@@ -125,7 +125,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // 3. Select candidate ideas per slot
   const ideas = loadIdeas(slug);
-  const readyIdeas = ideas.filter(i => i.status === "ready");
+  const readyIdeas = ideas.filter(i => i.status === "New");
 
   // Calculate recency score
   const scored = readyIdeas.map(idea => {
@@ -164,11 +164,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
-  // 5. Stale old ideas
+  // 5. Defer old ideas (stale → Deferred in canonical pipeline)
   for (const idea of ideas) {
-    if (idea.status === "ready") {
+    if (idea.status === "New") {
       const ageDays = (now.getTime() - new Date(idea.created_at).getTime()) / 86400000;
-      if (ageDays > 14) idea.status = "stale";
+      if (ageDays > 14) idea.status = "Deferred";
     }
   }
 

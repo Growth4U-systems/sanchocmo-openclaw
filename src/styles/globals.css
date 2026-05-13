@@ -59,6 +59,66 @@
     --orange: #fb923c;
     --blue: #3B82F6;
     --purple: #C45D35;
+
+    /* ============================================================
+       Sancho Comic — full shade scale (for Content Engine UI)
+       ============================================================ */
+    --sc-ink: #1F1410;
+    --sc-ink-soft: #3B2A22;
+    --sc-paper: #FBF3E1;
+    --sc-paper-2: #F5E8C8;
+    --sc-paper-3: #FFFAEC;
+    --sc-white: #FFFFFF;
+
+    --sc-fg-soft: #3B2A22;
+    --sc-fg-muted: #6B5044;
+    --sc-fg-subtle: #9A8473;
+
+    --sc-rust-50: #FBE4D6;
+    --sc-rust-100: #F5BFA0;
+    --sc-rust-300: #E07140;
+    --sc-rust-500: #C45D35;
+    --sc-rust-600: #A34A28;
+    --sc-rust-700: #7A331A;
+
+    --sc-sun-50: #FFF6CF;
+    --sc-sun-100: #FFE57A;
+    --sc-sun-300: #F4C430;
+    --sc-sun-500: #D9A300;
+
+    --sc-navy-500: #1B2C5B;
+    --sc-navy-700: #0E1A3A;
+
+    --sc-sage-100: #C8DDB8;
+    --sc-sage-500: #4F7F4F;
+
+    --sc-brick-500: #B83A2C;
+    --sc-brick-bg: #F6D9D2;
+
+    --sc-caramel-50: #F8E6CC;
+    --sc-caramel-100: #ECC893;
+    --sc-caramel-200: #DDA961;
+
+    /* Pop shadows — hard offset, no blur (the comic sticker move) */
+    --pop-xs: 2px 2px 0 0 var(--sc-ink);
+    --pop-sm: 3px 3px 0 0 var(--sc-ink);
+    --pop-md: 5px 5px 0 0 var(--sc-ink);
+    --pop-lg: 8px 8px 0 0 var(--sc-ink);
+
+    /* Radii — chunkier than default */
+    --sc-r-sm: 4px;
+    --sc-r-md: 8px;
+    --sc-r-lg: 14px;
+    --sc-r-tile: 22px;
+    --sc-r-pill: 999px;
+
+    /* Motion */
+    --sc-dur-fast: 90ms;
+    --sc-dur-base: 160ms;
+    --sc-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Halftone texture */
+    --sc-halftone-dots: radial-gradient(rgba(31,20,16,0.12) 1.2px, transparent 1.6px);
   }
 
   /* Comic UI — Dark (Catppuccin-inspired) */
@@ -120,6 +180,37 @@
   html {
     @apply font-sans;
   }
+}
+
+/* ============================================================
+   Sancho Comic utilities — used by Content Engine screens
+   ============================================================ */
+.sc-halftone {
+  background-image: var(--sc-halftone-dots);
+  background-size: 14px 14px;
+}
+.sc-halftone-strong {
+  background-image: radial-gradient(rgba(31,20,16,0.22) 1.4px, transparent 1.8px);
+  background-size: 10px 10px;
+}
+.sc-pop-hover { transition: transform var(--sc-dur-fast) var(--sc-ease-pop), box-shadow var(--sc-dur-fast); }
+.sc-pop-hover:hover { transform: translate(-1px, -1px); box-shadow: var(--pop-sm); }
+.sc-pop-hover:active { transform: translate(2px, 2px); box-shadow: none; }
+.sc-burst {
+  display: inline-grid; place-items: center;
+  background: var(--sc-sun-300);
+  color: var(--sc-ink);
+  border: 2.5px solid var(--sc-ink);
+  font-weight: 800;
+  text-align: center;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  clip-path: polygon(
+    50% 0%, 60% 12%, 75% 5%, 75% 22%, 92% 22%, 82% 38%, 100% 50%,
+    82% 62%, 92% 78%, 75% 78%, 75% 95%, 60% 88%, 50% 100%, 40% 88%,
+    25% 95%, 25% 78%, 8% 78%, 18% 62%, 0% 50%, 18% 38%, 8% 22%,
+    25% 22%, 25% 5%, 40% 12%);
+  transform: rotate(-8deg);
 }
 
 /* Toast UI Editor — force light theme in dark mode */

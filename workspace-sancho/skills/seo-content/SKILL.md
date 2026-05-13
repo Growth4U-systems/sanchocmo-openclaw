@@ -1,14 +1,16 @@
 ---
 name: seo-content
 description: >
-  Write publication-ready SEO long-form content. Performs live SERP analysis, captures People Also Ask questions,
-  analyzes competitor gaps, and produces articles with proper on-page optimization, schema markup (Article + FAQ +
-  HowTo JSON-LD), and YAML frontmatter. Supports content refresh mode for existing articles. Chains to
-  /content-atomizer for social distribution.
+  Write publication-ready SEO long-form content. Performs live SERP analysis of the top 10 results, downloads and
+  audits each competitor article (Competitive Content Audit), captures People Also Ask questions, builds a Content
+  Gap Matrix, and produces "Beat the SERP" recommendations before writing. Articles include proper on-page
+  optimization, schema markup (Article + FAQ + HowTo JSON-LD), and YAML frontmatter. Supports content refresh mode
+  for existing articles. Chains to /content-atomizer for social distribution.
 context_required:
-- brand/{slug}/brand-voice/current.md
-- brand/{slug}/content-playbook/writing-guide.md
-- brand/{slug}/content-playbook/pillars.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/content/content-pillars.md
+- brand/{slug}/content/pov-bank.json
+- brand/{slug}/content/strategy-decisions.md
 - brand/{slug}/go-to-market/keyword-plan.md
 - brand/{slug}/go-to-market/ecps/current.md
 - brand/{slug}/go-to-market/positioning/*/current.md
@@ -28,7 +30,29 @@ trust. Content that sounds like an expert sharing what they know.
 
 The goal: Would someone bookmark this? Would they share it? Would they come back?
 
-Read `./brand/` per `_system/intelligence/brand-memory.md` · Follow `_system/output/output-format.md`
+Read `./brand/` per `_system/brand-memory.md` · Follow `_system/output-format.md`
+
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "imagen generada" / "hero image lista" / "visual hecho"
+  sin URL real devuelta por un endpoint. Si solo describes un concepto,
+  di "te propongo este concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image` o
+  `/api/content-engine/upload-media`. **Nunca** editar
+  `frontmatter.media` a mano con Edit/Write.
+- **Nunca** escribir `status:` al frontmatter del draft de canal. Ese campo
+  fue eliminado: la fase vive en `tasks.json` bajo
+  `ContentTask.channel_phases[<canal>]`. Reportarla via:
+  ```bash
+  curl -fsS -X PATCH "$MC_BASE/api/content-engine/content-tasks" \
+    -H "Content-Type: application/json" \
+    -d '{"slug":"<slug>","parentTaskId":"<pid>","id":"<ctid>","channel_phases":{"<channel>":"draft"}}'
+  ```
+  El writer-trigger te entrega los IDs y los curl ya construidos. Para los
+  archivos de SEO en `campaigns/content/`, el frontmatter sigue su propio
+  schema (CMS-side); este cambio aplica solo a `content/drafts/{idea}/{ch}.md`.
 
 ---
 
@@ -38,9 +62,10 @@ Read `./brand/` per `_system/intelligence/brand-memory.md` · Follow `_system/ou
 
 | File | Purpose |
 |------|---------|
-| `brand/{slug}/brand-voice/current.md` | Tone, personality, vocabulary → shapes writing style |
-- brand/{slug}/content-playbook/writing-guide.md
-- brand/{slug}/content-playbook/pillars.md
+| `brand/{slug}/brand-book/brand-voice/brand-voice.current.md` | Tone, personality, vocabulary → shapes writing style |
+| `brand/{slug}/content/content-pillars.md` | 5 active pillars with hooks and topic scope |
+| `brand/{slug}/content/pov-bank.json` | POV per pillar: core_belief, preferred_angles, evidence_we_cite |
+| `brand/{slug}/content/strategy-decisions.md` | 14 content strategy decisions (tilt, villain, BOFU-first, etc.) |
 | `brand/{slug}/go-to-market/keyword-plan.md` | Keywords, content briefs, SERP data |
 | `brand/{slug}/go-to-market/ecps/current.md` | Buyer profiles, sophistication level, pain points |
 | `brand/{slug}/go-to-market/positioning/*/current.md` | Market angles, differentiators → unique angle |
@@ -74,9 +99,7 @@ Before starting, check if content exists at `campaigns/content/{keyword-slug}.md
 2. **Keyword cluster** — Related keywords to include naturally
 3. **Search intent** — Informational / Commercial / Transactional
 4. **Content type** — Pillar guide / How-to / Comparison / Listicle
-5. **Brand voice profile** — From brand-voice/current.md if available
-- brand/{slug}/content-playbook/writing-guide.md
-- brand/{slug}/content-playbook/pillars.md
+5. **Brand voice profile** — From `brand/{slug}/brand-book/brand-voice/brand-voice.current.md`, plus `content/content-pillars.md`, `content/pov-bank.json`, and `content/strategy-decisions.md`.
 6. **Unique angle** — What perspective makes this different?
 
 Pre-fill from brand memory when available. If from /keyword-research, load brief at `campaigns/content-plan/{keyword-slug}.md`.
@@ -90,7 +113,15 @@ RESEARCH → BRIEF → OUTLINE → DRAFT → HUMANIZE → OPTIMIZE → SCHEMA �
 ```
 
 ### Phase 1: Research
-Live SERP analysis of top 5 results + PAA capture (all questions — they become mandatory sections) + gap analysis. Show RESEARCH MODE signal per `_system/intelligence/brand-memory.md`. → `references/workflow.md` §Phase 1
+Live SERP analysis of top 10 results + PAA capture (all questions — they become mandatory sections) + gap analysis + **Competitive Content Audit**. Show RESEARCH MODE signal per `_system/brand-memory.md`. → `references/workflow.md` §Phase 1
+
+**1a. SERP Analysis (top 10):** Search the target keyword via `web_search`. Capture the top 10 organic results (URLs, titles, positions). → `references/workflow.md` §SERP Analysis
+
+**1b. Competitive Content Audit:** For each of the top 10 results, use `web_fetch` to download the full article content. Analyze structure, depth, data, angles, gaps, E-E-A-T signals, and weaknesses. Produce a Content Gap Matrix and "Beat the SERP" recommendations. → `references/workflow.md` §Competitive Content Audit
+
+**1c. PAA Capture:** Pull all People Also Ask questions for the target keyword + variations. These become mandatory sections. → `references/workflow.md` §People Also Ask Integration
+
+**Plus deep-research for the signal/angle (always)**: invoke the `deep-research` skill with `angle_draft` + `signal.url` + `signal.summary` to verify the data point and pull adjacent stats / quotes / named examples. Output a `research_pack` object that feeds the Clarify step and the draft. Skip ONLY for purely personal-story signals — record `research_pack: { skipped: true, reason: "personal-story" }`.
 
 ### Phase 2: Content Brief
 Create or enhance brief from /keyword-research. Target keyword, cluster, intent, type, audience, angle, PAA, gaps, links, CTA. → `references/templates.md` §Content Brief
@@ -99,9 +130,7 @@ Create or enhance brief from /keyword-research. Target keyword, cluster, intent,
 Structure by content type: Pillar (5-8K words), How-To (2-3K), Comparison (2.5-4K), Listicle (2-3K). Map PAA to H2s/FAQ. → `references/workflow.md` §Phase 3
 
 ### Phase 4: Draft
-Voice from brand-voice/current.md. First Paragraph Rule, "So What?" Chain, Specificity Over Generality, Show Your Work, Positioning-Informed Angle. → `references/workflow.md` §Phase 4
-- brand/{slug}/content-playbook/writing-guide.md
-- brand/{slug}/content-playbook/pillars.md
+Voice from `brand-book/brand-voice/brand-voice.current.md`. Pillars + POV from `content/content-pillars.md` + `content/pov-bank.json`. Strategy guardrails from `content/strategy-decisions.md`. First Paragraph Rule, "So What?" Chain, Specificity Over Generality, Show Your Work, Positioning-Informed Angle. → `references/workflow.md` §Phase 4
 
 ### Phase 5: Humanize
 Remove AI tells: words (delve, comprehensive, leverage, landscape), phrases, structural patterns. Inject: experience, opinions, admissions, specifics, rhythm variation. → `references/workflow.md` §Phase 5
@@ -123,11 +152,19 @@ Save to `campaigns/content/{keyword-slug}.md` with YAML frontmatter (title, meta
 
 → `references/templates.md` §File Output for exact format.
 
+**Body discipline (applies to every content file this skill writes, including `content/drafts/{ideaId}/blog.md` when invoked from the Content Engine):**
+
+Follow the system spec at `_system/draft-file-format.md`. Specifically for blog:
+- **H1 in body is REQUIRED** — it is the article title. Renderer extracts it for the hero card.
+- Use **H2 (`##`)** for top-level sections; renderer slices the preview into one card per H2.
+- **No HTML comments** anywhere in the body. If you self-validate, write the result as `self_qa: PASS|FAIL` + `self_qa_notes: [...]` in the frontmatter.
+- **No trailing `---` separators.**
+
 ---
 
 ## Key Rules
 
-1. **Never skip SERP analysis** when web search is available
+1. **Never skip SERP analysis + Competitive Content Audit** when web search is available. Fetch and analyze the top 10 competitor articles via `web_fetch` before writing.
 2. **Always check for existing content first** — enables refresh mode
 3. **Always generate schema markup** — Article + FAQ mandatory
 4. **Always save to disk** — the saved file IS the deliverable

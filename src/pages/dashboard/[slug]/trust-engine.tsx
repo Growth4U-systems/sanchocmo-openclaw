@@ -8,7 +8,7 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useProjects } from "@/hooks/useProjects";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useOpenChat, useSendMessage } from "@/hooks/useChat";
 import { useChatStore } from "@/stores/chat";
 import { cn } from "@/lib/utils";
@@ -150,7 +150,7 @@ export default function TrustEnginePage() {
   const openChat = useOpenChat();
 
   // ── Foundation: get niches (ICPs) ──
-  const { data: foundation } = useFoundation(slug);
+  const { data: foundation } = useBrandBrain(slug);
   const availableNiches = useMemo(() => {
     if (!foundation?.brand_summary?.icps) return [];
     return foundation.brand_summary.icps.map((item, i) => {

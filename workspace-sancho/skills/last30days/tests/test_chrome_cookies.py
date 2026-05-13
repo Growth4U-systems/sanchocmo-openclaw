@@ -4,11 +4,14 @@ import hashlib
 import os
 import sqlite3
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from unittest import mock
 
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills" / "last30days"))
 
 from scripts.lib.chrome_cookies import (
     CHROME_COOKIES_DB,

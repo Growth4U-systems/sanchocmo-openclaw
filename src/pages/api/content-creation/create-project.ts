@@ -178,6 +178,33 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       depends_on: `${projectId}-T05`,
       owner: "Sancho",
     },
+    {
+      // Visual Templates — produces the 5 carousel HTMLs Mission Control's
+      // carousel panel consumes. Independent of the calendar/crons branch:
+      // only depends on T02 (Playbook) which gives pillars + tone, plus the
+      // brand's `visual-identity` pillar in Foundation L5 (checked at runtime
+      // by the visual-generator skill — not modeled as a P14 dependency
+      // because Foundation lives outside this project).
+      id: `${projectId}-T07`,
+      name: "Visual Templates (5 plantillas HTML)",
+      description: `Genera las 5 plantillas HTML brand-specific (linkedin-quote, linkedin-9-slide, instagram-3-slide, blog-post, blog-title) ejecutando el skill ${slug}-visual-generator. La skill lee design-tokens.json + visual-identity.current.md, decide qué personajes incluir (Alfonso/Martín/Philippe), genera con nano-banana-pro los assets faltantes, y produce los HTMLs en brand/${slug}/brand-book/visual-identity/templates/{id}/. Prerequisito de runtime: visual-identity pillar 'approved' en Foundation L5.`,
+      type: "foundation",
+      pillar: "visual-identity",
+      skill: `${slug}-visual-generator`,
+      channel: "visual",
+      niche: null,
+      status: "todo",
+      deliverable_file: `brand/${slug}/brand-book/visual-identity/templates/`,
+      output_files: [
+        "templates/linkedin-quote/template.html",
+        "templates/linkedin-9-slide/slide-cover.html",
+        "templates/instagram-3-slide/slide-cover.html",
+        "templates/blog-post/template.html",
+        "templates/blog-title/template.html",
+      ],
+      depends_on: `${projectId}-T02`,
+      owner: "Sancho",
+    },
   ];
 
   // Apply anchors (validates + creates empty chat thread files).

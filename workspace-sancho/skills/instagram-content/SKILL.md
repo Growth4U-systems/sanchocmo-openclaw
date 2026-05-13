@@ -2,13 +2,36 @@
 
 > Genera contenido nativo de Instagram: captions, carruseles (slides), reel scripts y stories a partir de un artículo de blog o topic.
 
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "carrusel generado" / "imagen lista" / "slide creado"
+  sin URL real devuelta por un endpoint. Si solo describes un concepto,
+  di "te propongo este concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image`,
+  `/api/content-engine/render-carousel` (carruseles HTML→PNG/PDF) o
+  `/api/content-engine/upload-media`. **Nunca** editar `frontmatter.media`
+  a mano con Edit/Write.
+- **Nunca** escribir `status:` (de ningún tipo) al frontmatter del draft.
+  Ese campo fue eliminado: la fase vive en `tasks.json` bajo
+  `ContentTask.channel_phases[<canal>]`. Para reportarla:
+  ```bash
+  curl -fsS -X PATCH "$MC_BASE/api/content-engine/content-tasks" \
+    -H "Content-Type: application/json" \
+    -d '{"slug":"<slug>","parentTaskId":"<pid>","id":"<ctid>","channel_phases":{"<channel>":"draft"}}'
+  ```
+  El writer-trigger te da los IDs y los curl ya construidos.
+
 ## Trigger
 Cuando el usuario pide crear contenido para Instagram, generar posts de IG, crear carruseles, escribir captions, o preparar contenido social para IG.
 
 ## Prerequisitos
-- Artículo de blog generado (preferido) O keyword/topic del cliente
-- `brand_voice` del cliente (desde Foundation: `brand/{slug}/brand-voice/current.md`)
-- ECPs del cliente (desde Foundation: `brand/{slug}/niche-discovery/current.md`)
+- Idea aprobada con `signal + angle_draft + target_channel: instagram` (Content Engine flow), O artículo de blog / keyword (modos legacy)
+- `brand_voice` del cliente: `brand/{slug}/brand-book/brand-voice/brand-voice.current.md`
+- Pillars + POV: `brand/{slug}/content/content-pillars.md` + `brand/{slug}/content/pov-bank.json`
+- Strategy guardrails: `brand/{slug}/content/strategy-decisions.md`
+- ECPs (opcional): `brand/{slug}/go-to-market/ecps/current.md`
 
 ## Pipeline
 
@@ -18,12 +41,31 @@ SI hay artículo de blog → usar como fuente (atomizer mode)
 SI no hay artículo → usar keyword/topic directamente (standalone mode)
 ```
 
-### Paso 2: Leer Brand Voice + ECPs
+### Paso 2: Leer Brand Voice + Pillars + POV
 ```python
-# Leer brand voice del cliente
-brand_voice = read(f"brand/{slug}/brand-voice/current.md")
-ecps = read(f"brand/{slug}/niche-discovery/current.md")
+brand_voice = read(f"brand/{slug}/brand-book/brand-voice/brand-voice.current.md")
+pillars = read(f"brand/{slug}/content/content-pillars.md")
+pov_bank = read_json(f"brand/{slug}/content/pov-bank.json")
+strategy = read(f"brand/{slug}/content/strategy-decisions.md")
+ecps = read(f"brand/{slug}/go-to-market/ecps/current.md")  # opcional
 ```
+
+### Paso 2.5: Deep Research (ALWAYS — pre-step before Clarify)
+
+Invoca el skill `deep-research` con `angle_draft` + `signal.url` + `signal.summary`. Verifica el dato del signal y trae stats/quotes/ejemplos adyacentes. Captura todo en un `research_pack` object para alimentar Clarify y el draft.
+
+Skip SOLO si el signal es `personal-story` puro y no hay nada externo a verificar — registra `research_pack: { skipped: true, reason: "personal-story" }`.
+
+### Paso 2.6: Clarify (ALWAYS — see _system/clarify-protocol.md)
+
+Genera 2-3 preguntas con predictions + confidence (formato Clarify Protocol):
+- **Angle** — qué encuadre del topic encaja mejor con la audiencia IG (relatable / aspirational / behind-the-scenes / educational)
+- **Visual hint** — qué tipo de imagen/carousel anclará el caption (foto producto, cita en card, antes/después, screenshot, frame video, etc.)
+- **CTA** — comment-bait pregunta / save-this-post / link in bio / DM word
+
+Presenta al humano. Espera confirmación o ajuste. NUNCA saltar.
+
+Guarda el resultado en `brand/{slug}/content/clarify-history.json`.
 
 ### Paso 3: Generar Contenido
 
@@ -95,13 +137,36 @@ Por story:
 ```
 
 ### Paso 4: Output
-Guardar en `brand/{slug}/content/instagram/{fecha}-{topic-slug}.md` con formato:
+
+Para flujos legacy (standalone topic), guardar en
+`brand/{slug}/content/instagram/{fecha}-{topic-slug}.md`. Para Content
+Engine, guardar en `content/drafts/{ideaId}/instagram.md`.
+
+**File format (STRICT)** — sigue `_system/draft-file-format.md`:
+
+- **Frontmatter** con metadatos operativos (idea_id, channel, status,
+  source, ecp, fecha) + Self-QA si aplica.
+- **Body** = solo el contenido publicable. **No H1** (Instagram no
+  renderiza título). **No HTML comments**. **No `---` decorativos.**
+- **Self-QA va en el frontmatter**, nunca inline. Si el verdict aún no
+  se ha calculado, omite el campo (no escribas `PENDING`).
 
 ```markdown
-# Instagram Content — {topic}
-Generated: {fecha}
-Source: {artículo_id o "standalone"}
-ECP: {ecp_name}
+---
+idea_id: {ideaId}
+channel: instagram
+kind: channel-draft
+iteration: 1
+status: draft
+source: {artículo_id o "standalone"}
+ecp: {ecp_name}
+self_qa: PASS  # opcional, una vez auto-validado
+self_qa_notes:
+  - "Hook scroll-stopping: ✅"
+  - "Carrusel 5-10 slides: ✅"
+created_at: '{ISO date}'
+updated_at: '{ISO date}'
+---
 
 ## Caption Post
 {caption}
@@ -114,9 +179,6 @@ ECP: {ecp_name}
 
 ## Story Sequence
 {stories}
-
----
-<!-- Self-QA: PENDING | {fecha} -->
 ```
 
 ### Paso 5: Revisión Humana

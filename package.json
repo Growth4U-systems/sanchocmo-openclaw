@@ -9,6 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
+    "migrate:media": "tsx scripts/migrate-legacy-media.mts",
+    "check:drafts": "tsx scripts/check-legacy-media.mts",
     "prepare": "husky"
   },
   "dependencies": {

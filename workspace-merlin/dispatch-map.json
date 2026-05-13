@@ -1,0 +1,34 @@
+{
+  "version": 3,
+  "dispatch_mode": "sessions",
+  "agent": "merlin",
+  "note": "Workspace de Merlín (Data, atribución & forecasting). Agente NUEVO sin precedente en personas. Catálogo de skills propio TBD — placeholder en Fase 1, definición real en Fase posterior.",
+  "channel_roles": {
+    "intelligence": {
+      "description": "Quantitative analysis, attribution, forecasting, CRM analysis.",
+      "channels": ["learning"],
+      "rules": {
+        "learning": "CRM analysis, last 30 days trends, attribution, cohort analysis, forecasting."
+      }
+    }
+  },
+  "personas": {
+    "merlin": {
+      "name": "Merlín",
+      "persona_file": "./SOUL.md",
+      "dispatch_for": [
+        "attribution-analysis",
+        "cohort-analysis",
+        "kpi-dashboard",
+        "forecast",
+        "retention-analysis",
+        "crm-pulse",
+        "funnel-analysis",
+        "pattern-detector"
+      ],
+      "skills": [],
+      "skills_note": "Catálogo de skills propio TBD. En Fase 1 Merlín opera con análisis ad-hoc directos sobre tablas del CRM.",
+      "brand_context": ["positioning.md", "ecps.md", "learnings.md"]
+    }
+  }
+}

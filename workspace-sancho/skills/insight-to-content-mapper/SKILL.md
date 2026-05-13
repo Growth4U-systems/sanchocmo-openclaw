@@ -35,9 +35,9 @@ Este skill convierte raw insights en **production-ready content briefs**. No es 
 - **seo-content**: Escribe el contenido final (este skill genera el BRIEF para ello)
 - **insight-to-content-mapper**: El PUENTE entre tener insights y tener contenido
 
-Read ./brand/ per _system/intelligence/brand-memory.md (if using SanchoCMO framework)
+Read ./brand/ per _system/brand-memory.md (if using SanchoCMO framework)
 
-Follow _system/output/output-format.md (if using SanchoCMO framework)
+Follow _system/output-format.md (if using SanchoCMO framework)
 
 ---
 
@@ -392,7 +392,11 @@ For each signal:
 - Assign `target_channel` (linkedin, twitter, blog, newsletter)
 - Calculate `pov_confidence` (0.0-1.0)
 
-Append to `brand/{slug}/content/idea-queue.json`:
+Append to `brand/{slug}/content/idea-queue.json`. **Before assigning `{seq}`**,
+read the existing file and find the highest `{seq}` already used for today's date
+prefix (`idea-{date}-`). Start at `max + 1` so a second run on the same day does
+not collide with earlier ideas. If no idea for today exists yet, start at `1`.
+
 ```json
 {
   "id": "idea-{date}-{seq}",
@@ -409,7 +413,7 @@ Append to `brand/{slug}/content/idea-queue.json`:
   "pov_confidence": 0.78,
   "source_signals": ["news-2026-04-25-003"],
   "created_at": "2026-04-25T08:00:00Z",
-  "status": "ready"
+  "status": "New"
 }
 ```
 

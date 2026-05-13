@@ -1,0 +1,24 @@
+{
+  "agent": "dulcinea",
+  "version": 1,
+  "note": "Config del chat para Dulcinea. MC consulta esto cuando enruta tasks type=content o tareas con triggers de SEO, atomización, newsletter, landing copy, brand voice.",
+  "tasks": {
+    "_defaults": {
+      "skill": "seo-content"
+    },
+    "_byType": {
+      "content": {
+        "skill": "seo-content",
+        "skills": ["seo-content", "keyword-research", "content-calendar-planner", "content-atomizer", "newsletter", "direct-response-copy", "brand-voice", "lead-magnet"]
+      }
+    },
+    "_byChannel": {
+      "content": { "skill": "seo-content" },
+      "web": { "skill": "direct-response-copy" }
+    },
+    "_byTool": {
+      "ahrefs": { "skill": "keyword-research" },
+      "dataforseo": { "skill": "keyword-research" }
+    }
+  }
+}

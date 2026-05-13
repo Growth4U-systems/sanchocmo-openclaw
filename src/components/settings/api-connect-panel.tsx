@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, type ReactNode } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,12 @@ interface ApiConnectPanelProps {
   slug: string;
   apiId: string;
   onClose: () => void;
+  /**
+   * Optional content rendered inside the hero/status zone, below the badges.
+   * Used by the publishing flow to surface the connected Metricool brand
+   * + networks as the most prominent piece of info.
+   */
+  topAccessory?: ReactNode;
 }
 
 interface ApiCatalogEntry {
@@ -88,7 +94,7 @@ const DIFFICULTY_CONFIG: Record<string, { bg: string; text: string }> = {
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export function ApiConnectPanel({ slug, apiId, onClose }: ApiConnectPanelProps) {
+export function ApiConnectPanel({ slug, apiId, onClose, topAccessory }: ApiConnectPanelProps) {
   /* ----- State ----- */
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
@@ -240,39 +246,62 @@ export function ApiConnectPanel({ slug, apiId, onClose }: ApiConnectPanelProps) 
 
   return (
     <div className="p-6 space-y-6">
-      {/* ---- Status Row ---- */}
-      <div className="flex items-center flex-wrap gap-2">
-        <span className={cn("text-[11px] px-2.5 py-1 rounded-full font-bold", statusCfg.bg, statusCfg.text)}>
-          {statusCfg.label}
-        </span>
-        <span
-          className={cn(
-            "text-[11px] px-2.5 py-1 rounded-full font-bold",
-            ownership === "client"
-              ? "bg-rust/10 text-rust"
-              : "bg-blue-500/10 text-blue-600"
-          )}
-        >
-          {ownership === "client" ? "CLIENTE" : "SISTEMA"}
-        </span>
-        {apiMeta?.docsUrl && (
-          <a
-            href={apiMeta.docsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[11px] text-blue-600 underline hover:text-blue-800"
+      {/* ---- Hero / Status zone ---- */}
+      <div
+        className="rounded-lg border-2 p-4"
+        style={{
+          background: "var(--sc-paper-2)",
+          borderColor: "var(--sc-ink)",
+          boxShadow: "var(--pop-sm)",
+        }}
+      >
+        <div className="flex items-center flex-wrap gap-2.5">
+          <span
+            className={cn(
+              "text-sm px-3 py-1.5 rounded-full font-bold",
+              statusCfg.bg,
+              statusCfg.text
+            )}
           >
-            Documentacion
-          </a>
+            {statusCfg.label}
+          </span>
+          <span
+            className={cn(
+              "text-sm px-3 py-1.5 rounded-full font-bold",
+              ownership === "client"
+                ? "bg-rust/10 text-rust"
+                : "bg-blue-500/10 text-blue-600"
+            )}
+          >
+            {ownership === "client" ? "CLIENTE" : "SISTEMA"}
+          </span>
+          {apiMeta?.docsUrl && (
+            <a
+              href={apiMeta.docsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-600 underline hover:text-blue-800"
+            >
+              Documentación
+            </a>
+          )}
+          <div className="flex-1" />
+          {statusData?.lastTestedAt && (
+            <span className="text-[11px]" style={{ color: "var(--sc-fg-muted)" }}>
+              Último test: {new Date(statusData.lastTestedAt).toLocaleString("es-ES")}
+            </span>
+          )}
+        </div>
+
+        {topAccessory && (
+          <div
+            className="mt-3 pt-3 border-t-2 border-dashed"
+            style={{ borderColor: "var(--sc-ink)" }}
+          >
+            {topAccessory}
+          </div>
         )}
       </div>
-
-      {/* ---- Last test / error ---- */}
-      {statusData?.lastTestedAt && (
-        <p className="text-[11px] text-muted-foreground">
-          Ultimo test: {new Date(statusData.lastTestedAt).toLocaleString("es-ES")}
-        </p>
-      )}
 
       {statusData?.lastError && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">

@@ -23,9 +23,15 @@ import {
   buildTaskIndex,
 } from "@/lib/chat-openers";
 import { useQuickActions } from "@/hooks/useChat";
+import { useRetriggerWriter } from "@/hooks/useContentTasks";
 import { ThreadListPanel } from "./thread-list-panel";
+import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
+import { ProgressTimeline } from "./progress-timeline";
+import type { ProgressEvent } from "@/hooks/useChat";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
-import { useFoundation } from "@/hooks/useFoundation";
+import { MediaAssetSlideover } from "@/components/media-creation/MediaAssetSlideover";
+import { useBrandAssets, type BrandAsset } from "@/hooks/useBrandAssets";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
@@ -35,10 +41,16 @@ import { formatThreadDisplayName } from "@/lib/thread-display-name";
 // ---------------------------------------------------------------------------
 
 const AGENT_BADGES: Record<string, { emoji: string; label: string; color: string }> = {
-  sancho:    { emoji: "🤠", label: "Sancho",    color: "bg-rust" },
-  escudero:  { emoji: "⚔️",  label: "Escudero",  color: "bg-green-600" },
-  rocinante: { emoji: "🐴", label: "Rocinante", color: "bg-cyan-600" },
-  cervantes: { emoji: "✒️",  label: "Cervantes", color: "bg-purple-600" },
+  sancho:        { emoji: "🤠", label: "Sancho",      color: "bg-rust" },
+  cervantes:     { emoji: "✒️",  label: "Cervantes",   color: "bg-purple-600" },
+  hamete:        { emoji: "📜", label: "Hamete",      color: "bg-amber-700" },
+  dulcinea:      { emoji: "✍️",  label: "Dulcinea",    color: "bg-rose-500" },
+  rocinante:     { emoji: "🐴", label: "Rocinante",   color: "bg-cyan-600" },
+  "maese-pedro": { emoji: "🎭", label: "Maese Pedro", color: "bg-pink-600" },
+  mambrino:      { emoji: "🪖", label: "Mambrino",    color: "bg-orange-700" },
+  merlin:        { emoji: "🔮", label: "Merlín",      color: "bg-indigo-600" },
+  sanson:        { emoji: "🛡️", label: "Sansón",      color: "bg-emerald-700" },
+  escudero:      { emoji: "⚔️",  label: "Escudero",    color: "bg-green-600" }, // legacy hasta Fase 2 (dispatch sigue invocándolo)
 };
 
 function agentBadge(agent?: string) {
@@ -175,7 +187,7 @@ export function ChatSidebar() {
 
   // Foundation state + projects (for deriving ThreadConfig when the user
   // picks a thread from the panel). Both cached by React Query.
-  const { data: foundationState } = useFoundation(slug || null);
+  const { data: foundationState } = useBrandBrain(slug || null);
   const { data: projectsData } = useProjects(slug || null);
   const queryClient = useQueryClient();
 
@@ -574,6 +586,7 @@ export function ChatSidebar() {
   const messagesQuery = useThreadMessages(activeThreadId ?? null);
   const messages = messagesQuery.data?.messages ?? [];
   const statusData = messagesQuery.data?.status;
+  const pendingProgress: ProgressEvent[] = messagesQuery.data?.pendingProgress ?? [];
 
   // Send / cancel / mark-read
   const sendMutation = useSendMessage();
@@ -608,6 +621,20 @@ export function ChatSidebar() {
   // to the foundation page. Keeps the user in their current context (chat
   // thread, task page, etc.) while they read or edit the doc.
   const [openDocSlidePath, setOpenDocSlidePath] = useState<string | null>(null);
+
+  // Media-asset slide-over — opened when the doc pill points at a template
+  // folder (kind="template"). The MediaAssetSlideover handles multi-slide
+  // preview and the file list. Looked up from useBrandAssets by relative
+  // path so the same data the Assets tab loads is reused.
+  const [openTemplateAsset, setOpenTemplateAsset] = useState<BrandAsset | null>(null);
+  const { data: brandAssetsData } = useBrandAssets(
+    meta?.docKind === "template" && slug ? slug : null,
+  );
+  const findAssetByRelativePath = useCallback(
+    (relPath: string): BrandAsset | null =>
+      brandAssetsData?.assets.find((a) => a.relativePath === relPath) ?? null,
+    [brandAssetsData],
+  );
 
   // Input state
   const [input, setInput] = useState("");
@@ -695,11 +722,64 @@ export function ChatSidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, activeThreadId, slug]);
 
-  // Typing indicator — show when polling OR when last message is from user (waiting for response)
+  // Typing indicator — show when polling OR when last substantive message is from user (waiting for response)
+  // System messages (failover/billing notices) are ignored here so the typing indicator
+  // stays visible while a bot reply is still pending after a system event.
   const lastMsg = messages[messages.length - 1];
-  const waitingForReply = messages.length > 0 && lastMsg?.role === "user";
-  const isBotThinking = isPolling && waitingForReply;
-  const showTyping = isBotThinking || !!statusData?.text || (waitingForReply && sendMutation.isPending);
+  const lastSubstantiveMsg = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role !== "system") return messages[i];
+    }
+    return undefined;
+  })();
+  const waitingForReply = messages.length > 0 && lastSubstantiveMsg?.role === "user";
+
+  // Activity gate: a reply is "in progress" when a send is in flight, when the
+  // gateway has emitted a status update in the last minute, or when the user's
+  // message is recent enough that an agent could still be working on it. Using
+  // `isPolling` alone caused the typing indicator to disappear after the 30s
+  // polling window while the red stop button stayed on — they're now in sync.
+  const lastUserMsgTs = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") return messages[i].ts ?? 0;
+    }
+    return 0;
+  })();
+  const STATUS_FRESH_MS = 60_000;
+  const REPLY_WINDOW_MS = 5 * 60_000;
+  const now = Date.now();
+  const hasFreshStatus = !!statusData?.text && now - (statusData?.ts ?? 0) < STATUS_FRESH_MS;
+  const recentUserMsg = waitingForReply && lastUserMsgTs > 0 && now - lastUserMsgTs < REPLY_WINDOW_MS;
+  const isAwaitingReply = sendMutation.isPending || hasFreshStatus || recentUserMsg;
+  const showTyping = isAwaitingReply;
+
+  // Live agent for the typing indicator: prefer the gateway's status (whoever
+  // is actually working right now) → last bot message agent → thread default.
+  const lastBotAgent = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role !== "user" && m.role !== "system" && m.agent) return m.agent;
+    }
+    return undefined;
+  })();
+  const typingAgent = statusData?.agent || lastBotAgent || primarySkill;
+  const typingBadge = typingAgent ? agentBadge(typingAgent) : null;
+
+  // Gateway-down detection: when a ContentTask thread's last system marker
+  // ("Pidiendo a Escudero…") has been sitting for >60s without an agent
+  // reply, the OpenClaw gateway is most likely down. Surface a banner with
+  // a "Reintentar" button that re-fires `triggerWriter`.
+  const GATEWAY_STALE_MS = 60 * 1000;
+  const ctIdFromLinked = meta?.linkedTo?.match(/\/content\/([^/]+)/i)?.[1];
+  const lastIsTriggerMarker =
+    !!lastMsg &&
+    lastMsg.role !== "user" &&
+    typeof lastMsg.text === "string" &&
+    /Pidiendo a (Escudero|Sancho que itere)/.test(lastMsg.text);
+  const triggerStale = !lastMsg?.ts || Date.now() - lastMsg.ts > GATEWAY_STALE_MS;
+  const gatewayLikelyDown =
+    !!ctIdFromLinked && lastIsTriggerMarker && triggerStale && !sendMutation.isPending;
+  const retriggerWriter = useRetriggerWriter();
 
   // Quick-actions from chat-config.json.
   //
@@ -958,10 +1038,15 @@ export function ChatSidebar() {
             // because they're config files the user wouldn't want to open
             // in the markdown viewer.
             const docPath = meta?.docPath || null;
-            const isRealDoc = !!docPath &&
-              /\.(md|html|txt)$/i.test(docPath) &&
-              !/tasks\.json$/i.test(docPath) &&
-              !/project\.json$/i.test(docPath);
+            const isTemplateDoc = !!docPath && meta?.docKind === "template";
+            const isRealDoc = !!docPath && (
+              isTemplateDoc ||
+              (
+                /\.(md|html|txt)$/i.test(docPath) &&
+                !/tasks\.json$/i.test(docPath) &&
+                !/project\.json$/i.test(docPath)
+              )
+            );
             const linkedTo = meta?.linkedTo || "";
             const isTaskLinked = /^projects\/[^/]+\/tasks\/[^/]+/i.test(linkedTo);
             const isProjectLinked = !isTaskLinked && /^projects\/[^/]+/i.test(linkedTo);
@@ -979,10 +1064,14 @@ export function ChatSidebar() {
                 .replace(/-/g, " ")
                 .replace(/\b\w/g, (c) => c.toUpperCase());
 
-            if (isRealDoc) {
+            if (isTemplateDoc) {
+              icon = "🧩";
+              label = (docPath!.split("/").filter(Boolean).pop() || "Plantilla").replace(/-/g, " ");
+              href = null; // click handled inline below to open MediaAssetSlideover
+            } else if (isRealDoc) {
               icon = "📄";
               label = readableDocName(docPath!);
-              href = `/dashboard/${slug}/foundation?doc=${encodeURIComponent(docPath!)}`;
+              href = `/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(docPath!)}`;
             } else if (isTaskLinked) {
               icon = "📝";
               label = prettify(meta?.threadName || "") || "Tarea";
@@ -1037,6 +1126,25 @@ export function ChatSidebar() {
               "w-full bg-[#313244] rounded-lg px-3 py-2 text-[13px] text-[#cdd6f4] flex items-center gap-2 border border-transparent transition-colors text-left",
               (href || isRealDoc) && "cursor-pointer hover:bg-[#45475a] hover:border-rust no-underline"
             );
+            // Template doc: open MediaAssetSlideover (multi-slide preview)
+            // instead of DocSlideOver — DocSlideOver fetches /api/docs which
+            // would 404 on a folder path.
+            if (isTemplateDoc && docPath) {
+              return (
+                <button
+                  type="button"
+                  className={pillClass}
+                  onClick={() => {
+                    const rel = docPath.replace(/^brand\/[^/]+\//, "");
+                    const found = findAssetByRelativePath(rel);
+                    if (found) setOpenTemplateAsset(found);
+                  }}
+                  title="Abrir plantilla"
+                >
+                  {pillContent}
+                </button>
+              );
+            }
             // For real docs (.md/.html/.txt), open in slide-over IN-PLACE
             // instead of navigating to /foundation?doc=... The slide-over
             // lets the user read/edit without losing their current context
@@ -1065,20 +1173,26 @@ export function ChatSidebar() {
 
           {/* Task/Project link pill — shows the associated task/project */}
           {activeThreadId && meta?.linkedTo && (() => {
-            const taskMatch = meta.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)/i);
+            const taskMatch = meta.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)(?:\/content\/([^/]+))?/i);
             const projMatch = !taskMatch && meta.linkedTo.match(/^projects\/([^/]+)/i);
             if (!taskMatch && !projMatch) return null;
 
             if (taskMatch) {
               const projId = taskMatch[1];
               const taskId = taskMatch[2];
+              const ctId = taskMatch[3];
+              const href = ctId
+                ? `/dashboard/${slug}/projects/${projId}/tasks/${taskId}/content/${ctId}`
+                : `/dashboard/${slug}/projects/${projId}/tasks/${taskId}`;
               return (
                 <Link
-                  href={`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`}
+                  href={href}
                   className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
                 >
-                  <span>📋</span>
-                  <span className="truncate flex-1">Tarea: {taskId}</span>
+                  <span>{ctId ? "✍️" : "📋"}</span>
+                  <span className="truncate flex-1">
+                    {ctId ? `${taskId} → ${ctId}` : `Tarea: ${taskId}`}
+                  </span>
                   <span className="text-[11px] text-[#6c7086]">↗</span>
                 </Link>
               );
@@ -1205,7 +1319,78 @@ export function ChatSidebar() {
           </div>
         )}
 
-        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number }, i: number) => {
+        {gatewayLikelyDown && ctIdFromLinked && (
+          <div className="border border-amber-500/40 bg-amber-500/10 text-amber-200 rounded-lg px-3 py-2 text-[13px] leading-snug">
+            <div className="font-semibold mb-1">⚠ Escudero parece no haber respondido</div>
+            <p className="text-[12px] text-amber-100/80 mb-2">
+              Puede que el gateway de OpenClaw esté caído. Comprueba <code className="bg-black/30 px-1 rounded">openclaw gateway status</code> y pulsa Reintentar.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!slug || !ctIdFromLinked) return;
+                  retriggerWriter.mutate({ slug, contentTaskId: ctIdFromLinked });
+                }}
+                disabled={retriggerWriter.isPending}
+                className="text-[12px] px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-50 rounded border border-amber-500/40 transition-colors"
+              >
+                {retriggerWriter.isPending ? "Reintentando..." : "Reintentar"}
+              </button>
+              {retriggerWriter.isError && (
+                <span className="text-[11px] text-red-300">
+                  {(retriggerWriter.error as Error).message}
+                </span>
+              )}
+              {retriggerWriter.isSuccess && retriggerWriter.data?.writerTriggered === false && (
+                <span className="text-[11px] text-amber-300/80">
+                  Sigue caído: {retriggerWriter.data.writerError || "sin respuesta"}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number; progress?: ProgressEvent[]; from_agent?: string; to_agent?: string }, i: number) => {
+          if (msg.role === "system") {
+            return (
+              <div key={i} className="flex justify-center">
+                <div className="max-w-[90%] px-3 py-1.5 rounded-md text-[12px] leading-snug bg-amber-500/10 text-amber-200 border border-amber-500/30 italic">
+                  <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                </div>
+              </div>
+            );
+          }
+
+          if (msg.role === "handoff") {
+            const fromBadge = agentBadge(msg.from_agent);
+            const toBadge = agentBadge(msg.to_agent);
+            return (
+              <div key={i} className="flex justify-center">
+                <div className="max-w-[90%] w-full px-3 py-2 rounded-md text-[12px] leading-snug bg-[#1E1E2E]/60 border border-[#45475a]/60 italic">
+                  <div className="flex items-center justify-center gap-2 mb-1 not-italic">
+                    <span className={cn(
+                      "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
+                      fromBadge.color
+                    )}>
+                      {fromBadge.emoji} {fromBadge.label}
+                    </span>
+                    <span className="text-[#a6adc8] text-[14px]">→</span>
+                    <span className={cn(
+                      "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
+                      toBadge.color
+                    )}>
+                      {toBadge.emoji} {toBadge.label}
+                    </span>
+                  </div>
+                  {msg.text && (
+                    <div className="text-center text-[#a6adc8]" dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                  )}
+                </div>
+              </div>
+            );
+          }
+
           const isUser = msg.role === "user";
           const badge = !isUser ? agentBadge(msg.agent) : null;
 
@@ -1227,7 +1412,20 @@ export function ChatSidebar() {
                     </span>
                   </div>
                 )}
-                <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                <AskQuestionGroup
+                  segments={parseMessageSegments(msg.text || "")}
+                  threadId={activeThreadId ?? ""}
+                  renderText={(text, key) => (
+                    <div
+                      key={key}
+                      dangerouslySetInnerHTML={{ __html: formatMessage(text) }}
+                    />
+                  )}
+                  onSubmit={(text) =>
+                    activeThreadId &&
+                    sendMutation.mutate({ text, threadId: activeThreadId })
+                  }
+                />
                 {/* Attachments */}
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {(msg as any).attachments?.length > 0 && (
@@ -1260,21 +1458,32 @@ export function ChatSidebar() {
                     })}
                   </div>
                 )}
+                {!isUser && msg.progress && msg.progress.length > 0 && (
+                  <ProgressTimeline events={msg.progress} mode="sealed" />
+                )}
               </div>
             </div>
           );
         })}
 
-        {/* Typing indicator */}
+        {/* Typing indicator + live progress timeline */}
         {showTyping && (
           <div className="flex justify-start">
-            <div className="bg-[#313244] text-[#a6adc8] px-[14px] py-[10px] rounded-[14px] text-[15px] italic flex items-center gap-2">
-              {primarySkill && (
-                <span className="bg-rust/15 text-rust text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
-                  {primarySkill}
-                </span>
+            <div className="bg-[#313244] text-[#a6adc8] px-[14px] py-[10px] rounded-[14px] text-[15px] italic max-w-[85%]">
+              <div className="flex items-center gap-2">
+                {typingBadge && (
+                  <span className={cn(
+                    "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
+                    typingBadge.color
+                  )}>
+                    {typingBadge.emoji} {typingBadge.label}
+                  </span>
+                )}
+                <span>· 🔄 {statusData?.text || t("thinking")}</span>
+              </div>
+              {pendingProgress.length > 0 && (
+                <ProgressTimeline events={pendingProgress} mode="live" />
               )}
-              <span>· 🔄 {t("thinking")}</span>
             </div>
           </div>
         )}
@@ -1357,7 +1566,7 @@ export function ChatSidebar() {
             className="chat-textarea flex-1 bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-base px-3 py-2 rounded-lg border border-[#45475a] focus:outline-none focus:border-rust disabled:opacity-50 resize-none overflow-y-auto leading-snug"
             style={{ maxHeight: 120 }}
           />
-          {showTyping || sendMutation.isPending || uploading ? (
+          {isAwaitingReply || cancelMutation.isPending || uploading ? (
             <button
               onClick={() => cancelMutation.mutate({ threadId: activeThreadId ?? undefined })}
               className="bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
@@ -1394,6 +1603,12 @@ export function ChatSidebar() {
             : null
         }
         onClose={() => setOpenDocSlidePath(null)}
+      />
+      <MediaAssetSlideover
+        slug={slug || ""}
+        asset={openTemplateAsset}
+        onClose={() => setOpenTemplateAsset(null)}
+        onRequestEdit={() => setOpenTemplateAsset(null)}
       />
     </div>
   );

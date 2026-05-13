@@ -33,9 +33,20 @@
       "text": "✅ Listo. 5 cron jobs creados para Criptan, todos semanales:\n\n| # | Tarea | Día | Hora | Qué hace |\n|---|-------|-----|------|----------|\n| 1 | **SEO Weekly Review** | Lunes | 09:00 | GSC + GA4: keywords BOFU, tráfico orgánico, alertas de caídas |\n| 2 | **Competitor Watch** | Miércoles | 10:00 | Scrape top 5 competidores: movimientos, contenido nuevo, amenazas |\n| 3 | **Social & Content Review** | Viernes | 10:00 | X, IG, LinkedIn, blog: engagement, menciones, contenido publicado |\n| 4 | **B2B Pipeline Review** | Jueves | 11:00 | LinkedIn Jorge + Outbound B2B: posts, pipeline, respuestas |\n| 5 | **Weekly Strategy Report** | Viernes | 09:00 | Síntesis de todo: wins, riesgos, prioridades semana siguiente |\n\n**Cómo funciona:**\n- Se ejecutan automáticamente y guardan los resultados en `brand/criptan/intelligence/` y `brand/criptan/metrics/`\n- Los puedes consultar desde Mission Control en cualquier momento\n- El reporte del viernes cruza toda la info de la semana → es tu resumen ejecutivo\n\n**Nota:** El Strategy Report se ejecuta a las 9:00 del viernes y el Social Review a las 10:00, así el reporte estratégico del viernes siguiente ya incluye el social. La primera ejecución completa será esta semana.\n\n¿Quieres que ajuste algo? Por ejemplo: añadir alguna tarea, cambiar horarios, o que los reportes se envíen también por algún canal (email, Telegram, etc.).",
       "agent": "sancho",
       "ts": "2026-03-30T21:54:47.439Z"
+    },
+    {
+      "role": "user",
+      "text": "Podemos trabajar la parte de posiciónamiento que está sin completar en go to market",
+      "ts": "2026-05-06T17:57:00.578Z"
+    },
+    {
+      "role": "bot",
+      "text": "Vamos al lío. He revisado el estado de Foundation de Criptan y aquí está la situación del **positioning**:\n\n## 📊 Estado actual\n\nEl pilar de **Positioning** está en `not-started` (Layer 4), y tiene una cadena de dependencias sin completar:\n\n| Pilar | Estado | Layer |\n|-------|--------|-------|\n| ✅ Market Analysis | Aprobado | L1 |\n| ✅ Competitor Analysis | Aprobado | L1 |\n| ❌ **Self Analysis** | No iniciado | L1 |\n| ❌ **Market Synthesis** | No iniciado | L2 |\n| ❌ **Niche Discovery** | No iniciado | L3 |\n| ❌ **Positioning** | No iniciado | L4 |\n\nPara llegar a Positioning necesitamos completar 3 pilares previos en orden:\n\n1. **Self Analysis** (L1) — Análisis interno de Criptan (fortalezas, debilidades, recursos, capacidades)\n2. **Market Synthesis** (L2) — Cruce de market + competitors + self → oportunidades y gaps\n3. **Niche Discovery** (L3) — Identificar y priorizar nichos/ECPs con mayor potencial\n4. **Positioning** (L4) — Posicionamiento y messaging por nicho\n\nLa buena noticia: ya tenemos Market Analysis y Competitor Analysis aprobados, así que la base está sólida. Self Analysis es el primer paso que falta.\n\n:::ask\n{\"id\":\"q_approach\",\"prompt\":\"¿Cómo quieres que avancemos?\",\"mode\":\"single\",\"options\":[{\"id\":\"full_chain\",\"label\":\"Ejecutar toda la cadena (Self → Synthesis → Niche → Positioning)\"},{\"id\":\"self_first\",\"label\":\"Empezar con Self Analysis y luego decidimos\"},{\"id\":\"skip_to_pos\",\"label\":\"Ir directo a Positioning con lo que tenemos (sin niche discovery completo)\"},{\"id\":\"other\",\"label\":\"Otro (lo escribo)\"}]}\n:::",
+      "agent": "sancho",
+      "ts": "2026-05-06T17:57:36.601Z"
     }
   ],
-  "updatedAt": 1774907687439,
+  "updatedAt": 1778090256601,
   "discordThreadId": null,
   "discordChannelId": null
 }

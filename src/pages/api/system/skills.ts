@@ -1,10 +1,42 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
-const SKILLS_DIR = path.join(BASE, "skills");
+// El panel Skills escanea múltiples workspaces. workspace-sancho es el default
+// (legacy + skills generales). workspace-maese-pedro contiene las skills del
+// agente visual Maese Pedro (od-*, design-system, sancho-visual, etc.).
+const SKILL_WORKSPACES: Array<{ id: string; label: string; dir: string }> = [
+  {
+    id: "workspace-sancho",
+    label: "Sancho",
+    dir: path.join(BASE, "skills"),
+  },
+  {
+    id: "workspace-maese-pedro",
+    label: "Maese Pedro",
+    dir: path.join(
+      process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
+      "workspace-maese-pedro",
+      "skills",
+    ),
+  },
+];
+
+function skillDirFor(skillId: string, workspace?: string): { dir: string; workspaceId: string } | null {
+  if (workspace) {
+    const ws = SKILL_WORKSPACES.find((w) => w.id === workspace);
+    if (ws) return { dir: path.join(ws.dir, skillId), workspaceId: ws.id };
+  }
+  // Buscar en cualquier workspace
+  for (const ws of SKILL_WORKSPACES) {
+    const candidate = path.join(ws.dir, skillId);
+    if (fs.existsSync(candidate)) return { dir: candidate, workspaceId: ws.id };
+  }
+  return null;
+}
 
 interface SkillMeta {
   name: string;
@@ -51,7 +83,7 @@ function parseYamlFrontmatter(content: string): { meta: SkillMeta; body: string 
   return { meta: meta as unknown as SkillMeta, body };
 }
 
-function readSkill(skillDir: string, skillId: string) {
+function readSkill(skillDir: string, skillId: string, workspaceId: string) {
   const skillMdPath = path.join(skillDir, "SKILL.md");
   if (!fs.existsSync(skillMdPath)) return null;
 
@@ -90,24 +122,28 @@ function readSkill(skillDir: string, skillId: string) {
     skillMd,
     references,
     scripts,
+    workspace: workspaceId,
+    file_path: skillMdPath,
+    skill_dir: skillDir,
   };
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
-    const { id } = req.query;
+    const { id, workspace } = req.query;
+    const workspaceParam = typeof workspace === "string" ? workspace : undefined;
 
     // Single skill detail
     if (id && typeof id === "string") {
-      const skillDir = path.join(SKILLS_DIR, id);
-      if (!fs.existsSync(skillDir)) {
+      const located = skillDirFor(id, workspaceParam);
+      if (!located) {
         return res.status(404).json({ error: "Skill not found" });
       }
-      const skill = readSkill(skillDir, id);
+      const skill = readSkill(located.dir, id, located.workspaceId);
       return res.status(200).json(skill);
     }
 
-    // List all skills (lightweight — no file contents)
+    // List all skills (lightweight — no file contents). Escanea TODOS los workspaces.
     const skills: Array<{
       id: string;
       name: string;
@@ -115,39 +151,43 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       pillar?: string;
       layer?: string;
       phase?: string;
+      agent?: string;
       refCount: number;
       hasScripts: boolean;
+      workspace: string;
+      file_path: string;
     }> = [];
 
-    if (!fs.existsSync(SKILLS_DIR)) {
-      return res.status(200).json({ skills });
-    }
+    for (const ws of SKILL_WORKSPACES) {
+      if (!fs.existsSync(ws.dir)) continue;
+      for (const entry of fs.readdirSync(ws.dir, { withFileTypes: true })) {
+        if (!entry.isDirectory() || entry.name.startsWith(".") || entry.name.startsWith("_")) continue;
+        const skillDir = path.join(ws.dir, entry.name);
+        const skillMdPath = path.join(skillDir, "SKILL.md");
+        if (!fs.existsSync(skillMdPath)) continue;
 
-    for (const entry of fs.readdirSync(SKILLS_DIR, { withFileTypes: true })) {
-      if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
-      const skillMdPath = path.join(SKILLS_DIR, entry.name, "SKILL.md");
-      if (!fs.existsSync(skillMdPath)) continue;
+        const content = fs.readFileSync(skillMdPath, "utf-8");
+        const { meta } = parseYamlFrontmatter(content);
 
-      const content = fs.readFileSync(skillMdPath, "utf-8");
-      const { meta } = parseYamlFrontmatter(content);
+        const refsDir = path.join(skillDir, "references");
+        const scriptsDir = path.join(skillDir, "scripts");
 
-      const refsDir = path.join(SKILLS_DIR, entry.name, "references");
-      const scriptsDir = path.join(SKILLS_DIR, entry.name, "scripts");
-
-      skills.push({
-        id: entry.name,
-        name: meta.name || entry.name,
-        description: typeof meta.description === "string"
-          ? meta.description.slice(0, 200)
-          : "",
-        pillar: meta.metadata?.pillar,
-        layer: meta.metadata?.layer,
-        phase: meta.metadata?.phase,
-        refCount: fs.existsSync(refsDir)
-          ? fs.readdirSync(refsDir).filter((f) => f.endsWith(".md")).length
-          : 0,
-        hasScripts: fs.existsSync(scriptsDir),
-      });
+        skills.push({
+          id: entry.name,
+          name: meta.name || entry.name,
+          description: typeof meta.description === "string" ? meta.description.slice(0, 200) : "",
+          pillar: meta.metadata?.pillar,
+          layer: meta.metadata?.layer,
+          phase: meta.metadata?.phase,
+          agent: meta.metadata?.agent,
+          refCount: fs.existsSync(refsDir)
+            ? fs.readdirSync(refsDir).filter((f) => f.endsWith(".md")).length
+            : 0,
+          hasScripts: fs.existsSync(scriptsDir),
+          workspace: ws.id,
+          file_path: skillMdPath,
+        });
+      }
     }
 
     // Sort by layer then name
@@ -158,12 +198,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return a.name.localeCompare(b.name);
     });
 
-    return res.status(200).json({ skills });
+    return res.status(200).json({ skills, workspaces: SKILL_WORKSPACES.map((w) => ({ id: w.id, label: w.label })) });
   }
 
   if (req.method === "POST") {
     // Save a file within a skill
-    const { skillId, fileName, content } = req.body;
+    const { skillId, fileName, content, workspace } = req.body;
     if (!skillId || !fileName || content === undefined) {
       return res.status(400).json({ error: "Missing skillId, fileName, or content" });
     }
@@ -173,37 +213,41 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: "Invalid fileName" });
     }
 
-    const skillDir = path.join(SKILLS_DIR, skillId);
-    // Create skill directory if it doesn't exist (new skill)
-    if (!fs.existsSync(skillDir)) {
-      fs.mkdirSync(skillDir, { recursive: true });
+    // Resolver workspace: si ya existe la skill en algún workspace, usar ese; si no,
+    // usar el workspace explícito del body, default workspace-sancho.
+    let located = skillDirFor(skillId, workspace);
+    if (!located) {
+      const targetWs = SKILL_WORKSPACES.find((w) => w.id === workspace) ?? SKILL_WORKSPACES[0];
+      located = { dir: path.join(targetWs.dir, skillId), workspaceId: targetWs.id };
+    }
+    if (!fs.existsSync(located.dir)) {
+      fs.mkdirSync(located.dir, { recursive: true });
     }
 
-    const filePath = path.join(skillDir, fileName);
-    // Ensure parent dir exists (for references/prompt.md etc.)
+    const filePath = path.join(located.dir, fileName);
     const parentDir = path.dirname(filePath);
     if (!fs.existsSync(parentDir)) {
       fs.mkdirSync(parentDir, { recursive: true });
     }
 
     fs.writeFileSync(filePath, content, "utf-8");
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true, workspace: located.workspaceId });
   }
 
   if (req.method === "DELETE") {
-    const { skillId } = req.body;
+    const { skillId, workspace } = req.body;
     if (!skillId) {
       return res.status(400).json({ error: "Missing skillId" });
     }
     if (skillId.includes("..") || skillId.includes("/") || skillId.includes("~")) {
       return res.status(400).json({ error: "Invalid skillId" });
     }
-    const skillDir = path.join(SKILLS_DIR, skillId);
-    if (!fs.existsSync(skillDir)) {
+    const located = skillDirFor(skillId, workspace);
+    if (!located || !fs.existsSync(located.dir)) {
       return res.status(404).json({ error: "Skill not found" });
     }
-    fs.rmSync(skillDir, { recursive: true, force: true });
-    return res.status(200).json({ ok: true });
+    fs.rmSync(located.dir, { recursive: true, force: true });
+    return res.status(200).json({ ok: true, workspace: located.workspaceId });
   }
 
   res.setHeader("Allow", "GET, POST, DELETE");

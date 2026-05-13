@@ -3,7 +3,10 @@ name: newsletter
 version: 7.0
 description: Newsletter strategy and content.
 context_required:
-- brand/{slug}/brand-voice/current.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/content/content-pillars.md
+- brand/{slug}/content/pov-bank.json
+- brand/{slug}/content/strategy-decisions.md
 - brand/{slug}/go-to-market/ecps/current.md
 - brand/{slug}/operational/learnings.md
 context_writes:
@@ -24,17 +27,31 @@ Read `./brand/` per `_system/intelligence/brand-memory.md`
 
 Follow all output formatting rules from `_system/output/output-format.md`
 
+## Media Persistence (obligatorio)
+
+Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
+
+- **Nunca** afirmar "imagen generada" sin URL real devuelta por un
+  endpoint. Si solo describes un concepto, di "te propongo este
+  concepto, ¿lo genero?".
+- Persistir media via `POST /api/content-engine/generate-image` o
+  `/api/content-engine/upload-media`. **Nunca** editar
+  `frontmatter.media` a mano con Edit/Write.
+- **Nunca** escribir `status: published` al frontmatter desde el
+  agente. El status `published` solo lo pone el dispatcher tras un
+  envio real con confirmacion.
+
 ---
 
 ## Brand Memory Integration
 
 This skill reads brand context to ensure every newsletter edition sounds like the user's brand, speaks to their actual audience, and builds on what has worked before. It also checks the learnings journal for send-time data, subject line performance, and format preferences.
 
-**Reads:** `brand-voice/current.md`, `audience.md`, `learnings.md` (all optional)
+**Reads:** `brand-book/brand-voice/brand-voice.current.md`, `audience.md`, `learnings.md` (all optional)
 
 On invocation, check for `./brand/` and load available context:
 
-1. **Load `brand-voice/current.md`** (if exists):
+1. **Load `brand-book/brand-voice/brand-voice.current.md`** (if exists):
    - Match the brand's tone, vocabulary, and sentence rhythm in every section
    - Apply voice DNA to subject lines, hooks, body copy, and sign-offs
    - A "direct, proof-heavy" voice writes different newsletters than a "warm, story-driven" voice
@@ -90,6 +107,27 @@ Brand context loaded:
 
 ---
 
+## Required pre-steps (when invoked from Content Engine flow)
+
+When this skill runs because an idea was approved (Content Engine: idea has `target_channel: newsletter` + `signal` + `angle_draft`), execute BOTH of these BEFORE drafting:
+
+### Pre-step A: Deep Research (ALWAYS)
+Invoke the `deep-research` skill with `angle_draft` + `signal.url` + `signal.summary`. Verify the data point in the signal, surface adjacent stats / quotes / studies, and pull 1-2 named examples to cite. Output a `research_pack` object that the Clarify step shows the human and the draft cites.
+
+Skip ONLY for purely personal-story signals — record `research_pack: { skipped: true, reason: "personal-story" }`.
+
+### Pre-step B: Clarify (ALWAYS — see `_system/clarify-protocol.md`)
+Generate 2-3 questions with predictions + confidence:
+- **Angle / framing** — which slice of the topic for this audience this week
+- **Tone** — teaching / digest / story / contrarian
+- **CTA** — reply-bait question / forward / book a call / no-cta
+
+Present to human. Wait for confirmation or adjustment. Append the result to `brand/{slug}/content/clarify-history.json`.
+
+(For freestanding manual newsletter requests — i.e. not from an approved idea — Clarify is still strongly recommended, but `deep-research` only when a specific data claim needs verification.)
+
+---
+
 ## The core job
 
 Transform your content, curation, or ideas into **publication-ready newsletters** that:
@@ -97,6 +135,25 @@ Transform your content, curation, or ideas into **publication-ready newsletters*
 - Get read (hook + scannability)
 - Get remembered (voice + value)
 - Get shared (insight worth passing on)
+
+---
+
+## Output File Format (STRICT)
+
+When invoked from the Content Engine, this skill writes to
+`content/drafts/{ideaId}/email.md` (or `newsletter.md`). Follow the system
+spec at `_system/draft-file-format.md`.
+
+Newsletter-specific reminders:
+- **H1 (`#`) is the email's hero header / subject line** — required at the
+  top of the body. The renderer extracts it for the email "subject"
+  display.
+- **H2 (`##`) for sections** (Intro, Main Story, Quick Hits, CTA…). They
+  render as visual section breaks.
+- **No HTML comments** anywhere in the body. If you self-validate, write
+  the result as `self_qa: PASS|FAIL` + `self_qa_notes: [...]` in the
+  frontmatter, never inline.
+- **No decorative `---` separators at the end.**
 
 ---
 
@@ -1448,7 +1505,7 @@ When a user invokes this skill, follow this sequence:
 
 ```
 1. Load brand context
-   ├── Read brand-voice/current.md, audience.md, learnings.md
+   ├── Read brand-book/brand-voice/brand-voice.current.md, audience.md, learnings.md
    ├── Check ./campaigns/newsletters/ for past editions
    └── Display context loading tree
 
@@ -1486,7 +1543,23 @@ When a user invokes this skill, follow this sequence:
    ├── → "Iterate" (revise subject line or sections)
    ├── → "Different format" (try another archetype)
    └── → Feedback prompt
+
+8. Post-Approval Media Gate (cuando el humano aprueba el draft)
+   ├── ContentTask pasa a status "Media", NO a "Published"
+   ├── Ofrecer (en este orden):
+   │     1. /creative o [brand]-visual-generator → hero/header image
+   │     2. /content-atomizer → versiones LinkedIn/X de la edicion
+   │     3. (Opcional) subir asset propio del usuario
+   ├── Si el humano dice "skip media" explicitamente:
+   │     persistir media_status: "skipped" en el frontmatter del draft
+   └── Solo cuando media_status ∈ {ready, skipped} se permite el envio
+       a la plataforma (Beehiiv/Substack/Metricool/etc.)
 ```
+
+**Por que este gate**: el draft escrito es solo el cuerpo. Una newsletter
+sin hero image se ve incompleta en mobile preview, y atomizar despues
+de enviar pierde el momento. La regla es: aprobar texto → producir
+visuales → publicar. Nunca aprobar → publicar directo.
 
 ### Output Format
 
@@ -1547,23 +1620,31 @@ Follow `_system/output/output-format.md` exactly. The newsletter output should u
   ./campaigns/newsletters/{file}.md    ✓ (new)
   ./brand/{slug}/operational/assets.md                    ✓ (1 entry added)
 
-  WHAT'S NEXT
+  WHAT'S NEXT  —  MEDIA GATE (required before send)
 
-  Your newsletter edition is ready. Before sending:
+  Your newsletter edition is approved. NOT sent yet.
+  Pre-send checklist:
 
-  → /creative           Build it — HTML template,
-                        header design, or visual
-                        assets (~15 min)
-  → "Skip visuals"      Continue to distribution ↓
+  → /creative           Build hero/header image +
+    (or [brand]-        visual assets (~15 min)
+     visual-generator)  ★ default next step
+
+  → /content-atomizer   Atomize for social (~10 min)
+                        ★ recommended for distribution
+
+  → "Skip media"        Skip visuals (you must confirm
+                        — persists media_status:skipped
+                        in frontmatter)
 
   ──────────────────────────────────────────────
 
-  → /content-atomizer   Atomize for social (~10 min)
-  → /email-sequences    Build subscriber welcome
-                        sequence (~15 min)
-  → "Iterate"           Revise sections or subject
+  Send only unlocks once media is ready or skipped:
+
+  → "Send now"          Dispatch to platform
+  → "Schedule send"     Pick day + time
+  → /email-sequences    Build welcome sequence
+  → "Iterate"           Revise subject or sections
   → "Different format"  Try another archetype
-  → "Send tips"         Platform-specific send advice
 
   Or tell me what you're working on and I'll
   route you.

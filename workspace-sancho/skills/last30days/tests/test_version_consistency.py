@@ -4,10 +4,11 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SKILL_ROOT = ROOT / "skills" / "last30days"
 
 
 def _skill_version() -> str:
-    text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
     match = re.search(r'^version:\s*"([^"]+)"\s*$', text, re.MULTILINE)
     if not match:
         raise AssertionError("SKILL.md version frontmatter not found")
@@ -16,18 +17,18 @@ def _skill_version() -> str:
 
 class TestVersionConsistency(unittest.TestCase):
     def test_root_skill_header_matches_frontmatter_version(self) -> None:
-        text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
         version = _skill_version()
         self.assertIn(f"# last30days v{version}:", text)
 
     def test_sync_cache_path_uses_skill_version(self) -> None:
-        sync_text = (ROOT / "scripts" / "sync.sh").read_text(encoding="utf-8")
+        sync_text = (SKILL_ROOT / "scripts" / "sync.sh").read_text(encoding="utf-8")
         version = _skill_version()
         self.assertIn(f'last30days-3/{version}"', sync_text)
 
     def test_memory_save_dir_uses_single_env_variable(self) -> None:
-        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
-        compare_text = (ROOT / "scripts" / "compare.sh").read_text(encoding="utf-8")
+        skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        compare_text = (SKILL_ROOT / "scripts" / "compare.sh").read_text(encoding="utf-8")
         default_assignment = 'LAST30DAYS_MEMORY_DIR="${LAST30DAYS_MEMORY_DIR:-$HOME/Documents/Last30Days}"'
 
         self.assertIn(default_assignment, skill_text)
