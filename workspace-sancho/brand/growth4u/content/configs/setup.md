@@ -87,9 +87,9 @@ Ver y editar en MC UI → Inputs → ⏰ Cadencia.
 | 🕵️ **Competitor Monitor** | 7am L-V | `sources.json` (profiles) | `research-signals/{date}-creators.json` |
 | 🔑 **Keyword Research** | Semanal (lunes 6am) | `keywords-seed/P*.yml` | `research-signals/{date}-keywords.json` |
 | ❓ **PAA Monitor** | Semanal (lunes 6am) | `paa-queries/P*.yml` | `research-signals/{date}-paa.json` |
-| 🧠 **Classify + Ideas** | 7:30am L-V | `research-signals/*.json` + **`pov-bank.json`** + `content-pillars.md` + `cadence-config.yml` | `idea-queue.json` (con angle_draft = 1 parrafo POV) |
+| 🧠 **Classify + Ideas** | 7:30am L-V | `research-signals/*.json` + **POV Bank en Neon** + `content-pillars.md` + `cadence-config.yml` | `idea-queue.json` (con angle_draft = 1 parrafo POV) |
 | 📬 **Editorial Dispatch** | 8:30am L-V | `idea-queue.json` + `cadence-config.yml` | Discord/Slack del cliente |
-| 🎯 **POV Bank Refresh** | 1er dia mes 9am | `clarify-history.json` (ultimo mes) | `pov-bank.json` (refinado, versionado) |
+| 🎯 **POV Bank Refresh** | 1er dia mes 9am | Tablas Neon (`pov_*`) | Propuestas revisables en Neon |
 
 Todos los links apuntan al dashboard del cliente en Mission Control.
 
@@ -97,7 +97,7 @@ Todos los links apuntan al dashboard del cliente en Mission Control.
 
 ## POV Bank
 
-El POV Bank ya esta poblado (v2, 2026-04-27) con la postura de Growth4U por cada pillar:
+El POV Bank vive en Neon. El antiguo `pov-bank.json` solo sirve como import explícito/backfill manual. Growth4U parte de esta postura por cada pillar:
 
 | Pillar | Core belief resumido |
 |--------|---------------------|

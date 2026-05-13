@@ -118,9 +118,9 @@ La migración de Mission Control de HTML monolítico (~9500 líneas) a **Next.js
 - **Dashboard V2** — Vista principal con 3 columnas: brand snapshot, métricas en tiempo real, próximos pasos.
 - **Foundation Browser** — File tree interactivo + doc viewer + markdown editor para los 15 pilares de estrategia. Endpoints: `pillar-status`, `pillar-docs`, `other-docs`, `download`, `state`.
 - **Projects CRUD completo** — Lista de proyectos con tareas colapsables, detail page por proyecto, task detail con edición inline (status, priority, notes, execution tasks). Endpoints: `create-batch`, `create-execution-tasks`, `create-tool-project`, `task-status`, `task-update`, `project-update`, `project-archive`.
-- **Idea Bank** — Banco de ideas con gestión de estados y filtros. Endpoint: `/api/ideas/status`.
+- **Idea Queue** — Banco de ideas con gestión de estados y filtros. Endpoint: `/api/idea-queue/status`.
 - **Trust Engine** — Score de confianza con signal cards mejoradas.
-- **Atalaya** — Inteligencia competitiva integrada en el dashboard.
+- **Competitive Intelligence** — Inteligencia competitiva integrada en el dashboard.
 - **Metrics** — Vista de métricas por cliente. Endpoint: `/api/metrics`.
 - **Chat con Sancho** — Sistema de chat integrado con sidebar, skill picker, quick actions, conversation starters. Endpoints: `/api/chat/mark-read`, `/api/chat/quick-actions`.
 - **Skills Page** — Nueva página de detalle de skills en `/dashboard/[slug]/skills/[skillId]`.
@@ -144,7 +144,7 @@ La migración de Mission Control de HTML monolítico (~9500 líneas) a **Next.js
 - **Chat Openers** — Nuevos conversation starters contextuales.
 - **Project Cards** — Colapsables, click en header para toggle de tareas.
 - **Task Rows** — Clickeables como links al detalle de la tarea.
-- **Recommendations** — Action buttons integrados, sección Atalaya standalone eliminada.
+- **Recommendations** — Action buttons integrados, sección competitive-intelligence standalone eliminada.
 - **.gitignore** — Unificado para Next.js + OpenClaw (sin secrets).
 
 ### Fixed
@@ -169,7 +169,7 @@ La migración de Mission Control de HTML monolítico (~9500 líneas) a **Next.js
 - **MC Projects: Detail Page** — Click project opens full-page view with header (status/phase/strategy/review), objective, metrics, progress bar, task cards with status pills, 💬 Chat + ✏️ Edit buttons, back navigation.
 - **MC Projects: Archiving** — 📦 archive button per project with optional reason prompt. New `POST /api/projects/project-archive` endpoint. Archived projects hidden from main list, shown in collapsible "📦 Archivados" section.
 - **MC Notification System (server-side)** — `notifyProjectChange()` fires on task/project status changes. Notifies correct MC Chat thread via `sourceThread` parameter + queues Discord notification in `_system/notification-queue.jsonl`.
-- **MC Sidebar Reorganization** — New structure: Foundation | **Trabajo** (Proyectos, Idea Bank, Recurrentes) | **Datos** (Métricas, Trust Engine, Campañas, Supabase) | Sistema.
+- **MC Sidebar Reorganization** — New structure: Foundation | **Trabajo** (Proyectos, Idea Queue, Recurrentes) | **Datos** (Métricas, Trust Engine, Campañas, Supabase) | Sistema.
 - **`alarife-integration` skill** — New skill for Alarife integration (421 lines).
 - **`frontend-slides` deploy + export** — `deploy.sh` (218 lines) for deployment and `export-pdf.sh` (418 lines) for PDF conversion.
 - **MC Smoke Test script** — `scripts/mc-smoke-test.sh` for automated MC health checks.

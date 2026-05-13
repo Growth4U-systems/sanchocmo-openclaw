@@ -33,6 +33,15 @@ const DRY_RUN = process.argv.includes("--dry-run");
 const LIST_ONLY = process.argv.includes("--list");
 const ALL = process.argv.includes("--all");
 const SLUG_ARG = process.argv.find((a, i) => process.argv[i - 1] === "--slug");
+const SYSTEM_BRAND_SLUGS = new Set(["example", "sancho", "sanchocmo", "test", "daily-pulse"]);
+
+function isClientBrandDir(entry) {
+  if (!entry.isDirectory() || SYSTEM_BRAND_SLUGS.has(entry.name)) return false;
+  const dir = path.join(BRANDS_DIR, entry.name);
+  return fs.existsSync(path.join(dir, "foundation-state.json")) ||
+    fs.existsSync(path.join(dir, "client-config.json")) ||
+    fs.existsSync(path.join(dir, "market-and-us"));
+}
 
 // ---------------------------------------------------------------------------
 // Foundation checks
@@ -208,7 +217,7 @@ function addCronsForClient(slug) {
 
 function listClients() {
   const slugs = fs.readdirSync(BRANDS_DIR, { withFileTypes: true })
-    .filter(d => d.isDirectory() && !["atalaya", "example", "sancho", "sanchocmo", "test", "daily-pulse"].includes(d.name))
+    .filter(isClientBrandDir)
     .map(d => d.name);
 
   console.log("\n=== Content Engine — Client Readiness ===\n");
@@ -282,7 +291,7 @@ console.log(`\n=== Content Engine Setup (${DRY_RUN ? "DRY RUN" : "APPLY"}) ===`)
 
 const slugs = ALL
   ? fs.readdirSync(BRANDS_DIR, { withFileTypes: true })
-      .filter(d => d.isDirectory() && !["atalaya", "example", "sancho", "sanchocmo", "test", "daily-pulse"].includes(d.name))
+      .filter(isClientBrandDir)
       .map(d => d.name)
   : SLUG_ARG ? [SLUG_ARG] : [];
 

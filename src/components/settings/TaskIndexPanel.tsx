@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildContentTaskThread, buildTaskThread } from "@/lib/chat-openers";
-
-type DocRef = { path: string; name?: string; title?: string; source?: string };
-type InputRef = { id: string; label: string; kind?: string; optional?: boolean; source?: string };
+import { buildTaskThread, buildContentTaskThread } from "@/lib/chat-openers";
 
 interface TaskIndexEntry {
   projectId: string;
@@ -15,66 +12,32 @@ interface TaskIndexEntry {
   taskId: string;
   taskName: string;
   status: string;
-  type: string;
-  agent: string;
   skill: string;
-  skills: string[];
-  inputDocuments: DocRef[];
-  requiredInputs: InputRef[];
-  outputDocuments: DocRef[];
-  dependsOn: string[];
+  skillOk: boolean;
+  deliverableFile: string;
+  docExists: boolean;
   mcChatThreadId: string;
   threadFileExists: boolean;
-  outputDocsExist: number;
-  outputDocsMissing: number;
-  issues: string[];
-  ok: boolean;
   pillar: string | null;
+  type: string;
   parentTaskId?: string;
+  ideaId?: string;
+  targetChannels?: string[];
+  channelSkills?: { channel: string; skill: string }[];
   isContentTask?: boolean;
 }
 
 interface Stats {
   total: number;
-  ok: number;
-  issues: number;
-  agentOk: number;
+  docOk: number;
+  docMissing: number;
+  docPlaceholder: number;
   skillOk: number;
-  outputOk: number;
-  inputOk: number;
   threadOk: number;
 }
 
 interface Props {
   slug: string;
-}
-
-const AGENT_LABELS: Record<string, string> = {
-  sancho: "Sancho",
-  hamete: "Hamete",
-  dulcinea: "Dulcinea",
-  rocinante: "Rocinante",
-  "maese-pedro": "Maese Pedro",
-  mambrino: "Mambrino",
-  merlin: "Merlin",
-  sanson: "Sanson",
-  cervantes: "Cervantes",
-};
-
-function agentLabel(agent: string) {
-  return AGENT_LABELS[agent] || agent || "Sin agente";
-}
-
-function taskHref(slug: string, task: TaskIndexEntry) {
-  if (task.isContentTask) return `/dashboard/${slug}/content-creation?tab=ideas&focus=${encodeURIComponent(task.taskId)}`;
-  return `/dashboard/${slug}/tasks/${task.taskId}`;
-}
-
-function firstDocLabel(docs: DocRef[]) {
-  if (docs.length === 0) return "Sin output";
-  const first = docs[0];
-  const label = first.title || first.name || first.path.split("/").pop() || first.path;
-  return docs.length === 1 ? label : `${label} +${docs.length - 1}`;
 }
 
 export function TaskIndexPanel({ slug }: Props) {
@@ -86,10 +49,9 @@ export function TaskIndexPanel({ slug }: Props) {
   const openChat = useOpenChat();
 
   useEffect(() => {
-    setLoading(true);
     fetch(`/api/system/task-index?slug=${slug}`)
-      .then((r) => r.json())
-      .then((data) => {
+      .then(r => r.json())
+      .then(data => {
         if (data.ok) {
           setEntries(data.entries || []);
           setStats(data.stats || null);
@@ -101,168 +63,217 @@ export function TaskIndexPanel({ slug }: Props) {
 
   const filtered = useMemo(() => {
     let result = entries;
-    if (filter === "ok") result = result.filter((entry) => entry.ok);
-    if (filter === "issues") result = result.filter((entry) => !entry.ok);
+    if (filter === "ok") result = result.filter(e => e.docExists && e.skillOk && e.threadFileExists);
+    if (filter === "issues") result = result.filter(e => !e.docExists || !e.skillOk || !e.threadFileExists);
     if (search.trim()) {
       const q = search.toLowerCase();
-      result = result.filter((entry) =>
-        entry.taskId.toLowerCase().includes(q) ||
-        entry.taskName.toLowerCase().includes(q) ||
-        entry.projectName.toLowerCase().includes(q) ||
-        entry.agent.toLowerCase().includes(q) ||
-        entry.skill.toLowerCase().includes(q) ||
-        entry.skills.some((skill) => skill.toLowerCase().includes(q)) ||
-        entry.outputDocuments.some((doc) => doc.path.toLowerCase().includes(q)),
+      result = result.filter(e =>
+        e.taskId.toLowerCase().includes(q) ||
+        e.taskName.toLowerCase().includes(q) ||
+        e.projectName.toLowerCase().includes(q) ||
+        e.skill.toLowerCase().includes(q) ||
+        (e.pillar || "").toLowerCase().includes(q)
       );
     }
     return result;
   }, [entries, filter, search]);
 
+  // Group by project
+  const grouped = useMemo(() => {
+    const map = new Map<string, TaskIndexEntry[]>();
+    for (const e of filtered) {
+      const key = e.projectId;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(e);
+    }
+    return Array.from(map.entries());
+  }, [filtered]);
+
   if (loading) return <p className="text-sm text-muted-foreground py-8 text-center">Cargando indice...</p>;
 
   return (
-    <div className="space-y-4">
+    <div>
+      {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat value={stats.total} label="Tareas indexadas" />
-          <Stat value={stats.ok} label="OK" tone="ok" />
-          <Stat value={stats.issues} label="Con issues" tone="warn" />
-          <Stat value={`${stats.agentOk}/${stats.total}`} label="Con agente" />
+        <div className="grid grid-cols-4 gap-3 mb-4">
+          <div className="bg-white border border-[#E8E2D9] rounded-lg px-3 py-2 text-center" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+            <p className="text-lg font-bold text-[#2C3E50]">{stats.total}</p>
+            <p className="text-[9px] text-muted-foreground uppercase">Total tareas</p>
+          </div>
+          <div className="bg-white border border-[#E8E2D9] rounded-lg px-3 py-2 text-center" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+            <p className="text-lg font-bold text-green-600">{stats.docOk}</p>
+            <p className="text-[9px] text-muted-foreground uppercase">Doc ✅</p>
+          </div>
+          <div className="bg-white border border-[#E8E2D9] rounded-lg px-3 py-2 text-center" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+            <p className="text-lg font-bold text-amber-600">{stats.docPlaceholder}</p>
+            <p className="text-[9px] text-muted-foreground uppercase">Placeholder</p>
+          </div>
+          <div className="bg-white border border-[#E8E2D9] rounded-lg px-3 py-2 text-center" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+            <p className="text-lg font-bold text-[#2C3E50]">{stats.skillOk}/{stats.total}</p>
+            <p className="text-[9px] text-muted-foreground uppercase">Skill ✅</p>
+          </div>
         </div>
       )}
 
-      <div className="flex gap-2 flex-wrap">
+      {/* Search + filter */}
+      <div className="flex gap-2 mb-4">
         <input
           type="text"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por tarea, agente, skill, documento..."
-          className="min-w-[260px] flex-1 rounded-sc-md border-2 px-3 py-2 text-sm focus:outline-none"
-          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)" }}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar por tarea, proyecto, skill..."
+          className="flex-1 text-[12px] border border-[#E8E2D9] rounded-md px-3 py-1.5 focus:outline-none focus:border-rust"
         />
-        {(["all", "ok", "issues"] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setFilter(key)}
-            className="rounded-sc-md border-2 px-3 py-2 text-xs font-heading font-bold"
-            style={{
-              background: filter === key ? "var(--sc-rust-500)" : "var(--sc-paper-3)",
-              borderColor: "var(--sc-ink)",
-              color: filter === key ? "var(--sc-paper-3)" : "var(--sc-ink)",
-            }}
-          >
-            {key === "all" ? "Todos" : key === "ok" ? "OK" : "Issues"}
-          </button>
-        ))}
+        <div className="flex gap-1">
+          {(["all", "ok", "issues"] as const).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={cn("text-[11px] px-3 py-1.5 rounded-md font-medium transition-colors",
+                filter === f ? "bg-rust text-white" : "bg-muted/40 text-muted-foreground hover:bg-muted"
+              )}>
+              {f === "all" ? "Todos" : f === "ok" ? "✅ OK" : "⚠️ Issues"}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sc-lg border-2" style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-3)" }}>
-        <table className="w-full min-w-[980px] text-sm">
-          <thead>
-            <tr className="border-b-2 text-left text-[11px] uppercase tracking-wider" style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-2)" }}>
-              <th className="px-3 py-2">Task</th>
-              <th className="px-3 py-2">Agente</th>
-              <th className="px-3 py-2">Skills</th>
-              <th className="px-3 py-2">Inputs</th>
-              <th className="px-3 py-2">Output docs</th>
-              <th className="px-3 py-2">Thread</th>
-              <th className="px-3 py-2">Estado</th>
-              <th className="px-3 py-2">Issues</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((task) => (
-              <tr key={task.taskId} className="border-b last:border-0 align-top" style={{ borderColor: "var(--sc-border)" }}>
-                <td className="px-3 py-3">
-                  <Link href={taskHref(slug, task)} className="font-bold no-underline hover:text-rust" style={{ color: "var(--sc-ink)" }}>
-                    {task.taskName}
-                  </Link>
-                  <div className="mt-1 flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
-                    <span className="font-mono">{task.taskId}</span>
-                    <span>{task.type}</span>
-                    {task.projectId !== task.taskId ? <span>{task.projectName}</span> : null}
-                  </div>
-                </td>
-                <td className="px-3 py-3 font-semibold">{agentLabel(task.agent)}</td>
-                <td className="px-3 py-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {task.skills.map((skill) => (
-                      <Link key={skill} href={`/dashboard/${slug}/skills/${skill}`} className="rounded-full border px-2 py-0.5 text-[11px] no-underline">
-                        {skill}
+      {/* Table grouped by project */}
+      {grouped.map(([projectId, tasks]) => (
+        <div key={projectId} className="mb-4">
+          <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+            {projectId} — {tasks[0]?.projectName}
+          </h3>
+          <div className="bg-white border border-[#E8E2D9] rounded-lg overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="bg-muted/20 border-b border-[#E8E2D9]">
+                  <th className="text-left px-3 py-1.5 font-semibold text-muted-foreground">Tarea</th>
+                  <th className="text-center px-2 py-1.5 font-semibold text-muted-foreground">Doc</th>
+                  <th className="text-center px-2 py-1.5 font-semibold text-muted-foreground">Skill</th>
+                  <th className="text-center px-2 py-1.5 font-semibold text-muted-foreground">Thread</th>
+                  <th className="text-center px-2 py-1.5 font-semibold text-muted-foreground">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tasks.map(task => {
+                  const taskHref = task.isContentTask && task.parentTaskId
+                    ? `/dashboard/${slug}/projects/${task.projectId}/tasks/${task.parentTaskId}/content/${task.taskId}`
+                    : `/dashboard/${slug}/projects/${task.projectId}/tasks/${task.taskId}`;
+                  return (
+                  <tr key={task.taskId} className="border-b border-[#E8E2D9]/50 last:border-0 hover:bg-muted/10">
+                    <td className="px-3 py-2">
+                      {task.isContentTask && (
+                        <span className="text-muted-foreground/60 mr-1" title="ContentTask">↳</span>
+                      )}
+                      <Link href={taskHref}
+                        className="text-[#2C3E50] hover:text-rust no-underline font-medium">
+                        {task.taskId}
                       </Link>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-3 py-3 text-xs">
-                  {task.dependsOn.length > 0 ? <div>Depende: {task.dependsOn.join(", ")}</div> : null}
-                  {task.requiredInputs.length > 0 ? <div>{task.requiredInputs.map((input) => input.label).join(", ")}</div> : null}
-                  {task.dependsOn.length === 0 && task.requiredInputs.length === 0 ? <span className="text-muted-foreground">No declara inputs</span> : null}
-                </td>
-                <td className="px-3 py-3 text-xs">
-                  <div className={cn(task.outputDocuments.length === 0 && "text-red-700")}>{firstDocLabel(task.outputDocuments)}</div>
-                  {task.outputDocsMissing > 0 ? <div className="text-amber-700">{task.outputDocsMissing} sin archivo detectado</div> : null}
-                </td>
-                <td className="px-3 py-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const config = task.isContentTask && task.parentTaskId
-                        ? buildContentTaskThread(slug, task.parentTaskId, task.taskId, task.taskName, task.projectId, {
-                            skill: task.skill,
-                            status: task.status,
-                            docPath: task.outputDocuments[0]?.path,
-                            agent: task.agent,
-                            skills: task.skills,
-                            outputDocuments: task.outputDocuments,
-                            inputDocuments: task.inputDocuments,
-                            requiredInputs: task.requiredInputs,
-                            dependsOn: task.dependsOn,
-                          })
-                        : buildTaskThread(slug, task.taskId, task.taskName, task.projectId, {
-                            taskSkill: task.skill,
-                            taskStatus: task.status,
-                            taskType: task.type,
-                            pillar: task.pillar || undefined,
-                            deliverableFile: task.outputDocuments[0]?.path,
-                            agent: task.agent,
-                            skills: task.skills,
-                            outputDocuments: task.outputDocuments,
-                            inputDocuments: task.inputDocuments,
-                            requiredInputs: task.requiredInputs,
-                            dependsOn: task.dependsOn,
-                          });
-                      openChat(slug, config);
-                    }}
-                    className={cn("rounded-full px-2 py-1 text-[11px] font-bold", task.threadFileExists ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700")}
-                  >
-                    {task.threadFileExists ? "Abrir" : "Crear"}
-                  </button>
-                </td>
-                <td className="px-3 py-3 text-xs">{task.status}</td>
-                <td className="px-3 py-3 text-xs">
-                  {task.issues.length === 0 ? <span className="text-green-700 font-bold">OK</span> : task.issues.join(", ")}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                      <span className="text-muted-foreground ml-1.5">{task.taskName.slice(0, 40)}</span>
+                      {task.isContentTask && (
+                        <span className="ml-1.5 text-[9px] bg-rust/10 text-rust px-1.5 py-0.5 rounded-full">
+                          ✍️ content
+                          {task.targetChannels?.length ? ` · ${task.targetChannels.join("/")}` : ""}
+                        </span>
+                      )}
+                    </td>
+                    <td className="text-center px-2 py-2">
+                      {task.docExists ? (
+                        task.isContentTask && task.parentTaskId ? (
+                          <Link
+                            href={`/dashboard/${slug}/projects/${task.projectId}/tasks/${task.parentTaskId}/content/${task.taskId}/draft/${task.targetChannels?.[0] || "linkedin"}`}
+                            className="text-green-600 hover:text-green-800 no-underline"
+                            title={task.deliverableFile}
+                          >
+                            ✅
+                          </Link>
+                        ) : (
+                          <Link href={`/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(task.deliverableFile)}`}
+                            className="text-green-600 hover:text-green-800 no-underline" title={task.deliverableFile}>
+                            ✅
+                          </Link>
+                        )
+                      ) : task.deliverableFile.includes("deliverable.md") ? (
+                        <span title={task.deliverableFile}>⏳</span>
+                      ) : (
+                        <span title={task.deliverableFile}>❌</span>
+                      )}
+                    </td>
+                    <td className="text-center px-2 py-2">
+                      {task.isContentTask && task.channelSkills && task.channelSkills.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 justify-center">
+                          {task.channelSkills.map((cs) => (
+                            <Link
+                              key={cs.channel}
+                              href={`/dashboard/${slug}/skills/${cs.skill}`}
+                              className="text-[9px] bg-rust/10 text-rust px-1.5 py-0.5 rounded-full hover:bg-rust/20 no-underline transition-colors"
+                              title={`${cs.channel} → ${cs.skill}`}
+                            >
+                              {cs.channel}: {cs.skill}
+                            </Link>
+                          ))}
+                        </div>
+                      ) : task.skillOk ? (
+                        <Link href={`/dashboard/${slug}/skills/${task.skill}`}
+                          className="text-[9px] bg-rust/10 text-rust px-1.5 py-0.5 rounded-full hover:bg-rust/20 no-underline transition-colors">
+                          {task.skill}
+                        </Link>
+                      ) : "❌"}
+                    </td>
+                    <td className="text-center px-2 py-2">
+                      {task.threadFileExists ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (task.isContentTask && task.parentTaskId) {
+                              const config = buildContentTaskThread(
+                                slug,
+                                task.parentTaskId,
+                                task.taskId,
+                                task.taskName,
+                                task.projectId,
+                                {
+                                  skill: task.skill,
+                                  status: task.status,
+                                  docPath: task.deliverableFile || undefined,
+                                },
+                              );
+                              openChat(slug, config);
+                              return;
+                            }
+                            const config = buildTaskThread(
+                              slug, task.taskId, task.taskName, task.projectId,
+                              { taskSkill: task.skill, pillar: task.pillar || undefined, deliverableFile: task.deliverableFile || undefined }
+                            );
+                            openChat(slug, config);
+                          }}
+                          className="text-green-600 hover:text-green-800"
+                          title={`Abrir chat: ${task.mcChatThreadId}`}
+                        >
+                          ✅
+                        </button>
+                      ) : "❌"}
+                    </td>
+                    <td className="text-center px-2 py-2">
+                      <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
+                        task.status === "completed" || task.status === "Published" ? "bg-green-50 text-green-700" :
+                        task.status === "in-progress" || task.status === "Draft" || task.status === "Approved" ? "bg-blue-50 text-blue-700" :
+                        "bg-gray-50 text-gray-500"
+                      )}>{task.status}</span>
+                    </td>
+                  </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
 
       {filtered.length === 0 && (
         <p className="text-center text-muted-foreground text-sm py-8">
           {search ? `Sin resultados para "${search}"` : "Sin tareas"}
         </p>
       )}
-    </div>
-  );
-}
-
-function Stat({ value, label, tone }: { value: string | number; label: string; tone?: "ok" | "warn" }) {
-  return (
-    <div className="rounded-sc-md border-2 px-3 py-2 text-center" style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)" }}>
-      <div className={cn("font-heading text-xl font-bold", tone === "ok" && "text-green-700", tone === "warn" && "text-amber-700")}>{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
     </div>
   );
 }

@@ -51,7 +51,7 @@
     "skill": "self-intelligence",
     "pillar": "self-analysis",
     "section": "market-and-us",
-    "deliverable_file": "brand/criptan/market-and-us/self/current.md",
+    "deliverable_file": "brand/criptan/market-and-us/self/self.current.md",
     "mc_chat_thread_id": "task-p00-ful-t03",
     "discord_thread_id": null
   },
@@ -123,7 +123,7 @@
     "skill": "brand-voice",
     "pillar": "brand-voice",
     "section": "brand-identity",
-    "deliverable_file": "brand/criptan/brand-voice/current.md",
+    "deliverable_file": "brand/criptan/brand-voice/brand-voice.current.md",
     "mc_chat_thread_id": "task-p00-ful-t07",
     "discord_thread_id": null
   },

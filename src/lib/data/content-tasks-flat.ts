@@ -61,61 +61,9 @@ export function findContentTaskById(slug: string, id: string): ContentTask | nul
 export function upsertContentTask(slug: string, ct: ContentTask): ContentTask {
   const all = loadAllContentTasks(slug);
   const idx = all.findIndex((c) => c.id === ct.id);
-  const now = new Date().toISOString();
-  const next = {
-    ...(idx >= 0 ? all[idx] : {}),
-    ...ct,
-    updated_at: ct.updated_at || now,
-  } as ContentTask;
-  if (idx >= 0) all[idx] = next;
-  else all.push(next);
+  if (idx >= 0) all[idx] = ct;
+  else all.push(ct);
   saveAllContentTasks(slug, all);
-  return next;
-}
-
-export function getNextOrphanContentTaskId(slug: string, date = new Date()): string {
-  const day = date.toISOString().slice(0, 10);
-  const prefix = `CT-${slug}-${day}-`;
-  const max = loadAllContentTasks(slug).reduce((acc, ct) => {
-    if (!ct.id.startsWith(prefix)) return acc;
-    const n = Number.parseInt(ct.id.slice(prefix.length), 10);
-    return Number.isFinite(n) ? Math.max(acc, n) : acc;
-  }, 0);
-  return `${prefix}${String(max + 1).padStart(2, "0")}`;
-}
-
-export function contentTaskFromDiscovery(
-  slug: string,
-  input: Record<string, unknown>,
-): ContentTask {
-  const now = new Date().toISOString();
-  const id = String(input.id || input.idea_id || getNextOrphanContentTaskId(slug));
-  const ideaId = String(input.idea_id || input.id || id);
-  const targetChannels = Array.isArray(input.target_channels)
-    ? input.target_channels.map(String)
-    : input.target_channel
-      ? [String(input.target_channel)]
-      : [];
-  const ct: ContentTask = {
-    id,
-    idea_id: ideaId,
-    name: String(input.name || input.title || input.angle_draft || id).slice(0, 160),
-    status: (input.status as ContentTaskStatus) || "New",
-    target_channels: targetChannels,
-    documents: Array.isArray(input.documents) ? input.documents as ContentTask["documents"] : [],
-    created_at: String(input.created_at || now),
-    updated_at: now,
-  };
-  if (input.parent_task_id) ct.parent_task_id = String(input.parent_task_id);
-  if (input.skill) ct.skill = String(input.skill);
-  if (input.owner) ct.owner = String(input.owner);
-  if (input.mc_chat_thread_id) ct.mc_chat_thread_id = String(input.mc_chat_thread_id);
-  if (input.discord_thread_id) ct.discord_thread_id = String(input.discord_thread_id);
-
-  const ctRecord = ct as unknown as Record<string, unknown>;
-  for (const k of IDEA_DISCOVERY_FIELDS) {
-    if (input[k] !== undefined) ctRecord[k] = input[k];
-  }
   return ct;
 }
 
@@ -158,7 +106,6 @@ export function contentTaskCountsByStatus(slug: string): Record<ContentTaskStatu
  * function can be replaced by a plain `loadAllContentTasks(slug)` and removed.
  */
 export function loadUnifiedContentTasks(slug: string): ContentTask[] {
-  const flatCTs = loadAllContentTasks(slug);
   const ideaPath = path.join(BASE, "brand", slug, "content", "idea-queue.json");
   const rawIdeas: Record<string, unknown>[] = (() => {
     if (!fs.existsSync(ideaPath)) return [];
@@ -179,8 +126,8 @@ export function loadUnifiedContentTasks(slug: string): ContentTask[] {
       const tasksPath = path.join(projectsRoot, proj.name, "tasks.json");
       if (!fs.existsSync(tasksPath)) continue;
       try {
-        const raw = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
-        const tasks = Array.isArray(raw) ? raw : Array.isArray(raw?.tasks) ? raw.tasks : [];
+        const tasks = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+        if (!Array.isArray(tasks)) continue;
         for (const t of tasks) {
           if (!Array.isArray(t.content_tasks)) continue;
           for (const ct of t.content_tasks as ContentTask[]) {
@@ -192,7 +139,7 @@ export function loadUnifiedContentTasks(slug: string): ContentTask[] {
   }
 
   const ctsByIdeaId = new Map<string, ContentTask>();
-  for (const ct of [...flatCTs, ...nestedCTs]) {
+  for (const ct of nestedCTs) {
     if (ct.idea_id) ctsByIdeaId.set(ct.idea_id, ct);
   }
 
@@ -242,8 +189,9 @@ export function loadUnifiedContentTasks(slug: string): ContentTask[] {
     out.push(ct);
   }
 
-  // Pass 2: flat/nested CTs not linked to any idea (defensive — should be rare).
-  for (const ct of [...flatCTs, ...nestedCTs]) {
+  // Pass 2: nested CTs not linked to any idea (defensive — should be rare).
+  for (const ct of nestedCTs) {
+    if (ct.idea_id && ctsByIdeaId.has(ct.idea_id)) continue;
     if (seen.has(ct.id)) continue;
     seen.add(ct.id);
     out.push(ct);

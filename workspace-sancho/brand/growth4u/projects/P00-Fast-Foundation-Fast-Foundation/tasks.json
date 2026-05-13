@@ -16,5 +16,30 @@
     "deliverable_file": "brand/growth4u/company-brief/company-brief.current.md",
     "mc_chat_thread_id": "task-p00-ff-t01",
     "discord_thread_id": null
+  },
+  {
+    "id": "P00-FF-T02",
+    "name": "Implementar/configurar Meeting Intelligence",
+    "description": "Configurar Meeting Intelligence desde el chat sidebar: verificar MCP/APIs, seleccionar Google Drive con Picker o fallback por ID/URL, seleccionar Notion database/page, cargar filtros como clients relation, definir routing de revisión y ejecutar un primer run.\n\nNo aplicar cambios sobre StrategyPlan, POV Bank ni documentos canónicos sin revisión humana explícita.",
+    "deliverable": "Entregable: Meeting Intelligence configurado con fuentes aprobadas, filtros guardados, routing revisado y primer run documentado.\n\nCriterio: Google Drive o Notion configurado; filtros/routing guardados; primer scan ejecutado con reuniones encontradas o reporte explícito de cero reuniones; setup.md actualizado.",
+    "done_criteria": "Entregable: Meeting Intelligence configurado con fuentes aprobadas, filtros guardados, routing revisado y primer run documentado.\n\nCriterio: Google Drive o Notion configurado; filtros/routing guardados; primer scan ejecutado con reuniones encontradas o reporte explícito de cero reuniones; setup.md actualizado.",
+    "depends_on": null,
+    "owner": "Sancho",
+    "status": "todo",
+    "channel": "intelligence",
+    "type": "foundation",
+    "skill": "meeting-intelligence",
+    "deliverable_file": "brand/growth4u/intelligence/setup.md",
+    "output_files": [
+      "brand/growth4u/intelligence/config.json",
+      "brand/growth4u/intelligence/setup.md"
+    ],
+    "mc_chat_thread_id": "task-p00-ff-t02",
+    "discord_thread_id": null,
+    "objective": "",
+    "approach": "",
+    "brief": "Configurar Meeting Intelligence desde el chat sidebar: verificar MCP/APIs, seleccionar Google Drive con Picker o fallback por ID/URL, seleccionar Notion database/page, cargar filtros como clients relation, definir routing de revisión y ejecutar un primer run.\n\nNo aplicar cambios sobre StrategyPlan, POV Bank ni documentos canónicos sin revisión humana explícita.",
+    "completion": "Entregable: Meeting Intelligence configurado con fuentes aprobadas, filtros guardados, routing revisado y primer run documentado.\n\nCriterio: Google Drive o Notion configurado; filtros/routing guardados; primer scan ejecutado con reuniones encontradas o reporte explícito de cero reuniones; setup.md actualizado.",
+    "execution_notes": ""
   }
 ]

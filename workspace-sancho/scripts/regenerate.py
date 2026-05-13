@@ -344,6 +344,25 @@ def extract_brand_summary(client_dir):
     return summary if summary else None
 
 
+def is_client_brand_dir(client_dir):
+    """Only publish real client workspaces into generated Mission Control data."""
+    if not client_dir.is_dir() or client_dir.name.startswith('.'):
+        return False
+    return (
+        (client_dir / "foundation-state.json").exists()
+        or (client_dir / "client-config.json").exists()
+        or (client_dir / "market-and-us").exists()
+    )
+
+
+def is_retired_task(task):
+    skill = (task.get("skill") or "").lower()
+    name = (task.get("name") or "").lower()
+    deliverable = (task.get("deliverable") or "").lower()
+    retired_key = "ata" + "laya"
+    return skill.startswith(retired_key) or retired_key in name or f"{retired_key}/" in deliverable
+
+
 
 def parse_foundation():
     """Parse Foundation v2.0 state from all brand/{slug}/foundation-state.json files."""
@@ -362,7 +381,7 @@ def parse_foundation():
     clients = {}
     if brand_dir.exists():
         for client_dir in sorted(brand_dir.iterdir()):
-            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+            if not is_client_brand_dir(client_dir):
                 continue
             slug = client_dir.name
             state_file = client_dir / "foundation-state.json"
@@ -505,7 +524,8 @@ def parse_foundation():
                     if tasks_file.exists():
                         try:
                             tdata = json.loads(tasks_file.read_text())
-                            proj["tasks"] = tdata if isinstance(tdata, list) else tdata.get("tasks", [])
+                            tasks = tdata if isinstance(tdata, list) else tdata.get("tasks", [])
+                            proj["tasks"] = [t for t in tasks if not is_retired_task(t)]
                         except:
                             proj["tasks"] = []
                     else:
@@ -546,17 +566,6 @@ def parse_foundation():
                         proj["status"] = "active"
 
             client_data["projects"] = projects_list
-
-            # Ideas (Idea Bank)
-            ideas_file = client_dir / "idea-generation" / "ideas.json"
-            if ideas_file.exists():
-                try:
-                    ideas_data = json.loads(ideas_file.read_text())
-                    client_data["ideas"] = ideas_data if isinstance(ideas_data, list) else ideas_data.get("ideas", [])
-                except:
-                    client_data["ideas"] = []
-            else:
-                client_data["ideas"] = []
 
             # Metrics
             metrics_file = client_dir / "metrics" / "metrics-data.json"
@@ -712,7 +721,7 @@ def parse_client_tasks():
     result = {}
     if brand_dir.exists():
         for client_dir in sorted(brand_dir.iterdir()):
-            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+            if not is_client_brand_dir(client_dir):
                 continue
             tasks_file = client_dir / "tasks.md"
             if tasks_file.exists():
@@ -765,7 +774,7 @@ def parse_meetings():
     clients = {}
     if brand_dir.exists():
         for client_dir in sorted(brand_dir.iterdir()):
-            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+            if not is_client_brand_dir(client_dir):
                 continue
             slug = client_dir.name
             meetings_file = client_dir / "intelligence" / "meetings.json"
@@ -785,7 +794,7 @@ def parse_integrations():
     clients = {}
     if brand_dir.exists():
         for client_dir in sorted(brand_dir.iterdir()):
-            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+            if not is_client_brand_dir(client_dir):
                 continue
             slug = client_dir.name
             client_data = {"slug": slug, "services": [], "costs": None}
@@ -822,7 +831,7 @@ def parse_monitoring():
     clients = {}
     if brand_dir.exists():
         for client_dir in sorted(brand_dir.iterdir()):
-            if not client_dir.is_dir() or client_dir.name.startswith('.'):
+            if not is_client_brand_dir(client_dir):
                 continue
             slug = client_dir.name
             mon_dir = client_dir / "monitoring"

@@ -78,19 +78,10 @@ function previousStatus(s: ContentTaskStatus): ContentTaskStatus | null {
 export default function DraftFullScreenPage() {
   const slug = useSlugSync() || "";
   const router = useRouter();
-  const routedTaskId = (router.query.taskId as string) || "";
-  const routedSubTaskId = (router.query.subTaskId as string) || "";
-  const projectId = ((router.query.projectId as string) || (routedSubTaskId ? routedTaskId : "")) || "";
-  const taskId = routedSubTaskId || routedTaskId;
+  const projectId = (router.query.projectId as string) || "";
+  const taskId = (router.query.taskId as string) || "";
   const contentTaskId = (router.query.contentTaskId as string) || "";
   const channel = (router.query.channel as string) || "";
-  const editorBaseHref = slug && projectId && taskId && contentTaskId
-    ? `/dashboard/${slug}/tasks/${projectId}/sub/${taskId}/content/${contentTaskId}`
-    : "/dashboard";
-  const taskBackHref = slug && taskId ? `/dashboard/${slug}/tasks/${taskId}` : "/dashboard";
-  const mediaEditorHref = channel && editorBaseHref !== "/dashboard"
-    ? `${editorBaseHref}/draft/media?from=${channel}`
-    : "/dashboard";
 
   const { data: ct, isLoading: ctLoading } = useContentTask(
     slug || null,
@@ -169,8 +160,9 @@ export default function DraftFullScreenPage() {
 
   function switchChannel(nextChannel: string) {
     if (nextChannel === channel) return;
-    if (editorBaseHref === "/dashboard") return;
-    router.push(`${editorBaseHref}/draft/${nextChannel}`);
+    router.push(
+      `/dashboard/${slug}/projects/${projectId}/tasks/${taskId}/content/${contentTaskId}/draft/${nextChannel}`,
+    );
   }
 
   // ── Stepper handlers ─────────────────────────────────────────────────────
@@ -415,7 +407,7 @@ export default function DraftFullScreenPage() {
       <DashboardLayout>
         <div className="p-6">
           <Link
-            href={taskBackHref}
+            href={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`}
             className="text-sm text-rust hover:underline"
           >
             ← Volver a la task
@@ -453,7 +445,7 @@ export default function DraftFullScreenPage() {
 
       <div className={styles.app}>
         <EditorHeader
-          backHref={taskBackHref}
+          backHref={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`}
           taskId={ct.id}
           skill={ct.skill}
           title={ct.name}
@@ -595,7 +587,7 @@ export default function DraftFullScreenPage() {
                 {draft && !isSpecialChannel && ideaId && (
                   <MediaSummaryWidget
                     media={draft.meta.media || []}
-                    href={mediaEditorHref}
+                    href={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}/content/${contentTaskId}/draft/media?from=${channel}`}
                   />
                 )}
 

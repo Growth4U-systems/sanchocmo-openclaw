@@ -289,7 +289,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
       { num: 1, key: "strategy", title: "Content Strategy", file: "strategy-decisions.md", badges: "Decisiones · informa Pillars y POV", doc: lookup.strategy },
       { num: 2, key: "pillars", title: "Content Pillars", file: "content-pillars.md", badges: "Temas · definen prompts, keywords, PAA", doc: lookup.pillars },
       { num: 3, key: "setup", title: "Setup configs", file: "setup.md", badges: "Archivos YAML · alimenta News, Perfiles, Keywords, PAA", doc: lookup.setup },
-      { num: 4, key: "pov", title: "POV Bank", file: "pov-bank.json", badges: "Tu ángulo único · usado por Classify para puntuar ideas", doc: lookup.pov },
+      { num: 4, key: "pov", title: "POV Bank", file: "Neon", badges: "Tu ángulo único · usado por crons y writers", doc: lookup.pov },
     ];
   }, [docs]);
 
@@ -419,7 +419,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
         meta="Classify · Cola · Canal · Dispatch"
         description={
           <>
-            Una antena junta las señales de <b>Investiga</b> con tu <b>POV Bank</b> y crea ideas con angle_draft + pov_confidence.
+            Una antena junta las señales de <b>Investiga</b> con tu <b>POV Bank en Neon</b> y crea ideas con angle_draft + pov_confidence.
             La antena <b>Editorial Dispatch</b> coge las ideas <b>ready</b> y las envía al <b>canal</b> que decidas.
           </>
         }

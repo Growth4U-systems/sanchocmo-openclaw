@@ -3,9 +3,11 @@ import { drizzle } from "drizzle-orm/neon-http";
 
 type Db = ReturnType<typeof drizzle>;
 
+export const hasDatabase = Boolean(process.env.DATABASE_URL);
+
 let _db: Db | null = null;
 
-function getDb(): Db {
+export function getDb(): Db {
   if (_db) return _db;
   const url = process.env.DATABASE_URL;
   if (!url) {

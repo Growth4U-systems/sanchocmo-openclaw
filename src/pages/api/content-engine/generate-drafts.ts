@@ -34,7 +34,6 @@ import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { createContentTask, attachDocumentToContentTask } from "@/lib/data/content-tasks";
-import { findContentTaskById, loadAllContentTasks, upsertContentTask } from "@/lib/data/content-tasks-flat";
 import { createEmptyDraft, createSpecialDoc, draftRelPath } from "@/lib/data/drafts";
 import { triggerWriter } from "@/lib/data/writer-trigger";
 
@@ -156,15 +155,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { slug, ideaId, contentTaskId } = req.body;
+  const { slug, ideaId } = req.body;
   if (!slug || !ideaId) return res.status(400).json({ error: "Missing slug or ideaId" });
 
   const ideas = loadIdeas(slug);
-  const flatCt = (contentTaskId ? findContentTaskById(slug, contentTaskId) : null)
-    || findContentTaskById(slug, ideaId)
-    || loadAllContentTasks(slug).find((c) => c.idea_id === ideaId);
-  const idea = ideas.find((i) => i.id === ideaId) || flatCt;
-  if (!idea) return res.status(404).json({ error: "Idea/ContentTask not found" });
+  const idea = ideas.find((i) => i.id === ideaId);
+  if (!idea) return res.status(404).json({ error: "Idea not found" });
   // Case-insensitive: the new Idea Bank UI persists PascalCase ("Approved")
   // while older callers used lowercase. Both must trigger draft generation.
   if (String(idea.status || "").toLowerCase() !== "approved") {
@@ -190,18 +186,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     pipeline_state: "researching",
     channel_phases: Object.fromEntries(channels.map((c) => [c, "researching" as const])),
   });
-  const flatContentTask = upsertContentTask(slug, {
-    ...(flatCt || contentTask),
-    ...contentTask,
-    id: flatCt?.id || contentTask.id,
-    idea_id: ideaId,
-    parent_task_id: taskId,
-    status: "Approved",
-    pipeline_state: "researching",
-    channel_phases: Object.fromEntries(channels.map((c) => [c, "researching" as const])),
-    target_channels: channels,
-    updated_at: new Date().toISOString(),
-  });
 
   // 3. Create one draft markdown file per channel and attach to ContentTask.
   const angle = (idea.angle_draft as string) || "";
@@ -217,7 +201,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         idea_id: ideaId,
         channel,
         kind: "channel-draft",
-        content_task_id: flatContentTask.id,
+        content_task_id: contentTask.id,
         parent_task_id: taskId,
         iteration: 0,
         clarify_status: "pending",
@@ -228,18 +212,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       path: draftRelPath(ideaId, channel),
       name: channel.charAt(0).toUpperCase() + channel.slice(1),
       channel,
-    });
-    const latestFlat = findContentTaskById(slug, flatContentTask.id) || flatContentTask;
-    upsertContentTask(slug, {
-      ...latestFlat,
-      documents: [
-        ...(latestFlat.documents || []).filter((d) => d.path !== draftRelPath(ideaId, channel)),
-        {
-          path: draftRelPath(ideaId, channel),
-          name: channel.charAt(0).toUpperCase() + channel.slice(1),
-          channel,
-        },
-      ],
     });
     provisioned.push(channel);
   }
@@ -291,44 +263,23 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     ["research", researchBody],
     ["clarify", clarifyBody],
   ] as const) {
-    const result = createSpecialDoc(slug, ideaId, kind, flatContentTask.id, taskId, body);
+    const result = createSpecialDoc(slug, ideaId, kind, contentTask.id, taskId, body);
     if (result.created) {
       attachDocumentToContentTask(slug, taskId, contentTask.id, {
         path: result.path,
         name: kind.charAt(0).toUpperCase() + kind.slice(1),
         channel: kind,
       });
-      const latestFlat = findContentTaskById(slug, flatContentTask.id) || flatContentTask;
-      upsertContentTask(slug, {
-        ...latestFlat,
-        documents: [
-          ...(latestFlat.documents || []).filter((d) => d.path !== result.path),
-          {
-            path: result.path,
-            name: kind.charAt(0).toUpperCase() + kind.slice(1),
-            channel: kind,
-          },
-        ],
-      });
     }
   }
 
   // 4. Mirror project_id / project_task_id / content_task_id back to the idea
   //    so the Idea Bank can link directly to the Content Task and its drafts.
-  const ideaRecord = idea as Record<string, unknown>;
-  ideaRecord.project_task_id = taskId;
-  ideaRecord.project_id = projectId;
-  ideaRecord.content_task_id = flatContentTask.id;
-  ideaRecord.content_task_channels = channels;
-  const ideaInQueue = ideas.find((i) => i.id === ideaId);
-  if (ideaInQueue) saveIdeas(slug, ideas);
-  upsertContentTask(slug, {
-    ...(findContentTaskById(slug, flatContentTask.id) || flatContentTask),
-    project_task_id: taskId,
-    project_id: projectId,
-    content_task_id: flatContentTask.id,
-    content_task_channels: channels,
-  } as unknown as typeof flatContentTask);
+  idea.project_task_id = taskId;
+  idea.project_id = projectId;
+  idea.content_task_id = contentTask.id;
+  idea.content_task_channels = channels;
+  saveIdeas(slug, ideas);
 
   // 5. Lanzar la skill de escritura. Posteamos al thread del ContentTask vía
   //    el gateway de OpenClaw para que Escudero Content corra deep-research →
@@ -337,7 +288,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   //    desde el chat del ContentTask.
   const trigger = await triggerWriter({
     slug,
-    contentTaskId: flatContentTask.id,
+    contentTaskId: contentTask.id,
     parentTaskId: taskId,
     ideaId,
     channels,
@@ -349,7 +300,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   return res.status(200).json({
     ok: true,
     ideaId,
-    contentTaskId: flatContentTask.id,
+    contentTaskId: contentTask.id,
     projectId,
     taskId,
     channelsProvisioned: provisioned,

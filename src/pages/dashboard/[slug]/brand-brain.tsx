@@ -108,21 +108,6 @@ interface SelectedDoc {
   parentPillar?: string;
 }
 
-function taskTargetFromDocPath(slug: string, docPath: string): { href: string; label: string } | null {
-  const match = docPath.match(/(?:brand\/[^/]+\/)?projects\/([^/]+)(?:\/(?:T(\d+)|tasks\/([^/]+)))?/i);
-  if (!match) return null;
-
-  const projectDir = match[1];
-  const projectId = projectDir.match(/^(P\d+)/)?.[1] || projectDir;
-  const taskId = match[3] || (match[2] ? `${projectId}-T${match[2]}` : null);
-  const targetId = taskId || projectId;
-
-  return {
-    href: `/dashboard/${slug}/tasks/${encodeURIComponent(targetId)}`,
-    label: taskId ? `Tarea ${taskId}` : `Tarea ${projectId}`,
-  };
-}
-
 export default function BrandBrainPage() {
   const slug = useSlugSync();
   const router = useRouter();
@@ -138,32 +123,17 @@ export default function BrandBrainPage() {
   const [docContent, setDocContent] = useState<string | null>(null);
   const [docLastModified, setDocLastModified] = useState<string | null>(null);
   const [docLoading, setDocLoading] = useState(false);
-  const [docMissing, setDocMissing] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
-    if (!selectedDoc?.docPath) {
-      setDocContent(null);
-      setDocLastModified(null);
-      setDocMissing(false);
-      return;
-    }
+    if (!selectedDoc?.docPath) { setDocContent(null); setDocLastModified(null); return; }
     setDocLoading(true);
     setDocContent(null);
     setDocLastModified(null);
-    setDocMissing(false);
     setEditing(false);
     fetch(`/api/docs/${selectedDoc.docPath}`)
-      .then((res) => {
-        if (res.status === 404) {
-          setDocMissing(true);
-          return null;
-        }
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => {
-        if (!data) return;
         if (data.ok && data.content) {
           setDocContent(data.content);
           setDocLastModified(data.lastModified || null);
@@ -263,40 +233,30 @@ export default function BrandBrainPage() {
         return;
       }
 
-      const taskTarget = taskTargetFromDocPath(slug, selectedDoc.docPath);
-      if (taskTarget) {
-        router.push(taskTarget.href);
-        setSelectedDoc(null);
-        return;
+      const m = selectedDoc.docPath.match(
+        /(?:brand\/[^/]+\/)?projects\/([^/]+)(?:\/(?:T(\d+)|tasks\/([^/]+)))?/i
+      );
+      if (m) {
+        const projDir = m[1];
+        const projId = projDir.match(/^(P\d+)/)?.[1];
+        const taskNum = m[2];
+        const taskId = m[3];
+
+        if (projId) {
+          if (taskNum) {
+            router.push(`/dashboard/${slug}/projects/${projId}/tasks/${projId}-T${taskNum}`);
+          } else if (taskId) {
+            router.push(`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`);
+          } else {
+            router.push(`/dashboard/${slug}/projects/${projId}`);
+          }
+          setSelectedDoc(null);
+          return;
+        }
       }
     }
     setSelectedDoc(null);
   }, [selectedDoc, slug, router]);
-
-  const handleCreateMissingDoc = useCallback(async () => {
-    if (!selectedDoc?.docPath) return;
-    const ext = selectedDoc.docPath.split(".").pop()?.toLowerCase();
-    if (ext !== "md" && ext !== "html") return;
-    const title = selectedDoc.docPath
-      .split("/")
-      .pop()
-      ?.replace(/\.(md|html)$/i, "")
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase()) || "Documento";
-    const content = ext === "html"
-      ? `<!doctype html>\n<html lang="es">\n<head>\n  <meta charset="utf-8" />\n  <title>${title}</title>\n</head>\n<body>\n  <h1>${title}</h1>\n</body>\n</html>\n`
-      : `# ${title}\n\n> Documento esperado declarado por la task. Completa este borrador con el output final.\n\n`;
-    const res = await fetch(`/api/docs/${selectedDoc.docPath}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    });
-    if (!res.ok) throw new Error("Save failed");
-    setDocContent(content);
-    setDocMissing(false);
-    setDocLastModified(new Date().toISOString());
-    setEditing(ext === "md");
-  }, [selectedDoc]);
 
   if (isLoading) {
     return (
@@ -312,7 +272,7 @@ export default function BrandBrainPage() {
     return (
       <DashboardLayout>
         <Head>
-          <title>Brand Brain &mdash; {slug} &mdash; Mission Control</title>
+          <title>{`Brand Brain - ${slug} - Mission Control`}</title>
         </Head>
         <EmptyState
           icon={"🧠"}
@@ -329,7 +289,6 @@ export default function BrandBrainPage() {
       .replace(/-/g, " ")
       .replace(/\b\w/g, (c: string) => c.toUpperCase());
     const displayPath = selectedDoc.docPath.replace(/^brand\/[^/]+\//, "");
-    const taskTarget = slug ? taskTargetFromDocPath(slug, selectedDoc.docPath) : null;
     const normStatus =
       (selectedDoc.pillar.status as string) === "done" ? "approved"
         : selectedDoc.pillar.status === "generated" ? "pending-review"
@@ -340,7 +299,7 @@ export default function BrandBrainPage() {
     return (
       <DashboardLayout>
         <Head>
-          <title>{pillarTitle} &mdash; {slug} &mdash; Mission Control</title>
+          <title>{`${pillarTitle} - ${slug} - Mission Control`}</title>
         </Head>
 
         <div className="flex items-center gap-2.5 mb-4 flex-wrap">
@@ -349,7 +308,7 @@ export default function BrandBrainPage() {
             onClick={handleBack}
             className="text-xs text-muted-foreground hover:text-rust"
           >
-            ← {taskTarget?.label || displayPath.split("/").slice(0, -1).join("/") || selectedDoc.pillarKey}
+            ← {displayPath.split("/").slice(0, -1).join("/") || selectedDoc.pillarKey}
           </button>
 
           <span className="text-sm font-bold text-foreground truncate">
@@ -371,19 +330,13 @@ export default function BrandBrainPage() {
               />
             )}
 
-            {docMissing ? (
-              <button type="button" disabled className={btnClass + " opacity-50 cursor-not-allowed"}>
-                ⬇ Descargar
-              </button>
-            ) : (
-              <a
-                href={`/api/docs/${selectedDoc.docPath}?download=1`}
-                download
-                className={btnClass + " no-underline"}
-              >
-                ⬇ Descargar
-              </a>
-            )}
+            <a
+              href={`/api/docs/${selectedDoc.docPath}?download=1`}
+              download
+              className={btnClass + " no-underline"}
+            >
+              ⬇ Descargar
+            </a>
 
             <button
               type="button"
@@ -407,8 +360,7 @@ export default function BrandBrainPage() {
                   console.error("Share link copy failed:", (e as Error).message);
                 }
               }}
-              disabled={docMissing}
-              className={btnClass + (docMissing ? " opacity-50 cursor-not-allowed" : "")}
+              className={btnClass}
               title="Copia un link público para compartir con terceros"
             >
               {shareCopied ? "✓ Copiado" : "🔗 Compartir"}
@@ -436,27 +388,7 @@ export default function BrandBrainPage() {
         </div>
 
         {docLoading && <p className="text-sm text-muted-foreground text-center py-20">Cargando documento...</p>}
-        {!docLoading && docMissing ? (
-          <div className="mx-auto mt-20 max-w-xl rounded-xl border border-dashed border-[#D8CDBA] bg-[#FAF4E3] p-6 text-center">
-            <div className="text-3xl mb-3">▣</div>
-            <h3 className="font-heading text-lg font-bold text-[#1D1A17]">Documento esperado pendiente</h3>
-            <p className="mt-2 text-sm text-[#6D6257]">
-              La task declara este output, pero el archivo todavía no existe. Esto es normal si el agente aún no lo ha producido.
-            </p>
-            <div className="mt-4 rounded-md bg-white/70 px-3 py-2 text-left font-mono text-[11px] text-[#6D6257] break-all">
-              {selectedDoc.docPath}
-            </div>
-            {(selectedDoc.docPath.endsWith(".md") || selectedDoc.docPath.endsWith(".html")) && (
-              <button
-                type="button"
-                onClick={handleCreateMissingDoc}
-                className="mt-5 inline-flex items-center justify-center rounded-md border-2 border-[#1B1720] bg-[#F7C948] px-4 py-2 text-sm font-bold text-[#1B1720] shadow-[3px_3px_0_#1B1720] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#1B1720]"
-              >
-                Crear borrador
-              </button>
-            )}
-          </div>
-        ) : !docLoading && editing && docContent ? (
+        {!docLoading && editing && docContent ? (
           <div className="min-h-[60vh]">
             <MarkdownEditor
               initialContent={docContent}
@@ -468,7 +400,6 @@ export default function BrandBrainPage() {
                 });
                 if (!res.ok) throw new Error("Save failed");
                 setDocContent(content);
-                setDocLastModified(new Date().toISOString());
                 setEditing(false);
               }}
               onCancel={() => setEditing(false)}
@@ -517,7 +448,7 @@ export default function BrandBrainPage() {
   return (
     <DashboardLayout>
       <Head>
-        <title>Brand Brain &mdash; {slug} &mdash; Mission Control</title>
+        <title>{`Brand Brain - ${slug} - Mission Control`}</title>
       </Head>
 
       <div className="flex items-center gap-3 mb-2 flex-wrap">

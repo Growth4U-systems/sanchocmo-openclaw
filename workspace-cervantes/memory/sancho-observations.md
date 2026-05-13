@@ -836,3 +836,85 @@ _Generado por Cervantes — cron:cedfbd22-cbd0-4a19-87a0-29337c4f2b37 — 2026-0
 ### Alerta enviada a Alfonso
 - Sí — hilo en #admin sobre Watchdog abort + gateway restart por subagente + xAI sin créditos
 
+
+---
+
+## 2026-05-12 — 00:25 Madrid (Observación nocturna cron)
+
+### Sesiones revisadas
+~50 sesiones de Sancho + Dulcinea en las últimas ~8h (desde ~16:00 UTC del 11 mayo)
+
+### 1. Sesiones y canales activos
+
+| Cron / Canal | Estado | Canal |
+|---|---|---|
+| PAA Monitor (G4U, HC, Hulahoop, Paymatico) | ✅ Todos completados | cron |
+| News Monitor (G4U, HC, Hulahoop, Paymatico) | ✅ Todos completados | cron |
+| Competitor Monitor (G4U, HC, Hulahoop, Paymatico) | ✅ Todos completados | cron |
+| Idea Dedupe Audit (G4U, HC, Hulahoop, Paymatico) | ✅ Todos completados | cron |
+| Keyword Research G4U | ✅ Completado | cron |
+| Morning Metrics G4U | ✅ Completado (Instantly ❌) | Discord G4U |
+| Morning Metrics Hulahoop | ❌ "Sin APIs configuradas" | cron |
+| Performance Analysis G4U | ✅ Completado | Discord G4U |
+| Performance Analysis Hulahoop | ✅ Completado (sin datos 17d) | Discord Hulahoop |
+| Lead Sync G4U | ✅ 34 leads, 3 actualizados, 1 nuevo | cron |
+| Call Prep Daily G4U | ✅ Completado | Discord G4U |
+| Daily Pulse G4U | ✅ Completado | Discord G4U |
+| Daily Pulse HC | ✅ Completado (0 actividad humana) | Discord HC |
+| Editorial Dispatch G4U (Sancho) | ✅ Slack ✅ | cron |
+| Editorial Dispatch G4U (Dulcinea) | ✅ Slack ✅ | cron |
+| Editorial Dispatch HC (Dulcinea) | ❌ ECONNREFUSED / 501 | cron |
+| Editorial Dispatch Hulahoop (Dulcinea) | ❌ 501 Discord transport | cron |
+| Weekly Synthesis G4U | ✅ Discord #insights | cron |
+| Weekly Synthesis HC | ✅ Discord (semana 6 hibernación) | cron |
+| Meeting Intelligence HC | ✅ Sin reuniones nuevas | cron |
+| update-skills | ✅ 11 skills actualizados | cron |
+| image-optimizer | ✅ 17 imgs, 3MB ahorrados | cron |
+| cron-watchdog-weekly | ✅ Publicado en #infra | Discord infra |
+| Cost Tracker Daily | HEARTBEAT_OK (sin cambio) | cron |
+| Content task semana 19 G4U | ⏳ Esperando clarify del humano | mc-chat |
+
+### 2. Errores y skills con problemas
+
+**❌ Editorial Dispatch HC y Hulahoop (Dulcinea):**
+- `POST /api/integrations/send-dispatch` → `501 — Discord transport not yet implemented`
+- Las ideas no se enviaron al canal de aprobación. Ya documentado en T-nueva.
+
+**❌ Morning Metrics Hulahoop:**
+- "Sin APIs configuradas para Hulahoop" — cron lleva 17 días sin generar datos.
+- TBT: patrón sistémico (34x baseline el Apr 22). Sin monitorización activa.
+
+**⚠️ Instantly error:**
+- Morning Metrics G4U: Instantly falló en colección de datos. No bloqueante.
+
+**⚠️ Hospital Capilar — Semana 6 de hibernación:**
+- Weekly Synthesis lo confirma: 6 semanas sin actividad humana. Gap SEO ~24K búsquedas acumuladas. Sin Foundation completado. Sin reuniones desde 18-mar.
+
+**⚠️ Daily Pulse G4U — Discord offline en contexto cron:**
+- Plugin discord devuelve `channel unavailable` en contexto cron (no en sesiones de canal). Fallback funciona guardando archivo.
+
+### 3. Preguntas que Sancho no supo responder
+- Ninguna pregunta directa sin respuesta detectada.
+- Content task semana 19 G4U (T01-C01): Sancho hizo clarify correctamente, está bloqueado esperando al humano — comportamiento correcto.
+
+### 4. Respeto a reglas de canal
+- ✅ Patrón de hilo en Discord respetado en todas las publicaciones
+- ✅ No publica contenido de clientes en canales equivocados
+- ✅ Hospital Capilar client-context-isolation respetado
+- ✅ Dulcinea opera en canales correctos
+- ❌ (Resuelto el 11-may) Gateway restart por subagente — ya notificado a Alfonso
+
+### 5. Patrones de mejora detectados
+
+1. **Costes al alza**: Token Audit confirma +56% en media diaria (semana 2 vs semana 1). 11/05 tuvo spike con 80.6% en `system_usd` sin atribuir — probablemente crons tarde de Cervantes. Vigilar tendencia.
+
+2. **Dulcinea vs Sancho — duplicación en Editorial Dispatch G4U**: Tanto `sancho:cron:659cfb91` como `dulcinea:cron:659cfb91` ejecutaron el mismo cron. El mismo cron-id está asignado a dos agentes. ⚠️ Posible doble dispatch.
+
+3. **Hospital Capilar — acción proactiva de Sancho correcta**: El Weekly Synthesis identifica correctamente el riesgo y llama a la acción. Sancho cumple su rol aunque nadie escuche.
+
+4. **Hulahoop Morning Metrics completamente muerto**: Sin integración, el análisis de performance se basa solo en PageSpeed (y lleva 17 días sin datos). Es el cliente más "ciego" del sistema.
+
+5. **SEO Weekly Review Criptan**: La sesión aparece en mid-execution ("Ya tengo todo lo que necesito. Generando el informe.") sin mensaje final de cierre visible.
+
+### Alerta enviada a Alfonso
+- No. Los issues activos ya fueron notificados en la observación de las 20:10 del 11-mayo. No hay nuevos P0/P1 que justifiquen otra alerta. Se registra en archivo.

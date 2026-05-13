@@ -1,0 +1,11 @@
+{
+  "cronId": "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2",
+  "cronName": "Lead Sync — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-12",
+  "runAtMs": 1778616000024,
+  "status": "ok",
+  "durationMs": 498047,
+  "model": "claude-sonnet-4-6",
+  "content": "📊 **Lead Sync Growth4U — 2026-05-12** | `llamada-agendada` (35 contactos)\n\n**Nuevos leads (2):**\n• 🆕 **Joaquim Bruguera** / CECOPLAST (cecoplast.com) — Distribución industrial de plásticos, Sabadell. Llamada mañana 13-may a las 16:30 CEST\n• ⚠️ **test@test.com** — Contacto de prueba, marcado como `is_test:true`, ignorado\n\n**Transcripts recuperados (3):**\n• 🔴 **Clara Melero** (FletchChofer) — Llamada 05-may: rechazó la propuesta, necesita social media management, no consultoría. Lead frío.\n• 🟡 **Reyes Saiz** (EADIC) — Llamada 04-may: evaluando programa, follow-up pendiente. Nuevo proyecto de másters de IA.\n• 🟢 **Josep M Gil** (Gutendurance → **Innática**) — Llamada 11-may: **FIRMÓ CONTRATO** 🎉 Depósito 1.000€, marca Innática (healthtech), 5 pagos totales. Fase de diagnóstico arranca esta semana.\n\n**Slack:** deshabilitado | **Errores:** 0\n\n---\n\n📊 **Lead Sync Growth4U — 2026-05-12** | `llamada-agendada` (35 contactos)\n\n**Nuevos leads (2):**\n• 🆕 **Joaquim Bruguera** / CECOPLAST (cecoplast.com) — Distribución industrial de plásticos, Sabadell. Llamada mañana 13-may a las 16:30 CEST\n• ⚠️ **test@test.com** — Contacto de prueba, marcado como `is_test:true`, ignorado\n\n**Transcripts recuperados (3):**\n• 🔴 **Clara Melero** (FletchChofer) — Llamada 05-may: rechazó la propuesta, necesita social media management, no consultoría. Lead frío.\n• 🟡 **Reyes Saiz** (EADIC) — Llamada 04-may: evaluando programa, follow-up pendiente. Nuevo proyecto de másters de IA.\n• 🟢 **Josep M Gil** (Gutendurance → **Innática**) — Llamada 11-may: **FIRMÓ CONTRATO** 🎉 Depósito 1.000€, marca Innática (healthtech), 5 pagos totales. Fase de diagnóstico arranca esta semana.\n\n**Slack:** deshabilitado | **Errores:** 0"
+}

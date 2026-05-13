@@ -107,8 +107,6 @@ export function useUpdateContentTaskStatus() {
       qc.invalidateQueries({ queryKey: ["content-tasks", v.slug, v.parentTaskId] });
       qc.invalidateQueries({ queryKey: ["content-task", v.slug, v.parentTaskId, v.id] });
       qc.invalidateQueries({ queryKey: ["projects", v.slug] });
-      qc.invalidateQueries({ queryKey: ["tasks", v.slug] });
-      qc.invalidateQueries({ queryKey: ["task-rows", v.slug] });
     },
   });
 }
@@ -153,8 +151,6 @@ export function useUpdateContentTask() {
       qc.invalidateQueries({ queryKey: ["content-tasks", v.slug, v.parentTaskId] });
       qc.invalidateQueries({ queryKey: ["content-task", v.slug, v.parentTaskId, v.id] });
       qc.invalidateQueries({ queryKey: ["projects", v.slug] });
-      qc.invalidateQueries({ queryKey: ["tasks", v.slug] });
-      qc.invalidateQueries({ queryKey: ["task-rows", v.slug] });
     },
   });
 }
@@ -185,8 +181,6 @@ export function useAttachDocumentToContentTask() {
       qc.invalidateQueries({ queryKey: ["content-tasks", v.slug, v.parentTaskId] });
       qc.invalidateQueries({ queryKey: ["content-task", v.slug, v.parentTaskId, v.id] });
       qc.invalidateQueries({ queryKey: ["projects", v.slug] });
-      qc.invalidateQueries({ queryKey: ["tasks", v.slug] });
-      qc.invalidateQueries({ queryKey: ["task-rows", v.slug] });
     },
   });
 }
@@ -226,8 +220,6 @@ export function useRetriggerWriter() {
       qc.invalidateQueries({ queryKey: ["chat", "thread"] });
       qc.invalidateQueries({ queryKey: ["content-task", v.slug] });
       qc.invalidateQueries({ queryKey: ["projects", v.slug] });
-      qc.invalidateQueries({ queryKey: ["tasks", v.slug] });
-      qc.invalidateQueries({ queryKey: ["task-rows", v.slug] });
     },
   });
 }
@@ -251,8 +243,6 @@ export function useDetachDocumentFromContentTask() {
       qc.invalidateQueries({ queryKey: ["content-tasks", v.slug, v.parentTaskId] });
       qc.invalidateQueries({ queryKey: ["content-task", v.slug, v.parentTaskId, v.id] });
       qc.invalidateQueries({ queryKey: ["projects", v.slug] });
-      qc.invalidateQueries({ queryKey: ["tasks", v.slug] });
-      qc.invalidateQueries({ queryKey: ["task-rows", v.slug] });
     },
   });
 }
@@ -283,8 +273,6 @@ function makeActionHook(action: string, errorLabel: string) {
         qc.invalidateQueries({ queryKey: ["content-tasks", v.slug, v.parentTaskId] });
         qc.invalidateQueries({ queryKey: ["content-task", v.slug, v.parentTaskId, v.id] });
         qc.invalidateQueries({ queryKey: ["projects", v.slug] });
-        qc.invalidateQueries({ queryKey: ["tasks", v.slug] });
-        qc.invalidateQueries({ queryKey: ["task-rows", v.slug] });
       },
       // On failure — typically a 409 because the local CT state is stale (the
       // agent advanced the CT via PATCH before this click landed) — refresh

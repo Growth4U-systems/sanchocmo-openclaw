@@ -1,25 +1,17 @@
 /**
- * GET /api/system/task-index?slug=X
+ * GET /api/system/task-index?slug=X — Complete index of task → doc → skill → thread
  *
- * Canonical task execution index. Reads the unified `tasks` table through
- * the data layer, not legacy project JSON files.
+ * Returns every task across all projects for a client with the status
+ * of each anchor (deliverable_file exists on disk? skill? thread file?).
+ * Used by Settings page to show the full index, and by any page that
+ * needs to verify data integrity.
  */
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { listUnifiedTaskRowsAsync, type UnifiedTaskRow } from "@/lib/data/tasks";
 import { BASE } from "@/lib/data/paths";
-import {
-  dependencyIds,
-  documentRefsFromUnknown,
-  inferTaskExecutionContract,
-  requiredInputsFromUnknown,
-  skillListFromUnknown,
-  type TaskDocumentRef,
-  type RequiredInputRef,
-} from "@/lib/data/task-execution-contract";
 
 interface TaskIndexEntry {
   projectId: string;
@@ -27,59 +19,38 @@ interface TaskIndexEntry {
   taskId: string;
   taskName: string;
   status: string;
-  type: string;
-  agent: string;
   skill: string;
-  skills: string[];
-  inputDocuments: TaskDocumentRef[];
-  requiredInputs: RequiredInputRef[];
-  outputDocuments: TaskDocumentRef[];
-  dependsOn: string[];
+  skillOk: boolean;
+  deliverableFile: string;
+  docExists: boolean;
   mcChatThreadId: string;
   threadFileExists: boolean;
-  outputDocsExist: number;
-  outputDocsMissing: number;
-  issues: string[];
-  ok: boolean;
   pillar: string | null;
+  type: string;
+  /** Set on ContentTask entries — refers to the parent Task that owns it. */
   parentTaskId?: string;
+  /** Set on ContentTask entries. */
+  ideaId?: string;
+  /** Set on ContentTask entries. */
+  targetChannels?: string[];
+  /** Per-channel writer skill (one entry per target_channel). Useful when a
+   *  ContentTask spans channels with different writer skills (e.g. blog →
+   *  seo-content + linkedin → social-writer). */
+  channelSkills?: { channel: string; skill: string }[];
+  /** True for ContentTasks (so the UI can render them indented and link to
+   *  the dedicated content-task route instead of the task route). */
   isContentTask?: boolean;
 }
 
-function absBrandPath(slug: string, docPath: string) {
-  const clean = docPath.replace(/^\/+/, "");
-  if (clean.startsWith(BASE)) return clean;
-  if (clean.startsWith("brand/")) return path.join(BASE, clean.slice("brand/".length));
-  return path.join(BASE, "brand", slug, clean);
-}
-
-function docExists(slug: string, doc: TaskDocumentRef) {
-  return !!doc.path && fs.existsSync(absBrandPath(slug, doc.path));
-}
-
-function asOutputDocuments(row: UnifiedTaskRow, brandSlug: string): TaskDocumentRef[] {
-  const contract = inferTaskExecutionContract(row as unknown as Parameters<typeof inferTaskExecutionContract>[0], { brandSlug });
-  return contract.outputDocuments.length > 0
-    ? contract.outputDocuments
-    : [
-        ...documentRefsFromUnknown(row.deliverable_file, "deliverable_file"),
-        ...documentRefsFromUnknown(row.output_files, "output_files"),
-        ...documentRefsFromUnknown(row.documents, "documents"),
-      ];
-}
-
-function projectFor(row: UnifiedTaskRow, rowsById: Map<string, UnifiedTaskRow>) {
-  if (row.type === "project") return row;
-  let current: UnifiedTaskRow | undefined = row;
-  const seen = new Set<string>();
-  while (current?.parent_id && !seen.has(current.parent_id)) {
-    seen.add(current.parent_id);
-    const parent = rowsById.get(current.parent_id);
-    if (!parent) break;
-    if (parent.type === "project") return parent;
-    current = parent;
-  }
-  return row.project_id ? rowsById.get(row.project_id) || null : null;
+/** Mirrors generate-drafts writerSkillFor(). Kept inline to avoid pulling
+ *  the whole API file just for the mapping. */
+function writerSkillFor(channel: string): string {
+  const c = (channel || "").toLowerCase();
+  if (c === "linkedin" || c === "x" || c === "twitter") return "social-writer";
+  if (c === "instagram" || c === "ig") return "instagram-content";
+  if (c === "blog" || c === "seo") return "seo-content";
+  if (c === "newsletter" || c === "email") return "newsletter";
+  return "social-writer";
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -88,75 +59,157 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = req.query.slug as string;
   if (!slug) return res.status(400).json({ error: "Missing slug" });
 
-  const rows = await listUnifiedTaskRowsAsync(slug);
-  const rowsById = new Map(rows.map((row) => [row.id, row]));
-  const outputById = new Map(rows.map((row) => [row.id, asOutputDocuments(row, slug)]));
+  const projectsDir = path.join(BASE, "brand", slug, "projects");
+  if (!fs.existsSync(projectsDir)) {
+    return res.status(200).json({ ok: true, entries: [], stats: { total: 0 } });
+  }
 
-  const entries: TaskIndexEntry[] = rows.map((row) => {
-    const project = projectFor(row, rowsById);
-    const dependencyOutputs = dependencyIds(row.depends_on).flatMap((id) => outputById.get(id) || []);
-    const contract = inferTaskExecutionContract(row as unknown as Parameters<typeof inferTaskExecutionContract>[0], {
-      brandSlug: slug,
-      dependencyOutputs,
-    });
-    const agent = row.agent || contract.agent;
-    const skill = row.skill || contract.skill;
-    const skills = skillListFromUnknown(row.skills).length ? skillListFromUnknown(row.skills) : contract.skills;
-    const inputDocuments = documentRefsFromUnknown(row.input_documents, "input_documents").length
-      ? documentRefsFromUnknown(row.input_documents, "input_documents")
-      : contract.inputDocuments;
-    const requiredInputs = requiredInputsFromUnknown(row.required_inputs);
-    const outputDocuments = asOutputDocuments(row, slug);
-    const outputDocsExist = outputDocuments.filter((doc) => docExists(slug, doc)).length;
-    const outputDocsMissing = Math.max(0, outputDocuments.length - outputDocsExist);
-    const thread = row.mc_chat_thread_id || `${row.type === "content_task" ? "content" : row.type === "project" ? "project" : "task"}-${row.id.toLowerCase()}`;
-    const threadFileExists = fs.existsSync(path.join(BASE, "brand", slug, "chat", `${thread}.json`));
-    const dependsOn = dependencyIds(row.depends_on);
-    const issues: string[] = [];
+  const entries: TaskIndexEntry[] = [];
+  const projDirs = fs.readdirSync(projectsDir, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name);
 
-    if (!agent) issues.push("Sin agente");
-    if (!skill) issues.push("Sin skill primaria");
-    if (skills.length === 0) issues.push("Sin skills");
-    if (outputDocuments.length === 0) issues.push("Sin output document");
-    if (!threadFileExists) issues.push("Sin thread");
-    if (dependsOn.length > 0 && inputDocuments.length === 0) issues.push("Dependencias sin inputs documentales");
-    if (requiredInputs.some((input) => !input.optional) && inputDocuments.length === 0) issues.push("Inputs requeridos sin evidencia");
+  for (const projDirName of projDirs) {
+    const projDir = path.join(projectsDir, projDirName);
+    let projectId = projDirName;
+    let projectName = projDirName;
 
-    return {
-      projectId: project?.id || row.project_id || row.id,
-      projectName: project?.name || row.parent_name || row.name,
-      taskId: row.id,
-      taskName: row.name,
-      status: row.status,
-      type: row.type,
-      agent,
-      skill,
-      skills,
-      inputDocuments,
-      requiredInputs,
-      outputDocuments,
-      dependsOn,
-      mcChatThreadId: thread,
-      threadFileExists,
-      outputDocsExist,
-      outputDocsMissing,
-      issues,
-      ok: issues.length === 0,
-      pillar: row.pillar || null,
-      parentTaskId: row.parent_id || undefined,
-      isContentTask: row.type === "content_task" || row.type === "content_subtask",
-    };
-  });
+    // Read project.json
+    try {
+      const pj = JSON.parse(fs.readFileSync(path.join(projDir, "project.json"), "utf-8"));
+      projectId = pj.id || projDirName;
+      projectName = pj.name || projDirName;
+    } catch { /* ignore */ }
+
+    // Read tasks.json
+    let tasks: Record<string, unknown>[] = [];
+    try {
+      const td = JSON.parse(fs.readFileSync(path.join(projDir, "tasks.json"), "utf-8"));
+      tasks = Array.isArray(td) ? td : (td.tasks || []);
+    } catch { continue; }
+
+    for (const task of tasks) {
+      const df = (task.deliverable_file || "") as string;
+      const thread = (task.mc_chat_thread_id || "") as string;
+      const skill = (task.skill || "") as string;
+
+      // Check doc exists on disk
+      let docExists = false;
+      if (df) {
+        const absPath = df.startsWith(BASE) ? df : path.join(BASE, df);
+        docExists = fs.existsSync(absPath);
+      }
+
+      // Check thread file exists
+      let threadFileExists = false;
+      if (thread) {
+        const chatFile = path.join(BASE, "brand", slug, "chat", `${thread}.json`);
+        threadFileExists = fs.existsSync(chatFile);
+      }
+
+      const parentTaskId = (task.id || "") as string;
+
+      entries.push({
+        projectId,
+        projectName,
+        taskId: parentTaskId,
+        taskName: (task.name || "") as string,
+        status: (task.status || "todo") as string,
+        skill,
+        skillOk: !!skill && skill !== "MISSING",
+        deliverableFile: df,
+        docExists,
+        mcChatThreadId: thread,
+        threadFileExists,
+        pillar: (task.pillar || null) as string | null,
+        type: (task.type || "") as string,
+      });
+
+      // Nested ContentTasks (only for type=content tasks). Each becomes its
+      // own entry so the index reflects the real unit of work — one
+      // ContentTask per approved idea — not just the daily aggregate task.
+      const contentTasks = Array.isArray(task.content_tasks)
+        ? (task.content_tasks as Record<string, unknown>[])
+        : [];
+      for (const ct of contentTasks) {
+        const ctId = (ct.id || "") as string;
+        const ctSkill = (ct.skill || "") as string;
+        const ctChannels = (ct.target_channels as string[] | undefined) || [];
+        // First attached document is the canonical deliverable for the index.
+        const docs = Array.isArray(ct.documents) ? (ct.documents as Record<string, unknown>[]) : [];
+        const ctDf = docs.length > 0 ? `brand/${slug}/${docs[0].path}` : "";
+        let ctDocExists = false;
+        if (ctDf) {
+          const absPath = ctDf.startsWith(BASE) ? ctDf : path.join(BASE, ctDf);
+          ctDocExists = fs.existsSync(absPath);
+        }
+
+        // Thread id convention is `content-{ctId.lower()}` (matches what
+        // buildContentTaskThread produces after the threadFile sanitizer).
+        // Older ContentTasks stored `task-{ctId.lower()}` here by mistake —
+        // we check the canonical name first, then fall back to the stored
+        // value, so legacy data still resolves.
+        const canonicalThread = `content-${ctId.toLowerCase()}`;
+        const storedThread = ct.mc_chat_thread_id as string | undefined;
+        let ctThread = canonicalThread;
+        let ctChatFile = path.join(BASE, "brand", slug, "chat", `${canonicalThread}.json`);
+        let ctThreadExists = fs.existsSync(ctChatFile);
+        if (!ctThreadExists && storedThread && storedThread !== canonicalThread) {
+          const altFile = path.join(BASE, "brand", slug, "chat", `${storedThread}.json`);
+          if (fs.existsSync(altFile)) {
+            ctThread = storedThread;
+            ctChatFile = altFile;
+            ctThreadExists = true;
+          }
+        }
+
+        // Per-channel writer skill. The ContentTask only stores ONE skill
+        // (the primary, derived from idea.target_channel), but a single
+        // ContentTask can span channels with different writer skills (blog
+        // → seo-content + linkedin → social-writer). Surface them all so
+        // the index doesn't lie.
+        const channelSkills = ctChannels.map((ch) => ({
+          channel: ch,
+          skill: writerSkillFor(ch),
+        }));
+
+        entries.push({
+          projectId,
+          projectName,
+          taskId: ctId,
+          taskName: (ct.name || "") as string,
+          status: (ct.status || "New") as string,
+          skill: ctSkill,
+          skillOk: !!ctSkill && ctSkill !== "MISSING",
+          deliverableFile: ctDf,
+          docExists: ctDocExists,
+          mcChatThreadId: ctThread,
+          threadFileExists: ctThreadExists,
+          pillar: null,
+          type: "content-task",
+          parentTaskId,
+          ideaId: (ct.idea_id as string | undefined) || undefined,
+          targetChannels: ctChannels.length ? ctChannels : undefined,
+          channelSkills: channelSkills.length ? channelSkills : undefined,
+          isContentTask: true,
+        });
+      }
+    }
+  }
 
   const stats = {
     total: entries.length,
-    ok: entries.filter((entry) => entry.ok).length,
-    issues: entries.filter((entry) => !entry.ok).length,
-    agentOk: entries.filter((entry) => !!entry.agent).length,
-    skillOk: entries.filter((entry) => !!entry.skill && entry.skills.length > 0).length,
-    outputOk: entries.filter((entry) => entry.outputDocuments.length > 0).length,
-    inputOk: entries.filter((entry) => entry.dependsOn.length === 0 || entry.inputDocuments.length > 0).length,
-    threadOk: entries.filter((entry) => entry.threadFileExists).length,
+    docOk: entries.filter(e => e.docExists).length,
+    docMissing: entries.filter(e => !e.docExists).length,
+    docPlaceholder: entries.filter(e => e.deliverableFile.includes("/tasks/") && e.deliverableFile.endsWith("/deliverable.md")).length,
+    skillOk: entries.filter(e => e.skillOk).length,
+    threadOk: entries.filter(e => e.threadFileExists).length,
+    byStatus: {
+      completed: entries.filter(e => e.status === "completed").length,
+      "in-progress": entries.filter(e => e.status === "in-progress").length,
+      todo: entries.filter(e => e.status === "todo").length,
+      blocked: entries.filter(e => e.status === "blocked").length,
+    },
   };
 
   return res.status(200).json({ ok: true, entries, stats });

@@ -3,7 +3,7 @@ ghl_id: rnk4eGKcfTINvsJzDIuh
 contact_name: Josep M Gil
 email: leadership@gutendurance.com
 phone: null
-last_enriched: 2026-05-11T20:00:00Z
+last_enriched: 2026-05-12T20:00:00Z
 enrichment_pending: false
 ---
 
@@ -87,3 +87,25 @@ enrichment_pending: false
 - 🔗 [Acuerdo Marco Growth4U <> Gutendurance](https://drive.google.com/file/d/1wzhyYPYE9fXcfhTDEY-d0GyWjziRhSZB0fopg4Dtptw/view)
 
 <!-- Self-QA: PASS | 2026-04-22T22:00Z | Transcript 2026-04-21 añadido desde Drive (2nda llamada). Notas Gemini: [1THjK1J5uYfwblyhx3P0KZ5Wr5-VFVWJsFMogcpqyH00](https://drive.google.com/file/d/1THjK1J5uYfwblyhx3P0KZ5Wr5-VFVWJsFMogcpqyH00/edit). -->
+
+### 2026-05-11 — Gutendurance + Growth4U — Firma de Contrato 🎉
+- **Estado**: ✅ **CLIENTE FIRMADO** — Depósito 1.000€ realizado. Contrato enviado para firma electrónica.
+- **Pain points**: Empresa en pre-lanzamiento, necesita partner de marketing que ejecute (no solo consultoría).
+- **Acuerdo comercial**:
+  - Depósito inicial: 1.000€ (fase de diagnóstico 2-3 semanas)
+  - Total: 5 pagos via suscripción automatizada
+  - Factura restante: 1.057€ (pendiente jueves o fin de semana)
+  - NIF empresa: B-275286
+- **Marca cliente**: **Innática** — startup healthtech (antes referenciada como "Heltech")
+- **Participantes**: Josep M Gil + Lola Mares (co-fundadora/socia)
+- **Next steps**:
+  - [Lola Mares] Enviar datos e información del proyecto a Martin
+  - [Martin Fila] Emitir factura total descontando depósito
+  - [Lola Mares] Enviar nuevo email corporativo al equipo
+  - [Martin Fila] Crear link de suscripción para 4 pagos restantes
+  - [Josep] Completar firma electrónica del contrato
+  - [Lola Mares] Crear Drive compartido con toda la info
+  - [Martin Fila] Enviar instrucciones de trabajo al cliente
+- 🔗 [Notas Gemini en Drive](https://docs.google.com/document/d/18S9bwgr26QFrkjw9sBjpo3WdaE0-BTXvzxtOMgX9mno/edit)
+
+<!-- Self-QA: PASS | 2026-05-12T20:00Z | Transcript 2026-05-11 añadido — cliente FIRMADO. Lead actualizado a cliente activo. -->

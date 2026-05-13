@@ -31,7 +31,6 @@ import yaml from "js-yaml";
 import { BASE } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
 import { logActivity } from "@/lib/data/activity-log";
-import { findContentTaskById, loadAllContentTasks } from "@/lib/data/content-tasks-flat";
 
 export const config = { api: { bodyParser: false } };
 
@@ -144,12 +143,17 @@ function getSigningSecret(slug: string): string | null {
 // Verifies the idea exists before we kick off the async PATCH. Returns
 // the idea so the caller has it for downstream message-edit + logging.
 function findIdea(slug: string, ideaId: string): { ok: boolean; error?: string; idea?: IdeaQueueEntry } {
-  const ct = findContentTaskById(slug, ideaId) || loadAllContentTasks(slug).find((c) => c.idea_id === ideaId);
-  if (!ct) return { ok: false, error: `ContentTask ${ideaId} not found` };
-  return { ok: true, idea: ct as unknown as IdeaQueueEntry };
+  const queuePath = path.join(BASE, "brand", slug, "content", "idea-queue.json");
+  if (!fs.existsSync(queuePath)) return { ok: false, error: "idea-queue.json not found" };
+  let queue: IdeaQueueEntry[];
+  try { queue = JSON.parse(fs.readFileSync(queuePath, "utf-8")); }
+  catch (e) { return { ok: false, error: `parse: ${(e as Error).message}` }; }
+  const idea = queue.find((i) => i.id === ideaId);
+  if (!idea) return { ok: false, error: `Idea ${ideaId} not found` };
+  return { ok: true, idea };
 }
 
-// ── Fire-and-forget PATCH to /api/content-engine/content-tasks ─
+// ── Fire-and-forget PATCH to /api/content-engine/ideas ────────
 // Routing the update through the canonical endpoint guarantees the
 // approve→generate-drafts auto-trigger runs (the source of truth for
 // status transitions and side effects). We do NOT await — Slack expects
@@ -161,10 +165,10 @@ function dispatchIdeaUpdate(slug: string, ideaId: string, action: "approve" | "l
     : action === "reject" ? { status: "Discarded", archived_at: now, archived_via: "slack-button", archived_by: actor }
     : { status: "Deferred", deferred_at: now, deferred_by: actor }; // later: park in Deferred queue
   const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
-  fetch(`${baseUrl}/api/content-engine/content-tasks`, {
+  fetch(`${baseUrl}/api/content-engine/ideas`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ slug, id: ideaId, ...fields }),
+    body: JSON.stringify({ slug, ideaId, fields }),
   }).catch((e) => console.error("[slack-interactivity] PATCH failed:", (e as Error).message));
 
   // Activity log (Engine/Estado feed)

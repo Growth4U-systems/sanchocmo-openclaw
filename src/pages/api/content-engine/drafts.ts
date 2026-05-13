@@ -16,6 +16,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { loadDraft, listDrafts, updateDraft } from "@/lib/data/drafts";
 import { maybePromoteContentTaskFromMedia } from "@/lib/data/content-tasks";
+import { reconcileClarifyToPovBank } from "@/lib/data/pov-bank";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug || req.body?.slug) as string;
@@ -40,6 +41,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!ideaId || !channel) return res.status(400).json({ error: "Missing ideaId or channel" });
     try {
       const updated = updateDraft(slug, ideaId, channel, { meta, body });
+      let povReconcile = null;
 
       // Re-check the media pipeline_state so any drafts.PATCH that mutates
       // `media[]` (uploads, deletes, migrations) flips `generating-media` ↔
@@ -54,7 +56,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         } catch { /* non-fatal */ }
       }
 
-      return res.status(200).json({ ok: true, draft: updated });
+      if (channel === "clarify") {
+        try {
+          povReconcile = await reconcileClarifyToPovBank(slug, { ideaId });
+        } catch (error) {
+          povReconcile = {
+            configured: false,
+            source: "clarify",
+            error: error instanceof Error ? error.message : "Clarify extraction failed",
+          };
+        }
+      }
+
+      return res.status(200).json({ ok: true, draft: updated, povReconcile });
     } catch (e) {
       return res.status(404).json({ error: (e as Error).message });
     }

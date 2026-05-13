@@ -83,7 +83,7 @@ export interface PublishingMeta {
    *  too led to drift (frontmatter said scheduled while CT said published).
    *  Note: `published_at` / `external_url` / `metrics` remain here as
    *  operational data; only the status flag moved. */
-  status?: "scheduled" | "publishing" | "published" | "failed" | "canceled";
+  status?: "scheduled" | "publishing" | "failed" | "canceled";
   provider: string;                   // PublishProvider.id
   scheduled_at?: string;              // ISO; absent when published immediately
   published_at?: string | null;

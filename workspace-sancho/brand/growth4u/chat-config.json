@@ -7,7 +7,7 @@
         "fast-foundation"
       ],
       "canonical": "fast-foundation",
-      "docPath": "company-brief/current.md",
+      "docPath": "company-brief/company-brief.current.md",
       "quickActions": [
         {
           "label": "Revisar brief",
@@ -210,7 +210,7 @@
       "skills": [
         "strategic-plan"
       ],
-      "docPath": "strategic-plan/current.md",
+      "docPath": "strategic-plan/strategic-plan.current.md",
       "quickActions": [
         {
           "label": "Resumen del plan",

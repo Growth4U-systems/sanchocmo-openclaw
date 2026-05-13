@@ -23,7 +23,6 @@ export default function ContentTaskRedirectPage() {
   const projectId = (router.query.projectId as string) || "";
   const taskId = (router.query.taskId as string) || "";
   const contentTaskId = (router.query.contentTaskId as string) || "";
-  const taskBackHref = slug && taskId ? `/dashboard/${slug}/tasks/${taskId}` : "/dashboard";
 
   const { data: ct, isLoading } = useContentTask(
     slug || null,
@@ -32,10 +31,10 @@ export default function ContentTaskRedirectPage() {
   );
 
   useEffect(() => {
-    if (!ct || !slug || !projectId || !taskId || !contentTaskId) return;
+    if (!ct || !slug) return;
     const channel = ct.target_channels?.[0] || "linkedin";
     router.replace(
-      `/dashboard/${slug}/tasks/${projectId}/sub/${taskId}/content/${contentTaskId}/draft/${channel}`,
+      `/dashboard/${slug}/projects/${projectId}/tasks/${taskId}/content/${contentTaskId}/draft/${channel}`,
     );
   }, [ct, slug, projectId, taskId, contentTaskId, router]);
 
@@ -50,7 +49,7 @@ export default function ContentTaskRedirectPage() {
         ) : !ct ? (
           <>
             <Link
-              href={taskBackHref}
+              href={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`}
               className="text-sm text-rust hover:underline"
             >
               ← Volver a la task

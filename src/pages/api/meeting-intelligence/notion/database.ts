@@ -75,11 +75,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }));
 
   if (!properties.some((prop) => prop.name.toLowerCase() === "clients")) {
-    properties.push({
-      id: "clients",
+    const relationCandidate = properties.find((prop) =>
+      prop.type === "relation" && /(client|system|empresa|company|g4u)/i.test(prop.name)
+    ) || properties.find((prop) => prop.type === "relation");
+    properties.unshift({
+      id: relationCandidate?.id || "clients",
       name: "clients",
       type: "relation",
-      relationDatabaseId: null,
+      relationDatabaseId: relationCandidate?.relationDatabaseId || null,
       source: "fallback",
     });
   }
