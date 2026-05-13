@@ -75,9 +75,11 @@ export interface PostMetricsSnapshot {
 }
 
 /** Publishing lifecycle metadata. Complementary to `status`; only present
- *  once the user kicks off publishing (publish-now or schedule). */
+ *  once the user kicks off publishing (publish-now or schedule).
+ *  `status` is omitted when the post reached the terminal "published" state
+ *  via an immediate publish — that lives in CT.channel_phases. */
 export interface PublishingMeta {
-  status: "scheduled" | "publishing" | "published" | "failed" | "canceled";
+  status?: "scheduled" | "publishing" | "published" | "failed" | "canceled";
   provider: string;                   // PublishProvider.id
   scheduled_at?: string;              // ISO; absent when published immediately
   published_at?: string | null;
@@ -111,6 +113,8 @@ export interface DraftFrontmatter {
   /** Set by the Clarify step. Drives Q1-Q4 templates and writer adaptations. */
   item_type?: ContentItemType;
   media?: MediaAsset[];
+  /** Channel-specific media policy. `"required"` enforces media before publishing. */
+  media_policy?: "required" | "optional";
   publishing?: PublishingMeta;
   /** Self-QA verdict written by the writer skill — never inline in the body. */
   self_qa?: "PASS" | "FAIL";

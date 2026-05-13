@@ -219,7 +219,7 @@ export const metricoolProvider: PublishProvider = {
         (dataAny.data && typeof dataAny.data === "object" && (dataAny.data as { id?: unknown }).id != null
           && String((dataAny.data as { id: unknown }).id)) ||
         undefined;
-      let externalJobId = candidateId || undefined;
+      let externalJobId: string | undefined = typeof candidateId === "string" ? candidateId : undefined;
       if (!externalJobId) {
         // Last-resort lookup: list scheduler posts in a 5-min window
         // surrounding our publishAt and find ours by dateTime + network.

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Head from "next/head";
@@ -12,7 +13,12 @@ import { StatCard } from "@/components/shared/stat-card";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { ActivityFeed, type ActivityItem } from "@/components/shared/activity-feed";
+import { ActivityBar } from "@/components/dashboard/activity-bar";
+import { BrandColumn } from "@/components/dashboard/brand-column";
+import { MetricsColumn } from "@/components/dashboard/metrics-column";
+import { NextStepsColumn } from "@/components/dashboard/nextsteps-column";
 import { useQuery } from "@tanstack/react-query";
+import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { cn } from "@/lib/utils";
 
 /**

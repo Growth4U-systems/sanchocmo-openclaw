@@ -16,6 +16,10 @@ export interface CalendarEvent {
   body: string;
   media: MediaAsset[];
   metrics?: PostMetricsSnapshot;
+  /** Drift watchdog flag: set by the API when a scheduled event is past-due
+   *  without confirmation from the provider. Drives the alarm visual in the
+   *  Posting Calendar (see PostingCalendarTab UNCONFIRMED_VISUAL). */
+  unconfirmed_drift?: boolean;
 }
 
 export interface ReadyDraft {
@@ -30,6 +34,8 @@ export interface ReadyDraft {
   has_media: boolean;
   body: string;
   media: MediaAsset[];
+  /** Per-channel media requirement: `"required"` blocks publishing without media. */
+  media_policy?: "required" | "optional";
 }
 
 export interface CalendarPayload {

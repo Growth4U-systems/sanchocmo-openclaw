@@ -240,6 +240,8 @@ export interface ContentTask {
    * draft frontmatter `status` field.
    */
   channel_phases?: Record<string, ChannelPhase>;
+  /** Per-channel media requirement. `"required"` enforces media before publishing. */
+  media_policy?: Record<string, "required" | "optional">;
   clarify_status?: "pending" | "answered" | "skipped";
   skill?: string;                   // social-writer | seo-content | instagram-content | newsletter — assigned at Approved
   target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these

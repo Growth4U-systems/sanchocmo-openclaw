@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
+import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
-import { mcDataFile } from "@/lib/data/paths";
+import { mcDataFile, BASE } from "@/lib/data/paths";
 
 /**
  * GET /api/activity?slug=hospital-capilar&limit=15
