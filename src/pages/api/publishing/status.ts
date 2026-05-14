@@ -36,11 +36,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const remote = await provider.getStatus(slug, pub.external_job_id);
   const next: PublishingMeta = {
     ...pub,
-    status: remote.status,
     external_url: remote.externalUrl ?? pub.external_url ?? null,
-    published_at: remote.publishedAt ?? pub.published_at ?? null,
+    published_at:
+      remote.status === "published"
+        ? remote.publishedAt ?? pub.published_at ?? new Date().toISOString()
+        : remote.publishedAt ?? pub.published_at ?? null,
     error: remote.error ?? null,
   };
+  if (remote.status === "published") {
+    delete next.status;
+  } else {
+    next.status = remote.status;
+  }
 
   // Only persist when something changed to avoid pointless writes.
   const changed =
@@ -51,7 +58,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (changed) {
     updateDraft(slug, ideaId, channel, { meta: { publishing: next } });
-    if (next.status === "published" && draft.meta.content_task_id) {
+    if (remote.status === "published" && draft.meta.content_task_id) {
       try {
         const found = findContentTaskByIdAcrossProjects(slug, draft.meta.content_task_id);
         if (found?.parentTaskId) {

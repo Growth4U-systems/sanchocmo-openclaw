@@ -60,7 +60,8 @@ export function PublishBar({
     if (!providerId && configured.length > 0) setProviderId(configured[0].id);
   }, [providerId, configured]);
 
-  const status = effective?.status;
+  const status: PublishingMeta["status"] | "published" | undefined =
+    effective?.published_at ? "published" : effective?.status;
   const showPublishControls = !status || status === "failed" || status === "canceled";
 
   const error = publish.error || cancel.error;
@@ -71,7 +72,7 @@ export function PublishBar({
       { slug, ideaId, channel, providerId },
       {
         onSuccess: (data) => {
-          if (data.publishing?.status === "published") {
+          if (data.publishing?.published_at) {
             onPublishedToast?.("Post publicado.");
           } else {
             onPublishedToast?.("Publicación enviada.");
@@ -198,7 +199,7 @@ export function PublishBar({
         </button>
       )}
 
-      {effective?.status === "published" && effective.external_url && (
+      {effective && status === "published" && effective.external_url && (
         <a
           href={effective.external_url}
           target="_blank"

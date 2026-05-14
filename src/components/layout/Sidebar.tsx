@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useAppStore } from "@/stores/app";
 import { useChatStore } from "@/stores/chat";
 import { cn } from "@/lib/utils";
+import { navigateToClient } from "@/lib/navigation";
 import { useClients } from "@/hooks/useClients";
 import { useUnreadCount } from "@/hooks/useChat";
 
@@ -139,18 +140,20 @@ export function Sidebar() {
         {/* ── Overview ── */}
         <SectionLabel text={t("nav.overview")} visible={sidebarOpen} />
         <NavLink
-          href="/dashboard"
+          href={selectedClient ? `/dashboard/${selectedClient}` : "/dashboard"}
           icon="📊"
           label={t("nav.dashboard")}
-          active={isActive("/dashboard")}
+          active={
+            selectedClient
+              ? router.asPath.split("?")[0].split("#")[0] === `/dashboard/${selectedClient}`
+              : router.asPath.split("?")[0].split("#")[0] === "/dashboard"
+          }
           collapsed={!sidebarOpen}
         />
 
         {/* ── Client section ── */}
-        {slug && (
+        {selectedClient && (
           <>
-            {/* Brand Brain — under client name */}
-            <SectionLabel text={slug} visible={sidebarOpen} />
             <NavLink
               href={clientHref("/brand-brain")}
               icon="🧠"
@@ -180,20 +183,20 @@ export function Sidebar() {
         {/* ── Sistema ── */}
         <SectionLabel text={t("nav.system")} visible={sidebarOpen} />
         <NavLink
-          href="/dashboard/admin/activity"
+          href={selectedClient ? clientHref("/activity") : "/dashboard/admin/activity"}
           icon="📡"
           label={t("nav.activity")}
-          active={isActive("/dashboard/admin/activity")}
+          active={selectedClient ? isActive(clientHref("/activity")) : isActive("/dashboard/admin/activity")}
           collapsed={!sidebarOpen}
         />
         <NavLink
-          href="/dashboard/admin/settings"
+          href={selectedClient ? clientHref("/settings") : "/dashboard/admin/settings"}
           icon="⚙️"
           label={t("nav.settings")}
-          active={isActive("/dashboard/admin/settings")}
+          active={selectedClient ? isActive(clientHref("/settings")) : isActive("/dashboard/admin/settings")}
           collapsed={!sidebarOpen}
         />
-        {isAdmin && (
+        {isAdmin && !selectedClient && (
           <>
             <NavLink
               href="/dashboard/admin/settings?tab=clients"
@@ -292,12 +295,10 @@ function ClientSelector() {
     const value = e.target.value;
     if (value === "global") {
       setSelectedClient(null);
-      router.push("/dashboard");
+      navigateToClient(router, null);
     } else {
       setSelectedClient(value);
-      // Preserve current sub-path (e.g. /projects, /foundation) when switching clients
-      const subPath = router.asPath.replace(/^\/dashboard\/[^/]+/, "");
-      router.push(`/dashboard/${value}${subPath}`);
+      navigateToClient(router, value);
     }
   };
 
