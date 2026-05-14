@@ -173,6 +173,7 @@ export function Sidebar() {
             <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/atalaya")} icon="🏰" label={t("nav.atalaya")} active={isActive(clientHref("/atalaya"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/intelligence")} icon="🧠" label="Intelligence" active={isActive(clientHref("/intelligence"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/yalc")} icon="🧭" label="YALC" active={isActive(clientHref("/yalc"))} collapsed={!sidebarOpen} />
           </>
         )}
 

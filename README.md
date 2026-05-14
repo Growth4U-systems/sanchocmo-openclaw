@@ -46,6 +46,10 @@ Explorador (prospecting), Redactor (SEO/content), Comunicador (social/newsletter
 
 120+ marketing skills with a Context Matrix system — each skill declares which brand files it needs (`context_required`) and where it writes (`context_writes`), preventing unnecessary context loading. The `yalc-operator` skill lets Yalc Agent operate YALC/GTM-OS through the YALC HTTP API, with live catalog verification, provider/MCP status checks, human gates, campaign endpoints, and dry-run defaults for side-effecting outbound operations.
 
+### YALC Cockpit
+
+Mission Control includes a native YALC cockpit at `/dashboard/<slug>/yalc`. It uses Sancho-authenticated proxy routes under `/api/yalc/*`, not an iframe, and covers runtime health, campaigns, lead tables, lead detail, human gates, and provider status. In Docker/staging, run Sancho with `docker-compose.yalc.yml` so the app talks to YALC at `http://yalc:3847`.
+
 ### Multi-Client
 
 One instance serves multiple clients with strict isolation:

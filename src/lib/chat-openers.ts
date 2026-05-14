@@ -116,7 +116,22 @@ export const MC_CHAT_AGENTS: Record<string, { emoji: string; label: string; colo
   rocinante: { emoji: "🐴", label: "Rocinante", color: "#3B9EBF" },
   cervantes: { emoji: "✒️", label: "Cervantes", color: "#9B59B6" },
   "maese-pedro": { emoji: "🎭", label: "Maese Pedro", color: "#D4548F" },
+  yalc: { emoji: "🧭", label: "Yalc Agent", color: "#4A5D23" },
 };
+
+export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
+  return {
+    threadId: `${slug}:yalc`,
+    threadName: "YALC / GTM-OS",
+    skill: "yalc-operator",
+    skills: ["yalc-operator"],
+    linkedTo: "yalc",
+    docPath: null,
+    threadState: "continue",
+    agent: "yalc",
+    initialMessage: prompt,
+  };
+}
 
 /**
  * Find the task thread that "owns" a given doc path, if any. A task owns a
