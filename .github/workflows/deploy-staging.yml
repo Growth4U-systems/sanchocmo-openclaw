@@ -97,7 +97,15 @@ jobs:
             fi
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose $COMPOSE_ARGS build --pull
-            docker compose $COMPOSE_ARGS up -d
+            if ! docker compose $COMPOSE_ARGS up -d; then
+              echo "▶ docker compose up failed; current service state:"
+              docker compose $COMPOSE_ARGS ps || true
+              echo "▶ yalc logs:"
+              docker compose $COMPOSE_ARGS logs --no-color --tail=200 yalc || true
+              echo "▶ sanchocmo logs:"
+              docker compose $COMPOSE_ARGS logs --no-color --tail=200 sanchocmo || true
+              exit 1
+            fi
             docker compose $COMPOSE_ARGS ps
           EOF
 
