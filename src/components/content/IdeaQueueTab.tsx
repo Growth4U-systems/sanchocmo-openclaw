@@ -129,6 +129,7 @@ const STATUS_VISUAL: Record<string, { label: string; bg: string; fg: string }> =
 interface Props {
   slug: string;
   openChat?: (slug: string, config: ThreadConfig) => void;
+  focusId?: string | null;
 }
 
 // Content type → comic color (rust = hot, sage = proof, navy = framework, yellow = personal, aged = listicle)
@@ -827,4 +828,3 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
     </div>
   );
 }
-

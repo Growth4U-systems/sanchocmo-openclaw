@@ -77,13 +77,10 @@ export interface PostMetricsSnapshot {
 /** Publishing lifecycle metadata. Complementary to `status`; only present
  *  once the user kicks off publishing (publish-now or schedule). */
 export interface PublishingMeta {
-  /** Non-terminal publishing state. Once published, this field is OMITTED —
-   *  the canonical "is this channel published?" answer lives in
-   *  `ContentTask.channel_phases[channel] === "published"`. Storing it here
-   *  too led to drift (frontmatter said scheduled while CT said published).
-   *  Note: `published_at` / `external_url` / `metrics` remain here as
-   *  operational data; only the status flag moved. */
-  status?: "scheduled" | "publishing" | "failed" | "canceled";
+  /** Publishing state returned by providers and surfaced in the publish UI.
+   *  `ContentTask.channel_phases[channel]` remains the canonical workflow
+   *  phase, while this field tracks provider-side lifecycle and metadata. */
+  status?: "scheduled" | "publishing" | "published" | "failed" | "canceled";
   provider: string;                   // PublishProvider.id
   scheduled_at?: string;              // ISO; absent when published immediately
   published_at?: string | null;
