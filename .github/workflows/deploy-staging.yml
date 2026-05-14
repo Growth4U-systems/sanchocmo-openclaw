@@ -39,6 +39,10 @@ jobs:
             cd "$DEPLOY_PATH"
             echo "▶ Fetching staging…"
             git fetch origin staging --prune
+            if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+              echo "▶ Stashing local runtime changes before checkout…"
+              git stash push --include-untracked -m "deploy-staging-$(date -u +%Y%m%dT%H%M%SZ)" || true
+            fi
             echo "▶ Checking out $SHA…"
             git checkout "$SHA"
             export GIT_COMMIT="$(git rev-parse HEAD)"
