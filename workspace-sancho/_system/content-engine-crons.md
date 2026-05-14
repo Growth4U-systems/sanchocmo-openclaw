@@ -126,10 +126,10 @@ id: content-pov-bank-refresh
 schedule: "0 9 1 * *"  # dia 1 del mes, 9am
 skill: brand-voice
 input:
-  clarify_history: "brand/{slug}/content/clarify-history.json"
+  pov_bank: "Neon tables: pov_banks, pov_pillars, pov_clarify_patterns, pov_evidence_items"
   current_voice: "brand/{slug}/brand-book/brand-voice/brand-voice.current.md"
-output: "Actualiza brand-voice.current.md con patrones aprendidos del clarify-history"
-notes: "Cierra el feedback loop. Los patterns de Clarify (que angulos elige el humano, que tono prefiere) refinan la Brand Voice."
+output: "Crea propuestas revisables en Neon; no modifica postura canonica sin aprobacion humana"
+notes: "Cierra el feedback loop. Los patterns de Clarify viven en Neon y refinan el POV Bank mediante propuestas."
 ```
 
 ---
@@ -147,7 +147,7 @@ Para activar el Content Engine en un cliente nuevo:
 - `content/content-pillars.md` (via skill content-pillars)
 - `content/configs/*.yml` (via setup workshop o skill automatizado)
 - `content/idea-queue.json` (vacio)
-- `content/clarify-history.json` (vacio)
+- POV Bank importado o creado en Neon
 
 **Lo que NO hay que crear** (es comun):
 - Skills (mismas para todos)

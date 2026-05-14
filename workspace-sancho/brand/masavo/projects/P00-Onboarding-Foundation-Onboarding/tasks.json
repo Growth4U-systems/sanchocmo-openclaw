@@ -1,0 +1,25 @@
+{
+  "project_id": "P00-Onboarding",
+  "tasks": [
+    {
+      "id": "P00-ONB-T01",
+      "name": "Implementar/configurar Meeting Intelligence",
+      "description": "Configurar Meeting Intelligence desde el chat sidebar: verificar MCP/APIs, seleccionar Google Drive con Picker o fallback por ID/URL, seleccionar Notion database/page, cargar filtros como clients relation, definir routing de revisión y ejecutar un primer run.\n\nNo aplicar cambios sobre StrategyPlan, POV Bank ni documentos canónicos sin revisión humana explícita.",
+      "deliverable": "Meeting Intelligence configurado con fuentes aprobadas, filtros guardados, routing revisado y primer run documentado.",
+      "done_criteria": "Google Drive o Notion configurado; filtros/routing guardados; primer scan ejecutado con reuniones encontradas o reporte explícito de cero reuniones; setup.md actualizado.",
+      "depends_on": null,
+      "owner": "Sancho",
+      "status": "todo",
+      "channel": "intelligence",
+      "type": "foundation",
+      "skill": "meeting-intelligence",
+      "deliverable_file": "brand/masavo/intelligence/setup.md",
+      "output_files": [
+        "brand/masavo/intelligence/config.json",
+        "brand/masavo/intelligence/setup.md"
+      ],
+      "mc_chat_thread_id": "task-p00-onb-t01",
+      "discord_thread_id": null
+    }
+  ]
+}

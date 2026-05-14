@@ -1,0 +1,9 @@
+{
+  "cronName": "Morning Metrics — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-05-04",
+  "runAtMs": 1746336600000,
+  "status": "ok",
+  "collectionNotes": "5/6 sources OK. Instantly failed (iterable error).",
+  "content": "📊 **Morning Metrics — Growth4U** | 2026-05-04\n\n━━━ **META ADS** (ayer) ━━━\n💰 Spend: **€148.96** (media 7d: €129.93 ✅)\n👁️ Impressions: **10,715** (media 7d: 6,892)\n🖱️ Clicks: **52** | CTR: **0.49%** | CPC: **€2.86**\n🎯 Leads: **2** (media 7d: 1.9/día)\n\n━━━ **GHL — CONTACTS** (últimas 24h) ━━━\n👤 Nuevos contactos: **2**\n- jhon esteban yandi aguirre — Llamada estratégica — llamada-agendada, secuencia-seguimiento — 2026-05-04 03:06\n- fran nava — Facebook — 2026-05-03 23:19\n\n━━━ **GHL — APPOINTMENTS** (últimas 24h) ━━━\n📅 Citas: **0**\n\n━━━ ✅ Sin alertas ━━━\n\n**Análisis de tendencias:**\n- Impressions repuntaron fuerte ayer (10.7K vs media 6.9K, +55%), probablemente por mayor bid/spend del sábado (€149 vs media €130).\n- CPC mejorando: €2.86 ayer vs media €3.30 — buen signo de relevancia.\n- CTR (0.49%) ligeramente bajo la media (0.58%) — el volumen de impressions diluyó el ratio. Normal con más alcance.\n- Leads estables en 2/día, alineado con la media de 1.9.\n- 0 citas ayer (domingo) — esperado.\n- Fran Nava entró por Facebook sin tags → revisar si la automatización de tagging está activa."
+}

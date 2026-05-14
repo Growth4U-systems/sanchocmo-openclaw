@@ -215,7 +215,7 @@ export default function ProjectsPage() {
     return (
       <DashboardLayout>
         <Head>
-          <title>Proyectos — {slug} — Mission Control</title>
+          <title>{`Proyectos - ${slug} - Mission Control`}</title>
         </Head>
         <EmptyState
           icon="📋"
@@ -228,7 +228,7 @@ export default function ProjectsPage() {
   return (
     <DashboardLayout>
       <Head>
-        <title>Proyectos — {slug} — Mission Control</title>
+        <title>{`Proyectos - ${slug} - Mission Control`}</title>
       </Head>
 
       {/* Header + Stats row */}

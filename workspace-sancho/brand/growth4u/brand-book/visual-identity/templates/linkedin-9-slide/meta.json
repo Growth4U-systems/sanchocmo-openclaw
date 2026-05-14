@@ -1,0 +1,142 @@
+{
+  "id": "linkedin-9-slide",
+  "name": "linkedin-9-slide",
+  "channel": "linkedin",
+  "description": "Carrusel educativo: cover + 7 body slides + CTA final",
+  "output_format": "html",
+  "generation_strategy": "html",
+  "model_hints": { "preferred_model": null, "prompt_prefix_from": null },
+  "pre_steps": [],
+  "slideCount": 9,
+  "width": 1080,
+  "height": 1350,
+  "slots": [
+    {
+      "key": "cover_kicker",
+      "label": "Kicker portada",
+      "placeholder": "GROWTH · SISTEMA"
+    },
+    {
+      "key": "cover_title",
+      "label": "Título portada",
+      "placeholder": "7 señales de que tu modelo de growth está roto",
+      "maxLength": 120
+    },
+    {
+      "key": "cover_subtitle",
+      "label": "Subtítulo portada",
+      "placeholder": "Y qué hacer al respecto"
+    },
+    {
+      "key": "hero_image_url",
+      "label": "Personaje cover (URL)"
+    },
+    {
+      "key": "slide_eyebrow",
+      "label": "Kicker (opcional, sustituye al rule por defecto)",
+      "perSlide": true,
+      "placeholder": "Diagnóstico · 01",
+      "maxLength": 40
+    },
+    {
+      "key": "slide_title",
+      "label": "Título de la slide",
+      "perSlide": true,
+      "placeholder": "Tu CAC sube cada trimestre"
+    },
+    {
+      "key": "slide_text",
+      "label": "Texto de la slide",
+      "perSlide": true,
+      "placeholder": "Si tu coste de adquisición sube y tu solución es 'más presupuesto', el problema no es el dinero. Es el modelo.",
+      "maxLength": 300
+    },
+    {
+      "key": "slide_data_value",
+      "label": "Dato destacado (cifra)",
+      "perSlide": true
+    },
+    {
+      "key": "slide_data_label",
+      "label": "Etiqueta del dato",
+      "perSlide": true
+    },
+    {
+      "key": "slide_quote_text",
+      "label": "Texto de cita (slide-quote)",
+      "perSlide": true,
+      "placeholder": "El sistema no se construye con más esfuerzo. Se construye con menos heroísmo.",
+      "maxLength": 220
+    },
+    {
+      "key": "slide_quote_author_name",
+      "label": "Autor de la cita",
+      "perSlide": true,
+      "placeholder": "María Pérez"
+    },
+    {
+      "key": "slide_quote_author_role",
+      "label": "Rol del autor",
+      "perSlide": true,
+      "placeholder": "CMO · Acme SaaS"
+    },
+    {
+      "key": "cta_headline",
+      "label": "Titular CTA",
+      "placeholder": "¿Quieres un sistema que funcione sin ti?",
+      "maxLength": 100
+    },
+    {
+      "key": "cta_subtext",
+      "label": "Subtexto CTA",
+      "placeholder": "6 meses. Sistema instalado. Fecha de fin."
+    },
+    {
+      "key": "cta_button",
+      "label": "Texto del botón CTA",
+      "maxLength": 30
+    },
+    {
+      "key": "cta_image_url",
+      "label": "Personaje CTA (URL)"
+    }
+  ],
+  "triggers": [
+    "linkedin carousel",
+    "linkedin 9 slide",
+    "carousel educativo linkedin",
+    "linkedin nueve slide",
+    "carousel linkedin"
+  ],
+  "od_kind": "template",
+  "use_case": "Carrusel educativo LinkedIn (9 slides 1080×1350) — cover + 7 body + CTA. Ideal para how-to, listas, frameworks.",
+
+  "payload_example": {
+    "_comment": "Shape canónico del POST body /api/content-engine/render-carousel. Sustituye los valores 'string aquí' por contenido real; mantén la estructura (slots vs perSlide) y los arrays de perSlide con length=9. slide[0]=cover, slide[1..7]=body, slide[8]=CTA. Usa \"\" para slots que no apliquen a cover/CTA.",
+    "slug": "growth4u",
+    "ideaId": "idea-YYYY-MM-DD-N",
+    "channel": "linkedin",
+    "templateId": "linkedin-9-slide",
+    "slots": {
+      "cover_kicker": "GROWTH · SISTEMA",
+      "cover_title": "string aquí (≤120 chars)",
+      "cover_subtitle": "string aquí",
+      "hero_image_url": "",
+      "cta_headline": "string aquí (≤100 chars)",
+      "cta_subtext": "string aquí",
+      "cta_button": "string aquí (≤30 chars)",
+      "cta_image_url": ""
+    },
+    "perSlide": {
+      "_note": "Cada array DEBE tener length=9. Índices: [0]=cover, [1..7]=body slides 1-7, [8]=CTA. Pon \"\" en posiciones no usadas. NUNCA pongas slide_1_title, slide_2_title, etc. en 'slots' — eso es anti-pattern y el endpoint lo rechaza con 400.",
+      "slide_eyebrow":          ["", "01·DOLOR", "02·DOLOR", "03·DOLOR", "04·SHIFT", "05·SHIFT", "06·CAUSA", "07·CAUSA", ""],
+      "slide_title":            ["", "Body 1 título", "Body 2 título", "Body 3 título", "Body 4 título", "Body 5 título", "Body 6 título", "Body 7 título", ""],
+      "slide_text":             ["", "Body 1 texto (≤300)", "Body 2 texto", "Body 3 texto", "Body 4 texto", "Body 5 texto", "Body 6 texto", "Body 7 texto", ""],
+      "slide_data_value":       ["", "+45%", "−12%", "", "", "", "", "", ""],
+      "slide_data_label":       ["", "CAC YoY", "Win rate", "", "", "", "", "", ""],
+      "slide_quote_text":       ["", "", "", "", "", "Quote text (≤220)", "", "", ""],
+      "slide_quote_author_name":["", "", "", "", "", "María Pérez", "", "", ""],
+      "slide_quote_author_role":["", "", "", "", "", "CMO · Acme SaaS", "", "", ""]
+    }
+  }
+}

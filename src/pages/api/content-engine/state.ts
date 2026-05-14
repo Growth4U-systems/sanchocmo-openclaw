@@ -14,6 +14,7 @@ import fs from "fs";
 import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
+import { loadPovBankFromNeon } from "@/lib/data/pov-bank";
 
 interface Idea {
   id: string;
@@ -97,8 +98,9 @@ function loadPillars(slug: string): Pillar[] {
   return matches.map((m) => ({ id: m[1] }));
 }
 
-function loadPovBank(slug: string): PovBank | null {
-  return readJSON<PovBank | null>(path.join(BASE, "brand", slug, "content", "pov-bank.json"), null);
+async function loadPovBank(slug: string): Promise<PovBank | null> {
+  const result = await loadPovBankFromNeon(slug);
+  return result.povBank as PovBank | null;
 }
 
 function loadJobs(): CronJob[] {
@@ -158,8 +160,17 @@ function readLastFinding(slug: string, folder: string): { date: string | null; f
       finding = previewFromContent(data.content);
     }
     const count: number | null = data.total_new_questions ?? data.candidates_sent ?? data.signals_count ?? null;
+    // `date` (YYYY-MM-DD, matches the filename) is the source of truth. Use `runAtMs` only when its
+    // day agrees with `date` — the cron writer agent has been known to hallucinate runAtMs values.
+    const dateStr = typeof data.date === "string" ? data.date : files[0].replace(".json", "");
+    let runDate: string | null = null;
+    if (data.runAtMs && new Date(data.runAtMs).toISOString().slice(0, 10) === dateStr) {
+      runDate = new Date(data.runAtMs).toISOString();
+    } else if (dateStr) {
+      runDate = new Date(dateStr + "T00:00:00Z").toISOString();
+    }
     return {
-      date: data.runAtMs ? new Date(data.runAtMs).toISOString() : (data.date ? new Date(data.date).toISOString() : null),
+      date: runDate,
       finding,
       count,
       status: data.status || null,
@@ -239,7 +250,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const ideas = loadIdeas(slug);
   const pillars = loadPillars(slug);
-  const povBank = loadPovBank(slug);
+  const povBank = await loadPovBank(slug);
   const jobs = loadJobs();
   const jobsState = loadJobsState();
   const activity = loadActivity(slug);

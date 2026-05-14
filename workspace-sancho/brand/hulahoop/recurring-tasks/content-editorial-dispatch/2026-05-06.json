@@ -1,0 +1,24 @@
+{
+  "cronName": "Content: Editorial Dispatch — Hulahoop",
+  "slug": "hulahoop",
+  "date": "2026-05-06",
+  "runAtMs": 1746513660000,
+  "status": "ok",
+  "transport": "discord",
+  "channel_id": "1491032340208812042",
+  "candidates_selected": 5,
+  "candidates_sent": 5,
+  "idea_ids": [
+    "idea-2026-05-06-7",
+    "idea-2026-05-06-11",
+    "idea-2026-05-06-8",
+    "idea-2026-05-06-12",
+    "idea-2026-05-06-13"
+  ],
+  "task_id": "P-Content-Semana-19-T06",
+  "project_id": "P-Content-Semana-19",
+  "error": null,
+  "notes": "send-dispatch endpoint returned 501 (Discord transport not implemented). Fallback: sent directly via Discord message tool to #content channel. cadence-config.yml and dispatch-channel.yml were missing — created with defaults.",
+  "total_candidates_new": 13,
+  "deferred_count": 0
+}

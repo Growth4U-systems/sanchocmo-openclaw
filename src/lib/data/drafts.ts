@@ -75,11 +75,15 @@ export interface PostMetricsSnapshot {
 }
 
 /** Publishing lifecycle metadata. Complementary to `status`; only present
- *  once the user kicks off publishing (publish-now or schedule).
- *  `status` is omitted when the post reached the terminal "published" state
- *  via an immediate publish — that lives in CT.channel_phases. */
+ *  once the user kicks off publishing (publish-now or schedule). */
 export interface PublishingMeta {
-  status?: "scheduled" | "publishing" | "published" | "failed" | "canceled";
+  /** Non-terminal publishing state. Once published, this field is OMITTED —
+   *  the canonical "is this channel published?" answer lives in
+   *  `ContentTask.channel_phases[channel] === "published"`. Storing it here
+   *  too led to drift (frontmatter said scheduled while CT said published).
+   *  Note: `published_at` / `external_url` / `metrics` remain here as
+   *  operational data; only the status flag moved. */
+  status?: "scheduled" | "publishing" | "failed" | "canceled";
   provider: string;                   // PublishProvider.id
   scheduled_at?: string;              // ISO; absent when published immediately
   published_at?: string | null;
@@ -113,7 +117,11 @@ export interface DraftFrontmatter {
   /** Set by the Clarify step. Drives Q1-Q4 templates and writer adaptations. */
   item_type?: ContentItemType;
   media?: MediaAsset[];
-  /** Channel-specific media policy. `"required"` enforces media before publishing. */
+  /** Whether this draft requires media before it can be published. Set by the
+   *  writer when the plan calls for a carousel / thread with visuals / image
+   *  post. When `"required"`, the publish endpoint refuses to send the post
+   *  to the provider if `media[]` is empty, and the UI disables the "Programar"
+   *  button on the Ready Queue. Default `"optional"`. */
   media_policy?: "required" | "optional";
   publishing?: PublishingMeta;
   /** Self-QA verdict written by the writer skill — never inline in the body. */
@@ -268,6 +276,7 @@ const VALID_DRAFT_KINDS: ReadonlyArray<DraftKind> = [
   "research",
   "clarify",
 ];
+const VALID_MEDIA_POLICIES = ["required", "optional"] as const;
 const VALID_MEDIA_SOURCES: ReadonlyArray<MediaAsset["source"]> = [
   "uploaded",
   "ai-generated",
@@ -349,6 +358,14 @@ export function updateDraft(
     throw new Error(
       `Invalid kind: "${patch.meta.kind}". Allowed: ${VALID_DRAFT_KINDS.join(", ")}. ` +
       `(Common mistake: "draft" instead of "channel-draft" — see _system/draft-file-format.md)`,
+    );
+  }
+  if (
+    patch.meta?.media_policy !== undefined &&
+    !VALID_MEDIA_POLICIES.includes(patch.meta.media_policy)
+  ) {
+    throw new Error(
+      `Invalid media_policy: "${patch.meta.media_policy}". Allowed: ${VALID_MEDIA_POLICIES.join(", ")}.`,
     );
   }
   if (patch.meta?.media !== undefined) {

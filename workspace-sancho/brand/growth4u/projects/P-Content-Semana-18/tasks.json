@@ -1,0 +1,590 @@
+[
+  {
+    "id": "P-Content-Semana-18-T01",
+    "name": "Contenido 28/04",
+    "description": "Contenido editorial del día — ideas seleccionadas en el dispatch del 28 abr 2026.",
+    "type": "content",
+    "channel": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "idea_ids": [
+      "idea-2026-04-28-8",
+      "idea-2026-04-28-10",
+      "idea-2026-04-28-11",
+      "idea-2026-04-28-12",
+      "idea-2026-04-28-13"
+    ],
+    "owner": "Escudero Content",
+    "created_at": "2026-04-28T09:53:00Z",
+    "mc_chat_thread_id": "task-p-content-semana-18-t01",
+    "discord_thread_id": null
+  },
+  {
+    "id": "P-Content-Semana-18-T05",
+    "name": "Contenido 30/04",
+    "description": "Ideas New candidatas al dispatch del 30 abr 2026 — 4 ideas seleccionadas por recency + confidence.",
+    "type": "content",
+    "channel": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "idea_ids": [
+      "idea-2026-04-28-5",
+      "idea-2026-04-28-1",
+      "idea-2026-04-28-2",
+      "idea-2026-04-28-6",
+      "idea-2026-04-28-9",
+      "idea-2026-05-01-5"
+    ],
+    "owner": "Escudero Content",
+    "created_at": "2026-04-30T18:15:00Z",
+    "content_tasks": [
+      {
+        "id": "P-Content-Semana-18-T05-C01",
+        "parent_task_id": "P-Content-Semana-18-T05",
+        "idea_id": "idea-2026-04-28-9",
+        "name": "AI-first SaaS: margin compression que nadie diagnostica",
+        "status": "Approved",
+        "skill": "social-writer",
+        "target_channels": [
+          "linkedin",
+          "twitter",
+          "instagram",
+          "blog"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-04-28-9/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-9/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-9/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-9/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-9/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t05-c01",
+        "owner": "Escudero Content",
+        "created_at": "2026-04-30T22:39:13.702Z",
+        "updated_at": "2026-05-09T22:22:38.266Z",
+        "approved_at": "2026-05-05T17:08:40.690Z",
+        "pipeline_state": "researching",
+        "channel_phases": {
+          "linkedin": "draft",
+          "twitter": "draft",
+          "instagram": "researching",
+          "blog": "researching"
+        }
+      },
+      {
+        "id": "P-Content-Semana-18-T05-C02",
+        "parent_task_id": "P-Content-Semana-18-T05",
+        "idea_id": "idea-2026-05-01-5",
+        "name": "El 40% de apps tendrán agentes IA — pero el 40% de proyectos morirá antes de 2027",
+        "status": "Pending Media",
+        "skill": "social-writer",
+        "target_channels": [
+          "linkedin",
+          "twitter"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-05-01-5/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-01-5/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-01-5/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-01-5/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-01-5/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t05-c02",
+        "owner": "Escudero Content",
+        "created_at": "2026-05-01T13:07:53.647Z",
+        "updated_at": "2026-05-09T22:22:38.267Z",
+        "approved_at": "2026-05-01T13:11:20.204Z",
+        "pipeline_state": "media-review",
+        "pending_media_at": "2026-05-06T08:41:56.979Z",
+        "channel_phases": {
+          "linkedin": "draft",
+          "twitter": "draft"
+        }
+      }
+    ]
+  },
+  {
+    "id": "P-Content-Semana-18-T04",
+    "name": "Contenido 2026-04-29",
+    "description": "Ideas de contenido aprobadas para 2026-04-29",
+    "type": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "deliverable_file": "brand/growth4u/content/published/2026-04-29.json",
+    "mc_chat_thread_id": "task-p-content-semana-18-t04",
+    "discord_thread_id": null,
+    "owner": "Escudero Content",
+    "created_at": "2026-04-29T22:30:50.538Z",
+    "idea_ids": [
+      "idea-2026-04-26-1",
+      "idea-2026-04-28-3",
+      "idea-2026-04-28-8",
+      "idea-2026-04-28-11",
+      "idea-2026-04-28-12",
+      "idea-2026-04-28-13",
+      "idea-2026-04-28-7"
+    ],
+    "content_tasks": [
+      {
+        "id": "P-Content-Semana-18-T04-C01",
+        "parent_task_id": "P-Content-Semana-18-T04",
+        "idea_id": "idea-2026-04-26-1",
+        "name": "Idea idea-2026-04-26-1",
+        "status": "Approved",
+        "pipeline_state": "clarify-needed",
+        "skill": "social-writer",
+        "target_channels": [
+          "linkedin",
+          "twitter"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-04-26-1/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-26-1/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-26-1/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-26-1/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-26-1/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t04-c01",
+        "owner": "Escudero Content",
+        "created_at": "2026-04-29T22:30:50.539Z",
+        "updated_at": "2026-05-09T22:22:38.267Z",
+        "approved_at": "2026-05-01T13:08:42.874Z",
+        "channel_phases": {
+          "linkedin": "clarify-needed",
+          "twitter": "clarify-needed"
+        }
+      },
+      {
+        "id": "P-Content-Semana-18-T04-C02",
+        "parent_task_id": "P-Content-Semana-18-T04",
+        "idea_id": "idea-2026-04-28-3",
+        "name": "Idea idea-2026-04-28-3",
+        "status": "Approved",
+        "pipeline_state": "clarify-needed",
+        "skill": "seo-content",
+        "target_channels": [
+          "blog",
+          "linkedin"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-04-28-3/blog.md",
+            "name": "Blog",
+            "channel": "blog"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-3/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-3/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-3/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-3/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t04-c02",
+        "owner": "Escudero Content",
+        "created_at": "2026-04-29T22:30:52.324Z",
+        "updated_at": "2026-05-09T22:22:38.268Z",
+        "approved_at": "2026-05-01T13:08:42.875Z",
+        "channel_phases": {
+          "blog": "clarify-needed",
+          "linkedin": "clarify-needed"
+        }
+      },
+      {
+        "id": "P-Content-Semana-18-T04-C03",
+        "parent_task_id": "P-Content-Semana-18-T04",
+        "idea_id": "idea-2026-04-28-8",
+        "name": "MiCA en julio 2026: el playbook compliance que escala growth crypto",
+        "status": "Draft",
+        "skill": "seo-content",
+        "target_channels": [
+          "blog",
+          "linkedin"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-04-28-8/blog.md",
+            "name": "Blog",
+            "channel": "blog"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-8/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-8/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-8/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-8/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t04-c03",
+        "owner": "Escudero Content",
+        "created_at": "2026-04-29T22:30:52.341Z",
+        "updated_at": "2026-05-09T22:23:07.025Z",
+        "approved_at": "2026-05-09T10:56:18.983Z",
+        "channel_phases": {
+          "blog": "draft",
+          "linkedin": "draft"
+        }
+      },
+      {
+        "id": "P-Content-Semana-18-T04-C04",
+        "parent_task_id": "P-Content-Semana-18-T04",
+        "idea_id": "idea-2026-04-28-11",
+        "name": "Zero-click marketing: por qué tu contenido SEO ya no genera clicks",
+        "status": "Approved",
+        "pipeline_state": "clarify-needed",
+        "skill": "social-writer",
+        "target_channels": [
+          "linkedin",
+          "twitter"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-04-28-11/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-11/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-11/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-11/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-11/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t04-c04",
+        "owner": "Escudero Content",
+        "created_at": "2026-04-29T22:30:52.371Z",
+        "updated_at": "2026-05-09T22:22:38.268Z",
+        "approved_at": "2026-05-01T13:08:42.877Z",
+        "channel_phases": {
+          "linkedin": "clarify-needed",
+          "twitter": "clarify-needed"
+        }
+      },
+      {
+        "id": "P-Content-Semana-18-T04-C05",
+        "parent_task_id": "P-Content-Semana-18-T04",
+        "idea_id": "idea-2026-04-28-12",
+        "name": "El 39% de CMOs recortan agencias. La señal que llevábamos años esperando.",
+        "status": "Approved",
+        "pipeline_state": "clarify-needed",
+        "skill": "social-writer",
+        "target_channels": [
+          "linkedin",
+          "twitter"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-04-28-12/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-12/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-12/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-12/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-12/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t04-c05",
+        "owner": "Escudero Content",
+        "created_at": "2026-04-29T22:30:52.410Z",
+        "updated_at": "2026-05-09T22:22:38.268Z",
+        "approved_at": "2026-05-01T13:08:42.878Z",
+        "channel_phases": {
+          "linkedin": "clarify-needed",
+          "twitter": "clarify-needed"
+        }
+      },
+      {
+        "id": "P-Content-Semana-18-T04-C06",
+        "parent_task_id": "P-Content-Semana-18-T04",
+        "idea_id": "idea-2026-04-28-13",
+        "name": "El 88% usa IA, solo el 6% la opera. La brecha que define ganadores.",
+        "status": "Approved",
+        "pipeline_state": "clarify-needed",
+        "skill": "social-writer",
+        "target_channels": [
+          "linkedin",
+          "twitter"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-04-28-13/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-13/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-13/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-13/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-13/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t04-c06",
+        "owner": "Escudero Content",
+        "created_at": "2026-04-29T22:30:52.435Z",
+        "updated_at": "2026-05-09T22:22:38.268Z",
+        "approved_at": "2026-05-01T13:08:42.878Z",
+        "channel_phases": {
+          "linkedin": "clarify-needed",
+          "twitter": "clarify-needed"
+        }
+      },
+      {
+        "id": "P-Content-Semana-18-T04-C07",
+        "parent_task_id": "P-Content-Semana-18-T04",
+        "idea_id": "idea-2026-04-28-7",
+        "name": "Idea idea-2026-04-28-7",
+        "status": "Approved",
+        "pipeline_state": "clarify-needed",
+        "skill": "social-writer",
+        "target_channels": [
+          "twitter",
+          "linkedin"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-04-28-7/twitter.md",
+            "name": "Twitter",
+            "channel": "twitter"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-7/linkedin.md",
+            "name": "Linkedin",
+            "channel": "linkedin"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-7/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-7/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-04-28-7/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t04-c07",
+        "owner": "Escudero Content",
+        "created_at": "2026-04-30T09:11:14.507Z",
+        "updated_at": "2026-05-09T22:22:38.268Z",
+        "approved_at": "2026-05-01T13:08:42.879Z",
+        "channel_phases": {
+          "twitter": "clarify-needed",
+          "linkedin": "clarify-needed"
+        }
+      }
+    ]
+  },
+  {
+    "id": "P-Content-Semana-18-T06",
+    "name": "Contenido 01/05",
+    "type": "content",
+    "channel": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "idea_ids": [
+      "idea-2026-05-01-4",
+      "idea-2026-05-01-1",
+      "idea-2026-05-01-3",
+      "idea-2026-05-01-5",
+      "idea-2026-05-01-6"
+    ],
+    "owner": "Escudero Content",
+    "created_at": "2026-05-01T06:47:37.737594+00:00"
+  },
+  {
+    "id": "P-Content-Semana-18-T02",
+    "name": "Contenido 2026-05-05",
+    "description": "Ideas de contenido aprobadas para 2026-05-05",
+    "type": "content",
+    "status": "in-progress",
+    "skill": "social-writer",
+    "deliverable_file": "brand/growth4u/content/published/2026-05-05.json",
+    "mc_chat_thread_id": "task-p-content-semana-18-t02",
+    "discord_thread_id": null,
+    "owner": "Escudero Content",
+    "created_at": "2026-05-05T17:15:09.116Z",
+    "idea_ids": [
+      "idea-2026-05-01-3"
+    ],
+    "content_tasks": [
+      {
+        "id": "P-Content-Semana-18-T02-C01",
+        "parent_task_id": "P-Content-Semana-18-T02",
+        "idea_id": "idea-2026-05-01-3",
+        "name": "Europa quiere registrar finfluencers en ESMA — tu playbook de influencers acaba de romperse",
+        "status": "Pending Media",
+        "skill": "newsletter",
+        "target_channels": [
+          "newsletter"
+        ],
+        "documents": [
+          {
+            "path": "content/drafts/idea-2026-05-01-3/newsletter.md",
+            "name": "Newsletter",
+            "channel": "newsletter"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-01-3/proposal.md",
+            "name": "Proposal",
+            "channel": "proposal"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-01-3/research.md",
+            "name": "Research",
+            "channel": "research"
+          },
+          {
+            "path": "content/drafts/idea-2026-05-01-3/clarify.md",
+            "name": "Clarify",
+            "channel": "clarify"
+          }
+        ],
+        "mc_chat_thread_id": "content-p-content-semana-18-t02-c01",
+        "owner": "Escudero Content",
+        "created_at": "2026-05-05T17:15:09.118Z",
+        "updated_at": "2026-05-09T22:22:38.269Z",
+        "approved_at": "2026-05-05T21:43:46.838Z",
+        "pipeline_state": "media-review",
+        "pending_media_at": "2026-05-06T08:39:18.184Z",
+        "channel_phases": {
+          "newsletter": "approved"
+        }
+      }
+    ]
+  }
+]

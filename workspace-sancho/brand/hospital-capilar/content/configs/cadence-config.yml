@@ -1,0 +1,20 @@
+# Cadence Config — Hospital Capilar
+# Defines how many content slots per day of the week
+
+schedule:
+  monday: 3
+  tuesday: 3
+  wednesday: 4
+  thursday: 3
+  friday: 3
+  saturday: 0
+  sunday: 0
+
+# Max ideas per dispatch
+max_per_dispatch: 5
+
+# Channels to distribute across
+channels:
+  - linkedin
+  - blog
+  - twitter

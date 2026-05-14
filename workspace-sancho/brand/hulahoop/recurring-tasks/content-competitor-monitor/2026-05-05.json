@@ -1,0 +1,26 @@
+{
+  "task": "content-competitor-monitor",
+  "date": "2026-05-05",
+  "status": "completed",
+  "last_finding": "SFTL publica estudio de impacto: música en vivo generó 5.812M€ en España en 2025 (+11% taquilla). SEGO Creative crece 50% con 14 proyectos financiados y se expande a videojuegos. Urbanitae lanza gestora SGIIC y bate récord con 280M€ captados — benchmark claro de madurez PFP.",
+  "summary": {
+    "competitors_monitored": ["SFTL / Incentiva Music", "SEGO Finance (Creative)", "TaxMM / Pelícano Partners", "Urbanitae", "Taxlease"],
+    "reference_creators_monitored": ["Sympathy for the Lawyer", "Spain Audiovisual Hub", "Crowdfunding News ES", "Diego Bañuelos", "Profilm / Cluster Audiovisual"],
+    "signals_extracted": 13,
+    "output_file": "brand/hulahoop/content/research-signals/2026-05-05-creators.json",
+    "x_search_status": "unavailable — xAI API credits exhausted",
+    "key_findings": [
+      "SFTL domina el contenido en incentivos fiscales musicales: estudio de impacto económico (5.812M€), reforma art. 36.3 LIS, y plataforma INCENTIVA como referencia",
+      "SEGO Creative es competidor directo en crowdfunding cultural: 14 proyectos, +2M€, expansión a videojuegos y espectáculos en vivo en 2026",
+      "Urbanitae marca el benchmark como PFP madura: récord 280M€, gestora SGIIC propia, expansión internacional, blog de alta frecuencia con análisis sectoriales",
+      "TaxMM/Pelícano Partners consolida posición en tax equity cultural con objetivo de 100M€",
+      "Sympathy for the Lawyer (blog/media) produce contenido viral mezclando legal + pop culture (Taylor Swift, Anthropic vs Universal, IMS Report)"
+    ],
+    "content_opportunities": [
+      "Análisis sectoriales regulares tipo Urbanitae blog — posicionar Hulahoop como experto en entertainment finance",
+      "POV sobre reforma art. 36.3 LIS y su impacto para inversores retail",
+      "Guía de financiación integral: subvenciones + crowdfunding + tax equity",
+      "Usar datos SFTL (5.812M€ música en vivo) como contexto para narrativa de inversión"
+    ]
+  }
+}

@@ -174,7 +174,7 @@ Las ideas sueltas se pueden ejecutar DIRECTAMENTE sin proyecto (via chat al apro
 
 ## 6. Mission Control UI
 
-### 6.1 Idea Bank (página existente)
+### 6.1 Idea Queue (página existente)
 
 - **Tabs**: 📝 Contenido | 👥 Contactos
 - **Agrupación**: por `list` (collapsible tables)

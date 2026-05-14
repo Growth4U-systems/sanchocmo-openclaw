@@ -72,6 +72,12 @@ interface AllConfigs {
   cadence: { businessModel: string; channels: CadenceChannel[] };
   setupTask: SetupTask | null;
   povBank: PovBank | null;
+  povBankStorage?: {
+    provider: "neon";
+    configured: boolean;
+    seededFromLegacyJson?: boolean;
+    error?: string | null;
+  };
 }
 
 interface CronInfo {
@@ -461,7 +467,7 @@ function PovBankForm({
   onSaved: () => void;
 }) {
   const initial: PovBank = povBank || {
-    version: 1,
+    version: 3,
     global: { one_liner: null, villain: null, voice_traits: [] },
     pov_per_pillar: Object.fromEntries(pillars.map((p) => [p.id, {
       pillar_name: p.name, core_belief: null, we_say_yes_to: [], we_say_no_to: [],
@@ -523,9 +529,9 @@ function PovBankForm({
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
-        <strong>POV Bank:</strong> opiniones del cliente por pillar. Es la fuente que <code>idea-builder</code> consulta para generar
-        angle_drafts diferenciados (no genéricos). Se construye en setup (task <code>P14-T04</code>) y se refresca con la antena mensual
-        POV Bank Refresh basada en patrones del clarify-history. Editable manualmente desde aquí.
+        <strong>POV Bank:</strong> opiniones del cliente por pillar guardadas en Neon. Es la fuente que los crons y writers consultan
+        para generar angle_drafts diferenciados (no genéricos). El JSON legacy solo se usa con import explícito.
+        Editable manualmente desde aquí.
       </div>
 
       {/* Global */}

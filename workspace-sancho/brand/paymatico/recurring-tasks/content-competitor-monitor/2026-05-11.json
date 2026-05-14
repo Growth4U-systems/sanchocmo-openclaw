@@ -1,0 +1,35 @@
+{
+  "cronName": "content-competitor-monitor",
+  "slug": "paymatico",
+  "date": "2026-05-11",
+  "runAtMs": 1747039740000,
+  "status": "completed",
+  "last_finding": "3 ideas nuevas (2 competitors, 1 reference-creator). Highlight: idea-2026-05-11-008 — Adyen adquiere Talon.One por €750M (primera compra en 20 años), loyalty dentro de la transacción, vendor lock-in alert para franquicias. Idea-2026-05-11-010 — Adyen Platforms +35% YoY confirma que infraestructura programable es el segmento de mayor crecimiento del sector.",
+  "content": "Monitorizados 9 competidores + 4 reference-creators. Señales frescas (May 4-11): Adyen Talon.One acquisition confirmada en Q1 report (€750M, primera adquisición en 20 años); Geoffrey Barraclough newsletter Mayo advierte sobre riesgo de ejecución loyalty+pagos; Adyen Platforms +35% YoY. MONEI banco, Stripe Sessions y Lavazza ya en queue de run anterior (May 8). PaynoPain, Sipay, Paycomet: sin contenido fresco esta semana.",
+  "ideas_created": 3,
+  "ideas_ids": [
+    "idea-2026-05-11-008",
+    "idea-2026-05-11-009",
+    "idea-2026-05-11-010"
+  ],
+  "sources_checked": {
+    "competitors": [
+      "Adyen",
+      "Stripe",
+      "MONEI",
+      "Mollie",
+      "PaynoPain",
+      "Sipay",
+      "Paycomet",
+      "Pecunpay",
+      "Teya"
+    ],
+    "reference_creators": [
+      "Geoffrey Barraclough / Business of Payments",
+      "Philippe Gelis / Kantox",
+      "Salvador Más / AEFI",
+      "Fintech Takes"
+    ]
+  },
+  "signals_file": "brand/paymatico/content/research-signals/2026-05-11-creators.json"
+}

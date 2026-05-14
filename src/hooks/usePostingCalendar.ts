@@ -16,9 +16,9 @@ export interface CalendarEvent {
   body: string;
   media: MediaAsset[];
   metrics?: PostMetricsSnapshot;
-  /** Drift watchdog flag: set by the API when a scheduled event is past-due
-   *  without confirmation from the provider. Drives the alarm visual in the
-   *  Posting Calendar (see PostingCalendarTab UNCONFIRMED_VISUAL). */
+  /** Still "scheduled" >2h past scheduled_at — reconciliation hasn't caught
+   *  up. Rendered as a red "⚠️ Sin confirmar" badge instead of the regular
+   *  "⏰ Programado" so the human investigates Metricool directly. */
   unconfirmed_drift?: boolean;
 }
 
@@ -34,7 +34,9 @@ export interface ReadyDraft {
   has_media: boolean;
   body: string;
   media: MediaAsset[];
-  /** Per-channel media requirement: `"required"` blocks publishing without media. */
+  /** Per-channel media requirement, mirrored from `ContentTask.media_policy`.
+   *  When `"required"` and `has_media === false`, the Ready Queue card
+   *  disables the "Programar" action. */
   media_policy?: "required" | "optional";
 }
 

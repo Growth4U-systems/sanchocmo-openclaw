@@ -1,0 +1,47 @@
+{
+  "cronName": "content-competitor-monitor",
+  "slug": "hulahoop",
+  "date": "2026-05-11",
+  "runAtMs": 1747043400000,
+  "status": "completed",
+  "last_finding": "7 ideas nuevas (4 competitors, 3 reference-creators). Highlights: idea-2026-05-11-8 — Ondo Finance RWA $1B→$36B en 5 años (X, May 6), pov_confidence 0.84. idea-2026-05-11-7 — Urbanitae framework gap de financiación alternativa (blog, May 8), pov_confidence 0.81.",
+  "content": {
+    "competitors_monitored": [
+      "SEGO Creative",
+      "Urbanitae",
+      "TaxMM/Pelícano Partners",
+      "SFTL/Incentiva Music",
+      "Taxlease"
+    ],
+    "reference_creators_monitored": [
+      "Sympathy for the Lawyer",
+      "Spain Audiovisual Hub",
+      "Diego Bañuelos",
+      "Ondo Finance",
+      "Profilm/Cluster Audiovisual"
+    ],
+    "signals_collected": 7,
+    "signals_discarded": 0,
+    "platforms_checked": [
+      "web/blog",
+      "X/Twitter",
+      "LinkedIn (search)",
+      "web/news"
+    ],
+    "coverage_gaps": [
+      "SFTL blog (404)",
+      "Sympathy for the Lawyer (no new posts)",
+      "Spain Audiovisual Hub (no new posts last 7 days)",
+      "Diego Bañuelos LinkedIn (no standalone posts)"
+    ]
+  },
+  "ideas_created": [
+    "idea-2026-05-11-6",
+    "idea-2026-05-11-7",
+    "idea-2026-05-11-8",
+    "idea-2026-05-11-9",
+    "idea-2026-05-11-10",
+    "idea-2026-05-11-11",
+    "idea-2026-05-11-12"
+  ]
+}

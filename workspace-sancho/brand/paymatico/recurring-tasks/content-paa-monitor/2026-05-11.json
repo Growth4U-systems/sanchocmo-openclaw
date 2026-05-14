@@ -1,0 +1,63 @@
+{
+  "task": "content-paa-monitor",
+  "client": "paymatico",
+  "date": "2026-05-11",
+  "status": "completed",
+  "run_at": "2026-05-11T06:15:00Z",
+  "source": "web_search",
+  "last_finding": "Regulación P3: entidades de pago deben reportar mensualmente a Hacienda desde enero 2026, y emergen FiDA + IPR como temas sin contenido en español — 8 preguntas nuevas, gap claro de POV. P1: Mollie lanzó página activa de franquicias con tap-to-pay (competidor directo de Paymatico).",
+  "summary": {
+    "total_new_questions": 30,
+    "by_pillar": {
+      "P1": 8,
+      "P2": 7,
+      "P3": 8,
+      "P4": 7
+    },
+    "deduplicated_against": "2026-05-04-paa.json",
+    "previous_total": 56
+  },
+  "signals": [
+    {
+      "pillar": "P3",
+      "signal": "Nuevas obligaciones de reporte mensual para entidades de pago a Hacienda desde enero 2026 — DAC8 en vigor. Gap de contenido explicativo para empresas.",
+      "source": "impoconta.es, linkedin.es/pulse"
+    },
+    {
+      "pillar": "P3",
+      "signal": "FiDA (open finance) e IPR (pagos instantáneos obligatorios) son 2 de los 9 cambios clave normativa fintech EU 2026 — sin cobertura editorial en español.",
+      "source": "unnax.com"
+    },
+    {
+      "pillar": "P1",
+      "signal": "Mollie lanzó solución específica para pagos en franquicias: tap-to-pay, quioscos autoservicio, terminal móvil. Competidor directo de Paymatico en este segmento.",
+      "source": "mollie.com/es/solutions/payments-for-franchises"
+    },
+    {
+      "pillar": "P2",
+      "signal": "BBVA lanzó 'Ibanes virtuales' (IBANs virtuales) para tesorería empresarial en octubre 2025. Señal de que grandes bancos entran en territorio de cuentas programables.",
+      "source": "bbva.com"
+    },
+    {
+      "pillar": "P2",
+      "signal": "Invoice-to-Cash automation reduce DSO 15-30 días en 90 días — dato concreto útil para contenido de ROI.",
+      "source": "beancount.io (Apr 2026)"
+    },
+    {
+      "pillar": "P2",
+      "signal": "Monei habilitó pagos programables con Bizum para pymes y autónomos — diferenciación de producto en mercado español.",
+      "source": "infonegocios.madrid"
+    },
+    {
+      "pillar": "P3",
+      "signal": "Banco de España publicó Plan Anual Normativo 2026 en febrero — referencia oficial para contenido de autoridad regulatoria.",
+      "source": "bde.es"
+    },
+    {
+      "pillar": "P4",
+      "signal": "Holded y Stripe publicaron guías actualizadas de pasarelas B2B para España en marzo 2026 — contenido competidor reciente que Paymatico puede superar con enfoque específico B2B.",
+      "source": "holded.com, stripe.com (Mar 2026)"
+    }
+  ],
+  "output_file": "brand/paymatico/content/research-signals/2026-05-11-paa.json"
+}

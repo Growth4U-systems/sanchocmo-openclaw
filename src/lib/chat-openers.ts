@@ -95,6 +95,10 @@ export interface ThreadConfig {
    * this field — see send.ts where it's forwarded.
    */
   agent?: string;
+  inputDocuments?: unknown[];
+  requiredInputs?: unknown[];
+  outputDocuments?: unknown[];
+  dependsOn?: string[];
   /**
    * Shape of the doc the thread is associated with. Defaults to `"file"`
    * (single .md / .html / .txt). For media templates the doc is a folder
@@ -408,6 +412,12 @@ export function buildTaskThread(
   opts: {
     taskSkill?: string; taskChannel?: string; taskStatus?: string;
     taskType?: string; pillar?: string;
+    agent?: string;
+    skills?: string[];
+    inputDocuments?: unknown[];
+    requiredInputs?: unknown[];
+    outputDocuments?: unknown[];
+    dependsOn?: string[];
     /** Pass the task's deliverable_file so the doc pill shows the right doc */
     deliverableFile?: string;
   }
@@ -421,8 +431,13 @@ export function buildTaskThread(
     // resolution fell back to sancho-manager.
     if (opts.taskSkill && config.skill === "sancho-manager") {
       config.skill = opts.taskSkill;
-      config.skills = [opts.taskSkill];
+      config.skills = opts.skills?.length ? opts.skills : [opts.taskSkill];
     }
+    if (opts.agent) config.agent = opts.agent;
+    config.inputDocuments = opts.inputDocuments;
+    config.requiredInputs = opts.requiredInputs;
+    config.outputDocuments = opts.outputDocuments;
+    config.dependsOn = opts.dependsOn;
     // Ensure linkedTo points to the actual task for navigation
     config.linkedTo = `projects/${projectId}/tasks/${taskId}`;
     return config;
@@ -441,11 +456,19 @@ export function buildTaskThread(
   return {
     threadId,
     threadName: taskName,
-    skill: resolved.skill,
-    skills: resolved.skills,
+    skill: opts.taskSkill || resolved.skill,
+    skills: opts.skills?.length ? opts.skills : resolved.skills,
     linkedTo: `projects/${projectId}/tasks/${taskId}`,
-    docPath: `projects/${projectId}/tasks.json`,
+    docPath: opts.deliverableFile || `projects/${projectId}/tasks.json`,
     threadState: opts.taskStatus === "ready" || opts.taskStatus === "pending" ? "create" : "continue",
+    agent: opts.agent || resolved.agent,
+    initialMessage: opts.taskSkill === "meeting-intelligence" && taskName.toLowerCase().includes("configurar")
+      ? "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, usa Google Workspace/GOG para buscar y validar carpetas de Drive, acepta URL/ID solo como fallback, selecciona Notion database/page, carga filtros como clients relation y deja preparado el primer run sin aplicar cambios a documentos canonicos."
+      : undefined,
+    inputDocuments: opts.inputDocuments,
+    requiredInputs: opts.requiredInputs,
+    outputDocuments: opts.outputDocuments,
+    dependsOn: opts.dependsOn,
   };
 }
 
@@ -459,6 +482,12 @@ export function buildContentTaskThread(
   opts: {
     skill?: string;
     status?: string;
+    agent?: string;
+    skills?: string[];
+    inputDocuments?: unknown[];
+    requiredInputs?: unknown[];
+    outputDocuments?: unknown[];
+    dependsOn?: string[];
     /** First/primary document path for the doc pill */
     docPath?: string;
   }
@@ -470,10 +499,15 @@ export function buildContentTaskThread(
     threadId,
     threadName: contentTaskName,
     skill,
-    skills: [skill],
+    skills: opts.skills?.length ? opts.skills : [skill],
     linkedTo: `projects/${projectId}/tasks/${parentTaskId}/content/${contentTaskId}`,
     docPath: opts.docPath || `projects/${projectId}/tasks.json`,
     threadState: opts.status === "Approved" || opts.status === "New" ? "create" : "continue",
+    agent: opts.agent || "dulcinea",
+    inputDocuments: opts.inputDocuments,
+    requiredInputs: opts.requiredInputs,
+    outputDocuments: opts.outputDocuments,
+    dependsOn: opts.dependsOn,
   };
 }
 
@@ -482,7 +516,16 @@ export function buildProjectThread(
   slug: string,
   projectId: string,
   projectName: string,
-  opts: { strategy?: string; status?: string }
+  opts: {
+    strategy?: string;
+    status?: string;
+    agent?: string;
+    skills?: string[];
+    inputDocuments?: unknown[];
+    requiredInputs?: unknown[];
+    outputDocuments?: unknown[];
+    dependsOn?: string[];
+  }
 ): ThreadConfig {
   const threadId = `${slug}:project:${projectId.toLowerCase()}`;
   const strategySkills = resolveThreadSkills({ slug, strategy: opts.strategy });
@@ -491,10 +534,17 @@ export function buildProjectThread(
     threadId,
     threadName: projectName,
     skill: "sancho-manager",
-    skills: ["sancho-manager", ...strategySkills.skills],
+    skills: opts.skills?.length ? opts.skills : ["sancho-manager", ...strategySkills.skills],
     linkedTo: `projects/${projectId}`,
-    docPath: `projects/${projectId}/project.json`,
+    docPath: Array.isArray(opts.outputDocuments) && (opts.outputDocuments[0] as { path?: string } | undefined)?.path
+      ? (opts.outputDocuments[0] as { path: string }).path
+      : `projects/${projectId}/project.json`,
     threadState: opts.status === "proposed" || opts.status === "pending" ? "create" : "continue",
+    agent: opts.agent || "sancho",
+    inputDocuments: opts.inputDocuments,
+    requiredInputs: opts.requiredInputs,
+    outputDocuments: opts.outputDocuments,
+    dependsOn: opts.dependsOn,
   };
 }
 

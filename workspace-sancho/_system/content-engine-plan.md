@@ -12,7 +12,7 @@ Alfonso (CGO Growth Systems, brand SanchoCMO) publica en LinkedIn, Blog SEO, New
 
 **El sistema vive como skills + UI.** Las skills son el motor (back-end). **Sancho UI (Next.js app) es el cockpit completo del sistema — no solo redacción.** En la UI el humano:
 
-- Ve la **Foundation** ejecutada (Brand Voice, Positioning, ECPs, Atalaya/competitive landscape).
+- Ve la **Foundation** ejecutada (Brand Voice, Positioning, ECPs, competitive landscape).
 - Define y revisa la **Content Strategy** (Capa 00 funnel + KPIs norte).
 - Ve los **Content Pillars** activos, los edita, versiona, y trigerea revisiones.
 - Ve los **Input Systems** y su configuración por pillar (news prompts, paa queries, keywords seed, competitors, schedules).
@@ -156,7 +156,7 @@ Adapta según `business_model`:
 | Skill | Cambio |
 |---|---|
 | `content-miner` | Renombrar a `insight-classifier` |
-| `thief-marketers` | Refactor: extraer competidores de Foundation/Atalaya, monitorear sus redes (LinkedIn, Instagram, blog) buscando "top 5 contenidos mejor performando 7 días". Incluir founders/personas referencia. |
+| `thief-marketers` | Refactor: extraer competidores de Foundation, monitorear sus redes (LinkedIn, Instagram, blog) buscando "top 5 contenidos mejor performando 7 días". Incluir founders/personas referencia. |
 | `daily-pulse` | Conectar cron + 5 días reales |
 | `meeting-intelligence` | Probar end-to-end (1 transcript) — **OPCIONAL en flujo pillar** |
 | `keyword-research` | Reuso para blog SEO targeting — sin cambio |
@@ -187,7 +187,7 @@ Adapta según `business_model`:
 ┌──────────────────────────────────────────────────────────────┐
 │  CAPA 0.5 — SETUP (NEW, primera vez por cliente)              │
 │  Para cada pillar genera: prompts news, queries PAA,          │
-│  keywords seed, lista competidores (de Atalaya/Foundation),   │
+│  keywords seed, lista competidores (de Foundation),   │
 │  fuentes RSS, perfiles founders. Guarda configs por cliente.  │
 │  Después: crons + steady state.                               │
 └──────────────────────────┬───────────────────────────────────┘
@@ -205,11 +205,11 @@ Adapta según `business_model`:
 └──────────────────────────┬───────────────────────────────────┘
                            ↓
 ┌──────────────────────────────────────────────────────────────┐
-│  CAPA 2 — HUB CENTRAL (file-based)                            │
+│  CAPA 2 — HUB CENTRAL                                         │
 │  • ./brand/content-pillars.md                                 │
 │  • ./content/research-signals/YYYY-MM-DD-{type}.json          │
 │  • ./content/idea-queue.json (ideas con signal+angle)         │
-│  • ./brand/clarify-history.json (POV Bank)                    │
+│  • Neon pov_* tables (POV Bank + Clarify patterns)            │
 │  insight-to-content-mapper [extend] → angle_draft             │
 └──────────────────────────┬───────────────────────────────────┘
                            ↓
@@ -314,7 +314,7 @@ pillars:
 | `news-prompts/<pillar_id>.yml` | Prompt SECTOR+PILLARS para `news-monitor` |
 | `paa-queries/<pillar_id>.yml` | Lista de queries seed para PAA |
 | `keywords-seed/<pillar_id>.yml` | Keywords para `keyword-research` |
-| `competitors/<pillar_id>.yml` | Lista competidores + redes (LinkedIn, Instagram, blog) — extraído de Atalaya/Foundation |
+| `competitors/<pillar_id>.yml` | Lista competidores + redes (LinkedIn, Instagram, blog) — extraído de Foundation |
 | `reference-creators/<pillar_id>.yml` | **Creadores de contenido referentes** del sector (founders, thought leaders, journalists, niche stars). Por plataforma: LinkedIn handles, X/Twitter handles, Instagram handles, blog/newsletter URLs. Distinto de competitors: no son competencia sino voces inspiradoras. |
 | `cadence-config.yml` | Cadencia día×canal×type para este cliente |
 
@@ -323,7 +323,7 @@ pillars:
 2. Para cada pillar, generar configs derivados (humano + Sancho colaboran):
    - News prompt: usa template parametrizado, humano confirma sector + pillars wording.
    - PAA queries: deriva de keywords_seed + topics.
-   - Competitors: pull de Atalaya/Foundation (`./brand/competitive-landscape.md` o equivalente). Extrae sus URLs sociales.
+   - Competitors: pull de Foundation (`./brand/competitive-landscape.md` o equivalente). Extrae sus URLs sociales.
 3. Cadence config: workshop con humano (qué tipos qué días qué canales).
 4. Activar crons.
 
@@ -358,7 +358,7 @@ Re-setup: si el humano cambia pillars (review trimestral), se re-ejecuta solo lo
 ### `thief-marketers` (refactor) — competitors + reference creators
 
 **Refactor:** leer DOS configs por pillar:
-- `competitors/<pillar_id>.yml` (extraído de Atalaya/Foundation)
+- `competitors/<pillar_id>.yml` (extraído de Foundation)
 - `reference-creators/<pillar_id>.yml` (creadores referentes del sector)
 
 Para cada competidor Y cada creador referente, monitorear sus redes (LinkedIn, Instagram, blog/newsletter, X) y traer "top 5 contenidos mejor performando últimos 7 días" por plataforma.
@@ -420,7 +420,7 @@ Cuando el cliente tenga transcripts. Output: quotes etiquetados por pillar → `
 🎯 Pillar: [P#] · Canal: [channel] · Tipo: [type]
 ```
 
-**Otros archivos del Hub** (sin cambio relevante respecto versión anterior): `clarify-history.json`, `quotes-by-pillar.json`, `voice-profile.md`, `cadence-config.yml`.
+**Otros archivos del Hub** (sin cambio relevante respecto versión anterior): `quotes-by-pillar.json`, `voice-profile.md`, `cadence-config.yml`. `clarify-history.json` queda solo como legacy/export; Neon es source of truth.
 
 ---
 
@@ -528,7 +528,7 @@ Output: `./content/published/YYYY-MM-DD.json` (channel, type, pillar, idea_id, p
 - Renombrar `content-miner` → `insight-classifier`.
 - Fix `daily-pulse` cron + correr 5 días.
 - Probar `meeting-intelligence` con 1 transcript real (validar que funciona, aunque sea opcional).
-- Refactor `thief-marketers`: input desde Atalaya/Foundation con redes competidores + founders.
+- Refactor `thief-marketers`: input desde Foundation con redes competidores + founders.
 - Ejecutar `content-pillars` para Alfonso → `./brand/content-pillars.md` con 3-4 pillars + funnel_role.
 - **Setup workshop con Alfonso:** crear configs derivados (news-prompts, paa-queries, keywords-seed, competitors, cadence-config).
 - Brand Voice Layer 4 locked.
@@ -538,7 +538,7 @@ Output: `./content/published/YYYY-MM-DD.json` (channel, type, pillar, idea_id, p
 **Fase 2 — LinkedIn-only MVP (semanas 3-4)**
 - Crear: `news-monitor`, `paa-monitor`, `social-writer` (canal=linkedin first).
 - Extender: `insight-to-content-mapper` (angle_draft con signal embedded), `content-calendar-planner` (recency-aware + dispatch a Idea Approval Loop).
-- Crear archivos: `idea-queue.json`, `clarify-history.json`.
+- Crear `idea-queue.json` y las tablas Neon `pov_*` para POV/Clarify.
 - Slack/Discord integration para Idea Approval Loop.
 - UI Sancho: implementar hilo del día con cards de drafts (mínimo viable — si UI no lista, fallback temporal a archivos editables manualmente).
 - Metricool API integrada.
@@ -551,7 +551,7 @@ Output: `./content/published/YYYY-MM-DD.json` (channel, type, pillar, idea_id, p
 - Métricas operativas + dashboard mensual + KPIs norte tracking.
 - POV Bank consolidation mensual.
 - **UI Sancho completa cubriendo TODO el sistema:**
-  - Foundation view (Brand Voice, Positioning, ECPs, Atalaya).
+  - Foundation view (Brand Voice, Positioning, ECPs, Competitive Landscape).
   - Content Strategy view (funnel + KPIs norte).
   - Pillars view (lista, edit, versionado, trigger review).
   - Input Systems view (configs por pillar visible y editable).
@@ -591,7 +591,7 @@ Output: `./content/published/YYYY-MM-DD.json` (channel, type, pillar, idea_id, p
 
 **Configs (workspace cliente, file-based):**
 - `./brand/content-pillars.md`
-- `./brand/clarify-history.json`
+- Neon `pov_*` tables (legacy export opcional: `./brand/clarify-history.json`)
 - `./brand/quotes-by-pillar.json`
 - `./content/configs/news-prompts/<pillar_id>.yml`
 - `./content/configs/paa-queries/<pillar_id>.yml`
@@ -626,7 +626,7 @@ Output: `./content/published/YYYY-MM-DD.json` (channel, type, pillar, idea_id, p
 - [ ] `content-miner` renombrada `insight-classifier`.
 - [ ] `daily-pulse` corre 5 días seguidos.
 - [ ] `meeting-intelligence` probada (output JSON con quotes etiquetados) — aunque opcional en flow.
-- [ ] `thief-marketers` refactor: lee competitors desde Atalaya/Foundation y trae top contenidos competidor.
+- [ ] `thief-marketers` refactor: lee competitors desde Foundation y trae top contenidos competidor.
 - [ ] Setup workshop ejecutado: configs por pillar (news-prompts, paa-queries, keywords-seed, competitors, reference-creators, cadence-config) creados.
 - [ ] `_system/clarify-protocol.md` y `_system/idea-approval-protocol.md` documentados.
 

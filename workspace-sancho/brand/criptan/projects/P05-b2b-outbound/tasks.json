@@ -1,0 +1,83 @@
+{
+  "project_id": "P05",
+  "tasks": [
+    {
+      "id": "T01",
+      "name": "Definir ICP B2B + criterios de empresa target",
+      "description": "Definir con precisión el perfil de empresa ideal para Criptan Earn B2B: sector, tamaño (empleados/revenue), señales de tesorería disponible (funding reciente, revenue alto, sector con márgenes), geografía (España, foco Madrid/Barcelona/Valencia). Cruzar con datos de las 250 empresas clientes existentes para validar.",
+      "deliverable": "Documento ICP B2B con criterios, ejemplos de empresas reales que encajan, y señales de cualificación.",
+      "done_criteria": "ICP aprobado con al menos 5 criterios medibles y 10 empresas ejemplo.",
+      "depends_on": null,
+      "status": "completed",
+      "owner": "Sancho",
+      "channel": "prospecting",
+      "discord_thread_id": null,
+      "skill": "company-finder",
+      "created": "2026-03-30",
+      "completed": "2026-03-30",
+      "output_files": [
+        "brand/criptan/projects/P05-b2b-outbound/T01/icp-b2b-definition.md"
+      ],
+      "notes": "ICP definido con 7+ criterios medibles, 15 empresas ejemplo, scoring model, 3 buyer personas. Pendiente validar con datos reales de 250 clientes existentes.",
+      "deliverable_file": "brand/criptan/projects/P05-b2b-outbound/tasks/T01/deliverable.md",
+      "mc_chat_thread_id": "task-t01"
+    },
+    {
+      "id": "T02",
+      "name": "List building — 200 empresas target",
+      "description": "Construir lista de 200 empresas españolas que cumplen los criterios del ICP B2B. Para cada empresa: nombre, sector, tamaño, señal de cualificación, persona clave (CFO/Director Financiero), LinkedIn URL.",
+      "deliverable": "Lista de 200 empresas con datos de contacto y señal de cualificación.",
+      "done_criteria": "200 empresas con al menos nombre + sector + persona clave + LinkedIn.",
+      "depends_on": "T01",
+      "status": "todo",
+      "owner": "Sancho",
+      "channel": "prospecting",
+      "discord_thread_id": null,
+      "skill": "company-finder",
+      "created": "2026-03-30",
+      "completed": null,
+      "output_files": [],
+      "notes": "",
+      "deliverable_file": "brand/criptan/projects/P05-b2b-outbound/tasks/T02/deliverable.md",
+      "mc_chat_thread_id": "task-t02"
+    },
+    {
+      "id": "T03",
+      "name": "Enriquecer contactos — email + contexto",
+      "description": "Para las 200 empresas, encontrar email de contacto del decisor (CFO/Director Financiero) y enriquecer con contexto para personalización: publicaciones LinkedIn recientes, noticias de la empresa, señales de timing (fundraising, expansión, cambio de CFO).",
+      "deliverable": "Lista enriquecida con email verificado y 1-2 señales de personalización por contacto.",
+      "done_criteria": "Al menos 150 emails verificados con señal de personalización.",
+      "depends_on": "T02",
+      "status": "todo",
+      "owner": "Sancho",
+      "channel": "prospecting",
+      "discord_thread_id": null,
+      "skill": "contact-enrichment",
+      "created": "2026-03-30",
+      "completed": null,
+      "output_files": [],
+      "notes": "Necesita herramienta de enrichment (Apollo, Hunter, etc.)",
+      "deliverable_file": "brand/criptan/projects/P05-b2b-outbound/tasks/T03/deliverable.md",
+      "mc_chat_thread_id": "task-t03"
+    },
+    {
+      "id": "T04",
+      "name": "Secuencia de outreach B2B — email + LinkedIn",
+      "description": "Crear secuencia de outreach de 3-5 touchpoints para el segmento de empresas con tesorería ociosa. Ángulo principal: 'Tu tesorería pierde valor — Criptan Earn B2B te da hasta 4.5% TAE regulado por CNMV'. Multi-canal: email + LinkedIn. Disclaimers MiCA obligatorios.",
+      "deliverable": "Secuencia completa: 3 emails + 2 touchpoints LinkedIn, con variantes por sub-segmento.",
+      "done_criteria": "Secuencia aprobada. Primeros 50 contactos activados con >15% reply rate.",
+      "depends_on": "T03",
+      "status": "todo",
+      "owner": "Sancho",
+      "channel": "prospecting",
+      "discord_thread_id": null,
+      "skill": "outreach-sequence-builder",
+      "created": "2026-03-30",
+      "completed": null,
+      "output_files": [],
+      "notes": "Necesita sequencer (Instantly, Lemlist, etc.) y dominio calentado",
+      "deliverable_file": "brand/criptan/projects/P05-b2b-outbound/tasks/T04/deliverable.md",
+      "mc_chat_thread_id": "task-t04"
+    }
+  ]
+}

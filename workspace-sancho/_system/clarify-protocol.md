@@ -12,8 +12,8 @@ pieza ANTES de que el writer genere el draft. Existe porque:
 
 1. **Reduce reescrituras** — mejor preguntar 2 cosas que rehacer el draft
 2. **Captura POV** — el POV se decide POR PIEZA, no por pillar
-3. **Construye POV Bank** — cada Clarify se guarda en `clarify-history.json`
-   para que Brand Voice aprenda patrones
+3. **Construye POV Bank** — cada Clarify se guarda en Neon (`pov_clarify_patterns`
+   / `pov_evidence_items`) para que el sistema aprenda patrones
 
 ## Flujo
 
@@ -64,7 +64,7 @@ predicciones, NO skip.
 
 ### 5. Guardar en POV Bank
 
-Append a `brand/{slug}/content/clarify-history.json`:
+Persistir en Neon:
 
 ```json
 {
@@ -98,4 +98,12 @@ Append a `brand/{slug}/content/clarify-history.json`:
 - **NUNCA saltarse Clarify.** Incluso si confianza es 0.99.
 - **Max 3 preguntas.** Mas de 3 genera friccion.
 - **Predicciones SIEMPRE.** Nunca preguntas vacias sin prediccion.
-- **Cada Clarify se guarda.** Sin excepcion. El POV Bank depende de esto.
+- **Cada Clarify se guarda en Neon.** Sin excepcion. El POV Bank depende de esto.
+- **No usar `clarify-history.json` ni `pov-bank.json` como source of truth.**
+
+## Persistencia automatica hacia POV Bank
+
+- Al guardar `content/drafts/{ideaId}/clarify.md` via `PATCH /api/content-engine/drafts`, MC ejecuta `reconcileClarifyToPovBank(slug, { ideaId })`.
+- Cada respuesta humana se convierte en `pov_evidence_items` (`source_type=clarify`, `status=active`) y en `pov_clarify_patterns`.
+- El `pillar_id`, canal, content_type, angle y path original se guardan en `source_ref` para que Writer pueda citar ejemplos concretos sin volver al JSON.
+- Para reconciliar manualmente todo el cliente: `POST /api/content-engine/pov-bank` con `{ "slug": "{slug}", "sources": ["clarify"] }`.

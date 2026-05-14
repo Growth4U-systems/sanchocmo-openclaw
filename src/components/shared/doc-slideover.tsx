@@ -9,6 +9,7 @@ import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
 import { findTaskThreadForDoc, buildPillarThread } from "@/lib/chat-openers";
+import { normalizeBrandDocPath, stripBrandPrefix } from "@/lib/doc-paths";
 import { cn } from "@/lib/utils";
 
 const MarkdownEditor = dynamic(
@@ -79,27 +80,56 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   const [lastModified, setLastModified] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [missingDoc, setMissingDoc] = useState(false);
   const [editing, setEditing] = useState(false);
   const { data: foundation, refetch: refetchFoundation } = useBrandBrain(slug);
   const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
   const router = useRouter();
-  const isOpen = !!docPath;
+  const normalizedDocPath = useMemo(() => {
+    if (!docPath) return null;
+    try {
+      return normalizeBrandDocPath(slug, docPath);
+    } catch {
+      return docPath;
+    }
+  }, [slug, docPath]);
+  const [canonicalDocPath, setCanonicalDocPath] = useState<string | null>(null);
+  const activeDocPath = canonicalDocPath || normalizedDocPath;
+  const isOpen = !!normalizedDocPath;
 
   // Fetch doc content
   useEffect(() => {
-    if (!docPath) return;
+    if (!normalizedDocPath) return;
     setLoading(true);
     setError(null);
+    setMissingDoc(false);
     setContent(null);
     setEditing(false);
+    setCanonicalDocPath(null);
 
-    fetch(`/api/docs/${docPath}`)
-      .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
-      .then((data) => { if (data.ok && data.content) { setContent(data.content); setLastModified(data.lastModified || null); } else setError(data.error || "Not found"); })
+    fetch(`/api/docs/${normalizedDocPath}`)
+      .then((res) => {
+        if (res.status === 404) {
+          setMissingDoc(true);
+          return null;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (!data) return;
+        if (data.ok && data.content) {
+          setContent(data.content);
+          setLastModified(data.lastModified || null);
+          setCanonicalDocPath(data.canonicalPath || data.path || normalizedDocPath);
+        } else {
+          setError(data.error || "No se pudo cargar el documento");
+        }
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [docPath]);
+  }, [normalizedDocPath]);
 
   // Body scroll lock
   useEffect(() => {
@@ -108,7 +138,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   }, [isOpen]);
 
   // Pillar info for status dropdown
-  const linkedKey = useMemo(() => docPath ? docPathToLinkedKey(docPath) : "", [docPath]);
+  const linkedKey = useMemo(() => activeDocPath ? docPathToLinkedKey(activeDocPath) : "", [activeDocPath]);
   const pillarInfo = useMemo(() => findPillarInfo(foundation, linkedKey), [foundation, linkedKey]);
   const normStatus = pillarInfo
     ? pillarInfo.status === "done" ? "approved" : pillarInfo.status === "generated" ? "pending-review" : pillarInfo.status
@@ -117,7 +147,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   const statusStyle = STATUS_STYLES[currentStatus];
 
   // Title
-  const displayTitle = docPath
+  const displayTitle = activeDocPath
     ?.split("/").pop()
     ?.replace(/\.md$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Documento";
 
@@ -135,7 +165,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
 
   function handleOpenFull() {
     onClose();
-    if (!docPath) {
+    if (!activeDocPath) {
       router.push(`/dashboard/${slug}/brand-brain`);
       return;
     }
@@ -145,23 +175,23 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     // openChat() so the chat sidebar is already populated when the user
     // arrives at the foundation page. Finally we router.push (not
     // window.location.href) so the navigation is client-side and instant.
-    const taskThread = findTaskThreadForDoc(slug, docPath, projectsData);
+    const taskThread = findTaskThreadForDoc(slug, activeDocPath, projectsData);
     if (taskThread) {
       openChat(slug, taskThread);
     } else {
       // Fallback: derive a pillar thread for the doc. linkedKey is the
       // pillar slug we computed from the docPath.
       if (linkedKey) {
-        const config = buildPillarThread(slug, linkedKey, docPath);
+        const config = buildPillarThread(slug, linkedKey, activeDocPath);
         openChat(slug, config);
       }
     }
-    router.push(`/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(docPath)}`);
+    router.push(`/dashboard/${slug}/brand-brain?doc=${encodeURIComponent(activeDocPath)}`);
   }
 
   async function handleSave(newContent: string) {
-    if (!docPath) return;
-    const res = await fetch(`/api/docs/${docPath}`, {
+    if (!activeDocPath) return;
+    const res = await fetch(`/api/docs/${activeDocPath}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: newContent }),
@@ -169,7 +199,20 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     if (!res.ok) throw new Error("Save failed");
     // Refresh content
     setContent(newContent);
+    setMissingDoc(false);
+    setLastModified(new Date().toISOString());
     setEditing(false);
+  }
+
+  async function handleCreateDraft() {
+    if (!docPath) return;
+    const ext = docPath.split(".").pop()?.toLowerCase();
+    if (ext !== "md" && ext !== "html") return;
+    const draft = ext === "html"
+      ? `<!doctype html>\n<html lang="es">\n<head>\n  <meta charset="utf-8" />\n  <title>${displayTitle}</title>\n</head>\n<body>\n  <h1>${displayTitle}</h1>\n</body>\n</html>\n`
+      : `# ${displayTitle}\n\n> Documento esperado declarado por la task. Completa este borrador con el output final.\n\n`;
+    await handleSave(draft);
+    if (ext === "md") setEditing(true);
   }
 
   // ── Public share link ────────────────────────────────────────────────
@@ -178,12 +221,12 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   // open the URL without needing MC login.
   const [shareCopied, setShareCopied] = useState(false);
   async function handleCopyShareLink() {
-    if (!docPath || !slug) return;
+    if (!activeDocPath || !slug) return;
     try {
       const res = await fetch("/api/docs/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, docPath }),
+        body: JSON.stringify({ slug, docPath: activeDocPath }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -201,7 +244,8 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     }
   }
 
-  const isJson = docPath?.endsWith(".json") || false;
+  const isJson = activeDocPath?.endsWith(".json") || false;
+  const canCreateDraft = !!activeDocPath && (activeDocPath.endsWith(".md") || activeDocPath.endsWith(".html"));
   const parsedJson = useMemo(() => {
     if (!isJson || !content) return null;
     try { return JSON.parse(content); } catch { return null; }
@@ -213,7 +257,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   // preview goes through the template-preview-html endpoint so `{{slot.*}}`
   // and `{{brand.*}}` placeholders get resolved to the brand's actual
   // values — that way you see the real render, not the template source.
-  const isHtmlDoc = !!(docPath?.endsWith(".html") || (content && (content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html"))));
+  const isHtmlDoc = !!(activeDocPath?.endsWith(".html") || (content && (content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html"))));
   const [htmlDraft, setHtmlDraft] = useState<string>("");
   const [savingHtml, setSavingHtml] = useState(false);
   const [previewRevision, setPreviewRevision] = useState(0);
@@ -222,11 +266,11 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   }, [isHtmlDoc, content]);
 
   const templateInfo = useMemo(() => {
-    if (!docPath) return null;
-    const m = docPath.match(/^brand\/([^/]+)\/brand-book\/visual-identity\/templates\/([^/]+)\/(slide-cover|slide-body|slide-cta|template)\.html$/);
+    if (!activeDocPath) return null;
+    const m = activeDocPath.match(/^brand\/([^/]+)\/brand-book\/visual-identity\/templates\/([^/]+)\/(slide-cover|slide-body|slide-cta|template)\.html$/);
     if (!m) return null;
     return { slug: m[1], id: m[2], file: m[3] };
-  }, [docPath]);
+  }, [activeDocPath]);
 
   const previewSrc = templateInfo
     ? `/api/content-engine/template-preview-html?slug=${encodeURIComponent(templateInfo.slug)}&id=${encodeURIComponent(templateInfo.id)}&file=${templateInfo.file}&_=${previewRevision}`
@@ -234,10 +278,10 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   const isHtmlDirty = isHtmlDoc && content !== null && htmlDraft !== content;
 
   async function handleSaveHtml() {
-    if (!docPath || htmlDraft === null) return;
+    if (!activeDocPath || htmlDraft === null) return;
     setSavingHtml(true);
     try {
-      const res = await fetch(`/api/docs/${docPath}`, {
+      const res = await fetch(`/api/docs/${activeDocPath}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: htmlDraft }),
@@ -316,7 +360,8 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
             <button
               type="button"
               onClick={handleCopyShareLink}
-              className={btnClass}
+              disabled={missingDoc}
+              className={cn(btnClass, missingDoc && "opacity-50 cursor-not-allowed hover:bg-transparent")}
               title="Copia un link público para compartir con terceros"
             >
               {shareCopied ? "✓ Copiado" : "🔗 Compartir"}
@@ -324,15 +369,15 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
 
             {/* Task link — find the task that owns this doc by searching projectsData directly */}
             {(() => {
-              if (!docPath || !projectsData) return null;
-              const norm = docPath.replace(/^brand\/[^/]+\//, "");
-              const withBrand = docPath.startsWith("brand/") ? docPath : `brand/${slug}/${docPath}`;
+              if (!activeDocPath || !projectsData) return null;
+              const norm = stripBrandPrefix(activeDocPath, slug);
+              const withBrand = activeDocPath;
               for (const pw of projectsData) {
                 for (const task of pw.tasks) {
                   const df = task.deliverable_file;
                   const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
                   if (!dfStr) continue;
-                  if (dfStr === docPath || dfStr === norm || dfStr === withBrand) {
+                  if (dfStr === activeDocPath || dfStr === norm || dfStr === withBrand) {
                     return (
                       <button
                         type="button"
@@ -351,7 +396,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
                   if (task.attachments) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const hit = (task.attachments as any[]).some((a: {path?: string}) =>
-                      a?.path === docPath || a?.path === norm || a?.path === withBrand
+                      a?.path === activeDocPath || a?.path === norm || a?.path === withBrand
                     );
                     if (hit) {
                       return (
@@ -374,17 +419,23 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               return null;
             })()}
 
-            <button type="button" onClick={handleOpenFull} className={btnClass} title="Abrir en Documents">
+            <button
+              type="button"
+              onClick={handleOpenFull}
+              disabled={missingDoc}
+              className={cn(btnClass, missingDoc && "opacity-50 cursor-not-allowed hover:bg-transparent")}
+              title="Abrir en Documents"
+            >
               ⤢ Abrir
             </button>
           </div>
         </div>
 
         {/* Body — viewer or editor.
-            Key forces clean remount when docPath changes, preventing
+            Key forces clean remount when activeDocPath changes, preventing
             Toast UI editor DOM desync (removeChild crash). */}
         {editing && content !== null ? (
-          <div className="flex-1 min-h-0" key={`editor-${docPath}`}>
+          <div className="flex-1 min-h-0" key={`editor-${activeDocPath}`}>
             <MarkdownEditor
               initialContent={content}
               onSave={handleSave}
@@ -396,7 +447,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
             {/* HTML editor (left) */}
             <div className="flex flex-col min-h-0 bg-[#1e1e2e]">
               <div className="px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-[#a6adc8] border-b border-[#313244] bg-[#181825] flex items-center justify-between">
-                <span>HTML · {docPath?.split("/").pop()}</span>
+                <span>HTML · {activeDocPath?.split("/").pop()}</span>
                 {isHtmlDirty && <span className="text-[10px] text-[#f9e2af]">● sin guardar</span>}
               </div>
               <textarea
@@ -432,7 +483,28 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
         ) : (
           <div className="flex-1 overflow-y-auto p-6">
             {loading && <p className="text-sm text-muted-foreground text-center py-20">Cargando documento...</p>}
-            {error && <p className="text-sm text-red-500 text-center py-20">{error}</p>}
+            {missingDoc && (
+              <div className="mx-auto max-w-xl rounded-xl border border-dashed border-[#D8CDBA] bg-[#FAF4E3] p-6 text-center">
+                <div className="text-3xl mb-3">▣</div>
+                <h3 className="font-heading text-lg font-bold text-[#1D1A17]">Documento esperado pendiente</h3>
+                <p className="mt-2 text-sm text-[#6D6257]">
+                  La task declara este output, pero el archivo todavía no existe. Esto es normal si el agente aún no lo ha producido.
+                </p>
+                <div className="mt-4 rounded-md bg-white/70 px-3 py-2 text-left font-mono text-[11px] text-[#6D6257] break-all">
+                  {activeDocPath}
+                </div>
+                {canCreateDraft && (
+                  <button
+                    type="button"
+                    onClick={handleCreateDraft}
+                    className="mt-5 inline-flex items-center justify-center rounded-md border-2 border-[#1B1720] bg-[#F7C948] px-4 py-2 text-sm font-bold text-[#1B1720] shadow-[3px_3px_0_#1B1720] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#1B1720]"
+                  >
+                    Crear borrador
+                  </button>
+                )}
+              </div>
+            )}
+            {error && !missingDoc && <p className="text-sm text-red-500 text-center py-20">{error}</p>}
             {content && (
               isJson && parsedJson ? (
                 <JsonViewer data={parsedJson} />
@@ -451,9 +523,9 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
         )}
 
         {/* Footer */}
-        {docPath && !editing && (
+        {activeDocPath && !editing && (
           <div className="flex items-center justify-between px-4 py-2 border-t border-[#E5E2DC] dark:border-[#313244] bg-[#FAFAF8] dark:bg-[#181825] text-[10px] text-muted-foreground shrink-0">
-            <span className="truncate">{docPath}</span>
+            <span className="truncate">{activeDocPath}</span>
             {lastModified && (
               <span className="flex-shrink-0 ml-3">
                 Editado: {new Date(lastModified).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}

@@ -1,0 +1,126 @@
+[
+  {
+    "id": "P14-T01",
+    "name": "Content Strategy (14 decisiones globales)",
+    "description": "Proceso 1 — Ejecutar content-strategy a nivel empresa. Define: nichos confirmados, Content Tilt, Villano, Trigger Events, canales activos, mix searchable/shareable, pillars a alto nivel, KPIs norte.",
+    "phase": 1,
+    "type": "foundation",
+    "channel": "strategy",
+    "niche": null,
+    "status": "completed",
+    "completed": "2026-04-27",
+    "deliverable": "Documento con las 14 decisiones estrategicas globales del Content Engine",
+    "deliverable_file": "brand/growth4u/content/strategy-decisions.md",
+    "output_files": [
+      "strategy-decisions.md"
+    ],
+    "depends_on": null,
+    "owner": "Sancho",
+    "skill": "content-strategy",
+    "mc_chat_thread_id": "task-p14-t01",
+    "discord_thread_id": null
+  },
+  {
+    "id": "P14-T02",
+    "name": "Content Pillars (3-5 temas)",
+    "description": "Proceso 1 — Ejecutar content-pillars. Define 3-5 pillars (TEMAS, no POV). Lee Foundation completa + strategy-decisions.md. Asigna funnel_role per pillar. El humano confirma la lista final.",
+    "phase": 1,
+    "type": "foundation",
+    "channel": "strategy",
+    "niche": null,
+    "status": "completed",
+    "completed": "2026-04-25",
+    "deliverable": "Content pillars con funnel_role, pain_origin, expertise, related_topics",
+    "deliverable_file": "brand/growth4u/content/content-pillars.md",
+    "output_files": [
+      "content-pillars.md"
+    ],
+    "depends_on": "P14-T01",
+    "owner": "Sancho",
+    "skill": "content-pillars",
+    "mc_chat_thread_id": "task-p14-t02",
+    "discord_thread_id": null
+  },
+  {
+    "id": "P14-T03",
+    "name": "Setup configs por pillar",
+    "description": "Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + pov-bank.json + Foundation. Genera ademas un setup.md narrativo que explica el por que de cada decision y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA. ORDEN DE EJECUCION: SE EJECUTA EL ULTIMO. Requiere P14-T01 (Strategy) + P14-T02 (Pillars) + P14-T04 (POV Bank) en status:completed.",
+    "phase": 1,
+    "type": "execution",
+    "channel": "strategy",
+    "niche": null,
+    "status": "completed",
+    "completed": "2026-04-27",
+    "deliverable": "Configs por pillar + cadence + sources.json profiles + setup.md narrativo",
+    "deliverable_file": "brand/growth4u/content/configs/setup.md",
+    "output_files": [
+      "setup.md",
+      "cadence-config.yml",
+      "news-prompts/*.yml",
+      "paa-queries/*.yml",
+      "keywords-seed/*.yml",
+      "../../market-and-us/competitors/sources.json"
+    ],
+    "depends_on": "P14-T04",
+    "owner": "Sancho",
+    "skill": "content-engine-setup",
+    "mc_chat_thread_id": "task-p14-t03",
+    "discord_thread_id": null
+  },
+  {
+    "id": "P14-T04",
+    "name": "Build POV Bank",
+    "description": "Construye la BD de puntos de vista (pov-bank.json) per pillar: core_belief, we_say_yes_to/no_to, preferred_angles, evidence_we_cite. Lee brand-voice + content-pillars + clarify-history. El skill idea-builder consultara este doc para generar angle_drafts diferenciados (no genericos). Se refresca mensualmente con el cron POV Bank Refresh basado en patrones de clarify-history. ORDEN DE EJECUCION: VA ANTES que P14-T03 (Setup configs) — el POV se decide primero, despues se configuran los inputs alineados con esa postura. Requiere P14-T01 (Strategy) + P14-T02 (Pillars) en status:completed.",
+    "phase": 1,
+    "type": "execution",
+    "channel": "strategy",
+    "niche": null,
+    "status": "completed",
+    "deliverable": "POV Bank con opiniones por pillar (core_belief, we_say_yes/no, preferred_angles, evidence)",
+    "deliverable_file": "brand/growth4u/content/pov-bank.json",
+    "output_files": [
+      "pov-bank.json",
+      "pov-bank-history.json"
+    ],
+    "depends_on": "P14-T02",
+    "owner": "Sancho",
+    "skill": "pov-bank-builder",
+    "mc_chat_thread_id": "task-p14-t04",
+    "discord_thread_id": null,
+    "completed": "2026-04-27"
+  },
+  {
+    "id": "P14-T05",
+    "name": "Visual Templates (5 plantillas HTML)",
+    "description": "Genera las 5 plantillas HTML brand-specific (linkedin-quote, linkedin-9-slide, instagram-3-slide, blog-post, blog-title) ejecutando el skill growth4u-visual-generator. La skill lee design-tokens.json + visual-identity.current.md, decide qué personajes incluir (Alfonso/Martín/Philippe), genera con nano-banana-pro los assets faltantes, y produce los HTMLs en brand/growth4u/brand-book/visual-identity/templates/{id}/. Ver SKILL.md de la skill para el flow completo.",
+    "phase": 1,
+    "type": "foundation",
+    "channel": "visual",
+    "niche": null,
+    "status": "completed",
+    "completed": "2026-05-07",
+    "deliverable": "5 plantillas HTML (template.html o slide-*.html) + meta.json por plantilla",
+    "deliverable_file": [
+      "brand/growth4u/brand-book/visual-identity/templates/linkedin-quote/template.html",
+      "brand/growth4u/brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+      "brand/growth4u/brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+      "brand/growth4u/brand-book/visual-identity/templates/blog-post/template.html",
+      "brand/growth4u/brand-book/visual-identity/templates/blog-title/template.html"
+    ],
+    "output_files": [
+      "brand-book/visual-identity/templates/linkedin-quote/template.html",
+      "brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+      "brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+      "brand-book/visual-identity/templates/blog-post/template.html",
+      "brand-book/visual-identity/templates/blog-title/template.html"
+    ],
+    "depends_on": [
+      "P14-T01",
+      "P14-T02"
+    ],
+    "owner": "Sancho",
+    "skill": "growth4u-visual-generator",
+    "mc_chat_thread_id": "task-p14-t05",
+    "discord_thread_id": null
+  }
+]

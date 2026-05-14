@@ -1,0 +1,43 @@
+{
+  "date": "2026-05-04",
+  "generated_at": "2026-05-04T07:10:00Z",
+  "channels_scanned": ["general", "brand", "projects", "content", "paid-ads", "web", "intelligence", "soporte"],
+  "human_messages_24h": 0,
+  "bot_messages_24h": 3,
+  "insights": [],
+  "metrics_summary": {
+    "meta_ads": {
+      "impressions": "10.7K (+55% vs media)",
+      "cpc": "€2.86 (mejorando)",
+      "leads_yesterday": 2,
+      "spend_trend": "recovering"
+    },
+    "ghl": {
+      "total_contacts": 447,
+      "llamada_agendada": 28,
+      "new_leads_yesterday": 0,
+      "transcripts_new": 0
+    },
+    "calls_tomorrow": 1
+  },
+  "health_indicators": {
+    "human_engagement": "critical — 0 human messages in 24h, 9+ weeks without Discord activity",
+    "lead_flow": "stable — 2 leads yesterday, CPC improving",
+    "conversion_gap": "persistent — leads entering but citas not materializing consistently",
+    "content_engine": "active — editorial dispatch running, Slack scope error blocking publish"
+  },
+  "action_items": [
+    {
+      "priority": "P0",
+      "item": "Fix Slack chat:write scope for editorial dispatch (bloqueado desde 28/04)"
+    },
+    {
+      "priority": "P1", 
+      "item": "Lead→cita conversion: 28 leads con 'llamada-agendada' pero gap de follow-up persiste"
+    },
+    {
+      "priority": "P2",
+      "item": "Re-engagement: 0 mensajes humanos en Discord — considerar nudge o cambio de canal de comunicación"
+    }
+  ]
+}

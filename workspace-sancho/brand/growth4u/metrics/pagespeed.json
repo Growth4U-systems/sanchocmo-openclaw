@@ -1,0 +1,98 @@
+{
+  "url": "https://growth4u.io",
+  "mobile": {
+    "performance": 75,
+    "seo": 92,
+    "accessibility": 92,
+    "bestPractices": 100,
+    "lcp": 4.4,
+    "cls": 0.007,
+    "tbt": 50,
+    "opportunities": [
+      {
+        "id": "unused-javascript",
+        "title": "Reduce unused JavaScript",
+        "savings": 570,
+        "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      }
+    ],
+    "diagnostics": [
+      {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
+        "score": 0
+      },
+      {
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
+        "score": 0
+      },
+      {
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+        "score": 0
+      },
+      {
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
+        "score": 0
+      }
+    ]
+  },
+  "desktop": {
+    "performance": 97,
+    "seo": 92,
+    "accessibility": 92,
+    "bestPractices": 100,
+    "lcp": 1.1,
+    "cls": 0.009,
+    "tbt": 45,
+    "opportunities": [
+      {
+        "id": "unused-javascript",
+        "title": "Reduce unused JavaScript",
+        "savings": 160,
+        "description": "Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. [Learn how to reduce unused"
+      },
+      {
+        "id": "server-response-time",
+        "title": "Initial server response time was short",
+        "savings": 7,
+        "description": "Keep the server response time for the main document short because all other requests depend on it. [Learn more about the Time to First Byte metric](ht"
+      }
+    ],
+    "diagnostics": [
+      {
+        "id": "color-contrast",
+        "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+        "score": 0
+      },
+      {
+        "id": "landmark-one-main",
+        "title": "Document does not have a main landmark.",
+        "score": 0
+      },
+      {
+        "id": "image-delivery-insight",
+        "title": "Improve image delivery",
+        "score": 0
+      },
+      {
+        "id": "robots-txt",
+        "title": "robots.txt is not valid",
+        "score": 0
+      },
+      {
+        "id": "heading-order",
+        "title": "Heading elements are not in a sequentially-descending order",
+        "score": 0
+      }
+    ]
+  },
+  "fetchedAt": "2026-05-10T23:53:45.561Z"
+}

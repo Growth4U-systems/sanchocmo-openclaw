@@ -1,0 +1,262 @@
+{
+  "date": "2026-05-11",
+  "week": "2026-W19",
+  "slug": "hulahoop",
+  "status": "partial",
+  "healthScore": null,
+  "pagespeed_technical_score": 56,
+  "primaryKPI": {
+    "name": "NSM no definido",
+    "value": null,
+    "target": null,
+    "onTrack": null,
+    "reason": "metrics-plan.json no existe. Foundation metrics-setup status: not-started. Semana 4 consecutiva sin KPIs de negocio."
+  },
+  "summary": "Hulahoop — Semana 4 (W19, 5-11 mayo). BLOCKER PERSISTENTE: metrics-plan.json no existe — 4 semanas sin métricas de negocio. NUEVAS ALARMAS: (1) Colección PageSpeed interrumpida 17 días (último snapshot: Apr 24 — sin datos May); (2) Patrón TBT crítico con 2 spikes mayores en 3 semanas (Apr 13: 801ms, Apr 22: 1728ms según W17). Último dato (Apr 24): performance_mobile 57/100 (-10.9% vs baseline Apr 7), TBT 117ms elevado con tendencia ascendente (3 lecturas consecutivas subiendo), LCP 16.3s estancado en nivel crítico (6x objetivo Google). SEO 92/100 sólido y estable. 0 integraciones conectadas. Foundation: go-to-market Layer 3 pending-review (sin avance desde Apr 16), strategic-plan not-started. URGENTE: (1) debug TBT — patrón recurrente severo, (2) ejecutar metrics-setup, (3) verificar cron morning-metrics.",
+  "dataAvailability": {
+    "metrics_plan": false,
+    "metrics_data": false,
+    "daily_snapshots_this_week": false,
+    "page_speed": true,
+    "page_speed_note": "7 snapshots disponibles (Apr 7-24). Sin datos May 1-11 — brecha de 17 días. Último snapshot: Apr 24.",
+    "page_speed_last_date": "2026-04-24",
+    "page_speed_gap_days": 17,
+    "other_sources_note": "integrations.json: services=[] — 0 APIs conectadas (GA4, GSC, Meta Ads, GHL).",
+    "w17_context": "El cron W17 (Apr 27) ejecutó con éxito parcial (modelo MiniMax-M2.7) y reportó: TBT spike 1728ms en Apr 22 (2do spike en 3 sem), performance_mobile avg 53, Discord module roto. No se guardó weekly report en monitoring/weekly/."
+  },
+  "pagespeed_timeline": [
+    { "date": "2026-04-07", "perf_mobile": 64, "perf_desktop": 71, "lcp_mobile": 14.2, "tbt_mobile": 51, "seo": 92, "cls": 0 },
+    { "date": "2026-04-09", "perf_mobile": 59, "perf_desktop": 83, "lcp_mobile": 14.4, "tbt_mobile": 138, "seo": 92, "cls": 0 },
+    { "date": "2026-04-13", "perf_mobile": 40, "perf_desktop": 83, "lcp_mobile": 15.7, "tbt_mobile": 801, "seo": 92, "cls": 0 },
+    { "date": "2026-04-14", "perf_mobile": 73, "perf_desktop": 82, "lcp_mobile": 15.9, "tbt_mobile": 23, "seo": 92, "cls": 0 },
+    { "date": "2026-04-16", "perf_mobile": 62, "perf_desktop": 79, "lcp_mobile": 16.0, "tbt_mobile": 64, "seo": 92, "cls": 0 },
+    { "date": "2026-04-20", "perf_mobile": 57, "perf_desktop": 79, "lcp_mobile": 16.3, "tbt_mobile": 99, "seo": 92, "cls": 0 },
+    { "date": "2026-04-22", "perf_mobile": null, "perf_desktop": null, "lcp_mobile": null, "tbt_mobile": 1728, "seo": null, "cls": null, "source": "w17_recurring_task_context" },
+    { "date": "2026-04-24", "perf_mobile": 57, "perf_desktop": 73, "lcp_mobile": 16.3, "tbt_mobile": 117, "seo": 92, "cls": 0 }
+  ],
+  "baselines": {
+    "perf_mobile": {
+      "mean_7d": 57.0,
+      "mean_30d": 58.9,
+      "note": "mean_7d based on Apr 20+24 only (2 data points in 7-day window). mean_30d from all 7 snapshots Apr 7-24."
+    },
+    "tbt_mobile": {
+      "mean_7d": 108.0,
+      "mean_30d_excl_spikes": 82.0,
+      "mean_30d_incl_spikes": 437.5,
+      "note": "mean_7d from Apr 20 (99) + Apr 24 (117). Spikes Apr 13 (801ms) and Apr 22 (1728ms) treated as anomalies for baseline but indicate systemic issue."
+    },
+    "lcp_mobile": {
+      "mean_7d": 16.3,
+      "mean_30d": 15.5,
+      "note": "Stagnant at 16.3s last 2 readings. Progressive deterioration from 14.2s baseline."
+    },
+    "seo": { "mean_7d": 92, "mean_30d": 92, "note": "Perfectly stable throughout." },
+    "cls": { "mean_7d": 0, "mean_30d": 0, "note": "Perfectly stable." },
+    "perf_desktop": { "mean_7d": 76.0, "mean_30d": 78.6, "note": "Slight declining trend." }
+  },
+  "anomalies": [
+    {
+      "id": "anom-20260511-001",
+      "metric": "pagespeed.tbt_mobile",
+      "severity": "red",
+      "pattern": "recurrent_spikes + sustained_elevation",
+      "description": "Patrón crítico: 2 spikes mayores en 3 semanas (Apr 13: 801ms = 15x baseline, Apr 22: 1728ms = 34x baseline). Entre spikes, TBT elevado sin retorno a baseline: Apr 9 (138ms), Apr 16 (64ms), Apr 20 (99ms), Apr 24 (117ms). 3 lecturas consecutivas subiendo (64→99→117). Baseline pre-anomalía: 51ms. Inverted metric: tendencia ascendente = RED.",
+      "current_value": 117,
+      "baseline": 51,
+      "pct_above_baseline": 129,
+      "trend": "trending_up_3_consecutive",
+      "recommendation_id": "rec-20260511-002"
+    },
+    {
+      "id": "anom-20260511-002",
+      "metric": "pagespeed.lcp_mobile",
+      "severity": "red",
+      "pattern": "stagnant_critical",
+      "description": "LCP móvil en 16.3s — 6.5x objetivo Google (<2.5s good). Sin mejora en 25+ días. Progresivo deterioro desde baseline Apr 7 (14.2s). Stagnation YELLOW elevada a RED por nivel absoluto crítico y duración (>3 semanas).",
+      "current_value": 16.3,
+      "baseline": 14.2,
+      "pct_above_baseline": 14.8,
+      "google_threshold_good": 2.5,
+      "google_threshold_poor": 4.0,
+      "multiple_of_threshold": 6.52,
+      "trend": "stagnant_critical",
+      "recommendation_id": "rec-20260420-002"
+    },
+    {
+      "id": "anom-20260511-003",
+      "metric": "pagespeed.performance_mobile",
+      "severity": "yellow",
+      "pattern": "declining_trend",
+      "description": "Performance móvil en declive consistente: 64 (Apr 7) → 57 (Apr 20-24). -10.9% desde baseline. Avg W17 según contexto: ~53 (posible nuevo mínimo). 3+ lecturas por debajo de mean_30d=58.9.",
+      "current_value": 57,
+      "baseline": 64,
+      "pct_below_baseline": -10.9,
+      "trend": "declining",
+      "recommendation_id": "rec-20260420-003"
+    },
+    {
+      "id": "anom-20260511-004",
+      "metric": "pagespeed.collection_gap",
+      "severity": "yellow",
+      "pattern": "data_collection_stopped",
+      "description": "Sin snapshots PageSpeed desde Apr 24 (17 días de brecha). El cron de morning-metrics no está generando datos. Posible causa: cron parado, cambio en configuración, o error en el script de colección.",
+      "last_data_date": "2026-04-24",
+      "gap_days": 17,
+      "recommendation_id": "rec-20260511-001"
+    }
+  ],
+  "opportunities": [
+    {
+      "metric": "pagespeed.seo",
+      "severity": "green",
+      "description": "SEO score 92/100 consistente en los 6 snapshots disponibles (mobile y desktop). Sin variación. Arquitectura SEO técnica sólida.",
+      "potential_action": "Usar esta base técnica para lanzar contenido editorial/blog cuando Foundation esté lista. SEO score no limitante — LCP/TBT sí lo son (Core Web Vitals).",
+      "note": "SEO score de PageSpeed mide aspectos técnicos (meta tags, estructura). NO incluye rankings de keywords (requiere GSC)."
+    },
+    {
+      "metric": "pagespeed.cls",
+      "severity": "green",
+      "description": "CLS (Cumulative Layout Shift) = 0 en todos los snapshots. Perfecto. No hay layout instability.",
+      "potential_action": "Mantener — no requiere intervención."
+    }
+  ],
+  "healthScore": {
+    "overall": null,
+    "reason": "Sin métricas de negocio (metrics-plan.json no existe, 0 APIs conectadas). Health score no calculable para categorías: funnel (35%), paid (25%), traffic (20%), seo-rankings (10%), social (10%).",
+    "pagespeed_technical": {
+      "score": 56,
+      "components": {
+        "seo_technical": { "score": 90, "weight": 0.30, "contribution": 27 },
+        "performance_mobile": { "score": 45, "weight": 0.25, "contribution": 11.25 },
+        "tbt_mobile": { "score": 25, "weight": 0.20, "contribution": 5 },
+        "lcp_mobile": { "score": 20, "weight": 0.15, "contribution": 3 },
+        "cls": { "score": 95, "weight": 0.10, "contribution": 9.5 }
+      },
+      "trend": "declining",
+      "change_vs_w16": -2,
+      "note": "Indicador técnico únicamente. No representa salud de negocio."
+    }
+  },
+  "nsm_progress": {
+    "nsm": "AUM (Assets Under Management)",
+    "target_2026": "22.5M€",
+    "baseline_2025": "7.2M€",
+    "current": null,
+    "on_track": null,
+    "note": "Sin datos de tracking AUM. NSM no puede evaluarse sin integraciones conectadas (GHL para deals, o reporting manual)."
+  },
+  "funnel_analysis": {
+    "bottleneck": null,
+    "note": "Sin datos de funnel. Requiere metrics-setup + integración GHL/CRM."
+  },
+  "projects_correlation": [
+    {
+      "project_id": "P00-Metrics",
+      "name": "Métricas y Conexiones",
+      "status": "pending",
+      "weeks_pending": 4,
+      "related_metrics": ["all"],
+      "change_pct": null,
+      "confidence": null,
+      "assessment": "4 semanas sin ejecutar. BLOCKER crítico para toda la capa de medición. 0 progreso visible.",
+      "urgency": "critical"
+    },
+    {
+      "project_id": "P00-Full-Foundation",
+      "name": "Full Foundation",
+      "status": "in-progress",
+      "related_metrics": ["pagespeed", "seo"],
+      "assessment": "go-to-market Layer 3 (niche-discovery) en pending-review desde Apr 16 sin avance. Strategic plan not-started. Impacto en métricas: ninguno medible aún.",
+      "confidence": "low"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "rec-20260413-001",
+      "created": "2026-04-13",
+      "updated": "2026-05-11",
+      "type": "launch",
+      "priority": "high",
+      "metric": "all",
+      "description": "Ejecutar metrics-setup skill: definir KPIs, conectar GA4, GSC, Meta Ads y GHL. Sin esto no hay medición de negocio. 4 semanas de delay — esto bloquea todo el ciclo de inteligencia.",
+      "linked_project": "P00-Metrics",
+      "status": "active",
+      "weeks_active": 4
+    },
+    {
+      "id": "rec-20260413-002",
+      "created": "2026-04-13",
+      "updated": "2026-05-11",
+      "type": "launch",
+      "priority": "high",
+      "metric": "all",
+      "description": "Completar Foundation: (1) revisar y aprobar niche-discovery (pending-review desde Apr 16), (2) ejecutar strategic-plan para formalizar NSM y prioridades. Foundation bloqueada en Layer 3 afecta toda la estrategia downstream.",
+      "linked_project": null,
+      "status": "active",
+      "weeks_active": 4
+    },
+    {
+      "id": "rec-20260511-001",
+      "created": "2026-05-11",
+      "type": "investigate",
+      "priority": "high",
+      "metric": "pagespeed.collection",
+      "description": "Colección PageSpeed interrumpida: sin datos desde Apr 24 (17 días). Verificar: (1) cron de morning-metrics habilitado para hulahoop, (2) script de colección sin errores, (3) pagespeed.json actualizado. Sin monitorización continua no hay señal de alerta temprana para degradación web.",
+      "linked_project": null,
+      "status": "new",
+      "action": "Revisar openclaw cron logs para morning-metrics hulahoop. Ejecutar manualmente: node scripts/morning-metrics.js hulahoop"
+    },
+    {
+      "id": "rec-20260511-002",
+      "created": "2026-05-11",
+      "type": "investigate",
+      "priority": "high",
+      "metric": "pagespeed.tbt_mobile",
+      "description": "Patrón TBT crítico — 2 spikes mayores en 3 semanas (Apr 13: 801ms, Apr 22: 1728ms = 34x baseline). Entre spikes TBT se mantiene elevado (64-117ms vs 51ms baseline). Este patrón sugiere: (1) script de third-party cargando en ciclos (analytics, chat widget, ad tag), (2) Long Task en JS que se dispara periódicamente, (3) posible memory leak. Acciones: usar Chrome DevTools Performance tab para capturar Long Tasks, auditar third-party scripts (GTM tags, Facebook Pixel, chat), revisar Event Listeners en scroll/resize.",
+      "linked_project": null,
+      "status": "new",
+      "weeks_underperforming": 4,
+      "web_search_triggered": false
+    },
+    {
+      "id": "rec-20260420-002",
+      "created": "2026-04-20",
+      "updated": "2026-05-11",
+      "type": "investigate",
+      "priority": "high",
+      "metric": "pagespeed.lcp_mobile",
+      "description": "LCP móvil 16.3s — 6.5x objetivo Google. Estancado 25+ días. W17 identificó causas probables: redirects (752ms savings), unused JS (750ms savings). Acción concreta: (1) eliminar redirect chains en hulahoop.media, (2) implementar code-splitting/lazy loading para JS no crítico, (3) optimizar imagen hero a WebP/AVIF con preload, (4) activar CDN (Cloudflare). Cada segundo de mejora en LCP = ~7% mejora en conversion rate móvil (Google data).",
+      "linked_project": null,
+      "status": "active",
+      "weeks_active": 3
+    },
+    {
+      "id": "rec-20260420-003",
+      "created": "2026-04-20",
+      "updated": "2026-05-11",
+      "type": "investigate",
+      "priority": "medium",
+      "metric": "pagespeed.performance_mobile",
+      "description": "Performance móvil -10.9% desde baseline (64→57). Correlacionado con TBT elevation. Root cause mismo que TBT. Corrección TBT debería mejorar performance score.",
+      "linked_project": null,
+      "status": "active",
+      "weeks_active": 3
+    }
+  ],
+  "auto_resolved": [
+    {
+      "id": "rec-20260420-001",
+      "reason": "Absorbida por rec-20260511-002 (TBT recurrent spikes) — análisis más completo. Misma métrica, más contexto acumulado."
+    }
+  ],
+  "blockingReasons": [
+    "metrics-plan.json no existe → metrics-setup status: not-started (4 semanas)",
+    "metrics-data.json no existe → sin datos de negocio (GA4/GSC/Meta Ads/GHL)",
+    "integrations.json: services=[] → 0 APIs conectadas",
+    "Strategic plan not-started → NSM AUM 22.5M€ sin tracking formal",
+    "Foundation Layer 3 pending-review → go-to-market no completado",
+    "Morning-metrics cron: posiblemente interrumpido (17 días sin snapshots)"
+  ],
+  "executiveSummary": "Hulahoop — W19 (5-11 mayo 2026). 4ª semana sin métricas de negocio. Nuevas alertas: colección PageSpeed detenida 17 días + patrón TBT recurrente crítico (spikes Apr 13: 801ms, Apr 22: 1728ms). Último dato disponible (Apr 24): performance_mobile 57/100 en declive, TBT elevado con trend ascendente, LCP 16.3s crítico estancado. SEO 92/100 sólido. Acción inmediata: verificar morning-metrics cron + debug TBT + ejecutar metrics-setup."
+}

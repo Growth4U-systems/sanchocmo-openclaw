@@ -1,0 +1,11 @@
+{
+  "cronId": "00fa288d-d349-449e-85ff-1d3b2260f2d3",
+  "cronName": "Daily Pulse — Growth4U",
+  "slug": "growth4u",
+  "date": "2026-04-28",
+  "runAtMs": 1777360107886,
+  "status": "error",
+  "durationMs": 396414,
+  "model": "MiniMax-M2.7",
+  "content": "**📊 Daily Pulse — Growth4U | Martes 28-abr-2026**\n\n---\n\n**⚠️ ALERTA CRÍTICA: NSM 0 por 2ª semana + Health Score 22/100**\nFlujo lead→cita sigue roto. Gap de 16+ días sin reuniones. Revisar follow-up y enriquecimiento.\n\n---\n\n**📈 Morning Metrics (28-abr)**\n• Meta Ads: €177.02 spend | 4 leads | CPC €3.28 | 0 alertas\n• Dentro de rango pero sin conversión a reuniones.\n\n**📞 Pipeline — Calls Mañana (29-abr)**\n⚠️ 3 prospects SIN lead file en GHL:\n1. **Alba Duran** (Monzo) — 12:30 — sin contacto GHL\n2. **Aarón Sanromán** — creado 27-abr, enriquecimiento pendiente, sin lead file\n3. **Orbyn** (Enrique Fernandez + Gonzalo Albero) — 16:00 — sin lead GHL\n\nCalendario de mañana NO coincide con leads con tag `llamada-agendada`.\n\n**📝 Contenido Pendiente**\n5 ideas candidatas publicadas en #content. Esperando selección:\n1. MiCA/ESMA deadline julio 2026 — compliance-as-moat\n2. B2B buyers ahora preguntan a Gemini/LLM — geo-as-distribution-moat\n3. 15% agencias van a desaparecer — execution-or-obsolescence\n4. 88% usa IA, solo 6% la tiene operando — IA como ejecución real\n5. Gartner: 40% apps enterprise con agentes IA embedidos\n\n**📊 Estado Semanal**\n• Health Score W18: 22/100 (↓35 vs 57 W17)\n• NSM: 0 meetings (2ª semana consecutiva)\n• P14 Content Engine: T01 + T03 + T04 completadas\n• Sistema sin actividad humana hace 9+ semanas\n\n---\n\n*Daily Pulse completo guardado en Mission Control.*"
+}

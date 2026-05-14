@@ -1,0 +1,21 @@
+{
+  "cronName": "Content: Editorial Dispatch — Hulahoop",
+  "slug": "hulahoop",
+  "date": "2026-05-11",
+  "runAtMs": 1747138920000,
+  "status": "error",
+  "transport": "discord",
+  "channel_id": "1491032340208812042",
+  "candidates_selected": 5,
+  "candidates_sent": 0,
+  "idea_ids": [
+    "idea-2026-05-11-1",
+    "idea-2026-05-11-4",
+    "idea-2026-05-11-3",
+    "idea-2026-05-11-5",
+    "idea-2026-05-11-10"
+  ],
+  "task_id": "P-Content-Semana-20-T01",
+  "project_id": "P-Content-Semana-20",
+  "error": "501 — Discord transport not yet implemented in send-dispatch endpoint. POST http://localhost:3000/api/integrations/send-dispatch returned: {\"error\":\"Discord transport not yet implemented in send-dispatch endpoint.\"}"
+}

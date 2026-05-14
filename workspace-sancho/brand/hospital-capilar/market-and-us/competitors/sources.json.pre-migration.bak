@@ -1,0 +1,39 @@
+{
+  "daily_pulse": {
+    "enabled": true,
+    "sources": {
+      "gmail": {
+        "enabled": false,
+        "labels": ["support", "sales"],
+        "lookback_hours": 24
+      },
+      "notion": {
+        "enabled": false,
+        "database_id": "",
+        "filter_property": "created_time",
+        "lookback_hours": 24
+      },
+      "slack": {
+        "enabled": false,
+        "token": "",
+        "channels": []
+      },
+      "discord": {
+        "enabled": true,
+        "guild_id": "1475635138108063746",
+        "channels": {
+          "general": "1475635138988609678",
+          "brand": "1475638249107095866",
+          "campaigns": "1475638251485401171",
+          "content": "1475638259425087629",
+          "intelligence": "1475638253154603170",
+          "onboarding": "1476491108421730334",
+          "soporte": "1475638273501040681",
+          "research": "1475638269109862463",
+          "paid-ads": "1475638261819900146"
+        },
+        "lookback_hours": 24
+      }
+    }
+  }
+}

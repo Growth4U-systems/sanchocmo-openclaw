@@ -12,6 +12,7 @@ import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { verifyShareToken } from "@/lib/share-tokens";
+import { resolveWorkspaceDocPath } from "@/lib/server/doc-paths";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -35,16 +36,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).json({ error: "Token payload mismatch" });
   }
 
-  const absPath = path.resolve(path.join(BASE, payload.docPath));
-  const safeBase = path.resolve(BASE);
-  if (!absPath.startsWith(safeBase)) {
+  let resolved;
+  try {
+    resolved = resolveWorkspaceDocPath(BASE, payload.docPath, { slug: payload.slug, requireBrand: true });
+  } catch {
     return res.status(403).json({ error: "Forbidden" });
   }
+  const absPath = resolved.absPath;
 
   // ?download=1 — stream raw file
   if (req.query.download === "1") {
     try {
-      if (!fs.existsSync(absPath)) {
+      if (!resolved.exists || !fs.existsSync(absPath)) {
         return res.status(404).json({ error: "Not found" });
       }
       const ext = path.extname(absPath).toLowerCase();
@@ -66,14 +69,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    if (!fs.existsSync(absPath)) {
+    if (!resolved.exists || !fs.existsSync(absPath)) {
       return res.status(404).json({ error: "Not found" });
     }
     const content = fs.readFileSync(absPath, "utf-8");
     return res.status(200).json({
       ok: true,
       slug: payload.slug,
-      path: payload.docPath,
+      path: resolved.canonicalPath,
+      requestedPath: payload.docPath,
+      canonicalPath: resolved.canonicalPath,
+      usedFallback: resolved.usedFallback,
       filename: path.basename(absPath),
       content,
       iat: payload.iat,

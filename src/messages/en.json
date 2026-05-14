@@ -295,7 +295,8 @@
       "systemKey": "System key",
       "error": "Error",
       "connected": "Connected",
-      "notConfigured": "Not configured"
+      "notConfigured": "Not configured",
+      "pending": "Pending"
     },
     "howToStart": "How to start?"
   },

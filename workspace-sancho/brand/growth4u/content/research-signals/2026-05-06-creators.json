@@ -1,0 +1,138 @@
+{
+  "scan_date": "2026-05-06",
+  "scan_time": "2026-05-06T05:10:00Z",
+  "sources_scanned": {
+    "competitors": [
+      "Snowball/Pau Gallinat",
+      "Product Hackers",
+      "TheGrowtHacker",
+      "iSocialWeb",
+      "Flat 101",
+      "Glissmarket",
+      "TEAM LEWIS"
+    ],
+    "reference_creators": [
+      "Elena Verna",
+      "Lenny Rachitsky",
+      "Maja Voje",
+      "Ross Simmonds",
+      "Amanda Natividad",
+      "Rob Walling",
+      "Alex Hormozi",
+      "Katelyn Bourgoin",
+      "Joe Pulizzi"
+    ]
+  },
+  "platforms_searched": [
+    "linkedin",
+    "newsletter",
+    "blog",
+    "twitter"
+  ],
+  "notes": "X/Twitter search unavailable (xAI credits exhausted). Competitor direct content scarce this week — Pau Gallinat and Product Hackers had no high-engagement pieces in the 7-day window. Reference creators dominated signal quality.",
+  "signals_found": 8,
+  "ideas_generated": 8,
+  "discarded": {
+    "no_pillar_match": 0,
+    "low_confidence": 0,
+    "duplicate_url": 0
+  },
+  "raw_signals": [
+    {
+      "id": "creators-2026-05-06-ev01",
+      "source": "Elena Verna",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.elenaverna.com/p/its-time-to-start-your-content-creator",
+      "date": "2026-01-23",
+      "summary": "Elena Verna argumenta que en Lovable cada empleado publica en redes como parte de su trabajo — no es opcional, es estrategia de crecimiento. Su tesis: el personal branding de empleados supera al del f",
+      "pillar_match": "P2",
+      "pov_confidence": 0.82,
+      "idea_id": "idea-2026-05-06-6"
+    },
+    {
+      "id": "creators-2026-05-06-lr01",
+      "source": "Lenny Rachitsky / Max Schoening (Notion)",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/p/why-cultivating-agency-matters-more",
+      "date": "2026-05-03",
+      "summary": "Max Schoening (Head of Product, Notion) argumenta en Lenny's Podcast que en la era IA lo que separa a quienes prosperan de quienes se quedan atrás no son las skills técnicas sino la agencia personal —",
+      "pillar_match": "P5",
+      "pov_confidence": 0.85,
+      "idea_id": "idea-2026-05-06-7"
+    },
+    {
+      "id": "creators-2026-05-06-lr02",
+      "source": "Lenny Rachitsky / Vikas Kansal",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://www.lennysnewsletter.com/",
+      "date": "2026-05-05",
+      "summary": "Vikas Kansal en Lenny's Newsletter argumenta que los playbooks freemium tradicionales de SaaS no funcionan para productos IA. Los costes marginales de servir usuarios freemium en IA son significativam",
+      "pillar_match": "P1",
+      "pov_confidence": 0.8,
+      "idea_id": "idea-2026-05-06-8"
+    },
+    {
+      "id": "creators-2026-05-06-an01",
+      "source": "Amanda Natividad",
+      "source_type": "reference-creator",
+      "platform": "newsletter",
+      "url": "https://amandanat.substack.com/p/its-not-a-content-marketing-problem",
+      "date": "2026-04-28",
+      "summary": "Amanda Natividad publica que el debate entre 'content marketing' y 'growth marketing' es falso en un mundo zero-click. Tras un debate con Matt Lerner (SYSTM), concluye que ambos están convergiendo: en",
+      "pillar_match": "P2",
+      "pov_confidence": 0.83,
+      "idea_id": "idea-2026-05-06-9"
+    },
+    {
+      "id": "creators-2026-05-06-rw01",
+      "source": "Rob Walling",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://www.startupsfortherestofus.com/episodes/episode-829-ai-is-bad-at-product-top-5-startup-success-factors-and-the-beastie-boys-a-rob-solo-adventure",
+      "date": "2026-04-21",
+      "summary": "Rob Walling en el episodio 829 de Startups for the Rest of Us analiza qué puede y qué no puede hacer la IA en cada función de una startup. Conclusión: la IA es fuerte en desarrollo (código, testing), ",
+      "pillar_match": "P5",
+      "pov_confidence": 0.86,
+      "idea_id": "idea-2026-05-06-10"
+    },
+    {
+      "id": "creators-2026-05-06-rw02",
+      "source": "Rob Walling / MicroConf US 2026",
+      "source_type": "reference-creator",
+      "platform": "blog",
+      "url": "https://www.startupsfortherestofus.com/",
+      "date": "2026-04-28",
+      "summary": "En MicroConf US 2026, Rob Walling presentó un framework de 6 formas de implementar IA en SaaS. El episodio 830 recapitula el evento. La tesis: la mayoría de startups solo usa IA de una forma (generaci",
+      "pillar_match": "P5",
+      "pov_confidence": 0.81,
+      "idea_id": "idea-2026-05-06-11"
+    },
+    {
+      "id": "creators-2026-05-06-ah01",
+      "source": "Alex Hormozi",
+      "source_type": "reference-creator",
+      "platform": "linkedin",
+      "url": "https://www.youtube.com/watch?v=EwxPSL_aAFY",
+      "date": "2026-05-01",
+      "summary": "Alex Hormozi genera el grueso de su engagement en LinkedIn con posts de texto plano (76.2% de sus publicaciones). Su estrategia 'organic-first advertising' consiste en validar ideas con contenido orgá",
+      "pillar_match": "P4",
+      "pov_confidence": 0.78,
+      "idea_id": "idea-2026-05-06-12"
+    },
+    {
+      "id": "creators-2026-05-06-rs01",
+      "source": "Ross Simmonds",
+      "source_type": "reference-creator",
+      "platform": "linkedin",
+      "url": "https://www.distribution.ai/blog/content-distribution",
+      "date": "2026-05-01",
+      "summary": "Ross Simmonds (Foundation, Distribution.ai) argumenta que en un panorama saturado de contenido generado por IA, la ventaja competitiva ya no está en crear más contenido sino en distribuirlo mejor. Pro",
+      "pillar_match": "P2",
+      "pov_confidence": 0.8,
+      "idea_id": "idea-2026-05-06-13"
+    }
+  ]
+}

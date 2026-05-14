@@ -1,0 +1,38 @@
+{
+  "id": "P02",
+  "name": "Founder-Led LinkedIn — Carlos Horno",
+  "status": "completed",
+  "created": "2026-03-26",
+  "review_date": "2026-04-26",
+  "origin": {
+    "type": "strategic-plan",
+    "version": 1,
+    "detail": "Carlos ya tiene 9K seguidores y publica. Estructurar cadencia + DMs warm."
+  },
+  "objective": {
+    "description": "Generar pipeline orgánico desde LinkedIn con contenido + DMs warm",
+    "metric": "qualified_calls_per_week",
+    "baseline": 0,
+    "target": 3,
+    "unit": "calls/week",
+    "horizon_days": 90
+  },
+  "strategy": {
+    "catalog_id": "#30",
+    "description": "Founder-Led GTM — LinkedIn Flywheel: contenido 3-5/semana + DMs warm"
+  },
+  "channels": [
+    "content"
+  ],
+  "discord": {
+    "project_thread_id": "1486635258643484695",
+    "project_channel": "projects"
+  },
+  "tasks_total": 2,
+  "tasks_completed": 1,
+  "value_review": null,
+  "updated_at": "2026-04-15T15:37:46.391Z",
+  "completed_at": "2026-04-15T15:37:46.391Z",
+  "mc_chat_thread_id": "project-p02",
+  "discord_thread_id": null
+}

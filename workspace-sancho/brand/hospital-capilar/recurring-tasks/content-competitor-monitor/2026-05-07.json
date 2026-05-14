@@ -1,0 +1,18 @@
+{
+  "cronName": "content-competitor-monitor",
+  "slug": "hospital-capilar",
+  "date": "2026-05-07",
+  "runAtMs": 1746591660000,
+  "status": "completed",
+  "last_finding": "7 ideas nuevas (4 reference-creators, 3 competitors). Highlight: idea-2026-05-07-8 — Consenso Delphi de 50 expertos sobre envejecimiento capilar co-autorado por Dr. Vañó (abril 2026), pov_confidence 0.82. También: Dr. Vañó publica datos de minoxidil oral en 69 pacientes COVID (mayo 2026).",
+  "content": "Monitoreados: Insparya, Svenson, Capilclinic, IMD Dermatológico, mediQuo (competitors) + Dr. Vañó, Helena Rodero, Dr. De Felipe (reference-creators). Fuentes: blogs, prensa, PubMed, YouTube.",
+  "ideas_created": [
+    "idea-2026-05-07-6",
+    "idea-2026-05-07-7",
+    "idea-2026-05-07-8",
+    "idea-2026-05-07-9",
+    "idea-2026-05-07-10",
+    "idea-2026-05-07-11",
+    "idea-2026-05-07-12"
+  ]
+}

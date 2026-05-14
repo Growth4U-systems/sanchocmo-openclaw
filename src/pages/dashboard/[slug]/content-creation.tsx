@@ -84,7 +84,11 @@ export default function ContentCreationPage() {
         <EngineTab slug={slug} openChat={openChat} />
       )}
       {!isLoading && slug && activeTab === "ideas" && (
-        <IdeaQueueTab slug={slug} openChat={openChat} />
+        <IdeaQueueTab
+          slug={slug}
+          openChat={openChat}
+          focusId={typeof router.query.focus === "string" ? router.query.focus : null}
+        />
       )}
       {!isLoading && slug && activeTab === "calendar" && (
         <PostingCalendarTab
