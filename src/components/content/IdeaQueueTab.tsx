@@ -77,15 +77,6 @@ function getIdeaTitle(idea: { title?: string; angle_draft?: string; signal?: { s
   return out.length > 140 ? out.slice(0, 137).trimEnd() + "…" : out;
 }
 
-// Comic UI palette for recency
-function recencyBadge(days: number | null): { color: string; label: string } | null {
-  if (days === null) return null;
-  if (days <= 3)  return { color: "bg-sage   text-white", label: `${days}d · reciente` };
-  if (days <= 14) return { color: "bg-yellow text-ink",   label: `${days}d · esta semana` };
-  if (days <= 45) return { color: "bg-aged   text-ink",   label: `${Math.round(days/7)} sem` };
-  return                { color: "bg-rust   text-white", label: `> ${Math.round(days/30)} mes` };
-}
-
 function formatLastRun(iso: string | undefined | null): string | null {
   if (!iso) return null;
   const d = new Date(iso);
@@ -129,6 +120,7 @@ const STATUS_VISUAL: Record<string, { label: string; bg: string; fg: string }> =
 interface Props {
   slug: string;
   openChat?: (slug: string, config: ThreadConfig) => void;
+  focusId?: string | null;
 }
 
 // Content type → comic color (rust = hot, sage = proof, navy = framework, yellow = personal, aged = listicle)
@@ -827,4 +819,3 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
     </div>
   );
 }
-
