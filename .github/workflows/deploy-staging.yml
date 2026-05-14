@@ -34,9 +34,14 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           SHA: ${{ github.sha }}
           SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
+          ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
+          YALC_REF: ${{ vars.YALC_REF || 'main' }}
+          YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
         run: |
-          SANCHO_INTERNAL_API_TOKEN_B64="$(printf '%s' "$SANCHO_INTERNAL_API_TOKEN" | base64 -w0)"
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA SANCHO_INTERNAL_API_TOKEN_B64=$SANCHO_INTERNAL_API_TOKEN_B64 bash -s" <<'EOF'
+          SANCHO_INTERNAL_API_TOKEN_B64="$(printf '%s' "$SANCHO_INTERNAL_API_TOKEN" | base64 | tr -d '\n')"
+          YALC_REPO_TOKEN_B64="$(printf '%s' "${YALC_REPO_TOKEN:-}" | base64 | tr -d '\n')"
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA SANCHO_INTERNAL_API_TOKEN_B64=$SANCHO_INTERNAL_API_TOKEN_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64=$YALC_REPO_TOKEN_B64 bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching staging…"
@@ -69,10 +74,31 @@ jobs:
             echo "▶ Checking out $SHA…"
             git checkout "$SHA"
             export GIT_COMMIT="$(git rev-parse HEAD)"
+            COMPOSE_ARGS="-f docker-compose.yml"
+            if [ "${ENABLE_YALC_SERVICE:-1}" != "0" ]; then
+              YALC_DIR="${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}"
+              if [ ! -d "$YALC_DIR/.git" ]; then
+                if [ -z "${YALC_REPO_TOKEN_B64:-}" ]; then
+                  echo "YALC_REPO_TOKEN is required on the staging GitHub Environment, or pre-clone YALC at $YALC_DIR."
+                  exit 1
+                fi
+                echo "▶ Cloning YALC source into $YALC_DIR…"
+                mkdir -p "$(dirname "$YALC_DIR")"
+                YALC_REPO_TOKEN="$(printf '%s' "$YALC_REPO_TOKEN_B64" | base64 -d)"
+                git clone "https://x-access-token:${YALC_REPO_TOKEN}@github.com/Growth4U-systems/Yalc-Growth4U.git" "$YALC_DIR"
+                unset YALC_REPO_TOKEN
+              fi
+              echo "▶ Fetching YALC ref ${YALC_REF:-main}…"
+              git -C "$YALC_DIR" fetch origin "${YALC_REF:-main}" --prune
+              git -C "$YALC_DIR" checkout FETCH_HEAD
+              echo "▶ YALC source: $(git -C "$YALC_DIR" rev-parse --short HEAD)"
+              export YALC_BUILD_CONTEXT="$YALC_DIR"
+              COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
+            fi
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
-            docker compose build --pull
-            docker compose up -d
-            docker compose ps
+            docker compose $COMPOSE_ARGS build --pull
+            docker compose $COMPOSE_ARGS up -d
+            docker compose $COMPOSE_ARGS ps
           EOF
 
       - name: Health check

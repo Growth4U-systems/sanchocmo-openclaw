@@ -54,10 +54,11 @@ async function main() {
   if (!config.agents.defaults.subagents) config.agents.defaults.subagents = {};
   config.agents.defaults.subagents.maxConcurrent = config.agents.defaults.subagents.maxConcurrent || 8;
 
-  // --- Session agents (escudero, rocinante) ---
+  // --- Session agents (escudero, rocinante, yalc) ---
   config.agents.list = [
     { id: 'escudero', workspace: path.join(OPENCLAW_ROOT, 'workspace-escudero') },
-    { id: 'rocinante', workspace: path.join(OPENCLAW_ROOT, 'workspace-rocinante') }
+    { id: 'rocinante', workspace: path.join(OPENCLAW_ROOT, 'workspace-rocinante') },
+    { id: 'yalc', workspace: path.join(OPENCLAW_ROOT, 'workspace-yalc') }
   ];
 
   // --- Gateway ---

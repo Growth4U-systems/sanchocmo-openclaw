@@ -445,6 +445,20 @@
           "config": [],
           "docs": "https://developer.instantly.ai/"
         },
+        "yalc": {
+          "provider": "YALC / GTM-OS",
+          "icon": "🧭",
+          "desc": "GTM operating system for lead qualification, outbound execution, campaign tracking, and Instantly orchestration",
+          "ownership": "system",
+          "credentials": [
+            { "key": "API_TOKEN", "label": "API Token", "type": "string", "sensitive": true, "help": "Same value as GTM_OS_API_TOKEN in the YALC environment when API auth is enabled" }
+          ],
+          "config": [
+            { "key": "BASE_URL", "label": "YALC Base URL", "type": "string", "sensitive": false, "help": "Example: http://localhost:3847 or the private YALC service URL" },
+            { "key": "TENANT", "label": "Tenant", "type": "string", "sensitive": false, "help": "YALC tenant slug. Default: default" }
+          ],
+          "docs": "https://github.com/Growth4U-systems/Yalc-Growth4U"
+        },
         "lemlist": {
           "provider": "Lemlist",
           "icon": "🍋",

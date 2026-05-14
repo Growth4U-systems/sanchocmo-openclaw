@@ -1,0 +1,69 @@
+{
+  "agent": "yalc",
+  "name": "Yalc Agent",
+  "defaultSkill": "yalc-operator",
+  "tasks": {
+    "_defaults": {
+      "skill": "yalc-operator",
+      "skills": ["yalc-operator"],
+      "agent": "yalc"
+    },
+    "_byType": {
+      "yalc": {
+        "skill": "yalc-operator",
+        "skills": ["yalc-operator"],
+        "agent": "yalc"
+      },
+      "outreach": {
+        "skill": "yalc-operator",
+        "skills": ["yalc-operator"],
+        "agent": "yalc"
+      },
+      "campaign": {
+        "skill": "yalc-operator",
+        "skills": ["yalc-operator"],
+        "agent": "yalc"
+      }
+    },
+    "_byTool": {
+      "yalc": {
+        "skill": "yalc-operator",
+        "skills": ["yalc-operator"],
+        "agent": "yalc"
+      },
+      "gtm-os": {
+        "skill": "yalc-operator",
+        "skills": ["yalc-operator"],
+        "agent": "yalc"
+      },
+      "instantly": {
+        "skill": "yalc-operator",
+        "skills": ["yalc-operator"],
+        "agent": "yalc"
+      }
+    },
+    "_byChannel": {
+      "prospecting": {
+        "skill": "yalc-operator",
+        "skills": ["yalc-operator"],
+        "agent": "yalc"
+      },
+      "partners": {
+        "skill": "yalc-operator",
+        "skills": ["yalc-operator"],
+        "agent": "yalc"
+      },
+      "campaigns": {
+        "skill": "yalc-operator",
+        "skills": ["yalc-operator"],
+        "agent": "yalc"
+      }
+    }
+  },
+  "yalc": {
+    "primaryInterface": "api",
+    "apiSkill": "yalc-operator",
+    "sideEffectPolicy": "dry-run-first",
+    "outputRoot": "brand/{slug}/yalc/runs"
+  }
+}

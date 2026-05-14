@@ -14,12 +14,13 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
                             │
             ┌───────────────┼───────────────┐
             │               │               │
-        Sancho          Escudero        Rocinante
+        Sancho          Escudero        Sanson
       (Strategist)      (Worker)      (QA Guardian)
        Opus 4.6        Sonnet 4.5      Opus 4.6
             │                               ▲
             ├── sessions_spawn ─► Escudero   │
-            ├── sessions_send ──► Rocinante ─┘
+            ├── sessions_send ──► Sanson ────┘
+            ├── sessions_send ─► Yalc Agent ─► YALC/GTM-OS API
             └── sessions_send ──► Cervantes
                                   (System Architect)
                                    Opus 4.6
@@ -31,7 +32,8 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
 |-------|------|------------------|
 | **Sancho** | CMO Strategist & Orchestrator | Discord messages (client guilds) + cron jobs |
 | **Escudero** | Execution worker (adopts personas) | `sessions_spawn` from Sancho |
-| **Rocinante** | Brand Guardian / QA | `sessions_send` from Sancho |
+| **Sansón** | Brand Guardian / QA | `sessions_send` from Sancho |
+| **Yalc Agent** | GTM-OS operator for provider/MCP status, brain/setup, gates, lead qualification, cold email dry-runs/live confirmed launches, campaign status and reporting | `sessions_send` to agent `yalc`; uses `yalc-operator` |
 | **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Operates in Cervantes Brain guild (#admin, #infra, #tasks, #changelog). Can edit Sancho's skills, SOUL.md, and cron jobs. Runs daily backups (git commit + push). |
 
 ### Personas (Escudero)
@@ -42,7 +44,11 @@ Explorador (prospecting), Redactor (SEO/content), Comunicador (social/newsletter
 
 ### Skills
 
-120+ marketing skills with a Context Matrix system — each skill declares which brand files it needs (`context_required`) and where it writes (`context_writes`), preventing unnecessary context loading.
+120+ marketing skills with a Context Matrix system — each skill declares which brand files it needs (`context_required`) and where it writes (`context_writes`), preventing unnecessary context loading. The `yalc-operator` skill lets Yalc Agent operate YALC/GTM-OS through the YALC HTTP API, with live catalog verification, provider/MCP status checks, human gates, campaign endpoints, and dry-run defaults for side-effecting outbound operations.
+
+### YALC Cockpit
+
+Mission Control includes a native YALC cockpit at `/dashboard/<slug>/yalc`. It uses Sancho-authenticated proxy routes under `/api/yalc/*`, not an iframe, and covers runtime health, campaigns, lead tables, lead detail, human gates, and provider status. In Docker/staging, run Sancho with `docker-compose.yalc.yml` so the app talks to YALC at `http://yalc:3847`.
 
 ### Multi-Client
 
@@ -119,6 +125,7 @@ workspace-sancho/                # Main CMO agent
 workspace-cervantes/             # System architect agent
 workspace-escudero/              # Worker agent (symlinks to sancho)
 workspace-rocinante/             # QA agent (symlinks to sancho)
+workspace-yalc/                  # Yalc Agent (symlinks to sancho brand/skills/system)
 
 cron/                            # OpenClaw cron jobs
 ```

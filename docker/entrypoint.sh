@@ -29,14 +29,10 @@ if [ ! -f "$OPENCLAW_CONFIG" ]; then
   echo "[entrypoint] Generating OpenClaw config..."
   node docker/generate-openclaw-config.js
 
-  # 2. Register agents
-  echo "[entrypoint] Registering agents..."
-  bash docker/setup-agents.sh
-
-  # 3. Inject env vars into .md files
+  # 2. Inject env vars into .md files
   bash docker/inject-env-vars.sh
 
-  # 4. Link cron jobs to where OpenClaw expects them
+  # 3. Link cron jobs to where OpenClaw expects them
   mkdir -p .openclaw/cron
   if [ -f cron/jobs.json ] && [ ! -f .openclaw/cron/jobs.json ]; then
     ln -sf /root/.openclaw/cron/jobs.json .openclaw/cron/jobs.json
@@ -47,6 +43,12 @@ if [ ! -f "$OPENCLAW_CONFIG" ]; then
 else
   echo "[entrypoint] Config exists, skipping setup."
 fi
+
+# Agents are idempotent and must be ensured on every startup: staging/prod
+# volumes keep openclaw.json between deploys, so newly added agents would not
+# be registered if this only ran during first boot.
+echo "[entrypoint] Ensuring agents are registered..."
+bash docker/setup-agents.sh
 
 # ===========================================================
 # 1b. ENSURE MC-CHAT PLUGIN (runs every startup)

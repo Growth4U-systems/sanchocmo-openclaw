@@ -1,0 +1,39 @@
+services:
+  sanchocmo:
+    depends_on:
+      yalc:
+        condition: service_healthy
+    environment:
+      - YALC_BASE_URL=${YALC_BASE_URL:-http://yalc:3847}
+      - YALC_API_TOKEN=${YALC_API_TOKEN:-}
+
+  yalc:
+    build:
+      context: ${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}
+    container_name: yalc-gtm-os
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3847
+      - GTM_OS_API_TOKEN=${YALC_API_TOKEN:-}
+    ports:
+      - "127.0.0.1:${YALC_PORT:-3847}:3847"
+    volumes:
+      - ${YALC_DATA_VOLUME:-yalc_data}:/root/.gtm-os
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3847/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  yalc_data:

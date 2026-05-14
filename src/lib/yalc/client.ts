@@ -1,0 +1,104 @@
+export interface YalcRuntimeConfig {
+  baseUrl: string;
+  token?: string;
+  slug?: string;
+}
+
+export class YalcClientError extends Error {
+  status: number;
+  body: unknown;
+
+  constructor(message: string, status: number, body: unknown) {
+    super(message);
+    this.name = "YalcClientError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
+function envPrefix(slug?: string): string | null {
+  if (!slug) return null;
+  const key = slug
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return key || null;
+}
+
+export function resolveYalcConfig(slug?: string): YalcRuntimeConfig {
+  const prefix = envPrefix(slug);
+  const baseUrl =
+    (prefix ? process.env[`${prefix}_YALC_BASE_URL`] : undefined) ||
+    process.env.YALC_BASE_URL ||
+    "http://localhost:3847";
+  const token =
+    (prefix ? process.env[`${prefix}_YALC_API_TOKEN`] : undefined) ||
+    process.env.YALC_API_TOKEN ||
+    undefined;
+
+  return {
+    baseUrl: baseUrl.replace(/\/+$/, ""),
+    token,
+    slug,
+  };
+}
+
+export function publicYalcConfig(config: YalcRuntimeConfig) {
+  return {
+    baseUrl: config.baseUrl,
+    auth: config.token ? "bearer" : "none",
+  };
+}
+
+export async function yalcFetch<T = unknown>(
+  config: YalcRuntimeConfig,
+  path: string,
+  init: { method?: string; body?: unknown } = {},
+): Promise<T> {
+  const url = new URL(path.startsWith("/") ? path : `/${path}`, config.baseUrl);
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (config.token) headers.Authorization = `Bearer ${config.token}`;
+  if (init.body !== undefined) headers["Content-Type"] = "application/json";
+
+  const res = await fetch(url, {
+    method: init.method || (init.body === undefined ? "GET" : "POST"),
+    headers,
+    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+  });
+
+  const contentType = res.headers.get("content-type") || "";
+  const payload = contentType.includes("application/json") ? await res.json() : await res.text();
+  if (!res.ok) {
+    const message =
+      payload && typeof payload === "object" && "error" in payload
+        ? String((payload as { error: unknown }).error)
+        : `YALC ${res.status} ${res.statusText}`;
+    throw new YalcClientError(message, res.status, payload);
+  }
+  return payload as T;
+}
+
+export function yalcErrorResponse(err: unknown) {
+  if (err instanceof YalcClientError) {
+    return {
+      status: err.status,
+      body: { error: err.message, yalcStatus: err.status, detail: err.body },
+    };
+  }
+  return {
+    status: 502,
+    body: { error: err instanceof Error ? err.message : "YALC unreachable" },
+  };
+}
+
+export function countYalcRows(value: unknown): number | null {
+  if (!value || typeof value !== "object") return null;
+  const obj = value as Record<string, unknown>;
+  for (const key of ["campaigns", "leads", "items", "providers", "skills"]) {
+    const rows = obj[key];
+    if (Array.isArray(rows)) return rows.length;
+  }
+  if (typeof obj.total === "number") return obj.total;
+  return null;
+}

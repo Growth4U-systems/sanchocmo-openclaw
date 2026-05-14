@@ -78,6 +78,7 @@ export default defineChannelPluginEntry({
           userName,
           linkedTo,
           skill,
+          agent,
           agentId,
           isAdmin,
           senderRole,
@@ -90,7 +91,14 @@ export default defineChannelPluginEntry({
           return true;
         }
 
-        logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId}: ${text.slice(0, 80)}`);
+        const rawRequestedAgent = typeof agentId === "string" && agentId.trim()
+          ? agentId.trim()
+          : (typeof agent === "string" && agent.trim() ? agent.trim() : "sancho");
+        const requestedAgent = /^[a-z0-9][a-z0-9_-]{0,63}$/i.test(rawRequestedAgent)
+          ? rawRequestedAgent.toLowerCase()
+          : "sancho";
+
+        logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId} agent=${requestedAgent}: ${text.slice(0, 80)}`);
 
         // threadId may already include slug prefix (e.g. "growth4u:self-intelligence")
         const chatId = threadId.startsWith(slug + ':')
@@ -108,6 +116,7 @@ export default defineChannelPluginEntry({
         if (threadName) contextLines.push(`thread_name: ${threadName}`);
         if (linkedTo) contextLines.push(`linked_to: ${linkedTo}`);
         if (skill) contextLines.push(`skill: ${skill}`);
+        if (requestedAgent && requestedAgent !== "sancho") contextLines.push(`requested_agent: ${requestedAgent}`);
         contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Read files from disk (brand/${slug}/), never via HTTP/web_fetch to localhost.`);
         contextLines.push(`⚠️ EXECUTION GUARDRAIL: Aprobar un plan o crear proyectos NO es autorización para ejecutar tareas. Siempre preguntar "¿Ejecuto [tarea específica]?" y esperar confirmación explícita antes de generar deliverables. "Apruebo el plan" y "Ejecuta" son pasos DIFERENTES.`);
         contextLines.push(`💬 INTERACTIVE QUESTIONS: Cuando necesites una decisión del usuario entre opciones FINITAS y CONOCIDAS (ej. elegir un nicho de una lista, un tono, un pilar, un ICP), emite un bloque ":::ask" en vez de preguntar en texto libre. Formato:`);
@@ -126,13 +135,13 @@ export default defineChannelPluginEntry({
         const resolvedSenderId = isAdmin ? "mc-admin" : (userId || `mc-client-${slug}`);
         const resolvedSenderName = userName || (isAdmin ? "Admin" : `${slug} (client)`);
 
-        // When the payload carries an `agentId`, embed it in the SessionKey
+        // When the payload carries an agent override, embed it in the SessionKey
         // using OpenClaw's canonical agent-scoped format: "agent:<agentId>:<rest>".
         // resolveSessionAgentIds() (agent-scope.js) parses this and routes the
         // dispatch to workspace-<agentId> instead of the default agent.
         // Without this prefix, mc-chat messages always land on the default
-        // agent (sancho) regardless of what `agentId` the frontend sent.
-        const sessionKey = agentId ? `agent:${agentId}:${chatId}` : chatId;
+        // agent (sancho) regardless of what `agent`/`agentId` the frontend sent.
+        const sessionKey = requestedAgent === "sancho" ? chatId : `agent:${requestedAgent}:${chatId}`;
 
         // Build MsgContext for OpenClaw dispatch
         const msgCtx = finalizeInboundContext({
@@ -218,7 +227,7 @@ export default defineChannelPluginEntry({
                 if (texts.length === 0) return;
 
                 // Detect which agent is responding
-                const respondingAgent = replyPayload?.agentId || replyPayload?.agent || agentId || "sancho";
+                const respondingAgent = replyPayload?.agentId || replyPayload?.agent || requestedAgent || "sancho";
 
                 // Check if thread is linked to Discord
                 let discordLink = null;
@@ -269,7 +278,7 @@ export default defineChannelPluginEntry({
             typingCallbacks: {
               onReplyStart: async () => {
                 const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
-                const baseAgent = agentId || "sancho";
+                const baseAgent = requestedAgent || "sancho";
                 fetch(callbackUrl, {
                   method: "POST",
                   headers,
@@ -289,7 +298,7 @@ export default defineChannelPluginEntry({
               onToolStart: async (payload) => {
                 if (!payload?.name) return;
                 const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
-                const baseAgent = agentId || "sancho";
+                const baseAgent = requestedAgent || "sancho";
                 const toolName = payload.name;
                 const input = payload.input || {};
                 // Slugs del equipo SanchoCMO — sólo emitimos el mensaje formal role=handoff
@@ -297,7 +306,7 @@ export default defineChannelPluginEntry({
                 const TEAM_SLUGS = new Set([
                   "sancho", "cervantes", "hamete", "dulcinea",
                   "rocinante", "maese-pedro", "mambrino", "merlin",
-                  "sanson", "escudero",
+                  "sanson", "escudero", "yalc",
                 ]);
 
                 // Map tool name → label (legacy status text) + structured event
@@ -363,7 +372,7 @@ export default defineChannelPluginEntry({
               },
               onCompactionStart: async () => {
                 const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
-                const baseAgent = agentId || "sancho";
+                const baseAgent = requestedAgent || "sancho";
                 fetch(callbackUrl, {
                   method: "POST",
                   headers,

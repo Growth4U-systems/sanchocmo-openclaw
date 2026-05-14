@@ -150,9 +150,39 @@ R2_PUBLIC_URL=...
 # Search & scraping (used by Sancho skills)
 SERPER_API_KEY=...           # Google Search via Serper.dev
 FIRECRAWL_API_KEY=...        # Web scraping
+
+# YALC / GTM-OS (used by Yalc Agent + Mission Control cockpit)
+YALC_BASE_URL=http://yalc:3847
+YALC_API_TOKEN=...           # Same value exposed to YALC as GTM_OS_API_TOKEN
+YALC_BUILD_CONTEXT=../Yalc-Growth4U
+YALC_DATA_VOLUME=yalc_data   # Or /mnt/data/yalc-gtm-os for a host-mounted SQLite directory
+YALC_PORT=3847
 ```
 
 > See `.env.example` for the full list of optional variables (payments, social media, analytics, etc.).
+
+**YALC source for staging deploy** — staging now builds YALC from the private `Growth4U-systems/Yalc-Growth4U` repo and starts it with `docker-compose.yalc.yml`.
+
+In the GitHub **staging Environment**, set:
+
+```env
+ENABLE_YALC_SERVICE=1
+YALC_REF=main
+YALC_BUILD_CONTEXT=../Yalc-Growth4U
+```
+
+And add secret:
+
+```env
+YALC_REPO_TOKEN=<fine-grained GitHub token with read access to Growth4U-systems/Yalc-Growth4U>
+```
+
+If you do not want to use `YALC_REPO_TOKEN`, pre-clone the repo on the VPS at the same path:
+
+```bash
+cd "$(dirname ~/.openclaw)"
+git clone git@github.com:Growth4U-systems/Yalc-Growth4U.git Yalc-Growth4U
+```
 
 **`config/instance.json`** — copy from example and set Discord IDs:
 
@@ -171,10 +201,11 @@ nano config/clients.json
 ### 6. Launch
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.yalc.yml up -d --build
 ```
 
-First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, escudero, rocinante), and auto-detects Discord guilds.
+First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, escudero, rocinante, yalc), and auto-detects Discord guilds.
+The YALC container exposes its API inside Docker as `http://yalc:3847`, persists SQLite state under `/root/.gtm-os`, and serves `/healthz` without bearer auth for Docker health checks.
 
 > **Cervantes** does NOT run inside Docker. See step 8 below.
 
@@ -189,9 +220,19 @@ curl https://staging.sanchocmo.ai/mc/api/health-check
 
 # Stream logs
 docker logs sanchocmo --tail 50 -f
+docker logs yalc-gtm-os --tail 50 -f
 
 # Check bot status inside container
 docker exec sanchocmo openclaw status
+
+# Check YALC health from the VPS host
+curl http://127.0.0.1:3847/healthz
+```
+
+Mission Control exposes the YALC cockpit at:
+
+```text
+https://staging.sanchocmo.ai/dashboard/<client-slug>/yalc
 ```
 
 ### 8. Approve your Discord user (OpenClaw bot)
