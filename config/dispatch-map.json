@@ -108,5 +108,32 @@
     "id": "sanson",
     "method": "sessions_send",
     "activate_for": ["brand-check", "qa-review", "devil-advocate", "foundation-verification"]
+  },
+  "yalc_agent": {
+    "id": "yalc",
+    "name": "Yalc Agent",
+    "method": "sessions_send",
+    "skill": "yalc-operator",
+    "activate_for": [
+      "yalc",
+      "gtm-os",
+      "outbound-execution",
+      "lead-qualification",
+      "campaign-dry-run",
+      "campaign-launch-confirmed",
+      "campaign-reporting",
+      "instantly",
+      "provider-status",
+      "mcp-provider-status"
+    ],
+    "requires_confirmation_for": [
+      "send-email",
+      "launch-campaign",
+      "approve-gate",
+      "commit-setup",
+      "pause-campaign",
+      "resume-campaign",
+      "update-lead-status"
+    ]
   }
 }

@@ -18,9 +18,9 @@
 | **Merlín** | 🔮 | Data, atribución & forecasting — CRM, KPIs |
 | **Sansón** | 🛡️ | QA, brand-check & devil's advocate (antes Rocinante=QA) |
 | **Cervantes** | ✒️ | Arquitecto del sistema, bugs/infra |
-| **Yalc Agent** | 🧭 | Operador GTM-OS — health, qualification, cold email dry-run/live confirmado, reporting |
+| **Yalc Agent** | 🧭 | Operador GTM-OS — health, provider/MCP status, gates, qualification, cold email dry-run/live confirmado, reporting |
 
-**Dispatch operativo (Fase 1)**: aunque el equipo de agentes está definido, el dispatch interno todavía pasa por Escudero (`workspace-escudero/`) y sus personas (`./personas/`). En Fase 2 se actualizará `dispatch-map.json` a v4 con bloque `specialists` y Sancho dispatchará directamente a especialistas. Excepciones activas: Sansón para QA y Yalc Agent para operaciones GTM-OS/Instantly confirmadas.
+**Dispatch operativo (Fase 1)**: aunque el equipo de agentes está definido, el dispatch interno todavía pasa por Escudero (`workspace-escudero/`) y sus personas (`./personas/`). En Fase 2 se actualizará `dispatch-map.json` a v4 con bloque `specialists` y Sancho dispatchará directamente a especialistas. Excepciones activas: Sansón para QA y Yalc Agent (`workspace-yalc`) para operaciones GTM-OS/YALC/Instantly confirmadas.
 
 ## Personalidad — El CMO pragmático (Sancho Panza)
 
@@ -87,7 +87,7 @@ Todo lo que hago (contenido, ads, outreach, Foundation) se evalúa contra la NSM
 - **Sancho**: Estrategia, planificación, research, tareas de 1 turno, Foundation
 - **Escudero** (sessions_spawn, thread:true): Contenido largo, tareas especializadas/paralelas → NO_REPLY
 - **Sansón** (sessions_send): Brand check, QA, devil's advocate (antes Rocinante=QA — slug `rocinante` ahora apunta a Outreach)
-- **Yalc Agent** (yalc-operator): Health, lead qualification, cold email dry-run/live confirmado, reporting GTM-OS
+- **Yalc Agent** (sessions_send -> `yalc`, skill `yalc-operator`): Health, provider/MCP status, brain/setup, gates, lead qualification, cold email dry-run/live confirmado, reporting GTM-OS
 - **Cervantes** (sessions_send): Bugs, infra, config
 - Protocolos: `_system/dispatch-protocol.md`, `dispatch-map.json`
 

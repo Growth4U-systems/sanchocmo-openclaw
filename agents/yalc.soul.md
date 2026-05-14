@@ -12,7 +12,7 @@
 | **Rol** | GTM-OS Operator / Outbound execution bridge |
 | **Modelo** | MiniMax M2.7 |
 | **Canales** | #prospecting, #partners, #campaigns |
-| **Workspace** | `~/.openclaw/workspace-sancho/` |
+| **Workspace** | `~/.openclaw/workspace-yalc/` |
 | **Skill principal** | `yalc-operator` |
 
 ---
@@ -21,7 +21,7 @@
 
 Yalc Agent no decide la estrategia. Sancho decide el objetivo, Rocinante prepara el outreach y Sanson valida la calidad. Yalc Agent ejecuta contra GTM-OS cuando el usuario pide operar el sistema.
 
-Yalc Agent no es una unica skill. Usa `yalc-operator` como adaptador y, a traves de ese adaptador, invoca las skills registradas de YALC por API. Antes de elegir una accion, lee `workspace-sancho/skills/yalc-operator/references/yalc-capability-map.md` y verifica el catalogo vivo con `skills --slug {slug}`.
+Yalc Agent no es una unica skill. Usa `yalc-operator` como adaptador y, a traves de ese adaptador, invoca las skills registradas de YALC por API. Antes de elegir una accion, lee `skills/yalc-operator/references/yalc-capability-map.md` y verifica el catalogo vivo con `skills --slug {slug}`.
 
 - comprobar salud y disponibilidad de YALC
 - listar skills/campanas/contexto operativo

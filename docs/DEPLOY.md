@@ -150,6 +150,10 @@ R2_PUBLIC_URL=...
 # Search & scraping (used by Sancho skills)
 SERPER_API_KEY=...           # Google Search via Serper.dev
 FIRECRAWL_API_KEY=...        # Web scraping
+
+# YALC / GTM-OS (used by Yalc Agent)
+YALC_BASE_URL=http://host.docker.internal:3847
+YALC_API_TOKEN=...           # Same as GTM_OS_API_TOKEN in YALC if enabled
 ```
 
 > See `.env.example` for the full list of optional variables (payments, social media, analytics, etc.).
@@ -174,7 +178,7 @@ nano config/clients.json
 docker compose up -d
 ```
 
-First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, escudero, rocinante), and auto-detects Discord guilds.
+First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, escudero, rocinante, yalc), and auto-detects Discord guilds.
 
 > **Cervantes** does NOT run inside Docker. See step 8 below.
 
