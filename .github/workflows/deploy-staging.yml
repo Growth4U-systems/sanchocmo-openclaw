@@ -33,8 +33,10 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           SHA: ${{ github.sha }}
+          SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
         run: |
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA bash -s" <<'EOF'
+          SANCHO_INTERNAL_API_TOKEN_B64="$(printf '%s' "$SANCHO_INTERNAL_API_TOKEN" | base64 -w0)"
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA SANCHO_INTERNAL_API_TOKEN_B64=$SANCHO_INTERNAL_API_TOKEN_B64 bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching staging…"
@@ -42,6 +44,27 @@ jobs:
             if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
               echo "▶ Stashing local runtime changes before checkout…"
               git stash push --include-untracked -m "deploy-staging-$(date -u +%Y%m%dT%H%M%SZ)" || true
+            fi
+            if [ -n "${SANCHO_INTERNAL_API_TOKEN_B64:-}" ]; then
+              echo "▶ Ensuring Sancho internal API token is configured…"
+              python3 - <<'PY'
+          import base64
+          import os
+          import pathlib
+
+          token = base64.b64decode(os.environ["SANCHO_INTERNAL_API_TOKEN_B64"]).decode()
+          env_path = pathlib.Path(".env")
+          lines = env_path.read_text().splitlines() if env_path.exists() else []
+          updated = False
+          for index, line in enumerate(lines):
+              if line.startswith("SANCHO_INTERNAL_API_TOKEN="):
+                  lines[index] = f"SANCHO_INTERNAL_API_TOKEN={token}"
+                  updated = True
+                  break
+          if not updated:
+              lines.append(f"SANCHO_INTERNAL_API_TOKEN={token}")
+          env_path.write_text("\n".join(lines) + "\n")
+          PY
             fi
             echo "▶ Checking out $SHA…"
             git checkout "$SHA"
