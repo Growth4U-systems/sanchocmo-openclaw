@@ -104,9 +104,14 @@ export interface IntelligenceItem {
   source: string;
   date: string;
   confidence: string;
+  confidenceValue?: number | null;
   status: InsightStatus;
   evidenceRaw: boolean;
   meetingId?: string | null;
+  owner?: string | null;
+  body?: string | null;
+  rationale?: string | null;
+  evidence?: Record<string, unknown> | null;
   tone: "ok" | "warn" | "critical" | "proposal";
 }
 
@@ -988,9 +993,14 @@ function mapInsight(
     source: row.sourceLabel || "Meeting Intelligence",
     date: row.eventDate || "",
     confidence: typeof row.confidence === "number" ? `${Math.round(row.confidence * 100)}%` : hasRaw ? "traceable" : "raw missing",
+    confidenceValue: row.confidence,
     status,
     evidenceRaw: hasRaw,
     meetingId: row.meetingId,
+    owner: row.owner,
+    body: row.body,
+    rationale: row.rationale,
+    evidence,
     tone: insightTone(kind, status, hasRaw),
   };
 }
