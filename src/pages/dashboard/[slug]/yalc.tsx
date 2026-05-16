@@ -16,6 +16,9 @@ import {
   ShieldCheck,
   Target,
   Users,
+  X,
+  Plug,
+  Loader2,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -137,6 +140,35 @@ interface Provider {
 
 interface ProvidersPayload {
   providers?: Provider[];
+}
+
+interface ProviderEnvVar {
+  name: string;
+  description: string;
+  example: string;
+  required: boolean;
+}
+
+interface ProviderKnowledge {
+  id: string;
+  display_name: string;
+  homepage?: string | null;
+  docs_url?: string | null;
+  key_acquisition_url?: string | null;
+  integration_kind?: string;
+  env_vars: ProviderEnvVar[];
+  install_steps?: string[];
+}
+
+interface KnowledgePayload {
+  providers?: ProviderKnowledge[];
+}
+
+interface SaveResult {
+  status: string;
+  provider: string;
+  healthcheck?: { ok: boolean; status: string; detail: string };
+  custom?: boolean;
 }
 
 const TABS: Array<{ key: TabKey; label: string }> = [
@@ -648,42 +680,267 @@ export default function YalcCockpitPage() {
         )}
 
         {activeTab === "providers" && (
-          <Panel title="Providers YALC" action={`${providers.length} registrados`}>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {providers.map((provider) => (
-                <div key={provider.id} className="rounded-lg border-2 border-border bg-background p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={cn("h-2.5 w-2.5 rounded-full", providerDot(provider.status))} />
-                        <h3 className="truncate font-heading text-base text-navy">{provider.name || provider.id}</h3>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{provider.description || provider.id}</p>
-                    </div>
-                    <span className={cn("rounded-md border px-2 py-1 text-xs font-bold", statusClasses(provider.status))}>
-                      {provider.status || "unknown"}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {(provider.capabilities || []).slice(0, 5).map((capability) => (
-                      <span key={capability} className="rounded border border-border bg-card px-2 py-1 text-[11px] font-semibold">
-                        {capability}
-                      </span>
-                    ))}
-                    {(provider.capabilities || []).length > 5 && (
-                      <span className="rounded border border-border bg-card px-2 py-1 text-[11px] font-semibold">
-                        +{(provider.capabilities || []).length - 5}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {providers.length === 0 && <EmptyLine text="No hay providers disponibles o YALC no responde." />}
-            </div>
-          </Panel>
+          <ProviderConnectTab slug={slug} providers={providers} onRefresh={() => providersQuery.refetch()} />
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+function ProviderConnectTab({
+  slug,
+  providers,
+  onRefresh,
+}: {
+  slug: string;
+  providers: Provider[];
+  onRefresh: () => void;
+}) {
+  const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<Record<string, { ok: boolean; detail: string }>>({});
+
+  const knowledgeQuery = useQuery({
+    queryKey: ["yalc", slug, "providers-knowledge"],
+    queryFn: () => fetchJson<KnowledgePayload>(`/api/yalc/providers/knowledge?slug=${encodeURIComponent(slug)}`),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const knowledgeMap = useMemo(() => {
+    const map = new Map<string, ProviderKnowledge>();
+    for (const k of knowledgeQuery.data?.providers || []) map.set(k.id, k);
+    return map;
+  }, [knowledgeQuery.data]);
+
+  const handleTest = async (providerId: string) => {
+    setTestingId(providerId);
+    try {
+      const result = await fetchJson<{ ok: boolean; detail: string }>(`/api/yalc/providers/test?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: providerId }),
+      });
+      setTestResult((prev) => ({ ...prev, [providerId]: result }));
+    } catch (err) {
+      setTestResult((prev) => ({ ...prev, [providerId]: { ok: false, detail: err instanceof Error ? err.message : "Error" } }));
+    } finally {
+      setTestingId(null);
+    }
+  };
+
+  return (
+    <>
+      <Panel title="Providers YALC" action={`${providers.length} registrados`}>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {providers.map((provider) => {
+            const knowledge = knowledgeMap.get(provider.id);
+            const test = testResult[provider.id];
+            return (
+              <div key={provider.id} className="rounded-lg border-2 border-border bg-background p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={cn("h-2.5 w-2.5 rounded-full", providerDot(provider.status))} />
+                      <h3 className="truncate font-heading text-base text-navy">{provider.name || provider.id}</h3>
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{provider.description || provider.id}</p>
+                  </div>
+                  <span className={cn("rounded-md border px-2 py-1 text-xs font-bold", statusClasses(provider.status))}>
+                    {provider.status || "unknown"}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {(provider.capabilities || []).slice(0, 5).map((capability) => (
+                    <span key={capability} className="rounded border border-border bg-card px-2 py-1 text-[11px] font-semibold">
+                      {capability}
+                    </span>
+                  ))}
+                </div>
+                {test && (
+                  <div className={cn("mt-2 rounded border px-2 py-1 text-xs", test.ok ? "border-sage/40 bg-sage/10 text-sage" : "border-destructive/40 bg-destructive/10 text-destructive")}>
+                    {test.ok ? "OK" : "Error"}: {test.detail}
+                  </div>
+                )}
+                <div className="mt-3 flex gap-2">
+                  {knowledge && (
+                    <button
+                      type="button"
+                      onClick={() => setConnectingId(provider.id)}
+                      className="inline-flex items-center gap-1 rounded-md border border-rust bg-rust/10 px-2 py-1 text-xs font-bold text-rust hover:bg-rust/20"
+                    >
+                      <Plug className="h-3 w-3" />
+                      {provider.status === "green" ? "Reconfigurar" : "Conectar"}
+                    </button>
+                  )}
+                  {provider.hasHealthProbe && (
+                    <button
+                      type="button"
+                      disabled={testingId === provider.id}
+                      onClick={() => handleTest(provider.id)}
+                      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-bold hover:bg-card disabled:opacity-50"
+                    >
+                      {testingId === provider.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Activity className="h-3 w-3" />}
+                      Test
+                    </button>
+                  )}
+                  {knowledge?.key_acquisition_url && (
+                    <a
+                      href={knowledge.key_acquisition_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-bold hover:bg-card"
+                    >
+                      <ExternalLink className="h-3 w-3" /> Get key
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {providers.length === 0 && <EmptyLine text="No hay providers disponibles o YALC no responde." />}
+        </div>
+      </Panel>
+
+      {connectingId && knowledgeMap.has(connectingId) && (
+        <ProviderConnectModal
+          slug={slug}
+          knowledge={knowledgeMap.get(connectingId)!}
+          currentStatus={providers.find((p) => p.id === connectingId)?.status}
+          onClose={() => setConnectingId(null)}
+          onSaved={() => {
+            setConnectingId(null);
+            onRefresh();
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+function ProviderConnectModal({
+  slug,
+  knowledge,
+  currentStatus,
+  onClose,
+  onSaved,
+}: {
+  slug: string;
+  knowledge: ProviderKnowledge;
+  currentStatus?: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    for (const v of knowledge.env_vars) init[v.name] = "";
+    return init;
+  });
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<SaveResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const canSave = knowledge.env_vars.filter((v) => v.required).every((v) => values[v.name]?.trim());
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    setResult(null);
+    try {
+      const res = await fetchJson<SaveResult>(`/api/yalc/providers/save?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: knowledge.id, env: values }),
+      });
+      setResult(res);
+      if (res.healthcheck?.ok) {
+        setTimeout(onSaved, 1500);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error guardando keys");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-lg rounded-xl border-2 border-border bg-background p-6 shadow-xl">
+        <div className="mb-4 flex items-start justify-between">
+          <div>
+            <h2 className="font-heading text-xl text-foreground">{knowledge.display_name || knowledge.id}</h2>
+            {currentStatus === "green" && (
+              <span className="text-xs text-sage font-bold">Conectado — reconfigurar keys</span>
+            )}
+          </div>
+          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-card">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {knowledge.env_vars.map((envVar) => (
+            <div key={envVar.name}>
+              <label className="mb-1 block text-sm font-bold text-foreground">
+                {envVar.name}
+                {envVar.required && <span className="ml-1 text-destructive">*</span>}
+              </label>
+              <p className="mb-1.5 text-xs text-muted-foreground">{envVar.description}</p>
+              <input
+                type="password"
+                value={values[envVar.name] || ""}
+                onChange={(e) => setValues((prev) => ({ ...prev, [envVar.name]: e.target.value }))}
+                placeholder={envVar.example || envVar.name}
+                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:border-rust focus:outline-none"
+                autoComplete="off"
+              />
+            </div>
+          ))}
+
+          {knowledge.key_acquisition_url && (
+            <a
+              href={knowledge.key_acquisition_url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-bold text-rust hover:underline"
+            >
+              <ExternalLink className="h-3 w-3" /> Obtener API key
+            </a>
+          )}
+
+          {result && (
+            <div className={cn("rounded-md border p-3 text-sm", result.healthcheck?.ok ? "border-sage/40 bg-sage/10" : "border-destructive/40 bg-destructive/10")}>
+              <div className="font-bold">{result.healthcheck?.ok ? "Conectado correctamente" : "Keys guardadas pero health check fallo"}</div>
+              <div className="mt-1 text-xs">{result.healthcheck?.detail}</div>
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              disabled={!canSave || saving}
+              onClick={handleSave}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border-2 border-ink bg-rust px-4 py-2 text-sm font-bold text-white shadow-comic-sm disabled:opacity-50"
+            >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              {saving ? "Guardando..." : "Guardar y verificar"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md border border-border px-4 py-2 text-sm font-bold hover:bg-card"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
