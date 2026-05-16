@@ -5,7 +5,9 @@ import { useRouter } from "next/router";
 import { ConfigurationPipeline } from "./ConfigurationPipeline";
 import { EngineState } from "./EngineState";
 import { InputsTab } from "./InputsTab";
+import { StrategyDocsTab } from "./StrategyDocsTab";
 import { ConfigSheet } from "@/components/content/config/ConfigSheet";
+import { useContentCreation } from "@/hooks/useContentCreation";
 import type { ThreadConfig } from "@/lib/chat-openers";
 
 interface Props {
@@ -36,6 +38,14 @@ const SECTION_ICONS: Record<EditorSection, string> = {
 
 export function EngineTab({ slug, openChat }: Props) {
   const [sub, setSub] = useState<SubTab>("state");
+  const { data, isLoading } = useContentCreation(slug, null);
+
+  // Brand without a Content Engine project yet → niche selector + "Crear
+  // Estrategia de Contenido" CTA. Once created, hasProject flips true and
+  // we fall through to the normal Engine UI.
+  if (!isLoading && data && !data.hasProject) {
+    return <StrategyDocsTab slug={slug} data={data} openChat={openChat} />;
+  }
 
   return (
     <div>
