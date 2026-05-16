@@ -11,8 +11,8 @@ import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
 import { withErrorHandler } from "@/lib/api-middleware";
+import { cronJobsFile, cronJobsStateFile } from "@/lib/data/openclaw-paths";
 
-const CRON_FILE = path.join(process.env.HOME || "", ".openclaw", "cron", "jobs.json");
 const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
 
 interface CronJob {
@@ -27,11 +27,11 @@ interface CronJob {
 }
 
 function loadJobs(): { version: number; jobs: CronJob[] } {
-  return JSON.parse(fs.readFileSync(CRON_FILE, "utf-8"));
+  return JSON.parse(fs.readFileSync(cronJobsFile(), "utf-8"));
 }
 
 function saveJobs(data: { version: number; jobs: CronJob[] }) {
-  fs.writeFileSync(CRON_FILE, JSON.stringify(data, null, 2));
+  fs.writeFileSync(cronJobsFile(), JSON.stringify(data, null, 2));
 }
 
 /** Convert cron expression to human-readable Spanish */
@@ -51,7 +51,7 @@ function humanizeCron(expr: string): string {
 /** Read raw jobs-state.json once per request */
 let _jobsStateCache: { mtime: number; data: Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string } }> } | null = null;
 function loadJobsState(): Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string } }> {
-  const f = path.join(process.env.HOME || "", ".openclaw", "cron", "jobs-state.json");
+  const f = cronJobsStateFile();
   if (!fs.existsSync(f)) return {};
   try {
     const stat = fs.statSync(f);

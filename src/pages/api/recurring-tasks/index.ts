@@ -6,6 +6,7 @@ import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
 import { loadClients } from "@/lib/data/clients";
 import { BASE } from "@/lib/data/paths";
+import { cronJobsFile } from "@/lib/data/openclaw-paths";
 import { readJSON } from "@/lib/data/json-io";
 
 
@@ -90,8 +91,7 @@ function extractScripts(prompt: string): unknown[] {
 }
 
 function loadCronsFromOpenClaw(): unknown[] {
-  const jobsFile = process.env.OPENCLAW_CRON_FILE
-    || path.join(process.env.HOME || "/root", ".openclaw", "cron", "jobs.json");
+  const jobsFile = process.env.OPENCLAW_CRON_FILE || cronJobsFile();
   const data = readJSON<{ jobs?: unknown[] }>(jobsFile, { jobs: [] });
   return Array.isArray(data) ? data : (data.jobs || []);
 }
