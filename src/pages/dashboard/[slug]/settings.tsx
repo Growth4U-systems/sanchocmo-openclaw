@@ -7,7 +7,6 @@ import { TabGroup } from "@/components/shared/tab-group";
 import { ApisConnectorsPanel } from "@/components/settings/ApisConnectorsPanel";
 import { AgentsPanel } from "@/components/settings/agents-panel";
 import { SkillsPanel } from "@/components/settings/skills-panel";
-import { DispatchPanel } from "@/components/settings/dispatch-panel";
 import { StrategiesPanel } from "@/components/settings/strategies-panel";
 import { RecurringPanel } from "@/components/settings/recurring-panel";
 import { TaskIndexPanel } from "@/components/settings/TaskIndexPanel";
@@ -24,7 +23,6 @@ const TAB_KEYS = [
   "apis",
   "agents",
   "skills",
-  "dispatch",
   "strategies",
   "recurring",
   "task-index",
@@ -35,7 +33,6 @@ const TAB_ICONS: Record<TabKey, string> = {
   apis: "🔌",
   agents: "🤖",
   skills: "🧰",
-  dispatch: "📡",
   strategies: "🎯",
   recurring: "🔄",
   "task-index": "📋",
@@ -86,7 +83,6 @@ export default function ClientSettingsPage() {
       {activeTab === "apis" && <ApisConnectorsPanel />}
       {activeTab === "agents" && <AgentsPanel />}
       {activeTab === "skills" && <SkillsPanel slug={slug} />}
-      {activeTab === "dispatch" && <DispatchPanel />}
       {activeTab === "strategies" && <StrategiesPanel />}
       {activeTab === "recurring" && <RecurringPanel slug={slug} />}
       {activeTab === "task-index" && <TaskIndexPanel slug={slug} />}

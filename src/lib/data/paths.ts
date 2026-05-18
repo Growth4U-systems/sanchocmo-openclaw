@@ -66,10 +66,6 @@ export function chatReadStateFile(slug: string) {
   return path.join(BASE, "brand", slug, "chat", "_read-state.json");
 }
 
-export function atalayaDir(slug: string) {
-  return path.join(BASE, "brand", slug, "atalaya");
-}
-
 export function meetingIntelligenceDir(slug: string) {
   return path.join(BASE, "brand", slug, "intelligence");
 }

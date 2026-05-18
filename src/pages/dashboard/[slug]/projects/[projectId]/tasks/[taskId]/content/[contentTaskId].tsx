@@ -11,11 +11,9 @@ import { useContentTask } from "@/hooks/useContentTasks";
 /**
  * /dashboard/[slug]/projects/[projectId]/tasks/[taskId]/content/[contentTaskId]
  *
- * Legacy ContentTask metadata-only page. We've merged its UI into the draft
- * page (which already has DashboardLayout chat sidebar, channel switcher, and
- * a collapsible Detalles section with all editable fields). To keep existing
- * URLs working — Idea Bank chips, task-index links, etc. — we redirect to
- * the first target channel's draft view.
+ * Legacy ContentTask metadata-only page. The UI is now in the draft page;
+ * we keep this route as a redirect to preserve existing URLs (task-index
+ * links, etc.). It redirects to the first target channel's draft view.
  */
 export default function ContentTaskRedirectPage() {
   const slug = useSlugSync() || "";

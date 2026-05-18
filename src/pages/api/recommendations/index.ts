@@ -93,7 +93,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   for (const item of grouped.recommendations || []) {
     allRecs.push({
       id: item.id || "",
-      source: item.source || "atalaya",
+      source: item.source || "recommendation",
       type: item.type || "content_task",
       priority: item.priority || "medium",
       title: item.title || "",

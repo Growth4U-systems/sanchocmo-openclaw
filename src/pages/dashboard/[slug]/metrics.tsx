@@ -23,7 +23,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
-// CollapsibleSection removed — recommendations moved to Idea Bank > Insights
 import { useMetricsPlan } from "@/hooks/useMetrics";
 import { cn } from "@/lib/utils";
 
@@ -1393,7 +1392,6 @@ export default function MetricsPage() {
         </div>
       )}
 
-      {/* Recommendations moved to Idea Bank > Insights */}
     </DashboardLayout>
   );
 }

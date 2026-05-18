@@ -1112,11 +1112,12 @@ export function ChatSidebar() {
               const navProjectId = projMatch?.[1] || "";
               href = navProjectId ? `/dashboard/${slug}/tasks/${navProjectId}` : null;
             } else if (toolMatch) {
-              // Tool page: trust-engine, atalaya
+              // Tool page: trust-engine, atalaya (atalaya has no MC page —
+              // its threads are still backed by the backend skill).
               const toolName = toolMatch[1];
               icon = toolName === "atalaya" ? "🏰" : "🔍";
               label = prettify(toolName);
-              href = `/dashboard/${slug}/${toolName}`;
+              href = toolName === "atalaya" ? null : `/dashboard/${slug}/${toolName}`;
             } else if (skillMatch) {
               icon = "🛠️";
               label = `Skill · ${prettify(skillMatch[1])}`;
