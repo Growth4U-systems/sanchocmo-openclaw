@@ -199,17 +199,17 @@ export function Sidebar() {
         {isAdmin && !selectedClient && (
           <>
             <NavLink
-              href="/dashboard/admin/settings?tab=clients"
+              href="/dashboard/admin/clients"
               icon="👥"
               label="Clientes"
-              active={router.asPath.startsWith("/dashboard/admin/settings") && router.asPath.includes("tab=clients")}
+              active={isActive("/dashboard/admin/clients")}
               collapsed={!sidebarOpen}
             />
             <NavLink
-              href="/dashboard/admin/settings?tab=admins"
+              href="/dashboard/admin/users"
               icon="🔐"
               label="Usuarios admin"
-              active={router.asPath.startsWith("/dashboard/admin/settings") && router.asPath.includes("tab=admins")}
+              active={isActive("/dashboard/admin/users")}
               collapsed={!sidebarOpen}
             />
           </>
