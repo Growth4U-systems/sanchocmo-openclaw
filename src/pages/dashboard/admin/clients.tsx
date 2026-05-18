@@ -40,14 +40,17 @@ function ClientsPanel() {
   const qc = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const { data: clients, isLoading } = useQuery<ClientFull[]>({
+  const { data: clients, isLoading, error: fetchError, refetch } = useQuery<ClientFull[], Error>({
     queryKey: ["clients"],
     queryFn: async () => {
       const res = await fetch("/api/clients");
-      if (!res.ok) return [];
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const d = await res.json();
-      return d.clients || [];
+      if (!Array.isArray(d.clients)) throw new Error("Respuesta inválida: clients no es array");
+      return d.clients;
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const toggleActive = useMutation({
@@ -82,7 +85,6 @@ function ClientsPanel() {
       name: string;
       emoji: string;
       url: string;
-      guild: string;
       language: string;
       active: boolean;
     }) => {
@@ -104,6 +106,29 @@ function ClientsPanel() {
   });
 
   const [editSlug, setEditSlug] = useState<string | null>(null);
+  const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const deleteClient = useMutation({
+    mutationFn: async ({ slug, confirmSlug }: { slug: string; confirmSlug: string }) => {
+      const res = await fetch("/api/clients/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, confirmSlug }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) throw new Error(json.error || "Failed");
+      return json;
+    },
+    onSuccess: () => {
+      setDeleteSlug(null);
+      setDeleteConfirmText("");
+      setDeleteError(null);
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: Error) => setDeleteError(e.message),
+  });
 
   if (isLoading) return <p className="text-muted-foreground">{t("loadingClients")}</p>;
 
@@ -181,6 +206,17 @@ function ClientsPanel() {
             >
               ✏️ {tCommon("edit")}
             </button>
+            <button
+              onClick={() => {
+                setDeleteError(null);
+                setDeleteConfirmText("");
+                setDeleteSlug(deleteSlug === client.slug ? null : client.slug);
+              }}
+              className="text-xs px-3 py-1 rounded border border-border hover:border-red-500 hover:text-red-600 text-muted-foreground"
+              title="Eliminar cliente"
+            >
+              🗑
+            </button>
           </div>
 
           {editSlug === client.slug && (
@@ -192,6 +228,54 @@ function ClientsPanel() {
               }}
               onCancel={() => setEditSlug(null)}
             />
+          )}
+
+          {deleteSlug === client.slug && (
+            <div className="mt-4 pt-4 border-t-2 border-red-500/40 space-y-3">
+              <div>
+                <p className="text-sm font-bold text-red-600">⚠️ Eliminar cliente</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Esto remueve <span className="font-mono">{client.slug}</span> de <span className="font-mono">clients.json</span>.
+                  La carpeta <span className="font-mono">brand/{client.slug}/</span> en disco se conserva (podés borrarla manualmente).
+                  Esta acción no se puede deshacer desde la UI.
+                </p>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  Para confirmar, escribí el slug: <span className="font-mono text-ink">{client.slug}</span>
+                </label>
+                <input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={client.slug}
+                  className="w-full mt-1 px-3 py-1.5 border-2 border-red-500/60 rounded-lg text-sm bg-background font-mono"
+                  autoFocus
+                />
+              </div>
+              {deleteError && <p className="text-xs text-red-500">⚠️ {deleteError}</p>}
+              <div className="flex gap-2">
+                <button
+                  onClick={() =>
+                    deleteClient.mutate({ slug: client.slug, confirmSlug: deleteConfirmText.trim() })
+                  }
+                  disabled={deleteConfirmText.trim().toLowerCase() !== client.slug || deleteClient.isPending}
+                  className="px-4 py-1.5 bg-red-600 text-white rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleteClient.isPending ? "Eliminando..." : "Eliminar definitivamente"}
+                </button>
+                <button
+                  onClick={() => {
+                    setDeleteSlug(null);
+                    setDeleteConfirmText("");
+                    setDeleteError(null);
+                  }}
+                  disabled={deleteClient.isPending}
+                  className="px-4 py-1.5 border border-border rounded-lg text-sm text-muted-foreground disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
           )}
         </ComicCard>
       ))}
@@ -224,7 +308,6 @@ function ClientCreateForm({
     name: string;
     emoji: string;
     url: string;
-    guild: string;
     language: string;
     active: boolean;
   }) => void;
@@ -235,7 +318,6 @@ function ClientCreateForm({
   const [slugTouched, setSlugTouched] = useState(false);
   const [emoji, setEmoji] = useState("🏢");
   const [url, setUrl] = useState("");
-  const [guild, setGuild] = useState("");
   const [language, setLanguage] = useState("es");
   const [active, setActive] = useState(true);
 
@@ -248,7 +330,6 @@ function ClientCreateForm({
   const canSave =
     Boolean(name.trim()) &&
     /^[a-z0-9][a-z0-9-]*$/.test(normalizedSlug) &&
-    /^\d{17,20}$/.test(guild.trim()) &&
     !slugExists &&
     !isSaving;
 
@@ -284,15 +365,6 @@ function ClientCreateForm({
               className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
             />
             {slugExists && <p className="text-[11px] text-red-500 mt-1">Ese slug ya existe.</p>}
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground">Discord Guild ID</label>
-            <input
-              value={guild}
-              onChange={(e) => setGuild(e.target.value.replace(/\D/g, "").slice(0, 20))}
-              placeholder="123456789012345678"
-              className="w-full mt-1 px-3 py-1.5 border-2 border-ink rounded-lg text-sm bg-background"
-            />
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase text-muted-foreground">Website</label>
@@ -343,7 +415,6 @@ function ClientCreateForm({
               name: name.trim(),
               emoji: emoji.trim() || "🏢",
               url: url.trim(),
-              guild: guild.trim(),
               language,
               active,
             })}
