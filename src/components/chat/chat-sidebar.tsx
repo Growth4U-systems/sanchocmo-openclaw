@@ -1075,11 +1075,18 @@ export function ChatSidebar() {
             } else if (isTaskLinked) {
               icon = "📝";
               label = prettify(meta?.threadName || "") || "Tarea";
-              href = `/dashboard/${slug}/${linkedTo}`;
+              // linkedTo is a thread anchor in legacy format (projects/X/tasks/Y);
+              // route via the unified /tasks/:taskId path so client-side
+              // navigation lands on the working unified page.
+              const taskMatch = linkedTo.match(/^projects\/[^/]+\/tasks\/([^/]+)/i);
+              const navTaskId = taskMatch?.[1] || "";
+              href = navTaskId ? `/dashboard/${slug}/tasks/${navTaskId}` : null;
             } else if (isProjectLinked) {
               icon = "📁";
               label = prettify(meta?.threadName || "") || "Proyecto";
-              href = `/dashboard/${slug}/${linkedTo}`;
+              const projMatch = linkedTo.match(/^projects\/([^/]+)/i);
+              const navProjectId = projMatch?.[1] || "";
+              href = navProjectId ? `/dashboard/${slug}/tasks/${navProjectId}` : null;
             } else if (toolMatch) {
               // Tool page: trust-engine, atalaya
               const toolName = toolMatch[1];
