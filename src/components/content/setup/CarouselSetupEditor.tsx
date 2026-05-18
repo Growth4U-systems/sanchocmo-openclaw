@@ -333,10 +333,9 @@ function EmptyTemplatesState({ slug }: { slug: string }) {
       if (!res.ok || !data.ok || !data.task || !data.projectId) {
         throw new Error(data.error || "No se pudo crear la tarea");
       }
-      // The task page route uses the bare project id (e.g. "P14"), not the
-      // project folder slug ("P14-Content-Engine") — the page resolves the
-      // task by `project.id === projectId`.
-      router.push(`/dashboard/${slug}/projects/${data.projectId}/tasks/${data.task.id}`);
+      // Unified task route — taskId is enough; the task page resolves the
+      // owning project on the server via findTaskByIdAcrossBrand.
+      router.push(`/dashboard/${slug}/tasks/${data.task.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

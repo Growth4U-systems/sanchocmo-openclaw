@@ -514,7 +514,7 @@ export default function ProjectDetailPage() {
                     return (
                       <Link
                         key={t.id}
-                        href={`/dashboard/${slug}/projects/${project.id}/tasks/${t.id}`}
+                        href={`/dashboard/${slug}/tasks/${t.id}`}
                         className={cn(
                           "group block rounded-lg border border-border bg-white p-2.5 cursor-pointer hover:border-rust hover:shadow-md transition-all",
                           tDone && "opacity-50"
@@ -575,7 +575,7 @@ export default function ProjectDetailPage() {
                           )}
                           {!isFnd && (
                             <Link
-                              href={`/dashboard/${slug}/projects/${project.id}/tasks/${t.id}`}
+                              href={`/dashboard/${slug}/tasks/${t.id}`}
                               className="text-[10px] text-muted-foreground hover:text-[#C45D35] transition-colors ml-auto no-underline"
                               onClick={(e) => { e.stopPropagation(); }}
                             >

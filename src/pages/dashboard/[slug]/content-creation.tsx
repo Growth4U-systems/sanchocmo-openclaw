@@ -50,7 +50,7 @@ export default function ContentCreationPage() {
         <h1 className="font-heading text-2xl text-navy">Content Engine</h1>
         {data?.projectId && (
           <Link
-            href={`/dashboard/${slug}/projects/${data.projectId}`}
+            href={`/dashboard/${slug}/tasks/${data.projectId}`}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] bg-transparent border border-[#E5E2DC] rounded-md text-[#7A7A7A] hover:bg-[#E5E2DC] hover:text-[#1A1A1A] transition-colors no-underline"
           >
             📁 Proyecto: {data.projectId}

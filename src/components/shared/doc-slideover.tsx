@@ -383,7 +383,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
                         type="button"
                         onClick={() => {
                           onClose();
-                          router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                          router.push(`/dashboard/${slug}/tasks/${task.id}`);
                         }}
                         className={btnClass}
                         title={`Ir a tarea ${task.id}`}
@@ -404,7 +404,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
                           type="button"
                           onClick={() => {
                             onClose();
-                            router.push(`/dashboard/${slug}/projects/${pw.project.id}/tasks/${task.id}`);
+                            router.push(`/dashboard/${slug}/tasks/${task.id}`);
                           }}
                           className={btnClass}
                           title={`Ir a tarea ${task.id}`}

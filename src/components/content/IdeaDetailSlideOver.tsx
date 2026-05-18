@@ -316,7 +316,7 @@ export function IdeaDetailSlideOver({ slug, idea, onClose, onUpdate }: Props) {
           )}
           {isApproved && idea.project_id && idea.project_task_id && (
             <Link
-              href={`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}`}
+              href={`/dashboard/${slug}/tasks/${idea.project_task_id}`}
               className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-2 rounded-sc-md border-2 sc-pop-hover no-underline inline-flex items-center"
               style={{ background: "var(--sc-paper-3)", color: "var(--sc-ink)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
             >📋 Tarea</Link>

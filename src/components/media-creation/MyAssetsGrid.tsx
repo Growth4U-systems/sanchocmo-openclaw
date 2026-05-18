@@ -79,8 +79,7 @@ function AssetRow({
     e.stopPropagation();
     if (!taskId) return;
     if (taskId.includes("-T")) {
-      const projectId = taskId.split("-T")[0];
-      router.push(`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`);
+      router.push(`/dashboard/${slug}/tasks/${taskId}`);
     }
   };
 

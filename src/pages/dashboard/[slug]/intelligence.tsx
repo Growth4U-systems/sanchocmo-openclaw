@@ -929,7 +929,7 @@ function SetupTaskCard({
   }, []);
 
   const taskHref = setupTask
-    ? `/dashboard/${slug}/projects/${setupTask.project.id}/tasks/${setupTask.task.id}`
+    ? `/dashboard/${slug}/tasks/${setupTask.task.id}`
     : "";
   const sourceTone = configuredSourceCount > 1 ? "ok" : "proposal";
   const sourceLabel = configuredSourceCount > 1 ? `${configuredSourceCount} sources configured` : "sources pending";

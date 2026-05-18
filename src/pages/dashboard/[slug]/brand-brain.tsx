@@ -244,11 +244,11 @@ export default function BrandBrainPage() {
 
         if (projId) {
           if (taskNum) {
-            router.push(`/dashboard/${slug}/projects/${projId}/tasks/${projId}-T${taskNum}`);
+            router.push(`/dashboard/${slug}/tasks/${projId}-T${taskNum}`);
           } else if (taskId) {
-            router.push(`/dashboard/${slug}/projects/${projId}/tasks/${taskId}`);
+            router.push(`/dashboard/${slug}/tasks/${taskId}`);
           } else {
-            router.push(`/dashboard/${slug}/projects/${projId}`);
+            router.push(`/dashboard/${slug}/tasks/${projId}`);
           }
           setSelectedDoc(null);
           return;
