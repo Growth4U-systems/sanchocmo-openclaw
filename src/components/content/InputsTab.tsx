@@ -297,7 +297,7 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-bold text-[#2C3E50]">Setup configs por pillar</span>
                   <Link
-                    href={`/dashboard/${slug}/projects/${configs.setupTask.projectId}/tasks/${configs.setupTask.taskId}`}
+                    href={`/dashboard/${slug}/tasks/${configs.setupTask.taskId}`}
                     className="text-[10px] text-muted-foreground hover:text-rust bg-muted/40 hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors no-underline"
                     title="Abrir tarea"
                   >
@@ -327,7 +327,7 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
                 </p>
                 <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                   <Link
-                    href={`/dashboard/${slug}/projects/${configs.setupTask.projectId}/tasks/${configs.setupTask.taskId}`}
+                    href={`/dashboard/${slug}/tasks/${configs.setupTask.taskId}`}
                     className="text-[11px] px-2.5 py-1 rounded border border-rust/30 text-rust hover:bg-rust/10 font-medium no-underline"
                   >
                     📋 Abrir tarea

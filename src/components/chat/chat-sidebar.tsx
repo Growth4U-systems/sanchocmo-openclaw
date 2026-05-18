@@ -1182,8 +1182,8 @@ export function ChatSidebar() {
               const taskId = taskMatch[2];
               const ctId = taskMatch[3];
               const href = ctId
-                ? `/dashboard/${slug}/projects/${projId}/tasks/${taskId}/content/${ctId}`
-                : `/dashboard/${slug}/projects/${projId}/tasks/${taskId}`;
+                ? `/dashboard/${slug}/tasks/${projId}/sub/${taskId}/content/${ctId}`
+                : `/dashboard/${slug}/tasks/${taskId}`;
               return (
                 <Link
                   href={href}
@@ -1201,7 +1201,7 @@ export function ChatSidebar() {
               const projId = projMatch[1];
               return (
                 <Link
-                  href={`/dashboard/${slug}/projects/${projId}`}
+                  href={`/dashboard/${slug}/tasks/${projId}`}
                   className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
                 >
                   <span>📁</span>

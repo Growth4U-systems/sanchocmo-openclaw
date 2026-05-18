@@ -338,7 +338,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
               badges={d.badges}
               status={d.doc?.status}
               onChat={d.doc ? () => handleDocChat(d.doc!) : undefined}
-              onTask={d.doc?.taskId ? () => router.push(`/dashboard/${slug}/projects/P14/tasks/${d.doc!.taskId}`) : undefined}
+              onTask={d.doc?.taskId ? () => router.push(`/dashboard/${slug}/tasks/${d.doc!.taskId}`) : undefined}
               onView={d.doc ? () => setOpenDocPath(d.doc!.path) : undefined}
               onDownload={d.doc ? () => window.open(`/api/docs/${d.doc!.path}?download=1`, "_blank") : undefined}
             />

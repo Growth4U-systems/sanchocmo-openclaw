@@ -361,7 +361,7 @@ export default function ProjectsPage() {
                         return (
                           <Link
                             key={pw.project.id}
-                            href={`/dashboard/${slug}/projects/${pw.project.id}`}
+                            href={`/dashboard/${slug}/tasks/${pw.project.id}`}
                             className="bg-white border-2 border-ink rounded-lg p-3 cursor-pointer hover:border-rust transition-colors block shadow-sm"
                           >
                             <div className="flex items-center gap-2 mb-2">
@@ -429,7 +429,7 @@ export default function ProjectsPage() {
                         return (
                           <Link
                             key={t.id}
-                            href={`/dashboard/${slug}/projects/${t.projectId}/tasks/${t.id}`}
+                            href={`/dashboard/${slug}/tasks/${t.id}`}
                             className="bg-white border border-border rounded-lg p-3 cursor-pointer hover:border-rust transition-colors block"
                           >
                             <div className="flex justify-between mb-1 items-center">
@@ -639,7 +639,7 @@ function ProjectCard({
             <span className="text-xs text-muted-foreground">Sin tareas</span>
           )}
           <Link
-            href={`/dashboard/${slug}/projects/${p.id}`}
+            href={`/dashboard/${slug}/tasks/${p.id}`}
             className="text-sm text-muted-foreground hover:text-rust"
             onClick={(e) => e.stopPropagation()}
             title="Ver detalle"
@@ -656,7 +656,7 @@ function ProjectCard({
             const tDone = isDone(t.status);
             const tType = t.type || t.batch_type || "execution";
             const isFnd = tType === "foundation" && !!t.pillar;
-            const taskUrl = `/dashboard/${slug}/projects/${p.id}/tasks/${t.id}`;
+            const taskUrl = `/dashboard/${slug}/tasks/${t.id}`;
             return (
               <Link
                 key={t.id}

@@ -130,7 +130,7 @@ export function TaskSlideOver({ slug, projectId, taskId, onClose, onOpenDoc, onO
                 </div>
                 <div className="bg-[#FAFAF8] rounded-lg p-3 border border-[#E8E2D9]">
                   <p className="text-[9px] text-muted-foreground uppercase font-semibold mb-0.5">Proyecto</p>
-                  <Link href={`/dashboard/${slug}/projects/${project?.id}`} className="text-xs text-rust hover:underline no-underline font-medium">
+                  <Link href={`/dashboard/${slug}/tasks/${project?.id}`} className="text-xs text-rust hover:underline no-underline font-medium">
                     📁 {project?.id} — {project?.name}
                   </Link>
                 </div>
@@ -208,7 +208,7 @@ export function TaskSlideOver({ slug, projectId, taskId, onClose, onOpenDoc, onO
               // Navigate to task page + open chat (no doc slide-over)
               if (projectId && taskId && onOpenChat) onOpenChat();
               onClose();
-              if (projectId && taskId) router.push(`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`);
+              if (projectId && taskId) router.push(`/dashboard/${slug}/tasks/${taskId}`);
             }}
             className={btnClass}
           >

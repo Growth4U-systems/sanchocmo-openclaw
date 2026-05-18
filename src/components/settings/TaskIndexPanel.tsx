@@ -156,8 +156,8 @@ export function TaskIndexPanel({ slug }: Props) {
               <tbody>
                 {tasks.map(task => {
                   const taskHref = task.isContentTask && task.parentTaskId
-                    ? `/dashboard/${slug}/projects/${task.projectId}/tasks/${task.parentTaskId}/content/${task.taskId}`
-                    : `/dashboard/${slug}/projects/${task.projectId}/tasks/${task.taskId}`;
+                    ? `/dashboard/${slug}/tasks/${task.parentTaskId}/sub/${task.taskId}`
+                    : `/dashboard/${slug}/tasks/${task.taskId}`;
                   return (
                   <tr key={task.taskId} className="border-b border-[#E8E2D9]/50 last:border-0 hover:bg-muted/10">
                     <td className="px-3 py-2">
