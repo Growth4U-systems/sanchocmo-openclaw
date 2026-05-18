@@ -258,6 +258,7 @@
     "fullscreen": "Pantalla completa",
     "closeSidebar": "Cerrar",
     "loading": "Cargando...",
+    "emptyThread": "Escribime para empezar la conversación.",
     "selectThread": "Selecciona un thread para empezar.",
     "selectThreadOption": "Seleccionar hilo...",
     "newThread": "Nuevo hilo",
@@ -280,7 +281,6 @@
       "strategies": "Estrategias",
       "recurring": "Recurrentes",
       "task-index": "Indice de Tareas",
-      "clients": "Clientes",
       "preferences": "Preferencias"
     },
     "loadingClients": "Cargando clientes...",
