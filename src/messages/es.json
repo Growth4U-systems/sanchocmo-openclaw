@@ -258,6 +258,7 @@
     "fullscreen": "Pantalla completa",
     "closeSidebar": "Cerrar",
     "loading": "Cargando...",
+    "emptyThread": "Escribime para empezar la conversación.",
     "selectThread": "Selecciona un thread para empezar.",
     "selectThreadOption": "Seleccionar hilo...",
     "newThread": "Nuevo hilo",

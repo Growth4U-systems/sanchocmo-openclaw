@@ -258,6 +258,7 @@
     "fullscreen": "Fullscreen",
     "closeSidebar": "Close",
     "loading": "Loading...",
+    "emptyThread": "Type a message to start the conversation.",
     "selectThread": "Select a thread to start.",
     "selectThreadOption": "Select thread...",
     "newThread": "New thread",

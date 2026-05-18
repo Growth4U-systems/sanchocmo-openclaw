@@ -645,6 +645,7 @@ export function ChatSidebar() {
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const addFiles = useCallback((files: FileList | File[]) => {
@@ -848,6 +849,20 @@ export function ChatSidebar() {
     },
     [handleSend]
   );
+
+  // Focus the textarea once the thread has loaded and is empty, so users see
+  // the cursor blink in the input instead of staring at the "empty thread"
+  // bubble wondering what to do.
+  useEffect(() => {
+    if (
+      activeThreadId &&
+      !messagesQuery.isLoading &&
+      messages.length === 0 &&
+      textareaRef.current
+    ) {
+      textareaRef.current.focus();
+    }
+  }, [activeThreadId, messagesQuery.isLoading, messages.length]);
 
   // Auto-send initialMessage when thread opens with one
   const initialSentRef = useRef<string | null>(null);
@@ -1322,7 +1337,16 @@ export function ChatSidebar() {
                 🤠 Sancho
               </span>
             </div>
-            {sidebarLocked ? `🔄 ${t("loading")}` : t("selectThread")}
+            {/* Distinguish real loading (initial fetch with no data yet) from
+                an empty thread. The previous "Cargando..." text was shown for
+                both cases, making users wait for something that would never
+                arrive — they only realized they could just type once they
+                clicked the unlock button and the text changed. */}
+            {messagesQuery.isLoading
+              ? `🔄 ${t("loading")}`
+              : activeThreadId
+              ? t("emptyThread")
+              : t("selectThread")}
           </div>
         )}
 
@@ -1558,6 +1582,7 @@ export function ChatSidebar() {
             onChange={(e) => { if (e.target.files?.length) { addFiles(e.target.files); e.target.value = ""; } }}
           />
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
