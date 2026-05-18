@@ -278,18 +278,6 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
   const { data: projectsData } = useProjects(slug);
   const openChat = useOpenChat();
 
-  // Atalaya recommendations
-  const { data: atalayaData } = useQuery({
-    queryKey: ["recommendations", slug],
-    queryFn: async () => {
-      const res = await fetch(`/api/recommendations?slug=${slug}&status=pending`);
-      if (!res.ok) return { recommendations: [] };
-      return res.json();
-    },
-    enabled: !!slug,
-    staleTime: 60_000,
-  });
-
   // Monitoring data for performance recs
   const { data: monData } = useQuery({
     queryKey: ["monitoring-recs", slug],
@@ -343,14 +331,6 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
     (r: { status: string }) => r.status === "pending" || r.status === "active"
   ) || [];
   const topMonRecs = monRecs
-    .filter((r: { priority: string }) => r.priority === "high" || r.priority === "medium")
-    .slice(0, 4);
-
-  // --- Atalaya recommendations ---
-  const atalayaRecs = (atalayaData?.recommendations || []).filter(
-    (r: { source?: string }) => !r.source?.startsWith("performance")
-  );
-  const topAtalaya = atalayaRecs
     .filter((r: { priority: string }) => r.priority === "high" || r.priority === "medium")
     .slice(0, 4);
 

@@ -594,64 +594,6 @@ export interface Integration {
   updatedAt: string;
 }
 
-// --- Atalaya ---
-
-export interface AtalayaProfile {
-  id: string;
-  platform: "linkedin" | "twitter" | "instagram";
-  url: string;
-  handle?: string;
-  name?: string;
-  category: string;         // "Growth", "Founder", "SEO", "AI"...
-  active: boolean;
-  added_at: string;
-}
-
-export interface AtalayaConfig {
-  followed_profiles: AtalayaProfile[];
-  channels_to_monitor: Record<string, string[]>;
-}
-
-export interface AtalayaReport {
-  run_date: string;
-  mode: string;
-  client_slug: string;
-  trigger: "manual" | "cron";
-  competitors_analyzed: {
-    name: string;
-    slug: string;
-    channels_scraped: Record<string, {
-      status: string;
-      items_found: number;
-      content: { full_text: string; date: string; is_new: boolean }[];
-    }>;
-  }[];
-  followed_profiles_analyzed: {
-    name: string;
-    platform: string;
-    url: string;
-    category: string;
-    content: Record<string, unknown>[];
-  }[];
-  ideas_generated: {
-    id: string;
-    source_type: string;
-    pattern_identified: string;
-    adapted_idea: Record<string, unknown>;
-  }[];
-  contacts_detected: {
-    name: string;
-    platform: string;
-    url: string;
-    relevance: string;
-  }[];
-  comparison_with_last_run: {
-    last_run_date: string;
-    new_items_by_channel: Record<string, unknown>;
-    notable_changes: string[];
-  };
-}
-
 // --- Recurring Tasks / Cron ---
 
 export interface RecurringTask {
