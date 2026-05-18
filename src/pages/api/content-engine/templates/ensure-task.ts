@@ -9,15 +9,15 @@ import { BASE } from "@/lib/data/paths";
  *   body: { slug }
  *
  * **Migration-only endpoint.** New brands get the Visual Templates task
- * baked into the project template by `create-project.ts` (it's `T07` of the
- * canonical Content Engine flow). This endpoint exists to retrofit brands
- * whose P14 was created before T07 was added — it appends the task to the
- * existing `tasks.json` using the next free `T0X` id and idempotently
- * returns the existing one if already present.
+ * baked into the project template by `create-project.ts` (it's `T05` of
+ * the canonical Content Engine flow). This endpoint exists to retrofit
+ * brands whose Content Engine project was created before Visual Templates
+ * existed — it appends the task to the existing `tasks.json` using the
+ * next free `T0X` id and idempotently returns the existing one if already
+ * present (match is by task name + skill suffix, not by position).
  *
- * In practice the only brand that needs this is growth4u (P14 had 4 tasks,
- * pre-Visual-Templates). The carousel panel's empty state calls it on demand
- * so the user lands on the task in one click.
+ * The carousel panel's empty state calls it on demand so the user lands
+ * on the task in one click.
  *
  * Response: { ok, task, alreadyExists }
  */
