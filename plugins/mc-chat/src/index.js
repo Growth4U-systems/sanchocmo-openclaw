@@ -135,13 +135,13 @@ export default defineChannelPluginEntry({
         const resolvedSenderId = isAdmin ? "mc-admin" : (userId || `mc-client-${slug}`);
         const resolvedSenderName = userName || (isAdmin ? "Admin" : `${slug} (client)`);
 
-        // When the payload carries an agent override, embed it in the SessionKey
-        // using OpenClaw's canonical agent-scoped format: "agent:<agentId>:<rest>".
-        // resolveSessionAgentIds() (agent-scope.js) parses this and routes the
-        // dispatch to workspace-<agentId> instead of the default agent.
-        // Without this prefix, mc-chat messages always land on the default
-        // agent (sancho) regardless of what `agent`/`agentId` the frontend sent.
-        const sessionKey = requestedAgent === "sancho" ? chatId : `agent:${requestedAgent}:${chatId}`;
+        // Always embed the agentId in the SessionKey using OpenClaw's canonical
+        // agent-scoped format: "agent:<agentId>:<rest>". resolveSessionAgentIds()
+        // (agent-scope.js) parses this and routes the dispatch to
+        // workspace-<agentId>. Without this prefix the message lands on whatever
+        // OpenClaw considers the default agent — which is no longer guaranteed
+        // to be sancho once additional agents are registered.
+        const sessionKey = `agent:${requestedAgent}:${chatId}`;
 
         // Build MsgContext for OpenClaw dispatch
         const msgCtx = finalizeInboundContext({
@@ -208,6 +208,13 @@ export default defineChannelPluginEntry({
           await dispatchInboundMessageWithBufferedDispatcher({
             ctx: msgCtx,
             cfg,
+            // OpenClaw's default sourceReplyDeliveryMode for chatType="channel"
+            // is "message_tool_only", which suppresses auto-delivery and expects
+            // the agent to call the message tool. The mc-chat system prompt
+            // explicitly instructs the agent NOT to use that tool — its reply
+            // is delivered via the `deliver` callback below. Force "automatic"
+            // so deliver actually fires.
+            replyOptions: { sourceReplyDeliveryMode: "automatic" },
             dispatcherOptions: {
               deliver: async (replyPayload, _info) => {
                 // Diagnostic: log every deliver invocation so we can tell
