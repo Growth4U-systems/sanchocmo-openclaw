@@ -18,10 +18,6 @@ function isValidSlug(value: string): boolean {
   return /^[a-z0-9][a-z0-9-]*$/.test(value);
 }
 
-function isValidGuild(value: string): boolean {
-  return /^\d{17,20}$/.test(value);
-}
-
 function writeClientsFile(data: ClientsFileData): void {
   const json = JSON.stringify(data, null, 2);
   JSON.parse(json);
@@ -54,7 +50,7 @@ function createClientDirs(slug: string): void {
 /**
  * POST /api/clients/create
  * Admin only — creates a client entry in clients.json and a base brand folder.
- * Body: { slug, name, guild, emoji?, url?, language?, active? }
+ * Body: { slug, name, emoji?, url?, language?, active? }
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -65,7 +61,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const slug = normalizeSlug(String(req.body?.slug || ""));
   const name = String(req.body?.name || "").trim();
-  const guild = String(req.body?.guild || "").trim();
   const emoji = String(req.body?.emoji || "🏢").trim() || "🏢";
   const url = String(req.body?.url || "").trim();
   const language = String(req.body?.language || "es") === "en" ? "en" : "es";
@@ -75,10 +70,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!slug) return res.status(400).json({ error: "Missing slug" });
   if (!isValidSlug(slug)) {
     return res.status(400).json({ error: "Invalid slug format. Use lowercase letters, numbers, and hyphens." });
-  }
-  if (!guild) return res.status(400).json({ error: "Missing Discord guild ID" });
-  if (!isValidGuild(guild)) {
-    return res.status(400).json({ error: "Invalid Discord guild ID. It must be 17-20 digits." });
   }
 
   const data = JSON.parse(fs.readFileSync(CLIENTS_FILE, "utf-8")) as ClientsFileData;
@@ -96,7 +87,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     name,
     emoji,
     url,
-    guild,
     active,
     language,
     phase: 0,
@@ -117,7 +107,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       name,
       emoji,
       url,
-      guild,
       active,
       language,
       phase: 0,
