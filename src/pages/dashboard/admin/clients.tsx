@@ -40,14 +40,17 @@ function ClientsPanel() {
   const qc = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const { data: clients, isLoading } = useQuery<ClientFull[]>({
+  const { data: clients, isLoading, error: fetchError, refetch } = useQuery<ClientFull[], Error>({
     queryKey: ["clients"],
     queryFn: async () => {
       const res = await fetch("/api/clients");
-      if (!res.ok) return [];
+      if (!res.ok) throw new Error(`HTTP ${res.status} — ${await res.text().catch(() => res.statusText)}`);
       const d = await res.json();
-      return d.clients || [];
+      if (!Array.isArray(d.clients)) throw new Error("Respuesta inválida: clients no es array");
+      return d.clients;
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const toggleActive = useMutation({
@@ -106,6 +109,21 @@ function ClientsPanel() {
   const [editSlug, setEditSlug] = useState<string | null>(null);
 
   if (isLoading) return <p className="text-muted-foreground">{t("loadingClients")}</p>;
+
+  if (fetchError) {
+    return (
+      <ComicCard>
+        <p className="text-sm text-red-500 mb-2">⚠️ No se pudo cargar la lista de clientes.</p>
+        <p className="text-xs text-muted-foreground mb-3">{fetchError.message}</p>
+        <button
+          onClick={() => refetch()}
+          className="px-3 py-1 text-xs border border-border rounded hover:border-rust"
+        >
+          🔄 Reintentar
+        </button>
+      </ComicCard>
+    );
+  }
 
   const allClients = clients || [];
 

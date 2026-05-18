@@ -35,13 +35,18 @@ function AdminsPanel({ currentEmail }: { currentEmail: string }) {
   const [newEmail, setNewEmail] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery<{ emails: string[] }>({
+  const { data, isLoading, error: fetchError, refetch } = useQuery<{ emails: string[] }, Error>({
     queryKey: ["admin-emails"],
     queryFn: async () => {
       const res = await fetch("/api/admin/admins");
-      if (!res.ok) throw new Error("Failed to load admins");
+      if (!res.ok) {
+        const body = await res.text().catch(() => res.statusText);
+        throw new Error(`HTTP ${res.status} — ${body}`);
+      }
       return res.json();
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const addMutation = useMutation({
@@ -136,6 +141,17 @@ function AdminsPanel({ currentEmail }: { currentEmail: string }) {
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando...</p>
+      ) : fetchError ? (
+        <ComicCard>
+          <p className="text-sm text-red-500 mb-2">⚠️ No se pudo cargar la lista de admins.</p>
+          <p className="text-xs text-muted-foreground mb-3">{fetchError.message}</p>
+          <button
+            onClick={() => refetch()}
+            className="px-3 py-1 text-xs border border-border rounded hover:border-rust"
+          >
+            🔄 Reintentar
+          </button>
+        </ComicCard>
       ) : emails.length === 0 ? (
         <ComicCard>
           <p className="text-sm text-muted-foreground text-center py-3">
