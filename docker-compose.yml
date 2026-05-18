@@ -48,7 +48,7 @@ services:
         max-file: "3"
 
   open-design:
-    image: ${OPEN_DESIGN_IMAGE:-docker.io/vanjayak/open-design:latest}
+    image: ${OPEN_DESIGN_IMAGE:-ghcr.io/growth4u-systems/od:edge}
     container_name: open-design
     restart: unless-stopped
     ports:
