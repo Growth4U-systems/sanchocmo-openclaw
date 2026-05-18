@@ -389,7 +389,6 @@ export default function TaskDetailPage() {
   if (taskType === "tool" && task.skill) {
     const toolPages: Record<string, string> = {
       "trust-engine": "trust-engine",
-      // "atalaya": "atalaya", — future
     };
     const toolPage = toolPages[task.skill];
     if (toolPage) {
@@ -577,7 +576,6 @@ export default function TaskDetailPage() {
               <select value={draft.skill || ""} onChange={(e) => setDraft((d) => ({ ...d, skill: e.target.value }))} className="w-full border border-[#E8E2D9] rounded-lg px-2 py-1 text-[13px] bg-white focus:outline-none focus:border-[#2C3E50]">
                 <option value="">— Seleccionar —</option>
                 <option value="trust-engine">Trust Engine</option>
-                <option value="atalaya">Atalaya</option>
                 <option value="content-flywheel">Content Flywheel</option>
                 <option value="strategic-plan">Strategic Plan</option>
               </select>

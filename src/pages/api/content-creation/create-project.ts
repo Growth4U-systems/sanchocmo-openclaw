@@ -166,7 +166,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     {
       id: `${projectId}-T06`,
       name: "Activar tareas recurrentes de contenido",
-      description: "Crear crons: idea-generation 2x/semana, atalaya semanal, performance-analysis semanal, calendar refresh semanal.",
+      description: "Crear crons: idea-generation 2x/semana, performance-analysis semanal, calendar refresh semanal.",
       type: "foundation",
       pillar: "activate-crons",
       skill: "sancho-manager",

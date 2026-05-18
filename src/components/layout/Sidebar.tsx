@@ -10,31 +10,7 @@ import { navigateToClient } from "@/lib/navigation";
 import { useClients } from "@/hooks/useClients";
 import { useUnreadCount } from "@/hooks/useChat";
 
-/**
- * Sidebar — faithful replica of legacy mission-control.html <nav>.
- *
- * Structure (from legacy HTML):
- *   Logo + version
- *   Client Selector
- *   💬 Chat con Sancho (client only)
- *   ── Overview ──
- *     📊 Dashboard
- *   ── [client name] ──  (client only)
- *     📂 Documents
- *   ── Trabajo ──  (client only)
- *     📋 Proyectos
- *     💡 Idea Bank
- *     📈 Métricas
- *   ── Herramientas ──  (client only)
- *     🔍 Trust Engine
- *     🏰 Atalaya
- *   ── Sistema ──
- *     📡 Activity
- *   ── spacer ──
- *   ── Footer ──
- *     User avatar + name (clickable → dropdown)
- *     Dropdown: Changelog, Guía, Dark mode, Settings, Regenerar
- */
+// Sidebar — primary nav (client-aware).
 
 export function Sidebar() {
   const t = useTranslations();
@@ -168,13 +144,11 @@ export function Sidebar() {
             <NavLink href={clientHref("/content-creation")} icon="✏️" label="Content Creation" active={isActive(clientHref("/content-creation"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/media-creation")} icon="🎨" label="Media Creation" active={isActive(clientHref("/media-creation"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/outreach")} icon="📤" label="Outreach" active={isActive(clientHref("/outreach"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/ideas")} icon="💡" label={t("nav.ideas")} active={isActive(clientHref("/ideas"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/metrics")} icon="📈" label={t("nav.metrics")} active={isActive(clientHref("/metrics"))} collapsed={!sidebarOpen} />
 
             {/* ── Herramientas ── */}
             <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
             <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/atalaya")} icon="🏰" label={t("nav.atalaya")} active={isActive(clientHref("/atalaya"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/intelligence")} icon="🧠" label="Intelligence" active={isActive(clientHref("/intelligence"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/yalc")} icon="🧭" label="YALC" active={isActive(clientHref("/yalc"))} collapsed={!sidebarOpen} />
           </>

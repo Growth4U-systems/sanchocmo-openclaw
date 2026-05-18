@@ -139,7 +139,7 @@ function applyApprove(brandDir: string, item: RecordItem, recId: string, project
       status: "new",
       title: item.title || item.adapted_idea?.title || "",
       description: item.description || item.adapted_idea?.description || "",
-      source: item.source || "atalaya",
+      source: item.source || "recommendation",
       priority_score:
         item.priority === "high" ? 80 : item.priority === "medium" ? 50 : 20,
       created_at: new Date().toISOString(),
@@ -210,10 +210,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const brandDir = path.join(BASE, "brand", slug);
   const searchFiles = [
     path.join(brandDir, "recommendations.json"),
-    path.join(brandDir, "atalaya", "profiles-pending.json"),
-    path.join(brandDir, "atalaya", "competitors-pending.json"),
-    path.join(brandDir, "atalaya", "ads-pending.json"),
-    path.join(brandDir, "atalaya", "pending-ideas.json"),
     path.join(brandDir, "monitoring", "pending-recommendations.json"),
     path.join(brandDir, "trust-engine", "recommendations.json"),
   ];
