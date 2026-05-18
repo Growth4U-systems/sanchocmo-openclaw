@@ -1039,12 +1039,21 @@ export function ChatSidebar() {
             // in the markdown viewer.
             const docPath = meta?.docPath || null;
             const isTemplateDoc = !!docPath && meta?.docKind === "template";
+            // DocSlideOver renders .md/.html/.txt natively and .json via
+            // JsonViewer. Config jsons that aren't worth opening (tasks.json,
+            // project.json) stay excluded. Allowing pov-bank.json + other
+            // content/* jsons keeps the chat pill useful for Build POV Bank,
+            // idea-queue, etc. without dragging the user back to the task.
             const isRealDoc = !!docPath && (
               isTemplateDoc ||
               (
-                /\.(md|html|txt)$/i.test(docPath) &&
+                /\.(md|html|txt|json)$/i.test(docPath) &&
                 !/tasks\.json$/i.test(docPath) &&
-                !/project\.json$/i.test(docPath)
+                !/project\.json$/i.test(docPath) &&
+                !/foundation-state\.json$/i.test(docPath) &&
+                !/client-config\.json$/i.test(docPath) &&
+                !/chat-config\.json$/i.test(docPath) &&
+                !/dispatch-map\.json$/i.test(docPath)
               )
             );
             const linkedTo = meta?.linkedTo || "";
