@@ -44,7 +44,7 @@ function ClientsPanel() {
     queryKey: ["clients"],
     queryFn: async () => {
       const res = await fetch("/api/clients");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status} — ${await res.text().catch(() => res.statusText)}`);
       const d = await res.json();
       if (!Array.isArray(d.clients)) throw new Error("Respuesta inválida: clients no es array");
       return d.clients;
@@ -131,6 +131,21 @@ function ClientsPanel() {
   });
 
   if (isLoading) return <p className="text-muted-foreground">{t("loadingClients")}</p>;
+
+  if (fetchError) {
+    return (
+      <ComicCard>
+        <p className="text-sm text-red-500 mb-2">⚠️ No se pudo cargar la lista de clientes.</p>
+        <p className="text-xs text-muted-foreground mb-3">{fetchError.message}</p>
+        <button
+          onClick={() => refetch()}
+          className="px-3 py-1 text-xs border border-border rounded hover:border-rust"
+        >
+          🔄 Reintentar
+        </button>
+      </ComicCard>
+    );
+  }
 
   const allClients = clients || [];
 
