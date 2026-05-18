@@ -30,6 +30,11 @@ services:
       - MC_TASKS_BACKEND=${MC_TASKS_BACKEND:-json}
       - MC_TASKS_WORKSPACE=${MC_TASKS_WORKSPACE:-workspace-sancho}
       - DATABASE_URL=${DATABASE_URL:-}
+      # Open Design (agentic editor): daemonUrl is server-to-server via the
+      # compose network; webUrl is the public URL the browser loads in the
+      # iframe / new tab. Both end at the same `open-design` container.
+      - OD_DAEMON_URL=${OD_DAEMON_URL:-http://open-design:7456}
+      - OD_WEB_URL=${OD_WEB_URL:-}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:18789/healthz"]
       interval: 60s
@@ -41,3 +46,46 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  open-design:
+    image: ${OPEN_DESIGN_IMAGE:-docker.io/vanjayak/open-design:latest}
+    container_name: open-design
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7456:7456"
+    environment:
+      NODE_ENV: production
+      OD_BIND_HOST: 0.0.0.0
+      OD_PORT: "7456"
+      # Origins allowed to call the daemon API cross-origin. The MC backend
+      # proxies via the compose network so this is only needed for the OD web
+      # app served at its public URL — it must list itself plus any embedding
+      # origin (the MC public URL embedding it in an iframe).
+      OD_ALLOWED_ORIGINS: ${OD_ALLOWED_ORIGINS:-}
+    volumes:
+      - open_design_data:/app/.od
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${OPEN_DESIGN_MEM_LIMIT:-384m}
+    pids_limit: 256
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:7456/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  open_design_data:
