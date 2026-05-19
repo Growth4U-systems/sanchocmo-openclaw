@@ -25,6 +25,58 @@ interface OdItemBodyResponse {
   body?: string;
 }
 
+interface DaemonPromptTemplate {
+  id?: string;
+  title?: string;
+  surface?: string;
+  category?: string;
+  summary?: string;
+  /** JSON string with the actual generation prompt + slot defaults. */
+  prompt?: string;
+  source?: { author?: string; repo?: string; license?: string; url?: string };
+  model?: string;
+  aspect?: string;
+  previewImageUrl?: string;
+}
+
+/**
+ * The prompt-template daemon route emits `{ promptTemplate: {...} }` with
+ * the actual prompt in `.prompt` (a stringified JSON) plus metadata; there
+ * is no `body` field. Synthesize a markdown body so the same slide-over
+ * renderer handles every item type uniformly.
+ */
+function promptTemplateToBody(tpl: DaemonPromptTemplate): string {
+  const sections: string[] = [];
+  if (tpl.title) sections.push(`# ${tpl.title}`);
+  const meta = [
+    tpl.surface && `**Surface:** ${tpl.surface}`,
+    tpl.category && `**Category:** ${tpl.category}`,
+    tpl.model && `**Model:** ${tpl.model}`,
+    tpl.aspect && `**Aspect:** ${tpl.aspect}`,
+  ]
+    .filter(Boolean)
+    .join("  ·  ");
+  if (meta) sections.push(meta);
+  if (tpl.summary) sections.push(tpl.summary);
+  if (tpl.previewImageUrl) {
+    sections.push(`![preview](${tpl.previewImageUrl})`);
+  }
+  if (tpl.prompt) {
+    sections.push("## Prompt template", "```json", tpl.prompt, "```");
+  }
+  if (tpl.source) {
+    const parts = [
+      tpl.source.author && `por **${tpl.source.author}**`,
+      tpl.source.repo && `[repo](https://github.com/${tpl.source.repo})`,
+      tpl.source.license && `licencia ${tpl.source.license}`,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    if (parts) sections.push(`---\n_Source: ${parts}_`);
+  }
+  return sections.join("\n\n");
+}
+
 function endpointFor(
   type: OdItemType,
   id: string,
@@ -61,7 +113,22 @@ export function useOdItemBody(
       if (!url) throw new Error("missing type/id");
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Failed to load OD item (HTTP ${res.status})`);
-      return res.json();
+      const payload = (await res.json()) as Record<string, unknown> & {
+        body?: string;
+        promptTemplate?: DaemonPromptTemplate;
+      };
+      // Skills / design-systems / craft return a flat object with `body`.
+      // Prompt-templates wrap the resource as `{ promptTemplate: {...} }`
+      // and ship the prompt JSON in `.prompt` instead — synthesize a body
+      // so the slide-over renders the same way for every type.
+      if (typeof payload.body === "string") return { id: payload.id as string, body: payload.body };
+      if (payload.promptTemplate) {
+        return {
+          id: payload.promptTemplate.id,
+          body: promptTemplateToBody(payload.promptTemplate),
+        };
+      }
+      return payload as OdItemBodyResponse;
     },
     enabled: !!url,
     staleTime: 60_000,
