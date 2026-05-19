@@ -74,7 +74,7 @@ context_writes:
 ### Guardar con versionado
 - Ruta: `brand/{slug}/brand-voice/current.md`
 - Backup + versionado + history.json
-- Link: `{MC_BASE_URL}/docs/brand/{slug}/brand-voice/current.md`
+- Link: `<MC_BASE>/docs/brand/{slug}/brand-voice/current.md`
 
 ---
 
@@ -116,4 +116,4 @@ brand/{{slug}}/brand-voice/
 1. Identifica slug desde systemPrompt
 2. Si existe `current.md` → backup como `v{N+1}.md`
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `{MC_BASE_URL}/docs/brand/{slug}/brand-voice/current.md`
+4. Link: `<MC_BASE>/docs/brand/{slug}/brand-voice/current.md`

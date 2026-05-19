@@ -73,6 +73,9 @@ Write back to brand/{slug}/idea-generation/notifications.json with sent=true for
 
 ## Message Format Examples
 
+> `<MC_BASE>` = host pre-resuelto que aparece en `workspace-sancho/PROTOCOLS.md` Rule 3 / `TOOLS.md` (se inyecta al arranque del container). NUNCA inventar otro hostname.
+
+
 ### Content ideas notification
 ```
 💡 **Nuevas ideas de contenido**
@@ -84,7 +87,7 @@ Se generaron 12 ideas de contenido para Hospital Capilar:
 
 📊 **Stats**: 12 nuevas ideas (12 contenido, 0 contactos)
 
-🔗 **Ver en Mission Control**: https://sancho-cmo.taild48df2.ts.net/mc/portal/{token}/docs/brand/hospital-capilar/idea-generation
+🔗 **Ver en Mission Control**: <MC_BASE>/portal/{token}/docs/brand/hospital-capilar/idea-generation
 ```
 
 ### Contact ideas notification
@@ -97,7 +100,7 @@ Se identificaron 5 oportunidades de contacto para Growth4U:
 
 📊 **Stats**: 5 nuevas ideas (0 contenido, 5 contactos)
 
-🔗 **Ver en Mission Control**: https://sancho-cmo.taild48df2.ts.net/mc/portal/{token}/docs/brand/growth4u/idea-generation
+🔗 **Ver en Mission Control**: <MC_BASE>/portal/{token}/docs/brand/growth4u/idea-generation
 ```
 
 ### Mixed notification
@@ -110,7 +113,7 @@ Se generaron 18 ideas para Paymático:
 
 📊 **Stats**: 18 nuevas ideas (10 contenido, 8 contactos)
 
-🔗 **Ver en Mission Control**: https://sancho-cmo.taild48df2.ts.net/mc/portal/{token}/docs/brand/paymatico/idea-generation
+🔗 **Ver en Mission Control**: <MC_BASE>/portal/{token}/docs/brand/paymatico/idea-generation
 ```
 
 ---

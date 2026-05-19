@@ -5,7 +5,8 @@
  * en un mensaje (Editorial Dispatch: ✅ Aprobar / 🕓 Más tarde / ❌ Rechazar).
  *
  * Slack Settings → tu app → Interactivity & Shortcuts → Request URL =
- *   https://sancho-cmo.taild48df2.ts.net:8443/api/integrations/slack/interactivity
+ *   {BASE_URL}/api/integrations/slack/interactivity
+ *   (p.ej. en staging: https://staging.sanchocmo.ai/api/integrations/slack/interactivity)
  *
  * Auth: Slack firma cada request con su signing_secret
  * (X-Slack-Signature + X-Slack-Request-Timestamp headers). Verificamos
@@ -268,7 +269,11 @@ async function updateSlackMessage(
 }
 
 function getMcBaseUrl(): string {
-  return process.env.MC_PUBLIC_URL || "https://sancho-cmo.taild48df2.ts.net:8443";
+  const url = process.env.BASE_URL || process.env.NEXTAUTH_URL;
+  if (!url) {
+    throw new Error("No app base URL configured — set BASE_URL (canonical) or NEXTAUTH_URL");
+  }
+  return url.replace(/\/+$/, "");
 }
 
 // ── Handler ───────────────────────────────────────────────────
