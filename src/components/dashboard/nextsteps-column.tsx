@@ -109,7 +109,7 @@ function RecommendationsSection({
     const data = await res.json();
     // If a new project was created, navigate to the project detail page
     if (projectOverride === "__NEW__" && data.projectId) {
-      window.location.href = `/dashboard/${slug}/projects/${data.projectId}`;
+      window.location.href = `/dashboard/${slug}/tasks/${data.projectId}`;
       return true;
     }
     window.location.reload();
@@ -515,7 +515,7 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
               openChat(slug, config);
             };
 
-            const projectUrl = `/dashboard/${slug}/projects/${p.id as string}`;
+            const projectUrl = `/dashboard/${slug}/tasks/${p.id as string}`;
 
             return (
               <div

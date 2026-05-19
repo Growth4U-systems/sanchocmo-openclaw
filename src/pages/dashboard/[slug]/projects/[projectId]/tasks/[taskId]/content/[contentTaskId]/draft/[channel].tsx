@@ -171,7 +171,7 @@ export default function DraftFullScreenPage() {
   function switchChannel(nextChannel: string) {
     if (nextChannel === channel) return;
     router.push(
-      `/dashboard/${slug}/projects/${projectId}/tasks/${taskId}/content/${contentTaskId}/draft/${nextChannel}`,
+      `/dashboard/${slug}/tasks/${projectId}/sub/${taskId}/content/${contentTaskId}/draft/${nextChannel}`,
     );
   }
 
@@ -417,7 +417,7 @@ export default function DraftFullScreenPage() {
       <DashboardLayout>
         <div className="p-6">
           <Link
-            href={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`}
+            href={`/dashboard/${slug}/tasks/${taskId}`}
             className="text-sm text-rust hover:underline"
           >
             ← Volver a la task
@@ -455,7 +455,7 @@ export default function DraftFullScreenPage() {
 
       <div className={styles.app}>
         <EditorHeader
-          backHref={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`}
+          backHref={`/dashboard/${slug}/tasks/${taskId}`}
           taskId={ct.id}
           skill={ct.skill}
           title={ct.name}
@@ -597,7 +597,7 @@ export default function DraftFullScreenPage() {
                 {draft && !isSpecialChannel && ideaId && (
                   <MediaSummaryWidget
                     media={draft.meta.media || []}
-                    href={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}/content/${contentTaskId}/draft/media?from=${channel}`}
+                    href={`/dashboard/${slug}/tasks/${projectId}/sub/${taskId}/content/${contentTaskId}/draft/media?from=${channel}`}
                   />
                 )}
 

@@ -853,7 +853,7 @@ function PostPreviewSlideOver({
 
   const cv = CHANNEL_VISUAL[channel] || CHANNEL_VISUAL.blog;
   const projectId = parentTaskId.replace(/-T\d+$/, "");
-  const editorHref = `/dashboard/${slug}/projects/${projectId}/tasks/${parentTaskId}/content/${contentTaskId}/draft/${channel}`;
+  const editorHref = `/dashboard/${slug}/tasks/${projectId}/sub/${parentTaskId}/content/${contentTaskId}/draft/${channel}`;
 
   const sv = item.kind === "scheduled" ? STATUS_VISUAL[item.event.status] || STATUS_VISUAL.scheduled : null;
 

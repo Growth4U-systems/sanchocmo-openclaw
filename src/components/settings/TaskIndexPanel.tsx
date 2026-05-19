@@ -180,7 +180,7 @@ export function TaskIndexPanel({ slug }: Props) {
                       {task.docExists ? (
                         task.isContentTask && task.parentTaskId ? (
                           <Link
-                            href={`/dashboard/${slug}/projects/${task.projectId}/tasks/${task.parentTaskId}/content/${task.taskId}/draft/${task.targetChannels?.[0] || "linkedin"}`}
+                            href={`/dashboard/${slug}/tasks/${task.projectId}/sub/${task.parentTaskId}/content/${task.taskId}/draft/${task.targetChannels?.[0] || "linkedin"}`}
                             className="text-green-600 hover:text-green-800 no-underline"
                             title={task.deliverableFile}
                           >

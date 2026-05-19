@@ -765,7 +765,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                               onClick={() => {
                                 if (idea.content_task_id && idea.project_id && idea.project_task_id) {
                                   const channel = idea.content_task_channels?.[0] || idea.target_channel || "linkedin";
-                                  router.push(`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`);
+                                  router.push(`/dashboard/${slug}/tasks/${idea.project_id}/sub/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`);
                                   return;
                                 }
                                 if (!openChat || !idea.project_task_id || !idea.project_id) {

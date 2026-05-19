@@ -111,7 +111,7 @@ function buildIdeaBlocks(idea: Idea, slug: string, mcUrl: string, pillarName: st
   const conf = Math.round((idea.pov_confidence || 0) * 100);
   const slugUpper = slug.toUpperCase();
   const taskLink = projectId && taskId
-    ? ` · <${mcUrl}/dashboard/${slug}/projects/${projectId}/tasks/${taskId}|📋 Tarea>`
+    ? ` · <${mcUrl}/dashboard/${slug}/tasks/${taskId}|📋 Tarea>`
     : "";
   const title = getIdeaTitle(idea);
   const cleanAngle = stripPovPrefix(idea.angle_draft || "");
@@ -214,7 +214,7 @@ function buildRootMessage(
     })
     .join(" · ");
   const taskLink = projectId && taskId
-    ? ` · <${mcUrl}/dashboard/${slug}/projects/${projectId}/tasks/${taskId}|📋 Tarea>`
+    ? ` · <${mcUrl}/dashboard/${slug}/tasks/${taskId}|📋 Tarea>`
     : "";
   const text = `📬 Editorial Dispatch — ${dateLabel} · ${totalIdeas} idea${totalIdeas === 1 ? "" : "s"}`;
   const blocks: unknown[] = [

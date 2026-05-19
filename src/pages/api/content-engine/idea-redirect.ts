@@ -62,12 +62,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const channel = idea.content_task_channels?.[0] || idea.target_channel || "linkedin";
     return res.redirect(
       302,
-      `${mcUrl}/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`,
+      `${mcUrl}/dashboard/${slug}/tasks/${idea.project_id}/sub/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`,
     );
   }
 
   return res.redirect(
     302,
-    `${mcUrl}/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}`,
+    `${mcUrl}/dashboard/${slug}/tasks/${idea.project_task_id}`,
   );
 }
