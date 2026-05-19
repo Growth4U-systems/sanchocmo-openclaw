@@ -442,7 +442,7 @@ export default function TaskDetailPage() {
       {/* Back link */}
       <div className="mb-4">
         <Link
-          href={`/dashboard/${slug}/projects/${project.id}`}
+          href={`/dashboard/${slug}/tasks/${project.id}`}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           ← {project.name}
@@ -945,7 +945,7 @@ function ContentTasksSection({
                         return (
                           <Link
                             key={ct.id}
-                            href={`/dashboard/${slug}/projects/${projectId}/tasks/${parentTaskId}/content/${ct.id}`}
+                            href={`/dashboard/${slug}/tasks/${projectId}/sub/${parentTaskId}/content/${ct.id}`}
                             className="block bg-white border border-[#E8E2D9] rounded-lg px-2.5 py-2 hover:border-rust hover:shadow-sm transition-all"
                           >
                             <div className="text-[12px] font-semibold text-[#2C3E50] leading-snug line-clamp-2">

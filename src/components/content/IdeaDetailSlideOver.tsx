@@ -309,7 +309,7 @@ export function IdeaDetailSlideOver({ slug, idea, onClose, onUpdate }: Props) {
           )}
           {isApproved && idea.project_id && idea.project_task_id && idea.content_task_id && (
             <Link
-              href={`/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}/content/${idea.content_task_id}/draft/${idea.content_task_channels?.[0] || idea.target_channel}`}
+              href={`/dashboard/${slug}/tasks/${idea.project_id}/sub/${idea.project_task_id}/content/${idea.content_task_id}/draft/${idea.content_task_channels?.[0] || idea.target_channel}`}
               className="font-heading uppercase text-[12px] tracking-wider px-3 py-2 rounded-sc-md border-2 sc-pop-hover no-underline inline-flex items-center"
               style={{ background: "var(--sc-rust-500)", color: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
             >💬 Abrir draft</Link>

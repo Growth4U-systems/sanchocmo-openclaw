@@ -109,7 +109,7 @@ Si no hay manifest:
   ```
   ⚠ Esta brand no tiene manifest visual todavia.
   Lanza el bootstrap del catalogo desde T07:
-  https://sancho-cmo.taild48df2.ts.net/dashboard/{slug}/projects/P14-Content-Engine/tasks/{T07-id}
+  https://sancho-cmo.taild48df2.ts.net/dashboard/{slug}/tasks/{T07-id}
   Cuando la skill termine vuelve aqui y genero la imagen.
   ```
 
@@ -137,7 +137,7 @@ Mensaje canonico al usuario:
 ⚠ La plantilla 'newsletter-header' no esta en el catalogo de {slug}.
 Pidesela al [brand]-visual-generator desde T07:
 
-https://sancho-cmo.taild48df2.ts.net/dashboard/{slug}/projects/P14-Content-Engine/tasks/{T07-id}
+https://sancho-cmo.taild48df2.ts.net/dashboard/{slug}/tasks/{T07-id}
 
 Una vez la anyada al manifest vuelvo aqui y te genero la imagen.
 ```
