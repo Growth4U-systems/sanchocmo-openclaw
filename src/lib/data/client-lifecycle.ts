@@ -17,9 +17,11 @@ import {
   povPillars,
   povUpdateProposals,
 } from "@/db/schema";
-import { BASE, brandDir } from "@/lib/data/paths";
+import { BASE, brandDir, mcDataFile } from "@/lib/data/paths";
 
 const ARCHIVE_ROOT = path.join(BASE, "brand", "_archived");
+const COSTS_DAILY_PATH = path.join(BASE, "costs-daily.json");
+const COSTS_GLOBAL_PATH = path.join(BASE, "costs-global.json");
 
 export interface ArchiveBrandDirResult {
   archived: boolean;
@@ -167,4 +169,130 @@ export async function archiveClientNeonData(
   });
 
   return { configured: true, archivedSlug, updated };
+}
+
+export interface ArchiveClientSystemFilesResult {
+  mcData: { entriesRemoved: number; clientsRemoved: number } | null;
+  costsDaily: { daysAffected: number } | null;
+  costsGlobal: { removed: boolean } | null;
+  extractPath?: string;
+}
+
+/**
+ * Clean up slug-tagged entries from system-wide shared files. These live
+ * OUTSIDE `brand/<slug>/` and were leaking into the recreated client (activity
+ * bar, dashboard stats, costs panel) because they're keyed by `client: <slug>`
+ * inside aggregated files, not by folder name.
+ *
+ * Files touched:
+ *  - mc-data.js — strips `activity[]` entries with `client === slug` and any
+ *    `clients[]` row with matching slug. (Regenerate.py rebuilds this from
+ *    scratch periodically; manual cleanup just shortens the window where the
+ *    UI shows stale events.)
+ *  - costs-daily.json — drops `days.<date>.clients.<slug>` everywhere.
+ *  - costs-global.json — drops `clients.<slug>`.
+ *
+ * Removed entries are dumped to `<archiveDir>/_system-extract.json` so the
+ * data is recoverable along with the brand folder snapshot.
+ *
+ * Idempotent: re-runs find nothing to remove and become no-ops.
+ */
+export function archiveClientSystemFiles(
+  slug: string,
+  archiveDir: string,
+): ArchiveClientSystemFilesResult {
+  const extract: Record<string, unknown> = {};
+  const result: ArchiveClientSystemFilesResult = {
+    mcData: null,
+    costsDaily: null,
+    costsGlobal: null,
+  };
+
+  const mcPath = mcDataFile();
+  if (fs.existsSync(mcPath)) {
+    const raw = fs.readFileSync(mcPath, "utf-8");
+    const jsonStart = raw.indexOf("{");
+    const jsonEnd = raw.lastIndexOf("}");
+    if (jsonStart >= 0 && jsonEnd > jsonStart) {
+      try {
+        const data = JSON.parse(raw.slice(jsonStart, jsonEnd + 1)) as Record<string, unknown>;
+
+        const activity = Array.isArray(data.activity) ? (data.activity as Array<{ client?: string }>) : [];
+        const removedActivity = activity.filter((e) => e.client === slug);
+        const remainingActivity = activity.filter((e) => e.client !== slug);
+
+        const clientsList = Array.isArray(data.clients) ? (data.clients as Array<{ slug?: string }>) : [];
+        const removedClients = clientsList.filter((c) => c.slug === slug);
+        const remainingClients = clientsList.filter((c) => c.slug !== slug);
+
+        if (removedActivity.length > 0 || removedClients.length > 0) {
+          data.activity = remainingActivity;
+          data.clients = remainingClients;
+
+          extract.mcData = { activity: removedActivity, clients: removedClients };
+
+          const prefix = raw.slice(0, jsonStart);
+          const suffix = raw.slice(jsonEnd + 1);
+          const newContent = prefix + JSON.stringify(data, null, 2) + suffix;
+          const tmpPath = `${mcPath}.tmp`;
+          fs.writeFileSync(tmpPath, newContent);
+          fs.renameSync(tmpPath, mcPath);
+
+          result.mcData = {
+            entriesRemoved: removedActivity.length,
+            clientsRemoved: removedClients.length,
+          };
+        }
+      } catch {
+        // Malformed mc-data.js — skip rather than corrupting it further.
+      }
+    }
+  }
+
+  if (fs.existsSync(COSTS_DAILY_PATH)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(COSTS_DAILY_PATH, "utf-8")) as Record<string, unknown>;
+      const days = (data.days || {}) as Record<string, { clients?: Record<string, unknown> }>;
+      const removed: Record<string, unknown> = {};
+      let affected = 0;
+      for (const [date, day] of Object.entries(days)) {
+        if (day.clients && slug in day.clients) {
+          removed[date] = day.clients[slug];
+          delete day.clients[slug];
+          affected++;
+        }
+      }
+      if (affected > 0) {
+        extract.costsDaily = removed;
+        fs.writeFileSync(COSTS_DAILY_PATH, JSON.stringify(data, null, 2));
+        result.costsDaily = { daysAffected: affected };
+      }
+    } catch {
+      // Skip on parse error.
+    }
+  }
+
+  if (fs.existsSync(COSTS_GLOBAL_PATH)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(COSTS_GLOBAL_PATH, "utf-8")) as Record<string, unknown>;
+      const clients = (data.clients || {}) as Record<string, unknown>;
+      if (slug in clients) {
+        extract.costsGlobal = clients[slug];
+        delete clients[slug];
+        fs.writeFileSync(COSTS_GLOBAL_PATH, JSON.stringify(data, null, 2));
+        result.costsGlobal = { removed: true };
+      }
+    } catch {
+      // Skip on parse error.
+    }
+  }
+
+  if (Object.keys(extract).length > 0) {
+    fs.mkdirSync(archiveDir, { recursive: true });
+    const extractPath = path.join(archiveDir, "_system-extract.json");
+    fs.writeFileSync(extractPath, JSON.stringify(extract, null, 2));
+    result.extractPath = extractPath;
+  }
+
+  return result;
 }
