@@ -198,6 +198,67 @@ cp config/clients.json.example config/clients.json
 nano config/clients.json
 ```
 
+### 5b. Set up Open Design daemon vhost
+
+The Media Creation surface in Mission Control opens a web-based agentic
+editor served by the Open Design daemon container (`ghcr.io/growth4u-systems/od`).
+The daemon runs alongside Sancho via Compose, but its public URL is a
+**separate subdomain** with its own nginx vhost and TLS cert.
+
+The reverse-proxy config lives in [`infra/nginx/od.conf`](../infra/nginx/od.conf)
+with placeholders for the FQDN and API token. Apply it like this:
+
+```bash
+# Choose the OD subdomain (must have an A record pointing at the VPS IP)
+OD_DOMAIN=od.staging.sanchocmo.ai
+
+# 1) Add OD env vars to .env (token must match what nginx will inject below)
+cat >> /root/.openclaw/.env <<EOF
+OD_API_TOKEN=$(openssl rand -hex 32)
+OD_WEB_URL=https://${OD_DOMAIN}
+OD_ALLOWED_ORIGINS=https://${OD_DOMAIN}
+OPEN_DESIGN_IMAGE=ghcr.io/growth4u-systems/od:sanchocmo
+EOF
+
+# 2) Stub vhost so certbot can issue a cert
+sudo tee /etc/nginx/sites-available/sancho-od >/dev/null <<EOF
+server { listen 80; server_name ${OD_DOMAIN}; location / { return 404; } }
+EOF
+sudo ln -sf /etc/nginx/sites-available/sancho-od /etc/nginx/sites-enabled/sancho-od
+sudo nginx -t && sudo systemctl reload nginx
+
+# 3) Cert
+sudo certbot --nginx -d ${OD_DOMAIN} --non-interactive --agree-tos --email ops@sanchocmo.ai
+
+# 4) Replace the certbot stub with the versioned config from this repo
+TOKEN=$(grep '^OD_API_TOKEN=' /root/.openclaw/.env | cut -d= -f2-)
+sudo cp ~/.openclaw/infra/nginx/od.conf /etc/nginx/sites-available/sancho-od
+sudo sed -i "s|<OD_DOMAIN>|${OD_DOMAIN}|g; s|<OD_API_TOKEN>|${TOKEN}|g" /etc/nginx/sites-available/sancho-od
+sudo ln -sf /etc/nginx/sites-available/sancho-od /etc/nginx/sites-enabled/sancho-od
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+For staging/prod deploys driven by GitHub Actions, set the same values
+in the corresponding **GitHub Environment** so the workflow rewrites
+`.env` on every deploy:
+
+| Variable / Secret | Where it lives | Value |
+|------|------|------|
+| `OD_API_TOKEN` (secret) | Environment | Same hex string injected by nginx |
+| `OD_WEB_URL` (var) | Environment | `https://od.<env>.sanchocmo.ai` |
+| `OD_ALLOWED_ORIGINS` (var) | Environment | Same as `OD_WEB_URL` (comma-list if more origins are embedding) |
+| `OPEN_DESIGN_IMAGE` (var) | Environment | `ghcr.io/growth4u-systems/od:sanchocmo` (branded trunk) or pin to `:vX.Y.Z` |
+
+Smoke test:
+
+```bash
+curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://${OD_DOMAIN}/api/mcp/install-info
+# expect HTTP 200
+```
+
+See [`infra/nginx/README.md`](../infra/nginx/README.md) for token rotation
+and conventions (sites-available vs sites-enabled, backup snapshots).
+
 ### 6. Launch
 
 ```bash
