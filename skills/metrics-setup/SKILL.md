@@ -109,13 +109,15 @@ El usuario elige. No forzar — es su decisión qué conectar.
 
 Para CADA herramienta seleccionada:
 
-1. **Generar link de conexión en MC**:
+1. **Generar link de conexión en MC** (usar el formato de URL de `workspace-sancho/PROTOCOLS.md` Rule 3 / `TOOLS.md` — el host ya está pre-resuelto ahí):
    ```
-   👉 https://sancho-cmo.taild48df2.ts.net/mc/connect/{slug}/{apiId}
+   👉 <MC_BASE>/admin/{adminToken}/connect/{slug}/{apiId}   ← guild interno
+   👉 <MC_BASE>/portal/{mcToken}/connect/{apiId}            ← guild de cliente
    Ahí tienes las instrucciones y el formulario para conectarlo.
    ```
+   (Sustituye `<MC_BASE>` por el host pre-resuelto que aparece en PROTOCOLS.md/TOOLS.md.)
 
-2. **NUNCA pedir credenciales en el chat** — toda la gestión de secretos va por MC UI (HTTPS + Tailscale)
+2. **NUNCA pedir credenciales en el chat** — toda la gestión de secretos va por MC UI
 
 3. **Google APIs (GA4, GSC, Google Ads)**: usan Service Account compartido
    - El usuario solo necesita dar acceso de Viewer al email del SA
@@ -246,7 +248,7 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 {
   "id": "P00-MET-T{XX}",
   "name": "Conectar {nombre_api}",
-  "description": "Enlace de conexión: https://sancho-cmo.taild48df2.ts.net/mc/connect/{slug}/{apiId}\n\n{instrucciones según caso}",
+  "description": "Enlace de conexión: <MC_BASE>/admin/{adminToken}/connect/{slug}/{apiId}\n\n{instrucciones según caso}",
   "type": "execution",
   "skill": "metrics-setup",
   "channel": "intelligence",
@@ -256,12 +258,12 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 }
 ```
 
-**IMPORTANTE:** Toda tarea de tipo "Conectar X" DEBE incluir el enlace de conexión MC como primera línea del campo `description`. Formato: `https://sancho-cmo.taild48df2.ts.net/mc/connect/{slug}/{apiId}`. Usa el mapeo de nombres a API IDs del Step 6 para obtener el `{apiId}` correcto.
+**IMPORTANTE:** Toda tarea de tipo "Conectar X" DEBE incluir el enlace de conexión MC como primera línea del campo `description`. Formato: `<MC_BASE>/admin/{adminToken}/connect/{slug}/{apiId}` (guild interno) o `<MC_BASE>/portal/{mcToken}/connect/{apiId}` (guild cliente). `<MC_BASE>` = host pre-resuelto en `workspace-sancho/PROTOCOLS.md` / `TOOLS.md` (NUNCA inventes uno distinto). Usa el mapeo de nombres a API IDs del Step 6 para obtener el `{apiId}` correcto.
 
 **Reglas según ownership y estado:**
 - API ya conectada (`status: "connected"` en integrations.json) → crear tarea con `status: "completed"`, nota "Ya conectada"
 - API no conectada + `ownership: "system"` → `status: "todo"`, `owner: "Sancho"` — Escudero la puede conectar directamente
-- API no conectada + `ownership: "client"` → `status: "todo"`, `owner: "Equipo"`, descripción: "Enlace de conexión: https://sancho-cmo.taild48df2.ts.net/mc/connect/{slug}/{apiId}\n\nContactar al equipo de {cliente} para obtener credenciales de {api}. Mientras tanto, trackear vía Excel."
+- API no conectada + `ownership: "client"` → `status: "todo"`, `owner: "Equipo"`, descripción: "Enlace de conexión: <MC_BASE>/admin/{adminToken}/connect/{slug}/{apiId}\n\nContactar al equipo de {cliente} para obtener credenciales de {api}. Mientras tanto, trackear vía Excel."
 
 6. Añadir tarea final de verificación:
 ```json

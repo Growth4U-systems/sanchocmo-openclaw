@@ -90,7 +90,11 @@ function loadBrandEnv(slug: string): Record<string, string> {
 }
 
 function getMcBaseUrl(_req: NextApiRequest): string {
-  return process.env.MC_PUBLIC_URL || "https://sancho-cmo.taild48df2.ts.net:8443";
+  const url = process.env.BASE_URL || process.env.NEXTAUTH_URL;
+  if (!url) {
+    throw new Error("No app base URL configured — set BASE_URL (canonical) or NEXTAUTH_URL");
+  }
+  return url.replace(/\/+$/, "");
 }
 
 // Resolve pillar_name from content/configs/news-prompts/{P}.yml

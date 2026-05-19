@@ -13,8 +13,9 @@ export MC_BASE_URL="${MC_BASE_URL:-$BASE_URL/mc}"
 echo "[env-inject] BASE_URL=$BASE_URL"
 echo "[env-inject] MC_BASE_URL=$MC_BASE_URL"
 
-# Files to process (relative to workspace root)
-INJECT_FILES="SOUL.md TOOLS.md _system/mc-links-protocol.md _system/client-onboarding.md _system/presentation-summary-protocol.md _system/project-threads-protocol.md"
+# Files to process (relative to workspace root). Whitelist must reflect
+# real paths; missing files are skipped with a warning by the loop below.
+INJECT_FILES="SOUL.md AGENTS.md PROTOCOLS.md TOOLS.md _system/technical/mc-links-protocol.md _system/onboarding/client-onboarding.md _system/onboarding/client-onboarding-checklist.md _system/output/presentation-summary-protocol.md _system/output/project-threads-protocol.md"
 
 for ws in "$OPENCLAW_ROOT"/workspace-sancho "$OPENCLAW_ROOT"/workspace-cervantes; do
   [ -d "$ws" ] || continue

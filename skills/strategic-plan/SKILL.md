@@ -344,7 +344,7 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
 5. **Resolver datos del cliente:**
    - Leer `brand/{slug}/discord-channels.json` para channel IDs
    - Si no existe → `message(action=channel-list, guildId={guild})` → crear el fichero
-   - Obtener `mcToken` de `clients.json` → MC URL: `{MC_BASE_URL}/portal/{mcToken}/projects/`
+   - Obtener `mcToken` de `clients.json` → MC URL: `<MC_BASE>/portal/{mcToken}/projects/`
 6. **Por cada proyecto** (ir uno a uno):
 
    a. **Crear hilo de proyecto en #projects:**

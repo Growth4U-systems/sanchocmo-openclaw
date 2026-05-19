@@ -57,11 +57,11 @@ Read `skills/acquisition-metrics-plan/schemas/api-catalog.json` and check if the
 
 ### Step 3: Generate link and respond
 
-Base URL: `{MC_BASE_URL}/connect/{slug}/{apiId}`
+Base URL: `<MC_BASE>/connect/{slug}/{apiId}`
 
 Respond with ONLY the link and a one-liner. Example:
 
-> 👉 {MC_BASE_URL}/connect/growth4u/ga4
+> 👉 <MC_BASE>/connect/growth4u/ga4
 > Ahí tienes las instrucciones y el formulario para conectarlo.
 
 **Do NOT:**
@@ -80,9 +80,9 @@ If you can't determine the client from context:
 
 If the user asks to connect multiple APIs, generate all links:
 
-> 👉 GA4: {MC_BASE_URL}/connect/{slug}/ga4
-> 👉 GSC: {MC_BASE_URL}/connect/{slug}/gsc
-> 👉 Meta Ads: {MC_BASE_URL}/connect/{slug}/meta_ads
+> 👉 GA4: <MC_BASE>/connect/{slug}/ga4
+> 👉 GSC: <MC_BASE>/connect/{slug}/gsc
+> 👉 Meta Ads: <MC_BASE>/connect/{slug}/meta_ads
 
 ## System Service Account (Google APIs)
 

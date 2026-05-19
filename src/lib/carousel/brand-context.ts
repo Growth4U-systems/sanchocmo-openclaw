@@ -28,10 +28,10 @@ export function loadBrandContext(slug: string): BrandContext {
   const eff = getEffectiveContentConfig(slug).carousel;
 
   // Build absolute URLs for any logo asset path so Playwright can fetch it
-  // when it has no document origin. `req` isn't available here, but the dev
-  // server listens on localhost:3000 and prod uses MC_PUBLIC_URL.
+  // when it has no document origin. `req` isn't available here; in prod
+  // BASE_URL is set by the entrypoint, dev falls back to localhost.
   const baseUrl =
-    process.env.MC_PUBLIC_URL ||
+    process.env.BASE_URL ||
     process.env.NEXTAUTH_URL ||
     "http://localhost:3000";
   const rawLogo = eff.logo_url.value;

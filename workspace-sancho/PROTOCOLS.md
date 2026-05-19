@@ -15,11 +15,12 @@ Discord/MC = ONLY information for that client. ZERO internal data or data from o
 Create a thread from the user's message_id. Reply to the thread via `target`. Final message = NO_REPLY. Specialists (Dulcinea, Hamete, Rocinante, Mambrino, Maese Pedro, Merlín): invoke via `Agent(subagent_type=<slug>)` with the task's thread. Never reply outside the thread. See `TOOLS.md`.
 
 ### 3. Links, never raw paths
-ALWAYS publish links with token. See `_system/mc-links-protocol.md` for the exact URL resolution. Summary:
+ALWAYS publish links with token. See `_system/technical/mc-links-protocol.md` for the exact URL resolution. Summary:
 
-- In a **client guild**: read `clients.json` → find by guild → use `mcToken` → `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/docs/brand/{slug}/{path}`
+- **Use the URL templates below verbatim.** The `{MC_BASE_URL}` host is pre-resolved at container start from `BASE_URL` (see `docker/inject-env-vars.sh`) — after injection you will see the actual deployment host instead of `{MC_BASE_URL}`. NEVER substitute a different hostname (no `sancho-cmo.taild48df2.ts.net` unless that IS the injected host, no inventing domains). If the templates still show `{MC_BASE_URL}` literally, the injection didn't run — stop and report it.
+- In a **client guild**: read `clients.json` → find by guild → use `mcToken` → `{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}`
 - ⚠️ The path ALWAYS includes `brand/{slug}/` after `/docs/`. NEVER `/docs/campaigns/...` → ALWAYS `/docs/brand/{slug}/campaigns/...`
-- In an **internal guild** (Cervantes Brain `1478770422093709502`): use `adminToken` from `clients.json` → `https://sancho-cmo.taild48df2.ts.net/mc/admin/{adminToken}/docs/brand/{slug}/{path}`
+- In an **internal guild** (Cervantes Brain `1478770422093709502`): use `adminToken` from `clients.json` → `{MC_BASE_URL}/admin/{adminToken}/docs/brand/{slug}/{path}`
 - **NEVER** use `/mc/docs/...` or `/mc/connect/...` without a token — those endpoints return 403.
 
 ### 4. No step narration
@@ -68,8 +69,8 @@ When completing any task that generates files:
   ```
   <@{sender_id}> ✅ Done.
 
-  📄 **{deliverable name}:** <{MC_BASE}/docs/brand/{slug}/{path}>
-  📄 **{another deliverable}:** <{MC_BASE}/docs/brand/{slug}/{path}>
+  📄 **{deliverable name}:** <{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}>
+  📄 **{another deliverable}:** <{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}>
   ```
 - NEVER post only the internal path (`campaigns/content/file.md`). Always the full MC link.
 - NEVER leave the user without knowing where what you generated lives.
@@ -97,8 +98,8 @@ BEFORE searching, reading, or referencing any client file, read `brand/{slug}/fo
 - **Mandatory flow when someone asks to connect an API:**
   1. Identify the client's slug and the API's ID in the catalog (`skills/acquisition-metrics-plan/schemas/api-catalog.json`)
   2. If the API exists → reply ONLY with the tokenized link:
-     - In a client guild: `https://sancho-cmo.taild48df2.ts.net/mc/portal/{mcToken}/connect/{apiId}`
-     - In internal guild: `https://sancho-cmo.taild48df2.ts.net/mc/admin/{adminToken}/connect/{slug}/{apiId}`
+     - In a client guild: `{MC_BASE_URL}/portal/{mcToken}/connect/{apiId}`
+     - In internal guild: `{MC_BASE_URL}/admin/{adminToken}/connect/{slug}/{apiId}`
   3. If the API does NOT exist in the catalog → say so clearly: *"That API is not in our catalog. Contact the team to add it."*
   4. NEVER explain manual steps or give configuration instructions via chat — everything is in the MC page.
 - **If someone pastes a token/key via chat** → reply: *"⚠️ Don't share credentials via chat. Use Mission Control to configure APIs safely: [link]"*. Do not use the token.
