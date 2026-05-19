@@ -1,8 +1,0 @@
-{
-  "cronName": "Daily Pulse — Growth4U",
-  "slug": "growth4u",
-  "date": "2026-04-10",
-  "runAtMs": 1775802240000,
-  "status": "ok",
-  "content": "📊 **Daily Pulse — Growth4U | 10 abril 2026**\n\n---\n\n🚨 **ALERTA PRINCIPAL:** 5° día sin citas en GHL.\n\nMeta Ads sigue generando leads (3 ayer, €128 spend) pero ninguno convierte en demo. El volumen cayó -45% en impresiones y -28% en spend en las últimas 48h. CTR repuntó a 1.84% lo cual sugiere que el presupuesto o la audiencia pueden estar agotados. **El cuello de botella ya no es adquisición — es conversión.**\n\n---\n\n📈 **Métricas (últimas 24h):**\n\n**Meta Ads:**\n- Leads: 3 | Spend: €128.90 | Citas GHL: 0\n- Media 7d: 4 leads/día | CPC avg: €0.68\n- 5 días consecutivos SIN citas\n\n**GHL Pipeline:**\n- 7 leads activos con tag `llamada-agendada`\n- 0 leads nuevos en últimas 24h\n- 4 leads pendientes enrichment (sin company data)\n- 1 lead duplicado detectado (Manuel Campos Figal)\n\n---\n\n📅 **Viernes 10 — Agenda:**\n- 12:00 — Aarón (Growit School) — reunión general Growth4U 👤\n- Resto: reuniones internas\n\n---\n\n⚠️ **Issues abiertos:**\n- GHL API key expirada — call prep funciona parcialmente\n- Flujo de booking roto — investigar journey post-click\n\n---\n\n🗂️ **Archivo:** `brand/growth4u/daily-pulse/2026-04-10.json`"
-}

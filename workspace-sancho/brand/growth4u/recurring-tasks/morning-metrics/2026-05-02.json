@@ -1,9 +1,0 @@
-{
-  "cronName": "Morning Metrics — Growth4U",
-  "slug": "growth4u",
-  "date": "2026-05-02",
-  "runAtMs": 1746167400000,
-  "status": "ok",
-  "collectionErrors": ["instantly: (campaigns || []) is not iterable"],
-  "content": "📊 **Morning Metrics — Growth4U** | 2026-05-02\n\n━━━ **META ADS** (ayer) ━━━\n💰 Spend: **€101.12** (media 7d: €136.31 ⬇️)\n👁️ Impressions: **5,871** (media 7d: 5,579)\n🖱️ Clicks: **35** | CTR: **0.60%** | CPC: **€2.89**\n🎯 Leads: **3** (media 7d: 1.6/día)\n\n━━━ **GHL — CONTACTS** (últimas 24h) ━━━\n👤 Nuevos contactos: **4**\n- clara melero — Facebook\n- 𝐄𝐥 𝐏𝐚𝐧𝐢𝐢 — Facebook\n- francisco franco — Facebook — llamada-agendada, secuencia-seguimiento\n- gabriel gonzález gil — Lead Magnet Framework Nichos 60 días\n\n━━━ **GHL — APPOINTMENTS** (últimas 24h) ━━━\n📅 Citas: **0**\n\n━━━ **ANÁLISIS** ━━━\n✅ Leads por encima de media (3 vs 1.6/d) — buen día\n✅ CPC mejorando (€2.89 vs €3.58 media) — eficiencia al alza\n⚠️ CTR ligeramente bajo (0.60% vs 0.71% media) — monitorizar\n📉 Spend bajo por 1 de Mayo (festivo España) — normal\n🔄 1 contacto vía lead magnet orgánico — el funnel de nichos está captando\n⚠️ 0 citas agendadas — el cuello de botella sigue en conversión lead→cita\n⚠️ Instantly con error de integración — revisar"
-}

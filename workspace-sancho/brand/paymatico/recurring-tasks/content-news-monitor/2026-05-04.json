@@ -1,9 +1,0 @@
-{
-  "cronName": "Content: News Monitor — Paymatico",
-  "slug": "paymatico",
-  "date": "2026-05-04",
-  "runAtMs": 1777873293652,
-  "status": "ok",
-  "last_finding": "Bizum lanza pagos NFC en tienda física mayo 2026 (impacto franquicias). PSD3/PSR acuerdo político cerrado — aplicación 2027-28. Mollie aterriza en España con oferta específica de franquicias y Wero (52M usuarios). Embedded finance B2B alcanza $4.1T.",
-  "content": "16 signals: competencia-fintech=5, franquicias-multisede=3, regulacion-pagos=5, tecnologia-pagos=3"
-}

@@ -141,6 +141,28 @@ jobs:
             cd "$DEPLOY_PATH"
             echo "▶ Fetching staging…"
             git fetch origin staging --prune
+
+            # Backup `workspace-sancho/brand/<slug>/` folders before checkout.
+            # Historically these were committed to git; the staging branch is
+            # transitioning them to untracked-runtime via `git rm --cached`.
+            # On the first deploy after that transition, `git checkout <SHA>`
+            # would delete the on-disk files (they're in old HEAD but not new
+            # HEAD). On subsequent deploys this is a no-op (folders are
+            # gitignored and untouched by checkout). The restore below puts
+            # them back if checkout removed them.
+            BRAND_BACKUP_DIR="$(mktemp -d -t sancho-brand-bk-XXXXXX)"
+            if [ -d workspace-sancho/brand ]; then
+              echo "▶ Backing up workspace-sancho/brand/ runtime data to $BRAND_BACKUP_DIR…"
+              for d in workspace-sancho/brand/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                # Skip the always-tracked sample and the archive bucket.
+                [ "$name" = "example" ] && continue
+                [ "$name" = "_archived" ] && continue
+                cp -a "$d" "$BRAND_BACKUP_DIR/"
+              done
+            fi
+
             if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
               echo "▶ Stashing local runtime changes before checkout…"
               git stash push --include-untracked -m "deploy-staging-$(date -u +%Y%m%dT%H%M%SZ)" || true
@@ -166,6 +188,21 @@ jobs:
             echo "▶ Checking out $SHA…"
             git checkout "$SHA"
             export GIT_COMMIT="$(git rev-parse HEAD)"
+
+            # Restore brand/<slug>/ folders that the checkout removed.
+            if [ -d "$BRAND_BACKUP_DIR" ]; then
+              for d in "$BRAND_BACKUP_DIR"/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                target="workspace-sancho/brand/$name"
+                if [ ! -d "$target" ] || [ -z "$(ls -A "$target" 2>/dev/null || true)" ]; then
+                  echo "▶ Restoring workspace-sancho/brand/$name from backup…"
+                  mkdir -p "$target"
+                  cp -a "$d/." "$target/"
+                fi
+              done
+              rm -rf "$BRAND_BACKUP_DIR"
+            fi
             COMPOSE_ARGS="-f docker-compose.yml"
             if [ "${ENABLE_YALC_SERVICE:-1}" != "0" ]; then
               YALC_DIR="${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}"

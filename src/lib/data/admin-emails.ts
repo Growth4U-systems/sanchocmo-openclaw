@@ -1,5 +1,6 @@
 import fs from "fs";
 import { CLIENTS_FILE } from "./paths";
+import { writeClientsFile } from "./clients";
 
 /**
  * Helpers to read/write the `adminEmails` array in clients.json.
@@ -35,16 +36,7 @@ export function loadAdminEmails(): string[] {
 function saveAdminEmails(emails: string[]): void {
   const raw = JSON.parse(fs.readFileSync(CLIENTS_FILE, "utf-8"));
   raw.adminEmails = emails;
-  const json = JSON.stringify(raw, null, 2);
-  // Roundtrip validation
-  JSON.parse(json);
-  // Backup
-  const backupPath = `${CLIENTS_FILE}.bak.${Date.now()}`;
-  fs.copyFileSync(CLIENTS_FILE, backupPath);
-  // Atomic write
-  const tmpPath = `${CLIENTS_FILE}.tmp`;
-  fs.writeFileSync(tmpPath, json);
-  fs.renameSync(tmpPath, CLIENTS_FILE);
+  writeClientsFile(raw);
 }
 
 export function addAdminEmail(email: string): { ok: boolean; error?: string; emails: string[] } {

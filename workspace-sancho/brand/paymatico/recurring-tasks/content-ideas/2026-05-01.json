@@ -1,8 +1,0 @@
-{
-  "cronName": "Content: Classify + Ideas — Paymatico",
-  "slug": "paymatico",
-  "date": "2026-05-01",
-  "runAtMs": 1746082980000,
-  "status": "ok",
-  "content": "28 signals clasificados (12 competitors, 16 news). 7 ideas generadas: 2 Hot Take (linkedin), 2 Contrarian Take (linkedin), 1 Proof Post (linkedin), 2 Framework (blog). Pillars: competencia-fintech(1), tecnologia-pagos(2), regulacion-pagos(1), franquicias-multisede(3). Channels: linkedin(5), blog(2). Top confidence: Dinero programable contrarian (0.90), Bizum TPV físico (0.88), Euronet/Paynopain hot take (0.85), Sipay Horeca contrarian (0.85)."
-}

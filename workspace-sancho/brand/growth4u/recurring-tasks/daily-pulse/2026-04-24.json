@@ -1,8 +1,0 @@
-{
-  "cronName": "Daily Pulse — Growth4U",
-  "slug": "growth4u",
-  "date": "2026-04-24",
-  "runAtMs": 1777014300000,
-  "status": "ok",
-  "content": "📊 Daily Pulse — Growth4U | 2026-04-24\n\n5 leads ayer (media 7d: 3.3/día ✅) | CPC €3.39 dentro de rango ✅ | Solo 1 call mañana 🔴\n\n🔴 CRÍTICO: 22 leads 'llamada-agendada' vs casi 0 calls en calendario — el flujo lead→cita sigue roto. Adquisición OK (5 leads/día), el problema es conversión.\n\n🟡 Alerta: CPC €8.21 el 23 abr (2x media) — recuperado pero monitorizar.\n🟡 APIs enrichment bloqueadas (x_search rate-limited, Apollo sin config, Slack disabled).\n\n0 actividad humana en canales Discord en 24h (solo crons).\n\n📁 brand/growth4u/daily-pulse/2026-04-24.json"
-}
