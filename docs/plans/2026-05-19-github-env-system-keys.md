@@ -1,432 +1,218 @@
-# System API Keys → GitHub Environments — Implementation Plan
+# System ENVs → GitHub Environments — Implementation Plan (v2)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Stop SSH-editing `~/.openclaw/.env` on staging/prod for system API keys. Move source-of-truth to GitHub Environment secrets, auto-applied on deploy.
+**Goal:** Stop SSH-editing `~/.openclaw/.env` on staging for **all** secrets and config — not just the LLM/API keys originally scoped. Move source-of-truth to GitHub Environment secrets/variables, auto-applied on deploy.
 
-**Architecture:** A generic Python upsert script (`scripts/upsert-env.py`, TDD'd via stdlib `unittest`) reads a base64-encoded JSON dict of `{KEY: VALUE}` from stdin and writes those keys to a target `.env` file, **skipping empty values** (so unset secrets are no-ops). Both `deploy-staging.yml` and `deploy-prod.yml` build that JSON from an explicit list of GitHub Environment secrets, `scp` the script to the VPS, and run it via `python3 /tmp/upsert-env.py …` before `docker compose up -d`. The container is force-recreated only when the `.env` content sha256 actually changed.
+**Architecture:** A generic Python upsert script (`scripts/upsert-env.py`, TDD'd via stdlib `unittest`) reads a base64-encoded JSON dict of `{KEY: VALUE}` from stdin and writes those keys to a target `.env` file, **skipping empty values** (so unset secrets are no-ops). `deploy-staging.yml` builds that JSON from an explicit list of GitHub Environment secrets, `scp`s the script to the VPS, and runs it via `python3 /tmp/upsert-env.py …` before `docker compose up -d`. The container is force-recreated only when the `.env` content sha256 actually changed. `deploy-prod.yml` gets the same wiring **but stays a no-op** until the `production` GitHub Environment is populated (it currently is not — staging is de-facto prod as of 2026-05).
 
-**Tech Stack:** Python 3 (stdlib only — `json`, `base64`, `pathlib`, `argparse`, `sys`), `unittest` for tests. GitHub Actions workflow YAML. Bash + SSH for VPS execution.
+**Tech Stack:** Python 3 (stdlib only — `json`, `base64`, `pathlib`, `argparse`, `sys`), `unittest`. Bash for the operator helper (`scripts/load-secrets-from-env.sh`). GitHub Actions workflow YAML. `gh` CLI for bulk secret upload.
 
-**Scope:** Only the 22 keys backing `SERVICE_ENV_MAP` in `src/pages/api/env/index.ts` (the LLM/tools/social/data providers). `SANCHO_INTERNAL_API_TOKEN` already migrates via the existing inline upsert and is folded into this generalized mechanism. Out of scope: `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `GOOGLE_CLIENT_*`, `OD_API_TOKEN`, `R2_*`, `DATABASE_URL`. Those can be added later by extending the keys list — no code change needed beyond declaring the new GitHub secrets.
+**Predecessor:** PR #84 (`investigate/apis-settings-tab` → `staging`) — **merged** as commit `63fb444a`.
 
-**Predecessor:** PR #84 (`investigate/apis-settings-tab` → `staging`) must be merged first to avoid touching the same workflow during rebases.
+**Scope evolution (why this is v2):** v1 (the version that shipped with PR #85) scoped only the 22 keys backing `SERVICE_ENV_MAP` in `src/pages/api/env/index.ts`. After auditing the real `.env` on the VPS (2026-05-19), it's clear that ~30 other secrets — auth/infra, skills APIs, OAuth pairs — suffer the same SSH-ed-by-hand problem. v2 expands the staging Environment scope to all of them. Prod scope stays minimal (deferred until prod is revived).
 
 ---
 
 ## Files
 
-- **Create:** `scripts/upsert-env.py` — pure-function `upsert(env_path, updates: dict[str,str], strict=True) -> dict[str,str]` returning per-key action (`added` / `updated` / `unchanged` / `skipped_empty`). CLI: `python3 scripts/upsert-env.py <env_path>` reads base64-encoded JSON from stdin, writes back, prints a summary line.
-- **Create:** `scripts/test_upsert_env.py` — `unittest.TestCase` suite covering: new file, existing key replace, append missing key, skip empty, reject multi-line value, preserve comments + blank lines + unrelated keys, idempotent re-run.
-- **Modify:** `.github/workflows/deploy-staging.yml` — generalize the existing `SANCHO_INTERNAL_API_TOKEN` inline upsert into the script-based pattern. Touched range: lines 31-73 (env block + Deploy step).
-- **Modify:** `.github/workflows/deploy-prod.yml` — add the env upsert step entirely (prod has none today). Touched: lines 41-60 (Deploy step).
-- **Modify:** `.github/workflows/ci.yml` — add a `verify-scripts` job that runs `python3 -m unittest discover -s scripts -p 'test_*.py'`. Touched: append job at lines 60-ish.
-- **Create:** `docs/runbooks/system-keys-management.md` — how to add/rotate a key.
+- ✅ **Created** (PR #85): `scripts/upsert-env.py` — pure-function `upsert(env_path, updates)` returning per-key action (`added` / `updated` / `unchanged` / `skipped_empty`). CLI reads base64-encoded JSON from stdin.
+- ✅ **Created** (PR #85): `scripts/test_upsert_env.py` — 10 `unittest` cases (stdlib only).
+- ✅ **Created** (PR #85, this commit): `scripts/load-secrets-from-env.sh` — bulk-upload helper. Reads a `.env` snapshot, calls `gh secret set` per non-empty key, dry-run by default, value passed via stdin (never `--body`) for safety.
+- ✅ **Modified** (PR #85): `.github/workflows/ci.yml` — new `verify-scripts` job running the unittest suite.
+- ⏳ **Modify** (Task 3 — next PR): `.github/workflows/deploy-staging.yml` — generalize the existing `SANCHO_INTERNAL_API_TOKEN` inline upsert into the script-based pattern across all 52 secrets.
+- ⏳ **Modify** (Task 4 — same PR): `.github/workflows/deploy-prod.yml` — add the env upsert step entirely (currently has none); 22-key scope; stays a no-op until `production` Environment is populated.
+- ⏳ **Create** (Task 5 — same PR): `docs/runbooks/system-keys-management.md` — how to add/rotate/disable a key.
 
 ---
 
-## Key list (single source of truth referenced by both workflows)
+## Secret tiers — `staging` GitHub Environment (52 secrets + 7 variables)
 
-Define this in both workflow files identically as the workflow `env:` block on the Deploy step. Lifted from `src/pages/api/env/index.ts:9-35`:
+The workflow's `env:` block enumerates every secret it wants; the Python `KEYS` list inside the workflow must match. Tiers are documentation-only — the script treats them identically.
+
+### Tier 1 — Auth & infra (21 secrets, blast radius = highest)
 
 ```
-ANTHROPIC_API_KEY, OPENROUTER_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY,
-XAI_API_KEY, MINIMAX_API_KEY, BRAVE_API_KEY, APIFY_API_KEY,
-FIRECRAWL_API_KEY, SERPER_API_KEY, DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD,
-NOTION_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, FAL_API_KEY,
-WAVESPEED_API_KEY, DUMPLING_API_KEY, SLACK_BOT_TOKEN, INSTANTLY_API_KEY,
-METRICOOL_API_KEY, SANCHO_INTERNAL_API_TOKEN
+NEXTAUTH_SECRET            — NextAuth session signer
+NEXTAUTH_URL               — public auth URL
+ENCRYPTION_KEY             — encrypts stored OAuth tokens at rest (rotation invalidates them)
+DATABASE_URL               — Neon Postgres connection
+SUPABASE_SERVICE_ROLE_KEY  — Supabase admin role (different from ANON_KEY)
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+DISCORD_BOT_TOKEN
+DISCORD_BOT_CLIENT_ID
+CERVANTES_DISCORD_BOT_TOKEN
+CERVANTES_DISCORD_BOT_CLIENT_ID
+CERVANTES_GUILD_ID
+DISCORD_WEBHOOK_CERVANTES
+OD_API_TOKEN               — Open Design daemon bearer
+OPENCLAW_GATEWAY_TOKEN     — internal OpenClaw gateway
+GTM_OS_API_TOKEN           — YALC / GTM-OS
+YALC_API_TOKEN
+CLAUDE_CODE_OAUTH_TOKEN    — cron `claude -p` invocations
+SLACK_CLIENT_ID
+SLACK_CLIENT_SECRET
+SLACK_SIGNING_SECRET
 ```
 
-22 total. Same list in both workflows; values come from per-environment GitHub Secrets (`staging` / `production`).
+### Tier 2 — System APIs (22 secrets — the original v1 scope)
+
+```
+ANTHROPIC_API_KEY          OPENROUTER_API_KEY    OPENAI_API_KEY        GEMINI_API_KEY
+XAI_API_KEY                MINIMAX_API_KEY       BRAVE_API_KEY         APIFY_API_KEY
+FIRECRAWL_API_KEY          SERPER_API_KEY        DATAFORSEO_LOGIN      DATAFORSEO_PASSWORD
+NOTION_API_KEY             SUPABASE_URL          SUPABASE_ANON_KEY     FAL_API_KEY
+WAVESPEED_API_KEY          DUMPLING_API_KEY      SLACK_BOT_TOKEN       INSTANTLY_API_KEY
+METRICOOL_API_KEY          SANCHO_INTERNAL_API_TOKEN
+```
+
+### Tier 3 — Skill APIs (9 secrets — present on VPS but not in `SERVICE_ENV_MAP` yet)
+
+```
+APOLLO_API_KEY             — Apollo.io prospecting
+GHL_API_KEY                — GoHighLevel
+GHL_LOCATION_ID
+META_ACCESS_TOKEN          — Meta Ads
+META_AD_ACCOUNT_ID
+PAGESPEED_API_KEY          — Google PageSpeed Insights
+UNIPILE_API_KEY            — Unipile (LinkedIn messaging)
+UNIPILE_DSN
+DATAFORSEO_API_KEY         — DataForSEO token (separate from LOGIN/PASSWORD pair)
+```
+
+Folding Tier 3 into `SERVICE_ENV_MAP` (so they appear in the APIs admin panel) is **out of scope** for this plan — file as a follow-up.
+
+### Variables (7, non-secret config — `${{ vars.X }}` not `${{ secrets.X }}`)
+
+```
+BASE_URL                   NEXT_PUBLIC_ENV_LABEL    OD_WEB_URL
+OD_ALLOWED_ORIGINS         OPEN_DESIGN_IMAGE        MC_CHAT_GATEWAY
+SLACK_REDIRECT_URI
+```
+
+The workflow references variables as `${{ vars.X }}` and merges them into the same upsert payload. **Optional for v2** — if you want to defer them, keep editing them by SSH for now and add as a follow-up.
+
+### Notes from the 2026-05-19 audit
+
+- `BRAVE_API_KEY` and `METRICOOL_API_KEY` are declared in `SERVICE_ENV_MAP` but currently unset on the VPS. Declared in the workflow anyway — the `skip_empty` rule keeps them no-op.
+- `ANTHROPIC_API_KEY` intentionally absent from the `production` Environment scope (prod uses OpenAI for agents per the operator).
+- `SANCHO_INTERNAL_API_TOKEN`, `NEXTAUTH_*`, `DATABASE_URL`, `ENCRYPTION_KEY` missing from prod is **expected staleness** (prod is not currently being deployed against).
+
+### Prod scope — minimal until revived
+
+When prod gets revived, **mirror the staging tiers**. Until then, the `production` Environment has whatever secrets the previous deploy needed (see prod snapshot) — leave them. The workflow change (Task 4) is safe even with an unpopulated Environment because `skip_empty` no-ops every unset secret.
 
 ---
 
-### Task 0: Inventory + populate GitHub Environment secrets (MANUAL — risk gate)
+### Task 0: Populate the `staging` GitHub Environment
 
-**This is the migration risk. Do not start Task 3/4 until this is complete.** No code in this task — it's a human operations step. The python script (Task 1) deliberately skips empty values so a half-populated GitHub Environment is safe, but a *wrong* value in GitHub will overwrite the VPS's real one on the next deploy.
+**Risk gate.** Do not run Task 3 (the staging workflow change) until this is complete. The `skip_empty` rule in `upsert-env.py` protects against missing secrets, but a *wrong* value will overwrite the VPS's real one on next deploy.
 
-- [ ] **Step 1: Snapshot staging `.env`**
+- [ ] **Step 1: Verify `gh` is authenticated**
 
 ```bash
-ssh sancho-cmo-staging "cat /root/.openclaw/.env" > /tmp/staging.env.snapshot
-# DO NOT commit this file. It contains secrets.
+gh auth status
+# expect: Logged in to github.com as <you>
+```
+
+- [ ] **Step 2: Snapshot the staging `.env` (if not already done)**
+
+```bash
+scp sancho-cmo-staging:~/.openclaw/.env /tmp/staging.env.snapshot
 chmod 600 /tmp/staging.env.snapshot
 ```
 
-- [ ] **Step 2: Snapshot prod `.env`**
+- [ ] **Step 3: Dry-run the bulk upload**
 
 ```bash
-ssh sancho-cmo-prod "cat /root/.openclaw/.env" > /tmp/prod.env.snapshot
-chmod 600 /tmp/prod.env.snapshot
+scripts/load-secrets-from-env.sh --env staging --from /tmp/staging.env.snapshot
 ```
 
-- [ ] **Step 3: For each of the 22 keys, if set on staging, add to GitHub `staging` Environment secrets**
+Read the output carefully. Every key from `/tmp/staging.env.snapshot` whose value is non-empty will be queued for upload. Confirm:
+- All 21 Tier 1 names are listed (or note the ones that are missing — those still need manual setup on the VPS).
+- All 20 Tier 2 names present on staging (per audit) are listed.
+- All 9 Tier 3 names are listed.
+- Total `Would upload` ≈ 50 (give or take based on what's set).
 
-GitHub repo → Settings → Environments → `staging` → Add secret. Secret name MUST match env var name (e.g., `ANTHROPIC_API_KEY` → secret `ANTHROPIC_API_KEY`). For each key:
+If anything looks off (unknown keys you don't recognize, or important keys missing), inspect the snapshot before proceeding.
+
+- [ ] **Step 4: Execute the upload**
 
 ```bash
-grep "^ANTHROPIC_API_KEY=" /tmp/staging.env.snapshot
-# copy value to clipboard, paste into GitHub UI
+scripts/load-secrets-from-env.sh --env staging --from /tmp/staging.env.snapshot --confirm
 ```
 
-Repeat for all 22 keys. Skip any that are absent or empty on the VPS — they'll stay empty in GitHub (no-op on deploy).
-
-- [ ] **Step 4: Same for prod → `production` GitHub Environment**
-
-```bash
-grep "^OPENAI_API_KEY=" /tmp/prod.env.snapshot
-# etc.
-```
+This calls `gh secret set --env staging <KEY>` once per non-empty key. Values are piped via stdin (not `--body`), so they never enter `ps`/history.
 
 - [ ] **Step 5: Verify**
 
-GitHub → Settings → Environments → list `staging`. Count of secrets ≥ count of keys grepped from staging snapshot. Same for `production`. Diff the two lists — they should mostly overlap but may legitimately differ (e.g., METRICOOL_API_KEY only on prod).
-
-- [ ] **Step 6: Delete snapshots**
-
 ```bash
-shred -u /tmp/staging.env.snapshot /tmp/prod.env.snapshot
+# Count secrets in the staging Environment
+gh api "/repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/environments/staging/secrets" \
+  --paginate -q '.secrets | length'
 ```
 
-**Acceptance:** Every key currently set on a VPS has a matching GitHub Environment secret. Snapshots wiped. No commit yet.
+Compare against the `Uploaded` count from Step 4 — should match.
+
+Spot-check by name in the UI: GitHub → Settings → Environments → `staging` → Secrets.
+
+- [ ] **Step 6: Shred the snapshot**
+
+```bash
+shred -u /tmp/staging.env.snapshot
+```
+
+(Keep `/tmp/prod.env.snapshot` until prod is revived; or shred it now if you've already finished using it.)
+
+**Acceptance:** `staging` GitHub Environment contains every secret currently set on the staging VPS. Workflow change in Task 3 will pick them up automatically.
 
 ---
 
-### Task 1: TDD the upsert script
+### Task 0b (optional): Populate `staging` variables
 
-**Files:**
-- Create: `scripts/upsert-env.py`
-- Create: `scripts/test_upsert_env.py`
+7 non-secret values (BASE_URL, NEXT_PUBLIC_ENV_LABEL, etc.) — GitHub doesn't let you bulk-set variables from CLI as cleanly as secrets, so this is faster in the UI for 7 items.
 
-- [ ] **Step 1: Write the failing test suite**
-
-`scripts/test_upsert_env.py`:
-
-```python
-"""Tests for scripts/upsert-env.py.
-
-Run with:  python3 -m unittest scripts/test_upsert_env.py
-"""
-import os
-import sys
-import tempfile
-import unittest
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent))
-# Module name has a hyphen → import via importlib so tests don't depend on a rename.
-import importlib.util
-_spec = importlib.util.spec_from_file_location(
-    "upsert_env", Path(__file__).parent / "upsert-env.py"
-)
-upsert_env = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(upsert_env)
-
-
-class UpsertEnvTest(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False)
-        self.tmp.close()
-        self.path = Path(self.tmp.name)
-
-    def tearDown(self):
-        if self.path.exists():
-            self.path.unlink()
-
-    def test_creates_file_if_missing(self):
-        self.path.unlink()
-        report = upsert_env.upsert(self.path, {"FOO": "bar"})
-        self.assertEqual(report["FOO"], "added")
-        self.assertEqual(self.path.read_text(), "FOO=bar\n")
-
-    def test_adds_missing_key_to_existing_file(self):
-        self.path.write_text("EXISTING=keep\n")
-        report = upsert_env.upsert(self.path, {"NEW": "val"})
-        self.assertEqual(report["NEW"], "added")
-        content = self.path.read_text()
-        self.assertIn("EXISTING=keep", content)
-        self.assertIn("NEW=val", content)
-
-    def test_updates_existing_key(self):
-        self.path.write_text("FOO=old\nBAR=keep\n")
-        report = upsert_env.upsert(self.path, {"FOO": "new"})
-        self.assertEqual(report["FOO"], "updated")
-        content = self.path.read_text()
-        self.assertIn("FOO=new", content)
-        self.assertNotIn("FOO=old", content)
-        self.assertIn("BAR=keep", content)
-
-    def test_unchanged_when_value_matches(self):
-        self.path.write_text("FOO=same\n")
-        report = upsert_env.upsert(self.path, {"FOO": "same"})
-        self.assertEqual(report["FOO"], "unchanged")
-
-    def test_skips_empty_value(self):
-        self.path.write_text("EXISTING=keep\n")
-        report = upsert_env.upsert(self.path, {"EMPTY": ""})
-        self.assertEqual(report["EMPTY"], "skipped_empty")
-        self.assertNotIn("EMPTY=", self.path.read_text())
-
-    def test_preserves_comments_and_blanks(self):
-        original = "# Header comment\n\nFOO=old\n\n# trailing comment\n"
-        self.path.write_text(original)
-        upsert_env.upsert(self.path, {"FOO": "new"})
-        content = self.path.read_text()
-        self.assertIn("# Header comment", content)
-        self.assertIn("# trailing comment", content)
-        self.assertIn("FOO=new", content)
-
-    def test_rejects_multiline_value(self):
-        with self.assertRaises(ValueError):
-            upsert_env.upsert(self.path, {"FOO": "line1\nline2"})
-
-    def test_idempotent(self):
-        self.path.write_text("FOO=v1\n")
-        first = upsert_env.upsert(self.path, {"FOO": "v2"})
-        second = upsert_env.upsert(self.path, {"FOO": "v2"})
-        self.assertEqual(first["FOO"], "updated")
-        self.assertEqual(second["FOO"], "unchanged")
-
-    def test_handles_special_chars_in_value(self):
-        # Tokens may contain $, =, /, +, ., -, _. No quoting needed for .env consumers
-        # that read line-by-line (dotenv, docker-compose env_file).
-        report = upsert_env.upsert(self.path, {"TOKEN": "sk-ant_v1+abc/123=foo"})
-        self.assertEqual(report["TOKEN"], "added")
-        self.assertEqual(self.path.read_text(), "TOKEN=sk-ant_v1+abc/123=foo\n")
-
-    def test_cli_reads_base64_json_from_stdin(self):
-        import base64, json, subprocess
-        payload = base64.b64encode(json.dumps({"CLI_KEY": "cli-val"}).encode()).decode()
-        result = subprocess.run(
-            [sys.executable, str(Path(__file__).parent / "upsert-env.py"), str(self.path)],
-            input=payload,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        self.assertIn("added=1", result.stdout)
-        self.assertEqual(self.path.read_text().strip(), "CLI_KEY=cli-val")
-
-
-if __name__ == "__main__":
-    unittest.main()
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
+- [ ] **Step 1: For each variable, grab the value from the snapshot**
 
 ```bash
-python3 -m unittest scripts/test_upsert_env.py -v
+for v in BASE_URL NEXT_PUBLIC_ENV_LABEL OD_WEB_URL OD_ALLOWED_ORIGINS \
+         OPEN_DESIGN_IMAGE MC_CHAT_GATEWAY SLACK_REDIRECT_URI; do
+  echo "$v=$(grep "^$v=" /tmp/staging.env.snapshot | cut -d= -f2-)"
+done
 ```
 
-Expected: all 10 tests fail with `FileNotFoundError` or `ModuleNotFoundError` (script doesn't exist yet).
+- [ ] **Step 2: GitHub → Settings → Environments → `staging` → Variables → New variable**
 
-- [ ] **Step 3: Implement the script**
+One at a time. Name matches env var; value pasted from Step 1.
 
-`scripts/upsert-env.py`:
-
-```python
-#!/usr/bin/env python3
-"""Upsert env vars into a .env file.
-
-Used by .github/workflows/deploy-{staging,prod}.yml to apply
-GitHub Environment secrets to the VPS's ~/.openclaw/.env on every deploy.
-
-The CLI reads a base64-encoded JSON dict from stdin and writes its keys
-to the target .env, preserving comments, blanks, and unrelated keys.
-Empty values are skipped (safe default — lets unset GitHub secrets be no-ops).
-Multi-line values are rejected (current consumers expect one-line-per-key).
-
-Usage:
-    echo "$(echo '{"FOO":"bar"}' | base64)" | python3 scripts/upsert-env.py /path/to/.env
-
-Exit codes:
-    0: success
-    1: invalid input (bad JSON, multi-line value, etc.)
-"""
-from __future__ import annotations
-
-import argparse
-import base64
-import json
-import sys
-from pathlib import Path
-
-
-def upsert(env_path: Path, updates: dict[str, str]) -> dict[str, str]:
-    """Apply `updates` to `env_path`. Returns per-key action report."""
-    report: dict[str, str] = {}
-    lines = env_path.read_text().splitlines() if env_path.exists() else []
-
-    for key, value in updates.items():
-        if value == "":
-            report[key] = "skipped_empty"
-            continue
-        if "\n" in value or "\r" in value:
-            raise ValueError(
-                f"Multi-line value for {key} is not supported "
-                f"(found newline). Use a single-line token."
-            )
-
-        new_line = f"{key}={value}"
-        found = False
-        for i, line in enumerate(lines):
-            if line.startswith(f"{key}="):
-                if line == new_line:
-                    report[key] = "unchanged"
-                else:
-                    lines[i] = new_line
-                    report[key] = "updated"
-                found = True
-                break
-        if not found:
-            lines.append(new_line)
-            report[key] = "added"
-
-    env_path.write_text("\n".join(lines) + ("\n" if lines else ""))
-    return report
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Upsert env vars into a .env file.")
-    parser.add_argument("env_path", type=Path, help="Path to .env file")
-    args = parser.parse_args()
-
-    payload_b64 = sys.stdin.read().strip()
-    if not payload_b64:
-        print("error: stdin is empty (expected base64-encoded JSON)", file=sys.stderr)
-        return 1
-
-    try:
-        updates = json.loads(base64.b64decode(payload_b64).decode())
-    except (ValueError, UnicodeDecodeError) as exc:
-        print(f"error: invalid stdin payload: {exc}", file=sys.stderr)
-        return 1
-
-    if not isinstance(updates, dict):
-        print("error: payload must decode to a JSON object", file=sys.stderr)
-        return 1
-
-    try:
-        report = upsert(args.env_path, {str(k): str(v) for k, v in updates.items()})
-    except ValueError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
-
-    # Summary line (no values revealed)
-    counts = {"added": 0, "updated": 0, "unchanged": 0, "skipped_empty": 0}
-    for action in report.values():
-        counts[action] = counts.get(action, 0) + 1
-    summary = " ".join(f"{k}={v}" for k, v in counts.items())
-    keys_changed = [k for k, a in report.items() if a in ("added", "updated")]
-    print(f"[upsert-env] {summary} | changed: {','.join(keys_changed) or '(none)'}")
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-python3 -m unittest scripts/test_upsert_env.py -v
-```
-
-Expected: `Ran 10 tests in 0.0XXs … OK`.
-
-- [ ] **Step 5: Verify the CLI end-to-end manually**
-
-```bash
-TMPF=$(mktemp --suffix=.env)
-echo "EXISTING=keep" > "$TMPF"
-echo '{"ANTHROPIC_API_KEY":"sk-test","EMPTY":""}' | base64 | python3 scripts/upsert-env.py "$TMPF"
-cat "$TMPF"
-rm "$TMPF"
-```
-
-Expected stdout: `[upsert-env] added=1 updated=0 unchanged=0 skipped_empty=1 | changed: ANTHROPIC_API_KEY`
-Expected `$TMPF` contents:
-```
-EXISTING=keep
-ANTHROPIC_API_KEY=sk-test
-```
-
-- [ ] **Step 6: Make the script executable**
-
-```bash
-chmod +x scripts/upsert-env.py
-```
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add scripts/upsert-env.py scripts/test_upsert_env.py
-git commit -m "feat(scripts): add upsert-env.py for deploy-time .env management
-
-Pure-function upsert + CLI reading base64-encoded JSON from stdin.
-Skips empty values (so unset GitHub Environment secrets are safe no-ops)
-and rejects multi-line values (current consumers read one line per key).
-Tests cover create/update/add/skip/idempotent/special-chars/CLI roundtrip.
-
-Used by deploy-{staging,prod}.yml in the next commit to replace the
-inline python upsert that today only handles SANCHO_INTERNAL_API_TOKEN."
-```
+If you'd rather skip Task 0b for now, the workflow change (Task 3) can be implemented to only handle secrets — variables can stay in the VPS `.env` until later.
 
 ---
 
-### Task 2: Wire the script into CI
+### Task 1: TDD the upsert script ✅ DONE (PR #85)
 
-**Files:**
-- Modify: `.github/workflows/ci.yml` (append a new job after the existing `lint` job, before `e2e`)
+See `scripts/upsert-env.py` + `scripts/test_upsert_env.py` already on this branch.
 
-- [ ] **Step 1: Add the `verify-scripts` job**
+### Task 2: Wire the script into CI ✅ DONE (PR #85)
 
-Insert after line 59 in `ci.yml`:
-
-```yaml
-  verify-scripts:
-    name: Scripts unit tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Run unit tests
-        run: python3 -m unittest discover -s scripts -p 'test_*.py' -v
-```
-
-- [ ] **Step 2: Verify the job syntax with `actionlint` if available, else inspect manually**
-
-```bash
-which actionlint && actionlint .github/workflows/ci.yml || echo "actionlint not installed; visual review only"
-```
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add .github/workflows/ci.yml
-git commit -m "ci: run scripts/ unit tests on PR + push
-
-Runs python3 -m unittest against scripts/test_*.py so the upsert-env.py
-logic stays correct as it grows. Required (not informational) — a broken
-upsert script would silently corrupt deploys."
-```
+See `.github/workflows/ci.yml verify-scripts` job already on this branch.
 
 ---
 
 ### Task 3: Generalize the upsert in `deploy-staging.yml`
 
-**Files:**
-- Modify: `.github/workflows/deploy-staging.yml` — touched range lines 31-73 (env block + Deploy via SSH step)
+**Files:** `.github/workflows/deploy-staging.yml`
 
-- [ ] **Step 1: Replace the env block with the full key list**
+Replaces the existing `SANCHO_INTERNAL_API_TOKEN`-only inline upsert with the script-based pattern across all 52 secrets (+ 7 variables if Task 0b is done).
 
-In `deploy-staging.yml`, replace the existing `env:` block on the Deploy step (currently lines 31-40) with:
+- [ ] **Step 1: Define the `env:` block with all secret names**
+
+In the Deploy step, replace the current `env:` block with one that lists every secret declared in Tiers 1–3 above. Pattern:
 
 ```yaml
         env:
+          # Existing infra
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
@@ -435,10 +221,29 @@ In `deploy-staging.yml`, replace the existing `env:` block on the Deploy step (c
           YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
           YALC_REF: ${{ vars.YALC_REF || 'main' }}
           YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
-          # === System API keys (managed by GitHub Environments) ===
-          # Adding a new key here + adding the matching secret to the
-          # `staging` Environment is enough to roll it out. The upsert
-          # script skips empty values so unset secrets stay no-op.
+          # === Tier 1 — Auth & infra ===
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_BOT_CLIENT_ID: ${{ secrets.DISCORD_BOT_CLIENT_ID }}
+          CERVANTES_DISCORD_BOT_TOKEN: ${{ secrets.CERVANTES_DISCORD_BOT_TOKEN }}
+          CERVANTES_DISCORD_BOT_CLIENT_ID: ${{ secrets.CERVANTES_DISCORD_BOT_CLIENT_ID }}
+          CERVANTES_GUILD_ID: ${{ secrets.CERVANTES_GUILD_ID }}
+          DISCORD_WEBHOOK_CERVANTES: ${{ secrets.DISCORD_WEBHOOK_CERVANTES }}
+          OD_API_TOKEN: ${{ secrets.OD_API_TOKEN }}
+          OPENCLAW_GATEWAY_TOKEN: ${{ secrets.OPENCLAW_GATEWAY_TOKEN }}
+          GTM_OS_API_TOKEN: ${{ secrets.GTM_OS_API_TOKEN }}
+          YALC_API_TOKEN: ${{ secrets.YALC_API_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+          SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          # === Tier 2 — System APIs ===
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -461,35 +266,65 @@ In `deploy-staging.yml`, replace the existing `env:` block on the Deploy step (c
           INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
           METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
           SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
+          # === Tier 3 — Skill APIs ===
+          APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+          GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
+          GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
+          UNIPILE_API_KEY: ${{ secrets.UNIPILE_API_KEY }}
+          UNIPILE_DSN: ${{ secrets.UNIPILE_DSN }}
+          DATAFORSEO_API_KEY: ${{ secrets.DATAFORSEO_API_KEY }}
+          # === Variables (optional — Task 0b) ===
+          # Comment these out if you skipped Task 0b
+          BASE_URL: ${{ vars.BASE_URL }}
+          NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
+          OD_WEB_URL: ${{ vars.OD_WEB_URL }}
+          OD_ALLOWED_ORIGINS: ${{ vars.OD_ALLOWED_ORIGINS }}
+          OPEN_DESIGN_IMAGE: ${{ vars.OPEN_DESIGN_IMAGE }}
+          MC_CHAT_GATEWAY: ${{ vars.MC_CHAT_GATEWAY }}
+          SLACK_REDIRECT_URI: ${{ vars.SLACK_REDIRECT_URI }}
 ```
 
-(Removes the now-unused `SANCHO_INTERNAL_API_TOKEN_B64` variable from the env block — it's superseded.)
+- [ ] **Step 2: Replace the `run:` body with the script-based upsert**
 
-- [ ] **Step 2: Replace the `run:` body with the generalized flow**
-
-In the same step, replace the entire `run: |` body (currently lines 41-73 of the file, the bash block that does `SANCHO_INTERNAL_API_TOKEN_B64=…` + ssh + python heredoc upsert + checkout + build) with:
+The KEYS list inside the python heredoc must match the env block above.
 
 ```yaml
         run: |
-          # Build a single base64-encoded JSON dict of all system env vars
-          # that have a non-empty value, then ship it + the upsert script
-          # to the VPS for application BEFORE git checkout.
           PAYLOAD_B64=$(python3 - <<'PY'
           import os, json, base64
           KEYS = [
+              # Tier 1
+              "NEXTAUTH_SECRET", "NEXTAUTH_URL", "ENCRYPTION_KEY", "DATABASE_URL",
+              "SUPABASE_SERVICE_ROLE_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+              "DISCORD_BOT_TOKEN", "DISCORD_BOT_CLIENT_ID",
+              "CERVANTES_DISCORD_BOT_TOKEN", "CERVANTES_DISCORD_BOT_CLIENT_ID",
+              "CERVANTES_GUILD_ID", "DISCORD_WEBHOOK_CERVANTES",
+              "OD_API_TOKEN", "OPENCLAW_GATEWAY_TOKEN", "GTM_OS_API_TOKEN",
+              "YALC_API_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
+              "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
+              # Tier 2
               "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
               "XAI_API_KEY", "MINIMAX_API_KEY", "BRAVE_API_KEY", "APIFY_API_KEY",
               "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
               "NOTION_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY", "FAL_API_KEY",
               "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN", "INSTANTLY_API_KEY",
               "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
+              # Tier 3
+              "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",
+              "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID",
+              "PAGESPEED_API_KEY", "UNIPILE_API_KEY", "UNIPILE_DSN", "DATAFORSEO_API_KEY",
+              # Variables (optional)
+              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "OD_WEB_URL", "OD_ALLOWED_ORIGINS",
+              "OPEN_DESIGN_IMAGE", "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())
           PY
           )
 
-          # Ship the upsert script (single source of truth, tested in CI)
           scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
 
           ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64='$(printf '%s' "${YALC_REPO_TOKEN:-}" | base64 | tr -d '\n')' bash -s" <<'EOF'
@@ -502,10 +337,9 @@ In the same step, replace the entire `run: |` body (currently lines 41-73 of the
               git stash push --include-untracked -m "deploy-staging-$(date -u +%Y%m%dT%H%M%SZ)" || true
             fi
 
-            # Apply GitHub Environment secrets to ~/.openclaw/.env
             ENV_HASH_BEFORE=$(sha256sum .env 2>/dev/null | cut -d' ' -f1 || echo "missing")
             if [ -n "${PAYLOAD_B64:-}" ]; then
-              echo "▶ Upserting system env vars from GitHub Environment…"
+              echo "▶ Upserting env vars from GitHub `staging` Environment…"
               echo "$PAYLOAD_B64" | python3 /tmp/upsert-env.py .env
             fi
             ENV_HASH_AFTER=$(sha256sum .env | cut -d' ' -f1)
@@ -559,182 +393,63 @@ In the same step, replace the entire `run: |` body (currently lines 41-73 of the
           EOF
 ```
 
-Key changes vs. the existing flow:
-1. **Generic upsert** replaces the SANCHO-specific python heredoc.
-2. **`scp scripts/upsert-env.py`** ships the tested script to the VPS — single source of truth, no inline duplication.
-3. **`ENV_CHANGED` flag** drives a conditional `--force-recreate` so env-only re-runs (workflow_dispatch with no commit change) actually propagate new values into the container.
-
-- [ ] **Step 3: Lint the workflow file**
+- [ ] **Step 3: Lint + commit**
 
 ```bash
-which actionlint && actionlint .github/workflows/deploy-staging.yml || echo "actionlint not installed; visual review"
-yamllint .github/workflows/deploy-staging.yml 2>/dev/null || echo "yamllint not installed; skip"
-```
-
-Expected: no errors. Visual review: confirm all 22 keys are in the env block AND in the python KEYS list — they must match.
-
-- [ ] **Step 4: Commit (do NOT merge yet)**
-
-```bash
+which actionlint && actionlint .github/workflows/deploy-staging.yml || echo "actionlint not installed; visual review only"
 git add .github/workflows/deploy-staging.yml
-git commit -m "ci(deploy-staging): apply system API keys from GitHub Environment
+git commit -m "ci(deploy-staging): apply all envs from GitHub \`staging\` Environment
 
-Replaces the SANCHO-only inline python upsert with a generalized flow:
-- 22 system API keys declared in the workflow env block, sourced from
-  the \`staging\` Environment secrets.
-- Tested upsert script (scripts/upsert-env.py) shipped to the VPS via
-  scp before git checkout — same script will be used by deploy-prod.
-- Conditional --force-recreate when .env content changed so env-only
-  re-runs (workflow_dispatch) propagate without a code commit.
-
-DEPENDS ON: Task 0 (GitHub \`staging\` Environment populated with the
-22 secrets). If a secret is unset/empty, the upsert skips that key —
-the VPS keeps its current value. Safe by default."
+…"
 ```
 
-- [ ] **Step 5: Trigger a manual staging deploy + verify**
+- [ ] **Step 4: Manual staging deploy + verify**
 
 ```bash
 gh workflow run "Deploy to Staging" --ref staging
-gh run watch  # tail the run until completion
+gh run watch
 ```
 
-Then on the VPS:
+After completion:
 
 ```bash
 ssh sancho-cmo-staging "grep -c '^[A-Z_]*=' /root/.openclaw/.env"
-# expect: same count as before, plus any newly-added keys
-ssh sancho-cmo-staging "docker compose -f /root/.openclaw/docker-compose.yml logs sanchocmo --tail=20 | grep -E 'started|listening'"
-# expect: container running on new SHA
+# expect: roughly equal to total keys uploaded in Task 0
+ssh sancho-cmo-staging "docker compose ps --filter name=sanchocmo"
+# expect: container running, recent created time if .env changed
 ```
 
-Open `/dashboard/<slug>/settings?tab=apis` on staging: every system API row that has a key set in GitHub `staging` should now show 🟢 Connected (or whatever the existing health check returns — at minimum, the badge transitions from ⚫ Sin configurar).
+Open `/dashboard/<slug>/settings?tab=apis` on staging. System rows should show 🟢 Connected (or 🔵 SYSTEM key) for the keys present in GitHub. Hit "🔄 Verificar Todo" to re-validate.
 
-- [ ] **Step 6: If verify fails, rollback**
+- [ ] **Step 5: Rollback path**
 
-The previous SHA still has the old workflow that doesn't upsert. Re-deploy that SHA via `git revert HEAD && git push origin staging` (or `gh workflow run "Deploy to Staging" --ref <prev-sha>`). No data loss — `.env` content is preserved across deploys.
+The previous SHA on `staging` still has the old workflow that only upserts `SANCHO_INTERNAL_API_TOKEN`. Re-deploying it via `gh workflow run "Deploy to Staging" --ref <prev-sha>` restores the previous behavior. `.env` content is preserved across deploys, so no data loss.
 
 ---
 
 ### Task 4: Apply the same to `deploy-prod.yml`
 
-**Files:**
-- Modify: `.github/workflows/deploy-prod.yml` — add the env block + upsert step. Prod currently has none of this.
+**Files:** `.github/workflows/deploy-prod.yml`
 
-- [ ] **Step 1: Add the env block to the Deploy step**
+**Why now**: prod is currently stale, but adding the upsert mechanism is safe (empty secrets → no-op) and means prod will be ready the moment someone populates the `production` Environment. Doing both staging + prod in one PR is cleaner than splitting.
 
-In `deploy-prod.yml`, replace the existing env block on the Deploy step (currently lines 42-46) with the same 22-key list as Task 3 Step 1, but pointing at the `production` Environment (GitHub resolves `${{ secrets.X }}` against `environment.name`, so the YAML is identical — secret name + workflow Environment do the dispatch).
+**Scope on prod**: same code + same KEYS list as Task 3. The `production` GitHub Environment only has whatever was set by the previous deploys — most of Tier 1 will be empty for now. When prod is revived, a second pass of Task 0 (against prod snapshot, targeting `production` Environment) populates it. **No code change at that point** — the workflow already supports it.
 
-```yaml
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
-          TAG: ${{ steps.tag.outputs.tag }}
-          # === System API keys (managed by GitHub `production` Environment) ===
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
-          APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
-          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
-          DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
-          DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
-          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
-          WAVESPEED_API_KEY: ${{ secrets.WAVESPEED_API_KEY }}
-          DUMPLING_API_KEY: ${{ secrets.DUMPLING_API_KEY }}
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
-          METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
-          SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
-```
+- [ ] **Step 1: Mirror Task 3 Steps 1-2 to `deploy-prod.yml`**
 
-- [ ] **Step 2: Replace the `run:` body with the env-aware flow**
+Same env block + same python KEYS list. The only diff is the workflow body structure (no YALC, no stash, tag-based instead of SHA-based). Use the existing skeleton, splice in the upsert + scp + sha-check + conditional --force-recreate.
 
-Replace the existing `run: |` body (currently lines 47-60) with:
-
-```yaml
-        run: |
-          PAYLOAD_B64=$(python3 - <<'PY'
-          import os, json, base64
-          KEYS = [
-              "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
-              "XAI_API_KEY", "MINIMAX_API_KEY", "BRAVE_API_KEY", "APIFY_API_KEY",
-              "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
-              "NOTION_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY", "FAL_API_KEY",
-              "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN", "INSTANTLY_API_KEY",
-              "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
-          ]
-          out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
-          print(base64.b64encode(json.dumps(out).encode()).decode())
-          PY
-          )
-
-          scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
-
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 bash -s" <<'EOF'
-            set -euo pipefail
-            cd "$DEPLOY_PATH"
-            echo "▶ Fetching tags…"
-            git fetch --tags --prune
-
-            ENV_HASH_BEFORE=$(sha256sum .env 2>/dev/null | cut -d' ' -f1 || echo "missing")
-            if [ -n "${PAYLOAD_B64:-}" ]; then
-              echo "▶ Upserting system env vars from GitHub `production` Environment…"
-              echo "$PAYLOAD_B64" | python3 /tmp/upsert-env.py .env
-            fi
-            ENV_HASH_AFTER=$(sha256sum .env | cut -d' ' -f1)
-            ENV_CHANGED=0
-            if [ "$ENV_HASH_BEFORE" != "$ENV_HASH_AFTER" ]; then
-              ENV_CHANGED=1
-              echo "▶ .env content changed (will force-recreate sanchocmo)"
-            fi
-            rm -f /tmp/upsert-env.py
-
-            echo "▶ Checking out $TAG…"
-            git checkout "$TAG"
-            export GIT_COMMIT="$(git rev-parse HEAD)"
-            echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
-            docker compose build --pull
-            UP_ARGS=""
-            if [ "$ENV_CHANGED" = "1" ]; then
-              UP_ARGS="--force-recreate"
-            fi
-            docker compose up -d $UP_ARGS
-            docker compose ps
-          EOF
-```
-
-The rollback step (lines 81-101 of deploy-prod.yml) doesn't need changes — env upsert is idempotent and the previous SHA's `.env` content is already on disk.
-
-- [ ] **Step 3: Lint + commit**
+- [ ] **Step 2: Lint + commit**
 
 ```bash
 which actionlint && actionlint .github/workflows/deploy-prod.yml || echo "visual review only"
 git add .github/workflows/deploy-prod.yml
-git commit -m "ci(deploy-prod): apply system API keys from GitHub Environment
+git commit -m "ci(deploy-prod): apply envs from GitHub \`production\` Environment
 
-Mirrors deploy-staging.yml: 22 system API keys sourced from the
-\`production\` Environment, applied via scripts/upsert-env.py before
-\`git checkout \$TAG\`. Conditional --force-recreate on .env change.
-
-Prod previously had no env upsert at all — every key was SSH-edited
-by hand. This closes that gap. Existing rollback step is unchanged
-(env content is preserved across SHA rollbacks).
-
-DEPENDS ON: Task 0 (GitHub \`production\` Environment populated)."
+…"
 ```
 
-- [ ] **Step 4: Cut a `workflow_dispatch` test deploy**
-
-Don't piggyback this on a release. Use the manual trigger with the current prod tag (so no code change):
+- [ ] **Step 3: Workflow-dispatch verify (no-op expected today)**
 
 ```bash
 LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
@@ -742,113 +457,51 @@ gh workflow run "Deploy to Production" --field tag="$LATEST_TAG"
 gh run watch
 ```
 
-This proves the upsert path is correct on prod without rolling forward the deploy SHA. Verify on the VPS:
+Verify on VPS that `.env` content didn't change unexpectedly (sha matches before/after):
 
 ```bash
-ssh sancho-cmo-prod "grep -c '^[A-Z_]*=' /root/.openclaw/.env"
-ssh sancho-cmo-prod "docker compose -f /root/.openclaw/docker-compose.yml ps"
+ssh sancho-cmo-prod "sha256sum /root/.openclaw/.env"
+# (compare to value from before the dispatch)
 ```
 
-- [ ] **Step 5: Smoke-test the production APIs panel**
-
-`https://<prod-host>/dashboard/<slug>/settings?tab=apis` should show system rows with their badges. Hit "🔄 Verificar Todo" — health-check writes to `_system/api-health.json` (post-PR #84 path) using the keys from `process.env`.
+If any prod secrets are populated in GitHub from a previous setup, those will be upserted. Eyeball the workflow log's `[upsert-env]` summary line to confirm what was touched.
 
 ---
 
 ### Task 5: Runbook for operators
 
-**Files:**
-- Create: `docs/runbooks/system-keys-management.md`
+**Files:** `docs/runbooks/system-keys-management.md`
 
 - [ ] **Step 1: Write the runbook**
 
-```markdown
-# System API Keys Management
-
-## Where they live
-
-System API keys (LLM providers, social APIs, data sources) are managed in
-**GitHub Environment secrets**, not SSH-edited on the VPS.
-
-- Staging keys → repo Settings → Environments → `staging` → Secrets
-- Production keys → repo Settings → Environments → `production` → Secrets
-
-The deploy workflows (`deploy-staging.yml`, `deploy-prod.yml`) apply them
-to `~/.openclaw/.env` on the VPS via `scripts/upsert-env.py` before
-`docker compose up -d`. If a secret is empty or unset on GitHub, the
-upsert skips it — the VPS keeps whatever value is already there.
-
-## Adding a new system API key
-
-1. Add the env var name to `SERVICE_ENV_MAP` in `src/pages/api/env/index.ts`.
-2. Add it to the `env:` block on the Deploy step in **both** `deploy-staging.yml`
-   and `deploy-prod.yml`, sourced from `${{ secrets.NEW_KEY }}`.
-3. Add the same name to the `KEYS = [...]` python list in the same step.
-4. Add the secret to the matching GitHub Environment (`staging` and/or `production`).
-5. Push to staging → deploy runs → key applied. Same on prod via the next release.
-
-## Rotating a key
-
-1. Update the secret value in the GitHub Environment.
-2. Re-run the deploy workflow with `workflow_dispatch` (no code commit needed).
-3. The upsert detects the `.env` change via sha256 and force-recreates the
-   `sanchocmo` container so it picks up the new value.
-
-Rotation takes 1–2 min; no SSH.
-
-## Disabling a key (revoke without rotating)
-
-Delete the GitHub Environment secret. The next deploy will **not** clear the
-VPS's `.env` (the script skips empty values — by design — to avoid accidental
-nukes). To actually remove the key from runtime:
-
-1. Delete the GitHub Environment secret (prevents future upserts).
-2. SSH to the VPS and remove the line from `~/.openclaw/.env`.
-3. `docker compose restart sanchocmo`.
-
-This is the only legitimate remaining SSH operation.
-
-## Why we don't manage everything via GitHub
-
-`NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `OD_API_TOKEN`, `R2_*`, `DATABASE_URL`,
-`GOOGLE_CLIENT_*` etc. are out of scope for this rollout — see plan
-`docs/plans/2026-05-19-github-env-system-keys.md` for the scope reasoning.
-They can be folded in later by extending the keys list; no new code needed.
-
-The other migration target is operator-driven hot rotation via the
-`/api/env` endpoint (already implemented, not wired to a UI yet — see
-plan `docs/plans/2026-05-19-admin-env-ui.md` once it exists).
-```
+Cover:
+- **Where they live**: GitHub Environment secrets (`staging` / `production`), workflow declares which ones are applied.
+- **Adding a new key**: add to `SERVICE_ENV_MAP` (if it's a Tier-2 system API), then env block + KEYS list in `deploy-{staging,prod}.yml`, then add the secret to the matching GitHub Environment. Mention that `scripts/load-secrets-from-env.sh` works for bulk adds from a local `.env`.
+- **Rotating a key**: update the GitHub Environment secret value → trigger `workflow_dispatch` → upsert detects sha change → force-recreate sanchocmo. 1–2 min, no SSH.
+- **Disabling a key**: delete the GitHub Environment secret (prevents future upserts) → SSH once to remove the line from `~/.openclaw/.env` → `docker compose restart sanchocmo`. *The only remaining legitimate SSH path.*
+- **Prod status (2026-05)**: stale; staging is de-facto prod. When prod is revived, repeat Task 0 against prod's snapshot.
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add docs/runbooks/system-keys-management.md
-git commit -m "docs: runbook for system API keys management
-
-Where they live (GitHub Environments), how to add/rotate/disable,
-and what's still out of scope (infra secrets, hot rotation UI)."
+git commit -m "docs: runbook for managing system envs via GitHub Environments"
 ```
 
 ---
 
 ## Self-review checklist
 
-- **Spec coverage:** user asked to move system keys out of manual SSH editing. Plan covers:
-  - All 22 `SERVICE_ENV_MAP` keys → Task 3 + 4 env blocks + KEYS list.
-  - Both staging + prod → Task 3 (staging-only) + Task 4 (prod, full step added).
-  - Avoiding partial overwrites → Task 0 inventory + script's empty-skip behavior.
-  - Operator self-service afterwards → Task 5 runbook.
-- **Placeholders:** no "TBD", no "implement later". Every step has exact commands or full code blocks.
-- **Type consistency:**
-  - `upsert(env_path, updates)` signature is identical in tests + implementation + CLI body.
-  - Action strings (`added`/`updated`/`unchanged`/`skipped_empty`) used identically in tests, impl, and the CLI summary.
-  - KEYS list is character-identical in deploy-staging.yml and deploy-prod.yml (paste from same source).
+- **Spec coverage** (full SSH-out): every secret currently SSH-edited on the VPS appears in either Tier 1/2/3 or is intentionally deferred (e.g., bot tokens for VPS-specific tooling). Audit at 2026-05-19 saw 56 keys on staging; v2 covers 52 secrets + 7 variables = 59 of them. The 4 not covered are: `OPENCLAW_GATEWAY_PASSWORD` (prod-only, not in staging audit), and 3 lines that didn't match `^[A-Z_]+=` in the grep (would need a re-snapshot to identify).
+- **Placeholders:** none — every step has either concrete commands or full code blocks.
+- **Type consistency:** `KEYS = [...]` python list matches the `env:` block line-for-line. The `vars.X` (variables) keys are inside the same KEYS list and the script doesn't distinguish (both end up as `process.env.X`).
+- **Drift mitigation:** the workflow's env: block and the KEYS list are adjacent in the same file → visual diff catches drift. CI's `verify` (typecheck + build) doesn't directly check this, but a future improvement could be a workflow lint step that asserts both lists are identical sets.
 
 ---
 
-## Out of scope (next plan, separate branch)
+## Out of scope (next plans, separate branches)
 
-- **`/api/env` admin UI**: cabling the existing endpoint (`src/pages/api/env/index.ts`, already protected with `withAuth`) to a tab in `/dashboard/admin/settings` for hot rotation without a deploy. Tradeoff: drifts from GitHub source-of-truth until next deploy re-asserts. Document the drift behavior in the UI when implemented.
+- **`/api/env` admin UI**: cabling the existing endpoint (`src/pages/api/env/index.ts`, already protected with `withAuth`) to a tab in `/dashboard/admin/settings` for hot rotation without a deploy. Tradeoff: drifts from GitHub source-of-truth until next deploy re-asserts. Document that drift in the UI when implemented.
+- **Fold Tier 3 into `SERVICE_ENV_MAP`**: so Apollo/GHL/Meta/Unipile/PageSpeed/DataForSEO-API show up in the APIs admin panel alongside the others.
 - **Drift detection job**: nightly cron that compares VPS `.env` against the GitHub Environment secret set and reports differences. Useful once both staging + prod have been on this flow for a few weeks.
-- **Other categories of secrets**: `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `OD_API_TOKEN`, `R2_*`, `GOOGLE_CLIENT_*`, `DATABASE_URL`. Same mechanism, extend the KEYS list when ready.
+- **Prod revival workflow**: when prod is brought back as the real prod, that's a separate ops PR — populate the `production` Environment via `scripts/load-secrets-from-env.sh --env production --from /tmp/prod.env.snapshot --confirm`, then trigger a deploy.
