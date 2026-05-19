@@ -20,7 +20,7 @@ for f in clients.json clients.js dispatch-map.json; do
 done
 
 # ===========================================================
-# 1-4. SETUP (runs if openclaw.json is missing)
+# 1-4. SETUP
 # ===========================================================
 if [ ! -f "$OPENCLAW_CONFIG" ]; then
   echo "[entrypoint] First run — configuring..."
@@ -29,9 +29,6 @@ if [ ! -f "$OPENCLAW_CONFIG" ]; then
   echo "[entrypoint] Generating OpenClaw config..."
   node docker/generate-openclaw-config.js
 
-  # 2. Inject env vars into .md files
-  bash docker/inject-env-vars.sh
-
   # 3. Link cron jobs to where OpenClaw expects them
   mkdir -p .openclaw/cron
   if [ -f cron/jobs.json ] && [ ! -f .openclaw/cron/jobs.json ]; then
@@ -39,10 +36,19 @@ if [ ! -f "$OPENCLAW_CONFIG" ]; then
     echo "[entrypoint] Linked cron jobs ($(python3 -c "import json; print(len(json.load(open('cron/jobs.json')).get('jobs',[])))" 2>/dev/null || echo '?') jobs)"
   fi
 
-  echo "[entrypoint] Setup complete."
+  echo "[entrypoint] First-run setup complete."
 else
-  echo "[entrypoint] Config exists, skipping setup."
+  echo "[entrypoint] Config exists, skipping first-run setup."
 fi
+
+# Inject env vars into agent .md files on EVERY start. Deploys ship new
+# placeholders or new whitelist entries, and BASE_URL may differ across
+# environments — running this only on first boot leaves stale literals
+# like `{MC_BASE_URL}` in PROTOCOLS.md / TOOLS.md after subsequent deploys.
+# The script is idempotent: once a placeholder is substituted, the next
+# pass finds nothing to replace.
+echo "[entrypoint] Injecting env vars into workspace .md files..."
+bash docker/inject-env-vars.sh
 
 # Agents are idempotent and must be ensured on every startup: staging/prod
 # volumes keep openclaw.json between deploys, so newly added agents would not
