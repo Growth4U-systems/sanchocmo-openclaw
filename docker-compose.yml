@@ -33,8 +33,12 @@ services:
       # Open Design (agentic editor): daemonUrl is server-to-server via the
       # compose network; webUrl is the public URL the browser loads in the
       # iframe / new tab. Both end at the same `open-design` container.
+      # OD_API_TOKEN is shared with the daemon — MC injects it as Bearer +
+      # spoofs `Origin: ${OD_WEB_URL}` so writes (e.g. PUT /api/app-config)
+      # pass the fork's Phase 5 auth + same-origin guard.
       - OD_DAEMON_URL=${OD_DAEMON_URL:-http://open-design:7456}
       - OD_WEB_URL=${OD_WEB_URL:-}
+      - OD_API_TOKEN=${OD_API_TOKEN:-}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:18789/healthz"]
       interval: 60s

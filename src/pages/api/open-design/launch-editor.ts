@@ -14,7 +14,11 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from "next";
-import { resolveOdConfig, OdDaemonOfflineError } from "@/lib/open-design/client";
+import {
+  resolveOdConfig,
+  odSetAppConfig,
+  OdDaemonOfflineError,
+} from "@/lib/open-design/client";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -31,15 +35,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // 1. Set the brand's design system as the OD daemon default. Best-effort:
   //    si el daemon está offline o devuelve error, seguimos abriendo OD igualmente
-  //    porque el usuario puede seleccionar el design system a mano.
+  //    porque el usuario puede seleccionar el design system a mano. odSetAppConfig
+  //    inyecta el Bearer (OD_API_TOKEN) + Origin (= OD_WEB_URL) que la guarda
+  //    Phase 5 del fork exige para writes server-to-server.
   let designSystemApplied = false;
   try {
-    const response = await fetch(`${config.daemonUrl}/api/app-config`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ designSystemId: slug }),
-    });
-    designSystemApplied = response.ok;
+    const result = await odSetAppConfig({ designSystemId: slug }, config);
+    designSystemApplied = result.ok;
   } catch (err) {
     if (err instanceof OdDaemonOfflineError) {
       return res.status(503).json({ error: err.message });
