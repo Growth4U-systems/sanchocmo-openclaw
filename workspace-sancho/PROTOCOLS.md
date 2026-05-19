@@ -69,8 +69,8 @@ When completing any task that generates files:
   ```
   <@{sender_id}> ✅ Done.
 
-  📄 **{deliverable name}:** <{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}>
-  📄 **{another deliverable}:** <{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}>
+  📄 **{deliverable name}:** {MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}
+  📄 **{another deliverable}:** {MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}
   ```
 - NEVER post only the internal path (`campaigns/content/file.md`). Always the full MC link.
 - NEVER leave the user without knowing where what you generated lives.
