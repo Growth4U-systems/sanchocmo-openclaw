@@ -552,7 +552,7 @@ No hay evidencia de producto defectuoso ni reputación negativa. Los gaps son de
 | **Current** | `brand/hulahoop/market-and-us/self/self.current.md` |
 | **Backup (v1)** | `brand/hulahoop/market-and-us/self/v1.md` |
 | **History** | `brand/hulahoop/market-and-us/self/history.json` |
-| **Link Sancho** | `https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hulahoop/market-and-us/self/self.current.md` |
+| **Link Sancho** | `https://staging.sanchocmo.ai/mc/docs/brand/hulahoop/market-and-us/self/self.current.md` |
 
 ---
 

@@ -89,7 +89,7 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 Todos los archivos de brand van en `brand/{slug-cliente}/`, NUNCA en `brand/` directamente.
 - Hospital Capilar → `brand/hospital-capilar/`
 - Próximo cliente → `brand/{slug}/`
-Links Mission Control: `https://sancho-cmo.taild48df2.ts.net/mc/brand/{slug}/{archivo}.md`
+Links Mission Control: `https://staging.sanchocmo.ai/mc/brand/{slug}/{archivo}.md`
 
 ## What Goes Here
 

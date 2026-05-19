@@ -19,7 +19,7 @@
     },
     {
       "role": "bot",
-      "text": "El archivo existe en disco (59KB, `market.current.md`). El problema puede ser que MC no lo muestre correctamente. Déjame verificar que el link funciona con el token correcto:\n\n📄 **Link directo:** <https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/market/market.current.md>\n\n¿Te da error 403, 404, o simplemente aparece en blanco? Así puedo diagnosticar qué pasa.",
+      "text": "El archivo existe en disco (59KB, `market.current.md`). El problema puede ser que MC no lo muestre correctamente. Déjame verificar que el link funciona con el token correcto:\n\n📄 **Link directo:** https://staging.sanchocmo.ai/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/market/market.current.md\n\n¿Te da error 403, 404, o simplemente aparece en blanco? Así puedo diagnosticar qué pasa.",
       "agent": "sancho",
       "ts": "2026-04-09T16:42:26.632Z"
     },
@@ -30,7 +30,7 @@
     },
     {
       "role": "bot",
-      "text": "El archivo está bien — es UTF-8 válido, 59KB. Si MC lo muestra en blanco puede ser un tema de rendering del markdown largo o de la ruta en el visor.\n\n¿Puedes probar acceder desde el navegador directamente a este link?\n\n<https://sancho-cmo.taild48df2.ts.net/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/market/market.current.md>\n\nSi sigue en blanco, puede ser que MC tenga un límite de tamaño para renderizar (59KB es bastante largo). Como alternativa, te puedo pegar aquí las secciones clave que quieras revisar. ¿Qué prefieres?",
+      "text": "El archivo está bien — es UTF-8 válido, 59KB. Si MC lo muestra en blanco puede ser un tema de rendering del markdown largo o de la ruta en el visor.\n\n¿Puedes probar acceder desde el navegador directamente a este link?\n\nhttps://staging.sanchocmo.ai/mc/portal/8ae49b366b51bf7dfbd54f7d9e36d508/docs/brand/hulahoop/market-and-us/market/market.current.md\n\nSi sigue en blanco, puede ser que MC tenga un límite de tamaño para renderizar (59KB es bastante largo). Como alternativa, te puedo pegar aquí las secciones clave que quieras revisar. ¿Qué prefieres?",
       "ts": 1775753017156,
       "agent": "sancho"
     },

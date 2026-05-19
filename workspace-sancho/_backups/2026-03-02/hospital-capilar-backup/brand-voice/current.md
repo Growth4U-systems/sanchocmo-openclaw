@@ -478,8 +478,8 @@ Hospital Capilar habla como un médico de confianza que te dedica tiempo: usa da
 
 ## Fuentes
 
-- [Positioning v2](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/positioning/current.md)
-- [Niche Discovery v1](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/niche-discovery-100x/current.md)
-- [Company Context v2](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/company-context/current.md)
-- [Self-Intelligence v2](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/self-intelligence/current.md)
+- [Positioning v2](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/positioning/current.md)
+- [Niche Discovery v1](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/niche-discovery-100x/current.md)
+- [Company Context v2](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/company-context/current.md)
+- [Self-Intelligence v2](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/self-intelligence/current.md)
 - [hospitalcapilar.com](https://hospitalcapilar.com) (4 páginas analizadas: home, tratamientos, blog/alopecia-difusa, blog/injerto-6-meses)

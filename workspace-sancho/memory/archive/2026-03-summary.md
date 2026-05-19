@@ -124,7 +124,7 @@
 - **Total: ~40 slides**
 - Presentación debe estar lista martes para sesión de 2h con equipo HC
 - File: `brand/hospital-capilar/presentations/mercado-competidores/index.html`
-- Link: `https://sancho-cmo.taild48df2.ts.net/presentations/hospital-capilar/presentations/mercado-competidores/index.html`
+- Link: `https://staging.sanchocmo.ai/presentations/hospital-capilar/presentations/mercado-competidores/index.html`
 - Philippe confirmó slide "Qué hemos analizado" OK, preguntó por la parte del principio de fuentes — ya estaba incluida
 
 ### 2026-03-11.md

@@ -18,7 +18,7 @@
     },
     {
       "role": "bot",
-      "text": "Aquí tienes:\n\n🔗 **Conectar GA4:** https://sancho-cmo.taild48df2.ts.net/mc/admin/cc9b8067c18c5214358611d75f151f6d/connect/criptan/ga4\n\nGA4 usa nuestro Service Account del sistema, así que **no necesitas compartir credenciales**. Solo hay que:\n\n1. **Introducir el Property ID** de GA4 (número que encuentras en GA4 → Admin → Property Settings)\n2. **Dar acceso Viewer** al Service Account en tu propiedad GA4 — las instrucciones están en la página del link\n\nTodo desde ahí, seguro y sin tokens por chat. 👆",
+      "text": "Aquí tienes:\n\n🔗 **Conectar GA4:** https://staging.sanchocmo.ai/mc/admin/cc9b8067c18c5214358611d75f151f6d/connect/criptan/ga4\n\nGA4 usa nuestro Service Account del sistema, así que **no necesitas compartir credenciales**. Solo hay que:\n\n1. **Introducir el Property ID** de GA4 (número que encuentras en GA4 → Admin → Property Settings)\n2. **Dar acceso Viewer** al Service Account en tu propiedad GA4 — las instrucciones están en la página del link\n\nTodo desde ahí, seguro y sin tokens por chat. 👆",
       "agent": "sancho",
       "ts": "2026-03-30T12:07:32.600Z"
     },

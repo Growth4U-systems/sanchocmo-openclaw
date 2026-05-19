@@ -17,7 +17,7 @@ Create a thread from the user's message_id. Reply to the thread via `target`. Fi
 ### 3. Links, never raw paths
 ALWAYS publish links with token. See `_system/technical/mc-links-protocol.md` for the exact URL resolution. Summary:
 
-- **Use the URL templates below verbatim.** The `{MC_BASE_URL}` host is pre-resolved at container start from `BASE_URL` (see `docker/inject-env-vars.sh`) — after injection you will see the actual deployment host instead of `{MC_BASE_URL}`. NEVER substitute a different hostname (no `sancho-cmo.taild48df2.ts.net` unless that IS the injected host, no inventing domains). If the templates still show `{MC_BASE_URL}` literally, the injection didn't run — stop and report it.
+- **Use the URL templates below verbatim.** The `{MC_BASE_URL}` host is pre-resolved at container start from `BASE_URL` (see `docker/inject-env-vars.sh`) — after injection you will see the actual deployment host instead of `{MC_BASE_URL}`. NEVER invent or substitute a different hostname; use exactly the host shown in this document. If the templates still show `{MC_BASE_URL}` literally, the injection didn't run — stop and report it.
 - In a **client guild**: read `clients.json` → find by guild → use `mcToken` → `{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}`
 - ⚠️ The path ALWAYS includes `brand/{slug}/` after `/docs/`. NEVER `/docs/campaigns/...` → ALWAYS `/docs/brand/{slug}/campaigns/...`
 - In an **internal guild** (Cervantes Brain `1478770422093709502`): use `adminToken` from `clients.json` → `{MC_BASE_URL}/admin/{adminToken}/docs/brand/{slug}/{path}`

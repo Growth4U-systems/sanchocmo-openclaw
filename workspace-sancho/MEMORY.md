@@ -3,7 +3,7 @@
 > Core compacto. Detalle por cliente → `memory/clients/{slug}.md`. Skills → `memory/skills.md`.
 
 ## Sistema
-- Gateway (LaunchAgent), Tailscale (`sancho-cmo.taild48df2.ts.net`), Discord bot SanchoCMO
+- Gateway (LaunchAgent), Tailscale (`staging.sanchocmo.ai`), Discord bot SanchoCMO
 - Google Workspace (alfonso@growth4u.io), Notion API, Supabase
 - Cost alerts → hilo "Costes APIs" (thread `1481910083255406694`). NO mensajes sueltos en #infra.
 - Plan Anthropic: Claude Max $200/mes (flat). Alertar solo anomalías >2x promedio.

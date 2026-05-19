@@ -530,7 +530,7 @@ Nunca abrir con: saludo ("¡Hola!"), presentación ("Somos Growth4U"), promesa g
 - ✅ Slug: growth4u
 - ✅ Guardado en brand/growth4u/brand-voice/current.md
 - ✅ Versionado: v1-quick-snapshot.md (backup)
-- ✅ Link: https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/brand-voice/current.md
+- ✅ Link: https://staging.sanchocmo.ai/mc/docs/brand/growth4u/brand-voice/current.md
 
 ### META
 - ✅ Cada pattern tiene fuente (URL, Rankia, positioning playbooks)
