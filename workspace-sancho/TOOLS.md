@@ -26,7 +26,7 @@
 Al completar cualquier tarea que genera archivos:
 1. **Mencionar** al usuario: `<@{sender_id}>` — sin mención no hay notificación
 2. **Links tokenizados de MC** a TODOS los archivos generados:
-   - `<{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}>` (el host de `{MC_BASE_URL}` se inyecta al arranque)
+   - `{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}` (plain URL — el MC chat UI lo auto-linkifica; el host de `{MC_BASE_URL}` se inyecta al arranque)
    - NUNCA rutas internas (`campaigns/content/archivo.md`)
    - NUNCA links sin token
    - NUNCA un hostname distinto al que ves tras la inyección

@@ -77,10 +77,10 @@ El company-brief define 3 sub-ICPs y 3 tiers de verticales — pero no valida cu
 
 | Pilar | Documento | Status |
 |---|---|---|
-| Self-Intelligence | [Self-Analysis](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/self/current.md) | ✅ Approved |
-| Market Intelligence | [Market Analysis v4](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/market/current.md) | ✅ Approved |
-| Competitor Intelligence | [Competitors v2](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/current.md) + [Snowball](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/snowball/current.md) · [Product Hackers](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/product-hackers/current.md) · [TheGrowtHacker](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/competitors/thegrowthacker/current.md) | ✅ Approved |
-| SWOT & TOWS | [SWOT v3](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/swot/current.md) | ✅ Approved |
-| OPE Canvas | [OPE Canvas](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/growth4u/market-and-us/ope-canvas/current.md) | ✅ Approved |
+| Self-Intelligence | [Self-Analysis](https://staging.sanchocmo.ai/mc/docs/brand/growth4u/market-and-us/self/current.md) | ✅ Approved |
+| Market Intelligence | [Market Analysis v4](https://staging.sanchocmo.ai/mc/docs/brand/growth4u/market-and-us/market/current.md) | ✅ Approved |
+| Competitor Intelligence | [Competitors v2](https://staging.sanchocmo.ai/mc/docs/brand/growth4u/market-and-us/competitors/current.md) + [Snowball](https://staging.sanchocmo.ai/mc/docs/brand/growth4u/market-and-us/competitors/snowball/current.md) · [Product Hackers](https://staging.sanchocmo.ai/mc/docs/brand/growth4u/market-and-us/competitors/product-hackers/current.md) · [TheGrowtHacker](https://staging.sanchocmo.ai/mc/docs/brand/growth4u/market-and-us/competitors/thegrowthacker/current.md) | ✅ Approved |
+| SWOT & TOWS | [SWOT v3](https://staging.sanchocmo.ai/mc/docs/brand/growth4u/market-and-us/swot/current.md) | ✅ Approved |
+| OPE Canvas | [OPE Canvas](https://staging.sanchocmo.ai/mc/docs/brand/growth4u/market-and-us/ope-canvas/current.md) | ✅ Approved |
 
 <!-- Self-QA: PASS | 2026-03-04 | Synthesis of 4 approved pillars. Key findings cross-verified. 0 new data generated — pure synthesis. -->

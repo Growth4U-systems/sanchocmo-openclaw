@@ -5211,7 +5211,7 @@ function notifyProjectChange(slug, change) {
   if (!client) return;
 
   const mcToken = client.mcToken;
-  const mcBase = `https://sancho-cmo.taild48df2.ts.net/mc/portal/${mcToken}`;
+  const mcBase = `https://staging.sanchocmo.ai/mc/portal/${mcToken}`;
   const statusEmoji = { completed:'✅', done:'✅', archived:'📦', cancelled:'❌', blocked:'⛔', 'in-progress':'🔧', todo:'📋', ready:'📋' };
   const statusLabel = { completed:'Completado', done:'Completado', archived:'Archivado', cancelled:'Cancelado', blocked:'Bloqueado', 'in-progress':'En progreso', todo:'Por hacer', ready:'Listo' };
 

@@ -15,19 +15,19 @@ En las últimas 2 semanas hemos completado un análisis estratégico profundo pa
 
 | Pilar | Qué analizamos | Fuentes | Doc. completo |
 |-------|----------------|---------|:-------------:|
-| **Mercado** | TAM, segmentos, tendencias, geografía, madurez | MRFR, GVR, Mordor Intelligence, BellezaMédica, INE, El País | [Ver completo](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/market-and-us/market/current.md) |
-| **Autopercepción** | Cómo se presenta HC (web, RRSS, medios, reviews) | hospitalcapilar.com, Instagram, TikTok, YouTube, Trustpilot, prensa | [Ver completo](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/market-and-us/self/current.md) |
-| **Competidores** | 9 competidores directos + long tail de 43 clínicas | Web scraping, Meta Ad Library, Trustpilot, OCU, Indeed, foros | [Ver completo](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/_archive/v1-migration-20260303/competitors/current.md) |
-| **SWOT** | Fortalezas, debilidades, oportunidades, amenazas | Cruce de los 3 análisis anteriores | [Ver completo](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/market-and-us/swot/current.md) |
-| **Nichos** | 58 problemas reales → 6 segmentos (ECPs) | Reddit, foros españoles, reviews de competidores, fuentes médicas | [Ver completo](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/niche-discovery/current.md) |
-| **Posicionamiento** | Mensajes por segmento, USPs, objeciones, copy hooks | Cruce de niche discovery + competitor intelligence | [Ver completo](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/go-to-market/positioning/current.md) |
-| **Quiz diagnóstico** | Arquitectura de quiz: preguntas, lógica, destinos | Todo lo anterior + reuniones con equipo HC | [Ver completo](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/quiz/quiz-diagnostico-v2.md) |
+| **Mercado** | TAM, segmentos, tendencias, geografía, madurez | MRFR, GVR, Mordor Intelligence, BellezaMédica, INE, El País | [Ver completo](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/market-and-us/market/current.md) |
+| **Autopercepción** | Cómo se presenta HC (web, RRSS, medios, reviews) | hospitalcapilar.com, Instagram, TikTok, YouTube, Trustpilot, prensa | [Ver completo](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/market-and-us/self/current.md) |
+| **Competidores** | 9 competidores directos + long tail de 43 clínicas | Web scraping, Meta Ad Library, Trustpilot, OCU, Indeed, foros | [Ver completo](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/_archive/v1-migration-20260303/competitors/current.md) |
+| **SWOT** | Fortalezas, debilidades, oportunidades, amenazas | Cruce de los 3 análisis anteriores | [Ver completo](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/market-and-us/swot/current.md) |
+| **Nichos** | 58 problemas reales → 6 segmentos (ECPs) | Reddit, foros españoles, reviews de competidores, fuentes médicas | [Ver completo](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/niche-discovery/current.md) |
+| **Posicionamiento** | Mensajes por segmento, USPs, objeciones, copy hooks | Cruce de niche discovery + competitor intelligence | [Ver completo](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/go-to-market/positioning/current.md) |
+| **Quiz diagnóstico** | Arquitectura de quiz: preguntas, lógica, destinos | Todo lo anterior + reuniones con equipo HC | [Ver completo](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/quiz/quiz-diagnostico-v2.md) |
 
 ---
 
 ## 2. El mercado: la oportunidad
 
-> 📎 **Documento completo:** [Análisis de Mercado](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/market-and-us/market/current.md)
+> 📎 **Documento completo:** [Análisis de Mercado](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/market-and-us/market/current.md)
 
 ### Tamaño y crecimiento
 
@@ -54,7 +54,7 @@ Todos los competidores (incluido HC hasta ahora) centran su comunicación en cir
 
 ## 3. Nosotros: lo que encontramos
 
-> 📎 **Documento completo:** [Self-Intelligence (Autopercepción)](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/market-and-us/self/current.md)
+> 📎 **Documento completo:** [Self-Intelligence (Autopercepción)](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/market-and-us/self/current.md)
 
 ### Lo que HC hace muy bien ✅
 
@@ -78,7 +78,7 @@ Todos los competidores (incluido HC hasta ahora) centran su comunicación en cir
 
 ## 4. Los competidores: vulnerabilidades detectadas
 
-> 📎 **Documento completo:** [Competitor Intelligence](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/_archive/v1-migration-20260303/competitors/current.md)
+> 📎 **Documento completo:** [Competitor Intelligence](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/_archive/v1-migration-20260303/competitors/current.md)
 
 ### Mapa competitivo (resumen)
 
@@ -106,7 +106,7 @@ Las 3 cadenas más grandes del mercado (Svenson 33 centros, IMD 21, Dorsia 160+)
 
 ## 5. SWOT: la foto completa
 
-> 📎 **Documento completo:** [Análisis SWOT](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/market-and-us/swot/current.md)
+> 📎 **Documento completo:** [Análisis SWOT](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/market-and-us/swot/current.md)
 
 ```
 ┌──────────────────────────────────────┬──────────────────────────────────────┐
@@ -142,7 +142,7 @@ La oportunidad es clara: **lanzar un funnel dedicado a tratamientos capilares co
 
 ## 6. Los 6 nichos identificados
 
-> 📎 **Documento completo:** [Niche Discovery](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/niche-discovery/current.md)
+> 📎 **Documento completo:** [Niche Discovery](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/niche-discovery/current.md)
 
 Analizamos 58 problemas reales de personas con caída de pelo (desde foros, Reddit, reviews, fuentes médicas). Los filtramos por 3 criterios (SWOT, ICP, Producto) y los agrupamos en 6 perfiles de cliente ideal:
 
@@ -199,7 +199,7 @@ Analizamos 58 problemas reales de personas con caída de pelo (desde foros, Redd
 
 ## 7. Posicionamiento: cómo lo contamos
 
-> 📎 **Documento completo:** [Positioning & Messaging](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/go-to-market/positioning/current.md)
+> 📎 **Documento completo:** [Positioning & Messaging](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/go-to-market/positioning/current.md)
 
 ### Declaración de posicionamiento
 
@@ -233,7 +233,7 @@ Analizamos 58 problemas reales de personas con caída de pelo (desde foros, Redd
 
 ## 8. El Quiz Diagnóstico: arquitectura propuesta
 
-> 📎 **Documento completo:** [Quiz Diagnóstico v2](https://sancho-cmo.taild48df2.ts.net/mc/docs/brand/hospital-capilar/quiz/quiz-diagnostico-v2.md)
+> 📎 **Documento completo:** [Quiz Diagnóstico v2](https://staging.sanchocmo.ai/mc/docs/brand/hospital-capilar/quiz/quiz-diagnostico-v2.md)
 
 ### Concepto
 

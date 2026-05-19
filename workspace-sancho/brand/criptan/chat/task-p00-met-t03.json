@@ -18,7 +18,7 @@
     },
     {
       "role": "bot",
-      "text": "Aquí tienes:\n\n🔗 **Conectar Google Search Console:** <https://sancho-cmo.taild48df2.ts.net/mc/admin/cc9b8067c18c5214358611d75f151f6d/connect/criptan/gsc>\n\nAhí te pedirá la **Site URL** exacta como está en GSC y te dará las instrucciones para añadir el Service Account como usuario con permiso de lectura. Cuando completes la configuración, avísame y verifico que la conexión funciona.",
+      "text": "Aquí tienes:\n\n🔗 **Conectar Google Search Console:** https://staging.sanchocmo.ai/mc/admin/cc9b8067c18c5214358611d75f151f6d/connect/criptan/gsc\n\nAhí te pedirá la **Site URL** exacta como está en GSC y te dará las instrucciones para añadir el Service Account como usuario con permiso de lectura. Cuando completes la configuración, avísame y verifico que la conexión funciona.",
       "agent": "sancho",
       "ts": "2026-03-30T12:16:02.018Z"
     },
