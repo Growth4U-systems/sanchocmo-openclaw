@@ -165,4 +165,10 @@ export interface OdClientConfig {
   webUrl: string;
   /** /Users/ragi/open-design por default (env: OD_REPO_PATH). Para enriquecer filePath de skills. */
   repoPath: string;
+  /**
+   * Bearer token compartido con el daemon (env: OD_API_TOKEN). Requerido por
+   * la guarda Phase 5 del fork ≥ 0.7.0 cuando OD_BIND_HOST != loopback.
+   * Vacío → no se manda Authorization header (modo dev local sin token).
+   */
+  apiToken?: string;
 }

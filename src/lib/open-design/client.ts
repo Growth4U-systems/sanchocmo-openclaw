@@ -41,7 +41,36 @@ export function resolveOdConfig(): OdClientConfig {
       (usePublic ? process.env.OD_PUBLIC_WEB_URL : process.env.OD_WEB_URL) ||
       "http://localhost:3100",
     repoPath: process.env.OD_REPO_PATH || "/Users/ragi/open-design",
+    apiToken: process.env.OD_API_TOKEN?.trim() || undefined,
   };
+}
+
+/**
+ * Build the request init OD endpoints expect when the daemon enforces
+ * Phase 5 hosted-mode auth:
+ *
+ *   - `Authorization: Bearer <token>` satisfies the bearer middleware.
+ *   - For writes (PUT/POST/PATCH/DELETE), `Origin: <webUrl>` exercises the
+ *     escape hatch in origin-validation.ts (`extraAllowedOrigins.includes(origin)
+ *     → return true`) so the same-origin guard accepts server-to-server calls
+ *     from MC. `OD_WEB_URL` must therefore be listed in `OD_ALLOWED_ORIGINS`
+ *     on the daemon side (the setup script does this automatically).
+ *
+ * Returns the input init unchanged when no token is configured — keeps the
+ * local dev flow (loopback daemon, no token) working without code branches
+ * elsewhere.
+ */
+function withOdAuth(init: RequestInit | undefined, config: OdClientConfig): RequestInit {
+  if (!config.apiToken) return init ?? {};
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${config.apiToken}`);
+  }
+  const method = (init?.method ?? "GET").toUpperCase();
+  if (method !== "GET" && method !== "HEAD" && !headers.has("Origin")) {
+    headers.set("Origin", config.webUrl);
+  }
+  return { ...init, headers };
 }
 
 // ---------------------------------------------------------------------------
@@ -66,11 +95,35 @@ async function odFetch(
   const url = `${config.daemonUrl}${endpoint}`;
   let response: Response;
   try {
-    response = await fetch(url, init);
+    response = await fetch(url, withOdAuth(init, config));
   } catch (err) {
     throw new OdDaemonOfflineError(config.daemonUrl, err);
   }
   return response;
+}
+
+/**
+ * PUT /api/app-config — set daemon-wide preferences (designSystemId, skillId,
+ * agentModels, etc.). Used by launch-editor to pre-select the brand's design
+ * system before the user opens the OD web app.
+ *
+ * Goes through `odFetch`, so the Bearer + Origin auth headers are added
+ * automatically when OD_API_TOKEN is configured.
+ */
+export async function odSetAppConfig(
+  partial: Record<string, unknown>,
+  config?: OdClientConfig,
+): Promise<{ ok: boolean; status: number }> {
+  const response = await odFetch(
+    "/api/app-config",
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(partial),
+    },
+    config,
+  );
+  return { ok: response.ok, status: response.status };
 }
 
 // ---------------------------------------------------------------------------
