@@ -14,7 +14,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: "Missing slug parameter" });
     }
 
-    const catalogPath = path.join(BASE, "skills", "acquisition-metrics-plan", "schemas", "api-catalog.json");
+    // Shared skills tree lives at ~/.openclaw/skills/, one level above BASE.
+    const catalogPath = path.join(BASE, "..", "skills", "acquisition-metrics-plan", "schemas", "api-catalog.json");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const catalog = readJSON<any>(catalogPath, { categories: {} });
 
@@ -111,7 +112,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     writeJSON(intPath, intData);
 
     // Run test-connection.js for this source
-    const testScript = path.join(BASE, "skills", "acquisition-metrics-plan", "scripts", "test-connection.js");
+    const testScript = path.join(BASE, "..", "skills", "acquisition-metrics-plan", "scripts", "test-connection.js");
     let testResult: Record<string, unknown> = { status: "pending" };
 
     try {
