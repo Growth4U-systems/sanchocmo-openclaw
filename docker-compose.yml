@@ -77,6 +77,14 @@ services:
       OD_ALLOWED_ORIGINS: ${OD_ALLOWED_ORIGINS:-}
     volumes:
       - open_design_data:/app/.od
+      # Brand design systems live in MC's workspace as the output of Sancho's
+      # visual-identity skill. We expose each brand's `brand-book/visual-identity`
+      # directory as a "user" design system to OD by bind-mounting it into
+      # `/app/.od/design-systems/<slug>` (the dir the daemon scans). Read-only
+      # because the daemon must never write to brand-book artifacts — the
+      # skill owns authoring. Add one mount per brand that has authored
+      # DESIGN.md. Brands without one stay invisible to OD.
+      - ${OPENCLAW_HOME:-~/.openclaw}/workspace-sancho/brand/growth4u/brand-book/visual-identity:/app/.od/design-systems/growth4u:ro
     read_only: true
     tmpfs:
       - /tmp
