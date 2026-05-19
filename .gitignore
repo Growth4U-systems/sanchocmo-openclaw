@@ -242,3 +242,7 @@ workspace-sancho/cron/jobs.json.bak
 # Generated env backups (timestamped)
 .env.bak-*
 .env.local.bak-*
+
+# Python bytecode (scripts/upsert-env.py and its tests)
+__pycache__/
+*.py[cod]
