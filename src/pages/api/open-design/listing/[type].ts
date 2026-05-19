@@ -198,6 +198,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const STRING_ARRAY_FIELDS = ["triggers", "tags", "craftRequires", "defaultFor"];
   const sanitized = (items as Record<string, unknown>[]).map((item) => {
     const out: Record<string, unknown> = { ...item };
+    // El daemon expone craft guides como `{ id, label, bytes }`, mientras que
+    // OdCraftGuide (y CraftGuidesList) esperan `name`. Mapear para que las
+    // tarjetas muestren título en lugar de quedar vacías.
+    if (type === "craft-guides" && typeof out.label === "string" && out.name == null) {
+      out.name = out.label;
+    }
     for (const field of STRING_ARRAY_FIELDS) {
       const v = out[field];
       if (Array.isArray(v)) {
