@@ -23,6 +23,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { SlideOver } from "@/components/shared/slide-over";
+import { JsonViewer } from "@/components/shared/doc-slideover";
 import { useMetricsPlan } from "@/hooks/useMetrics";
 import { cn } from "@/lib/utils";
 
@@ -1019,6 +1021,7 @@ export default function MetricsPage() {
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [collecting, setCollecting] = useState(false);
   const [collectStatus, setCollectStatus] = useState("");
+  const [planOpen, setPlanOpen] = useState(false);
 
   const { data: plan, isLoading: planLoading } = useMetricsPlan(slug);
 
@@ -1271,9 +1274,9 @@ export default function MetricsPage() {
               {"\uD83D\uDD0C"} {t("apis")}
             </a>
             {effectivePlan && (
-              <a href={`/api/metrics/plan?slug=${slug}`} target="_blank" rel="noopener noreferrer" className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
+              <button type="button" onClick={() => setPlanOpen(true)} className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
                 {"\uD83D\uDCCB"} {t("plan")}
-              </a>
+              </button>
             )}
             {metricsData?.metricsSheet?.url && (
               <a href={metricsData.metricsSheet.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
@@ -1392,6 +1395,9 @@ export default function MetricsPage() {
         </div>
       )}
 
+      <SlideOver open={planOpen} onClose={() => setPlanOpen(false)} title={`${t("plan")} — ${slug}`}>
+        {effectivePlan ? <JsonViewer data={effectivePlan} /> : null}
+      </SlideOver>
     </DashboardLayout>
   );
 }

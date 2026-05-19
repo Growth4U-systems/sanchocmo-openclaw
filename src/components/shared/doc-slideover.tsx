@@ -542,7 +542,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
 // JSON Viewer — renders structured JSON as readable cards and tables
 // ---------------------------------------------------------------------------
 
-function JsonViewer({ data }: { data: unknown }) {
+export function JsonViewer({ data }: { data: unknown }) {
   if (data === null || data === undefined) return <span className="text-muted-foreground text-xs">null</span>;
   if (typeof data !== "object") return <span className="text-sm">{String(data)}</span>;
 
