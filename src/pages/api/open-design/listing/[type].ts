@@ -155,12 +155,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  // Resto: probar daemon, si falla o vuelve vacío usar FS
+  // Resto: probar daemon, si falla o vuelve vacío usar FS. Bearer +
+  // spoofed Origin son requeridos por la guarda Phase 5 del fork; sin
+  // ellos el daemon devuelve 401 y caemos al fallback FS en un path que
+  // probablemente no existe (OD_REPO_PATH default = laptop del autor).
   const daemonInfo = TYPE_DAEMON_PATH[type];
   let items: unknown[] = [];
   let source = "daemon";
   try {
-    const r = await fetch(`${config.daemonUrl}${daemonInfo.endpoint}`);
+    const daemonHeaders: Record<string, string> = {};
+    if (config.apiToken) {
+      daemonHeaders["Authorization"] = `Bearer ${config.apiToken}`;
+      daemonHeaders["Origin"] = config.webUrl;
+    }
+    const r = await fetch(`${config.daemonUrl}${daemonInfo.endpoint}`, { headers: daemonHeaders });
     if (r.ok) {
       const payload = (await r.json()) as DaemonPayload;
       const candidates = [
