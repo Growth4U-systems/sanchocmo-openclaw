@@ -161,7 +161,7 @@ export function SkillsList({ slug: _slug, onUse }: Props) {
             ? ({
                 id: selected.id,
                 title: selected.name ?? selected.id,
-                filePath: selected.filePath ?? "",
+                type: "skill",
                 subtitle: [selected.mode, selected.surface, selected.platform, selected.scenario].filter(Boolean).join(" · "),
                 summary: selected.description,
                 badges: [

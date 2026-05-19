@@ -156,7 +156,11 @@ export function PromptTemplatesGallery({ slug: _slug, onUse }: Props) {
             ? ({
                 id: selected.id,
                 title: selected.title ?? selected.name ?? selected.id,
-                filePath: selected.filePath ?? "",
+                type: "prompt-template",
+                // El id viene del listing como `surface/<slug>` (p.ej. `image/foo`).
+                // El daemon expone /api/prompt-templates/<surface>/<slug>: separamos
+                // ambos para que el slideover pueda construir la URL correcta.
+                surface: selected.surface ?? selected.category ?? selected.id.split("/")[0],
                 subtitle: [selected.surface, selected.category, selected.source?.author].filter(Boolean).join(" · "),
                 summary: selected.summary,
                 badges: [

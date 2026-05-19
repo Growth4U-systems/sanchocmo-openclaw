@@ -121,7 +121,7 @@ export function DesignSystemsGrid({ slug: _slug, onUse }: Props) {
             ? ({
                 id: selected.id,
                 title: selected.title ?? selected.name ?? selected.id,
-                filePath: selected.filePath ?? "",
+                type: "design-system",
                 subtitle: [selected.category, selected.surface, selected.source].filter(Boolean).join(" · "),
                 summary: selected.summary,
                 badges: [

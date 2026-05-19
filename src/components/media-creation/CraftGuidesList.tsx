@@ -65,7 +65,7 @@ export function CraftGuidesList() {
             ? ({
                 id: selected.id,
                 title: selected.name,
-                filePath: selected.filePath,
+                type: "craft-guide",
                 subtitle: "craft guide · brand-agnostic",
                 summary: selected.summary,
                 badges: [{ label: "craft", tone: "rust" }],

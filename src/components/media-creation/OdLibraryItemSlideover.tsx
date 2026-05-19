@@ -3,22 +3,29 @@
  * prompt template / craft guide). Reusa `SettingsSlideOver` (mismo componente
  * que usa el panel Skills de Settings) para mantener consistencia visual.
  *
- * Carga el SKILL.md / DESIGN.md / .md en lectura, muestra metadata como header
- * y ofrece dos acciones primarias:
- *  - "Usar en este brand"  → dispara chat con Maese Pedro
- *  - "Open in VS Code"     → opcional, vía link vscode://file
+ * El cuerpo (SKILL.md / DESIGN.md / .md) se hidrata desde el daemon vía
+ * `useOdItemBody`, no desde el filesystem de MC — en el deploy VPS el repo
+ * de OD vive dentro del container del daemon, no junto a MC.
+ *
+ * Acción primaria: "Usar en este brand" → dispara chat con Maese Pedro.
+ * (Eliminamos "Abrir en VS Code" porque sólo tenía sentido en el deploy
+ * laptop original donde MC, OD y VS Code compartían filesystem.)
  */
 
 "use client";
 
 import { useMemo } from "react";
 import { SettingsSlideOver } from "@/components/settings/settings-slideover";
-import { useOdFile } from "@/hooks/useOdFile";
+import { useOdItemBody, type OdItemType } from "@/hooks/useOdItemBody";
 
 export interface OdLibraryItem {
   id: string;
   title: string;
-  filePath: string;
+  /** Tipo del item — determina el endpoint daemon que sirve el body. */
+  type: OdItemType;
+  /** Sólo prompt-templates: surface (image|video|audio) requerida para
+   *  construir la URL del daemon `/api/prompt-templates/<surface>/<id>`. */
+  surface?: "image" | "video" | "audio" | string;
   /** Línea de subtítulo: ej. "skill · template · video" o "design-system · brand". */
   subtitle?: string;
   /** Etiquetas secundarias renderizadas debajo del header. */
@@ -33,34 +40,40 @@ interface Props {
   onUse: () => void;
 }
 
+const FILE_NAME_BY_TYPE: Record<OdItemType, string> = {
+  skill: "SKILL.md",
+  "design-system": "DESIGN.md",
+  "prompt-template": "PROMPT.md",
+  "craft-guide": "GUIDE.md",
+};
+
 export function OdLibraryItemSlideover({ item, onClose, onUse }: Props) {
-  const { data, isLoading } = useOdFile(item?.filePath ?? null);
+  const { data, isLoading, error } = useOdItemBody(
+    item?.type ?? null,
+    item?.id ?? null,
+    item?.surface,
+  );
 
   const files = useMemo(() => {
     if (!item) return [];
-    if (data?.isDirectory) {
+    const fileName = FILE_NAME_BY_TYPE[item.type] ?? "FILE.md";
+    if (isLoading) {
+      return [{ name: fileName, fileName, content: "Cargando contenido…" }];
+    }
+    if (error) {
       return [
         {
-          name: "Directorio",
-          fileName: item.filePath,
-          content:
-            `# ${item.title}\n\nEste item es un directorio (\`${item.filePath}\`). Contiene:\n\n` +
-            (data.entries?.map((e) => `- ${e.isDirectory ? "📁" : "📄"} \`${e.name}\``).join("\n") ?? "_(vacío)_"),
+          name: fileName,
+          fileName,
+          content: `# ${item.title}\n\nNo se pudo cargar el contenido (${error instanceof Error ? error.message : String(error)}).`,
         },
       ];
     }
-    if (isLoading || !data?.content) {
-      return [
-        {
-          name: "Cargando…",
-          fileName: item.filePath,
-          content: isLoading ? "Cargando contenido…" : "Sin contenido.",
-        },
-      ];
+    if (!data?.body) {
+      return [{ name: fileName, fileName, content: "Sin contenido." }];
     }
-    const fileName = item.filePath.split("/").pop() ?? "FILE.md";
-    return [{ name: fileName, fileName: item.filePath, content: data.content }];
-  }, [item, data, isLoading]);
+    return [{ name: fileName, fileName, content: data.body }];
+  }, [item, data, isLoading, error]);
 
   if (!item) return null;
 
@@ -98,12 +111,6 @@ export function OdLibraryItemSlideover({ item, onClose, onUse }: Props) {
         >
           💬 Usar en este brand
         </button>
-        <a
-          href={`vscode://file${item.filePath}`}
-          className="text-sm px-3 py-1.5 rounded-md border border-border hover:bg-muted/40 no-underline"
-        >
-          Abrir en VS Code
-        </a>
       </div>
     </div>
   );
@@ -116,7 +123,6 @@ export function OdLibraryItemSlideover({ item, onClose, onUse }: Props) {
       subtitle={item.id}
       files={files}
       editable={false}
-      copyPathPrefix={item.filePath}
       headerContent={headerContent}
     />
   );
