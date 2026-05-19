@@ -78,8 +78,18 @@ function previousStatus(s: ContentTaskStatus): ContentTaskStatus | null {
 export default function DraftFullScreenPage() {
   const slug = useSlugSync() || "";
   const router = useRouter();
-  const projectId = (router.query.projectId as string) || "";
-  const taskId = (router.query.taskId as string) || "";
+  // This component is rendered for two URL patterns (the unified
+  // /tasks/[taskId]/sub/[subTaskId]/... route re-exports it). Under the legacy
+  // /projects/[projectId]/tasks/[taskId]/... pattern `taskId` is the parent
+  // task; under the unified one `taskId` is the project and `subTaskId` is the
+  // parent task. Detect `subTaskId` and remap so `useContentTask` gets the
+  // actual parent task id either way — otherwise the API 404s with
+  // "ContentTask no encontrada".
+  const subTaskIdRaw = (router.query.subTaskId as string | undefined) || undefined;
+  const projectId = subTaskIdRaw
+    ? ((router.query.taskId as string) || "")
+    : ((router.query.projectId as string) || "");
+  const taskId = subTaskIdRaw || ((router.query.taskId as string) || "");
   const contentTaskId = (router.query.contentTaskId as string) || "";
   const channel = (router.query.channel as string) || "";
 
