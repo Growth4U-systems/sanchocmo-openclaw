@@ -27,13 +27,41 @@ import { OpenDesignLibrary } from "@/components/media-creation/OpenDesignLibrary
 import type { OdSkill, OdDesignSystem, OdPromptTemplate } from "@/lib/open-design/types";
 import type { BrandAsset } from "@/hooks/useBrandAssets";
 
-const TABS = [
-  { key: "design-system", label: "Design System", icon: "📐" },
-  { key: "assets", label: "Assets", icon: "🗂️" },
-  { key: "library", label: "Open Design Library", icon: "📚" },
+type TabIcon =
+  | { kind: "emoji"; value: string }
+  | { kind: "image"; src: string; alt: string; fallback: string };
+
+const TABS: ReadonlyArray<{ key: string; label: string; icon: TabIcon }> = [
+  { key: "design-system", label: "Design System", icon: { kind: "emoji", value: "📐" } },
+  { key: "assets", label: "Assets", icon: { kind: "emoji", value: "🗂️" } },
+  // El icono se sirve por el daemon del fork de Open Design (proxy
+  // /api/open-design/icon → /app-icon.svg). Cambiar el SVG en el fork y
+  // redeployar el container basta — MC lo refleja en el próximo page load.
+  // Si el daemon no responde, mostramos el `fallback` emoji para no romper
+  // el botón.
+  {
+    key: "library",
+    label: "Open Design Library",
+    icon: { kind: "image", src: "/api/open-design/icon", alt: "Open Design", fallback: "📚" },
+  },
 ] as const;
 
-type TabKey = (typeof TABS)[number]["key"];
+type TabKey = "design-system" | "assets" | "library";
+
+function TabIconView({ icon }: { icon: TabIcon }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  if (icon.kind === "emoji" || imageFailed) {
+    return <span>{icon.kind === "emoji" ? icon.value : icon.fallback}</span>;
+  }
+  return (
+    <img
+      src={icon.src}
+      alt={icon.alt}
+      className="h-4 w-4 inline-block"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
 
 export default function MediaCreationPage() {
   const slug = useSlugSync();
@@ -92,7 +120,7 @@ export default function MediaCreationPage() {
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => switchTab(tab.key)}
+            onClick={() => switchTab(tab.key as TabKey)}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all whitespace-nowrap flex items-center gap-1.5",
               activeTab === tab.key
@@ -100,7 +128,7 @@ export default function MediaCreationPage() {
                 : "border-border hover:border-rust"
             )}
           >
-            <span>{tab.icon}</span>
+            <TabIconView icon={tab.icon} />
             {tab.label}
           </button>
         ))}
@@ -111,7 +139,9 @@ export default function MediaCreationPage() {
             disabled={launching}
             className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border-2 border-border bg-white text-foreground hover:border-rust transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span>🎨</span>
+            <TabIconView
+              icon={{ kind: "image", src: "/api/open-design/icon", alt: "Open Design", fallback: "🎨" }}
+            />
             {launching ? "Abriendo…" : "Abrir editor agentic"}
           </button>
         )}
