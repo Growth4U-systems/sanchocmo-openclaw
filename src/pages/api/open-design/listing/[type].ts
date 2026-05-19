@@ -28,6 +28,9 @@ const TYPE_DAEMON_PATH: Record<string, { endpoint: string; payloadKey: string }>
   skills: { endpoint: "/api/skills", payloadKey: "skills" },
   "design-systems": { endpoint: "/api/design-systems", payloadKey: "designSystems" },
   "prompt-templates": { endpoint: "/api/prompt-templates", payloadKey: "promptTemplates" },
+  // Fork exposes craft guides at /api/craft (singular). Earlier upstream
+  // versions didn't expose it at all, hence the fallback path below.
+  "craft-guides": { endpoint: "/api/craft", payloadKey: "craft" },
 };
 
 async function fsListSkills(repoPath: string): Promise<unknown[]> {
@@ -148,19 +151,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const config = resolveOdConfig();
 
-  // craft-guides solo desde FS (daemon no expone endpoint)
-  if (type === "craft-guides") {
-    const items = await fsListCraftGuides(config.repoPath);
-    res.status(200).json({ items, count: items.length, source: "fs" });
-    return;
-  }
-
-  // Resto: probar daemon, si falla o vuelve vacío usar FS
+  // Probar daemon, si falla o vuelve vacío usar FS. Bearer +
+  // spoofed Origin son requeridos por la guarda Phase 5 del fork; sin
+  // ellos el daemon devuelve 401 y caemos al fallback FS en un path que
+  // probablemente no existe (OD_REPO_PATH default = laptop del autor).
   const daemonInfo = TYPE_DAEMON_PATH[type];
   let items: unknown[] = [];
   let source = "daemon";
   try {
-    const r = await fetch(`${config.daemonUrl}${daemonInfo.endpoint}`);
+    const daemonHeaders: Record<string, string> = {};
+    if (config.apiToken) {
+      daemonHeaders["Authorization"] = `Bearer ${config.apiToken}`;
+      daemonHeaders["Origin"] = config.webUrl;
+    }
+    const r = await fetch(`${config.daemonUrl}${daemonInfo.endpoint}`, { headers: daemonHeaders });
     if (r.ok) {
       const payload = (await r.json()) as DaemonPayload;
       const candidates = [
@@ -185,6 +189,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (type === "skills") items = await fsListSkills(config.repoPath);
     else if (type === "design-systems") items = await fsListDesignSystems(config.repoPath);
     else if (type === "prompt-templates") items = await fsListPromptTemplates(config.repoPath);
+    else if (type === "craft-guides") items = await fsListCraftGuides(config.repoPath);
   }
 
   // Enriquecer con filePath absoluto + sanitizar campos array-of-strings
@@ -193,6 +198,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const STRING_ARRAY_FIELDS = ["triggers", "tags", "craftRequires", "defaultFor"];
   const sanitized = (items as Record<string, unknown>[]).map((item) => {
     const out: Record<string, unknown> = { ...item };
+    // El daemon expone craft guides como `{ id, label, bytes }`, mientras que
+    // OdCraftGuide (y CraftGuidesList) esperan `name`. Mapear para que las
+    // tarjetas muestren título en lugar de quedar vacías.
+    if (type === "craft-guides" && typeof out.label === "string" && out.name == null) {
+      out.name = out.label;
+    }
     for (const field of STRING_ARRAY_FIELDS) {
       const v = out[field];
       if (Array.isArray(v)) {

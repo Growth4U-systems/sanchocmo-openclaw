@@ -29,7 +29,7 @@ async function readRawBody(req: NextApiRequest): Promise<Buffer> {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { daemonUrl } = resolveOdConfig();
+  const { daemonUrl, webUrl, apiToken } = resolveOdConfig();
 
   const pathParts = Array.isArray(req.query.path) ? req.query.path : [req.query.path].filter(Boolean);
   const targetPath = pathParts.join("/");
@@ -47,13 +47,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const url = `${daemonUrl}/api/${targetPath}${queryString}`;
 
-  // Forward headers excluyendo Host y Connection
+  // Forward headers excluyendo Host y Connection. Authorization y Origin
+  // del browser se descartan: el browser nunca tuvo OD_API_TOKEN, y
+  // reescribimos Origin con OD_WEB_URL para pasar la guarda same-origin
+  // del fork (Phase 5). El daemon ya valida el bearer + same-origin server-
+  // side; el cliente no participa de esa negociación.
   const headers: Record<string, string> = {};
   for (const [k, v] of Object.entries(req.headers)) {
     if (!v) continue;
     const lower = k.toLowerCase();
-    if (["host", "connection", "content-length", "transfer-encoding"].includes(lower)) continue;
+    if (
+      ["host", "connection", "content-length", "transfer-encoding", "authorization", "origin"].includes(lower)
+    ) {
+      continue;
+    }
     headers[k] = Array.isArray(v) ? v.join(",") : v;
+  }
+  if (apiToken) {
+    headers["authorization"] = `Bearer ${apiToken}`;
+    headers["origin"] = webUrl;
   }
 
   const method = (req.method ?? "GET").toUpperCase();
