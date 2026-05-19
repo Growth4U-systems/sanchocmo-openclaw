@@ -57,6 +57,15 @@ services:
       NODE_ENV: production
       OD_BIND_HOST: 0.0.0.0
       OD_PORT: "7456"
+      # Phase 5 hosted-mode safety floor (Growth4U fork ≥ 0.7.0). The
+      # daemon refuses to bind 0.0.0.0 without OD_API_TOKEN and rejects
+      # every /api/* request lacking `Authorization: Bearer <token>`
+      # (loopback peers + health/version/status probes are exempted).
+      # Nginx injects the bearer for browser-side traffic so the OD web
+      # app keeps working without code changes; MC backend → daemon
+      # calls bypass auth because they enter from a loopback peer when
+      # the daemon is reached over the compose bridge.
+      OD_API_TOKEN: ${OD_API_TOKEN:?OD_API_TOKEN required when OD_BIND_HOST is non-loopback (generate with `openssl rand -hex 32`)}
       # Origins allowed to call the daemon API cross-origin. The MC backend
       # proxies via the compose network so this is only needed for the OD web
       # app served at its public URL — it must list itself plus any embedding

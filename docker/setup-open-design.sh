@@ -9,13 +9,15 @@
 #   - Run as root (or with sudo)
 #
 # What it does:
-#   1. Pulls the Open Design image and starts the `open-design` compose service.
-#   2. Installs an nginx vhost for the subdomain (HTTP → HTTPS redirect, proxy → 127.0.0.1:7456).
-#   3. Issues a Let's Encrypt cert via `certbot --nginx` (uses the running nginx).
-#   4. Appends OD_WEB_URL / OD_ALLOWED_ORIGINS to /root/.openclaw/.env if not already set.
-#   5. Recreates the sanchocmo container so MC picks up the new env vars.
+#   1. Generates OD_API_TOKEN if not set (Phase 5 fork requires it on non-loopback).
+#   2. Pulls the Open Design image and starts the `open-design` compose service.
+#   3. Installs an nginx vhost for the subdomain (HTTP → HTTPS redirect, proxy → 127.0.0.1:7456),
+#      injecting `Authorization: Bearer <OD_API_TOKEN>` so the OD web app works without code changes.
+#   4. Issues a Let's Encrypt cert via `certbot --nginx` (uses the running nginx).
+#   5. Appends OD_WEB_URL / OD_ALLOWED_ORIGINS to /root/.openclaw/.env if not already set,
+#      then recreates the sanchocmo container so MC picks up the new env vars.
 #
-# Re-running is safe; existing certs and env entries are not duplicated.
+# Re-running is safe; existing certs, tokens, and env entries are not duplicated.
 set -euo pipefail
 
 OD_DOMAIN="${1:?Usage: bash docker/setup-open-design.sh <od-domain>}"
@@ -43,6 +45,23 @@ if [ -n "$EXPECTED_IP" ] && [ -n "$RESOLVED_IP" ] && [ "$EXPECTED_IP" != "$RESOL
   echo "  certbot will likely fail. Fix the A record and retry."
 fi
 
+# Ensure OD_API_TOKEN exists — required by the fork's Phase 5 safety floor
+# whenever OD_BIND_HOST is non-loopback (which is our case in docker-compose).
+existing_token="$(grep -E '^OD_API_TOKEN=' "$ENV_FILE" | head -1 | cut -d= -f2- || true)"
+if [ -z "$existing_token" ]; then
+  OD_API_TOKEN="$(openssl rand -hex 32)"
+  if grep -q "^OD_API_TOKEN=" "$ENV_FILE"; then
+    sed -i "s|^OD_API_TOKEN=.*|OD_API_TOKEN=${OD_API_TOKEN}|" "$ENV_FILE"
+  else
+    printf '\nOD_API_TOKEN=%s\n' "$OD_API_TOKEN" >> "$ENV_FILE"
+  fi
+  echo "  generated new OD_API_TOKEN (64 hex chars)"
+else
+  OD_API_TOKEN="$existing_token"
+  echo "  OD_API_TOKEN already present in .env (leaving as-is)"
+fi
+export OD_API_TOKEN
+
 # --- Step 2: Start the open-design container ---
 echo "[2/5] Starting open-design container..."
 ( cd "$REPO_DIR" && docker compose pull open-design && docker compose up -d open-design )
@@ -67,7 +86,9 @@ TEMPLATE="$SCRIPT_DIR/nginx-od.conf.template"
 
 if [ -d "/etc/letsencrypt/live/$OD_DOMAIN" ]; then
   # Cert already exists — install full vhost from template, no certbot run needed.
-  sed "s/OD_DOMAIN/$OD_DOMAIN/g" "$TEMPLATE" > "$VHOST"
+  sed -e "s/OD_DOMAIN/$OD_DOMAIN/g" \
+      -e "s|Bearer OD_API_TOKEN|Bearer $OD_API_TOKEN|" \
+      "$TEMPLATE" > "$VHOST"
   ln -sfn "$VHOST" /etc/nginx/sites-enabled/sancho-od
   nginx -t
   systemctl reload nginx
@@ -93,6 +114,7 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Authorization "Bearer $OD_API_TOKEN";
         proxy_buffering off;
         proxy_cache off;
     }
