@@ -193,6 +193,7 @@ memory/
 # === Development plans ===
 docs/superpowers
 .claude/plans
+.claude/worktrees/
 
 # === mc-inspect script output ===
 screenshots/mc-inspect/
