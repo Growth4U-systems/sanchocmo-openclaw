@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { CLIENTS_FILE } from "@/lib/data/paths";
+import { archiveBrandDir, archiveClientNeonData } from "@/lib/data/client-lifecycle";
 
 type ClientsFileData = {
   clients?: Array<Record<string, unknown>>;
@@ -22,9 +23,19 @@ function writeClientsFile(data: ClientsFileData): void {
 
 /**
  * POST /api/clients/delete
- * Admin only — removes a client entry from clients.json.
- * The brand/<slug> folder on disk is preserved (deletion would be irreversible).
- * Body: { slug, confirmSlug } — confirmSlug must equal slug as an explicit double-check.
+ * Admin only — archives a client so the slug can be reused cleanly.
+ *
+ * Steps (in order):
+ *  1. Archive `brand/<slug>/` → `brand/_archived/<slug>__<ts>/` (preserves all
+ *     human-authored content: chats, drafts, projects, foundation, brand-book).
+ *  2. Soft-archive Neon rows: rename slug to `<slug>__archived_<ts>` (and the
+ *     ids that derive from slug) so the active slug is freed for reuse while
+ *     POV Bank + Meeting Intelligence data stays recoverable.
+ *  3. Remove the entry from clients.json.
+ *
+ * The `confirmSlug === slug` guard remains as a double-check.
+ *
+ * Body: { slug, confirmSlug }
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -46,10 +57,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const idx = clients.findIndex((c) => c.slug === slug);
   if (idx === -1) return res.status(404).json({ error: "Client not found" });
 
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const archive = archiveBrandDir(slug, timestamp);
+  const neon = await archiveClientNeonData(slug, timestamp);
+
   data.clients = clients.filter((_, i) => i !== idx);
   writeClientsFile(data);
 
-  return res.status(200).json({ ok: true, slug });
+  return res.status(200).json({
+    ok: true,
+    slug,
+    archive,
+    neon,
+  });
 }
 
 export default compose(withErrorHandler, withAuth)(handler);
