@@ -33,12 +33,17 @@ export function OpenDesignLibrary({ slug, onUseSkill, onUseDesignSystem, onUsePr
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Catálogo upstream de{" "}
-        <a href="https://github.com/nexu-io/open-design" target="_blank" rel="noopener noreferrer" className="text-rust hover:underline">
-          Open Design
+        Catálogo servido por el daemon de{" "}
+        <a
+          href="https://github.com/Growth4U-systems/open-design"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-rust hover:underline"
+        >
+          Open Design (fork Growth4U)
         </a>
-        . Apache-2.0. <code className="bg-muted px-1.5 py-0.5 rounded">git pull</code> en{" "}
-        <code className="bg-muted px-1.5 py-0.5 rounded">/Users/ragi/open-design</code> para recibir mejoras.
+        . Apache-2.0. Las mejoras llegan al hacer redeploy del container con el tag más reciente de{" "}
+        <code className="bg-muted px-1.5 py-0.5 rounded">ghcr.io/growth4u-systems/od</code>.
       </p>
 
       <div className="flex gap-2 overflow-x-auto">
