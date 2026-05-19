@@ -1267,13 +1267,13 @@ export default function MetricsPage() {
           <DateRangeFilter options={DATE_RANGE_OPTIONS} value={range} onChange={(v) => setRange(v as DateRange)} />
 
           <div className="flex gap-1.5">
-            <a href="/dashboard/admin/settings?tab=apis" className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
+            <a href={`/dashboard/${slug}/settings?tab=apis`} className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
               {"\uD83D\uDD0C"} {t("apis")}
             </a>
             {effectivePlan && (
-              <span className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background">
+              <a href={`/api/metrics/plan?slug=${slug}`} target="_blank" rel="noopener noreferrer" className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
                 {"\uD83D\uDCCB"} {t("plan")}
-              </span>
+              </a>
             )}
             {metricsData?.metricsSheet?.url && (
               <a href={metricsData.metricsSheet.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
