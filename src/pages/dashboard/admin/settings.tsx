@@ -10,32 +10,36 @@ import { useTranslations } from "next-intl";
 import { AgentsPanel } from "@/components/settings/agents-panel";
 import { SkillsPanel } from "@/components/settings/skills-panel";
 import { RecurringPanel } from "@/components/settings/recurring-panel";
+import { ApisConnectorsPanel } from "@/components/settings/ApisConnectorsPanel";
 
 /**
  * /dashboard/admin/settings — global ("all clients") configuration.
  *
- * Only shows things that make sense across every brand: the agents
- * catalog, the skills catalog, and the cross-brand recurring task view.
- * User-level preferences (theme/language/display name) also live here
- * because they apply regardless of the currently selected brand.
+ * Shows things that span every brand: the agents catalog, skills
+ * catalog, cross-brand recurring task view, and a read-only APIs
+ * panel for the global system keys (Anthropic, OpenAI, …). The
+ * panel reuses `ApisConnectorsPanel` — without a `selectedClient`
+ * it reads from `/api/system/api-health` (no brand overrides) and
+ * hides the per-brand "Configurar / Key propia" action.
  *
- * Brand-scoped settings (APIs, dispatch, strategies, task index) live
- * in /dashboard/[slug]/settings. The clients CRUD and the admin
- * allowlist have their own dedicated routes:
+ * Brand-scoped settings (per-brand overrides, dispatch, strategies,
+ * task index) live in /dashboard/[slug]/settings. Clients CRUD and
+ * admin allowlist have their own dedicated routes:
  *   - /dashboard/admin/clients
  *   - /dashboard/admin/users
  */
 
-const TAB_KEYS = ["agents", "skills", "recurring", "preferences"] as const;
+const TAB_KEYS = ["apis", "agents", "skills", "recurring", "preferences"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
 const TAB_ICONS: Record<TabKey, string> = {
+  apis: "🔌",
   agents: "🤖",
   skills: "🧰",
   recurring: "🔄",
   preferences: "⚙️",
 };
-const DEFAULT_TAB: TabKey = "agents";
+const DEFAULT_TAB: TabKey = "apis";
 
 function isTabKey(v: unknown): v is TabKey {
   return typeof v === "string" && (TAB_KEYS as readonly string[]).includes(v);
@@ -76,6 +80,7 @@ export default function SettingsPage() {
         }}
       />
 
+      {activeTab === "apis" && <ApisConnectorsPanel />}
       {activeTab === "agents" && <AgentsPanel />}
       {activeTab === "skills" && <SkillsPanel />}
       {activeTab === "recurring" && <RecurringPanel />}
