@@ -150,6 +150,7 @@ Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como c
   - `brand_summary` si hay datos nuevos (company_name, sector, ICPs, competidores, positioning, URL)
   - `file_index` si se crearon archivos nuevos (ej: nuevo competidor → añadir a `file_index.competitors.battle_cards`, nueva presentación → añadir a `file_index.presentations`)
 - Ejecutar `python3 scripts/regenerate.py`
+- **Si la skill aprobada fue `company-context`, `business-model-audit` o `budget-constraints`** → ejecutar `python3 scripts/regenerate-company-brief.py {slug}` para refrescar la merge view. El script escribe a `company-brief/current.md` cuando al menos un standalone está full, o a `company-brief/lite.md` cuando todos siguen siendo seeds de fast-foundation. Resuelve el "Stale view conocido": ya no hay riesgo de que niche-discovery o downstream lean un merge desactualizado tras aprobar un standalone full.
 
 ---
 
