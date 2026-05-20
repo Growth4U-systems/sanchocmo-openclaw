@@ -326,21 +326,76 @@ def _extract_usage_blocks(text):
 # ──────────────────── Session data extraction ────────────────────
 
 def get_active_sessions():
-    """Get session key → info mapping from OpenClaw."""
+    """Get session_id → {key, ...} for ALL sessions across all agents.
+
+    Sources, in priority order:
+      1. Per-agent `sessions.json` stores on disk (authoritative; one entry
+         per session ever created). The OpenClaw CLI's
+         `openclaw sessions --all-agents --json` only returns the most-recent
+         100 sessions by default, so historical transcripts on disk would
+         miss their key and get bucketed as `_unclassified`.
+      2. Fallback: `openclaw sessions --all-agents --json` (CLI). Used only
+         if the disk stores can't be located.
+
+    Returns: {sessionId: {"key": str, ...}}
+    """
+    result = {}
+    for _agent_id, sessions_dir in agent_sessions_dirs().items():
+        store = sessions_dir / "sessions.json"
+        if not store.exists():
+            continue
+        try:
+            data = json.loads(store.read_text())
+        except Exception:
+            continue
+        # Format: { "<session-key>": { "sessionId": "<uuid>", ... }, ... }
+        for key, entry in (data.items() if isinstance(data, dict) else []):
+            sid = entry.get("sessionId") if isinstance(entry, dict) else None
+            if not sid:
+                continue
+            result[sid] = {"key": key, **(entry if isinstance(entry, dict) else {})}
+    if result:
+        return result
+
     try:
-        result = subprocess.run(
+        out = subprocess.run(
             ["openclaw", "sessions", "--all-agents", "--json"],
-            capture_output=True, text=True, timeout=30
+            capture_output=True, text=True, timeout=30,
         )
-        data = json.loads(result.stdout)
+        data = json.loads(out.stdout)
         sessions = data if isinstance(data, list) else data.get("sessions", [])
-        return {s.get("sessionId", ""): s for s in sessions}
-    except:
+        return {s.get("sessionId", ""): s for s in sessions if s.get("sessionId")}
+    except Exception:
         return {}
 
+_KNOWN_SLUGS_CACHE = None
+
+
+def known_slugs():
+    """Cached set of slugs from clients.json. Used by classify_session to
+    reject mc-chat keys whose embedded slug doesn't match an active client."""
+    global _KNOWN_SLUGS_CACHE
+    if _KNOWN_SLUGS_CACHE is None:
+        try:
+            data = json.loads((WORKSPACE / "clients.json").read_text())
+            _KNOWN_SLUGS_CACHE = {c["slug"] for c in data.get("clients", []) if c.get("slug")}
+        except Exception:
+            _KNOWN_SLUGS_CACHE = set()
+    return _KNOWN_SLUGS_CACHE
+
+
 def classify_session(key, agent_id, channel_cache, guild_to_client):
-    """Classify a session key → client slug."""
-    # System patterns
+    """Classify a session key → client slug.
+
+    Recognised patterns (post-Discord deprecation):
+      - `agent:<name>:unknown:channel:mc-chat:<slug>:<topic>` — UI-launched
+        sessions from `/dashboard/<slug>/...`. The mc-chat plugin embeds the
+        slug in the SessionKey at plugins/mc-chat/src/index.js:144.
+      - `agent:<name>:discord:channel:<id>` — legacy Discord sessions. Kept
+        as fallback so historical cost data classifies; new clients don't
+        have a `guild` field and won't match this branch.
+      - `:heartbeat`, `:cron:`, `:main`, `:subagent:` → system.
+    """
     if ":heartbeat" in key:
         return "_system"
     if ":cron:" in key:
@@ -349,8 +404,15 @@ def classify_session(key, agent_id, channel_cache, guild_to_client):
         return "_system"
     if ":subagent:" in key:
         return "_system"
-    
-    # Discord channel sessions
+
+    if ":mc-chat:" in key:
+        # Slug is the segment immediately after `:mc-chat:`.
+        tail = key.split(":mc-chat:", 1)[1]
+        slug = tail.split(":", 1)[0] if ":" in tail else tail
+        if slug and slug in known_slugs():
+            return slug
+        return "_unclassified"
+
     if ":discord:channel:" in key:
         channel_id = key.split(":discord:channel:")[-1]
         guild_id = channel_cache.get(channel_id)
@@ -358,15 +420,13 @@ def classify_session(key, agent_id, channel_cache, guild_to_client):
             client = guild_to_client.get(guild_id)
             if client:
                 return client
-            # Internal guilds
             if guild_id in ("1478770422093709502", "1477997446885019670"):
                 return "_system"
         return "_unclassified"
-    
-    # Cervantes is system by default
+
     if agent_id == "cervantes":
         return "_system"
-    
+
     return "_unclassified"
 
 def scan_transcript(jsonl_file, agent_id, period_filter=None):
