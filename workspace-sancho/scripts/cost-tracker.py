@@ -18,9 +18,64 @@ from collections import defaultdict
 
 OPENCLAW_HOME = Path(os.environ.get("OPENCLAW_HOME", str(Path.home() / ".openclaw")))
 WORKSPACE = OPENCLAW_HOME / "workspace-sancho"
-AGENTS_DIR = OPENCLAW_HOME / "agents"
+
 USD_TO_EUR = 0.92
 CHANNEL_CACHE = WORKSPACE / "scripts" / ".channel-guild-cache.json"
+
+
+def get_agent_sessions_dirs():
+    """Map agent_id -> sessions dir. Authoritative source.
+
+    OpenClaw exposes the canonical session store path per agent via
+    `openclaw sessions --all-agents --json` (each entry of `stores[]` carries
+    `agentId` and `path`, where `path` is the per-agent sessions.json).
+    The `.jsonl` transcript files live in the same directory.
+
+    Querying OpenClaw avoids hardcoding layout assumptions — historically the
+    flat `~/.openclaw/agents/` moved to the nested `~/.openclaw/.openclaw/agents/`
+    on newer deployments, and this script silently reported "0 sessions"
+    for months because its hardcoded path stopped resolving.
+
+    Fallback: probe nested then flat on the filesystem if the CLI fails (so
+    the script still works in environments without `openclaw` on PATH).
+    """
+    try:
+        result = subprocess.run(
+            ["openclaw", "sessions", "--all-agents", "--json"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            dirs = {}
+            for store in data.get("stores", []):
+                agent_id = store.get("agentId")
+                store_path = store.get("path")
+                if agent_id and store_path:
+                    dirs[agent_id] = Path(store_path).parent
+            if dirs:
+                return dirs
+    except Exception:
+        pass
+
+    for candidate in (OPENCLAW_HOME / ".openclaw" / "agents", OPENCLAW_HOME / "agents"):
+        if candidate.exists():
+            return {
+                p.name: p / "sessions"
+                for p in candidate.iterdir()
+                if p.is_dir() and (p / "sessions").exists()
+            }
+    return {}
+
+
+_AGENT_DIRS_CACHE = None
+
+
+def agent_sessions_dirs():
+    """Cached accessor — calls get_agent_sessions_dirs() once per run."""
+    global _AGENT_DIRS_CACHE
+    if _AGENT_DIRS_CACHE is None:
+        _AGENT_DIRS_CACHE = get_agent_sessions_dirs()
+    return _AGENT_DIRS_CACHE
 
 # ──────────────────── Channel → Guild → Client mapping ────────────────────
 
@@ -96,10 +151,7 @@ def build_channel_guild_map(session_map):
     
     if unresolved:
         # Pass 1: Scan transcripts for group_space
-        for agent_dir in AGENTS_DIR.iterdir():
-            if not agent_dir.is_dir():
-                continue
-            sessions_dir = agent_dir / "sessions"
+        for agent_id, sessions_dir in agent_sessions_dirs().items():
             if not sessions_dir.exists():
                 continue
             for jsonl_file in sessions_dir.glob("*.jsonl"):
@@ -200,10 +252,7 @@ def resolve_unknown_channels(unknown_channels, cache, session_map):
         return cache
     
     updated = False
-    for agent_dir in AGENTS_DIR.iterdir():
-        if not agent_dir.is_dir():
-            continue
-        sessions_dir = agent_dir / "sessions"
+    for agent_id, sessions_dir in agent_sessions_dirs().items():
         if not sessions_dir.exists():
             continue
         for jsonl_file in sessions_dir.iterdir():
@@ -767,13 +816,9 @@ def main():
     
     # Scan all transcripts
     all_results = []
-    for agent_dir in sorted(AGENTS_DIR.iterdir()):
-        if not agent_dir.is_dir():
-            continue
-        sessions_dir = agent_dir / "sessions"
+    for agent_id, sessions_dir in sorted(agent_sessions_dirs().items()):
         if not sessions_dir.exists():
             continue
-        agent_id = agent_dir.name
         count = 0
         for jsonl_file in sessions_dir.glob("*.jsonl"):
             result = scan_transcript(jsonl_file, agent_id, period)

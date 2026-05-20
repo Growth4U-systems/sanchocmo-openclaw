@@ -128,6 +128,42 @@ node workspace-sancho/scripts/mc-server.js &
 MC_PID=$!
 
 # ===========================================================
+# 7a. COST TRACKER LOOP (background)
+# ===========================================================
+# Runs cost-tracker.py every COST_TRACKER_INTERVAL seconds (default 600 = 10
+# min). The tracker scans OpenClaw session transcripts and aggregates token
+# costs into workspace-sancho/memory/costs/global.json + brand/<slug>/costs.json.
+# Used by /api/system/costs → dashboard CostsCard.
+#
+# Previously this ran outside the container via an external cron that wasn't
+# transferable. Embedding the loop here makes the cost dashboard work on any
+# new environment with no manual cron registration. Output is appended to
+# workspace-sancho/_system/cost-tracker.log (truncated by logrotate-equivalent
+# external to this script).
+COST_TRACKER_INTERVAL="${COST_TRACKER_INTERVAL:-600}"
+COST_TRACKER_LOG="/root/.openclaw/workspace-sancho/_system/cost-tracker.log"
+mkdir -p "$(dirname "$COST_TRACKER_LOG")"
+echo "[entrypoint] Starting cost-tracker loop (every ${COST_TRACKER_INTERVAL}s)…"
+(
+  # Initial delay so the gateway/MC processes settle before the first run.
+  sleep 30
+  while :; do
+    {
+      echo "[$(date -u +%FT%TZ)] cost-tracker run start"
+      python3 /root/.openclaw/workspace-sancho/scripts/cost-tracker.py 2>&1
+      echo "[$(date -u +%FT%TZ)] cost-tracker run done"
+    } >> "$COST_TRACKER_LOG" 2>&1 || true
+    # Cap log file to last ~5MB to avoid unbounded growth in long-running
+    # containers without external logrotate. Keeps the tail readable on SSH.
+    if [ -f "$COST_TRACKER_LOG" ] && [ "$(stat -c%s "$COST_TRACKER_LOG" 2>/dev/null || echo 0)" -gt 5242880 ]; then
+      tail -c 2097152 "$COST_TRACKER_LOG" > "${COST_TRACKER_LOG}.tmp" && mv "${COST_TRACKER_LOG}.tmp" "$COST_TRACKER_LOG"
+    fi
+    sleep "$COST_TRACKER_INTERVAL"
+  done
+) &
+COST_TRACKER_PID=$!
+
+# ===========================================================
 # 7b. START NEXT.JS MC (primary frontend on :3000)
 # ===========================================================
 echo "[entrypoint] Starting Next.js Mission Control on :3000..."
@@ -139,7 +175,7 @@ node_modules/.bin/next start -p 3000 &
 NEXTJS_PID=$!
 cd /root/.openclaw
 
-echo "[entrypoint] All services running. Gateway=$GATEWAY_PID LegacyMC=$MC_PID NextJS=$NEXTJS_PID"
+echo "[entrypoint] All services running. Gateway=$GATEWAY_PID LegacyMC=$MC_PID NextJS=$NEXTJS_PID CostTracker=$COST_TRACKER_PID"
 
 # ===========================================================
 # 8. WAIT — if any process dies, container stops
