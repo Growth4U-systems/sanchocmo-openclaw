@@ -117,6 +117,12 @@ for i in $(seq 0 $((NUM_JOBS - 1))); do
   echo "➕ Creating: ${CRON_NAME}"
   TMPFILE=$(mktemp)
   printf '%s' "$PROMPT" > "$TMPFILE"
+  # --no-deliver matches the template's delivery.mode: "none". Without it,
+  # `cron add` defaults to channel=last, which fails when the agent's last
+  # chat is on mc-chat (cron logs "Delivering to mc-chat requires target"
+  # even though the agent's work succeeded). Content Engine crons report
+  # their results by writing to recurring-tasks/*.json — they do not need
+  # cron-level delivery.
   if openclaw cron add \
       --name "$CRON_NAME" \
       --agent "$AGENT" \
@@ -124,6 +130,7 @@ for i in $(seq 0 $((NUM_JOBS - 1))); do
       --tz "$TZ" \
       --session isolated \
       --model "$MODEL" \
+      --no-deliver \
       --message "$(cat "$TMPFILE")" \
       2>&1 | head -5; then
     CREATED=$((CREATED + 1))

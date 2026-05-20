@@ -102,6 +102,19 @@ if [ ! -f workspace-sancho/mission-control.html ] || [ ! -f workspace-sancho/mem
 fi
 
 # ===========================================================
+# 5b. ENSURE CRON-MODEL ALLOWLIST (runs every startup)
+# ===========================================================
+# Content Engine crons specify Anthropic models in their payload.model. The
+# openclaw daemon enforces agents.defaults.models as an allowlist at preflight
+# and caches it at startup — so the patch must happen BEFORE `gateway run`.
+# The script is idempotent: a no-op when the models are already present.
+if [ -x workspace-sancho/scripts/ensure-openclaw-allowlist.sh ]; then
+  echo "[entrypoint] Ensuring cron model allowlist..."
+  workspace-sancho/scripts/ensure-openclaw-allowlist.sh --config "$OPENCLAW_CONFIG" || \
+    echo "[entrypoint] WARNING: ensure-openclaw-allowlist.sh failed; Content Engine crons may be rejected"
+fi
+
+# ===========================================================
 # 6. START GATEWAY (foreground, backgrounded for MC)
 # ===========================================================
 echo "[entrypoint] Starting OpenClaw gateway..."
