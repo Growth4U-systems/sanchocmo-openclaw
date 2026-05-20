@@ -82,7 +82,25 @@ interface LastExecution {
 }
 
 function getLastExecution(slug: string, cronName: string, jobId: string): LastExecution | null {
-  // 1) Try recurring-tasks (richer info: status from cron output)
+  // The cron has two reporting surfaces and they can diverge:
+  //
+  //   (a) `recurring-tasks/{folder}/{YYYY-MM-DD}.json` — written by the
+  //       AGENT at the end of its prompt (PASO N · RECURRING TASKS).
+  //       Carries `last_finding` (the 1-2 line human summary) and the
+  //       agent's own framing of any errors that happened mid-prompt.
+  //       BUT: if the run dies before that step (preflight reject,
+  //       LLM billing failure, gateway restart, …), this file is NOT
+  //       updated and we read a stale entry from a previous run.
+  //
+  //   (b) `cron/jobs-state.json` — written by the OPENCLAW CRON RUNNER
+  //       at the end of every run regardless of success. Always current,
+  //       but lacks `last_finding`.
+  //
+  // Strategy: read both. If (b) is newer than (a)'s file mtime, the
+  // recurring-tasks JSON is stale relative to the runner's last attempt,
+  // so we prefer (b)'s status + error. Otherwise we take (a)'s richer
+  // payload but still overlay (b)'s lastError when the file's `error`
+  // field is empty (catches successful agent + failed delivery cases).
   const BASE = path.join(process.env.HOME || "", ".openclaw", "workspace-sancho");
   const nameMap: Record<string, string> = {
     "News Monitor": "content-news-monitor",
@@ -95,36 +113,69 @@ function getLastExecution(slug: string, cronName: string, jobId: string): LastEx
     "Idea Dedupe Audit": "content-dedupe-audit",
   };
   const baseName = cronName.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
+
+  const runtime = loadJobsState()[jobId]?.state as
+    | { lastRunAtMs?: number; lastDurationMs?: number; lastRunStatus?: string; lastError?: string }
+    | undefined;
+
+  // Locate the most recent recurring-tasks file for this cron (if any).
+  let filePath: string | null = null;
+  let fileMtimeMs = 0;
+  let fileData:
+    | { date?: string; status?: string; last_finding?: string; error?: string }
+    | null = null;
   const folderName = nameMap[baseName];
   if (folderName) {
     const dir = path.join(BASE, "brand", slug, "recurring-tasks", folderName);
     if (fs.existsSync(dir)) {
       const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json")).sort().reverse();
       if (files.length > 0) {
+        filePath = path.join(dir, files[0]);
         try {
-          const data = JSON.parse(fs.readFileSync(path.join(dir, files[0]), "utf-8")) as
-            { date?: string; status?: string; last_finding?: string; error?: string };
-          return {
-            date: data.date || files[0].replace(".json", ""),
-            status: data.status || "ok",
-            last_finding: data.last_finding ?? null,
-            last_error: data.error ?? null,
-          };
+          fileMtimeMs = fs.statSync(filePath).mtimeMs;
+          fileData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
         } catch {
-          return { date: files[0].replace(".json", ""), status: "unknown" };
+          // Treat unreadable file as missing — fall through to runtime.
+          filePath = null;
+          fileMtimeMs = 0;
+          fileData = null;
         }
       }
     }
   }
 
-  // 2) Fallback to runtime jobs-state.json (always written by the cron
-  // runner; carries delivery / preflight errors that never reach the agent).
-  const state = loadJobsState()[jobId];
-  if (state?.state?.lastRunAtMs) {
+  // The runtime ran AFTER the agent's last write to the file (or there
+  // is no file). Show the runner's view — that's the truth of what
+  // happened in the most recent attempt.
+  const runtimeIsNewer = runtime?.lastRunAtMs && runtime.lastRunAtMs > fileMtimeMs + 1000;
+  if (runtimeIsNewer && runtime?.lastRunAtMs) {
     return {
-      date: new Date(state.state.lastRunAtMs).toISOString(),
-      status: state.state.lastRunStatus || "unknown",
-      last_error: (state.state as { lastError?: string }).lastError ?? null,
+      date: new Date(runtime.lastRunAtMs).toISOString(),
+      status: runtime.lastRunStatus || "unknown",
+      last_finding: null,
+      last_error: runtime.lastError ?? null,
+    };
+  }
+
+  // We have a recent recurring-tasks file — use it as the base. Overlay
+  // the runner's `lastError` only when the file doesn't carry one
+  // (covers "agent succeeded → cron-runner delivery failed").
+  if (fileData) {
+    return {
+      date: fileData.date || (filePath ? path.basename(filePath, ".json") : ""),
+      status: fileData.status || "ok",
+      last_finding: fileData.last_finding ?? null,
+      last_error: fileData.error ?? runtime?.lastError ?? null,
+    };
+  }
+
+  // No file at all — fall back to runtime alone.
+  if (runtime?.lastRunAtMs) {
+    return {
+      date: new Date(runtime.lastRunAtMs).toISOString(),
+      status: runtime.lastRunStatus || "unknown",
+      last_finding: null,
+      last_error: runtime.lastError ?? null,
     };
   }
   return null;
