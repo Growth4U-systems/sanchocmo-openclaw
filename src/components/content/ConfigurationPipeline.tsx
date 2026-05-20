@@ -203,22 +203,29 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
   const getCron = useCallback((baseName: string) => crons.find((c) => c.baseName === baseName), [crons]);
 
   // True if any cron has a server-derived `running` payload. Used to
-  // (a) speed up polling and (b) keep the 1s duration tick ticking only
-  // while there's something to display.
+  // keep the 1s duration tick ticking only while there's a live badge
+  // whose counter advances.
   const anyRunning = useMemo(() => crons.some((c) => c.running), [crons]);
+  // True if we're waiting on anything — either an in-flight server run
+  // OR the user just clicked ▶ and we haven't yet seen the server's
+  // `running` payload land. Drives the polling cadence: without the
+  // `runningJob` half, a freshly-clicked cron would sit in the 30 s
+  // idle interval and only transition from "Encolada" → "Corriendo"
+  // after the next slow poll (or a manual refresh — what the user
+  // actually reported hitting).
+  const anyActive = anyRunning || runningJob !== null;
 
-  // Adaptive polling: 5s while any cron is mid-run, 30s otherwise.
-  // The 5s cadence is tight enough to feel live without thrashing the
-  // session-store read on the server, and lets a parallel-launched job
-  // show up within a few seconds of the user clicking ▶ on a second row.
+  // Adaptive polling: 5s while anything is active (running OR pending),
+  // 30s otherwise. The 5s cadence is tight enough to catch the
+  // session-store signal within one poll of when the agent first
+  // touches the session.
   useEffect(() => {
-    const interval = setInterval(fetchCronsOnly, anyRunning ? 5_000 : 30_000);
+    const interval = setInterval(fetchCronsOnly, anyActive ? 5_000 : 30_000);
     return () => clearInterval(interval);
-  }, [fetchCronsOnly, anyRunning]);
+  }, [fetchCronsOnly, anyActive]);
 
-  // 1s tick while something is running so the "Running 2m 14s" label
-  // advances live. When idle we fall back to a 30s tick that only keeps
-  // the "hace Xm" timestamps current.
+  // 1s tick while a live run exists so the "Corriendo Nm Ns" label
+  // advances. The pending state doesn't need it (no duration counter).
   const [, setNowTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setNowTick((n) => n + 1), anyRunning ? 1_000 : 30_000);
