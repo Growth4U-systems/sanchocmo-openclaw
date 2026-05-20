@@ -1,9 +1,0 @@
-{
-  "cronName": "Morning Metrics — Hulahoop",
-  "slug": "hulahoop",
-  "date": "2026-05-10",
-  "runAtMs": 1746858720000,
-  "status": "skipped",
-  "reason": "NO_APIS — no adapters configured for hulahoop",
-  "content": "Sin APIs configuradas. Ningún adaptador activo (GA4, GSC, Metricool, Meta Ads, GHL, Instantly, Sheets)."
-}

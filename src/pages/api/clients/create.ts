@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { brandDir, CLIENTS_FILE } from "@/lib/data/paths";
+import { writeClientsFile } from "@/lib/data/clients";
 
 type ClientsFileData = {
   clients?: Array<Record<string, unknown>>;
@@ -16,18 +17,6 @@ function normalizeSlug(value: string): string {
 
 function isValidSlug(value: string): boolean {
   return /^[a-z0-9][a-z0-9-]*$/.test(value);
-}
-
-function writeClientsFile(data: ClientsFileData): void {
-  const json = JSON.stringify(data, null, 2);
-  JSON.parse(json);
-
-  const backupPath = `${CLIENTS_FILE}.bak.${Date.now()}`;
-  fs.copyFileSync(CLIENTS_FILE, backupPath);
-
-  const tmpPath = `${CLIENTS_FILE}.tmp`;
-  fs.writeFileSync(tmpPath, json);
-  fs.renameSync(tmpPath, CLIENTS_FILE);
 }
 
 function createClientDirs(slug: string): void {

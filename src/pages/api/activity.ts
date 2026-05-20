@@ -84,7 +84,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const data = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
       const activity: { date: string; time?: string; text: string; raw?: string; client?: string }[] = data.activity || [];
       for (const e of activity) {
-        if (slug && e.client && e.client !== slug && e.client !== "system" && e.client !== "unknown") continue;
+        // Per-client view: only events tagged with this exact slug.
+        // System / unknown / null-client events are noise here (e.g. healthcheck
+        // pings, events about other clients) — they show on /dashboard/admin/activity.
+        if (slug) {
+          if (e.client !== slug) continue;
+        }
         const isCron = !!(e.raw && e.raw.startsWith("Cron run:"));
         if (isCron) {
           // Skip mc-data.js cron events when we already have live data for this slug+folder+date.

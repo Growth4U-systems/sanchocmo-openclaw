@@ -1,8 +1,0 @@
-{
-  "cronName": "Morning Metrics — Growth4U",
-  "slug": "growth4u",
-  "date": "2026-05-07",
-  "runAtMs": 1746599400000,
-  "status": "ok",
-  "content": "📊 **Morning Metrics — Growth4U** | 2026-05-07\n\n━━━ **META ADS** (ayer) ━━━\n💰 Spend: **€125.14** (media 7d: €115.36 ✅)\n👁️ Impressions: **6,898** (media 7d: 7,631)\n🖱️ Clicks: **31** | CTR: **0.45%** | CPC: **€4.04**\n🎯 Leads: **1** (media 7d: 2.1/día)\n\n━━━ **GHL — CONTACTS** (últimas 24h) ━━━\n👤 Nuevos contactos: **3**\n- visun — Facebook\n- marco pancea — Facebook\n- support al — Sin fuente\n\n━━━ **GHL — APPOINTMENTS** ━━━\n📅 Citas: **0**\n\n━━━ 🚨 **ALERTAS** ━━━\n🔴 CPC disparado: €4.04 vs media €2.98 (+35%)\n🟡 Leads por debajo: 1 vs media 2.1/día\n🟡 CTR bajo: 0.45% vs media 0.52%\n🟡 0 citas en últimas 24h\n🟡 1 contacto sin fuente — posible test/spam\n⚠️ Instantly: error en recolección (bug en script)\n\n━━━ **ANÁLISIS** ━━━\nDía flojo en Meta Ads: el CPC subió un 35% con menos clicks y solo 1 lead. El domingo (05-04) fue el mejor día con 4 leads a €2.63 CPC. El patrón sugiere fatiga de audiencia o competencia elevada en subasta a inicio de semana. Los 3 contactos GHL no convirtieron a cita — revisar seguimiento.\n\n━━━ **PROPUESTAS DE ACCIÓN** ━━━\n1. Revisar frecuencia de anuncios — posible ad fatigue si la misma audiencia ve los ads demasiado\n2. Evaluar creativos: refrescar copy/imagen en los ads con peor CTR\n3. Revisar pipeline GHL: 3 contactos nuevos pero 0 citas → ¿está funcionando el nurturing automático?\n4. Fix bug Instantly: el collector falla en campaigns — revisar script"
-}

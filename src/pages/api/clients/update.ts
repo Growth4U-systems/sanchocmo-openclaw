@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { CLIENTS_FILE } from "@/lib/data/paths";
+import { writeClientsFile } from "@/lib/data/clients";
 
 /**
  * POST /api/clients/update
@@ -26,7 +27,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
-  fs.writeFileSync(CLIENTS_FILE, JSON.stringify(data, null, 2));
+  writeClientsFile(data);
   res.status(200).json({ ok: true, client: { slug: client.slug, name: client.name, active: client.active } });
 }
 

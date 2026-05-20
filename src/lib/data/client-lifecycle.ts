@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { execSync } from "child_process";
 import { eq, sql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import {
@@ -17,7 +18,8 @@ import {
   povPillars,
   povUpdateProposals,
 } from "@/db/schema";
-import { BASE, brandDir, mcDataFile } from "@/lib/data/paths";
+import { BASE, brandDir, EXEC_PATH, mcDataFile } from "@/lib/data/paths";
+import { cronJobsFile } from "@/lib/data/openclaw-paths";
 
 const ARCHIVE_ROOT = path.join(BASE, "brand", "_archived");
 const COSTS_DAILY_PATH = path.join(BASE, "costs-daily.json");
@@ -43,6 +45,21 @@ export function archiveBrandDir(slug: string, timestamp: string): ArchiveBrandDi
   fs.mkdirSync(ARCHIVE_ROOT, { recursive: true });
   const dest = path.join(ARCHIVE_ROOT, `${slug}__${timestamp}`);
   fs.renameSync(src, dest);
+
+  // Defensive: if BASE is a git repo and `brand/<slug>/` was somehow tracked
+  // (regression from earlier history), drop it from the index. Without this,
+  // a future `git checkout` would restore the folder from HEAD even though
+  // we just archived it. Idempotent: --ignore-unmatch skips silently when
+  // nothing is tracked.
+  try {
+    execSync(`git -C "${BASE}" rm -r --cached --ignore-unmatch -q "brand/${slug}"`, {
+      timeout: 5000,
+      stdio: "pipe",
+    });
+  } catch {
+    // BASE not a git repo, or git binary unavailable — fine.
+  }
+
   return { archived: true, archivePath: dest };
 }
 
@@ -292,6 +309,77 @@ export function archiveClientSystemFiles(
     const extractPath = path.join(archiveDir, "_system-extract.json");
     fs.writeFileSync(extractPath, JSON.stringify(extract, null, 2));
     result.extractPath = extractPath;
+  }
+
+  return result;
+}
+
+export interface DisableClientCronsResult {
+  disabled: Array<{ id: string; name: string }>;
+  errors: Array<{ id: string; error: string }>;
+}
+
+interface CronJobLike {
+  id: string;
+  name?: string;
+  payload?: { message?: string };
+}
+
+function cronReferencesSlug(job: CronJobLike, slug: string, name?: string): boolean {
+  const prompt = job.payload?.message || "";
+  if (prompt.includes(`brand/${slug}`)) return true;
+  const lowerCronName = (job.name || "").toLowerCase();
+  if (lowerCronName.includes(slug.toLowerCase())) return true;
+  if (name && lowerCronName.includes(name.toLowerCase())) return true;
+  return false;
+}
+
+/**
+ * Disable OpenClaw cron jobs that reference a deleted client slug.
+ *
+ * Why: crons created during client onboarding (news monitor, competitor
+ * monitor, manual-metrics reminder, etc.) stay registered after the client
+ * is deleted. They keep firing on schedule and write fresh output to
+ * `brand/<slug>/recurring-tasks/<folder>/<date>.json` — which shows up on
+ * the recreated client's activity page as resurrected history.
+ *
+ * Detection mirrors `extractSlugFromCron` in cron-runs.ts:
+ *  1. The cron's prompt mentions `brand/<slug>` (most reliable).
+ *  2. The cron's name contains the slug or the client's display name.
+ *
+ * Side effect: invokes `openclaw cron disable <id>` per match. Failures
+ * are captured and returned, not thrown — the delete flow continues so
+ * downstream cleanup steps run.
+ */
+export function disableClientCrons(slug: string, name?: string): DisableClientCronsResult {
+  const jobsPath = cronJobsFile();
+  const result: DisableClientCronsResult = { disabled: [], errors: [] };
+
+  if (!fs.existsSync(jobsPath)) return result;
+
+  let jobs: CronJobLike[] = [];
+  try {
+    const data = JSON.parse(fs.readFileSync(jobsPath, "utf-8")) as { jobs?: CronJobLike[] };
+    jobs = data.jobs || [];
+  } catch {
+    return result;
+  }
+
+  for (const job of jobs) {
+    if (!cronReferencesSlug(job, slug, name)) continue;
+    try {
+      execSync(`openclaw cron disable ${job.id}`, {
+        timeout: 5000,
+        stdio: "pipe",
+        env: { ...process.env, PATH: EXEC_PATH },
+      });
+      result.disabled.push({ id: job.id, name: job.name || "" });
+    } catch (e) {
+      result.errors.push({
+        id: job.id,
+        error: e instanceof Error ? e.message.slice(0, 200) : String(e),
+      });
+    }
   }
 
   return result;

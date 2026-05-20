@@ -1,8 +1,0 @@
-{
-  "cronName": "Daily Pulse — Growth4U",
-  "slug": "growth4u",
-  "date": "2026-04-22",
-  "runAtMs": 1745276400000,
-  "status": "ok",
-  "content": "📊 **Daily Pulse — 2026-04-22 | Growth4U**\n\n**📌 Insight principal:** 2 llamadas GHL confirmadas ayer (21/04) — verificar resultados; CPC alerta 🟡 (€4.28 vs baseline €2.74); Health Score 57 (↑9pts desde 48) pero NSM meetings caída (5 vs 9 sem anterior)\n\n**📈 Métricas (24h):**\n- Leads ayer: 3 (vs media 1.7/día ✅)\n- CPC: €4.28 🟡 (1.5x media)\n- Meetings NSM: 5 (vs 9 semana anterior — parcialmente bloqueado)\n- Health Score: 57 ↑ (desde 48)\n- Transcripts nuevos: 0 (APIs enrichment caidas)\n- Nuevos leads: Blas Nieto — Synapsale (B2B SaaS, Sales Automation AI)\n\n**📋 Acciones:**\n- HIGH: Verificar resultados 2 llamadas GHL\n- MEDIUM: Investigar CPC €4.28 — campañas responsables\n- MEDIUM: Follow-up Blas Nieto (Synapsale)\n- LOW: Recuperar Apollo/GOG APIs\n\n**💡 Micro-brief:** La actividad en Discord fue mínima — solo crons. El equipo está operando en modo automático. El mayor riesgo es el CPC elevado sin conversión correspondiente."
-}

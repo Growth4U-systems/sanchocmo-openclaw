@@ -1,8 +1,0 @@
-{
-  "cronName": "Content: Classify + Ideas — Growth4U",
-  "slug": "growth4u",
-  "date": "2026-05-01",
-  "runAtMs": 1746081720000,
-  "status": "ok",
-  "content": "30 signals procesados (15 news + 15 creators), 7 ideas generadas. Distribución: {'P1': 2, 'P2': 1, 'P3': 1, 'P4': 1, 'P5': 2}. 6/7 ideas con pov_confidence >= 0.8. Todos los pillares tienen POV bank poblado (core_belief presente en P1-P5). No hay pillar con pov-bank vacío."
-}

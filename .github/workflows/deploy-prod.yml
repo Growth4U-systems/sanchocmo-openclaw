@@ -148,6 +148,22 @@ jobs:
             echo "▶ Fetching tags…"
             git fetch --tags --prune
 
+            # See deploy-staging.yml for context: brand/<slug>/ folders are
+            # transitioning from tracked to untracked-runtime. Backup before
+            # checkout so the transition deploy doesn't wipe live client data.
+            # No-op after the transition (folders are gitignored, untouched).
+            BRAND_BACKUP_DIR="$(mktemp -d -t sancho-brand-bk-XXXXXX)"
+            if [ -d workspace-sancho/brand ]; then
+              echo "▶ Backing up workspace-sancho/brand/ runtime data to $BRAND_BACKUP_DIR…"
+              for d in workspace-sancho/brand/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                [ "$name" = "example" ] && continue
+                [ "$name" = "_archived" ] && continue
+                cp -a "$d" "$BRAND_BACKUP_DIR/"
+              done
+            fi
+
             # Apply GitHub `production` Environment to ~/.openclaw/.env.
             # When unpopulated (current state), this is a no-op — empty
             # secrets/vars are filtered out by the payload builder.
@@ -167,6 +183,22 @@ jobs:
             echo "▶ Checking out $TAG…"
             git checkout "$TAG"
             export GIT_COMMIT="$(git rev-parse HEAD)"
+
+            # Restore brand/<slug>/ folders that the checkout removed.
+            if [ -d "$BRAND_BACKUP_DIR" ]; then
+              for d in "$BRAND_BACKUP_DIR"/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                target="workspace-sancho/brand/$name"
+                if [ ! -d "$target" ] || [ -z "$(ls -A "$target" 2>/dev/null || true)" ]; then
+                  echo "▶ Restoring workspace-sancho/brand/$name from backup…"
+                  mkdir -p "$target"
+                  cp -a "$d/." "$target/"
+                fi
+              done
+              rm -rf "$BRAND_BACKUP_DIR"
+            fi
+
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose build --pull
             UP_ARGS=""

@@ -1,8 +1,0 @@
-{
-  "cronName": "Daily Pulse — Growth4U",
-  "slug": "growth4u",
-  "date": "2026-05-11",
-  "runAtMs": 1778537520000,
-  "status": "ok",
-  "content": "Lunes 11 mayo — 0 msgs humanos (fin de semana). Highlights: (1) Meta Ads: impresiones -73% el viernes (1.8K vs 7K media) — monitorizar hoy; (2) Call agendada hoy con Jordi Teixido de Haro (developer/FB Ads); (3) Frank Nava (Rentakia) pendiente de propuesta fraccionada post-call; (4) Health Score 37 recuperando desde mínimo 22; (5) Blocker Slack bot sin scope chat:write bloquea 5 ideas de contenido; (6) 3 pillars con alta señal: GEO/ZCM, MiCA julio, AI Agents en producción. Action items: revisar Meta Ads + call Jordi + propuesta Frank Nava + fix Slack token."
-}

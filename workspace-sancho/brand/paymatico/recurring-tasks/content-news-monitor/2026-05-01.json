@@ -1,9 +1,0 @@
-{
-  "cronName": "Content: News Monitor — Paymatico",
-  "slug": "paymatico",
-  "date": "2026-05-01",
-  "runAtMs": 1746081900000,
-  "status": "ok",
-  "last_finding": "Bizum en TPV físico desde 18 mayo 2026 (CaixaBank, Sabadell, Bankinter). Adyen lanza 'Intelligent Money Movement' unificando pagos+liquidez+payouts — competencia directa al panel único de Paymatico. Stripe añade Bizum cross-border y wallet AI.",
-  "content": "16 signals: regulacion-pagos (5), tecnologia-pagos (4), franquicias-multisede (3), competencia-fintech (4)"
-}
