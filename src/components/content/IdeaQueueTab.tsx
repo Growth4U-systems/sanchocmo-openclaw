@@ -319,7 +319,12 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
     })
     .filter((i) => filterSource === "all" || classifySignalSource(i) === filterSource)
     .filter((i) => filterFramework === "all" || i.content_type === filterFramework)
-    .filter((i) => !todayOnly || i.dispatch_date === today)
+    // "Solo HOY" semantics: anything that happened today in this queue —
+    // either an idea created today by an antenna OR an idea dispatched
+    // today by Editorial Dispatch. Previously this only matched
+    // dispatch_date, which left the toggle showing (0) whenever crons
+    // had produced fresh ideas but Editorial Dispatch hadn't fired yet.
+    .filter((i) => !todayOnly || i.dispatch_date === today || (i.created_at || "").startsWith(today))
     .sort((a, b) => {
       if (sortBy === "confidence") return (b.pov_confidence || 0) - (a.pov_confidence || 0);
       if (sortBy === "pillar") return a.pillar_id.localeCompare(b.pillar_id);
@@ -337,7 +342,10 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
       return bDate - aDate;
     });
 
-  const todayCount = ideas.filter((i) => i.dispatch_date === today).length;
+  // Counter matches the toggle: created today OR dispatched today.
+  const todayCount = ideas.filter(
+    (i) => i.dispatch_date === today || (i.created_at || "").startsWith(today),
+  ).length;
 
   return (
     <div>
