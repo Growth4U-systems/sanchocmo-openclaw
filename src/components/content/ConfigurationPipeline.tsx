@@ -293,6 +293,14 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
     if (cron?.running) setRunningJob(null);
   }, [crons, runningJob]);
 
+  // openclaw serialises cron dispatch (only one cron actually executes at
+  // a time, even though `agents.defaults.maxConcurrent` says 4). When the
+  // user clicks ▶ on a row while another cron is mid-run, the second job
+  // sits in the openclaw queue silently until the first finishes. We
+  // surface that explicitly: any cron whose row says "pending" while
+  // another has a server `running` payload is queued behind it.
+  const liveCron = useMemo(() => crons.find((c) => c.running) ?? null, [crons]);
+
   const toggleCron = useCallback(async (jobId: string, enabled: boolean) => {
     await fetch("/api/content-engine/crons", {
       method: "PATCH",
@@ -408,6 +416,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             cron={getCron("News Monitor")}
             isRunning={!!getCron("News Monitor")?.running || runningJob === getCron("News Monitor")?.id}
             flash={runFlash?.jobId === getCron("News Monitor")?.id ? runFlash : null}
+            queueAhead={liveCron && liveCron.id !== getCron("News Monitor")?.id ? { baseName: liveCron.baseName } : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
           />
@@ -419,6 +428,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             cron={getCron("Competitor Monitor")}
             isRunning={!!getCron("Competitor Monitor")?.running || runningJob === getCron("Competitor Monitor")?.id}
             flash={runFlash?.jobId === getCron("Competitor Monitor")?.id ? runFlash : null}
+            queueAhead={liveCron && liveCron.id !== getCron("Competitor Monitor")?.id ? { baseName: liveCron.baseName } : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
           />
@@ -430,6 +440,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             cron={getCron("Keyword Research")}
             isRunning={!!getCron("Keyword Research")?.running || runningJob === getCron("Keyword Research")?.id}
             flash={runFlash?.jobId === getCron("Keyword Research")?.id ? runFlash : null}
+            queueAhead={liveCron && liveCron.id !== getCron("Keyword Research")?.id ? { baseName: liveCron.baseName } : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
           />
@@ -441,6 +452,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             cron={getCron("PAA Monitor")}
             isRunning={!!getCron("PAA Monitor")?.running || runningJob === getCron("PAA Monitor")?.id}
             flash={runFlash?.jobId === getCron("PAA Monitor")?.id ? runFlash : null}
+            queueAhead={liveCron && liveCron.id !== getCron("PAA Monitor")?.id ? { baseName: liveCron.baseName } : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
           />
@@ -514,6 +526,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             cron={dispatchCron}
             isRunning={!!dispatchCron?.running || runningJob === dispatchCron?.id}
             flash={runFlash?.jobId === dispatchCron?.id ? runFlash : null}
+            queueAhead={liveCron && liveCron.id !== dispatchCron?.id ? { baseName: liveCron.baseName } : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
           />
@@ -791,12 +804,17 @@ function formatDuration(ms: number): string {
 }
 
 function CronRow({
-  icon, title, sub, cron, isRunning, flash, onRun, onToggle, onEdit,
+  icon, title, sub, cron, isRunning, flash, queueAhead, onRun, onToggle, onEdit,
 }: {
   icon: string; title: string; sub: string;
   cron?: CronInfo;
   isRunning: boolean;
   flash?: { status: "ok" | "error"; message: string } | null;
+  /** When this row is pending (clicked ▶ but not yet "live") AND another
+   *  cron is currently mid-run, openclaw queues this one behind it. We
+   *  surface that: "Encolada · espera a <other>" replaces the generic
+   *  "arrancando" badge so the user knows the dispatch isn't stuck. */
+  queueAhead?: { baseName: string } | null;
   onRun: (id: string) => void;
   onToggle: (id: string, on: boolean) => void;
   onEdit?: () => void;
@@ -805,12 +823,18 @@ function CronRow({
   const lastErr = cron?.lastExecution?.last_error ?? null;
   const lastFinding = cron?.lastExecution?.last_finding ?? null;
   const lastStatus = cron?.lastExecution?.status ?? null;
+  // `isRunning` becomes true the instant the user clicks ▶ (local buffer
+  // in the parent). `live` only appears once the agent actually touches
+  // the session — there's a 30–60 s dispatch delay between the openclaw
+  // queue and the first agent message. In that window we render a
+  // "Encolada" badge so the user gets visual feedback immediately rather
+  // than staring at a stale row until the next poll cycle.
+  const pending = isRunning && !live;
   // Avoid double-rendering: while a live run is active the "last
   // execution" pill refers to the *previous* run, so we hide finding/error
-  // text until the new run lands. Once `running` clears, the next poll
-  // surfaces the fresh finding/error.
-  const showLastFinding = !live && lastStatus === "ok" && lastFinding;
-  const showLastError = !live && lastStatus === "error" && lastErr;
+  // text until the new run lands. Same applies during the pending window.
+  const showLastFinding = !live && !pending && lastStatus === "ok" && lastFinding;
+  const showLastError = !live && !pending && lastStatus === "error" && lastErr;
 
   return (
     <ConfigRow
@@ -841,6 +865,27 @@ function CronRow({
                   style={{ background: "var(--sc-sage-500)" }}
                 />
                 Corriendo · {formatDuration(Date.now() - live.startedAtMs)}
+              </span>
+            </>
+          ) : pending ? (
+            <>
+              <span>·</span>
+              <span
+                className="font-heading uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-sc-pill border-2 inline-flex items-center gap-1"
+                style={{ background: "var(--sc-sun-100)", borderColor: "var(--sc-sun-500)", color: "var(--sc-ink)" }}
+                title={
+                  queueAhead
+                    ? `openclaw despacha crons de a uno — esta antena arranca cuando termine "${queueAhead.baseName}"`
+                    : "Lanzada — esperando que el agente arranque la sesión (típico 30–60 s)"
+                }
+              >
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ background: "var(--sc-sun-500)" }}
+                />
+                {queueAhead
+                  ? `Encolada · espera a ${queueAhead.baseName}`
+                  : "Encolada · arrancando"}
               </span>
             </>
           ) : cron?.lastExecution ? (
