@@ -26,7 +26,25 @@ interface CronInfo {
   baseName: string;
   enabled: boolean;
   scheduleHuman: string;
-  lastExecution?: { date: string; status: string } | null;
+  /** Last completed run, with the agent's `last_finding` summary when
+   *  available and `last_error` for failed runs (covers both delivery
+   *  errors from the cron runner and errors the agent reported back). */
+  lastExecution?: {
+    date: string;
+    status: string;
+    last_finding?: string | null;
+    last_error?: string | null;
+  } | null;
+  /** Server-derived "currently running" signal. Truthy when the agent
+   *  session for this job was touched recently AND newer than the last
+   *  completed run's end timestamp. UI uses this for the live badge —
+   *  it survives page refresh because it comes from the session store,
+   *  not local React state. */
+  running?: {
+    startedAtMs: number;
+    lastTouchMs: number;
+    sessionId: string | null;
+  } | null;
 }
 interface DispatchChannelConfig {
   transport: "slack" | "discord";
@@ -103,8 +121,10 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
   const [dispatchChannel, setDispatchChannel] = useState<DispatchChannelConfig | null>(null);
   const [cadenceChannels, setCadenceChannels] = useState<CadenceChannelLite[]>([]);
   const [openDocPath, setOpenDocPath] = useState<string | null>(null);
+  // Transient local "user just clicked ▶" state. The button needs to feel
+  // pressed *immediately*, before the next poll cycle picks up the
+  // server's `running` payload (5s away). Cleared as soon as POST returns.
   const [runningJob, setRunningJob] = useState<string | null>(null);
-  const [pollingJob, setPollingJob] = useState<string | null>(null);
   const [runFlash, setRunFlash] = useState<{ jobId: string; status: "ok" | "error"; message: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -175,13 +195,6 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Tick cada 30s para que los "hace 2d/1h/5min" se recalculen sin recargar la página.
-  const [, setNowTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setNowTick((n) => n + 1), 30_000);
-    return () => clearInterval(id);
-  }, []);
-
   const fetchCronsOnly = useCallback(async () => {
     const r = await fetch(`/api/content-engine/crons?slug=${slug}`).then((r) => r.json()).catch(() => ({ crons: [] }));
     setCrons(r.crons || []);
@@ -189,7 +202,59 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
 
   const getCron = useCallback((baseName: string) => crons.find((c) => c.baseName === baseName), [crons]);
 
+  // True if any cron has a server-derived `running` payload. Used to
+  // (a) speed up polling and (b) keep the 1s duration tick ticking only
+  // while there's something to display.
+  const anyRunning = useMemo(() => crons.some((c) => c.running), [crons]);
+
+  // Adaptive polling: 5s while any cron is mid-run, 30s otherwise.
+  // The 5s cadence is tight enough to feel live without thrashing the
+  // session-store read on the server, and lets a parallel-launched job
+  // show up within a few seconds of the user clicking ▶ on a second row.
+  useEffect(() => {
+    const interval = setInterval(fetchCronsOnly, anyRunning ? 5_000 : 30_000);
+    return () => clearInterval(interval);
+  }, [fetchCronsOnly, anyRunning]);
+
+  // 1s tick while something is running so the "Running 2m 14s" label
+  // advances live. When idle we fall back to a 30s tick that only keeps
+  // the "hace Xm" timestamps current.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((n) => n + 1), anyRunning ? 1_000 : 30_000);
+    return () => clearInterval(id);
+  }, [anyRunning]);
+
+  // Detect transitions running → not-running to flash a completion toast.
+  // We compare the previous running set against the current one; any job
+  // that was running last tick but isn't now just finished.
+  const prevRunningIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const currentRunning = new Set(crons.filter((c) => c.running).map((c) => c.id));
+    for (const id of prevRunningIdsRef.current) {
+      if (currentRunning.has(id)) continue;
+      const justFinished = crons.find((c) => c.id === id);
+      if (!justFinished) continue;
+      const ok = (justFinished.lastExecution?.status ?? "ok") === "ok";
+      setRunFlash({
+        jobId: id,
+        status: ok ? "ok" : "error",
+        message: ok
+          ? (justFinished.lastExecution?.last_finding || "✓ Terminó — última ejecución actualizada.")
+          : (justFinished.lastExecution?.last_error || "✗ Terminó con error."),
+      });
+      setTimeout(() => setRunFlash((cur) => (cur?.jobId === id ? null : cur)), 10_000);
+    }
+    prevRunningIdsRef.current = currentRunning;
+  }, [crons]);
+
   const runCron = useCallback(async (jobId: string) => {
+    // Hold `runningJob` for up to ~90s as a UX buffer: openclaw can take
+    // 30–60s to pick the job off the queue and touch the agent session,
+    // and without this the button would flick back to "▶ Ejecutar"
+    // immediately after the POST returns — making the user feel nothing
+    // happened. As soon as the server's `running` field appears for this
+    // job (next poll, within 5s), the effect below clears the buffer.
     setRunningJob(jobId);
     setRunFlash(null);
     try {
@@ -199,63 +264,34 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
         body: JSON.stringify({ jobId, action: "run" }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setRunFlash({ jobId, status: "ok", message: "Lanzada — refrescando cada 60 s (tarda ~4–5 min)." });
-        setPollingJob(jobId);
-      } else {
+      if (!res.ok) {
+        setRunningJob(null);
         setRunFlash({ jobId, status: "error", message: data.error || "No se pudo lanzar" });
         setTimeout(() => setRunFlash((cur) => (cur?.jobId === jobId ? null : cur)), 8000);
+        return;
       }
+      // Triggered OK. Refresh now; subsequent polls (5s) will pick up
+      // the server `running` payload.
+      fetchCronsOnly();
+      // Failsafe: clear buffer after 90s in case the session never
+      // surfaces (e.g. job got rejected by preflight before session creation).
+      setTimeout(() => {
+        setRunningJob((cur) => (cur === jobId ? null : cur));
+      }, 90_000);
     } catch (err) {
+      setRunningJob(null);
       setRunFlash({ jobId, status: "error", message: err instanceof Error ? err.message : "Error de red" });
       setTimeout(() => setRunFlash((cur) => (cur?.jobId === jobId ? null : cur)), 8000);
-    } finally {
-      setRunningJob(null);
     }
-  }, []);
+  }, [fetchCronsOnly]);
 
-  // Polling tras Ejecutar: refresca crons a 30s + cada 60s, hasta 5 min.
-  // El detector en el efecto siguiente para el polling cuando lastExecution cambia.
+  // Clear the "I just clicked ▶" buffer as soon as the server's `running`
+  // payload appears for that job — the badge takes over from there.
   useEffect(() => {
-    if (!pollingJob) return;
-    const fast = setTimeout(fetchCronsOnly, 30_000);
-    const interval = setInterval(fetchCronsOnly, 60_000);
-    const expire = setTimeout(() => {
-      const expiredJob = pollingJob;
-      setPollingJob(null);
-      setRunFlash({ jobId: expiredJob, status: "ok", message: "Sigue corriendo en segundo plano. Revisa más tarde." });
-      setTimeout(() => setRunFlash((cur) => (cur?.jobId === expiredJob ? null : cur)), 6000);
-    }, 5 * 60 * 1000);
-    return () => {
-      clearTimeout(fast);
-      clearInterval(interval);
-      clearTimeout(expire);
-    };
-  }, [pollingJob, fetchCronsOnly]);
-
-  // Detector "terminó": cuando crons se refresca y lastExecution.date del pollingJob cambia
-  // respecto al baseline capturado al iniciar, paramos polling y mostramos flash de éxito.
-  const pollingBaselineRef = useRef<{ jobId: string | null; date: string | null }>({ jobId: null, date: null });
-  useEffect(() => {
-    if (!pollingJob) {
-      pollingBaselineRef.current = { jobId: null, date: null };
-      return;
-    }
-    if (pollingBaselineRef.current.jobId !== pollingJob) {
-      pollingBaselineRef.current = {
-        jobId: pollingJob,
-        date: crons.find((c) => c.id === pollingJob)?.lastExecution?.date || null,
-      };
-      return;
-    }
-    const current = crons.find((c) => c.id === pollingJob)?.lastExecution?.date || null;
-    if (current && current !== pollingBaselineRef.current.date) {
-      const finishedJob = pollingJob;
-      setPollingJob(null);
-      setRunFlash({ jobId: finishedJob, status: "ok", message: "✓ Terminó — última ejecución actualizada." });
-      setTimeout(() => setRunFlash((cur) => (cur?.jobId === finishedJob ? null : cur)), 8000);
-    }
-  }, [crons, pollingJob]);
+    if (!runningJob) return;
+    const cron = crons.find((c) => c.id === runningJob);
+    if (cron?.running) setRunningJob(null);
+  }, [crons, runningJob]);
 
   const toggleCron = useCallback(async (jobId: string, enabled: boolean) => {
     await fetch("/api/content-engine/crons", {
@@ -370,7 +406,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             sub={`${configSummary?.newsPrompts || 0} pillars · lee news-prompts/P*.yml`}
             onEdit={() => onRequestEditor("news")}
             cron={getCron("News Monitor")}
-            isRunning={runningJob === getCron("News Monitor")?.id || pollingJob === getCron("News Monitor")?.id}
+            isRunning={!!getCron("News Monitor")?.running || runningJob === getCron("News Monitor")?.id}
             flash={runFlash?.jobId === getCron("News Monitor")?.id ? runFlash : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
@@ -381,7 +417,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             sub={`${configSummary?.monitoredProfiles || 0} perfiles · lee sources.json`}
             onEdit={() => onRequestEditor("profiles")}
             cron={getCron("Competitor Monitor")}
-            isRunning={runningJob === getCron("Competitor Monitor")?.id || pollingJob === getCron("Competitor Monitor")?.id}
+            isRunning={!!getCron("Competitor Monitor")?.running || runningJob === getCron("Competitor Monitor")?.id}
             flash={runFlash?.jobId === getCron("Competitor Monitor")?.id ? runFlash : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
@@ -392,7 +428,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             sub={`${configSummary?.keywordsSeed || 0} pillars · lee keywords-seed/P*.yml`}
             onEdit={() => onRequestEditor("keywords")}
             cron={getCron("Keyword Research")}
-            isRunning={runningJob === getCron("Keyword Research")?.id || pollingJob === getCron("Keyword Research")?.id}
+            isRunning={!!getCron("Keyword Research")?.running || runningJob === getCron("Keyword Research")?.id}
             flash={runFlash?.jobId === getCron("Keyword Research")?.id ? runFlash : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
@@ -403,7 +439,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             sub={`${configSummary?.paaQueries || 0} pillars · lee paa-queries/P*.yml`}
             onEdit={() => onRequestEditor("paa")}
             cron={getCron("PAA Monitor")}
-            isRunning={runningJob === getCron("PAA Monitor")?.id || pollingJob === getCron("PAA Monitor")?.id}
+            isRunning={!!getCron("PAA Monitor")?.running || runningJob === getCron("PAA Monitor")?.id}
             flash={runFlash?.jobId === getCron("PAA Monitor")?.id ? runFlash : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
@@ -476,7 +512,7 @@ export function ConfigurationPipeline({ slug, openChat, onRequestEditor, onOpenI
             title="Editorial Dispatch"
             sub="lee Cadencia + Canal + Ideas ready · envía al canal"
             cron={dispatchCron}
-            isRunning={runningJob === dispatchCron?.id}
+            isRunning={!!dispatchCron?.running || runningJob === dispatchCron?.id}
             flash={runFlash?.jobId === dispatchCron?.id ? runFlash : null}
             onRun={(id) => runCron(id)}
             onToggle={(id, on) => toggleCron(id, on)}
@@ -740,6 +776,20 @@ function DocAction({ icon, label, onClick }: { icon: string; label: string; onCl
 
 // ── CronRow (Investiga + Editorial Dispatch) ───────────────────
 
+/**
+ * Compact "Nm Ns" formatter for the live duration badge. Anything under
+ * a minute renders as plain seconds so the user sees the counter advance
+ * immediately on first tick instead of staring at "0m".
+ */
+function formatDuration(ms: number): string {
+  if (ms < 0) ms = 0;
+  const total = Math.floor(ms / 1000);
+  if (total < 60) return `${total}s`;
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return s === 0 ? `${m}m` : `${m}m ${s}s`;
+}
+
 function CronRow({
   icon, title, sub, cron, isRunning, flash, onRun, onToggle, onEdit,
 }: {
@@ -751,6 +801,17 @@ function CronRow({
   onToggle: (id: string, on: boolean) => void;
   onEdit?: () => void;
 }) {
+  const live = cron?.running ?? null;
+  const lastErr = cron?.lastExecution?.last_error ?? null;
+  const lastFinding = cron?.lastExecution?.last_finding ?? null;
+  const lastStatus = cron?.lastExecution?.status ?? null;
+  // Avoid double-rendering: while a live run is active the "last
+  // execution" pill refers to the *previous* run, so we hide finding/error
+  // text until the new run lands. Once `running` clears, the next poll
+  // surfaces the fresh finding/error.
+  const showLastFinding = !live && lastStatus === "ok" && lastFinding;
+  const showLastError = !live && lastStatus === "error" && lastErr;
+
   return (
     <ConfigRow
       icon={icon}
@@ -767,12 +828,34 @@ function CronRow({
               >⏰ {cron.scheduleHuman}</span>
             </>
           )}
-          {cron?.lastExecution ? (
+          {live ? (
+            <>
+              <span>·</span>
+              <span
+                className="font-heading uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-sc-pill border-2 inline-flex items-center gap-1"
+                style={{ background: "var(--sc-sage-100)", borderColor: "var(--sc-sage-500)", color: "var(--sc-ink)" }}
+                title={`Sesión activa · última actividad hace ${formatDuration(Date.now() - live.lastTouchMs)}`}
+              >
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ background: "var(--sc-sage-500)" }}
+                />
+                Corriendo · {formatDuration(Date.now() - live.startedAtMs)}
+              </span>
+            </>
+          ) : cron?.lastExecution ? (
             <>
               <span>·</span>
               <span className="font-mono text-[11px]" style={{ color: "var(--sc-fg-muted)" }}>
                 {formatLastRun(cron.lastExecution.date)}
               </span>
+              {lastStatus === "error" && (
+                <span
+                  className="font-heading uppercase text-[9px] tracking-wider px-1.5 py-0.5 rounded border"
+                  style={{ background: "var(--sc-brick-bg)", borderColor: "var(--sc-brick-500)", color: "var(--sc-brick-500)" }}
+                  title={lastErr || "Error desconocido"}
+                >✗ error</span>
+              )}
             </>
           ) : (
             <>
@@ -830,6 +913,33 @@ function CronRow({
             }}
           >
             {flash.status === "ok" ? "✓" : "✗"} {flash.message}
+          </div>
+        ) : showLastError ? (
+          // Persistent error band — visible across refreshes so the user
+          // doesn't have to dig into a tooltip to find why the run failed.
+          <div
+            className="px-2.5 py-1.5 rounded-sc-md border-2 text-xs"
+            style={{
+              background: "var(--sc-brick-bg)",
+              borderColor: "var(--sc-brick-500)",
+              color: "var(--sc-brick-500)",
+            }}
+          >
+            ✗ {lastErr}
+          </div>
+        ) : showLastFinding ? (
+          // Agent's 1-2 sentence summary of what it did. Truncated by CSS
+          // to two lines; full text lives in the recurring-tasks JSON.
+          <div
+            className="px-2.5 py-1.5 rounded-sc-md border text-xs line-clamp-2"
+            style={{
+              background: "var(--sc-paper-2)",
+              borderColor: "var(--sc-ink)",
+              color: "var(--sc-fg-soft)",
+            }}
+            title={lastFinding || undefined}
+          >
+            {lastFinding}
           </div>
         ) : undefined
       }
