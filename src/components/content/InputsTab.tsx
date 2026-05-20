@@ -1668,6 +1668,16 @@ function DispatchChannelForm({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Test-connection state: parallel to save state so a failed test
+  // doesn't block saving the config (and vice versa). `testResult`
+  // sticks around until the user changes the channel selection.
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    ok: boolean;
+    message: string;
+    suggest?: string;
+    tokenSource?: string;
+  } | null>(null);
 
   useEffect(() => {
     fetch(`/api/integrations/communication-options?slug=${slug}`)
@@ -1715,6 +1725,54 @@ function DispatchChannelForm({
     }
   };
 
+  // Posts a tiny test message to the selected channel using the same
+  // token-resolution path as the real Editorial Dispatch. We don't
+  // require the channel to be saved first — the operator may want to
+  // verify a candidate before committing it.
+  const testConnection = async () => {
+    if (!selectedTransport || !selectedChannelId) return;
+    setTesting(true);
+    setTestResult(null);
+    const channelName = channels.find((c) => c.id === selectedChannelId)?.name;
+    try {
+      const res = await fetch("/api/integrations/dispatch-channel-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          transport: selectedTransport,
+          channel_id: selectedChannelId,
+          channel_name: channelName,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setTestResult({
+          ok: true,
+          message: data.message || `Mensaje de prueba publicado en #${channelName || selectedChannelId}.`,
+          tokenSource: data.token_source,
+        });
+      } else {
+        setTestResult({
+          ok: false,
+          message: data.error || "Falló sin código",
+          suggest: data.suggest,
+          tokenSource: data.token_source,
+        });
+      }
+    } catch (e) {
+      setTestResult({ ok: false, message: (e as Error).message });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  // Clear stale test result when the user picks a different channel —
+  // a green check on the old channel would mislead.
+  useEffect(() => {
+    setTestResult(null);
+  }, [selectedTransport, selectedChannelId]);
+
   if (loading) return <p className="text-sm text-ink/70 py-8 text-center">Cargando opciones de canal...</p>;
 
   if (options.length === 0) {
@@ -1734,14 +1792,49 @@ function DispatchChannelForm({
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="font-heading text-base font-bold text-ink">📬 Canal de envío</h2>
-        <button
-          onClick={save}
-          disabled={saving || !selectedTransport || !selectedChannelId}
-          className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-rust text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 disabled:opacity-50 transition-transform"
-        >
-          {saving ? "Guardando..." : "💾 Guardar"}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={testConnection}
+            disabled={testing || saving || !selectedTransport || !selectedChannelId || selectedTransport !== "slack"}
+            className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-card text-ink border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 disabled:opacity-50 transition-transform"
+            title={selectedTransport === "slack"
+              ? "Publica un mensaje de prueba en el canal seleccionado para verificar que el token + permisos están OK"
+              : "Test sólo disponible para Slack — Discord se verifica al ejecutar Editorial Dispatch"}
+          >
+            {testing ? "Probando..." : "🧪 Probar conexión"}
+          </button>
+          <button
+            onClick={save}
+            disabled={saving || !selectedTransport || !selectedChannelId}
+            className="font-heading text-sm font-bold px-4 py-2 rounded-md bg-rust text-white border-2 border-ink shadow-comic-sm hover:-translate-y-0.5 disabled:opacity-50 transition-transform"
+          >
+            {saving ? "Guardando..." : "💾 Guardar"}
+          </button>
+        </div>
       </div>
+
+      {testResult && (
+        <div
+          className={cn(
+            "border-2 border-ink rounded-lg p-3 text-sm",
+            testResult.ok ? "bg-sage/15 text-ink" : "bg-rust text-white"
+          )}
+        >
+          <div className="font-heading font-bold">
+            {testResult.ok ? "✓ Conexión OK" : `✗ ${testResult.message}`}
+          </div>
+          {testResult.ok ? (
+            <div className="text-xs mt-1 opacity-80">
+              {testResult.message}
+              {testResult.tokenSource && (
+                <span className="ml-2 font-mono">· token: {testResult.tokenSource}</span>
+              )}
+            </div>
+          ) : testResult.suggest ? (
+            <div className="text-xs mt-1 opacity-95">{testResult.suggest}</div>
+          ) : null}
+        </div>
+      )}
 
       <div className="bg-amber-50 border-2 border-ink rounded-lg p-4 text-xs text-ink/80">
         <strong>La antena Editorial Dispatch</strong> enviará las candidatas diarias al canal configurado aquí.
