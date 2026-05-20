@@ -50,7 +50,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const token = signShareToken({ slug, docPath: resolved.canonicalPath });
   // Prefer explicit env config over request headers — behind a reverse
   // proxy (Tailscale, Cloudflare, ngrok) the Host header can be wrong.
-  // buildShareUrl handles the fallback chain MC_PUBLIC_URL → NEXTAUTH_URL.
+  // buildShareUrl handles the fallback chain BASE_URL → NEXTAUTH_URL.
   const url = buildShareUrl(token);
 
   return res.status(200).json({

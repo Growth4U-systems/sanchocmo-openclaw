@@ -109,9 +109,10 @@ Si no hay manifest:
   ```
   ⚠ Esta brand no tiene manifest visual todavia.
   Lanza el bootstrap del catalogo desde T07:
-  https://sancho-cmo.taild48df2.ts.net/dashboard/{slug}/projects/P14-Content-Engine/tasks/{T07-id}
+  <APP_BASE>/dashboard/{slug}/tasks/{T07-id}
   Cuando la skill termine vuelve aqui y genero la imagen.
   ```
+  (`<APP_BASE>` = el host pre-resuelto de `workspace-sancho/TOOLS.md` quitando el sufijo `/mc`. NUNCA inventes uno distinto.)
 
 Con manifest cargado:
 - `templates[<id>]` te dice si una plantilla existe antes de pedir
@@ -137,10 +138,11 @@ Mensaje canonico al usuario:
 ⚠ La plantilla 'newsletter-header' no esta en el catalogo de {slug}.
 Pidesela al [brand]-visual-generator desde T07:
 
-https://sancho-cmo.taild48df2.ts.net/dashboard/{slug}/projects/P14-Content-Engine/tasks/{T07-id}
+<APP_BASE>/dashboard/{slug}/tasks/{T07-id}
 
 Una vez la anyada al manifest vuelvo aqui y te genero la imagen.
 ```
+(`<APP_BASE>` = el host pre-resuelto de `workspace-sancho/TOOLS.md` quitando el sufijo `/mc`. NUNCA inventes uno distinto.)
 
 (El task-id concreto de T07 lo lees del proyecto P14-Content-Engine
 del cliente; el formato suele ser `P14-T07` o el equivalente que la

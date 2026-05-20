@@ -105,17 +105,16 @@ export function verifyShareToken(token: string): SharePayload | null {
 /**
  * Build the public share URL for a given token. Resolution order:
  *   1. Explicit `origin` argument (e.g., derived from request headers)
- *   2. `MC_PUBLIC_URL` env var — explicit deploy config
- *   3. `NEXT_PUBLIC_MC_BASE_URL` — alternate explicit name
- *   4. `NEXTAUTH_URL` — automatic fallback. Always set in MC because
- *      NextAuth requires it for callbacks. Same domain we want for shares.
- *   5. Empty string — relative URL (only useful in dev with same-origin)
+ *   2. `BASE_URL` — canonical app URL (documented in `.env.example`,
+ *      set by entrypoint, single source for all deployment URLs)
+ *   3. `NEXTAUTH_URL` — safety net (NextAuth always sets it; entrypoint
+ *      also falls back from BASE_URL)
+ *   4. Empty string — relative URL (only useful in dev with same-origin)
  */
 export function buildShareUrl(token: string, origin?: string): string {
   const base =
     origin ||
-    process.env.MC_PUBLIC_URL ||
-    process.env.NEXT_PUBLIC_MC_BASE_URL ||
+    process.env.BASE_URL ||
     process.env.NEXTAUTH_URL ||
     "";
   const path = `/share/${token}`;

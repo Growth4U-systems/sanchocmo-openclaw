@@ -32,6 +32,7 @@ import yaml from "js-yaml";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { logActivity } from "@/lib/data/activity-log";
+import { getSlackBotToken } from "@/lib/data/integrations";
 
 interface DispatchChannelConfig {
   transport: "slack" | "discord";
@@ -90,7 +91,11 @@ function loadBrandEnv(slug: string): Record<string, string> {
 }
 
 function getMcBaseUrl(_req: NextApiRequest): string {
-  return process.env.MC_PUBLIC_URL || "https://sancho-cmo.taild48df2.ts.net:8443";
+  const url = process.env.BASE_URL || process.env.NEXTAUTH_URL;
+  if (!url) {
+    throw new Error("No app base URL configured — set BASE_URL (canonical) or NEXTAUTH_URL");
+  }
+  return url.replace(/\/+$/, "");
 }
 
 // Resolve pillar_name from content/configs/news-prompts/{P}.yml
@@ -111,7 +116,7 @@ function buildIdeaBlocks(idea: Idea, slug: string, mcUrl: string, pillarName: st
   const conf = Math.round((idea.pov_confidence || 0) * 100);
   const slugUpper = slug.toUpperCase();
   const taskLink = projectId && taskId
-    ? ` · <${mcUrl}/dashboard/${slug}/projects/${projectId}/tasks/${taskId}|📋 Tarea>`
+    ? ` · <${mcUrl}/dashboard/${slug}/tasks/${taskId}|📋 Tarea>`
     : "";
   const title = getIdeaTitle(idea);
   const cleanAngle = stripPovPrefix(idea.angle_draft || "");
@@ -214,7 +219,7 @@ function buildRootMessage(
     })
     .join(" · ");
   const taskLink = projectId && taskId
-    ? ` · <${mcUrl}/dashboard/${slug}/projects/${projectId}/tasks/${taskId}|📋 Tarea>`
+    ? ` · <${mcUrl}/dashboard/${slug}/tasks/${taskId}|📋 Tarea>`
     : "";
   const text = `📬 Editorial Dispatch — ${dateLabel} · ${totalIdeas} idea${totalIdeas === 1 ? "" : "s"}`;
   const blocks: unknown[] = [
@@ -280,9 +285,40 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const mcUrl = getMcBaseUrl(req);
 
   if (dispatch.transport === "slack") {
-    const env = loadBrandEnv(slug);
-    const token = env[`${slug.toUpperCase()}_SLACK_BOT_TOKEN`] || env.SLACK_BOT_TOKEN;
-    if (!token) return res.status(400).json({ error: "Slack token not in env" });
+    // Token lookup order (must match slack/list-channels.ts so the UI's
+    // "Slack connected" state stays consistent with what dispatch can use):
+    //   1) integrations.json `slack.bot_token_encrypted` — OAuth callback.
+    //   2) brand/{slug}/.env — legacy POST /api/integrations form flow,
+    //      either {SLUG_UPPER}_SLACK_BOT_TOKEN or plain SLACK_BOT_TOKEN.
+    //   3) process.env — workspace-wide token shared by every brand.
+    //      Set in container env (SLACK_BOT_TOKEN) for the staging/prod
+    //      Slack workspace; this is what makes Slack show "connected"
+    //      in the admin UI even when no per-brand OAuth ran.
+    const slugUpper = slug.toUpperCase();
+    let token: string | null = null;
+    try {
+      token = getSlackBotToken(slug);
+    } catch {
+      token = null;
+    }
+    if (!token) {
+      const env = loadBrandEnv(slug);
+      token =
+        env[`${slugUpper}_SLACK_BOT_TOKEN`] ||
+        env.SLACK_BOT_TOKEN ||
+        process.env[`${slugUpper}_SLACK_BOT_TOKEN`] ||
+        process.env.SLACK_BOT_TOKEN ||
+        null;
+    }
+    if (!token) {
+      return res.status(400).json({
+        error:
+          `Slack bot token not configured for ${slug}. Either reconnect Slack at ` +
+          `/dashboard/admin/settings?tab=apis (OAuth, writes encrypted to integrations.json), ` +
+          `add ${slugUpper}_SLACK_BOT_TOKEN to brand/${slug}/.env, or set the ` +
+          `workspace-wide SLACK_BOT_TOKEN env var.`,
+      });
+    }
 
     const results: { channel: string; ok: boolean; error?: string; ts?: string; ideaCount: number }[] = [];
 

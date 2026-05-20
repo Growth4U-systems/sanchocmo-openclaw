@@ -10,7 +10,10 @@ from pathlib import Path
 
 OPENCLAW_HOME = os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw"))
 BRAND_DIR = Path(os.path.join(OPENCLAW_HOME, "workspace-sancho", "brand"))
-MC_BASE_URL = os.environ.get("MC_BASE_URL", "https://sancho-cmo.taild48df2.ts.net/mc")
+_app_base = (os.environ.get("BASE_URL") or os.environ.get("NEXTAUTH_URL") or "").rstrip("/")
+MC_BASE_URL = os.environ.get("MC_BASE_URL") or (f"{_app_base}/mc" if _app_base else "")
+if not MC_BASE_URL:
+    raise RuntimeError("MC_BASE_URL not configured — set MC_BASE_URL, BASE_URL, or NEXTAUTH_URL")
 
 def read_file(path):
     try:

@@ -32,7 +32,7 @@ brand/{slug}/
 > ⚠️ **Cada tarea tiene su propia carpeta y playbook.** NUNCA meter todo el detalle en un solo fichero del proyecto.
 > El playbook del proyecto es solo un resumen con links a los playbooks de tareas.
 > En Discord, el hilo de cada tarea linka a su playbook individual en MC:
-> `{MC_BASE}/docs/brand/{slug}/projects/P{XX}/T{YY}/playbook.md`
+> `<MC_BASE>/portal/{mcToken}/docs/brand/{slug}/projects/P{XX}/T{YY}/playbook.md`
 
 ---
 
@@ -335,7 +335,7 @@ Aumentar conversion rate de 0.5% a 2.0%
 Los archivos en `brand/{slug}/strategic-plan/` y `brand/{slug}/projects/` son accesibles vía MC con token del cliente:
 
 ```
-{MC_BASE_URL}/portal/{mcToken}/docs/strategic-plan/current.md
-{MC_BASE_URL}/portal/{mcToken}/docs/projects/registry.json
-{MC_BASE_URL}/portal/{mcToken}/docs/projects/P01/project.json
+<MC_BASE>/portal/{mcToken}/docs/strategic-plan/current.md
+<MC_BASE>/portal/{mcToken}/docs/projects/registry.json
+<MC_BASE>/portal/{mcToken}/docs/projects/P01/project.json
 ```

@@ -142,4 +142,4 @@ brand/{{slug}}/market-and-us/self/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `{MC_BASE_URL}/docs/brand/{slug}/market-and-us/self/current.md`
+4. Link: `<MC_BASE>/docs/brand/{slug}/market-and-us/self/current.md`

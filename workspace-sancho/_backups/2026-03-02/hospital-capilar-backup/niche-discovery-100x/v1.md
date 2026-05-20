@@ -128,7 +128,7 @@
 
 ### Criterios aplicados
 
-**SWOT Filter**: Basado en [SWOT v2](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/swot/current.md)
+**SWOT Filter**: Basado en [SWOT v2](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/swot/current.md)
 - S1: Calidad médica 4.8/5
 - S2: Continuidad médico-paciente
 - S5: Portfolio tratamientos propios (CRT/HRT)
@@ -541,11 +541,11 @@ Pain
 - [NIH — Psychosocial impact of hair loss](https://pmc.ncbi.nlm.nih.gov/articles/PMC10084176/)
 
 ### Brand files cruzados
-- [SWOT v2](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/swot/current.md)
-- [Competitor Intelligence v3](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md)
-- [Market Intelligence v4](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market/current.md)
-- [Company Context](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/company-context/current.md)
-- [OPE Canvas v2](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/ope-canvas/current.md)
+- [SWOT v2](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/swot/current.md)
+- [Competitor Intelligence v3](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md)
+- [Market Intelligence v4](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market/current.md)
+- [Company Context](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/company-context/current.md)
+- [OPE Canvas v2](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/ope-canvas/current.md)
 
 ---
 

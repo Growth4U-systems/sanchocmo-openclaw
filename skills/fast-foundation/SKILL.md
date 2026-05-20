@@ -207,12 +207,18 @@ Cada skill full versiona (`v{N}.md` + `history.json`) **por separado** — permi
 
 `brand/{slug}/company-brief/current.md` es la **vista consolidada full**. La regenera el orquestador via `scripts/regenerate-company-brief.py` cada vez que una skill full (company-context, business-model-audit, budget-constraints) aprueba — el script lee el `current.md` de cada standalone cuando existe y cae a `lite.md` por sección si no, marcando el resultado como `mode: full` o `mode: mixed` según el caso. Mientras ninguna standalone sea full, el script escribe a `lite.md` (no toca `current.md`).
 
-**Quién regenera el merge view:**
+`brand/{slug}/company-brief/current.md` es la **vista consolidada full**. La regenera el orquestador (o cualquier skill autorizada) cuando los 3 standalones tienen `current.md` (es decir, las 3 skills full corrieron). Hasta entonces, consumers que necesitan la foto completa deben leer los `current.md` standalone directamente y caer a `lite.md` solo si saben qué están haciendo.
 
 - **fast-foundation** (al final del intake inicial): escribe `company-brief/lite.md` desde los 3 seeds lite.
 - **foundation-orchestrator**: ejecuta `scripts/regenerate-company-brief.py {slug}` al aprobar cualquiera de las 3 skills full standalones → reemite `company-brief/current.md` (si hay ≥1 full) o `company-brief/lite.md` (si todo sigue siendo seed).
 
 > Esto resuelve el "Stale view conocido" anterior: el merge ya no queda desactualizado al aprobar un standalone full.
+
+**Quién regenera el merge view lite:**
+
+Solo **fast-foundation** (al final del flujo inicial de intake, desde los 3 seeds lite).
+
+> ⚠️ **Stale view**: si una skill full corre y actualiza un standalone `current.md`, el merge view lite (`company-brief/lite.md`) queda desactualizado. Es lo esperado — el lite.md es un seed inicial, no una vista viva. Consumers que necesitan info fresca leen el standalone directamente.
 
 **Formato del merge view lite (`company-brief/lite.md`):**
 ```markdown

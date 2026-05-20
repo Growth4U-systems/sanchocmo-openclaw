@@ -116,7 +116,7 @@ Después del Self-QA, genera el bloque `## Slide Summary` al final del informe (
 ### 5. Guardar con versionado
 - Ruta: `brand/{slug}/market-and-us/market/current.md`
 - Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
-- Link al usuario: `{MC_BASE_URL}/docs/brand/{slug}/market-and-us/market/current.md`
+- Link al usuario: `<MC_BASE>/docs/brand/{slug}/market-and-us/market/current.md`
 
 ---
 
@@ -166,4 +166,4 @@ brand/{{slug}}/market-and-us/market/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `{MC_BASE_URL}/docs/brand/{slug}/market-and-us/market/current.md`
+4. Link: `<MC_BASE>/docs/brand/{slug}/market-and-us/market/current.md`

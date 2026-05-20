@@ -32,7 +32,7 @@ export default function ContentTaskRedirectPage() {
     if (!ct || !slug) return;
     const channel = ct.target_channels?.[0] || "linkedin";
     router.replace(
-      `/dashboard/${slug}/projects/${projectId}/tasks/${taskId}/content/${contentTaskId}/draft/${channel}`,
+      `/dashboard/${slug}/tasks/${projectId}/sub/${taskId}/content/${contentTaskId}/draft/${channel}`,
     );
   }, [ct, slug, projectId, taskId, contentTaskId, router]);
 
@@ -47,7 +47,7 @@ export default function ContentTaskRedirectPage() {
         ) : !ct ? (
           <>
             <Link
-              href={`/dashboard/${slug}/projects/${projectId}/tasks/${taskId}`}
+              href={`/dashboard/${slug}/tasks/${taskId}`}
               className="text-sm text-rust hover:underline"
             >
               ← Volver a la task

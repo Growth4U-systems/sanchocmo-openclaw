@@ -21,6 +21,9 @@ jobs:
       name: production
       url: ${{ vars.HEALTH_URL }}
     steps:
+      - name: Checkout (need scripts/upsert-env.py for scp)
+        uses: actions/checkout@v4
+
       - name: Resolve target tag
         id: tag
         run: |
@@ -40,22 +43,180 @@ jobs:
 
       - name: Deploy via SSH
         env:
+          # ── Deploy infra ──────────────────────────────────────────────
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           TAG: ${{ steps.tag.outputs.tag }}
+          # ── Tier 1 — Auth & infra secrets ─────────────────────────────
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          OD_API_TOKEN: ${{ secrets.OD_API_TOKEN }}
+          OPENCLAW_GATEWAY_TOKEN: ${{ secrets.OPENCLAW_GATEWAY_TOKEN }}
+          GTM_OS_API_TOKEN: ${{ secrets.GTM_OS_API_TOKEN }}
+          YALC_API_TOKEN: ${{ secrets.YALC_API_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+          SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          # ── Tier 2 — System APIs ──────────────────────────────────────
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+          DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+          DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
+          WAVESPEED_API_KEY: ${{ secrets.WAVESPEED_API_KEY }}
+          DUMPLING_API_KEY: ${{ secrets.DUMPLING_API_KEY }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
+          METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
+          SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
+          # ── Tier 3 — Skill APIs ───────────────────────────────────────
+          APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+          GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
+          GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
+          UNIPILE_API_KEY: ${{ secrets.UNIPILE_API_KEY }}
+          UNIPILE_DSN: ${{ secrets.UNIPILE_DSN }}
+          DATAFORSEO_API_KEY: ${{ secrets.DATAFORSEO_API_KEY }}
+          # ── Variables (non-sensitive config) ─────────────────────────
+          BASE_URL: ${{ vars.BASE_URL }}
+          NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
+          NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          OD_WEB_URL: ${{ vars.OD_WEB_URL }}
+          OD_ALLOWED_ORIGINS: ${{ vars.OD_ALLOWED_ORIGINS }}
+          OPEN_DESIGN_IMAGE: ${{ vars.OPEN_DESIGN_IMAGE }}
+          MC_CHAT_GATEWAY: ${{ vars.MC_CHAT_GATEWAY }}
+          SLACK_REDIRECT_URI: ${{ vars.SLACK_REDIRECT_URI }}
         run: |
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG bash -s" <<'EOF'
+          # Build payload identically to deploy-staging.yml — same key list.
+          # Empty secrets/vars are filtered out so an under-populated
+          # `production` Environment is a safe no-op (prod is stale as of
+          # 2026-05; staging is de-facto prod until prod is revived).
+          PAYLOAD_B64=$(python3 - <<'PY'
+          import os, json, base64
+          KEYS = [
+              # Tier 1 — Auth & infra
+              "NEXTAUTH_SECRET", "ENCRYPTION_KEY", "DATABASE_URL",
+              "SUPABASE_SERVICE_ROLE_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+              "OD_API_TOKEN", "OPENCLAW_GATEWAY_TOKEN", "GTM_OS_API_TOKEN",
+              "YALC_API_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
+              "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
+              # Tier 2 — System APIs
+              "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
+              "XAI_API_KEY", "MINIMAX_API_KEY", "BRAVE_API_KEY", "APIFY_API_KEY",
+              "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
+              "NOTION_API_KEY", "SUPABASE_ANON_KEY", "FAL_API_KEY",
+              "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN",
+              "INSTANTLY_API_KEY", "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
+              # Tier 3 — Skill APIs
+              "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",
+              "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID", "PAGESPEED_API_KEY",
+              "UNIPILE_API_KEY", "UNIPILE_DSN", "DATAFORSEO_API_KEY",
+              # Variables (non-sensitive config)
+              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL", "SUPABASE_URL",
+              "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
+              "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
+          ]
+          out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
+          print(base64.b64encode(json.dumps(out).encode()).decode())
+          PY
+          )
+
+          scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
+
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching tags…"
             git fetch --tags --prune
+
+            # See deploy-staging.yml for context: brand/<slug>/ folders are
+            # transitioning from tracked to untracked-runtime. Backup before
+            # checkout so the transition deploy doesn't wipe live client data.
+            # No-op after the transition (folders are gitignored, untouched).
+            BRAND_BACKUP_DIR="$(mktemp -d -t sancho-brand-bk-XXXXXX)"
+            if [ -d workspace-sancho/brand ]; then
+              echo "▶ Backing up workspace-sancho/brand/ runtime data to $BRAND_BACKUP_DIR…"
+              for d in workspace-sancho/brand/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                [ "$name" = "example" ] && continue
+                [ "$name" = "_archived" ] && continue
+                cp -a "$d" "$BRAND_BACKUP_DIR/"
+              done
+            fi
+
+            # Apply GitHub `production` Environment to ~/.openclaw/.env.
+            # When unpopulated (current state), this is a no-op — empty
+            # secrets/vars are filtered out by the payload builder.
+            ENV_HASH_BEFORE=$(sha256sum .env 2>/dev/null | cut -d' ' -f1 || echo "missing")
+            if [ -n "${PAYLOAD_B64:-}" ]; then
+              echo "▶ Upserting envs from GitHub \`production\` Environment…"
+              echo "$PAYLOAD_B64" | python3 /tmp/upsert-env.py .env
+            fi
+            ENV_HASH_AFTER=$(sha256sum .env | cut -d' ' -f1)
+            ENV_CHANGED=0
+            if [ "$ENV_HASH_BEFORE" != "$ENV_HASH_AFTER" ]; then
+              ENV_CHANGED=1
+              echo "▶ .env content changed (will force-recreate sanchocmo)"
+            fi
+            rm -f /tmp/upsert-env.py
+
             echo "▶ Checking out $TAG…"
             git checkout "$TAG"
             export GIT_COMMIT="$(git rev-parse HEAD)"
+
+            # Restore brand/<slug>/ files that the checkout removed.
+            # `cp -a -n` merges any backup file that isn't already in target,
+            # so untracked-runtime data (chat, projects) survives next to
+            # restored-tracked data (foundation-state, brand-book). Idempotent.
+            if [ -d "$BRAND_BACKUP_DIR" ]; then
+              for d in "$BRAND_BACKUP_DIR"/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                target="workspace-sancho/brand/$name"
+                if [ -d "$target" ] && [ -n "$(ls -A "$target" 2>/dev/null || true)" ]; then
+                  before=$(find "$target" -type f 2>/dev/null | wc -l)
+                  cp -a -n "$d." "$target/" 2>/dev/null || true
+                  after=$(find "$target" -type f 2>/dev/null | wc -l)
+                  diff=$((after - before))
+                  if [ "$diff" -gt 0 ]; then
+                    echo "▶ Merged $diff missing file(s) into workspace-sancho/brand/$name from backup"
+                  fi
+                else
+                  echo "▶ Restoring workspace-sancho/brand/$name from backup…"
+                  mkdir -p "$target"
+                  cp -a "$d." "$target/"
+                fi
+              done
+              rm -rf "$BRAND_BACKUP_DIR"
+            fi
+
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose build --pull
-            docker compose up -d
+            UP_ARGS=""
+            if [ "$ENV_CHANGED" = "1" ]; then
+              UP_ARGS="--force-recreate"
+            fi
+            docker compose up -d $UP_ARGS
             docker compose ps
           EOF
 

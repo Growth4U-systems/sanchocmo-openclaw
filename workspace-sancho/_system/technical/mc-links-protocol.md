@@ -3,7 +3,9 @@
 > Todos los links a Mission Control DEBEN incluir un token de acceso. URLs sin token devuelven 403.
 
 ## URL Base
-Lee de `_system/instance.json` → campo `mc_base_url`
+- `{MC_BASE_URL}` se reemplaza al arranque del contenedor (ver `docker/inject-env-vars.sh`) por `${BASE_URL}/mc` — la URL canónica del deployment.
+- Si en este documento ves `{MC_BASE_URL}` literal (sin reemplazar), la inyección no corrió: **no generes el link**, avisa al usuario que la instancia no está configurada.
+- **NUNCA inventes un hostname distinto** al que aparece en los ejemplos de este doc — el host que ves es el host pre-resuelto para este deployment.
 
 ## Tipos de Acceso
 

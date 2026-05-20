@@ -47,4 +47,6 @@ If no visual identity exists, defaults to a neutral dark preset.
 ## Output
 
 Files are saved to `brand/{slug}/presentations/` and served via MC at:
-`https://sancho-cmo.taild48df2.ts.net/mc/brand/{slug}/presentations/{name}.html`
+`<MC_BASE>/portal/{mcToken}/brand/{slug}/presentations/{name}.html`
+
+> `<MC_BASE>` is the pre-resolved host shown in `workspace-sancho/PROTOCOLS.md` / `TOOLS.md`. `{mcToken}` comes from `clients.json`. Never hardcode the hostname.

@@ -18,3 +18,13 @@ export function openclawRuntimeFile(...segments: string[]): string {
 
 export const cronJobsFile = () => openclawRuntimeFile("cron", "jobs.json");
 export const cronJobsStateFile = () => openclawRuntimeFile("cron", "jobs-state.json");
+
+// Agent session store. We default to `sancho` because every cron job runs
+// under that agent (see `agentId: "sancho"` in cron templates); if a future
+// brand uses a different agent we can derive the path from the job's
+// agentId. Sessions live in:
+//   <OPENCLAW_HOME>/.openclaw/agents/<agent>/sessions/sessions.json
+// Each entry's `updatedAt` is touched on every agent message, so it
+// doubles as a heartbeat for in-flight runs.
+export const agentSessionsFile = (agent = "sancho") =>
+  openclawRuntimeFile("agents", agent, "sessions", "sessions.json");

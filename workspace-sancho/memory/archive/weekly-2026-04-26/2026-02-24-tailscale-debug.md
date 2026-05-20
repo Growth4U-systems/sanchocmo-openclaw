@@ -17,7 +17,7 @@ user: Conversation info (untrusted metadata):
 assistant: 
 
 502 — el proxy de Tailscale llega pero el servidor HTTP no responde. El `https+insecure` espera HTTPS en localhost. Cambio a HTTP plano.
-assistant: Ahora sí. Recarga: **https://sancho-cmo.taild48df2.ts.net/**
+assistant: Ahora sí. Recarga: **https://staging.sanchocmo.ai/**
 user: Conversation info (untrusted metadata):
 ```json
 {

@@ -9,7 +9,7 @@
 ## Decisiones
 - **2026-02-24**: Esta instancia es la **versión test** de SanchoCMO. Objetivo: iterar, versionar, aprender.
 - **2026-02-24**: Foundation se hace siempre desde el **Discord del cliente**, no desde webchat.
-- **2026-02-24**: Google Workspace autenticado (`alfonso@growth4u.io`), Notion API key configurada, Tailscale serve activo (`https://sancho-cmo.taild48df2.ts.net`), auth por password.
+- **2026-02-24**: Google Workspace autenticado (`alfonso@growth4u.io`), Notion API key configurada, Tailscale serve activo (`https://staging.sanchocmo.ai`), auth por password.
 - **2026-03-02**: Reset completo de datos de Hospital Capilar. Backup en `_backups/2026-03-02/`. Motivo: Foundation hecha sin seguir DAG, GTM prematuro. Empezar de cero con proceso correcto.
 
 ## Learnings
@@ -18,7 +18,7 @@
 
 ## Sistema — Estado Actual (actualizado 2026-03-02)
 - **Gateway**: Running, LaunchAgent, ws://127.0.0.1:18789
-- **Tailscale**: serve en `https://sancho-cmo.taild48df2.ts.net`, auth por password
+- **Tailscale**: serve en `https://staging.sanchocmo.ai`, auth por password
 - **Discord**: Bot SanchoCMO conectado, allowlist Alfonso (1334604955687977042)
 - **Google Workspace**: gog CLI autenticado (alfonso@growth4u.io) — todos los servicios
 - **Notion**: API key configurada en entorno

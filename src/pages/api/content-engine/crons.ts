@@ -12,6 +12,7 @@ import path from "path";
 import { spawn } from "child_process";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { cronJobsFile, cronJobsStateFile } from "@/lib/data/openclaw-paths";
+import { getRunningCronJobs } from "@/lib/data/openclaw-sessions";
 
 const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
 
@@ -65,8 +66,22 @@ function loadJobsState(): Record<string, { state?: { lastRunAtMs?: number; lastR
   }
 }
 
-/** Get the last execution. Prefers per-day recurring-tasks JSON, falls back to jobs-state.json. */
-function getLastExecution(slug: string, cronName: string, jobId: string): { date: string; status: string } | null {
+/** Get the last execution. Prefers per-day recurring-tasks JSON (rich:
+ *  surfaces last_finding/last_error written by the agent), falls back to
+ *  jobs-state.json (always present, but only carries the openclaw-side
+ *  status + delivery error — not the agent's human-readable summary). */
+interface LastExecution {
+  date: string;
+  status: string;
+  /** 1-2 sentence summary the agent wrote in recurring-tasks/{date}.json,
+   *  e.g. "5 ideas nuevas hoy. Highlight: idea-... pov_confidence 0.95." */
+  last_finding?: string | null;
+  /** Error message from the cron runner or the agent — preferred over a
+   *  generic "error" status pill. */
+  last_error?: string | null;
+}
+
+function getLastExecution(slug: string, cronName: string, jobId: string): LastExecution | null {
   // 1) Try recurring-tasks (richer info: status from cron output)
   const BASE = path.join(process.env.HOME || "", ".openclaw", "workspace-sancho");
   const nameMap: Record<string, string> = {
@@ -77,6 +92,7 @@ function getLastExecution(slug: string, cronName: string, jobId: string): { date
     "PAA Monitor": "content-paa-monitor",
     "Keyword Research": "content-keyword-research",
     "POV Bank Refresh": "content-pov-bank",
+    "Idea Dedupe Audit": "content-dedupe-audit",
   };
   const baseName = cronName.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
   const folderName = nameMap[baseName];
@@ -86,8 +102,14 @@ function getLastExecution(slug: string, cronName: string, jobId: string): { date
       const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json")).sort().reverse();
       if (files.length > 0) {
         try {
-          const data = JSON.parse(fs.readFileSync(path.join(dir, files[0]), "utf-8"));
-          return { date: data.date || files[0].replace(".json", ""), status: data.status || "ok" };
+          const data = JSON.parse(fs.readFileSync(path.join(dir, files[0]), "utf-8")) as
+            { date?: string; status?: string; last_finding?: string; error?: string };
+          return {
+            date: data.date || files[0].replace(".json", ""),
+            status: data.status || "ok",
+            last_finding: data.last_finding ?? null,
+            last_error: data.error ?? null,
+          };
         } catch {
           return { date: files[0].replace(".json", ""), status: "unknown" };
         }
@@ -95,12 +117,14 @@ function getLastExecution(slug: string, cronName: string, jobId: string): { date
     }
   }
 
-  // 2) Fallback to runtime jobs-state.json (always written by the cron runner)
+  // 2) Fallback to runtime jobs-state.json (always written by the cron
+  // runner; carries delivery / preflight errors that never reach the agent).
   const state = loadJobsState()[jobId];
   if (state?.state?.lastRunAtMs) {
     return {
       date: new Date(state.state.lastRunAtMs).toISOString(),
       status: state.state.lastRunStatus || "unknown",
+      last_error: (state.state as { lastError?: string }).lastError ?? null,
     };
   }
   return null;
@@ -123,30 +147,50 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!slug) return res.status(400).json({ error: "Missing slug" });
 
     const data = loadJobs();
-    const contentJobs = data.jobs
+    const matchedJobs = data.jobs
       .filter((j) => j.name.startsWith("Content:"))
       .filter((j) => {
         // Match jobs for this slug (check if the prompt mentions the slug)
         const msg = j.payload?.message || "";
         return msg.includes(`brand/${slug}/`) || msg.includes(`para ${slug}`) || j.name.toLowerCase().includes(slug.toLowerCase());
-      })
-      .map((j) => {
-        const baseName = j.name.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
-        return {
-          id: j.id,
-          name: j.name,
-          baseName,
-          description: DESCRIPTIONS[baseName] || "",
-          enabled: j.enabled,
-          schedule: j.schedule.expr,
-          scheduleHuman: humanizeCron(j.schedule.expr),
-          timezone: j.schedule.tz,
-          model: j.payload?.model || "unknown",
-          lastExecution: getLastExecution(slug, j.name, j.id),
-          promptPreview: (j.payload?.message || "").slice(0, 200) + "...",
-          promptFull: j.payload?.message || "",
-        };
       });
+
+    // Build a {jobId → lastEnd} map first so getRunningCronJobs can
+    // distinguish a fresh session touch (in-flight) from a session that
+    // was just touched by the run that already finished.
+    const jobsState = loadJobsState();
+    const jobsEndedAt: Record<string, { lastRunAtMs?: number; lastDurationMs?: number }> = {};
+    for (const j of matchedJobs) {
+      const s = jobsState[j.id]?.state as { lastRunAtMs?: number; lastDurationMs?: number } | undefined;
+      jobsEndedAt[j.id] = { lastRunAtMs: s?.lastRunAtMs, lastDurationMs: s?.lastDurationMs };
+    }
+    const runningMap = getRunningCronJobs(jobsEndedAt);
+
+    const contentJobs = matchedJobs.map((j) => {
+      const baseName = j.name.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
+      const live = runningMap.get(j.id);
+      return {
+        id: j.id,
+        name: j.name,
+        baseName,
+        description: DESCRIPTIONS[baseName] || "",
+        enabled: j.enabled,
+        schedule: j.schedule.expr,
+        scheduleHuman: humanizeCron(j.schedule.expr),
+        timezone: j.schedule.tz,
+        model: j.payload?.model || "unknown",
+        lastExecution: getLastExecution(slug, j.name, j.id),
+        running: live
+          ? {
+              startedAtMs: live.startedAtMs,
+              lastTouchMs: live.lastTouchMs,
+              sessionId: live.sessionId,
+            }
+          : null,
+        promptPreview: (j.payload?.message || "").slice(0, 200) + "...",
+        promptFull: j.payload?.message || "",
+      };
+    });
 
     const stats = {
       total: contentJobs.length,

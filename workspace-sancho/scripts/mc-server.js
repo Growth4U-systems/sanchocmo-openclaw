@@ -9,6 +9,24 @@ const BASE = path.join(__dirname, '..');
 const MC_DATA_DIR = path.join(BASE, 'memory', 'mc');
 const API_HEALTH_FILE = path.join(BASE, 'memory', 'state', 'api-health.json');
 const CLIENTS_FILE = path.join(BASE, 'clients.json');
+const INSTANCE_FILE = path.join(BASE, '_system', 'instance.json');
+
+// Resolve MC base URL. Source of truth: `_system/instance.json:mc_base_url`
+// (same field Sancho reads per `_system/technical/mc-links-protocol.md`).
+// Env fallback uses BASE_URL (canonical per `.env.example`, set by
+// `docker/inject-env-vars.sh`) with NEXTAUTH_URL as a safety net.
+// Returns null if nothing is set.
+function resolveMcBaseUrl() {
+  try {
+    if (fs.existsSync(INSTANCE_FILE)) {
+      const inst = JSON.parse(fs.readFileSync(INSTANCE_FILE, 'utf-8'));
+      const v = inst && typeof inst.mc_base_url === 'string' ? inst.mc_base_url.trim() : '';
+      if (v && !v.startsWith('TODO')) return v.replace(/\/+$/, '');
+    }
+  } catch {}
+  const envApp = (process.env.BASE_URL || process.env.NEXTAUTH_URL || '').replace(/\/+$/, '');
+  return envApp ? `${envApp}/mc` : null;
+}
 let _clientCreationInProgress = false;
 
 const MIME = {
@@ -4015,7 +4033,12 @@ function notifyProjectChange(slug, change) {
   if (!client) return;
 
   const mcToken = client.mcToken;
-  const mcBase = `https://sancho-cmo.taild48df2.ts.net/mc/portal/${mcToken}`;
+  const mcBaseUrl = resolveMcBaseUrl();
+  if (!mcBaseUrl) {
+    console.warn('[notifyProjectChange] mc_base_url not configured (instance.json / BASE_URL / NEXTAUTH_URL) — skipping notification links');
+    return;
+  }
+  const mcBase = `${mcBaseUrl}/portal/${mcToken}`;
   const statusEmoji = { completed:'✅', done:'✅', archived:'📦', cancelled:'❌', blocked:'⛔', 'in-progress':'🔧', todo:'📋', ready:'📋' };
   const statusLabel = { completed:'Completado', done:'Completado', archived:'Archivado', cancelled:'Cancelado', blocked:'Bloqueado', 'in-progress':'En progreso', todo:'Por hacer', ready:'Listo' };
 

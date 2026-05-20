@@ -193,6 +193,7 @@ memory/
 # === Development plans ===
 docs/superpowers
 .claude/plans
+.claude/worktrees/
 
 # === mc-inspect script output ===
 screenshots/mc-inspect/
@@ -242,3 +243,7 @@ workspace-sancho/cron/jobs.json.bak
 # Generated env backups (timestamped)
 .env.bak-*
 .env.local.bak-*
+
+# Python bytecode (scripts/upsert-env.py and its tests)
+__pycache__/
+*.py[cod]

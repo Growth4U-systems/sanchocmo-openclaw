@@ -1,7 +1,0 @@
-{
-  "date": "2026-05-01",
-  "task": "pov-bank-refresh",
-  "status": "skipped",
-  "reason": "clarify-history.json has 0 entries (<10 threshold)",
-  "next_check": "2026-06-01"
-}

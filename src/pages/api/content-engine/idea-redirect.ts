@@ -26,7 +26,11 @@ interface QueueEntry {
 }
 
 function getMcBaseUrl(): string {
-  return process.env.MC_PUBLIC_URL || "https://sancho-cmo.taild48df2.ts.net:8443";
+  const url = process.env.BASE_URL || process.env.NEXTAUTH_URL;
+  if (!url) {
+    throw new Error("No app base URL configured — set BASE_URL (canonical) or NEXTAUTH_URL");
+  }
+  return url.replace(/\/+$/, "");
 }
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -62,12 +66,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const channel = idea.content_task_channels?.[0] || idea.target_channel || "linkedin";
     return res.redirect(
       302,
-      `${mcUrl}/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`,
+      `${mcUrl}/dashboard/${slug}/tasks/${idea.project_id}/sub/${idea.project_task_id}/content/${idea.content_task_id}/draft/${channel}`,
     );
   }
 
   return res.redirect(
     302,
-    `${mcUrl}/dashboard/${slug}/projects/${idea.project_id}/tasks/${idea.project_task_id}`,
+    `${mcUrl}/dashboard/${slug}/tasks/${idea.project_task_id}`,
   );
 }

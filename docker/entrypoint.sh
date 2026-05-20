@@ -20,7 +20,7 @@ for f in clients.json clients.js dispatch-map.json; do
 done
 
 # ===========================================================
-# 1-4. SETUP (runs if openclaw.json is missing)
+# 1-4. SETUP
 # ===========================================================
 if [ ! -f "$OPENCLAW_CONFIG" ]; then
   echo "[entrypoint] First run — configuring..."
@@ -29,9 +29,6 @@ if [ ! -f "$OPENCLAW_CONFIG" ]; then
   echo "[entrypoint] Generating OpenClaw config..."
   node docker/generate-openclaw-config.js
 
-  # 2. Inject env vars into .md files
-  bash docker/inject-env-vars.sh
-
   # 3. Link cron jobs to where OpenClaw expects them
   mkdir -p .openclaw/cron
   if [ -f cron/jobs.json ] && [ ! -f .openclaw/cron/jobs.json ]; then
@@ -39,10 +36,19 @@ if [ ! -f "$OPENCLAW_CONFIG" ]; then
     echo "[entrypoint] Linked cron jobs ($(python3 -c "import json; print(len(json.load(open('cron/jobs.json')).get('jobs',[])))" 2>/dev/null || echo '?') jobs)"
   fi
 
-  echo "[entrypoint] Setup complete."
+  echo "[entrypoint] First-run setup complete."
 else
-  echo "[entrypoint] Config exists, skipping setup."
+  echo "[entrypoint] Config exists, skipping first-run setup."
 fi
+
+# Inject env vars into agent .md files on EVERY start. Deploys ship new
+# placeholders or new whitelist entries, and BASE_URL may differ across
+# environments — running this only on first boot leaves stale literals
+# like `{MC_BASE_URL}` in PROTOCOLS.md / TOOLS.md after subsequent deploys.
+# The script is idempotent: once a placeholder is substituted, the next
+# pass finds nothing to replace.
+echo "[entrypoint] Injecting env vars into workspace .md files..."
+bash docker/inject-env-vars.sh
 
 # Agents are idempotent and must be ensured on every startup: staging/prod
 # volumes keep openclaw.json between deploys, so newly added agents would not
@@ -96,6 +102,19 @@ if [ ! -f workspace-sancho/mission-control.html ] || [ ! -f workspace-sancho/mem
 fi
 
 # ===========================================================
+# 5b. ENSURE CRON-MODEL ALLOWLIST (runs every startup)
+# ===========================================================
+# Content Engine crons specify Anthropic models in their payload.model. The
+# openclaw daemon enforces agents.defaults.models as an allowlist at preflight
+# and caches it at startup — so the patch must happen BEFORE `gateway run`.
+# The script is idempotent: a no-op when the models are already present.
+if [ -x workspace-sancho/scripts/ensure-openclaw-allowlist.sh ]; then
+  echo "[entrypoint] Ensuring cron model allowlist..."
+  workspace-sancho/scripts/ensure-openclaw-allowlist.sh --config "$OPENCLAW_CONFIG" || \
+    echo "[entrypoint] WARNING: ensure-openclaw-allowlist.sh failed; Content Engine crons may be rejected"
+fi
+
+# ===========================================================
 # 6. START GATEWAY (foreground, backgrounded for MC)
 # ===========================================================
 echo "[entrypoint] Starting OpenClaw gateway..."
@@ -122,6 +141,42 @@ node workspace-sancho/scripts/mc-server.js &
 MC_PID=$!
 
 # ===========================================================
+# 7a. COST TRACKER LOOP (background)
+# ===========================================================
+# Runs cost-tracker.py every COST_TRACKER_INTERVAL seconds (default 600 = 10
+# min). The tracker scans OpenClaw session transcripts and aggregates token
+# costs into workspace-sancho/memory/costs/global.json + brand/<slug>/costs.json.
+# Used by /api/system/costs → dashboard CostsCard.
+#
+# Previously this ran outside the container via an external cron that wasn't
+# transferable. Embedding the loop here makes the cost dashboard work on any
+# new environment with no manual cron registration. Output is appended to
+# workspace-sancho/_system/cost-tracker.log (truncated by logrotate-equivalent
+# external to this script).
+COST_TRACKER_INTERVAL="${COST_TRACKER_INTERVAL:-600}"
+COST_TRACKER_LOG="/root/.openclaw/workspace-sancho/_system/cost-tracker.log"
+mkdir -p "$(dirname "$COST_TRACKER_LOG")"
+echo "[entrypoint] Starting cost-tracker loop (every ${COST_TRACKER_INTERVAL}s)…"
+(
+  # Initial delay so the gateway/MC processes settle before the first run.
+  sleep 30
+  while :; do
+    {
+      echo "[$(date -u +%FT%TZ)] cost-tracker run start"
+      python3 /root/.openclaw/workspace-sancho/scripts/cost-tracker.py 2>&1
+      echo "[$(date -u +%FT%TZ)] cost-tracker run done"
+    } >> "$COST_TRACKER_LOG" 2>&1 || true
+    # Cap log file to last ~5MB to avoid unbounded growth in long-running
+    # containers without external logrotate. Keeps the tail readable on SSH.
+    if [ -f "$COST_TRACKER_LOG" ] && [ "$(stat -c%s "$COST_TRACKER_LOG" 2>/dev/null || echo 0)" -gt 5242880 ]; then
+      tail -c 2097152 "$COST_TRACKER_LOG" > "${COST_TRACKER_LOG}.tmp" && mv "${COST_TRACKER_LOG}.tmp" "$COST_TRACKER_LOG"
+    fi
+    sleep "$COST_TRACKER_INTERVAL"
+  done
+) &
+COST_TRACKER_PID=$!
+
+# ===========================================================
 # 7b. START NEXT.JS MC (primary frontend on :3000)
 # ===========================================================
 echo "[entrypoint] Starting Next.js Mission Control on :3000..."
@@ -133,7 +188,7 @@ node_modules/.bin/next start -p 3000 &
 NEXTJS_PID=$!
 cd /root/.openclaw
 
-echo "[entrypoint] All services running. Gateway=$GATEWAY_PID LegacyMC=$MC_PID NextJS=$NEXTJS_PID"
+echo "[entrypoint] All services running. Gateway=$GATEWAY_PID LegacyMC=$MC_PID NextJS=$NEXTJS_PID CostTracker=$COST_TRACKER_PID"
 
 # ===========================================================
 # 8. WAIT — if any process dies, container stops

@@ -70,7 +70,7 @@ context_writes:
 ### 4. Guardar con versionado
 - Ruta: `brand/{slug}/swot/current.md`
 - Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
-- Link: `{MC_BASE_URL}/docs/brand/{slug}/swot/current.md`
+- Link: `<MC_BASE>/docs/brand/{slug}/swot/current.md`
 
 ---
 
@@ -116,4 +116,4 @@ brand/{{slug}}/market-and-us/swot/
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
 2. Si existe `current.md` → backup como `v{N+1}.md` antes de sobreescribir
 3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `{MC_BASE_URL}/docs/brand/{slug}/swot/current.md`
+4. Link: `<MC_BASE>/docs/brand/{slug}/swot/current.md`
