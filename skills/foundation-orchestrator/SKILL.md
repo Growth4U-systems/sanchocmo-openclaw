@@ -103,7 +103,12 @@ Verificar requires + cargar enriches_with disponibles.
 
 ### 2. Ejecutar Skill
 Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como contexto.
-Skills full leen los docs lite de Fast Foundation como **hydration** (no re-preguntan lo que ya existe).
+
+**Convención de paths lite vs full (v3.1):**
+- Fast Foundation escribe siempre a `lite.md` (`brand/{slug}/{section}/lite.md`).
+- Las skills full escriben a `current.md` (`brand/{slug}/{section}/current.md`).
+- Las skills full leen el `lite.md` correspondiente como **hydration seed** (no re-preguntan lo que ya existe), y producen su `current.md` desde el paquete completo de Foundation aprobada — nunca limitándose a refinar el lite.
+- Si una skill full necesita un input y solo existe el `lite.md` del consumer (ej. niche-discovery-100x necesita `market-and-us/swot/current.md` pero solo hay `lite.md`), debe **bloquearse** hasta que el upstream esté en `current.md`. No degradar a leer lite como fuente final.
 
 **Con model fallback:**
 ```
@@ -145,6 +150,7 @@ Skills full leen los docs lite de Fast Foundation como **hydration** (no re-preg
   - `brand_summary` si hay datos nuevos (company_name, sector, ICPs, competidores, positioning, URL)
   - `file_index` si se crearon archivos nuevos (ej: nuevo competidor → añadir a `file_index.competitors.battle_cards`, nueva presentación → añadir a `file_index.presentations`)
 - Ejecutar `python3 scripts/regenerate.py`
+- **Si la skill aprobada fue `company-context`, `business-model-audit` o `budget-constraints`** → ejecutar `python3 scripts/regenerate-company-brief.py {slug}` para refrescar la merge view. El script escribe a `company-brief/current.md` cuando al menos un standalone está full, o a `company-brief/lite.md` cuando todos siguen siendo seeds de fast-foundation. Resuelve el "Stale view conocido": ya no hay riesgo de que niche-discovery o downstream lean un merge desactualizado tras aprobar un standalone full.
 
 ---
 
@@ -247,5 +253,6 @@ Docs en: brand/{slug}/
 8. **enriches_with es silencioso** — si no está disponible, funcionar sin avisar
 9. **Retry automático** — 3 intentos con model fallback antes de rendirse
 10. **Error = notificar** — nunca silently fail
-11. **Hydration** — skills full leen docs lite de Fast Foundation, no re-preguntan
-12. **file_index siempre actualizado** — al crear/mover/eliminar archivos, actualizar `file_index` en foundation-state.json. Incluye: competitors battle_cards, sources, integrations, metrics, brand_assets, presentations, operational files. Si un skill nuevo crea un archivo que no está en file_index → añadirlo.
+11. **Hydration** — skills full leen `lite.md` de Fast Foundation como seed, no re-preguntan. Pero el output final de la skill full SIEMPRE se regenera desde el paquete reconciliado, no se limita a refinar el lite.
+12. **Path discipline** — fast-foundation NUNCA escribe a `current.md`. Skills full NUNCA leen lite.md como fuente final. `current.md` = full, `lite.md` = seed.
+13. **file_index siempre actualizado** — al crear/mover/eliminar archivos, actualizar `file_index` en foundation-state.json. Incluye: competitors battle_cards, sources, integrations, metrics, brand_assets, presentations, operational files. Si un skill nuevo crea un archivo que no está en file_index → añadirlo.

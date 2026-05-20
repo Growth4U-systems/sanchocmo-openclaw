@@ -248,12 +248,25 @@ in the corresponding **GitHub Environment** so the workflow rewrites
 | `OD_WEB_URL` (var) | Environment | `https://od.<env>.sanchocmo.ai` |
 | `OD_ALLOWED_ORIGINS` (var) | Environment | Same as `OD_WEB_URL` (comma-list if more origins are embedding) |
 | `OPEN_DESIGN_IMAGE` (var) | Environment | `ghcr.io/growth4u-systems/od:sanchocmo` (branded trunk) or pin to `:vX.Y.Z` |
+| `ANTHROPIC_API_KEY` (secret) | Environment | Anthropic API key for the baked-in `claude` CLI (Settings → Local CLI). Per-tenant deploys should use a per-tenant key so billing is scoped to the client. |
+
+The branded image bakes `@anthropic-ai/claude-code` into the runtime so
+the Settings → Local CLI panel surfaces a working agent in cloud mode.
+The daemon's upstream `env.ts` strips `ANTHROPIC_API_KEY` before
+spawning `claude` (assumes desktop `claude login`); the fork honors
+`OD_CLAUDE_PRESERVE_API_KEY=1` (hardcoded in `docker-compose.yml`) to
+keep the key in scope since interactive login is impossible inside a
+container.
 
 Smoke test:
 
 ```bash
 curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://${OD_DOMAIN}/api/mcp/install-info
 # expect HTTP 200
+
+# Local CLI sanity check from inside the container:
+docker exec open-design claude --version
+# expect a version string like "2.0.42 (Claude Code)"
 ```
 
 See [`infra/nginx/README.md`](../infra/nginx/README.md) for token rotation
