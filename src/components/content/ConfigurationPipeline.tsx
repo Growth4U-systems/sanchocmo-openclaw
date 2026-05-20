@@ -805,12 +805,18 @@ function CronRow({
   const lastErr = cron?.lastExecution?.last_error ?? null;
   const lastFinding = cron?.lastExecution?.last_finding ?? null;
   const lastStatus = cron?.lastExecution?.status ?? null;
+  // `isRunning` becomes true the instant the user clicks ▶ (local buffer
+  // in the parent). `live` only appears once the agent actually touches
+  // the session — there's a 30–60 s dispatch delay between the openclaw
+  // queue and the first agent message. In that window we render a
+  // "Encolada" badge so the user gets visual feedback immediately rather
+  // than staring at a stale row until the next poll cycle.
+  const pending = isRunning && !live;
   // Avoid double-rendering: while a live run is active the "last
   // execution" pill refers to the *previous* run, so we hide finding/error
-  // text until the new run lands. Once `running` clears, the next poll
-  // surfaces the fresh finding/error.
-  const showLastFinding = !live && lastStatus === "ok" && lastFinding;
-  const showLastError = !live && lastStatus === "error" && lastErr;
+  // text until the new run lands. Same applies during the pending window.
+  const showLastFinding = !live && !pending && lastStatus === "ok" && lastFinding;
+  const showLastError = !live && !pending && lastStatus === "error" && lastErr;
 
   return (
     <ConfigRow
@@ -841,6 +847,21 @@ function CronRow({
                   style={{ background: "var(--sc-sage-500)" }}
                 />
                 Corriendo · {formatDuration(Date.now() - live.startedAtMs)}
+              </span>
+            </>
+          ) : pending ? (
+            <>
+              <span>·</span>
+              <span
+                className="font-heading uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-sc-pill border-2 inline-flex items-center gap-1"
+                style={{ background: "var(--sc-sun-100)", borderColor: "var(--sc-sun-500)", color: "var(--sc-ink)" }}
+                title="Lanzada — esperando que el agente arranque la sesión (típico 30–60 s)"
+              >
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ background: "var(--sc-sun-500)" }}
+                />
+                Encolada · arrancando
               </span>
             </>
           ) : cron?.lastExecution ? (
