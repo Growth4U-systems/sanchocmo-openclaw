@@ -5,6 +5,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl jq openssh-client sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
+# Default /bin/sh to bash so child processes that prepend `set -o pipefail`
+# (e.g. agent-issued shell commands via the OpenClaw Bash tool) don't fail
+# on Debian's dash. Both /bin/sh and /usr/bin/sh are symlinked because
+# Debian's usr-merge exposes the latter and some callers resolve it directly.
+RUN ln -sf /usr/bin/bash /bin/sh && ln -sf /usr/bin/bash /usr/bin/sh
+
 # Install OpenClaw CLI
 RUN npm install -g openclaw@latest
 
