@@ -75,6 +75,16 @@ services:
       # app served at its public URL — it must list itself plus any embedding
       # origin (the MC public URL embedding it in an iframe).
       OD_ALLOWED_ORIGINS: ${OD_ALLOWED_ORIGINS:-}
+      # Growth4U fork bakes the `claude` CLI into the runtime image so the
+      # Settings → Local CLI panel surfaces a working agent in cloud mode
+      # (upstream desktop installs rely on the user's host `claude` which
+      # doesn't exist in a container). Upstream strips ANTHROPIC_API_KEY
+      # before spawning `claude` so `claude login` wins on desktop; we opt
+      # back in because login is impossible in a headless container and the
+      # API key is the only viable auth path. Empty key = CLI still shows
+      # up but auth fails on first invocation; that's loud enough to debug.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OD_CLAUDE_PRESERVE_API_KEY: "1"
     volumes:
       - open_design_data:/app/.od
       # Brand design systems live in MC's workspace as the output of Sancho's
