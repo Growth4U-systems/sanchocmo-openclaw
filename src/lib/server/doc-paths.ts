@@ -47,6 +47,31 @@ function currentAliasFallback(absPath: string): string | null {
   return candidates[0] ? path.join(dir, candidates[0]) : null;
 }
 
+/**
+ * Lite sibling fallback: when a caller requests `current.md` and it does
+ * not exist, return the sibling `lite.md` if present. fast-foundation
+ * writes preliminary outputs to `lite.md`; full skills produce the real
+ * `current.md` later. This fallback lets the dashboard surface preliminary
+ * content (with `usedFallback: true` so the UI can badge it as such).
+ *
+ * Scope: this fallback fires only for read paths exposed via the docs API
+ * (used by the dashboard / brand-brain / chat sidebar). Skills running
+ * server-side read files directly via the harness, NOT through this
+ * resolver, so a downstream skill that consumes another skill's output
+ * (positioning reading ECPs, niche-discovery reading SWOT) will NOT
+ * silently degrade to lite. That problem (Philippe's complaint,
+ * 2026-05-19) was caused by lite content sitting at the `current.md` path
+ * itself — solved by the fast-foundation rename, not by this fallback.
+ */
+function liteSiblingFallback(absPath: string): string | null {
+  if (!absPath.endsWith(`${path.sep}current.md`)) return null;
+  const litePath = path.join(path.dirname(absPath), "lite.md");
+  if (fs.existsSync(litePath) && fs.statSync(litePath).isFile()) {
+    return litePath;
+  }
+  return null;
+}
+
 export function resolveWorkspaceDocPath(
   baseDir: string,
   docPath: string,
@@ -75,7 +100,7 @@ export function resolveWorkspaceDocPath(
     };
   }
 
-  const fallbackAbs = currentAliasFallback(absPath);
+  const fallbackAbs = currentAliasFallback(absPath) ?? liteSiblingFallback(absPath);
   if (fallbackAbs) {
     const canonicalPath = path.relative(path.resolve(baseDir), fallbackAbs).split(path.sep).join("/");
     return {
