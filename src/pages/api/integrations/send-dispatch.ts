@@ -285,12 +285,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const mcUrl = getMcBaseUrl(req);
 
   if (dispatch.transport === "slack") {
-    // Token can come from two places (historic dual storage):
-    //   1) integrations.json `slack.bot_token_encrypted` — written by the
-    //      OAuth callback (`saveSlackIntegration`). Decrypted on read.
-    //   2) brand/{slug}/.env as `{SLUG_UPPER}_SLACK_BOT_TOKEN` or plain
-    //      `SLACK_BOT_TOKEN` — legacy POST /api/integrations form flow.
-    // We try OAuth first since the dashboard UI now points users there.
+    // Token lookup order (must match slack/list-channels.ts so the UI's
+    // "Slack connected" state stays consistent with what dispatch can use):
+    //   1) integrations.json `slack.bot_token_encrypted` — OAuth callback.
+    //   2) brand/{slug}/.env — legacy POST /api/integrations form flow,
+    //      either {SLUG_UPPER}_SLACK_BOT_TOKEN or plain SLACK_BOT_TOKEN.
+    //   3) process.env — workspace-wide token shared by every brand.
+    //      Set in container env (SLACK_BOT_TOKEN) for the staging/prod
+    //      Slack workspace; this is what makes Slack show "connected"
+    //      in the admin UI even when no per-brand OAuth ran.
+    const slugUpper = slug.toUpperCase();
     let token: string | null = null;
     try {
       token = getSlackBotToken(slug);
@@ -299,15 +303,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     if (!token) {
       const env = loadBrandEnv(slug);
-      token = env[`${slug.toUpperCase()}_SLACK_BOT_TOKEN`] || env.SLACK_BOT_TOKEN || null;
+      token =
+        env[`${slugUpper}_SLACK_BOT_TOKEN`] ||
+        env.SLACK_BOT_TOKEN ||
+        process.env[`${slugUpper}_SLACK_BOT_TOKEN`] ||
+        process.env.SLACK_BOT_TOKEN ||
+        null;
     }
     if (!token) {
       return res.status(400).json({
         error:
-          `Slack bot token not configured for ${slug}. Reconnect Slack at ` +
-          `/dashboard/admin/settings?tab=apis (OAuth) — that writes the encrypted ` +
-          `token to integrations.json. Alternatively, add ${slug.toUpperCase()}_SLACK_BOT_TOKEN ` +
-          `to brand/${slug}/.env.`,
+          `Slack bot token not configured for ${slug}. Either reconnect Slack at ` +
+          `/dashboard/admin/settings?tab=apis (OAuth, writes encrypted to integrations.json), ` +
+          `add ${slugUpper}_SLACK_BOT_TOKEN to brand/${slug}/.env, or set the ` +
+          `workspace-wide SLACK_BOT_TOKEN env var.`,
       });
     }
 
