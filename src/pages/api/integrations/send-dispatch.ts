@@ -32,6 +32,7 @@ import yaml from "js-yaml";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { logActivity } from "@/lib/data/activity-log";
+import { getSlackBotToken } from "@/lib/data/integrations";
 
 interface DispatchChannelConfig {
   transport: "slack" | "discord";
@@ -284,9 +285,31 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const mcUrl = getMcBaseUrl(req);
 
   if (dispatch.transport === "slack") {
-    const env = loadBrandEnv(slug);
-    const token = env[`${slug.toUpperCase()}_SLACK_BOT_TOKEN`] || env.SLACK_BOT_TOKEN;
-    if (!token) return res.status(400).json({ error: "Slack token not in env" });
+    // Token can come from two places (historic dual storage):
+    //   1) integrations.json `slack.bot_token_encrypted` — written by the
+    //      OAuth callback (`saveSlackIntegration`). Decrypted on read.
+    //   2) brand/{slug}/.env as `{SLUG_UPPER}_SLACK_BOT_TOKEN` or plain
+    //      `SLACK_BOT_TOKEN` — legacy POST /api/integrations form flow.
+    // We try OAuth first since the dashboard UI now points users there.
+    let token: string | null = null;
+    try {
+      token = getSlackBotToken(slug);
+    } catch {
+      token = null;
+    }
+    if (!token) {
+      const env = loadBrandEnv(slug);
+      token = env[`${slug.toUpperCase()}_SLACK_BOT_TOKEN`] || env.SLACK_BOT_TOKEN || null;
+    }
+    if (!token) {
+      return res.status(400).json({
+        error:
+          `Slack bot token not configured for ${slug}. Reconnect Slack at ` +
+          `/dashboard/admin/settings?tab=apis (OAuth) — that writes the encrypted ` +
+          `token to integrations.json. Alternatively, add ${slug.toUpperCase()}_SLACK_BOT_TOKEN ` +
+          `to brand/${slug}/.env.`,
+      });
+    }
 
     const results: { channel: string; ok: boolean; error?: string; ts?: string; ideaCount: number }[] = [];
 
