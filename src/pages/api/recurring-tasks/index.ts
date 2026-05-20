@@ -6,59 +6,20 @@ import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
 import { loadClients } from "@/lib/data/clients";
 import { BASE } from "@/lib/data/paths";
-import { cronJobsFile } from "@/lib/data/openclaw-paths";
 import { readJSON } from "@/lib/data/json-io";
+import {
+  enrichCrons,
+  humanizeSchedule,
+  loadAllCrons,
+  resolveCronBrand,
+  detectCronCategory,
+  type EnrichedCron,
+} from "@/lib/data/openclaw-crons";
 
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function detectCronCategory(name: string, _prompt: string): string {
-  const n = (name || "").toLowerCase();
-  if (n.includes("metric") || n.includes("cost")) return "metrics";
-  if (n.includes("pulse") || n.includes("intelligence") || n.includes("synthesis") || n.includes("thief") || n.includes("signal") || n.includes("idea")) return "intelligence";
-  if (n.includes("outreach") || n.includes("lead") || n.includes("call prep") || n.includes("prospecting")) return "outreach";
-  if (n.includes("content") || n.includes("blog") || n.includes("social") || n.includes("newsletter")) return "content";
-  if (n.includes("health") || n.includes("backup") || n.includes("watchdog") || n.includes("memory") || n.includes("update") || n.includes("token") || n.includes("image-opt") || n.includes("compact") || n.includes("changelog") || n.includes("activity") || n.includes("mejora") || n.includes("skill-improvement") || n.includes("pattern") || n.includes("regenerar")) return "system";
-  return "other";
-}
-
-function humanizeCron(schedule: Record<string, unknown>): string {
-  if (!schedule) return "\u2014";
-  if ((schedule as { kind?: string }).kind === "every") {
-    const h = Math.round(((schedule as { everyMs?: number }).everyMs || 0) / 3600000);
-    return h >= 24 ? `Cada ${Math.round(h / 24)}d` : `Cada ${h}h`;
-  }
-  const expr = ((schedule as { expr?: string }).expr || "");
-  const parts = expr.split(/\s+/);
-  if (parts.length < 5) return expr;
-  const [min, hour, dom, , dow] = parts;
-  const hStr = hour.includes(",")
-    ? hour.split(",").map((h) => `${h}:${min.padStart(2, "0")}`).join(", ")
-    : `${hour}:${min.padStart(2, "0")}`;
-  const dowMap: Record<string, string> = { "0": "Dom", "1": "Lun", "2": "Mar", "3": "Mi\u00e9", "4": "Jue", "5": "Vie", "6": "S\u00e1b" };
-  let dayStr = "";
-  if (dow === "*" && dom === "*") dayStr = "Cada d\u00eda";
-  else if (dow === "1-5") dayStr = "L-V";
-  else if (dow === "0-4") dayStr = "D-J";
-  else if (dow !== "*") {
-    if (dow.includes("-")) {
-      const [a, b] = dow.split("-");
-      dayStr = (dowMap[a] || a) + "-" + (dowMap[b] || b);
-    } else {
-      dayStr = dow.split(",").map((d) => dowMap[d] || d).join(", ");
-    }
-  } else if (dom === "1") dayStr = "D\u00eda 1 del mes";
-  else dayStr = `D\u00eda ${dom}`;
-  return `${dayStr} ${hStr}`;
-}
-
-function extractSlugFromCron(cronName: string, clients: { slug: string; name: string }[]): string | null {
-  const lower = (cronName || "").toLowerCase();
-  for (const c of clients) {
-    if (lower.includes(c.name.toLowerCase()) || lower.includes(c.slug.toLowerCase())) return c.slug;
-  }
-  return null;
-}
-
+/** Resolve script references inside a cron prompt to {path, name, lang, lines}.
+ *  Kept here (not in openclaw-crons) because it's specific to this endpoint's
+ *  payload shape and noisy enough to dilute the shared helper. */
 function extractScripts(prompt: string): unknown[] {
   if (!prompt) return [];
   const scripts = new Set<string>();
@@ -90,64 +51,67 @@ function extractScripts(prompt: string): unknown[] {
   return resolved;
 }
 
-function loadCronsFromOpenClaw(): unknown[] {
-  const jobsFile = process.env.OPENCLAW_CRON_FILE || cronJobsFile();
-  const data = readJSON<{ jobs?: unknown[] }>(jobsFile, { jobs: [] });
-  return Array.isArray(data) ? data : (data.jobs || []);
+/** Shape returned to the UI for each cron — keeps backward-compatible field
+ *  names while adding the new `running` and `last_finding` payload. */
+function toApiShape(c: EnrichedCron, slug: string | null) {
+  return {
+    id: c.id,
+    name: c.name,
+    task_type: c.category,
+    schedule: humanizeSchedule(c.schedule_raw || undefined),
+    schedule_raw: c.schedule_raw,
+    status: c.enabled ? "active" : "paused",
+    last_run_at: c.last_run_at,
+    next_run_at: c.next_run_at,
+    last_status: c.last_status,
+    last_duration_ms: c.last_duration_ms,
+    consecutive_errors: c.consecutive_errors,
+    last_diagnostic_summary: c.last_diagnostic_summary,
+    last_error: c.last_error,
+    last_error_reason: c.last_error_reason,
+    last_finding: c.last_finding,
+    diagnostics: c.diagnostics,
+    running: c.running,
+    ideas_generated: 0,
+    agent: c.agent,
+    model: c.model,
+    prompt: c.prompt,
+    description: c.description,
+    scripts: extractScripts(c.prompt),
+    client_slug: c.client_slug ?? slug ?? null,
+    _source: "openclaw-cron",
+    _shared: c.client_slug === null,
+    created_at: null as string | null,
+  };
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     const slugParam = (req.query.slug as string) || req.ctx?.clientSlug || null;
+    const includeSystem = req.query.includeSystem === "1" && !!req.ctx?.isAdmin;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let result: Record<string, any> = {};
 
     if (slugParam) {
-      // Merge local JSON tasks with OpenClaw crons for this client
+      const clients = loadClients() as { slug: string; name: string }[];
       const localTasks = loadRecurringTasks(slugParam);
-      const allCrons = loadCronsFromOpenClaw();
-      const clients = loadClients();
       const localIds = new Set(localTasks.map((t) => t.id));
 
-      // Build enriched tasks from OpenClaw crons that match this client
-      const openclawTasks: unknown[] = [];
-      for (const cron of allCrons as Record<string, unknown>[]) {
-        if (localIds.has(cron.id as string)) continue; // skip duplicates
-        let cronSlug = extractSlugFromCron(cron.name as string, clients as { slug: string; name: string }[]);
-        if (!cronSlug) {
-          const payload = cron.payload as { message?: string } | undefined;
-          const promptMatch = (payload?.message || "").match(/brand\/([a-z0-9_-]+)\//i);
-          if (promptMatch && (clients as { slug: string }[]).some((c) => c.slug === promptMatch[1])) cronSlug = promptMatch[1];
-        }
-        if (cronSlug !== slugParam) continue;
-        const payload = cron.payload as { message?: string; model?: string } | undefined;
-        const state = cron.state as { lastRunAtMs?: number; nextRunAtMs?: number; lastStatus?: string; lastDurationMs?: number; consecutiveErrors?: number } | undefined;
-        const sched = cron.schedule as Record<string, unknown> || {};
-        openclawTasks.push({
-          id: cron.id,
-          name: cron.name || "\u2014",
-          task_type: detectCronCategory(cron.name as string, payload?.message || ""),
-          schedule: humanizeCron(sched),
-          schedule_raw: sched,
-          status: cron.enabled ? "active" : "paused",
-          last_run_at: state?.lastRunAtMs ? new Date(state.lastRunAtMs).toISOString() : null,
-          next_run_at: state?.nextRunAtMs ? new Date(state.nextRunAtMs).toISOString() : null,
-          last_status: state?.lastStatus || null,
-          last_duration_ms: state?.lastDurationMs || null,
-          consecutive_errors: state?.consecutiveErrors || 0,
-          ideas_generated: 0,
-          agent: cron.agentId || "sancho",
-          model: payload?.model || "\u2014",
-          prompt: payload?.message || "",
-          description: cron.description || "",
-          scripts: extractScripts(payload?.message || ""),
-          client_slug: slugParam,
-          _source: "openclaw-cron",
-          created_at: (cron as { createdAtMs?: number }).createdAtMs ? new Date((cron as { createdAtMs: number }).createdAtMs).toISOString() : null,
-        });
-      }
+      const { crons: brandCrons, systemCrons } = enrichCrons({
+        slug: slugParam,
+        includeSystem,
+        clients,
+      });
+
+      const openclawTasks = brandCrons
+        .filter((c) => !localIds.has(c.id))
+        .map((c) => toApiShape(c, slugParam));
 
       result[slugParam] = [...openclawTasks, ...localTasks];
+
+      if (includeSystem) {
+        result._system = systemCrons.map((c) => toApiShape(c, null));
+      }
 
       // Also return available templates
       try {
@@ -173,29 +137,24 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         if (available.length > 0) result._available_templates = available;
       } catch { /* empty */ }
     } else {
-      // Global view: group all crons by client
-      const clients = loadClients();
-      const crons = loadCronsFromOpenClaw();
+      // Global admin view: group all crons by client
+      const clients = loadClients() as { slug: string; name: string }[];
+      const allCrons = loadAllCrons();
       const grouped: Record<string, unknown[]> = {};
-      for (const cron of crons as Record<string, unknown>[]) {
-        let cronSlug = extractSlugFromCron(cron.name as string, clients as { slug: string; name: string }[]);
-        if (!cronSlug) {
-          const payload = cron.payload as { message?: string } | undefined;
-          const promptMatch = (payload?.message || "").match(/brand\/([a-z0-9_-]+)\//i);
-          if (promptMatch && (clients as { slug: string }[]).some((c) => c.slug === promptMatch[1])) cronSlug = promptMatch[1];
-        }
+      for (const cron of allCrons) {
+        const cronSlug = resolveCronBrand(cron, clients);
         const key = cronSlug || "_system";
         if (!grouped[key]) grouped[key] = [];
         const payload = cron.payload as { message?: string; model?: string } | undefined;
         const state = cron.state as { lastRunAtMs?: number; nextRunAtMs?: number; lastStatus?: string; lastDurationMs?: number; consecutiveErrors?: number } | undefined;
-        const sched = cron.schedule as Record<string, unknown> || {};
+        const sched = (cron.schedule || {}) as { kind?: string; expr?: string; everyMs?: number };
         grouped[key].push({
           id: cron.id,
-          name: cron.name || "\u2014",
-          task_type: detectCronCategory(cron.name as string, payload?.message || ""),
-          schedule: humanizeCron(sched),
+          name: cron.name || "—",
+          task_type: detectCronCategory(cron.name as string),
+          schedule: humanizeSchedule(sched),
           schedule_raw: sched,
-          status: cron.enabled ? "active" : "paused",
+          status: cron.enabled !== false ? "active" : "paused",
           last_run_at: state?.lastRunAtMs ? new Date(state.lastRunAtMs).toISOString() : null,
           next_run_at: state?.nextRunAtMs ? new Date(state.nextRunAtMs).toISOString() : null,
           last_status: state?.lastStatus || null,
@@ -203,7 +162,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           consecutive_errors: state?.consecutiveErrors || 0,
           ideas_generated: 0,
           agent: cron.agentId || "sancho",
-          model: payload?.model || "\u2014",
+          model: payload?.model || "—",
           prompt: payload?.message || "",
           description: cron.description || "",
           scripts: extractScripts(payload?.message || ""),
