@@ -151,7 +151,7 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
         <div className="flex justify-between items-center mb-3">
           <h2 className="font-heading text-base text-navy">{"📡"} {t("dashboard.recentActivity")}</h2>
           <Link
-            href="/activity"
+            href="/dashboard/admin/activity"
             className="text-xs font-semibold text-rust hover:underline"
           >
             {t("common.viewAll")} {"→"}
@@ -259,13 +259,17 @@ function GlobalActivityFeed() {
       const res = await fetch("/api/activity?limit=10");
       if (!res.ok) return [];
       const json = await res.json();
+      // The /api/activity response shape is `{ events: [{ id, message,
+      // timestamp, time, level, isCron }] }`. ActivityFeed reads `title` and
+      // `status`, not `text`/`ok` — the previous mapping shipped wrong field
+      // names so the component rendered blank rows for every entry.
       return (json.events || json || []).map((e: Record<string, unknown>) => ({
-        id: e.id || `${e.timestamp}-${e.event}`,
-        text: (e.event || e.message || "") as string,
+        id: (e.id as string) || `${e.timestamp || ""}-${e.message || ""}`,
+        title: (e.message || e.event || e.raw || "") as string,
         timestamp: (e.timestamp || e.date || "") as string,
-        type: (e.type || "system") as string,
-        client: (e.client || e.slug || "system") as string,
-        ok: e.ok !== false && e.status !== "error",
+        type: e.isCron ? "cron" : ((e.type as string) || "system"),
+        client: (e.client || e.slug || undefined) as string | undefined,
+        status: ((e.level as string) || (e.status as string) || "ok") as "ok" | "error" | "warning",
       }));
     },
     staleTime: 30_000,

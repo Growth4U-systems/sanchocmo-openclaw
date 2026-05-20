@@ -189,16 +189,31 @@ jobs:
             git checkout "$SHA"
             export GIT_COMMIT="$(git rev-parse HEAD)"
 
-            # Restore brand/<slug>/ folders that the checkout removed.
+            # Restore brand/<slug>/ files that the checkout removed.
+            # The previous "skip if target non-empty" approach lost data: an
+            # active client whose untracked runtime files survived the checkout
+            # (chat, projects with in-progress tasks) would block the restore
+            # of its tracked files (foundation-state.json, brand-book/...).
+            # Use `cp -a -n` (no-clobber) instead — copies any backup file
+            # that isn't already in the target. Idempotent and safe.
             if [ -d "$BRAND_BACKUP_DIR" ]; then
               for d in "$BRAND_BACKUP_DIR"/*/; do
                 [ -d "$d" ] || continue
                 name=$(basename "$d")
                 target="workspace-sancho/brand/$name"
-                if [ ! -d "$target" ] || [ -z "$(ls -A "$target" 2>/dev/null || true)" ]; then
+                if [ -d "$target" ] && [ -n "$(ls -A "$target" 2>/dev/null || true)" ]; then
+                  # Target survived with some files. Merge missing ones in.
+                  before=$(find "$target" -type f 2>/dev/null | wc -l)
+                  cp -a -n "$d." "$target/" 2>/dev/null || true
+                  after=$(find "$target" -type f 2>/dev/null | wc -l)
+                  diff=$((after - before))
+                  if [ "$diff" -gt 0 ]; then
+                    echo "▶ Merged $diff missing file(s) into workspace-sancho/brand/$name from backup"
+                  fi
+                else
                   echo "▶ Restoring workspace-sancho/brand/$name from backup…"
                   mkdir -p "$target"
-                  cp -a "$d/." "$target/"
+                  cp -a "$d." "$target/"
                 fi
               done
               rm -rf "$BRAND_BACKUP_DIR"
