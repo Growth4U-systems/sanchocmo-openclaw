@@ -212,6 +212,13 @@ jobs:
 
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose build --pull
+            # `build --pull` only refreshes images for services with a
+            # `build:` directive. Services that consume a pre-built image
+            # (open-design via OPEN_DESIGN_IMAGE) need an explicit pull,
+            # or Docker keeps the cached local image even when the rolling
+            # tag (`:sanchocmo`, `:edge`) points at a new digest in the
+            # registry. See deploy-staging.yml for the incident this fixes.
+            docker compose pull --ignore-buildable || true
             UP_ARGS=""
             if [ "$ENV_CHANGED" = "1" ]; then
               UP_ARGS="--force-recreate"

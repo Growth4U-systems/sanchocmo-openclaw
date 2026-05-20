@@ -122,14 +122,24 @@ export default function BrandBrainPage() {
   const [editing, setEditing] = useState(false);
   const [docContent, setDocContent] = useState<string | null>(null);
   const [docLastModified, setDocLastModified] = useState<string | null>(null);
+  const [docUsedFallback, setDocUsedFallback] = useState(false);
+  const [docCanonicalPath, setDocCanonicalPath] = useState<string | null>(null);
   const [docLoading, setDocLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
-    if (!selectedDoc?.docPath) { setDocContent(null); setDocLastModified(null); return; }
+    if (!selectedDoc?.docPath) {
+      setDocContent(null);
+      setDocLastModified(null);
+      setDocUsedFallback(false);
+      setDocCanonicalPath(null);
+      return;
+    }
     setDocLoading(true);
     setDocContent(null);
     setDocLastModified(null);
+    setDocUsedFallback(false);
+    setDocCanonicalPath(null);
     setEditing(false);
     fetch(`/api/docs/${selectedDoc.docPath}`)
       .then((res) => res.json())
@@ -137,6 +147,8 @@ export default function BrandBrainPage() {
         if (data.ok && data.content) {
           setDocContent(data.content);
           setDocLastModified(data.lastModified || null);
+          setDocUsedFallback(Boolean(data.usedFallback));
+          setDocCanonicalPath(data.canonicalPath || null);
         }
       })
       .catch(() => {})
@@ -314,6 +326,14 @@ export default function BrandBrainPage() {
           <span className="text-sm font-bold text-foreground truncate">
             {pillarTitle}
           </span>
+          {docUsedFallback && docCanonicalPath?.endsWith("/lite.md") && (
+            <span
+              className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200 flex-shrink-0"
+              title={`Mostrando ${docCanonicalPath} (preliminar de fast-foundation). Ejecuta la skill full para producir current.md.`}
+            >
+              Preliminar (lite)
+            </span>
+          )}
           {docLastModified && (
             <span className="text-[10px] text-muted-foreground flex-shrink-0">
               Editado: {new Date(docLastModified).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}

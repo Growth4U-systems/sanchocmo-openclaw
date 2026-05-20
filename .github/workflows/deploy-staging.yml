@@ -241,6 +241,16 @@ jobs:
             fi
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose $COMPOSE_ARGS build --pull
+            # `build --pull` only refreshes images for services with a
+            # `build:` directive (sanchocmo). Services that consume a
+            # pre-built image (open-design via OPEN_DESIGN_IMAGE) need an
+            # explicit pull, or Docker keeps the cached local image even
+            # when the rolling tag (`:sanchocmo`, `:edge`) points at a new
+            # digest in the registry. Seen on 2026-05-20: a fresh branded
+            # OD image with the `claude` CLI baked in shipped to GHCR but
+            # staging kept the prior `:sanchocmo` digest until a manual
+            # `docker compose pull` was run via SSH.
+            docker compose $COMPOSE_ARGS pull --ignore-buildable || true
             UP_ARGS=""
             if [ "$ENV_CHANGED" = "1" ]; then
               UP_ARGS="--force-recreate"
