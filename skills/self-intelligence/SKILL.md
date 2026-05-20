@@ -13,6 +13,9 @@ metadata:
   changes: v4 — Restructured per skill-creator principles.
 context_required:
 - brand/{slug}/company-brief/current.md
+# Lite fallbacks (read-only, treat as preliminary seed, not as final truth):
+- brand/{slug}/company-brief/lite.md            # merge view fallback (always lite today)
+- brand/{slug}/market-and-us/self/lite.md       # own seed from fast-foundation (hydration only)
 context_writes:
 - brand/{slug}/market-and-us/self/current.md
 - brand/{slug}/operational/learnings.md
