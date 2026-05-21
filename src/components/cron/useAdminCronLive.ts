@@ -25,7 +25,12 @@ interface StatusResponse {
   statuses: Record<string, LiveStatus>;
 }
 
-const PENDING_CLICK_MS = 90_000;
+// See useCronLive.ts for the rationale on this value — openclaw runs cron
+// jobs sequentially, so a queued click can wait several minutes behind the
+// running one before its own session entry shows up. Combined with the
+// "don't expire while another cron is running" guard below, 5 min gives
+// realistic queued clicks time to surface.
+const PENDING_CLICK_MS = 300_000;
 const STATUS_POLL_MS = 5_000;
 const SNAPSHOT_FAST_MS = 20_000;
 const SNAPSHOT_IDLE_MS = 60_000;
@@ -191,8 +196,10 @@ export function useAdminCronLive(): UseAdminCronLiveResult {
 
   useEffect(() => {
     const currentRunning = new Set(mergedAll.filter((c) => c.running).map((c) => c.id));
+    let someoneFinished = false;
     for (const id of prevRunningRef.current) {
       if (currentRunning.has(id)) continue;
+      someoneFinished = true;
       const c = mergedAll.find((c) => c.id === id);
       if (!c) continue;
       const ok = (c.last_status ?? "ok") === "ok";
@@ -209,18 +216,43 @@ export function useAdminCronLive(): UseAdminCronLiveResult {
       );
       clearPending(id);
     }
+    // A queued cron's slot just moved up — refresh remaining pendingClick TTLs
+    // so the next-in-line gets a fresh window to surface as `running`.
+    if (someoneFinished) {
+      setPendingClicks((cur) => {
+        if (Object.keys(cur).length === 0) return cur;
+        const refresh = Date.now() + PENDING_CLICK_MS;
+        let changed = false;
+        const next = { ...cur };
+        for (const id of Object.keys(next)) {
+          if (next[id] < refresh) { next[id] = refresh; changed = true; }
+        }
+        return changed ? next : cur;
+      });
+    }
     prevRunningRef.current = currentRunning;
   }, [mergedAll, setFlash, clearPending]);
 
   // ── Expire pending clicks ───────────────────────────────────────
+  // While ANY cron is currently running we leave other pendingClicks alone —
+  // openclaw's queue is sequential, so a click that hasn't surfaced as
+  // `running` is almost certainly waiting behind the in-flight job. Dropping
+  // the optimistic tag during that wait re-enables the Run button and lets
+  // the user accidentally double-queue.
   useEffect(() => {
     const now = Date.now();
     let changed = false;
     const next = { ...pendingClicks };
+    const someoneRunning = mergedAll.some((c) => c.running);
     for (const id of Object.keys(next)) {
       const expireAt = next[id];
       const cron = mergedAll.find((c) => c.id === id);
-      if (cron?.running || now > expireAt) {
+      if (cron?.running) {
+        delete next[id];
+        changed = true;
+        continue;
+      }
+      if (now > expireAt && !someoneRunning) {
         delete next[id];
         changed = true;
       }

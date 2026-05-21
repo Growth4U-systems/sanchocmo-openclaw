@@ -111,7 +111,13 @@ export function loadUnifiedContentTasks(slug: string): ContentTask[] {
     if (!fs.existsSync(ideaPath)) return [];
     try {
       const data = JSON.parse(fs.readFileSync(ideaPath, "utf-8"));
-      return Array.isArray(data) ? data : [];
+      // Canonical shape is a bare array; tolerate `{ "ideas": [...] }` so a
+      // misbehaving cron writer doesn't silently empty the Ideas tab.
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray((data as { ideas?: unknown }).ideas)) {
+        return (data as { ideas: Record<string, unknown>[] }).ideas;
+      }
+      return [];
     } catch {
       return [];
     }

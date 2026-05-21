@@ -46,7 +46,17 @@ export interface JobEndedAt {
   lastDurationMs?: number;
 }
 
-const DEFAULT_FRESHNESS_MS = 90_000;
+// 600s instead of 90s because openclaw only writes `updatedAt` near the start
+// of a cron session (right after sessionStartedAt) and does not bump it across
+// long agent steps. Observed in prod: News/Competitor Monitor sessions touch
+// `updatedAt` once at T+10s but the run continues for ~4 min — at 90s the
+// "running" badge silently disappeared for most of the run.
+//
+// The `updatedAt <= lastEnd + 1` guard below still excludes finished runs as
+// soon as jobs-state.json records the end, so widening the window does not
+// keep finished crons "stuck" running — it only covers the gap between the
+// first session touch and the next jobs-state write.
+const DEFAULT_FRESHNESS_MS = 600_000;
 const SESSION_KEY_RE = /^agent:[^:]+:cron:([0-9a-f-]+)$/;
 
 export function loadAgentSessions(agent = "sancho"): Record<string, SessionEntry> {
