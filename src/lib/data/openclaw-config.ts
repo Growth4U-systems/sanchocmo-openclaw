@@ -6,14 +6,17 @@ interface ExecOptions {
   stdin?: string;
 }
 
+const DEFAULT_TIMEOUT_MS = 90_000;
+
 export function runOpenclaw(args: string[], opts: ExecOptions = {}): string {
   const cmd = "openclaw";
   return execSync([cmd, ...args].join(" "), {
-    timeout: opts.timeoutMs ?? 20_000,
+    timeout: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
     encoding: "utf-8",
     env: { ...process.env, PATH: EXEC_PATH },
     input: opts.stdin,
     stdio: opts.stdin ? ["pipe", "pipe", "pipe"] : ["ignore", "pipe", "pipe"],
+    maxBuffer: 64 * 1024 * 1024,
   }).toString();
 }
 
@@ -41,8 +44,16 @@ export function ensureModelInAllowlist(modelId: string): void {
 }
 
 export function setDefaultPrimaryModel(modelId: string): void {
+  // Combine allowlist + primary in one patch — halves the openclaw startup
+  // overhead (each CLI invocation costs ~1.5–3s) and reduces the chance of
+  // partial-save windows.
   patchOpenclawConfig({
-    agents: { defaults: { model: { primary: modelId } } },
+    agents: {
+      defaults: {
+        model: { primary: modelId },
+        models: { [modelId]: {} },
+      },
+    },
   });
 }
 
@@ -63,21 +74,44 @@ export function listAgents(): AgentEntry[] {
 
 export function setAgentModel(agentId: string, modelId: string | null): { updated: boolean } {
   const agents = listAgents();
-  const idx = agents.findIndex((a) => a.id === agentId);
+  let next = agents.slice();
+  const idx = next.findIndex((a) => a.id === agentId);
   if (idx < 0) {
-    throw new Error(`Agent "${agentId}" not in agents.list`);
-  }
-  const next = agents.slice();
-  const entry = { ...next[idx] };
-  if (modelId === null) {
-    delete entry.model;
+    // Agent isn't registered in agents.list yet — create a minimal entry so
+    // openclaw resolves the override. We require the workspace to exist on
+    // disk to avoid creating ghost entries; the workspace path follows the
+    // canonical `workspace-<id>` convention next to the others.
+    if (modelId === null) {
+      // Nothing to clear if the agent has no entry yet.
+      return { updated: false };
+    }
+    const referenceAgent = next.find((a) => typeof a.workspace === "string");
+    const workspaceDir = referenceAgent && typeof referenceAgent.workspace === "string"
+      ? referenceAgent.workspace.replace(/workspace-[^/]+$/, `workspace-${agentId}`)
+      : `/root/.openclaw/workspace-${agentId}`;
+    next.push({ id: agentId, workspace: workspaceDir, model: modelId });
   } else {
-    entry.model = modelId;
+    const entry = { ...next[idx] };
+    if (modelId === null) {
+      delete entry.model;
+    } else {
+      entry.model = modelId;
+    }
+    next = next.slice();
+    next[idx] = entry;
   }
-  next[idx] = entry;
-  runOpenclaw(["config", "patch", "--stdin", "--replace-path", "agents.list"], {
-    stdin: JSON.stringify(next),
-  });
+  if (modelId !== null) {
+    // Same single-patch trick as setDefaultPrimaryModel: include the allowlist
+    // entry in the same write so we don't need a separate patch call.
+    runOpenclaw(["config", "patch", "--stdin", "--replace-path", "agents.list"], {
+      stdin: JSON.stringify(next),
+    });
+    patchOpenclawConfig({ agents: { defaults: { models: { [modelId]: {} } } } });
+  } else {
+    runOpenclaw(["config", "patch", "--stdin", "--replace-path", "agents.list"], {
+      stdin: JSON.stringify(next),
+    });
+  }
   return { updated: true };
 }
 
@@ -95,6 +129,75 @@ export function getAgentEffectiveModel(agentId: string): string | null {
     return (m as { primary: string }).primary;
   }
   return null;
+}
+
+export interface AgentRichEntry {
+  id: string;
+  name: string;
+  emoji: string | null;
+  workspace: string | null;
+  resolvedModel: string | null;
+  overrideModel: string | null;
+  isDefault: boolean;
+}
+
+interface AgentsListJsonEntry {
+  id: string;
+  identityName?: string;
+  identityEmoji?: string;
+  workspace?: string;
+  model?: string;
+  isDefault?: boolean;
+}
+
+export function listAgentsRich(): AgentRichEntry[] {
+  const overrides = listAgents();
+  const overrideById = new Map(overrides.map((a) => [a.id, a]));
+
+  let resolved: AgentsListJsonEntry[] = [];
+  try {
+    const raw = runOpenclaw(["agents", "list", "--json"]);
+    const trimmed = raw.trim();
+    const start = trimmed.search(/\[/);
+    if (start >= 0) {
+      resolved = JSON.parse(trimmed.slice(start)) as AgentsListJsonEntry[];
+    }
+  } catch {
+    resolved = [];
+  }
+
+  if (resolved.length === 0) {
+    return overrides.map((a) => ({
+      id: a.id,
+      name: (a.name as string) || a.id,
+      emoji: null,
+      workspace: (a.workspace as string) || null,
+      resolvedModel: getAgentEffectiveModel(a.id),
+      overrideModel: getAgentEffectiveModel(a.id),
+      isDefault: false,
+    }));
+  }
+
+  return resolved.map((entry) => {
+    const ovEntry = overrideById.get(entry.id);
+    let overrideModel: string | null = null;
+    if (ovEntry && ovEntry.model !== undefined) {
+      const m = ovEntry.model;
+      if (typeof m === "string") overrideModel = m;
+      else if (m && typeof m === "object" && typeof (m as { primary?: unknown }).primary === "string") {
+        overrideModel = (m as { primary: string }).primary;
+      }
+    }
+    return {
+      id: entry.id,
+      name: entry.identityName || entry.id,
+      emoji: entry.identityEmoji || null,
+      workspace: entry.workspace || null,
+      resolvedModel: entry.model || null,
+      overrideModel,
+      isDefault: !!entry.isDefault,
+    };
+  });
 }
 
 export function getDefaultPrimaryModel(): string | null {

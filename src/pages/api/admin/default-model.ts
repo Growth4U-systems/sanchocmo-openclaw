@@ -23,7 +23,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Missing or invalid 'model' in body" });
   }
 
-  const catalog = getModelCatalog();
+  const catalog = await getModelCatalog();
   const check = isModelAvailable(catalog, model);
   if (!check.ok) {
     return res.status(400).json({ error: check.reason });

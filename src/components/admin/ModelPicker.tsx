@@ -23,12 +23,14 @@ function authBadge(p: CatalogProvider): string {
 function groupModelsByProvider(
   models: CatalogModel[],
   providers: CatalogProvider[],
-  showAll: boolean
+  showAll: boolean,
+  alwaysIncludeId: string | null
 ): Array<{ provider: CatalogProvider; models: CatalogModel[] }> {
   const byId = new Map(providers.map((p) => [p.id, p]));
   const groups = new Map<string, CatalogModel[]>();
   for (const m of models) {
-    if (!showAll && !m.curated) continue;
+    const isAlwaysIncluded = alwaysIncludeId !== null && m.id === alwaysIncludeId;
+    if (!showAll && !m.curated && !isAlwaysIncluded) continue;
     if (!groups.has(m.provider)) groups.set(m.provider, []);
     groups.get(m.provider)!.push(m);
   }
@@ -56,24 +58,32 @@ export function ModelPicker({
   size = "md",
   className,
 }: ModelPickerProps) {
-  const { data, isLoading, error } = useModelCatalog();
   const [showAll, setShowAll] = useState(false);
+  const fast = useModelCatalog();
+  const full = useModelCatalog({ all: showAll });
+
+  const active = showAll ? full : fast;
+  const data = active.data;
 
   const groups = useMemo(() => {
     if (!data) return [];
-    return groupModelsByProvider(data.models, data.providers, showAll);
-  }, [data, showAll]);
+    return groupModelsByProvider(data.models, data.providers, showAll, value);
+  }, [data, showAll, value]);
 
   const valueInCatalog = useMemo(() => {
     if (!data || !value) return true;
     return data.models.some((m) => m.id === value);
   }, [data, value]);
 
-  if (isLoading) {
-    return <span className={cn("text-xs text-muted-foreground", className)}>cargando modelos…</span>;
+  if (active.isLoading && !data) {
+    return (
+      <span className={cn("text-xs text-muted-foreground", className)}>
+        cargando modelos…
+      </span>
+    );
   }
 
-  if (error || !data) {
+  if (active.error || !data) {
     return <span className={cn("text-xs text-destructive", className)}>error catálogo</span>;
   }
 
@@ -81,6 +91,8 @@ export function ModelPicker({
     if (next === "__inherit__") onChange(null);
     else onChange(next);
   };
+
+  const fullLoading = showAll && full.isFetching;
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -115,11 +127,15 @@ export function ModelPicker({
       <button
         type="button"
         onClick={() => setShowAll((v) => !v)}
-        disabled={disabled}
-        title={showAll ? "Solo curados" : "Mostrar todos los modelos"}
+        disabled={disabled || fullLoading}
+        title={
+          showAll
+            ? "Volver al listado curado"
+            : "Cargar el catálogo completo (tarda ~20s la primera vez)"
+        }
         className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
       >
-        {showAll ? "curados" : "todos"}
+        {fullLoading ? "cargando…" : showAll ? "curados" : "todos"}
       </button>
     </div>
   );
