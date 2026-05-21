@@ -16,10 +16,16 @@
  *   - `run(cronId)` / `toggle(cronId, enable)` mutations with optimistic UX
  *
  * Polling cadence is adaptive:
- *   - idle:    snapshot @ 60s, status not polled
+ *   - idle:    snapshot @ 30s, status @ 15s
  *   - active:  status @ 5s, snapshot @ 20s
  * Active = any cron has `running` OR a recent local `pendingClickFresh`
  * buffer (90 s after a user click that hasn't surfaced server-side yet).
+ *
+ * Why poll status even while idle: a cron can start in another tab, from
+ * the Content Engine panel, or from an external trigger. Without idle
+ * status polling the recurring panel only notices via the slower snapshot,
+ * leaving up to a full snapshot interval of dead time before the "running"
+ * badge appears.
  *
  * Suspends polling while `document.hidden` to avoid background CPU.
  */
@@ -57,8 +63,9 @@ interface StatusResponse {
 
 const PENDING_CLICK_MS = 90_000;
 const STATUS_POLL_MS = 5_000;
+const STATUS_IDLE_POLL_MS = 15_000;
 const SNAPSHOT_FAST_MS = 20_000;
-const SNAPSHOT_IDLE_MS = 60_000;
+const SNAPSHOT_IDLE_MS = 30_000;
 
 export interface UseCronLiveResult {
   crons: CronApi[];
@@ -145,21 +152,23 @@ export function useCronLive(
     return crons.some((c) => c.running) || systemCrons.some((c) => c.running);
   }, [crons, systemCrons, pendingClicks]);
 
-  // ── Live status query (cheap, polled fast while active) ─────────
-  // We only enable this query while `anyActive` is true. Idle panels rely on
-  // the slower snapshot refresh.
+  // ── Live status query (cheap, always polled while we have ids) ──
+  // Idle cadence (15s) catches crons started elsewhere — another tab, the
+  // Content Engine panel, or an external `openclaw cron run`. When the
+  // snapshot already reflects an in-flight cron we accelerate to 5s.
   const statusQuery = useQuery<StatusResponse>({
     queryKey: ["cron-status", allIds.join(",")],
-    enabled: anyActive && allIds.length > 0,
+    enabled: allIds.length > 0,
     queryFn: async () => {
       const params = new URLSearchParams({ ids: allIds.join(",") });
       const res = await fetch(`/api/system/cron-status?${params.toString()}`);
-      // 403 means non-admin caller — fall back gracefully to empty.
+      // 403 should no longer happen (endpoint is auth-only, not admin-only)
+      // but stay defensive in case an older instance is still running.
       if (res.status === 403) return { statuses: {} };
       if (!res.ok) throw new Error(`Status failed: ${res.status}`);
       return (await res.json()) as StatusResponse;
     },
-    refetchInterval: anyActive ? STATUS_POLL_MS : false,
+    refetchInterval: anyActive ? STATUS_POLL_MS : STATUS_IDLE_POLL_MS,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     retry: 1,

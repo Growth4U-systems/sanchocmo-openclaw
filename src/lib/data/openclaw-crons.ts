@@ -75,6 +75,12 @@ export interface EnrichedCron {
  * Try to attribute a cron to a brand by inspecting its name and prompt.
  * Returns the matching client slug, or null if the cron is "shared system"
  * (backups, health checks, cost trackers, etc.).
+ *
+ * The matching rules mirror the per-cron filter in /api/content-engine/crons
+ * so a cron that surfaces under a brand in the Content Engine panel is the
+ * same one that surfaces under that brand in the Recurring Tasks panel.
+ * Keep the two filters aligned — divergence is what made running crons
+ * disappear from the recurring panel.
  */
 export function resolveCronBrand(
   cron: RawCronJob,
@@ -87,12 +93,26 @@ export function resolveCronBrand(
     }
   }
   const msg = cron.payload?.message || "";
+  // Prompt-based attribution: prefer `brand/<slug>/` paths (canonical), then
+  // fall back to natural-language `para <slug>` phrasing used by Content
+  // Engine prompts written before the per-brand cron template existed.
   const promptMatch = msg.match(/brand\/([a-z0-9_-]+)\//i);
   if (promptMatch) {
-    const slug = promptMatch[1];
+    const slug = promptMatch[1].toLowerCase();
     if (clients.some((c) => c.slug === slug)) return slug;
   }
+  for (const c of clients) {
+    const slugLc = c.slug.toLowerCase();
+    const nameLc = c.name.toLowerCase();
+    // Match `para <slug>` or `para <name>` as a standalone token.
+    const re = new RegExp(`\\bpara\\s+(${escapeRegex(slugLc)}|${escapeRegex(nameLc)})\\b`, "i");
+    if (re.test(msg)) return c.slug;
+  }
   return null;
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // ── Category classification ───────────────────────────────────────

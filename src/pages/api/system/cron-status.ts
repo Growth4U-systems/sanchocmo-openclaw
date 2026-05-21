@@ -6,8 +6,10 @@
  * lightweight (no brand attribution, no prompt payload, no recurring-tasks
  * disk scan) and cacheable for ~1s per process.
  *
- * Admin-only — same gate as cron-run. Brand users see live updates via the
- * fuller /api/recurring-tasks polling at 20s.
+ * Open to any authenticated user. Payload is just a boolean + start/touch
+ * timestamps per id — no prompts, errors, or brand attribution. Brand users
+ * call this with the ids surfaced by their /api/recurring-tasks snapshot
+ * (which is already brand-scoped), so there is no extra info leakage.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
@@ -20,10 +22,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
-  }
-
-  if (!req.ctx?.isAdmin) {
-    return res.status(403).json({ error: "Admin only" });
   }
 
   const raw = (req.query.ids as string) || "";
