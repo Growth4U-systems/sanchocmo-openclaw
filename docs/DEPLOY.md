@@ -4,7 +4,17 @@ Deploy SanchoCMO to a VPS using Docker Compose and nginx.
 
 ---
 
+> **Running a live deploy already?** Read [`SERVER-OPS.md`](./SERVER-OPS.md) for the day-2 ops side: minimum resources, swap, log rotation, build-cache prune cron, monitoring and the recovery playbook for failures we've actually seen in prod. The "post-install hardening" steps there are **not optional** for a real workload — apply them right after this guide.
+
+---
+
 ## Requirements
+
+> **VPS sizing**: the numbers below are the floor for an idle install. A
+> live workload (multiple brands × content-engine crons) needs **4 vCPU /
+> 8 GB RAM / 80 GB disk** to avoid OOM-kills and disk pressure. See
+> [`SERVER-OPS.md §1`](./SERVER-OPS.md#1-minimum-resource-budget) for the
+> full budget.
 
 | Resource | Minimum |
 |---|---|
