@@ -90,6 +90,29 @@ BEFORE searching, reading, or referencing any client file, read `brand/{slug}/fo
 - All paths in `file_index` are **relative to `brand/{slug}/`**.
 - **Reconciliation:** `python3 scripts/verify-file-index.py [--fix]` checks and fixes discrepancies.
 
+### 17. ⚠️ Acknowledge recovered tool failures in your final reply
+
+When an `exec`/`bash`/`Write`/`Edit`/python-heredoc call **fails mid-turn but you recover** and the deliverable ships OK, you MUST mention the failure in the same reply that announces success. Why: MC chat otherwise appends a separate `⚠️ 🛠️ <tool> (agent) failed` message right after your "✅ Hecho" — looks like the whole task broke even though it didn't.
+
+The runtime suppresses that warning only when the reply contains an explicit failure acknowledgement, and **the detector is English-only**. So when you recovered from a failure, add a short English footnote at the end of your Spanish reply. Any one of these phrasings satisfies it:
+
+- `Note: 1 exec command failed during exploration; recovered.`
+- `Encountered an error while running a script; recovered.`
+- `Couldn't apply the first <action> attempt; the next one succeeded.`
+
+The detector matches an English **action verb** (`write/edit/update/save/create/delete/remove/modify/change/apply/patch/move/rename/send/reply/message/run/execute/execution/command/script/shell/bash/exec/tool/action/operation`) paired with an English **failure word** (`failed/failure/errored`) within ~100 chars, or the form `(hit|encountered|ran into) error … (while|trying to|when) … <action verb>`. Vague Spanish ("tuve un problema") does NOT satisfy it.
+
+Do NOT mention failures that did not actually happen, and skip the footnote when no tool failure occurred. Do NOT add it to a reply that is itself an error message.
+
+### 18. 🔗 Never wrap URLs in angle brackets
+
+When publishing MC/portal/admin links, post them as **plain URLs**, not Discord-style `<URL>` wrappers. The MC chat UI does not strip angle brackets — they leak into the rendered href and the `>` at the end turns `…/file.md` into `…/file.md>`, which 404s. This regressed before (#86); the rule applies to every channel, not just Discord.
+
+❌ INCORRECTO: `<https://staging.sanchocmo.ai/mc/portal/{token}/docs/brand/{slug}/file.md>`
+✅ CORRECTO:   `https://staging.sanchocmo.ai/mc/portal/{token}/docs/brand/{slug}/file.md`
+
+Markdown links also work: `[Voice Profile](https://…/file.md)`. Auto-linkification handles bare URLs cleanly.
+
 ---
 
 ## API Connection Protocol (P0)
