@@ -124,6 +124,7 @@ export interface RichAgent {
   resolvedModel: string | null;
   overrideModel: string | null;
   isDefault: boolean;
+  registered: boolean;
 }
 
 export function useAgentsList() {
