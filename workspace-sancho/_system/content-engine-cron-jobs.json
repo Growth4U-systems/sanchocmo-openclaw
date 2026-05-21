@@ -71,6 +71,20 @@
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": { "mode": "none" }
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: POV Bank Refresh — {NAME}",
+      "enabled": true,
+      "schedule": { "kind": "cron", "expr": "0 9 1 * *", "tz": "Europe/Madrid" },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "POV Bank Refresh mensual para {NAME}.\n\n1. Lee los Clarify patterns activos de {SLUG} desde Neon vía endpoint:\n   curl -fsS \"$MC_BASE/api/content-engine/pov-bank?slug={SLUG}\"\n   El response trae povBank.pov_per_pillar.{pillar_id}.clarify_patterns[] (filtra status='active', updated_at en los últimos 30 días).\n\n2. Cuenta el total de patterns activos en los últimos 30 días. Si >10:\n   - Analiza patrones: qué ángulos elige el humano, qué tono prefiere, qué CTAs usa\n   - Lee brand/{SLUG}/brand-book/brand-voice/brand-voice.current.md\n   - Propone refinamientos a la Brand Voice basados en los patterns del Clarify\n   - Si hay cambios significativos, actualiza brand-voice con versionado (escribe brand-voice.current.md y agrega entry en brand-voice.history.json con timestamp + change_note)\n\n3. Guarda resumen en brand/{SLUG}/recurring-tasks/content-pov-bank/{YYYY-MM-DD}.json:\n{\"cronName\": \"Content: POV Bank Refresh — {NAME}\", \"slug\": \"{SLUG}\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\", \"patterns_analyzed\": <N>, \"changes_applied\": <bool>, \"last_finding\": \"<frase>\"}\n\n4. Si <10 patterns: skip, no hay suficiente data aún. last_finding=\"Skip mensual: solo <N> patterns activos en últimos 30d (umbral >10).\"",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": { "mode": "none" }
     }
   ]
 }
