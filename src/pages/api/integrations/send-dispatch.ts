@@ -377,8 +377,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             if (!dispatchedIds.has(idea.id)) continue;
             idea.dispatch_date = today;
             idea.dispatch_slot = idea.target_channel || null;
-            if (taskId) idea.project_task_id = taskId;
-            if (projectId) idea.project_id = projectId;
+            // Only stamp the routing pointers if the idea hasn't been promoted
+            // to a ContentTask yet. Once `content_task_id` exists the parent
+            // task is fixed (the CT lives inside that parent's `tasks.json`),
+            // so a re-dispatch on a different day must not move the pointer —
+            // otherwise project_task_id ends up referencing today's daily task
+            // while content_task_id still points to the CT under the original
+            // parent, and "Abrir draft" 404s.
+            if (!idea.content_task_id) {
+              if (taskId) idea.project_task_id = taskId;
+              if (projectId) idea.project_id = projectId;
+            }
             mutated = true;
           }
           if (mutated) fs.writeFileSync(queuePath, JSON.stringify(fullQueue, null, 2));

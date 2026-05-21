@@ -89,7 +89,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     } catch { continue; }
 
     for (const task of tasks) {
-      const df = (task.deliverable_file || "") as string;
+      // `deliverable_file` is typed as a string, but some skill writers
+      // persist a string[] when a task produces multiple files (e.g. a set
+      // of templates). The index just needs *something* to check on disk,
+      // so coerce: pick the first entry of an array, else fall through to "".
+      // Without this guard the whole endpoint 500s with
+      // "t.startsWith is not a function" and the Task Index UI shows blank.
+      const dfRaw = task.deliverable_file;
+      const df = typeof dfRaw === "string"
+        ? dfRaw
+        : Array.isArray(dfRaw) && typeof dfRaw[0] === "string"
+          ? dfRaw[0]
+          : "";
       const thread = (task.mc_chat_thread_id || "") as string;
       const skill = (task.skill || "") as string;
 

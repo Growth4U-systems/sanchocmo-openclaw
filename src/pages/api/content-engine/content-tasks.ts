@@ -23,6 +23,7 @@ import { withErrorHandler } from "@/lib/api-middleware";
 import {
   listContentTasks,
   findContentTask,
+  findContentTaskByIdAcrossProjects,
   setContentTaskStatus,
   updateContentTask,
   attachDocumentToContentTask,
@@ -67,7 +68,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!parentTaskId) return res.status(400).json({ error: "Missing parentTaskId" });
 
     if (id) {
-      const ct = findContentTask(slug, parentTaskId, id);
+      // Primary lookup uses the caller-supplied parentTaskId. Fall back to a
+      // brand-wide scan when that misses: the CT id itself encodes the parent
+      // (`{parent}-C{n}`) so we can recover from a stale `project_task_id` on
+      // the idea record (e.g. when a re-dispatched idea got its pointer moved
+      // to a different daily task than the one its CT actually lives under).
+      let ct = findContentTask(slug, parentTaskId, id);
+      if (!ct) {
+        const fallback = findContentTaskByIdAcrossProjects(slug, id);
+        if (fallback) ct = fallback.ct;
+      }
       if (!ct) return res.status(404).json({ error: "ContentTask not found" });
       return res.status(200).json({ ok: true, contentTask: ct });
     }
