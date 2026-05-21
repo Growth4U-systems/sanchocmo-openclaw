@@ -12,8 +12,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).json({ error: "Admin only" });
   }
 
+  const all = req.query.all === "1" || req.query.all === "true";
   const force = req.query.force === "1";
-  const catalog = getModelCatalog(force);
+  const catalog = await getModelCatalog({ all, force });
   return res.status(200).json({ ok: true, ...catalog });
 }
 

@@ -24,20 +24,23 @@ export interface ModelCatalogResponse {
   models: CatalogModel[];
   curated: string[];
   generatedAt: number;
+  complete: boolean;
 }
 
-export function useModelCatalog() {
+export function useModelCatalog(opts: { all?: boolean } = {}) {
+  const all = opts.all === true;
   return useQuery<ModelCatalogResponse>({
-    queryKey: ["models-catalog"],
+    queryKey: ["models-catalog", all],
     queryFn: async () => {
-      const res = await fetch("/api/models/catalog");
+      const url = all ? "/api/models/catalog?all=1" : "/api/models/catalog";
+      const res = await fetch(url);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Failed to fetch model catalog");
       }
       return res.json();
     },
-    staleTime: 30_000,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -113,14 +116,24 @@ export function useSetCronModel(slug: string | null) {
   });
 }
 
+export interface RichAgent {
+  id: string;
+  name: string;
+  emoji: string | null;
+  workspace: string | null;
+  resolvedModel: string | null;
+  overrideModel: string | null;
+  isDefault: boolean;
+}
+
 export function useAgentsList() {
-  return useQuery<{ ok: true; agents: Array<{ id: string; model: string | null }> }>({
+  return useQuery<{ ok: true; agents: RichAgent[] }>({
     queryKey: ["agents-list"],
     queryFn: async () => {
       const res = await fetch("/api/admin/agents");
       if (!res.ok) throw new Error("Failed to fetch agents");
       return res.json();
     },
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 }

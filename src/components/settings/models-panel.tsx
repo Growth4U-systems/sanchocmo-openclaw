@@ -111,21 +111,34 @@ function PerAgentSection() {
         Override por agente (<code>agents.list[].model</code>). Si vacío, hereda el default global.
       </p>
       {agents.length === 0 ? (
-        <p className="text-sm text-muted-foreground">no hay agentes en agents.list</p>
+        <p className="text-sm text-muted-foreground">no hay agentes registrados</p>
       ) : (
         <ul className="space-y-2">
           {agents.map((a) => {
             const busy = isPending && pendingAgent === a.id;
+            const inheriting = a.overrideModel === null;
             return (
               <li
                 key={a.id}
                 className="flex items-center gap-3 rounded border-2 border-ink p-2"
               >
-                <span className="font-mono font-semibold text-sm w-28 truncate">{a.id}</span>
+                <span className="flex items-center gap-1 w-40 truncate">
+                  {a.emoji && <span>{a.emoji}</span>}
+                  <span className="font-mono font-semibold text-sm truncate">{a.id}</span>
+                  {a.isDefault && (
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                      default
+                    </span>
+                  )}
+                </span>
                 <ModelPicker
-                  value={a.model}
+                  value={a.overrideModel}
                   allowInherit
-                  inheritLabel="(default global)"
+                  inheritLabel={
+                    a.resolvedModel
+                      ? `(default → ${a.resolvedModel})`
+                      : "(default global)"
+                  }
                   disabled={busy}
                   size="sm"
                   onChange={(next) => {
@@ -136,6 +149,9 @@ function PerAgentSection() {
                     );
                   }}
                 />
+                {!inheriting && (
+                  <span className="text-[10px] uppercase font-bold text-rust">override</span>
+                )}
                 {busy && <span className="text-xs text-muted-foreground">guardando…</span>}
               </li>
             );
