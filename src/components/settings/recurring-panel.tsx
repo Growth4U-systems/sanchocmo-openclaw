@@ -286,6 +286,7 @@ function CategorySection(props: CategorySectionProps) {
             onDetails={onDetails}
             onRun={onRun}
             onToggle={onToggle}
+            shared={shared}
           />
         )}
       </CollapsibleSection>
@@ -298,12 +299,15 @@ function CompactTable({
   onDetails,
   onRun,
   onToggle,
+  shared,
 }: {
   crons: CronApi[];
   onDetails: (id: string) => void;
   onRun: (id: string) => void;
   onToggle: (id: string, enable: boolean) => void;
+  shared?: boolean;
 }) {
+  const sharedTitle = "Cron de sistema — gestionar desde el panel admin";
   return (
     <div className="overflow-x-auto">
       <p className="text-[11px] text-muted-foreground mb-1.5">
@@ -342,8 +346,15 @@ function CompactTable({
                   type="button"
                   role="switch"
                   aria-checked={isEnabled(c)}
+                  aria-disabled={shared || undefined}
+                  disabled={shared}
                   onClick={() => onToggle(c.id, !isEnabled(c))}
-                  className={"relative inline-flex h-4 w-7 rounded-full border border-ink " + (isEnabled(c) ? "bg-sage" : "bg-muted")}
+                  title={shared ? sharedTitle : undefined}
+                  className={
+                    "relative inline-flex h-4 w-7 rounded-full border border-ink " +
+                    (isEnabled(c) ? "bg-sage" : "bg-muted") +
+                    (shared ? " opacity-50 cursor-not-allowed" : "")
+                  }
                 >
                   <span
                     className={
@@ -357,8 +368,9 @@ function CompactTable({
                 <button
                   type="button"
                   onClick={() => onRun(c.id)}
-                  className="text-[10px] font-heading uppercase tracking-wider px-1.5 py-0.5 rounded border border-ink hover:bg-muted transition-colors"
-                  title="Ejecutar ahora"
+                  disabled={shared}
+                  className="text-[10px] font-heading uppercase tracking-wider px-1.5 py-0.5 rounded border border-ink hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  title={shared ? sharedTitle : "Ejecutar ahora"}
                 >
                   ▶
                 </button>

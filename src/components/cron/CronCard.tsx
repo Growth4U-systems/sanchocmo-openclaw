@@ -109,13 +109,19 @@ export function CronCard({
         <button
           type="button"
           onClick={() => onRun(cron.id)}
-          disabled={runDisabled}
+          disabled={runDisabled || shared}
           className={cn(
             "text-[11px] px-2.5 py-1 rounded border-2 border-ink font-heading uppercase tracking-wider transition-all",
             "bg-rust text-white hover:-translate-y-0.5 shadow-comic",
             "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0",
           )}
-          title={runDisabled ? "Ya está corriendo o encolada" : "Ejecutar ahora"}
+          title={
+            shared
+              ? "Cron de sistema — gestionar desde el panel admin"
+              : runDisabled
+                ? "Ya está corriendo o encolada"
+                : "Ejecutar ahora"
+          }
         >
           {runDisabled ? "⏳" : "▶ Ejecutar"}
         </button>
@@ -123,6 +129,7 @@ export function CronCard({
         <Toggle
           checked={enabled}
           running={running}
+          disabled={!!shared}
           onChange={(v) => onToggle(cron.id, v)}
         />
 
@@ -157,10 +164,12 @@ export function CronCard({
 function Toggle({
   checked,
   running,
+  disabled,
   onChange,
 }: {
   checked: boolean;
   running: boolean;
+  disabled?: boolean;
   onChange: (v: boolean) => void;
 }) {
   return (
@@ -168,19 +177,24 @@ function Toggle({
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-disabled={disabled || undefined}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
       title={
-        running
-          ? checked
-            ? "Activo — pausar (no detiene la corrida actual)"
-            : "Pausado"
-          : checked
-            ? "Activo — click para pausar"
-            : "Pausado — click para activar"
+        disabled
+          ? "Cron de sistema — gestionar desde el panel admin"
+          : running
+            ? checked
+              ? "Activo — pausar (no detiene la corrida actual)"
+              : "Pausado"
+            : checked
+              ? "Activo — click para pausar"
+              : "Pausado — click para activar"
       }
       className={cn(
         "relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-ink transition-colors",
         checked ? "bg-sage" : "bg-muted",
+        disabled && "opacity-50 cursor-not-allowed",
       )}
     >
       <span
