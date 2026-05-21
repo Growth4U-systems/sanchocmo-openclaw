@@ -74,8 +74,14 @@ JSON array** (never an object grouped by pillar). Each element has the shape
 shown in step 3. If nothing was extracted for a pillar, omit it — do not
 write placeholders. If nothing was extracted at all, write `[]`.
 
-Downstream consumers count with `jq '[.[] | select(.pillar_id == "PX")] | length'`
-— a grouped-by-pillar shape breaks the filter.
+Downstream consumers filter with selectors over `pillar_id`, so a grouped
+shape (`{ "P1": [...] }`) silently breaks them. Keep it flat.
+
+Don't run `jq` (or `cat`, `ls`, `grep`) on the file as a self-check. The
+cron's shell cwd is `~/.openclaw`, not `workspace-sancho/`, so a relative
+path like `brand/<slug>/...` won't resolve and the run will be marked as
+failed even though the write succeeded. Use the file-read tool if you need
+to inspect what you just wrote.
 
 Deduplicate against previous weeks (same question = skip).
 
