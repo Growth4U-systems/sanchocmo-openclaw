@@ -69,7 +69,14 @@ For each seed query in the config:
 ```
 
 ### 4. Write output
-Write to `content/research-signals/{YYYY-MM-DD}-paa.json`.
+Write to `content/research-signals/{YYYY-MM-DD}-paa.json` as a **flat top-level
+JSON array** (never an object grouped by pillar). Each element has the shape
+shown in step 3. If nothing was extracted for a pillar, omit it — do not
+write placeholders. If nothing was extracted at all, write `[]`.
+
+Downstream consumers count with `jq '[.[] | select(.pillar_id == "PX")] | length'`
+— a grouped-by-pillar shape breaks the filter.
+
 Deduplicate against previous weeks (same question = skip).
 
 ## Rules
