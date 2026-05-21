@@ -192,6 +192,7 @@
     "tabs": {
       "apis": "APIs",
       "agents": "Agents",
+      "models": "Models",
       "skills": "Skills",
       "strategies": "Strategies",
       "recurring": "Recurring",

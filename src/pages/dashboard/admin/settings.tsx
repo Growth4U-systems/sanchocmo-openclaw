@@ -11,6 +11,7 @@ import { AgentsPanel } from "@/components/settings/agents-panel";
 import { SkillsPanel } from "@/components/settings/skills-panel";
 import { RecurringPanel } from "@/components/settings/recurring-panel";
 import { ApisConnectorsPanel } from "@/components/settings/ApisConnectorsPanel";
+import { ModelsPanel } from "@/components/settings/models-panel";
 
 /**
  * /dashboard/admin/settings — global ("all clients") configuration.
@@ -29,12 +30,13 @@ import { ApisConnectorsPanel } from "@/components/settings/ApisConnectorsPanel";
  *   - /dashboard/admin/users
  */
 
-const TAB_KEYS = ["apis", "agents", "skills", "recurring", "preferences"] as const;
+const TAB_KEYS = ["apis", "agents", "models", "skills", "recurring", "preferences"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
 const TAB_ICONS: Record<TabKey, string> = {
   apis: "🔌",
   agents: "🤖",
+  models: "🧠",
   skills: "🧰",
   recurring: "🔄",
   preferences: "⚙️",
@@ -82,6 +84,7 @@ export default function SettingsPage() {
 
       {activeTab === "apis" && <ApisConnectorsPanel />}
       {activeTab === "agents" && <AgentsPanel />}
+      {activeTab === "models" && <ModelsPanel />}
       {activeTab === "skills" && <SkillsPanel />}
       {activeTab === "recurring" && <RecurringPanel />}
       {activeTab === "preferences" && <PreferencesPanel />}

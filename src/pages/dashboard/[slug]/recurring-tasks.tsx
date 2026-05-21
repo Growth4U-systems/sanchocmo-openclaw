@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useTranslations } from "next-intl";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import ReactMarkdown from "react-markdown";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useRecurringTasks, useCronRuns, useToggleRecurringTask } from "@/hooks/useRecurringTasks";
+import { useSetCronModel } from "@/hooks/useModels";
+import { ModelPicker } from "@/components/admin/ModelPicker";
 import { cn } from "@/lib/utils";
 
 interface CronRun {
@@ -22,10 +25,14 @@ interface CronRun {
 export default function RecurringTasksPage() {
   const slug = useSlugSync();
   const t = useTranslations("recurringTasks");
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
   const { data: tasksData, isLoading: tasksLoading } = useRecurringTasks(slug);
   const { data: runsData, isLoading: runsLoading } = useCronRuns(slug);
   const toggleMutation = useToggleRecurringTask();
+  const setCronModel = useSetCronModel(slug);
   const [selectedRun, setSelectedRun] = useState<CronRun | null>(null);
+  const [pendingCron, setPendingCron] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"tasks" | "history">("tasks");
 
   const tasks = tasksData?.[slug] || [];
@@ -101,8 +108,31 @@ export default function RecurringTasksPage() {
                   <span>{String(task.schedule || "—")}</span>
                   {task.task_type ? <span className="capitalize">{String(task.task_type)}</span> : null}
                   {task.agent ? <span>🤖 {String(task.agent)}</span> : null}
+                  {!isAdmin && task.model ? <span className="font-mono">{String(task.model)}</span> : null}
                 </div>
               </div>
+
+              {/* Model picker (admin only) */}
+              {isAdmin && task._source === "openclaw-cron" && (
+                <ModelPicker
+                  value={
+                    typeof task.model === "string" && task.model && task.model !== "—"
+                      ? task.model
+                      : null
+                  }
+                  size="sm"
+                  disabled={pendingCron === (task.id as string)}
+                  onChange={(next) => {
+                    if (!next) return;
+                    const id = task.id as string;
+                    setPendingCron(id);
+                    setCronModel.mutate(
+                      { cronId: id, model: next },
+                      { onSettled: () => setPendingCron(null) }
+                    );
+                  }}
+                />
+              )}
 
               {/* Status badge */}
               <span
