@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { readJSON } from "@/lib/data/json-io";
 import { apiHealthFile, integrationsFile } from "@/lib/data/paths";
 import { brandEnvHas } from "@/lib/brand-env";
-import { getProvider } from "@/lib/publishing/registry";
+import { getProvider, getProviderConfigStatus } from "@/lib/publishing/registry";
 
 interface ServiceHealth {
   status: string;
@@ -56,12 +56,12 @@ function deriveFromIntegration(
 
   const provider = getProvider(apiId);
   if (provider) {
-    const insp = provider.inspect(slug);
-    if (insp.configured) return { status: "ok", lastCheck, details: {} };
+    const status = getProviderConfigStatus(slug, provider);
+    if (status.configured) return { status: "ok", lastCheck, details: {} };
     return {
       status: "error",
       lastCheck,
-      details: { error: insp.missing || "Credenciales faltantes" },
+      details: { error: status.missing || "Credenciales faltantes" },
     };
   }
 
