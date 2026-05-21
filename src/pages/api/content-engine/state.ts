@@ -84,7 +84,17 @@ function readJSON<T>(p: string, fallback: T): T {
 }
 
 function loadIdeas(slug: string): Idea[] {
-  return readJSON<Idea[]>(path.join(BASE, "brand", slug, "content", "idea-queue.json"), []);
+  // The canonical shape of `idea-queue.json` is a bare JSON array. Some
+  // cron-driven skills (news-monitor, thief-marketers) have intermittently
+  // written it as `{ "ideas": [...] }` — a single bad run there used to
+  // 500 the Engine endpoint globally with "r.filter is not a function" and
+  // hide the dashboard. Accept either shape so a malformed writer can't
+  // take the UI down (writers should still be fixed; this is defense).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = readJSON<any>(path.join(BASE, "brand", slug, "content", "idea-queue.json"), []);
+  if (Array.isArray(raw)) return raw as Idea[];
+  if (raw && Array.isArray(raw.ideas)) return raw.ideas as Idea[];
+  return [];
 }
 
 function loadPillars(slug: string): Pillar[] {

@@ -80,7 +80,25 @@ Build a complete idea in one shot:
 
 ### 4. Schema (one idea per top piece)
 
-Append to `content/idea-queue.json`. **Before assigning `{n}`**, read the existing
+#### 4.0 CRITICAL — File contract for `idea-queue.json`
+
+> **Read this before you write a single byte. Violating this section has wiped 100+ ideas in past runs.**
+
+- **Shape is a bare JSON array `[...]`.** Never `{ "ideas": [...] }`. Never `{ ... }`. The dashboard reads `idea-queue.json` directly and crashes if it sees an object at the top level.
+- **You APPEND. You do NOT overwrite.** The existing array contains all ideas ever produced for this brand (often 100+). Your output is a small set of new ideas merged INTO that array. The final file must contain `existing_ideas + your_new_ideas`.
+- **If you cannot parse the existing file as an array, STOP and write nothing.** Do not "fix" it by writing a fresh array. Log the failure to `recurring-tasks/content-competitor-monitor/{date}.json` with `status: "error"` and exit. Overwriting a malformed queue is worse than skipping the run — a wrong write destroys real ideas.
+- **Concretely, the write is this sequence (pseudocode):**
+  ```
+  existing = json.load("content/idea-queue.json")
+  assert isinstance(existing, list)        # abort run if not an array
+  new_ideas = [ ... ]                       # what you built this run
+  for idea in new_ideas:
+      assert idea["id"] not in {e["id"] for e in existing}   # no id collisions
+  json.dump(existing + new_ideas, "content/idea-queue.json", indent=2)
+  ```
+- **Verify after writing.** Re-read the file and assert `isinstance(parsed, list) and len(parsed) >= len(existing) + len(new_ideas)`. If the assertion fails, restore from the pre-write copy and log `status: "error"`.
+
+Append to `content/idea-queue.json` following the contract above. **Before assigning `{n}`**, read the existing
 file and find the highest `{n}` already used for today's date prefix
 (`idea-{YYYY-MM-DD}-`). Start your numbering at `max + 1` so a second cron run on
 the same day does not collide with earlier ideas. If no idea for today exists yet,
