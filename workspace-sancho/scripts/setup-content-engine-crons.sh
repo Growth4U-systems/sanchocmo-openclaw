@@ -65,11 +65,26 @@ CREATED=0
 SKIPPED=0
 ERRORS=0
 
-# Existing crons live in ~/.openclaw/cron/jobs.json — read it directly for
-# exact name matching (`openclaw cron list` truncates names with "...").
-JOBS_FILE="${HOME}/.openclaw/cron/jobs.json"
+# Existing crons live in OpenClaw's runtime state. Newer versions store
+# them under ${OPENCLAW_HOME}/.openclaw/cron/jobs.json (nested); older
+# versions used ${OPENCLAW_HOME}/cron/jobs.json (flat). Try nested first
+# so we still detect duplicates even when the legacy symlink bridge is
+# missing — otherwise the script reports "would create" for every job
+# and `cron add` later fails or silently produces duplicates.
+# We read jobs.json directly (rather than `openclaw cron list`) for exact
+# name matching, since the CLI truncates long names with "...".
+OPENCLAW_HOME_DIR="${OPENCLAW_HOME:-$HOME/.openclaw}"
+JOBS_FILE=""
+for candidate in \
+    "${OPENCLAW_HOME_DIR}/.openclaw/cron/jobs.json" \
+    "${OPENCLAW_HOME_DIR}/cron/jobs.json"; do
+  if [[ -f "$candidate" ]]; then
+    JOBS_FILE="$candidate"
+    break
+  fi
+done
 EXISTING_NAMES_FILE=$(mktemp)
-if [[ -f "$JOBS_FILE" ]]; then
+if [[ -n "$JOBS_FILE" && -f "$JOBS_FILE" ]]; then
   # Handle either schema: top-level array, or { "jobs": [...] }, or { "jobs": {id: job} }
   jq -r '
     if type == "array" then .[]
