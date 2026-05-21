@@ -343,7 +343,70 @@ Common cause: multiple content-engine crons firing in the same minute
 spread the schedule manually so they don't all wake at once. Use the
 recurring tasks admin tab to see what's running concurrently.
 
-### 5.4 Snapshot watchdog alert
+### 5.4 MC chat replies time out — "Request timed out before a response was generated"
+
+**Symptom**: a chat thread in MC returns the bot message:
+
+```
+⚠️ 🛠️ run <something> (agent) failed
+Request timed out before a response was generated.
+Please try again, or increase `agents.defaults.timeoutSeconds` in your config.
+```
+
+The hint in the error message is **misleading** — `agents.defaults.timeoutSeconds`
+defaults to 600 s and is almost never the cap that fires here.
+
+**Real cause**: the Codex app-server (which runs the model for Sancho) has a
+hardcoded default `turnCompletionIdleTimeoutMs` of **60 s**. If the LLM
+takes longer than 60 s to produce the next step (typical when the thread
+has accumulated 200k+ tokens), Codex's watchdog aborts the turn and the
+gateway surfaces this generic timeout text.
+
+Confirm by reading the container logs around the failure:
+
+```bash
+docker logs sanchocmo --since 1h 2>&1 | grep -E 'turn idle timed out|reason=timeout'
+```
+
+You're looking for entries like:
+
+```
+[agent/embedded] codex app-server turn idle timed out waiting for completion
+[agent/embedded] embedded run failover decision: ... reason=timeout from=codex/<model>
+```
+
+If those are present, the fix is to raise the Codex app-server timeouts in
+`/root/.openclaw/openclaw.json`:
+
+```jsonc
+"plugins": {
+  "entries": {
+    "codex": {
+      "enabled": true,
+      "config": {
+        "appServer": {
+          "turnCompletionIdleTimeoutMs": 180000,
+          "requestTimeoutMs": 180000
+        }
+      }
+    }
+    // … other entries unchanged
+  }
+}
+```
+
+Then `docker restart sanchocmo`. Three minutes is a sane ceiling for
+reasoning-heavy turns; raise further only if you've seen the new ceiling
+also get hit. The setting is documented in
+`@openclaw/host` at `plugins.entries.codex.config.appServer` — the
+default constants live in `run-attempt-*.js` (`CODEX_TURN_COMPLETION_IDLE_TIMEOUT_MS`).
+
+If timeouts persist after the bump, the underlying issue is usually
+runaway context in a single chat thread (an "Ejecutar" that accumulated a
+multi-hour conversation). Resetting that chat's session to start with a
+fresh context is the structural fix; the timeout bump just buys headroom.
+
+### 5.5 Snapshot watchdog alert
 
 **Symptom**: webhook fires "snapshot stale".
 
@@ -430,3 +493,7 @@ are also a fallback — see `DEPLOY.md` "Backups" for the restore procedure.
   `openclaw gateway` (no swap on the host) + disk-full risk (30 GB of stale
   docker build cache, never pruned). Captured the fixes here so future
   VPS bring-ups don't repeat the same diagnosis.
+- **2026-05-21**: added §5.4 — Codex app-server idle timeout (60 s default)
+  after a brand-voice chat on staging timed out at the watchdog ceiling.
+  The user-facing error points at the wrong knob; recorded the real
+  config path so the next occurrence is a one-minute fix.
