@@ -90,6 +90,7 @@ function DefaultModelSection() {
 
 function PerAgentSection() {
   const { data: agentsData, isLoading } = useAgentsList();
+  const { data: defaultModel } = useDefaultModel();
   const { mutate, isPending } = useSetAgentModel();
   const [pendingAgent, setPendingAgent] = useState<string | null>(null);
 
@@ -103,24 +104,37 @@ function PerAgentSection() {
   }
 
   const agents = agentsData?.agents || [];
+  const globalDefault = defaultModel?.model ?? null;
 
   return (
     <ComicCard>
       <h3 className="font-heading text-lg text-navy mb-1">Por agente</h3>
       <p className="text-xs text-muted-foreground mb-4">
-        Override por agente (<code>agents.list[].model</code>). Si vacío, hereda el default global.
+        Cada agente puede <strong>heredar el default global</strong> o tener un{" "}
+        <strong>modelo propio</strong>. Los agentes sin registrar (sólo workspace en disco) aparecen
+        debajo y se registran automáticamente al elegir un modelo.
       </p>
       {agents.length === 0 ? (
-        <p className="text-sm text-muted-foreground">no hay agentes registrados</p>
+        <p className="text-sm text-muted-foreground">no hay agentes</p>
       ) : (
         <ul className="space-y-2">
           {agents.map((a) => {
             const busy = isPending && pendingAgent === a.id;
             const inheriting = a.overrideModel === null;
+            const handleSave = (next: string | null) => {
+              setPendingAgent(a.id);
+              mutate(
+                { agentId: a.id, model: next },
+                { onSettled: () => setPendingAgent(null) }
+              );
+            };
             return (
               <li
                 key={a.id}
-                className="flex items-center gap-3 rounded border-2 border-ink p-2"
+                className={cn(
+                  "flex items-center gap-3 rounded border-2 border-ink p-2",
+                  !a.registered && "opacity-80"
+                )}
               >
                 <span className="flex items-center gap-1 w-40 truncate">
                   {a.emoji && <span>{a.emoji}</span>}
@@ -130,26 +144,55 @@ function PerAgentSection() {
                       default
                     </span>
                   )}
+                  {!a.registered && (
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                      sin registrar
+                    </span>
+                  )}
                 </span>
+
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`mode-${a.id}`}
+                      checked={inheriting && a.registered}
+                      disabled={busy || !a.registered}
+                      onChange={() => handleSave(null)}
+                    />
+                    <span>
+                      Heredar default
+                      {globalDefault && (
+                        <span className="text-muted-foreground font-mono">
+                          {" "}
+                          ({globalDefault})
+                        </span>
+                      )}
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`mode-${a.id}`}
+                      checked={!inheriting || !a.registered}
+                      disabled={busy}
+                      readOnly
+                    />
+                    <span>Modelo propio</span>
+                  </label>
+                </div>
+
                 <ModelPicker
                   value={a.overrideModel}
-                  allowInherit
-                  inheritLabel={
-                    a.resolvedModel
-                      ? `(default → ${a.resolvedModel})`
-                      : "(default global)"
-                  }
-                  disabled={busy}
+                  allowInherit={false}
+                  disabled={busy || (inheriting && a.registered)}
                   size="sm"
                   onChange={(next) => {
-                    setPendingAgent(a.id);
-                    mutate(
-                      { agentId: a.id, model: next },
-                      { onSettled: () => setPendingAgent(null) }
-                    );
+                    if (next) handleSave(next);
                   }}
                 />
-                {!inheriting && (
+
+                {!inheriting && a.registered && (
                   <span className="text-[10px] uppercase font-bold text-rust">override</span>
                 )}
                 {busy && <span className="text-xs text-muted-foreground">guardando…</span>}

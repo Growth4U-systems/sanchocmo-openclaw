@@ -1,5 +1,7 @@
 import { execSync } from "child_process";
-import { EXEC_PATH } from "@/lib/data/paths";
+import fs from "fs";
+import path from "path";
+import { EXEC_PATH, BASE } from "@/lib/data/paths";
 
 interface ExecOptions {
   timeoutMs?: number;
@@ -22,6 +24,12 @@ export function runOpenclaw(args: string[], opts: ExecOptions = {}): string {
 
 export function patchOpenclawConfig(patchObj: unknown): void {
   runOpenclaw(["config", "patch", "--stdin"], {
+    stdin: JSON.stringify(patchObj),
+  });
+}
+
+function patchOpenclawConfigReplacePath(path: string, patchObj: unknown): void {
+  runOpenclaw(["config", "patch", "--stdin", "--replace-path", path], {
     stdin: JSON.stringify(patchObj),
   });
 }
@@ -72,45 +80,63 @@ export function listAgents(): AgentEntry[] {
   return [];
 }
 
+function writeAgentsList(newList: AgentEntry[]): void {
+  // `openclaw config patch --stdin` requires a JSON5 *object* patch even
+  // when `--replace-path` targets an array path. Wrap the new list in the
+  // surrounding object so openclaw accepts it.
+  patchOpenclawConfigReplacePath("agents.list", { agents: { list: newList } });
+}
+
+function workspaceDirForId(agentId: string): string {
+  return path.join(BASE.replace(/\/workspace-sancho$/, ""), `workspace-${agentId}`);
+}
+
+export function registerAgent(agentId: string, model?: string): void {
+  const workspace = workspaceDirForId(agentId);
+  const args = ["agents", "add", agentId, "--workspace", workspace, "--non-interactive"];
+  if (model) {
+    args.push("--model", model);
+  }
+  try {
+    runOpenclaw(args);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/already\s+exists|duplicate|conflict/i.test(msg)) {
+      throw e;
+    }
+  }
+}
+
 export function setAgentModel(agentId: string, modelId: string | null): { updated: boolean } {
   const agents = listAgents();
-  let next = agents.slice();
-  const idx = next.findIndex((a) => a.id === agentId);
+  const idx = agents.findIndex((a) => a.id === agentId);
+
   if (idx < 0) {
-    // Agent isn't registered in agents.list yet — create a minimal entry so
-    // openclaw resolves the override. We require the workspace to exist on
-    // disk to avoid creating ghost entries; the workspace path follows the
-    // canonical `workspace-<id>` convention next to the others.
     if (modelId === null) {
-      // Nothing to clear if the agent has no entry yet.
+      // Nothing to clear if the agent isn't registered.
       return { updated: false };
     }
-    const referenceAgent = next.find((a) => typeof a.workspace === "string");
-    const workspaceDir = referenceAgent && typeof referenceAgent.workspace === "string"
-      ? referenceAgent.workspace.replace(/workspace-[^/]+$/, `workspace-${agentId}`)
-      : `/root/.openclaw/workspace-${agentId}`;
-    next.push({ id: agentId, workspace: workspaceDir, model: modelId });
-  } else {
-    const entry = { ...next[idx] };
-    if (modelId === null) {
-      delete entry.model;
-    } else {
-      entry.model = modelId;
+    // Use `openclaw agents add` rather than a raw patch so the CLI runs all
+    // its schema/identity validation and seeds default agent state.
+    registerAgent(agentId, modelId);
+    if (modelId !== null) {
+      ensureModelInAllowlist(modelId);
     }
-    next = next.slice();
-    next[idx] = entry;
+    return { updated: true };
   }
-  if (modelId !== null) {
-    // Same single-patch trick as setDefaultPrimaryModel: include the allowlist
-    // entry in the same write so we don't need a separate patch call.
-    runOpenclaw(["config", "patch", "--stdin", "--replace-path", "agents.list"], {
-      stdin: JSON.stringify(next),
-    });
-    patchOpenclawConfig({ agents: { defaults: { models: { [modelId]: {} } } } });
+
+  const next = agents.slice();
+  const entry = { ...next[idx] };
+  if (modelId === null) {
+    delete entry.model;
   } else {
-    runOpenclaw(["config", "patch", "--stdin", "--replace-path", "agents.list"], {
-      stdin: JSON.stringify(next),
-    });
+    entry.model = modelId;
+  }
+  next[idx] = entry;
+
+  writeAgentsList(next);
+  if (modelId !== null) {
+    ensureModelInAllowlist(modelId);
   }
   return { updated: true };
 }
@@ -139,6 +165,7 @@ export interface AgentRichEntry {
   resolvedModel: string | null;
   overrideModel: string | null;
   isDefault: boolean;
+  registered: boolean;
 }
 
 interface AgentsListJsonEntry {
@@ -148,6 +175,19 @@ interface AgentsListJsonEntry {
   workspace?: string;
   model?: string;
   isDefault?: boolean;
+}
+
+function listWorkspaceIds(): string[] {
+  try {
+    const root = BASE.replace(/\/workspace-sancho$/, "");
+    const entries = fs.readdirSync(root, { withFileTypes: true });
+    return entries
+      .filter((e) => e.isDirectory() && e.name.startsWith("workspace-"))
+      .map((e) => e.name.replace(/^workspace-/, ""))
+      .filter((id) => id && !id.startsWith("yalc-prev") && !id.includes("_archived"));
+  } catch {
+    return [];
+  }
 }
 
 export function listAgentsRich(): AgentRichEntry[] {
@@ -166,25 +206,19 @@ export function listAgentsRich(): AgentRichEntry[] {
     resolved = [];
   }
 
-  if (resolved.length === 0) {
-    return overrides.map((a) => ({
-      id: a.id,
-      name: (a.name as string) || a.id,
-      emoji: null,
-      workspace: (a.workspace as string) || null,
-      resolvedModel: getAgentEffectiveModel(a.id),
-      overrideModel: getAgentEffectiveModel(a.id),
-      isDefault: false,
-    }));
-  }
+  const registeredIds = new Set(resolved.map((r) => r.id));
 
-  return resolved.map((entry) => {
+  const out: AgentRichEntry[] = resolved.map((entry) => {
     const ovEntry = overrideById.get(entry.id);
     let overrideModel: string | null = null;
     if (ovEntry && ovEntry.model !== undefined) {
       const m = ovEntry.model;
       if (typeof m === "string") overrideModel = m;
-      else if (m && typeof m === "object" && typeof (m as { primary?: unknown }).primary === "string") {
+      else if (
+        m &&
+        typeof m === "object" &&
+        typeof (m as { primary?: unknown }).primary === "string"
+      ) {
         overrideModel = (m as { primary: string }).primary;
       }
     }
@@ -196,8 +230,33 @@ export function listAgentsRich(): AgentRichEntry[] {
       resolvedModel: entry.model || null,
       overrideModel,
       isDefault: !!entry.isDefault,
+      registered: true,
     };
   });
+
+  // Add filesystem-derived agents that aren't registered yet.
+  const fsIds = listWorkspaceIds();
+  for (const id of fsIds) {
+    if (registeredIds.has(id)) continue;
+    out.push({
+      id,
+      name: id,
+      emoji: null,
+      workspace: workspaceDirForId(id),
+      resolvedModel: null,
+      overrideModel: null,
+      isDefault: false,
+      registered: false,
+    });
+  }
+
+  out.sort((a, b) => {
+    if (a.registered !== b.registered) return a.registered ? -1 : 1;
+    if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1;
+    return a.id.localeCompare(b.id);
+  });
+
+  return out;
 }
 
 export function getDefaultPrimaryModel(): string | null {
