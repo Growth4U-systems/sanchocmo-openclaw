@@ -204,6 +204,17 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
         <>
           <h2 className="font-heading text-lg text-navy mb-3">🔌 APIs & Servicios</h2>
 
+          {!slug && (
+            <div className="mb-4 px-3 py-2 rounded-md border border-amber-300 bg-amber-50 text-[12px] text-amber-900 leading-relaxed">
+              <strong>ℹ️ Vista read-only.</strong> Las keys de <strong>sistema</strong>{" "}
+              (Anthropic, OpenAI, etc.) se editan a mano en{" "}
+              <code className="text-[11px] px-1 py-0.5 rounded bg-amber-100">~/.openclaw/.env</code>{" "}
+              por SSH. Las credenciales <strong>por brand</strong> (Metricool, GHL, Meta Ads, …) viven en{" "}
+              <code className="text-[11px] px-1 py-0.5 rounded bg-amber-100">brand/&lt;slug&gt;/.env</code>{" "}
+              y se configuran desde la página del brand correspondiente.
+            </div>
+          )}
+
           <div className="flex items-center gap-2 flex-wrap mb-4">
             <button
               onClick={handleVerifyAll}
