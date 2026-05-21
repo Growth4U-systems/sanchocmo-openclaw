@@ -61,7 +61,14 @@ interface StatusResponse {
   statuses: Record<string, LiveStatus>;
 }
 
-const PENDING_CLICK_MS = 90_000;
+// 5 min instead of 90s. openclaw runs cron jobs sequentially via a single
+// agent queue, so a second click sits *behind* the first one and may wait
+// several minutes before its own session ever shows up as `running`. At 90s
+// the optimistic tag fell off while the cron was still queued, the Run button
+// re-enabled, and clicking again either double-queued or got rejected with
+// 409. Combined with the "don't expire while another cron is running" guard
+// below, this gives realistic queued-behind-one-cron clicks time to surface.
+const PENDING_CLICK_MS = 300_000;
 const STATUS_POLL_MS = 5_000;
 const STATUS_IDLE_POLL_MS = 15_000;
 const SNAPSHOT_FAST_MS = 20_000;
@@ -233,8 +240,10 @@ export function useCronLive(
     const currentRunning = new Set(
       [...mergedCrons, ...mergedSystemCrons].filter((c) => c.running).map((c) => c.id),
     );
+    let someoneFinished = false;
     for (const id of prevRunningRef.current) {
       if (currentRunning.has(id)) continue;
+      someoneFinished = true;
       const c = [...mergedCrons, ...mergedSystemCrons].find((c) => c.id === id);
       if (!c) continue;
       const ok = (c.last_status ?? "ok") === "ok";
@@ -251,18 +260,46 @@ export function useCronLive(
       );
       clearPending(id);
     }
+    // A queued cron's slot in the openclaw queue just moved up. Reset the
+    // remaining pendingClick TTLs so the next-in-line has a fresh window to
+    // surface as `running` — without this, a long predecessor + slight start
+    // gap can race the pendingClick out before the next cron's session entry
+    // appears.
+    if (someoneFinished) {
+      setPendingClicks((cur) => {
+        if (Object.keys(cur).length === 0) return cur;
+        const refresh = Date.now() + PENDING_CLICK_MS;
+        let changed = false;
+        const next = { ...cur };
+        for (const id of Object.keys(next)) {
+          if (next[id] < refresh) { next[id] = refresh; changed = true; }
+        }
+        return changed ? next : cur;
+      });
+    }
     prevRunningRef.current = currentRunning;
   }, [mergedCrons, mergedSystemCrons, setFlash, clearPending]);
 
   // ── Expire pending clicks once server confirms or buffer elapses ─
+  // While ANY cron is currently running we don't expire other pendingClicks:
+  // openclaw's cron runner is sequential, so the second click is almost
+  // certainly waiting in queue behind the running one and its session entry
+  // hasn't been created yet. Dropping the optimistic tag during that wait
+  // re-enables the Run button and lets the user accidentally double-queue.
   useEffect(() => {
     const now = Date.now();
     let changed = false;
     const next = { ...pendingClicks };
+    const someoneRunning = [...mergedCrons, ...mergedSystemCrons].some((c) => c.running);
     for (const id of Object.keys(next)) {
       const expireAt = next[id];
       const cron = [...mergedCrons, ...mergedSystemCrons].find((c) => c.id === id);
-      if ((cron?.running) || now > expireAt) {
+      if (cron?.running) {
+        delete next[id];
+        changed = true;
+        continue;
+      }
+      if (now > expireAt && !someoneRunning) {
         delete next[id];
         changed = true;
       }
