@@ -11,8 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Debian's usr-merge exposes the latter and some callers resolve it directly.
 RUN ln -sf /usr/bin/bash /bin/sh && ln -sf /usr/bin/bash /usr/bin/sh
 
-# Install OpenClaw CLI
-RUN npm install -g openclaw@latest
+# Install OpenClaw CLI — pinned so a major schema change (auth-profiles.json,
+# openclaw.json) doesn't silently break the running container on rebuild.
+# Bump deliberately when staging is validated against a new version.
+ARG OPENCLAW_VERSION=2026.5.18
+RUN npm install -g openclaw@${OPENCLAW_VERSION}
 
 # Git config for backup commits
 RUN git config --global user.name "Cervantes (SanchoCMO)" \

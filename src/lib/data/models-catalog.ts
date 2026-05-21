@@ -1,5 +1,6 @@
 import { execSync } from "child_process";
 import { EXEC_PATH } from "@/lib/data/paths";
+import { listAgents } from "@/lib/data/openclaw-config";
 
 export interface CatalogProvider {
   id: string;
@@ -17,12 +18,14 @@ export interface CatalogModel {
   reasoning?: boolean;
   input?: string[];
   curated: boolean;
+  tags: string[];
 }
 
 export interface ModelCatalog {
   providers: CatalogProvider[];
   models: CatalogModel[];
   curated: string[];
+  agentDir: string | null;
   generatedAt: number;
 }
 
@@ -39,67 +42,137 @@ export const CURATED_MODELS = [
 const CACHE_TTL_MS = 30_000;
 let cached: { catalog: ModelCatalog; expiresAt: number } | null = null;
 
-function shell(cmd: string, timeoutMs = 15_000): string {
+function shell(cmd: string, extraEnv?: Record<string, string>, timeoutMs = 20_000): string {
   return execSync(cmd, {
     timeout: timeoutMs,
     encoding: "utf-8",
-    env: { ...process.env, PATH: EXEC_PATH },
+    env: { ...process.env, ...extraEnv, PATH: EXEC_PATH },
     stdio: ["ignore", "pipe", "pipe"],
   }).toString();
 }
 
-function listModels(): CatalogModel[] {
-  const raw = shell("openclaw models list --json 2>/dev/null");
-  const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
-  const models: CatalogModel[] = [];
-  for (const line of lines) {
-    if (!line.startsWith("{")) continue;
-    try {
-      const obj = JSON.parse(line) as Record<string, unknown>;
-      if (typeof obj.id === "string" && typeof obj.provider === "string") {
-        const canonicalId = `${obj.provider}/${obj.id}`;
-        models.push({
-          id: canonicalId,
-          name: (obj.name as string) || (obj.id as string),
-          provider: obj.provider as string,
-          contextWindow: obj.contextWindow as number | undefined,
-          reasoning: obj.reasoning as boolean | undefined,
-          input: obj.input as string[] | undefined,
-          curated: CURATED_MODELS.includes(canonicalId),
-        });
-      }
-    } catch {
-      // skip malformed line
-    }
+function extractJson<T = unknown>(raw: string): T | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const first = trimmed.search(/[{[]/);
+  if (first < 0) return null;
+  try {
+    return JSON.parse(trimmed.slice(first)) as T;
+  } catch {
+    return null;
   }
-  return models;
 }
 
-function authProviders(): CatalogProvider[] {
-  const raw = shell("openclaw models auth status 2>/dev/null");
-  const start = raw.indexOf("{");
-  if (start < 0) return [];
-  let json: { auth?: { providers?: unknown[] } };
+function pickPrimaryAgentDir(): string | null {
   try {
-    json = JSON.parse(raw.slice(start));
+    const agents = listAgents();
+    const preferred = agents.find((a) => a.id === "sancho" && typeof a.agentDir === "string");
+    if (preferred && typeof preferred.agentDir === "string") return preferred.agentDir;
+    const anyWithDir = agents.find((a) => typeof a.agentDir === "string");
+    if (anyWithDir && typeof anyWithDir.agentDir === "string") return anyWithDir.agentDir;
   } catch {
-    return [];
+    // fallthrough
   }
-  const providers = json.auth?.providers as Array<Record<string, unknown>> | undefined;
-  if (!providers) return [];
-  return providers.map((p) => {
-    const eff = (p.effective as Record<string, unknown>) || {};
-    const env = (p.env as Record<string, unknown>) || {};
-    const profiles = (p.profiles as Record<string, unknown>) || {};
-    const labels = (profiles.labels as string[]) || [];
+  return null;
+}
+
+interface RawModel {
+  key?: string;
+  name?: string;
+  contextWindow?: number;
+  reasoning?: boolean;
+  input?: string | string[];
+  tags?: string[];
+  available?: boolean;
+  missing?: boolean;
+}
+
+interface AuthProviderEntry {
+  provider: string;
+  effective?: { kind?: string; detail?: string };
+  env?: { source?: string; value?: string };
+  profiles?: { count?: number; labels?: string[] };
+}
+
+interface RuntimeRoute {
+  provider: string;
+  runtime: string;
+  authProvider: string;
+  status: string;
+}
+
+interface AuthStatus {
+  agentDir?: string;
+  auth?: {
+    providers?: AuthProviderEntry[];
+    providersWithOAuth?: string[];
+    runtimeAuthRoutes?: RuntimeRoute[];
+  };
+}
+
+function listAllModels(env?: Record<string, string>): CatalogModel[] {
+  const raw = shell("openclaw models list --all --json 2>/dev/null", env);
+  const parsed = extractJson<{ models?: RawModel[] }>(raw);
+  if (!parsed?.models) return [];
+  return parsed.models
+    .filter((m) => typeof m.key === "string" && m.key.includes("/"))
+    .map((m) => {
+      const key = m.key as string;
+      const slashIdx = key.indexOf("/");
+      const provider = key.slice(0, slashIdx);
+      return {
+        id: key,
+        name: m.name || key,
+        provider,
+        contextWindow: m.contextWindow,
+        reasoning: m.reasoning,
+        input: Array.isArray(m.input) ? m.input : m.input ? [m.input] : undefined,
+        curated: CURATED_MODELS.includes(key),
+        tags: m.tags || [],
+      };
+    });
+}
+
+function getAuthStatus(env?: Record<string, string>): AuthStatus | null {
+  const raw = shell("openclaw infer model auth status --json 2>/dev/null", env);
+  return extractJson<AuthStatus>(raw);
+}
+
+function isProviderConfigured(
+  providerId: string,
+  auth: AuthStatus | null
+): { configured: boolean; kind: string; source: string | null } {
+  if (!auth?.auth) return { configured: false, kind: "missing", source: null };
+
+  const provs = auth.auth.providers || [];
+  const direct = provs.find((p) => p.provider === providerId);
+  if (direct?.effective?.kind && direct.effective.kind !== "missing") {
     return {
-      id: (p.provider as string) || "",
-      configured: (eff.kind as string) !== "missing",
-      authKind: (eff.kind as string) || "missing",
-      sourceLabel: (env.source as string) || labels[0] || null,
-      modelCount: 0,
+      configured: true,
+      kind: direct.effective.kind,
+      source: direct.env?.source || direct.profiles?.labels?.[0] || null,
     };
-  });
+  }
+
+  const routes = auth.auth.runtimeAuthRoutes || [];
+  const route = routes.find(
+    (r) => (r.runtime === providerId || r.authProvider === providerId) && r.status === "usable"
+  );
+  if (route) {
+    return {
+      configured: true,
+      kind: "oauth",
+      source: `via ${route.authProvider}`,
+    };
+  }
+
+  const oauthList = auth.auth.providersWithOAuth || [];
+  const oauthHit = oauthList.find((label) => label.startsWith(`${providerId} `) || label === providerId);
+  if (oauthHit) {
+    return { configured: true, kind: "oauth", source: oauthHit };
+  }
+
+  return { configured: false, kind: "missing", source: null };
 }
 
 export function getModelCatalog(force = false): ModelCatalog {
@@ -107,30 +180,51 @@ export function getModelCatalog(force = false): ModelCatalog {
   if (!force && cached && cached.expiresAt > now) {
     return cached.catalog;
   }
-  const models = listModels();
-  const providers = authProviders().map((p) => ({
-    ...p,
-    modelCount: models.filter((m) => m.provider === p.id).length,
-  }));
+
+  const agentDir = pickPrimaryAgentDir();
+  const env = agentDir ? { OPENCLAW_AGENT_DIR: agentDir } : undefined;
+
+  const models = listAllModels(env);
+  const auth = getAuthStatus(env);
+
+  const providerIds = Array.from(new Set(models.map((m) => m.provider)));
+  const providers: CatalogProvider[] = providerIds
+    .map((id) => {
+      const status = isProviderConfigured(id, auth);
+      return {
+        id,
+        configured: status.configured,
+        authKind: status.kind,
+        sourceLabel: status.source,
+        modelCount: models.filter((m) => m.provider === id).length,
+      };
+    })
+    .sort((a, b) => {
+      if (a.configured !== b.configured) return a.configured ? -1 : 1;
+      return a.id.localeCompare(b.id);
+    });
+
   const catalog: ModelCatalog = {
     providers,
     models,
     curated: CURATED_MODELS,
+    agentDir,
     generatedAt: now,
   };
   cached = { catalog, expiresAt: now + CACHE_TTL_MS };
   return catalog;
 }
 
-export function isModelAvailable(catalog: ModelCatalog, modelId: string): {
-  ok: boolean;
-  reason?: string;
-} {
+export function isModelAvailable(
+  catalog: ModelCatalog,
+  modelId: string
+): { ok: boolean; reason?: string } {
   const model = catalog.models.find((m) => m.id === modelId);
   if (!model) return { ok: false, reason: `Model "${modelId}" not in catalog` };
   const provider = catalog.providers.find((p) => p.id === model.provider);
   if (!provider) return { ok: false, reason: `Provider "${model.provider}" not in catalog` };
-  if (!provider.configured) return { ok: false, reason: `Provider "${model.provider}" not configured` };
+  if (!provider.configured)
+    return { ok: false, reason: `Provider "${model.provider}" not configured` };
   return { ok: true };
 }
 
