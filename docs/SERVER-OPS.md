@@ -357,10 +357,15 @@ The hint in the error message is **misleading** — `agents.defaults.timeoutSeco
 defaults to 600 s and is almost never the cap that fires here.
 
 **Real cause**: the Codex app-server (which runs the model for Sancho) has a
-hardcoded default `turnCompletionIdleTimeoutMs` of **60 s**. If the LLM
-takes longer than 60 s to produce the next step (typical when the thread
-has accumulated 200k+ tokens), Codex's watchdog aborts the turn and the
-gateway surfaces this generic timeout text.
+default `turnCompletionIdleTimeoutMs` of **60 s** — the maximum quiet
+period between progress events from the model before the watchdog
+intervenes. The most common trigger is **a single long-generation step**:
+the model is producing a large output (full document write via heredoc,
+long brand voice profile, big tool-call payload) and 60 s pass without
+streaming a single progress event. Accumulated chat context contributes
+by slowing generation, but the trigger is the long output itself — a
+brand-new chat can hit this on its very first turn if `Ejecutar` asks
+for a multi-page deliverable.
 
 Confirm by reading the container logs around the failure:
 
@@ -375,36 +380,58 @@ You're looking for entries like:
 [agent/embedded] embedded run failover decision: ... reason=timeout from=codex/<model>
 ```
 
-If those are present, the fix is to raise the Codex app-server timeouts in
-`/root/.openclaw/openclaw.json`:
+If those are present, raise the Codex app-server timeouts. **Use
+`openclaw config patch`, not a direct file edit** — the runtime config
+lives at `$OPENCLAW_HOME/.openclaw/openclaw.json` (note the nested
+`.openclaw`), not `$OPENCLAW_HOME/openclaw.json`. There is a same-named
+legacy file at the outer path on some VPSes that is **not loaded**;
+editing it silently does nothing. `openclaw config patch` always targets
+the correct file and validates against the plugin schema before writing.
+
+Write the patch to a file:
 
 ```jsonc
-"plugins": {
-  "entries": {
-    "codex": {
-      "enabled": true,
-      "config": {
-        "appServer": {
-          "turnCompletionIdleTimeoutMs": 180000,
-          "requestTimeoutMs": 180000
-        }
-      }
-    }
-    // … other entries unchanged
-  }
+// /tmp/codex-patch.json5
+{
+  plugins: {
+    entries: {
+      codex: {
+        enabled: true,
+        config: {
+          appServer: {
+            turnCompletionIdleTimeoutMs: 180000,
+            requestTimeoutMs: 180000,
+          },
+        },
+      },
+    },
+  },
 }
 ```
 
-Then `docker restart sanchocmo`. Three minutes is a sane ceiling for
-reasoning-heavy turns; raise further only if you've seen the new ceiling
-also get hit. The setting is documented in
-`@openclaw/host` at `plugins.entries.codex.config.appServer` — the
-default constants live in `run-attempt-*.js` (`CODEX_TURN_COMPLETION_IDLE_TIMEOUT_MS`).
+Apply and verify (inside the container):
 
-If timeouts persist after the bump, the underlying issue is usually
-runaway context in a single chat thread (an "Ejecutar" that accumulated a
-multi-hour conversation). Resetting that chat's session to start with a
-fresh context is the structural fix; the timeout bump just buys headroom.
+```bash
+docker exec sanchocmo openclaw config patch --file /tmp/codex-patch.json5 --dry-run
+docker exec sanchocmo openclaw config patch --file /tmp/codex-patch.json5
+docker exec sanchocmo openclaw config get plugins.entries.codex.config.appServer
+# expect: turnCompletionIdleTimeoutMs: 180000, requestTimeoutMs: 180000
+
+docker restart sanchocmo
+```
+
+Three minutes is a sane ceiling for reasoning-heavy turns and long
+document writes; raise further only if the new ceiling also gets hit.
+The setting is documented in `@openclaw/host` at
+`plugins.entries.codex.config.appServer` — the default constants live in
+`run-attempt-*.js` (`CODEX_TURN_COMPLETION_IDLE_TIMEOUT_MS`).
+
+If the chat still times out after the bump, look at *what* the model is
+trying to produce. A single "write the full brand voice guide" turn that
+emits a multi-page heredoc in one shot can blow past even 3 min on a
+slow path. Workarounds: split the deliverable across smaller turns, or
+reset the chat session so the agent starts the task with a lighter
+working context.
 
 ### 5.5 Snapshot watchdog alert
 
@@ -497,3 +524,9 @@ are also a fallback — see `DEPLOY.md` "Backups" for the restore procedure.
   after a brand-voice chat on staging timed out at the watchdog ceiling.
   The user-facing error points at the wrong knob; recorded the real
   config path so the next occurrence is a one-minute fix.
+- **2026-05-21**: refined §5.4 — clarified the trigger (single long-output
+  generation step, not "accumulated context" — a brand-new chat can hit
+  this on turn 1), and documented the gotcha that the runtime config
+  lives at `$OPENCLAW_HOME/.openclaw/openclaw.json` (nested), with a
+  same-named legacy file at the outer path that is not loaded. Use
+  `openclaw config patch` instead of direct file edits.
