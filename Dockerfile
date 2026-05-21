@@ -14,7 +14,10 @@ RUN ln -sf /usr/bin/bash /bin/sh && ln -sf /usr/bin/bash /usr/bin/sh
 # Install OpenClaw CLI — pinned so a major schema change (auth-profiles.json,
 # openclaw.json) doesn't silently break the running container on rebuild.
 # Bump deliberately when staging is validated against a new version.
+# ENV propagates the pin to runtime so entrypoint.sh can keep auto-installed
+# plugins (e.g. @openclaw/codex) in lockstep — see entrypoint section 5c.
 ARG OPENCLAW_VERSION=2026.5.18
+ENV OPENCLAW_VERSION=${OPENCLAW_VERSION}
 RUN npm install -g openclaw@${OPENCLAW_VERSION}
 
 # Git config for backup commits

@@ -115,6 +115,30 @@ if [ -x workspace-sancho/scripts/ensure-openclaw-allowlist.sh ]; then
 fi
 
 # ===========================================================
+# 5c. ENSURE @openclaw/codex MATCHES HOST OPENCLAW VERSION
+# ===========================================================
+# OpenClaw auto-installs @openclaw/codex@latest on first gateway boot, but its
+# installer only enforces minHostVersion, not compat.pluginApi. That lets a
+# newer codex (e.g. 2026.5.19, which calls
+# `listRegisteredPluginAgentPromptGuidance({...})` from
+# openclaw/plugin-sdk/plugin-runtime) land on a host pinned at an older
+# version where the symbol doesn't exist. The embedded agent harness then
+# throws "is not a function" before reply and every MC chat hangs forever on
+# "Sancho está pensando…". Pin codex to the same version as the host so the
+# pluginApi contract is always met. Use `openclaw plugins install` (not raw
+# npm) so the CLI also wires the peer-dep loader hook that resolves
+# `import "openclaw"` to the global install.
+if [ -n "$OPENCLAW_VERSION" ]; then
+  CURRENT_CODEX=$(node -p "try{require('/root/.openclaw/.openclaw/npm/node_modules/@openclaw/codex/package.json').version}catch(_){''}" 2>/dev/null)
+  if [ "$CURRENT_CODEX" != "$OPENCLAW_VERSION" ]; then
+    echo "[entrypoint] Pinning @openclaw/codex@${OPENCLAW_VERSION} (was: ${CURRENT_CODEX:-none}) to match host..."
+    openclaw plugins install "@openclaw/codex@${OPENCLAW_VERSION}" --force >/tmp/codex-pin.log 2>&1 \
+      && echo "[entrypoint] codex pinned to ${OPENCLAW_VERSION}" \
+      || echo "[entrypoint] WARNING: codex pin failed (see /tmp/codex-pin.log); MC chat may hang if installed codex requires a newer pluginApi"
+  fi
+fi
+
+# ===========================================================
 # 6. START GATEWAY (foreground, backgrounded for MC)
 # ===========================================================
 echo "[entrypoint] Starting OpenClaw gateway..."
