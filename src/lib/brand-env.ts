@@ -32,6 +32,28 @@ export function readBrandSecret(
   return undefined;
 }
 
+/**
+ * Check whether a fully-qualified env var name (e.g. `GROWTH4U_METRICOOL_API_TOKEN`)
+ * is reachable through the same precedence chain as `readBrandSecret`:
+ * brand/.env → workspace/.env → process.env.
+ *
+ * Used by `/api/system/api-health` to verify that envVars listed in
+ * `integrations.json` still exist before reporting an integration as
+ * connected — otherwise a successful test from months ago keeps lying
+ * after the env entry is dropped (migration, redeploy, manual edit).
+ */
+export function brandEnvHas(slug: string, envName: string): boolean {
+  const brandEnv = parseEnvFile(path.join(brandDir(slug), ".env"));
+  if (brandEnv[envName]) return true;
+
+  const workspaceEnv = parseEnvFile(path.join(BASE, "..", ".env"));
+  if (workspaceEnv[envName]) return true;
+
+  if (process.env[envName]) return true;
+
+  return false;
+}
+
 function parseEnvFile(absPath: string): Record<string, string> {
   let content: string;
   try {
