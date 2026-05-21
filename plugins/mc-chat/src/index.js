@@ -16,6 +16,18 @@ import { mcChatPlugin } from "./channel.js";
 const CHANNEL_KEY = "mc-chat";
 const DEFAULT_ACCOUNT_ID = "default";
 
+// Strip Discord-style `<URL>` wrappers from outbound bot text.
+// MC chat UI does not parse them — the angle brackets leak into the
+// rendered href so `…/file.md>` 404s. Sancho regresses to this pattern
+// from training data despite the rule in PROTOCOLS.md (#18); the
+// defensive scrub here makes the channel robust against any agent.
+// Only unwraps when angle brackets surround a bare http(s) URL with no
+// interior whitespace.
+function scrubAngleWrappedUrls(text) {
+  if (typeof text !== "string" || text.length === 0) return text;
+  return text.replace(/<(https?:\/\/[^\s<>]+)>/g, "$1");
+}
+
 export default defineChannelPluginEntry({
   id: "mc-chat",
   name: "Mission Control Chat",
@@ -222,12 +234,12 @@ export default defineChannelPluginEntry({
                 logger.info(`[mc-chat] deliver called kind=${_info?.kind || '?'} thread=${threadId} hasText=${Boolean(replyPayload?.text)} hasParts=${Array.isArray(replyPayload?.parts) && replyPayload.parts.length > 0} textLen=${(replyPayload?.text || '').length}`);
                 // Support multi-message: replyPayload can have text, body, or parts
                 const texts = [];
-                const replyText = replyPayload?.text || replyPayload?.body || "";
+                const replyText = scrubAngleWrappedUrls(replyPayload?.text || replyPayload?.body || "");
                 if (replyText) texts.push(replyText);
                 // Also check for parts/segments if available
                 if (replyPayload?.parts && Array.isArray(replyPayload.parts)) {
                   for (const part of replyPayload.parts) {
-                    const t = part?.text || part?.body || "";
+                    const t = scrubAngleWrappedUrls(part?.text || part?.body || "");
                     if (t) texts.push(t);
                   }
                 }
