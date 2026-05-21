@@ -19,6 +19,7 @@ import { CronCard } from "@/components/cron/CronCard";
 import { CronDetailsModal } from "@/components/cron/CronDetailsModal";
 import { CronToolbar, type CronFilter } from "@/components/cron/CronToolbar";
 import { useClients } from "@/hooks/useClients";
+import { useSetCronModel } from "@/hooks/useModels";
 import { isEnabled } from "@/components/cron/types";
 
 export function AdminRecurringPanel() {
@@ -81,6 +82,15 @@ function AdminRecurringPanelInner() {
     }
     return systemCrons.find((c) => c.id === detailsId) || null;
   }, [detailsId, cronsByBrand, brandSlugs, systemCrons]);
+
+  // Admin recurring panel always renders for admins (gated above), so the
+  // mutation is always enabled. Slug comes from the currently opened cron
+  // so query invalidation flows back to its brand snapshot too.
+  const detailsSlug = detailsCron?.client_slug ?? null;
+  const setCronModel = useSetCronModel(detailsSlug);
+  const modelSaveError = setCronModel.error
+    ? (setCronModel.error as Error).message
+    : null;
 
   const filteredByBrand = useMemo(() => {
     const result: Record<string, CronApi[]> = {};
@@ -201,6 +211,9 @@ function AdminRecurringPanelInner() {
         pendingClickFresh={detailsCron ? isPendingFresh(pendingClicks[detailsCron.id]) : false}
         nowTick={nowTick}
         onClose={() => setDetailsId(null)}
+        onModelChange={(cronId, model) => setCronModel.mutate({ cronId, model })}
+        modelSavePending={setCronModel.isPending}
+        modelSaveError={modelSaveError}
       />
     </section>
   );

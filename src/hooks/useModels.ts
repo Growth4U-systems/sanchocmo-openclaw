@@ -111,6 +111,8 @@ export function useSetCronModel(slug: string | null) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["recurring-tasks", slug] });
+      qc.invalidateQueries({ queryKey: ["cron-snapshot"] });
+      qc.invalidateQueries({ queryKey: ["admin-cron-snapshot"] });
       qc.invalidateQueries({ queryKey: ["models-catalog"] });
     },
   });

@@ -7,6 +7,8 @@
 import { useState } from "react";
 import { Modal } from "@/components/shared/modal";
 import { cn } from "@/lib/utils";
+import { ModelPicker } from "@/components/admin/ModelPicker";
+import { useDefaultModel } from "@/hooks/useModels";
 import { CronStatusPill } from "./CronStatusPill";
 import {
   formatDuration,
@@ -25,9 +27,27 @@ interface Props {
   pendingClickFresh?: boolean;
   nowTick?: number;
   onClose: () => void;
+  /** When provided, the config tab renders an editable ModelPicker for the
+   *  cron's `payload.model`. Caller is responsible for admin gating —
+   *  if `onModelChange` is undefined we render a read-only display. */
+  onModelChange?: (cronId: string, model: string) => void;
+  /** Async state: disables the picker while a save is in flight. */
+  modelSavePending?: boolean;
+  /** Optional error message from the last save attempt — shown inline. */
+  modelSaveError?: string | null;
 }
 
-export function CronDetailsModal({ cron, open, flash, pendingClickFresh, nowTick, onClose }: Props) {
+export function CronDetailsModal({
+  cron,
+  open,
+  flash,
+  pendingClickFresh,
+  nowTick,
+  onClose,
+  onModelChange,
+  modelSavePending,
+  modelSaveError,
+}: Props) {
   const [tab, setTab] = useState<Tab>("status");
   const [severityFilter, setSeverityFilter] = useState<string | null>(null);
 
@@ -175,11 +195,19 @@ export function CronDetailsModal({ cron, open, flash, pendingClickFresh, nowTick
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2 text-[11px]">
             <Pill>Agente: {cron.agent || "sancho"}</Pill>
-            <Pill>Modelo: {cron.model || "—"}</Pill>
             <Pill>Frecuencia: {humanizeSchedule(cron.schedule_raw || cron.schedule)}</Pill>
             {cron.client_slug && <Pill>Cliente: {cron.client_slug}</Pill>}
             {cron.scripts?.map((s) => <Pill key={s.path}>📄 {s.name} · {s.lines} líneas</Pill>)}
           </div>
+
+          <Section title="Modelo">
+            <ModelControl
+              cron={cron}
+              onModelChange={onModelChange}
+              savePending={!!modelSavePending}
+              saveError={modelSaveError ?? null}
+            />
+          </Section>
 
           {cron.description && (
             <Section title="Descripción">
@@ -248,5 +276,91 @@ function Chip({
 function Pill({ children }: { children: React.ReactNode }) {
   return (
     <span className="bg-muted px-2 py-0.5 rounded text-muted-foreground">{children}</span>
+  );
+}
+
+function ModelControl({
+  cron,
+  onModelChange,
+  savePending,
+  saveError,
+}: {
+  cron: CronApi;
+  onModelChange?: (cronId: string, model: string) => void;
+  savePending: boolean;
+  saveError: string | null;
+}) {
+  const editable = !!onModelChange;
+  const { data: defaultData, isLoading: defaultLoading } = useDefaultModel();
+  const globalDefault = defaultData?.model ?? null;
+  const current = cron.model || null;
+  const differsFromDefault = !!globalDefault && !!current && current !== globalDefault;
+
+  if (!editable) {
+    return (
+      <div className="text-xs">
+        {current ? (
+          <code className="font-mono text-[11px]">{current}</code>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+        {!defaultLoading && globalDefault && current && differsFromDefault && (
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Default global actual: <code className="font-mono">{globalDefault}</code> · sólo
+            un admin puede cambiar este cron.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  const handleApplyDefault = () => {
+    if (!globalDefault || !onModelChange) return;
+    onModelChange(cron.id, globalDefault);
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2 flex-wrap">
+        <ModelPicker
+          value={current}
+          size="sm"
+          disabled={savePending}
+          onChange={(next) => {
+            if (!next || !onModelChange) return;
+            onModelChange(cron.id, next);
+          }}
+        />
+        {savePending && <span className="text-[11px] text-muted-foreground">guardando…</span>}
+        {!defaultLoading && globalDefault && differsFromDefault && (
+          <button
+            type="button"
+            onClick={handleApplyDefault}
+            disabled={savePending}
+            title={`Sobrescribe el modelo de este cron con el default global (${globalDefault})`}
+            className={cn(
+              "text-[10px] font-heading uppercase tracking-wider px-2 py-0.5 rounded border-2 border-ink transition-colors",
+              savePending
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-background hover:bg-muted",
+            )}
+          >
+            ↺ Aplicar default global
+          </button>
+        )}
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Cambio se aplica al próximo turno del cron. Si difiere del default global, se marca
+        como override.
+      </p>
+      {!defaultLoading && globalDefault && current && !differsFromDefault && (
+        <p className="text-[10px] text-muted-foreground">
+          Coincide con el default global (<code className="font-mono">{globalDefault}</code>).
+        </p>
+      )}
+      {saveError && (
+        <p className="text-[11px] text-destructive">{saveError}</p>
+      )}
+    </div>
   );
 }

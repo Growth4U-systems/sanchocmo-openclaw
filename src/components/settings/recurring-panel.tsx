@@ -16,6 +16,7 @@ import { isEnabled, type CronApi } from "@/components/cron/types";
 import { CronCard } from "@/components/cron/CronCard";
 import { CronDetailsModal } from "@/components/cron/CronDetailsModal";
 import { CronToolbar, type CronFilter } from "@/components/cron/CronToolbar";
+import { useSetCronModel } from "@/hooks/useModels";
 
 type CategoryKey = "intelligence" | "metrics" | "outreach" | "content" | "system" | "other";
 
@@ -59,6 +60,11 @@ export function RecurringPanel({ slug: slugProp }: RecurringPanelProps = {}) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<CronFilter>("all");
   const [detailsId, setDetailsId] = useState<string | null>(null);
+
+  const setCronModel = useSetCronModel(slug || null);
+  const modelSaveError = setCronModel.error
+    ? (setCronModel.error as Error).message
+    : null;
 
   const detailsCron = useMemo<CronApi | null>(() => {
     if (!detailsId) return null;
@@ -227,6 +233,13 @@ export function RecurringPanel({ slug: slugProp }: RecurringPanelProps = {}) {
         pendingClickFresh={detailsCron ? isPendingFresh(pendingClicks[detailsCron.id]) : false}
         nowTick={nowTick}
         onClose={() => setDetailsId(null)}
+        onModelChange={
+          isAdmin
+            ? (cronId, model) => setCronModel.mutate({ cronId, model })
+            : undefined
+        }
+        modelSavePending={setCronModel.isPending}
+        modelSaveError={modelSaveError}
       />
     </section>
   );
