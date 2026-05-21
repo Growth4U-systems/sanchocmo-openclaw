@@ -9,7 +9,7 @@ import { TabGroup } from "@/components/shared/tab-group";
 import { useTranslations } from "next-intl";
 import { AgentsPanel } from "@/components/settings/agents-panel";
 import { SkillsPanel } from "@/components/settings/skills-panel";
-import { RecurringPanel } from "@/components/settings/recurring-panel";
+import { AdminRecurringPanel } from "@/components/settings/admin-recurring-panel";
 import { ApisConnectorsPanel } from "@/components/settings/ApisConnectorsPanel";
 import { ModelsPanel } from "@/components/settings/models-panel";
 
@@ -86,7 +86,7 @@ export default function SettingsPage() {
       {activeTab === "agents" && <AgentsPanel />}
       {activeTab === "models" && <ModelsPanel />}
       {activeTab === "skills" && <SkillsPanel />}
-      {activeTab === "recurring" && <RecurringPanel />}
+      {activeTab === "recurring" && <AdminRecurringPanel />}
       {activeTab === "preferences" && <PreferencesPanel />}
     </DashboardLayout>
   );

@@ -10,9 +10,6 @@ import { readJSON } from "@/lib/data/json-io";
 import {
   enrichCrons,
   humanizeSchedule,
-  loadAllCrons,
-  resolveCronBrand,
-  detectCronCategory,
   type EnrichedCron,
 } from "@/lib/data/openclaw-crons";
 
@@ -137,40 +134,37 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         if (available.length > 0) result._available_templates = available;
       } catch { /* empty */ }
     } else {
-      // Global admin view: group all crons by client
-      const clients = loadClients() as { slug: string; name: string }[];
-      const allCrons = loadAllCrons();
-      const grouped: Record<string, unknown[]> = {};
-      for (const cron of allCrons) {
-        const cronSlug = resolveCronBrand(cron, clients);
-        const key = cronSlug || "_system";
-        if (!grouped[key]) grouped[key] = [];
-        const payload = cron.payload as { message?: string; model?: string } | undefined;
-        const state = cron.state as { lastRunAtMs?: number; nextRunAtMs?: number; lastStatus?: string; lastDurationMs?: number; consecutiveErrors?: number } | undefined;
-        const sched = (cron.schedule || {}) as { kind?: string; expr?: string; everyMs?: number };
-        grouped[key].push({
-          id: cron.id,
-          name: cron.name || "—",
-          task_type: detectCronCategory(cron.name as string),
-          schedule: humanizeSchedule(sched),
-          schedule_raw: sched,
-          status: cron.enabled !== false ? "active" : "paused",
-          last_run_at: state?.lastRunAtMs ? new Date(state.lastRunAtMs).toISOString() : null,
-          next_run_at: state?.nextRunAtMs ? new Date(state.nextRunAtMs).toISOString() : null,
-          last_status: state?.lastStatus || null,
-          last_duration_ms: state?.lastDurationMs || null,
-          consecutive_errors: state?.consecutiveErrors || 0,
-          ideas_generated: 0,
-          agent: cron.agentId || "sancho",
-          model: payload?.model || "—",
-          prompt: payload?.message || "",
-          description: cron.description || "",
-          scripts: extractScripts(payload?.message || ""),
-          client_slug: cronSlug || null,
-          _source: "openclaw-cron",
-          created_at: (cron as { createdAtMs?: number }).createdAtMs ? new Date((cron as { createdAtMs: number }).createdAtMs).toISOString() : null,
-        });
+      // Global admin view: every brand's crons grouped by slug + _system
+      // bucket for shared crons. Admin-only (server-side gate).
+      if (!req.ctx?.isAdmin) {
+        return res.status(403).json({ error: "Forbidden" });
       }
+      const clients = loadClients() as { slug: string; name: string }[];
+
+      const { crons: brandEnriched, systemCrons: systemEnriched } = enrichCrons({
+        slug: null,
+        includeSystem: true,
+        clients,
+      });
+
+      const grouped: Record<string, unknown[]> = {};
+      for (const c of brandEnriched) {
+        const key = c.client_slug as string;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(toApiShape(c, key));
+      }
+
+      // Merge any locally-defined recurring tasks (kept in
+      // brand/<slug>/recurring-tasks.json) so the admin view matches
+      // feature parity with the per-brand panel.
+      for (const client of clients) {
+        const localTasks = loadRecurringTasks(client.slug);
+        if (localTasks.length === 0) continue;
+        if (!grouped[client.slug]) grouped[client.slug] = [];
+        grouped[client.slug].push(...localTasks);
+      }
+
+      grouped._system = systemEnriched.map((c) => toApiShape(c, null));
       result = grouped;
     }
 
