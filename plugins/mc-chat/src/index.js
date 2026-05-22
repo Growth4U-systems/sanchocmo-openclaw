@@ -12,6 +12,8 @@ import {
 } from "openclaw/plugin-sdk/reply-runtime";
 import { loadConfig } from "openclaw/plugin-sdk/config-runtime";
 import { mcChatPlugin } from "./channel.js";
+import { classifyAndRewriteError, mergeWithPriorCategory } from "./error-rewriter.js";
+import { errorTracker } from "./error-tracker.js";
 
 const CHANNEL_KEY = "mc-chat";
 const DEFAULT_ACCOUNT_ID = "default";
@@ -260,15 +262,27 @@ export default defineChannelPluginEntry({
                   }
                 } catch {}
 
-                // Send each text as a separate message (MC + Discord if linked)
+                // Send each text as a separate message (MC + Discord if linked).
+                // Each text is run through the error rewriter: if it matches a
+                // known error pattern (rate_limit / auth / watchdog_abort / …)
+                // the user-facing text is replaced with a clear Spanish summary
+                // and the raw payload is surfaced as `errorDetail` for the UI
+                // modal. Untouched otherwise.
                 for (const msgText of texts) {
+                  const { text: rewritten, errorDetail: classified } = classifyAndRewriteError(msgText);
+                  let errorDetail = classified;
+                  if (errorDetail?.category === "watchdog_abort") {
+                    const prior = errorTracker.getRecent(respondingAgent);
+                    if (prior) errorDetail = mergeWithPriorCategory(errorDetail, prior);
+                  }
                   await postWithRetry(callbackUrl, {
                     slug,
                     threadId,
-                    text: msgText,
+                    text: rewritten,
                     role: "bot",
                     agent: respondingAgent,
                     ts: new Date().toISOString(),
+                    ...(errorDetail ? { errorDetail } : {}),
                   }, "Bot callback");
                   // Also relay to Discord if linked (skip if message came from Discord)
                   if (discordLink && _source !== "discord") {
@@ -276,7 +290,7 @@ export default defineChannelPluginEntry({
                       await tools.message.send({
                         action: "send",
                         target: `channel:${discordLink.threadId}`,
-                        message: msgText + "\n||[_mc_relay]||", // Hidden spoiler tag
+                        message: rewritten + "\n||[_mc_relay]||", // Hidden spoiler tag
                       });
                       logger.info(`[mc-chat] Relayed to Discord thread ${discordLink.threadId}`);
                     } catch (discordErr) {
@@ -287,6 +301,14 @@ export default defineChannelPluginEntry({
               },
               onError: (err, info) => {
                 logger.error(`[mc-chat] Dispatch error (${info.kind}): ${err?.message || err}`);
+                // Record classified errors into the per-agent tracker so a
+                // subsequent watchdog_abort delivery can correlate ("session
+                // timed out — last seen rate_limit"). Best-effort only.
+                try {
+                  const respondingAgent = requestedAgent || "sancho";
+                  const { errorDetail } = classifyAndRewriteError(err?.message || String(err));
+                  if (errorDetail) errorTracker.record(respondingAgent, errorDetail);
+                } catch {}
               },
             },
             // Status updates: send intermediate state to MC typing indicator.
