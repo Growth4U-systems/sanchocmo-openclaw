@@ -251,9 +251,18 @@ jobs:
             # staging kept the prior `:sanchocmo` digest until a manual
             # `docker compose pull` was run via SSH.
             docker compose $COMPOSE_ARGS pull --ignore-buildable || true
-            UP_ARGS=""
+            # `--wait` blocks until every service with a healthcheck is
+            # `healthy` (or the timeout fires), so the deploy step fails fast
+            # when the new container can't actually serve traffic — instead
+            # of returning success the moment containers are *created*. This
+            # is what lets the workflow report a real outcome and is the
+            # cheap path to minimizing user-visible downtime on staging:
+            # paired with the tightened sanchocmo healthcheck (10s interval),
+            # the new container is acknowledged as ready within ~10s of the
+            # app booting, vs. up to 60s with the old interval.
+            UP_ARGS="--wait --wait-timeout 180"
             if [ "$ENV_CHANGED" = "1" ]; then
-              UP_ARGS="--force-recreate"
+              UP_ARGS="$UP_ARGS --force-recreate"
             fi
             if ! docker compose $COMPOSE_ARGS up -d $UP_ARGS; then
               echo "▶ docker compose up failed; current service state:"

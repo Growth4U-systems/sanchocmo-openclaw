@@ -41,10 +41,15 @@ services:
       - OD_API_TOKEN=${OD_API_TOKEN:-}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:18789/healthz"]
-      interval: 60s
-      timeout: 10s
+      # Tight interval + generous start_period so `docker compose up --wait`
+      # in the deploy workflow marks the container healthy within ~10s of the
+      # app being ready (instead of waiting up to a full 60s interval),
+      # minimizing the user-visible gap between old-container stop and
+      # new-container readiness.
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 60s
     logging:
       driver: json-file
       options:
