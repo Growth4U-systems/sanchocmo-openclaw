@@ -1,9 +1,18 @@
 FROM node:24-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip \
+    python3 python3-pip python3-venv python3-full \
     git curl jq openssh-client sqlite3 \
     && rm -rf /var/lib/apt/lists/*
+
+# PDF extraction libs. Debian Bookworm marks the system Python as
+# externally-managed (PEP 668), so `pip install pypdf` from an agent's
+# bash tool fails with "externally-managed-environment". Sancho recovered
+# the first time using `--break-system-packages`, but the recovery dance
+# (failed pip, failed venv, retry with override) surfaces as alarming red
+# "tool failed" lines in MC Chat. Pre-installing the two libraries the
+# agent actually reaches for keeps the happy path silent.
+RUN pip install --break-system-packages --no-cache-dir pypdf pdfplumber
 
 # Default /bin/sh to bash so child processes that prepend `set -o pipefail`
 # (e.g. agent-issued shell commands via the OpenClaw Bash tool) don't fail
