@@ -54,6 +54,16 @@ async function main() {
   if (!config.agents.defaults.subagents) config.agents.defaults.subagents = {};
   config.agents.defaults.subagents.maxConcurrent = config.agents.defaults.subagents.maxConcurrent || 8;
 
+  // Heartbeat polls (`{ every: "1h" }`) trigger one model turn per agent every
+  // hour for proactive checks. In this project periodic work goes through
+  // explicit cron jobs, so heartbeats just burn quota — on 2026-05-22 they
+  // saturated the Codex subscription rate-limit. Strip the block defensively
+  // in case an older config or upstream default reintroduced it.
+  if (config.agents.defaults.heartbeat) {
+    delete config.agents.defaults.heartbeat;
+    console.log('[config] Removed agents.defaults.heartbeat (deprecated in this project)');
+  }
+
   // --- Session agents (escudero, rocinante, yalc) ---
   config.agents.list = [
     { id: 'escudero', workspace: path.join(OPENCLAW_ROOT, 'workspace-escudero') },
