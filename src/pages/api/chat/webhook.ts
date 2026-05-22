@@ -9,6 +9,7 @@ import {
   appendProgress,
   sealProgress,
   clearProgress,
+  normalizeErrorDetail,
   type ProgressEvent,
   type ProgressKind,
 } from "@/lib/data/mc-chat";
@@ -42,7 +43,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { slug, threadId, text, agent, ts: _ts, role, event, from_agent, to_agent } = req.body;
+  const { slug, threadId, text, agent, ts: _ts, role, event, from_agent, to_agent, errorDetail: rawErrorDetail } = req.body;
   // Compose canonical "<slug>:<shortId>" thread key.
   // Outbound callers may post threadId as either the full "<slug>:<shortId>"
   // (e.g. from src/pages/api/chat/send.ts and plugin index.js deliver) or just
@@ -100,8 +101,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const sealed = sealProgress(tid);
-  addMessage(tid, "bot", text, agent, undefined, sealed);
-  console.log(`[mc-chat] Bot response → ${tid}: ${(text || "").slice(0, 60)} (${sealed.length} progress events)`);
+  // Optional errorDetail produced by the mc-chat plugin's error-rewriter.
+  // Normalize defensively — a malformed detail must not prevent the bot
+  // message itself from being persisted.
+  const errorDetail = rawErrorDetail !== undefined ? normalizeErrorDetail(rawErrorDetail) : undefined;
+  if (rawErrorDetail !== undefined && !errorDetail) {
+    console.warn(`[mc-chat] dropped malformed errorDetail on thread ${tid}`);
+  }
+  addMessage(tid, "bot", text, agent, undefined, sealed, undefined, undefined, errorDetail);
+  console.log(`[mc-chat] Bot response → ${tid}: ${(text || "").slice(0, 60)} (${sealed.length} progress events${errorDetail ? `, errorDetail=${errorDetail.category}` : ""})`);
   res.status(200).json({ ok: true, messageId: `mc-${Date.now()}`, progressCount: sealed.length });
 }
 
