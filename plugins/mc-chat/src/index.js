@@ -5,6 +5,8 @@
  * from Mission Control server.
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import { defineChannelPluginEntry } from "openclaw/plugin-sdk/core";
 import {
   finalizeInboundContext,
@@ -14,6 +16,40 @@ import { loadConfig } from "openclaw/plugin-sdk/config-runtime";
 import { mcChatPlugin } from "./channel.js";
 import { classifyAndRewriteError, mergeWithPriorCategory } from "./error-rewriter.js";
 import { errorTracker } from "./error-tracker.js";
+
+// Best-effort lookup of an agent's current Codex auth mode + account email.
+// Used to disambiguate "rate limit" errors: Codex CLI always emits the
+// "subscription usage limit" wording even when auth_mode is apikey, which
+// confuses debugging. The rewriter consumes this to pick auth-aware copy.
+// Returns null if anything goes wrong; the rewriter then falls back to the
+// generic message.
+function readCodexAuthInfo(agentId) {
+  if (!agentId || typeof agentId !== "string") return null;
+  const home = process.env.OPENCLAW_HOME;
+  if (!home) return null;
+  const candidates = [
+    path.join(home, ".openclaw", "agents", agentId, "agent", "codex-home", "auth.json"),
+    path.join(home, "agents", agentId, "agent", "codex-home", "auth.json"),
+  ];
+  for (const p of candidates) {
+    try {
+      const data = JSON.parse(fs.readFileSync(p, "utf8"));
+      // Derive auth mode: trust explicit `auth_mode` first, else infer from
+      // presence of `tokens` (chatgpt OAuth) or `OPENAI_API_KEY` (apikey).
+      let authMode = typeof data?.auth_mode === "string" ? data.auth_mode : null;
+      if (!authMode) {
+        if (data?.tokens && typeof data.tokens === "object") authMode = "chatgpt";
+        else if (typeof data?.OPENAI_API_KEY === "string" && data.OPENAI_API_KEY) authMode = "apikey";
+      }
+      const authEmail = typeof data?.email === "string" ? data.email
+        : (typeof data?.tokens?.account?.email === "string" ? data.tokens.account.email : null);
+      return { authMode, authEmail };
+    } catch {
+      // try next candidate path
+    }
+  }
+  return null;
+}
 
 const CHANNEL_KEY = "mc-chat";
 const DEFAULT_ACCOUNT_ID = "default";
@@ -268,8 +304,9 @@ export default defineChannelPluginEntry({
                 // the user-facing text is replaced with a clear Spanish summary
                 // and the raw payload is surfaced as `errorDetail` for the UI
                 // modal. Untouched otherwise.
+                const authInfo = readCodexAuthInfo(respondingAgent) || {};
                 for (const msgText of texts) {
-                  const { text: rewritten, errorDetail: classified } = classifyAndRewriteError(msgText);
+                  const { text: rewritten, errorDetail: classified } = classifyAndRewriteError(msgText, authInfo);
                   let errorDetail = classified;
                   if (errorDetail?.category === "watchdog_abort") {
                     const prior = errorTracker.getRecent(respondingAgent);
@@ -306,7 +343,8 @@ export default defineChannelPluginEntry({
                 // timed out — last seen rate_limit"). Best-effort only.
                 try {
                   const respondingAgent = requestedAgent || "sancho";
-                  const { errorDetail } = classifyAndRewriteError(err?.message || String(err));
+                  const authInfo = readCodexAuthInfo(respondingAgent) || {};
+                  const { errorDetail } = classifyAndRewriteError(err?.message || String(err), authInfo);
                   if (errorDetail) errorTracker.record(respondingAgent, errorDetail);
                 } catch {}
               },

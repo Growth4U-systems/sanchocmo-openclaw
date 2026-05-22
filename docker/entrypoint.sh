@@ -56,6 +56,15 @@ bash docker/inject-env-vars.sh
 echo "[entrypoint] Ensuring agents are registered..."
 bash docker/setup-agents.sh
 
+# Propagate the Codex (ChatGPT) subscription auth across every agent. Without
+# this, `openclaw models auth login --agent <X>` writes tokens only into X's
+# auth-profiles.json, leaving the other agents on the env OPENAI_API_KEY (or
+# nothing). The sync script collapses every agent's file into a symlink to a
+# single canonical store so one login propagates to all. Idempotent.
+echo "[entrypoint] Syncing Codex subscription auth across agents..."
+bash docker/sync-codex-auth.sh || \
+  echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
+
 # ===========================================================
 # 1b. ENSURE MC-CHAT PLUGIN (runs every startup)
 # ===========================================================

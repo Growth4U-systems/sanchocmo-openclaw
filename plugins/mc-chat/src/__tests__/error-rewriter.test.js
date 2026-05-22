@@ -147,3 +147,73 @@ test("merge: only merges when categories differ", () => {
   // Two rate_limits → no correlatedWith (same category is not new info)
   assert.equal(merged.correlatedWith, undefined);
 });
+
+// -----------------------------------------------------------------------------
+// authMode-aware rate_limit messages
+// -----------------------------------------------------------------------------
+
+test("rate_limit + authMode=apikey: rewrites to API-key billing message", () => {
+  const out = classifyAndRewriteError(FIXTURE_RATE_LIMIT_WITH_RESET, { authMode: "apikey" });
+  assert.equal(out.errorDetail.category, "rate_limit");
+  assert.equal(out.errorDetail.authMode, "apikey");
+  assert.ok(
+    out.text.startsWith("⚠️ **API key OpenAI sin cuota**"),
+    `expected API-key header, got: ${out.text.split("\n")[0]}`,
+  );
+  assert.ok(out.text.includes("billing"));
+  // Must NOT keep the misleading generic header
+  assert.ok(!out.text.startsWith("⚠️ **Rate limit alcanzado**"));
+});
+
+test("rate_limit + authMode=chatgpt: rewrites to subscription message", () => {
+  const out = classifyAndRewriteError(FIXTURE_RATE_LIMIT_CHAIN, { authMode: "chatgpt" });
+  assert.equal(out.errorDetail.category, "rate_limit");
+  assert.equal(out.errorDetail.authMode, "chatgpt");
+  assert.ok(
+    out.text.startsWith("⚠️ **Suscripción Codex topada**"),
+    `expected subscription header, got: ${out.text.split("\n")[0]}`,
+  );
+});
+
+test("rate_limit + no authMode: falls back to generic header (back-compat)", () => {
+  const out = classifyAndRewriteError(FIXTURE_RATE_LIMIT_WITH_RESET);
+  assert.equal(out.errorDetail.category, "rate_limit");
+  assert.equal(out.errorDetail.authMode, undefined);
+  assert.ok(out.text.startsWith("⚠️ **Rate limit alcanzado**"));
+});
+
+test("rate_limit + authMode=unknown: falls back to generic header", () => {
+  const out = classifyAndRewriteError(FIXTURE_RATE_LIMIT_WITH_RESET, { authMode: "weird-future-mode" });
+  assert.equal(out.errorDetail.authMode, "weird-future-mode");
+  assert.ok(out.text.startsWith("⚠️ **Rate limit alcanzado**"));
+});
+
+test("authEmail: surfaces account when raw text has no email", () => {
+  const out = classifyAndRewriteError(FIXTURE_RATE_LIMIT_WITH_RESET, {
+    authMode: "chatgpt",
+    authEmail: "accounts@growth4u.io",
+  });
+  assert.equal(out.errorDetail.account, "accounts@growth4u.io");
+  assert.ok(out.text.includes("accounts@growth4u.io"));
+});
+
+test("authEmail: raw text email wins over opts.authEmail", () => {
+  const raw = "rate_limit on provider openai-codex for account real@example.com model codex/gpt-5.5";
+  const out = classifyAndRewriteError(raw, { authMode: "chatgpt", authEmail: "fallback@example.com" });
+  assert.equal(out.errorDetail.account, "real@example.com");
+});
+
+test("non-rate_limit + authMode: auth-aware copy does not leak into other categories", () => {
+  const out = classifyAndRewriteError(FIXTURE_CONTEXT_OVERFLOW, { authMode: "apikey" });
+  assert.equal(out.errorDetail.category, "context_overflow");
+  assert.ok(out.text.startsWith("⚠️ **Contexto demasiado largo**"));
+});
+
+test("insufficient_quota: detects raw OpenAI billing error directly", () => {
+  const raw =
+    'OpenAI API error: {"type":"insufficient_quota","code":"insufficient_quota","message":' +
+    '"You exceeded your current quota, please check your plan and billing details."}';
+  const out = classifyAndRewriteError(raw);
+  assert.equal(out.errorDetail.category, "insufficient_quota");
+  assert.ok(out.text.startsWith("⚠️ **API key OpenAI sin cuota**"));
+});
