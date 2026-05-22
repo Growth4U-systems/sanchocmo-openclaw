@@ -92,6 +92,16 @@ if [ -f workspace-sancho/package.json ] && [ ! -d workspace-sancho/node_modules 
   (cd workspace-sancho && npm install --production --quiet)
 fi
 
+# metrics-collector skill: ga4/gsc adapters import google-auth-library; without
+# it the cron silently fails over to the catch and writes status=error. The
+# skill carries its own scripts/package.json with the dep declared — install
+# once per fresh deploy and skip on warm boots.
+if [ -f skills/metrics-collector/scripts/package.json ] && [ ! -d skills/metrics-collector/scripts/node_modules ]; then
+  echo "[entrypoint] Installing metrics-collector dependencies..."
+  (cd skills/metrics-collector/scripts && npm install --production --quiet) \
+    || echo "[entrypoint] WARNING: metrics-collector npm install failed; GA4/GSC adapters will throw at runtime"
+fi
+
 # ===========================================================
 # 5. GENERATE MC DASHBOARD DATA (if missing)
 # ===========================================================

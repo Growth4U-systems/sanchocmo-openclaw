@@ -15,7 +15,11 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const WORKSPACE = path.resolve(__dirname, '..', '..', '..');
+// MC_WORKSPACE (set by the VPS container) wins over the legacy relative walk,
+// which only resolved correctly when this skill lived inside workspace-sancho/.
+// Post merge with content-engine the skill moved to ~/.openclaw/skills/, leaving
+// the original `..,..,..` walk pointing at a directory with no brand/.
+const WORKSPACE = process.env.MC_WORKSPACE || path.resolve(__dirname, '..', '..', '..');
 
 // --- Argument parsing ---
 const args = process.argv.slice(2);
@@ -66,9 +70,14 @@ if (!existsSync(integrationsPath)) {
 const integrations = JSON.parse(readFileSync(integrationsPath, 'utf-8'));
 
 // --- Load .env ---
+// Layering: process.env (global secrets injected by the VPS deploy) is the
+// base, and brand-specific brand/<slug>/.env overlays on top so per-client
+// overrides win. Without process.env the VPS deploy injection of
+// META_ACCESS_TOKEN / GHL_API_KEY / INSTANTLY_API_KEY would be invisible to
+// the adapters, since collect.js used to read only the brand .env.
 function loadEnv(slug) {
+  const env = { ...process.env };
   const envPath = path.join(brandDir, '.env');
-  const env = {};
   if (existsSync(envPath)) {
     const lines = readFileSync(envPath, 'utf-8').split('\n');
     for (const line of lines) {
