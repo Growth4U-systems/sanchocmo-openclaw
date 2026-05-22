@@ -130,11 +130,11 @@ function formatMessage(text: string): string {
     .replace(/`([^`]+)`/g, '<code class="bg-[#45475a] px-1 py-0.5 rounded text-[15px]">$1</code>')
     .replace(
       /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener" class="underline text-blue-400 hover:text-blue-300">$1</a>'
+      '<a href="$2" target="_blank" rel="noopener" class="underline text-blue-400 hover:text-blue-300 break-all">$1</a>'
     )
     .replace(
       /(^|[^"'])(https?:\/\/[^\s<]+)/g,
-      '$1<a href="$2" target="_blank" rel="noopener" class="underline text-blue-400 hover:text-blue-300">$2</a>'
+      '$1<a href="$2" target="_blank" rel="noopener" class="underline text-blue-400 hover:text-blue-300 break-all">$2</a>'
     )
     .replace(/\n/g, "<br>");
 }
