@@ -16,6 +16,12 @@
 - `clients.json` (raíz). `active: false` excluye de crons.
 - `./scripts/for-each-client.sh '<cmd>'` — vars: `$CLIENT_SLUG`, `$CLIENT_NAME`, `$CLIENT_GUILD`
 
+## Notion
+- Skill `notion` está disponible. Si te piden leer un doc de Notion, **NO inventes solicitudes de instalación** — usala.
+- CLI: `ntn pages get <page-id>` (lee el token de `NOTION_API_TOKEN`, que el container exporta aliasado de `NOTION_API_KEY`).
+- Fallback raw: `curl -H "Authorization: Bearer $NOTION_API_KEY" -H "Notion-Version: 2022-06-28" https://api.notion.com/v1/pages/<page-id>`.
+- Si recibís `object_not_found` o `unauthorized`: el bot del integration token no fue invitado a esa página. Reportalo al usuario pidiéndole que invite al bot en Notion: *Share → Add connections* — sin esa invitación ningún endpoint funciona, aunque el panel APIs muestre Notion como "connected".
+
 ## Lecciones
 - LinkedIn scraping: web_fetch mezcla posts propios y "Liked by". Verificar autoría.
 
