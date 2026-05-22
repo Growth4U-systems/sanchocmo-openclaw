@@ -571,11 +571,12 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
 
             if (group.docs.length === 1) {
               const doc = group.docs[0];
+              const title = group.folder === "_root" ? doc.name : group.label;
               return (
                 <div key={group.folder} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                   <div className="flex items-center gap-3 px-5 py-4 hover:bg-muted/20 transition-colors">
                     <span className="text-xl">{icon}</span>
-                    <span className="flex-1 text-base font-bold text-foreground">{doc.name}</span>
+                    <span className="flex-1 text-base font-bold text-foreground">{title}</span>
                     <div className="flex items-center gap-1">
                       <DownloadBtn docPath={doc.fullPath} />
                       <button type="button" onClick={() => onSelectOtherDoc(doc.fullPath, doc.name)}
