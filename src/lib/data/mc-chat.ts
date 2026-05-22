@@ -54,6 +54,69 @@ export interface ChatAttachment {
 }
 
 // ---------------------------------------------------------------------------
+// Structured error detail — set by the mc-chat plugin's error-rewriter when
+// an upstream runtime error (rate limit, missing auth, watchdog abort, …) is
+// detected. The user-facing `text` of the bot message is rewritten to a clear
+// Spanish summary; this field carries the raw payload + classification so the
+// UI can open a modal with the full technical detail.
+// ---------------------------------------------------------------------------
+export type ErrorCategory =
+  | "rate_limit"
+  | "auth"
+  | "context_overflow"
+  | "watchdog_abort"
+  | "model_unavailable"
+  | "network";
+
+export interface ErrorDetail {
+  category: ErrorCategory;
+  raw: string;
+  provider?: string;
+  account?: string;
+  model?: string;
+  classifiedAt: number;
+  correlatedWith?: ErrorCategory;
+}
+
+const VALID_CATEGORIES: ReadonlySet<ErrorCategory> = new Set([
+  "rate_limit",
+  "auth",
+  "context_overflow",
+  "watchdog_abort",
+  "model_unavailable",
+  "network",
+]);
+const MAX_RAW_LEN = 4096;
+
+// Defensive normalizer used by the webhook. Returns `undefined` for any input
+// that doesn't match the contract — never throws — so a malformed errorDetail
+// never blocks the bot message itself from being persisted.
+export function normalizeErrorDetail(input: unknown): ErrorDetail | undefined {
+  if (!input || typeof input !== "object") return undefined;
+  const v = input as Record<string, unknown>;
+  if (typeof v.category !== "string" || !VALID_CATEGORIES.has(v.category as ErrorCategory)) {
+    return undefined;
+  }
+  if (typeof v.raw !== "string") return undefined;
+  const raw = v.raw.length > MAX_RAW_LEN ? v.raw.slice(0, MAX_RAW_LEN) + "…" : v.raw;
+  const out: ErrorDetail = {
+    category: v.category as ErrorCategory,
+    raw,
+    classifiedAt: typeof v.classifiedAt === "number" ? v.classifiedAt : Date.now(),
+  };
+  if (typeof v.provider === "string") out.provider = v.provider.slice(0, 64);
+  if (typeof v.account === "string") out.account = v.account.slice(0, 128);
+  if (typeof v.model === "string") out.model = v.model.slice(0, 64);
+  if (
+    typeof v.correlatedWith === "string" &&
+    VALID_CATEGORIES.has(v.correlatedWith as ErrorCategory)
+  ) {
+    out.correlatedWith = v.correlatedWith as ErrorCategory;
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // Progress events — granular updates emitted by the gateway during a turn
 // (tool calls, file writes, sub-agent handoffs, etc.). Accumulate in
 // `pendingProgress` while the agent is working, then get sealed into the
@@ -93,6 +156,7 @@ interface ThreadData {
     progress?: ProgressEvent[];
     from_agent?: string;
     to_agent?: string;
+    errorDetail?: ErrorDetail;
   }[];
   discordThreadId?: string;
   discordChannelId?: string;
@@ -128,6 +192,7 @@ export function addMessage(
   progress?: ProgressEvent[],
   fromAgent?: string,
   toAgent?: string,
+  errorDetail?: ErrorDetail,
 ) {
   if (role === "handoff" && (!fromAgent || !toAgent)) {
     throw new Error("addMessage: role 'handoff' requires both fromAgent and toAgent");
@@ -143,6 +208,7 @@ export function addMessage(
     progress: sealed,
     from_agent: fromAgent,
     to_agent: toAgent,
+    errorDetail,
   });
   // Cap messages at 200
   if (thread.messages.length > 200) {
