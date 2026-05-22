@@ -30,6 +30,8 @@ import { ProgressTimeline } from "./progress-timeline";
 import type { ProgressEvent } from "@/hooks/useChat";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { MediaAssetSlideover } from "@/components/media-creation/MediaAssetSlideover";
+import { ErrorDetailModal } from "./error-detail-modal";
+import type { ErrorDetail } from "@/hooks/useChat";
 import { useBrandAssets, type BrandAsset } from "@/hooks/useBrandAssets";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
@@ -621,6 +623,11 @@ export function ChatSidebar() {
   // to the foundation page. Keeps the user in their current context (chat
   // thread, task page, etc.) while they read or edit the doc.
   const [openDocSlidePath, setOpenDocSlidePath] = useState<string | null>(null);
+
+  // Error-detail modal — opened by the chip rendered under any bot message
+  // whose text was rewritten by the mc-chat error-rewriter (rate limit, auth,
+  // watchdog abort, etc.).
+  const [openErrorDetail, setOpenErrorDetail] = useState<ErrorDetail | null>(null);
 
   // Media-asset slide-over — opened when the doc pill points at a template
   // folder (kind="template"). The MediaAssetSlideover handles multi-slide
@@ -1392,7 +1399,7 @@ export function ChatSidebar() {
           </div>
         )}
 
-        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number; progress?: ProgressEvent[]; from_agent?: string; to_agent?: string }, i: number) => {
+        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number; progress?: ProgressEvent[]; from_agent?: string; to_agent?: string; errorDetail?: ErrorDetail }, i: number) => {
           if (msg.role === "system") {
             return (
               <div key={i} className="flex justify-center">
@@ -1501,6 +1508,16 @@ export function ChatSidebar() {
                 )}
                 {!isUser && msg.progress && msg.progress.length > 0 && (
                   <ProgressTimeline events={msg.progress} mode="sealed" />
+                )}
+                {!isUser && msg.errorDetail && (
+                  <button
+                    type="button"
+                    onClick={() => setOpenErrorDetail(msg.errorDetail ?? null)}
+                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 border border-amber-500/40 transition-colors"
+                    aria-label="Ver detalle técnico del error"
+                  >
+                    🔍 Ver detalle técnico
+                  </button>
                 )}
               </div>
             </div>
@@ -1651,6 +1668,11 @@ export function ChatSidebar() {
         asset={openTemplateAsset}
         onClose={() => setOpenTemplateAsset(null)}
         onRequestEdit={() => setOpenTemplateAsset(null)}
+      />
+      <ErrorDetailModal
+        open={openErrorDetail !== null}
+        onClose={() => setOpenErrorDetail(null)}
+        detail={openErrorDetail}
       />
     </div>
   );

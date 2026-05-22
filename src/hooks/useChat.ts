@@ -31,7 +31,25 @@ export interface ProgressEvent {
   ts: number;
 }
 
-interface ChatMessage {
+export type ErrorCategory =
+  | "rate_limit"
+  | "auth"
+  | "context_overflow"
+  | "watchdog_abort"
+  | "model_unavailable"
+  | "network";
+
+export interface ErrorDetail {
+  category: ErrorCategory;
+  raw: string;
+  provider?: string;
+  account?: string;
+  model?: string;
+  classifiedAt: number;
+  correlatedWith?: ErrorCategory;
+}
+
+export interface ChatMessage {
   role: "user" | "bot" | "status" | "system" | "handoff";
   text: string;
   agent?: string;
@@ -41,6 +59,10 @@ interface ChatMessage {
   // Only set when role === "handoff": agente que delega y agente que recibe
   from_agent?: string;
   to_agent?: string;
+  // Set on bot messages whose text was rewritten by the mc-chat error-rewriter
+  // (rate limit, watchdog abort, auth failure, etc.). Drives the "Ver detalle
+  // técnico" chip + modal.
+  errorDetail?: ErrorDetail;
 }
 
 interface ThreadListItem {
