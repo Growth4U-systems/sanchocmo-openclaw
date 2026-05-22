@@ -39,6 +39,12 @@ services:
       - OD_DAEMON_URL=${OD_DAEMON_URL:-http://open-design:7456}
       - OD_WEB_URL=${OD_WEB_URL:-}
       - OD_API_TOKEN=${OD_API_TOKEN:-}
+      # The bundled `notion` skill reads NOTION_API_TOKEN, but `.env` ships the
+      # key as NOTION_API_KEY (the name the meeting-intelligence flow + the
+      # admin api-health check expect). Alias the two so `ntn` and the skill's
+      # curl examples both authenticate against the same Notion integration
+      # without forcing every agent to remember to re-export.
+      - NOTION_API_TOKEN=${NOTION_API_KEY:-}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:18789/healthz"]
       interval: 60s

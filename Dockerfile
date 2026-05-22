@@ -20,6 +20,12 @@ ARG OPENCLAW_VERSION=2026.5.18
 ENV OPENCLAW_VERSION=${OPENCLAW_VERSION}
 RUN npm install -g openclaw@${OPENCLAW_VERSION}
 
+# Official Notion CLI used by the bundled `notion` skill. Without `ntn`
+# on PATH, the skill's anyBins=["ntn","curl"] check passes via curl, but
+# its SKILL.md tells the agent to prefer `ntn` — leading to "command not
+# found" mid-session. Installing it here keeps the preferred path working.
+RUN npm install -g ntn
+
 # Git config for backup commits
 RUN git config --global user.name "Cervantes (SanchoCMO)" \
     && git config --global user.email "cervantes@sanchocmo.ai"
