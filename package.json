@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:plugins": "node --test plugins/mc-chat/src/__tests__/*.test.js",
+    "test:lib": "tsx --test src/lib/data/__tests__/*.test.mts",
     "migrate:media": "tsx scripts/migrate-legacy-media.mts",
     "check:drafts": "tsx scripts/check-legacy-media.mts",
     "audit:docs": "tsx scripts/audit-doc-paths.mts --check",

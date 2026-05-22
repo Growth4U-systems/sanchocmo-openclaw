@@ -10,9 +10,17 @@ import {
   sealProgress,
   clearProgress,
   normalizeErrorDetail,
+  isStaleWatchdogAfterRecentSuccess,
+  getThread,
   type ProgressEvent,
   type ProgressKind,
 } from "@/lib/data/mc-chat";
+
+// How long after a successful bot reply we should treat a watchdog_abort on
+// the same thread as a stale runtime echo and drop it. Empirically the gap
+// observed in production is in the 20-ms range; 5 s is generous without ever
+// hiding a real subsequent timeout.
+const STALE_WATCHDOG_WINDOW_MS = 5000;
 
 const PROGRESS_KINDS: ReadonlySet<ProgressKind> = new Set([
   "thinking",
@@ -107,6 +115,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const errorDetail = rawErrorDetail !== undefined ? normalizeErrorDetail(rawErrorDetail) : undefined;
   if (rawErrorDetail !== undefined && !errorDetail) {
     console.warn(`[mc-chat] dropped malformed errorDetail on thread ${tid}`);
+  }
+  // Drop stale watchdog_abort messages that arrive right after a successful
+  // bot reply on the same thread (runtime sometimes emits a leftover abort
+  // event 20 ms after a successful deliver — pure noise that confuses users).
+  if (errorDetail?.category === "watchdog_abort") {
+    const existing = getThread(tid);
+    if (isStaleWatchdogAfterRecentSuccess(existing.messages, Date.now(), STALE_WATCHDOG_WINDOW_MS)) {
+      console.log(`[mc-chat] suppressed stale watchdog_abort on ${tid} (recent success within ${STALE_WATCHDOG_WINDOW_MS}ms)`);
+      // Still consume the sealed progress so the next reply starts from clean
+      // state. No addMessage call.
+      return res.status(200).json({ ok: true, suppressed: "stale_watchdog_after_success", progressCount: sealed.length });
+    }
   }
   addMessage(tid, "bot", text, agent, undefined, sealed, undefined, undefined, errorDetail);
   console.log(`[mc-chat] Bot response → ${tid}: ${(text || "").slice(0, 60)} (${sealed.length} progress events${errorDetail ? `, errorDetail=${errorDetail.category}` : ""})`);
