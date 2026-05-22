@@ -21,14 +21,18 @@ export async function collect(config, env, dateRange) {
     throw new Error('Meta Ads: missing accountId in integrations.json');
   }
 
-  // Find access token — try slug-prefixed first, then generic
+  // Find access token — try slug-prefixed first, then the canonical generic name,
+  // then the legacy/deploy-secret name (the GitHub `staging`/`prod` Environments
+  // ship META_ACCESS_TOKEN, not META_ADS_ACCESS_TOKEN).
   const slugUpper = (config._slug || '').toUpperCase().replace(/-/g, '_');
   const accessToken =
     env[`${slugUpper}_META_ADS_ACCESS_TOKEN`] ||
-    env.META_ADS_ACCESS_TOKEN;
+    env[`${slugUpper}_META_ACCESS_TOKEN`] ||
+    env.META_ADS_ACCESS_TOKEN ||
+    env.META_ACCESS_TOKEN;
 
   if (!accessToken) {
-    throw new Error('Meta Ads: missing META_ADS_ACCESS_TOKEN in .env');
+    throw new Error('Meta Ads: missing META_ADS_ACCESS_TOKEN (or META_ACCESS_TOKEN) in env');
   }
 
   const metrics = [];
