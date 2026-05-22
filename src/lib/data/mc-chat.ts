@@ -219,6 +219,37 @@ export function addMessage(
 }
 
 // ---------------------------------------------------------------------------
+// Stale-watchdog guard
+//
+// The openclaw runtime occasionally emits a `watchdog_abort` deliver right
+// after the agent has already produced its real reply (20ms gap observed in
+// production on 2026-05-22). The watchdog hint is meaningless in that case —
+// the work succeeded. This helper lets the webhook drop such a message when
+// the same thread already received a successful bot reply within the window.
+// ---------------------------------------------------------------------------
+
+interface MessageForSuppression {
+  role: string;
+  ts?: number;
+  errorDetail?: ErrorDetail;
+}
+
+export function isStaleWatchdogAfterRecentSuccess(
+  messages: readonly MessageForSuppression[],
+  now: number,
+  windowMs: number,
+): boolean {
+  // Walk backwards to the most recent bot message (ignore user/system/handoff).
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.role !== "bot") continue;
+    if (m.errorDetail) return false;
+    return now - (m.ts ?? 0) <= windowMs;
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Progress accumulator — pendingProgress lives in the thread file so it
 // survives Next.js process restarts and is visible to all polling clients.
 // ---------------------------------------------------------------------------
