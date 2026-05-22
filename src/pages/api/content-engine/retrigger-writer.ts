@@ -28,7 +28,7 @@ interface ParentTask {
 function findContentTaskAcrossProjects(
   slug: string,
   contentTaskId: string,
-): { ct: ContentTask; parentTaskId: string } | null {
+): { ct: ContentTask; parentTaskId: string; projectId: string } | null {
   const root = path.join(BASE, "brand", slug, "projects");
   if (!fs.existsSync(root)) return null;
   for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
@@ -42,7 +42,7 @@ function findContentTaskAcrossProjects(
     for (const t of tasks) {
       const cts = t.content_tasks || [];
       const match = cts.find((c) => c.id === contentTaskId);
-      if (match) return { ct: match, parentTaskId: t.id };
+      if (match) return { ct: match, parentTaskId: t.id, projectId: entry.name };
     }
   }
   return null;
@@ -61,13 +61,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const found = findContentTaskAcrossProjects(slug, contentTaskId);
   if (!found) return res.status(404).json({ error: "ContentTask not found" });
-  const { ct, parentTaskId } = found;
+  const { ct, parentTaskId, projectId } = found;
 
   const kind: "initial" | "iterate" = instruction ? "iterate" : "initial";
   const trigger = await triggerWriter({
     slug,
     contentTaskId: ct.id,
     parentTaskId,
+    projectId,
     ideaId: ct.idea_id,
     channels: ct.target_channels || [],
     skill: ct.skill || "social-writer",

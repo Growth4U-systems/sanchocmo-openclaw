@@ -23,6 +23,10 @@ export interface TriggerWriterInput {
   slug: string;
   contentTaskId: string;
   parentTaskId: string;
+  /** Project that owns the parent task — required to build the dashboard URLs
+   *  that the writer should paste back in its summary instead of filesystem
+   *  paths. */
+  projectId: string;
   ideaId: string;
   channels: string[];
   skill: string;
@@ -81,6 +85,13 @@ function buildMessage(input: TriggerWriterInput): string {
     .map((ch) => `  - brand/${input.slug}/content/drafts/${input.ideaId}/${ch}.md`)
     .join("\n");
   const ideaDir = `brand/${input.slug}/content/drafts/${input.ideaId}`;
+  // Public dashboard URLs the writer should paste back in its summary instead
+  // of absolute filesystem paths (`/root/.openclaw/...`). The chat renderer
+  // only converts markdown links whose href starts with http(s), so anything
+  // else shows up as raw `[text](path)` text in the bubble.
+  const draftUrls = targetChannels
+    .map((ch) => `  - ${ch}: $MC_BASE/dashboard/${input.slug}/projects/${input.projectId}/tasks/${input.parentTaskId}/content/${input.contentTaskId}/draft/${ch}`)
+    .join("\n");
 
   if (input.kind === "initial") {
     return [
@@ -208,7 +219,14 @@ function buildMessage(input: TriggerWriterInput): string {
       `         phase="draft" para ESE canal (no para todos a la vez): el body`,
       `         del curl debe ser channel_phases:{"<channel>":"draft"}. Así se`,
       `         actualiza la fase por canal en tasks.json y la UI ve el progreso.`,
-      `   d) Postea aquí un resumen breve (≤6 líneas) cuando termines.`,
+      `   d) Postea aquí un resumen breve (≤6 líneas) cuando termines. Si querés`,
+      `      enlazar a los drafts, usá EXACTAMENTE estas URLs (con MC_BASE`,
+      `      resuelto al host del entorno — el chat las renderiza como links):`,
+      draftUrls,
+      `      NO uses paths absolutos del filesystem (\`/root/...\`, \`/home/...\`,`,
+      `      \`/app/...\`) en el mensaje al humano — el renderer del chat solo`,
+      `      convierte a anchor markdown links con href http(s)://, así que un`,
+      `      path absoluto aparece como texto crudo entre corchetes.`,
       ``,
       `4. POV / VOICE — el POV Bank vive en Neon, NO en JSON.`,
       `   Antes de redactar, consulta el endpoint server-side:`,
@@ -247,7 +265,11 @@ function buildMessage(input: TriggerWriterInput): string {
     `3) Reescribe el body manteniendo el frontmatter (sin \`status\`) y subiendo iteration en 1.`,
     `4) Cuando termines, marca el canal como "draft":`,
     `   ${curlPatchPhase(input, targetChannels, "draft")}`,
-    `5) Postea aquí un breve resumen del cambio que has hecho.`,
+    `5) Postea aquí un breve resumen del cambio que has hecho. Si enlazás al`,
+    `   draft iterado, usá EXACTAMENTE esta URL (MC_BASE = host del entorno;`,
+    `   el chat solo renderiza http(s) links — paths del filesystem aparecen`,
+    `   como texto crudo entre corchetes):`,
+    draftUrls,
   ].join("\n");
 }
 

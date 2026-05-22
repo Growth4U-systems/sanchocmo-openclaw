@@ -290,6 +290,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     slug,
     contentTaskId: contentTask.id,
     parentTaskId: taskId,
+    projectId,
     ideaId,
     channels,
     skill,
