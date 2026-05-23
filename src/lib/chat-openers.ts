@@ -112,11 +112,17 @@ export interface ThreadConfig {
 /** Agent display config for message rendering */
 export const MC_CHAT_AGENTS: Record<string, { emoji: string; label: string; color: string }> = {
   sancho: { emoji: "🤠", label: "Sancho", color: "#C45D35" },
-  escudero: { emoji: "⚔️", label: "Escudero", color: "#22A06B" },
+  dulcinea: { emoji: "✍️", label: "Dulcinea", color: "#E11D74" },
+  hamete: { emoji: "📜", label: "Hamete", color: "#A16207" },
   rocinante: { emoji: "🐴", label: "Rocinante", color: "#3B9EBF" },
   cervantes: { emoji: "✒️", label: "Cervantes", color: "#9B59B6" },
   "maese-pedro": { emoji: "🎭", label: "Maese Pedro", color: "#D4548F" },
+  mambrino: { emoji: "🪖", label: "Mambrino", color: "#C2410C" },
+  merlin: { emoji: "🔮", label: "Merlín", color: "#4F46E5" },
+  sanson: { emoji: "🛡️", label: "Sansón", color: "#047857" },
   yalc: { emoji: "🧭", label: "Yalc Agent", color: "#4A5D23" },
+  // legacy shim: old threads with agent="escudero" display as Dulcinea
+  escudero: { emoji: "✍️", label: "Dulcinea", color: "#E11D74" },
 };
 
 export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
@@ -508,7 +514,7 @@ export function buildContentTaskThread(
   }
 ): ThreadConfig {
   const threadId = `${slug}:content:${contentTaskId.toLowerCase()}`;
-  const skill = opts.skill || "escudero-content";
+  const skill = opts.skill || "social-writer";
 
   return {
     threadId,

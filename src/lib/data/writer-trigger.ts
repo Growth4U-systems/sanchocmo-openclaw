@@ -4,10 +4,10 @@ import { addMessage, getChatSecret, getGatewayUrl } from "./mc-chat";
  * Writer-skill trigger.
  *
  * Calls the OpenClaw gateway (`/mc-chat/inbound`) on the ContentTask's chat
- * thread so Escudero Content (or whichever writer skill the ContentTask is
- * mapped to) actually runs deep-research → Clarify → writer and overwrites
- * the draft `.md` files. Best-effort: if the gateway is down, we still
- * record the request locally so a future cron/manual run can pick it up.
+ * thread so Dulcinea (or whichever writer skill the ContentTask is mapped
+ * to) actually runs deep-research → Clarify → writer and overwrites the
+ * draft `.md` files. Best-effort: if the gateway is down, we still record
+ * the request locally so a future cron/manual run can pick it up.
  *
  * The skill is responsible for:
  *   - Reading `brand/{slug}/content/drafts/{ideaId}/{channel}.md` (frontmatter
@@ -290,7 +290,7 @@ export async function triggerWriter(
     threadId,
     "system",
     input.kind === "initial"
-      ? "🤠 Pidiendo a Escudero que redacte este draft..."
+      ? "🤠 Pidiendo a Dulcinea que redacte este draft..."
       : `🔄 Pidiendo a Sancho que itere este draft (${input.channelScope || "todos los canales"})...`,
   );
   addMessage(threadId, "user", message);

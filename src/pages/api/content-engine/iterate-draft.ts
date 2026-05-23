@@ -2,9 +2,9 @@
  * POST /api/content-engine/iterate-draft
  *
  * Records a user iteration request against an existing draft. The actual
- * regeneration runs out-of-band: Escudero Content (or the future writer
- * pipeline) picks up drafts whose `clarify_answers.iteration_request`
- * is non-empty and produces a new version.
+ * regeneration runs out-of-band: Dulcinea picks up drafts whose
+ * `clarify_answers.iteration_request` is non-empty and produces a new
+ * version.
  *
  * What this endpoint does today:
  *   1. Snapshots the current draft to `{channel}.v{N}.md`.

@@ -335,7 +335,7 @@ function contentTaskToRow(
     project_id: context.projectId || null,
     parent_name: context.parentName,
     channel: ct.target_channels?.join(", "),
-    owner: ct.owner || "Escudero Content",
+    owner: ct.owner || "Dulcinea",
     agent: "dulcinea",
     skill: ct.skill,
     skills: ct.skill ? [ct.skill] : ["social-writer"],

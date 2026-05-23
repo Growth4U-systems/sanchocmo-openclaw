@@ -282,7 +282,7 @@ export function isPlaceholderBody(body: string): boolean {
   if (!body) return true;
   const trimmed = body.trim();
   if (trimmed.length === 0) return true;
-  return /Pendiente:\s*Escudero Content ejecutará/.test(trimmed);
+  return /Pendiente:\s*(?:Dulcinea|Escudero Content) ejecutará/.test(trimmed);
 }
 
 function PreviewCard({ headerLabel, children }: { headerLabel: string; children: ReactNode }) {
