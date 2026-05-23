@@ -308,7 +308,8 @@ export default function DraftFullScreenPage() {
   // a reliable "done" signal. Compute it per doc kind:
   //   - proposal: generated complete from idea data → done as soon as it exists.
   //   - research: done when frontmatter.status !== "pending" AND the body is
-  //     no longer the placeholder ("Pendiente. Escudero rellenará…").
+  //     no longer the placeholder ("Pendiente. Dulcinea rellenará…", or the
+  //     legacy "Pendiente. Escudero rellenará…" for older content tasks).
   //   - clarify:  done when clarify_status === "answered" / "skipped". The
   //     stub shows the questions Sancho wrote, but the human still has to
   //     answer them — that's what "done" means for clarify.
@@ -318,7 +319,7 @@ export default function DraftFullScreenPage() {
         .filter((d) => d.channel && SPECIAL_DOCS.some((s) => s.key === d.channel))
         .map((d) => d.channel as string),
     );
-    const researchPlaceholderRe = /Pendiente\. Escudero rellenará/i;
+    const researchPlaceholderRe = /Pendiente\. (?:Dulcinea|Escudero) rellenará/i;
     // Research is "done" when the file exists with real body content. The
     // legacy status check on the .md frontmatter is gone — phase tracking
     // moved to ct.channel_phases (per-channel, in tasks.json) and special
@@ -575,7 +576,7 @@ export default function DraftFullScreenPage() {
 
                 {draft && placeholderBody && (
                   <div className="border border-[#FCD34D] bg-[#FFFBEB] rounded-lg px-4 py-3 text-sm text-[#92400E]">
-                    <strong>Este draft aún no se ha redactado.</strong> Escudero Content
+                    <strong>Este draft aún no se ha redactado.</strong> Dulcinea
                     todavía no ha terminado. Puedes editarlo manualmente o pedirle a Sancho
                     que lo redacte por el chat lateral →
                   </div>

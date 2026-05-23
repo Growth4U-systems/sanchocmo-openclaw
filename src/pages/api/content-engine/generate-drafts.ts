@@ -16,9 +16,9 @@
  *   5. Attaches each draft path to the ContentTask's `documents[]`.
  *
  * What it does NOT do (yet — TODO):
- *   - Invoke Escudero Content end-to-end. The actual run of the writer skill
- *     (deep-research → Clarify → writing) is expected to happen via either:
- *       a) An Escudero cron/queue picking up ContentTasks in `Approved` +
+ *   - Invoke the writer skill end-to-end. The actual run (deep-research →
+ *     Clarify → writing) is expected to happen via either:
+ *       a) A Dulcinea cron/queue picking up ContentTasks in `Approved` +
  *          `pipeline_state: "researching"` state.
  *       b) A dedicated wrapper endpoint that wires this into the OpenClaw
  *          gateway (`openclaw cron run-once` or equivalent).
@@ -118,7 +118,7 @@ function ensureWeeklyProjectAndTask(slug: string, ideaId: string): { projectId: 
       deliverable_file: `brand/${slug}/content/published/${dateStr}.json`,
       mc_chat_thread_id: chatThreadId,
       discord_thread_id: null,
-      owner: "Escudero Content",
+      owner: "Dulcinea",
       created_at: now.toISOString(),
       idea_ids: [],
     });
@@ -147,7 +147,7 @@ function ensureWeeklyProjectAndTask(slug: string, ideaId: string): { projectId: 
 }
 
 function starterBody(channel: string, angleDraft: string, signal: string): string {
-  return `# ${channel} draft\n\n## Ángulo aprobado\n\n${angleDraft}\n\n## Signal\n\n${signal}\n\n---\n\n_Pendiente: Escudero Content ejecutará deep-research → Clarify → writer y reemplazará este placeholder con el draft real._\n`;
+  return `# ${channel} draft\n\n## Ángulo aprobado\n\n${angleDraft}\n\n## Signal\n\n${signal}\n\n---\n\n_Pendiente: Dulcinea ejecutará deep-research → Clarify → writer y reemplazará este placeholder con el draft real._\n`;
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -238,7 +238,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const researchBody = [
     `# Research — ${(idea.title as string) || ideaId}`,
     ``,
-    `_Pendiente. Escudero rellenará este documento con el deep-research:_`,
+    `_Pendiente. Dulcinea rellenará este documento con el deep-research:_`,
     `_fuentes consultadas, queries usadas y key findings._`,
     ``,
     `## Sources`,
@@ -252,7 +252,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const clarifyBody = [
     `# Clarify — ${(idea.title as string) || ideaId}`,
     ``,
-    `_Pendiente. Escudero postará aquí las preguntas necesarias antes de redactar._`,
+    `_Pendiente. Dulcinea postará aquí las preguntas necesarias antes de redactar._`,
     `_Cada pregunta tendrá una sección "Respuesta humana:" para que la rellenes._`,
     `_Cuando estén todas respondidas, el agente avanzará al draft._`,
     ``,
@@ -282,7 +282,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   saveIdeas(slug, ideas);
 
   // 5. Lanzar la skill de escritura. Posteamos al thread del ContentTask vía
-  //    el gateway de OpenClaw para que Escudero Content corra deep-research →
+  //    el gateway de OpenClaw para que Dulcinea corra deep-research →
   //    Clarify → writer y sobreescriba los .md. Best-effort: si el gateway no
   //    responde, los drafts quedan pendientes y se pueden disparar a mano
   //    desde el chat del ContentTask.

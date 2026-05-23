@@ -7,7 +7,7 @@ const OC_BASE = process.env.HOME
   ? path.join(process.env.HOME, ".openclaw")
   : "/Users/ragi/.openclaw";
 
-/** Agent metadata — 9 agents (Fase 1 reorg, 2026-05-11). Escudero removed from UI but workspace-escudero/ kept until Fase 2. */
+/** Agent metadata — 10 agents (Fase 2 reorg). Specialist team replaces the legacy Escudero dispatcher: Sancho now dispatches directly to each specialist. */
 const AGENTS_META = [
   { slug: "cervantes",   name: "Cervantes",   emoji: "✒️",  channel: "Webchat + #admin",                  model: "Opus 4.6",   role: "Arquitecto del sistema" },
   { slug: "sancho",      name: "Sancho",      emoji: "🤠", channel: "Todos los canales Discord (default)", model: "Opus 4.6",   role: "CMO Estratega / Orchestrator" },

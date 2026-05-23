@@ -14,7 +14,9 @@ interface QAInlineProps {
   /** Parsed QA report (only present when the QA-REPORT-research file exists). */
   qaReport: QAReportData | null;
   /** research.md body — used to detect the placeholder text
-   *  ("Pendiente. Escudero rellenará...") and to gauge real content presence. */
+   *  ("Pendiente. Dulcinea rellenará...") and to gauge real content presence.
+   *  Also matches the legacy "Escudero" placeholder for content tasks created
+   *  before the rename. */
   researchBody?: string;
   /** Currently-open doc — only used to hide the "Ver reporte" link when already on research. */
   activeDoc?: string;
@@ -22,7 +24,7 @@ interface QAInlineProps {
   onSwitchDoc: (docId: string) => void;
 }
 
-const RESEARCH_PLACEHOLDER_RE = /Pendiente\. Escudero rellenará/i;
+const RESEARCH_PLACEHOLDER_RE = /Pendiente\. (?:Dulcinea|Escudero) rellenará/i;
 
 /**
  * Always-visible quality strip. Reports the state of research + QA for *this*

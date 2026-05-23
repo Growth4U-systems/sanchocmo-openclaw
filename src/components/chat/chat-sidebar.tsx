@@ -52,7 +52,7 @@ const AGENT_BADGES: Record<string, { emoji: string; label: string; color: string
   mambrino:      { emoji: "🪖", label: "Mambrino",    color: "bg-orange-700" },
   merlin:        { emoji: "🔮", label: "Merlín",      color: "bg-indigo-600" },
   sanson:        { emoji: "🛡️", label: "Sansón",      color: "bg-emerald-700" },
-  escudero:      { emoji: "⚔️",  label: "Escudero",    color: "bg-green-600" }, // legacy hasta Fase 2 (dispatch sigue invocándolo)
+  escudero:      { emoji: "✍️",  label: "Dulcinea",    color: "bg-rose-500" }, // legacy shim: old threads with agent="escudero" display as Dulcinea
 };
 
 function agentBadge(agent?: string) {
@@ -774,16 +774,18 @@ export function ChatSidebar() {
   const typingBadge = typingAgent ? agentBadge(typingAgent) : null;
 
   // Gateway-down detection: when a ContentTask thread's last system marker
-  // ("Pidiendo a Escudero…") has been sitting for >60s without an agent
+  // ("Pidiendo a Dulcinea…") has been sitting for >60s without an agent
   // reply, the OpenClaw gateway is most likely down. Surface a banner with
-  // a "Reintentar" button that re-fires `triggerWriter`.
+  // a "Reintentar" button that re-fires `triggerWriter`. The regex also
+  // matches the legacy "Escudero" marker so old in-flight threads still
+  // trigger the banner.
   const GATEWAY_STALE_MS = 60 * 1000;
   const ctIdFromLinked = meta?.linkedTo?.match(/\/content\/([^/]+)/i)?.[1];
   const lastIsTriggerMarker =
     !!lastMsg &&
     lastMsg.role !== "user" &&
     typeof lastMsg.text === "string" &&
-    /Pidiendo a (Escudero|Sancho que itere)/.test(lastMsg.text);
+    /Pidiendo a (Dulcinea|Escudero|Sancho que itere)/.test(lastMsg.text);
   const triggerStale = !lastMsg?.ts || Date.now() - lastMsg.ts > GATEWAY_STALE_MS;
   const gatewayLikelyDown =
     !!ctIdFromLinked && lastIsTriggerMarker && triggerStale && !sendMutation.isPending;
@@ -1369,7 +1371,7 @@ export function ChatSidebar() {
 
         {gatewayLikelyDown && ctIdFromLinked && (
           <div className="border border-amber-500/40 bg-amber-500/10 text-amber-200 rounded-lg px-3 py-2 text-[13px] leading-snug">
-            <div className="font-semibold mb-1">⚠ Escudero parece no haber respondido</div>
+            <div className="font-semibold mb-1">⚠ Dulcinea parece no haber respondido</div>
             <p className="text-[12px] text-amber-100/80 mb-2">
               Puede que el gateway de OpenClaw esté caído. Comprueba <code className="bg-black/30 px-1 rounded">openclaw gateway status</code> y pulsa Reintentar.
             </p>

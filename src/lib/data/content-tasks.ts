@@ -135,7 +135,7 @@ export function createContentTask(slug: string, input: CreateContentTaskInput): 
     target_channels: input.target_channels,
     documents: input.documents || [],
     mc_chat_thread_id: threadId,
-    owner: input.owner || "Escudero Content",
+    owner: input.owner || "Dulcinea",
     created_at: now,
     updated_at: now,
   };

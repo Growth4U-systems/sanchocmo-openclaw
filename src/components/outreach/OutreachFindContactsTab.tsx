@@ -17,7 +17,7 @@ export function OutreachFindContactsTab({ slug }: Props) {
         "Tareas activas de research (company-finder, decision-maker-finder, enrichment)",
         "Import desde Trust Engine media list",
         "Upload CSV manual",
-        "Botón 'Lanzar research' → Sancho dispatcha Escudero con el skill correcto",
+        "Botón 'Lanzar research' → Sancho dispatcha Hamete (research) o Rocinante (outreach) con el skill correcto",
       ]}
     />
   );

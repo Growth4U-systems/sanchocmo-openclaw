@@ -306,7 +306,7 @@ export interface ContentTask {
   documents: { path: string; name?: string; channel?: string }[];
   mc_chat_thread_id?: string;
   discord_thread_id?: string;
-  owner?: string;                   // "Escudero Content"
+  owner?: string;                   // "Dulcinea"
   created_at: string;               // ISO8601
   updated_at?: string;
   approved_at?: string;

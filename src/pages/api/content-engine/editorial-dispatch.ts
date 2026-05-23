@@ -77,7 +77,7 @@ function ensureWeeklyProjectAndTask(slug: string): { projectId: string; taskId: 
       type: "content", status: "in-progress", skill: "social-writer",
       deliverable_file: `brand/${slug}/content/published/${dateStr}.json`,
       mc_chat_thread_id: chatThreadId, discord_thread_id: null,
-      owner: "Escudero Content", created_at: now.toISOString(), idea_ids: [],
+      owner: "Dulcinea", created_at: now.toISOString(), idea_ids: [],
     });
     fs.writeFileSync(tasksPath, JSON.stringify(tasks, null, 2));
 

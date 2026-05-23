@@ -99,7 +99,7 @@ export function DraftCards({ idea, slug, channelPhases, onApproveChannel, onRequ
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Drafts por canal</span>
         {!loading && drafts.length === 0 && (
-          <span className="text-[10px] text-muted-foreground italic">Escudero Content generará los drafts automáticamente tras el Clarify</span>
+          <span className="text-[10px] text-muted-foreground italic">Dulcinea generará los drafts automáticamente tras el Clarify</span>
         )}
       </div>
 
@@ -148,7 +148,7 @@ export function DraftCards({ idea, slug, channelPhases, onApproveChannel, onRequ
 
             {!draft ? (
               <p className="text-[11px] text-muted-foreground italic py-2">
-                Sin draft todavía. Se generará automáticamente cuando Escudero Content ejecute deep-research → Clarify → writer.
+                Sin draft todavía. Se generará automáticamente cuando Dulcinea ejecute deep-research → Clarify → writer.
               </p>
             ) : (
               <div
@@ -156,7 +156,7 @@ export function DraftCards({ idea, slug, channelPhases, onApproveChannel, onRequ
                 onClick={() => onOpenDoc(idea.id, channel)}
                 title="Click para abrir y editar"
               >
-                {draft.body.trim() || "(vacío — Escudero está trabajando)"}
+                {draft.body.trim() || "(vacío — Dulcinea está trabajando)"}
               </div>
             )}
 
