@@ -65,6 +65,21 @@ export const CURATED_MODELS = [
   "google/gemini-2.5-flash",
 ];
 
+const CURATED_MODEL_METADATA: Record<string, Pick<CatalogModel, "contextWindow" | "tags">> = {
+  "anthropic/claude-opus-4-7": {
+    contextWindow: 1_000_000,
+    tags: ["extended-context", "1m"],
+  },
+  "anthropic/claude-opus-4-6": {
+    contextWindow: 1_000_000,
+    tags: ["extended-context", "1m"],
+  },
+  "anthropic/claude-sonnet-4-6": {
+    contextWindow: 1_000_000,
+    tags: ["extended-context", "1m"],
+  },
+};
+
 const FAST_CACHE_TTL_MS = 5 * 60_000;
 const FULL_CACHE_TTL_MS = 10 * 60_000;
 const SHELL_TIMEOUT_MS = 45_000;
@@ -242,13 +257,13 @@ function toCatalogModel(m: RawModel): CatalogModel | null {
     id: key,
     name: m.name || key,
     provider,
-    contextWindow: m.contextWindow,
+    contextWindow: CURATED_MODEL_METADATA[key]?.contextWindow ?? m.contextWindow,
     reasoning: inferReasoningCapability(key, m.reasoning),
     available: m.available,
     missing: m.missing,
     input: Array.isArray(m.input) ? m.input : m.input ? [m.input] : undefined,
     curated: CURATED_MODELS.includes(key),
-    tags: m.tags || [],
+    tags: uniqueStrings([...(m.tags || []), ...(CURATED_MODEL_METADATA[key]?.tags || [])]),
   };
 }
 
@@ -425,9 +440,10 @@ function synthesizeCuratedEntries(existing: CatalogModel[]): CatalogModel[] {
       id,
       name: id.slice(slashIdx + 1),
       provider: id.slice(0, slashIdx),
+      contextWindow: CURATED_MODEL_METADATA[id]?.contextWindow,
       reasoning: inferReasoningCapability(id),
       curated: true,
-      tags: [],
+      tags: CURATED_MODEL_METADATA[id]?.tags || [],
     });
   }
   return out;

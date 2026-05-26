@@ -56,6 +56,31 @@ bash docker/inject-env-vars.sh
 echo "[entrypoint] Ensuring agents are registered..."
 bash docker/setup-agents.sh
 
+# Anthropic model execution in this app must use Anthropic API credentials.
+# Claude CLI OAuth may be present on the host, but it is a Claude subscription
+# route and can hit claude.ai usage limits. Keep API-token profiles first while
+# still leaving Claude CLI as a last-resort fallback.
+python3 -c "
+import json
+f='$OPENCLAW_CONFIG'
+try:
+    c=json.load(open(f))
+except Exception:
+    c={}
+auth=c.setdefault('auth',{})
+profiles=auth.get('profiles') or {}
+token_ids=[k for k,v in profiles.items() if isinstance(v, dict) and v.get('provider')=='anthropic' and v.get('mode') in ('token','apiKey')]
+current=auth.setdefault('order',{}).get('anthropic') or []
+fallback=[k for k in current if k not in token_ids and k!='anthropic:claude-cli']
+next_order=token_ids + fallback
+if 'anthropic:claude-cli' in profiles:
+    next_order.append('anthropic:claude-cli')
+if next_order and current != next_order:
+    auth.setdefault('order',{})['anthropic']=next_order
+    json.dump(c, open(f,'w'), indent=2)
+    print('[entrypoint] Anthropic auth order: API tokens before Claude CLI')
+" 2>/dev/null || true
+
 # Propagate the Codex (ChatGPT) subscription auth across every agent. Without
 # this, `openclaw models auth login --agent <X>` writes tokens only into X's
 # auth-profiles.json, leaving the other agents on the env OPENAI_API_KEY (or
