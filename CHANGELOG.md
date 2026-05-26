@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.4.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.3.0...v0.4.0) (2026-05-26)
+
+> First feature release after the staging → production cutover. Promotes the work that accumulated on `staging` since v0.3.0.
+
+### Features
+
+* **auth:** multi-client access + integral user management ([#160](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/160), [#162](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/162))
+* **access:** redirect non-admins off admin views + "Colaborador" role label ([#163](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/163))
+* **sidebar:** scoped scroll, collapse toggle, version + STAGING tag ([#165](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/165))
+* **scripts:** `resync-staging-to-prod.sh` for gradual-cutover data sync ([#166](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/166), [#170](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/170))
+* **chat:** elapsed-time indicator on "Sancho está pensando" ([#154](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/154))
+* **ci:** release-please via PAT + `target-branch: main`; auto-sync release version files main → staging
+
+### Bug Fixes
+
+* **content-engine:** stop false cron errors from jq + wrong MC_BASE port ([#169](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/169))
+
+## [0.3.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.2.0...v0.3.0) (2026-05-26)
+
+> **Staging → Production cutover.** This release promotes the full staging
+> codebase (the de-facto production instance) to the production VPS. The
+> auto-generated entries below only list the two commits that lived solely
+> on `main` since `v0.2.0`; the bulk of the work summarized here was
+> developed on `staging` and ships to production for the first time now.
+
+### Cutover highlights (work shipped to production)
+
+- **Content Engine** — POV Bank moved to Neon (pillars, evidence, update proposals); content-creation pipeline (strategy → pillars → setup → POV → visual templates); per-brand cron seeding (news/PAA/thief-marketers monitors); per-cron model picker; empty-state UI when a brand has no Content Engine project.
+- **Meeting Intelligence** — meetings, insights, recommendations and document-impact tracking surfaced internally (`mi_*` tables).
+- **Mission Control (Next.js)** — faithful UI migration (Foundation, Projects, Ideas, Trust Engine, Metrics, Dashboard V2); chat progress timeline with live elapsed ticker and sealed-event timestamps; normalized runtime error messages with technical-detail modal.
+- **Multi-client & admin** — external admin allowlist via `clients.json`; settings split by brand vs all-clients; cross-brand recurring-cron panel at `/dashboard/admin/settings` with live status, manual run and diagnostics; APIs tab in admin settings.
+- **YALC / GTM-OS** — YALC cockpit + staging service, provider-connect UI, operator integration, runtime-capability mapping, Sancho live-status API.
+- **Open Design** — versioned nginx vhost + documented setup; `ANTHROPIC_API_KEY` passthrough with preserve-key flag for the baked-in CLI.
+- **Infra / Deploy** — CI/CD split into staging (auto) and prod (manual); GitHub-Environment-managed secrets via `upsert-env.py` + `load-secrets-from-env.sh`; YALC overlay in deploy workflows; `MC_TASKS_BACKEND` + `DATABASE_URL` wired through Compose; snapshot watchdog + backup crons.
+
+_~38 features and ~65 fixes accumulated on `staging` since v0.2.0 are included. See the [v0.2.0…v0.3.0 compare](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.2.0...v0.3.0) for the full commit list._
+
+### Features
+
+* **skills:** add Alarife Payload operator ([7c1f9e2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7c1f9e2c30f363daa4c75becf907312d41f290fc))
+
+
+### Bug Fixes
+
+* **chat:** wrap long URLs inside message bubble ([#144](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/144)) ([9c5ce02](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9c5ce02ec94dea810a9e0062f874ee873370922c))
+
 ## [0.2.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.1.0...v0.2.0) (2026-05-12)
 
 
