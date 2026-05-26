@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ModelPicker } from "@/components/admin/ModelPicker";
@@ -128,6 +129,52 @@ interface CronAssignment extends CronApi {
   groupSlug: string;
 }
 
+interface CollapsibleModelSectionProps {
+  title: string;
+  description?: ReactNode;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}
+
+function CollapsibleModelSection({
+  title,
+  description,
+  children,
+  defaultOpen = true,
+}: CollapsibleModelSectionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <ComicCard className="overflow-hidden p-0">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-background/60"
+      >
+        <ChevronRight
+          aria-hidden="true"
+          className={cn(
+            "mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-90"
+          )}
+        />
+        <span className="min-w-0 flex-1">
+          <span className="block font-heading text-lg text-navy">{title}</span>
+          {description ? (
+            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+              {description}
+            </span>
+          ) : null}
+        </span>
+      </button>
+      <div hidden={!open} className="border-t border-border px-5 pb-5 pt-4">
+        {children}
+      </div>
+    </ComicCard>
+  );
+}
+
 function useCronAssignments() {
   return useQuery<CronAssignment[]>({
     queryKey: ["model-assignments", "crons"],
@@ -164,12 +211,15 @@ function DefaultModelSection() {
   const dirty = draft !== null && draft !== current;
 
   return (
-    <ComicCard>
-      <h3 className="font-heading text-lg text-navy mb-1">Default global</h3>
-      <p className="text-xs text-muted-foreground mb-4">
+    <CollapsibleModelSection
+      title="Default global"
+      description={
+        <>
         Modelo por defecto del chat (<code>agents.defaults.model.primary</code>).
         Aplica a cualquier agente que no tenga override propio.
-      </p>
+        </>
+      }
+    >
       {isLoading ? (
         <p className="text-sm text-muted-foreground">cargando…</p>
       ) : (
@@ -204,7 +254,7 @@ function DefaultModelSection() {
           {error instanceof Error ? error.message : "Error"}
         </p>
       )}
-    </ComicCard>
+    </CollapsibleModelSection>
   );
 }
 
@@ -214,13 +264,13 @@ function PerAgentSection() {
   const { data: catalog } = useModelCatalog();
   const { mutate, isPending } = useSetAgentModel();
   const [pendingAgent, setPendingAgent] = useState<string | null>(null);
+  const [ownModeDrafts, setOwnModeDrafts] = useState<Record<string, boolean>>({});
 
   if (isLoading) {
     return (
-      <ComicCard>
-        <h3 className="font-heading text-lg text-navy mb-1">Por agente</h3>
+      <CollapsibleModelSection title="Por agente">
         <p className="text-sm text-muted-foreground">cargando agentes…</p>
-      </ComicCard>
+      </CollapsibleModelSection>
     );
   }
 
@@ -228,13 +278,16 @@ function PerAgentSection() {
   const globalDefault = defaultModel?.model ?? null;
 
   return (
-    <ComicCard>
-      <h3 className="font-heading text-lg text-navy mb-1">Por agente</h3>
-      <p className="text-xs text-muted-foreground mb-4">
+    <CollapsibleModelSection
+      title="Por agente"
+      description={
+        <>
         Cada agente puede <strong>heredar el default global</strong> o tener un{" "}
         <strong>modelo propio</strong>. Los agentes sin registrar (sólo workspace en disco) aparecen
         debajo y se registran automáticamente al elegir un modelo.
-      </p>
+        </>
+      }
+    >
       {agents.length === 0 ? (
         <p className="text-sm text-muted-foreground">no hay agentes</p>
       ) : (
@@ -243,6 +296,11 @@ function PerAgentSection() {
             const busy = isPending && pendingAgent === a.id;
             const inheriting = a.overrideModel === null;
             const resolvedModel = a.resolvedModel || (inheriting ? globalDefault : a.overrideModel);
+            const ownMode = ownModeDrafts[a.id] || !inheriting || !a.registered;
+            const recommendedModel = a.recommendedModel || null;
+            const pickerValue = a.overrideModel || (ownMode ? recommendedModel : null) || resolvedModel || globalDefault;
+            const currentOwnModel = a.overrideModel || (ownMode ? pickerValue : null);
+            const recommendedApplied = Boolean(recommendedModel && currentOwnModel === recommendedModel);
             const resolvedProvider = providerForModel(catalog, resolvedModel);
             const route = effectiveRoute(resolvedProvider);
             const handleSave = (next: string | null) => {
@@ -280,9 +338,16 @@ function PerAgentSection() {
                     <input
                       type="radio"
                       name={`mode-${a.id}`}
-                      checked={inheriting && a.registered}
+                      checked={!ownMode && inheriting && a.registered}
                       disabled={busy || !a.registered}
-                      onChange={() => handleSave(null)}
+                      onChange={() => {
+                        setOwnModeDrafts((prev) => {
+                          const next = { ...prev };
+                          delete next[a.id];
+                          return next;
+                        });
+                        handleSave(null);
+                      }}
                     />
                     <span>
                       Heredar default
@@ -298,26 +363,55 @@ function PerAgentSection() {
                     <input
                       type="radio"
                       name={`mode-${a.id}`}
-                      checked={!inheriting || !a.registered}
+                      checked={ownMode}
                       disabled={busy}
-                      readOnly
+                      onChange={() => {
+                        setOwnModeDrafts((prev) => ({ ...prev, [a.id]: true }));
+                        const nextModel = recommendedModel || pickerValue;
+                        if (inheriting && a.registered && nextModel) {
+                          handleSave(nextModel);
+                        }
+                      }}
                     />
                     <span>Modelo propio</span>
                   </label>
                 </div>
 
                 <ModelPicker
-                  value={a.overrideModel}
+                  value={pickerValue}
                   allowInherit={false}
-                  disabled={busy || (inheriting && a.registered)}
+                  disabled={busy || (!ownMode && a.registered)}
                   size="sm"
                   onChange={(next) => {
-                    if (next) handleSave(next);
+                    if (!next) return;
+                    setOwnModeDrafts((prev) => ({ ...prev, [a.id]: true }));
+                    handleSave(next);
                   }}
                 />
 
                 {!inheriting && a.registered && (
                   <span className="text-[10px] uppercase font-bold text-rust">override</span>
+                )}
+                {recommendedModel && (
+                  <button
+                    type="button"
+                    disabled={busy || recommendedApplied}
+                    title={a.recommendedReason || undefined}
+                    onClick={() => {
+                      setOwnModeDrafts((prev) => ({ ...prev, [a.id]: true }));
+                      handleSave(recommendedModel);
+                    }}
+                    className={cn(
+                      "max-w-[220px] truncate rounded px-2 py-1 text-left text-[10px] font-bold uppercase",
+                      recommendedApplied
+                        ? "bg-sage/15 text-sage"
+                        : "bg-rust/10 text-rust hover:bg-rust/15",
+                      (busy || recommendedApplied) && "cursor-default"
+                    )}
+                  >
+                    {recommendedApplied ? "recomendado" : "aplicar recomendado"}{" "}
+                    <span className="font-mono normal-case">{recommendedModel}</span>
+                  </button>
                 )}
                 {busy && <span className="text-xs text-muted-foreground">guardando…</span>}
                 <span className="ml-auto flex min-w-[180px] items-center justify-end gap-2 text-xs">
@@ -326,7 +420,7 @@ function PerAgentSection() {
                   </span>
                   <AuthRouteBadge
                     route={route}
-                    configured={Boolean(resolvedProvider?.configured)}
+                    configured={resolvedProvider?.configured}
                     title={resolvedProvider?.sourceLabel}
                   />
                 </span>
@@ -335,7 +429,7 @@ function PerAgentSection() {
           })}
         </ul>
       )}
-    </ComicCard>
+    </CollapsibleModelSection>
   );
 }
 
@@ -349,13 +443,15 @@ function CronModelsSection() {
   const globalDefault = defaultModel?.model ?? null;
 
   return (
-    <ComicCard>
-      <h3 className="font-heading text-lg text-navy mb-1">Tareas recurrentes</h3>
-      <p className="mb-4 text-xs text-muted-foreground">
+    <CollapsibleModelSection
+      title="Tareas recurrentes"
+      description={
+        <>
         Crons de OpenClaw con modelo explícito o heredado del default global. Cambiar acá actualiza
         el modelo del cron en OpenClaw.
-      </p>
-
+        </>
+      }
+    >
       {isLoading && <p className="text-sm text-muted-foreground">cargando crons…</p>}
       {error && (
         <p className="text-sm text-destructive">
@@ -431,7 +527,7 @@ function CronModelsSection() {
                     <td className="px-3 py-2">
                       <AuthRouteBadge
                         route={route}
-                        configured={Boolean(provider?.configured)}
+                        configured={provider?.configured}
                         title={provider?.sourceLabel}
                       />
                     </td>
@@ -453,7 +549,7 @@ function CronModelsSection() {
           </table>
         </div>
       )}
-    </ComicCard>
+    </CollapsibleModelSection>
   );
 }
 
@@ -461,10 +557,9 @@ function ProvidersSection() {
   const { data, isLoading } = useModelCatalog();
   if (isLoading) {
     return (
-      <ComicCard>
-        <h3 className="font-heading text-lg text-navy mb-1">Providers</h3>
+      <CollapsibleModelSection title="Rutas de modelos del workspace">
         <p className="text-sm text-muted-foreground">cargando providers…</p>
-      </ComicCard>
+      </CollapsibleModelSection>
     );
   }
   const providers = data?.providers ?? [];
@@ -479,12 +574,15 @@ function ProvidersSection() {
     });
 
   return (
-    <ComicCard>
-      <h3 className="font-heading text-lg text-navy mb-1">Rutas de modelos del workspace</h3>
-      <p className="text-xs text-muted-foreground mb-4">
+    <CollapsibleModelSection
+      title="Rutas de modelos del workspace"
+      description={
+        <>
         Estado real que reporta OpenClaw. En esta app la suscripción se considera ruta válida
         para Codex; Anthropic/Opus debe ir por API key o por OpenRouter.
-      </p>
+        </>
+      }
+    >
       <div className="overflow-x-auto rounded-lg border-2 border-ink shadow-comic-sm">
         <table className="w-full min-w-[860px] text-sm">
           <thead>
@@ -575,7 +673,7 @@ function ProvidersSection() {
           </tbody>
         </table>
       </div>
-    </ComicCard>
+    </CollapsibleModelSection>
   );
 }
 
@@ -583,12 +681,15 @@ function RecommendationsSection() {
   const { data, isLoading } = useModelCatalog();
 
   return (
-    <ComicCard>
-      <h3 className="font-heading text-lg text-navy mb-1">Referencia de calidad por workload</h3>
-      <p className="mb-4 text-xs text-muted-foreground">
+    <CollapsibleModelSection
+      title="Referencia de calidad por workload"
+      description={
+        <>
         Guía operativa para que Foundation y análisis críticos no caigan por accidente en el
         default global si ese default está optimizado para coste o ejecución técnica.
-      </p>
+        </>
+      }
+    >
       {isLoading ? (
         <p className="text-sm text-muted-foreground">cargando recomendaciones…</p>
       ) : (
@@ -603,7 +704,7 @@ function RecommendationsSection() {
                   <h4 className="font-heading text-sm text-navy">{item.workload}</h4>
                   <AuthRouteBadge
                     route={route}
-                    configured={Boolean(provider?.configured)}
+                    configured={provider?.configured}
                     title={provider?.sourceLabel || item.route}
                   />
                 </div>
@@ -627,7 +728,7 @@ function RecommendationsSection() {
           })}
         </div>
       )}
-    </ComicCard>
+    </CollapsibleModelSection>
   );
 }
 

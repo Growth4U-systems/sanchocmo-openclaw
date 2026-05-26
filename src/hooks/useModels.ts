@@ -147,6 +147,9 @@ export interface RichAgent {
   workspace: string | null;
   resolvedModel: string | null;
   overrideModel: string | null;
+  recommendedModel: string | null;
+  recommendedReason: string | null;
+  recommendedSkills: string[];
   isDefault: boolean;
   registered: boolean;
 }
