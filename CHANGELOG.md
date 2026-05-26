@@ -2,6 +2,23 @@
 
 ## [0.3.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.2.0...v0.3.0) (2026-05-26)
 
+> **Staging → Production cutover.** This release promotes the full staging
+> codebase (the de-facto production instance) to the production VPS. The
+> auto-generated entries below only list the two commits that lived solely
+> on `main` since `v0.2.0`; the bulk of the work summarized here was
+> developed on `staging` and ships to production for the first time now.
+
+### Cutover highlights (work shipped to production)
+
+- **Content Engine** — POV Bank moved to Neon (pillars, evidence, update proposals); content-creation pipeline (strategy → pillars → setup → POV → visual templates); per-brand cron seeding (news/PAA/thief-marketers monitors); per-cron model picker; empty-state UI when a brand has no Content Engine project.
+- **Meeting Intelligence** — meetings, insights, recommendations and document-impact tracking surfaced internally (`mi_*` tables).
+- **Mission Control (Next.js)** — faithful UI migration (Foundation, Projects, Ideas, Trust Engine, Metrics, Dashboard V2); chat progress timeline with live elapsed ticker and sealed-event timestamps; normalized runtime error messages with technical-detail modal.
+- **Multi-client & admin** — external admin allowlist via `clients.json`; settings split by brand vs all-clients; cross-brand recurring-cron panel at `/dashboard/admin/settings` with live status, manual run and diagnostics; APIs tab in admin settings.
+- **YALC / GTM-OS** — YALC cockpit + staging service, provider-connect UI, operator integration, runtime-capability mapping, Sancho live-status API.
+- **Open Design** — versioned nginx vhost + documented setup; `ANTHROPIC_API_KEY` passthrough with preserve-key flag for the baked-in CLI.
+- **Infra / Deploy** — CI/CD split into staging (auto) and prod (manual); GitHub-Environment-managed secrets via `upsert-env.py` + `load-secrets-from-env.sh`; YALC overlay in deploy workflows; `MC_TASKS_BACKEND` + `DATABASE_URL` wired through Compose; snapshot watchdog + backup crons.
+
+_~38 features and ~65 fixes accumulated on `staging` since v0.2.0 are included. See the [v0.2.0…v0.3.0 compare](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.2.0...v0.3.0) for the full commit list._
 
 ### Features
 
