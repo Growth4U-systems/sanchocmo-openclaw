@@ -25,12 +25,14 @@ import sys
 from pathlib import Path
 
 
-def upsert(env_path: Path, updates: dict) -> dict:
+def upsert(env_path: Path, updates: dict, preserve_existing: set[str] | None = None) -> dict:
     """Apply `updates` to `env_path`. Returns per-key action report.
 
-    Action values: "added" | "updated" | "unchanged" | "skipped_empty".
+    Action values: "added" | "updated" | "unchanged" | "skipped_empty" |
+    "preserved_existing".
     """
     report: dict = {}
+    preserve_existing = preserve_existing or set()
     lines = env_path.read_text().splitlines() if env_path.exists() else []
 
     for key, value in updates.items():
@@ -47,6 +49,10 @@ def upsert(env_path: Path, updates: dict) -> dict:
         found = False
         for i, line in enumerate(lines):
             if line.startswith(f"{key}="):
+                if key in preserve_existing and line.split("=", 1)[1]:
+                    report[key] = "preserved_existing"
+                    found = True
+                    break
                 if line == new_line:
                     report[key] = "unchanged"
                 else:
@@ -65,6 +71,12 @@ def upsert(env_path: Path, updates: dict) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Upsert env vars into a .env file.")
     parser.add_argument("env_path", type=Path, help="Path to .env file")
+    parser.add_argument(
+        "--preserve-existing",
+        action="append",
+        default=[],
+        help="Do not overwrite this key when it already has a non-empty value in the target .env.",
+    )
     args = parser.parse_args()
 
     payload_b64 = sys.stdin.read().strip()
@@ -83,12 +95,16 @@ def main() -> int:
         return 1
 
     try:
-        report = upsert(args.env_path, {str(k): str(v) for k, v in updates.items()})
+        report = upsert(
+            args.env_path,
+            {str(k): str(v) for k, v in updates.items()},
+            preserve_existing=set(args.preserve_existing),
+        )
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    counts = {"added": 0, "updated": 0, "unchanged": 0, "skipped_empty": 0}
+    counts = {"added": 0, "updated": 0, "unchanged": 0, "skipped_empty": 0, "preserved_existing": 0}
     for action in report.values():
         counts[action] = counts.get(action, 0) + 1
     summary = " ".join(f"{k}={v}" for k, v in counts.items())

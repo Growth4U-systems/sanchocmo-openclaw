@@ -56,32 +56,6 @@ bash docker/inject-env-vars.sh
 echo "[entrypoint] Ensuring agents are registered..."
 bash docker/setup-agents.sh
 
-# Anthropic model execution in this app must use Anthropic API credentials, not
-# the Claude subscription route. Claude CLI OAuth may be present on the host,
-# but keep it out of the Anthropic provider order so missing API keys surface as
-# missing auth instead of silently consuming claude.ai quota.
-python3 -c "
-import json, os
-f='$OPENCLAW_CONFIG'
-try:
-    c=json.load(open(f))
-except Exception:
-    c={}
-auth=c.setdefault('auth',{})
-profiles=auth.get('profiles') or {}
-if os.environ.get('ANTHROPIC_API_KEY'):
-    profiles['anthropic:default']={'provider':'anthropic','mode':'token'}
-    auth['profiles']=profiles
-token_ids=[k for k,v in profiles.items() if isinstance(v, dict) and v.get('provider')=='anthropic' and v.get('mode') in ('token','apiKey')]
-current=auth.setdefault('order',{}).get('anthropic') or []
-fallback=[k for k in current if k not in token_ids and k!='anthropic:claude-cli']
-next_order=token_ids + fallback
-if next_order and current != next_order:
-    auth.setdefault('order',{})['anthropic']=next_order
-    json.dump(c, open(f,'w'), indent=2)
-    print('[entrypoint] Anthropic auth order: API credentials only')
-" 2>/dev/null || true
-
 # Propagate the Codex (ChatGPT) subscription auth across every agent. Without
 # this, `openclaw models auth login --agent <X>` writes tokens only into X's
 # auth-profiles.json, leaving the other agents on the env OPENAI_API_KEY (or
@@ -90,6 +64,15 @@ if next_order and current != next_order:
 echo "[entrypoint] Syncing Codex subscription auth across agents..."
 bash docker/sync-codex-auth.sh || \
   echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
+
+# Anthropic model execution in this app must use Anthropic API credentials, not
+# the Claude subscription route. Claude CLI OAuth may be present on the host,
+# but Sancho/OpenClaw must resolve `anthropic/*` models from ANTHROPIC_API_KEY.
+# This must run after sync-codex-auth because the shared auth-profiles symlink is
+# created there; writing only openclaw.json is not enough for agent inference.
+echo "[entrypoint] Ensuring Anthropic API auth profile..."
+node docker/ensure-anthropic-api-auth.js || \
+  echo "[entrypoint] WARNING: ensure-anthropic-api-auth failed; Anthropic may use stale auth"
 
 # ===========================================================
 # 1b. ENSURE MC-CHAT PLUGIN (runs every startup)
