@@ -225,8 +225,11 @@ function authRouteForProfileType(type: string | undefined): ProviderAuthRoute {
 function authRouteForEffectiveKind(kind: string | undefined): ProviderAuthRoute {
   if (!kind || kind === "missing") return "missing";
   if (kind === "oauth") return "subscription";
-  if (kind === "token" || kind === "apiKey" || kind === "profiles") return "api";
+  if (kind === "token" || kind === "apiKey") return "api";
   if (kind === "env") return "env";
+  // `profiles` is a container, not an auth route. Resolve it from the actual
+  // profile labels/counts below so OAuth subscriptions do not appear as API keys.
+  if (kind === "profiles") return "missing";
   return "api";
 }
 
@@ -250,6 +253,14 @@ function authKindForRoute(route: ProviderAuthRoute): string {
   if (route === "api") return "apiKey";
   if (route === "env") return "env";
   return "missing";
+}
+
+function envCredentialLabel(entry: AuthProviderEntry | undefined): string | null {
+  if (!entry) return null;
+  const source = entry.env?.source || null;
+  const value = entry.env?.value || entry.effective?.detail || null;
+  if (source && value && source !== value) return `${source} · ${value}`;
+  return source || value;
 }
 
 function inferReasoningCapability(id: string, explicit?: boolean): boolean | undefined {
@@ -371,6 +382,7 @@ export function summarizeProviderAuth(
   ]);
 
   const envEntry = providerEntries.find((p) => p.env?.source || p.effective?.kind === "env");
+  const envLabel = envCredentialLabel(envEntry);
   const hasEnv = Boolean(envEntry);
   const runtimeRoute = subscriptionSupported
     ? (auth.auth.runtimeAuthRoutes || []).find(
@@ -399,7 +411,7 @@ export function summarizeProviderAuth(
       effective = "missing";
     }
     effectiveLabel =
-      effectiveEntry.env?.source ||
+      envCredentialLabel(effectiveEntry) ||
       apiKeyLabels[0] ||
       unsupportedSubscriptionLabels[0] ||
       effectiveEntry.effective?.detail ||
@@ -419,7 +431,7 @@ export function summarizeProviderAuth(
     effectiveLabel = apiKeyLabels[0] || null;
   } else if (effective === "missing" && hasEnv) {
     effective = "env";
-    effectiveLabel = envEntry?.env?.source || envEntry?.effective?.detail || null;
+    effectiveLabel = envLabel;
   }
 
   const preferred: ProviderAuthRoute = hasSubscription
@@ -436,7 +448,7 @@ export function summarizeProviderAuth(
       : preferred === "api"
         ? apiKeyLabels[0] || null
         : preferred === "env"
-          ? envEntry?.env?.source || envEntry?.effective?.detail || null
+          ? envLabel
           : null;
 
   return {
@@ -451,7 +463,7 @@ export function summarizeProviderAuth(
     subscriptionLabels,
     unsupportedSubscriptionLabels,
     apiKeyLabels,
-    envLabel: envEntry?.env?.source || envEntry?.effective?.detail || null,
+    envLabel,
     authProviders,
   };
 }

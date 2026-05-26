@@ -62,8 +62,8 @@ const RECOMMENDATIONS = [
 
 function routeLabel(route: ProviderAuthRoute | undefined): string {
   if (route === undefined) return "cargando";
-  if (route === "subscription") return "sub";
-  if (route === "api") return "api key";
+  if (route === "subscription") return "suscripción";
+  if (route === "api") return "API key";
   if (route === "env") return "env key";
   return "sin auth";
 }
@@ -106,11 +106,44 @@ function AuthRouteBadge({
 function providerDisplayName(providerId: string): string {
   if (providerId === "anthropic") return "Anthropic";
   if (providerId === "codex") return "Codex";
-  if (providerId === "openai-codex") return "Codex auth";
+  if (providerId === "openai-codex") return "OpenAI Codex";
   if (providerId === "openrouter") return "OpenRouter";
   if (providerId === "openai") return "OpenAI";
   if (providerId === "google") return "Gemini";
   return providerId;
+}
+
+function connectionLabel(route: ProviderAuthRoute | undefined, configured: boolean): string {
+  if (!configured || !route || route === "missing") return "Sin auth";
+  if (route === "subscription") return "Conectado por suscripción";
+  if (route === "api") return "Conectado por API key";
+  if (route === "env") return "Conectado por env";
+  return "Sin auth";
+}
+
+function connectionClass(route: ProviderAuthRoute | undefined, configured: boolean): string {
+  if (!configured || !route || route === "missing") return "bg-muted text-muted-foreground";
+  if (route === "subscription") return "bg-sage/20 text-sage";
+  if (route === "api") return "bg-rust/10 text-rust";
+  if (route === "env") return "bg-blue-500/10 text-blue-700";
+  return "bg-muted text-muted-foreground";
+}
+
+function maskAuthLabel(label: string): string {
+  return label
+    .replace(/sk-ant-api[\w-]*/gi, (value) => `${value.slice(0, 12)}...${value.slice(-4)}`)
+    .replace(/sk-ant-o[\w-]*/gi, (value) => `${value.slice(0, 10)}...${value.slice(-4)}`)
+    .replace(/sk-or-v1[\w-]*/gi, (value) => `${value.slice(0, 11)}...${value.slice(-4)}`)
+    .replace(/sk-[\w-]{16,}/gi, (value) => `${value.slice(0, 7)}...${value.slice(-4)}`);
+}
+
+function authSourceLines(provider: CatalogProvider): string[] {
+  return [
+    ...provider.auth.subscriptionLabels.map((label) => `Suscripción: ${label}`),
+    ...provider.auth.apiKeyLabels.map((label) => `API key: ${label}`),
+    ...(provider.auth.envLabel ? [`Env: ${provider.auth.envLabel}`] : []),
+    ...provider.auth.unsupportedSubscriptionLabels.map((label) => `No usada: ${label}`),
+  ].map(maskAuthLabel);
 }
 
 function providerForModel(data: ModelCatalogResponse | undefined, modelId: string | null) {
@@ -616,20 +649,22 @@ function ProvidersSection() {
       title="Rutas de modelos del workspace"
       description={
         <>
-        Estado real que reporta OpenClaw. En esta app la suscripción se considera ruta válida
-        para Codex; Anthropic/Opus debe ir por API key o por OpenRouter.
+        Estado real que reporta OpenClaw. Codex puede estar conectado por suscripción/OAuth;
+        Anthropic/Opus debe ir por API key o por OpenRouter.
         </>
       }
     >
       <div className="overflow-x-auto rounded-lg border-2 border-ink shadow-comic-sm">
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="w-full min-w-[980px] text-sm">
           <thead>
             <tr className="border-b-2 border-ink bg-navy/5">
               <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Provider</th>
+              <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Estado</th>
               <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Reasoning</th>
               <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Suscripción</th>
               <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">API / env</th>
-              <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Ruta efectiva</th>
+              <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Usa ahora</th>
+              <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Fuente / token</th>
               <th className="px-3 py-2 text-right font-heading text-xs uppercase text-navy">Acción</th>
             </tr>
           </thead>
@@ -639,11 +674,17 @@ function ProvidersSection() {
               const reasoning = models.filter((m) => m.provider === p.id && m.reasoning);
               const shownReasoning = reasoning.slice(0, 2).map((m) => m.name || m.id).join(", ");
               const hiddenCount = Math.max(0, reasoning.length - 2);
+              const sources = authSourceLines(p);
               return (
                 <tr key={p.id} className="border-b border-border align-top last:border-b-0">
                   <td className="px-3 py-2">
                     <div className="font-mono font-semibold">{providerDisplayName(p.id)}</div>
                     <div className="text-[11px] text-muted-foreground">{p.id}</div>
+                  </td>
+                  <td className="px-3 py-2">
+                    <span className={cn("rounded px-2 py-0.5 text-[10px] font-bold uppercase", connectionClass(route, p.configured))}>
+                      {connectionLabel(route, p.configured)}
+                    </span>
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">
                     {reasoning.length > 0 ? (
@@ -689,9 +730,25 @@ function ProvidersSection() {
                     <div className="flex flex-col gap-1">
                       <AuthRouteBadge route={route} configured={p.configured} title={p.sourceLabel} />
                       <span className="max-w-[240px] truncate text-[11px] text-muted-foreground" title={p.sourceLabel || undefined}>
-                        {p.sourceLabel || "—"}
+                        {p.sourceLabel ? maskAuthLabel(p.sourceLabel) : "—"}
                       </span>
                     </div>
+                  </td>
+                  <td className="px-3 py-2">
+                    {sources.length > 0 ? (
+                      <div className="flex max-w-[260px] flex-col gap-0.5 text-[11px] text-muted-foreground">
+                        {sources.slice(0, 3).map((line) => (
+                          <span key={line} className="truncate" title={sources.join("\n")}>
+                            {line}
+                          </span>
+                        ))}
+                        {sources.length > 3 ? (
+                          <span title={sources.join("\n")}>+{sources.length - 3} más</span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right">
                     {["anthropic", "openrouter", "openai", "google"].includes(p.id) ? (

@@ -23,10 +23,10 @@ const MVP_MODELS = [
 ];
 
 function authRouteLabel(route: string | undefined): string {
-  if (route === "subscription") return "sub";
-  if (route === "api") return "api key";
+  if (route === "subscription") return "suscripción";
+  if (route === "api") return "API key";
   if (route === "env") return "env key";
-  return "missing";
+  return "sin auth";
 }
 
 function authBadge(p: CatalogProvider): string {
@@ -41,9 +41,10 @@ function authBadge(p: CatalogProvider): string {
     }
     return authRouteLabel(effective);
   }
-  if (p.authKind === "oauth" || p.authKind === "token") return "sub";
+  if (p.authKind === "oauth") return "suscripción";
+  if (p.authKind === "token") return "API key";
   if (p.authKind === "env") return "env key";
-  if (p.authKind === "apiKey") return "api key";
+  if (p.authKind === "apiKey") return "API key";
   return p.authKind;
 }
 
