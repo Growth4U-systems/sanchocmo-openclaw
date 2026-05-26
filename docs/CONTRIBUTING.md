@@ -31,8 +31,12 @@ feature/foo ──PR(squash)──▶ staging ──auto-deploy──▶ staging
 ```bash
 git checkout staging
 git pull
-git checkout -b feature/short-description
+git checkout -b martin/san-123-short-description
 ```
+
+Every code PR must be linked to a Linear issue. Prefer copying the branch name
+from Linear (`Cmd/Ctrl Shift .`) so the issue ID is present from the first
+commit. PRs without a `SAN-123` reference in the branch, title, or body fail CI.
 
 ### 2. Commit using Conventional Commits
 The commit message format is **enforced** by `commitlint` via a `commit-msg` git hook. release-please reads these to bump versions automatically.
@@ -47,10 +51,22 @@ The commit message format is **enforced** by `commitlint` via a `commit-msg` git
 Scope is optional but encouraged: `feat(slack): per-action handlers`.
 
 ### 3. Open a PR against `staging`
-The default branch of the repo is `staging`, so the PR target is automatic. Fill the PR template, push, request review.
+The default branch of the repo is `staging`, so the PR target is automatic. Fill
+the PR template, push, request review.
+
+Keep the Linear section in the PR body:
+
+```md
+Refs SAN-123
+```
+
+Use `Refs` for normal staging work so the issue stays linked while Linear's
+GitHub automations move it through review/QA states. Use `Fixes SAN-123` only
+when merging that PR should complete the issue.
 
 ### 4. CI runs automatically
 Required checks (must pass before merge):
+- `Require Linear issue ID`
 - `typecheck` (`npm run typecheck`)
 - `build` (`npm run build`)
 
