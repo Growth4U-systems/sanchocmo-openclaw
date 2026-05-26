@@ -49,8 +49,7 @@ async function main() {
       : [];
     config.auth.order.anthropic = [
       'anthropic:default',
-      ...current.filter(id => id !== 'anthropic:default' && id !== 'anthropic:claude-cli'),
-      ...(config.auth.profiles['anthropic:claude-cli'] ? ['anthropic:claude-cli'] : [])
+      ...current.filter(id => id !== 'anthropic:default' && id !== 'anthropic:claude-cli')
     ];
   }
 
