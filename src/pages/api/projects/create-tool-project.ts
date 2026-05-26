@@ -30,7 +30,6 @@ const STRATEGY_TOOLS: Record<string, { tool: string; taskName: string; taskType:
     taskName: "Ejecutar Trust Engine",
     taskType: "tool",
   },
-  // Atalaya and others will be added later
 };
 
 function nextProjectId(projectsDir: string): string {
@@ -97,7 +96,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // report location inside the project dir so the sidebar can link directly
   // from task → report without retro-active heuristics.
   const taskName = strategyConfig?.taskName
-    ? `${strategyConfig.taskName} — ${name.replace(/^Trust Engine\s*[—-]\s*/i, "").replace(/^Atalaya\s*[—-]\s*/i, "")}`
+    ? `${strategyConfig.taskName} — ${name.replace(/^Trust Engine\s*[—-]\s*/i, "")}`
     : `Research — ${name}`;
 
   const deliverableFile = `brand/${slug}/projects/${dirName}/${tool}-report.md`;

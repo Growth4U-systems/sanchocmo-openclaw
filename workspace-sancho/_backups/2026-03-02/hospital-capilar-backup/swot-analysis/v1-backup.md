@@ -24,50 +24,50 @@
 
 | # | Fortaleza | Evidencia | Fuente |
 |---|-----------|-----------|--------|
-| **S1** | Calidad médica excepcional | 4.8/5 Trustpilot, 4.6/5 CrowdTrust, 95% satisfacción | [self-intel Lens 3](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/self-intelligence/current.md) |
-| **S2** | Continuidad médico-paciente | Pacientes nombran a doctores por nombre (Dra. Soto, Dr. Walker, Dr. Leone). Insparya rota equipo → quejas | [self-intel Lens 3 + competitor-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md) |
-| **S3** | SEO orgánico potente | 21K visitas/mes, 192 leads/mes, ROI 6.915%, conversión 28,8% | [company-context](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/company-context.md) |
-| **S4** | Infraestructura premium regulada | 2.000m², 11 quirófanos, licencias sanitarias en 3 CCAA. Barrera de entrada = moat | [self-intel Lens 1 + OPE Canvas](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/ope-canvas/current.md) |
+| **S1** | Calidad médica excepcional | 4.8/5 Trustpilot, 4.6/5 CrowdTrust, 95% satisfacción | [self-intel Lens 3](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/self-intelligence/current.md) |
+| **S2** | Continuidad médico-paciente | Pacientes nombran a doctores por nombre (Dra. Soto, Dr. Walker, Dr. Leone). Insparya rota equipo → quejas | [self-intel Lens 3 + competitor-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md) |
+| **S3** | SEO orgánico potente | 21K visitas/mes, 192 leads/mes, ROI 6.915%, conversión 28,8% | [company-context](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/company-context.md) |
+| **S4** | Infraestructura premium regulada | 2.000m², 11 quirófanos, licencias sanitarias en 3 CCAA. Barrera de entrada = moat | [self-intel Lens 1 + OPE Canvas](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/ope-canvas/current.md) |
 | **S5** | Portfolio de tratamientos propios | CRT + HRT son tratamientos con nombre propio de HC (no genéricos). + PRP + mesoterapia | [self-intel Lens 1](https://hospitalcapilar.com/diferencias-crt-hrt/) |
-| **S6** | Tracción orgánica en tratamientos | 1.828 tratamientos/año (+88% YoY) SIN inversión dedicada = product-market fit confirmado | [company-context](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/company-context.md) |
+| **S6** | Tracción orgánica en tratamientos | 1.828 tratamientos/año (+88% YoY) SIN inversión dedicada = product-market fit confirmado | [company-context](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/company-context.md) |
 | **S7** | Respaldo financiero VC | €3.5M de Inveready + Trainera (Santander) para expansión a 9 clínicas | [Europa Press](https://www.europapress.es/economia/noticia-inveready-trainera-impulsan-crecimiento-hospital-capilar-inversion-35-millones-euros-20260122144213.html) |
-| **S8** | Call center + comercial efectivo | 88% contactabilidad, 8 asesores + 2 televenta | [company-context](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/company-context.md) |
+| **S8** | Call center + comercial efectivo | 88% contactabilidad, 8 asesores + 2 televenta | [company-context](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/company-context.md) |
 
 ### WEAKNESSES (Internas — con evidencia)
 
 | # | Debilidad | Evidencia | Fuente |
 |---|-----------|-----------|--------|
-| **W1** | Comunicación 100% centrada en cirugía | Web, RRSS, medios, todo habla de cirugía. Tratamientos tienen 1 sección genérica | [self-intel — todas las lentes](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/self-intelligence/current.md) |
-| **W2** | Sin funnel de tratamientos | No hay LP, no hay quiz, no hay nurturing, no hay paid dedicado. Los 152/mes son cross-sell | [business-model](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/business-model/current.md) |
-| **W3** | Reviews insuficientes | 135 reviews totales sobre 4.500+ cirugías = <3% dejan review. Capilclinic tiene más (178) | [self-intel Lens 3](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/self-intelligence/current.md) |
-| **W4** | Cero messaging para mujer | 40% de mujeres con alopecia, 70% del revenue global = mujeres. HC no tiene UNA pieza dirigida a ellas | [market-intel + self-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market.md) |
-| **W5** | TikTok infrautilizado | 1.5K followers vs potencial enorme para educación preventiva (millennials/GenZ) | [company-context](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/company-context.md) |
-| **W6** | Bloqueantes operativos | Médico dedicado y vendedora para consulta €195 sin confirmar | [company-context](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/company-context.md) |
-| **W7** | Consulta de pago vs mercado que ofrece gratis | TODOS los competidores ofrecen consulta gratis. €195 puede ser barrera si no se comunica bien | [competitor-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md) |
+| **W1** | Comunicación 100% centrada en cirugía | Web, RRSS, medios, todo habla de cirugía. Tratamientos tienen 1 sección genérica | [self-intel — todas las lentes](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/self-intelligence/current.md) |
+| **W2** | Sin funnel de tratamientos | No hay LP, no hay quiz, no hay nurturing, no hay paid dedicado. Los 152/mes son cross-sell | [business-model](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/business-model/current.md) |
+| **W3** | Reviews insuficientes | 135 reviews totales sobre 4.500+ cirugías = <3% dejan review. Capilclinic tiene más (178) | [self-intel Lens 3](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/self-intelligence/current.md) |
+| **W4** | Cero messaging para mujer | 40% de mujeres con alopecia, 70% del revenue global = mujeres. HC no tiene UNA pieza dirigida a ellas | [market-intel + self-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market.md) |
+| **W5** | TikTok infrautilizado | 1.5K followers vs potencial enorme para educación preventiva (millennials/GenZ) | [company-context](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/company-context.md) |
+| **W6** | Bloqueantes operativos | Médico dedicado y vendedora para consulta €195 sin confirmar | [company-context](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/company-context.md) |
+| **W7** | Consulta de pago vs mercado que ofrece gratis | TODOS los competidores ofrecen consulta gratis. €195 puede ser barrera si no se comunica bien | [competitor-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md) |
 
 ### OPPORTUNITIES (Externas)
 
 | # | Oportunidad | Evidencia | Fuente |
 |---|-------------|-----------|--------|
-| **O1** | Mercado de tratamientos 4x mayor que cirugía | TAM España: tratamientos €300M vs trasplantes €79M. CAGR 4.1% | [market-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market.md) |
-| **O2** | Nadie posiciona tratamientos como producto estrella | Todos los competidores: cirugía primero, tratamiento como add-on | [competitor-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md) |
-| **O3** | Segmento mujer masivamente infraexplotado | 70% del revenue global en tratamientos. 0 competidores con messaging para mujer en España | [market-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market.md) |
-| **O4** | Millennials/GenZ preventivos | 52% inician tratamiento antes de los 40. Buscan educación y prevención, no cirugía | [market-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market.md) |
-| **O5** | Regulación elimina competidores low-cost | Desde sept 2024, solo especialistas para cirugía estética. HC cumple, muchos no | [market-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market.md) |
-| **O6** | Vulnerabilidad de Insparya | Tácticas comerciales agresivas (Reddit, Trustpilot). Doctor diferente cada vez. 4.0 vs HC 4.8 | [competitor-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md) |
-| **O7** | Exosomas como diferenciador premium | Terapia regenerativa emergente. Ser first-mover en comunicación con base científica | [market-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market.md) |
-| **O8** | España #1 en prevalencia alopecia masculina | 44,5% de hombres afectados. ~20-24M personas potenciales | [market-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market.md) |
+| **O1** | Mercado de tratamientos 4x mayor que cirugía | TAM España: tratamientos €300M vs trasplantes €79M. CAGR 4.1% | [market-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market.md) |
+| **O2** | Nadie posiciona tratamientos como producto estrella | Todos los competidores: cirugía primero, tratamiento como add-on | [competitor-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md) |
+| **O3** | Segmento mujer masivamente infraexplotado | 70% del revenue global en tratamientos. 0 competidores con messaging para mujer en España | [market-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market.md) |
+| **O4** | Millennials/GenZ preventivos | 52% inician tratamiento antes de los 40. Buscan educación y prevención, no cirugía | [market-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market.md) |
+| **O5** | Regulación elimina competidores low-cost | Desde sept 2024, solo especialistas para cirugía estética. HC cumple, muchos no | [market-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market.md) |
+| **O6** | Vulnerabilidad de Insparya | Tácticas comerciales agresivas (Reddit, Trustpilot). Doctor diferente cada vez. 4.0 vs HC 4.8 | [competitor-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md) |
+| **O7** | Exosomas como diferenciador premium | Terapia regenerativa emergente. Ser first-mover en comunicación con base científica | [market-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market.md) |
+| **O8** | España #1 en prevalencia alopecia masculina | 44,5% de hombres afectados. ~20-24M personas potenciales | [market-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market.md) |
 
 ### THREATS (Externas)
 
 | # | Amenaza | Evidencia | Fuente |
 |---|---------|-----------|--------|
-| **T1** | Insparya: marca + presupuesto 10x | €2M+/año en I+D, Cristiano Ronaldo, 15 centros globales, premios | [competitor-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md) |
-| **T2** | Medical Hair ya vende tratamientos como producto | Mesoterapia €70/sesión, red de 10+ ciudades. Competidor más directo | [competitor-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md) |
-| **T3** | Turquía como competidor en precio | Cirugía a €1.500-2.500 vs HC €3.145+. Atrae al segmento precio-sensible | [market-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market.md) |
-| **T4** | Competencia en consulta gratuita | TODOS ofrecen consulta gratis. La consulta €195 de HC necesita justificación clara | [competitor-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md) |
-| **T5** | IMD: red de 21 clínicas con portfolio de tratamientos | Mayor cobertura geográfica + exosomas + ozono + láser. Aunque con mala reputación | [competitor-intel](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md) |
-| **T6** | Timeline de expansión ambicioso | 3→9 clínicas en 2026 = riesgo de ejecución, dilución de calidad, capital intensivo | [company-context + OPE Canvas](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/ope-canvas/current.md) |
+| **T1** | Insparya: marca + presupuesto 10x | €2M+/año en I+D, Cristiano Ronaldo, 15 centros globales, premios | [competitor-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md) |
+| **T2** | Medical Hair ya vende tratamientos como producto | Mesoterapia €70/sesión, red de 10+ ciudades. Competidor más directo | [competitor-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md) |
+| **T3** | Turquía como competidor en precio | Cirugía a €1.500-2.500 vs HC €3.145+. Atrae al segmento precio-sensible | [market-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market.md) |
+| **T4** | Competencia en consulta gratuita | TODOS ofrecen consulta gratis. La consulta €195 de HC necesita justificación clara | [competitor-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md) |
+| **T5** | IMD: red de 21 clínicas con portfolio de tratamientos | Mayor cobertura geográfica + exosomas + ozono + láser. Aunque con mala reputación | [competitor-intel](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md) |
+| **T6** | Timeline de expansión ambicioso | 3→9 clínicas en 2026 = riesgo de ejecución, dilución de calidad, capital intensivo | [company-context + OPE Canvas](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/ope-canvas/current.md) |
 
 ---
 
@@ -183,12 +183,12 @@
 ## Fuentes
 
 Todos los datos de este SWOT provienen exclusivamente de los pilares upstream:
-- [Self-Intelligence](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/self-intelligence/current.md)
-- [Competitor Intelligence](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md)
-- [Market Intelligence](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market.md)
-- [Company Context](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/company-context.md)
-- [Business Model](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/business-model/current.md)
-- [OPE Canvas](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/ope-canvas/current.md)
+- [Self-Intelligence](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/self-intelligence/current.md)
+- [Competitor Intelligence](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md)
+- [Market Intelligence](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market.md)
+- [Company Context](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/company-context.md)
+- [Business Model](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/business-model/current.md)
+- [OPE Canvas](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/ope-canvas/current.md)
 
 ---
 

@@ -313,9 +313,9 @@
 ## Fuentes
 
 Todos los datos provienen de pilares upstream:
-- [Niche Discovery v1](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/niche-discovery/current.md)
-- [SWOT v2](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/swot/current.md)
-- [Competitor Intelligence v3](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/competitors/current.md)
-- [Self-Intelligence v2](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/self-intelligence/current.md)
-- [Company Context](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/company-context/current.md)
-- [Market Intelligence v4](https://sancho-cmo.taild48df2.ts.net/mc/brand/hospital-capilar/market/current.md)
+- [Niche Discovery v1](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/niche-discovery/current.md)
+- [SWOT v2](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/swot/current.md)
+- [Competitor Intelligence v3](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/competitors/current.md)
+- [Self-Intelligence v2](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/self-intelligence/current.md)
+- [Company Context](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/company-context/current.md)
+- [Market Intelligence v4](https://staging.sanchocmo.ai/mc/brand/hospital-capilar/market/current.md)

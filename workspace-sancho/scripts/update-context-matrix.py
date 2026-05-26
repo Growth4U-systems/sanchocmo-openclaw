@@ -380,14 +380,14 @@ CONTEXT_MATRIX = {
             "brand/learnings.md"
         ]
     },
-    "qa-bot": {
+    "brand-check": {
         "context_required": [
-            "brand/company-context.md",
-            "brand/voice-profile.md",
-            "brand/positioning.md"
+            "brand/foundation-state.json",
+            "brand/brand-book/brand-voice/brand-voice.current.md",
+            "brand/go-to-market/positioning/shared/messaging-summary.md"
         ],
         "context_writes": [
-            "brand/learnings.md"
+            "brand/compliance/brand-check-{date}-{asset}.md"
         ]
     },
     "sancho-start": {

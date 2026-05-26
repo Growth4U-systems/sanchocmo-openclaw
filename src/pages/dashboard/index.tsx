@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Head from "next/head";
@@ -7,12 +8,17 @@ import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useGlobalStats } from "@/hooks/useDashboardStats";
 import { useClients } from "@/hooks/useClients";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { StatCard } from "@/components/shared/stat-card";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { ActivityFeed, type ActivityItem } from "@/components/shared/activity-feed";
+import { ActivityBar } from "@/components/dashboard/activity-bar";
+import { BrandColumn } from "@/components/dashboard/brand-column";
+import { MetricsColumn } from "@/components/dashboard/metrics-column";
+import { NextStepsColumn } from "@/components/dashboard/nextsteps-column";
 import { useQuery } from "@tanstack/react-query";
+import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { cn } from "@/lib/utils";
 
 /**
@@ -145,7 +151,7 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
         <div className="flex justify-between items-center mb-3">
           <h2 className="font-heading text-base text-navy">{"📡"} {t("dashboard.recentActivity")}</h2>
           <Link
-            href="/activity"
+            href="/dashboard/admin/activity"
             className="text-xs font-semibold text-rust hover:underline"
           >
             {t("common.viewAll")} {"→"}
@@ -197,7 +203,7 @@ function ClientCard({
   emoji: string;
   phase: number;
 }) {
-  const { data: foundation } = useFoundation(slug);
+  const { data: foundation } = useBrandBrain(slug);
 
   // Mini foundation stats
   let fApproved = 0;
@@ -253,19 +259,130 @@ function GlobalActivityFeed() {
       const res = await fetch("/api/activity?limit=10");
       if (!res.ok) return [];
       const json = await res.json();
+      // The /api/activity response shape is `{ events: [{ id, message,
+      // timestamp, time, level, isCron }] }`. ActivityFeed reads `title` and
+      // `status`, not `text`/`ok` — the previous mapping shipped wrong field
+      // names so the component rendered blank rows for every entry.
       return (json.events || json || []).map((e: Record<string, unknown>) => ({
-        id: e.id || `${e.timestamp}-${e.event}`,
-        text: (e.event || e.message || "") as string,
+        id: (e.id as string) || `${e.timestamp || ""}-${e.message || ""}`,
+        title: (e.message || e.event || e.raw || "") as string,
         timestamp: (e.timestamp || e.date || "") as string,
-        type: (e.type || "system") as string,
-        client: (e.client || e.slug || "system") as string,
-        ok: e.ok !== false && e.status !== "error",
+        type: e.isCron ? "cron" : ((e.type as string) || "system"),
+        client: (e.client || e.slug || undefined) as string | undefined,
+        status: ((e.level as string) || (e.status as string) || "ok") as "ok" | "error" | "warning",
       }));
     },
     staleTime: 30_000,
   });
 
   return <ActivityFeed items={data || []} limit={10} />;
+}
+
+// ============================================================
+// Client Dashboard V2 — 3-column layout with activity bar
+// Faithful replica of legacy view-client with v2-grid
+// ============================================================
+
+function ClientDashboardV2({ slug }: { slug: string }) {
+  const t = useTranslations("dashboard");
+  const [activeTab, setActiveTab] = useState(0);
+  const [docPath, setDocPath] = useState<string | null>(null);
+
+  const tabs = [
+    { emoji: "🏢", label: t("brandSnapshot") },
+    { emoji: "📈", label: t("metricas") },
+    { emoji: "🎯", label: t("nextSteps") },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen">
+      {/* Activity Bar (collapsible terminal) */}
+      <ActivityBar slug={slug} />
+
+      {/* Mobile tab bar — visible < lg */}
+      <div className="flex lg:hidden bg-card border-b-2 border-ink p-1">
+        {tabs.map((tab, i) => (
+          <button
+            key={tab.label}
+            type="button"
+            onClick={() => setActiveTab(i)}
+            className={cn(
+              "flex-1 px-3 py-2 rounded text-xs font-semibold transition-colors text-center",
+              activeTab === i ? "bg-rust text-white" : "hover:bg-muted"
+            )}
+          >
+            {tab.emoji} {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 3-Column Grid — desktop: all visible, mobile: tab-switched */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 flex-1 min-h-0 overflow-hidden">
+        {/* Col 1: Brand + Foundation */}
+        <div
+          className={cn(
+            "lg:border-r border-border bg-white dark:bg-card flex flex-col min-h-0",
+            activeTab !== 0 && "hidden lg:flex"
+          )}
+        >
+          {/* Column header */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
+            <span className="text-xs font-bold">{"🏢"} {t("brandSnapshot")}</span>
+            <Link
+              href={`/dashboard/${slug}/brand-brain`}
+              className="text-[10px] font-semibold text-rust hover:underline"
+            >
+              {t("brandSnapshot")} {"→"}
+            </Link>
+          </div>
+          {/* Column body */}
+          <div className="px-5 py-3 overflow-y-auto flex-1">
+            <BrandColumn slug={slug} onOpenDoc={setDocPath} />
+          </div>
+        </div>
+
+        {/* Col 2: Metrics */}
+        <div
+          className={cn(
+            "lg:border-r border-border bg-white dark:bg-card flex flex-col min-h-0",
+            activeTab !== 1 && "hidden lg:flex"
+          )}
+        >
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
+            <span className="text-xs font-bold">{"📈"} {t("metricas")}</span>
+            <Link
+              href={`/dashboard/${slug}/metrics`}
+              className="text-[10px] font-semibold text-rust hover:underline"
+            >
+              {t("title")} {"→"}
+            </Link>
+          </div>
+          <div className="px-5 py-3 overflow-y-auto flex-1">
+            <MetricsColumn slug={slug} />
+          </div>
+        </div>
+
+        {/* Col 3: Next Steps */}
+        <div className={cn("bg-white dark:bg-card flex flex-col min-h-0", activeTab !== 2 && "hidden lg:flex")}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
+            <span className="text-xs font-bold">{"🎯"} {t("nextSteps")}</span>
+            <Link
+              href={`/dashboard/${slug}/projects`}
+              className="text-[10px] font-semibold text-rust hover:underline"
+            >
+              {t("nextSteps")} {"→"}
+            </Link>
+          </div>
+          <div className="px-5 py-3 overflow-y-auto flex-1">
+            <NextStepsColumn slug={slug} onOpenDoc={setDocPath} />
+          </div>
+        </div>
+      </div>
+
+      {/* Doc slide-over */}
+      <DocSlideOver slug={slug} docPath={docPath} onClose={() => setDocPath(null)} />
+    </div>
+  );
 }
 
 // ============================================================

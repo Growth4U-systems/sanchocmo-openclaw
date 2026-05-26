@@ -902,6 +902,85 @@
   .te-btn-primary { background:var(--rust); color:#fff; }
   .te-btn-navy { background:var(--navy); color:#fff; }
   .te-btn-secondary { background:var(--card); color:var(--text); }
+
+  /* Intelligence Center */
+  .intel-shell { display:flex; flex-direction:column; gap:14px; min-height:calc(100vh - 88px); }
+  .intel-topbar { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+  .intel-title-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .intel-kicker { font-size:11px; font-weight:800; color:var(--rust); text-transform:uppercase; letter-spacing:1px; }
+  .intel-sub { color:var(--muted); font-size:13px; margin-top:4px; max-width:760px; }
+  .intel-status-strip { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .intel-stat-pill { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px 10px; min-width:92px; }
+  .intel-stat-pill .num { font-family:'Space Grotesk',sans-serif; font-size:21px; line-height:1; color:var(--navy); }
+  .intel-stat-pill .lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:3px; }
+  .intel-activity { background:var(--card); border:1px solid var(--border); border-radius:8px; height:36px; padding:0 12px; display:flex; align-items:center; gap:9px; color:var(--muted); font-size:12px; }
+  .intel-live { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); flex-shrink:0; }
+  .intel-tabs { display:flex; gap:6px; flex-wrap:wrap; }
+  .intel-tab { border:1px solid var(--border); background:var(--card); color:var(--muted); border-radius:7px; padding:7px 11px; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; }
+  .intel-tab:hover { border-color:var(--rust); color:var(--text); }
+  .intel-tab.active { background:var(--rust); border-color:var(--rust); color:#fff; }
+  .intel-grid { display:grid; grid-template-columns:minmax(260px,1.05fr) minmax(280px,1.15fr) minmax(250px,.95fr) minmax(270px,1.05fr); gap:0; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--card); min-height:620px; }
+  .intel-col { min-width:0; border-right:1px solid var(--border); display:flex; flex-direction:column; background:var(--card); }
+  .intel-col:last-child { border-right:none; }
+  .intel-col-head { height:42px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0 14px; border-bottom:1px solid var(--border); font-size:12px; font-weight:800; color:var(--text); }
+  .intel-col-body { padding:12px; overflow:auto; flex:1; }
+  .intel-filters { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+  .intel-filter { font-size:10px; font-weight:700; color:var(--muted); border:1px solid var(--border); background:var(--bg); border-radius:12px; padding:3px 8px; cursor:pointer; }
+  .intel-filter.active { color:#fff; background:var(--navy); border-color:var(--navy); }
+  .intel-card { border:1px solid var(--border); border-radius:8px; background:var(--bg); padding:10px; margin-bottom:8px; transition:border-color .15s, background .15s; cursor:pointer; }
+  .intel-card:hover { border-color:var(--rust); background:var(--card); }
+  .intel-card.active { border-color:var(--rust); box-shadow:inset 3px 0 0 var(--rust); background:var(--card); }
+  .intel-card.critical { border-color:var(--rust); box-shadow:inset 3px 0 0 var(--rust); }
+  .intel-card.warn { background:#FFF8E5; border-color:#E8C25C; }
+  [data-theme="dark"] .intel-card.warn { background:rgba(242,201,76,.09); border-color:#8B6914; }
+  .intel-card-title { font-size:13px; font-weight:800; line-height:1.25; color:var(--text); }
+  .intel-card-meta { display:flex; gap:6px; flex-wrap:wrap; color:var(--muted); font-size:10px; margin-top:6px; align-items:center; }
+  .intel-card-desc { font-size:12px; color:var(--muted); line-height:1.45; margin-top:7px; }
+  .intel-badge { display:inline-flex; align-items:center; gap:4px; border-radius:12px; padding:2px 7px; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.3px; border:1px solid transparent; white-space:nowrap; }
+  .intel-badge.processed, .intel-badge.applied, .intel-badge.linked { background:rgba(74,93,35,.13); color:var(--green); border-color:rgba(74,93,35,.25); }
+  .intel-badge.pending, .intel-badge.proposal { background:rgba(242,201,76,.22); color:#8B6914; border-color:rgba(242,201,76,.45); }
+  .intel-badge.review, .intel-badge.conflict, .intel-badge.critical, .intel-badge.high { background:rgba(196,93,53,.12); color:var(--rust); border-color:rgba(196,93,53,.35); }
+  .intel-badge.low { background:rgba(93,83,72,.10); color:var(--muted); border-color:var(--border); }
+  .intel-mini-row { display:flex; gap:8px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--border); }
+  .intel-mini-row:last-child { border-bottom:none; }
+  .intel-mini-icon { width:24px; height:24px; border-radius:7px; background:rgba(196,93,53,.10); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .intel-mini-title { font-size:12px; font-weight:800; line-height:1.3; }
+  .intel-mini-copy { font-size:11px; color:var(--muted); line-height:1.35; margin-top:3px; }
+  .intel-progress-line { height:5px; border-radius:5px; background:var(--border); overflow:hidden; margin-top:8px; }
+  .intel-progress-line span { display:block; height:100%; background:var(--rust); border-radius:inherit; }
+  .intel-btn-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:9px; }
+  .intel-btn { border:1px solid var(--border); background:var(--card); color:var(--text); border-radius:6px; padding:5px 9px; font-size:11px; font-weight:800; cursor:pointer; }
+  .intel-btn.primary { background:var(--rust); border-color:var(--rust); color:#fff; }
+  .intel-btn.ghost { color:var(--muted); }
+  .intel-wide { display:grid; grid-template-columns:1.15fr 1fr; gap:14px; }
+  .intel-panel { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; min-width:0; }
+  .intel-panel h3 { font-size:14px; margin:0 0 10px; color:var(--navy); }
+  .intel-detail-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:12px; }
+  .intel-detail-title { font-family:'Space Grotesk',sans-serif; font-size:22px; color:var(--navy); line-height:1.1; }
+  .intel-detail-tabs { display:flex; gap:5px; flex-wrap:wrap; margin:12px 0; }
+  .intel-detail-tab { border:1px solid var(--border); background:var(--bg); border-radius:6px; padding:5px 9px; font-size:11px; font-weight:800; color:var(--muted); cursor:pointer; }
+  .intel-detail-tab.active { background:var(--navy); border-color:var(--navy); color:#fff; }
+  .intel-timeline { border-left:2px solid var(--border); padding-left:14px; }
+  .intel-timeline-row { position:relative; padding:0 0 14px 12px; }
+  .intel-timeline-row::before { content:""; position:absolute; left:-20px; top:4px; width:10px; height:10px; border-radius:50%; background:var(--rust); border:2px solid var(--card); }
+  .intel-pov-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; }
+  .intel-pov-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .intel-pov-card h3 { font-size:14px; color:var(--navy); margin-bottom:8px; }
+  .intel-chip-list { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .intel-chip { border:1px solid var(--border); background:var(--bg); border-radius:14px; padding:3px 8px; color:var(--muted); font-size:10px; font-weight:700; }
+  .intel-doc-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; }
+  .intel-doc-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .intel-doc-card.critical { border-color:var(--rust); box-shadow:inset 3px 0 0 var(--rust); }
+  .intel-review-layout { display:grid; grid-template-columns:1fr 1.1fr 1fr; gap:12px; min-height:540px; }
+  .intel-review-col { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; display:flex; flex-direction:column; min-width:0; }
+  .intel-review-box { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px; margin-top:10px; font-size:12px; line-height:1.55; }
+  .intel-review-footer { position:sticky; bottom:0; display:flex; justify-content:flex-end; gap:8px; padding:10px 0 0; background:var(--bg); }
+  .intel-empty-state { border:1px dashed var(--border); border-radius:10px; padding:28px; text-align:center; color:var(--muted); background:var(--card); }
+  .intel-empty-state strong { display:block; color:var(--text); font-size:15px; margin-bottom:6px; }
+  .intel-skeleton { height:72px; border-radius:8px; background:linear-gradient(90deg,var(--bg),var(--card),var(--bg)); background-size:200% 100%; animation:intelSk 1.4s ease infinite; border:1px solid var(--border); margin-bottom:8px; }
+  @keyframes intelSk { from{background-position:200% 0} to{background-position:-200% 0} }
+  @media (max-width:1300px) { .intel-grid { grid-template-columns:1fr 1fr; } .intel-col:nth-child(2) { border-right:none; } .intel-col:nth-child(3), .intel-col:nth-child(4) { border-top:1px solid var(--border); } .intel-review-layout { grid-template-columns:1fr; } }
+  @media (max-width:860px) { .intel-topbar { flex-direction:column; } .intel-status-strip { justify-content:flex-start; } .intel-grid, .intel-wide { grid-template-columns:1fr; } .intel-col { border-right:none; border-top:1px solid var(--border); } .intel-col:first-child { border-top:none; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -934,11 +1013,15 @@
 
   <div class="ns nav-client-only">Trabajo</div>
   <a href="#" class="nav-client-only" onclick="showPage('projects',this);">📋 Proyectos</a>
-  <a href="#" class="nav-client-only" onclick="showPage('idea-bank',this)">💡 Idea Bank</a>
   <a href="#" class="nav-client-only" onclick="showPage('metrics',this)">📈 Métricas</a>
   <div class="ns nav-client-only">Herramientas</div>
   <a href="#" class="nav-client-only" onclick="showPage('trust-engine',this)">🔍 Trust Engine</a>
-  <a href="#" class="nav-client-only" onclick="showPage('atalaya',this)">🏰 Atalaya <span id="atalaya-badge" style="background:#C45D35;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;display:none;"></span></a>
+  <a href="#" class="nav-client-only" onclick="window._intelligenceView='overview';showPage('intelligence',this)">🧠 Intelligence</a>
+  <a href="#" class="nav-client-only" onclick="window._intelligenceView='meetings';showPage('intelligence',this)" style="font-size:12px;padding-left:26px;">Meetings</a>
+  <a href="#" class="nav-client-only" onclick="window._intelligenceView='decisions';showPage('intelligence',this)" style="font-size:12px;padding-left:26px;">Decisions</a>
+  <a href="#" class="nav-client-only" onclick="window._intelligenceView='pov';showPage('intelligence',this)" style="font-size:12px;padding-left:26px;">POV Database</a>
+  <a href="#" class="nav-client-only" onclick="window._intelligenceView='impact';showPage('intelligence',this)" style="font-size:12px;padding-left:26px;">Document Impact</a>
+  <a href="#" class="nav-client-only" onclick="window._intelligenceView='proposals';showPage('intelligence',this)" style="font-size:12px;padding-left:26px;">Proposals</a>
   <div class="ns">Sistema</div>
   <a href="#" onclick="showPage('activity',this)">📡 Activity</a>
 
@@ -1121,9 +1204,45 @@
   </div>
 </div>
 
-<!-- ==================== ATALAYA ==================== -->
-<div id="page-atalaya" class="page">
-  <iframe id="atalaya-iframe" style="width:100%;height:calc(100vh - 56px);border:none;display:block;"></iframe>
+
+<!-- ==================== INTELLIGENCE CENTER ==================== -->
+<div id="page-intelligence" class="page">
+  <div class="intel-shell">
+    <div class="intel-topbar">
+      <div>
+        <div class="intel-kicker">Meeting Notes Intelligence</div>
+        <div class="intel-title-row">
+          <div class="page-title" style="margin:0;">🧠 Intelligence Center — <span id="intel-client-name">Cliente</span></div>
+          <span class="intel-badge pending" id="intel-mode-badge">Review-first</span>
+        </div>
+        <div class="intel-sub">Command center visual para convertir reuniones en decisiones, mejoras de POV y propuestas de cambio sobre documentos críticos como StrategyPlan.</div>
+      </div>
+      <div class="intel-status-strip" id="intel-stats"></div>
+    </div>
+
+    <div class="intel-activity">
+      <span class="intel-live"></span>
+      <strong style="color:var(--text);">Activity</strong>
+      <span id="intel-activity-copy">Listo para revisar meetings, decisiones e impactos.</span>
+      <span style="margin-left:auto;" id="intel-activity-time"></span>
+    </div>
+
+    <div class="intel-tabs">
+      <button class="intel-tab active" data-intel-view="overview" onclick="setIntelligenceView('overview',this)">Overview</button>
+      <button class="intel-tab" data-intel-view="meetings" onclick="setIntelligenceView('meetings',this)">Meeting Detail</button>
+      <button class="intel-tab" data-intel-view="decisions" onclick="setIntelligenceView('decisions',this)">Decision Log</button>
+      <button class="intel-tab" data-intel-view="pov" onclick="setIntelligenceView('pov',this)">POV Database</button>
+      <button class="intel-tab" data-intel-view="impact" onclick="setIntelligenceView('impact',this)">Document Impact</button>
+      <button class="intel-tab" data-intel-view="proposals" onclick="setIntelligenceView('proposals',this)">Proposal Review</button>
+    </div>
+
+    <div id="intel-view-overview"></div>
+    <div id="intel-view-meetings" style="display:none;"></div>
+    <div id="intel-view-decisions" style="display:none;"></div>
+    <div id="intel-view-pov" style="display:none;"></div>
+    <div id="intel-view-impact" style="display:none;"></div>
+    <div id="intel-view-proposals" style="display:none;"></div>
+  </div>
 </div>
 
 <!-- ==================== TRUST ENGINE ==================== -->
@@ -1203,10 +1322,6 @@
   </div>
 </div>
 
-<!-- ==================== IDEA BANK ==================== -->
-<div id="page-idea-bank" class="page">
-  <iframe id="idea-bank-iframe" style="width:100%;height:calc(100vh - 56px);border:none;display:block;"></iframe>
-</div>
 
 <!-- ==================== SETTINGS (iframe) ==================== -->
 <div id="page-settings" class="page">
@@ -1405,7 +1520,7 @@
       <!-- Step 3: Competidores (opcional) -->
       <div class="wiz-content" id="wiz-3">
         <div class="wiz-title">Competidores</div>
-        <div class="wiz-desc">Si conoces los competidores principales, añádelos aquí. Atalaya los monitorizará automáticamente. <em>(Opcional — puedes añadirlos después)</em></div>
+        <div class="wiz-desc">Si conoces los competidores principales, añádelos aquí para documentarlos en la Foundation. <em>(Opcional — puedes añadirlos después)</em></div>
 
         <div style="margin-top:16px;">
           <div id="wiz-competitors">
@@ -1445,7 +1560,7 @@
           <div style="font-size:12px;color:var(--muted);line-height:1.8;">
             📁 Crea <code>brand/{slug}/</code> con foundation-state.json v3.0<br>
             📋 Crea 4 proyectos P00 con tareas foundation<br>
-            🗄️ Inserta en Supabase + actualiza clients.json<br>
+            🗄️ Inserta en Supabase + actualiza clients.json/clients.js<br>
             🔗 Auto-bind Discord (mapea canales a systemPrompts)<br>
             🔒 Configura seguridad + reinicia gateway<br>
             🔄 Regenera Mission Control
@@ -1515,7 +1630,7 @@
 <script src="/mc/skills-data.js"></script>
 <script>document.write('<script src="/mc/mc-data.js?t=' + Date.now() + '"><\/script>');</script>
 <script src="/mc/agents-data.js"></script>
-<script>document.write('<script src="/mc/mc-work.js?t=' + Date.now() + '"><\/script>');</script>
+<script>document.write('<script src="mc-work.js?t=' + Date.now() + '"><\/script>');</script>
 <script>
 // === Base URL detection (works for /mc/, /mc/admin/{token}/, /mc/portal/{token}/) ===
 const MC_BASE = (() => {
@@ -2110,6 +2225,325 @@ function renderIntelligence() {
   if (filtered.length > 25) html += `<tr><td colspan="5" style="padding:8px;color:var(--muted);text-align:center;">...y ${filtered.length-25} más</td></tr>`;
   html += '</tbody></table></div>';
   el.innerHTML = html;
+}
+
+function intelEsc(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function intelSlug() {
+  const sel = document.getElementById('clientSelector');
+  const slug = sel && sel.value && sel.value !== 'global' ? sel.value : 'hospital-capilar';
+  return slug;
+}
+
+function intelClientName(slug) {
+  const c = typeof CLIENTS !== 'undefined' ? CLIENTS[slug] : null;
+  return c ? c.name : slug;
+}
+
+function intelMeetings(slug) {
+  const raw = D && D.meetings ? D.meetings[slug] : null;
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  return Array.isArray(raw.meetings) ? raw.meetings : [];
+}
+
+function intelStatusForMeeting(m, idx) {
+  if (!m || !m.status) return 'needs review';
+  if (idx === 1) return 'needs review';
+  if (idx === 4) return 'low confidence';
+  if (idx === 7) return 'duplicate';
+  return m.status;
+}
+
+function intelSourceLabel(source) {
+  const s = (source || '').toLowerCase();
+  if (s.includes('notion')) return 'Notion';
+  if (s.includes('slack')) return 'Slack';
+  if (s.includes('manual')) return 'Manual';
+  return 'Drive';
+}
+
+function intelSelectedMeeting(slug) {
+  const meetings = intelMeetings(slug);
+  if (!meetings.length) return null;
+  const selected = window._intelligenceSelectedMeeting;
+  return meetings.find(m => m.id === selected) || meetings[0];
+}
+
+function intelMeetingById(id) {
+  const slug = intelSlug();
+  return intelMeetings(slug).find(m => m.id === id) || null;
+}
+
+function intelSelectMeeting(id, view) {
+  window._intelligenceSelectedMeeting = id;
+  if (view) window._intelligenceView = view;
+  renderIntelligenceCenter();
+}
+
+function setIntelligenceView(view, btn) {
+  window._intelligenceView = view;
+  document.querySelectorAll('.intel-tab').forEach(t => t.classList.toggle('active', t.dataset.intelView === view));
+  ['overview','meetings','decisions','pov','impact','proposals'].forEach(v => {
+    const el = document.getElementById('intel-view-' + v);
+    if (el) el.style.display = v === view ? '' : 'none';
+  });
+  if (btn) btn.classList.add('active');
+  renderIntelligenceCenter();
+}
+
+function intelItemsForMeeting(m) {
+  const title = m ? m.title || 'Meeting' : 'Meeting';
+  const source = intelSourceLabel(m ? m.source : '');
+  const date = m ? m.date || '' : '';
+  const decCount = Math.max(1, Math.min(3, m && m.decisions ? Number(m.decisions) : 2));
+  const actionCount = Math.max(1, Math.min(2, m && m.actions ? Number(m.actions) : 2));
+  const decisions = [
+    {icon:'✓', type:'Decision', title:'Actualizar criterio operativo desde la reunion', copy:'Se detecta una decision accionable que puede afectar prioridades, ownership o estrategia.', source, date, confidence:'92%'},
+    {icon:'⊙', type:'Decision', title:'Revisar implicaciones para StrategyPlan', copy:'La reunion contiene cambios que deberian pasar por review antes de tocar el documento canonico.', source, date, confidence:'86%'},
+    {icon:'↗', type:'Decision', title:'Convertir insight en propuesta para POV', copy:'Hay lenguaje de cliente y evidencia que puede reforzar el punto de vista editorial.', source, date, confidence:'81%'}
+  ].slice(0, decCount);
+  const actions = [
+    {icon:'↳', type:'Action', title:'Asignar owner y deadline', copy:'Action item extraido; necesita confirmacion si el owner no aparece claro.', source, date, confidence:'88%'},
+    {icon:'↳', type:'Action', title:'Abrir tarea desde propuesta aprobada', copy:'El cambio visual no ejecuta tareas todavia; queda preparado para el siguiente paso.', source, date, confidence:'79%'}
+  ].slice(0, actionCount);
+  const insights = [
+    {icon:'◆', type:'Insight', title:'Nuevo lenguaje de cliente', copy:'Frase o pain point util para POV database, content angles y posicionamiento.', source, date, confidence:'90%'},
+    {icon:'!', type:'Risk', title:'Posible contradiccion documental', copy:'El criterio actual podria estar desactualizado frente a lo decidido en reunion.', source, date, confidence:'74%'},
+    {icon:'“', type:'Quote', title:'Quote from meeting', copy:'Se reserva espacio visual para cita verbatim con timestamp y fuente.', source, date, confidence:'95%'}
+  ];
+  return decisions.concat(actions, insights);
+}
+
+function intelDocuments(m) {
+  const base = [
+    {name:'StrategyPlan', area:'Prioridades, horizonte y apuestas activas', status:'critical', proposals:1, conflicts:1, health:'Needs review'},
+    {name:'POV Bank', area:'Proof points, objections y customer language', status:'proposal', proposals:2, conflicts:0, health:'Strong'},
+    {name:'Positioning', area:'Messaging, villano y promesa central', status:'possible update', proposals:1, conflicts:0, health:'Watch'},
+    {name:'Company Brief', area:'Contexto, ICPs y restricciones', status:'no impact', proposals:0, conflicts:0, health:'OK'},
+    {name:'Brand Voice', area:'Tono, claims y vocabulario permitido', status:'possible update', proposals:1, conflicts:0, health:'OK'},
+    {name:'Content Pillars', area:'Angulos, pilares y cadencia editorial', status:'proposal ready', proposals:2, conflicts:0, health:'Ready'}
+  ];
+  return base.map((d, i) => ({...d, last: m ? m.date : 'TBD', priority: i === 0 ? 'high' : i < 3 ? 'medium' : 'low'}));
+}
+
+function intelProposals(m) {
+  const mt = m || {};
+  return [
+    {id:'PROP-001', type:'strategy_plan_update', title:'Revisar StrategyPlan por decision reciente', priority:'high', doc:'StrategyPlan', change:'Actualizar la seccion de prioridades para reflejar la decision aprobada en la reunion.', evidence:mt.title || 'Meeting note', source:intelSourceLabel(mt.source), date:mt.date || '', status:'pending'},
+    {id:'PROP-002', type:'pov_update', title:'Anadir proof point al POV Bank', priority:'medium', doc:'POV Bank', change:'Guardar evidencia nueva como proof point enlazado a la fuente de reunion.', evidence:'Insight extraido de meeting notes', source:intelSourceLabel(mt.source), date:mt.date || '', status:'pending'},
+    {id:'PROP-003', type:'document_update', title:'Actualizar lenguaje de posicionamiento', priority:'medium', doc:'Positioning', change:'Convertir customer language en propuesta semantica, sin editar JSON crudo.', evidence:'Customer language detected', source:intelSourceLabel(mt.source), date:mt.date || '', status:'pending'},
+    {id:'PROP-004', type:'conflict_detected', title:'Resolver posible conflicto documental', priority:'high', doc:'StrategyPlan', change:'Marcar contradiccion entre decision reciente y version canonica del plan.', evidence:'Decision log + StrategyPlan', source:intelSourceLabel(mt.source), date:mt.date || '', status:'pending'}
+  ];
+}
+
+function intelSetActivity(copy) {
+  const el = document.getElementById('intel-activity-copy');
+  if (el) el.textContent = copy;
+  const t = document.getElementById('intel-activity-time');
+  if (t) t.textContent = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+}
+
+function intelAction(label) {
+  intelSetActivity(label + ' — visual only, pendiente de backend de aprobacion.');
+}
+
+function renderIntelligenceCenter() {
+  const root = document.getElementById('page-intelligence');
+  if (!root) return;
+  const slug = intelSlug();
+  const meetings = intelMeetings(slug).slice().sort((a,b) => String(b.date||'').localeCompare(String(a.date||'')));
+  if (!window._intelligenceSelectedMeeting && meetings[0]) window._intelligenceSelectedMeeting = meetings[0].id;
+  const selected = intelSelectedMeeting(slug);
+  const items = intelItemsForMeeting(selected);
+  const docs = intelDocuments(selected);
+  const proposals = intelProposals(selected);
+  const totalDecisions = meetings.reduce((sum, m) => sum + (Number(m.decisions) || 0), 0);
+  const totalActions = meetings.reduce((sum, m) => sum + (Number(m.actions) || 0), 0);
+  const cName = document.getElementById('intel-client-name');
+  if (cName) cName.textContent = intelClientName(slug);
+  const stats = document.getElementById('intel-stats');
+  if (stats) {
+    stats.innerHTML = `
+      <div class="intel-stat-pill"><div class="num">${meetings.length}</div><div class="lbl">Meetings</div></div>
+      <div class="intel-stat-pill"><div class="num">${totalDecisions}</div><div class="lbl">Decisions</div></div>
+      <div class="intel-stat-pill"><div class="num">${totalActions}</div><div class="lbl">Actions</div></div>
+      <div class="intel-stat-pill"><div class="num">${proposals.length}</div><div class="lbl">Proposals</div></div>`;
+  }
+  renderIntelOverview(slug, meetings, selected, items, docs, proposals);
+  renderIntelMeetingDetail(slug, selected, items, docs, proposals);
+  renderIntelDecisionLog(slug, meetings);
+  renderIntelPov(slug, meetings, selected);
+  renderIntelImpact(slug, docs);
+  renderIntelProposalReview(slug, selected, proposals);
+  const desired = window._intelligenceView || 'overview';
+  const tab = document.querySelector(`.intel-tab[data-intel-view="${desired}"]`);
+  setIntelligenceViewOnly(desired, tab);
+}
+
+function setIntelligenceViewOnly(view, tab) {
+  document.querySelectorAll('.intel-tab').forEach(t => t.classList.toggle('active', t.dataset.intelView === view));
+  ['overview','meetings','decisions','pov','impact','proposals'].forEach(v => {
+    const el = document.getElementById('intel-view-' + v);
+    if (el) el.style.display = v === view ? '' : 'none';
+  });
+  if (tab) tab.classList.add('active');
+}
+
+function renderIntelOverview(slug, meetings, selected, items, docs, proposals) {
+  const el = document.getElementById('intel-view-overview');
+  if (!el) return;
+  if (!meetings.length) {
+    el.innerHTML = `<div class="intel-empty-state"><strong>No meetings processed yet</strong><div>Conecta Drive, Notion, Slack o sube notas manuales para empezar.</div><div class="intel-btn-row" style="justify-content:center;"><button class="intel-btn primary" onclick="intelAction('Connect source')">Connect source</button><button class="intel-btn" onclick="intelAction('Upload notes')">Upload notes</button></div></div>`;
+    return;
+  }
+  const currentFilter = window._intelSourceFilter || 'all';
+  const sourceFilters = ['all','Drive','Notion','Slack','Manual'];
+  const filteredMeetings = currentFilter === 'all' ? meetings : meetings.filter(m => intelSourceLabel(m.source) === currentFilter);
+  const sourceButtons = sourceFilters.map(f => `<button class="intel-filter ${currentFilter===f?'active':''}" onclick="window._intelSourceFilter='${f}';renderIntelligenceCenter()">${f}</button>`).join('');
+  el.innerHTML = `
+    <div class="intel-grid">
+      <section class="intel-col">
+        <div class="intel-col-head"><span>Meeting Feed</span><span>${filteredMeetings.length}</span></div>
+        <div class="intel-col-body">
+          <div class="intel-filters">${sourceButtons}</div>
+          ${filteredMeetings.map((m, idx) => {
+            const st = intelStatusForMeeting(m, idx);
+            const cls = st === 'needs review' || st === 'low confidence' ? 'warn' : '';
+            return `<div class="intel-card ${selected && selected.id===m.id?'active':''} ${cls}" onclick="intelSelectMeeting('${intelEsc(m.id)}')">
+              <div class="intel-card-title">${intelEsc(m.title || m.id)}</div>
+              <div class="intel-card-meta"><span>${intelEsc(m.date || '')}</span><span>${intelEsc(intelSourceLabel(m.source))}</span><span class="intel-badge ${st==='processed'?'processed':'review'}">${intelEsc(st)}</span></div>
+              <div class="intel-card-desc">${intelEsc(m.type || 'meeting')} · ${Number(m.decisions)||0} decisions · ${Number(m.actions)||0} actions</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </section>
+      <section class="intel-col">
+        <div class="intel-col-head"><span>Extracted Intelligence</span><span class="intel-badge processed">${items.length} items</span></div>
+        <div class="intel-col-body">
+          ${items.map(i => `<div class="intel-mini-row"><div class="intel-mini-icon">${intelEsc(i.icon)}</div><div><div class="intel-mini-title">${intelEsc(i.title)}</div><div class="intel-mini-copy">${intelEsc(i.copy)}</div><div class="intel-card-meta"><span>${intelEsc(i.type)}</span><span>${intelEsc(i.source)}</span><span>${intelEsc(i.confidence)}</span></div></div></div>`).join('')}
+        </div>
+      </section>
+      <section class="intel-col">
+        <div class="intel-col-head"><span>Document Impact</span><span class="intel-badge critical">StrategyPlan</span></div>
+        <div class="intel-col-body">
+          ${docs.slice(0,5).map(d => `<div class="intel-card ${d.name==='StrategyPlan'?'critical':''}" onclick="setIntelligenceView('impact')">
+            <div class="intel-card-title">${intelEsc(d.name)}</div>
+            <div class="intel-card-desc">${intelEsc(d.area)}</div>
+            <div class="intel-card-meta"><span class="intel-badge ${d.status==='critical'?'critical':d.status==='no impact'?'processed':'proposal'}">${intelEsc(d.status)}</span><span>${d.proposals} proposals</span><span>${d.conflicts} conflicts</span></div>
+          </div>`).join('')}
+        </div>
+      </section>
+      <section class="intel-col">
+        <div class="intel-col-head"><span>Pending Proposals</span><span>${proposals.length}</span></div>
+        <div class="intel-col-body">
+          ${proposals.map(p => `<div class="intel-card ${p.priority==='high'?'critical':''}">
+            <div class="intel-card-title">${intelEsc(p.title)}</div>
+            <div class="intel-card-desc">${intelEsc(p.change)}</div>
+            <div class="intel-card-meta"><span class="intel-badge ${p.priority}">${intelEsc(p.priority)}</span><span>${intelEsc(p.doc)}</span><span>${intelEsc(p.type)}</span></div>
+            <div class="intel-btn-row"><button class="intel-btn primary" onclick="setIntelligenceView('proposals')">Review</button><button class="intel-btn" onclick="intelAction('Approve ${intelEsc(p.id)}')">Approve</button><button class="intel-btn ghost" onclick="intelAction('Reject ${intelEsc(p.id)}')">Reject</button></div>
+          </div>`).join('')}
+        </div>
+      </section>
+    </div>`;
+}
+
+function renderIntelMeetingDetail(slug, meeting, items, docs, proposals) {
+  const el = document.getElementById('intel-view-meetings');
+  if (!el) return;
+  if (!meeting) {
+    el.innerHTML = `<div class="intel-empty-state"><strong>No meeting selected</strong><div>Select a meeting from Overview.</div></div>`;
+    return;
+  }
+  const tab = window._intelMeetingTab || 'summary';
+  const tabs = ['summary','raw','decisions','actions','insights','impact'];
+  const tabHtml = tabs.map(t => `<button class="intel-detail-tab ${tab===t?'active':''}" onclick="window._intelMeetingTab='${t}';renderIntelligenceCenter()">${t==='raw'?'Transcript / Raw':t[0].toUpperCase()+t.slice(1)}</button>`).join('');
+  const sourcePath = meeting.file ? `brand/${slug}/intelligence/meetings/${meeting.file}` : '';
+  let body = '';
+  if (tab === 'summary') {
+    body = `<div class="intel-panel"><h3>Summary</h3><p>${intelEsc(meeting.title)} se procesa como meeting intelligence para revisar decisiones, acciones, insights y posibles impactos documentales.</p><div class="intel-chip-list"><span class="intel-chip">${Number(meeting.decisions)||0} decisions</span><span class="intel-chip">${Number(meeting.actions)||0} actions</span><span class="intel-chip">${intelEsc(meeting.type || 'meeting')}</span><span class="intel-chip">StrategyPlan contradiction check</span></div></div>`;
+  } else if (tab === 'raw') {
+    body = `<div class="intel-panel"><h3>Transcript / Raw</h3><div class="intel-review-box">Fuente: ${intelEsc(meeting.source || 'Unknown')}<br>ID: ${intelEsc(meeting.sourceId || 'TBD')}<br>${sourcePath ? `Documento: <code>${intelEsc(sourcePath)}</code>` : 'Documento: pendiente de normalizar'}</div><div class="intel-btn-row"><button class="intel-btn primary" onclick="intelAction('Open source meeting')">Open source meeting</button></div></div>`;
+  } else if (tab === 'impact') {
+    body = `<div class="intel-doc-grid">${docs.map(d => `<div class="intel-doc-card ${d.name==='StrategyPlan'?'critical':''}"><h3>${intelEsc(d.name)}</h3><div class="intel-card-desc">${intelEsc(d.area)}</div><div class="intel-card-meta"><span class="intel-badge ${d.status==='critical'?'critical':d.status==='no impact'?'processed':'proposal'}">${intelEsc(d.status)}</span><span>${d.proposals} proposals</span></div></div>`).join('')}</div>`;
+  } else {
+    const filtered = tab === 'decisions' ? items.filter(i => i.type === 'Decision') : tab === 'actions' ? items.filter(i => i.type === 'Action') : items.filter(i => ['Insight','Quote','Risk'].includes(i.type));
+    body = `<div class="intel-panel">${filtered.map(i => `<div class="intel-mini-row"><div class="intel-mini-icon">${intelEsc(i.icon)}</div><div><div class="intel-mini-title">${intelEsc(i.title)}</div><div class="intel-mini-copy">${intelEsc(i.copy)}</div><div class="intel-card-meta"><span>${intelEsc(i.type)}</span><span>${intelEsc(i.confidence)}</span></div></div></div>`).join('')}</div>`;
+  }
+  el.innerHTML = `<div class="intel-wide">
+    <div class="intel-panel">
+      <div class="intel-detail-head"><div><div class="intel-detail-title">${intelEsc(meeting.title)}</div><div class="intel-card-meta"><span>${intelEsc(meeting.date)}</span><span>${intelEsc(intelSourceLabel(meeting.source))}</span><span>${(meeting.participants||[]).length} participants</span><span class="intel-badge processed">${intelEsc(meeting.status||'processed')}</span></div></div><button class="intel-btn" onclick="setIntelligenceView('overview')">Back</button></div>
+      <div class="intel-detail-tabs">${tabHtml}</div>
+      ${body}
+    </div>
+    <div class="intel-panel">
+      <h3>Generated Proposals</h3>
+      ${proposals.map(p => `<div class="intel-card ${p.priority==='high'?'critical':''}"><div class="intel-card-title">${intelEsc(p.title)}</div><div class="intel-card-desc">${intelEsc(p.change)}</div><div class="intel-card-meta"><span class="intel-badge ${p.priority}">${intelEsc(p.priority)}</span><span>${intelEsc(p.doc)}</span></div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderIntelDecisionLog(slug, meetings) {
+  const el = document.getElementById('intel-view-decisions');
+  if (!el) return;
+  const statuses = ['Logged','Linked','Proposal pending','Applied','Rejected'];
+  const rows = meetings.flatMap((m, mi) => {
+    const n = Math.max(1, Math.min(2, Number(m.decisions)||1));
+    return Array.from({length:n}).map((_, i) => ({meeting:m, idx:i, status:statuses[(mi+i)%statuses.length]}));
+  });
+  el.innerHTML = `<div class="intel-panel"><h3>Decision Log</h3><div class="intel-card-meta"><span>Timeline</span><span>Date</span><span>Decision</span><span>Rationale</span><span>Owner</span><span>Source</span><span>Affected documents</span><span>Status</span></div><div class="intel-timeline">
+    ${rows.map(r => `<div class="intel-timeline-row"><div class="intel-card" onclick="intelSelectMeeting('${intelEsc(r.meeting.id)}','meetings')"><div class="intel-card-title">${intelEsc(r.meeting.date)} · ${intelEsc(r.meeting.title)}</div><div class="intel-card-desc"><strong>Decision:</strong> ${r.idx+1} · <strong>Rationale:</strong> pendiente de validar contra fuente. <strong>Owner:</strong> ${intelEsc((r.meeting.participants||[])[0] || 'TBD')}.</div><div class="intel-card-meta"><span>Source: ${intelEsc(intelSourceLabel(r.meeting.source))}</span><span>Affected documents: StrategyPlan / POV Bank</span><span class="intel-badge ${r.status==='Applied'?'applied':r.status==='Linked'?'linked':r.status==='Proposal pending'?'pending':'low'}">${intelEsc(r.status)}</span></div></div></div>`).join('')}
+  </div></div>`;
+}
+
+function renderIntelPov(slug, meetings, selected) {
+  const el = document.getElementById('intel-view-pov');
+  if (!el) return;
+  const pillars = [
+    {name:'Systems over tactics', belief:'Growth es un sistema repetible, no una coleccion de hacks.', suggestions:['New proof point','Stronger angle','Customer language']},
+    {name:'Trust-based acquisition', belief:'La adquisicion fragil depende de paid; la duradera crea activos de confianza.', suggestions:['New proof point','Objection detected']},
+    {name:'Regulated growth', belief:'Compliance puede ser ventaja competitiva cuando el sistema lo incorpora desde el inicio.', suggestions:['Potential contradiction','New evidence']},
+    {name:'Anti-retainer agency model', belief:'El modelo retainer premia entregables, no transferencia de capacidad.', suggestions:['Stronger angle','Quote from meeting']}
+  ];
+  el.innerHTML = `<div class="intel-pov-grid">${pillars.map(p => `<div class="intel-pov-card">
+    <h3>${intelEsc(p.name)}</h3>
+    <div class="intel-card-desc"><strong>Core belief:</strong> ${intelEsc(p.belief)}</div>
+    <div class="intel-chip-list"><span class="intel-chip">We say yes / no</span><span class="intel-chip">Preferred angles</span><span class="intel-chip">Evidence</span><span class="intel-chip">Quotes from meetings</span><span class="intel-chip">Objections detected</span></div>
+    <div style="margin-top:12px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;">Suggestions from meetings</div>
+    ${p.suggestions.map((s, idx) => `<div class="intel-mini-row"><div class="intel-mini-icon">${idx===0?'◆':'+'}</div><div><div class="intel-mini-title">${intelEsc(s)}</div><div class="intel-mini-copy">Extraido de ${intelEsc(selected ? selected.title : 'meeting notes')} y listo para propuesta, no edicion directa.</div></div></div>`).join('')}
+    <div class="intel-btn-row"><button class="intel-btn primary" onclick="setIntelligenceView('proposals')">Send to proposal</button><button class="intel-btn ghost" onclick="intelAction('Open POV source')">Open POV</button></div>
+  </div>`).join('')}</div>`;
+}
+
+function renderIntelImpact(slug, docs) {
+  const el = document.getElementById('intel-view-impact');
+  if (!el) return;
+  el.innerHTML = `<div class="intel-panel"><h3>Canonical Documents</h3><div class="intel-card-desc">StrategyPlan is Critical and Never auto-apply: every pending impact requires review before a document changes.</div></div><div class="intel-doc-grid" style="margin-top:12px;">${docs.map(d => `<div class="intel-doc-card ${d.name==='StrategyPlan'?'critical':''}">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;"><h3>${intelEsc(d.name)}</h3><span class="intel-badge ${d.name==='StrategyPlan'?'critical':d.status==='no impact'?'processed':'proposal'}">${d.name==='StrategyPlan'?'Critical':intelEsc(d.status)}</span></div>
+    <div class="intel-card-desc">${intelEsc(d.area)}</div>
+    <div class="intel-progress-line"><span style="width:${d.name==='StrategyPlan'?'78':'46'}%"></span></div>
+    <div class="intel-card-meta"><span>Health: ${intelEsc(d.health)}</span><span>Last: ${intelEsc(d.last)}</span><span>${d.proposals} pending</span><span>${d.conflicts} conflicts</span></div>
+    <div class="intel-btn-row"><button class="intel-btn primary" onclick="setIntelligenceView('proposals')">Review</button><button class="intel-btn ghost" onclick="intelAction('Open ${intelEsc(d.name)}')">Open doc</button></div>
+  </div>`).join('')}</div>`;
+}
+
+function renderIntelProposalReview(slug, selected, proposals) {
+  const el = document.getElementById('intel-view-proposals');
+  if (!el) return;
+  const p = proposals[0];
+  el.innerHTML = `<div class="intel-review-layout">
+    <section class="intel-review-col"><h3>Evidence from meeting</h3><div class="intel-card-title">${intelEsc(selected ? selected.title : 'No meeting selected')}</div><div class="intel-card-meta"><span>${intelEsc(selected ? selected.date : '')}</span><span>${intelEsc(selected ? intelSourceLabel(selected.source) : '')}</span><span>confidence 92%</span></div><div class="intel-review-box">Decision detected: actualizar documento canonico solo despues de review humana. La evidencia queda enlazada a meeting notes y fuente original.</div><div class="intel-btn-row"><button class="intel-btn" onclick="setIntelligenceView('meetings')">Open source meeting</button></div></section>
+    <section class="intel-review-col"><h3>Proposed change</h3><div class="intel-badge high">${intelEsc(p.priority)}</div><div class="intel-review-box"><strong>${intelEsc(p.title)}</strong><br><br>${intelEsc(p.change)}<br><br>Formato semantico: no se muestra JSON crudo; Sancho explica el cambio como decision, proof point o contradiccion.</div><div class="intel-review-box">Para POV Bank: Anadir proof point / Actualizar core belief / Mover evidence / Marcar contradiccion.<br><br>Para StrategyPlan: Seccion afectada, texto actual, cambio propuesto, razon y fuente.</div></section>
+    <section class="intel-review-col"><h3>Affected document</h3><div class="intel-card critical"><div class="intel-card-title">${intelEsc(p.doc)}</div><div class="intel-card-desc">Documento critico. No hay aplicacion directa sin aprobacion explicita.</div><div class="intel-card-meta"><span class="intel-badge critical">Critical</span><span>backup required</span><span>change-log required</span></div></div><div class="intel-review-box"><strong>Current text</strong><br>Resumen estrategico actual pendiente de review.<br><br><strong>Proposed text</strong><br>Actualizar criterio segun decision aprobada en meeting.</div></section>
+  </div>
+  <div class="intel-review-footer"><button class="intel-btn" onclick="intelAction('Ask Sancho to revise')">Ask Sancho to revise</button><button class="intel-btn ghost" onclick="intelAction('Reject proposal')">Reject</button><button class="intel-btn primary" onclick="intelAction('Approve proposal')">Approve</button></div>`;
 }
 
 window._activityExpanded = false;
@@ -3023,398 +3457,6 @@ async function docPillarAction(slug, section, pillar, status) {
   }
 }
 
-// ==================================================================
-// mcChatSidebar — Reusable chat sidebar panel for any MC page
-// Usage:
-//   HTML: <div id="mc-sidebar-chat-anchor"></div>
-//         <button onclick="mcChatSidebar.toggle()">💬 Chat</button>
-//   JS:   mcChatSidebar.init({ anchorId, toggleBtnId, pageId })
-//   The sidebar mirrors the main dashboard chat (Col 4) — same threads,
-//   same messages, same mc-chat system. No duplication.
-// ==================================================================
-const mcChatSidebar = (() => {
-  let isOpen = false;
-  let panelEl = null;
-  let toggleBtnId = null;
-  let anchorId = null;
-  let syncInterval = null;
-  let lockedThreadId = null;  // If set, sidebar is locked to this thread
-  let lockedThreadName = null;
-  const PANEL_ID = 'mc-sidebar-chat-panel';
-
-  function createPanel(anchorId) {
-    const anchor = document.getElementById(anchorId);
-    if (!anchor) return;
-    if (document.getElementById(PANEL_ID)) { panelEl = document.getElementById(PANEL_ID); return; }
-
-    // Build thread bar: locked (fixed name + unlock button + pinned doc) or free (selector + new)
-    const threadBar = lockedThreadId
-      ? `<div style="padding:6px 18px;border-bottom:1px solid #313244;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;">
-           <div style="font-size:12px;font-weight:700;color:#C45D35;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-             <span>${mcChatThreadIcon(lockedThreadId.split(':').slice(1).join(':'))} ${lockedThreadName || lockedThreadId.split(':').slice(1).join(':').replace(/-/g,' ')}</span>
-             ${(() => { const _m = mcChatGetThreadMeta(lockedThreadId) || {}; console.log('[createPanel badge] lockedThreadId:', lockedThreadId, 'meta:', JSON.stringify(_m), 'allMeta:', JSON.stringify(mcChatThreadMeta)); if (!_m.skill) return ''; const extra = (_m.skills && _m.skills.length > 1) ? ' <span style="opacity:0.7;">+' + (_m.skills.length - 1) + '</span>' : ''; return '<span onclick="openSkill(\'' + _m.skill + '\')" style="font-size:9px;background:color-mix(in srgb,#C45D35 15%,transparent);color:#C45D35;padding:1px 8px;border-radius:10px;font-weight:600;cursor:pointer;" title="Skills: ' + (_m.skills || [_m.skill]).join(', ') + '">' + _m.skill + extra + '</span>'; })()}
-           </div>
-           <div style="display:flex;gap:4px;">
-             <button id="sidebar-discord-btn" onclick="mcChatSidebar.toggleDiscordSync()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:10px;padding:2px 6px;" title="Sincronizar con Discord">📱</button>
-             <button onclick="mcChatSidebar.unlock()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:10px;padding:2px 6px;" title="Desbloquear — cambiar a modo libre">🔓</button>
-           </div>
-         </div>
-         <div id="sidebar-pinned-doc" style="display:none;padding:6px 18px;border-bottom:1px solid #313244;background:color-mix(in srgb,#1e1e2e 95%,#313244);flex-shrink:0;cursor:pointer;" onclick="mcChatOpenPinnedDoc()">
-           <div style="display:flex;justify-content:space-between;align-items:center;">
-             <span style="font-size:11px;color:#C45D35;font-family:'Space Grotesk',sans-serif;">📄 <span id="sidebar-pinned-label">Documento actual</span></span>
-             <span id="sidebar-pinned-date" style="font-size:10px;color:#666;"></span>
-           </div>
-         </div>`
-      : `<div style="display:flex;align-items:center;gap:6px;padding:8px 18px;border-bottom:1px solid #313244;flex-shrink:0;">
-           <span style="font-size:10px;color:#666;">Thread:</span>
-           <select id="sidebar-chat-threads" onchange="mcChatSwitchThread(this.value)" style="flex:1;min-width:0;padding:4px 8px;background:#313244;border:1px solid #3D3D5C;border-radius:6px;color:#cdd6f4;font-size:11px;">
-             <option value="">— selecciona —</option>
-           </select>
-           <button onclick="mcChatNewThread()" style="background:none;border:1px solid #3D3D5C;border-radius:6px;padding:4px 8px;color:#22A06B;font-size:11px;cursor:pointer;flex-shrink:0;" title="Nueva conversación">+</button>
-         </div>
-         <div id="sidebar-pinned-doc" style="display:none;padding:6px 18px;border-bottom:1px solid #313244;background:color-mix(in srgb,#1e1e2e 95%,#313244);flex-shrink:0;cursor:pointer;" onclick="mcChatOpenPinnedDoc()">
-           <div style="display:flex;justify-content:space-between;align-items:center;">
-             <span style="font-size:11px;color:#C45D35;font-family:'Space Grotesk',sans-serif;">📄 <span id="sidebar-pinned-label">Documento actual</span></span>
-             <span id="sidebar-pinned-date" style="font-size:10px;color:#666;"></span>
-           </div>
-         </div>`;
-
-    const html = `
-    <div id="${PANEL_ID}" class="v2-col v2-col-dark" style="display:none;position:fixed;right:0;top:0;bottom:0;width:380px;z-index:400;border-left:2px solid #313244;box-shadow:-4px 0 24px rgba(0,0,0,.3);overflow:hidden;flex-direction:column;border-radius:0;box-sizing:border-box;max-width:380px;">
-      <div class="v2-ch">
-        <span><span id="sidebar-chat-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#666;"></span>&nbsp; Chat con Sancho</span>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <span id="sidebar-chat-status" style="font-size:10px;color:#666;"></span>
-          <button id="sidebar-expand-btn" onclick="mcChatSidebar.toggleFullscreen()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:18px;padding:2px 8px;line-height:1;" title="Pantalla completa">⤢</button>
-          <button onclick="mcChatSidebar.toggle()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:18px;padding:2px 8px;line-height:1;">✕</button>
-        </div>
-      </div>
-      <div class="v2-cb" style="padding:0;display:flex;flex-direction:column;min-height:0;flex:1;overflow-x:hidden;overflow-y:auto;max-width:100%;box-sizing:border-box;">
-        ${threadBar}
-        <div class="v2-chat-msgs" id="sidebar-chat-msgs" style="overflow-x:hidden;">
-          <div class="v2-msg v2-msg-b">${mcChatAgentWho('sancho')}${lockedThreadId ? '🔄 Cargando...' : 'Selecciona un thread para empezar.'}</div>
-        </div>
-        <div id="sidebar-chat-typing" style="display:none;padding:4px 18px;font-size:11px;color:#C45D35;font-style:italic;line-height:1.5;">
-          🔄 Sancho está pensando...
-        </div>
-        <div class="v2-chat-in">
-          <input type="text" id="sidebar-chat-input" placeholder="Escribe aquí..." onkeydown="if(event.key==='Enter')mcChatSidebarSend()" />
-          <button id="sidebar-chat-send-btn" onclick="mcChatSidebarSend()">→</button>
-          <button id="sidebar-chat-stop-btn" onclick="mcChatSidebarStop()" style="display:none;background:#C0392B;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px;font-weight:700;" title="Parar">⏹</button>
-        </div>
-      </div>
-    </div>`;
-    anchor.innerHTML = html;
-    panelEl = document.getElementById(PANEL_ID);
-  }
-
-  let sidebarPollTimer = null;
-
-  async function loadSidebarMessages() {
-    if (!lockedThreadId) return;
-    try {
-      const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
-      const data = await res.json();
-      const msgs = data.messages || [];
-      const sideMsgs = document.getElementById('sidebar-chat-msgs');
-      if (!sideMsgs) return;
-      if (msgs.length === 0) return; // Keep welcome message if no real messages yet
-      // Check if user is near bottom before re-rendering
-      const wasAtBottom = (sideMsgs.scrollHeight - sideMsgs.scrollTop - sideMsgs.clientHeight) < 100;
-      const prevCount = sideMsgs.querySelectorAll('.v2-msg').length;
-      sideMsgs.innerHTML = msgs.map(m => {
-        const escaped = mcChatFormatMsg(m.text || '');
-        return m.role === 'user'
-          ? '<div class="v2-msg v2-msg-u">' + escaped + '</div>'
-          : '<div class="v2-msg v2-msg-b">' + mcChatAgentWho(m.agent) + escaped + '</div>';
-      }).join('');
-      // Only auto-scroll if user was at bottom or new messages arrived
-      if (wasAtBottom) {
-        sideMsgs.scrollTop = sideMsgs.scrollHeight;
-      }
-      // Hide typing if last message is from bot + restore send button
-      const last = msgs[msgs.length - 1];
-      if (last && last.role !== 'user') {
-        const sideTyping = document.getElementById('sidebar-chat-typing');
-        if (sideTyping) sideTyping.style.display = 'none';
-        mcChatToggleStopBtn(false);
-      }
-      // Update typing with live status from gateway
-      if (data.status) {
-        const sideTyping = document.getElementById('sidebar-chat-typing');
-        if (sideTyping) { sideTyping.style.display = ''; sideTyping.innerHTML = mcChatTypingWithContext(lockedThreadId, data.status.text); }
-      }
-    } catch {}
-  }
-
-  function syncFromMain() {
-    if (lockedThreadId) {
-      // Locked mode: load messages independently, don't sync from main
-      loadSidebarMessages();
-      return;
-    }
-    // Free mode: sync thread selector from main
-    const mainSelect = document.getElementById('ws-session-select');
-    const sideSelect = document.getElementById('sidebar-chat-threads');
-    if (mainSelect && sideSelect) {
-      sideSelect.innerHTML = mainSelect.innerHTML;
-      sideSelect.value = mainSelect.value;
-    }
-    // Sync messages from main
-    const mainMsgs = document.getElementById('v2-chat-msgs');
-    const sideMsgs = document.getElementById('sidebar-chat-msgs');
-    if (mainMsgs && sideMsgs) {
-      sideMsgs.innerHTML = mainMsgs.innerHTML;
-      sideMsgs.scrollTop = sideMsgs.scrollHeight;
-    }
-    // Sync status dot
-    const mainDot = document.getElementById('ws-status-dot');
-    const sideDot = document.getElementById('sidebar-chat-dot');
-    if (mainDot && sideDot) sideDot.style.background = mainDot.style.background;
-    // Sync typing
-    const mainTyping = document.getElementById('ws-typing');
-    const sideTyping = document.getElementById('sidebar-chat-typing');
-    if (mainTyping && sideTyping) { sideTyping.style.display = mainTyping.style.display; sideTyping.innerHTML = mainTyping.innerHTML; }
-  }
-
-  function loadPinnedDoc() {
-    if (!lockedThreadId || !mcChatCurrentSlug) return;
-    const shortId = lockedThreadId.split(':').slice(1).join(':');
-    const docPaths = PILLAR_DOC_PATHS[shortId];
-    // For non-Foundation threads, hide the pinned doc panel
-    if (!docPaths) {
-      const panel = document.getElementById('sidebar-pinned-doc');
-      if (panel) panel.style.display = 'none';
-      return;
-    }
-    // Try each path
-    (async () => {
-      for (const docPath of docPaths) {
-        try {
-          const res = await fetch(`${MC_BASE}/api/mc-chat/doc/${encodeURIComponent(mcChatCurrentSlug + '/' + docPath)}`);
-          const data = await res.json();
-          if (data.ok && data.content) {
-            const panel = document.getElementById('sidebar-pinned-doc');
-            const label = document.getElementById('sidebar-pinned-label');
-            const dateEl = document.getElementById('sidebar-pinned-date');
-            if (panel) panel.style.display = '';
-            if (label) label.textContent = 'Documento actual — ' + shortId.replace(/-/g, ' ');
-            const dateMatch = data.content.match(/(?:updated|fecha|date|actualizado)[:\s]*(\d{4}-\d{2}-\d{2})/i);
-            if (dateEl) dateEl.textContent = dateMatch ? '📅 ' + dateMatch[1] : '📄 current.md';
-            return;
-          }
-        } catch {}
-      }
-      // No doc
-      const panel = document.getElementById('sidebar-pinned-doc');
-      const label = document.getElementById('sidebar-pinned-label');
-      if (panel) panel.style.display = '';
-      if (label) label.textContent = shortId.replace(/-/g, ' ') + ' — sin documento';
-    })();
-  }
-
-  function toggle() {
-    isOpen = !isOpen;
-    if (panelEl) panelEl.style.display = isOpen ? 'flex' : 'none';
-    // Resize main content to make room for sidebar
-    document.documentElement.style.setProperty('--sidebar-w', isOpen ? '380px' : '0px');
-    const btn = document.getElementById(toggleBtnId);
-    if (btn) {
-      btn.style.background = isOpen ? '#1e1e2e' : '#C45D35';
-      btn.style.color = '#fff';
-      btn.style.borderColor = isOpen ? '#313244' : '#C45D35';
-    }
-    if (isOpen) {
-      if (lockedThreadId) {
-        // Set main chat to locked thread
-        mcChatCurrentThread = lockedThreadId;
-        if (!mcChatLocalThreads.includes(lockedThreadId)) mcChatLocalThreads.push(lockedThreadId);
-        mcChatSetStatus('Conectado · ' + (lockedThreadName || ''), '#22A06B');
-        mcChatCurrentSlug = mcChatCurrentSlug || (document.getElementById('clientSelector')?.value || '');
-        loadPinnedDoc();
-        // Load existing messages — if none, auto-send initial prompt
-        (async () => {
-          let shouldAutoPrompt = false;
-          try {
-            const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
-            const data = await res.json();
-            const msgs = data.messages || [];
-            if (msgs.length > 0) {
-              // Has history — just show it
-              await loadSidebarMessages();
-            } else {
-              // No history — auto-send initial prompt so Sancho responds with context
-              shouldAutoPrompt = true;
-              const slug = mcChatCurrentSlug;
-              const typing = document.getElementById('sidebar-chat-typing');
-              if (typing) { typing.style.display = ''; typing.innerHTML = mcChatTypingWithContext(lockedThreadId, null); }
-              mcChatToggleStopBtn(true);
-              const sideMsgs = document.getElementById('sidebar-chat-msgs');
-              if (sideMsgs) sideMsgs.innerHTML = '<div class="v2-msg v2-msg-b">' + mcChatAgentWho('sancho') + '🔄 Analizando contexto...</div>';
-              const _meta = mcChatGetThreadMeta(lockedThreadId);
-              const _autoText = _meta.threadState === 'create'
-                ? `Quiero crear "${lockedThreadName || lockedThreadId}". Usa el skill ${_meta.skill || 'asignado'} para generar el documento.`
-                : `Estoy abriendo el chat sobre "${lockedThreadName || lockedThreadId}". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.`;
-              await fetch(`${MC_BASE}/api/mc-chat/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  slug,
-                  threadId: lockedThreadId,
-                  text: _autoText,
-                  userName: 'Admin',
-                  ..._meta,
-                }),
-              });
-            }
-          } catch (e) {
-            console.error('[mc-chat] Error loading thread:', e);
-          }
-          // Start polling AFTER deciding whether to auto-prompt
-          if (!syncInterval) syncInterval = setInterval(syncFromMain, 2000);
-        })();
-      } else {
-        syncFromMain();
-      }
-      if (!lockedThreadId) syncFromMain();
-      const input = document.getElementById('sidebar-chat-input');
-      if (input) { input.disabled = false; input.focus(); }
-      if (!syncInterval) syncInterval = setInterval(syncFromMain, 2000);
-    } else {
-      if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
-    }
-  }
-
-  function close() {
-    if (isFullscreen) toggleFullscreen();
-    if (isOpen) toggle();
-  }
-
-  function init(opts = {}) {
-    anchorId = opts.anchorId || 'mc-sidebar-chat-anchor';
-    toggleBtnId = opts.toggleBtnId || 'metrics-chat-toggle';
-    // Support locked thread mode
-    lockedThreadId = opts.threadId || null;
-    lockedThreadName = opts.threadName || null;
-    // Recreate panel if switching modes
-    const existing = document.getElementById(PANEL_ID);
-    if (existing) existing.remove();
-    panelEl = null;
-    isOpen = false; // Reset state since panel was destroyed and recreated
-    createPanel(anchorId);
-  }
-
-  let isFullscreen = false;
-
-  function toggleFullscreen() {
-    isFullscreen = !isFullscreen;
-    if (!panelEl) return;
-    const btn = document.getElementById('sidebar-expand-btn');
-    if (isFullscreen) {
-      panelEl.style.width = 'calc(100vw - 220px)';
-      panelEl.style.maxWidth = 'calc(100vw - 220px)';
-      document.documentElement.style.setProperty('--sidebar-w', 'calc(100vw - 220px)');
-      if (btn) { btn.textContent = '⤡'; btn.title = 'Reducir'; }
-    } else {
-      panelEl.style.width = '380px';
-      panelEl.style.maxWidth = '380px';
-      document.documentElement.style.setProperty('--sidebar-w', '380px');
-      if (btn) { btn.textContent = '⤢'; btn.title = 'Pantalla completa'; }
-    }
-  }
-
-  function unlock() {
-    if (!isOpen || !lockedThreadId) return;
-    // Re-init in free mode
-    init({ anchorId, toggleBtnId });
-    // Sidebar is still open, just switched to free mode
-  }
-
-  async function toggleDiscordSync() {
-    if (!lockedThreadId) return;
-    const slug = mcChatCurrentSlug || (document.getElementById('clientSelector')?.value || '');
-    if (!slug) return;
-    const btn = document.getElementById('sidebar-discord-btn');
-    if (!btn) return;
-
-    // Check if already linked
-    try {
-      const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
-      const data = await res.json();
-      if (data.discordThreadId) {
-        // Already linked — unlink (TODO: implement unlink endpoint)
-        alert('Ya está sincronizado con Discord thread ' + data.discordThreadId);
-        return;
-      }
-    } catch (e) {
-      console.error('[mc-chat] Error checking Discord link:', e);
-      return;
-    }
-
-    // Not linked — create Discord thread and link
-    btn.disabled = true;
-    btn.textContent = '⏳';
-    try {
-      // Get client guild from clients.json
-      const clientsRes = await fetch(`${MC_BASE}/api/clients`);
-      const clientsData = await clientsRes.json();
-      const client = clientsData.clients.find(c => c.slug === slug);
-      if (!client || !client.guild) {
-        alert('Cliente no tiene guild de Discord configurado');
-        btn.disabled = false;
-        btn.textContent = '📱';
-        return;
-      }
-      const guildId = client.guild;
-      // Find a suitable channel (first text channel in guild)
-      // For now, hardcode a channel ID or let user pick — simpler: use a dedicated "mc-chat" channel
-      const channelId = client.mcChatChannelId || '1486120283612905644'; // fallback to #infra for now
-      // Create Discord thread via message tool
-      const threadName = (lockedThreadName || lockedThreadId.split(':').slice(1).join(':')).substring(0,80);
-      // Send initial message to create thread
-      const createRes = await fetch(`${MC_BASE}/api/discord/thread-create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          guild: guildId,
-          channel: channelId,
-          name: threadName,
-          message: `🔗 Thread sincronizado con Mission Control: **${threadName}**`,
-        }),
-      });
-      const createData = await createRes.json();
-      if (!createData.ok || !createData.threadId) {
-        alert('Error creando Discord thread: ' + (createData.error || 'unknown'));
-        btn.disabled = false;
-        btn.textContent = '📱';
-        return;
-      }
-      const discordThreadId = createData.threadId;
-      // Link to MC thread
-      await fetch(`${MC_BASE}/api/mc-chat/link-discord`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          threadId: lockedThreadId,
-          discordThreadId,
-          discordChannelId: channelId,
-        }),
-      });
-      btn.textContent = '✅';
-      btn.style.color = '#22A06B';
-      btn.title = 'Sincronizado con Discord';
-      alert(`✅ Sincronizado con Discord thread: ${threadName}`);
-    } catch (e) {
-      console.error('[mc-chat] Discord sync error:', e);
-      alert('Error sincronizando con Discord: ' + e.message);
-      btn.disabled = false;
-      btn.textContent = '📱';
-    }
-  }
-
-  return { init, toggle, close, toggleFullscreen, unlock, toggleDiscordSync, get isOpen() { return isOpen; }, get _lockedThreadId() { return lockedThreadId; } };
-})();
-
 function openDocChatSidebar() {
   const slug = document.getElementById('clientSelector')?.value || '';
   if (!slug || !docChatThreadId) {
@@ -4163,7 +4205,7 @@ function renderGuide() {
           <div style="font-size:13px;color:var(--muted);line-height:1.7;">
             1. Instalar <a href="https://tailscale.com/download" target="_blank" style="color:var(--rust,#C45D35);">Tailscale</a><br>
             2. Unirse a la Tailnet<br>
-            3. <code>https://sancho-cmo.taild48df2.ts.net</code><br>
+            3. <code>https://staging.sanchocmo.ai</code><br>
             4. Discord: todos los canales
           </div>
         </div>
@@ -4478,54 +4520,6 @@ function goToSettings() {
     window.location.href = '/mc/settings/' + slug + '/';
   }
 }
-function loadIdeaBankIframe() {
-  const iframe = document.getElementById('idea-bank-iframe');
-  if (!iframe) return;
-  const sel = document.getElementById('clientSelector');
-  const slug = sel ? sel.value : '';
-  if (!slug || slug === 'global') return;
-  let ibUrl;
-  if (window.location.pathname.includes('/admin/')) {
-    const base = window.location.pathname.match(/\/mc\/admin\/[^/]+/);
-    ibUrl = base ? base[0] + '/idea-bank/' + slug + '/?embed=1' : null;
-  } else {
-    ibUrl = '/mc/idea-bank/' + slug + '/?embed=1';
-  }
-  if (!ibUrl) return;
-  if (iframe.src !== ibUrl) iframe.src = ibUrl;
-}
-
-function loadAtalayaIframe() {
-  const iframe = document.getElementById('atalaya-iframe');
-  if (!iframe) return;
-  const sel = document.getElementById('clientSelector');
-  const slug = sel ? sel.value : '';
-  if (!slug || slug === 'global') return;
-  let atalayaUrl;
-  if (window.location.pathname.includes('/admin/')) {
-    const base = window.location.pathname.match(/\/mc\/admin\/[^/]+/);
-    atalayaUrl = base ? base[0] + '/atalaya/' + slug + '/?embed=1' : null;
-  } else {
-    atalayaUrl = '/mc/atalaya/' + slug + '/?embed=1';
-  }
-  if (!atalayaUrl) return;
-  if (iframe.src !== atalayaUrl) iframe.src = atalayaUrl;
-}
-async function updateAtalayaBadge() {
-  const sel = document.getElementById('clientSelector');
-  const slug = sel ? sel.value : '';
-  const badge = document.getElementById('atalaya-badge');
-  if (!badge || !slug || slug === 'global') { if (badge) badge.style.display = 'none'; return; }
-  try {
-    const base = window.location.pathname.includes('/admin/') ? (window.location.pathname.match(/\/mc\/admin\/[^/]+/) || [''])[0] : '/mc';
-    const res = await fetch(base + '/api/atalaya-overview?slug=' + slug);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.pendingCount > 0) { badge.textContent = data.pendingCount; badge.style.display = ''; } else { badge.style.display = 'none'; }
-    }
-  } catch { if (badge) badge.style.display = 'none'; }
-}
-
 function loadSettingsIframe(tab) {
   const iframe = document.getElementById('settings-iframe');
   if (!iframe) return;
@@ -4560,14 +4554,6 @@ window.addEventListener('message', function(e) {
     const input = document.getElementById('sidebar-chat-input');
     if (input) { input.value = e.data.text; }
     try { mcChatSidebarSend(); } catch(err) { console.error('Chat send error:', err); }
-    return;
-  }
-  if (e.data.type === 'atalaya-navigate') {
-    if (e.data.page === 'foundation' && e.data.docPath) {
-      docBrowserPath = e.data.docPath;
-      try { localStorage.setItem('sancho-docpath', docBrowserPath); } catch(ex) {}
-      showPage('foundation');
-    }
     return;
   }
   if (e.data.type !== 'settings-open-chat') return;
@@ -4616,9 +4602,8 @@ function showPage(name, el) {
     'activity':         () => { window._activityPageInit = false; _activityCronsFetched = false; _activityCronSlug = null; renderActivityPage(); },
     'metrics':          () => { loadMetrics(); },
     'projects':         () => { loadProjects(); },
-    'idea-bank':        () => { loadIdeaBankIframe(); },
+    'intelligence':     () => { renderIntelligenceCenter(); },
     'trust-engine':     () => { loadTrustEngine(); const _s = document.getElementById('clientSelector')?.value; if (_s && _s !== 'global') { mcChatSidebar.init({ anchorId: 'mc-global-chat-anchor', toggleBtnId: 'global-chat-toggle', threadId: 'trust-engine-' + _s, threadName: 'Trust Engine — ' + _s }); if (!mcChatSidebar.isOpen) mcChatSidebar.toggle(); } },
-    'atalaya':          () => { loadAtalayaIframe(); },
     'settings':         () => { loadSettingsIframe(window._pendingSettingsTab); window._pendingSettingsTab = null; },
   };
   if (PAGE_INIT[name]) PAGE_INIT[name]();
@@ -4658,7 +4643,7 @@ function switchClient(val) {
     clientItems.forEach(el => el.style.display = 'none');
     globalItems.forEach(el => el.style.display = '');
     const active = document.querySelector('.page.active');
-    if (active && ['page-foundation','page-tasks','page-trust-engine','page-projects','page-atalaya'].includes(active.id)) showPage('dashboard');
+    if (active && ['page-foundation','page-tasks','page-trust-engine','page-projects','page-intelligence'].includes(active.id)) showPage('dashboard');
   } else {
     document.getElementById('view-global').style.display = 'none';
     document.getElementById('view-client').style.display = ''; // defer to CSS (flex layout)
@@ -4682,12 +4667,11 @@ function switchClient(val) {
   renderApis(); // Re-render APIs page (context-aware: global vs client)
   renderIntelligence(); // Re-render meetings for selected client
   renderFoundation(); // Re-render foundation for selected client
-  updateAtalayaBadge(); // Update Atalaya badge for selected client
   // Re-render metrics if on that page
   const activePage = document.querySelector('.page.active');
   if (activePage && activePage.id === 'page-metrics') loadMetrics();
-  if (activePage && activePage.id === 'page-idea-bank') loadIdeaBankIframe();
   if (activePage && activePage.id === 'page-recurring-tasks') loadRecurringTasksData();
+  if (activePage && activePage.id === 'page-intelligence') renderIntelligenceCenter();
 }
 
 function populateClientSelector() {
@@ -5567,20 +5551,20 @@ const STRATEGY_SKILLS = {
 };
 
 const CONTENT_CHANNEL_SKILLS = {
-  'blog':          { skill: 'seo-content', skills: ['deep-research', 'seo-content', 'schema-markup', 'qa-bot', 'content-calendar-planner'] },
-  'seo':           { skill: 'seo-content', skills: ['deep-research', 'seo-content', 'schema-markup', 'qa-bot', 'content-calendar-planner'] },
-  'linkedin':      { skill: 'linkedin-content', skills: ['linkedin-content', 'brand-voice', 'qa-bot', 'content-calendar-planner'] },
-  'instagram':     { skill: 'instagram-content', skills: ['instagram-content', 'brand-voice', 'qa-bot', 'content-calendar-planner'] },
-  'twitter':       { skill: 'twitter-content', skills: ['twitter-content', 'brand-voice', 'qa-bot', 'content-calendar-planner'] },
-  'tiktok':        { skill: 'tiktok-growth', skills: ['tiktok-growth', 'social-content', 'brand-voice', 'qa-bot', 'content-calendar-planner'] },
-  'email':         { skill: 'email-sequences', skills: ['email-sequences', 'copywriting', 'qa-bot'] },
-  'newsletter':    { skill: 'email-sequences', skills: ['email-sequences', 'copywriting', 'qa-bot'] },
-  'youtube':       { skill: 'copywriting', skills: ['deep-research', 'copywriting', 'qa-bot'] },
-  'guest-post':    { skill: 'seo-content', skills: ['seo-content', 'copywriting', 'outreach-sequence-builder', 'qa-bot'] },
-  'paid-ads':      { skill: 'direct-response-copy', skills: ['direct-response-copy', 'qa-bot'] },
-  'web':           { skill: 'landing-pages', skills: ['landing-pages', 'alarife-integration', 'qa-bot'] },
-  'landing':       { skill: 'landing-pages', skills: ['landing-pages', 'alarife-integration', 'qa-bot'] },
-  'presentations': { skill: 'frontend-slides', skills: ['frontend-slides', 'qa-bot'] },
+  'blog':          { skill: 'seo-content', skills: ['deep-research', 'seo-content', 'schema-markup', 'content-calendar-planner'] },
+  'seo':           { skill: 'seo-content', skills: ['deep-research', 'seo-content', 'schema-markup', 'content-calendar-planner'] },
+  'linkedin':      { skill: 'linkedin-content', skills: ['linkedin-content', 'brand-voice', 'content-calendar-planner'] },
+  'instagram':     { skill: 'instagram-content', skills: ['instagram-content', 'brand-voice', 'content-calendar-planner'] },
+  'twitter':       { skill: 'twitter-content', skills: ['twitter-content', 'brand-voice', 'content-calendar-planner'] },
+  'tiktok':        { skill: 'tiktok-growth', skills: ['tiktok-growth', 'social-content', 'brand-voice', 'content-calendar-planner'] },
+  'email':         { skill: 'email-sequences', skills: ['email-sequences', 'copywriting'] },
+  'newsletter':    { skill: 'email-sequences', skills: ['email-sequences', 'copywriting'] },
+  'youtube':       { skill: 'copywriting', skills: ['deep-research', 'copywriting'] },
+  'guest-post':    { skill: 'seo-content', skills: ['seo-content', 'copywriting', 'outreach-sequence-builder'] },
+  'paid-ads':      { skill: 'direct-response-copy', skills: ['direct-response-copy'] },
+  'web':           { skill: 'landing-pages', skills: ['landing-pages', 'alarife-integration'] },
+  'landing':       { skill: 'landing-pages', skills: ['landing-pages', 'alarife-integration'] },
+  'presentations': { skill: 'frontend-slides', skills: ['frontend-slides'] },
 };
 
 const PILLAR_SKILLS = {
@@ -5611,7 +5595,7 @@ function resolveThreadSkills(ctx) {
   if (ctx.taskType) {
     if (ctx.taskType === 'content') {
       const ch = CONTENT_CHANNEL_SKILLS[ctx.channel];
-      return ch || { skill: 'content-strategy', skills: ['content-strategy', 'qa-bot'] };
+      return ch || { skill: 'content-strategy', skills: ['content-strategy'] };
     }
     if (ctx.taskType === 'outreach') return { skill: 'outreach-sequence-builder', skills: ['company-finder', 'decision-maker-finder', 'contact-enrichment', 'outreach-sequence-builder'] };
     if (ctx.taskType === 'foundation') return PILLAR_SKILLS[ctx.pillar] || { skill: 'doc-coauthoring', skills: ['doc-coauthoring'] };
@@ -6727,39 +6711,6 @@ async function renderV2NextSteps(slug) {
   }
 
   // ===== 🏰 ATALAYA RECOMMENDATIONS (Section 1c — from all sources except performance) =====
-  try {
-    const atalayaRes = await fetch(`${MC_BASE}/api/recommendations?slug=${slug}&status=pending`);
-    if (atalayaRes.ok) {
-      const atalayaData = await atalayaRes.json();
-      const atalayaRecs = (atalayaData.recommendations || []).filter(r => !r.source?.startsWith('performance'));
-      const topAtalaya = atalayaRecs.filter(r => r.priority === 'high' || r.priority === 'medium').slice(0, 4);
-      if (topAtalaya.length > 0) {
-        const srcIcons = {'atalaya-profiles':'👤','atalaya-competitors':'🎯','atalaya-ads':'📢','trust-engine':'🔍'};
-        html += '<div class="v2-sub"><div class="v2-sub-t">🏰 Ideas de Atalaya</div>';
-        for (const rec of topAtalaya) {
-          const prioColor = rec.priority === 'high' ? '#C45D35' : '#B8860B';
-          const srcIcon = srcIcons[rec.source] || '💡';
-          html += `<div style="margin:2px 0;padding:8px 10px;background:var(--card-bg);border:1px solid var(--border);border-left:3px solid ${prioColor};border-radius:6px;font-size:11px;">
-            <div style="display:flex;align-items:flex-start;gap:6px;">
-              <span style="font-size:13px;flex-shrink:0;">${srcIcon}</span>
-              <div style="flex:1;">
-                <div style="font-weight:600;margin-bottom:2px;">${(rec.title||'').replace(/</g,'&lt;')}</div>
-                <div style="display:flex;align-items:center;gap:5px;">
-                  <span style="font-size:9px;padding:1px 5px;background:#F0EDE8;border-radius:3px;">${(rec.source||'').replace(/</g,'&lt;')}</span>
-                  <span style="flex:1;"></span>
-                  <span style="font-size:8px;font-weight:700;color:${prioColor};text-transform:uppercase;">${rec.priority}</span>
-                </div>
-              </div>
-            </div>
-          </div>`;
-        }
-        if (atalayaRecs.length > topAtalaya.length) {
-          html += `<div style="text-align:center;margin-top:4px;"><a href="#" onclick="showPage('idea-bank');return false;" style="font-size:10px;color:var(--rust);text-decoration:none;">Ver las ${atalayaRecs.length} recomendaciones en Idea Bank →</a></div>`;
-        }
-        html += '</div>';
-      }
-    }
-  } catch(e) { console.warn('[NextSteps] Atalaya recs fetch error:', e.message); }
 
   // ===== 📋 PROYECTOS (Section 2 — always) =====
   let allProjects = [];
@@ -7260,6 +7211,7 @@ renderDashboard();
 renderGlobalCosts();
 renderIntegrations();
 renderIntelligence();
+renderIntelligenceCenter();
 renderTasks();
 renderSkills();
 renderAgents();
@@ -7417,6 +7369,398 @@ renderGuide();
 
 // ==================== METRICS DASHBOARD ====================
 // metricsData, moduleOrder, metricsRangeDays, currentClientId declared near MC_BASE init
+
+// ==================================================================
+// mcChatSidebar — Reusable chat sidebar panel for any MC page
+// Usage:
+//   HTML: <div id="mc-sidebar-chat-anchor"></div>
+//         <button onclick="mcChatSidebar.toggle()">💬 Chat</button>
+//   JS:   mcChatSidebar.init({ anchorId, toggleBtnId, pageId })
+//   The sidebar mirrors the main dashboard chat (Col 4) — same threads,
+//   same messages, same mc-chat system. No duplication.
+// ==================================================================
+const mcChatSidebar = (() => {
+  let isOpen = false;
+  let panelEl = null;
+  let toggleBtnId = null;
+  let anchorId = null;
+  let syncInterval = null;
+  let lockedThreadId = null;  // If set, sidebar is locked to this thread
+  let lockedThreadName = null;
+  const PANEL_ID = 'mc-sidebar-chat-panel';
+
+  function createPanel(anchorId) {
+    const anchor = document.getElementById(anchorId);
+    if (!anchor) return;
+    if (document.getElementById(PANEL_ID)) { panelEl = document.getElementById(PANEL_ID); return; }
+
+    // Build thread bar: locked (fixed name + unlock button + pinned doc) or free (selector + new)
+    const threadBar = lockedThreadId
+      ? `<div style="padding:6px 18px;border-bottom:1px solid #313244;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;">
+           <div style="font-size:12px;font-weight:700;color:#C45D35;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+             <span>${mcChatThreadIcon(lockedThreadId.split(':').slice(1).join(':'))} ${lockedThreadName || lockedThreadId.split(':').slice(1).join(':').replace(/-/g,' ')}</span>
+             ${(() => { const _m = mcChatGetThreadMeta(lockedThreadId) || {}; console.log('[createPanel badge] lockedThreadId:', lockedThreadId, 'meta:', JSON.stringify(_m), 'allMeta:', JSON.stringify(mcChatThreadMeta)); if (!_m.skill) return ''; const extra = (_m.skills && _m.skills.length > 1) ? ' <span style="opacity:0.7;">+' + (_m.skills.length - 1) + '</span>' : ''; return '<span onclick="openSkill(\'' + _m.skill + '\')" style="font-size:9px;background:color-mix(in srgb,#C45D35 15%,transparent);color:#C45D35;padding:1px 8px;border-radius:10px;font-weight:600;cursor:pointer;" title="Skills: ' + (_m.skills || [_m.skill]).join(', ') + '">' + _m.skill + extra + '</span>'; })()}
+           </div>
+           <div style="display:flex;gap:4px;">
+             <button id="sidebar-discord-btn" onclick="mcChatSidebar.toggleDiscordSync()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:10px;padding:2px 6px;" title="Sincronizar con Discord">📱</button>
+             <button onclick="mcChatSidebar.unlock()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:10px;padding:2px 6px;" title="Desbloquear — cambiar a modo libre">🔓</button>
+           </div>
+         </div>
+         <div id="sidebar-pinned-doc" style="display:none;padding:6px 18px;border-bottom:1px solid #313244;background:color-mix(in srgb,#1e1e2e 95%,#313244);flex-shrink:0;cursor:pointer;" onclick="mcChatOpenPinnedDoc()">
+           <div style="display:flex;justify-content:space-between;align-items:center;">
+             <span style="font-size:11px;color:#C45D35;font-family:'Space Grotesk',sans-serif;">📄 <span id="sidebar-pinned-label">Documento actual</span></span>
+             <span id="sidebar-pinned-date" style="font-size:10px;color:#666;"></span>
+           </div>
+         </div>`
+      : `<div style="display:flex;align-items:center;gap:6px;padding:8px 18px;border-bottom:1px solid #313244;flex-shrink:0;">
+           <span style="font-size:10px;color:#666;">Thread:</span>
+           <select id="sidebar-chat-threads" onchange="mcChatSwitchThread(this.value)" style="flex:1;min-width:0;padding:4px 8px;background:#313244;border:1px solid #3D3D5C;border-radius:6px;color:#cdd6f4;font-size:11px;">
+             <option value="">— selecciona —</option>
+           </select>
+           <button onclick="mcChatNewThread()" style="background:none;border:1px solid #3D3D5C;border-radius:6px;padding:4px 8px;color:#22A06B;font-size:11px;cursor:pointer;flex-shrink:0;" title="Nueva conversación">+</button>
+         </div>
+         <div id="sidebar-pinned-doc" style="display:none;padding:6px 18px;border-bottom:1px solid #313244;background:color-mix(in srgb,#1e1e2e 95%,#313244);flex-shrink:0;cursor:pointer;" onclick="mcChatOpenPinnedDoc()">
+           <div style="display:flex;justify-content:space-between;align-items:center;">
+             <span style="font-size:11px;color:#C45D35;font-family:'Space Grotesk',sans-serif;">📄 <span id="sidebar-pinned-label">Documento actual</span></span>
+             <span id="sidebar-pinned-date" style="font-size:10px;color:#666;"></span>
+           </div>
+         </div>`;
+
+    const html = `
+    <div id="${PANEL_ID}" class="v2-col v2-col-dark" style="display:none;position:fixed;right:0;top:0;bottom:0;width:380px;z-index:400;border-left:2px solid #313244;box-shadow:-4px 0 24px rgba(0,0,0,.3);overflow:hidden;flex-direction:column;border-radius:0;box-sizing:border-box;max-width:380px;">
+      <div class="v2-ch">
+        <span><span id="sidebar-chat-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#666;"></span>&nbsp; Chat con Sancho</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span id="sidebar-chat-status" style="font-size:10px;color:#666;"></span>
+          <button id="sidebar-expand-btn" onclick="mcChatSidebar.toggleFullscreen()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:18px;padding:2px 8px;line-height:1;" title="Pantalla completa">⤢</button>
+          <button onclick="mcChatSidebar.toggle()" style="background:none;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;cursor:pointer;font-size:18px;padding:2px 8px;line-height:1;">✕</button>
+        </div>
+      </div>
+      <div class="v2-cb" style="padding:0;display:flex;flex-direction:column;min-height:0;flex:1;overflow-x:hidden;overflow-y:auto;max-width:100%;box-sizing:border-box;">
+        ${threadBar}
+        <div class="v2-chat-msgs" id="sidebar-chat-msgs" style="overflow-x:hidden;">
+          <div class="v2-msg v2-msg-b">${mcChatAgentWho('sancho')}${lockedThreadId ? '🔄 Cargando...' : 'Selecciona un thread para empezar.'}</div>
+        </div>
+        <div id="sidebar-chat-typing" style="display:none;padding:4px 18px;font-size:11px;color:#C45D35;font-style:italic;line-height:1.5;">
+          🔄 Sancho está pensando...
+        </div>
+        <div class="v2-chat-in">
+          <input type="text" id="sidebar-chat-input" placeholder="Escribe aquí..." onkeydown="if(event.key==='Enter')mcChatSidebarSend()" />
+          <button id="sidebar-chat-send-btn" onclick="mcChatSidebarSend()">→</button>
+          <button id="sidebar-chat-stop-btn" onclick="mcChatSidebarStop()" style="display:none;background:#C0392B;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px;font-weight:700;" title="Parar">⏹</button>
+        </div>
+      </div>
+    </div>`;
+    anchor.innerHTML = html;
+    panelEl = document.getElementById(PANEL_ID);
+  }
+
+  let sidebarPollTimer = null;
+
+  async function loadSidebarMessages() {
+    if (!lockedThreadId) return;
+    try {
+      const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
+      const data = await res.json();
+      const msgs = data.messages || [];
+      const sideMsgs = document.getElementById('sidebar-chat-msgs');
+      if (!sideMsgs) return;
+      if (msgs.length === 0) return; // Keep welcome message if no real messages yet
+      // Check if user is near bottom before re-rendering
+      const wasAtBottom = (sideMsgs.scrollHeight - sideMsgs.scrollTop - sideMsgs.clientHeight) < 100;
+      const prevCount = sideMsgs.querySelectorAll('.v2-msg').length;
+      sideMsgs.innerHTML = msgs.map(m => {
+        const escaped = mcChatFormatMsg(m.text || '');
+        return m.role === 'user'
+          ? '<div class="v2-msg v2-msg-u">' + escaped + '</div>'
+          : '<div class="v2-msg v2-msg-b">' + mcChatAgentWho(m.agent) + escaped + '</div>';
+      }).join('');
+      // Only auto-scroll if user was at bottom or new messages arrived
+      if (wasAtBottom) {
+        sideMsgs.scrollTop = sideMsgs.scrollHeight;
+      }
+      // Hide typing if last message is from bot + restore send button
+      const last = msgs[msgs.length - 1];
+      if (last && last.role !== 'user') {
+        const sideTyping = document.getElementById('sidebar-chat-typing');
+        if (sideTyping) sideTyping.style.display = 'none';
+        mcChatToggleStopBtn(false);
+      }
+      // Update typing with live status from gateway
+      if (data.status) {
+        const sideTyping = document.getElementById('sidebar-chat-typing');
+        if (sideTyping) { sideTyping.style.display = ''; sideTyping.innerHTML = mcChatTypingWithContext(lockedThreadId, data.status.text); }
+      }
+    } catch {}
+  }
+
+  function syncFromMain() {
+    if (lockedThreadId) {
+      // Locked mode: load messages independently, don't sync from main
+      loadSidebarMessages();
+      return;
+    }
+    // Free mode: sync thread selector from main
+    const mainSelect = document.getElementById('ws-session-select');
+    const sideSelect = document.getElementById('sidebar-chat-threads');
+    if (mainSelect && sideSelect) {
+      sideSelect.innerHTML = mainSelect.innerHTML;
+      sideSelect.value = mainSelect.value;
+    }
+    // Sync messages from main
+    const mainMsgs = document.getElementById('v2-chat-msgs');
+    const sideMsgs = document.getElementById('sidebar-chat-msgs');
+    if (mainMsgs && sideMsgs) {
+      sideMsgs.innerHTML = mainMsgs.innerHTML;
+      sideMsgs.scrollTop = sideMsgs.scrollHeight;
+    }
+    // Sync status dot
+    const mainDot = document.getElementById('ws-status-dot');
+    const sideDot = document.getElementById('sidebar-chat-dot');
+    if (mainDot && sideDot) sideDot.style.background = mainDot.style.background;
+    // Sync typing
+    const mainTyping = document.getElementById('ws-typing');
+    const sideTyping = document.getElementById('sidebar-chat-typing');
+    if (mainTyping && sideTyping) { sideTyping.style.display = mainTyping.style.display; sideTyping.innerHTML = mainTyping.innerHTML; }
+  }
+
+  function loadPinnedDoc() {
+    if (!lockedThreadId || !mcChatCurrentSlug) return;
+    const shortId = lockedThreadId.split(':').slice(1).join(':');
+    const docPaths = PILLAR_DOC_PATHS[shortId];
+    // For non-Foundation threads, hide the pinned doc panel
+    if (!docPaths) {
+      const panel = document.getElementById('sidebar-pinned-doc');
+      if (panel) panel.style.display = 'none';
+      return;
+    }
+    // Try each path
+    (async () => {
+      for (const docPath of docPaths) {
+        try {
+          const res = await fetch(`${MC_BASE}/api/mc-chat/doc/${encodeURIComponent(mcChatCurrentSlug + '/' + docPath)}`);
+          const data = await res.json();
+          if (data.ok && data.content) {
+            const panel = document.getElementById('sidebar-pinned-doc');
+            const label = document.getElementById('sidebar-pinned-label');
+            const dateEl = document.getElementById('sidebar-pinned-date');
+            if (panel) panel.style.display = '';
+            if (label) label.textContent = 'Documento actual — ' + shortId.replace(/-/g, ' ');
+            const dateMatch = data.content.match(/(?:updated|fecha|date|actualizado)[:\s]*(\d{4}-\d{2}-\d{2})/i);
+            if (dateEl) dateEl.textContent = dateMatch ? '📅 ' + dateMatch[1] : '📄 current.md';
+            return;
+          }
+        } catch {}
+      }
+      // No doc
+      const panel = document.getElementById('sidebar-pinned-doc');
+      const label = document.getElementById('sidebar-pinned-label');
+      if (panel) panel.style.display = '';
+      if (label) label.textContent = shortId.replace(/-/g, ' ') + ' — sin documento';
+    })();
+  }
+
+  function toggle() {
+    isOpen = !isOpen;
+    if (panelEl) panelEl.style.display = isOpen ? 'flex' : 'none';
+    // Resize main content to make room for sidebar
+    document.documentElement.style.setProperty('--sidebar-w', isOpen ? '380px' : '0px');
+    const btn = document.getElementById(toggleBtnId);
+    if (btn) {
+      btn.style.background = isOpen ? '#1e1e2e' : '#C45D35';
+      btn.style.color = '#fff';
+      btn.style.borderColor = isOpen ? '#313244' : '#C45D35';
+    }
+    if (isOpen) {
+      if (lockedThreadId) {
+        // Set main chat to locked thread
+        mcChatCurrentThread = lockedThreadId;
+        if (!mcChatLocalThreads.includes(lockedThreadId)) mcChatLocalThreads.push(lockedThreadId);
+        mcChatSetStatus('Conectado · ' + (lockedThreadName || ''), '#22A06B');
+        mcChatCurrentSlug = mcChatCurrentSlug || (document.getElementById('clientSelector')?.value || '');
+        loadPinnedDoc();
+        // Load existing messages — if none, auto-send initial prompt
+        (async () => {
+          let shouldAutoPrompt = false;
+          try {
+            const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
+            const data = await res.json();
+            const msgs = data.messages || [];
+            if (msgs.length > 0) {
+              // Has history — just show it
+              await loadSidebarMessages();
+            } else {
+              // No history — auto-send initial prompt so Sancho responds with context
+              shouldAutoPrompt = true;
+              const slug = mcChatCurrentSlug;
+              const typing = document.getElementById('sidebar-chat-typing');
+              if (typing) { typing.style.display = ''; typing.innerHTML = mcChatTypingWithContext(lockedThreadId, null); }
+              mcChatToggleStopBtn(true);
+              const sideMsgs = document.getElementById('sidebar-chat-msgs');
+              if (sideMsgs) sideMsgs.innerHTML = '<div class="v2-msg v2-msg-b">' + mcChatAgentWho('sancho') + '🔄 Analizando contexto...</div>';
+              const _meta = mcChatGetThreadMeta(lockedThreadId);
+              const _autoText = _meta.threadState === 'create'
+                ? `Quiero crear "${lockedThreadName || lockedThreadId}". Usa el skill ${_meta.skill || 'asignado'} para generar el documento.`
+                : `Estoy abriendo el chat sobre "${lockedThreadName || lockedThreadId}". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.`;
+              await fetch(`${MC_BASE}/api/mc-chat/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  slug,
+                  threadId: lockedThreadId,
+                  text: _autoText,
+                  userName: 'Admin',
+                  ..._meta,
+                }),
+              });
+            }
+          } catch (e) {
+            console.error('[mc-chat] Error loading thread:', e);
+          }
+          // Start polling AFTER deciding whether to auto-prompt
+          if (!syncInterval) syncInterval = setInterval(syncFromMain, 2000);
+        })();
+      } else {
+        syncFromMain();
+      }
+      if (!lockedThreadId) syncFromMain();
+      const input = document.getElementById('sidebar-chat-input');
+      if (input) { input.disabled = false; input.focus(); }
+      if (!syncInterval) syncInterval = setInterval(syncFromMain, 2000);
+    } else {
+      if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
+    }
+  }
+
+  function close() {
+    if (isFullscreen) toggleFullscreen();
+    if (isOpen) toggle();
+  }
+
+  function init(opts = {}) {
+    anchorId = opts.anchorId || 'mc-sidebar-chat-anchor';
+    toggleBtnId = opts.toggleBtnId || 'metrics-chat-toggle';
+    // Support locked thread mode
+    lockedThreadId = opts.threadId || null;
+    lockedThreadName = opts.threadName || null;
+    // Recreate panel if switching modes
+    const existing = document.getElementById(PANEL_ID);
+    if (existing) existing.remove();
+    panelEl = null;
+    isOpen = false; // Reset state since panel was destroyed and recreated
+    createPanel(anchorId);
+  }
+
+  let isFullscreen = false;
+
+  function toggleFullscreen() {
+    isFullscreen = !isFullscreen;
+    if (!panelEl) return;
+    const btn = document.getElementById('sidebar-expand-btn');
+    if (isFullscreen) {
+      panelEl.style.width = 'calc(100vw - 220px)';
+      panelEl.style.maxWidth = 'calc(100vw - 220px)';
+      document.documentElement.style.setProperty('--sidebar-w', 'calc(100vw - 220px)');
+      if (btn) { btn.textContent = '⤡'; btn.title = 'Reducir'; }
+    } else {
+      panelEl.style.width = '380px';
+      panelEl.style.maxWidth = '380px';
+      document.documentElement.style.setProperty('--sidebar-w', '380px');
+      if (btn) { btn.textContent = '⤢'; btn.title = 'Pantalla completa'; }
+    }
+  }
+
+  function unlock() {
+    if (!isOpen || !lockedThreadId) return;
+    // Re-init in free mode
+    init({ anchorId, toggleBtnId });
+    // Sidebar is still open, just switched to free mode
+  }
+
+  async function toggleDiscordSync() {
+    if (!lockedThreadId) return;
+    const slug = mcChatCurrentSlug || (document.getElementById('clientSelector')?.value || '');
+    if (!slug) return;
+    const btn = document.getElementById('sidebar-discord-btn');
+    if (!btn) return;
+
+    // Check if already linked
+    try {
+      const res = await fetch(`${MC_BASE}/api/mc-chat/thread/${encodeURIComponent(lockedThreadId)}`);
+      const data = await res.json();
+      if (data.discordThreadId) {
+        // Already linked — unlink (TODO: implement unlink endpoint)
+        alert('Ya está sincronizado con Discord thread ' + data.discordThreadId);
+        return;
+      }
+    } catch (e) {
+      console.error('[mc-chat] Error checking Discord link:', e);
+      return;
+    }
+
+    // Not linked — create Discord thread and link
+    btn.disabled = true;
+    btn.textContent = '⏳';
+    try {
+      // Get client guild from clients.json
+      const clientsRes = await fetch(`${MC_BASE}/api/clients`);
+      const clientsData = await clientsRes.json();
+      const client = clientsData.clients.find(c => c.slug === slug);
+      if (!client || !client.guild) {
+        alert('Cliente no tiene guild de Discord configurado');
+        btn.disabled = false;
+        btn.textContent = '📱';
+        return;
+      }
+      const guildId = client.guild;
+      // Find a suitable channel (first text channel in guild)
+      // For now, hardcode a channel ID or let user pick — simpler: use a dedicated "mc-chat" channel
+      const channelId = client.mcChatChannelId || '1486120283612905644'; // fallback to #infra for now
+      // Create Discord thread via message tool
+      const threadName = (lockedThreadName || lockedThreadId.split(':').slice(1).join(':')).substring(0,80);
+      // Send initial message to create thread
+      const createRes = await fetch(`${MC_BASE}/api/discord/thread-create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guild: guildId,
+          channel: channelId,
+          name: threadName,
+          message: `🔗 Thread sincronizado con Mission Control: **${threadName}**`,
+        }),
+      });
+      const createData = await createRes.json();
+      if (!createData.ok || !createData.threadId) {
+        alert('Error creando Discord thread: ' + (createData.error || 'unknown'));
+        btn.disabled = false;
+        btn.textContent = '📱';
+        return;
+      }
+      const discordThreadId = createData.threadId;
+      // Link to MC thread
+      await fetch(`${MC_BASE}/api/mc-chat/link-discord`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          threadId: lockedThreadId,
+          discordThreadId,
+          discordChannelId: channelId,
+        }),
+      });
+      btn.textContent = '✅';
+      btn.style.color = '#22A06B';
+      btn.title = 'Sincronizado con Discord';
+      alert(`✅ Sincronizado con Discord thread: ${threadName}`);
+    } catch (e) {
+      console.error('[mc-chat] Discord sync error:', e);
+      alert('Error sincronizando con Discord: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = '📱';
+    }
+  }
+
+  return { init, toggle, close, toggleFullscreen, unlock, toggleDiscordSync, get isOpen() { return isOpen; }, get _lockedThreadId() { return lockedThreadId; } };
+})();
 
 // Load pinned doc bar in the SIDEBAR (separate from main pinned doc)
 async function mcChatLoadSidebarPinnedDoc(slug, shortId) {

@@ -327,7 +327,7 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
           </div>
         ) : (
           <Link
-            href="/dashboard/admin/settings?tab=apis"
+            href={`/dashboard/${slug}/settings?tab=apis`}
             className="block bg-[#FEF3EE] border border-rust rounded-lg p-3 mb-3"
           >
             <div className="flex items-center gap-2.5">

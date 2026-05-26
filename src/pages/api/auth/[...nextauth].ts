@@ -62,8 +62,7 @@ export const authOptions: NextAuthOptions = {
         if (account?.provider === "google") {
           const email = (user.email || "").toLowerCase();
           const data = loadClientsData();
-          const adminEmails = ((data as { adminEmails?: string[] }).adminEmails || [])
-            .map((e) => e.toLowerCase());
+          const adminEmails = (data.adminEmails || []).map((e) => e.toLowerCase());
           const isAdmin =
             email.endsWith("@growth4u.io") || adminEmails.includes(email);
           token.role = isAdmin ? "admin" : "client";

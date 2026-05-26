@@ -1,0 +1,382 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-21T16:18:12.776Z",
+  "entries": {
+    "memory:memory/daily/2026-03-14.md:1:21": {
+      "key": "memory:memory/daily/2026-03-14.md:1:21",
+      "path": "memory/daily/2026-03-14.md",
+      "startLine": 1,
+      "endLine": 21,
+      "source": "memory",
+      "snippet": "# 2026-03-14 ## Morning Metrics Cron Fix - Fixed **Morning Metrics — Growth4U** cron (`d46675e3-06e1-4887-a136-0537f3923299`) - **Problem 1**: Content posted directly to channel instead of in threads (data tables spammed #intelligence) - **Problem 2**: Cron was `sessionTarget: \"main\"` causing duplicate/triple executions when main session was busy - **Problem 3**: Used Minimax model which poorly followed thread patterns - **Fixes applied**: Changed to `sessionTarget: \"isolated\"`, rewrote prompt with explicit THREAD PATTERN (1-line summary → thread-create → all content inside thread), changed model to Sonnet 4.5 - Schedule unchanged: `30 8 * * 1-5` Europe/Madrid - Next run: Mon 2026-03-16 08:",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.3719657689332962,
+      "maxScore": 0.3719657689332962,
+      "firstRecalledAt": "2026-04-15T10:38:25.814Z",
+      "lastRecalledAt": "2026-04-15T10:38:25.814Z",
+      "queryHashes": [
+        "8679af03578b"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "duplicate/triple",
+        "1-line",
+        "thread-create",
+        "4.5",
+        "1-5",
+        "europe/madrid",
+        "morning",
+        "metrics"
+      ]
+    },
+    "memory:memory/2026-03-23.md:22:49": {
+      "key": "memory:memory/2026-03-23.md:22:49",
+      "path": "memory/2026-03-23.md",
+      "startLine": 22,
+      "endLine": 49,
+      "source": "memory",
+      "snippet": "- Reads client's `integrations.json` + `integration-mappings.json` - Maps funnel steps to connected APIs (or marks as `manual`) - Calculates which KPIs are possible (cross-source like CPL = ads.spend / crm.newContacts) - Detects missing integrations - Outputs `brand/{slug}/metrics-plan.json` - Tested: Growth4U → 4-step funnel (3 auto, 1 manual), 18 KPIs, 1 missing (Instantly) #### 3. SKILL.md Updated (acquisition-metrics-plan) - Added **Step 7.5**: Generate `metrics-plan.json` via `generate-plan.js` - Added **Step 8**: Integration Discovery Flow — skill asks client what tools they use per metric category, sends MC connect links - Output section: now 3 deliverables (plan.md + plan.json + XLS",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.3679240584373474,
+      "maxScore": 0.3679240584373474,
+      "firstRecalledAt": "2026-04-15T10:38:25.814Z",
+      "lastRecalledAt": "2026-04-15T10:38:25.814Z",
+      "queryHashes": [
+        "8679af03578b"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "integrations.json",
+        "integration-mappings.json",
+        "cross-source",
+        "ads.spend",
+        "crm.newcontacts",
+        "metrics-plan.json",
+        "4-step",
+        "skill.md"
+      ]
+    },
+    "memory:memory/2026-03-17.md:1:28": {
+      "key": "memory:memory/2026-03-17.md:1:28",
+      "path": "memory/2026-03-17.md",
+      "startLine": 1,
+      "endLine": 28,
+      "source": "memory",
+      "snippet": "# 2026-03-17 ## Metrics Dashboard v2 — Complete Redesign (Mar 14-16) ### Architecture - **3-layer design**: Health Score KPIs → Source pills → Adaptive modules - Inspired by Geckoboard (clarity), Baremetrics (deltas), Databox (modules), ChartMogul (typography) - Modules auto-show/hide based on connected sources — no empty cards - Progressive disclosure: click ▼ to expand detail - **Drag & drop reorder**: saved per client in localStorage (`mc-metrics-order-{slug}`) ### Bug Fixes - `currentClientId` wasn't set for clients without Supabase → metrics page showed empty. Fixed: set `currentClientId` before Supabase check in `connectSupabase()` - `sbClient` (Supabase object) was used as slug str",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.3645321041345596,
+      "maxScore": 0.3645321041345596,
+      "firstRecalledAt": "2026-04-15T10:38:25.814Z",
+      "lastRecalledAt": "2026-04-15T10:38:25.814Z",
+      "queryHashes": [
+        "8679af03578b"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "14-16",
+        "3-layer",
+        "auto-show/hide",
+        "mc-metrics-order",
+        "metrics",
+        "dashboard",
+        "complete",
+        "redesign"
+      ]
+    },
+    "memory:memory/daily/2026-03-03.md:54:81": {
+      "key": "memory:memory/daily/2026-03-03.md:54:81",
+      "path": "memory/daily/2026-03-03.md",
+      "startLine": 54,
+      "endLine": 81,
+      "source": "memory",
+      "snippet": "- Sub-agent safety net: Cron progress monitor running every 5 min (currently idle, no sub-agents active) - Status: **Nothing urgent**. Kleva meeting set for Tue 10. Tomorrow is full. All systems nominal. ## Growth4U Competitor Intelligence — Pilar 7/15 Progress (22:30–23:26) ### TheGrowtHacker Deep Dive Completed - Wrote `brand/growth4u/competitors/competitor-thegrowthacker.md` (10,142 bytes) - 9 pages scraped via web_fetch: home, servicios, metodologia, nosotros, casos-de-exito (index + 3 cases), blog - DataForSEO: **0 keywords** for thegrowthacker.com — near-zero SEO visibility - **Key finding:** All 3 published case studies (Scrab.in, FindThatLead, Profe.com) are from companies where fo",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.35905830562114716,
+      "maxScore": 0.35905830562114716,
+      "firstRecalledAt": "2026-04-15T10:38:25.814Z",
+      "lastRecalledAt": "2026-04-15T10:38:25.814Z",
+      "queryHashes": [
+        "8679af03578b"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "sub-agent",
+        "sub-agents",
+        "7/15",
+        "web-fetch",
+        "casos-de-exito",
+        "thegrowthacker.com",
+        "near-zero",
+        "scrab.in"
+      ]
+    },
+    "memory:memory/2026-03-17.md:23:48": {
+      "key": "memory:memory/2026-03-17.md:23:48",
+      "path": "memory/2026-03-17.md",
+      "startLine": 23,
+      "endLine": 48,
+      "source": "memory",
+      "snippet": "- Best CTR: Ángulo 2_V1 (6.4%, €0.84 CPC) - Worst CTR: Ángulo 2_V3 (1.7%, €2.35 CPC) ### Metrics Collector — All Adapters Fixed (Mar 14) - **GSC**: Added 3-day lag auto-offset (`daysAgo(4)` to `daysAgo(3)` when no explicit date) - **GHL**: Rewrote adapter — calendars endpoint needs `calendarId` (iterates all calendars) - **Metricool**: Rewrote to use v2 API (`/v2/analytics/posts/{network}`). Auto-detects connected networks via `/admin/simpleProfiles`. Growth4U only has LinkedIn connected (NOT Instagram/Facebook) - **collect.js fixes**: slug prefix stripping for env vars, nested `dataSources` structure support, `today` variable scope fix ### Google Sheets Sync - Created folder \"Sancho C",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.35638063251972196,
+      "maxScore": 0.35638063251972196,
+      "firstRecalledAt": "2026-04-15T10:38:25.814Z",
+      "lastRecalledAt": "2026-04-15T10:38:25.814Z",
+      "queryHashes": [
+        "8679af03578b"
+      ],
+      "recallDays": [
+        "2026-04-15"
+      ],
+      "conceptTags": [
+        "network",
+        "2-v1",
+        "6.4",
+        "0.84",
+        "2-v3",
+        "1.7",
+        "2.35",
+        "3-day"
+      ]
+    },
+    "memory:memory/daily/2026-04-04.md:1:6": {
+      "key": "memory:memory/daily/2026-04-04.md:1:6",
+      "path": "memory/daily/2026-04-04.md",
+      "startLine": 1,
+      "endLine": 6,
+      "source": "memory",
+      "snippet": "# 2026-04-04 (Saturday) ## Checks - 11:31 — Calendar: Weekend, no timed meetings. Philippe still traveling (until Apr 18). - 11:31 — Memory maintenance: Reviewed dailies Apr 1 & 3. Added HulaHoop onboarding (Apr 8) to MEMORY.md.",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.7710880130529403,
+      "maxScore": 0.38688863217830655,
+      "firstRecalledAt": "2026-04-20T05:33:37.415Z",
+      "lastRecalledAt": "2026-04-21T16:18:12.776Z",
+      "queryHashes": [
+        "2bae87396927",
+        "ce428297c0fe"
+      ],
+      "recallDays": [
+        "2026-04-20",
+        "2026-04-21"
+      ],
+      "conceptTags": [
+        "memory.md",
+        "saturday",
+        "checks",
+        "calendar",
+        "weekend",
+        "timed",
+        "meetings",
+        "philippe"
+      ]
+    },
+    "memory:memory/daily/2026-04-13.md:1:16": {
+      "key": "memory:memory/daily/2026-04-13.md:1:16",
+      "path": "memory/daily/2026-04-13.md",
+      "startLine": 1,
+      "endLine": 16,
+      "source": "memory",
+      "snippet": "# 2026-04-13 (Monday) ## Checks - 10:20 — email + calendar (new week) ## Meetings Today - 12:00 — Spain GTM weekly update (en curso) - 12:30 — Revisión propuesta (FellowFunders) - 16:00 — Pedido ayudas i+D - Growth4U <> Iasaf - 17:00 — Q&A Oier - 18:00 — Weekly Sistemas - ❌ Cancelled: Weekly Spain Readiness sync 16:00 ## Notable - Tue 14 Apr 11:30 — Estrategia Contenido Linkedin (accepted) - Tue 14 Apr 10:30 — Llamada Estratégica (from Thu confirmation)",
+      "recallCount": 2,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.7566201210021972,
+      "maxScore": 0.3881732493638992,
+      "firstRecalledAt": "2026-04-20T05:33:37.415Z",
+      "lastRecalledAt": "2026-04-21T16:18:12.776Z",
+      "queryHashes": [
+        "2bae87396927",
+        "ce428297c0fe"
+      ],
+      "recallDays": [
+        "2026-04-20",
+        "2026-04-21"
+      ],
+      "conceptTags": [
+        "monday",
+        "checks",
+        "email",
+        "calendar",
+        "new",
+        "week",
+        "meetings",
+        "spain"
+      ]
+    },
+    "memory:memory/daily/2026-04-03.md:1:9": {
+      "key": "memory:memory/daily/2026-04-03.md:1:9",
+      "path": "memory/daily/2026-04-03.md",
+      "startLine": 1,
+      "endLine": 9,
+      "source": "memory",
+      "snippet": "# 2026-04-03 (Friday) ## Checks - 14:05 — Calendar: No timed meetings today/tomorrow. Philippe en Argentina/Uruguay hasta Apr 18. - 14:05 — Email: All newsletters, no urgent items. Auto-sent Paymatico Weekly prep at 12:01. ## Notes - Working from home (Casa)",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.3502916246652603,
+      "maxScore": 0.3502916246652603,
+      "firstRecalledAt": "2026-04-20T05:33:37.415Z",
+      "lastRecalledAt": "2026-04-20T05:33:37.415Z",
+      "queryHashes": [
+        "2bae87396927"
+      ],
+      "recallDays": [
+        "2026-04-20"
+      ],
+      "conceptTags": [
+        "today/tomorrow",
+        "argentina/uruguay",
+        "auto-sent",
+        "friday",
+        "checks",
+        "calendar",
+        "timed",
+        "meetings"
+      ]
+    },
+    "memory:memory/daily/2026-04-20.md:1:20": {
+      "key": "memory:memory/daily/2026-04-20.md:1:20",
+      "path": "memory/daily/2026-04-20.md",
+      "startLine": 1,
+      "endLine": 20,
+      "source": "memory",
+      "snippet": "# 2026-04-20 (Monday) ## Checks - 14:16 — email + calendar (busy Monday) ## Meetings Today - 13:30-14:30 — Affiliate Spain Weekly (still on calendar, May dates declined) - 14:00-16:00 — Ocupado - 15:30-16:00 — Weekly Spain Readiness sync - 16:00-16:30 — Iasaf + Contabilidad (new invite, today) - 17:00-17:30 — Q&A Oier - 17:30-18:00 — Llamada Estratégica Sergi Candel & Growth4U - 19:00-19:30 — Weekly Sistemas ## Tomorrow Tue 21 Apr - 09:00-13:00 — Grabación Growit - 16:00-16:30 — 2da Llamada Estratégica Josep & Growth4U (MOVED from Mon 20 → Tue 21, confirmed) ## Wed 22 Apr - 11:00-11:30 — Llamada Estratégica Blas Nieto & Growth4U",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.38827334344387054,
+      "maxScore": 0.38827334344387054,
+      "firstRecalledAt": "2026-04-21T16:18:12.776Z",
+      "lastRecalledAt": "2026-04-21T16:18:12.776Z",
+      "queryHashes": [
+        "ce428297c0fe"
+      ],
+      "recallDays": [
+        "2026-04-21"
+      ],
+      "conceptTags": [
+        "30-14",
+        "00-16",
+        "30-16",
+        "00-17",
+        "30-18",
+        "00-19",
+        "00-13",
+        "00-11"
+      ]
+    },
+    "memory:memory/daily/2026-04-17.md:1:14": {
+      "key": "memory:memory/daily/2026-04-17.md:1:14",
+      "path": "memory/daily/2026-04-17.md",
+      "startLine": 1,
+      "endLine": 14,
+      "source": "memory",
+      "snippet": "# 2026-04-17 (Friday) ## Checks - 12:20 — email + calendar (Friday, new week) ## Meetings Today - 09:00-14:30 — Grabación Growit (en curso) - 13:15 — Miguel y Growt4U - Propuesta - 15:00 — Q&A Oier ## Notable Emails - Google data download ready - PROMPTS-CHEAT-SHEET.md shared request - New recurring: \"Cafeteria T-8\" weekly Friday 10:00-11:30 (accepted invite)",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.37248993813991543,
+      "maxScore": 0.37248993813991543,
+      "firstRecalledAt": "2026-04-21T16:18:12.776Z",
+      "lastRecalledAt": "2026-04-21T16:18:12.776Z",
+      "queryHashes": [
+        "ce428297c0fe"
+      ],
+      "recallDays": [
+        "2026-04-21"
+      ],
+      "conceptTags": [
+        "00-14",
+        "prompts-cheat-sheet.md",
+        "t-8",
+        "00-11",
+        "friday",
+        "checks",
+        "email",
+        "calendar"
+      ]
+    },
+    "memory:memory/daily/2026-04-21.md:1:15": {
+      "key": "memory:memory/daily/2026-04-21.md:1:15",
+      "path": "memory/daily/2026-04-21.md",
+      "startLine": 1,
+      "endLine": 15,
+      "source": "memory",
+      "snippet": "# 2026-04-21 (Tuesday) ## Checks - 12:33 — email + calendar ## Meetings Today - 09:00-13:00 — Grabación Growit (en curso) - 12:00-12:30 — Q&A Oier - ⚠️ 13:00 — CONFLICTO: Paymatico-Growth4U (13-15h) AND Alfonso Nistal (13-13:45h) overlap! - 14:00-16:00 — Comida Lore - Alfonso - 16:00-16:30 — Weekly Fellow<>G4U - 17:15-18:15 — Propuesta Comunidad ## Tomorrow Wed 22 Apr - 11:00-11:30 — Llamada Estratégica Blas Nieto & Growth4U",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.36660587489604946,
+      "maxScore": 0.36660587489604946,
+      "firstRecalledAt": "2026-04-21T16:18:12.776Z",
+      "lastRecalledAt": "2026-04-21T16:18:12.776Z",
+      "queryHashes": [
+        "ce428297c0fe"
+      ],
+      "recallDays": [
+        "2026-04-21"
+      ],
+      "conceptTags": [
+        "00-13",
+        "00-12",
+        "paymatico-growth4u",
+        "13-15h",
+        "13-13",
+        "00-16",
+        "15-18",
+        "00-11"
+      ]
+    },
+    "memory:memory/daily/2026-04-07.md:1:8": {
+      "key": "memory:memory/daily/2026-04-07.md:1:8",
+      "path": "memory/daily/2026-04-07.md",
+      "startLine": 1,
+      "endLine": 8,
+      "source": "memory",
+      "snippet": "# 2026-04-07 (Tuesday) ## Checks - 17:02 — Calendar: \"Casa\" (WFH). Weekly Fellow<>G4U at 16:00, Weekly Projects Philippe at 16:30 today. - 17:02 — Email: Qonto payments x2 (admin), Corey Haines (Swipe Files), Llamada Estratégica Thursday Apr 9 10:00 AM (scheduled). ## Notes - Working from home",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "groundedCount": 0,
+      "totalScore": 0.3624969482421875,
+      "maxScore": 0.3624969482421875,
+      "firstRecalledAt": "2026-04-21T16:18:12.776Z",
+      "lastRecalledAt": "2026-04-21T16:18:12.776Z",
+      "queryHashes": [
+        "ce428297c0fe"
+      ],
+      "recallDays": [
+        "2026-04-21"
+      ],
+      "conceptTags": [
+        "tuesday",
+        "checks",
+        "calendar",
+        "casa",
+        "wfh",
+        "weekly",
+        "fellow",
+        "g4u"
+      ]
+    }
+  }
+}

@@ -40,8 +40,8 @@
     "explorador": {
       "name": "El Explorador",
       "persona_file": "./personas/explorador.md",
-      "dispatch_for": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach"],
-      "skills": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder", "email-sequences", "direct-response-copy"],
+      "dispatch_for": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach", "yalc"],
+      "skills": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder", "email-sequences", "direct-response-copy", "yalc-operator"],
       "brand_context": ["ecps.md", "positioning.md"]
     },
     "redactor": {
@@ -93,6 +93,13 @@
       "skills": ["direct-response-copy", "lead-magnet", "positioning-messaging"],
       "brand_context": ["positioning.md", "ecps.md", "voice-profile.md"]
     },
+    "alarife_operator": {
+      "name": "Alarife Operator",
+      "persona_file": "./personas/alarife-operator.md",
+      "dispatch_for": ["alarife", "alarife-payload", "payload", "cms-migration", "export-site", "import-site", "page-design", "web-publish", "site-preview"],
+      "skills": ["alarife-integration", "payload", "cms-migration", "site-architecture", "frontend-design", "page-cro", "form-cro"],
+      "brand_context": ["foundation-state.json", "voice-profile.md", "visual-identity.md", "positioning.md"]
+    },
     "investigador": {
       "name": "El Investigador",
       "persona_file": "./personas/investigador.md",
@@ -105,8 +112,35 @@
   "client_channels": ["general", "onboarding", "marketing-inbox", "projects", "research", "partners", "prospecting", "content", "paid-ads", "creatives", "web", "insights", "soporte"],
   "cervantes_channels": ["skills", "bugs", "infra", "tasks", "ideas", "nuevo-cliente"],
   "qa_agent": {
-    "id": "rocinante",
+    "id": "sanson",
     "method": "sessions_send",
     "activate_for": ["brand-check", "qa-review", "devil-advocate", "foundation-verification"]
+  },
+  "yalc_agent": {
+    "id": "yalc",
+    "name": "Yalc Agent",
+    "method": "sessions_send",
+    "skill": "yalc-operator",
+    "activate_for": [
+      "yalc",
+      "gtm-os",
+      "outbound-execution",
+      "lead-qualification",
+      "campaign-dry-run",
+      "campaign-launch-confirmed",
+      "campaign-reporting",
+      "instantly",
+      "provider-status",
+      "mcp-provider-status"
+    ],
+    "requires_confirmation_for": [
+      "send-email",
+      "launch-campaign",
+      "approve-gate",
+      "commit-setup",
+      "pause-campaign",
+      "resume-campaign",
+      "update-lead-status"
+    ]
   }
 }

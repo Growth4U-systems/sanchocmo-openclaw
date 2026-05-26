@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trust Engine — Mockups</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #EEEAE4; color: #2C3E50; }
+
+  /* Tab switcher */
+  .mockup-tabs { position: sticky; top: 0; z-index: 100; background: #2C3E50; display: flex; gap: 0; }
+  .mockup-tab { padding: 12px 24px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; }
+  .mockup-tab:hover { color: white; }
+  .mockup-tab.active { color: white; border-bottom-color: #C45D35; }
+  .mockup-panel { display: none; }
+  .mockup-panel.active { display: block; }
+
+  .page { max-width: 860px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── Project bar ── */
+  .project-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 12px; flex-wrap: wrap; }
+  .project-bar h1 { font-size: 22px; font-weight: 800; }
+  .niche-tag { font-size: 12px; font-weight: 600; color: #C45D35; border: 1px solid rgba(196,93,53,0.25); padding: 4px 12px; border-radius: 20px; background: rgba(196,93,53,0.08); }
+  .actions { display: flex; gap: 8px; align-items: center; }
+  .project-selector { font-size: 12px; padding: 5px 10px; border: 1px solid #E8E2D9; border-radius: 8px; background: white; font-weight: 600; cursor: pointer; }
+  .btn-new { font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 8px; border: 1px solid #C45D35; color: #C45D35; background: white; cursor: pointer; transition: all 0.15s; }
+  .btn-new:hover { background: #C45D35; color: white; }
+
+  /* ── Progress ── */
+  .progress-section { margin-bottom: 20px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: #7F8C8D; margin-bottom: 6px; font-weight: 600; }
+  .progress-track { height: 8px; background: #E8E2D9; border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: #27AE60; transition: width 0.5s; }
+
+  /* ── Intro card ── */
+  .intro-card { background: white; border: 1px solid #E8E2D9; border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+  .intro-toggle { width: 100%; display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: none; border: none; cursor: pointer; font-size: 13px; font-weight: 700; color: #2C3E50; text-align: left; }
+  .intro-toggle:hover { background: #FDFCFA; }
+  .intro-toggle .chv { color: #B0A99F; font-size: 10px; transition: transform 0.2s; display: inline-block; }
+  .intro-toggle .chv.open { transform: rotate(90deg); }
+  .intro-body { padding: 0 20px 24px 38px; font-size: 13px; color: #5D6D7E; line-height: 1.75; }
+  .intro-body strong { color: #C45D35; font-weight: 700; }
+  .intro-body em { color: #1565C0; font-style: normal; background: #F0F4FF; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  .intro-body h4 { color: #2C3E50; font-size: 13px; font-weight: 700; margin: 16px 0 6px 0; }
+  .intro-body ul { margin: 4px 0 12px 18px; }
+  .intro-body li { margin-bottom: 4px; }
+  .journey-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+  .journey-card { background: #FDFCFA; border: 1px solid #E8E2D9; border-radius: 8px; padding: 10px 12px; }
+  .jc-before { font-size: 11px; color: #B0A99F; margin-bottom: 4px; }
+  .jc-after { font-size: 12px; color: #C45D35; font-weight: 600; }
+  .jc-label { font-size: 10px; color: #7F8C8D; margin-top: 4px; }
+
+  /* ── Section ── */
+  .section { background: white; border: 1px solid #E8E2D9; border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+  .section-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; user-select: none; }
+  .section-header:hover { background: #FDFCFA; }
+  .section-icon { font-size: 16px; }
+  .section-title { font-size: 13px; font-weight: 700; flex: 1; }
+  .section-count { font-size: 10px; color: #B0A99F; background: #F5F3F0; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .section-chv { color: #B0A99F; font-size: 10px; transition: transform 0.2s; display: inline-block; }
+  .section-chv.open { transform: rotate(90deg); }
+
+  /* ── Document row ── */
+  .doc-list { border-top: 1px solid #F0EDE8; }
+  .doc-row { display: flex; align-items: center; padding: 10px 16px 10px 42px; gap: 10px; transition: background 0.1s; }
+  .doc-row:hover { background: #FDFCFA; }
+  .doc-row + .doc-row { border-top: 1px solid #F5F3F0; }
+  .doc-icon { font-size: 14px; flex-shrink: 0; }
+  .doc-info { flex: 1; min-width: 0; }
+  .doc-name { font-size: 12px; font-weight: 600; }
+  .doc-desc { font-size: 10px; color: #B0A99F; margin-top: 1px; }
+
+  /* Status */
+  .status { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+  .status-done { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+  .status-wip { background: #EFF6FF; color: #1D4ED8; border: 1px solid #93C5FD; }
+  .status-todo { background: #F5F5F5; color: #999; border: 1px solid #E0E0E0; }
+
+  /* Action buttons */
+  .doc-actions { display: flex; gap: 2px; flex-shrink: 0; }
+  .doc-actions button { font-size: 14px; padding: 5px 7px; border: none; background: none; cursor: pointer; border-radius: 6px; transition: all 0.15s; opacity: 0.4; }
+  .doc-actions button:hover { opacity: 1; background: rgba(0,0,0,0.04); transform: scale(1.15); }
+
+  /* ── Empty state ── */
+  .empty-state { text-align: center; padding: 40px 24px 20px; }
+  .empty-state .icon { width: 80px; height: 80px; border-radius: 50%; background: rgba(196,93,53,0.08); display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 24px; }
+  .empty-state h1 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+  .empty-state .subtitle { font-size: 14px; color: #7F8C8D; max-width: 440px; margin: 0 auto 24px; line-height: 1.6; }
+  .empty-state .subtitle strong { color: #2C3E50; }
+  .niche-list { max-width: 460px; margin: 0 auto; text-align: left; }
+  .niche-list h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .niche-list .hint { font-size: 11px; color: #B0A99F; margin-bottom: 12px; }
+  .niche-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1px solid #E8E2D9; border-radius: 10px; background: white; cursor: pointer; transition: all 0.15s; margin-bottom: 8px; }
+  .niche-btn:hover { border-color: rgba(196,93,53,0.4); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .niche-btn .nn { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .niche-btn .nn span { width: 28px; height: 28px; border-radius: 50%; background: #F5F3F0; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .niche-btn .na { font-size: 11px; color: #7F8C8D; }
+
+  /* ── Slide-over ── */
+  .slideover-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; }
+  .slideover { position: fixed; top: 0; right: 0; height: 100vh; width: 75vw; max-width: 900px; background: white; z-index: 501; box-shadow: -4px 0 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; }
+  .slideover-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid #E5E2DC; background: #FAFAF8; flex-shrink: 0; }
+  .slideover-header .close-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: #7A7A7A; padding: 4px 8px; border-radius: 6px; }
+  .slideover-header .close-btn:hover { background: #E5E2DC; color: #1A1A1A; }
+  .slideover-header .title { font-size: 13px; font-weight: 700; flex: 1; }
+  .slideover-header .hdr-btns { display: flex; gap: 6px; }
+  .hdr-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.15s; border: 1px solid #E5E2DC; background: transparent; color: #7A7A7A; }
+  .hdr-btn:hover { background: #E5E2DC; color: #1A1A1A; }
+  .hdr-btn-dark { background: #2C3E50; border-color: #2C3E50; color: white; }
+  .hdr-btn-dark:hover { background: #34495E; }
+  .status-select { padding: 4px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+  .slideover-body { flex: 1; overflow-y: auto; padding: 20px; }
+  .slideover-footer { padding: 8px 16px; border-top: 1px solid #E5E2DC; background: #FAFAF8; font-size: 10px; color: #B0A99F; flex-shrink: 0; }
+
+  /* ── Table (in slideover) ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th { text-align: left; padding: 8px 12px; background: #F5F3F0; color: #7F8C8D; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #E8E2D9; }
+  .data-table td { padding: 8px 12px; border-bottom: 1px solid #F0EDE8; }
+  .data-table tr:hover td { background: #FDFCFA; }
+  .score { font-weight: 700; }
+  .score-high { color: #047857; }
+  .score-med { color: #B45309; }
+  .score-low { color: #999; }
+  .tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .tag-kw { background: #EFF6FF; color: #1D4ED8; }
+  .tag-pr { background: #F5F0FF; color: #7C3AED; }
+  .data-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 6px; border-bottom: 2px solid #E8E2D9; margin-bottom: 12px; margin-top: 20px; }
+  .data-section-title:first-child { margin-top: 0; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #E8E2D9; margin-bottom: 16px; }
+  .meta-badge { font-size: 11px; }
+  .meta-badge .ml { color: #7F8C8D; font-weight: 600; }
+  .meta-badge .mv { color: #2C3E50; font-weight: 700; margin-left: 4px; }
+</style>
+</head>
+<body>
+
+<div class="mockup-tabs">
+  <button class="mockup-tab active" onclick="showPanel('empty')">1. Empty State</button>
+  <button class="mockup-tab" onclick="showPanel('active')">2. Proyecto activo</button>
+  <button class="mockup-tab" onclick="showPanel('docview')">3. Ver documento (Slideover)</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PANEL 1: EMPTY STATE                                       -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="panel-empty" class="mockup-panel active">
+<div class="page">
+  <div class="empty-state">
+    <div class="icon">🔒</div>
+    <h1>Trust Engine</h1>
+    <p class="subtitle">
+      Analiza el <strong>customer journey</strong> de tu cliente y llena cada punto de contacto con
+      <strong style="color:#C45D35">señales de confianza de terceros</strong> para aumentar la conversión.
+    </p>
+  </div>
+
+  <!-- Same intro content as in active project, but always open -->
+  <div class="intro-card" style="max-width:460px; margin:0 auto 24px;">
+    <button class="intro-toggle" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.querySelector('.chv').classList.toggle('open')">
+      <span class="chv open">▶</span>
+      🔒 ¿Cómo funciona la confianza?
+    </button>
+    <div class="intro-body">
+      <p>
+        Antes de comprarte, tu cliente pasa por <strong>4 momentos</strong> donde necesita confiar en ti.
+        Hoy, esos puntos de contacto probablemente están vacíos — y eso mata la conversión.
+      </p>
+
+      <h4>El Customer Journey de la confianza</h4>
+      <div class="journey-grid">
+        <div class="journey-card">
+          <div class="jc-before">📱 Ve un post en redes sociales</div>
+          <div class="jc-after">→ De alguien que le da confianza</div>
+          <div class="jc-label">Cubierto por: Influencers</div>
+        </div>
+        <div class="journey-card">
+          <div class="jc-before">🖥️ Llega a tu landing</div>
+          <div class="jc-after">→ Con incentivo y social proof</div>
+          <div class="jc-label">Cubierto por: Own Media</div>
+        </div>
+        <div class="journey-card">
+          <div class="jc-before">📰 Lee un artículo sobre ti</div>
+          <div class="jc-after">→ De un tercero independiente</div>
+          <div class="jc-label">Cubierto por: SERP + Gap + Keywords</div>
+        </div>
+        <div class="journey-card">
+          <div class="jc-before">🔍 Te busca en Google</div>
+          <div class="jc-after">→ Encuentra resultados positivos</div>
+          <div class="jc-label">Cubierto por: SEO Audit + GEO Analysis</div>
+        </div>
+      </div>
+
+      <p style="margin-bottom:10px">
+        Las búsquedas típicas que hace tu cliente:
+      </p>
+      <p style="margin-bottom:16px">
+        <em>"opiniones de [tu marca]"</em>
+        <em>"¿es seguro [tu marca]?"</em>
+        <em>"alternativas a [tu marca]"</em>
+      </p>
+
+      <h4>¿Qué hace Trust Engine?</h4>
+      <ul>
+        <li><strong>Fase 1 — Auditoría:</strong> Analiza qué señales de confianza existen hoy (SEO, medios propios, IA, SERP)</li>
+        <li><strong>Fase 2 — Análisis:</strong> Detecta dónde falta cobertura de terceros y genera recomendaciones priorizadas</li>
+        <li><strong>Fase 3 — Acción:</strong> Genera 3 listas accionables: keywords para contenido, oportunidades en medios, e influencers/partners</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="niche-list" style="max-width:460px; margin:0 auto;">
+    <h3>Crear proyecto de Trust Engine</h3>
+    <p class="hint">Selecciona un nicho de Foundation para lanzar el análisis.</p>
+    <button class="niche-btn"><span class="nn"><span>🎯</span> Growth para fintechs reguladas</span><span class="na">Crear →</span></button>
+    <button class="niche-btn"><span class="nn"><span>🎯</span> Sistema de growth repetible</span><span class="na">Crear →</span></button>
+    <button class="niche-btn"><span class="nn"><span>🎯</span> Diversificación de canales</span><span class="na">Crear →</span></button>
+    <button class="niche-btn"><span class="nn"><span>🎯</span> Founder quemado por agencias</span><span class="na">Crear →</span></button>
+    <button class="niche-btn"><span class="nn"><span>🎯</span> Visibilidad digital</span><span class="na">Crear →</span></button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PANEL 2: PROYECTO ACTIVO                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="panel-active" class="mockup-panel">
+<div class="page">
+
+  <div class="project-bar">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <h1>🔒 Trust Engine</h1>
+      <span class="niche-tag">Growth para fintechs reguladas</span>
+    </div>
+    <div class="actions">
+      <select class="project-selector">
+        <option>Growth para fintechs reguladas</option>
+        <option>Sistema de growth repetible</option>
+      </select>
+      <button class="btn-new">+ Nuevo nicho</button>
+    </div>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-label"><span>Progreso</span><span>3/8 · 38%</span></div>
+    <div class="progress-track"><div class="progress-fill" style="width:38%"></div></div>
+  </div>
+
+  <!-- Intro (closed by default in active view) -->
+  <div class="intro-card">
+    <button class="intro-toggle" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.querySelector('.chv').classList.toggle('open')">
+      <span class="chv">▶</span>
+      🔒 ¿Qué es el Trust Engine?
+    </button>
+    <div class="intro-body" style="display:none">
+      <p>Antes de comprarte, tu cliente pasa por <strong>4 momentos</strong> donde necesita confiar en ti. Hoy, esos puntos de contacto probablemente están vacíos — y eso mata la conversión.</p>
+      <h4>El Customer Journey de la confianza</h4>
+      <div class="journey-grid">
+        <div class="journey-card"><div class="jc-before">📱 Ve un post en redes sociales</div><div class="jc-after">→ De alguien que le da confianza</div><div class="jc-label">Cubierto por: Influencers</div></div>
+        <div class="journey-card"><div class="jc-before">🖥️ Llega a tu landing</div><div class="jc-after">→ Con incentivo y social proof</div><div class="jc-label">Cubierto por: Own Media</div></div>
+        <div class="journey-card"><div class="jc-before">📰 Lee un artículo sobre ti</div><div class="jc-after">→ De un tercero independiente</div><div class="jc-label">Cubierto por: SERP + Gap + Keywords</div></div>
+        <div class="journey-card"><div class="jc-before">🔍 Te busca en Google</div><div class="jc-after">→ Encuentra resultados positivos</div><div class="jc-label">Cubierto por: SEO Audit + GEO Analysis</div></div>
+      </div>
+      <p style="margin-bottom:10px">Búsquedas típicas: <em>"opiniones de [tu marca]"</em> <em>"¿es seguro [tu marca]?"</em> <em>"alternativas a [tu marca]"</em></p>
+      <h4>¿Qué hace Trust Engine?</h4>
+      <ul>
+        <li><strong>Fase 1 — Auditoría:</strong> Analiza qué señales de confianza existen hoy</li>
+        <li><strong>Fase 2 — Análisis:</strong> Detecta dónde falta cobertura de terceros</li>
+        <li><strong>Fase 3 — Acción:</strong> Genera 3 listas accionables</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-chv open">▶</span>
+      <span class="section-icon">🔍</span>
+      <span class="section-title">Auditoría</span>
+      <span class="section-count">3/4</span>
+    </div>
+    <div class="doc-list">
+      <div class="doc-row">
+        <span class="doc-icon">🔍</span>
+        <div class="doc-info"><div class="doc-name">SEO Audit</div><div class="doc-desc">Lighthouse, Core Web Vitals, health checks</div></div>
+        <span class="status status-done">Completado</span>
+        <div class="doc-actions"><button title="Ver documento">📄</button><button title="Chat">💬</button></div>
+      </div>
+      <div class="doc-row">
+        <span class="doc-icon">🌐</span>
+        <div class="doc-info"><div class="doc-name">Own Media</div><div class="doc-desc">Blog, redes sociales, schemas, stack técnico</div></div>
+        <span class="status status-done">Completado</span>
+        <div class="doc-actions"><button title="Ver documento">📄</button><button title="Chat">💬</button></div>
+      </div>
+      <div class="doc-row">
+        <span class="doc-icon">🤖</span>
+        <div class="doc-info"><div class="doc-name">GEO Analysis</div><div class="doc-desc">Visibilidad en ChatGPT, Gemini, Perplexity</div></div>
+        <span class="status status-done">Completado</span>
+        <div class="doc-actions"><button title="Ver documento">📄</button><button title="Chat">💬</button></div>
+      </div>
+      <div class="doc-row">
+        <span class="doc-icon">📊</span>
+        <div class="doc-info"><div class="doc-name">SERP Analysis</div><div class="doc-desc">Posiciones en Google por keyword</div></div>
+        <span class="status status-todo">No iniciado</span>
+        <div class="doc-actions"><button title="Ejecutar" style="opacity:0.7">▶️</button><button title="Chat">💬</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-chv open">▶</span>
+      <span class="section-icon">🔗</span>
+      <span class="section-title">Análisis</span>
+      <span class="section-count">0/2</span>
+    </div>
+    <div class="doc-list">
+      <div class="doc-row">
+        <span class="doc-icon">🔗</span>
+        <div class="doc-info"><div class="doc-name">Gap Analysis</div><div class="doc-desc">Dónde aparecen competidores y tú no</div></div>
+        <span class="status status-todo">No iniciado</span>
+        <div class="doc-actions"><button title="Ejecutar" style="opacity:0.7">▶️</button><button title="Chat">💬</button></div>
+      </div>
+      <div class="doc-row">
+        <span class="doc-icon">✅</span>
+        <div class="doc-info"><div class="doc-name">Recommendations</div><div class="doc-desc">Recomendaciones priorizadas con impacto esperado</div></div>
+        <span class="status status-todo">No iniciado</span>
+        <div class="doc-actions"><button title="Ejecutar" style="opacity:0.7">▶️</button><button title="Chat">💬</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="section-chv open">▶</span>
+      <span class="section-icon">🚀</span>
+      <span class="section-title">Acción</span>
+      <span class="section-count">0/2</span>
+    </div>
+    <div class="doc-list">
+      <div class="doc-row">
+        <span class="doc-icon">🔑</span>
+        <div class="doc-info"><div class="doc-name">Keywords</div><div class="doc-desc">Keywords por subnicho, competidores y oportunidades</div></div>
+        <span class="status status-todo">No iniciado</span>
+        <div class="doc-actions"><button title="Ejecutar" style="opacity:0.7">▶️</button><button title="Chat">💬</button></div>
+      </div>
+      <div class="doc-row">
+        <span class="doc-icon">🎯</span>
+        <div class="doc-info"><div class="doc-name">Influencers</div><div class="doc-desc">Influencers y medios del sector</div></div>
+        <span class="status status-todo">No iniciado</span>
+        <div class="doc-actions"><button title="Ejecutar" style="opacity:0.7">▶️</button><button title="Chat">💬</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PANEL 3: DOCUMENT SLIDEOVER (same as Foundation)           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="panel-docview" class="mockup-panel">
+
+  <!-- Faded page behind -->
+  <div class="page" style="opacity:0.3; pointer-events:none;">
+    <div class="project-bar">
+      <div style="display:flex;align-items:center;gap:12px"><h1>🔒 Trust Engine</h1><span class="niche-tag">Growth para fintechs reguladas</span></div>
+    </div>
+    <div class="section"><div class="section-header"><span class="section-chv open">▶</span><span class="section-icon">🔍</span><span class="section-title">Auditoría</span></div></div>
+  </div>
+
+  <!-- Overlay -->
+  <div class="slideover-overlay" onclick="showPanel('active')"></div>
+
+  <!-- Slide-over panel -->
+  <div class="slideover">
+    <!-- Header (matches DocSlideOver exactly) -->
+    <div class="slideover-header">
+      <button class="close-btn" onclick="showPanel('active')">✕</button>
+      <span class="title">🔑 Keywords</span>
+      <div class="hdr-btns">
+        <select class="status-select" style="background:#ECFDF5; border:1px solid #A7F3D0; color:#047857;">
+          <option>Completado</option>
+          <option>En progreso</option>
+          <option>Pendiente revisión</option>
+          <option>No iniciado</option>
+        </select>
+        <button class="hdr-btn">✏️ Editar</button>
+        <button class="hdr-btn">⤢ Abrir</button>
+        <button class="hdr-btn hdr-btn-dark">💬 Chat</button>
+      </div>
+    </div>
+
+    <!-- Body: JSON rendered as tables (like JsonViewer) -->
+    <div class="slideover-body">
+
+      <!-- Metadata badges (top, like JsonViewer) -->
+      <div class="meta-row">
+        <div class="meta-badge"><span class="ml">Módulo</span><span class="mv">keywords</span></div>
+        <div class="meta-badge"><span class="ml">Estado</span><span class="mv">completed</span></div>
+        <div class="meta-badge"><span class="ml">Última ejecución</span><span class="mv">13 abr 2026, 14:32</span></div>
+        <div class="meta-badge"><span class="ml">Nicho</span><span class="mv">Growth para fintechs reguladas</span></div>
+      </div>
+
+      <!-- Summary -->
+      <div class="data-section-title">Resumen</div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px;">
+        <div style="background:#FDFCFA; border:1px solid #E8E2D9; border-radius:10px; padding:12px; text-align:center;">
+          <div style="font-size:22px; font-weight:800; color:#1D4ED8;">147</div>
+          <div style="font-size:10px; color:#7F8C8D; font-weight:600; margin-top:2px;">KEYWORDS</div>
+        </div>
+        <div style="background:#FDFCFA; border:1px solid #E8E2D9; border-radius:10px; padding:12px; text-align:center;">
+          <div style="font-size:22px; font-weight:800; color:#047857;">23</div>
+          <div style="font-size:10px; color:#7F8C8D; font-weight:600; margin-top:2px;">HIGH PRIORITY</div>
+        </div>
+        <div style="background:#FDFCFA; border:1px solid #E8E2D9; border-radius:10px; padding:12px; text-align:center;">
+          <div style="font-size:22px; font-weight:800; color:#B45309;">89</div>
+          <div style="font-size:10px; color:#7F8C8D; font-weight:600; margin-top:2px;">MEDIUM</div>
+        </div>
+        <div style="background:#FDFCFA; border:1px solid #E8E2D9; border-radius:10px; padding:12px; text-align:center;">
+          <div style="font-size:22px; font-weight:800; color:#999;">35</div>
+          <div style="font-size:10px; color:#7F8C8D; font-weight:600; margin-top:2px;">LOW</div>
+        </div>
+      </div>
+
+      <!-- Keywords table -->
+      <div class="data-section-title">Keywords por subnicho</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Keyword</th><th>Subnicho</th><th>Vol.</th><th>KD</th><th>Score</th><th>Tipo</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>pagos recurrentes gimnasio</strong></td><td>Cadenas fitness multi-sede</td><td>1.2K</td><td>34</td><td class="score score-high">92</td><td><span class="tag tag-kw">keyword</span></td></tr>
+          <tr><td><strong>gestión cobros recurrentes</strong></td><td>Cadenas fitness multi-sede</td><td>880</td><td>28</td><td class="score score-high">87</td><td><span class="tag tag-kw">keyword</span></td></tr>
+          <tr><td><strong>mejor pasarela de pago para gimnasios</strong></td><td>Cadenas fitness multi-sede</td><td>590</td><td>42</td><td class="score score-high">81</td><td><span class="tag tag-pr">prompt</span></td></tr>
+          <tr><td><strong>software gestión academias</strong></td><td>Academias y centros</td><td>720</td><td>31</td><td class="score score-med">68</td><td><span class="tag tag-kw">keyword</span></td></tr>
+          <tr><td><strong>alternativas a stripe para España</strong></td><td>Fintechs reguladas</td><td>480</td><td>55</td><td class="score score-med">62</td><td><span class="tag tag-pr">prompt</span></td></tr>
+          <tr><td><strong>cobros SEPA domiciliaciones</strong></td><td>Fintechs reguladas</td><td>320</td><td>19</td><td class="score score-med">58</td><td><span class="tag tag-kw">keyword</span></td></tr>
+          <tr><td><strong>opiniones paymatico</strong></td><td>Fintechs reguladas</td><td>110</td><td>8</td><td class="score score-low">41</td><td><span class="tag tag-pr">prompt</span></td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:20px; text-align:right;">
+        <button style="font-size:11px; color:#7F8C8D; background:none; border:1px solid #E8E2D9; border-radius:6px; padding:5px 12px; cursor:pointer;">
+          { } Ver JSON
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer (path) -->
+    <div class="slideover-footer">
+      brand/growth4u/trust-engine/keywords.json
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showPanel(id) {
+  document.querySelectorAll('.mockup-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.mockup-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.querySelectorAll('.mockup-tab')[{empty:0,active:1,docview:2}[id]].classList.add('active');
+}
+function toggleSection(el) {
+  var list = el.nextElementSibling;
+  list.style.display = list.style.display === 'none' ? 'block' : 'none';
+  el.querySelector('.section-chv').classList.toggle('open');
+}
+</script>
+</body>
+</html>

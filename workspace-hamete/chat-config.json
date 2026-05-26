@@ -1,0 +1,24 @@
+{
+  "agent": "hamete",
+  "version": 1,
+  "note": "Config del chat para Hamete. MC consulta esto cuando enruta tasks type=research o tareas con triggers de competitive intel / signals.",
+  "tasks": {
+    "_defaults": {
+      "skill": "deep-research"
+    },
+    "_byType": {
+      "research": {
+        "skill": "deep-research",
+        "skills": ["deep-research", "competitor-intelligence", "market-intelligence", "meeting-intelligence", "daily-pulse", "signal-monitor", "thief-marketers"]
+      }
+    },
+    "_byChannel": {
+      "research": { "skill": "deep-research" },
+      "intelligence": { "skill": "daily-pulse" }
+    },
+    "_byTool": {
+      "trust-engine": { "skill": "trust-engine" },
+      "atalaya": { "skill": "competitor-intelligence" }
+    }
+  }
+}

@@ -11,6 +11,15 @@ import { BASE, integrationsFile } from "@/lib/data/paths";
 
 const _metricsCache: Record<string, { json: string; ts: number }> = {};
 
+/**
+ * Drop the in-process metrics cache entry for a slug. Called from the client
+ * delete flow so that recreating a client with the same slug doesn't serve
+ * the previous client's cached metrics for up to 5 minutes.
+ */
+export function invalidateMetricsCache(slug: string): void {
+  delete _metricsCache[slug];
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") { res.status(405).json({ error: "Method not allowed" }); return; }
 

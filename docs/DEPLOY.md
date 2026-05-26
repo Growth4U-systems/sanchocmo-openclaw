@@ -4,7 +4,17 @@ Deploy SanchoCMO to a VPS using Docker Compose and nginx.
 
 ---
 
+> **Running a live deploy already?** Read [`SERVER-OPS.md`](./SERVER-OPS.md) for the day-2 ops side: minimum resources, swap, log rotation, build-cache prune cron, monitoring and the recovery playbook for failures we've actually seen in prod. The "post-install hardening" steps there are **not optional** for a real workload — apply them right after this guide.
+
+---
+
 ## Requirements
+
+> **VPS sizing**: the numbers below are the floor for an idle install. A
+> live workload (multiple brands × content-engine crons) needs **4 vCPU /
+> 8 GB RAM / 80 GB disk** to avoid OOM-kills and disk pressure. See
+> [`SERVER-OPS.md §1`](./SERVER-OPS.md#1-minimum-resource-budget) for the
+> full budget.
 
 | Resource | Minimum |
 |---|---|
@@ -150,9 +160,39 @@ R2_PUBLIC_URL=...
 # Search & scraping (used by Sancho skills)
 SERPER_API_KEY=...           # Google Search via Serper.dev
 FIRECRAWL_API_KEY=...        # Web scraping
+
+# YALC / GTM-OS (used by Yalc Agent + Mission Control cockpit)
+YALC_BASE_URL=http://yalc:3847
+YALC_API_TOKEN=...           # Same value exposed to YALC as GTM_OS_API_TOKEN
+YALC_BUILD_CONTEXT=../Yalc-Growth4U
+YALC_DATA_VOLUME=yalc_data   # Or /mnt/data/yalc-gtm-os for a host-mounted SQLite directory
+YALC_PORT=3847
 ```
 
 > See `.env.example` for the full list of optional variables (payments, social media, analytics, etc.).
+
+**YALC source for staging deploy** — staging now builds YALC from the private `Growth4U-systems/Yalc-Growth4U` repo and starts it with `docker-compose.yalc.yml`.
+
+In the GitHub **staging Environment**, set:
+
+```env
+ENABLE_YALC_SERVICE=1
+YALC_REF=main
+YALC_BUILD_CONTEXT=../Yalc-Growth4U
+```
+
+And add secret:
+
+```env
+YALC_REPO_TOKEN=<fine-grained GitHub token with read access to Growth4U-systems/Yalc-Growth4U>
+```
+
+If you do not want to use `YALC_REPO_TOKEN`, pre-clone the repo on the VPS at the same path:
+
+```bash
+cd "$(dirname ~/.openclaw)"
+git clone git@github.com:Growth4U-systems/Yalc-Growth4U.git Yalc-Growth4U
+```
 
 **`config/instance.json`** — copy from example and set Discord IDs:
 
@@ -168,13 +208,88 @@ cp config/clients.json.example config/clients.json
 nano config/clients.json
 ```
 
+### 5b. Set up Open Design daemon vhost
+
+The Media Creation surface in Mission Control opens a web-based agentic
+editor served by the Open Design daemon container (`ghcr.io/growth4u-systems/od`).
+The daemon runs alongside Sancho via Compose, but its public URL is a
+**separate subdomain** with its own nginx vhost and TLS cert.
+
+The reverse-proxy config lives in [`infra/nginx/od.conf`](../infra/nginx/od.conf)
+with placeholders for the FQDN and API token. Apply it like this:
+
+```bash
+# Choose the OD subdomain (must have an A record pointing at the VPS IP)
+OD_DOMAIN=od.staging.sanchocmo.ai
+
+# 1) Add OD env vars to .env (token must match what nginx will inject below)
+cat >> /root/.openclaw/.env <<EOF
+OD_API_TOKEN=$(openssl rand -hex 32)
+OD_WEB_URL=https://${OD_DOMAIN}
+OD_ALLOWED_ORIGINS=https://${OD_DOMAIN}
+OPEN_DESIGN_IMAGE=ghcr.io/growth4u-systems/od:sanchocmo
+EOF
+
+# 2) Stub vhost so certbot can issue a cert
+sudo tee /etc/nginx/sites-available/sancho-od >/dev/null <<EOF
+server { listen 80; server_name ${OD_DOMAIN}; location / { return 404; } }
+EOF
+sudo ln -sf /etc/nginx/sites-available/sancho-od /etc/nginx/sites-enabled/sancho-od
+sudo nginx -t && sudo systemctl reload nginx
+
+# 3) Cert
+sudo certbot --nginx -d ${OD_DOMAIN} --non-interactive --agree-tos --email ops@sanchocmo.ai
+
+# 4) Replace the certbot stub with the versioned config from this repo
+TOKEN=$(grep '^OD_API_TOKEN=' /root/.openclaw/.env | cut -d= -f2-)
+sudo cp ~/.openclaw/infra/nginx/od.conf /etc/nginx/sites-available/sancho-od
+sudo sed -i "s|<OD_DOMAIN>|${OD_DOMAIN}|g; s|<OD_API_TOKEN>|${TOKEN}|g" /etc/nginx/sites-available/sancho-od
+sudo ln -sf /etc/nginx/sites-available/sancho-od /etc/nginx/sites-enabled/sancho-od
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+For staging/prod deploys driven by GitHub Actions, set the same values
+in the corresponding **GitHub Environment** so the workflow rewrites
+`.env` on every deploy:
+
+| Variable / Secret | Where it lives | Value |
+|------|------|------|
+| `OD_API_TOKEN` (secret) | Environment | Same hex string injected by nginx |
+| `OD_WEB_URL` (var) | Environment | `https://od.<env>.sanchocmo.ai` |
+| `OD_ALLOWED_ORIGINS` (var) | Environment | Same as `OD_WEB_URL` (comma-list if more origins are embedding) |
+| `OPEN_DESIGN_IMAGE` (var) | Environment | `ghcr.io/growth4u-systems/od:sanchocmo` (branded trunk) or pin to `:vX.Y.Z` |
+| `ANTHROPIC_API_KEY` (secret) | Environment | Anthropic API key for the baked-in `claude` CLI (Settings → Local CLI). Per-tenant deploys should use a per-tenant key so billing is scoped to the client. |
+
+The branded image bakes `@anthropic-ai/claude-code` into the runtime so
+the Settings → Local CLI panel surfaces a working agent in cloud mode.
+The daemon's upstream `env.ts` strips `ANTHROPIC_API_KEY` before
+spawning `claude` (assumes desktop `claude login`); the fork honors
+`OD_CLAUDE_PRESERVE_API_KEY=1` (hardcoded in `docker-compose.yml`) to
+keep the key in scope since interactive login is impossible inside a
+container.
+
+Smoke test:
+
+```bash
+curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://${OD_DOMAIN}/api/mcp/install-info
+# expect HTTP 200
+
+# Local CLI sanity check from inside the container:
+docker exec open-design claude --version
+# expect a version string like "2.0.42 (Claude Code)"
+```
+
+See [`infra/nginx/README.md`](../infra/nginx/README.md) for token rotation
+and conventions (sites-available vs sites-enabled, backup snapshots).
+
 ### 6. Launch
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.yalc.yml up -d --build
 ```
 
-First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, escudero, rocinante), and auto-detects Discord guilds.
+First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, escudero, rocinante, yalc), and auto-detects Discord guilds.
+The YALC container exposes its API inside Docker as `http://yalc:3847`, persists SQLite state under `/root/.gtm-os`, and serves `/healthz` without bearer auth for Docker health checks.
 
 > **Cervantes** does NOT run inside Docker. See step 8 below.
 
@@ -189,9 +304,19 @@ curl https://staging.sanchocmo.ai/mc/api/health-check
 
 # Stream logs
 docker logs sanchocmo --tail 50 -f
+docker logs yalc-gtm-os --tail 50 -f
 
 # Check bot status inside container
 docker exec sanchocmo openclaw status
+
+# Check YALC health from the VPS host
+curl http://127.0.0.1:3847/healthz
+```
+
+Mission Control exposes the YALC cockpit at:
+
+```text
+https://staging.sanchocmo.ai/dashboard/<client-slug>/yalc
 ```
 
 ### 8. Approve your Discord user (OpenClaw bot)
@@ -469,9 +594,9 @@ Both environments use the **same secret and variable names** — only the values
 
 | Name | Value | Where to get it |
 |---|---|---|
-| `VPS_HOST` | IP address or hostname of the VPS | The IP/domain you set up DNS for in step 2 (e.g. `staging.sanchocmo.ai`, `203.0.113.42`) |
-| `VPS_USER` | SSH user that owns `authorized_keys` | The user you ran `ssh-keygen` as in Step 1 (e.g. `deploy`, `root`) |
-| `VPS_SSH_KEY` | Full private key contents from Step 1 | The output of `cat ~/.ssh/github-actions-deploy` — entire block including BEGIN/END lines |
+| `VPS_HOST` | Bare hostname or IP — **no protocol, no slash, no spaces** | The IP or domain you set up DNS for in step 2. Examples that work: `staging.sanchocmo.ai`, `app.sanchocmo.ai`, `203.0.113.42`. Examples that break: `https://staging.sanchocmo.ai` (has protocol), `staging.sanchocmo.ai/` (has slash), `staging.sanchocmo.ai ` (trailing space). |
+| `VPS_USER` | SSH user that owns `authorized_keys` | The user you ran `ssh-keygen` as in Step 1 (e.g. `deploy`, `root`). Bare username, no `@host` suffix. |
+| `VPS_SSH_KEY` | Full private key contents from Step 1 | The output of `cat ~/.ssh/github-actions-deploy` — entire block including the `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----` lines. |
 
 **Variables** (Settings → Environments → `<env>` → Add variable — visible in logs, editable):
 
@@ -496,12 +621,18 @@ git push origin staging
 1. Actions → "Deploy to Production"
 2. "Run workflow" → enter the tag (e.g. `v0.2.0`) → Run
 
-Watch the run at `https://github.com/<org>/<repo>/actions`. Expected step order:
+Watch the run at `https://github.com/<org>/<repo>/actions`. Expected step order and what each failure means:
 
-1. **Setup SSH agent** — fails if `VPS_SSH_KEY` is empty or malformed
-2. **Add VPS host to known_hosts** — fails if `VPS_HOST` doesn't resolve
-3. **Deploy via SSH** — fails if `git fetch` can't reach GitHub (revisit Step 2) or `cd "$DEPLOY_PATH"` finds nothing (revisit Step 3's `DEPLOY_PATH`)
-4. **Health check** — fails if the app didn't come up or `HEALTH_URL` doesn't point at it
+| Step | Failure symptom in logs | Likely cause |
+|---|---|---|
+| **Setup SSH agent** | `Error loading key`, agent fails to start | `VPS_SSH_KEY` is empty, missing BEGIN/END lines, or has Windows line endings |
+| **Add VPS host to known_hosts** | `getaddrinfo ***: Name or service not known` (many retries) | `VPS_HOST` has a typo, a leading `https://`, a trailing `/`, an extra space, or DNS hasn't propagated. Re-paste the value, then verify with `dig <host> +short` |
+| **Deploy via SSH** | `Permission denied (publickey)` | The Actions→VPS key (Step 1) wasn't added to `~/.ssh/authorized_keys` of `VPS_USER` on the VPS |
+| **Deploy via SSH** | `Permission denied (publickey)` **on `git fetch`** | The VPS→GitHub deploy key (Step 2) is missing or `~/.ssh/config` doesn't point at it |
+| **Deploy via SSH** | `cd: ...: No such file or directory` | `DEPLOY_PATH` doesn't match the repo location on the VPS |
+| **Deploy via SSH** | `docker: permission denied while trying to connect` | `VPS_USER` is not in the `docker` group on the VPS |
+| **Health check** | Curl returns HTML / 404 / 502 | The container started but the deployed code doesn't have `/api/health`, or nginx isn't routing to port 3000 |
+| **Health check** | Connection times out | The container didn't start — check `docker compose logs` on the VPS |
 
 End-to-end success looks like:
 

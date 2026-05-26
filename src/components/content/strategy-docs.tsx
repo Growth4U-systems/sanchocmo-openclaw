@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { DepthBar } from "@/components/foundation/depth-bar";
+import { DepthBar } from "@/components/brand-brain/depth-bar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 

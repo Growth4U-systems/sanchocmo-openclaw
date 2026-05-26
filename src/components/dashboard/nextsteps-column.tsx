@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { useFoundation } from "@/hooks/useFoundation";
+import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildPillarThread, buildTaskThread, buildProjectThread } from "@/lib/chat-openers";
+import { buildPillarThread, buildTaskThread, buildProjectThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { cn } from "@/lib/utils";
-import type { FoundationState, Section } from "@/types";
+import type { BrandBrainState, Section } from "@/types";
 
 // ============================================================
 // Next Steps Column — Faithful port of renderV2NextSteps()
@@ -37,7 +37,7 @@ function ffDonePillars(sections: Record<string, Section>): Set<string> {
   return done;
 }
 
-function calcFoundationStats(foundation: FoundationState | undefined) {
+function calcFoundationStats(foundation: BrandBrainState | undefined) {
   let approved = 0;
   let total = 0;
   if (!foundation?.sections) return { approved, total, pct: 0 };
@@ -109,7 +109,7 @@ function RecommendationsSection({
     const data = await res.json();
     // If a new project was created, navigate to the project detail page
     if (projectOverride === "__NEW__" && data.projectId) {
-      window.location.href = `/dashboard/${slug}/projects/${data.projectId}`;
+      window.location.href = `/dashboard/${slug}/tasks/${data.projectId}`;
       return true;
     }
     window.location.reload();
@@ -274,21 +274,9 @@ interface NextStepsColumnProps {
 }
 
 export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
-  const { data: foundation } = useFoundation(slug);
+  const { data: foundation } = useBrandBrain(slug);
   const { data: projectsData } = useProjects(slug);
   const openChat = useOpenChat();
-
-  // Atalaya recommendations
-  const { data: atalayaData } = useQuery({
-    queryKey: ["recommendations", slug],
-    queryFn: async () => {
-      const res = await fetch(`/api/recommendations?slug=${slug}&status=pending`);
-      if (!res.ok) return { recommendations: [] };
-      return res.json();
-    },
-    enabled: !!slug,
-    staleTime: 60_000,
-  });
 
   // Monitoring data for performance recs
   const { data: monData } = useQuery({
@@ -346,14 +334,6 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
     .filter((r: { priority: string }) => r.priority === "high" || r.priority === "medium")
     .slice(0, 4);
 
-  // --- Atalaya recommendations ---
-  const atalayaRecs = (atalayaData?.recommendations || []).filter(
-    (r: { source?: string }) => !r.source?.startsWith("performance")
-  );
-  const topAtalaya = atalayaRecs
-    .filter((r: { priority: string }) => r.priority === "high" || r.priority === "medium")
-    .slice(0, 4);
-
   // --- Projects ---
   const allProjects = (projectsData || []).map((p: { project: unknown; tasks: unknown[] }) => ({
     ...(p.project as Record<string, unknown>),
@@ -401,7 +381,7 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
       {/* Foundation warning */}
       {foundation && fStats.pct < 100 && (
         <Link
-          href={`/dashboard/${slug}/foundation`}
+          href={`/dashboard/${slug}/brand-brain`}
           className={cn(
             "block mb-3 px-3 py-2 rounded-lg text-[11px] cursor-pointer transition-colors",
             fStats.pct >= 40
@@ -423,6 +403,11 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
           {decisions.map((d) => {
             const handleChat = () => {
               if (d.pillar) {
+                // Convergence: check if this doc belongs to a task first
+                if (d.docUrl) {
+                  const taskThread = findTaskThreadForDoc(slug, d.docUrl, projectsData);
+                  if (taskThread) { openChat(slug, taskThread); return; }
+                }
                 const config = buildPillarThread(slug, d.pillar, d.docUrl || undefined);
                 openChat(slug, config);
               }
@@ -530,7 +515,7 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
               openChat(slug, config);
             };
 
-            const projectUrl = `/dashboard/${slug}/projects/${p.id as string}`;
+            const projectUrl = `/dashboard/${slug}/tasks/${p.id as string}`;
 
             return (
               <div

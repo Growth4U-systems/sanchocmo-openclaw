@@ -1,0 +1,1962 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import Head from "next/head";
+import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import {
+  Check,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  MessageSquareText,
+  RefreshCw,
+  X,
+} from "lucide-react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useSlugSync } from "@/hooks/useSlugSync";
+import { useClients } from "@/hooks/useClients";
+import { useOpenChat } from "@/hooks/useChat";
+import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
+import { cn } from "@/lib/utils";
+import type { Project, Task } from "@/types";
+
+type View = "overview" | "sources" | "meetings" | "decisions" | "pov" | "impact" | "proposals";
+type Status = "needs_raw_sync" | "raw_available" | "processed" | "needs_review" | "failed";
+type ImpactStatus = "no impact" | "possible update" | "conflict" | "proposal ready";
+type Priority = "high" | "medium" | "low";
+
+interface Meeting {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  source: string;
+  status: Status;
+  rawStatus?: string;
+  hasRaw?: boolean;
+  hasSummary?: boolean;
+  type: string;
+  participants: string[];
+  decisions: number;
+  actions: number;
+  file?: string;
+  sourceId?: string;
+  sourceUrl?: string;
+  fetchedAt?: string | null;
+}
+
+interface SourceScope {
+  id: string;
+  name: string;
+  url?: string;
+  notes?: string;
+  filter?: {
+    property?: string;
+    propertyId?: string;
+    propertyType?: string;
+    operator?: string;
+    value?: string;
+  };
+}
+
+interface MeetingIntelligenceConfig {
+  slug: string;
+  enabled: boolean;
+  updatedAt: string | null;
+  sync: {
+    enabled: boolean;
+    time: string;
+    timezone: string;
+    cronExpr: string;
+    limit: number;
+    cronJobId: string | null;
+  };
+  sources: {
+    googleDrive: { enabled: boolean; includeSubfolders: boolean; folders: SourceScope[] };
+    notion: { enabled: boolean; databases: SourceScope[]; pages: SourceScope[] };
+    slack: { enabled: boolean; channels: SourceScope[]; includeThreads: boolean };
+    discord: { enabled: boolean; channels: SourceScope[]; includeThreads: boolean };
+    manualUpload: { enabled: boolean };
+  };
+  routing: {
+    publishChannel: string;
+    reviewOwner: string;
+    defaultTimezone: string;
+  };
+}
+
+interface ServiceConnection {
+  status: string;
+  account?: string | null;
+  botName?: string | null;
+  lastCheck?: string | null;
+  details?: Record<string, unknown>;
+}
+
+interface ConnectionStatus {
+  googleWorkspace?: ServiceConnection;
+  notion?: ServiceConnection;
+  slack?: ServiceConnection;
+  discord?: ServiceConnection;
+}
+
+interface SyncCronStatus {
+  configured: boolean;
+  job: {
+    id: string;
+    name: string;
+    enabled: boolean;
+    schedule: { kind: string; expr: string; tz?: string };
+    nextRunAt: string | null;
+    lastRunAt: string | null;
+    lastStatus: string | null;
+    consecutiveErrors: number;
+  } | null;
+  error?: string;
+}
+
+interface SetupTaskInfo {
+  project: Project;
+  task: Task;
+  projectDirName: string;
+  legacyTaskCount: number;
+  created: boolean;
+}
+
+interface IntelligenceItem {
+  id?: string;
+  type: "Decision" | "Action" | "Insight" | "Quote" | "Risk" | "Run";
+  title: string;
+  source: string;
+  date: string;
+  confidence: string;
+  status?: "draft" | "reviewable" | "accepted" | "rejected" | "converted";
+  evidenceRaw?: boolean;
+  meetingId?: string | null;
+  tone: "ok" | "warn" | "critical" | "proposal";
+}
+
+interface DecisionEntry {
+  id?: string;
+  date: string;
+  decision: string;
+  rationale: string;
+  owner: string;
+  source: string;
+  documents: string[];
+  status: "Logged" | "Linked" | "Proposal pending" | "Applied" | "Rejected";
+  evidenceRaw?: boolean;
+  meetingId?: string | null;
+}
+
+interface ProposalEntry {
+  id: string;
+  title: string;
+  description?: string | null;
+  priority: Priority;
+  doc: string;
+  source: string;
+  status?: "recommended" | "approved" | "rejected" | "converted";
+  taskStatus?: string;
+  meetingId?: string | null;
+  insightId?: string | null;
+}
+
+interface DocumentRecord {
+  name: string;
+  area: string;
+  health: string;
+  status: ImpactStatus;
+  proposals: number;
+  conflicts: number;
+  critical?: boolean;
+}
+
+interface MeetingIntelligenceState {
+  meetings: Meeting[];
+  totals: {
+    meetings: number;
+    decisions: number;
+    actions: number;
+    proposals?: number;
+    sources?: number;
+  };
+  intelligence: IntelligenceItem[];
+  decisions: DecisionEntry[];
+  documents: DocumentRecord[];
+  proposals: ProposalEntry[];
+  storage?: {
+    configured: boolean;
+    provider: string;
+    message?: string;
+  };
+  lastSync: string | null;
+  lastCheckStatus: string | null;
+  lastRun: {
+    date: string;
+    status: string;
+    file: string;
+    contentPreview?: string;
+  } | null;
+}
+
+interface MeetingDetailPayload {
+  meeting: Meeting;
+  artifact: {
+    rawText: string | null;
+    summaryText: string | null;
+    sourcePayload: Record<string, unknown> | null;
+    checksum: string | null;
+    fetchedAt: string | null;
+  } | null;
+  insights: IntelligenceItem[];
+  decisions: DecisionEntry[];
+  impacts: Array<{
+    id: string;
+    documentName: string;
+    status: string;
+    severity: string;
+    reason: string | null;
+    proposedChange: string | null;
+  }>;
+  recommendations: ProposalEntry[];
+}
+
+function meetingDateTime(meeting: Meeting) {
+  return meeting.time ? `${meeting.date} · ${meeting.time}` : meeting.date;
+}
+
+function emptyScope(): SourceScope {
+  return { id: "", name: "", url: "", notes: "" };
+}
+
+function localDefaultConfig(slug: string): MeetingIntelligenceConfig {
+  return {
+    slug,
+    enabled: true,
+    updatedAt: null,
+    sync: {
+      enabled: false,
+      time: "18:00",
+      timezone: "Europe/Madrid",
+      cronExpr: "0 18 * * *",
+      limit: 60,
+      cronJobId: null,
+    },
+    sources: {
+      googleDrive: { enabled: false, includeSubfolders: true, folders: [emptyScope()] },
+      notion: { enabled: false, databases: [emptyScope()], pages: [] },
+      slack: { enabled: false, channels: [], includeThreads: true },
+      discord: { enabled: false, channels: [], includeThreads: true },
+      manualUpload: { enabled: true },
+    },
+    routing: {
+      publishChannel: "intelligence",
+      reviewOwner: "Alfonso",
+      defaultTimezone: "Europe/Madrid",
+    },
+  };
+}
+
+function normalizeSyncTime(value: unknown, fallback = "18:00") {
+  const raw = typeof value === "string" ? value : fallback;
+  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return fallback;
+  const hour = Math.max(0, Math.min(23, Number(match[1])));
+  const minute = Math.max(0, Math.min(59, Number(match[2])));
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function cronExprFromTime(time: string) {
+  const [hour = "18", minute = "0"] = time.split(":");
+  return `${Number(minute)} ${Number(hour)} * * *`;
+}
+
+function normalizeClientScope(input: unknown): SourceScope {
+  if (!input || typeof input !== "object") return emptyScope();
+  const scope = input as Record<string, unknown>;
+  const id = typeof scope.id_dashed === "string" ? scope.id_dashed : typeof scope.id === "string" ? scope.id : "";
+  return {
+    id,
+    name: typeof scope.name === "string" ? scope.name : "",
+    url: typeof scope.url === "string" ? scope.url : "",
+    notes: typeof scope.notes === "string"
+      ? scope.notes
+      : typeof scope.description === "string"
+        ? scope.description
+        : "",
+    filter: scope.filter && typeof scope.filter === "object" ? scope.filter as SourceScope["filter"] : undefined,
+  };
+}
+
+function normalizeClientScopes(input: unknown, fallback: SourceScope[], keepEmpty = true) {
+  const scopes = Array.isArray(input) ? input.map(normalizeClientScope) : fallback;
+  if (scopes.length) return scopes;
+  return keepEmpty ? [emptyScope()] : [];
+}
+
+function normalizeClientConfig(slug: string, input: Partial<MeetingIntelligenceConfig> & Record<string, unknown>): MeetingIntelligenceConfig {
+  const base = localDefaultConfig(slug);
+  const rawSources = (input.sources && typeof input.sources === "object" ? input.sources : {}) as Record<string, unknown>;
+  const legacyDrive = (rawSources.google_drive && typeof rawSources.google_drive === "object" ? rawSources.google_drive : {}) as Record<string, unknown>;
+  const rawGoogleDrive = (rawSources.googleDrive && typeof rawSources.googleDrive === "object" ? rawSources.googleDrive : {}) as Partial<MeetingIntelligenceConfig["sources"]["googleDrive"]>;
+  const rawNotion = (rawSources.notion && typeof rawSources.notion === "object" ? rawSources.notion : {}) as Partial<MeetingIntelligenceConfig["sources"]["notion"]>;
+  const rawSlack = (rawSources.slack && typeof rawSources.slack === "object" ? rawSources.slack : {}) as Partial<MeetingIntelligenceConfig["sources"]["slack"]>;
+  const rawDiscord = (rawSources.discord && typeof rawSources.discord === "object" ? rawSources.discord : {}) as Partial<MeetingIntelligenceConfig["sources"]["discord"]>;
+  const rawManualUpload = (rawSources.manualUpload && typeof rawSources.manualUpload === "object" ? rawSources.manualUpload : {}) as Partial<MeetingIntelligenceConfig["sources"]["manualUpload"]>;
+  const rawSync = (input.sync && typeof input.sync === "object" ? input.sync : {}) as Partial<MeetingIntelligenceConfig["sync"]>;
+  const syncTime = normalizeSyncTime(rawSync.time, base.sync.time);
+
+  return {
+    ...base,
+    ...input,
+    slug,
+    enabled: Boolean(input.enabled ?? base.enabled),
+    updatedAt: typeof input.updatedAt === "string" ? input.updatedAt : base.updatedAt,
+    sync: {
+      enabled: Boolean(rawSync.enabled ?? base.sync.enabled),
+      time: syncTime,
+      timezone: typeof rawSync.timezone === "string" ? rawSync.timezone : base.sync.timezone,
+      cronExpr: typeof rawSync.cronExpr === "string" ? rawSync.cronExpr : cronExprFromTime(syncTime),
+      limit: typeof rawSync.limit === "number" ? rawSync.limit : base.sync.limit,
+      cronJobId: typeof rawSync.cronJobId === "string" ? rawSync.cronJobId : null,
+    },
+    sources: {
+      googleDrive: {
+        ...base.sources.googleDrive,
+        ...rawGoogleDrive,
+        enabled: Boolean(rawGoogleDrive.enabled ?? legacyDrive.enabled ?? base.sources.googleDrive.enabled),
+        includeSubfolders: Boolean(rawGoogleDrive.includeSubfolders ?? base.sources.googleDrive.includeSubfolders),
+        folders: normalizeClientScopes(rawGoogleDrive.folders ?? legacyDrive.folders, base.sources.googleDrive.folders),
+      },
+      notion: {
+        ...base.sources.notion,
+        ...rawNotion,
+        enabled: Boolean(rawNotion.enabled ?? base.sources.notion.enabled),
+        databases: normalizeClientScopes(rawNotion.databases, base.sources.notion.databases),
+        pages: normalizeClientScopes(rawNotion.pages, [], false),
+      },
+      slack: {
+        ...base.sources.slack,
+        ...rawSlack,
+        enabled: Boolean(rawSlack.enabled ?? base.sources.slack.enabled),
+        channels: normalizeClientScopes(rawSlack.channels, [], false).filter((scope) => scope.id || scope.name || scope.url),
+        includeThreads: Boolean(rawSlack.includeThreads ?? base.sources.slack.includeThreads),
+      },
+      discord: {
+        ...base.sources.discord,
+        ...rawDiscord,
+        enabled: Boolean(rawDiscord.enabled ?? base.sources.discord.enabled),
+        channels: normalizeClientScopes(rawDiscord.channels, [], false).filter((scope) => scope.id || scope.name || scope.url),
+        includeThreads: Boolean(rawDiscord.includeThreads ?? base.sources.discord.includeThreads),
+      },
+      manualUpload: {
+        ...base.sources.manualUpload,
+        ...rawManualUpload,
+        enabled: Boolean(rawManualUpload.enabled ?? base.sources.manualUpload.enabled),
+      },
+    },
+    routing: { ...base.routing, ...(input.routing || {}) },
+  };
+}
+
+const povPillars = [
+  { name: "Systems over tactics", belief: "Growth es un sistema repetible, no una coleccion de hacks.", suggestions: ["New proof point", "New customer language", "Stronger angle"] },
+  { name: "Trust-based acquisition", belief: "La adquisicion duradera crea activos de confianza.", suggestions: ["New proof point", "Objections detected"] },
+  { name: "Regulated growth", belief: "Compliance puede ser ventaja competitiva cuando el sistema lo incorpora desde el inicio.", suggestions: ["Potential contradiction", "New proof point"] },
+  { name: "Anti-retainer agency model", belief: "El retainer premia entregables, no transferencia de capacidad.", suggestions: ["Stronger angle", "New customer language"] },
+];
+
+const viewLabels: { key: View; label: string }[] = [
+  { key: "overview", label: "Overview" },
+  { key: "sources", label: "Sources" },
+  { key: "meetings", label: "Meeting Detail" },
+  { key: "decisions", label: "Decision Log" },
+  { key: "pov", label: "POV Database" },
+  { key: "impact", label: "Document Impact" },
+  { key: "proposals", label: "Proposal Review" },
+];
+
+const EMPTY_MEETINGS: Meeting[] = [];
+const EMPTY_INTELLIGENCE: IntelligenceItem[] = [];
+const EMPTY_DECISIONS: DecisionEntry[] = [];
+const EMPTY_DOCUMENTS: DocumentRecord[] = [];
+const EMPTY_PROPOSALS: ProposalEntry[] = [];
+
+const hashToView: Record<string, View> = {
+  overview: "overview",
+  sources: "sources",
+  meetings: "meetings",
+  decisions: "decisions",
+  "pov-database": "pov",
+  pov: "pov",
+  "document-impact": "impact",
+  impact: "impact",
+  proposals: "proposals",
+};
+
+function viewToHash(view: View) {
+  if (view === "pov") return "pov-database";
+  if (view === "impact") return "document-impact";
+  if (view === "meetings") return "meetings";
+  if (view === "decisions") return "decisions";
+  if (view === "proposals") return "proposals";
+  if (view === "sources") return "sources";
+  return "overview";
+}
+
+export default function IntelligencePage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <>
+      <Head>
+        <title>Meeting Intelligence - Mission Control</title>
+      </Head>
+      {mounted ? (
+        <IntelligencePageClient />
+      ) : (
+        <div className="min-h-screen bg-background p-6 text-sm text-muted-foreground">
+          Loading Meeting Intelligence...
+        </div>
+      )}
+    </>
+  );
+}
+
+function IntelligencePageClient() {
+  const slug = useSlugSync();
+  const { data: clients } = useClients();
+  const openChat = useOpenChat();
+  const [view, setView] = useState<View>("overview");
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [sourceConfig, setSourceConfig] = useState<MeetingIntelligenceConfig>(() => localDefaultConfig(""));
+  const [meetingState, setMeetingState] = useState<MeetingIntelligenceState | null>(null);
+  const [stateVersion, setStateVersion] = useState(0);
+  const [sourcesLoading, setSourcesLoading] = useState(false);
+  const [sourcesSaving, setSourcesSaving] = useState(false);
+  const [sourcesSavedAt, setSourcesSavedAt] = useState<string | null>(null);
+  const [sourcesError, setSourcesError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({});
+  const [syncCron, setSyncCron] = useState<SyncCronStatus | null>(null);
+  const [setupTask, setSetupTask] = useState<SetupTaskInfo | null>(null);
+  const [setupTaskLoading, setSetupTaskLoading] = useState(false);
+  const [setupTaskSaving, setSetupTaskSaving] = useState(false);
+  const [rawSyncStarting, setRawSyncStarting] = useState(false);
+  const [rawSyncMessage, setRawSyncMessage] = useState<string | null>(null);
+
+  const clientName = useMemo(() => {
+    const client = clients?.find((c) => c.slug === slug);
+    return client?.name || slug.replace(/-/g, " ");
+  }, [clients, slug]);
+  const effectiveSourceConfig = useMemo(
+    () => normalizeClientConfig(slug, sourceConfig as Partial<MeetingIntelligenceConfig> & Record<string, unknown>),
+    [slug, sourceConfig]
+  );
+  const activeMeetings = meetingState?.meetings ?? EMPTY_MEETINGS;
+  const activeIntelligence = meetingState?.intelligence ?? EMPTY_INTELLIGENCE;
+  const activeProposals = meetingState?.proposals ?? EMPTY_PROPOSALS;
+  const activeDecisions = meetingState?.decisions ?? EMPTY_DECISIONS;
+  const activeDocuments = meetingState?.documents ?? EMPTY_DOCUMENTS;
+  const activeTotals = {
+    meetings: meetingState?.totals.meetings ?? activeMeetings.length,
+    decisions: meetingState?.totals.decisions ?? activeMeetings.reduce((sum, meeting) => sum + meeting.decisions, 0),
+    actions: meetingState?.totals.actions ?? activeMeetings.reduce((sum, meeting) => sum + meeting.actions, 0),
+    proposals: meetingState?.totals.proposals ?? activeProposals.length,
+    sources: meetingState?.totals.sources ?? 0,
+  };
+
+  const filteredMeetings = sourceFilter === "all"
+    ? activeMeetings
+    : activeMeetings.filter((meeting) => meeting.source === sourceFilter || meeting.source.includes(sourceFilter));
+
+  const openView = (nextView: View) => {
+    setSelectedProposalId(null);
+    setView(nextView);
+  };
+
+  const openProposalReview = (proposal: ProposalEntry, meeting?: Meeting | null) => {
+    setSelectedProposalId(proposal.id);
+    if (meeting) setSelectedMeeting(meeting);
+    setView("proposals");
+  };
+
+  useEffect(() => {
+    const syncHash = () => {
+      const key = window.location.hash.replace(/^#/, "");
+      if (hashToView[key]) setView(hashToView[key]);
+    };
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, []);
+
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    setSourcesLoading(true);
+    setSetupTaskLoading(true);
+    Promise.all([
+      fetch(`/api/meeting-intelligence/config?slug=${slug}`).then((res) => res.json()),
+      fetch(`/api/meeting-intelligence/status?slug=${slug}`).then((res) => res.json()).catch(() => ({ services: {} })),
+      fetch(`/api/meeting-intelligence/setup-task?slug=${slug}`).then((res) => res.json()).catch(() => ({ setupTask: null })),
+      fetch(`/api/meeting-intelligence/state?slug=${slug}&v=${Date.now()}`).then((res) => res.json()).catch(() => ({ meetings: [], intelligence: [], decisions: [], documents: [], proposals: [], totals: null })),
+    ])
+      .then(([data, status, setup, state]) => {
+        if (!cancelled) setSourceConfig(normalizeClientConfig(slug, data.config || localDefaultConfig(slug)));
+        if (!cancelled) setSyncCron(data.cron || null);
+        if (!cancelled) setConnectionStatus(status.services || {});
+        if (!cancelled) setSetupTask(setup.setupTask || null);
+        if (!cancelled) {
+          const nextState = {
+            meetings: Array.isArray(state.meetings) ? state.meetings : [],
+            totals: state.totals || { meetings: 0, decisions: 0, actions: 0 },
+            intelligence: Array.isArray(state.intelligence) ? state.intelligence : [],
+            decisions: Array.isArray(state.decisions) ? state.decisions : [],
+            documents: Array.isArray(state.documents) ? state.documents : [],
+            proposals: Array.isArray(state.proposals) ? state.proposals : [],
+            storage: state.storage,
+            lastSync: state.lastSync || null,
+            lastCheckStatus: state.lastCheckStatus || null,
+            lastRun: state.lastRun || null,
+          } satisfies MeetingIntelligenceState;
+          setMeetingState(nextState);
+          if (nextState.meetings[0]) setSelectedMeeting(nextState.meetings[0]);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSourceConfig(localDefaultConfig(slug));
+        if (!cancelled) setSyncCron(null);
+        if (!cancelled) setMeetingState(null);
+      })
+      .finally(() => {
+        if (!cancelled) setSourcesLoading(false);
+        if (!cancelled) setSetupTaskLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [slug, stateVersion]);
+
+  useEffect(() => {
+    if (!activeMeetings.length) {
+      setSelectedMeeting(null);
+      return;
+    }
+    if (!selectedMeeting || !activeMeetings.some((meeting) => meeting.id === selectedMeeting.id)) {
+      setSelectedMeeting(activeMeetings[0]);
+    }
+  }, [activeMeetings, selectedMeeting]);
+
+  async function saveSourceConfig() {
+    if (!slug || sourcesSaving) return;
+    setSourcesSaving(true);
+    setSourcesError(null);
+    try {
+      const res = await fetch(`/api/meeting-intelligence/config?slug=${encodeURIComponent(slug)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: effectiveSourceConfig }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar la configuracion.");
+      if (!data.config) throw new Error("La API no devolvio la configuracion guardada.");
+      setSourceConfig(normalizeClientConfig(slug, data.config));
+      setSyncCron(data.cron || null);
+      setSourcesSavedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      setStateVersion((version) => version + 1);
+    } catch (error) {
+      setSourcesError(error instanceof TypeError
+        ? "No se pudo conectar con Mission Control. Recarga la pagina y vuelve a guardar."
+        : error instanceof Error
+          ? error.message
+          : "No se pudo guardar la configuracion.");
+    } finally {
+      setSourcesSaving(false);
+    }
+  }
+
+  async function ensureSetupTask() {
+    if (!slug) return null;
+    setSetupTaskSaving(true);
+    const res = await fetch(`/api/meeting-intelligence/setup-task?slug=${slug}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug }),
+    });
+    const data = await res.json();
+    const next = data.setupTask || null;
+    setSetupTask(next);
+    setSetupTaskSaving(false);
+    return next as SetupTaskInfo | null;
+  }
+
+  function buildSetupTaskChatConfig(info: SetupTaskInfo): ThreadConfig {
+    return buildTaskThread(slug, info.task.id, info.task.name, info.project.id, {
+      taskSkill: info.task.skill,
+      taskChannel: info.task.channel,
+      taskStatus: info.task.status,
+      taskType: info.task.type,
+      pillar: info.task.pillar,
+      deliverableFile: typeof info.task.deliverable_file === "string" ? info.task.deliverable_file : undefined,
+    });
+  }
+
+  async function openSetupTaskChat() {
+    if (!slug) return;
+    const info = setupTask || await ensureSetupTask();
+    if (!info) return;
+    openChat(slug, buildSetupTaskChatConfig(info));
+  }
+
+  async function startRawSyncRun() {
+    if (!slug || rawSyncStarting) return;
+    setRawSyncStarting(true);
+    setRawSyncMessage(null);
+    try {
+      const runRes = await fetch("/api/meeting-intelligence/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          trigger: "manual_ui",
+          limit: 30,
+        }),
+      });
+      const runData = await runRes.json();
+      if (!runRes.ok || !runData.ok) {
+        throw new Error(runData?.storage?.message || runData?.error || "Could not create Neon run");
+      }
+      const metrics = runData.metrics || {};
+      setRawSyncMessage(`Run automático completado: ${metrics.rawAvailable || 0} meetings con raw, ${metrics.insights || 0} insights, ${metrics.recommendations || 0} recommendations.`);
+      setStateVersion((version) => version + 1);
+    } catch (error) {
+      setRawSyncMessage(error instanceof Error ? error.message : "No se pudo lanzar el raw sync.");
+    } finally {
+      setRawSyncStarting(false);
+    }
+  }
+
+  const configuredDriveCount = effectiveSourceConfig.sources.googleDrive.enabled
+    ? effectiveSourceConfig.sources.googleDrive.folders.filter((s) => s.id || s.url).length
+    : 0;
+  const configuredNotionCount = effectiveSourceConfig.sources.notion.enabled
+    ? [...effectiveSourceConfig.sources.notion.databases, ...effectiveSourceConfig.sources.notion.pages].filter((s) => s.id || s.url).length
+    : 0;
+  const configuredConversationCount =
+    (effectiveSourceConfig.sources.slack.enabled ? effectiveSourceConfig.sources.slack.channels.length : 0) +
+    (effectiveSourceConfig.sources.discord.enabled ? effectiveSourceConfig.sources.discord.channels.length : 0);
+  const configuredSourceCount = configuredDriveCount + configuredNotionCount + configuredConversationCount;
+  const setupConfigured = configuredSourceCount > 0;
+
+  return (
+    <DashboardLayout>
+      <Head>
+        <title>{`Intelligence — ${clientName} — Mission Control`}</title>
+      </Head>
+      <div className="space-y-5">
+        <header className="border-b-2 border-border pb-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-rust">
+                Meeting Notes Intelligence
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="font-heading text-[28px] leading-tight text-navy">
+                  Intelligence Center — {clientName}
+                </h1>
+                <Badge tone="proposal">Review-first</Badge>
+              </div>
+              <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
+                Command center visual para convertir reuniones en decisiones, mejoras de POV y propuestas sobre documentos canonicos. Nada aplica cambios sin aprobacion humana.
+              </p>
+            </div>
+          </div>
+          <MetricStrip
+            stats={[
+              { value: activeTotals.meetings, label: "Meetings" },
+              { value: activeTotals.decisions, label: "Decisions" },
+              { value: activeTotals.actions, label: "Actions" },
+              { value: activeTotals.proposals, label: "Proposals" },
+              { value: activeTotals.sources, label: "Sources" },
+            ]}
+          />
+        </header>
+
+        {meetingState?.storage?.configured === false && (
+          <section className="rounded-sc-md border-[2px] border-yellow-400/60 bg-yellow-50 p-3 text-[12px] leading-relaxed text-muted-foreground">
+            <strong className="text-foreground">Neon pendiente:</strong> {meetingState.storage.message}
+          </section>
+        )}
+
+        <SetupTaskCard
+          slug={slug}
+          setupTask={setupTask}
+          loading={setupTaskLoading}
+          saving={setupTaskSaving}
+          compact={setupConfigured}
+          configuredSourceCount={configuredSourceCount}
+          googleStatus={connectionStatus.googleWorkspace?.status || "unknown"}
+          notionStatus={connectionStatus.notion?.status || "unknown"}
+          onOpenChat={() => void openSetupTaskChat()}
+          onRunRawSync={() => void startRawSyncRun()}
+          rawSyncStarting={rawSyncStarting}
+        />
+
+        {rawSyncMessage && (
+          <section className="rounded-sc-md border-[2px] border-border bg-card p-3 text-[12px] leading-relaxed text-muted-foreground">
+            {rawSyncMessage}
+          </section>
+        )}
+
+        <nav className="flex gap-2 overflow-x-auto">
+          {viewLabels.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                openView(tab.key);
+                window.history.replaceState(null, "", `#${viewToHash(tab.key)}`);
+              }}
+              className={cn(
+                "whitespace-nowrap rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all",
+                view === tab.key
+                  ? "border-rust bg-rust text-white"
+                  : "border-border bg-transparent text-muted-foreground hover:border-rust hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        {view === "overview" && (
+          <Overview
+            meetings={filteredMeetings}
+            intelligence={activeIntelligence}
+            documents={activeDocuments}
+            proposals={activeProposals}
+            selectedMeetingId={selectedMeeting?.id || null}
+            sourceFilter={sourceFilter}
+            onFilter={setSourceFilter}
+            onSelect={(meeting) => {
+              setSelectedMeeting(meeting);
+              setSelectedProposalId(null);
+              setView("meetings");
+            }}
+            onView={openView}
+            onProposalSelect={(proposal, meetingForProposal) => openProposalReview(proposal, meetingForProposal || selectedMeeting)}
+          />
+        )}
+        {view === "sources" && (
+          <SourcesSetup
+            config={effectiveSourceConfig}
+            connectionStatus={connectionStatus}
+            loading={sourcesLoading}
+            saving={sourcesSaving}
+            savedAt={sourcesSavedAt}
+            saveError={sourcesError}
+            setConfig={setSourceConfig}
+            onSave={saveSourceConfig}
+            onOpenSetupChat={() => void openSetupTaskChat()}
+            onRunRawSync={() => void startRawSyncRun()}
+            rawSyncStarting={rawSyncStarting}
+            syncCron={syncCron}
+          />
+        )}
+        {view === "meetings" && <MeetingDetail meeting={selectedMeeting} documents={activeDocuments} proposals={activeProposals} onProposalSelect={(proposal, meetingForProposal) => openProposalReview(proposal, meetingForProposal)} />}
+        {view === "decisions" && <DecisionLog decisions={activeDecisions} meetings={activeMeetings} onSelect={(meeting) => { setSelectedMeeting(meeting); setSelectedProposalId(null); setView("meetings"); }} />}
+        {view === "pov" && <PovDatabase meetingTitle={selectedMeeting?.title || "Meeting Intelligence"} onView={openView} />}
+        {view === "impact" && <DocumentImpact documents={activeDocuments} onView={openView} />}
+        {view === "proposals" && <ProposalReview slug={slug} meeting={selectedMeeting} proposals={activeProposals} selectedProposalId={selectedProposalId} onChanged={() => setStateVersion((version) => version + 1)} />}
+      </div>
+    </DashboardLayout>
+  );
+}
+
+function Overview({
+  meetings,
+  intelligence,
+  documents,
+  proposals,
+  selectedMeetingId,
+  sourceFilter,
+  onFilter,
+  onSelect,
+  onView,
+  onProposalSelect,
+}: {
+  meetings: Meeting[];
+  intelligence: IntelligenceItem[];
+  documents: DocumentRecord[];
+  proposals: ProposalEntry[];
+  selectedMeetingId: string | null;
+  sourceFilter: string;
+  onFilter: (source: string) => void;
+  onSelect: (meeting: Meeting) => void;
+  onView: (view: View) => void;
+  onProposalSelect: (proposal: ProposalEntry, meeting?: Meeting | null) => void;
+}) {
+  return (
+    <div className="grid min-h-[620px] grid-cols-1 overflow-hidden rounded-lg border border-border bg-card lg:grid-cols-[1.05fr_1.15fr_.95fr_1.05fr]">
+      <Column title="Meeting Feed" meta={String(meetings.length)}>
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {["all", "Google Drive", "Notion", "Slack", "Discord", "Manual"].map((source) => (
+            <button
+              key={source}
+              type="button"
+              onClick={() => onFilter(source)}
+              className={cn(
+                "rounded-full border border-border bg-background px-2 py-1 text-[10px] font-bold text-muted-foreground",
+                sourceFilter === source && "border-navy bg-navy text-white"
+              )}
+            >
+              {source}
+            </button>
+          ))}
+        </div>
+        {meetings.length === 0 ? (
+          <EmptyState />
+        ) : (
+          meetings.map((meeting) => (
+            <MeetingCard key={meeting.id} meeting={meeting} active={meeting.id === selectedMeetingId} onClick={() => onSelect(meeting)} />
+          ))
+        )}
+      </Column>
+      <Column title="Extracted Intelligence" meta={`${intelligence.length} items`}>
+        {intelligence.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-background p-4 text-[12px] leading-relaxed text-muted-foreground">
+            No extracted intelligence yet. Run the setup task scan to populate decisions, actions, insights, quotes and risks.
+          </div>
+        ) : intelligence.map((item) => (
+          <MiniRow
+            key={item.id || `${item.type}-${item.title}`}
+            title={item.title}
+            eyebrow={`${item.type}${item.status ? ` · ${item.status}` : ""}`}
+            meta={`${item.source} · ${item.date || "no date"} · ${item.evidenceRaw ? item.confidence : "raw missing"}`}
+            tone={item.tone}
+          />
+        ))}
+      </Column>
+      <Column title="Document Impact" meta="StrategyPlan">
+        {documents.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-background p-4 text-[12px] leading-relaxed text-muted-foreground">
+            No document impacts in Neon yet. Impacts only appear after raw evidence is fetched and reviewed.
+          </div>
+        ) : documents.slice(0, 5).map((doc) => (
+          <button
+            key={doc.name}
+            type="button"
+            onClick={() => onView("impact")}
+            className={cn(
+              "mb-2 w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-rust",
+              doc.critical && "border-rust shadow-[inset_3px_0_0_var(--rust)]"
+            )}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <strong className="text-[13px] text-foreground">{doc.name}</strong>
+              <Badge tone={doc.critical ? "critical" : doc.status === "no impact" ? "ok" : "proposal"}>{doc.critical ? "Critical" : doc.status}</Badge>
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{doc.area}</p>
+            <div className="mt-2 flex gap-2 text-[10px] text-muted-foreground">
+              <span>{doc.proposals} proposals</span>
+              <span>{doc.conflicts} conflicts</span>
+            </div>
+          </button>
+        ))}
+      </Column>
+      <Column title="Pending Proposals" meta={String(proposals.length)}>
+        {proposals.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-background p-4 text-[12px] leading-relaxed text-muted-foreground">
+            No pending proposals. Sancho creates proposals only after a reviewed scan finds document impact.
+          </div>
+        ) : proposals.map((proposal) => {
+          const proposalMeeting = meetings.find((meeting) => meeting.id === proposal.meetingId) || null;
+          return (
+            <div key={proposal.id} className={cn("mb-2 rounded-lg border border-border bg-background p-3", proposal.priority === "high" && "border-rust")}>
+              <div className="flex items-start justify-between gap-2">
+                <strong className="text-[13px] text-foreground">{proposal.title}</strong>
+                <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">{proposal.doc} · {proposal.source}</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                <ActionButton onClick={() => onProposalSelect(proposal, proposalMeeting)}>Review</ActionButton>
+                <ActionButton primary>Approve</ActionButton>
+                <ActionButton>Reject</ActionButton>
+              </div>
+            </div>
+          );
+        })}
+      </Column>
+    </div>
+  );
+}
+
+function SetupTaskCard({
+  slug,
+  setupTask,
+  loading,
+  saving,
+  compact,
+  configuredSourceCount,
+  googleStatus,
+  notionStatus,
+  onOpenChat,
+  onRunRawSync,
+  rawSyncStarting,
+}: {
+  slug: string;
+  setupTask: SetupTaskInfo | null;
+  loading: boolean;
+  saving: boolean;
+  compact: boolean;
+  configuredSourceCount: number;
+  googleStatus: string;
+  notionStatus: string;
+  onOpenChat: () => void;
+  onRunRawSync: () => void;
+  rawSyncStarting: boolean;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const taskHref = setupTask
+    ? `/dashboard/${slug}/tasks/${setupTask.task.id}`
+    : "";
+  const sourceTone = configuredSourceCount > 1 ? "ok" : "proposal";
+  const sourceLabel = configuredSourceCount > 1 ? `${configuredSourceCount} sources configured` : "sources pending";
+
+  const description = mounted
+    ? compact
+      ? "El cron automatico baja raw, genera insights y crea recommendations. El chat solo se usa para cambiar fuentes o filtros."
+      : "El setup vive como tarea normal de Foundation/Onboarding. Desde su chat, Sancho verifica APIs, busca carpetas con Google Workspace, selecciona Notion y guarda filtros; el procesamiento lo hace el cron automatico."
+    : "";
+
+  return (
+    <section
+      className="rounded-sc-md border-[2px] p-3"
+      style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-heading text-base text-navy">Setup task</h2>
+            <Badge tone={setupTask ? "ok" : "proposal"}>{setupTask ? setupTask.task.status : "not created"}</Badge>
+            <Badge tone={sourceTone}>{sourceLabel}</Badge>
+          </div>
+          <p suppressHydrationWarning className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+          <div className={cn("flex flex-wrap gap-1.5 text-[10px] text-muted-foreground", compact ? "mt-1" : "mt-2")}>
+            <span className="rounded-full border border-border bg-background px-2 py-1">Google: {googleStatus}</span>
+            <span className="rounded-full border border-border bg-background px-2 py-1">Notion: {notionStatus}</span>
+            {setupTask?.legacyTaskCount ? (
+              <span className="rounded-full border border-border bg-background px-2 py-1">legacy untouched: {setupTask.legacyTaskCount}</span>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {setupTask ? (
+            <>
+              <Link
+                href={taskHref}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-2 text-[12px] font-extrabold text-foreground hover:border-rust"
+              >
+                <FileText className="h-3 w-3" /> Open task
+              </Link>
+              <ActionButton primary onClick={onOpenChat}>
+                <MessageSquareText className="h-3 w-3" /> Open setup chat
+              </ActionButton>
+              <ActionButton disabled={rawSyncStarting} onClick={onRunRawSync}>
+                <RefreshCw className="h-3 w-3" /> {rawSyncStarting ? "Running..." : "Run sync now"}
+              </ActionButton>
+            </>
+          ) : (
+            <ActionButton primary disabled={loading || saving} onClick={onOpenChat}>
+              {loading ? "Checking..." : saving ? "Creating..." : "Create + open setup chat"}
+            </ActionButton>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SourcesSetup({
+  config,
+  connectionStatus,
+  loading,
+  saving,
+  savedAt,
+  saveError,
+  setConfig,
+  onSave,
+  onOpenSetupChat,
+  onRunRawSync,
+  rawSyncStarting,
+  syncCron,
+}: {
+  config: MeetingIntelligenceConfig;
+  connectionStatus: ConnectionStatus;
+  loading: boolean;
+  saving: boolean;
+  savedAt: string | null;
+  saveError: string | null;
+  setConfig: (config: MeetingIntelligenceConfig) => void;
+  onSave: () => void;
+  onOpenSetupChat: () => void;
+  onRunRawSync: () => void;
+  rawSyncStarting: boolean;
+  syncCron: SyncCronStatus | null;
+}) {
+  const updateSync = (sync: Partial<MeetingIntelligenceConfig["sync"]>) => {
+    const nextTime = sync.time ? normalizeSyncTime(sync.time, config.sync.time) : config.sync.time;
+    setConfig({
+      ...config,
+      sync: {
+        ...config.sync,
+        ...sync,
+        time: nextTime,
+        cronExpr: cronExprFromTime(nextTime),
+      },
+    });
+  };
+  const updateSources = (sources: Partial<MeetingIntelligenceConfig["sources"]>) => setConfig({
+    ...config,
+    sources: { ...config.sources, ...sources },
+  });
+  const driveConnected = connectionStatus.googleWorkspace?.status === "ok" || connectionStatus.googleWorkspace?.status === "connected";
+  const selectedNotionDatabases = useMemo(
+    () => config.sources.notion.databases.filter((database) => database.id || database.url),
+    [config.sources.notion.databases]
+  );
+  const configuredSourceCount = (
+    (config.sources.googleDrive.enabled ? config.sources.googleDrive.folders.filter((scope) => scope.id || scope.url).length : 0) +
+    (config.sources.notion.enabled ? [...config.sources.notion.databases, ...config.sources.notion.pages].filter((scope) => scope.id || scope.url).length : 0) +
+    (config.sources.slack.enabled ? config.sources.slack.channels.length : 0) +
+    (config.sources.discord.enabled ? config.sources.discord.channels.length : 0)
+  );
+  const automaticSyncEnabled = config.enabled && config.sync.enabled;
+  const cronJob = syncCron?.job || null;
+  const formatDate = (value?: string | null) => value ? new Date(value).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : "not scheduled yet";
+
+  return (
+    <div className="space-y-4">
+      <section
+        className="rounded-sc-md border-[2px] p-4"
+        style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-xl text-navy">Meeting Sources</h2>
+            <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-muted-foreground">
+              Aqui se ve que fuentes reales puede leer Sancho. Para cambiarlas, abre el hilo de setup y el agente las valida con la skill meeting-intelligence.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 rounded-lg border-2 border-border bg-background px-3 py-2 text-[12px] font-bold">
+              <input
+                type="checkbox"
+                checked={automaticSyncEnabled}
+                onChange={(e) => {
+                  const enabled = e.target.checked;
+                  setConfig({
+                    ...config,
+                    enabled,
+                    sync: { ...config.sync, enabled },
+                  });
+                }}
+              />
+              Automatic sync active
+            </label>
+            <ActionButton primary onClick={onOpenSetupChat}>
+              <MessageSquareText className="h-3 w-3" /> Change with Sancho
+            </ActionButton>
+            <ActionButton disabled={rawSyncStarting} onClick={onRunRawSync}>
+              <RefreshCw className="h-3 w-3" /> {rawSyncStarting ? "Running raw sync..." : "Run raw sync now"}
+            </ActionButton>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="rounded-sc-md border-[2px] p-4"
+        style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h3 className="font-heading text-base text-navy">Automatic raw sync</h3>
+            <p className="mt-1 max-w-3xl text-[12px] leading-relaxed text-muted-foreground">
+              Funciona como Editorial Dispatch: una vez al dia baja raw, genera summaries, insights, impactos y recommendations. Si esta apagado, las fuentes quedan guardadas pero el cron no corre.
+            </p>
+          </div>
+          <Badge tone={automaticSyncEnabled && configuredSourceCount > 0 ? "ok" : "proposal"}>
+            {automaticSyncEnabled && configuredSourceCount > 0 ? "cron active" : "cron paused"}
+          </Badge>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-[180px_220px_1fr]">
+          <label className="text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">
+            Daily time
+            <input
+              type="time"
+              value={config.sync.time}
+              onChange={(e) => updateSync({ time: e.target.value })}
+              className="mt-1 w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-[13px] font-bold text-foreground"
+            />
+          </label>
+          <label className="text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">
+            Timezone
+            <input
+              type="text"
+              value={config.sync.timezone}
+              onChange={(e) => updateSync({ timezone: e.target.value })}
+              className="mt-1 w-full rounded-lg border-2 border-border bg-background px-3 py-2 text-[13px] font-bold text-foreground"
+            />
+          </label>
+          <div className="rounded-lg border border-border bg-background p-3 text-[12px] leading-relaxed text-muted-foreground">
+            <div><strong className="text-foreground">Cron:</strong> {config.sync.cronExpr}</div>
+            <div><strong className="text-foreground">Job:</strong> {cronJob ? cronJob.name : "will be created after saving sources"}</div>
+            <div><strong className="text-foreground">Next:</strong> {formatDate(cronJob?.nextRunAt)}</div>
+            <div><strong className="text-foreground">Last:</strong> {formatDate(cronJob?.lastRunAt)} {cronJob?.lastStatus ? `(${cronJob.lastStatus})` : ""}</div>
+          </div>
+        </div>
+        {configuredSourceCount === 0 && (
+          <p className="mt-3 rounded-lg border border-yellow-400/40 bg-yellow-50 p-3 text-[12px] text-muted-foreground">
+            El cron se activara cuando haya al menos una fuente aprobada de Drive, Notion, Slack o Discord y guardes la configuracion.
+          </p>
+        )}
+      </section>
+
+      <SourceCard
+        title="Google Drive"
+        description="Carpetas donde viven notas, docs exportados, transcripciones o resumenes de meetings."
+        enabled={config.sources.googleDrive.enabled}
+        onEnabled={(enabled) => updateSources({ googleDrive: { ...config.sources.googleDrive, enabled } })}
+        footer={
+          <label className="flex items-center gap-2 text-[12px] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={config.sources.googleDrive.includeSubfolders}
+              onChange={(e) => updateSources({ googleDrive: { ...config.sources.googleDrive, includeSubfolders: e.target.checked } })}
+            />
+            Include subfolders
+          </label>
+        }
+      >
+        <ConnectionStrip
+          label="Google Workspace / Drive"
+          connection={connectionStatus.googleWorkspace}
+          connectedText={connectionStatus.googleWorkspace?.account || "Connected in APIs"}
+          missingText="Connect Google Workspace in APIs before browsing Drive."
+        />
+        <div className={cn(
+          "mb-3 rounded-lg border p-3 text-[12px] leading-relaxed",
+          driveConnected ? "border-sage/30 bg-sage/10 text-muted-foreground" : "border-yellow-400/40 bg-yellow-50 text-muted-foreground"
+        )}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <strong className="block text-foreground">Agent-driven Google Workspace</strong>
+              <span>
+                {driveConnected
+                  ? "Workspace/GOG is connected. Sancho can browse Drive from the setup chat and save approved folder IDs here."
+                  : "Connect Google Workspace in APIs before Sancho browses Drive folders."}
+              </span>
+            </div>
+            <Badge tone={driveConnected ? "ok" : "proposal"}>
+              {driveConnected ? "connected" : "setup needed"}
+            </Badge>
+          </div>
+        </div>
+        <div className="mb-3">
+          <ActionButton primary onClick={onOpenSetupChat}>
+            <MessageSquareText className="h-3 w-3" /> Change Drive sources with Sancho
+          </ActionButton>
+        </div>
+        <SourceSummaryList
+          title="Approved Drive folders"
+          scopes={config.sources.googleDrive.folders}
+          emptyText="No Drive folders approved yet. Open the setup chat so Sancho can search Drive and save the exact folder IDs."
+        />
+      </SourceCard>
+
+      <SourceCard
+        title="Notion"
+        description="Bases de datos donde se guardan actas, notas de llamadas o syncs desde herramientas tipo Granola/Fathom."
+        enabled={config.sources.notion.enabled}
+        onEnabled={(enabled) => updateSources({ notion: { ...config.sources.notion, enabled } })}
+      >
+        <ConnectionStrip
+          label="Notion API"
+          connection={connectionStatus.notion}
+          connectedText={connectionStatus.notion?.botName || "Connected in APIs"}
+          missingText="Connect Notion in APIs before selecting databases."
+        />
+        <div className="mb-3">
+          <ActionButton primary onClick={onOpenSetupChat}>
+            <MessageSquareText className="h-3 w-3" /> Change Notion sources with Sancho
+          </ActionButton>
+        </div>
+        <SourceSummaryList
+          title="Approved Notion databases"
+          scopes={selectedNotionDatabases}
+          emptyText="No Notion database selected yet. Open the setup chat so Sancho can validate access and save filters such as clients relation."
+        />
+      </SourceCard>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <SourceCard
+          title="Slack"
+          description="Canales conectados en APIs donde Sancho debe detectar follow-ups, decisiones confirmadas y cambios de scope."
+          enabled={config.sources.slack.enabled}
+          onEnabled={(enabled) => updateSources({ slack: { ...config.sources.slack, enabled } })}
+        >
+          <ConnectionStrip
+            label="Slack API"
+            connection={connectionStatus.slack}
+            connectedText="Connected in APIs"
+            missingText="Connect Slack in APIs before selecting channels."
+          />
+          <AgenticChannelSummary
+            label="Slack"
+            channels={config.sources.slack.channels}
+            includeThreads={config.sources.slack.includeThreads}
+            onOpenSetupChat={onOpenSetupChat}
+          />
+        </SourceCard>
+
+        <SourceCard
+          title="Discord"
+          description="Canales conectados en APIs para contexto conversacional alrededor de meetings y revisiones."
+          enabled={config.sources.discord.enabled}
+          onEnabled={(enabled) => updateSources({ discord: { ...config.sources.discord, enabled } })}
+        >
+          <ConnectionStrip
+            label="Discord API"
+            connection={connectionStatus.discord}
+            connectedText="Connected in APIs"
+            missingText="Connect Discord in APIs before selecting channels."
+          />
+          <AgenticChannelSummary
+            label="Discord"
+            channels={config.sources.discord.channels}
+            includeThreads={config.sources.discord.includeThreads}
+            onOpenSetupChat={onOpenSetupChat}
+          />
+        </SourceCard>
+      </div>
+
+      <div
+        className="rounded-sc-md border-[2px] p-3"
+        style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[12px] text-muted-foreground">
+            These sources only decide where Sancho reads meeting context. Document changes remain review-first.
+          </p>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving || loading}
+            className="rounded-lg border-2 border-rust bg-rust px-5 py-2 text-[12px] font-extrabold text-white disabled:opacity-50"
+          >
+            {saving ? "Saving..." : loading ? "Loading..." : "Save sources"}
+          </button>
+        </div>
+        {savedAt && <p className="mt-2 text-right text-[11px] text-muted-foreground">Saved at {savedAt}</p>}
+        {saveError && <p className="mt-2 text-right text-[11px] font-bold text-rust">{saveError}</p>}
+        {config.updatedAt && !savedAt && <p className="mt-2 text-right text-[11px] text-muted-foreground">Last saved {new Date(config.updatedAt).toLocaleString()}</p>}
+      </div>
+    </div>
+  );
+}
+
+function ConnectionStrip({
+  label,
+  connection,
+  connectedText,
+  missingText,
+}: {
+  label: string;
+  connection?: ServiceConnection;
+  connectedText: string;
+  missingText: string;
+}) {
+  const connected = connection?.status === "ok" || connection?.status === "connected";
+  const statusText = connected ? connectedText : connection?.status || "unknown";
+  return (
+    <div className={cn(
+      "mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-[12px]",
+      connected ? "border-sage/30 bg-sage/10" : "border-yellow-400/40 bg-yellow-50"
+    )}>
+      <div>
+        <div className="font-extrabold text-foreground">{label}</div>
+        <div className="mt-0.5 text-muted-foreground">
+          {connected ? statusText : missingText}
+        </div>
+      </div>
+      <Badge tone={connected ? "ok" : "proposal"}>{connection?.status || "unknown"}</Badge>
+    </div>
+  );
+}
+
+function SourceCard({
+  title,
+  description,
+  enabled,
+  onEnabled,
+  footer,
+  children,
+}: {
+  title: string;
+  description: string;
+  enabled: boolean;
+  onEnabled: (enabled: boolean) => void;
+  footer?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      className={cn("rounded-sc-md border-[2px] p-4", enabled && "shadow-[inset_4px_0_0_var(--rust)]")}
+      style={{ background: "var(--sc-paper-3)", borderColor: enabled ? "var(--sc-rust-500)" : "var(--sc-ink)", boxShadow: enabled ? "var(--pop-xs), inset 4px 0 0 var(--rust)" : "var(--pop-xs)" }}
+    >
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-heading text-base text-navy">{title}</h3>
+          <p className="mt-1 max-w-3xl text-[12px] leading-relaxed text-muted-foreground">{description}</p>
+        </div>
+        <label className="flex items-center gap-2 rounded-md border-2 border-border bg-background px-2.5 py-1.5 text-[11px] font-bold">
+          <input type="checkbox" checked={enabled} onChange={(e) => onEnabled(e.target.checked)} />
+          Enabled
+        </label>
+      </div>
+      <div className={cn(!enabled && "opacity-55")}>{children}</div>
+      {footer && <div className="mt-3 border-t border-border pt-3">{footer}</div>}
+    </section>
+  );
+}
+
+function AgenticChannelSummary({
+  label,
+  channels,
+  includeThreads,
+  onOpenSetupChat,
+}: {
+  label: "Slack" | "Discord";
+  channels: SourceScope[];
+  includeThreads: boolean;
+  onOpenSetupChat: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg border border-border bg-background p-3">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="text-[10px] font-extrabold uppercase tracking-wide text-muted-foreground">
+            Approved {label} channels
+          </div>
+          <Badge tone={includeThreads ? "ok" : "proposal"}>{includeThreads ? "threads included" : "threads off"}</Badge>
+        </div>
+        <SourceSummaryRows
+          scopes={channels}
+          emptyText={`No ${label} channels approved yet. Open the setup chat so Sancho can inspect the connected workspace and save the right channel IDs.`}
+        />
+      </div>
+      <ActionButton primary onClick={onOpenSetupChat}>
+        <MessageSquareText className="h-3 w-3" /> Change {label} channels with Sancho
+      </ActionButton>
+    </div>
+  );
+}
+
+function SourceSummaryList({
+  title,
+  scopes,
+  emptyText,
+}: {
+  title?: string;
+  scopes: SourceScope[];
+  emptyText: string;
+}) {
+  return (
+    <div className="mb-3">
+      {title && <div className="mb-2 text-[10px] font-extrabold uppercase tracking-wide text-muted-foreground">{title}</div>}
+      <SourceSummaryRows scopes={scopes} emptyText={emptyText} />
+    </div>
+  );
+}
+
+function SourceSummaryRows({
+  scopes,
+  emptyText,
+}: {
+  scopes: SourceScope[];
+  emptyText: string;
+}) {
+  const rows = scopes.filter((scope) => scope.id || scope.url || scope.name);
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-border bg-background p-4 text-[12px] leading-relaxed text-muted-foreground">
+        {emptyText}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {rows.map((scope, index) => (
+        <div key={`${scope.id || scope.url || scope.name}-${index}`} className="rounded-lg border border-border bg-background p-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[13px] font-extrabold text-foreground">{scope.name || "Approved source"}</div>
+              <div className="mt-1 max-w-full truncate text-[10px] text-muted-foreground">{scope.id || scope.url || "No ID saved"}</div>
+            </div>
+            {scope.filter?.property ? <Badge tone="proposal">{scope.filter.property}</Badge> : null}
+          </div>
+          {scope.filter?.property ? (
+            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+              Filter: {scope.filter.property} {scope.filter.operator || "equals"} {scope.filter.value || "configured in setup"}
+            </p>
+          ) : null}
+          {scope.notes ? (
+            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{scope.notes}</p>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MeetingDetail({
+  meeting,
+  documents,
+  proposals,
+  onProposalSelect,
+}: {
+  meeting: Meeting | null;
+  documents: DocumentRecord[];
+  proposals: ProposalEntry[];
+  onProposalSelect: (proposal: ProposalEntry, meeting?: Meeting | null) => void;
+}) {
+  const [tab, setTab] = useState("Summary");
+  const [detail, setDetail] = useState<MeetingDetailPayload | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const detailRequestRef = useRef(0);
+  const tabs = ["Summary", "Transcript / Raw", "Decisions", "Actions", "Insights", "Impact"];
+  const slug = useSlugSync();
+
+  useEffect(() => {
+    const requestId = detailRequestRef.current + 1;
+    detailRequestRef.current = requestId;
+
+    if (!slug || !meeting?.id) {
+      setDetail(null);
+      setDetailError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 12000);
+    setDetailError(null);
+
+    fetch(`/api/meeting-intelligence/meeting?slug=${slug}&meetingId=${encodeURIComponent(meeting.id)}`, {
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Meeting detail unavailable");
+        return data;
+      })
+      .then((data) => {
+        if (detailRequestRef.current === requestId) setDetail(data.detail || null);
+      })
+      .catch((error) => {
+        if (detailRequestRef.current !== requestId) return;
+        setDetail(null);
+        const isAbort = error instanceof Error && error.name === "AbortError";
+        setDetailError(isAbort
+          ? "Neon tardó demasiado en devolver este detalle. Cambia de meeting o vuelve a intentarlo."
+          : error instanceof Error
+            ? error.message
+            : "No se pudo cargar el detalle de la meeting desde Neon.");
+      })
+      .finally(() => {
+        window.clearTimeout(timeoutId);
+      });
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [slug, meeting?.id]);
+
+  if (!meeting) {
+    return (
+      <section className="rounded-lg border border-border bg-card p-6">
+        <EmptyState />
+      </section>
+    );
+  }
+
+  const activeDetail = detail;
+  const detailInsights = activeDetail?.insights || [];
+  const detailDecisions = activeDetail?.decisions || [];
+  const detailActions = detailInsights.filter((item) => item.type === "Action");
+  const generalInsights = detailInsights.filter((item) => item.type !== "Action" && item.type !== "Decision");
+  const detailRecommendations = activeDetail?.recommendations.length ? activeDetail.recommendations : proposals.filter((proposal) => proposal.meetingId === meeting.id);
+  const detailTaskDrafts = detailRecommendations.filter((proposal) => proposal.status === "recommended" || proposal.taskStatus === "recommended");
+  const detailDocuments = activeDetail?.impacts.length
+    ? activeDetail.impacts.map((impact) => ({
+      name: impact.documentName,
+      area: impact.reason || "Impact from meeting evidence.",
+      health: impact.status === "conflict" ? "Needs review" : "Possible update",
+      status: (impact.status === "conflict" ? "conflict" : "possible update") as ImpactStatus,
+      proposals: detailRecommendations.filter((proposal) => proposal.doc === impact.documentName).length,
+      conflicts: impact.status === "conflict" ? 1 : 0,
+      critical: impact.documentName === "StrategyPlan",
+    }))
+    : documents.filter((doc) => detailRecommendations.some((proposal) => proposal.doc === doc.name));
+
+  function renderTab() {
+    if (detailError && !activeDetail) {
+      return <ReviewBox>{detailError}</ReviewBox>;
+    }
+    if (tab === "Summary") {
+      return activeDetail?.artifact?.summaryText ? (
+        <MarkdownPanel content={activeDetail.artifact.summaryText} />
+      ) : (
+        <ReviewBox>No summary generated in Neon yet. Run the agentic scan after raw is fetched.</ReviewBox>
+      );
+    }
+    if (tab === "Transcript / Raw") {
+      return activeDetail?.artifact?.rawText ? (
+        <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border bg-background p-4 font-mono text-[12px] leading-relaxed text-muted-foreground">
+          {activeDetail.artifact.rawText}
+        </pre>
+      ) : (
+        <div className="rounded-lg border border-dashed border-yellow-400/60 bg-yellow-50 p-4 text-[13px] leading-relaxed text-muted-foreground">
+          <strong className="text-foreground">Raw not downloaded yet.</strong>
+          <p className="mt-2">This meeting stays as <strong>needs_raw_sync</strong>. Summary notes may exist, but Sancho should not treat decisions or X-Hype-style findings as important until the connector/agent stores `raw_text` in Neon.</p>
+        </div>
+      );
+    }
+    if (tab === "Decisions") {
+      return detailDecisions.length ? (
+        <div className="space-y-2">
+          {detailDecisions.map((decision) => (
+            <MiniRow key={decision.id || decision.decision} title={decision.decision} eyebrow={decision.evidenceRaw ? decision.status : `${decision.status} · raw missing`} meta={`${decision.source} · ${decision.date || "no date"} · ${decision.owner}`} tone={decision.evidenceRaw ? "ok" : "proposal"} />
+          ))}
+        </div>
+      ) : <ReviewBox>No decisions extracted from raw evidence for this meeting.</ReviewBox>;
+    }
+    if (tab === "Actions") {
+      return detailActions.length || detailTaskDrafts.length ? (
+        <div className="space-y-2">
+          {detailActions.map((item) => (
+            <MiniRow key={item.id || item.title} title={item.title} eyebrow={item.status || "draft"} meta={`${item.source} · ${item.date || "no date"} · ${item.evidenceRaw ? item.confidence : "raw missing"}`} tone={item.evidenceRaw ? "warn" : "proposal"} />
+          ))}
+          {detailTaskDrafts.map((proposal) => (
+            <button
+              key={proposal.id}
+              type="button"
+              onClick={() => onProposalSelect(proposal, meeting)}
+              className="w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-rust"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <strong className="text-[13px] leading-snug text-foreground">{proposal.title}</strong>
+                <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground">
+                Task draft · {proposal.doc} · {proposal.status || "recommended"}
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : <ReviewBox>No action items extracted from raw evidence for this meeting.</ReviewBox>;
+    }
+    if (tab === "Insights") {
+      return generalInsights.length ? (
+        <div className="space-y-2">
+          {generalInsights.map((item) => (
+            <MiniRow key={item.id || item.title} title={item.title} eyebrow={`${item.type} · ${item.status || "draft"}`} meta={`${item.source} · ${item.date || "no date"} · ${item.evidenceRaw ? item.confidence : "raw missing"}`} tone={item.tone} />
+          ))}
+        </div>
+      ) : <ReviewBox>No insights, quotes or risks extracted from raw evidence for this meeting.</ReviewBox>;
+    }
+    return detailDocuments.length ? (
+      <div className="grid gap-3 md:grid-cols-2">
+        {detailDocuments.map((doc) => <DocumentTile key={doc.name} doc={doc} />)}
+      </div>
+    ) : (
+      <ReviewBox>No document impacts in Neon for this meeting. StrategyPlan and POV remain untouched.</ReviewBox>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
+      <section className="rounded-lg border border-border bg-card p-4">
+        <div className="mb-3 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-2xl text-navy">{meeting.title}</h2>
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+              <span>{meetingDateTime(meeting)}</span><span>{meeting.source}</span><span>{meeting.participants.join(", ")}</span><span>{meeting.type}</span>
+            </div>
+          </div>
+          <Badge tone={meetingStatusTone(meeting)}>{meetingStatusLabel(meeting)}</Badge>
+        </div>
+        <div className="mb-4 flex flex-wrap gap-1.5">
+          {tabs.map((item) => (
+            <button key={item} type="button" onClick={() => setTab(item)} className={cn("rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-bold text-muted-foreground", tab === item && "border-navy bg-navy text-white")}>{item}</button>
+          ))}
+        </div>
+        {renderTab()}
+      </section>
+      <section className="rounded-lg border border-border bg-card p-4">
+        <h3 className="mb-3 font-heading text-base text-navy">Generated Proposals</h3>
+        {detailRecommendations.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-background p-4 text-[12px] leading-relaxed text-muted-foreground">
+            No proposals generated for the current reviewed intelligence yet.
+          </div>
+        ) : detailRecommendations.map((proposal) => (
+          <button key={proposal.id} type="button" onClick={() => onProposalSelect(proposal, meeting)} className="mb-2 w-full rounded-lg border border-border bg-background p-3 text-left hover:border-rust">
+            <strong className="text-[13px] text-foreground">{proposal.title}</strong>
+            <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+              <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
+              <span>{proposal.doc}</span>
+              <span>{proposal.status || "recommended"}</span>
+            </div>
+          </button>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function DecisionLog({
+  decisions,
+  meetings,
+  onSelect,
+}: {
+  decisions: DecisionEntry[];
+  meetings: Meeting[];
+  onSelect: (meeting: Meeting) => void;
+}) {
+  const meetingBySource = (source: string) => meetings.find((meeting) => source.includes(meeting.title) || source.includes(meeting.id)) || meetings[0];
+  return (
+    <section className="rounded-lg border border-border bg-card p-4">
+      <h2 className="font-heading text-xl text-navy">Decision Log</h2>
+      <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-bold uppercase text-muted-foreground">
+        <span>Timeline</span><span>Fecha</span><span>Decision</span><span>Rationale</span><span>Owner</span><span>Fuente</span><span>Documentos afectados</span><span>Estado</span>
+      </div>
+      <div className="mt-4 border-l-2 border-border pl-4">
+        {decisions.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-background p-4 text-[12px] leading-relaxed text-muted-foreground">
+            No decisions logged yet. The next scan will write decisions here before any document proposal is created.
+          </div>
+        ) : decisions.map((decision, index) => {
+          const meeting = meetingBySource(decision.source);
+          return (
+            <button key={`${decision.date}-${index}`} type="button" onClick={() => meeting && onSelect(meeting)} className="relative mb-3 w-full rounded-lg border border-border bg-background p-3 text-left before:absolute before:-left-[23px] before:top-4 before:h-2.5 before:w-2.5 before:rounded-full before:bg-rust">
+              <div className="font-bold text-foreground">{decision.date} · {decision.decision}</div>
+              <p className="mt-1 text-[12px] text-muted-foreground"><strong>Rationale:</strong> {decision.rationale} <strong>Owner:</strong> {decision.owner}.</p>
+              <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground"><span>{decision.source}</span><span>{decision.documents.join(" / ")}</span><Badge tone={decision.status === "Rejected" ? "low" : decision.status === "Proposal pending" ? "proposal" : "ok"}>{decision.status}</Badge></div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function PovDatabase({ meetingTitle, onView }: { meetingTitle: string; onView: (view: View) => void }) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      {povPillars.map((pillar) => (
+        <section key={pillar.name} className="rounded-lg border border-border bg-card p-4">
+          <h3 className="font-heading text-base text-navy">{pillar.name}</h3>
+          <p className="mt-2 text-[12px] text-muted-foreground"><strong className="text-foreground">Core belief:</strong> {pillar.belief}</p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {["We say yes / no", "Preferred angles", "Evidence", "Quotes from meetings", "Objections detected"].map((tag) => <Badge key={tag} tone="low">{tag}</Badge>)}
+          </div>
+          <div className="mt-4 text-[10px] font-extrabold uppercase tracking-wide text-muted-foreground">Suggestions from meetings</div>
+          {pillar.suggestions.map((suggestion) => (
+            <MiniRow key={suggestion} title={suggestion} eyebrow="Suggestion" meta={`Extracted from ${meetingTitle}`} tone={suggestion.includes("contradiction") ? "critical" : "proposal"} />
+          ))}
+          <ActionButton primary onClick={() => onView("proposals")}>Send to proposal</ActionButton>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function DocumentImpact({ documents, onView }: { documents: DocumentRecord[]; onView: (view: View) => void }) {
+  return (
+    <>
+      <section className="mb-3 rounded-lg border border-border bg-card p-4">
+        <h2 className="font-heading text-xl text-navy">Canonical Documents</h2>
+        <p className="mt-1 text-[13px] text-muted-foreground">StrategyPlan is Critical and never auto-apply: every pending impact requires review before a document changes.</p>
+      </section>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {documents.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-card p-6 text-[13px] leading-relaxed text-muted-foreground">
+            No document impacts in Neon yet. Sancho will only create impacts after raw evidence exists and the extraction is traceable.
+          </div>
+        ) : documents.map((doc) => (
+          <section key={doc.name} className={cn("rounded-lg border border-border bg-card p-4", doc.critical && "border-rust shadow-[inset_3px_0_0_var(--rust)]")}>
+            <div className="flex items-start justify-between gap-2"><h3 className="font-heading text-base text-navy">{doc.name}</h3><Badge tone={doc.critical ? "critical" : doc.status === "no impact" ? "ok" : "proposal"}>{doc.critical ? "Critical" : doc.status}</Badge></div>
+            <p className="mt-2 text-[12px] text-muted-foreground">{doc.area}</p>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full bg-rust" style={{ width: doc.critical ? "78%" : "46%" }} /></div>
+            <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-muted-foreground"><span>Health: {doc.health}</span><span>{doc.proposals} pending</span><span>{doc.conflicts} conflicts</span></div>
+            <div className="mt-3 flex gap-2"><ActionButton primary onClick={() => onView("proposals")}>Review</ActionButton><ActionButton><ExternalLink className="h-3 w-3" /> Open doc</ActionButton></div>
+          </section>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ProposalReview({
+  slug,
+  meeting,
+  proposals,
+  selectedProposalId,
+  onChanged,
+}: {
+  slug: string;
+  meeting: Meeting | null;
+  proposals: ProposalEntry[];
+  selectedProposalId: string | null;
+  onChanged: () => void;
+}) {
+  const selectedProposal = selectedProposalId ? proposals.find((item) => item.id === selectedProposalId) || null : null;
+  const meetingProposals = meeting ? proposals.filter((item) => item.meetingId === meeting.id) : [];
+  const proposal = selectedProposal || meetingProposals[0] || proposals[0] || null;
+  const rawAffectedDocument = proposal?.doc || "No document selected";
+  const affectedDocument = rawAffectedDocument.toLowerCase() === "task" ? "Task draft" : rawAffectedDocument;
+  const criticalDocument = affectedDocument === "StrategyPlan";
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  async function act(action: "approve" | "reject" | "convert") {
+    if (!proposal) return;
+    setBusyAction(action);
+    await fetch("/api/meeting-intelligence/recommendations/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, recommendationId: proposal.id, action }),
+    }).catch(() => null);
+    setBusyAction(null);
+    onChanged();
+  }
+  return (
+    <>
+      <div className="grid min-h-[520px] gap-3 xl:grid-cols-[1fr_1.1fr_1fr]">
+        <ReviewColumn title="Evidence from meeting">
+          <div className="font-bold text-foreground">{meeting?.title || proposal?.source || "No meeting selected"}</div>
+          {meeting ? (
+            <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+              <span>{meetingDateTime(meeting)}</span>
+              <span>{meeting.source}</span>
+              <Badge tone={meeting.hasRaw ? "ok" : "proposal"}>{meeting.hasRaw ? "raw available" : "raw missing"}</Badge>
+            </div>
+          ) : null}
+          <ReviewBox>
+            {proposal?.description || "A recommendation only becomes actionable after Sancho links it to raw meeting evidence. StrategyPlan, Foundation and POV remain review-first."}
+          </ReviewBox>
+          <ActionButton><ExternalLink className="h-3 w-3" /> Open source meeting</ActionButton>
+        </ReviewColumn>
+        <ReviewColumn title="Proposed change">
+          {proposal ? (
+            <>
+              <Badge tone={proposal.priority === "high" ? "critical" : "proposal"}>{proposal.priority}</Badge>
+              <ReviewBox>
+                <strong>{proposal.title}</strong><br /><br />
+                Documento afectado: {affectedDocument}. Fuente: {proposal.source}. Estado: {proposal.status || "recommended"}. Task draft: {proposal.taskStatus || "recommended"}.
+              </ReviewBox>
+            </>
+          ) : (
+            <ReviewBox><strong>No pending proposal</strong><br /><br />Cuando un scan detecte impacto documental, Sancho lo convertira aqui en una propuesta revisable antes de tocar StrategyPlan, POV Bank u otro documento canonico.</ReviewBox>
+          )}
+          <ReviewBox>Para POV Bank: Anadir proof point / Actualizar core belief / Mover evidence / Marcar contradiccion.<br /><br />Para StrategyPlan: Seccion afectada, texto actual, cambio propuesto, razon y fuente.</ReviewBox>
+        </ReviewColumn>
+        <ReviewColumn title="Affected document">
+          <div className={cn("rounded-lg border bg-background p-3", criticalDocument ? "border-rust shadow-[inset_3px_0_0_var(--rust)]" : "border-border")}>
+            <div className="font-bold text-foreground">{affectedDocument}</div>
+            <p className="mt-1 text-[12px] text-muted-foreground">{criticalDocument ? "Documento critico. No hay aplicacion directa sin aprobacion explicita." : "Cambio recomendado como tarea draft. No se aplica hasta aprobarlo."}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Badge tone={criticalDocument ? "critical" : "proposal"}>{criticalDocument ? "Critical" : "Review"}</Badge>
+              <Badge tone="low">backup required</Badge>
+              <Badge tone="low">change-log required</Badge>
+            </div>
+          </div>
+          <ReviewBox>
+            <strong>Current state</strong><br />
+            Pendiente de revisión humana contra el documento canónico.<br /><br />
+            <strong>Proposed change</strong><br />
+            {proposal ? proposal.title : "Selecciona una propuesta para revisar el cambio."}
+          </ReviewBox>
+        </ReviewColumn>
+      </div>
+      <footer className="sticky bottom-0 mt-3 flex flex-wrap justify-end gap-2 border-t border-border bg-background py-3">
+        <ActionButton><RefreshCw className="h-3 w-3" /> Ask Sancho to revise</ActionButton>
+        <ActionButton disabled={!proposal || Boolean(busyAction)} onClick={() => void act("reject")}><X className="h-3 w-3" /> {busyAction === "reject" ? "Rejecting..." : "Reject"}</ActionButton>
+        <ActionButton disabled={!proposal || Boolean(busyAction)} onClick={() => void act("convert")}><FileText className="h-3 w-3" /> {busyAction === "convert" ? "Converting..." : "Convert to task"}</ActionButton>
+        <ActionButton primary disabled={!proposal || Boolean(busyAction)} onClick={() => void act("approve")}><Check className="h-3 w-3" /> {busyAction === "approve" ? "Approving..." : "Approve"}</ActionButton>
+      </footer>
+    </>
+  );
+}
+
+function Column({ title, meta, children }: { title: string; meta: string; children: ReactNode }) {
+  return (
+    <section className="min-w-0 border-b border-border lg:border-b-0 lg:border-r lg:last:border-r-0">
+      <div className="flex h-11 items-center justify-between border-b border-border px-3 text-[12px] font-extrabold text-foreground">
+        <span>{title}</span><span>{meta}</span>
+      </div>
+      <div className="max-h-[580px] overflow-auto p-3">{children}</div>
+    </section>
+  );
+}
+
+function MeetingCard({ meeting, active, onClick }: { meeting: Meeting; active: boolean; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={cn("mb-2 w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-rust", active && "border-rust bg-card shadow-[inset_3px_0_0_var(--rust)]", meeting.status === "needs_review" && "bg-[#FFF8E5]", meeting.status === "needs_raw_sync" && "border-dashed")}>
+      <div className="font-bold text-foreground">{meeting.title}</div>
+      <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+        <span>{meetingDateTime(meeting)}</span>
+        <span>{meeting.source}</span>
+        <Badge tone={meetingStatusTone(meeting)}>{meetingStatusLabel(meeting)}</Badge>
+      </div>
+      <div className="mt-2 text-[12px] text-muted-foreground">
+        {meeting.type} · {meeting.decisions} decisions · {meeting.actions} actions
+        {!meeting.hasRaw ? " · raw missing" : ""}
+      </div>
+    </button>
+  );
+}
+
+function MiniRow({ title, eyebrow, meta, tone }: { title: string; eyebrow: string; meta: string; tone: string }) {
+  return (
+    <div className="flex gap-2 border-b border-border py-2 last:border-b-0">
+      <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-rust/10 text-rust", tone === "critical" && "bg-rust/15")}>{tone === "critical" ? "!" : <ChevronRight className="h-3 w-3" />}</span>
+      <div className="min-w-0">
+        <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{eyebrow}</div>
+        <div className="text-[12px] font-bold leading-snug text-foreground">{title}</div>
+        <div className="mt-1 text-[10px] text-muted-foreground">{meta}</div>
+      </div>
+    </div>
+  );
+}
+
+function DocumentTile({ doc }: { doc: DocumentRecord }) {
+  return (
+    <div className={cn("rounded-lg border border-border bg-background p-3", doc.critical && "border-rust")}>
+      <div className="flex items-start justify-between gap-2"><strong className="text-[13px]">{doc.name}</strong><Badge tone={doc.critical ? "critical" : "proposal"}>{doc.status}</Badge></div>
+      <p className="mt-1 text-[11px] text-muted-foreground">{doc.area}</p>
+      <div className="mt-2 text-[10px] text-muted-foreground">POV affected · contradiction check · proposals generated</div>
+    </div>
+  );
+}
+
+function meetingStatusTone(meeting: Meeting): "ok" | "proposal" | "critical" | "low" {
+  if (meeting.status === "processed" || meeting.status === "raw_available") return "ok";
+  if (meeting.status === "failed") return "critical";
+  if (meeting.status === "needs_review") return "proposal";
+  return "low";
+}
+
+function meetingStatusLabel(meeting: Meeting) {
+  if (!meeting.hasRaw && meeting.status !== "failed") return "needs raw sync";
+  return meeting.status.replace(/_/g, " ");
+}
+
+function MetricStrip({ stats }: { stats: { value: number | string; label: string }[] }) {
+  return (
+    <div className="mt-5 flex max-w-full gap-2 overflow-x-auto pb-1">
+      {stats.map((stat) => (
+        <div
+          key={stat.label}
+          className="flex min-w-[132px] items-center justify-between gap-3 rounded-sc-md border-[2px] px-3 py-2"
+          style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+        >
+          <div className="font-heading text-[24px] leading-none text-navy">{stat.value}</div>
+          <div className="text-[10px] font-extrabold uppercase tracking-wide text-muted-foreground">{stat.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Badge({ children, tone }: { children: ReactNode; tone: "ok" | "proposal" | "critical" | "low" }) {
+  return (
+    <span className={cn(
+      "inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide",
+      tone === "ok" && "border-sage/30 bg-sage/10 text-sage",
+      tone === "proposal" && "border-yellow-400/40 bg-yellow-100 text-yellow-800",
+      tone === "critical" && "border-rust/40 bg-rust/10 text-rust",
+      tone === "low" && "border-border bg-background text-muted-foreground"
+    )}>{children}</span>
+  );
+}
+
+function ActionButton({ children, primary, disabled, onClick }: { children: ReactNode; primary?: boolean; disabled?: boolean; onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-[11px] font-extrabold text-foreground",
+        primary && "border-rust bg-rust text-white",
+        disabled && "cursor-not-allowed opacity-60"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ReviewColumn({ title, children }: { title: string; children: ReactNode }) {
+  return <section className="rounded-lg border border-border bg-card p-4"><h3 className="mb-3 font-heading text-base text-navy">{title}</h3>{children}</section>;
+}
+
+function ReviewBox({ children }: { children: ReactNode }) {
+  return <div className="mt-3 rounded-lg border border-border bg-background p-3 text-[12px] leading-relaxed text-muted-foreground">{children}</div>;
+}
+
+function MarkdownPanel({ content }: { content: string }) {
+  return (
+    <div className="max-h-[560px] overflow-auto rounded-lg border border-border bg-background p-4">
+      <article
+        className={cn(
+          "prose prose-sm max-w-none dark:prose-invert",
+          "prose-headings:font-heading prose-headings:text-navy prose-headings:mt-4 prose-headings:mb-2",
+          "prose-p:my-2 prose-p:text-muted-foreground prose-p:leading-relaxed",
+          "prose-strong:text-foreground prose-li:my-1 prose-ul:my-2 prose-ol:my-2",
+          "prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:text-[11px]",
+          "prose-pre:max-h-[320px] prose-pre:overflow-auto prose-pre:rounded-lg prose-pre:border prose-pre:border-border prose-pre:bg-card",
+          "text-[13px]"
+        )}
+      >
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      </article>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center text-muted-foreground">
+      <MessageSquareText className="mx-auto mb-3 h-8 w-8 text-rust" />
+      <strong className="block text-foreground">No meetings processed yet</strong>
+      <div className="mt-3 flex justify-center gap-2">
+        <ActionButton primary><RefreshCw className="h-3 w-3" /> Connect source</ActionButton>
+        <ActionButton><FileText className="h-3 w-3" /> Upload notes</ActionButton>
+      </div>
+    </div>
+  );
+}

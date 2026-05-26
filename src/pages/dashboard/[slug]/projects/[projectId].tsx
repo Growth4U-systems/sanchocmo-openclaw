@@ -268,9 +268,7 @@ export default function ProjectDetailPage() {
   return (
     <DashboardLayout>
       <Head>
-        <title>
-          {project.id} — {project.name} — Mission Control
-        </title>
+        <title>{`${project.id} - ${project.name} - Mission Control`}</title>
       </Head>
 
       {/* Back link */}
@@ -516,7 +514,7 @@ export default function ProjectDetailPage() {
                     return (
                       <Link
                         key={t.id}
-                        href={`/dashboard/${slug}/projects/${project.id}/tasks/${t.id}`}
+                        href={`/dashboard/${slug}/tasks/${t.id}`}
                         className={cn(
                           "group block rounded-lg border border-border bg-white p-2.5 cursor-pointer hover:border-rust hover:shadow-md transition-all",
                           tDone && "opacity-50"
@@ -577,7 +575,7 @@ export default function ProjectDetailPage() {
                           )}
                           {!isFnd && (
                             <Link
-                              href={`/dashboard/${slug}/projects/${project.id}/tasks/${t.id}`}
+                              href={`/dashboard/${slug}/tasks/${t.id}`}
                               className="text-[10px] text-muted-foreground hover:text-[#C45D35] transition-colors ml-auto no-underline"
                               onClick={(e) => { e.stopPropagation(); }}
                             >
@@ -695,7 +693,11 @@ export default function ProjectDetailPage() {
       )}
 
       {/* Document SlideOver */}
-      <DocSlideOver slug={slug} docPath={openDocPath ? `brand/${slug}/${openDocPath}` : null} onClose={() => setOpenDocPath(null)} />
+      <DocSlideOver
+        slug={slug}
+        docPath={openDocPath}
+        onClose={() => setOpenDocPath(null)}
+      />
     </DashboardLayout>
   );
 }

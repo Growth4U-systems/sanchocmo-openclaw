@@ -14,12 +14,55 @@ interface ChatAttachment {
   size: number;
 }
 
-interface ChatMessage {
-  role: "user" | "bot" | "status";
+export type ProgressKind =
+  | "thinking"
+  | "tool_call"
+  | "file_write"
+  | "agent_handoff"
+  | "search"
+  | "read";
+
+export interface ProgressEvent {
+  kind: ProgressKind;
+  label: string;
+  detail?: string;
+  target?: string;
+  agent?: string;
+  ts: number;
+}
+
+export type ErrorCategory =
+  | "rate_limit"
+  | "auth"
+  | "context_overflow"
+  | "watchdog_abort"
+  | "model_unavailable"
+  | "network";
+
+export interface ErrorDetail {
+  category: ErrorCategory;
+  raw: string;
+  provider?: string;
+  account?: string;
+  model?: string;
+  classifiedAt: number;
+  correlatedWith?: ErrorCategory;
+}
+
+export interface ChatMessage {
+  role: "user" | "bot" | "status" | "system" | "handoff";
   text: string;
   agent?: string;
   ts?: number;
   attachments?: ChatAttachment[];
+  progress?: ProgressEvent[];
+  // Only set when role === "handoff": agente que delega y agente que recibe
+  from_agent?: string;
+  to_agent?: string;
+  // Set on bot messages whose text was rewritten by the mc-chat error-rewriter
+  // (rate limit, watchdog abort, auth failure, etc.). Drives the "Ver detalle
+  // técnico" chip + modal.
+  errorDetail?: ErrorDetail;
 }
 
 interface ThreadListItem {
@@ -39,7 +82,7 @@ interface ThreadListItem {
 export function useThreadMessages(threadId: string | null) {
   const { isPolling, lastMsgCount, setLastMsgCount } = useChatStore();
 
-  return useQuery<{ messages: ChatMessage[]; status: { text: string } | null }>({
+  return useQuery<{ messages: ChatMessage[]; status: { text: string; agent?: string; ts: number } | null; pendingProgress?: ProgressEvent[] }>({
     queryKey: ["chat", "thread", threadId],
     queryFn: async () => {
       if (!threadId) return { messages: [], status: null };
@@ -282,7 +325,7 @@ export function useQuickActions(slug: string | undefined, meta?: ThreadMeta) {
       if (threadType === "pillar") {
         params.set("type", "pillar");
         // Extract pillar key from linkedTo or threadId
-        const pillarKey = meta?.pillar || meta?.linkedTo?.replace("foundation/", "") || threadId?.split(":").pop() || "";
+        const pillarKey = meta?.pillar || meta?.linkedTo?.replace(/^(foundation|brand-brain)\//, "") || threadId?.split(":").pop() || "";
         params.set("key", pillarKey);
       } else if (threadType === "task") {
         params.set("type", "task");

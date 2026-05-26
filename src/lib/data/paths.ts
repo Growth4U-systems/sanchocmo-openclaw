@@ -66,8 +66,12 @@ export function chatReadStateFile(slug: string) {
   return path.join(BASE, "brand", slug, "chat", "_read-state.json");
 }
 
-export function atalayaDir(slug: string) {
-  return path.join(BASE, "brand", slug, "atalaya");
+export function meetingIntelligenceDir(slug: string) {
+  return path.join(BASE, "brand", slug, "intelligence");
+}
+
+export function meetingIntelligenceConfigFile(slug: string) {
+  return path.join(meetingIntelligenceDir(slug), "config.json");
 }
 
 export function integrationsFile(slug: string) {
@@ -83,11 +87,13 @@ export function monitoringDir(slug: string) {
 }
 
 export function strategiesCatalogFile() {
-  return path.join(BASE, "skills", "strategic-plan", "references", "strategies-catalog.json");
+  // Shared skills tree lives at ~/.openclaw/skills/, one level above BASE.
+  return path.join(BASE, "..", "skills", "strategic-plan", "references", "strategies-catalog.json");
 }
 
 export function apiHealthFile() {
-  return path.join(BASE, "memory", "state", "api-health.json");
+  // OpenClaw convention: instance/runtime state lives in workspace _system/.
+  return path.join(BASE, "_system", "api-health.json");
 }
 
 export function mcDataFile() {

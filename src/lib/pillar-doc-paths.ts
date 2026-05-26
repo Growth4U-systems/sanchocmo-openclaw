@@ -8,27 +8,37 @@
  * Default doc paths per pillar (fallback when foundation-state.json
  * doesn't have an output_file for the pillar).
  * Each entry is an array of paths to try in order.
+ *
+ * Lite fallback convention (added v1.1, 2026-05-20):
+ *   For pillars whose canonical path is also a fast-foundation output target,
+ *   we list `current.md` first and the sibling `lite.md` second. `current.md`
+ *   is produced by the full skill; `lite.md` is produced by `fast-foundation`
+ *   as a preliminary seed. The dashboard shows whichever exists, preferring full.
+ *
+ *   Consumers MUST treat lite.md as preliminary (badge "lite" in UI). Cross-
+ *   skill consumers (positioning, pricing, etc.) DO NOT fall back to lite —
+ *   that's intentional and lives in each consumer's `context_required`.
  */
 export const PILLAR_DOC_PATHS: Record<string, string[]> = {
-  "fast-foundation": ["company-brief/current.md"],
-  "company-brief": ["company-brief/current.md"],
-  "company-context": ["company-context/current.md"],
-  "business-model": ["business-model/current.md"],
-  "budget": ["budget/current.md"],
+  "fast-foundation": ["company-brief/current.md", "company-brief/lite.md"],
+  "company-brief": ["company-brief/current.md", "company-brief/lite.md"],
+  "company-context": ["company-context/current.md", "company-context/lite.md"],
+  "business-model": ["business-model/current.md", "business-model/lite.md"],
+  "budget": ["budget/current.md", "budget/lite.md"],
   "seo-audit": ["site-audit/seo-audit/current.md", "trust-engine/seo-audit.json"],
   "own-media-audit": ["site-audit/own-media-audit/current.md", "trust-engine/own-media-audit.json"],
-  "market-analysis": ["market-and-us/market/current.md"],
+  "market-analysis": ["market-and-us/market/current.md", "market-and-us/market/lite.md"],
   "competitor-analysis": ["market-and-us/competitors/current.md"],
-  "self-analysis": ["market-and-us/self/current.md"],
+  "self-analysis": ["market-and-us/self/current.md", "market-and-us/self/lite.md"],
   "market-synthesis": ["market-and-us/swot/current.md"],
-  "niche-discovery": ["go-to-market/ecps/current.md"],
-  "niche-basic": ["go-to-market/ecps/current.md"],
+  "niche-discovery": ["go-to-market/ecps/current.md", "go-to-market/ecps/lite.md"],
+  "niche-basic": ["go-to-market/ecps/current.md", "go-to-market/ecps/lite.md"],
   "existing-customer-data": ["go-to-market/existing-customers/current.md"],
   "ecp-validation": ["go-to-market/ecp-validation/current.md"],
   positioning: ["go-to-market/positioning/current.md"],
   pricing: ["go-to-market/pricing/current.md"],
   "brand-voice": ["brand-identity/voice-profile/current.md", "brand-identity/brand-voice/current.md"],
-  "brand-voice-snapshot": ["brand-voice/current.md"],
+  "brand-voice-snapshot": ["brand-voice/current.md", "brand-voice/lite.md"],
   "visual-identity": ["brand-identity/visual-identity/current.md"],
   "content-strategy": ["strategies/content/current.md"],
   "social-media-strategy": ["strategies/social/current.md"],
@@ -95,10 +105,29 @@ export function resolveTaskDocPaths(
   // 1) Explicit deliverable_file on the task (canonical when present)
   if (task.deliverable_file) {
     const arr = Array.isArray(task.deliverable_file) ? task.deliverable_file : [task.deliverable_file];
-    if (arr.length > 0) return arr.map(stripBrand);
+    const files = arr.filter((p) => !p.endsWith("/"));
+    const dirs = arr.filter((p) => p.endsWith("/"));
+
+    if (files.length > 0) return files.map(stripBrand);
+
+    // Directory deliverables (e.g. `brand/X/brand-book/visual-identity/templates/`):
+    // a single doc fetch would 404, so fall back to `output_files`. Skills emit
+    // those as paths relative to the deliverable directory's parent (e.g.
+    // `templates/blog-post/template.html` next to `brand-book/visual-identity/`),
+    // so we resolve them against that parent here.
+    if (dirs.length > 0 && task.output_files && task.output_files.length > 0) {
+      const baseDir = stripBrand(dirs[0]).replace(/\/$/, "");
+      const parent = baseDir.includes("/") ? baseDir.slice(0, baseDir.lastIndexOf("/")) : "";
+      return task.output_files.map((f) => {
+        const stripped = stripBrand(f);
+        if (stripped.startsWith(`${baseDir}/`)) return stripped;
+        return parent ? `${parent}/${stripped}` : stripped;
+      });
+    }
+    // Bare directory with no output_files — fall through to other resolution.
   }
 
-  // 2) Legacy output_files
+  // 2) Legacy output_files (no deliverable_file at all)
   if (task.output_files && task.output_files.length > 0) {
     return task.output_files.map(stripBrand);
   }

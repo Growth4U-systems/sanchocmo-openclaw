@@ -14,7 +14,7 @@ const i18n = {
     title: "¿Cómo empezar?",
     subtitle: "Todo lo que necesitas saber",
     heroTitle: "🐴 Bienvenido a SanchoCMO",
-    heroDesc: 'Un CMO virtual con <strong class="text-foreground">4 agentes de IA</strong>: Cervantes (arquitecto), Sancho (CMO estratega), Rocinante (QA) y Escudero (ejecución).',
+    heroDesc: 'Un CMO virtual con <strong class="text-foreground">10 agentes de IA especializados</strong>, orquestados por Sancho — desde estrategia y research hasta contenido, outreach, paid ads y QA.',
     heroCta: "Tú decides. Sancho orquesta. Los agentes ejecutan.",
     flywheelTitle: "⚡ Cómo funciona — El Flywheel",
     flywheelSubtitle: "Un ciclo que se repite y mejora con cada vuelta.",
@@ -53,13 +53,19 @@ const i18n = {
       { label: "L4", title: "Activación", checkpoint: "" },
       { label: "L5", title: "Visual", checkpoint: "" },
     ],
-    agentsTitle: "🤖 Los 4 Agentes",
+    agentsTitle: "🤖 Los 10 Agentes",
     agentsSubtitle: "Cada uno tiene su canal Discord, su personalidad (SOUL.md), y sus skills asignadas. Sancho les envía briefs, ellos ejecutan.",
     agents: [
       { name: "Cervantes", ch: "Webchat + #admin", model: "Opus 4.6", role: "Arquitecto del sistema", emoji: "✒️" },
-      { name: "Sancho", ch: "Todos los canales Discord", model: "Opus 4.6", role: "CMO Estratega / Orchestrator", emoji: "🐴" },
-      { name: "Rocinante", ch: "Invocado por Sancho (QA)", model: "Sonnet 4.5", role: "QA & Brand Check", emoji: "🐎" },
-      { name: "Escudero", ch: "Invocado por Sancho (ejecución)", model: "Sonnet 4.5", role: "Ejecución de tareas", emoji: "⚔️" },
+      { name: "Sancho", ch: "Todos los canales Discord", model: "Opus 4.6", role: "CMO Estratega / Orchestrator", emoji: "🤠" },
+      { name: "Hamete", ch: "#research, #intelligence", model: "Sonnet 4.5", role: "Cronista — Research & Market Intel", emoji: "📜" },
+      { name: "Dulcinea", ch: "#content, #web", model: "Sonnet 4.5", role: "Musa — Contenido escrito", emoji: "✍️" },
+      { name: "Rocinante", ch: "#prospecting, #partners", model: "Sonnet 4.5", role: "Outreach & Partnerships", emoji: "🐴" },
+      { name: "Maese Pedro", ch: "#creatives, #design, #web", model: "Opus 4.6", role: "Visual Director / Creative Engine", emoji: "🎭" },
+      { name: "Yalc Agent", ch: "Mission Control / GTM-OS", model: "Sonnet 4.5", role: "YALC operator / outbound GTM", emoji: "🧭" },
+      { name: "Mambrino", ch: "#paid-ads", model: "Sonnet 4.5", role: "Paid Ads & Retargeting", emoji: "🪖" },
+      { name: "Merlín", ch: "#learning", model: "Sonnet 4.5", role: "Data, atribución & forecasting", emoji: "🔮" },
+      { name: "Sansón", ch: "Invocado por Sancho (QA)", model: "Sonnet 4.5", role: "QA, brand-check & devil's advocate", emoji: "🛡️" },
     ],
     pillarsTitle: "🧱 Los 5 Pilares del Sistema",
     pillarsSubtitle: "La arquitectura que hace que todo funcione.",
@@ -147,7 +153,7 @@ const i18n = {
     title: "Getting started",
     subtitle: "Everything you need to know",
     heroTitle: "🐴 Welcome to SanchoCMO",
-    heroDesc: 'A virtual CMO with <strong class="text-foreground">4 AI agents</strong>: Cervantes (architect), Sancho (CMO strategist), Rocinante (QA) and Escudero (execution).',
+    heroDesc: 'A virtual CMO with <strong class="text-foreground">10 specialized AI agents</strong>, orchestrated by Sancho — from strategy and research to content, outreach, paid ads, and QA.',
     heroCta: "You decide. Sancho orchestrates. The agents execute.",
     flywheelTitle: "⚡ How it works — The Flywheel",
     flywheelSubtitle: "A cycle that repeats and improves with each turn.",
@@ -186,13 +192,19 @@ const i18n = {
       { label: "L4", title: "Activation", checkpoint: "" },
       { label: "L5", title: "Visual", checkpoint: "" },
     ],
-    agentsTitle: "🤖 The 4 Agents",
+    agentsTitle: "🤖 The 10 Agents",
     agentsSubtitle: "Each has its own Discord channel, personality (SOUL.md), and assigned skills. Sancho sends them briefs, they execute.",
     agents: [
       { name: "Cervantes", ch: "Webchat + #admin", model: "Opus 4.6", role: "System architect", emoji: "✒️" },
-      { name: "Sancho", ch: "All Discord channels", model: "Opus 4.6", role: "CMO Strategist / Orchestrator", emoji: "🐴" },
-      { name: "Rocinante", ch: "Invoked by Sancho (QA)", model: "Sonnet 4.5", role: "QA & Brand Check", emoji: "🐎" },
-      { name: "Escudero", ch: "Invoked by Sancho (execution)", model: "Sonnet 4.5", role: "Task execution", emoji: "⚔️" },
+      { name: "Sancho", ch: "All Discord channels", model: "Opus 4.6", role: "CMO Strategist / Orchestrator", emoji: "🤠" },
+      { name: "Hamete", ch: "#research, #intelligence", model: "Sonnet 4.5", role: "Chronicler — Research & Market Intel", emoji: "📜" },
+      { name: "Dulcinea", ch: "#content, #web", model: "Sonnet 4.5", role: "Muse — Written content", emoji: "✍️" },
+      { name: "Rocinante", ch: "#prospecting, #partners", model: "Sonnet 4.5", role: "Outreach & Partnerships", emoji: "🐴" },
+      { name: "Maese Pedro", ch: "#creatives, #design, #web", model: "Opus 4.6", role: "Visual Director / Creative Engine", emoji: "🎭" },
+      { name: "Yalc Agent", ch: "Mission Control / GTM-OS", model: "Sonnet 4.5", role: "YALC operator / outbound GTM", emoji: "🧭" },
+      { name: "Mambrino", ch: "#paid-ads", model: "Sonnet 4.5", role: "Paid Ads & Retargeting", emoji: "🪖" },
+      { name: "Merlín", ch: "#learning", model: "Sonnet 4.5", role: "Data, attribution & forecasting", emoji: "🔮" },
+      { name: "Sansón", ch: "Invoked by Sancho (QA)", model: "Sonnet 4.5", role: "QA, brand-check & devil's advocate", emoji: "🛡️" },
     ],
     pillarsTitle: "🧱 The 5 System Pillars",
     pillarsSubtitle: "The architecture that makes everything work.",
@@ -440,7 +452,7 @@ export default function GuidePage() {
         <ComicCard>
           <h2 className="font-heading text-base text-navy mb-1">{c.agentsTitle}</h2>
           <p className="text-xs text-muted-foreground mb-4">{c.agentsSubtitle}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             {c.agents.map((a) => (
               <Link key={a.name} href="/dashboard/agents" className="bg-muted border border-border rounded-lg p-3 hover:border-rust transition-colors">
                 <div className="flex items-center gap-2 mb-1.5">

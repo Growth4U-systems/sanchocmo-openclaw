@@ -13,6 +13,9 @@ export interface ThreadMeta {
   threadName: string;
   threadState: "create" | "continue" | undefined;
   initialMessage?: string;
+  agent?: string;
+  /** Shape of the associated doc — see ThreadConfig.docKind. */
+  docKind?: "file" | "template";
 }
 
 interface ChatState {
@@ -113,6 +116,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       threadName: config.threadName,
       threadState: config.threadState,
       initialMessage: config.initialMessage,
+      agent: config.agent,
+      docKind: config.docKind,
     });
     get().registerThread(config.threadId, config.threadName);
   },
@@ -135,6 +140,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         threadName: config.threadName,
         threadState: config.threadState,
         initialMessage: config.initialMessage,
+        agent: config.agent,
+        docKind: config.docKind,
       });
       // Register thread locally
       get().registerThread(config.threadId, config.threadName);

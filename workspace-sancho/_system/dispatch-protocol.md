@@ -6,7 +6,7 @@
 
 ## Principio
 
-Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn) y verificación a Rocinante (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
+Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn), operaciones GTM-OS a Yalc Agent (sessions_send -> `yalc`, skill `yalc-operator`) y verificación a Sansón (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
 
 ---
 
@@ -23,6 +23,15 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Tareas de ejecución que necesitan especialización (prospecting pipeline, ad copy, landing pages)
 - Tareas paralelas (lanzar 3 Escuderos a la vez para diferentes piezas)
 - Tareas donde MiniMax/Qwen es suficiente y quieres ahorrar coste
+
+**Usa Yalc Agent** (via `sessions_send` al agente `yalc`; dentro usa `yalc-operator`):
+- Health checks y troubleshooting de GTM-OS/YALC
+- Provider status y MCP-backed provider checks expuestos por YALC
+- Brain/setup/gates de YALC cuando el usuario pide operar GTM-OS
+- Lead qualification cuando el usuario pide usar YALC
+- Dry-runs de cold email y campaign setup via YALC/Instantly
+- Lanzamientos live solo tras confirmación explícita del usuario
+- Campaign status, reporting y guardado de resultados en `brand/{slug}/yalc/runs/`
 
 ### Selección de modelo para spawn (IMPORTANTE)
 
@@ -43,7 +52,7 @@ Escudero tiene 2 modelos disponibles. Elige según la necesidad de contexto:
 
 **PRIVACIDAD**: Qwen (Alibaba) recopila datos de prompts/completions. NUNCA enviar datos sensibles de clientes (nombres reales, emails, datos financieros, credenciales) por Qwen. Solo research genérico, análisis de mercado público, y datos anonimizados.
 
-**Envía a Rocinante** (via `sessions_send`):
+**Envía a Sansón** (via `sessions_send`):
 - Verificación de marca antes de publicar contenido importante
 - Devil's advocate para propuestas estratégicas
 - Verificación de coherencia post-Foundation
@@ -74,7 +83,8 @@ Para mapping completo de personas a tareas, ver `dispatch-map.json`.
 | Propuestas, battlecards | Escudero | spawn | `personas/comercial.md` | positioning-messaging, pricing-strategy |
 | Landing pages, CRO | Escudero | spawn | `personas/arquitecto.md` | direct-response-copy, lead-magnet |
 | Research simple | Escudero | spawn | `personas/investigador.md` | daily-pulse, thief-marketers, signal-monitor |
-| Brand check, QA | Rocinante | send | — | Brand verification, devil's advocate |
+| YALC/GTM-OS execution | Yalc Agent | send | — | yalc-operator |
+| Brand check, QA | Sansón | send | — | Brand verification, devil's advocate |
 | Admin, bugs, infra | Cervantes | message (Discord) | — | System tasks |
 
 ---
@@ -116,7 +126,7 @@ Cada skill declara `context_required` y `context_writes` en su frontmatter YAML.
 
 ---
 
-## QA con Rocinante (sessions_send)
+## QA con Sansón (sessions_send)
 
 Formato:
 
@@ -129,7 +139,7 @@ QA REQUEST
 **Brand files**: [archivos de ./brand/ a contrastar]
 ```
 
-**Cuándo activar Rocinante:**
+**Cuándo activar Sansón:**
 - Antes de publicar contenido importante (posts, artículos, landing pages)
 - Después de Foundation Blitz para verificar coherencia entre pilares
 - Cuando hay duda sobre alineación con la marca
@@ -138,6 +148,32 @@ QA REQUEST
 - Tareas rutinarias internas
 - Respuestas conversacionales en Discord
 - Outputs solo para uso interno
+
+## Yalc Agent (sessions_send)
+
+Formato:
+
+```
+YALC REQUEST
+
+**Cliente/slug**: {slug}
+**Intent**: [health / providers / qualify-leads / campaign-dry-run / launch-confirmed / gates / reporting / setup / brain]
+**Confirmación live**: [ninguna / texto exacto de confirmación del usuario]
+**Contexto de marca**:
+- brand/{slug}/foundation-state.json
+- [archivos concretos necesarios]
+**Payload o inputs**:
+[JSON o ruta a payload bajo brand/{slug}/yalc/]
+**Output esperado**:
+[qué debe devolver Sancho al usuario]
+```
+
+Reglas:
+- El agente `yalc` debe usar `skills/yalc-operator/scripts/yalc-client.mjs`.
+- Antes de `run-skill`, debe listar `skills` y verificar el catálogo vivo.
+- Para email/campañas/gates/setup/brain writes/campaign status writes: si no hay confirmación explícita, solo dry-run o lectura.
+- MCP se revisa a través de `providers`, `provider-knowledge` y `provider-test`; no conectar Sancho directamente a MCP externos salvo cambio futuro.
+- Todo resultado queda guardado en `brand/{slug}/yalc/runs/` y el `savedTo` se reporta a Sancho.
 
 ---
 

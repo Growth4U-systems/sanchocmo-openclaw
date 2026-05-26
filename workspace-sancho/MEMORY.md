@@ -3,7 +3,7 @@
 > Core compacto. Detalle por cliente → `memory/clients/{slug}.md`. Skills → `memory/skills.md`.
 
 ## Sistema
-- Gateway (LaunchAgent), Tailscale (`sancho-cmo.taild48df2.ts.net`), Discord bot SanchoCMO
+- Gateway (LaunchAgent), Tailscale (`staging.sanchocmo.ai`), Discord bot SanchoCMO
 - Google Workspace (alfonso@growth4u.io), Notion API, Supabase
 - Cost alerts → hilo "Costes APIs" (thread `1481910083255406694`). NO mensajes sueltos en #infra.
 - Plan Anthropic: Claude Max $200/mes (flat). Alertar solo anomalías >2x promedio.
@@ -32,7 +32,10 @@
 - DATA: DataForSEO (credentials ok), Serper.dev (ok), Own media (IG 133K, YT 40K, LinkedIn 7.8K, TikTok 55K)
 
 ## Semana
-- **Apr 7** — Back after weekend. Weekly Fellow<>G4U + Weekly Projects Philippe hoy 16:00-17:00. Llamada estratégica Thursday Apr 9 10:00 AM (cliente nuevo?).
+- **May 3** — Semana muy silenciosa. Solo 1 daily log (Apr 27). Sin dailies Apr 28–May 3 (gap de 6 días).
+- **Abr 27** — G4U Weekly, Spain GTM weekly, Affiliate Spain Weekly, Spain Readiness sync, Q&A Oier.
+- **Abr 22-26** — Semana intensa: 9+ reuniones/día Apr 22. Llamadas: Blas Nieto, Paymatico review, Laura Donadio, Sergi Candel, Chloe/Monzo, Alba Weekly, Impact demo. Growit grabaciones.
+- **Pending crítico** — HC Foundation sigue ATASCADA (>2 meses desde reset Mar 2). Parálisis crónica confirmada.
 
 ## Pending
 - HC Foundation desde cero (DAG a seguir)

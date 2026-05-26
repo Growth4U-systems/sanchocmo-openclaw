@@ -1,13 +1,40 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-const r2 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_UPLOAD_IMAGE_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY!,
-  },
-});
+const REQUIRED_R2_VARS = [
+  "CLOUDFLARE_ACCOUNT_ID",
+  "R2_UPLOAD_IMAGE_ACCESS_KEY_ID",
+  "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
+  "R2_UPLOAD_IMAGE_BUCKET_NAME",
+  "R2_PUBLIC_URL",
+] as const;
+
+function assertR2Configured(): void {
+  const missing = REQUIRED_R2_VARS.filter((k) => !process.env[k]);
+  if (missing.length > 0) {
+    throw new Error(
+      `R2 not configured: missing ${missing.join(", ")}. ` +
+      `Set these in ~/.openclaw/.env.local and restart 'next dev'. ` +
+      `Without them upload-media / generate-image cannot persist images, ` +
+      `which causes agents to fall back to writing 'localPath' into ` +
+      `frontmatter.media — see _system/media-persistence-protocol.md.`,
+    );
+  }
+}
+
+let _client: S3Client | null = null;
+function r2(): S3Client {
+  if (_client) return _client;
+  assertR2Configured();
+  _client = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_UPLOAD_IMAGE_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY!,
+    },
+  });
+  return _client;
+}
 
 /** Upload any file to R2 and return the public URL */
 export async function uploadToR2(
@@ -15,7 +42,8 @@ export async function uploadToR2(
   key: string,
   contentType: string
 ): Promise<string> {
-  await r2.send(
+  assertR2Configured();
+  await r2().send(
     new PutObjectCommand({
       Bucket: process.env.R2_UPLOAD_IMAGE_BUCKET_NAME!,
       Key: key,

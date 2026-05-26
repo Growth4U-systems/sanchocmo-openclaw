@@ -24,5 +24,8 @@
       }
     }
   ],
-  "adminToken": "generate-with-openssl-rand-hex-32"
+  "adminToken": "generate-with-openssl-rand-hex-32",
+  "adminEmails": [
+    "external.admin@example.com"
+  ]
 }

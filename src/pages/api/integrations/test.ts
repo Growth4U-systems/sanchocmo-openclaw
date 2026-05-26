@@ -25,7 +25,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Missing slug" });
   }
 
-  const testScript = path.join(BASE, "skills", "acquisition-metrics-plan", "scripts", "test-connection.js");
+  const testScript = path.join(BASE, "..", "skills", "acquisition-metrics-plan", "scripts", "test-connection.js");
   const intPath = path.join(BASE, "brand", slug, "integrations.json");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let intData = readJSON<any>(intPath, { slug, dataSources: {}, systemOverrides: {} });

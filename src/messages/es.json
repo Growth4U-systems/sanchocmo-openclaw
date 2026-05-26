@@ -23,14 +23,11 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "foundation": "Foundation",
     "projects": "Proyectos",
-    "ideas": "Idea Bank",
     "recurringTasks": "Tareas Recurrentes",
     "metrics": "Métricas",
     "trustEngine": "Trust Engine",
     "skills": "Skills",
-    "atalaya": "Atalaya",
     "campaigns": "Campañas",
     "tasks": "Tareas",
     "dataExplorer": "Data Explorer",
@@ -38,7 +35,7 @@
     "settings": "Ajustes",
     "guide": "Guía",
     "changelog": "Changelog",
-    "documents": "Documentos",
+    "brandBrain": "Brand Brain",
     "overview": "Vista general",
     "work": "Trabajo",
     "tools": "Herramientas",
@@ -79,9 +76,9 @@
     "metricas": "Métricas",
     "nextSteps": "Próximos Pasos"
   },
-  "foundation": {
-    "title": "Foundation",
-    "subtitle": "Estado de los pilares de marca",
+  "brandBrain": {
+    "title": "Brand Brain",
+    "subtitle": "La memoria estratégica de tu marca — pilares, ICPs, competidores y todo el contexto del que tira el sistema",
     "notStarted": "No iniciado",
     "inProgress": "En progreso",
     "approved": "Aprobado",
@@ -99,8 +96,8 @@
     "requestRefresh": "Solicitar actualización",
     "depth": "Profundidad",
     "viewDoc": "Ver documento",
-    "depthLabel": "Foundation Depth",
-    "warningMessage": "Foundation {pct}% completa — {pending} pilares pendientes"
+    "depthLabel": "Brand Brain Depth",
+    "warningMessage": "Brand Brain {pct}% completo — {pending} pilares pendientes"
   },
   "projects": {
     "title": "Proyectos",
@@ -115,88 +112,6 @@
     "newProject": "Nuevo proyecto",
     "tasks": "Tareas",
     "archive": "Archivar"
-  },
-  "ideas": {
-    "title": "Idea Bank",
-    "subtitle": "Ideas, semillas de contenido y oportunidades de contacto",
-    "newIdea": "Nueva Idea",
-    "status": {
-      "all": "Todas",
-      "new": "Nuevas",
-      "approved": "Aprobadas",
-      "rejected": "Rechazadas",
-      "executed": "Ejecutadas"
-    },
-    "stats": {
-      "total": "Total",
-      "new": "Nuevas",
-      "approved": "Aprobadas",
-      "approvalRate": "% Aprobación"
-    },
-    "bulkActions": "Acciones en lote",
-    "bulkApprove": "Aprobar",
-    "bulkReject": "Rechazar",
-    "selected": "seleccionada(s)",
-    "selectAll": "Seleccionar todas",
-    "priority": "Prioridad",
-    "description": "Descripción",
-    "action": "Acción",
-    "channels": "Canales",
-    "source": "Fuente",
-    "sourceAll": "Fuente: Todas",
-    "channelAll": "Canal: Todos",
-    "goal": "Objetivo",
-    "theme": "Tema",
-    "list": "Lista / Grupo",
-    "pieces": "Piezas",
-    "changeStatus": "Cambiar estado",
-    "delete": "Eliminar idea",
-    "confirmDelete": "¿Eliminar esta idea?",
-    "yes": "Sí, eliminar",
-    "no": "Cancelar",
-    "created": "Creada",
-    "approved": "Aprobada",
-    "approval": "Aprobación",
-    "searchPlaceholder": "Buscar ideas...",
-    "empty": "No hay ideas. Haz clic en \"+ Nueva Idea\" o ejecuta una tarea recurrente.",
-    "analytics": "Analytics por Fuente",
-    "close": "Cerrar",
-    "sourceData": "Datos de la fuente",
-    "score": "Score",
-    "date": "Fecha",
-    "actions": "Acciones",
-    "titleAction": "Título + Acción",
-    "lists": {
-      "keywords": "Keywords para rankear",
-      "trending": "Contenido trending para crear",
-      "gaps": "Gaps vs competencia",
-      "repurpose": "Contenido para reutilizar",
-      "medios": "Medios donde aparecer",
-      "partners": "Partners para colaborar",
-      "influencers": "Influencers para contactar",
-      "outreach": "Prospects para contactar"
-    },
-    "listDescriptions": {
-      "keywords": "Oportunidades SEO detectadas",
-      "trending": "Temas en tendencia en el nicho",
-      "gaps": "Contenido que competidores no cubren bien",
-      "repurpose": "Ideas de atomización cross-canal",
-      "medios": "Blogs, revistas, podcasts para PR/guest posts",
-      "partners": "Empresas/personas para co-marketing",
-      "influencers": "Creadores relevantes en el nicho",
-      "outreach": "Leads para outreach directo"
-    },
-    "sources": {
-      "seo_geo": "SEO/GEO",
-      "signal": "Signal",
-      "competitor": "Competencia",
-      "meeting": "Reunión",
-      "manual": "Manual",
-      "trust_engine": "Trust Engine",
-      "paa": "PAA",
-      "trending": "Trending",
-      "serp_gaps": "SERP Gaps"
-    }
   },
   "recurringTasks": {
     "title": "Tareas Recurrentes",
@@ -259,6 +174,7 @@
     "fullscreen": "Pantalla completa",
     "closeSidebar": "Cerrar",
     "loading": "Cargando...",
+    "emptyThread": "Escribime para empezar la conversación.",
     "selectThread": "Selecciona un thread para empezar.",
     "selectThreadOption": "Seleccionar hilo...",
     "newThread": "Nuevo hilo",
@@ -276,11 +192,11 @@
     "tabs": {
       "apis": "APIs",
       "agents": "Agentes",
+      "models": "Modelos",
       "skills": "Skills",
-      "dispatch": "Dispatch",
       "strategies": "Estrategias",
       "recurring": "Recurrentes",
-      "clients": "Clientes",
+      "task-index": "Indice de Tareas",
       "preferences": "Preferencias"
     },
     "loadingClients": "Cargando clientes...",
@@ -295,7 +211,8 @@
       "systemKey": "Key sistema",
       "error": "Error",
       "connected": "Conectado",
-      "notConfigured": "No configurado"
+      "notConfigured": "No configurado",
+      "pending": "Pendiente"
     },
     "howToStart": "¿Cómo empezar?"
   },

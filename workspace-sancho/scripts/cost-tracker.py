@@ -18,9 +18,64 @@ from collections import defaultdict
 
 OPENCLAW_HOME = Path(os.environ.get("OPENCLAW_HOME", str(Path.home() / ".openclaw")))
 WORKSPACE = OPENCLAW_HOME / "workspace-sancho"
-AGENTS_DIR = OPENCLAW_HOME / "agents"
+
 USD_TO_EUR = 0.92
 CHANNEL_CACHE = WORKSPACE / "scripts" / ".channel-guild-cache.json"
+
+
+def get_agent_sessions_dirs():
+    """Map agent_id -> sessions dir. Authoritative source.
+
+    OpenClaw exposes the canonical session store path per agent via
+    `openclaw sessions --all-agents --json` (each entry of `stores[]` carries
+    `agentId` and `path`, where `path` is the per-agent sessions.json).
+    The `.jsonl` transcript files live in the same directory.
+
+    Querying OpenClaw avoids hardcoding layout assumptions — historically the
+    flat `~/.openclaw/agents/` moved to the nested `~/.openclaw/.openclaw/agents/`
+    on newer deployments, and this script silently reported "0 sessions"
+    for months because its hardcoded path stopped resolving.
+
+    Fallback: probe nested then flat on the filesystem if the CLI fails (so
+    the script still works in environments without `openclaw` on PATH).
+    """
+    try:
+        result = subprocess.run(
+            ["openclaw", "sessions", "--all-agents", "--json"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            dirs = {}
+            for store in data.get("stores", []):
+                agent_id = store.get("agentId")
+                store_path = store.get("path")
+                if agent_id and store_path:
+                    dirs[agent_id] = Path(store_path).parent
+            if dirs:
+                return dirs
+    except Exception:
+        pass
+
+    for candidate in (OPENCLAW_HOME / ".openclaw" / "agents", OPENCLAW_HOME / "agents"):
+        if candidate.exists():
+            return {
+                p.name: p / "sessions"
+                for p in candidate.iterdir()
+                if p.is_dir() and (p / "sessions").exists()
+            }
+    return {}
+
+
+_AGENT_DIRS_CACHE = None
+
+
+def agent_sessions_dirs():
+    """Cached accessor — calls get_agent_sessions_dirs() once per run."""
+    global _AGENT_DIRS_CACHE
+    if _AGENT_DIRS_CACHE is None:
+        _AGENT_DIRS_CACHE = get_agent_sessions_dirs()
+    return _AGENT_DIRS_CACHE
 
 # ──────────────────── Channel → Guild → Client mapping ────────────────────
 
@@ -96,10 +151,7 @@ def build_channel_guild_map(session_map):
     
     if unresolved:
         # Pass 1: Scan transcripts for group_space
-        for agent_dir in AGENTS_DIR.iterdir():
-            if not agent_dir.is_dir():
-                continue
-            sessions_dir = agent_dir / "sessions"
+        for agent_id, sessions_dir in agent_sessions_dirs().items():
             if not sessions_dir.exists():
                 continue
             for jsonl_file in sessions_dir.glob("*.jsonl"):
@@ -200,10 +252,7 @@ def resolve_unknown_channels(unknown_channels, cache, session_map):
         return cache
     
     updated = False
-    for agent_dir in AGENTS_DIR.iterdir():
-        if not agent_dir.is_dir():
-            continue
-        sessions_dir = agent_dir / "sessions"
+    for agent_id, sessions_dir in agent_sessions_dirs().items():
         if not sessions_dir.exists():
             continue
         for jsonl_file in sessions_dir.iterdir():
@@ -277,21 +326,76 @@ def _extract_usage_blocks(text):
 # ──────────────────── Session data extraction ────────────────────
 
 def get_active_sessions():
-    """Get session key → info mapping from OpenClaw."""
+    """Get session_id → {key, ...} for ALL sessions across all agents.
+
+    Sources, in priority order:
+      1. Per-agent `sessions.json` stores on disk (authoritative; one entry
+         per session ever created). The OpenClaw CLI's
+         `openclaw sessions --all-agents --json` only returns the most-recent
+         100 sessions by default, so historical transcripts on disk would
+         miss their key and get bucketed as `_unclassified`.
+      2. Fallback: `openclaw sessions --all-agents --json` (CLI). Used only
+         if the disk stores can't be located.
+
+    Returns: {sessionId: {"key": str, ...}}
+    """
+    result = {}
+    for _agent_id, sessions_dir in agent_sessions_dirs().items():
+        store = sessions_dir / "sessions.json"
+        if not store.exists():
+            continue
+        try:
+            data = json.loads(store.read_text())
+        except Exception:
+            continue
+        # Format: { "<session-key>": { "sessionId": "<uuid>", ... }, ... }
+        for key, entry in (data.items() if isinstance(data, dict) else []):
+            sid = entry.get("sessionId") if isinstance(entry, dict) else None
+            if not sid:
+                continue
+            result[sid] = {"key": key, **(entry if isinstance(entry, dict) else {})}
+    if result:
+        return result
+
     try:
-        result = subprocess.run(
+        out = subprocess.run(
             ["openclaw", "sessions", "--all-agents", "--json"],
-            capture_output=True, text=True, timeout=30
+            capture_output=True, text=True, timeout=30,
         )
-        data = json.loads(result.stdout)
+        data = json.loads(out.stdout)
         sessions = data if isinstance(data, list) else data.get("sessions", [])
-        return {s.get("sessionId", ""): s for s in sessions}
-    except:
+        return {s.get("sessionId", ""): s for s in sessions if s.get("sessionId")}
+    except Exception:
         return {}
 
+_KNOWN_SLUGS_CACHE = None
+
+
+def known_slugs():
+    """Cached set of slugs from clients.json. Used by classify_session to
+    reject mc-chat keys whose embedded slug doesn't match an active client."""
+    global _KNOWN_SLUGS_CACHE
+    if _KNOWN_SLUGS_CACHE is None:
+        try:
+            data = json.loads((WORKSPACE / "clients.json").read_text())
+            _KNOWN_SLUGS_CACHE = {c["slug"] for c in data.get("clients", []) if c.get("slug")}
+        except Exception:
+            _KNOWN_SLUGS_CACHE = set()
+    return _KNOWN_SLUGS_CACHE
+
+
 def classify_session(key, agent_id, channel_cache, guild_to_client):
-    """Classify a session key → client slug."""
-    # System patterns
+    """Classify a session key → client slug.
+
+    Recognised patterns (post-Discord deprecation):
+      - `agent:<name>:unknown:channel:mc-chat:<slug>:<topic>` — UI-launched
+        sessions from `/dashboard/<slug>/...`. The mc-chat plugin embeds the
+        slug in the SessionKey at plugins/mc-chat/src/index.js:144.
+      - `agent:<name>:discord:channel:<id>` — legacy Discord sessions. Kept
+        as fallback so historical cost data classifies; new clients don't
+        have a `guild` field and won't match this branch.
+      - `:heartbeat`, `:cron:`, `:main`, `:subagent:` → system.
+    """
     if ":heartbeat" in key:
         return "_system"
     if ":cron:" in key:
@@ -300,8 +404,15 @@ def classify_session(key, agent_id, channel_cache, guild_to_client):
         return "_system"
     if ":subagent:" in key:
         return "_system"
-    
-    # Discord channel sessions
+
+    if ":mc-chat:" in key:
+        # Slug is the segment immediately after `:mc-chat:`.
+        tail = key.split(":mc-chat:", 1)[1]
+        slug = tail.split(":", 1)[0] if ":" in tail else tail
+        if slug and slug in known_slugs():
+            return slug
+        return "_unclassified"
+
     if ":discord:channel:" in key:
         channel_id = key.split(":discord:channel:")[-1]
         guild_id = channel_cache.get(channel_id)
@@ -309,15 +420,13 @@ def classify_session(key, agent_id, channel_cache, guild_to_client):
             client = guild_to_client.get(guild_id)
             if client:
                 return client
-            # Internal guilds
             if guild_id in ("1478770422093709502", "1477997446885019670"):
                 return "_system"
         return "_unclassified"
-    
-    # Cervantes is system by default
+
     if agent_id == "cervantes":
         return "_system"
-    
+
     return "_unclassified"
 
 def scan_transcript(jsonl_file, agent_id, period_filter=None):
@@ -767,13 +876,9 @@ def main():
     
     # Scan all transcripts
     all_results = []
-    for agent_dir in sorted(AGENTS_DIR.iterdir()):
-        if not agent_dir.is_dir():
-            continue
-        sessions_dir = agent_dir / "sessions"
+    for agent_id, sessions_dir in sorted(agent_sessions_dirs().items()):
         if not sessions_dir.exists():
             continue
-        agent_id = agent_dir.name
         count = 0
         for jsonl_file in sessions_dir.glob("*.jsonl"):
             result = scan_transcript(jsonl_file, agent_id, period)

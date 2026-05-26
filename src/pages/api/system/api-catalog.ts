@@ -5,7 +5,8 @@ import { BASE } from "@/lib/data/paths";
 
 /**
  * GET /api/system/api-catalog
- * Returns the API catalog from the workspace
+ * Returns the API catalog from the shared skills tree
+ * (~/.openclaw/skills/, one level above BASE).
  */
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -14,6 +15,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const catalogPath = path.join(
     BASE,
+    "..",
     "skills",
     "acquisition-metrics-plan",
     "schemas",

@@ -1,9 +1,0 @@
-{
-  "cronName": "Morning Metrics — Growth4U",
-  "slug": "growth4u",
-  "date": "2026-04-04",
-  "runAtMs": 1743749400000,
-  "status": "ok",
-  "sources": {"ok": ["ga4", "gsc", "metricool", "meta-ads", "ghl"], "errors": ["instantly"]},
-  "content": "📊 **Morning Metrics — Growth4U** | 2026-04-04\n\n━━━ **META ADS** (ayer) ━━━\n💰 Spend: **€206.47** (media 7d: €151.02 ⬆️)\n👁️ Impressions: **7,958** (media 7d: 7,884)\n🖱️ Clicks: **129** | CTR: **1.62%** | CPC: **€1.60**\n🎯 Leads: **5** (media 7d: 4.1/día)\n\n**Desglose 7d:**\nFecha         Spend     Imp  Clicks    CTR     CPC  Leads\n03-28      €105.18   7,607     221  2.91% € 0.48     6\n03-29      €136.15  14,608     299  2.05% € 0.46     3\n03-30      €134.00   9,363     189  2.02% € 0.71     5\n03-31      € 99.62   5,186     135  2.60% € 0.74     5\n04-01      €170.90   5,291      68  1.29% € 2.51     1\n04-02      €204.83   5,177      63  1.22% € 3.25     4\n04-03      €206.47   7,958     129  1.62% € 1.60     5\nMedia/d    €151.02   7,884     157  1.96% € 1.39   4.1\n\n━━━ **GHL — CONTACTS** (últimas 24h) ━━━\n👤 Nuevos contactos: **0**\n\n━━━ **GHL — APPOINTMENTS** (últimas 24h) ━━━\n📅 Citas: **0**\n\n━━━ **ANÁLISIS** ━━━\n⚠️ CPC en tendencia alcista: €0.48 → €3.25 → €1.60 (media 7d: €1.39). Aunque ayer mejoró vs 04-02, sigue 3x por encima del inicio de semana.\n⚠️ CTR cayendo: de 2.91% (03-28) a 1.62% (ayer). Señal de fatiga creativa o saturación de audiencia.\n⚠️ Spend +37% sobre media 7d (€206 vs €151) sin aumento proporcional de leads.\n⚠️ CPL ayer: €41.29 vs €17.53 el 03-28 — 2.4x más caro por lead.\nℹ️ GHL sin contactos ni citas — sábado, puede ser patrón normal de fin de semana."
-}

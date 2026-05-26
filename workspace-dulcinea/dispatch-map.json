@@ -1,0 +1,49 @@
+{
+  "version": 3,
+  "dispatch_mode": "sessions",
+  "agent": "dulcinea",
+  "note": "Workspace de Dulcinea (Contenido Escrito). Agente nuevo creado en Fase 1. Hereda dominios de personas Redactor + Comunicador + Arquitecto. Skills viven aún en workspace-sancho/skills/; migración en Fase 3.",
+  "channel_roles": {
+    "execution": {
+      "description": "Create and execute written content.",
+      "channels": ["content", "web"],
+      "rules": {
+        "content": "Create content (blogs, social, newsletter). Ideas come from intelligence → campaigns → here.",
+        "web": "Landing page copy, lead magnets, pricing pages."
+      }
+    }
+  },
+  "personas": {
+    "dulcinea": {
+      "name": "Dulcinea",
+      "persona_file": "./SOUL.md",
+      "dispatch_for": [
+        "seo-content",
+        "keyword-research",
+        "content-calendar",
+        "content-calendar-planner",
+        "content-atomizer",
+        "newsletter",
+        "social",
+        "direct-response-copy",
+        "landing-pages",
+        "web",
+        "brand-voice",
+        "lead-magnet",
+        "positioning-messaging"
+      ],
+      "skills": [
+        "keyword-research",
+        "seo-content",
+        "content-calendar-planner",
+        "content-atomizer",
+        "newsletter",
+        "direct-response-copy",
+        "brand-voice",
+        "lead-magnet",
+        "positioning-messaging"
+      ],
+      "brand_context": ["voice-profile.md", "positioning.md", "ecps.md"]
+    }
+  }
+}

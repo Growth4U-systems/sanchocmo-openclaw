@@ -1,0 +1,22 @@
+{
+  "date": "2026-04-26",
+  "runAt": "2026-04-26T08:00:54+02:00",
+  "total_cost_usd": 218.01,
+  "total_turns": 8047,
+  "avg_daily_usd": 8.39,
+  "avg_daily_turns": 310,
+  "today_usd": 0.22,
+  "today_turns": 60,
+  "anomaly_threshold_2x_usd": 16.77,
+  "anomaly_threshold_2x_turns": 619,
+  "client_anomaly": false,
+  "global_anomaly": false,
+  "clients": {
+    "hospital-capilar": {"cost_usd": 0, "turns": 9, "sessions": 2, "anomaly": false},
+    "paymatico": {"cost_usd": 0, "turns": 1, "sessions": 1, "anomaly": false},
+    "growth4u": {"cost_usd": 0, "turns": 10, "sessions": 1, "anomaly": false},
+    "kleva": {"cost_usd": 6.84, "turns": 105, "sessions": 4, "anomaly": false},
+    "sanchocmo": {"cost_usd": 0.80, "turns": 5, "sessions": 1, "anomaly": false}
+  },
+  "note": "99%+ unclassified. Clients show no per-channel classification this period."
+}

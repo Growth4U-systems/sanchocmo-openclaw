@@ -1,12 +1,39 @@
 FROM node:24-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip \
+    python3 python3-pip python3-venv python3-full \
     git curl jq openssh-client sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install OpenClaw CLI
-RUN npm install -g openclaw@latest
+# PDF extraction libs. Debian Bookworm marks the system Python as
+# externally-managed (PEP 668), so `pip install pypdf` from an agent's
+# bash tool fails with "externally-managed-environment". Sancho recovered
+# the first time using `--break-system-packages`, but the recovery dance
+# (failed pip, failed venv, retry with override) surfaces as alarming red
+# "tool failed" lines in MC Chat. Pre-installing the two libraries the
+# agent actually reaches for keeps the happy path silent.
+RUN pip install --break-system-packages --no-cache-dir pypdf pdfplumber
+
+# Default /bin/sh to bash so child processes that prepend `set -o pipefail`
+# (e.g. agent-issued shell commands via the OpenClaw Bash tool) don't fail
+# on Debian's dash. Both /bin/sh and /usr/bin/sh are symlinked because
+# Debian's usr-merge exposes the latter and some callers resolve it directly.
+RUN ln -sf /usr/bin/bash /bin/sh && ln -sf /usr/bin/bash /usr/bin/sh
+
+# Install OpenClaw CLI — pinned so a major schema change (auth-profiles.json,
+# openclaw.json) doesn't silently break the running container on rebuild.
+# Bump deliberately when staging is validated against a new version.
+# ENV propagates the pin to runtime so entrypoint.sh can keep auto-installed
+# plugins (e.g. @openclaw/codex) in lockstep — see entrypoint section 5c.
+ARG OPENCLAW_VERSION=2026.5.18
+ENV OPENCLAW_VERSION=${OPENCLAW_VERSION}
+RUN npm install -g openclaw@${OPENCLAW_VERSION}
+
+# Official Notion CLI used by the bundled `notion` skill. Without `ntn`
+# on PATH, the skill's anyBins=["ntn","curl"] check passes via curl, but
+# its SKILL.md tells the agent to prefer `ntn` — leading to "command not
+# found" mid-session. Installing it here keeps the preferred path working.
+RUN npm install -g ntn
 
 # Git config for backup commits
 RUN git config --global user.name "Cervantes (SanchoCMO)" \

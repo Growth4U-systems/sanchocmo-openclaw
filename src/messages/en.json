@@ -23,14 +23,11 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "foundation": "Foundation",
     "projects": "Projects",
-    "ideas": "Idea Bank",
     "recurringTasks": "Recurring Tasks",
     "metrics": "Metrics",
     "trustEngine": "Trust Engine",
     "skills": "Skills",
-    "atalaya": "Atalaya",
     "campaigns": "Campaigns",
     "tasks": "Tasks",
     "dataExplorer": "Data Explorer",
@@ -38,7 +35,7 @@
     "settings": "Settings",
     "guide": "Guide",
     "changelog": "Changelog",
-    "documents": "Documents",
+    "brandBrain": "Brand Brain",
     "overview": "Overview",
     "work": "Work",
     "tools": "Tools",
@@ -79,9 +76,9 @@
     "metricas": "Metrics",
     "nextSteps": "Next Steps"
   },
-  "foundation": {
-    "title": "Foundation",
-    "subtitle": "Brand pillar status",
+  "brandBrain": {
+    "title": "Brand Brain",
+    "subtitle": "Your brand's strategic memory — pillars, ICPs, competitors, and all the context the system pulls from",
     "notStarted": "Not started",
     "inProgress": "In progress",
     "approved": "Approved",
@@ -99,8 +96,8 @@
     "requestRefresh": "Request refresh",
     "depth": "Depth",
     "viewDoc": "View document",
-    "depthLabel": "Foundation Depth",
-    "warningMessage": "Foundation {pct}% complete — {pending} pillars pending"
+    "depthLabel": "Brand Brain Depth",
+    "warningMessage": "Brand Brain {pct}% complete — {pending} pillars pending"
   },
   "projects": {
     "title": "Projects",
@@ -115,88 +112,6 @@
     "newProject": "New project",
     "tasks": "Tasks",
     "archive": "Archive"
-  },
-  "ideas": {
-    "title": "Idea Bank",
-    "subtitle": "Ideas, content seeds and contact opportunities",
-    "newIdea": "New Idea",
-    "status": {
-      "all": "All",
-      "new": "New",
-      "approved": "Approved",
-      "rejected": "Rejected",
-      "executed": "Executed"
-    },
-    "stats": {
-      "total": "Total",
-      "new": "New",
-      "approved": "Approved",
-      "approvalRate": "Approval %"
-    },
-    "bulkActions": "Bulk actions",
-    "bulkApprove": "Approve",
-    "bulkReject": "Reject",
-    "selected": "selected",
-    "selectAll": "Select all",
-    "priority": "Priority",
-    "description": "Description",
-    "action": "Action",
-    "channels": "Channels",
-    "source": "Source",
-    "sourceAll": "Source: All",
-    "channelAll": "Channel: All",
-    "goal": "Goal",
-    "theme": "Theme",
-    "list": "List / Group",
-    "pieces": "Pieces",
-    "changeStatus": "Change status",
-    "delete": "Delete idea",
-    "confirmDelete": "Delete this idea?",
-    "yes": "Yes, delete",
-    "no": "Cancel",
-    "created": "Created",
-    "approved": "Approved",
-    "approval": "Approval",
-    "searchPlaceholder": "Search ideas...",
-    "empty": "No ideas found. Click \"+ New Idea\" or run a recurring task.",
-    "analytics": "Analytics by Source",
-    "close": "Close",
-    "sourceData": "Source data",
-    "score": "Score",
-    "date": "Date",
-    "actions": "Actions",
-    "titleAction": "Title + Action",
-    "lists": {
-      "keywords": "Keywords to rank",
-      "trending": "Trending content to create",
-      "gaps": "Gaps vs competitors",
-      "repurpose": "Content to repurpose",
-      "medios": "Media to appear in",
-      "partners": "Partners to collaborate with",
-      "influencers": "Influencers to contact",
-      "outreach": "Prospects to contact"
-    },
-    "listDescriptions": {
-      "keywords": "Detected SEO opportunities",
-      "trending": "Trending topics in the niche",
-      "gaps": "Content competitors don't cover well",
-      "repurpose": "Cross-channel atomization ideas",
-      "medios": "Blogs, magazines, podcasts for PR/guest posts",
-      "partners": "Companies/people for co-marketing",
-      "influencers": "Relevant creators in the niche",
-      "outreach": "Leads for direct outreach"
-    },
-    "sources": {
-      "seo_geo": "SEO/GEO",
-      "signal": "Signal",
-      "competitor": "Competitors",
-      "meeting": "Meeting",
-      "manual": "Manual",
-      "trust_engine": "Trust Engine",
-      "paa": "PAA",
-      "trending": "Trending",
-      "serp_gaps": "SERP Gaps"
-    }
   },
   "recurringTasks": {
     "title": "Recurring Tasks",
@@ -259,6 +174,7 @@
     "fullscreen": "Fullscreen",
     "closeSidebar": "Close",
     "loading": "Loading...",
+    "emptyThread": "Type a message to start the conversation.",
     "selectThread": "Select a thread to start.",
     "selectThreadOption": "Select thread...",
     "newThread": "New thread",
@@ -276,11 +192,11 @@
     "tabs": {
       "apis": "APIs",
       "agents": "Agents",
+      "models": "Models",
       "skills": "Skills",
-      "dispatch": "Dispatch",
       "strategies": "Strategies",
       "recurring": "Recurring",
-      "clients": "Clients",
+      "task-index": "Task Index",
       "preferences": "Preferences"
     },
     "loadingClients": "Loading clients...",
@@ -295,7 +211,8 @@
       "systemKey": "System key",
       "error": "Error",
       "connected": "Connected",
-      "notConfigured": "Not configured"
+      "notConfigured": "Not configured",
+      "pending": "Pending"
     },
     "howToStart": "How to start?"
   },

@@ -1,6 +1,6 @@
 {
   "name": "mission-control",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,17 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
+    "test:plugins": "node --test plugins/mc-chat/src/__tests__/*.test.js",
+    "test:lib": "tsx --test src/lib/__tests__/*.test.mts src/lib/data/__tests__/*.test.mts",
+    "migrate:media": "tsx scripts/migrate-legacy-media.mts",
+    "check:drafts": "tsx scripts/check-legacy-media.mts",
+    "audit:docs": "tsx scripts/audit-doc-paths.mts --check",
+    "fix:docs": "tsx scripts/audit-doc-paths.mts --fix",
+    "test:doc-paths": "tsx scripts/test-doc-paths.mts",
+    "db:migrate": "drizzle-kit migrate",
+    "db:verify": "tsx scripts/verify-migration.ts",
+    "db:sync-tasks": "tsx scripts/migrate-projects-to-db.ts --apply",
+    "db:sync-tasks:dry": "tsx scripts/migrate-projects-to-db.ts --dry-run",
     "prepare": "husky"
   },
   "dependencies": {

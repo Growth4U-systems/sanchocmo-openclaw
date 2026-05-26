@@ -17,6 +17,9 @@ jobs:
       name: staging
       url: ${{ vars.HEALTH_URL }}
     steps:
+      - name: Checkout (need scripts/upsert-env.py + scripts/load-secrets-from-env.sh for scp)
+        uses: actions/checkout@v4
+
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -29,23 +32,248 @@ jobs:
 
       - name: Deploy via SSH
         env:
+          # ── Deploy infra ──────────────────────────────────────────────
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           SHA: ${{ github.sha }}
+          ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
+          YALC_REF: ${{ vars.YALC_REF || 'main' }}
+          YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
+          # ── Tier 1 — Auth & infra secrets ─────────────────────────────
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          OD_API_TOKEN: ${{ secrets.OD_API_TOKEN }}
+          OPENCLAW_GATEWAY_TOKEN: ${{ secrets.OPENCLAW_GATEWAY_TOKEN }}
+          GTM_OS_API_TOKEN: ${{ secrets.GTM_OS_API_TOKEN }}
+          YALC_API_TOKEN: ${{ secrets.YALC_API_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+          SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          # ── Tier 2 — System APIs ──────────────────────────────────────
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+          DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+          DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
+          WAVESPEED_API_KEY: ${{ secrets.WAVESPEED_API_KEY }}
+          DUMPLING_API_KEY: ${{ secrets.DUMPLING_API_KEY }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
+          METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
+          SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
+          # ── Tier 3 — Skill APIs ───────────────────────────────────────
+          APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+          GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
+          GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
+          UNIPILE_API_KEY: ${{ secrets.UNIPILE_API_KEY }}
+          UNIPILE_DSN: ${{ secrets.UNIPILE_DSN }}
+          DATAFORSEO_API_KEY: ${{ secrets.DATAFORSEO_API_KEY }}
+          # ── Variables (non-sensitive config) ─────────────────────────
+          BASE_URL: ${{ vars.BASE_URL }}
+          NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
+          NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          OD_WEB_URL: ${{ vars.OD_WEB_URL }}
+          OD_ALLOWED_ORIGINS: ${{ vars.OD_ALLOWED_ORIGINS }}
+          OPEN_DESIGN_IMAGE: ${{ vars.OPEN_DESIGN_IMAGE }}
+          MC_CHAT_GATEWAY: ${{ vars.MC_CHAT_GATEWAY }}
+          SLACK_REDIRECT_URI: ${{ vars.SLACK_REDIRECT_URI }}
         run: |
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA bash -s" <<'EOF'
+          # Build a base64-encoded JSON dict of every non-empty key (skip empty
+          # values so unset GitHub secrets/variables are safe no-ops on the VPS).
+          PAYLOAD_B64=$(python3 - <<'PY'
+          import os, json, base64
+          KEYS = [
+              # Tier 1 — Auth & infra
+              "NEXTAUTH_SECRET", "ENCRYPTION_KEY", "DATABASE_URL",
+              "SUPABASE_SERVICE_ROLE_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+              "OD_API_TOKEN", "OPENCLAW_GATEWAY_TOKEN", "GTM_OS_API_TOKEN",
+              "YALC_API_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
+              "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
+              # Tier 2 — System APIs
+              "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
+              "XAI_API_KEY", "MINIMAX_API_KEY", "BRAVE_API_KEY", "APIFY_API_KEY",
+              "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
+              "NOTION_API_KEY", "SUPABASE_ANON_KEY", "FAL_API_KEY",
+              "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN",
+              "INSTANTLY_API_KEY", "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
+              # Tier 3 — Skill APIs
+              "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",
+              "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID", "PAGESPEED_API_KEY",
+              "UNIPILE_API_KEY", "UNIPILE_DSN", "DATAFORSEO_API_KEY",
+              # Variables (non-sensitive config)
+              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL", "SUPABASE_URL",
+              "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
+              "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
+          ]
+          out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
+          print(base64.b64encode(json.dumps(out).encode()).decode())
+          PY
+          )
+
+          # Ship the tested upsert script to the VPS so the value-application
+          # logic is single-sourced (no inline duplication in this workflow).
+          scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
+
+          YALC_REPO_TOKEN_B64="$(printf '%s' "${YALC_REPO_TOKEN:-}" | base64 | tr -d '\n')"
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64=$YALC_REPO_TOKEN_B64 bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching staging…"
             git fetch origin staging --prune
+
+            # Backup `workspace-sancho/brand/<slug>/` folders before checkout.
+            # Historically these were committed to git; the staging branch is
+            # transitioning them to untracked-runtime via `git rm --cached`.
+            # On the first deploy after that transition, `git checkout <SHA>`
+            # would delete the on-disk files (they're in old HEAD but not new
+            # HEAD). On subsequent deploys this is a no-op (folders are
+            # gitignored and untouched by checkout). The restore below puts
+            # them back if checkout removed them.
+            BRAND_BACKUP_DIR="$(mktemp -d -t sancho-brand-bk-XXXXXX)"
+            if [ -d workspace-sancho/brand ]; then
+              echo "▶ Backing up workspace-sancho/brand/ runtime data to $BRAND_BACKUP_DIR…"
+              for d in workspace-sancho/brand/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                # Skip the always-tracked sample and the archive bucket.
+                [ "$name" = "example" ] && continue
+                [ "$name" = "_archived" ] && continue
+                cp -a "$d" "$BRAND_BACKUP_DIR/"
+              done
+            fi
+
+            if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+              echo "▶ Stashing local runtime changes before checkout…"
+              git stash push --include-untracked -m "deploy-staging-$(date -u +%Y%m%dT%H%M%SZ)" || true
+            fi
+
+            # Apply GitHub `staging` Environment secrets + variables to ~/.openclaw/.env
+            # via the tested upsert script. Hash before/after lets us conditionally
+            # force-recreate the container on env-only changes (workflow_dispatch
+            # re-runs without a code commit otherwise wouldn't pick up new values).
+            ENV_HASH_BEFORE=$(sha256sum .env 2>/dev/null | cut -d' ' -f1 || echo "missing")
+            if [ -n "${PAYLOAD_B64:-}" ]; then
+              echo "▶ Upserting envs from GitHub \`staging\` Environment…"
+              echo "$PAYLOAD_B64" | python3 /tmp/upsert-env.py .env
+            fi
+            ENV_HASH_AFTER=$(sha256sum .env | cut -d' ' -f1)
+            ENV_CHANGED=0
+            if [ "$ENV_HASH_BEFORE" != "$ENV_HASH_AFTER" ]; then
+              ENV_CHANGED=1
+              echo "▶ .env content changed (will force-recreate sanchocmo)"
+            fi
+            rm -f /tmp/upsert-env.py
+
             echo "▶ Checking out $SHA…"
             git checkout "$SHA"
             export GIT_COMMIT="$(git rev-parse HEAD)"
+
+            # Restore brand/<slug>/ files that the checkout removed.
+            # The previous "skip if target non-empty" approach lost data: an
+            # active client whose untracked runtime files survived the checkout
+            # (chat, projects with in-progress tasks) would block the restore
+            # of its tracked files (foundation-state.json, brand-book/...).
+            # Use `cp -a -n` (no-clobber) instead — copies any backup file
+            # that isn't already in the target. Idempotent and safe.
+            if [ -d "$BRAND_BACKUP_DIR" ]; then
+              for d in "$BRAND_BACKUP_DIR"/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                target="workspace-sancho/brand/$name"
+                if [ -d "$target" ] && [ -n "$(ls -A "$target" 2>/dev/null || true)" ]; then
+                  # Target survived with some files. Merge missing ones in.
+                  before=$(find "$target" -type f 2>/dev/null | wc -l)
+                  cp -a -n "$d." "$target/" 2>/dev/null || true
+                  after=$(find "$target" -type f 2>/dev/null | wc -l)
+                  diff=$((after - before))
+                  if [ "$diff" -gt 0 ]; then
+                    echo "▶ Merged $diff missing file(s) into workspace-sancho/brand/$name from backup"
+                  fi
+                else
+                  echo "▶ Restoring workspace-sancho/brand/$name from backup…"
+                  mkdir -p "$target"
+                  cp -a "$d." "$target/"
+                fi
+              done
+              rm -rf "$BRAND_BACKUP_DIR"
+            fi
+            COMPOSE_ARGS="-f docker-compose.yml"
+            if [ "${ENABLE_YALC_SERVICE:-1}" != "0" ]; then
+              YALC_DIR="${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}"
+              if [ ! -d "$YALC_DIR/.git" ]; then
+                if [ -z "${YALC_REPO_TOKEN_B64:-}" ]; then
+                  echo "YALC_REPO_TOKEN is required on the staging GitHub Environment, or pre-clone YALC at $YALC_DIR."
+                  exit 1
+                fi
+                echo "▶ Cloning YALC source into $YALC_DIR…"
+                mkdir -p "$(dirname "$YALC_DIR")"
+                YALC_REPO_TOKEN="$(printf '%s' "$YALC_REPO_TOKEN_B64" | base64 -d)"
+                git clone "https://x-access-token:${YALC_REPO_TOKEN}@github.com/Growth4U-systems/Yalc-Growth4U.git" "$YALC_DIR"
+                unset YALC_REPO_TOKEN
+              fi
+              echo "▶ Fetching YALC ref ${YALC_REF:-main}…"
+              git -C "$YALC_DIR" fetch origin "${YALC_REF:-main}" --prune
+              git -C "$YALC_DIR" checkout FETCH_HEAD
+              echo "▶ YALC source: $(git -C "$YALC_DIR" rev-parse --short HEAD)"
+              export YALC_BUILD_CONTEXT="$YALC_DIR"
+              COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
+            fi
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
-            docker compose build --pull
-            docker compose up -d
-            docker compose ps
+            docker compose $COMPOSE_ARGS build --pull
+            # `build --pull` only refreshes images for services with a
+            # `build:` directive (sanchocmo). Services that consume a
+            # pre-built image (open-design via OPEN_DESIGN_IMAGE) need an
+            # explicit pull, or Docker keeps the cached local image even
+            # when the rolling tag (`:sanchocmo`, `:edge`) points at a new
+            # digest in the registry. Seen on 2026-05-20: a fresh branded
+            # OD image with the `claude` CLI baked in shipped to GHCR but
+            # staging kept the prior `:sanchocmo` digest until a manual
+            # `docker compose pull` was run via SSH.
+            docker compose $COMPOSE_ARGS pull --ignore-buildable || true
+            # `--wait` blocks until every service with a healthcheck is
+            # `healthy` (or the timeout fires), so the deploy step fails fast
+            # when the new container can't actually serve traffic — instead
+            # of returning success the moment containers are *created*. This
+            # is what lets the workflow report a real outcome and is the
+            # cheap path to minimizing user-visible downtime on staging:
+            # paired with the tightened sanchocmo healthcheck (10s interval),
+            # the new container is acknowledged as ready within ~10s of the
+            # app booting, vs. up to 60s with the old interval.
+            UP_ARGS="--wait --wait-timeout 180"
+            if [ "$ENV_CHANGED" = "1" ]; then
+              UP_ARGS="$UP_ARGS --force-recreate"
+            fi
+            if ! docker compose $COMPOSE_ARGS up -d $UP_ARGS; then
+              echo "▶ docker compose up failed; current service state:"
+              docker compose $COMPOSE_ARGS ps || true
+              echo "▶ yalc logs:"
+              docker compose $COMPOSE_ARGS logs --no-color --tail=200 yalc || true
+              echo "▶ sanchocmo logs:"
+              docker compose $COMPOSE_ARGS logs --no-color --tail=200 sanchocmo || true
+              exit 1
+            fi
+            docker compose $COMPOSE_ARGS ps
           EOF
 
       - name: Health check

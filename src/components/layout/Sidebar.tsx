@@ -6,41 +6,18 @@ import { useSession, signOut } from "next-auth/react";
 import { useAppStore } from "@/stores/app";
 import { useChatStore } from "@/stores/chat";
 import { cn } from "@/lib/utils";
+import { navigateToClient } from "@/lib/navigation";
 import { useClients } from "@/hooks/useClients";
 import { useUnreadCount } from "@/hooks/useChat";
-import { navigateToClient } from "@/lib/navigation";
 
-/**
- * Sidebar — faithful replica of legacy mission-control.html <nav>.
- *
- * Structure (from legacy HTML):
- *   Logo + version
- *   Client Selector
- *   💬 Chat con Sancho (client only)
- *   ── Overview ──
- *     📊 Dashboard
- *   ── [client name] ──  (client only)
- *     📂 Documents
- *   ── Trabajo ──  (client only)
- *     📋 Proyectos
- *     💡 Idea Bank
- *     📈 Métricas
- *   ── Herramientas ──  (client only)
- *     🔍 Trust Engine
- *     🏰 Atalaya
- *   ── Sistema ──
- *     📡 Activity
- *   ── spacer ──
- *   ── Footer ──
- *     User avatar + name (clickable → dropdown)
- *     Dropdown: Changelog, Guía, Dark mode, Settings, Regenerar
- */
+// Sidebar — primary nav (client-aware).
 
 export function Sidebar() {
   const t = useTranslations();
   const router = useRouter();
   const { data: session } = useSession();
-  const sidebarOpen = useAppStore((s) => s.sidebarOpen);
+  const { selectedClient, sidebarOpen } = useAppStore();
+  const { data: clients } = useClients();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close mobile sidebar on route change
@@ -51,28 +28,18 @@ export function Sidebar() {
   }, [router]);
 
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
-  // Sidebar scope is derived from the URL, not the Zustand store: on admin or
-  // global routes we never render client-only sections, even if the store
-  // still holds the last client the user was working with.
-  const slug = (router.query.slug as string | undefined) || null;
+  const routeSlug = typeof router.query.slug === "string" ? router.query.slug : null;
+  const fallbackClient = clients?.find((client) => client.active)?.slug || null;
+  const slug = selectedClient || routeSlug || fallbackClient;
   const unreadCount = useUnreadCount(slug);
-
-  const dashboardHref = slug ? `/dashboard/${slug}` : "/dashboard";
 
   function clientHref(path: string) {
     return slug ? `/dashboard/${slug}${path}` : "/dashboard";
   }
 
   function isActive(href: string) {
-    const path = router.asPath.split("?")[0];
-    return path === href || path.startsWith(href + "/");
-  }
-
-  // Home routes (global or client dashboard) should match only the exact
-  // URL — otherwise the Dashboard link would show active on every sub-page
-  // since it is a prefix of their paths.
-  function isExact(href: string) {
-    return router.asPath.split("?")[0] === href;
+    const currentPath = router.asPath.split("#")[0].split("?")[0];
+    return currentPath === href || currentPath.startsWith(href + "/");
   }
 
   return (
@@ -96,138 +63,137 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 h-screen bg-card border-r-2 border-border z-[60] flex flex-col transition-all duration-200",
+          "fixed top-0 left-0 h-screen bg-card border-r-2 border-border z-[60] flex flex-col transition-all duration-200 overflow-y-auto",
           sidebarOpen ? "lg:w-[220px]" : "lg:w-[60px]",
           mobileOpen ? "w-[260px]" : "max-lg:-translate-x-full",
           "max-lg:w-[260px]"
         )}
         style={{ padding: sidebarOpen ? "16px 12px" : "16px 8px" }}
       >
-        {/* ─── Fixed header: logo + client selector + chat ─── */}
-        <div className="flex-shrink-0">
+        {/* Logo */}
+        <div className="mb-0.5">
           {sidebarOpen ? (
-            <div className="flex items-start gap-2">
-              <div className="flex-1 min-w-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.webp" alt="SanchoCMO" className="w-full h-auto block" />
-                <div className="flex items-center gap-1 mt-1 flex-wrap">
-                  <span className="inline-block bg-rust text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-md border-2 border-ink">
-                    v2.0
-                  </span>
-                  {process.env.NEXT_PUBLIC_ENV_LABEL && (
-                    <span className="inline-block bg-amber-400 text-ink text-[10px] font-semibold px-2.5 py-0.5 rounded-md border-2 border-ink uppercase">
-                      {process.env.NEXT_PUBLIC_ENV_LABEL}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => useAppStore.getState().toggleSidebar()}
-                className="hidden lg:flex shrink-0 w-6 h-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground text-xs"
-                aria-label={t("sidebar.collapse")}
-                title={t("sidebar.collapse")}
-              >
-                «
-              </button>
-            </div>
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.webp" alt="SanchoCMO" className="w-full h-auto block" />
+              <span className="inline-block bg-rust text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-md border-2 border-ink mt-1">
+                v2.0
+              </span>
+            </>
           ) : (
-            <button
-              type="button"
-              onClick={() => useAppStore.getState().toggleSidebar()}
-              className="w-full flex justify-center"
-              aria-label={t("sidebar.expand")}
-              title={t("sidebar.expand")}
-            >
+            <div className="flex justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo.webp" alt="SanchoCMO" className="w-10 h-10 object-contain" />
-            </button>
-          )}
-
-          {isAdmin && sidebarOpen && (
-            <div className="mt-3">
-              <ClientSelector />
             </div>
-          )}
-
-          {slug && sidebarOpen && (
-            <button
-              onClick={() => {
-                useChatStore.getState().setCurrentSlug(slug);
-                useChatStore.getState().toggleSidebar();
-              }}
-              className="w-full flex items-center gap-2 px-3.5 py-2.5 mt-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center relative"
-            >
-              💬 {t("chat.title")}
-              {unreadCount > 0 && (
-                <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
           )}
         </div>
 
-        {/* ─── Scrollable middle: nav sections ─── */}
-        <nav className="flex-1 min-h-0 overflow-y-auto mt-1 -mx-1 px-1">
-          {/* ── Overview ── */}
-          <SectionLabel text={t("nav.overview")} visible={sidebarOpen} />
-          <NavLink
-            href={dashboardHref}
-            icon="📊"
-            label={t("nav.dashboard")}
-            active={isExact(dashboardHref)}
-            collapsed={!sidebarOpen}
-          />
+        {/* Client Selector */}
+        {isAdmin && sidebarOpen && (
+          <div className="mt-3">
+            <ClientSelector />
+          </div>
+        )}
 
-          {/* ── Client section ── */}
-          {slug && (
-            <>
-              <SectionLabel text={slug} visible={sidebarOpen} />
-              <NavLink
-                href={clientHref("/foundation")}
-                icon="📂"
-                label={t("nav.documents")}
-                active={isActive(clientHref("/foundation"))}
-                collapsed={!sidebarOpen}
-              />
+        {/* Chat button (client only) */}
+        {slug && sidebarOpen && (
+          <button
+            onClick={() => {
+              useChatStore.getState().setCurrentSlug(slug);
+              useChatStore.getState().toggleSidebar();
+            }}
+            className="w-full flex items-center gap-2 px-3.5 py-2.5 mt-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center relative"
+          >
+            💬 {t("chat.title")}
+            {unreadCount > 0 && (
+              <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+        )}
 
-              <SectionLabel text={t("nav.work")} visible={sidebarOpen} />
-              <NavLink href={clientHref("/projects")} icon="📋" label={t("nav.projects")} active={isActive(clientHref("/projects"))} collapsed={!sidebarOpen} />
-              <NavLink href={clientHref("/content-creation")} icon="✏️" label="Content Creation" active={isActive(clientHref("/content-creation"))} collapsed={!sidebarOpen} />
-              <NavLink href={clientHref("/outreach")} icon="📤" label="Outreach" active={isActive(clientHref("/outreach"))} collapsed={!sidebarOpen} />
-              <NavLink href={clientHref("/ideas")} icon="💡" label={t("nav.ideas")} active={isActive(clientHref("/ideas"))} collapsed={!sidebarOpen} />
-              <NavLink href={clientHref("/metrics")} icon="📈" label={t("nav.metrics")} active={isActive(clientHref("/metrics"))} collapsed={!sidebarOpen} />
+        {/* ── Overview ── */}
+        <SectionLabel text={t("nav.overview")} visible={sidebarOpen} />
+        <NavLink
+          href={selectedClient ? `/dashboard/${selectedClient}` : "/dashboard"}
+          icon="📊"
+          label={t("nav.dashboard")}
+          active={
+            selectedClient
+              ? router.asPath.split("?")[0].split("#")[0] === `/dashboard/${selectedClient}`
+              : router.asPath.split("?")[0].split("#")[0] === "/dashboard"
+          }
+          collapsed={!sidebarOpen}
+        />
 
-              <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
-              <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
-              <NavLink href={clientHref("/atalaya")} icon="🏰" label={t("nav.atalaya")} active={isActive(clientHref("/atalaya"))} collapsed={!sidebarOpen} />
-            </>
-          )}
+        {/* ── Client section ── */}
+        {selectedClient && (
+          <>
+            <NavLink
+              href={clientHref("/brand-brain")}
+              icon="🧠"
+              label={t("nav.brandBrain")}
+              active={isActive(clientHref("/brand-brain")) || isActive(clientHref("/foundation"))}
+              collapsed={!sidebarOpen}
+            />
 
-          {/* ── Sistema ── Activity and Settings adapt to the current scope:
-              when a client is selected they point at the per-client pages;
-              otherwise they point at the global admin ones. There is one
-              entry per item, never both at once. */}
-          <SectionLabel text={t("nav.system")} visible={sidebarOpen} />
-          <NavLink
-            href={slug ? clientHref("/activity") : "/dashboard/admin/activity"}
-            icon="📡"
-            label={t("nav.activity")}
-            active={isActive(slug ? clientHref("/activity") : "/dashboard/admin/activity")}
-            collapsed={!sidebarOpen}
-          />
-          <NavLink
-            href={slug ? clientHref("/settings") : "/dashboard/admin/settings"}
-            icon="⚙️"
-            label={t("nav.settings")}
-            active={isActive(slug ? clientHref("/settings") : "/dashboard/admin/settings")}
-            collapsed={!sidebarOpen}
-          />
-        </nav>
+            {/* ── Trabajo ── */}
+            <SectionLabel text={t("nav.work")} visible={sidebarOpen} />
+            <NavLink href={clientHref("/tasks")} icon="📋" label={t("nav.tasks")} active={isActive(clientHref("/tasks")) || isActive(clientHref("/projects"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/content-creation")} icon="✏️" label="Content Creation" active={isActive(clientHref("/content-creation"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/media-creation")} icon="🎨" label="Media Creation" active={isActive(clientHref("/media-creation"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/outreach")} icon="📤" label="Outreach" active={isActive(clientHref("/outreach"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/metrics")} icon="📈" label={t("nav.metrics")} active={isActive(clientHref("/metrics"))} collapsed={!sidebarOpen} />
 
-        {/* ─── Fixed footer: user menu ─── */}
-        <div className="flex-shrink-0 border-t border-border pt-3 mt-3">
+            {/* ── Herramientas ── */}
+            <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
+            <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/intelligence")} icon="🧠" label="Intelligence" active={isActive(clientHref("/intelligence"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/yalc")} icon="🧭" label="YALC" active={isActive(clientHref("/yalc"))} collapsed={!sidebarOpen} />
+          </>
+        )}
+
+        {/* ── Sistema ── */}
+        <SectionLabel text={t("nav.system")} visible={sidebarOpen} />
+        <NavLink
+          href={selectedClient ? clientHref("/activity") : "/dashboard/admin/activity"}
+          icon="📡"
+          label={t("nav.activity")}
+          active={selectedClient ? isActive(clientHref("/activity")) : isActive("/dashboard/admin/activity")}
+          collapsed={!sidebarOpen}
+        />
+        <NavLink
+          href={selectedClient ? clientHref("/settings") : "/dashboard/admin/settings"}
+          icon="⚙️"
+          label={t("nav.settings")}
+          active={selectedClient ? isActive(clientHref("/settings")) : isActive("/dashboard/admin/settings")}
+          collapsed={!sidebarOpen}
+        />
+        {isAdmin && !selectedClient && (
+          <>
+            <NavLink
+              href="/dashboard/admin/clients"
+              icon="👥"
+              label="Clientes"
+              active={isActive("/dashboard/admin/clients")}
+              collapsed={!sidebarOpen}
+            />
+            <NavLink
+              href="/dashboard/admin/users"
+              icon="🔐"
+              label="Usuarios admin"
+              active={isActive("/dashboard/admin/users")}
+              collapsed={!sidebarOpen}
+            />
+          </>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Footer — User menu with dropdown (matches legacy) */}
+        <div className="border-t border-border pt-3 mt-3">
           <UserFooter collapsed={!sidebarOpen} />
         </div>
       </aside>
@@ -259,9 +225,25 @@ function NavLink({
   active: boolean;
   collapsed: boolean;
 }) {
+  const router = useRouter();
+
   return (
     <Link
       href={href}
+      onClick={(event) => {
+        if (
+          event.defaultPrevented ||
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        event.preventDefault();
+        router.push(href);
+      }}
       className={cn(
         "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all mb-px",
         active
@@ -280,20 +262,23 @@ function NavLink({
 function ClientSelector() {
   const t = useTranslations("sidebar");
   const router = useRouter();
+  const { selectedClient, setSelectedClient } = useAppStore();
   const { data: clients } = useClients();
-
-  // The selector mirrors the URL, not a parallel store. On admin/global
-  // routes there is no slug in the URL, so the dropdown shows "global".
-  const urlSlug = (router.query.slug as string | undefined) || null;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    navigateToClient(router, value === "global" ? null : value);
+    if (value === "global") {
+      setSelectedClient(null);
+      navigateToClient(router, null);
+    } else {
+      setSelectedClient(value);
+      navigateToClient(router, value);
+    }
   };
 
   return (
     <select
-      value={urlSlug || "global"}
+      value={selectedClient || "global"}
       onChange={handleChange}
       className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-rust"
     >

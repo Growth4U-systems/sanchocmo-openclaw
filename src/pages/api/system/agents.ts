@@ -7,12 +7,18 @@ const OC_BASE = process.env.HOME
   ? path.join(process.env.HOME, ".openclaw")
   : "/Users/ragi/.openclaw";
 
-/** Agent metadata — matches legacy AGENTS array */
+/** Agent metadata — 10 agents (Fase 2 reorg). Specialist team replaces the legacy Escudero dispatcher: Sancho now dispatches directly to each specialist. */
 const AGENTS_META = [
-  { slug: "cervantes", name: "Cervantes", emoji: "✒️",  channel: "Webchat + #admin", model: "Opus 4.6", role: "Arquitecto del sistema" },
-  { slug: "sancho",    name: "Sancho",    emoji: "🐴", channel: "Todos los canales Discord (default)", model: "Opus 4.6", role: "CMO Estratega / Orchestrator" },
-  { slug: "rocinante", name: "Rocinante", emoji: "🐎", channel: "Invocado por Sancho (QA)", model: "Sonnet 4.5", role: "QA & Brand Check" },
-  { slug: "escudero",  name: "Escudero",  emoji: "⚔️",  channel: "Invocado por Sancho (ejecución)", model: "Sonnet 4.5", role: "Ejecución de tareas" },
+  { slug: "cervantes",   name: "Cervantes",   emoji: "✒️",  channel: "Webchat + #admin",                  model: "Opus 4.6",   role: "Arquitecto del sistema" },
+  { slug: "sancho",      name: "Sancho",      emoji: "🤠", channel: "Todos los canales Discord (default)", model: "Opus 4.6",   role: "CMO Estratega / Orchestrator" },
+  { slug: "hamete",      name: "Hamete",      emoji: "📜", channel: "#research, #intelligence",            model: "Sonnet 4.5", role: "Cronista — Research & Market Intel" },
+  { slug: "dulcinea",    name: "Dulcinea",    emoji: "✍️",  channel: "#content, #web",                     model: "Sonnet 4.5", role: "Musa — Contenido escrito" },
+  { slug: "rocinante",   name: "Rocinante",   emoji: "🐴", channel: "#prospecting, #partners",             model: "Sonnet 4.5", role: "Outreach & Partnerships" },
+  { slug: "maese-pedro", name: "Maese Pedro", emoji: "🎭", channel: "#creatives, #design, #web",           model: "Opus 4.6",   role: "Visual Director / Creative Engine" },
+  { slug: "yalc",        name: "Yalc Agent",   emoji: "🧭", channel: "Mission Control / GTM-OS",            model: "Sonnet 4.5", role: "YALC operator / outbound GTM" },
+  { slug: "mambrino",    name: "Mambrino",    emoji: "🪖", channel: "#paid-ads",                           model: "Sonnet 4.5", role: "Paid Ads & Retargeting" },
+  { slug: "merlin",      name: "Merlín",      emoji: "🔮", channel: "#learning",                           model: "Sonnet 4.5", role: "Data, atribución & forecasting" },
+  { slug: "sanson",      name: "Sansón",      emoji: "🛡️", channel: "Invocado por Sancho (QA)",            model: "Sonnet 4.5", role: "QA, brand-check & devil's advocate" },
 ];
 
 /** Key agent files to expose (order matters for tabs) */

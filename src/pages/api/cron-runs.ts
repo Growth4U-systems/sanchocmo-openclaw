@@ -4,6 +4,7 @@ import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { loadClients } from "@/lib/data/clients";
 import { BASE } from "@/lib/data/paths";
+import { cronJobsFile } from "@/lib/data/openclaw-paths";
 
 /**
  * GET /api/cron-runs?limit=20&slug=hospital-capilar
@@ -41,8 +42,7 @@ function loadCronsFromOpenClaw(): CronJob[] {
   const now = Date.now();
   if (_cronCache && (now - _cronCacheTs) < CRON_CACHE_TTL) return _cronCache;
   try {
-    const jobsFile = path.join(process.env.HOME || "/tmp", ".openclaw", "cron", "jobs.json");
-    const data = JSON.parse(fs.readFileSync(jobsFile, "utf-8"));
+    const data = JSON.parse(fs.readFileSync(cronJobsFile(), "utf-8"));
     _cronCache = data.jobs || [];
     _cronCacheTs = now;
     return _cronCache!;

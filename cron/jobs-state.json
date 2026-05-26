@@ -1,0 +1,1272 @@
+{
+  "version": 1,
+  "jobs": {
+    "2283eade-3d08-4f46-a508-eaa6d035a4d2": {
+      "updatedAtMs": 1778569204094,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778655600000,
+        "lastRunAtMs": 1778569200026,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 4068,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778569204094,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastError": "FailoverError: LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing"
+      }
+    },
+    "33434fd7-8b66-4069-b7f7-983f66fc25c2": {
+      "updatedAtMs": 1778538244237,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779091200000,
+        "lastRunAtMs": 1778538104321,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 139916,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      }
+    },
+    "8a4c8f89-58f0-4827-a076-df3f83660b3f": {
+      "updatedAtMs": 1775720995031,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":false,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8,12,16,20 * * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "lastRunAtMs": 1775714400014,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 254776,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": false
+      }
+    },
+    "6dac9a53-6736-490a-ae54-e028b8ebbbd1": {
+      "updatedAtMs": 1778601823917,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 18 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778688000000,
+        "lastRunAtMs": 1778601600030,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 223887,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      }
+    },
+    "abc8abac-3097-4e27-8131-0a5d77717195": {
+      "updatedAtMs": 1778443551418,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 22 * * 0\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779048000000,
+        "lastRunAtMs": 1778443551391,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 27,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+        "lastDiagnostics": {
+          "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+          "entries": [
+            {
+              "ts": 1778443551418,
+              "source": "cron-preflight",
+              "severity": "error",
+              "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+      }
+    },
+    "0cd1e931-d374-4428-a452-e2394beac5b7": {
+      "updatedAtMs": 1778047819496,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * 3\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778652000000,
+        "lastRunAtMs": 1778047487497,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 331999,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0,
+        "lastDelivered": true,
+        "consecutiveSkipped": 0
+      }
+    },
+    "618bc941-a980-4f0d-99c8-5e715060ce6b": {
+      "updatedAtMs": 1778547617189,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 3 * * *\"}}",
+      "state": {
+        "nextRunAtMs": 1778634000000,
+        "lastRunAtMs": 1778547600026,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 17163,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778547617186,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing",
+        "runningAtMs": 1778634000017
+      }
+    },
+    "0c59e923-3267-4926-9a60-36bb81b6041f": {
+      "updatedAtMs": 1778624743374,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"every\",\"everyMs\":21600000,\"anchorMs\":1772069609685}}",
+      "state": {
+        "nextRunAtMs": 1778646325411,
+        "lastRunAtMs": 1778624725411,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 17963,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      }
+    },
+    "cedfbd22-cbd0-4a19-87a0-29337c4f2b37": {
+      "updatedAtMs": 1778572804679,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778659200000,
+        "lastRunAtMs": 1778572800033,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 4646,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FailoverError: LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778572804679,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing"
+      }
+    },
+    "bf4b712d-1ed4-49df-acac-1c7ce4d19097": {
+      "updatedAtMs": 1772567425141,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":false,\"schedule\":{\"kind\":\"every\",\"everyMs\":300000,\"anchorMs\":1772567385215}}",
+      "state": {}
+    },
+    "b780c3f1-a760-453f-ab81-bc19e4257d11": {
+      "updatedAtMs": 1778565609866,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778652000000,
+        "lastRunAtMs": 1778565600023,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 9843,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778565609866,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing",
+        "lastError": "FailoverError: LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+      }
+    },
+    "4eda3a87-1b19-4932-8c7d-d4b1971d53e3": {
+      "updatedAtMs": 1775720982335,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":false,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {}
+    },
+    "c586f8ed-7b4b-47b7-b5ca-89ebb7baaf3b": {
+      "updatedAtMs": 1778538704756,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779091200000,
+        "lastRunAtMs": 1778538583475,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 121281,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "cron: job execution timed out",
+        "lastDiagnostics": {
+          "summary": "cron: job execution timed out",
+          "entries": [
+            {
+              "ts": 1778538704756,
+              "source": "cron-setup",
+              "severity": "error",
+              "message": "cron: job execution timed out"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
+      }
+    },
+    "1e64347a-7151-482d-ac27-8ad88cb62896": {
+      "updatedAtMs": 1778556608376,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 5 * * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778643000000,
+        "lastRunAtMs": 1778556600023,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 8353,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FailoverError: LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778556608376,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing"
+      }
+    },
+    "f04c8094-eaf9-4995-bde8-9d5df88ef4d7": {
+      "updatedAtMs": 1778400301213,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 0\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779004800000,
+        "lastRunAtMs": 1778400000075,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 301138,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "cron: job execution timed out",
+        "lastDiagnostics": {
+          "summary": "cron: job execution timed out",
+          "entries": [
+            {
+              "ts": 1778400301213,
+              "source": "cron-setup",
+              "severity": "error",
+              "message": "cron: job execution timed out"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "cron: job execution timed out",
+        "lastErrorReason": "timeout"
+      }
+    },
+    "f10d84d4-0e6d-4db1-8e1d-824d34efbbc7": {
+      "updatedAtMs": 1778400480784,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 0\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779004800000,
+        "lastRunAtMs": 1778400301213,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 179571,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "⚠️ ✉️ Message failed",
+        "lastDiagnostics": {
+          "summary": "⚠️ ✉️ Message failed",
+          "entries": [
+            {
+              "ts": 1778400480784,
+              "source": "tool",
+              "severity": "error",
+              "message": "⚠️ ✉️ Message failed"
+            },
+            {
+              "ts": 1778400480784,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "⚠️ ✉️ Message failed"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "⚠️ ✉️ Message failed"
+      }
+    },
+    "953c7fcd-9358-4dd6-8092-6ddde9c775a0": {
+      "updatedAtMs": 1778400480814,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 0\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779004800000,
+        "lastRunAtMs": 1778400480784,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 30,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+        "lastDiagnostics": {
+          "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+          "entries": [
+            {
+              "ts": 1778400480814,
+              "source": "cron-preflight",
+              "severity": "error",
+              "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+      }
+    },
+    "3c0b79c9-01e5-499d-bd98-c88c963c9b82": {
+      "updatedAtMs": 1778400602470,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 0\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779004800000,
+        "lastRunAtMs": 1778400480814,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 121656,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 4,
+        "lastErrorReason": "rate_limit",
+        "consecutiveSkipped": 0,
+        "lastError": "Unsupported channel: 1482642972712505395",
+        "lastDiagnostics": {
+          "summary": "Unsupported channel: 1482642972712505395",
+          "entries": [
+            {
+              "ts": 1778400602470,
+              "source": "tool",
+              "severity": "error",
+              "message": "⚠️ ✉️ Message failed"
+            },
+            {
+              "ts": 1778400602470,
+              "source": "delivery",
+              "severity": "error",
+              "message": "Unsupported channel: 1482642972712505395"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "Unsupported channel: 1482642972712505395"
+      }
+    },
+    "476f5959-8aaf-4d2a-8f41-9b0187250e86": {
+      "updatedAtMs": 1778538799064,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779087600000,
+        "lastRunAtMs": 1778538752939,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 46125,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FailoverError: LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778538799063,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing"
+      }
+    },
+    "f78ba296-fe22-4ddc-a9a4-a6602465c13e": {
+      "updatedAtMs": 1777597417724,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 3 1 * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1780275600000,
+        "lastRunAtMs": 1777597369929,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 47795,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      }
+    },
+    "2e1d6efd-5da7-4a5a-bcb0-e0892ff25b66": {
+      "updatedAtMs": 1778538809536,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 11 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779094800000,
+        "lastRunAtMs": 1778538799064,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 10472,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FailoverError: LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778538809536,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing"
+      }
+    },
+    "a68143d8-1309-46eb-a5dc-4c3fb35ee3d2": {
+      "updatedAtMs": 1778616498071,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 22 * * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778702400000,
+        "lastRunAtMs": 1778616000024,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 498047,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      }
+    },
+    "36d0bff9-fea9-40d8-9bfd-bf1e5e58468b": {
+      "updatedAtMs": 1778618121614,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 22 * * 0-4\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778704200000,
+        "lastRunAtMs": 1778617800032,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 321582,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      }
+    },
+    "6f136183-673c-4a60-9aca-d923d3c00480": {
+      "updatedAtMs": 1778272201571,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 22 * * 5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778877000000,
+        "lastRunAtMs": 1778272200034,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 1537,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+        "lastDiagnostics": {
+          "summary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5",
+          "entries": [
+            {
+              "ts": 1778272201571,
+              "source": "cron-preflight",
+              "severity": "error",
+              "message": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "cron payload.model 'anthropic/claude-sonnet-4-5' rejected by agents.defaults.models allowlist: anthropic/claude-sonnet-4-5"
+      }
+    },
+    "7442ba81-9342-40b4-b8c0-87786890c84e": {
+      "updatedAtMs": 1778538814919,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779087600000,
+        "lastRunAtMs": 1778538814379,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 540,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 7,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538814919,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "53f6b4d3-51b4-4f78-8907-2f68a82efc7b": {
+      "updatedAtMs": 1778054858935,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 3\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778659200000,
+        "lastRunAtMs": 1778054677253,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 181682,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 5,
+        "lastError": "cron: job execution timed out",
+        "lastErrorReason": "timeout",
+        "consecutiveSkipped": 0
+      }
+    },
+    "df8aaf99-8b1b-4b5b-844b-5c53de641e5c": {
+      "updatedAtMs": 1778238505905,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778832000000,
+        "lastRunAtMs": 1778237806083,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 699822,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 2,
+        "lastErrorReason": "timeout",
+        "consecutiveSkipped": 0,
+        "lastError": "cron: job interrupted by gateway restart",
+        "lastDelivered": false,
+        "lastDeliveryError": "cron: job interrupted by gateway restart"
+      }
+    },
+    "854d8902-eea8-45aa-bb26-6afeb3a6c949": {
+      "updatedAtMs": 1778144523783,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 11 * * 4\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778749200000,
+        "lastRunAtMs": 1778144402114,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 121669,
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 6,
+        "consecutiveSkipped": 0,
+        "lastError": "cron: job execution timed out"
+      }
+    },
+    "41d660cb-c18f-4268-aa95-6275f2435f90": {
+      "updatedAtMs": 1778223974366,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778828400000,
+        "lastRunAtMs": 1778223852374,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 121992,
+        "lastErrorReason": "timeout",
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 6,
+        "consecutiveSkipped": 0,
+        "lastError": "cron: job execution timed out"
+      }
+    },
+    "1b104cd3-74b6-42df-9d4e-b4a764acef21": {
+      "updatedAtMs": 1778538815413,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779087600000,
+        "lastRunAtMs": 1778538814919,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 494,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538815413,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "00fa288d-d349-449e-85ff-1d3b2260f2d3": {
+      "updatedAtMs": 1778569204567,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778655600000,
+        "lastRunAtMs": 1778569204094,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 473,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778569204567,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "eef29d29-0160-4708-8b9f-d5f0503b4964": {
+      "updatedAtMs": 1778538816405,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 11 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779094800000,
+        "lastRunAtMs": 1778538815898,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 507,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538816405,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "a654ab5d-b65d-4718-bab6-906ee62601eb": {
+      "updatedAtMs": 1778538816902,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 10 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779091200000,
+        "lastRunAtMs": 1778538816405,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 497,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538816902,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "09b92860-663d-4fb1-8f27-352c55e8a507": {
+      "updatedAtMs": 1778567404041,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778653800000,
+        "lastRunAtMs": 1778567400030,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 4011,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778567404041,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastError": "FailoverError: LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing"
+      }
+    },
+    "9416a8bc-14f5-4626-99d2-c8065c4ab002": {
+      "updatedAtMs": 1778567404524,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778653800000,
+        "lastRunAtMs": 1778567404041,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 483,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778567404524,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "7d58dea0-fbeb-42f1-97e6-a33880cf6389": {
+      "updatedAtMs": 1778538818476,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 11 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779094800000,
+        "lastRunAtMs": 1778538817981,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 495,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538818476,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "68c55ca5-7655-4ab5-9d5d-26925d6cdae6": {
+      "updatedAtMs": 1776665908779,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":false,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * 3\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "lastRunAtMs": 1776233357904,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 307573,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    "34f928f2-5534-47e9-85ce-0903fb9ab53e": {
+      "updatedAtMs": 1776665896026,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":false,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * 3\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "lastRunAtMs": 1776233665477,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 231851,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.",
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 1
+      }
+    },
+    "19e4cf8d-4587-4b60-a300-364a955d9023": {
+      "updatedAtMs": 1778047985311,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 8 * * 3\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778652000000,
+        "lastRunAtMs": 1778047924456,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 60855,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 4,
+        "lastError": "Channel is required when multiple channels are configured: discord, mc-chat Set delivery.channel explicitly or use a main session with a previous channel.; the agent used the message tool, but OpenClaw could not verify that message matched the cron delivery target",
+        "consecutiveSkipped": 0
+      }
+    },
+    "caae560f-344f-44a8-9ddb-4a4ce8c6e913": {
+      "updatedAtMs": 1778538818972,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 6 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779076800000,
+        "lastRunAtMs": 1778538818476,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 496,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538818972,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "7624d72f-c443-4f79-be22-b1b1479f8e69": {
+      "updatedAtMs": 1778538819473,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 6 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779076800000,
+        "lastRunAtMs": 1778538818972,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 501,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538819473,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "369c003e-c170-4f6d-bf9d-5cf380028d45": {
+      "updatedAtMs": 1778538820012,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 6 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779076800000,
+        "lastRunAtMs": 1778538819473,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 539,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538820012,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "1846c8cf-3c46-4e4f-bdd5-37782fc0ff5b": {
+      "updatedAtMs": 1778538820492,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 6 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779076800000,
+        "lastRunAtMs": 1778538820012,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 480,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538820492,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "510489d9-51c7-4dba-9ba5-1502e2828066": {
+      "updatedAtMs": 1777619895790,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 1 * *\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1780297200000,
+        "lastRunAtMs": 1777619824028,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 71762,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 0,
+        "consecutiveSkipped": 0
+      }
+    },
+    "c9156fd2-3839-4c9d-82ef-15747a3f1f5a": {
+      "updatedAtMs": 1778538821316,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 6 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779076800000,
+        "lastRunAtMs": 1778538820492,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 824,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538821316,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "c8577592-e1af-47fd-a15a-ccd968f18220": {
+      "updatedAtMs": 1778538821778,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779087600000,
+        "lastRunAtMs": 1778538821316,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 462,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538821778,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "91058115-935f-48e8-88b6-c8a543914ad8": {
+      "updatedAtMs": 1778538822240,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779087600000,
+        "lastRunAtMs": 1778538821778,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 462,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538822239,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "0b7aadcc-e694-475b-a8ba-b6eb3418807f": {
+      "updatedAtMs": 1778538822693,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779087600000,
+        "lastRunAtMs": 1778538822240,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 453,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538822693,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "42dbd1ef-e58d-4fe9-a211-c48030f4e0c1": {
+      "updatedAtMs": 1778538823149,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 9 * * 1\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1779087600000,
+        "lastRunAtMs": 1778538822693,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 456,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 1,
+        "consecutiveSkipped": 0,
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778538823149,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-sonnet-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "7352736a-f369-4559-8342-9157f7320d25": {
+      "updatedAtMs": 1778562007443,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778648400000,
+        "lastRunAtMs": 1778562000024,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 7419,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778562007443,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastError": "FailoverError: LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing"
+      }
+    },
+    "945531aa-9e66-487b-92ab-aff060671424": {
+      "updatedAtMs": 1778562014694,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"0 7 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778648400000,
+        "lastRunAtMs": 1778562007443,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 7251,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+          "entries": [
+            {
+              "ts": 1778562014694,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going."
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastError": "FailoverError: LLM request rejected: You're out of extra usage. Add more at claude.ai/settings/usage and keep going.",
+        "lastErrorReason": "billing"
+      }
+    },
+    "659cfb91-f536-4d75-82a7-582067a55133": {
+      "updatedAtMs": 1778567405022,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778653800000,
+        "lastRunAtMs": 1778567404524,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 498,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 2,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778567405022,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "538d8c16-86fe-4dba-9895-e7b339c5d515": {
+      "updatedAtMs": 1778567405491,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778653800000,
+        "lastRunAtMs": 1778567405022,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 469,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 5,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778567405491,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "c9bfd568-f98e-4999-82f0-b486626f4ede": {
+      "updatedAtMs": 1778567405948,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778653800000,
+        "lastRunAtMs": 1778567405491,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 457,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 5,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778567405948,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    },
+    "d0851106-f61d-437a-bfd0-62eb10c7345f": {
+      "updatedAtMs": 1778567406443,
+      "scheduleIdentity": "{\"version\":1,\"enabled\":true,\"schedule\":{\"kind\":\"cron\",\"expr\":\"30 8 * * 1-5\",\"tz\":\"Europe/Madrid\"}}",
+      "state": {
+        "nextRunAtMs": 1778653800000,
+        "lastRunAtMs": 1778567405948,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 495,
+        "lastDeliveryStatus": "not-requested",
+        "consecutiveErrors": 5,
+        "consecutiveSkipped": 0,
+        "lastDiagnostics": {
+          "summary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+          "entries": [
+            {
+              "ts": 1778567406443,
+              "source": "agent-run",
+              "severity": "error",
+              "message": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+            }
+          ]
+        },
+        "lastDiagnosticSummary": "All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)",
+        "lastError": "FallbackSummaryError: All models failed (1): anthropic/claude-opus-4-6: Provider anthropic has billing issue (skipping all models) (billing)"
+      }
+    }
+  }
+}
