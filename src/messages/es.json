@@ -209,7 +209,7 @@
     "url": "URL",
     "clientLanguage": "Idioma",
     "apiStatus": {
-      "systemKey": "Key sistema",
+      "systemKey": "API sistema",
       "error": "Error",
       "connected": "Conectado",
       "notConfigured": "No configurado",
