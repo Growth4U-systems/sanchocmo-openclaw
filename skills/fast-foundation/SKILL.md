@@ -38,6 +38,23 @@ context_writes:
 
 ---
 
+## ⛔ Contrato de estado (LEER ANTES DE ESCRIBIR NADA)
+
+El dashboard, el Brand Brain y las APIs de foundation **solo leen** `brand/{slug}/foundation-state.json` en el **schema canónico v3.0**:
+
+```
+{ "version": "3.0", "sections": { "<section>": { "pillars": { "<pillar>": { "status", "output_file" } } } }, "brand_summary": {...} }
+```
+
+Si el estado no tiene `sections[*].pillars[*].output_file`, **la marca queda invisible en la UI aunque los `.md` existan en disco**. Por eso:
+
+1. **NUNCA escribas `current.md`** — fast-foundation escribe SIEMPRE a `lite.md` (regla v1.1). `current.md` lo reservan las skills full.
+2. **NUNCA inventes un `foundation-state.json` con schema propio** (ej. un mapa plano `pillars`/`path` sin `sections`). Eso rompe la UI.
+3. El `foundation-state.json` canónico (`sections`, `file_index`, `brand_summary`) lo **mantiene el `foundation-orchestrator`**, no esta skill. Corré fast-foundation **a través del orquestador** para que registre la sección `fast-foundation` y persista el estado (`scripts/regenerate.py`).
+4. Si por algún motivo se corre suelta y el estado quedó en otro schema, recuperá con `scripts/rebuild-foundation-state.mjs <slug> --apply` (reconstruye el v3.0 desde los docs en disco, sin tocar el contenido).
+
+---
+
 ## Dos modos de entrada
 
 ### Modo URL (95% de los casos)
