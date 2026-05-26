@@ -27,6 +27,7 @@ import { useRetriggerWriter } from "@/hooks/useContentTasks";
 import { ThreadListPanel } from "./thread-list-panel";
 import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
 import { ProgressTimeline } from "./progress-timeline";
+import { formatElapsed } from "@/lib/format-elapsed";
 import type { ProgressEvent } from "@/hooks/useChat";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { MediaAssetSlideover } from "@/components/media-creation/MediaAssetSlideover";
@@ -654,6 +655,8 @@ export function ChatSidebar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  // Drives the 1Hz "thinking for Ns" counter on the typing indicator.
+  const [thinkingNow, setThinkingNow] = useState(() => Date.now());
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const arr = Array.from(files).slice(0, 5); // Max 5 files
@@ -760,6 +763,20 @@ export function ChatSidebar() {
   const recentUserMsg = waitingForReply && lastUserMsgTs > 0 && now - lastUserMsgTs < REPLY_WINDOW_MS;
   const isAwaitingReply = sendMutation.isPending || hasFreshStatus || recentUserMsg;
   const showTyping = isAwaitingReply;
+
+  // Live "thinking for Ns" counter on the typing indicator. Anchored to the
+  // last user message (when the turn started) so it works for ANY backend —
+  // including codex/ACP agents that emit no granular progress events, where
+  // the ProgressTimeline ticker has nothing to render. Ticks 1Hz only while
+  // the indicator is visible.
+  useEffect(() => {
+    if (!showTyping) return;
+    const id = setInterval(() => setThinkingNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [showTyping]);
+  const thinkingSince = lastUserMsgTs || statusData?.ts || 0;
+  const thinkingElapsedMs =
+    showTyping && thinkingSince ? Math.max(0, thinkingNow - thinkingSince) : null;
 
   // Live agent for the typing indicator: prefer the gateway's status (whoever
   // is actually working right now) → last bot message agent → thread default.
@@ -1539,7 +1556,12 @@ export function ChatSidebar() {
                     {typingBadge.emoji} {typingBadge.label}
                   </span>
                 )}
-                <span>· 🔄 {statusData?.text || t("thinking")}</span>
+                <span>
+                  · 🔄 {statusData?.text || t("thinking")}
+                  {thinkingElapsedMs !== null && (
+                    <span className="not-italic tabular-nums opacity-80"> · {formatElapsed(thinkingElapsedMs)}</span>
+                  )}
+                </span>
               </div>
               {pendingProgress.length > 0 && (
                 <ProgressTimeline events={pendingProgress} mode="live" />
