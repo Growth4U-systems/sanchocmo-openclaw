@@ -1,3 +1,8 @@
+## Linear
+
+<!-- Required for Linear/GitHub automation. Prefer "Refs SAN-123"; use "Fixes SAN-123" only when the PR should close the issue on merge. -->
+Refs SAN-123
+
 ## Summary
 
 <!-- 1-3 bullets: what does this PR do? -->
