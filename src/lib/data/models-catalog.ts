@@ -59,6 +59,7 @@ export const CURATED_MODELS = [
   "codex/gpt-5.4-mini",
   "openai-codex/gpt-5.3-codex",
   "anthropic/claude-sonnet-4-6",
+  "anthropic/claude-opus-4-7",
   "anthropic/claude-opus-4-6",
   "openrouter/openai/gpt-5.5",
   "google/gemini-2.5-flash",
@@ -513,8 +514,6 @@ export function isModelAvailable(
   if (!model) return { ok: false, reason: `Model "${modelId}" not in catalog` };
   const provider = catalog.providers.find((p) => p.id === model.provider);
   if (!provider) return { ok: false, reason: `Provider "${model.provider}" not in catalog` };
-  if (!provider.configured)
-    return { ok: false, reason: `Provider "${model.provider}" not configured` };
   return { ok: true };
 }
 

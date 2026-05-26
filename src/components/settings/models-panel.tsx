@@ -265,6 +265,8 @@ function PerAgentSection() {
   const { mutate, isPending } = useSetAgentModel();
   const [pendingAgent, setPendingAgent] = useState<string | null>(null);
   const [ownModeDrafts, setOwnModeDrafts] = useState<Record<string, boolean>>({});
+  const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
+  const [savedAgents, setSavedAgents] = useState<Record<string, boolean>>({});
 
   if (isLoading) {
     return (
@@ -303,11 +305,41 @@ function PerAgentSection() {
             const recommendedApplied = Boolean(recommendedModel && currentOwnModel === recommendedModel);
             const resolvedProvider = providerForModel(catalog, resolvedModel);
             const route = effectiveRoute(resolvedProvider);
+            const saveError = saveErrors[a.id];
+            const saved = savedAgents[a.id];
             const handleSave = (next: string | null) => {
               setPendingAgent(a.id);
+              setSaveErrors((prev) => {
+                const copy = { ...prev };
+                delete copy[a.id];
+                return copy;
+              });
+              setSavedAgents((prev) => {
+                const copy = { ...prev };
+                delete copy[a.id];
+                return copy;
+              });
               mutate(
                 { agentId: a.id, model: next },
-                { onSettled: () => setPendingAgent(null) }
+                {
+                  onSuccess: () => {
+                    setSavedAgents((prev) => ({ ...prev, [a.id]: true }));
+                    window.setTimeout(() => {
+                      setSavedAgents((prev) => {
+                        const copy = { ...prev };
+                        delete copy[a.id];
+                        return copy;
+                      });
+                    }, 2200);
+                  },
+                  onError: (err) => {
+                    setSaveErrors((prev) => ({
+                      ...prev,
+                      [a.id]: err instanceof Error ? err.message : "No se pudo guardar el modelo",
+                    }));
+                  },
+                  onSettled: () => setPendingAgent(null),
+                }
               );
             };
             return (
@@ -414,6 +446,12 @@ function PerAgentSection() {
                   </button>
                 )}
                 {busy && <span className="text-xs text-muted-foreground">guardando…</span>}
+                {saved && !busy && <span className="text-xs font-semibold text-sage">guardado</span>}
+                {saveError && (
+                  <span className="max-w-[220px] truncate text-xs font-semibold text-destructive" title={saveError}>
+                    no guardado: {saveError}
+                  </span>
+                )}
                 <span className="ml-auto flex min-w-[180px] items-center justify-end gap-2 text-xs">
                   <span className="max-w-[190px] truncate font-mono text-muted-foreground" title={resolvedModel || undefined}>
                     {resolvedModel || "sin modelo"}

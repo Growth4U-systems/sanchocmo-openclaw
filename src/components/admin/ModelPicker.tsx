@@ -14,6 +14,7 @@ interface ModelPickerProps {
 
 const MVP_MODELS = [
   "anthropic/claude-opus-4-7",
+  "anthropic/claude-opus-4-6",
   "anthropic/claude-sonnet-4-6",
   "codex/gpt-5.4",
   "codex/gpt-5.4-mini",
@@ -162,7 +163,7 @@ export function ModelPicker({
             label={`${provider.id} (${authBadge(provider)})${provider.configured ? "" : " — sin auth"}`}
           >
             {models.map((m) => (
-              <option key={m.id} value={m.id} disabled={!provider.configured}>
+              <option key={m.id} value={m.id}>
                 {m.id}
                 {m.reasoning ? " · reasoning" : ""}
                 {m.contextWindow ? ` · ${Math.round(m.contextWindow / 1000)}k` : ""}
