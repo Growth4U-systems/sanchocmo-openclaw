@@ -220,6 +220,7 @@
     "allClients": "All clients",
     "admin": "Admin",
     "client": "Client",
+    "collaborator": "Collaborator",
     "collapse": "Collapse menu",
     "expand": "Expand menu"
   },

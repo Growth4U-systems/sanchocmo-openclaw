@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
+import { withAuth, withErrorHandler, compose, canAccessSlug } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
 /**
@@ -18,6 +18,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const result: Record<string, unknown[]> = {};
 
   if (slugParam) {
+    if (!canAccessSlug(req.ctx, slugParam)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
     const notifsFile = path.join(BASE, "brand", slugParam, "idea-generation", "notifications.json");
     try {
       const notifs = JSON.parse(fs.readFileSync(notifsFile, "utf-8"));

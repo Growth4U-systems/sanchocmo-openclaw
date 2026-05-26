@@ -25,6 +25,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     enabledFeatures: c.enabledFeatures || [],
   }));
 
+  // Multi-client team members only see their assigned clients
+  if (req.ctx?.allowedSlugs) {
+    const allowed = req.ctx.allowedSlugs;
+    const subset = safe.filter((c) => allowed.includes(c.slug));
+    return res.status(200).json({ ok: true, clients: subset });
+  }
+
   // Portal clients only see their own
   if (req.ctx?.clientSlug) {
     const own = safe.filter((c) => c.slug === req.ctx!.clientSlug);

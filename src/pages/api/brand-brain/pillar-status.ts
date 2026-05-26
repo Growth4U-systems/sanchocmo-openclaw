@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
+import { withAuth, withErrorHandler, compose, canAccessSlug } from "@/lib/api-middleware";
 import {
   setPillarStatus,
   normalizePillarStatus,
@@ -38,7 +38,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .json({ error: "Missing slug, section, pillar, or status" });
   }
 
-  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+  if (!canAccessSlug(req.ctx, slug)) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
