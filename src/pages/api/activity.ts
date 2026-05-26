@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
+import { withAuth, withErrorHandler, compose, canAccessSlug } from "@/lib/api-middleware";
 import { mcDataFile, BASE } from "@/lib/data/paths";
 
 /**
@@ -15,6 +15,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   const slug = (req.query.slug as string) || null;
+  // Per-client view requires access to that slug; the global (no-slug) feed
+  // aggregates every client and is admin only.
+  if (slug) {
+    if (!canAccessSlug(req.ctx, slug)) return res.status(403).json({ error: "Forbidden" });
+  } else if (!req.ctx?.isAdmin) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
   const limit = Math.min(parseInt(req.query.limit as string || "15", 10), 50);
 
   interface Event {

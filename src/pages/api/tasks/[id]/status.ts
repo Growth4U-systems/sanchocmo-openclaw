@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
+import { compose, withAuth, withErrorHandler, canAccessSlug } from "@/lib/api-middleware";
 import { setTaskStatus } from "@/lib/data/tasks";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -11,7 +11,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const id = req.query.id as string;
   const status = req.body?.status as string;
   if (!slug || !id || !status) return res.status(400).json({ error: "Missing slug, id or status" });
-  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) return res.status(403).json({ error: "Forbidden" });
+  if (!canAccessSlug(req.ctx, slug)) return res.status(403).json({ error: "Forbidden" });
   const result = await setTaskStatus(slug, id, status);
   if (!result.ok) {
     const error = "error" in result ? result.error : "Failed to update task status";

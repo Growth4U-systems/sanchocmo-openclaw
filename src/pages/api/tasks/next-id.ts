@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
+import { compose, withAuth, withErrorHandler, canAccessSlug } from "@/lib/api-middleware";
 import { getNextChildTaskId, getNextContentSubtaskId, getNextProjectId } from "@/lib/data/tasks";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -11,7 +11,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const kind = (req.query.kind || "project") as string;
   const parentId = req.query.parent_id as string | undefined;
   if (!slug) return res.status(400).json({ error: "Missing slug" });
-  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) return res.status(403).json({ error: "Forbidden" });
+  if (!canAccessSlug(req.ctx, slug)) return res.status(403).json({ error: "Forbidden" });
 
   const nextId = kind === "content_subtask"
     ? getNextContentSubtaskId(slug, parentId || "")

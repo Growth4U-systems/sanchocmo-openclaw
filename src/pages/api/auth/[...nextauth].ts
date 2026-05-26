@@ -2,6 +2,7 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { loadClientsData } from "@/lib/data/clients";
+import { getSlugsForEmail } from "@/lib/data/client-access";
 
 /**
  * NextAuth.js configuration
@@ -66,17 +67,27 @@ export const authOptions: NextAuthOptions = {
           const isAdmin =
             email.endsWith("@growth4u.io") || adminEmails.includes(email);
           token.role = isAdmin ? "admin" : "client";
+          token.clientSlug = null;
+          token.allowedSlugs = null;
           if (token.role === "client") {
-            const client = (data.clients || []).find(
-              (c: { url?: string; email?: string }) =>
-                c.email === email || c.url?.includes(email.split("@")[0])
-            );
-            token.clientSlug = client?.slug || null;
+            // Multi-client team member: explicit email → slugs mapping wins.
+            const allowed = getSlugsForEmail(email);
+            if (allowed.length > 0) {
+              token.allowedSlugs = allowed;
+            } else {
+              // Legacy single-client portal by email/url match.
+              const client = (data.clients || []).find(
+                (c: { url?: string; email?: string }) =>
+                  c.email === email || c.url?.includes(email.split("@")[0])
+              );
+              token.clientSlug = client?.slug || null;
+            }
           }
         } else {
           // Legacy token provider
           token.role = (user as { role?: string }).role || "client";
           token.clientSlug = (user as { clientSlug?: string }).clientSlug || null;
+          token.allowedSlugs = null;
         }
       }
       return token;
@@ -86,6 +97,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as { role?: string }).role = token.role as string;
         (session.user as { clientSlug?: string | null }).clientSlug =
           token.clientSlug as string | null;
+        (session.user as { allowedSlugs?: string[] | null }).allowedSlugs =
+          (token.allowedSlugs as string[] | null) ?? null;
       }
       return session;
     },

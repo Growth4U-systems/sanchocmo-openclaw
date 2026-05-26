@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { loadClients } from "@/lib/data/clients";
 import {
   ensureMeetingIntelligenceSetupTask,
@@ -23,7 +23,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "GET") {
     if (!slug) return res.status(400).json({ error: "Missing slug" });
-    if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+    if (!canAccessSlug(req.ctx, slug)) {
       return res.status(403).json({ error: "Forbidden" });
     }
     const setupTask = getMeetingIntelligenceSetupTask(slug);
@@ -47,7 +47,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     if (!slug) return res.status(400).json({ error: "Missing slug" });
-    if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+    if (!canAccessSlug(req.ctx, slug)) {
       return res.status(403).json({ error: "Forbidden" });
     }
     const setupTask = ensureMeetingIntelligenceSetupTask(slug);

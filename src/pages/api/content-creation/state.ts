@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { BASE, brandDir, ideasFile } from "@/lib/data/paths";
 import { readJSON, readText } from "@/lib/data/json-io";
 
@@ -66,7 +66,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Missing slug" });
   }
 
-  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+  if (!canAccessSlug(req.ctx, slug)) {
     return res.status(403).json({ error: "Forbidden" });
   }
 

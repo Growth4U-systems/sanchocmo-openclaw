@@ -11,6 +11,9 @@ import { integrationsFile } from "@/lib/data/paths";
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
+  // Aggregated cross-client view — admin only.
+  if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
+
   const clients = loadClients().filter((c) => c.active);
   const summary: { slug: string; name: string; sources: { name: string; status: string }[] }[] = [];
   let connected = 0;
