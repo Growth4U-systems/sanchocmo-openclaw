@@ -47,23 +47,32 @@ RS="-aH"
 [ "$DRY_RUN" = "1" ] && RS="$RS --dry-run" && echo "### DRY RUN — no changes will be written ###"
 
 echo "▶ [1/4] Building runtime file list on staging (gitignored + untracked, minus rebuildables)…"
+# NOTE: workspace-sancho/brand/ is intentionally EXCLUDED here — it is
+# mirrored with --delete in step [2b] so that files deleted on staging
+# (e.g. a client reset from scratch) are also removed on prod. An additive
+# file-list sync would leave stale client data behind on prod.
 ssh -n "$STAGING_SSH" 'cd /root/.openclaw && {
     git ls-files --others --ignored --exclude-standard
     git ls-files --others --exclude-standard
-  } | grep -vE "^(node_modules/|\.next/|backups/|\.git/|workspace-cervantes/|screenshots/)" \
+  } | grep -vE "^(node_modules/|\.next/|backups/|\.git/|workspace-cervantes/|screenshots/|workspace-sancho/brand/)" \
     | grep -vE "(^|/)(node_modules|\.next)/" \
     | grep -vE "\.bak($|-)" \
     | grep -vE "^openclaw\.json" \
     | grep -vE "^(\.env|tsconfig\.tsbuildinfo|next-env\.d\.ts)$" \
     | sort -u > /tmp/resync-files.txt
-  echo "  $(wc -l < /tmp/resync-files.txt) runtime files"'
+  echo "  $(wc -l < /tmp/resync-files.txt) runtime files (brand/ synced separately)"'
 
-echo "▶ [2/4] rsync runtime files staging → prod (additive)…"
+echo "▶ [2/4] rsync runtime files staging → prod (additive: config, cron, agents, memory)…"
 ssh -n "$STAGING_SSH" "rsync $RS --files-from=/tmp/resync-files.txt \
   -e 'ssh -o StrictHostKeyChecking=accept-new' \
   /root/.openclaw/ root@$PROD_IP:/root/.openclaw/"
 
-echo "▶ [2b/4] rsync .openclaw/ gateway+agent state staging → prod (mirror)…"
+echo "▶ [2b/4] MIRROR workspace-sancho/brand/ staging → prod (--delete: removes stale client data)…"
+ssh -n "$STAGING_SSH" "rsync $RS --delete \
+  -e 'ssh -o StrictHostKeyChecking=accept-new' \
+  /root/.openclaw/workspace-sancho/brand/ root@$PROD_IP:/root/.openclaw/workspace-sancho/brand/"
+
+echo "▶ [2c/4] rsync .openclaw/ gateway+agent state staging → prod (mirror)…"
 ssh -n "$STAGING_SSH" "rsync $RS --delete \
   --exclude='node_modules/' --exclude='.next/' --exclude='npm/' \
   -e 'ssh -o StrictHostKeyChecking=accept-new' \
