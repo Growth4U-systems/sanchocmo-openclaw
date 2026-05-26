@@ -45,7 +45,8 @@
     "signIn": "Iniciar sesión",
     "signOut": "Cerrar sesión",
     "signInWith": "Iniciar sesión con {provider}",
-    "accessToken": "Token de acceso"
+    "accessToken": "Token de acceso",
+    "signInError": "No se pudo iniciar sesión. Revisa el token o la configuración local de auth."
   },
   "dashboard": {
     "title": "Dashboard",

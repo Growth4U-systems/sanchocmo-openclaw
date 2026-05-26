@@ -6,6 +6,25 @@ export interface CatalogProvider {
   authKind: string;
   sourceLabel: string | null;
   modelCount: number;
+  auth: ProviderAuthState;
+}
+
+export type ProviderAuthRoute = "subscription" | "api" | "env" | "missing";
+
+export interface ProviderAuthState {
+  effective: ProviderAuthRoute;
+  preferred: ProviderAuthRoute;
+  effectiveLabel: string | null;
+  preferredLabel: string | null;
+  subscriptionSupported: boolean;
+  hasSubscription: boolean;
+  hasApiKey: boolean;
+  hasEnv: boolean;
+  subscriptionLabels: string[];
+  unsupportedSubscriptionLabels: string[];
+  apiKeyLabels: string[];
+  envLabel: string | null;
+  authProviders: string[];
 }
 
 export interface CatalogModel {
@@ -14,8 +33,11 @@ export interface CatalogModel {
   provider: string;
   contextWindow?: number;
   reasoning?: boolean;
+  available?: boolean;
+  missing?: boolean;
   input?: string[];
   curated: boolean;
+  tags: string[];
 }
 
 export interface ModelCatalogResponse {
