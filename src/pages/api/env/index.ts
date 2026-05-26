@@ -35,8 +35,10 @@ const SERVICE_ENV_MAP: Record<string, { key: string; label: string; placeholder:
 };
 
 function maskKey(val: string): string {
-  if (!val || val.length < 8) return val ? "\u2022\u2022\u2022\u2022" : "";
-  return val.slice(0, 4) + "\u2022".repeat(Math.min(val.length - 8, 20)) + val.slice(-4);
+  if (!val) return "";
+  if (val.length < 12) return "\u2022\u2022\u2022\u2022";
+  const prefixLength = val.startsWith("sk-ant-api") ? 16 : 12;
+  return `${val.slice(0, Math.min(prefixLength, val.length - 4))}...${val.slice(-4)}`;
 }
 
 function readEnvFile(): string {
@@ -78,7 +80,42 @@ function setEnvVars(updates: Record<string, string>): void {
   }
 }
 
+function ensureAnthropicApiProfile(): void {
+  const configFile = path.join(BASE, "..", ".openclaw", "openclaw.json");
+  if (!fs.existsSync(configFile)) return;
+
+  const config = JSON.parse(fs.readFileSync(configFile, "utf-8")) as {
+    auth?: {
+      profiles?: Record<string, { provider?: string; mode?: string }>;
+      order?: Record<string, string[]>;
+    };
+  };
+
+  const auth = config.auth || {};
+  const profiles = auth.profiles || {};
+  profiles["anthropic:default"] = { provider: "anthropic", mode: "token" };
+
+  const currentOrder = auth.order?.anthropic || [];
+  const tokenProfileIds = Object.entries(profiles)
+    .filter(([, profile]) => profile.provider === "anthropic" && ["token", "apiKey"].includes(profile.mode || ""))
+    .map(([id]) => id);
+  const fallback = currentOrder.filter((id) => !tokenProfileIds.includes(id) && id !== "anthropic:claude-cli");
+
+  auth.profiles = profiles;
+  auth.order = {
+    ...(auth.order || {}),
+    anthropic: [...tokenProfileIds, ...fallback],
+  };
+  config.auth = auth;
+
+  fs.writeFileSync(configFile, JSON.stringify(config, null, 2) + "\n", "utf-8");
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (!req.ctx?.isAdmin) {
+    return res.status(403).json({ error: "Admin only" });
+  }
+
   if (req.method === "GET") {
     const serviceId = req.query.service as string | undefined;
     const envVars = parseEnv(readEnvFile());
@@ -130,6 +167,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     setEnvVars(updates);
+    if (updates.ANTHROPIC_API_KEY) {
+      ensureAnthropicApiProfile();
+    }
+
     return res.status(200).json({ ok: true, saved: Object.keys(updates) });
   }
 
