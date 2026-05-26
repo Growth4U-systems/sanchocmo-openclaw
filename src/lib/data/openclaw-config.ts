@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { EXEC_PATH, BASE } from "@/lib/data/paths";
@@ -12,7 +12,7 @@ const DEFAULT_TIMEOUT_MS = 90_000;
 
 export function runOpenclaw(args: string[], opts: ExecOptions = {}): string {
   const cmd = "openclaw";
-  return execSync([cmd, ...args].join(" "), {
+  return execFileSync(cmd, args, {
     timeout: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
     encoding: "utf-8",
     env: { ...process.env, PATH: EXEC_PATH },

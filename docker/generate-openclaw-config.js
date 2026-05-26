@@ -43,6 +43,15 @@ async function main() {
       provider: 'anthropic',
       mode: 'token'
     };
+    if (!config.auth.order) config.auth.order = {};
+    const current = Array.isArray(config.auth.order.anthropic)
+      ? config.auth.order.anthropic
+      : [];
+    config.auth.order.anthropic = [
+      'anthropic:default',
+      ...current.filter(id => id !== 'anthropic:default' && id !== 'anthropic:claude-cli'),
+      ...(config.auth.profiles['anthropic:claude-cli'] ? ['anthropic:claude-cli'] : [])
+    ];
   }
 
   // --- Agent defaults ---
