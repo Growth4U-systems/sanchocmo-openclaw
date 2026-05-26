@@ -197,6 +197,8 @@ const UNSUPPORTED_SUBSCRIPTION_ALIASES: Record<string, string[]> = {
 };
 
 const SUBSCRIPTION_RUNTIME_PROVIDERS = new Set(["codex", "openai-codex"]);
+const ANTHROPIC_API_KEY_RE = /=token:sk-ant-api/i;
+const ANTHROPIC_SUBSCRIPTION_TOKEN_RE = /=token:sk-ant-o/i;
 
 function uniqueStrings(values: Array<string | null | undefined>): string[] {
   return Array.from(new Set(values.filter((v): v is string => typeof v === "string" && v.length > 0)));
@@ -226,6 +228,21 @@ function authRouteForEffectiveKind(kind: string | undefined): ProviderAuthRoute 
   if (kind === "token" || kind === "apiKey" || kind === "profiles") return "api";
   if (kind === "env") return "env";
   return "api";
+}
+
+function isAnthropicProvider(providerId: string): boolean {
+  return providerId === "anthropic";
+}
+
+function isApiCredentialLabel(providerId: string, label: string): boolean {
+  if (isAnthropicProvider(providerId)) {
+    return ANTHROPIC_API_KEY_RE.test(label) || /=apiKey:/i.test(label);
+  }
+  return /=token:|=apiKey:/i.test(label);
+}
+
+function isUnsupportedSubscriptionCredentialLabel(providerId: string, label: string): boolean {
+  return isAnthropicProvider(providerId) && ANTHROPIC_SUBSCRIPTION_TOKEN_RE.test(label);
 }
 
 function authKindForRoute(route: ProviderAuthRoute): string {
@@ -332,20 +349,22 @@ export function summarizeProviderAuth(
     ...(auth.auth.providersWithOAuth || []).filter((label) =>
       unsupportedSubscriptionProviders.some((id) => label === id || label.startsWith(`${id} `))
     ),
+    ...providerEntries.flatMap((p) =>
+      (p.profiles?.labels || []).filter((label) =>
+        isUnsupportedSubscriptionCredentialLabel(providerId, label)
+      )
+    ),
   ]);
 
   const apiKeyLabels = uniqueStrings([
-    ...oauthProfiles
-      .filter((p) => authProviders.includes(p.provider || "") && (p.type === "token" || p.type === "apiKey"))
-      .map((p) => p.label || p.profileId),
     ...providerEntries.flatMap((p) =>
-      (p.profiles?.labels || []).filter((label) => /=token:|=apiKey:/i.test(label))
+      (p.profiles?.labels || []).filter((label) => isApiCredentialLabel(providerId, label))
     ),
     ...providerEntries.flatMap((p) => {
       if ((p.profiles?.token || 0) > 0 || (p.profiles?.apiKey || 0) > 0) {
-        return (p.profiles?.labels || [`${p.provider}:profiles`]).filter(
-          (label) => !/=OAuth\b/i.test(label)
-        );
+        return (p.profiles?.labels || [])
+          .filter((label) => !/=OAuth\b/i.test(label))
+          .filter((label) => isApiCredentialLabel(providerId, label));
       }
       return [];
     }),
@@ -366,15 +385,23 @@ export function summarizeProviderAuth(
 
   let effective = directEffectiveRoute;
   let effectiveLabel = directEffectiveProfile?.label || directEffectiveProfile?.profileId || null;
+  if (isAnthropicProvider(providerId) && effective === "api" && !hasApiKey && !hasEnv) {
+    effective = "missing";
+    effectiveLabel = null;
+  }
 
   if (effective === "missing" && effectiveEntry) {
     effective = authRouteForEffectiveKind(effectiveEntry.effective?.kind);
     if (effective === "subscription" && !subscriptionSupported) {
       effective = "missing";
     }
+    if (isAnthropicProvider(providerId) && effective === "api" && !hasApiKey && !hasEnv) {
+      effective = "missing";
+    }
     effectiveLabel =
       effectiveEntry.env?.source ||
-      effectiveEntry.profiles?.labels?.[0] ||
+      apiKeyLabels[0] ||
+      unsupportedSubscriptionLabels[0] ||
       effectiveEntry.effective?.detail ||
       effectiveEntry.provider;
   }
