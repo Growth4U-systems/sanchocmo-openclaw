@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.4.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.3.0...v0.4.0) (2026-05-26)
+
+> First feature release after the staging → production cutover. Promotes the work that accumulated on `staging` since v0.3.0.
+
+### Features
+
+* **auth:** multi-client access + integral user management ([#160](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/160), [#162](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/162))
+* **access:** redirect non-admins off admin views + "Colaborador" role label ([#163](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/163))
+* **sidebar:** scoped scroll, collapse toggle, version + STAGING tag ([#165](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/165))
+* **scripts:** `resync-staging-to-prod.sh` for gradual-cutover data sync ([#166](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/166), [#170](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/170))
+* **chat:** elapsed-time indicator on "Sancho está pensando" ([#154](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/154))
+* **ci:** release-please via PAT + `target-branch: main`; auto-sync release version files main → staging
+
+### Bug Fixes
+
+* **content-engine:** stop false cron errors from jq + wrong MC_BASE port ([#169](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/169))
+
 ## [0.3.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.2.0...v0.3.0) (2026-05-26)
 
 > **Staging → Production cutover.** This release promotes the full staging
