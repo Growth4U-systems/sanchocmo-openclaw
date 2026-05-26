@@ -77,9 +77,10 @@ export function Sidebar() {
       >
         {/* Logo + collapse toggle (fixed top) */}
         {sidebarOpen ? (
-          <div className="mb-0.5 flex items-center gap-2">
+          <div className="mb-0.5 flex items-center gap-1.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.webp" alt="SanchoCMO" className="flex-1 min-w-0 h-auto block" />
+            <EnvBadge />
             <CollapseToggle collapsed={false} />
           </div>
         ) : (
@@ -195,10 +196,9 @@ export function Sidebar() {
 
         </nav>
 
-        {/* Footer — User menu + version (fixed bottom) */}
+        {/* Footer — User menu (version lives in the role line) */}
         <div className="border-t border-border pt-3 mt-3">
           <UserFooter collapsed={!sidebarOpen} />
-          {sidebarOpen && <VersionTag />}
         </div>
       </aside>
     </>
@@ -222,22 +222,14 @@ function CollapseToggle({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function VersionTag() {
-  const version = process.env.NEXT_PUBLIC_APP_VERSION;
-  // STAGING/PREVIEW badge — set via NEXT_PUBLIC_ENV_LABEL; empty in prod.
+function EnvBadge() {
+  // STAGING/PREVIEW badge by the logo — set via NEXT_PUBLIC_ENV_LABEL; empty in prod.
   const envLabel = process.env.NEXT_PUBLIC_ENV_LABEL;
-  if (!version && !envLabel) return null;
+  if (!envLabel) return null;
   return (
-    <div className="flex items-center gap-1.5 px-3 pt-2">
-      {version && (
-        <span className="text-[10px] text-muted-foreground font-medium">v{version}</span>
-      )}
-      {envLabel && (
-        <span className="inline-block bg-rust text-white text-[9px] font-semibold px-1.5 py-0.5 rounded border border-ink uppercase tracking-wide">
-          {envLabel}
-        </span>
-      )}
-    </div>
+    <span className="flex-shrink-0 bg-rust text-white text-[9px] font-semibold px-1.5 py-0.5 rounded border border-ink uppercase tracking-wide leading-none">
+      {envLabel}
+    </span>
   );
 }
 
@@ -343,6 +335,7 @@ function UserFooter({ collapsed }: { collapsed: boolean }) {
 
   const name = session?.user?.name || "Alfonso";
   const initial = name.charAt(0).toUpperCase();
+  const version = process.env.NEXT_PUBLIC_APP_VERSION;
   const sessionUser = session?.user as { role?: string; allowedSlugs?: string[] | null } | undefined;
   // admin → Admin; scoped team member (allowedSlugs) → Colaborador; the
   // client themselves (single-slug portal) → Cliente.
@@ -410,7 +403,10 @@ function UserFooter({ collapsed }: { collapsed: boolean }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-xs font-semibold truncate">{name}</div>
-          <div className="text-[10px] text-muted-foreground">{role}</div>
+          <div className="text-[10px] text-muted-foreground truncate">
+            {role}
+            {version && <span className="opacity-70"> · v{version}</span>}
+          </div>
         </div>
         <span className="text-[10px] text-muted-foreground">⋯</span>
       </button>
