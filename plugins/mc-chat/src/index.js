@@ -16,6 +16,7 @@ import { loadConfig } from "openclaw/plugin-sdk/config-runtime";
 import { mcChatPlugin } from "./channel.js";
 import { classifyAndRewriteError, mergeWithPriorCategory } from "./error-rewriter.js";
 import { errorTracker } from "./error-tracker.js";
+import { parseThreadIdFromSessionKey, toolToProgressEvent } from "./progress-hooks.js";
 
 // Best-effort lookup of an agent's current Codex auth mode + account email.
 // Used to disambiguate "rate limit" errors: Codex CLI always emits the
@@ -74,6 +75,56 @@ export default defineChannelPluginEntry({
 
   registerFull(api) {
     const logger = api.logger;
+
+    // ─── Native typed hooks → MC progress timeline ───
+    // The legacy onReplyStart/onToolStart reply-runtime callbacks (below, in the
+    // inbound handler) only fire for the embedded Claude harness. Codex/ACP
+    // agents like Sancho produce ZERO progress events through them, so their
+    // chat turns showed no live activity. These core hooks fire backend-agnostic
+    // from openclaw's runtime, so they cover codex too.
+    //
+    // Debug logs are intentional during rollout: they let us confirm post-deploy
+    // whether the hooks actually fire for the codex ACP path (an open question —
+    // codex makes model calls inside its own subprocess). Trim once validated.
+    if (typeof api.on === "function") {
+      const initCfg = loadConfig();
+      const initChannelCfg = initCfg?.channels?.[CHANNEL_KEY];
+      const progressUrl = `${initChannelCfg?.mcServerUrl || "http://localhost:3000"}/api/chat/webhook`;
+      const progressSecret = initChannelCfg?.sharedSecret;
+
+      const postProgress = (slug, threadId, agentId, event) => {
+        const headers = { "Content-Type": "application/json", ...(progressSecret ? { "X-MC-Secret": progressSecret } : {}) };
+        const ac = new AbortController();
+        const timer = setTimeout(() => ac.abort(), 2000);
+        fetch(progressUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ slug, threadId, role: "progress", agent: agentId || "sancho", event }),
+          signal: ac.signal,
+        }).catch(() => {}).finally(() => clearTimeout(timer));
+      };
+
+      // Model started reasoning — covers the silence BETWEEN tool calls.
+      api.on("model_call_started", async (event, ctx) => {
+        const key = ctx?.sessionKey || event?.sessionKey || ctx?.sessionId || event?.sessionId;
+        const parsed = parseThreadIdFromSessionKey(key);
+        logger.info(`[mc-chat] hook model_call_started key=${key} → thread=${parsed?.threadId || "none"} provider=${event?.provider} model=${event?.model}`);
+        if (!parsed) return;
+        postProgress(parsed.slug, parsed.threadId, ctx?.agentId, { kind: "thinking", label: "Pensando" });
+      });
+
+      // Tool invocation — the granular activity codex never surfaced.
+      api.on("before_tool_call", async (event, ctx) => {
+        const key = ctx?.sessionKey || ctx?.sessionId;
+        const parsed = parseThreadIdFromSessionKey(key);
+        logger.info(`[mc-chat] hook before_tool_call tool=${event?.toolName} key=${key} → thread=${parsed?.threadId || "none"}`);
+        if (!parsed) return;
+        const evt = toolToProgressEvent(event?.toolName, event?.params, event?.derivedPaths);
+        if (evt) postProgress(parsed.slug, parsed.threadId, ctx?.agentId, evt);
+      });
+    } else {
+      logger.warn("[mc-chat] api.on not available in this SDK version — codex progress timeline disabled");
+    }
 
     // ─── HTTP Route: Inbound webhook from MC Server ───
     api.registerHttpRoute({
@@ -388,7 +439,7 @@ export default defineChannelPluginEntry({
                   "sanson", "escudero", "yalc",
                 ]);
 
-                // Map tool name → label (legacy status text) + structured event
+                // Map tool name → label for the legacy ephemeral status text.
                 const label = toolName === "Read" ? "📄 Leyendo"
                   : toolName === "Write" ? "✍️ Escribiendo"
                   : toolName === "Edit" ? "✏️ Editando"
@@ -398,22 +449,6 @@ export default defineChannelPluginEntry({
                   : toolName === "Agent" ? "🤖 Delegando a subagente"
                   : "🔧 " + toolName;
 
-                let kind = "tool_call";
-                if (toolName === "Read") kind = "read";
-                else if (toolName === "Write" || toolName === "Edit") kind = "file_write";
-                else if (toolName === "Grep" || toolName === "Glob") kind = "search";
-                else if (toolName === "WebFetch" || toolName === "WebSearch") kind = "search";
-                else if (toolName === "Agent") kind = "agent_handoff";
-
-                const target = input.file_path
-                  || input.path
-                  || input.url
-                  || input.pattern
-                  || input.query
-                  || input.subagent_type
-                  || (typeof input.command === "string" ? input.command.slice(0, 80) : undefined)
-                  || undefined;
-
                 // Legacy status (ephemeral)
                 fetch(callbackUrl, {
                   method: "POST",
@@ -421,15 +456,11 @@ export default defineChannelPluginEntry({
                   body: JSON.stringify({ slug, threadId, role: "status", text: label + "...", agent: baseAgent }),
                 }).catch(() => {});
 
-                // Structured progress event (accumulated + sealed)
-                fetch(callbackUrl, {
-                  method: "POST",
-                  headers,
-                  body: JSON.stringify({
-                    slug, threadId, role: "progress", agent: baseAgent,
-                    event: { kind, label, target },
-                  }),
-                }).catch(() => {});
+                // NOTE: the structured `role:progress` event used to be emitted here
+                // too, but it only fired for the embedded Claude harness and
+                // duplicated events for those agents. Progress now comes from the
+                // backend-agnostic `before_tool_call` hook (see registerFull above),
+                // which also covers codex/ACP agents.
 
                 // Formal handoff message: solo cuando se delega a un agente del equipo SanchoCMO
                 // (no para subagentes genéricos de Claude SDK como Explore/Plan/general-purpose).
