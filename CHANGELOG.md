@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.2.0...v0.3.0) (2026-05-26)
+
+
+### Features
+
+* **skills:** add Alarife Payload operator ([7c1f9e2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7c1f9e2c30f363daa4c75becf907312d41f290fc))
+
+
+### Bug Fixes
+
+* **chat:** wrap long URLs inside message bubble ([#144](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/144)) ([9c5ce02](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9c5ce02ec94dea810a9e0062f874ee873370922c))
+
 ## [0.2.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.1.0...v0.2.0) (2026-05-12)
 
 
