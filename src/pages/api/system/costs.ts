@@ -77,6 +77,9 @@ function currentPeriod(): string {
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
+  // Global cross-client totals — admin only.
+  if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
+
   const period = currentPeriod();
   const globalPath = path.join(BASE, "memory", "costs", "global.json");
   const global = readJSON<GlobalCostsFile | null>(globalPath, null);

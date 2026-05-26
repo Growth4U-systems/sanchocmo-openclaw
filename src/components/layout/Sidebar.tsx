@@ -28,6 +28,8 @@ export function Sidebar() {
   }, [router]);
 
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
+  const allowedSlugs = (session?.user as { allowedSlugs?: string[] | null })?.allowedSlugs;
+  const isMultiClient = !isAdmin && !!allowedSlugs && allowedSlugs.length > 0;
   const routeSlug = typeof router.query.slug === "string" ? router.query.slug : null;
   const fallbackClient = clients?.find((client) => client.active)?.slug || null;
   const slug = selectedClient || routeSlug || fallbackClient;
@@ -89,9 +91,9 @@ export function Sidebar() {
         </div>
 
         {/* Client Selector */}
-        {isAdmin && sidebarOpen && (
+        {(isAdmin || isMultiClient) && sidebarOpen && (
           <div className="mt-3">
-            <ClientSelector />
+            <ClientSelector showGlobal={isAdmin} />
           </div>
         )}
 
@@ -182,7 +184,7 @@ export function Sidebar() {
             <NavLink
               href="/dashboard/admin/users"
               icon="🔐"
-              label="Usuarios admin"
+              label="Usuarios"
               active={isActive("/dashboard/admin/users")}
               collapsed={!sidebarOpen}
             />
@@ -259,11 +261,12 @@ function NavLink({
   );
 }
 
-function ClientSelector() {
+function ClientSelector({ showGlobal = true }: { showGlobal?: boolean }) {
   const t = useTranslations("sidebar");
   const router = useRouter();
   const { selectedClient, setSelectedClient } = useAppStore();
   const { data: clients } = useClients();
+  const activeClients = (clients || []).filter((c) => c.active);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -276,14 +279,17 @@ function ClientSelector() {
     }
   };
 
+  // Non-admins (multi-client members) have no global view — default to a client.
+  const effectiveValue = selectedClient || (showGlobal ? "global" : activeClients[0]?.slug || "");
+
   return (
     <select
-      value={selectedClient || "global"}
+      value={effectiveValue}
       onChange={handleChange}
       className="w-full px-2 py-1.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:border-rust"
     >
-      <option value="global">🌐 {t("allClients")}</option>
-      {(clients || []).filter((c) => c.active).map((c) => (
+      {showGlobal && <option value="global">🌐 {t("allClients")}</option>}
+      {activeClients.map((c) => (
         <option key={c.slug} value={c.slug}>
           {c.emoji || "🏢"} {c.name}
         </option>

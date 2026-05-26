@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
+import { withAuth, withErrorHandler, compose, canAccessSlug } from "@/lib/api-middleware";
 import { loadClients } from "@/lib/data/clients";
 import { loadAllProjects } from "@/lib/data/projects";
 import { loadIdeas } from "@/lib/data/ideas";
@@ -19,6 +19,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug as string) || req.ctx?.clientSlug;
 
   if (slug) {
+    if (!canAccessSlug(req.ctx, slug)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
     // Client-specific stats
     const stats = getClientStats(slug);
     return res.status(200).json({ ok: true, slug, ...stats });

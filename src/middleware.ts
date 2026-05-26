@@ -6,6 +6,20 @@ export default withAuth(
     const token = req.nextauth.token;
     const pathname = req.nextUrl.pathname;
 
+    // Clients (single-client portal or multi-client member) never see the
+    // global "all clients" dashboard — send them to their own client. This
+    // also contains the global cost/integration/activity cards from leaking
+    // cross-client data to non-admins.
+    if (token?.role === "client" && pathname === "/dashboard") {
+      const allowed = token?.allowedSlugs as string[] | null | undefined;
+      const homeSlug =
+        (token?.clientSlug as string | null | undefined) ||
+        (allowed && allowed.length ? allowed[0] : null);
+      if (homeSlug) {
+        return NextResponse.redirect(new URL(`/dashboard/${homeSlug}`, req.url));
+      }
+    }
+
     // Admin-only routes (activity log)
     // Settings is accessible to all authenticated users in local deployment
     if (pathname.startsWith("/dashboard/admin/activity") && token?.role !== "admin") {
@@ -18,6 +32,17 @@ export default withAuth(
       if (slugMatch && slugMatch[1] !== "admin" && slugMatch[1] !== token.clientSlug) {
         return NextResponse.redirect(
           new URL(`/dashboard/${token.clientSlug}`, req.url)
+        );
+      }
+    }
+
+    // Multi-client team member: can only access slugs in their allowed list
+    const allowed = token?.allowedSlugs as string[] | null | undefined;
+    if (token?.role === "client" && allowed && allowed.length) {
+      const slugMatch = pathname.match(/^\/dashboard\/([^/]+)/);
+      if (slugMatch && slugMatch[1] !== "admin" && !allowed.includes(slugMatch[1])) {
+        return NextResponse.redirect(
+          new URL(`/dashboard/${allowed[0]}`, req.url)
         );
       }
     }

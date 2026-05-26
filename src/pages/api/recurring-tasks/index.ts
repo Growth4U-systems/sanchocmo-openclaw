@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
 import { loadClients } from "@/lib/data/clients";
 import { BASE } from "@/lib/data/paths";
@@ -176,7 +176,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!slug || !task) {
       return res.status(400).json({ error: "Missing slug or task" });
     }
-    if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+    if (!canAccessSlug(req.ctx, slug)) {
       return res.status(403).json({ error: "Forbidden" });
     }
     const tasks = loadRecurringTasks(slug);
@@ -204,7 +204,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!slug || !taskId) {
       return res.status(400).json({ error: "Missing slug or taskId" });
     }
-    if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+    if (!canAccessSlug(req.ctx, slug)) {
       return res.status(403).json({ error: "Forbidden" });
     }
     let tasks = loadRecurringTasks(slug);

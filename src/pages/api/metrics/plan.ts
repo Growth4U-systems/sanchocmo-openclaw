@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";
-import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
 
@@ -13,6 +13,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = req.ctx?.clientSlug || (req.query.slug as string);
   if (!slug) {
     return res.status(400).json({ error: "Missing slug" });
+  }
+  if (!canAccessSlug(req.ctx, slug)) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   const planFile = path.join(BASE, "brand", slug, "metrics-plan.json");

@@ -7,6 +7,7 @@ interface ClientsData {
   clients: Client[];
   adminToken: string | null;
   adminEmails?: string[];
+  clientAccess?: Record<string, string[]>;
 }
 
 /**

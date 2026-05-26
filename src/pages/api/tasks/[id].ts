@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
+import { compose, withAuth, withErrorHandler, canAccessSlug } from "@/lib/api-middleware";
 import { getTask, updateTask } from "@/lib/data/tasks";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = (req.query.slug || req.body?.slug || req.ctx?.clientSlug) as string;
   const id = req.query.id as string;
   if (!slug || !id) return res.status(400).json({ error: "Missing slug or id" });
-  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) return res.status(403).json({ error: "Forbidden" });
+  if (!canAccessSlug(req.ctx, slug)) return res.status(403).json({ error: "Forbidden" });
 
   if (req.method === "GET") {
     const task = await getTask(slug, id);

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
-import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { loadIdeas, saveIdeas } from "@/lib/data/ideas";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
 import { notificationsFile } from "@/lib/data/paths";
@@ -29,7 +29,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // Portal clients can only access their own slug
-  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+  if (!canAccessSlug(req.ctx, slug)) {
     return res.status(403).json({ error: "Forbidden" });
   }
 

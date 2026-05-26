@@ -13,8 +13,26 @@ export type ApiHandler = (
 export interface RequestContext {
   isAdmin: boolean;
   clientSlug: string | null;
+  // Slugs a multi-client team member is restricted to. null = no restriction
+  // (admin, or a single-client portal user scoped by `clientSlug`).
+  allowedSlugs: string[] | null;
   adminToken: string | null;
   portalClient: { slug: string; name: string } | null;
+}
+
+/**
+ * Whether the request's auth context is allowed to act on a given client slug.
+ *
+ * - admin → all
+ * - multi-client member → only slugs in allowedSlugs
+ * - single-client portal → only their clientSlug
+ */
+export function canAccessSlug(ctx: RequestContext | undefined, slug: string): boolean {
+  if (!ctx) return false;
+  if (ctx.isAdmin) return true;
+  if (ctx.allowedSlugs) return ctx.allowedSlugs.includes(slug);
+  if (ctx.clientSlug) return ctx.clientSlug === slug;
+  return false;
 }
 
 // Attach context to request
@@ -64,7 +82,7 @@ export function withAuth(handler: ApiHandler): ApiHandler {
     const ctx = await resolveAuth(req, res);
     req.ctx = ctx;
 
-    if (!ctx.isAdmin && !ctx.clientSlug) {
+    if (!ctx.isAdmin && !ctx.clientSlug && !(ctx.allowedSlugs && ctx.allowedSlugs.length)) {
       res.status(403).json({ error: "Unauthorized" });
       return;
     }
@@ -74,15 +92,15 @@ export function withAuth(handler: ApiHandler): ApiHandler {
 }
 
 /**
- * Auth middleware that also requires a specific slug
- * Portal clients can only access their own slug
+ * Auth middleware that also requires a specific slug.
+ * The slug must be one the caller can access (own slug, allowed list, or admin).
  */
 export function withSlugAuth(handler: ApiHandler): ApiHandler {
   return async (req, res) => {
     const ctx = await resolveAuth(req, res);
     req.ctx = ctx;
 
-    if (!ctx.isAdmin && !ctx.clientSlug) {
+    if (!ctx.isAdmin && !ctx.clientSlug && !(ctx.allowedSlugs && ctx.allowedSlugs.length)) {
       res.status(403).json({ error: "Unauthorized" });
       return;
     }
@@ -97,8 +115,8 @@ export function withSlugAuth(handler: ApiHandler): ApiHandler {
       return;
     }
 
-    // Portal clients can only access their own slug
-    if (ctx.clientSlug && ctx.clientSlug !== slug) {
+    // Caller may only access slugs they are scoped to
+    if (!canAccessSlug(ctx, slug)) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
@@ -133,6 +151,7 @@ async function resolveAuth(req: NextApiRequest, res: NextApiResponse): Promise<R
     return {
       isAdmin: true,
       clientSlug: null,
+      allowedSlugs: null,
       adminToken: token,
       portalClient: null,
     };
@@ -147,6 +166,7 @@ async function resolveAuth(req: NextApiRequest, res: NextApiResponse): Promise<R
       return {
         isAdmin: false,
         clientSlug: client.slug,
+        allowedSlugs: null,
         adminToken: null,
         portalClient: { slug: client.slug, name: client.name },
       };
@@ -161,9 +181,11 @@ async function resolveAuth(req: NextApiRequest, res: NextApiResponse): Promise<R
     if (session?.user) {
       const role = (session.user as { role?: string }).role;
       const clientSlug = (session.user as { clientSlug?: string | null }).clientSlug;
+      const allowed = (session.user as { allowedSlugs?: string[] | null }).allowedSlugs;
       return {
         isAdmin: role === "admin",
         clientSlug: clientSlug || null,
+        allowedSlugs: allowed && allowed.length ? allowed : null,
         adminToken: null,
         portalClient: clientSlug ? { slug: clientSlug, name: session.user.name || "" } : null,
       };
@@ -176,6 +198,7 @@ async function resolveAuth(req: NextApiRequest, res: NextApiResponse): Promise<R
   return {
     isAdmin: false,
     clientSlug: null,
+    allowedSlugs: null,
     adminToken: null,
     portalClient: null,
   };

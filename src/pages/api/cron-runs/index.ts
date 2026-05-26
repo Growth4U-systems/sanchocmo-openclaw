@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
-import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { loadClients } from "@/lib/data/clients";
 import { BASE, EXEC_PATH } from "@/lib/data/paths";
 
@@ -73,6 +73,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const slugParam = req.ctx?.clientSlug || (req.query.slug as string) || null;
+  if (slugParam) {
+    if (!canAccessSlug(req.ctx, slugParam)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+  } else if (!req.ctx?.isAdmin) {
+    // No slug = cross-client view; only admins may see all runs.
+    return res.status(403).json({ error: "Forbidden" });
+  }
   const limitParam = parseInt((req.query.limit as string) || "1", 10);
   const limit = Math.max(1, Math.min(limitParam, 20));
 

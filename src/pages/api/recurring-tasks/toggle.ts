@@ -1,7 +1,7 @@
 import { EXEC_PATH } from "@/lib/data/paths";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { execSync } from "child_process";
-import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
 
 
@@ -15,7 +15,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!slug || !taskId) {
     return res.status(400).json({ error: "Missing slug or taskId" });
   }
-  if (req.ctx?.clientSlug && req.ctx.clientSlug !== slug) {
+  if (!canAccessSlug(req.ctx, slug)) {
     return res.status(403).json({ error: "Forbidden" });
   }
 

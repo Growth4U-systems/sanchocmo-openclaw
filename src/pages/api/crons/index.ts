@@ -1,7 +1,7 @@
 import { EXEC_PATH } from "@/lib/data/paths";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { execSync } from "child_process";
-import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { loadClients } from "@/lib/data/clients";
 
 
@@ -58,6 +58,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const slugParam = req.ctx?.clientSlug || (req.query.slug as string) || null;
+  if (slugParam) {
+    if (!canAccessSlug(req.ctx, slugParam)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+  } else if (!req.ctx?.isAdmin) {
+    // No slug = cross-client view; only admins may see all crons.
+    return res.status(403).json({ error: "Forbidden" });
+  }
   const clients = loadClients() as { slug: string; name: string }[];
   const enriched = loadCronJobs().map((j) => enrichCronJob(j, clients));
 
