@@ -50,6 +50,15 @@ class UpsertEnvTest(unittest.TestCase):
         self.assertNotIn("FOO=old", content)
         self.assertIn("BAR=keep", content)
 
+    def test_preserves_existing_key_when_requested(self):
+        self.path.write_text("FOO=runtime\nBAR=keep\n")
+        report = upsert_env.upsert(self.path, {"FOO": "github"}, preserve_existing={"FOO"})
+        self.assertEqual(report["FOO"], "preserved_existing")
+        content = self.path.read_text()
+        self.assertIn("FOO=runtime", content)
+        self.assertNotIn("FOO=github", content)
+        self.assertIn("BAR=keep", content)
+
     def test_unchanged_when_value_matches(self):
         self.path.write_text("FOO=same\n")
         report = upsert_env.upsert(self.path, {"FOO": "same"})
