@@ -33,7 +33,10 @@ export function Sidebar() {
   const routeSlug = typeof router.query.slug === "string" ? router.query.slug : null;
   const fallbackClient = clients?.find((client) => client.active)?.slug || null;
   const slug = selectedClient || routeSlug || fallbackClient;
-  const unreadCount = useUnreadCount(slug);
+  // Chat targets a concrete client only — never the "all clients"/global view,
+  // so we deliberately exclude the fallback client here.
+  const chatSlug = selectedClient || routeSlug;
+  const unreadCount = useUnreadCount(chatSlug);
 
   function clientHref(path: string) {
     return slug ? `/dashboard/${slug}${path}` : "/dashboard";
@@ -65,30 +68,28 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 h-screen bg-card border-r-2 border-border z-[60] flex flex-col transition-all duration-200 overflow-y-auto",
+          "fixed top-0 left-0 h-screen bg-card border-r-2 border-border z-[60] flex flex-col transition-all duration-200 overflow-hidden",
           sidebarOpen ? "lg:w-[220px]" : "lg:w-[60px]",
           mobileOpen ? "w-[260px]" : "max-lg:-translate-x-full",
           "max-lg:w-[260px]"
         )}
         style={{ padding: sidebarOpen ? "16px 12px" : "16px 8px" }}
       >
-        {/* Logo */}
-        <div className="mb-0.5">
-          {sidebarOpen ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.webp" alt="SanchoCMO" className="w-full h-auto block" />
-              <span className="inline-block bg-rust text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-md border-2 border-ink mt-1">
-                v2.0
-              </span>
-            </>
-          ) : (
-            <div className="flex justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.webp" alt="SanchoCMO" className="w-10 h-10 object-contain" />
-            </div>
-          )}
-        </div>
+        {/* Logo + collapse toggle (fixed top) */}
+        {sidebarOpen ? (
+          <div className="mb-0.5 flex items-center gap-1.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="SanchoCMO" className="flex-1 min-w-0 h-auto block" />
+            <EnvBadge />
+            <CollapseToggle collapsed={false} />
+          </div>
+        ) : (
+          <div className="mb-0.5 flex flex-col items-center gap-1.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="SanchoCMO" className="w-10 h-10 object-contain" />
+            <CollapseToggle collapsed={true} />
+          </div>
+        )}
 
         {/* Client Selector */}
         {(isAdmin || isMultiClient) && sidebarOpen && (
@@ -97,11 +98,11 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* Chat button (client only) */}
-        {slug && sidebarOpen && (
+        {/* Chat button (concrete client only — hidden in the global view) */}
+        {chatSlug && sidebarOpen && (
           <button
             onClick={() => {
-              useChatStore.getState().setCurrentSlug(slug);
+              useChatStore.getState().setCurrentSlug(chatSlug);
               useChatStore.getState().toggleSidebar();
             }}
             className="w-full flex items-center gap-2 px-3.5 py-2.5 mt-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center relative"
@@ -115,6 +116,8 @@ export function Sidebar() {
           </button>
         )}
 
+        {/* Nav — the only scrollable region (between dropdown and user data) */}
+        <nav className="flex-1 min-h-0 overflow-y-auto mt-1">
         {/* ── Overview ── */}
         <SectionLabel text={t("nav.overview")} visible={sidebarOpen} />
         <NavLink
@@ -191,10 +194,9 @@ export function Sidebar() {
           </>
         )}
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        </nav>
 
-        {/* Footer — User menu with dropdown (matches legacy) */}
+        {/* Footer — User menu (version lives in the role line) */}
         <div className="border-t border-border pt-3 mt-3">
           <UserFooter collapsed={!sidebarOpen} />
         </div>
@@ -204,6 +206,32 @@ export function Sidebar() {
 }
 
 // --- Sub-components ---
+
+function CollapseToggle({ collapsed }: { collapsed: boolean }) {
+  // Desktop only — on mobile the sidebar is a full-width drawer.
+  return (
+    <button
+      type="button"
+      onClick={() => useAppStore.getState().toggleSidebar()}
+      className="hidden lg:flex w-6 h-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground flex-shrink-0 transition-colors"
+      aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+      title={collapsed ? "Expandir" : "Colapsar"}
+    >
+      {collapsed ? "›" : "‹"}
+    </button>
+  );
+}
+
+function EnvBadge() {
+  // STAGING/PREVIEW badge by the logo — set via NEXT_PUBLIC_ENV_LABEL; empty in prod.
+  const envLabel = process.env.NEXT_PUBLIC_ENV_LABEL;
+  if (!envLabel) return null;
+  return (
+    <span className="flex-shrink-0 bg-rust text-white text-[9px] font-semibold px-1.5 py-0.5 rounded border border-ink uppercase tracking-wide leading-none">
+      {envLabel}
+    </span>
+  );
+}
 
 function SectionLabel({ text, visible }: { text: string; visible: boolean }) {
   if (!visible) return <div className="h-3" />;
@@ -307,6 +335,7 @@ function UserFooter({ collapsed }: { collapsed: boolean }) {
 
   const name = session?.user?.name || "Alfonso";
   const initial = name.charAt(0).toUpperCase();
+  const version = process.env.NEXT_PUBLIC_APP_VERSION;
   const sessionUser = session?.user as { role?: string; allowedSlugs?: string[] | null } | undefined;
   // admin → Admin; scoped team member (allowedSlugs) → Colaborador; the
   // client themselves (single-slug portal) → Cliente.
@@ -374,7 +403,10 @@ function UserFooter({ collapsed }: { collapsed: boolean }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-xs font-semibold truncate">{name}</div>
-          <div className="text-[10px] text-muted-foreground">{role}</div>
+          <div className="text-[10px] text-muted-foreground truncate">
+            {role}
+            {version && <span className="opacity-70"> · v{version}</span>}
+          </div>
         </div>
         <span className="text-[10px] text-muted-foreground">⋯</span>
       </button>
