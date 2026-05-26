@@ -16,6 +16,15 @@ jobs:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
+          # PAT (repo scope) instead of GITHUB_TOKEN: the org disallows
+          # GitHub Actions from creating PRs, so the default token can't
+          # open the release PR. A user PAT bypasses that org restriction.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          # Target main explicitly. The repo's default branch is `staging`,
+          # and release-please-action defaults to the default branch — so
+          # without this it opens the release PR against staging instead of
+          # main (where production releases/tags must come from).
+          target-branch: main
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
     outputs:
