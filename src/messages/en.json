@@ -45,7 +45,8 @@
     "signIn": "Sign in",
     "signOut": "Sign out",
     "signInWith": "Sign in with {provider}",
-    "accessToken": "Access token"
+    "accessToken": "Access token",
+    "signInError": "Sign-in failed. Check the token or local auth configuration."
   },
   "dashboard": {
     "title": "Dashboard",

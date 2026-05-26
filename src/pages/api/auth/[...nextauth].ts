@@ -4,6 +4,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { loadClientsData } from "@/lib/data/clients";
 import { getSlugsForEmail } from "@/lib/data/client-access";
 
+const googleClientId =
+  process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_OAUTH_CLIENT_ID;
+const googleClientSecret =
+  process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+const googleAuthConfigured = Boolean(googleClientId) && Boolean(googleClientSecret);
+
 /**
  * NextAuth.js configuration
  * - Google OAuth for team (@growth4u.io → admin) and clients
@@ -11,10 +17,14 @@ import { getSlugsForEmail } from "@/lib/data/client-access";
  */
 export const authOptions: NextAuthOptions = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
+    ...(googleAuthConfigured
+      ? [
+          GoogleProvider({
+            clientId: googleClientId as string,
+            clientSecret: googleClientSecret as string,
+          }),
+        ]
+      : []),
     // Legacy token provider for coexistence with mc-server.js
     CredentialsProvider({
       id: "legacy-token",
@@ -25,9 +35,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.token) return null;
         const data = loadClientsData();
+        const adminToken = data.adminToken || process.env.MC_ADMIN_TOKEN || null;
 
         // Check admin token
-        if (data.adminToken && credentials.token === data.adminToken) {
+        if (adminToken && credentials.token === adminToken) {
           return {
             id: "admin",
             name: "Admin",
