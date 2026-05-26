@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ComicCard } from "@/components/shared/comic-card";
@@ -42,7 +42,8 @@ function useStatusBadge() {
     if (ownership === "system") {
       if (healthStatus === "ok") return { dot: "bg-blue-500", label: t("systemKey"), color: "text-blue-600", border: "border-l-blue-500" };
       if (healthStatus === "error") return { dot: "bg-red-500", label: t("error"), color: "text-red-500", border: "border-l-red-500" };
-      return { dot: "bg-blue-500", label: t("systemKey"), color: "text-blue-600", border: "border-l-blue-500" };
+      if (healthStatus === "pending") return { dot: "bg-yellow-500", label: t("pending"), color: "text-yellow-600", border: "border-l-yellow-500" };
+      return { dot: "bg-muted-foreground/30", label: t("notConfigured"), color: "text-muted-foreground", border: "border-l-border" };
     }
     if (healthStatus === "ok") return { dot: "bg-green-500", label: t("connected"), color: "text-green-600", border: "border-l-green-500" };
     if (healthStatus === "error") return { dot: "bg-red-500", label: t("error"), color: "text-red-500", border: "border-l-red-500" };
@@ -117,7 +118,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
     staleTime: 120_000,
   });
 
-  const services = health?.services || {};
+  const services = useMemo(() => health?.services ?? {}, [health?.services]);
 
   // Flatten all APIs with their category for filtering. If a categories prop is
   // provided, restrict to that scope up-front so counters + table both reflect
@@ -140,6 +141,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
     const svc = services[apiId];
     const st = svc?.status;
     if (st === "ok") connected++;
+    else if (st === "pending") pending++;
     else if (st === "error") errored++;
     else notConfigured++;
   }
@@ -151,14 +153,20 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
     return Object.entries(catalog.categories).map(([key, cat]) => ({ key, label: cat.label }));
   }, [catalog, categories]);
 
-  const getApiStatus = (apiId: string, ownership: string) => {
+  const getApiStatus = useCallback((apiId: string, ownership: string) => {
     const svc = services[apiId];
     const st = svc?.status;
-    if (ownership === "system") return st === "error" ? "error" : "system";
+    if (ownership === "system") {
+      if (st === "ok") return "system";
+      if (st === "error") return "error";
+      if (st === "pending") return "pending";
+      return "not-configured";
+    }
     if (st === "ok") return "ok";
     if (st === "error") return "error";
+    if (st === "pending") return "pending";
     return "not-configured";
-  };
+  }, [services]);
 
   const filteredApis = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -176,7 +184,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
         item.catLabel.toLowerCase().includes(q)
       );
     });
-  }, [allApis, search, categoryFilter, statusFilter, services]);
+  }, [allApis, search, categoryFilter, statusFilter, getApiStatus]);
 
   const handleVerifyAll = async () => {
     setChecking(true);
@@ -289,7 +297,8 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
         >
           <option value="all">Todos los estados</option>
           <option value="ok">🟢 Conectado</option>
-          <option value="system">🔵 System key</option>
+          <option value="system">🔵 API sistema</option>
+          <option value="pending">🟡 Pendiente</option>
           <option value="error">🔴 Error</option>
           <option value="not-configured">⚫ Sin configurar</option>
         </select>
