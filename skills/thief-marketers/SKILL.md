@@ -96,7 +96,7 @@ Build a complete idea in one shot:
       assert idea["id"] not in {e["id"] for e in existing}   # no id collisions
   json.dump(existing + new_ideas, "content/idea-queue.json", indent=2)
   ```
-- **Verify after writing.** Re-read the file and assert `isinstance(parsed, list) and len(parsed) >= len(existing) + len(new_ideas)`. If the assertion fails, restore from the pre-write copy and log `status: "error"`.
+- **Verify after writing.** Re-read the file and assert `isinstance(parsed, list) and len(parsed) >= len(existing) + len(new_ideas)`. If the assertion fails, restore from the pre-write copy and log `status: "error"`. **Do this verification in Python (re-read + assert) — do NOT eyeball the queue with an ad-hoc `jq` one-liner.** A failed shell/tool command marks the *entire* cron run as `error` in Mission Control even when the ideas were written correctly. If you do reach for `jq`, mind operator precedence: `jq 'length, .[-8:] | map(...)'` pipes the *number* from `length` into `map` and dies with `Cannot iterate over number`; the correct form is `jq 'length, (.[-8:] | map(...))'`.
 
 Append to `content/idea-queue.json` following the contract above. **Before assigning `{n}`**, read the existing
 file and find the highest `{n}` already used for today's date prefix
