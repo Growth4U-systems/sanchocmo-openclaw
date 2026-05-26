@@ -1,0 +1,57 @@
+name: Sync release to staging
+
+# After a production release, release-please bumps the version files
+# (.release-please-manifest.json, CHANGELOG.md, package.json, lock) on
+# `main` only. `staging` stays on the old version, so the NEXT
+# `staging → main` promotion conflicts on those files every time.
+#
+# This job brings those files back to `staging` by opening a `main → staging`
+# PR right after a release publishes. Once code is in sync, the merge is
+# clean (only version files differ), so the next promotion has no conflict.
+#
+# Runs from the default branch (`staging`) on the `release` event.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Open main → staging sync PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+      - name: Open (and try to auto-merge) the sync PR
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          TAG: ${{ github.event.release.tag_name || 'manual' }}
+        run: |
+          set -euo pipefail
+          git fetch origin main staging
+          if git merge-base --is-ancestor origin/main origin/staging; then
+            echo "staging already contains main — nothing to sync."
+            exit 0
+          fi
+          num=$(gh pr list --base staging --head main --state open --json number -q '.[0].number // empty')
+          if [ -z "$num" ]; then
+            gh pr create --base staging --head main \
+              --title "chore: sync release ${TAG} to staging" \
+              --body "Automated post-release sync. Brings the release-please version files (\`.release-please-manifest.json\`, \`CHANGELOG.md\`, \`package.json\`, lock) from \`main\` back to \`staging\` so the next \`staging → main\` promotion doesn't conflict on version files. Merge with a **merge commit** (code is already in sync; only version files differ)."
+            num=$(gh pr list --base staging --head main --state open --json number -q '.[0].number')
+          fi
+          echo "Sync PR: #$num"
+          # Try to auto-merge (merges once required checks pass). Falls back to
+          # leaving the PR open for a one-click manual merge if auto-merge or
+          # branch protection blocks it.
+          gh pr merge "$num" --merge --auto \
+            && echo "Auto-merge enabled on PR #$num" \
+            || echo "::notice::Sync PR #$num is open — merge it manually (merge commit)."
