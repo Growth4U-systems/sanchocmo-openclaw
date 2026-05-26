@@ -307,7 +307,15 @@ function UserFooter({ collapsed }: { collapsed: boolean }) {
 
   const name = session?.user?.name || "Alfonso";
   const initial = name.charAt(0).toUpperCase();
-  const role = (session?.user as { role?: string })?.role === "admin" ? t("sidebar.admin") : t("sidebar.client");
+  const sessionUser = session?.user as { role?: string; allowedSlugs?: string[] | null } | undefined;
+  // admin → Admin; scoped team member (allowedSlugs) → Colaborador; the
+  // client themselves (single-slug portal) → Cliente.
+  const role =
+    sessionUser?.role === "admin"
+      ? t("sidebar.admin")
+      : sessionUser?.allowedSlugs && sessionUser.allowedSlugs.length > 0
+      ? t("sidebar.collaborator")
+      : t("sidebar.client");
 
   if (collapsed) {
     return (
