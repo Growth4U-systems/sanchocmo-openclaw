@@ -1,11 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
 import { loadUsers, setUserAccess, removeUser, type UserRole } from "@/lib/data/users";
+import { getAdminDomains } from "@/lib/data/admin-domain";
 
 /**
  * /api/admin/users — integral user management.
  *
- *   GET                                  → { ok, users: ManagedUser[] }
+ *   GET                                  → { ok, users: ManagedUser[], adminDomains: string[] }
  *   POST   body { email, role, slugs? }  → set a user's access level
  *   DELETE body { email }                → revoke all access for a user
  *
@@ -19,7 +20,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === "GET") {
-    return res.status(200).json({ ok: true, users: loadUsers() });
+    return res.status(200).json({ ok: true, users: loadUsers(), adminDomains: getAdminDomains() });
   }
 
   if (req.method === "POST") {

@@ -16,6 +16,16 @@ interface ManagedUser {
   slugs: string[];
 }
 
+// Render configured admin domains as highlighted @domain chips (", "-joined).
+function domainCodes(domains: string[]) {
+  return domains.map((d, i) => (
+    <span key={d}>
+      {i > 0 ? ", " : ""}
+      <code className="text-rust">@{d}</code>
+    </span>
+  ));
+}
+
 export default function AdminUsersPage() {
   const tCommon = useTranslations("common");
   const { data: session, status: sessionStatus } = useSession();
@@ -49,7 +59,7 @@ function UsersPanel({ currentEmail }: { currentEmail: string }) {
   // Local-only rows not yet persisted (a client role with no clients picked).
   const [pending, setPending] = useState<ManagedUser[]>([]);
 
-  const { data, isLoading, error: fetchError, refetch } = useQuery<{ users: ManagedUser[] }, Error>({
+  const { data, isLoading, error: fetchError, refetch } = useQuery<{ users: ManagedUser[]; adminDomains: string[] }, Error>({
     queryKey: ["users"],
     queryFn: async () => {
       const res = await fetch("/api/admin/users");
@@ -100,6 +110,7 @@ function UsersPanel({ currentEmail }: { currentEmail: string }) {
   });
 
   const serverUsers = data?.users || [];
+  const adminDomains = data?.adminDomains || [];
   const pendingEmails = new Set(pending.map((p) => p.email));
   const rows: ManagedUser[] = [
     ...serverUsers.filter((u) => !pendingEmails.has(u.email)),
@@ -171,7 +182,12 @@ function UsersPanel({ currentEmail }: { currentEmail: string }) {
     <div>
       <h1 className="font-heading text-2xl text-navy mb-1">👥 Usuarios</h1>
       <p className="text-xs text-muted-foreground mb-5">
-        Gestioná quién accede a Mission Control y a qué clientes. Las cuentas del dominio admin configurado son admin automáticamente y no se listan aquí.
+        Gestioná quién accede a Mission Control y a qué clientes.{" "}
+        {adminDomains.length > 0 ? (
+          <>Las cuentas {domainCodes(adminDomains)} son admin automáticamente y no se listan aquí.</>
+        ) : (
+          <>El dominio admin (<code className="text-rust">ADMIN_EMAIL_DOMAIN</code>) no está configurado: solo los emails de esta lista y el admin token tienen acceso.</>
+        )}
       </p>
 
       <ComicCard className="mb-4">
@@ -219,7 +235,12 @@ function UsersPanel({ currentEmail }: { currentEmail: string }) {
       ) : rows.length === 0 ? (
         <ComicCard>
           <p className="text-sm text-muted-foreground text-center py-3">
-            No hay usuarios configurados. Solo el dominio admin configurado tiene acceso.
+            No hay usuarios configurados.{" "}
+            {adminDomains.length > 0 ? (
+              <>Solo las cuentas {domainCodes(adminDomains)} tienen acceso.</>
+            ) : (
+              <>Configurá <code className="text-rust">ADMIN_EMAIL_DOMAIN</code> o agregá un email para dar acceso.</>
+            )}
           </p>
         </ComicCard>
       ) : (
