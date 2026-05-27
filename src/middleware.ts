@@ -50,6 +50,7 @@ export default withAuth(
     return NextResponse.next();
   },
   {
+    secret: process.env.NEXTAUTH_SECRET || "mc-dev-secret-change-me",
     callbacks: {
       authorized: ({ token, req }) => {
         // Allow API routes without session (they use their own auth)

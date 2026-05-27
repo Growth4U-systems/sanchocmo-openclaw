@@ -135,7 +135,7 @@ export function withSlugAuth(handler: ApiHandler): ApiHandler {
 async function resolveAuth(req: NextApiRequest, res: NextApiResponse): Promise<RequestContext> {
   const { loadClientsData } = await import("@/lib/data/clients");
   const data = loadClientsData();
-  const adminToken = data.adminToken || null;
+  const adminToken = data.adminToken || process.env.MC_ADMIN_TOKEN || null;
   const clients = data.clients || [];
 
   // Extract token from various sources

@@ -12,11 +12,39 @@ interface ModelPickerProps {
   className?: string;
 }
 
+const MVP_MODELS = [
+  "anthropic/claude-opus-4-7",
+  "anthropic/claude-opus-4-6",
+  "anthropic/claude-sonnet-4-6",
+  "codex/gpt-5.4",
+  "codex/gpt-5.4-mini",
+  "openrouter/openai/gpt-5.5",
+  "google/gemini-2.5-flash",
+];
+
+function authRouteLabel(route: string | undefined): string {
+  if (route === "subscription") return "suscripción";
+  if (route === "api") return "API key";
+  if (route === "env") return "env key";
+  return "sin auth";
+}
+
 function authBadge(p: CatalogProvider): string {
   if (!p.configured) return "missing";
-  if (p.authKind === "oauth" || p.authKind === "token") return "sub";
+  if (p.auth) {
+    const effective = p.auth.effective !== "missing" ? p.auth.effective : p.auth.preferred;
+    if (p.auth.preferred === "subscription" && effective !== "subscription") {
+      return `${authRouteLabel(effective)} now · sub ready`;
+    }
+    if (p.auth.preferred !== "missing" && effective !== p.auth.preferred) {
+      return `${authRouteLabel(effective)} now · ${authRouteLabel(p.auth.preferred)} ready`;
+    }
+    return authRouteLabel(effective);
+  }
+  if (p.authKind === "oauth") return "suscripción";
+  if (p.authKind === "token") return "API key";
   if (p.authKind === "env") return "env key";
-  if (p.authKind === "apiKey") return "api key";
+  if (p.authKind === "apiKey") return "API key";
   return p.authKind;
 }
 
@@ -75,22 +103,42 @@ export function ModelPicker({
     return data.models.some((m) => m.id === value);
   }, [data, value]);
 
+  const handleChange = (next: string) => {
+    if (next === "__inherit__") onChange(null);
+    else onChange(next);
+  };
+
   if (active.isLoading && !data) {
+    const options = value && !MVP_MODELS.includes(value) ? [value, ...MVP_MODELS] : MVP_MODELS;
     return (
-      <span className={cn("text-xs text-muted-foreground", className)}>
-        cargando modelos…
-      </span>
+      <div className={cn("flex items-center gap-2", className)}>
+        <select
+          value={value ?? "__inherit__"}
+          onChange={(e) => handleChange(e.target.value)}
+          disabled={disabled}
+          className={cn(
+            "rounded-md border-2 border-ink bg-card font-mono",
+            size === "sm" ? "text-xs px-2 py-1" : "text-sm px-3 py-1.5",
+            disabled && "opacity-60 cursor-not-allowed"
+          )}
+        >
+          {allowInherit && <option value="__inherit__">{inheritLabel}</option>}
+          {options.map((id) => (
+            <option key={id} value={id}>
+              {id}
+            </option>
+          ))}
+        </select>
+        <span className="text-[10px] uppercase font-bold text-muted-foreground">
+          verificando auth
+        </span>
+      </div>
     );
   }
 
   if (active.error || !data) {
     return <span className={cn("text-xs text-destructive", className)}>error catálogo</span>;
   }
-
-  const handleChange = (next: string) => {
-    if (next === "__inherit__") onChange(null);
-    else onChange(next);
-  };
 
   const fullLoading = showAll && full.isFetching;
 
@@ -116,8 +164,9 @@ export function ModelPicker({
             label={`${provider.id} (${authBadge(provider)})${provider.configured ? "" : " — sin auth"}`}
           >
             {models.map((m) => (
-              <option key={m.id} value={m.id} disabled={!provider.configured}>
+              <option key={m.id} value={m.id}>
                 {m.id}
+                {m.reasoning ? " · reasoning" : ""}
                 {m.contextWindow ? ` · ${Math.round(m.contextWindow / 1000)}k` : ""}
               </option>
             ))}

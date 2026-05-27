@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ComicCard } from "@/components/shared/comic-card";
@@ -36,13 +36,23 @@ interface ApiCatalog {
   categories: Record<string, CatalogCategory>;
 }
 
+interface SystemEnvField {
+  label: string;
+  placeholder?: string;
+  masked: string;
+  hasValue: boolean;
+}
+
+const GATEWAY_ENV_SERVICES = new Set(["anthropic", "openai", "openrouter", "gemini", "xai"]);
+
 function useStatusBadge() {
   const t = useTranslations("settings.apiStatus");
   return (healthStatus: string, ownership: string) => {
     if (ownership === "system") {
       if (healthStatus === "ok") return { dot: "bg-blue-500", label: t("systemKey"), color: "text-blue-600", border: "border-l-blue-500" };
       if (healthStatus === "error") return { dot: "bg-red-500", label: t("error"), color: "text-red-500", border: "border-l-red-500" };
-      return { dot: "bg-blue-500", label: t("systemKey"), color: "text-blue-600", border: "border-l-blue-500" };
+      if (healthStatus === "pending") return { dot: "bg-yellow-500", label: t("pending"), color: "text-yellow-600", border: "border-l-yellow-500" };
+      return { dot: "bg-muted-foreground/30", label: t("notConfigured"), color: "text-muted-foreground", border: "border-l-border" };
     }
     if (healthStatus === "ok") return { dot: "bg-green-500", label: t("connected"), color: "text-green-600", border: "border-l-green-500" };
     if (healthStatus === "error") return { dot: "bg-red-500", label: t("error"), color: "text-red-500", border: "border-l-red-500" };
@@ -73,6 +83,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
   const [checking, setChecking] = useState(false);
   const [checkStatus, setCheckStatus] = useState("");
   const [connectSlider, setConnectSlider] = useState<{ apiId: string; provider: string } | null>(null);
+  const [systemKeySlider, setSystemKeySlider] = useState<{ apiId: string; provider: string } | null>(null);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -117,7 +128,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
     staleTime: 120_000,
   });
 
-  const services = health?.services || {};
+  const services = useMemo(() => health?.services ?? {}, [health?.services]);
 
   // Flatten all APIs with their category for filtering. If a categories prop is
   // provided, restrict to that scope up-front so counters + table both reflect
@@ -140,6 +151,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
     const svc = services[apiId];
     const st = svc?.status;
     if (st === "ok") connected++;
+    else if (st === "pending") pending++;
     else if (st === "error") errored++;
     else notConfigured++;
   }
@@ -151,14 +163,20 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
     return Object.entries(catalog.categories).map(([key, cat]) => ({ key, label: cat.label }));
   }, [catalog, categories]);
 
-  const getApiStatus = (apiId: string, ownership: string) => {
+  const getApiStatus = useCallback((apiId: string, ownership: string) => {
     const svc = services[apiId];
     const st = svc?.status;
-    if (ownership === "system") return st === "error" ? "error" : "system";
+    if (ownership === "system") {
+      if (st === "ok") return "system";
+      if (st === "error") return "error";
+      if (st === "pending") return "pending";
+      return "not-configured";
+    }
     if (st === "ok") return "ok";
     if (st === "error") return "error";
+    if (st === "pending") return "pending";
     return "not-configured";
-  };
+  }, [services]);
 
   const filteredApis = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -176,7 +194,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
         item.catLabel.toLowerCase().includes(q)
       );
     });
-  }, [allApis, search, categoryFilter, statusFilter, services]);
+  }, [allApis, search, categoryFilter, statusFilter, getApiStatus]);
 
   const handleVerifyAll = async () => {
     setChecking(true);
@@ -206,10 +224,9 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
 
           {!slug && (
             <div className="mb-4 px-3 py-2 rounded-md border border-amber-300 bg-amber-50 text-[12px] text-amber-900 leading-relaxed">
-              <strong>ℹ️ Vista read-only.</strong> Las keys de <strong>sistema</strong>{" "}
-              (Anthropic, OpenAI, etc.) se editan a mano en{" "}
-              <code className="text-[11px] px-1 py-0.5 rounded bg-amber-100">~/.openclaw/.env</code>{" "}
-              por SSH. Las credenciales <strong>por brand</strong> (Metricool, GHL, Meta Ads, …) viven en{" "}
+              <strong>ℹ️ APIs de sistema.</strong> Usa <strong>Key sistema</strong>{" "}
+              para cargar o rotar claves globales sin mostrar el valor completo. Las credenciales{" "}
+              <strong> por brand</strong> (Metricool, GHL, Meta Ads, etc.) viven en{" "}
               <code className="text-[11px] px-1 py-0.5 rounded bg-amber-100">brand/&lt;slug&gt;/.env</code>{" "}
               y se configuran desde la página del brand correspondiente.
             </div>
@@ -289,7 +306,8 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
         >
           <option value="all">Todos los estados</option>
           <option value="ok">🟢 Conectado</option>
-          <option value="system">🔵 System key</option>
+          <option value="system">🔵 API sistema</option>
+          <option value="pending">🟡 Pendiente</option>
           <option value="error">🔴 Error</option>
           <option value="not-configured">⚫ Sin configurar</option>
         </select>
@@ -389,14 +407,21 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
                       {/* Actions */}
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-1.5 justify-end flex-wrap">
-                          {slug && (
+                          {slug ? (
                             <button
                               onClick={() => setConnectSlider({ apiId, provider: apiMeta.provider })}
                               className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
                             >
                               {isSystem ? "🔑 Key propia" : (healthStatus === "not-configured" ? "⚙️ Configurar" : "⚙️ Editar")}
                             </button>
-                          )}
+                          ) : isSystem ? (
+                            <button
+                              onClick={() => setSystemKeySlider({ apiId, provider: apiMeta.provider })}
+                              className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                            >
+                              🔑 Key sistema
+                            </button>
+                          ) : null}
                           <button
                             onClick={() => handleSingleCheck(apiId)}
                             disabled={checkingService === apiId}
@@ -475,6 +500,232 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
           </div>
         </div>
       )}
+
+      {/* System Key Slider — global admin credentials */}
+      {systemKeySlider && !slug && (
+        <div
+          className="fixed inset-0 z-50 flex justify-end"
+          onClick={() => {
+            setSystemKeySlider(null);
+            qc.invalidateQueries({ queryKey: ["api-health"] });
+          }}
+        >
+          <div className="absolute inset-0 bg-black/30" />
+
+          <div
+            className="relative w-full max-w-[560px] h-full bg-card shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+              <h3 className="font-heading text-base text-navy">
+                🔑 Key sistema: {systemKeySlider.provider}
+              </h3>
+              <button
+                onClick={() => {
+                  setSystemKeySlider(null);
+                  qc.invalidateQueries({ queryKey: ["api-health"] });
+                }}
+                className="text-muted-foreground hover:text-foreground text-lg leading-none px-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              <SystemEnvPanel
+                apiId={systemKeySlider.apiId}
+                provider={systemKeySlider.provider}
+                onSaved={() => {
+                  qc.invalidateQueries({ queryKey: ["api-health"] });
+                  qc.invalidateQueries({ queryKey: ["models-catalog"] });
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SystemEnvPanel({
+  apiId,
+  provider,
+  onSaved,
+}: {
+  apiId: string;
+  provider: string;
+  onSaved: () => void;
+}) {
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const { data, isLoading, error, refetch } = useQuery<Record<string, SystemEnvField>>({
+    queryKey: ["system-env", apiId],
+    queryFn: async () => {
+      const res = await fetch(`/api/env?service=${encodeURIComponent(apiId)}`);
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || "No se pudo cargar la key");
+      return payload;
+    },
+    staleTime: 10_000,
+  });
+
+  const fields = useMemo(() => Object.entries(data || {}), [data]);
+
+  const toggleFieldVisibility = useCallback((key: string) => {
+    setVisibleFields((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const handleSave = async () => {
+    const vars: Record<string, string> = {};
+    for (const [key] of fields) {
+      const value = formValues[key]?.trim();
+      if (value) vars[key] = value;
+    }
+
+    if (Object.keys(vars).length === 0) {
+      setResult({ ok: false, message: "Pega una key nueva antes de guardar." });
+      return;
+    }
+
+    setSaving(true);
+    setResult(null);
+    try {
+      const saveRes = await fetch("/api/env", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ service: apiId, vars }),
+      });
+      const savePayload = await saveRes.json().catch(() => ({}));
+      if (!saveRes.ok) throw new Error(savePayload.error || "No se pudo guardar");
+
+      let restartNote = "";
+      if (GATEWAY_ENV_SERVICES.has(apiId)) {
+        const restartRes = await fetch("/api/system/restart-gateway");
+        const restartPayload = await restartRes.json().catch(() => ({}));
+        if (restartRes.ok && restartPayload.ok) {
+          restartNote = " Gateway reiniciado para aplicar la credencial.";
+        } else {
+          restartNote = " Guardado, pero no se pudo reiniciar el gateway; puede requerir deploy o restart.";
+        }
+      }
+
+      await fetch(`/api/system/health-check-all?service=${encodeURIComponent(apiId)}`).catch(() => null);
+      setFormValues({});
+      await refetch();
+      onSaved();
+      setResult({ ok: true, message: `Key guardada sin mostrar el valor completo.${restartNote}` });
+    } catch (e) {
+      setResult({ ok: false, message: e instanceof Error ? e.message : "Error guardando la key" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="p-5 space-y-5">
+      <div className="rounded-lg border-2 border-ink bg-background p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h4 className="font-heading text-sm text-navy">{provider}</h4>
+            <p className="text-xs text-muted-foreground mt-1">
+              El valor completo no se muestra. Para rotarla, pega una nueva key y guarda.
+            </p>
+          </div>
+          <span className="text-[10px] text-white px-2 py-1 rounded font-semibold bg-blue-600">
+            SISTEMA
+          </span>
+        </div>
+      </div>
+
+      {isLoading && <p className="text-sm text-muted-foreground">Cargando key actual...</p>}
+
+      {error instanceof Error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+          {error.message}
+        </div>
+      )}
+
+      {!isLoading && fields.length === 0 && (
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+          No hay variables de entorno mapeadas para <strong>{apiId}</strong>.
+        </div>
+      )}
+
+      {fields.length > 0 && (
+        <div className="border-2 border-ink rounded-lg bg-card overflow-hidden">
+          <div className="p-4 border-b border-ink bg-background">
+            <h4 className="font-heading text-sm text-navy">Credenciales</h4>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {fields.map(([key, field]) => {
+              const isVisible = visibleFields.has(key);
+              return (
+                <div key={key} className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="block text-sm font-bold text-navy">{field.label || key}</label>
+                    <span className="text-[11px] text-muted-foreground font-mono">
+                      {field.hasValue ? field.masked : "sin valor"}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={isVisible ? "text" : "password"}
+                      value={formValues[key] || ""}
+                      onChange={(e) => setFormValues((prev) => ({ ...prev, [key]: e.target.value }))}
+                      placeholder={field.hasValue ? "Pegar nueva key para reemplazar" : field.placeholder || "Pegar key"}
+                      autoComplete="off"
+                      className="w-full px-3 py-2 border-2 border-ink rounded-lg text-sm bg-background focus:outline-none focus:border-rust pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleFieldVisibility(key)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-navy text-sm"
+                      title={isVisible ? "Ocultar" : "Mostrar"}
+                    >
+                      {isVisible ? "🙈" : "👁️"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 bg-gradient-to-br from-rust to-[#D4734F] text-white border-2 border-ink rounded-lg text-sm font-bold shadow-comic cursor-pointer hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {saving ? "Guardando..." : "Guardar y aplicar"}
+            </button>
+
+            {result && (
+              <div
+                className={cn(
+                  "p-3 rounded-lg border text-xs",
+                  result.ok
+                    ? "bg-green-50 border-green-200 text-green-700"
+                    : "bg-red-50 border-red-200 text-red-700"
+                )}
+              >
+                {result.message}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <p className="text-[11px] text-muted-foreground text-center">
+        Se guarda en el entorno del sistema. En staging/prod, sincroniza también el secret del deploy si quieres que sobreviva futuros redeploys.
+      </p>
     </div>
   );
 }
