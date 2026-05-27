@@ -1,0 +1,173 @@
+{
+  "date": "2026-05-18",
+  "source": "web_search_paa_extraction",
+  "method": "Google Search via web_search — PAA-style questions extracted from search results and related searches",
+  "deduplication_against": ["2026-05-04-paa.json", "2026-05-11-paa.json"],
+  "pillars": {
+    "P1-alopecia-temprana": {
+      "name": "Alopecia temprana y pérdida de cabello joven",
+      "new_questions": [
+        "¿Qué es la terapia celular para la calvicie y cuándo estará disponible en España?",
+        "¿Los investigadores españoles han conseguido regenerar pelo con células madre en humanos?",
+        "¿El tratamiento con células madre para la calvicie estará disponible antes de 2030?",
+        "¿Qué novedades presentó el congreso AAD 2026 para la alopecia androgenética?",
+        "¿La alopecia androgenética tiene algún componente autoinmune?",
+        "¿Cuándo se considera que la alopecia está estabilizada y se puede plantear un trasplante?",
+        "¿Los cambios de hábitos (dieta, sueño, ejercicio) frenan la alopecia androgenética?",
+        "¿Existe la escala de Norwood en mujeres o hay una escala femenina específica?",
+        "¿Puede la alopecia androgenética revertirse sin medicación en estadios muy iniciales?",
+        "¿Cuánto pelo caído al día indica que hay que ir urgente al médico?",
+        "¿Afecta la calidad del sueño a la caída del pelo?",
+        "¿El tabaco acelera la calvicie de patrón masculino?",
+        "¿El pelo se recupera después de dejar el tabaco?",
+        "¿La alopecia androgenética en mujeres jóvenes puede estar relacionada con el síndrome de ovario poliquístico?",
+        "¿Qué significa 'miniaturización folicular' y cuándo es reversible?",
+        "¿La IA puede diagnosticar alopecia androgenética precoz desde una foto?",
+        "¿Se puede frenar la alopecia androgenética con cambios de dieta sin medicación?",
+        "¿Los inhibidores JAK son el futuro del tratamiento de la alopecia androgenética?",
+        "¿Qué presentó Ramón y Cajal en el congreso mundial de alopecia 2026?",
+        "¿La ansiedad y el cortisol elevado aceleran la calvicie de patrón masculino?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "Terapia celular/células madre calvicie: artículo The Conversation (mar 2026) con alta difusión — 'al menos 5 años' disponible — oportunidad de contenido realista sobre expectativas",
+        "AAD 2026 (mar 2026): nuevas vías androgenética + upadacitinib areata + rezpegaldesleukin — congreso cubierto por media pero sin POV de Hospital Capilar",
+        "SOP + alopecia femenina joven: señal emergente en búsquedas femeninas 20-35 años — gap de contenido"
+      ]
+    },
+    "P2-tratamientos-capilares": {
+      "name": "Tratamientos capilares médicos (más allá del OTC)",
+      "new_questions": [
+        "¿Cuánto tiempo se puede tomar minoxidil oral sin revisión médica periódica?",
+        "¿El minoxidil oral puede causar problemas cardíacos si se toma a largo plazo?",
+        "¿Si dejo el minoxidil oral se cae todo el pelo ganado?",
+        "¿El PRP con exosomas es más eficaz que el PRP tradicional para la alopecia?",
+        "¿Qué es la terapia capilar con exosomas y tiene resultados clínicos probados?",
+        "¿El Dupixent (dupilumab) funciona para la alopecia areata moderada-severa?",
+        "¿Qué nuevas vías de tratamiento de alopecia androgenética presentó el AAD 2026?",
+        "¿El upadacitinib está aprobado en España para la alopecia areata?",
+        "¿La espironolactona tópica sirve para la alopecia androgenética masculina?",
+        "¿El minoxidil en espuma es igual de eficaz que en solución líquida?",
+        "¿Se puede combinar PRP con clascoterona para mejores resultados?",
+        "¿Qué es la terapia con luz roja (LLLT) para el pelo y hay evidencia científica?",
+        "¿El microneedling sin medicamentos adicionales frena la alopecia androgenética?",
+        "¿Cuándo hay que parar el finasteride si se quiere tener hijos?",
+        "¿Existen tratamientos capilares que funcionen también para la alopecia frontal fibrosante?",
+        "¿Cuántas sesiones de PRP se necesitan para la alopecia androgenética moderada?",
+        "¿La espironolactona tópica tiene efectos secundarios sistémicos en hombres?",
+        "¿El minoxidil oral a 2,5 mg es seguro para mujeres sin supervisión médica?",
+        "¿Qué tratamientos capilares están cubiertos por la Seguridad Social en España?",
+        "¿El polvo de keratina o los densificadores capilares dañan el pelo a largo plazo?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "Minoxidil oral efectos secundarios largo plazo: búsqueda recurrente en TikTok y IG (may 2026) — contenido de seguridad sin explotar por Hospital Capilar",
+        "Dupixent/dupilumab para alopecia areata: Pfizer presentó datos fase 3 en AAD 2026 — FDA en revisión — señal de alto interés mediático",
+        "Exosomas capilares: emergente en Instagram España (abr-may 2026) — varios competidores ya ofrecen el tratamiento sin respaldo clínico claro — oportunidad de contenido diferenciador"
+      ]
+    },
+    "P3-diagnostico-capilar": {
+      "name": "Diagnóstico capilar y consulta médica",
+      "new_questions": [
+        "¿La inteligencia artificial puede diagnosticar alopecia desde una foto del móvil con fiabilidad?",
+        "¿Qué es el Fotofinder y cómo mejora el diagnóstico de alopecia frente a la tricoscopia manual?",
+        "¿Qué es el simulador capilar 3D y para qué sirve antes de decidir un trasplante?",
+        "¿La TRH (terapia hormonal sustitutiva) puede causar más caída de pelo en algunas mujeres?",
+        "¿Qué tipo de alopecia tienen las mujeres en la menopausia: androgenética o difusa?",
+        "¿La caída de pelo en mujeres post-menopausia tiene tratamiento efectivo en 2026?",
+        "¿Qué diferencia hay entre alopecia difusa y alopecia androgenética femenina?",
+        "¿El hipotiroidismo no tratado puede causar alopecia permanente?",
+        "¿La alopecia por déficit de vitamina D es reversible al suplementar?",
+        "¿Cómo se distingue la caída por anemia ferropénica de la alopecia androgenética?",
+        "¿El diagnóstico capilar con IA es tan fiable como la consulta con un tricólogo?",
+        "¿Cuánto tiempo tarda en hacer efecto un tratamiento capilar y cuándo revisarlo?",
+        "¿La dermatitis seborreica y la alopecia androgenética están relacionadas causalmente?",
+        "¿La alopecia frontal fibrosante tiene tratamiento específico en España en 2026?",
+        "¿Cuándo está indicado el análisis hormonal completo para estudiar la caída del pelo?",
+        "¿Qué es la escala BASP para diagnosticar la alopecia en mujeres?",
+        "¿Los tests genéticos de alopecia son fiables para predecir si me quedaré calvo?",
+        "¿Cuándo la caída de pelo por estrés postparto se considera efluvio telógeno crónico?",
+        "¿El síndrome de ovario poliquístico (SOP) siempre causa alopecia androgenética?",
+        "¿Puede la caída del pelo ser el primer síntoma de una enfermedad sistémica no diagnosticada?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "IA + diagnóstico capilar: varios competidores (AreaCapilar, ASENSI Clinic) ya ofrecen valoración gratuita con IA — Hospital Capilar necesita posicionarse en este espacio",
+        "TRH y pelo menopausia: búsquedas 'TRH causa caída pelo' con tráfico relevante — contenido contradictorio en web — oportunidad de artículo aclaratorio con autoridad médica",
+        "Tests genéticos alopecia: emergen como búsqueda de usuarios jóvenes preocupados por predisposición — gap total de contenido en HC"
+      ]
+    },
+    "P4-trasplante-capilar": {
+      "name": "Trasplante capilar y post-cirugía",
+      "new_questions": [
+        "¿Qué tipo de alopecia en mujeres no es candidata al trasplante capilar FUE?",
+        "¿Cuándo se puede llevar gorra o sombrero después de un injerto capilar?",
+        "¿Cuándo se puede volver al gimnasio y levantar pesas después del trasplante capilar?",
+        "¿Cuántos días de baja laboral se necesitan después de un injerto capilar FUE?",
+        "¿Se puede conducir el mismo día de la operación del trasplante capilar?",
+        "¿Qué alimentos o suplementos están contraindicados después de un injerto capilar?",
+        "¿El trasplante capilar se puede hacer en personas con diabetes tipo 2?",
+        "¿Cuándo se puede tomar el sol después de un trasplante capilar sin riesgos?",
+        "¿El trasplante capilar en mujeres tiene menor tasa de éxito que en hombres?",
+        "¿Cuántos grafts necesito para cubrir la coronilla completa según el grado Norwood?",
+        "¿La técnica FUE sin rapado (long hair FUE sin rasurar receptor) es igual de efectiva?",
+        "¿Se puede hacer trasplante capilar con alopecia difusa o solo con alopecia androgenética estable?",
+        "¿Qué pasa si se toma el sol antes de tiempo tras el trasplante capilar?",
+        "¿Es posible hacerse el trasplante capilar si se está tomando anticoagulantes?",
+        "¿Cuánto tiempo después de un trasplante capilar se puede teñir o decolorar el pelo?",
+        "¿El trasplante capilar requiere anestesia general o solo local?",
+        "¿Hay diferencia en los resultados del trasplante capilar según la edad del paciente?",
+        "¿Se pueden trasplantar folículos de la barba o el pecho si la zona donante es insuficiente?",
+        "¿Qué es el PRP intraoperatorio y mejora el resultado del trasplante capilar?",
+        "¿Cuándo se puede tener relaciones sexuales después de un trasplante capilar?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "Gimnasio/pesas después trasplante: búsqueda alta en Instagram Reels y TikTok (nov 2025-may 2026) — Hospital Capilar tiene artículo propio en hospitalcapilar.com — reforzar con vídeo/reel",
+        "Gorra después trasplante: búsqueda relacionada recurrente sin cobertura en HC — contenido de alta frecuencia y baja competencia",
+        "Trasplante en pacientes con diabetes: nueva búsqueda emergente — sin contenido en HC — alta intención de decisión"
+      ]
+    },
+    "P5-confianza-clinicas": {
+      "name": "Confianza en clínicas capilares",
+      "new_questions": [
+        "¿Qué es 'trasplantecapilarverificado.com' y cómo funciona la verificación de clínicas capilares en España?",
+        "¿Las clínicas capilares están obligadas legalmente a incluir el seguimiento postoperatorio en el precio?",
+        "¿Qué significa que una clínica ofrezca 'garantía de resultados' en un trasplante capilar?",
+        "¿Insparya es una alternativa comparable a Hospital Capilar en calidad médica y resultados?",
+        "¿Cómo se comparan en calidad las principales clínicas capilares de España en 2026?",
+        "¿Qué plataformas online permiten comparar clínicas capilares en España de forma objetiva?",
+        "¿Cuándo se considera negligencia médica en un trasplante capilar mal ejecutado?",
+        "¿Qué organismo sanitario en España regula y supervisa a los médicos de trasplante capilar?",
+        "¿Es legal que una clínica capilar no tenga médico cirujano en plantilla propia?",
+        "¿Cómo diferenciar una clínica capilar con médicos propios de una que subcontrata técnicos?",
+        "¿Qué incluye exactamente el precio de un trasplante capilar en Hospital Capilar?",
+        "¿El consentimiento informado de un trasplante capilar protege al paciente si el resultado no es el esperado?",
+        "¿Las agencias de turismo médico para trasplante capilar son fiables o añaden riesgos?",
+        "¿Qué diferencia hay entre pagar por injerto (graft) y pagar por sesión en una clínica capilar?",
+        "¿Una clínica capilar que opera en fin de semana es señal de alerta?",
+        "¿Cómo afectan las reseñas falsas en Google a la elección de clínica capilar?",
+        "¿Qué papel juega el colegio de médicos en la supervisión de las clínicas capilares en España?",
+        "¿Qué diferencia hay entre clínica capilar y unidad de tricología en un hospital público?",
+        "¿Las financiaciones sin intereses en trasplante capilar tienen letra pequeña que conocer?",
+        "¿Por qué algunas clínicas capilares ofrecen consultas gratuitas y qué incluyen realmente?"
+      ],
+      "deduplicated_count": 20,
+      "signals": [
+        "Trasplantecapilarverificado.com: nuevo portal de comparativa de clínicas España 2026 — Hospital Capilar debe asegurarse de estar correctamente listado y con ficha completa",
+        "Insparya como competidor emergente: apertura nuevas clínicas internacionales dic 2025 + propósito 2026 — búsquedas comparativas HC vs Insparya creciendo",
+        "Negligencia médica trasplante capilar: búsqueda emergente post-reportajes Equipo Investigación — oportunidad de contenido legal educativo que diferencia a HC"
+      ]
+    }
+  },
+  "total_new_questions": 100,
+  "new_questions_per_pillar": 20,
+  "notable_signals": [
+    "TERAPIA CELULAR 🔬 — The Conversation (mar 2026): investigadores calculan 'al menos 5 años' para disponibilidad. Gran señal de expectativa en usuarios — Hospital Capilar puede posicionarse como fuente de información realista frente al ruido mediático.",
+    "AAD 2026 — Nuevas vías alopecia androgenética + upadacitinib areata + rezpegaldesleukin (Pfizer). Hospital Capilar aún sin contenido de reacción al congreso — gap de autoridad científica frente a competidores.",
+    "IA DIAGNÓSTICO CAPILAR — Competidores (AreaCapilar, ASENSI Clinic, Montemauro 3D) ya ofrecen valoración gratuita con IA. Hospital Capilar necesita posicionamiento en esta área antes de quedarse atrás.",
+    "INSPARYA — Expansión agresiva con nuevas clínicas y comunicación de marca fuerte ('salud capilar 2026'). Búsquedas comparativas 'Insparya vs Hospital Capilar' empiezan a aparecer.",
+    "TRASPLANTE CAPILAR MUJER — Contenido emergente (abr 2026, pedralbesclinic.com): 'candidatas, técnica y resultados reales'. Segmento femenino P4 sin cobertura propia en Hospital Capilar — gap claro."
+  ],
+  "last_finding": "La terapia celular/células madre copa el interés mediático (The Conversation mar 2026) pero con horizonte de 5+ años — Hospital Capilar puede diferenciarse con contenido realista que gestione expectativas. Paralelamente, el AAD 2026 presentó nuevas vías para androgenética y upadacitinib para areata severa, sin respuesta editorial de HC: hay un gap de autoridad científica que competidores pueden aprovechar."
+}

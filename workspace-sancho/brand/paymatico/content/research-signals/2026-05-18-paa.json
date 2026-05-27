@@ -1,0 +1,342 @@
+{
+  "date": "2026-05-18",
+  "source": "web_search_paa_extraction",
+  "language": "es",
+  "total_new_questions": 31,
+  "pillars": [
+    {
+      "pillar_id": "P1",
+      "pillar_name": "Pagos y TPVs para franquicias",
+      "new_questions": [
+        {
+          "id": "paa-20260518-p1-01",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cuándo es obligatorio el TPV homologado con Veri*Factu para empresas y para autónomos?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p1-02",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Qué multas tiene usar un software de facturación no homologado según Veri*Factu?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p1-03",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cómo conectar el TPV de una franquicia con plataformas de ecommerce y software de contabilidad?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p1-04",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Por qué es tan importante un software TPV para franquicias de restauración en 2026?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p1-05",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cómo mantener la coherencia operativa entre locales de una franquicia sin ahogar al franquiciado?",
+          "seed_query": "centralizar pagos franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p1-06",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cómo gestionar precios y promociones de toda la red de franquicia desde un panel central?",
+          "seed_query": "cobros multisede franquicia",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p1-07",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Qué diferencia hay entre un SIF tipo Veri*Factu y un SIF no Veri*Factu?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p1-08",
+          "type": "paa",
+          "pillar_id": "P1",
+          "question": "¿Cuánto cuesta un software TPV para hostelería y franquicias en España en 2026?",
+          "seed_query": "gestión TPV franquicias España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        }
+      ]
+    },
+    {
+      "pillar_id": "P2",
+      "pillar_name": "Cuentas programables y tesorería",
+      "new_questions": [
+        {
+          "id": "paa-20260518-p2-01",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cómo automatiza la inteligencia artificial los asientos contables de tesorería en una pyme?",
+          "seed_query": "tesorería automatizada pyme",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p2-02",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Qué herramientas de open banking permiten consolidar varias cuentas bancarias en una sola vista?",
+          "seed_query": "cuentas programables empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p2-03",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Por qué falla la conciliación bancaria manual y cuándo es el momento de automatizarla?",
+          "seed_query": "conciliación bancaria automática",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p2-04",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cómo detectar movimientos no autorizados o fraude contable con conciliación bancaria automática?",
+          "seed_query": "conciliación bancaria automática",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p2-05",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Qué es la gestión de liquidez en tiempo real y cómo beneficia a una pyme?",
+          "seed_query": "tesorería automatizada pyme",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p2-06",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Pueden las pymes acceder a financiación dinámica basada en su flujo de caja en tiempo real?",
+          "seed_query": "tesorería automatizada pyme",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p2-07",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Qué son los smart payments o pagos inteligentes y para qué casos son útiles en empresas?",
+          "seed_query": "automatizar pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p2-08",
+          "type": "paa",
+          "pillar_id": "P2",
+          "question": "¿Cómo configurar reglas de alerta automática cuando una cuenta bancaria cae por debajo de un umbral?",
+          "seed_query": "cuentas programables empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        }
+      ]
+    },
+    {
+      "pillar_id": "P3",
+      "pillar_name": "Regulación fintech y pagos",
+      "new_questions": [
+        {
+          "id": "paa-20260518-p3-01",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué impacto tiene PSD3 en plataformas y marketplaces que gestionan pagos en España?",
+          "seed_query": "regulación fintech España 2026",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p3-02",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué nuevas medidas anti-fraude introduce PSD3 para proveedores de servicios de pago?",
+          "seed_query": "PSD2 pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p3-03",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Cuándo tendrán que ofrecer los bancos españoles pagos instantáneos sin coste adicional?",
+          "seed_query": "normativa pagos digitales España",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p3-04",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué diferencia hay entre un AISP y un PISP bajo PSD2 y PSD3?",
+          "seed_query": "PSD2 pagos empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p3-05",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué es la responsabilidad compartida en fraudes de pago y cómo cambia con PSD3?",
+          "seed_query": "regulación fintech España 2026",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p3-06",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Cómo afecta PSD3 al acceso de fintechs a las cuentas bancarias de clientes empresariales?",
+          "seed_query": "regulación fintech España 2026",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p3-07",
+          "type": "paa",
+          "pillar_id": "P3",
+          "question": "¿Qué novedades introduce el Consejo de la UE en la futura directiva de servicios de pago PSD3?",
+          "seed_query": "regulación fintech España 2026",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        }
+      ]
+    },
+    {
+      "pillar_id": "P4",
+      "pillar_name": "Gestión unificada de pagos B2B",
+      "new_questions": [
+        {
+          "id": "paa-20260518-p4-01",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cuáles son los principales retos de digitalizar los pagos B2B en pequeñas y medianas empresas?",
+          "seed_query": "unificar métodos de pago empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p4-02",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cómo funcionan las tarjetas virtuales B2B y cuándo son más útiles que la transferencia bancaria?",
+          "seed_query": "unificar métodos de pago empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p4-03",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Qué es Buy Now Pay Later (BNPL) B2B y está disponible para empresas en España?",
+          "seed_query": "pasarela de pago para empresas",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p4-04",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cómo automatizar el proceso completo desde la emisión de factura hasta el cobro en B2B?",
+          "seed_query": "pasarela de pago para empresas",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p4-05",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Qué es el Account-to-Account (A2A) payment y cómo mejora los pagos entre empresas?",
+          "seed_query": "SEPA transferencias empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p4-06",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cómo funciona el esquema SEPA Request-to-Pay (R2P) y para qué empresas tiene sentido?",
+          "seed_query": "SEPA transferencias empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p4-07",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Cómo se gestiona el fraude en pagos B2B y qué herramientas existen para prevenirlo?",
+          "seed_query": "unificar métodos de pago empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        },
+        {
+          "id": "paa-20260518-p4-08",
+          "type": "paa",
+          "pillar_id": "P4",
+          "question": "¿Por qué los cheques siguen siendo el método de pago más usado en B2B y cómo migrar a alternativas digitales?",
+          "seed_query": "unificar métodos de pago empresa",
+          "search_volume_hint": null,
+          "language": "es",
+          "created_at": "2026-05-18T06:20:00Z"
+        }
+      ]
+    }
+  ]
+}

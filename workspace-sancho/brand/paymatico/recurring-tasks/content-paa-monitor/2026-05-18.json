@@ -1,0 +1,40 @@
+{
+  "task": "content-paa-monitor",
+  "client": "paymatico",
+  "date": "2026-05-18",
+  "status": "completed",
+  "run_at": "2026-05-18T06:20:00Z",
+  "summary": {
+    "pillars_processed": 4,
+    "seeds_queried": 16,
+    "new_questions_found": 31,
+    "questions_by_pillar": {
+      "P1": 8,
+      "P2": 8,
+      "P3": 7,
+      "P4": 8
+    },
+    "deduplicated_against": ["2026-05-04-paa.json", "2026-05-11-paa.json"],
+    "total_historic_questions": 86
+  },
+  "last_finding": "Veri*Factu obligatorio en julio 2026 para empresas (enero 2027 autónomos) genera fuerte demanda de preguntas en TPVs de franquicias (multas, homologación, SIF). En regulación, el Consejo de la UE avanzó PSD3 el 4 mayo — 3 nuevas preguntas sobre responsabilidad compartida en fraude y acceso fintech bajo la nueva directiva.",
+  "output_file": "brand/paymatico/content/research-signals/2026-05-18-paa.json",
+  "top_signals": [
+    {
+      "pillar": "P1",
+      "signal": "TPV homologado Veri*Factu obligatorio julio 2026 — franquicias buscan guías sobre multas y migración"
+    },
+    {
+      "pillar": "P3",
+      "signal": "Avance del Consejo UE sobre PSD3 (4 mayo 2026) — preguntas sobre impacto en marketplaces y responsabilidad en fraude"
+    },
+    {
+      "pillar": "P4",
+      "signal": "BNPL B2B y A2A payments emergiendo como alternativas al cheque — gap de contenido en España"
+    },
+    {
+      "pillar": "P2",
+      "signal": "IA para asientos contables automáticos (Fygr, Holded) — preguntas sobre conciliación inteligente y liquidez en tiempo real"
+    }
+  ]
+}

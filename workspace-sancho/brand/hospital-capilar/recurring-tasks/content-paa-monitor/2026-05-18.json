@@ -1,0 +1,23 @@
+{
+  "task": "content-paa-monitor",
+  "client": "hospital-capilar",
+  "date": "2026-05-18",
+  "status": "completed",
+  "run_at": "2026-05-18T04:10:00Z",
+  "pillars_processed": ["P1-alopecia-temprana", "P2-tratamientos-capilares", "P3-diagnostico-capilar", "P4-trasplante-capilar", "P5-confianza-clinicas"],
+  "seeds_searched": 10,
+  "deduplication_against": ["2026-05-04-paa.json", "2026-05-11-paa.json"],
+  "total_existing_questions": 200,
+  "total_new_questions": 100,
+  "new_questions_per_pillar": 20,
+  "output_file": "brand/hospital-capilar/content/research-signals/2026-05-18-paa.json",
+  "last_finding": "La terapia celular/células madre copa el interés mediático (The Conversation mar 2026) pero con horizonte de 5+ años — Hospital Capilar puede diferenciarse con contenido realista que gestione expectativas. Paralelamente, el AAD 2026 presentó nuevas vías para androgenética y upadacitinib para areata severa, sin respuesta editorial de HC: hay un gap de autoridad científica que competidores pueden aprovechar.",
+  "top_signals": [
+    "Terapia celular calvicie: artículo The Conversation viral (mar 2026) — '5 años mínimo' — gap de contenido realista vs hype",
+    "AAD 2026: upadacitinib areata + nuevas vías androgenética — sin cobertura en Hospital Capilar",
+    "IA diagnóstico capilar: competidores (AreaCapilar, ASENSI, Montemauro 3D) ya posicionados — HC sin contenido propio",
+    "Insparya expansión 2026: búsquedas comparativas 'Insparya vs Hospital Capilar' emergentes",
+    "Trasplante capilar mujer: gap claro en P4 — competidores con contenido específico desde abr 2026"
+  ],
+  "next_run": "2026-05-25"
+}

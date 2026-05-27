@@ -1,0 +1,62 @@
+{
+  "task": "content-keyword-research",
+  "client": "growth4u",
+  "date": "2026-05-18",
+  "run_at": "2026-05-18T04:22:00Z",
+  "status": "completed",
+  "output_file": "brand/growth4u/content/research-signals/2026-05-18-keywords.json",
+  "stats": {
+    "pillars_covered": 5,
+    "keywords_total": 26,
+    "bofu_keywords": 9,
+    "searches_run": 6,
+    "new_long_tails_identified": 8
+  },
+  "top_signals": [
+    {
+      "signal": "MiCA deadline 1-julio-2026",
+      "pillar": "P3",
+      "urgency": "high",
+      "detail": "ESMA confirmó: CASPs no autorizados no pueden operar tras 1 jul 2026. CNMV ya otorgó 8 licencias. Ningún contenido cubre las implicaciones para el marketing de crypto."
+    },
+    {
+      "signal": "Agentic marketing — BCG entra al tema",
+      "pillar": "P5",
+      "urgency": "medium-high",
+      "detail": "BCG publicó 'Agentic Scenarios Every Marketer Must Prepare For' (Mar 2026). En español: zero artículos pilar. Ventana de posicionamiento abierta."
+    },
+    {
+      "signal": "Fractional CMO Europa — precios actualizados",
+      "pillar": "P4",
+      "urgency": "medium",
+      "detail": "Innomakerpartners.com (May 2026): €2K-€18K/mes en Europa para B2B startups. Trust Engine a 7K posicionado en el rango medio-alto con diferencial de exit date."
+    },
+    {
+      "signal": "GEO en español — gap activo",
+      "pillar": "P2",
+      "urgency": "medium",
+      "detail": "Multiple guías GEO en inglés (enrichlabs, seo.com, insightland) publicadas en 2026. Español: casi vacío. Growth4U puede ser el primer recurso serio en ES."
+    }
+  ],
+  "recommended_actions": [
+    {
+      "action": "Artículo urgente P3",
+      "title": "MiCA julio 2026: qué pueden (y no pueden) hacer los equipos de marketing crypto ahora",
+      "rationale": "Ventana de 6 semanas antes del deadline. Alfonso tiene autoridad única: Bit2Me + Criptan con licencia CNMV.",
+      "priority": 1
+    },
+    {
+      "action": "Artículo GEO en español P2",
+      "title": "GEO: cómo aparecer en ChatGPT, Gemini y Perplexity (guía práctica en español)",
+      "rationale": "Gap claro. Volumen creciendo. Growth4U ya es caso de éxito (#1-2 Gemini fintech España).",
+      "priority": 2
+    },
+    {
+      "action": "Artículo BOFU P4",
+      "title": "Fractional CMO vs agencia vs Trust Engine: la calculadora que ninguna agencia quiere que veas",
+      "rationale": "Frame BOFU directo. Pricing público de mercado disponible para comparar.",
+      "priority": 3
+    }
+  ],
+  "last_finding": "MiCA: el periodo transitorio expira el 1 julio 2026 — ESMA publicó guía para CASPs no autorizados y la CNMV ya tiene 8 licencias (Bit2Me, Criptan entre ellas). Gap claro: ningún contenido cubre qué significa esto para el marketing crypto. P3 tiene ventana de 6 semanas antes del deadline."
+}

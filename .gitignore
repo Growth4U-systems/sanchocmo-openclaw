@@ -47,6 +47,7 @@ openclaw.json.pre-migration
 exec-approvals.json
 agents/*/agent/auth.json
 agents/*/agent/auth-profiles.json
+service-env/
 
 # === Session logs (large, contain secrets) ===
 agents/*/sessions/

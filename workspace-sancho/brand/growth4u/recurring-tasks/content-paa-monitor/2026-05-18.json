@@ -1,0 +1,27 @@
+{
+  "status": "ok",
+  "date": "2026-05-18",
+  "task": "content-paa-monitor",
+  "client": "growth4u",
+  "total_seeds": 25,
+  "total_new_questions": 46,
+  "by_pillar": {
+    "P1": 10,
+    "P2": 7,
+    "P3": 13,
+    "P4": 8,
+    "P5": 8
+  },
+  "errors": [
+    "P1/escalar startup España: timeout (empty response)",
+    "P4/cuando contratar agencia marketing: timeout (empty response)"
+  ],
+  "last_finding": "P3 lidera con 13 preguntas nuevas sobre MiCA 2026: '¿Es ilegal anunciar criptomonedas?', '¿Cuál será la regulación en 2026?' y '¿Cómo afecta MiCA a Hacienda?' — 3 gaps de contenido táctico con clara intención informacional y buying intent en clientes fintech/crypto.",
+  "deduplication": {
+    "prev_weeks_loaded": 1,
+    "prev_questions_total": 93,
+    "skipped_duplicates": 23
+  },
+  "output_file": "content/research-signals/2026-05-18-paa.json",
+  "completed_at": "2026-05-18T06:00:00+02:00"
+}

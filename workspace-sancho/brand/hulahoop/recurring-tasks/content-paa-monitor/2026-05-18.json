@@ -1,0 +1,48 @@
+{
+  "task": "content-paa-monitor",
+  "client": "hulahoop",
+  "date": "2026-05-18",
+  "run_at": "2026-05-18T04:14:00Z",
+  "status": "completed",
+  "last_finding": "Música en vivo generó 5.812M€ de impacto en España en 2025 — gap claro de contenido sobre financiación privada del sector y rol de festivales. RWA tokenizados globales superan 24.000M$ (+266% en 2025) y la oferta de Ackman por Universal Music (55.000M€) abre preguntas sin respuesta sobre el futuro de la financiación independiente en entretenimiento.",
+  "summary": {
+    "pillars_processed": 4,
+    "total_new_questions": 40,
+    "per_pillar": {
+      "financiacion-entretenimiento": 10,
+      "incentivos-fiscales": 10,
+      "pfp-regulacion": 10,
+      "tokenizacion-rwa": 10
+    },
+    "dedup_against": ["2026-05-04-paa.json", "2026-05-11-paa.json"],
+    "existing_questions_skipped": 80
+  },
+  "signals_file": "brand/hulahoop/content/research-signals/2026-05-18-paa.json",
+  "highlights": [
+    {
+      "pillar_id": "financiacion-entretenimiento",
+      "signal": "Música en vivo: 5.812M€ de impacto económico en España (2025) — gap de contenido sobre financiación privada del ecosistema",
+      "source": "sympathyforthelawyer.com + Incentiva Music"
+    },
+    {
+      "pillar_id": "financiacion-entretenimiento",
+      "signal": "Bill Ackman lanza oferta de 55.000M€ por Universal Music — genera preguntas sobre impacto en sellos independientes y artistas españoles",
+      "source": "El País, Instagram Forbes, abril 2026"
+    },
+    {
+      "pillar_id": "incentivos-fiscales",
+      "signal": "Reforma ley mecenazgo activa — umbral micromecenazgo IRPF sube de 150€ a 250€, deducción 80% en primer tramo",
+      "source": "gestiontercersector.org, fundaciondiversitasmadrid.org"
+    },
+    {
+      "pillar_id": "pfp-regulacion",
+      "signal": "Anteproyecto ley transposición UE aprobado Consejo de Ministros 24-marzo-2026 — afecta crowdfunding establecido en España",
+      "source": "finreg360.com, abril 2026"
+    },
+    {
+      "pillar_id": "tokenizacion-rwa",
+      "signal": "RWA tokenizados alcanzan 24.000M$ en feb-2026 (+266% en 2025) — Franklin Templeton: crecimiento 5x a principios de 2026",
+      "source": "investax.io, franklintempleton.com.es, mayo/marzo 2026"
+    }
+  ]
+}

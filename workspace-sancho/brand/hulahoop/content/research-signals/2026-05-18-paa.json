@@ -1,0 +1,408 @@
+{
+  "date": "2026-05-18",
+  "run_at": "2026-05-18T04:14:00Z",
+  "source": "web_search_paa",
+  "total_new": 40,
+  "signals": [
+    {
+      "id": "paa-20260518-fe0101",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Cuánto impacto económico generó la música en vivo en España en 2025 y qué supone para los financiadores privados del sector?",
+      "seed_query": "financiación industria musical España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-fe0102",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Qué implica para artistas y productoras independientes españolas la posible compra de Universal Music por Bill Ackman?",
+      "seed_query": "financiación industria musical España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-fe0103",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Cómo funcionan los anticipos sobre royalties de streaming como fuente de financiación para artistas independientes?",
+      "seed_query": "anticipos royalties música streaming España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-fe0104",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Pueden los videojuegos y esports acceder a las mismas convocatorias de financiación pública que el cine y el audiovisual?",
+      "seed_query": "inversión en entretenimiento España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-fe0105",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Qué papel juegan las televisiones autonómicas en la coproducción y financiación de contenido audiovisual independiente?",
+      "seed_query": "cómo financiar una película en España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-fe0106",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Cómo funciona la coproducción internacional como mecanismo de financiación para series y películas españolas?",
+      "seed_query": "anticipos producción cine España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-fe0107",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Cómo acceden los festivales de música a financiación privada más allá del patrocinio corporativo?",
+      "seed_query": "financiación industria musical España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-fe0108",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Qué es el Fondo de Protección a la Cinematografía y cómo se distribuye su dotación entre productoras?",
+      "seed_query": "financiación producción audiovisual España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-fe0109",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Qué requisitos exige el ICO para que una empresa del sector cultural acceda a sus líneas de financiación?",
+      "seed_query": "inversión en entretenimiento España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-fe0110",
+      "type": "paa",
+      "pillar_id": "financiacion-entretenimiento",
+      "question": "¿Cuánto destina la Fundación SGAE en sus incentivos a la creación musical y quién puede solicitarlos?",
+      "seed_query": "financiación industria musical España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0101",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Qué novedades introduce la reforma de la ley de mecenazgo en el umbral de micromecenazgo deducible en el IRPF?",
+      "seed_query": "mecenazgo cultural desgravación fiscal",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0102",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Cuánto puede deducirse en el Impuesto de Sociedades una empresa que financia actividades de mecenazgo empresarial?",
+      "seed_query": "deducciones fiscales inversión cultural España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0103",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Pueden las pymes sin cuota íntegra positiva aplicarse el tax credit audiovisual del artículo 36.1 LIS?",
+      "seed_query": "artículo 36 ley impuesto sociedades cultura",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0104",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Qué diferencia hay entre los incentivos fiscales culturales del régimen navarro y el régimen general del Estado?",
+      "seed_query": "incentivos fiscales cine España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0105",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Es posible aplicar el artículo 36.3 LIS a espectáculos de circo, danza contemporánea o magia escénica?",
+      "seed_query": "deducción fiscal producción cinematográfica",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0106",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Qué es el certificado de nacionalidad española de una producción audiovisual y por qué es obligatorio para la deducción del artículo 36.1 LIS?",
+      "seed_query": "artículo 36 ley impuesto sociedades cultura",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0107",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Cómo afecta acumular bases imponibles negativas de ejercicios anteriores a la aplicación de las deducciones del artículo 36 LIS?",
+      "seed_query": "deducciones fiscales inversión cultural España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0108",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Qué documentación específica exige la Agencia Tributaria para validar una deducción por producción cinematográfica en el IS?",
+      "seed_query": "deducción fiscal producción cinematográfica",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0109",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Puede una empresa extranjera invertir en una coproducción española y beneficiarse de las deducciones del artículo 36.2 LIS?",
+      "seed_query": "deducción fiscal producción cinematográfica",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-if0110",
+      "type": "paa",
+      "pillar_id": "incentivos-fiscales",
+      "question": "¿Cuántos años tiene Hacienda para revisar y cuestionar una deducción cultural declarada en el Impuesto de Sociedades?",
+      "seed_query": "artículo 36 ley impuesto sociedades cultura",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0101",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Cuántas plataformas de financiación participativa están actualmente autorizadas e inscritas por la CNMV en España?",
+      "seed_query": "plataforma financiación participativa España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0102",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Cuál es el plazo máximo legal para que la CNMV resuelva una solicitud de autorización como proveedor de servicios de financiación participativa?",
+      "seed_query": "crowdfunding regulado CNMV",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0103",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Qué requisitos de capital mínimo exige el reglamento ECSPR a los proveedores de servicios de financiación participativa?",
+      "seed_query": "ECSPR regulación crowdfunding Europa",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0104",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Cómo afecta el anteproyecto de ley de transposición aprobado en marzo 2026 a las plataformas de crowdfunding ya establecidas en España?",
+      "seed_query": "crowdfunding regulado CNMV",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0105",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Pueden las plataformas de crowdfunding publicitar proyectos de inversión en redes sociales sin restricciones regulatorias en España?",
+      "seed_query": "invertir en crowdfunding España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0106",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Qué tipos de instrumentos financieros admite el reglamento ECSPR: solo préstamos o también equity y valores de deuda?",
+      "seed_query": "ECSPR regulación crowdfunding Europa",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0107",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Cómo funciona el test de idoneidad que aplican las plataformas ECSPR a inversores no sofisticados antes de permitirles invertir?",
+      "seed_query": "invertir en crowdfunding España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0108",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Qué obligaciones de información continua tienen las plataformas ECSPR hacia los inversores durante la vida de los proyectos financiados?",
+      "seed_query": "ECSPR regulación crowdfunding Europa",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0109",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Pueden las plataformas de crowdfunding audiovisual español captar inversión de personas residentes fuera de la Unión Europea?",
+      "seed_query": "plataforma crowdfunding entretenimiento",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-pfp0110",
+      "type": "paa",
+      "pillar_id": "pfp-regulacion",
+      "question": "¿Qué diferencia hay entre una plataforma de crowdfunding de recompensas como Verkami y una PFP regulada por la CNMV?",
+      "seed_query": "plataforma financiación participativa España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0101",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Qué implica para el sector cultural español que los RWA tokenizados alcancen 24.000 millones de dólares a principios de 2026?",
+      "seed_query": "tokenización activos reales España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0102",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Qué plataformas europeas están tokenizando activos de entretenimiento bajo el régimen piloto DLT de la Unión Europea?",
+      "seed_query": "RWA real world assets entretenimiento",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0103",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Cómo puede un artista musical tokenizar su catálogo de derechos sin perder el control creativo sobre su obra?",
+      "seed_query": "tokenizar derechos audiovisuales",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0104",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Qué es el régimen piloto DLT de la UE y cómo abre la puerta a la tokenización regulada de activos culturales en Europa?",
+      "seed_query": "tokenización activos reales España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0105",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Cuáles son los principales riesgos de liquidez al invertir en tokens que representan derechos sobre producciones audiovisuales?",
+      "seed_query": "inversión tokenizada cultura",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0106",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Qué diferencia hay entre tokenizar los derechos de explotación comercial de una película y tokenizar los derechos de autor?",
+      "seed_query": "tokenizar derechos audiovisuales",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0107",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Cómo tributan en España las ganancias patrimoniales derivadas de la venta de tokens de activos culturales?",
+      "seed_query": "blockchain industria cultural",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0108",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Qué papel tiene ESMA en la regulación de las plataformas que comercialicen tokens de activos reales (RWA) tras la entrada en vigor de MiCA?",
+      "seed_query": "inversión tokenizada cultura",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0109",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Pueden pequeños inversores comprar fracciones tokenizadas de la producción de un festival de música o concierto en España?",
+      "seed_query": "inversión tokenizada cultura",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    },
+    {
+      "id": "paa-20260518-rwa0110",
+      "type": "paa",
+      "pillar_id": "tokenizacion-rwa",
+      "question": "¿Qué proyectos concretos de tokenización de activos culturales se han lanzado en España durante el primer semestre de 2026?",
+      "seed_query": "tokenización activos reales España",
+      "search_volume_hint": null,
+      "language": "es",
+      "created_at": "2026-05-18T04:14:00Z"
+    }
+  ]
+}

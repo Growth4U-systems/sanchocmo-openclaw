@@ -1,0 +1,416 @@
+[
+  {
+    "id": "paa-2026-05-18-9f8159df",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Qué es el growth en startups?",
+    "seed_query": "sistema growth startups",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-35fe71fa",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Qué es el sistema Growth?",
+    "seed_query": "sistema growth startups",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-b8e4b53f",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Cuánto cobra un growth hacker?",
+    "seed_query": "growth hacking empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-76c94f4a",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Corporativo growth hacking Qué es?",
+    "seed_query": "growth hacking empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-1eed9aae",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Es legítima la empresa Growth Hacker?",
+    "seed_query": "growth hacking empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-359ff766",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Qué es growth hacking?",
+    "seed_query": "growth hacking empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-f48f884e",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Qué es un modelo SaaS B2B?",
+    "seed_query": "embudo crecimiento B2B SaaS",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-16bbc823",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Qué es la regla del 40 en SaaS?",
+    "seed_query": "embudo crecimiento B2B SaaS",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-71b29c37",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Qué es un embudo de marketing B2B?",
+    "seed_query": "embudo crecimiento B2B SaaS",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-66c6cb31",
+    "type": "paa",
+    "pillar_id": "P1",
+    "question": "¿Qué es el marketing B2B SaaS?",
+    "seed_query": "embudo crecimiento B2B SaaS",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-4dbd40b9",
+    "type": "paa",
+    "pillar_id": "P2",
+    "question": "¿Qué es la regla 3-3-3 en marketing?",
+    "seed_query": "marketing multicanal empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-19ae2deb",
+    "type": "paa",
+    "pillar_id": "P2",
+    "question": "¿Cuánto gana un especialista en marketing multicanal?",
+    "seed_query": "marketing multicanal empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-e2df5f25",
+    "type": "paa",
+    "pillar_id": "P2",
+    "question": "¿Cómo usar ChatGPT en mi empresa?",
+    "seed_query": "aparecer en ChatGPT con mi empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-971005d2",
+    "type": "paa",
+    "pillar_id": "P2",
+    "question": "¿Mi empleador sabrá si uso Chatgpt?",
+    "seed_query": "aparecer en ChatGPT con mi empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-dd89b8ef",
+    "type": "paa",
+    "pillar_id": "P2",
+    "question": "¿Qué es atribución multicanal?",
+    "seed_query": "atribucion marketing digital multicanal",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-6dc299e7",
+    "type": "paa",
+    "pillar_id": "P2",
+    "question": "¿Qué es la estrategia de marketing digital multicanal?",
+    "seed_query": "atribucion marketing digital multicanal",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-7d67fae0",
+    "type": "paa",
+    "pillar_id": "P2",
+    "question": "¿Qué caracteriza a la atribución multicanal?",
+    "seed_query": "atribucion marketing digital multicanal",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-ee246276",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Cuál será la regulación de las criptomonedas en 2026?",
+    "seed_query": "MiCA regulacion criptomonedas julio 2026",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-d2cc581e",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Se gravarán las criptomonedas en 2026?",
+    "seed_query": "MiCA regulacion criptomonedas julio 2026",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-8b7bddbf",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Qué proyectos de criptomonedas están excluidos de Mica?",
+    "seed_query": "MiCA regulacion criptomonedas julio 2026",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-0de06bfa",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Qué empresas se consideran fintech?",
+    "seed_query": "fintech CNMV marketing digital España",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-1aa7ada0",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Qué significa fintech en marketing?",
+    "seed_query": "fintech CNMV marketing digital España",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-ad35ee41",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Quién supervisa a las fintech?",
+    "seed_query": "fintech CNMV marketing digital España",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-561dac69",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Se enterará la Hacienda Pública si vendo criptomonedas?",
+    "seed_query": "marketing crypto regulado",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-a22a0a63",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Es ilegal anunciar criptomonedas?",
+    "seed_query": "marketing crypto regulado",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-387a9582",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Cuánto dinero puedo tener en criptomonedas sin declarar?",
+    "seed_query": "marketing crypto regulado",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-9b9ced3b",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Qué es la regla del 1% en criptomonedas?",
+    "seed_query": "marketing crypto regulado",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-f22075da",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Cómo afecta la Ley MiCA a Hacienda?",
+    "seed_query": "cumplimiento MiCA empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-244ec530",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Qué son los reglamentos MiCA?",
+    "seed_query": "cumplimiento MiCA empresa",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-3172cdd4",
+    "type": "paa",
+    "pillar_id": "P3",
+    "question": "¿Qué es HealthTech?",
+    "seed_query": "healthtech publicidad regulada España",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-2bf46419",
+    "type": "paa",
+    "pillar_id": "P4",
+    "question": "¿Cuáles son las desventajas de una agencia de marketing digital?",
+    "seed_query": "agencia marketing problemas",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-cc08f791",
+    "type": "paa",
+    "pillar_id": "P4",
+    "question": "¿Cuánto cobran las agencias de marketing?",
+    "seed_query": "marketing inhouse vs agencia coste",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-f3ff59d1",
+    "type": "paa",
+    "pillar_id": "P4",
+    "question": "¿Diferencia entre agencia de marketing y agencia de publicidad?",
+    "seed_query": "marketing inhouse vs agencia coste",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-9adb1ce6",
+    "type": "paa",
+    "pillar_id": "P4",
+    "question": "¿Cuál es la mejor agencia de marketing de España?",
+    "seed_query": "alternativas agencia marketing retainer",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-5342168e",
+    "type": "paa",
+    "pillar_id": "P4",
+    "question": "¿Cuál es la empresa número 1 en marketing?",
+    "seed_query": "alternativas agencia marketing retainer",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-3b5b4ffc",
+    "type": "paa",
+    "pillar_id": "P4",
+    "question": "¿Cuáles son los mejores nichos para el marketing de afiliados?",
+    "seed_query": "alternativas agencia marketing retainer",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-ac71301d",
+    "type": "paa",
+    "pillar_id": "P4",
+    "question": "¿Qué es retainer en marketing?",
+    "seed_query": "alternativas agencia marketing retainer",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-e65f64d7",
+    "type": "paa",
+    "pillar_id": "P4",
+    "question": "¿Merece la pena contratar una agencia de marketing?",
+    "seed_query": "problemas trabajar con agencia marketing",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-7311f4d3",
+    "type": "paa",
+    "pillar_id": "P5",
+    "question": "¿Qué es una startup de inteligencia artificial?",
+    "seed_query": "contenido con inteligencia artificial startup",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-172e10ef",
+    "type": "paa",
+    "pillar_id": "P5",
+    "question": "¿Es rentable la creación de contenido mediante IA?",
+    "seed_query": "contenido con inteligencia artificial startup",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-954f6f9f",
+    "type": "paa",
+    "pillar_id": "P5",
+    "question": "¿Qué tipo de contenido puede generar mediante inteligencia artificial?",
+    "seed_query": "contenido con inteligencia artificial startup",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-b9080c2d",
+    "type": "paa",
+    "pillar_id": "P5",
+    "question": "¿Por qué fracasan el 85% de los proyectos de IA?",
+    "seed_query": "contenido con inteligencia artificial startup",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-c457ab24",
+    "type": "paa",
+    "pillar_id": "P5",
+    "question": "¿Qué es outreach en ventas?",
+    "seed_query": "outreach automatizado IA ventas",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-4f181d85",
+    "type": "paa",
+    "pillar_id": "P5",
+    "question": "¿Qué herramientas de IA se utilizan para las ventas?",
+    "seed_query": "outreach automatizado IA ventas",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-fc259313",
+    "type": "paa",
+    "pillar_id": "P5",
+    "question": "¿Cuáles son las 5 técnicas de ventas?",
+    "seed_query": "outreach automatizado IA ventas",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  },
+  {
+    "id": "paa-2026-05-18-fcab3881",
+    "type": "paa",
+    "pillar_id": "P5",
+    "question": "¿Cómo funciona la IA en ventas?",
+    "seed_query": "outreach automatizado IA ventas",
+    "language": "es",
+    "created_at": "2026-05-18T06:00:00+02:00"
+  }
+]
