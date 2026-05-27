@@ -32,6 +32,32 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 ---
 
+## Progreso (tracking)
+
+> Bitácora de avances. Última actualización: **2026-05-27**.
+
+### ✅ Hecho
+
+- **[Fase 1 · Admin configurable — GAP B1]** — PR [#208](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/208) (`feat/configurable-admin-domain` → `staging`), `Refs SAN-20`.
+  - Nuevo `src/lib/data/admin-domain.ts` → `isAdminDomainEmail()` / `getAdminDomains()` (lee `ADMIN_EMAIL_DOMAIN`, lista por comas, tolera `@`).
+  - Reemplazado el hardcode `@growth4u.io` en **todos** los gates: `nextauth.ts:79` (login) y `:45` (email del admin-token → `ADMIN_IDENTITY_EMAIL`), `admin-emails.ts`, `client-access.ts`, `users.ts`, `dashboard/admin/users.tsx`, `health-check.ts:323`.
+  - `.env.example`: documentadas `ADMIN_EMAIL_DOMAIN` y `ADMIN_IDENTITY_EMAIL`.
+  - UI (`dashboard/admin/users.tsx`): el chip resaltado `<code>` ahora muestra el/los dominio(s) configurado(s) vía `GET /api/admin/users` (nuevo campo `adminDomains`), con fallback si no hay ninguno.
+  - Deploy: `deploy-staging.yml` y `deploy-prod.yml` inyectan las dos vars al `.env` (bloque `env:` + lista `KEYS` de `upsert-env.py`).
+  - GitHub Environments seteados y verificados: `staging` y `production` → `ADMIN_EMAIL_DOMAIN=growth4u.io`, `ADMIN_IDENTITY_EMAIL=admin@growth4u.io` (preserva comportamiento actual, evita lockout).
+  - Verificación local: `npm run typecheck` ✅ · `npm run test:lib` ✅ 36/36.
+
+### 🟡 En curso / bloqueado
+
+- **CI del PR #208 en rojo por GitHub Actions pausado (billing)** a nivel org — `startup_failure`, no es el código (local pasa). Se destraba al cargar saldo y re-correr. (Usuario: "luego cargo plata".)
+
+### ⏭️ Próximo
+
+- Completar **Fase 1**: auth dual (C), OD/YALC públicos + opcionales (B2/B3), Supabase→Neon (B6), retiro de git-backup (B5).
+- **Fase 0** (purga de secretos / repo limpio) sigue siendo bloqueante #1 **antes de publicar** — el trabajo de admin se hizo primero porque es independiente y va a staging (repo propio de G4U), no al release público todavía.
+
+---
+
 ## Shape del cambio
 
 ```
@@ -88,7 +114,7 @@ historial o partir de un repo nuevo, y **rotar** las credenciales expuestas.
 
 | # | Actual | Ideal | Dónde |
 |---|--------|-------|-------|
-| B1 | Admin gate real es `email.endsWith("@growth4u.io")` en el callback de auth | Helper `isAdminEmail()` que lea `ADMIN_EMAIL_DOMAIN` (+ `adminEmails`) | **`src/pages/api/auth/[...nextauth].ts:79`** (gate) y `:45` (email del admin token); call-sites: `users.ts:29`, `admin-emails.ts:46`, `client-access.ts:73`, `dashboard/admin/users.tsx`, `health-check.ts:323` (`alfonso@growth4u.io`) |
+| B1 ✅ | Admin gate real es `email.endsWith("@growth4u.io")` en el callback de auth | Helper `isAdminEmail()` que lea `ADMIN_EMAIL_DOMAIN` (+ `adminEmails`) | **HECHO** (PR #208) — `admin-domain.ts` + reemplazos en `nextauth.ts:79/:45`, `users.ts`, `admin-emails.ts`, `client-access.ts`, `dashboard/admin/users.tsx`, `health-check.ts:323` |
 | B2 | **Open Design es obligatorio**: en `docker-compose.yml` base con `OD_API_TOKEN: ${OD_API_TOKEN:?...}` → `compose up` falla sin OD | Mover servicio `open-design` a overlay `docker-compose.od.yml`; **imagen pública** `ghcr.io/<org>/od:vX.Y.Z` (publicar el fork) en vez de la privada | `docker-compose.yml:65-133`, `.env.example:159-167` |
 | B3 | YALC build desde repo privado `../Yalc-Growth4U` | Mantener overlay `docker-compose.yalc.yml` pero con `image:` **pública** `ghcr.io/<org>/yalc:vX.Y.Z` (no `build:` privado) | `docker-compose.yalc.yml` |
 | B4 | Volumen monta `brand/growth4u/...` hardcodeado | Va con overlay OD; parametrizar por brand o quitar del base | `docker-compose.yml:108` |
@@ -172,7 +198,7 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - Crear `LICENSE.md` (texto SUL real). Confirmar org/registry GHCR público.
 
 ### Fase 1 — Desacople de G4U (4–6 días) 🔴
-- **Admin configurable**: helper `isAdminEmail()` (lee `ADMIN_EMAIL_DOMAIN` + `adminEmails`); reemplazar hardcode en `nextauth.ts:79` y call-sites; parametrizar email del admin token (`nextauth.ts:45`).
+- ✅ **Admin configurable** (HECHO, PR #208): helper `isAdminDomainEmail()` (lee `ADMIN_EMAIL_DOMAIN` + `adminEmails`); reemplazado hardcode en `nextauth.ts:79` y call-sites; parametrizado email del admin token (`nextauth.ts:45` → `ADMIN_IDENTITY_EMAIL`); UI muestra el dominio configurado; vars inyectadas en deploy + seteadas en GitHub Environments.
 - **Auth dual (C)**: `ANTHROPIC_AUTH_MODE` y `OPENAI_AUTH_MODE` en `generate-openclaw-config.js`; en `api_key` generar profile de API key y saltar el script de suscripción. Gatear `ensure-anthropic-subscription-auth.js` y `sync-codex-auth.sh` por modo (`entrypoint.sh:108,117`).
 - **OD/YALC públicos + opcionales**: mover `open-design` a `docker-compose.od.yml` con imagen pública `ghcr.io/<org>/od`; YALC overlay con imagen pública `ghcr.io/<org>/yalc`; quitar OD del base. Confirmar degradación limpia en MC (`src/lib/open-design/client.ts`, `src/lib/yalc/client.ts` + UI).
 - **Supabase → Neon (B6)**: eliminar referencias en config examples, `new-client.sh`, `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `regenerate.py`, docs/skills.
