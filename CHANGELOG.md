@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.4.0...v0.4.1) (2026-05-27)
+
+### Bug Fixes
+
+* **models:** promote SAN-5/SAN-6 model assignment fixes to production ([#194](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/194))
+* **models:** route Anthropic models through the Claude subscription profile instead of API-key auth
+* **settings:** expose system API/subscription status and keep agent model selectors aligned with the effective model
+
 ## [0.4.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.3.0...v0.4.0) (2026-05-26)
 
 > First feature release after the staging → production cutover. Promotes the work that accumulated on `staging` since v0.3.0.
