@@ -1,14 +1,15 @@
 import fs from "fs";
 import { CLIENTS_FILE } from "./paths";
 import { writeClientsFile } from "./clients";
+import { isAdminDomainEmail } from "./admin-domain";
 
 /**
  * Helpers to read/write the `adminEmails` array in clients.json.
  *
  * adminEmails grants admin role to specific external Google accounts at
- * login (see src/pages/api/auth/[...nextauth].ts). Emails ending in
- * @growth4u.io are always admin regardless of this list — this is purely
- * for external collaborators.
+ * login (see src/pages/api/auth/[...nextauth].ts). Emails in a configured
+ * ADMIN_EMAIL_DOMAIN are always admin regardless of this list — this is
+ * purely for external collaborators.
  *
  * Writes are atomic: write to tempfile + rename, with a timestamped backup
  * of the previous contents.
@@ -42,9 +43,9 @@ function saveAdminEmails(emails: string[]): void {
 export function addAdminEmail(email: string): { ok: boolean; error?: string; emails: string[] } {
   const e = normalize(email);
   if (!isValidEmail(e)) return { ok: false, error: "Email inválido", emails: loadAdminEmails() };
-  // @growth4u.io is implicit admin — no need to add
-  if (e.endsWith("@growth4u.io")) {
-    return { ok: false, error: "Los emails @growth4u.io ya son admin automáticamente", emails: loadAdminEmails() };
+  // Emails in ADMIN_EMAIL_DOMAIN are implicit admin — no need to add
+  if (isAdminDomainEmail(e)) {
+    return { ok: false, error: "Ese dominio ya es admin automáticamente", emails: loadAdminEmails() };
   }
   const current = loadAdminEmails();
   if (current.map(normalize).includes(e)) {

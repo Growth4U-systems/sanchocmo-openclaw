@@ -11,7 +11,7 @@ import { loadUsers, setUserAccess, removeUser, type UserRole } from "@/lib/data/
  *
  * Admin only. Manages the `adminEmails` and `clientAccess` lists in
  * clients.json as one coherent surface (see src/lib/data/users.ts).
- * @growth4u.io accounts are admin by domain and are not editable here.
+ * ADMIN_EMAIL_DOMAIN accounts are admin by domain and are not editable here.
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!req.ctx?.isAdmin) {

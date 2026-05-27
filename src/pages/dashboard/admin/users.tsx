@@ -115,10 +115,6 @@ function UsersPanel({ currentEmail }: { currentEmail: string }) {
   function handleAdd() {
     const e = newEmail.trim().toLowerCase();
     if (!e) return;
-    if (e.endsWith("@growth4u.io")) {
-      setErrorMsg("Las cuentas @growth4u.io ya son admin automáticamente");
-      return;
-    }
     if (rows.some((r) => r.email === e)) {
       setErrorMsg("Ese usuario ya está en la lista");
       return;
@@ -175,7 +171,7 @@ function UsersPanel({ currentEmail }: { currentEmail: string }) {
     <div>
       <h1 className="font-heading text-2xl text-navy mb-1">👥 Usuarios</h1>
       <p className="text-xs text-muted-foreground mb-5">
-        Gestioná quién accede a Mission Control y a qué clientes. Las cuentas <code className="text-rust">@growth4u.io</code> son admin automáticamente y no se listan aquí.
+        Gestioná quién accede a Mission Control y a qué clientes. Las cuentas del dominio admin configurado son admin automáticamente y no se listan aquí.
       </p>
 
       <ComicCard className="mb-4">
@@ -223,7 +219,7 @@ function UsersPanel({ currentEmail }: { currentEmail: string }) {
       ) : rows.length === 0 ? (
         <ComicCard>
           <p className="text-sm text-muted-foreground text-center py-3">
-            No hay usuarios configurados. Solo los <code>@growth4u.io</code> tienen acceso.
+            No hay usuarios configurados. Solo el dominio admin configurado tiene acceso.
           </p>
         </ComicCard>
       ) : (

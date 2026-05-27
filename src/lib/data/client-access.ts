@@ -2,13 +2,14 @@ import fs from "fs";
 import { CLIENTS_FILE } from "./paths";
 import { writeClientsFile, loadClients } from "./clients";
 import { loadAdminEmails } from "./admin-emails";
+import { isAdminDomainEmail } from "./admin-domain";
 
 /**
  * Helpers to read/write the `clientAccess` map in clients.json.
  *
  * clientAccess maps a Google account email → list of client slugs that
  * account is allowed to see. It powers the "multi-client team member" case:
- * a user who is neither full admin (@growth4u.io / adminEmails, who see all
+ * a user who is neither full admin (ADMIN_EMAIL_DOMAIN / adminEmails, who see all
  * clients) nor a single-client portal user (tied to one slug by mcToken).
  *
  * The login flow reads this in src/pages/api/auth/[...nextauth].ts and the
@@ -64,14 +65,14 @@ function saveClientAccess(map: Record<string, string[]>): void {
 type AccessResult = { ok: boolean; error?: string; access: Record<string, string[]> };
 
 /**
- * Validate that an email is eligible for per-client access. @growth4u.io and
- * adminEmails accounts already see every client, so assigning them a subset
+ * Validate that an email is eligible for per-client access. ADMIN_EMAIL_DOMAIN
+ * and adminEmails accounts already see every client, so assigning them a subset
  * would be misleading.
  */
 function validateEmail(e: string): string | null {
   if (!isValidEmail(e)) return "Email inválido";
-  if (e.endsWith("@growth4u.io")) {
-    return "Los emails @growth4u.io ya son admin (ven todos los clientes)";
+  if (isAdminDomainEmail(e)) {
+    return "Ese dominio ya es admin (ve todos los clientes)";
   }
   if (loadAdminEmails().map(normalize).includes(e)) {
     return "Ese email es admin externo (ya ve todos los clientes)";
