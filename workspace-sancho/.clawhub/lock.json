@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "skills": {
+    "apify": {
+      "version": "1.0.3",
+      "installedAt": 1779075218275
+    },
+    "google-analytics": {
+      "version": "1.0.12",
+      "installedAt": 1779075221197
+    },
+    "google-search-console": {
+      "version": "1.0.6",
+      "installedAt": 1779075223981
+    },
+    "google-ads": {
+      "version": "1.1.0",
+      "installedAt": 1779075227130
+    },
+    "meta-ads": {
+      "version": "1.0.0",
+      "installedAt": 1779075230108
+    },
+    "apollo": {
+      "version": "1.0.0",
+      "installedAt": 1779075233442
+    },
+    "native-google-analytics": {
+      "version": "0.1.1",
+      "installedAt": 1779075236634
+    },
+    "gsc": {
+      "version": "1.2.2",
+      "installedAt": 1779075240550
+    },
+    "metricool": {
+      "version": "1.0.0",
+      "installedAt": 1779075243770
+    },
+    "larry": {
+      "version": "1.0.0",
+      "installedAt": 1779075247562
+    },
+    "nano-banana-pro": {
+      "version": "1.0.1",
+      "installedAt": 1779075250994
+    }
+  }
+}

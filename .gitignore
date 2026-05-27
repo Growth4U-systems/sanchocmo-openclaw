@@ -47,6 +47,7 @@ openclaw.json.pre-migration
 exec-approvals.json
 agents/*/agent/auth.json
 agents/*/agent/auth-profiles.json
+service-env/
 
 # === Session logs (large, contain secrets) ===
 agents/*/sessions/
@@ -146,8 +147,8 @@ cron/jobs.json.pre-*
 workspace-sancho/_backups/
 workspace-sancho/tmp/
 
-# === Skill repos (fetched at runtime) ===
-skill-repos/
+# === Skill repos (tracked as submodules) ===
+# skill-repos/ is tracked — skills are always versioned
 
 # === MC proxy device keys ===
 .mc-proxy-device.json
@@ -228,6 +229,7 @@ plugins/installs.json
 OD_VERSION.txt
 PLAN-chat-progress-streaming.md
 openclaw.json.last-good
+restart-sentinel.json
 
 # ACP / Codex local config (per-machine)
 acpx/codex-home/
