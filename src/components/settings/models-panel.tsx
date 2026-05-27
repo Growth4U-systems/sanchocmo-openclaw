@@ -298,6 +298,7 @@ function PerAgentSection() {
   const { mutate, isPending } = useSetAgentModel();
   const [pendingAgent, setPendingAgent] = useState<string | null>(null);
   const [ownModeDrafts, setOwnModeDrafts] = useState<Record<string, boolean>>({});
+  const [modelDrafts, setModelDrafts] = useState<Record<string, string>>({});
   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
   const [savedAgents, setSavedAgents] = useState<Record<string, boolean>>({});
 
@@ -330,16 +331,39 @@ function PerAgentSection() {
           {agents.map((a) => {
             const busy = isPending && pendingAgent === a.id;
             const inheriting = a.overrideModel === null;
-            const resolvedModel = a.resolvedModel || (inheriting ? globalDefault : a.overrideModel);
-            const ownMode = ownModeDrafts[a.id] || !inheriting || !a.registered;
+            const ownModeDraft = ownModeDrafts[a.id];
+            const backendModel = ownModeDraft === false
+              ? globalDefault
+              : a.resolvedModel || (inheriting ? globalDefault : a.overrideModel);
             const recommendedModel = a.recommendedModel || null;
-            const pickerValue = a.overrideModel || (ownMode ? recommendedModel : null) || resolvedModel || globalDefault;
+            const draftModel = modelDrafts[a.id] || null;
+            const ownMode = ownModeDraft ?? (!inheriting || !a.registered);
+            const pickerValue =
+              draftModel ||
+              a.overrideModel ||
+              (ownMode ? recommendedModel : null) ||
+              backendModel ||
+              globalDefault;
+            const displayModel = draftModel || (ownMode ? pickerValue : backendModel) || null;
             const currentOwnModel = a.overrideModel || (ownMode ? pickerValue : null);
-            const recommendedApplied = Boolean(recommendedModel && currentOwnModel === recommendedModel);
-            const resolvedProvider = providerForModel(catalog, resolvedModel);
-            const route = effectiveRoute(resolvedProvider);
+            const recommendedApplied = Boolean(
+              recommendedModel &&
+              a.registered &&
+              !draftModel &&
+              currentOwnModel === recommendedModel
+            );
+            const displayProvider = providerForModel(catalog, displayModel);
+            const route = effectiveRoute(displayProvider);
             const saveError = saveErrors[a.id];
             const saved = savedAgents[a.id];
+            const clearModelDraft = () => {
+              setModelDrafts((prev) => {
+                if (!(a.id in prev)) return prev;
+                const copy = { ...prev };
+                delete copy[a.id];
+                return copy;
+              });
+            };
             const handleSave = (next: string | null) => {
               setPendingAgent(a.id);
               setSaveErrors((prev) => {
@@ -356,6 +380,8 @@ function PerAgentSection() {
                 { agentId: a.id, model: next },
                 {
                   onSuccess: () => {
+                    clearModelDraft();
+                    setOwnModeDrafts((prev) => ({ ...prev, [a.id]: next !== null }));
                     setSavedAgents((prev) => ({ ...prev, [a.id]: true }));
                     window.setTimeout(() => {
                       setSavedAgents((prev) => {
@@ -366,6 +392,7 @@ function PerAgentSection() {
                     }, 2200);
                   },
                   onError: (err) => {
+                    clearModelDraft();
                     setSaveErrors((prev) => ({
                       ...prev,
                       [a.id]: err instanceof Error ? err.message : "No se pudo guardar el modelo",
@@ -393,7 +420,7 @@ function PerAgentSection() {
                   )}
                   {!a.registered && (
                     <span className="text-[10px] uppercase font-bold text-muted-foreground">
-                      sin registrar
+                      {busy ? "registrando…" : "sin registrar"}
                     </span>
                   )}
                 </span>
@@ -406,11 +433,8 @@ function PerAgentSection() {
                       checked={!ownMode && inheriting && a.registered}
                       disabled={busy || !a.registered}
                       onChange={() => {
-                        setOwnModeDrafts((prev) => {
-                          const next = { ...prev };
-                          delete next[a.id];
-                          return next;
-                        });
+                        setOwnModeDrafts((prev) => ({ ...prev, [a.id]: false }));
+                        clearModelDraft();
                         handleSave(null);
                       }}
                     />
@@ -432,8 +456,11 @@ function PerAgentSection() {
                       disabled={busy}
                       onChange={() => {
                         setOwnModeDrafts((prev) => ({ ...prev, [a.id]: true }));
-                        const nextModel = recommendedModel || pickerValue;
-                        if (inheriting && a.registered && nextModel) {
+                        const nextModel = draftModel || recommendedModel || pickerValue;
+                        if (nextModel) {
+                          setModelDrafts((prev) => ({ ...prev, [a.id]: nextModel }));
+                        }
+                        if ((inheriting || !a.registered) && nextModel) {
                           handleSave(nextModel);
                         }
                       }}
@@ -450,6 +477,7 @@ function PerAgentSection() {
                   onChange={(next) => {
                     if (!next) return;
                     setOwnModeDrafts((prev) => ({ ...prev, [a.id]: true }));
+                    setModelDrafts((prev) => ({ ...prev, [a.id]: next }));
                     handleSave(next);
                   }}
                 />
@@ -464,6 +492,7 @@ function PerAgentSection() {
                     title={a.recommendedReason || undefined}
                     onClick={() => {
                       setOwnModeDrafts((prev) => ({ ...prev, [a.id]: true }));
+                      setModelDrafts((prev) => ({ ...prev, [a.id]: recommendedModel }));
                       handleSave(recommendedModel);
                     }}
                     className={cn(
@@ -486,13 +515,13 @@ function PerAgentSection() {
                   </span>
                 )}
                 <span className="ml-auto flex min-w-[180px] items-center justify-end gap-2 text-xs">
-                  <span className="max-w-[190px] truncate font-mono text-muted-foreground" title={resolvedModel || undefined}>
-                    {resolvedModel || "sin modelo"}
+                  <span className="max-w-[190px] truncate font-mono text-muted-foreground" title={displayModel || undefined}>
+                    {displayModel || "sin modelo"}
                   </span>
                   <AuthRouteBadge
                     route={route}
-                    configured={resolvedProvider?.configured}
-                    title={resolvedProvider?.sourceLabel}
+                    configured={displayProvider?.configured}
+                    title={displayProvider?.sourceLabel}
                   />
                 </span>
               </li>
