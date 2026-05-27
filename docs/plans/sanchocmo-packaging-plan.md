@@ -38,7 +38,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 ### ✅ Hecho
 
-- **[Fase 1 · Admin configurable — GAP B1]** — PR [#208](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/208) (`feat/configurable-admin-domain` → `staging`), `Refs SAN-20`.
+- **[Fase 1 · Admin configurable — GAP B1]** — PR [#208](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/208) (`feat/configurable-admin-domain` → `staging`), `Refs SAN-22`.
   - Nuevo `src/lib/data/admin-domain.ts` → `isAdminDomainEmail()` / `getAdminDomains()` (lee `ADMIN_EMAIL_DOMAIN`, lista por comas, tolera `@`).
   - Reemplazado el hardcode `@growth4u.io` en **todos** los gates: `nextauth.ts:79` (login) y `:45` (email del admin-token → `ADMIN_IDENTITY_EMAIL`), `admin-emails.ts`, `client-access.ts`, `users.ts`, `dashboard/admin/users.tsx`, `health-check.ts:323`.
   - `.env.example`: documentadas `ADMIN_EMAIL_DOMAIN` y `ADMIN_IDENTITY_EMAIL`.
@@ -47,7 +47,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - GitHub Environments seteados y verificados: `staging` y `production` → `ADMIN_EMAIL_DOMAIN=growth4u.io`, `ADMIN_IDENTITY_EMAIL=admin@growth4u.io` (preserva comportamiento actual, evita lockout).
   - Verificación local: `npm run typecheck` ✅ · `npm run test:lib` ✅ 36/36.
 
-- **[Fase 1 · Auth de modelos dual — GAP C]** — PR [#219](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/219) (`feat/dual-model-auth` → `staging`), `Refs SAN-20`. Trabajado en worktree aislado.
+- **[Fase 1 · Auth de modelos dual — GAP C]** — PR [#219](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/219) (`feat/dual-model-auth` → `staging`), `Refs SAN-22`. Trabajado en worktree aislado.
   - `ANTHROPIC_AUTH_MODE` / `OPENAI_AUTH_MODE` (`api_key` default | `subscription`).
   - `generate-openclaw-config.js`: en `api_key` escribe perfil `anthropic:default` (`mode:"token"`, key del env); en `subscription`, `anthropic:claude-cli` (oauth). Limpia el perfil del modo contrario.
   - `entrypoint.sh`: gatea `sync-codex-auth.sh` y `ensure-anthropic-subscription-auth.js` al modo `subscription`; en `api_key` los saltea (usa `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`).
