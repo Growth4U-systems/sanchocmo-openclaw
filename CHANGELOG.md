@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.4.1...v0.4.2) (2026-05-27)
+
+### Bug Fixes
+
+* **deploy:** keep production startup alive when optional agent registration fails during setup
+
 ## [0.4.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.4.0...v0.4.1) (2026-05-27)
 
 ### Bug Fixes

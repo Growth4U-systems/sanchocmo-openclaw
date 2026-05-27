@@ -71,8 +71,11 @@ for AGENT_NAME in sancho escudero cervantes hamete dulcinea rocinante mambrino m
     ADD_ARGS+=(--agent-dir "$AGENT_DIR")
   fi
 
-  OUTPUT=$(openclaw "${ADD_ARGS[@]}" 2>&1) && true
-  EXIT_CODE=$?
+  if OUTPUT=$(openclaw "${ADD_ARGS[@]}" 2>&1); then
+    EXIT_CODE=0
+  else
+    EXIT_CODE=$?
+  fi
 
   if [ $EXIT_CODE -eq 0 ]; then
     echo "    OK"
