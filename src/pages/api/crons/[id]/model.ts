@@ -26,7 +26,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     ensureModelInAllowlist(model);
     setCronModel(cronId, model);
     invalidateCatalogCache();
-    return res.status(200).json({ ok: true, cronId, model });
+    return res.status(200).json({ ok: true, cronId, model, warning: check.warning });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return res.status(500).json({ error: msg });

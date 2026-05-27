@@ -22,10 +22,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
   }
 
+  let warning: string | undefined;
   if (typeof model === "string") {
     const catalog = await getModelCatalog();
     const check = isModelAvailable(catalog, model);
     if (!check.ok) return res.status(400).json({ error: check.reason });
+    warning = check.warning;
   }
 
   try {
@@ -34,7 +36,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     setAgentModel(agentId, model ?? null);
     invalidateCatalogCache();
-    return res.status(200).json({ ok: true, agentId, model });
+    return res.status(200).json({ ok: true, agentId, model, warning });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes("not in agents.list")) {
