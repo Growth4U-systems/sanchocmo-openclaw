@@ -380,7 +380,10 @@ You're looking for entries like:
 [agent/embedded] embedded run failover decision: ... reason=timeout from=codex/<model>
 ```
 
-If those are present, raise the Codex app-server timeouts. **Use
+If those are present, raise both the Codex app-server timeouts and the
+diagnostic stuck-session recovery ceiling. The app-server timeout controls the
+quiet model turn; `diagnostics.stuckSessionAbortMs` controls the independent
+recovery watchdog that aborts sessions with no observed progress. **Use
 `openclaw config patch`, not a direct file edit** — the runtime config
 lives at `$OPENCLAW_HOME/.openclaw/openclaw.json` (note the nested
 `.openclaw`), not `$OPENCLAW_HOME/openclaw.json`. There is a same-named
@@ -393,14 +396,18 @@ Write the patch to a file:
 ```jsonc
 // /tmp/codex-patch.json5
 {
+  diagnostics: {
+    stuckSessionWarnMs: 120000,
+    stuckSessionAbortMs: 900000,
+  },
   plugins: {
     entries: {
       codex: {
         enabled: true,
         config: {
           appServer: {
-            turnCompletionIdleTimeoutMs: 180000,
-            requestTimeoutMs: 180000,
+            turnCompletionIdleTimeoutMs: 900000,
+            requestTimeoutMs: 900000,
           },
         },
       },
@@ -414,13 +421,15 @@ Apply and verify (inside the container):
 ```bash
 docker exec sanchocmo openclaw config patch --file /tmp/codex-patch.json5 --dry-run
 docker exec sanchocmo openclaw config patch --file /tmp/codex-patch.json5
+docker exec sanchocmo openclaw config get diagnostics
 docker exec sanchocmo openclaw config get plugins.entries.codex.config.appServer
-# expect: turnCompletionIdleTimeoutMs: 180000, requestTimeoutMs: 180000
+# expect: stuckSessionAbortMs: 900000
+# expect: turnCompletionIdleTimeoutMs: 900000, requestTimeoutMs: 900000
 
 docker restart sanchocmo
 ```
 
-Three minutes is a sane ceiling for reasoning-heavy turns and long
+Fifteen minutes is a sane ceiling for reasoning-heavy turns and long
 document writes; raise further only if the new ceiling also gets hit.
 The setting is documented in `@openclaw/host` at
 `plugins.entries.codex.config.appServer` — the default constants live in
@@ -530,3 +539,7 @@ are also a fallback — see `DEPLOY.md` "Backups" for the restore procedure.
   lives at `$OPENCLAW_HOME/.openclaw/openclaw.json` (nested), with a
   same-named legacy file at the outer path that is not loaded. Use
   `openclaw config patch` instead of direct file edits.
+- **2026-05-27**: raised §5.4 guidance from 3 min to 15 min and added the
+  separate `diagnostics.stuckSessionAbortMs` ceiling after XHYPE Self
+  Intelligence v4.1 hit the diagnostic recovery watchdog while Opus was
+  generating a large `current.md` write.
