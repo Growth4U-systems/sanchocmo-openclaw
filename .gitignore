@@ -146,8 +146,8 @@ cron/jobs.json.pre-*
 workspace-sancho/_backups/
 workspace-sancho/tmp/
 
-# === Skill repos (fetched at runtime) ===
-skill-repos/
+# === Skill repos (tracked as submodules) ===
+# skill-repos/ is tracked — skills are always versioned
 
 # === MC proxy device keys ===
 .mc-proxy-device.json
