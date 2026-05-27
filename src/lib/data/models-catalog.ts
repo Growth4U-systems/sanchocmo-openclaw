@@ -188,17 +188,15 @@ const PROVIDER_AUTH_ALIASES: Record<string, string[]> = {
   // OpenClaw model ids use `codex/...`, while auth status reports the
   // Codex subscription provider as `openai-codex`.
   codex: ["openai-codex"],
-};
-
-const UNSUPPORTED_SUBSCRIPTION_ALIASES: Record<string, string[]> = {
-  // Claude Code OAuth can exist on the box, but OpenClaw model execution for
-  // Anthropic must use Anthropic/OpenRouter API credentials in this app.
+  // Anthropic model ids execute through the Claude CLI subscription profile
+  // when that OAuth route is configured in OpenClaw.
   anthropic: ["claude-cli"],
 };
 
-const SUBSCRIPTION_RUNTIME_PROVIDERS = new Set(["codex", "openai-codex"]);
+const UNSUPPORTED_SUBSCRIPTION_ALIASES: Record<string, string[]> = {};
+
+const SUBSCRIPTION_RUNTIME_PROVIDERS = new Set(["anthropic", "claude-cli", "codex", "openai-codex"]);
 const ANTHROPIC_API_KEY_RE = /=token:sk-ant-api/i;
-const ANTHROPIC_SUBSCRIPTION_TOKEN_RE = /=token:sk-ant-o/i;
 
 function uniqueStrings(values: Array<string | null | undefined>): string[] {
   return Array.from(new Set(values.filter((v): v is string => typeof v === "string" && v.length > 0)));
@@ -244,8 +242,8 @@ function isApiCredentialLabel(providerId: string, label: string): boolean {
   return /=token:|=apiKey:/i.test(label);
 }
 
-function isUnsupportedSubscriptionCredentialLabel(providerId: string, label: string): boolean {
-  return isAnthropicProvider(providerId) && ANTHROPIC_SUBSCRIPTION_TOKEN_RE.test(label);
+function isUnsupportedSubscriptionCredentialLabel(_providerId: string, _label: string): boolean {
+  return false;
 }
 
 function authKindForRoute(route: ProviderAuthRoute): string {
@@ -397,6 +395,10 @@ export function summarizeProviderAuth(
 
   let effective = directEffectiveRoute;
   let effectiveLabel = directEffectiveProfile?.label || directEffectiveProfile?.profileId || null;
+  if (isAnthropicProvider(providerId) && hasSubscription) {
+    effective = "subscription";
+    effectiveLabel = subscriptionLabels[0] || (runtimeRoute ? `via ${runtimeRoute.authProvider}` : null);
+  }
   if (isAnthropicProvider(providerId) && effective === "api" && !hasApiKey && !hasEnv) {
     effective = "missing";
     effectiveLabel = null;

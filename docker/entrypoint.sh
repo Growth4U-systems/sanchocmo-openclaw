@@ -65,14 +65,13 @@ echo "[entrypoint] Syncing Codex subscription auth across agents..."
 bash docker/sync-codex-auth.sh || \
   echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
 
-# Anthropic model execution in this app must use Anthropic API credentials, not
-# the Claude subscription route. Claude CLI OAuth may be present on the host,
-# but Sancho/OpenClaw must resolve `anthropic/*` models from ANTHROPIC_API_KEY.
-# This must run after sync-codex-auth because the shared auth-profiles symlink is
-# created there; writing only openclaw.json is not enough for agent inference.
-echo "[entrypoint] Ensuring Anthropic API auth profile..."
-node docker/ensure-anthropic-api-auth.js || \
-  echo "[entrypoint] WARNING: ensure-anthropic-api-auth failed; Anthropic may use stale auth"
+# Anthropic model execution must use the Claude/OpenClaw subscription route.
+# Keep this after sync-codex-auth because that step creates the shared
+# auth-profiles symlink; writing only openclaw.json is not enough for agent
+# inference.
+echo "[entrypoint] Ensuring Anthropic subscription auth profile..."
+node docker/ensure-anthropic-subscription-auth.js || \
+  echo "[entrypoint] WARNING: ensure-anthropic-subscription-auth failed; Anthropic may use stale auth"
 
 # ===========================================================
 # 1b. ENSURE MC-CHAT PLUGIN (runs every startup)

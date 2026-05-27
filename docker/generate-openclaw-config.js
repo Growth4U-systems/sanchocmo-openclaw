@@ -2,7 +2,7 @@
 /**
  * generate-openclaw-config.js — Auto-generate openclaw.json from env vars
  *
- * Reads DISCORD_BOT_TOKEN, ANTHROPIC_API_KEY from env.
+ * Reads DISCORD_BOT_TOKEN from env.
  * Auto-detects Discord guilds via API and creates bindings:
  *   - All guilds → sancho agent
  *
@@ -32,26 +32,18 @@ async function main() {
   }
 
   const discordToken = process.env.DISCORD_BOT_TOKEN;
-  const anthropicKey = process.env.ANTHROPIC_API_KEY || '';
   const cervantesGuildId = process.env.CERVANTES_GUILD_ID || '';
 
   // --- Auth profiles ---
-  if (anthropicKey) {
-    if (!config.auth) config.auth = {};
-    if (!config.auth.profiles) config.auth.profiles = {};
-    config.auth.profiles['anthropic:default'] = {
-      provider: 'anthropic',
-      mode: 'token'
-    };
-    if (!config.auth.order) config.auth.order = {};
-    const current = Array.isArray(config.auth.order.anthropic)
-      ? config.auth.order.anthropic
-      : [];
-    config.auth.order.anthropic = [
-      'anthropic:default',
-      ...current.filter(id => id !== 'anthropic:default' && id !== 'anthropic:claude-cli')
-    ];
-  }
+  if (!config.auth) config.auth = {};
+  if (!config.auth.profiles) config.auth.profiles = {};
+  delete config.auth.profiles['anthropic:default'];
+  config.auth.profiles['anthropic:claude-cli'] = {
+    provider: 'claude-cli',
+    mode: 'oauth'
+  };
+  if (!config.auth.order) config.auth.order = {};
+  config.auth.order.anthropic = ['anthropic:claude-cli'];
 
   // --- Agent defaults ---
   if (!config.agents) config.agents = {};

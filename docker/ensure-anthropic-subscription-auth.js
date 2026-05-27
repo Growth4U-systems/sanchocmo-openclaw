@@ -4,13 +4,8 @@ const fs = require("fs");
 const path = require("path");
 
 const OPENCLAW_ROOT = process.env.OPENCLAW_HOME || "/root/.openclaw";
-const PROFILE_ID = "anthropic:default";
-const TOKEN_REF = { source: "env", provider: "default", id: "ANTHROPIC_API_KEY" };
-
-if (!process.env.ANTHROPIC_API_KEY || !process.env.ANTHROPIC_API_KEY.trim()) {
-  console.log("[anthropic-api-auth] ANTHROPIC_API_KEY missing; skipping");
-  process.exit(0);
-}
+const SUBSCRIPTION_PROFILE_ID = "anthropic:claude-cli";
+const API_PROFILE_IDS = new Set(["anthropic:default"]);
 
 function readJson(file, fallback) {
   try {
@@ -61,16 +56,31 @@ function uniqueRealPaths(files) {
   return result;
 }
 
+function isAnthropicApiProfile(id, profile) {
+  if (!profile || typeof profile !== "object") return false;
+  if (API_PROFILE_IDS.has(id)) return true;
+  const provider = profile.provider;
+  const type = profile.type || profile.mode;
+  return provider === "anthropic" && (type === "token" || type === "apiKey");
+}
+
 const configFile = path.join(OPENCLAW_ROOT, ".openclaw", "openclaw.json");
 const config = readJson(configFile, {});
 const auth = config.auth || {};
-auth.profiles = {
-  ...(auth.profiles || {}),
-  [PROFILE_ID]: { provider: "anthropic", mode: "token" },
+const profiles = auth.profiles || {};
+
+for (const id of Object.keys(profiles)) {
+  if (isAnthropicApiProfile(id, profiles[id])) delete profiles[id];
+}
+
+profiles[SUBSCRIPTION_PROFILE_ID] = {
+  provider: "claude-cli",
+  mode: "oauth",
 };
+auth.profiles = profiles;
 auth.order = {
   ...(auth.order || {}),
-  anthropic: [PROFILE_ID],
+  anthropic: [SUBSCRIPTION_PROFILE_ID],
 };
 config.auth = auth;
 writeJson(configFile, config);
@@ -86,10 +96,12 @@ for (const file of authProfileFiles) {
   const store = readJson(file, { version: 1, profiles: {} });
   store.version = store.version || 1;
   store.profiles = store.profiles || {};
-  store.profiles[PROFILE_ID] = {
-    type: "token",
-    provider: "anthropic",
-    tokenRef: TOKEN_REF,
+  for (const id of Object.keys(store.profiles)) {
+    if (isAnthropicApiProfile(id, store.profiles[id])) delete store.profiles[id];
+  }
+  store.profiles[SUBSCRIPTION_PROFILE_ID] = {
+    type: "oauth",
+    provider: "claude-cli",
   };
   writeJson(file, store);
   try {
@@ -103,7 +115,7 @@ for (const file of uniqueRealPaths(agentDirs.map((dir) => path.join(dir, "auth-s
   if (!fs.existsSync(file)) continue;
   const state = readJson(file, { version: 1 });
   state.version = state.version || 1;
-  state.lastGood = { ...(state.lastGood || {}), anthropic: PROFILE_ID };
+  state.lastGood = { ...(state.lastGood || {}), anthropic: SUBSCRIPTION_PROFILE_ID };
   if (state.usageStats) {
     for (const key of Object.keys(state.usageStats)) {
       if (key.startsWith("anthropic:")) delete state.usageStats[key];
@@ -113,4 +125,6 @@ for (const file of uniqueRealPaths(agentDirs.map((dir) => path.join(dir, "auth-s
   states += 1;
 }
 
-console.log(`[anthropic-api-auth] ensured ${stores} auth store(s), ${states} auth state file(s), order=${PROFILE_ID}`);
+console.log(
+  `[anthropic-subscription-auth] ensured ${stores} auth store(s), ${states} auth state file(s), order=${SUBSCRIPTION_PROFILE_ID}`
+);
