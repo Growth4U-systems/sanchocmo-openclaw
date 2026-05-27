@@ -5,9 +5,6 @@ import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
 const ENV_FILE = path.join(BASE, "..", ".env");
-const OPENCLAW_ROOT = path.join(BASE, "..");
-const ANTHROPIC_PROFILE_ID = "anthropic:default";
-const ANTHROPIC_TOKEN_REF = { source: "env", provider: "default", id: "ANTHROPIC_API_KEY" };
 
 const SERVICE_ENV_MAP: Record<string, { key: string; label: string; placeholder: string }[]> = {
   anthropic: [{ key: "ANTHROPIC_API_KEY", label: "API Key", placeholder: "sk-ant-..." }],
@@ -83,115 +80,6 @@ function setEnvVars(updates: Record<string, string>): void {
   }
 }
 
-function readJsonFile<T>(file: string, fallback: T): T {
-  try {
-    return JSON.parse(fs.readFileSync(file, "utf-8")) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeJsonFile(file: string, value: unknown): void {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", "utf-8");
-}
-
-function listAgentDirs(): string[] {
-  const roots = [
-    path.join(OPENCLAW_ROOT, ".openclaw", "agents"),
-    path.join(OPENCLAW_ROOT, "agents"),
-  ];
-  const dirs: string[] = [];
-  for (const root of roots) {
-    try {
-      for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
-        if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
-        dirs.push(path.join(root, entry.name, "agent"));
-      }
-    } catch {
-      // Missing agent roots are valid on fresh installs.
-    }
-  }
-  return dirs;
-}
-
-function uniqueRealPaths(files: string[]): string[] {
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const file of files) {
-    let key = file;
-    try {
-      key = fs.realpathSync(file);
-    } catch {
-      // Keep the original path for files that do not exist yet.
-    }
-    if (seen.has(key)) continue;
-    seen.add(key);
-    result.push(file);
-  }
-  return result;
-}
-
-function ensureAnthropicApiProfile(): void {
-  const configFile = path.join(OPENCLAW_ROOT, ".openclaw", "openclaw.json");
-
-  const config = readJsonFile(configFile, {}) as {
-    auth?: {
-      profiles?: Record<string, { provider?: string; mode?: string }>;
-      order?: Record<string, string[]>;
-    };
-  };
-
-  const auth = config.auth || {};
-  const profiles = auth.profiles || {};
-  profiles[ANTHROPIC_PROFILE_ID] = { provider: "anthropic", mode: "token" };
-  auth.profiles = profiles;
-  auth.order = {
-    ...(auth.order || {}),
-    anthropic: [ANTHROPIC_PROFILE_ID],
-  };
-  config.auth = auth;
-  writeJsonFile(configFile, config);
-
-  const authProfileFiles = uniqueRealPaths([
-    path.join(OPENCLAW_ROOT, ".openclaw", "shared", "auth-profiles.json"),
-    ...listAgentDirs().map((dir) => path.join(dir, "auth-profiles.json")),
-  ]);
-  for (const file of authProfileFiles) {
-    const store = readJsonFile(file, { version: 1, profiles: {} }) as {
-      version?: number;
-      profiles?: Record<string, unknown>;
-    };
-    store.version = store.version || 1;
-    store.profiles = store.profiles || {};
-    store.profiles[ANTHROPIC_PROFILE_ID] = {
-      type: "token",
-      provider: "anthropic",
-      tokenRef: ANTHROPIC_TOKEN_REF,
-    };
-    writeJsonFile(file, store);
-    try { fs.chmodSync(file, 0o600); } catch {}
-  }
-
-  const authStateFiles = uniqueRealPaths(listAgentDirs().map((dir) => path.join(dir, "auth-state.json")));
-  for (const file of authStateFiles) {
-    if (!fs.existsSync(file)) continue;
-    const state = readJsonFile(file, { version: 1 }) as {
-      version?: number;
-      lastGood?: Record<string, string>;
-      usageStats?: Record<string, unknown>;
-    };
-    state.version = state.version || 1;
-    state.lastGood = { ...(state.lastGood || {}), anthropic: ANTHROPIC_PROFILE_ID };
-    if (state.usageStats) {
-      for (const key of Object.keys(state.usageStats)) {
-        if (key.startsWith("anthropic:")) delete state.usageStats[key];
-      }
-    }
-    writeJsonFile(file, state);
-  }
-}
-
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!req.ctx?.isAdmin) {
     return res.status(403).json({ error: "Admin only" });
@@ -248,9 +136,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     setEnvVars(updates);
-    if (updates.ANTHROPIC_API_KEY) {
-      ensureAnthropicApiProfile();
-    }
 
     return res.status(200).json({ ok: true, saved: Object.keys(updates) });
   }
