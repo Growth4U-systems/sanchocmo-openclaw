@@ -35,8 +35,10 @@ const SERVICE_ENV_MAP: Record<string, { key: string; label: string; placeholder:
 };
 
 function maskKey(val: string): string {
-  if (!val || val.length < 8) return val ? "\u2022\u2022\u2022\u2022" : "";
-  return val.slice(0, 4) + "\u2022".repeat(Math.min(val.length - 8, 20)) + val.slice(-4);
+  if (!val) return "";
+  if (val.length < 12) return "\u2022\u2022\u2022\u2022";
+  const prefixLength = val.startsWith("sk-ant-api") ? 16 : 12;
+  return `${val.slice(0, Math.min(prefixLength, val.length - 4))}...${val.slice(-4)}`;
 }
 
 function readEnvFile(): string {
@@ -79,6 +81,10 @@ function setEnvVars(updates: Record<string, string>): void {
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (!req.ctx?.isAdmin) {
+    return res.status(403).json({ error: "Admin only" });
+  }
+
   if (req.method === "GET") {
     const serviceId = req.query.service as string | undefined;
     const envVars = parseEnv(readEnvFile());
@@ -130,6 +136,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     setEnvVars(updates);
+
     return res.status(200).json({ ok: true, saved: Object.keys(updates) });
   }
 

@@ -175,7 +175,7 @@ jobs:
             ENV_HASH_BEFORE=$(sha256sum .env 2>/dev/null | cut -d' ' -f1 || echo "missing")
             if [ -n "${PAYLOAD_B64:-}" ]; then
               echo "▶ Upserting envs from GitHub \`staging\` Environment…"
-              echo "$PAYLOAD_B64" | python3 /tmp/upsert-env.py .env
+              echo "$PAYLOAD_B64" | python3 /tmp/upsert-env.py .env --preserve-existing ANTHROPIC_API_KEY
             fi
             ENV_HASH_AFTER=$(sha256sum .env | cut -d' ' -f1)
             ENV_CHANGED=0
