@@ -4,12 +4,22 @@
  * Verifies the HMAC-signed share token, reads the doc from disk, and
  * returns its content as JSON. NO auth middleware — this is the public
  * read path. Security relies entirely on token unguessability.
+ *
+ * SAN-15 commented-snapshot behavior:
+ *   If a `*.commented.<ext>` sibling exists next to the original doc,
+ *   that file is served instead — it contains the same body plus an
+ *   appended `## Comentarios` section materialized by the comments POST
+ *   endpoint. The share token still works against the ORIGINAL path
+ *   (no re-signing needed); switching to the commented sibling happens
+ *   transparently. Tokens that already point at the commented path are
+ *   honored as-is.
  */
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
+import { getCommentedDocPath, isCommentedDocPath } from "@/lib/comments-file";
 import { BASE } from "@/lib/data/paths";
 import { verifyShareToken } from "@/lib/share-tokens";
 import { resolveWorkspaceDocPath } from "@/lib/server/doc-paths";
@@ -36,9 +46,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).json({ error: "Token payload mismatch" });
   }
 
+  // If a commented sibling exists for this original doc, serve that
+  // instead so the cliente sees previous comments and the appended
+  // `## Comentarios` section. Idempotent on already-commented paths.
+  let effectiveDocPath = payload.docPath;
+  if (!isCommentedDocPath(payload.docPath)) {
+    const candidateCommented = getCommentedDocPath(payload.docPath);
+    try {
+      const commentedAbs = path.resolve(BASE, candidateCommented);
+      if (commentedAbs.startsWith(path.resolve(BASE, "brand") + path.sep) && fs.existsSync(commentedAbs)) {
+        effectiveDocPath = candidateCommented;
+      }
+    } catch {
+      // ignore — fall through and serve the original
+    }
+  }
+
   let resolved;
   try {
-    resolved = resolveWorkspaceDocPath(BASE, payload.docPath, { slug: payload.slug, requireBrand: true });
+    resolved = resolveWorkspaceDocPath(BASE, effectiveDocPath, {
+      slug: payload.slug,
+      requireBrand: true,
+    });
   } catch {
     return res.status(403).json({ error: "Forbidden" });
   }
@@ -79,6 +108,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       path: resolved.canonicalPath,
       requestedPath: payload.docPath,
       canonicalPath: resolved.canonicalPath,
+      // True when the served file is the commented sibling (not the
+      // original). Frontend can use this to label / opt out of the
+      // appended `## Comentarios` section if it ever wants to.
+      isCommentedView: effectiveDocPath !== payload.docPath,
+      originalDocPath: payload.docPath,
       usedFallback: resolved.usedFallback,
       filename: path.basename(absPath),
       content,
