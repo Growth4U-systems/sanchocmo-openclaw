@@ -41,6 +41,50 @@ else
   echo "[entrypoint] Config exists, skipping first-run setup."
 fi
 
+# MC Chat often asks Sancho to produce large markdown deliverables in one
+# model turn. Keep the app-server and diagnostic recovery watchdogs aligned so
+# long Opus generations are not aborted just before the final write arrives.
+echo "[entrypoint] Ensuring MC chat model timeouts..."
+OPENCLAW_CONFIG="$OPENCLAW_CONFIG" python3 - <<'PY'
+import json
+import os
+
+path = os.environ["OPENCLAW_CONFIG"]
+with open(path, "r", encoding="utf-8") as fh:
+    config = json.load(fh)
+
+changed = False
+
+def ensure_min(obj, key, value):
+    global changed
+    current = obj.get(key)
+    if not isinstance(current, (int, float)) or current < value:
+        obj[key] = value
+        changed = True
+
+diagnostics = config.setdefault("diagnostics", {})
+ensure_min(diagnostics, "stuckSessionWarnMs", 120_000)
+ensure_min(diagnostics, "stuckSessionAbortMs", 900_000)
+
+plugins = config.setdefault("plugins", {})
+entries = plugins.setdefault("entries", {})
+codex = entries.setdefault("codex", {})
+if codex.get("enabled") is not True:
+    codex["enabled"] = True
+    changed = True
+app_server = codex.setdefault("config", {}).setdefault("appServer", {})
+ensure_min(app_server, "turnCompletionIdleTimeoutMs", 900_000)
+ensure_min(app_server, "requestTimeoutMs", 900_000)
+
+if changed:
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(config, fh, indent=2)
+        fh.write("\n")
+    print("[entrypoint] MC chat model timeouts updated")
+else:
+    print("[entrypoint] MC chat model timeouts already OK")
+PY
+
 # Inject env vars into agent .md files on EVERY start. Deploys ship new
 # placeholders or new whitelist entries, and BASE_URL may differ across
 # environments — running this only on first boot leaves stale literals

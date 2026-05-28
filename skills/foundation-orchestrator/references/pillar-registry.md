@@ -29,9 +29,9 @@
 **Skill**: `market-intelligence`
 **Thread**: `{slug}:market-analysis`
 **Output**: `brand/{slug}/market-and-us/market/current.md`
-**requires**: fast-foundation
-**enriches_with**: competitor-analysis, self-analysis
-**Hydration**: lee doc lite de Fast Foundation (market L1) y amplía
+**requires**: —
+**enriches_with**: fast-foundation, competitor-analysis, self-analysis
+**Hydration**: si fast-foundation está `approved`, hidrata con su doc lite (market L1). Si no, arranca standalone desde el input del cliente. Fast Foundation **no es prerequisito**.
 **Lite done**: Sector + TAM/SAM estimado + tendencias principales
 **Deep done**: Lite + regulación + 3+ tendencias + tasa crecimiento + características mercado
 
@@ -41,8 +41,8 @@
 **Output**:
 - `brand/{slug}/market-and-us/competitors/current.md` (roll-up: landscape + lista, generado desde subdirs)
 - `brand/{slug}/market-and-us/competitors/{nombre}/current.md` (deep-dive 3-lens, 1 por competidor)
-**requires**: fast-foundation
-**enriches_with**: market-analysis, self-analysis
+**requires**: —
+**enriches_with**: fast-foundation, market-analysis, self-analysis
 **Lite done**: Top 3 competidores directos + Lens 1 (qué dicen de sí mismos)
 **Deep done**: 3+ directos con 3 lenses + 2+ alternativas indirectas + growth model por competidor
 
@@ -50,9 +50,9 @@
 **Skill**: `self-intelligence`
 **Thread**: `{slug}:self-analysis`
 **Output**: `brand/{slug}/market-and-us/self/current.md`
-**requires**: fast-foundation
-**enriches_with**: market-analysis, competitor-analysis
-**Hydration**: lee doc lite de Fast Foundation (Self L1) y añade Lens 2 + Lens 3
+**requires**: —
+**enriches_with**: fast-foundation, market-analysis, competitor-analysis
+**Hydration**: si fast-foundation está `approved`, hidrata con su doc lite (Self L1) y añade Lens 2 + Lens 3. Si no, ejecuta las 3 lenses standalone. Fast Foundation **no es prerequisito**.
 **Skip**: si es marca nueva sin track record
 **Lite done**: Lens 1 (qué decimos) para homepage + 2 redes sociales top
 **Deep done**: 3 lentes completas: homepage, 2 redes sociales, 2 plataformas de reviews
@@ -91,8 +91,8 @@
 **Skill**: `existing-customer-data`
 **Thread**: `{slug}:existing-customer-data` (solo si se activa)
 **Output**: `brand/{slug}/go-to-market/existing-customer-data/current.md`
-**requires**: fast-foundation
-**enriches_with**: niche-discovery
+**requires**: —
+**enriches_with**: fast-foundation, niche-discovery
 **Skip**: si pre-launch sin clientes
 
 ---
