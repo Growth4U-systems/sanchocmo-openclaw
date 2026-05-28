@@ -100,6 +100,8 @@ jobs:
           SLACK_REDIRECT_URI: ${{ vars.SLACK_REDIRECT_URI }}
           ANTHROPIC_AUTH_MODE: ${{ vars.ANTHROPIC_AUTH_MODE }}
           OPENAI_AUTH_MODE: ${{ vars.OPENAI_AUTH_MODE }}
+          ADMIN_EMAIL_DOMAIN: ${{ vars.ADMIN_EMAIL_DOMAIN }}
+          ADMIN_IDENTITY_EMAIL: ${{ vars.ADMIN_IDENTITY_EMAIL }}
         run: |
           # Build a base64-encoded JSON dict of every non-empty key (skip empty
           # values so unset GitHub secrets/variables are safe no-ops on the VPS).
@@ -128,6 +130,7 @@ jobs:
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
+              "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())

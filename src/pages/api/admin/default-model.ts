@@ -33,7 +33,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     ensureModelInAllowlist(model);
     setDefaultPrimaryModel(model);
     invalidateCatalogCache();
-    return res.status(200).json({ ok: true, model });
+    return res.status(200).json({ ok: true, model, warning: check.warning });
   } catch (e) {
     return res.status(500).json({
       error: e instanceof Error ? e.message : String(e),

@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { loadClientsData } from "@/lib/data/clients";
 import { getSlugsForEmail } from "@/lib/data/client-access";
+import { isAdminDomainEmail } from "@/lib/data/admin-domain";
 
 const googleClientId =
   process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_OAUTH_CLIENT_ID;
@@ -12,7 +13,7 @@ const googleAuthConfigured = Boolean(googleClientId) && Boolean(googleClientSecr
 
 /**
  * NextAuth.js configuration
- * - Google OAuth for team (@growth4u.io → admin) and clients
+ * - Google OAuth for team (ADMIN_EMAIL_DOMAIN → admin) and clients
  * - Credentials provider for legacy token auth (coexistence)
  */
 export const authOptions: NextAuthOptions = {
@@ -42,7 +43,7 @@ export const authOptions: NextAuthOptions = {
           return {
             id: "admin",
             name: "Admin",
-            email: "admin@growth4u.io",
+            email: process.env.ADMIN_IDENTITY_EMAIL || "admin@localhost",
             role: "admin",
           };
         }
@@ -76,7 +77,7 @@ export const authOptions: NextAuthOptions = {
           const data = loadClientsData();
           const adminEmails = (data.adminEmails || []).map((e) => e.toLowerCase());
           const isAdmin =
-            email.endsWith("@growth4u.io") || adminEmails.includes(email);
+            isAdminDomainEmail(email) || adminEmails.includes(email);
           token.role = isAdmin ? "admin" : "client";
           token.clientSlug = null;
           token.allowedSlugs = null;

@@ -566,11 +566,29 @@ export async function getModelCatalog(
 export function isModelAvailable(
   catalog: ModelCatalog,
   modelId: string
-): { ok: boolean; reason?: string } {
+): { ok: boolean; reason?: string; warning?: string } {
   const model = catalog.models.find((m) => m.id === modelId);
   if (!model) return { ok: false, reason: `Model "${modelId}" not in catalog` };
+  // openclaw itself does not validate model ids on `models set` / `config
+  // patch` — it stores whatever string it's given and only fails when an agent
+  // turn actually runs. So this is the layer that has to reject obviously
+  // unusable selections. `missing` is openclaw's explicit "not in my registry"
+  // flag from `models list --all`; never persist one of those.
+  if (model.missing === true) {
+    return { ok: false, reason: `Model "${modelId}" is reported missing by openclaw` };
+  }
   const provider = catalog.providers.find((p) => p.id === model.provider);
   if (!provider) return { ok: false, reason: `Provider "${model.provider}" not in catalog` };
+  // A configured-but-unauthed provider is the silent-failure case the picker
+  // is most prone to: the id is valid, the save succeeds, but the model never
+  // responds at runtime. Allow the write (auth can be added afterwards) but
+  // surface a warning the API/UI can show instead of failing opaquely later.
+  if (!provider.configured) {
+    return {
+      ok: true,
+      warning: `Provider "${model.provider}" sin auth configurada — el modelo no responderá hasta cargar credenciales.`,
+    };
+  }
   return { ok: true };
 }
 

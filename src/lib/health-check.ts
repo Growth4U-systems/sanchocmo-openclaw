@@ -320,7 +320,7 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
           const hasError = /error|unauthorized|invalid/i.test(raw) && !/subject/i.test(raw);
           return hasError
             ? error(raw.slice(0, 150))
-            : ok({ account: "alfonso@growth4u.io", test: "gmail inbox" });
+            : ok({ account: "gmail", test: "gmail inbox" });
         } catch (e) {
           return error(e instanceof Error ? e.message : String(e));
         }
