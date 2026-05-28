@@ -9,6 +9,7 @@ import path from "node:path";
 // the module (via dynamic import below).
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "mc-client-access-"));
 process.env.MC_WORKSPACE = tmp;
+process.env.ADMIN_EMAIL_DOMAIN = "growth4u.io";
 
 const CLIENTS_FILE = path.join(tmp, "clients.json");
 
@@ -47,11 +48,11 @@ test("getSlugsForEmail normalizes case and returns [] when missing", () => {
   assert.deepEqual(mod.getSlugsForEmail("manager@acme.com"), ["alpha"]);
 });
 
-test("setClientAccess rejects @growth4u.io accounts", () => {
+test("setClientAccess rejects admin-domain accounts", () => {
   seed();
   const r = mod.setClientAccess("someone@growth4u.io", ["alpha"]);
   assert.equal(r.ok, false);
-  assert.match(r.error || "", /growth4u/);
+  assert.match(r.error || "", /dominio/);
 });
 
 test("setClientAccess rejects external admin emails", () => {
