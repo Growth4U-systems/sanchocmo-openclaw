@@ -109,6 +109,8 @@ jobs:
           OPEN_DESIGN_IMAGE: ${{ vars.OPEN_DESIGN_IMAGE }}
           MC_CHAT_GATEWAY: ${{ vars.MC_CHAT_GATEWAY }}
           SLACK_REDIRECT_URI: ${{ vars.SLACK_REDIRECT_URI }}
+          ANTHROPIC_AUTH_MODE: ${{ vars.ANTHROPIC_AUTH_MODE }}
+          OPENAI_AUTH_MODE: ${{ vars.OPENAI_AUTH_MODE }}
           ADMIN_EMAIL_DOMAIN: ${{ vars.ADMIN_EMAIL_DOMAIN }}
           ADMIN_IDENTITY_EMAIL: ${{ vars.ADMIN_IDENTITY_EMAIL }}
         run: |
@@ -140,6 +142,7 @@ jobs:
               "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL", "SUPABASE_URL",
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
+              "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
               "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}

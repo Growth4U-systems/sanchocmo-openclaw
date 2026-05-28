@@ -105,17 +105,35 @@ bash docker/setup-agents.sh
 # auth-profiles.json, leaving the other agents on the env OPENAI_API_KEY (or
 # nothing). The sync script collapses every agent's file into a symlink to a
 # single canonical store so one login propagates to all. Idempotent.
-echo "[entrypoint] Syncing Codex subscription auth across agents..."
-bash docker/sync-codex-auth.sh || \
-  echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
+#
+# Gated on OPENAI_AUTH_MODE: only the subscription route needs this sync. In
+# api_key mode (default) the agents fall back to OPENAI_API_KEY from the env,
+# so forcing the shared subscription store would override the user's key.
+if [ "${OPENAI_AUTH_MODE:-api_key}" = "subscription" ]; then
+  echo "[entrypoint] Syncing Codex subscription auth across agents..."
+  bash docker/sync-codex-auth.sh || \
+    echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
+else
+  echo "[entrypoint] OPENAI_AUTH_MODE=api_key — skipping Codex subscription sync (agents use OPENAI_API_KEY)"
+fi
 
-# Anthropic model execution must use the Claude/OpenClaw subscription route.
-# Keep this after sync-codex-auth because that step creates the shared
-# auth-profiles symlink; writing only openclaw.json is not enough for agent
-# inference.
-echo "[entrypoint] Ensuring Anthropic subscription auth profile..."
-node docker/ensure-anthropic-subscription-auth.js || \
-  echo "[entrypoint] WARNING: ensure-anthropic-subscription-auth failed; Anthropic may use stale auth"
+# Anthropic model execution route, gated on ANTHROPIC_AUTH_MODE:
+#   subscription → enforce the Claude/OpenClaw OAuth profile across openclaw.json
+#                  and every agent's auth-profiles.json (the script strips any
+#                  API-key profile). Keep this after sync-codex-auth because that
+#                  step creates the shared auth-profiles symlink; writing only
+#                  openclaw.json is not enough for agent inference.
+#   api_key (default) → skip: generate-openclaw-config.js already wrote the
+#                  `anthropic:default` token profile, and the key comes from
+#                  ANTHROPIC_API_KEY. Running the subscription script here would
+#                  delete that profile and flip billing to the subscription.
+if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
+  echo "[entrypoint] Ensuring Anthropic subscription auth profile..."
+  node docker/ensure-anthropic-subscription-auth.js || \
+    echo "[entrypoint] WARNING: ensure-anthropic-subscription-auth failed; Anthropic may use stale auth"
+else
+  echo "[entrypoint] ANTHROPIC_AUTH_MODE=api_key — using ANTHROPIC_API_KEY (anthropic:default token profile)"
+fi
 
 # ===========================================================
 # 1b. ENSURE MC-CHAT PLUGIN (runs every startup)

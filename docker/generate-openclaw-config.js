@@ -35,15 +35,31 @@ async function main() {
   const cervantesGuildId = process.env.CERVANTES_GUILD_ID || '';
 
   // --- Auth profiles ---
+  // ANTHROPIC_AUTH_MODE selects how Anthropic inference authenticates:
+  //   api_key (default) → profile `anthropic:default` (mode "token"); the key
+  //                       is read from ANTHROPIC_API_KEY in the env.
+  //   subscription      → profile `anthropic:claude-cli` (OAuth via Claude CLI).
+  // The subscription enforcement (docker/ensure-anthropic-subscription-auth.js)
+  // is gated on the same mode in entrypoint.sh, so the two stay consistent.
+  const anthropicAuthMode = (process.env.ANTHROPIC_AUTH_MODE || 'api_key').toLowerCase();
   if (!config.auth) config.auth = {};
   if (!config.auth.profiles) config.auth.profiles = {};
-  delete config.auth.profiles['anthropic:default'];
-  config.auth.profiles['anthropic:claude-cli'] = {
-    provider: 'claude-cli',
-    mode: 'oauth'
-  };
   if (!config.auth.order) config.auth.order = {};
-  config.auth.order.anthropic = ['anthropic:claude-cli'];
+  if (anthropicAuthMode === 'subscription') {
+    delete config.auth.profiles['anthropic:default'];
+    config.auth.profiles['anthropic:claude-cli'] = {
+      provider: 'claude-cli',
+      mode: 'oauth'
+    };
+    config.auth.order.anthropic = ['anthropic:claude-cli'];
+  } else {
+    delete config.auth.profiles['anthropic:claude-cli'];
+    config.auth.profiles['anthropic:default'] = {
+      provider: 'anthropic',
+      mode: 'token'
+    };
+    config.auth.order.anthropic = ['anthropic:default'];
+  }
 
   // --- Agent defaults ---
   if (!config.agents) config.agents = {};
