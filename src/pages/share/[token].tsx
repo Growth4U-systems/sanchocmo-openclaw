@@ -174,14 +174,24 @@ export default function SharePage() {
         return;
       }
       const rect = range.getBoundingClientRect();
+      // position: fixed coords are viewport-relative — do NOT add scrollY/X.
       setPopup({
-        top: rect.top + window.scrollY - 40,
-        left: rect.left + window.scrollX + rect.width / 2,
+        top: Math.max(8, rect.top - 40),
+        left: rect.left + rect.width / 2,
         text: selectedText,
       });
     };
 
-    const handleMouseDown = () => setPopup(null);
+    const handleMouseDown = (e: MouseEvent) => {
+      // Don't dismiss the popup if the user is clicking the popup itself.
+      // The native document listener fires after React's onMouseDown bubble
+      // path; checking the target via `closest` works for nested children too.
+      const target = e.target as Element | null;
+      if (target && target.closest?.("[data-comment-popup]")) {
+        return;
+      }
+      setPopup(null);
+    };
 
     document.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("mousedown", handleMouseDown);
@@ -348,6 +358,7 @@ export default function SharePage() {
       {popup && (
         <button
           type="button"
+          data-comment-popup="true"
           onMouseDown={(e) => e.preventDefault()}
           onClick={openFormFromSelection}
           className="fixed z-50 px-3 py-1.5 text-[12px] bg-[#1A1A1A] text-white rounded-md shadow-lg hover:bg-[#333] transition-colors"
