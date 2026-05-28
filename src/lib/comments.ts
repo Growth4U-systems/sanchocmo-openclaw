@@ -17,6 +17,13 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import { sharedDocComments } from "@/db/schema";
 
+export interface CommentPatch {
+  body?: string;
+  anchorText?: string | null;
+  anchorContext?: string | null;
+  anchorDocOffset?: number | null;
+}
+
 export interface CommentRow {
   id: string;
   slug: string;
@@ -178,6 +185,111 @@ export async function loadDocComments(
     .orderBy(desc(sharedDocComments.createdAt));
 
   return rows.map(rowToComment);
+}
+
+/**
+ * Validate a PATCH body. Only body/anchor fields are mutable; author/email/
+ * created_at are immutable. Returns the sanitized patch or throws.
+ *
+ * `body` is optional in PATCH (caller may only want to update anchor), but if
+ * present it must not be empty/oversized.
+ */
+export function validateCommentPatch(raw: unknown): CommentPatch {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new CommentValidationError("Invalid request body");
+  }
+  const r = raw as Record<string, unknown>;
+  const patch: CommentPatch = {};
+
+  if (r.body !== undefined) {
+    const body = typeof r.body === "string" ? r.body.trim() : "";
+    if (!body) throw new CommentValidationError("body cannot be empty");
+    if (body.length > MAX_BODY) {
+      throw new CommentValidationError(`body too long (max ${MAX_BODY} chars)`);
+    }
+    patch.body = body;
+  }
+
+  if (r.anchorText !== undefined) {
+    patch.anchorText = sanitizeOptionalString(r.anchorText, MAX_ANCHOR_TEXT);
+  }
+  if (r.anchorContext !== undefined) {
+    patch.anchorContext = sanitizeOptionalString(r.anchorContext, MAX_ANCHOR_CONTEXT);
+  }
+  if (r.anchorDocOffset !== undefined) {
+    if (r.anchorDocOffset === null) {
+      patch.anchorDocOffset = null;
+    } else {
+      const n = Number(r.anchorDocOffset);
+      if (!Number.isFinite(n) || n < 0) {
+        throw new CommentValidationError("Invalid anchorDocOffset");
+      }
+      patch.anchorDocOffset = Math.floor(n);
+    }
+  }
+
+  if (Object.keys(patch).length === 0) {
+    throw new CommentValidationError("Empty patch");
+  }
+  return patch;
+}
+
+/**
+ * Update a comment by id. Caller must pass slug+docPath from the verified
+ * share token: a comment is only mutable through a token that grants access
+ * to the doc it lives on. Returns the updated row or null if no row matched
+ * the (id, slug, docPath) triple.
+ */
+export async function updateComment(
+  id: string,
+  slug: string,
+  docPath: string,
+  patch: CommentPatch,
+): Promise<CommentRow | null> {
+  if (!id || !slug || !docPath) {
+    throw new CommentValidationError("id + slug + docPath required");
+  }
+  if (Object.keys(patch).length === 0) {
+    throw new CommentValidationError("Empty patch");
+  }
+  const rows = await db
+    .update(sharedDocComments)
+    .set(patch)
+    .where(
+      and(
+        eq(sharedDocComments.id, id),
+        eq(sharedDocComments.slug, slug),
+        eq(sharedDocComments.docPath, docPath),
+      ),
+    )
+    .returning();
+  if (rows.length === 0) return null;
+  return rowToComment(rows[0]);
+}
+
+/**
+ * Delete a comment by id. Same token-bound (slug, docPath) check as update.
+ * Returns true if a row was deleted, false otherwise.
+ */
+export async function deleteComment(
+  id: string,
+  slug: string,
+  docPath: string,
+): Promise<boolean> {
+  if (!id || !slug || !docPath) {
+    throw new CommentValidationError("id + slug + docPath required");
+  }
+  const rows = await db
+    .delete(sharedDocComments)
+    .where(
+      and(
+        eq(sharedDocComments.id, id),
+        eq(sharedDocComments.slug, slug),
+        eq(sharedDocComments.docPath, docPath),
+      ),
+    )
+    .returning({ id: sharedDocComments.id });
+  return rows.length > 0;
 }
 
 function rowToComment(r: typeof sharedDocComments.$inferSelect): CommentRow {
