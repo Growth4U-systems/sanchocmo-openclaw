@@ -26,7 +26,9 @@ import remarkGfm from "remark-gfm";
 import {
   type AnchorPayload,
   buildAnchorPayload,
+  deriveDocTitle,
   formatCommentDate,
+  stripCommentMarkers,
   validateCommentForm,
 } from "@/lib/comments-client";
 import {
@@ -42,8 +44,13 @@ interface ShareResponse {
   filename?: string;
   content?: string;
   iat?: number;
+  /** True when the server swapped to the `*.commented.<ext>` sibling. */
+  isCommentedView?: boolean;
+  /** Original (clean) brand-relative path — present when isCommentedView. */
+  originalDocPath?: string;
   error?: string;
 }
+
 
 interface PublicComment {
   id: string;
@@ -463,12 +470,7 @@ export default function SharePage() {
     }
   };
 
-  const displayTitle = data?.filename
-    ? data.filename
-        .replace(/\.(md|html|txt)$/i, "")
-        .replace(/[-_]/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase())
-    : "Documento";
+  const displayTitle = deriveDocTitle(data?.filename, data?.originalDocPath);
 
   return (
     <>
@@ -561,7 +563,7 @@ export default function SharePage() {
                   ref={articleRef}
                   className="max-w-3xl mx-auto px-6 py-8 prose prose-sm dark:prose-invert prose-headings:font-heading prose-headings:text-rust prose-a:text-rust prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs"
                 >
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.content}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{stripCommentMarkers(data.content)}</ReactMarkdown>
                 </article>
               )}
 

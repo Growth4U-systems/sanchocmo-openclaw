@@ -89,6 +89,37 @@ export function validateCommentForm(c: PendingComment): CommentFormValidation {
   return { ok: Object.keys(errors).length === 0, errors };
 }
 
+/**
+ * Strip `<!-- cmt:<id> -->` / `<!-- /cmt:<id> -->` markers from a
+ * markdown string before rendering. The markers are used server-side
+ * to locate comment blocks inside the commented file but react-markdown
+ * renders raw HTML comments as visible text — so the share viewer
+ * scrubs them before feeding the content to the renderer.
+ */
+export function stripCommentMarkers(content: string): string {
+  return content.replace(/<!--\s*\/?cmt:[^>]*?-->\s*\n?/g, "");
+}
+
+/**
+ * Derive the title shown in the share page header/title-tag from a
+ * brand-relative doc path or filename. When the server is serving the
+ * commented sibling (and exposes `originalDocPath`), we prefer the
+ * original — so the header never reads "Current.Commented".
+ */
+export function deriveDocTitle(
+  filename: string | undefined,
+  originalPath: string | undefined,
+): string {
+  const source =
+    (originalPath ? originalPath.split("/").pop() : undefined) || filename || "";
+  if (!source) return "Documento";
+  return source
+    .replace(/\.commented(\.[a-z0-9]+)?$/i, "$1")
+    .replace(/\.(md|html|txt)$/i, "")
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 /** Format an ISO date to a short relative-ish label for the UI. */
 export function formatCommentDate(iso: string): string {
   const d = new Date(iso);

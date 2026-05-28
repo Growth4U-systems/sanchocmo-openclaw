@@ -27,6 +27,7 @@ import {
   validateCommentPatch,
 } from "@/lib/comments";
 import {
+  deleteCommentedFileIfEmpty,
   getCommentedDocPath,
   removeCommentFromFile,
   updateCommentInFile,
@@ -94,13 +95,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(404).json({ error: "Comment not found" });
     }
     let fileWarning: string | null = null;
+    let commentedFileDeleted = false;
     try {
       removeCommentFromFile(BASE, commentedDocPath, idStr);
+      // If this was the last comment for the doc, drop the sibling so
+      // the share viewer falls back to serving the clean original
+      // (and the displayed filename reverts).
+      commentedFileDeleted = deleteCommentedFileIfEmpty(BASE, commentedDocPath);
     } catch (e) {
       fileWarning = e instanceof Error ? e.message : "file remove failed";
     }
     return res.status(200).json({
       ok: true,
+      commentedFileDeleted,
       ...(fileWarning ? { fileWarning } : {}),
     });
   }

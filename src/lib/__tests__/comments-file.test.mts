@@ -9,6 +9,8 @@ const {
   formatCommentBlock,
   findCommentBlockRange,
   resolveBrandDocAbsPath,
+  commentedFileHasAnyComment,
+  deleteCommentedFileIfEmpty,
 } = (mod as unknown as { default: typeof mod }).default ?? mod;
 
 test("getCommentedDocPath: adds .commented before the extension", () => {
@@ -165,6 +167,97 @@ test("findCommentBlockRange: ignores nested markers belonging to other ids", () 
   assert.ok(ra.end <= rb.start, "block A must end before block B starts");
   assert.ok(doc.slice(ra.start, ra.end).includes("alpha"));
   assert.ok(doc.slice(rb.start, rb.end).includes("beta"));
+});
+
+// commentedFileHasAnyComment / deleteCommentedFileIfEmpty round-trip via
+// temp file. These touch the FS so they live separately from the pure-fn
+// tests above.
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+function setupTempBrand(slug: string, filename: string, content: string) {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "san15-"));
+  const docDir = path.join(base, "brand", slug);
+  fs.mkdirSync(docDir, { recursive: true });
+  const docPath = `brand/${slug}/${filename}`;
+  fs.writeFileSync(path.join(base, docPath), content);
+  return { base, docPath };
+}
+
+test("commentedFileHasAnyComment: true when at least one marker present", () => {
+  const block = formatCommentBlock({
+    id: "cmt_alive",
+    author: "X",
+    createdAt: new Date("2026-05-28T10:00:00Z"),
+    body: "still here",
+  });
+  const { base, docPath } = setupTempBrand(
+    "ttest",
+    "current.commented.md",
+    `body\n\n---\n\n## Comentarios\n\n${block}`,
+  );
+  assert.equal(commentedFileHasAnyComment(base, docPath), true);
+  fs.rmSync(base, { recursive: true });
+});
+
+test("commentedFileHasAnyComment: false when no markers in file", () => {
+  const { base, docPath } = setupTempBrand(
+    "ttest",
+    "current.commented.md",
+    "just body, no comments\n",
+  );
+  assert.equal(commentedFileHasAnyComment(base, docPath), false);
+  fs.rmSync(base, { recursive: true });
+});
+
+test("commentedFileHasAnyComment: false when file does not exist", () => {
+  const { base } = setupTempBrand("ttest", "other.md", "x");
+  assert.equal(
+    commentedFileHasAnyComment(base, "brand/ttest/missing.commented.md"),
+    false,
+  );
+  fs.rmSync(base, { recursive: true });
+});
+
+test("deleteCommentedFileIfEmpty: unlinks the file when no markers remain", () => {
+  const { base, docPath } = setupTempBrand(
+    "ttest",
+    "current.commented.md",
+    "original body, no markers\n",
+  );
+  const removed = deleteCommentedFileIfEmpty(base, docPath);
+  assert.equal(removed, true);
+  assert.equal(fs.existsSync(path.join(base, docPath)), false);
+  fs.rmSync(base, { recursive: true });
+});
+
+test("deleteCommentedFileIfEmpty: leaves the file alone when markers remain", () => {
+  const block = formatCommentBlock({
+    id: "cmt_x",
+    author: "X",
+    createdAt: new Date("2026-05-28T10:00:00Z"),
+    body: "still here",
+  });
+  const { base, docPath } = setupTempBrand(
+    "ttest",
+    "current.commented.md",
+    `body\n\n---\n\n## Comentarios\n\n${block}`,
+  );
+  const removed = deleteCommentedFileIfEmpty(base, docPath);
+  assert.equal(removed, false);
+  assert.equal(fs.existsSync(path.join(base, docPath)), true);
+  fs.rmSync(base, { recursive: true });
+});
+
+test("deleteCommentedFileIfEmpty: no-op when file missing", () => {
+  const { base } = setupTempBrand("ttest", "other.md", "x");
+  const removed = deleteCommentedFileIfEmpty(
+    base,
+    "brand/ttest/missing.commented.md",
+  );
+  assert.equal(removed, false);
+  fs.rmSync(base, { recursive: true });
 });
 
 test("resolveBrandDocAbsPath: blocks path traversal", () => {
