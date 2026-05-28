@@ -19,7 +19,7 @@ context_writes: []
 |---|------------|-------|-----------|
 | 1 | `01 📋 Fast Foundation` | fast-foundation | Intake rápido (~30 min): URL → Company Brief + Self L1 + Market L1 + Brand Voice Snapshot + Niche básico. |
 
-### 📊 FULL FOUNDATION — RESEARCH (Layer 1 — requires: Fast Foundation)
+### 📊 FULL FOUNDATION — RESEARCH (Layer 1 — sin dependencias; Fast Foundation enriquece si está approved)
 
 | # | Thread Name | Skill | Objective |
 |---|------------|-------|-----------|
