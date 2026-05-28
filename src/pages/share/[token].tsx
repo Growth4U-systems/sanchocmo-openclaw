@@ -2,19 +2,23 @@
  * /share/[token] — Public document viewer with comments (SAN-15).
  *
  * Unauthenticated. Renders any document whose share token validates.
- * Layout: minimal header (filename + brand) + content area (markdown or
- * HTML iframe) + inline comments list. No DashboardLayout, no auth guard.
+ * Layout: minimal header + content area (markdown or HTML iframe) +
+ * comments list below the doc.
  *
- * Comment UX:
- *  - Markdown: select text → floating "Comentar" button appears → click
- *    opens form with selection captured as the anchor.
- *  - HTML: iframe sandbox blocks selection forwarding to parent, so
- *    instead a "Comentar" button in the header opens a doc-level form
- *    (no anchor).
- *  - Below the doc: list of existing comments with the anchor quoted.
+ * Comment UX (markdown):
+ *  - Select text → floating "Comentar" button → form modal with anchor.
+ *  - Anchored comments render inline as yellow-highlighted spans in the doc.
+ *  - Hover an anchor mark → tooltip with author + body snippet.
+ *  - Click an anchor mark (or a comment in the list) → detail modal with
+ *    full body + full anchor context.
+ *  - Edit/Delete in the detail modal, ONLY for comments whose id is in
+ *    localStorage on this browser (the commenter's own browser).
+ *
+ * HTML docs: the iframe sandbox blocks selection forwarding to parent, so
+ * only the header "Comentar" button (whole-doc, no anchor) is offered.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import ReactMarkdown from "react-markdown";
@@ -25,6 +29,11 @@ import {
   formatCommentDate,
   validateCommentForm,
 } from "@/lib/comments-client";
+import {
+  isMyComment,
+  markCommentAsMine,
+  unmarkCommentAsMine,
+} from "@/lib/comments-ownership";
 
 interface ShareResponse {
   ok: boolean;
@@ -81,6 +90,21 @@ const EMPTY_FORM: FormState = {
   submitError: null,
 };
 
+interface HoverTooltip {
+  comment: PublicComment;
+  top: number;
+  left: number;
+}
+
+interface DetailState {
+  comment: PublicComment;
+  editing: boolean;
+  editBody: string;
+  saving: boolean;
+  deleting: boolean;
+  saveError: string | null;
+}
+
 export default function SharePage() {
   const router = useRouter();
   const { token } = router.query;
@@ -94,10 +118,19 @@ export default function SharePage() {
 
   const [popup, setPopup] = useState<SelectionPopup | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [tooltip, setTooltip] = useState<HoverTooltip | null>(null);
+  const [detail, setDetail] = useState<DetailState | null>(null);
 
   const articleRef = useRef<HTMLElement | null>(null);
+  const tooltipHideTimer = useRef<number | null>(null);
 
   const tokenStr = typeof token === "string" ? token : "";
+
+  const commentsById = useMemo(() => {
+    const m = new Map<string, PublicComment>();
+    for (const c of comments) m.set(c.id, c);
+    return m;
+  }, [comments]);
 
   // Fetch the document.
   useEffect(() => {
@@ -167,14 +200,12 @@ export default function SharePage() {
       }
       const article = articleRef.current;
       if (!article) return;
-      // Only show popup if the selection is inside our article.
       const range = sel.getRangeAt(0);
       if (!article.contains(range.commonAncestorContainer)) {
         setPopup(null);
         return;
       }
       const rect = range.getBoundingClientRect();
-      // position: fixed coords are viewport-relative — do NOT add scrollY/X.
       setPopup({
         top: Math.max(8, rect.top - 40),
         left: rect.left + rect.width / 2,
@@ -183,9 +214,6 @@ export default function SharePage() {
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-      // Don't dismiss the popup if the user is clicking the popup itself.
-      // The native document listener fires after React's onMouseDown bubble
-      // path; checking the target via `closest` works for nested children too.
       const target = e.target as Element | null;
       if (target && target.closest?.("[data-comment-popup]")) {
         return;
@@ -201,6 +229,88 @@ export default function SharePage() {
     };
   }, [data, isHtml]);
 
+  // Inject inline anchor highlights once the article is rendered.
+  useEffect(() => {
+    const article = articleRef.current;
+    if (!article || !data?.content || isHtml || comments.length === 0) return;
+
+    const inserted: HTMLSpanElement[] = [];
+    for (const c of comments) {
+      if (!c.anchorText) continue;
+      injectAnchor(article, c.anchorText, c.id, inserted);
+    }
+
+    return () => {
+      for (const span of inserted) {
+        const parent = span.parentNode;
+        if (!parent) continue;
+        const text = document.createTextNode(span.textContent ?? "");
+        parent.replaceChild(text, span);
+      }
+      // Merge adjacent text nodes after un-wrapping.
+      try {
+        article.normalize?.();
+      } catch {
+        // ignore — best-effort cleanup
+      }
+    };
+  }, [data?.content, comments, isHtml]);
+
+  // Hover/click delegation on the article: tooltip on mouseenter,
+  // detail modal on click. Bound once per article render.
+  useEffect(() => {
+    const article = articleRef.current;
+    if (!article || isHtml) return;
+
+    const onOver = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      const span = target?.closest?.(".comment-anchor") as HTMLElement | null;
+      if (!span) return;
+      const id = span.dataset.cmtId ?? "";
+      const c = commentsById.get(id);
+      if (!c) return;
+      if (tooltipHideTimer.current) {
+        window.clearTimeout(tooltipHideTimer.current);
+        tooltipHideTimer.current = null;
+      }
+      const rect = span.getBoundingClientRect();
+      setTooltip({
+        comment: c,
+        top: rect.bottom + 8,
+        left: rect.left + rect.width / 2,
+      });
+    };
+
+    const onOut = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      const span = target?.closest?.(".comment-anchor");
+      if (!span) return;
+      if (tooltipHideTimer.current) window.clearTimeout(tooltipHideTimer.current);
+      tooltipHideTimer.current = window.setTimeout(() => setTooltip(null), 120);
+    };
+
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      const span = target?.closest?.(".comment-anchor") as HTMLElement | null;
+      if (!span) return;
+      e.preventDefault();
+      const id = span.dataset.cmtId ?? "";
+      const c = commentsById.get(id);
+      if (!c) return;
+      setTooltip(null);
+      openDetail(c);
+    };
+
+    article.addEventListener("mouseover", onOver);
+    article.addEventListener("mouseout", onOut);
+    article.addEventListener("click", onClick);
+    return () => {
+      article.removeEventListener("mouseover", onOver);
+      article.removeEventListener("mouseout", onOut);
+      article.removeEventListener("click", onClick);
+    };
+  }, [commentsById, isHtml]);
+
   const openFormFromSelection = () => {
     if (!popup || !data?.content) return;
     const anchor = buildAnchorPayload(data.content, popup.text);
@@ -213,6 +323,18 @@ export default function SharePage() {
   };
 
   const closeForm = () => setForm(EMPTY_FORM);
+
+  const openDetail = (c: PublicComment) =>
+    setDetail({
+      comment: c,
+      editing: false,
+      editBody: c.body,
+      saving: false,
+      deleting: false,
+      saveError: null,
+    });
+
+  const closeDetail = () => setDetail(null);
 
   const submitComment = async () => {
     const v = validateCommentForm({
@@ -248,6 +370,7 @@ export default function SharePage() {
         }));
         return;
       }
+      markCommentAsMine(body.id);
       closeForm();
       await fetchComments();
     } catch (e) {
@@ -256,6 +379,87 @@ export default function SharePage() {
         submitting: false,
         submitError: e instanceof Error ? e.message : "Error de red",
       }));
+    }
+  };
+
+  const saveEdit = async () => {
+    if (!detail) return;
+    const newBody = detail.editBody.trim();
+    if (!newBody) {
+      setDetail({ ...detail, saveError: "El comentario no puede estar vacío" });
+      return;
+    }
+    setDetail({ ...detail, saving: true, saveError: null });
+    try {
+      const res = await fetch(
+        `/api/share/${tokenStr}/comments/${detail.comment.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ body: newBody }),
+        },
+      );
+      const body = await res.json();
+      if (res.status !== 200 || !body.ok) {
+        setDetail((d) =>
+          d ? { ...d, saving: false, saveError: body.error || `HTTP ${res.status}` } : d,
+        );
+        return;
+      }
+      await fetchComments();
+      setDetail((d) =>
+        d
+          ? {
+              ...d,
+              editing: false,
+              editBody: newBody,
+              saving: false,
+              comment: { ...d.comment, body: newBody },
+            }
+          : d,
+      );
+    } catch (e) {
+      setDetail((d) =>
+        d
+          ? {
+              ...d,
+              saving: false,
+              saveError: e instanceof Error ? e.message : "Error de red",
+            }
+          : d,
+      );
+    }
+  };
+
+  const deleteCurrent = async () => {
+    if (!detail) return;
+    if (typeof window !== "undefined" && !window.confirm("¿Borrar este comentario?")) return;
+    setDetail({ ...detail, deleting: true, saveError: null });
+    try {
+      const res = await fetch(
+        `/api/share/${tokenStr}/comments/${detail.comment.id}`,
+        { method: "DELETE" },
+      );
+      const body = await res.json();
+      if (res.status !== 200 || !body.ok) {
+        setDetail((d) =>
+          d ? { ...d, deleting: false, saveError: body.error || `HTTP ${res.status}` } : d,
+        );
+        return;
+      }
+      unmarkCommentAsMine(detail.comment.id);
+      closeDetail();
+      await fetchComments();
+    } catch (e) {
+      setDetail((d) =>
+        d
+          ? {
+              ...d,
+              deleting: false,
+              saveError: e instanceof Error ? e.message : "Error de red",
+            }
+          : d,
+      );
     }
   };
 
@@ -272,6 +476,26 @@ export default function SharePage() {
         <title>{displayTitle} — Shared Document</title>
         <meta name="robots" content="noindex,nofollow" />
       </Head>
+      <style jsx global>{`
+        .comment-anchor {
+          background-color: rgba(255, 235, 59, 0.45);
+          border-bottom: 1px dotted rgba(180, 130, 0, 0.7);
+          cursor: pointer;
+          padding: 0 1px;
+          border-radius: 2px;
+          transition: background-color 120ms ease;
+        }
+        .comment-anchor:hover {
+          background-color: rgba(255, 200, 0, 0.65);
+        }
+        .dark .comment-anchor {
+          background-color: rgba(255, 220, 100, 0.25);
+          border-bottom-color: rgba(255, 220, 100, 0.6);
+        }
+        .dark .comment-anchor:hover {
+          background-color: rgba(255, 220, 100, 0.4);
+        }
+      `}</style>
 
       <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#1E1E2E] flex flex-col">
         <header className="bg-white dark:bg-[#181825] border-b border-[#E5E2DC] dark:border-[#313244] px-6 py-3 flex items-center gap-3">
@@ -345,6 +569,7 @@ export default function SharePage() {
                 comments={comments}
                 loading={commentsLoading}
                 error={commentsError}
+                onOpen={openDetail}
               />
             </>
           )}
@@ -372,6 +597,30 @@ export default function SharePage() {
         </button>
       )}
 
+      {tooltip && !detail && (
+        <div
+          className="fixed z-40 max-w-xs px-3 py-2 bg-[#1A1A1A] text-white text-[11px] rounded-md shadow-lg pointer-events-none"
+          style={{
+            top: tooltip.top,
+            left: tooltip.left,
+            transform: "translateX(-50%)",
+          }}
+        >
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <span className="font-bold">{tooltip.comment.author}</span>
+            <span className="opacity-70 text-[10px]">
+              {formatCommentDate(tooltip.comment.createdAt)}
+            </span>
+          </div>
+          <p className="whitespace-pre-wrap break-words">
+            {tooltip.comment.body.length > 200
+              ? tooltip.comment.body.slice(0, 200) + "…"
+              : tooltip.comment.body}
+          </p>
+          <p className="mt-1 text-[10px] opacity-60 italic">Click para ver detalle</p>
+        </div>
+      )}
+
       {form.open && (
         <CommentFormModal
           form={form}
@@ -380,27 +629,83 @@ export default function SharePage() {
           onSubmit={submitComment}
         />
       )}
+
+      {detail && (
+        <CommentDetailModal
+          state={detail}
+          onChange={(patch) => setDetail((d) => (d ? { ...d, ...patch } : d))}
+          onClose={closeDetail}
+          onSave={saveEdit}
+          onDelete={deleteCurrent}
+        />
+      )}
     </>
   );
+}
+
+/**
+ * Walk text nodes inside `article` and wrap the first occurrence of
+ * `anchorText` with a span. The span is pushed into `inserted` so the
+ * effect can unwrap it on cleanup. Multiple comments anchoring the same
+ * string overlap onto a single span (we skip text already inside a
+ * comment-anchor to avoid nesting), so the first comment "wins" the
+ * mark; the other comments are still visible in the comments list and
+ * detail modal via the shared anchor.
+ */
+function injectAnchor(
+  article: HTMLElement,
+  anchorText: string,
+  commentId: string,
+  inserted: HTMLSpanElement[],
+): void {
+  if (!anchorText) return;
+  const walker = document.createTreeWalker(article, NodeFilter.SHOW_TEXT);
+  let node: Node | null = walker.nextNode();
+  while (node) {
+    const text = node as Text;
+    const parent = text.parentNode as HTMLElement | null;
+    if (!parent || parent.closest?.(".comment-anchor")) {
+      node = walker.nextNode();
+      continue;
+    }
+    const value = text.nodeValue ?? "";
+    const idx = value.indexOf(anchorText);
+    if (idx < 0) {
+      node = walker.nextNode();
+      continue;
+    }
+    const before = value.slice(0, idx);
+    const after = value.slice(idx + anchorText.length);
+    const span = document.createElement("span");
+    span.className = "comment-anchor";
+    span.dataset.cmtId = commentId;
+    span.textContent = anchorText;
+    if (before) parent.insertBefore(document.createTextNode(before), text);
+    parent.insertBefore(span, text);
+    if (after) parent.insertBefore(document.createTextNode(after), text);
+    parent.removeChild(text);
+    inserted.push(span);
+    return;
+  }
 }
 
 function CommentsSection({
   comments,
   loading,
   error,
+  onOpen,
 }: {
   comments: PublicComment[];
   loading: boolean;
   error: string | null;
+  onOpen: (c: PublicComment) => void;
 }) {
   return (
     <section className="max-w-3xl mx-auto px-6 pb-12 pt-2">
       <h2 className="text-sm font-bold text-[#1A1A1A] dark:text-[#cdd6f4] mb-3 border-t border-[#E5E2DC] dark:border-[#313244] pt-6">
         Comentarios{comments.length > 0 && ` (${comments.length})`}
       </h2>
-      {loading && (
-        <p className="text-xs text-muted-foreground">Cargando comentarios...</p>
-      )}
+      {loading && <p className="text-xs text-muted-foreground">Cargando comentarios...</p>}
       {error && !loading && (
         <p className="text-xs text-red-500">No se pudieron cargar los comentarios: {error}</p>
       )}
@@ -413,11 +718,15 @@ function CommentsSection({
         {comments.map((c) => (
           <li
             key={c.id}
-            className="bg-white dark:bg-[#181825] border border-[#E5E2DC] dark:border-[#313244] rounded-md p-3"
+            onClick={() => onOpen(c)}
+            className="bg-white dark:bg-[#181825] border border-[#E5E2DC] dark:border-[#313244] rounded-md p-3 cursor-pointer hover:border-rust transition-colors"
           >
             <div className="flex items-center justify-between gap-2 mb-1">
               <span className="text-[12px] font-bold text-[#1A1A1A] dark:text-[#cdd6f4]">
                 {c.author}
+                {isMyComment(c.id) && (
+                  <span className="ml-1 text-[10px] font-normal text-rust">(tuyo)</span>
+                )}
               </span>
               <span className="text-[10px] text-muted-foreground">
                 {formatCommentDate(c.createdAt)}
@@ -428,7 +737,7 @@ function CommentsSection({
                 "{c.anchorText.length > 200 ? c.anchorText.slice(0, 200) + "…" : c.anchorText}"
               </blockquote>
             )}
-            <p className="text-[12px] text-[#1A1A1A] dark:text-[#cdd6f4] whitespace-pre-wrap">
+            <p className="text-[12px] text-[#1A1A1A] dark:text-[#cdd6f4] whitespace-pre-wrap line-clamp-3">
               {c.body}
             </p>
           </li>
@@ -543,6 +852,127 @@ function CommentFormModal({
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function CommentDetailModal({
+  state,
+  onChange,
+  onClose,
+  onSave,
+  onDelete,
+}: {
+  state: DetailState;
+  onChange: (patch: Partial<DetailState>) => void;
+  onClose: () => void;
+  onSave: () => void;
+  onDelete: () => void;
+}) {
+  const c = state.comment;
+  const owned = isMyComment(c.id);
+  const busy = state.saving || state.deleting;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-[#181825] rounded-lg shadow-xl max-w-lg w-full p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div>
+            <h2 className="text-sm font-bold text-[#1A1A1A] dark:text-[#cdd6f4]">
+              {c.author}
+              {owned && (
+                <span className="ml-2 text-[10px] font-normal text-rust">(tuyo)</span>
+              )}
+            </h2>
+            <p className="text-[10px] text-muted-foreground">
+              {formatCommentDate(c.createdAt)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            aria-label="Cerrar"
+            className="text-xl text-muted-foreground hover:text-[#1A1A1A] dark:hover:text-[#cdd6f4] disabled:opacity-50"
+          >
+            ×
+          </button>
+        </div>
+
+        {c.anchorText && (
+          <blockquote className="text-[11px] text-muted-foreground border-l-2 border-rust pl-2 mb-3 italic whitespace-pre-wrap">
+            "{c.anchorText}"
+          </blockquote>
+        )}
+
+        {state.editing ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={state.editBody}
+              onChange={(e) => onChange({ editBody: e.target.value })}
+              maxLength={5000}
+              rows={6}
+              className="w-full px-2 py-1.5 text-[12px] bg-transparent border border-[#E5E2DC] dark:border-[#313244] rounded text-[#1A1A1A] dark:text-[#cdd6f4] resize-y"
+            />
+            {state.saveError && (
+              <p className="text-[11px] text-red-500">{state.saveError}</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => onChange({ editing: false, editBody: c.body, saveError: null })}
+                disabled={busy}
+                className="px-3 py-1.5 text-[12px] bg-transparent border border-[#E5E2DC] dark:border-[#313244] rounded-md text-[#7A7A7A] dark:text-[#6c7086] hover:bg-[#E5E2DC] dark:hover:bg-[#313244] transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={busy}
+                className="px-3 py-1.5 text-[12px] bg-[#1A1A1A] text-white rounded-md hover:bg-[#333] transition-colors disabled:opacity-50"
+              >
+                {state.saving ? "Guardando..." : "Guardar"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-[13px] text-[#1A1A1A] dark:text-[#cdd6f4] whitespace-pre-wrap mb-4">
+              {c.body}
+            </p>
+            {state.saveError && (
+              <p className="text-[11px] text-red-500 mb-2">{state.saveError}</p>
+            )}
+            {owned && (
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  disabled={busy}
+                  className="px-3 py-1.5 text-[12px] bg-transparent border border-red-500/50 rounded-md text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                >
+                  {state.deleting ? "Borrando..." : "Borrar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange({ editing: true, editBody: c.body, saveError: null })}
+                  disabled={busy}
+                  className="px-3 py-1.5 text-[12px] bg-[#1A1A1A] text-white rounded-md hover:bg-[#333] transition-colors disabled:opacity-50"
+                >
+                  Editar
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
