@@ -453,3 +453,24 @@ export const tasks = pgTable("tasks", {
   index("tasks_brand_pillar_idx").on(table.brandSlug, table.pillar),
   index("tasks_idea_id_idx").on(table.ideaId),
 ]);
+
+// ============================================================
+// Shared Document Comments (SAN-15)
+// ============================================================
+
+export const sharedDocComments = pgTable("shared_doc_comments", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  docPath: text("doc_path").notNull(),
+  docVersion: integer("doc_version"),
+  author: text("author").notNull(),
+  email: text("email"),
+  body: text("body").notNull(),
+  anchorText: text("anchor_text"),
+  anchorContext: text("anchor_context"),
+  anchorDocOffset: integer("anchor_doc_offset"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("shared_doc_comments_slug_idx").on(table.slug),
+  index("shared_doc_comments_slug_doc_idx").on(table.slug, table.docPath, table.createdAt),
+]);
