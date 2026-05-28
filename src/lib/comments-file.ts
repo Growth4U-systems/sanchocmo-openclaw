@@ -247,3 +247,38 @@ export function removeCommentFromFile(
   const next = content.slice(0, range.start) + content.slice(range.end);
   fs.writeFileSync(abs, next);
 }
+
+/**
+ * Detect whether the commented file still holds at least one comment
+ * block. Uses a simple substring scan for `<!-- cmt:` — fast and good
+ * enough since the marker is unique to this feature.
+ */
+export function commentedFileHasAnyComment(
+  base: string,
+  commentedDocPath: string,
+): boolean {
+  const abs = resolveBrandDocAbsPath(base, commentedDocPath);
+  if (!fs.existsSync(abs)) return false;
+  const content = fs.readFileSync(abs, "utf-8");
+  return content.includes("<!-- cmt:");
+}
+
+/**
+ * Remove the commented sibling file if it no longer holds any
+ * comments. Returns true when the file was unlinked. No-op if the
+ * file doesn't exist or still has comments.
+ *
+ * Used after a DELETE op: when the last comment goes away, the
+ * sibling is no longer needed and the share viewer should fall back
+ * transparently to the clean original.
+ */
+export function deleteCommentedFileIfEmpty(
+  base: string,
+  commentedDocPath: string,
+): boolean {
+  const abs = resolveBrandDocAbsPath(base, commentedDocPath);
+  if (!fs.existsSync(abs)) return false;
+  if (commentedFileHasAnyComment(base, commentedDocPath)) return false;
+  fs.unlinkSync(abs);
+  return true;
+}

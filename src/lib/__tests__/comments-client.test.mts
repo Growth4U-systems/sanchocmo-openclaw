@@ -7,6 +7,8 @@ const {
   buildAnchorPayload,
   validateCommentForm,
   formatCommentDate,
+  deriveDocTitle,
+  stripCommentMarkers,
   EMAIL_RE,
 } = (mod as unknown as { default: typeof mod }).default ?? mod;
 
@@ -161,4 +163,60 @@ test("formatCommentDate falls back to date for older", () => {
 
 test("formatCommentDate returns input for non-date string", () => {
   assert.equal(formatCommentDate("not a date"), "not a date");
+});
+
+test("stripCommentMarkers: removes start + end cmt markers", () => {
+  const md = "foo\n<!-- cmt:cmt_abc -->\nbody\n<!-- /cmt:cmt_abc -->\nbar";
+  const out = stripCommentMarkers(md);
+  assert.equal(out.includes("<!-- cmt:"), false);
+  assert.equal(out.includes("body"), true);
+  assert.equal(out.includes("foo"), true);
+  assert.equal(out.includes("bar"), true);
+});
+
+test("stripCommentMarkers: tolerates whitespace inside the marker", () => {
+  const md = "<!--  cmt:cmt_x  -->\nbody\n<!-- /cmt:cmt_x -->";
+  const out = stripCommentMarkers(md);
+  assert.equal(out.includes("cmt:"), false);
+});
+
+test("stripCommentMarkers: leaves unrelated HTML comments intact", () => {
+  const md = "<!-- TODO finish this -->\ntext";
+  const out = stripCommentMarkers(md);
+  assert.equal(out.includes("<!-- TODO finish this -->"), true);
+});
+
+test("stripCommentMarkers: handles multiple markers in a single string", () => {
+  const md = "<!-- cmt:a -->A<!-- /cmt:a --><!-- cmt:b -->B<!-- /cmt:b -->";
+  const out = stripCommentMarkers(md);
+  assert.equal(out, "AB");
+});
+
+test("deriveDocTitle: uses originalDocPath when provided (strips .commented)", () => {
+  assert.equal(
+    deriveDocTitle("current.commented.md", "brand/x/y/current.md"),
+    "Current",
+  );
+});
+
+test("deriveDocTitle: strips .commented from filename when no originalDocPath", () => {
+  assert.equal(deriveDocTitle("current.commented.md", undefined), "Current");
+});
+
+test("deriveDocTitle: plain markdown filename", () => {
+  assert.equal(deriveDocTitle("foundation-report.md", undefined), "Foundation Report");
+});
+
+test("deriveDocTitle: title-cases each word + replaces hyphens/underscores", () => {
+  assert.equal(deriveDocTitle("market-and-us_overview.md", undefined), "Market And Us Overview");
+});
+
+test("deriveDocTitle: HTML/txt extensions also stripped", () => {
+  assert.equal(deriveDocTitle("foo.commented.html", undefined), "Foo");
+  assert.equal(deriveDocTitle("notes.txt", undefined), "Notes");
+});
+
+test("deriveDocTitle: falls back to 'Documento' when both inputs are empty", () => {
+  assert.equal(deriveDocTitle(undefined, undefined), "Documento");
+  assert.equal(deriveDocTitle("", ""), "Documento");
 });
