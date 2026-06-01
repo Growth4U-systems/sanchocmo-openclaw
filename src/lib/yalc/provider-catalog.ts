@@ -77,9 +77,17 @@ export function mergeYalcProvidersIntoCatalog(
   knowledge: YalcKnowledgePayload,
 ): ApiCatalog {
   const categories = { ...(catalog.categories || {}) };
+  const existingApiIds = new Set<string>();
   const yalcApis: Record<string, ApiCatalogEntry> = {};
 
+  for (const category of Object.values(categories)) {
+    for (const apiId of Object.keys(category.apis || {})) {
+      existingApiIds.add(apiId);
+    }
+  }
+
   for (const provider of knowledge.providers || []) {
+    if (existingApiIds.has(provider.id)) continue;
     const entry = yalcProviderToCatalogEntry(provider);
     if (entry) yalcApis[entry.id] = entry;
   }
@@ -116,8 +124,8 @@ export function yalcProviderToCatalogEntry(
 
   return {
     id: apiId,
-    name: `${displayName} (YALC)`,
-    provider: `${displayName} (YALC)`,
+    name: displayName,
+    provider: displayName,
     description,
     desc: description,
     icon: "🧭",

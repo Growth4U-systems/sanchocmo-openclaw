@@ -36,7 +36,7 @@ test("mergeYalcProvidersIntoCatalog adds env vars as sensitive credential fields
   );
 
   const entry = catalog.categories.yalc_providers.apis["yalc-provider:instantly"];
-  assert.equal(entry.provider, "Instantly (YALC)");
+  assert.equal(entry.provider, "Instantly");
   assert.equal(entry.ownership, "client");
   assert.equal(entry.docsUrl, "https://developer.instantly.ai");
   assert.deepEqual(entry.credentials, [
@@ -50,4 +50,54 @@ test("mergeYalcProvidersIntoCatalog adds env vars as sensitive credential fields
       placeholder: "ist_xxx",
     },
   ]);
+});
+
+test("mergeYalcProvidersIntoCatalog skips providers already present in Sancho catalog", () => {
+  const catalog = mergeYalcProvidersIntoCatalog(
+    {
+      categories: {
+        outbound: {
+          label: "Outbound",
+          apis: {
+            instantly: {
+              id: "instantly",
+              name: "Instantly",
+              provider: "Instantly",
+              description: "Cold email sequencer",
+              desc: "Cold email sequencer",
+              icon: "mail",
+              ownership: "client",
+              authType: "api_key",
+              credentials: [],
+              config: [],
+            },
+          },
+        },
+      },
+    },
+    {
+      providers: [
+        {
+          id: "instantly",
+          display_name: "Instantly",
+          env_vars: [{ name: "INSTANTLY_API_KEY", required: true }],
+        },
+        {
+          id: "predictleads",
+          display_name: "PredictLeads",
+          env_vars: [{ name: "PREDICTLEADS_API_KEY", required: true }],
+        },
+      ],
+    },
+  );
+
+  assert.equal(catalog.categories.outbound.apis.instantly.provider, "Instantly");
+  assert.equal(
+    catalog.categories.yalc_providers.apis["yalc-provider:instantly"],
+    undefined,
+  );
+  assert.equal(
+    catalog.categories.yalc_providers.apis["yalc-provider:predictleads"].provider,
+    "PredictLeads",
+  );
 });
