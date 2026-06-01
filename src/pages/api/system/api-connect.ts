@@ -226,7 +226,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
         cwd: scriptDir,
         timeout: 30_000,
         encoding: "utf-8",
-        env: { ...process.env, PATH: process.env.PATH },
+        env: { ...process.env, MC_WORKSPACE: BASE, PATH: process.env.PATH },
       }
     );
 
