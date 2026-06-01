@@ -381,7 +381,7 @@ function writeYalcIntegrationState(
   const prev = integrations.dataSources[apiId] || {};
   integrations.dataSources[apiId] = {
     ...prev,
-    provider: `${provider} (YALC)`,
+    provider,
     status: patch.status,
     lastTestedAt: new Date().toISOString(),
     lastError: patch.lastError ?? null,
