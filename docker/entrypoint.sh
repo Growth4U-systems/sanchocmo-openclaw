@@ -129,12 +129,23 @@ if [ -d "$MC_CHAT_PLUGIN" ]; then
   fi
   # Ensure channel config and binding exist
   python3 -c "
-import json, sys
+import json, os, sys
 f='$OPENCLAW_CONFIG'
 c=json.load(open(f))
 changed=False
-if 'mc-chat' not in c.get('channels',{}):
-    c.setdefault('channels',{})['mc-chat']={'enabled':True,'mcServerUrl':'http://localhost:18790'}
+channel=c.setdefault('channels',{}).setdefault('mc-chat',{})
+if channel.get('enabled') is not True:
+    channel['enabled']=True
+    changed=True
+if not channel.get('mcServerUrl'):
+    channel['mcServerUrl']='http://localhost:18790'
+    changed=True
+secret=os.environ.get('MC_CHAT_SECRET') or ''
+if secret and channel.get('sharedSecret') != secret:
+    channel['sharedSecret']=secret
+    changed=True
+elif not secret and 'sharedSecret' in channel:
+    del channel['sharedSecret']
     changed=True
 if not any(b.get('match',{}).get('channel')=='mc-chat' for b in c.get('bindings',[])):
     c.setdefault('bindings',[]).append({'agentId':'sancho','match':{'channel':'mc-chat'}})
