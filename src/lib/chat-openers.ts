@@ -312,6 +312,10 @@ export function resolveFullThreadConfig(
     ? threadId.slice(slug.length + 1)
     : threadId;
 
+  if (shortId === "yalc") {
+    return buildYalcThread(slug);
+  }
+
   // ── O(1) lookup: find the task that owns this thread ─────────
   const entry = taskIndex.get(shortId) ||
     // Also try suffix match for compound pillars (e.g. "content-system-seekers-content-strategy")
