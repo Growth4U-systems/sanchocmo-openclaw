@@ -46,7 +46,7 @@ declare -A AGENT_MODELS=(
   ["mambrino"]="anthropic/claude-sonnet-4-6"
   ["merlin"]="anthropic/claude-opus-4-7"
   ["sanson"]="anthropic/claude-opus-4-7"
-  ["yalc"]="codex/gpt-5.5"
+  ["yalc"]="anthropic/claude-sonnet-4-6"
 )
 
 for AGENT_NAME in sancho escudero cervantes hamete dulcinea rocinante mambrino merlin sanson yalc; do
@@ -103,7 +103,7 @@ default_models = {
     "mambrino": "anthropic/claude-sonnet-4-6",
     "merlin": "anthropic/claude-opus-4-7",
     "sanson": "anthropic/claude-opus-4-7",
-    "yalc": "codex/gpt-5.5",
+    "yalc": "anthropic/claude-sonnet-4-6",
 }
 
 try:
