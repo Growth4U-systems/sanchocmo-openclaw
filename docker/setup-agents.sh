@@ -46,7 +46,7 @@ declare -A AGENT_MODELS=(
   ["mambrino"]="anthropic/claude-sonnet-4-6"
   ["merlin"]="anthropic/claude-opus-4-7"
   ["sanson"]="anthropic/claude-opus-4-7"
-  ["yalc"]="codex/gpt-5.4"
+  ["yalc"]="codex/gpt-5.5"
 )
 
 for AGENT_NAME in sancho escudero cervantes hamete dulcinea rocinante mambrino merlin sanson yalc; do
@@ -103,7 +103,7 @@ default_models = {
     "mambrino": "anthropic/claude-sonnet-4-6",
     "merlin": "anthropic/claude-opus-4-7",
     "sanson": "anthropic/claude-opus-4-7",
-    "yalc": "codex/gpt-5.4",
+    "yalc": "codex/gpt-5.5",
 }
 
 try:
@@ -117,7 +117,7 @@ for agent in agents:
     if not isinstance(agent, dict):
         continue
     agent_id = agent.get("id")
-    if agent_id in default_models and not agent.get("model"):
+    if agent_id in default_models and (not agent.get("model") or agent_id == "yalc"):
         agent["model"] = default_models[agent_id]
         changed.append(agent_id)
 
