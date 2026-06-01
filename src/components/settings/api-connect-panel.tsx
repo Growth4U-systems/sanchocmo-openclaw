@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, type ReactNode } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { ConnectedAccountsInfo } from "@/components/settings/ConnectedAccountsInfo";
+import { isYalcProviderApiId } from "@/lib/yalc/provider-catalog";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -24,8 +25,11 @@ interface ApiConnectPanelProps {
 interface ApiCatalogEntry {
   id: string;
   name: string;
+  provider?: string;
   description?: string;
+  desc?: string;
   docsUrl?: string;
+  docs?: string;
   credentials?: CredentialField[];
   config?: CredentialField[];
   ownership?: "system" | "client";
@@ -95,19 +99,21 @@ const DIFFICULTY_CONFIG: Record<string, { bg: string; text: string }> = {
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export function ApiConnectPanel({ slug, apiId, onClose, topAccessory }: ApiConnectPanelProps) {
+export function ApiConnectPanel({ slug, apiId, topAccessory }: ApiConnectPanelProps) {
   /* ----- State ----- */
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   const [allExpanded, setAllExpanded] = useState(false);
   const [connectResult, setConnectResult] = useState<ConnectResult | null>(null);
+  const isYalcProvider = isYalcProviderApiId(apiId);
 
   /* ----- Fetch API catalog ----- */
-  const { data: catalogData } = useQuery<{ categories: Record<string, { apis: ApiCatalogEntry[] }> }>({
-    queryKey: ["system", "api-catalog"],
+  const { data: catalogData } = useQuery<{ categories: Record<string, { apis: Record<string, ApiCatalogEntry> }> }>({
+    queryKey: ["system", "api-catalog", slug],
     queryFn: async () => {
-      const res = await fetch("/api/system/api-catalog");
+      const url = slug ? `/api/system/api-catalog?slug=${encodeURIComponent(slug)}` : "/api/system/api-catalog";
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to load catalog");
       return res.json();
     },
@@ -118,7 +124,7 @@ export function ApiConnectPanel({ slug, apiId, onClose, topAccessory }: ApiConne
     if (!catalogData?.categories) return null;
     for (const cat of Object.values(catalogData.categories)) {
       const apis = cat.apis || {};
-      if (apiId in apis) return (apis as unknown as Record<string, ApiCatalogEntry>)[apiId];
+      if (apiId in apis) return apis[apiId];
     }
     return null;
   }, [catalogData, apiId]);
@@ -127,7 +133,9 @@ export function ApiConnectPanel({ slug, apiId, onClose, topAccessory }: ApiConne
   const { data: statusData, isLoading: statusLoading } = useQuery<ApiStatus>({
     queryKey: ["system", "api-connect", slug, apiId],
     queryFn: async () => {
-      const res = await fetch(`/api/system/api-connect?slug=${slug}&apiId=${apiId}`);
+      const res = await fetch(
+        `/api/system/api-connect?slug=${encodeURIComponent(slug)}&apiId=${encodeURIComponent(apiId)}`,
+      );
       if (!res.ok) throw new Error("Failed to load status");
       return res.json();
     },
@@ -438,7 +446,7 @@ export function ApiConnectPanel({ slug, apiId, onClose, topAccessory }: ApiConne
                 disabled={connectMutation.isPending}
                 className="px-4 py-2 bg-gradient-to-br from-rust to-[#D4734F] text-white border-2 border-ink rounded-lg text-sm font-bold shadow-comic cursor-pointer hover:opacity-90 disabled:opacity-50 transition-opacity"
               >
-                {connectMutation.isPending ? "Conectando..." : "Conectar y testear"}
+                {connectMutation.isPending ? "Conectando..." : isYalcProvider ? "Guardar en YALC y testear" : "Conectar y testear"}
               </button>
               <button
                 onClick={() => connectMutation.mutate({ testOnly: true })}
@@ -483,7 +491,9 @@ export function ApiConnectPanel({ slug, apiId, onClose, topAccessory }: ApiConne
 
       {/* ---- Security footer ---- */}
       <p className="text-[11px] text-muted-foreground text-center">
-        Las credenciales se guardan en brand/{slug}/.env
+        {isYalcProvider
+          ? "Las credenciales se sincronizan con YALC desde Sancho. Sancho solo conserva el estado de conexion."
+          : `Las credenciales se guardan en brand/${slug}/.env`}
       </p>
     </div>
   );

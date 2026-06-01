@@ -7,6 +7,7 @@ import { ComicCard } from "@/components/shared/comic-card";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
 import { useAppStore } from "@/stores/app";
 import { cn } from "@/lib/utils";
+import { isYalcProviderApiId } from "@/lib/yalc/provider-catalog";
 
 interface ApiHealth {
   lastCheck: string | null;
@@ -94,7 +95,13 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
   const handleSingleCheck = async (serviceId: string) => {
     setCheckingService(serviceId);
     try {
-      const res = await fetch(`/api/system/health-check-all?service=${serviceId}`);
+      const res = isYalcProviderApiId(serviceId) && slug
+        ? await fetch("/api/system/api-connect", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slug, apiId: serviceId, testOnly: true }),
+          })
+        : await fetch(`/api/system/health-check-all?service=${serviceId}`);
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         console.error(`Health check failed for ${serviceId}:`, data?.error || res.statusText);
@@ -119,9 +126,10 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
   });
 
   const { data: catalog, isLoading: catalogLoading } = useQuery<ApiCatalog>({
-    queryKey: ["api-catalog"],
+    queryKey: ["api-catalog", slug],
     queryFn: async () => {
-      const res = await fetch("/api/system/api-catalog");
+      const url = slug ? `/api/system/api-catalog?slug=${encodeURIComponent(slug)}` : "/api/system/api-catalog";
+      const res = await fetch(url);
       if (!res.ok) return { categories: {} };
       return res.json();
     },

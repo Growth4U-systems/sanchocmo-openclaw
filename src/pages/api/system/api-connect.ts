@@ -5,16 +5,24 @@ import fs from "fs";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE, integrationsFile, brandDir } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
+import { resolveYalcConfig, yalcErrorResponse, yalcFetch } from "@/lib/yalc/client";
+import {
+  buildYalcSetupGuide,
+  parseYalcProviderApiId,
+  type YalcKnowledgePayload,
+} from "@/lib/yalc/provider-catalog";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
 interface IntegrationEntry {
+  provider?: string;
   status?: string;
   lastTestedAt?: string;
   lastError?: string | null;
   notes?: string | null;
+  envVars?: string[];
   config?: Record<string, string>;
   [key: string]: unknown;
 }
@@ -22,6 +30,7 @@ interface IntegrationEntry {
 interface IntegrationsData {
   dataSources?: Record<string, IntegrationEntry>;
   systemOverrides?: Record<string, IntegrationEntry>;
+  updatedAt?: string;
 }
 
 interface GuideStep {
@@ -34,6 +43,22 @@ interface SetupGuide {
   time: string;
   warning?: string;
   steps: GuideStep[];
+}
+
+interface YalcSaveResponse {
+  status?: string;
+  provider?: string;
+  healthcheck?: {
+    ok?: boolean;
+    status?: string;
+    detail?: string;
+  };
+}
+
+interface YalcTestResponse {
+  ok?: boolean;
+  status?: string;
+  detail?: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -54,7 +79,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 /*  GET — Read status + guide                                          */
 /* ------------------------------------------------------------------ */
 
-function handleGet(req: NextApiRequest, res: NextApiResponse) {
+async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   const slug = req.query.slug as string;
   const apiId = req.query.apiId as string;
 
@@ -91,7 +116,11 @@ function handleGet(req: NextApiRequest, res: NextApiResponse) {
     "setup-guides.json"
   );
   const allGuides = readJSON<Record<string, SetupGuide>>(guidesPath, {});
-  const guide = allGuides[apiId] || null;
+  let guide: SetupGuide | null = allGuides[apiId] || null;
+  const yalcProvider = parseYalcProviderApiId(apiId);
+  if (!guide && yalcProvider) {
+    guide = await loadYalcSetupGuide(slug, yalcProvider);
+  }
 
   return res.status(200).json({
     status,
@@ -107,11 +136,23 @@ function handleGet(req: NextApiRequest, res: NextApiResponse) {
 /*  POST — Save credentials + test connection                          */
 /* ------------------------------------------------------------------ */
 
-function handlePost(req: NextApiRequest, res: NextApiResponse) {
+async function handlePost(req: NextApiRequest, res: NextApiResponse) {
   const { slug, apiId, config, secrets, testOnly } = req.body || {};
 
   if (!slug || !apiId) {
     return res.status(400).json({ error: "Missing slug or apiId" });
+  }
+
+  const yalcProvider = parseYalcProviderApiId(apiId);
+  if (yalcProvider) {
+    return handleYalcProviderPost(req, res, {
+      slug,
+      apiId,
+      provider: yalcProvider,
+      config,
+      secrets,
+      testOnly,
+    });
   }
 
   if (!testOnly) {
@@ -224,3 +265,134 @@ function handlePost(req: NextApiRequest, res: NextApiResponse) {
 }
 
 export default compose(withErrorHandler, withAuth)(handler);
+
+async function loadYalcSetupGuide(slug: string, providerId: string): Promise<SetupGuide | null> {
+  try {
+    const knowledge = await yalcFetch<YalcKnowledgePayload>(
+      resolveYalcConfig(slug),
+      "/api/keys/knowledge",
+    );
+    const provider = (knowledge.providers || []).find((item) => item.id === providerId) || null;
+    return buildYalcSetupGuide(provider);
+  } catch {
+    return null;
+  }
+}
+
+async function handleYalcProviderPost(
+  _req: NextApiRequest,
+  res: NextApiResponse,
+  input: {
+    slug: string;
+    apiId: string;
+    provider: string;
+    config?: unknown;
+    secrets?: unknown;
+    testOnly?: unknown;
+  },
+) {
+  const runtime = resolveYalcConfig(input.slug);
+
+  try {
+    if (input.testOnly) {
+      const result = await yalcFetch<YalcTestResponse>(
+        runtime,
+        `/api/keys/test/${encodeURIComponent(input.provider)}`,
+        { method: "POST" },
+      );
+      const ok = result.ok === true;
+      writeYalcIntegrationState(input.slug, input.apiId, input.provider, {
+        status: ok ? "connected" : "error",
+        lastError: ok ? null : result.detail || result.status || "YALC health check failed",
+      });
+      return res.status(200).json({
+        ok,
+        testResult: {
+          status: ok ? "connected" : "error",
+          output: ok ? result.detail || result.status : undefined,
+          error: ok ? undefined : result.detail || result.status || "YALC health check failed",
+        },
+      });
+    }
+
+    const env = collectYalcEnv(input.config, input.secrets);
+    if (Object.keys(env).length === 0) {
+      return res.status(400).json({ error: "Missing YALC provider credentials" });
+    }
+
+    const result = await yalcFetch<YalcSaveResponse>(runtime, "/api/keys/save", {
+      body: { provider: input.provider, env },
+    });
+
+    const ok = result.healthcheck?.ok === true || result.status === "configured";
+    const detail =
+      result.healthcheck?.detail ||
+      result.healthcheck?.status ||
+      result.status ||
+      "YALC provider saved";
+
+    writeYalcIntegrationState(input.slug, input.apiId, input.provider, {
+      status: ok ? "connected" : "error",
+      lastError: ok ? null : detail,
+    });
+
+    return res.status(200).json({
+      ok,
+      testResult: {
+        status: ok ? "connected" : "error",
+        output: ok ? detail : undefined,
+        error: ok ? undefined : detail,
+      },
+    });
+  } catch (err) {
+    const out = yalcErrorResponse(err);
+    writeYalcIntegrationState(input.slug, input.apiId, input.provider, {
+      status: "error",
+      lastError: out.body.error,
+    });
+    return res.status(out.status).json(out.body);
+  }
+}
+
+function collectYalcEnv(config: unknown, secrets: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const source of [config, secrets]) {
+    if (!source || typeof source !== "object" || Array.isArray(source)) continue;
+    for (const [key, value] of Object.entries(source)) {
+      if (!/^[A-Z][A-Z0-9_]*$/.test(key)) continue;
+      if (typeof value === "string" && value.trim()) {
+        out[key] = value;
+      }
+    }
+  }
+  return out;
+}
+
+function writeYalcIntegrationState(
+  slug: string,
+  apiId: string,
+  provider: string,
+  patch: Pick<IntegrationEntry, "status" | "lastError">,
+) {
+  const intPath = integrationsFile(slug);
+  const integrations = readJSON<IntegrationsData>(intPath, { dataSources: {} });
+  if (!integrations.dataSources) integrations.dataSources = {};
+
+  const prev = integrations.dataSources[apiId] || {};
+  integrations.dataSources[apiId] = {
+    ...prev,
+    provider: `${provider} (YALC)`,
+    status: patch.status,
+    lastTestedAt: new Date().toISOString(),
+    lastError: patch.lastError ?? null,
+    notes: "Credenciales sincronizadas desde Sancho hacia YALC.",
+    config: {
+      ...(prev.config || {}),
+      provider,
+    },
+    envVars: [],
+    yalcProvider: provider,
+  };
+  integrations.updatedAt = new Date().toISOString();
+  writeJSON(intPath, integrations);
+}
