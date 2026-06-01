@@ -38,7 +38,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         cwd: BASE,
         timeout: 30000,
         encoding: "utf-8",
-        env: { ...process.env, PATH: EXEC_PATH },
+        env: { ...process.env, MC_WORKSPACE: BASE, PATH: EXEC_PATH },
       });
       try { intData = readJSON(intPath, intData); } catch { /* empty */ }
       const entry = (intData.dataSources || {})[srcId] || (intData.systemOverrides || {})[srcId] || {};

@@ -23,7 +23,10 @@ const https = require('https');
 const http = require('http');
 
 // --- Config ---
-const BRAND_DIR = path.resolve(__dirname, '..', '..', '..', 'brand');
+const WORKSPACE_DIR = process.env.MC_WORKSPACE ? path.resolve(process.env.MC_WORKSPACE) : null;
+const BRAND_DIR = WORKSPACE_DIR
+  ? path.join(WORKSPACE_DIR, 'brand')
+  : path.resolve(__dirname, '..', '..', '..', 'brand');
 const CATALOG_PATH = path.resolve(__dirname, '..', 'schemas', 'api-catalog.json');
 
 // --- Env loader ---
