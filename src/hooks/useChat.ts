@@ -203,7 +203,7 @@ export function useSendMessage() {
  * Cancel a running agent in a thread.
  */
 export function useCancelMessage() {
-  const { currentThread, setPolling } = useChatStore();
+  const { currentThread, threadMeta, setPolling } = useChatStore();
   const qc = useQueryClient();
 
   return useMutation({
@@ -211,11 +211,12 @@ export function useCancelMessage() {
       const tid = threadId || currentThread;
       if (!tid) throw new Error("No thread");
       const slug = tid.split(":")[0];
+      const agent = threadMeta[tid]?.agent;
 
       const res = await fetch("/api/chat/cancel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, threadId: tid }),
+        body: JSON.stringify({ slug, threadId: tid, ...(agent ? { agent } : {}) }),
       });
       if (!res.ok) throw new Error("Failed to cancel");
       return res.json();
