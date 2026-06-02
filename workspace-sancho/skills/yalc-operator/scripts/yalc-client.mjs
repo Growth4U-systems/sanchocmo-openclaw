@@ -95,6 +95,7 @@ function usage() {
   yalc-client catalog --slug <slug>
   yalc-client today --slug <slug>
   yalc-client campaigns --slug <slug>
+  yalc-client create-campaign-draft --slug <slug> [--input <json-file>|--json '<json>']
   yalc-client campaign --slug <slug> --id <campaign-id>
   yalc-client campaign-leads --slug <slug> --id <campaign-id>
   yalc-client campaign-lead --slug <slug> --id <campaign-id> --lead-id <lead-id>
@@ -130,6 +131,7 @@ Options:
   --token <token>               Override bearer token (avoid in shell history; prefer env)
   --json '<json>'               Inline JSON payload for run-skill
   --confirm-side-effect         Required for live sends, campaign status writes, gates, setup commits, and generic mutating API calls
+                                Not required for create-campaign-draft because it only creates an internal YALC review draft
 `)
 }
 
@@ -395,6 +397,12 @@ async function main() {
 
   if (command === 'campaigns') {
     return callAndSave(config, 'campaigns', 'GET', '/api/campaigns')
+  }
+
+  if (command === 'create-campaign-draft') {
+    const payload = readPayload(args)
+    const title = typeof payload.title === 'string' && payload.title.trim() ? payload.title.trim() : 'campaign'
+    return callAndSave(config, `campaign-draft-${title}`, 'POST', '/api/campaigns', payload)
   }
 
   if (command === 'today') {
