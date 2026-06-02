@@ -62,6 +62,32 @@ interface Campaign {
   funnel?: Record<string, number>;
 }
 
+interface CampaignStep {
+  id?: string;
+  stepIndex?: number;
+  skillId?: string;
+  skillInput?: Record<string, unknown>;
+  channel?: string | null;
+  status?: string | null;
+  dependsOn?: string[];
+  approvalRequired?: boolean;
+  resultSetId?: string | null;
+  scheduledAt?: string | null;
+  completedAt?: string | null;
+}
+
+interface SuccessMetric {
+  metric?: string;
+  target?: number;
+  baseline?: number | null;
+  actual?: number | null;
+}
+
+interface CampaignDetail extends Campaign {
+  successMetrics?: SuccessMetric[];
+  steps?: CampaignStep[];
+}
+
 interface CampaignPayload {
   campaigns?: Campaign[];
 }
@@ -275,6 +301,24 @@ function metricValue(campaign: Campaign, key: string): string {
   return typeof value === "string" && value ? value : "-";
 }
 
+function channelText(channels?: string[] | string | null): string {
+  if (Array.isArray(channels)) return channels.join(", ") || "-";
+  if (!channels) return "-";
+  try {
+    const parsed = JSON.parse(channels);
+    if (Array.isArray(parsed)) return parsed.join(", ") || "-";
+  } catch {
+    // Fall through to returning the raw value.
+  }
+  return channels;
+}
+
+function compactJson(value: unknown): string {
+  if (!value || typeof value !== "object") return "{}";
+  const text = JSON.stringify(value, null, 2);
+  return text.length > 1600 ? `${text.slice(0, 1600)}\n...` : text;
+}
+
 function gateRunId(gate: GateItem): string {
   return gate.run_id || gate.runId || "";
 }
@@ -337,6 +381,15 @@ export default function YalcCockpitPage() {
     if (!selectedCampaignId && campaigns.length > 0) setSelectedCampaignId(campaigns[0].id);
   }, [campaigns, selectedCampaignId]);
 
+  const campaignDetailQuery = useQuery({
+    queryKey: ["yalc", slug, "campaigns", selectedCampaignId],
+    queryFn: () =>
+      fetchJson<CampaignDetail>(
+        `/api/yalc/campaigns/${encodeURIComponent(selectedCampaignId)}?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug && !!selectedCampaignId,
+  });
+
   const leadsQuery = useQuery({
     queryKey: ["yalc", slug, "campaigns", selectedCampaignId, "leads"],
     queryFn: () =>
@@ -373,8 +426,9 @@ export default function YalcCockpitPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       }),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId] });
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "overview"] });
     },
   });
@@ -421,6 +475,7 @@ export default function YalcCockpitPage() {
   }, [campaigns, providers]);
 
   const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) || null;
+  const selectedCampaignDetail = campaignDetailQuery.data || selectedCampaign;
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId) || null;
 
   function openYalcAgent(prompt?: string) {
@@ -607,17 +662,27 @@ export default function YalcCockpitPage() {
         )}
 
         {activeTab === "campaigns" && (
-          <Panel title="Campanas YALC" action={`${campaigns.length} total`}>
-            <CampaignTable
-              campaigns={campaigns}
-              onSelect={(id) => {
-                setSelectedCampaignId(id);
-                setActiveTab("leads");
-              }}
-              onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
-              busyId={campaignAction.variables?.campaignId}
-            />
-          </Panel>
+          <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_440px]">
+            <Panel title="Campanas YALC" action={`${campaigns.length} total`}>
+              <CampaignTable
+                campaigns={campaigns}
+                onSelect={setSelectedCampaignId}
+                onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
+                busyId={campaignAction.variables?.campaignId}
+              />
+            </Panel>
+
+            <Panel
+              title="Revision de campana"
+              action={campaignDetailQuery.isFetching ? "loading" : selectedCampaignDetail?.status || "sin campana"}
+            >
+              <CampaignDetailPanel
+                campaign={selectedCampaignDetail}
+                onOpenAgent={(prompt) => openYalcAgent(prompt)}
+                onViewLeads={() => setActiveTab("leads")}
+              />
+            </Panel>
+          </div>
         )}
 
         {activeTab === "leads" && (
@@ -1072,6 +1137,129 @@ function CampaignTable({
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function CampaignDetailPanel({
+  campaign,
+  onOpenAgent,
+  onViewLeads,
+}: {
+  campaign: CampaignDetail | null;
+  onOpenAgent: (prompt: string) => void;
+  onViewLeads: () => void;
+}) {
+  if (!campaign) return <EmptyLine text="Selecciona una campana para revisar el draft guardado en YALC." />;
+
+  const steps = campaign.steps || [];
+  const successMetrics = campaign.successMetrics || [];
+
+  return (
+    <div className="space-y-4 text-sm">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={cn("rounded-md border px-2 py-1 text-xs font-bold", statusClasses(campaign.status))}>
+            {campaign.status || "unknown"}
+          </span>
+          <span className="rounded-md border border-border bg-background px-2 py-1 text-xs font-bold">
+            {channelText(campaign.channels)}
+          </span>
+        </div>
+        <h3 className="mt-3 font-heading text-base text-foreground">{campaign.title || campaign.id}</h3>
+        <p className="mt-1 text-muted-foreground">{campaign.hypothesis || "Sin hipotesis guardada."}</p>
+        {campaign.targetSegment && (
+          <p className="mt-2 text-xs font-semibold text-muted-foreground">ICP: {campaign.targetSegment}</p>
+        )}
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="rounded-md border border-border bg-background p-3">
+          <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Leads</div>
+          <div className="mt-1 text-lg font-heading text-foreground">{campaign.leadCount ?? 0}</div>
+        </div>
+        <div className="rounded-md border border-border bg-background p-3">
+          <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Actualizada</div>
+          <div className="mt-1 text-sm font-semibold text-foreground">
+            {formatDate(campaign.updatedAt || campaign.createdAt)}
+          </div>
+        </div>
+      </div>
+
+      {successMetrics.length > 0 && (
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            <Target className="h-3.5 w-3.5" />
+            Metricas objetivo
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {successMetrics.map((metric, index) => (
+              <span key={`${metric.metric || "metric"}-${index}`} className="rounded-md border border-border bg-background px-2 py-1 text-xs font-semibold">
+                {metric.metric || "metric"}: {typeof metric.target === "number" ? metric.target : "-"}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onOpenAgent(`Revisa la campana YALC ${campaign.id} y dime que falta antes de probarla en Instantly.`)}
+          className="inline-flex items-center gap-1 rounded-md border border-rust bg-rust/10 px-2 py-1 text-xs font-bold text-rust hover:bg-rust/20"
+        >
+          <Bot className="h-3.5 w-3.5" />
+          Revisar en chat
+        </button>
+        <button
+          type="button"
+          onClick={onViewLeads}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-bold hover:border-ink"
+        >
+          <Users className="h-3.5 w-3.5" />
+          Ver leads
+        </button>
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <ListChecks className="h-3.5 w-3.5" />
+          Pasos guardados
+        </div>
+        {steps.length === 0 ? (
+          <EmptyLine text="Esta campana todavia no tiene pasos guardados." />
+        ) : (
+          <div className="space-y-2">
+            {steps.map((step, index) => (
+              <div key={step.id || `${step.skillId}-${index}`} className="rounded-md border border-border bg-background p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="font-semibold text-foreground">
+                    {(step.stepIndex ?? index) + 1}. {step.skillId || "step"}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {step.channel && (
+                      <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-bold">
+                        {step.channel}
+                      </span>
+                    )}
+                    <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", statusClasses(step.status))}>
+                      {step.status || "pending"}
+                    </span>
+                    {step.approvalRequired && (
+                      <span className="rounded border border-yellow-500/50 bg-yellow-100 px-1.5 py-0.5 text-[11px] font-bold text-yellow-800">
+                        approval
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] leading-relaxed text-muted-foreground">
+                  {compactJson(step.skillInput)}
+                </pre>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

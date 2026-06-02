@@ -68,6 +68,14 @@ node skills/yalc-operator/scripts/yalc-client.mjs campaigns --slug growth4u
 node skills/yalc-operator/scripts/yalc-client.mjs brain --slug growth4u
 ```
 
+Create the internal YALC campaign draft first:
+
+```bash
+node skills/yalc-operator/scripts/yalc-client.mjs create-campaign-draft \
+  --slug growth4u \
+  --input brand/growth4u/yalc/payloads/campaign-draft.json
+```
+
 Run a YALC skill:
 
 ```bash
@@ -89,7 +97,7 @@ node skills/yalc-operator/scripts/yalc-client.mjs run-skill \
 
 Other YALC API surfaces covered by the wrapper:
 
-- `skill-info`, `today`, `campaign`, `campaign-leads`, `campaign-lead`, `campaign-report`, `campaign-timeline`, `campaign-export`, `campaign-chat`
+- `skill-info`, `today`, `create-campaign-draft`, `campaign`, `campaign-leads`, `campaign-lead`, `campaign-report`, `campaign-timeline`, `campaign-export`, `campaign-chat`
 - `pause-campaign`, `resume-campaign`, `update-lead-status` with confirmation
 - `brain-update` with confirmation
 - `gates`, `approve-gate`, `reject-gate` with confirmation
@@ -135,12 +143,27 @@ Use existing Sancho skills for:
 2. Run `health` before the first YALC operation in a thread.
 3. Run `skills` and compare the requested action against `references/yalc-capability-map.md`.
 4. Decompose multi-step requests into explicit YALC API/skill calls instead of calling generic autonomous orchestration.
-5. If launching/sending, prepare a dry-run payload and run YALC with `dryRun: true`.
-6. Present the YALC dry-run result, lead count, sequence count, and any warnings.
-7. Ask for explicit confirmation: "Confirmas que lance esta campana en YALC/Instantly?"
-8. Only after confirmation, rerun with `--confirm-side-effect`.
-9. Save the returned JSON in `brand/{slug}/yalc/runs/YYYY-MM-DDTHH-mm-ss-*.json`.
-10. Report back with the YALC campaign ID and next tracking command.
+5. For any outbound campaign, create the internal YALC draft first with `create-campaign-draft`. Include title, hypothesis, target segment, channels, success metrics, and planned steps. The email/Instantly step must stay `dryRun: true` inside `skillInput`.
+6. Present the YALC draft campaign ID, what was saved for review, and where to inspect it in Sancho/YALC Cockpit before doing any Instantly call.
+7. Ask for explicit confirmation before the Instantly dry-run: "Confirmas que pruebe esta campana en Instantly en dry-run?"
+8. After confirmation, run `send-email-sequence` with `dryRun: true` and reference the existing YALC campaign ID in the payload/name.
+9. Present the YALC/Instantly dry-run result, lead count, sequence count, and any warnings.
+10. Ask for explicit confirmation before live external execution: "Confirmas que cree o actualice la campana live en Instantly?"
+11. Only after confirmation, rerun with `--confirm-side-effect`.
+12. Save the returned JSON in `brand/{slug}/yalc/runs/YYYY-MM-DDTHH-mm-ss-*.json`.
+13. Report back with the YALC campaign ID, external Instantly ID when present, and next tracking command.
+
+## Campaign Lifecycle
+
+Chat copy is not enough. Yalc Agent must persist a YALC campaign draft before Instantly. The default lifecycle is:
+
+1. Sancho/Yalc Agent drafts the strategy and copy in chat.
+2. Yalc Agent creates a YALC `draft` campaign with `create-campaign-draft`.
+3. The user reviews the draft in Sancho/YALC Cockpit or by asking chat to inspect the campaign ID.
+4. Yalc Agent runs Instantly dry-run only after explicit approval.
+5. Yalc Agent creates or updates the live Instantly campaign only after a second explicit approval.
+
+Never jump from chat copy directly to an Instantly placeholder campaign when no YALC campaign ID exists. If the user says "crea la campana para revisar", that means create the YALC draft, not a live external campaign.
 
 ## Current Limitation
 
