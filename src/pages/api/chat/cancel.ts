@@ -10,8 +10,16 @@ import { markCancelled, clearStatus, clearProgress, getGatewayUrl, getChatSecret
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { slug, threadId } = req.body;
+  const { slug, threadId, agent, agentId } = req.body;
   const tid = threadId || slug;
+  const requestedAgent =
+    typeof agentId === "string" && agentId.trim()
+      ? agentId.trim()
+      : typeof agent === "string" && agent.trim()
+        ? agent.trim()
+        : typeof tid === "string" && tid.split(":")[1] === "yalc"
+          ? "yalc"
+          : undefined;
 
   markCancelled(tid);
   clearStatus(tid);
@@ -27,7 +35,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         "Content-Type": "application/json",
         ...(secret ? { "X-MC-Secret": secret } : {}),
       },
-      body: JSON.stringify({ slug, threadId, text: "/stop", userName: "Admin", isAdmin: true }),
+      body: JSON.stringify({
+        slug,
+        threadId,
+        text: "/stop",
+        userName: "Admin",
+        userId: "mc-admin",
+        isAdmin: true,
+        ...(requestedAgent ? { agent: requestedAgent, agentId: requestedAgent } : {}),
+      }),
     });
   } catch (err) {
     console.error(`[mc-chat] Gateway /stop failed: ${err instanceof Error ? err.message : err}`);
