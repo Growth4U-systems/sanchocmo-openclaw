@@ -22,7 +22,7 @@ If a skill is not listed by YALC at runtime, do not claim it is executable throu
 | Skill catalog and execution | `skills`, `skill-info`, `run-skill` |
 | Brain and setup | `brain`, `brain-update`, `setup-preview`, `setup-update-preview`, `setup-regenerate`, `setup-commit` |
 | Human gates | `gates`, `approve-gate`, `reject-gate` |
-| Campaigns | `campaigns`, `create-campaign-draft`, `campaign`, `campaign-leads`, `campaign-lead`, `campaign-report`, `campaign-timeline`, `campaign-export`, `campaign-chat`, `pause-campaign`, `resume-campaign`, `update-lead-status` |
+| Campaigns | `campaigns`, `create-campaign-draft`, `add-campaign-step`, `campaign`, `campaign-leads`, `campaign-lead`, `campaign-report`, `campaign-timeline`, `campaign-export`, `campaign-chat`, `pause-campaign`, `resume-campaign`, `update-lead-status` |
 | Providers / MCP-backed providers | `providers`, `provider-knowledge`, `provider-test` |
 | Dashboards and visualization | `dashboard-list`, `dashboard`, `visualizations`, `visualization` |
 | Escape hatches | `api` for confirmed `/api/*` gaps; `cli` for allowlisted read-only commands |
@@ -72,8 +72,8 @@ These exist in the YALC source tree, docs, or Claude Code skill layer, but are n
 | "Approve a YALC gate" | `gates`, summarize payload, wait for explicit confirmation, then `approve-gate --confirm-side-effect` |
 | "Qualify these leads" | `run-skill --skill qualify-leads` |
 | "Find companies / people" | `find-companies` then `find-people`; enrich only if needed |
-| "Prepare cold email" | Sancho/Rocinante drafts strategy/copy, then Yalc Agent persists a reviewable YALC draft with `create-campaign-draft` |
-| "Create campaign for review" | `create-campaign-draft`; return the YALC campaign ID and ask the user to review before any Instantly dry-run |
+| "Prepare cold email" | Sancho/Rocinante drafts strategy/copy, then Yalc Agent persists a reviewable YALC draft with `create-campaign-draft`; include the email sequence in `skillInput.sequence` |
+| "Create campaign for review" | `create-campaign-draft`; return the YALC campaign ID and ask the user to review before any Instantly dry-run. If a draft already exists but lacks emails, use `add-campaign-step` with `send-email-sequence` instead of duplicating it |
 | "Launch/send campaign" | Start from an existing YALC campaign ID. If none exists, create a YALC draft first. Then dry-run with `send-email-sequence` or `multi-channel-campaign`, show warnings, wait for explicit confirmation, then rerun with `--confirm-side-effect` |
 | "Track/report campaign" | `campaigns`, `monthly-campaign-report`, or `visualize-campaigns` |
 | "Inspect one campaign" | `campaign`, `campaign-leads`, `campaign-timeline`, `campaign-report` |

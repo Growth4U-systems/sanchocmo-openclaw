@@ -95,8 +95,9 @@ function usage() {
   yalc-client catalog --slug <slug>
   yalc-client today --slug <slug>
   yalc-client campaigns --slug <slug>
-  yalc-client create-campaign-draft --slug <slug> [--input <json-file>|--json '<json>']
+  yalc-client create-campaign-draft --slug <slug> [--input <json-file>|--json '<json>'] [--allow-empty-email-sequence]
   yalc-client campaign --slug <slug> --id <campaign-id>
+  yalc-client add-campaign-step --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>']
   yalc-client campaign-leads --slug <slug> --id <campaign-id>
   yalc-client campaign-lead --slug <slug> --id <campaign-id> --lead-id <lead-id>
   yalc-client campaign-report --slug <slug> --id <campaign-id>
@@ -137,7 +138,7 @@ Options:
 
 function parseArgs(argv) {
   const args = { _: [] }
-  const boolFlags = new Set(['confirm-side-effect', 'allow-unverified-skill'])
+  const boolFlags = new Set(['confirm-side-effect', 'allow-unverified-skill', 'allow-empty-email-sequence'])
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (!a.startsWith('--')) {
@@ -288,6 +289,59 @@ function isSideEffectingSkill(skill) {
   return /(^|[-:])(send|launch|reply|post|publish|campaign-create|linkedin-campaign-create|email-campaign-create)([-:]|$)/.test(skill)
 }
 
+function isRecord(value) {
+  return value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function arrayHasEmailBody(items) {
+  if (!Array.isArray(items)) return false
+  return items.some((item) => {
+    if (!isRecord(item)) return false
+    return Boolean(typeof item.body === 'string' && item.body.trim()
+      || typeof item.content === 'string' && item.content.trim()
+      || typeof item.message === 'string' && item.message.trim()
+      || typeof item.template === 'string' && item.template.trim())
+  })
+}
+
+function inputHasEmailSequence(input) {
+  if (!isRecord(input)) return false
+  return arrayHasEmailBody(input.sequence)
+    || arrayHasEmailBody(input.emails)
+    || arrayHasEmailBody(input.emailSequence)
+    || arrayHasEmailBody(input.email_sequence)
+    || arrayHasEmailBody(input.steps)
+    || arrayHasEmailBody(input.messages)
+}
+
+function hasReviewableEmailSequence(payload) {
+  if (!isRecord(payload)) return false
+  if (inputHasEmailSequence(payload)) return true
+  const steps = Array.isArray(payload.steps) ? payload.steps : []
+  return steps.some((step) => isRecord(step) && inputHasEmailSequence(step.skillInput))
+}
+
+function requiresEmailSequence(payload) {
+  if (!isRecord(payload)) return false
+  const channels = Array.isArray(payload.channels) ? payload.channels : []
+  if (channels.some((channel) => String(channel).toLowerCase() === 'email')) return true
+  const steps = Array.isArray(payload.steps) ? payload.steps : []
+  return steps.some((step) => {
+    if (!isRecord(step)) return false
+    const skillId = String(step.skillId || '').toLowerCase()
+    const channel = String(step.channel || '').toLowerCase()
+    return channel === 'email' || skillId.includes('email')
+  })
+}
+
+function assertReviewableEmailDraft(payload, args) {
+  if (!requiresEmailSequence(payload) || args.allowEmptyEmailSequence) return
+  if (hasReviewableEmailSequence(payload)) return
+  throw new Error(
+    'Email campaign drafts must include a reviewable email sequence before they are created. Add a send-email-sequence step with skillInput.sequence [{ subject, body, delay_days }] or rerun with --allow-empty-email-sequence for a planning-only draft.',
+  )
+}
+
 function assertSafeGenericApi(args) {
   const method = String(args.method || 'GET').toUpperCase()
   const endpoint = requireArg(args, 'path')
@@ -401,8 +455,15 @@ async function main() {
 
   if (command === 'create-campaign-draft') {
     const payload = readPayload(args)
+    assertReviewableEmailDraft(payload, args)
     const title = typeof payload.title === 'string' && payload.title.trim() ? payload.title.trim() : 'campaign'
     return callAndSave(config, `campaign-draft-${title}`, 'POST', '/api/campaigns', payload)
+  }
+
+  if (command === 'add-campaign-step') {
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-add-step`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/steps`, payload)
   }
 
   if (command === 'today') {
