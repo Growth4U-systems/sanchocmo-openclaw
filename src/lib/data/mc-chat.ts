@@ -10,7 +10,7 @@ import { readJSON, writeJSON } from "./json-io";
 
 // In-memory status cache (status updates don't persist to disk)
 const statusCache = new Map<string, { text: string; agent?: string; ts: number }>();
-const cancelledThreads = new Set<string>();
+const cancelledThreads = new Map<string, number>();
 
 export function getStatusEntry(threadId: string) {
   return statusCache.get(threadId) || null;
@@ -24,16 +24,31 @@ export function clearStatus(threadId: string) {
   statusCache.delete(threadId);
 }
 
-export function markCancelled(threadId: string) {
-  cancelledThreads.add(threadId);
+export function markCancelled(threadId: string, cancelledAt = Date.now()) {
+  cancelledThreads.set(threadId, cancelledAt);
 }
 
-export function consumeCancelled(threadId: string): boolean {
-  if (cancelledThreads.has(threadId)) {
-    cancelledThreads.delete(threadId);
-    return true;
+interface MessageForCancellation {
+  role: string;
+  ts?: number;
+}
+
+export function consumeCancelled(
+  threadId: string,
+  messages: readonly MessageForCancellation[] = [],
+): boolean {
+  const cancelledAt = cancelledThreads.get(threadId);
+  if (cancelledAt === undefined) return false;
+
+  // A cancel marker is meant to suppress the in-flight reply that was stopped.
+  // If the user has already sent a newer message, don't let a stale cancel flag
+  // eat the next valid answer.
+  const hasNewerUserMessage = messages.some((m) => m.role === "user" && (m.ts ?? 0) > cancelledAt);
+  cancelledThreads.delete(threadId);
+  if (hasNewerUserMessage) {
+    return false;
   }
-  return false;
+  return true;
 }
 
 // Gateway URL and secret

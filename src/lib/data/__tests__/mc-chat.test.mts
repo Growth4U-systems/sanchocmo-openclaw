@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import * as mc from "../mc-chat";
 import type { ErrorDetail } from "../mc-chat";
 const { isStaleWatchdogAfterRecentSuccess } = (mc as unknown as { default: typeof mc }).default ?? mc;
+const { markCancelled, consumeCancelled } = (mc as unknown as { default: typeof mc }).default ?? mc;
 
 const NOW = 10_000;
 const W = 5_000;
@@ -59,4 +60,18 @@ test("real fixture: 20ms gap matches the fellow-funders false positive", () => {
     successBot(1779460552049),
   ];
   assert.equal(isStaleWatchdogAfterRecentSuccess(msgs, 1779460552069, W), true);
+});
+
+test("cancel consumes the next bot response when no newer user message exists", () => {
+  const threadId = "test:cancel-old-run";
+  markCancelled(threadId, 1_000);
+  assert.equal(consumeCancelled(threadId, [userMsg(900)]), true);
+  assert.equal(consumeCancelled(threadId, [userMsg(900)]), false);
+});
+
+test("cancel does not discard a response after a newer user message", () => {
+  const threadId = "test:cancel-new-user-message";
+  markCancelled(threadId, 1_000);
+  assert.equal(consumeCancelled(threadId, [userMsg(1_100)]), false);
+  assert.equal(consumeCancelled(threadId, [userMsg(900)]), false);
 });
