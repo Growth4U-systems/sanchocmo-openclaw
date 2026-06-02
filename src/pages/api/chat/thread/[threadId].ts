@@ -20,6 +20,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // against a race where the webhook receives the bot reply between client polls
   // and clearStatus has fired but addMessage hasn't been read yet.
   let liveStatus = statusEntry;
+  const STATUS_TTL_MS = 10 * 60 * 1000;
+  if (liveStatus && Date.now() - liveStatus.ts > STATUS_TTL_MS) {
+    liveStatus = null;
+  }
   if (statusEntry && thread?.messages?.length) {
     let lastNonUserTs = 0;
     for (let i = thread.messages.length - 1; i >= 0; i--) {
