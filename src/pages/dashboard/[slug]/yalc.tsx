@@ -88,6 +88,17 @@ interface CampaignDetail extends Campaign {
   steps?: CampaignStep[];
 }
 
+interface EmailSequenceEmail {
+  subject?: string | null;
+  body: string;
+  delayDays?: number | null;
+}
+
+interface EmailSequenceBlock {
+  source: string;
+  emails: EmailSequenceEmail[];
+}
+
 interface CampaignPayload {
   campaigns?: Campaign[];
 }
@@ -317,6 +328,67 @@ function compactJson(value: unknown): string {
   if (!value || typeof value !== "object") return "{}";
   const text = JSON.stringify(value, null, 2);
   return text.length > 1600 ? `${text.slice(0, 1600)}\n...` : text;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function numberValue(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function normalizeEmailItem(value: unknown): EmailSequenceEmail | null {
+  const item = asRecord(value);
+  if (!item) return null;
+  const body =
+    stringValue(item.body) ||
+    stringValue(item.content) ||
+    stringValue(item.message) ||
+    stringValue(item.template);
+  if (!body) return null;
+
+  return {
+    subject: stringValue(item.subject),
+    body,
+    delayDays:
+      numberValue(item.delay_days) ??
+      numberValue(item.delayDays) ??
+      numberValue(item.dayOffset) ??
+      numberValue(item.day),
+  };
+}
+
+function normalizeEmailArray(value: unknown): EmailSequenceEmail[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeEmailItem).filter((item): item is EmailSequenceEmail => item !== null);
+}
+
+function sequenceFromInput(input: unknown): EmailSequenceEmail[] {
+  const data = asRecord(input);
+  if (!data) return [];
+  for (const key of ["sequence", "emails", "emailSequence", "email_sequence", "steps", "messages"]) {
+    const emails = normalizeEmailArray(data[key]);
+    if (emails.length > 0) return emails;
+  }
+  return [];
+}
+
+function extractEmailSequences(campaign: CampaignDetail): EmailSequenceBlock[] {
+  const blocks: EmailSequenceBlock[] = [];
+  for (const step of campaign.steps || []) {
+    const emails = sequenceFromInput(step.skillInput);
+    if (emails.length === 0) continue;
+    blocks.push({
+      source: step.skillId || step.channel || "email-sequence",
+      emails,
+    });
+  }
+  return blocks;
 }
 
 function gateRunId(gate: GateItem): string {
@@ -1119,7 +1191,7 @@ function CampaignTable({
                       onClick={() => onSelect(campaign.id)}
                       className="rounded-md border border-border bg-background px-2 py-1 text-xs font-bold hover:border-ink"
                     >
-                      Ver leads
+                      Revisar
                     </button>
                     <button
                       type="button"
@@ -1154,6 +1226,7 @@ function CampaignDetailPanel({
 
   const steps = campaign.steps || [];
   const successMetrics = campaign.successMetrics || [];
+  const emailSequences = extractEmailSequences(campaign);
 
   return (
     <div className="space-y-4 text-sm">
@@ -1201,6 +1274,68 @@ function CampaignDetailPanel({
           </div>
         </div>
       )}
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <Send className="h-3.5 w-3.5" />
+          Secuencia de emails para aprobar
+        </div>
+        {emailSequences.length === 0 ? (
+          <div className="rounded-md border border-yellow-500/50 bg-yellow-100 p-3 text-sm text-yellow-900">
+            <div className="flex items-start gap-2">
+              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <div className="font-bold">No hay secuencia guardada en este draft.</div>
+                <p className="mt-1 text-xs">
+                  La campana existe en YALC, pero no tiene emails revisables. Pide a YALC que genere la secuencia y la anada a este draft antes de probar Instantly.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onOpenAgent(`La campana YALC ${campaign.id} no tiene secuencia de emails guardada. Genera una secuencia de outbound email para Growth4U y anadela al draft existente como paso send-email-sequence con dryRun true para poder aprobarla antes de Instantly. No crees una campana nueva.`)}
+                  className="mt-2 inline-flex items-center gap-1 rounded-md border border-yellow-700 bg-white/70 px-2 py-1 text-xs font-bold text-yellow-900 hover:bg-white"
+                >
+                  <Bot className="h-3.5 w-3.5" />
+                  Pedir secuencia
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {emailSequences.map((block, blockIndex) => (
+              <div key={`${block.source}-${blockIndex}`} className="rounded-md border border-border bg-background p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <div className="font-semibold text-foreground">{block.source}</div>
+                  <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-bold">
+                    {block.emails.length} emails
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {block.emails.map((email, index) => (
+                    <div key={`${email.subject || "email"}-${index}`} className="rounded border border-border bg-card p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                          Email {index + 1}
+                          {typeof email.delayDays === "number" ? ` · Dia ${email.delayDays}` : ""}
+                        </div>
+                        <span className="rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-semibold">
+                          {email.subject ? "con asunto" : "reply en hilo"}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-sm font-bold text-foreground">
+                        {email.subject || "(sin asunto)"}
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                        {email.body}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <button
