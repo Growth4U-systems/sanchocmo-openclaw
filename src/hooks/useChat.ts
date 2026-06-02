@@ -97,6 +97,7 @@ export function useThreadMessages(threadId: string | null) {
     },
     enabled: !!threadId,
     refetchInterval: isPolling ? 1500 : 3000,
+    refetchIntervalInBackground: true,
     staleTime: 1000,
   });
 }
