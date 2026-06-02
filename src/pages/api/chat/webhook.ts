@@ -102,7 +102,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Bot response: seal the running timeline into this message, then store
   clearStatus(tid);
-  if (consumeCancelled(tid)) {
+  const existing = getThread(tid);
+  if (consumeCancelled(tid, existing.messages)) {
     clearProgress(tid);
     console.log(`[mc-chat] Bot response discarded (cancelled): ${tid}`);
     return res.status(200).json({ ok: true, cancelled: true });
@@ -120,7 +121,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // bot reply on the same thread (runtime sometimes emits a leftover abort
   // event 20 ms after a successful deliver — pure noise that confuses users).
   if (errorDetail?.category === "watchdog_abort") {
-    const existing = getThread(tid);
     if (isStaleWatchdogAfterRecentSuccess(existing.messages, Date.now(), STALE_WATCHDOG_WINDOW_MS)) {
       console.log(`[mc-chat] suppressed stale watchdog_abort on ${tid} (recent success within ${STALE_WATCHDOG_WINDOW_MS}ms)`);
       // Still consume the sealed progress so the next reply starts from clean
