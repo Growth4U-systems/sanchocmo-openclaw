@@ -840,7 +840,7 @@ export default function YalcCockpitPage() {
                   setActiveTab("leads");
                 }}
                 onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
-                busyId={campaignAction.variables?.campaignId}
+                busyId={campaignAction.isPending ? campaignAction.variables?.campaignId : undefined}
               />
             </Panel>
 
@@ -870,7 +870,7 @@ export default function YalcCockpitPage() {
                   campaigns={campaigns}
                   onSelect={setSelectedCampaignId}
                   onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
-                  busyId={campaignAction.variables?.campaignId}
+                  busyId={campaignAction.isPending ? campaignAction.variables?.campaignId : undefined}
                 />
               </Panel>
             </div>
@@ -888,7 +888,11 @@ export default function YalcCockpitPage() {
                 onOutboundAction={(action) => {
                   if (selectedCampaignDetail?.id) outboundAction.mutate({ campaignId: selectedCampaignDetail.id, action });
                 }}
-                busyAction={outboundAction.variables?.campaignId === selectedCampaignDetail?.id ? outboundAction.variables?.action : undefined}
+                busyAction={
+                  outboundAction.isPending && outboundAction.variables?.campaignId === selectedCampaignDetail?.id
+                    ? outboundAction.variables?.action
+                    : undefined
+                }
                 actionError={outboundAction.error instanceof Error ? outboundAction.error.message : null}
               />
             </Panel>
@@ -925,7 +929,7 @@ export default function YalcCockpitPage() {
                 selectedLeadId={selectedLeadId}
                 onSelect={setSelectedLeadId}
                 onStatus={(leadId, lifecycleStatus) => leadStatusAction.mutate({ leadId, lifecycleStatus })}
-                busyId={leadStatusAction.variables?.leadId}
+                busyId={leadStatusAction.isPending ? leadStatusAction.variables?.leadId : undefined}
               />
             </Panel>
 
