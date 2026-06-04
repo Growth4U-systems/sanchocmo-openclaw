@@ -1,7 +1,15 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as z from "zod/v4";
-import { addMessage, getChatSecret, getGatewayUrl } from "@/lib/data/mc-chat";
+import {
+  addMessage,
+  getChatSecret,
+  getGatewayUrl,
+  getPendingProgress,
+  getStatusEntry,
+  getThread,
+  listThreadsForSlug,
+} from "@/lib/data/mc-chat";
 import { loadClients } from "@/lib/data/clients";
 import { getInternalClientStatus } from "@/lib/sancho-internal-api";
 import { getTask, listUnifiedTaskRowsAsync } from "@/lib/data/tasks";
@@ -31,6 +39,21 @@ interface SanchoMcpContext {
 
 const TASK_LIMIT_DEFAULT = 50;
 const TASK_LIMIT_MAX = 200;
+const CHAT_THREAD_LIMIT_DEFAULT = 25;
+const CHAT_THREAD_LIMIT_MAX = 100;
+const CHAT_MESSAGE_LIMIT_DEFAULT = 40;
+const CHAT_MESSAGE_LIMIT_MAX = 100;
+const CHAT_TEXT_MAX_CHARS = 12_000;
+
+const askQuestionSchema = z.object({
+  id: z.string().min(1),
+  prompt: z.string().min(1),
+  mode: z.enum(["single", "multi"]),
+  options: z.array(z.object({ id: z.string().min(1), label: z.string().min(1) })).min(1),
+});
+
+type AskQuestion = z.infer<typeof askQuestionSchema>;
+type ChatMessage = ReturnType<typeof getThread>["messages"][number];
 
 const YALC_OVERVIEW_CHECKS = {
   skills: "/api/skills/list",
@@ -232,6 +255,81 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   );
 
   server.registerTool(
+    "sancho_list_chat_threads",
+    {
+      title: "List Sancho chat threads",
+      description: "Lists Mission Control chat threads for a client. Requires sancho:chat.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(CHAT_THREAD_LIMIT_MAX)
+          .optional()
+          .describe("Maximum chat threads to return."),
+      },
+    },
+    async ({ clientSlug, limit }) =>
+      runTool(context, "sancho_list_chat_threads", clientSlug, async () => {
+        assertClientScope(context, "sancho:chat", clientSlug);
+        const max = clampLimit(limit, CHAT_THREAD_LIMIT_DEFAULT, CHAT_THREAD_LIMIT_MAX);
+        const threads = listThreadsForSlug(clientSlug).slice(0, max);
+        return jsonResult({ threads, count: threads.length, limit: max });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_chat_thread",
+    {
+      title: "Get Sancho chat thread",
+      description:
+        "Reads recent Mission Control chat messages for a client and extracts pending :::ask multiple-choice questions. Requires sancho:chat.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        threadId: z.string().min(1).describe("Thread id, either full '<client>:<thread>' or short id."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(CHAT_MESSAGE_LIMIT_MAX)
+          .optional()
+          .describe("Maximum recent messages to return."),
+      },
+    },
+    async ({ clientSlug, threadId, limit }) =>
+      runTool(context, "sancho_get_chat_thread", clientSlug, async () => {
+        assertClientScope(context, "sancho:chat", clientSlug);
+        const tid = normalizeChatThreadId(clientSlug, threadId);
+        const thread = getThread(tid);
+        if (!chatThreadExists(clientSlug, tid) && thread.messages.length === 0) {
+          throw new McpAuthError(404, `Chat thread not found: ${tid}`);
+        }
+
+        const max = clampLimit(limit, CHAT_MESSAGE_LIMIT_DEFAULT, CHAT_MESSAGE_LIMIT_MAX);
+        const startIndex = Math.max(0, thread.messages.length - max);
+        const messages = thread.messages
+          .slice(startIndex)
+          .map((message, offset) => sanitizeChatMessage(message, startIndex + offset));
+        const pendingQuestions = extractPendingQuestions(thread.messages);
+
+        return jsonResult({
+          threadId: tid,
+          clientSlug,
+          shortId: shortChatThreadId(tid),
+          messageCount: thread.messages.length,
+          returnedMessageCount: messages.length,
+          updatedAt: thread.updatedAt ?? null,
+          messages,
+          status: getStatusEntry(tid),
+          pendingProgress: getPendingProgress(tid),
+          pendingQuestions,
+          responseFormat: buildAskResponseFormat(pendingQuestions),
+        });
+      }),
+  );
+
+  server.registerTool(
     "yalc_get_overview",
     {
       title: "Get YALC overview",
@@ -418,9 +516,13 @@ function errorResult(message: string): CallToolResult {
   };
 }
 
-function clampLimit(limit: number | undefined): number {
-  if (!Number.isFinite(limit)) return TASK_LIMIT_DEFAULT;
-  return Math.max(1, Math.min(TASK_LIMIT_MAX, Number(limit)));
+function clampLimit(
+  limit: number | undefined,
+  defaultLimit = TASK_LIMIT_DEFAULT,
+  maxLimit = TASK_LIMIT_MAX,
+): number {
+  if (!Number.isFinite(limit)) return defaultLimit;
+  return Math.max(1, Math.min(maxLimit, Number(limit)));
 }
 
 function extractChatId(value: unknown): string | null {
@@ -430,6 +532,113 @@ function extractChatId(value: unknown): string | null {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function normalizeChatThreadId(clientSlug: string, threadId: string): string {
+  const raw = threadId.trim();
+  if (!raw) throw new McpAuthError(400, "threadId is required");
+  if (raw.startsWith(`${clientSlug}:`)) return raw;
+  return `${clientSlug}:${raw}`;
+}
+
+function shortChatThreadId(threadId: string): string {
+  const colonIdx = threadId.indexOf(":");
+  return colonIdx < 0 ? threadId : threadId.slice(colonIdx + 1);
+}
+
+function chatThreadExists(clientSlug: string, threadId: string): boolean {
+  return listThreadsForSlug(clientSlug).some((thread) => isRecord(thread) && thread.id === threadId);
+}
+
+function sanitizeChatMessage(message: ChatMessage, index: number) {
+  const text = message.text || "";
+  const truncated = text.length > CHAT_TEXT_MAX_CHARS;
+  const questions = extractAskQuestions(text).map(({ question }) => question);
+  return {
+    index,
+    role: message.role,
+    text: truncated ? `${text.slice(0, CHAT_TEXT_MAX_CHARS)}…` : text,
+    textTruncated: truncated || undefined,
+    ts: message.ts,
+    agent: message.agent,
+    attachments: message.attachments,
+    progress: message.progress,
+    from_agent: message.from_agent,
+    to_agent: message.to_agent,
+    errorDetail: message.errorDetail,
+    questions: questions.length ? questions : undefined,
+  };
+}
+
+const ASK_REGEX = /^:::ask\s*\n([\s\S]*?)\n:::\s*$/gm;
+const CODE_FENCE_REGEX = /```[\s\S]*?```/g;
+const ASK_RESPONSE_REGEX = /^\[ask:([^\]]+)\]\s*respuesta:/gim;
+
+function extractAskQuestions(text: string): Array<{ question: AskQuestion; start: number; end: number }> {
+  if (!text || !text.includes(":::ask")) return [];
+
+  const codeRanges = Array.from(text.matchAll(CODE_FENCE_REGEX))
+    .filter((match) => match.index !== undefined)
+    .map((match) => [match.index as number, (match.index as number) + match[0].length] as const);
+  const isInsideCode = (start: number, end: number) =>
+    codeRanges.some(([codeStart, codeEnd]) => start >= codeStart && end <= codeEnd);
+
+  const questions: Array<{ question: AskQuestion; start: number; end: number }> = [];
+  for (const match of text.matchAll(ASK_REGEX)) {
+    const start = match.index;
+    if (start === undefined) continue;
+    const end = start + match[0].length;
+    if (isInsideCode(start, end)) continue;
+
+    try {
+      const parsed = askQuestionSchema.safeParse(JSON.parse(match[1]));
+      if (parsed.success) questions.push({ question: parsed.data, start, end });
+    } catch {
+      // Invalid ask blocks are left as normal chat text.
+    }
+  }
+  return questions;
+}
+
+function extractPendingQuestions(messages: ChatMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index];
+    if (message.role === "user") continue;
+
+    const questions = extractAskQuestions(message.text || "").map(({ question }) => question);
+    if (questions.length === 0) return [];
+
+    const answered = answeredAskIdsAfter(messages, index);
+    const pending = questions.filter((question) => !answered.has(question.id));
+    return pending.map((question) => ({
+      ...question,
+      sourceMessageIndex: index,
+      sourceMessageTs: message.ts,
+      sourceAgent: message.agent,
+    }));
+  }
+  return [];
+}
+
+function answeredAskIdsAfter(messages: ChatMessage[], messageIndex: number): Set<string> {
+  const answered = new Set<string>();
+  for (const message of messages.slice(messageIndex + 1)) {
+    if (message.role !== "user") continue;
+    for (const match of (message.text || "").matchAll(ASK_RESPONSE_REGEX)) {
+      answered.add(match[1]);
+    }
+  }
+  return answered;
+}
+
+function buildAskResponseFormat(questions: Array<AskQuestion & { sourceMessageIndex: number }>): string | null {
+  if (questions.length === 0) return null;
+  return questions
+    .map((question) => {
+      const hint = question.mode === "multi" ? "<option label(s), comma-separated>" : "<option label>";
+      return `[ask:${question.id}] respuesta: ${hint}`;
+    })
+    .join("\n");
 }
 
 async function listOpenDesignCatalog(
