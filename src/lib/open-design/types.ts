@@ -171,4 +171,6 @@ export interface OdClientConfig {
    * Vacío → no se manda Authorization header (modo dev local sin token).
    */
   apiToken?: string;
+  /** Optional server-to-server metadata headers, e.g. request tracing. */
+  extraHeaders?: Record<string, string>;
 }

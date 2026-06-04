@@ -54,10 +54,10 @@ export function publicYalcConfig(config: YalcRuntimeConfig) {
 export async function yalcFetch<T = unknown>(
   config: YalcRuntimeConfig,
   path: string,
-  init: { method?: string; body?: unknown } = {},
+  init: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
 ): Promise<T> {
   const url = new URL(path.startsWith("/") ? path : `/${path}`, config.baseUrl);
-  const headers: Record<string, string> = { Accept: "application/json" };
+  const headers: Record<string, string> = { Accept: "application/json", ...init.headers };
   if (config.token) headers.Authorization = `Bearer ${config.token}`;
   if (init.body !== undefined) headers["Content-Type"] = "application/json";
 
