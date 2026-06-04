@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { FeedbackInsightsPanel } from "@/components/intelligence/FeedbackInsightsPanel";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useClients } from "@/hooks/useClients";
 import { useOpenChat } from "@/hooks/useChat";
@@ -21,7 +22,7 @@ import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
 import type { Project, Task } from "@/types";
 
-type View = "overview" | "sources" | "meetings" | "decisions" | "pov" | "impact" | "proposals";
+type View = "overview" | "sources" | "meetings" | "decisions" | "pov" | "impact" | "proposals" | "mejoras";
 type Status = "needs_raw_sync" | "raw_available" | "processed" | "needs_review" | "failed";
 type ImpactStatus = "no impact" | "possible update" | "conflict" | "proposal ready";
 type Priority = "high" | "medium" | "low";
@@ -376,6 +377,7 @@ const viewLabels: { key: View; label: string }[] = [
   { key: "pov", label: "POV Database" },
   { key: "impact", label: "Document Impact" },
   { key: "proposals", label: "Proposal Review" },
+  { key: "mejoras", label: "Mejoras" },
 ];
 
 const EMPTY_MEETINGS: Meeting[] = [];
@@ -394,6 +396,7 @@ const hashToView: Record<string, View> = {
   "document-impact": "impact",
   impact: "impact",
   proposals: "proposals",
+  mejoras: "mejoras",
 };
 
 function viewToHash(view: View) {
@@ -403,6 +406,7 @@ function viewToHash(view: View) {
   if (view === "decisions") return "decisions";
   if (view === "proposals") return "proposals";
   if (view === "sources") return "sources";
+  if (view === "mejoras") return "mejoras";
   return "overview";
 }
 
@@ -774,6 +778,7 @@ function IntelligencePageClient() {
         {view === "pov" && <PovDatabase meetingTitle={selectedMeeting?.title || "Meeting Intelligence"} onView={openView} />}
         {view === "impact" && <DocumentImpact documents={activeDocuments} onView={openView} />}
         {view === "proposals" && <ProposalReview slug={slug} meeting={selectedMeeting} proposals={activeProposals} selectedProposalId={selectedProposalId} onChanged={() => setStateVersion((version) => version + 1)} />}
+        {view === "mejoras" && <FeedbackInsightsPanel slug={slug} />}
       </div>
     </DashboardLayout>
   );
