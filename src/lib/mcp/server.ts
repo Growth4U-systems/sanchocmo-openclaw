@@ -12,7 +12,7 @@ import {
 } from "@/lib/data/mc-chat";
 import { loadClients } from "@/lib/data/clients";
 import { getInternalClientStatus } from "@/lib/sancho-internal-api";
-import { getTask, listUnifiedTaskRowsAsync } from "@/lib/data/tasks";
+import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
 import {
   resolveOdConfig,
@@ -188,6 +188,86 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         const task = await getTask(clientSlug, taskId);
         if (!task) throw new McpAuthError(404, `Task not found: ${taskId}`);
         return jsonResult(task);
+      }),
+  );
+
+  server.registerTool(
+    "sancho_create_task",
+    {
+      title: "Create Sancho task",
+      description:
+        "Creates a task for a client. Requires tasks:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        name: z.string().min(1).describe("Task name."),
+        description: z.string().optional().describe("Task description/brief."),
+        status: z.string().optional().describe("Initial status (default todo)."),
+        type: z.string().optional().describe("Task type, e.g. project or execution."),
+        parentId: z.string().optional().describe("Parent task id to create a child task."),
+        owner: z.string().optional().describe("Task owner (default Sancho)."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the create operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create."),
+      },
+    },
+    async ({ clientSlug, name, description, status, type, parentId, owner, dryRun, confirm }) =>
+      runTool(context, "sancho_create_task", clientSlug, async () => {
+        assertClientScope(context, "tasks:write", clientSlug);
+        const input = pickDefined({ name, description, status, type, parent_id: parentId, owner });
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to create this task.",
+            input: { clientSlug, ...input },
+          });
+        }
+        const task = await createTask(clientSlug, input as Parameters<typeof createTask>[1]);
+        return jsonResult({ ok: true, task });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_update_task",
+    {
+      title: "Update Sancho task",
+      description:
+        "Updates whitelisted fields of a task. Requires tasks:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        taskId: z.string().min(1).describe("Task id."),
+        name: z.string().optional().describe("New task name."),
+        status: z.string().optional().describe("New status."),
+        description: z.string().optional().describe("New description."),
+        brief: z.string().optional().describe("New brief."),
+        completion: z.string().optional().describe("New completion/done criteria."),
+        owner: z.string().optional().describe("New owner."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the update operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({ clientSlug, taskId, name, status, description, brief, completion, owner, dryRun, confirm }) =>
+      runTool(context, "sancho_update_task", clientSlug, async () => {
+        assertClientScope(context, "tasks:write", clientSlug);
+        const patch = pickDefined({ name, status, description, brief, completion, owner });
+        if (Object.keys(patch).length === 0) {
+          throw new McpAuthError(
+            400,
+            "No fields to update; provide at least one of: name, status, description, brief, completion, owner",
+          );
+        }
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to apply this update.",
+            taskId,
+            patch,
+          });
+        }
+        const task = await updateTask(clientSlug, taskId, patch);
+        return jsonResult({ ok: true, task });
       }),
   );
 
@@ -532,6 +612,10 @@ function extractChatId(value: unknown): string | null {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function pickDefined(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
 }
 
 function normalizeChatThreadId(clientSlug: string, threadId: string): string {
