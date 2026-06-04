@@ -94,6 +94,7 @@ interface CampaignReadiness {
   state: string;
   readyForReview: boolean;
   readyForDryRun: boolean;
+  readyForPublish: boolean;
   readyForLive: boolean;
   blockers: Array<{ code: string; message: string; nextAction: string }>;
   checklist: Array<{ id: string; label: string; passed: boolean; blocking: boolean }>;
@@ -119,6 +120,7 @@ interface EmailSequenceEmail {
 }
 
 interface EmailSequenceBlock {
+  stepId?: string;
   source: string;
   emails: EmailSequenceEmail[];
 }
@@ -235,7 +237,7 @@ interface SaveResult {
   custom?: boolean;
 }
 
-type OutboundAction = "search" | "enrich" | "approve" | "dry-run" | "live";
+type OutboundAction = "search" | "enrich" | "approve" | "dry-run" | "publish" | "live";
 
 const TABS: Array<{ key: TabKey; label: string }> = [
   { key: "overview", label: "Overview" },
@@ -413,6 +415,7 @@ function extractEmailSequences(campaign: CampaignDetail): EmailSequenceBlock[] {
     const emails = sequenceFromInput(step.skillInput);
     if (emails.length === 0) continue;
     blocks.push({
+      stepId: step.id,
       source: step.skillId || step.channel || "email-sequence",
       emails,
     });
@@ -433,6 +436,7 @@ function outboundActionLabel(action: OutboundAction): string {
   if (action === "enrich") return "Enriquecer";
   if (action === "approve") return "Aprobar";
   if (action === "dry-run") return "Prueba seca";
+  if (action === "publish") return "Crear en Instantly";
   return "Lanzar";
 }
 
@@ -610,7 +614,17 @@ export default function YalcCockpitPage() {
           body: JSON.stringify({}),
         });
       }
-      if (!window.confirm("Esto creara y lanzara la campana en Instantly. Continuar?")) {
+      if (action === "publish") {
+        if (!window.confirm("Esto creara la campana y cargara leads en Instantly, pero no la lanzara. Continuar?")) {
+          return Promise.resolve({ cancelled: true });
+        }
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/publish?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ confirmInstantlyPublish: true, actorLabel: "Sancho" }),
+        });
+      }
+      if (!window.confirm("Esto lanzara la campana ya creada en Instantly. Continuar?")) {
         return Promise.resolve({ cancelled: true });
       }
       return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/live?slug=${encodeURIComponent(slug)}`, {
@@ -626,6 +640,29 @@ export default function YalcCockpitPage() {
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "events"] });
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "leads"] });
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "overview"] });
+    },
+  });
+
+  const sequenceUpdateAction = useMutation({
+    mutationFn: ({ campaignId, stepId, emails }: { campaignId: string; stepId?: string; emails: EmailSequenceEmail[] }) =>
+      fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/sequence/update?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stepId,
+          actorLabel: "Sancho",
+          sequence: emails.map((email) => ({
+            subject: email.subject || undefined,
+            body: email.body,
+            delay_days: email.delayDays ?? undefined,
+          })),
+        }),
+      }),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "readiness"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "events"] });
     },
   });
 
@@ -885,15 +922,29 @@ export default function YalcCockpitPage() {
                 events={eventsQuery.data?.events || []}
                 onOpenAgent={(prompt) => openYalcAgent(prompt)}
                 onViewLeads={() => setActiveTab("leads")}
+                onSaveSequence={(stepId, emails) => {
+                  if (selectedCampaignDetail?.id) {
+                    sequenceUpdateAction.mutate({ campaignId: selectedCampaignDetail.id, stepId, emails });
+                  }
+                }}
                 onOutboundAction={(action) => {
                   if (selectedCampaignDetail?.id) outboundAction.mutate({ campaignId: selectedCampaignDetail.id, action });
                 }}
+                busySequenceStepId={
+                  sequenceUpdateAction.isPending && sequenceUpdateAction.variables?.campaignId === selectedCampaignDetail?.id
+                    ? sequenceUpdateAction.variables?.stepId || "__default__"
+                    : undefined
+                }
                 busyAction={
                   outboundAction.isPending && outboundAction.variables?.campaignId === selectedCampaignDetail?.id
                     ? outboundAction.variables?.action
                     : undefined
                 }
-                actionError={outboundAction.error instanceof Error ? outboundAction.error.message : null}
+                actionError={
+                  outboundAction.error instanceof Error
+                    ? outboundAction.error.message
+                    : sequenceUpdateAction.error instanceof Error ? sequenceUpdateAction.error.message : null
+                }
               />
             </Panel>
           </div>
@@ -1491,7 +1542,9 @@ function CampaignDetailPanel({
   events,
   onOpenAgent,
   onViewLeads,
+  onSaveSequence,
   onOutboundAction,
+  busySequenceStepId,
   busyAction,
   actionError,
 }: {
@@ -1500,7 +1553,9 @@ function CampaignDetailPanel({
   events: CampaignEvent[];
   onOpenAgent: (prompt: string) => void;
   onViewLeads: () => void;
+  onSaveSequence: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
   onOutboundAction: (action: OutboundAction) => void;
+  busySequenceStepId?: string;
   busyAction?: OutboundAction;
   actionError: string | null;
 }) {
@@ -1575,6 +1630,9 @@ function CampaignDetailPanel({
                 <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForDryRun ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
                   dry-run
                 </span>
+                <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForPublish ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
+                  publish
+                </span>
                 <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForLive ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
                   live
                 </span>
@@ -1609,11 +1667,12 @@ function CampaignDetailPanel({
           Operacion outbound
         </div>
         <div className="flex flex-wrap gap-2">
-          {(["search", "enrich", "approve", "dry-run", "live"] as OutboundAction[]).map((action) => {
+          {(["search", "enrich", "approve", "dry-run", "publish", "live"] as OutboundAction[]).map((action) => {
             const disabled =
               !!busyAction ||
               (action === "approve" && emailSequences.length === 0) ||
               (action === "dry-run" && !readiness?.readyForDryRun) ||
+              (action === "publish" && (!readiness?.readyForPublish || readiness?.readyForLive)) ||
               (action === "live" && !readiness?.readyForLive);
             return (
               <button
@@ -1691,35 +1750,12 @@ function CampaignDetailPanel({
         ) : (
           <div className="space-y-3">
             {emailSequences.map((block, blockIndex) => (
-              <div key={`${block.source}-${blockIndex}`} className="rounded-md border border-border bg-background p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <div className="font-semibold text-foreground">{block.source}</div>
-                  <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-bold">
-                    {block.emails.length} emails
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {block.emails.map((email, index) => (
-                    <div key={`${email.subject || "email"}-${index}`} className="rounded border border-border bg-card p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                          Email {index + 1}
-                          {typeof email.delayDays === "number" ? ` · Dia ${email.delayDays}` : ""}
-                        </div>
-                        <span className="rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-semibold">
-                          {email.subject ? "con asunto" : "reply en hilo"}
-                        </span>
-                      </div>
-                      <div className="mt-2 text-sm font-bold text-foreground">
-                        {email.subject || "(sin asunto)"}
-                      </div>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                        {email.body}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <EmailSequenceEditor
+                key={`${block.source}-${block.stepId || blockIndex}`}
+                block={block}
+                busy={busySequenceStepId === (block.stepId || "__default__")}
+                onSave={(emails) => onSaveSequence(block.stepId, emails)}
+              />
             ))}
           </div>
         )}
@@ -1963,6 +1999,94 @@ function LeadDetailPanel({
         <Bot className="h-4 w-4" />
         Pedir siguiente accion
       </button>
+    </div>
+  );
+}
+
+function EmailSequenceEditor({
+  block,
+  busy,
+  onSave,
+}: {
+  block: EmailSequenceBlock;
+  busy: boolean;
+  onSave: (emails: EmailSequenceEmail[]) => void;
+}) {
+  const sourceSignature = JSON.stringify(block.emails);
+  const [emails, setEmails] = useState<EmailSequenceEmail[]>(block.emails);
+
+  useEffect(() => {
+    setEmails(block.emails);
+  }, [block.stepId, sourceSignature]);
+
+  const changed = JSON.stringify(emails) !== sourceSignature;
+  const valid =
+    emails.length > 0 &&
+    emails.every((email) => email.body.trim().length > 0) &&
+    Boolean(emails[0]?.subject?.trim());
+
+  const updateEmail = (index: number, patch: Partial<EmailSequenceEmail>) => {
+    setEmails((current) => current.map((email, currentIndex) => (
+      currentIndex === index ? { ...email, ...patch } : email
+    )));
+  };
+
+  return (
+    <div className="rounded-md border border-border bg-background p-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="font-semibold text-foreground">{block.source}</div>
+        <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-bold">
+          {emails.length} emails
+        </span>
+      </div>
+      <div className="space-y-2">
+        {emails.map((email, index) => (
+          <div key={`${block.stepId || block.source}-${index}`} className="rounded border border-border bg-card p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Email {index + 1}</div>
+              <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                Dia
+                <input
+                  type="number"
+                  value={email.delayDays ?? 0}
+                  onChange={(event) => updateEmail(index, { delayDays: Number(event.target.value) })}
+                  className="h-7 w-16 rounded border border-border bg-background px-2 text-xs font-semibold text-foreground focus:border-rust focus:outline-none"
+                />
+              </label>
+            </div>
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Asunto</span>
+              <input
+                value={email.subject || ""}
+                onChange={(event) => updateEmail(index, { subject: event.target.value })}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold focus:border-rust focus:outline-none"
+              />
+            </label>
+            <label className="mt-2 block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Cuerpo</span>
+              <textarea
+                value={email.body}
+                onChange={(event) => updateEmail(index, { body: event.target.value })}
+                rows={5}
+                className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed focus:border-rust focus:outline-none"
+              />
+            </label>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={busy || !changed || !valid}
+          onClick={() => onSave(emails)}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-bold hover:border-ink disabled:opacity-50"
+        >
+          {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          Guardar cambios
+        </button>
+        {!valid && <span className="text-xs font-semibold text-yellow-800">El primer email necesita asunto y todos necesitan cuerpo.</span>}
+        {changed && valid && <span className="text-xs font-semibold text-muted-foreground">Al guardar, la secuencia vuelve a requerir aprobacion.</span>}
+      </div>
     </div>
   );
 }
