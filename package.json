@@ -17,6 +17,7 @@
     "fix:docs": "tsx scripts/audit-doc-paths.mts --fix",
     "test:doc-paths": "tsx scripts/test-doc-paths.mts",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:mcp": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql",
     "db:verify": "tsx scripts/verify-migration.ts",
     "db:sync-tasks": "tsx scripts/migrate-projects-to-db.ts --apply",
     "db:sync-tasks:dry": "tsx scripts/migrate-projects-to-db.ts --dry-run",

@@ -46,6 +46,7 @@ RUN npm ci
 COPY next.config.mjs tsconfig.json postcss.config.mjs tailwind.config.ts components.json drizzle.config.ts ./
 COPY src/ ./src/
 COPY public/ ./public/
+COPY scripts/apply-sql-migration.mjs ./scripts/apply-sql-migration.mjs
 # NEXT_PUBLIC_* vars must be present at build time — they are inlined into the client bundle.
 ARG NEXT_PUBLIC_ENV_LABEL=""
 ENV NEXT_PUBLIC_ENV_LABEL=${NEXT_PUBLIC_ENV_LABEL}
