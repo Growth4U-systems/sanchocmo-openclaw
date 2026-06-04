@@ -6,11 +6,14 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withErrorHandler } from "@/lib/api-middleware";
 import { requireInternalAuth } from "@/lib/sancho-internal-api";
+import { addMessage } from "@/lib/data/mc-chat";
+import { feedbackThreadId } from "@/lib/data/feedback-triage-trigger";
 import {
   FeedbackInsightValidationError,
   insertInsights,
   validateIngestPayload,
 } from "@/lib/feedback-insights";
+import { buildFeedbackCardMessage, summarizeInsightCounts } from "@/lib/feedback-card";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -26,6 +29,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const payload = validateIngestPayload(slugStr, req.body);
     const rows = await insertInsights(payload);
+
+    // Option C — chat-first awareness: post a summary card to the feedback
+    // thread (per-category counts + deep-link to the Mejoras panel).
+    // Best-effort: never fail ingest because the chat card couldn't post.
+    try {
+      const counts = summarizeInsightCounts(payload.insights);
+      const base = process.env.NEXTAUTH_URL ?? "";
+      const reviewUrl = base ? `${base}/dashboard/${slugStr}/intelligence#mejoras` : "";
+      const card = buildFeedbackCardMessage(payload.docPath, counts, reviewUrl);
+      addMessage(feedbackThreadId(slugStr, payload.docPath), "system", card);
+    } catch {
+      // chat card is non-critical to the ingest
+    }
+
     return res.status(200).json({ ok: true, runId: payload.runId, count: rows.length });
   } catch (e) {
     if (e instanceof FeedbackInsightValidationError) {

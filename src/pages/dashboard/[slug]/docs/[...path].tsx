@@ -73,6 +73,8 @@ export default function DocViewerPage() {
   const tooltipHideTimer = useRef<number | null>(null);
   const [tooltip, setTooltip] = useState<HoverTooltip | null>(null);
   const [detail, setDetail] = useState<DocComment | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeMsg, setAnalyzeMsg] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["doc", fullPath],
@@ -141,6 +143,31 @@ export default function DocViewerPage() {
 
   // Hover / click event delegation for tooltip + detail modal.
   const closeDetail = useCallback(() => setDetail(null), []);
+
+  // Manual trigger (option C): ask Sansón to triage this doc's client feedback.
+  const analyzeFeedback = useCallback(async () => {
+    const originalRel = `brand/${slug}/${docPath.replace(/\.commented(\.[a-z0-9]+)?$/i, (_m, ext) => ext ?? "")}`;
+    setAnalyzing(true);
+    setAnalyzeMsg(null);
+    try {
+      const res = await fetch(`/api/clients/${slug}/analyze-feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ docPath: originalRel }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "No se pudo disparar el análisis");
+      setAnalyzeMsg(
+        d.forwardedToGateway
+          ? "Análisis disparado — Sansón está procesando. Revisá en Mejoras."
+          : `No se disparó: ${d.error || "sin comentarios"}`,
+      );
+    } catch (e) {
+      setAnalyzeMsg(e instanceof Error ? e.message : "Error");
+    } finally {
+      setAnalyzing(false);
+    }
+  }, [slug, docPath]);
 
   useEffect(() => {
     const article = articleRef.current;
@@ -232,6 +259,19 @@ export default function DocViewerPage() {
           <span className="ml-3 inline-flex items-center gap-1 rounded-full bg-yellow-200/40 dark:bg-yellow-300/20 px-2 py-0.5 text-[10px] font-semibold text-yellow-900 dark:text-yellow-200">
             💬 con comentarios{docComments.length > 0 && ` (${docComments.length})`}
           </span>
+        )}
+        {showCommentOverlay && docComments.length > 0 && (
+          <button
+            type="button"
+            onClick={analyzeFeedback}
+            disabled={analyzing}
+            className="ml-2 inline-flex items-center gap-1 rounded-full border border-rust/40 bg-rust/10 px-2 py-0.5 text-[10px] font-semibold text-rust hover:bg-rust/15 disabled:opacity-50"
+          >
+            🛡️ {analyzing ? "Analizando…" : "Analizar feedback"}
+          </button>
+        )}
+        {analyzeMsg && (
+          <span className="ml-2 text-[10px] text-muted-foreground">{analyzeMsg}</span>
         )}
       </div>
 

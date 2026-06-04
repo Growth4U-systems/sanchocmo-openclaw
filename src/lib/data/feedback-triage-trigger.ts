@@ -30,7 +30,7 @@ export interface TriggerFeedbackTriageResult {
   error?: string;
 }
 
-function buildThreadId(slug: string, docPath: string): string {
+export function feedbackThreadId(slug: string, docPath: string): string {
   const docSlug = docPath.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
   return `${slug}:feedback:${docSlug}`;
 }
@@ -89,7 +89,7 @@ export async function triggerFeedbackTriage(
   input: TriggerFeedbackTriageInput,
 ): Promise<TriggerFeedbackTriageResult> {
   const runId = `fbr_${crypto.randomUUID()}`;
-  const threadId = buildThreadId(input.slug, input.docPath);
+  const threadId = feedbackThreadId(input.slug, input.docPath);
   const comments = await resolveComments(input.slug, input.docPath);
 
   if (comments.length === 0) {
