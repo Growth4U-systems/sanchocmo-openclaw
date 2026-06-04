@@ -38,6 +38,7 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           SHA: ${{ github.sha }}
           ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          RUN_DB_MIGRATIONS: ${{ vars.RUN_DB_MIGRATIONS }}
           YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
           YALC_REF: ${{ vars.YALC_REF || 'main' }}
           YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
@@ -78,6 +79,7 @@ jobs:
           INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
           METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
           SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
+          SANCHO_MCP_TOKENS: ${{ secrets.SANCHO_MCP_TOKENS }}
           # ── Tier 3 — Skill APIs ───────────────────────────────────────
           APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
           GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
@@ -102,6 +104,9 @@ jobs:
           OPENAI_AUTH_MODE: ${{ vars.OPENAI_AUTH_MODE }}
           ADMIN_EMAIL_DOMAIN: ${{ vars.ADMIN_EMAIL_DOMAIN }}
           ADMIN_IDENTITY_EMAIL: ${{ vars.ADMIN_IDENTITY_EMAIL }}
+          SANCHO_MCP_AUDIT_BACKEND: ${{ vars.SANCHO_MCP_AUDIT_BACKEND }}
+          SANCHO_MCP_AUDIT_FAIL_CLOSED: ${{ vars.SANCHO_MCP_AUDIT_FAIL_CLOSED }}
+          SANCHO_MCP_AUDIT_FILE: ${{ vars.SANCHO_MCP_AUDIT_FILE }}
         run: |
           # Build a base64-encoded JSON dict of every non-empty key (skip empty
           # values so unset GitHub secrets/variables are safe no-ops on the VPS).
@@ -121,6 +126,7 @@ jobs:
               "NOTION_API_KEY", "SUPABASE_ANON_KEY", "FAL_API_KEY",
               "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN",
               "INSTANTLY_API_KEY", "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
+              "SANCHO_MCP_TOKENS",
               # Tier 3 — Skill APIs
               "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",
               "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID", "PAGESPEED_API_KEY",
@@ -131,6 +137,8 @@ jobs:
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
               "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL",
+              "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
+              "SANCHO_MCP_AUDIT_FILE",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())
@@ -142,7 +150,7 @@ jobs:
           scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
 
           YALC_REPO_TOKEN_B64="$(printf '%s' "${YALC_REPO_TOKEN:-}" | base64 | tr -d '\n')"
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64=$YALC_REPO_TOKEN_B64 bash -s" <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64=$YALC_REPO_TOKEN_B64 bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching staging…"
@@ -247,6 +255,10 @@ jobs:
             fi
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose $COMPOSE_ARGS build --pull
+            if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
+              echo "▶ Running DB migrations…"
+              docker compose $COMPOSE_ARGS run --rm --no-deps sanchocmo npm run db:migrate
+            fi
             # `build --pull` only refreshes images for services with a
             # `build:` directive (sanchocmo). Services that consume a
             # pre-built image (open-design via OPEN_DESIGN_IMAGE) need an

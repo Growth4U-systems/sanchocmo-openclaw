@@ -1,10 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
+import * as providerCatalog from "../yalc/provider-catalog";
+
+const {
   mergeYalcProvidersIntoCatalog,
   parseYalcProviderApiId,
   toYalcProviderApiId,
-} from "../yalc/provider-catalog";
+} = (providerCatalog as unknown as { default: typeof providerCatalog }).default ?? providerCatalog;
 
 test("yalc provider api ids round trip only valid provider slugs", () => {
   assert.equal(toYalcProviderApiId("instantly"), "yalc-provider:instantly");
