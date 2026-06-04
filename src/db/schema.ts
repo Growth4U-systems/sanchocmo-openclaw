@@ -496,3 +496,23 @@ export const mcpAuditEvents = pgTable("mcp_audit_events", {
   index("mcp_audit_events_client_idx").on(table.clientSlug),
   index("mcp_audit_events_ok_idx").on(table.ok),
 ]);
+
+export const feedbackInsights = pgTable("feedback_insights", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull(),
+  slug: text("slug").notNull(),
+  docPath: text("doc_path").notNull(),
+  skillId: text("skill_id"),
+  category: text("category").notNull(),
+  title: text("title").notNull(),
+  detail: text("detail").notNull(),
+  proposedChange: text("proposed_change"),
+  sourceCommentIds: jsonb("source_comment_ids").$type<string[]>().default([]).notNull(),
+  status: text("status").notNull().default("new"),
+  routedRef: text("routed_ref"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("feedback_insights_slug_idx").on(table.slug),
+  index("feedback_insights_slug_status_idx").on(table.slug, table.status),
+  index("feedback_insights_run_idx").on(table.runId),
+]);

@@ -118,6 +118,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "doc-coauthoring": "dulcinea",
   "ecp-validation": "sanson",
   "email-sequence": "rocinante",
+  "feedback-triage": "sanson",
   "find-instagram-profiles": "hamete",
   "find-linkedin-profiles": "hamete",
   "find-twitter-profiles": "hamete",
