@@ -19,6 +19,7 @@ import {
   X,
   Plug,
   Loader2,
+  Rocket,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -88,6 +89,30 @@ interface CampaignDetail extends Campaign {
   steps?: CampaignStep[];
 }
 
+interface CampaignReadiness {
+  campaignId: string;
+  state: string;
+  readyForReview: boolean;
+  readyForDryRun: boolean;
+  readyForPublish: boolean;
+  readyForLive: boolean;
+  blockers: Array<{ code: string; message: string; nextAction: string }>;
+  checklist: Array<{ id: string; label: string; passed: boolean; blocking: boolean }>;
+}
+
+interface CampaignEvent {
+  id: string;
+  campaignId: string;
+  type: string;
+  message: string;
+  payload?: Record<string, unknown>;
+  createdAt: string;
+}
+
+interface CampaignEventsPayload {
+  events?: CampaignEvent[];
+}
+
 interface EmailSequenceEmail {
   subject?: string | null;
   body: string;
@@ -95,6 +120,7 @@ interface EmailSequenceEmail {
 }
 
 interface EmailSequenceBlock {
+  stepId?: string;
   source: string;
   emails: EmailSequenceEmail[];
 }
@@ -105,6 +131,9 @@ interface CampaignPayload {
 
 interface Lead {
   id: string;
+  email?: string | null;
+  emailStatus?: string | null;
+  instantlyCampaignId?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   headline?: string | null;
@@ -207,6 +236,8 @@ interface SaveResult {
   healthcheck?: { ok: boolean; status: string; detail: string };
   custom?: boolean;
 }
+
+type OutboundAction = "search" | "enrich" | "approve" | "dry-run" | "publish" | "live";
 
 const TABS: Array<{ key: TabKey; label: string }> = [
   { key: "overview", label: "Overview" },
@@ -384,6 +415,7 @@ function extractEmailSequences(campaign: CampaignDetail): EmailSequenceBlock[] {
     const emails = sequenceFromInput(step.skillInput);
     if (emails.length === 0) continue;
     blocks.push({
+      stepId: step.id,
       source: step.skillId || step.channel || "email-sequence",
       emails,
     });
@@ -397,6 +429,15 @@ function gateRunId(gate: GateItem): string {
 
 function gateTitle(gate: GateItem): string {
   return gate.title || gate.message || gate.gate_id || gate.gateId || gateRunId(gate) || "Gate pendiente";
+}
+
+function outboundActionLabel(action: OutboundAction): string {
+  if (action === "search") return "Buscar leads";
+  if (action === "enrich") return "Enriquecer";
+  if (action === "approve") return "Aprobar";
+  if (action === "dry-run") return "Prueba seca";
+  if (action === "publish") return "Crear en Instantly";
+  return "Lanzar";
 }
 
 export default function YalcCockpitPage() {
@@ -462,6 +503,24 @@ export default function YalcCockpitPage() {
     enabled: !!slug && !!selectedCampaignId,
   });
 
+  const readinessQuery = useQuery({
+    queryKey: ["yalc", slug, "campaigns", selectedCampaignId, "readiness"],
+    queryFn: () =>
+      fetchJson<CampaignReadiness>(
+        `/api/yalc/campaigns/${encodeURIComponent(selectedCampaignId)}/readiness?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug && !!selectedCampaignId,
+  });
+
+  const eventsQuery = useQuery({
+    queryKey: ["yalc", slug, "campaigns", selectedCampaignId, "events"],
+    queryFn: () =>
+      fetchJson<CampaignEventsPayload>(
+        `/api/yalc/campaigns/${encodeURIComponent(selectedCampaignId)}/events?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug && !!selectedCampaignId,
+  });
+
   const leadsQuery = useQuery({
     queryKey: ["yalc", slug, "campaigns", selectedCampaignId, "leads"],
     queryFn: () =>
@@ -502,6 +561,108 @@ export default function YalcCockpitPage() {
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns"] });
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId] });
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "overview"] });
+    },
+  });
+
+  const createCampaignAction = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      fetchJson<{ campaignId: string }>(`/api/yalc/campaigns?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (data) => {
+      setSelectedCampaignId(data.campaignId);
+      setActiveTab("campaigns");
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
+    },
+  });
+
+  const outboundAction = useMutation({
+    mutationFn: ({ campaignId, action }: { campaignId: string; action: OutboundAction }) => {
+      if (action === "search") {
+        const campaign = campaignDetailQuery.data || selectedCampaign;
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/search?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: "apollo",
+            query: campaign?.targetSegment || campaign?.hypothesis || campaign?.title || "B2B founder",
+            titles: ["Founder", "CEO", "Co-Founder"],
+            limit: 25,
+          }),
+        });
+      }
+      if (action === "enrich") {
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/enrich?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider: "apollo", limit: 25 }),
+        });
+      }
+      if (action === "approve") {
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/sequence/approve?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ actorLabel: "Sancho" }),
+        });
+      }
+      if (action === "dry-run") {
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/dry-run?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+      }
+      if (action === "publish") {
+        if (!window.confirm("Esto creara la campana y cargara leads en Instantly, pero no la lanzara. Continuar?")) {
+          return Promise.resolve({ cancelled: true });
+        }
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/publish?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ confirmInstantlyPublish: true, actorLabel: "Sancho" }),
+        });
+      }
+      if (!window.confirm("Esto lanzara la campana ya creada en Instantly. Continuar?")) {
+        return Promise.resolve({ cancelled: true });
+      }
+      return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/live?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmLiveLaunch: true, actorLabel: "Sancho" }),
+      });
+    },
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "readiness"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "events"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "leads"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "overview"] });
+    },
+  });
+
+  const sequenceUpdateAction = useMutation({
+    mutationFn: ({ campaignId, stepId, emails }: { campaignId: string; stepId?: string; emails: EmailSequenceEmail[] }) =>
+      fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/sequence/update?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stepId,
+          actorLabel: "Sancho",
+          sequence: emails.map((email) => ({
+            subject: email.subject || undefined,
+            body: email.body,
+            delay_days: email.delayDays ?? undefined,
+          })),
+        }),
+      }),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "readiness"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "events"] });
     },
   });
 
@@ -716,7 +877,7 @@ export default function YalcCockpitPage() {
                   setActiveTab("leads");
                 }}
                 onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
-                busyId={campaignAction.variables?.campaignId}
+                busyId={campaignAction.isPending ? campaignAction.variables?.campaignId : undefined}
               />
             </Panel>
 
@@ -735,14 +896,21 @@ export default function YalcCockpitPage() {
 
         {activeTab === "campaigns" && (
           <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_440px]">
-            <Panel title="Campanas YALC" action={`${campaigns.length} total`}>
-              <CampaignTable
-                campaigns={campaigns}
-                onSelect={setSelectedCampaignId}
-                onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
-                busyId={campaignAction.variables?.campaignId}
+            <div className="space-y-4">
+              <CreateOutboundCampaignPanel
+                busy={createCampaignAction.isPending}
+                error={createCampaignAction.error instanceof Error ? createCampaignAction.error.message : null}
+                onCreate={(body) => createCampaignAction.mutate(body)}
               />
-            </Panel>
+              <Panel title="Campanas YALC" action={`${campaigns.length} total`}>
+                <CampaignTable
+                  campaigns={campaigns}
+                  onSelect={setSelectedCampaignId}
+                  onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
+                  busyId={campaignAction.isPending ? campaignAction.variables?.campaignId : undefined}
+                />
+              </Panel>
+            </div>
 
             <Panel
               title="Revision de campana"
@@ -750,8 +918,33 @@ export default function YalcCockpitPage() {
             >
               <CampaignDetailPanel
                 campaign={selectedCampaignDetail}
+                readiness={readinessQuery.data || null}
+                events={eventsQuery.data?.events || []}
                 onOpenAgent={(prompt) => openYalcAgent(prompt)}
                 onViewLeads={() => setActiveTab("leads")}
+                onSaveSequence={(stepId, emails) => {
+                  if (selectedCampaignDetail?.id) {
+                    sequenceUpdateAction.mutate({ campaignId: selectedCampaignDetail.id, stepId, emails });
+                  }
+                }}
+                onOutboundAction={(action) => {
+                  if (selectedCampaignDetail?.id) outboundAction.mutate({ campaignId: selectedCampaignDetail.id, action });
+                }}
+                busySequenceStepId={
+                  sequenceUpdateAction.isPending && sequenceUpdateAction.variables?.campaignId === selectedCampaignDetail?.id
+                    ? sequenceUpdateAction.variables?.stepId || "__default__"
+                    : undefined
+                }
+                busyAction={
+                  outboundAction.isPending && outboundAction.variables?.campaignId === selectedCampaignDetail?.id
+                    ? outboundAction.variables?.action
+                    : undefined
+                }
+                actionError={
+                  outboundAction.error instanceof Error
+                    ? outboundAction.error.message
+                    : sequenceUpdateAction.error instanceof Error ? sequenceUpdateAction.error.message : null
+                }
               />
             </Panel>
           </div>
@@ -787,7 +980,7 @@ export default function YalcCockpitPage() {
                 selectedLeadId={selectedLeadId}
                 onSelect={setSelectedLeadId}
                 onStatus={(leadId, lifecycleStatus) => leadStatusAction.mutate({ leadId, lifecycleStatus })}
-                busyId={leadStatusAction.variables?.leadId}
+                busyId={leadStatusAction.isPending ? leadStatusAction.variables?.leadId : undefined}
               />
             </Panel>
 
@@ -1081,6 +1274,136 @@ function ProviderConnectModal({
   );
 }
 
+function CreateOutboundCampaignPanel({
+  busy,
+  error,
+  onCreate,
+}: {
+  busy: boolean;
+  error: string | null;
+  onCreate: (body: Record<string, unknown>) => void;
+}) {
+  const [title, setTitle] = useState("Growth4U - Programa 6 meses");
+  const [hypothesis, setHypothesis] = useState(
+    "B2B founders with stalled outbound will respond to a six-month execution program.",
+  );
+  const [targetSegment, setTargetSegment] = useState("B2B founders in Spain doing founder-led sales");
+  const [query, setQuery] = useState("B2B SaaS founder Spain");
+  const [subject, setSubject] = useState("Sistema outbound en 6 meses");
+  const [email1, setEmail1] = useState(
+    "Hola {{first_name}}, vi que {{company_name}} esta en una fase donde outbound repetible puede cambiar el ritmo comercial. En Growth4U construimos el sistema completo en 6 meses: ICP, datos, secuencias, testing y operacion semanal.",
+  );
+  const [email2, setEmail2] = useState(
+    "Te comparto la idea concreta: en vez de contratar piezas sueltas, montamos contigo el motor outbound hasta que haya cadencia, reporting y aprendizaje real. Si tiene sentido, revisamos si aplica a {{company_name}}.",
+  );
+
+  return (
+    <Panel title="Crear campana outbound" action="YALC draft">
+      <div className="grid gap-3 md:grid-cols-2">
+        <LabeledInput label="Titulo" value={title} onChange={setTitle} />
+        <LabeledInput label="Busqueda Apollo" value={query} onChange={setQuery} />
+        <LabeledInput label="ICP" value={targetSegment} onChange={setTargetSegment} className="md:col-span-2" />
+        <LabeledTextarea label="Hipotesis" value={hypothesis} onChange={setHypothesis} className="md:col-span-2" />
+        <LabeledInput label="Asunto email 1" value={subject} onChange={setSubject} className="md:col-span-2" />
+        <LabeledTextarea label="Email 1" value={email1} onChange={setEmail1} />
+        <LabeledTextarea label="Email 2" value={email2} onChange={setEmail2} />
+      </div>
+      {error && <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">{error}</div>}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={busy || !title.trim() || !hypothesis.trim()}
+          onClick={() =>
+            onCreate({
+              title,
+              hypothesis,
+              targetSegment,
+              channels: ["email"],
+              successMetrics: [
+                { metric: "reply_rate", target: 0.08, baseline: null, actual: null },
+                { metric: "positive_reply_rate", target: 0.03, baseline: null, actual: null },
+              ],
+              steps: [
+                {
+                  skillId: "find-companies",
+                  channel: "apollo",
+                  skillInput: { query, maxCompanies: 25 },
+                  approvalRequired: true,
+                },
+                {
+                  skillId: "send-email-sequence",
+                  channel: "email",
+                  skillInput: {
+                    provider: "instantly",
+                    dryRun: true,
+                    sequence: [
+                      { subject, body: email1, delay_days: 0 },
+                      { subject: "Seguimiento Growth4U", body: email2, delay_days: 3 },
+                    ],
+                  },
+                  approvalRequired: true,
+                },
+              ],
+            })
+          }
+          className="inline-flex items-center gap-2 rounded-md border-2 border-ink bg-rust px-3 py-2 text-sm font-bold text-white shadow-comic-sm disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
+          Crear draft en YALC
+        </button>
+        <span className="text-xs font-semibold text-muted-foreground">Despues usa buscar, enriquecer, aprobar y lanzar.</span>
+      </div>
+    </Panel>
+  );
+}
+
+function LabeledInput({
+  label,
+  value,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <label className={cn("block", className)}>
+      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</span>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none"
+      />
+    </label>
+  );
+}
+
+function LabeledTextarea({
+  label,
+  value,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <label className={cn("block", className)}>
+      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</span>
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={4}
+        className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none"
+      />
+    </label>
+  );
+}
+
 function StatusTile({
   icon,
   label,
@@ -1215,12 +1538,26 @@ function CampaignTable({
 
 function CampaignDetailPanel({
   campaign,
+  readiness,
+  events,
   onOpenAgent,
   onViewLeads,
+  onSaveSequence,
+  onOutboundAction,
+  busySequenceStepId,
+  busyAction,
+  actionError,
 }: {
   campaign: CampaignDetail | null;
+  readiness: CampaignReadiness | null;
+  events: CampaignEvent[];
   onOpenAgent: (prompt: string) => void;
   onViewLeads: () => void;
+  onSaveSequence: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
+  onOutboundAction: (action: OutboundAction) => void;
+  busySequenceStepId?: string;
+  busyAction?: OutboundAction;
+  actionError: string | null;
 }) {
   if (!campaign) return <EmptyLine text="Selecciona una campana para revisar el draft guardado en YALC." />;
 
@@ -1277,6 +1614,116 @@ function CampaignDetailPanel({
 
       <div>
         <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <ListChecks className="h-3.5 w-3.5" />
+          Readiness
+        </div>
+        {readiness ? (
+          <div className="rounded-md border border-border bg-background p-3">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <span className={cn("rounded-md border px-2 py-1 text-xs font-bold", statusClasses(readiness.state))}>
+                {readiness.state}
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForReview ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
+                  review
+                </span>
+                <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForDryRun ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
+                  dry-run
+                </span>
+                <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForPublish ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
+                  publish
+                </span>
+                <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForLive ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
+                  live
+                </span>
+              </div>
+            </div>
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              {readiness.checklist.map((item) => (
+                <div key={item.id} className="flex items-center gap-2 text-xs">
+                  {item.passed ? <CheckCircle2 className="h-3.5 w-3.5 text-sage" /> : <CircleAlert className="h-3.5 w-3.5 text-yellow-700" />}
+                  <span className={item.passed ? "text-foreground" : "text-muted-foreground"}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+            {readiness.blockers.length > 0 && (
+              <div className="mt-3 space-y-1">
+                {readiness.blockers.slice(0, 3).map((blocker) => (
+                  <div key={blocker.code} className="rounded border border-yellow-500/50 bg-yellow-100 px-2 py-1 text-xs text-yellow-900">
+                    <span className="font-bold">{blocker.code}:</span> {blocker.nextAction || blocker.message}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <EmptyLine text="Readiness no disponible todavia." />
+        )}
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <Rocket className="h-3.5 w-3.5" />
+          Operacion outbound
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(["search", "enrich", "approve", "dry-run", "publish", "live"] as OutboundAction[]).map((action) => {
+            const disabled =
+              !!busyAction ||
+              (action === "approve" && emailSequences.length === 0) ||
+              (action === "dry-run" && !readiness?.readyForDryRun) ||
+              (action === "publish" && (!readiness?.readyForPublish || readiness?.readyForLive)) ||
+              (action === "live" && !readiness?.readyForLive);
+            return (
+              <button
+                key={action}
+                type="button"
+                disabled={disabled}
+                onClick={() => onOutboundAction(action)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold disabled:opacity-50",
+                  action === "live"
+                    ? "border-rust bg-rust text-white"
+                    : "border-border bg-background hover:border-ink",
+                )}
+              >
+                {busyAction === action && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {outboundActionLabel(action)}
+              </button>
+            );
+          })}
+        </div>
+        {actionError && (
+          <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+            {actionError}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <Activity className="h-3.5 w-3.5" />
+          Timeline YALC
+        </div>
+        {events.length === 0 ? (
+          <EmptyLine text="Sin eventos registrados." />
+        ) : (
+          <div className="max-h-72 space-y-2 overflow-auto rounded-md border border-border bg-background p-2">
+            {events.slice().reverse().slice(0, 12).map((event) => (
+              <div key={event.id} className="rounded border border-border bg-card p-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-foreground">{event.type}</span>
+                  <span className="text-[11px] font-semibold text-muted-foreground">{formatDate(event.createdAt)}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{event.message}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           <Send className="h-3.5 w-3.5" />
           Secuencia de emails para aprobar
         </div>
@@ -1303,35 +1750,12 @@ function CampaignDetailPanel({
         ) : (
           <div className="space-y-3">
             {emailSequences.map((block, blockIndex) => (
-              <div key={`${block.source}-${blockIndex}`} className="rounded-md border border-border bg-background p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <div className="font-semibold text-foreground">{block.source}</div>
-                  <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-bold">
-                    {block.emails.length} emails
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {block.emails.map((email, index) => (
-                    <div key={`${email.subject || "email"}-${index}`} className="rounded border border-border bg-card p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                          Email {index + 1}
-                          {typeof email.delayDays === "number" ? ` · Dia ${email.delayDays}` : ""}
-                        </div>
-                        <span className="rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-semibold">
-                          {email.subject ? "con asunto" : "reply en hilo"}
-                        </span>
-                      </div>
-                      <div className="mt-2 text-sm font-bold text-foreground">
-                        {email.subject || "(sin asunto)"}
-                      </div>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                        {email.body}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <EmailSequenceEditor
+                key={`${block.source}-${block.stepId || blockIndex}`}
+                block={block}
+                busy={busySequenceStepId === (block.stepId || "__default__")}
+                onSave={(emails) => onSaveSequence(block.stepId, emails)}
+              />
             ))}
           </div>
         )}
@@ -1435,6 +1859,7 @@ function LeadTable({
           <tr className="border-b-2 border-border text-xs uppercase tracking-wide text-muted-foreground">
             <th className="pb-2 pr-3">Lead</th>
             <th className="pb-2 pr-3">Empresa</th>
+            <th className="pb-2 pr-3">Email</th>
             <th className="pb-2 pr-3">Status</th>
             <th className="pb-2 pr-3">Score</th>
             <th className="pb-2 pr-3">Variant</th>
@@ -1457,6 +1882,10 @@ function LeadTable({
                 <div className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{lead.headline || lead.source || lead.id}</div>
               </td>
               <td className="py-3 pr-3">{lead.company || "-"}</td>
+              <td className="py-3 pr-3">
+                <div className="font-semibold text-foreground">{lead.email || "-"}</div>
+                {lead.emailStatus && <div className="mt-0.5 text-xs text-muted-foreground">{lead.emailStatus}</div>}
+              </td>
               <td className="py-3 pr-3">
                 <span className={cn("rounded-md border px-2 py-1 text-xs font-bold", statusClasses(lead.lifecycleStatus))}>
                   {lead.lifecycleStatus || "unknown"}
@@ -1524,6 +1953,8 @@ function LeadDetailPanel({
         <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
           <InfoCell label="Status" value={lead.lifecycleStatus || "-"} />
           <InfoCell label="Score" value={scoreLabel(lead.qualificationScore)} />
+          <InfoCell label="Email" value={lead.email || "-"} />
+          <InfoCell label="Email status" value={lead.emailStatus || "-"} />
           <InfoCell label="Source" value={lead.source || "-"} />
           <InfoCell label="Updated" value={formatDate(lead.updatedAt)} />
         </div>
@@ -1568,6 +1999,94 @@ function LeadDetailPanel({
         <Bot className="h-4 w-4" />
         Pedir siguiente accion
       </button>
+    </div>
+  );
+}
+
+function EmailSequenceEditor({
+  block,
+  busy,
+  onSave,
+}: {
+  block: EmailSequenceBlock;
+  busy: boolean;
+  onSave: (emails: EmailSequenceEmail[]) => void;
+}) {
+  const sourceSignature = JSON.stringify(block.emails);
+  const [emails, setEmails] = useState<EmailSequenceEmail[]>(block.emails);
+
+  useEffect(() => {
+    setEmails(block.emails);
+  }, [block.stepId, sourceSignature]);
+
+  const changed = JSON.stringify(emails) !== sourceSignature;
+  const valid =
+    emails.length > 0 &&
+    emails.every((email) => email.body.trim().length > 0) &&
+    Boolean(emails[0]?.subject?.trim());
+
+  const updateEmail = (index: number, patch: Partial<EmailSequenceEmail>) => {
+    setEmails((current) => current.map((email, currentIndex) => (
+      currentIndex === index ? { ...email, ...patch } : email
+    )));
+  };
+
+  return (
+    <div className="rounded-md border border-border bg-background p-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="font-semibold text-foreground">{block.source}</div>
+        <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-bold">
+          {emails.length} emails
+        </span>
+      </div>
+      <div className="space-y-2">
+        {emails.map((email, index) => (
+          <div key={`${block.stepId || block.source}-${index}`} className="rounded border border-border bg-card p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Email {index + 1}</div>
+              <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                Dia
+                <input
+                  type="number"
+                  value={email.delayDays ?? 0}
+                  onChange={(event) => updateEmail(index, { delayDays: Number(event.target.value) })}
+                  className="h-7 w-16 rounded border border-border bg-background px-2 text-xs font-semibold text-foreground focus:border-rust focus:outline-none"
+                />
+              </label>
+            </div>
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Asunto</span>
+              <input
+                value={email.subject || ""}
+                onChange={(event) => updateEmail(index, { subject: event.target.value })}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold focus:border-rust focus:outline-none"
+              />
+            </label>
+            <label className="mt-2 block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Cuerpo</span>
+              <textarea
+                value={email.body}
+                onChange={(event) => updateEmail(index, { body: event.target.value })}
+                rows={5}
+                className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed focus:border-rust focus:outline-none"
+              />
+            </label>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={busy || !changed || !valid}
+          onClick={() => onSave(emails)}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-bold hover:border-ink disabled:opacity-50"
+        >
+          {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          Guardar cambios
+        </button>
+        {!valid && <span className="text-xs font-semibold text-yellow-800">El primer email necesita asunto y todos necesitan cuerpo.</span>}
+        {changed && valid && <span className="text-xs font-semibold text-muted-foreground">Al guardar, la secuencia vuelve a requerir aprobacion.</span>}
+      </div>
     </div>
   );
 }
