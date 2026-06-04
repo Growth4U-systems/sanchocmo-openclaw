@@ -41,10 +41,14 @@ async function resolveComments(slug: string, docPath: string): Promise<CommentRo
   const exact = await loadDocComments(slug, getCommentedDocPath(docPath));
   if (exact.length > 0) return exact;
   const all = await loadDocComments(slug);
+  // Match children of a directory-style docPath (content drafts store
+  // per-channel `.commented` files under the draft dir). Use a trailing
+  // slash so `idea-1` does not also match `idea-10`.
+  const prefix = `${docPath}/`;
   return all.filter(
     (c) =>
-      c.docPath.startsWith(docPath) ||
-      getOriginalDocPath(c.docPath).startsWith(docPath),
+      c.docPath.startsWith(prefix) ||
+      getOriginalDocPath(c.docPath).startsWith(prefix),
   );
 }
 
