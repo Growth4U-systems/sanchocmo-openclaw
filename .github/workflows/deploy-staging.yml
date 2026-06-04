@@ -261,7 +261,7 @@ jobs:
               # `drizzle-kit migrate` yet: there is no Drizzle journal in git,
               # and one old migration drops/recreates `tasks`. Apply only the
               # additive MCP audit migration required by this deploy.
-              docker compose $COMPOSE_ARGS run --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:mcp"
+              docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:mcp"
             fi
             # `build --pull` only refreshes images for services with a
             # `build:` directive (sanchocmo). Services that consume a
@@ -286,6 +286,17 @@ jobs:
             if [ "$ENV_CHANGED" = "1" ]; then
               UP_ARGS="$UP_ARGS --force-recreate"
             fi
+            # Rebuilds tag the local image as `openclaw-sanchocmo:latest`, but
+            # Compose can keep the existing container when the service config is
+            # unchanged. Force-recreate `sanchocmo` so health checks validate
+            # the newly built image, not yesterday's still-healthy container.
+            if ! docker compose $COMPOSE_ARGS up -d --no-deps --force-recreate $UP_ARGS sanchocmo; then
+              echo "▶ docker compose up sanchocmo failed; current service state:"
+              docker compose $COMPOSE_ARGS ps || true
+              echo "▶ sanchocmo logs:"
+              docker compose $COMPOSE_ARGS logs --no-color --tail=200 sanchocmo || true
+              exit 1
+            fi
             if ! docker compose $COMPOSE_ARGS up -d $UP_ARGS; then
               echo "▶ docker compose up failed; current service state:"
               docker compose $COMPOSE_ARGS ps || true
@@ -301,6 +312,7 @@ jobs:
       - name: Health check
         env:
           HEALTH_URL: ${{ vars.HEALTH_URL }}
+          EXPECTED_COMMIT: ${{ github.sha }}
         run: |
           if [ -z "$HEALTH_URL" ]; then
             echo "::warning::HEALTH_URL variable not set on staging environment; skipping health check"
@@ -308,9 +320,14 @@ jobs:
           fi
           echo "▶ Polling $HEALTH_URL (up to 60s)…"
           for i in {1..30}; do
-            if curl -fsS --max-time 5 "$HEALTH_URL" > /dev/null; then
-              echo "✓ Health check passed"
-              exit 0
+            body="$(curl -fsS --max-time 5 "$HEALTH_URL" || true)"
+            if [ -n "$body" ]; then
+              commit="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("commit", ""))' <<<"$body" 2>/dev/null || true)"
+              if [ "$commit" = "$EXPECTED_COMMIT" ]; then
+                echo "✓ Health check passed at commit $commit"
+                exit 0
+              fi
+              echo "▶ Health responded with commit '${commit:-missing}', expected '$EXPECTED_COMMIT'"
             fi
             sleep 2
           done
