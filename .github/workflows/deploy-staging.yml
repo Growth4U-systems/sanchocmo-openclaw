@@ -257,7 +257,11 @@ jobs:
             docker compose $COMPOSE_ARGS build --pull
             if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
               echo "▶ Running DB migrations…"
-              docker compose $COMPOSE_ARGS run --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate"
+              # The repo's historical SQL migrations are not a safe input for
+              # `drizzle-kit migrate` yet: there is no Drizzle journal in git,
+              # and one old migration drops/recreates `tasks`. Apply only the
+              # additive MCP audit migration required by this deploy.
+              docker compose $COMPOSE_ARGS run --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:mcp"
             fi
             # `build --pull` only refreshes images for services with a
             # `build:` directive (sanchocmo). Services that consume a
