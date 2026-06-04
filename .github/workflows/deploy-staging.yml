@@ -261,7 +261,9 @@ jobs:
               # `drizzle-kit migrate` yet: there is no Drizzle journal in git,
               # and one old migration drops/recreates `tasks`. Apply only the
               # additive MCP audit migration required by this deploy.
-              docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:mcp"
+              # Redirect stdin so the one-off container cannot consume the
+              # remaining SSH heredoc before `docker compose up` runs.
+              docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:mcp" < /dev/null
             fi
             # `build --pull` only refreshes images for services with a
             # `build:` directive (sanchocmo). Services that consume a
