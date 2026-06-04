@@ -88,3 +88,42 @@ test("groupInsightsByCategory returns all four buckets", () => {
   assert.equal(grouped.client.length, 0);
   assert.equal(grouped.other.length, 0);
 });
+
+import * as routingMod from "../feedback-routing";
+const { buildExecutionLogEntry } = (routingMod as unknown as { default: typeof routingMod }).default ?? routingMod;
+
+test("buildExecutionLogEntry maps a skill insight to a skill-execution-log entry", () => {
+  const row = {
+    id: "fbi_1",
+    runId: "fbr_x",
+    slug: "acme",
+    docPath: "brand/acme/market/current.md",
+    skillId: "deep-research",
+    category: "skill" as const,
+    title: "Research too shallow",
+    detail: "Lacked depth.",
+    proposedChange: "Require >=10 sources.",
+    sourceCommentIds: ["cmt_1", "cmt_2"],
+    status: "new",
+    routedRef: null,
+    createdAt: new Date("2026-06-04T10:00:00.000Z"),
+  };
+  const entry = buildExecutionLogEntry(row);
+  assert.equal(entry.skill, "deep-research");
+  assert.equal(entry.outcome, "client-feedback");
+  assert.equal(entry.session_key, "feedback:fbr_x");
+  assert.equal(entry.timestamp, "2026-06-04T10:00:00.000Z");
+  assert.deepEqual(entry.issues, ["Research too shallow"]);
+  assert.equal(entry.improvement_hint, "Require >=10 sources.");
+  assert.match(entry.notes, /cmt_1,cmt_2/);
+});
+
+test("buildExecutionLogEntry falls back to detail when no proposedChange and unknown skill", () => {
+  const entry = buildExecutionLogEntry({
+    id: "fbi_2", runId: "fbr_y", slug: "acme", docPath: "d.md", skillId: null,
+    category: "skill" as const, title: "t", detail: "the detail", proposedChange: null,
+    sourceCommentIds: [], status: "new", routedRef: null, createdAt: new Date("2026-06-04T10:00:00.000Z"),
+  });
+  assert.equal(entry.skill, "unknown");
+  assert.equal(entry.improvement_hint, "the detail");
+});
