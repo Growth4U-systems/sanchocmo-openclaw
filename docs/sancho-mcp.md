@@ -80,6 +80,8 @@ Current scaffolded tools:
 - `sancho_list_tasks`
 - `sancho_get_task`
 - `sancho_send_message`
+- `sancho_list_chat_threads`
+- `sancho_get_chat_thread`
 - `yalc_get_overview`
 - `yalc_list_campaigns`
 - `yalc_list_gates`
@@ -87,6 +89,21 @@ Current scaffolded tools:
 - `open_design_list_catalog`
 
 `sancho_send_message` is side-effecting. It defaults to dry-run and only sends when `dryRun=false` and `confirm=true`.
+
+### Chat read flow
+
+Use `sancho_list_chat_threads` to find Mission Control chat threads for the allowed client, then `sancho_get_chat_thread` to read recent messages.
+
+`sancho_get_chat_thread` also extracts pending `:::ask` blocks emitted by Sancho agents and returns:
+
+- `pendingQuestions`: parsed multiple-choice questions with `id`, `prompt`, `mode` and `options`.
+- `responseFormat`: the exact text shape Claude Code can send back through `sancho_send_message`, for example:
+
+```text
+[ask:q_foundation_scope] respuesta: Foundation completo
+```
+
+Both chat read tools require `sancho:chat` because chat history may contain sensitive client context.
 
 YALC and Open Design are read-only in this scaffold. Do not expose the generic Open Design proxy or YALC side-effect skills through MCP until the dry-run/confirmation layer and audit requirements are completed.
 
@@ -124,7 +141,7 @@ The staging GitHub Environment must define:
 - Variable `SANCHO_MCP_AUDIT_FAIL_CLOSED=true`
 - Variable `RUN_DB_MIGRATIONS=1`
 
-`deploy-staging.yml` applies those values to the VPS `.env` and runs `npm run db:migrate` in the `sanchocmo` container when `RUN_DB_MIGRATIONS=1`.
+`deploy-staging.yml` applies those values to the VPS `.env` and runs `npm run db:migrate:mcp` in the `sanchocmo` container when `RUN_DB_MIGRATIONS=1`.
 
 The current staging token is a single operator token for client `growth4u` with:
 
