@@ -73,6 +73,15 @@ test("validateIngestPayload rejects empty title / oversized detail", () => {
   }), FeedbackInsightValidationError);
 });
 
+test("validateIngestPayload collapses newlines in title (no markdown-heading injection)", () => {
+  const out = validateIngestPayload("acme", {
+    runId: "r", docPath: "d.md",
+    insights: [{ ...validInsight, title: "Research\n### Injected" }],
+  });
+  assert.equal(out.insights[0].title, "Research ### Injected");
+  assert.doesNotMatch(out.insights[0].title, /\n/);
+});
+
 test("VALID_CATEGORIES is the expected set", () => {
   assert.deepEqual([...VALID_CATEGORIES], ["skill", "client", "form", "other"]);
   assert.ok(MAX_TITLE > 0);

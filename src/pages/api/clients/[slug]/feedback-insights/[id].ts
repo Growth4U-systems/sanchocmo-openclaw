@@ -34,6 +34,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const row = await getInsight(idStr, slugStr);
   if (!row) return res.status(404).json({ error: "Insight not found" });
 
+  // Idempotent: only a `new` insight can be acted on. A repeat accept/dismiss
+  // (double-click, retry) returns the current state without re-routing — avoids
+  // duplicate appends to the skill-execution-log.
+  if (row.status !== "new") {
+    return res.status(200).json({ ok: true, insight: row, alreadyProcessed: true });
+  }
+
   if (action === "dismissed") {
     const updated = await updateInsightStatus(idStr, slugStr, "dismissed");
     return res.status(200).json({ ok: true, insight: updated });

@@ -39,8 +39,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const reviewUrl = base ? `${base}/dashboard/${slugStr}/intelligence#mejoras` : "";
       const card = buildFeedbackCardMessage(payload.docPath, counts, reviewUrl);
       addMessage(feedbackThreadId(slugStr, payload.docPath), "system", card);
-    } catch {
-      // chat card is non-critical to the ingest
+    } catch (cardErr) {
+      // chat card is non-critical to the ingest — log but never fail ingest
+      console.error("[feedback-insights] chat card post failed:", cardErr);
     }
 
     return res.status(200).json({ ok: true, runId: payload.runId, count: rows.length });

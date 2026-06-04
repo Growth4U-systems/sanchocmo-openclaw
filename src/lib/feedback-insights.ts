@@ -104,7 +104,9 @@ function validateInsight(raw: unknown): InsightInput {
 
   return {
     category: category as InsightCategory,
-    title: reqString(r.title, "title", MAX_TITLE),
+    // Collapse whitespace/newlines: title is rendered as a markdown heading in
+    // routed output, so a newline would inject an unintended heading.
+    title: reqString(r.title, "title", MAX_TITLE).replace(/\s+/g, " "),
     detail: reqString(r.detail, "detail", MAX_DETAIL),
     proposedChange: optString(r.proposedChange, "proposedChange", MAX_PROPOSED),
     sourceCommentIds,
