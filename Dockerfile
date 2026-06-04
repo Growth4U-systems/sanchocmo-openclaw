@@ -43,7 +43,7 @@ RUN git config --global user.name "Cervantes (SanchoCMO)" \
 WORKDIR /app/mc-nextjs
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY next.config.mjs tsconfig.json postcss.config.mjs tailwind.config.ts components.json ./
+COPY next.config.mjs tsconfig.json postcss.config.mjs tailwind.config.ts components.json drizzle.config.ts ./
 COPY src/ ./src/
 COPY public/ ./public/
 # NEXT_PUBLIC_* vars must be present at build time — they are inlined into the client bundle.
