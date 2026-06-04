@@ -33,6 +33,7 @@ import {
   ContentTaskUpdateInput,
 } from "@/lib/data/content-tasks";
 import { listDrafts } from "@/lib/data/drafts";
+import { triggerFeedbackTriage } from "@/lib/data/feedback-triage-trigger";
 import { publish as publishEvent } from "@/lib/data/events";
 import {
   ChannelPhase,
@@ -173,6 +174,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           id,
           channel_phases as Record<string, ChannelPhase>,
         );
+      }
+
+      // Auto-fire feedback triage when a commented draft reaches the "draft" phase.
+      // Best-effort and fire-and-forget: never fail the PATCH because triage
+      // couldn't start. triggerFeedbackTriage no-ops if the draft has no comments.
+      if (channel_phases !== undefined && Object.values(channel_phases).includes("draft")) {
+        try {
+          await triggerFeedbackTriage({
+            slug,
+            docPath: `brand/${slug}/content/drafts/${updated.idea_id}`,
+            skillId: updated.skill ?? null,
+            source: "auto",
+          });
+        } catch {
+          // swallow — triage is non-critical to the content-task update
+        }
       }
 
       return respondAndEmit(updated);
