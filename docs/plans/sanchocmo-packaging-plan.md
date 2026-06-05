@@ -70,6 +70,13 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - Fuera de scope: **data snapshots** (`snapshot-data.sh`, `/mnt/data`) se conserva — su opcionalización es F5. Snapshots/CHANGELOG históricos + `mc-data.js` (generado) sin tocar.
   - Verificación: `git grep` refs funcionales → 0 · `docker-compose.yml` YAML válido · una instalación nueva no sembraba el cron (no hay `cron/jobs.json` trackeado).
 
+- **[Fase 1 · Open Design opcional — GAP B2/B4]** — PR #327 (`chore/san-91-od-optional` → base `chore/san-90-remove-git-backup`, **stacked**), `Refs SAN-91`. Trabajado en worktree aislado.
+  - OD vivía en `docker-compose.yml` base con `OD_API_TOKEN:?` requerido → `compose up` fallaba sin OD. Ahora el base **levanta sin OD**.
+  - Nuevo `docker-compose.od.yml` (overlay opt-in) con `open-design` (imagen pública `ghcr.io/growth4u-systems/od:edge`), volumen + `depends_on` + mount de design-systems (B4 sale del base). OD removido del base.
+  - `deploy-staging.yml` + `deploy-prod.yml`: `ENABLE_OD_SERVICE` (default 1) suma `-f docker-compose.od.yml` en todos los `COMPOSE_ARGS` → G4U mantiene OD.
+  - `.env.example`: OD documentado como overlay opt-in.
+  - Verificación (`docker compose config`): base sin token ✅ · base+OD sin token falla (esperado) · base+OD con token ✅ · combo base+OD+YALC ✅ · deploy YAML válido.
+
 ### 🟡 En curso / bloqueado
 
 - **CI de los PRs #208 y #219 en rojo por GitHub Actions pausado (billing)** a nivel org — `startup_failure`, no es el código (local pasa). Se destraba al cargar saldo y re-correr. (Usuario: "luego cargo plata".)
@@ -103,6 +110,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 | # | Item | PR | Estado | Notas |
 |---|------|----|--------|-------|
 | 1 | B5 · retiro git-backup | #325 (base `staging`) | ✅ abierto | base del stack |
+| 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ abierto | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
@@ -177,7 +185,7 @@ historial o partir de un repo nuevo, y **rotar** las credenciales expuestas.
 | # | Actual | Ideal | Dónde |
 |---|--------|-------|-------|
 | B1 ✅ | Admin gate real es `email.endsWith("@growth4u.io")` en el callback de auth | Helper `isAdminEmail()` que lea `ADMIN_EMAIL_DOMAIN` (+ `adminEmails`) | **HECHO** (PR #208) — `admin-domain.ts` + reemplazos en `nextauth.ts:79/:45`, `users.ts`, `admin-emails.ts`, `client-access.ts`, `dashboard/admin/users.tsx`, `health-check.ts:323` |
-| B2 | **Open Design es obligatorio**: en `docker-compose.yml` base con `OD_API_TOKEN: ${OD_API_TOKEN:?...}` → `compose up` falla sin OD | Mover servicio `open-design` a overlay `docker-compose.od.yml`; **imagen pública** `ghcr.io/<org>/od:vX.Y.Z` (publicar el fork) en vez de la privada | `docker-compose.yml:65-133`, `.env.example:159-167` |
+| B2 ✅ | **Open Design es obligatorio**: en `docker-compose.yml` base con `OD_API_TOKEN: ${OD_API_TOKEN:?...}` → `compose up` falla sin OD | **HECHO** (PR SAN-91): movido a overlay `docker-compose.od.yml` (imagen pública `ghcr.io/growth4u-systems/od:edge`); OD fuera del base → levanta sin OD; deploy G4U lo mantiene vía `ENABLE_OD_SERVICE` | `docker-compose.od.yml` (nuevo), `docker-compose.yml`, deploy workflows, `.env.example` |
 | B3 | YALC build desde repo privado `../Yalc-Growth4U` | Mantener overlay `docker-compose.yalc.yml` pero con `image:` **pública** `ghcr.io/<org>/yalc:vX.Y.Z` (no `build:` privado) | `docker-compose.yalc.yml` |
 | B4 | Volumen monta `brand/growth4u/...` hardcodeado | Va con overlay OD; parametrizar por brand o quitar del base | `docker-compose.yml:108` |
 | B5 ✅ | **Git backups de Cervantes** (git config + daily commit+push) | **HECHO** (PR #325, SAN-90): quitado `git config` (Dockerfile), mount `~/.ssh` (compose), cron `backup.sh` (`crontab-cervantes`), `backup.sh` eliminado, menciones en README + DEPLOY.md. Data snapshots (`/mnt/data`) se conserva → F5 | `Dockerfile`, `docker-compose.yml:18`, `docker/crontab-cervantes`, README, DEPLOY.md |
@@ -262,7 +270,7 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 ### Fase 1 — Desacople de G4U (4–6 días) 🔴
 - ✅ **Admin configurable** (HECHO, PR #208): helper `isAdminDomainEmail()` (lee `ADMIN_EMAIL_DOMAIN` + `adminEmails`); reemplazado hardcode en `nextauth.ts:79` y call-sites; parametrizado email del admin token (`nextauth.ts:45` → `ADMIN_IDENTITY_EMAIL`); UI muestra el dominio configurado; vars inyectadas en deploy + seteadas en GitHub Environments.
 - ✅ **Auth dual (C)** (HECHO, PR #219): `ANTHROPIC_AUTH_MODE` y `OPENAI_AUTH_MODE` en `generate-openclaw-config.js`; en `api_key` genera profile de API key y saltea el script de suscripción; gateados ambos scripts por modo en `entrypoint.sh`; vars seteadas en GitHub Environments (subscription) para G4U.
-- **OD/YALC públicos + opcionales**: mover `open-design` a `docker-compose.od.yml` con imagen pública `ghcr.io/<org>/od`; YALC overlay con imagen pública `ghcr.io/<org>/yalc`; quitar OD del base. Confirmar degradación limpia en MC (`src/lib/open-design/client.ts`, `src/lib/yalc/client.ts` + UI).
+- ✅ **OD opcional (B2)** (HECHO, SAN-91): `open-design` movido a `docker-compose.od.yml` (imagen pública `ghcr.io/growth4u-systems/od:edge`), fuera del base. **Pendiente**: YALC overlay a imagen pública (B3, hoy usa `build:` privado — necesita nombre de imagen) + degradación limpia OD/YALC en MC (D7).
 - ✅ **Supabase → Neon (B6)** (HECHO, PR #318, SAN-86): eliminadas referencias en config examples, `new-client.sh` (+ anon_key A6), `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `types/index.ts`, `guide.tsx`, `mc-server.js` legacy, `regenerate.py`, deploy workflows, docs/skills; borrado `supabase-migration.sql`.
 - ✅ **Retirar git-backup (B5)** (HECHO, PR #325, SAN-90): quitado `git config` (Dockerfile), montaje `~/.ssh` (compose), cron de `backup.sh` (`crontab-cervantes`), `backup.sh` eliminado, menciones en README + DEPLOY.md.
 - Limpiar `health-check.ts:323` y placeholders de dominio.

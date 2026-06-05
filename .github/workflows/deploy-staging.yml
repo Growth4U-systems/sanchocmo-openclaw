@@ -38,6 +38,7 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           SHA: ${{ github.sha }}
           ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
           RUN_DB_MIGRATIONS: ${{ vars.RUN_DB_MIGRATIONS }}
           YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
           YALC_REF: ${{ vars.YALC_REF || 'main' }}
@@ -230,6 +231,8 @@ jobs:
               rm -rf "$BRAND_BACKUP_DIR"
             fi
             COMPOSE_ARGS="-f docker-compose.yml"
+            # Open Design is an opt-in overlay (image is public). G4U keeps it on by default.
+            [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
             if [ "${ENABLE_YALC_SERVICE:-1}" != "0" ]; then
               YALC_DIR="${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}"
               if [ ! -d "$YALC_DIR/.git" ]; then
