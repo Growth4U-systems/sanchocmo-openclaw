@@ -34,7 +34,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 ## Progreso (tracking)
 
-> Bitácora de avances. Última actualización: **2026-05-27**.
+> Bitácora de avances. Última actualización: **2026-06-05**.
 
 ### ✅ Hecho
 
@@ -55,13 +55,22 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - GitHub Environments: `staging` y `production` → `ANTHROPIC_AUTH_MODE=subscription`, `OPENAI_AUTH_MODE=subscription` (preserva el comportamiento de G4U, evita flip de billing).
   - Verificación: `node --check` ✅ · `bash -n` ✅ · test funcional de la generación de config (ambos modos → bloque `auth` correcto, validado vs `openclaw.json.last-good`). **Pendiente:** inferencia real en runtime/container.
 
+- **[Fase 1 · Supabase → Neon — GAP B6]** — PR [#318](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/318) (`chore/san-86-remove-supabase` → `staging`), `Refs SAN-86`. Trabajado en worktree aislado.
+  - Persistencia ya corría en Neon (`DATABASE_URL`); esto elimina Supabase de toda la superficie funcional y shipped, sin cambio de comportamiento para G4U.
+  - Código: `health-check.ts` (case + `ALL_SERVICES`), `api/clients/create.ts` (deja de copiar/escribir el bloque), `api/env/index.ts` (catálogo de APIs), `types/index.ts` (campo del tipo Client), `dashboard/guide.tsx` (Supabase → Neon en labels y FAQs), `workspace-sancho/scripts/mc-server.js` (server legacy arrancado por `docker/entrypoint.sh:264`: health-check + catálogo + mapeos).
+  - Config/deploy: `instance.json.example`, `clients.json.example`, `.env.example` (sin `SUPABASE_*`), `deploy-staging.yml` + `deploy-prod.yml` (`SUPABASE_*` fuera del bloque `env:` y de `KEYS`).
+  - Scripts: `new-client.sh` (elimina lectura de `instance.json`, el insert REST a Supabase y la **anon_key hardcodeada** — A6); `regenerate.py` (campo en `clients.js` legacy + keyword).
+  - Docs/skills: README, runbook `system-keys-management.md`, onboarding/governance, `connect-api`, schemas de `acquisition-metrics-plan`. Eliminado `workspace-cervantes/supabase-migration.sql`.
+  - Fuera de scope (documentado): archivos con secretos vivos + data histórica de runtime (Fase 0); el folder de Drive **"Supabase Recordings"** (nombre literal, no es la DB) se conserva.
+  - Verificación local: `npm run typecheck` ✅ · `npm run test:lib` ✅ 162/162 · `node --check mc-server.js` ✅ · JSON examples válidos.
+
 ### 🟡 En curso / bloqueado
 
 - **CI de los PRs #208 y #219 en rojo por GitHub Actions pausado (billing)** a nivel org — `startup_failure`, no es el código (local pasa). Se destraba al cargar saldo y re-correr. (Usuario: "luego cargo plata".)
 
 ### ⏭️ Próximo
 
-- Completar **Fase 1**: OD/YALC públicos + opcionales (B2/B3), Supabase→Neon (B6), retiro de git-backup (B5).
+- Completar **Fase 1**: OD/YALC públicos + opcionales (B2/B3), retiro de git-backup (B5). ✅ Supabase→Neon (B6) hecho (PR #318, SAN-86).
 - **Fase 0** (purga de secretos / repo limpio) sigue siendo bloqueante #1 **antes de publicar** — el trabajo de admin se hizo primero porque es independiente y va a staging (repo propio de G4U), no al release público todavía.
 
 ---
@@ -127,7 +136,7 @@ historial o partir de un repo nuevo, y **rotar** las credenciales expuestas.
 | B3 | YALC build desde repo privado `../Yalc-Growth4U` | Mantener overlay `docker-compose.yalc.yml` pero con `image:` **pública** `ghcr.io/<org>/yalc:vX.Y.Z` (no `build:` privado) | `docker-compose.yalc.yml` |
 | B4 | Volumen monta `brand/growth4u/...` hardcodeado | Va con overlay OD; parametrizar por brand o quitar del base | `docker-compose.yml:108` |
 | B5 | **Git backups de Cervantes** (git config + daily commit+push) | **Retirar** todo el flujo (decisión #6): quitar `git config` del Dockerfile, montaje `~/.ssh`, y crons/skills de backup | `Dockerfile:39-40`, `docker-compose.yml:18`, crons de backup, README |
-| B6 | **Supabase** en ~44 archivos | **Eliminar** (decisión #7): `instance.json.example` (bloque `supabase`), `clients.json.example` (`supabase`), `new-client.sh` (insert + key), `health-check.ts`, `src/pages/api/clients/create.ts`, `src/pages/api/env/index.ts`, `regenerate.py`, `workspace-cervantes/supabase-migration.sql`, docs/skills. Persistencia = Neon (`DATABASE_URL`) | grep `supabase` (44 files) |
+| B6 ✅ | **Supabase** en ~44 archivos | **HECHO** (PR #318, SAN-86): eliminado de `instance.json.example`, `clients.json.example`, `new-client.sh` (insert + anon_key A6), `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `types/index.ts`, `guide.tsx`, `mc-server.js` (legacy live), `regenerate.py`, `.env.example`, ambos deploy workflows, docs/skills; borrado `supabase-migration.sql`. Persistencia = Neon (`DATABASE_URL`). Resto = data histórica/secretos (Fase 0) + folder Drive "Supabase Recordings" | grep `supabase` (44 files) |
 | B7 | Falta `LICENSE.md` (README lo cita); docs usan `sanchocmo.ai`/IPs | Crear `LICENSE.md`; placeholders genéricos | raíz, `docs/` |
 
 ### C. Auth de modelos (Anthropic + OpenAI) — ✅ HECHO (PR #219)
@@ -209,7 +218,7 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - ✅ **Admin configurable** (HECHO, PR #208): helper `isAdminDomainEmail()` (lee `ADMIN_EMAIL_DOMAIN` + `adminEmails`); reemplazado hardcode en `nextauth.ts:79` y call-sites; parametrizado email del admin token (`nextauth.ts:45` → `ADMIN_IDENTITY_EMAIL`); UI muestra el dominio configurado; vars inyectadas en deploy + seteadas en GitHub Environments.
 - ✅ **Auth dual (C)** (HECHO, PR #219): `ANTHROPIC_AUTH_MODE` y `OPENAI_AUTH_MODE` en `generate-openclaw-config.js`; en `api_key` genera profile de API key y saltea el script de suscripción; gateados ambos scripts por modo en `entrypoint.sh`; vars seteadas en GitHub Environments (subscription) para G4U.
 - **OD/YALC públicos + opcionales**: mover `open-design` a `docker-compose.od.yml` con imagen pública `ghcr.io/<org>/od`; YALC overlay con imagen pública `ghcr.io/<org>/yalc`; quitar OD del base. Confirmar degradación limpia en MC (`src/lib/open-design/client.ts`, `src/lib/yalc/client.ts` + UI).
-- **Supabase → Neon (B6)**: eliminar referencias en config examples, `new-client.sh`, `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `regenerate.py`, docs/skills.
+- ✅ **Supabase → Neon (B6)** (HECHO, PR #318, SAN-86): eliminadas referencias en config examples, `new-client.sh` (+ anon_key A6), `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `types/index.ts`, `guide.tsx`, `mc-server.js` legacy, `regenerate.py`, deploy workflows, docs/skills; borrado `supabase-migration.sql`.
 - **Retirar git-backup (B5)**: quitar `git config` (`Dockerfile:39-40`), montaje `~/.ssh` (`docker-compose.yml:18`), crons/skills de backup y mención en README.
 - Limpiar `health-check.ts:323` y placeholders de dominio.
 
