@@ -10,7 +10,8 @@
 
 import { useRouter } from "next/router";
 import Head from "next/head";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useBrandBrain, useBrandBrainOtherDocs, useUpdatePillarStatus } from "@/hooks/useBrandBrain";
@@ -115,6 +116,71 @@ export default function BrandBrainPage() {
   const { data: otherDocs } = useBrandBrainOtherDocs(slug);
   const { data: projectsData } = useProjects(slug || null);
   const openChat = useOpenChat();
+
+  // Client feedback (SAN-15 comments) surfaced inside Brand Brain so a doc's
+  // comments + the "Analizar feedback" trigger live next to the doc itself.
+  const { data: clientComments } = useQuery<{
+    documents?: Array<{
+      docPath: string;
+      count: number;
+      comments: Array<{ id: string; author: string; body: string; anchorText: string | null; createdAt: string }>;
+    }>;
+  }>({
+    queryKey: ["client-comments", slug],
+    queryFn: async () => {
+      const res = await fetch(`/api/clients/${slug}/comments`);
+      if (!res.ok) return { documents: [] };
+      return res.json();
+    },
+    enabled: !!slug,
+    staleTime: 30_000,
+  });
+  const docRelKey = useCallback(
+    (p: string) => p.replace(/^brand\/[^/]+\//, "").replace(/\.commented(?=\.[a-z0-9]+$|$)/i, ""),
+    [],
+  );
+  const { commentCounts, commentsByRel } = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const byRel = new Map<
+      string,
+      { count: number; comments: Array<{ id: string; author: string; body: string; anchorText: string | null; createdAt: string }> }
+    >();
+    for (const d of clientComments?.documents ?? []) {
+      const key = d.docPath.replace(/^brand\/[^/]+\//, "").replace(/\.commented(?=\.[a-z0-9]+$|$)/i, "");
+      counts[key] = (counts[key] ?? 0) + d.count;
+      byRel.set(key, { count: d.count, comments: d.comments });
+    }
+    return { commentCounts: counts, commentsByRel: byRel };
+  }, [clientComments]);
+
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeMsg, setAnalyzeMsg] = useState<string | null>(null);
+  const analyzeFeedback = useCallback(
+    async (docPath: string) => {
+      if (!slug) return;
+      setAnalyzing(true);
+      setAnalyzeMsg(null);
+      try {
+        const res = await fetch(`/api/clients/${slug}/analyze-feedback`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ docPath: docPath.startsWith("brand/") ? docPath : `brand/${slug}/${docPath}` }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d.error || "No se pudo disparar el análisis");
+        setAnalyzeMsg(
+          d.forwardedToGateway
+            ? "Análisis disparado — Sansón está procesando. Aparecerá en la pestaña Mejoras."
+            : `No se disparó: ${d.error || "sin comentarios"}`,
+        );
+      } catch (e) {
+        setAnalyzeMsg(e instanceof Error ? e.message : "Error");
+      } finally {
+        setAnalyzing(false);
+      }
+    },
+    [slug],
+  );
 
   const [selectedDoc, setSelectedDoc] = useState<SelectedDoc | null>(null);
   const [taskSlideOver, setTaskSlideOver] = useState<{ projectId: string; taskId: string } | null>(null);
@@ -407,6 +473,43 @@ export default function BrandBrainPage() {
           </div>
         </div>
 
+        {(() => {
+          const dc = commentsByRel.get(docRelKey(selectedDoc.docPath));
+          if (!dc || dc.comments.length === 0) return null;
+          return (
+            <div className="mb-4 rounded-lg border border-yellow-300/60 bg-yellow-50/60 dark:bg-yellow-900/10 p-4">
+              <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                <span className="text-sm font-bold text-yellow-900 dark:text-yellow-200">
+                  💬 Comentarios del cliente ({dc.count})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => analyzeFeedback(selectedDoc.docPath)}
+                  disabled={analyzing}
+                  className="inline-flex items-center gap-1 rounded-md border border-rust/40 bg-rust/10 px-3 py-1 text-xs font-bold text-rust hover:bg-rust/15 disabled:opacity-50"
+                >
+                  🛡️ {analyzing ? "Analizando..." : "Analizar feedback"}
+                </button>
+              </div>
+              {analyzeMsg && <p className="mb-2 text-[11px] text-muted-foreground">{analyzeMsg}</p>}
+              <ul className="space-y-2 m-0 list-none p-0">
+                {dc.comments.map((c) => (
+                  <li key={c.id} className="text-[12px]">
+                    <span className="font-semibold">{c.author}</span>
+                    <span className="text-muted-foreground"> · {new Date(c.createdAt).toLocaleDateString("es-ES")}</span>
+                    {c.anchorText && (
+                      <div className="mt-0.5 border-l-2 border-rust/50 pl-2 italic text-muted-foreground">
+                        &ldquo;{c.anchorText.slice(0, 160)}&rdquo;
+                      </div>
+                    )}
+                    <div className="mt-0.5">{c.body}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()}
+
         {docLoading && <p className="text-sm text-muted-foreground text-center py-20">Cargando documento...</p>}
         {!docLoading && editing && docContent ? (
           <div className="min-h-[60vh]">
@@ -494,6 +597,7 @@ export default function BrandBrainPage() {
         slug={slug}
         foundation={brandBrain}
         otherDocs={otherDocs}
+        commentCounts={commentCounts}
         onSelectDoc={handleSelectDoc}
         onSelectOtherDoc={handleSelectOtherDoc}
         onOpenChat={handleOpenChat}
