@@ -63,6 +63,21 @@ const FOLDER_ICONS: Record<string, string> = {
   _root: "📄",
 };
 
+function relKey(p: string): string {
+  return p.replace(/^brand\/[^/]+\//, "");
+}
+
+function CommentBadge({ n }: { n: number }) {
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 rounded-full bg-yellow-200/50 dark:bg-yellow-300/20 px-1.5 py-0.5 text-[9px] font-bold text-yellow-900 dark:text-yellow-200"
+      title={`${n} comentario(s) del cliente`}
+    >
+      💬 {n}
+    </span>
+  );
+}
+
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
   const ff = sections["fast-foundation"];
@@ -197,7 +212,7 @@ function DeepDiveRow({ sf, onSelectOtherDoc, parentPillar }: { sf: SubfolderEntr
   );
 }
 
-function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOptional, statusCls, statusLabel, onSelectDoc, onSelectOtherDoc, onOpenChat, onOpenTask, pillar }: {
+function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOptional, statusCls, statusLabel, onSelectDoc, onSelectOtherDoc, onOpenChat, onOpenTask, pillar, commentCount }: {
   slug: string; sectionKey: string; pillarKey: string; hasDoc: boolean; docUrl: string;
   name: string; isOptional: boolean; statusCls: string; statusLabel: string;
   onSelectDoc: (sectionKey: string, pillarKey: string, pillar: Pillar) => void;
@@ -205,6 +220,7 @@ function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOption
   onOpenChat: (pillarKey: string, docPath?: string) => void;
   onOpenTask?: (docPath: string) => void;
   pillar: Pillar;
+  commentCount: (fp: string) => number;
 }) {
   const t = useTranslations("brandBrain");
   const [open, setOpen] = useState(false);
@@ -250,6 +266,7 @@ function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOption
 
         <span className="flex-1 text-sm font-medium text-foreground/80 flex items-center gap-2">
           {name}
+          {hasDoc && commentCount(docUrl) > 0 && <CommentBadge n={commentCount(docUrl)} />}
           {isOptional && (
             <span className="text-[10px] text-muted-foreground font-normal">({t("optional")})</span>
           )}
@@ -312,7 +329,7 @@ function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOption
               {extra.otherFiles.map((f) => (
                 <div key={f.fullPath} className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-muted/20 transition-colors">
                   <span className="text-[11px] text-muted-foreground">{"📄"}</span>
-                  <span className="flex-1 text-xs font-medium text-foreground/60">{f.name}</span>
+                  <span className="flex-1 text-xs font-medium text-foreground/60 flex items-center gap-1.5">{f.name}{commentCount(f.fullPath) > 0 && <CommentBadge n={commentCount(f.fullPath)} />}</span>
                   <div className="flex items-center gap-1">
                     <DownloadBtn docPath={f.fullPath} />
                     <button type="button" onClick={() => onSelectOtherDoc(f.fullPath, f.name, pillarKey)}
@@ -342,10 +359,12 @@ interface FileTreeProps {
   onSelectOtherDoc: (docPath: string, docName: string, parentPillar?: string) => void;
   onOpenChat: (pillarKey: string, docPath?: string) => void;
   onOpenTask?: (docPath: string) => void;
+  commentCounts?: Record<string, number>;
 }
 
-export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOtherDoc, onOpenChat, onOpenTask }: FileTreeProps) {
+export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOtherDoc, onOpenChat, onOpenTask, commentCounts }: FileTreeProps) {
   const t = useTranslations("brandBrain");
+  const commentCount = (fp: string) => commentCounts?.[relKey(fp)] ?? 0;
   const sections = foundation.sections || {};
   const ffDone = ffDonePillars(sections);
   const ffSection = sections["fast-foundation"]?.pillars || {};
@@ -530,6 +549,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                         onOpenChat={onOpenChat}
                         onOpenTask={onOpenTask}
                         pillar={p}
+                        commentCount={commentCount}
                       />
                     );
                   })}
@@ -576,7 +596,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                 <div key={group.folder} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                   <div className="flex items-center gap-3 px-5 py-4 hover:bg-muted/20 transition-colors">
                     <span className="text-xl">{icon}</span>
-                    <span className="flex-1 text-base font-bold text-foreground">{title}</span>
+                    <span className="flex-1 text-base font-bold text-foreground flex items-center gap-2">{title}{commentCount(doc.fullPath) > 0 && <CommentBadge n={commentCount(doc.fullPath)} />}</span>
                     <div className="flex items-center gap-1">
                       <DownloadBtn docPath={doc.fullPath} />
                       <button type="button" onClick={() => onSelectOtherDoc(doc.fullPath, doc.name)}
@@ -601,7 +621,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                 <div className="divide-y divide-border/40">
                   {group.docs.map((doc) => (
                     <div key={doc.fullPath} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/20 transition-colors">
-                      <span className="flex-1 text-sm font-medium text-foreground/80 pl-8">{doc.name}</span>
+                      <span className="flex-1 text-sm font-medium text-foreground/80 pl-8 flex items-center gap-2">{doc.name}{commentCount(doc.fullPath) > 0 && <CommentBadge n={commentCount(doc.fullPath)} />}</span>
                       <div className="flex items-center gap-1">
                         <DownloadBtn docPath={doc.fullPath} />
                         <button type="button" onClick={() => onSelectOtherDoc(doc.fullPath, doc.name)}
