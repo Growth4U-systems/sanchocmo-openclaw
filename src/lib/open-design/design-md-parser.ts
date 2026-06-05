@@ -83,12 +83,6 @@ function extractSection(md: string, sectionRegex: RegExp): string | undefined {
   return nextHeading === -1 ? tail : tail.slice(0, nextHeading);
 }
 
-function firstHex(text: string | undefined): string | undefined {
-  if (!text) return undefined;
-  const m = text.match(HEX_RE);
-  return m?.[0];
-}
-
 function findColorAfterLabel(text: string, labels: string[]): string | undefined {
   for (const label of labels) {
     const re = new RegExp(`\\b${label}\\b[^#\\n]*?(${HEX_RE.source})`, "i");

@@ -61,7 +61,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
 
-  let { slug, projectId, name, batchType, ideaIds, skill, deliverable_file } = req.body;
+  const { slug, name, batchType, ideaIds, skill, deliverable_file } = req.body;
+  let { projectId } = req.body;
   if (!slug || !projectId || !name || !ideaIds || !ideaIds.length) {
     return res.status(400).json({ error: "Missing slug, projectId, name, or ideaIds" });
   }

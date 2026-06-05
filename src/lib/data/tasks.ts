@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import { tasks as tasksTable } from "@/db/schema";
 import { MC_TASKS_BACKEND, MC_TASKS_WORKSPACE } from "@/lib/config";
@@ -49,7 +49,7 @@ export type UnifiedTaskRow = (
 
 type DbTaskRow = typeof tasksTable.$inferSelect;
 
-function useDbTasks() {
+function dbTasksEnabled() {
   return MC_TASKS_BACKEND === "db";
 }
 
@@ -248,12 +248,12 @@ function listProjectsWithTasksJson(slug: string): ProjectWithTasks[] {
 }
 
 export async function listProjectsWithTasks(slug: string): Promise<ProjectWithTasks[]> {
-  if (useDbTasks()) return listDbProjectsWithTasks(slug);
+  if (dbTasksEnabled()) return listDbProjectsWithTasks(slug);
   return listProjectsWithTasksJson(slug);
 }
 
 export function listUnifiedTaskRows(slug: string): UnifiedTaskRow[] {
-  if (useDbTasks()) {
+  if (dbTasksEnabled()) {
     throw new Error("Use listUnifiedTaskRowsAsync when MC_TASKS_BACKEND=db");
   }
   const projects = listProjectsWithTasksJson(slug);
@@ -318,7 +318,7 @@ export function listUnifiedTaskRows(slug: string): UnifiedTaskRow[] {
 }
 
 export async function listUnifiedTaskRowsAsync(slug: string): Promise<UnifiedTaskRow[]> {
-  if (useDbTasks()) return listDbTaskRows(slug);
+  if (dbTasksEnabled()) return listDbTaskRows(slug);
   return listUnifiedTaskRows(slug);
 }
 
@@ -354,7 +354,7 @@ export function getChildren(slug: string, parentId: string): Task[] {
 }
 
 export async function getTask(slug: string, id: string): Promise<Project | Task | ContentTask | null> {
-  if (useDbTasks()) return getDbRow(slug, id) as Promise<Project | Task | ContentTask | null>;
+  if (dbTasksEnabled()) return getDbRow(slug, id) as Promise<Project | Task | ContentTask | null>;
   return findTaskByIdAcrossBrand(slug, id)?.task || null;
 }
 
@@ -400,7 +400,7 @@ function isContentTaskRecord(task: Project | Task | ContentTask): task is Conten
 }
 
 export async function updateTask(slug: string, id: string, fields: Record<string, unknown>): Promise<Project | Task | ContentTask> {
-  if (useDbTasks()) {
+  if (dbTasksEnabled()) {
     const patch = dbPatch(fields);
     await db
       .update(tasksTable)
@@ -437,7 +437,7 @@ export async function updateTask(slug: string, id: string, fields: Record<string
 }
 
 export async function setTaskStatus(slug: string, id: string, status: string) {
-  if (useDbTasks()) {
+  if (dbTasksEnabled()) {
     const task = await updateTask(slug, id, { status });
     return { ok: true, slug, task, newStatus: status };
   }
@@ -458,7 +458,7 @@ export async function archiveTask(slug: string, id: string, reason = "Archivado 
 }
 
 export async function createTask(slug: string, input: Partial<Project & Task> & { parent_id?: string; type?: string }) {
-  if (useDbTasks()) {
+  if (dbTasksEnabled()) {
     const now = new Date();
     const type = input.type || (!input.parent_id ? "project" : "execution");
     const id = input.id || (type === "project"

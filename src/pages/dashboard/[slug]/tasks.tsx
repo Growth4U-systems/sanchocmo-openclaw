@@ -310,8 +310,9 @@ export default function TasksPage() {
               key={row.id}
               row={row}
               slug={slug}
-              children={childrenByParent.get(row.id) || []}
-            />
+            >
+              {childrenByParent.get(row.id) || []}
+            </TaskTreeRow>
           ))}
         </div>
       ) : (
@@ -341,7 +342,7 @@ export default function TasksPage() {
                   {colRows.length === 0 ? (
                     <p className="text-[11px] text-muted-foreground text-center py-8">Sin tareas</p>
                   ) : colRows.map((row) => (
-                    <TaskKanbanCard key={row.id} row={row} slug={slug} children={childrenByParent.get(row.id) || []} />
+                    <TaskKanbanCard key={row.id} row={row} slug={slug}>{childrenByParent.get(row.id) || []}</TaskKanbanCard>
                   ))}
                 </div>
               </div>
