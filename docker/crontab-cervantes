@@ -10,9 +10,6 @@ PATH=/usr/local/bin:/usr/bin:/bin
 # Healthcheck — every 6 hours
 0 */6 * * * bash $OPENCLAW_HOME/workspace-cervantes/scripts/healthcheck.sh >> /var/log/cervantes-healthcheck.log 2>&1
 
-# Backup — daily 3 AM
-0 3 * * * bash $OPENCLAW_HOME/workspace-sancho/scripts/backup.sh >> /var/log/cervantes-backup.log 2>&1
-
 # Snapshots — every 3 hours
 0 */3 * * * bash $OPENCLAW_HOME/workspace-cervantes/scripts/snapshot-data.sh >> /var/log/cervantes-snapshot.log 2>&1
 

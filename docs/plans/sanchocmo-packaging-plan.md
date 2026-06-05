@@ -64,14 +64,59 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - Fuera de scope (documentado): archivos con secretos vivos + data histórica de runtime (Fase 0); el folder de Drive **"Supabase Recordings"** (nombre literal, no es la DB) se conserva.
   - Verificación local: `npm run typecheck` ✅ · `npm run test:lib` ✅ 162/162 · `node --check mc-server.js` ✅ · JSON examples válidos.
 
+- **[Fase 1 · Retiro de git-backup — GAP B5]** — PR [#325](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/325) (`chore/san-90-remove-git-backup` → `staging`), `Refs SAN-90`. Trabajado en worktree aislado.
+  - Retirado el backup diario de Cervantes (`git add -A` + commit + push de `~/.openclaw` a GitHub). Decisión #6: los datos ya tienen otro backup (data snapshots → `/mnt/data`).
+  - `Dockerfile` (git config Cervantes), `docker-compose.yml` (mount `~/.ssh:ro`), `docker/crontab-cervantes` (cron 03:00), `workspace-sancho/scripts/backup.sh` (**eliminado**), `README.md` + `docs/DEPLOY.md` (menciones).
+  - Fuera de scope: **data snapshots** (`snapshot-data.sh`, `/mnt/data`) se conserva — su opcionalización es F5. Snapshots/CHANGELOG históricos + `mc-data.js` (generado) sin tocar.
+  - Verificación: `git grep` refs funcionales → 0 · `docker-compose.yml` YAML válido · una instalación nueva no sembraba el cron (no hay `cron/jobs.json` trackeado).
+
 ### 🟡 En curso / bloqueado
 
 - **CI de los PRs #208 y #219 en rojo por GitHub Actions pausado (billing)** a nivel org — `startup_failure`, no es el código (local pasa). Se destraba al cargar saldo y re-correr. (Usuario: "luego cargo plata".)
 
 ### ⏭️ Próximo
 
-- Completar **Fase 1**: OD/YALC públicos + opcionales (B2/B3), retiro de git-backup (B5). ✅ Supabase→Neon (B6) hecho (PR #318, SAN-86).
-- **Fase 0** (purga de secretos / repo limpio) sigue siendo bloqueante #1 **antes de publicar** — el trabajo de admin se hizo primero porque es independiente y va a staging (repo propio de G4U), no al release público todavía.
+- Completar **Fase 1**: OD/YALC públicos + opcionales (B2/B3 — **desbloqueado**, ver aclaración #3). ✅ B6 (#318), ✅ B5 (#325) hechos.
+- **Fase 0** (purga de secretos / repo limpio) sigue siendo bloqueante #1 **antes de publicar**. Requiere rewrite de historial + rotación de credenciales → **necesita al usuario** (destructivo), ver preguntas abiertas.
+
+---
+
+## 🤖 Modo autónomo (sesión 2026-06-05)
+
+> El usuario dejó la sesión corriendo sola con instrucción de avanzar lo máximo posible. Estrategia:
+> **PRs apilados (stacked)** en orden de dependencia (uno por concern, base = branch anterior), porque
+> nadie va a mergear mientras tanto. Cada item se testea antes del PR. La meta prioritaria es que el
+> proyecto **levante localmente** (`docker compose up`) sin G4U: PG bundled + Discord opcional + modo
+> mínimo + wizard + install. Bitácora y preguntas abiertas abajo.
+
+### Aclaraciones del usuario (2026-06-05)
+
+1. **Discord = una opción más de comunicación, igual que Slack.** No debe ser fundamental para que la app
+   funcione, ni los clientes deben estar ordenados en torno a Discord. (Refuerza Fase 2 / GAP D.)
+2. **El wizard de config debe ser lo más completo, intuitivo y eficiente posible.** (Fase 4 / E.)
+3. **Las imágenes de OD y YALC ya deberían ser públicas — las arma G4U.** → **B2/B3 desbloqueado**
+   (no hay blocker de derechos de publicación; solo referenciar las imágenes públicas correctas).
+4. **Instalar el producto con un comando** (o lo más cercano posible): `install.sh` / one-liner. (Fase 6.)
+
+### Bitácora autónoma (orden cronológico de PRs en el stack)
+
+| # | Item | PR | Estado | Notas |
+|---|------|----|--------|-------|
+| 1 | B5 · retiro git-backup | #325 (base `staging`) | ✅ abierto | base del stack |
+
+### ❓ Preguntas abiertas para el usuario (responder al volver)
+
+1. **LICENSE (B7)**: el README cita "SUL" pero no existe el texto. ¿Qué licencia exacta usamos
+   (SUL/BUSL/MIT/propietaria)? Mientras tanto dejo un `LICENSE.md` placeholder marcado como borrador.
+2. **Imágenes públicas OD/YALC (B2/B3/F5)**: ¿cuáles son los nombres/tags exactos de las imágenes
+   públicas (`ghcr.io/<org>/od:<tag>`, `ghcr.io/<org>/yalc:<tag>`)? Asumo lo que encuentre en
+   `OPEN_DESIGN_IMAGE` / la branch `chore/od-sanchocmo-default-image`; si no, parametrizo con un
+   default y lo dejo configurable por env.
+3. **Fase 0 (purga de secretos)**: es destructiva (rewrite de historial git + **rotar** credenciales
+   expuestas: clave Tailscale, tokens de `openclaw.json.last-good`/`.env.bak`/`instance.json`). **No lo
+   hago solo.** Dejo listado lo que hay que rotar; lo ejecutás vos.
+4. **Cutover tasks JSON→DB (B8)**: requiere correr `db-shadow` en staging N días con diff continuo
+   antes del cutover. Autónomamente solo escribo el **runbook**; el cutover real lo hacés vos.
 
 ---
 
@@ -135,7 +180,7 @@ historial o partir de un repo nuevo, y **rotar** las credenciales expuestas.
 | B2 | **Open Design es obligatorio**: en `docker-compose.yml` base con `OD_API_TOKEN: ${OD_API_TOKEN:?...}` → `compose up` falla sin OD | Mover servicio `open-design` a overlay `docker-compose.od.yml`; **imagen pública** `ghcr.io/<org>/od:vX.Y.Z` (publicar el fork) en vez de la privada | `docker-compose.yml:65-133`, `.env.example:159-167` |
 | B3 | YALC build desde repo privado `../Yalc-Growth4U` | Mantener overlay `docker-compose.yalc.yml` pero con `image:` **pública** `ghcr.io/<org>/yalc:vX.Y.Z` (no `build:` privado) | `docker-compose.yalc.yml` |
 | B4 | Volumen monta `brand/growth4u/...` hardcodeado | Va con overlay OD; parametrizar por brand o quitar del base | `docker-compose.yml:108` |
-| B5 | **Git backups de Cervantes** (git config + daily commit+push) | **Retirar** todo el flujo (decisión #6): quitar `git config` del Dockerfile, montaje `~/.ssh`, y crons/skills de backup | `Dockerfile:39-40`, `docker-compose.yml:18`, crons de backup, README |
+| B5 ✅ | **Git backups de Cervantes** (git config + daily commit+push) | **HECHO** (PR #325, SAN-90): quitado `git config` (Dockerfile), mount `~/.ssh` (compose), cron `backup.sh` (`crontab-cervantes`), `backup.sh` eliminado, menciones en README + DEPLOY.md. Data snapshots (`/mnt/data`) se conserva → F5 | `Dockerfile`, `docker-compose.yml:18`, `docker/crontab-cervantes`, README, DEPLOY.md |
 | B6 ✅ | **Supabase** en ~44 archivos | **HECHO** (PR #318, SAN-86): eliminado de `instance.json.example`, `clients.json.example`, `new-client.sh` (insert + anon_key A6), `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `types/index.ts`, `guide.tsx`, `mc-server.js` (legacy live), `regenerate.py`, `.env.example`, ambos deploy workflows, docs/skills; borrado `supabase-migration.sql`. Persistencia = Neon (`DATABASE_URL`). Resto = data histórica/secretos (Fase 0) + folder Drive "Supabase Recordings" | grep `supabase` (44 files) |
 | B7 | Falta `LICENSE.md` (README lo cita); docs usan `sanchocmo.ai`/IPs | Crear `LICENSE.md`; placeholders genéricos | raíz, `docs/` |
 
@@ -219,7 +264,7 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - ✅ **Auth dual (C)** (HECHO, PR #219): `ANTHROPIC_AUTH_MODE` y `OPENAI_AUTH_MODE` en `generate-openclaw-config.js`; en `api_key` genera profile de API key y saltea el script de suscripción; gateados ambos scripts por modo en `entrypoint.sh`; vars seteadas en GitHub Environments (subscription) para G4U.
 - **OD/YALC públicos + opcionales**: mover `open-design` a `docker-compose.od.yml` con imagen pública `ghcr.io/<org>/od`; YALC overlay con imagen pública `ghcr.io/<org>/yalc`; quitar OD del base. Confirmar degradación limpia en MC (`src/lib/open-design/client.ts`, `src/lib/yalc/client.ts` + UI).
 - ✅ **Supabase → Neon (B6)** (HECHO, PR #318, SAN-86): eliminadas referencias en config examples, `new-client.sh` (+ anon_key A6), `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `types/index.ts`, `guide.tsx`, `mc-server.js` legacy, `regenerate.py`, deploy workflows, docs/skills; borrado `supabase-migration.sql`.
-- **Retirar git-backup (B5)**: quitar `git config` (`Dockerfile:39-40`), montaje `~/.ssh` (`docker-compose.yml:18`), crons/skills de backup y mención en README.
+- ✅ **Retirar git-backup (B5)** (HECHO, PR #325, SAN-90): quitado `git config` (Dockerfile), montaje `~/.ssh` (compose), cron de `backup.sh` (`crontab-cervantes`), `backup.sh` eliminado, menciones en README + DEPLOY.md.
 - Limpiar `health-check.ts:323` y placeholders de dominio.
 
 ### Fase 2 — Discord opcional + canal de publicación (2–3 días) 🟠

@@ -35,10 +35,6 @@ RUN npm install -g openclaw@${OPENCLAW_VERSION}
 # found" mid-session. Installing it here keeps the preferred path working.
 RUN npm install -g ntn
 
-# Git config for backup commits
-RUN git config --global user.name "Cervantes (SanchoCMO)" \
-    && git config --global user.email "cervantes@sanchocmo.ai"
-
 # --- Build Next.js Mission Control ---
 WORKDIR /app/mc-nextjs
 COPY package.json package-lock.json ./

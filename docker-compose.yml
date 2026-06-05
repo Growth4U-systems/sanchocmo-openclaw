@@ -15,7 +15,6 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ${OPENCLAW_HOME:-~/.openclaw}:/root/.openclaw
-      - ~/.ssh:/root/.ssh:ro
       - ${SNAPSHOT_DATA_DIR:-/mnt/data/snapshots}:/mnt/data/snapshots
     env_file:
       - .env
