@@ -106,16 +106,24 @@ async function main() {
   config.commands.restart = true;
   config.commands.ownerDisplay = 'raw';
 
-  // --- Discord channel config ---
+  // --- Discord channel config (OPTIONAL — only when a bot token is set) ---
+  // Discord is one comms option, not a requirement. Without DISCORD_BOT_TOKEN
+  // the channel stays disabled and MC chat (below) is the primary interface.
   if (!config.channels) config.channels = {};
-  if (!config.channels.discord) config.channels.discord = {};
-  config.channels.discord.enabled = true;
-  if (discordToken) config.channels.discord.token = discordToken;
-  config.channels.discord.groupPolicy = 'allowlist';
-  config.channels.discord.replyToMode = 'first';
-  if (!config.channels.discord.threadBindings) config.channels.discord.threadBindings = {};
-  config.channels.discord.threadBindings.enabled = true;
-  config.channels.discord.threadBindings.spawnSubagentSessions = true;
+  if (discordToken) {
+    if (!config.channels.discord) config.channels.discord = {};
+    config.channels.discord.enabled = true;
+    config.channels.discord.token = discordToken;
+    config.channels.discord.groupPolicy = 'allowlist';
+    config.channels.discord.replyToMode = 'first';
+    if (!config.channels.discord.threadBindings) config.channels.discord.threadBindings = {};
+    config.channels.discord.threadBindings.enabled = true;
+    config.channels.discord.threadBindings.spawnSubagentSessions = true;
+  } else if (config.channels.discord) {
+    // No token → keep any existing block but ensure it's disabled so the
+    // gateway doesn't try to connect with a tokenless Discord channel.
+    config.channels.discord.enabled = false;
+  }
 
   // --- Session config ---
   if (!config.session) config.session = {};

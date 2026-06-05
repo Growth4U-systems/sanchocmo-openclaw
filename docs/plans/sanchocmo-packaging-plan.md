@@ -77,6 +77,12 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - `.env.example`: OD documentado como overlay opt-in.
   - Verificación (`docker compose config`): base sin token ✅ · base+OD sin token falla (esperado) · base+OD con token ✅ · combo base+OD+YALC ✅ · deploy YAML válido.
 
+- **[Fase 2 · Discord opcional — GAP D1/D2/D3]** — PR #329 (`chore/san-92-discord-optional` → base `chore/san-91-od-optional`, **stacked**), `Refs SAN-92`. Aclaración del usuario #1.
+  - `docker/generate-openclaw-config.js` (D2): el bloque `channels.discord` se gatea a `DISCORD_BOT_TOKEN`; sin token Discord no se habilita (`mc-chat` sigue primario).
+  - `.env.example` (D1): `DISCORD_BOT_TOKEN` comentado/opcional. `config/instance.json.example` (D3): bloque `discord` marcado opcional (`$comment_discord`).
+  - G4U sin cambio (setea el token → rama con-token = comportamiento previo). Verif: `node --check` ✅ · JSON válido ✅ · test funcional del gating ✅.
+  - **Follow-ups Fase 2**: D4 (rewrite `new-client.sh` sin guild), D5 (canal publicación slack|discord), D6 (README→MC).
+
 ### 🟡 En curso / bloqueado
 
 - **CI de los PRs #208 y #219 en rojo por GitHub Actions pausado (billing)** a nivel org — `startup_failure`, no es el código (local pasa). Se destraba al cargar saldo y re-correr. (Usuario: "luego cargo plata".)
@@ -111,6 +117,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 |---|------|----|--------|-------|
 | 1 | B5 · retiro git-backup | #325 (base `staging`) | ✅ abierto | base del stack |
 | 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ abierto | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
+| 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ abierto | aclaración #1; D4/D5/D6 follow-up |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
