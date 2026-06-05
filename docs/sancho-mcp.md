@@ -148,11 +148,13 @@ The staging GitHub Environment must define:
 
 `deploy-staging.yml` applies those values to the VPS `.env` and runs `npm run db:migrate:mcp` in the `sanchocmo` container when `RUN_DB_MIGRATIONS=1`.
 
-The current staging token is a single operator token for client `growth4u` with:
+The current staging token is a single shared operator token enabled for all clients (`clients: ["*"]`) with:
 
 ```json
-["sancho:read", "tasks:read", "yalc:read", "open-design:read", "sancho:chat"]
+["sancho:read", "tasks:read", "tasks:write", "yalc:read", "open-design:read", "sancho:chat"]
 ```
+
+This is a shared token: audit events attribute every call to the same principal, and it can read and write across any staging client. For production, issue per-person/per-client tokens scoped to the narrowest set needed.
 
 Install the single staging MCP in Claude Code with:
 
