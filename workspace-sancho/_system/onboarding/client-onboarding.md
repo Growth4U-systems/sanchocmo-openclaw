@@ -1,7 +1,6 @@
 # Client Onboarding — Procedimiento
 
 ## Prerequisitos
-- Cuenta de Supabase activa (proyecto compartido)
 - Bot SanchoCMO corriendo
 
 ## Paso 1: Discord Server (el cliente)
@@ -37,7 +36,6 @@ Esto hace:
 - Crea carpeta `brand/{slug}/`
 - Crea `foundation-state.json` v2.0 con 4 secciones (company-brief, market-and-us, go-to-market, brand-identity)
 - Crea `integrations.json` vacío
-- Inserta cliente en Supabase (`clients` table)
 - Añade guild + channel bindings a `openclaw.json`
 - Añade systemPrompts con contexto del cliente a todos los canales
 
@@ -59,6 +57,5 @@ openclaw gateway restart
 |-----|-----|
 | Plantilla Discord | https://discord.new/mnXBVkNQqFBk |
 | OAuth Bot | Dinámico — ver `instance.json → discord.bot_client_id` |
-| Supabase | Dinámico — ver `instance.json → supabase.url` |
 | Mission Control | Dinámico — ver `instance.json → mc_base_url` |
 | Docs (público) | Dinámico — ver `instance.json → mc_base_url` + `/docs/` |

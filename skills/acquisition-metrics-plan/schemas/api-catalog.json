@@ -154,19 +154,6 @@
     "infrastructure": {
       "label": "⚙️ Infraestructura",
       "apis": {
-        "supabase": {
-          "provider": "Supabase",
-          "icon": "⚡",
-          "desc": "Database & auth",
-          "ownership": "system",
-          "credentials": [
-            { "key": "ANON_KEY", "label": "Anon Key", "type": "string", "sensitive": true, "help": "Supabase → Settings → API" }
-          ],
-          "config": [
-            { "key": "URL", "label": "Project URL", "type": "string", "sensitive": false, "help": "Supabase → Settings → API → Project URL" }
-          ],
-          "docs": "https://supabase.com/docs"
-        },
         "openclaw": {
           "provider": "OpenClaw Gateway",
           "icon": "🐾",

@@ -509,22 +509,6 @@
       }
     ]
   },
-  "supabase": {
-    "title": "Supabase",
-    "difficulty": "baja",
-    "time": "2 min",
-    "steps": [
-      {
-        "title": "Copia las credenciales",
-        "instructions": "En tu <a href='https://supabase.com/dashboard' target='_blank'>proyecto de Supabase</a> → <strong>Settings → API</strong>. Copia la <strong>Project URL</strong> y la <strong>Anon Key</strong>.",
-        "alwaysShow": true
-      },
-      {
-        "title": "Pega las credenciales",
-        "instructions": "Introduce <strong>Project URL</strong> y <strong>Anon Key</strong>."
-      }
-    ]
-  },
   "amplitude": {
     "title": "Amplitude Analytics",
     "difficulty": "baja",

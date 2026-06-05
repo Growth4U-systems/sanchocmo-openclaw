@@ -67,10 +67,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(409).json({ error: `Client "${slug}" already exists` });
   }
 
-  const supabaseTemplate = clients.find(
-    (client) => typeof client.supabase === "object" && client.supabase !== null
-  )?.supabase || { url: "", anon_key: "" };
-
   const client: Record<string, unknown> = {
     slug,
     name,
@@ -80,7 +76,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     language,
     phase: 0,
     paths: { brand: "brand/" },
-    supabase: supabaseTemplate,
     mcToken: crypto.randomBytes(16).toString("hex"),
     metrics: { apis: [] },
   };

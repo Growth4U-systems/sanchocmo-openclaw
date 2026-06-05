@@ -21,11 +21,6 @@
       "mejora_continua_thread": "channel-id (maps to your #ideas channel)"
     }
   },
-  "supabase": {
-    "url": "https://your-project.supabase.co",
-    "service_key": "your-supabase-service-role-key",
-    "anon_key": "your-supabase-anon-key"
-  },
   "accounts": {
     "google_workspace": "admin@yourdomain.com",
     "dataforseo": "api@yourdomain.com"
