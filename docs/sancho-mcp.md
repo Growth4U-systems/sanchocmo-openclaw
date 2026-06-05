@@ -65,6 +65,7 @@ Available scopes:
 - `sancho:read`
 - `sancho:chat`
 - `tasks:read`
+- `tasks:write`
 - `yalc:read`
 - `open-design:read`
 
@@ -79,6 +80,8 @@ Current scaffolded tools:
 - `sancho_get_client_context`
 - `sancho_list_tasks`
 - `sancho_get_task`
+- `sancho_create_task`
+- `sancho_update_task`
 - `sancho_send_message`
 - `sancho_list_chat_threads`
 - `sancho_get_chat_thread`
@@ -88,7 +91,9 @@ Current scaffolded tools:
 - `open_design_health`
 - `open_design_list_catalog`
 
-`sancho_send_message` is side-effecting. It defaults to dry-run and only sends when `dryRun=false` and `confirm=true`.
+`sancho_send_message`, `sancho_create_task` and `sancho_update_task` are side-effecting. They require `tasks:write` (except `sancho_send_message`, which requires `sancho:chat`), default to dry-run, and only write when `dryRun=false` and `confirm=true`.
+
+`sancho_update_task` only accepts a whitelist of fields (`name`, `status`, `description`, `brief`, `completion`, `owner`) and rejects updates that change nothing.
 
 ### Chat read flow
 
