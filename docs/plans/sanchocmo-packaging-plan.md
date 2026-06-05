@@ -83,6 +83,13 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - G4U sin cambio (setea el token → rama con-token = comportamiento previo). Verif: `node --check` ✅ · JSON válido ✅ · test funcional del gating ✅.
   - **Follow-ups Fase 2**: D4 (rewrite `new-client.sh` sin guild), D5 (canal publicación slack|discord), D6 (README→MC).
 
+- **[Fase 4/6 · install.sh + wizard — E1/E2/E4]** — PR #331 (`chore/san-93-wizard-install` → base `chore/san-92-discord-optional`, **stacked**), `Refs SAN-93`. Aclaraciones #2 (wizard) y #4 (un comando).
+  - `install.sh` (raíz): chequea docker/compose/openssl, corre el wizard si falta `.env`, `docker compose up -d --build`. Flags `--od`/`--yalc`/`--no-up`/`--force`.
+  - `scripts/wizard.sh`: interactivo + no-interactivo (`WIZARD_ASSUME_YES=1`). Genera secrets (`NEXTAUTH_SECRET`/`ENCRYPTION_KEY`/`SANCHO_INTERNAL_API_TOKEN`/`adminToken`/`mcToken`) y escribe `.env` + `config/instance.json` (sin Discord) + `config/clients.json` (primer brand). No pisa sin `--force`. Checklist final E5.
+  - `docs/INSTALL.md`: guía.
+  - Verif: `bash -n` ✅ · wizard non-interactive genera archivos válidos (JSON OK, tokens 64 hex) · `docker compose config` con el `.env` generado ✅.
+  - **Nota**: DB local setea `COMPOSE_PROFILES=local-db` — se enciende del todo con B9. Follow-up #2: integrar `new-client.sh` reescrito (D4), preflight (Fase 3), SetupChecklist UI (E5).
+
 ### 🟡 En curso / bloqueado
 
 - **CI de los PRs #208 y #219 en rojo por GitHub Actions pausado (billing)** a nivel org — `startup_failure`, no es el código (local pasa). Se destraba al cargar saldo y re-correr. (Usuario: "luego cargo plata".)
@@ -118,6 +125,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 | 1 | B5 · retiro git-backup | #325 (base `staging`) | ✅ abierto | base del stack |
 | 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ abierto | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
 | 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ abierto | aclaración #1; D4/D5/D6 follow-up |
+| 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ abierto | un-comando install; DB local espera B9 |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
