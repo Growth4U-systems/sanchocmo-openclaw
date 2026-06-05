@@ -22,10 +22,6 @@ const SERVICE_ENV_MAP: Record<string, { key: string; label: string; placeholder:
     { key: "DATAFORSEO_PASSWORD", label: "Password", placeholder: "" },
   ],
   notion: [{ key: "NOTION_API_KEY", label: "Integration Token", placeholder: "ntn_..." }],
-  supabase: [
-    { key: "SUPABASE_URL", label: "Project URL", placeholder: "https://xxx.supabase.co" },
-    { key: "SUPABASE_ANON_KEY", label: "Anon Key", placeholder: "eyJ..." },
-  ],
   fal: [{ key: "FAL_API_KEY", label: "API Key", placeholder: "" }],
   wavespeed: [{ key: "WAVESPEED_API_KEY", label: "API Key", placeholder: "" }],
   dumpling: [{ key: "DUMPLING_API_KEY", label: "API Key", placeholder: "" }],

@@ -535,7 +535,6 @@ export interface Client {
   workspace: string;        // Path
   phase: number;
   paths: { brand: string; campaigns?: string };
-  supabase: { url: string; anon_key: string };
   mcToken?: string;         // Portal access token
   channels?: { insights: string };
   metrics: { apis: string[]; meta_ads?: Record<string, unknown>; ghl?: Record<string, unknown> };

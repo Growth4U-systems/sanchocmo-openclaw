@@ -235,14 +235,6 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
         if (r.data?.code) return error(r.data.message || r.data.code);
         return r.ok ? ok() : error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
       }
-      case "supabase": {
-        const url = getKey(envVars, "SUPABASE_URL");
-        const key = getKey(envVars, "SUPABASE_ANON_KEY");
-        if (!url || !key) return notConfigured("SUPABASE_URL/ANON_KEY");
-        const r = await httpCheck(`${url}/rest/v1/`, { apikey: key, Authorization: `Bearer ${key}` }, [200, 204]);
-        const projectId = url.match(/https:\/\/(\w+)\./)?.[1] || "";
-        return r.ok ? ok({ httpCode: r.httpCode, project: projectId }) : error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
-      }
       case "slack": {
         const key = getKey(envVars, "SLACK_BOT_TOKEN");
         if (!key) return notConfigured("SLACK_BOT_TOKEN");
@@ -352,7 +344,7 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
 const ALL_SERVICES = [
   "anthropic", "openrouter", "openai", "gemini", "xai", "minimax",
   "brave", "apify", "firecrawl", "serper", "dataforseo",
-  "notion", "supabase", "slack", "discord",
+  "notion", "slack", "discord",
   "fal", "wavespeed", "dumpling", "nanobanana", "remotion",
   "instantly", "metricool",
   "gog", "openclaw",

@@ -8,14 +8,6 @@ set -euo pipefail
 # Uso: new-client.sh --slug "slug" --name "Nombre" --guild "GUILD_ID"
 
 WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}"
-SUPABASE_URL=$(python3 -c "import json; print(json.load(open('${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}/_system/instance.json')).get('supabase',{}).get('url',''))" 2>/dev/null)
-SKEY=$(python3 -c "import json; print(json.load(open('${OPENCLAW_WORKSPACE:-$HOME/.openclaw/workspace-sancho}/_system/instance.json')).get('supabase',{}).get('service_key',''))" 2>/dev/null)
-if [[ -z "$SKEY" ]]; then
-  SKEY="${SUPABASE_SERVICE_KEY:-}"
-fi
-if [[ -z "$SUPABASE_URL" || -z "$SKEY" ]]; then
-  echo "⚠️ Supabase URL or service key not found in instance.json or env. Supabase insert will be skipped."
-fi
 
 # --- Parse args ---
 SLUG="" NAME="" GUILD=""
@@ -819,22 +811,6 @@ SOURCESJSON
 echo "   ✅ client-config.json creado con crons por defecto"
 echo "   ℹ️  Los channel IDs se rellenan en el paso 6 (auto-bind Discord)"
 
-# --- 2. Insertar en Supabase ---
-echo "🗄️ Insertando en Supabase..."
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-  -X POST "$SUPABASE_URL/rest/v1/clients" \
-  -H "apikey: $SKEY" \
-  -H "Authorization: Bearer $SKEY" \
-  -H "Content-Type: application/json" \
-  -H "Prefer: return=minimal" \
-  -d "{\"slug\":\"$SLUG\",\"name\":\"$NAME\",\"discord_guild_id\":\"$GUILD\",\"phase\":0}")
-
-if [[ "$HTTP_CODE" == "201" ]]; then
-  echo "   ✅ Cliente insertado en Supabase"
-else
-  echo "   ⚠️ Supabase HTTP $HTTP_CODE (puede que ya exista)"
-fi
-
 # --- 3. Actualizar clients.json ---
 echo "📋 Actualizando clients.json..."
 CLIENTS_FILE="$WORKSPACE/clients.json"
@@ -852,11 +828,7 @@ if "$SLUG" not in slugs:
         "active": True,
         "language": "es",
         "phase": 0,
-        "paths": {"brand": "brand/"},
-        "supabase": {
-            "url": "$SUPABASE_URL",
-            "anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzYXBtdWp6eGhheHJhcGhkZGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTAxNTEsImV4cCI6MjA4NzQ2NjE1MX0.RxanIQCJtjGfCUL_X0MqPi2IdGkXOkmfaEAJZvQJblI"
-        }
+        "paths": {"brand": "brand/"}
     })
     with open("$CLIENTS_FILE", "w") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)

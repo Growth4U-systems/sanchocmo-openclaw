@@ -539,7 +539,6 @@ const SERVICE_ENV_MAP = {
   serper:     [{ key: 'SERPER_API_KEY', label: 'API Key', placeholder: '' }],
   dataforseo: [{ key: 'DATAFORSEO_LOGIN', label: 'Login (email)', placeholder: 'you@email.com' }, { key: 'DATAFORSEO_PASSWORD', label: 'Password', placeholder: '' }],
   notion:     [{ key: 'NOTION_API_KEY', label: 'Integration Token', placeholder: 'ntn_...' }],
-  supabase:   [{ key: 'SUPABASE_URL', label: 'Project URL', placeholder: 'https://xxx.supabase.co' }, { key: 'SUPABASE_ANON_KEY', label: 'Anon Key', placeholder: 'eyJ...' }],
   fal:        [{ key: 'FAL_API_KEY', label: 'API Key', placeholder: '' }],
   wavespeed:  [{ key: 'WAVESPEED_API_KEY', label: 'API Key', placeholder: '' }],
   dumpling:   [{ key: 'DUMPLING_API_KEY', label: 'API Key', placeholder: '' }],
@@ -750,17 +749,6 @@ function checkService(serviceId) {
         } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
         break;
       }
-      case 'supabase': {
-        const url = getKey('SUPABASE_URL');
-        const key = getKey('SUPABASE_ANON_KEY');
-        if (!url || !key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'SUPABASE_URL or SUPABASE_ANON_KEY not set' } });
-        try {
-          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "apikey: ${key}" -H "Authorization: Bearer ${key}" "${url}/rest/v1/" -m 10`, { timeout, encoding: 'utf-8' }).trim();
-          const projectId = url.match(/https:\/\/(\w+)\./)?.[1] || '';
-          resolve({ status: (res === '200' || res === '204') ? 'ok' : 'error', lastCheck: now, details: { httpCode: res, project: projectId } });
-        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
-        break;
-      }
       case 'fal': {
         const key = getKey('FAL_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'FAL_API_KEY not set' } });
@@ -859,7 +847,7 @@ function checkService(serviceId) {
 
 async function runHealthChecks(serviceFilter) {
   const health = loadApiHealth();
-  const allServices = ['anthropic', 'openrouter', 'openai', 'gemini', 'xai', 'minimax', 'brave', 'apify', 'firecrawl', 'serper', 'dataforseo', 'notion', 'supabase', 'slack', 'fal', 'wavespeed', 'dumpling', 'instantly', 'metricool', 'nanobanana', 'remotion', 'gog', 'openclaw', 'discord'];
+  const allServices = ['anthropic', 'openrouter', 'openai', 'gemini', 'xai', 'minimax', 'brave', 'apify', 'firecrawl', 'serper', 'dataforseo', 'notion', 'slack', 'fal', 'wavespeed', 'dumpling', 'instantly', 'metricool', 'nanobanana', 'remotion', 'gog', 'openclaw', 'discord'];
   const toCheck = serviceFilter === 'all' ? allServices : allServices.includes(serviceFilter) ? [serviceFilter] : [];
 
   if (toCheck.length === 0) return { error: `Unknown service: ${serviceFilter}` };
@@ -3001,7 +2989,6 @@ const API_META = {
   serper:{icon:'🔍',name:'Serper',desc:'Google SERP API',cat:'Data'},
   dataforseo:{icon:'📊',name:'DataForSEO',desc:'SEO data API',cat:'Data'},
   notion:{icon:'📝',name:'Notion',desc:'Workspace & docs API',cat:'Infra'},
-  supabase:{icon:'⚡',name:'Supabase',desc:'Database & auth',cat:'Infra'},
   gog:{icon:'📧',name:'Google Workspace',desc:'Gmail, Calendar, Drive (gog CLI)',cat:'Infra'},
   discord:{icon:'💬',name:'Discord Bot',desc:'Bot SanchoCMO',cat:'Infra'},
   openclaw:{icon:'🐾',name:'OpenClaw Gateway',desc:'Agent orchestration platform',cat:'Infra'},
@@ -3019,7 +3006,7 @@ const SERVICE_ENV_MAP_FE = {
   gemini:['GEMINI_API_KEY'], xai:['XAI_API_KEY'], minimax:['MINIMAX_API_KEY'], brave:['BRAVE_API_KEY'],
   apify:['APIFY_API_KEY'], firecrawl:['FIRECRAWL_API_KEY'], serper:['SERPER_API_KEY'],
   dataforseo:['DATAFORSEO_LOGIN','DATAFORSEO_PASSWORD'], notion:['NOTION_API_KEY'],
-  supabase:['SUPABASE_URL','SUPABASE_ANON_KEY'], fal:['FAL_API_KEY'], wavespeed:['WAVESPEED_API_KEY'],
+  fal:['FAL_API_KEY'], wavespeed:['WAVESPEED_API_KEY'],
   dumpling:['DUMPLING_API_KEY'], slack:['SLACK_BOT_TOKEN'], instantly:['INSTANTLY_API_KEY'], metricool:['METRICOOL_API_KEY'],
 };
 
@@ -4925,7 +4912,6 @@ nav .nav-footer { display:none !important; }
             emoji: thisClient.emoji || '🏢',
             url: thisClient.url || '',
             discord_guild: thisClient.guild || '',
-            supabase: thisClient.supabase || {},
             workspace: thisClient.workspace || '',
             phase: thisClient.phase || 0,
           };

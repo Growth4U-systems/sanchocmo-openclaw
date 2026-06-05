@@ -46,7 +46,6 @@ jobs:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           OD_API_TOKEN: ${{ secrets.OD_API_TOKEN }}
@@ -71,7 +70,6 @@ jobs:
           DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
           DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
           WAVESPEED_API_KEY: ${{ secrets.WAVESPEED_API_KEY }}
           DUMPLING_API_KEY: ${{ secrets.DUMPLING_API_KEY }}
@@ -94,7 +92,6 @@ jobs:
           BASE_URL: ${{ vars.BASE_URL }}
           NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
           NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
-          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           OD_WEB_URL: ${{ vars.OD_WEB_URL }}
           OD_ALLOWED_ORIGINS: ${{ vars.OD_ALLOWED_ORIGINS }}
           OPEN_DESIGN_IMAGE: ${{ vars.OPEN_DESIGN_IMAGE }}
@@ -115,7 +112,7 @@ jobs:
           KEYS = [
               # Tier 1 — Auth & infra
               "NEXTAUTH_SECRET", "ENCRYPTION_KEY", "DATABASE_URL",
-              "SUPABASE_SERVICE_ROLE_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+              "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
               "OD_API_TOKEN", "OPENCLAW_GATEWAY_TOKEN", "GTM_OS_API_TOKEN",
               "YALC_API_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
               "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
@@ -123,7 +120,7 @@ jobs:
               "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
               "XAI_API_KEY", "MINIMAX_API_KEY", "BRAVE_API_KEY", "APIFY_API_KEY",
               "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
-              "NOTION_API_KEY", "SUPABASE_ANON_KEY", "FAL_API_KEY",
+              "NOTION_API_KEY", "FAL_API_KEY",
               "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN",
               "INSTANTLY_API_KEY", "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
               "SANCHO_MCP_TOKENS",
@@ -132,7 +129,7 @@ jobs:
               "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID", "PAGESPEED_API_KEY",
               "UNIPILE_API_KEY", "UNIPILE_DSN", "DATAFORSEO_API_KEY",
               # Variables (non-sensitive config)
-              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL", "SUPABASE_URL",
+              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL",
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",

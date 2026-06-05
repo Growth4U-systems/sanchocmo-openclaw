@@ -38,7 +38,6 @@ API name mapping (common names → catalog IDs):
 - amplitude → `amplitude`
 - apify → `apify`
 - dataforseo → `dataforseo`
-- supabase → `supabase`
 - openai, gpt → `openai`
 - anthropic, claude → `anthropic`
 - gemini → `gemini`

@@ -9,10 +9,6 @@
       "guild": "discord-guild-id",
       "language": "es",
       "active": true,
-      "supabase": {
-        "url": "https://your-project.supabase.co",
-        "anon_key": "your-supabase-anon-key"
-      },
       "paths": {
         "brand": "brand/",
         "campaigns": "campaigns/"

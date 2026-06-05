@@ -81,7 +81,7 @@ cp .env.example .env
 
 # 3. Configure instance
 cp config/instance.json.example config/instance.json
-# Edit with your MC URL, Discord IDs, Supabase URL
+# Edit with your MC URL and Discord IDs
 
 # 4. Configure clients
 cp config/clients.json.example config/clients.json
@@ -137,7 +137,7 @@ All instance-specific data lives in `config/`:
 | File | Purpose | Gitignored |
 |------|---------|------------|
 | `instance.json` | MC URL, Discord IDs, ports, accounts | Yes |
-| `clients.json` | Client tokens, guilds, Supabase keys | Yes |
+| `clients.json` | Client tokens, guilds | Yes |
 | `dispatch-map.json` | Channel role mapping | No (framework) |
 
 Templates (`.example` files) are provided for all gitignored configs.

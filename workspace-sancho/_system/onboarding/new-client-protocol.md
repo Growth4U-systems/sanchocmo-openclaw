@@ -33,7 +33,6 @@ Este script hace TODO automáticamente:
 - ✅ Crea `brand/{slug}/` con toda la estructura de carpetas
 - ✅ Crea `foundation-state.json` v2.0
 - ✅ Crea `integrations.json`
-- ✅ Inserta en Supabase
 - ✅ Actualiza `clients.json`
 - ✅ Regenera Mission Control (`regenerate.py`)
 - ✅ Auto-bind Discord channels + systemPrompts (`auto-bind.py`)
