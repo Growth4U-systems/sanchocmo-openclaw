@@ -1,5 +1,7 @@
 # Sancho MCP
 
+> **Operators:** for token issuance/rotation, kill switches, dependency-down playbook, install troubleshooting and the smoke-test checklist, see [`sancho-mcp-runbook.md`](./sancho-mcp-runbook.md).
+
 Sancho exposes a stateless Streamable HTTP MCP endpoint at:
 
 ```text
