@@ -98,8 +98,16 @@ function usage() {
   yalc-client create-campaign-draft --slug <slug> [--input <json-file>|--json '<json>'] [--allow-empty-email-sequence]
   yalc-client campaign --slug <slug> --id <campaign-id>
   yalc-client add-campaign-step --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>']
+  yalc-client campaign-leads-search --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-leads-enrich --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-leads --slug <slug> --id <campaign-id>
   yalc-client campaign-lead --slug <slug> --id <campaign-id> --lead-id <lead-id>
+  yalc-client campaign-sequence-update --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-sequence-approve --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-sequence-request-changes --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-dry-run --slug <slug> --id <campaign-id> --confirm-side-effect
+  yalc-client campaign-publish --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-live --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-report --slug <slug> --id <campaign-id>
   yalc-client campaign-timeline --slug <slug> --id <campaign-id>
   yalc-client campaign-export --slug <slug> --id <campaign-id>
@@ -466,6 +474,20 @@ async function main() {
     return callAndSave(config, `campaign-${id}-add-step`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/steps`, payload)
   }
 
+  if (command === 'campaign-leads-search') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-leads-search`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/leads/search`, payload)
+  }
+
+  if (command === 'campaign-leads-enrich') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-leads-enrich`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/leads/enrich`, payload)
+  }
+
   if (command === 'today') {
     return callAndSave(config, 'today', 'GET', '/api/today/feed')
   }
@@ -505,6 +527,51 @@ async function main() {
     const id = requireArg(args, 'id')
     const message = requireArg(args, 'message')
     return callAndSave(config, `campaign-${id}-chat`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/chat`, { message })
+  }
+
+  if (command === 'campaign-sequence-update') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-sequence-update`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/sequence/update`, payload)
+  }
+
+  if (command === 'campaign-sequence-approve') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-sequence-approve`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/sequence/approve`, payload)
+  }
+
+  if (command === 'campaign-sequence-request-changes') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-sequence-request-changes`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/sequence/request-changes`, payload)
+  }
+
+  if (command === 'campaign-dry-run') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    return callAndSave(config, `campaign-${id}-dry-run`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/dry-run`, {})
+  }
+
+  if (command === 'campaign-publish') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    return callAndSave(config, `campaign-${id}-publish`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/publish`, {
+      ...readPayload(args),
+      confirmInstantlyPublish: true,
+    })
+  }
+
+  if (command === 'campaign-live') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    return callAndSave(config, `campaign-${id}-live`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/live`, {
+      ...readPayload(args),
+      confirmLiveLaunch: true,
+    })
   }
 
   if (command === 'pause-campaign' || command === 'resume-campaign') {
