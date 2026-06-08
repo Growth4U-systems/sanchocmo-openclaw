@@ -1,4 +1,4 @@
-# Dispatch Protocol — SanchoCMO (v3 — 4 Agents)
+# Dispatch Protocol — SanchoCMO (v4 — 5 Agents)
 
 > Cómo Sancho despacha trabajo a agentes via sessions.
 
@@ -6,7 +6,7 @@
 
 ## Principio
 
-Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn), operaciones GTM-OS a Yalc Agent (sessions_send -> `yalc`, skill `yalc-operator`) y verificación a Sansón (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
+Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn), **research & market intelligence a Hamete** (sessions_send -> `hamete`), operaciones GTM-OS a Yalc Agent (sessions_send -> `yalc`, skill `yalc-operator`) y verificación a Sansón (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
 
 ---
 
@@ -24,6 +24,14 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Tareas paralelas (lanzar 3 Escuderos a la vez para diferentes piezas)
 - Tareas donde MiniMax/Qwen es suficiente y quieres ahorrar coste
 
+**Usa Hamete** (via `sessions_send` al agente `hamete` — Research & Market Intelligence 📜):
+- Deep research de mercado, producto, regulación (skill `deep-research`)
+- Competitive intelligence y battle cards (skill `competitor-intelligence`)
+- Market analysis / sizing / segmentación (skill `market-intelligence`)
+- Signals, daily pulse, pattern detection, meeting intelligence, thief-marketers
+- Cualquier tarea cuyo entregable sea "realidad externa documentada con fuentes"
+- Hamete corre el preflight de providers (`scraping-preflight.md`) y usa el stack conectado (scrapecreators MCP, DataForSEO MCP, smart-scrape). NO uses "Gemini Deep Research" (no existe): el research es `deep-research` vía Hamete.
+
 **Usa Yalc Agent** (via `sessions_send` al agente `yalc`; dentro usa `yalc-operator`):
 - Health checks y troubleshooting de GTM-OS/YALC
 - Provider status y MCP-backed provider checks expuestos por YALC
@@ -34,6 +42,8 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Campaign status, reporting y guardado de resultados en `brand/{slug}/yalc/runs/`
 
 ### Selección de modelo para spawn (IMPORTANTE)
+
+> Nota: research profundo / competitive intel / market analysis ya **no** se spawnan como Escudero — van a **Hamete** (`sessions_send`). La tabla de abajo aplica a tareas de Escudero (contenido, prospecting, ejecución). Hamete gestiona su propio modelo de research.
 
 Escudero tiene 2 modelos disponibles. Elige según la necesidad de contexto:
 
@@ -82,7 +92,9 @@ Para mapping completo de personas a tareas, ver `dispatch-map.json`.
 | Partnerships | Escudero | spawn | `personas/conector.md` | company-finder, direct-response-copy |
 | Propuestas, battlecards | Escudero | spawn | `personas/comercial.md` | positioning-messaging, pricing-strategy |
 | Landing pages, CRO | Escudero | spawn | `personas/arquitecto.md` | direct-response-copy, lead-magnet |
-| Research simple | Escudero | spawn | `personas/investigador.md` | daily-pulse, thief-marketers, signal-monitor |
+| **Deep research, market analysis** | **Hamete** | **send** | — | deep-research, market-intelligence |
+| **Competitive intel, battle cards** | **Hamete** | **send** | — | competitor-intelligence, thief-marketers |
+| **Signals, daily pulse, patterns, meeting intel** | **Hamete** | **send** | — | signal-monitor, daily-pulse, pattern-detector, meeting-intelligence |
 | YALC/GTM-OS execution | Yalc Agent | send | — | yalc-operator |
 | Brand check, QA | Sansón | send | — | Brand verification, devil's advocate |
 | Admin, bugs, infra | Cervantes | message (Discord) | — | System tasks |
@@ -174,6 +186,31 @@ Reglas:
 - Para email/campañas/gates/setup/brain writes/campaign status writes: si no hay confirmación explícita, solo dry-run o lectura.
 - MCP se revisa a través de `providers`, `provider-knowledge` y `provider-test`; no conectar Sancho directamente a MCP externos salvo cambio futuro.
 - Todo resultado queda guardado en `brand/{slug}/yalc/runs/` y el `savedTo` se reporta a Sancho.
+
+---
+
+## Hamete (sessions_send) — Research & Market Intelligence 📜
+
+Formato:
+
+```
+HAMETE REQUEST
+
+**Cliente/slug**: {slug}
+**Intent**: [deep-research / market-intelligence / competitor-intelligence / signal-monitor / daily-pulse / meeting-intelligence / thief-marketers]
+**Brief**: [pregunta o alcance concreto del research; para deep-research, el prompt Market y/o Company]
+**Contexto de marca**:
+- brand/{slug}/foundation-state.json
+- [archivos concretos: company-brief, competitors, market — solo los relevantes]
+**Output esperado**:
+[documento promocionable con fuentes citadas + qa-bot, guardado en su context_writes]
+```
+
+Reglas:
+- Hamete corre **`scraping-preflight.md`** al inicio: detecta providers conectados (scrapecreators MCP, DataForSEO MCP, smart-scrape) y enruta; si falta una capability material, lo reporta y pide conectarla.
+- El research profundo se hace con el skill **`deep-research`** (7 fases + qa-bot). NO existe "Gemini Deep Research".
+- Hamete escribe en sus `context_writes` (`brand/{slug}/market-and-us/*`, `intelligence/`); reporta a Sancho el `savedTo` + executive summary.
+- Para datos sensibles del cliente, mismas reglas de privacidad que el resto (no exfiltrar PII a providers externos).
 
 ---
 
