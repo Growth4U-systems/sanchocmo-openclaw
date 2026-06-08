@@ -6,6 +6,20 @@ cd /root/.openclaw
 OPENCLAW_CONFIG="/root/.openclaw/.openclaw/openclaw.json"
 
 # ===========================================================
+# 0a. ENSURE APIFY_TOKEN (runs every startup)
+# ===========================================================
+# The bundled `apify` skill (and competitor-intelligence's scraping-guide)
+# require the env var APIFY_TOKEN, but deploys provision APIFY_API_KEY. Without
+# APIFY_TOKEN, OpenClaw gates the apify skill out (skill `requires.env`), so
+# agents fall back to web_fetch and primary scraping (Trustpilot/IG/FB ads)
+# never runs. Derive it so the scraper actors are available to every agent.
+# Exported before `openclaw gateway run` so the gateway and its agents inherit it.
+if [ -z "${APIFY_TOKEN:-}" ] && [ -n "${APIFY_API_KEY:-}" ]; then
+  export APIFY_TOKEN="$APIFY_API_KEY"
+  echo "[entrypoint] APIFY_TOKEN derived from APIFY_API_KEY (apify skill enabled)"
+fi
+
+# ===========================================================
 # 0. ENSURE CONFIG SYMLINKS (runs every startup)
 # ===========================================================
 # These files live in config/ (instance-specific, untracked) but the app
@@ -16,6 +30,27 @@ for f in clients.json clients.js dispatch-map.json; do
   if [ -f "config/$f" ] && [ ! -e "workspace-sancho/$f" ]; then
     ln -sf "../config/$f" "workspace-sancho/$f"
     echo "[entrypoint] Linked workspace-sancho/$f -> ../config/$f"
+  fi
+done
+
+# ===========================================================
+# 0b. ENSURE PER-AGENT SKILLS SYMLINK (runs every startup)
+# ===========================================================
+# Skills live centrally at ~/.openclaw/skills. Specialist agents run with
+# cwd = their own workspace-<agent>/, so a relative read like
+# `skills/<name>/references/x.md` resolves against the workspace, not the skill
+# home → ENOENT. Point every non-Sancho workspace's `skills` at the central
+# root so the agents that EXECUTE skills (hamete, etc.) resolve those reads.
+# Sancho keeps its own real skills/ dir (first-party operator skills not in the
+# central catalog). `git checkout` wipes symlinks on deploy → recreate every
+# boot. Idempotent: only manage an absent or already-symlinked path.
+for ws in /root/.openclaw/workspace-*; do
+  [ -d "$ws" ] || continue
+  [ "$(basename "$ws")" = "workspace-sancho" ] && continue
+  link="$ws/skills"
+  if [ -L "$link" ] || [ ! -e "$link" ]; then
+    ln -sfn ../skills "$link"
+    echo "[entrypoint] Linked $(basename "$ws")/skills -> ../skills"
   fi
 done
 
@@ -63,8 +98,11 @@ def ensure_min(obj, key, value):
         changed = True
 
 diagnostics = config.setdefault("diagnostics", {})
-ensure_min(diagnostics, "stuckSessionWarnMs", 120_000)
-ensure_min(diagnostics, "stuckSessionAbortMs", 900_000)
+# Heavy intelligence skills (competitor/market/self) accumulate large context
+# from scraping; single Opus turns can run many minutes. Raised so the watchdog
+# does not abort a still-progressing report before the final write (45 min).
+ensure_min(diagnostics, "stuckSessionWarnMs", 300_000)
+ensure_min(diagnostics, "stuckSessionAbortMs", 2_700_000)
 
 plugins = config.setdefault("plugins", {})
 entries = plugins.setdefault("entries", {})
@@ -73,8 +111,8 @@ if codex.get("enabled") is not True:
     codex["enabled"] = True
     changed = True
 app_server = codex.setdefault("config", {}).setdefault("appServer", {})
-ensure_min(app_server, "turnCompletionIdleTimeoutMs", 900_000)
-ensure_min(app_server, "requestTimeoutMs", 900_000)
+ensure_min(app_server, "turnCompletionIdleTimeoutMs", 2_700_000)
+ensure_min(app_server, "requestTimeoutMs", 2_700_000)
 
 if changed:
     with open(path, "w", encoding="utf-8") as fh:
