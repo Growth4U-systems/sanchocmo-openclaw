@@ -34,7 +34,7 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
 | **Escudero** | Execution worker (adopts personas) | `sessions_spawn` from Sancho |
 | **Sansón** | Brand Guardian / QA | `sessions_send` from Sancho |
 | **Yalc Agent** | GTM-OS operator for provider/MCP status, brain/setup, gates, lead qualification, cold email dry-runs/live confirmed launches, campaign status and reporting | `sessions_send` to agent `yalc`; uses `yalc-operator` |
-| **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Operates in Cervantes Brain guild (#admin, #infra, #tasks, #changelog). Can edit Sancho's skills, SOUL.md, and cron jobs. Runs daily backups (git commit + push). |
+| **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Operates in Cervantes Brain guild (#admin, #infra, #tasks, #changelog). Can edit Sancho's skills, SOUL.md, and cron jobs. |
 
 ### Personas (Escudero)
 
@@ -151,7 +151,6 @@ Templates (`.example` files) are provided for all gitignored configs.
 - **Weekly Synthesis** — Detect patterns and trends
 - **Healthcheck** — Monitor 23+ services every 6 hours
 - **Cost Tracker** — Track API costs per client
-- **Backup** — Daily git commit + push
 
 Templates in `_system/cron-templates.json` generate per-client jobs automatically via `scripts/create-client-crons.sh`.
 

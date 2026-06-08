@@ -22,7 +22,6 @@ Deploy SanchoCMO to a VPS using Docker Compose and nginx.
 | OS | Ubuntu 22.04 |
 | Block storage | 10 GB volume mounted at `/mnt/data` (for data snapshots) |
 | Domain | A record pointing to VPS IP |
-| GitHub SSH key | On the VPS, for Cervantes backups |
 | Discord (OpenClaw) | Bot token + client ID + Message Content Intent enabled |
 | Discord (Cervantes) | Separate bot token for Cervantes Claude Code Channel + webhook URL for #cervantes-admin |
 | Anthropic | API key (for Sancho/Escudero/Rocinante via OpenClaw) |
@@ -435,7 +434,7 @@ Press `Ctrl+C` to stop the session.
 
 #### 9g. Create Discord webhook for alerts
 
-This webhook is used by healthcheck, backup, and alert scripts — it's separate from the bot.
+This webhook is used by healthcheck and alert scripts — it's separate from the bot.
 
 1. Discord → Cervantes guild → `#cervantes-admin` channel
 2. **Edit Channel** → **Integrations** → **Webhooks** → **New Webhook**
@@ -460,7 +459,7 @@ bash docker/setup-cervantes-cc.sh
 
 This installs:
 - **systemd service** (`cervantes-claude-code`) — Claude Code with Discord Channel, auto-restart
-- **System crontab** — operational scripts (healthcheck, backup, snapshot, regenerate, cost-tracker)
+- **System crontab** — operational scripts (healthcheck, snapshot, regenerate, cost-tracker)
 - **Logrotate** — log rotation for cron output
 
 #### 9i. Start the service
@@ -694,14 +693,6 @@ docker compose build --no-cache && docker compose up -d
 ```
 
 ### Backups
-
-Two backup mechanisms run automatically:
-
-**Framework backup** (daily at 03:00) — `backup.sh` commits and pushes git-tracked files to GitHub:
-
-```bash
-docker exec sanchocmo bash workspace-sancho/scripts/backup.sh
-```
 
 **Data snapshots** (every 3h) — `snapshot-data.sh` creates tarballs of private data (brand, memory, config, SQLite) on the Hetzner volume. Runs via system crontab (not inside Docker):
 
