@@ -56,7 +56,7 @@ El documento final debe contarse como una historia de **mapeo competitivo**, no 
 Step 0: Competitor Discovery          → Identify + categorize
 Step 1: Profile Discovery (per comp)  → Find all digital footprint URLs
 Step 2: Scraping (per comp)           → Collect raw data by lens
-Step 3: Deep Research (per comp)      → Context via Gemini/web research
+Step 3: Deep Research (per comp)      → Context via /deep-research skill (Hamete)
 Step 4: Lens Analysis (per comp)      → Autopercepción → Terceros → Reviews
 Step 5: Battle Card (per comp)        → Synthesize into actionable card
 Step 6: Competitive Landscape Map     → Cross-competitor synthesis

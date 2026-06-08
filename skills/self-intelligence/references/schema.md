@@ -20,8 +20,8 @@ Platforms checked: Instagram, Facebook, LinkedIn, YouTube, TikTok, Twitter/X, Tr
 
 | Field | Type | Required | Source Priority | Consumed By |
 |-------|------|----------|-----------------|-------------|
-| market_research | object {market_size, growth_rate, segments, geography, maturity} | Deep | Gemini Deep Research: Market | Context for all lenses |
-| company_research | object | REQUIRED | Gemini Deep Research: Company | All lenses |
+| market_research | object {market_size, growth_rate, segments, geography, maturity} | Deep | `/deep-research`: Market | Context for all lenses |
+| company_research | object | REQUIRED | `/deep-research`: Company | All lenses |
 
 Company research object:
 ```

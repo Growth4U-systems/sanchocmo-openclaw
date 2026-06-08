@@ -64,82 +64,65 @@ Documentar cada URL con status: `active` / `dormant` / `not found`
 
 ## Step 2: Scraping con herramientas — Por Lente
 
+> ⚠️ NO hardcodear proveedores. El provider concreto lo decide `_system/skills/scraping-preflight.md`
+> (Step 0): detecta lo conectado y enruta cada necesidad por su matriz. Las columnas "Provider"
+> de abajo indican la **necesidad de dato** y el provider preferido **si está conectado**; si no,
+> el preflight usa el fallback o pide conectar. Marca siempre provider real + evidencia.
+
 ### Lens 1 (Autopercepción) — Qué ELLOS dicen
 
-| Herramienta | Qué extraer | Actor/Endpoint |
+| Necesidad de dato | Qué extraer | Provider preferido (vía matriz) |
 |------------|-------------|----------------|
-| Apify web-scraper | Homepage + /pricing + /about + /blog (últimos 10 posts) | `apify/web-scraper` o `apify/cheerio-scraper` |
-| Apify instagram-scraper | Últimos 20 posts + bio + followers + engagement | `apify/instagram-scraper` o `apify/instagram-profile-scraper` |
-| Apify facebook-ads-scraper | Ads activos en FB Ads Library | `apify/facebook-ads-scraper` |
-| web_fetch | /pricing OBLIGATORIO (verificación directa) | Nativo |
+| Web del competidor | Homepage + /pricing + /about + /blog (últimos 10 posts) | `smart-scrape` (cascada web) |
+| Instagram / TikTok / LinkedIn | Últimos ~20 posts + bio + followers + engagement | scrapecreators MCP (`v1_instagram_*`, `v1_tiktok_*`, `v1_linkedin_*`) |
+| Facebook / Google Ads Library | Ads activos | scrapecreators (`v1_facebook_adLibrary_*`, `v1_google_company_ads`) |
+| Pricing (verificación directa) | /pricing OBLIGATORIO | WebFetch nativo (fuente primaria) |
 
 ### Lens 2 (Terceros) — Qué OTROS dicen
 
-| Herramienta | Qué extraer | Fuente |
+| Necesidad de dato | Qué extraer | Provider preferido (vía matriz) |
 |------------|-------------|--------|
-| Serper | SERP results por keywords principales | `$SERPER_API_KEY` — PAA, Related Searches, rankings |
-| DataForSEO Keywords | Keywords por las que rankea el competidor | `/v3/keywords_data/google_ads/keywords_for_site/live` |
-| DataForSEO SERP | Rankings orgánicos complementarios | `/v3/serp/google/organic/live` |
-| Apify backlinks scraper | DA/DR, backlinks, referring domains | Apify actors que scrapean free tools (Ahrefs free checker, Moz free) |
-| Apify google-search-scraper | "[nombre] reviews", "[nombre] vs" | `apify/google-search-scraper` |
-| web_search | Noticias, press releases, artículos recientes | Nativo |
+| SERP / rankings | Resultados orgánicos + PAA por keywords principales | DataForSEO MCP (`serp_*`) → fallback Serper (si key) / web_search |
+| Keywords del dominio | Keywords por las que rankea el competidor | DataForSEO MCP (`dataforseo_labs_*`) |
+| Backlinks | DA/DR, backlinks, referring domains | DataForSEO MCP (`backlinks_*`) si el plan lo cubre; si no, fallback |
+| Noticias / menciones | Press releases, artículos recientes | web_search nativo |
 
-**Para visibilidad en LLMs / GEO:** No se cubre en esta skill. Usar skill `ai-seo` que hace queries directas a múltiples LLMs (GPT, Claude, Gemini, Perplexity) y trackea menciones de marca, citations y sentiment.
+**Para visibilidad en LLMs / GEO:** No se cubre en esta skill. Usar skill `ai-seo` (queries directas a GPT, Claude, Gemini, Perplexity) o DataForSEO `ai_optimization_*`.
 
 ### Lens 3 (Consumidores) — Qué CLIENTES dicen
 
-| Herramienta | Qué extraer | Actor/Fuente |
+| Necesidad de dato | Qué extraer | Provider preferido (vía matriz) |
 |------------|-------------|--------------|
-| Apify trustpilot-scraper | Últimas 50 reviews + rating | `apify/trustpilot-scraper` |
-| web_search | "[nombre] opiniones", "[nombre] experiencia" | Nativo |
-| web_search | Reddit, foros sobre el competidor | Nativo |
-| web_fetch | Threads relevantes de Reddit/foros | Nativo (fallback) |
+| Reviews (Trustpilot/G2/Capterra) | Últimas ~50 reviews + rating | `smart-scrape`/WebFetch (Trustpilot/G2 no están en scrapecreators); Apify trustpilot actor si hay key |
+| Reddit / foros | Opiniones, experiencia, threads relevantes | scrapecreators (`v1_reddit_*`) + web_search |
+| Opiniones generales | "[nombre] opiniones", "[nombre] experiencia" | web_search → WebFetch (fallback) |
 
 ---
 
 ## APIs disponibles — Referencia rápida
 
-### Serper (SERP + PAA)
+> La selección de provider la gobierna `_system/skills/scraping-preflight.md`. **Preferido: DataForSEO
+> MCP** (`mcp__dataforseo__*`) cuando esté conectado — más simple y sin gestionar auth REST. Lo de
+> abajo son los detalles REST/keys de los tiers opcionales, para cuando el preflight caiga a ellos.
+
+### DataForSEO (preferido vía MCP)
 ```
-Auth: Header X-API-KEY → $SERPER_API_KEY
-Base URL: https://google.serper.dev
-
-Endpoints:
-  POST /search          → SERP orgánico
-  POST /search (type: news)  → noticias
-
-Body ejemplo:
-  { "q": "keyword", "gl": "es", "hl": "es", "num": 10 }
-```
-
-### DataForSEO (Keywords + SERP complementario)
-```
-Auth: Basic auth → $DATAFORSEO_LOGIN : $DATAFORSEO_PASSWORD
-Base URL: https://api.dataforseo.com/v3
-
-Endpoints disponibles (sin mínimo mensual):
-  /serp/google/organic/live          → SERP results por keyword
-  /keywords_data/google_ads/keywords_for_site/live  → keywords de un dominio
-  /on_page/summary                   → análisis on-page
-
-⚠️ Endpoints NO disponibles (requieren $100/mes mínimo):
-  /backlinks/*           → Usar Apify actors como alternativa
-  
-Parámetros siempre:
-  location_code: 2724  (España)
-  language_code: "es"
-
-Balance: pay-as-you-go, ~$0.01-0.05 por query
+Preferido: tools mcp__dataforseo__serp_organic_live_advanced / dataforseo_labs_* / backlinks_* / on_page_*
+Fallback REST (solo si no hay MCP): Basic auth $DATAFORSEO_LOGIN:$DATAFORSEO_PASSWORD, base https://api.dataforseo.com/v3
+  /serp/google/organic/live · /keywords_data/google_ads/keywords_for_site/live · /on_page/summary
+Parámetros: location_code 2724 (España), language_code "es"
 ```
 
-### Apify — Backlinks (alternativa a DataForSEO Backlinks)
+### Serper (SERP alternativo — solo si $SERPER_API_KEY presente)
 ```
-Buscar actors en Apify Store para:
-  - Ahrefs free backlink checker scraper → DR, backlinks, referring domains
-  - Moz free DA checker scraper → DA, PA
-  
-Usar skill `apify` para la sintaxis exacta de cada actor.
-Datos menos completos que API directa pero suficientes para análisis competitivo.
+Auth: Header X-API-KEY → $SERPER_API_KEY · Base: https://google.serper.dev
+POST /search { "q": "keyword", "gl": "es", "hl": "es", "num": 10 }   (type: news → noticias)
+```
+
+### Apify (opcional — solo si $APIFY_TOKEN presente)
+```
+Usar skill `apify` para la sintaxis. Útil para: actor Trustpilot, backlinks (Ahrefs/Moz free checkers),
+o plataformas con login duro que el preflight no pueda cubrir con scrapecreators/smart-scrape.
 ```
 
 ---
