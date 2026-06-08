@@ -180,6 +180,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "sales-enablement": "rocinante",
   "sancho-visual": "maese-pedro",
   "schema-markup": "dulcinea",
+  "self-intelligence": "hamete",
   "send-idea-notifications": "dulcinea",
   "seo-audit": "dulcinea",
   "seo-content": "dulcinea",
