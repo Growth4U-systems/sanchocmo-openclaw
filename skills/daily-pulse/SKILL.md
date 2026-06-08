@@ -10,10 +10,10 @@ metadata:
   depends_on: company-context, brand-voice
   chains_to: insight-to-content-mapper, keyword-research, seo-content
 context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/brand-voice/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
 context_writes:
 - brand/transitory/daily-pulse/
 - brand/{slug}/operational/learnings.md
@@ -49,8 +49,8 @@ Follow _system/output/output-format.md (if using SanchoCMO framework)
 - WebSearch (fallback para contexto de tendencias)
 
 **Optional context:**
-- ./brand/{slug}/go-to-market/positioning/*/current.md (filtrar insights relevantes a nuestra marca)
-- ./brand/{slug}/brand-voice/current.md (adaptar ideas a nuestro tono)
+- ./brand/{slug}/go-to-market/positioning/*/*.current.md (filtrar insights relevantes a nuestra marca)
+- ./brand/{slug}/brand-voice/brand-voice.current.md (adaptar ideas a nuestro tono)
 - brand/{slug}/operational/content-ideas.json (evitar duplicados con ideas existentes)
 
 ---
@@ -456,8 +456,8 @@ The daily-pulse JSON schema:
 
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
-| ./brand/{slug}/go-to-market/positioning/*/current.md | Our unique angle | Filter: insights must be relevant to our market |
-| ./brand/{slug}/brand-voice/current.md | Our tone and style | Adaptation: frame content ideas in our voice |
+| ./brand/{slug}/go-to-market/positioning/*/*.current.md | Our unique angle | Filter: insights must be relevant to our market |
+| ./brand/{slug}/brand-voice/brand-voice.current.md | Our tone and style | Adaptation: frame content ideas in our voice |
 | brand/{slug}/operational/content-ideas.json | Existing ideas | Deduplication: skip insights already captured |
 | brand/{slug}/market-and-us/competitors.json | Competitor names | Detection: flag competitive intel mentions |
 

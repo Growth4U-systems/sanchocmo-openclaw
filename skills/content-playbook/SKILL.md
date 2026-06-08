@@ -2,15 +2,15 @@
 name: content-playbook
 description: "Generate and update the Content Playbook for a client. Defines content pillars, hooks, formats, and cadence based on Atalaya intelligence, Trust Engine SEO data, and Foundation context."
 context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/brand-book/brand-voice/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/go-to-market/positioning/current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/positioning/positioning.current.md
 - brand/{slug}/market-and-us/competitors/sources.json
 - brand/{slug}/atalaya/config.json
-- brand/{slug}/strategic-plan/current.md
+- brand/{slug}/strategic-plan/strategic-plan.current.md
 context_writes:
-- brand/{slug}/content-playbook/current.md
+- brand/{slug}/content-playbook/content-playbook.current.md
 - brand/{slug}/content-playbook/pillars.md
 - brand/{slug}/content-playbook/writing-guide.md
 ---
@@ -35,7 +35,7 @@ context_writes:
 - WebSearch: mejores hooks de LinkedIn/Twitter/IG para el nicho
 - Analizar Atalaya scans previos (si existen) en `atalaya/profiles-scan/`
 
-### 3. Generate current.md
+### 3. Generate content-playbook.current.md
 - Stack de contenido: web, blog, redes con handles
 - Herramientas de publicación configuradas
 - Cadencia por canal (frecuencia, mejores días/horas)

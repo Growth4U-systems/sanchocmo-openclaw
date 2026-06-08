@@ -54,8 +54,8 @@ Alarife Payload:
 Leer si existe:
 
 - `brand/{slug}/foundation-state.json`
-- `voice-profile/current.md`
-- `visual-identity/current.md`
-- `positioning/current.md`
+- `voice-profile/voice-profile.current.md`
+- `visual-identity/visual-identity.current.md`
+- `positioning/positioning.current.md`
 
 Si no existe Foundation, operar igual pero marcar menor confianza de marca.

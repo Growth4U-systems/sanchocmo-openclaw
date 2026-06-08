@@ -115,8 +115,8 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Roll-up guardado en** `brand/{{slug}}/market-and-us/competitors/current.md`
-- [ ] **Deep-dives por competidor en** `brand/{{slug}}/market-and-us/competitors/{{nombre}}/current.md`
+- [ ] **Roll-up guardado en** `brand/{{slug}}/market-and-us/competitors/competitors.current.md`
+- [ ] **Deep-dives por competidor en** `brand/{{slug}}/market-and-us/competitors/{{nombre}}/{{nombre}}.current.md`
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 

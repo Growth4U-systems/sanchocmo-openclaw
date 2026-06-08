@@ -8,7 +8,7 @@ metadata:
   system: SanchoCMO
   phase: '0'
 context_required:
-- brand/{slug}/company-brief/current.md
+- brand/{slug}/company-brief/company-brief.current.md
 - brand/{slug}/operational/stack.md
 context_writes:
 - brand/{slug}/operational/learnings.md
