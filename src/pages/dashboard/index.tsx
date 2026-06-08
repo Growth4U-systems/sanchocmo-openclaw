@@ -283,6 +283,7 @@ function GlobalActivityFeed() {
 // Faithful replica of legacy view-client with v2-grid
 // ============================================================
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- stale duplicate of components/dashboard/client-dashboard.tsx (canonical, used by [slug]/index.tsx); remove in a separate cleanup
 function ClientDashboardV2({ slug }: { slug: string }) {
   const t = useTranslations("dashboard");
   const [activeTab, setActiveTab] = useState(0);

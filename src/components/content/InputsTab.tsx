@@ -211,7 +211,6 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
   // para que el badge de "última ejecución" se actualice solo cuando el cron termine.
   useEffect(() => {
     if (!pollingJob) return;
-    const baselineExec = crons.find((c) => c.id === pollingJob)?.lastExecution?.date || null;
     const start = Date.now();
     const interval = setInterval(async () => {
       await fetchCronsOnly();
@@ -458,6 +457,7 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
 }
 
 // ── POV BANK FORM ─────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- orphaned WIP form, kept for the future POV-bank editing UI
 function PovBankForm({
   povBank, pillars, slug, onSaved,
 }: {
@@ -1336,7 +1336,7 @@ function PaaForm({ configs, slug, onSaved }: { configs: PaaConfig[]; slug: strin
       </div>
       <div className="bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-[11px] text-purple-700">
         <strong>Como funciona:</strong> Cada prompt se ejecuta semanalmente (lunes 6am) usando la
-        <strong> API de DataforSEO</strong> para extraer las preguntas reales de "People Also Ask"
+        <strong> API de DataforSEO</strong> para extraer las preguntas reales de &quot;People Also Ask&quot;
         que muestra Google para cada pillar. Las preguntas descubiertas alimentan el Idea Queue
         como fuente de contenido.
       </div>

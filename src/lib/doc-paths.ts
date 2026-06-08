@@ -42,7 +42,7 @@ export function collapseDuplicateBrandPrefix(input: string): string {
 export function normalizeBrandDocPath(slug: string, input: string): string {
   if (!slug) throw new DocPathError("Missing slug");
 
-  let cleaned = collapseDuplicateBrandPrefix(input);
+  const cleaned = collapseDuplicateBrandPrefix(input);
   const prefix = `brand/${slug}/`;
 
   if (cleaned.startsWith(prefix)) return cleaned;

@@ -290,7 +290,6 @@ function ChildDocRow({
    ================================================================ */
 
 export function StrategyDocs({
-  slug,
   hasProject,
   documents,
   niches,
