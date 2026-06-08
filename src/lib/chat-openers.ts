@@ -719,6 +719,14 @@ export function buildPillarThread(
     threadName: pillarKey.replace(/-/g, " "),
     skill: resolved.skill,
     skills: resolved.skills,
+    // Propagate the owner agent (competitor/market/self-intelligence → hamete,
+    // etc.) so the gateway dispatches this thread to the specialist that runs
+    // the skill instead of falling back to the default agent (Sancho), which
+    // would improvise. resolveThreadSkills() already enriches `agent` via
+    // SKILL_OWNER_MAP; dropping it here was the regression that sent every
+    // doc/pillar chat to Sancho. undefined → default agent (correct for
+    // Sancho-owned pillars).
+    agent: resolved.agent,
     linkedTo: `brand-brain/${pillarKey}`,
     docPath: docPath || pillarCfg?.docPath || null,
     threadState: "continue",
