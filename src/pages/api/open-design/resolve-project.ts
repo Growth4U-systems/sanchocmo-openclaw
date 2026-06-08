@@ -17,7 +17,6 @@ import path from "path";
 import os from "os";
 import {
   resolveOdConfig,
-  odFindProjectByBaseDir,
   odImportFolder,
   odListProjects,
   odPatchProject,
