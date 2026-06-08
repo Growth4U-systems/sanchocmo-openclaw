@@ -13,59 +13,64 @@ context_writes: []
 
 ## Thread Definitions (4 proyectos, 11 threads obligatorios)
 
+> **Agent** = agente dueño que ejecuta el thread. Fuente de verdad alineada con
+> `config/chat-config.default.json`, `SKILL_OWNER_MAP`/`FOUNDATION_PILLAR_SKILL`
+> (`src/lib/skill-resolver.ts`) y `workspace-sancho/dispatch-map.json`. Si cambias el
+> dueño de un pilar, actualízalo en las cuatro capas.
+
 ### 📋 FAST FOUNDATION (Layer 0 — sin dependencias)
 
-| # | Thread Name | Skill | Objective |
-|---|------------|-------|-----------|
-| 1 | `01 📋 Fast Foundation` | fast-foundation | Intake rápido (~30 min): URL → Company Brief + Self L1 + Market L1 + Brand Voice Snapshot + Niche básico. |
+| # | Thread Name | Skill | Agent | Objective |
+|---|------------|-------|-------|-----------|
+| 1 | `01 📋 Fast Foundation` | fast-foundation | sancho (SAN-13) | Intake rápido (~30 min): URL → Company Brief + Self L1 + Market L1 + Brand Voice Snapshot + Niche básico. |
 
 ### 📊 FULL FOUNDATION — RESEARCH (Layer 1 — sin dependencias; Fast Foundation enriquece si está approved)
 
-| # | Thread Name | Skill | Objective |
-|---|------------|-------|-----------|
-| 2 | `02 📊 Market Analysis` | market-intelligence | TAM, segmentos, tendencias, regulación del mercado. Deep dive completo. |
-| 3 | `03 ⚔️ Competitor Analysis` | competitor-intelligence | Battle cards por competidor: 3 lentes (qué dicen, qué dicen otros, qué dicen clientes). |
-| 4 | `04 🔍 Self Analysis` | self-intelligence | Radiografía propia: 3 lentes completas de autopercepción (web, redes, reviews). |
+| # | Thread Name | Skill | Agent | Objective |
+|---|------------|-------|-------|-----------|
+| 2 | `02 📊 Market Analysis` | market-intelligence | hamete | TAM, segmentos, tendencias, regulación del mercado. Deep dive completo. |
+| 3 | `03 ⚔️ Competitor Analysis` | competitor-intelligence | hamete | Battle cards por competidor: 3 lentes (qué dicen, qué dicen otros, qué dicen clientes). |
+| 4 | `04 🔍 Self Analysis` | self-intelligence | hamete | Radiografía propia: 3 lentes completas de autopercepción (web, redes, reviews). |
 
 ### 📊 FULL FOUNDATION — SYNTHESIS (Layer 2 — requires: Layer 1 completo)
 
-| # | Thread Name | Skill | Objective |
-|---|------------|-------|-----------|
-| 5 | `05 🔄 Market Synthesis` | market-synthesis | SWOT+TOWS+ICE + Market Summary + OPE Canvas + Presentación HTML. |
+| # | Thread Name | Skill | Agent | Objective |
+|---|------------|-------|-------|-----------|
+| 5 | `05 🔄 Market Synthesis` | market-synthesis | hamete | SWOT+TOWS+ICE + Market Summary + OPE Canvas + Presentación HTML. |
 
 ### 🎯 FULL FOUNDATION — GO-TO-MARKET (Layer 3-4)
 
-| # | Thread Name | Skill | Objective |
-|---|------------|-------|-----------|
-| 6 | `06 👥 Niche Discovery` | niche-discovery-100x | Descubrir nichos, validar con Triple Filter, puntuar ECPs con JTBD. |
-| 7 | `07 💬 Positioning` | positioning-messaging | Messaging playbook por ECP: value criteria, assets, messaging framework. |
-| 8 | `08 💰 Pricing` | pricing-strategy | Modelo de pricing, tiers, value metrics, hooks psicológicos. |
+| # | Thread Name | Skill | Agent | Objective |
+|---|------------|-------|-------|-----------|
+| 6 | `06 👥 Niche Discovery` | niche-discovery-100x | hamete | Descubrir nichos, validar con Triple Filter, puntuar ECPs con JTBD. |
+| 7 | `07 💬 Positioning` | positioning-messaging | dulcinea | Messaging playbook por ECP: value criteria, assets, messaging framework. |
+| 8 | `08 💰 Pricing` | pricing-strategy | sancho | Modelo de pricing, tiers, value metrics, hooks psicológicos. |
 
 ### 🎨 FULL FOUNDATION — BRAND IDENTITY (Layer 5)
 
-| # | Thread Name | Skill | Objective |
-|---|------------|-------|-----------|
-| 9 | `09 🎨 Brand Voice` | brand-voice | Full Voice Guide + AI Brand Kit + Per-ECP/Channel adaptation. |
-| 10 | `10 🎨 Visual Identity` | visual-identity | Sistema visual: paleta, tipografía, guidelines, assets. |
+| # | Thread Name | Skill | Agent | Objective |
+|---|------------|-------|-------|-----------|
+| 9 | `09 🎨 Brand Voice` | brand-voice | dulcinea | Full Voice Guide + AI Brand Kit + Per-ECP/Channel adaptation. |
+| 10 | `10 🎨 Visual Identity` | visual-identity | maese-pedro | Sistema visual: paleta, tipografía, guidelines, assets. |
 
 ### 📏 MÉTRICAS Y CONEXIONES (Post-Foundation)
 
-| # | Thread Name | Skill | Objective |
-|---|------------|-------|-----------|
-| 11 | `11 📏 Métricas y Conexiones` | metrics-setup | Plan de métricas + conectar integraciones (GA4, Ads, CRM) + generar dashboard. |
+| # | Thread Name | Skill | Agent | Objective |
+|---|------------|-------|-------|-----------|
+| 11 | `11 📏 Métricas y Conexiones` | metrics-setup | merlin | Plan de métricas + conectar integraciones (GA4, Ads, CRM) + generar dashboard. |
 
 ### 🗺️ STRATEGIC PLAN (Post-Métricas)
 
-| # | Thread Name | Skill | Objective |
-|---|------------|-------|-----------|
-| 12 | `12 🗺️ Strategic Plan` | strategic-plan | Roadmap estratégico: selección de estrategias GTM, proyectos, fases. |
+| # | Thread Name | Skill | Agent | Objective |
+|---|------------|-------|-------|-----------|
+| 12 | `12 🗺️ Strategic Plan` | strategic-plan | sancho | Roadmap estratégico: selección de estrategias GTM, proyectos, fases. |
 
 ## Threads opcionales (solo si se activan)
 
-| Thread Name | Skill | Cuándo crear |
-|------------|-------|--------------|
-| `Existing Customer Data` | existing-customer-data | Si el cliente tiene datos de clientes existentes |
-| `ECP Validation` | ecp-validation | Si se decide validar ECPs con datos reales |
+| Thread Name | Skill | Agent | Cuándo crear |
+|------------|-------|-------|--------------|
+| `Existing Customer Data` | existing-customer-data | hamete | Si el cliente tiene datos de clientes existentes |
+| `ECP Validation` | ecp-validation | sanson | Si se decide validar ECPs con datos reales |
 
 ## Creación de Threads
 

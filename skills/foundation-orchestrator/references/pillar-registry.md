@@ -8,6 +8,7 @@
 
 ### fast-foundation
 **Skill**: `fast-foundation`
+**Agent**: `sancho` (rework en SAN-13)
 **Thread**: `{slug}:fast-foundation`
 **Output**: 5 docs lite:
 - `brand/{slug}/company-brief/current.md` — Company Brief (identidad + business model + budget)
@@ -27,6 +28,7 @@
 
 ### market-analysis
 **Skill**: `market-intelligence`
+**Agent**: `hamete`
 **Thread**: `{slug}:market-analysis`
 **Output**: `brand/{slug}/market-and-us/market/current.md`
 **requires**: —
@@ -37,6 +39,7 @@
 
 ### competitor-analysis
 **Skill**: `competitor-intelligence`
+**Agent**: `hamete`
 **Thread**: `{slug}:competitor-analysis`
 **Output**:
 - `brand/{slug}/market-and-us/competitors/current.md` (roll-up: landscape + lista, generado desde subdirs)
@@ -48,6 +51,7 @@
 
 ### self-analysis
 **Skill**: `self-intelligence`
+**Agent**: `hamete`
 **Thread**: `{slug}:self-analysis`
 **Output**: `brand/{slug}/market-and-us/self/current.md`
 **requires**: —
@@ -63,6 +67,7 @@
 
 ### market-synthesis
 **Skill**: `market-synthesis`
+**Agent**: `hamete`
 **Thread**: `{slug}:market-synthesis`
 **Output**:
 - `brand/{slug}/market-and-us/swot/current.md` — SWOT + TOWS + ICE
@@ -79,6 +84,7 @@
 
 ### niche-discovery
 **Skill**: `niche-discovery-100x`
+**Agent**: `hamete`
 **Thread**: `{slug}:niche-discovery`
 **Output**: `brand/{slug}/go-to-market/ecps/current.md` (JTBD integrado por segmento)
 **requires**: market-synthesis (swot)
@@ -89,6 +95,7 @@
 
 ### existing-customer-data (OPCIONAL)
 **Skill**: `existing-customer-data`
+**Agent**: `hamete`
 **Thread**: `{slug}:existing-customer-data` (solo si se activa)
 **Output**: `brand/{slug}/go-to-market/existing-customer-data/current.md`
 **requires**: —
@@ -101,6 +108,7 @@
 
 ### positioning
 **Skill**: `positioning-messaging`
+**Agent**: `dulcinea`
 **Thread**: `{slug}:positioning`
 **Output**: `brand/{slug}/go-to-market/positioning/{ecp-slug}/current.md` (1 por ECP)
 **requires**: niche-discovery
@@ -110,6 +118,7 @@
 
 ### pricing
 **Skill**: `pricing-strategy`
+**Agent**: `sancho`
 **Thread**: `{slug}:pricing`
 **Output**: `brand/{slug}/go-to-market/pricing/current.md`
 **requires**: niche-discovery, positioning
@@ -120,6 +129,7 @@
 
 ### ecp-validation (OPCIONAL)
 **Skill**: `ecp-validation`
+**Agent**: `sanson`
 **Thread**: `{slug}:ecp-validation` (solo si se activa)
 **requires**: niche-discovery
 **Skip**: si timeline muy corto
@@ -130,6 +140,7 @@
 
 ### brand-voice
 **Skill**: `brand-voice`
+**Agent**: `dulcinea`
 **Thread**: `{slug}:brand-voice`
 **Output**: `brand/{slug}/brand-voice/current.md`
 **requires**: positioning
@@ -138,6 +149,7 @@
 
 ### visual-identity
 **Skill**: `visual-identity`
+**Agent**: `maese-pedro`
 **Thread**: `{slug}:visual-identity`
 **Output**: `brand/{slug}/brand-identity/visual-identity/current.md`
 **requires**: brand-voice
@@ -149,6 +161,7 @@
 
 ### metrics-setup
 **Skill**: `metrics-setup`
+**Agent**: `merlin`
 **Thread**: `{slug}:metrics-setup`
 **Output**: `brand/{slug}/go-to-market/metrics-plan/current.md` + `metrics-plan.json` + `integrations.json`
 **requires**: positioning, pricing (para determinar arquetipo y funnel)
@@ -160,6 +173,7 @@
 
 ### strategic-plan
 **Skill**: `strategic-plan`
+**Agent**: `sancho`
 **Thread**: `{slug}:strategic-plan`
 **Output**: `brand/{slug}/strategic-plan/current.md`
 **requires**: Full Foundation completada + metrics-setup
