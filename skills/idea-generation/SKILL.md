@@ -9,9 +9,9 @@ metadata:
   depends_on: company-context, niche-discovery-100x, brand-voice
   chains_to: seo-content, content-atomizer, social-content, partner-finder
   context_required:
-    - brand/{slug}/company-brief/current.md
-    - brand/{slug}/go-to-market/ecps/current.md
-    - brand/{slug}/brand-voice/current.md
+    - brand/{slug}/company-brief/company-brief.current.md
+    - brand/{slug}/go-to-market/ecps/ecps.current.md
+    - brand/{slug}/brand-voice/brand-voice.current.md
     - brand/{slug}/idea-generation/recurring-tasks.json
     - brand/{slug}/client-config.json
   context_writes:
@@ -36,11 +36,11 @@ Este skill es el **runner** del Idea Generation System. Se ejecuta:
 
 ```
 1. Read brand/{slug}/client-config.json → get channel IDs, cron config
-2. Read brand/{slug}/company-brief/current.md → business context
-3. Read brand/{slug}/go-to-market/ecps/current.md → target audience
-4. Read brand/{slug}/brand-voice/current.md → tone (for evaluating relevance)
-5. Read brand/{slug}/go-to-market/positioning/*/current.md → angles, USPs
-6. Read brand/{slug}/market-and-us/competitors/current.md → competitor list
+2. Read brand/{slug}/company-brief/company-brief.current.md → business context
+3. Read brand/{slug}/go-to-market/ecps/ecps.current.md → target audience
+4. Read brand/{slug}/brand-voice/brand-voice.current.md → tone (for evaluating relevance)
+5. Read brand/{slug}/go-to-market/positioning/*/*.current.md → angles, USPs
+6. Read brand/{slug}/market-and-us/competitors/competitors.current.md → competitor list
 7. Read brand/{slug}/idea-generation/recurring-tasks.json → active tasks
 8. Read brand/{slug}/idea-generation/ideas.json → existing ideas (avoid duplicates)
 ```

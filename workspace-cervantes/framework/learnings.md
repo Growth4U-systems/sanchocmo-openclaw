@@ -52,7 +52,7 @@
 
 ## Arquitectura
 
-- **Versionado por pilar**: `brand/{slug}/{pilar}/current.md` + `v1.md` + `history.json` + `qa-log.md`.
+- **Versionado por pilar**: `brand/{slug}/{pilar}/{pilar}.current.md` + `v1.md` + `history.json` + `qa-log.md`.
 - **foundation-state.json** por cliente: fuente de verdad para statuses. File watcher en mc-server.js auto-regenera.
 - **Aislamiento de contexto**: Daily Pulse filtró info interna a canal de cliente → Regla 0 en SOUL.md de Sancho.
 

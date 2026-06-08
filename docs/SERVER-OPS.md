@@ -542,4 +542,4 @@ are also a fallback — see `DEPLOY.md` "Backups" for the restore procedure.
 - **2026-05-27**: raised §5.4 guidance from 3 min to 15 min and added the
   separate `diagnostics.stuckSessionAbortMs` ceiling after XHYPE Self
   Intelligence v4.1 hit the diagnostic recovery watchdog while Opus was
-  generating a large `current.md` write.
+  generating a large `{carpeta}.current.md` write.

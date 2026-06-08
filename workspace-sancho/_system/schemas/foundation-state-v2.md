@@ -183,15 +183,15 @@ Resumen ejecutivo de la marca. Debe existir para todo cliente con al menos Fast 
   "file_index": {
     "competitors": {
       "sources": "market-and-us/competitors/sources.json",
-      "summary": "market-and-us/competitors/current.md",
+      "summary": "market-and-us/competitors/competitors.current.md",
       "battle_cards": {
-        "{slug}": "market-and-us/competitors/{slug}/current.md"
+        "{slug}": "market-and-us/competitors/{slug}/{slug}.current.md"
       }
     },
     "integrations": "integrations.json",
     "metrics": {
       "plan_json": "metrics-plan.json",
-      "plan_doc": "go-to-market/metrics-plan/current.md",
+      "plan_doc": "go-to-market/metrics-plan/metrics-plan.current.md",
       "data_dir": "metrics/"
     },
     "brand_assets": {

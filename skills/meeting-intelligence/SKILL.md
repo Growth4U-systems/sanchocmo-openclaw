@@ -10,7 +10,7 @@ metadata:
   layer: Intelligence
   type: workflow
 context_required:
-- brand/{slug}/company-brief/current.md
+- brand/{slug}/company-brief/company-brief.current.md
 context_writes:
 - intelligence/
 - brand/{slug}/operational/learnings.md

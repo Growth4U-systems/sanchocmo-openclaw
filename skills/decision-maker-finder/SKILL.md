@@ -9,9 +9,9 @@ metadata:
   depends_on: company-finder
   chains_to: contact-enrichment
 context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/assets.md
@@ -52,7 +52,7 @@ Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 **Optional context:**
 - brand/{slug}/go-to-market/ecps.json (buyer personas with target roles)
-- ./brand/{slug}/go-to-market/positioning/*/current.md (to identify relevant departments)
+- ./brand/{slug}/go-to-market/positioning/*/*.current.md (to identify relevant departments)
 - brand/{slug}/market-and-us/competitors.json (to identify warm paths via mutual connections)
 
 ---
@@ -436,7 +436,7 @@ Same JSON format. Mark `"tool_used": "manual"`. Profile quality assessment may b
 |------|-----------------|---------------|
 | brand/{slug}/operational/companies-YYYYMMDD.json | Target companies list | Source list for people search |
 | brand/{slug}/go-to-market/ecps.json | Buyer personas with roles | Defines which roles to target |
-| ./brand/{slug}/go-to-market/positioning/*/current.md | Our value proposition | Identifies relevant departments |
+| ./brand/{slug}/go-to-market/positioning/*/*.current.md | Our value proposition | Identifies relevant departments |
 | brand/{slug}/market-and-us/competitors.json | Competitor data | Warm path identification via shared connections |
 
 ### Writes to Context Lake

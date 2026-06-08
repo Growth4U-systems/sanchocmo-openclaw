@@ -7,7 +7,7 @@ context_required:
 - brand/{slug}/content/content-pillars.md
 - brand/{slug}/content/pov-bank.json
 - brand/{slug}/content/strategy-decisions.md
-- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/operational/learnings.md
 context_writes:
 - campaigns/

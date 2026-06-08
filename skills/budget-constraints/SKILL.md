@@ -11,12 +11,12 @@ metadata:
   updated: '2026-02-27'
   changes: v4 — Restructured per skill-creator principles.
 context_required:
-- brand/{slug}/company-brief/current.md
+- brand/{slug}/company-brief/company-brief.current.md
 # Lite fallbacks (read-only, treat as preliminary seed, not as final truth):
 - brand/{slug}/company-brief/lite.md            # merge view fallback (always lite today)
 - brand/{slug}/budget/lite.md                   # own seed from fast-foundation (hydration only)
 context_writes:
-- brand/{slug}/budget/current.md
+- brand/{slug}/budget/budget.current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -25,7 +25,7 @@ context_writes:
 > Mapea el dinero, el tiempo, las personas y las herramientas. Cada decisión downstream está acotada por estos constraints.
 
 **Input**: Conversación con cliente + company-context existente
-**Output**: Budget Constraints Profile → `brand/{slug}/budget/current.md` (standalone — la única fuente de verdad que esta skill escribe).
+**Output**: Budget Constraints Profile → `brand/{slug}/budget/budget.current.md` (standalone — la única fuente de verdad que esta skill escribe).
 
 ## References
 
@@ -77,10 +77,10 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/budget/current.md` (standalone, único archivo que esta skill escribe)
-- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
+- Ruta: `brand/{slug}/budget/budget.current.md` (standalone, único archivo que esta skill escribe)
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `budget.current.md`, actualiza `history.json`
 
-> **Merge view `company-brief/current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa — aceptado por ahora.
+> **Merge view `company-brief/company-brief.current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa — aceptado por ahora.
 
 ---
 
@@ -105,13 +105,13 @@ Al entregar, añade bloque de profundización estándar.
 
 ```
 brand/{{slug}}/budget/
-├── current.md      ← versión activa
+├── budget.current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
 └── qa-log.md       ← historial de QA
 ```
 
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
-2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
-3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `<MC_BASE>/docs/brand/{slug}/budget/current.md`
+2. Si existe `budget.current.md` → backup como `v{N+1}.md`, pide confirmación
+3. Si no existe → crea carpeta + `budget.current.md` + `v1.md` + `history.json`
+4. Link: `<MC_BASE>/docs/brand/{slug}/budget/budget.current.md`
