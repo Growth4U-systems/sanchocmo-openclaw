@@ -606,8 +606,8 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                   const recDays = signalRecencyDays(idea.signal?.date);
                   const isToday = idea.dispatch_date === today;
                   const pillarName = pillars.find((p) => p.id === idea.pillar_id)?.name;
-                  const tv = CONTENT_TYPE_VISUAL[idea.content_type] || { label: idea.content_type.toUpperCase(), bg: "bg-aged text-ink", emoji: "📄" };
-                  const cv = CHANNEL_VISUAL[idea.target_channel] || { label: idea.target_channel, emoji: "📄" };
+                  const tv = CONTENT_TYPE_VISUAL[idea.content_type] || { label: idea.content_type?.toUpperCase() || "—", bg: "bg-aged text-ink", emoji: "📄" };
+                  const cv = CHANNEL_VISUAL[idea.target_channel] || { label: idea.target_channel || "—", emoji: "📄" };
                   const conf = Math.round((idea.pov_confidence || 0) * 100);
                   const cellBase: React.CSSProperties = { padding: "16px 12px", verticalAlign: "top", background: isToday ? "var(--sc-sun-50)" : "var(--sc-paper-3)" };
                   const last = idx === visibleIdeas.length - 1;
