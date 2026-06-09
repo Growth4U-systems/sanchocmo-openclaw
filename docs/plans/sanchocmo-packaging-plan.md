@@ -34,7 +34,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 ## Progreso (tracking)
 
-> Bitácora de avances. Última actualización: **2026-06-05**.
+> Bitácora de avances. Última actualización: **2026-06-09**.
 
 ### ✅ Hecho
 
@@ -97,7 +97,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - Fuera de scope: docs internos de Cervantes (se limpian en su track de retiro); `CHANGELOG.md` histórico; **`mc-server.js` sigue necesario** (fallback Strangler-Fig, el Next aún proxya `recurring-tasks`/`connect-proxy` a :18790).
   - Verif: `node -c` ambos servers ✅ · `grep new-client` en código → 0.
 
-- **[Fase 1.5 · Postgres bundled — GAP B9]** — branch `feat/pg-bundled-local-db` (→ `staging`), worktree aislado. Enfoque aprobado por el usuario: **driver condicional + baseline limpio + migrate-at-boot, gateado a local-db; path Neon de prod byte-idéntico**.
+- **[Fase 1.5 · Postgres bundled — GAP B9]** — PR [#366](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/366) (`feat/pg-bundled-local-db` → `staging`) **MERGED 2026-06-09**, `Refs SAN-110`. Worktree aislado. Enfoque aprobado por el usuario: **driver condicional + baseline limpio + migrate-at-boot, gateado a local-db; path Neon de prod byte-idéntico**.
   - **Driver condicional**: nuevo `src/db/driver-select.ts` → `selectDbDriver(url, override)` (auto: `*.neon.tech` → `neon`, otro → `postgres`; override `DATABASE_DRIVER`). `src/db/drizzle.ts` instancia `neon-http` o `postgres-js` según eso; `Db` se tipa como el cliente neon histórico (cast en el boundary) → **cero churn en call-sites**. Dep nueva: `postgres` (postgres.js).
   - **Baseline limpio**: las migraciones de `src/db/migrations/` están rotas para replay (sin journal, números duplicados, `0003_rekey_tasks` con DROP). Nuevo `drizzle.local.config.ts` + `src/db/migrations-local/` (baseline `0000` consolidado desde `schema.ts`, 22 tablas, sin DROPs, con journal). Prod/Neon sigue con su flujo manual aparte.
   - **Migrate-at-boot**: `scripts/migrate-local.mjs` (migrator programático postgres-js, espera readiness, idempotente, no-op en Neon, non-fatal). Gateado en `docker/entrypoint.sh` (sección 5d, solo si driver=postgres y `DATABASE_URL` seteada). `COPY` agregado en `Dockerfile`.
@@ -105,17 +105,34 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - **Seguridad prod**: `DATABASE_DRIVER=neon` explícito en `deploy-staging.yml` + `deploy-prod.yml` (cinturón sobre el auto-detect).
   - **Resuelve la decisión abierta #5** (driver + bootstrap). El `.batch()` neon-only de `client-lifecycle.ts` se hizo portable (neon mantiene `.batch`; postgres usa transacción interactiva) — único call-site con divergencia real.
   - **Fuera de scope**: cutover de tasks a DB (B8) — `MC_TASKS_BACKEND` queda en `json`; B9 solo habilita MI/POV/Polar con DB local.
-  - Verificación: `npm run test:lib` ✅ 192/192 (incluye 5 nuevos de `selectDbDriver`) · `npm run typecheck` ✅ · `docker compose config` base (sin postgres) y `--profile local-db` (con postgres+volumen) ✅ · **bootstrap real contra `postgres:16-alpine` efímero**: 22 tablas creadas, 2ª corrida idempotente (`__drizzle_migrations`=1), URL neon → skip sin conectar ✅. **Pendiente**: e2e en container completo (`compose up` con local-db) y CI.
+  - Verificación: `npm run test:lib` ✅ 192/192 (incluye 5 nuevos de `selectDbDriver`) · `npm run typecheck` ✅ · `docker compose config` base (sin postgres) y `--profile local-db` (con postgres+volumen) ✅ · **bootstrap real contra `postgres:16-alpine` efímero**: 22 tablas, idempotente, URL neon → skip ✅ · **e2e sobre la red de compose** (servicio `postgres` healthy vía profile, migrate por nombre de host → 22 tablas, persistencia del volumen al recrear) ✅.
+
+- **[Fase 4/6 · Fix wizard `.env` duplicado — B9 follow-up]** — PR [#367](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/367) (`fix/wizard-env-dup-database-url` → `staging`), `Refs SAN-110`. **Abierto, sin mergear.**
+  - **Regresión que B9 metió en staging**: el bloque DB de `.env.example` documentaba el modo bundled con ejemplos comentados `DATABASE_URL=…`. El `set_env()` del wizard matchea `^#?\s*KEY=` y reemplazaba el **primer** match (el ejemplo comentado), dejando dos `DATABASE_URL` activos → en `env_file` de compose gana el último (`CHANGE_ME`) → la app no conecta al PG bundled.
+  - Fix: reescritos los comentarios para que **no contengan la forma `KEY=`** (un solo target de `set_env`) + `NOTE` documentando el gotcha.
+  - Verificado: el wizard emite **un solo** `DATABASE_URL` activo; boot real local-db OK (22 tablas).
+
+- **[Fase 6 / GAP G · Imagen self-contained — seed de OPENCLAW_HOME]** — PR [#369](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/369) (`chore/self-contained-image-seed` → `staging`), `Refs SAN-111`. **Abierto, sin mergear.** Trabajado en worktree aislado.
+  - **Problema** (descubierto en el primer boot real del producto): un `OPENCLAW_HOME` vacío crasheaba (`Cannot find module '/root/.openclaw/docker/generate-openclaw-config.js'`) — el Dockerfile no bakeaba nada del "openclaw-home"; el contenido venía del repo montado. El producto no puede depender de tener el repo clonado en una ruta específica.
+  - **`.dockerignore` (nuevo)**: el `COPY` del seed honra `.dockerignore` (no `.gitignore`) → excluye data/runtime/junk para que **no se baken datos de cliente** (`_backups/` con `hospital-capilar-backup`, `memory/`, `brand/`, `_system/recurring-tasks/`, logs, `.pyc`, `.backup*`, cron pre-backups).
+  - **`Dockerfile`**: bakea el framework a `/opt/sancho-seed/` (path que el mount no shadowea) + `.seed-version`.
+  - **`docker/init-home.sh` (nuevo)**: cada boot refresca `skills/docker/plugins` desde la imagen (gateado por version marker → sin churn de 180MB; preserva `plugins/installs.json`) y seedea `agents/workspace-*/config/cron` **solo si faltan** (nunca pisa datos). Invocado al inicio del `entrypoint.sh`.
+  - **Seguridad G4U**: default del compose `${OPENCLAW_HOME:-~/.openclaw}` **sin tocar** (G4U depende de que resuelva a su repo); en su volumen poblado init-home **sí corre** pero es idempotente (refresh = mismos bytes del commit deployado) + seed-if-absent no-op → datos intactos. Primer boot post-merge: copia única de ~180MB del framework, luego version-gated.
+  - Verificado (boot real aislado): **`OPENCLAW_HOME` vacío bootea** (sin crash) → gateway ready + Next + healthy + 22 tablas; datos preservados en restart (sentinel + config); refresh version-gated ("skipping refresh"); **sin datos de cliente en el seed** (grep).
+  - **Resuelve GAP G** (que `compose pull` no pise datos del volumen) — ver sección G.
 
 ### 🟡 En curso / bloqueado
 
-- **CI de los PRs #208 y #219 en rojo por GitHub Actions pausado (billing)** a nivel org — `startup_failure`, no es el código (local pasa). Se destraba al cargar saldo y re-correr. (Usuario: "luego cargo plata".)
+- **PRs #367 y #369 abiertos, sin mergear** (→ `staging`). **Dependencia**: #369 necesita #367 para que el flujo DB-sobre-volumen-vacío quede limpio (sin el fix, el `.env` del wizard trae el `DATABASE_URL` duplicado). **Mergear #367 primero, luego #369.** (Para el deploy de G4U el orden es indistinto — G4U no usa el wizard.)
+- **🔴 Fase 0 sigue bloqueante #1 para publicar** — y el seeding (#369) lo dejó **más expuesto**: el repo todavía commitea **data operacional y refs hardcodeadas de G4U** que el `.dockerignore` (safety net) no cubre del todo: `workspace-sancho/scripts/{regenerate.py,mc-server.js,auto-bind.py,create-client-crons.sh}`, `mc-data.js`/`legacy-*.js`, `_system/intelligence-log.json`, `AGENTS.md`, etc. mencionan slugs de clientes reales. **La imagen NO es publicable hasta la purga Fase 0.**
 
 ### ⏭️ Próximo
 
-- Completar **Fase 1**: OD/YALC públicos + opcionales (B2/B3 — **desbloqueado**, ver aclaración #3). ✅ B6 (#318), ✅ B5 (#325) hechos.
-- **Fase 0** (purga de secretos / repo limpio) sigue siendo bloqueante #1 **antes de publicar**. Requiere rewrite de historial + rotación de credenciales → **necesita al usuario** (destructivo), ver preguntas abiertas.
-- **Deuda técnica GAP H (`SAN-109`)**: terminar el Strangler-Fig para dejar de levantar `mc-server.js` (server legacy en `:18790`). Auditoría de superficie viva hecha; quedan ~2 endpoints + el plugin `mc-chat` por portar. Ver sección **H** abajo.
+- **Mergear #367 → #369** (en ese orden) a `staging`.
+- Completar **Fase 1**: B3 (YALC overlay a imagen pública — falta nombre/tag) + D7 (degradación graceful OD/YALC en MC).
+- **Fase 0** (purga de secretos + data/refs de cliente / repo limpio) — bloqueante #1 antes de publicar. Destructivo (rewrite de historial + rotación) → **lo ejecuta el usuario**.
+- **Deuda técnica GAP H (`SAN-109`)**: terminar el Strangler-Fig para dejar de levantar `mc-server.js` (`:18790`). Ver sección **H**.
+- Otros hilos desbloqueados: D5 (canal publicación slack|discord), D6 (README→MC), Fase 3 (preflight + modo mínimo).
 
 ---
 
@@ -145,7 +162,9 @@ añadir wizard y publicar imágenes. No es una reescritura.
 | 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ abierto | aclaración #1; D4/D5/D6 follow-up |
 | 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ abierto | un-comando install; DB local ✅ con B9 |
 | 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ abierto | placeholder SUL; texto canónico = decisión legal |
-| 6 | B9 · Postgres bundled (driver condicional + baseline) | branch `feat/pg-bundled-local-db` (→ `staging`) | 🔨 local listo, sin PR | resuelve decisión #5; verificado vs `postgres:16-alpine` (22 tablas, idempotente); falta e2e en container + PR |
+| 6 | B9 · Postgres bundled (driver condicional + baseline) | #366 (→ `staging`), SAN-110 | ✅ **MERGED** (2026-06-09) | resuelve decisión #5; e2e en container + persistencia de volumen ✅ |
+| 7 | Fix wizard `.env` duplicado (B9 follow-up) | #367 (→ `staging`), SAN-110 | 🟡 abierto | regresión de B9 en staging; mergear **antes** de #369 |
+| 8 | Imagen self-contained (seed OPENCLAW_HOME) — GAP G | #369 (→ `staging`), SAN-111 | 🟡 abierto | volumen vacío bootea; datos preservados; depende de #367 |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
@@ -270,11 +289,16 @@ El camino de **API key está roto hoy** para ambos proveedores:
 | F4 | `release-please` ya versiona | Reusar: release `vX.Y.Z` → tag de imagen |
 | F5 | `~/.ssh:/root/.ssh:ro` y `/mnt/data/snapshots` montados | `~/.ssh` se retira con git-backup (B5); `/mnt/data` opcional | `docker-compose.yml:18-19` |
 
-### G. Separación framework vs instancia — 🟢 casi resuelto
+### G. Separación framework vs instancia — ✅ resuelto (PR #369, SAN-111)
 
 `config/*.json` gitignored con `.example`, `brand/` gitignored, symlinks en `entrypoint.sh:15-20`,
-seeds en `templates/`, seeding gateado por existencia de `openclaw.json` (`entrypoint.sh:25`).
-Falta garantizar que un `compose pull` de versión nueva no pise datos del volumen (`OPENCLAW_HOME`).
+seeding gateado por existencia de `openclaw.json`. **Cerrado con #369**: la imagen ahora es
+**self-contained** — el framework se bakea en `/opt/sancho-seed/` y `docker/init-home.sh` lo seedea/
+refresca al volumen en cada boot **sin pisar datos** (framework `skills/docker/plugins` refresca
+gateado por `.seed-version`; `config/`, `workspace-*/memory`, `brand/` y demás datos = seed-si-falta).
+Verificado: `OPENCLAW_HOME` vacío bootea y un `compose pull` (cambio de versión) refresca el framework
+preservando los datos del volumen. **Caveat**: en una máquina que ya use `~/.openclaw` para el CLI
+openclaw hay colisión → setear `OPENCLAW_HOME` a un dir dedicado (documentado en `docs/INSTALL.md`).
 
 ### H. Retiro del server legacy `mc-server.js` (terminar Strangler-Fig) — 🟠 deuda técnica (`SAN-109`)
 
