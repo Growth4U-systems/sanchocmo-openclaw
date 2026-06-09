@@ -48,6 +48,25 @@ function extractScripts(prompt: string): unknown[] {
   return resolved;
 }
 
+/** Match a cron's display name to the cron-templates.json key of a *publishing*
+ *  cron (one whose template prompt posts to /api/integrations/publish), so the
+ *  UI can offer a per-cron publish-channel picker. Returns null for crons that
+ *  don't publish (no picker). Mirrors the name-normalisation used for the
+ *  "available templates" list below. */
+function publishableCronKey(
+  name: string,
+  templates: Record<string, { name_template?: string; prompt?: string }>,
+): string | null {
+  const n = (name || "").toLowerCase();
+  for (const [key, tmpl] of Object.entries(templates)) {
+    if (key === "$comment") continue;
+    if (!tmpl.prompt || !tmpl.prompt.includes("/api/integrations/publish")) continue;
+    const cronName = (tmpl.name_template || "").replace("{NAME}", "").toLowerCase().trim().replace(/\s*[—–-]\s*$/, "");
+    if (cronName && n.includes(cronName)) return key;
+  }
+  return null;
+}
+
 /** Shape returned to the UI for each cron — keeps backward-compatible field
  *  names while adding the new `running` and `last_finding` payload. */
 function toApiShape(c: EnrichedCron, slug: string | null) {
@@ -110,10 +129,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         result._system = systemCrons.map((c) => toApiShape(c, null));
       }
 
+      // Load cron templates once: used both to tag each cron with its
+      // publishable cron_key (for the publish-channel picker) and to list
+      // available (not-yet-active) templates below.
+      const templatesFile = path.join(BASE, "_system", "cron-templates.json");
+      const templates = readJSON<Record<string, { auto_onboarding?: boolean; name_template?: string; description?: string; requires?: string; p00_task?: unknown; prompt?: string }>>(templatesFile, {});
+
+      // Tag each cron in this brand's list with cron_key when it maps to a
+      // publishing template — the UI shows the channel picker only for those.
+      for (const task of result[slugParam] as Record<string, unknown>[]) {
+        const key = publishableCronKey((task.name as string) || "", templates);
+        if (key) task.cron_key = key;
+      }
+
       // Also return available templates
       try {
-        const templatesFile = path.join(BASE, "_system", "cron-templates.json");
-        const templates = readJSON<Record<string, { auto_onboarding?: boolean; name_template?: string; description?: string; requires?: string; p00_task?: unknown }>>(templatesFile, {});
         const allTaskNames = [...openclawTasks, ...localTasks].map((c) => (((c as Record<string, unknown>).name as string) || "").toLowerCase());
         const available: unknown[] = [];
         for (const [key, tmpl] of Object.entries(templates)) {
