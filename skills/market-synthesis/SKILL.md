@@ -1,6 +1,6 @@
 ---
 name: market-synthesis
-description: "Síntesis estratégica completa: SWOT+TOWS con ICE prioritization, Market Summary, OPE Canvas, y Presentación HTML. Ejecutar después de que market-intelligence, competitor-intelligence y self-intelligence estén aprobados. Produce 4 outputs en 1 thread: swot/current.md, summary/current.md, ope-canvas/current.md, y presentations/foundation-report.html. Absorbe: swot-analysis + orchestrator inline synthesis + frontend-slides (presentación)."
+description: "Síntesis estratégica completa: SWOT+TOWS con ICE prioritization, Market Summary, OPE Canvas, y Presentación HTML. Ejecutar después de que market-intelligence, competitor-intelligence y self-intelligence estén aprobados. Produce 4 outputs en 1 thread: swot/swot.current.md, summary/summary.current.md, ope-canvas/ope-canvas.current.md, y presentations/foundation-report.html. Absorbe: swot-analysis + orchestrator inline synthesis + frontend-slides (presentación)."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
@@ -12,14 +12,14 @@ metadata:
   updated: '2026-03-27'
   changes: v1.0 — Merge de swot-analysis + orchestrator synthesis + presentación.
 context_required:
-- brand/{slug}/market-and-us/self/current.md
-- brand/{slug}/market-and-us/competitors/current.md
-- brand/{slug}/market-and-us/market/current.md
-- brand/{slug}/company-brief/current.md
+- brand/{slug}/market-and-us/self/self.current.md
+- brand/{slug}/market-and-us/competitors/competitors.current.md
+- brand/{slug}/market-and-us/market/market.current.md
+- brand/{slug}/company-brief/company-brief.current.md
 context_writes:
-- brand/{slug}/market-and-us/swot/current.md
-- brand/{slug}/market-and-us/summary/current.md
-- brand/{slug}/market-and-us/ope-canvas/current.md
+- brand/{slug}/market-and-us/swot/swot.current.md
+- brand/{slug}/market-and-us/summary/summary.current.md
+- brand/{slug}/market-and-us/ope-canvas/ope-canvas.current.md
 - brand/{slug}/presentations/foundation-report.html
 ---
 
@@ -103,7 +103,7 @@ Cada estrategia TOWS recibe:
 Ranking final → top 3 acciones inmediatas.
 
 #### 1.7 Guardar SWOT
-Ruta: `brand/{slug}/market-and-us/swot/current.md`
+Ruta: `brand/{slug}/market-and-us/swot/swot.current.md`
 Incluir `## Presentation Summary` al final (ver protocolo).
 
 ---
@@ -111,10 +111,10 @@ Incluir `## Presentation Summary` al final (ver protocolo).
 ### Fase 2: Market Summary (~15 min)
 
 Síntesis ejecutiva de 1-2 páginas. Leer:
-- `brand/{slug}/market-and-us/market/current.md`
-- `brand/{slug}/market-and-us/competitors/current.md` (roll-up)
-- `brand/{slug}/market-and-us/self/current.md`
-- `brand/{slug}/market-and-us/swot/current.md` (recién generado)
+- `brand/{slug}/market-and-us/market/market.current.md`
+- `brand/{slug}/market-and-us/competitors/competitors.current.md` (roll-up)
+- `brand/{slug}/market-and-us/self/self.current.md`
+- `brand/{slug}/market-and-us/swot/swot.current.md` (recién generado)
 
 Formato:
 ```markdown
@@ -140,7 +140,7 @@ Formato:
 [Qué hacer con esta información — generalmente Niche Discovery o Positioning]
 ```
 
-Ruta: `brand/{slug}/market-and-us/summary/current.md`
+Ruta: `brand/{slug}/market-and-us/summary/summary.current.md`
 
 ---
 
@@ -171,7 +171,7 @@ Leer todo lo anterior + company-brief. Para cada sección:
 
 Presentar al usuario. Resolver DUDAs en conversación.
 
-Ruta: `brand/{slug}/market-and-us/ope-canvas/current.md`
+Ruta: `brand/{slug}/market-and-us/ope-canvas/ope-canvas.current.md`
 Incluir `## Presentation Summary` al final.
 
 ---
@@ -180,8 +180,8 @@ Incluir `## Presentation Summary` al final.
 
 Generar presentación con frontend-slides:
 
-1. Leer `## Presentation Summary` de swot/current.md y ope-canvas/current.md
-2. Leer visual identity del cliente (`brand-identity/visual-identity/current.md`) si existe → extraer colores
+1. Leer `## Presentation Summary` de swot/swot.current.md y ope-canvas/ope-canvas.current.md
+2. Leer visual identity del cliente (`brand-identity/visual-identity/visual-identity.current.md`) si existe → extraer colores
 3. Si no hay visual identity → usar estilo base Electric Studio
 4. Combinar slides de ambos docs en 1 presentación:
    - Slides contexto (quién es la empresa)
@@ -221,14 +221,14 @@ Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 ```
 brand/{slug}/market-and-us/
 ├── swot/
-│   ├── current.md      ← SWOT + TOWS + ICE + Presentation Summary
+│   ├── swot.current.md      ← SWOT + TOWS + ICE + Presentation Summary
 │   ├── v1.md
 │   └── history.json
 ├── summary/
-│   ├── current.md      ← Market Summary (1-2 pág)
+│   ├── summary.current.md      ← Market Summary (1-2 pág)
 │   └── history.json
 ├── ope-canvas/
-│   ├── current.md      ← OPE Canvas (14 secciones) + Presentation Summary
+│   ├── ope-canvas.current.md      ← OPE Canvas (14 secciones) + Presentation Summary
 │   └── history.json
 brand/{slug}/presentations/
 └── foundation-report.html  ← Presentación HTML

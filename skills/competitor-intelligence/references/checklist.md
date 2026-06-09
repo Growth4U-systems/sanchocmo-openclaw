@@ -69,14 +69,15 @@
   - Si un dato viene de fuente secundaria → marcado como "⚠️ Fuente secundaria — pendiente verificar en web del competidor"
 - [ ] **Regla verificada:** Fuente primaria > fuente secundaria SIEMPRE
 
-### Scraping (Step 2) — VERIFICACIÓN DE HERRAMIENTAS OBLIGATORIA
-- [ ] **Apify web-scraper ejecutado** en homepage + pricing + about de cada competidor directo (pegar run ID o confirmar ejecución)
-- [ ] **Apify instagram-scraper ejecutado** para cada competidor con cuenta IG (pegar run ID o confirmar)
-- [ ] **Apify trustpilot-scraper ejecutado** para competidores con perfil Trustpilot (pegar run ID o confirmar)
-- [ ] **DataForSEO SERP/backlinks ejecutado** para dominios de competidores directos (pegar endpoint usado)
-- [ ] **Meta Ad Library consultada** via browser tool (captura de pantalla o datos extraídos)
-- [ ] Si alguna herramienta NO se pudo usar → marcar ⚠️ con razón específica ("Apify actor X falló con error Y, usé web_fetch como fallback")
-- [ ] **PROHIBIDO marcar ✅ si usaste web_search/web_fetch en lugar de Apify/DataForSEO** — eso es ⚠️ con justificación, NUNCA ✅
+### Scraping (Step 2) — VERIFICACIÓN DE PROVIDER OBLIGATORIA (vía preflight)
+- [ ] **Preflight ejecutado** (`scraping-preflight.md`) → capability report mostrado (qué provider cubre cada necesidad)
+- [ ] **Web del competidor scrapeada** (homepage + pricing + about) con el provider del preflight (smart-scrape/WebFetch) — anotar provider + URL/evidencia
+- [ ] **Social scrapeado** (IG/TikTok/LinkedIn) con el provider conectado (scrapecreators MCP / Apify) — anotar tool + dataset/respuesta
+- [ ] **Reviews recopiladas** (Trustpilot/G2/foros) — anotar provider (smart-scrape/Apify) + evidencia
+- [ ] **SERP/keywords/backlinks** vía DataForSEO MCP (o fallback) para dominios directos — anotar tool/endpoint
+- [ ] **Ads Library consultada** (scrapecreators `facebook_adLibrary_*`/`google_company_ads` o browser) — datos extraídos
+- [ ] Si un provider preferido falló → marcar ⚠️ con razón ("scrapecreators IG devolvió vacío, usé WebFetch como fallback")
+- [ ] **PROHIBIDO marcar ✅ con un provider de fallback** cuando el preferido estaba disponible — eso es ⚠️ con justificación, NUNCA ✅
 - [ ] **Lens 1 data recopilada** (homepage, producto, pricing, social posts, ads)
 - [ ] **Lens 2 data recopilada** (influencers, artículos, backlinks, SEO)
 - [ ] **Lens 3 data recopilada** (reviews, comentarios, foros, Reddit)
@@ -115,8 +116,8 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Roll-up guardado en** `brand/{{slug}}/market-and-us/competitors/current.md`
-- [ ] **Deep-dives por competidor en** `brand/{{slug}}/market-and-us/competitors/{{nombre}}/current.md`
+- [ ] **Roll-up guardado en** `brand/{{slug}}/market-and-us/competitors/competitors.current.md`
+- [ ] **Deep-dives por competidor en** `brand/{{slug}}/market-and-us/competitors/{{nombre}}/{{nombre}}.current.md`
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 

@@ -10,16 +10,16 @@ metadata:
   depends_on: company-context, business-model, budget, self-intelligence
   updated: '2026-02-27'
 context_required:
-- brand/{slug}/company-context/current.md
-- brand/{slug}/business-model/current.md
-- brand/{slug}/budget/current.md
-- brand/{slug}/market-and-us/self/current.md
-- brand/{slug}/market-and-us/market/current.md
-- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/company-context/company-context.current.md
+- brand/{slug}/business-model/business-model.current.md
+- brand/{slug}/budget/budget.current.md
+- brand/{slug}/market-and-us/self/self.current.md
+- brand/{slug}/market-and-us/market/market.current.md
+- brand/{slug}/market-and-us/competitors/competitors.current.md
 - brand/{slug}/go-to-market/positioning/shared/messaging-summary.md
 - brand/{slug}/intelligence/meetings/*.md
 context_writes:
-- brand/{slug}/market-and-us/ope-canvas/current.md
+- brand/{slug}/market-and-us/ope-canvas/ope-canvas.current.md
 ---
 
 # OPE Canvas (One-Page Endgame)
@@ -27,7 +27,7 @@ context_writes:
 > Síntesis estratégica en 1 página: visión, ICP, propuesta de valor, moats, canales y endgame. Puente entre "entender la empresa" y "analizar el mercado".
 
 **Input**: Los 4 pilares de La Empresa (company-context, business-model, budget, self-intelligence) + documentación del cliente
-**Output**: OPE Canvas completo → `brand/{slug}/market-and-us/ope-canvas/current.md`
+**Output**: OPE Canvas completo → `brand/{slug}/market-and-us/ope-canvas/ope-canvas.current.md`
 
 ## References
 
@@ -57,12 +57,12 @@ context_writes:
 ### 1. Recopilar TODA la Información Disponible
 **Lee TODOS los documentos existentes del cliente, no solo los 4 de La Empresa:**
 ```
-brand/{slug}/company-context/current.md            ← standalone: identidad
-brand/{slug}/business-model/current.md             ← standalone: modelo
-brand/{slug}/budget/current.md                     ← standalone: budget
-brand/{slug}/market-and-us/self/current.md
-brand/{slug}/market-and-us/market/current.md       ← si existe
-brand/{slug}/market-and-us/competitors/current.md     ← si existe
+brand/{slug}/company-context/company-context.current.md            ← standalone: identidad
+brand/{slug}/business-model/business-model.current.md             ← standalone: modelo
+brand/{slug}/budget/budget.current.md                     ← standalone: budget
+brand/{slug}/market-and-us/self/self.current.md
+brand/{slug}/market-and-us/market/market.current.md       ← si existe
+brand/{slug}/market-and-us/competitors/competitors.current.md     ← si existe
 brand/{slug}/go-to-market/positioning/shared/messaging-summary.md ← si existe
 brand/{slug}/market-and-us/ope-canvas/briefing.md ← si existe (datos pre-validados)
 brand/{slug}/intelligence/meetings/*.md ← notas de reuniones
@@ -95,22 +95,22 @@ brand/{slug}/intelligence/meetings/*.md ← notas de reuniones
 
 ```
 INPUTS (La Empresa):
-  company-context/current.md → Obvious Choice, Core Product, Core Values, Core Capabilities
-  business-model/current.md  → Core Product, Geography, Strategy Choice, Endgame
-  budget/current.md          → Year/Quarter/Monthly Picture
-  self-intelligence/current.md → Moats, Core Capabilities, Strategy Choice
+  company-context/company-context.current.md → Obvious Choice, Core Product, Core Values, Core Capabilities
+  business-model/business-model.current.md  → Core Product, Geography, Strategy Choice, Endgame
+  budget/budget.current.md          → Year/Quarter/Monthly Picture
+  self-intelligence/self-intelligence.current.md → Moats, Core Capabilities, Strategy Choice
 
 OUTPUTS (alimenta El Mercado):
-  ope-canvas/current.md → ICP y Moats informan competitor-intelligence
-  ope-canvas/current.md → Geography y Channels informan market-intelligence
-  ope-canvas/current.md → Core Problem e ICP informan niche-discovery-100x
+  ope-canvas/ope-canvas.current.md → ICP y Moats informan competitor-intelligence
+  ope-canvas/ope-canvas.current.md → Geography y Channels informan market-intelligence
+  ope-canvas/ope-canvas.current.md → Core Problem e ICP informan niche-discovery-100x
 ```
 
 ## 📁 Almacenamiento (OBLIGATORIO)
 
 ```
 brand/{slug}/market-and-us/ope-canvas/
-├── current.md      ← Versión activa
+├── ope-canvas.current.md      ← Versión activa
 ├── v1.md           ← Primera versión
 ├── history.json    ← Log de versiones
 └── qa-log.md       ← Registro de QA

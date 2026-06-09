@@ -50,5 +50,38 @@ const duplicated = resolveWorkspaceDocPath(
 );
 assert.equal(duplicated.canonicalPath, "brand/growth4u/strategic-plan/strategic-plan.current.md");
 
+// SAN-103: bidirectional resolution. A request for the *named* canonical
+// doc must fall back to a legacy bare `current.md` still on disk (live
+// clients not yet data-migrated), so the repo-wide rename never 404s.
+fs.mkdirSync(path.join(tmp, "brand", "growth4u", "market-and-us", "market"), { recursive: true });
+fs.writeFileSync(
+  path.join(tmp, "brand", "growth4u", "market-and-us", "market", "current.md"),
+  "# Market (legacy name)",
+);
+const namedReqLegacyDisk = resolveWorkspaceDocPath(
+  tmp,
+  "brand/growth4u/market-and-us/market/market.current.md",
+  { slug: "growth4u", requireBrand: true },
+);
+assert.equal(namedReqLegacyDisk.exists, true);
+assert.equal(namedReqLegacyDisk.usedFallback, true);
+assert.equal(
+  namedReqLegacyDisk.canonicalPath,
+  "brand/growth4u/market-and-us/market/current.md",
+);
+
+// A direct hit on the named file resolves without the fallback.
+const namedDirect = resolveWorkspaceDocPath(
+  tmp,
+  "brand/growth4u/strategic-plan/strategic-plan.current.md",
+  { slug: "growth4u", requireBrand: true },
+);
+assert.equal(namedDirect.exists, true);
+assert.equal(namedDirect.usedFallback, false);
+assert.equal(
+  namedDirect.canonicalPath,
+  "brand/growth4u/strategic-plan/strategic-plan.current.md",
+);
+
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log("doc path tests passed");

@@ -2,7 +2,7 @@
 
 ## Expected Output Format
 
-File: `brand/{slug}/customer-data/current.md`
+File: `brand/{slug}/customer-data/customer-data.current.md`
 
 ```markdown
 # Customer Data Analysis

@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildPillarThread, buildTaskThread, buildProjectThread, findTaskThreadForDoc } from "@/lib/chat-openers";
+import { buildPillarThread, buildTaskThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { cn } from "@/lib/utils";
 import type { BrandBrainState, Section } from "@/types";
@@ -496,14 +496,6 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
             const nextTask = !isDone
               ? tasks.find((t) => !["completed", "done"].includes(t.status))
               : null;
-
-            const handleProjectChat = () => {
-              const config = buildProjectThread(slug, p.id as string, p.name as string, {
-                strategy: p.strategy as string,
-                status: p.status as string,
-              });
-              openChat(slug, config);
-            };
 
             const handleTaskChat = (t: { id: string; name: string; type?: string; pillar?: string; skill?: string; status?: string }) => {
               const config = buildTaskThread(slug, t.id, t.name, p.id as string, {

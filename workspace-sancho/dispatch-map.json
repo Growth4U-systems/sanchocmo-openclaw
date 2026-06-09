@@ -125,6 +125,10 @@
         "thief-marketers",
         "competitor-intelligence",
         "market-intelligence",
+        "self-intelligence",
+        "market-synthesis",
+        "niche-discovery-100x",
+        "existing-customer-data",
         "deep-research",
         "trust-engine",
         "apify",
@@ -207,6 +211,7 @@
         "page-cro",
         "paywall-upgrade-cro",
         "popup-cro",
+        "positioning-messaging",
         "pov-bank-builder",
         "programmatic-seo",
         "schema-markup",
@@ -221,7 +226,6 @@
         "youtube-transcript"
       ],
       "skills_invokable": [
-        "positioning-messaging",
         "directory-submissions"
       ],
       "brand_context": [

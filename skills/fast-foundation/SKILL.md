@@ -10,10 +10,10 @@ metadata:
   layer: '0'
   updated: '2026-05-20'
   changes: |
-    v1.1 — Outputs lite ahora se escriben en `lite.md` (nunca `current.md`).
+    v1.1 — Outputs lite ahora se escriben en `lite.md` (nunca `{carpeta}.current.md`).
            Evita path collision con skills Full Foundation (self-intelligence,
            market-intelligence, brand-voice, niche-discovery-100x, etc.).
-           `current.md` queda reservado para outputs full.
+           `{carpeta}.current.md` queda reservado para outputs full.
     v1.0 — Merge de 8 skills en 1 sesión de intake unificada.
 context_required: []
 context_writes:
@@ -48,7 +48,7 @@ El dashboard, el Brand Brain y las APIs de foundation **solo leen** `brand/{slug
 
 Si el estado no tiene `sections[*].pillars[*].output_file`, **la marca queda invisible en la UI aunque los `.md` existan en disco**. Por eso:
 
-1. **NUNCA escribas `current.md`** — fast-foundation escribe SIEMPRE a `lite.md` (regla v1.1). `current.md` lo reservan las skills full.
+1. **NUNCA escribas `{carpeta}.current.md`** — fast-foundation escribe SIEMPRE a `lite.md` (regla v1.1). `{carpeta}.current.md` lo reservan las skills full.
 2. **NUNCA inventes un `foundation-state.json` con schema propio** (ej. un mapa plano `pillars`/`path` sin `sections`). Eso rompe la UI.
 3. El `foundation-state.json` canónico (`sections`, `file_index`, `brand_summary`) lo **mantiene el `foundation-orchestrator`**, no esta skill. Corré fast-foundation **a través del orquestador** para que registre la sección `fast-foundation` y persista el estado (`scripts/regenerate.py`).
 4. Si por algún motivo se corre suelta y el estado quedó en otro schema, recuperá con `scripts/rebuild-foundation-state.mjs <slug> --apply` (reconstruye el v3.0 desde los docs en disco, sin tocar el contenido).
@@ -161,8 +161,8 @@ De la conversación y el scraping:
 
 ### Step 5: Generar 5 Docs Lite
 
-> **Regla de paths (v1.1)**: fast-foundation escribe SIEMPRE a `lite.md`, nunca a `current.md`.
-> `current.md` está reservado para las skills Full Foundation (self-intelligence, market-intelligence,
+> **Regla de paths (v1.1)**: fast-foundation escribe SIEMPRE a `lite.md`, nunca a `{carpeta}.current.md`.
+> `{carpeta}.current.md` está reservado para las skills Full Foundation (self-intelligence, market-intelligence,
 > brand-voice, niche-discovery-100x, company-context, business-model-audit, budget-constraints).
 > Esto evita que el output lite contamine el path canónico antes de que corra la skill full.
 
@@ -170,9 +170,9 @@ Escribir los 5 documentos en sus carpetas:
 
 | Doc | Path | Contenido |
 |-----|------|-----------|
-| Company Context (standalone lite) | `brand/{slug}/company-context/lite.md` | Identidad — seed lite. `company-context` skill produce el `current.md`. |
-| Business Model (standalone lite) | `brand/{slug}/business-model/lite.md` | Modelo — seed lite. `business-model-audit` skill produce el `current.md`. |
-| Budget & Resources (standalone lite) | `brand/{slug}/budget/lite.md` | Resources — seed lite. `budget-constraints` skill produce el `current.md`. |
+| Company Context (standalone lite) | `brand/{slug}/company-context/lite.md` | Identidad — seed lite. `company-context` skill produce el `{carpeta}.current.md`. |
+| Business Model (standalone lite) | `brand/{slug}/business-model/lite.md` | Modelo — seed lite. `business-model-audit` skill produce el `{carpeta}.current.md`. |
+| Budget & Resources (standalone lite) | `brand/{slug}/budget/lite.md` | Resources — seed lite. `budget-constraints` skill produce el `{carpeta}.current.md`. |
 | Company Brief (merge view lite) | `brand/{slug}/company-brief/lite.md` | Vista consolidada lite. Header: `<!-- DO NOT EDIT — auto-generated -->`. |
 | Self Intelligence L1 | `brand/{slug}/market-and-us/self/lite.md` | Lens 1 only: autopercepción. Header: `<!-- mode: lite | source: fast-foundation -->` |
 | Market Intelligence L1 | `brand/{slug}/market-and-us/market/lite.md` | Datos básicos del mercado. Header: `<!-- mode: lite | source: fast-foundation -->` |
@@ -181,7 +181,7 @@ Escribir los 5 documentos en sus carpetas:
 
 **Headers `<!-- mode: lite -->` siguen siendo importantes**: marcan estos archivos como hydration seed para las skills de Full Foundation.
 
-**Nunca sobrescribir un `current.md` existente** — ni siquiera si parece "antiguo". El `current.md` solo lo escribe la skill full correspondiente.
+**Nunca sobrescribir un `{carpeta}.current.md` existente** — ni siquiera si parece "antiguo". El `{carpeta}.current.md` solo lo escribe la skill full correspondiente.
 
 ### Step 6: Resumen & Siguiente Paso
 
@@ -198,7 +198,7 @@ Escribir los 5 documentos en sus carpetas:
 🎨 Brand Voice         ✅ brand/{slug}/brand-voice/lite.md (Snapshot)
 👥 Niche Discovery     ✅ brand/{slug}/go-to-market/ecps/lite.md (básico)
 
-Siguiente paso: Full Foundation. Las skills full escriben en `current.md`
+Siguiente paso: Full Foundation. Las skills full escriben en `{carpeta}.current.md`
 y consumen estos `lite.md` como hydration seed (no como fuente final).
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -209,12 +209,12 @@ y consumen estos `lite.md` como hydration seed (no como fuente final).
 
 ### Principio
 
-Cada una de las 3 skills full (company-context, business-model-audit, budget-constraints) es **standalone autoritativa** sobre su propio `current.md`:
-- `brand/{slug}/company-context/current.md` ← fuente de verdad de company-context skill (full)
-- `brand/{slug}/business-model/current.md` ← fuente de verdad de business-model-audit skill (full)
-- `brand/{slug}/budget/current.md` ← fuente de verdad de budget-constraints skill (full)
+Cada una de las 3 skills full (company-context, business-model-audit, budget-constraints) es **standalone autoritativa** sobre su propio `{carpeta}.current.md`:
+- `brand/{slug}/company-context/company-context.current.md` ← fuente de verdad de company-context skill (full)
+- `brand/{slug}/business-model/business-model.current.md` ← fuente de verdad de business-model-audit skill (full)
+- `brand/{slug}/budget/budget.current.md` ← fuente de verdad de budget-constraints skill (full)
 
-Fast-foundation produce solo los **seeds lite** (`lite.md`) — nunca toca `current.md`.
+Fast-foundation produce solo los **seeds lite** (`lite.md`) — nunca toca `{carpeta}.current.md`.
 
 Cada skill full versiona (`v{N}.md` + `history.json`) **por separado** — permite re-correr una sin afectar a las otras.
 
@@ -222,12 +222,12 @@ Cada skill full versiona (`v{N}.md` + `history.json`) **por separado** — permi
 
 `brand/{slug}/company-brief/lite.md` es la **vista consolidada lite auto-regenerada** desde los 3 seeds lite. NO es editable a mano (se sobreescribe).
 
-`brand/{slug}/company-brief/current.md` es la **vista consolidada full**. La regenera el orquestador via `scripts/regenerate-company-brief.py` cada vez que una skill full (company-context, business-model-audit, budget-constraints) aprueba — el script lee el `current.md` de cada standalone cuando existe y cae a `lite.md` por sección si no, marcando el resultado como `mode: full` o `mode: mixed` según el caso. Mientras ninguna standalone sea full, el script escribe a `lite.md` (no toca `current.md`).
+`brand/{slug}/company-brief/company-brief.current.md` es la **vista consolidada full**. La regenera el orquestador via `scripts/regenerate-company-brief.py` cada vez que una skill full (company-context, business-model-audit, budget-constraints) aprueba — el script lee el `{carpeta}.current.md` de cada standalone cuando existe y cae a `lite.md` por sección si no, marcando el resultado como `mode: full` o `mode: mixed` según el caso. Mientras ninguna standalone sea full, el script escribe a `lite.md` (no toca `{carpeta}.current.md`).
 
-`brand/{slug}/company-brief/current.md` es la **vista consolidada full**. La regenera el orquestador (o cualquier skill autorizada) cuando los 3 standalones tienen `current.md` (es decir, las 3 skills full corrieron). Hasta entonces, consumers que necesitan la foto completa deben leer los `current.md` standalone directamente y caer a `lite.md` solo si saben qué están haciendo.
+`brand/{slug}/company-brief/company-brief.current.md` es la **vista consolidada full**. La regenera el orquestador (o cualquier skill autorizada) cuando los 3 standalones tienen `{carpeta}.current.md` (es decir, las 3 skills full corrieron). Hasta entonces, consumers que necesitan la foto completa deben leer los `{carpeta}.current.md` standalone directamente y caer a `lite.md` solo si saben qué están haciendo.
 
 - **fast-foundation** (al final del intake inicial): escribe `company-brief/lite.md` desde los 3 seeds lite.
-- **foundation-orchestrator**: ejecuta `scripts/regenerate-company-brief.py {slug}` al aprobar cualquiera de las 3 skills full standalones → reemite `company-brief/current.md` (si hay ≥1 full) o `company-brief/lite.md` (si todo sigue siendo seed).
+- **foundation-orchestrator**: ejecuta `scripts/regenerate-company-brief.py {slug}` al aprobar cualquiera de las 3 skills full standalones → reemite `company-brief/company-brief.current.md` (si hay ≥1 full) o `company-brief/lite.md` (si todo sigue siendo seed).
 
 > Esto resuelve el "Stale view conocido" anterior: el merge ya no queda desactualizado al aprobar un standalone full.
 
@@ -235,7 +235,7 @@ Cada skill full versiona (`v{N}.md` + `history.json`) **por separado** — permi
 
 Solo **fast-foundation** (al final del flujo inicial de intake, desde los 3 seeds lite).
 
-> ⚠️ **Stale view**: si una skill full corre y actualiza un standalone `current.md`, el merge view lite (`company-brief/lite.md`) queda desactualizado. Es lo esperado — el lite.md es un seed inicial, no una vista viva. Consumers que necesitan info fresca leen el standalone directamente.
+> ⚠️ **Stale view**: si una skill full corre y actualiza un standalone `{carpeta}.current.md`, el merge view lite (`company-brief/lite.md`) queda desactualizado. Es lo esperado — el lite.md es un seed inicial, no una vista viva. Consumers que necesitan info fresca leen el standalone directamente.
 
 **Formato del merge view lite (`company-brief/lite.md`):**
 ```markdown
@@ -263,7 +263,7 @@ Solo **fast-foundation** (al final del flujo inicial de intake, desde los 3 seed
 
 ### Contenido de cada standalone
 
-**company-context/current.md** (Identity)
+**company-context/**company-context.current.md** (Identity)
 - The Core Three: quién eres, qué vendes, a quién
 - Elevator pitch (2-3 frases)
 - Producto/servicio principal + diferenciadores
@@ -272,14 +272,14 @@ Solo **fast-foundation** (al final del flujo inicial de intake, desde los 3 seed
 - URLs y perfiles sociales
 - Fuentes por campo (extracted from URL, user input, etc.)
 
-**business-model/current.md** (Model)
+**business-model/**business-model.current.md** (Model)
 - Clasificación: B2B/B2C/Hybrid + modelo de revenue
 - Growth motion: Sales-Led, Marketing-Led, Product-Led, Community-Led
 - Funnel actual mapeado (etapas, conversiones conocidas)
 - Unit economics básicos (si disponibles): ACV, churn estimado, LTV estimado
 - Canales actuales de adquisición
 
-**budget/current.md** (Resources)
+**budget/**budget.current.md** (Resources)
 - Presupuesto mensual marketing (rango)
 - Timeline: horizonte para primeros resultados
 - Equipo: quién está disponible, horas/semana
@@ -373,7 +373,7 @@ FULL FOUNDATION lee docs lite y profundiza:
 Cada doc se guarda con versionado estándar:
 ```
 brand/{slug}/{carpeta}/
-├── current.md      ← versión activa
+├── {carpeta}.current.md      ← versión activa
 ├── v1.md           ← primera versión (= fast-foundation output)
 └── history.json    ← log de versiones
 ```

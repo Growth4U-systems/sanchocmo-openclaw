@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useChatStore } from "@/stores/chat";
 import type { ThreadConfig } from "@/lib/chat-openers";
 

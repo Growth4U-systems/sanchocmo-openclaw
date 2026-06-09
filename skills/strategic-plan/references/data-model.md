@@ -6,7 +6,7 @@
 brand/{slug}/
   discord-channels.json     ← mapeo canal→ID Discord del guild
   strategic-plan/
-    current.md              ← plan activo (documento vivo)
+    strategic-plan.current.md              ← plan activo (documento vivo)
     v1.md                   ← archivo: plan de marzo 2026
     history.json            ← log de versiones
   projects/
@@ -36,7 +36,7 @@ brand/{slug}/
 
 ---
 
-## strategic-plan/current.md
+## strategic-plan/strategic-plan.current.md
 
 Documento vivo. Se versiona cuando cambian los objetivos o se completa un ciclo.
 
@@ -75,8 +75,8 @@ Documento vivo. Se versiona cuando cambian los objetivos o se completa un ciclo.
 
 ### Versionado del plan
 
-- `current.md` = plan activo
-- Cuando se completa un ciclo o cambian objetivos → `current.md` se copia a `vX.md`
+- `strategic-plan.current.md` = plan activo
+- Cuando se completa un ciclo o cambian objetivos → `strategic-plan.current.md` se copia a `vX.md`
 - Cada versión = un ciclo (típicamente mensual o trimestral)
 - `history.json` registra cuándo y por qué se versionó
 
@@ -335,7 +335,7 @@ Aumentar conversion rate de 0.5% a 2.0%
 Los archivos en `brand/{slug}/strategic-plan/` y `brand/{slug}/projects/` son accesibles vía MC con token del cliente:
 
 ```
-<MC_BASE>/portal/{mcToken}/docs/strategic-plan/current.md
+<MC_BASE>/portal/{mcToken}/docs/strategic-plan/strategic-plan.current.md
 <MC_BASE>/portal/{mcToken}/docs/projects/registry.json
 <MC_BASE>/portal/{mcToken}/docs/projects/P01/project.json
 ```

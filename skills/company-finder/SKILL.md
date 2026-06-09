@@ -9,10 +9,10 @@ metadata:
   depends_on: niche-discovery-100x, company-context
   chains_to: decision-maker-finder
 context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/market-and-us/competitors/competitors.current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/assets.md
@@ -32,7 +32,7 @@ This skill is the bridge between "knowing who your ideal customer is" and "havin
 
 Before starting, load context from the brand directory:
 
-- `brand/{slug}/company-brief/current.md` — Our company context (what we sell, to whom)
+- `brand/{slug}/company-brief/company-brief.current.md` — Our company context (what we sell, to whom)
 - `brand/{slug}/go-to-market/ecps.json` — ICP definition (industry, size, geo, tech stack, etc.)
 - `brand/{slug}/go-to-market/ecps.json` — Early Customer Profiles with scoring from niche-discovery-100x
 - `brand/{slug}/market-and-us/competitors.json` — Competitor data (to exclude or identify competitor customers)

@@ -713,7 +713,7 @@ function CommentsSection({
       )}
       {!loading && !error && comments.length === 0 && (
         <p className="text-xs text-muted-foreground italic">
-          Aún no hay comentarios. Selecciona texto del documento o usa el botón "Comentar" del encabezado.
+          Aún no hay comentarios. Selecciona texto del documento o usa el botón &quot;Comentar&quot; del encabezado.
         </p>
       )}
       <ul className="flex flex-col gap-3">
@@ -736,7 +736,7 @@ function CommentsSection({
             </div>
             {c.anchorText && (
               <blockquote className="text-[11px] text-muted-foreground border-l-2 border-[#E5E2DC] dark:border-[#313244] pl-2 mb-2 italic">
-                "{c.anchorText.length > 200 ? c.anchorText.slice(0, 200) + "…" : c.anchorText}"
+                &quot;{c.anchorText.length > 200 ? c.anchorText.slice(0, 200) + "…" : c.anchorText}&quot;
               </blockquote>
             )}
             <p className="text-[12px] text-[#1A1A1A] dark:text-[#cdd6f4] whitespace-pre-wrap line-clamp-3">
@@ -775,11 +775,11 @@ function CommentFormModal({
 
         {form.anchor?.anchorText && (
           <blockquote className="text-[11px] text-muted-foreground border-l-2 border-[#E5E2DC] dark:border-[#313244] pl-2 mb-3 italic">
-            Comentando sobre: "
+            Comentando sobre: &quot;
             {form.anchor.anchorText.length > 120
               ? form.anchor.anchorText.slice(0, 120) + "…"
               : form.anchor.anchorText}
-            "
+            &quot;
           </blockquote>
         )}
 
@@ -910,7 +910,7 @@ function CommentDetailModal({
 
         {c.anchorText && (
           <blockquote className="text-[11px] text-muted-foreground border-l-2 border-rust pl-2 mb-3 italic whitespace-pre-wrap">
-            "{c.anchorText}"
+            &quot;{c.anchorText}&quot;
           </blockquote>
         )}
 
