@@ -75,7 +75,7 @@ context_writes: []
 ## Creación de Threads
 
 ### Cuándo crear
-- **Thread 1 (Fast Foundation)**: al crear el cliente (automático con new-client.sh)
+- **Thread 1 (Fast Foundation)**: al crear el cliente desde Mission Control
 - **Threads 2-10 (Full Foundation)**: al completar Fast Foundation
 - **Thread 11 (Métricas)**: al completar Full Foundation
 - **Thread 12 (Strategic Plan)**: al completar Métricas

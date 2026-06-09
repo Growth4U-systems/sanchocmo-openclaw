@@ -96,14 +96,12 @@ node workspace-sancho/scripts/mc-server.js &
 
 ### Adding a Client
 
-```bash
-bash workspace-sancho/scripts/new-client.sh \
-  --slug "my-client" \
-  --name "My Client" \
-  --guild "DISCORD_GUILD_ID"
-```
+Create the client from **Mission Control** (Admin → *New client*: slug + display
+name). This registers it in `clients.json` and creates the base brand folder.
 
-This creates the brand directory structure, updates `clients.json`, binds Discord channels, and configures systemPrompts.
+Then, from the client's chat, ask Sancho to run **Fast Foundation** (and later the
+full Foundation). The foundation skills scaffold the rest of the `brand/{slug}/`
+tree and generate `foundation-state.json` on demand — no extra script needed.
 
 ## Directory Structure
 
