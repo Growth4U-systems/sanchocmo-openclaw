@@ -41,6 +41,14 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Lanzamientos live solo tras confirmación explícita del usuario
 - Campaign status, reporting y guardado de resultados en `brand/{slug}/yalc/runs/`
 
+**Usa Alarife para web/páginas** (via `Agent(subagent_type="alarife")` desde Sancho; usa `alarife-integration`, `payload`, `site-architecture`, `frontend-design`, `page-cro`):
+- Build y publish de páginas/sites en Payload CMS (draft → preview → publish-with-approval)
+- Arquitectura de la información: estructura de páginas, jerarquía, routing
+- Frontend: implementación de páginas en producción
+- CRO: optimización de conversión a nivel de página y formulario
+- Importación/exportación de sites y migraciones de CMS
+- Alarife solicita el copy a Dulcinea y los visuales a Maese Pedro; nunca publica sin aprobación explícita
+
 ### Selección de modelo para spawn (IMPORTANTE)
 
 > Nota: research profundo / competitive intel / market analysis ya **no** se spawnan como Escudero — van a **Hamete** (`sessions_send`). La tabla de abajo aplica a tareas de Escudero (contenido, prospecting, ejecución). Hamete gestiona su propio modelo de research.
@@ -96,6 +104,7 @@ Para mapping completo de personas a tareas, ver `dispatch-map.json`.
 | **Competitive intel, battle cards** | **Hamete** | **send** | — | competitor-intelligence, thief-marketers |
 | **Signals, daily pulse, patterns, meeting intel** | **Hamete** | **send** | — | signal-monitor, daily-pulse, pattern-detector, meeting-intelligence |
 | YALC/GTM-OS execution | Rocinante | send | — | yalc-operator |
+| **Web/page build & publish** | **Alarife** | **spawn** | — | alarife-integration, payload, site-architecture, frontend-design, page-cro |
 | Brand check, QA | Sansón | send | — | Brand verification, devil's advocate |
 | Admin, bugs, infra | Cervantes | message (Discord) | — | System tasks |
 
