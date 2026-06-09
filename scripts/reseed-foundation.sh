@@ -3,8 +3,8 @@
 # reseed-foundation.sh — Reinstala el scaffolding canónico de Foundation
 # en un cliente existente, archivando el estado actual.
 #
-# Extraído de new-client.sh (la sección que crea proyectos core +
-# foundation-state.json v3). NO toca Supabase, Discord, ni nada externo.
+# Crea los proyectos core + el árbol canónico de brand + foundation-state.json
+# v3. NO toca Discord ni nada externo.
 # Sólo escribe en disco bajo $WORKSPACE/brand/$SLUG/.
 #
 # Uso:
@@ -65,7 +65,7 @@ fi
 BRAND_DIR="$WORKSPACE/brand/$SLUG"
 if [[ ! -d "$BRAND_DIR" ]]; then
   echo "❌ El cliente '$SLUG' no existe en $BRAND_DIR" >&2
-  echo "   (Para crear un cliente nuevo usá new-client.sh)" >&2
+  echo "   (Para crear un cliente nuevo usá Mission Control → New client)" >&2
   exit 1
 fi
 
@@ -127,7 +127,7 @@ done
 
 echo "  → archivo: $ARCHIVE_DIR"
 
-# --- 2. Crear estructura de carpetas vacías (mismo árbol que new-client.sh) ---
+# --- 2. Crear estructura de carpetas vacías (árbol canónico de brand) ---
 echo ""
 echo "📁 [2/3] Recreando estructura de carpetas vacías..."
 run "mkdir -p '$BRAND_DIR'/{company-context,business-model,budget,company-brief,market-and-us/{market,competitors,self,swot,summary,ope-canvas,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},presentations,strategic-plan,operational,projects}"

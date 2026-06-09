@@ -9,7 +9,6 @@ const BASE = path.join(__dirname, '..');
 const accessLog = fs.createWriteStream(path.join(BASE, '..', 'logs', 'mc-legacy-access.log'), { flags: 'a' });
 const API_HEALTH_FILE = path.join(BASE, '_system', 'api-health.json');
 const CLIENTS_FILE = path.join(BASE, 'clients.json');
-let _clientCreationInProgress = false;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -7504,96 +7503,6 @@ nav .nav-footer { display:none !important; }
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message }));
     }
-    return;
-  }
-
-  // === API: Create new client (SSE streaming) ===
-  if (req.method === 'POST' && url === '/api/new-client') {
-    if (!req._adminToken) {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Admin only' }));
-      return;
-    }
-    if (_clientCreationInProgress) {
-      res.writeHead(409, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Client creation already in progress' }));
-      return;
-    }
-    let body = '';
-    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
-    req.on('end', () => {
-      try {
-        const { slug, name, guild } = JSON.parse(body);
-        // Validate required fields
-        if (!slug || !name || !guild) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Missing slug, name, or guild' }));
-          return;
-        }
-        if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid slug format (lowercase, numbers, hyphens only)' }));
-          return;
-        }
-        if (!/^\d{17,20}$/.test(guild)) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid guild ID (must be 17-20 digit Discord snowflake)' }));
-          return;
-        }
-        // Check if brand directory already exists
-        const brandDir = path.join(BASE, 'brand', slug);
-        if (fs.existsSync(brandDir)) {
-          res.writeHead(409, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: `Client "${slug}" already exists` }));
-          return;
-        }
-        // Start SSE streaming
-        _clientCreationInProgress = true;
-        res.writeHead(200, {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'X-Accel-Buffering': 'no'
-        });
-        const scriptPath = path.join(BASE, 'scripts', 'new-client.sh');
-        const child = spawn('bash', [scriptPath, '--slug', slug, '--name', name, '--guild', guild], {
-          cwd: BASE,
-          env: { ...process.env, PATH: `/opt/homebrew/bin:${process.env.PATH || '/usr/bin:/bin'}` }
-        });
-        const sendSSE = (data) => { res.write(`data: ${data}\n\n`); };
-        let outputBuffer = '';
-        const flushLines = (chunk) => {
-          outputBuffer += chunk;
-          const lines = outputBuffer.split('\n');
-          outputBuffer = lines.pop();
-          for (const line of lines) {
-            sendSSE(line);
-          }
-        };
-        child.stdout.on('data', (data) => flushLines(data.toString()));
-        child.stderr.on('data', (data) => flushLines('[stderr] ' + data.toString()));
-        const killTimer = setTimeout(() => {
-          child.kill('SIGTERM');
-          sendSSE('⏱️ Timeout — proceso terminado tras 120s');
-        }, 120000);
-        child.on('close', (code) => {
-          clearTimeout(killTimer);
-          if (outputBuffer) sendSSE(outputBuffer);
-          res.write(`event: done\ndata: ${JSON.stringify({ ok: code === 0, code })}\n\n`);
-          res.end();
-          _clientCreationInProgress = false;
-        });
-        res.on('close', () => {
-          child.kill('SIGTERM');
-          clearTimeout(killTimer);
-          _clientCreationInProgress = false;
-        });
-      } catch (e) {
-        _clientCreationInProgress = false;
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
-      }
-    });
     return;
   }
 
