@@ -118,7 +118,7 @@ workspace-sancho/                # Main CMO agent
   AGENTS.md                      # Inter-agent protocols
   _system/                       # Protocols, schemas, templates
   skills/                        # 120+ marketing skills
-  personas/                      # 9 worker personas for Escudero
+  personas/                      # Alarife Operator persona (legacy Escudero personas removed)
   scripts/                       # Automation scripts
   brand/{slug}/                  # Client data (Foundation v2.0)
 

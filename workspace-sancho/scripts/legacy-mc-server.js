@@ -3800,8 +3800,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 .dispatch-channel{padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:13px;}
 .dispatch-channel strong{color:var(--navy);}
 .dispatch-rule{color:var(--muted);font-size:12px;margin-top:2px;}
-.persona-card{background:var(--bg);border:2px solid var(--ink);border-radius:8px;padding:12px;margin-bottom:8px;}
-.persona-card h4{font-family:'Space Grotesk',sans-serif;font-size:14px;margin-bottom:4px;}
 
 /* Preferences form */
 .pref-field{margin-bottom:16px;}
@@ -4618,18 +4616,6 @@ function renderDispatch() {
         const rule = data.rules ? data.rules[ch] : '';
         html += '<div class="dispatch-channel"><strong>#' + ch + '</strong>' + (rule ? '<div class="dispatch-rule">' + rule + '</div>' : '') + '</div>';
       }
-    }
-    html += '</div>';
-  }
-
-  if (dd.personas && Array.isArray(dd.personas)) {
-    html += '<h3 style="font-family:\\'Space Grotesk\\',sans-serif;font-size:16px;margin:20px 0 12px;">👥 Personas</h3>';
-    html += '<div class="grid">';
-    for (const p of dd.personas) {
-      html += '<div class="persona-card"><h4>' + (p.emoji||'') + ' ' + (p.name||'') + '</h4>';
-      if (p.skills) html += '<div style="font-size:12px;color:var(--muted);margin-top:4px;"><strong>Skills:</strong> ' + (Array.isArray(p.skills) ? p.skills.join(', ') : p.skills) + '</div>';
-      if (p.brand_context) html += '<div style="font-size:12px;color:var(--muted);margin-top:2px;"><strong>Brand:</strong> ' + p.brand_context + '</div>';
-      html += '</div>';
     }
     html += '</div>';
   }

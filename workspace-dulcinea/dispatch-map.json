@@ -12,38 +12,5 @@
         "web": "Landing page copy, lead magnets, pricing pages."
       }
     }
-  },
-  "personas": {
-    "dulcinea": {
-      "name": "Dulcinea",
-      "persona_file": "./SOUL.md",
-      "dispatch_for": [
-        "seo-content",
-        "keyword-research",
-        "content-calendar",
-        "content-calendar-planner",
-        "content-atomizer",
-        "newsletter",
-        "social",
-        "direct-response-copy",
-        "landing-pages",
-        "web",
-        "brand-voice",
-        "lead-magnet",
-        "positioning-messaging"
-      ],
-      "skills": [
-        "keyword-research",
-        "seo-content",
-        "content-calendar-planner",
-        "content-atomizer",
-        "newsletter",
-        "direct-response-copy",
-        "brand-voice",
-        "lead-magnet",
-        "positioning-messaging"
-      ],
-      "brand_context": ["voice-profile.md", "positioning.md", "ecps.md"]
-    }
   }
 }
