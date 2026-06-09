@@ -1,38 +1,34 @@
 ---
 name: fast-foundation
-description: "Sesión de intake rápida (~30 min) que genera los cimientos mínimos viables para un cliente. Modo URL (95%): scrape web + sociales → pre-fill → validar → completar gaps. Modo manual (5%): preguntas conversacionales. Produce 5 docs lite: Company Brief, Self Intelligence L1, Market Intelligence L1, Brand Voice Snapshot, Niche Discovery básico. Es el primer skill que se ejecuta para cualquier cliente nuevo. Absorbe: sancho-start, company-context, business-model-audit, budget-constraints, brand-voice Quick, self-intelligence Lens 1, market-intelligence L1, niche-discovery básico."
+description: "Sesión de intake rápida (~30 min) que genera los cimientos mínimos viables para un cliente. Modo URL (95%): scrape web + sociales → pre-fill → validar → completar gaps. Modo manual (5%): preguntas conversacionales. Produce UN único archivo fastcontext.current.md con secciones H2: Company Identity, Business Model, Budget & Resources, Self Intelligence L1, Market Intelligence L1, Brand Voice Snapshot, Niche / ECPs. Es el primer skill que se ejecuta para cualquier cliente nuevo. Absorbe: sancho-start, company-context, business-model-audit, budget-constraints, brand-voice Quick, self-intelligence Lens 1, market-intelligence L1, niche-discovery básico."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '1.0'
+  version: '2.0'
   system: SanchoCMO
   phase: Foundation
   pillar: fast-foundation
   layer: '0'
-  updated: '2026-05-20'
+  updated: '2026-06-09'
   changes: |
-    v1.1 — Outputs lite ahora se escriben en `lite.md` (nunca `{carpeta}.current.md`).
-           Evita path collision con skills Full Foundation (self-intelligence,
+    v2.0 — SAN-13: FF escribe UN único archivo `fastcontext/fastcontext.current.md`
+           (grounding desechable, secciones H2). NO toca ninguna carpeta de pilar.
+           Las skills full lo leen como seed opcional. Archivos lite por pilar retirados.
+    v1.1 — Outputs lite se guardaban en archivos por pilar (nunca `{carpeta}.current.md`).
+           Evitaba path collision con skills Full Foundation (self-intelligence,
            market-intelligence, brand-voice, niche-discovery-100x, etc.).
-           `{carpeta}.current.md` queda reservado para outputs full.
+           `{carpeta}.current.md` quedaba reservado para outputs full.
     v1.0 — Merge de 8 skills en 1 sesión de intake unificada.
 context_required: []
 context_writes:
-- brand/{slug}/company-brief/lite.md
-- brand/{slug}/company-context/lite.md
-- brand/{slug}/business-model/lite.md
-- brand/{slug}/budget/lite.md
-- brand/{slug}/market-and-us/self/lite.md
-- brand/{slug}/market-and-us/market/lite.md
-- brand/{slug}/brand-voice/lite.md
-- brand/{slug}/go-to-market/ecps/lite.md
+- brand/{slug}/fastcontext/fastcontext.current.md
 ---
 
 # Fast Foundation — Intake Rápido
 
-> Una sesión. Una URL. Cinco documentos base. Todo lo que necesitas para empezar a ejecutar.
+> Una sesión. Una URL. Un documento de grounding base. Todo lo que necesitas para empezar a ejecutar.
 
 **Input**: URL del sitio web (o conversación manual si no hay URL)
-**Output**: 5 docs lite en las carpetas del cliente
+**Output**: `brand/{slug}/fastcontext/fastcontext.current.md` (grounding inicial desechable)
 **Duración**: ~30 minutos
 **Thread**: `{slug}:fast-foundation`
 
@@ -48,10 +44,10 @@ El dashboard, el Brand Brain y las APIs de foundation **solo leen** `brand/{slug
 
 Si el estado no tiene `sections[*].pillars[*].output_file`, **la marca queda invisible en la UI aunque los `.md` existan en disco**. Por eso:
 
-1. **NUNCA escribas `{carpeta}.current.md`** — fast-foundation escribe SIEMPRE a `lite.md` (regla v1.1). `{carpeta}.current.md` lo reservan las skills full.
-2. **NUNCA inventes un `foundation-state.json` con schema propio** (ej. un mapa plano `pillars`/`path` sin `sections`). Eso rompe la UI.
-3. El `foundation-state.json` canónico (`sections`, `file_index`, `brand_summary`) lo **mantiene el `foundation-orchestrator`**, no esta skill. Corré fast-foundation **a través del orquestador** para que registre la sección `fast-foundation` y persista el estado (`scripts/regenerate.py`).
-4. Si por algún motivo se corre suelta y el estado quedó en otro schema, recuperá con `scripts/rebuild-foundation-state.mjs <slug> --apply` (reconstruye el v3.0 desde los docs en disco, sin tocar el contenido).
+1. **FF tiene PROHIBIDO tocar carpetas de pilares** — las rutas `company-context/`, `business-model/`, `budget/`, `market-and-us/`, `brand-voice/`, `go-to-market/`, `company-brief/` y análogas son territorio exclusivo de las skills Full Foundation. FF opera únicamente bajo `brand/{slug}/fastcontext/`.
+2. FF produce **un único** `fastcontext/fastcontext.current.md` (+ versionado `fastcontext.v{N}.md` + `history.json`), con secciones H2.
+3. La sección de estado `fast-foundation` tiene **un solo pilar** `fast-context` cuyo `output_file` es `brand/{slug}/fastcontext/fastcontext.current.md`. Lo mantiene el `foundation-orchestrator`.
+4. Si se corrió en otro schema, recuperá con `scripts/rebuild-foundation-state.mjs <slug> --apply`.
 
 ---
 
@@ -61,7 +57,7 @@ Si el estado no tiene `sections[*].pillars[*].output_file`, **la marca queda inv
 El usuario introduce la URL de su web en el dashboard. El skill:
 1. Scrapea homepage, about, pricing, producto, blog (3-5 posts)
 2. Revisa perfiles sociales (LinkedIn, Twitter/X, Instagram)
-3. Pre-rellena los 5 documentos con lo que encuentra
+3. Pre-rellena las secciones del fastcontext con lo que encuentra
 4. Presenta al usuario para validar y completar gaps
 
 ### Modo Manual (5% — sin URL)
@@ -73,7 +69,7 @@ Para empresas pre-lanzamiento o sin presencia web:
    - Paso 4: ¿Quiénes son tus competidores?
    - Paso 5: ¿Qué presupuesto y equipo tienes?
    - Paso 6: ¿Qué has probado antes en marketing?
-2. Genera los 5 docs lite desde las respuestas
+2. Genera `fastcontext.current.md` desde las respuestas
 
 ---
 
@@ -105,9 +101,9 @@ elif usuario dice "no tengo web" / "pre-lanzamiento":
 - Twitter/X: bio, tono, frecuencia, engagement
 - Instagram: bio, estética, frecuencia, engagement
 
-**1c. Pre-fill documentos**
-Con lo extraído, pre-rellenar:
-- Company Brief: identidad, producto, modelo de negocio estimado
+**1c. Pre-fill secciones**
+Con lo extraído, pre-rellenar las secciones H2 de `fastcontext.current.md`:
+- Company Identity: identidad, producto, modelo de negocio estimado
 - Self Intelligence L1: qué dicen de sí mismos, assets encontrados, tono
 - Brand Voice Snapshot: patrones de voz (tono, vocabulario, POV, ritmo)
 
@@ -127,7 +123,7 @@ Una pregunta a la vez. Tono CMO cercano. Follow-up si respuesta vaga (max 1).
 Presentar lo inferido agrupado (NO campo por campo):
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 COMPANY BRIEF — Lo que he encontrado
+📋 FAST CONTEXT — Lo que he encontrado
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🏢 Empresa: [nombre] — [tagline]
 📦 Producto: [descripción corta]
@@ -159,29 +155,32 @@ De la conversación y el scraping:
 2. Para cada ECP: dolor principal, cómo buscan solución, dónde están
 3. NO validación exhaustiva — es un primer mapa
 
-### Step 5: Generar 5 Docs Lite
+### Step 5: Generar `fastcontext.current.md`
 
-> **Regla de paths (v1.1)**: fast-foundation escribe SIEMPRE a `lite.md`, nunca a `{carpeta}.current.md`.
-> `{carpeta}.current.md` está reservado para las skills Full Foundation (self-intelligence, market-intelligence,
-> brand-voice, niche-discovery-100x, company-context, business-model-audit, budget-constraints).
-> Esto evita que el output lite contamine el path canónico antes de que corra la skill full.
+> **Regla de paths (v2.0 / SAN-13)**: FF escribe SIEMPRE y SOLO a
+> `brand/{slug}/fastcontext/fastcontext.current.md`. NUNCA toca carpetas de pilares.
 
-Escribir los 5 documentos en sus carpetas:
+Un único archivo con secciones H2. Header obligatorio, luego las secciones:
 
-| Doc | Path | Contenido |
-|-----|------|-----------|
-| Company Context (standalone lite) | `brand/{slug}/company-context/lite.md` | Identidad — seed lite. `company-context` skill produce el `{carpeta}.current.md`. |
-| Business Model (standalone lite) | `brand/{slug}/business-model/lite.md` | Modelo — seed lite. `business-model-audit` skill produce el `{carpeta}.current.md`. |
-| Budget & Resources (standalone lite) | `brand/{slug}/budget/lite.md` | Resources — seed lite. `budget-constraints` skill produce el `{carpeta}.current.md`. |
-| Company Brief (merge view lite) | `brand/{slug}/company-brief/lite.md` | Vista consolidada lite. Header: `<!-- DO NOT EDIT — auto-generated -->`. |
-| Self Intelligence L1 | `brand/{slug}/market-and-us/self/lite.md` | Lens 1 only: autopercepción. Header: `<!-- mode: lite | source: fast-foundation -->` |
-| Market Intelligence L1 | `brand/{slug}/market-and-us/market/lite.md` | Datos básicos del mercado. Header: `<!-- mode: lite | source: fast-foundation -->` |
-| Brand Voice Snapshot | `brand/{slug}/brand-voice/lite.md` | Quick snapshot: 3 adjetivos, espectro, Do/Don't, ejemplos. Header: `<!-- mode: quick | source: fast-foundation -->` |
-| Niche Discovery | `brand/{slug}/go-to-market/ecps/lite.md` | 2-3 ECPs preliminares con dolores y canales. Header: `<!-- mode: lite | source: fast-foundation -->` |
+```markdown
+# Fast Context — {Cliente}
+<!-- mode: grounding | source: fast-foundation | regenerated: YYYY-MM-DD -->
+<!-- Grounding inicial desechable. NUNCA source of truth. -->
 
-**Headers `<!-- mode: lite -->` siguen siendo importantes**: marcan estos archivos como hydration seed para las skills de Full Foundation.
+## Company Identity
+## Business Model
+## Budget & Resources
+## Self Intelligence L1
+## Market Intelligence L1
+## Brand Voice Snapshot
+## Niche / ECPs
+```
 
-**Nunca sobrescribir un `{carpeta}.current.md` existente** — ni siquiera si parece "antiguo". El `{carpeta}.current.md` solo lo escribe la skill full correspondiente.
+Versionado (mismo patrón que las skills de pilar):
+- **Primera corrida** (no existe `fastcontext/`): crear `fastcontext/fastcontext.current.md` + `fastcontext/fastcontext.v1.md` (copia idéntica) + `fastcontext/history.json` con una entrada inicial.
+- **Re-corrida** (ya existe): copiar la actual a `fastcontext/fastcontext.v{N+1}.md`, sobrescribir `fastcontext/fastcontext.current.md`, y añadir la entrada a `history.json`.
+
+`history.json` = lista de `{ "version": N, "date": "YYYY-MM-DD", "note": "..." }`.
 
 ### Step 6: Resumen & Siguiente Paso
 
@@ -189,81 +188,23 @@ Escribir los 5 documentos en sus carpetas:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ FAST FOUNDATION — Completada
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 Company Context     ✅ brand/{slug}/company-context/lite.md (seed)
-📋 Business Model      ✅ brand/{slug}/business-model/lite.md (seed)
-📋 Budget & Resources  ✅ brand/{slug}/budget/lite.md (seed)
-📋 Company Brief       ✅ brand/{slug}/company-brief/lite.md (merge view)
-🔍 Self Intelligence   ✅ brand/{slug}/market-and-us/self/lite.md (L1)
-📊 Market Intelligence ✅ brand/{slug}/market-and-us/market/lite.md (L1)
-🎨 Brand Voice         ✅ brand/{slug}/brand-voice/lite.md (Snapshot)
-👥 Niche Discovery     ✅ brand/{slug}/go-to-market/ecps/lite.md (básico)
+📋 Fast Context  ✅ brand/{slug}/fastcontext/fastcontext.current.md (grounding inicial)
 
-Siguiente paso: Full Foundation. Las skills full escriben en `{carpeta}.current.md`
-y consumen estos `lite.md` como hydration seed (no como fuente final).
+Siguiente paso: Full Foundation. Las skills full leen fastcontext.current.md como
+seed opcional (si no existe, corren standalone). Las skills full escriben en sus
+propias carpetas de pilar con {carpeta}.current.md como fuente de verdad.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ---
 
-## Company Brief — Arquitectura "standalone + merge view"
+## Contenido de cada sección H2
 
-### Principio
+Las secciones siguientes describen qué va en cada H2 de `fastcontext.current.md`.
+Las skills full leen estas secciones como grounding opcional antes de profundizar.
 
-Cada una de las 3 skills full (company-context, business-model-audit, budget-constraints) es **standalone autoritativa** sobre su propio `{carpeta}.current.md`:
-- `brand/{slug}/company-context/company-context.current.md` ← fuente de verdad de company-context skill (full)
-- `brand/{slug}/business-model/business-model.current.md` ← fuente de verdad de business-model-audit skill (full)
-- `brand/{slug}/budget/budget.current.md` ← fuente de verdad de budget-constraints skill (full)
+### `## Company Identity`
 
-Fast-foundation produce solo los **seeds lite** (`lite.md`) — nunca toca `{carpeta}.current.md`.
-
-Cada skill full versiona (`v{N}.md` + `history.json`) **por separado** — permite re-correr una sin afectar a las otras.
-
-### Merge view
-
-`brand/{slug}/company-brief/lite.md` es la **vista consolidada lite auto-regenerada** desde los 3 seeds lite. NO es editable a mano (se sobreescribe).
-
-`brand/{slug}/company-brief/company-brief.current.md` es la **vista consolidada full**. La regenera el orquestador via `scripts/regenerate-company-brief.py` cada vez que una skill full (company-context, business-model-audit, budget-constraints) aprueba — el script lee el `{carpeta}.current.md` de cada standalone cuando existe y cae a `lite.md` por sección si no, marcando el resultado como `mode: full` o `mode: mixed` según el caso. Mientras ninguna standalone sea full, el script escribe a `lite.md` (no toca `{carpeta}.current.md`).
-
-`brand/{slug}/company-brief/company-brief.current.md` es la **vista consolidada full**. La regenera el orquestador (o cualquier skill autorizada) cuando los 3 standalones tienen `{carpeta}.current.md` (es decir, las 3 skills full corrieron). Hasta entonces, consumers que necesitan la foto completa deben leer los `{carpeta}.current.md` standalone directamente y caer a `lite.md` solo si saben qué están haciendo.
-
-- **fast-foundation** (al final del intake inicial): escribe `company-brief/lite.md` desde los 3 seeds lite.
-- **foundation-orchestrator**: ejecuta `scripts/regenerate-company-brief.py {slug}` al aprobar cualquiera de las 3 skills full standalones → reemite `company-brief/company-brief.current.md` (si hay ≥1 full) o `company-brief/lite.md` (si todo sigue siendo seed).
-
-> Esto resuelve el "Stale view conocido" anterior: el merge ya no queda desactualizado al aprobar un standalone full.
-
-**Quién regenera el merge view lite:**
-
-Solo **fast-foundation** (al final del flujo inicial de intake, desde los 3 seeds lite).
-
-> ⚠️ **Stale view**: si una skill full corre y actualiza un standalone `{carpeta}.current.md`, el merge view lite (`company-brief/lite.md`) queda desactualizado. Es lo esperado — el lite.md es un seed inicial, no una vista viva. Consumers que necesitan info fresca leen el standalone directamente.
-
-**Formato del merge view lite (`company-brief/lite.md`):**
-```markdown
-# Company Brief — {Cliente}
-<!-- mode: lite | source: fast-foundation -->
-<!-- auto-generated from: company-context/lite.md, business-model/lite.md, budget/lite.md -->
-<!-- DO NOT EDIT HERE — edits will be overwritten on next regeneration -->
-<!-- regenerated: YYYY-MM-DD by fast-foundation -->
-
-## Company Identity
-{contenido de company-context/lite.md, sin frontmatter}
-
-## Business Model
-{contenido de business-model/lite.md, o placeholder "_pendiente — correr business-model-audit_"}
-
-## Budget & Resources
-{contenido de budget/lite.md, o placeholder "_pendiente — correr budget-constraints_"}
-```
-
-**Por qué este diseño:**
-- Permite correr cada skill standalone con versionado granular propio
-- Los consumers que necesitan info parcial leen el standalone directamente (`company-context/`)
-- Los consumers que necesitan la foto completa leen el merge view (`company-brief/`)
-- No duplica información canónica — el merge view es view, no storage
-
-### Contenido de cada standalone
-
-**company-context/**company-context.current.md** (Identity)
 - The Core Three: quién eres, qué vendes, a quién
 - Elevator pitch (2-3 frases)
 - Producto/servicio principal + diferenciadores
@@ -272,49 +213,73 @@ Solo **fast-foundation** (al final del flujo inicial de intake, desde los 3 seed
 - URLs y perfiles sociales
 - Fuentes por campo (extracted from URL, user input, etc.)
 
-**business-model/**business-model.current.md** (Model)
+### `## Business Model`
+
 - Clasificación: B2B/B2C/Hybrid + modelo de revenue
 - Growth motion: Sales-Led, Marketing-Led, Product-Led, Community-Led
 - Funnel actual mapeado (etapas, conversiones conocidas)
 - Unit economics básicos (si disponibles): ACV, churn estimado, LTV estimado
 - Canales actuales de adquisición
 
-**budget/**budget.current.md** (Resources)
+### `## Budget & Resources`
+
 - Presupuesto mensual marketing (rango)
 - Timeline: horizonte para primeros resultados
 - Equipo: quién está disponible, horas/semana
 - Herramientas actuales (CRM, analytics, ads, etc.)
 - Constraints: lo que NO se puede hacer
 
+### `## Self Intelligence L1`
+
+Solo Lens 1 (autopercepción). Formato detallado en la sección "Self Intelligence L1 — Solo Lens 1" más abajo.
+
+### `## Market Intelligence L1`
+
+- Tamaño y tendencias principales del sector (búsqueda rápida, NO deep dive)
+- Posición estimada en el mercado (por lo que sabemos de competidores)
+- Regulación relevante si aplica
+
+### `## Brand Voice Snapshot`
+
+Quick snapshot. Formato detallado en la sección "Brand Voice Snapshot — Formato Quick" más abajo.
+
+### `## Niche / ECPs`
+
+- 2-3 ECPs preliminares (Extreme Customer Profiles)
+- Para cada ECP: dolor principal, cómo busca solución, dónde está
+- Sin validación exhaustiva — primer mapa
+
 ---
 
-## Brand Voice Snapshot — Formato Quick
+## Brand Voice Snapshot — Formato de la sección H2
+
+El contenido siguiente va en la sección `## Brand Voice Snapshot` de `fastcontext.current.md`:
 
 ```markdown
-# Brand Voice — Quick Snapshot
-<!-- mode: quick | source: fast-foundation -->
+## Brand Voice Snapshot
+<!-- mode: grounding | source: fast-foundation -->
 
-## Tres Adjetivos
+### Tres Adjetivos
 [adj1], [adj2], [adj3]
 
-## Espectro de Tono
+### Espectro de Tono
 Formal ◻◻◼◻◻ Casual
 Técnico ◻◼◻◻◻ Simple
 Serio ◻◻◻◼◻ Playful
 
-## Patrones Detectados
+### Patrones Detectados
 - **Vocabulario**: [palabras frecuentes, jerga del sector]
 - **POV**: [1a persona plural / 3a persona / directo al usuario]
 - **Ritmo**: [frases cortas / largas / mixto]
 
-## Do / Don't
+### Do / Don't
 | Do | Don't |
 |----|-------|
 | [patrón positivo 1] | [patrón a evitar 1] |
 | [patrón positivo 2] | [patrón a evitar 2] |
 | [patrón positivo 3] | [patrón a evitar 3] |
 
-## Ejemplos por Canal
+### Ejemplos por Canal
 - **Social**: "[ejemplo de post]"
 - **Email**: "[ejemplo de subject + primer párrafo]"
 - **Landing**: "[ejemplo de headline + CTA]"
@@ -322,31 +287,33 @@ Serio ◻◻◻◼◻ Playful
 
 ---
 
-## Self Intelligence L1 — Solo Lens 1
+## Self Intelligence L1 — Formato de la sección H2
+
+El contenido siguiente va en la sección `## Self Intelligence L1` de `fastcontext.current.md`:
 
 ```markdown
-# Self Intelligence — Lens 1: Autopercepción
-<!-- mode: lite | source: fast-foundation -->
+## Self Intelligence L1
+<!-- mode: grounding | source: fast-foundation -->
 
-## Lo que dicen de sí mismos
+### Lo que dicen de sí mismos
 - **Web**: [resumen de messaging en homepage/about]
 - **LinkedIn**: [bio, descripción, tono de posts]
 - **Twitter/X**: [bio, tono, temas]
 - **Instagram**: [bio, estética, temas]
 
-## Assets Encontrados
+### Assets Encontrados
 | Asset | Canal | Estado |
 |-------|-------|--------|
 | [blog] | Web | [activo/inactivo] |
 | [newsletter] | Email | [existe/no] |
 | [perfil LinkedIn] | Social | [seguidores, frecuencia] |
 
-## Positioning Declarado
+### Positioning Declarado
 - **Tagline**: "[lo que dicen en la web]"
 - **UVP implícita**: "[lo que parece ser su propuesta]"
 - **Tono general**: [profesional/casual/técnico/etc.]
 
-## Gaps para Full Foundation
+### Gaps para Full Foundation
 - Lens 2 (percepción terceros): pendiente
 - Lens 3 (percepción clientes): pendiente
 ```
@@ -356,27 +323,31 @@ Serio ◻◻◻◼◻ Playful
 ## Cross-Pillar Data Flow
 
 ```
-FAST FOUNDATION genera docs lite
-    ↓ hydration ↓
-FULL FOUNDATION lee docs lite y profundiza:
-  market-intelligence   ← lee market L1, amplía con 3+ fuentes
-  competitor-intelligence ← nuevo (no hay lite)
-  self-intelligence     ← lee Self L1, añade Lens 2 + Lens 3
-  brand-voice           ← lee Snapshot, genera Full Guide + AI Brand Kit
-  niche-discovery-100x  ← lee ECPs básicos, valida con 100+ empresas
+FAST FOUNDATION genera fastcontext.current.md (grounding inicial desechable)
+    ↓ seed opcional ↓
+FULL FOUNDATION lee fastcontext.current.md y profundiza en sus propias carpetas:
+  market-intelligence   ← lee § Market Intelligence L1, amplía con 3+ fuentes
+  competitor-intelligence ← nuevo (no hay sección en fastcontext)
+  self-intelligence     ← lee § Self Intelligence L1, añade Lens 2 + Lens 3
+  brand-voice           ← lee § Brand Voice Snapshot, genera Full Guide + AI Brand Kit
+  niche-discovery-100x  ← lee § Niche / ECPs, valida con 100+ empresas
 ```
+
+Si `fastcontext.current.md` no existe, las skills full corren standalone sin seed.
 
 ---
 
 ## Almacenamiento
 
-Cada doc se guarda con versionado estándar:
+`fastcontext.current.md` se guarda con versionado estándar:
 ```
-brand/{slug}/{carpeta}/
-├── {carpeta}.current.md      ← versión activa
-├── v1.md           ← primera versión (= fast-foundation output)
-└── history.json    ← log de versiones
+brand/{slug}/fastcontext/
+├── fastcontext.current.md      ← versión activa (grounding inicial)
+├── fastcontext.v{N}.md         ← snapshot de cada regeneración
+└── history.json                ← log de versiones
 ```
+
+Las carpetas de pilar (`company-context/`, `business-model/`, `budget/`, `market-and-us/`, `brand-voice/`, `go-to-market/`) son propiedad exclusiva de las skills Full Foundation y sus orquestadores. FF nunca escribe en ellas.
 
 ---
 
@@ -384,16 +355,16 @@ brand/{slug}/{carpeta}/
 
 ### Pre-launch (sin URL, sin clientes, sin revenue)
 - Modo manual obligatorio
-- Budget: puede ser 0 — registrar como constraint
-- Self Intelligence L1: no hay web que analizar → skip, marcar como pendiente
-- Brand Voice: Path B (5 Quick Questions) en vez de scrape
-- Niche Discovery: basado en hipótesis del fundador
+- Budget: puede ser 0 — registrar como constraint en `## Budget & Resources`
+- Self Intelligence L1: no hay web que analizar → skip, marcar como pendiente en `## Self Intelligence L1`
+- Brand Voice: Path B (5 Quick Questions) en vez de scrape → resultado en `## Brand Voice Snapshot`
+- Niche Discovery: basado en hipótesis del fundador → resultado en `## Niche / ECPs`
 
 ### Multi-producto
 - Elegir el producto/servicio estrella para Foundation
-- Registrar los otros como contexto futuro
+- Registrar los otros como contexto futuro en `## Company Identity`
 
 ### URL pero web muy básica (1 pager, under construction)
 - Scrape lo que haya
 - Complementar con modo manual para gaps
-- Marcar Self Intelligence L1 como "baja confianza"
+- Marcar `## Self Intelligence L1` como "baja confianza"
