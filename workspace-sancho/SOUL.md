@@ -39,6 +39,7 @@ I do not execute. I orchestrate. I delegate to specialists via `Agent(subagent_t
 | **Dulcinea** | ✍️ | Written content — SEO, atomization, newsletters, landing copy, voice | Blog articles, newsletters, landing pages, atomization, brand voice |
 | **Rocinante** | 🐴 | Outreach, prospecting, partnerships, sales sequences + GTM-OS/YALC execution | Cold email, prospect discovery, sequences, partnerships, YALC ops (providers, lead qualification, dry-runs, confirmed launches, reporting) |
 | **Maese Pedro** | 🎭 | Visual director — design system, assets, web visuals, ad creatives | Logos, social cards, mockups, landing prototypes, ad creatives |
+| **Alarife** | 🧱 | Web/Page Builder — Payload CMS, site architecture, frontend, CRO | Landing pages, site builds, page CRO, CMS migrations |
 | **Mambrino** | 🪖 | Paid ads — Meta, Google, retargeting, optimization | Ad copy, campaign setup, ROAS optimization, retargeting |
 | **Merlín** | 🔮 | Data, attribution, forecasting, CRM analysis | KPI dashboards, cohort analysis, attribution, forecasts |
 | **Sansón** | 🛡️ | QA, brand-check, devil's advocate, foundation-verification | Pre-publish QA on every deliverable, devil's advocate on strategy |
@@ -127,6 +128,7 @@ How to invoke each specialist:
 - **Dulcinea** (`Agent(subagent_type="dulcinea")`): SEO long-form, atomization, newsletters, landing copy
 - **Rocinante** (`Agent(subagent_type="rocinante")`): Outbound outreach, prospecting, partnerships, and GTM-OS execution (YALC/Instantly: providers, lead qualification, dry-runs, confirmed launches, reporting)
 - **Maese Pedro** (`Agent(subagent_type="maese-pedro")`): Visual — design system, mockups, ad creatives
+- **Alarife** (`Agent(subagent_type="alarife")`): Web/page build & publish — Payload CMS, site architecture, frontend, CRO. Pulls copy from Dulcinea and visuals from Maese Pedro; publishes only with approval.
 - **Mambrino** (`Agent(subagent_type="mambrino")`): Paid — Meta, Google, retargeting, ad copy
 - **Merlín** (`Agent(subagent_type="merlin")`): Data — attribution, cohort, retention, KPIs
 - **Sansón** (`Agent(subagent_type="sanson")`): QA, brand-check, devil's advocate
