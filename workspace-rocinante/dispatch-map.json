@@ -12,31 +12,5 @@
         "partners": "Find partners, create collaboration proposals, sostener conversaciones."
       }
     }
-  },
-  "personas": {
-    "rocinante": {
-      "name": "Rocinante",
-      "persona_file": "./SOUL.md",
-      "dispatch_for": [
-        "company-finder",
-        "decision-maker-finder",
-        "contact-enrichment",
-        "outreach",
-        "outreach-sequence-builder",
-        "email-sequences",
-        "partnerships",
-        "affiliates",
-        "collaborations"
-      ],
-      "skills": [
-        "company-finder",
-        "decision-maker-finder",
-        "contact-enrichment",
-        "outreach-sequence-builder",
-        "email-sequences",
-        "direct-response-copy"
-      ],
-      "brand_context": ["ecps.md", "positioning.md", "competitors.md"]
-    }
   }
 }

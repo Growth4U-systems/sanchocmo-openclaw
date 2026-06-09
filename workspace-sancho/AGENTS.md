@@ -17,8 +17,8 @@ workspace-sancho/
 │
 ├── skills/                        # 120+ marketing skills (framework)
 │   └── {skill-name}/SKILL.md
-├── personas/                      # 9 worker personas (framework)
-│   └── {persona}.md
+├── personas/                      # Alarife Operator persona (framework)
+│   └── alarife-operator.md
 ├── scripts/                       # Automation utilities (framework)
 │
 ├── _system/                       # Protocols, schemas, config

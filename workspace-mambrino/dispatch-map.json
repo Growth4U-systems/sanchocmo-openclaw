@@ -11,33 +11,5 @@
         "paid-ads": "Create ad copy, brief creatives to Maese Pedro, setup Meta/Google accounts, manage budget and optimization."
       }
     }
-  },
-  "personas": {
-    "mambrino": {
-      "name": "Mambrino",
-      "persona_file": "./SOUL.md",
-      "dispatch_for": [
-        "paid-ads",
-        "meta-ads",
-        "google-ads",
-        "retargeting",
-        "campaigns-paid",
-        "ad-creative",
-        "ab-test-setup",
-        "acquisition-metrics-plan"
-      ],
-      "skills": [
-        "paid-ads",
-        "meta-ads",
-        "google-ads",
-        "retargeting",
-        "ad-creative",
-        "direct-response-copy",
-        "sancho-visual",
-        "ab-test-setup",
-        "acquisition-metrics-plan"
-      ],
-      "brand_context": ["positioning.md", "ecps.md", "voice-profile.md"]
-    }
   }
 }
