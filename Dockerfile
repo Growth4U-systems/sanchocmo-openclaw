@@ -55,6 +55,35 @@ ARG GIT_COMMIT=""
 ENV GIT_COMMIT=${GIT_COMMIT}
 RUN npm run build
 
+# --- Bake the OpenClaw "home" framework as a seed layer ---
+# The entrypoint runs with cwd=/root/.openclaw and needs the framework there, but
+# a fresh product volume mounted at that path is empty (and shadows anything baked
+# into it). So we bake the framework at /opt/sancho-seed (NOT shadowed by the mount)
+# and docker/init-home.sh populates the volume from it at boot. .dockerignore keeps
+# per-instance DATA and runtime state out of this layer (verify: no memory/, brand/,
+# clients.json, etc. under /opt/sancho-seed).
+WORKDIR /opt/sancho-seed
+COPY docker/ ./docker/
+COPY skills/ ./skills/
+COPY plugins/ ./plugins/
+COPY agents/ ./agents/
+COPY cron/ ./cron/
+COPY config/ ./config/
+COPY workspace-sancho/ ./workspace-sancho/
+COPY workspace-cervantes/ ./workspace-cervantes/
+COPY workspace-escudero/ ./workspace-escudero/
+COPY workspace-hamete/ ./workspace-hamete/
+COPY workspace-dulcinea/ ./workspace-dulcinea/
+COPY workspace-rocinante/ ./workspace-rocinante/
+COPY workspace-mambrino/ ./workspace-mambrino/
+COPY workspace-merlin/ ./workspace-merlin/
+COPY workspace-sanson/ ./workspace-sanson/
+COPY workspace-yalc/ ./workspace-yalc/
+# Version marker: init-home.sh refreshes the framework only when this changes
+# (avoids re-copying ~180 MB of skills on every container restart).
+RUN echo "${GIT_COMMIT:-$(date +%s)}" > /opt/sancho-seed/.seed-version \
+    && chmod +x /opt/sancho-seed/docker/*.sh
+
 # --- OpenClaw workspace ---
 WORKDIR /root/.openclaw
 
