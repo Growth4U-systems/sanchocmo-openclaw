@@ -43,8 +43,9 @@ export function getCronPublishConfig(slug: string, cronKey: string): CronPublish
 }
 
 /** Write the publish destination for a cron into client-config.json.
- *  Creates the crons object / cron entry if missing; preserves other fields. */
-export function setCronPublishConfig(slug: string, cronKey: string, cfg: CronPublishConfig): void {
+ *  Creates the crons object / cron entry if missing; preserves other fields.
+ *  Returns the written config so callers don't need to re-read. */
+export function setCronPublishConfig(slug: string, cronKey: string, cfg: CronPublishConfig): CronPublishConfig {
   const data = readJSON<ClientConfig>(configPath(slug), {});
   if (!data.crons) data.crons = {};
   const existing = data.crons[cronKey] || {};
@@ -55,4 +56,5 @@ export function setCronPublishConfig(slug: string, cronKey: string, cfg: CronPub
     publish_channel_name: cfg.channel_name,
   };
   writeJSON(configPath(slug), data);
+  return { transport: cfg.transport, channel_id: cfg.channel_id, channel_name: cfg.channel_name };
 }

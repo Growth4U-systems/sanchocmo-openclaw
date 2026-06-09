@@ -32,8 +32,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: `Invalid transport — registered: [${registeredTransports().join(", ")}]` });
     }
     if (!channel_id) return res.status(400).json({ error: "Missing channel_id" });
-    setCronPublishConfig(slug, cronKey, { transport, channel_id, channel_name: channel_name || undefined });
-    return res.status(200).json({ ok: true, config: getCronPublishConfig(slug, cronKey) });
+    const config = setCronPublishConfig(slug, cronKey, { transport, channel_id, channel_name: channel_name || undefined });
+    return res.status(200).json({ ok: true, config });
   }
 
   res.setHeader("Allow", "GET, PUT");

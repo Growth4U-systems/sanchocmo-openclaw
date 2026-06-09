@@ -29,10 +29,13 @@ export function CronPublishChannel({ slug, cronKey }: { slug: string; cronKey: s
   const load = async () => {
     setLoading(true);
     setError(null);
+    setChannelsError(null);
+    const s = encodeURIComponent(slug);
+    const k = encodeURIComponent(cronKey);
     try {
       const [optRes, cfgRes] = await Promise.all([
-        fetch(`/api/integrations/communication-options?slug=${slug}`).then((r) => r.json()),
-        fetch(`/api/content-engine/cron-publish-config?slug=${slug}&cronKey=${cronKey}`).then((r) => r.json()),
+        fetch(`/api/integrations/communication-options?slug=${s}`).then((r) => r.json()),
+        fetch(`/api/content-engine/cron-publish-config?slug=${s}&cronKey=${k}`).then((r) => r.json()),
       ]);
       const slackOpt = (optRes.transports || []).find((o: { transport: string }) => o.transport === "slack");
       setChannels(slackOpt?.channels || []);
@@ -51,7 +54,9 @@ export function CronPublishChannel({ slug, cronKey }: { slug: string; cronKey: s
   const toggle = () => {
     const next = !open;
     setOpen(next);
-    if (next && channels.length === 0 && !channelsError) load();
+    // Reload whenever opening without a loaded channel list — including after a
+    // prior transient error, so the picker recovers once Slack is reachable.
+    if (next && channels.length === 0) load();
   };
 
   const save = async () => {

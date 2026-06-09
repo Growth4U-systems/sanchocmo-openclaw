@@ -52,14 +52,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: (e as Error).message });
   }
 
-  if (result.ok) {
+  // Log whenever a root message reached the channel — including the partial
+  // case (root posted but the threaded body failed). Without this, a partial
+  // publish leaves a live message in the channel with no activity-log record.
+  if (result.rootId) {
     try {
       logActivity(slug, {
         type: "publish",
-        text: `Publicado vía ${target.transport}${cronKey ? ` (${cronKey})` : ""}`,
+        text: `Publicado vía ${target.transport}${cronKey ? ` (${cronKey})` : ""}${result.ok ? "" : " — parcial (falló el hilo)"}`,
         icon: "📤",
-        accent: "navy",
-        meta: { transport: target.transport, channel: target.channel, cronKey, rootId: result.rootId },
+        accent: result.ok ? "navy" : "rust",
+        meta: { transport: target.transport, channel: target.channel, cronKey, rootId: result.rootId, partial: !result.ok },
       });
     } catch (e) {
       console.error("[publish] activity log failed:", (e as Error).message);

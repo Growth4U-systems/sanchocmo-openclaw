@@ -48,23 +48,29 @@ function extractScripts(prompt: string): unknown[] {
   return resolved;
 }
 
-/** Match a cron's display name to the cron-templates.json key of a *publishing*
- *  cron (one whose template prompt posts to /api/integrations/publish), so the
- *  UI can offer a per-cron publish-channel picker. Returns null for crons that
- *  don't publish (no picker). Mirrors the name-normalisation used for the
- *  "available templates" list below. */
-function publishableCronKey(
-  name: string,
+/** Lead segment of a cron/template name: the text before the " — {brand}"
+ *  separator, normalised. Crons and templates are both named "<Title> — <X>"
+ *  (e.g. "Daily Pulse — Acme" / "Daily Pulse — {NAME}" → "daily pulse"). Split
+ *  on em/en-dash only (not hyphen) so titles containing a hyphen aren't cut. */
+function cronNameLeadSegment(name: string): string {
+  return (name || "").split(/\s*[—–]\s*/)[0].toLowerCase().trim();
+}
+
+/** Build lead-segment → cronKey map for *publishing* templates (those whose
+ *  prompt posts to /api/integrations/publish), so the UI offers a publish-channel
+ *  picker only for crons that publish. Computed once per request; exact-segment
+ *  match avoids the substring collisions a loose includes() would allow. */
+function publishingTemplateMap(
   templates: Record<string, { name_template?: string; prompt?: string }>,
-): string | null {
-  const n = (name || "").toLowerCase();
+): Map<string, string> {
+  const map = new Map<string, string>();
   for (const [key, tmpl] of Object.entries(templates)) {
     if (key === "$comment") continue;
     if (!tmpl.prompt || !tmpl.prompt.includes("/api/integrations/publish")) continue;
-    const cronName = (tmpl.name_template || "").replace("{NAME}", "").toLowerCase().trim().replace(/\s*[—–-]\s*$/, "");
-    if (cronName && n.includes(cronName)) return key;
+    const seg = cronNameLeadSegment(tmpl.name_template || "");
+    if (seg) map.set(seg, key);
   }
-  return null;
+  return map;
 }
 
 /** Shape returned to the UI for each cron — keeps backward-compatible field
@@ -137,8 +143,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
       // Tag each cron in this brand's list with cron_key when it maps to a
       // publishing template — the UI shows the channel picker only for those.
+      const publishingMap = publishingTemplateMap(templates);
       for (const task of result[slugParam] as Record<string, unknown>[]) {
-        const key = publishableCronKey((task.name as string) || "", templates);
+        const key = publishingMap.get(cronNameLeadSegment((task.name as string) || ""));
         if (key) task.cron_key = key;
       }
 
