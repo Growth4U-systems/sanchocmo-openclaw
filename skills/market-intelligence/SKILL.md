@@ -35,6 +35,7 @@ context_writes:
 | Archivo | Cuándo leer | Contenido |
 |---------|------------|-----------|
 | [hydration.md](references/hydration.md) | **SIEMPRE** — Step 0 obligatorio | Mapeo de campos upstream → esta skill |
+| `_system/skills/scraping-preflight.md` | **SIEMPRE** — Step 0, antes de research/scraping | Detección providers + matriz (web/social/SEO/research) + pedir conectar |
 | [prompt.md](references/prompt.md) | **SIEMPRE** — es la fuente de verdad | Las 5 partes del informe con instrucciones detalladas |
 | [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA obligatorio | Ítems de verificación por sección |
 | [concepts.md](references/concepts.md) | Si necesitas recordar qué es TAM, madurez, etc. | Definiciones y metodología |
@@ -44,13 +45,14 @@ context_writes:
 
 ## Flujo de Ejecución
 
-### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
+### 0. Context Hydration + Scraping Preflight (OBLIGATORIO — antes de cualquier pregunta)
 - Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map
 - Presenta datos heredados al usuario: "De [fuente] ya tengo X. ¿Correcto?"
 - Solo pregunta campos listados en "Campos genuinamente nuevos"
+- **Lee `_system/skills/scraping-preflight.md` y ejecútalo**: detecta providers conectados y enruta web (smart-scrape), escucha social (scrapecreators/last30days), SEO (DataForSEO) y research (`/deep-research`). Muestra el capability report; si falta una capability material, pide conectarla.
 
 ### 1. Preparar contexto
 - Lee `brand/{slug}/company-context/company-context.current.md` y `brand/{slug}/market-and-us/competitors/competitors.current.md`
@@ -60,10 +62,12 @@ context_writes:
 
 Para CADA competidor — heredados de company-context Y descubiertos en research:
 
-1. `web_fetch(homepage)` → posicionamiento REAL, tagline, propuesta de valor
-2. `web_fetch(/pricing o /plans o /#pricing)` → pricing REAL
-3. `web_fetch(/features o /product o /services)` → features REALES
-4. `web_fetch(/about)` → equipo, historia, credenciales
+Usa el provider web del preflight (`smart-scrape`, que cae a WebFetch en páginas estáticas):
+
+1. `smart-scrape(homepage)` → posicionamiento REAL, tagline, propuesta de valor
+2. `smart-scrape(/pricing o /plans o /#pricing)` → pricing REAL
+3. `smart-scrape(/features o /product o /services)` → features REALES
+4. `smart-scrape(/about)` → equipo, historia, credenciales
 
 **Reglas HARD:**
 - NUNCA escribir sobre un competidor sin haber scrapeado su web
@@ -73,7 +77,8 @@ Para CADA competidor — heredados de company-context Y descubiertos en research
 
 ### 2. Investigar siguiendo el prompt
 - Lee `references/prompt.md` — es tu guía sección por sección
-- Ejecuta búsquedas web (mínimo 10-15) cubriendo las 5 partes:
+- **Backbone de research → `/deep-research` (Hamete):** para la profundidad de mercado (TAM, dinámicas, segmentación, tendencias) invoca el skill `/deep-research` con el prompt **Market** (industry overview, landscape, trends) — fuentes citadas + qa-bot. NO existe "Gemini Deep Research"; el research es competencia de Hamete vía `/deep-research`. Las búsquedas web (mín. 10-15) complementan y verifican, no sustituyen.
+- Cubre las 5 partes:
   - **Parte 0**: Executive Narrative (síntesis narrativa de todo el análisis)
   - **Parte 1**: TAM, segmentos, geografía, madurez
   - **Parte 2**: Competidores, cuota, estrategias, RRSS, amenazas
@@ -81,7 +86,7 @@ Para CADA competidor — heredados de company-context Y descubiertos en research
   - **Parte 4**: Tendencias, comportamiento consumidor, plataformas, regulación
   - **Parte 5**: Gaps, oportunidades, atractivo, hoja de ruta
 - Para cada parte, busca en múltiples ángulos (español + inglés, general + específico)
-- Incluye escucha social: foros, reviews, comentarios en RRSS para pain points reales
+- **Escucha social (pain points reales):** vía el provider del preflight — scrapecreators (`reddit_*`, social) y/o skill `last30days` para el pulso de comunidad/recencia; foros y reviews para quejas reales. No te quedes solo en web_search.
 
 ### 3. Escribir el documento (STORYTELLING OBLIGATORIO)
 - **EMPIEZA con Executive Narrative (Parte 0)** — 1 página, narrativa pura, cero tablas

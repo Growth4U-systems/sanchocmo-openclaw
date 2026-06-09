@@ -81,11 +81,14 @@ async function main() {
     console.log('[config] Removed agents.defaults.heartbeat (deprecated in this project)');
   }
 
-  // --- Session agents (escudero, rocinante, yalc) ---
+  // --- Session agents (escudero, rocinante, yalc, hamete) ---
   config.agents.list = [
     { id: 'escudero', workspace: path.join(OPENCLAW_ROOT, 'workspace-escudero') },
     { id: 'rocinante', workspace: path.join(OPENCLAW_ROOT, 'workspace-rocinante') },
-    { id: 'yalc', workspace: path.join(OPENCLAW_ROOT, 'workspace-yalc') }
+    { id: 'yalc', workspace: path.join(OPENCLAW_ROOT, 'workspace-yalc') },
+    // Hamete — Research & Market Intelligence agent (deep-research, competitor/market intel,
+    // signals). Runs the scraping-preflight + /deep-research stack. See dispatch-protocol.md.
+    { id: 'hamete', workspace: path.join(OPENCLAW_ROOT, 'workspace-hamete') }
   ];
 
   // --- Gateway ---
