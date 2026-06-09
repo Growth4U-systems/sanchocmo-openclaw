@@ -131,10 +131,10 @@ export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
     threadName: "YALC / GTM-OS",
     skill: "yalc-operator",
     skills: ["yalc-operator"],
-    linkedTo: "yalc",
+    linkedTo: "rocinante",
     docPath: null,
     threadState: "continue",
-    agent: "yalc",
+    agent: "rocinante",
     initialMessage: prompt,
   };
 }
