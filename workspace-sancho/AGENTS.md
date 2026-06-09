@@ -17,8 +17,6 @@ workspace-sancho/
 │
 ├── skills/                        # 120+ marketing skills (framework)
 │   └── {skill-name}/SKILL.md
-├── personas/                      # Alarife Operator persona (framework)
-│   └── alarife-operator.md
 ├── scripts/                       # Automation utilities (framework)
 │
 ├── _system/                       # Protocols, schemas, config
@@ -81,7 +79,7 @@ workspace-sancho/
 
 ### Framework vs Instance
 
-- **Framework** (versionado in git): skills/, personas/, scripts/, _system/, templates/, SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md
+- **Framework** (versionado in git): skills/, scripts/, _system/, templates/, SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md
 - **Instance** (gitignored): memory/, brand/{slug}/ (except example/), config files via symlinks
 
 NEVER put client data, API keys, or deployment-specific info in framework files.

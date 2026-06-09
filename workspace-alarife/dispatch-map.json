@@ -6,10 +6,9 @@
   "channel_roles": {
     "execution": {
       "description": "Construcción y publicación de páginas web, arquitectura del sitio, CRO.",
-      "channels": ["web", "pages"],
+      "channels": ["web"],
       "rules": {
-        "web": "Build pages in Payload CMS (draft → preview → publish-with-approval), site architecture, frontend.",
-        "pages": "Page-level and form-level CRO, landing page assembly, publish coordination."
+        "web": "Build pages in Payload CMS (draft → preview → publish-with-approval), site architecture, frontend, page/form CRO, landing assembly, publish coordination."
       }
     }
   }

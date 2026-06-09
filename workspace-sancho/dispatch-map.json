@@ -363,7 +363,7 @@
       "emoji": "🧱",
       "workspace": "../workspace-alarife",
       "soul_file": "../workspace-alarife/SOUL.md",
-      "domain": "Web/Page builder — Payload CMS, site architecture, frontend build, CRO, controlled publishing",
+      "domain": "Web/Page Builder — Payload CMS, site architecture, frontend build, CRO, controlled publishing",
       "dispatch_for": [
         "alarife",
         "alarife-payload",
@@ -391,7 +391,9 @@
       "skills_invokable": [
         "direct-response-copy",
         "landing-pages",
-        "sancho-visual"
+        "sancho-visual",
+        "design-system",
+        "visual-identity"
       ],
       "requires_confirmation_for": [
         "web-publish"

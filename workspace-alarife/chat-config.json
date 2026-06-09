@@ -13,8 +13,7 @@
       }
     },
     "_byChannel": {
-      "web": { "skill": "alarife-integration" },
-      "pages": { "skill": "page-cro" }
+      "web": { "skill": "alarife-integration" }
     },
     "_byTool": {
       "payload": { "skill": "payload" },
