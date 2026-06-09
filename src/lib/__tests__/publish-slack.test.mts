@@ -11,7 +11,7 @@ process.env.SLACK_BOT_TOKEN = "xoxb-test-token"; // resolveSlackToken process.en
 type Mod = typeof import("../publish/slack");
 let mod: Mod;
 
-const calls: Array<{ url: string; body: any }> = [];
+const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
 const origFetch = globalThis.fetch;
 
 before(async () => {
@@ -23,11 +23,11 @@ beforeEach(() => {
   calls.length = 0;
   // Each postMessage returns a distinct ts so root/thread are distinguishable.
   let n = 0;
-  globalThis.fetch = (async (url: any, opts: any) => {
-    calls.push({ url: String(url), body: JSON.parse(opts.body) });
+  globalThis.fetch = (async (url: string | URL | Request, opts?: RequestInit) => {
+    calls.push({ url: String(url), body: JSON.parse(String(opts?.body)) });
     n += 1;
-    return { json: async () => ({ ok: true, ts: `ts-${n}` }) } as any;
-  }) as any;
+    return { json: async () => ({ ok: true, ts: `ts-${n}` }) } as unknown as Response;
+  }) as typeof fetch;
 });
 
 test("publish posts root then threaded body and returns ids", async () => {
@@ -44,7 +44,7 @@ test("publish posts root then threaded body and returns ids", async () => {
 });
 
 test("publish returns ok:false with error when root post fails", async () => {
-  globalThis.fetch = (async () => ({ json: async () => ({ ok: false, error: "channel_not_found" }) })) as any;
+  globalThis.fetch = (async () => ({ json: async () => ({ ok: false, error: "channel_not_found" }) }) as unknown as Response) as typeof fetch;
   const t = new mod.SlackTransport();
   const res = await t.publish("alpha", { transport: "slack", channel: "Cbad" }, { title: "R", body: "B" });
   assert.equal(res.ok, false);
