@@ -6,6 +6,7 @@ export type McpScope =
   | "sancho:read"
   | "sancho:chat"
   | "tasks:read"
+  | "tasks:write"
   | "yalc:read"
   | "open-design:read";
 

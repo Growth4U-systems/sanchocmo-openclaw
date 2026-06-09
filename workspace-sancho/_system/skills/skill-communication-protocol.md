@@ -411,7 +411,7 @@ to: foundation-orchestrator
 mode: Lite | Deep
 context:
   blitz_results:
-    company_context: brand/{slug}/company-brief/current.md
+    company_context: brand/{slug}/company-brief/company-brief.current.md
     product_analysis: brand/{slug}/market-and-us/self-analysis.md
     competitors: brand/{slug}/market-and-us/competitor-*.md
   user_meta: "LEADS"
@@ -441,7 +441,7 @@ recommendation: "Phase 2: Trust Engine" | "Continue Phase 1 Deep"
 from: foundation-orchestrator
 to: competitor-intelligence
 context:
-  company_context: brand/{slug}/company-brief/current.md
+  company_context: brand/{slug}/company-brief/company-brief.current.md
   positioning: brand/{slug}/go-to-market/positioning-*.md (if exists)
 lens: 1 | "1-3"  # Lite = Lens 1, Deep = Lens 1-3
 instruction: "Analyze top 3 competitors. Output to brand/{slug}/market-and-us/competitor-*.md"

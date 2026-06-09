@@ -8,7 +8,7 @@ import type { SubscriptionDetailsResult } from "@/lib/subscription";
 
 export default function PricingPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [loading, setLoading] = useState(false);
 
   const { data: subDetails } = useQuery<SubscriptionDetailsResult>({

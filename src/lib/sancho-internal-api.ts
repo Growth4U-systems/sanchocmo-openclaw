@@ -62,6 +62,25 @@ export interface SanchoClientLiveStatus {
   blockers: SanchoBlocker[];
   recent_outputs: SanchoOutputSummary[];
   updated_at: string;
+  metrics?: SanchoMetricSummary | null;
+}
+
+export interface SanchoMetricValue {
+  name: string;
+  value: number | string;
+  date?: string;
+}
+
+export interface SanchoMetricSource {
+  source: string;
+  status: string;
+  metrics: SanchoMetricValue[];
+}
+
+export interface SanchoMetricSummary {
+  collected_at: string | null;
+  date_range?: { from?: string; to?: string };
+  sources: SanchoMetricSource[];
 }
 
 export interface SanchoOutputDetail extends SanchoOutputSummary {
@@ -151,7 +170,118 @@ export function getInternalClientStatus(
     blockers,
     recent_outputs: recentOutputs,
     updated_at: updatedAt,
+    metrics: getClientMetricsSummary(slug),
   };
+}
+
+/**
+ * Reads the latest metrics snapshot for a client (brand/{slug}/metrics/YYYY-MM-DD.json,
+ * falling back to metrics-data.json) and returns a compact per-source summary so the
+ * client status/report carries its KPIs. Returns null if no metrics collected yet.
+ */
+export function getClientMetricsSummary(slug: string): SanchoMetricSummary | null {
+  const metricsDir = path.join(brandDir(slug), "metrics");
+  let snapshotPath: string | null = null;
+  try {
+    const files = fs
+      .readdirSync(metricsDir)
+      .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
+      .sort();
+    if (files.length > 0) {
+      snapshotPath = path.join(metricsDir, files[files.length - 1]);
+    } else if (fs.existsSync(path.join(metricsDir, "metrics-data.json"))) {
+      snapshotPath = path.join(metricsDir, "metrics-data.json");
+    }
+  } catch {
+    return null;
+  }
+  if (!snapshotPath) return null;
+
+  const snap = pickLatestSnapshot(readJSON<unknown>(snapshotPath, null));
+  if (!snap) return null;
+
+  const sourcesRaw = snap.sources;
+  if (!sourcesRaw || typeof sourcesRaw !== "object") return null;
+
+  const sources: SanchoMetricSource[] = [];
+  for (const [source, valUnknown] of Object.entries(
+    sourcesRaw as Record<string, unknown>
+  )) {
+    if (!valUnknown || typeof valUnknown !== "object") continue;
+    const val = valUnknown as Record<string, unknown>;
+    const metricsArr = Array.isArray(val.metrics) ? (val.metrics as unknown[]) : [];
+    const byName = new Map<string, SanchoMetricValue>();
+    for (const mUnknown of metricsArr) {
+      if (!mUnknown || typeof mUnknown !== "object") continue;
+      const m = mUnknown as Record<string, unknown>;
+      if (typeof m.name !== "string") continue;
+      const value = m.value;
+      if (typeof value !== "number" && typeof value !== "string") continue;
+      const date = typeof m.date === "string" ? m.date : undefined;
+      const prev = byName.get(m.name);
+      if (!prev || (date && (!prev.date || date > prev.date))) {
+        byName.set(m.name, { name: m.name, value, date });
+      }
+    }
+    sources.push({
+      source,
+      status: typeof val.status === "string" ? val.status : "unknown",
+      metrics: Array.from(byName.values()).slice(0, 20),
+    });
+  }
+
+  const dr = snap.dateRange;
+  const dateRange =
+    dr && typeof dr === "object"
+      ? {
+          from:
+            typeof (dr as Record<string, unknown>).from === "string"
+              ? ((dr as Record<string, unknown>).from as string)
+              : undefined,
+          to:
+            typeof (dr as Record<string, unknown>).to === "string"
+              ? ((dr as Record<string, unknown>).to as string)
+              : undefined,
+        }
+      : undefined;
+
+  return {
+    collected_at: typeof snap.collectedAt === "string" ? snap.collectedAt : null,
+    date_range: dateRange,
+    sources,
+  };
+}
+
+function pickLatestSnapshot(raw: unknown): Record<string, unknown> | null {
+  if (
+    raw &&
+    typeof raw === "object" &&
+    !Array.isArray(raw) &&
+    (raw as Record<string, unknown>).sources
+  ) {
+    return raw as Record<string, unknown>;
+  }
+  if (Array.isArray(raw)) {
+    const snaps = raw.filter(
+      (s): s is Record<string, unknown> =>
+        !!s && typeof s === "object" && !!(s as Record<string, unknown>).sources
+    );
+    snaps.sort((a, b) =>
+      String(a.collectedAt ?? "").localeCompare(String(b.collectedAt ?? ""))
+    );
+    return snaps[snaps.length - 1] ?? null;
+  }
+  if (raw && typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    const keys = Object.keys(obj).sort();
+    for (let i = keys.length - 1; i >= 0; i--) {
+      const v = obj[keys[i]];
+      if (v && typeof v === "object" && (v as Record<string, unknown>).sources) {
+        return v as Record<string, unknown>;
+      }
+    }
+  }
+  return null;
 }
 
 export function listClientOutputs(

@@ -12,9 +12,9 @@ context_required:
 - brand/{slug}/content/pov-bank.json
 - brand/{slug}/content/strategy-decisions.md
 - brand/{slug}/go-to-market/keyword-plan.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/go-to-market/positioning/*/current.md
-- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/positioning/*/*.current.md
+- brand/{slug}/market-and-us/competitors/competitors.current.md
 - brand/{slug}/operational/learnings.md
 context_writes:
 - campaigns/content/{keyword-slug}.md
@@ -67,9 +67,9 @@ Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
 | `brand/{slug}/content/pov-bank.json` | POV per pillar: core_belief, preferred_angles, evidence_we_cite |
 | `brand/{slug}/content/strategy-decisions.md` | 14 content strategy decisions (tilt, villain, BOFU-first, etc.) |
 | `brand/{slug}/go-to-market/keyword-plan.md` | Keywords, content briefs, SERP data |
-| `brand/{slug}/go-to-market/ecps/current.md` | Buyer profiles, sophistication level, pain points |
-| `brand/{slug}/go-to-market/positioning/*/current.md` | Market angles, differentiators → unique angle |
-| `brand/{slug}/market-and-us/competitors/current.md` | Named competitors, their positioning |
+| `brand/{slug}/go-to-market/ecps/ecps.current.md` | Buyer profiles, sophistication level, pain points |
+| `brand/{slug}/go-to-market/positioning/*/*.current.md` | Market angles, differentiators → unique angle |
+| `brand/{slug}/market-and-us/competitors/competitors.current.md` | Named competitors, their positioning |
 | `brand/{slug}/operational/learnings.md` | Past performance data |
 
 ### Writes

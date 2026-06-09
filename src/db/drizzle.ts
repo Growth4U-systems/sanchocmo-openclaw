@@ -23,7 +23,7 @@ export function getDb(): Db {
 // Only code paths that actually touch the DB will throw — JSON-backed
 // callers (MC_TASKS_BACKEND=json) never trigger the proxy.
 export const db = new Proxy({} as Db, {
-  get(_target, prop, receiver) {
+  get(_target, prop) {
     const real = getDb();
     const value = Reflect.get(real, prop, real);
     return typeof value === "function" ? value.bind(real) : value;

@@ -2,8 +2,8 @@
 name: find-instagram-profiles
 description: "Find relevant Instagram accounts for a client's niche. Used in Atalaya chat thread atalaya:instagram:{slug}."
 context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/positioning/current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/go-to-market/positioning/positioning.current.md
 - brand/{slug}/atalaya/config.json
 context_writes:
 - brand/{slug}/atalaya/config.json
@@ -18,7 +18,7 @@ context_writes:
 ## Workflow
 
 ### 1. Understand the Niche
-Read `company-brief/current.md` and `positioning/current.md` to understand the client's industry, audience, and visual identity.
+Read `company-brief/company-brief.current.md` and `positioning/positioning.current.md` to understand the client's industry, audience, and visual identity.
 
 ### 2. Search for Accounts
 Use `web_search` to find active Instagram creators:

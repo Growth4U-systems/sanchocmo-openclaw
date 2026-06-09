@@ -67,6 +67,7 @@ test("tools/list exposes expected MCP schemas", async () => {
     assert.deepEqual(names, [
       "open_design_health",
       "open_design_list_catalog",
+      "sancho_create_task",
       "sancho_get_chat_thread",
       "sancho_get_client_context",
       "sancho_get_task",
@@ -75,6 +76,7 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_list_tasks",
       "sancho_mcp_status",
       "sancho_send_message",
+      "sancho_update_task",
       "yalc_get_overview",
       "yalc_list_campaigns",
       "yalc_list_gates",
@@ -246,6 +248,131 @@ test("client-scoped tools reject clients outside token whitelist", async () => {
     });
     assert.equal(result.isError, true);
     assert.match(result.content[0].type === "text" ? result.content[0].text : "", /not allowed/i);
+  } finally {
+    await close();
+  }
+});
+
+function payloadOf(result: Awaited<ReturnType<Client["callTool"]>>): Record<string, unknown> {
+  const first = Array.isArray(result.content) ? result.content[0] : undefined;
+  return JSON.parse(first && first.type === "text" ? first.text : "{}");
+}
+
+test("sancho_create_task is dry-run by default and writes nothing", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["tasks:write", "tasks:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_create_task",
+      arguments: { clientSlug: "alpha", name: "Proyecto de prueba" },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.dryRun, true);
+    assert.equal(payload.requiresConfirmation, true);
+
+    const list = await client.callTool({ name: "sancho_list_tasks", arguments: { clientSlug: "alpha" } });
+    assert.equal(payloadOf(list).count, 0);
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_create_task creates a task with confirm and it is retrievable", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["tasks:write", "tasks:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_create_task",
+      arguments: { clientSlug: "alpha", name: "Lanzar Foundation", description: "desc", dryRun: false, confirm: true },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.ok, true);
+    const task = payload.task as { id: string; name: string };
+    assert.ok(task.id);
+
+    const get = await client.callTool({ name: "sancho_get_task", arguments: { clientSlug: "alpha", taskId: task.id } });
+    assert.equal(payloadOf(get).name, "Lanzar Foundation");
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_update_task updates a whitelisted field with confirm", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["tasks:write", "tasks:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const created = await client.callTool({
+      name: "sancho_create_task",
+      arguments: { clientSlug: "alpha", name: "Tarea a actualizar", dryRun: false, confirm: true },
+    });
+    const taskId = (payloadOf(created).task as { id: string }).id;
+
+    const updated = await client.callTool({
+      name: "sancho_update_task",
+      arguments: { clientSlug: "alpha", taskId, status: "in_progress", dryRun: false, confirm: true },
+    });
+    assert.equal(updated.isError, undefined);
+    const payload = payloadOf(updated);
+    assert.equal(payload.ok, true);
+    assert.equal((payload.task as { status: string }).status, "in_progress");
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_update_task requires at least one field to change", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["tasks:write", "tasks:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const created = await client.callTool({
+      name: "sancho_create_task",
+      arguments: { clientSlug: "alpha", name: "Tarea sin cambios", dryRun: false, confirm: true },
+    });
+    const taskId = (payloadOf(created).task as { id: string }).id;
+
+    const result = await client.callTool({
+      name: "sancho_update_task",
+      arguments: { clientSlug: "alpha", taskId, dryRun: false, confirm: true },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /no fields/i);
+  } finally {
+    await close();
+  }
+});
+
+test("task write tools require tasks:write scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["tasks:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_create_task",
+      arguments: { clientSlug: "alpha", name: "x", dryRun: false, confirm: true },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /tasks:write/);
   } finally {
     await close();
   }

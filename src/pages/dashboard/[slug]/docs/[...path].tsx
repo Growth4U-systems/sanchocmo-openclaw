@@ -351,7 +351,7 @@ export default function DocViewerPage() {
             </div>
             {detail.anchorText && (
               <blockquote className="text-[11px] text-muted-foreground border-l-2 border-rust pl-2 mb-3 italic whitespace-pre-wrap">
-                "{detail.anchorText}"
+                &quot;{detail.anchorText}&quot;
               </blockquote>
             )}
             <p className="text-[13px] whitespace-pre-wrap">{detail.body}</p>

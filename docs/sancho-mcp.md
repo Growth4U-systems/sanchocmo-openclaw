@@ -1,5 +1,7 @@
 # Sancho MCP
 
+> **Operators:** for token issuance/rotation, kill switches, dependency-down playbook, install troubleshooting and the smoke-test checklist, see [`sancho-mcp-runbook.md`](./sancho-mcp-runbook.md).
+
 Sancho exposes a stateless Streamable HTTP MCP endpoint at:
 
 ```text
@@ -65,6 +67,7 @@ Available scopes:
 - `sancho:read`
 - `sancho:chat`
 - `tasks:read`
+- `tasks:write`
 - `yalc:read`
 - `open-design:read`
 
@@ -79,6 +82,8 @@ Current scaffolded tools:
 - `sancho_get_client_context`
 - `sancho_list_tasks`
 - `sancho_get_task`
+- `sancho_create_task`
+- `sancho_update_task`
 - `sancho_send_message`
 - `sancho_list_chat_threads`
 - `sancho_get_chat_thread`
@@ -88,7 +93,9 @@ Current scaffolded tools:
 - `open_design_health`
 - `open_design_list_catalog`
 
-`sancho_send_message` is side-effecting. It defaults to dry-run and only sends when `dryRun=false` and `confirm=true`.
+`sancho_send_message`, `sancho_create_task` and `sancho_update_task` are side-effecting. They require `tasks:write` (except `sancho_send_message`, which requires `sancho:chat`), default to dry-run, and only write when `dryRun=false` and `confirm=true`.
+
+`sancho_update_task` only accepts a whitelist of fields (`name`, `status`, `description`, `brief`, `completion`, `owner`) and rejects updates that change nothing.
 
 ### Chat read flow
 
@@ -143,11 +150,13 @@ The staging GitHub Environment must define:
 
 `deploy-staging.yml` applies those values to the VPS `.env` and runs `npm run db:migrate:mcp` in the `sanchocmo` container when `RUN_DB_MIGRATIONS=1`.
 
-The current staging token is a single operator token for client `growth4u` with:
+The current staging token is a single shared operator token enabled for all clients (`clients: ["*"]`) with:
 
 ```json
-["sancho:read", "tasks:read", "yalc:read", "open-design:read", "sancho:chat"]
+["sancho:read", "tasks:read", "tasks:write", "yalc:read", "open-design:read", "sancho:chat"]
 ```
+
+This is a shared token: audit events attribute every call to the same principal, and it can read and write across any staging client. For production, issue per-person/per-client tokens scoped to the narrowest set needed.
 
 Install the single staging MCP in Claude Code with:
 

@@ -1,10 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import type { GetServerSideProps } from "next";
+import { getToken } from "next-auth/jwt";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Head from "next/head";
 import Link from "next/link";
+import {
+  resolveDashboardLanding,
+  type DashboardLandingToken,
+} from "@/lib/data/dashboard-landing";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useGlobalStats } from "@/hooks/useDashboardStats";
 import { useClients } from "@/hooks/useClients";
@@ -25,7 +31,11 @@ import { cn } from "@/lib/utils";
  * /dashboard — global overview across all clients.
  * The per-client variant lives at /dashboard/[slug].
  */
-export default function DashboardPage() {
+export default function DashboardPage({
+  noClientAccess,
+}: {
+  noClientAccess: boolean;
+}) {
   const t = useTranslations();
   const { data: session } = useSession();
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
@@ -35,8 +45,27 @@ export default function DashboardPage() {
       <Head>
         <title>{t("dashboard.title")} — Mission Control</title>
       </Head>
-      <GlobalDashboard isAdmin={isAdmin} />
+      {noClientAccess ? <NoClientAccess /> : <GlobalDashboard isAdmin={isAdmin} />}
     </DashboardLayout>
+  );
+}
+
+/**
+ * Shown when a non-admin reaches `/dashboard` with no client to route them to.
+ * Non-admins with a client are redirected to `/dashboard/[slug]` in
+ * `getServerSideProps`, so this is the explicit dead-end for unassigned users.
+ */
+function NoClientAccess() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
+      <div className="text-4xl mb-4">🔒</div>
+      <h1 className="font-heading text-2xl text-navy mb-2">
+        No tienes cliente asignado
+      </h1>
+      <p className="text-sm text-muted-foreground max-w-sm">
+        Habla con un admin para que te dé acceso.
+      </p>
+    </div>
   );
 }
 
@@ -283,6 +312,7 @@ function GlobalActivityFeed() {
 // Faithful replica of legacy view-client with v2-grid
 // ============================================================
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- stale duplicate of components/dashboard/client-dashboard.tsx (canonical, used by [slug]/index.tsx); remove in a separate cleanup
 function ClientDashboardV2({ slug }: { slug: string }) {
   const t = useTranslations("dashboard");
   const [activeTab, setActiveTab] = useState(0);
@@ -564,3 +594,27 @@ function IntegrationsCard() {
     </ComicCard>
   );
 }
+
+/**
+ * `/dashboard` is the global, all-clients view — admin-only. Non-admins are
+ * redirected server-side to their own client dashboard (`/dashboard/[slug]`),
+ * or shown a "no client assigned" message when they have none. Resolving this
+ * on the server avoids flashing the global admin shell to clients.
+ */
+export const getServerSideProps: GetServerSideProps<{
+  noClientAccess: boolean;
+}> = async ({ req }) => {
+  const token = await getToken({ req });
+  if (!token) {
+    return { redirect: { destination: "/auth/signin", permanent: false } };
+  }
+
+  const landing = resolveDashboardLanding(token as DashboardLandingToken);
+  if (landing.kind === "redirect") {
+    return {
+      redirect: { destination: `/dashboard/${landing.slug}`, permanent: false },
+    };
+  }
+
+  return { props: { noClientAccess: landing.kind === "no-client" } };
+};

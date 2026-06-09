@@ -3,7 +3,7 @@
 ## How to resolve brand colors for any client
 
 ### Step 1: Check for Visual Identity
-Read `brand/{slug}/visual-identity/current.md` and extract:
+Read `brand/{slug}/visual-identity/visual-identity.current.md` and extract:
 - Primary color (hero/accent)
 - Secondary color
 - Dark color (backgrounds)
