@@ -32,7 +32,7 @@ import yaml from "js-yaml";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { logActivity } from "@/lib/data/activity-log";
-import { getSlackBotToken } from "@/lib/data/integrations";
+import { postToSlack, resolveSlackToken } from "@/lib/publish/slack";
 
 interface DispatchChannelConfig {
   transport: "slack" | "discord";
@@ -73,22 +73,6 @@ const TARGET_CHANNEL_LABELS: Record<string, { emoji: string; label: string }> = 
   blog:       { emoji: "📝", label: "Blog" },
   newsletter: { emoji: "📧", label: "Newsletter" },
 };
-
-function loadBrandEnv(slug: string): Record<string, string> {
-  const envPath = path.join(BASE, "brand", slug, ".env");
-  const vars: Record<string, string> = {};
-  try {
-    const content = fs.readFileSync(envPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      vars[trimmed.slice(0, eq)] = trimmed.slice(eq + 1).replace(/^["']|["']$/g, "");
-    }
-  } catch { /* optional */ }
-  return vars;
-}
 
 function getMcBaseUrl(_req: NextApiRequest): string {
   const url = process.env.BASE_URL || process.env.NEXTAUTH_URL;
@@ -180,29 +164,6 @@ function buildIdeaBlocks(idea: Idea, slug: string, mcUrl: string, pillarName: st
   ];
 }
 
-async function postToSlack(
-  token: string,
-  channelId: string,
-  text: string,
-  blocks: unknown[],
-  threadTs?: string,
-): Promise<{ ok: boolean; error?: string; ts?: string }> {
-  const body: Record<string, unknown> = {
-    channel: channelId,
-    text,
-    blocks,
-    unfurl_links: false,
-    unfurl_media: false,
-  };
-  if (threadTs) body.thread_ts = threadTs;
-  const res = await fetch("https://slack.com/api/chat.postMessage", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return (await res.json()) as { ok: boolean; error?: string; ts?: string };
-}
-
 function buildRootMessage(
   byChannel: Map<string, Idea[]>,
   mcUrl: string,
@@ -285,37 +246,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const mcUrl = getMcBaseUrl(req);
 
   if (dispatch.transport === "slack") {
-    // Token lookup order (must match slack/list-channels.ts so the UI's
-    // "Slack connected" state stays consistent with what dispatch can use):
-    //   1) integrations.json `slack.bot_token_encrypted` — OAuth callback.
-    //   2) brand/{slug}/.env — legacy POST /api/integrations form flow,
-    //      either {SLUG_UPPER}_SLACK_BOT_TOKEN or plain SLACK_BOT_TOKEN.
-    //   3) process.env — workspace-wide token shared by every brand.
-    //      Set in container env (SLACK_BOT_TOKEN) for the staging/prod
-    //      Slack workspace; this is what makes Slack show "connected"
-    //      in the admin UI even when no per-brand OAuth ran.
-    const slugUpper = slug.toUpperCase();
-    let token: string | null = null;
-    try {
-      token = getSlackBotToken(slug);
-    } catch {
-      token = null;
-    }
-    if (!token) {
-      const env = loadBrandEnv(slug);
-      token =
-        env[`${slugUpper}_SLACK_BOT_TOKEN`] ||
-        env.SLACK_BOT_TOKEN ||
-        process.env[`${slugUpper}_SLACK_BOT_TOKEN`] ||
-        process.env.SLACK_BOT_TOKEN ||
-        null;
-    }
+    // Token lookup (integrations.json OAuth → brand/.env → process.env) lives in
+    // the shared publish lib so it stays consistent with the generic publish
+    // endpoint and the admin UI's "Slack connected" state.
+    const token = resolveSlackToken(slug);
     if (!token) {
       return res.status(400).json({
         error:
           `Slack bot token not configured for ${slug}. Either reconnect Slack at ` +
           `/dashboard/admin/settings?tab=apis (OAuth, writes encrypted to integrations.json), ` +
-          `add ${slugUpper}_SLACK_BOT_TOKEN to brand/${slug}/.env, or set the ` +
+          `add ${slug.toUpperCase()}_SLACK_BOT_TOKEN to brand/${slug}/.env, or set the ` +
           `workspace-wide SLACK_BOT_TOKEN env var.`,
       });
     }
