@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# Seed/refresh the OpenClaw home from the image's baked framework so a fresh/empty
+# OPENCLAW_HOME boots and `compose pull` updates apply — without clobbering user
+# data. No-op in source/bind-mount dev mode (no /opt/sancho-seed). See init-home.sh.
+if [ -x /opt/sancho-seed/docker/init-home.sh ]; then
+  bash /opt/sancho-seed/docker/init-home.sh /root/.openclaw
+fi
+
 cd /root/.openclaw
 
 OPENCLAW_CONFIG="/root/.openclaw/.openclaw/openclaw.json"
@@ -169,6 +176,19 @@ if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
   echo "[entrypoint] Ensuring Anthropic subscription auth profile..."
   node docker/ensure-anthropic-subscription-auth.js || \
     echo "[entrypoint] WARNING: ensure-anthropic-subscription-auth failed; Anthropic may use stale auth"
+  # The model layer (pi-ai's Anthropic provider) resolves the Anthropic
+  # credential from env in this order: ANTHROPIC_OAUTH_TOKEN, then
+  # ANTHROPIC_API_KEY. Any value containing "sk-ant-oat" is auto-detected as an
+  # OAuth (subscription) token → Bearer auth + Claude Code identity headers, so
+  # it bills the Claude Max subscription instead of API credit. We already ship
+  # a subscription token as CLAUDE_CODE_OAUTH_TOKEN (used by the Cervantes
+  # Claude Code service); mirror it into ANTHROPIC_OAUTH_TOKEN so the OpenClaw
+  # gateway agents use the subscription too. Without this the provider falls
+  # through to ANTHROPIC_API_KEY — the silent API-billing footgun. Idempotent.
+  if [ -z "${ANTHROPIC_OAUTH_TOKEN:-}" ] && [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+    export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
+    echo "[entrypoint] ANTHROPIC_OAUTH_TOKEN derived from CLAUDE_CODE_OAUTH_TOKEN (gateway → Claude subscription)"
+  fi
 else
   echo "[entrypoint] ANTHROPIC_AUTH_MODE=api_key — using ANTHROPIC_API_KEY (anthropic:default token profile)"
 fi
@@ -352,6 +372,42 @@ echo "[entrypoint] Starting cost-tracker loop (every ${COST_TRACKER_INTERVAL}s)�
   done
 ) &
 COST_TRACKER_PID=$!
+
+# ===========================================================
+# 7a-bis. USAGE MONITOR LOOP (background)
+# ===========================================================
+# Watches the Claude subscription's "extra usage" headroom and alerts to
+# Discord (#cervantes-admin) BEFORE it runs out — so the subscription-backed
+# agents don't get silently rejected ("out of extra usage"). It does a 1-token
+# probe with CLAUDE_CODE_OAUTH_TOKEN and reads the anthropic-ratelimit-unified-*
+# headers (exact utilization per window). Gated: only runs when both the OAuth
+# token and the Discord webhook are present (no token = nothing to measure;
+# no webhook = nowhere to alert). The monitor self-dedupes, so this loop just
+# re-checks on an interval. Default 30 min; tune with USAGE_MONITOR_INTERVAL.
+USAGE_MONITOR_INTERVAL="${USAGE_MONITOR_INTERVAL:-1800}"
+USAGE_MONITOR_LOG="/root/.openclaw/workspace-sancho/_system/usage-monitor.log"
+if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ]; then
+  mkdir -p "$(dirname "$USAGE_MONITOR_LOG")"
+  echo "[entrypoint] Starting usage-monitor loop (every ${USAGE_MONITOR_INTERVAL}s)…"
+  (
+    sleep 45  # let the gateway settle before the first probe
+    while :; do
+      {
+        echo "[$(date -u +%FT%TZ)] usage-monitor run start"
+        python3 /root/.openclaw/workspace-sancho/scripts/usage-monitor.py 2>&1
+        echo "[$(date -u +%FT%TZ)] usage-monitor run done"
+      } >> "$USAGE_MONITOR_LOG" 2>&1 || true
+      if [ -f "$USAGE_MONITOR_LOG" ] && [ "$(stat -c%s "$USAGE_MONITOR_LOG" 2>/dev/null || echo 0)" -gt 2097152 ]; then
+        tail -c 1048576 "$USAGE_MONITOR_LOG" > "${USAGE_MONITOR_LOG}.tmp" && mv "${USAGE_MONITOR_LOG}.tmp" "$USAGE_MONITOR_LOG"
+      fi
+      sleep "$USAGE_MONITOR_INTERVAL"
+    done
+  ) &
+  USAGE_MONITOR_PID=$!
+else
+  echo "[entrypoint] usage-monitor skipped (need CLAUDE_CODE_OAUTH_TOKEN + DISCORD_WEBHOOK_CERVANTES)"
+  USAGE_MONITOR_PID=""
+fi
 
 # ===========================================================
 # 7b. START NEXT.JS MC (primary frontend on :3000)
