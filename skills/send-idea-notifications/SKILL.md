@@ -1,6 +1,6 @@
 ---
 name: send-idea-notifications
-description: "Consume notification queue and send to Discord #intelligence. Use when: cron fires (daily check), user asks 'send pending notifications', 'enviar notificaciones pendientes', 'check notification queue', or after idea-generation run completes. Reads brand/{slug}/idea-generation/notifications.json, sends to Discord, marks as sent."
+description: "Consume notification queue and publish via the configured channel (Slack default). Use when: cron fires (daily check), user asks 'send pending notifications', 'enviar notificaciones pendientes', 'check notification queue', or after idea-generation run completes. Reads brand/{slug}/idea-generation/notifications.json, publishes via /api/integrations/publish, marks as sent."
 metadata:
   author: Growth4U
   version: '1.0'
@@ -9,19 +9,19 @@ metadata:
   depends_on: idea-generation
   context_required:
     - brand/{slug}/idea-generation/notifications.json
-    - brand/{slug}/client-config.json (for Discord channel ID)
+    - brand/{slug}/client-config.json (for the configured publish transport/channel)
   context_writes:
     - brand/{slug}/idea-generation/notifications.json (marks sent)
 ---
 
 # Send Idea Notifications
 
-> Consume la cola de notificaciones y envía a Discord #intelligence.
+> Consume la cola de notificaciones y publica vía el endpoint (canal configurado, Slack por defecto).
 
 ## Pipeline
 
 ```
-Read notifications.json → Filter pending → Send to Discord → Mark as sent
+Read notifications.json → Filter pending → Publish via endpoint → Mark as sent
 ```
 
 ---
@@ -37,26 +37,26 @@ For each client in clients.json where active=true:
 
 ---
 
-## Step 2: Send to Discord
+## Step 2: Publish each notification
 
-For each pending notification:
+For each pending notification, publish via the server-side endpoint — transport and channel are
+resolved from `client-config.json` (`crons.idea_generation.publish_transport`/`publish_channel`,
+Slack default). Do NOT read a channel ID or assume Discord.
 
 ```
-1. Read brand/{slug}/client-config.json → get channels.intelligence Discord channel ID
-2. If no intelligence channel configured → log warning, skip
-3. Send message to Discord:
-   - Use message tool, channel=discord
-   - Target = intelligence channel ID
-   - Message format:
-     
-     {emoji} **{title}**
-     
-     {summary}
-     
-     📊 **Stats**: {count} nuevas ideas ({content_count} contenido, {contact_count} contactos)
-     
-     🔗 **Ver en Mission Control**: {mc_link}
-     
+1. Read the adminToken from the ROOT of ~/.openclaw/workspace-sancho/clients.json
+2. Build the message:
+   - title (root): "{emoji} {title}"
+   - body (thread):
+       {summary}
+
+       📊 Stats: {count} nuevas ideas ({content_count} contenido, {contact_count} contactos)
+
+       🔗 Ver en Mission Control: {mc_link}
+3. POST http://localhost:3000/api/integrations/publish
+   Headers: Content-Type: application/json, x-admin-token: <adminToken>
+   Body: {"slug": "{slug}", "cronKey": "idea_generation", "title": "<title>", "body": "<body>"}
+   - If the endpoint returns ok=false / 4xx-5xx → log warning, do NOT mark as sent (retry next run)
 4. Mark notification as sent:
    - Update notification object: sent = true, sent_at = ISO timestamp
 ```
@@ -124,7 +124,7 @@ Se generaron 18 ideas para Paymático:
 |-------|--------|
 | notifications.json not found | Skip client, log warning |
 | client-config.json missing intelligence channel | Skip client, log: "Client {slug}: No intelligence channel configured" |
-| Discord send fails | Log error, do NOT mark as sent (will retry next run) |
+| Publish endpoint returns ok:false/4xx-5xx | Log error, do NOT mark as sent (will retry next run) |
 | Empty queue | Silent skip |
 
 ---
@@ -132,7 +132,7 @@ Se generaron 18 ideas para Paymático:
 ## Self-QA
 
 1. ¿Se procesaron TODOS los clientes activos?
-2. ¿Se envió a Discord #intelligence de cada cliente (no al canal interno)?
+2. ¿Se publicó al canal configurado de cada cliente (no al canal interno)?
 3. ¿Se marcaron como sent=true solo las notificaciones enviadas exitosamente?
 4. ¿El link de Mission Control usa el token correcto del cliente?
 5. ¿Se respetó el formato de mensaje (emoji + título + stats + link)?
@@ -157,4 +157,4 @@ Task: Check and send pending idea notifications for all active clients
 | Skill | Relation |
 |-------|----------|
 | idea-generation | Produces notifications.json |
-| This skill | Consumes notifications.json, sends to Discord |
+| This skill | Consumes notifications.json, publishes via endpoint |

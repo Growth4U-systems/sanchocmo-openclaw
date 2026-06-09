@@ -25,7 +25,7 @@ context_writes: []
 
 **Tools needed:**
 - **Google Calendar** (`gog calendar`) — leer eventos
-- **Discord** (`message()`) — enviar briefing
+- **Publish endpoint** (`POST /api/integrations/publish`) — enviar briefing al canal configurado
 - **GHL API** — datos operativos del lead (notas Slack, pipeline stage)
 - Archivos de leads en `brand/{slug}/leads/` (inteligencia generada por @lead-intelligence-hub)
 
@@ -135,10 +135,13 @@ Miércoles:
 Total: {count} llamadas programadas
 ```
 
-### Publicar en Discord (patrón de hilo):
-1. `message(action=send, channel=discord, target=1477741644789842031, message="📞 {título}: {count} llamadas")`
-2. Capturar `messageId` → `message(action=thread-create, ...threadName="📞 Call Prep — {date}")`
-3. Capturar `threadId` → `message(action=send, target={threadId}, message="{briefing_completo}")`
+### Publicar (vía endpoint server-side, transport-agnostic):
+No hardcodees IDs ni asumas Discord. El endpoint resuelve transporte y canal desde `client-config.json` → `crons.sales_call_prep.publish_transport`/`publish_channel` (Slack por defecto):
+1. Leé el `adminToken` de la RAÍZ de `~/.openclaw/workspace-sancho/clients.json`.
+2. `POST http://localhost:3000/api/integrations/publish`
+   Headers: `Content-Type: application/json`, `x-admin-token: <adminToken>`
+   Body: `{"slug": "{slug}", "cronKey": "sales_call_prep", "title": "📞 {título}: {count} llamadas", "body": "{briefing_completo}"}`
+3. El endpoint postea `title` como raíz y `body` en el hilo. Devuelve `{ok, rootId, threadId}`; si `ok=false` o status 4xx/5xx, reportá el error.
 
 ## Step 5: Log
 
@@ -161,7 +164,7 @@ Actualizar `memory/heartbeat-state.json`:
 
 ## Error Handling
 
-- Calendar API error → log en heartbeat-state, notificar en Discord
+- Calendar API error → log en heartbeat-state, notificar vía publish endpoint
 - GHL contact no encontrado → incluir en briefing con datos del evento solo
 - leads/{id}.md no existe → briefing con datos de GHL solamente (sin inteligencia extra)
-- Discord send falla → retry 1x, log error
+- Publish endpoint devuelve `ok:false`/4xx-5xx → retry 1x, log error

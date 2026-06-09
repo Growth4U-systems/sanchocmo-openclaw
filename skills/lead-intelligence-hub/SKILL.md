@@ -158,10 +158,13 @@ Guardar resumen en `memory/heartbeat-state.json`:
 }
 ```
 
-Publicar resumen en Discord:
-```
-message(action=send, channel=discord, target="{intelligence_channel}", message="📊 Lead Sync — {date}: {new_leads} nuevos, {updated} actualizados, {slack_notes} notas sincronizadas")
-```
+Publicar resumen vía el endpoint server-side (transport-agnostic; resuelve transporte y canal desde `client-config.json` → `crons.lead_intelligence.publish_transport`/`publish_channel`, Slack por defecto — NO hardcodees IDs ni asumas Discord):
+
+1. Leé el `adminToken` de la RAÍZ de `~/.openclaw/workspace-sancho/clients.json`.
+2. `POST http://localhost:3000/api/integrations/publish`
+   Headers: `Content-Type: application/json`, `x-admin-token: <adminToken>`
+   Body: `{"slug": "{slug}", "cronKey": "lead_intelligence", "title": "📊 Lead Sync — {date}: {new_leads} nuevos, {updated} actualizados, {slack_notes} notas sincronizadas", "body": "<detalle del sync>"}`
+3. El endpoint postea `title` como raíz y `body` en el hilo. Devuelve `{ok, rootId, threadId}`; si `ok=false` o status 4xx/5xx, reportá el error y no reintentes a ciegas.
 
 ## Lead File Template
 
