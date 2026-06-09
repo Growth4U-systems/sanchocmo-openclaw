@@ -10,17 +10,12 @@
 **Skill**: `fast-foundation`
 **Agent**: `sancho` (rework en SAN-13)
 **Thread**: `{slug}:fast-foundation`
-**Output**: 5 docs lite:
-- `brand/{slug}/company-brief/company-brief.current.md` — Company Brief (identidad + business model + budget)
-- `brand/{slug}/market-and-us/self/self.current.md` — Self Intelligence L1 (autopercepción)
-- `brand/{slug}/market-and-us/market/market.current.md` — Market Intelligence L1 (datos básicos)
-- `brand/{slug}/brand-voice/brand-voice.current.md` — Brand Voice Snapshot (quick)
-- `brand/{slug}/go-to-market/ecps/ecps.current.md` — Niche Discovery básico (ECPs preliminares)
+**Output**: `brand/{slug}/fastcontext/fastcontext.current.md` (un archivo, secciones H2; grounding desechable). NO toca carpetas de pilares.
 **requires**: — (es el primer paso)
 **Skip**: nunca
 **Modo URL**: scrape web + sociales → pre-fill → validar → completar gaps
 **Modo manual**: 6 preguntas conversacionales (sin URL)
-**Done**: Los 5 docs lite generados y validados por el usuario
+**Done**: `fastcontext.current.md` generado y validado por el usuario
 
 ---
 
@@ -33,7 +28,7 @@
 **Output**: `brand/{slug}/market-and-us/market/market.current.md`
 **requires**: —
 **enriches_with**: fast-foundation, competitor-analysis, self-analysis
-**Hydration**: si fast-foundation está `approved`, hidrata con su doc lite (market L1). Si no, arranca standalone desde el input del cliente. Fast Foundation **no es prerequisito**.
+**Hydration**: si fast-foundation está `approved`, hidrata con su sección de `fastcontext.current.md` (grounding opcional). Si no, arranca standalone desde el input del cliente. Fast Foundation **no es prerequisito**.
 **Lite done**: Sector + TAM/SAM estimado + tendencias principales
 **Deep done**: Lite + regulación + 3+ tendencias + tasa crecimiento + características mercado
 
@@ -56,7 +51,7 @@
 **Output**: `brand/{slug}/market-and-us/self/self.current.md`
 **requires**: —
 **enriches_with**: fast-foundation, market-analysis, competitor-analysis
-**Hydration**: si fast-foundation está `approved`, hidrata con su doc lite (Self L1) y añade Lens 2 + Lens 3. Si no, ejecuta las 3 lenses standalone. Fast Foundation **no es prerequisito**.
+**Hydration**: si fast-foundation está `approved`, hidrata con su sección de `fastcontext.current.md` (grounding opcional) y añade Lens 2 + Lens 3. Si no, ejecuta las 3 lenses standalone. Fast Foundation **no es prerequisito**.
 **Skip**: si es marca nueva sin track record
 **Lite done**: Lens 1 (qué decimos) para homepage + 2 redes sociales top
 **Deep done**: 3 lentes completas: homepage, 2 redes sociales, 2 plataformas de reviews
@@ -89,7 +84,7 @@
 **Output**: `brand/{slug}/go-to-market/ecps/ecps.current.md` (JTBD integrado por segmento)
 **requires**: market-synthesis (swot)
 **enriches_with**: existing-customer-data
-**Hydration**: lee doc lite de Fast Foundation (ECPs básicos) y valida con research
+**Hydration**: lee su sección de `fastcontext.current.md` (grounding opcional) como seed y valida con research
 **Lite done**: 50+ problemas, Triple Filter, 3-7 ECPs scored
 **Deep done**: 100+ problemas, 5+ tipos fuente, TAM/SAM por ECP, datos clientes integrados
 
@@ -144,7 +139,7 @@
 **Thread**: `{slug}:brand-voice`
 **Output**: `brand/{slug}/brand-voice/brand-voice.current.md`
 **requires**: positioning
-**Hydration**: lee doc lite de Fast Foundation (Brand Voice Snapshot) y genera Full Guide
+**Hydration**: lee su sección de `fastcontext.current.md` (Brand Voice grounding opcional) y genera Full Guide
 **Done**: Voice guide completa + AI Brand Kit + Per-ECP/Channel adaptation
 
 ### visual-identity
