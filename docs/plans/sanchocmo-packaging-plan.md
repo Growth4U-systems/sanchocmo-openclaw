@@ -97,7 +97,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - Fuera de scope: docs internos de Cervantes (se limpian en su track de retiro); `CHANGELOG.md` histórico; **`mc-server.js` sigue necesario** (fallback Strangler-Fig, el Next aún proxya `recurring-tasks`/`connect-proxy` a :18790).
   - Verif: `node -c` ambos servers ✅ · `grep new-client` en código → 0.
 
-- **[Fase 1.5 · Postgres bundled — GAP B9]** — branch `feat/pg-bundled-local-db` (→ `staging`), worktree aislado. Enfoque aprobado por el usuario: **driver condicional + baseline limpio + migrate-at-boot, gateado a local-db; path Neon de prod byte-idéntico**.
+- **[Fase 1.5 · Postgres bundled — GAP B9]** — PR [#366](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/366) (`feat/pg-bundled-local-db` → `staging`), `Refs SAN-110`. Worktree aislado. Enfoque aprobado por el usuario: **driver condicional + baseline limpio + migrate-at-boot, gateado a local-db; path Neon de prod byte-idéntico**.
   - **Driver condicional**: nuevo `src/db/driver-select.ts` → `selectDbDriver(url, override)` (auto: `*.neon.tech` → `neon`, otro → `postgres`; override `DATABASE_DRIVER`). `src/db/drizzle.ts` instancia `neon-http` o `postgres-js` según eso; `Db` se tipa como el cliente neon histórico (cast en el boundary) → **cero churn en call-sites**. Dep nueva: `postgres` (postgres.js).
   - **Baseline limpio**: las migraciones de `src/db/migrations/` están rotas para replay (sin journal, números duplicados, `0003_rekey_tasks` con DROP). Nuevo `drizzle.local.config.ts` + `src/db/migrations-local/` (baseline `0000` consolidado desde `schema.ts`, 22 tablas, sin DROPs, con journal). Prod/Neon sigue con su flujo manual aparte.
   - **Migrate-at-boot**: `scripts/migrate-local.mjs` (migrator programático postgres-js, espera readiness, idempotente, no-op en Neon, non-fatal). Gateado en `docker/entrypoint.sh` (sección 5d, solo si driver=postgres y `DATABASE_URL` seteada). `COPY` agregado en `Dockerfile`.
@@ -145,7 +145,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 | 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ abierto | aclaración #1; D4/D5/D6 follow-up |
 | 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ abierto | un-comando install; DB local ✅ con B9 |
 | 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ abierto | placeholder SUL; texto canónico = decisión legal |
-| 6 | B9 · Postgres bundled (driver condicional + baseline) | branch `feat/pg-bundled-local-db` (→ `staging`) | 🔨 local listo, sin PR | resuelve decisión #5; verificado vs `postgres:16-alpine` (22 tablas, idempotente); falta e2e en container + PR |
+| 6 | B9 · Postgres bundled (driver condicional + baseline) | #366 (`feat/pg-bundled-local-db` → `staging`), SAN-110 | ✅ abierto | resuelve decisión #5; verificado vs `postgres:16-alpine` (22 tablas, idempotente) + e2e sobre red de compose (volumen persiste); falta e2e del stack completo (needs G4U auth) |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
