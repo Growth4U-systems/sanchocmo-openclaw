@@ -1,0 +1,16 @@
+{
+  "version": 3,
+  "dispatch_mode": "sessions",
+  "agent": "alarife",
+  "note": "Workspace de Alarife (Web/Page Builder). Promovido de alarife_operator a agente completo el 2026-06-09 (SAN-116). En Fase 1 las skills viven en workspace-sancho/skills/. Migración a workspace-alarife/skills/ en Fase 3.",
+  "channel_roles": {
+    "execution": {
+      "description": "Construcción y publicación de páginas web, arquitectura del sitio, CRO.",
+      "channels": ["web", "pages"],
+      "rules": {
+        "web": "Build pages in Payload CMS (draft → preview → publish-with-approval), site architecture, frontend.",
+        "pages": "Page-level and form-level CRO, landing page assembly, publish coordination."
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "agent": "alarife",
+  "version": 1,
+  "note": "Config del chat para Alarife. MC consulta esto cuando enruta tasks type=web-build o tareas con triggers de payload/site-architecture/cro.",
+  "tasks": {
+    "_defaults": {
+      "skill": "alarife-integration"
+    },
+    "_byType": {
+      "web-build": {
+        "skill": "alarife-integration",
+        "skills": ["alarife-integration", "payload", "site-architecture", "frontend-design", "page-cro", "form-cro"]
+      }
+    },
+    "_byChannel": {
+      "web": { "skill": "alarife-integration" },
+      "pages": { "skill": "page-cro" }
+    },
+    "_byTool": {
+      "payload": { "skill": "payload" },
+      "cms": { "skill": "cms-migration" }
+    }
+  }
+}
