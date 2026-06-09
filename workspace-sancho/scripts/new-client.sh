@@ -433,14 +433,14 @@ cat > "$BRAND_DIR/projects/P00-Fast-Foundation/project.json" << PROJJSON
 {
   "id": "P00-Fast-Foundation",
   "name": "Fast Foundation",
-  "description": "Intake rápido (~30 min): URL → Company Brief + Self L1 + Market L1 + Brand Voice Snapshot + Niche Discovery básico. Suficiente para empezar a ejecutar canales básicos.",
-  "approach": "El usuario introduce la URL de su web. El skill fast-foundation scrapea, pre-rellena 5 docs lite, y valida con el usuario. Si no hay URL, modo conversacional (6 preguntas).",
+  "description": "Intake rápido (~30 min): URL → un único archivo de grounding fastcontext.current.md (secciones Company/Self/Market/Brand Voice/Niche). Grounding inicial para empezar a ejecutar; NUNCA source of truth.",
+  "approach": "El usuario introduce la URL de su web. El skill fast-foundation scrapea, genera UN único fastcontext/fastcontext.current.md (grounding desechable, secciones H2) y valida con el usuario. Si no hay URL, modo conversacional (6 preguntas). NO toca carpetas de pilares.",
   "objective": {
-    "description": "5 docs lite generados y validados",
+    "description": "Grounding inicial (fastcontext.current.md) generado y validado",
     "metric": "docs_completed",
     "baseline": 0,
-    "target": 5,
-    "unit": " docs"
+    "target": 1,
+    "unit": " archivo"
   },
   "origin": "onboarding",
   "phase": -1,
@@ -455,17 +455,17 @@ cat > "$BRAND_DIR/projects/P00-Fast-Foundation/tasks.json" << TASKSJSON
   {
     "id": "P00-FF-T01",
     "name": "Ejecutar Fast Foundation",
-    "description": "Intake rápido (~30 min) donde Sancho te hace preguntas sobre tu empresa y genera los documentos base: Company Context, Business Model y Niche Discovery con ECPs iniciales. Todo se ejecuta en una sola conversación en #onboarding.",
-    "deliverable": "company-brief/company-context.md, company-brief/business-model.md, go-to-market/ecps/ecps.current.md",
-    "done_criteria": "Los 3 documentos lite generados y validados por el cliente.",
+    "description": "Intake rápido (~30 min) donde Sancho te hace preguntas sobre tu empresa y genera el archivo de grounding base (Company Context, Business Model, Market, Brand Voice, ECPs iniciales) en una sola conversación en #onboarding.",
+    "deliverable": "fastcontext/fastcontext.current.md",
+    "done_criteria": "Archivo de grounding fastcontext.current.md generado y validado por el cliente.",
     "depends_on": null,
     "owner": "Sancho",
     "status": "pending",
     "channel": "onboarding",
     "type": "foundation",
     "skill": "fast-foundation",
-    "pillars": ["company-context", "business-model", "niche-discovery"],
-    "sections": ["company-brief", "go-to-market"]
+    "pillars": ["fast-context"],
+    "sections": ["fast-foundation"]
   }
 ]
 TASKSJSON
@@ -476,8 +476,8 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/project.json" << PROJJSON2
 {
   "id": "P00-Full-Foundation",
   "name": "Full Foundation",
-  "description": "Foundation completa: research profundo de mercado, competencia, self-analysis, síntesis SWOT, positioning, pricing, brand voice y visual identity. Profundiza los docs lite de Fast Foundation.",
-  "approach": "Tras Fast Foundation, cada skill lee su doc lite como hydration y profundiza: Market Intelligence (3+ fuentes), Competitor Intelligence (3 lenses), Self Intelligence (3 lenses), Market Synthesis (SWOT+Summary+OPE Canvas+Presentación), Niche Discovery (100+ empresas), Positioning (por ECP), Pricing, Brand Voice (full guide), Visual Identity.",
+  "description": "Foundation completa: research profundo de mercado, competencia, self-analysis, síntesis SWOT, positioning, pricing, brand voice y visual identity. Profundiza el grounding inicial de Fast Foundation.",
+  "approach": "Tras Fast Foundation, cada skill lee su sección de fastcontext.current.md como grounding opcional y profundiza: Market Intelligence (3+ fuentes), Competitor Intelligence (3 lenses), Self Intelligence (3 lenses), Market Synthesis (SWOT+Summary+OPE Canvas+Presentación), Niche Discovery (100+ empresas), Positioning (por ECP), Pricing, Brand Voice (full guide), Visual Identity.",
   "objective": {
     "description": "Foundation completa ejecutada",
     "metric": "pillars_completed",
