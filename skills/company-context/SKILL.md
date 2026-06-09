@@ -11,8 +11,7 @@ metadata:
   updated: '2026-02-27'
   changes: v4 — Restructured per skill-creator principles. SKILL.md lean. Concepts/methodology moved to references.
 context_required:
-# Lite fallback (read-only, treat as preliminary seed, not as final truth):
-- brand/{slug}/company-context/lite.md          # own seed from fast-foundation (hydration only)
+- brand/{slug}/fastcontext/fastcontext.current.md   # optional grounding (read your section; skip if absent)
 context_writes:
 - brand/{slug}/company-context/company-context.current.md
 - brand/{slug}/operational/learnings.md
