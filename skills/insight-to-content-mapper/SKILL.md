@@ -9,12 +9,12 @@ metadata:
   depends_on: company-context, brand-voice, positioning-messaging
   chains_to: keyword-research, seo-content, content-atomizer
   context_required:
-    - brand/{slug}/company-brief/current.md
-    - brand/{slug}/brand-voice/current.md
+    - brand/{slug}/company-brief/company-brief.current.md
+    - brand/{slug}/brand-voice/brand-voice.current.md
 - brand/{slug}/content-playbook/writing-guide.md
 - brand/{slug}/content-playbook/pillars.md
-    - brand/{slug}/go-to-market/positioning/*/current.md
-    - brand/{slug}/go-to-market/ecps/current.md
+    - brand/{slug}/go-to-market/positioning/*/*.current.md
+    - brand/{slug}/go-to-market/ecps/ecps.current.md
     - brand/{slug}/go-to-market/keyword-plan.md
   context_writes:
     - campaigns/
@@ -49,8 +49,8 @@ Follow _system/output-format.md (if using SanchoCMO framework)
 - Meeting notes with flagged topics
 
 **Brand context (loaded automatically in SanchoCMO):**
-- ./brand/{slug}/go-to-market/positioning/*/current.md (unique angle selection)
-- ./brand/{slug}/brand-voice/current.md (tone guidance)
+- ./brand/{slug}/go-to-market/positioning/*/*.current.md (unique angle selection)
+- ./brand/{slug}/brand-voice/brand-voice.current.md (tone guidance)
 - brand/{slug}/content-playbook/writing-guide.md
 - brand/{slug}/content-playbook/pillars.md
 - ./brand/{slug}/go-to-market/keyword-plan.md (existing keyword strategy)
@@ -175,8 +175,8 @@ Thresholds:
 **Load positioning and select differentiated angle:**
 
 ```
-Read ./brand/{slug}/go-to-market/positioning/*/current.md → positioning statement, differentiators, proof points
-Read ./brand/{slug}/brand-voice/current.md → tone, reading level, perspective
+Read ./brand/{slug}/go-to-market/positioning/*/*.current.md → positioning statement, differentiators, proof points
+Read ./brand/{slug}/brand-voice/brand-voice.current.md → tone, reading level, perspective
 - brand/{slug}/content-playbook/writing-guide.md
 - brand/{slug}/content-playbook/pillars.md
 
@@ -313,8 +313,8 @@ content-briefs/YYYY-MM-DD-[topic-slug-2].md   ← Brief #2
 
 | File | What it provides | How it's used |
 |------|-----------------|---------------|
-| ./brand/{slug}/go-to-market/positioning/*/current.md | Unique angle and differentiators | Step 5: Angle selection |
-| ./brand/{slug}/brand-voice/current.md | Tone, style, reading level | Step 6: Tone guidance in brief |
+| ./brand/{slug}/go-to-market/positioning/*/*.current.md | Unique angle and differentiators | Step 5: Angle selection |
+| ./brand/{slug}/brand-voice/brand-voice.current.md | Tone, style, reading level | Step 6: Tone guidance in brief |
 - brand/{slug}/content-playbook/writing-guide.md
 - brand/{slug}/content-playbook/pillars.md
 | ./brand/{slug}/go-to-market/keyword-plan.md | Existing keyword strategy | Step 2: Align new keywords |

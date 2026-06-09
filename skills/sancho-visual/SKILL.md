@@ -3,8 +3,8 @@ name: sancho-visual
 description: Generate marketing visuals.
 user-invocable: false
 context_required:
-- brand/{slug}/brand-voice/current.md
-- brand/{slug}/company-brief/current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
+- brand/{slug}/company-brief/company-brief.current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/assets.md

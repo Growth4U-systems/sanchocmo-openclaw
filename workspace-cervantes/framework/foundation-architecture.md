@@ -58,7 +58,7 @@ Este orden aplica a TODOS los clientes.
 ## Versionado por Pilar
 
 ```
-brand/{slug}/{pilar}/current.md + v1.md + v2.md... + history.json + qa-log.md
+brand/{slug}/{pilar}/{pilar}.current.md + v1.md + v2.md... + history.json + qa-log.md
 ```
 
 ## Flujo Post-Aprobación

@@ -86,7 +86,7 @@ const MONTH_NAMES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-export function IdeasBoard({ ideas, onOpenChat, onApproveIdeas: _onApproveIdeas, onRejectIdeas }: IdeasBoardProps) {
+export function IdeasBoard({ ideas, onOpenChat, onApproveIdeas: _onApproveIdeas, onRejectIdeas: _onRejectIdeas }: IdeasBoardProps) {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [view, setView] = useState<ViewMode>("kanban");
   const [calMonth, setCalMonth] = useState(() => new Date());

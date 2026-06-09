@@ -33,36 +33,36 @@ That single line means: "Before I start, load relevant brand context using the p
 
 ### 4 Secciones + Operacional
 
-> **Convención**: Todos los pilares usan subdirectorios con `current.md` como versión activa.
+> **Convención**: Todos los pilares usan subdirectorios con `{carpeta}.current.md` como versión activa.
 > Versiones históricas: `v1.md`, `v2.md`, etc. en el mismo directorio + `history.json`.
 
 ```
 ./brand/{slug}/
   company-brief/
-    current.md              <- Doc único: Identity + Business Model + Budget
+    company-brief.current.md              <- Doc único: Identity + Business Model + Budget
     v1.md, v2.md...         <- Versiones históricas
     history.json
 
   market-and-us/
-    market/current.md           <- /market-intelligence owns
-    competitors/current.md      <- /competitor-intelligence owns (resumen)
-    competitors/{nombre}/current.md  <- Deep dive por competidor
-    self/current.md             <- /self-intelligence owns
-    swot/current.md             <- /swot-analysis owns
-    summary/current.md          <- orchestrator genera (síntesis ejecutiva)
-    ope-canvas/current.md       <- orchestrator genera (síntesis)
+    market/market.current.md           <- /market-intelligence owns
+    competitors/competitors.current.md      <- /competitor-intelligence owns (resumen)
+    competitors/{nombre}/{nombre}.current.md  <- Deep dive por competidor
+    self/self.current.md             <- /self-intelligence owns
+    swot/swot.current.md             <- /swot-analysis owns
+    summary/summary.current.md          <- orchestrator genera (síntesis ejecutiva)
+    ope-canvas/ope-canvas.current.md       <- orchestrator genera (síntesis)
 
   go-to-market/
-    ecps/current.md             <- /niche-discovery-100x owns (JTBD integrado)
-    positioning/{ecp-slug}/current.md  <- /positioning-messaging owns (1 por ECP)
+    ecps/ecps.current.md             <- /niche-discovery-100x owns (JTBD integrado)
+    positioning/{ecp-slug}/{ecp-slug}.current.md  <- /positioning-messaging owns (1 por ECP)
     positioning/shared/         <- Tier 2: value-criteria.md, assets.md, messaging-summary.md
-    pricing/current.md          <- /pricing-strategy owns
-    existing-customer-data/current.md  <- /existing-customer-data owns (opcional)
+    pricing/pricing.current.md          <- /pricing-strategy owns
+    existing-customer-data/existing-customer-data.current.md  <- /existing-customer-data owns (opcional)
     metrics-plan.md             <- /acquisition-metrics-plan owns
 
   brand-identity/
-    voice-profile/current.md    <- /brand-voice owns (voice profile + AI Brand Kit)
-    visual-identity/current.md  <- /visual-identity owns
+    voice-profile/voice-profile.current.md    <- /brand-voice owns (voice profile + AI Brand Kit)
+    visual-identity/visual-identity.current.md  <- /visual-identity owns
 
   operational/
     assets.md               <- All skills append (NEVER truncate)
@@ -92,24 +92,24 @@ Each profile file has a **primary owner** — the skill that creates and maintai
 
 | File | Owner | Others Can |
 |------|-------|-----------|
-| company-brief/current.md (§ Company Identity) | company-context | Read only |
-| company-brief/current.md (§ Business Model) | business-model-audit | Read only |
-| company-brief/current.md (§ Budget & Resources) | budget-constraints | Read only |
-| market-and-us/market/current.md | market-intelligence | Read only |
-| market-and-us/competitors/current.md | competitor-intelligence | Read only |
-| market-and-us/competitors/{nombre}/current.md | competitor-intelligence | Read only |
-| market-and-us/self/current.md | self-intelligence | Read only |
-| market-and-us/swot/current.md | swot-analysis | Read only |
-| market-and-us/summary/current.md | foundation-orchestrator | Read only |
-| market-and-us/ope-canvas/current.md | foundation-orchestrator | Read only |
-| go-to-market/ecps/current.md | niche-discovery-100x | Read only |
-| go-to-market/positioning/{ecp-slug}/current.md | positioning-messaging | Read only |
+| company-brief/company-brief.current.md (§ Company Identity) | company-context | Read only |
+| company-brief/company-brief.current.md (§ Business Model) | business-model-audit | Read only |
+| company-brief/company-brief.current.md (§ Budget & Resources) | budget-constraints | Read only |
+| market-and-us/market/market.current.md | market-intelligence | Read only |
+| market-and-us/competitors/competitors.current.md | competitor-intelligence | Read only |
+| market-and-us/competitors/{nombre}/{nombre}.current.md | competitor-intelligence | Read only |
+| market-and-us/self/self.current.md | self-intelligence | Read only |
+| market-and-us/swot/swot.current.md | swot-analysis | Read only |
+| market-and-us/summary/summary.current.md | foundation-orchestrator | Read only |
+| market-and-us/ope-canvas/ope-canvas.current.md | foundation-orchestrator | Read only |
+| go-to-market/ecps/ecps.current.md | niche-discovery-100x | Read only |
+| go-to-market/positioning/{ecp-slug}/{ecp-slug}.current.md | positioning-messaging | Read only |
 | go-to-market/positioning/shared/messaging-summary.md | positioning-messaging | Read only |
-| go-to-market/pricing/current.md | pricing-strategy | Read only |
-| go-to-market/existing-customer-data/current.md | existing-customer-data | Read only |
+| go-to-market/pricing/pricing.current.md | pricing-strategy | Read only |
+| go-to-market/existing-customer-data/existing-customer-data.current.md | existing-customer-data | Read only |
 | go-to-market/metrics-plan.md | acquisition-metrics-plan | Read only |
-| brand-identity/voice-profile/current.md | brand-voice | Read only |
-| brand-identity/visual-identity/current.md | visual-identity | Read only |
+| brand-identity/voice-profile/voice-profile.current.md | brand-voice | Read only |
+| brand-identity/visual-identity/visual-identity.current.md | visual-identity | Read only |
 | operational/assets.md | ALL skills | Append (never truncate) |
 | operational/learnings.md | ALL skills | Append (never truncate) |
 | operational/stack.md | sancho-start | Update on tool detection |
@@ -207,32 +207,32 @@ Each skill declares dependencies. Do NOT read every file on every invocation.
 | Skill | Reads from ./brand/{slug}/ | WHY |
 |-------|----------------------------|-----|
 | company-context | (none) | First skill — writes to company-brief |
-| business-model-audit | company-brief/current.md | Adds Business Model section |
-| budget-constraints | company-brief/current.md | Adds Budget section |
-| self-intelligence | company-brief/current.md | Needs basics for product analysis |
-| competitor-intelligence | company-brief/current.md, go-to-market/positioning/*/current.md (if exist) | Needs industry + differentiation |
-| market-intelligence | company-brief/current.md, market-and-us/competitors/current.md (if exists) | Needs basics + competitive landscape |
-| swot-analysis | market-and-us/self/current.md, market-and-us/competitors/current.md, market-and-us/market/current.md | Synthesis of 3 inputs |
-| niche-discovery-100x | market-and-us/swot/current.md, go-to-market/existing-customer-data/current.md (if exists) | Needs strategic fit + customer insights |
-| positioning-messaging | company-brief/current.md, market-and-us/competitors/current.md, go-to-market/ecps/current.md | Who we are + competition + who we serve |
-| pricing-strategy | go-to-market/ecps/current.md, go-to-market/positioning/*/current.md, market-and-us/competitors/current.md | ECPs + positioning + competitive pricing |
-| brand-voice | company-brief/current.md, go-to-market/positioning/*/current.md | Identity + angle for tone |
-| visual-identity | brand-identity/voice-profile/current.md, company-brief/current.md | Voice + identity for visual system |
-| keyword-research | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, market-and-us/competitors/current.md | Angle + audience + competitive keywords |
-| seo-content | brand-identity/voice-profile/current.md, go-to-market/ecps/current.md, go-to-market/positioning/*/current.md | Tone + topics + who we write for |
-| email-sequences | brand-identity/voice-profile/current.md, go-to-market/positioning/*/current.md | Tone + angle + what we deliver |
-| content-atomizer | brand-identity/voice-profile/current.md, brand-identity/visual-identity/current.md (if exists) | Tone + visual direction |
-| lead-magnet | brand-identity/voice-profile/current.md, go-to-market/positioning/*/current.md, go-to-market/ecps/current.md | Tone + angle + audience pain |
-| direct-response-copy | brand-identity/voice-profile/current.md, go-to-market/positioning/*/current.md, go-to-market/ecps/current.md | Tone + angle + audience |
-| newsletter | brand-identity/voice-profile/current.md, go-to-market/ecps/current.md, operational/learnings.md | Tone + audience + what's worked |
-| channel-prioritization | company-brief/current.md, go-to-market/ecps/current.md, go-to-market/positioning/*/current.md, market-and-us/competitors/current.md, operational/stack.md | Full context to score channels |
-| content-calendar-planner | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, brand-identity/voice-profile/current.md | Topics + voice + audience |
-| outreach-sequence-builder | go-to-market/positioning/*/current.md, go-to-market/ecps/current.md, brand-identity/voice-profile/current.md | Audience + angle + voice |
-| acquisition-metrics-plan | company-brief/current.md, go-to-market/ecps/current.md, go-to-market/positioning/*/current.md (if exists), go-to-market/pricing/current.md (if exists), operational/stack.md (if exists) | Business model + ECPs + canales + pricing para métricas precisas |
+| business-model-audit | company-brief/company-brief.current.md | Adds Business Model section |
+| budget-constraints | company-brief/company-brief.current.md | Adds Budget section |
+| self-intelligence | company-brief/company-brief.current.md | Needs basics for product analysis |
+| competitor-intelligence | company-brief/company-brief.current.md, go-to-market/positioning/*/*.current.md (if exist) | Needs industry + differentiation |
+| market-intelligence | company-brief/company-brief.current.md, market-and-us/competitors/competitors.current.md (if exists) | Needs basics + competitive landscape |
+| swot-analysis | market-and-us/self/self.current.md, market-and-us/competitors/competitors.current.md, market-and-us/market/market.current.md | Synthesis of 3 inputs |
+| niche-discovery-100x | market-and-us/swot/swot.current.md, go-to-market/existing-customer-data/existing-customer-data.current.md (if exists) | Needs strategic fit + customer insights |
+| positioning-messaging | company-brief/company-brief.current.md, market-and-us/competitors/competitors.current.md, go-to-market/ecps/ecps.current.md | Who we are + competition + who we serve |
+| pricing-strategy | go-to-market/ecps/ecps.current.md, go-to-market/positioning/*/*.current.md, market-and-us/competitors/competitors.current.md | ECPs + positioning + competitive pricing |
+| brand-voice | company-brief/company-brief.current.md, go-to-market/positioning/*/*.current.md | Identity + angle for tone |
+| visual-identity | brand-identity/voice-profile/voice-profile.current.md, company-brief/company-brief.current.md | Voice + identity for visual system |
+| keyword-research | go-to-market/positioning/*/*.current.md, go-to-market/ecps/ecps.current.md, market-and-us/competitors/competitors.current.md | Angle + audience + competitive keywords |
+| seo-content | brand-identity/voice-profile/voice-profile.current.md, go-to-market/ecps/ecps.current.md, go-to-market/positioning/*/*.current.md | Tone + topics + who we write for |
+| email-sequences | brand-identity/voice-profile/voice-profile.current.md, go-to-market/positioning/*/*.current.md | Tone + angle + what we deliver |
+| content-atomizer | brand-identity/voice-profile/voice-profile.current.md, brand-identity/visual-identity/visual-identity.current.md (if exists) | Tone + visual direction |
+| lead-magnet | brand-identity/voice-profile/voice-profile.current.md, go-to-market/positioning/*/*.current.md, go-to-market/ecps/ecps.current.md | Tone + angle + audience pain |
+| direct-response-copy | brand-identity/voice-profile/voice-profile.current.md, go-to-market/positioning/*/*.current.md, go-to-market/ecps/ecps.current.md | Tone + angle + audience |
+| newsletter | brand-identity/voice-profile/voice-profile.current.md, go-to-market/ecps/ecps.current.md, operational/learnings.md | Tone + audience + what's worked |
+| channel-prioritization | company-brief/company-brief.current.md, go-to-market/ecps/ecps.current.md, go-to-market/positioning/*/*.current.md, market-and-us/competitors/competitors.current.md, operational/stack.md | Full context to score channels |
+| content-calendar-planner | go-to-market/positioning/*/*.current.md, go-to-market/ecps/ecps.current.md, brand-identity/voice-profile/voice-profile.current.md | Topics + voice + audience |
+| outreach-sequence-builder | go-to-market/positioning/*/*.current.md, go-to-market/ecps/ecps.current.md, brand-identity/voice-profile/voice-profile.current.md | Audience + angle + voice |
+| acquisition-metrics-plan | company-brief/company-brief.current.md, go-to-market/ecps/ecps.current.md, go-to-market/positioning/*/*.current.md (if exists), go-to-market/pricing/pricing.current.md (if exists), operational/stack.md (if exists) | Business model + ECPs + canales + pricing para métricas precisas |
 
 **Orchestrators read everything:**
-| sancho-start | ALL brand files (only current.md per pillar) + operational/ | Full picture for routing |
-| foundation-orchestrator | ALL sections (only current.md per pillar, for coverage + gate checks) | Manages 6-layer DAG |
+| sancho-start | ALL brand files (only {carpeta}.current.md per pillar) + operational/ | Full picture for routing |
+| foundation-orchestrator | ALL sections (only {carpeta}.current.md per pillar, for coverage + gate checks) | Manages 6-layer DAG |
 
 ### 4. Handle Missing Files Gracefully
 
@@ -441,7 +441,7 @@ Every campaign has `brief.md`. See `_system/schemas/campaign.schema.json`.
 {planning | active | complete}
 
 ## Voice Notes
-{Campaign-specific voice adjustments from brand/{slug}/brand-identity/voice-profile/current.md}
+{Campaign-specific voice adjustments from brand/{slug}/brand-identity/voice-profile/voice-profile.current.md}
 
 ## GTM Canvas Alignment
 {Which Canvas elements this activates: Market/Customer/Product/Pricing/Positioning/Growth}

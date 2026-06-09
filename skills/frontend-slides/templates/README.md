@@ -4,22 +4,22 @@
 
 Each template is a self-contained HTML generator that:
 1. Reads brand colors/fonts from `brand/{slug}/visual-identity/` (or uses defaults)
-2. Reads pilar data from `brand/{slug}/{pilar}/current.md`
+2. Reads pilar data from `brand/{slug}/{pilar}/{pilar}.current.md`
 3. Generates a single HTML file with all CSS/JS inline
 
 ## Templates Available
 
 | Template | Slides | Data Source |
 |----------|--------|-------------|
-| `competitor-deep-dive` | 1 per competitor | `market-and-us/competitors/current.md` |
-| `swot-analysis` | 1 | `swot-analysis/current.md` |
-| `ope-canvas` | 1 | `ope-canvas/current.md` |
-| `gap-analysis` | 1-2 | `market-and-us/competitors/current.md` |
-| `competitor-landscape` | 1 | `market-and-us/competitors/current.md` |
-| `niche-value-engine` | 1 per ECP | `positioning-messaging/current.md` |
-| `cross-niche-authorities` | 1 | `niche-discovery-100x/current.md` |
-| `platform-assets` | 1 | `positioning-messaging/current.md` |
-| `market-context` | 1-2 | `market-intelligence/current.md` |
+| `competitor-deep-dive` | 1 per competitor | `market-and-us/competitors/competitors.current.md` |
+| `swot-analysis` | 1 | `swot-analysis/swot-analysis.current.md` |
+| `ope-canvas` | 1 | `ope-canvas/ope-canvas.current.md` |
+| `gap-analysis` | 1-2 | `market-and-us/competitors/competitors.current.md` |
+| `competitor-landscape` | 1 | `market-and-us/competitors/competitors.current.md` |
+| `niche-value-engine` | 1 per ECP | `positioning-messaging/positioning-messaging.current.md` |
+| `cross-niche-authorities` | 1 | `niche-discovery-100x/niche-discovery-100x.current.md` |
+| `platform-assets` | 1 | `positioning-messaging/positioning-messaging.current.md` |
+| `market-context` | 1-2 | `market-intelligence/market-intelligence.current.md` |
 | `cover` | 1 | Manual input |
 | `section-divider` | 1 | Manual input |
 | `index-toc` | 1 | Auto-generated from slide set |
@@ -33,7 +33,7 @@ Each template is a self-contained HTML generator that:
 
 ## Brand Integration
 
-The skill reads from `brand/{slug}/visual-identity/current.md` for:
+The skill reads from `brand/{slug}/visual-identity/visual-identity.current.md` for:
 - `--brand-primary`: Primary color
 - `--brand-accent`: Accent color  
 - `--brand-dark`: Dark background

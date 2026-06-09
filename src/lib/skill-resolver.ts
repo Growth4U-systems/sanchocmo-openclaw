@@ -118,6 +118,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "doc-coauthoring": "dulcinea",
   "ecp-validation": "sanson",
   "email-sequence": "rocinante",
+  "existing-customer-data": "hamete",
   "feedback-triage": "sanson",
   "find-instagram-profiles": "hamete",
   "find-linkedin-profiles": "hamete",
@@ -144,6 +145,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "lead-magnet": "dulcinea",
   "lead-magnets": "dulcinea",
   "market-intelligence": "hamete",
+  "market-synthesis": "hamete",
   "mcp-builder": "cervantes",
   "meeting-intelligence": "hamete",
   "meta-ads": "mambrino",
@@ -154,6 +156,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "native-google-analytics": "merlin",
   "news-monitor": "hamete",
   "newsletter": "dulcinea",
+  "niche-discovery-100x": "hamete",
   "niche-presentation": "maese-pedro",
   "od-export": "maese-pedro",
   "od-generate": "maese-pedro",
@@ -170,6 +173,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "paywall-upgrade-cro": "dulcinea",
   "performance-analysis": "merlin",
   "popup-cro": "dulcinea",
+  "positioning-messaging": "dulcinea",
   "pov-bank-builder": "dulcinea",
   "programmatic-seo": "dulcinea",
   "qa-bot": "sanson",
@@ -180,6 +184,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "sales-enablement": "rocinante",
   "sancho-visual": "maese-pedro",
   "schema-markup": "dulcinea",
+  "self-intelligence": "hamete",
   "send-idea-notifications": "dulcinea",
   "seo-audit": "dulcinea",
   "seo-content": "dulcinea",
@@ -333,6 +338,15 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
   if (ctx.pillar) {
     const fromConfig = toResolution(cfg.pillars?.[ctx.pillar]);
     if (fromConfig) return fromConfig;
+    // 5a. Foundation pillars are named *-analysis in the UI/foundation, but the
+    // installed skills (and SKILL_OWNER_MAP) use *-intelligence (and other
+    // pillar-key ≠ skill-name mismatches). Bridge the naming so the pillar
+    // resolves to the REAL skill + its owner agent instead of a non-existent
+    // homonymous skill with no owner that falls back to Sancho. Root cause of the
+    // chat→Sancho regression (SAN-26/98); extended to all Foundation pillars in
+    // SAN-102 so research/synthesis/niche → Hamete, positioning → Dulcinea, etc.
+    const aliasedSkill = PILLAR_SKILL_ALIAS[ctx.pillar];
+    if (aliasedSkill) return { skill: aliasedSkill, skills: [aliasedSkill] };
     // 5b. Convention: meta-skill pillars have a homonymous skill installed
     // alongside them. When the brand hasn't customized chat-config we fall
     // through to that convention before going to the generic manager — so
@@ -345,6 +359,31 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
   // 6. Fallback
   return { skill: "sancho-manager", skills: ["sancho-manager"] };
 }
+
+/** Foundation pillar key → installed skill. Foundation threads are opened by
+ *  pillar key (the thread namespace, e.g. `{slug}:market-analysis`), which often
+ *  differs from the installed skill name (`market-intelligence`) — and even when
+ *  it matches, the homonymous skill may not exist. This bridge maps the pillar →
+ *  its real skill so resolution lands on the owned skill and routes to the owner
+ *  agent via SKILL_OWNER_MAP, instead of falling back to Sancho. Root cause of
+ *  the chat→Sancho regression (SAN-26/98); extended to all Foundation pillars in
+ *  SAN-102 (research/synthesis/niche → Hamete, positioning → Dulcinea,
+ *  pricing/strategic-plan → Sancho default).
+ *  `fast-foundation` / `company-brief` are intentionally absent — that flow is
+ *  owned by Fast Foundation and reworked in SAN-13. */
+const PILLAR_SKILL_ALIAS: Record<string, string> = {
+  "market-analysis": "market-intelligence",
+  "competitor-analysis": "competitor-intelligence",
+  "self-analysis": "self-intelligence",
+  "market-synthesis": "market-synthesis",
+  "niche-discovery": "niche-discovery-100x",
+  positioning: "positioning-messaging",
+  pricing: "pricing-strategy",
+  "metrics-setup": "metrics-setup",
+  "strategic-plan": "strategic-plan",
+  "existing-customer-data": "existing-customer-data",
+  "ecp-validation": "ecp-validation",
+};
 
 /** Pillars that ship with a child skill of the same name. Used by step 5b
  *  of `resolveThreadSkills` so threads land on the right skill even when

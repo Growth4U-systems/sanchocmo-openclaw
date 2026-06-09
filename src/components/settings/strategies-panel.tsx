@@ -578,7 +578,6 @@ export function StrategiesPanel() {
           </p>
         )}
         {filtered.map((s) => {
-          const isActive = activeIds.has(s.id);
           const clientInfo = getClientScore(s.id, clientStrategies);
 
           return (

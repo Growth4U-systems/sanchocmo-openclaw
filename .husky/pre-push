@@ -1,14 +1,13 @@
 # Pre-push hook — runs checks locally to save CI Actions minutes.
-#   • typecheck (tsc --noEmit) → BLOCKS the push if it fails (the real local gate).
-#   • lint (next lint)         → INFORMATIONAL only; prints findings, never blocks.
-#     Mirrors CI's former `continue-on-error` lint job; the repo carries known
-#     legacy lint debt, so blocking on it would force --no-verify on every push.
+#   • typecheck (tsc --noEmit) → BLOCKS the push if it fails.
+#   • lint (next lint)         → BLOCKS the push on errors (warnings don't fail).
+#     The repo's legacy lint debt was cleared, so lint is now an enforced gate.
 # Bypass in a pinch with: git push --no-verify
 # (CI still runs typecheck + build on staging/main as the authoritative gate.)
 
-echo "🔎 pre-push: typecheck (blocking)…"
+echo "🔎 pre-push: typecheck…"
 npm run typecheck
 
 echo ""
-echo "💡 pre-push: lint (informational — does not block the push)…"
-npm run lint || true
+echo "🧹 pre-push: lint…"
+npm run lint

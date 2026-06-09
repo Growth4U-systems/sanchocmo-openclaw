@@ -233,7 +233,7 @@ export function VisualIdentityHero({ slug, onRequestChange }: Props) {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-bold text-red-700 mb-2">DON'T</h4>
+              <h4 className="text-sm font-bold text-red-700 mb-2">DON&apos;T</h4>
               <ul className="space-y-1 text-sm">
                 {parsed.dosAndDonts.donts.map((d, i) => (
                   <li key={i} className="flex gap-2"><span className="text-red-600">✗</span><span>{d}</span></li>

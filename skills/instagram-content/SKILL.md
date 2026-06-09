@@ -31,7 +31,7 @@ Cuando el usuario pide crear contenido para Instagram, generar posts de IG, crea
 - `brand_voice` del cliente: `brand/{slug}/brand-book/brand-voice/brand-voice.current.md`
 - Pillars + POV: `brand/{slug}/content/content-pillars.md` + `brand/{slug}/content/pov-bank.json`
 - Strategy guardrails: `brand/{slug}/content/strategy-decisions.md`
-- ECPs (opcional): `brand/{slug}/go-to-market/ecps/current.md`
+- ECPs (opcional): `brand/{slug}/go-to-market/ecps/ecps.current.md`
 
 ## Pipeline
 
@@ -47,7 +47,7 @@ brand_voice = read(f"brand/{slug}/brand-book/brand-voice/brand-voice.current.md"
 pillars = read(f"brand/{slug}/content/content-pillars.md")
 pov_bank = read_json(f"brand/{slug}/content/pov-bank.json")
 strategy = read(f"brand/{slug}/content/strategy-decisions.md")
-ecps = read(f"brand/{slug}/go-to-market/ecps/current.md")  # opcional
+ecps = read(f"brand/{slug}/go-to-market/ecps/ecps.current.md")  # opcional
 ```
 
 ### Paso 2.5: Deep Research (ALWAYS — pre-step before Clarify)
