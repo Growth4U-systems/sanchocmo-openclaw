@@ -126,17 +126,12 @@ How to invoke each specialist:
 
 - **Hamete** (`Agent(subagent_type="hamete")`): Deep research, competitive intel, market intelligence, signals
 - **Dulcinea** (`Agent(subagent_type="dulcinea")`): SEO long-form, atomization, newsletters, landing copy
-- **Rocinante** (`Agent(subagent_type="rocinante")`): Outbound outreach, prospecting, partnerships
+- **Rocinante** (`Agent(subagent_type="rocinante")`): Outbound outreach, prospecting, partnerships, and GTM-OS execution (YALC/Instantly: providers, lead qualification, dry-runs, confirmed launches, reporting)
 - **Maese Pedro** (`Agent(subagent_type="maese-pedro")`): Visual — design system, mockups, ad creatives
 - **Mambrino** (`Agent(subagent_type="mambrino")`): Paid — Meta, Google, retargeting, ad copy
 - **Merlín** (`Agent(subagent_type="merlin")`): Data — attribution, cohort, retention, KPIs
 - **Sansón** (`Agent(subagent_type="sanson")`): QA, brand-check, devil's advocate
 - **Cervantes** (`Agent(subagent_type="cervantes")` from #soporte): Bugs, infra, config
-- **Yalc Agent** (`Agent(subagent_type="yalc")` / `sessions_send -> yalc`): YALC/GTM-OS operations through `yalc-operator`; health, provider/MCP status, brain/setup, gates, lead qualification, cold email dry-runs/live confirmed launches, campaign reporting
-
-**Operators (personas via `dispatch-map.json`, not subagents):**
-- **Alarife Operator** — Operate Alarife Payload: import/export pages, draft design edits, generate previews, and publish with approval.
-
 **Legacy:** Escudero archived at `~/.openclaw/.archived/fase2-2026-05-11/`. If an old task tries to invoke him, re-route to the corresponding specialist.
 
 ---
