@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# Seed/refresh the OpenClaw home from the image's baked framework so a fresh/empty
+# OPENCLAW_HOME boots and `compose pull` updates apply — without clobbering user
+# data. No-op in source/bind-mount dev mode (no /opt/sancho-seed). See init-home.sh.
+if [ -x /opt/sancho-seed/docker/init-home.sh ]; then
+  bash /opt/sancho-seed/docker/init-home.sh /root/.openclaw
+fi
+
 cd /root/.openclaw
 
 OPENCLAW_CONFIG="/root/.openclaw/.openclaw/openclaw.json"

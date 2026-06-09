@@ -105,3 +105,21 @@ docker compose -f docker-compose.yml up -d --build
 Schema migrations for the bundled Postgres are **applied automatically at boot**,
 so a new version that adds tables just works — your `postgres_data` volume (and
 `config/` / `brand/`) persist across updates.
+
+## The OpenClaw home (data & framework)
+
+The container keeps its state in a volume mounted at `/root/.openclaw`
+(`OPENCLAW_HOME`, default `~/.openclaw`). You do **not** need to seed it yourself:
+the image is self-contained and **populates an empty volume on first boot**, so the
+project is not tied to a cloned repo at any particular path.
+
+- **Framework** (agent skills, boot scripts, plugins) ships *inside the image* and
+  is **refreshed from the image whenever you update** — so `compose pull` of a newer
+  version brings new skills/fixes automatically.
+- **Your data** (`config/`, `workspace-*/memory`, `brand/`, real `cron/jobs.json`,
+  and the bundled Postgres `postgres_data` volume) lives only in the volume and is
+  **never overwritten** by an update.
+
+> **Tip:** if the machine already uses `~/.openclaw` for the `openclaw` CLI, point
+> SanchoCMO at a dedicated dir to avoid mixing them — set `OPENCLAW_HOME=/srv/sancho-home`
+> (or any path/volume) in `.env` before `docker compose up`.
