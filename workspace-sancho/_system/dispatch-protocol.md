@@ -6,7 +6,7 @@
 
 ## Principio
 
-Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn), **research & market intelligence a Hamete** (sessions_send -> `hamete`), operaciones GTM-OS a Yalc Agent (sessions_send -> `yalc`, skill `yalc-operator`) y verificación a Sansón (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
+Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn), **research & market intelligence a Hamete** (sessions_send -> `hamete`), operaciones GTM-OS a Rocinante (sessions_send -> `rocinante`, skill `yalc-operator`) y verificación a Sansón (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
 
 ---
 
@@ -32,7 +32,7 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Cualquier tarea cuyo entregable sea "realidad externa documentada con fuentes"
 - Hamete corre el preflight de providers (`scraping-preflight.md`) y usa el stack conectado (scrapecreators MCP, DataForSEO MCP, smart-scrape). NO uses "Gemini Deep Research" (no existe): el research es `deep-research` vía Hamete.
 
-**Usa Yalc Agent** (via `sessions_send` al agente `yalc`; dentro usa `yalc-operator`):
+**Usa Rocinante para GTM-OS** (via `sessions_send` al agente `rocinante`; usa `yalc-operator`):
 - Health checks y troubleshooting de GTM-OS/YALC
 - Provider status y MCP-backed provider checks expuestos por YALC
 - Brain/setup/gates de YALC cuando el usuario pide operar GTM-OS
@@ -40,6 +40,14 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Dry-runs de cold email y campaign setup via YALC/Instantly
 - Lanzamientos live solo tras confirmación explícita del usuario
 - Campaign status, reporting y guardado de resultados en `brand/{slug}/yalc/runs/`
+
+**Usa Alarife para web/páginas** (via `Agent(subagent_type="alarife")` desde Sancho; usa `alarife-integration`, `payload`, `site-architecture`, `frontend-design`, `page-cro`):
+- Build y publish de páginas/sites en Payload CMS (draft → preview → publish-with-approval)
+- Arquitectura de la información: estructura de páginas, jerarquía, routing
+- Frontend: implementación de páginas en producción
+- CRO: optimización de conversión a nivel de página y formulario
+- Importación/exportación de sites y migraciones de CMS
+- Alarife solicita el copy a Dulcinea y los visuales a Maese Pedro; nunca publica sin aprobación explícita
 
 ### Selección de modelo para spawn (IMPORTANTE)
 
@@ -95,7 +103,8 @@ Para mapping completo de personas a tareas, ver `dispatch-map.json`.
 | **Deep research, market analysis** | **Hamete** | **send** | — | deep-research, market-intelligence |
 | **Competitive intel, battle cards** | **Hamete** | **send** | — | competitor-intelligence, thief-marketers |
 | **Signals, daily pulse, patterns, meeting intel** | **Hamete** | **send** | — | signal-monitor, daily-pulse, pattern-detector, meeting-intelligence |
-| YALC/GTM-OS execution | Yalc Agent | send | — | yalc-operator |
+| YALC/GTM-OS execution | Rocinante | send | — | yalc-operator |
+| **Web/page build & publish** | **Alarife** | **spawn** | — | alarife-integration, payload, site-architecture, frontend-design, page-cro |
 | Brand check, QA | Sansón | send | — | Brand verification, devil's advocate |
 | Admin, bugs, infra | Cervantes | message (Discord) | — | System tasks |
 
@@ -161,7 +170,7 @@ QA REQUEST
 - Respuestas conversacionales en Discord
 - Outputs solo para uso interno
 
-## Yalc Agent (sessions_send)
+## Rocinante — GTM-OS/YALC (sessions_send)
 
 Formato:
 
@@ -181,7 +190,7 @@ YALC REQUEST
 ```
 
 Reglas:
-- El agente `yalc` debe usar `skills/yalc-operator/scripts/yalc-client.mjs`.
+- Rocinante debe usar `skills/yalc-operator/scripts/yalc-client.mjs`.
 - Antes de `run-skill`, debe listar `skills` y verificar el catálogo vivo.
 - Para email/campañas/gates/setup/brain writes/campaign status writes: si no hay confirmación explícita, solo dry-run o lectura.
 - MCP se revisa a través de `providers`, `provider-knowledge` y `provider-test`; no conectar Sancho directamente a MCP externos salvo cambio futuro.

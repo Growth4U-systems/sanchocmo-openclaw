@@ -43,44 +43,5 @@
     "id": "sanson",
     "method": "sessions_send",
     "activate_for": ["brand-check", "qa-review", "devil-advocate", "foundation-verification"]
-  },
-  "alarife_operator": {
-    "id": "alarife-operator",
-    "name": "Alarife Operator",
-    "method": "sessions_send",
-    "note": "v4 operator (not a legacy Escudero persona). Operates Alarife Payload: import/export, draft edits, previews, publish with approval.",
-    "persona_file": "workspace-sancho/personas/alarife-operator.md",
-    "skill": "alarife-integration",
-    "activate_for": ["alarife", "alarife-payload", "payload", "cms-migration", "export-site", "import-site", "page-design", "web-publish", "site-preview"],
-    "skills": ["alarife-integration", "payload", "cms-migration", "site-architecture", "frontend-design", "page-cro", "form-cro"],
-    "brand_context": ["foundation-state.json", "voice-profile.md", "visual-identity.md", "positioning.md"],
-    "requires_confirmation_for": ["web-publish"]
-  },
-  "yalc_agent": {
-    "id": "yalc",
-    "name": "Yalc Agent",
-    "method": "sessions_send",
-    "skill": "yalc-operator",
-    "activate_for": [
-      "yalc",
-      "gtm-os",
-      "outbound-execution",
-      "lead-qualification",
-      "campaign-dry-run",
-      "campaign-launch-confirmed",
-      "campaign-reporting",
-      "instantly",
-      "provider-status",
-      "mcp-provider-status"
-    ],
-    "requires_confirmation_for": [
-      "send-email",
-      "launch-campaign",
-      "approve-gate",
-      "commit-setup",
-      "pause-campaign",
-      "resume-campaign",
-      "update-lead-status"
-    ]
   }
 }

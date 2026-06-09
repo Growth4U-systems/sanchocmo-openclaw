@@ -56,7 +56,7 @@ The wrapper also reads `brand/{slug}/.env` if present.
 
 ## Commands
 
-Use these from `workspace-yalc/` or `workspace-sancho/`:
+Use these from `workspace-sancho/`:
 
 ```bash
 node skills/yalc-operator/scripts/yalc-client.mjs health --slug growth4u

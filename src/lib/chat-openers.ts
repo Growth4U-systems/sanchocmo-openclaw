@@ -117,10 +117,12 @@ export const MC_CHAT_AGENTS: Record<string, { emoji: string; label: string; colo
   rocinante: { emoji: "🐴", label: "Rocinante", color: "#3B9EBF" },
   cervantes: { emoji: "✒️", label: "Cervantes", color: "#9B59B6" },
   "maese-pedro": { emoji: "🎭", label: "Maese Pedro", color: "#D4548F" },
+  alarife: { emoji: "🧱", label: "Alarife", color: "#7C6D3E" },
   mambrino: { emoji: "🪖", label: "Mambrino", color: "#C2410C" },
   merlin: { emoji: "🔮", label: "Merlín", color: "#4F46E5" },
   sanson: { emoji: "🛡️", label: "Sansón", color: "#047857" },
-  yalc: { emoji: "🧭", label: "Yalc Agent", color: "#4A5D23" },
+  // legacy shim: old yalc threads display as Rocinante (merged SAN-116)
+  yalc: { emoji: "🐴", label: "Rocinante", color: "#3B9EBF" },
   // legacy shim: old threads with agent="escudero" display as Dulcinea
   escudero: { emoji: "✍️", label: "Dulcinea", color: "#E11D74" },
 };
@@ -131,10 +133,10 @@ export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
     threadName: "YALC / GTM-OS",
     skill: "yalc-operator",
     skills: ["yalc-operator"],
-    linkedTo: "yalc",
+    linkedTo: "rocinante",
     docPath: null,
     threadState: "continue",
-    agent: "yalc",
+    agent: "rocinante",
     initialMessage: prompt,
   };
 }
