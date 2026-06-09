@@ -97,6 +97,16 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - Fuera de scope: docs internos de Cervantes (se limpian en su track de retiro); `CHANGELOG.md` histórico; **`mc-server.js` sigue necesario** (fallback Strangler-Fig, el Next aún proxya `recurring-tasks`/`connect-proxy` a :18790).
   - Verif: `node -c` ambos servers ✅ · `grep new-client` en código → 0.
 
+- **[Fase 1.5 · Postgres bundled — GAP B9]** — branch `feat/pg-bundled-local-db` (→ `staging`), worktree aislado. Enfoque aprobado por el usuario: **driver condicional + baseline limpio + migrate-at-boot, gateado a local-db; path Neon de prod byte-idéntico**.
+  - **Driver condicional**: nuevo `src/db/driver-select.ts` → `selectDbDriver(url, override)` (auto: `*.neon.tech` → `neon`, otro → `postgres`; override `DATABASE_DRIVER`). `src/db/drizzle.ts` instancia `neon-http` o `postgres-js` según eso; `Db` se tipa como el cliente neon histórico (cast en el boundary) → **cero churn en call-sites**. Dep nueva: `postgres` (postgres.js).
+  - **Baseline limpio**: las migraciones de `src/db/migrations/` están rotas para replay (sin journal, números duplicados, `0003_rekey_tasks` con DROP). Nuevo `drizzle.local.config.ts` + `src/db/migrations-local/` (baseline `0000` consolidado desde `schema.ts`, 22 tablas, sin DROPs, con journal). Prod/Neon sigue con su flujo manual aparte.
+  - **Migrate-at-boot**: `scripts/migrate-local.mjs` (migrator programático postgres-js, espera readiness, idempotente, no-op en Neon, non-fatal). Gateado en `docker/entrypoint.sh` (sección 5d, solo si driver=postgres y `DATABASE_URL` seteada). `COPY` agregado en `Dockerfile`.
+  - **Compose**: servicio `postgres:16-alpine` detrás del profile `local-db` + volumen `postgres_data` + healthcheck; `DATABASE_DRIVER` passthrough. `.env.example` y `docs/INSTALL.md` (nueva sección *Database*) documentan modo bundled vs externo vs sin-DB, auto-detect del driver, y migraciones auto al boot.
+  - **Seguridad prod**: `DATABASE_DRIVER=neon` explícito en `deploy-staging.yml` + `deploy-prod.yml` (cinturón sobre el auto-detect).
+  - **Resuelve la decisión abierta #5** (driver + bootstrap). El `.batch()` neon-only de `client-lifecycle.ts` se hizo portable (neon mantiene `.batch`; postgres usa transacción interactiva) — único call-site con divergencia real.
+  - **Fuera de scope**: cutover de tasks a DB (B8) — `MC_TASKS_BACKEND` queda en `json`; B9 solo habilita MI/POV/Polar con DB local.
+  - Verificación: `npm run test:lib` ✅ 192/192 (incluye 5 nuevos de `selectDbDriver`) · `npm run typecheck` ✅ · `docker compose config` base (sin postgres) y `--profile local-db` (con postgres+volumen) ✅ · **bootstrap real contra `postgres:16-alpine` efímero**: 22 tablas creadas, 2ª corrida idempotente (`__drizzle_migrations`=1), URL neon → skip sin conectar ✅. **Pendiente**: e2e en container completo (`compose up` con local-db) y CI.
+
 ### 🟡 En curso / bloqueado
 
 - **CI de los PRs #208 y #219 en rojo por GitHub Actions pausado (billing)** a nivel org — `startup_failure`, no es el código (local pasa). Se destraba al cargar saldo y re-correr. (Usuario: "luego cargo plata".)
@@ -130,15 +140,12 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 | # | Item | PR | Estado | Notas |
 |---|------|----|--------|-------|
-| 1 | B5 · retiro git-backup | #325 (base `staging`) | ✅ **en staging** | base del stack |
-| 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ **en staging** | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
-| 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ **en staging** | aclaración #1; D4/D5/D6 follow-up |
-| 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ **en staging** | un-comando install; DB local espera B9 |
-| 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ **en staging** | placeholder SUL; texto canónico = decisión legal |
-
-> **Stack mergeado** (2026-06-08, por el usuario): cada PR aterrizó como su propio commit squash en `staging` (no un squash único). Los siguientes PRs ya no se apilan — se branchean desde `staging` actualizada.
-
-| 6 | D4 · retiro `new-client.sh` | #363 (base `staging`) | ✅ abierto | SAN-108; superseded por creación-MC + foundation skills |
+| 1 | B5 · retiro git-backup | #325 (base `staging`) | ✅ abierto | base del stack |
+| 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ abierto | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
+| 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ abierto | aclaración #1; D4/D5/D6 follow-up |
+| 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ abierto | un-comando install; DB local ✅ con B9 |
+| 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ abierto | placeholder SUL; texto canónico = decisión legal |
+| 6 | B9 · Postgres bundled (driver condicional + baseline) | branch `feat/pg-bundled-local-db` (→ `staging`) | 🔨 local listo, sin PR | resuelve decisión #5; verificado vs `postgres:16-alpine` (22 tablas, idempotente); falta e2e en container + PR |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
@@ -146,7 +153,11 @@ añadir wizard y publicar imágenes. No es una reescritura.
 2. **Imágenes públicas OD/YALC (B2/B3/F5)** — *OD resuelto*: la imagen OD ya es pública (`ghcr.io/growth4u-systems/od:edge`, usada en el overlay B2). **Falta YALC**: hoy el overlay usa `build:` desde el repo privado `../Yalc-Growth4U`; ¿cuál es el nombre/tag de la imagen YALC pública (`ghcr.io/growth4u-systems/yalc:<tag>`)? Con eso hago B3 (build → image).
 3. **Fase 0 (purga de secretos)** — bloqueante para publicar, **destructivo**: rewrite de historial git + **rotar** credenciales expuestas (clave Tailscale `sancho-cmo.taild48df2.ts.net.key`, tokens de `openclaw.json.last-good`/`.env.bak`/`instance.json`). **No lo hago solo.** Lo ejecutás vos.
 4. **Cutover tasks JSON→DB (B8)**: requiere `db-shadow` en staging N días con diff continuo antes del cutover. Autónomamente solo el **runbook**; el cutover lo hacés vos.
-5. **🔴 B9 (Postgres bundled) — DECISIÓN NECESARIA, bloquea local-run completo**: el driver de DB es `@neondatabase/serverless` (`neon-http`), que **NO habla con un Postgres vanilla** — solo con el endpoint HTTP de Neon. Para PG bundled hay que (a) cambiar/condicionar el driver (neon-http para Neon, `pg`/node-postgres para local) **sin romper la conexión Neon de G4U en prod**, y (b) resolver el bootstrap de schema: **no hay journal de Drizzle** (`migrations/meta/` ausente) → `drizzle-kit migrate` no sirve as-is; hay una migración **destructiva** (`0003_rekey_tasks`, DROP) y números duplicados → no se puede aplicar todo el SQL a ciegas; `apply-sql-migration.mjs` también usa `neon()`. **Opciones**: (i) generar un journal de Drizzle limpio desde el schema actual + driver condicional + migrate-al-boot solo para PG local; (ii) un `init.sql` consolidado para DBs frescas. Necesito tu OK sobre el enfoque (riesgo de tocar el path de DB de prod). El wizard ya deja `COMPOSE_PROFILES=local-db` listo para cuando aterrice. **Mientras tanto la app corre con `MC_TASKS_BACKEND=json` (default) o DB externa (Neon).**
+5. **✅ B9 (Postgres bundled) — RESUELTO** (branch `feat/pg-bundled-local-db`). El usuario aprobó el enfoque **(i)**: driver condicional (`neon-http` para `*.neon.tech` / `postgres-js` para el resto) + baseline limpio generado desde `schema.ts` en `src/db/migrations-local/` + migrate-at-boot gateado a local-db. Prod/Neon byte-idéntico (auto-detect + `DATABASE_DRIVER=neon` en deploys). Verificado contra `postgres:16-alpine` (22 tablas, idempotente). Ver entrada en "✅ Hecho". El texto original de la decisión queda abajo como referencia histórica.
+   <details><summary>Contexto original de la decisión</summary>
+
+   **🔴 B9 (Postgres bundled) — DECISIÓN NECESARIA, bloquea local-run completo**: el driver de DB es `@neondatabase/serverless` (`neon-http`), que **NO habla con un Postgres vanilla** — solo con el endpoint HTTP de Neon. Para PG bundled hay que (a) cambiar/condicionar el driver (neon-http para Neon, `pg`/node-postgres para local) **sin romper la conexión Neon de G4U en prod**, y (b) resolver el bootstrap de schema: **no hay journal de Drizzle** (`migrations/meta/` ausente) → `drizzle-kit migrate` no sirve as-is; hay una migración **destructiva** (`0003_rekey_tasks`, DROP) y números duplicados → no se puede aplicar todo el SQL a ciegas; `apply-sql-migration.mjs` también usa `neon()`. **Opciones**: (i) generar un journal de Drizzle limpio desde el schema actual + driver condicional + migrate-al-boot solo para PG local; (ii) un `init.sql` consolidado para DBs frescas. Necesito tu OK sobre el enfoque (riesgo de tocar el path de DB de prod). El wizard ya deja `COMPOSE_PROFILES=local-db` listo para cuando aterrice. **Mientras tanto la app corre con `MC_TASKS_BACKEND=json` (default) o DB externa (Neon).**
+   </details>
 
 ---
 

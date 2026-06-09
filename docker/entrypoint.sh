@@ -277,6 +277,21 @@ if [ -n "$OPENCLAW_VERSION" ]; then
 fi
 
 # ===========================================================
+# 5d. APPLY LOCAL DB MIGRATIONS (bundled / non-Neon Postgres only)
+# ===========================================================
+# The bundled local Postgres (Compose profile `local-db`) ships empty; create
+# its schema from the clean baseline in src/db/migrations-local before the app
+# servers touch the DB. The script self-gates: it SKIPS Neon/managed URLs
+# (prod keeps its own manual apply flow) and is a no-op when DATABASE_URL is
+# unset. Idempotent across reboots/upgrades. Non-fatal on failure so the
+# container still boots (DB features degrade rather than crash). Runs from the
+# Next app dir so it resolves postgres/drizzle-orm from its node_modules.
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "[entrypoint] Checking local DB migrations…"
+  ( cd /app/mc-nextjs && node scripts/migrate-local.mjs ) || true
+fi
+
+# ===========================================================
 # 6. START GATEWAY (foreground, backgrounded for MC)
 # ===========================================================
 echo "[entrypoint] Starting OpenClaw gateway..."

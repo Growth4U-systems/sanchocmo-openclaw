@@ -102,6 +102,11 @@ jobs:
           OPENAI_AUTH_MODE: ${{ vars.OPENAI_AUTH_MODE }}
           ADMIN_EMAIL_DOMAIN: ${{ vars.ADMIN_EMAIL_DOMAIN }}
           ADMIN_IDENTITY_EMAIL: ${{ vars.ADMIN_IDENTITY_EMAIL }}
+          # Force the Neon HTTP driver in G4U deploys. The runtime also
+          # auto-detects neon from the *.neon.tech host, but pinning it here
+          # removes any chance of falling back to the vanilla-Postgres driver
+          # (used by the bundled local-db) if DATABASE_URL ever changes shape.
+          DATABASE_DRIVER: neon
           SANCHO_MCP_AUDIT_BACKEND: ${{ vars.SANCHO_MCP_AUDIT_BACKEND }}
           SANCHO_MCP_AUDIT_FAIL_CLOSED: ${{ vars.SANCHO_MCP_AUDIT_FAIL_CLOSED }}
           SANCHO_MCP_AUDIT_FILE: ${{ vars.SANCHO_MCP_AUDIT_FILE }}
@@ -134,7 +139,7 @@ jobs:
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
-              "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL",
+              "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
               "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
               "SANCHO_MCP_AUDIT_FILE",
           ]

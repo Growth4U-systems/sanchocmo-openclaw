@@ -72,6 +72,29 @@ All off by default. Turn them on when you need them:
 - **Discord** — set `DISCORD_BOT_TOKEN` in `.env` (Discord is one comms channel; Mission Control chat is the primary interface).
 - **Slack** — configure in Mission Control → Settings → APIs.
 
+## Database
+
+You pick this in the wizard (`Database: local` or `external`); it only sets two
+values in `.env`, which you can also edit by hand:
+
+- **Bundled local Postgres** (recommended, `DB_MODE=local`): the wizard writes
+  `COMPOSE_PROFILES=local-db` and a `DATABASE_URL` pointing at the in-network
+  `postgres` service (`postgres://sancho:…@postgres:5432/sancho`). `docker
+  compose up` then starts a `postgres:16-alpine` container alongside the app
+  (its data lives in the `postgres_data` volume), and the schema is **created
+  automatically on first boot** — no Neon account needed. Meeting Intelligence /
+  POV Bank / Polar work out of the box.
+- **External / managed** (e.g. Neon, `DB_MODE=external`): leave
+  `COMPOSE_PROFILES` empty and set `DATABASE_URL` to your own database. No
+  bundled container is started.
+- **No database at all**: leave `DATABASE_URL` empty and run with
+  `MC_TASKS_BACKEND=json` (default). The app boots fine; only DB-backed features
+  (MI / POV Bank) are unavailable.
+
+The driver is auto-selected from the `DATABASE_URL` host (`*.neon.tech` → Neon's
+HTTP driver, anything else → standard Postgres), so the same image works for all
+three. Set `DATABASE_DRIVER=neon|postgres` only to override that.
+
 ## Updating
 
 ```bash
@@ -79,8 +102,6 @@ git pull
 docker compose -f docker-compose.yml up -d --build
 ```
 
-> **Note:** the bundled Postgres option (`DB_MODE=local`, `COMPOSE_PROFILES=local-db`)
-> is wired by the wizard and lights up once the `postgres` service lands in the
-> base compose (packaging item B9). Until then, choose `external` with a real
-> `DATABASE_URL`, or run with `MC_TASKS_BACKEND=json` (default) and skip DB-backed
-> features (Meeting Intelligence / POV Bank).
+Schema migrations for the bundled Postgres are **applied automatically at boot**,
+so a new version that adds tables just works — your `postgres_data` volume (and
+`config/` / `brand/`) persist across updates.

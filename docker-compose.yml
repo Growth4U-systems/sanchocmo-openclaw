@@ -24,11 +24,18 @@ services:
       - MC_WORKSPACE=/root/.openclaw/workspace-sancho
       - LEGACY_PORT=18790
       # Tasks backend: "json" (default), "db-shadow" or "db".
-      # When "db" or "db-shadow", DATABASE_URL must point at a Neon DB
-      # with the migrations in src/db/migrations applied.
+      # When "db" or "db-shadow", DATABASE_URL must resolve to a Postgres with
+      # the schema applied (the bundled local-db does this at boot; Neon/managed
+      # uses the manual apply flow). B9 enables MI/POV/Polar on the bundled DB;
+      # the tasks cutover to "db" is tracked separately (B8).
       - MC_TASKS_BACKEND=${MC_TASKS_BACKEND:-json}
       - MC_TASKS_WORKSPACE=${MC_TASKS_WORKSPACE:-workspace-sancho}
+      # DATABASE_URL: bundled local Postgres by default when COMPOSE_PROFILES
+      # includes `local-db` (postgres://sancho:...@postgres:5432/sancho), or any
+      # external/Neon URL. DATABASE_DRIVER auto-detects from the host
+      # (*.neon.tech -> neon-http, else postgres-js); override to force one.
       - DATABASE_URL=${DATABASE_URL:-}
+      - DATABASE_DRIVER=${DATABASE_DRIVER:-}
       # Open Design (agentic editor): daemonUrl is server-to-server via the
       # compose network; webUrl is the public URL the browser loads in the
       # iframe / new tab. Both end at the same `open-design` container.
@@ -60,3 +67,37 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  # Bundled Postgres for the out-of-the-box "local-db" experience: MI/POV/Polar
+  # work without a Neon account. Gated behind the `local-db` Compose profile so
+  # it only runs when the wizard sets COMPOSE_PROFILES=local-db (external/Neon
+  # users leave the profile unset and point DATABASE_URL elsewhere). No
+  # `depends_on` from sanchocmo: the profile makes that a hard error when the
+  # profile is inactive, so readiness is handled by scripts/migrate-local.mjs
+  # (retry loop) and the app's lazy DB connection instead.
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["local-db"]
+    container_name: sancho-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-sancho}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-sancho}
+      - POSTGRES_DB=${POSTGRES_DB:-sancho}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sancho} -d ${POSTGRES_DB:-sancho}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  # Persists the bundled local Postgres across container restarts/upgrades.
+  postgres_data:
