@@ -20,7 +20,9 @@
  *   that's intentional and lives in each consumer's `context_required`.
  */
 export const PILLAR_DOC_PATHS: Record<string, string[]> = {
-  "fast-foundation": ["company-brief/company-brief.current.md", "company-brief/lite.md"],
+  // no lite fallback by design (SAN-13): fastcontext is FF's single canonical output
+  "fast-context": ["fastcontext/fastcontext.current.md"],
+  "fast-foundation": ["fastcontext/fastcontext.current.md"],
   "company-brief": ["company-brief/company-brief.current.md", "company-brief/lite.md"],
   "company-context": ["company-context/company-context.current.md", "company-context/lite.md"],
   "business-model": ["business-model/business-model.current.md", "business-model/lite.md"],
