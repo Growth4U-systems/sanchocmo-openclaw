@@ -81,14 +81,21 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - `docker/generate-openclaw-config.js` (D2): el bloque `channels.discord` se gatea a `DISCORD_BOT_TOKEN`; sin token Discord no se habilita (`mc-chat` sigue primario).
   - `.env.example` (D1): `DISCORD_BOT_TOKEN` comentado/opcional. `config/instance.json.example` (D3): bloque `discord` marcado opcional (`$comment_discord`).
   - G4U sin cambio (setea el token → rama con-token = comportamiento previo). Verif: `node --check` ✅ · JSON válido ✅ · test funcional del gating ✅.
-  - **Follow-ups Fase 2**: D4 (rewrite `new-client.sh` sin guild), D5 (canal publicación slack|discord), D6 (README→MC).
+  - **Follow-ups Fase 2**: ✅ D4 (retiro `new-client.sh`, SAN-108), D5 (canal publicación slack|discord), D6 (README→MC).
 
 - **[Fase 4/6 · install.sh + wizard — E1/E2/E4]** — PR #331 (`chore/san-93-wizard-install` → base `chore/san-92-discord-optional`, **stacked**), `Refs SAN-93`. Aclaraciones #2 (wizard) y #4 (un comando).
   - `install.sh` (raíz): chequea docker/compose/openssl, corre el wizard si falta `.env`, `docker compose up -d --build`. Flags `--od`/`--yalc`/`--no-up`/`--force`.
   - `scripts/wizard.sh`: interactivo + no-interactivo (`WIZARD_ASSUME_YES=1`). Genera secrets (`NEXTAUTH_SECRET`/`ENCRYPTION_KEY`/`SANCHO_INTERNAL_API_TOKEN`/`adminToken`/`mcToken`) y escribe `.env` + `config/instance.json` (sin Discord) + `config/clients.json` (primer brand). No pisa sin `--force`. Checklist final E5.
   - `docs/INSTALL.md`: guía.
   - Verif: `bash -n` ✅ · wizard non-interactive genera archivos válidos (JSON OK, tokens 64 hex) · `docker compose config` con el `.env` generado ✅.
-  - **Nota**: DB local setea `COMPOSE_PROFILES=local-db` — se enciende del todo con B9. Follow-up #2: integrar `new-client.sh` reescrito (D4), preflight (Fase 3), SetupChecklist UI (E5).
+  - **Nota**: DB local setea `COMPOSE_PROFILES=local-db` — se enciende del todo con B9. Follow-up #2: preflight (Fase 3), SetupChecklist UI (E5).
+
+- **[Fase 2 · Retiro de new-client.sh — GAP D4]** — PR #363 (`chore/retire-new-client` → `staging`, **no stacked** — el stack ya está en staging), `Refs SAN-108`. Trabajado en worktree aislado.
+  - **Corrige el plan**: D4 pasa de "reescribir el script sin guild" a **retirarlo**. El onboarding ya no lo necesita: (1) el cliente se crea desde Mission Control (`api/clients/create.ts`: registra en `clients.json` + carpeta base, sin Discord/Supabase); (2) Sancho corre Fast/Full Foundation por chat y las skills se auto-bootstrappean — el `foundation-orchestrator` crea `foundation-state.json` v3.0 si no existe, cada skill crea su sub-árbol. El script era el camino viejo (pre-seed + `--guild` obligatorio + insert Supabase), redundante.
+  - **Eliminado** `workspace-sancho/scripts/new-client.sh`. Removido el endpoint legacy `POST /api/new-client` (que lo ejecutaba vía SSE) de `mc-server.js` (gateway legacy **vivo** en :18790) y `legacy-mc-server.js` (muerto), + var huérfana `_clientCreationInProgress`.
+  - Docs al flujo nuevo: `README.md`, `_system/onboarding/{new-client-protocol,client-onboarding}.md` (reescritos), `foundation-threads/SKILL.md`, mensajes de error en `setup-content-engine-crons.sh` + `reseed-foundation.sh`.
+  - Fuera de scope: docs internos de Cervantes (se limpian en su track de retiro); `CHANGELOG.md` histórico; **`mc-server.js` sigue necesario** (fallback Strangler-Fig, el Next aún proxya `recurring-tasks`/`connect-proxy` a :18790).
+  - Verif: `node -c` ambos servers ✅ · `grep new-client` en código → 0.
 
 ### 🟡 En curso / bloqueado
 
@@ -122,11 +129,15 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 | # | Item | PR | Estado | Notas |
 |---|------|----|--------|-------|
-| 1 | B5 · retiro git-backup | #325 (base `staging`) | ✅ abierto | base del stack |
-| 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ abierto | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
-| 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ abierto | aclaración #1; D4/D5/D6 follow-up |
-| 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ abierto | un-comando install; DB local espera B9 |
-| 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ abierto | placeholder SUL; texto canónico = decisión legal |
+| 1 | B5 · retiro git-backup | #325 (base `staging`) | ✅ **en staging** | base del stack |
+| 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ **en staging** | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
+| 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ **en staging** | aclaración #1; D4/D5/D6 follow-up |
+| 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ **en staging** | un-comando install; DB local espera B9 |
+| 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ **en staging** | placeholder SUL; texto canónico = decisión legal |
+
+> **Stack mergeado** (2026-06-08, por el usuario): cada PR aterrizó como su propio commit squash en `staging` (no un squash único). Los siguientes PRs ya no se apilan — se branchean desde `staging` actualizada.
+
+| 6 | D4 · retiro `new-client.sh` | #363 (base `staging`) | ✅ abierto | SAN-108; superseded por creación-MC + foundation skills |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
@@ -220,7 +231,7 @@ El camino de **API key está roto hoy** para ambos proveedores:
 | D1 | `DISCORD_BOT_TOKEN=your-bot-token` figura como requerido | Comentado/opcional | `.env.example:19` |
 | D2 | `channels.discord.enabled=true` **siempre** | Gatear todo el bloque Discord a presencia del token | `generate-openclaw-config.js:95` |
 | D3 | `instance.json.example` pide `discord.*` como base | Bloque Discord opcional | `config/instance.json.example` |
-| D4 | `new-client.sh` exige `--guild`, inserta en Supabase, auto-bind Discord, `tools.deny` por guild | Reescribir: crea brand + registra en `clients.json` (genera `mcToken`) **sin** guild/Supabase/Discord | `workspace-sancho/scripts/new-client.sh` |
+| D4 ✅ | `new-client.sh` exige `--guild`, inserta en Supabase, auto-bind Discord | **HECHO** (PR #363, SAN-108): **retirado** el script — el onboarding ya lo hace la creación-MC (`api/clients/create.ts`) + foundation skills (auto-scaffold + `foundation-state.json` v3.0). Endpoint legacy `/api/new-client` removido de `mc-server.js` + `legacy-mc-server.js` | ~~`workspace-sancho/scripts/new-client.sh`~~ (eliminado) |
 | D5 | **Crons publican en Discord** con `message(channel=discord,…)` + patrón de hilo, leyendo `crons.<x>.publish_channel` de `client-config.json` | **Canal configurable (decisión #5)**: añadir `publish.channel_type` (`slack`/`discord`) en `instance.json`/`client-config.json`; parametrizar el paso "PUBLICAR" de las plantillas de cron. **Default Slack** (OAuth ya construido). Si dual-channel resulta caro → centralizar en Slack y dejar Discord como legacy | `cron/jobs.json*`, `client-config.json`, `meeting-intelligence-db.ts:363` (`publish_channel`), `skills/atalaya/SKILL.md:100` |
 | D6 | README gira en torno a "guild por cliente" + diagrama Discord | Reescribir alrededor de Mission Control + chat | `README.md:5-40` |
 
@@ -233,7 +244,7 @@ El camino de **API key está roto hoy** para ambos proveedores:
 | E1 | Editar a mano `.env` + `config/instance.json` + `config/clients.json` | Wizard que pregunta lo esencial y los genera |
 | E2 | Secrets a mano (`openssl rand`): `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `mcToken`/`adminToken` | El wizard los genera |
 | E3 | Sin preflight de config al boot | Preflight que falla rápido listando MUST faltantes |
-| E4 | Crear 1er cliente requiere guild Discord | Crear 1er brand sin Discord (vía `new-client.sh` reescrito) |
+| E4 | Crear 1er cliente requiere guild Discord | Crear 1er brand sin Discord (vía Mission Control + foundation skills; D4 ✅) |
 
 **MUST mínimos reales (verificado):** API key del proveedor elegido (`ANTHROPIC_API_KEY` y/o `OPENAI_API_KEY`) · `config/clients.json` · `config/instance.json` (mínimo) · `NEXTAUTH_SECRET`. `DATABASE_URL` (Neon) solo si `MC_TASKS_BACKEND=db` (default `json`, sin DB — `docker-compose.yml:30`). Google OAuth opcional (fallback legacy token en `nextauth.ts:30-67`). Discord/YALC/OD/Slack: opcionales.
 
@@ -287,7 +298,7 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 
 ### Fase 2 — Discord opcional + canal de publicación (2–3 días) 🟠
 - `.env.example:19` comentar `DISCORD_BOT_TOKEN`; `generate-openclaw-config.js` gatear `channels.discord` a presencia del token; `instance.json.example` bloque discord opcional.
-- **Reescribir `new-client.sh`**: sin `--guild`/Supabase/auto-bind; crea brand + registra en `clients.json` (genera `mcToken`); conservar proyectos P00.
+- ✅ **Retirar `new-client.sh` (D4, SAN-108)**: el onboarding lo hace la creación-MC (`api/clients/create.ts`) + foundation skills (auto-scaffold). Script + endpoint legacy `/api/new-client` eliminados.
 - **Canal configurable (D5)**: `publish.channel_type` en `instance.json`/`client-config.json`; parametrizar el paso "PUBLICAR" de las plantillas de cron (default Slack). Si es caro, centralizar en Slack.
 - Reescribir `README.md` alrededor de Mission Control.
 
@@ -297,8 +308,8 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - Perfil "mínimo" de compose: solo `sanchocmo`, `MC_TASKS_BACKEND=json`, sin DB/OD/YALC/Discord.
 
 ### Fase 4 — Wizard de configuración (4–6 días) 🟠 corazón del pedido
-- Script CLI interactivo (reutilizable desde `install.sh`): elige proveedor + modo auth (api_key/suscripción), pide API key(s) + dominio + nombre del 1er brand; genera `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `adminToken`, `ADMIN_EMAIL_DOMAIN`; opcionalmente configura canal de publicación (Slack/Discord); escribe `.env`, `config/instance.json`, `config/clients.json` (desde `.example`); crea 1er brand vía `new-client.sh` reescrito; valida con preflight.
-- Reusar `config/*.example` y `new-client.sh`; `openssl rand` para secrets.
+- Script CLI interactivo (reutilizable desde `install.sh`): elige proveedor + modo auth (api_key/suscripción), pide API key(s) + dominio + nombre del 1er brand; genera `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `adminToken`, `ADMIN_EMAIL_DOMAIN`; opcionalmente configura canal de publicación (Slack/Discord); escribe `.env`, `config/instance.json`, `config/clients.json` (desde `.example`); registra el 1er brand en `clients.json` (igual que la creación-MC); valida con preflight.
+- Reusar `config/*.example`; `openssl rand` para secrets.
 
 ### Fase 5 — Imágenes públicas versionadas (3–4 días) 🟠
 - Workflow que publica `sanchocmo`, `od`, `yalc` `:vX.Y.Z`+`:latest` en GHCR público al release (engancha a `release-please`).
