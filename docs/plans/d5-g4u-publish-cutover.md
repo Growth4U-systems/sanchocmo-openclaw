@@ -5,6 +5,19 @@
 > carry Discord assumptions baked into runtime data (`cron/jobs.json` in the volume + per-brand
 > `client-config.json`), so they need a config + prompt cutover.
 
+## Deploy safety (no hard regression)
+
+Merging + deploying does **not** break crons: a publishing cron with no Slack channel
+configured now **skips publishing and logs it** (`skipped: no_publish_channel`) instead of
+erroring — its data work still runs. So this cutover can be done calmly after deploy, not as a
+blocking gate. Find what's pending two ways:
+
+- **UI**: Recurring Tasks shows an amber `⚠️ Sin canal` badge on each publishing cron without a channel.
+- **Script**: `node scripts/audit-publish-channels.mjs` (set `MC_WORKSPACE` or `--workspace`) lists,
+  per brand, publishing crons missing a Slack channel or still holding a Discord id.
+
+A cron whose channel IS set but fails to post (bad token, channel_not_found) still errors loudly.
+
 ## Background
 
 - D5 made cron publishing config-driven: skills/templates now `POST /api/integrations/publish` with a
