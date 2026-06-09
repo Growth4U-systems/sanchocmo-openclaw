@@ -189,6 +189,17 @@ if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
     export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
     echo "[entrypoint] ANTHROPIC_OAUTH_TOKEN derived from CLAUDE_CODE_OAUTH_TOKEN (gateway → Claude subscription)"
   fi
+  # HARD GUARD: with a subscription OAuth token in scope, strip ANTHROPIC_API_KEY
+  # from the gateway env so the model layer (pi-ai resolves
+  # ANTHROPIC_OAUTH_TOKEN → ANTHROPIC_API_KEY) can NEVER silently fall back to
+  # API-credit billing. If the OAuth token ever breaks, Anthropic calls fail
+  # loudly (and usage-monitor's auth-source alert fires) instead of quietly
+  # spending on the API — which is exactly the footgun that drained the key.
+  # OD runs in its own container, unaffected by this unset.
+  if [ -n "${ANTHROPIC_OAUTH_TOKEN:-}" ] && [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+    unset ANTHROPIC_API_KEY
+    echo "[entrypoint] subscription mode: dropped ANTHROPIC_API_KEY from gateway env (no API fallback possible)"
+  fi
 else
   echo "[entrypoint] ANTHROPIC_AUTH_MODE=api_key — using ANTHROPIC_API_KEY (anthropic:default token profile)"
 fi
