@@ -206,6 +206,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "web-artifacts-builder": "maese-pedro",
   "webapp-testing": "maese-pedro",
   "xlsx": "merlin",
+  "yalc-operator": "rocinante",
   "youtube-transcript": "dulcinea",
 };
 
