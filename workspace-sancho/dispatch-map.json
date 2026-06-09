@@ -363,6 +363,54 @@
         "brand"
       ]
     },
+    "alarife": {
+      "name": "Alarife",
+      "emoji": "🧱",
+      "workspace": "../workspace-alarife",
+      "soul_file": "../workspace-alarife/SOUL.md",
+      "domain": "Web/Page builder — Payload CMS, site architecture, frontend build, CRO, controlled publishing",
+      "dispatch_for": [
+        "alarife",
+        "alarife-payload",
+        "payload",
+        "cms-migration",
+        "export-site",
+        "import-site",
+        "page-design",
+        "web-publish",
+        "site-preview",
+        "site-architecture",
+        "frontend-design",
+        "page-cro",
+        "form-cro"
+      ],
+      "skills_owned": [
+        "alarife-integration",
+        "payload",
+        "cms-migration",
+        "site-architecture",
+        "frontend-design",
+        "page-cro",
+        "form-cro"
+      ],
+      "skills_invokable": [
+        "direct-response-copy",
+        "landing-pages",
+        "sancho-visual"
+      ],
+      "requires_confirmation_for": [
+        "web-publish"
+      ],
+      "brand_context": [
+        "foundation-state.json",
+        "voice-profile.md",
+        "visual-identity.md",
+        "positioning.md"
+      ],
+      "channels": [
+        "web"
+      ]
+    },
     "mambrino": {
       "name": "Mambrino",
       "emoji": "🪖",
