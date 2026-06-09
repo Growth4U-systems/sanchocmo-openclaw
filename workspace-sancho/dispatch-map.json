@@ -243,7 +243,7 @@
       "emoji": "🐴",
       "workspace": "../workspace-rocinante",
       "soul_file": "../workspace-rocinante/SOUL.md",
-      "domain": "Outreach & Partnerships",
+      "domain": "Outreach, Partnerships & GTM-OS execution (prospecting, sequences, YALC/Instantly operations)",
       "dispatch_for": [
         "company-finder",
         "decision-maker-finder",
@@ -253,7 +253,17 @@
         "email-sequence",
         "partnerships",
         "affiliates",
-        "collaborations"
+        "collaborations",
+        "yalc",
+        "gtm-os",
+        "outbound-execution",
+        "lead-qualification",
+        "campaign-dry-run",
+        "campaign-launch-confirmed",
+        "campaign-reporting",
+        "instantly",
+        "provider-status",
+        "mcp-provider-status"
       ],
       "skills_owned": [
         "company-finder",
@@ -271,11 +281,21 @@
         "community-marketing",
         "lead-intelligence-hub",
         "revops",
-        "directory-submissions"
+        "directory-submissions",
+        "yalc-operator"
       ],
       "skills_invokable": [
         "direct-response-copy",
         "positioning-messaging"
+      ],
+      "requires_confirmation_for": [
+        "send-email",
+        "launch-campaign",
+        "approve-gate",
+        "commit-setup",
+        "pause-campaign",
+        "resume-campaign",
+        "update-lead-status"
       ],
       "brand_context": [
         "ecps.md",
