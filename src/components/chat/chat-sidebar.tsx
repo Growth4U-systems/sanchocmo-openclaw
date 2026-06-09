@@ -50,6 +50,7 @@ const AGENT_BADGES: Record<string, { emoji: string; label: string; color: string
   dulcinea:      { emoji: "✍️",  label: "Dulcinea",    color: "bg-rose-500" },
   rocinante:     { emoji: "🐴", label: "Rocinante",   color: "bg-cyan-600" },
   "maese-pedro": { emoji: "🎭", label: "Maese Pedro", color: "bg-pink-600" },
+  alarife:       { emoji: "🧱", label: "Alarife",     color: "bg-amber-800" },
   mambrino:      { emoji: "🪖", label: "Mambrino",    color: "bg-orange-700" },
   merlin:        { emoji: "🔮", label: "Merlín",      color: "bg-indigo-600" },
   sanson:        { emoji: "🛡️", label: "Sansón",      color: "bg-emerald-700" },
