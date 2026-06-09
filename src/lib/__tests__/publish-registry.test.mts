@@ -1,6 +1,12 @@
-import { test } from "node:test";
+import { test, before } from "node:test";
 import assert from "node:assert/strict";
-import { resolveTransport } from "../publish/registry";
+
+type Mod = typeof import("../publish/registry");
+let resolveTransport: Mod["resolveTransport"];
+
+before(async () => {
+  ({ resolveTransport } = await import("../publish/registry"));
+});
 
 test("resolveTransport returns the slack transport", () => {
   const t = resolveTransport("slack");
