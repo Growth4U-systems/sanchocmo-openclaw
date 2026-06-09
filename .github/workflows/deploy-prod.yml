@@ -49,6 +49,7 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           TAG: ${{ steps.tag.outputs.tag }}
           ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
           YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
           YALC_REF: ${{ vars.YALC_REF || 'main' }}
           YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
@@ -223,6 +224,8 @@ jobs:
             fi
 
             COMPOSE_ARGS="-f docker-compose.yml"
+            # Open Design is an opt-in overlay (image is public). G4U keeps it on by default.
+            [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
             if [ "${ENABLE_YALC_SERVICE:-1}" != "0" ]; then
               YALC_DIR="${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}"
               if [ ! -d "$YALC_DIR/.git" ]; then
@@ -308,6 +311,7 @@ jobs:
             git checkout "$PREV"
             export GIT_COMMIT="$(git rev-parse HEAD)"
             COMPOSE_ARGS="-f docker-compose.yml"
+            [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
             [ -d "${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}/.git" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
             docker compose $COMPOSE_ARGS up -d
           EOF
