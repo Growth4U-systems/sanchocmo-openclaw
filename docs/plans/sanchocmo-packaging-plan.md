@@ -126,20 +126,15 @@ añadir wizard y publicar imágenes. No es una reescritura.
 | 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ abierto | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
 | 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ abierto | aclaración #1; D4/D5/D6 follow-up |
 | 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ abierto | un-comando install; DB local espera B9 |
+| 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ abierto | placeholder SUL; texto canónico = decisión legal |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
-1. **LICENSE (B7)**: el README cita "SUL" pero no existe el texto. ¿Qué licencia exacta usamos
-   (SUL/BUSL/MIT/propietaria)? Mientras tanto dejo un `LICENSE.md` placeholder marcado como borrador.
-2. **Imágenes públicas OD/YALC (B2/B3/F5)**: ¿cuáles son los nombres/tags exactos de las imágenes
-   públicas (`ghcr.io/<org>/od:<tag>`, `ghcr.io/<org>/yalc:<tag>`)? Asumo lo que encuentre en
-   `OPEN_DESIGN_IMAGE` / la branch `chore/od-sanchocmo-default-image`; si no, parametrizo con un
-   default y lo dejo configurable por env.
-3. **Fase 0 (purga de secretos)**: es destructiva (rewrite de historial git + **rotar** credenciales
-   expuestas: clave Tailscale, tokens de `openclaw.json.last-good`/`.env.bak`/`instance.json`). **No lo
-   hago solo.** Dejo listado lo que hay que rotar; lo ejecutás vos.
-4. **Cutover tasks JSON→DB (B8)**: requiere correr `db-shadow` en staging N días con diff continuo
-   antes del cutover. Autónomamente solo escribo el **runbook**; el cutover real lo hacés vos.
+1. **LICENSE (B7)** — *parcial*: creé `LICENSE.md` como **borrador** (placeholder SUL, marcado "pending legal review"). Falta tu decisión: ¿texto canónico de la **Sustainable Use License** (el README ya la cita), u otra (BUSL/MIT/propietaria)? + definir licensor y "Permitted Purpose". No fabriqué texto legal autoritativo.
+2. **Imágenes públicas OD/YALC (B2/B3/F5)** — *OD resuelto*: la imagen OD ya es pública (`ghcr.io/growth4u-systems/od:edge`, usada en el overlay B2). **Falta YALC**: hoy el overlay usa `build:` desde el repo privado `../Yalc-Growth4U`; ¿cuál es el nombre/tag de la imagen YALC pública (`ghcr.io/growth4u-systems/yalc:<tag>`)? Con eso hago B3 (build → image).
+3. **Fase 0 (purga de secretos)** — bloqueante para publicar, **destructivo**: rewrite de historial git + **rotar** credenciales expuestas (clave Tailscale `sancho-cmo.taild48df2.ts.net.key`, tokens de `openclaw.json.last-good`/`.env.bak`/`instance.json`). **No lo hago solo.** Lo ejecutás vos.
+4. **Cutover tasks JSON→DB (B8)**: requiere `db-shadow` en staging N días con diff continuo antes del cutover. Autónomamente solo el **runbook**; el cutover lo hacés vos.
+5. **🔴 B9 (Postgres bundled) — DECISIÓN NECESARIA, bloquea local-run completo**: el driver de DB es `@neondatabase/serverless` (`neon-http`), que **NO habla con un Postgres vanilla** — solo con el endpoint HTTP de Neon. Para PG bundled hay que (a) cambiar/condicionar el driver (neon-http para Neon, `pg`/node-postgres para local) **sin romper la conexión Neon de G4U en prod**, y (b) resolver el bootstrap de schema: **no hay journal de Drizzle** (`migrations/meta/` ausente) → `drizzle-kit migrate` no sirve as-is; hay una migración **destructiva** (`0003_rekey_tasks`, DROP) y números duplicados → no se puede aplicar todo el SQL a ciegas; `apply-sql-migration.mjs` también usa `neon()`. **Opciones**: (i) generar un journal de Drizzle limpio desde el schema actual + driver condicional + migrate-al-boot solo para PG local; (ii) un `init.sql` consolidado para DBs frescas. Necesito tu OK sobre el enfoque (riesgo de tocar el path de DB de prod). El wizard ya deja `COMPOSE_PROFILES=local-db` listo para cuando aterrice. **Mientras tanto la app corre con `MC_TASKS_BACKEND=json` (default) o DB externa (Neon).**
 
 ---
 
