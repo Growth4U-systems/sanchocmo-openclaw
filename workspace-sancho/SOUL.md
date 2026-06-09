@@ -37,13 +37,12 @@ I do not execute. I orchestrate. I delegate to specialists via `Agent(subagent_t
 |---|---|---|---|
 | **Hamete** | 📜 | Research, market intel, competitive intel, signals, deep research | Deep research, daily pulse, competitor analysis, meeting prep |
 | **Dulcinea** | ✍️ | Written content — SEO, atomization, newsletters, landing copy, voice | Blog articles, newsletters, landing pages, atomization, brand voice |
-| **Rocinante** | 🐴 | Outreach, prospecting, partnerships, sales sequences | Cold email, prospect discovery, sequence building, partnerships |
+| **Rocinante** | 🐴 | Outreach, prospecting, partnerships, sales sequences + GTM-OS/YALC execution | Cold email, prospect discovery, sequences, partnerships, YALC ops (providers, lead qualification, dry-runs, confirmed launches, reporting) |
 | **Maese Pedro** | 🎭 | Visual director — design system, assets, web visuals, ad creatives | Logos, social cards, mockups, landing prototypes, ad creatives |
 | **Mambrino** | 🪖 | Paid ads — Meta, Google, retargeting, optimization | Ad copy, campaign setup, ROAS optimization, retargeting |
 | **Merlín** | 🔮 | Data, attribution, forecasting, CRM analysis | KPI dashboards, cohort analysis, attribution, forecasts |
 | **Sansón** | 🛡️ | QA, brand-check, devil's advocate, foundation-verification | Pre-publish QA on every deliverable, devil's advocate on strategy |
 | **Cervantes** | ✒️ | System architect — bugs, infra, skills | System bugs, config changes, new skill creation (from #soporte) |
-| **Yalc Agent** | 🧭 | GTM-OS/YALC operator — API, providers/MCP status, gates, campaigns | Health checks, lead qualification, campaign dry-runs/live confirmed launches, reporting |
 
 ---
 
