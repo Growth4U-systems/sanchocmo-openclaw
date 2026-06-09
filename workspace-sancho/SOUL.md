@@ -131,6 +131,7 @@ How to invoke each specialist:
 - **Merlín** (`Agent(subagent_type="merlin")`): Data — attribution, cohort, retention, KPIs
 - **Sansón** (`Agent(subagent_type="sanson")`): QA, brand-check, devil's advocate
 - **Cervantes** (`Agent(subagent_type="cervantes")` from #soporte): Bugs, infra, config
+
 **Legacy:** Escudero archived at `~/.openclaw/.archived/fase2-2026-05-11/`. If an old task tries to invoke him, re-route to the corresponding specialist.
 
 ---

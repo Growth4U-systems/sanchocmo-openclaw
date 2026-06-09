@@ -15,7 +15,6 @@ const AGENTS_META = [
   { slug: "dulcinea",    name: "Dulcinea",    emoji: "✍️",  channel: "#content, #web",                     model: "Sonnet 4.5", role: "Musa — Contenido escrito" },
   { slug: "rocinante",   name: "Rocinante",   emoji: "🐴", channel: "#prospecting, #partners",             model: "Sonnet 4.5", role: "Outreach & Partnerships" },
   { slug: "maese-pedro", name: "Maese Pedro", emoji: "🎭", channel: "#creatives, #design, #web",           model: "Opus 4.6",   role: "Visual Director / Creative Engine" },
-  { slug: "yalc",        name: "Yalc Agent",   emoji: "🧭", channel: "Mission Control / GTM-OS",            model: "Sonnet 4.5", role: "YALC operator / outbound GTM" },
   { slug: "mambrino",    name: "Mambrino",    emoji: "🪖", channel: "#paid-ads",                           model: "Sonnet 4.5", role: "Paid Ads & Retargeting" },
   { slug: "merlin",      name: "Merlín",      emoji: "🔮", channel: "#learning",                           model: "Sonnet 4.5", role: "Data, atribución & forecasting" },
   { slug: "sanson",      name: "Sansón",      emoji: "🛡️", channel: "Invocado por Sancho (QA)",            model: "Sonnet 4.5", role: "QA, brand-check & devil's advocate" },
