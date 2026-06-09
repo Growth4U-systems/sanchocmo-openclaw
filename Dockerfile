@@ -43,6 +43,10 @@ COPY next.config.mjs tsconfig.json postcss.config.mjs tailwind.config.ts compone
 COPY src/ ./src/
 COPY public/ ./public/
 COPY scripts/apply-sql-migration.mjs ./scripts/apply-sql-migration.mjs
+# Local-Postgres baseline migrator (bundled local-db). Applies the journal-backed
+# baseline under src/db/migrations-local (copied via `COPY src/`) at boot — see
+# docker/entrypoint.sh section 5d.
+COPY scripts/migrate-local.mjs ./scripts/migrate-local.mjs
 # NEXT_PUBLIC_* vars must be present at build time — they are inlined into the client bundle.
 ARG NEXT_PUBLIC_ENV_LABEL=""
 ENV NEXT_PUBLIC_ENV_LABEL=${NEXT_PUBLIC_ENV_LABEL}

@@ -111,6 +111,10 @@ jobs:
           OPENAI_AUTH_MODE: ${{ vars.OPENAI_AUTH_MODE }}
           ADMIN_EMAIL_DOMAIN: ${{ vars.ADMIN_EMAIL_DOMAIN }}
           ADMIN_IDENTITY_EMAIL: ${{ vars.ADMIN_IDENTITY_EMAIL }}
+          # Force the Neon HTTP driver in G4U deploys (belt over the runtime's
+          # *.neon.tech auto-detect) so prod can never fall back to the
+          # vanilla-Postgres driver used by the bundled local-db.
+          DATABASE_DRIVER: neon
         run: |
           # Build payload identically to deploy-staging.yml — same key list.
           # Empty secrets/vars are filtered out so an under-populated
@@ -141,7 +145,7 @@ jobs:
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
-              "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL",
+              "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())

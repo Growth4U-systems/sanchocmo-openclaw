@@ -127,6 +127,10 @@ BASE_URL=https://your-domain.com
 
 # Next.js Mission Control
 DATABASE_URL=postgresql://user:pass@ep-xxx.region.neon.tech/mc
+# Pins the Neon HTTP driver. Auto-detected from the *.neon.tech host, but the
+# deploy workflows also inject DATABASE_DRIVER=neon explicitly so prod can never
+# fall back to the vanilla-Postgres driver used by the bundled local-db.
+DATABASE_DRIVER=neon
 NEXTAUTH_URL=https://your-domain.com
 NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
 GOOGLE_CLIENT_ID=your-google-client-id
