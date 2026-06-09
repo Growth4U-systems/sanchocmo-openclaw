@@ -166,11 +166,7 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 0,
       "skill": "fast-foundation",
       "pillars": {
-        "company-brief": {"status": "not-started", "output_file": "brand/$SLUG/company-brief/company-brief.current.md", "skill": "fast-foundation"},
-        "self-l1": {"status": "not-started", "output_file": "brand/$SLUG/market-and-us/self/self.current.md", "skill": "fast-foundation"},
-        "market-l1": {"status": "not-started", "output_file": "brand/$SLUG/market-and-us/market/market.current.md", "skill": "fast-foundation"},
-        "brand-voice-snapshot": {"status": "not-started", "output_file": "brand/$SLUG/brand-book/brand-voice/brand-voice.current.md", "skill": "fast-foundation"},
-        "niche-basic": {"status": "not-started", "output_file": "brand/$SLUG/go-to-market/ecps/ecps.current.md", "skill": "fast-foundation"}
+        "fast-context": {"status": "not-started", "output_file": "brand/$SLUG/fastcontext/fastcontext.current.md", "skill": "fast-foundation"}
       }
     },
     "company-brief": {

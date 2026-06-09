@@ -24,3 +24,12 @@ test("foundation-state output_file still wins over the static map", () => {
     "brand/acme/fastcontext/fastcontext.current.md",
   );
 });
+
+test("fast-context falls back to the static map when no foundation-state", () => {
+  // Guards the actual SAN-13 change: without state, the resolver must return
+  // the new fastcontext path from PILLAR_DOC_PATHS (not the old company-brief lite).
+  assert.equal(
+    resolvePillarDocPath("fast-context", undefined),
+    "fastcontext/fastcontext.current.md",
+  );
+});
