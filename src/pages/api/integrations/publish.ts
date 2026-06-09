@@ -32,16 +32,30 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   let target: PublishTarget;
-  try {
-    if (cronKey) {
+  if (cronKey) {
+    try {
       target = resolvePublishTarget(slug, cronKey);
-    } else if (transport && channel) {
-      target = { transport, channel };
-    } else {
-      return res.status(400).json({ error: "Provide cronKey, or transport + channel" });
+    } catch {
+      // A publishing cron with no channel configured is a benign "pending
+      // config" state, not a failure — skip the publish, but surface it (log +
+      // skipped response) so it shows in history and the UI, never silently.
+      try {
+        logActivity(slug, {
+          type: "publish",
+          text: `Publicación omitida — sin canal configurado para "${cronKey}" (configuralo en Recurring Tasks → 📢 Canal)`,
+          icon: "⏭️",
+          accent: "sun",
+          meta: { cronKey, skipped: true, reason: "no_publish_channel" },
+        });
+      } catch (e) {
+        console.error("[publish] skip-log failed:", (e as Error).message);
+      }
+      return res.status(200).json({ ok: true, skipped: true, reason: "no_publish_channel", cronKey });
     }
-  } catch (e) {
-    return res.status(400).json({ error: (e as Error).message });
+  } else if (transport && channel) {
+    target = { transport, channel };
+  } else {
+    return res.status(400).json({ error: "Provide cronKey, or transport + channel" });
   }
 
   let result;

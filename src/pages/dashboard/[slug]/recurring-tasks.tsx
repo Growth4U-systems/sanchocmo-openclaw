@@ -115,7 +115,12 @@ export default function RecurringTasksPage() {
 
               {/* Publish-channel picker (admin only, publishing crons) */}
               {isAdmin && typeof task.cron_key === "string" && task.cron_key && (
-                <CronPublishChannel slug={slug} cronKey={task.cron_key as string} />
+                <CronPublishChannel
+                  slug={slug}
+                  cronKey={task.cron_key as string}
+                  initialChannelId={(task.publish_channel as string | null) ?? null}
+                  initialChannelName={(task.publish_channel_name as string | null) ?? null}
+                />
               )}
 
               {/* Model picker (admin only) */}

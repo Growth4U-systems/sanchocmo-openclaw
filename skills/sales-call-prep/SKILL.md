@@ -141,7 +141,7 @@ No hardcodees IDs ni asumas Discord. El endpoint resuelve transporte y canal des
 2. `POST http://localhost:3000/api/integrations/publish`
    Headers: `Content-Type: application/json`, `x-admin-token: <adminToken>`
    Body: `{"slug": "{slug}", "cronKey": "sales_call_prep", "title": "📞 {título}: {count} llamadas", "body": "{briefing_completo}"}`
-3. El endpoint postea `title` como raíz y `body` en el hilo. Devuelve `{ok, rootId, threadId}`; si `ok=false` o status 4xx/5xx, reportá el error.
+3. El endpoint postea `title` como raíz y `body` en el hilo. Devuelve `{ok, rootId, threadId}`; si `ok=false` o status 4xx/5xx, reportá el error. Si la respuesta trae skipped:true, el cron no tiene canal configurado: NO es un error — mencionalo brevemente y seguí.
 
 ## Step 5: Log
 

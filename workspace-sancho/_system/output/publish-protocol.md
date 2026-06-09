@@ -36,7 +36,7 @@ Body: {
 
 ### Paso 3: Manejar el resultado
 El endpoint devuelve `{ ok, rootId, threadId, transport, channel }`. Si `ok=false` o status 4xx/5xx,
-reportá el `error` y no reintentes a ciegas.
+reportá el `error` y no reintentes a ciegas. Si la respuesta trae skipped:true, el cron no tiene canal configurado: NO es un error — mencionalo brevemente y seguí.
 
 ## Reglas
 

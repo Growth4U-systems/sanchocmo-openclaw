@@ -12,6 +12,7 @@ import {
   humanizeSchedule,
   type EnrichedCron,
 } from "@/lib/data/openclaw-crons";
+import { getCronPublishConfig } from "@/lib/publish/cron-publish-config";
 
 
 /** Resolve script references inside a cron prompt to {path, name, lang, lines}.
@@ -143,10 +144,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
       // Tag each cron in this brand's list with cron_key when it maps to a
       // publishing template — the UI shows the channel picker only for those.
+      // Also attach the current publish destination (if any) so the picker can
+      // flag "sin canal" eagerly without a per-cron fetch.
       const publishingMap = publishingTemplateMap(templates);
       for (const task of result[slugParam] as Record<string, unknown>[]) {
         const key = publishingMap.get(cronNameLeadSegment((task.name as string) || ""));
-        if (key) task.cron_key = key;
+        if (!key) continue;
+        task.cron_key = key;
+        const cfg = getCronPublishConfig(slugParam, key);
+        task.publish_channel = cfg?.channel_id ?? null;
+        task.publish_channel_name = cfg?.channel_name ?? null;
       }
 
       // Also return available templates

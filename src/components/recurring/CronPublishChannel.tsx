@@ -15,16 +15,28 @@ interface SlackChannel {
   is_member?: boolean;
 }
 
-export function CronPublishChannel({ slug, cronKey }: { slug: string; cronKey: string }) {
+export function CronPublishChannel({
+  slug,
+  cronKey,
+  initialChannelId,
+  initialChannelName,
+}: {
+  slug: string;
+  cronKey: string;
+  initialChannelId?: string | null;
+  initialChannelName?: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [channels, setChannels] = useState<SlackChannel[]>([]);
   const [channelsError, setChannelsError] = useState<string | null>(null);
-  const [currentId, setCurrentId] = useState<string>("");
-  const [currentName, setCurrentName] = useState<string>("");
-  const [selectedId, setSelectedId] = useState<string>("");
+  // Seed from the eager state the recurring-tasks API attaches, so the badge
+  // reflects configured/unconfigured before the dropdown is ever opened.
+  const [currentId, setCurrentId] = useState<string>(initialChannelId || "");
+  const [currentName, setCurrentName] = useState<string>(initialChannelName || "");
+  const [selectedId, setSelectedId] = useState<string>(initialChannelId || "");
 
   const load = async () => {
     setLoading(true);
@@ -82,19 +94,21 @@ export function CronPublishChannel({ slug, cronKey }: { slug: string; cronKey: s
     }
   };
 
-  const label = currentId ? `📢 #${currentName || currentId}` : "📢 Canal";
+  const label = currentId ? `📢 #${currentName || currentId}` : "📢 Sin canal";
 
   return (
     <div className="relative flex-shrink-0">
       <button
         onClick={toggle}
-        title="Canal de publicación de este cron (Slack)"
+        title={currentId
+          ? "Canal de publicación de este cron (Slack)"
+          : "Este cron publica pero no tiene canal configurado — no publicará hasta que elijas uno"}
         className={cn(
           "px-2 py-1 rounded text-xs font-semibold border-2 border-ink shadow-comic-sm transition-transform hover:-translate-y-0.5 max-w-[180px] truncate",
-          currentId ? "bg-sage/20 text-ink" : "bg-card text-ink/70"
+          currentId ? "bg-sage/20 text-ink" : "bg-amber-100 text-ink"
         )}
       >
-        {label}
+        {currentId ? label : `⚠️ ${label}`}
       </button>
 
       {open && (

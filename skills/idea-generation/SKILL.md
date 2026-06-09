@@ -236,7 +236,7 @@ Top ideas:
    Headers: Content-Type: application/json, x-admin-token: <adminToken>
    Body: {"slug": "{slug}", "cronKey": "idea_generation", "title": "<summary above>", "body": "<full_details>"}
 3. The endpoint posts title as the root message and body in the thread. Returns {ok, rootId, threadId};
-   on ok=false or 4xx/5xx, report the error and do not blindly retry.
+   on ok=false or 4xx/5xx, report the error and do not blindly retry. If the response has skipped:true, the cron has no channel configured: this is NOT an error — note it briefly and continue.
 ```
 
 ---
