@@ -385,7 +385,7 @@ export default defineChannelPluginEntry({
                 const TEAM_SLUGS = new Set([
                   "sancho", "cervantes", "hamete", "dulcinea",
                   "rocinante", "maese-pedro", "mambrino", "merlin",
-                  "sanson", "escudero", "yalc",
+                  "sanson", "escudero",
                 ]);
 
                 // Map tool name → label (legacy status text) + structured event
