@@ -8,6 +8,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useRecurringTasks, useCronRuns, useToggleRecurringTask } from "@/hooks/useRecurringTasks";
 import { useSetCronModel } from "@/hooks/useModels";
 import { ModelPicker } from "@/components/admin/ModelPicker";
+import { CronPublishChannel } from "@/components/recurring/CronPublishChannel";
 import { cn } from "@/lib/utils";
 
 interface CronRun {
@@ -111,6 +112,16 @@ export default function RecurringTasksPage() {
                   {!isAdmin && task.model ? <span className="font-mono">{String(task.model)}</span> : null}
                 </div>
               </div>
+
+              {/* Publish-channel picker (admin only, publishing crons) */}
+              {isAdmin && typeof task.cron_key === "string" && task.cron_key && (
+                <CronPublishChannel
+                  slug={slug}
+                  cronKey={task.cron_key as string}
+                  initialChannelId={(task.publish_channel as string | null) ?? null}
+                  initialChannelName={(task.publish_channel_name as string | null) ?? null}
+                />
+              )}
 
               {/* Model picker (admin only) */}
               {isAdmin && task._source === "openclaw-cron" && (

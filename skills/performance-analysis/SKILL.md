@@ -201,7 +201,7 @@ Clean up previous recommendations:
 3. Save `brand/{slug}/monitoring/health-score.json` (lightweight, for MC dashboard)
 4. Append key insights to `brand/{slug}/operational/learnings.md`
 5. Execute: `python3 ~/.openclaw/workspace-sancho/scripts/regenerate.py`
-6. Publish to Discord #intelligence with thread pattern
+6. Publish the summary via `POST /api/integrations/publish` (cronKey `performance_analysis_weekly`; transport+channel resolved from `client-config.json`, Slack default — no hardcoded channel/Discord). `title` = root line, `body` = full report.
 
 ---
 
