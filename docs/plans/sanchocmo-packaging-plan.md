@@ -105,6 +105,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 - Completar **Fase 1**: OD/YALC públicos + opcionales (B2/B3 — **desbloqueado**, ver aclaración #3). ✅ B6 (#318), ✅ B5 (#325) hechos.
 - **Fase 0** (purga de secretos / repo limpio) sigue siendo bloqueante #1 **antes de publicar**. Requiere rewrite de historial + rotación de credenciales → **necesita al usuario** (destructivo), ver preguntas abiertas.
+- **Deuda técnica GAP H (`SAN-109`)**: terminar el Strangler-Fig para dejar de levantar `mc-server.js` (server legacy en `:18790`). Auditoría de superficie viva hecha; quedan ~2 endpoints + el plugin `mc-chat` por portar. Ver sección **H** abajo.
 
 ---
 
@@ -263,6 +264,29 @@ El camino de **API key está roto hoy** para ambos proveedores:
 `config/*.json` gitignored con `.example`, `brand/` gitignored, symlinks en `entrypoint.sh:15-20`,
 seeds en `templates/`, seeding gateado por existencia de `openclaw.json` (`entrypoint.sh:25`).
 Falta garantizar que un `compose pull` de versión nueva no pise datos del volumen (`OPENCLAW_HOME`).
+
+### H. Retiro del server legacy `mc-server.js` (terminar Strangler-Fig) — 🟠 deuda técnica (`SAN-109`)
+
+`docker/entrypoint.sh:302` levanta `node workspace-sancho/scripts/mc-server.js &` como **fallback Strangler-Fig** en `:18790`, en paralelo al Next (`:3000`). La migración a Next está **casi completa** (chat, métricas, notificaciones, cron-runs, trust-engine, etc. ya portados — quedan solo comentarios "ported from mc-server.js"). Objetivo: terminar de portar lo que falta y **dejar de levantar el proceso** (menos RAM, una superficie menos, fin del doble server).
+
+**Superficie viva que todavía depende del legacy (auditado 2026-06-08):**
+
+| # | Consumidor | Qué usa de `:18790` |
+|---|-----------|---------------------|
+| H1 | `src/pages/api/system/recurring-tasks.ts` | proxya `GET :18790/api/recurring-tasks` |
+| H2 | `src/pages/api/system/connect-proxy.ts` | sirve el portal **Connect-APIs** (`/connect/{slug}/{apiId}`) + reescribe `/mc/api/` al legacy |
+| H3 | `plugins/mc-chat/src/channel.js` | `mcServerUrl` default `http://localhost:18790` — **auditar**: ¿el legacy aún ingiere el chat o se repunta a Next `:3000`? |
+| H4 | Infra | `Dockerfile` `EXPOSE 18790`; `docker-compose.yml` (`127.0.0.1:18790:18790`, `LEGACY_PORT=18790`); `entrypoint.sh:302` |
+| H5 | Ruta pública `/mc` | `workspace-cervantes/scripts/healthcheck.sh` funnelea `/mc → :18790` — verificar si sigue vigente o ya lo sirve Next (Cervantes se retira aparte) |
+
+**Cutover (incremental, con la app arriba):**
+1. Auditar H3/H5 (chat ingestion + portal `/mc`): confirmar qué sirve realmente el legacy hoy.
+2. Portar `/api/recurring-tasks` (H1) y el portal Connect-APIs (H2) a rutas Next nativas.
+3. Repuntar el plugin `mc-chat` a Next (`:3000`) o confirmar que ya no se usa.
+4. Quitar `node mc-server.js &` de `entrypoint.sh`, `EXPOSE 18790`, el mapping de compose y `LEGACY_PORT`.
+5. **Eliminar** `workspace-sancho/scripts/mc-server.js` + `legacy-mc-server.js`.
+
+**Riesgo:** medio — toca el path de chat/portal en vivo; hacerlo endpoint-por-endpoint y verificar antes de borrar el server. (El endpoint `/api/new-client` ya se removió de ambos servers en D4 / #363.)
 
 ---
 
