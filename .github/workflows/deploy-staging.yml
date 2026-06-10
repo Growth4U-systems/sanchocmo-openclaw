@@ -190,6 +190,9 @@ jobs:
             rm -f /tmp/upsert-env.py
 
             echo "▶ Checking out $SHA…"
+            # Self-heal: discard stray local edits under src/ that would abort the
+            # checkout. Runtime state under agents/ and workspace-*/ is preserved.
+            git checkout -- src 2>/dev/null || true
             git checkout "$SHA"
             export GIT_COMMIT="$(git rev-parse HEAD)"
 
