@@ -16,6 +16,7 @@
     "audit:docs": "tsx scripts/audit-doc-paths.mts --check",
     "fix:docs": "tsx scripts/audit-doc-paths.mts --fix",
     "test:doc-paths": "tsx scripts/test-doc-paths.mts",
+    "lint:paths": "tsx scripts/lint-paths.mts",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:local": "node scripts/migrate-local.mjs",
     "db:generate:local": "drizzle-kit generate --config drizzle.local.config.ts",
