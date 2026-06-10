@@ -4,6 +4,9 @@ import {
   setPillarStatus,
   normalizePillarStatus,
 } from "@/lib/data/pillar-task-sync";
+import { provisionYalcBrain } from "@/lib/yalc/provision";
+
+const RESYNC_STATUSES = new Set(["approved", "completed", "done"]);
 
 const VALID_STATUSES = [
   "approved",
@@ -51,6 +54,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!result.ok) {
     const code = result.error?.includes("not found") ? 404 : 500;
     return res.status(code).json({ error: result.error || "sync failed" });
+  }
+
+  // An approved pillar changes the brand's doctrine — re-sync the YALC brain
+  // so outbound runs on the freshly approved Foundation. Fire-and-forget so
+  // the approval response isn't blocked by synthesis; provisioning is
+  // idempotent, so repeated approvals are safe.
+  if (RESYNC_STATUSES.has(status) && result.pillarChanged) {
+    void provisionYalcBrain(slug).catch((err) =>
+      console.error(`[pillar-status] YALC brain re-sync failed for ${slug}:`, err),
+    );
   }
 
   return res.status(200).json({
