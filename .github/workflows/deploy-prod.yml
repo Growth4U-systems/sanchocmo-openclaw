@@ -120,6 +120,9 @@ jobs:
           SANCHO_MCP_AUDIT_BACKEND: ${{ vars.SANCHO_MCP_AUDIT_BACKEND }}
           SANCHO_MCP_AUDIT_FAIL_CLOSED: ${{ vars.SANCHO_MCP_AUDIT_FAIL_CLOSED }}
           SANCHO_MCP_AUDIT_FILE: ${{ vars.SANCHO_MCP_AUDIT_FILE }}
+          # Sancho->YALC runtime URL inside the compose network. Default avoids the
+          # client.ts localhost:3847 fallback that left the cockpit stuck on "Checking".
+          YALC_BASE_URL: ${{ vars.YALC_BASE_URL || 'http://yalc:3847' }}
         run: |
           # Build payload identically to deploy-staging.yml — same key list.
           # Empty secrets/vars are filtered out so an under-populated
@@ -155,6 +158,7 @@ jobs:
               "SANCHO_MCP_TOKENS",
               "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
               "SANCHO_MCP_AUDIT_FILE",
+              "YALC_BASE_URL",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())
@@ -207,6 +211,10 @@ jobs:
             rm -f /tmp/upsert-env.py
 
             echo "▶ Checking out $TAG…"
+            # Self-heal: discard stray local edits under src/ that would abort the tag
+            # checkout (e.g. a leftover src/lib/chat-openers.ts). Runtime state under
+            # agents/ and workspace-*/ is preserved.
+            git checkout -- src 2>/dev/null || true
             git checkout "$TAG"
             export GIT_COMMIT="$(git rev-parse HEAD)"
 
