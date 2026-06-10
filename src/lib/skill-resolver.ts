@@ -4,6 +4,7 @@
 // falls back to hardcoded maps for backwards compatibility.
 // ============================================================
 
+import { MANIFEST_PILLARS } from "./pillar-doc-paths";
 
 export interface SkillResolution {
   skill: string;
@@ -373,32 +374,21 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
  *  SAN-102 (research/synthesis/niche → Hamete, positioning → Dulcinea,
  *  pricing/strategic-plan → Sancho default).
  *  `fast-foundation` / `company-brief` are intentionally absent — that flow is
- *  owned by Fast Foundation and reworked in SAN-13. */
-const PILLAR_SKILL_ALIAS: Record<string, string> = {
-  "market-analysis": "market-intelligence",
-  "competitor-analysis": "competitor-intelligence",
-  "self-analysis": "self-intelligence",
-  "market-synthesis": "market-synthesis",
-  "niche-discovery": "niche-discovery-100x",
-  positioning: "positioning-messaging",
-  pricing: "pricing-strategy",
-  "metrics-setup": "metrics-setup",
-  "strategic-plan": "strategic-plan",
-  "existing-customer-data": "existing-customer-data",
-  "ecp-validation": "ecp-validation",
-};
+ *  owned by Fast Foundation and reworked in SAN-13.
+ *  DERIVED from `config/pillar-manifest.json` (F0) — do NOT hand-edit; edit the
+ *  manifest. Frozen equivalence in src/lib/__tests__/pillar-manifest.test.mts. */
+const PILLAR_SKILL_ALIAS: Record<string, string> = Object.fromEntries(
+  Object.entries(MANIFEST_PILLARS)
+    .filter(([, entry]) => entry.skillAlias)
+    .map(([key, entry]) => [key, entry.skillAlias as string]),
+);
 
 /** Pillars that ship with a child skill of the same name. Used by step 5b
  *  of `resolveThreadSkills` so threads land on the right skill even when
- *  `chat-config.json` doesn't list the pillar. */
-const HOMONYMOUS_SKILL_PILLARS = new Set([
-  "visual-identity",
-  "brand-voice",
-  "content-strategy",
-  "content-pillars",
-  "content-playbook",
-  "niche-discovery-100x",
-  "positioning-messaging",
-  "pricing",
-  "company-brief",
-]);
+ *  `chat-config.json` doesn't list the pillar.
+ *  DERIVED from `config/pillar-manifest.json` (F0) — do NOT hand-edit. */
+const HOMONYMOUS_SKILL_PILLARS = new Set(
+  Object.entries(MANIFEST_PILLARS)
+    .filter(([, entry]) => entry.homonymous)
+    .map(([key]) => key),
+);
