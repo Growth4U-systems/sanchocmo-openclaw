@@ -102,7 +102,7 @@ context_writes: []
 - Positioning y Pricing son threads **separados** (antes compartían hilo)
 - Brand Voice y Visual Identity son threads **separados** (antes compartían hilo)
 - Market Synthesis = SWOT + Summary + OPE Canvas + Presentación en 1 hilo
-- Fast Foundation = intake completo en 1 hilo (5 docs lite)
+- Fast Foundation = intake completo en 1 hilo (un archivo de grounding: fastcontext.current.md)
 - Total: **12 hilos obligatorios** + 2 opcionales
 - Si el orchestrator detecta hilos existentes con los nombres correctos, NO crea nuevos
 - **foundation-state.json es la fuente de verdad**: leer `file_index` para resolver paths a archivos del cliente. Al crear threads, guardar `thread_id` en el pilar correspondiente de `sections`. Al completar un pilar que genera archivos nuevos, actualizar `file_index`.

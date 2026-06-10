@@ -14,9 +14,7 @@ metadata:
 context_required:
 - brand/{slug}/company-brief/company-brief.current.md
 - brand/{slug}/market-and-us/competitors/competitors.current.md
-# Lite fallbacks (read-only, treat as preliminary seed, not as final truth):
-- brand/{slug}/company-brief/lite.md            # merge view fallback (always lite today)
-- brand/{slug}/business-model/lite.md           # own seed from fast-foundation (hydration only)
+- brand/{slug}/fastcontext/fastcontext.current.md   # optional grounding (read your section; skip if absent)
 context_writes:
 - brand/{slug}/business-model/business-model.current.md
 - brand/{slug}/operational/learnings.md

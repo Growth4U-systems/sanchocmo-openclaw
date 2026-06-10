@@ -127,9 +127,9 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 
 **Cada skill escribe su propio standalone (fuente de verdad).** El `company-brief/company-brief.current.md` es un **merge view auto-generado** de los 3 standalones — no se edita a mano.
 
-1. **company-context** → escribe `brand/{slug}/company-context/company-context.current.md` (standalone). Regenera el merge view.
-2. **business-model-audit** → escribe `brand/{slug}/business-model/business-model.current.md` (standalone). Regenera el merge view.
-3. **budget-constraints** → escribe `brand/{slug}/budget/budget.current.md` (standalone). Regenera el merge view.
+1. **company-context** → escribe `brand/{slug}/company-context/company-context.current.md` (standalone).
+2. **business-model-audit** → escribe `brand/{slug}/business-model/business-model.current.md` (standalone).
+3. **budget-constraints** → escribe `brand/{slug}/budget/budget.current.md` (standalone).
 
 **Beneficios del diseño:**
 - Cada skill se puede re-correr standalone con versionado granular propio (puedo tener business-model v5 sin que afecte a company-context v2).
@@ -143,12 +143,12 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 ```
 
 **Flujo Fast-Foundation:**
-El orchestrator lanza las 3 skills en secuencia sin aprobación intermedia. Al final, regenera el merge view y presenta el Company Brief consolidado para una sola aprobación.
+Fast Foundation produce `brand/{slug}/fastcontext/fastcontext.current.md` (un archivo de grounding desechable con secciones H2). NO toca carpetas de pilares ni genera merge views. El grounding inicial de Company, Market, Brand Voice y ECPs vive en ese único archivo. Fast Foundation NO es un nodo del DAG de dependencias ni prerequisito de ningún pilar — es grounding opcional. El Layer 0 del DAG (`company-brief`) son los 3 standalones full (company-context, business-model, budget).
 
 **Quién regenera el merge view:**
-Solo `fast-foundation`. Las skills productoras standalone NO lo tocan — solo escriben su propio standalone. Si una productora se corre fuera de fast-foundation, el merge view queda stale hasta la próxima corrida completa — comportamiento aceptado por ahora.
+`regenerate-company-brief.py` — solo cuando al menos un standalone full (company-context, business-model o budget) está aprobado. Escribe `company-brief/company-brief.current.md`. Si ningún standalone full existe aún, no se genera merge view; el grounding inicial vive en `fastcontext.current.md`.
 
-**Detalles operativos del merge** (formato, placeholders, quién lo dispara): ver [fast-foundation/SKILL.md](../../skills/fast-foundation/SKILL.md) — sección "Company Brief — Arquitectura standalone + merge view".
+**Detalles operativos del merge** (formato, secciones, cuándo se dispara): ver el script `workspace-sancho/scripts/regenerate-company-brief.py` y la regla de regeneración en `skills/foundation-orchestrator/SKILL.md`.
 
 ---
 
