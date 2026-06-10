@@ -3,7 +3,7 @@ name: newsletter
 version: 7.0
 description: Newsletter strategy and content.
 context_required:
-- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
 - brand/{slug}/content/content-pillars.md
 - brand/{slug}/content/pov-bank.json
 - brand/{slug}/content/strategy-decisions.md

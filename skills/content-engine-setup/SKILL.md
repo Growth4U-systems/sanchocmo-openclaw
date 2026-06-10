@@ -7,7 +7,7 @@ context_required:
 - brand/{slug}/company-brief/company-brief.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/market-and-us/competitors/sources.json
-- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
 context_writes:
 - brand/{slug}/content/configs/news-prompts/*.yml
 - brand/{slug}/content/configs/paa-queries/*.yml

@@ -3,7 +3,7 @@ name: content-playbook
 description: "Generate and update the Content Playbook for a client. Defines content pillars, hooks, formats, and cadence based on Atalaya intelligence, Trust Engine SEO data, and Foundation context."
 context_required:
 - brand/{slug}/company-brief/company-brief.current.md
-- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/go-to-market/positioning/positioning.current.md
 - brand/{slug}/market-and-us/competitors/sources.json

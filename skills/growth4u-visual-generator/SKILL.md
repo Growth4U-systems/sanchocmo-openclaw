@@ -372,9 +372,9 @@ gateway sin pasar por MC).
 
 - `brand/{slug}/brand-book/visual-identity/design-tokens.json` — paleta,
   typography, gradients oficiales (incluido el `gradient.brand` multi-stop).
-- `brand/{slug}/brand-book/visual-identity/visual-identity.current.md` —
+- `brand/{slug}/brand-identity/visual-identity/visual-identity.current.md` —
   reglas de composición, personajes, anti-pegote.
-- `brand/{slug}/brand-book/brand-voice/brand-voice.current.md` — tone of
+- `brand/{slug}/brand-voice/brand-voice.current.md` — tone of
   voice, anti-AI-writing, signature patterns.
 - `brand/{slug}/brand-book/visual-identity/templates/{id}/` — versión actual del brand
   si existe. Si hay overrides del cliente, RESPETARLOS — no machacar

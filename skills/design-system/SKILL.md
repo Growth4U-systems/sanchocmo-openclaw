@@ -62,7 +62,7 @@ context_required:
   - brand/{slug}/company-brief/company-brief.current.md
   - brand/{slug}/brand-voice/brand-voice.current.md (si existe)
   - brand/{slug}/go-to-market/positioning/*/*.current.md (si existen)
-  - brand/{slug}/brand-book/visual-identity/visual-identity.current.md (si existe — legacy)
+  - brand/{slug}/brand-identity/visual-identity/visual-identity.current.md (si existe — legacy)
   - brand/{slug}/brand-book/visual-identity/design-tokens.json (si existe — legacy, para migración)
 context_writes:
   - brand/{slug}/brand-book/visual-identity/DESIGN.md

@@ -7,7 +7,7 @@ description: >
   optimization, schema markup (Article + FAQ + HowTo JSON-LD), and YAML frontmatter. Supports content refresh mode
   for existing articles. Chains to /content-atomizer for social distribution.
 context_required:
-- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
 - brand/{slug}/content/content-pillars.md
 - brand/{slug}/content/pov-bank.json
 - brand/{slug}/content/strategy-decisions.md
@@ -62,7 +62,7 @@ Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
 
 | File | Purpose |
 |------|---------|
-| `brand/{slug}/brand-book/brand-voice/brand-voice.current.md` | Tone, personality, vocabulary → shapes writing style |
+| `brand/{slug}/brand-voice/brand-voice.current.md` | Tone, personality, vocabulary → shapes writing style |
 | `brand/{slug}/content/content-pillars.md` | 5 active pillars with hooks and topic scope |
 | `brand/{slug}/content/pov-bank.json` | POV per pillar: core_belief, preferred_angles, evidence_we_cite |
 | `brand/{slug}/content/strategy-decisions.md` | 14 content strategy decisions (tilt, villain, BOFU-first, etc.) |
@@ -99,7 +99,7 @@ Before starting, check if content exists at `campaigns/content/{keyword-slug}.md
 2. **Keyword cluster** — Related keywords to include naturally
 3. **Search intent** — Informational / Commercial / Transactional
 4. **Content type** — Pillar guide / How-to / Comparison / Listicle
-5. **Brand voice profile** — From `brand/{slug}/brand-book/brand-voice/brand-voice.current.md`, plus `content/content-pillars.md`, `content/pov-bank.json`, and `content/strategy-decisions.md`.
+5. **Brand voice profile** — From `brand/{slug}/brand-voice/brand-voice.current.md`, plus `content/content-pillars.md`, `content/pov-bank.json`, and `content/strategy-decisions.md`.
 6. **Unique angle** — What perspective makes this different?
 
 Pre-fill from brand memory when available. If from /keyword-research, load brief at `campaigns/content-plan/{keyword-slug}.md`.

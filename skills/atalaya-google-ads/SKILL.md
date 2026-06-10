@@ -3,7 +3,7 @@ name: atalaya-google-ads
 description: "Search Google Ads Transparency Center for competitor ads. Extract headlines, descriptions. Generate adapted search ad ideas."
 context_required:
 - brand/{slug}/market-and-us/competitors/sources.json
-- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
 context_writes:
 - brand/{slug}/atalaya/ads-scan/google-YYYY-MM-DD.json

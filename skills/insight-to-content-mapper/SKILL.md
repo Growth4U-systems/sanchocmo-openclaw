@@ -383,7 +383,7 @@ than the full brief generation:
 
 1. Read classified signals from `brand/{slug}/content/research-signals/{today}-*.json`
 2. Read `brand/{slug}/content/content-pillars.md` for pillar matching
-3. Read `brand/{slug}/brand-book/brand-voice/brand-voice.current.md` for tone
+3. Read `brand/{slug}/brand-voice/brand-voice.current.md` for tone
 
 For each signal:
 - Match to a pillar_id (by topic relevance)

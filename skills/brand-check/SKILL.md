@@ -13,10 +13,10 @@ metadata:
   updated: '2026-05-01'
 context_required:
   - brand/{slug}/foundation-state.json
-  - brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+  - brand/{slug}/brand-voice/brand-voice.current.md
   - brand/{slug}/go-to-market/positioning/shared/messaging-summary.md
 context_optional:
-  - brand/{slug}/brand-book/visual-identity/visual-identity.current.md
+  - brand/{slug}/brand-identity/visual-identity/visual-identity.current.md
   - brand/{slug}/brand-book/seo-guidelines.md
   - brand/{slug}/go-to-market/positioning/ecp{N}-{slug}/*.current.md
 context_writes:

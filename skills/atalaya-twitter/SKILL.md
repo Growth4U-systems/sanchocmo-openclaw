@@ -3,7 +3,7 @@ name: atalaya-twitter
 description: "Scan followed Twitter/X profiles. Extract full tweet content. Generate adapted content ideas."
 context_required:
 - brand/{slug}/atalaya/config.json
-- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/content-playbook/writing-guide.md
 context_writes:

@@ -3,7 +3,7 @@ name: outreach-playbook
 description: "Generate and update the Outreach Playbook for a client. Defines discovery methods, sequence templates, and outreach stack based on Foundation ECPs, Atalaya contacts, and Trust Engine media/partner intelligence."
 context_required:
 - brand/{slug}/company-brief/company-brief.current.md
-- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/go-to-market/positioning/positioning.current.md
 - brand/{slug}/market-and-us/competitors/sources.json

@@ -1,8 +1,7 @@
 {
   "docPaths": {
     "brand-voice": [
-      "brand-identity/voice-profile/voice-profile.current.md",
-      "brand-identity/brand-voice/brand-voice.current.md"
+      "brand-voice/brand-voice.current.md"
     ],
     "brand-voice-snapshot": [
       "brand-voice/brand-voice.current.md",
@@ -27,6 +26,9 @@
     "competitor-analysis": [
       "market-and-us/competitors/competitors.current.md"
     ],
+    "content-playbook": [
+      "content-playbook/content-playbook.current.md"
+    ],
     "content-strategy": [
       "strategies/content/content.current.md"
     ],
@@ -37,7 +39,7 @@
       "strategies/email/email.current.md"
     ],
     "existing-customer-data": [
-      "go-to-market/existing-customers/existing-customers.current.md"
+      "go-to-market/existing-customer-data/existing-customer-data.current.md"
     ],
     "fast-foundation": [
       "company-brief/company-brief.current.md",
@@ -51,10 +53,12 @@
       "market-and-us/market/lite.md"
     ],
     "market-synthesis": [
-      "market-and-us/swot/swot.current.md"
+      "market-and-us/swot/swot.current.md",
+      "market-and-us/summary/summary.current.md",
+      "market-and-us/ope-canvas/ope-canvas.current.md"
     ],
     "metrics-setup": [
-      "metrics/setup/setup.current.md"
+      "go-to-market/metrics-plan/metrics-plan.current.md"
     ],
     "niche-basic": [
       "go-to-market/ecps/ecps.current.md",
@@ -63,6 +67,9 @@
     "niche-discovery": [
       "go-to-market/ecps/ecps.current.md",
       "go-to-market/ecps/lite.md"
+    ],
+    "outreach-playbook": [
+      "outreach-playbook/outreach-playbook.current.md"
     ],
     "own-media-audit": [
       "site-audit/own-media-audit/own-media-audit.current.md",

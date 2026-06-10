@@ -3,7 +3,7 @@ name: pov-bank-builder
 description: "Builds and refreshes the POV Bank (point-of-view database) for a brand. Synthesizes brand-voice + content-pillars + clarify-history into per-pillar opinions: core beliefs, what we say yes/no to, preferred angles, and evidence we cite. Used by idea-builder to derive non-generic, brand-aligned angle drafts."
 context_required:
 - brand/{slug}/content/content-pillars.md
-- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
 - brand/{slug}/company-brief/company-brief.current.md
 context_optional:
 - brand/{slug}/content/clarify-history.json
