@@ -5,8 +5,15 @@ name: Publish sanchocmo image
 # GAP F1/F2/F4). Mirror of the OD/YALC `docker-image.yml` workflows.
 #
 #   • release: published   → :vX.Y.Z + :latest   (hooks into release-please)
-#   • push to staging       → :edge               (continuous test image)
 #   • workflow_dispatch     → :<input>            (default :edge, for private tests)
+#
+# We DON'T build on every push to staging: the multi-arch (amd64 + arm64) build
+# runs the arm64 leg under QEMU emulation (~15-20 min) and is billed per-minute
+# on this private repo. Staging never consumed that image anyway — deploy-staging
+# builds `sanchocmo` from source on the VPS (it has a compose `build:` directive),
+# and docker-compose.yml defaults to `:latest`, not `:edge`. So the image is only
+# needed for a real production release (multi-arch, versioned) or an on-demand
+# test build via workflow_dispatch. See docs/plans/sanchocmo-packaging-plan.md.
 #
 # NOTE: the GHCR package starts PRIVATE. Making it public is gated on Fase 0
 # (secret + client-data purge) — until then this still works for VPS/CI hosts
@@ -15,15 +22,13 @@ name: Publish sanchocmo image
 on:
   release:
     types: [published]
-  push:
-    branches: [staging]
   workflow_dispatch:
     inputs:
       tag:
         description: "Image tag to publish (manual runs)"
         default: edge
 
-# One in-flight build per ref; a newer push supersedes an older one.
+# One in-flight build per ref; a newer trigger supersedes an older one.
 concurrency:
   group: docker-image-${{ github.ref }}
   cancel-in-progress: true
@@ -61,7 +66,6 @@ jobs:
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=raw,value=edge,enable=${{ github.event_name == 'push' }}
             type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
             type=raw,value=latest,enable=${{ github.event_name == 'release' }}
             type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
