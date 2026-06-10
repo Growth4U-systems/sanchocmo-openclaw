@@ -58,6 +58,13 @@ else
 fi
 
 # --- 3. Bring the stack up ---------------------------------------------------
+# The wizard turns Outreach on by provisioning a YALC_API_TOKEN; honor that
+# here so `install.sh` (no flag) still brings the overlay up when the user
+# opted in during setup. The explicit --yalc flag also forces it on.
+if [ "$WITH_YALC" != "1" ] && grep -qE '^YALC_API_TOKEN=.+' .env 2>/dev/null; then
+  WITH_YALC=1
+  echo "  ✓ Outreach (YALC) enabled in .env — starting its overlay"
+fi
 COMPOSE_ARGS="-f docker-compose.yml"
 [ "$WITH_OD" = "1" ]   && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
 [ "$WITH_YALC" = "1" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
