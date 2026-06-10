@@ -22,7 +22,7 @@ If a skill is not listed by YALC at runtime, do not claim it is executable throu
 | Skill catalog and execution | `skills`, `skill-info`, `run-skill` |
 | Brain and setup | `brain`, `brain-update`, `setup-preview`, `setup-update-preview`, `setup-regenerate`, `setup-commit` |
 | Human gates | `gates`, `approve-gate`, `reject-gate` |
-| Campaigns | `campaigns`, `campaign`, `campaign-leads`, `campaign-lead`, `campaign-report`, `campaign-timeline`, `campaign-export`, `campaign-chat`, `pause-campaign`, `resume-campaign`, `update-lead-status` |
+| Campaigns | `campaigns`, `create-campaign-draft`, `add-campaign-step`, `campaign`, `campaign-leads-search`, `campaign-leads-enrich`, `campaign-leads`, `campaign-lead`, `campaign-sequence-update`, `campaign-sequence-approve`, `campaign-sequence-request-changes`, `campaign-dry-run`, `campaign-publish`, `campaign-live`, `campaign-report`, `campaign-timeline`, `campaign-export`, `campaign-chat`, `pause-campaign`, `resume-campaign`, `update-lead-status` |
 | Providers / MCP-backed providers | `providers`, `provider-knowledge`, `provider-test` |
 | Dashboards and visualization | `dashboard-list`, `dashboard`, `visualizations`, `visualization` |
 | Escape hatches | `api` for confirmed `/api/*` gaps; `cli` for allowlisted read-only commands |
@@ -71,9 +71,14 @@ These exist in the YALC source tree, docs, or Claude Code skill layer, but are n
 | "Check providers / MCP" | `providers`, `provider-knowledge`, and `provider-test --provider <id>` |
 | "Approve a YALC gate" | `gates`, summarize payload, wait for explicit confirmation, then `approve-gate --confirm-side-effect` |
 | "Qualify these leads" | `run-skill --skill qualify-leads` |
-| "Find companies / people" | `find-companies` then `find-people`; enrich only if needed |
-| "Prepare cold email" | Sancho/Rocinante drafts strategy/copy, YALC runs `email-sequence` or `personalize` |
-| "Launch/send campaign" | dry-run with `send-email-sequence` or `multi-channel-campaign`, show warnings, wait for explicit confirmation, then rerun with `--confirm-side-effect` |
+| "Find companies / people" | For standalone sourcing, use `find-companies` then `find-people`; enrich only if needed. For a campaign, use `campaign-leads-search` so the sourced leads are assigned to the YALC campaign. |
+| "Prepare cold email" | Sancho/Rocinante drafts strategy/copy, then Yalc Agent persists a reviewable YALC draft with `create-campaign-draft`; include the email sequence in `skillInput.sequence` |
+| "Create campaign for review" | `create-campaign-draft`; return the YALC campaign ID and ask the user to review before any Instantly dry-run. If a draft already exists but lacks emails, use `add-campaign-step` with `send-email-sequence` instead of duplicating it |
+| "Enrich campaign leads" | `campaign-leads-enrich --confirm-side-effect`; if Apollo fails, report the provider error and ask for valid credentials or user-provided leads |
+| "Approve campaign sequence" | `campaign-sequence-approve --confirm-side-effect` after the user has reviewed the sequence |
+| "Test campaign in Instantly" | Start from an existing YALC campaign ID. If none exists, create a YALC draft first. Then run `campaign-dry-run --confirm-side-effect` and show readiness, warnings, lead count, and sequence count |
+| "Publish campaign to Instantly" | `campaign-publish --confirm-side-effect` only after explicit user confirmation. This creates the campaign in Instantly without launching it |
+| "Launch/send campaign" | `campaign-live --confirm-side-effect` only after explicit user confirmation and a successful publish run |
 | "Track/report campaign" | `campaigns`, `monthly-campaign-report`, or `visualize-campaigns` |
 | "Inspect one campaign" | `campaign`, `campaign-leads`, `campaign-timeline`, `campaign-report` |
 | "Use full autonomous YALC orchestration" | Do not use `orchestrate` via HTTP until API-level approval gates are supported; decompose into explicit allowlisted skills instead |

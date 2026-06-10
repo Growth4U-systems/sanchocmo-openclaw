@@ -95,9 +95,19 @@ function usage() {
   yalc-client catalog --slug <slug>
   yalc-client today --slug <slug>
   yalc-client campaigns --slug <slug>
+  yalc-client create-campaign-draft --slug <slug> [--input <json-file>|--json '<json>'] [--allow-empty-email-sequence]
   yalc-client campaign --slug <slug> --id <campaign-id>
+  yalc-client add-campaign-step --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>']
+  yalc-client campaign-leads-search --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-leads-enrich --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-leads --slug <slug> --id <campaign-id>
   yalc-client campaign-lead --slug <slug> --id <campaign-id> --lead-id <lead-id>
+  yalc-client campaign-sequence-update --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-sequence-approve --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-sequence-request-changes --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-dry-run --slug <slug> --id <campaign-id> --confirm-side-effect
+  yalc-client campaign-publish --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-live --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-report --slug <slug> --id <campaign-id>
   yalc-client campaign-timeline --slug <slug> --id <campaign-id>
   yalc-client campaign-export --slug <slug> --id <campaign-id>
@@ -130,12 +140,13 @@ Options:
   --token <token>               Override bearer token (avoid in shell history; prefer env)
   --json '<json>'               Inline JSON payload for run-skill
   --confirm-side-effect         Required for live sends, campaign status writes, gates, setup commits, and generic mutating API calls
+                                Not required for create-campaign-draft because it only creates an internal YALC review draft
 `)
 }
 
 function parseArgs(argv) {
   const args = { _: [] }
-  const boolFlags = new Set(['confirm-side-effect', 'allow-unverified-skill'])
+  const boolFlags = new Set(['confirm-side-effect', 'allow-unverified-skill', 'allow-empty-email-sequence'])
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (!a.startsWith('--')) {
@@ -286,6 +297,59 @@ function isSideEffectingSkill(skill) {
   return /(^|[-:])(send|launch|reply|post|publish|campaign-create|linkedin-campaign-create|email-campaign-create)([-:]|$)/.test(skill)
 }
 
+function isRecord(value) {
+  return value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function arrayHasEmailBody(items) {
+  if (!Array.isArray(items)) return false
+  return items.some((item) => {
+    if (!isRecord(item)) return false
+    return Boolean(typeof item.body === 'string' && item.body.trim()
+      || typeof item.content === 'string' && item.content.trim()
+      || typeof item.message === 'string' && item.message.trim()
+      || typeof item.template === 'string' && item.template.trim())
+  })
+}
+
+function inputHasEmailSequence(input) {
+  if (!isRecord(input)) return false
+  return arrayHasEmailBody(input.sequence)
+    || arrayHasEmailBody(input.emails)
+    || arrayHasEmailBody(input.emailSequence)
+    || arrayHasEmailBody(input.email_sequence)
+    || arrayHasEmailBody(input.steps)
+    || arrayHasEmailBody(input.messages)
+}
+
+function hasReviewableEmailSequence(payload) {
+  if (!isRecord(payload)) return false
+  if (inputHasEmailSequence(payload)) return true
+  const steps = Array.isArray(payload.steps) ? payload.steps : []
+  return steps.some((step) => isRecord(step) && inputHasEmailSequence(step.skillInput))
+}
+
+function requiresEmailSequence(payload) {
+  if (!isRecord(payload)) return false
+  const channels = Array.isArray(payload.channels) ? payload.channels : []
+  if (channels.some((channel) => String(channel).toLowerCase() === 'email')) return true
+  const steps = Array.isArray(payload.steps) ? payload.steps : []
+  return steps.some((step) => {
+    if (!isRecord(step)) return false
+    const skillId = String(step.skillId || '').toLowerCase()
+    const channel = String(step.channel || '').toLowerCase()
+    return channel === 'email' || skillId.includes('email')
+  })
+}
+
+function assertReviewableEmailDraft(payload, args) {
+  if (!requiresEmailSequence(payload) || args.allowEmptyEmailSequence) return
+  if (hasReviewableEmailSequence(payload)) return
+  throw new Error(
+    'Email campaign drafts must include a reviewable email sequence before they are created. Add a send-email-sequence step with skillInput.sequence [{ subject, body, delay_days }] or rerun with --allow-empty-email-sequence for a planning-only draft.',
+  )
+}
+
 function assertSafeGenericApi(args) {
   const method = String(args.method || 'GET').toUpperCase()
   const endpoint = requireArg(args, 'path')
@@ -397,6 +461,33 @@ async function main() {
     return callAndSave(config, 'campaigns', 'GET', '/api/campaigns')
   }
 
+  if (command === 'create-campaign-draft') {
+    const payload = readPayload(args)
+    assertReviewableEmailDraft(payload, args)
+    const title = typeof payload.title === 'string' && payload.title.trim() ? payload.title.trim() : 'campaign'
+    return callAndSave(config, `campaign-draft-${title}`, 'POST', '/api/campaigns', payload)
+  }
+
+  if (command === 'add-campaign-step') {
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-add-step`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/steps`, payload)
+  }
+
+  if (command === 'campaign-leads-search') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-leads-search`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/leads/search`, payload)
+  }
+
+  if (command === 'campaign-leads-enrich') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-leads-enrich`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/leads/enrich`, payload)
+  }
+
   if (command === 'today') {
     return callAndSave(config, 'today', 'GET', '/api/today/feed')
   }
@@ -436,6 +527,51 @@ async function main() {
     const id = requireArg(args, 'id')
     const message = requireArg(args, 'message')
     return callAndSave(config, `campaign-${id}-chat`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/chat`, { message })
+  }
+
+  if (command === 'campaign-sequence-update') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-sequence-update`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/sequence/update`, payload)
+  }
+
+  if (command === 'campaign-sequence-approve') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-sequence-approve`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/sequence/approve`, payload)
+  }
+
+  if (command === 'campaign-sequence-request-changes') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = readPayload(args)
+    return callAndSave(config, `campaign-${id}-sequence-request-changes`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/sequence/request-changes`, payload)
+  }
+
+  if (command === 'campaign-dry-run') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    return callAndSave(config, `campaign-${id}-dry-run`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/dry-run`, {})
+  }
+
+  if (command === 'campaign-publish') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    return callAndSave(config, `campaign-${id}-publish`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/publish`, {
+      ...readPayload(args),
+      confirmInstantlyPublish: true,
+    })
+  }
+
+  if (command === 'campaign-live') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    return callAndSave(config, `campaign-${id}-live`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/live`, {
+      ...readPayload(args),
+      confirmLiveLaunch: true,
+    })
   }
 
   if (command === 'pause-campaign' || command === 'resume-campaign') {

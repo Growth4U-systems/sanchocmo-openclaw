@@ -1,6 +1,33 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { addMessage, getGatewayUrl, getChatSecret, type ChatAttachment } from "@/lib/data/mc-chat";
+import {
+  addMessage,
+  clearStatus,
+  getGatewayUrl,
+  getChatSecret,
+  setStatusEntry,
+  type ChatAttachment,
+  type ErrorDetail,
+} from "@/lib/data/mc-chat";
+
+async function readGatewayResponse(res: Response): Promise<{ chatId?: string; raw: string }> {
+  const raw = await res.text();
+  if (!raw) return { raw };
+  try {
+    const data = JSON.parse(raw) as { chatId?: string };
+    return { chatId: data.chatId, raw };
+  } catch {
+    return { raw };
+  }
+}
+
+function gatewayErrorDetail(raw: string): ErrorDetail {
+  return {
+    category: "network",
+    raw: raw.slice(0, 4096),
+    classifiedAt: Date.now(),
+  };
+}
 
 /**
  * POST /api/chat/send (was /api/mc-chat/send)
@@ -33,11 +60,33 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const tid = threadId || `${slug}:general`;
+  const rawAgent = typeof agent === "string" && agent.trim() ? agent.trim() : undefined;
+  const shortThreadId =
+    typeof tid === "string" && tid.startsWith(`${slug}:`)
+      ? tid.slice(String(slug).length + 1)
+      : typeof tid === "string"
+        ? tid
+        : "";
+  const resolvedAgent = rawAgent || (shortThreadId === "yalc" ? "yalc" : undefined);
+  const resolvedSkill = skill || (resolvedAgent === "yalc" ? "yalc-operator" : undefined);
+  const resolvedSkills =
+    Array.isArray(skills) && skills.length > 0
+      ? skills
+      : resolvedSkill
+        ? [resolvedSkill]
+        : undefined;
   const parsedAttachments: ChatAttachment[] | undefined =
     Array.isArray(attachments) && attachments.length > 0 ? attachments : undefined;
 
   // Store user message locally
   addMessage(tid, "user", text, undefined, parsedAttachments);
+  if (resolvedAgent) {
+    setStatusEntry(tid, {
+      text: resolvedAgent === "yalc" ? "YALC está preparando la respuesta..." : "El agente está pensando...",
+      agent: resolvedAgent,
+      ts: Date.now(),
+    });
+  }
 
   // Dashboard UI doesn't send _source → treated as admin (unchanged behavior).
   // mc-chat plugin relays Discord messages with _source: "discord" → client role
@@ -57,8 +106,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     userId: resolvedUserId,
     userName: userName || (isAdmin ? "Admin" : slug),
     linkedTo: linkedTo || undefined,
-    skill: skill || undefined,
-    skills: skills || undefined,
+    skill: resolvedSkill || undefined,
+    skills: resolvedSkills || undefined,
     threadState: threadState || undefined,
     docPath: docPath || undefined,
     docKind: typeof docKind === "string" ? docKind : undefined,
@@ -74,8 +123,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     // coordination. The plugin embeds the value in the SessionKey
     // (`agent:<slug>:<chatId>`) so OpenClaw's `resolveSessionAgentIds()`
     // routes to workspace-<slug>.
-    agentId: typeof agent === "string" ? agent : undefined,
-    agent: typeof agent === "string" ? agent : undefined,
+    agentId: resolvedAgent,
+    agent: resolvedAgent,
   };
 
   try {
@@ -87,11 +136,34 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       },
       body: JSON.stringify(payload),
     });
-    const data = await gwRes.json();
+    const data = await readGatewayResponse(gwRes);
+    if (!gwRes.ok) {
+      const detail = `HTTP ${gwRes.status}${data.raw ? `: ${data.raw.slice(0, 500)}` : ""}`;
+      const userText =
+        gwRes.status === 403
+          ? "No he podido entregar el mensaje al gateway de agentes: la firma compartida de MC Chat no coincide o falta. Revisa MC_CHAT_SECRET y reinicia el gateway."
+          : `No he podido entregar el mensaje al gateway de agentes (${detail}).`;
+      addMessage(tid, "bot", userText, "sancho", undefined, undefined, undefined, undefined, gatewayErrorDetail(detail));
+      clearStatus(tid);
+      console.error("[mc-chat] Gateway rejected message:", detail);
+      return res.status(502).json({ error: "Gateway rejected message: " + detail });
+    }
     res.status(200).json({ ok: true, chatId: data.chatId || tid });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Gateway unreachable";
     console.error("[mc-chat] Forward error:", msg);
+    clearStatus(tid);
+    addMessage(
+      tid,
+      "bot",
+      "No he podido conectar con el gateway de agentes. El mensaje quedó guardado, pero no se ha iniciado ninguna ejecución.",
+      "sancho",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      gatewayErrorDetail(msg),
+    );
     res.status(502).json({ error: "Gateway unreachable: " + msg });
   }
 }

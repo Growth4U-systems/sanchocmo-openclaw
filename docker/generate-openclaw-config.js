@@ -33,6 +33,7 @@ async function main() {
 
   const discordToken = process.env.DISCORD_BOT_TOKEN;
   const cervantesGuildId = process.env.CERVANTES_GUILD_ID || '';
+  const mcChatSecret = process.env.MC_CHAT_SECRET || '';
 
   // --- Auth profiles ---
   if (!config.auth) config.auth = {};
@@ -140,6 +141,15 @@ async function main() {
   }
   if (!config.channels['mc-chat']) {
     config.channels['mc-chat'] = { enabled: true, mcServerUrl: 'http://localhost:18790' };
+  }
+  config.channels['mc-chat'].enabled = true;
+  if (!config.channels['mc-chat'].mcServerUrl) {
+    config.channels['mc-chat'].mcServerUrl = 'http://localhost:18790';
+  }
+  if (mcChatSecret) {
+    config.channels['mc-chat'].sharedSecret = mcChatSecret;
+  } else if (config.channels['mc-chat'].sharedSecret) {
+    delete config.channels['mc-chat'].sharedSecret;
   }
   // Binding: mc-chat → sancho (if not already present)
   if (!config.bindings) config.bindings = [];

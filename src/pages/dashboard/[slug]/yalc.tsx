@@ -19,6 +19,7 @@ import {
   X,
   Plug,
   Loader2,
+  Rocket,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -62,12 +63,77 @@ interface Campaign {
   funnel?: Record<string, number>;
 }
 
+interface CampaignStep {
+  id?: string;
+  stepIndex?: number;
+  skillId?: string;
+  skillInput?: Record<string, unknown>;
+  channel?: string | null;
+  status?: string | null;
+  dependsOn?: string[];
+  approvalRequired?: boolean;
+  resultSetId?: string | null;
+  scheduledAt?: string | null;
+  completedAt?: string | null;
+}
+
+interface SuccessMetric {
+  metric?: string;
+  target?: number;
+  baseline?: number | null;
+  actual?: number | null;
+}
+
+interface CampaignDetail extends Campaign {
+  successMetrics?: SuccessMetric[];
+  steps?: CampaignStep[];
+}
+
+interface CampaignReadiness {
+  campaignId: string;
+  state: string;
+  readyForReview: boolean;
+  readyForDryRun: boolean;
+  readyForPublish: boolean;
+  readyForLive: boolean;
+  blockers: Array<{ code: string; message: string; nextAction: string }>;
+  checklist: Array<{ id: string; label: string; passed: boolean; blocking: boolean }>;
+}
+
+interface CampaignEvent {
+  id: string;
+  campaignId: string;
+  type: string;
+  message: string;
+  payload?: Record<string, unknown>;
+  createdAt: string;
+}
+
+interface CampaignEventsPayload {
+  events?: CampaignEvent[];
+}
+
+interface EmailSequenceEmail {
+  subject?: string | null;
+  body: string;
+  delayDays?: number | null;
+}
+
+interface EmailSequenceBlock {
+  stepId?: string;
+  source: string;
+  emails: EmailSequenceEmail[];
+}
+
 interface CampaignPayload {
   campaigns?: Campaign[];
 }
 
 interface Lead {
   id: string;
+  email?: string | null;
+  emailStatus?: string | null;
+  instantlyCampaignId?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   headline?: string | null;
@@ -170,6 +236,8 @@ interface SaveResult {
   healthcheck?: { ok: boolean; status: string; detail: string };
   custom?: boolean;
 }
+
+type OutboundAction = "search" | "enrich" | "approve" | "dry-run" | "publish" | "live";
 
 const TABS: Array<{ key: TabKey; label: string }> = [
   { key: "overview", label: "Overview" },
@@ -275,12 +343,101 @@ function metricValue(campaign: Campaign, key: string): string {
   return typeof value === "string" && value ? value : "-";
 }
 
+function channelText(channels?: string[] | string | null): string {
+  if (Array.isArray(channels)) return channels.join(", ") || "-";
+  if (!channels) return "-";
+  try {
+    const parsed = JSON.parse(channels);
+    if (Array.isArray(parsed)) return parsed.join(", ") || "-";
+  } catch {
+    // Fall through to returning the raw value.
+  }
+  return channels;
+}
+
+function compactJson(value: unknown): string {
+  if (!value || typeof value !== "object") return "{}";
+  const text = JSON.stringify(value, null, 2);
+  return text.length > 1600 ? `${text.slice(0, 1600)}\n...` : text;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function numberValue(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function normalizeEmailItem(value: unknown): EmailSequenceEmail | null {
+  const item = asRecord(value);
+  if (!item) return null;
+  const body =
+    stringValue(item.body) ||
+    stringValue(item.content) ||
+    stringValue(item.message) ||
+    stringValue(item.template);
+  if (!body) return null;
+
+  return {
+    subject: stringValue(item.subject),
+    body,
+    delayDays:
+      numberValue(item.delay_days) ??
+      numberValue(item.delayDays) ??
+      numberValue(item.dayOffset) ??
+      numberValue(item.day),
+  };
+}
+
+function normalizeEmailArray(value: unknown): EmailSequenceEmail[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeEmailItem).filter((item): item is EmailSequenceEmail => item !== null);
+}
+
+function sequenceFromInput(input: unknown): EmailSequenceEmail[] {
+  const data = asRecord(input);
+  if (!data) return [];
+  for (const key of ["sequence", "emails", "emailSequence", "email_sequence", "steps", "messages"]) {
+    const emails = normalizeEmailArray(data[key]);
+    if (emails.length > 0) return emails;
+  }
+  return [];
+}
+
+function extractEmailSequences(campaign: CampaignDetail): EmailSequenceBlock[] {
+  const blocks: EmailSequenceBlock[] = [];
+  for (const step of campaign.steps || []) {
+    const emails = sequenceFromInput(step.skillInput);
+    if (emails.length === 0) continue;
+    blocks.push({
+      stepId: step.id,
+      source: step.skillId || step.channel || "email-sequence",
+      emails,
+    });
+  }
+  return blocks;
+}
+
 function gateRunId(gate: GateItem): string {
   return gate.run_id || gate.runId || "";
 }
 
 function gateTitle(gate: GateItem): string {
   return gate.title || gate.message || gate.gate_id || gate.gateId || gateRunId(gate) || "Gate pendiente";
+}
+
+function outboundActionLabel(action: OutboundAction): string {
+  if (action === "search") return "Buscar leads";
+  if (action === "enrich") return "Enriquecer";
+  if (action === "approve") return "Aprobar";
+  if (action === "dry-run") return "Prueba seca";
+  if (action === "publish") return "Crear en Instantly";
+  return "Lanzar";
 }
 
 export default function YalcCockpitPage() {
@@ -337,6 +494,33 @@ export default function YalcCockpitPage() {
     if (!selectedCampaignId && campaigns.length > 0) setSelectedCampaignId(campaigns[0].id);
   }, [campaigns, selectedCampaignId]);
 
+  const campaignDetailQuery = useQuery({
+    queryKey: ["yalc", slug, "campaigns", selectedCampaignId],
+    queryFn: () =>
+      fetchJson<CampaignDetail>(
+        `/api/yalc/campaigns/${encodeURIComponent(selectedCampaignId)}?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug && !!selectedCampaignId,
+  });
+
+  const readinessQuery = useQuery({
+    queryKey: ["yalc", slug, "campaigns", selectedCampaignId, "readiness"],
+    queryFn: () =>
+      fetchJson<CampaignReadiness>(
+        `/api/yalc/campaigns/${encodeURIComponent(selectedCampaignId)}/readiness?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug && !!selectedCampaignId,
+  });
+
+  const eventsQuery = useQuery({
+    queryKey: ["yalc", slug, "campaigns", selectedCampaignId, "events"],
+    queryFn: () =>
+      fetchJson<CampaignEventsPayload>(
+        `/api/yalc/campaigns/${encodeURIComponent(selectedCampaignId)}/events?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug && !!selectedCampaignId,
+  });
+
   const leadsQuery = useQuery({
     queryKey: ["yalc", slug, "campaigns", selectedCampaignId, "leads"],
     queryFn: () =>
@@ -373,9 +557,112 @@ export default function YalcCockpitPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       }),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId] });
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "overview"] });
+    },
+  });
+
+  const createCampaignAction = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      fetchJson<{ campaignId: string }>(`/api/yalc/campaigns?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (data) => {
+      setSelectedCampaignId(data.campaignId);
+      setActiveTab("campaigns");
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
+    },
+  });
+
+  const outboundAction = useMutation({
+    mutationFn: ({ campaignId, action }: { campaignId: string; action: OutboundAction }) => {
+      if (action === "search") {
+        const campaign = campaignDetailQuery.data || selectedCampaign;
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/search?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: "apollo",
+            query: campaign?.targetSegment || campaign?.hypothesis || campaign?.title || "B2B founder",
+            titles: ["Founder", "CEO", "Co-Founder"],
+            limit: 25,
+          }),
+        });
+      }
+      if (action === "enrich") {
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/enrich?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider: "apollo", limit: 25 }),
+        });
+      }
+      if (action === "approve") {
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/sequence/approve?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ actorLabel: "Sancho" }),
+        });
+      }
+      if (action === "dry-run") {
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/dry-run?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+      }
+      if (action === "publish") {
+        if (!window.confirm("Esto creara la campana y cargara leads en Instantly, pero no la lanzara. Continuar?")) {
+          return Promise.resolve({ cancelled: true });
+        }
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/publish?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ confirmInstantlyPublish: true, actorLabel: "Sancho" }),
+        });
+      }
+      if (!window.confirm("Esto lanzara la campana ya creada en Instantly. Continuar?")) {
+        return Promise.resolve({ cancelled: true });
+      }
+      return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/live?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmLiveLaunch: true, actorLabel: "Sancho" }),
+      });
+    },
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "readiness"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "events"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "leads"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "overview"] });
+    },
+  });
+
+  const sequenceUpdateAction = useMutation({
+    mutationFn: ({ campaignId, stepId, emails }: { campaignId: string; stepId?: string; emails: EmailSequenceEmail[] }) =>
+      fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/sequence/update?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stepId,
+          actorLabel: "Sancho",
+          sequence: emails.map((email) => ({
+            subject: email.subject || undefined,
+            body: email.body,
+            delay_days: email.delayDays ?? undefined,
+          })),
+        }),
+      }),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "readiness"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaigns", variables.campaignId, "events"] });
     },
   });
 
@@ -421,6 +708,7 @@ export default function YalcCockpitPage() {
   }, [campaigns, providers]);
 
   const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) || null;
+  const selectedCampaignDetail = campaignDetailQuery.data || selectedCampaign;
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId) || null;
 
   function openYalcAgent(prompt?: string) {
@@ -589,7 +877,7 @@ export default function YalcCockpitPage() {
                   setActiveTab("leads");
                 }}
                 onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
-                busyId={campaignAction.variables?.campaignId}
+                busyId={campaignAction.isPending ? campaignAction.variables?.campaignId : undefined}
               />
             </Panel>
 
@@ -607,17 +895,59 @@ export default function YalcCockpitPage() {
         )}
 
         {activeTab === "campaigns" && (
-          <Panel title="Campanas YALC" action={`${campaigns.length} total`}>
-            <CampaignTable
-              campaigns={campaigns}
-              onSelect={(id) => {
-                setSelectedCampaignId(id);
-                setActiveTab("leads");
-              }}
-              onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
-              busyId={campaignAction.variables?.campaignId}
-            />
-          </Panel>
+          <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_440px]">
+            <div className="space-y-4">
+              <CreateOutboundCampaignPanel
+                busy={createCampaignAction.isPending}
+                error={createCampaignAction.error instanceof Error ? createCampaignAction.error.message : null}
+                onCreate={(body) => createCampaignAction.mutate(body)}
+              />
+              <Panel title="Campanas YALC" action={`${campaigns.length} total`}>
+                <CampaignTable
+                  campaigns={campaigns}
+                  onSelect={setSelectedCampaignId}
+                  onAction={(campaignId, action) => campaignAction.mutate({ campaignId, action })}
+                  busyId={campaignAction.isPending ? campaignAction.variables?.campaignId : undefined}
+                />
+              </Panel>
+            </div>
+
+            <Panel
+              title="Revision de campana"
+              action={campaignDetailQuery.isFetching ? "loading" : selectedCampaignDetail?.status || "sin campana"}
+            >
+              <CampaignDetailPanel
+                campaign={selectedCampaignDetail}
+                readiness={readinessQuery.data || null}
+                events={eventsQuery.data?.events || []}
+                onOpenAgent={(prompt) => openYalcAgent(prompt)}
+                onViewLeads={() => setActiveTab("leads")}
+                onSaveSequence={(stepId, emails) => {
+                  if (selectedCampaignDetail?.id) {
+                    sequenceUpdateAction.mutate({ campaignId: selectedCampaignDetail.id, stepId, emails });
+                  }
+                }}
+                onOutboundAction={(action) => {
+                  if (selectedCampaignDetail?.id) outboundAction.mutate({ campaignId: selectedCampaignDetail.id, action });
+                }}
+                busySequenceStepId={
+                  sequenceUpdateAction.isPending && sequenceUpdateAction.variables?.campaignId === selectedCampaignDetail?.id
+                    ? sequenceUpdateAction.variables?.stepId || "__default__"
+                    : undefined
+                }
+                busyAction={
+                  outboundAction.isPending && outboundAction.variables?.campaignId === selectedCampaignDetail?.id
+                    ? outboundAction.variables?.action
+                    : undefined
+                }
+                actionError={
+                  outboundAction.error instanceof Error
+                    ? outboundAction.error.message
+                    : sequenceUpdateAction.error instanceof Error ? sequenceUpdateAction.error.message : null
+                }
+              />
+            </Panel>
+          </div>
         )}
 
         {activeTab === "leads" && (
@@ -650,7 +980,7 @@ export default function YalcCockpitPage() {
                 selectedLeadId={selectedLeadId}
                 onSelect={setSelectedLeadId}
                 onStatus={(leadId, lifecycleStatus) => leadStatusAction.mutate({ leadId, lifecycleStatus })}
-                busyId={leadStatusAction.variables?.leadId}
+                busyId={leadStatusAction.isPending ? leadStatusAction.variables?.leadId : undefined}
               />
             </Panel>
 
@@ -944,6 +1274,136 @@ function ProviderConnectModal({
   );
 }
 
+function CreateOutboundCampaignPanel({
+  busy,
+  error,
+  onCreate,
+}: {
+  busy: boolean;
+  error: string | null;
+  onCreate: (body: Record<string, unknown>) => void;
+}) {
+  const [title, setTitle] = useState("Growth4U - Programa 6 meses");
+  const [hypothesis, setHypothesis] = useState(
+    "B2B founders with stalled outbound will respond to a six-month execution program.",
+  );
+  const [targetSegment, setTargetSegment] = useState("B2B founders in Spain doing founder-led sales");
+  const [query, setQuery] = useState("B2B SaaS founder Spain");
+  const [subject, setSubject] = useState("Sistema outbound en 6 meses");
+  const [email1, setEmail1] = useState(
+    "Hola {{first_name}}, vi que {{company_name}} esta en una fase donde outbound repetible puede cambiar el ritmo comercial. En Growth4U construimos el sistema completo en 6 meses: ICP, datos, secuencias, testing y operacion semanal.",
+  );
+  const [email2, setEmail2] = useState(
+    "Te comparto la idea concreta: en vez de contratar piezas sueltas, montamos contigo el motor outbound hasta que haya cadencia, reporting y aprendizaje real. Si tiene sentido, revisamos si aplica a {{company_name}}.",
+  );
+
+  return (
+    <Panel title="Crear campana outbound" action="YALC draft">
+      <div className="grid gap-3 md:grid-cols-2">
+        <LabeledInput label="Titulo" value={title} onChange={setTitle} />
+        <LabeledInput label="Busqueda Apollo" value={query} onChange={setQuery} />
+        <LabeledInput label="ICP" value={targetSegment} onChange={setTargetSegment} className="md:col-span-2" />
+        <LabeledTextarea label="Hipotesis" value={hypothesis} onChange={setHypothesis} className="md:col-span-2" />
+        <LabeledInput label="Asunto email 1" value={subject} onChange={setSubject} className="md:col-span-2" />
+        <LabeledTextarea label="Email 1" value={email1} onChange={setEmail1} />
+        <LabeledTextarea label="Email 2" value={email2} onChange={setEmail2} />
+      </div>
+      {error && <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">{error}</div>}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={busy || !title.trim() || !hypothesis.trim()}
+          onClick={() =>
+            onCreate({
+              title,
+              hypothesis,
+              targetSegment,
+              channels: ["email"],
+              successMetrics: [
+                { metric: "reply_rate", target: 0.08, baseline: null, actual: null },
+                { metric: "positive_reply_rate", target: 0.03, baseline: null, actual: null },
+              ],
+              steps: [
+                {
+                  skillId: "find-companies",
+                  channel: "apollo",
+                  skillInput: { query, maxCompanies: 25 },
+                  approvalRequired: true,
+                },
+                {
+                  skillId: "send-email-sequence",
+                  channel: "email",
+                  skillInput: {
+                    provider: "instantly",
+                    dryRun: true,
+                    sequence: [
+                      { subject, body: email1, delay_days: 0 },
+                      { subject: "Seguimiento Growth4U", body: email2, delay_days: 3 },
+                    ],
+                  },
+                  approvalRequired: true,
+                },
+              ],
+            })
+          }
+          className="inline-flex items-center gap-2 rounded-md border-2 border-ink bg-rust px-3 py-2 text-sm font-bold text-white shadow-comic-sm disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
+          Crear draft en YALC
+        </button>
+        <span className="text-xs font-semibold text-muted-foreground">Despues usa buscar, enriquecer, aprobar y lanzar.</span>
+      </div>
+    </Panel>
+  );
+}
+
+function LabeledInput({
+  label,
+  value,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <label className={cn("block", className)}>
+      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</span>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none"
+      />
+    </label>
+  );
+}
+
+function LabeledTextarea({
+  label,
+  value,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  return (
+    <label className={cn("block", className)}>
+      <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</span>
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={4}
+        className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none"
+      />
+    </label>
+  );
+}
+
 function StatusTile({
   icon,
   label,
@@ -1054,7 +1514,7 @@ function CampaignTable({
                       onClick={() => onSelect(campaign.id)}
                       className="rounded-md border border-border bg-background px-2 py-1 text-xs font-bold hover:border-ink"
                     >
-                      Ver leads
+                      Revisar
                     </button>
                     <button
                       type="button"
@@ -1072,6 +1532,293 @@ function CampaignTable({
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function CampaignDetailPanel({
+  campaign,
+  readiness,
+  events,
+  onOpenAgent,
+  onViewLeads,
+  onSaveSequence,
+  onOutboundAction,
+  busySequenceStepId,
+  busyAction,
+  actionError,
+}: {
+  campaign: CampaignDetail | null;
+  readiness: CampaignReadiness | null;
+  events: CampaignEvent[];
+  onOpenAgent: (prompt: string) => void;
+  onViewLeads: () => void;
+  onSaveSequence: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
+  onOutboundAction: (action: OutboundAction) => void;
+  busySequenceStepId?: string;
+  busyAction?: OutboundAction;
+  actionError: string | null;
+}) {
+  if (!campaign) return <EmptyLine text="Selecciona una campana para revisar el draft guardado en YALC." />;
+
+  const steps = campaign.steps || [];
+  const successMetrics = campaign.successMetrics || [];
+  const emailSequences = extractEmailSequences(campaign);
+
+  return (
+    <div className="space-y-4 text-sm">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={cn("rounded-md border px-2 py-1 text-xs font-bold", statusClasses(campaign.status))}>
+            {campaign.status || "unknown"}
+          </span>
+          <span className="rounded-md border border-border bg-background px-2 py-1 text-xs font-bold">
+            {channelText(campaign.channels)}
+          </span>
+        </div>
+        <h3 className="mt-3 font-heading text-base text-foreground">{campaign.title || campaign.id}</h3>
+        <p className="mt-1 text-muted-foreground">{campaign.hypothesis || "Sin hipotesis guardada."}</p>
+        {campaign.targetSegment && (
+          <p className="mt-2 text-xs font-semibold text-muted-foreground">ICP: {campaign.targetSegment}</p>
+        )}
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="rounded-md border border-border bg-background p-3">
+          <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Leads</div>
+          <div className="mt-1 text-lg font-heading text-foreground">{campaign.leadCount ?? 0}</div>
+        </div>
+        <div className="rounded-md border border-border bg-background p-3">
+          <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Actualizada</div>
+          <div className="mt-1 text-sm font-semibold text-foreground">
+            {formatDate(campaign.updatedAt || campaign.createdAt)}
+          </div>
+        </div>
+      </div>
+
+      {successMetrics.length > 0 && (
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            <Target className="h-3.5 w-3.5" />
+            Metricas objetivo
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {successMetrics.map((metric, index) => (
+              <span key={`${metric.metric || "metric"}-${index}`} className="rounded-md border border-border bg-background px-2 py-1 text-xs font-semibold">
+                {metric.metric || "metric"}: {typeof metric.target === "number" ? metric.target : "-"}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <ListChecks className="h-3.5 w-3.5" />
+          Readiness
+        </div>
+        {readiness ? (
+          <div className="rounded-md border border-border bg-background p-3">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <span className={cn("rounded-md border px-2 py-1 text-xs font-bold", statusClasses(readiness.state))}>
+                {readiness.state}
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForReview ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
+                  review
+                </span>
+                <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForDryRun ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
+                  dry-run
+                </span>
+                <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForPublish ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
+                  publish
+                </span>
+                <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", readiness.readyForLive ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground")}>
+                  live
+                </span>
+              </div>
+            </div>
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              {readiness.checklist.map((item) => (
+                <div key={item.id} className="flex items-center gap-2 text-xs">
+                  {item.passed ? <CheckCircle2 className="h-3.5 w-3.5 text-sage" /> : <CircleAlert className="h-3.5 w-3.5 text-yellow-700" />}
+                  <span className={item.passed ? "text-foreground" : "text-muted-foreground"}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+            {readiness.blockers.length > 0 && (
+              <div className="mt-3 space-y-1">
+                {readiness.blockers.slice(0, 3).map((blocker) => (
+                  <div key={blocker.code} className="rounded border border-yellow-500/50 bg-yellow-100 px-2 py-1 text-xs text-yellow-900">
+                    <span className="font-bold">{blocker.code}:</span> {blocker.nextAction || blocker.message}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <EmptyLine text="Readiness no disponible todavia." />
+        )}
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <Rocket className="h-3.5 w-3.5" />
+          Operacion outbound
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(["search", "enrich", "approve", "dry-run", "publish", "live"] as OutboundAction[]).map((action) => {
+            const disabled =
+              !!busyAction ||
+              (action === "approve" && emailSequences.length === 0) ||
+              (action === "dry-run" && !readiness?.readyForDryRun) ||
+              (action === "publish" && (!readiness?.readyForPublish || readiness?.readyForLive)) ||
+              (action === "live" && !readiness?.readyForLive);
+            return (
+              <button
+                key={action}
+                type="button"
+                disabled={disabled}
+                onClick={() => onOutboundAction(action)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold disabled:opacity-50",
+                  action === "live"
+                    ? "border-rust bg-rust text-white"
+                    : "border-border bg-background hover:border-ink",
+                )}
+              >
+                {busyAction === action && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {outboundActionLabel(action)}
+              </button>
+            );
+          })}
+        </div>
+        {actionError && (
+          <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+            {actionError}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <Activity className="h-3.5 w-3.5" />
+          Timeline YALC
+        </div>
+        {events.length === 0 ? (
+          <EmptyLine text="Sin eventos registrados." />
+        ) : (
+          <div className="max-h-72 space-y-2 overflow-auto rounded-md border border-border bg-background p-2">
+            {events.slice().reverse().slice(0, 12).map((event) => (
+              <div key={event.id} className="rounded border border-border bg-card p-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-foreground">{event.type}</span>
+                  <span className="text-[11px] font-semibold text-muted-foreground">{formatDate(event.createdAt)}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{event.message}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <Send className="h-3.5 w-3.5" />
+          Secuencia de emails para aprobar
+        </div>
+        {emailSequences.length === 0 ? (
+          <div className="rounded-md border border-yellow-500/50 bg-yellow-100 p-3 text-sm text-yellow-900">
+            <div className="flex items-start gap-2">
+              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <div className="font-bold">No hay secuencia guardada en este draft.</div>
+                <p className="mt-1 text-xs">
+                  La campana existe en YALC, pero no tiene emails revisables. Pide a YALC que genere la secuencia y la anada a este draft antes de probar Instantly.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onOpenAgent(`La campana YALC ${campaign.id} no tiene secuencia de emails guardada. Genera una secuencia de outbound email para Growth4U y anadela al draft existente como paso send-email-sequence con dryRun true para poder aprobarla antes de Instantly. No crees una campana nueva.`)}
+                  className="mt-2 inline-flex items-center gap-1 rounded-md border border-yellow-700 bg-white/70 px-2 py-1 text-xs font-bold text-yellow-900 hover:bg-white"
+                >
+                  <Bot className="h-3.5 w-3.5" />
+                  Pedir secuencia
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {emailSequences.map((block, blockIndex) => (
+              <EmailSequenceEditor
+                key={`${block.source}-${block.stepId || blockIndex}`}
+                block={block}
+                busy={busySequenceStepId === (block.stepId || "__default__")}
+                onSave={(emails) => onSaveSequence(block.stepId, emails)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onOpenAgent(`Revisa la campana YALC ${campaign.id} y dime que falta antes de probarla en Instantly.`)}
+          className="inline-flex items-center gap-1 rounded-md border border-rust bg-rust/10 px-2 py-1 text-xs font-bold text-rust hover:bg-rust/20"
+        >
+          <Bot className="h-3.5 w-3.5" />
+          Revisar en chat
+        </button>
+        <button
+          type="button"
+          onClick={onViewLeads}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-bold hover:border-ink"
+        >
+          <Users className="h-3.5 w-3.5" />
+          Ver leads
+        </button>
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <ListChecks className="h-3.5 w-3.5" />
+          Pasos guardados
+        </div>
+        {steps.length === 0 ? (
+          <EmptyLine text="Esta campana todavia no tiene pasos guardados." />
+        ) : (
+          <div className="space-y-2">
+            {steps.map((step, index) => (
+              <div key={step.id || `${step.skillId}-${index}`} className="rounded-md border border-border bg-background p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="font-semibold text-foreground">
+                    {(step.stepIndex ?? index) + 1}. {step.skillId || "step"}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {step.channel && (
+                      <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-bold">
+                        {step.channel}
+                      </span>
+                    )}
+                    <span className={cn("rounded border px-1.5 py-0.5 text-[11px] font-bold", statusClasses(step.status))}>
+                      {step.status || "pending"}
+                    </span>
+                    {step.approvalRequired && (
+                      <span className="rounded border border-yellow-500/50 bg-yellow-100 px-1.5 py-0.5 text-[11px] font-bold text-yellow-800">
+                        approval
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] leading-relaxed text-muted-foreground">
+                  {compactJson(step.skillInput)}
+                </pre>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1112,6 +1859,7 @@ function LeadTable({
           <tr className="border-b-2 border-border text-xs uppercase tracking-wide text-muted-foreground">
             <th className="pb-2 pr-3">Lead</th>
             <th className="pb-2 pr-3">Empresa</th>
+            <th className="pb-2 pr-3">Email</th>
             <th className="pb-2 pr-3">Status</th>
             <th className="pb-2 pr-3">Score</th>
             <th className="pb-2 pr-3">Variant</th>
@@ -1134,6 +1882,10 @@ function LeadTable({
                 <div className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{lead.headline || lead.source || lead.id}</div>
               </td>
               <td className="py-3 pr-3">{lead.company || "-"}</td>
+              <td className="py-3 pr-3">
+                <div className="font-semibold text-foreground">{lead.email || "-"}</div>
+                {lead.emailStatus && <div className="mt-0.5 text-xs text-muted-foreground">{lead.emailStatus}</div>}
+              </td>
               <td className="py-3 pr-3">
                 <span className={cn("rounded-md border px-2 py-1 text-xs font-bold", statusClasses(lead.lifecycleStatus))}>
                   {lead.lifecycleStatus || "unknown"}
@@ -1201,6 +1953,8 @@ function LeadDetailPanel({
         <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
           <InfoCell label="Status" value={lead.lifecycleStatus || "-"} />
           <InfoCell label="Score" value={scoreLabel(lead.qualificationScore)} />
+          <InfoCell label="Email" value={lead.email || "-"} />
+          <InfoCell label="Email status" value={lead.emailStatus || "-"} />
           <InfoCell label="Source" value={lead.source || "-"} />
           <InfoCell label="Updated" value={formatDate(lead.updatedAt)} />
         </div>
@@ -1245,6 +1999,94 @@ function LeadDetailPanel({
         <Bot className="h-4 w-4" />
         Pedir siguiente accion
       </button>
+    </div>
+  );
+}
+
+function EmailSequenceEditor({
+  block,
+  busy,
+  onSave,
+}: {
+  block: EmailSequenceBlock;
+  busy: boolean;
+  onSave: (emails: EmailSequenceEmail[]) => void;
+}) {
+  const sourceSignature = JSON.stringify(block.emails);
+  const [emails, setEmails] = useState<EmailSequenceEmail[]>(block.emails);
+
+  useEffect(() => {
+    setEmails(block.emails);
+  }, [block.stepId, sourceSignature]);
+
+  const changed = JSON.stringify(emails) !== sourceSignature;
+  const valid =
+    emails.length > 0 &&
+    emails.every((email) => email.body.trim().length > 0) &&
+    Boolean(emails[0]?.subject?.trim());
+
+  const updateEmail = (index: number, patch: Partial<EmailSequenceEmail>) => {
+    setEmails((current) => current.map((email, currentIndex) => (
+      currentIndex === index ? { ...email, ...patch } : email
+    )));
+  };
+
+  return (
+    <div className="rounded-md border border-border bg-background p-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="font-semibold text-foreground">{block.source}</div>
+        <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-bold">
+          {emails.length} emails
+        </span>
+      </div>
+      <div className="space-y-2">
+        {emails.map((email, index) => (
+          <div key={`${block.stepId || block.source}-${index}`} className="rounded border border-border bg-card p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Email {index + 1}</div>
+              <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                Dia
+                <input
+                  type="number"
+                  value={email.delayDays ?? 0}
+                  onChange={(event) => updateEmail(index, { delayDays: Number(event.target.value) })}
+                  className="h-7 w-16 rounded border border-border bg-background px-2 text-xs font-semibold text-foreground focus:border-rust focus:outline-none"
+                />
+              </label>
+            </div>
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Asunto</span>
+              <input
+                value={email.subject || ""}
+                onChange={(event) => updateEmail(index, { subject: event.target.value })}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold focus:border-rust focus:outline-none"
+              />
+            </label>
+            <label className="mt-2 block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Cuerpo</span>
+              <textarea
+                value={email.body}
+                onChange={(event) => updateEmail(index, { body: event.target.value })}
+                rows={5}
+                className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed focus:border-rust focus:outline-none"
+              />
+            </label>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={busy || !changed || !valid}
+          onClick={() => onSave(emails)}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-bold hover:border-ink disabled:opacity-50"
+        >
+          {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          Guardar cambios
+        </button>
+        {!valid && <span className="text-xs font-semibold text-yellow-800">El primer email necesita asunto y todos necesitan cuerpo.</span>}
+        {changed && valid && <span className="text-xs font-semibold text-muted-foreground">Al guardar, la secuencia vuelve a requerir aprobacion.</span>}
+      </div>
     </div>
   );
 }
