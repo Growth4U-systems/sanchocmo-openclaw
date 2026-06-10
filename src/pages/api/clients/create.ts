@@ -5,6 +5,7 @@ import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { brandDir, CLIENTS_FILE } from "@/lib/data/paths";
 import { writeClientsFile } from "@/lib/data/clients";
+import { provisionYalcBrain } from "@/lib/yalc/provision";
 
 type ClientsFileData = {
   clients?: Array<Record<string, unknown>>;
@@ -88,6 +89,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   data.clients = [...clients, client];
   writeClientsFile(data);
   createClientDirs(slug);
+
+  // Auto-provision the brand's YALC brain from its website — no CLI, no manual
+  // step. Fire-and-forget so brand creation isn't blocked by YALC synthesis;
+  // a missing/late website just no-ops (re-sync later via /api/yalc/provision).
+  void provisionYalcBrain(slug, { website: url }).catch((err) =>
+    console.error(`[clients/create] YALC brain provisioning failed for ${slug}:`, err),
+  );
 
   return res.status(201).json({
     ok: true,
