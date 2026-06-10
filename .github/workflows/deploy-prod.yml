@@ -126,8 +126,7 @@ jobs:
         run: |
           # Build payload identically to deploy-staging.yml — same key list.
           # Empty secrets/vars are filtered out so an under-populated
-          # `production` Environment is a safe no-op (prod is stale as of
-          # 2026-05; staging is de-facto prod until prod is revived).
+          # `production` Environment is a safe no-op.
           PAYLOAD_B64=$(python3 - <<'PY'
           import os, json, base64
           KEYS = [
