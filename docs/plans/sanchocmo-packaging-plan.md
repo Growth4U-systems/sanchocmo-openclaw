@@ -34,7 +34,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 ## Progreso (tracking)
 
-> Bitácora de avances. Última actualización: **2026-06-05**.
+> Bitácora de avances. Última actualización: **2026-06-09**.
 
 ### ✅ Hecho
 
@@ -70,14 +70,69 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - Fuera de scope: **data snapshots** (`snapshot-data.sh`, `/mnt/data`) se conserva — su opcionalización es F5. Snapshots/CHANGELOG históricos + `mc-data.js` (generado) sin tocar.
   - Verificación: `git grep` refs funcionales → 0 · `docker-compose.yml` YAML válido · una instalación nueva no sembraba el cron (no hay `cron/jobs.json` trackeado).
 
+- **[Fase 1 · Open Design opcional — GAP B2/B4]** — PR #327 (`chore/san-91-od-optional` → base `chore/san-90-remove-git-backup`, **stacked**), `Refs SAN-91`. Trabajado en worktree aislado.
+  - OD vivía en `docker-compose.yml` base con `OD_API_TOKEN:?` requerido → `compose up` fallaba sin OD. Ahora el base **levanta sin OD**.
+  - Nuevo `docker-compose.od.yml` (overlay opt-in) con `open-design` (imagen pública `ghcr.io/growth4u-systems/od:edge`), volumen + `depends_on` + mount de design-systems (B4 sale del base). OD removido del base.
+  - `deploy-staging.yml` + `deploy-prod.yml`: `ENABLE_OD_SERVICE` (default 1) suma `-f docker-compose.od.yml` en todos los `COMPOSE_ARGS` → G4U mantiene OD.
+  - `.env.example`: OD documentado como overlay opt-in.
+  - Verificación (`docker compose config`): base sin token ✅ · base+OD sin token falla (esperado) · base+OD con token ✅ · combo base+OD+YALC ✅ · deploy YAML válido.
+
+- **[Fase 2 · Discord opcional — GAP D1/D2/D3]** — PR #329 (`chore/san-92-discord-optional` → base `chore/san-91-od-optional`, **stacked**), `Refs SAN-92`. Aclaración del usuario #1.
+  - `docker/generate-openclaw-config.js` (D2): el bloque `channels.discord` se gatea a `DISCORD_BOT_TOKEN`; sin token Discord no se habilita (`mc-chat` sigue primario).
+  - `.env.example` (D1): `DISCORD_BOT_TOKEN` comentado/opcional. `config/instance.json.example` (D3): bloque `discord` marcado opcional (`$comment_discord`).
+  - G4U sin cambio (setea el token → rama con-token = comportamiento previo). Verif: `node --check` ✅ · JSON válido ✅ · test funcional del gating ✅.
+  - **Follow-ups Fase 2**: ✅ D4 (retiro `new-client.sh`, SAN-108), D5 (canal publicación slack|discord), D6 (README→MC).
+
+- **[Fase 4/6 · install.sh + wizard — E1/E2/E4]** — PR #331 (`chore/san-93-wizard-install` → base `chore/san-92-discord-optional`, **stacked**), `Refs SAN-93`. Aclaraciones #2 (wizard) y #4 (un comando).
+  - `install.sh` (raíz): chequea docker/compose/openssl, corre el wizard si falta `.env`, `docker compose up -d --build`. Flags `--od`/`--yalc`/`--no-up`/`--force`.
+  - `scripts/wizard.sh`: interactivo + no-interactivo (`WIZARD_ASSUME_YES=1`). Genera secrets (`NEXTAUTH_SECRET`/`ENCRYPTION_KEY`/`SANCHO_INTERNAL_API_TOKEN`/`adminToken`/`mcToken`) y escribe `.env` + `config/instance.json` (sin Discord) + `config/clients.json` (primer brand). No pisa sin `--force`. Checklist final E5.
+  - `docs/INSTALL.md`: guía.
+  - Verif: `bash -n` ✅ · wizard non-interactive genera archivos válidos (JSON OK, tokens 64 hex) · `docker compose config` con el `.env` generado ✅.
+  - **Nota**: DB local setea `COMPOSE_PROFILES=local-db` — se enciende del todo con B9. Follow-up #2: preflight (Fase 3), SetupChecklist UI (E5).
+
+- **[Fase 2 · Retiro de new-client.sh — GAP D4]** — PR #363 (`chore/retire-new-client` → `staging`, **no stacked** — el stack ya está en staging), `Refs SAN-108`. Trabajado en worktree aislado.
+  - **Corrige el plan**: D4 pasa de "reescribir el script sin guild" a **retirarlo**. El onboarding ya no lo necesita: (1) el cliente se crea desde Mission Control (`api/clients/create.ts`: registra en `clients.json` + carpeta base, sin Discord/Supabase); (2) Sancho corre Fast/Full Foundation por chat y las skills se auto-bootstrappean — el `foundation-orchestrator` crea `foundation-state.json` v3.0 si no existe, cada skill crea su sub-árbol. El script era el camino viejo (pre-seed + `--guild` obligatorio + insert Supabase), redundante.
+  - **Eliminado** `workspace-sancho/scripts/new-client.sh`. Removido el endpoint legacy `POST /api/new-client` (que lo ejecutaba vía SSE) de `mc-server.js` (gateway legacy **vivo** en :18790) y `legacy-mc-server.js` (muerto), + var huérfana `_clientCreationInProgress`.
+  - Docs al flujo nuevo: `README.md`, `_system/onboarding/{new-client-protocol,client-onboarding}.md` (reescritos), `foundation-threads/SKILL.md`, mensajes de error en `setup-content-engine-crons.sh` + `reseed-foundation.sh`.
+  - Fuera de scope: docs internos de Cervantes (se limpian en su track de retiro); `CHANGELOG.md` histórico; **`mc-server.js` sigue necesario** (fallback Strangler-Fig, el Next aún proxya `recurring-tasks`/`connect-proxy` a :18790).
+  - Verif: `node -c` ambos servers ✅ · `grep new-client` en código → 0.
+
+- **[Fase 1.5 · Postgres bundled — GAP B9]** — PR [#366](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/366) (`feat/pg-bundled-local-db` → `staging`) **MERGED 2026-06-09**, `Refs SAN-110`. Worktree aislado. Enfoque aprobado por el usuario: **driver condicional + baseline limpio + migrate-at-boot, gateado a local-db; path Neon de prod byte-idéntico**.
+  - **Driver condicional**: nuevo `src/db/driver-select.ts` → `selectDbDriver(url, override)` (auto: `*.neon.tech` → `neon`, otro → `postgres`; override `DATABASE_DRIVER`). `src/db/drizzle.ts` instancia `neon-http` o `postgres-js` según eso; `Db` se tipa como el cliente neon histórico (cast en el boundary) → **cero churn en call-sites**. Dep nueva: `postgres` (postgres.js).
+  - **Baseline limpio**: las migraciones de `src/db/migrations/` están rotas para replay (sin journal, números duplicados, `0003_rekey_tasks` con DROP). Nuevo `drizzle.local.config.ts` + `src/db/migrations-local/` (baseline `0000` consolidado desde `schema.ts`, 22 tablas, sin DROPs, con journal). Prod/Neon sigue con su flujo manual aparte.
+  - **Migrate-at-boot**: `scripts/migrate-local.mjs` (migrator programático postgres-js, espera readiness, idempotente, no-op en Neon, non-fatal). Gateado en `docker/entrypoint.sh` (sección 5d, solo si driver=postgres y `DATABASE_URL` seteada). `COPY` agregado en `Dockerfile`.
+  - **Compose**: servicio `postgres:16-alpine` detrás del profile `local-db` + volumen `postgres_data` + healthcheck; `DATABASE_DRIVER` passthrough. `.env.example` y `docs/INSTALL.md` (nueva sección *Database*) documentan modo bundled vs externo vs sin-DB, auto-detect del driver, y migraciones auto al boot.
+  - **Seguridad prod**: `DATABASE_DRIVER=neon` explícito en `deploy-staging.yml` + `deploy-prod.yml` (cinturón sobre el auto-detect).
+  - **Resuelve la decisión abierta #5** (driver + bootstrap). El `.batch()` neon-only de `client-lifecycle.ts` se hizo portable (neon mantiene `.batch`; postgres usa transacción interactiva) — único call-site con divergencia real.
+  - **Fuera de scope**: cutover de tasks a DB (B8) — `MC_TASKS_BACKEND` queda en `json`; B9 solo habilita MI/POV/Polar con DB local.
+  - Verificación: `npm run test:lib` ✅ 192/192 (incluye 5 nuevos de `selectDbDriver`) · `npm run typecheck` ✅ · `docker compose config` base (sin postgres) y `--profile local-db` (con postgres+volumen) ✅ · **bootstrap real contra `postgres:16-alpine` efímero**: 22 tablas, idempotente, URL neon → skip ✅ · **e2e sobre la red de compose** (servicio `postgres` healthy vía profile, migrate por nombre de host → 22 tablas, persistencia del volumen al recrear) ✅.
+
+- **[Fase 4/6 · Fix wizard `.env` duplicado — B9 follow-up]** — PR [#367](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/367) (`fix/wizard-env-dup-database-url` → `staging`), `Refs SAN-110`. **Abierto, sin mergear.**
+  - **Regresión que B9 metió en staging**: el bloque DB de `.env.example` documentaba el modo bundled con ejemplos comentados `DATABASE_URL=…`. El `set_env()` del wizard matchea `^#?\s*KEY=` y reemplazaba el **primer** match (el ejemplo comentado), dejando dos `DATABASE_URL` activos → en `env_file` de compose gana el último (`CHANGE_ME`) → la app no conecta al PG bundled.
+  - Fix: reescritos los comentarios para que **no contengan la forma `KEY=`** (un solo target de `set_env`) + `NOTE` documentando el gotcha.
+  - Verificado: el wizard emite **un solo** `DATABASE_URL` activo; boot real local-db OK (22 tablas).
+
+- **[Fase 6 / GAP G · Imagen self-contained — seed de OPENCLAW_HOME]** — PR [#369](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/369) (`chore/self-contained-image-seed` → `staging`), `Refs SAN-111`. **Abierto, sin mergear.** Trabajado en worktree aislado.
+  - **Problema** (descubierto en el primer boot real del producto): un `OPENCLAW_HOME` vacío crasheaba (`Cannot find module '/root/.openclaw/docker/generate-openclaw-config.js'`) — el Dockerfile no bakeaba nada del "openclaw-home"; el contenido venía del repo montado. El producto no puede depender de tener el repo clonado en una ruta específica.
+  - **`.dockerignore` (nuevo)**: el `COPY` del seed honra `.dockerignore` (no `.gitignore`) → excluye data/runtime/junk para que **no se baken datos de cliente** (`_backups/` con `hospital-capilar-backup`, `memory/`, `brand/`, `_system/recurring-tasks/`, logs, `.pyc`, `.backup*`, cron pre-backups).
+  - **`Dockerfile`**: bakea el framework a `/opt/sancho-seed/` (path que el mount no shadowea) + `.seed-version`.
+  - **`docker/init-home.sh` (nuevo)**: cada boot refresca `skills/docker/plugins` desde la imagen (gateado por version marker → sin churn de 180MB; preserva `plugins/installs.json`) y seedea `agents/workspace-*/config/cron` **solo si faltan** (nunca pisa datos). Invocado al inicio del `entrypoint.sh`.
+  - **Seguridad G4U**: default del compose `${OPENCLAW_HOME:-~/.openclaw}` **sin tocar** (G4U depende de que resuelva a su repo); en su volumen poblado init-home **sí corre** pero es idempotente (refresh = mismos bytes del commit deployado) + seed-if-absent no-op → datos intactos. Primer boot post-merge: copia única de ~180MB del framework, luego version-gated.
+  - Verificado (boot real aislado): **`OPENCLAW_HOME` vacío bootea** (sin crash) → gateway ready + Next + healthy + 22 tablas; datos preservados en restart (sentinel + config); refresh version-gated ("skipping refresh"); **sin datos de cliente en el seed** (grep).
+  - **Resuelve GAP G** (que `compose pull` no pise datos del volumen) — ver sección G.
+
 ### 🟡 En curso / bloqueado
 
-- **CI de los PRs #208 y #219 en rojo por GitHub Actions pausado (billing)** a nivel org — `startup_failure`, no es el código (local pasa). Se destraba al cargar saldo y re-correr. (Usuario: "luego cargo plata".)
+- **PRs #367 y #369 abiertos, sin mergear** (→ `staging`). **Dependencia**: #369 necesita #367 para que el flujo DB-sobre-volumen-vacío quede limpio (sin el fix, el `.env` del wizard trae el `DATABASE_URL` duplicado). **Mergear #367 primero, luego #369.** (Para el deploy de G4U el orden es indistinto — G4U no usa el wizard.)
+- **🔴 Fase 0 sigue bloqueante #1 para publicar** — y el seeding (#369) lo dejó **más expuesto**: el repo todavía commitea **data operacional y refs hardcodeadas de G4U** que el `.dockerignore` (safety net) no cubre del todo: `workspace-sancho/scripts/{regenerate.py,mc-server.js,auto-bind.py,create-client-crons.sh}`, `mc-data.js`/`legacy-*.js`, `_system/intelligence-log.json`, `AGENTS.md`, etc. mencionan slugs de clientes reales. **La imagen NO es publicable hasta la purga Fase 0.**
 
 ### ⏭️ Próximo
 
-- Completar **Fase 1**: OD/YALC públicos + opcionales (B2/B3 — **desbloqueado**, ver aclaración #3). ✅ B6 (#318), ✅ B5 (#325) hechos.
-- **Fase 0** (purga de secretos / repo limpio) sigue siendo bloqueante #1 **antes de publicar**. Requiere rewrite de historial + rotación de credenciales → **necesita al usuario** (destructivo), ver preguntas abiertas.
+- **Mergear #367 → #369** (en ese orden) a `staging`.
+- Completar **Fase 1**: B3 (YALC overlay a imagen pública — falta nombre/tag) + D7 (degradación graceful OD/YALC en MC).
+- **Fase 0** (purga de secretos + data/refs de cliente / repo limpio) — bloqueante #1 antes de publicar. Destructivo (rewrite de historial + rotación) → **lo ejecuta el usuario**.
+- **Deuda técnica GAP H (`SAN-109`)**: terminar el Strangler-Fig para dejar de levantar `mc-server.js` (`:18790`). Ver sección **H**.
+- Otros hilos desbloqueados: D5 (canal publicación slack|discord), D6 (README→MC), Fase 3 (preflight + modo mínimo).
 
 ---
 
@@ -103,20 +158,25 @@ añadir wizard y publicar imágenes. No es una reescritura.
 | # | Item | PR | Estado | Notas |
 |---|------|----|--------|-------|
 | 1 | B5 · retiro git-backup | #325 (base `staging`) | ✅ abierto | base del stack |
+| 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ abierto | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
+| 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ abierto | aclaración #1; D4/D5/D6 follow-up |
+| 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ abierto | un-comando install; DB local ✅ con B9 |
+| 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ abierto | placeholder SUL; texto canónico = decisión legal |
+| 6 | B9 · Postgres bundled (driver condicional + baseline) | #366 (→ `staging`), SAN-110 | ✅ **MERGED** (2026-06-09) | resuelve decisión #5; e2e en container + persistencia de volumen ✅ |
+| 7 | Fix wizard `.env` duplicado (B9 follow-up) | #367 (→ `staging`), SAN-110 | 🟡 abierto | regresión de B9 en staging; mergear **antes** de #369 |
+| 8 | Imagen self-contained (seed OPENCLAW_HOME) — GAP G | #369 (→ `staging`), SAN-111 | 🟡 abierto | volumen vacío bootea; datos preservados; depende de #367 |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
-1. **LICENSE (B7)**: el README cita "SUL" pero no existe el texto. ¿Qué licencia exacta usamos
-   (SUL/BUSL/MIT/propietaria)? Mientras tanto dejo un `LICENSE.md` placeholder marcado como borrador.
-2. **Imágenes públicas OD/YALC (B2/B3/F5)**: ¿cuáles son los nombres/tags exactos de las imágenes
-   públicas (`ghcr.io/<org>/od:<tag>`, `ghcr.io/<org>/yalc:<tag>`)? Asumo lo que encuentre en
-   `OPEN_DESIGN_IMAGE` / la branch `chore/od-sanchocmo-default-image`; si no, parametrizo con un
-   default y lo dejo configurable por env.
-3. **Fase 0 (purga de secretos)**: es destructiva (rewrite de historial git + **rotar** credenciales
-   expuestas: clave Tailscale, tokens de `openclaw.json.last-good`/`.env.bak`/`instance.json`). **No lo
-   hago solo.** Dejo listado lo que hay que rotar; lo ejecutás vos.
-4. **Cutover tasks JSON→DB (B8)**: requiere correr `db-shadow` en staging N días con diff continuo
-   antes del cutover. Autónomamente solo escribo el **runbook**; el cutover real lo hacés vos.
+1. **LICENSE (B7)** — *parcial*: creé `LICENSE.md` como **borrador** (placeholder SUL, marcado "pending legal review"). Falta tu decisión: ¿texto canónico de la **Sustainable Use License** (el README ya la cita), u otra (BUSL/MIT/propietaria)? + definir licensor y "Permitted Purpose". No fabriqué texto legal autoritativo.
+2. **Imágenes públicas OD/YALC (B2/B3/F5)** — *OD resuelto*: la imagen OD ya es pública (`ghcr.io/growth4u-systems/od:edge`, usada en el overlay B2). **Falta YALC**: hoy el overlay usa `build:` desde el repo privado `../Yalc-Growth4U`; ¿cuál es el nombre/tag de la imagen YALC pública (`ghcr.io/growth4u-systems/yalc:<tag>`)? Con eso hago B3 (build → image).
+3. **Fase 0 (purga de secretos)** — bloqueante para publicar, **destructivo**: rewrite de historial git + **rotar** credenciales expuestas (clave Tailscale `sancho-cmo.taild48df2.ts.net.key`, tokens de `openclaw.json.last-good`/`.env.bak`/`instance.json`). **No lo hago solo.** Lo ejecutás vos.
+4. **Cutover tasks JSON→DB (B8)**: requiere `db-shadow` en staging N días con diff continuo antes del cutover. Autónomamente solo el **runbook**; el cutover lo hacés vos.
+5. **✅ B9 (Postgres bundled) — RESUELTO** (branch `feat/pg-bundled-local-db`). El usuario aprobó el enfoque **(i)**: driver condicional (`neon-http` para `*.neon.tech` / `postgres-js` para el resto) + baseline limpio generado desde `schema.ts` en `src/db/migrations-local/` + migrate-at-boot gateado a local-db. Prod/Neon byte-idéntico (auto-detect + `DATABASE_DRIVER=neon` en deploys). Verificado contra `postgres:16-alpine` (22 tablas, idempotente). Ver entrada en "✅ Hecho". El texto original de la decisión queda abajo como referencia histórica.
+   <details><summary>Contexto original de la decisión</summary>
+
+   **🔴 B9 (Postgres bundled) — DECISIÓN NECESARIA, bloquea local-run completo**: el driver de DB es `@neondatabase/serverless` (`neon-http`), que **NO habla con un Postgres vanilla** — solo con el endpoint HTTP de Neon. Para PG bundled hay que (a) cambiar/condicionar el driver (neon-http para Neon, `pg`/node-postgres para local) **sin romper la conexión Neon de G4U en prod**, y (b) resolver el bootstrap de schema: **no hay journal de Drizzle** (`migrations/meta/` ausente) → `drizzle-kit migrate` no sirve as-is; hay una migración **destructiva** (`0003_rekey_tasks`, DROP) y números duplicados → no se puede aplicar todo el SQL a ciegas; `apply-sql-migration.mjs` también usa `neon()`. **Opciones**: (i) generar un journal de Drizzle limpio desde el schema actual + driver condicional + migrate-al-boot solo para PG local; (ii) un `init.sql` consolidado para DBs frescas. Necesito tu OK sobre el enfoque (riesgo de tocar el path de DB de prod). El wizard ya deja `COMPOSE_PROFILES=local-db` listo para cuando aterrice. **Mientras tanto la app corre con `MC_TASKS_BACKEND=json` (default) o DB externa (Neon).**
+   </details>
 
 ---
 
@@ -177,7 +237,7 @@ historial o partir de un repo nuevo, y **rotar** las credenciales expuestas.
 | # | Actual | Ideal | Dónde |
 |---|--------|-------|-------|
 | B1 ✅ | Admin gate real es `email.endsWith("@growth4u.io")` en el callback de auth | Helper `isAdminEmail()` que lea `ADMIN_EMAIL_DOMAIN` (+ `adminEmails`) | **HECHO** (PR #208) — `admin-domain.ts` + reemplazos en `nextauth.ts:79/:45`, `users.ts`, `admin-emails.ts`, `client-access.ts`, `dashboard/admin/users.tsx`, `health-check.ts:323` |
-| B2 | **Open Design es obligatorio**: en `docker-compose.yml` base con `OD_API_TOKEN: ${OD_API_TOKEN:?...}` → `compose up` falla sin OD | Mover servicio `open-design` a overlay `docker-compose.od.yml`; **imagen pública** `ghcr.io/<org>/od:vX.Y.Z` (publicar el fork) en vez de la privada | `docker-compose.yml:65-133`, `.env.example:159-167` |
+| B2 ✅ | **Open Design es obligatorio**: en `docker-compose.yml` base con `OD_API_TOKEN: ${OD_API_TOKEN:?...}` → `compose up` falla sin OD | **HECHO** (PR SAN-91): movido a overlay `docker-compose.od.yml` (imagen pública `ghcr.io/growth4u-systems/od:edge`); OD fuera del base → levanta sin OD; deploy G4U lo mantiene vía `ENABLE_OD_SERVICE` | `docker-compose.od.yml` (nuevo), `docker-compose.yml`, deploy workflows, `.env.example` |
 | B3 | YALC build desde repo privado `../Yalc-Growth4U` | Mantener overlay `docker-compose.yalc.yml` pero con `image:` **pública** `ghcr.io/<org>/yalc:vX.Y.Z` (no `build:` privado) | `docker-compose.yalc.yml` |
 | B4 | Volumen monta `brand/growth4u/...` hardcodeado | Va con overlay OD; parametrizar por brand o quitar del base | `docker-compose.yml:108` |
 | B5 ✅ | **Git backups de Cervantes** (git config + daily commit+push) | **HECHO** (PR #325, SAN-90): quitado `git config` (Dockerfile), mount `~/.ssh` (compose), cron `backup.sh` (`crontab-cervantes`), `backup.sh` eliminado, menciones en README + DEPLOY.md. Data snapshots (`/mnt/data`) se conserva → F5 | `Dockerfile`, `docker-compose.yml:18`, `docker/crontab-cervantes`, README, DEPLOY.md |
@@ -202,7 +262,7 @@ El camino de **API key está roto hoy** para ambos proveedores:
 | D1 | `DISCORD_BOT_TOKEN=your-bot-token` figura como requerido | Comentado/opcional | `.env.example:19` |
 | D2 | `channels.discord.enabled=true` **siempre** | Gatear todo el bloque Discord a presencia del token | `generate-openclaw-config.js:95` |
 | D3 | `instance.json.example` pide `discord.*` como base | Bloque Discord opcional | `config/instance.json.example` |
-| D4 | `new-client.sh` exige `--guild`, inserta en Supabase, auto-bind Discord, `tools.deny` por guild | Reescribir: crea brand + registra en `clients.json` (genera `mcToken`) **sin** guild/Supabase/Discord | `workspace-sancho/scripts/new-client.sh` |
+| D4 ✅ | `new-client.sh` exige `--guild`, inserta en Supabase, auto-bind Discord | **HECHO** (PR #363, SAN-108): **retirado** el script — el onboarding ya lo hace la creación-MC (`api/clients/create.ts`) + foundation skills (auto-scaffold + `foundation-state.json` v3.0). Endpoint legacy `/api/new-client` removido de `mc-server.js` + `legacy-mc-server.js` | ~~`workspace-sancho/scripts/new-client.sh`~~ (eliminado) |
 | D5 | **Crons publican en Discord** con `message(channel=discord,…)` + patrón de hilo, leyendo `crons.<x>.publish_channel` de `client-config.json` | **Canal configurable (decisión #5)**: añadir `publish.channel_type` (`slack`/`discord`) en `instance.json`/`client-config.json`; parametrizar el paso "PUBLICAR" de las plantillas de cron. **Default Slack** (OAuth ya construido). Si dual-channel resulta caro → centralizar en Slack y dejar Discord como legacy | `cron/jobs.json*`, `client-config.json`, `meeting-intelligence-db.ts:363` (`publish_channel`), `skills/atalaya/SKILL.md:100` |
 | D6 | README gira en torno a "guild por cliente" + diagrama Discord | Reescribir alrededor de Mission Control + chat | `README.md:5-40` |
 
@@ -215,7 +275,7 @@ El camino de **API key está roto hoy** para ambos proveedores:
 | E1 | Editar a mano `.env` + `config/instance.json` + `config/clients.json` | Wizard que pregunta lo esencial y los genera |
 | E2 | Secrets a mano (`openssl rand`): `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `mcToken`/`adminToken` | El wizard los genera |
 | E3 | Sin preflight de config al boot | Preflight que falla rápido listando MUST faltantes |
-| E4 | Crear 1er cliente requiere guild Discord | Crear 1er brand sin Discord (vía `new-client.sh` reescrito) |
+| E4 | Crear 1er cliente requiere guild Discord | Crear 1er brand sin Discord (vía Mission Control + foundation skills; D4 ✅) |
 
 **MUST mínimos reales (verificado):** API key del proveedor elegido (`ANTHROPIC_API_KEY` y/o `OPENAI_API_KEY`) · `config/clients.json` · `config/instance.json` (mínimo) · `NEXTAUTH_SECRET`. `DATABASE_URL` (Neon) solo si `MC_TASKS_BACKEND=db` (default `json`, sin DB — `docker-compose.yml:30`). Google OAuth opcional (fallback legacy token en `nextauth.ts:30-67`). Discord/YALC/OD/Slack: opcionales.
 
@@ -229,11 +289,39 @@ El camino de **API key está roto hoy** para ambos proveedores:
 | F4 | `release-please` ya versiona | Reusar: release `vX.Y.Z` → tag de imagen |
 | F5 | `~/.ssh:/root/.ssh:ro` y `/mnt/data/snapshots` montados | `~/.ssh` se retira con git-backup (B5); `/mnt/data` opcional | `docker-compose.yml:18-19` |
 
-### G. Separación framework vs instancia — 🟢 casi resuelto
+### G. Separación framework vs instancia — ✅ resuelto (PR #369, SAN-111)
 
 `config/*.json` gitignored con `.example`, `brand/` gitignored, symlinks en `entrypoint.sh:15-20`,
-seeds en `templates/`, seeding gateado por existencia de `openclaw.json` (`entrypoint.sh:25`).
-Falta garantizar que un `compose pull` de versión nueva no pise datos del volumen (`OPENCLAW_HOME`).
+seeding gateado por existencia de `openclaw.json`. **Cerrado con #369**: la imagen ahora es
+**self-contained** — el framework se bakea en `/opt/sancho-seed/` y `docker/init-home.sh` lo seedea/
+refresca al volumen en cada boot **sin pisar datos** (framework `skills/docker/plugins` refresca
+gateado por `.seed-version`; `config/`, `workspace-*/memory`, `brand/` y demás datos = seed-si-falta).
+Verificado: `OPENCLAW_HOME` vacío bootea y un `compose pull` (cambio de versión) refresca el framework
+preservando los datos del volumen. **Caveat**: en una máquina que ya use `~/.openclaw` para el CLI
+openclaw hay colisión → setear `OPENCLAW_HOME` a un dir dedicado (documentado en `docs/INSTALL.md`).
+
+### H. Retiro del server legacy `mc-server.js` (terminar Strangler-Fig) — 🟠 deuda técnica (`SAN-109`)
+
+`docker/entrypoint.sh:302` levanta `node workspace-sancho/scripts/mc-server.js &` como **fallback Strangler-Fig** en `:18790`, en paralelo al Next (`:3000`). La migración a Next está **casi completa** (chat, métricas, notificaciones, cron-runs, trust-engine, etc. ya portados — quedan solo comentarios "ported from mc-server.js"). Objetivo: terminar de portar lo que falta y **dejar de levantar el proceso** (menos RAM, una superficie menos, fin del doble server).
+
+**Superficie viva que todavía depende del legacy (auditado 2026-06-08):**
+
+| # | Consumidor | Qué usa de `:18790` |
+|---|-----------|---------------------|
+| H1 | `src/pages/api/system/recurring-tasks.ts` | proxya `GET :18790/api/recurring-tasks` |
+| H2 | `src/pages/api/system/connect-proxy.ts` | sirve el portal **Connect-APIs** (`/connect/{slug}/{apiId}`) + reescribe `/mc/api/` al legacy |
+| H3 | `plugins/mc-chat/src/channel.js` | `mcServerUrl` default `http://localhost:18790` — **auditar**: ¿el legacy aún ingiere el chat o se repunta a Next `:3000`? |
+| H4 | Infra | `Dockerfile` `EXPOSE 18790`; `docker-compose.yml` (`127.0.0.1:18790:18790`, `LEGACY_PORT=18790`); `entrypoint.sh:302` |
+| H5 | Ruta pública `/mc` | `workspace-cervantes/scripts/healthcheck.sh` funnelea `/mc → :18790` — verificar si sigue vigente o ya lo sirve Next (Cervantes se retira aparte) |
+
+**Cutover (incremental, con la app arriba):**
+1. Auditar H3/H5 (chat ingestion + portal `/mc`): confirmar qué sirve realmente el legacy hoy.
+2. Portar `/api/recurring-tasks` (H1) y el portal Connect-APIs (H2) a rutas Next nativas.
+3. Repuntar el plugin `mc-chat` a Next (`:3000`) o confirmar que ya no se usa.
+4. Quitar `node mc-server.js &` de `entrypoint.sh`, `EXPOSE 18790`, el mapping de compose y `LEGACY_PORT`.
+5. **Eliminar** `workspace-sancho/scripts/mc-server.js` + `legacy-mc-server.js`.
+
+**Riesgo:** medio — toca el path de chat/portal en vivo; hacerlo endpoint-por-endpoint y verificar antes de borrar el server. (El endpoint `/api/new-client` ya se removió de ambos servers en D4 / #363.)
 
 ---
 
@@ -262,14 +350,14 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 ### Fase 1 — Desacople de G4U (4–6 días) 🔴
 - ✅ **Admin configurable** (HECHO, PR #208): helper `isAdminDomainEmail()` (lee `ADMIN_EMAIL_DOMAIN` + `adminEmails`); reemplazado hardcode en `nextauth.ts:79` y call-sites; parametrizado email del admin token (`nextauth.ts:45` → `ADMIN_IDENTITY_EMAIL`); UI muestra el dominio configurado; vars inyectadas en deploy + seteadas en GitHub Environments.
 - ✅ **Auth dual (C)** (HECHO, PR #219): `ANTHROPIC_AUTH_MODE` y `OPENAI_AUTH_MODE` en `generate-openclaw-config.js`; en `api_key` genera profile de API key y saltea el script de suscripción; gateados ambos scripts por modo en `entrypoint.sh`; vars seteadas en GitHub Environments (subscription) para G4U.
-- **OD/YALC públicos + opcionales**: mover `open-design` a `docker-compose.od.yml` con imagen pública `ghcr.io/<org>/od`; YALC overlay con imagen pública `ghcr.io/<org>/yalc`; quitar OD del base. Confirmar degradación limpia en MC (`src/lib/open-design/client.ts`, `src/lib/yalc/client.ts` + UI).
+- ✅ **OD opcional (B2)** (HECHO, SAN-91): `open-design` movido a `docker-compose.od.yml` (imagen pública `ghcr.io/growth4u-systems/od:edge`), fuera del base. **Pendiente**: YALC overlay a imagen pública (B3, hoy usa `build:` privado — necesita nombre de imagen) + degradación limpia OD/YALC en MC (D7).
 - ✅ **Supabase → Neon (B6)** (HECHO, PR #318, SAN-86): eliminadas referencias en config examples, `new-client.sh` (+ anon_key A6), `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `types/index.ts`, `guide.tsx`, `mc-server.js` legacy, `regenerate.py`, deploy workflows, docs/skills; borrado `supabase-migration.sql`.
 - ✅ **Retirar git-backup (B5)** (HECHO, PR #325, SAN-90): quitado `git config` (Dockerfile), montaje `~/.ssh` (compose), cron de `backup.sh` (`crontab-cervantes`), `backup.sh` eliminado, menciones en README + DEPLOY.md.
 - Limpiar `health-check.ts:323` y placeholders de dominio.
 
 ### Fase 2 — Discord opcional + canal de publicación (2–3 días) 🟠
 - `.env.example:19` comentar `DISCORD_BOT_TOKEN`; `generate-openclaw-config.js` gatear `channels.discord` a presencia del token; `instance.json.example` bloque discord opcional.
-- **Reescribir `new-client.sh`**: sin `--guild`/Supabase/auto-bind; crea brand + registra en `clients.json` (genera `mcToken`); conservar proyectos P00.
+- ✅ **Retirar `new-client.sh` (D4, SAN-108)**: el onboarding lo hace la creación-MC (`api/clients/create.ts`) + foundation skills (auto-scaffold). Script + endpoint legacy `/api/new-client` eliminados.
 - **Canal configurable (D5)**: `publish.channel_type` en `instance.json`/`client-config.json`; parametrizar el paso "PUBLICAR" de las plantillas de cron (default Slack). Si es caro, centralizar en Slack.
 - Reescribir `README.md` alrededor de Mission Control.
 
@@ -279,8 +367,8 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - Perfil "mínimo" de compose: solo `sanchocmo`, `MC_TASKS_BACKEND=json`, sin DB/OD/YALC/Discord.
 
 ### Fase 4 — Wizard de configuración (4–6 días) 🟠 corazón del pedido
-- Script CLI interactivo (reutilizable desde `install.sh`): elige proveedor + modo auth (api_key/suscripción), pide API key(s) + dominio + nombre del 1er brand; genera `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `adminToken`, `ADMIN_EMAIL_DOMAIN`; opcionalmente configura canal de publicación (Slack/Discord); escribe `.env`, `config/instance.json`, `config/clients.json` (desde `.example`); crea 1er brand vía `new-client.sh` reescrito; valida con preflight.
-- Reusar `config/*.example` y `new-client.sh`; `openssl rand` para secrets.
+- Script CLI interactivo (reutilizable desde `install.sh`): elige proveedor + modo auth (api_key/suscripción), pide API key(s) + dominio + nombre del 1er brand; genera `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `adminToken`, `ADMIN_EMAIL_DOMAIN`; opcionalmente configura canal de publicación (Slack/Discord); escribe `.env`, `config/instance.json`, `config/clients.json` (desde `.example`); registra el 1er brand en `clients.json` (igual que la creación-MC); valida con preflight.
+- Reusar `config/*.example`; `openssl rand` para secrets.
 
 ### Fase 5 — Imágenes públicas versionadas (3–4 días) 🟠
 - Workflow que publica `sanchocmo`, `od`, `yalc` `:vX.Y.Z`+`:latest` en GHCR público al release (engancha a `release-please`).

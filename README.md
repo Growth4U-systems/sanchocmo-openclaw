@@ -20,7 +20,7 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
             │                               ▲
             ├── sessions_spawn ─► Escudero   │
             ├── sessions_send ──► Sanson ────┘
-            ├── sessions_send ─► Yalc Agent ─► YALC/GTM-OS API
+            ├── sessions_send ─► Rocinante ─► YALC/GTM-OS API
             └── sessions_send ──► Cervantes
                                   (System Architect)
                                    Opus 4.6
@@ -33,7 +33,8 @@ SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients
 | **Sancho** | CMO Strategist & Orchestrator | Discord messages (client guilds) + cron jobs |
 | **Escudero** | Execution worker (adopts personas) | `sessions_spawn` from Sancho |
 | **Sansón** | Brand Guardian / QA | `sessions_send` from Sancho |
-| **Yalc Agent** | GTM-OS operator for provider/MCP status, brain/setup, gates, lead qualification, cold email dry-runs/live confirmed launches, campaign status and reporting | `sessions_send` to agent `yalc`; uses `yalc-operator` |
+| **Rocinante** | Outreach, Partnerships & GTM-OS execution — provider/MCP status, brain/setup, gates, lead qualification, cold email dry-runs/live confirmed launches, campaign status and reporting via `yalc-operator` | `sessions_send` from Sancho |
+| **Alarife** | Web/Page Builder (Payload, site architecture, frontend, CRO) | `Agent(subagent_type="alarife")` from Sancho |
 | **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Operates in Cervantes Brain guild (#admin, #infra, #tasks, #changelog). Can edit Sancho's skills, SOUL.md, and cron jobs. |
 
 ### Personas (Escudero)
@@ -44,7 +45,7 @@ Explorador (prospecting), Redactor (SEO/content), Comunicador (social/newsletter
 
 ### Skills
 
-120+ marketing skills with a Context Matrix system — each skill declares which brand files it needs (`context_required`) and where it writes (`context_writes`), preventing unnecessary context loading. The `yalc-operator` skill lets Yalc Agent operate YALC/GTM-OS through the YALC HTTP API, with live catalog verification, provider/MCP status checks, human gates, campaign endpoints, and dry-run defaults for side-effecting outbound operations.
+120+ marketing skills with a Context Matrix system — each skill declares which brand files it needs (`context_required`) and where it writes (`context_writes`), preventing unnecessary context loading. The `yalc-operator` skill lets Rocinante operate YALC/GTM-OS through the YALC HTTP API, with live catalog verification, provider/MCP status checks, human gates, campaign endpoints, and dry-run defaults for side-effecting outbound operations.
 
 ### YALC Cockpit
 
@@ -96,14 +97,12 @@ node workspace-sancho/scripts/mc-server.js &
 
 ### Adding a Client
 
-```bash
-bash workspace-sancho/scripts/new-client.sh \
-  --slug "my-client" \
-  --name "My Client" \
-  --guild "DISCORD_GUILD_ID"
-```
+Create the client from **Mission Control** (Admin → *New client*: slug + display
+name). This registers it in `clients.json` and creates the base brand folder.
 
-This creates the brand directory structure, updates `clients.json`, binds Discord channels, and configures systemPrompts.
+Then, from the client's chat, ask Sancho to run **Fast Foundation** (and later the
+full Foundation). The foundation skills scaffold the rest of the `brand/{slug}/`
+tree and generate `foundation-state.json` on demand — no extra script needed.
 
 ## Directory Structure
 
@@ -118,14 +117,13 @@ workspace-sancho/                # Main CMO agent
   AGENTS.md                      # Inter-agent protocols
   _system/                       # Protocols, schemas, templates
   skills/                        # 120+ marketing skills
-  personas/                      # 9 worker personas for Escudero
   scripts/                       # Automation scripts
   brand/{slug}/                  # Client data (Foundation v2.0)
 
 workspace-cervantes/             # System architect agent
 workspace-escudero/              # Worker agent (symlinks to sancho)
-workspace-rocinante/             # QA agent (symlinks to sancho)
-workspace-yalc/                  # Yalc Agent (symlinks to sancho brand/skills/system)
+workspace-rocinante/             # Outreach & GTM-OS agent
+workspace-alarife/               # Web/Page Builder agent (Payload, site architecture, frontend, CRO)
 
 cron/                            # OpenClaw cron jobs
 ```

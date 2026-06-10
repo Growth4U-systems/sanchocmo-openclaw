@@ -44,7 +44,8 @@ Cada step referencia un archivo en `references/`. **DEBES hacer `read()` de ese 
 | Archivo | Cuándo leer |
 |---------|------------|
 | `references/hydration.md` | Step 0 — antes de cualquier pregunta |
-| `references/scraping-guide.md` | Steps 1, 1.5, 2 — herramientas y sintaxis exacta |
+| `_system/skills/scraping-preflight.md` | Step 0 — antes del primer scraper (detección providers + matriz + pedir conectar) |
+| `references/scraping-guide.md` | Steps 1, 1.5, 2 — plataformas a descubrir + routing por matriz |
 | `references/prompt.md` | Steps 4, 5, 6 — formato de output y storytelling |
 | `references/schema.md` | Steps 5, 6 — estructura campo por campo |
 | `references/concepts.md` | Step 4 — si hay conflictos entre lentes |
@@ -66,18 +67,19 @@ En TODOS los modos: check datos existentes primero, presenta hallazgos iniciales
 
 ## Flujo de Ejecución
 
-### Step 0: Context Hydration + Competitor Discovery
+### Step 0: Context Hydration + Scraping Preflight + Competitor Discovery
 1. `read("references/hydration.md")` — mapeo de campos upstream
 2. `read("_system/skills/context-hydration-protocol.md")` — patrón genérico
-3. Lee TODOS los docs en `context_required`
-4. Presenta datos heredados: "De [fuente] ya tengo X. ¿Correcto?"
-5. Descubrir competidores: Direct (3-5), Indirect (2-3), Emerging (1-2)
-6. Presentar lista CON DOMINIOS Y REDES al usuario. Formato:
+3. `read("_system/skills/scraping-preflight.md")` y **ejecútalo** — detecta providers conectados (scrapecreators MCP, DataForSEO MCP, smart-scrape, Apify/Firecrawl si hay key), muestra el capability report, y enruta el scraping por la matriz. Si falta una capability material, pide conectarla. NO declares actores que no estén conectados.
+4. Lee TODOS los docs en `context_required`
+5. Presenta datos heredados: "De [fuente] ya tengo X. ¿Correcto?"
+6. Descubrir competidores: Direct (3-5), Indirect (2-3), Emerging (1-2)
+7. Presentar lista CON DOMINIOS Y REDES al usuario. Formato:
    - 🔴 Directos: nombre + por qué + 🌐 dominio · 📸 IG · 📘 FB · ⭐ Trustpilot
    - 🟡 Indirectos: nombre + por qué + 🌐 dominio
    - 🟢 Emergentes: nombre + por qué
-7. **ESPERAR confirmación del usuario antes de continuar**
-8. Guardar lista en `brand/{slug}/competitors/sources.json`
+8. **ESPERAR confirmación del usuario antes de continuar**
+9. Guardar lista en `brand/{slug}/competitors/sources.json`
 
 ### Step 1: Profile Discovery (~5 min/competidor)
 1. `read("references/scraping-guide.md")` — lista completa de plataformas
@@ -94,18 +96,18 @@ En TODOS los modos: check datos existentes primero, presenta hallazgos iniciales
 4. **Fuente primaria (web del competidor) > fuente secundaria SIEMPRE**
 5. **NO continuar al Step 2 hasta completar verificación de TODOS los directos**
 
-### Step 2: Scraping (~15 min/competidor)
+### Step 2: Scraping (~15 min/competidor) — vía matriz del preflight
 1. Si no lo leíste en Steps 1/1.5: `read("references/scraping-guide.md")`
-2. Ejecutar scrapers por lente según la guía:
-   - **Lens 1**: Apify web-scraper + instagram-scraper + facebook-ads-scraper
-   - **Lens 2**: DataForSEO (SERP, backlinks, keywords) + google-search-scraper + web_search
-   - **Lens 3**: Apify trustpilot-scraper + web_search (opiniones, Reddit, foros)
-3. Si un scraper falla → documentar error + usar web_fetch como fallback
-4. **NUNCA marcar ✅ si usaste fallback — marcar ⚠️ con justificación**
+2. Enrutar cada necesidad por la **matriz de `scraping-preflight.md`** (usa el provider conectado, no actores hardcodeados):
+   - **Lens 1** (qué ELLOS dicen): web (home/pricing/about/blog) → `smart-scrape`; IG/TikTok/LinkedIn → scrapecreators MCP; ads (FB/Google) → scrapecreators (`facebook_adLibrary_*`, `google_company_ads`)
+   - **Lens 2** (qué OTROS dicen): SERP/keywords/rankings/backlinks → DataForSEO MCP; noticias/menciones → web_search
+   - **Lens 3** (qué CLIENTES dicen): reviews (Trustpilot/G2/Capterra) → smart-scrape/WebFetch (o Apify actor si hay key); Reddit/foros → scrapecreators (`reddit_*`) + web_search
+3. Si el provider preferido falla → documentar error + caer al fallback de la matriz
+4. **NUNCA marcar ✅ si usaste fallback — marcar ⚠️ con provider real + justificación**
 
-### Step 3: Deep Research (~10 min/competidor)
-- Background, product evolution, growth model, financials públicos
-- Usar web_search + web_fetch para investigación contextual
+### Step 3: Deep Research (~10 min/competidor) — vía `/deep-research` (Hamete)
+- Por cada competidor directo, invoca el skill **`/deep-research`** con un brief de "Company radiography": background, fundación/funding/equipo, product evolution, growth model, financials públicos (las dimensiones de Quick Profile en `references/competitor-analysis-prompts.md`). Devuelve documento con fuentes + qa-bot.
+- ⚠️ NO existe "Gemini Deep Research" — el research es competencia de Hamete vía `/deep-research`.
 
 ### Step 4: Lens Analysis (~30 min/competidor)
 1. `read("references/prompt.md")` — reglas de storytelling y formato

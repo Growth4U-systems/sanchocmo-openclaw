@@ -17,8 +17,6 @@ workspace-sancho/
 │
 ├── skills/                        # 120+ marketing skills (framework)
 │   └── {skill-name}/SKILL.md
-├── personas/                      # 9 worker personas (framework)
-│   └── {persona}.md
 ├── scripts/                       # Automation utilities (framework)
 │
 ├── _system/                       # Protocols, schemas, config
@@ -81,7 +79,7 @@ workspace-sancho/
 
 ### Framework vs Instance
 
-- **Framework** (versionado in git): skills/, personas/, scripts/, _system/, templates/, SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md
+- **Framework** (versionado in git): skills/, scripts/, _system/, templates/, SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md
 - **Instance** (gitignored): memory/, brand/{slug}/ (except example/), config files via symlinks
 
 NEVER put client data, API keys, or deployment-specific info in framework files.
@@ -203,6 +201,6 @@ Playbooks en `_system/`:
 - **intelligence/**: intelligence-protocol, brand-memory, morning-metrics-protocol
 - **governance/**: client-context-isolation, execution-gate
 - **onboarding/**: onboarding-playbook, new-client-protocol, client-onboarding, client-onboarding-checklist
-- **output/**: output-format, presentation-summary-protocol, discord-thread-protocol, project-threads-protocol
+- **output/**: output-format, presentation-summary-protocol, publish-protocol (cron output → /api/integrations/publish, transport-agnostic), project-threads-protocol
 - **technical/**: mc-links-protocol, image-optimization, token-optimization-guide
 Cargar solo cuando se necesite.

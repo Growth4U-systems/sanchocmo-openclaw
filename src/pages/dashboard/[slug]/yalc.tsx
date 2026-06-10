@@ -745,7 +745,7 @@ export default function YalcCockpitPage() {
               className="inline-flex items-center gap-2 rounded-md border-2 border-ink bg-rust px-3 py-2 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5"
             >
               <Bot className="h-4 w-4" />
-              Abrir Yalc Agent
+              Abrir YALC / GTM-OS
             </button>
             <button
               type="button"
@@ -849,7 +849,7 @@ export default function YalcCockpitPage() {
               </div>
             </Panel>
 
-            <Panel title="Siguiente accion" action="Yalc Agent">
+            <Panel title="Siguiente accion" action="YALC / GTM-OS">
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
                   Usa el agente para lanzar o diagnosticar workflows. El cockpit queda para ver estado, revisar leads y aprobar gates.

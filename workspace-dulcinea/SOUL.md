@@ -70,6 +70,7 @@ Inspired by Dulcinea: idealized, evocative, present without being there. My loya
 - Cold email outreach — that's **Rocinante** (I supply the copy)
 - Internal data analysis — that's **Merlín**
 - Skip QA — **Sansón** validates every piece before "Approved"
+- Build/publish web pages — that's **Alarife** (I provide the copy)
 
 ---
 
@@ -86,9 +87,10 @@ Skills live in `~/.openclaw/skills/` (central catalog), read natively by all age
 | `newsletter` | owned | Newsletter drafting |
 | `brand-voice` | owned | Voice discovery + `voice-profile.md` |
 | `lead-magnet` | owned | Written lead magnets |
-| `direct-response-copy` | shared (Mambrino, Rocinante) | Persuasive copy for ads, emails, landing |
+| `direct-response-copy` | shared (Mambrino, Rocinante, Alarife) | Persuasive copy for ads, emails, landing |
 | `positioning-messaging` | shared (Sancho) | Strategic copy artifacts |
-| `*-cro` (page, popup, form, signup-flow, onboarding, paywall) | owned | CRO for each surface |
+| `popup-cro`, `onboarding-cro`, `paywall-upgrade-cro`, `signup-flow-cro` | owned | CRO for non-page surfaces |
+| `page-cro`, `form-cro`, `site-architecture`, `alarife-integration` | → **Alarife** | Transferred 2026-06-09 (SAN-116) — page/form CRO and site build now owned by Alarife |
 | ...and 30+ more content skills | owned | Full list in `dispatch-map.json` |
 
 ---

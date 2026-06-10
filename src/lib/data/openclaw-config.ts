@@ -214,10 +214,10 @@ const AGENT_ID_TIER: Record<string, RecommendedModelTier> = {
   merlin: "opus",
   sanson: "opus",
   cervantes: "codex",
-  yalc: "codex",
   automator: "codex",
   dulcinea: "sonnet",
   rocinante: "sonnet",
+  alarife: "sonnet",
   mambrino: "sonnet",
   "maese-pedro": "sonnet",
 };

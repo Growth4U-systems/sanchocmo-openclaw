@@ -1,30 +1,30 @@
 # Channel-Skill Map
 
-> Mapeo de tipo de tarea → canal Discord → skills sugeridos → persona Escudero.
-> Derivado de `dispatch-map.json`. Consultar este archivo al asignar canal y skill a cada tarea.
+> Mapeo de tipo de tarea → canal Discord → skills sugeridos → especialista v4.
+> Derivado de `dispatch-map.json` (bloque `specialists`) y del Delegation Protocol de `workspace-sancho/SOUL.md`. Consultar este archivo al asignar canal y skill a cada tarea.
 
 ---
 
 ## Canales de Ejecución
 
-| Tipo de tarea | Canal | Skills sugeridos | Persona Escudero |
-|---------------|-------|------------------|------------------|
-| Landing pages, CRO, copy web | `web` | direct-response-copy, lead-magnet, positioning-messaging | El Arquitecto |
-| Artículos SEO, keyword research, content calendar | `content` | keyword-research, seo-content, content-calendar-planner | El Redactor |
-| Social media, newsletter, atomización | `content` | content-atomizer, newsletter, direct-response-copy | El Comunicador |
-| Ad copy, retargeting, campañas paid | `paid-ads` | direct-response-copy, sancho-visual | El Amplificador |
-| Prospecting, listas, enrichment, outreach | `prospecting` | company-finder, decision-maker-finder, contact-enrichment, outreach-sequence-builder, email-sequences | El Explorador |
-| Email sequences, lead magnets, sales | `prospecting` | positioning-messaging, pricing-strategy, direct-response-copy | El Comercial |
-| Partnerships, afiliados, colaboraciones | `partners` | company-finder, decision-maker-finder, contact-enrichment, direct-response-copy | El Conector |
-| Assets visuales, identidad visual, diseño | `creatives` | visual-identity, brand-voice, sancho-visual | El Creativo |
+| Tipo de tarea | Canal | Skills sugeridos | Especialista (v4) |
+|---------------|-------|------------------|-------------------|
+| Landing pages, CRO, copy web | `web` | direct-response-copy, lead-magnet, positioning-messaging | Dulcinea (copy) · Alarife Operator (build/publish) |
+| Artículos SEO, keyword research, content calendar | `content` | keyword-research, seo-content, content-calendar-planner | Dulcinea |
+| Social media, newsletter, atomización | `content` | content-atomizer, newsletter, direct-response-copy | Dulcinea |
+| Ad copy, retargeting, campañas paid | `paid-ads` | direct-response-copy, sancho-visual | Mambrino |
+| Prospecting, listas, enrichment, outreach | `prospecting` | company-finder, decision-maker-finder, contact-enrichment, outreach-sequence-builder, email-sequences | Rocinante |
+| Email sequences, lead magnets, sales | `prospecting` | positioning-messaging, pricing-strategy, direct-response-copy | Rocinante |
+| Partnerships, afiliados, colaboraciones | `partners` | company-finder, decision-maker-finder, contact-enrichment, direct-response-copy | Rocinante |
+| Assets visuales, identidad visual, diseño | `creatives` | visual-identity, brand-voice, sancho-visual | Maese Pedro |
 
 ## Canales de Intelligence
 
-| Tipo de tarea | Canal | Skills sugeridos | Persona Escudero |
-|---------------|-------|------------------|------------------|
-| Deep research, competitive intel, market analysis | `research` | market-intelligence, competitor-intelligence, deep-research | El Investigador |
-| Signals, patterns, daily pulse, meeting intel | `intelligence` | daily-pulse, meeting-intelligence, signal-monitor, thief-marketers, pattern-detector | El Investigador |
-| CRM analysis, trends, self-intelligence | `learning` | last-30-days, self-intelligence | El Investigador |
+| Tipo de tarea | Canal | Skills sugeridos | Especialista (v4) |
+|---------------|-------|------------------|-------------------|
+| Deep research, competitive intel, market analysis | `research` | market-intelligence, competitor-intelligence, deep-research | Hamete |
+| Signals, patterns, daily pulse, meeting intel | `intelligence` | daily-pulse, meeting-intelligence, signal-monitor, thief-marketers, pattern-detector | Hamete |
+| CRM analysis, trends, self-intelligence | `learning` | last-30-days, self-intelligence | Merlín |
 
 ## Canales de Decisión (no ejecutar)
 

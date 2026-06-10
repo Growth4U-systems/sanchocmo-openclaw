@@ -568,6 +568,7 @@ function SystemEnvPanel({
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery<Record<string, SystemEnvField>>({
@@ -635,6 +636,48 @@ function SystemEnvPanel({
       setResult({ ok: false, message: e instanceof Error ? e.message : "Error guardando la key" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const anyConfigured = fields.some(([, field]) => field.hasValue);
+
+  const handleRemove = async () => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        `¿Quitar la(s) credencial(es) de ${provider}? Se borran del .env del sistema y, si aplica, se reinicia el gateway para dejar de usarlas.`,
+      )
+    ) {
+      return;
+    }
+
+    setRemoving(true);
+    setResult(null);
+    try {
+      const delRes = await fetch(`/api/env?service=${encodeURIComponent(apiId)}`, { method: "DELETE" });
+      const delPayload = await delRes.json().catch(() => ({}));
+      if (!delRes.ok) throw new Error(delPayload.error || "No se pudo quitar la key");
+
+      let restartNote = "";
+      if (GATEWAY_ENV_SERVICES.has(apiId)) {
+        const restartRes = await fetch("/api/system/restart-gateway");
+        const restartPayload = await restartRes.json().catch(() => ({}));
+        if (restartRes.ok && restartPayload.ok) {
+          restartNote = " Gateway reiniciado para dejar de usar la credencial.";
+        } else {
+          restartNote = " Quitada, pero no se pudo reiniciar el gateway; puede requerir restart/deploy.";
+        }
+      }
+
+      await fetch(`/api/system/health-check-all?service=${encodeURIComponent(apiId)}`).catch(() => null);
+      setFormValues({});
+      await refetch();
+      onSaved();
+      setResult({ ok: true, message: `Credencial quitada del sistema.${restartNote}` });
+    } catch (e) {
+      setResult({ ok: false, message: e instanceof Error ? e.message : "Error quitando la key" });
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -707,13 +750,25 @@ function SystemEnvPanel({
               );
             })}
 
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 bg-gradient-to-br from-rust to-[#D4734F] text-white border-2 border-ink rounded-lg text-sm font-bold shadow-comic cursor-pointer hover:opacity-90 disabled:opacity-50 transition-opacity"
-            >
-              {saving ? "Guardando..." : "Guardar y aplicar"}
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleSave}
+                disabled={saving || removing}
+                className="px-4 py-2 bg-gradient-to-br from-rust to-[#D4734F] text-white border-2 border-ink rounded-lg text-sm font-bold shadow-comic cursor-pointer hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                {saving ? "Guardando..." : "Guardar y aplicar"}
+              </button>
+              {anyConfigured && (
+                <button
+                  onClick={handleRemove}
+                  disabled={saving || removing}
+                  className="px-4 py-2 border-2 border-red-500 text-red-600 rounded-lg text-sm font-bold bg-card cursor-pointer hover:bg-red-50 disabled:opacity-50 transition-colors"
+                  title="Borra la credencial del .env del sistema"
+                >
+                  {removing ? "Quitando..." : "Quitar key"}
+                </button>
+              )}
+            </div>
 
             {result && (
               <div

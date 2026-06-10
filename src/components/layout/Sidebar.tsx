@@ -153,14 +153,13 @@ export function Sidebar() {
             <NavLink href={clientHref("/tasks")} icon="📋" label={t("nav.tasks")} active={isActive(clientHref("/tasks")) || isActive(clientHref("/projects"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/content-creation")} icon="✏️" label="Content Creation" active={isActive(clientHref("/content-creation"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/media-creation")} icon="🎨" label="Media Creation" active={isActive(clientHref("/media-creation"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/outreach")} icon="📤" label="Outreach" active={isActive(clientHref("/outreach"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/yalc")} icon="📤" label="Outreach" active={isActive(clientHref("/yalc"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/metrics")} icon="📈" label={t("nav.metrics")} active={isActive(clientHref("/metrics"))} collapsed={!sidebarOpen} />
 
             {/* ── Herramientas ── */}
             <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
             <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/intelligence")} icon="🧠" label="Intelligence" active={isActive(clientHref("/intelligence"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/yalc")} icon="🧭" label="YALC" active={isActive(clientHref("/yalc"))} collapsed={!sidebarOpen} />
           </>
         )}
 

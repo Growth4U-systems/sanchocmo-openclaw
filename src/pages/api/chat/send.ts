@@ -67,8 +67,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       : typeof tid === "string"
         ? tid
         : "";
-  const resolvedAgent = rawAgent || (shortThreadId === "yalc" ? "yalc" : undefined);
-  const resolvedSkill = skill || (resolvedAgent === "yalc" ? "yalc-operator" : undefined);
+  const resolvedAgent = rawAgent || (shortThreadId === "yalc" ? "rocinante" : undefined);
+  const resolvedSkill = skill || (shortThreadId === "yalc" ? "yalc-operator" : undefined);
   const resolvedSkills =
     Array.isArray(skills) && skills.length > 0
       ? skills
@@ -82,7 +82,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   addMessage(tid, "user", text, undefined, parsedAttachments);
   if (resolvedAgent) {
     setStatusEntry(tid, {
-      text: resolvedAgent === "yalc" ? "YALC está preparando la respuesta..." : "El agente está pensando...",
+      text: shortThreadId === "yalc" ? "YALC está preparando la respuesta..." : "El agente está pensando...",
       agent: resolvedAgent,
       ts: Date.now(),
     });

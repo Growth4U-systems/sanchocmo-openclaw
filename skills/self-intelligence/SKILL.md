@@ -31,6 +31,7 @@ context_writes:
 | Archivo | Cuándo leer | Contenido |
 |---------|------------|-----------|
 | [hydration.md](references/hydration.md) | **SIEMPRE** — Step 0 obligatorio | Mapeo de campos upstream → esta skill |
+| `_system/skills/scraping-preflight.md` | **SIEMPRE** — Step 0, antes del primer scraper | Detección de providers conectados + matriz de routing + pedir conectar |
 | [prompt.md](references/prompt.md) | **SIEMPRE** — fuente de verdad del output | Pipeline 5 pasos, scrapers, análisis, output format |
 | [checklist.md](references/checklist.md) | **Antes de entregar** — self-QA obligatorio | Ítems de verificación |
 | [concepts.md](references/concepts.md) | Si necesitas lens conflict resolution, viability rules, edge cases | Definiciones y metodología |
@@ -40,29 +41,32 @@ context_writes:
 
 ## Flujo de Ejecución
 
-### 0. Context Hydration (OBLIGATORIO — antes de cualquier pregunta)
+### 0. Context Hydration + Scraping Preflight (OBLIGATORIO — antes de cualquier pregunta)
 - Lee `_system/skills/context-hydration-protocol.md` para el patrón genérico
 - Lee `references/hydration.md` para el mapeo específico de esta skill
 - Lee TODOS los docs en `context_required`
 - Pre-rellena campos según hydration_map
 - Presenta datos heredados al usuario: "De [fuente] ya tengo X. ¿Correcto?"
 - Solo pregunta campos listados en "Campos genuinamente nuevos"
+- **Lee `_system/skills/scraping-preflight.md` y ejecútalo**: detecta providers conectados, muestra el capability report, y enruta el scraping por la matriz. NO declares herramientas que no estén conectadas; si falta una capability material, pide conectarla.
 
 ### 0. Profile Discovery (~5 min)
 - Encontrar TODAS las URLs: social, review platforms, app stores, website
 - Para cada plataforma: URL, username/ID, status (active/dormant/not found)
 - Ausencia = dato (marcar explícitamente "No presence")
 
-### 1. Scraping (~15 min)
-- 20 scrapers en 4 grupos (ver `references/prompt.md` para detalle)
-- Group 1: Autopercepción (8 scrapers — website, social posts, LinkedIn)
-- Group 2: Terceros (2 scrapers — SEO/SERP, news)
-- Group 3: RRSS Comments (5 scrapers — comments por plataforma)
-- Group 4: Reviews (5 scrapers — Trustpilot, G2, Capterra, stores)
+### 1. Scraping (~15 min) — vía matriz del preflight
+- 4 grupos de datos (ver `references/prompt.md` para el detalle de qué capturar por grupo):
+  - Group 1: Autopercepción — website + social posts + LinkedIn
+  - Group 2: Terceros — SEO/SERP + news
+  - Group 3: RRSS Comments — comments por plataforma
+  - Group 4: Reviews — Trustpilot, G2, Capterra, app stores
+- **Enruta cada grupo por la matriz de `scraping-preflight.md`** (web → smart-scrape; social → scrapecreators; SEO/SERP → DataForSEO; reviews → smart-scrape/Apify). NO uses actores hardcodeados: usa el provider conectado que indique el preflight.
+- Marca provider + evidencia por cada fuente; si caes a fallback, márcalo ⚠️.
 
-### 2. Deep Research (~10 min)
-- Deep Research: Company (digital footprint, products, brand image, UVP)
-- Lee `references/prompt.md` para los prompts
+### 2. Deep Research (~10 min) — vía `/deep-research` (Hamete)
+- Invoca el skill **`/deep-research`** con el prompt **Company** de `references/deep-research-prompts.md` (digital footprint, products, brand image, UVP). Devuelve documento con fuentes + qa-bot.
+- ⚠️ NO existe "Gemini Deep Research" en este runtime — el research es competencia de Hamete vía `/deep-research`.
 - ⚠️ NO incluir market research — eso pertenece a market-intelligence
 
 ### 3. Lens Analysis (5 prompts secuenciales — STORYTELLING OBLIGATORIO)

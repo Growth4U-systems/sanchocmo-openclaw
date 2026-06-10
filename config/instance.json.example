@@ -4,6 +4,7 @@
   "$comment_mc_server_port": "Internal port of the live Mission Control (Next.js) server — the agent builds $MC_BASE = http://127.0.0.1:{mc_server_port} for server-side /api calls. This is the Next app (3000), NOT the legacy mc-server.js (18790, see LEGACY_PORT).",
   "mc_server_port": 3000,
   "gateway_port": 18789,
+  "$comment_discord": "OPTIONAL — omit this whole block to run without Discord. Discord is one comms channel like Slack; Mission Control chat is the primary interface. Only used when DISCORD_BOT_TOKEN is set.",
   "discord": {
     "bot_client_id": "your-bot-client-id",
     "admin_users": [

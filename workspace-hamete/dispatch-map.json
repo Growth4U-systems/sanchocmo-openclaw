@@ -12,33 +12,5 @@
         "intelligence": "Signals, patterns, daily pulse, meeting intelligence. Outputs cortos y accionables."
       }
     }
-  },
-  "personas": {
-    "hamete": {
-      "name": "Hamete",
-      "persona_file": "./SOUL.md",
-      "dispatch_for": [
-        "deep-research",
-        "competitor-intelligence",
-        "market-intelligence",
-        "meeting-intelligence",
-        "daily-pulse",
-        "signal-monitor",
-        "thief-marketers",
-        "pattern-detector",
-        "trust-engine"
-      ],
-      "skills": [
-        "daily-pulse",
-        "meeting-intelligence",
-        "signal-monitor",
-        "thief-marketers",
-        "competitor-intelligence",
-        "market-intelligence",
-        "trust-engine",
-        "pattern-detector"
-      ],
-      "brand_context": ["competitors.md", "market.md", "learnings.md", "ecps.md"]
-    }
   }
 }

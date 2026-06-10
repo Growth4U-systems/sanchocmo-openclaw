@@ -57,6 +57,9 @@ export async function yalcFetch<T = unknown>(
   init: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
 ): Promise<T> {
   const url = new URL(path.startsWith("/") ? path : `/${path}`, config.baseUrl);
+  // Scope every call to the brand's YALC tenant. Without this the cockpit
+  // always hits the `default` tenant, so all brands share one brain/campaigns.
+  if (config.slug) url.searchParams.set("tenant", config.slug);
   const headers: Record<string, string> = { Accept: "application/json", ...init.headers };
   if (config.token) headers.Authorization = `Bearer ${config.token}`;
   if (init.body !== undefined) headers["Content-Type"] = "application/json";

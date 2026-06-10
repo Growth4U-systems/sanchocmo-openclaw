@@ -21,7 +21,7 @@
 | Campo | Por qué no existe upstream | Acción |
 |-------|--------------------------|--------|
 | digital_profiles (completo) | company-context solo tiene los declarados, no los descubiertos | Discovery de TODOS los perfiles |
-| company_research (deep) | Requiere deep research dedicado | Gemini Deep Research |
+| company_research (deep) | Requiere deep research dedicado | skill `/deep-research` (Hamete) |
 | Autopercepción (Lens 1) | Análisis propio de esta skill | Scraping + análisis web/social |
 | Terceros (Lens 2) | Análisis propio de esta skill | Reviews, menciones, prensa |
 | Consumidores (Lens 3) | Análisis propio de esta skill | Reviews, foros, social listening |

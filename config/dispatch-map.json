@@ -36,78 +36,6 @@
     }
   },
   "flow": "intelligence → campaigns (propose) → user approves → execution channels → brand (if update needed)",
-  "personas": {
-    "explorador": {
-      "name": "El Explorador",
-      "persona_file": "./personas/explorador.md",
-      "dispatch_for": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach", "yalc"],
-      "skills": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder", "email-sequences", "direct-response-copy", "yalc-operator"],
-      "brand_context": ["ecps.md", "positioning.md"]
-    },
-    "redactor": {
-      "name": "El Redactor",
-      "persona_file": "./personas/redactor.md",
-      "dispatch_for": ["seo-content", "keyword-research", "content-calendar"],
-      "skills": ["keyword-research", "seo-content", "content-calendar-planner"],
-      "brand_context": ["voice-profile.md", "positioning.md"]
-    },
-    "comunicador": {
-      "name": "El Comunicador",
-      "persona_file": "./personas/comunicador.md",
-      "dispatch_for": ["content-atomizer", "newsletter", "social"],
-      "skills": ["content-atomizer", "newsletter", "direct-response-copy"],
-      "brand_context": ["voice-profile.md", "positioning.md"]
-    },
-    "creativo": {
-      "name": "El Creativo",
-      "persona_file": "./personas/creativo.md",
-      "dispatch_for": ["nano-banana-pro", "visual-identity", "design"],
-      "skills": ["visual-identity", "brand-voice", "sancho-visual"],
-      "brand_context": ["visual-identity.md"]
-    },
-    "amplificador": {
-      "name": "El Amplificador",
-      "persona_file": "./personas/amplificador.md",
-      "dispatch_for": ["paid-ads", "retargeting", "campaigns-paid"],
-      "skills": ["direct-response-copy", "sancho-visual"],
-      "brand_context": ["positioning.md", "ecps.md"]
-    },
-    "conector": {
-      "name": "El Conector",
-      "persona_file": "./personas/conector.md",
-      "dispatch_for": ["partnerships", "affiliates", "collaborations"],
-      "skills": ["company-finder", "decision-maker-finder", "contact-enrichment", "direct-response-copy"],
-      "brand_context": ["ecps.md", "positioning.md", "competitors.md"]
-    },
-    "comercial": {
-      "name": "El Comercial",
-      "persona_file": "./personas/comercial.md",
-      "dispatch_for": ["email-sequences", "lead-magnet", "sales"],
-      "skills": ["positioning-messaging", "pricing-strategy", "business-model-audit", "direct-response-copy"],
-      "brand_context": ["positioning.md", "ecps.md", "competitors.md"]
-    },
-    "arquitecto": {
-      "name": "El Arquitecto",
-      "persona_file": "./personas/arquitecto.md",
-      "dispatch_for": ["direct-response-copy", "landing-pages", "web"],
-      "skills": ["direct-response-copy", "lead-magnet", "positioning-messaging"],
-      "brand_context": ["positioning.md", "ecps.md", "voice-profile.md"]
-    },
-    "alarife_operator": {
-      "name": "Alarife Operator",
-      "persona_file": "./personas/alarife-operator.md",
-      "dispatch_for": ["alarife", "alarife-payload", "payload", "cms-migration", "export-site", "import-site", "page-design", "web-publish", "site-preview"],
-      "skills": ["alarife-integration", "payload", "cms-migration", "site-architecture", "frontend-design", "page-cro", "form-cro"],
-      "brand_context": ["foundation-state.json", "voice-profile.md", "visual-identity.md", "positioning.md"]
-    },
-    "investigador": {
-      "name": "El Investigador",
-      "persona_file": "./personas/investigador.md",
-      "dispatch_for": ["market-intelligence", "competitor-intelligence", "deep-research", "thief-marketers"],
-      "skills": ["daily-pulse", "meeting-intelligence", "signal-monitor", "thief-marketers", "pattern-detector", "competitor-intelligence", "market-intelligence"],
-      "brand_context": ["competitors.md", "market.md", "learnings.md"]
-    }
-  },
   "discord_channels_note": "Channel IDs are resolved per-client from brand/{slug}/sources.json. No hardcoded IDs here.",
   "client_channels": ["general", "onboarding", "marketing-inbox", "projects", "research", "partners", "prospecting", "content", "paid-ads", "creatives", "web", "insights", "soporte"],
   "cervantes_channels": ["skills", "bugs", "infra", "tasks", "ideas", "nuevo-cliente"],
@@ -115,32 +43,5 @@
     "id": "sanson",
     "method": "sessions_send",
     "activate_for": ["brand-check", "qa-review", "devil-advocate", "foundation-verification"]
-  },
-  "yalc_agent": {
-    "id": "yalc",
-    "name": "Yalc Agent",
-    "method": "sessions_send",
-    "skill": "yalc-operator",
-    "activate_for": [
-      "yalc",
-      "gtm-os",
-      "outbound-execution",
-      "lead-qualification",
-      "campaign-dry-run",
-      "campaign-launch-confirmed",
-      "campaign-reporting",
-      "instantly",
-      "provider-status",
-      "mcp-provider-status"
-    ],
-    "requires_confirmation_for": [
-      "send-email",
-      "launch-campaign",
-      "approve-gate",
-      "commit-setup",
-      "pause-campaign",
-      "resume-campaign",
-      "update-lead-status"
-    ]
   }
 }

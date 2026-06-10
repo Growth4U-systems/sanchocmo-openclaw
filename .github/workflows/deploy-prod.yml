@@ -49,6 +49,8 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           TAG: ${{ steps.tag.outputs.tag }}
           ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
+          RUN_DB_MIGRATIONS: ${{ vars.RUN_DB_MIGRATIONS }}
           YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
           YALC_REF: ${{ vars.YALC_REF || 'main' }}
           YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
@@ -87,6 +89,7 @@ jobs:
           INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
           METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
           SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
+          SANCHO_MCP_TOKENS: ${{ secrets.SANCHO_MCP_TOKENS }}
           # ── Tier 3 — Skill APIs ───────────────────────────────────────
           APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
           GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
@@ -110,6 +113,16 @@ jobs:
           OPENAI_AUTH_MODE: ${{ vars.OPENAI_AUTH_MODE }}
           ADMIN_EMAIL_DOMAIN: ${{ vars.ADMIN_EMAIL_DOMAIN }}
           ADMIN_IDENTITY_EMAIL: ${{ vars.ADMIN_IDENTITY_EMAIL }}
+          # Force the Neon HTTP driver in G4U deploys (belt over the runtime's
+          # *.neon.tech auto-detect) so prod can never fall back to the
+          # vanilla-Postgres driver used by the bundled local-db.
+          DATABASE_DRIVER: neon
+          SANCHO_MCP_AUDIT_BACKEND: ${{ vars.SANCHO_MCP_AUDIT_BACKEND }}
+          SANCHO_MCP_AUDIT_FAIL_CLOSED: ${{ vars.SANCHO_MCP_AUDIT_FAIL_CLOSED }}
+          SANCHO_MCP_AUDIT_FILE: ${{ vars.SANCHO_MCP_AUDIT_FILE }}
+          # Sancho->YALC runtime URL inside the compose network. Default avoids the
+          # client.ts localhost:3847 fallback that left the cockpit stuck on "Checking".
+          YALC_BASE_URL: ${{ vars.YALC_BASE_URL || 'http://yalc:3847' }}
         run: |
           # Build payload identically to deploy-staging.yml — same key list.
           # Empty secrets/vars are filtered out so an under-populated
@@ -131,6 +144,7 @@ jobs:
               "NOTION_API_KEY", "FAL_API_KEY",
               "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN",
               "INSTANTLY_API_KEY", "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
+              "SANCHO_MCP_TOKENS",
               # Tier 3 — Skill APIs
               "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",
               "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID", "PAGESPEED_API_KEY",
@@ -140,7 +154,11 @@ jobs:
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
-              "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL",
+              "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
+              "SANCHO_MCP_TOKENS",
+              "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
+              "SANCHO_MCP_AUDIT_FILE",
+              "YALC_BASE_URL",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())
@@ -154,7 +172,7 @@ jobs:
 
           scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
 
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64=$YALC_REPO_TOKEN_B64 bash -s" <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64=$YALC_REPO_TOKEN_B64 bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching tags…"
@@ -193,6 +211,10 @@ jobs:
             rm -f /tmp/upsert-env.py
 
             echo "▶ Checking out $TAG…"
+            # Self-heal: discard stray local edits under src/ that would abort the tag
+            # checkout (e.g. a leftover src/lib/chat-openers.ts). Runtime state under
+            # agents/ and workspace-*/ is preserved.
+            git checkout -- src 2>/dev/null || true
             git checkout "$TAG"
             export GIT_COMMIT="$(git rev-parse HEAD)"
 
@@ -223,6 +245,8 @@ jobs:
             fi
 
             COMPOSE_ARGS="-f docker-compose.yml"
+            # Open Design is an opt-in overlay (image is public). G4U keeps it on by default.
+            [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
             if [ "${ENABLE_YALC_SERVICE:-1}" != "0" ]; then
               YALC_DIR="${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}"
               if [ ! -d "$YALC_DIR/.git" ]; then
@@ -245,6 +269,15 @@ jobs:
             fi
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose $COMPOSE_ARGS build --pull
+            if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
+              echo "▶ Running DB migrations…"
+              # Apply only the additive deploy migrations (MCP audit + feedback_insights)
+              # via the non-destructive single-file runner — mirrors deploy-staging.yml.
+              # The repo's historical SQL migrations are not a safe input for
+              # `drizzle-kit migrate` (no journal in git; one old migration drops/recreates
+              # `tasks`). Redirect stdin so the one-off container can't eat the SSH heredoc.
+              docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:deploy" < /dev/null
+            fi
             # `build --pull` only refreshes images for services with a
             # `build:` directive (sanchocmo). Services that consume a
             # pre-built image (open-design via OPEN_DESIGN_IMAGE) need an
@@ -308,6 +341,7 @@ jobs:
             git checkout "$PREV"
             export GIT_COMMIT="$(git rev-parse HEAD)"
             COMPOSE_ARGS="-f docker-compose.yml"
+            [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
             [ -d "${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}/.git" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
             docker compose $COMPOSE_ARGS up -d
           EOF
