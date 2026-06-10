@@ -12,13 +12,13 @@ metadata:
   updated: '2026-02-27'
   changes: v4 — Restructured per skill-creator principles.
 context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/market-and-us/competitors/current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/market-and-us/competitors/competitors.current.md
 # Lite fallbacks (read-only, treat as preliminary seed, not as final truth):
 - brand/{slug}/company-brief/lite.md            # merge view fallback (always lite today)
 - brand/{slug}/business-model/lite.md           # own seed from fast-foundation (hydration only)
 context_writes:
-- brand/{slug}/business-model/current.md
+- brand/{slug}/business-model/business-model.current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -27,7 +27,7 @@ context_writes:
 > Entiende CÓMO la empresa adquiere y monetiza clientes. El modelo de negocio determina qué growth levers existen.
 
 **Input**: company-context (necesita elevator_pitch, product_type, b2b_b2c mínimo)
-**Output**: Business Model Profile → `brand/{slug}/business-model/current.md` (standalone — la única fuente de verdad que esta skill escribe).
+**Output**: Business Model Profile → `brand/{slug}/business-model/business-model.current.md` (standalone — la única fuente de verdad que esta skill escribe).
 
 ## References
 
@@ -77,10 +77,10 @@ context_writes:
 - Metadata QA en documento
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/business-model/current.md` (standalone, único archivo que esta skill escribe)
-- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
+- Ruta: `brand/{slug}/business-model/business-model.current.md` (standalone, único archivo que esta skill escribe)
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `business-model.current.md`, actualiza `history.json`
 
-> **Merge view `company-brief/current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa — aceptado por ahora.
+> **Merge view `company-brief/company-brief.current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa — aceptado por ahora.
 
 ---
 
@@ -114,13 +114,13 @@ Al entregar, añade bloque de profundización estándar.
 
 ```
 brand/{{slug}}/business-model/
-├── current.md      ← versión activa
+├── business-model.current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
 └── qa-log.md       ← historial de QA
 ```
 
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
-2. Si existe `current.md` → backup como `v{N+1}.md`, pide confirmación
-3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `<MC_BASE>/docs/brand/{slug}/business-model/current.md`
+2. Si existe `business-model.current.md` → backup como `v{N+1}.md`, pide confirmación
+3. Si no existe → crea carpeta + `business-model.current.md` + `v1.md` + `history.json`
+4. Link: `<MC_BASE>/docs/brand/{slug}/business-model/business-model.current.md`

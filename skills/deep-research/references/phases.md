@@ -194,7 +194,7 @@ See [quality.md](quality.md) for detailed thresholds.
 
 ### File Outputs
 
-Save to `01-business/clients/[client]/research/` (or `brand/{slug}/{pilar}/current.md` if profundización Foundation):
+Save to `01-business/clients/[client]/research/` (or `brand/{slug}/{pilar}/{pilar}.current.md` if profundización Foundation):
 
 | File | Content |
 |------|---------|
@@ -207,8 +207,8 @@ Save to `01-business/clients/[client]/research/` (or `brand/{slug}/{pilar}/curre
 ### Versionado (caso Foundation)
 
 Si es profundización de un documento Foundation existente:
-1. Backup: `current.md` → `v{N+1}.md`
-2. Marca al inicio del nuevo `current.md`: `<!-- deep-research: YYYY-MM-DD | fuentes: N | búsquedas: M | qa-score: X/10 -->`
+1. Backup: `{pilar}.current.md` → `v{N+1}.md`
+2. Marca al inicio del nuevo `{pilar}.current.md`: `<!-- deep-research: YYYY-MM-DD | fuentes: N | búsquedas: M | qa-score: X/10 -->`
 3. Update `history.json` y `brand/{slug}/intelligence/research-log.json`:
 
 ```json

@@ -12,6 +12,7 @@ import {
   humanizeSchedule,
   type EnrichedCron,
 } from "@/lib/data/openclaw-crons";
+import { getCronPublishConfig } from "@/lib/publish/cron-publish-config";
 
 
 /** Resolve script references inside a cron prompt to {path, name, lang, lines}.
@@ -46,6 +47,31 @@ function extractScripts(prompt: string): unknown[] {
     resolved.push({ path: relPath, absPath, name: basename, lang, lines });
   }
   return resolved;
+}
+
+/** Lead segment of a cron/template name: the text before the " — {brand}"
+ *  separator, normalised. Crons and templates are both named "<Title> — <X>"
+ *  (e.g. "Daily Pulse — Acme" / "Daily Pulse — {NAME}" → "daily pulse"). Split
+ *  on em/en-dash only (not hyphen) so titles containing a hyphen aren't cut. */
+function cronNameLeadSegment(name: string): string {
+  return (name || "").split(/\s*[—–]\s*/)[0].toLowerCase().trim();
+}
+
+/** Build lead-segment → cronKey map for *publishing* templates (those whose
+ *  prompt posts to /api/integrations/publish), so the UI offers a publish-channel
+ *  picker only for crons that publish. Computed once per request; exact-segment
+ *  match avoids the substring collisions a loose includes() would allow. */
+function publishingTemplateMap(
+  templates: Record<string, { name_template?: string; prompt?: string }>,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const [key, tmpl] of Object.entries(templates)) {
+    if (key === "$comment") continue;
+    if (!tmpl.prompt || !tmpl.prompt.includes("/api/integrations/publish")) continue;
+    const seg = cronNameLeadSegment(tmpl.name_template || "");
+    if (seg) map.set(seg, key);
+  }
+  return map;
 }
 
 /** Shape returned to the UI for each cron — keeps backward-compatible field
@@ -110,10 +136,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         result._system = systemCrons.map((c) => toApiShape(c, null));
       }
 
+      // Load cron templates once: used both to tag each cron with its
+      // publishable cron_key (for the publish-channel picker) and to list
+      // available (not-yet-active) templates below.
+      const templatesFile = path.join(BASE, "_system", "cron-templates.json");
+      const templates = readJSON<Record<string, { auto_onboarding?: boolean; name_template?: string; description?: string; requires?: string; p00_task?: unknown; prompt?: string }>>(templatesFile, {});
+
+      // Tag each cron in this brand's list with cron_key when it maps to a
+      // publishing template — the UI shows the channel picker only for those.
+      // Also attach the current publish destination (if any) so the picker can
+      // flag "sin canal" eagerly without a per-cron fetch.
+      const publishingMap = publishingTemplateMap(templates);
+      for (const task of result[slugParam] as Record<string, unknown>[]) {
+        const key = publishingMap.get(cronNameLeadSegment((task.name as string) || ""));
+        if (!key) continue;
+        task.cron_key = key;
+        const cfg = getCronPublishConfig(slugParam, key);
+        task.publish_channel = cfg?.channel_id ?? null;
+        task.publish_channel_name = cfg?.channel_name ?? null;
+      }
+
       // Also return available templates
       try {
-        const templatesFile = path.join(BASE, "_system", "cron-templates.json");
-        const templates = readJSON<Record<string, { auto_onboarding?: boolean; name_template?: string; description?: string; requires?: string; p00_task?: unknown }>>(templatesFile, {});
         const allTaskNames = [...openclawTasks, ...localTasks].map((c) => (((c as Record<string, unknown>).name as string) || "").toLowerCase());
         const available: unknown[] = [];
         for (const [key, tmpl] of Object.entries(templates)) {

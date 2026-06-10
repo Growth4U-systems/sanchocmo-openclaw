@@ -12,11 +12,11 @@ metadata:
   updated: '2026-02-27'
   changes: v3 — Restructured per skill-creator principles. SKILL.md lean (~120 lines). Concepts moved to references.
 context_required:
-- brand/{slug}/market-and-us/self/current.md
-- brand/{slug}/market-and-us/competitors/current.md
-- brand/{slug}/market-and-us/market/current.md
+- brand/{slug}/market-and-us/self/self.current.md
+- brand/{slug}/market-and-us/competitors/competitors.current.md
+- brand/{slug}/market-and-us/market/market.current.md
 context_writes:
-- brand/{slug}/market-and-us/swot/current.md
+- brand/{slug}/market-and-us/swot/swot.current.md
 ---
 
 # SWOT Analysis & TOWS Strategies
@@ -24,7 +24,7 @@ context_writes:
 > Sintetiza intelligence upstream en SWOT con evidencia, estrategias TOWS cruzadas, y plan de acción ICE-priorizado.
 
 **Input**: self-intelligence + competitor-intelligence + market-intelligence
-**Output**: SWOT + TOWS + Action Plan → `brand/{slug}/swot/current.md`
+**Output**: SWOT + TOWS + Action Plan → `brand/{slug}/swot/swot.current.md`
 
 ## References
 
@@ -49,7 +49,7 @@ context_writes:
 - Solo pregunta campos listados en "Campos genuinamente nuevos"
 
 ### 1. Verificar prerequisites
-- Carga `brand/{slug}/product-analysis/current.md`, `brand/{slug}/market-and-us/competitors/current.md`, `brand/{slug}/market-and-us/market/current.md`
+- Carga `brand/{slug}/product-analysis/product-analysis.current.md`, `brand/{slug}/market-and-us/competitors/competitors.current.md`, `brand/{slug}/market-and-us/market/market.current.md`
 - Si falta algún upstream: "No puedo construir un SWOT robusto sin [pillar]. ¿Procedo con baja confianza o completamos primero?"
 
 ### 2. Ejecutar el prompt
@@ -68,9 +68,9 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 4. Guardar con versionado
-- Ruta: `brand/{slug}/swot/current.md`
-- Si ya existe → backup como `v{N+1}.md`, sobreescribe `current.md`, actualiza `history.json`
-- Link: `<MC_BASE>/docs/brand/{slug}/swot/current.md`
+- Ruta: `brand/{slug}/swot/swot.current.md`
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `swot.current.md`, actualiza `history.json`
+- Link: `<MC_BASE>/docs/brand/{slug}/swot/swot.current.md`
 
 ---
 
@@ -107,13 +107,13 @@ Si el usuario dice "profundizar": invoca `deep-research` con la ruta del documen
 
 ```
 brand/{{slug}}/market-and-us/swot/
-├── current.md      ← versión activa
+├── swot.current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
 └── qa-log.md       ← historial de QA
 ```
 
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
-2. Si existe `current.md` → backup como `v{N+1}.md` antes de sobreescribir
-3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `<MC_BASE>/docs/brand/{slug}/swot/current.md`
+2. Si existe `swot.current.md` → backup como `v{N+1}.md` antes de sobreescribir
+3. Si no existe → crea carpeta + `swot.current.md` + `v1.md` + `history.json`
+4. Link: `<MC_BASE>/docs/brand/{slug}/swot/swot.current.md`

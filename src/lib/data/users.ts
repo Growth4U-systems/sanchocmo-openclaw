@@ -1,5 +1,6 @@
 import { loadAdminEmails, addAdminEmail, removeAdminEmail } from "./admin-emails";
 import { loadClientAccess, setClientAccess } from "./client-access";
+import { isAdminDomainEmail } from "./admin-domain";
 
 /**
  * Integral user-management layer over clients.json.
@@ -8,8 +9,8 @@ import { loadClientAccess, setClientAccess } from "./client-access";
  *   - "admin"  → sees every client (stored in `adminEmails`)
  *   - "client" → sees only `slugs` (stored in `clientAccess[email]`)
  *
- * @growth4u.io accounts are admin by domain (see the auth callback) and are
- * NOT stored here — they cannot be listed or edited.
+ * ADMIN_EMAIL_DOMAIN accounts are admin by domain (see the auth callback) and
+ * are NOT stored here — they cannot be listed or edited.
  *
  * The two underlying lists are mutually exclusive: setUserAccess moves an
  * email between them atomically so a user is never both admin and scoped.
@@ -25,8 +26,8 @@ export interface ManagedUser {
 
 type Result = { ok: boolean; error?: string; users: ManagedUser[] };
 
-function isGrowth4u(email: string): boolean {
-  return email.trim().toLowerCase().endsWith("@growth4u.io");
+function isAdminDomain(email: string): boolean {
+  return isAdminDomainEmail(email);
 }
 
 /**
@@ -62,8 +63,8 @@ export function loadUsers(): ManagedUser[] {
  */
 export function setUserAccess(email: string, role: UserRole, slugs: string[] = []): Result {
   const e = email.trim().toLowerCase();
-  if (isGrowth4u(e)) {
-    return { ok: false, error: "Las cuentas @growth4u.io ya son admin automáticamente", users: loadUsers() };
+  if (isAdminDomain(e)) {
+    return { ok: false, error: "Ese dominio ya es admin automáticamente", users: loadUsers() };
   }
 
   if (role === "admin") {

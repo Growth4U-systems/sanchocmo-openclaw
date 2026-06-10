@@ -18,7 +18,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       : typeof agent === "string" && agent.trim()
         ? agent.trim()
         : typeof tid === "string" && tid.split(":")[1] === "yalc"
-          ? "yalc"
+          ? "rocinante"
           : undefined;
 
   markCancelled(tid);

@@ -11,39 +11,39 @@ La Foundation genera documentos organizados en 4 secciones + operacional:
 ```
 brand/{slug}/
 ├── company-context/
-│   ├── current.md        ← STANDALONE (fuente de verdad): Identity
+│   ├── company-context.current.md        ← STANDALONE (fuente de verdad): Identity
 │   ├── v1.md, v2.md...
 │   └── history.json
 ├── business-model/
-│   ├── current.md        ← STANDALONE (fuente de verdad): Model
+│   ├── business-model.current.md        ← STANDALONE (fuente de verdad): Model
 │   ├── v1.md, v2.md...
 │   └── history.json
 ├── budget/
-│   ├── current.md        ← STANDALONE (fuente de verdad): Resources (money + time + team + tools)
+│   ├── budget.current.md        ← STANDALONE (fuente de verdad): Resources (money + time + team + tools)
 │   ├── v1.md, v2.md...
 │   └── history.json
 ├── company-brief/
-│   ├── current.md        ← MERGE VIEW (auto-generated): Identity + Model + Resources (label semántica; la carpeta se llama `budget/` por compat histórica)
+│   ├── company-brief.current.md        ← MERGE VIEW (auto-generated): Identity + Model + Resources (label semántica; la carpeta se llama `budget/` por compat histórica)
 │   ├── v1.md, v2.md...   ← snapshots del merge view
 │   └── history.json
 ├── market-and-us/
-│   ├── market/current.md           ← TAM, segmentos, tendencias, regulación
-│   ├── competitors/{nombre}/current.md  ← Battle card por competidor
-│   ├── self/current.md             ← 3 lentes de autopercepción
-│   ├── summary/current.md          ← Síntesis: mercado + competidores + nosotros
-│   ├── swot/current.md             ← SWOT + TOWS estratégico
-│   ├── ope-canvas/current.md       ← One-Page Endgame (foto completa en 1 página)
+│   ├── market/market.current.md           ← TAM, segmentos, tendencias, regulación
+│   ├── competitors/{nombre}/{nombre}.current.md  ← Battle card por competidor
+│   ├── self/self.current.md             ← 3 lentes de autopercepción
+│   ├── summary/summary.current.md          ← Síntesis: mercado + competidores + nosotros
+│   ├── swot/swot.current.md             ← SWOT + TOWS estratégico
+│   ├── ope-canvas/ope-canvas.current.md       ← One-Page Endgame (foto completa en 1 página)
 │   └── sources/                    ← Datos raw de scrapers
 ├── go-to-market/
-│   ├── ecps/current.md                     ← Perfiles ECP con JTBD integrado
-│   ├── positioning/{ecp-slug}/current.md   ← Messaging playbook por ECP
+│   ├── ecps/ecps.current.md                     ← Perfiles ECP con JTBD integrado
+│   ├── positioning/{ecp-slug}/{ecp-slug}.current.md   ← Messaging playbook por ECP
 │   ├── positioning/shared/                 ← Tier 2: value-criteria, assets, messaging-summary
-│   ├── pricing/current.md                  ← Framework de pricing + hooks
-│   ├── existing-customer-data/current.md   ← Datos clientes existentes (opcional)
+│   ├── pricing/pricing.current.md                  ← Framework de pricing + hooks
+│   ├── existing-customer-data/existing-customer-data.current.md   ← Datos clientes existentes (opcional)
 │   └── metrics-plan.md                     ← Sistema de métricas por arquetipo + Excel template
 ├── brand-identity/
-│   ├── voice-profile/current.md    ← Brand voice
-│   └── visual-identity/current.md  ← Sistema visual
+│   ├── voice-profile/voice-profile.current.md    ← Brand voice
+│   └── visual-identity/visual-identity.current.md  ← Sistema visual
 └── operational/
     ├── budget.md               ← Presupuesto detallado (viene de company-brief)
     ├── assets.md
@@ -125,11 +125,11 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 
 ## Company Brief — Arquitectura "standalone + merge view"
 
-**Cada skill escribe su propio standalone (fuente de verdad).** El `company-brief/current.md` es un **merge view auto-generado** de los 3 standalones — no se edita a mano.
+**Cada skill escribe su propio standalone (fuente de verdad).** El `company-brief/company-brief.current.md` es un **merge view auto-generado** de los 3 standalones — no se edita a mano.
 
-1. **company-context** → escribe `brand/{slug}/company-context/current.md` (standalone). Regenera el merge view.
-2. **business-model-audit** → escribe `brand/{slug}/business-model/current.md` (standalone). Regenera el merge view.
-3. **budget-constraints** → escribe `brand/{slug}/budget/current.md` (standalone). Regenera el merge view.
+1. **company-context** → escribe `brand/{slug}/company-context/company-context.current.md` (standalone). Regenera el merge view.
+2. **business-model-audit** → escribe `brand/{slug}/business-model/business-model.current.md` (standalone). Regenera el merge view.
+3. **budget-constraints** → escribe `brand/{slug}/budget/budget.current.md` (standalone). Regenera el merge view.
 
 **Beneficios del diseño:**
 - Cada skill se puede re-correr standalone con versionado granular propio (puedo tener business-model v5 sin que afecte a company-context v2).

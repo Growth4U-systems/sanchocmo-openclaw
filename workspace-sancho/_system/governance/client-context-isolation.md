@@ -37,7 +37,7 @@ Para cada cliente, el output debe limitarse a:
 | **Agentes/Sistema** | Spawning de Escudero/Rocinante, sessions_spawn, sessions_send |
 | **Config/Skills** | Cambios de skills, actualizaciones de SOUL.md, BRAIN.md |
 | **Logs del sistema** | Errores, bugs, crashes, heartbeats, cron logs |
-| **Infraestructura** | Tailscale, Supabase, LaunchAgents, Gateway status |
+| **Infraestructura** | Tailscale, base de datos, LaunchAgents, Gateway status |
 | **Otros clientes** | Datos, nombres, métricas, estrategias de otros clientes |
 | **Reglas internas** | Reglas de hilos Discord, protocolos de dispatch, workflow rules |
 | **Costes** | Tokens, costes por agente, pricing de APIs |

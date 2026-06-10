@@ -39,7 +39,7 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/budget/current.md`
+- [ ] **Guardado en** `brand/{{slug}}/budget/budget.current.md`
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 

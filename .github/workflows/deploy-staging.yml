@@ -38,6 +38,8 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           SHA: ${{ github.sha }}
           ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
+          RUN_DB_MIGRATIONS: ${{ vars.RUN_DB_MIGRATIONS }}
           YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
           YALC_REF: ${{ vars.YALC_REF || 'main' }}
           YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
@@ -45,7 +47,6 @@ jobs:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           OD_API_TOKEN: ${{ secrets.OD_API_TOKEN }}
@@ -70,7 +71,6 @@ jobs:
           DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
           DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
           WAVESPEED_API_KEY: ${{ secrets.WAVESPEED_API_KEY }}
           DUMPLING_API_KEY: ${{ secrets.DUMPLING_API_KEY }}
@@ -78,6 +78,7 @@ jobs:
           INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
           METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
           SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
+          SANCHO_MCP_TOKENS: ${{ secrets.SANCHO_MCP_TOKENS }}
           # ── Tier 3 — Skill APIs ───────────────────────────────────────
           APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
           GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
@@ -92,12 +93,23 @@ jobs:
           BASE_URL: ${{ vars.BASE_URL }}
           NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
           NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
-          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           OD_WEB_URL: ${{ vars.OD_WEB_URL }}
           OD_ALLOWED_ORIGINS: ${{ vars.OD_ALLOWED_ORIGINS }}
           OPEN_DESIGN_IMAGE: ${{ vars.OPEN_DESIGN_IMAGE }}
           MC_CHAT_GATEWAY: ${{ vars.MC_CHAT_GATEWAY }}
           SLACK_REDIRECT_URI: ${{ vars.SLACK_REDIRECT_URI }}
+          ANTHROPIC_AUTH_MODE: ${{ vars.ANTHROPIC_AUTH_MODE }}
+          OPENAI_AUTH_MODE: ${{ vars.OPENAI_AUTH_MODE }}
+          ADMIN_EMAIL_DOMAIN: ${{ vars.ADMIN_EMAIL_DOMAIN }}
+          ADMIN_IDENTITY_EMAIL: ${{ vars.ADMIN_IDENTITY_EMAIL }}
+          # Force the Neon HTTP driver in G4U deploys. The runtime also
+          # auto-detects neon from the *.neon.tech host, but pinning it here
+          # removes any chance of falling back to the vanilla-Postgres driver
+          # (used by the bundled local-db) if DATABASE_URL ever changes shape.
+          DATABASE_DRIVER: neon
+          SANCHO_MCP_AUDIT_BACKEND: ${{ vars.SANCHO_MCP_AUDIT_BACKEND }}
+          SANCHO_MCP_AUDIT_FAIL_CLOSED: ${{ vars.SANCHO_MCP_AUDIT_FAIL_CLOSED }}
+          SANCHO_MCP_AUDIT_FILE: ${{ vars.SANCHO_MCP_AUDIT_FILE }}
           # Sancho->YALC runtime URL inside the compose network. Default avoids the
           # client.ts localhost:3847 fallback that left the cockpit stuck on "Checking".
           YALC_BASE_URL: ${{ vars.YALC_BASE_URL || 'http://yalc:3847' }}
@@ -109,7 +121,7 @@ jobs:
           KEYS = [
               # Tier 1 — Auth & infra
               "NEXTAUTH_SECRET", "ENCRYPTION_KEY", "DATABASE_URL",
-              "SUPABASE_SERVICE_ROLE_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+              "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
               "OD_API_TOKEN", "OPENCLAW_GATEWAY_TOKEN", "GTM_OS_API_TOKEN",
               "YALC_API_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
               "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
@@ -117,17 +129,22 @@ jobs:
               "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
               "XAI_API_KEY", "MINIMAX_API_KEY", "BRAVE_API_KEY", "APIFY_API_KEY",
               "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
-              "NOTION_API_KEY", "SUPABASE_ANON_KEY", "FAL_API_KEY",
+              "NOTION_API_KEY", "FAL_API_KEY",
               "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN",
               "INSTANTLY_API_KEY", "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
+              "SANCHO_MCP_TOKENS",
               # Tier 3 — Skill APIs
               "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",
               "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID", "PAGESPEED_API_KEY",
               "UNIPILE_API_KEY", "UNIPILE_DSN", "DATAFORSEO_API_KEY",
               # Variables (non-sensitive config)
-              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL", "SUPABASE_URL",
+              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL",
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
+              "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
+              "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
+              "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
+              "SANCHO_MCP_AUDIT_FILE",
               "YALC_BASE_URL",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
@@ -140,7 +157,7 @@ jobs:
           scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
 
           YALC_REPO_TOKEN_B64="$(printf '%s' "${YALC_REPO_TOKEN:-}" | base64 | tr -d '\n')"
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64=$YALC_REPO_TOKEN_B64 bash -s" <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64=$YALC_REPO_TOKEN_B64 bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching staging…"
@@ -226,6 +243,8 @@ jobs:
               rm -rf "$BRAND_BACKUP_DIR"
             fi
             COMPOSE_ARGS="-f docker-compose.yml"
+            # Open Design is an opt-in overlay (image is public). G4U keeps it on by default.
+            [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
             if [ "${ENABLE_YALC_SERVICE:-1}" != "0" ]; then
               YALC_DIR="${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}"
               if [ ! -d "$YALC_DIR/.git" ]; then
@@ -248,6 +267,17 @@ jobs:
             fi
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose $COMPOSE_ARGS build --pull
+            if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
+              echo "▶ Running DB migrations…"
+              # The repo's historical SQL migrations are not a safe input for
+              # `drizzle-kit migrate` yet: there is no Drizzle journal in git,
+              # and one old migration drops/recreates `tasks`. Apply only the
+              # additive deploy migrations (MCP audit + feedback_insights) via
+              # the non-destructive single-file runner.
+              # Redirect stdin so the one-off container cannot consume the
+              # remaining SSH heredoc before `docker compose up` runs.
+              docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:deploy" < /dev/null
+            fi
             # `build --pull` only refreshes images for services with a
             # `build:` directive (sanchocmo). Services that consume a
             # pre-built image (open-design via OPEN_DESIGN_IMAGE) need an
@@ -271,6 +301,17 @@ jobs:
             if [ "$ENV_CHANGED" = "1" ]; then
               UP_ARGS="$UP_ARGS --force-recreate"
             fi
+            # Rebuilds tag the local image as `openclaw-sanchocmo:latest`, but
+            # Compose can keep the existing container when the service config is
+            # unchanged. Force-recreate `sanchocmo` so health checks validate
+            # the newly built image, not yesterday's still-healthy container.
+            if ! docker compose $COMPOSE_ARGS up -d --no-deps --force-recreate $UP_ARGS sanchocmo; then
+              echo "▶ docker compose up sanchocmo failed; current service state:"
+              docker compose $COMPOSE_ARGS ps || true
+              echo "▶ sanchocmo logs:"
+              docker compose $COMPOSE_ARGS logs --no-color --tail=200 sanchocmo || true
+              exit 1
+            fi
             if ! docker compose $COMPOSE_ARGS up -d $UP_ARGS; then
               echo "▶ docker compose up failed; current service state:"
               docker compose $COMPOSE_ARGS ps || true
@@ -286,6 +327,7 @@ jobs:
       - name: Health check
         env:
           HEALTH_URL: ${{ vars.HEALTH_URL }}
+          EXPECTED_COMMIT: ${{ github.sha }}
         run: |
           if [ -z "$HEALTH_URL" ]; then
             echo "::warning::HEALTH_URL variable not set on staging environment; skipping health check"
@@ -293,9 +335,14 @@ jobs:
           fi
           echo "▶ Polling $HEALTH_URL (up to 60s)…"
           for i in {1..30}; do
-            if curl -fsS --max-time 5 "$HEALTH_URL" > /dev/null; then
-              echo "✓ Health check passed"
-              exit 0
+            body="$(curl -fsS --max-time 5 "$HEALTH_URL" || true)"
+            if [ -n "$body" ]; then
+              commit="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("commit", ""))' <<<"$body" 2>/dev/null || true)"
+              if [ "$commit" = "$EXPECTED_COMMIT" ]; then
+                echo "✓ Health check passed at commit $commit"
+                exit 0
+              fi
+              echo "▶ Health responded with commit '${commit:-missing}', expected '$EXPECTED_COMMIT'"
             fi
             sleep 2
           done

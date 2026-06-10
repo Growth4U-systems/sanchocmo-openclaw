@@ -115,7 +115,7 @@ def parse_activity():
                        "api-health", "scripts/", "skills/", "_system/", "infra",
                        "changelog", "memory maintenance", "token", "openclaw",
                        "cervantes", "escudero", "rocinante", "sancho",
-                       "daily memory", "supabase security"]
+                       "daily memory"]
     if clients_file.exists():
         try:
             import json
@@ -925,7 +925,6 @@ def main():
                     "emoji": c.get("emoji", "🏢"),
                     "url": c.get("url", ""),
                     "discord_guild": c.get("discord_guild_id", c.get("guild", "")),
-                    "supabase": c.get("supabase", {}),
                     "workspace": c.get("workspace", ""),
                     "phase": c.get("phase", 0),
                 }

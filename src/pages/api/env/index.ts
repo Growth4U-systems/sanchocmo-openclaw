@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
+import { parseEnvContent, upsertEnvContent, removeKeysFromEnvContent } from "@/lib/env-file";
 
 const ENV_FILE = path.join(BASE, "..", ".env");
 
@@ -22,10 +23,6 @@ const SERVICE_ENV_MAP: Record<string, { key: string; label: string; placeholder:
     { key: "DATAFORSEO_PASSWORD", label: "Password", placeholder: "" },
   ],
   notion: [{ key: "NOTION_API_KEY", label: "Integration Token", placeholder: "ntn_..." }],
-  supabase: [
-    { key: "SUPABASE_URL", label: "Project URL", placeholder: "https://xxx.supabase.co" },
-    { key: "SUPABASE_ANON_KEY", label: "Anon Key", placeholder: "eyJ..." },
-  ],
   fal: [{ key: "FAL_API_KEY", label: "API Key", placeholder: "" }],
   wavespeed: [{ key: "WAVESPEED_API_KEY", label: "API Key", placeholder: "" }],
   dumpling: [{ key: "DUMPLING_API_KEY", label: "API Key", placeholder: "" }],
@@ -46,38 +43,21 @@ function readEnvFile(): string {
 }
 
 function parseEnv(content: string): Record<string, string> {
-  const vars: Record<string, string> = {};
-  for (const line of content.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-    vars[trimmed.slice(0, eq)] = trimmed.slice(eq + 1);
-  }
-  return vars;
+  return parseEnvContent(content);
 }
 
 function setEnvVars(updates: Record<string, string>): void {
-  const content = readEnvFile();
-  const lines = content.split("\n");
-
-  for (const [key, value] of Object.entries(updates)) {
-    let found = false;
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].startsWith(key + "=")) {
-        lines[i] = `${key}=${value}`;
-        found = true;
-        break;
-      }
-    }
-    if (!found) lines.push(`${key}=${value}`);
-  }
-
-  fs.writeFileSync(ENV_FILE, lines.join("\n"), "utf-8");
+  fs.writeFileSync(ENV_FILE, upsertEnvContent(readEnvFile(), updates), "utf-8");
   // Also set in current process env
   for (const [key, value] of Object.entries(updates)) {
     process.env[key] = value;
   }
+}
+
+function removeEnvVars(keys: string[]): void {
+  fs.writeFileSync(ENV_FILE, removeKeysFromEnvContent(readEnvFile(), keys), "utf-8");
+  // Also drop from the current process env
+  for (const key of keys) delete process.env[key];
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -140,7 +120,24 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({ ok: true, saved: Object.keys(updates) });
   }
 
-  res.setHeader("Allow", "GET, POST");
+  if (req.method === "DELETE") {
+    const service = (req.query.service as string) || (req.body?.service as string);
+    if (!service) {
+      return res.status(400).json({ error: "Missing service" });
+    }
+
+    const allowed = SERVICE_ENV_MAP[service];
+    if (!allowed) {
+      return res.status(400).json({ error: `Unknown service: ${service}` });
+    }
+
+    const keys = allowed.map((f) => f.key);
+    removeEnvVars(keys);
+
+    return res.status(200).json({ ok: true, removed: keys });
+  }
+
+  res.setHeader("Allow", "GET, POST, DELETE");
   return res.status(405).json({ error: `Method ${req.method} not allowed` });
 }
 

@@ -1,0 +1,753 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import * as z from "zod/v4";
+import {
+  addMessage,
+  getChatSecret,
+  getGatewayUrl,
+  getPendingProgress,
+  getStatusEntry,
+  getThread,
+  listThreadsForSlug,
+} from "@/lib/data/mc-chat";
+import { loadClients } from "@/lib/data/clients";
+import { getInternalClientStatus } from "@/lib/sancho-internal-api";
+import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
+import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
+import {
+  resolveOdConfig,
+  odHealth,
+  odListCraftGuides,
+  odListDesignSystems,
+  odListPromptTemplates,
+  odListProjects,
+  odListSkills,
+} from "@/lib/open-design/client";
+import { auditMcpToolCall } from "@/lib/mcp/audit";
+import {
+  assertMcpClientAccess,
+  assertMcpScope,
+  McpAuthError,
+  type McpPrincipal,
+  type McpScope,
+} from "@/lib/mcp/auth";
+
+interface SanchoMcpContext {
+  principal: McpPrincipal;
+  traceId: string;
+}
+
+const TASK_LIMIT_DEFAULT = 50;
+const TASK_LIMIT_MAX = 200;
+const CHAT_THREAD_LIMIT_DEFAULT = 25;
+const CHAT_THREAD_LIMIT_MAX = 100;
+const CHAT_MESSAGE_LIMIT_DEFAULT = 40;
+const CHAT_MESSAGE_LIMIT_MAX = 100;
+const CHAT_TEXT_MAX_CHARS = 12_000;
+
+const askQuestionSchema = z.object({
+  id: z.string().min(1),
+  prompt: z.string().min(1),
+  mode: z.enum(["single", "multi"]),
+  options: z.array(z.object({ id: z.string().min(1), label: z.string().min(1) })).min(1),
+});
+
+type AskQuestion = z.infer<typeof askQuestionSchema>;
+type ChatMessage = ReturnType<typeof getThread>["messages"][number];
+
+const YALC_OVERVIEW_CHECKS = {
+  skills: "/api/skills/list",
+  today: "/api/today/feed",
+  campaigns: "/api/campaigns",
+  gates: "/api/gates/awaiting",
+  providers: "/api/keys/list",
+} as const;
+
+type YalcOverviewCheck = {
+  ok: boolean;
+  count: number | null;
+  data?: unknown;
+  error?: string;
+};
+
+export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
+  const server = new McpServer(
+    {
+      name: "sancho",
+      version: "0.1.0",
+    },
+    {
+      capabilities: {
+        logging: {},
+      },
+    },
+  );
+
+  server.registerTool(
+    "sancho_mcp_status",
+    {
+      title: "Sancho MCP status",
+      description: "Checks Sancho MCP connectivity and returns the authenticated token profile.",
+      inputSchema: {},
+    },
+    async () =>
+      runTool(context, "sancho_mcp_status", undefined, async () =>
+        jsonResult({
+          ok: true,
+          server: "sancho",
+          version: "0.1.0",
+          traceId: context.traceId,
+          principal: {
+            id: context.principal.id,
+            scopes: context.principal.scopes,
+            clients: context.principal.clients,
+          },
+        }),
+      ),
+  );
+
+  server.registerTool(
+    "sancho_list_clients",
+    {
+      title: "List Sancho clients",
+      description: "Lists clients allowed by the MCP token. Requires sancho:read.",
+      inputSchema: {},
+    },
+    async () =>
+      runTool(context, "sancho_list_clients", undefined, async () => {
+        assertMcpScope(context.principal, "sancho:read");
+        const allowed = new Set(context.principal.clients);
+        const clients = loadClients()
+          .filter((client) => allowed.has("*") || allowed.has(client.slug))
+          .map((client) => ({
+            slug: client.slug,
+            name: client.name,
+            plan: client.plan,
+            status: client.status,
+            subscriptionStatus: client.subscriptionStatus,
+          }));
+        return jsonResult({ clients, count: clients.length });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_client_context",
+    {
+      title: "Get Sancho client context",
+      description: "Returns status, active work, blockers and recent outputs for one client. Requires sancho:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "sancho_get_client_context", clientSlug, async () => {
+        assertClientScope(context, "sancho:read", clientSlug);
+        const status = getInternalClientStatus(clientSlug);
+        if (!status) throw new McpAuthError(404, `Client context not found: ${clientSlug}`);
+        return jsonResult(status);
+      }),
+  );
+
+  server.registerTool(
+    "sancho_list_tasks",
+    {
+      title: "List Sancho tasks",
+      description: "Lists tasks for a client with optional status/type filters. Requires tasks:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        status: z.string().optional().describe("Optional exact task status filter."),
+        type: z.string().optional().describe("Optional exact task type filter."),
+        limit: z.number().int().min(1).max(TASK_LIMIT_MAX).optional().describe("Maximum tasks to return."),
+      },
+    },
+    async ({ clientSlug, status, type, limit }) =>
+      runTool(context, "sancho_list_tasks", clientSlug, async () => {
+        assertClientScope(context, "tasks:read", clientSlug);
+        const max = clampLimit(limit);
+        const tasks = (await listUnifiedTaskRowsAsync(clientSlug))
+          .filter((task) => !status || task.status === status)
+          .filter((task) => !type || task.type === type)
+          .slice(0, max);
+        return jsonResult({ tasks, count: tasks.length, limit: max });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_task",
+    {
+      title: "Get Sancho task",
+      description: "Returns one task by id for a client. Requires tasks:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        taskId: z.string().min(1).describe("Task id."),
+      },
+    },
+    async ({ clientSlug, taskId }) =>
+      runTool(context, "sancho_get_task", clientSlug, async () => {
+        assertClientScope(context, "tasks:read", clientSlug);
+        const task = await getTask(clientSlug, taskId);
+        if (!task) throw new McpAuthError(404, `Task not found: ${taskId}`);
+        return jsonResult(task);
+      }),
+  );
+
+  server.registerTool(
+    "sancho_create_task",
+    {
+      title: "Create Sancho task",
+      description:
+        "Creates a task for a client. Requires tasks:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        name: z.string().min(1).describe("Task name."),
+        description: z.string().optional().describe("Task description/brief."),
+        status: z.string().optional().describe("Initial status (default todo)."),
+        type: z.string().optional().describe("Task type, e.g. project or execution."),
+        parentId: z.string().optional().describe("Parent task id to create a child task."),
+        owner: z.string().optional().describe("Task owner (default Sancho)."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the create operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create."),
+      },
+    },
+    async ({ clientSlug, name, description, status, type, parentId, owner, dryRun, confirm }) =>
+      runTool(context, "sancho_create_task", clientSlug, async () => {
+        assertClientScope(context, "tasks:write", clientSlug);
+        const input = pickDefined({ name, description, status, type, parent_id: parentId, owner });
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to create this task.",
+            input: { clientSlug, ...input },
+          });
+        }
+        const task = await createTask(clientSlug, input as Parameters<typeof createTask>[1]);
+        return jsonResult({ ok: true, task });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_update_task",
+    {
+      title: "Update Sancho task",
+      description:
+        "Updates whitelisted fields of a task. Requires tasks:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        taskId: z.string().min(1).describe("Task id."),
+        name: z.string().optional().describe("New task name."),
+        status: z.string().optional().describe("New status."),
+        description: z.string().optional().describe("New description."),
+        brief: z.string().optional().describe("New brief."),
+        completion: z.string().optional().describe("New completion/done criteria."),
+        owner: z.string().optional().describe("New owner."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the update operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({ clientSlug, taskId, name, status, description, brief, completion, owner, dryRun, confirm }) =>
+      runTool(context, "sancho_update_task", clientSlug, async () => {
+        assertClientScope(context, "tasks:write", clientSlug);
+        const patch = pickDefined({ name, status, description, brief, completion, owner });
+        if (Object.keys(patch).length === 0) {
+          throw new McpAuthError(
+            400,
+            "No fields to update; provide at least one of: name, status, description, brief, completion, owner",
+          );
+        }
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to apply this update.",
+            taskId,
+            patch,
+          });
+        }
+        const task = await updateTask(clientSlug, taskId, patch);
+        return jsonResult({ ok: true, task });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_send_message",
+    {
+      title: "Send Sancho chat message",
+      description:
+        "Sends a message into Sancho Mission Control chat. Requires sancho:chat. Defaults to dry-run and requires confirm=true for execution.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        text: z.string().min(1).describe("Message text."),
+        threadId: z.string().optional().describe("Optional MC chat thread id."),
+        threadName: z.string().optional().describe("Optional thread display name."),
+        agent: z.string().optional().describe("Optional target agent id."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the send operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to send."),
+      },
+    },
+    async ({ clientSlug, text, threadId, threadName, agent, dryRun, confirm }) =>
+      runTool(context, "sancho_send_message", clientSlug, async () => {
+        assertClientScope(context, "sancho:chat", clientSlug);
+        const tid = threadId || `${clientSlug}:mcp`;
+        const payload = {
+          slug: clientSlug,
+          threadId: tid,
+          threadName: threadName || tid,
+          text,
+          userId: `mcp:${context.principal.id}`,
+          userName: "Claude Code",
+          isAdmin: true,
+          senderRole: "admin",
+          _source: "mcp",
+          agentId: agent,
+          agent,
+        };
+
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to send this chat message.",
+            payload,
+          });
+        }
+
+        addMessage(tid, "user", text);
+        const secret = getChatSecret();
+        const response = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...traceHeaders(context),
+            ...(secret ? { "X-MC-Secret": secret } : {}),
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = (await response.json()) as unknown;
+        if (!response.ok) {
+          throw new Error(`Mission Control gateway rejected message: ${response.status}`);
+        }
+        return jsonResult({ ok: true, chatId: extractChatId(data) || tid, gateway: data });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_list_chat_threads",
+    {
+      title: "List Sancho chat threads",
+      description: "Lists Mission Control chat threads for a client. Requires sancho:chat.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(CHAT_THREAD_LIMIT_MAX)
+          .optional()
+          .describe("Maximum chat threads to return."),
+      },
+    },
+    async ({ clientSlug, limit }) =>
+      runTool(context, "sancho_list_chat_threads", clientSlug, async () => {
+        assertClientScope(context, "sancho:chat", clientSlug);
+        const max = clampLimit(limit, CHAT_THREAD_LIMIT_DEFAULT, CHAT_THREAD_LIMIT_MAX);
+        const threads = listThreadsForSlug(clientSlug).slice(0, max);
+        return jsonResult({ threads, count: threads.length, limit: max });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_chat_thread",
+    {
+      title: "Get Sancho chat thread",
+      description:
+        "Reads recent Mission Control chat messages for a client and extracts pending :::ask multiple-choice questions. Requires sancho:chat.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        threadId: z.string().min(1).describe("Thread id, either full '<client>:<thread>' or short id."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(CHAT_MESSAGE_LIMIT_MAX)
+          .optional()
+          .describe("Maximum recent messages to return."),
+      },
+    },
+    async ({ clientSlug, threadId, limit }) =>
+      runTool(context, "sancho_get_chat_thread", clientSlug, async () => {
+        assertClientScope(context, "sancho:chat", clientSlug);
+        const tid = normalizeChatThreadId(clientSlug, threadId);
+        const thread = getThread(tid);
+        if (!chatThreadExists(clientSlug, tid) && thread.messages.length === 0) {
+          throw new McpAuthError(404, `Chat thread not found: ${tid}`);
+        }
+
+        const max = clampLimit(limit, CHAT_MESSAGE_LIMIT_DEFAULT, CHAT_MESSAGE_LIMIT_MAX);
+        const startIndex = Math.max(0, thread.messages.length - max);
+        const messages = thread.messages
+          .slice(startIndex)
+          .map((message, offset) => sanitizeChatMessage(message, startIndex + offset));
+        const pendingQuestions = extractPendingQuestions(thread.messages);
+
+        return jsonResult({
+          threadId: tid,
+          clientSlug,
+          shortId: shortChatThreadId(tid),
+          messageCount: thread.messages.length,
+          returnedMessageCount: messages.length,
+          updatedAt: thread.updatedAt ?? null,
+          messages,
+          status: getStatusEntry(tid),
+          pendingProgress: getPendingProgress(tid),
+          pendingQuestions,
+          responseFormat: buildAskResponseFormat(pendingQuestions),
+        });
+      }),
+  );
+
+  server.registerTool(
+    "yalc_get_overview",
+    {
+      title: "Get YALC overview",
+      description: "Returns read-only YALC health/count overview for a Sancho client. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "yalc_get_overview", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const config = resolveYalcConfig(clientSlug);
+        const entries = await Promise.all(
+          Object.entries(YALC_OVERVIEW_CHECKS).map(async ([name, endpoint]) => {
+            try {
+              const data = await yalcFetch(config, endpoint, { headers: traceHeaders(context) });
+              return [name, { ok: true, count: countYalcRows(data), data }] as const;
+            } catch (err) {
+              return [
+                name,
+                {
+                  ok: false,
+                  count: null,
+                  error: err instanceof Error ? err.message : "YALC request failed",
+                },
+              ] as const;
+            }
+          }),
+        );
+        const checks = Object.fromEntries(entries) as Record<string, YalcOverviewCheck>;
+        return jsonResult({
+          ok: Object.values(checks).every((check) => check.ok),
+          runtime: publicYalcConfig(config),
+          checks,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "yalc_list_campaigns",
+    {
+      title: "List YALC campaigns",
+      description: "Lists read-only YALC campaigns for a Sancho client. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "yalc_list_campaigns", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const data = await yalcFetch(resolveYalcConfig(clientSlug), "/api/campaigns", {
+          headers: traceHeaders(context),
+        });
+        return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
+    "yalc_list_gates",
+    {
+      title: "List YALC approval gates",
+      description: "Lists read-only YALC approval gates awaiting action. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "yalc_list_gates", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const data = await yalcFetch(resolveYalcConfig(clientSlug), "/api/gates/awaiting", {
+          headers: traceHeaders(context),
+        });
+        return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
+    "open_design_health",
+    {
+      title: "Check Open Design health",
+      description: "Checks the Open Design daemon through the Sancho MCP boundary. Requires open-design:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "open_design_health", clientSlug, async () => {
+        assertClientScope(context, "open-design:read", clientSlug);
+        return jsonResult(await odHealth(odConfig(context)));
+      }),
+  );
+
+  server.registerTool(
+    "open_design_list_catalog",
+    {
+      title: "List Open Design catalog",
+      description: "Lists Open Design skills, design systems, prompt templates, craft guides or projects. Requires open-design:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        type: z
+          .enum(["skills", "design-systems", "prompt-templates", "craft-guides", "projects"])
+          .describe("Open Design catalog type."),
+        filter: z.string().optional().describe("Optional filter for supported catalog types."),
+        category: z.enum(["image", "video", "audio"]).optional().describe("Prompt-template category."),
+      },
+    },
+    async ({ clientSlug, type, filter, category }) =>
+      runTool(context, "open_design_list_catalog", clientSlug, async () => {
+        assertClientScope(context, "open-design:read", clientSlug);
+        const items = await listOpenDesignCatalog(type, { filter, category }, context);
+        return jsonResult({ type, items, count: Array.isArray(items) ? items.length : null });
+      }),
+  );
+
+  return server;
+}
+
+function assertClientScope(context: SanchoMcpContext, scope: McpScope, clientSlug: string): void {
+  assertMcpScope(context.principal, scope);
+  assertMcpClientAccess(context.principal, clientSlug);
+}
+
+async function runTool(
+  context: SanchoMcpContext,
+  toolName: string,
+  clientSlug: string | undefined,
+  handler: () => Promise<CallToolResult>,
+): Promise<CallToolResult> {
+  try {
+    const result = await handler();
+    const auditError = await auditToolCall({
+      principal: context.principal,
+      toolName,
+      clientSlug,
+      ok: true,
+      metadata: { traceId: context.traceId },
+    });
+    if (auditError) return errorResult(`MCP audit failed: ${auditError}`);
+    return result;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown MCP tool error";
+    const auditError = await auditToolCall({
+      principal: context.principal,
+      toolName,
+      clientSlug,
+      ok: false,
+      error: message,
+      metadata: { traceId: context.traceId },
+    });
+    return errorResult(auditError ? `${message}; MCP audit failed: ${auditError}` : message);
+  }
+}
+
+async function auditToolCall(event: Parameters<typeof auditMcpToolCall>[0]): Promise<string | null> {
+  try {
+    await auditMcpToolCall(event);
+    return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : "Unknown audit error";
+  }
+}
+
+function jsonResult(value: unknown): CallToolResult {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(value, null, 2),
+      },
+    ],
+    structuredContent: isRecord(value) ? value : { value },
+  };
+}
+
+function errorResult(message: string): CallToolResult {
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: message,
+      },
+    ],
+  };
+}
+
+function clampLimit(
+  limit: number | undefined,
+  defaultLimit = TASK_LIMIT_DEFAULT,
+  maxLimit = TASK_LIMIT_MAX,
+): number {
+  if (!Number.isFinite(limit)) return defaultLimit;
+  return Math.max(1, Math.min(maxLimit, Number(limit)));
+}
+
+function extractChatId(value: unknown): string | null {
+  if (!isRecord(value)) return null;
+  return typeof value.chatId === "string" ? value.chatId : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function pickDefined(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
+}
+
+function normalizeChatThreadId(clientSlug: string, threadId: string): string {
+  const raw = threadId.trim();
+  if (!raw) throw new McpAuthError(400, "threadId is required");
+  if (raw.startsWith(`${clientSlug}:`)) return raw;
+  return `${clientSlug}:${raw}`;
+}
+
+function shortChatThreadId(threadId: string): string {
+  const colonIdx = threadId.indexOf(":");
+  return colonIdx < 0 ? threadId : threadId.slice(colonIdx + 1);
+}
+
+function chatThreadExists(clientSlug: string, threadId: string): boolean {
+  return listThreadsForSlug(clientSlug).some((thread) => isRecord(thread) && thread.id === threadId);
+}
+
+function sanitizeChatMessage(message: ChatMessage, index: number) {
+  const text = message.text || "";
+  const truncated = text.length > CHAT_TEXT_MAX_CHARS;
+  const questions = extractAskQuestions(text).map(({ question }) => question);
+  return {
+    index,
+    role: message.role,
+    text: truncated ? `${text.slice(0, CHAT_TEXT_MAX_CHARS)}…` : text,
+    textTruncated: truncated || undefined,
+    ts: message.ts,
+    agent: message.agent,
+    attachments: message.attachments,
+    progress: message.progress,
+    from_agent: message.from_agent,
+    to_agent: message.to_agent,
+    errorDetail: message.errorDetail,
+    questions: questions.length ? questions : undefined,
+  };
+}
+
+const ASK_REGEX = /^:::ask\s*\n([\s\S]*?)\n:::\s*$/gm;
+const CODE_FENCE_REGEX = /```[\s\S]*?```/g;
+const ASK_RESPONSE_REGEX = /^\[ask:([^\]]+)\]\s*respuesta:/gim;
+
+function extractAskQuestions(text: string): Array<{ question: AskQuestion; start: number; end: number }> {
+  if (!text || !text.includes(":::ask")) return [];
+
+  const codeRanges = Array.from(text.matchAll(CODE_FENCE_REGEX))
+    .filter((match) => match.index !== undefined)
+    .map((match) => [match.index as number, (match.index as number) + match[0].length] as const);
+  const isInsideCode = (start: number, end: number) =>
+    codeRanges.some(([codeStart, codeEnd]) => start >= codeStart && end <= codeEnd);
+
+  const questions: Array<{ question: AskQuestion; start: number; end: number }> = [];
+  for (const match of text.matchAll(ASK_REGEX)) {
+    const start = match.index;
+    if (start === undefined) continue;
+    const end = start + match[0].length;
+    if (isInsideCode(start, end)) continue;
+
+    try {
+      const parsed = askQuestionSchema.safeParse(JSON.parse(match[1]));
+      if (parsed.success) questions.push({ question: parsed.data, start, end });
+    } catch {
+      // Invalid ask blocks are left as normal chat text.
+    }
+  }
+  return questions;
+}
+
+function extractPendingQuestions(messages: ChatMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index];
+    if (message.role === "user") continue;
+
+    const questions = extractAskQuestions(message.text || "").map(({ question }) => question);
+    if (questions.length === 0) return [];
+
+    const answered = answeredAskIdsAfter(messages, index);
+    const pending = questions.filter((question) => !answered.has(question.id));
+    return pending.map((question) => ({
+      ...question,
+      sourceMessageIndex: index,
+      sourceMessageTs: message.ts,
+      sourceAgent: message.agent,
+    }));
+  }
+  return [];
+}
+
+function answeredAskIdsAfter(messages: ChatMessage[], messageIndex: number): Set<string> {
+  const answered = new Set<string>();
+  for (const message of messages.slice(messageIndex + 1)) {
+    if (message.role !== "user") continue;
+    for (const match of (message.text || "").matchAll(ASK_RESPONSE_REGEX)) {
+      answered.add(match[1]);
+    }
+  }
+  return answered;
+}
+
+function buildAskResponseFormat(questions: Array<AskQuestion & { sourceMessageIndex: number }>): string | null {
+  if (questions.length === 0) return null;
+  return questions
+    .map((question) => {
+      const hint = question.mode === "multi" ? "<option label(s), comma-separated>" : "<option label>";
+      return `[ask:${question.id}] respuesta: ${hint}`;
+    })
+    .join("\n");
+}
+
+async function listOpenDesignCatalog(
+  type: "skills" | "design-systems" | "prompt-templates" | "craft-guides" | "projects",
+  options: { filter?: string; category?: "image" | "video" | "audio" },
+  context: SanchoMcpContext,
+) {
+  const config = odConfig(context);
+  if (type === "skills") return odListSkills(options.filter, config);
+  if (type === "design-systems") return odListDesignSystems(options.filter, config);
+  if (type === "prompt-templates") return odListPromptTemplates(options.category, config);
+  if (type === "craft-guides") return odListCraftGuides(config);
+  return odListProjects(config);
+}
+
+function odConfig(context: SanchoMcpContext) {
+  return {
+    ...resolveOdConfig(),
+    extraHeaders: traceHeaders(context),
+  };
+}
+
+function traceHeaders(context: SanchoMcpContext): Record<string, string> {
+  return {
+    "X-Request-Id": context.traceId,
+    "X-Sancho-MCP-Trace-Id": context.traceId,
+  };
+}

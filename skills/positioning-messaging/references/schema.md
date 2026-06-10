@@ -16,7 +16,7 @@ Stored in `brand/{slug}/positioning/shared/`. Shared across ALL niches.
 ```
 | # | Value Criteria | Imp. | G4U | Comp1 | Comp2 | ... | DIY | Nada | Zone | ECPs |
 ```
-- ECPs column: links to per-ECP docs (e.g. `[1](../ecp1-slug/current.md)`)
+- ECPs column: links to per-ECP docs (e.g. `[1](../ecp1-slug/ecp1-slug.current.md)`)
 - Zone: 🟢 Opp | 🟡 Cont | 🔴 Red
 
 #### Per-criteria explanation format (below the table):

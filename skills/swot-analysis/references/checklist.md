@@ -78,7 +78,7 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/swot/current.md`
+- [ ] **Guardado en** `brand/{{slug}}/swot/swot.current.md`
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 

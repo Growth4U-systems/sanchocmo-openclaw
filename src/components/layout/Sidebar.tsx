@@ -31,11 +31,16 @@ export function Sidebar() {
   const allowedSlugs = (session?.user as { allowedSlugs?: string[] | null })?.allowedSlugs;
   const isMultiClient = !isAdmin && !!allowedSlugs && allowedSlugs.length > 0;
   const routeSlug = typeof router.query.slug === "string" ? router.query.slug : null;
+  // The client whose section/nav is active: an explicit store selection, else
+  // the slug in the URL. Using the route slug means a client routed straight to
+  // /dashboard/[slug] still gets the full client menu, even though they have no
+  // client selector to populate the store.
+  const activeSlug = selectedClient || routeSlug;
   const fallbackClient = clients?.find((client) => client.active)?.slug || null;
-  const slug = selectedClient || routeSlug || fallbackClient;
+  const slug = activeSlug || fallbackClient;
   // Chat targets a concrete client only — never the "all clients"/global view,
   // so we deliberately exclude the fallback client here.
-  const chatSlug = selectedClient || routeSlug;
+  const chatSlug = activeSlug;
   const unreadCount = useUnreadCount(chatSlug);
 
   function clientHref(path: string) {
@@ -121,19 +126,19 @@ export function Sidebar() {
         {/* ── Overview ── */}
         <SectionLabel text={t("nav.overview")} visible={sidebarOpen} />
         <NavLink
-          href={selectedClient ? `/dashboard/${selectedClient}` : "/dashboard"}
+          href={activeSlug ? `/dashboard/${activeSlug}` : "/dashboard"}
           icon="📊"
           label={t("nav.dashboard")}
           active={
-            selectedClient
-              ? router.asPath.split("?")[0].split("#")[0] === `/dashboard/${selectedClient}`
+            activeSlug
+              ? router.asPath.split("?")[0].split("#")[0] === `/dashboard/${activeSlug}`
               : router.asPath.split("?")[0].split("#")[0] === "/dashboard"
           }
           collapsed={!sidebarOpen}
         />
 
         {/* ── Client section ── */}
-        {selectedClient && (
+        {activeSlug && (
           <>
             <NavLink
               href={clientHref("/brand-brain")}
@@ -161,20 +166,20 @@ export function Sidebar() {
         {/* ── Sistema ── */}
         <SectionLabel text={t("nav.system")} visible={sidebarOpen} />
         <NavLink
-          href={selectedClient ? clientHref("/activity") : "/dashboard/admin/activity"}
+          href={activeSlug ? clientHref("/activity") : "/dashboard/admin/activity"}
           icon="📡"
           label={t("nav.activity")}
-          active={selectedClient ? isActive(clientHref("/activity")) : isActive("/dashboard/admin/activity")}
+          active={activeSlug ? isActive(clientHref("/activity")) : isActive("/dashboard/admin/activity")}
           collapsed={!sidebarOpen}
         />
         <NavLink
-          href={selectedClient ? clientHref("/settings") : "/dashboard/admin/settings"}
+          href={activeSlug ? clientHref("/settings") : "/dashboard/admin/settings"}
           icon="⚙️"
           label={t("nav.settings")}
-          active={selectedClient ? isActive(clientHref("/settings")) : isActive("/dashboard/admin/settings")}
+          active={activeSlug ? isActive(clientHref("/settings")) : isActive("/dashboard/admin/settings")}
           collapsed={!sidebarOpen}
         />
-        {isAdmin && !selectedClient && (
+        {isAdmin && !activeSlug && (
           <>
             <NavLink
               href="/dashboard/admin/clients"

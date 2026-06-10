@@ -3,8 +3,8 @@
 # reseed-foundation.sh — Reinstala el scaffolding canónico de Foundation
 # en un cliente existente, archivando el estado actual.
 #
-# Extraído de new-client.sh (la sección que crea proyectos core +
-# foundation-state.json v3). NO toca Supabase, Discord, ni nada externo.
+# Crea los proyectos core + el árbol canónico de brand + foundation-state.json
+# v3. NO toca Discord ni nada externo.
 # Sólo escribe en disco bajo $WORKSPACE/brand/$SLUG/.
 #
 # Uso:
@@ -65,7 +65,7 @@ fi
 BRAND_DIR="$WORKSPACE/brand/$SLUG"
 if [[ ! -d "$BRAND_DIR" ]]; then
   echo "❌ El cliente '$SLUG' no existe en $BRAND_DIR" >&2
-  echo "   (Para crear un cliente nuevo usá new-client.sh)" >&2
+  echo "   (Para crear un cliente nuevo usá Mission Control → New client)" >&2
   exit 1
 fi
 
@@ -127,7 +127,7 @@ done
 
 echo "  → archivo: $ARCHIVE_DIR"
 
-# --- 2. Crear estructura de carpetas vacías (mismo árbol que new-client.sh) ---
+# --- 2. Crear estructura de carpetas vacías (árbol canónico de brand) ---
 echo ""
 echo "📁 [2/3] Recreando estructura de carpetas vacías..."
 run "mkdir -p '$BRAND_DIR'/{company-context,business-model,budget,company-brief,market-and-us/{market,competitors,self,swot,summary,ope-canvas,sources},go-to-market/{ecps,positioning/shared,pricing,existing-customer-data,ecp-validation},brand-book/{brand-voice,visual-identity},presentations,strategic-plan,operational,projects}"
@@ -166,11 +166,11 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 0,
       "skill": "fast-foundation",
       "pillars": {
-        "company-brief": {"status": "not-started", "output_file": "brand/$SLUG/company-brief/current.md", "skill": "fast-foundation"},
-        "self-l1": {"status": "not-started", "output_file": "brand/$SLUG/market-and-us/self/current.md", "skill": "fast-foundation"},
-        "market-l1": {"status": "not-started", "output_file": "brand/$SLUG/market-and-us/market/current.md", "skill": "fast-foundation"},
-        "brand-voice-snapshot": {"status": "not-started", "output_file": "brand/$SLUG/brand-book/brand-voice/current.md", "skill": "fast-foundation"},
-        "niche-basic": {"status": "not-started", "output_file": "brand/$SLUG/go-to-market/ecps/current.md", "skill": "fast-foundation"}
+        "company-brief": {"status": "not-started", "output_file": "brand/$SLUG/company-brief/company-brief.current.md", "skill": "fast-foundation"},
+        "self-l1": {"status": "not-started", "output_file": "brand/$SLUG/market-and-us/self/self.current.md", "skill": "fast-foundation"},
+        "market-l1": {"status": "not-started", "output_file": "brand/$SLUG/market-and-us/market/market.current.md", "skill": "fast-foundation"},
+        "brand-voice-snapshot": {"status": "not-started", "output_file": "brand/$SLUG/brand-book/brand-voice/brand-voice.current.md", "skill": "fast-foundation"},
+        "niche-basic": {"status": "not-started", "output_file": "brand/$SLUG/go-to-market/ecps/ecps.current.md", "skill": "fast-foundation"}
       }
     },
     "company-brief": {
@@ -178,10 +178,10 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 0,
       "output_dir": "brand/$SLUG/company-brief/",
       "pillars": {
-        "company-context": {"status": "not-started", "skill": "company-context", "output_file": "brand/$SLUG/company-context/current.md"},
-        "business-model": {"status": "not-started", "skill": "business-model-audit", "output_file": "brand/$SLUG/business-model/current.md"},
-        "budget": {"status": "not-started", "skill": "budget-constraints", "output_file": "brand/$SLUG/budget/current.md"},
-        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/$SLUG/company-brief/current.md", "note": "merge view auto-generated"}
+        "company-context": {"status": "not-started", "skill": "company-context", "output_file": "brand/$SLUG/company-context/company-context.current.md"},
+        "business-model": {"status": "not-started", "skill": "business-model-audit", "output_file": "brand/$SLUG/business-model/business-model.current.md"},
+        "budget": {"status": "not-started", "skill": "budget-constraints", "output_file": "brand/$SLUG/budget/budget.current.md"},
+        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/$SLUG/company-brief/company-brief.current.md", "note": "merge view auto-generated"}
       }
     },
     "market-and-us": {
@@ -189,9 +189,9 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 1,
       "output_dir": "brand/$SLUG/market-and-us/",
       "pillars": {
-        "market-analysis": {"status": "not-started", "layer": 1, "skill": "market-intelligence", "output_file": "brand/$SLUG/market-and-us/market/current.md"},
+        "market-analysis": {"status": "not-started", "layer": 1, "skill": "market-intelligence", "output_file": "brand/$SLUG/market-and-us/market/market.current.md"},
         "competitor-analysis": {"status": "not-started", "layer": 1, "skill": "competitor-intelligence"},
-        "self-analysis": {"status": "not-started", "layer": 1, "skill": "self-intelligence", "output_file": "brand/$SLUG/market-and-us/self/current.md"},
+        "self-analysis": {"status": "not-started", "layer": 1, "skill": "self-intelligence", "output_file": "brand/$SLUG/market-and-us/self/self.current.md"},
         "market-synthesis": {"status": "not-started", "layer": 2, "skill": "market-synthesis"},
         "foundation-presentation": {"status": "not-started", "layer": 2, "skill": "market-synthesis", "output_file": "brand/$SLUG/presentations/foundation-report.html"}
       }
@@ -201,10 +201,10 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 3,
       "output_dir": "brand/$SLUG/go-to-market/",
       "pillars": {
-        "niche-discovery": {"status": "not-started", "layer": 3, "skill": "niche-discovery-100x", "output_file": "brand/$SLUG/go-to-market/ecps/current.md"},
+        "niche-discovery": {"status": "not-started", "layer": 3, "skill": "niche-discovery-100x", "output_file": "brand/$SLUG/go-to-market/ecps/ecps.current.md"},
         "existing-customer-data": {"status": "not-started", "layer": 3, "optional": true, "skill": "existing-customer-data"},
         "positioning": {"status": "not-started", "layer": 4, "skill": "positioning-messaging", "output_file": "brand/$SLUG/go-to-market/positioning/shared/messaging-summary.md"},
-        "pricing": {"status": "not-started", "layer": 4, "skill": "pricing-strategy", "output_file": "brand/$SLUG/go-to-market/pricing/current.md"},
+        "pricing": {"status": "not-started", "layer": 4, "skill": "pricing-strategy", "output_file": "brand/$SLUG/go-to-market/pricing/pricing.current.md"},
         "ecp-validation": {"status": "not-started", "layer": 4, "optional": true, "skill": "ecp-validation"},
         "gtm-presentation": {"status": "not-started", "layer": 4, "skill": "gtm-presentation", "output_file": "brand/$SLUG/go-to-market/gtm-report.html"}
       }
@@ -214,8 +214,8 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
       "layer": 5,
       "output_dir": "brand/$SLUG/brand-book/",
       "pillars": {
-        "brand-voice": {"status": "not-started", "layer": 5, "skill": "brand-voice", "output_file": "brand/$SLUG/brand-book/brand-voice/current.md"},
-        "visual-identity": {"status": "not-started", "layer": 5, "skill": "visual-identity", "output_file": "brand/$SLUG/brand-book/visual-identity/current.md"},
+        "brand-voice": {"status": "not-started", "layer": 5, "skill": "brand-voice", "output_file": "brand/$SLUG/brand-book/brand-voice/brand-voice.current.md"},
+        "visual-identity": {"status": "not-started", "layer": 5, "skill": "visual-identity", "output_file": "brand/$SLUG/brand-book/visual-identity/visual-identity.current.md"},
         "brand-report": {"status": "not-started", "layer": 5, "optional": true, "skill": "brand-report", "output_file": "brand/$SLUG/brand-book/brand-report.html"}
       }
     },
@@ -229,9 +229,9 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
     "strategic-plan": {
       "status": "not-started",
       "layer": 7,
-      "output_file": "brand/$SLUG/strategic-plan/current.md",
+      "output_file": "brand/$SLUG/strategic-plan/strategic-plan.current.md",
       "pillars": {
-        "strategic-plan": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/$SLUG/strategic-plan/current.md"},
+        "strategic-plan": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/$SLUG/strategic-plan/strategic-plan.current.md"},
         "strategic-presentation": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/$SLUG/strategic-plan/strategic-presentation.html"}
       }
     }
@@ -279,7 +279,7 @@ cat > "$BRAND_DIR/projects/P00-Fast-Foundation/tasks.json" << 'TASKSJSON_FF'
     "id": "P00-FF-T01",
     "name": "Ejecutar Fast Foundation",
     "description": "Intake rápido (~30 min) donde Sancho te hace preguntas sobre tu empresa y genera los documentos base: Company Context, Business Model y Niche Discovery con ECPs iniciales. Todo se ejecuta en una sola conversación en #onboarding.",
-    "deliverable": "company-brief/company-context.md, company-brief/business-model.md, go-to-market/ecps/current.md",
+    "deliverable": "company-brief/company-context.md, company-brief/business-model.md, go-to-market/ecps/ecps.current.md",
     "done_criteria": "Los 3 documentos lite generados y validados por el cliente.",
     "depends_on": null,
     "owner": "Sancho",
@@ -323,7 +323,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << 'TASKSJSON_FUL'
     "id": "P00-FUL-T01",
     "name": "L1 — Market Intelligence",
     "description": "Research profundo del mercado: tamaño, tendencias, regulación, tecnología, comportamiento de compradores.",
-    "deliverable": "market-and-us/market/current.md con análisis completo del mercado.",
+    "deliverable": "market-and-us/market/market.current.md con análisis completo del mercado.",
     "done_criteria": "Análisis aprobado con datos verificables.",
     "depends_on": null,
     "owner": "Sancho",
@@ -353,7 +353,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << 'TASKSJSON_FUL'
     "id": "P00-FUL-T03",
     "name": "L1 — Self Intelligence",
     "description": "Análisis interno: 3 lenses (autopercepción, terceros, consumidores).",
-    "deliverable": "market-and-us/self/current.md",
+    "deliverable": "market-and-us/self/self.current.md",
     "done_criteria": "3 lenses completas. Assets únicos identificados.",
     "depends_on": null,
     "owner": "Sancho",
@@ -368,7 +368,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << 'TASKSJSON_FUL'
     "id": "P00-FUL-T04",
     "name": "L2 — Market Summary",
     "description": "Síntesis de todo el research: SWOT+TOWS con ICE prioritization, Market Summary ejecutivo, OPE Canvas y presentación de resultados.",
-    "deliverable": "market-and-us/swot/current.md + market-and-us/summary/current.md + market-and-us/ope-canvas/current.md",
+    "deliverable": "market-and-us/swot/swot.current.md + market-and-us/summary/summary.current.md + market-and-us/ope-canvas/ope-canvas.current.md",
     "done_criteria": "Summary aprobado. SWOT con oportunidades y amenazas priorizadas. Presentación lista.",
     "depends_on": "P00-FUL-T01,P00-FUL-T02,P00-FUL-T03",
     "owner": "Sancho",
@@ -383,7 +383,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << 'TASKSJSON_FUL'
     "id": "P00-FUL-T05",
     "name": "L3 — Niche Discovery 100x",
     "description": "Research profundo de nichos: análisis de 100+ empresas, segmentación avanzada, ECPs detallados con pain points, triggers y objeciones.",
-    "deliverable": "go-to-market/ecps/current.md con ECPs completos.",
+    "deliverable": "go-to-market/ecps/ecps.current.md con ECPs completos.",
     "done_criteria": "ECPs profundos documentados con datos verificables. Nichos priorizados por TAM y fit.",
     "depends_on": "P00-FUL-T04",
     "owner": "Sancho",
@@ -398,7 +398,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << 'TASKSJSON_FUL'
     "id": "P00-FUL-T06",
     "name": "L4 — Positioning & Messaging",
     "description": "Posicionamiento diferenciado, propuesta de valor y messaging framework por ECP.",
-    "deliverable": "go-to-market/positioning/{ecp-slug}/current.md por ECP.",
+    "deliverable": "go-to-market/positioning/{ecp-slug}/{ecp-slug}.current.md por ECP.",
     "done_criteria": "Posicionamiento aprobado. Mensajes diferenciados para cada ECP.",
     "depends_on": "P00-FUL-T05",
     "owner": "Sancho",
@@ -413,7 +413,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << 'TASKSJSON_FUL'
     "id": "P00-FUL-T07",
     "name": "L4 — Pricing Strategy",
     "description": "Modelo de pricing, tiers, value metrics y hooks de conversión.",
-    "deliverable": "go-to-market/pricing/current.md",
+    "deliverable": "go-to-market/pricing/pricing.current.md",
     "done_criteria": "Pricing aprobado. Tiers documentados.",
     "depends_on": "P00-FUL-T06",
     "owner": "Sancho",
@@ -428,7 +428,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << 'TASKSJSON_FUL'
     "id": "P00-FUL-T08",
     "name": "L5 — Brand Voice",
     "description": "Full Voice Guide + AI Brand Kit + adaptación por ECP/canal.",
-    "deliverable": "brand-voice/current.md",
+    "deliverable": "brand-voice/brand-voice.current.md",
     "done_criteria": "Voice guide aprobada. AI Brand Kit ready.",
     "depends_on": "P00-FUL-T06",
     "owner": "Sancho",
@@ -443,7 +443,7 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/tasks.json" << 'TASKSJSON_FUL'
     "id": "P00-FUL-T09",
     "name": "L5 — Visual Identity",
     "description": "Sistema visual: paleta, tipografía, logo guidelines, templates.",
-    "deliverable": "brand-identity/visual-identity/current.md",
+    "deliverable": "brand-identity/visual-identity/visual-identity.current.md",
     "done_criteria": "Visual identity aprobada. Assets exportados.",
     "depends_on": "P00-FUL-T08",
     "owner": "Sancho",
@@ -585,7 +585,7 @@ cat > "$BRAND_DIR/projects/P00-Strategic-Plan/tasks.json" << 'TASKSJSON_SP'
     "id": "P00-SP-T01",
     "name": "L7 — Crear Strategic Plan",
     "description": "Generar plan estratégico: SWOT ejecutivo, channel prioritization, roadmap de proyectos, KPIs.",
-    "deliverable": "strategic-plan/current.md",
+    "deliverable": "strategic-plan/strategic-plan.current.md",
     "done_criteria": "Plan aprobado. Proyectos P01+ creados en Mission Control.",
     "depends_on": "P00-MET-T01",
     "owner": "Sancho",

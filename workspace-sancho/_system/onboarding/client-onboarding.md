@@ -1,64 +1,42 @@
 # Client Onboarding — Procedimiento
 
 ## Prerequisitos
-- Cuenta de Supabase activa (proyecto compartido)
-- Bot SanchoCMO corriendo
+- SanchoCMO corriendo (gateway + Mission Control)
+- Acceso admin a Mission Control
 
-## Paso 1: Discord Server (el cliente)
+## Paso 1: Crear el cliente desde Mission Control
 
-El cliente crea su servidor de Discord desde nuestra plantilla:
+Como admin, en Mission Control → **New client**, cargar:
+- **Slug** (minúsculas, números, guiones)
+- **Nombre** del cliente
 
-**👉 https://discord.new/mnXBVkNQqFBk**
+Esto registra el cliente en `config/clients.json` (con su `mcToken`) y crea la
+carpeta base `brand/{slug}/`. No se necesita Discord ni Guild ID.
 
-Esto crea automáticamente todos los canales y categorías estándar de SanchoCMO.
+## Paso 2: Correr Foundation (Sancho, por chat)
 
-## Paso 2: Añadir Bot (el cliente)
+Desde el chat del cliente, pedirle a Sancho que corra **Fast Foundation** y luego
+la **Full Foundation**. Las skills hacen el scaffolding y el estado:
 
-El cliente añade el bot a su servidor:
+- El `foundation-orchestrator` crea `brand/{slug}/foundation-state.json`
+  (schema v3.0) si no existe.
+- Cada skill crea su sub-árbol de carpetas y su `current.md` a medida que produce
+  output.
 
-**👉 `https://discord.com/oauth2/authorize?client_id={BOT_CLIENT_ID}&permissions=8&integration_type=0&scope=bot`**
+## Paso 3: Verificar
 
-> ⚠️ Reemplazar `{BOT_CLIENT_ID}` con el valor de `_system/instance.json → discord.bot_client_id`.
-> `new-client.sh --help` muestra el link correcto automáticamente.
+- El cliente aparece en `clients.json` y en Mission Control.
+- Tras Fast Foundation, los pilares se ven en el Brand Brain de MC.
+- Sancho conoce el contexto del cliente.
 
-## Paso 3: Configurar OpenClaw (Cervantes)
+## Comunicación (opcional)
 
-1. Obtener el **Guild ID** del nuevo servidor Discord
-2. Ejecutar `new-client.sh` con los datos del cliente:
+Discord y Slack son canales opcionales. Se configuran aparte (MC → Settings →
+APIs / canales). La interfaz primaria es el chat de Mission Control.
 
-```bash
-bash ~/.openclaw/workspace-sancho/scripts/new-client.sh \
-  --slug "nuevo-cliente" \
-  --name "Nombre del Cliente" \
-  --guild "GUILD_ID"
-```
-
-Esto hace:
-- Crea carpeta `brand/{slug}/`
-- Crea `foundation-state.json` v2.0 con 4 secciones (company-brief, market-and-us, go-to-market, brand-identity)
-- Crea `integrations.json` vacío
-- Inserta cliente en Supabase (`clients` table)
-- Añade guild + channel bindings a `openclaw.json`
-- Añade systemPrompts con contexto del cliente a todos los canales
-
-## Paso 4: Gateway Restart (Cervantes)
-
-```bash
-openclaw gateway restart
-```
-
-## Paso 5: Verificar (Cervantes)
-
-- Bot responde en #general del nuevo servidor
-- Foundation pillars visibles en MC
-- Sancho conoce el contexto del cliente
-
-## URLs de Onboarding
+## URLs
 
 | Qué | URL |
 |-----|-----|
-| Plantilla Discord | https://discord.new/mnXBVkNQqFBk |
-| OAuth Bot | Dinámico — ver `instance.json → discord.bot_client_id` |
-| Supabase | Dinámico — ver `instance.json → supabase.url` |
 | Mission Control | Dinámico — ver `instance.json → mc_base_url` |
 | Docs (público) | Dinámico — ver `instance.json → mc_base_url` + `/docs/` |

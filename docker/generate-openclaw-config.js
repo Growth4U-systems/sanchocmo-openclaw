@@ -36,15 +36,31 @@ async function main() {
   const mcChatSecret = process.env.MC_CHAT_SECRET || '';
 
   // --- Auth profiles ---
+  // ANTHROPIC_AUTH_MODE selects how Anthropic inference authenticates:
+  //   api_key (default) → profile `anthropic:default` (mode "token"); the key
+  //                       is read from ANTHROPIC_API_KEY in the env.
+  //   subscription      → profile `anthropic:claude-cli` (OAuth via Claude CLI).
+  // The subscription enforcement (docker/ensure-anthropic-subscription-auth.js)
+  // is gated on the same mode in entrypoint.sh, so the two stay consistent.
+  const anthropicAuthMode = (process.env.ANTHROPIC_AUTH_MODE || 'api_key').toLowerCase();
   if (!config.auth) config.auth = {};
   if (!config.auth.profiles) config.auth.profiles = {};
-  delete config.auth.profiles['anthropic:default'];
-  config.auth.profiles['anthropic:claude-cli'] = {
-    provider: 'claude-cli',
-    mode: 'oauth'
-  };
   if (!config.auth.order) config.auth.order = {};
-  config.auth.order.anthropic = ['anthropic:claude-cli'];
+  if (anthropicAuthMode === 'subscription') {
+    delete config.auth.profiles['anthropic:default'];
+    config.auth.profiles['anthropic:claude-cli'] = {
+      provider: 'claude-cli',
+      mode: 'oauth'
+    };
+    config.auth.order.anthropic = ['anthropic:claude-cli'];
+  } else {
+    delete config.auth.profiles['anthropic:claude-cli'];
+    config.auth.profiles['anthropic:default'] = {
+      provider: 'anthropic',
+      mode: 'token'
+    };
+    config.auth.order.anthropic = ['anthropic:default'];
+  }
 
   // --- Agent defaults ---
   if (!config.agents) config.agents = {};
@@ -65,11 +81,16 @@ async function main() {
     console.log('[config] Removed agents.defaults.heartbeat (deprecated in this project)');
   }
 
-  // --- Session agents (escudero, rocinante, yalc) ---
+  // --- Session agents (escudero, rocinante, hamete, alarife) ---
   config.agents.list = [
     { id: 'escudero', workspace: path.join(OPENCLAW_ROOT, 'workspace-escudero') },
     { id: 'rocinante', workspace: path.join(OPENCLAW_ROOT, 'workspace-rocinante') },
-    { id: 'yalc', workspace: path.join(OPENCLAW_ROOT, 'workspace-yalc') }
+    // Hamete — Research & Market Intelligence agent (deep-research, competitor/market intel,
+    // signals). Runs the scraping-preflight + /deep-research stack. See dispatch-protocol.md.
+    { id: 'hamete', workspace: path.join(OPENCLAW_ROOT, 'workspace-hamete') },
+    // Alarife — Web/Page Builder (Payload CMS, site architecture, frontend, CRO). Promoted
+    // from alarife_operator to full specialist on 2026-06-09 (SAN-116).
+    { id: 'alarife', workspace: path.join(OPENCLAW_ROOT, 'workspace-alarife') }
   ];
 
   // --- Gateway ---
@@ -90,16 +111,24 @@ async function main() {
   config.commands.restart = true;
   config.commands.ownerDisplay = 'raw';
 
-  // --- Discord channel config ---
+  // --- Discord channel config (OPTIONAL — only when a bot token is set) ---
+  // Discord is one comms option, not a requirement. Without DISCORD_BOT_TOKEN
+  // the channel stays disabled and MC chat (below) is the primary interface.
   if (!config.channels) config.channels = {};
-  if (!config.channels.discord) config.channels.discord = {};
-  config.channels.discord.enabled = true;
-  if (discordToken) config.channels.discord.token = discordToken;
-  config.channels.discord.groupPolicy = 'allowlist';
-  config.channels.discord.replyToMode = 'first';
-  if (!config.channels.discord.threadBindings) config.channels.discord.threadBindings = {};
-  config.channels.discord.threadBindings.enabled = true;
-  config.channels.discord.threadBindings.spawnSubagentSessions = true;
+  if (discordToken) {
+    if (!config.channels.discord) config.channels.discord = {};
+    config.channels.discord.enabled = true;
+    config.channels.discord.token = discordToken;
+    config.channels.discord.groupPolicy = 'allowlist';
+    config.channels.discord.replyToMode = 'first';
+    if (!config.channels.discord.threadBindings) config.channels.discord.threadBindings = {};
+    config.channels.discord.threadBindings.enabled = true;
+    config.channels.discord.threadBindings.spawnSubagentSessions = true;
+  } else if (config.channels.discord) {
+    // No token → keep any existing block but ensure it's disabled so the
+    // gateway doesn't try to connect with a tokenless Discord channel.
+    config.channels.discord.enabled = false;
+  }
 
   // --- Session config ---
   if (!config.session) config.session = {};

@@ -74,11 +74,11 @@ scripts/load-secrets-from-env.sh --env staging --from ~/Software/G4U/staging.env
 
 # 3. Upload (use --exclude to skip vars that should be variables, deploy-infra, deprecated keys, …)
 scripts/load-secrets-from-env.sh --env staging --from ~/Software/G4U/staging.env.snapshot --confirm \
-  --exclude DISCORD_BOT_TOKEN,DISCORD_BOT_CLIENT_ID,CERVANTES_DISCORD_BOT_TOKEN,CERVANTES_DISCORD_BOT_CLIENT_ID,CERVANTES_GUILD_ID,DISCORD_WEBHOOK_CERVANTES,BASE_URL,NEXT_PUBLIC_ENV_LABEL,NEXTAUTH_URL,SUPABASE_URL,OD_WEB_URL,OD_ALLOWED_ORIGINS,OPEN_DESIGN_IMAGE,MC_CHAT_GATEWAY,SLACK_REDIRECT_URI
+  --exclude DISCORD_BOT_TOKEN,DISCORD_BOT_CLIENT_ID,CERVANTES_DISCORD_BOT_TOKEN,CERVANTES_DISCORD_BOT_CLIENT_ID,CERVANTES_GUILD_ID,DISCORD_WEBHOOK_CERVANTES,BASE_URL,NEXT_PUBLIC_ENV_LABEL,NEXTAUTH_URL,OD_WEB_URL,OD_ALLOWED_ORIGINS,OPEN_DESIGN_IMAGE,MC_CHAT_GATEWAY,SLACK_REDIRECT_URI
 
 # 4. For the variables, use gh api (gh v2.4.0 doesn't support `gh variable set`):
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-for v in BASE_URL NEXT_PUBLIC_ENV_LABEL NEXTAUTH_URL SUPABASE_URL OD_WEB_URL OD_ALLOWED_ORIGINS OPEN_DESIGN_IMAGE MC_CHAT_GATEWAY SLACK_REDIRECT_URI; do
+for v in BASE_URL NEXT_PUBLIC_ENV_LABEL NEXTAUTH_URL OD_WEB_URL OD_ALLOWED_ORIGINS OPEN_DESIGN_IMAGE MC_CHAT_GATEWAY SLACK_REDIRECT_URI; do
   value=$(grep "^${v}=" ~/Software/G4U/staging.env.snapshot | cut -d= -f2-)
   [ -z "$value" ] && { echo "  · $v (skip, empty)"; continue; }
   if gh api "repos/$REPO/environments/staging/variables/$v" >/dev/null 2>&1; then

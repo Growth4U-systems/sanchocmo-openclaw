@@ -1,8 +1,10 @@
-# Deep Research Prompts (Gemini)
+# Deep Research Prompts
 
-Two deep research prompts that provide market context and company radiography. Run BEFORE the lens analysis. These are executed via Gemini Deep Research.
+Two deep research prompts that provide market context and company radiography. Run BEFORE the lens analysis.
 
-**For self-intelligence**: Use with the client's own company name and industry.
+**Cómo se ejecutan:** vía el skill **`/deep-research`** (agente Hamete) — pásale el prompt como brief. NO existe ninguna herramienta "Gemini Deep Research" en este runtime; cualquier referencia antigua a "Gemini" significa "usar `/deep-research`". El output es un documento con fuentes citadas + verificación qa-bot.
+
+**For self-intelligence**: Use with the client's own company name and industry (solo el prompt Company; el de Market pertenece a market-intelligence).
 **For competitor-intelligence**: Use with each competitor's name.
 
 ---

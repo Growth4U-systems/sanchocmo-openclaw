@@ -1,9 +1,30 @@
 #!/bin/bash
 set -e
 
+# Seed/refresh the OpenClaw home from the image's baked framework so a fresh/empty
+# OPENCLAW_HOME boots and `compose pull` updates apply — without clobbering user
+# data. No-op in source/bind-mount dev mode (no /opt/sancho-seed). See init-home.sh.
+if [ -x /opt/sancho-seed/docker/init-home.sh ]; then
+  bash /opt/sancho-seed/docker/init-home.sh /root/.openclaw
+fi
+
 cd /root/.openclaw
 
 OPENCLAW_CONFIG="/root/.openclaw/.openclaw/openclaw.json"
+
+# ===========================================================
+# 0a. ENSURE APIFY_TOKEN (runs every startup)
+# ===========================================================
+# The bundled `apify` skill (and competitor-intelligence's scraping-guide)
+# require the env var APIFY_TOKEN, but deploys provision APIFY_API_KEY. Without
+# APIFY_TOKEN, OpenClaw gates the apify skill out (skill `requires.env`), so
+# agents fall back to web_fetch and primary scraping (Trustpilot/IG/FB ads)
+# never runs. Derive it so the scraper actors are available to every agent.
+# Exported before `openclaw gateway run` so the gateway and its agents inherit it.
+if [ -z "${APIFY_TOKEN:-}" ] && [ -n "${APIFY_API_KEY:-}" ]; then
+  export APIFY_TOKEN="$APIFY_API_KEY"
+  echo "[entrypoint] APIFY_TOKEN derived from APIFY_API_KEY (apify skill enabled)"
+fi
 
 # ===========================================================
 # 0. ENSURE CONFIG SYMLINKS (runs every startup)
@@ -16,6 +37,27 @@ for f in clients.json clients.js dispatch-map.json; do
   if [ -f "config/$f" ] && [ ! -e "workspace-sancho/$f" ]; then
     ln -sf "../config/$f" "workspace-sancho/$f"
     echo "[entrypoint] Linked workspace-sancho/$f -> ../config/$f"
+  fi
+done
+
+# ===========================================================
+# 0b. ENSURE PER-AGENT SKILLS SYMLINK (runs every startup)
+# ===========================================================
+# Skills live centrally at ~/.openclaw/skills. Specialist agents run with
+# cwd = their own workspace-<agent>/, so a relative read like
+# `skills/<name>/references/x.md` resolves against the workspace, not the skill
+# home → ENOENT. Point every non-Sancho workspace's `skills` at the central
+# root so the agents that EXECUTE skills (hamete, etc.) resolve those reads.
+# Sancho keeps its own real skills/ dir (first-party operator skills not in the
+# central catalog). `git checkout` wipes symlinks on deploy → recreate every
+# boot. Idempotent: only manage an absent or already-symlinked path.
+for ws in /root/.openclaw/workspace-*; do
+  [ -d "$ws" ] || continue
+  [ "$(basename "$ws")" = "workspace-sancho" ] && continue
+  link="$ws/skills"
+  if [ -L "$link" ] || [ ! -e "$link" ]; then
+    ln -sfn ../skills "$link"
+    echo "[entrypoint] Linked $(basename "$ws")/skills -> ../skills"
   fi
 done
 
@@ -63,8 +105,11 @@ def ensure_min(obj, key, value):
         changed = True
 
 diagnostics = config.setdefault("diagnostics", {})
-ensure_min(diagnostics, "stuckSessionWarnMs", 120_000)
-ensure_min(diagnostics, "stuckSessionAbortMs", 900_000)
+# Heavy intelligence skills (competitor/market/self) accumulate large context
+# from scraping; single Opus turns can run many minutes. Raised so the watchdog
+# does not abort a still-progressing report before the final write (45 min).
+ensure_min(diagnostics, "stuckSessionWarnMs", 300_000)
+ensure_min(diagnostics, "stuckSessionAbortMs", 2_700_000)
 
 plugins = config.setdefault("plugins", {})
 entries = plugins.setdefault("entries", {})
@@ -73,8 +118,8 @@ if codex.get("enabled") is not True:
     codex["enabled"] = True
     changed = True
 app_server = codex.setdefault("config", {}).setdefault("appServer", {})
-ensure_min(app_server, "turnCompletionIdleTimeoutMs", 900_000)
-ensure_min(app_server, "requestTimeoutMs", 900_000)
+ensure_min(app_server, "turnCompletionIdleTimeoutMs", 2_700_000)
+ensure_min(app_server, "requestTimeoutMs", 2_700_000)
 
 if changed:
     with open(path, "w", encoding="utf-8") as fh:
@@ -105,17 +150,48 @@ bash docker/setup-agents.sh
 # auth-profiles.json, leaving the other agents on the env OPENAI_API_KEY (or
 # nothing). The sync script collapses every agent's file into a symlink to a
 # single canonical store so one login propagates to all. Idempotent.
-echo "[entrypoint] Syncing Codex subscription auth across agents..."
-bash docker/sync-codex-auth.sh || \
-  echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
+#
+# Gated on OPENAI_AUTH_MODE: only the subscription route needs this sync. In
+# api_key mode (default) the agents fall back to OPENAI_API_KEY from the env,
+# so forcing the shared subscription store would override the user's key.
+if [ "${OPENAI_AUTH_MODE:-api_key}" = "subscription" ]; then
+  echo "[entrypoint] Syncing Codex subscription auth across agents..."
+  bash docker/sync-codex-auth.sh || \
+    echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
+else
+  echo "[entrypoint] OPENAI_AUTH_MODE=api_key — skipping Codex subscription sync (agents use OPENAI_API_KEY)"
+fi
 
-# Anthropic model execution must use the Claude/OpenClaw subscription route.
-# Keep this after sync-codex-auth because that step creates the shared
-# auth-profiles symlink; writing only openclaw.json is not enough for agent
-# inference.
-echo "[entrypoint] Ensuring Anthropic subscription auth profile..."
-node docker/ensure-anthropic-subscription-auth.js || \
-  echo "[entrypoint] WARNING: ensure-anthropic-subscription-auth failed; Anthropic may use stale auth"
+# Anthropic model execution route, gated on ANTHROPIC_AUTH_MODE:
+#   subscription → enforce the Claude/OpenClaw OAuth profile across openclaw.json
+#                  and every agent's auth-profiles.json (the script strips any
+#                  API-key profile). Keep this after sync-codex-auth because that
+#                  step creates the shared auth-profiles symlink; writing only
+#                  openclaw.json is not enough for agent inference.
+#   api_key (default) → skip: generate-openclaw-config.js already wrote the
+#                  `anthropic:default` token profile, and the key comes from
+#                  ANTHROPIC_API_KEY. Running the subscription script here would
+#                  delete that profile and flip billing to the subscription.
+if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
+  echo "[entrypoint] Ensuring Anthropic subscription auth profile..."
+  node docker/ensure-anthropic-subscription-auth.js || \
+    echo "[entrypoint] WARNING: ensure-anthropic-subscription-auth failed; Anthropic may use stale auth"
+  # The model layer (pi-ai's Anthropic provider) resolves the Anthropic
+  # credential from env in this order: ANTHROPIC_OAUTH_TOKEN, then
+  # ANTHROPIC_API_KEY. Any value containing "sk-ant-oat" is auto-detected as an
+  # OAuth (subscription) token → Bearer auth + Claude Code identity headers, so
+  # it bills the Claude Max subscription instead of API credit. We already ship
+  # a subscription token as CLAUDE_CODE_OAUTH_TOKEN (used by the Cervantes
+  # Claude Code service); mirror it into ANTHROPIC_OAUTH_TOKEN so the OpenClaw
+  # gateway agents use the subscription too. Without this the provider falls
+  # through to ANTHROPIC_API_KEY — the silent API-billing footgun. Idempotent.
+  if [ -z "${ANTHROPIC_OAUTH_TOKEN:-}" ] && [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+    export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
+    echo "[entrypoint] ANTHROPIC_OAUTH_TOKEN derived from CLAUDE_CODE_OAUTH_TOKEN (gateway → Claude subscription)"
+  fi
+else
+  echo "[entrypoint] ANTHROPIC_AUTH_MODE=api_key — using ANTHROPIC_API_KEY (anthropic:default token profile)"
+fi
 
 # ===========================================================
 # 1b. ENSURE MC-CHAT PLUGIN (runs every startup)
@@ -221,6 +297,21 @@ if [ -n "$OPENCLAW_VERSION" ]; then
 fi
 
 # ===========================================================
+# 5d. APPLY LOCAL DB MIGRATIONS (bundled / non-Neon Postgres only)
+# ===========================================================
+# The bundled local Postgres (Compose profile `local-db`) ships empty; create
+# its schema from the clean baseline in src/db/migrations-local before the app
+# servers touch the DB. The script self-gates: it SKIPS Neon/managed URLs
+# (prod keeps its own manual apply flow) and is a no-op when DATABASE_URL is
+# unset. Idempotent across reboots/upgrades. Non-fatal on failure so the
+# container still boots (DB features degrade rather than crash). Runs from the
+# Next app dir so it resolves postgres/drizzle-orm from its node_modules.
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "[entrypoint] Checking local DB migrations…"
+  ( cd /app/mc-nextjs && node scripts/migrate-local.mjs ) || true
+fi
+
+# ===========================================================
 # 6. START GATEWAY (foreground, backgrounded for MC)
 # ===========================================================
 echo "[entrypoint] Starting OpenClaw gateway..."
@@ -281,6 +372,42 @@ echo "[entrypoint] Starting cost-tracker loop (every ${COST_TRACKER_INTERVAL}s)�
   done
 ) &
 COST_TRACKER_PID=$!
+
+# ===========================================================
+# 7a-bis. USAGE MONITOR LOOP (background)
+# ===========================================================
+# Watches the Claude subscription's "extra usage" headroom and alerts to
+# Discord (#cervantes-admin) BEFORE it runs out — so the subscription-backed
+# agents don't get silently rejected ("out of extra usage"). It does a 1-token
+# probe with CLAUDE_CODE_OAUTH_TOKEN and reads the anthropic-ratelimit-unified-*
+# headers (exact utilization per window). Gated: only runs when both the OAuth
+# token and the Discord webhook are present (no token = nothing to measure;
+# no webhook = nowhere to alert). The monitor self-dedupes, so this loop just
+# re-checks on an interval. Default 30 min; tune with USAGE_MONITOR_INTERVAL.
+USAGE_MONITOR_INTERVAL="${USAGE_MONITOR_INTERVAL:-1800}"
+USAGE_MONITOR_LOG="/root/.openclaw/workspace-sancho/_system/usage-monitor.log"
+if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ]; then
+  mkdir -p "$(dirname "$USAGE_MONITOR_LOG")"
+  echo "[entrypoint] Starting usage-monitor loop (every ${USAGE_MONITOR_INTERVAL}s)…"
+  (
+    sleep 45  # let the gateway settle before the first probe
+    while :; do
+      {
+        echo "[$(date -u +%FT%TZ)] usage-monitor run start"
+        python3 /root/.openclaw/workspace-sancho/scripts/usage-monitor.py 2>&1
+        echo "[$(date -u +%FT%TZ)] usage-monitor run done"
+      } >> "$USAGE_MONITOR_LOG" 2>&1 || true
+      if [ -f "$USAGE_MONITOR_LOG" ] && [ "$(stat -c%s "$USAGE_MONITOR_LOG" 2>/dev/null || echo 0)" -gt 2097152 ]; then
+        tail -c 1048576 "$USAGE_MONITOR_LOG" > "${USAGE_MONITOR_LOG}.tmp" && mv "${USAGE_MONITOR_LOG}.tmp" "$USAGE_MONITOR_LOG"
+      fi
+      sleep "$USAGE_MONITOR_INTERVAL"
+    done
+  ) &
+  USAGE_MONITOR_PID=$!
+else
+  echo "[entrypoint] usage-monitor skipped (need CLAUDE_CODE_OAUTH_TOKEN + DISCORD_WEBHOOK_CERVANTES)"
+  USAGE_MONITOR_PID=""
+fi
 
 # ===========================================================
 # 7b. START NEXT.JS MC (primary frontend on :3000)

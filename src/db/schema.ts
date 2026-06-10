@@ -453,3 +453,66 @@ export const tasks = pgTable("tasks", {
   index("tasks_brand_pillar_idx").on(table.brandSlug, table.pillar),
   index("tasks_idea_id_idx").on(table.ideaId),
 ]);
+
+// ============================================================
+// Shared Document Comments (SAN-15)
+// ============================================================
+
+export const sharedDocComments = pgTable("shared_doc_comments", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  docPath: text("doc_path").notNull(),
+  docVersion: integer("doc_version"),
+  author: text("author").notNull(),
+  email: text("email"),
+  body: text("body").notNull(),
+  anchorText: text("anchor_text"),
+  anchorContext: text("anchor_context"),
+  anchorDocOffset: integer("anchor_doc_offset"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("shared_doc_comments_slug_idx").on(table.slug),
+  index("shared_doc_comments_slug_doc_idx").on(table.slug, table.docPath, table.createdAt),
+]);
+
+// ============================================================
+// Sancho MCP audit events
+// ============================================================
+
+export const mcpAuditEvents = pgTable("mcp_audit_events", {
+  id: text("id").primaryKey(),
+  principalId: text("principal_id").notNull(),
+  tokenHash: text("token_hash").notNull(),
+  toolName: text("tool_name").notNull(),
+  clientSlug: text("client_slug"),
+  ok: boolean("ok").notNull(),
+  error: text("error"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("mcp_audit_events_created_at_idx").on(table.createdAt),
+  index("mcp_audit_events_principal_idx").on(table.principalId),
+  index("mcp_audit_events_tool_idx").on(table.toolName),
+  index("mcp_audit_events_client_idx").on(table.clientSlug),
+  index("mcp_audit_events_ok_idx").on(table.ok),
+]);
+
+export const feedbackInsights = pgTable("feedback_insights", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull(),
+  slug: text("slug").notNull(),
+  docPath: text("doc_path").notNull(),
+  skillId: text("skill_id"),
+  category: text("category").notNull(),
+  title: text("title").notNull(),
+  detail: text("detail").notNull(),
+  proposedChange: text("proposed_change"),
+  sourceCommentIds: jsonb("source_comment_ids").$type<string[]>().default([]).notNull(),
+  status: text("status").notNull().default("new"),
+  routedRef: text("routed_ref"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("feedback_insights_slug_idx").on(table.slug),
+  index("feedback_insights_slug_status_idx").on(table.slug, table.status),
+  index("feedback_insights_run_idx").on(table.runId),
+]);

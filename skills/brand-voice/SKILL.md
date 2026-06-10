@@ -12,13 +12,13 @@ metadata:
   updated: '2026-02-27'
   changes: v3 — Restructured per skill-creator principles. SKILL.md lean (~130 lines). Concepts/questions in references.
 context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/positioning/*/current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/go-to-market/positioning/*/*.current.md
 # Lite fallbacks (read-only, treat as preliminary seed, not as final truth):
 - brand/{slug}/company-brief/lite.md            # merge view fallback (always lite today)
 - brand/{slug}/brand-voice/lite.md              # own seed from fast-foundation (hydration only)
 context_writes:
-- brand/{slug}/brand-voice/current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
 ---
 
 # Brand Voice
@@ -26,7 +26,7 @@ context_writes:
 > Cómo habla la brand — codificado para consistencia. Quick Snapshot al inicio; Full Voice Guide + AI Brand Kit cuando ECPs y positioning estén listos.
 
 **Input**: URL/materiales (Quick) | ECPs + positioning + content samples (Full)
-**Output**: Voice Snapshot / AI Brand Kit → `brand/{slug}/brand-voice/current.md`
+**Output**: Voice Snapshot / AI Brand Kit → `brand/{slug}/brand-voice/brand-voice.current.md`
 
 ## References
 
@@ -75,9 +75,9 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### Guardar con versionado
-- Ruta: `brand/{slug}/brand-voice/current.md`
+- Ruta: `brand/{slug}/brand-voice/brand-voice.current.md`
 - Backup + versionado + history.json
-- Link: `<MC_BASE>/docs/brand/{slug}/brand-voice/current.md`
+- Link: `<MC_BASE>/docs/brand/{slug}/brand-voice/brand-voice.current.md`
 
 ---
 
@@ -110,13 +110,13 @@ Al entregar, añade:
 
 ```
 brand/{{slug}}/brand-voice/
-├── current.md      ← versión activa
+├── brand-voice.current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
 └── qa-log.md       ← historial de QA
 ```
 
 1. Identifica slug desde systemPrompt
-2. Si existe `current.md` → backup como `v{N+1}.md`
-3. Si no existe → crea carpeta + `current.md` + `v1.md` + `history.json`
-4. Link: `<MC_BASE>/docs/brand/{slug}/brand-voice/current.md`
+2. Si existe `brand-voice.current.md` → backup como `v{N+1}.md`
+3. Si no existe → crea carpeta + `brand-voice.current.md` + `v1.md` + `history.json`
+4. Link: `<MC_BASE>/docs/brand/{slug}/brand-voice/brand-voice.current.md`

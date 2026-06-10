@@ -1,6 +1,6 @@
 ---
 name: idea-generation
-description: "Recurring cross-channel intelligence engine that generates content ideas and contact opportunities. Use when: a recurring task fires (via cron), user asks 'generate ideas', 'busca ideas', 'qué contenido crear', 'find partners', 'find influencers', or after Trust Engine / audit completes. Reads Foundation data + active recurring tasks config + multiple sources (PAA, SERP gaps, competitor content, signals, trending). Outputs ideas to idea_bank JSON files + notifies Discord #intelligence. Triggers: 'idea generation', 'generate ideas', 'busca ideas de contenido', 'find contacts', 'run intelligence', 'ejecuta idea generation'."
+description: "Recurring cross-channel intelligence engine that generates content ideas and contact opportunities. Use when: a recurring task fires (via cron), user asks 'generate ideas', 'busca ideas', 'qué contenido crear', 'find partners', 'find influencers', or after Trust Engine / audit completes. Reads Foundation data + active recurring tasks config + multiple sources (PAA, SERP gaps, competitor content, signals, trending). Outputs ideas to idea_bank JSON files + publishes a summary via the configured channel. Triggers: 'idea generation', 'generate ideas', 'busca ideas de contenido', 'find contacts', 'run intelligence', 'ejecuta idea generation'."
 metadata:
   author: Growth4U
   version: '1.0'
@@ -9,9 +9,9 @@ metadata:
   depends_on: company-context, niche-discovery-100x, brand-voice
   chains_to: seo-content, content-atomizer, social-content, partner-finder
   context_required:
-    - brand/{slug}/company-brief/current.md
-    - brand/{slug}/go-to-market/ecps/current.md
-    - brand/{slug}/brand-voice/current.md
+    - brand/{slug}/company-brief/company-brief.current.md
+    - brand/{slug}/go-to-market/ecps/ecps.current.md
+    - brand/{slug}/brand-voice/brand-voice.current.md
     - brand/{slug}/idea-generation/recurring-tasks.json
     - brand/{slug}/client-config.json
   context_writes:
@@ -28,7 +28,7 @@ Este skill es el **runner** del Idea Generation System. Se ejecuta:
 2. Via **usuario** ("genera ideas para X")
 3. Via **trigger automático** (post-audit, post-Trust Engine)
 
-**Output**: Ideas depositadas en `brand/{slug}/idea-generation/ideas.json` + notificación Discord.
+**Output**: Ideas depositadas en `brand/{slug}/idea-generation/ideas.json` + resumen publicado vía el endpoint (canal configurado en `client-config.json`, Slack por defecto).
 
 ---
 
@@ -36,11 +36,11 @@ Este skill es el **runner** del Idea Generation System. Se ejecuta:
 
 ```
 1. Read brand/{slug}/client-config.json → get channel IDs, cron config
-2. Read brand/{slug}/company-brief/current.md → business context
-3. Read brand/{slug}/go-to-market/ecps/current.md → target audience
-4. Read brand/{slug}/brand-voice/current.md → tone (for evaluating relevance)
-5. Read brand/{slug}/go-to-market/positioning/*/current.md → angles, USPs
-6. Read brand/{slug}/market-and-us/competitors/current.md → competitor list
+2. Read brand/{slug}/company-brief/company-brief.current.md → business context
+3. Read brand/{slug}/go-to-market/ecps/ecps.current.md → target audience
+4. Read brand/{slug}/brand-voice/brand-voice.current.md → tone (for evaluating relevance)
+5. Read brand/{slug}/go-to-market/positioning/*/*.current.md → angles, USPs
+6. Read brand/{slug}/market-and-us/competitors/competitors.current.md → competitor list
 7. Read brand/{slug}/idea-generation/recurring-tasks.json → active tasks
 8. Read brand/{slug}/idea-generation/ideas.json → existing ideas (avoid duplicates)
 ```
@@ -207,13 +207,14 @@ if from_cron:
 
 ---
 
-## Step 5: Notify Discord
+## Step 5: Publish summary
 
-Publish summary to the client's #intelligence channel.
+Publish the run summary via the server-side endpoint — transport and channel are resolved from
+`client-config.json` (`crons.idea_generation.publish_transport`/`publish_channel`, Slack default).
+Do NOT read a channel ID or assume Discord.
 
 ```
-1. Read client-config.json → get intelligence channel ID
-2. Create summary message:
+1. title (root, 1 line + top ideas):
 
 "💡 Idea Generation — {date}
 📝 {N} nuevas ideas de contenido | 👥 {M} nuevos contactos
@@ -225,17 +226,17 @@ Top ideas:
 
 👉 Revisa y aprueba en Mission Control: {MC_LINK}"
 
-3. Send to channel, create thread with full details
-4. In thread: list ALL new ideas grouped by type (content/contact)
+2. body (thread): list ALL new ideas grouped by type (content/contact)
 ```
 
-**Thread pattern** (obligatory):
+**Endpoint call:**
 ```
-message(action=send, target=intelligence_channel_id, message=summary)
-  → capture messageId
-message(action=thread-create, channelId=intelligence_channel_id, messageId=messageId, threadName="💡 Ideas — YYYY-MM-DD")
-  → capture threadId
-message(action=send, target=threadId, message=full_details)
+1. Read adminToken from the ROOT of ~/.openclaw/workspace-sancho/clients.json
+2. POST http://localhost:3000/api/integrations/publish
+   Headers: Content-Type: application/json, x-admin-token: <adminToken>
+   Body: {"slug": "{slug}", "cronKey": "idea_generation", "title": "<summary above>", "body": "<full_details>"}
+3. The endpoint posts title as the root message and body in the thread. Returns {ok, rootId, threadId};
+   on ok=false or 4xx/5xx, report the error and do not blindly retry. If the response has skipped:true, the cron has no channel configured: this is NOT an error — note it briefly and continue.
 ```
 
 ---
@@ -269,7 +270,7 @@ cron(action=add, job={
   sessionTarget: "isolated",
   payload: {
     kind: "agentTurn",
-    message: "Ejecuta idea-generation para {slug}. Tarea específica: {task_id}. Lee brand/{slug}/idea-generation/recurring-tasks.json y ejecuta solo la tarea con id={task_id}. Publica resultados en Discord #intelligence del cliente."
+    message: "Ejecuta idea-generation para {slug}. Tarea específica: {task_id}. Lee brand/{slug}/idea-generation/recurring-tasks.json y ejecuta solo la tarea con id={task_id}. Publica resultados vía el endpoint /api/integrations/publish (cronKey idea_generation; canal configurado en client-config.json)."
   },
   delivery: { mode: "none" }
 })
@@ -352,7 +353,7 @@ cron(action=add, job={
 5. ¿Contact ideas tienen: target_channel (string)?
 6. ¿Se calculó priority_score para cada idea?
 7. ¿Se actualizó recurring-tasks.json con last_run_at e ideas_generated?
-8. ¿Se notificó en Discord #intelligence con patrón de hilo?
+8. ¿Se publicó el resumen vía el endpoint (cronKey idea_generation, canal configurado)?
 9. ¿Se incluyó link a Mission Control en la notificación?
 10. ¿Se aplicó client-context-isolation (solo info de este cliente)?
 

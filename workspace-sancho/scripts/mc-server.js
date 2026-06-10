@@ -27,7 +27,6 @@ function resolveMcBaseUrl() {
   const envApp = (process.env.BASE_URL || process.env.NEXTAUTH_URL || '').replace(/\/+$/, '');
   return envApp ? `${envApp}/mc` : null;
 }
-let _clientCreationInProgress = false;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -539,7 +538,6 @@ const SERVICE_ENV_MAP = {
   serper:     [{ key: 'SERPER_API_KEY', label: 'API Key', placeholder: '' }],
   dataforseo: [{ key: 'DATAFORSEO_LOGIN', label: 'Login (email)', placeholder: 'you@email.com' }, { key: 'DATAFORSEO_PASSWORD', label: 'Password', placeholder: '' }],
   notion:     [{ key: 'NOTION_API_KEY', label: 'Integration Token', placeholder: 'ntn_...' }],
-  supabase:   [{ key: 'SUPABASE_URL', label: 'Project URL', placeholder: 'https://xxx.supabase.co' }, { key: 'SUPABASE_ANON_KEY', label: 'Anon Key', placeholder: 'eyJ...' }],
   fal:        [{ key: 'FAL_API_KEY', label: 'API Key', placeholder: '' }],
   wavespeed:  [{ key: 'WAVESPEED_API_KEY', label: 'API Key', placeholder: '' }],
   dumpling:   [{ key: 'DUMPLING_API_KEY', label: 'API Key', placeholder: '' }],
@@ -750,17 +748,6 @@ function checkService(serviceId) {
         } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
         break;
       }
-      case 'supabase': {
-        const url = getKey('SUPABASE_URL');
-        const key = getKey('SUPABASE_ANON_KEY');
-        if (!url || !key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'SUPABASE_URL or SUPABASE_ANON_KEY not set' } });
-        try {
-          const res = execSync(`curl -s -o /dev/null -w "%{http_code}" -H "apikey: ${key}" -H "Authorization: Bearer ${key}" "${url}/rest/v1/" -m 10`, { timeout, encoding: 'utf-8' }).trim();
-          const projectId = url.match(/https:\/\/(\w+)\./)?.[1] || '';
-          resolve({ status: (res === '200' || res === '204') ? 'ok' : 'error', lastCheck: now, details: { httpCode: res, project: projectId } });
-        } catch (e) { resolve({ status: 'error', lastCheck: now, details: { error: e.message.slice(0, 200) } }); }
-        break;
-      }
       case 'fal': {
         const key = getKey('FAL_API_KEY');
         if (!key) return resolve({ status: 'not-configured', lastCheck: now, details: { error: 'FAL_API_KEY not set' } });
@@ -859,7 +846,7 @@ function checkService(serviceId) {
 
 async function runHealthChecks(serviceFilter) {
   const health = loadApiHealth();
-  const allServices = ['anthropic', 'openrouter', 'openai', 'gemini', 'xai', 'minimax', 'brave', 'apify', 'firecrawl', 'serper', 'dataforseo', 'notion', 'supabase', 'slack', 'fal', 'wavespeed', 'dumpling', 'instantly', 'metricool', 'nanobanana', 'remotion', 'gog', 'openclaw', 'discord'];
+  const allServices = ['anthropic', 'openrouter', 'openai', 'gemini', 'xai', 'minimax', 'brave', 'apify', 'firecrawl', 'serper', 'dataforseo', 'notion', 'slack', 'fal', 'wavespeed', 'dumpling', 'instantly', 'metricool', 'nanobanana', 'remotion', 'gog', 'openclaw', 'discord'];
   const toCheck = serviceFilter === 'all' ? allServices : allServices.includes(serviceFilter) ? [serviceFilter] : [];
 
   if (toCheck.length === 0) return { error: `Unknown service: ${serviceFilter}` };
@@ -2623,8 +2610,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);line
 .dispatch-channel{padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:13px;}
 .dispatch-channel strong{color:var(--navy);}
 .dispatch-rule{color:var(--muted);font-size:12px;margin-top:2px;}
-.persona-card{background:var(--bg);border:2px solid var(--ink);border-radius:8px;padding:12px;margin-bottom:8px;}
-.persona-card h4{font-family:'Space Grotesk',sans-serif;font-size:14px;margin-bottom:4px;}
 
 /* Preferences form */
 .pref-field{margin-bottom:16px;}
@@ -3001,7 +2986,6 @@ const API_META = {
   serper:{icon:'🔍',name:'Serper',desc:'Google SERP API',cat:'Data'},
   dataforseo:{icon:'📊',name:'DataForSEO',desc:'SEO data API',cat:'Data'},
   notion:{icon:'📝',name:'Notion',desc:'Workspace & docs API',cat:'Infra'},
-  supabase:{icon:'⚡',name:'Supabase',desc:'Database & auth',cat:'Infra'},
   gog:{icon:'📧',name:'Google Workspace',desc:'Gmail, Calendar, Drive (gog CLI)',cat:'Infra'},
   discord:{icon:'💬',name:'Discord Bot',desc:'Bot SanchoCMO',cat:'Infra'},
   openclaw:{icon:'🐾',name:'OpenClaw Gateway',desc:'Agent orchestration platform',cat:'Infra'},
@@ -3019,7 +3003,7 @@ const SERVICE_ENV_MAP_FE = {
   gemini:['GEMINI_API_KEY'], xai:['XAI_API_KEY'], minimax:['MINIMAX_API_KEY'], brave:['BRAVE_API_KEY'],
   apify:['APIFY_API_KEY'], firecrawl:['FIRECRAWL_API_KEY'], serper:['SERPER_API_KEY'],
   dataforseo:['DATAFORSEO_LOGIN','DATAFORSEO_PASSWORD'], notion:['NOTION_API_KEY'],
-  supabase:['SUPABASE_URL','SUPABASE_ANON_KEY'], fal:['FAL_API_KEY'], wavespeed:['WAVESPEED_API_KEY'],
+  fal:['FAL_API_KEY'], wavespeed:['WAVESPEED_API_KEY'],
   dumpling:['DUMPLING_API_KEY'], slack:['SLACK_BOT_TOKEN'], instantly:['INSTANTLY_API_KEY'], metricool:['METRICOOL_API_KEY'],
 };
 
@@ -3440,18 +3424,6 @@ function renderDispatch() {
         const rule = data.rules ? data.rules[ch] : '';
         html += '<div class="dispatch-channel"><strong>#' + ch + '</strong>' + (rule ? '<div class="dispatch-rule">' + rule + '</div>' : '') + '</div>';
       }
-    }
-    html += '</div>';
-  }
-
-  if (dd.personas && Array.isArray(dd.personas)) {
-    html += '<h3 style="font-family:\\'Space Grotesk\\',sans-serif;font-size:16px;margin:20px 0 12px;">👥 Personas</h3>';
-    html += '<div class="grid">';
-    for (const p of dd.personas) {
-      html += '<div class="persona-card"><h4>' + (p.emoji||'') + ' ' + (p.name||'') + '</h4>';
-      if (p.skills) html += '<div style="font-size:12px;color:var(--muted);margin-top:4px;"><strong>Skills:</strong> ' + (Array.isArray(p.skills) ? p.skills.join(', ') : p.skills) + '</div>';
-      if (p.brand_context) html += '<div style="font-size:12px;color:var(--muted);margin-top:2px;"><strong>Brand:</strong> ' + p.brand_context + '</div>';
-      html += '</div>';
     }
     html += '</div>';
   }
@@ -4925,7 +4897,6 @@ nav .nav-footer { display:none !important; }
             emoji: thisClient.emoji || '🏢',
             url: thisClient.url || '',
             discord_guild: thisClient.guild || '',
-            supabase: thisClient.supabase || {},
             workspace: thisClient.workspace || '',
             phase: thisClient.phase || 0,
           };
@@ -5931,96 +5902,6 @@ nav .nav-footer { display:none !important; }
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message }));
     }
-    return;
-  }
-
-  // === API: Create new client (SSE streaming) ===
-  if (req.method === 'POST' && url === '/api/new-client') {
-    if (!req._adminToken) {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Admin only' }));
-      return;
-    }
-    if (_clientCreationInProgress) {
-      res.writeHead(409, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Client creation already in progress' }));
-      return;
-    }
-    let body = '';
-    req.on('data', chunk => { body += chunk; if (body.length > 1e5) req.destroy(); });
-    req.on('end', () => {
-      try {
-        const { slug, name, guild } = JSON.parse(body);
-        // Validate required fields
-        if (!slug || !name || !guild) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Missing slug, name, or guild' }));
-          return;
-        }
-        if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid slug format (lowercase, numbers, hyphens only)' }));
-          return;
-        }
-        if (!/^\d{17,20}$/.test(guild)) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid guild ID (must be 17-20 digit Discord snowflake)' }));
-          return;
-        }
-        // Check if brand directory already exists
-        const brandDir = path.join(BASE, 'brand', slug);
-        if (fs.existsSync(brandDir)) {
-          res.writeHead(409, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: `Client "${slug}" already exists` }));
-          return;
-        }
-        // Start SSE streaming
-        _clientCreationInProgress = true;
-        res.writeHead(200, {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'X-Accel-Buffering': 'no'
-        });
-        const scriptPath = path.join(BASE, 'scripts', 'new-client.sh');
-        const child = spawn('bash', [scriptPath, '--slug', slug, '--name', name, '--guild', guild], {
-          cwd: BASE,
-          env: { ...process.env, PATH: `/opt/homebrew/bin:${process.env.PATH || '/usr/bin:/bin'}` }
-        });
-        const sendSSE = (data) => { res.write(`data: ${data}\n\n`); };
-        let outputBuffer = '';
-        const flushLines = (chunk) => {
-          outputBuffer += chunk;
-          const lines = outputBuffer.split('\n');
-          outputBuffer = lines.pop();
-          for (const line of lines) {
-            sendSSE(line);
-          }
-        };
-        child.stdout.on('data', (data) => flushLines(data.toString()));
-        child.stderr.on('data', (data) => flushLines('[stderr] ' + data.toString()));
-        const killTimer = setTimeout(() => {
-          child.kill('SIGTERM');
-          sendSSE('⏱️ Timeout — proceso terminado tras 120s');
-        }, 120000);
-        child.on('close', (code) => {
-          clearTimeout(killTimer);
-          if (outputBuffer) sendSSE(outputBuffer);
-          res.write(`event: done\ndata: ${JSON.stringify({ ok: code === 0, code })}\n\n`);
-          res.end();
-          _clientCreationInProgress = false;
-        });
-        res.on('close', () => {
-          child.kill('SIGTERM');
-          clearTimeout(killTimer);
-          _clientCreationInProgress = false;
-        });
-      } catch (e) {
-        _clientCreationInProgress = false;
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
-      }
-    });
     return;
   }
 

@@ -2,9 +2,9 @@
 name: direct-response-copy
 description: "Write direct-response copy that converts: ads, landing pages, emails, sales pages. Pipeline: Context → Format Selection → Draft with DR techniques → Humanize → Review. Applies 13 proven techniques (headlines, curiosity gaps, slippery slide, pain quantification, founder stories, testimonials, CTAs). Anti-AI-detection built in."
 context_required:
-- brand/{slug}/brand-voice/current.md
-- brand/{slug}/go-to-market/positioning/*/current.md
-- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/brand-voice/brand-voice.current.md
+- brand/{slug}/go-to-market/positioning/*/*.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/learnings.md

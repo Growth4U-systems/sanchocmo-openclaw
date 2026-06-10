@@ -61,8 +61,11 @@ export function resolveOdConfig(): OdClientConfig {
  * elsewhere.
  */
 function withOdAuth(init: RequestInit | undefined, config: OdClientConfig): RequestInit {
-  if (!config.apiToken) return init ?? {};
   const headers = new Headers(init?.headers);
+  for (const [key, value] of Object.entries(config.extraHeaders || {})) {
+    if (!headers.has(key)) headers.set(key, value);
+  }
+  if (!config.apiToken) return { ...(init ?? {}), headers };
   if (!headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${config.apiToken}`);
   }
@@ -141,13 +144,6 @@ export async function odHealth(config?: OdClientConfig): Promise<OdHealth> {
 // ---------------------------------------------------------------------------
 // Skills, design systems, prompt templates
 // ---------------------------------------------------------------------------
-
-interface ListResponse<T> {
-  items?: T[];
-  skills?: T[];
-  "design-systems"?: T[];
-  "prompt-templates"?: T[];
-}
 
 function pickItems<T>(payload: unknown, keys: string[]): T[] {
   if (Array.isArray(payload)) return payload as T[];

@@ -25,22 +25,42 @@ function safeAbs(baseDir: string, relPath: string): string {
   return absPath;
 }
 
+// Matches a canonical-doc filename: `current.<ext>` or `<name>.current.<ext>`.
+const CANONICAL_DOC_RE = /(^|\.)current\.(md|html|json)$/i;
+
+/**
+ * Name-agnostic canonical-doc fallback (SAN-103). Foundation pillar docs
+ * live one-per-folder and may be physically named either `current.md`
+ * (legacy) or `{folder}.current.md` (canonical). A caller may request
+ * EITHER name, so when the exact requested file is missing, scan the
+ * folder for the single canonical `*.current.*` doc and serve it. This
+ * makes the rename safe in both directions:
+ *
+ *   request `x/current.md`     (legacy)    → serves `x/x.current.md` if present
+ *   request `x/x.current.md`   (canonical) → serves `x/current.md` for un-migrated data
+ *
+ * Preference order: folder-named `{folder}.current.*` first, then any
+ * other `*.current.*`, then bare `current.*`.
+ */
 function currentAliasFallback(absPath: string): string | null {
-  if (!absPath.endsWith(`${path.sep}current.md`)) return null;
+  if (!CANONICAL_DOC_RE.test(path.basename(absPath))) return null;
 
   const dir = path.dirname(absPath);
   if (!fs.existsSync(dir)) return null;
 
-  const folderName = path.basename(dir);
+  const folderName = path.basename(dir).toLowerCase();
   const candidates = fs
     .readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
-    .filter((name) => /\.current\.(md|html|json)$/i.test(name))
+    .filter((name) => CANONICAL_DOC_RE.test(name))
     .sort((a, b) => {
-      const aPreferred = a.toLowerCase().startsWith(`${folderName.toLowerCase()}.current.`);
-      const bPreferred = b.toLowerCase().startsWith(`${folderName.toLowerCase()}.current.`);
-      if (aPreferred !== bPreferred) return aPreferred ? -1 : 1;
+      const aFolder = a.toLowerCase().startsWith(`${folderName}.current.`);
+      const bFolder = b.toLowerCase().startsWith(`${folderName}.current.`);
+      if (aFolder !== bFolder) return aFolder ? -1 : 1;
+      const aBare = /^current\./i.test(a);
+      const bBare = /^current\./i.test(b);
+      if (aBare !== bBare) return aBare ? 1 : -1; // prefer named over bare
       return a.localeCompare(b);
     });
 
@@ -48,8 +68,9 @@ function currentAliasFallback(absPath: string): string | null {
 }
 
 /**
- * Lite sibling fallback: when a caller requests `current.md` and it does
- * not exist, return the sibling `lite.md` if present. fast-foundation
+ * Lite sibling fallback: when a caller requests a canonical doc
+ * (`current.md` or `{folder}.current.md`) and it does not exist, return
+ * the sibling `lite.md` if present. fast-foundation
  * writes preliminary outputs to `lite.md`; full skills produce the real
  * `current.md` later. This fallback lets the dashboard surface preliminary
  * content (with `usedFallback: true` so the UI can badge it as such).
@@ -64,7 +85,7 @@ function currentAliasFallback(absPath: string): string | null {
  * itself — solved by the fast-foundation rename, not by this fallback.
  */
 function liteSiblingFallback(absPath: string): string | null {
-  if (!absPath.endsWith(`${path.sep}current.md`)) return null;
+  if (!/(^|\.)current\.md$/i.test(path.basename(absPath))) return null;
   const litePath = path.join(path.dirname(absPath), "lite.md");
   if (fs.existsSync(litePath) && fs.statSync(litePath).isFile()) {
     return litePath;

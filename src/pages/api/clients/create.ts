@@ -3,7 +3,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
-import { brandDir, CLIENTS_FILE } from "@/lib/data/paths";
+import { brandDir, chatConfigFile, CLIENTS_FILE } from "@/lib/data/paths";
 import { writeClientsFile } from "@/lib/data/clients";
 import { provisionYalcBrain } from "@/lib/yalc/provision";
 
@@ -34,6 +34,27 @@ function createClientDirs(slug: string): void {
 
   for (const dir of dirs) {
     fs.mkdirSync(dir, { recursive: true });
+  }
+
+  seedChatConfig(slug);
+}
+
+/**
+ * Seed brand/{slug}/chat-config.json from the repo default template so Foundation
+ * pillar threads resolve to the right skill+agent (per-brand override point). The
+ * hardcoded fallback in src/lib/skill-resolver.ts covers brands without this file,
+ * but seeding it keeps the server-side quick-actions and per-brand overrides aligned.
+ * Best-effort: never block client creation if the template is missing or unreadable.
+ */
+function seedChatConfig(slug: string): void {
+  const target = chatConfigFile(slug);
+  if (fs.existsSync(target)) return;
+  const template = path.join(process.cwd(), "config", "chat-config.default.json");
+  try {
+    if (!fs.existsSync(template)) return;
+    fs.copyFileSync(template, target);
+  } catch {
+    // non-fatal: brands without chat-config.json fall back to skill-resolver defaults
   }
 }
 
@@ -68,10 +89,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(409).json({ error: `Client "${slug}" already exists` });
   }
 
-  const supabaseTemplate = clients.find(
-    (client) => typeof client.supabase === "object" && client.supabase !== null
-  )?.supabase || { url: "", anon_key: "" };
-
   const client: Record<string, unknown> = {
     slug,
     name,
@@ -81,7 +98,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     language,
     phase: 0,
     paths: { brand: "brand/" },
-    supabase: supabaseTemplate,
     mcToken: crypto.randomBytes(16).toString("hex"),
     metrics: { apis: [] },
   };

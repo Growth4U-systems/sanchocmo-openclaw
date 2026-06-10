@@ -142,7 +142,11 @@ export function setAgentModel(agentId: string, modelId: string | null): { update
 }
 
 export function setCronModel(cronId: string, modelId: string): void {
-  runOpenclaw(["cron", "edit", cronId, "--model", JSON.stringify(modelId)]);
+  // Pass the model id as a plain arg. `runOpenclaw` uses execFileSync (no
+  // shell), so arguments are passed verbatim — JSON.stringify here would wrap
+  // the id in literal double quotes and openclaw would store `"id"` instead of
+  // `id`. Matches how `agents add --model` is invoked above.
+  runOpenclaw(["cron", "edit", cronId, "--model", modelId]);
 }
 
 export function getAgentEffectiveModel(agentId: string): string | null {
@@ -210,10 +214,10 @@ const AGENT_ID_TIER: Record<string, RecommendedModelTier> = {
   merlin: "opus",
   sanson: "opus",
   cervantes: "codex",
-  yalc: "codex",
   automator: "codex",
   dulcinea: "sonnet",
   rocinante: "sonnet",
+  alarife: "sonnet",
   mambrino: "sonnet",
   "maese-pedro": "sonnet",
 };

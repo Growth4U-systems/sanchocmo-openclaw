@@ -1,0 +1,34 @@
+{
+  "$comment": "Per-brand config — lives at brand/<slug>/client-config.json (gitignored runtime data). This example documents the shape, focusing on how each cron's publish destination is configured. Created/edited by MC client creation + foundation skills; safe to edit by hand.",
+  "slug": "my-client",
+  "name": "My Client",
+  "language": "es",
+
+  "$comment_publish": "Brand-level default transport for cron output. 'slack' today; the publish registry (src/lib/publish/registry.ts) can add 'discord'/'telegram' later. Each cron may override it.",
+  "publish": {
+    "default_transport": "slack"
+  },
+
+  "$comment_channels": "Optional friendly-name → channel-id map. Reference these ids from crons.<x>.publish_channel, or put the channel id directly on the cron.",
+  "channels": {
+    "intelligence": "C0XXXXXXXXX"
+  },
+
+  "$comment_crons": "Per-cron config. enabled + schedule + tz drive scheduling; publish_transport (optional, defaults to publish.default_transport → slack) and publish_channel decide WHERE the cron publishes via POST /api/integrations/publish. Never hardcode a channel id in a skill/prompt — it comes from here.",
+  "crons": {
+    "daily_pulse": {
+      "enabled": true,
+      "schedule": "0 9 * * 1-5",
+      "tz": "Europe/Madrid",
+      "publish_transport": "slack",
+      "publish_channel": "C0XXXXXXXXX"
+    },
+    "weekly_synthesis": {
+      "enabled": false,
+      "schedule": "0 10 * * 1",
+      "tz": "Europe/Madrid",
+      "publish_transport": "slack",
+      "publish_channel": "C0XXXXXXXXX"
+    }
+  }
+}

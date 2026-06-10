@@ -2,7 +2,8 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 import { eq, sql } from "drizzle-orm";
-import { getDb, hasDatabase } from "@/db/drizzle";
+import { getDb, hasDatabase, type Db } from "@/db/drizzle";
+import { selectDbDriver } from "@/db/driver-select";
 import {
   miDocumentImpacts,
   miInsights,
@@ -106,10 +107,9 @@ export async function archiveClientNeonData(
   const archivedSlug = `${slug}${suffix}`;
   const newBankId = `povb_${slug}${suffix}`;
 
-  // neon-http does NOT support db.transaction() (throws at runtime). db.batch()
-  // sends the queries as a single server-side transaction — we get atomicity
-  // and intra-statement ordering (PG checks FK at each statement boundary, so
-  // null-then-restore on bank_id works).
+  // We need atomicity + intra-statement ordering (PG checks FK at each statement
+  // boundary, so null-then-restore on bank_id works). Each driver gets that a
+  // different way — see the buildArchiveUpdates execution block below.
   //
   // Order rationale:
   //  1-4: NULL the bank_id FK on children → frees pov_banks.id to be renamed.
@@ -138,50 +138,75 @@ export async function archiveClientNeonData(
     "mi_recommendations",
   ] as const;
 
-  const results = await database.batch([
-    database.update(povPillars).set({ bankId: null }).where(eq(povPillars.slug, slug)),
-    database.update(povEvidenceItems).set({ bankId: null }).where(eq(povEvidenceItems.slug, slug)),
-    database.update(povClarifyPatterns).set({ bankId: null }).where(eq(povClarifyPatterns.slug, slug)),
-    database.update(povUpdateProposals).set({ bankId: null }).where(eq(povUpdateProposals.slug, slug)),
-    database
+  // Build the 17 ordered updates once, then execute them atomically. The two
+  // drivers need different transaction primitives:
+  //  - neon-http (prod/Neon): interactive db.transaction() throws → db.batch()
+  //    runs the array as a single server-side transaction.
+  //  - postgres-js (bundled local-db / vanilla PG): no .batch(), but real
+  //    interactive transactions → run the statements in order inside one.
+  // Both preserve array order, so the null-then-restore bank_id sequence holds.
+  const buildArchiveUpdates = (d: Db) => [
+    d.update(povPillars).set({ bankId: null }).where(eq(povPillars.slug, slug)),
+    d.update(povEvidenceItems).set({ bankId: null }).where(eq(povEvidenceItems.slug, slug)),
+    d.update(povClarifyPatterns).set({ bankId: null }).where(eq(povClarifyPatterns.slug, slug)),
+    d.update(povUpdateProposals).set({ bankId: null }).where(eq(povUpdateProposals.slug, slug)),
+    d
       .update(povBanks)
       .set({ id: newBankId, slug: archivedSlug })
       .where(eq(povBanks.slug, slug)),
-    database
+    d
       .update(povPillars)
       .set({ bankId: newBankId, slug: archivedSlug, id: sql`${povPillars.id} || ${suffix}` })
       .where(eq(povPillars.slug, slug)),
-    database
+    d
       .update(povEvidenceItems)
       .set({ bankId: newBankId, slug: archivedSlug })
       .where(eq(povEvidenceItems.slug, slug)),
-    database
+    d
       .update(povClarifyPatterns)
       .set({ bankId: newBankId, slug: archivedSlug })
       .where(eq(povClarifyPatterns.slug, slug)),
-    database
+    d
       .update(povUpdateProposals)
       .set({ bankId: newBankId, slug: archivedSlug })
       .where(eq(povUpdateProposals.slug, slug)),
-    database
+    d
       .update(miSettings)
       .set({ slug: archivedSlug, id: sql`${miSettings.id} || ${suffix}` })
       .where(eq(miSettings.slug, slug)),
-    database
+    d
       .update(miSources)
       .set({ slug: archivedSlug, id: sql`${miSources.id} || ${suffix}` })
       .where(eq(miSources.slug, slug)),
-    database.update(miRuns).set({ slug: archivedSlug }).where(eq(miRuns.slug, slug)),
-    database.update(miMeetings).set({ slug: archivedSlug }).where(eq(miMeetings.slug, slug)),
-    database.update(miMeetingArtifacts).set({ slug: archivedSlug }).where(eq(miMeetingArtifacts.slug, slug)),
-    database.update(miInsights).set({ slug: archivedSlug }).where(eq(miInsights.slug, slug)),
-    database.update(miDocumentImpacts).set({ slug: archivedSlug }).where(eq(miDocumentImpacts.slug, slug)),
-    database.update(miRecommendations).set({ slug: archivedSlug }).where(eq(miRecommendations.slug, slug)),
-  ]);
+    d.update(miRuns).set({ slug: archivedSlug }).where(eq(miRuns.slug, slug)),
+    d.update(miMeetings).set({ slug: archivedSlug }).where(eq(miMeetings.slug, slug)),
+    d.update(miMeetingArtifacts).set({ slug: archivedSlug }).where(eq(miMeetingArtifacts.slug, slug)),
+    d.update(miInsights).set({ slug: archivedSlug }).where(eq(miInsights.slug, slug)),
+    d.update(miDocumentImpacts).set({ slug: archivedSlug }).where(eq(miDocumentImpacts.slug, slug)),
+    d.update(miRecommendations).set({ slug: archivedSlug }).where(eq(miRecommendations.slug, slug)),
+  ];
+
+  let results: readonly unknown[];
+  if (selectDbDriver(process.env.DATABASE_URL, process.env.DATABASE_DRIVER) === "neon") {
+    type BatchArg = Parameters<typeof database.batch>[0];
+    results = await database.batch(
+      buildArchiveUpdates(database) as unknown as BatchArg,
+    );
+  } else {
+    results = await database.transaction(async (tx) => {
+      const out: unknown[] = [];
+      for (const q of buildArchiveUpdates(tx as unknown as Db)) {
+        out.push(await q);
+      }
+      return out;
+    });
+  }
 
   const updated: Record<string, number> = {};
   results.forEach((result, idx) => {
-    const rowCount = (result as { rowCount?: number }).rowCount ?? 0;
+    // neon-http write results expose `rowCount`; postgres-js exposes `count`.
+    const r = result as { rowCount?: number; count?: number };
+    const rowCount = r.rowCount ?? r.count ?? 0;
     if (rowCount > 0) updated[labels[idx]] = rowCount;
   });
 

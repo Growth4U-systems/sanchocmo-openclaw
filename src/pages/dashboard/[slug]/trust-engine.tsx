@@ -9,7 +9,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
-import { useOpenChat, useSendMessage } from "@/hooks/useChat";
+import { useSendMessage } from "@/hooks/useChat";
 import { useChatStore } from "@/stores/chat";
 import { cn } from "@/lib/utils";
 
@@ -147,7 +147,6 @@ export default function TrustEnginePage() {
   const isEmbed = router.query.embed === "1";
   const slug = useSlugSync();
   const t = useTranslations("trustEngine");
-  const openChat = useOpenChat();
 
   // ── Foundation: get niches (ICPs) ──
   const { data: foundation } = useBrandBrain(slug);
@@ -718,7 +717,6 @@ function OwnMediaRenderer({ data }: { data: Record<string, any> }) {
   const score = data.overall_score ?? data.score ?? 0;
   const contentScore = data.content_score || {};
   const socialScore = data.social_score || {};
-  const techScore = data.technical_score || {};
   const blog = contentScore.blog || data.blog || {};
   const platforms = socialScore.platforms || {};
   const issues = data.issues || [];
@@ -776,7 +774,6 @@ function KeywordsRenderer({ data }: { data: Record<string, any> }) {
   const topKws = data.top_keywords || [];
   const summary = data.execution_summary || {};
   const layers = data.layers || {};
-  const coverage = data.subnicho_coverage || {};
   return (
     <>
       {summary.total_keywords && (

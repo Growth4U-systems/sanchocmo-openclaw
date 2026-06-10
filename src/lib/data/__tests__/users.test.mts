@@ -8,6 +8,7 @@ import path from "node:path";
 // under MC_WORKSPACE at import time. Point it at a throwaway workspace first.
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "mc-users-"));
 process.env.MC_WORKSPACE = tmp;
+process.env.ADMIN_EMAIL_DOMAIN = "growth4u.io";
 const CLIENTS_FILE = path.join(tmp, "clients.json");
 
 function seed() {

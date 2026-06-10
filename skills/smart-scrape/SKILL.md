@@ -216,6 +216,15 @@ This skill supports these workflows:
 | `seo-audit` — crawl client site structure | Tier 3 | Need multi-page + metadata |
 | `contact-enrichment` — LinkedIn/social | Tier 5 | Apify Actors |
 
+## Sibling providers (social + SEO)
+
+smart-scrape cubre **páginas web genéricas**. Para datos de plataforma usa los MCP conectados (no reinventes con tiers):
+
+- **scrapecreators MCP** (`mcp__scrapecreators__*`) → social (Instagram, TikTok, LinkedIn, YouTube, Reddit, Twitter/X, Threads, Pinterest), Facebook/Google Ads Library.
+- **DataForSEO MCP** (`mcp__dataforseo__*`) → SERP, keywords, rankings, backlinks, on-page, visibilidad LLM.
+
+La selección de provider para una skill de intelligence la gobierna `_system/skills/scraping-preflight.md` (matriz necesidad→provider). smart-scrape es el provider "web" de esa matriz.
+
 ## Setup Checklist
 
 Before using Tiers 3-5, ensure API keys are configured:

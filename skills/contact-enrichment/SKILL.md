@@ -9,9 +9,9 @@ metadata:
   depends_on: decision-maker-finder
   chains_to: outreach-sequence-builder, email-sequences
 context_required:
-- brand/{slug}/company-brief/current.md
-- brand/{slug}/go-to-market/ecps/current.md
-- brand/{slug}/go-to-market/ecps/current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/assets.md
