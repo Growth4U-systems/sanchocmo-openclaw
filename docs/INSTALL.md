@@ -115,10 +115,28 @@ three. Set `DATABASE_DRIVER=neon|postgres` only to override that.
 
 ## Updating
 
+The core runs from a versioned public image, so an update is a **pull** — no
+rebuild, no `git pull`:
+
 ```bash
-git pull
-docker compose -f docker-compose.yml up -d --build
+docker compose pull     # fetch the new sanchocmo image (+ od / yalc if enabled)
+docker compose up -d    # recreate the changed containers
 ```
+
+`./install.sh` (no flags) does the same `pull && up -d` for you. Add the overlay
+flags (`-f docker-compose.od.yml`, `-f docker-compose.yalc.yml`) to both commands
+if you run those services.
+
+Pin a specific release in `.env` for reproducible upgrades:
+
+```bash
+SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z
+```
+
+Omit it to track `:latest`, or use `:edge` for the rolling staging build.
+
+> Hacking on a clone instead of running the published image? Build from your
+> source tree with `docker compose up -d --build` (or `./install.sh --build`).
 
 Schema migrations for the bundled Postgres are **applied automatically at boot**,
 so a new version that adds tables just works — your `postgres_data` volume (and

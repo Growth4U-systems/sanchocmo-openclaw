@@ -13,6 +13,8 @@
 #   --no-up         Configure only; don't start containers.
 #   --od            Also start the Open Design overlay (needs OD_API_TOKEN).
 #   --yalc          Also start the YALC overlay.
+#   --build         Build the core image from this source tree instead of
+#                   pulling the published image (for hacking on a clone).
 #   --force         Let the wizard regenerate an existing .env / config.
 # ============================================================================
 set -euo pipefail
@@ -20,12 +22,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-WITH_OD=0; WITH_YALC=0; DO_UP=1; FORCE_ARG=""
+WITH_OD=0; WITH_YALC=0; DO_UP=1; FORCE_ARG=""; BUILD=0
 for arg in "$@"; do
   case "$arg" in
     --od) WITH_OD=1 ;;
     --yalc) WITH_YALC=1 ;;
     --no-up) DO_UP=0 ;;
+    --build) BUILD=1 ;;
     --force) FORCE_ARG="--force" ;;
     -h|--help) grep '^# ' "$0" | sed 's/^# //'; exit 0 ;;
     *) echo "Unknown flag: $arg" >&2; exit 1 ;;
@@ -71,15 +74,29 @@ COMPOSE_ARGS="-f docker-compose.yml"
 
 if [ "$DO_UP" = "1" ]; then
   echo ""
-  bold "Starting containers ($COMPOSE $COMPOSE_ARGS up -d)"
-  # shellcheck disable=SC2086
-  $COMPOSE $COMPOSE_ARGS up -d --build
+  if [ "$BUILD" = "1" ]; then
+    bold "Building & starting containers ($COMPOSE $COMPOSE_ARGS up -d --build)"
+    # shellcheck disable=SC2086
+    $COMPOSE $COMPOSE_ARGS up -d --build
+  else
+    # Pull the published image(s) first (best-effort). If the pull fails —
+    # e.g. the GHCR package is still private, or you're offline — `up -d`
+    # falls back to building `sanchocmo` from this source tree (it has a
+    # `build:` directive), so the install still completes.
+    bold "Pulling images ($COMPOSE $COMPOSE_ARGS pull)"
+    # shellcheck disable=SC2086
+    $COMPOSE $COMPOSE_ARGS pull || echo "  ⚠ pull failed — will build from source if needed"
+    bold "Starting containers ($COMPOSE $COMPOSE_ARGS up -d)"
+    # shellcheck disable=SC2086
+    $COMPOSE $COMPOSE_ARGS up -d
+  fi
   echo ""
   bold "Done. Mission Control should be reachable at the BASE_URL you chose."
   echo "  Logs:   $COMPOSE $COMPOSE_ARGS logs -f sanchocmo"
+  echo "  Update: $COMPOSE $COMPOSE_ARGS pull && $COMPOSE $COMPOSE_ARGS up -d"
   echo "  Stop:   $COMPOSE $COMPOSE_ARGS down"
 else
   echo ""
   bold "Configured. Start it when ready:"
-  echo "  $COMPOSE $COMPOSE_ARGS up -d --build"
+  echo "  $COMPOSE $COMPOSE_ARGS pull && $COMPOSE $COMPOSE_ARGS up -d"
 fi
