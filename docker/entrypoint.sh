@@ -62,6 +62,75 @@ for ws in /root/.openclaw/workspace-*; do
 done
 
 # ===========================================================
+# 0c. PREFLIGHT — validate MUST config, fail fast & clear
+# ===========================================================
+# A fresh install missing an essential var or config file should fail here
+# with an actionable message, not crash later inside generate-openclaw-config
+# or the gateway with an opaque error. Runs every boot (cheap), after the
+# config symlinks (section 0) so config/*.json resolve, and before the heavy
+# setup. Uses if/then (not `cond && action`) because `set -e` (line 2) would
+# treat a false short-circuit as a fatal error. G4U sets all of these via its
+# deploy, so the checks pass unchanged — purely additive, no regression.
+preflight() {
+  local errors=() warnings=()
+
+  if [ -z "${NEXTAUTH_SECRET:-}" ]; then errors+=("NEXTAUTH_SECRET is not set"); fi
+  if [ -z "${ENCRYPTION_KEY:-}" ]; then errors+=("ENCRYPTION_KEY is not set"); fi
+
+  local f
+  for f in clients.json instance.json; do
+    if [ ! -f "config/$f" ]; then
+      errors+=("config/$f is missing")
+    elif ! python3 -c "import json; json.load(open('config/$f'))" 2>/dev/null; then
+      errors+=("config/$f is not valid JSON")
+    fi
+  done
+
+  # At least one usable model credential for the active auth mode. Anthropic is
+  # Sancho's primary agent; OpenAI/Codex is secondary.
+  local anthropic_ok=0 openai_ok=0
+  if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
+    if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}${ANTHROPIC_OAUTH_TOKEN:-}" ]; then anthropic_ok=1; fi
+  else
+    if [ -n "${ANTHROPIC_API_KEY:-}" ]; then anthropic_ok=1; fi
+  fi
+  if [ -n "${OPENAI_API_KEY:-}" ]; then openai_ok=1; fi
+  if [ "$anthropic_ok" = 0 ] && [ "$openai_ok" = 0 ]; then
+    errors+=("No usable model credential for the active auth mode(s) — set ANTHROPIC_API_KEY (or the subscription token), and/or OPENAI_API_KEY")
+  elif [ "$anthropic_ok" = 0 ]; then
+    warnings+=("Anthropic credential absent — Sancho's primary agent needs it; only OpenAI/Codex agents will work")
+  fi
+
+  # DATABASE_URL is only required when tasks are DB-backed (default is json).
+  case "${MC_TASKS_BACKEND:-json}" in
+    db|db-shadow)
+      if [ -z "${DATABASE_URL:-}" ]; then
+        errors+=("MC_TASKS_BACKEND=${MC_TASKS_BACKEND} requires DATABASE_URL")
+      fi
+      ;;
+  esac
+
+  if [ "${#warnings[@]}" -gt 0 ]; then
+    local w
+    for w in "${warnings[@]}"; do echo "[entrypoint] ⚠ preflight: $w"; done
+  fi
+
+  if [ "${#errors[@]}" -gt 0 ]; then
+    echo "[entrypoint] ❌ Preflight failed — required configuration is missing:"
+    local e
+    for e in "${errors[@]}"; do echo "   • $e"; done
+    echo "[entrypoint] Fix: run scripts/wizard.sh (or edit .env / config/*.json), then restart the container."
+    echo "[entrypoint] (To bypass for debugging only: set SKIP_PREFLIGHT=1.)"
+    exit 1
+  fi
+  echo "[entrypoint] ✓ Preflight checks passed"
+}
+
+if [ "${SKIP_PREFLIGHT:-0}" != "1" ]; then
+  preflight
+fi
+
+# ===========================================================
 # 1-4. SETUP
 # ===========================================================
 if [ ! -f "$OPENCLAW_CONFIG" ]; then
