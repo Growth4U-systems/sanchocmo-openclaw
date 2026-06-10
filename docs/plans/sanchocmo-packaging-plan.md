@@ -131,6 +131,14 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 - **[Fase 3 · Preflight de boot — GAP E3]** — PR #422 (`Refs SAN-138`) **MERGED**. Nueva sección `0c` en `docker/entrypoint.sh`: valida `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `config/clients.json`+`instance.json` (existen + JSON válido), ≥1 credencial de modelo según `*_AUTH_MODE`, y `DATABASE_URL` solo si `MC_TASKS_BACKEND`∈{db,db-shadow}. Lista todos los faltantes + fix y aborta; `SKIP_PREFLIGHT=1` saltea. G4U pasa sin cambios (verificado contra el env real de staging). `bash -n` + 13 escenarios en sandbox.
 
+- **[Fase 5 · Imagen pública de `sanchocmo` + workflow GHCR + compose `image:`]** — PR [#428](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/428) (`Refs SAN-140`) **ABIERTO**. Es EL mecanismo "compose pull". Decisión de arquitectura confirmada con el usuario: **`image:`+`build:` en el base** (no overlay separado) + **publish en release/edge/manual, multi-arch**.
+  - **Nuevo `.github/workflows/docker-image.yml`** (espejo de OD/YALC): publica `ghcr.io/growth4u-systems/sanchocmo` multi-arch (`linux/amd64,arm64`) → `:vX.Y.Z`+`:latest` en `release: published` (engancha a release-please), `:edge` en push a `staging`, `workflow_dispatch` (input `tag`, default `edge`) para publicar privado on-demand. `cache-from/to: gha`, pasa `GIT_COMMIT=${github.sha}`, honra `.dockerignore` (el `context: .` no rebaka data de cliente, ver #369).
+  - **`docker-compose.yml`**: `sanchocmo` gana `image: ${SANCHOCMO_IMAGE:-ghcr.io/growth4u-systems/sanchocmo:latest}` **conservando `build:`**. Compose tagea el build local con ese mismo `image:` → ambos caminos convergen. **Cero cambios a los deploy workflows de G4U**: su `build --pull` sigue construyendo local, y `pull --ignore-buildable` saltea sanchocmo (tiene `build:`) → nunca pullea imagen ajena.
+  - **`install.sh`**: el path producto hace `compose pull` (best-effort) antes de `up -d` (sin `--build`); si el pull falla (package privado/offline) `up -d` cae a build desde el source tree (tiene `build:`). Nuevo flag `--build` fuerza build desde clone. Mensaje de update = `pull && up -d`.
+  - **`.env.example`**: sección *Distribution / core image* documenta `SANCHOCMO_IMAGE` (pin de versión). **`docs/INSTALL.md`**: sección *Updating* reescrita a `pull && up -d` (sin `git pull`/rebuild) + pin + nota de build-desde-clone. **`docs/DEPLOY.md`**: nota en *Launch* ofreciendo el path imagen pública como alternativa al `--build`.
+  - **Push público gateado por Fase 0** (la imagen self-contained bakea el framework con refs/data de cliente); hasta entonces el package se publica **privado** para probar el mecanismo. El workflow funciona igual para hosts autenticados a GHCR.
+  - Verificación: `bash -n install.sh` ✅ · YAML del workflow parsea (3 triggers, 6 steps) ✅ · `docker compose config`: base con `image:`+`build:` ambos presentes ✅, default `:latest` y `SANCHOCMO_IMAGE` override ✅, overlays od+yalc válidos ✅, `--ignore-buildable` saltea sanchocmo (buildable) ✅. **Pendiente**: primer push real del package (CI) + e2e `compose pull` en host limpio (Fase 6).
+
 - **[Fase 3/D7 · Degradación graceful Outreach (YALC) — parcial]** — PR #420 (`Refs SAN-137`) **MERGED** (commit `68fee290`, 2026-06-10). `isYalcConfigured()` en `client.ts` distingue "no activado" de "caído"; `overview.ts` devuelve `configured`; `yalc.tsx` muestra placeholder "Outreach no está activado" con CTA en vez del cockpit roto. `docs/INSTALL.md`: sección Outreach + conectar proveedor de email. **Falta el equivalente para OD** (D7-OD).
 
 - **[Fase 2 · README → Mission Control — GAP D6]** — `Refs SAN-92`. Reescrito `README.md` alrededor de Mission Control (chat web → Sancho) en vez de Discord: tagline ("operated through Mission Control"), diagrama de arquitectura (entrada = MC chat; Discord/Slack = canales opcionales), columna "How it activates" de los agentes (Mission Control chat, no "Discord messages"), sección Multi-Client (cliente = brand en MC, no "1 Discord guild"), Quick Start reescrito al flujo `install.sh` + wizard (Discord/OD/YALC opcionales), y sección Mission Control actualizada al server Next.js (`:3000`, no el legacy `mc-server.js:18790`). **Fuera de scope** (anotado): el roster de agentes tiene drift aparte de Discord (Escudero retirado en SAN-104; agentes nuevos dulcinea/hamete/mambrino/merlin) — no se toca acá, es otro cambio.
@@ -154,13 +162,14 @@ añadir wizard y publicar imágenes. No es una reescritura.
 - ~~**B7**: texto final de la LICENSE~~ → ✅ **HECHO** (SUL canónica, `SAN-94`).
 
 **Desbloqueado (ingeniería, se puede avanzar ya):**
-- **🔴 Fase 5 — workflow de imagen de `sanchocmo`** (NO empezada): publicar `ghcr.io/<org>/sanchocmo:vX.Y.Z` multi-arch + compose de producto con `image:` (hoy el base usa `build:`). Es EL mecanismo "compose pull". El push público queda gateado por Fase 0; se puede publicar privado para probar.
-- ~~**D6** — reescribir `README.md` alrededor de Mission Control~~ → ✅ **HECHO** (`SAN-92`); queda aparte el drift del roster de agentes (no es Discord).
+- **🟡 Fase 5 — workflow de imagen de `sanchocmo`** (IMPLEMENTADA, PR #428 abierto): `docker-image.yml` publica `ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z`+`:latest`/`:edge` multi-arch; base compose con `image:`+`build:`; `install.sh` pull-first. **Falta**: mergear + primer push real del package (queda **privado** hasta Fase 0) + e2e `compose pull` en host limpio (Fase 6).
+- **D6** — reescribir `README.md` alrededor de Mission Control (confirmado: sigue Discord-céntrico, "manages everything through Discord" / "Client Discord Guilds").
 - **E5** — Setup Checklist UI en el dashboard ("qué falta configurar").
 - **D7-OD** — placeholder graceful de Open Design sin daemon (espejo de lo hecho para YALC en #420).
 - **Fase 6** — verificación e2e en máquina limpia (KPI: install → MC <5min, sin ediciones manuales, anda sin opcionales, `compose pull` preserva data).
 
 **Deuda / opcional (no bloquean lanzamiento):**
+- **Fase 7 — deploy de G4U vía imagen (pull en vez de build)**: hoy el VPS buildea desde source; migrarlo a `compose pull` de la imagen que publica el CI (Fase 5). Beneficio: deploy en segundos, menos RAM/disco en VPS, paridad byte-idéntica staging→prod, dogfooding. **No bloqueante**; ver sección dedicada abajo (3 pre-requisitos).
 - **GAP H (`SAN-109`)**: terminar Strangler-Fig, dejar de levantar `mc-server.js` (`:18790`).
 - **B8**: cutover tasks JSON→DB (runbook + ejecución del usuario). El producto corre con `json` igual.
 
@@ -240,7 +249,9 @@ graph TD
     P3 --> P5
     P4["Fase 4 · Wizard de config"] --> P6
     P5["Fase 5 · Imágenes públicas versionadas (sancho+od+yalc)"] --> P6
+    P5 --> P7
     P6["Fase 6 · install.sh + docs + verificación e2e"]
+    P7["Fase 7 · Deploy de G4U vía imagen (pull) · 🟢 deuda/opcional"]
 ```
 
 ---
@@ -403,14 +414,52 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - Reusar `config/*.example`; `openssl rand` para secrets.
 
 ### Fase 5 — Imágenes públicas versionadas (3–4 días) 🟠
-- Workflow que publica `sanchocmo`, `od`, `yalc` `:vX.Y.Z`+`:latest` en GHCR público al release (engancha a `release-please`).
-- `docker-compose.yml` de producto con `image:` (sin `build:`); overlays `docker-compose.od.yml` y `docker-compose.yalc.yml` con imágenes públicas.
-- Documentar update genérico (`pull && up -d`); `/mnt/data` opcional.
+- ✅ **Workflow `sanchocmo` (SAN-140)**: `.github/workflows/docker-image.yml` publica `:vX.Y.Z`+`:latest` en release (engancha a `release-please`), `:edge` en staging, multi-arch. OD (#18/SAN-91) y YALC (#18/SAN-135) ya tienen el suyo.
+- ✅ **Compose de producto con `image:`**: el base lleva `image:`+`build:` (decisión del usuario: no overlay separado; G4U sigue buildeando, `pull --ignore-buildable` lo saltea). Overlays od/yalc ya usan `image:`.
+- ✅ **Update genérico** (`pull && up -d`) documentado en `docs/INSTALL.md`/`DEPLOY.md` + `install.sh` pull-first.
+- ⏭️ **Falta**: hacer **públicos** los packages (Fase 0) + e2e en host limpio (Fase 6); `/mnt/data` opcional.
 
 ### Fase 6 — Instalador + docs + verificación (2–3 días)
 - `install.sh`: baja compose + `.env.example`, corre wizard, `compose up`.
 - Guías de instalación (local + servidor) y de actualización.
 - Verificación e2e en máquina limpia (abajo).
+
+### Fase 7 — Deploy de G4U vía imagen (pull en vez de build) (2–3 días) 🟢 deuda/opcional
+
+> No bloquea el lanzamiento del producto. Migra el **deploy interno de G4U** de
+> "buildear en el VPS" a "pullear la imagen que ya publica el CI (Fase 5)".
+> Decisión de scope (2026-06-10): se dejó **fuera** del PR de Fase 5 (SAN-140)
+> para no tocar el path de deploy en vivo; el base compose quedó con `image:`+`build:`
+> justamente para habilitar esto después sin más cambios de arquitectura.
+
+**Motivación.** Hoy `deploy-staging.yml`/`deploy-prod.yml` hacen `git checkout $SHA`
++ `docker compose build --pull` en el VPS (≈2-3 min de `npm ci` + `next build`,
+consume CPU/RAM/disco — de ahí el *build-cache prune cron* y el swap de `SERVER-OPS.md`).
+Pulleando la imagen pre-buildada: deploy en segundos, menos recursos en el VPS,
+**paridad byte-idéntica staging→prod** (prod corre la imagen que staging validó,
+elimina "rompió en prod pero no en staging"), rollback = cambiar tag + `up -d`, y
+G4U usa el mismo mecanismo que un tercero (dogfooding).
+
+**3 pre-requisitos (por orden):**
+1. **Login GHCR del VPS** — la credencial actual es un placeholder roto (OD corre de
+   cache local; ver "🟡 En curso / bloqueado"). Es la **misma acción** que destraba
+   #416/OD/YALC públicos: un PAT válido con `read:packages` (o package público).
+2. **Tag inmutable por SHA** — añadir `type=sha` al `metadata-action` de
+   `docker-image.yml` y que el deploy pullee `:sha-<short>` del commit exacto. Hoy el
+   workflow solo emite `:edge`/`:vX.Y.Z`/`:latest`; `:edge` es mutable → race entre
+   "el commit que deployás" y "el último edge". Cambio chico.
+3. **`NEXT_PUBLIC_ENV_LABEL` (el costo real)** — staging buildea con
+   `NEXT_PUBLIC_ENV_LABEL=STAGING` y ese valor se **inlinea en el bundle client en
+   build-time** (`Dockerfile:54`). Una sola imagen no puede ser STAGING y prod a la
+   vez. Opciones: (a) staging y prod comparten imagen sin badge; (b) **mover el badge a
+   runtime** (recomendado — habilita imagen única prod=staging, que es el mayor
+   beneficio de paridad); (c) buildear por-entorno (anula medio beneficio).
+
+**Cambios:** `docker-image.yml` (`type=sha`); `deploy-staging.yml`/`deploy-prod.yml`
+(`COMPOSE_ARGS` deja de buildear sanchocmo → `pull` por SHA + `up -d`; el `run --rm …
+db:migrate:deploy` sigue igual); refactor del badge si se elige (b). **Riesgo:** medio
+(toca el path de deploy en vivo) — hacerlo con fallback a build y validado en staging
+varios días antes de prod.
 
 ---
 
