@@ -194,6 +194,10 @@ jobs:
             rm -f /tmp/upsert-env.py
 
             echo "▶ Checking out $TAG…"
+            # Self-heal: discard stray local edits under src/ that would abort the tag
+            # checkout (e.g. a leftover src/lib/chat-openers.ts). Runtime state under
+            # agents/ and workspace-*/ is preserved.
+            git checkout -- src 2>/dev/null || true
             git checkout "$TAG"
             export GIT_COMMIT="$(git rev-parse HEAD)"
 
