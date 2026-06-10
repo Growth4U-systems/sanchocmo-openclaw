@@ -110,6 +110,9 @@ jobs:
           SANCHO_MCP_AUDIT_BACKEND: ${{ vars.SANCHO_MCP_AUDIT_BACKEND }}
           SANCHO_MCP_AUDIT_FAIL_CLOSED: ${{ vars.SANCHO_MCP_AUDIT_FAIL_CLOSED }}
           SANCHO_MCP_AUDIT_FILE: ${{ vars.SANCHO_MCP_AUDIT_FILE }}
+          # Sancho->YALC runtime URL inside the compose network. Default avoids the
+          # client.ts localhost:3847 fallback that left the cockpit stuck on "Checking".
+          YALC_BASE_URL: ${{ vars.YALC_BASE_URL || 'http://yalc:3847' }}
         run: |
           # Build a base64-encoded JSON dict of every non-empty key (skip empty
           # values so unset GitHub secrets/variables are safe no-ops on the VPS).
@@ -142,6 +145,7 @@ jobs:
               "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
               "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
               "SANCHO_MCP_AUDIT_FILE",
+              "YALC_BASE_URL",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())
@@ -203,6 +207,9 @@ jobs:
             rm -f /tmp/upsert-env.py
 
             echo "▶ Checking out $SHA…"
+            # Self-heal: discard stray local edits under src/ that would abort the
+            # checkout. Runtime state under agents/ and workspace-*/ is preserved.
+            git checkout -- src 2>/dev/null || true
             git checkout "$SHA"
             export GIT_COMMIT="$(git rev-parse HEAD)"
 
