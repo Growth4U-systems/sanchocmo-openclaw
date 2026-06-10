@@ -109,6 +109,9 @@ jobs:
           OPEN_DESIGN_IMAGE: ${{ vars.OPEN_DESIGN_IMAGE }}
           MC_CHAT_GATEWAY: ${{ vars.MC_CHAT_GATEWAY }}
           SLACK_REDIRECT_URI: ${{ vars.SLACK_REDIRECT_URI }}
+          # Sancho->YALC runtime URL inside the compose network. Default avoids the
+          # client.ts localhost:3847 fallback that left the cockpit stuck on "Checking".
+          YALC_BASE_URL: ${{ vars.YALC_BASE_URL || 'http://yalc:3847' }}
         run: |
           # Build payload identically to deploy-staging.yml — same key list.
           # Empty secrets/vars are filtered out so an under-populated
@@ -138,6 +141,7 @@ jobs:
               "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL", "SUPABASE_URL",
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
+              "YALC_BASE_URL",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())
