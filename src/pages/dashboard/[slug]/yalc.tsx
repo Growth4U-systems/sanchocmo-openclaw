@@ -44,6 +44,9 @@ interface OverviewCheck {
 
 interface OverviewPayload {
   ok: boolean;
+  // Whether Outreach (YALC) is wired up at all. false → show the setup
+  // placeholder rather than a wall of "unreachable" errors.
+  configured?: boolean;
   runtime?: RuntimeInfo;
   checks?: Record<string, OverviewCheck>;
 }
@@ -718,6 +721,60 @@ export default function YalcCockpitPage() {
 
   function refreshAll() {
     void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
+  }
+
+  // Outreach is an opt-in service. When it isn't wired up, show a calm setup
+  // placeholder instead of the cockpit's "unreachable" errors and empty tiles.
+  const notConfigured = overview.data?.configured === false;
+  if (notConfigured) {
+    return (
+      <DashboardLayout>
+        <Head>
+          <title>{`Outreach - ${slug || "cliente"} - Mission Control`}</title>
+        </Head>
+        <div className="min-h-[calc(100vh-48px)]">
+          <header className="mb-6">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              <Plug className="h-4 w-4" />
+              Outreach
+            </div>
+            <h1 className="mt-1 font-heading text-2xl text-navy">Outreach (YALC)</h1>
+          </header>
+          <div className="mx-auto max-w-2xl rounded-xl border-2 border-border bg-card p-8 text-center shadow-comic-sm">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border-2 border-ink bg-sage/20">
+              <Rocket className="h-6 w-6 text-sage" />
+            </div>
+            <h2 className="font-heading text-xl text-navy">Outreach no está activado</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              YALC es el motor de outbound (campañas, leads, secuencias). Es un servicio
+              opcional: cuando lo activás, este panel se convierte en el cockpit para operarlo.
+            </p>
+            <div className="mx-auto mt-5 max-w-md rounded-lg border-2 border-border bg-background p-4 text-left text-sm">
+              <p className="font-semibold text-navy">Para activarlo:</p>
+              <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+                <li>
+                  Reinstalá con Outreach activado (<code className="rounded bg-muted px-1">./install.sh --yalc</code>)
+                  o levantá el overlay <code className="rounded bg-muted px-1">docker-compose.yalc.yml</code>.
+                </li>
+                <li>
+                  Verificá que <code className="rounded bg-muted px-1">YALC_BASE_URL</code> y{" "}
+                  <code className="rounded bg-muted px-1">YALC_API_TOKEN</code> estén en tu <code className="rounded bg-muted px-1">.env</code>.
+                </li>
+                <li>Después, cargá tu proveedor de email (ej. Instantly) desde acá mismo.</li>
+              </ol>
+            </div>
+            <button
+              type="button"
+              onClick={() => refreshAll()}
+              className="mt-5 inline-flex items-center gap-2 rounded-md border-2 border-border bg-card px-3 py-2 text-sm font-semibold hover:border-ink"
+            >
+              <RefreshCw className={cn("h-4 w-4", overview.isFetching && "animate-spin")} />
+              Volver a verificar
+            </button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
   }
 
   return (
