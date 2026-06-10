@@ -51,21 +51,28 @@ ENV_LABEL="${ENV_LABEL:-${NEXT_PUBLIC_ENV_LABEL:-}}"
 if [ -z "$ENV_LABEL" ]; then
   echo "✗ Refusing to run: ENV_LABEL is empty — this looks like PRODUCTION." >&2
   echo "  prod→staging only runs on staging and never writes to prod." >&2
+  write_status failed
   exit 2
 fi
 case "$(printf '%s' "$ENV_LABEL" | tr '[:lower:]' '[:upper:]')" in
-  *PROD*) echo "✗ Refusing to run: ENV_LABEL='$ENV_LABEL' looks like production." >&2; exit 2 ;;
+  *PROD*) echo "✗ Refusing to run: ENV_LABEL='$ENV_LABEL' looks like production." >&2; write_status failed; exit 2 ;;
 esac
 
-case "$MODE" in A|B|C) ;; *) echo "✗ Invalid MODE='$MODE' (expected A, B or C)" >&2; exit 2 ;; esac
+case "$MODE" in A|B|C) ;; *) echo "✗ Invalid MODE='$MODE' (expected A, B or C)" >&2; write_status failed; exit 2 ;; esac
 
 # --- config (override via env) ----------------------------------------------
 PROD_IP="${PROD_IP:-159.69.244.59}"            # prod VPS (rsync source)
 SSH_OPTS="${SSH_OPTS:--o StrictHostKeyChecking=accept-new -o ConnectTimeout=15}"
 OPENCLAW_HOME="${OPENCLAW_HOME:-/root/.openclaw}"
 WORKSPACE="${MC_WORKSPACE:-$OPENCLAW_HOME/workspace-sancho}"
-BRAND_DIR="$WORKSPACE/brand"
-STATE_DIR="$OPENCLAW_HOME/.openclaw"           # gateway + agent state (mode C)
+BRAND_DIR="$WORKSPACE/brand"                    # local (staging) destination
+STATE_DIR="$OPENCLAW_HOME/.openclaw"            # local gateway + agent state (mode C)
+# Remote (prod) SOURCE paths are FIXED to prod's canonical layout, independent
+# of any local MC_WORKSPACE / OPENCLAW_HOME override on staging (so overriding
+# the local workspace can never repoint the remote pull at a missing path).
+PROD_OPENCLAW_HOME="${PROD_OPENCLAW_HOME:-/root/.openclaw}"
+PROD_BRAND_DIR="${PROD_BRAND_DIR:-$PROD_OPENCLAW_HOME/workspace-sancho/brand}"
+PROD_STATE_DIR="${PROD_STATE_DIR:-$PROD_OPENCLAW_HOME/.openclaw}"
 
 # Neon (modes B/C). Defaults mirror scripts/resync-staging-to-prod.sh.
 NEON_PROJECT="${NEON_PROJECT:-empty-rain-04721142}"
@@ -110,7 +117,7 @@ fi
 echo "▶ [2/4] rsync brand/ prod → staging (mirror)"
 rsync $RS --delete "${EXCLUDES[@]}" \
   -e "ssh $SSH_OPTS" \
-  "root@$PROD_IP:$BRAND_DIR/" "$BRAND_DIR/"
+  "root@$PROD_IP:$PROD_BRAND_DIR/" "$BRAND_DIR/"
 
 # --- [3] Neon DB restore (modes B/C): staging branch ← prod branch ----------
 if [ "$MODE" = "B" ] || [ "$MODE" = "C" ]; then
@@ -134,7 +141,7 @@ if [ "$MODE" = "C" ]; then
   echo "▶ [4/4] rsync .openclaw/ agent state prod → staging (C-safe: no creds/tokens)"
   rsync $RS "${EXCLUDES[@]}" "${CRED_EXCLUDES[@]}" \
     -e "ssh $SSH_OPTS" \
-    "root@$PROD_IP:$STATE_DIR/" "$STATE_DIR/"
+    "root@$PROD_IP:$PROD_STATE_DIR/" "$STATE_DIR/"
 else
   echo "▶ [4/4] agent-state step not requested (mode $MODE)"
 fi

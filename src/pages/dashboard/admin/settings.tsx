@@ -71,7 +71,11 @@ export default function SettingsPage() {
   );
 
   useEffect(() => {
-    if (isTabKey(queryTab)) setActiveTab(queryTab);
+    // Honor ?tab=… but never activate the staging-only datasync tab on prod:
+    // it's filtered out of TABS there, so activating it would blank the body.
+    if (isTabKey(queryTab) && (queryTab !== "datasync" || IS_STAGING)) {
+      setActiveTab(queryTab);
+    }
   }, [queryTab]);
 
   return (

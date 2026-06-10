@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { spawn } from "child_process";
-import { openSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
+import { openSync, closeSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
 import path from "path";
+import { randomBytes } from "crypto";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 
 /**
@@ -92,7 +93,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    const syncId = `${new Date().toISOString().replace(/[:.]/g, "-")}-${mode}`;
+    const syncId = `${new Date().toISOString().replace(/[:.]/g, "-")}-${mode}-${randomBytes(3).toString("hex")}`;
     const logPath = path.join(dir, `${syncId}.log`);
     const statusPath = path.join(dir, `${syncId}.status.json`);
 
@@ -108,29 +109,35 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Detached: the sync outlives this request. The script writes its own
     // final state ("ok"/"failed") to STATUS_FILE and streams to the log.
     const logFd = openSync(logPath, "a");
-    const child = spawn("bash", [scriptPath], {
-      cwd: path.dirname(path.dirname(scriptPath)),
-      env: {
-        ...process.env,
-        MODE: mode,
-        SYNC_ID: syncId,
-        STATUS_FILE: statusPath,
-        ENV_LABEL: process.env.NEXT_PUBLIC_ENV_LABEL || "",
-      },
-      detached: true,
-      stdio: ["ignore", logFd, logFd],
-    });
-    child.on("error", () => {
-      try {
-        writeFileSync(
-          statusPath,
-          JSON.stringify({ syncId, mode, state: "failed", error: "spawn failed" }, null, 2),
-        );
-      } catch {
-        /* best effort */
-      }
-    });
-    child.unref();
+    try {
+      const child = spawn("bash", [scriptPath], {
+        cwd: path.dirname(path.dirname(scriptPath)),
+        env: {
+          ...process.env,
+          MODE: mode,
+          SYNC_ID: syncId,
+          STATUS_FILE: statusPath,
+          ENV_LABEL: process.env.NEXT_PUBLIC_ENV_LABEL || "",
+        },
+        detached: true,
+        stdio: ["ignore", logFd, logFd],
+      });
+      child.on("error", () => {
+        try {
+          writeFileSync(
+            statusPath,
+            JSON.stringify({ syncId, mode, state: "failed", error: "spawn failed" }, null, 2),
+          );
+        } catch {
+          /* best effort */
+        }
+      });
+      child.unref();
+    } finally {
+      // The child inherited its own dup of the fd; close the parent's copy so
+      // repeated POSTs don't leak descriptors in the long-lived server process.
+      closeSync(logFd);
+    }
 
     return res.status(200).json({ ok: true, syncId, mode });
   }

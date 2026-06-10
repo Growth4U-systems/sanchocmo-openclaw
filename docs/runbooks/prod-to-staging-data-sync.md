@@ -62,7 +62,8 @@ the endpoint refuses to run unless it is admin **and** staging.
 
 1. On staging, open **Settings → Sync Prod** (admin only).
 2. Pick A / B / C, click **Sync from Prod**, confirm.
-3. Watch the live log; it ends with `✓ Sync completo` or `✗ Falló`.
+3. Watch the live log (it ends with `✓ prod→staging sync complete`); the status
+   badge then shows `✓ Sync completo`, or `✗ Falló` on failure.
 
 ### From the CLI (manual / debugging)
 
@@ -74,8 +75,11 @@ DRY_RUN=1 MODE=A ENV_LABEL=STAGING bash scripts/resync-prod-to-staging.sh
 MODE=B ENV_LABEL=STAGING NEON_API_KEY=napi_xxx bash scripts/resync-prod-to-staging.sh
 ```
 
-Overridable env: `PROD_IP`, `MC_WORKSPACE`, `OPENCLAW_HOME`, `NEON_PROJECT`,
-`NEON_STAGING_BRANCH`, `NEON_PROD_BRANCH`, `SYNC_SCRIPT_PATH`.
+Script-overridable env: `PROD_IP`, `PROD_BRAND_DIR`, `PROD_STATE_DIR`, `SSH_OPTS`,
+`MC_WORKSPACE` / `OPENCLAW_HOME` (local destination paths only — the remote prod
+source is fixed via `PROD_*`), `NEON_PROJECT`, `NEON_STAGING_BRANCH`,
+`NEON_PROD_BRANCH`. (`SYNC_SCRIPT_PATH` is an **API-route** override used to
+locate the script; the script itself does not read it.)
 
 ## Status & logs
 
