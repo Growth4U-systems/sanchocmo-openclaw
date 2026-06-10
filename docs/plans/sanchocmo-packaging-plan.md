@@ -165,6 +165,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 - **Fase 6** — verificación e2e en máquina limpia (KPI: install → MC <5min, sin ediciones manuales, anda sin opcionales, `compose pull` preserva data).
 
 **Deuda / opcional (no bloquean lanzamiento):**
+- **Fase 7 — deploy de G4U vía imagen (pull en vez de build)**: hoy el VPS buildea desde source; migrarlo a `compose pull` de la imagen que publica el CI (Fase 5). Beneficio: deploy en segundos, menos RAM/disco en VPS, paridad byte-idéntica staging→prod, dogfooding. **No bloqueante**; ver sección dedicada abajo (3 pre-requisitos).
 - **GAP H (`SAN-109`)**: terminar Strangler-Fig, dejar de levantar `mc-server.js` (`:18790`).
 - **B8**: cutover tasks JSON→DB (runbook + ejecución del usuario). El producto corre con `json` igual.
 
@@ -244,7 +245,9 @@ graph TD
     P3 --> P5
     P4["Fase 4 · Wizard de config"] --> P6
     P5["Fase 5 · Imágenes públicas versionadas (sancho+od+yalc)"] --> P6
+    P5 --> P7
     P6["Fase 6 · install.sh + docs + verificación e2e"]
+    P7["Fase 7 · Deploy de G4U vía imagen (pull) · 🟢 deuda/opcional"]
 ```
 
 ---
@@ -416,6 +419,43 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - `install.sh`: baja compose + `.env.example`, corre wizard, `compose up`.
 - Guías de instalación (local + servidor) y de actualización.
 - Verificación e2e en máquina limpia (abajo).
+
+### Fase 7 — Deploy de G4U vía imagen (pull en vez de build) (2–3 días) 🟢 deuda/opcional
+
+> No bloquea el lanzamiento del producto. Migra el **deploy interno de G4U** de
+> "buildear en el VPS" a "pullear la imagen que ya publica el CI (Fase 5)".
+> Decisión de scope (2026-06-10): se dejó **fuera** del PR de Fase 5 (SAN-140)
+> para no tocar el path de deploy en vivo; el base compose quedó con `image:`+`build:`
+> justamente para habilitar esto después sin más cambios de arquitectura.
+
+**Motivación.** Hoy `deploy-staging.yml`/`deploy-prod.yml` hacen `git checkout $SHA`
++ `docker compose build --pull` en el VPS (≈2-3 min de `npm ci` + `next build`,
+consume CPU/RAM/disco — de ahí el *build-cache prune cron* y el swap de `SERVER-OPS.md`).
+Pulleando la imagen pre-buildada: deploy en segundos, menos recursos en el VPS,
+**paridad byte-idéntica staging→prod** (prod corre la imagen que staging validó,
+elimina "rompió en prod pero no en staging"), rollback = cambiar tag + `up -d`, y
+G4U usa el mismo mecanismo que un tercero (dogfooding).
+
+**3 pre-requisitos (por orden):**
+1. **Login GHCR del VPS** — la credencial actual es un placeholder roto (OD corre de
+   cache local; ver "🟡 En curso / bloqueado"). Es la **misma acción** que destraba
+   #416/OD/YALC públicos: un PAT válido con `read:packages` (o package público).
+2. **Tag inmutable por SHA** — añadir `type=sha` al `metadata-action` de
+   `docker-image.yml` y que el deploy pullee `:sha-<short>` del commit exacto. Hoy el
+   workflow solo emite `:edge`/`:vX.Y.Z`/`:latest`; `:edge` es mutable → race entre
+   "el commit que deployás" y "el último edge". Cambio chico.
+3. **`NEXT_PUBLIC_ENV_LABEL` (el costo real)** — staging buildea con
+   `NEXT_PUBLIC_ENV_LABEL=STAGING` y ese valor se **inlinea en el bundle client en
+   build-time** (`Dockerfile:54`). Una sola imagen no puede ser STAGING y prod a la
+   vez. Opciones: (a) staging y prod comparten imagen sin badge; (b) **mover el badge a
+   runtime** (recomendado — habilita imagen única prod=staging, que es el mayor
+   beneficio de paridad); (c) buildear por-entorno (anula medio beneficio).
+
+**Cambios:** `docker-image.yml` (`type=sha`); `deploy-staging.yml`/`deploy-prod.yml`
+(`COMPOSE_ARGS` deja de buildear sanchocmo → `pull` por SHA + `up -d`; el `run --rm …
+db:migrate:deploy` sigue igual); refactor del badge si se elige (b). **Riesgo:** medio
+(toca el path de deploy en vivo) — hacerlo con fallback a build y validado en staging
+varios días antes de prod.
 
 ---
 
