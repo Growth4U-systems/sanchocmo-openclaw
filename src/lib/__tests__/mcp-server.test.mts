@@ -77,6 +77,7 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_mcp_status",
       "sancho_send_message",
       "sancho_update_task",
+      "yalc_create_search",
       "yalc_get_overview",
       "yalc_list_campaigns",
       "yalc_list_gates",
@@ -91,6 +92,10 @@ test("tools/list exposes expected MCP schemas", async () => {
     const setLeadStage = result.tools.find((tool) => tool.name === "yalc_set_lead_stage");
     assert.ok(setLeadStage);
     assert.deepEqual(setLeadStage.inputSchema.required, ["clientSlug", "leadId", "stage"]);
+
+    const createSearch = result.tools.find((tool) => tool.name === "yalc_create_search");
+    assert.ok(createSearch);
+    assert.deepEqual(createSearch.inputSchema.required, ["clientSlug", "title", "sectors", "networks"]);
   } finally {
     await close();
   }
@@ -398,6 +403,73 @@ test("sancho_update_task requires at least one field to change", async () => {
     });
     assert.equal(result.isError, true);
     assert.match(result.content[0].type === "text" ? result.content[0].text : "", /no fields/i);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_create_search requires yalc:write scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_create_search",
+      arguments: {
+        clientSlug: "alpha",
+        title: "Finanzas ES",
+        sectors: ["finanzas personales"],
+        networks: ["instagram"],
+      },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:write/);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_create_search is dry-run by default and previews the parsed plan", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:write"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_create_search",
+      arguments: {
+        clientSlug: "alpha",
+        title: "Finanzas personales ES · IG+TikTok",
+        sectors: ["Finanzas Personales", "ahorro"],
+        networks: ["IG", "tiktok"],
+        tiers: ["micro", "mid"],
+        targetVolume: 40,
+        competitorBrands: ["N26", "Revolut"],
+      },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.dryRun, true);
+    assert.equal(payload.requiresConfirmation, true);
+    const plan = payload.plan as {
+      networks: string[];
+      sectors: string[];
+      tiers: string[];
+      qualificationMode: string;
+      disqualifyThreshold: number;
+      signals: { competitorBrands: string[] };
+    };
+    assert.deepEqual(plan.networks, ["instagram", "tiktok"]);
+    assert.deepEqual(plan.sectors, ["finanzas personales", "ahorro"]);
+    assert.deepEqual(plan.tiers, ["micro", "mid"]);
+    assert.equal(plan.qualificationMode, "hybrid");
+    assert.equal(plan.disqualifyThreshold, 40);
+    assert.deepEqual(plan.signals.competitorBrands, ["N26", "Revolut"]);
   } finally {
     await close();
   }
