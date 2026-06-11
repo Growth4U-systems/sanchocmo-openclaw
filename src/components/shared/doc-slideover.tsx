@@ -23,6 +23,20 @@ const MarkdownEditor = dynamic(
  * Body: markdown viewer OR Toast UI editor
  */
 
+/**
+ * Strips a leading YAML frontmatter block (`---\n…\n---`) before VIEW
+ * rendering. Brand Brain docs keep their metadata in HTML comments, which
+ * ReactMarkdown never paints — docs with YAML frontmatter (e.g. the
+ * Outreach/Partnerships templates) must behave the same, otherwise the
+ * block renders as an hr + setext heading. Only the rendered view is
+ * affected: the editor receives the raw content so the frontmatter
+ * round-trips intact on save.
+ */
+export function stripMarkdownFrontmatter(text: string): string {
+  const match = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+  return match ? text.slice(match[0].length) : text;
+}
+
 interface DocSlideOverProps {
   slug: string;
   docPath: string | null;
@@ -686,7 +700,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
                   "prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold",
                   "prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs",
                 )}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{stripMarkdownFrontmatter(content)}</ReactMarkdown>
                 </article>
               )
             )}

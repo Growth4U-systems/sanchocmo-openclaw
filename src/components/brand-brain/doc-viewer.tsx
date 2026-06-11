@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { stripMarkdownFrontmatter } from "@/components/shared/doc-slideover";
 import { cn } from "@/lib/utils";
 
 interface DocViewerProps {
@@ -105,7 +106,9 @@ export function DocViewer({ slug, docPath, onBack }: DocViewerProps) {
               "prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs",
             )}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+            {/* Same rule as the doc slide-over: YAML frontmatter is metadata,
+                never part of the rendered document. */}
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{stripMarkdownFrontmatter(content)}</ReactMarkdown>
           </article>
         )}
       </div>

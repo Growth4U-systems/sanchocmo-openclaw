@@ -116,6 +116,8 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "design-system": "maese-pedro",
   "direct-response-copy": "dulcinea",
   "directory-submissions": "rocinante",
+  "discovery-plan-builder": "rocinante",
+  "discovery-search-runner": "rocinante",
   "doc-coauthoring": "dulcinea",
   "ecp-validation": "sanson",
   "email-sequence": "rocinante",

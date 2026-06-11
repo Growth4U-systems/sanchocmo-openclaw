@@ -142,6 +142,71 @@ export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
 }
 
 /**
+ * Partnerships (SAN-78) — "Crear nueva búsqueda" de creators abre el chat
+ * global con el plan de discovery. La skill `discovery-plan-builder` la
+ * construye SAN-79; mientras llega, Rocinante (agente owner de Outreach,
+ * SAN-116) atiende el hilo con sus skills de outreach.
+ *
+ * - Sin búsqueda: hilo nuevo por click (cada click = un plan nuevo).
+ * - Con búsqueda draft: hilo estable por campaña (continuar el plan).
+ */
+export function buildDiscoverySearchThread(
+  slug: string,
+  search?: { campaignId: string; title?: string },
+): ThreadConfig {
+  const base = {
+    skill: "discovery-plan-builder",
+    skills: ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"] as string[],
+    linkedTo: "rocinante",
+    docPath: null,
+    agent: "rocinante",
+  };
+
+  if (search) {
+    return {
+      ...base,
+      threadId: `${slug}:discovery:${search.campaignId.toLowerCase()}`,
+      threadName: search.title ? `Búsqueda: ${search.title}` : "Búsqueda de creators",
+      threadState: "continue",
+      initialMessage: `Quiero completar y lanzar la búsqueda de creators "${search.title || search.campaignId}" (campaña Yalc ${search.campaignId}, type=Partnerships). Repásame el plan de discovery (sectores, redes, tiers, volumen) y dime qué falta para lanzarla.`,
+    };
+  }
+
+  return {
+    ...base,
+    threadId: `${slug}:discovery:new-${Date.now()}`,
+    threadName: "Nueva búsqueda de creators",
+    threadState: "create",
+    initialMessage:
+      "Quiero crear una nueva búsqueda de creators para el programa de Partnerships. Proponme un plan de discovery: sectores con mejor fit, redes, tiers objetivo y volumen de candidatos. Cuando lo cerremos, lánzala como campaña type=Partnerships en Yalc.",
+  };
+}
+
+/**
+ * Plantillas de Outreach·Partnerships (SAN-80) — 💬 "Chat con Sancho" de cada
+ * plantilla (secuencia o brief). Hilo estable por plantilla, atendido por
+ * Rocinante (agente owner de Outreach) con la skill de secuencias; el doc
+ * anclado es el .md de la plantilla (mismo fichero que ⬇️/📄).
+ */
+export function buildOutreachTemplateThread(
+  slug: string,
+  template: { id: string; name: string; kind?: "sequence" | "brief" },
+): ThreadConfig {
+  const kindLabel = template.kind === "brief" ? "brief" : "secuencia";
+  return {
+    threadId: `${slug}:outreach-template:${template.id.toLowerCase()}`,
+    threadName: `Plantilla: ${template.name}`,
+    skill: "outreach-sequence-builder",
+    skills: ["outreach-sequence-builder", "outreach-playbook"],
+    linkedTo: `outreach/templates/${template.id}`,
+    docPath: `brand/${slug}/outreach/templates/${template.id}.md`,
+    threadState: "continue",
+    agent: "rocinante",
+    initialMessage: `Estoy mirando la plantilla de outreach "${template.name}" (${kindLabel}, brand/${slug}/outreach/templates/${template.id}.md). Puedes ajustar tono, pasos, delays o variables ({{handle}}, {{quality_score}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK.`,
+  };
+}
+
+/**
  * Find the task thread that "owns" a given doc path, if any. A task owns a
  * doc if the path matches either its `deliverable_file` OR any entry in its
  * `attachments[]`. Returns a ThreadConfig pointing at that task's thread

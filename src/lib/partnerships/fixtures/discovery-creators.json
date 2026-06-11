@@ -1,0 +1,161 @@
+{
+  "description": "Fixture del discovery-search-runner (SAN-79): los 9 creators canónicos del mockup contactos-lista.html (seeds de calc-creator-core). Con la config sembrada, computeQualityScore reproduce exactamente 87/91/74/82/58/79/88/31/52.",
+  "candidates": [
+    {
+      "handle": "@finanzasconlucia",
+      "network": "instagram",
+      "name": "Lucía · Finanzas con Lucía",
+      "followers": 142000,
+      "engagementRatePct": 4.8,
+      "signals": {
+        "fakeFollowersPct": 6,
+        "suspiciousGrowthSpikes": false,
+        "verticalMatchShare": 1,
+        "adLibraryChecked": true,
+        "competitorPromos": [{ "brand": "Revolut", "count": 2, "windowMonths": 6 }],
+        "activeConflict": false,
+        "spanishAudiencePct": 91,
+        "cetAlignmentPct": 68,
+        "postsPerWeek": 3.5,
+        "longGapsLast6Months": 2
+      }
+    },
+    {
+      "handle": "@elinversorprudente",
+      "network": "youtube",
+      "name": "El Inversor Prudente",
+      "followers": 89000,
+      "engagementRatePct": 6.2,
+      "signals": {
+        "fakeFollowersPct": 4,
+        "verticalMatchShare": 1,
+        "adLibraryChecked": true,
+        "competitorPromos": [{ "brand": "MyInvestor", "count": 2, "windowMonths": 6 }],
+        "spanishAudiencePct": 95,
+        "cetAlignmentPct": 90,
+        "postsPerWeek": 3,
+        "longGapsLast6Months": 0
+      }
+    },
+    {
+      "handle": "@ahorroconmarta",
+      "network": "tiktok",
+      "name": "Marta · Ahorro con Marta",
+      "followers": 230000,
+      "engagementRatePct": 3.1,
+      "signals": {
+        "fakeFollowersPct": 12,
+        "verticalMatchShare": 0.85,
+        "adLibraryChecked": true,
+        "competitorPromos": [{ "brand": "Vivid", "count": 1, "windowMonths": 6 }],
+        "spanishAudiencePct": 85,
+        "cetAlignmentPct": 70,
+        "postsPerWeek": 4,
+        "longGapsLast6Months": 1
+      }
+    },
+    {
+      "handle": "@davidfintech",
+      "network": "instagram",
+      "name": "David Fintech",
+      "followers": 45000,
+      "engagementRatePct": 7.4,
+      "signals": {
+        "fakeFollowersPct": 7,
+        "verticalMatchShare": 0.8,
+        "adLibraryChecked": true,
+        "competitorPromos": [],
+        "spanishAudiencePct": 93,
+        "cetAlignmentPct": 85,
+        "postsPerWeek": 2.6,
+        "longGapsLast6Months": 0
+      }
+    },
+    {
+      "handle": "@cuentasclaras_es",
+      "network": "youtube",
+      "name": "Cuentas Claras",
+      "followers": 310000,
+      "engagementRatePct": 2.2,
+      "signals": {
+        "fakeFollowersPct": 14,
+        "verticalMatchShare": 0.45,
+        "adLibraryChecked": true,
+        "competitorPromos": [],
+        "spanishAudiencePct": 75,
+        "cetAlignmentPct": 65,
+        "postsPerWeek": 2,
+        "longGapsLast6Months": 2
+      }
+    },
+    {
+      "handle": "@lauraylasfinanzas",
+      "network": "instagram",
+      "name": "Laura y las Finanzas",
+      "followers": 67000,
+      "engagementRatePct": 5.5,
+      "signals": {
+        "fakeFollowersPct": 8,
+        "verticalMatchShare": 0.9,
+        "adLibraryChecked": true,
+        "competitorPromos": [{ "brand": "N26", "count": 1, "windowMonths": 6 }],
+        "spanishAudiencePct": 90,
+        "cetAlignmentPct": 80,
+        "postsPerWeek": 3,
+        "longGapsLast6Months": 2
+      }
+    },
+    {
+      "handle": "@money_pau",
+      "network": "tiktok",
+      "name": "Pau · Money Pau",
+      "followers": 510000,
+      "engagementRatePct": 4.0,
+      "signals": {
+        "fakeFollowersPct": 8,
+        "verticalMatchShare": 0.95,
+        "adLibraryChecked": true,
+        "competitorPromos": [{ "brand": "Revolut", "count": 3, "windowMonths": 6 }],
+        "spanishAudiencePct": 87,
+        "cetAlignmentPct": 75,
+        "postsPerWeek": 5,
+        "longGapsLast6Months": 1
+      }
+    },
+    {
+      "handle": "@pelotazo_cripto",
+      "network": "tiktok",
+      "name": "Pelotazo Cripto",
+      "followers": 88000,
+      "engagementRatePct": 1.1,
+      "signals": {
+        "fakeFollowersPct": 30,
+        "suspiciousGrowthSpikes": true,
+        "verticalMatchShare": 0.15,
+        "adLibraryChecked": true,
+        "competitorPromos": [],
+        "spanishAudiencePct": 63,
+        "cetAlignmentPct": 50,
+        "postsPerWeek": 2,
+        "longGapsLast6Months": 2
+      }
+    },
+    {
+      "handle": "@cuentasclaras_es2",
+      "network": "youtube",
+      "name": "Cuentas Claras 2",
+      "followers": 12000,
+      "engagementRatePct": 3.0,
+      "signals": {
+        "fakeFollowersPct": 10,
+        "verticalMatchShare": 0.5,
+        "adLibraryChecked": true,
+        "competitorPromos": [],
+        "spanishAudiencePct": 80,
+        "cetAlignmentPct": 70,
+        "postsPerWeek": 1.5,
+        "longGapsLast6Months": 1
+      }
+    }
+  ]
+}

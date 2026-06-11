@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useTranslations } from "next-intl";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { MetricsPartnershipsTab } from "@/components/partnerships/metrics-partnerships-tab";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { SlideOver } from "@/components/shared/slide-over";
@@ -1014,14 +1016,43 @@ function PlanFunnelCard({ plan, sources, metricsData }: { plan: NonNullable<Metr
 // Main Component
 // ============================================================
 
+// Sub-tabs de Metrics (SAN-81): Funnel = la vista clásica por fuentes ·
+// Partnerships = reporting por creator (cierra el loop de la calc).
+type MetricsTab = "funnel" | "partnerships";
+
+const METRICS_TABS: { key: MetricsTab; label: string }[] = [
+  { key: "funnel", label: "Funnel" },
+  { key: "partnerships", label: "Partnerships" },
+];
+
 export default function MetricsPage() {
   const slug = useSlugSync();
   const t = useTranslations("metrics");
+  const router = useRouter();
+  const [tab, setTab] = useState<MetricsTab>("funnel");
   const [range, setRange] = useState<DateRange>("7d");
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [collecting, setCollecting] = useState(false);
   const [collectStatus, setCollectStatus] = useState("");
   const [planOpen, setPlanOpen] = useState(false);
+
+  // Tab inicial por URL (?tab=partnerships) — enlazable desde chat/MCP.
+  useEffect(() => {
+    if (!router.isReady) return;
+    const queryTab = Array.isArray(router.query.tab) ? router.query.tab[0] : router.query.tab;
+    if (queryTab === "partnerships" || queryTab === "funnel") setTab(queryTab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
+
+  const selectTab = useCallback(
+    (next: MetricsTab) => {
+      setTab(next);
+      const query = { ...router.query, tab: next } as Record<string, string | string[]>;
+      if (next === "funnel") delete query.tab;
+      router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
+    },
+    [router],
+  );
 
   const { data: plan, isLoading: planLoading } = useMetricsPlan(slug);
 
@@ -1258,14 +1289,15 @@ export default function MetricsPage() {
       </Head>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
+      <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
         <div>
           <h1 className="font-heading text-2xl text-navy mb-1">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">
-            {slug} <span className="text-[11px] ml-2">{rangeLabel}</span>
+            {slug} {tab === "funnel" && <span className="text-[11px] ml-2">{rangeLabel}</span>}
           </p>
         </div>
 
+        {tab === "funnel" && (
         <div className="flex items-center gap-2 flex-wrap">
           <DateRangeFilter options={DATE_RANGE_OPTIONS} value={range} onChange={(v) => setRange(v as DateRange)} />
 
@@ -1285,8 +1317,30 @@ export default function MetricsPage() {
             )}
           </div>
         </div>
+        )}
       </div>
 
+      {/* Sub-tabs: Funnel \u00B7 Partnerships (SAN-81) */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {METRICS_TABS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => selectTab(item.key)}
+            className={cn(
+              "px-3.5 py-1.5 border rounded-md text-[13px] font-semibold transition-colors",
+              tab === item.key ? "border-rust bg-rust text-white" : "border-border bg-background hover:bg-muted"
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "partnerships" && <MetricsPartnershipsTab slug={slug} />}
+
+      {tab === "funnel" && (
+      <>
       {/* Manual data banner */}
       {metricsData?.manualDataPending && metricsData.metricsSheet?.url && (
         <div className="flex items-center gap-3 p-3 mb-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
@@ -1398,6 +1452,8 @@ export default function MetricsPage() {
       <SlideOver open={planOpen} onClose={() => setPlanOpen(false)} title={`${t("plan")} — ${slug}`}>
         {effectivePlan ? <JsonViewer data={effectivePlan} /> : null}
       </SlideOver>
+      </>
+      )}
     </DashboardLayout>
   );
 }
