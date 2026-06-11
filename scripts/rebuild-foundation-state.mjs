@@ -54,20 +54,10 @@ if (!fs.existsSync(brandDir)) {
  * directory/file stems (relative to the brand dir) to probe for a main doc.
  */
 const TAXONOMY = {
-  // Layer 0 — excluded from the file tree, used to mark canonical pillars done.
-  "fast-foundation": {
-    layer: 0,
-    skill: "fast-foundation",
-    pillars: {
-      "company-brief": ["company-brief"],
-      "self-l1": ["market-and-us/self"],
-      "market-l1": ["market-and-us/market"],
-      "brand-voice-snapshot": ["brand-book/brand-voice", "brand-identity/voice-profile", "brand-voice"],
-      "niche-basic": ["go-to-market/ecps"],
-    },
-  },
+  // Layer 0 — company-brief is the single kickoff pillar.
   "company-brief": {
     layer: 0,
+    skill: "kickoff",
     pillars: { "company-brief": ["company-brief"] },
   },
   "site-audit": {
@@ -193,7 +183,7 @@ for (const [secKey, secDef] of Object.entries(TAXONOMY)) {
   sections[secKey] = {
     status: present.length === 0 ? "not-started" : allApproved ? "approved" : "pending-review",
     layer: secDef.layer,
-    output_dir: `brand/${slug}/${secKey === "fast-foundation" ? "company-brief" : secKey}/`,
+    output_dir: `brand/${slug}/${secKey}/`,
     ...(secDef.skill ? { skill: secDef.skill } : {}),
     pillars,
   };

@@ -1,5 +1,5 @@
 {
-  "_comment": "Default per-brand chat config copied to brand/{slug}/chat-config.json on client creation (src/pages/api/clients/create.ts). The `pillars` block declares, per Foundation pillar, the skill that runs it and the agent that owns it. This is the per-brand override point; the hardcoded fallback lives in src/lib/skill-resolver.ts (FOUNDATION_PILLAR_SKILL + SKILL_OWNER_MAP). Keep both in sync. fast-foundation / company-brief are intentionally omitted — owned by the Fast Foundation flow, reworked in SAN-13.",
+  "_comment": "Default per-brand chat config copied to brand/{slug}/chat-config.json on client creation (src/pages/api/clients/create.ts). The `pillars` block declares, per Foundation pillar, the skill that runs it and the agent that owns it. This is the per-brand override point; the hardcoded fallback lives in src/lib/skill-resolver.ts (FOUNDATION_PILLAR_SKILL + SKILL_OWNER_MAP). Keep both in sync. company-brief is omitted here — it resolves to the kickoff skill on hamete via skill-resolver (PILLAR_SKILL_ALIAS + SKILL_OWNER_MAP), per SAN-3 W4.",
   "pillars": {
     "market-analysis": { "skill": "market-intelligence", "skills": ["market-intelligence"], "agent": "hamete" },
     "competitor-analysis": { "skill": "competitor-intelligence", "skills": ["competitor-intelligence"], "agent": "hamete" },

@@ -23,15 +23,15 @@ const FF_PILLAR_MAP: Record<string, string> = {
   "brand-voice-snapshot": "brand-voice",
   "niche-basic": "niche-discovery",
 };
-const EXCLUDED_SECTIONS = ["fast-foundation", "foundation-presentation"];
+const EXCLUDED_SECTIONS = ["foundation-presentation"];
 
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
-  const ff = sections["fast-foundation"];
-  if (!ff) return done;
-  for (const [ffName, pInfo] of Object.entries(ff.pillars || {})) {
+  const cb = sections["company-brief"];
+  if (!cb) return done;
+  for (const [cbName, pInfo] of Object.entries(cb.pillars || {})) {
     if (["approved", "done"].includes(pInfo.status)) {
-      done.add(FF_PILLAR_MAP[ffName] || ffName);
+      done.add(FF_PILLAR_MAP[cbName] || cbName);
     }
   }
   return done;

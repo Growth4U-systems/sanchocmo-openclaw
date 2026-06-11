@@ -238,7 +238,7 @@ function ClientCard({
   let fApproved = 0;
   let fTotal = 0;
   if (foundation?.sections) {
-    const excluded = ["fast-foundation", "foundation-presentation"];
+    const excluded = ["foundation-presentation"];
     for (const [secKey, secData] of Object.entries(foundation.sections)) {
       if (excluded.includes(secKey)) continue;
       for (const [, pInfo] of Object.entries(secData.pillars || {})) {

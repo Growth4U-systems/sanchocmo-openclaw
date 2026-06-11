@@ -16,14 +16,11 @@ import type { BrandBrainState, Section, Pillar } from "@/types";
 import type { OtherDocGroup } from "@/hooks/useBrandBrain";
 
 const FF_PILLAR_MAP: Record<string, string> = {
-  // SAN-13: Fast Foundation collapsed to a single `fast-context` pillar whose doc
-  // is the Company Brief. Older clients still carry the pre-SAN-13 sub-pillars below.
+  // SAN-3 W4: the Kickoff writes a single `company-brief` pillar (the living
+  // Company Brief). `fast-context` is the pre-W4 name for the same pillar, kept
+  // so legacy clients still resolve to the Company Brief section.
   "fast-context": "company-brief",
   "company-brief": "company-brief",
-  "self-l1": "self-analysis",
-  "market-l1": "market-analysis",
-  "brand-voice-snapshot": "brand-voice",
-  "niche-basic": "niche-discovery",
 };
 
 const SECTION_DEFS = [
@@ -83,7 +80,7 @@ function CommentBadge({ n }: { n: number }) {
 
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
-  const ff = sections["fast-foundation"];
+  const ff = sections["company-brief"];
   if (!ff) return done;
   for (const [ffName, pInfo] of Object.entries(ff.pillars || {})) {
     if (["approved", "done"].includes(pInfo.status)) {
@@ -387,7 +384,6 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
   const commentCount = (fp: string) => commentCounts?.[relKey(fp)] ?? 0;
   const sections = foundation.sections || {};
   const ffDone = ffDonePillars(sections);
-  const ffSection = sections["fast-foundation"]?.pillars || {};
 
   const [search, setSearch] = useState("");
 
@@ -487,11 +483,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
               const raw = p.status || "not-started";
               const norm = normalizeStatus(raw, ffDone, pName);
               const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
-              let docUrl = p.output_file || "";
-              if (!docUrl) {
-                const ffKey = Object.entries(FF_PILLAR_MAP).find(([, v]) => v === pName);
-                if (ffKey && ffSection[ffKey[0]]) docUrl = ffSection[ffKey[0]].output_file || "";
-              }
+              const docUrl = p.output_file || "";
               const hasDoc = !!docUrl;
 
               return (
@@ -545,11 +537,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                     const norm = normalizeStatus(raw, ffDone, pName);
                     const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
                     const name = displayName(pName);
-                    let docUrl = p.output_file || "";
-                    if (!docUrl) {
-                      const ffKey = Object.entries(FF_PILLAR_MAP).find(([, v]) => v === pName);
-                      if (ffKey && ffSection[ffKey[0]]) docUrl = ffSection[ffKey[0]].output_file || "";
-                    }
+                    const docUrl = p.output_file || "";
                     const hasDoc = !!docUrl;
 
                     return (

@@ -85,7 +85,7 @@ function currentAliasFallback(absPath: string): string | null {
 /**
  * Lite sibling fallback: when a caller requests a canonical doc
  * (`current.md` or `{folder}.current.md`) and it does not exist, return
- * the sibling `lite.md` if present. fast-foundation
+ * the sibling `lite.md` if present. The kickoff skill
  * writes preliminary outputs to `lite.md`; full skills produce the real
  * `current.md` later. This fallback lets the dashboard surface preliminary
  * content (with `usedFallback: true` so the UI can badge it as such).
@@ -97,7 +97,7 @@ function currentAliasFallback(absPath: string): string | null {
  * (positioning reading ECPs, niche-discovery reading SWOT) will NOT
  * silently degrade to lite. That problem (Philippe's complaint,
  * 2026-05-19) was caused by lite content sitting at the `current.md` path
- * itself — solved by the fast-foundation rename, not by this fallback.
+ * itself — solved by the kickoff rename, not by this fallback.
  */
 function liteSiblingFallback(absPath: string): string | null {
   if (!/(^|\.)current\.md$/i.test(path.basename(absPath))) return null;
