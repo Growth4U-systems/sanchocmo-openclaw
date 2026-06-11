@@ -20,11 +20,12 @@ import { withErrorHandler } from "@/lib/api-middleware";
 import {
   CommentValidationError,
   insertComment,
+  loadDocComments,
   updateComment,
 } from "@/lib/comments";
 import {
   appendCommentToFile,
-  getCommentedDocPath,
+  commentedDocPathFamily,
   updateCommentInFile,
 } from "@/lib/comments-file";
 import { BASE } from "@/lib/data/paths";
@@ -47,7 +48,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!docPathRaw || typeof docPathRaw !== "string") {
     return res.status(400).json({ error: "docPath required" });
   }
-  const commentedDocPath = getCommentedDocPath(docPathRaw);
+  // The comment row lives under whichever form was shared (.md or .html
+  // canonical sibling) — find the family member that owns this id (SAN-149).
+  const family = commentedDocPathFamily(docPathRaw);
+  let commentedDocPath = family[0];
+  for (const candidate of family) {
+    const hit = await loadDocComments(slugStr, candidate);
+    if (hit.some((c) => c.id === idStr)) {
+      commentedDocPath = candidate;
+      break;
+    }
+  }
 
   const resolved = req.body?.resolved;
   const replyBody = typeof req.body?.replyBody === "string" ? req.body.replyBody.trim() : "";

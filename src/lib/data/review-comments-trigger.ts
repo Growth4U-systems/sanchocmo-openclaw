@@ -21,8 +21,8 @@
  */
 
 import { addMessage, getChatSecret, getGatewayUrl } from "./mc-chat";
-import { type CommentRow, loadDocComments } from "@/lib/comments";
-import { getCommentedDocPath, getOriginalDocPath } from "@/lib/comments-file";
+import { type CommentRow, loadDocCommentsFamily } from "@/lib/comments";
+import { getOriginalDocPath } from "@/lib/comments-file";
 import { resolveDocAuthor } from "@/lib/doc-owner";
 
 export interface TriggerReviewCommentsInput {
@@ -96,11 +96,9 @@ export async function triggerReviewComments(
 ): Promise<TriggerReviewCommentsResult> {
   const originalDocPath = getOriginalDocPath(input.docPath);
   const author = await resolveDocAuthor(input.slug, originalDocPath);
-  const comments = await loadDocComments(
-    input.slug,
-    getCommentedDocPath(originalDocPath),
-    { openOnly: true },
-  );
+  // Family load (SAN-149): feedback may live under the .md OR the .html
+  // commented sibling, depending on which form was shared.
+  const comments = await loadDocCommentsFamily(input.slug, originalDocPath, { openOnly: true });
 
   if (comments.length === 0) {
     return {

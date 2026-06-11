@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import * as mod from "../comments-file";
 
 const {
+  commentedDocPathFamily,
   getCommentedDocPath,
   isCommentedDocPath,
   getOriginalDocPath,
@@ -340,4 +341,22 @@ test("findCommentBlockRange does not match an id-prefix collision", () => {
   });
   const r = findCommentBlockRange("intro\n" + block, "cmt_ab");
   assert.equal(r.start, -1);
+});
+
+// ── SAN-149: commented docPath family (md/html canonical pair) ──────────
+
+test("commentedDocPathFamily covers both md and html commented siblings", () => {
+  assert.deepEqual(
+    commentedDocPathFamily("brand/x/market/market.current.md"),
+    ["brand/x/market/market.current.commented.md", "brand/x/market/market.current.commented.html"],
+  );
+  assert.deepEqual(
+    commentedDocPathFamily("brand/x/market/market.current.html"),
+    ["brand/x/market/market.current.commented.html", "brand/x/market/market.current.commented.md"],
+  );
+  // accepts a commented member and normalizes through the original
+  assert.deepEqual(
+    commentedDocPathFamily("brand/x/market/market.current.commented.md"),
+    ["brand/x/market/market.current.commented.md", "brand/x/market/market.current.commented.html"],
+  );
 });

@@ -333,19 +333,24 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     try { return JSON.parse(content); } catch { return null; }
   }, [isJson, content]);
 
-  // ── HTML 2-col edit/preview state ─────────────────────────────────
-  // For any `.html` document we render a split view: text editor (left) +
-  // live iframe preview (right). For carousel templates specifically, the
+  // ── HTML view state ───────────────────────────────────────────────
+  // HTML documents render as the document itself (full-width iframe) by
+  // default — the source + live-preview split only appears when the user
+  // explicitly hits "✏️ Editar HTML" (SAN-149). For carousel templates the
   // preview goes through the template-preview-html endpoint so `{{slot.*}}`
   // and `{{brand.*}}` placeholders get resolved to the brand's actual
   // values — that way you see the real render, not the template source.
   const isHtmlDoc = !!(activeDocPath?.endsWith(".html") || (content && (content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html"))));
+  const [editingHtml, setEditingHtml] = useState(false);
   const [htmlDraft, setHtmlDraft] = useState<string>("");
   const [savingHtml, setSavingHtml] = useState(false);
   const [previewRevision, setPreviewRevision] = useState(0);
   useEffect(() => {
     if (isHtmlDoc && content !== null) setHtmlDraft(content);
   }, [isHtmlDoc, content]);
+  useEffect(() => {
+    setEditingHtml(false);
+  }, [normalizedDocPath]);
 
   const templateInfo = useMemo(() => {
     if (!activeDocPath) return null;
@@ -462,16 +467,36 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               </button>
             )}
 
-            {isHtmlDoc && (
+            {isHtmlDoc && !editingHtml && (
               <button
                 type="button"
-                onClick={handleSaveHtml}
-                disabled={!isHtmlDirty || savingHtml}
-                className={cn(btnClass, isHtmlDirty && "!bg-rust !text-white !border-rust hover:!bg-rust/90")}
-                title={isHtmlDirty ? "Guardar cambios y refrescar preview" : "No hay cambios pendientes"}
+                onClick={() => setEditingHtml(true)}
+                className={btnClass}
+                title="Editar el código HTML manualmente"
               >
-                {savingHtml ? "Guardando..." : isHtmlDirty ? "💾 Guardar" : "💾 Guardado"}
+                ✏️ Editar HTML
               </button>
+            )}
+            {isHtmlDoc && editingHtml && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSaveHtml}
+                  disabled={!isHtmlDirty || savingHtml}
+                  className={cn(btnClass, isHtmlDirty && "!bg-rust !text-white !border-rust hover:!bg-rust/90")}
+                  title={isHtmlDirty ? "Guardar cambios y refrescar preview" : "No hay cambios pendientes"}
+                >
+                  {savingHtml ? "Guardando..." : isHtmlDirty ? "💾 Guardar" : "💾 Guardado"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingHtml(false)}
+                  className={btnClass}
+                  title="Volver a la vista del documento"
+                >
+                  👁 Ver
+                </button>
+              </>
             )}
 
             <button
@@ -566,6 +591,18 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               initialContent={content}
               onSave={handleSave}
               onCancel={() => setEditing(false)}
+            />
+          </div>
+        ) : isHtmlDoc && content !== null && !editingHtml ? (
+          // Default HTML view (SAN-149): just the rendered document, full
+          // width. Source editing lives behind "✏️ Editar HTML".
+          <div className="flex-1 min-h-0">
+            <iframe
+              key={`view-${previewRevision}`}
+              src={previewSrc || `/api/docs/${activeDocPath}?raw=1&_=${previewRevision}`}
+              className="w-full h-full border-0 bg-white block"
+              sandbox="allow-same-origin"
+              title={displayTitle}
             />
           </div>
         ) : isHtmlDoc && content !== null ? (

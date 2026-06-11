@@ -137,7 +137,14 @@ export default function BrandBrainPage() {
     staleTime: 30_000,
   });
   const docRelKey = useCallback(
-    (p: string) => p.replace(/^brand\/[^/]+\//, "").replace(/\.commented(?=\.[a-z0-9]+$|$)/i, ""),
+    // Collapse .commented siblings AND the md/html canonical pair (SAN-149)
+    // onto the .md key so a doc's feedback matches no matter which form
+    // was shared or is being viewed.
+    (p: string) =>
+      p
+        .replace(/^brand\/[^/]+\//, "")
+        .replace(/\.commented(?=\.[a-z0-9]+$|$)/i, "")
+        .replace(/\.html$/i, ".md"),
     [],
   );
   const { commentCounts, commentsByRel } = useMemo(() => {
@@ -147,12 +154,16 @@ export default function BrandBrainPage() {
       { count: number; comments: Array<{ id: string; author: string; body: string; anchorText: string | null; createdAt: string }> }
     >();
     for (const d of clientComments?.documents ?? []) {
-      const key = d.docPath.replace(/^brand\/[^/]+\//, "").replace(/\.commented(?=\.[a-z0-9]+$|$)/i, "");
+      const key = docRelKey(d.docPath);
       counts[key] = (counts[key] ?? 0) + d.count;
-      byRel.set(key, { count: d.count, comments: d.comments });
+      const prev = byRel.get(key);
+      byRel.set(key, {
+        count: (prev?.count ?? 0) + d.count,
+        comments: [...(prev?.comments ?? []), ...d.comments],
+      });
     }
     return { commentCounts: counts, commentsByRel: byRel };
-  }, [clientComments]);
+  }, [clientComments, docRelKey]);
 
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeMsg, setAnalyzeMsg] = useState<string | null>(null);
@@ -178,6 +189,37 @@ export default function BrandBrainPage() {
         setAnalyzeMsg(e instanceof Error ? e.message : "Error");
       } finally {
         setAnalyzing(false);
+      }
+    },
+    [slug],
+  );
+
+  // Author-agent review loop (SAN-148): visible counterpart of the
+  // 15-minute auto-dispatch — asks the doc's AUTHOR to read the open
+  // threads, propose an Apply/Skip plan in the doc's chat and resolve.
+  const [applying, setApplying] = useState(false);
+  const applyFeedback = useCallback(
+    async (docPath: string) => {
+      if (!slug) return;
+      setApplying(true);
+      setAnalyzeMsg(null);
+      try {
+        const res = await fetch(`/api/clients/${slug}/review-comments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ docPath: docPath.startsWith("brand/") ? docPath : `brand/${slug}/${docPath}` }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d.error || "No se pudo despachar la revisión");
+        setAnalyzeMsg(
+          d.forwardedToGateway
+            ? `Revisión despachada a ${d.agent} — propondrá el plan Apply/Skip en el chat del documento (botón 💬 Chat).`
+            : `No se despachó: ${d.error || "sin comentarios abiertos"}`,
+        );
+      } catch (e) {
+        setAnalyzeMsg(e instanceof Error ? e.message : "Error");
+      } finally {
+        setApplying(false);
       }
     },
     [slug],
@@ -604,16 +646,32 @@ export default function BrandBrainPage() {
                 <span className="text-sm font-bold text-yellow-900 dark:text-yellow-200">
                   💬 Comentarios del cliente ({dc.count})
                 </span>
-                <button
-                  type="button"
-                  onClick={() => analyzeFeedback(selectedDoc.docPath)}
-                  disabled={analyzing}
-                  className="inline-flex items-center gap-1 rounded-md border border-rust/40 bg-rust/10 px-3 py-1 text-xs font-bold text-rust hover:bg-rust/15 disabled:opacity-50"
-                >
-                  🛡️ {analyzing ? "Analizando..." : "Analizar feedback"}
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => applyFeedback(selectedDoc.docPath)}
+                    disabled={applying || analyzing}
+                    className="inline-flex items-center gap-1 rounded-md border-2 border-[#1B1720] bg-[#F7C948] px-3 py-1 text-xs font-bold text-[#1B1720] shadow-[2px_2px_0_#1B1720] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#1B1720] disabled:opacity-50"
+                    title="El agente autor del doc lee el feedback, propone un plan Apply/Skip en el chat del documento y resuelve los comentarios"
+                  >
+                    💬 {applying ? "Despachando..." : "Aplicar feedback"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => analyzeFeedback(selectedDoc.docPath)}
+                    disabled={analyzing || applying}
+                    className="inline-flex items-center gap-1 rounded-md border border-rust/40 bg-rust/10 px-3 py-1 text-xs font-bold text-rust hover:bg-rust/15 disabled:opacity-50"
+                    title="Sansón clasifica el feedback en insights de mejora (pestaña Mejoras de Intelligence)"
+                  >
+                    🛡️ {analyzing ? "Analizando..." : "Clasificar (Mejoras)"}
+                  </button>
+                </div>
               </div>
-              {analyzeMsg && <p className="mb-2 text-[11px] text-muted-foreground">{analyzeMsg}</p>}
+              {analyzeMsg && (
+                <p className="mb-2 rounded-md border border-border bg-background/70 px-3 py-2 text-[12px] font-medium text-foreground">
+                  {analyzeMsg}
+                </p>
+              )}
               <ul className="space-y-2 m-0 list-none p-0">
                 {dc.comments.map((c) => (
                   <li key={c.id} className="text-[12px]">
