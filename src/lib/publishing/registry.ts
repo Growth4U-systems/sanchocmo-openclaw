@@ -1,4 +1,5 @@
 import { metricoolProvider } from "@/lib/publishing/providers/metricool";
+import { wordpressProvider } from "@/lib/publishing/providers/wordpress";
 import { readJSON } from "@/lib/data/json-io";
 import { integrationsFile } from "@/lib/data/paths";
 import type { Channel, ProviderInfo, PublishProvider } from "@/lib/publishing/types";
@@ -7,7 +8,7 @@ import type { Channel, ProviderInfo, PublishProvider } from "@/lib/publishing/ty
  * Add new providers here. The registry order is the UI's preference order:
  * the first configured + channel-supporting provider wins as auto-selected.
  */
-const ALL_PROVIDERS: PublishProvider[] = [metricoolProvider];
+const ALL_PROVIDERS: PublishProvider[] = [metricoolProvider, wordpressProvider];
 
 interface IntegrationEntry {
   status?: string;

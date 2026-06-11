@@ -11,6 +11,7 @@
  */
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useChannelLoops } from "@/hooks/useChannelLoops";
 import { ChannelLoopCard, CHANNEL_EMOJI, type LoopStageKey } from "@/components/content/ChannelLoopCard";
@@ -255,14 +256,53 @@ export function ChannelsTab({ slug, onGo }: Props) {
                 </div>
                 <div className="border-2 border-ink rounded-lg p-3 bg-yellow-400/15 text-sm">
                   <b>Google Search Console sin conectar.</b> Cuando se integre verás impresiones de
-                  búsqueda, CTR y posición media por artículo. Hasta entonces no se muestran datos
+                  búsqueda, clicks y posición media. Hasta entonces no se muestran datos
                   inventados — solo producción.
                 </div>
+                <Link
+                  href={`/dashboard/${slug}/settings?tab=apis`}
+                  className="block w-full text-center px-3 py-2 text-sm font-semibold border-2 border-ink rounded-lg bg-yellow-400/30 hover:-translate-y-0.5 hover:shadow-comic transition-all no-underline text-ink"
+                >
+                  🔌 Conectar Search Console (Ajustes → APIs)
+                </Link>
                 <p className="text-xs text-muted-foreground italic">
                   El loop SEO se mide distinto al social: tarda semanas en dar señal. Por eso este
                   canal es always-on — la constancia es la métrica intermedia.
                 </p>
               </>
+            ) : metricsFor.metricsProvider === "gsc" ? (
+              (() => {
+                const g = metricsFor.stages.metrics.gsc;
+                const delta = (cur: number, prev: number | null) =>
+                  prev && prev > 0
+                    ? { value: `${Math.round(((cur - prev) / prev) * 100)}%`, direction: (cur >= prev ? "up" : "down") as "up" | "down" }
+                    : undefined;
+                return g ? (
+                  <>
+                    <div className="grid grid-cols-3 gap-3">
+                      <KpiCard value={g.clicks30d} label="clicks búsqueda · 30d" status="good" delta={delta(g.clicks30d, g.prevClicks30d)} />
+                      <KpiCard value={g.impressions30d} label="impresiones · 30d" status="neutral" delta={delta(g.impressions30d, g.prevImpressions30d)} />
+                      <KpiCard value={g.avgPosition ?? "—"} label="posición media" status="neutral" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <KpiCard value={metricsFor.stages.published.thisMonth} label="publicados este mes" status="neutral" />
+                      <KpiCard
+                        value={g.impressions30d > 0 ? `${Math.round((g.clicks30d / g.impressions30d) * 1000) / 10}%` : "—"}
+                        label="CTR · 30d"
+                        status="neutral"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Fuente: Google Search Console (cron diario de métricas) · tendencia vs 30d anteriores.
+                    </p>
+                  </>
+                ) : (
+                  <div className="border-2 border-ink rounded-lg p-3 bg-sage/15 text-sm">
+                    <b>✓ Search Console conectado.</b> Aún no hay datos diarios recogidos — el cron de
+                    métricas empezará a escribirlos en breve.
+                  </div>
+                );
+              })()
             ) : (
               <>
                 <div className="grid grid-cols-3 gap-3">

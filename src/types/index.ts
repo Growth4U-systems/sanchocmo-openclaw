@@ -407,6 +407,17 @@ export interface ChannelLoopState {
       engagementPct: number | null;
       impressions30d: number | null;
       postsWithMetrics: number;
+      /** Search Console aggregates for the blog channel (SAN-161). Present
+       *  only when the gsc data source is connected and has daily files —
+       *  otherwise the UI keeps the honest "pendiente" state. */
+      gsc?: {
+        clicks30d: number;
+        impressions30d: number;
+        avgPosition: number | null;
+        /** Previous 30-day window for the trend delta. Null without history. */
+        prevClicks30d: number | null;
+        prevImpressions30d: number | null;
+      } | null;
     };
   };
   nextAction: { label: string; tab: "ideas" | "calendar" | "setup"; focusStatus?: string } | null;
@@ -427,6 +438,8 @@ export interface ChannelLoopsPayload {
   ok: boolean;
   channels: ChannelLoopState[];
   repurposing: RepurposeEntry[];
+  /** Cross-channel connection states the Setup checklist reflects (SAN-161). */
+  connections: { gsc: boolean };
   verifiedAt: string;
 }
 
