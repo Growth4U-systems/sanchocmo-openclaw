@@ -142,6 +142,47 @@ export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
 }
 
 /**
+ * Partnerships (SAN-78) — "Crear nueva búsqueda" de creators abre el chat
+ * global con el plan de discovery. La skill `discovery-plan-builder` la
+ * construye SAN-79; mientras llega, Rocinante (agente owner de Outreach,
+ * SAN-116) atiende el hilo con sus skills de outreach.
+ *
+ * - Sin búsqueda: hilo nuevo por click (cada click = un plan nuevo).
+ * - Con búsqueda draft: hilo estable por campaña (continuar el plan).
+ */
+export function buildDiscoverySearchThread(
+  slug: string,
+  search?: { campaignId: string; title?: string },
+): ThreadConfig {
+  const base = {
+    skill: "discovery-plan-builder",
+    skills: ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"] as string[],
+    linkedTo: "rocinante",
+    docPath: null,
+    agent: "rocinante",
+  };
+
+  if (search) {
+    return {
+      ...base,
+      threadId: `${slug}:discovery:${search.campaignId.toLowerCase()}`,
+      threadName: search.title ? `Búsqueda: ${search.title}` : "Búsqueda de creators",
+      threadState: "continue",
+      initialMessage: `Quiero completar y lanzar la búsqueda de creators "${search.title || search.campaignId}" (campaña Yalc ${search.campaignId}, type=Partnerships). Repásame el plan de discovery (sectores, redes, tiers, volumen) y dime qué falta para lanzarla.`,
+    };
+  }
+
+  return {
+    ...base,
+    threadId: `${slug}:discovery:new-${Date.now()}`,
+    threadName: "Nueva búsqueda de creators",
+    threadState: "create",
+    initialMessage:
+      "Quiero crear una nueva búsqueda de creators para el programa de Partnerships. Proponme un plan de discovery: sectores con mejor fit, redes, tiers objetivo y volumen de candidatos. Cuando lo cerremos, lánzala como campaña type=Partnerships en Yalc.",
+  };
+}
+
+/**
  * Find the task thread that "owns" a given doc path, if any. A task owns a
  * doc if the path matches either its `deliverable_file` OR any entry in its
  * `attachments[]`. Returns a ThreadConfig pointing at that task's thread
