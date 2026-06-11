@@ -1,7 +1,7 @@
 /**
  * Outreach · Settings (SAN-76) — sustituye al placeholder del engranaje ⚙️.
  * Espejo de comportamiento de `mockups-partnerships/settings.html`, con el
- * estilo del producto real (tokens navy/rust/sage/ink + shadow-comic):
+ * design system del producto (cards border-border/bg-card, tokens navy/rust/sage):
  *
  *  1. MODELO DE CREATORS (editable): tiers con ER benchmark editable inline +
  *     chips de verticals/formats (añadir/quitar).
@@ -9,7 +9,7 @@
  *     umbral de auto-descarte (oculto en Manual) + explicación de cada modo
  *     con link a los Descartados de la Lista. Aplica a búsquedas NUEVAS.
  *  3. CONVERSIÓN / FUNNEL (read-only): el funnel vive en Metrics — aquí solo
- *     se referencia (narrator + "Editar en Metrics →").
+ *     se referencia (helper + link "Editar en Metrics →").
  *  4. CONEXIONES: providers reales del Cockpit (GET /api/yalc/providers) con
  *     estado y "Probar conexión" (healthchecks reales, POST providers/test).
  *
@@ -24,7 +24,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import type { CreatorModelConfig, QualificationMode, TierKey } from "@/lib/calc-creator-core";
-import { NarratorCaption } from "./ui";
 import { modelConfigQueryKey, useModelConfig, type ModelConfigPayload } from "./use-model-config";
 
 // ── Draft editable (solo lo que Settings edita) ─────────────────────────────
@@ -83,14 +82,13 @@ function tierRange(min: number, max: number | null): string {
   return `${fmtFollowers(min)} – ${fmtFollowers(max)}`;
 }
 
-// ── Panel shell (estructura de settings.html con tokens del producto) ───────
+// ── Panel shell (card estándar del producto) ─────────────────────────────────
 
 function Panel({
   emoji,
   title,
   subtitle,
   pill,
-  tone = "warm",
   children,
   testid,
 }: {
@@ -98,36 +96,29 @@ function Panel({
   title: string;
   subtitle: string;
   pill: React.ReactNode;
-  tone?: "warm" | "cool" | "aged";
   children: React.ReactNode;
   testid?: string;
 }) {
-  const headTone =
-    tone === "cool" ? "bg-cyan-50" : tone === "aged" ? "bg-muted/60" : "bg-yellow-50";
   return (
-    <section
-      className="overflow-hidden rounded-xl border-2 border-ink bg-card shadow-comic-sm"
-      data-testid={testid}
-    >
-      <header className={cn("flex flex-wrap items-center gap-3 border-b-2 border-ink px-5 py-3.5", headTone)}>
-        <span className="grid h-10 w-10 place-items-center rounded-xl border-2 border-ink bg-background text-xl shadow-comic-sm" aria-hidden>
-          {emoji}
-        </span>
+    <section className="rounded-xl border border-border bg-card" data-testid={testid}>
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 pt-4 pb-3">
         <div>
-          <h2 className="font-heading text-lg tracking-wide text-ink">{title}</h2>
-          <p className="text-xs font-semibold text-muted-foreground">{subtitle}</p>
+          <h2 className="m-0 text-sm font-semibold text-foreground">
+            {emoji} {title}
+          </h2>
+          <p className="m-0 text-xs text-muted-foreground">{subtitle}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">{pill}</div>
       </header>
-      <div className="px-5 py-4">{children}</div>
+      <div className="px-5 pb-4">{children}</div>
     </section>
   );
 }
 
-function EditablePill() {
+function HeaderPill({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full border-2 border-ink bg-yellow-100 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wide text-ink shadow-comic-sm">
-      ✏️ Editable
+    <span className="rounded-full border border-border bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+      {children}
     </span>
   );
 }
@@ -173,7 +164,7 @@ function ErCell({
           if (event.key === "Enter") commit(true);
           if (event.key === "Escape") commit(false);
         }}
-        className="w-24 rounded-md border-2 border-rust bg-yellow-50 px-2 py-1 text-center text-sm font-bold text-ink shadow-comic-sm focus:outline-none"
+        className="w-24 rounded-md border border-border bg-background px-2 py-1 text-center text-sm text-foreground focus:border-rust focus:outline-none"
         data-testid={`er-input-${tier}`}
         aria-label={`ER benchmark del tier ${tier}`}
       />
@@ -188,10 +179,10 @@ function ErCell({
         setEditing(true);
       }}
       title="Click para editar el ER benchmark"
-      className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-md border-2 border-ink bg-background px-3 py-1 text-sm font-bold text-ink shadow-comic-sm transition-all hover:-translate-y-0.5 hover:bg-yellow-50"
+      className="inline-flex min-w-[88px] items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-1 text-sm font-medium text-foreground transition-colors hover:border-rust"
       data-testid={`tier-er-${tier}`}
     >
-      {value.toFixed(1)}% <span className="text-[11px] opacity-60" aria-hidden>✏️</span>
+      {value.toFixed(1)}% <span className="text-[11px] opacity-50" aria-hidden>✏️</span>
     </button>
   );
 }
@@ -202,13 +193,11 @@ function ChipRow({
   group,
   items,
   onChange,
-  chipClass,
   placeholder,
 }: {
   group: "vertical" | "format";
   items: string[];
   onChange: (next: string[]) => void;
-  chipClass: string;
   placeholder: string;
 }) {
   const [adding, setAdding] = useState(false);
@@ -228,10 +217,7 @@ function ChipRow({
       {items.map((item) => (
         <span
           key={item}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border-2 border-ink py-0.5 pl-3 pr-1.5 text-[13px] font-bold text-ink shadow-comic-sm",
-            chipClass,
-          )}
+          className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/50 py-0.5 pl-2.5 pr-1 text-xs font-medium text-foreground"
           data-testid={`chip-${group}-${item}`}
         >
           {item}
@@ -240,8 +226,7 @@ function ChipRow({
             title="quitar"
             aria-label={`Quitar ${item}`}
             onClick={() => onChange(items.filter((other) => other !== item))}
-            className="grid place-items-center rounded-full border border-ink bg-background text-[9px] font-black leading-none hover:bg-destructive hover:text-white"
-            style={{ width: 18, height: 18 }}
+            className="grid h-4 w-4 place-items-center rounded-full text-[10px] leading-none text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             ✕
           </button>
@@ -258,14 +243,14 @@ function ChipRow({
             if (event.key === "Escape") commit(false);
           }}
           placeholder={placeholder}
-          className="w-44 rounded-full border-2 border-rust bg-yellow-50 px-3 py-0.5 text-[13px] font-bold text-ink shadow-comic-sm focus:outline-none"
+          className="w-44 rounded-full border border-border bg-background px-3 py-0.5 text-xs focus:border-rust focus:outline-none"
           data-testid={`chip-input-${group}`}
         />
       ) : (
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="rounded-full border-2 border-dashed border-ink/60 bg-transparent px-3.5 py-0.5 text-[13px] font-bold text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-solid hover:bg-yellow-50 hover:text-ink"
+          className="rounded-full border border-dashed border-border px-3 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-rust hover:text-foreground"
           data-testid={`chip-add-${group}`}
         >
           + añadir
@@ -290,16 +275,16 @@ function QualificationDescription({
     <button
       type="button"
       onClick={onGoDiscarded}
-      className="font-bold text-rust underline underline-offset-2 hover:text-rust/80"
+      className="font-medium text-rust underline underline-offset-2 hover:text-rust/80"
       data-testid="link-descartados"
     >
-      Contactos · Lista → filtro Stage &quot;🗑 Descartados&quot;
+      Contactos · Lista → filtro Stage &quot;Descartados&quot;
     </button>
   );
 
   return (
     <div
-      className="mt-3.5 rounded-lg border-2 border-dashed border-ink/30 bg-background px-3.5 py-2.5 text-[13.5px] leading-relaxed text-foreground"
+      className="mt-3.5 rounded-md border border-border bg-muted/40 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground"
       data-testid="qmode-desc"
     >
       {mode === "auto" && (
@@ -324,7 +309,7 @@ function QualificationDescription({
           descartados —automáticos y manuales— se consultan en {discardedLink} y son recuperables.
         </>
       )}
-      <p className="mt-2 text-[11.5px] italic text-muted-foreground">
+      <p className="mt-2 text-xs text-muted-foreground">
         El modo y el umbral aplican a las búsquedas <b>nuevas</b> (cada campaña los congela al
         crearse — no se retro-aplican a las existentes).
       </p>
@@ -398,18 +383,13 @@ function ConnectionsPanel({ slug }: { slug: string }) {
   return (
     <Panel
       emoji="🔌"
-      title="CONEXIONES"
+      title="Conexiones"
       subtitle="providers del Cockpit · estado en vivo"
-      tone="aged"
-      pill={
-        <span className="rounded-full border-2 border-ink bg-background px-3 py-0.5 text-[11px] font-bold uppercase tracking-wide text-ink shadow-comic-sm">
-          {providersQuery.isLoading ? "…" : `${providers.length} providers`}
-        </span>
-      }
+      pill={<HeaderPill>{providersQuery.isLoading ? "…" : `${providers.length} providers`}</HeaderPill>}
       testid="panel-conexiones"
     >
       {providersQuery.error && (
-        <p className="mb-3 rounded-lg border-2 border-destructive/40 bg-destructive/10 p-2.5 text-sm text-destructive">
+        <p className="mb-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           No se pudieron cargar los providers: {String((providersQuery.error as Error).message)}
         </p>
       )}
@@ -420,17 +400,17 @@ function ConnectionsPanel({ slug }: { slug: string }) {
           return (
             <div
               key={provider.id}
-              className="flex flex-wrap items-center gap-3 rounded-lg border-2 border-border bg-background px-3.5 py-2.5 transition-all hover:border-ink"
+              className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background px-3.5 py-2.5 transition-colors hover:border-rust"
               data-testid={`conn-row-${provider.id}`}
             >
-              <span className={cn("h-3 w-3 shrink-0 rounded-full border border-ink", connDot(provider.status))} aria-hidden />
+              <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", connDot(provider.status))} aria-hidden />
               <div className="min-w-0">
-                <div className="text-sm font-bold text-ink">{provider.name || provider.id}</div>
+                <div className="text-sm font-semibold text-foreground">{provider.name || provider.id}</div>
                 <div className="truncate text-xs text-muted-foreground">{connMeta(provider)}</div>
                 {result && (
                   <div
                     className={cn(
-                      "mt-1 inline-block rounded border px-1.5 py-0.5 text-[11px] font-semibold",
+                      "mt-1 inline-block rounded border px-1.5 py-0.5 text-[11px] font-medium",
                       result.ok
                         ? "border-sage/50 bg-sage/10 text-sage"
                         : "border-destructive/50 bg-destructive/10 text-destructive",
@@ -451,10 +431,10 @@ function ConnectionsPanel({ slug }: { slug: string }) {
                       : "Lanza el healthcheck real del provider"
                   }
                   className={cn(
-                    "min-w-[140px] rounded-md border-2 border-ink bg-background px-3 py-1 text-[13px] font-bold text-ink shadow-comic-sm transition-all",
+                    "min-w-[140px] rounded-md border border-border bg-background px-3 py-1 text-[12px] font-semibold text-muted-foreground transition-colors",
                     testing || provider.hasHealthProbe === false
-                      ? "cursor-not-allowed opacity-60"
-                      : "hover:-translate-y-0.5 hover:bg-yellow-50",
+                      ? "cursor-not-allowed opacity-50"
+                      : "hover:border-rust hover:text-foreground",
                   )}
                   data-testid={`test-conn-${provider.id}`}
                 >
@@ -472,24 +452,24 @@ function ConnectionsPanel({ slug }: { slug: string }) {
 
         {/* Impact: tracking de afiliación — Fase 2 (SAN-82), espejo del mockup */}
         <div
-          className="flex flex-wrap items-center gap-3 rounded-lg border-2 border-border bg-muted/40 px-3.5 py-2.5 opacity-70"
+          className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/40 px-3.5 py-2.5 opacity-70"
           data-testid="conn-row-impact"
         >
-          <span className="h-3 w-3 shrink-0 rounded-full border border-ink bg-muted-foreground/40" aria-hidden />
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/40" aria-hidden />
           <div>
-            <div className="text-sm font-bold text-ink">Impact</div>
+            <div className="text-sm font-semibold text-foreground">Impact</div>
             <div className="text-xs text-muted-foreground">
               no conectado · tracking de afiliación y pagos variables
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2.5">
-            <span className="-rotate-3 rounded border-2 border-rust px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-rust">
+            <span className="rounded-full border border-rust/50 px-2 py-0.5 text-[10px] font-semibold text-rust">
               Fase 2
             </span>
             <button
               type="button"
               disabled
-              className="min-w-[140px] cursor-not-allowed rounded-md border-2 border-border bg-background px-3 py-1 text-[13px] font-bold text-muted-foreground opacity-50"
+              className="min-w-[140px] cursor-not-allowed rounded-md border border-border bg-background px-3 py-1 text-[12px] font-semibold text-muted-foreground opacity-50"
             >
               Probar conexión
             </button>
@@ -582,25 +562,25 @@ export function SettingsTab({
   return (
     <div className="space-y-5 pb-24" data-testid="settings-tab">
       {yalcDown && (
-        <div className="rounded-lg border-2 border-yellow-500/60 bg-yellow-100 p-3 text-sm font-semibold text-ink" data-testid="yalc-down-banner">
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900" data-testid="yalc-down-banner">
           ⚠️ YALC no responde — viendo los defaults sembrados de calc-creator-core (solo lectura
           hasta que vuelva): {data?.yalcError}
         </div>
       )}
 
-      {/* ════════ 1 · MODELO DE CREATORS ════════ */}
+      {/* ── 1 · Modelo de creators ── */}
       <Panel
         emoji="📐"
-        title="MODELO DE CREATORS"
+        title="Modelo de creators"
         subtitle={`tiers, benchmarks y taxonomía del programa · ${slug}`}
-        pill={<EditablePill />}
+        pill={<HeaderPill>Editable</HeaderPill>}
         testid="panel-modelo"
       >
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b-2 border-ink text-left">
+            <tr className="border-b border-border text-left">
               {["Tier", "Rango de seguidores", "ER benchmark"].map((label) => (
-                <th key={label} className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <th key={label} className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {label}
                 </th>
               ))}
@@ -608,9 +588,9 @@ export function SettingsTab({
           </thead>
           <tbody>
             {(data?.config.tiers || []).map((tier) => (
-              <tr key={tier.key} className="border-b border-dashed border-ink/20 last:border-0">
-                <td className="px-2.5 py-2.5 font-heading text-base tracking-wide text-navy">
-                  {tier.label.toUpperCase()}
+              <tr key={tier.key} className="border-b border-border last:border-0">
+                <td className="px-2.5 py-2.5 text-sm font-semibold text-navy">
+                  {tier.label}
                 </td>
                 <td className="px-2.5 py-2.5 text-[13px] text-muted-foreground">
                   {tierRange(tier.minFollowers, tier.maxFollowers)}
@@ -631,70 +611,68 @@ export function SettingsTab({
             ))}
           </tbody>
         </table>
-        <p className="mt-2.5 font-serif text-xs italic text-muted-foreground">
+        <p className="mt-2.5 text-xs text-muted-foreground">
           El ER benchmark por tier alimenta el componente &quot;ER vs tier&quot; del Quality Score (0–100).
           Click en un valor para editarlo.
         </p>
 
-        <div className="mt-4 text-sm font-bold text-ink">🏷️ Verticals</div>
+        <div className="mt-4 text-sm font-semibold text-foreground">Verticals</div>
         <div className="mt-2">
           <ChipRow
             group="vertical"
             items={draft.verticals}
             onChange={(next) => update((prev) => ({ ...prev, verticals: next }))}
-            chipClass="bg-sage/15"
             placeholder="nueva vertical…"
           />
         </div>
 
-        <div className="mt-4 text-sm font-bold text-ink">🎬 Formats</div>
+        <div className="mt-4 text-sm font-semibold text-foreground">Formats</div>
         <div className="mt-2">
           <ChipRow
             group="format"
             items={draft.formats}
             onChange={(next) => update((prev) => ({ ...prev, formats: next }))}
-            chipClass="bg-cyan-50"
             placeholder="nuevo formato…"
           />
         </div>
       </Panel>
 
-      {/* ════════ 1b · CUALIFICACIÓN DE CANDIDATOS ════════ */}
+      {/* ── 1b · Cualificación de candidatos ── */}
       <Panel
         emoji="🚦"
-        title="CUALIFICACIÓN DE CANDIDATOS"
+        title="Cualificación de candidatos"
         subtitle="quién decide qué leads pasan de Sourced a Qualified (Shortlist) — por campaña"
-        pill={<EditablePill />}
+        pill={<HeaderPill>Editable</HeaderPill>}
         testid="panel-cualificacion"
       >
         <div className="flex flex-wrap items-center gap-4">
-          <div className="inline-flex overflow-hidden rounded-full border-2 border-ink bg-background shadow-comic-sm" data-testid="qmode-segmented">
+          <div className="inline-flex gap-2" data-testid="qmode-segmented">
             {(
               [
                 { key: "auto" as const, label: "Auto" },
                 { key: "manual" as const, label: "Manual" },
                 { key: "hybrid" as const, label: "Hybrid" },
               ]
-            ).map((option, index) => (
+            ).map((option) => (
               <button
                 key={option.key}
                 type="button"
                 onClick={() => update((prev) => ({ ...prev, mode: option.key }))}
                 className={cn(
-                  "px-4 py-1.5 text-[13px] font-bold transition-colors",
-                  index === 1 && "border-x-2 border-ink",
-                  draft.mode === option.key ? "bg-navy text-white" : "bg-background text-foreground hover:bg-muted",
+                  "rounded-md border px-3 py-1.5 text-[12px] font-semibold transition-colors",
+                  draft.mode === option.key
+                    ? "border-rust bg-rust text-white"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted",
                 )}
                 data-testid={`qmode-${option.key}`}
               >
                 {option.label}
-                {draft.mode === option.key && " ✓"}
               </button>
             ))}
           </div>
 
           {draft.mode !== "manual" && (
-            <label className="flex items-center gap-2 text-sm font-bold text-ink" data-testid="umbral-wrap">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground" data-testid="umbral-wrap">
               auto-descarte si Quality Score &lt;
               <input
                 type="number"
@@ -708,7 +686,7 @@ export function SettingsTab({
                     threshold: Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : prev.threshold,
                   }));
                 }}
-                className="w-16 rounded-md border-2 border-ink bg-background px-2 py-1 text-sm font-bold text-ink shadow-comic-sm focus:border-rust focus:outline-none"
+                className="w-16 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-rust focus:outline-none"
                 data-testid="umbral-input"
               />
             </label>
@@ -718,22 +696,26 @@ export function SettingsTab({
         <QualificationDescription mode={draft.mode} threshold={draft.threshold} onGoDiscarded={onGoDiscarded} />
       </Panel>
 
-      {/* ════════ 2 · CONVERSIÓN / FUNNEL (read-only) ════════ */}
+      {/* ── 2 · Conversión / funnel (read-only) ── */}
       <Panel
         emoji="🔻"
-        title="CONVERSIÓN / FUNNEL"
+        title="Conversión / funnel"
         subtitle="valores de referencia para el break-even · solo lectura"
-        tone="cool"
-        pill={
-          <span className="rounded-full border-2 border-border bg-muted px-3 py-0.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-            🔒 Read-only
-          </span>
-        }
+        pill={<HeaderPill>Solo lectura</HeaderPill>}
         testid="panel-funnel"
       >
-        <div className="mb-3.5">
-          <NarratorCaption>el funnel vive en Metrics — aquí solo lo miramos…</NarratorCaption>
-        </div>
+        <p className="mb-3.5 text-sm text-muted-foreground">
+          El funnel vive en <b>Metrics</b> — Outreach solo referencia estos valores para calcular
+          el break-even de cada deal.{" "}
+          <button
+            type="button"
+            onClick={onGoMetrics}
+            className="font-medium text-rust underline underline-offset-2 hover:text-rust/80"
+            data-testid="editar-en-metrics"
+          >
+            Editar en Metrics →
+          </button>
+        </p>
         {funnel && (
           <div className="grid grid-cols-1 items-stretch gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]" data-testid="funnel-readonly">
             {(
@@ -746,59 +728,45 @@ export function SettingsTab({
             ).map((box, index) => (
               <div key={box.label} className="contents">
                 {index > 0 && (
-                  <span className="hidden place-items-center font-black text-ink sm:grid" aria-hidden>
-                    ▶
+                  <span className="hidden place-items-center text-muted-foreground sm:grid" aria-hidden>
+                    →
                   </span>
                 )}
-                <div className="rounded-lg border-2 border-ink bg-background px-3 py-2.5 text-center shadow-comic-sm">
+                <div className="rounded-lg border border-border bg-background px-3 py-2.5 text-center">
                   <div className={cn("font-heading text-2xl leading-none", box.rust ? "text-rust" : "text-navy")}>
                     {box.value}
                   </div>
-                  <div className="mt-1 text-[11px] font-semibold text-muted-foreground">{box.label}</div>
+                  <div className="mt-1 text-[11px] text-muted-foreground">{box.label}</div>
                 </div>
               </div>
             ))}
           </div>
         )}
-        <div className="mt-3.5 flex flex-wrap items-center gap-3">
-          <span className="text-xs text-muted-foreground">
-            🔒 Estos valores se editan en <b>Metrics</b>; Outreach solo los referencia para calcular
-            el break-even de cada deal.
-          </span>
-          <button
-            type="button"
-            onClick={onGoMetrics}
-            className="ml-auto rounded-md border-2 border-ink bg-background px-3.5 py-1.5 text-sm font-bold text-ink shadow-comic-sm transition-transform hover:-translate-y-0.5"
-            data-testid="editar-en-metrics"
-          >
-            Editar en Metrics →
-          </button>
-        </div>
       </Panel>
 
-      {/* ════════ 3 · CONEXIONES ════════ */}
+      {/* ── 3 · Conexiones ── */}
       <ConnectionsPanel slug={slug} />
 
-      {/* ════════ Banner flotante: cambios sin guardar ════════ */}
+      {/* ── Banner flotante: cambios sin guardar ── */}
       <div
         className={cn(
-          "fixed bottom-5 left-1/2 z-[500] flex items-center gap-3.5 rounded-xl border-2 border-ink px-5 py-2.5 shadow-comic transition-all duration-300",
-          savedFlash ? "bg-sage/20" : "bg-yellow-200",
+          "fixed bottom-5 left-1/2 z-[500] flex items-center gap-3.5 rounded-lg border px-4 py-2.5 shadow-lg transition-all duration-300",
+          savedFlash ? "border-sage/50 bg-sage/10" : "border-border bg-card",
           dirty || savedFlash || saveMutation.isPending
             ? "-translate-x-1/2 translate-y-0 opacity-100"
             : "pointer-events-none -translate-x-1/2 translate-y-24 opacity-0",
         )}
         data-testid="save-bar"
       >
-        <span className="text-sm font-bold text-ink" data-testid="save-msg">
+        <span className="text-sm font-medium text-foreground" data-testid="save-msg">
           {savedFlash
             ? "✓ Modelo guardado — aplica a búsquedas nuevas"
             : saveMutation.isPending
               ? "Guardando…"
-              : "✏️ Cambios sin guardar en el modelo de creators"}
+              : "Cambios sin guardar en el modelo de creators"}
         </span>
         {saveMutation.error && !savedFlash && (
-          <span className="text-xs font-semibold text-destructive">
+          <span className="text-xs font-medium text-destructive">
             {String((saveMutation.error as Error).message)}
           </span>
         )}
@@ -808,7 +776,7 @@ export function SettingsTab({
               type="button"
               onClick={() => setDraft(baseline)}
               disabled={saveMutation.isPending}
-              className="text-[13px] font-bold text-muted-foreground underline underline-offset-2 hover:text-ink"
+              className="text-[13px] font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
               data-testid="discard-btn"
             >
               descartar
@@ -823,8 +791,8 @@ export function SettingsTab({
                 saveMutation.mutate(partial);
               }}
               className={cn(
-                "rounded-md border-2 border-ink bg-rust px-4 py-1.5 font-heading text-sm uppercase tracking-wider text-white shadow-comic-sm transition-transform",
-                saveMutation.isPending || yalcDown ? "opacity-60" : "hover:-translate-y-0.5",
+                "rounded-md bg-rust px-4 py-1.5 text-sm font-semibold text-white transition-colors",
+                saveMutation.isPending || yalcDown ? "opacity-60" : "hover:bg-rust/90",
               )}
               data-testid="save-btn"
             >
