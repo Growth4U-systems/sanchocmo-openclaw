@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface Props {
   open: boolean;
@@ -26,11 +26,20 @@ export function ConfigSheet({ open, onOpenChange, icon, title, description, widt
         className="!max-w-[94vw] !inset-y-3 !right-3 !h-auto overflow-y-auto overflow-x-hidden rounded-2xl border-[3px] border-ink"
         style={{ width: w, boxShadow: "6px 6px 0 var(--sc-ink)" }}
         side="right"
+        showCloseButton={false}
       >
+        {/* Close lives in the sticky header (the built-in absolute one scrolls
+            away with the content and was painted under the z-10 header). */}
         <SheetHeader
-          className="sticky top-0 z-10 border-b-2 pr-12"
+          className="sticky top-0 z-10 border-b-2 pr-14 relative"
           style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-2)" }}
         >
+          <SheetClose
+            className="absolute top-1/2 -translate-y-1/2 right-3 w-9 h-9 grid place-items-center rounded-lg border-2 border-ink bg-card text-base font-bold cursor-pointer hover:-translate-y-[60%] hover:shadow-comic transition-all"
+            aria-label="Cerrar"
+          >
+            ✕
+          </SheetClose>
           <SheetTitle className="flex items-center gap-2.5 font-heading font-bold text-xl" style={{ color: "var(--sc-ink)" }}>
             {icon && (
               <span
