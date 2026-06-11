@@ -68,10 +68,19 @@ test("config sembrada: pesos default iguales y suman 1; hybrid con umbral 40", (
   assert.equal(DEFAULT_CREATOR_MODEL_CONFIG.qualification.threshold, 40);
 });
 
-test("config sembrada: semillas break-even (Ola 2) tipadas y presentes", () => {
+test("config sembrada: semillas break-even espejo del drawer (reach 30 × CTR por formato)", () => {
+  // La semilla provisional `clickRatePct: 15` de la pasada A se retiró:
+  // el mockup final modela reach × CTR (ver break-even.test.mts).
   const be = DEFAULT_CREATOR_MODEL_CONFIG.breakEven;
   assert.equal(be.defaultTargetCacEur, 80);
-  assert.equal(be.clickRatePct, 15);
+  assert.equal(be.reachRatePct, 30);
+  assert.deepEqual(be.ctrByFormatPct, {
+    reel: 1.2,
+    post: 0.9,
+    story: 0.6,
+    video: 1.4,
+    carrusel: 1.0,
+  });
   assert.deepEqual([be.clickToSignupPct, be.signupToKycPct, be.kycToFirstTxPct], [8, 60, 70]);
   assert.deepEqual(be.incentiveMultipliers, [1, 1.5, 2, 3]);
   assert.deepEqual(be.verdict, { viableMinRatio: 1, tightMinRatio: 0.6 });

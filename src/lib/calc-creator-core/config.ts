@@ -32,10 +32,14 @@ export const DEFAULT_CREATOR_MODEL_CONFIG: CreatorModelConfig = {
   qualification: { defaultMode: "hybrid", threshold: 40 },
   // Bandas visuales de la lista (qClass): ≥85 alta · ≥70 media · resto baja.
   scoreBands: { high: 85, medium: 70 },
-  // Semillas del break-even (SAN-75b · Ola 2). Motor NO construido aún:
-  // valores espejo de la calc del mockup (CAC 80 · click 15% · funnel 8/60/70).
+  // Break-even (SAN-75b · Ola 2): espejo EXACTO del <script> de
+  // drawer-partner.html — alcance 30%/post × CTR por formato × ajuste ER ×
+  // funnel 8/60/70 · CAC 80€. (La semilla provisional "click 15%" de la
+  // pasada A se retiró: el mockup final modela reach × CTR, no un click-rate
+  // plano sobre la audiencia engaged.)
   breakEven: {
-    clickRatePct: 15,
+    reachRatePct: 30,
+    ctrByFormatPct: { reel: 1.2, post: 0.9, story: 0.6, video: 1.4, carrusel: 1.0 },
     clickToSignupPct: 8,
     signupToKycPct: 60,
     kycToFirstTxPct: 70,

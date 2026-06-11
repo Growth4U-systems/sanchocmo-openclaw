@@ -2,24 +2,34 @@
  * calc-creator-core · API pública (SAN-75)
  *
  * Paquete TS puro (sin DOM, sin Next, sin DB) con la lógica de la calc de
- * Partnerships. Pasada A (Ola 0): motor de QUALITY SCORE + config sembrada.
+ * Partnerships. Dos motores:
+ *   - Pasada A (Ola 0): QUALITY SCORE 0-100 (`./quality-score.ts`).
+ *   - Pasada B (Ola 2): BREAK-EVEN (`./break-even.ts`) — solo fijo /
+ *     fijo+variable, multiplicador de incentivo del lado alcanzable,
+ *     veredicto verde/ámbar/rojo y contraoferta. Paridad exacta con la calc
+ *     de `drawer-partner.html`.
  *
- * Pasada B (SAN-75b · Ola 2 — NO construida aún): motor de BREAK-EVEN.
- * Cuando llegue, vivirá en `./break-even.ts` y se exportará desde aquí:
- *   - solo fijo:        necesita ≥ fee / CAC_objetivo
- *   - fijo + variable:  necesita ≥ fee / (CAC_objetivo − CPA_variable)
- *   - multiplicador de incentivo ×1/1.5/2/3 del lado de lo alcanzable
- *   - veredicto verde/ámbar/rojo (ratios en `config.breakEven.verdict`)
- * La config sembrada (`DEFAULT_CREATOR_MODEL_CONFIG.breakEven`) y sus tipos
- * (`BreakEvenSeedConfig`) ya están listos para acogerlo.
+ * La tool MCP `yalc_breakeven` vive en `./mcp-tool.ts` como entrypoint
+ * SEPARADO (importa zod + MCP SDK): impórtala como
+ * `@/lib/calc-creator-core/mcp-tool` para no arrastrar esas deps a los
+ * consumidores puros de este index (drawer de SAN-78, workers de SAN-79).
  */
 
 export type {
+  BreakEvenDeal,
+  BreakEvenDealEcho,
+  BreakEvenFunnel,
+  BreakEvenFunnelStep,
+  BreakEvenResult,
   BreakEvenSeedConfig,
+  BreakEvenVerdict,
+  BreakEvenVerdictColor,
   CompetitorPromo,
   CreatorMetrics,
   CreatorModelConfig,
   CreatorSignals,
+  DealFormat,
+  DealStructure,
   QualificationConfig,
   QualificationMode,
   QualityComponent,
@@ -38,6 +48,12 @@ export {
   resolveTier,
   scoreBand,
 } from "./config";
+
+export {
+  BREAK_EVEN_VERDICT_LABELS,
+  computeBreakEven,
+  normalizeDealFormat,
+} from "./break-even";
 
 export {
   computeQualityScore,
