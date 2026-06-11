@@ -8,6 +8,8 @@ const IDEA_DISCOVERY_FIELDS = [
   "title", "pillar_id", "content_type", "target_channel",
   "signal", "angle_draft", "pov_confidence", "signal_type", "source_signals",
   "dispatch_date", "dispatch_slot",
+  // Repurposing lineage (SAN-141) — written by content-atomizer on the idea.
+  "derived_from",
   "approved_via", "approved_by",
   "archived_at", "archived_via", "archived_by",
   "deferred_by", "target_date",
@@ -189,6 +191,7 @@ export function loadUnifiedContentTasks(slug: string): ContentTask[] {
       }
       if (idea.approved_at) ct.approved_at = String(idea.approved_at);
       if (idea.deferred_at) ct.deferred_at = String(idea.deferred_at);
+      if (idea.published_at) ct.published_at = String(idea.published_at);
     }
     if (seen.has(ct.id)) continue;
     seen.add(ct.id);
