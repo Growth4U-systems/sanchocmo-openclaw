@@ -168,20 +168,26 @@ export function findTaskThreadForDoc(
 
   // Normalize the input path. We compare both the brand-relative form
   // (`brand/{slug}/...`) and the slug-relative form (`...`) because
-  // different surfaces use different conventions.
-  const normalized = docPath.replace(/^\/+/, "");
-  const stripBrand = normalized.startsWith(`brand/${slug}/`)
-    ? normalized.slice(`brand/${slug}/`.length)
-    : normalized;
-  const withBrand = normalized.startsWith("brand/")
-    ? normalized
-    : `brand/${slug}/${normalized}`;
+  // different surfaces use different conventions. A `.md` and its
+  // HTML-canonical sibling `.html` (SAN-149) count as the SAME doc, so
+  // opening either file converges on the task thread that owns the pair.
+  const variants = new Set<string>();
+  const addVariants = (p: string) => {
+    const norm = p.replace(/^\/+/, "");
+    variants.add(norm);
+    variants.add(
+      norm.startsWith(`brand/${slug}/`) ? norm.slice(`brand/${slug}/`.length) : norm
+    );
+    variants.add(norm.startsWith("brand/") ? norm : `brand/${slug}/${norm}`);
+  };
+  addVariants(docPath);
+  if (/\.md$/i.test(docPath)) addVariants(docPath.replace(/\.md$/i, ".html"));
+  if (/\.html$/i.test(docPath)) addVariants(docPath.replace(/\.html$/i, ".md"));
 
   const matches = (candidate: unknown): boolean => {
     if (!candidate) return false;
     if (typeof candidate === "string") {
-      const c = candidate.replace(/^\/+/, "");
-      return c === normalized || c === stripBrand || c === withBrand;
+      return variants.has(candidate.replace(/^\/+/, ""));
     }
     if (Array.isArray(candidate)) {
       return candidate.some((x) => matches(x));
@@ -770,6 +776,51 @@ export function buildSkillEditorThread(
     linkedTo: `skills/${skillId}`,
     docPath: docPath || null,
     threadState: "continue",
+  };
+}
+
+/**
+ * Build the thread that asks the agent to convert a markdown doc into its
+ * HTML-canonical sibling via the `html-output` skill (SAN-149).
+ *
+ * Reuses the convergence rule: if a task owns the doc, the conversion runs
+ * in the task's thread; otherwise a doc thread is created. Either way the
+ * skill/agent are forced to html-output/maese-pedro for this message and
+ * the instruction is auto-sent on open (`initialMessage`).
+ */
+export function buildHtmlConversionThread(
+  slug: string,
+  docPath: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  projectsData: any[] | undefined
+): ThreadConfig {
+  const normalizedDocPath = docPath.startsWith("brand/")
+    ? docPath
+    : `brand/${slug}/${docPath.replace(/^\/+/, "")}`;
+  const docKey = normalizedDocPath
+    .split("/")
+    .slice(2)
+    .join("/")
+    .replace(/\.md$/i, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+
+  const base =
+    findTaskThreadForDoc(slug, normalizedDocPath, projectsData) ??
+    buildDocThread(slug, { key: `html-${docKey}`, docPath: normalizedDocPath });
+
+  return {
+    ...base,
+    skill: "html-output",
+    skills: ["html-output", ...base.skills.filter((s) => s !== "html-output")],
+    agent: "maese-pedro",
+    docPath: normalizedDocPath,
+    initialMessage:
+      `Ejecuta la skill html-output sobre ${normalizedDocPath}: genera el documento HTML ` +
+      `self-contained junto al .md (mismo nombre de fichero, extensión .html), usando la ` +
+      `identidad visual del brand si existe. Sigue _system/output/html-canonical-protocol.md. ` +
+      `Cuando termines, confirma la ruta exacta del .html generado.`,
   };
 }
 

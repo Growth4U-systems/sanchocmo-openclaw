@@ -133,6 +133,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "growth4u-ui-system": "maese-pedro",
   "growth4u-visual-generator": "maese-pedro",
   "gsc": "merlin",
+  "html-output": "maese-pedro",
   "image": "dulcinea",
   "insight-classifier": "dulcinea",
   "insight-to-content-mapper": "dulcinea",
