@@ -4,10 +4,9 @@ import { BASE } from "@/lib/data/paths";
 import { listDrafts, loadDraft } from "@/lib/data/drafts";
 import {
   aggregateChannelPhases,
+  computeRollbackPreview,
   deriveStatusFromPhase,
   isForwardMove,
-  STATUS_MAX_PHASE,
-  CHANNEL_PHASE_RANK,
 } from "@/lib/content-task-state";
 import {
   ContentTask,
@@ -346,31 +345,21 @@ export function rollbackChannelPhasesToStatus(
   if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
   if (!ct.channel_phases) return ct;
 
-  const cap = STATUS_MAX_PHASE[ct.status];
-  if (cap === undefined) {
+  // Single source of truth with the UI preview: apply exactly what
+  // computeRollbackPreview reports.
+  const changes = computeRollbackPreview(ct.channel_phases, ct.status);
+  if (changes.length === 0) return ct;
+
+  if (changes.some((c) => c.to === null)) {
     // No applicable phases (status=New) → clear the map entirely.
     delete ct.channel_phases;
-    ct.updated_at = new Date().toISOString();
-    saveProjectTasks(file);
-    return ct;
-  }
-
-  const capRank = CHANNEL_PHASE_RANK[cap];
-  let mutated = false;
-  const next: Record<string, ChannelPhase> = {};
-  for (const [ch, p] of Object.entries(ct.channel_phases)) {
-    if (CHANNEL_PHASE_RANK[p] > capRank) {
-      next[ch] = cap;
-      mutated = true;
-    } else {
-      next[ch] = p;
-    }
-  }
-  if (mutated) {
+  } else {
+    const next: Record<string, ChannelPhase> = { ...ct.channel_phases };
+    for (const c of changes) next[c.channel] = c.to as ChannelPhase;
     ct.channel_phases = next;
-    ct.updated_at = new Date().toISOString();
-    saveProjectTasks(file);
   }
+  ct.updated_at = new Date().toISOString();
+  saveProjectTasks(file);
   return ct;
 }
 

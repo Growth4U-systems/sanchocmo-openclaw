@@ -19,7 +19,12 @@ import {
   useApproveMedia,
   useDiscardContentTask,
   useDeferContentTask,
+  useRetriggerWriter,
 } from "@/hooks/useContentTasks";
+import { useReconcileState, desyncsForContentTask } from "@/hooks/useContentReconcile";
+import { PipelineStateChip } from "@/components/content/PipelineStateChip";
+import { DesyncBadge } from "@/components/content/DesyncBadge";
+import { computeRollbackPreview } from "@/lib/content-task-state";
 import { useOpenChat } from "@/hooks/useChat";
 import { useContentEngineEvents } from "@/hooks/useContentEngineEvents";
 import { buildContentTaskThread } from "@/lib/chat-openers";
@@ -119,6 +124,10 @@ export default function DraftFullScreenPage() {
   const approveMedia = useApproveMedia();
   const discardContentTask = useDiscardContentTask();
   const deferContentTask = useDeferContentTask();
+  const retriggerWriter = useRetriggerWriter();
+  // Desyncs from the last persisted reconciler run (SAN-153) — read-only.
+  const { data: reconcileState } = useReconcileState(slug || null);
+  const ctDesyncs = desyncsForContentTask(reconcileState, contentTaskId);
   const openChat = useOpenChat();
   // Live updates: agent-driven status moves (e.g. Draft → Pending Media)
   // arrive via SSE so the UI doesn't show stale "Aprobar texto" buttons.
@@ -243,6 +252,16 @@ export default function DraftFullScreenPage() {
     if (!ct) return;
     const prev = previousStatus(ct.status);
     if (!prev) return;
+    // Preview of the silent side-effect: reverting also caps any channel
+    // phase above the target status (same rule the server applies via
+    // rollbackChannelPhasesToStatus — shared in lib/content-task-state).
+    const changes = computeRollbackPreview(ct.channel_phases, prev);
+    const detail = changes.length
+      ? `\n\nEsto también retrocederá las fases de canal:\n${changes
+          .map((c) => `  · ${c.channel}: ${c.from} → ${c.to ?? "(se elimina)"}`)
+          .join("\n")}`
+      : "";
+    if (!window.confirm(`¿Revertir el estado a ${prev}?${detail}`)) return;
     updateContentTaskStatus.mutate(
       { slug, parentTaskId: taskId, id: contentTaskId, status: prev },
       {
@@ -464,6 +483,28 @@ export default function DraftFullScreenPage() {
           owner={ct.owner}
           ownerInitials={ownerInitials(ct.owner)}
           scheduledFor={draft?.meta.publishing?.scheduled_at}
+          meta={
+            <>
+              <PipelineStateChip
+                status={ct.status}
+                pipelineState={ct.pipeline_state}
+                since={ct.updated_at}
+              />
+              <DesyncBadge
+                desyncs={ctDesyncs}
+                retriggering={retriggerWriter.isPending}
+                onRetrigger={() =>
+                  retriggerWriter.mutate(
+                    { slug, contentTaskId },
+                    {
+                      onSuccess: () => showToast("Writer relanzado."),
+                      onError: (e) => showToast(`Error: ${(e as Error).message}`),
+                    },
+                  )
+                }
+              />
+            </>
+          }
           banner={banner}
           stepper={
             <StatusStepper

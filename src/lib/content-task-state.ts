@@ -95,6 +95,39 @@ export function deriveStatusFromPhase(
   }
 }
 
+/**
+ * What a status revert will do to each channel phase: entries above the
+ * target status' cap get capped (`to`), or cleared entirely (`to: null`)
+ * when the target has no applicable phases (New). Only changed entries are
+ * returned. `rollbackChannelPhasesToStatus` applies exactly this — the UI
+ * uses it to preview the revert before confirming.
+ */
+export function computeRollbackPreview(
+  channelPhases: Record<string, ChannelPhase> | undefined,
+  targetStatus: ContentTaskStatus,
+): Array<{ channel: string; from: ChannelPhase; to: ChannelPhase | null }> {
+  if (!channelPhases) return [];
+  const cap = STATUS_MAX_PHASE[targetStatus];
+  const out: Array<{ channel: string; from: ChannelPhase; to: ChannelPhase | null }> = [];
+  for (const [channel, from] of Object.entries(channelPhases)) {
+    if (cap === undefined) {
+      out.push({ channel, from, to: null });
+    } else if (CHANNEL_PHASE_RANK[from] > CHANNEL_PHASE_RANK[cap]) {
+      out.push({ channel, from, to: cap });
+    }
+  }
+  return out;
+}
+
+/** Human labels for the Approved/Pending Media sub-states shown in the UI. */
+export const PIPELINE_STATE_LABEL: Record<ContentTaskPipelineState, string> = {
+  researching: "investigando",
+  "clarify-needed": "clarify pendiente",
+  drafting: "redactando",
+  "generating-media": "generando media",
+  "media-review": "media en revisión",
+};
+
 /** Forward-only: returns true if `target` is a strict advance over `current`. */
 export function isForwardMove(
   current: { status: ContentTaskStatus; pipeline_state?: ContentTaskPipelineState | null },
