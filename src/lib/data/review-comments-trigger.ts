@@ -145,6 +145,10 @@ export async function triggerReviewComments(
         ...(secret ? { "X-MC-Secret": secret } : {}),
       },
       body: JSON.stringify(payload),
+      // Never hang the caller on a slow/down gateway: the manual buttons
+      // in the dashboard await this request, and without a timeout the UI
+      // sits in "Despachando..." forever (SAN-148 staging finding).
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
