@@ -107,6 +107,18 @@ export function ApiConnectPanel({ slug, apiId, topAccessory }: ApiConnectPanelPr
   const [allExpanded, setAllExpanded] = useState(false);
   const [connectResult, setConnectResult] = useState<ConnectResult | null>(null);
   const isYalcProvider = isYalcProviderApiId(apiId);
+  const isOAuth = OAUTH_API_IDS.includes(apiId);
+
+  /* ----- Fetch system Service Account (Google APIs share one system SA) ----- */
+  const { data: saData } = useQuery<{ configured: boolean; email?: string }>({
+    queryKey: ["system", "sa"],
+    queryFn: async () => {
+      const res = await fetch("/api/system/sa");
+      if (!res.ok) throw new Error("Failed to load service account");
+      return res.json();
+    },
+    enabled: isOAuth,
+  });
 
   /* ----- Fetch API catalog ----- */
   const { data: catalogData } = useQuery<{ categories: Record<string, { apis: Record<string, ApiCatalogEntry> }> }>({
@@ -241,8 +253,20 @@ export function ApiConnectPanel({ slug, apiId, topAccessory }: ApiConnectPanelPr
   const status = statusData?.status || "not_configured";
   const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.not_configured;
   const ownership = apiMeta?.ownership || "system";
-  const isOAuth = OAUTH_API_IDS.includes(apiId);
   const guide = statusData?.guide;
+
+  // Guide HTML ships with a `.sa-email` placeholder; fill it with the
+  // system Service Account email once configured (mirrors legacy mc-server).
+  const withSaEmail = useCallback(
+    (html: string) => {
+      if (!saData?.configured || !saData.email) return html;
+      return html.replace(
+        /(<code class=['"]sa-email['"]>)[^<]*(<\/code>)/g,
+        `$1${saData.email}$2`,
+      );
+    },
+    [saData],
+  );
 
   /* ----- Loading ----- */
   if (statusLoading) {
@@ -322,8 +346,18 @@ export function ApiConnectPanel({ slug, apiId, topAccessory }: ApiConnectPanelPr
       {/* ---- OAuth note ---- */}
       {isOAuth && (
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
-          <strong>Nota:</strong> Esta API usa autenticacion OAuth. Necesitas una cuenta de servicio de Google
-          o credenciales OAuth configuradas. Consulta la guia de setup para detalles.
+          {saData?.configured && saData.email ? (
+            <>
+              <strong>Service Account del sistema:</strong>{" "}
+              <code className="bg-blue-100 px-1 rounded select-all">{saData.email}</code>
+              {" "}— dale acceso de Lector a este email en tu propiedad (ver guia).
+            </>
+          ) : (
+            <>
+              <strong>Nota:</strong> Esta API usa autenticacion OAuth. Necesitas una cuenta de servicio de Google
+              o credenciales OAuth configuradas. Consulta la guia de setup para detalles.
+            </>
+          )}
         </div>
       )}
 
@@ -386,7 +420,7 @@ export function ApiConnectPanel({ slug, apiId, topAccessory }: ApiConnectPanelPr
                 {expandedSteps.has(idx) && (
                   <div
                     className="px-4 pb-3 pl-12 text-xs text-muted-foreground leading-relaxed [&_a]:text-blue-600 [&_a]:underline [&_strong]:text-foreground [&_strong]:font-semibold [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4 [&_li]:my-0.5"
-                    dangerouslySetInnerHTML={{ __html: step.instructions }}
+                    dangerouslySetInnerHTML={{ __html: withSaEmail(step.instructions) }}
                   />
                 )}
               </div>
