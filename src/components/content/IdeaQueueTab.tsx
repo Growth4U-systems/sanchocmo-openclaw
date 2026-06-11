@@ -121,6 +121,10 @@ interface Props {
   slug: string;
   openChat?: (slug: string, config: ThreadConfig) => void;
   focusId?: string | null;
+  /** Pre-select the Canal filter — set when arriving from a channel loop card (SAN-141). */
+  initialChannel?: string | null;
+  /** Pre-select the status filter (canonical ContentTaskStatus, e.g. "New"). */
+  initialStatus?: string | null;
 }
 
 // Content type → comic color (rust = hot, sage = proof, navy = framework, yellow = personal, aged = listicle)
@@ -146,16 +150,20 @@ function writerSkillFor(channel: string): string {
   return "social-writer"; // linkedin, twitter, default
 }
 
-export function IdeaQueueTab({ slug, openChat }: Props) {
+export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus }: Props) {
   const router = useRouter();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [counts, setCounts] = useState<IdeasCounts | null>(null);
   const [pillars, setPillars] = useState<PillarLite[]>([]);
   const [dispatchCron, setDispatchCron] = useState<CronLite | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>(initialStatus || "all");
   // New filters
-  const [filterChannel, setFilterChannel] = useState<string>("all");
+  const [filterChannel, setFilterChannel] = useState<string>(initialChannel || "all");
+
+  // Keep filters in sync with channel-loop drill-downs while mounted.
+  useEffect(() => { if (initialChannel) setFilterChannel(initialChannel); }, [initialChannel]);
+  useEffect(() => { if (initialStatus) setFilter(initialStatus); }, [initialStatus]);
   const [filterPillar, setFilterPillar] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<"all" | "today" | "week" | "month">("all");
   const [filterSource, setFilterSource] = useState<"all" | "news" | "paa" | "keywords" | "competitors" | "other">("all");

@@ -362,6 +362,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         bestTimes: ch.best_times || [],
         gating: ch.gating || "ungated",
         contentTypes: ch.content_types || [],
+        // SAN-141 channel-entity keys. Optional in the YAML; the cadence PUT
+        // below preserves them via the `...existingCh` spread, so they
+        // survive edits made from the cadence editor UI.
+        mode: ch.mode === "always-on" ? "always-on" : "scheduled",
+        label: ch.label || "",
+        strategyDoc: ch.strategy_doc || "",
+        metricsProvider: ch.metrics_provider || "",
+        primaryKpi: ch.primary_kpi || "",
         profiles: (ch.profiles || []).map((p: Record<string, unknown>) => ({
           name: p.name, handle: p.handle, role: p.role, postsPerWeek: p.posts_per_week,
         })),

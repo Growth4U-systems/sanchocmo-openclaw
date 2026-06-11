@@ -358,6 +358,76 @@ export interface ContentTask {
    * card lives in (status of the least-advanced channel wins).
    */
   draft_statuses?: Record<string, string>;
+  /**
+   * Repurposing lineage (SAN-141): set by content-atomizer when this piece
+   * was derived from a piece in another channel. Powers the "♻️ derivado"
+   * badge and the repurposing strip in the Canales view.
+   */
+  derived_from?: { idea_id: string; channel: string; title?: string };
+}
+
+// ─── Channel loops (SAN-141) ────────────────────────────────────────────────
+// Per-channel loop state for the 📡 Canales view. ALWAYS derived at request
+// time by /api/content-engine/channel-loops from idea-queue, channel_phases,
+// cadence-config, drafts and crons — never persisted (a stored copy would
+// drift from the sources of truth).
+
+export type ChannelMode = "scheduled" | "always-on";
+
+export interface ChannelLoopAntenna {
+  baseName: string;
+  jobId: string | null;
+  enabled: boolean;
+  schedule: string | null;
+  lastRunAt: string | null;
+  finding: string | null;
+  count: number | null;
+  status: string | null;
+}
+
+export interface ChannelLoopState {
+  channel: string;
+  label: string;
+  active: boolean;
+  mode: ChannelMode;
+  cadence: { frequency: string; bestDays: string[]; bestTimes: string[] };
+  /** Brand-relative path of the per-channel strategy doc, null when not configured. */
+  strategyDoc: string | null;
+  strategyDocExists: boolean;
+  metricsProvider: "metricool" | "gsc-pending" | "none" | string;
+  primaryKpi: string | null;
+  stages: {
+    antennas: { enabled: number; total: number; hasError: boolean; lastRunAt: string | null };
+    ideation: { newCount: number; approvedCount: number };
+    creation: { draftingCount: number; clarifyCount: number; readyCount: number; pendingMediaCount: number };
+    published: { thisMonth: number; nextSlot: string | null };
+    metrics: {
+      provider: string;
+      /** Average engagement % across published snapshots, null when unavailable. */
+      engagementPct: number | null;
+      impressions30d: number | null;
+      postsWithMetrics: number;
+    };
+  };
+  nextAction: { label: string; tab: "ideas" | "calendar" | "setup"; focusStatus?: string } | null;
+  repurposing: { incoming: number; outgoing: number };
+  antennas: ChannelLoopAntenna[];
+}
+
+export interface RepurposeEntry {
+  fromChannel: string;
+  fromTitle: string;
+  toChannel: string;
+  toTitle: string;
+  toStatus: string;
+  toId: string;
+}
+
+export interface ChannelLoopsPayload {
+  ok: boolean;
+  channels: ChannelLoopState[];
+  repurposing: RepurposeEntry[];
+  verifiedAt: string;
 }
 
 /** One artifact attached to a task — doc, image, csv, json, etc. */
