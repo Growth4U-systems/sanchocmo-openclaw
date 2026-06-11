@@ -51,6 +51,8 @@ function buildDocEntry(
 ): DocEntry | null {
   const ext = path.extname(fileName);
   if (![".md", ".html"].includes(ext)) return null;
+  // Feedback transcripts (SAN-15/148) are internal artifacts — never listed.
+  if (/\.commented\.(md|html)$/i.test(fileName)) return null;
   if (ext === ".html" && siblings.has(fileName.replace(/\.html$/, ".md"))) return null;
 
   const entry: DocEntry = {

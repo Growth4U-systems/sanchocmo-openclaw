@@ -594,10 +594,18 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
                 )}
               </div>
               <div className="flex-1 overflow-auto p-4">
+                {/* Saved docs load by URL (?raw=1) so in-page anchors stay
+                    inside the iframe (SAN-149); unsaved drafts fall back to
+                    srcDoc for the live preview. */}
                 <iframe
                   key={`preview-${previewRevision}`}
-                  src={previewSrc || undefined}
-                  srcDoc={previewSrc ? undefined : (isHtmlDirty ? htmlDraft : content)}
+                  src={
+                    previewSrc ||
+                    (!isHtmlDirty && activeDocPath
+                      ? `/api/docs/${activeDocPath}?raw=1&_=${previewRevision}`
+                      : undefined)
+                  }
+                  srcDoc={previewSrc || !isHtmlDirty ? undefined : htmlDraft}
                   className="w-full border border-[#E5E2DC] rounded-lg bg-white"
                   style={{ minHeight: "calc(100vh - 160px)" }}
                   sandbox="allow-same-origin"

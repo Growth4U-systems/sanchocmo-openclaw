@@ -50,6 +50,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
       return;
     }
+
+    // ?raw=1 — serve the file inline (SAN-149). HTML deliverables render in
+    // an iframe via this URL so the document has a REAL base URL: in-page
+    // anchors (`href="#section"`) navigate within the iframe document. With
+    // srcDoc the base URL is the parent page, so a TOC click loaded the
+    // whole dashboard inside the iframe.
+    if (req.query.raw === "1") {
+      try {
+        if (!resolved.exists) {
+          return res.status(404).json({ ok: false, error: "Not found", path: resolved.canonicalPath });
+        }
+        const mimeType = ext === ".html" ? "text/html; charset=utf-8" : "text/plain; charset=utf-8";
+        res.setHeader("Content-Type", mimeType);
+        res.setHeader("Cache-Control", "no-store");
+        const stream = fs.createReadStream(fullPath);
+        stream.pipe(res);
+      } catch {
+        res.status(404).json({ ok: false, error: "Not found" });
+      }
+      return;
+    }
     try {
       if (!resolved.exists) {
         return res.status(404).json({ ok: false, error: "Not found", path: resolved.canonicalPath });
