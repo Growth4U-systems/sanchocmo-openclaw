@@ -51,9 +51,9 @@ jobs:
           ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
           ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
           RUN_DB_MIGRATIONS: ${{ vars.RUN_DB_MIGRATIONS }}
-          YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
-          YALC_REF: ${{ vars.YALC_REF || 'main' }}
-          YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
+          # YALC ships as a public GHCR image (SAN-135). Override the tag here
+          # to pin a version; empty falls back to the compose default (:edge).
+          YALC_IMAGE: ${{ vars.YALC_IMAGE }}
           # ── Tier 1 — Auth & infra secrets ─────────────────────────────
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
@@ -150,7 +150,7 @@ jobs:
               "UNIPILE_API_KEY", "UNIPILE_DSN", "DATAFORSEO_API_KEY",
               # Variables (non-sensitive config)
               "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL",
-              "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE",
+              "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE", "YALC_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
               "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
@@ -164,14 +164,9 @@ jobs:
           PY
           )
 
-          YALC_REPO_TOKEN_B64=""
-          if [ -n "${YALC_REPO_TOKEN:-}" ]; then
-            YALC_REPO_TOKEN_B64=$(printf '%s' "$YALC_REPO_TOKEN" | base64 -w0)
-          fi
-
           scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
 
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT YALC_REF=$YALC_REF YALC_REPO_TOKEN_B64=$YALC_REPO_TOKEN_B64 bash -s" <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             echo "▶ Fetching tags…"
@@ -246,26 +241,9 @@ jobs:
             COMPOSE_ARGS="-f docker-compose.yml"
             # Open Design is an opt-in overlay (image is public). G4U keeps it on by default.
             [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
-            if [ "${ENABLE_YALC_SERVICE:-1}" != "0" ]; then
-              YALC_DIR="${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}"
-              if [ ! -d "$YALC_DIR/.git" ]; then
-                if [ -z "${YALC_REPO_TOKEN_B64:-}" ]; then
-                  echo "YALC_REPO_TOKEN is required on the production GitHub Environment, or pre-clone YALC at $YALC_DIR."
-                  exit 1
-                fi
-                echo "▶ Cloning YALC source into $YALC_DIR…"
-                mkdir -p "$(dirname "$YALC_DIR")"
-                YALC_REPO_TOKEN="$(printf '%s' "$YALC_REPO_TOKEN_B64" | base64 -d)"
-                git clone "https://x-access-token:${YALC_REPO_TOKEN}@github.com/Growth4U-systems/Yalc-Growth4U.git" "$YALC_DIR"
-                unset YALC_REPO_TOKEN
-              fi
-              echo "▶ Fetching YALC ref ${YALC_REF:-main}…"
-              git -C "$YALC_DIR" fetch origin "${YALC_REF:-main}" --prune
-              git -C "$YALC_DIR" checkout FETCH_HEAD
-              echo "▶ YALC source: $(git -C "$YALC_DIR" rev-parse --short HEAD)"
-              export YALC_BUILD_CONTEXT="$YALC_DIR"
-              COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
-            fi
+            # YALC (Outreach) is an opt-in overlay; its image is public on GHCR
+            # (pulled below via `pull --ignore-buildable`, same as Open Design).
+            [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose $COMPOSE_ARGS build --pull
             if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
@@ -325,10 +303,9 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
-          YALC_BUILD_CONTEXT: ${{ vars.YALC_BUILD_CONTEXT || '../Yalc-Growth4U' }}
         run: |
           echo "::warning::Deploy failed. Attempting rollback to previous tag…"
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH YALC_BUILD_CONTEXT=$YALC_BUILD_CONTEXT bash -s" <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
             PREV=$(git tag --sort=-creatordate | sed -n '2p')
@@ -341,6 +318,7 @@ jobs:
             export GIT_COMMIT="$(git rev-parse HEAD)"
             COMPOSE_ARGS="-f docker-compose.yml"
             [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
-            [ -d "${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}/.git" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
+            [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
+            docker compose $COMPOSE_ARGS pull --ignore-buildable || true
             docker compose $COMPOSE_ARGS up -d
           EOF
