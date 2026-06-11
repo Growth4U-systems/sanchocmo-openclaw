@@ -16,6 +16,9 @@ import type { BrandBrainState, Section, Pillar } from "@/types";
 import type { OtherDocGroup } from "@/hooks/useBrandBrain";
 
 const FF_PILLAR_MAP: Record<string, string> = {
+  // SAN-13: Fast Foundation collapsed to a single `fast-context` pillar whose doc
+  // is the Company Brief. Older clients still carry the pre-SAN-13 sub-pillars below.
+  "fast-context": "company-brief",
   "company-brief": "company-brief",
   "self-l1": "self-analysis",
   "market-l1": "market-analysis",
