@@ -102,6 +102,8 @@ Skills live in `~/.openclaw/skills/` (central catalog), read natively by all age
 | `email-sequence` | owned | Transactional sequences (post-demo, nurturing) |
 | `cold-email` | owned | Single cold-email campaigns |
 | `outreach-playbook` | owned | Strategic playbook templates |
+| `discovery-plan-builder` | owned | Plan a Partnerships creator search by chat → search task + YALC campaign (SAN-79) |
+| `discovery-search-runner` | owned | Execute a discovery search: ScrapeCreators scraping → scored leads in YALC (SAN-79) |
 | `apollo` | owned | Apollo.io prospecting integration |
 | `sales-call-prep` | owned | Pre-call brief with prospect context |
 | `sales-enablement` | owned | Materials for commercial team |

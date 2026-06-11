@@ -14,6 +14,7 @@ import { loadClients } from "@/lib/data/clients";
 import { getInternalClientStatus } from "@/lib/sancho-internal-api";
 import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
+import { createDiscoverySearch, parseDiscoveryPlan, runDiscoverySearch } from "@/lib/partnerships";
 import {
   resolveOdConfig,
   odHealth,
@@ -562,6 +563,114 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           },
         );
         return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
+    "yalc_create_search",
+    {
+      title: "Create Partnerships discovery search",
+      description:
+        "Creates a creator discovery search (Partnerships · SAN-79): a Partnerships campaign in YALC, a mother Outreach task in Sancho, and a queued discovery runner. Same action as the discovery-plan-builder chat skill and the Encuentra UI. Optionally executes the runner inline with the 9 mockup fixture creators (no ScrapeCreators). Requires yalc:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        title: z.string().min(1).describe("Search title, e.g. 'Finanzas personales ES · IG+TikTok'."),
+        sectors: z.array(z.string().min(1)).min(1).describe("Target sectors/verticals (e.g. 'finanzas personales', 'ahorro')."),
+        networks: z.array(z.string().min(1)).min(1).describe("Networks to scout: instagram, tiktok, youtube, ..."),
+        tiers: z
+          .array(z.enum(["nano", "micro", "mid", "macro"]))
+          .optional()
+          .describe("Target creator tiers (default: all)."),
+        audienceEsMinPct: z.number().min(0).max(100).optional().describe("Minimum Spanish-audience share (%)."),
+        targetVolume: z.number().int().min(1).max(500).optional().describe("Target number of candidates (~40 default)."),
+        competitorBrands: z
+          .array(z.string().min(1))
+          .optional()
+          .describe("Competitor brands to cross-check in ad-library for repeat-promo signal (e.g. N26, Revolut)."),
+        templates: z.array(z.string().min(1)).optional().describe("Template names to instantiate for this search (SAN-80)."),
+        qualificationMode: z
+          .enum(["auto", "manual", "hybrid"])
+          .optional()
+          .describe("YALC campaign qualification mode (default hybrid)."),
+        disqualifyThreshold: z.number().min(0).max(100).optional().describe("Auto-disqualify threshold (default 40)."),
+        notes: z.string().optional().describe("Free-form plan notes for the runner agent."),
+        runFixtures: z
+          .boolean()
+          .default(false)
+          .describe("Run the discovery runner inline with the 9 fixture creators (no ScrapeCreators call)."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the search creation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create."),
+      },
+    },
+    async ({
+      clientSlug,
+      title,
+      sectors,
+      networks,
+      tiers,
+      audienceEsMinPct,
+      targetVolume,
+      competitorBrands,
+      templates,
+      qualificationMode,
+      disqualifyThreshold,
+      notes,
+      runFixtures,
+      dryRun,
+      confirm,
+    }) =>
+      runTool(context, "yalc_create_search", clientSlug, async () => {
+        assertClientScope(context, "yalc:write", clientSlug);
+        const plan = parseDiscoveryPlan({
+          title,
+          sectors,
+          networks,
+          tiers,
+          audienceEsMinPct,
+          targetVolume,
+          signals: { adLibrary: true, competitorBrands: competitorBrands ?? [] },
+          templates,
+          qualificationMode,
+          disqualifyThreshold,
+          notes,
+        });
+
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to create this discovery search.",
+            plan,
+            runFixtures: runFixtures === true,
+          });
+        }
+
+        const created = await createDiscoverySearch({ slug: clientSlug, plan });
+        if (runFixtures === true) {
+          const run = await runDiscoverySearch({
+            slug: clientSlug,
+            searchId: created.search.id,
+            fixtures: true,
+          });
+          return jsonResult({
+            ok: true,
+            search: run.search,
+            campaignId: created.campaignId,
+            taskId: created.taskId,
+            runner: { mode: "fixtures", stats: run.stats },
+            leads: run.inserted,
+            dropped: run.dropped,
+          });
+        }
+        return jsonResult({
+          ok: true,
+          search: created.search,
+          campaignId: created.campaignId,
+          taskId: created.taskId,
+          message:
+            "Search queued. The discovery-search-runner agent picks it up (live scraping), or POST /api/partnerships/searches/{id}/run with fixtures=true.",
+        });
       }),
   );
 
