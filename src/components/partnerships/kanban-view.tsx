@@ -62,20 +62,20 @@ export function KanbanView({ leads, roster, busyLeadId, onMove, onOpen }: Kanban
             key={stage.key}
             data-stage={stage.key}
             className={cn(
-              "flex min-h-[320px] w-[230px] shrink-0 flex-col rounded-xl border-2 border-border bg-card shadow-comic-sm transition-colors",
+              "flex min-h-[320px] w-[230px] shrink-0 flex-col rounded-lg border border-border bg-card transition-colors",
               dragOver === stage.key && "border-rust bg-rust/5",
             )}
           >
             <header
               title={stage.headTooltip || stage.yalcSublabel}
-              className="flex items-start justify-between gap-2 border-b-2 border-border px-3 py-2"
+              className="flex items-start justify-between gap-2 border-b border-border px-3 py-2"
             >
               <div className="min-w-0">
-                <div className="font-heading text-sm uppercase tracking-wide text-navy">{stage.label}</div>
+                <div className="text-xs font-semibold text-muted-foreground">{stage.label}</div>
                 {/* Decisión de diseño nº 4 (2026-06-11): estado genérico del Cockpit Yalc al que mapea la columna */}
-                <div className="text-[10px] font-semibold text-muted-foreground">{stage.yalcSublabel}</div>
+                <div className="text-[10px] text-muted-foreground/70">{stage.yalcSublabel}</div>
               </div>
-              <span className="rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
+              <span className="rounded-full bg-border px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
                 {items.length}
               </span>
             </header>
@@ -90,7 +90,7 @@ export function KanbanView({ leads, roster, busyLeadId, onMove, onOpen }: Kanban
               onDrop={(event) => handleDrop(event, stage.key)}
             >
               {items.length === 0 && (
-                <p className="py-8 text-center text-[11px] font-semibold text-muted-foreground">— vacío —</p>
+                <p className="py-8 text-center text-[11px] text-muted-foreground">— vacío —</p>
               )}
               {items.map((lead) => (
                 <KanbanCard
@@ -149,14 +149,14 @@ function KanbanCard({
       onDragEnd={() => setDragging(false)}
       onClick={() => onOpen(lead)}
       className={cn(
-        "cursor-pointer rounded-lg border-2 border-border bg-background p-2.5 shadow-comic-sm transition-all hover:-translate-y-0.5 hover:border-ink",
+        "cursor-pointer rounded-lg border border-border bg-background p-2.5 transition-colors hover:border-rust",
         dragging && "opacity-50",
         busy && "pointer-events-none opacity-60",
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="truncate text-sm font-bold text-foreground">{leadDisplayName(lead)}</div>
+          <div className="truncate text-sm font-semibold text-foreground">{leadDisplayName(lead)}</div>
           <div className="mt-1 flex flex-wrap gap-1">
             <NetworkChip network={lead.network} />
             <TierChip tier={lead.tier} />
@@ -165,13 +165,13 @@ function KanbanCard({
         <QualityBadge score={lead.qualityScore} />
       </div>
       {typeof lead.offeredPrice === "number" && (
-        <div className="mt-1.5 text-xs font-bold text-rust">
+        <div className="mt-1.5 text-xs font-semibold text-rust">
           {formatEur(lead.offeredPrice)}
-          {feeNote && <span className="ml-1 font-semibold text-muted-foreground">{feeNote}</span>}
+          {feeNote && <span className="ml-1 font-normal text-muted-foreground">{feeNote}</span>}
         </div>
       )}
       {stage === "Discovered" && (
-        <div className="mt-2 flex gap-1.5 border-t-2 border-dashed border-border pt-2">
+        <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
           <button
             type="button"
             title="Mover a Shortlist (yalc: Qualified)"
@@ -179,7 +179,7 @@ function KanbanCard({
               event.stopPropagation();
               onMove(lead, "Shortlist");
             }}
-            className="flex-1 rounded-md border-2 border-ink bg-yellow-100 px-2 py-1 text-[11px] font-bold text-ink shadow-comic-sm transition-transform hover:-translate-y-0.5"
+            className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold transition-colors hover:border-rust hover:text-rust"
           >
             ✓ Shortlist
           </button>
@@ -190,7 +190,7 @@ function KanbanCard({
               event.stopPropagation();
               discard();
             }}
-            className="rounded-md border-2 border-border bg-card px-2 py-1 text-[11px] font-bold text-destructive shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-destructive"
+            className="rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
           >
             🗑
           </button>

@@ -33,10 +33,10 @@ function searchState(campaign: PartnershipCampaign): SearchState {
 }
 
 const STATE_META: Record<SearchState, { stamp: string; stampClass: string; barClass: string }> = {
-  running: { stamp: "⚙ Running", stampClass: "border-cyan-600 text-cyan-700", barClass: "bg-cyan-600" },
-  done: { stamp: "✔ Done", stampClass: "border-sage text-sage", barClass: "bg-sage" },
-  draft: { stamp: "✎ Draft", stampClass: "border-border text-muted-foreground", barClass: "bg-border" },
-  paused: { stamp: "⏸ Paused", stampClass: "border-yellow-600 text-yellow-700", barClass: "bg-yellow-400" },
+  running: { stamp: "⚙ Running", stampClass: "border-cyan-600/50 bg-cyan-50 text-cyan-700", barClass: "bg-cyan-600" },
+  done: { stamp: "✔ Done", stampClass: "border-sage/50 bg-sage/10 text-sage", barClass: "bg-sage" },
+  draft: { stamp: "✎ Draft", stampClass: "border-border bg-muted/40 text-muted-foreground", barClass: "bg-border" },
+  paused: { stamp: "⏸ Paused", stampClass: "border-yellow-500/50 bg-yellow-100 text-yellow-800", barClass: "bg-yellow-400" },
 };
 
 interface EncuentraTabProps {
@@ -78,15 +78,15 @@ export function EncuentraTab({
   return (
     <div data-testid="encuentra-tab">
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Filtrar</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Filtrar</span>
         {(["todas", "archivadas"] as const).map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => setFilter(key)}
             className={cn(
-              "rounded-full border-2 px-3 py-1 text-xs font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5",
-              filter === key ? "border-ink bg-yellow-200 text-ink" : "border-border bg-card text-muted-foreground",
+              "rounded-md border px-3 py-1.5 text-[12px] font-semibold transition-colors",
+              filter === key ? "border-rust bg-rust text-white" : "border-border bg-background hover:bg-muted",
             )}
           >
             {key === "todas" ? "Todas" : "Archivadas"}
@@ -97,7 +97,7 @@ export function EncuentraTab({
       {filter === "archivadas" ? (
         <ZeroState
           quote="«En este cajón no hay más que polvo y telarañas, señor…»"
-          title="¡NADA POR AQUÍ!"
+          title="Nada por aquí"
           body="No has archivado ninguna búsqueda todavía. Las búsquedas archivadas conservan sus candidatos y su histórico de scoring por si quieres rescatarlas."
           action={{ label: "← Volver a todas", onClick: () => setFilter("todas") }}
         />
@@ -106,7 +106,7 @@ export function EncuentraTab({
       ) : campaigns.length === 0 ? (
         <ZeroState
           quote="«Quien busca creators, halla partners, mi señor.»"
-          title="SIN BÚSQUEDAS TODAVÍA"
+          title="Sin búsquedas todavía"
           body="Crea tu primera búsqueda de creators con Sancho: te propone sectores con fit, redes y tiers, y el runner trae candidatos ya puntuados con quality score."
           action={{ label: "✨ Crear nueva búsqueda", onClick: onCreateSearch }}
         />
@@ -127,28 +127,19 @@ export function EncuentraTab({
                 key={campaign.id}
                 data-campaign-id={campaign.id}
                 onClick={() => (isDraft ? onContinueDraft(campaign) : onOpenSearch(campaign))}
-                className={cn(
-                  "cursor-pointer overflow-hidden rounded-xl border-2 border-border bg-card shadow-comic-sm transition-all hover:-translate-y-0.5 hover:border-ink hover:shadow-comic",
-                )}
+                className="cursor-pointer overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-rust"
                 title={
                   isDraft
                     ? "Borrador — completa el plan con Sancho para lanzar"
                     : "Abrir Contactos · Lista filtrado por esta búsqueda"
                 }
               >
-                <div
-                  className={cn(
-                    "flex flex-wrap items-center gap-4 px-5 py-4",
-                    state === "running" && "bg-yellow-50",
-                    state === "done" && "bg-sage/10",
-                    isDraft && "bg-muted/40",
-                  )}
-                >
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-ink bg-background text-xl shadow-comic-sm" aria-hidden>
+                <div className="flex flex-wrap items-center gap-4 px-5 py-4">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-border bg-muted/40 text-xl" aria-hidden>
                     {isDraft ? "🎙️" : state === "done" ? "📺" : "🔍"}
                   </div>
                   <div className="min-w-[240px] flex-1">
-                    <h3 className="font-heading text-lg leading-tight text-ink">{campaign.title || campaign.id}</h3>
+                    <h3 className="font-heading text-[15px] font-bold leading-tight text-foreground">{campaign.title || campaign.id}</h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       Búsqueda Outreach
                       {campaign.createdAt &&
@@ -161,11 +152,11 @@ export function EncuentraTab({
                       <div className={cn("font-heading text-2xl leading-none", isDraft ? "text-muted-foreground/60" : "text-rust")}>
                         {candidateCount}
                       </div>
-                      <div className="text-[10px] font-semibold text-muted-foreground">candidatos</div>
+                      <div className="text-[10px] text-muted-foreground">candidatos</div>
                     </div>
                     <span
                       className={cn(
-                        "-rotate-3 rounded-md border-2 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide",
+                        "rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                         meta.stampClass,
                       )}
                     >
@@ -176,13 +167,13 @@ export function EncuentraTab({
 
                 {/* Estado del runner — TODO(SAN-79): progreso real del discovery-search-runner */}
                 <div className="px-5 pb-3">
-                  <div className="h-2.5 overflow-hidden rounded-full border-2 border-ink/50 bg-background">
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
                     <div
                       className={cn("h-full rounded-full", meta.barClass)}
                       style={{ width: isDraft ? "0%" : "100%" }}
                     />
                   </div>
-                  <p className="mt-1 text-[11px] font-semibold text-muted-foreground">
+                  <p className="mt-1 text-[11px] text-muted-foreground">
                     {isDraft
                       ? "runner: sin lanzar — completa el plan con Sancho para arrancar"
                       : `runner: discovery por chat (SAN-79) · ${candidateCount} candidatos en pipeline · ${shortlisted} más allá de Discovered`}
@@ -192,11 +183,11 @@ export function EncuentraTab({
                 {/* Plantillas instanciadas por búsqueda (SAN-80) */}
                 {!isDraft && (
                   <div
-                    className="relative flex flex-wrap items-center gap-2 border-t-2 border-dashed border-border px-5 py-2.5"
+                    className="relative flex flex-wrap items-center gap-2 border-t border-border px-5 py-2.5"
                     onClick={(event) => event.stopPropagation()}
                     data-testid="search-templates-row"
                   >
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Plantillas de esta búsqueda:
                     </span>
                     {(searches.find((search) => search.campaignId === campaign.id)?.templates || []).map(
@@ -204,7 +195,7 @@ export function EncuentraTab({
                         <span
                           key={instance.instanceId}
                           title={`Instancia de «${instance.name}» (copia congelada al asignar)`}
-                          className="rounded-full border-2 border-ink bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-ink shadow-comic-sm"
+                          className="rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-foreground"
                           data-template-instance={instance.templateId}
                         >
                           {instance.kind === "sequence" ? "✉️" : "📝"} {instance.name}
@@ -214,7 +205,7 @@ export function EncuentraTab({
                     <button
                       type="button"
                       onClick={() => setPickerFor(pickerFor === campaign.id ? null : campaign.id)}
-                      className="rounded-full border-2 border-dashed border-border px-3 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-ink hover:text-foreground"
+                      className="rounded-full border border-dashed border-border px-3 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-rust hover:text-foreground"
                       title="Instanciar una plantilla de la biblioteca en esta búsqueda"
                       data-testid="assign-template-chip"
                     >
@@ -224,10 +215,10 @@ export function EncuentraTab({
                     {/* Picker de la biblioteca */}
                     {pickerFor === campaign.id && (
                       <div
-                        className="absolute left-5 top-full z-20 mt-1 w-80 overflow-hidden rounded-xl border-2 border-ink bg-card shadow-comic"
+                        className="absolute left-5 top-full z-20 mt-1 w-80 overflow-hidden rounded-lg border border-border bg-card shadow-md"
                         data-testid="template-picker"
                       >
-                        <div className="border-b-2 border-border bg-yellow-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                        <div className="border-b border-border bg-muted/30 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           Instanciar desde la biblioteca
                         </div>
                         {templateLibrary.length === 0 && (
@@ -241,17 +232,17 @@ export function EncuentraTab({
                               onAssignTemplate?.(campaign, template.id);
                               setPickerFor(null);
                             }}
-                            className="flex w-full items-center gap-2 border-b border-border/50 px-3 py-2 text-left text-xs transition-colors last:border-b-0 hover:bg-yellow-50"
+                            className="flex w-full items-center gap-2 border-b border-border/50 px-3 py-2 text-left text-xs transition-colors last:border-b-0 hover:bg-muted/40"
                             data-picker-template={template.id}
                           >
                             <span aria-hidden>{template.kind === "sequence" ? "✉️" : "📝"}</span>
                             <span className="min-w-0 flex-1">
-                              <span className="block truncate font-bold text-ink">{template.name}</span>
+                              <span className="block truncate font-semibold text-foreground">{template.name}</span>
                               <span className="block truncate text-[10px] text-muted-foreground">
                                 {template.description}
                               </span>
                             </span>
-                            <span className="shrink-0 rounded border border-ink bg-yellow-200 px-1.5 text-[9px] font-bold">
+                            <span className="shrink-0 rounded border border-border bg-muted px-1.5 text-[9px] font-semibold text-muted-foreground">
                               Instanciar
                             </span>
                           </button>
@@ -262,7 +253,7 @@ export function EncuentraTab({
                             setPickerFor(null);
                             onCreateTemplate?.();
                           }}
-                          className="w-full border-t-2 border-border px-3 py-2 text-left text-xs font-bold text-rust transition-colors hover:bg-yellow-50"
+                          className="w-full border-t border-border px-3 py-2 text-left text-xs font-semibold text-rust transition-colors hover:bg-muted/40"
                           data-testid="picker-create-new"
                         >
                           ✨ Crear nueva en Plantillas →
@@ -277,7 +268,7 @@ export function EncuentraTab({
         </div>
       )}
 
-      <p className="mt-5 text-[11px] italic text-muted-foreground">
+      <p className="mt-5 text-[11px] text-muted-foreground">
         * Los candidatos son Leads del pipeline: abrir una búsqueda lleva a <b>Contactos filtrado
         por esa búsqueda</b> (no hay vista aparte). Las búsquedas en borrador abren el chat de
         Sancho para completar el plan.
@@ -298,19 +289,15 @@ function ZeroState({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="rounded-xl border-4 border-dashed border-border bg-card px-8 py-12 text-center shadow-comic-sm">
-      <div className="inline-block rotate-1 rounded border-2 border-ink bg-yellow-200 px-3 py-0.5 font-serif text-[13px] italic text-ink shadow-comic-sm">
-        {quote}
-      </div>
-      <div className="mt-4 font-heading text-3xl tracking-wide text-navy/30" style={{ WebkitTextStroke: "1px var(--navy)" }}>
-        {title}
-      </div>
-      <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">{body}</p>
+    <div className="rounded-xl border border-dashed border-border bg-card px-8 py-12 text-center">
+      <p className="text-[13px] italic text-muted-foreground">{quote}</p>
+      <div className="mt-3 text-base font-semibold text-foreground">{title}</div>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{body}</p>
       {action && (
         <button
           type="button"
           onClick={action.onClick}
-          className="mt-5 rounded-md border-2 border-border bg-card px-4 py-2 text-sm font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-ink"
+          className="mt-5 rounded-lg border-2 border-border bg-background px-4 py-2 text-sm font-semibold transition-colors hover:border-rust"
         >
           {action.label}
         </button>

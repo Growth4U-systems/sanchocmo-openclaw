@@ -31,9 +31,9 @@ import {
   insertAnalysisParagraph,
   negotiationBreakEven,
 } from "@/lib/partnerships/negotiation";
-import { formatFollowers, formatTier, leadDisplayName } from "@/lib/partnerships/stage-mapping";
+import { formatFollowers, formatIntEs, formatTier, leadDisplayName } from "@/lib/partnerships/stage-mapping";
 import type { PartnershipLead } from "@/lib/partnerships/types";
-import { NarratorCaption, ToastViewport, useToast } from "./ui";
+import { ToastViewport, useToast } from "./ui";
 import { useModelConfig } from "./use-model-config";
 
 interface LeadMessage {
@@ -69,14 +69,14 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 const STATE_CHIP_TONES: Record<string, string> = {
-  paper: "bg-card text-foreground",
-  blue: "bg-blue-100 text-navy",
-  pale: "bg-yellow-50 text-foreground",
-  yellow: "bg-yellow-300 text-ink",
-  navy: "bg-navy text-white",
-  rust: "bg-rust text-white",
-  aged: "bg-muted text-muted-foreground",
-  red: "bg-destructive text-white",
+  paper: "border-border bg-muted/40 text-muted-foreground",
+  blue: "border-cyan-600/50 bg-cyan-50 text-cyan-800",
+  pale: "border-border bg-background text-muted-foreground",
+  yellow: "border-yellow-500/50 bg-yellow-100 text-yellow-800",
+  navy: "border-navy/40 bg-navy/10 text-navy",
+  rust: "border-rust/50 bg-rust/10 text-rust",
+  aged: "border-border bg-muted text-muted-foreground",
+  red: "border-destructive/50 bg-destructive/10 text-destructive",
 };
 
 const MULTIPLIERS = [
@@ -102,10 +102,6 @@ function timeAgo(date?: string | null): string {
   if (hours < 24) return `hace ${hours} h`;
   const days = Math.floor(hours / 24);
   return `hace ${days} d`;
-}
-
-function fmtEs(value: number): string {
-  return Math.round(value).toLocaleString("es-ES");
 }
 
 export function InboxTab({ slug }: { slug: string }) {
@@ -269,10 +265,6 @@ export function InboxTab({ slug }: { slug: string }) {
 
   return (
     <div data-testid="inbox-tab">
-      <div className="mb-3">
-        <NarratorCaption>Las respuestas llegan… y Sancho lee entre líneas.</NarratorCaption>
-      </div>
-
       <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
         {/* ── Lista + chips ── */}
         <div>
@@ -288,16 +280,18 @@ export function InboxTab({ slug }: { slug: string }) {
                   onClick={() => setFilter(active ? null : state.key)}
                   data-state={state.key}
                   className={cn(
-                    "rounded-full border-2 px-2.5 py-0.5 text-[11px] font-bold shadow-comic-sm transition-all hover:-translate-y-0.5",
-                    active ? "border-ink bg-navy text-white" : "border-border bg-card text-foreground",
+                    "rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-colors",
+                    active
+                      ? "border-rust bg-rust text-white"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted",
                     count === 0 && !active && "opacity-50",
                   )}
                 >
                   {state.label}
                   <span
                     className={cn(
-                      "ml-1.5 inline-block min-w-[17px] rounded-full border border-ink px-1 text-center text-[10px]",
-                      count > 0 ? "bg-yellow-300 text-ink" : "bg-muted text-muted-foreground",
+                      "ml-1.5 inline-block min-w-[17px] rounded-full px-1 text-center text-[10px]",
+                      active ? "bg-white/20 text-white" : count > 0 ? "bg-border text-foreground" : "bg-muted text-muted-foreground",
                     )}
                   >
                     {count}
@@ -307,9 +301,9 @@ export function InboxTab({ slug }: { slug: string }) {
             })}
           </div>
 
-          <div className="overflow-hidden rounded-xl border-2 border-border bg-card shadow-comic-sm" data-testid="convo-list">
+          <div className="overflow-hidden rounded-xl border border-border bg-card" data-testid="convo-list">
             {visible.length === 0 && (
-              <p className="px-4 py-7 text-center text-sm italic text-muted-foreground">
+              <p className="px-4 py-7 text-center text-sm text-muted-foreground">
                 Ninguna conversación{filter ? ` en "${INBOX_STATES.find((s) => s.key === filter)?.label}"` : ""}.
                 Sancho está en ello…
               </p>
@@ -327,12 +321,12 @@ export function InboxTab({ slug }: { slug: string }) {
                   onClick={() => setSelectedId(convo.id)}
                   data-convo-id={convo.id}
                   className={cn(
-                    "block w-full border-b-2 border-border/40 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-yellow-50",
-                    selected?.id === convo.id && "bg-yellow-50 shadow-[inset_4px_0_0_theme(colors.rust)]",
+                    "block w-full border-b border-border/60 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/40",
+                    selected?.id === convo.id && "bg-muted/50 shadow-[inset_2px_0_0_theme(colors.rust)]",
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-bold text-ink">
+                    <span className="truncate text-sm font-semibold text-foreground">
                       {networkEmoji(convo.network)} {leadDisplayName(convo)}
                     </span>
                     <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
@@ -342,7 +336,7 @@ export function InboxTab({ slug }: { slug: string }) {
                   <div className="mt-0.5 truncate text-xs text-muted-foreground">{snippet}</div>
                   <span
                     className={cn(
-                      "mt-1.5 inline-block rounded border-2 border-ink px-1.5 py-px text-[9px] font-bold uppercase tracking-wide shadow-comic-sm",
+                      "mt-1.5 inline-block rounded border px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide",
                       STATE_CHIP_TONES[meta.tone],
                     )}
                   >
@@ -355,23 +349,23 @@ export function InboxTab({ slug }: { slug: string }) {
         </div>
 
         {/* ── Hilo ── */}
-        <div className="overflow-hidden rounded-xl border-2 border-border bg-card shadow-comic-sm" data-testid="thread-panel">
+        <div className="overflow-hidden rounded-xl border border-border bg-card" data-testid="thread-panel">
           {!selected ? (
             <div className="px-8 py-14 text-center">
-              <div className="font-heading text-2xl text-navy">SIN CONVERSACIONES</div>
-              <p className="mx-auto mt-2 max-w-md text-sm italic text-muted-foreground">
+              <div className="text-base font-semibold text-foreground">Sin conversaciones</div>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
                 Cuando contactes creators (Contactos → Contactar) sus hilos aparecerán aquí; cada
                 respuesta con precio dispara el break-even de Sancho.
               </p>
             </div>
           ) : (
             <>
-              <header className="flex flex-wrap items-center gap-3 border-b-2 border-border bg-yellow-50 px-5 py-3">
-                <div className="grid h-10 w-10 place-items-center rounded-lg border-2 border-ink bg-card text-lg shadow-comic-sm" aria-hidden>
+              <header className="flex flex-wrap items-center gap-3 border-b border-border bg-muted/30 px-5 py-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-background text-lg" aria-hidden>
                   {networkEmoji(selected.network)}
                 </div>
                 <div className="min-w-[180px] flex-1">
-                  <div className="font-heading text-lg leading-tight text-ink">{leadDisplayName(selected)}</div>
+                  <div className="text-[15px] font-semibold leading-tight text-foreground">{leadDisplayName(selected)}</div>
                   <div className="text-[11px] text-muted-foreground">
                     {[
                       selected.network,
@@ -387,7 +381,7 @@ export function InboxTab({ slug }: { slug: string }) {
                 </div>
                 <span
                   className={cn(
-                    "rounded border-2 border-ink px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shadow-comic-sm",
+                    "rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                     STATE_CHIP_TONES[INBOX_STATES.find((s) => s.key === selected.inboxState)!.tone],
                   )}
                   data-testid="thread-state"
@@ -401,7 +395,7 @@ export function InboxTab({ slug }: { slug: string }) {
                   <p className="py-4 text-center text-sm text-muted-foreground">Cargando hilo…</p>
                 )}
                 {!threadQuery.isLoading && messages.length === 0 && (
-                  <p className="py-4 text-center text-sm italic text-muted-foreground">
+                  <p className="py-4 text-center text-sm text-muted-foreground">
                     Sin mensajes todavía — el primer email saldrá al aprobar el gate de contacto.
                   </p>
                 )}
@@ -414,11 +408,11 @@ export function InboxTab({ slug }: { slug: string }) {
                   >
                     <div
                       className={cn(
-                        "max-w-[80%] rounded-xl border-2 border-ink px-4 py-2.5 text-sm leading-relaxed shadow-comic-sm",
-                        message.direction === "out" ? "rounded-br-sm bg-blue-50" : "rounded-bl-sm bg-card",
+                        "max-w-[80%] rounded-xl border border-border px-4 py-2.5 text-sm leading-relaxed",
+                        message.direction === "out" ? "rounded-br-sm bg-muted/40" : "rounded-bl-sm bg-background",
                       )}
                     >
-                      <div className="mb-1 text-[10px] font-semibold text-muted-foreground">
+                      <div className="mb-1 text-[10px] text-muted-foreground">
                         {message.direction === "out" ? "Equipo (vía Sancho)" : leadDisplayName(selected)}
                         {" · "}
                         {timeAgo(message.createdAt)}
@@ -433,19 +427,15 @@ export function InboxTab({ slug }: { slug: string }) {
                 {/* ── Panel negotiation-assist ── */}
                 {breakEven && detectedPrice && (
                   <section
-                    className="rounded-xl border-2 border-ink bg-card p-4 shadow-comic-sm"
-                    style={{
-                      backgroundImage: "radial-gradient(circle, rgba(196,93,53,0.08) 1px, transparent 1px)",
-                      backgroundSize: "6px 6px",
-                    }}
+                    className="rounded-xl border border-rust/30 border-l-4 border-l-rust bg-rust/5 p-4"
                     data-testid="sancho-price-panel"
                   >
-                    <h3 className="flex flex-wrap items-center gap-2 font-heading text-lg text-rust">
+                    <h3 className="flex flex-wrap items-center gap-2 text-sm font-semibold text-rust">
                       🧮 Sancho ha detectado un precio:{" "}
-                      <span data-testid="detected-price">{fmtEs(fee ?? detectedPrice.amountEur)}€</span>
+                      <span data-testid="detected-price">{formatIntEs(fee ?? detectedPrice.amountEur)}€</span>
                     </h3>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-bold text-muted-foreground">
+                    <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-semibold text-muted-foreground">
                       <label className="flex items-center gap-2">
                         Fee 💶
                         <input
@@ -454,7 +444,7 @@ export function InboxTab({ slug }: { slug: string }) {
                           step={50}
                           value={fee ?? 0}
                           onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
-                          className="w-24 rounded-md border-2 border-border bg-background px-2 py-1 text-sm font-bold focus:border-ink focus:outline-none"
+                          className="w-24 rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-rust focus:outline-none"
                           data-testid="panel-fee"
                         />
                       </label>
@@ -463,7 +453,7 @@ export function InboxTab({ slug }: { slug: string }) {
                         <select
                           value={String(multiplier)}
                           onChange={(e) => setMultiplier(parseFloat(e.target.value) || 1)}
-                          className="rounded-md border-2 border-border bg-background px-2 py-1 text-sm font-bold focus:border-ink focus:outline-none"
+                          className="rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-rust focus:outline-none"
                           data-testid="panel-mult"
                         >
                           {MULTIPLIERS.map((m) => (
@@ -476,30 +466,30 @@ export function InboxTab({ slug }: { slug: string }) {
                     </div>
 
                     <div className="mt-3 grid grid-cols-3 gap-2.5" data-testid="panel-cells">
-                      <div className="rounded-lg border-2 border-border bg-background p-2.5 text-center">
-                        <div className="font-heading text-xl leading-none text-navy" data-testid="panel-necesarias">
-                          {Number.isFinite(breakEven.necesarias) ? fmtEs(breakEven.necesarias) : "∞"}
+                      <div className="rounded-lg border border-border bg-background p-2.5 text-center">
+                        <div className="font-heading text-xl font-semibold leading-none text-navy" data-testid="panel-necesarias">
+                          {Number.isFinite(breakEven.necesarias) ? formatIntEs(breakEven.necesarias) : "∞"}
                         </div>
-                        <div className="mt-1 text-[9px] font-semibold text-muted-foreground">
+                        <div className="mt-1 text-[9px] text-muted-foreground">
                           conversiones necesarias
                           <br />({breakEven.formulaNecesarias})
                         </div>
                       </div>
-                      <div className="rounded-lg border-2 border-border bg-background p-2.5 text-center">
-                        <div className="font-heading text-xl leading-none text-navy" data-testid="panel-alcanzable">
-                          ~{fmtEs(breakEven.alcanzable)}
+                      <div className="rounded-lg border border-border bg-background p-2.5 text-center">
+                        <div className="font-heading text-xl font-semibold leading-none text-navy" data-testid="panel-alcanzable">
+                          ~{formatIntEs(breakEven.alcanzable)}
                         </div>
-                        <div className="mt-1 text-[9px] font-semibold text-muted-foreground">
+                        <div className="mt-1 text-[9px] text-muted-foreground">
                           alcanzables estimadas
                           <br />
                           (×{breakEven.deal.incentiveMultiplier} incentivo)
                         </div>
                       </div>
-                      <div className="rounded-lg border-2 border-border bg-background p-2.5 text-center">
-                        <div className="font-heading text-xl leading-none text-navy" data-testid="panel-ratio">
+                      <div className="rounded-lg border border-border bg-background p-2.5 text-center">
+                        <div className="font-heading text-xl font-semibold leading-none text-navy" data-testid="panel-ratio">
                           {breakEven.ratio === Infinity ? "∞" : `${Math.round(breakEven.ratio * 100)}%`}
                         </div>
-                        <div className="mt-1 text-[9px] font-semibold text-muted-foreground">
+                        <div className="mt-1 text-[9px] text-muted-foreground">
                           cobertura del break-even
                         </div>
                       </div>
@@ -508,10 +498,10 @@ export function InboxTab({ slug }: { slug: string }) {
                     <div className="mt-3 flex flex-wrap items-center gap-3">
                       <span
                         className={cn(
-                          "-rotate-1 rounded-md border-2 border-ink px-3 py-0.5 font-heading text-base tracking-wide shadow-comic-sm",
-                          breakEven.veredictoColor === "green" && "bg-sage text-white",
-                          breakEven.veredictoColor === "amber" && "bg-yellow-300 text-ink",
-                          breakEven.veredictoColor === "red" && "bg-destructive text-white",
+                          "inline-flex items-center gap-1.5 rounded-md border px-3 py-1 text-sm font-semibold",
+                          breakEven.veredictoColor === "green" && "border-sage/60 bg-sage/10 text-sage",
+                          breakEven.veredictoColor === "amber" && "border-amber-400/60 bg-amber-100 text-amber-900",
+                          breakEven.veredictoColor === "red" && "border-destructive/50 bg-destructive/10 text-destructive",
                         )}
                         data-testid="panel-verdict"
                       >
@@ -525,10 +515,10 @@ export function InboxTab({ slug }: { slug: string }) {
 
                     {breakEven.contraofertaEur !== null && breakEven.contraofertaEur > 0 && (
                       <div
-                        className="mt-3 -rotate-[0.4deg] rounded-md border-2 border-ink bg-yellow-200 px-3 py-2 text-[13px] font-semibold text-ink shadow-comic-sm"
+                        className="mt-3 rounded-md border border-yellow-300/60 bg-yellow-50/60 px-3 py-2 text-[13px] text-yellow-900"
                         data-testid="panel-contraoferta"
                       >
-                        💡 <b>Contraoferta sugerida:</b> {fmtEs(breakEven.contraofertaEur)}€ —{" "}
+                        💡 <b>Contraoferta sugerida:</b> {formatIntEs(breakEven.contraofertaEur)}€ —{" "}
                         {breakEven.contraofertaNota}
                       </div>
                     )}
@@ -540,7 +530,7 @@ export function InboxTab({ slug }: { slug: string }) {
                           setDraft((prev) => insertAnalysisParagraph(prev, breakEven));
                           showToast("✓ análisis insertado en el borrador");
                         }}
-                        className="rounded-md border-2 border-border bg-card px-3 py-1.5 text-sm font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-ink"
+                        className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-muted"
                         data-testid="insert-analysis"
                       >
                         📎 Insertar análisis en la respuesta
@@ -550,15 +540,15 @@ export function InboxTab({ slug }: { slug: string }) {
                 )}
 
                 {/* ── Borrador ── */}
-                <div className="rounded-xl border-2 border-dashed border-ink bg-card p-3" data-testid="draft-box">
-                  <span className="-rotate-1 inline-block rounded border-2 border-ink bg-yellow-300 px-2 py-0.5 font-heading text-xs tracking-wide text-ink shadow-comic-sm">
-                    ✍️ BORRADOR · respuesta
+                <div className="rounded-xl border border-dashed border-border bg-background p-3" data-testid="draft-box">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    ✍️ Borrador — respuesta
                   </span>
                   <textarea
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     placeholder={`Escribe la respuesta a ${leadDisplayName(selected)}…`}
-                    className="mt-2 min-h-[150px] w-full resize-y rounded-md border-2 border-border bg-background px-3 py-2 text-sm leading-relaxed focus:border-ink focus:outline-none"
+                    className="mt-2 min-h-[150px] w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed focus:border-rust focus:outline-none"
                     data-testid="draft-textarea"
                   />
                   <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -566,7 +556,7 @@ export function InboxTab({ slug }: { slug: string }) {
                       type="button"
                       disabled={!draft.trim() || createGate.isPending}
                       onClick={() => createGate.mutate()}
-                      className="rounded-md border-2 border-ink bg-rust px-4 py-1.5 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+                      className="rounded-lg border-2 border-rust bg-rust px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
                       data-testid="send-draft"
                     >
                       {createGate.isPending ? "Creando gate…" : "📨 Enviar"}
@@ -575,12 +565,12 @@ export function InboxTab({ slug }: { slug: string }) {
                       type="button"
                       disabled={!draft.trim() || saveDraft.isPending}
                       onClick={() => saveDraft.mutate()}
-                      className="rounded-md border-2 border-border bg-card px-4 py-1.5 text-sm font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-ink disabled:opacity-50"
+                      className="rounded-lg border-2 border-border bg-background px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-muted disabled:opacity-50"
                       data-testid="save-draft"
                     >
                       💾 Guardar
                     </button>
-                    <span className="text-[11px] italic text-muted-foreground">
+                    <span className="text-[11px] text-muted-foreground">
                       Enviar abre el gate de aprobación — nada sale sin tu OK (dry-run en dev).
                     </span>
                   </div>
@@ -594,33 +584,33 @@ export function InboxTab({ slug }: { slug: string }) {
       {/* ── GATE MODAL (GateItem · human-in-the-loop) ── */}
       {gate && (
         <div className="fixed inset-0 z-[600]">
-          <div className="fixed inset-0 bg-ink/45" onClick={() => setGate(null)} aria-hidden />
+          <div className="fixed inset-0 bg-black/30" onClick={() => setGate(null)} aria-hidden />
           <div
             role="dialog"
             aria-modal="true"
-            className="fixed left-1/2 top-1/2 w-[min(540px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-2 border-ink bg-background p-6 shadow-comic"
+            className="fixed left-1/2 top-1/2 w-[min(540px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-lg border-[3px] border-ink bg-card p-6 shadow-comic"
             data-testid="gate-modal"
           >
             {!gate.sent ? (
               <>
-                <h2 className="font-heading text-2xl text-navy">🚦 GATE: APROBAR ENVÍO</h2>
-                <span className="mt-1 inline-block -rotate-2 rounded border-2 border-rust px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-rust">
+                <h2 className="text-lg font-semibold text-foreground">🚦 Aprobar envío</h2>
+                <span className="mt-1 inline-block rounded border border-rust/50 bg-rust/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rust">
                   GateItem · requiere humano
                 </span>
                 <div className="mt-3 space-y-1.5 text-sm">
-                  <div className="rounded-md border-2 border-border bg-card px-3 py-1.5">
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
                     <b>Para:</b> {selected ? leadDisplayName(selected) : ""}
                     {selected?.email ? ` (${selected.email})` : ""}
                   </div>
-                  <div className="rounded-md border-2 border-border bg-card px-3 py-1.5">
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
                     <b>Gate:</b> {gate.runId}
                     {gate.dryRun && " · dry-run (no saldrá ningún email real)"}
                   </div>
-                  <div className="rounded-md border-2 border-border bg-card px-3 py-1.5">
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
                     <b>Acción:</b> {gate.prompt || "Aprobar el envío de la respuesta"}
                   </div>
                 </div>
-                <div className="mt-3 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border-2 border-dashed border-ink bg-card px-3 py-2 text-xs">
+                <div className="mt-3 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs">
                   {gate.preview}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
@@ -628,7 +618,7 @@ export function InboxTab({ slug }: { slug: string }) {
                     type="button"
                     disabled={approveGate.isPending}
                     onClick={() => approveGate.mutate(gate.runId)}
-                    className="rounded-md border-2 border-ink bg-rust px-4 py-2 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+                    className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
                     data-testid="approve-gate"
                   >
                     {approveGate.isPending ? "Aprobando…" : "✅ Aprobar y enviar"}
@@ -636,22 +626,22 @@ export function InboxTab({ slug }: { slug: string }) {
                   <button
                     type="button"
                     onClick={() => setGate(null)}
-                    className="rounded-md border-2 border-border bg-card px-4 py-2 text-sm font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-ink"
+                    className="rounded-lg border-2 border-border bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                   >
-                    ✋ Cancelar
+                    Cancelar
                   </button>
                 </div>
-                <p className="mt-2 text-[11px] italic text-muted-foreground">
+                <p className="mt-2 text-[11px] text-muted-foreground">
                   El gate queda también en el Cockpit (yalc_list_gates) — puedes aprobarlo desde el
                   chat o desde Claude Code (yalc_approve_gate). Tres superficies, una sola lógica.
                 </p>
               </>
             ) : (
               <div className="py-4 text-center" data-testid="gate-sent">
-                <span className="inline-block -rotate-3 rounded-xl border-4 border-sage px-6 py-2 font-heading text-2xl tracking-wide text-sage">
-                  ¡ENVIADO!
+                <span className="inline-flex items-center gap-2 rounded-lg border border-sage/50 bg-sage/10 px-5 py-2 font-heading text-xl text-sage">
+                  ✅ Enviado
                 </span>
-                <p className="mx-auto mt-3 max-w-sm text-sm italic text-muted-foreground">
+                <p className="mx-auto mt-3 max-w-sm text-sm text-muted-foreground">
                   Sancho ha registrado la respuesta en el hilo
                   {gate.dryRun ? " (dry-run: sin email real)" : ""} y el estado del creator avanza en
                   el pipeline.
@@ -659,7 +649,7 @@ export function InboxTab({ slug }: { slug: string }) {
                 <button
                   type="button"
                   onClick={() => setGate(null)}
-                  className="mt-4 rounded-md border-2 border-border bg-card px-4 py-2 text-sm font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-ink"
+                  className="mt-4 rounded-lg border-2 border-border bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                 >
                   Cerrar
                 </button>

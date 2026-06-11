@@ -171,9 +171,22 @@ export function formatFollowers(followers?: number | null): string {
   return String(followers);
 }
 
+/**
+ * Enteros es-ES con separador de miles SIEMPRE ("3.500", "1.534"). No vale
+ * `toLocaleString("es-ES")` a secas: CLDR aplica `minimumGroupingDigits: 2`
+ * al español y omite el punto entre 1.000–9.999 (4100 → "4100"). Mismo
+ * formato determinista (sin ICU) que usa calc-creator-core en sus frases,
+ * para que todos los importes de las superficies Partnerships coincidan.
+ */
+export function formatIntEs(value: number): string {
+  const rounded = Math.round(value);
+  const sign = rounded < 0 ? "-" : "";
+  return sign + Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 export function formatEur(value?: number | null): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "—";
-  return `${value.toLocaleString("es-ES")}€`;
+  return `${formatIntEs(value)}€`;
 }
 
 export function formatTier(tier?: string | null): string | null {
