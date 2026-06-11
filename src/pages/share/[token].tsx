@@ -1,5 +1,5 @@
 /**
- * /share/[token] — Public document viewer with comments (SAN-15).
+ * /share/[token] — Public document viewer with comments (SAN-15, v2 SAN-148).
  *
  * Unauthenticated. Renders any document whose share token validates.
  * Layout: minimal header + content area (markdown or HTML iframe) +
@@ -7,15 +7,21 @@
  *
  * Comment UX (markdown):
  *  - Select text → floating "Comentar" button → form modal with anchor.
- *  - Anchored comments render inline as yellow-highlighted spans in the doc.
+ *    v2: the anchor is a W3C TextQuoteSelector captured over the RENDERED
+ *    text (exact + prefix/suffix, src/lib/anchoring.ts) so it survives doc
+ *    regenerations and selections that cross inline elements.
+ *  - Anchored comments render inline as yellow (open) / green (resolved)
+ *    highlighted spans — re-anchored each render via scoring.
  *  - Hover an anchor mark → tooltip with author + body snippet.
- *  - Click an anchor mark (or a comment in the list) → detail modal with
- *    full body + full anchor context.
+ *  - Click an anchor mark (or a comment in the list) → detail modal.
  *  - Edit/Delete in the detail modal, ONLY for comments whose id is in
  *    localStorage on this browser (the commenter's own browser).
+ *  - v2 threads: reply to a root comment, resolve/reopen a thread
+ *    (public + reversible, Notion model), badges huérfano/general/resuelto.
  *
- * HTML docs: the iframe sandbox blocks selection forwarding to parent, so
- * only the header "Comentar" button (whole-doc, no anchor) is offered.
+ * HTML docs (v2): the iframe loads /api/share/[token]/view, which serves
+ * the deliverable with public/comments-embed.js injected — selection →
+ * anchored comments work INSIDE the iframe (sandbox allows scripts).
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -24,8 +30,13 @@ import { useRouter } from "next/router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  type AnchorPayload,
-  buildAnchorPayload,
+  buildTextIndex,
+  quoteFromSelection,
+  rangeFromOffsets,
+  bestAnchorOffset,
+  type TextQuoteAnchor,
+} from "@/lib/anchoring";
+import {
   deriveDocTitle,
   formatCommentDate,
   stripCommentMarkers,
@@ -59,6 +70,12 @@ interface PublicComment {
   anchorText: string | null;
   anchorContext: string | null;
   anchorDocOffset: number | null;
+  anchorPrefix: string | null;
+  anchorSuffix: string | null;
+  parentId: string | null;
+  resolved: boolean;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
   docVersion: number | null;
   createdAt: string;
 }
@@ -73,14 +90,29 @@ interface SelectionPopup {
   top: number;
   left: number;
   text: string;
+  /** TextQuoteSelector captured at selection time (rendered text). */
+  anchor: TextQuoteAnchor | null;
+}
+
+/** Anchor payload as POSTed to the comments API (v2 fields included). */
+interface FormAnchor {
+  anchorText: string;
+  anchorContext: string | null;
+  anchorDocOffset: number | null;
+  anchorPrefix: string | null;
+  anchorSuffix: string | null;
 }
 
 interface FormState {
   open: boolean;
-  anchor: AnchorPayload | null;
+  anchor: FormAnchor | null;
+  /** Reply target: root comment this form answers (no anchor allowed). */
+  parentId: string | null;
   author: string;
   email: string;
   body: string;
+  /** Honeypot — hidden field, humans never fill it. */
+  website: string;
   submitting: boolean;
   errors: Record<string, string>;
   submitError: string | null;
@@ -89,9 +121,11 @@ interface FormState {
 const EMPTY_FORM: FormState = {
   open: false,
   anchor: null,
+  parentId: null,
   author: "",
   email: "",
   body: "",
+  website: "",
   submitting: false,
   errors: {},
   submitError: null,
@@ -101,6 +135,26 @@ interface HoverTooltip {
   comment: PublicComment;
   top: number;
   left: number;
+}
+
+// Remember the commenter's name across forms/sessions. Shares the key with
+// public/comments-embed.js so the HTML and markdown viewers agree.
+const AUTHOR_LS_KEY = "mcc-name";
+function rememberedAuthor(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(AUTHOR_LS_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+function rememberAuthor(name: string): void {
+  if (typeof window === "undefined" || !name) return;
+  try {
+    window.localStorage.setItem(AUTHOR_LS_KEY, name);
+  } catch {
+    // ignore
+  }
 }
 
 interface DetailState {
@@ -212,11 +266,16 @@ export default function SharePage() {
         setPopup(null);
         return;
       }
+      // v2 (SAN-148): capture the TextQuoteSelector NOW, over the rendered
+      // text — the selection may be gone by the time the form opens.
+      const index = buildTextIndex(article);
+      const anchor = quoteFromSelection(index, sel);
       const rect = range.getBoundingClientRect();
       setPopup({
         top: Math.max(8, rect.top - 40),
         left: rect.left + rect.width / 2,
         text: selectedText,
+        anchor,
       });
     };
 
@@ -236,16 +295,48 @@ export default function SharePage() {
     };
   }, [data, isHtml]);
 
+  // Track which comments could NOT be re-anchored (orphans) so the list
+  // can badge them.
+  const [orphanIds, setOrphanIds] = useState<Set<string>>(new Set());
+
   // Inject inline anchor highlights once the article is rendered.
+  // v2 (SAN-148): re-anchor each ROOT comment with the TextQuoteSelector
+  // scoring (exact + prefix/suffix + proximity) over the rendered text,
+  // then wrap every text segment of the resulting Range in highlight
+  // spans — selections crossing inline elements (<strong>, links) get
+  // multiple spans sharing the same data-cmt-id.
   useEffect(() => {
     const article = articleRef.current;
-    if (!article || !data?.content || isHtml || comments.length === 0) return;
+    if (!article || !data?.content || isHtml || comments.length === 0) {
+      setOrphanIds(new Set());
+      return;
+    }
 
     const inserted: HTMLSpanElement[] = [];
+    const orphans = new Set<string>();
     for (const c of comments) {
-      if (!c.anchorText) continue;
-      injectAnchor(article, c.anchorText, c.id, inserted);
+      if (c.parentId || !c.anchorText) continue;
+      // Rebuild the index per comment: previous wraps split text nodes.
+      const index = buildTextIndex(article);
+      const anchor: TextQuoteAnchor = {
+        exact: c.anchorText,
+        prefix: c.anchorPrefix ?? "",
+        suffix: c.anchorSuffix ?? "",
+        start: c.anchorDocOffset ?? undefined,
+      };
+      const offset = bestAnchorOffset(index.full, anchor);
+      const range = offset >= 0 ? rangeFromOffsets(index, offset, offset + c.anchorText.length) : null;
+      if (!range) {
+        // Legacy v1 fallback: single-text-node exact search (covers anchors
+        // captured over raw markdown whose rendered form still matches).
+        const before = inserted.length;
+        injectAnchor(article, c.anchorText, c.id, c.resolved, inserted);
+        if (inserted.length === before) orphans.add(c.id);
+        continue;
+      }
+      wrapRangeInSpans(range, c.id, c.resolved, inserted);
     }
+    setOrphanIds(orphans);
 
     return () => {
       for (const span of inserted) {
@@ -320,16 +411,57 @@ export default function SharePage() {
 
   const openFormFromSelection = () => {
     if (!popup || !data?.content) return;
-    const anchor = buildAnchorPayload(data.content, popup.text);
-    setForm({ ...EMPTY_FORM, open: true, anchor });
+    // v2: the anchor was captured over the rendered text at selection time.
+    const a = popup.anchor;
+    const anchor: FormAnchor | null = a
+      ? {
+          anchorText: a.exact,
+          anchorContext: `${a.prefix}${a.exact}${a.suffix}` || null,
+          anchorDocOffset: a.start ?? null,
+          anchorPrefix: a.prefix || null,
+          anchorSuffix: a.suffix || null,
+        }
+      : popup.text.trim()
+        ? {
+            anchorText: popup.text.trim(),
+            anchorContext: null,
+            anchorDocOffset: null,
+            anchorPrefix: null,
+            anchorSuffix: null,
+          }
+        : null;
+    setForm({ ...EMPTY_FORM, open: true, anchor, author: rememberedAuthor() });
     setPopup(null);
   };
 
   const openFormForDoc = () => {
-    setForm({ ...EMPTY_FORM, open: true, anchor: null });
+    setForm({ ...EMPTY_FORM, open: true, anchor: null, author: rememberedAuthor() });
+  };
+
+  const openReplyForm = (root: PublicComment) => {
+    setForm({ ...EMPTY_FORM, open: true, parentId: root.id, author: rememberedAuthor() });
   };
 
   const closeForm = () => setForm(EMPTY_FORM);
+
+  // Resolve/reopen a root thread — public and reversible (Notion model).
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const toggleResolved = async (c: PublicComment) => {
+    if (resolvingId) return;
+    setResolvingId(c.id);
+    try {
+      const res = await fetch(`/api/share/${tokenStr}/comments/${c.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resolved: !c.resolved, resolvedBy: rememberedAuthor() || undefined }),
+      });
+      if (res.ok) await fetchComments();
+    } catch {
+      // soft-fail: the list simply doesn't change
+    } finally {
+      setResolvingId(null);
+    }
+  };
 
   const openDetail = (c: PublicComment) =>
     setDetail({
@@ -348,7 +480,13 @@ export default function SharePage() {
       author: form.author,
       email: form.email,
       body: form.body,
-      anchor: form.anchor,
+      anchor: form.anchor
+        ? {
+            anchorText: form.anchor.anchorText,
+            anchorContext: form.anchor.anchorContext ?? "",
+            anchorDocOffset: form.anchor.anchorDocOffset,
+          }
+        : null,
     });
     if (!v.ok) {
       setForm((f) => ({ ...f, errors: v.errors }));
@@ -356,6 +494,7 @@ export default function SharePage() {
     }
     setForm((f) => ({ ...f, submitting: true, errors: {}, submitError: null }));
     try {
+      const isReply = !!form.parentId;
       const res = await fetch(`/api/share/${tokenStr}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -363,9 +502,14 @@ export default function SharePage() {
           author: form.author.trim(),
           email: form.email.trim() || undefined,
           body: form.body.trim(),
-          anchorText: form.anchor?.anchorText ?? undefined,
-          anchorContext: form.anchor?.anchorContext ?? undefined,
-          anchorDocOffset: form.anchor?.anchorDocOffset ?? undefined,
+          // Replies inherit the root's anchor — never send one.
+          anchorText: isReply ? undefined : (form.anchor?.anchorText ?? undefined),
+          anchorContext: isReply ? undefined : (form.anchor?.anchorContext ?? undefined),
+          anchorDocOffset: isReply ? undefined : (form.anchor?.anchorDocOffset ?? undefined),
+          anchorPrefix: isReply ? undefined : (form.anchor?.anchorPrefix ?? undefined),
+          anchorSuffix: isReply ? undefined : (form.anchor?.anchorSuffix ?? undefined),
+          parentId: form.parentId ?? undefined,
+          website: form.website,
         }),
       });
       const body = await res.json();
@@ -378,6 +522,7 @@ export default function SharePage() {
         return;
       }
       markCommentAsMine(body.id);
+      rememberAuthor(form.author.trim());
       closeForm();
       await fetchComments();
     } catch (e) {
@@ -497,6 +642,17 @@ export default function SharePage() {
         .dark .comment-anchor:hover {
           background-color: rgba(255, 220, 100, 0.4);
         }
+        .comment-anchor--resolved {
+          background-color: rgba(16, 185, 129, 0.16);
+          border-bottom-color: rgba(5, 122, 85, 0.5);
+        }
+        .comment-anchor--resolved:hover {
+          background-color: rgba(16, 185, 129, 0.3);
+        }
+        .dark .comment-anchor--resolved {
+          background-color: rgba(16, 185, 129, 0.18);
+          border-bottom-color: rgba(110, 231, 183, 0.5);
+        }
       `}</style>
 
       <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#1E1E2E] flex flex-col">
@@ -551,11 +707,16 @@ export default function SharePage() {
           {data?.content && !error && (
             <>
               {isHtml ? (
+                // v2 (SAN-148): the deliverable is served by /view with the
+                // comments embed injected — selection → anchored comments
+                // work inside the iframe. allow-scripts + allow-same-origin
+                // on same-origin first-party content: sandbox isolation is
+                // void by design here (deliverables are agent-generated).
                 <iframe
-                  srcDoc={data.content}
+                  src={`/api/share/${tokenStr}/view`}
                   className="w-full border-0 bg-white"
                   style={{ minHeight: "calc(100vh - 60px)" }}
-                  sandbox="allow-same-origin"
+                  sandbox="allow-scripts allow-same-origin"
                   title={displayTitle}
                 />
               ) : (
@@ -571,7 +732,11 @@ export default function SharePage() {
                 comments={comments}
                 loading={commentsLoading}
                 error={commentsError}
+                orphanIds={orphanIds}
+                resolvingId={resolvingId}
                 onOpen={openDetail}
+                onReply={openReplyForm}
+                onToggleResolved={toggleResolved}
               />
             </>
           )}
@@ -658,6 +823,7 @@ function injectAnchor(
   article: HTMLElement,
   anchorText: string,
   commentId: string,
+  resolved: boolean,
   inserted: HTMLSpanElement[],
 ): void {
   if (!anchorText) return;
@@ -679,7 +845,7 @@ function injectAnchor(
     const before = value.slice(0, idx);
     const after = value.slice(idx + anchorText.length);
     const span = document.createElement("span");
-    span.className = "comment-anchor";
+    span.className = resolved ? "comment-anchor comment-anchor--resolved" : "comment-anchor";
     span.dataset.cmtId = commentId;
     span.textContent = anchorText;
     if (before) parent.insertBefore(document.createTextNode(before), text);
@@ -691,22 +857,132 @@ function injectAnchor(
   }
 }
 
+/**
+ * Wrap every text segment covered by `range` in a highlight span (v2,
+ * SAN-148). A Range crossing inline elements can't be wrapped by a single
+ * span (surroundContents throws on partial element overlap), so we split
+ * the boundary text nodes and wrap each covered text node individually —
+ * all spans share the comment id for hover/click delegation.
+ */
+function wrapRangeInSpans(
+  range: Range,
+  commentId: string,
+  resolved: boolean,
+  inserted: HTMLSpanElement[],
+): void {
+  const doc = range.startContainer.ownerDocument;
+  if (!doc) return;
+
+  // Split boundary text nodes so the range covers whole text nodes.
+  const startText = range.startContainer as Text;
+  if (startText.nodeType === Node.TEXT_NODE && range.startOffset > 0) {
+    const rest = startText.splitText(range.startOffset);
+    if (range.endContainer === startText) {
+      range.setEnd(rest, range.endOffset - range.startOffset);
+    }
+    range.setStart(rest, 0);
+  }
+  const endText = range.endContainer as Text;
+  if (endText.nodeType === Node.TEXT_NODE && range.endOffset < endText.length) {
+    endText.splitText(range.endOffset);
+  }
+
+  // Collect the text nodes fully inside the (adjusted) range.
+  const root = range.commonAncestorContainer;
+  const walker = doc.createTreeWalker(
+    root.nodeType === Node.TEXT_NODE ? (root.parentNode as Node) : root,
+    NodeFilter.SHOW_TEXT,
+  );
+  const targets: Text[] = [];
+  let node: Node | null = walker.nextNode();
+  while (node) {
+    const t = node as Text;
+    if (range.intersectsNode(t) && t.length > 0) {
+      const r = doc.createRange();
+      r.selectNodeContents(t);
+      if (
+        range.compareBoundaryPoints(Range.START_TO_START, r) <= 0 &&
+        range.compareBoundaryPoints(Range.END_TO_END, r) >= 0
+      ) {
+        targets.push(t);
+      }
+    }
+    node = walker.nextNode();
+  }
+
+  for (const t of targets) {
+    const parent = t.parentNode as HTMLElement | null;
+    if (!parent || parent.closest?.(".comment-anchor")) continue;
+    const span = doc.createElement("span");
+    span.className = resolved ? "comment-anchor comment-anchor--resolved" : "comment-anchor";
+    span.dataset.cmtId = commentId;
+    parent.insertBefore(span, t);
+    span.appendChild(t);
+    inserted.push(span);
+  }
+}
+
+function Badge({ tone, children }: { tone: "orphan" | "general" | "resolved"; children: string }) {
+  const cls =
+    tone === "orphan"
+      ? "bg-orange-100 text-orange-800 border-orange-300"
+      : tone === "general"
+        ? "bg-blue-50 text-blue-700 border-blue-200"
+        : "bg-green-50 text-green-700 border-green-300";
+  return (
+    <span className={`text-[9px] font-bold uppercase tracking-wide border rounded px-1.5 py-px ${cls}`}>
+      {children}
+    </span>
+  );
+}
+
 function CommentsSection({
   comments,
   loading,
   error,
+  orphanIds,
+  resolvingId,
   onOpen,
+  onReply,
+  onToggleResolved,
 }: {
   comments: PublicComment[];
   loading: boolean;
   error: string | null;
+  orphanIds: Set<string>;
+  resolvingId: string | null;
   onOpen: (c: PublicComment) => void;
+  onReply: (root: PublicComment) => void;
+  onToggleResolved: (root: PublicComment) => void;
 }) {
+  const [showResolved, setShowResolved] = useState(true);
+
+  // v2 threads: roots ordered as returned (newest-first), replies oldest-
+  // first under their root so the conversation reads top-down.
+  const roots = comments.filter((c) => !c.parentId);
+  const repliesOf = (rootId: string) =>
+    comments
+      .filter((c) => c.parentId === rootId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const visibleRoots = showResolved ? roots : roots.filter((c) => !c.resolved);
+  const openCount = roots.filter((c) => !c.resolved).length;
+
   return (
     <section className="max-w-3xl mx-auto px-6 pb-12 pt-2">
-      <h2 className="text-sm font-bold text-[#1A1A1A] dark:text-[#cdd6f4] mb-3 border-t border-[#E5E2DC] dark:border-[#313244] pt-6">
-        Comentarios{comments.length > 0 && ` (${comments.length})`}
-      </h2>
+      <div className="flex items-center justify-between border-t border-[#E5E2DC] dark:border-[#313244] pt-6 mb-3">
+        <h2 className="text-sm font-bold text-[#1A1A1A] dark:text-[#cdd6f4]">
+          Comentarios{roots.length > 0 && ` (${openCount} abiertos / ${roots.length})`}
+        </h2>
+        {roots.some((c) => c.resolved) && (
+          <button
+            type="button"
+            onClick={() => setShowResolved((v) => !v)}
+            className="text-[11px] text-muted-foreground hover:text-[#1A1A1A] dark:hover:text-[#cdd6f4] underline"
+          >
+            {showResolved ? "Ocultar resueltos" : "Mostrar resueltos"}
+          </button>
+        )}
+      </div>
       {loading && <p className="text-xs text-muted-foreground">Cargando comentarios...</p>}
       {error && !loading && (
         <p className="text-xs text-red-500">No se pudieron cargar los comentarios: {error}</p>
@@ -717,33 +993,83 @@ function CommentsSection({
         </p>
       )}
       <ul className="flex flex-col gap-3">
-        {comments.map((c) => (
-          <li
-            key={c.id}
-            onClick={() => onOpen(c)}
-            className="bg-white dark:bg-[#181825] border border-[#E5E2DC] dark:border-[#313244] rounded-md p-3 cursor-pointer hover:border-rust transition-colors"
-          >
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <span className="text-[12px] font-bold text-[#1A1A1A] dark:text-[#cdd6f4]">
-                {c.author}
-                {isMyComment(c.id) && (
-                  <span className="ml-1 text-[10px] font-normal text-rust">(tuyo)</span>
+        {visibleRoots.map((c) => {
+          const replies = repliesOf(c.id);
+          return (
+            <li
+              key={c.id}
+              className={`bg-white dark:bg-[#181825] border border-[#E5E2DC] dark:border-[#313244] rounded-md p-3 transition-colors ${c.resolved ? "opacity-60" : ""}`}
+            >
+              <div
+                onClick={() => onOpen(c)}
+                className="cursor-pointer"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-[12px] font-bold text-[#1A1A1A] dark:text-[#cdd6f4] flex items-center gap-1.5">
+                    {c.author}
+                    {isMyComment(c.id) && (
+                      <span className="text-[10px] font-normal text-rust">(tuyo)</span>
+                    )}
+                    {!c.anchorText && <Badge tone="general">general</Badge>}
+                    {c.anchorText && orphanIds.has(c.id) && <Badge tone="orphan">huérfano</Badge>}
+                    {c.resolved && <Badge tone="resolved">resuelto</Badge>}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {formatCommentDate(c.createdAt)}
+                  </span>
+                </div>
+                {c.anchorText && (
+                  <blockquote className="text-[11px] text-muted-foreground border-l-2 border-[#E5E2DC] dark:border-[#313244] pl-2 mb-2 italic">
+                    &quot;{c.anchorText.length > 200 ? c.anchorText.slice(0, 200) + "…" : c.anchorText}&quot;
+                  </blockquote>
                 )}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                {formatCommentDate(c.createdAt)}
-              </span>
-            </div>
-            {c.anchorText && (
-              <blockquote className="text-[11px] text-muted-foreground border-l-2 border-[#E5E2DC] dark:border-[#313244] pl-2 mb-2 italic">
-                &quot;{c.anchorText.length > 200 ? c.anchorText.slice(0, 200) + "…" : c.anchorText}&quot;
-              </blockquote>
-            )}
-            <p className="text-[12px] text-[#1A1A1A] dark:text-[#cdd6f4] whitespace-pre-wrap line-clamp-3">
-              {c.body}
-            </p>
-          </li>
-        ))}
+                <p className="text-[12px] text-[#1A1A1A] dark:text-[#cdd6f4] whitespace-pre-wrap line-clamp-3">
+                  {c.body}
+                </p>
+              </div>
+
+              {replies.map((r) => (
+                <div
+                  key={r.id}
+                  className="mt-2 ml-4 pl-3 border-l-2 border-dashed border-[#E5E2DC] dark:border-[#313244]"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-[#1A1A1A] dark:text-[#cdd6f4]">
+                      {r.author}
+                      {isMyComment(r.id) && (
+                        <span className="ml-1 text-[10px] font-normal text-rust">(tuyo)</span>
+                      )}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {formatCommentDate(r.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-[#1A1A1A] dark:text-[#cdd6f4] whitespace-pre-wrap">
+                    {r.body}
+                  </p>
+                </div>
+              ))}
+
+              <div className="flex items-center gap-4 mt-2">
+                <button
+                  type="button"
+                  onClick={() => onReply(c)}
+                  className="text-[11px] font-bold text-[#1E3A5F] dark:text-[#89b4fa] hover:underline"
+                >
+                  ↩ Responder
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onToggleResolved(c)}
+                  disabled={resolvingId === c.id}
+                  className="text-[11px] font-bold text-green-700 dark:text-green-400 hover:underline disabled:opacity-50"
+                >
+                  {resolvingId === c.id ? "…" : c.resolved ? "Reabrir" : "✓ Resolver"}
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -770,7 +1096,7 @@ function CommentFormModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-sm font-bold text-[#1A1A1A] dark:text-[#cdd6f4] mb-3">
-          Dejar comentario
+          {form.parentId ? "Responder al comentario" : "Dejar comentario"}
         </h2>
 
         {form.anchor?.anchorText && (
@@ -830,6 +1156,19 @@ function CommentFormModal({
               <p className="text-[10px] text-red-500 mt-1">{form.errors.body}</p>
             )}
           </div>
+
+          {/* Honeypot (SAN-148): hidden from humans; bots that fill it get
+              a fake success server-side. */}
+          <input
+            type="text"
+            name="website"
+            value={form.website}
+            onChange={(e) => onChange({ website: e.target.value })}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+          />
 
           {form.submitError && (
             <p className="text-[11px] text-red-500">{form.submitError}</p>

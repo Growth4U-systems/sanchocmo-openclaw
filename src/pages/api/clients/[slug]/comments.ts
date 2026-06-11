@@ -10,11 +10,19 @@
  *   - admin (no ctx limits): all clients
  *   - team member with `allowedSlugs`: only if slug is in list
  *   - portal client with `clientSlug`: only their own slug
+ *
+ * v2 (SAN-148): also accepts service auth (`Authorization: Bearer
+ * $SANCHO_INTERNAL_API_TOKEN`) so the review-comments skill can read
+ * feedback from the agent runtime, plus filters:
+ *   - ?docPath=<original or .commented path> — scope to one doc
+ *   - ?open=1 — unresolved threads only (roots + their replies)
  */
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
 import { type CommentRow, loadDocComments } from "@/lib/comments";
+import { getCommentedDocPath } from "@/lib/comments-file";
+import { requireInternalAuth } from "@/lib/sancho-internal-api";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -34,7 +42,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  const rows = await loadDocComments(slugStr);
+  const docPathQ = Array.isArray(req.query.docPath) ? req.query.docPath[0] : req.query.docPath;
+  const openOnly = req.query.open === "1";
+
+  // Comments live on the `.commented` sibling — translate transparently
+  // when the caller passes the original path.
+  const docPath = docPathQ ? getCommentedDocPath(docPathQ) : undefined;
+  const rows = await loadDocComments(slugStr, docPath, { openOnly });
 
   const byDoc = new Map<string, ReturnType<typeof toApiShape>[]>();
   for (const r of rows) {
@@ -64,9 +78,29 @@ function toApiShape(c: CommentRow) {
     anchorText: c.anchorText,
     anchorContext: c.anchorContext,
     anchorDocOffset: c.anchorDocOffset,
+    anchorPrefix: c.anchorPrefix,
+    anchorSuffix: c.anchorSuffix,
+    parentId: c.parentId,
+    resolved: c.resolved,
+    resolvedAt: c.resolvedAt ? c.resolvedAt.toISOString() : null,
+    resolvedBy: c.resolvedBy,
     docVersion: c.docVersion,
     createdAt: c.createdAt.toISOString(),
   };
 }
 
-export default compose(withErrorHandler, withAuth)(handler);
+const sessionAuthed = compose(withErrorHandler, withAuth)(handler);
+const internalAuthed = withErrorHandler(async (req: NextApiRequest, res: NextApiResponse) => {
+  if (!requireInternalAuth(req, res)) return;
+  return handler(req, res);
+});
+
+export default function entry(req: NextApiRequest, res: NextApiResponse) {
+  // Service callers (agent runtime) authenticate with a Bearer token;
+  // browser callers ride the NextAuth session. The Bearer header decides
+  // the lane — sessions never send Authorization here.
+  if (typeof req.headers.authorization === "string" && req.headers.authorization.startsWith("Bearer ")) {
+    return internalAuthed(req, res);
+  }
+  return sessionAuthed(req, res);
+}

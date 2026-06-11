@@ -22,6 +22,10 @@ export interface CommentPatch {
   anchorText?: string | null;
   anchorContext?: string | null;
   anchorDocOffset?: number | null;
+  /** v2 (SAN-148): resolve/reopen — roots only, public and reversible. */
+  resolved?: boolean;
+  resolvedBy?: string | null;
+  resolvedAt?: Date | null;
 }
 
 export interface CommentRow {
@@ -35,6 +39,14 @@ export interface CommentRow {
   anchorText: string | null;
   anchorContext: string | null;
   anchorDocOffset: number | null;
+  /** v2 (SAN-148): root comment id when this row is a reply */
+  parentId: string | null;
+  resolved: boolean;
+  resolvedAt: Date | null;
+  resolvedBy: string | null;
+  /** v2 (SAN-148): W3C TextQuoteSelector context */
+  anchorPrefix: string | null;
+  anchorSuffix: string | null;
   createdAt: Date;
 }
 
@@ -50,6 +62,10 @@ export interface NewCommentInput {
   anchorText?: string | null;
   anchorContext?: string | null;
   anchorDocOffset?: number | null;
+  /** v2 (SAN-148): reply to a root comment. Replies carry NO anchor. */
+  parentId?: string | null;
+  anchorPrefix?: string | null;
+  anchorSuffix?: string | null;
 }
 
 export const EMAIL_RE = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -57,6 +73,19 @@ export const MAX_BODY = 5000;
 export const MAX_AUTHOR = 120;
 export const MAX_ANCHOR_TEXT = 1000;
 export const MAX_ANCHOR_CONTEXT = 2000;
+/** TextQuoteSelector prefix/suffix cap. g4u-comments captures 32 chars; 256 leaves margin. */
+export const MAX_ANCHOR_AFFIX = 256;
+
+/**
+ * Anti-spam honeypot (SAN-148): the public form ships a hidden `website`
+ * field humans never fill. When a bot fills it the endpoint replies with a
+ * fake 201 and inserts nothing — never reveal the filter to the bot.
+ */
+export function isHoneypotTripped(raw: unknown): boolean {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return false;
+  const v = (raw as Record<string, unknown>).website;
+  return typeof v === "string" && v.trim().length > 0;
+}
 
 export class CommentValidationError extends Error {
   constructor(message: string) {
@@ -99,6 +128,8 @@ export function validateCommentInput(raw: unknown): NewCommentInput {
 
   const anchorText = sanitizeOptionalString(r.anchorText, MAX_ANCHOR_TEXT);
   const anchorContext = sanitizeOptionalString(r.anchorContext, MAX_ANCHOR_CONTEXT);
+  const anchorPrefix = sanitizeOptionalString(r.anchorPrefix, MAX_ANCHOR_AFFIX);
+  const anchorSuffix = sanitizeOptionalString(r.anchorSuffix, MAX_ANCHOR_AFFIX);
 
   let anchorDocOffset: number | null = null;
   if (r.anchorDocOffset != null) {
@@ -118,6 +149,20 @@ export function validateCommentInput(raw: unknown): NewCommentInput {
     docVersion = Math.floor(n);
   }
 
+  // v2 (SAN-148): replies. One level only; a reply inherits the root's
+  // anchor, so sending anchor fields alongside parentId is an error.
+  let parentId: string | null = null;
+  if (r.parentId != null) {
+    const p = typeof r.parentId === "string" ? r.parentId.trim() : "";
+    if (!p || !/^cmt_[A-Za-z0-9-]+$/.test(p)) {
+      throw new CommentValidationError("Invalid parentId");
+    }
+    if (anchorText || anchorContext || anchorPrefix || anchorSuffix || anchorDocOffset != null) {
+      throw new CommentValidationError("Replies cannot carry an anchor (inherited from the root comment)");
+    }
+    parentId = p;
+  }
+
   return {
     slug: "",
     docPath: "",
@@ -128,6 +173,9 @@ export function validateCommentInput(raw: unknown): NewCommentInput {
     anchorText,
     anchorContext,
     anchorDocOffset,
+    parentId,
+    anchorPrefix,
+    anchorSuffix,
   };
 }
 
@@ -144,6 +192,28 @@ export async function insertComment(input: NewCommentInput): Promise<CommentRow>
   if (!input.slug || !input.docPath) {
     throw new CommentValidationError("slug + docPath required");
   }
+
+  // v2 (SAN-148): a reply's parent must exist, live on the same doc, and be
+  // a root itself (threads are one level deep, like g4u-comments).
+  if (input.parentId) {
+    const parents = await db
+      .select({ id: sharedDocComments.id, parentId: sharedDocComments.parentId })
+      .from(sharedDocComments)
+      .where(
+        and(
+          eq(sharedDocComments.id, input.parentId),
+          eq(sharedDocComments.slug, input.slug),
+          eq(sharedDocComments.docPath, input.docPath),
+        ),
+      );
+    if (parents.length === 0) {
+      throw new CommentValidationError("parentId not found on this document");
+    }
+    if (parents[0].parentId) {
+      throw new CommentValidationError("Cannot reply to a reply (threads are one level deep)");
+    }
+  }
+
   const id = `cmt_${crypto.randomUUID()}`;
   const rows = await db
     .insert(sharedDocComments)
@@ -158,6 +228,9 @@ export async function insertComment(input: NewCommentInput): Promise<CommentRow>
       anchorText: input.anchorText ?? null,
       anchorContext: input.anchorContext ?? null,
       anchorDocOffset: input.anchorDocOffset ?? null,
+      parentId: input.parentId ?? null,
+      anchorPrefix: input.anchorPrefix ?? null,
+      anchorSuffix: input.anchorSuffix ?? null,
     })
     .returning();
   return rowToComment(rows[0]);
@@ -169,10 +242,14 @@ export async function insertComment(input: NewCommentInput): Promise<CommentRow>
  *   - public GET endpoint (scoped to one doc)
  *   - authenticated client endpoint (all docs)
  *   - skills, when building context to regenerate a doc
+ *
+ * `openOnly` keeps unresolved roots AND their replies (a reply's open-ness
+ * follows its root).
  */
 export async function loadDocComments(
   slug: string,
   docPath?: string,
+  opts: { openOnly?: boolean } = {},
 ): Promise<CommentRow[]> {
   const baseWhere = docPath
     ? and(eq(sharedDocComments.slug, slug), eq(sharedDocComments.docPath, docPath))
@@ -184,7 +261,15 @@ export async function loadDocComments(
     .where(baseWhere)
     .orderBy(desc(sharedDocComments.createdAt));
 
-  return rows.map(rowToComment);
+  const all = rows.map(rowToComment);
+  if (!opts.openOnly) return all;
+
+  const openRoots = new Set(
+    all.filter((c) => !c.parentId && !c.resolved).map((c) => c.id),
+  );
+  return all.filter((c) =>
+    c.parentId ? openRoots.has(c.parentId) : openRoots.has(c.id),
+  );
 }
 
 /**
@@ -228,6 +313,19 @@ export function validateCommentPatch(raw: unknown): CommentPatch {
     }
   }
 
+  // v2 (SAN-148): resolve/reopen. Public and reversible (Notion model).
+  if (r.resolved !== undefined) {
+    if (typeof r.resolved !== "boolean") {
+      throw new CommentValidationError("Invalid resolved (boolean expected)");
+    }
+    patch.resolved = r.resolved;
+    patch.resolvedAt = r.resolved ? new Date() : null;
+    const by = sanitizeOptionalString(r.resolvedBy, MAX_AUTHOR);
+    patch.resolvedBy = r.resolved ? by : null;
+  } else if (r.resolvedBy !== undefined) {
+    throw new CommentValidationError("resolvedBy requires resolved");
+  }
+
   if (Object.keys(patch).length === 0) {
     throw new CommentValidationError("Empty patch");
   }
@@ -252,6 +350,26 @@ export async function updateComment(
   if (Object.keys(patch).length === 0) {
     throw new CommentValidationError("Empty patch");
   }
+
+  // v2 (SAN-148): resolve applies to roots only — the whole thread shows
+  // as resolved through its root. Replies reject the resolved field.
+  if (patch.resolved !== undefined) {
+    const existing = await db
+      .select({ parentId: sharedDocComments.parentId })
+      .from(sharedDocComments)
+      .where(
+        and(
+          eq(sharedDocComments.id, id),
+          eq(sharedDocComments.slug, slug),
+          eq(sharedDocComments.docPath, docPath),
+        ),
+      );
+    if (existing.length === 0) return null;
+    if (existing[0].parentId) {
+      throw new CommentValidationError("Only root comments can be resolved");
+    }
+  }
+
   const rows = await db
     .update(sharedDocComments)
     .set(patch)
@@ -269,16 +387,28 @@ export async function updateComment(
 
 /**
  * Delete a comment by id. Same token-bound (slug, docPath) check as update.
- * Returns true if a row was deleted, false otherwise.
+ * Deleting a root cascades to its replies (v2). Returns the ids of every
+ * deleted row (root first) so callers can excise file blocks, or [] if no
+ * row matched.
  */
 export async function deleteComment(
   id: string,
   slug: string,
   docPath: string,
-): Promise<boolean> {
+): Promise<string[]> {
   if (!id || !slug || !docPath) {
     throw new CommentValidationError("id + slug + docPath required");
   }
+  const replyRows = await db
+    .delete(sharedDocComments)
+    .where(
+      and(
+        eq(sharedDocComments.parentId, id),
+        eq(sharedDocComments.slug, slug),
+        eq(sharedDocComments.docPath, docPath),
+      ),
+    )
+    .returning({ id: sharedDocComments.id });
   const rows = await db
     .delete(sharedDocComments)
     .where(
@@ -289,7 +419,8 @@ export async function deleteComment(
       ),
     )
     .returning({ id: sharedDocComments.id });
-  return rows.length > 0;
+  if (rows.length === 0) return [];
+  return [...rows.map((r) => r.id), ...replyRows.map((r) => r.id)];
 }
 
 function rowToComment(r: typeof sharedDocComments.$inferSelect): CommentRow {
@@ -304,6 +435,12 @@ function rowToComment(r: typeof sharedDocComments.$inferSelect): CommentRow {
     anchorText: r.anchorText,
     anchorContext: r.anchorContext,
     anchorDocOffset: r.anchorDocOffset,
+    parentId: r.parentId,
+    resolved: r.resolved,
+    resolvedAt: r.resolvedAt,
+    resolvedBy: r.resolvedBy,
+    anchorPrefix: r.anchorPrefix,
+    anchorSuffix: r.anchorSuffix,
     createdAt: r.createdAt,
   };
 }
