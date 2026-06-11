@@ -1579,7 +1579,10 @@ function CadenceForm({
               >
                 <span
                   className={cn(
-                    "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
+                    // left-0 anchors the knob to the pill — without it the
+                    // absolute span inherits the button's centered static
+                    // position and overflows onto the channel name.
+                    "absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
                     ch.active ? "translate-x-4" : "translate-x-0.5"
                   )}
                 />

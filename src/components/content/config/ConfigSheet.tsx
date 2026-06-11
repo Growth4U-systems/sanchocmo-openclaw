@@ -14,7 +14,7 @@ interface Props {
   children: ReactNode;
 }
 
-const DEFAULT_WIDTH = "min(96vw, 820px)";
+const DEFAULT_WIDTH = "min(92vw, 820px)";
 
 export function ConfigSheet({ open, onOpenChange, icon, title, description, width, children }: Props) {
   const w = width || DEFAULT_WIDTH;

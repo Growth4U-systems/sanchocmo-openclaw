@@ -369,7 +369,7 @@ export function SetupTab({ slug, openChat, focusChannel }: Props) {
         onOpenChange={(open) => !open && setEditorSection(null)}
         icon={editorSection ? SECTION_ICONS[editorSection] : undefined}
         title={editorSection ? SECTION_LABELS[editorSection] : ""}
-        width="min(96vw, 1100px)"
+        width="min(92vw, 820px)"
       >
         {editorSection && (
           <InputsTab slug={slug} openChat={openChat} embedded={{ section: editorSection }} />
