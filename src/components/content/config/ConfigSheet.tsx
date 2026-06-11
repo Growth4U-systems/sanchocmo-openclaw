@@ -21,13 +21,15 @@ export function ConfigSheet({ open, onOpenChange, icon, title, description, widt
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="!max-w-[96vw] overflow-y-auto overflow-x-hidden"
-        style={{ width: w }}
+        // Floating comic drawer: margin off the window edges, ink border and
+        // flat offset shadow instead of the flush full-height default.
+        className="!max-w-[94vw] !inset-y-3 !right-3 !h-auto overflow-y-auto overflow-x-hidden rounded-2xl border-[3px] border-ink"
+        style={{ width: w, boxShadow: "6px 6px 0 var(--sc-ink)" }}
         side="right"
       >
         <SheetHeader
-          className="sticky top-0 z-10 bg-popover border-b pr-12"
-          style={{ borderColor: "var(--sc-ink)" }}
+          className="sticky top-0 z-10 border-b-2 pr-12"
+          style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-2)" }}
         >
           <SheetTitle className="flex items-center gap-2.5 font-heading font-bold text-xl" style={{ color: "var(--sc-ink)" }}>
             {icon && (
@@ -46,7 +48,10 @@ export function ConfigSheet({ open, onOpenChange, icon, title, description, widt
             </p>
           )}
         </SheetHeader>
-        <div className="px-5 pb-8">{children}</div>
+        {/* The embedded forms repeat their own <h2> title next to Guardar —
+            redundant under the sheet header, so hide it and keep the action
+            right-aligned. */}
+        <div className="px-5 pb-8 pt-1 [&_h2]:hidden [&_h2+button]:ml-auto">{children}</div>
       </SheetContent>
     </Sheet>
   );
