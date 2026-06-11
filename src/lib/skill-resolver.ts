@@ -211,6 +211,8 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "xlsx": "merlin",
   "yalc-operator": "rocinante",
   "youtube-transcript": "dulcinea",
+  // Fast Foundation intake runs on the research agent (SAN-3 FF flow wiring).
+  "fast-foundation": "hamete",
 };
 
 /** Return the owner agent slug for a skill, or undefined if it belongs to Sancho default. */
@@ -416,4 +418,7 @@ const HOMONYMOUS_SKILL_PILLARS = new Set([
   "positioning-messaging",
   "pricing",
   "company-brief",
+  // SAN-3: FF intake pillar resolves to the `fast-foundation` skill (owner: hamete),
+  // instead of falling through to the sancho-manager fallback.
+  "fast-foundation",
 ]);
