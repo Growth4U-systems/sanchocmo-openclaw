@@ -342,6 +342,21 @@
     "cms": {
       "label": "📰 Web & CMS",
       "apis": {
+        "alarife-payload": {
+          "provider": "Alarife (Payload)",
+          "icon": "🏗️",
+          "desc": "Publicación de artículos del blog en sites Alarife",
+          "ownership": "system",
+          "credentials": [
+            { "key": "API_KEY", "label": "API Key", "type": "string", "sensitive": true, "help": "Clave de Alarife Payload (la plataforma usa SANCHOCMO_ALARIFE_PAYLOAD_API_KEY como fallback global)" }
+          ],
+          "config": [
+            { "key": "CLIENT_ID", "label": "Site (client slug)", "type": "string", "sensitive": false, "help": "Slug del site en Alarife Payload, ej: growth4u o paymatico" },
+            { "key": "PUBLIC_URL", "label": "URL pública del site (opcional)", "type": "string", "sensitive": false, "help": "Origen público para construir el link del artículo, ej: https://www.growth4u.io" },
+            { "key": "BLOG_BASE_PATH", "label": "Ruta base del blog (opcional)", "type": "string", "sensitive": false, "help": "Prefijo de los artículos, por defecto /blog" }
+          ],
+          "docs": "https://alarife-payload.growth4u.io/admin"
+        },
         "wordpress": {
           "provider": "WordPress",
           "icon": "📰",

@@ -1,4 +1,5 @@
 import { metricoolProvider } from "@/lib/publishing/providers/metricool";
+import { alarifeProvider } from "@/lib/publishing/providers/alarife";
 import { wordpressProvider } from "@/lib/publishing/providers/wordpress";
 import { readJSON } from "@/lib/data/json-io";
 import { integrationsFile } from "@/lib/data/paths";
@@ -7,8 +8,10 @@ import type { Channel, ProviderInfo, PublishProvider } from "@/lib/publishing/ty
 /**
  * Add new providers here. The registry order is the UI's preference order:
  * the first configured + channel-supporting provider wins as auto-selected.
+ * Alarife goes before WordPress: it's our own platform, so it's the default
+ * blog publisher when both are configured.
  */
-const ALL_PROVIDERS: PublishProvider[] = [metricoolProvider, wordpressProvider];
+const ALL_PROVIDERS: PublishProvider[] = [metricoolProvider, alarifeProvider, wordpressProvider];
 
 interface IntegrationEntry {
   status?: string;

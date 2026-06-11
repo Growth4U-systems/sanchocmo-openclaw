@@ -48,3 +48,16 @@ test("markdownToHtml: escapes raw HTML in paragraphs", () => {
   assert.ok(!html.includes("<script>"));
   assert.ok(html.includes("&lt;script&gt;"));
 });
+
+// ── Alarife provider helpers (same file: blog providers share the converter) ──
+import * as al from "../publishing/providers/alarife";
+const { slugifyPath } = (al as unknown as { default: typeof al }).default ?? al;
+
+test("slugifyPath: normalizes accents, spaces and symbols", () => {
+  assert.equal(slugifyPath("Mejor CRM para pymes en 2026: comparativa"), "mejor-crm-para-pymes-en-2026-comparativa");
+  assert.equal(slugifyPath("¿Qué CRM elegir?"), "que-crm-elegir");
+});
+
+test("slugifyPath: never returns empty", () => {
+  assert.equal(slugifyPath("???"), "articulo");
+});
