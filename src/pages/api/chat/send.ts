@@ -9,6 +9,7 @@ import {
   type ChatAttachment,
   type ErrorDetail,
 } from "@/lib/data/mc-chat";
+import { maybeMarkClarifyAnswered } from "@/lib/clarify-autostatus";
 
 async function readGatewayResponse(res: Response): Promise<{ chatId?: string; raw: string }> {
   const raw = await res.text();
@@ -80,6 +81,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Store user message locally
   addMessage(tid, "user", text, undefined, parsedAttachments);
+
+  // Deterministic clarify transition (SAN-152): when this message carries
+  // `[ask:…] respuesta:` lines on a content thread and they complete the
+  // clarify doc's questions, flip `clarify_status` to "answered" so the UI
+  // and the writer gate don't depend on the agent remembering to do it.
+  // Never let a failure here block the chat message.
+  try {
+    const clarifyResult = maybeMarkClarifyAnswered(slug, tid, text);
+    if (clarifyResult.marked) {
+      console.log(`[clarify-autostatus] ${tid}: clarify_status → answered`);
+    }
+  } catch (e) {
+    console.error("[clarify-autostatus] failed:", e instanceof Error ? e.message : e);
+  }
   if (resolvedAgent) {
     setStatusEntry(tid, {
       text: shortThreadId === "yalc" ? "YALC está preparando la respuesta..." : "El agente está pensando...",

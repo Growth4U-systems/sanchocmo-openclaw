@@ -191,6 +191,13 @@ export function useSendMessage() {
       setTimeout(() => setPolling(false), 30000);
       // Invalidate thread messages
       qc.invalidateQueries({ queryKey: ["chat", "thread", tid] });
+      // Ask answers can flip the clarify doc to "answered" server-side
+      // (clarify-autostatus on /api/chat/send) — refetch drafts so the
+      // Documentos rail shows the green check without waiting for a refocus.
+      if (vars.text.includes("[ask:")) {
+        qc.invalidateQueries({ queryKey: ["draft"] });
+        qc.invalidateQueries({ queryKey: ["drafts"] });
+      }
       // Refresh thread list after 2s (new thread may have been created)
       setTimeout(() => {
         const slug = tid?.split(":")[0];

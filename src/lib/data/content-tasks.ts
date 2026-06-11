@@ -571,6 +571,9 @@ export function findContentTaskByIdAcrossProjects(
 ): { ct: ContentTask; parentTaskId: string; projectDir: string } | null {
   const root = projectsDir(slug);
   if (!fs.existsSync(root)) return null;
+  // Case-insensitive: chat thread ids carry the CT id lowercased
+  // (writer-trigger#buildThreadId), while tasks.json stores it mixed-case.
+  const wanted = contentTaskId.toLowerCase();
   for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const tasksPath = path.join(root, entry.name, "tasks.json");
@@ -581,7 +584,7 @@ export function findContentTaskByIdAcrossProjects(
     } catch { continue; }
     for (const t of tasks) {
       const cts = (t.content_tasks as ContentTask[] | undefined) || [];
-      const match = cts.find((c) => c.id === contentTaskId);
+      const match = cts.find((c) => c.id.toLowerCase() === wanted);
       if (match) {
         return {
           ct: match,
