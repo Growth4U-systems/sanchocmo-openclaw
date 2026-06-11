@@ -274,3 +274,70 @@ test("resolveBrandDocAbsPath: allows normal brand paths", () => {
   );
   assert.ok(out.endsWith("brand/xhype/market-and-us/market/current.md"));
 });
+
+// ── v2 (SAN-148): reply blocks, resolved mark, tolerant marker matching ──
+
+test("formatCommentBlock: reply block carries parent attr and citation line", () => {
+  const block = formatCommentBlock({
+    id: "cmt_r1",
+    author: "Sancho",
+    createdAt: "2026-06-11T10:00:00.000Z",
+    body: "Aplicado: actualicé la cifra.",
+    parentId: "cmt_root1",
+    parentAuthor: "Philippe",
+  });
+  assert.ok(block.startsWith("<!-- cmt:cmt_r1 parent:cmt_root1 -->"));
+  assert.ok(block.includes("> ↳ en respuesta a Philippe (cmt_root1)"));
+  assert.ok(block.includes("<!-- /cmt:cmt_r1 -->"));
+  // replies never quote an anchor and never get the resolved mark
+  assert.ok(!block.includes("RESUELTO"));
+});
+
+test("formatCommentBlock: resolved root gets RESUELTO mark", () => {
+  const block = formatCommentBlock({
+    id: "cmt_x",
+    author: "Philippe",
+    createdAt: "2026-06-11T10:00:00.000Z",
+    body: "ok",
+    anchorText: "tres fases",
+    resolved: true,
+  });
+  assert.ok(block.includes("· RESUELTO"));
+  assert.ok(block.includes('> "tres fases"'));
+});
+
+test("findCommentBlockRange matches both v1 and v2 reply markers", () => {
+  const v1 = formatCommentBlock({
+    id: "cmt_a",
+    author: "A",
+    createdAt: "2026-06-11T10:00:00.000Z",
+    body: "v1 style",
+  });
+  const v2 = formatCommentBlock({
+    id: "cmt_b",
+    author: "B",
+    createdAt: "2026-06-11T10:00:00.000Z",
+    body: "v2 reply",
+    parentId: "cmt_a",
+  });
+  const content = "# Doc\n\n---\n\n## Comentarios\n\n" + v1 + v2;
+  const ra = findCommentBlockRange(content, "cmt_a");
+  const rb = findCommentBlockRange(content, "cmt_b");
+  assert.ok(ra.start >= 0 && ra.end > ra.start);
+  assert.ok(rb.start >= 0 && rb.end > rb.start);
+  // excising cmt_a must not touch cmt_b's block
+  const excised = content.slice(0, ra.start) + content.slice(ra.end);
+  assert.ok(!excised.includes("cmt:cmt_a "));
+  assert.ok(excised.includes("cmt:cmt_b parent:cmt_a"));
+});
+
+test("findCommentBlockRange does not match an id-prefix collision", () => {
+  const block = formatCommentBlock({
+    id: "cmt_ab2",
+    author: "A",
+    createdAt: "2026-06-11T10:00:00.000Z",
+    body: "x",
+  });
+  const r = findCommentBlockRange("intro\n" + block, "cmt_ab");
+  assert.equal(r.start, -1);
+});

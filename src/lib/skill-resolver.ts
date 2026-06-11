@@ -219,6 +219,20 @@ export function resolveAgentForSkill(skill: string | undefined): string | undefi
   return SKILL_OWNER_MAP[skill];
 }
 
+/**
+ * Resolve the skill that produces a Foundation pillar's doc (SAN-148).
+ * Mirrors steps 2/5b of `resolveThreadSkills`: pillar alias first, then
+ * homonymous pillar skills. Used by doc-owner resolution to route client
+ * feedback on a pillar doc to the agent that authored it.
+ */
+export function resolveSkillForPillar(pillar: string | undefined): string | undefined {
+  if (!pillar) return undefined;
+  const aliased = PILLAR_SKILL_ALIAS[pillar];
+  if (aliased) return aliased;
+  if (HOMONYMOUS_SKILL_PILLARS.has(pillar)) return pillar;
+  return undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Hardcoded fallback maps (kept for backwards compat / no chat-config.json)
 // ---------------------------------------------------------------------------
