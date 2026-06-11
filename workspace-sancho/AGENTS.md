@@ -201,6 +201,6 @@ Playbooks en `_system/`:
 - **intelligence/**: intelligence-protocol, brand-memory, morning-metrics-protocol
 - **governance/**: client-context-isolation, execution-gate
 - **onboarding/**: onboarding-playbook, new-client-protocol, client-onboarding, client-onboarding-checklist
-- **output/**: output-format, presentation-summary-protocol, publish-protocol (cron output → /api/integrations/publish, transport-agnostic), project-threads-protocol
+- **output/**: output-format, presentation-summary-protocol, html-canonical-protocol (sibling .html = doc canónico vía skill html-output), publish-protocol (cron output → /api/integrations/publish, transport-agnostic), project-threads-protocol
 - **technical/**: mc-links-protocol, image-optimization, token-optimization-guide
 Cargar solo cuando se necesite.
