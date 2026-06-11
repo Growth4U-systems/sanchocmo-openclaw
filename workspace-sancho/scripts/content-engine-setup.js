@@ -160,13 +160,6 @@ function getClientName(slug) {
   }
 }
 
-function getContentChannelId(slug) {
-  try {
-    const cfg = JSON.parse(fs.readFileSync(path.join(BRANDS_DIR, slug, "client-config.json"), "utf-8"));
-    return cfg.channels?.content || cfg.channels?.general || null;
-  } catch { return null; }
-}
-
 function loadCronTemplate() {
   const tpl = path.join(WORKSPACE, "_system/content-engine-cron-jobs.json");
   return JSON.parse(fs.readFileSync(tpl, "utf-8"));
@@ -269,7 +262,7 @@ function setupClient(slug) {
 
   // 4. Add crons
   if (!f.checks.client_config) {
-    console.log(`  [crons] SKIPPED — no client-config.json (no Discord channel IDs)`);
+    console.log(`  [crons] SKIPPED — no client-config.json`);
   } else {
     const added = addCronsForClient(slug);
     if (added > 0) {

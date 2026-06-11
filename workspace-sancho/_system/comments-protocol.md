@@ -9,7 +9,7 @@ Cuando se comparte un doc vía `/share/<token>` y alguien deja comentarios, esos
 comentarios se materializan en un **archivo gemelo** al lado del original:
 
 ```
-brand/<slug>/market-and-us/market/current.md            ← original limpio (no se toca)
+brand/<slug>/market-and-us/market/market.current.md            ← original limpio (no se toca)
 brand/<slug>/market-and-us/market/current.commented.md  ← copia + comentarios appendeados
 ```
 
@@ -18,7 +18,7 @@ sección `## Comentarios` al final con un bloque por comentario.
 
 ## Regla para Sancho (la skill / el agente)
 
-Cuando vayas a leer un doc canónico (ej. `current.md`), **siempre chequea si
+Cuando vayas a leer un doc canónico (ej. `{carpeta}.current.md`), **siempre chequea si
 existe el sibling `*.commented.<ext>`**:
 
 - Si **existe** → léelo en vez del original. Tiene todo lo del original más el
