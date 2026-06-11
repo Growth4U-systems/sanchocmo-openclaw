@@ -339,6 +339,40 @@
         }
       }
     },
+    "cms": {
+      "label": "📰 Web & CMS",
+      "apis": {
+        "alarife-payload": {
+          "provider": "Alarife (Payload)",
+          "icon": "🏗️",
+          "desc": "Publicación de artículos del blog en sites Alarife",
+          "ownership": "system",
+          "credentials": [
+            { "key": "API_KEY", "label": "API Key", "type": "string", "sensitive": true, "help": "Clave de Alarife Payload (la plataforma usa SANCHOCMO_ALARIFE_PAYLOAD_API_KEY como fallback global)" }
+          ],
+          "config": [
+            { "key": "CLIENT_ID", "label": "Site (client slug)", "type": "string", "sensitive": false, "help": "Slug del site en Alarife Payload, ej: growth4u o paymatico" },
+            { "key": "PUBLIC_URL", "label": "URL pública del site (opcional)", "type": "string", "sensitive": false, "help": "Origen público para construir el link del artículo, ej: https://www.growth4u.io" },
+            { "key": "BLOG_BASE_PATH", "label": "Ruta base del blog (opcional)", "type": "string", "sensitive": false, "help": "Prefijo de los artículos, por defecto /blog" }
+          ],
+          "docs": "https://alarife-payload.growth4u.io/admin"
+        },
+        "wordpress": {
+          "provider": "WordPress",
+          "icon": "📰",
+          "desc": "Publicación de artículos del blog vía REST API",
+          "ownership": "client",
+          "credentials": [
+            { "key": "APP_PASSWORD", "label": "Application Password", "type": "string", "sensitive": true, "help": "WordPress → Usuarios → Perfil → Application Passwords → crea una para Sancho y pega el valor" }
+          ],
+          "config": [
+            { "key": "SITE_URL", "label": "URL del sitio", "type": "string", "sensitive": false, "help": "URL base del WordPress, ej: https://blog.tudominio.com (sin /wp-json)" },
+            { "key": "USERNAME", "label": "Usuario", "type": "string", "sensitive": false, "help": "El usuario de WordPress dueño de la Application Password" }
+          ],
+          "docs": "https://developer.wordpress.org/rest-api/reference/posts/"
+        }
+      }
+    },
     "advertising": {
       "label": "📣 Advertising",
       "apis": {

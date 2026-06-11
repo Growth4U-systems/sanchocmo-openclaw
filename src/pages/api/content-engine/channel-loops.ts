@@ -194,6 +194,74 @@ function countBlogArticlesThisMonth(slug: string): number {
   return 0;
 }
 
+// ── Search Console (SAN-161) ────────────────────────────────────
+// The metrics cron already writes daily files at brand/{slug}/metrics/
+// YYYY-MM-DD.json with per-source entries ({ sources: { gsc: { metrics } } }).
+// Connection state lives in integrations.json → dataSources.gsc.status.
+// We only aggregate what's on disk — no live Google calls from this route.
+
+interface DailyMetricEntry {
+  name?: string;
+  value?: number;
+  dimensions?: Record<string, string>;
+}
+
+interface DailyMetricsFile {
+  sources?: Record<string, { status?: string; metrics?: DailyMetricEntry[] }>;
+}
+
+function isGscConnected(slug: string): boolean {
+  const integrations = readJSON<{ dataSources?: Record<string, { status?: string }> }>(
+    path.join(BASE, "brand", slug, "integrations.json"),
+    {},
+  );
+  return integrations.dataSources?.gsc?.status === "connected";
+}
+
+function gscAggregates(slug: string): NonNullable<ChannelLoopState["stages"]["metrics"]["gsc"]> | null {
+  const dir = path.join(BASE, "brand", slug, "metrics");
+  if (!fs.existsSync(dir)) return null;
+  const files = fs.readdirSync(dir)
+    .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
+    .sort()
+    .slice(-60);
+  if (files.length === 0) return null;
+
+  const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const agg = { clicks: 0, impressions: 0, posSum: 0, posN: 0, days: 0 };
+  const prev = { clicks: 0, impressions: 0, days: 0 };
+
+  for (const f of files) {
+    const date = f.replace(".json", "");
+    const data = readJSON<DailyMetricsFile>(path.join(dir, f), {});
+    const entries = data.sources?.gsc?.metrics || [];
+    if (entries.length === 0) continue;
+    // Top-level (dimension-less) entries are the daily totals; query/page
+    // breakdowns carry dimensions and would double-count.
+    const val = (name: string) => entries.find((e) => e.name === name && !e.dimensions)?.value;
+    const clicks = val("clicks") ?? 0;
+    const impressions = val("impressions") ?? 0;
+    const position = val("position");
+    const bucket = date >= cutoff ? agg : prev;
+    bucket.clicks += clicks;
+    bucket.impressions += impressions;
+    bucket.days++;
+    if (bucket === agg && typeof position === "number" && position > 0) {
+      agg.posSum += position;
+      agg.posN++;
+    }
+  }
+
+  if (agg.days === 0 && prev.days === 0) return null;
+  return {
+    clicks30d: agg.clicks,
+    impressions30d: agg.impressions,
+    avgPosition: agg.posN > 0 ? Math.round((agg.posSum / agg.posN) * 10) / 10 : null,
+    prevClicks30d: prev.days > 0 ? prev.clicks : null,
+    prevImpressions30d: prev.days > 0 ? prev.impressions : null,
+  };
+}
+
 const DOW_LABELS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 const DAY_ALIASES: Record<string, number> = {
   sunday: 0, domingo: 0, sun: 0, dom: 0,
@@ -256,6 +324,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
   const cts = loadUnifiedContentTasks(slug);
   const jobs = loadContentJobs(slug);
   const jobsState = readJSON<JobsState>(cronJobsStateFile(), { jobs: {} }).jobs;
+  const gscConnected = isGscConnected(slug);
+  const gscData = gscConnected ? gscAggregates(slug) : null;
 
   // Channel registry = cadence-config keys; fall back to channels seen in CTs
   // so a brand without cadence still gets a usable view.
@@ -316,10 +386,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
       .sort()
       .reverse()[0] || null;
 
-    const metricsProvider = ch.metrics_provider || (key === "blog" ? "gsc-pending" : "metricool");
-    const metrics = metricsProvider === "gsc-pending" || metricsProvider === "none"
-      ? { engagementPct: null, impressions30d: null, postsWithMetrics: 0 }
-      : channelMetrics(slug, key, publishedCts);
+    // Blog graduates from "gsc-pending" to "gsc" the moment the data source
+    // is connected — the yaml default was a placeholder, not a choice. An
+    // explicit metrics_provider other than gsc-pending still wins.
+    let metricsProvider = ch.metrics_provider || (key === "blog" ? "gsc-pending" : "metricool");
+    if (key === "blog" && gscConnected && (!ch.metrics_provider || ch.metrics_provider === "gsc-pending")) {
+      metricsProvider = "gsc";
+    }
+    const metrics = metricsProvider === "gsc"
+      ? { engagementPct: null, impressions30d: null, postsWithMetrics: 0, gsc: gscData }
+      : metricsProvider === "gsc-pending" || metricsProvider === "none"
+        ? { engagementPct: null, impressions30d: null, postsWithMetrics: 0 }
+        : channelMetrics(slug, key, publishedCts);
 
     const strategyDoc = ch.strategy_doc
       ? path.posix.join("content", ch.strategy_doc)
@@ -377,6 +455,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
     ok: true,
     channels,
     repurposing,
+    connections: { gsc: gscConnected },
     verifiedAt: new Date().toISOString(),
   });
 }

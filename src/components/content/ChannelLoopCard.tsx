@@ -166,15 +166,30 @@ export function ChannelLoopCard({ loop, onStageClick, onNextAction, onOpenSetup,
   ].filter(Boolean).join("\n");
 
   const gscPending = loop.metricsProvider === "gsc-pending";
+  const gscLive = loop.metricsProvider === "gsc" ? s.metrics.gsc : null;
   const metricsBig = gscPending
     ? "⏳"
-    : s.metrics.engagementPct !== null ? `${s.metrics.engagementPct}%` : "—";
+    : gscLive
+      ? String(gscLive.clicks30d)
+      : loop.metricsProvider === "gsc"
+        ? "—"
+        : s.metrics.engagementPct !== null ? `${s.metrics.engagementPct}%` : "—";
   const metricsMeta = gscPending
     ? "GSC pendiente de\nintegrar — sin datos inventados"
-    : s.metrics.engagementPct !== null
-      ? `engagement medio\n${s.metrics.impressions30d ?? 0} impresiones · 30d`
-      : "sin snapshots aún";
-  const metricsDot: DotState = gscPending ? "warn" : s.metrics.postsWithMetrics > 0 ? "ok" : "off";
+    : gscLive
+      ? `clicks · ${gscLive.impressions30d} impr · 30d${gscLive.avgPosition !== null ? `\npos media ${gscLive.avgPosition}` : ""}`
+      : loop.metricsProvider === "gsc"
+        ? "GSC conectado —\nesperando primeros datos"
+        : s.metrics.engagementPct !== null
+          ? `engagement medio\n${s.metrics.impressions30d ?? 0} impresiones · 30d`
+          : "sin snapshots aún";
+  const metricsDot: DotState = gscPending
+    ? "warn"
+    : gscLive
+      ? "ok"
+      : loop.metricsProvider === "gsc"
+        ? "run"
+        : s.metrics.postsWithMetrics > 0 ? "ok" : "off";
 
   return (
     <section className="border-[3px] border-ink rounded-lg bg-card overflow-hidden" style={{ boxShadow: "var(--pop-md)" }}>

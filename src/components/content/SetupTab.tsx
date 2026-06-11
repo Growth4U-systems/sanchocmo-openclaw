@@ -107,17 +107,23 @@ export function SetupTab({ slug, openChat, focusChannel }: Props) {
 
   const channels = loops?.channels || [];
   const dispatchConfigured = !!dispatchQ.data?.config?.channel_name;
-  const socialConnected = (providersQ.data?.providers || []).some((p) => p.configured);
+  const providers = providersQ.data?.providers || [];
+  // Capability slots resolve per channel: social = any provider that speaks
+  // linkedin/instagram/...; blog = any provider that speaks blog (SAN-161).
+  const socialProviders = providers.filter((p) => p.supportedChannels.some((c) => c !== "blog"));
+  const blogProviders = providers.filter((p) => p.supportedChannels.includes("blog"));
+  const socialConnected = socialProviders.some((p) => p.configured);
+  const blogPublisher = blogProviders.find((p) => p.configured) || null;
+  const gscConnected = !!loops?.connections?.gsc;
 
   // Checklist progress: mother docs + dispatch + capability slots + one step
-  // per channel (its strategy doc). GSC and blog CMS are honest "pending"
-  // slots until their integrations land (SAN-141 F4).
+  // per channel (its strategy doc).
   const checks: boolean[] = [
     ...motherDocs.map((m) => !!m.doc && isDone(m.doc.status)),
     dispatchConfigured,
     socialConnected,
-    false, // blog CMS publisher (Alarife / WordPress / …) — F4
-    false, // GSC — F4
+    !!blogPublisher,
+    gscConnected,
     ...channels.filter((c) => c.active).map((c) => c.strategyDocExists),
   ];
   const done = checks.filter(Boolean).length;
@@ -266,19 +272,45 @@ export function SetupTab({ slug, openChat, focusChannel }: Props) {
         </div>
 
         <div className="flex items-center gap-3 py-2.5 border-b border-dashed border-ink/15 flex-wrap">
-          <span className="w-7 h-7 grid place-items-center rounded-full border-2 border-ink text-xs font-bold bg-muted">○</span>
+          <span className={cn("w-7 h-7 grid place-items-center rounded-full border-2 border-ink text-xs font-bold", blogPublisher ? "bg-sage text-white" : "bg-muted")}>
+            {blogPublisher ? "✓" : "○"}
+          </span>
           <span className="font-bold text-sm flex-1 min-w-[160px]">📰 Publicación blog (CMS/API)</span>
           <span className="text-xs text-muted-foreground">
-            sin conectar — los artículos se publican a mano · Alarife / WordPress / Webflow vía API (próximamente)
+            {blogPublisher
+              ? <>proveedor: <b className="text-ink">{blogPublisher.name}</b> ✓ conectado</>
+              : <>sin conectar — los artículos se publican a mano · {blogProviders.map((p) => p.name).join(" / ") || "WordPress"} disponible{blogProviders.length !== 1 ? "s" : ""}</>}
           </span>
+          <Link
+            href={`/dashboard/${slug}/settings?tab=apis`}
+            className={cn(
+              "px-2.5 py-1 text-xs font-semibold border-2 border-ink rounded-lg hover:-translate-y-0.5 transition-all no-underline text-ink",
+              blogPublisher ? "bg-card" : "bg-yellow-400/60"
+            )}
+          >
+            {blogPublisher ? "✏️ Gestionar" : "Conectar"}
+          </Link>
         </div>
 
         <div className="flex items-center gap-3 py-2.5 flex-wrap">
-          <span className="w-7 h-7 grid place-items-center rounded-full border-2 border-ink text-xs font-bold bg-muted">○</span>
+          <span className={cn("w-7 h-7 grid place-items-center rounded-full border-2 border-ink text-xs font-bold", gscConnected ? "bg-sage text-white" : "bg-muted")}>
+            {gscConnected ? "✓" : "○"}
+          </span>
           <span className="font-bold text-sm flex-1 min-w-[160px]">🔍 Métricas SEO (Search Console)</span>
           <span className="text-xs text-muted-foreground">
-            sin conectar — las métricas del canal blog se muestran como &ldquo;pendiente&rdquo;, nunca inventadas
+            {gscConnected
+              ? "conectado — el loop de blog muestra clicks, impresiones y posición"
+              : "sin conectar — las métricas del canal blog se muestran como “pendiente”, nunca inventadas"}
           </span>
+          <Link
+            href={`/dashboard/${slug}/settings?tab=apis`}
+            className={cn(
+              "px-2.5 py-1 text-xs font-semibold border-2 border-ink rounded-lg hover:-translate-y-0.5 transition-all no-underline text-ink",
+              gscConnected ? "bg-card" : "bg-yellow-400/60"
+            )}
+          >
+            {gscConnected ? "✏️ Gestionar" : "Conectar"}
+          </Link>
         </div>
       </section>
 
