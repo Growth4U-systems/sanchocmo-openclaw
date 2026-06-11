@@ -26,6 +26,10 @@ import {
 } from "@/lib/open-design/client";
 import { auditMcpToolCall } from "@/lib/mcp/audit";
 import {
+  registerYalcBreakevenTool,
+  type YalcBreakevenLeadMetrics,
+} from "@/lib/calc-creator-core/mcp-tool";
+import {
   assertMcpClientAccess,
   assertMcpScope,
   McpAuthError,
@@ -487,6 +491,18 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       }),
   );
 
+  // Calc break-even de Partnerships (SAN-75): wrapper fino de
+  // `calc-creator-core` — misma lógica que la UI del drawer y la skill
+  // negotiation-assist (paridad UI = chat = MCP). El camino `leadId` lee
+  // followers/ER vía `GET /api/leads` (SAN-77; hasta su deploy en Yalc,
+  // pasar followers/engagementRatePct explícitos).
+  registerYalcBreakevenTool(server, {
+    assertAccess: (clientSlug) => assertClientScope(context, "yalc:read", clientSlug),
+    run: (toolName, clientSlug, handler) => runTool(context, toolName, clientSlug, handler),
+    jsonResult,
+    fetchLeadMetrics: (clientSlug, leadId) => fetchYalcLeadMetrics(context, clientSlug, leadId),
+  });
+
   server.registerTool(
     "yalc_list_leads",
     {
@@ -718,6 +734,42 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
 function assertClientScope(context: SanchoMcpContext, scope: McpScope, clientSlug: string): void {
   assertMcpScope(context.principal, scope);
   assertMcpClientAccess(context.principal, clientSlug);
+}
+
+/**
+ * Lee followers/ER de un lead vía `GET /api/leads` de Yalc (SAN-77).
+ * No hay GET de lead individual: se lista y se busca por id; los descartados
+ * quedan fuera de la vista por defecto, así que se reintenta con el filtro
+ * `lifecycleStatus=Disqualified` antes de dar 404.
+ */
+async function fetchYalcLeadMetrics(
+  context: SanchoMcpContext,
+  clientSlug: string,
+  leadId: string,
+): Promise<YalcBreakevenLeadMetrics> {
+  const config = resolveYalcConfig(clientSlug);
+  const findLead = (data: unknown): Record<string, unknown> | null => {
+    if (!isRecord(data) || !Array.isArray(data.leads)) return null;
+    const match = data.leads.find((lead) => isRecord(lead) && lead.id === leadId);
+    return isRecord(match) ? match : null;
+  };
+
+  let lead = findLead(await yalcFetch(config, "/api/leads", { headers: traceHeaders(context) }));
+  if (!lead) {
+    lead = findLead(
+      await yalcFetch(config, "/api/leads?lifecycleStatus=Disqualified", {
+        headers: traceHeaders(context),
+      }),
+    );
+  }
+  if (!lead) throw new McpAuthError(404, `YALC lead not found: ${leadId}`);
+
+  return {
+    followers: typeof lead.followers === "number" ? lead.followers : null,
+    // Yalc serializa `engagementRate` en % (3.4 = 3.4%) — mismas unidades que el motor.
+    engagementRatePct: typeof lead.engagementRate === "number" ? lead.engagementRate : null,
+    handle: typeof lead.handle === "string" ? lead.handle : null,
+  };
 }
 
 async function runTool(

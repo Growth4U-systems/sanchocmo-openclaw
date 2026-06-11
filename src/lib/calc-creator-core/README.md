@@ -2,17 +2,21 @@
 
 Motor de la calc de **Partnerships** (SAN-75). Paquete **TS puro**: sin DOM, sin Next, sin DB, sin side-effects — importable desde endpoints, skills, workers y el MCP server.
 
-- **Pasada A (esta, Ola 0):** quality score 0-100 + config sembrada.
-- **Pasada B (SAN-75b, Ola 2 — NO construida):** break-even. La estructura ya la acoge (ver abajo).
+- **Pasada A (Ola 0):** quality score 0-100 + config sembrada.
+- **Pasada B (Ola 2, esta):** break-even + tool MCP `yalc_breakeven`.
 
 ```ts
 import {
+  computeBreakEven,
   computeQualityScore,
   DEFAULT_CREATOR_MODEL_CONFIG,
   isBelowQualificationThreshold,
   SEED_CREATORS,
 } from "@/lib/calc-creator-core";
 ```
+
+> La tool MCP vive en el entrypoint separado `@/lib/calc-creator-core/mcp-tool`
+> (importa zod + MCP SDK); el index se mantiene puro para los consumidores de UI/workers.
 
 ## Quality score (discovery: solo calidad, sin precio, para ELEGIR)
 
@@ -63,20 +67,49 @@ Espejo de `settings.html` (hardcode v1 — **SAN-76** la hará editable; todos l
 
 - **Tiers** (límite superior exclusivo): Nano <25K · Micro 25-100K · Mid 100-250K · Macro >250K, con ER benchmark 8.0 / 5.5 / 4.0 / 2.5.
 - **Verticals**: finanzas personales · inversión · ahorro · fintech. **Formats**: reel · post · story · video largo · carrusel.
-- **`breakEven`** (semillas Ola 2): CAC objetivo 80€ · click 15% · funnel 8/60/70 · multiplicadores ×1/1.5/2/3 · veredicto verde ≥1 / ámbar ≥0.6.
+- **`breakEven`** (espejo del `<script>` de drawer-partner): alcance 30%/post · CTR por formato (reel 1.2 / post 0.9 / story 0.6 / video 1.4 / carrusel 1.0, en %) · funnel 8/60/70 · CAC objetivo 80€ · multiplicadores ×1/1.5/2/3 · veredicto verde ≥1 / ámbar ≥0.6. *(La semilla provisional `clickRatePct: 15` de la pasada A se retiró: el mockup final modela reach × CTR.)*
 
 ## Seeds (`SEED_CREATORS`)
 
 Los 7 creators canónicos del mockup `contactos-lista.html` (+2 descartados), con señales calibradas: el motor reproduce **exactamente** la columna quality del mockup (91, 88, 87, 82, 79, 74, 58, 52, 31) y el desglose del drawer de @finanzasconlucia (92/88/95/84/76 → 87). Sirven para sembrar la UI (SAN-78) antes del discovery real.
 
-## Break-even (SAN-75b · Ola 2 — pendiente)
+## Break-even (negociación: cuánto debe producir para salir rentable)
 
-Vivirá en `./break-even.ts` y se exportará desde `index.ts`. Contrato previsto (issue SAN-75):
+```ts
+const result = computeBreakEven(deal, funnel /*, config? */);
+```
 
-- Solo fijo: `necesita ≥ fee / CAC_objetivo` · Fijo+variable: `necesita ≥ fee / (CAC_objetivo − CPA_variable)`.
-- Multiplicador de incentivo ×1/1.5/2/3 del lado de lo **alcanzable** (audiencia engaged × click × funnel).
-- Deal editable (nº posts × formato, precio total/€·post) y veredicto verde/ámbar/rojo vs calidad/alcance.
-- Sin rate-card de mercado: ancla = retorno + calidad + histórico propio.
+Le da la vuelta a la calc: no predice cuánto traerá, calcula **cuántas first_tx necesita** el deal para salir a tu CAC objetivo, y si son **alcanzables** dada su audiencia. Espejo EXACTO del `<script>` de `drawer-partner.html` (spec de comportamiento).
+
+**Input — `BreakEvenDeal`** (el deal editable de la calc; clamps del mockup: posts ≥1 · fee ≥0 · CAC ≥1 · CPA ≥0):
+
+| Campo | Default | Notas |
+|---|---|---|
+| `posts`, `format` | — / `"reel"` | CTR por formato configurable; alias aceptados (`vídeo`, `video largo`, `carousel`) — desconocido lanza `TypeError`. |
+| `feeEur` | — | Precio total; `€/post` derivado en el eco (`deal.perPostEur`). |
+| `structure`, `variableCpaEur` | `"fijo"` / — | `"mixto"` = fijo + CPA variable. |
+| `targetCacEur` | 80 (config) | En producción vendrá de Metrics. |
+| `incentiveMultiplier` | 1 | Canónicos ×1/×1.5/×2/×3; SOLO empuja el lado alcanzable. |
+
+**Input — `BreakEvenFunnel`**: `followers` (requerido), `engagementRatePct`, `erBenchmarkPct` y overrides de tasas (`reachRatePct`, `clickToSignupPct`, `signupToKycPct`, `kycToFirstTxPct`). Ausencias → neutro + `missingSignals` (nunca NaN).
+
+**Fórmulas (decisión cerrada):**
+
+- Solo fijo: `necesarias = ceil(fee / CAC_objetivo)`.
+- Fijo+variable: `necesarias = ceil(fee / (CAC_objetivo − CPA_variable))`; **CPA ≥ CAC → estructura rota** (∞ necesarias, INVIABLE, sin contraoferta).
+- Alcanzable: `followers × alcance 30%/post × posts × CTR(formato) × ajuste ER × funnel(8% × 60% × 70%) × multiplicador`.
+- Veredicto sobre `ratio = alcanzable / necesarias` (la necesaria YA redondeada, como el mockup): verde ≥1 · ámbar ≥0.6 · rojo <0.6.
+- Contraoferta: `floor(alcanzable × (CAC − CPA_var) / 100) × 100` (a la centena).
+
+**Output — `BreakEvenResult`** (todo lo que pinta la calc del drawer): `necesarias`, `alcanzableBase`, `alcanzable`, `ratio`, `veredicto`/`veredictoLabel`/`veredictoColor`, `frase`, `contraofertaEur`+`contraofertaNota`, `formulaNecesarias`, `modelo` (línea funnel-mini) y `funnel[]` (desglose paso a paso audience→reach→clicks→signups→KYC→first_tx→incentivo, con `value`/`rounded`/`detail` por fila).
+
+**Paridad de oro** (test): @finanzasconlucia 142K · ER 4.8 · 3 reels · 3.500€ · CAC 80 · funnel 8/60/70 → **necesita 44 · alcanzable ~52 · VIABLE · contraoferta 4.100€**.
+
+**Ajustes documentados respecto al mockup:**
+
+- El mockup fija el benchmark ER del nicho en 4.8 (= ER de Lucía → ajuste ×1,00). El motor acepta `erBenchmarkPct` explícito; sin él cae al benchmark del tier de la config (Mid 4.0 → ajuste ×1,20 para Lucía).
+- `fee 0` → necesarias 0 ⇒ ratio ∞ ⇒ viable (el mockup produce `Infinity` o `NaN` según el caso — artefacto JS normalizado aquí).
+- La calc HTML original de `OUTPUTS/g4u-tools` **no existe en disco** (directorio ausente): el test de paridad es el mockup drawer-partner, que es la spec viva.
 
 ## Paridad UI = chat = MCP (consumidores)
 
@@ -84,8 +117,9 @@ Este paquete es la única fuente de la lógica; las tres superficies la llaman v
 
 - **SAN-77**: `/api/qualify` (proxy Sancho→Yalc) llama `computeQualityScore` y persiste `total` + `components` en el Lead; expone la tool MCP `yalc_qualify_lead` en `src/lib/mcp/server.ts`.
 - **SAN-79**: qualify-enrich del discovery runner construye `CreatorMetrics` (ScrapeCreators + ad-library) y puntúa con esto.
-- **SAN-78**: drawer pinta `components[]` tal cual (score + note por fila).
-- **SAN-75b**: añadirá `yalc_breakeven` junto al motor.
+- **SAN-78**: drawer pinta `components[]` (quality) y `BreakEvenResult` (calc) tal cual.
+- **SAN-80**: negotiation-assist (chat) llama `computeBreakEven` sobre cada precio del Inbox.
+- **MCP `yalc_breakeven`** (esta rama): registrador exportado en `./mcp-tool.ts` y **registrado en `src/lib/mcp/server.ts`** con scope `yalc:read`. Recibe deal+funnel explícitos **o** `leadId` (lee `followers`/`engagementRate` vía `GET /api/leads` de Yalc — requiere el PR de Yalc de SAN-77 desplegado; hasta entonces, pasar las métricas explícitas). Si otra rama del stack (SAN-80) necesita re-registrarla sobre el server de SAN-77, es una línea: `registerYalcBreakevenTool(server, { assertAccess, run, jsonResult, fetchLeadMetrics })`.
 
 ## Tests
 
@@ -94,4 +128,5 @@ npm run test:calc   # solo este paquete
 npm run test:lib    # toda la suite de src/lib
 ```
 
-Cubren: paridad drawer/mockup (totales exactos + ranking relativo de los 9 seeds), límites de tier, umbrales del componente ER, sin ad-library, conflicto activo, ER 0, tier desconocido, métricas vacías, clamps y pesos personalizados/degenerados.
+- **Quality score**: paridad drawer/mockup (totales exactos + ranking relativo de los 9 seeds), límites de tier, umbrales del componente ER, sin ad-library, conflicto activo, ER 0, tier desconocido, métricas vacías, clamps y pesos personalizados/degenerados.
+- **Break-even**: paridad de oro con el mockup (44 / ~52 / VIABLE / 4.100€ + textos espejo + desglose del funnel), solo fijo vs fijo+variable, multiplicadores ×1/×1.5/×2/×3, veredictos en los 3 colores, edges (CPA ≥ CAC, fee 0, ER 0, señales ausentes, formatos/clamps/overrides) y la tool `yalc_breakeven` (oro vía wrapper, leadId con stub, overrides explícitos, errores explicativos).

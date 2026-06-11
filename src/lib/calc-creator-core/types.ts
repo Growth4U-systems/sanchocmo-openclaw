@@ -55,12 +55,25 @@ export interface ScoreBandsConfig {
 export type ScoreBand = "high" | "medium" | "low";
 
 /**
- * Config sembrada del break-even (SAN-75b · Ola 2 — el motor aún NO existe).
- * Se tipa ya para que SAN-76 la haga editable y la Ola 2 solo añada el motor.
+ * Formato de post del deal (keys del select del mockup drawer-partner).
+ * `normalizeDealFormat` acepta alias ("vídeo", "video largo", "carousel").
+ */
+export type DealFormat = "reel" | "post" | "story" | "video" | "carrusel";
+
+/** Estructura del deal: solo fijo, o fijo + CPA variable por conversión. */
+export type DealStructure = "fijo" | "mixto";
+
+/**
+ * Config sembrada del break-even (SAN-75b · Ola 2) — espejo EXACTO del
+ * `<script>` de `drawer-partner.html`: alcance 30%/post × CTR por formato ×
+ * ajuste ER × funnel 8/60/70. (La semilla provisional de la pasada A usaba
+ * `clickRatePct: 15`; el mockup final lo sustituyó por reach × CTR.)
  */
 export interface BreakEvenSeedConfig {
-  /** % de la audiencia engaged que clica (proxy). */
-  clickRatePct: number;
+  /** Alcance medio por post como % de followers (mockup: 30, IG). */
+  reachRatePct: number;
+  /** CTR estimado por formato, en % (mockup: reel 1.2 · post 0.9 · story 0.6 · video 1.4 · carrusel 1.0). */
+  ctrByFormatPct: Record<DealFormat, number>;
   /** Funnel Monzo sembrado: click→signup · signup→KYC · KYC→first_tx (en %). */
   clickToSignupPct: number;
   signupToKycPct: number;
@@ -155,5 +168,122 @@ export interface QualityScoreResult {
   erBenchmarkPct: number | null;
   components: QualityComponent[];
   /** Señales ausentes detectadas (p.ej. "adLibrary", "followers"). */
+  missingSignals: string[];
+}
+
+// ═════ Break-even (SAN-75b · Ola 2) ════════════════════════════════════════
+
+/**
+ * Deal editable (lado izquierdo de la calc del drawer).
+ * Clamps espejo del mockup: posts ≥ 1 · fee ≥ 0 · CAC ≥ 1 · CPA ≥ 0.
+ */
+export interface BreakEvenDeal {
+  /** Nº de posts del paquete (se clampa a ≥ 1). */
+  posts: number;
+  /** Formato del post; acepta alias ("vídeo", "video largo"). Default "reel" (el del mockup). */
+  format?: DealFormat | string;
+  /** Precio total del deal en € (se clampa a ≥ 0). */
+  feeEur: number;
+  /** Estructura: "fijo" (default) o "mixto" (fijo + variable). */
+  structure?: DealStructure;
+  /** CPA variable en € (solo mixto; se clampa a ≥ 0). */
+  variableCpaEur?: number;
+  /** CAC objetivo en € (default `config.breakEven.defaultTargetCacEur`; clamp ≥ 1). */
+  targetCacEur?: number;
+  /** Multiplicador de incentivo (canónicos ×1/×1.5/×2/×3; inválido → 1). */
+  incentiveMultiplier?: number;
+}
+
+/**
+ * Lado alcanzable: audiencia del creator + tasas del funnel (overrides de la
+ * config sembrada). El ajuste ER = `engagementRatePct / erBenchmarkPct`; si no
+ * se pasa benchmark se usa el del tier resuelto por followers. OJO paridad: el
+ * mockup fija el benchmark de nicho en 4.8 (= ER de Lucía) → ajuste ×1,00.
+ */
+export interface BreakEvenFunnel {
+  /** Seguidores del creator (requerido, finito ≥ 0). */
+  followers: number;
+  /** ER del creator en % (p.ej. 4.8). Ausente → ajuste 1 + señal ausente. */
+  engagementRatePct?: number;
+  /** Benchmark de ER del nicho en %. Default: benchmark del tier (config). */
+  erBenchmarkPct?: number;
+  /** Overrides de la config sembrada (en %). */
+  reachRatePct?: number;
+  clickToSignupPct?: number;
+  signupToKycPct?: number;
+  kycToFirstTxPct?: number;
+}
+
+/** Veredicto del break-even (mockup: VIABLE · AJUSTADO · NO VIABLE · INVIABLE). */
+export type BreakEvenVerdict = "viable" | "ajustado" | "no-viable" | "inviable";
+
+/** Color del sello del veredicto (verde ≥ viableMinRatio · ámbar ≥ tightMinRatio · rojo). */
+export type BreakEvenVerdictColor = "green" | "amber" | "red";
+
+/** Paso del desglose del funnel (filas para pintar la calc del drawer). */
+export interface BreakEvenFunnelStep {
+  key: "audience" | "reach" | "clicks" | "signups" | "kycs" | "firstTx" | "incentive";
+  /** Etiqueta es-ES ("Alcance", "Clicks", "Signups", …). */
+  label: string;
+  /** Valor exacto del paso (float, sin redondear). */
+  value: number;
+  /** Valor redondeado para pintar (Math.round, como el mockup). */
+  rounded: number;
+  /** Tasa/factor aplicado en este paso ("×30% alcance × 3 posts", "×8%", "×1,5"). */
+  detail: string;
+}
+
+/** Eco del deal normalizado (tras clamps y defaults) que usó el cálculo. */
+export interface BreakEvenDealEcho {
+  posts: number;
+  format: DealFormat;
+  /** CTR aplicado al formato, en %. */
+  ctrPct: number;
+  feeEur: number;
+  /** €/post derivado (fee / posts), sin redondear. */
+  perPostEur: number;
+  structure: DealStructure;
+  /** CPA variable aplicado (solo mixto; `null` en fijo). */
+  variableCpaEur: number | null;
+  targetCacEur: number;
+  incentiveMultiplier: number;
+}
+
+/** Salida del motor de break-even (todo lo que pinta la calc del drawer). */
+export interface BreakEvenResult {
+  deal: BreakEvenDealEcho;
+  /** First_tx necesarias, redondeadas HACIA ARRIBA (ceil). `Infinity` si la estructura rompe. */
+  necesarias: number;
+  /** fee / (CAC − CPA) sin redondear. `Infinity` si la estructura rompe. */
+  necesariasExactas: number;
+  /** Texto de la fórmula aplicada, estilo mockup ("3.500€ ÷ 80€ CAC"). */
+  formulaNecesarias: string;
+  /** `true` si mixto con CPA variable ≥ CAC objetivo (cada conversión pierde dinero). */
+  structureBroken: boolean;
+  /** Ajuste ER aplicado (ER / benchmark; 1 si falta señal). */
+  erAdjustment: number;
+  /** Clicks estimados (followers × reach% × posts × CTR × ajuste ER). */
+  clicks: number;
+  /** First_tx alcanzables SIN multiplicador (float). */
+  alcanzableBase: number;
+  /** First_tx alcanzables CON multiplicador de incentivo (float). */
+  alcanzable: number;
+  /** alcanzable / necesarias (ya redondeadas). `Infinity` si necesarias = 0; 0 si rompe. */
+  ratio: number;
+  veredicto: BreakEvenVerdict;
+  /** Sello del mockup: "VIABLE" | "AJUSTADO" | "NO VIABLE" | "INVIABLE". */
+  veredictoLabel: string;
+  veredictoColor: BreakEvenVerdictColor;
+  /** Frase del veredicto, espejo del mockup. */
+  frase: string;
+  /** Contraoferta = alcanzable × (CAC − CPA var.), floor a la centena. `null` si rompe. */
+  contraofertaEur: number | null;
+  /** Nota de la contraoferta (espejo del hint del mockup). */
+  contraofertaNota: string;
+  /** Línea "Modelo: …" del mockup (funnel-mini), lista para pintar. */
+  modelo: string;
+  /** Desglose paso a paso del funnel (filas de la calc). */
+  funnel: BreakEvenFunnelStep[];
+  /** Señales ausentes (p.ej. "engagementRate" → ajuste ER neutro ×1). */
   missingSignals: string[];
 }
