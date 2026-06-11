@@ -17,6 +17,7 @@ const {
   normalizeNetwork,
   formatFollowers,
   formatEur,
+  formatIntEs,
   formatTier,
   feeStageNote,
   filterAndSortLeads,
@@ -122,11 +123,24 @@ test("formatFollowers / formatEur / formatTier", () => {
   assert.equal(formatFollowers(1_500_000), "1.5M");
   assert.equal(formatFollowers(900), "900");
   assert.equal(formatFollowers(null), "—");
-  assert.equal(formatEur(3500), "3500".replace("3500", (3500).toLocaleString("es-ES")) + "€");
+  // Convención del producto (mockups/seeds): SIEMPRE separador de miles,
+  // también en 4 dígitos — a diferencia de toLocaleString("es-ES"), que
+  // por CLDR no agrupa números de 4 cifras (3500 → "3500").
+  assert.equal(formatEur(3500), "3.500€");
+  assert.equal(formatEur(900), "900€");
   assert.equal(formatEur(null), "—");
   assert.equal(formatTier("mid"), "Mid");
   assert.equal(formatTier("MACRO"), "Macro");
   assert.equal(formatTier(null), null);
+});
+
+test("formatIntEs: agrupación de miles determinista (sin ICU)", () => {
+  assert.equal(formatIntEs(4100), "4.100");
+  assert.equal(formatIntEs(999), "999");
+  assert.equal(formatIntEs(51_529), "51.529");
+  assert.equal(formatIntEs(1_234_567), "1.234.567");
+  assert.equal(formatIntEs(-4100), "-4.100");
+  assert.equal(formatIntEs(4099.6), "4.100"); // redondea antes de agrupar
 });
 
 test("feeStageNote: ofertado/pedido/firmado según stage", () => {
