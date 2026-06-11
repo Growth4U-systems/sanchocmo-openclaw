@@ -122,7 +122,9 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
   const handleAnalyze = () => {
     const trimmed = url.trim();
     if (!trimmed) return;
-    const config = buildPillarThread(slug, "fast-foundation");
+    // Pin the FF grounding doc so the thread isn't "Sin documento asociado" (SAN-3).
+    const ffDoc = foundation?.sections?.["fast-foundation"]?.pillars?.["fast-context"]?.output_file;
+    const config = buildPillarThread(slug, "fast-foundation", ffDoc || undefined);
     config.initialMessage = `Haz el Fast Foundation de esta empresa: ${trimmed}`;
     config.threadState = "create";
     openChat(slug, config);

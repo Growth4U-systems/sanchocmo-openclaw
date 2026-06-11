@@ -7,8 +7,8 @@ const { resolveThreadSkills } = await import("../skill-resolver");
 // Expected skill + owner agent per Foundation pillar key, as opened by
 // buildPillarThread → resolveThreadSkills({ pillar }) with NO chat-config.json.
 // agent === undefined means "no specialist owner → defaults to Sancho downstream".
-// fast-foundation / company-brief are intentionally excluded (owned by Fast
-// Foundation, reworked in SAN-13).
+// company-brief is intentionally excluded (the deep merge pillar). fast-foundation
+// now resolves to the `fast-foundation` skill (owner: hamete) — SAN-3 FF flow wiring.
 const CASES: Array<{ pillar: string; skill: string; agent: string | undefined }> = [
   { pillar: "market-analysis", skill: "market-intelligence", agent: "hamete" },
   { pillar: "competitor-analysis", skill: "competitor-intelligence", agent: "hamete" },
@@ -23,6 +23,7 @@ const CASES: Array<{ pillar: string; skill: string; agent: string | undefined }>
   { pillar: "strategic-plan", skill: "strategic-plan", agent: undefined },
   { pillar: "existing-customer-data", skill: "existing-customer-data", agent: "hamete" },
   { pillar: "ecp-validation", skill: "ecp-validation", agent: "sanson" },
+  { pillar: "fast-foundation", skill: "fast-foundation", agent: "hamete" },
 ];
 
 for (const c of CASES) {
