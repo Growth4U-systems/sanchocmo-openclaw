@@ -9,9 +9,9 @@ metadata:
   updated: '2026-02-26'
   changes: v3.0 — Flujo conversacional iterativo (T-026). Una pregunta a la vez, follow-ups inteligentes, state tracking, hard stop.
 context_required:
-- brand/{slug}/company-brief/company-brief-current.md
+- brand/{slug}/company-brief/company-brief.current.md
 context_writes:
-- brand/{slug}/company-brief/company-brief-current.md
+- brand/{slug}/company-brief/company-brief.current.md
 - memory/onboarding-state.json
 ---
 
@@ -31,7 +31,7 @@ Follow output formatting per _system/output/output-format.md
 Al invocar /sancho-start:
 
 ```
-if brand/{slug}/company-brief/company-brief-current.md exists AND is complete:
+if brand/{slug}/company-brief/company-brief.current.md exists AND is complete:
     mode = "RETURNING"
     → Show status board, suggest next action
     → Do NOT repeat onboarding
@@ -321,14 +321,14 @@ Si el usuario confirma → ejecutar Step 8.
 
 ## Step 8: Guardar y Rutear
 
-1. **Escribir `brand/{slug}/company-brief/company-brief-current.md`** con los datos estructurados del onboarding
+1. **Escribir `brand/{slug}/company-brief/company-brief.current.md`** con los datos estructurados del onboarding
 2. **Actualizar `memory/onboarding-state.json`** → `status: "completed"`
 3. **Informar al usuario:**
 
 ```
 Perfecto. Ya tengo todo lo que necesito para empezar.
 
-He guardado tu contexto en brand/{slug}/company-brief/company-brief-current.md.
+He guardado tu contexto en brand/{slug}/company-brief/company-brief.current.md.
 
 El siguiente paso es construir los cimientos de tu estrategia
 de marketing (Foundation). Esto lo maneja el foundation-orchestrator.
@@ -359,7 +359,7 @@ No hagas nada más. Espera a que el usuario interactúe con el orchestrator.
 ## Context Paradox
 
 Cuando rutees al foundation-orchestrator, pasa SOLO:
-- `brand/{slug}/company-brief/company-brief-current.md` (generado en Step 8)
+- `brand/{slug}/company-brief/company-brief.current.md` (generado en Step 8)
 - El rol de Sancho determinado por recursos (Step 5)
 
 NO pases el estado del onboarding, ni las respuestas raw, ni nada más. El foundation-orchestrator lee lo que necesita del Context Lake.

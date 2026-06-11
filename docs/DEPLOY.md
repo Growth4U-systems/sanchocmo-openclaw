@@ -294,6 +294,12 @@ docker compose -f docker-compose.yml -f docker-compose.yalc.yml up -d --build
 First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, escudero, rocinante, yalc), and auto-detects Discord guilds.
 The YALC container exposes its API inside Docker as `http://yalc:3847`, persists SQLite state under `/root/.gtm-os`, and serves `/healthz` without bearer auth for Docker health checks.
 
+> **Don't want to build from source?** The core ships as a public image. Set
+> `SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z` in `.env` and run
+> `docker compose pull && docker compose up -d` instead of `--build`. Updating is
+> then just `pull && up -d` (no `git pull`, no rebuild). This guide otherwise
+> assumes a source build because the G4U deploy pipeline builds on the host.
+
 > **Cervantes** does NOT run inside Docker. See step 8 below.
 
 ### 7. Verify

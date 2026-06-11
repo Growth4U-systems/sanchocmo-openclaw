@@ -100,7 +100,7 @@ Expected: 30-40% filtered out.
 ```bash
 python3 {baseDir}/scripts/llm_step.py \
   --input "brand/{slug}/niche-discovery/niches-confirmed.md,brand/{slug}/niche-discovery/scored.md" \
-  --output brand/{slug}/niche-discovery/niche-discovery-current.md \
+  --output brand/{slug}/niche-discovery/niche-discovery.current.md \
   --prompt-file {baseDir}/references/prompts-phase10.md \
   --model anthropic/claude-opus-4 \
   --temperature 0.3 \
@@ -111,6 +111,6 @@ python3 {baseDir}/scripts/llm_step.py \
 
 ```bash
 python3 {baseDir}/scripts/export_csv.py \
-  --input brand/{slug}/niche-discovery/niche-discovery-current.md \
+  --input brand/{slug}/niche-discovery/niche-discovery.current.md \
   --output brand/{slug}/niche-discovery/final-table.csv
 ```

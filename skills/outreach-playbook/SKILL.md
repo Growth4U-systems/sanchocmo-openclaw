@@ -2,14 +2,14 @@
 name: outreach-playbook
 description: "Generate and update the Outreach Playbook for a client. Defines discovery methods, sequence templates, and outreach stack based on Foundation ECPs, Atalaya contacts, and Trust Engine media/partner intelligence."
 context_required:
-- brand/{slug}/company-brief/company-brief-current.md
-- brand/{slug}/brand-voice/brand-voice-current.md
-- brand/{slug}/go-to-market/ecps/ecps-current.md
-- brand/{slug}/go-to-market/positioning/positioning-current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/positioning/positioning.current.md
 - brand/{slug}/market-and-us/competitors/sources.json
-- brand/{slug}/strategic-plan/strategic-plan-current.md
+- brand/{slug}/strategic-plan/strategic-plan.current.md
 context_writes:
-- brand/{slug}/outreach-playbook/outreach-playbook-current.md
+- brand/{slug}/outreach-playbook/outreach-playbook.current.md
 - brand/{slug}/outreach-playbook/discovery-guide.md
 - brand/{slug}/outreach-playbook/sequence-templates.md
 ---
@@ -32,7 +32,7 @@ context_writes:
 - Analizar Atalaya contacts detectados (si existen)
 - Trust Engine: medios, partners, influencers identificados
 
-### 3. Generate outreach-playbook-current.md
+### 3. Generate outreach-playbook.current.md
 - Stack: herramientas (Instantly, Apollo, etc.)
 - Dominios configurados para cold email
 - Canales: email, LinkedIn DM, teléfono

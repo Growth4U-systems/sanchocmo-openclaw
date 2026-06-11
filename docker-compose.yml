@@ -1,5 +1,15 @@
 services:
   sanchocmo:
+    # Product default is `docker compose pull` of a versioned public image.
+    # `build:` stays so the source-of-truth deploy (and anyone hacking on a
+    # clone) can build locally — Compose tags that local build with this same
+    # `image:` name, so the two paths converge:
+    #   • Product / update:  docker compose pull && up -d   → uses the registry image
+    #   • G4U deploy / clone: docker compose build           → tags the build as this image
+    # The deploy's `pull --ignore-buildable` skips this service (it has a
+    # `build:`), so a build host never pulls a foreign image. Pin a version
+    # with SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z.
+    image: ${SANCHOCMO_IMAGE:-ghcr.io/growth4u-systems/sanchocmo:latest}
     build:
       context: .
       args:

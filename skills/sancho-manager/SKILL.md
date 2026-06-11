@@ -10,10 +10,10 @@ metadata:
   depends_on: null
   chains_to: strategic-plan, execution-skills
 context_required:
-  - brand/{slug}/strategic-plan/strategic-plan-current.md
+  - brand/{slug}/strategic-plan/strategic-plan.current.md
   - brand/{slug}/projects/P*/project.json
   - brand/{slug}/foundation-state.json
-  - brand/{slug}/company-brief/company-brief-current.md
+  - brand/{slug}/company-brief/company-brief.current.md
 context_writes:
   - brand/{slug}/projects/P{XX}/project.json
   - brand/{slug}/projects/P{XX}/tasks.json
@@ -53,10 +53,10 @@ context_writes:
 ### Paso 0: Context Hydration (~1 min)
 
 Leer en paralelo:
-- `brand/{slug}/strategic-plan/strategic-plan-current.md` — objetivos y canales actuales
+- `brand/{slug}/strategic-plan/strategic-plan.current.md` — objetivos y canales actuales
 - `brand/{slug}/projects/P*/project.json` — escanear proyectos existentes (evitar duplicación)
 - `brand/{slug}/foundation-state.json` — estado Foundation
-- `brand/{slug}/company-brief/company-brief-current.md` — contexto de negocio
+- `brand/{slug}/company-brief/company-brief.current.md` — contexto de negocio
 
 Si no hay directorios `P*/` en `projects/`, el primer proyecto será P01.
 Si otros archivos no existen, continuar sin ellos (warning, no bloqueo).
@@ -75,7 +75,7 @@ Parsear la petición del usuario. Extraer:
 
 ### Paso 2: Alignment Check (Gate Advisory)
 
-Cruzar con `strategic-plan/strategic-plan-current.md`:
+Cruzar con `strategic-plan/strategic-plan.current.md`:
 
 | Resultado | Acción |
 |-----------|--------|
@@ -377,7 +377,7 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 |----------|-------|----------|
 | Defiere a | `foundation-orchestrator` | Creación y gestión del DAG de Foundation |
 | Defiere a | `strategic-plan` (INIT) | Crear plan estratégico completo desde cero |
-| Lee de | `strategic-plan/strategic-plan-current.md` | Objetivos, canales, para alignment checks |
+| Lee de | `strategic-plan/strategic-plan.current.md` | Objetivos, canales, para alignment checks |
 | Lee de | `foundation-state.json` | Estado de Foundation |
 | Lee de | `skills/strategic-plan/references/strategies-catalog.json` | Vincular tareas a estrategias del catálogo (poblar `strategy.catalog_id` en project.json) |
 | Escribe | project.json, tasks.json, playbook.md | Artefactos de proyecto |

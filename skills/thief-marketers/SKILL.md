@@ -7,7 +7,7 @@ context_required:
 - brand/{slug}/content/content-pillars.md
 - brand/{slug}/content/configs/cadence-config.yml
 - brand/{slug}/content/pov-bank.json
-- brand/{slug}/brand-voice/brand-voice-current.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
 context_writes:
 - brand/{slug}/content/idea-queue.json
 - brand/{slug}/content/research-signals/{date}-creators.json

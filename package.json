@@ -21,7 +21,7 @@
     "db:migrate:local": "node scripts/migrate-local.mjs",
     "db:generate:local": "drizzle-kit generate --config drizzle.local.config.ts",
     "db:migrate:mcp": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql",
-    "db:migrate:deploy": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql src/db/migrations/0007_feedback_insights.sql",
+    "db:migrate:deploy": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql src/db/migrations/0007_feedback_insights.sql src/db/migrations/0008_comments_v2.sql",
     "db:verify": "tsx scripts/verify-migration.ts",
     "db:sync-tasks": "tsx scripts/migrate-projects-to-db.ts --apply",
     "db:sync-tasks:dry": "tsx scripts/migrate-projects-to-db.ts --dry-run",

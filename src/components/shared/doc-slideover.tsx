@@ -8,8 +8,8 @@ import remarkGfm from "remark-gfm";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
-import { findTaskThreadForDoc, buildPillarThread } from "@/lib/chat-openers";
-import { normalizeBrandDocPath, stripBrandPrefix } from "@/lib/doc-paths";
+import { findTaskThreadForDoc, buildPillarThread, buildHtmlConversionThread } from "@/lib/chat-openers";
+import { htmlSiblingOf, normalizeBrandDocPath, stripBrandPrefix } from "@/lib/doc-paths";
 import { cn } from "@/lib/utils";
 
 const MarkdownEditor = dynamic(
@@ -98,9 +98,19 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   const activeDocPath = canonicalDocPath || normalizedDocPath;
   const isOpen = !!normalizedDocPath;
 
+  // ── HTML-canonical sibling state (SAN-149) ──────────────────────────
+  // When the opened .md has a generated .html sibling, the HTML is the
+  // canonical client-facing doc: we display IT by default and offer a
+  // "Ver fuente (.md)" toggle back to the editable markdown.
+  const [htmlSibling, setHtmlSibling] = useState<string | null>(null);
+  const [htmlSiblingStale, setHtmlSiblingStale] = useState(false);
+  const [viewSource, setViewSource] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
+
   // Fetch doc content
   useEffect(() => {
     if (!normalizedDocPath) return;
+    let cancelled = false;
     setLoading(true);
     setError(null);
     setMissingDoc(false);
@@ -108,27 +118,58 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     setEditing(false);
     setCanonicalDocPath(null);
 
-    fetch(`/api/docs/${normalizedDocPath}`)
-      .then((res) => {
+    (async () => {
+      try {
+        const res = await fetch(`/api/docs/${normalizedDocPath}`);
         if (res.status === 404) {
-          setMissingDoc(true);
-          return null;
+          if (!cancelled) setMissingDoc(true);
+          return;
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        if (!data) return;
-        if (data.ok && data.content) {
-          setContent(data.content);
-          setLastModified(data.lastModified || null);
-          setCanonicalDocPath(data.canonicalPath || data.path || normalizedDocPath);
-        } else {
+        const data = await res.json();
+        if (cancelled || !data) return;
+        if (!data.ok || !data.content) {
           setError(data.error || "No se pudo cargar el documento");
+          return;
         }
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+        setHtmlSibling(data.htmlSibling || null);
+        setHtmlSiblingStale(!!data.htmlSiblingStale);
+
+        // Canonical switch: serve the .html sibling instead of the .md
+        // unless the user explicitly asked for the source.
+        if (data.htmlSibling && !viewSource) {
+          const sibRes = await fetch(`/api/docs/${data.htmlSibling}`);
+          if (sibRes.ok) {
+            const sib = await sibRes.json();
+            if (cancelled) return;
+            if (sib.ok && sib.content) {
+              setContent(sib.content);
+              setLastModified(sib.lastModified || null);
+              setCanonicalDocPath(sib.canonicalPath || data.htmlSibling);
+              return;
+            }
+          }
+          // sibling fetch failed — fall through to the markdown
+        }
+
+        setContent(data.content);
+        setLastModified(data.lastModified || null);
+        setCanonicalDocPath(data.canonicalPath || data.path || normalizedDocPath);
+      } catch (e) {
+        if (!cancelled) setError((e as Error).message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [normalizedDocPath, viewSource, refreshTick]);
+
+  // Reset the source toggle when navigating to another doc
+  useEffect(() => {
+    setViewSource(false);
+    setHtmlSibling(null);
+    setHtmlSiblingStale(false);
   }, [normalizedDocPath]);
 
   // Body scroll lock
@@ -149,7 +190,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
   // Title
   const displayTitle = activeDocPath
     ?.split("/").pop()
-    ?.replace(/\.md$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Documento";
+    ?.replace(/\.(md|html)$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Documento";
 
   async function handleStatusChange(newStatus: string) {
     if (!pillarInfo) return;
@@ -244,6 +285,47 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     }
   }
 
+  // ── Convertir en HTML (SAN-149) ──────────────────────────────────────
+  // Dispatches the html-output skill to the agent via the doc's chat
+  // thread, then polls the expected sibling path until the file appears.
+  const [convertState, setConvertState] = useState<"idle" | "converting" | "error">("idle");
+  const expectedSibling = useMemo(() => {
+    if (!normalizedDocPath) return null;
+    try { return htmlSiblingOf(normalizedDocPath); } catch { return null; }
+  }, [normalizedDocPath]);
+
+  function handleConvertToHtml() {
+    if (!normalizedDocPath || !slug || convertState === "converting") return;
+    const thread = buildHtmlConversionThread(slug, normalizedDocPath, projectsData);
+    openChat(slug, thread);
+    setConvertState("converting");
+  }
+
+  useEffect(() => {
+    if (convertState !== "converting" || !expectedSibling) return;
+    const startedAt = Date.now();
+    const TIMEOUT_MS = 5 * 60 * 1000;
+    const interval = setInterval(async () => {
+      if (Date.now() - startedAt > TIMEOUT_MS) {
+        clearInterval(interval);
+        setConvertState("error");
+        return;
+      }
+      try {
+        const res = await fetch(`/api/docs/${expectedSibling}`);
+        if (res.ok) {
+          clearInterval(interval);
+          setConvertState("idle");
+          setViewSource(false);
+          setRefreshTick((t) => t + 1); // re-fetch → switches to canonical HTML
+        }
+      } catch {
+        // network hiccup — keep polling
+      }
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [convertState, expectedSibling]);
+
   const isJson = activeDocPath?.endsWith(".json") || false;
   const canCreateDraft = !!activeDocPath && (activeDocPath.endsWith(".md") || activeDocPath.endsWith(".html"));
   const parsedJson = useMemo(() => {
@@ -251,19 +333,24 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     try { return JSON.parse(content); } catch { return null; }
   }, [isJson, content]);
 
-  // ── HTML 2-col edit/preview state ─────────────────────────────────
-  // For any `.html` document we render a split view: text editor (left) +
-  // live iframe preview (right). For carousel templates specifically, the
+  // ── HTML view state ───────────────────────────────────────────────
+  // HTML documents render as the document itself (full-width iframe) by
+  // default — the source + live-preview split only appears when the user
+  // explicitly hits "✏️ Editar HTML" (SAN-149). For carousel templates the
   // preview goes through the template-preview-html endpoint so `{{slot.*}}`
   // and `{{brand.*}}` placeholders get resolved to the brand's actual
   // values — that way you see the real render, not the template source.
   const isHtmlDoc = !!(activeDocPath?.endsWith(".html") || (content && (content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html"))));
+  const [editingHtml, setEditingHtml] = useState(false);
   const [htmlDraft, setHtmlDraft] = useState<string>("");
   const [savingHtml, setSavingHtml] = useState(false);
   const [previewRevision, setPreviewRevision] = useState(0);
   useEffect(() => {
     if (isHtmlDoc && content !== null) setHtmlDraft(content);
   }, [isHtmlDoc, content]);
+  useEffect(() => {
+    setEditingHtml(false);
+  }, [normalizedDocPath]);
 
   const templateInfo = useMemo(() => {
     if (!activeDocPath) return null;
@@ -345,16 +432,71 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               </button>
             )}
 
-            {isHtmlDoc && (
+            {/* HTML-canonical controls (SAN-149) */}
+            {htmlSibling && (
               <button
                 type="button"
-                onClick={handleSaveHtml}
-                disabled={!isHtmlDirty || savingHtml}
-                className={cn(btnClass, isHtmlDirty && "!bg-rust !text-white !border-rust hover:!bg-rust/90")}
-                title={isHtmlDirty ? "Guardar cambios y refrescar preview" : "No hay cambios pendientes"}
+                onClick={() => setViewSource((v) => !v)}
+                className={btnClass}
+                title={viewSource ? "Ver el documento HTML canónico" : "Ver la fuente markdown editable"}
               >
-                {savingHtml ? "Guardando..." : isHtmlDirty ? "💾 Guardar" : "💾 Guardado"}
+                {viewSource ? "📄 Ver HTML" : "📝 Ver fuente (.md)"}
               </button>
+            )}
+            {normalizedDocPath?.endsWith(".md") && content && !missingDoc && (!htmlSibling || htmlSiblingStale) && (
+              <button
+                type="button"
+                onClick={handleConvertToHtml}
+                disabled={convertState === "converting"}
+                className={cn(btnClass, convertState === "converting" && "opacity-60 cursor-wait")}
+                title={
+                  convertState === "error"
+                    ? "La conversión sigue en el chat — el HTML tarda más de lo esperado"
+                    : htmlSiblingStale
+                      ? "El .md cambió después de generar el HTML — regenerar"
+                      : "Genera el documento HTML canónico con la skill html-output"
+                }
+              >
+                {convertState === "converting"
+                  ? "⏳ Generando HTML…"
+                  : convertState === "error"
+                    ? "⚠️ Reintentar HTML"
+                    : htmlSiblingStale
+                      ? "🔄 Regenerar HTML"
+                      : "🎨 Convertir en HTML"}
+              </button>
+            )}
+
+            {isHtmlDoc && !editingHtml && (
+              <button
+                type="button"
+                onClick={() => setEditingHtml(true)}
+                className={btnClass}
+                title="Editar el código HTML manualmente"
+              >
+                ✏️ Editar HTML
+              </button>
+            )}
+            {isHtmlDoc && editingHtml && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSaveHtml}
+                  disabled={!isHtmlDirty || savingHtml}
+                  className={cn(btnClass, isHtmlDirty && "!bg-rust !text-white !border-rust hover:!bg-rust/90")}
+                  title={isHtmlDirty ? "Guardar cambios y refrescar preview" : "No hay cambios pendientes"}
+                >
+                  {savingHtml ? "Guardando..." : isHtmlDirty ? "💾 Guardar" : "💾 Guardado"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingHtml(false)}
+                  className={btnClass}
+                  title="Volver a la vista del documento"
+                >
+                  👁 Ver
+                </button>
+              </>
             )}
 
             <button
@@ -370,14 +512,23 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
             {/* Task link — find the task that owns this doc by searching projectsData directly */}
             {(() => {
               if (!activeDocPath || !projectsData) return null;
-              const norm = stripBrandPrefix(activeDocPath, slug);
-              const withBrand = activeDocPath;
+              // A doc and its md/html canonical sibling (SAN-149) match the
+              // same task, so the Tarea button works from either view.
+              const candidates = new Set<string>();
+              const addCandidate = (p: string) => {
+                candidates.add(p);
+                candidates.add(stripBrandPrefix(p, slug));
+              };
+              addCandidate(activeDocPath);
+              if (/\.md$/i.test(activeDocPath)) addCandidate(activeDocPath.replace(/\.md$/i, ".html"));
+              if (/\.html$/i.test(activeDocPath)) addCandidate(activeDocPath.replace(/\.html$/i, ".md"));
+              const pathMatches = (p?: string | null) => !!p && candidates.has(p);
               for (const pw of projectsData) {
                 for (const task of pw.tasks) {
                   const df = task.deliverable_file;
                   const dfStr = typeof df === "string" ? df : Array.isArray(df) ? df[0] : null;
                   if (!dfStr) continue;
-                  if (dfStr === activeDocPath || dfStr === norm || dfStr === withBrand) {
+                  if (pathMatches(dfStr)) {
                     return (
                       <button
                         type="button"
@@ -396,7 +547,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
                   if (task.attachments) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const hit = (task.attachments as any[]).some((a: {path?: string}) =>
-                      a?.path === activeDocPath || a?.path === norm || a?.path === withBrand
+                      pathMatches(a?.path)
                     );
                     if (hit) {
                       return (
@@ -442,6 +593,18 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               onCancel={() => setEditing(false)}
             />
           </div>
+        ) : isHtmlDoc && content !== null && !editingHtml ? (
+          // Default HTML view (SAN-149): just the rendered document, full
+          // width. Source editing lives behind "✏️ Editar HTML".
+          <div className="flex-1 min-h-0">
+            <iframe
+              key={`view-${previewRevision}`}
+              src={previewSrc || `/api/docs/${activeDocPath}?raw=1&_=${previewRevision}`}
+              className="w-full h-full border-0 bg-white block"
+              sandbox="allow-same-origin"
+              title={displayTitle}
+            />
+          </div>
         ) : isHtmlDoc && content !== null ? (
           <div className="flex-1 min-h-0 grid grid-cols-2 divide-x divide-[#E5E2DC] dark:divide-[#313244]">
             {/* HTML editor (left) */}
@@ -468,10 +631,18 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
                 )}
               </div>
               <div className="flex-1 overflow-auto p-4">
+                {/* Saved docs load by URL (?raw=1) so in-page anchors stay
+                    inside the iframe (SAN-149); unsaved drafts fall back to
+                    srcDoc for the live preview. */}
                 <iframe
                   key={`preview-${previewRevision}`}
-                  src={previewSrc || undefined}
-                  srcDoc={previewSrc ? undefined : (isHtmlDirty ? htmlDraft : content)}
+                  src={
+                    previewSrc ||
+                    (!isHtmlDirty && activeDocPath
+                      ? `/api/docs/${activeDocPath}?raw=1&_=${previewRevision}`
+                      : undefined)
+                  }
+                  srcDoc={previewSrc || !isHtmlDirty ? undefined : htmlDraft}
                   className="w-full border border-[#E5E2DC] rounded-lg bg-white"
                   style={{ minHeight: "calc(100vh - 160px)" }}
                   sandbox="allow-same-origin"

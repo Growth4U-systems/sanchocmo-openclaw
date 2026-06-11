@@ -4,23 +4,18 @@
 
 ---
 
-## FAST FOUNDATION (1 skill, 1 thread, ~30 min)
+## KICKOFF (1 skill, 1 thread, ~30 min)
 
-### fast-foundation
-**Skill**: `fast-foundation`
-**Agent**: `sancho` (rework en SAN-13)
-**Thread**: `{slug}:fast-foundation`
-**Output**: 5 docs lite:
-- `brand/{slug}/company-brief/company-brief-current.md` — Company Brief (identidad + business model + budget)
-- `brand/{slug}/market-and-us/self/self-current.md` — Self Intelligence L1 (autopercepción)
-- `brand/{slug}/market-and-us/market/market-current.md` — Market Intelligence L1 (datos básicos)
-- `brand/{slug}/brand-voice/brand-voice-current.md` — Brand Voice Snapshot (quick)
-- `brand/{slug}/go-to-market/ecps/ecps-current.md` — Niche Discovery básico (ECPs preliminares)
+### company-brief
+**Skill**: `kickoff`
+**Agent**: `sancho`
+**Thread**: `{slug}:kickoff`
+**Output**: `brand/{slug}/company-brief/company-brief.current.md` (un archivo, secciones H2; Company Brief inicial). NO toca carpetas de pilares.
 **requires**: — (es el primer paso)
 **Skip**: nunca
 **Modo URL**: scrape web + sociales → pre-fill → validar → completar gaps
 **Modo manual**: 6 preguntas conversacionales (sin URL)
-**Done**: Los 5 docs lite generados y validados por el usuario
+**Done**: `company-brief.current.md` generado y validado por el usuario
 
 ---
 
@@ -30,10 +25,10 @@
 **Skill**: `market-intelligence`
 **Agent**: `hamete`
 **Thread**: `{slug}:market-analysis`
-**Output**: `brand/{slug}/market-and-us/market/market-current.md`
+**Output**: `brand/{slug}/market-and-us/market/market.current.md`
 **requires**: —
-**enriches_with**: fast-foundation, competitor-analysis, self-analysis
-**Hydration**: si fast-foundation está `approved`, hidrata con su doc lite (market L1). Si no, arranca standalone desde el input del cliente. Fast Foundation **no es prerequisito**.
+**enriches_with**: company-brief, competitor-analysis, self-analysis
+**Hydration**: lee su sección de `company-brief/company-brief.current.md` (grounding opcional). Si no existe, arranca standalone desde el input del cliente. Kickoff **no es prerequisito**.
 **Lite done**: Sector + TAM/SAM estimado + tendencias principales
 **Deep done**: Lite + regulación + 3+ tendencias + tasa crecimiento + características mercado
 
@@ -42,10 +37,11 @@
 **Agent**: `hamete`
 **Thread**: `{slug}:competitor-analysis`
 **Output**:
-- `brand/{slug}/market-and-us/competitors/competitors-current.md` (roll-up: landscape + lista, generado desde subdirs)
-- `brand/{slug}/market-and-us/competitors/{nombre}/{nombre}-current.md` (deep-dive 3-lens, 1 por competidor)
+- `brand/{slug}/market-and-us/competitors/competitors.current.md` (roll-up: landscape + lista, generado desde subdirs)
+- `brand/{slug}/market-and-us/competitors/{nombre}/{nombre}.current.md` (deep-dive 3-lens, 1 por competidor)
 **requires**: —
-**enriches_with**: fast-foundation, market-analysis, self-analysis
+**enriches_with**: company-brief, market-analysis, self-analysis
+**Hydration**: lee su sección de `company-brief/company-brief.current.md` (grounding opcional).
 **Lite done**: Top 3 competidores directos + Lens 1 (qué dicen de sí mismos)
 **Deep done**: 3+ directos con 3 lenses + 2+ alternativas indirectas + growth model por competidor
 
@@ -53,10 +49,10 @@
 **Skill**: `self-intelligence`
 **Agent**: `hamete`
 **Thread**: `{slug}:self-analysis`
-**Output**: `brand/{slug}/market-and-us/self/self-current.md`
+**Output**: `brand/{slug}/market-and-us/self/self.current.md`
 **requires**: —
-**enriches_with**: fast-foundation, market-analysis, competitor-analysis
-**Hydration**: si fast-foundation está `approved`, hidrata con su doc lite (Self L1) y añade Lens 2 + Lens 3. Si no, ejecuta las 3 lenses standalone. Fast Foundation **no es prerequisito**.
+**enriches_with**: company-brief, market-analysis, competitor-analysis
+**Hydration**: lee su sección de `company-brief/company-brief.current.md` (grounding opcional) y añade Lens 2 + Lens 3 si está disponible. Si no, ejecuta las 3 lenses standalone. Kickoff **no es prerequisito**.
 **Skip**: si es marca nueva sin track record
 **Lite done**: Lens 1 (qué decimos) para homepage + 2 redes sociales top
 **Deep done**: 3 lentes completas: homepage, 2 redes sociales, 2 plataformas de reviews
@@ -70,9 +66,9 @@
 **Agent**: `hamete`
 **Thread**: `{slug}:market-synthesis`
 **Output**:
-- `brand/{slug}/market-and-us/swot/swot-current.md` — SWOT + TOWS + ICE
-- `brand/{slug}/market-and-us/summary/summary-current.md` — Market Summary (1-2 pág)
-- `brand/{slug}/market-and-us/ope-canvas/ope-canvas-current.md` — OPE Canvas (14 secciones)
+- `brand/{slug}/market-and-us/swot/swot.current.md` — SWOT + TOWS + ICE
+- `brand/{slug}/market-and-us/summary/summary.current.md` — Market Summary (1-2 pág)
+- `brand/{slug}/market-and-us/ope-canvas/ope-canvas.current.md` — OPE Canvas (14 secciones)
 - `brand/{slug}/presentations/foundation-report.html` — Presentación HTML
 **requires**: market-analysis, competitor-analysis, self-analysis
 **Skip**: nunca
@@ -86,10 +82,10 @@
 **Skill**: `niche-discovery-100x`
 **Agent**: `hamete`
 **Thread**: `{slug}:niche-discovery`
-**Output**: `brand/{slug}/go-to-market/ecps/ecps-current.md` (JTBD integrado por segmento)
+**Output**: `brand/{slug}/go-to-market/ecps/ecps.current.md` (JTBD integrado por segmento)
 **requires**: market-synthesis (swot)
 **enriches_with**: existing-customer-data
-**Hydration**: lee doc lite de Fast Foundation (ECPs básicos) y valida con research
+**Hydration**: lee su sección de `company-brief/company-brief.current.md` (grounding opcional) como seed y valida con research
 **Lite done**: 50+ problemas, Triple Filter, 3-7 ECPs scored
 **Deep done**: 100+ problemas, 5+ tipos fuente, TAM/SAM por ECP, datos clientes integrados
 
@@ -97,9 +93,9 @@
 **Skill**: `existing-customer-data`
 **Agent**: `hamete`
 **Thread**: `{slug}:existing-customer-data` (solo si se activa)
-**Output**: `brand/{slug}/go-to-market/existing-customer-data/existing-customer-data-current.md`
+**Output**: `brand/{slug}/go-to-market/existing-customer-data/existing-customer-data.current.md`
 **requires**: —
-**enriches_with**: fast-foundation, niche-discovery
+**enriches_with**: company-brief, niche-discovery
 **Skip**: si pre-launch sin clientes
 
 ---
@@ -110,7 +106,7 @@
 **Skill**: `positioning-messaging`
 **Agent**: `dulcinea`
 **Thread**: `{slug}:positioning`
-**Output**: `brand/{slug}/go-to-market/positioning/{ecp-slug}/{ecp-slug}-current.md` (1 por ECP)
+**Output**: `brand/{slug}/go-to-market/positioning/{ecp-slug}/{ecp-slug}.current.md` (1 por ECP)
 **requires**: niche-discovery
 **Lite done**: Messaging básico para top ECP
 **Deep done**: Por ECP: value criteria ranked, competitor scoring, 3+ assets con proof, messaging framework
@@ -120,7 +116,7 @@
 **Skill**: `pricing-strategy`
 **Agent**: `sancho`
 **Thread**: `{slug}:pricing`
-**Output**: `brand/{slug}/go-to-market/pricing/pricing-current.md`
+**Output**: `brand/{slug}/go-to-market/pricing/pricing.current.md`
 **requires**: niche-discovery, positioning
 **Nota**: En tasks.json pricing depende explícitamente de positioning (secuencial). El registry marca positioning como enriches_with pero en la práctica siempre se ejecuta después.
 **Skip**: si pricing es fijo/no negociable
@@ -142,16 +138,16 @@
 **Skill**: `brand-voice`
 **Agent**: `dulcinea`
 **Thread**: `{slug}:brand-voice`
-**Output**: `brand/{slug}/brand-voice/brand-voice-current.md`
+**Output**: `brand/{slug}/brand-voice/brand-voice.current.md`
 **requires**: positioning
-**Hydration**: lee doc lite de Fast Foundation (Brand Voice Snapshot) y genera Full Guide
+**Hydration**: lee su sección de `company-brief/company-brief.current.md` (grounding opcional) y genera Full Guide
 **Done**: Voice guide completa + AI Brand Kit + Per-ECP/Channel adaptation
 
 ### visual-identity
 **Skill**: `visual-identity`
 **Agent**: `maese-pedro`
 **Thread**: `{slug}:visual-identity`
-**Output**: `brand/{slug}/brand-identity/visual-identity/visual-identity-current.md`
+**Output**: `brand/{slug}/brand-identity/visual-identity/visual-identity.current.md`
 **requires**: brand-voice
 **Done**: Sistema visual completo: paleta, tipografía, guidelines de uso
 
@@ -163,7 +159,7 @@
 **Skill**: `metrics-setup`
 **Agent**: `merlin`
 **Thread**: `{slug}:metrics-setup`
-**Output**: `brand/{slug}/go-to-market/metrics-plan/metrics-plan-current.md` + `metrics-plan.json` + `integrations.json`
+**Output**: `brand/{slug}/go-to-market/metrics-plan/metrics-plan.current.md` + `metrics-plan.json` + `integrations.json`
 **requires**: positioning, pricing (para determinar arquetipo y funnel)
 **Done**: Plan de métricas + integraciones conectadas + dashboard generado
 
@@ -175,7 +171,7 @@
 **Skill**: `strategic-plan`
 **Agent**: `sancho`
 **Thread**: `{slug}:strategic-plan`
-**Output**: `brand/{slug}/strategic-plan/strategic-plan-current.md`
+**Output**: `brand/{slug}/strategic-plan/strategic-plan.current.md`
 **requires**: Full Foundation completada + metrics-setup
 **Done**: Roadmap con estrategias GTM seleccionadas, proyectos definidos, fases y KPIs
 
@@ -184,7 +180,7 @@
 ## Quick Reference: Flujo de Desbloqueo
 
 ```
-fast-foundation
+company-brief (kickoff)
   ├── market-analysis ─┐
   ├── competitor-analysis ├── market-synthesis
   └── self-analysis ───┘       │
@@ -198,7 +194,7 @@ fast-foundation
 
 | Pilar | Desbloquea | Downstream |
 |-------|-----------|------------|
-| fast-foundation | Todo Layer 1+ | 11+ |
+| company-brief (kickoff) | Todo Layer 1+ | 11+ |
 | market-analysis | market-synthesis → discovery → activation → brand | 8+ |
 | competitor-analysis | market-synthesis → discovery → activation → brand | 8+ |
 | self-analysis | market-synthesis → discovery → activation → brand | 8+ |

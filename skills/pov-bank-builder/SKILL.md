@@ -3,8 +3,8 @@ name: pov-bank-builder
 description: "Builds and refreshes the POV Bank (point-of-view database) for a brand. Synthesizes brand-voice + content-pillars + clarify-history into per-pillar opinions: core beliefs, what we say yes/no to, preferred angles, and evidence we cite. Used by idea-builder to derive non-generic, brand-aligned angle drafts."
 context_required:
 - brand/{slug}/content/content-pillars.md
-- brand/{slug}/brand-voice/brand-voice-current.md
-- brand/{slug}/company-brief/company-brief-current.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/company-brief/company-brief.current.md
 context_optional:
 - brand/{slug}/content/clarify-history.json
 - brand/{slug}/content/idea-queue.json
@@ -100,8 +100,8 @@ Esta skill SOLO debe ejecutarse si **content-strategy** + **content-pillars** ya
 ### 1. Read inputs
 
 - `content-pillars.md` — los 3-5 pillars con pain_origin, expertise, related_topics
-- `brand-voice-current.md` — tono, vocabulario, voicing rules
-- `company-brief-current.md` — sector, posicionamiento
+- `brand-voice.current.md` — tono, vocabulario, voicing rules
+- `company-brief.current.md` — sector, posicionamiento
 - `clarify-history.json` — si existe, las 50 últimas entries (qué ángulos eligió el humano vs los que se le propusieron)
 - `pov-bank.json` previo (si existe) — para hacer un refresh incremental, no overwrite total
 - `idea-queue.json` — para ver qué ideas se aprobaron y cuáles se descartaron (señal de POV)

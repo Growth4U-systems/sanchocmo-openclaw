@@ -2,7 +2,7 @@ FROM node:24-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-venv python3-full \
-    git curl jq openssh-client sqlite3 \
+    git curl jq openssh-client rsync sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 # PDF extraction libs. Debian Bookworm marks the system Python as
@@ -47,6 +47,9 @@ COPY scripts/apply-sql-migration.mjs ./scripts/apply-sql-migration.mjs
 # baseline under src/db/migrations-local (copied via `COPY src/`) at boot — see
 # docker/entrypoint.sh section 5d.
 COPY scripts/migrate-local.mjs ./scripts/migrate-local.mjs
+# prod→staging data sync (staging-only "Sync with Prod" admin button). Invoked
+# via `bash` by /api/system/sync-prod-to-staging; needs rsync (installed above).
+COPY scripts/resync-prod-to-staging.sh ./scripts/resync-prod-to-staging.sh
 # NEXT_PUBLIC_* vars must be present at build time — they are inlined into the client bundle.
 ARG NEXT_PUBLIC_ENV_LABEL=""
 ENV NEXT_PUBLIC_ENV_LABEL=${NEXT_PUBLIC_ENV_LABEL}
@@ -78,7 +81,6 @@ COPY workspace-rocinante/ ./workspace-rocinante/
 COPY workspace-mambrino/ ./workspace-mambrino/
 COPY workspace-merlin/ ./workspace-merlin/
 COPY workspace-sanson/ ./workspace-sanson/
-COPY workspace-yalc/ ./workspace-yalc/
 # Version marker: init-home.sh refreshes the framework only when this changes
 # (avoids re-copying ~180 MB of skills on every container restart).
 RUN echo "${GIT_COMMIT:-$(date +%s)}" > /opt/sancho-seed/.seed-version \

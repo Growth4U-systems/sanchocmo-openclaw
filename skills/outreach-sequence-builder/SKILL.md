@@ -12,9 +12,9 @@ metadata:
   chains_to: email-outreach-executor, linkedin-outreach-executor
   context_required:
     - brand/{slug}/go-to-market/channel-plan.md
-    - brand/{slug}/go-to-market/positioning/*/*-current.md
-    - brand/{slug}/go-to-market/ecps/ecps-current.md
-    - brand/{slug}/brand-voice/brand-voice-current.md
+    - brand/{slug}/go-to-market/positioning/*/*.current.md
+    - brand/{slug}/go-to-market/ecps/ecps.current.md
+    - brand/{slug}/brand-voice/brand-voice.current.md
     - brand/{slug}/outreach-playbook/sequence-templates.md
     - brand/{slug}/outreach-playbook/discovery-guide.md
   context_writes:
@@ -50,11 +50,11 @@ Follow _system/output/output-format.md (if using SanchoCMO framework)
 
 **Required (will not run without these):**
 - `./brand/{slug}/go-to-market/channel-plan.md` — Confirms outreach is a selected channel (from channel-prioritization)
-- `./brand/{slug}/go-to-market/ecps/ecps-current.md` — Target personas with pain points (from niche-discovery-100x)
-- `./brand/{slug}/go-to-market/positioning/*/*-current.md` — Value proposition angles per ECP (from positioning-messaging)
+- `./brand/{slug}/go-to-market/ecps/ecps.current.md` — Target personas with pain points (from niche-discovery-100x)
+- `./brand/{slug}/go-to-market/positioning/*/*.current.md` — Value proposition angles per ECP (from positioning-messaging)
 
 **Recommended (better output with these):**
-- `./brand/{slug}/brand-voice/brand-voice-current.md` — Tone for email copy (from brand-voice)
+- `./brand/{slug}/brand-voice/brand-voice.current.md` — Tone for email copy (from brand-voice)
 - brand/{slug}/outreach-playbook/sequence-templates.md
 - brand/{slug}/outreach-playbook/discovery-guide.md
 - `brand/{slug}/operational/contacts-enriched.json` — Enriched contacts for personalization (from contact-enrichment)
@@ -104,7 +104,7 @@ From positioning.md:
   - Key differentiators vs alternatives
   - Proof points (metrics, case studies)
 
-From brand-voice/brand-voice-current.md (if exists):
+From brand-voice/brand-voice.current.md (if exists):
 - brand/{slug}/outreach-playbook/sequence-templates.md
 - brand/{slug}/outreach-playbook/discovery-guide.md
   - Tone guidelines
@@ -324,9 +324,9 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 | Action | File | Description |
 |--------|------|-------------|
 | READ | `./brand/{slug}/go-to-market/channel-plan.md` | Confirms outreach is selected channel |
-| READ | `./brand/{slug}/go-to-market/positioning/*/*-current.md` | Value prop angle per ECP |
-| READ | `./brand/{slug}/go-to-market/ecps/ecps-current.md` | Target persona details |
-| READ | `./brand/{slug}/brand-voice/brand-voice-current.md` | Tone for email copy |
+| READ | `./brand/{slug}/go-to-market/positioning/*/*.current.md` | Value prop angle per ECP |
+| READ | `./brand/{slug}/go-to-market/ecps/ecps.current.md` | Target persona details |
+| READ | `./brand/{slug}/brand-voice/brand-voice.current.md` | Tone for email copy |
 - brand/{slug}/outreach-playbook/sequence-templates.md
 - brand/{slug}/outreach-playbook/discovery-guide.md
 | READ | `brand/{slug}/operational/contacts-enriched.json` | Enriched contacts (optional) |

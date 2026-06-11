@@ -10,9 +10,9 @@ metadata:
   depends_on: signal-definition
   chains_to: decision-maker-finder, contact-enrichment, outreach-sequence-builder
 context_required:
-- brand/{slug}/company-brief/company-brief-current.md
-- brand/{slug}/go-to-market/ecps/ecps-current.md
-- brand/{slug}/go-to-market/ecps/ecps-current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
 context_writes:
 - campaigns/
 - brand/{slug}/operational/learnings.md

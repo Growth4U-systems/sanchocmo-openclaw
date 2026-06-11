@@ -168,20 +168,26 @@ export function findTaskThreadForDoc(
 
   // Normalize the input path. We compare both the brand-relative form
   // (`brand/{slug}/...`) and the slug-relative form (`...`) because
-  // different surfaces use different conventions.
-  const normalized = docPath.replace(/^\/+/, "");
-  const stripBrand = normalized.startsWith(`brand/${slug}/`)
-    ? normalized.slice(`brand/${slug}/`.length)
-    : normalized;
-  const withBrand = normalized.startsWith("brand/")
-    ? normalized
-    : `brand/${slug}/${normalized}`;
+  // different surfaces use different conventions. A `.md` and its
+  // HTML-canonical sibling `.html` (SAN-149) count as the SAME doc, so
+  // opening either file converges on the task thread that owns the pair.
+  const variants = new Set<string>();
+  const addVariants = (p: string) => {
+    const norm = p.replace(/^\/+/, "");
+    variants.add(norm);
+    variants.add(
+      norm.startsWith(`brand/${slug}/`) ? norm.slice(`brand/${slug}/`.length) : norm
+    );
+    variants.add(norm.startsWith("brand/") ? norm : `brand/${slug}/${norm}`);
+  };
+  addVariants(docPath);
+  if (/\.md$/i.test(docPath)) addVariants(docPath.replace(/\.md$/i, ".html"));
+  if (/\.html$/i.test(docPath)) addVariants(docPath.replace(/\.html$/i, ".md"));
 
   const matches = (candidate: unknown): boolean => {
     if (!candidate) return false;
     if (typeof candidate === "string") {
-      const c = candidate.replace(/^\/+/, "");
-      return c === normalized || c === stripBrand || c === withBrand;
+      return variants.has(candidate.replace(/^\/+/, ""));
     }
     if (Array.isArray(candidate)) {
       return candidate.some((x) => matches(x));
@@ -616,10 +622,23 @@ export function buildRecurringThread(
   };
 }
 
-/** Hardcoded pillar canonical fallback (overridden by chat-config.json if available) */
-const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {
-  "company-brief": "fast-foundation",
-};
+/**
+ * Hardcoded pillar canonical fallback (overridden by chat-config.json if available).
+ *
+ * Maps a pillarKey → the canonical PILLAR name used for the threadId and for
+ * `resolveThreadSkills({ pillar })`. The value must be a *pillar* key, never a
+ * skill name — buildPillarThread feeds it straight back to resolveThreadSkills
+ * as the pillar.
+ *
+ * Empty since SAN-3 W4: the only entry existed because the Fast Foundation doc
+ * lived in `fastcontext/` while the pillar was `company-brief`. W4 unified the
+ * folder to `company-brief`, so the pillar key == its folder == its canonical
+ * name; the `|| pillarKey` fallback in buildPillarThread now covers every pillar.
+ * Do NOT re-add `company-brief → kickoff`: `kickoff` is the *skill*, and
+ * resolving `{ pillar: "kickoff" }` falls through to sancho-manager — which
+ * improvises a brief and never writes company-brief.current.md.
+ */
+const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {};
 
 /**
  * Build thread config for a "content document" — the shape rendered by
@@ -770,6 +789,54 @@ export function buildSkillEditorThread(
     linkedTo: `skills/${skillId}`,
     docPath: docPath || null,
     threadState: "continue",
+  };
+}
+
+/**
+ * Build the thread that asks the agent to convert a markdown doc into its
+ * HTML-canonical sibling via the `html-output` skill (SAN-149).
+ *
+ * Reuses the convergence rule: if a task owns the doc, the conversion runs
+ * in the task's thread; otherwise a doc thread is created. The skill is
+ * forced to html-output for this message, but the conversion is done by
+ * the doc's AUTHOR agent (the one the task/pillar thread resolved) — same
+ * principle as the review-comments loop (SAN-148): whoever wrote the doc
+ * owns its revisions. maese-pedro (skill owner) is only the fallback when
+ * no task/pillar claims the doc.
+ */
+export function buildHtmlConversionThread(
+  slug: string,
+  docPath: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  projectsData: any[] | undefined
+): ThreadConfig {
+  const normalizedDocPath = docPath.startsWith("brand/")
+    ? docPath
+    : `brand/${slug}/${docPath.replace(/^\/+/, "")}`;
+  const docKey = normalizedDocPath
+    .split("/")
+    .slice(2)
+    .join("/")
+    .replace(/\.md$/i, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+
+  const base =
+    findTaskThreadForDoc(slug, normalizedDocPath, projectsData) ??
+    buildDocThread(slug, { key: `html-${docKey}`, docPath: normalizedDocPath });
+
+  return {
+    ...base,
+    skill: "html-output",
+    skills: ["html-output", ...base.skills.filter((s) => s !== "html-output")],
+    agent: base.agent || "maese-pedro",
+    docPath: normalizedDocPath,
+    initialMessage:
+      `Ejecuta la skill html-output sobre ${normalizedDocPath}: genera el documento HTML ` +
+      `self-contained junto al .md (mismo nombre de fichero, extensión .html), usando la ` +
+      `identidad visual del brand si existe. Sigue _system/output/html-canonical-protocol.md. ` +
+      `Cuando termines, confirma la ruta exacta del .html generado.`,
   };
 }
 

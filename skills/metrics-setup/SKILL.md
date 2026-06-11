@@ -12,11 +12,11 @@ metadata:
   updated: '2026-03-27'
   changes: v1.0 — Merge de acquisition-metrics-plan + connect-api + generate-plan.
 context_required:
-- brand/{slug}/company-brief/company-brief-current.md
-- brand/{slug}/go-to-market/positioning/positioning-current.md
-- brand/{slug}/go-to-market/pricing/pricing-current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/go-to-market/positioning/positioning.current.md
+- brand/{slug}/go-to-market/pricing/pricing.current.md
 context_writes:
-- brand/{slug}/go-to-market/metrics-plan/metrics-plan-current.md
+- brand/{slug}/go-to-market/metrics-plan/metrics-plan.current.md
 - brand/{slug}/metrics-plan.json
 - brand/{slug}/integrations.json
 ---
@@ -41,7 +41,7 @@ context_writes:
 
 ### Step 1: Clasificar el Negocio (~2 min)
 
-Leer `company-brief/company-brief-current.md`. Inferir arquetipo:
+Leer `company-brief/company-brief.current.md`. Inferir arquetipo:
 
 | Arquetipo | Evento de Activación | KPI Primario | Value Metric |
 |-----------|---------------------|--------------|--------------|
@@ -173,9 +173,10 @@ Crear una Google Sheet para input manual de métricas que no vienen de APIs (fun
    ```
    Del output JSON, extraer `spreadsheetId` y construir la URL: `https://docs.google.com/spreadsheets/d/{spreadsheetId}/edit`
 
-2. **Compartir con el Service Account** (para que el collector pueda leerla):
+2. **Compartir con el Service Account** (para que el collector pueda leerla). El email es el `client_email` del Service Account del sistema — leerlo del JSON, nunca hardcodearlo:
    ```bash
-   gog drive share "{spreadsheetId}" --email "sancho-analytics@gen-lang-client-0422972889.iam.gserviceaccount.com" --role reader
+   SA_EMAIL=$(jq -r .client_email "${MC_WORKSPACE:-$HOME/.openclaw/workspace-sancho}/.secrets/google-service-account.json")
+   gog drive share "{spreadsheetId}" --email "$SA_EMAIL" --role reader
    ```
 
 3. **Escribir la plantilla de input manual** en la pestaña `Summary`:
@@ -286,7 +287,7 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 
 ## Output Files
 
-### 1. Metrics Plan Document → `brand/{slug}/go-to-market/metrics-plan/metrics-plan-current.md`
+### 1. Metrics Plan Document → `brand/{slug}/go-to-market/metrics-plan/metrics-plan.current.md`
 - Business profile y arquetipo
 - Activation event y justificación
 - KPIs Level 1-4 con definiciones

@@ -3,10 +3,10 @@ name: atalaya
 description: "Watchtower — Competitive intelligence and content inspiration. Monitors competitor channels (Meta Ads, Google Ads, blog, LinkedIn, Instagram, Twitter) and followed profiles to extract full content, identify patterns, and generate adapted content ideas. Weekly cron + manual scan from MC."
 context_required:
 - brand/{slug}/atalaya/config.json
-- brand/{slug}/market-and-us/competitors/competitors-current.md
-- brand/{slug}/company-brief/company-brief-current.md
-- brand/{slug}/brand-voice/brand-voice-current.md
-- brand/{slug}/go-to-market/ecps/ecps-current.md
+- brand/{slug}/market-and-us/competitors/competitors.current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
 context_writes:
 - brand/{slug}/atalaya/YYYY-MM-DD.json
 - brand/{slug}/atalaya/pending-ideas.json
@@ -36,9 +36,9 @@ Read ./brand/ per `_system/brand-memory.md`
 
 ### Step 0: Load Config
 - Read `brand/{slug}/atalaya/config.json` for channels_to_monitor, followed_profiles, competitor_overrides
-- Read `brand/{slug}/market-and-us/competitors/competitors-current.md` for competitor list
+- Read `brand/{slug}/market-and-us/competitors/competitors.current.md` for competitor list
 - For each competitor, read individual battle card for URLs and social profiles
-- Read `brand/{slug}/brand-voice/brand-voice-current.md` and ECPs for adaptation context
+- Read `brand/{slug}/brand-book/brand-voice/brand-voice.current.md` and ECPs for adaptation context
 
 ### Step 1: Scrape Competitors (per channel)
 

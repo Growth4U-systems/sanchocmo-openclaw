@@ -134,6 +134,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "growth4u-ui-system": "maese-pedro",
   "growth4u-visual-generator": "maese-pedro",
   "gsc": "merlin",
+  "html-output": "maese-pedro",
   "image": "dulcinea",
   "insight-classifier": "dulcinea",
   "insight-to-content-mapper": "dulcinea",
@@ -211,12 +212,28 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "xlsx": "merlin",
   "yalc-operator": "rocinante",
   "youtube-transcript": "dulcinea",
+  // The Kickoff intake (SAN-3 W4, was fast-foundation) runs on the research agent.
+  "kickoff": "hamete",
 };
 
 /** Return the owner agent slug for a skill, or undefined if it belongs to Sancho default. */
 export function resolveAgentForSkill(skill: string | undefined): string | undefined {
   if (!skill) return undefined;
   return SKILL_OWNER_MAP[skill];
+}
+
+/**
+ * Resolve the skill that produces a Foundation pillar's doc (SAN-148).
+ * Mirrors steps 2/5b of `resolveThreadSkills`: pillar alias first, then
+ * homonymous pillar skills. Used by doc-owner resolution to route client
+ * feedback on a pillar doc to the agent that authored it.
+ */
+export function resolveSkillForPillar(pillar: string | undefined): string | undefined {
+  if (!pillar) return undefined;
+  const aliased = PILLAR_SKILL_ALIAS[pillar];
+  if (aliased) return aliased;
+  if (HOMONYMOUS_SKILL_PILLARS.has(pillar)) return pillar;
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -330,8 +347,8 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
     }
     if (lower.includes("strategic plan")) return { skill: "strategic-plan", skills: ["strategic-plan"] };
     if (lower.includes("metrics")) return { skill: "metrics-setup", skills: ["metrics-setup", "connect-api"] };
-    if (lower.includes("fast foundation")) {
-      return toResolution(cfg.pillars?.["fast-foundation"]) ?? { skill: "fast-foundation", skills: ["fast-foundation"] };
+    if (lower.includes("kickoff") || lower.includes("fast foundation")) {
+      return toResolution(cfg.pillars?.["company-brief"]) ?? { skill: "kickoff", skills: ["kickoff"] };
     }
     if (lower.includes("full foundation")) {
       return { skill: "market-intelligence", skills: ["market-intelligence", "competitor-intelligence", "self-intelligence"] };
@@ -373,8 +390,9 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
  *  the chat→Sancho regression (SAN-26/98); extended to all Foundation pillars in
  *  SAN-102 (research/synthesis/niche → Hamete, positioning → Dulcinea,
  *  pricing/strategic-plan → Sancho default).
- *  `fast-foundation` / `company-brief` are intentionally absent — that flow is
- *  owned by Fast Foundation and reworked in SAN-13.
+ *  W4 (SAN-3): `company-brief` → the `kickoff` skill (owner hamete). The Kickoff
+ *  produces the living Company Brief; the old fast-foundation flow is retired —
+ *  `fast-foundation` is no longer a pillar alias.
  *  DERIVED from `config/pillar-manifest.json` (F0) — do NOT hand-edit; edit the
  *  manifest. Frozen equivalence in src/lib/__tests__/pillar-manifest.test.mts. */
 const PILLAR_SKILL_ALIAS: Record<string, string> = Object.fromEntries(

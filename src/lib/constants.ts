@@ -79,7 +79,6 @@ export const FOUNDATION_ORDER = [
   "partnership-strategy",
   "web-strategy",
   "pricing-strategy",
-  "business-model-audit",
   "visual-identity",
 ] as const;
 
@@ -97,6 +96,5 @@ export const FOUNDATION_COLORS: Record<string, string> = {
   "partnership-strategy": "#1E3A5F",
   "web-strategy": "#3B9EBF",
   "pricing-strategy": "#C0392B",
-  "business-model-audit": "#1A1A2E",
   "visual-identity": "#C45D35",
 };

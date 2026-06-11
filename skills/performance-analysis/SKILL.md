@@ -6,7 +6,7 @@ context_required:
 - brand/{slug}/metrics-plan.json
 - brand/{slug}/integrations.json
 - brand/{slug}/operational/metrics/*.json
-- brand/{slug}/strategic-plan/strategic-plan-current.md
+- brand/{slug}/strategic-plan/strategic-plan.current.md
 - brand/{slug}/projects/*/project.json
 - brand/{slug}/operational/learnings.md
 - brand/{slug}/content-playbook/hooks.md
@@ -47,7 +47,7 @@ This skill does NOT collect metrics — that's already handled by `metrics-colle
 | Daily snapshots | `brand/{slug}/operational/metrics/YYYY-MM-DD.json` | Meta Ads 7d summary, GHL contacts/appointments, alerts |
 | Rolling archive | `brand/{slug}/metrics/metrics-data.json` | 90-day window: GA4, GSC, Meta Ads, GHL, Metricool per day |
 | KPI definitions | `brand/{slug}/metrics-plan.json` | KPI names, sources, formulas, categories, funnel steps |
-| Strategic plan | `brand/{slug}/strategic-plan/strategic-plan-current.md` | Active strategy, NSM, priorities |
+| Strategic plan | `brand/{slug}/strategic-plan/strategic-plan.current.md` | Active strategy, NSM, priorities |
 | Projects | `brand/{slug}/projects/*/project.json` | Active projects with tasks and status |
 | Learnings | `brand/{slug}/operational/learnings.md` | Accumulated insights from weekly synthesis |
 
@@ -59,7 +59,7 @@ This skill does NOT collect metrics — that's already handled by `metrics-colle
 1. Read `metrics-plan.json` to know which KPIs to analyze and the primary KPI (NSM)
 2. Read `metrics-data.json` (rolling 90 days) for baseline calculations
 3. Read daily snapshots from `operational/metrics/` for the last 7 days
-4. Read `strategic-plan/strategic-plan-current.md` for context
+4. Read `strategic-plan/strategic-plan.current.md` for context
 5. Read all `projects/*/project.json` for active project data
 6. Read `operational/learnings.md` for accumulated context
 7. Read `monitoring/pending-recommendations.json` if it exists (previous recommendations)

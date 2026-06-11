@@ -3,8 +3,9 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
-import { brandDir, chatConfigFile, CLIENTS_FILE } from "@/lib/data/paths";
+import { brandDir, chatConfigFile, foundationStateFile, CLIENTS_FILE } from "@/lib/data/paths";
 import { writeClientsFile } from "@/lib/data/clients";
+import { provisionYalcBrain } from "@/lib/yalc/provision";
 
 type ClientsFileData = {
   clients?: Array<Record<string, unknown>>;
@@ -19,7 +20,7 @@ function isValidSlug(value: string): boolean {
   return /^[a-z0-9][a-z0-9-]*$/.test(value);
 }
 
-function createClientDirs(slug: string): void {
+function createClientDirs(slug: string, name = ""): void {
   const root = brandDir(slug);
   const dirs = [
     root,
@@ -36,6 +37,37 @@ function createClientDirs(slug: string): void {
   }
 
   seedChatConfig(slug);
+  seedFoundationState(slug, name);
+}
+
+/**
+ * Seed brand/{slug}/foundation-state.json with the canonical v3.0 section/pillar
+ * tree from the repo default template. Without this, a new client's Brand Brain
+ * renders "0/0 pilares" / "No creado" everywhere because the on-disk default is
+ * EMPTY_STATE (sections: {}). This scaffolding used to live in new-client.sh
+ * (retired in SAN-108); the canonical shape is mirrored from the FJSON heredoc in
+ * scripts/reseed-foundation.sh — keep the two in sync.
+ *
+ * Placeholders __SLUG__ / __NAME__ / __NOW__ are substituted at write time.
+ * Best-effort: never block client creation if the template is missing/unreadable;
+ * the foundation skills can still bootstrap a v3.0 state on demand.
+ */
+function seedFoundationState(slug: string, name = ""): void {
+  const target = foundationStateFile(slug);
+  if (fs.existsSync(target)) return;
+  const template = path.join(process.cwd(), "config", "foundation-state.default.json");
+  try {
+    if (!fs.existsSync(template)) return;
+    const now = new Date().toISOString();
+    const seeded = fs
+      .readFileSync(template, "utf-8")
+      .replaceAll("__SLUG__", slug)
+      .replaceAll("__NAME__", name)
+      .replaceAll("__NOW__", now);
+    fs.writeFileSync(target, seeded);
+  } catch {
+    // non-fatal: foundation-orchestrator creates a v3.0 state on first run
+  }
 }
 
 /**
@@ -103,7 +135,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   data.clients = [...clients, client];
   writeClientsFile(data);
-  createClientDirs(slug);
+  createClientDirs(slug, name);
+
+  // Auto-provision the brand's YALC brain from its website — no CLI, no manual
+  // step. Fire-and-forget so brand creation isn't blocked by YALC synthesis;
+  // a missing/late website just no-ops (re-sync later via /api/yalc/provision).
+  void provisionYalcBrain(slug, { website: url }).catch((err) =>
+    console.error(`[clients/create] YALC brain provisioning failed for ${slug}:`, err),
+  );
 
   return res.status(201).json({
     ok: true,

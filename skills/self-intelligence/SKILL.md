@@ -12,12 +12,10 @@ metadata:
   updated: '2026-02-27'
   changes: v4 — Restructured per skill-creator principles.
 context_required:
-- brand/{slug}/company-brief/company-brief-current.md
-# Lite fallbacks (read-only, treat as preliminary seed, not as final truth):
-- brand/{slug}/company-brief/lite.md            # merge view fallback (always lite today)
-- brand/{slug}/market-and-us/self/lite.md       # own seed from fast-foundation (hydration only)
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/company-brief/company-brief.current.md   # optional Company Brief grounding (read your section; skip if absent)
 context_writes:
-- brand/{slug}/market-and-us/self/self-current.md
+- brand/{slug}/market-and-us/self/self.current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -26,7 +24,7 @@ context_writes:
 > Analiza la percepción de tu propia marca a través de 3 lentes: cómo TE ves, cómo TE ven terceros, cómo TE ven clientes.
 
 **Input**: company-context + URLs de la propia empresa
-**Output**: Self-Intelligence Profile + Triangulation → `brand/{slug}/market-and-us/self/self-current.md`
+**Output**: Self-Intelligence Profile + Triangulation → `brand/{slug}/market-and-us/self/self.current.md`
 
 ## References
 
@@ -88,7 +86,7 @@ context_writes:
 - Si no → PASS, continuar a dependent pillars
 
 ### 5. Self-QA + Guardar
-- Checklist, versionado, `brand/{slug}/market-and-us/self/self-current.md`
+- Checklist, versionado, `brand/{slug}/market-and-us/self/self.current.md`
 
 ---
 
@@ -137,13 +135,13 @@ Si el usuario dice "profundizar": relee el documento, haz 10-20 búsquedas adici
 
 ```
 brand/{{slug}}/market-and-us/self/
-├── self-current.md      ← versión activa
+├── self.current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
 └── qa-log.md       ← historial de QA
 ```
 
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
-2. Si existe `self-current.md` → backup como `v{N+1}.md`, pide confirmación
-3. Si no existe → crea carpeta + `self-current.md` + `v1.md` + `history.json`
-4. Link: `<MC_BASE>/docs/brand/{slug}/market-and-us/self/self-current.md`
+2. Si existe `self.current.md` → backup como `v{N+1}.md`, pide confirmación
+3. Si no existe → crea carpeta + `self.current.md` + `v1.md` + `history.json`
+4. Link: `<MC_BASE>/docs/brand/{slug}/market-and-us/self/self.current.md`

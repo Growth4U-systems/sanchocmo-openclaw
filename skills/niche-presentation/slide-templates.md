@@ -9,7 +9,7 @@ Todas las slides esperan estas variables definidas en `:root`:
 
 ```css
 :root {
-    /* Brand — resueltos desde visual-identity/visual-identity-current.md */
+    /* Brand — resueltos desde visual-identity/visual-identity.current.md */
     --brand-primary: #6BA89E;       /* Color principal */
     --brand-primary-light: #E8F4F1; /* Primary al 10-15% */
     --brand-primary-dark: #4CA994;  /* Primary oscuro */

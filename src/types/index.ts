@@ -358,6 +358,132 @@ export interface ContentTask {
    * card lives in (status of the least-advanced channel wins).
    */
   draft_statuses?: Record<string, string>;
+  /**
+   * Repurposing lineage (SAN-141): set by content-atomizer when this piece
+   * was derived from a piece in another channel. Powers the "♻️ derivado"
+   * badge and the repurposing strip in the Canales view.
+   */
+  derived_from?: { idea_id: string; channel: string; title?: string };
+  /**
+   * Founder-Led persona this piece belongs to (SAN-163). Matches a
+   * `cadence.channels.{key}.profiles[].id` for the target channel. Undefined =
+   * unassigned (lives in the brand-level "sin repartir" pool until routed).
+   */
+  author?: string;
+}
+
+// ─── Channel loops (SAN-141) ────────────────────────────────────────────────
+// Per-channel loop state for the 📡 Canales view. ALWAYS derived at request
+// time by /api/content-engine/channel-loops from idea-queue, channel_phases,
+// cadence-config, drafts and crons — never persisted (a stored copy would
+// drift from the sources of truth).
+
+export type ChannelMode = "scheduled" | "always-on";
+
+export interface ChannelLoopAntenna {
+  baseName: string;
+  jobId: string | null;
+  enabled: boolean;
+  schedule: string | null;
+  lastRunAt: string | null;
+  finding: string | null;
+  count: number | null;
+  status: string | null;
+}
+
+/**
+ * A Founder-Led voice declared under `cadence.channels.{key}.profiles[]`.
+ * `id` is the stable author key; legacy entries without one fall back to a
+ * slug of `name` (see personaId() in persona-loops.ts).
+ */
+export interface PersonaProfile {
+  id: string;
+  name: string;
+  role?: string;
+  handle?: string;
+  pillars_slant?: string[];
+  voice_doc?: string;
+  owner?: string;
+  metricool_profile_id?: string;
+  primary_kpi?: string;
+}
+
+/** One persona's slice of a channel loop, derived in persona-loops.ts. */
+export interface PersonaLoopState {
+  id: string;
+  name: string;
+  role: string | null;
+  handle: string | null;
+  /** Topic slant keywords — powers the client-side author suggestion (SAN-163). */
+  pillarsSlant: string[];
+  stages: {
+    ideation: { newCount: number; approvedCount: number };
+    creation: { draftingCount: number; clarifyCount: number; readyCount: number };
+    published: { thisMonth: number };
+  };
+  nextAction: { label: string; focusStatus?: string } | null;
+}
+
+export interface ChannelLoopState {
+  channel: string;
+  label: string;
+  active: boolean;
+  mode: ChannelMode;
+  cadence: { frequency: string; bestDays: string[]; bestTimes: string[] };
+  /** Brand-relative path of the per-channel strategy doc, null when not configured. */
+  strategyDoc: string | null;
+  strategyDocExists: boolean;
+  metricsProvider: "metricool" | "gsc-pending" | "none" | string;
+  primaryKpi: string | null;
+  stages: {
+    antennas: { enabled: number; total: number; hasError: boolean; lastRunAt: string | null };
+    ideation: { newCount: number; approvedCount: number };
+    creation: { draftingCount: number; clarifyCount: number; readyCount: number; pendingMediaCount: number };
+    published: { thisMonth: number; nextSlot: string | null };
+    metrics: {
+      provider: string;
+      /** Average engagement % across published snapshots, null when unavailable. */
+      engagementPct: number | null;
+      impressions30d: number | null;
+      postsWithMetrics: number;
+      /** Search Console aggregates for the blog channel (SAN-161). Present
+       *  only when the gsc data source is connected and has daily files —
+       *  otherwise the UI keeps the honest "pendiente" state. */
+      gsc?: {
+        clicks30d: number;
+        impressions30d: number;
+        avgPosition: number | null;
+        /** Previous 30-day window for the trend delta. Null without history. */
+        prevClicks30d: number | null;
+        prevImpressions30d: number | null;
+      } | null;
+    };
+  };
+  nextAction: { label: string; tab: "ideas" | "calendar" | "setup"; focusStatus?: string } | null;
+  repurposing: { incoming: number; outgoing: number };
+  antennas: ChannelLoopAntenna[];
+  /** Per-persona sub-loops when the channel declares `profiles[]` (SAN-163). Empty otherwise. */
+  personas: PersonaLoopState[];
+  /** Count of this channel's ContentTasks with no `author` yet (the "sin repartir" pool). */
+  unassignedPool: number;
+}
+
+export interface RepurposeEntry {
+  fromChannel: string;
+  fromTitle: string;
+  toChannel: string;
+  toTitle: string;
+  toStatus: string;
+  toId: string;
+}
+
+export interface ChannelLoopsPayload {
+  ok: boolean;
+  channels: ChannelLoopState[];
+  repurposing: RepurposeEntry[];
+  /** Cross-channel connection states the Setup checklist reflects (SAN-161). */
+  connections: { gsc: boolean };
+  verifiedAt: string;
 }
 
 /** One artifact attached to a task — doc, image, csv, json, etc. */

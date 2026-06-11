@@ -14,13 +14,11 @@ metadata:
     autogenerado (Step 4.5). Checklist con tiers P0/P1/P2. Hydration con regla de
     competidores heredados.
 context_required:
-- brand/{slug}/company-brief/company-brief-current.md
-- brand/{slug}/market-and-us/competitors/competitors-current.md
-# Lite fallbacks (read-only, treat as preliminary seed, not as final truth):
-- brand/{slug}/company-brief/lite.md            # merge view fallback (always lite today)
-- brand/{slug}/market-and-us/market/lite.md     # own seed from fast-foundation (hydration only)
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/market-and-us/competitors/competitors.current.md
+- brand/{slug}/company-brief/company-brief.current.md   # optional Company Brief grounding (read your section; skip if absent)
 context_writes:
-- brand/{slug}/market-and-us/market/market-current.md
+- brand/{slug}/market-and-us/market/market.current.md
 ---
 
 # Market Intelligence
@@ -28,7 +26,7 @@ context_writes:
 > Entiende el campo de juego antes de jugar. TAM, segmentos, competidores, clientes, regulación, tendencias.
 
 **Input**: company-context (industria, vertical, producto)
-**Output**: Informe 5 partes → `brand/{slug}/market-and-us/market/market-current.md`
+**Output**: Informe 5 partes → `brand/{slug}/market-and-us/market/market.current.md`
 
 ## References
 
@@ -55,7 +53,7 @@ context_writes:
 - **Lee `_system/skills/scraping-preflight.md` y ejecútalo**: detecta providers conectados y enruta web (smart-scrape), escucha social (scrapecreators/last30days), SEO (DataForSEO) y research (`/deep-research`). Muestra el capability report; si falta una capability material, pide conectarla.
 
 ### 1. Preparar contexto
-- Lee `brand/{slug}/company-context/company-context-current.md` y `brand/{slug}/market-and-us/competitors/competitors-current.md`
+- Lee `brand/{slug}/company-context/company-context.current.md` y `brand/{slug}/market-and-us/competitors/competitors.current.md`
 - Identifica: industria, vertical, producto, geografía, equipo
 
 ### 1.5. Primary Source Verification (OBLIGATORIO)
@@ -119,9 +117,9 @@ Después del Self-QA, genera el bloque `## Slide Summary` al final del informe (
 - Debe ser autosuficiente: con solo este bloque se genera la slide sin leer el resto
 
 ### 5. Guardar con versionado
-- Ruta: `brand/{slug}/market-and-us/market/market-current.md`
-- Si ya existe → backup como `v{N+1}.md`, sobreescribe `market-current.md`, actualiza `history.json`
-- Link al usuario: `<MC_BASE>/docs/brand/{slug}/market-and-us/market/market-current.md`
+- Ruta: `brand/{slug}/market-and-us/market/market.current.md`
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `market.current.md`, actualiza `history.json`
+- Link al usuario: `<MC_BASE>/docs/brand/{slug}/market-and-us/market/market.current.md`
 
 ---
 
@@ -162,13 +160,13 @@ Toda cifra con URL inline + sección `## Fuentes` al final con lista numerada co
 
 ```
 brand/{{slug}}/market-and-us/market/
-├── market-current.md      ← versión activa
+├── market.current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
 └── qa-log.md       ← historial de QA
 ```
 
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
-2. Si existe `market-current.md` → backup como `v{N+1}.md`, pide confirmación
-3. Si no existe → crea carpeta + `market-current.md` + `v1.md` + `history.json`
-4. Link: `<MC_BASE>/docs/brand/{slug}/market-and-us/market/market-current.md`
+2. Si existe `market.current.md` → backup como `v{N+1}.md`, pide confirmación
+3. Si no existe → crea carpeta + `market.current.md` + `v1.md` + `history.json`
+4. Link: `<MC_BASE>/docs/brand/{slug}/market-and-us/market/market.current.md`

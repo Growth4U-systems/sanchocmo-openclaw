@@ -1,6 +1,6 @@
 ---
 name: foundation-orchestrator
-description: "Orquesta la Foundation v3.0: 6 secciones, 8 layers, gate checks con requires/enriches_with. Flujo: Fast Foundation (1 skill, 5 docs lite) → Full Foundation (9 skills individuales) → Metrics Setup → Strategic Plan. Al aprobar un pilar, ejecuta automáticamente el siguiente. Leer pillar-registry.md para detalle de cada pilar."
+description: "Orquesta la Foundation v3.0: 6 secciones, 8 layers, gate checks con requires/enriches_with. Flujo: Kickoff (1 skill, company-brief.current.md) → Full Foundation (9 skills individuales) → Metrics Setup → Strategic Plan. Al aprobar un pilar, ejecuta automáticamente el siguiente. Leer pillar-registry.md para detalle de cada pilar."
 user-invocable: false
 context_required:
 - brand/{slug}/foundation-state.json
@@ -19,7 +19,7 @@ context_required:
 
 | Sección | Dir | Qué contiene |
 |---------|-----|-------------|
-| Fast Foundation | `company-brief/` + varios | 5 docs lite: Company Brief, Self L1, Market L1, Brand Voice Snapshot, Niche básico |
+| Company Brief | `company-brief/` | Company Brief inicial: `company-brief.current.md` (un archivo, secciones H2) |
 | Market & Us | `market-and-us/` | Research profundo + Market Synthesis (SWOT, Summary, OPE Canvas, Presentación) |
 | Go-To-Market | `go-to-market/` | Niche Discovery, Positioning, Pricing |
 | Brand Identity | `brand-identity/` + `brand-voice/` | Full Voice Guide + Visual Identity |
@@ -29,14 +29,14 @@ context_required:
 ## DAG — 8 Layers
 
 ```
-L0 FAST-FOUNDATION:  fast-foundation (1 skill → 5 docs lite)
-L1 RESEARCH:         market-intelligence + competitor-intelligence + self-intelligence
-L2 SYNTHESIS:        market-synthesis (SWOT + Summary + OPE Canvas + Presentación)
-L3 DISCOVERY:        niche-discovery-100x + existing-customer-data?
-L4 ACTIVATION:       positioning-messaging + pricing-strategy + ecp-validation?
-L5 BRAND:            brand-voice + visual-identity
-L6 METRICS:          metrics-setup (plan + connect APIs + dashboard)
-L7 STRATEGY:         strategic-plan
+L0 KICKOFF:    kickoff (1 skill → company-brief/company-brief.current.md)
+L1 RESEARCH:   market-intelligence + competitor-intelligence + self-intelligence
+L2 SYNTHESIS:  market-synthesis (SWOT + Summary + OPE Canvas + Presentación)
+L3 DISCOVERY:  niche-discovery-100x + existing-customer-data?
+L4 ACTIVATION: positioning-messaging + pricing-strategy + ecp-validation?
+L5 BRAND:      brand-voice + visual-identity
+L6 METRICS:    metrics-setup (plan + connect APIs + dashboard)
+L7 STRATEGY:   strategic-plan
 ```
 
 ## Gate Check — requires vs enriches_with
@@ -62,7 +62,7 @@ Ver `references/pillar-registry.md` para mapa completo de dependencias.
 ```
 🏗️ FOUNDATION — [Cliente]
 
-📋 Fast Foundation       ✅ (5 docs lite)
+📋 Kickoff               ✅ (company-brief/company-brief.current.md)
 📊 Market & Us           ✅ Market · ⬜ Competitors · ✅ Self · ⬜ Synthesis
 🎯 Go-To-Market          ⬜ Niches · ⬜ Positioning · ⬜ Pricing
 🎨 Brand Identity        ⬜ Voice · ⬜ Visual
@@ -81,18 +81,18 @@ Iconos: ✅ approved | ⚠️ pending-review | 🔧 in-progress | ⬜ not-starte
 
 ---
 
-## Fast Foundation — Layer 0
+## Kickoff — Layer 0
 
-**Skill**: `fast-foundation`
-**Thread**: `{slug}:fast-foundation`
+**Skill**: `kickoff`
+**Thread**: `{slug}:kickoff`
 
 Sesión de intake única (~30 min):
 1. Usuario introduce URL (o modo manual sin URL)
-2. Scrape web + sociales → pre-fill 5 docs
+2. Scrape web + sociales → pre-fill grounding
 3. Validar con usuario → completar gaps
-4. Genera 5 docs lite: Company Brief, Self L1, Market L1, Brand Voice Snapshot, Niche básico
+4. Genera `brand/{slug}/company-brief/company-brief.current.md` (un archivo, secciones H2: Company, Market, Brand Voice, ECPs)
 
-Al aprobar → marcar `fast-foundation` section como `approved` → desbloquea Layer 1.
+Al aprobar → marcar `company-brief` section como `approved` → desbloquea Layer 1.
 
 ---
 
@@ -104,11 +104,11 @@ Verificar requires + cargar enriches_with disponibles.
 ### 2. Ejecutar Skill
 Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como contexto.
 
-**Convención de paths lite vs full (v3.1):**
-- Fast Foundation escribe siempre a `lite.md` (`brand/{slug}/{section}/lite.md`).
-- Las skills full escriben a `{section}-current.md` (`brand/{slug}/{section}/{section}-current.md`).
-- Las skills full leen el `lite.md` correspondiente como **hydration seed** (no re-preguntan lo que ya existe), y producen su `{section}-current.md` desde el paquete completo de Foundation aprobada — nunca limitándose a refinar el lite.
-- Si una skill full necesita un input y solo existe el `lite.md` del consumer (ej. niche-discovery-100x necesita `market-and-us/swot/swot-current.md` pero solo hay `lite.md`), debe **bloquearse** hasta que el upstream esté en `{section}-current.md`. No degradar a leer lite como fuente final.
+**Convención de paths (v3.2):**
+- Kickoff escribe SOLO `brand/{slug}/company-brief/company-brief.current.md` (Company Brief inicial, un archivo). NO toca carpetas de pilares.
+- Las skills full escriben a `{carpeta}/{carpeta}.current.md` (`brand/{slug}/{carpeta}/{carpeta}.current.md`).
+- Las skills full leen su sección de `company-brief/company-brief.current.md` como grounding opcional (si no existe, arrancan standalone). El `{carpeta}.current.md` final se regenera desde el paquete completo, nunca se limita a refinar el grounding.
+- Si una skill full necesita un input upstream, ese input debe existir como `{carpeta}.current.md` (full, source of truth). No degradar a leer grounding como fuente final.
 
 **Con model fallback:**
 ```
@@ -130,7 +130,7 @@ Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como c
 • Regulación clave: [impactos]
 • Oportunidad principal: [descripción]
 
-📄 Doc: brand/{slug}/market-and-us/market/market-current.md
+📄 Doc: brand/{slug}/market-and-us/market/market.current.md
 ───────────────────────────────
 ¿Correcto? ¿Cambios?
 ───────────────────────────────
@@ -150,7 +150,6 @@ Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como c
   - `brand_summary` si hay datos nuevos (company_name, sector, ICPs, competidores, positioning, URL)
   - `file_index` si se crearon archivos nuevos (ej: nuevo competidor → añadir a `file_index.competitors.battle_cards`, nueva presentación → añadir a `file_index.presentations`)
 - Ejecutar `python3 scripts/regenerate.py`
-- **Si la skill aprobada fue `company-context`, `business-model-audit` o `budget-constraints`** → ejecutar `python3 scripts/regenerate-company-brief.py {slug}` para refrescar la merge view. El script escribe a `company-brief/company-brief-current.md` cuando al menos un standalone está full, o a `company-brief/lite.md` cuando todos siguen siendo seeds de fast-foundation. Resuelve el "Stale view conocido": ya no hay riesgo de que niche-discovery o downstream lean un merge desactualizado tras aprobar un standalone full.
 
 ---
 
@@ -172,11 +171,11 @@ Genera 4 outputs en secuencia:
 ## Competitors — Lista Dinámica
 
 Los competidores se descubren en múltiples momentos:
-1. **Fast Foundation** (L0): "¿Quiénes son tus competidores?"
+1. **Kickoff** (L0): "¿Quiénes son tus competidores?"
 2. **Market Analysis** (L1): descubiertos durante research
 3. **Niche Discovery** (L3): competidores por nicho
 
-Cada competidor → `market-and-us/competitors/{nombre}/{nombre}-current.md` (deep-dive). El roll-up consolidado vive en `market-and-us/competitors/competitors-current.md` y se regenera desde los subdirs.
+Cada competidor → `market-and-us/competitors/{nombre}/{nombre}.current.md` (deep-dive). El roll-up consolidado vive en `market-and-us/competitors/competitors.current.md` y se regenera desde los subdirs.
 Actualizar `competitor-analysis.output_files[]` en state.
 
 El orchestrator puede preguntar proactivamente: "¿Hay otros competidores que deberíamos analizar?"
@@ -246,13 +245,13 @@ Docs en: brand/{slug}/
 1. **Gate check SIEMPRE** antes de cada pilar
 2. **Resumen ejecutivo** — nunca el doc entero
 3. **Flujo automático** — al aprobar, siguiente arranca solo
-4. **Fast Foundation = 1 skill** (no 3 como en v2.0)
+4. **Kickoff = 1 skill** — produce Company Brief directamente; no hay merge-view ni scripts de regeneración separados
 5. **Market Synthesis = 1 skill** (SWOT + Summary + OPE Canvas + Presentación)
 6. **Estado siempre actualizado** — foundation-state.json tras cada transición
 7. **Retomable** — si la sesión se corta, retoma donde quedó
 8. **enriches_with es silencioso** — si no está disponible, funcionar sin avisar
 9. **Retry automático** — 3 intentos con model fallback antes de rendirse
 10. **Error = notificar** — nunca silently fail
-11. **Hydration** — skills full leen `lite.md` de Fast Foundation como seed, no re-preguntan. Pero el output final de la skill full SIEMPRE se regenera desde el paquete reconciliado, no se limita a refinar el lite.
-12. **Path discipline** — fast-foundation NUNCA escribe a `{section}-current.md`. Skills full NUNCA leen lite.md como fuente final. `{section}-current.md` = full, `lite.md` = seed.
+11. **Grounding** — las skills full leen su sección de `company-brief/company-brief.current.md` como seed opcional; nunca lo tratan como fuente final.
+12. **Path discipline** — kickoff escribe SOLO `company-brief/company-brief.current.md`. Nunca toca carpetas de pilares. `{carpeta}.current.md` = full (source of truth); `company-brief.current.md` = Company Brief inicial (grounding opcional).
 13. **file_index siempre actualizado** — al crear/mover/eliminar archivos, actualizar `file_index` en foundation-state.json. Incluye: competitors battle_cards, sources, integrations, metrics, brand_assets, presentations, operational files. Si un skill nuevo crea un archivo que no está en file_index → añadirlo.

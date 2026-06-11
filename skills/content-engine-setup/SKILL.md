@@ -4,10 +4,10 @@ description: "Populates Content Engine config files with client-specific data an
 context_required:
 - brand/{slug}/content/content-pillars.md
 - brand/{slug}/content/pov-bank.json
-- brand/{slug}/company-brief/company-brief-current.md
-- brand/{slug}/go-to-market/ecps/ecps-current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/market-and-us/competitors/sources.json
-- brand/{slug}/brand-voice/brand-voice-current.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
 context_writes:
 - brand/{slug}/content/configs/news-prompts/*.yml
 - brand/{slug}/content/configs/paa-queries/*.yml

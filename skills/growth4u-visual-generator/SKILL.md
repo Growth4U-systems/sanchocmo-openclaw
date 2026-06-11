@@ -119,7 +119,7 @@ skill + la carpeta `visual-identity/`.
 | Style references | `style-references/*.{webp,png}` | `generate-image` (auto-inyectadas en el prompt) | Idem |
 | Manifest | `manifest.json` | `content-image` (lo lee para saber qué está disponible) | Cada cambio de la skill |
 
-`design-tokens.json` y `visual-identity-current.md` no están en esta tabla
+`design-tokens.json` y `visual-identity.current.md` no están en esta tabla
 porque los escribe el meta-skill `visual-identity` (Foundation L5), no esta
 skill. Esta skill los **lee** como input.
 
@@ -134,7 +134,7 @@ Lo escribe esta skill al final de cada ejecución. Es el índice que
   "schema_version": "1",
   "updated_at": "2026-05-06T12:00:00Z",
   "design_tokens_path": "design-tokens.json",
-  "visual_identity_md_path": "visual-identity-current.md",
+  "visual_identity_md_path": "visual-identity.current.md",
   "templates": {
     "linkedin-quote": {
       "category": "carousel",
@@ -340,7 +340,7 @@ skill las crea desde cero — no hay defaults del sistema.
 
 Antes de hacer NADA, verifica que el pillar `visual-identity` está
 `approved` (o `done`) en Foundation L5. Es el pillar que produce
-`design-tokens.json` (paleta + tipografía) y `visual-identity-current.md`
+`design-tokens.json` (paleta + tipografía) y `visual-identity.current.md`
 (reglas de composición, personajes). Sin esos dos archivos no se puede
 producir ningún template — los templates los CONSUMEN, no los crean.
 
@@ -372,9 +372,9 @@ gateway sin pasar por MC).
 
 - `brand/{slug}/brand-book/visual-identity/design-tokens.json` — paleta,
   typography, gradients oficiales (incluido el `gradient.brand` multi-stop).
-- `brand/{slug}/brand-identity/visual-identity/visual-identity-current.md` —
+- `brand/{slug}/brand-book/visual-identity/visual-identity.current.md` —
   reglas de composición, personajes, anti-pegote.
-- `brand/{slug}/brand-voice/brand-voice-current.md` — tone of
+- `brand/{slug}/brand-book/brand-voice/brand-voice.current.md` — tone of
   voice, anti-AI-writing, signature patterns.
 - `brand/{slug}/brand-book/visual-identity/templates/{id}/` — versión actual del brand
   si existe. Si hay overrides del cliente, RESPETARLOS — no machacar

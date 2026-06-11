@@ -39,7 +39,7 @@
 - [ ] **Scoring 0-5** para cada competidor + "Do Nothing"
 - [ ] **Score explanations POR CRITERIA** (no agrupados por ECP): detalle por competidor con evidencia
 - [ ] **Scores que cambian por ECP** anotados INLINE en la explicación del criteria
-- [ ] **ECPs como links** en la tabla (ej: `[1](../ecp1-slug/ecp1-slug-current.md)`)
+- [ ] **ECPs como links** en la tabla (ej: `[1](../ecp1-slug/ecp1-slug.current.md)`)
 - [ ] **Clasificación**: Red Ocean (avg 4-5) / No Market (avg 0-1) / Opportunity Zone (avg 2-3)
 - [ ] **Top 3-5 Opportunity Zones** identificadas
 
@@ -107,7 +107,7 @@
 
 - [ ] **Slug identificado** correctamente
 - [ ] **Shared docs actualizados**: `brand/{{slug}}/positioning/shared/value-criteria.md` + `assets.md`
-- [ ] **Per-ECP guardado en** `brand/{{slug}}/positioning/{ecp-slug}/{ecp-slug}-current.md`
+- [ ] **Per-ECP guardado en** `brand/{{slug}}/positioning/{ecp-slug}/{ecp-slug}.current.md`
 - [ ] **Per-ECP empieza por JTBD** (sin narrativa de deep research)
 - [ ] **Links bidireccionales**: shared → ECPs (links en tabla) + ECP → shared (refs en header)
 - [ ] **Versionado** correcto (v1.md, history.json)

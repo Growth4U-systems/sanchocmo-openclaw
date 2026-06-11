@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
 
-export type ActivityType = "publish" | "approve" | "discard" | "edit" | "cron-run" | "idea-created";
+export type ActivityType = "publish" | "approve" | "discard" | "edit" | "cron-run" | "idea-created" | "transition";
 export type ActivityAccent = "sage" | "rust" | "navy" | "sun" | "brick";
 
 export interface ActivityEvent {

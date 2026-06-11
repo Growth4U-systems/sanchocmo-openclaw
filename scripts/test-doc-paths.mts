@@ -7,7 +7,7 @@ import path from "path";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
-const { collapseDuplicateBrandPrefix, normalizeBrandDocPath } = require("../src/lib/doc-paths.ts") as typeof import("../src/lib/doc-paths");
+const { collapseDuplicateBrandPrefix, normalizeBrandDocPath, htmlSiblingOf, mdSourceOf, isCanonicalPair } = require("../src/lib/doc-paths.ts") as typeof import("../src/lib/doc-paths");
 const { resolveWorkspaceDocPath } = require("../src/lib/server/doc-paths.ts") as typeof import("../src/lib/server/doc-paths");
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "mc-doc-paths-"));
@@ -83,32 +83,54 @@ assert.equal(
   "brand/growth4u/strategic-plan/strategic-plan.current.md",
 );
 
-// SAN-156: hyphen canonical (`{folder}-current.md`) is the new on-disk name.
-// A request for the legacy dot form or bare `current.md` must resolve to it.
-fs.mkdirSync(path.join(tmp, "brand", "growth4u", "go-to-market", "pricing"), { recursive: true });
-fs.writeFileSync(
-  path.join(tmp, "brand", "growth4u", "go-to-market", "pricing", "pricing-current.md"),
-  "# Pricing (hyphen canonical)",
-);
-const hyphenViaDot = resolveWorkspaceDocPath(
-  tmp,
-  "brand/growth4u/go-to-market/pricing/pricing.current.md",
-  { slug: "growth4u", requireBrand: true },
-);
-assert.equal(hyphenViaDot.exists, true);
-assert.equal(hyphenViaDot.usedFallback, true);
-assert.equal(
-  hyphenViaDot.canonicalPath,
-  "brand/growth4u/go-to-market/pricing/pricing-current.md",
-);
+// ── SAN-149: HTML-canonical sibling ─────────────────────────────────────
 
-const hyphenDirect = resolveWorkspaceDocPath(
+assert.equal(htmlSiblingOf("brand/growth4u/strategic-plan/current.md"), "brand/growth4u/strategic-plan/current.html");
+assert.equal(htmlSiblingOf("brand/growth4u/x/x.current.md"), "brand/growth4u/x/x.current.html");
+assert.equal(htmlSiblingOf("brand/growth4u/x/current.html"), null);
+assert.equal(mdSourceOf("brand/growth4u/x/current.html"), "brand/growth4u/x/current.md");
+assert.equal(mdSourceOf("brand/growth4u/x/current.md"), null);
+assert.equal(isCanonicalPair("a/b/current.md", "a/b/current.html"), true);
+assert.equal(isCanonicalPair("a/b/current.html", "a/b/current.md"), true);
+assert.equal(isCanonicalPair("a/b/current.md", "a/b/other.html"), false);
+
+// Sibling absent → htmlSibling null
+const noSibling = resolveWorkspaceDocPath(
   tmp,
-  "brand/growth4u/go-to-market/pricing/pricing-current.md",
+  "brand/growth4u/strategic-plan/strategic-plan.current.md",
   { slug: "growth4u", requireBrand: true },
 );
-assert.equal(hyphenDirect.exists, true);
-assert.equal(hyphenDirect.usedFallback, false);
+assert.equal(noSibling.htmlSibling, null);
+
+// Sibling present → htmlSibling points at it.
+fs.writeFileSync(
+  path.join(tmp, "brand", "growth4u", "strategic-plan", "strategic-plan.current.html"),
+  "<!DOCTYPE html><html><body>plan</body></html>",
+);
+const withSibling = resolveWorkspaceDocPath(
+  tmp,
+  "brand/growth4u/strategic-plan/strategic-plan.current.md",
+  { slug: "growth4u", requireBrand: true },
+);
+assert.equal(withSibling.htmlSibling, "brand/growth4u/strategic-plan/strategic-plan.current.html");
+
+// Legacy-name request that falls back to the named .md also surfaces the
+// named .html sibling (sibling is computed off the RESOLVED path).
+const fallbackWithSibling = resolveWorkspaceDocPath(
+  tmp,
+  "brand/growth4u/strategic-plan/current.md",
+  { slug: "growth4u", requireBrand: true },
+);
+assert.equal(fallbackWithSibling.usedFallback, true);
+assert.equal(fallbackWithSibling.htmlSibling, "brand/growth4u/strategic-plan/strategic-plan.current.html");
+
+// An .html doc itself never reports a sibling.
+const htmlDoc = resolveWorkspaceDocPath(
+  tmp,
+  "brand/growth4u/strategic-plan/strategic-plan.current.html",
+  { slug: "growth4u", requireBrand: true },
+);
+assert.equal(htmlDoc.htmlSibling, null);
 
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log("doc path tests passed");

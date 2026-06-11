@@ -8,12 +8,12 @@ metadata:
   phase: Execution
   depends_on: foundation-orchestrator
   context_required:
-    - brand/{slug}/company-brief/company-brief-current.md
-    - brand/{slug}/go-to-market/ecps/ecps-current.md
-    - brand/{slug}/go-to-market/positioning/positioning-current.md
-    - brand/{slug}/market-and-us/competitors/competitors-current.md
-    - brand/{slug}/market-and-us/competitors/*/*-current.md
-    - brand/{slug}/market-and-us/self/self-current.md
+    - brand/{slug}/company-brief/company-brief.current.md
+    - brand/{slug}/go-to-market/ecps/ecps.current.md
+    - brand/{slug}/go-to-market/positioning/positioning.current.md
+    - brand/{slug}/market-and-us/competitors/competitors.current.md
+    - brand/{slug}/market-and-us/competitors/*/*.current.md
+    - brand/{slug}/market-and-us/self/self.current.md
   context_writes:
     - brand/{slug}/trust-engine/config.json
     - brand/{slug}/trust-engine/run-state.json
@@ -94,10 +94,10 @@ Use detected APIs. Do NOT treat available APIs as optional — if the key exists
 ```
 1. Resolve slug from command or guild (via clients.json)
 2. Gate check: ALL of these must exist:
-   - brand/{slug}/company-brief/company-brief-current.md
-   - brand/{slug}/go-to-market/ecps/ecps-current.md
-   - brand/{slug}/go-to-market/positioning/positioning-current.md
-   - brand/{slug}/market-and-us/competitors/competitors-current.md
+   - brand/{slug}/company-brief/company-brief.current.md
+   - brand/{slug}/go-to-market/ecps/ecps.current.md
+   - brand/{slug}/go-to-market/positioning/positioning.current.md
+   - brand/{slug}/market-and-us/competitors/competitors.current.md
    If any missing → STOP with "❌ Foundation incompleta."
 3. mkdir -p brand/{slug}/trust-engine
 4. Load/create run-state.json (template below)
@@ -146,12 +146,12 @@ Read Foundation docs → create config.json.
 
 ```
 Read ALL of:
-  - brand/{slug}/company-brief/company-brief-current.md
-  - brand/{slug}/go-to-market/ecps/ecps-current.md
-  - brand/{slug}/go-to-market/positioning/positioning-current.md
-  - brand/{slug}/market-and-us/competitors/competitors-current.md
-  - brand/{slug}/market-and-us/self/self-current.md
-  - brand/{slug}/brand-identity/voice/voice-current.md (if exists)
+  - brand/{slug}/company-brief/company-brief.current.md
+  - brand/{slug}/go-to-market/ecps/ecps.current.md
+  - brand/{slug}/go-to-market/positioning/positioning.current.md
+  - brand/{slug}/market-and-us/competitors/competitors.current.md
+  - brand/{slug}/market-and-us/self/self.current.md
+  - brand/{slug}/brand-identity/voice/voice.current.md (if exists)
 
 Extract and write config.json:
 {
@@ -192,7 +192,7 @@ Extract and write config.json:
 
 **Context Import (Learning #10):**
 - Also read: `brand/{slug}/meeting-notes/` (if exists) — extract client-specific data (real customer names, revenue, objections)
-- Also read: `brand/{slug}/go-to-market/niche-discovery/niche-discovery-current.md` (if exists) — contains pain clusters with real user quotes
+- Also read: `brand/{slug}/go-to-market/niche-discovery/niche-discovery.current.md` (if exists) — contains pain clusters with real user quotes
 
 ### QUALITY GATE — init
 - ✅ config.json written

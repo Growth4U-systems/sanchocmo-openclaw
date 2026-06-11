@@ -34,7 +34,7 @@ This skill writes to `brand/{{brand_slug}}/brand-book/visual-identity/`:
 | `style-references/*.webp` | 5-10 reference images for image-gen prompts |
 | `manifest.json` | Index `content-image` consults before any operation |
 
-`design-tokens.json`, `visual-identity-current.md`, and the brand logo are
+`design-tokens.json`, `visual-identity.current.md`, and the brand logo are
 written by the parent meta-skill `visual-identity` (Foundation L5), NOT by
 this skill. This skill READS them as input.
 
@@ -46,7 +46,7 @@ this skill. This skill READS them as input.
   "schema_version": "1",
   "updated_at": "ISO-8601",
   "design_tokens_path": "design-tokens.json",
-  "visual_identity_md_path": "visual-identity-current.md",
+  "visual_identity_md_path": "visual-identity.current.md",
   "templates": {
     "<id>": {
       "category": "carousel|header|ad|hero|cover",

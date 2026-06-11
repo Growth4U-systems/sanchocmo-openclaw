@@ -35,7 +35,7 @@ PD: ese 1 que dejamos abierto era un canal saliente con CAC alto pero con cuenta
 
 ### Foundation snippets relevantes
 
-**brand-voice-current.md** (extracto):
+**brand-voice.current.md** (extracto):
 - Tone: insider-vulnerable, coaching, dato-en-mano
 - Do words: sistema, funnel, ejecutar, cuentas
 - Don't words: magia, revolucionario, leverage, unlock, simple
@@ -141,7 +141,7 @@ Reserva una demo y descubre cómo escalamos negocios que están estancados. ¡No
 
 Mismas que Example 1, **además**:
 - **messaging-summary.md → claims prohibidos**: "ROI garantizado", "exponencial", "sin esfuerzo"
-- **brand-voice-current.md → don't words**: revolucionar, magia, mágica, unlock, leverage, escalar (uso vacío)
+- **brand-voice.current.md → don't words**: revolucionar, magia, mágica, unlock, leverage, escalar (uso vacío)
 - **LinkedIn voice → no hashtags en body** (máx 3 al final si hay)
 
 ### Reporte (extracto)
@@ -170,7 +170,7 @@ NO publicar. Reescritura completa requerida.
 
 ❌ Misaligned (5)
 - "🚀 ¿Quieres revolucionar tu pipeline…?"
-  Anchor: brand-voice-current.md → don't word "revolucionar" + LinkedIn no hooks de hype
+  Anchor: brand-voice.current.md → don't word "revolucionar" + LinkedIn no hooks de hype
   Issue: don't word + tono opuesto al "insider"
   Fix sugerido: hook desde un dato concreto o pregunta honesta. Ej. "El 60% de los SaaS B2B tienen una fuga de funnel que vale más que su CAC. Aquí cómo encontrarla en 5 días."
 

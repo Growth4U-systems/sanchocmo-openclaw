@@ -16,6 +16,8 @@ interface EditorHeaderProps {
   stepper: React.ReactNode;
   /** Optional banner above the stepper (Discarded / Deferred). */
   banner?: React.ReactNode;
+  /** Optional trailing frontmatter items (pipeline-state chip, desync badge). */
+  meta?: React.ReactNode;
 }
 
 function formatDate(iso?: string): string | null {
@@ -40,6 +42,7 @@ export function EditorHeader({
   scheduledFor,
   stepper,
   banner,
+  meta,
 }: EditorHeaderProps) {
   const scheduled = formatDate(scheduledFor);
 
@@ -90,6 +93,12 @@ export function EditorHeader({
               {scheduled}
             </span>
           </span>
+        )}
+        {meta && (
+          <>
+            {(owner || ideaId || scheduled) && <span className={styles.fmSep} />}
+            <span className={styles.fmItem}>{meta}</span>
+          </>
         )}
       </div>
 

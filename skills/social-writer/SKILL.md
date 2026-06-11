@@ -3,7 +3,7 @@ name: social-writer
 description: "LinkedIn + X/Twitter content writer with Clarify protocol embedded. Takes an approved idea with signal+angle, runs Clarify (NEVER skips), generates platform-native drafts. Each platform gets a different angle/hook/structure — NOT reformatted copies."
 context_required:
 - brand/{slug}/content/content-pillars.md
-- brand/{slug}/brand-voice/brand-voice-current.md
+- brand/{slug}/brand-book/brand-voice/brand-voice.current.md
 - brand/{slug}/content/clarify-history.json
 - brand/{slug}/content/configs/cadence-config.yml
 context_writes:

@@ -13,11 +13,11 @@ description: "Visual identity meta-skill: defines how brand LOOKS and generates 
 - **Depends on**: none (Quick) | brand-voice, niche-discovery-100x, positioning-messaging (Full)
 
 ## Context
-- **Reads**: `brand/{slug}/company-brief/company-brief-current.md`, `brand/{slug}/brand-voice/brand-voice-current.md`, `brand/{slug}/go-to-market/positioning/*/*-current.md`
-- **Writes**: `brand/{slug}/brand-identity/visual-identity/visual-identity-current.md`, `brand/{slug}/operational/assets.md`
+- **Reads**: `brand/{slug}/company-brief/company-brief.current.md`, `brand/{slug}/brand-voice/brand-voice.current.md`, `brand/{slug}/go-to-market/positioning/*/*.current.md`
+- **Writes**: `brand/{slug}/brand-identity/visual-identity/visual-identity.current.md`, `brand/{slug}/operational/assets.md`
 
 **Input**: Brandbook + URL (Quick) | + brand-voice AI Brand Kit + ECPs + positioning (Full)
-**Output**: Visual Snapshot / Visual DNA Kit + Child Skills → `brand/{slug}/visual-identity/visual-identity-current.md`
+**Output**: Visual Snapshot / Visual DNA Kit + Child Skills → `brand/{slug}/visual-identity/visual-identity.current.md`
 
 ## References
 
@@ -194,7 +194,7 @@ Wyndo / Claude Design Brand. Path canónico:
 ```
 brand/{slug}/brand-book/visual-identity/
 ├── design-tokens.json            # ← lo escribe ESTA skill (visual-identity)
-├── visual-identity-current.md    # ← lo escribe ESTA skill
+├── visual-identity.current.md    # ← lo escribe ESTA skill
 ├── logo-light.{png,webp,svg}     # ← lo escribe ESTA skill
 ├── manifest.json                 # ← lo escribe el child (índice del catálogo)
 ├── style-references/             # ← lo escribe el child (5-10 imgs ref)
@@ -212,7 +212,7 @@ brand/{slug}/brand-book/visual-identity/
 
 | Output | Lo escribe | Cuando |
 |---|---|---|
-| `design-tokens.json`, `visual-identity-current.md`, logos | `visual-identity` (esta meta-skill) | Foundation L5: 1 vez al onboarding + refresh |
+| `design-tokens.json`, `visual-identity.current.md`, logos | `visual-identity` (esta meta-skill) | Foundation L5: 1 vez al onboarding + refresh |
 | `manifest.json`, `style-references/`, `templates/*` | `[brand]-visual-generator` (child) | T07 del P14 + cada vez que el cliente extiende el catalogo |
 
 Las 5 plantillas iniciales obligatorias del child siguen siendo las 5
@@ -309,10 +309,10 @@ Presentar como 3 rondas conversacionales, no un cuestionario de 15 preguntas sue
 ---
 
 ## Guardar con versionado
-- Ruta: `brand/{slug}/visual-identity/visual-identity-current.md`
+- Ruta: `brand/{slug}/visual-identity/visual-identity.current.md`
 - HTML presentable: `brand/{slug}/visual-identity/visual-guide.html`
 - Backup + versionado + history.json
-- Link: build with the MC URL format from `workspace-sancho/PROTOCOLS.md` Rule 3 (the host is already pre-resolved in that document). Path: `/portal/{mcToken}/docs/brand/{slug}/visual-identity/visual-identity-current.md`
+- Link: build with the MC URL format from `workspace-sancho/PROTOCOLS.md` Rule 3 (the host is already pre-resolved in that document). Path: `/portal/{mcToken}/docs/brand/{slug}/visual-identity/visual-identity.current.md`
 
 ---
 
@@ -336,7 +336,7 @@ Presentar como 3 rondas conversacionales, no un cuestionario de 15 preguntas sue
 
 ```
 brand/{{slug}}/visual-identity/
-├── visual-identity-current.md         ← versión activa (datos estructurados)
+├── visual-identity.current.md         ← versión activa (datos estructurados)
 ├── visual-guide.html  ← entregable visual presentable
 ├── v1.md, v2.md...    ← versiones anteriores
 ├── history.json       ← log de versiones

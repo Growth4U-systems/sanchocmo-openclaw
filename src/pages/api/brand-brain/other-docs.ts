@@ -14,7 +14,6 @@ import { brandDir } from "@/lib/data/paths";
 const FOUNDATION_FOLDERS = new Set([
   "company-brief", "market-and-us", "go-to-market",
   "brand-book", "metrics-setup", "strategic-plan",
-  "fast-foundation",
 ]);
 
 const IGNORED_FOLDERS = new Set([
@@ -32,6 +31,36 @@ interface DocEntry {
   name: string;
   path: string;
   fullPath: string;
+  /** HTML-canonical sibling exists for this .md (SAN-149) */
+  hasHtml?: boolean;
+}
+
+/**
+ * HTML-canonical pairs (SAN-149): when a folder holds both `foo.md` and
+ * `foo.html`, emit a single entry for the `.md` (the source — the viewer
+ * resolves it to the canonical HTML) flagged with `hasHtml`.
+ */
+function buildDocEntry(
+  fileName: string,
+  siblings: Set<string>,
+  brandSlug: string,
+  relPath: string,
+): DocEntry | null {
+  const ext = path.extname(fileName);
+  if (![".md", ".html"].includes(ext)) return null;
+  // Feedback transcripts (SAN-15/148) are internal artifacts — never listed.
+  if (/\.commented\.(md|html)$/i.test(fileName)) return null;
+  if (ext === ".html" && siblings.has(fileName.replace(/\.html$/, ".md"))) return null;
+
+  const entry: DocEntry = {
+    name: fileName.replace(/\.(md|html)$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    path: path.join(relPath, fileName),
+    fullPath: `brand/${brandSlug}/${path.join(relPath, fileName)}`,
+  };
+  if (ext === ".md" && siblings.has(fileName.replace(/\.md$/, ".html"))) {
+    entry.hasHtml = true;
+  }
+  return entry;
 }
 
 interface DocGroup {
@@ -53,6 +82,7 @@ function scanDir(dir: string, brandSlug: string, relBase: string): DocGroup[] {
   if (!fs.existsSync(dir)) return groups;
 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const rootFiles = new Set(entries.filter((e) => e.isFile()).map((e) => e.name));
 
   for (const entry of entries) {
     if (entry.name.startsWith(".") || entry.name.startsWith("_")) continue;
@@ -71,14 +101,8 @@ function scanDir(dir: string, brandSlug: string, relBase: string): DocGroup[] {
       }
     } else if (entry.isFile()) {
       if (IGNORED_FILES.has(entry.name)) continue;
-      const ext = path.extname(entry.name);
-      if (![".md", ".html"].includes(ext)) continue;
-
-      rootDocs.push({
-        name: entry.name.replace(/\.(md|html)$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-        path: path.join(relBase, entry.name),
-        fullPath: `brand/${brandSlug}/${path.join(relBase, entry.name)}`,
-      });
+      const doc = buildDocEntry(entry.name, rootFiles, brandSlug, relBase);
+      if (doc) rootDocs.push(doc);
     }
   }
 
@@ -94,17 +118,13 @@ function collectDocs(dir: string, brandSlug: string, relPath: string): DocEntry[
   if (!fs.existsSync(dir)) return docs;
 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const fileNames = new Set(entries.filter((e) => e.isFile()).map((e) => e.name));
   for (const entry of entries) {
     if (entry.name.startsWith(".") || entry.name.startsWith("_")) continue;
 
     if (entry.isFile()) {
-      const ext = path.extname(entry.name);
-      if (![".md", ".html"].includes(ext)) continue;
-      docs.push({
-        name: entry.name.replace(/\.(md|html)$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-        path: path.join(relPath, entry.name),
-        fullPath: `brand/${brandSlug}/${path.join(relPath, entry.name)}`,
-      });
+      const doc = buildDocEntry(entry.name, fileNames, brandSlug, relPath);
+      if (doc) docs.push(doc);
     } else if (entry.isDirectory()) {
       docs.push(...collectDocs(path.join(dir, entry.name), brandSlug, path.join(relPath, entry.name)));
     }

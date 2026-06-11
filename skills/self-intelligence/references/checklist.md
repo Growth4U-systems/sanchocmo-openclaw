@@ -108,7 +108,7 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/self-intelligence/self-intelligence-current.md`
+- [ ] **Guardado en** `brand/{{slug}}/self-intelligence/self-intelligence.current.md`
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 

@@ -34,7 +34,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 ## Progreso (tracking)
 
-> Bitácora de avances. Última actualización: **2026-06-09**.
+> Bitácora de avances. Última actualización: **2026-06-10**.
 
 ### ✅ Hecho
 
@@ -81,7 +81,7 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - `docker/generate-openclaw-config.js` (D2): el bloque `channels.discord` se gatea a `DISCORD_BOT_TOKEN`; sin token Discord no se habilita (`mc-chat` sigue primario).
   - `.env.example` (D1): `DISCORD_BOT_TOKEN` comentado/opcional. `config/instance.json.example` (D3): bloque `discord` marcado opcional (`$comment_discord`).
   - G4U sin cambio (setea el token → rama con-token = comportamiento previo). Verif: `node --check` ✅ · JSON válido ✅ · test funcional del gating ✅.
-  - **Follow-ups Fase 2**: ✅ D4 (retiro `new-client.sh`, SAN-108), D5 (canal publicación slack|discord), D6 (README→MC).
+  - **Follow-ups Fase 2**: ✅ D4 (retiro `new-client.sh`, SAN-108), ✅ D5 (canal publicación slack|discord), ✅ D6 (README→MC, SAN-92).
 
 - **[Fase 4/6 · install.sh + wizard — E1/E2/E4]** — PR #331 (`chore/san-93-wizard-install` → base `chore/san-92-discord-optional`, **stacked**), `Refs SAN-93`. Aclaraciones #2 (wizard) y #4 (un comando).
   - `install.sh` (raíz): chequea docker/compose/openssl, corre el wizard si falta `.env`, `docker compose up -d --build`. Flags `--od`/`--yalc`/`--no-up`/`--force`.
@@ -121,18 +121,57 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - Verificado (boot real aislado): **`OPENCLAW_HOME` vacío bootea** (sin crash) → gateway ready + Next + healthy + 22 tablas; datos preservados en restart (sentinel + config); refresh version-gated ("skipping refresh"); **sin datos de cliente en el seed** (grep).
   - **Resuelve GAP G** (que `compose pull` no pise datos del volumen) — ver sección G.
 
+- **[Stack 2026-06-09 mergeado]** — #367 (fix wizard `.env` dup), #369 (imagen self-contained / GAP G) y #372 (D5 canal publicación Slack + UI) **MERGED a `staging`**. La sección "En curso" previa quedó saldada.
+
+- **[Fase 1/5 · YALC imagen pública — GAP B3 (parcial)]** — `Refs SAN-135`. Decisión de arquitectura confirmada (`SAN-21`): **sidecar, NO embed** — el agente Yalc se fusionó en Rocinante (#391) pero el **servicio** GTM-OS (`:3847`) sigue siendo el motor de Outreach (cliente `src/lib/yalc/client.ts` + ~20 rutas `api/yalc/*` + cockpit `yalc.tsx`). Por eso no se dropea: se publica como imagen.
+  - **[Yalc-Growth4U PR #18 — MERGED]**: nuevo `.github/workflows/docker-image.yml` (espejo de `open-design`) → publica `ghcr.io/growth4u-systems/yalc` multi-arch (`:edge` en main, `:vX.Y.Z`+`:latest` en tags). El repo sigue privado; la **imagen** debe hacerse pública.
+  - **[sanchocmo PR #416 — ABIERTO, bloqueado]**: `docker-compose.yalc.yml` `build: ../Yalc-Growth4U` → `image: ${YALC_IMAGE:-ghcr.io/growth4u-systems/yalc:edge}`; deploys sin clone del repo privado (fuera `YALC_BUILD_CONTEXT`/`YALC_REF`/`YALC_REPO_TOKEN`), `pull --ignore-buildable` ya existente refresca; `.env.example` documenta `YALC_IMAGE`. **No mergear hasta que la imagen sea pullable** (ver bloqueante abajo).
+
+- **[Fase 4 · Wizard conecta YALC — GAP E (cierre)]** — PR #418 (`Refs SAN-136`) **MERGED**. El wizard tenía un hueco: mencionaba YALC pero no generaba el token ni cableaba la URL (síntoma de `SAN-131`, "Yalc no conectado"). Ahora `scripts/wizard.sh` tiene paso `6/6 Outreach` opcional → genera `YALC_API_TOKEN` + `YALC_BASE_URL=http://yalc:3847`; `install.sh` levanta el overlay automáticamente si el wizard lo provisionó. Verificado non-interactive (enabled/disabled).
+
+- **[Fase 3 · Preflight de boot — GAP E3]** — PR #422 (`Refs SAN-138`) **MERGED**. Nueva sección `0c` en `docker/entrypoint.sh`: valida `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `config/clients.json`+`instance.json` (existen + JSON válido), ≥1 credencial de modelo según `*_AUTH_MODE`, y `DATABASE_URL` solo si `MC_TASKS_BACKEND`∈{db,db-shadow}. Lista todos los faltantes + fix y aborta; `SKIP_PREFLIGHT=1` saltea. G4U pasa sin cambios (verificado contra el env real de staging). `bash -n` + 13 escenarios en sandbox.
+
+- **[Fase 5 · Imagen pública de `sanchocmo` + workflow GHCR + compose `image:`]** — PR [#428](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/428) (`Refs SAN-140`) **ABIERTO**. Es EL mecanismo "compose pull". Decisión de arquitectura confirmada con el usuario: **`image:`+`build:` en el base** (no overlay separado) + **publish en release/edge/manual, multi-arch**.
+  - **Nuevo `.github/workflows/docker-image.yml`** (espejo de OD/YALC): publica `ghcr.io/growth4u-systems/sanchocmo` multi-arch (`linux/amd64,arm64`) → `:vX.Y.Z`+`:latest` en `release: published` (engancha a release-please), `:edge` en push a `staging`, `workflow_dispatch` (input `tag`, default `edge`) para publicar privado on-demand. `cache-from/to: gha`, pasa `GIT_COMMIT=${github.sha}`, honra `.dockerignore` (el `context: .` no rebaka data de cliente, ver #369).
+  - **`docker-compose.yml`**: `sanchocmo` gana `image: ${SANCHOCMO_IMAGE:-ghcr.io/growth4u-systems/sanchocmo:latest}` **conservando `build:`**. Compose tagea el build local con ese mismo `image:` → ambos caminos convergen. **Cero cambios a los deploy workflows de G4U**: su `build --pull` sigue construyendo local, y `pull --ignore-buildable` saltea sanchocmo (tiene `build:`) → nunca pullea imagen ajena.
+  - **`install.sh`**: el path producto hace `compose pull` (best-effort) antes de `up -d` (sin `--build`); si el pull falla (package privado/offline) `up -d` cae a build desde el source tree (tiene `build:`). Nuevo flag `--build` fuerza build desde clone. Mensaje de update = `pull && up -d`.
+  - **`.env.example`**: sección *Distribution / core image* documenta `SANCHOCMO_IMAGE` (pin de versión). **`docs/INSTALL.md`**: sección *Updating* reescrita a `pull && up -d` (sin `git pull`/rebuild) + pin + nota de build-desde-clone. **`docs/DEPLOY.md`**: nota en *Launch* ofreciendo el path imagen pública como alternativa al `--build`.
+  - **Push público gateado por Fase 0** (la imagen self-contained bakea el framework con refs/data de cliente); hasta entonces el package se publica **privado** para probar el mecanismo. El workflow funciona igual para hosts autenticados a GHCR.
+  - Verificación: `bash -n install.sh` ✅ · YAML del workflow parsea (3 triggers, 6 steps) ✅ · `docker compose config`: base con `image:`+`build:` ambos presentes ✅, default `:latest` y `SANCHOCMO_IMAGE` override ✅, overlays od+yalc válidos ✅, `--ignore-buildable` saltea sanchocmo (buildable) ✅. **Pendiente**: primer push real del package (CI) + e2e `compose pull` en host limpio (Fase 6).
+
+- **[Fase 3/D7 · Degradación graceful Outreach (YALC) — parcial]** — PR #420 (`Refs SAN-137`) **MERGED** (commit `68fee290`, 2026-06-10). `isYalcConfigured()` en `client.ts` distingue "no activado" de "caído"; `overview.ts` devuelve `configured`; `yalc.tsx` muestra placeholder "Outreach no está activado" con CTA en vez del cockpit roto. `docs/INSTALL.md`: sección Outreach + conectar proveedor de email. **Falta el equivalente para OD** (D7-OD).
+
+- **[Fase 2 · README → Mission Control — GAP D6]** — `Refs SAN-92`. Reescrito `README.md` alrededor de Mission Control (chat web → Sancho) en vez de Discord: tagline ("operated through Mission Control"), diagrama de arquitectura (entrada = MC chat; Discord/Slack = canales opcionales), columna "How it activates" de los agentes (Mission Control chat, no "Discord messages"), sección Multi-Client (cliente = brand en MC, no "1 Discord guild"), Quick Start reescrito al flujo `install.sh` + wizard (Discord/OD/YALC opcionales), y sección Mission Control actualizada al server Next.js (`:3000`, no el legacy `mc-server.js:18790`). **Fuera de scope** (anotado): el roster de agentes tiene drift aparte de Discord (Escudero retirado en SAN-104; agentes nuevos dulcinea/hamete/mambrino/merlin) — no se toca acá, es otro cambio.
+
+- **[Fase 1 · LICENSE final (SUL) — GAP B7]** — PR de esta tanda (`Refs SAN-94`). `LICENSE.md` pasa de **DRAFT** a **Sustainable Use License** canónica (texto estilo n8n adaptado): licensor **Growth4U Systems**, *Permitted Purpose* = uso interno de negocio / personal, con la restricción de **no** ofrecerlo como servicio hosted comercial competidor; cláusulas de trademarks / patentes / disclaimer de garantía. Decisión del usuario (esta sesión): source-available, **no** OSI-open-source. Banner DRAFT removido. El README ya enlazaba `[Sustainable Use License (SUL)](LICENSE.md)`.
+
 ### 🟡 En curso / bloqueado
 
-- **PRs #367 y #369 abiertos, sin mergear** (→ `staging`). **Dependencia**: #369 necesita #367 para que el flujo DB-sobre-volumen-vacío quede limpio (sin el fix, el `.env` del wizard trae el `DATABASE_URL` duplicado). **Mergear #367 primero, luego #369.** (Para el deploy de G4U el orden es indistinto — G4U no usa el wizard.)
-- **🔴 Fase 0 sigue bloqueante #1 para publicar** — y el seeding (#369) lo dejó **más expuesto**: el repo todavía commitea **data operacional y refs hardcodeadas de G4U** que el `.dockerignore` (safety net) no cubre del todo: `workspace-sancho/scripts/{regenerate.py,mc-server.js,auto-bind.py,create-client-crons.sh}`, `mc-data.js`/`legacy-*.js`, `_system/intelligence-log.json`, `AGENTS.md`, etc. mencionan slugs de clientes reales. **La imagen NO es publicable hasta la purga Fase 0.**
+- **🔴 Visibilidad de imágenes GHCR — bloquea #416 (y delata OD)**: los packages `yalc` **y `od` están privados** (acceso anónimo → 403). Descubrimiento clave del 2026-06-10: **OD no está realmente "publicado"** — el VPS de staging tiene un login a ghcr con credencial placeholder (`tu-usuario-github`) que ya **no puede pullear** packages privados; OD corre solo porque su imagen está **cacheada localmente** de un pull viejo. YALC en staging corre de `openclaw-yalc` (build local), así que **no hay cache** que lo salve. **Acción del usuario**: hacer públicos `yalc` + `od` en `github.com/orgs/Growth4U-systems/packages` (Danger Zone → Public). Sin eso, **#416 rompe el deploy** (pull denegado, sin imagen → YALC no levanta).
+- **PR #416 abierto, NO mergear** hasta que `yalc` sea pullable. Una vez público: verificar pull anónimo en el VPS y mergear.
+- ✅ **PR #420 MERGED** (D7-YALC, `68fee290`): degradación graceful de Outreach ya está en `staging`. Pendiente solo el espejo para OD (D7-OD).
+- **🔴 Fase 0 sigue bloqueante #1 para publicar** — y el seeding (#369) lo dejó **más expuesto**: el repo todavía commitea **data operacional y refs hardcodeadas de G4U** que el `.dockerignore` (safety net) no cubre del todo: `workspace-sancho/scripts/{regenerate.py,mc-server.js,auto-bind.py,create-client-crons.sh}`, `mc-data.js`/`legacy-*.js`, `_system/intelligence-log.json`, `AGENTS.md`, etc. mencionan slugs de clientes reales. **La imagen de Sancho NO es publicable hasta la purga Fase 0** (la imagen self-contained bakea el framework).
 
 ### ⏭️ Próximo
 
-- **Mergear #367 → #369** (en ese orden) a `staging`.
-- Completar **Fase 1**: B3 (YALC overlay a imagen pública — falta nombre/tag) + D7 (degradación graceful OD/YALC en MC).
-- **Fase 0** (purga de secretos + data/refs de cliente / repo limpio) — bloqueante #1 antes de publicar. Destructivo (rewrite de historial + rotación) → **lo ejecuta el usuario**.
-- **Deuda técnica GAP H (`SAN-109`)**: terminar el Strangler-Fig para dejar de levantar `mc-server.js` (`:18790`). Ver sección **H**.
-- Otros hilos desbloqueados: D5 (canal publicación slack|discord), D6 (README→MC), Fase 3 (preflight + modo mínimo).
+> Estado: el producto **levanta local sin G4U** (PG bundled + wizard + Discord/OD/YALC opcionales + preflight). Lo que falta de fondo para "autoinstalable" es **publicar imágenes (Fase 5)** + **verificar e2e (Fase 6)**; el resto es pulido. Todo el publish está gateado por **Fase 0**.
+
+**Bloqueado en el usuario:**
+- Hacer **públicos** los packages `yalc` + `od` → destraba #416. Luego verificar staging y mergear #416.
+- **Fase 0** (purga de secretos + data/refs de cliente; rewrite de historial + rotación) — bloqueante #1 para publicar el repo **y** la imagen de Sancho.
+- ~~**B7**: texto final de la LICENSE~~ → ✅ **HECHO** (SUL canónica, `SAN-94`).
+
+**Desbloqueado (ingeniería, se puede avanzar ya):**
+- **🟡 Fase 5 — workflow de imagen de `sanchocmo`** (IMPLEMENTADA, PR #428 abierto): `docker-image.yml` publica `ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z`+`:latest`/`:edge` multi-arch; base compose con `image:`+`build:`; `install.sh` pull-first. **Falta**: mergear + primer push real del package (queda **privado** hasta Fase 0) + e2e `compose pull` en host limpio (Fase 6).
+- **D6** — reescribir `README.md` alrededor de Mission Control (confirmado: sigue Discord-céntrico, "manages everything through Discord" / "Client Discord Guilds").
+- **E5** — Setup Checklist UI en el dashboard ("qué falta configurar").
+- **D7-OD** — placeholder graceful de Open Design sin daemon (espejo de lo hecho para YALC en #420).
+- **Fase 6** — verificación e2e en máquina limpia (KPI: install → MC <5min, sin ediciones manuales, anda sin opcionales, `compose pull` preserva data).
+
+**Deuda / opcional (no bloquean lanzamiento):**
+- **Fase 7 — deploy de G4U vía imagen (pull en vez de build)**: hoy el VPS buildea desde source; migrarlo a `compose pull` de la imagen que publica el CI (Fase 5). Beneficio: deploy en segundos, menos RAM/disco en VPS, paridad byte-idéntica staging→prod, dogfooding. **No bloqueante**; ver sección dedicada abajo (3 pre-requisitos).
+- **GAP H (`SAN-109`)**: terminar Strangler-Fig, dejar de levantar `mc-server.js` (`:18790`).
+- **B8**: cutover tasks JSON→DB (runbook + ejecución del usuario). El producto corre con `json` igual.
 
 ---
 
@@ -161,15 +200,15 @@ añadir wizard y publicar imágenes. No es una reescritura.
 | 2 | B2 · OD opcional (overlay) | #327 (base #325) | ✅ abierto | imagen OD ya pública `ghcr.io/growth4u-systems/od:edge` |
 | 3 | D1-D3 · Discord opcional | #329 (base #327) | ✅ abierto | aclaración #1; D4/D5/D6 follow-up |
 | 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ abierto | un-comando install; DB local ✅ con B9 |
-| 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ abierto | placeholder SUL; texto canónico = decisión legal |
+| 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ mergeado | placeholder SUL; **finalizado** luego a SUL canónica (`SAN-94`) |
 | 6 | B9 · Postgres bundled (driver condicional + baseline) | #366 (→ `staging`), SAN-110 | ✅ **MERGED** (2026-06-09) | resuelve decisión #5; e2e en container + persistencia de volumen ✅ |
 | 7 | Fix wizard `.env` duplicado (B9 follow-up) | #367 (→ `staging`), SAN-110 | 🟡 abierto | regresión de B9 en staging; mergear **antes** de #369 |
 | 8 | Imagen self-contained (seed OPENCLAW_HOME) — GAP G | #369 (→ `staging`), SAN-111 | 🟡 abierto | volumen vacío bootea; datos preservados; depende de #367 |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
-1. **LICENSE (B7)** — *parcial*: creé `LICENSE.md` como **borrador** (placeholder SUL, marcado "pending legal review"). Falta tu decisión: ¿texto canónico de la **Sustainable Use License** (el README ya la cita), u otra (BUSL/MIT/propietaria)? + definir licensor y "Permitted Purpose". No fabriqué texto legal autoritativo.
-2. **Imágenes públicas OD/YALC (B2/B3/F5)** — *OD resuelto*: la imagen OD ya es pública (`ghcr.io/growth4u-systems/od:edge`, usada en el overlay B2). **Falta YALC**: hoy el overlay usa `build:` desde el repo privado `../Yalc-Growth4U`; ¿cuál es el nombre/tag de la imagen YALC pública (`ghcr.io/growth4u-systems/yalc:<tag>`)? Con eso hago B3 (build → image).
+1. **✅ LICENSE (B7) — RESUELTO** (`SAN-94`): el usuario eligió **Sustainable Use License** (esta sesión). `LICENSE.md` finalizado con texto SUL canónico (licensor Growth4U Systems, Permitted Purpose = uso interno/personal, no resale-as-hosted-service), banner DRAFT removido. *(Recomendado igualmente: revisión legal antes del release público.)*
+2. **Imágenes públicas OD/YALC (B2/B3/F5)** — *Reabierto 2026-06-10*: **ni OD ni YALC son realmente públicas.** Ambos packages GHCR están privados (anon → 403). OD "funciona" en staging solo porque su imagen está cacheada local de un pull viejo; la credencial ghcr del VPS es un placeholder roto. YALC corre de build local, sin cache. El workflow de publicación de YALC ya existe (`Yalc-Growth4U` PR #18, **merged** → `ghcr.io/growth4u-systems/yalc:edge`), y el cutover del overlay está en #416. **Acción pendiente del usuario**: hacer públicos `yalc` **y** `od` (Packages → Danger Zone → Public). Recién ahí el VPS (y terceros) pullean anónimo y #416 es seguro de mergear.
 3. **Fase 0 (purga de secretos)** — bloqueante para publicar, **destructivo**: rewrite de historial git + **rotar** credenciales expuestas (clave Tailscale `sancho-cmo.taild48df2.ts.net.key`, tokens de `openclaw.json.last-good`/`.env.bak`/`instance.json`). **No lo hago solo.** Lo ejecutás vos.
 4. **Cutover tasks JSON→DB (B8)**: requiere `db-shadow` en staging N días con diff continuo antes del cutover. Autónomamente solo el **runbook**; el cutover lo hacés vos.
 5. **✅ B9 (Postgres bundled) — RESUELTO** (branch `feat/pg-bundled-local-db`). El usuario aprobó el enfoque **(i)**: driver condicional (`neon-http` para `*.neon.tech` / `postgres-js` para el resto) + baseline limpio generado desde `schema.ts` en `src/db/migrations-local/` + migrate-at-boot gateado a local-db. Prod/Neon byte-idéntico (auto-detect + `DATABASE_DRIVER=neon` en deploys). Verificado contra `postgres:16-alpine` (22 tablas, idempotente). Ver entrada en "✅ Hecho". El texto original de la decisión queda abajo como referencia histórica.
@@ -210,7 +249,9 @@ graph TD
     P3 --> P5
     P4["Fase 4 · Wizard de config"] --> P6
     P5["Fase 5 · Imágenes públicas versionadas (sancho+od+yalc)"] --> P6
+    P5 --> P7
     P6["Fase 6 · install.sh + docs + verificación e2e"]
+    P7["Fase 7 · Deploy de G4U vía imagen (pull) · 🟢 deuda/opcional"]
 ```
 
 ---
@@ -238,11 +279,11 @@ historial o partir de un repo nuevo, y **rotar** las credenciales expuestas.
 |---|--------|-------|-------|
 | B1 ✅ | Admin gate real es `email.endsWith("@growth4u.io")` en el callback de auth | Helper `isAdminEmail()` que lea `ADMIN_EMAIL_DOMAIN` (+ `adminEmails`) | **HECHO** (PR #208) — `admin-domain.ts` + reemplazos en `nextauth.ts:79/:45`, `users.ts`, `admin-emails.ts`, `client-access.ts`, `dashboard/admin/users.tsx`, `health-check.ts:323` |
 | B2 ✅ | **Open Design es obligatorio**: en `docker-compose.yml` base con `OD_API_TOKEN: ${OD_API_TOKEN:?...}` → `compose up` falla sin OD | **HECHO** (PR SAN-91): movido a overlay `docker-compose.od.yml` (imagen pública `ghcr.io/growth4u-systems/od:edge`); OD fuera del base → levanta sin OD; deploy G4U lo mantiene vía `ENABLE_OD_SERVICE` | `docker-compose.od.yml` (nuevo), `docker-compose.yml`, deploy workflows, `.env.example` |
-| B3 | YALC build desde repo privado `../Yalc-Growth4U` | Mantener overlay `docker-compose.yalc.yml` pero con `image:` **pública** `ghcr.io/<org>/yalc:vX.Y.Z` (no `build:` privado) | `docker-compose.yalc.yml` |
+| B3 🟡 | YALC build desde repo privado `../Yalc-Growth4U` | **En curso** (`SAN-135`): workflow de imagen en `Yalc-Growth4U` (#18, **merged** → `ghcr.io/growth4u-systems/yalc:edge`) + overlay `build:`→`image:` y deploys (#416, **abierto/bloqueado** hasta que el package sea público). Decisión `SAN-21`: sidecar, no embed | `docker-compose.yalc.yml`, deploys, `Yalc-Growth4U/.github/workflows/docker-image.yml` |
 | B4 | Volumen monta `brand/growth4u/...` hardcodeado | Va con overlay OD; parametrizar por brand o quitar del base | `docker-compose.yml:108` |
 | B5 ✅ | **Git backups de Cervantes** (git config + daily commit+push) | **HECHO** (PR #325, SAN-90): quitado `git config` (Dockerfile), mount `~/.ssh` (compose), cron `backup.sh` (`crontab-cervantes`), `backup.sh` eliminado, menciones en README + DEPLOY.md. Data snapshots (`/mnt/data`) se conserva → F5 | `Dockerfile`, `docker-compose.yml:18`, `docker/crontab-cervantes`, README, DEPLOY.md |
 | B6 ✅ | **Supabase** en ~44 archivos | **HECHO** (PR #318, SAN-86): eliminado de `instance.json.example`, `clients.json.example`, `new-client.sh` (insert + anon_key A6), `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `types/index.ts`, `guide.tsx`, `mc-server.js` (legacy live), `regenerate.py`, `.env.example`, ambos deploy workflows, docs/skills; borrado `supabase-migration.sql`. Persistencia = Neon (`DATABASE_URL`). Resto = data histórica/secretos (Fase 0) + folder Drive "Supabase Recordings" | grep `supabase` (44 files) |
-| B7 | Falta `LICENSE.md` (README lo cita); docs usan `sanchocmo.ai`/IPs | Crear `LICENSE.md`; placeholders genéricos | raíz, `docs/` |
+| B7 ✅ | Falta `LICENSE.md` (README lo cita); docs usan `sanchocmo.ai`/IPs | **HECHO** (`SAN-94`): `LICENSE.md` = Sustainable Use License canónica (licensor Growth4U Systems, Permitted Purpose, sin resale-as-service); DRAFT removido. Pendiente aparte: placeholders `sanchocmo.ai`/IPs en `docs/` | raíz, `docs/` |
 
 ### C. Auth de modelos (Anthropic + OpenAI) — ✅ HECHO (PR #219)
 
@@ -264,7 +305,7 @@ El camino de **API key está roto hoy** para ambos proveedores:
 | D3 | `instance.json.example` pide `discord.*` como base | Bloque Discord opcional | `config/instance.json.example` |
 | D4 ✅ | `new-client.sh` exige `--guild`, inserta en Supabase, auto-bind Discord | **HECHO** (PR #363, SAN-108): **retirado** el script — el onboarding ya lo hace la creación-MC (`api/clients/create.ts`) + foundation skills (auto-scaffold + `foundation-state.json` v3.0). Endpoint legacy `/api/new-client` removido de `mc-server.js` + `legacy-mc-server.js` | ~~`workspace-sancho/scripts/new-client.sh`~~ (eliminado) |
 | D5 | **Crons publican en Discord** con `message(channel=discord,…)` + patrón de hilo, leyendo `crons.<x>.publish_channel` de `client-config.json` | **Canal configurable (decisión #5)**: añadir `publish.channel_type` (`slack`/`discord`) en `instance.json`/`client-config.json`; parametrizar el paso "PUBLICAR" de las plantillas de cron. **Default Slack** (OAuth ya construido). Si dual-channel resulta caro → centralizar en Slack y dejar Discord como legacy | `cron/jobs.json*`, `client-config.json`, `meeting-intelligence-db.ts:363` (`publish_channel`), `skills/atalaya/SKILL.md:100` |
-| D6 | README gira en torno a "guild por cliente" + diagrama Discord | Reescribir alrededor de Mission Control + chat | `README.md:5-40` |
+| D6 ✅ | README gira en torno a "guild por cliente" + diagrama Discord | **HECHO** (`SAN-92`): README reescrito alrededor de Mission Control (chat web → Sancho); Discord/Slack = canales opcionales; Quick Start = `install.sh` + wizard | `README.md` |
 
 > 🟢 El boot **no** crashea sin Discord (`generate-openclaw-config.js:192` solo warning) y `mc-chat → sancho` se crea siempre (`:147`, reforzado en `entrypoint.sh:139`). Es limpieza, no re-arquitectura.
 
@@ -345,12 +386,14 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - **Purgar secretos**: repo público nuevo sin historial (o reescritura de historial). Borrar/ignorar A1–A7. **Rotar** clave Tailscale y todo token de `openclaw.json.last-good`/`.env.bak`/`instance.json`.
 - Quitar Supabase anon_key hardcodeada de `new-client.sh:858`.
 - Auditar `workspace-*` por data de clientes G4U; decidir qué se publica.
-- Crear `LICENSE.md` (texto SUL real). Confirmar org/registry GHCR público.
+- ✅ Crear `LICENSE.md` (texto SUL real) — HECHO (`SAN-94`). Confirmar org/registry GHCR público.
 
 ### Fase 1 — Desacople de G4U (4–6 días) 🔴
 - ✅ **Admin configurable** (HECHO, PR #208): helper `isAdminDomainEmail()` (lee `ADMIN_EMAIL_DOMAIN` + `adminEmails`); reemplazado hardcode en `nextauth.ts:79` y call-sites; parametrizado email del admin token (`nextauth.ts:45` → `ADMIN_IDENTITY_EMAIL`); UI muestra el dominio configurado; vars inyectadas en deploy + seteadas en GitHub Environments.
 - ✅ **Auth dual (C)** (HECHO, PR #219): `ANTHROPIC_AUTH_MODE` y `OPENAI_AUTH_MODE` en `generate-openclaw-config.js`; en `api_key` genera profile de API key y saltea el script de suscripción; gateados ambos scripts por modo en `entrypoint.sh`; vars seteadas en GitHub Environments (subscription) para G4U.
-- ✅ **OD opcional (B2)** (HECHO, SAN-91): `open-design` movido a `docker-compose.od.yml` (imagen pública `ghcr.io/growth4u-systems/od:edge`), fuera del base. **Pendiente**: YALC overlay a imagen pública (B3, hoy usa `build:` privado — necesita nombre de imagen) + degradación limpia OD/YALC en MC (D7).
+- ✅ **OD opcional (B2)** (HECHO, SAN-91): `open-design` movido a `docker-compose.od.yml` (overlay `image:`), fuera del base. ⚠️ **Caveat 2026-06-10**: el package `od` está **privado** (corre por cache local en staging) — falta hacerlo público.
+- 🟡 **YALC overlay a imagen pública (B3, SAN-135)**: workflow de imagen en `Yalc-Growth4U` (#18 merged) + cutover del overlay (#416 abierto, bloqueado hasta package público). Decisión `SAN-21`: sidecar, no embed.
+- 🟡 **D7 degradación graceful**: YALC hecho (#420, `SAN-137`); **falta OD** (D7-OD).
 - ✅ **Supabase → Neon (B6)** (HECHO, PR #318, SAN-86): eliminadas referencias en config examples, `new-client.sh` (+ anon_key A6), `health-check.ts`, `api/clients/create.ts`, `api/env/index.ts`, `types/index.ts`, `guide.tsx`, `mc-server.js` legacy, `regenerate.py`, deploy workflows, docs/skills; borrado `supabase-migration.sql`.
 - ✅ **Retirar git-backup (B5)** (HECHO, PR #325, SAN-90): quitado `git config` (Dockerfile), montaje `~/.ssh` (compose), cron de `backup.sh` (`crontab-cervantes`), `backup.sh` eliminado, menciones en README + DEPLOY.md.
 - Limpiar `health-check.ts:323` y placeholders de dominio.
@@ -362,7 +405,7 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - Reescribir `README.md` alrededor de Mission Control.
 
 ### Fase 3 — Modo mínimo + preflight (2–3 días) 🟠
-- **Preflight** en `entrypoint.sh` (antes de `gateway run`): validar MUST (API key del modo activo, `NEXTAUTH_SECRET`, `config/clients.json`, `config/instance.json`) y abortar con mensaje accionable.
+- ✅ **Preflight** (HECHO, PR #422, `SAN-138`): sección `0c` en `entrypoint.sh` valida MUST (`NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `config/clients.json`+`instance.json`, ≥1 credencial de modelo según `*_AUTH_MODE`, `DATABASE_URL` solo si `MC_TASKS_BACKEND`∈{db,db-shadow}) y aborta listando todo + fix; `SKIP_PREFLIGHT=1` saltea.
 - Verificar seeding idempotente solo first-run; que `pull` de versión nueva no pisa el volumen.
 - Perfil "mínimo" de compose: solo `sanchocmo`, `MC_TASKS_BACKEND=json`, sin DB/OD/YALC/Discord.
 
@@ -371,14 +414,52 @@ las plantillas de cron resulta caro, centralizar en Slack y marcar Discord como 
 - Reusar `config/*.example`; `openssl rand` para secrets.
 
 ### Fase 5 — Imágenes públicas versionadas (3–4 días) 🟠
-- Workflow que publica `sanchocmo`, `od`, `yalc` `:vX.Y.Z`+`:latest` en GHCR público al release (engancha a `release-please`).
-- `docker-compose.yml` de producto con `image:` (sin `build:`); overlays `docker-compose.od.yml` y `docker-compose.yalc.yml` con imágenes públicas.
-- Documentar update genérico (`pull && up -d`); `/mnt/data` opcional.
+- ✅ **Workflow `sanchocmo` (SAN-140)**: `.github/workflows/docker-image.yml` publica `:vX.Y.Z`+`:latest` en release (engancha a `release-please`), `:edge` en staging, multi-arch. OD (#18/SAN-91) y YALC (#18/SAN-135) ya tienen el suyo.
+- ✅ **Compose de producto con `image:`**: el base lleva `image:`+`build:` (decisión del usuario: no overlay separado; G4U sigue buildeando, `pull --ignore-buildable` lo saltea). Overlays od/yalc ya usan `image:`.
+- ✅ **Update genérico** (`pull && up -d`) documentado en `docs/INSTALL.md`/`DEPLOY.md` + `install.sh` pull-first.
+- ⏭️ **Falta**: hacer **públicos** los packages (Fase 0) + e2e en host limpio (Fase 6); `/mnt/data` opcional.
 
 ### Fase 6 — Instalador + docs + verificación (2–3 días)
 - `install.sh`: baja compose + `.env.example`, corre wizard, `compose up`.
 - Guías de instalación (local + servidor) y de actualización.
 - Verificación e2e en máquina limpia (abajo).
+
+### Fase 7 — Deploy de G4U vía imagen (pull en vez de build) (2–3 días) 🟢 deuda/opcional
+
+> No bloquea el lanzamiento del producto. Migra el **deploy interno de G4U** de
+> "buildear en el VPS" a "pullear la imagen que ya publica el CI (Fase 5)".
+> Decisión de scope (2026-06-10): se dejó **fuera** del PR de Fase 5 (SAN-140)
+> para no tocar el path de deploy en vivo; el base compose quedó con `image:`+`build:`
+> justamente para habilitar esto después sin más cambios de arquitectura.
+
+**Motivación.** Hoy `deploy-staging.yml`/`deploy-prod.yml` hacen `git checkout $SHA`
++ `docker compose build --pull` en el VPS (≈2-3 min de `npm ci` + `next build`,
+consume CPU/RAM/disco — de ahí el *build-cache prune cron* y el swap de `SERVER-OPS.md`).
+Pulleando la imagen pre-buildada: deploy en segundos, menos recursos en el VPS,
+**paridad byte-idéntica staging→prod** (prod corre la imagen que staging validó,
+elimina "rompió en prod pero no en staging"), rollback = cambiar tag + `up -d`, y
+G4U usa el mismo mecanismo que un tercero (dogfooding).
+
+**3 pre-requisitos (por orden):**
+1. **Login GHCR del VPS** — la credencial actual es un placeholder roto (OD corre de
+   cache local; ver "🟡 En curso / bloqueado"). Es la **misma acción** que destraba
+   #416/OD/YALC públicos: un PAT válido con `read:packages` (o package público).
+2. **Tag inmutable por SHA** — añadir `type=sha` al `metadata-action` de
+   `docker-image.yml` y que el deploy pullee `:sha-<short>` del commit exacto. Hoy el
+   workflow solo emite `:edge`/`:vX.Y.Z`/`:latest`; `:edge` es mutable → race entre
+   "el commit que deployás" y "el último edge". Cambio chico.
+3. **`NEXT_PUBLIC_ENV_LABEL` (el costo real)** — staging buildea con
+   `NEXT_PUBLIC_ENV_LABEL=STAGING` y ese valor se **inlinea en el bundle client en
+   build-time** (`Dockerfile:54`). Una sola imagen no puede ser STAGING y prod a la
+   vez. Opciones: (a) staging y prod comparten imagen sin badge; (b) **mover el badge a
+   runtime** (recomendado — habilita imagen única prod=staging, que es el mayor
+   beneficio de paridad); (c) buildear por-entorno (anula medio beneficio).
+
+**Cambios:** `docker-image.yml` (`type=sha`); `deploy-staging.yml`/`deploy-prod.yml`
+(`COMPOSE_ARGS` deja de buildear sanchocmo → `pull` por SHA + `up -d`; el `run --rm …
+db:migrate:deploy` sigue igual); refactor del badge si se elige (b). **Riesgo:** medio
+(toca el path de deploy en vivo) — hacerlo con fallback a build y validado en staging
+varios días antes de prod.
 
 ---
 
@@ -406,4 +487,4 @@ En un host sin nada de G4U (sin acceso a repos/imágenes privadas):
 - **Canal de publicación dual**: parametrizar el paso "PUBLICAR" en todas las plantillas de cron (patrón de hilo Discord vs Slack) puede ser costoso; fallback = centralizar en Slack.
 - **Auth dual end-to-end**: validar modelos en allowlist de crons (`ensure-openclaw-allowlist.sh`, `entrypoint.sh:182`) con API key.
 - **Crons/skills** con supuestos de G4U (canales, cuentas, paths) más allá de lo mapeado — Fase 1 incluye auditoría de `workspace-sancho/skills` y `scripts/`.
-- **Licencia SUL**: el README la cita pero no existe el texto; redactarla (decisión del usuario).
+- ~~**Licencia SUL**: el README la cita pero no existe el texto~~ → ✅ resuelto (`LICENSE.md` = SUL canónica, `SAN-94`). Recomendable revisión legal antes del release público.

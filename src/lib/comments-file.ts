@@ -70,16 +70,46 @@ export function getOriginalDocPath(docPath: string): string {
   return `${base.slice(0, -".commented".length)}${ext}`;
 }
 
+/**
+ * All commented docPaths a doc's feedback may live under (SAN-149): a
+ * deliverable can be shared as its `.md` source OR as its HTML-canonical
+ * sibling, and comments anchor to whichever was shared. Consumers that
+ * read or mutate feedback must look across the whole family.
+ *
+ * Accepts any member (original/commented, md/html); returns deduped
+ * commented paths, the requested form first.
+ */
+export function commentedDocPathFamily(docPath: string): string[] {
+  const original = getOriginalDocPath(docPath);
+  const family = [getCommentedDocPath(original)];
+  if (/\.md$/i.test(original)) {
+    family.push(getCommentedDocPath(original.replace(/\.md$/i, ".html")));
+  } else if (/\.html$/i.test(original)) {
+    family.push(getCommentedDocPath(original.replace(/\.html$/i, ".md")));
+  }
+  return [...new Set(family)];
+}
+
 export interface CommentBlockInput {
   id: string;
   author: string;
   createdAt: Date | string;
   body: string;
   anchorText?: string | null;
+  /** v2 (SAN-148): reply blocks reference their root and quote no anchor. */
+  parentId?: string | null;
+  /** Optional display name of the root author, for the reply citation line. */
+  parentAuthor?: string | null;
+  /** v2 (SAN-148): resolved threads get a RESUELTO mark in the heading. */
+  resolved?: boolean;
 }
 
 const HEADING = "## Comentarios";
-const BLOCK_START = (id: string) => `<!-- cmt:${id} -->`;
+// v2 (SAN-148): reply blocks carry ` parent:<id>` inside the start marker.
+// findCommentBlockRange matches on the `cmt:<id>` prefix, tolerant of the
+// optional attribute, so v1 blocks and PATCH/DELETE keep working.
+const BLOCK_START = (id: string, parentId?: string | null) =>
+  parentId ? `<!-- cmt:${id} parent:${parentId} -->` : `<!-- cmt:${id} -->`;
 const BLOCK_END = (id: string) => `<!-- /cmt:${id} -->`;
 
 /**
@@ -92,14 +122,16 @@ export function formatCommentBlock(c: CommentBlockInput): string {
       ? c.createdAt
       : c.createdAt.toISOString();
   const dateShort = date.slice(0, 16).replace("T", " ");
-  const quote =
-    c.anchorText && c.anchorText.trim()
+  const quote = c.parentId
+    ? `> ↳ en respuesta a ${c.parentAuthor || "comentario"} (${c.parentId})\n>\n`
+    : c.anchorText && c.anchorText.trim()
       ? `> "${truncate(c.anchorText.trim(), 600)}"\n>\n`
       : "";
   const safeBody = c.body.trimEnd();
+  const resolvedMark = !c.parentId && c.resolved ? " · RESUELTO" : "";
   return [
-    BLOCK_START(c.id),
-    `### ${c.author} · ${dateShort}`,
+    BLOCK_START(c.id, c.parentId),
+    `### ${c.author} · ${dateShort}${resolvedMark}`,
     "",
     quote ? quote.trimEnd() : null,
     safeBody,
@@ -124,11 +156,25 @@ export function findCommentBlockRange(
   content: string,
   commentId: string,
 ): { start: number; end: number } {
-  const startMarker = BLOCK_START(commentId);
+  // Match `<!-- cmt:<id> -->` AND the v2 reply form
+  // `<!-- cmt:<id> parent:<pid> -->` — the id is followed by either a
+  // space (attributes) or the closing of the marker.
+  const startPrefix = `<!-- cmt:${commentId}`;
   const endMarker = BLOCK_END(commentId);
-  const start = content.indexOf(startMarker);
+  let start = -1;
+  let from = 0;
+  while (from <= content.length) {
+    const hit = content.indexOf(startPrefix, from);
+    if (hit < 0) break;
+    const nextChar = content[hit + startPrefix.length];
+    if (nextChar === " " || nextChar === undefined) {
+      start = hit;
+      break;
+    }
+    from = hit + startPrefix.length;
+  }
   if (start < 0) return { start: -1, end: -1 };
-  const endAt = content.indexOf(endMarker, start + startMarker.length);
+  const endAt = content.indexOf(endMarker, start + startPrefix.length);
   if (endAt < 0) return { start: -1, end: -1 };
   let end = endAt + endMarker.length;
   // Swallow the trailing newline(s) so the block is excised cleanly.

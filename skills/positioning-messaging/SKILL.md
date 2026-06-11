@@ -12,15 +12,15 @@ metadata:
   updated: '2026-03-06'
   changes: v5 — Shared Tier 2 docs (value-criteria.md + assets.md). Per-ECP lean docs start with JTBD. Value Criteria in ONE table with ECPs as links. Justification + Score Explanations organized BY CRITERIA (not by ECP). Incremental updates across ECPs.
 context_required:
-- brand/{slug}/company-brief/company-brief-current.md
-- brand/{slug}/market-and-us/competitors/competitors-current.md
-- brand/{slug}/go-to-market/ecps/ecps-current.md
-- brand/{slug}/go-to-market/ecps/ecps-current.md
+- brand/{slug}/company-brief/company-brief.current.md
+- brand/{slug}/market-and-us/competitors/competitors.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/ecps/ecps.current.md
 context_writes:
 - brand/{slug}/go-to-market/positioning/shared/value-criteria.md
 - brand/{slug}/go-to-market/positioning/shared/assets.md
 - brand/{slug}/go-to-market/positioning/shared/messaging-summary.md
-- brand/{slug}/go-to-market/positioning/{ecp-slug}/{ecp-slug}-current.md
+- brand/{slug}/go-to-market/positioning/{ecp-slug}/{ecp-slug}.current.md
 ---
 
 # Positioning & Messaging (Per-Niche)
@@ -30,7 +30,7 @@ context_writes:
 **Input**: ECPs (niche-discovery-100x) + competitor intelligence + self-intelligence + SWOT
 **Output**:
 - **Shared Tier 2**: `brand/{slug}/go-to-market/positioning/shared/value-criteria.md` + `assets.md`
-- **Per-ECP**: `brand/{slug}/go-to-market/positioning/{ecp-slug}/{ecp-slug}-current.md`
+- **Per-ECP**: `brand/{slug}/go-to-market/positioning/{ecp-slug}/{ecp-slug}.current.md`
 
 ## References
 
@@ -76,7 +76,7 @@ context_writes:
 - Clasifica: Red Ocean / No Market / Opportunity Zone
 - **FORMATO OBLIGATORIO de `shared/value-criteria.md`:**
   - **UNA sola tabla consolidada**: # | Value Criteria | Imp. | G4U | Comp1 | Comp2 | ... | DIY | Nada | Zone | ECPs
-  - **ECPs como links** a los docs per-ECP (ej: `[1](../ecp1-slug/ecp1-slug-current.md)`)
+  - **ECPs como links** a los docs per-ECP (ej: `[1](../ecp1-slug/ecp1-slug.current.md)`)
   - **Justification + Score Explanations organizadas POR CRITERIA** (no por ECP):
     - `### #N Value Criteria Name (Imp. X) — Zone`
     - Párrafo de **Justification**: qué significa este criteria y por qué importa (independiente de ECP)
@@ -134,9 +134,9 @@ context_writes:
 - Este paso es el gate final — no se entrega nada sin pasarlo
 
 ### 10. Guardar con versionado
-- Ruta: `brand/{slug}/go-to-market/positioning/positioning-current.md`
+- Ruta: `brand/{slug}/go-to-market/positioning/positioning.current.md`
 - Backup + versionado + history.json
-- Link: `<MC_BASE>/docs/brand/{slug}/go-to-market/positioning/positioning-current.md`
+- Link: `<MC_BASE>/docs/brand/{slug}/go-to-market/positioning/positioning.current.md`
 
 ---
 
@@ -173,7 +173,7 @@ brand/{{slug}}/positioning/
 │   ├── assets.md            ← Tier 2: todos los assets + justification + benefit + proof (global)
 │   └── messaging-summary.md ← Tier 2: UVPs + USPs + objeciones + mensajes transversales (consolidado)
 ├── {ecp1-slug}/
-│   ├── {ecp1-slug}-current.md          ← Per-ECP: JTBD + top criteria + top assets + messaging
+│   ├── {ecp1-slug}.current.md          ← Per-ECP: JTBD + top criteria + top assets + messaging
 │   ├── v1.md, v2.md...
 │   └── history.json
 ├── {ecp2-slug}/
@@ -181,7 +181,7 @@ brand/{{slug}}/positioning/
 └── ...
 ```
 
-### Estructura del documento Per-ECP (`{ecp-slug}/{ecp-slug}-current.md`)
+### Estructura del documento Per-ECP (`{ecp-slug}/{ecp-slug}.current.md`)
 1. **JTBD Synthesis** — tabla resumen (need, situation, motivation, outcome, JTBD, why, alternatives). SIN narrativa.
 2. **Top Value Criteria para messaging** — selección de criteria (importance ≥ 7 + Opportunity Zone) con link a shared doc. Tabla: # | Criteria | Imp. | G4U | Avg comp. | Zone | Asset clave
 3. **Assets relevantes** — selección de differentiators que anclan el messaging. Tabla con link a shared doc.

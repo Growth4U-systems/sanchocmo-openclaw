@@ -1,117 +1,115 @@
 {
   "docPaths": {
     "brand-voice": [
-      "brand-voice/brand-voice-current.md"
+      "brand-book/brand-voice/brand-voice.current.md",
+      "brand-voice/brand-voice.current.md"
     ],
     "brand-voice-snapshot": [
-      "brand-voice/brand-voice-current.md",
+      "brand-voice/brand-voice.current.md",
       "brand-voice/lite.md"
     ],
     "budget": [
-      "budget/budget-current.md",
+      "budget/budget.current.md",
       "budget/lite.md"
     ],
     "business-model": [
-      "business-model/business-model-current.md",
+      "business-model/business-model.current.md",
       "business-model/lite.md"
     ],
     "company-brief": [
-      "company-brief/company-brief-current.md",
-      "company-brief/lite.md"
+      "company-brief/company-brief.current.md"
     ],
     "company-context": [
-      "company-context/company-context-current.md",
+      "company-context/company-context.current.md",
       "company-context/lite.md"
     ],
     "competitor-analysis": [
-      "market-and-us/competitors/competitors-current.md"
+      "market-and-us/competitors/competitors.current.md"
     ],
     "content-playbook": [
-      "content-playbook/content-playbook-current.md"
+      "content-playbook/content-playbook.current.md"
     ],
     "content-strategy": [
-      "strategies/content/content-current.md"
+      "strategies/content/content.current.md"
     ],
     "ecp-validation": [
-      "go-to-market/ecp-validation/ecp-validation-current.md"
+      "go-to-market/ecp-validation/ecp-validation.current.md"
     ],
     "email-strategy": [
-      "strategies/email/email-current.md"
+      "strategies/email/email.current.md"
     ],
     "existing-customer-data": [
-      "go-to-market/existing-customer-data/existing-customer-data-current.md"
-    ],
-    "fast-foundation": [
-      "company-brief/company-brief-current.md",
-      "company-brief/lite.md"
+      "go-to-market/existing-customer-data/existing-customer-data.current.md"
     ],
     "foundation-presentation": [
       "presentations/foundation-deck.html"
     ],
     "market-analysis": [
-      "market-and-us/market/market-current.md",
+      "market-and-us/market/market.current.md",
       "market-and-us/market/lite.md"
     ],
     "market-synthesis": [
-      "market-and-us/swot/swot-current.md",
-      "market-and-us/summary/summary-current.md",
-      "market-and-us/ope-canvas/ope-canvas-current.md"
+      "market-and-us/swot/swot.current.md",
+      "market-and-us/summary/summary.current.md",
+      "market-and-us/ope-canvas/ope-canvas.current.md"
     ],
     "metrics-setup": [
-      "go-to-market/metrics-plan/metrics-plan-current.md"
+      "go-to-market/metrics-plan/metrics-plan.current.md"
     ],
     "niche-basic": [
-      "go-to-market/ecps/ecps-current.md",
+      "go-to-market/ecps/ecps.current.md",
       "go-to-market/ecps/lite.md"
     ],
     "niche-discovery": [
-      "go-to-market/ecps/ecps-current.md",
+      "go-to-market/ecps/ecps.current.md",
       "go-to-market/ecps/lite.md"
     ],
     "outreach-playbook": [
-      "outreach-playbook/outreach-playbook-current.md"
+      "outreach-playbook/outreach-playbook.current.md"
     ],
     "own-media-audit": [
-      "site-audit/own-media-audit/own-media-audit-current.md",
+      "site-audit/own-media-audit/own-media-audit.current.md",
       "trust-engine/own-media-audit.json"
     ],
     "paid-media-strategy": [
-      "strategies/paid/paid-current.md"
+      "strategies/paid/paid.current.md"
     ],
     "partnership-strategy": [
-      "strategies/partnerships/partnerships-current.md"
+      "strategies/partnerships/partnerships.current.md"
     ],
     "positioning": [
-      "go-to-market/positioning/positioning-current.md"
+      "go-to-market/positioning/positioning.current.md"
     ],
     "pricing": [
-      "go-to-market/pricing/pricing-current.md"
-    ],
-    "self-analysis": [
-      "market-and-us/self/self-current.md",
-      "market-and-us/self/lite.md"
+      "go-to-market/pricing/pricing.current.md"
     ],
     "seo-audit": [
-      "site-audit/seo-audit/seo-audit-current.md",
+      "site-audit/seo-audit/seo-audit.current.md",
       "trust-engine/seo-audit.json"
     ],
+    "self-analysis": [
+      "market-and-us/self/self.current.md",
+      "market-and-us/self/lite.md"
+    ],
     "social-media-strategy": [
-      "strategies/social/social-current.md"
+      "strategies/social/social.current.md"
     ],
     "strategic-plan": [
-      "strategic-plan/strategic-plan-current.md"
+      "strategic-plan/strategic-plan.current.md"
     ],
     "strategic-presentation": [
       "presentations/strategic-deck.html"
     ],
     "visual-identity": [
-      "brand-identity/visual-identity/visual-identity-current.md"
+      "brand-book/visual-identity/visual-identity.current.md",
+      "brand-identity/visual-identity/visual-identity.current.md"
     ],
     "web-strategy": [
-      "strategies/web/web-current.md"
+      "strategies/web/web.current.md"
     ]
   },
   "skillAlias": {
+    "company-brief": "kickoff",
     "competitor-analysis": "competitor-intelligence",
     "ecp-validation": "ecp-validation",
     "existing-customer-data": "existing-customer-data",
@@ -126,7 +124,6 @@
   },
   "homonymous": [
     "brand-voice",
-    "company-brief",
     "content-pillars",
     "content-playbook",
     "content-strategy",

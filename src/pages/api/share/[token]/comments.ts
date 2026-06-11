@@ -15,13 +15,16 @@
  *   the file IS a readable, git-friendly transcript of the feedback.
  */
 
+import crypto from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import {
   CommentValidationError,
   insertComment,
+  isHoneypotTripped,
   loadDocComments,
   validateCommentInput,
+  type CommentRow,
 } from "@/lib/comments";
 import {
   appendCommentToFile,
@@ -29,7 +32,47 @@ import {
   getCommentedDocPath,
 } from "@/lib/comments-file";
 import { BASE } from "@/lib/data/paths";
+import { notifyNewComment } from "@/lib/data/review-comments-trigger";
 import { verifyShareToken } from "@/lib/share-tokens";
+
+/** Public projection of a comment row — email is NEVER exposed here. */
+export function publicComment(c: CommentRow) {
+  return {
+    id: c.id,
+    author: c.author,
+    body: c.body,
+    anchorText: c.anchorText,
+    anchorContext: c.anchorContext,
+    anchorDocOffset: c.anchorDocOffset,
+    anchorPrefix: c.anchorPrefix,
+    anchorSuffix: c.anchorSuffix,
+    parentId: c.parentId,
+    resolved: c.resolved,
+    resolvedAt: c.resolvedAt ? c.resolvedAt.toISOString() : null,
+    resolvedBy: c.resolvedBy,
+    docVersion: c.docVersion,
+    createdAt: c.createdAt.toISOString(),
+  };
+}
+
+// ── Soft per-IP rate limit (anti-abuse, SAN-148) ──────────────────────
+// In-memory sliding window: cheap second line of defense behind the
+// unguessable token + honeypot. Resets on redeploy — that's fine.
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX_POSTS = 10;
+const postTimestamps = new Map<string, number[]>();
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (postTimestamps.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (recent.length >= RATE_MAX_POSTS) {
+    postTimestamps.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  postTimestamps.set(ip, recent);
+  return false;
+}
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { token } = req.query;
@@ -49,26 +92,39 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const commentedDocPath = getCommentedDocPath(payload.docPath);
 
   if (req.method === "GET") {
-    const rows = await loadDocComments(payload.slug, commentedDocPath);
+    const openOnly = req.query.open === "1";
+    const rows = await loadDocComments(payload.slug, commentedDocPath, { openOnly });
     return res.status(200).json({
       ok: true,
       slug: payload.slug,
       docPath: commentedDocPath,
       originalDocPath: payload.docPath,
-      comments: rows.map((c) => ({
-        id: c.id,
-        author: c.author,
-        body: c.body,
-        anchorText: c.anchorText,
-        anchorContext: c.anchorContext,
-        anchorDocOffset: c.anchorDocOffset,
-        docVersion: c.docVersion,
-        createdAt: c.createdAt.toISOString(),
-      })),
+      comments: rows.map(publicComment),
     });
   }
 
   if (req.method === "POST") {
+    // Honeypot (SAN-148): bots that fill the hidden `website` field get a
+    // fake success and nothing is stored. Checked before any other work.
+    if (isHoneypotTripped(req.body)) {
+      return res.status(201).json({
+        ok: true,
+        id: `cmt_${crypto.randomUUID()}`,
+        createdAt: new Date().toISOString(),
+        docPath: commentedDocPath,
+      });
+    }
+
+    const ip =
+      (typeof req.headers["x-forwarded-for"] === "string"
+        ? req.headers["x-forwarded-for"].split(",")[0].trim()
+        : null) ||
+      req.socket?.remoteAddress ||
+      "unknown";
+    if (rateLimited(ip)) {
+      return res.status(429).json({ error: "Too many comments, slow down" });
+    }
+
     let input;
     try {
       input = validateCommentInput(req.body);
@@ -90,11 +146,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    const inserted = await insertComment({
-      ...input,
-      slug: payload.slug,
-      docPath: commentedDocPath,
-    });
+    let inserted;
+    try {
+      inserted = await insertComment({
+        ...input,
+        slug: payload.slug,
+        docPath: commentedDocPath,
+      });
+    } catch (err) {
+      if (err instanceof CommentValidationError) {
+        return res.status(400).json({ error: err.message });
+      }
+      throw err;
+    }
 
     // Append the formatted block. Failure here is non-fatal for the
     // client UX (the comment is already in DB), but we surface it as a
@@ -107,14 +171,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         createdAt: inserted.createdAt,
         body: inserted.body,
         anchorText: inserted.anchorText,
+        parentId: inserted.parentId,
       });
     } catch (e) {
       fileWarning = e instanceof Error ? e.message : "file append failed";
     }
 
+    // Agentic loop (SAN-148): surface the new ROOT comment in the doc's MC
+    // thread and arm the debounced review dispatch. Fire-and-forget.
+    if (!inserted.parentId) {
+      notifyNewComment(payload.slug, payload.docPath, {
+        id: inserted.id,
+        author: inserted.author,
+        body: inserted.body,
+        anchorText: inserted.anchorText,
+      }).catch(() => {});
+    }
+
     return res.status(201).json({
       ok: true,
       id: inserted.id,
+      parentId: inserted.parentId,
       createdAt: inserted.createdAt.toISOString(),
       docPath: commentedDocPath,
       ...(fileWarning ? { fileWarning } : {}),

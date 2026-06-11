@@ -5,6 +5,8 @@ export interface OtherDocEntry {
   name: string;
   path: string;
   fullPath: string;
+  /** HTML-canonical sibling exists for this .md (SAN-149) */
+  hasHtml?: boolean;
 }
 
 export interface OtherDocGroup {

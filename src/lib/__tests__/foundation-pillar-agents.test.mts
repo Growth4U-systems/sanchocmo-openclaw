@@ -7,9 +7,10 @@ const { resolveThreadSkills } = await import("../skill-resolver");
 // Expected skill + owner agent per Foundation pillar key, as opened by
 // buildPillarThread → resolveThreadSkills({ pillar }) with NO chat-config.json.
 // agent === undefined means "no specialist owner → defaults to Sancho downstream".
-// fast-foundation / company-brief are intentionally excluded (owned by Fast
-// Foundation, reworked in SAN-13).
+// W4: company-brief is now the single Layer-0 pillar (skill=kickoff, owner=hamete).
+// fast-foundation and fast-context are retired.
 const CASES: Array<{ pillar: string; skill: string; agent: string | undefined }> = [
+  { pillar: "company-brief", skill: "kickoff", agent: "hamete" },
   { pillar: "market-analysis", skill: "market-intelligence", agent: "hamete" },
   { pillar: "competitor-analysis", skill: "competitor-intelligence", agent: "hamete" },
   { pillar: "self-analysis", skill: "self-intelligence", agent: "hamete" },

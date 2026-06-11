@@ -18,13 +18,13 @@ context_writes: []
 > (`src/lib/skill-resolver.ts`) y `workspace-sancho/dispatch-map.json`. Si cambias el
 > dueño de un pilar, actualízalo en las cuatro capas.
 
-### 📋 FAST FOUNDATION (Layer 0 — sin dependencias)
+### 📋 KICKOFF (Layer 0 — sin dependencias)
 
 | # | Thread Name | Skill | Agent | Objective |
 |---|------------|-------|-------|-----------|
-| 1 | `01 📋 Fast Foundation` | fast-foundation | sancho (SAN-13) | Intake rápido (~30 min): URL → Company Brief + Self L1 + Market L1 + Brand Voice Snapshot + Niche básico. |
+| 1 | `01 📋 Kickoff` | kickoff | sancho | Intake rápido (~30 min): URL → Company Brief + Self L1 + Market L1 + Brand Voice Snapshot + Niche básico. |
 
-### 📊 FULL FOUNDATION — RESEARCH (Layer 1 — sin dependencias; Fast Foundation enriquece si está approved)
+### 📊 FULL FOUNDATION — RESEARCH (Layer 1 — sin dependencias; Kickoff enriquece si está approved)
 
 | # | Thread Name | Skill | Agent | Objective |
 |---|------------|-------|-------|-----------|
@@ -75,8 +75,8 @@ context_writes: []
 ## Creación de Threads
 
 ### Cuándo crear
-- **Thread 1 (Fast Foundation)**: al crear el cliente desde Mission Control
-- **Threads 2-10 (Full Foundation)**: al completar Fast Foundation
+- **Thread 1 (Kickoff)**: al crear el cliente desde Mission Control
+- **Threads 2-10 (Full Foundation)**: al completar Kickoff
 - **Thread 11 (Métricas)**: al completar Full Foundation
 - **Thread 12 (Strategic Plan)**: al completar Métricas
 
@@ -102,7 +102,7 @@ context_writes: []
 - Positioning y Pricing son threads **separados** (antes compartían hilo)
 - Brand Voice y Visual Identity son threads **separados** (antes compartían hilo)
 - Market Synthesis = SWOT + Summary + OPE Canvas + Presentación en 1 hilo
-- Fast Foundation = intake completo en 1 hilo (5 docs lite)
+- Kickoff = intake completo en 1 hilo (un archivo inicial: company-brief/company-brief.current.md)
 - Total: **12 hilos obligatorios** + 2 opcionales
 - Si el orchestrator detecta hilos existentes con los nombres correctos, NO crea nuevos
 - **foundation-state.json es la fuente de verdad**: leer `file_index` para resolver paths a archivos del cliente. Al crear threads, guardar `thread_id` en el pilar correspondiente de `sections`. Al completar un pilar que genera archivos nuevos, actualizar `file_index`.

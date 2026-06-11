@@ -33,7 +33,6 @@ declare -A AGENT_WORKSPACES=(
   ["mambrino"]="$OPENCLAW_ROOT/workspace-mambrino"
   ["merlin"]="$OPENCLAW_ROOT/workspace-merlin"
   ["sanson"]="$OPENCLAW_ROOT/workspace-sanson"
-  ["yalc"]="$OPENCLAW_ROOT/workspace-yalc"
 )
 
 declare -A AGENT_MODELS=(
@@ -46,10 +45,9 @@ declare -A AGENT_MODELS=(
   ["mambrino"]="anthropic/claude-sonnet-4-6"
   ["merlin"]="anthropic/claude-opus-4-7"
   ["sanson"]="anthropic/claude-opus-4-7"
-  ["yalc"]="anthropic/claude-sonnet-4-6"
 )
 
-for AGENT_NAME in sancho escudero cervantes hamete dulcinea rocinante mambrino merlin sanson yalc; do
+for AGENT_NAME in sancho escudero cervantes hamete dulcinea rocinante mambrino merlin sanson; do
   WORKSPACE="${AGENT_WORKSPACES[$AGENT_NAME]}"
   MODEL="${AGENT_MODELS[$AGENT_NAME]}"
   AGENT_DIR="$OPENCLAW_ROOT/agents/$AGENT_NAME/agent"
@@ -71,8 +69,11 @@ for AGENT_NAME in sancho escudero cervantes hamete dulcinea rocinante mambrino m
     ADD_ARGS+=(--agent-dir "$AGENT_DIR")
   fi
 
-  OUTPUT=$(openclaw "${ADD_ARGS[@]}" 2>&1) && true
-  EXIT_CODE=$?
+  if OUTPUT=$(openclaw "${ADD_ARGS[@]}" 2>&1); then
+    EXIT_CODE=0
+  else
+    EXIT_CODE=$?
+  fi
 
   if [ $EXIT_CODE -eq 0 ]; then
     echo "    OK"
@@ -103,7 +104,6 @@ default_models = {
     "mambrino": "anthropic/claude-sonnet-4-6",
     "merlin": "anthropic/claude-opus-4-7",
     "sanson": "anthropic/claude-opus-4-7",
-    "yalc": "anthropic/claude-sonnet-4-6",
 }
 
 try:
@@ -117,7 +117,7 @@ for agent in agents:
     if not isinstance(agent, dict):
         continue
     agent_id = agent.get("id")
-    if agent_id in default_models and (not agent.get("model") or agent_id == "yalc"):
+    if agent_id in default_models and not agent.get("model"):
         agent["model"] = default_models[agent_id]
         changed.append(agent_id)
 

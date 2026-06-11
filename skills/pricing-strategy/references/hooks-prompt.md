@@ -4,9 +4,9 @@
 
 ```
 Analiza el pricing actual del cliente basándote en:
-- business-model/business-model-current.md (modelo de negocio, revenue streams)
-- budget/budget-current.md (márgenes, costes)
-- company-context/company-context-current.md (contexto general)
+- business-model/business-model.current.md (modelo de negocio, revenue streams)
+- budget/budget.current.md (márgenes, costes)
+- company-context/company-context.current.md (contexto general)
 
 Documenta:
 1. Modelo de pricing actual (por sesión, paquete, suscripción, etc.)
@@ -21,7 +21,7 @@ Si no hay datos → marcar como 🔴 DUDA y preguntar al usuario.
 ## Prompt 2: Análisis Competitivo de Precios
 
 ```
-Usando competitors/competitors-current.md como base, investiga los precios REALES de cada competidor.
+Usando competitors/competitors.current.md como base, investiga los precios REALES de cada competidor.
 
 Para CADA competidor:
 1. Buscar pricing page o precios publicados (web_search + web_fetch)
@@ -45,7 +45,7 @@ IMPORTANTE: Cada precio DEBE tener URL de fuente. NO inventar precios.
 ## Prompt 3: Mapeo de Valor
 
 ```
-Cruza positioning/positioning-current.md + swot-analysis/swot-analysis-current.md con el pricing:
+Cruza positioning/positioning.current.md + swot-analysis/swot-analysis.current.md con el pricing:
 
 1. ¿Qué valor único entrega el cliente que justifica un precio premium?
 2. ¿Qué diferenciadores tienen precio asociado?

@@ -9,7 +9,7 @@ Este skill se ha consolidado en `idea-builder` (carpeta hermana en `skills/`).
 
 **Cambios respecto a este skill:**
 - El angle_draft ahora es UN PÁRRAFO (60-80 palabras) que declara el POV — NO un draft / artículo / copy. La generación del contenido final pasa al writer skill después de la fase de Clarify.
-- El POV se deriva de `pov-bank.json` (nuevo), no solo de `brand-voice-current.md`.
+- El POV se deriva de `pov-bank.json` (nuevo), no solo de `brand-voice.current.md`.
 
 **No invoques `insight-to-content-mapper` directamente** — el cron `Content: Classify + Ideas — {Brand}` ahora ejecuta `idea-builder`.
 

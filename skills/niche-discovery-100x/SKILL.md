@@ -3,13 +3,13 @@ name: niche-discovery-100x
 description: "Descubrimiento end-to-end de ECPs con metodología 100x. Cluster por NECESIDAD (no por persona). Reachability como proceso de descubrimiento (Trust Map → Search Map → Channel Map). Auto-detecta B2C/SMB vs B2B Enterprise. Usar cuando: identificar ECPs, validar nichos, ICP, o 'a quién le vendo'. Triggers: find niches, discover market, ICP, target audience, customer segments, niche discovery, ECP. NO usar para: análisis de mercado amplio (market-intelligence), posicionamiento (positioning-messaging), segmentación solo datos existentes (existing-customer-data). Requiere: company-context, self-intelligence, competitor-intelligence, swot-analysis."
 metadata:
   context_required:
-    - brand/{slug}/company-brief/company-brief-current.md
-    - brand/{slug}/market-and-us/self/self-current.md
-    - brand/{slug}/market-and-us/competitors/competitors-current.md
-    - brand/{slug}/market-and-us/competitors/*/*-current.md
-    - brand/{slug}/market-and-us/swot/swot-current.md
-    - brand/{slug}/market-and-us/market/market-current.md
-    - brand/{slug}/market-and-us/summary/summary-current.md
+    - brand/{slug}/company-brief/company-brief.current.md
+    - brand/{slug}/market-and-us/self/self.current.md
+    - brand/{slug}/market-and-us/competitors/competitors.current.md
+    - brand/{slug}/market-and-us/competitors/*/*.current.md
+    - brand/{slug}/market-and-us/swot/swot.current.md
+    - brand/{slug}/market-and-us/market/market.current.md
+    - brand/{slug}/market-and-us/summary/summary.current.md
   context_writes:
     - brand/{slug}/go-to-market/ecps/ecps.md
     - brand/{slug}/go-to-market/ecps/problems.md
@@ -69,7 +69,7 @@ Modo B2B Enterprise usa herramientas del agente (web_search, web_fetch) — no n
 Auto-leer de Foundation — NO preguntar lo que ya tenemos.
 
 1. Identificar slug del cliente desde systemPrompt
-2. Leer: `brand/{slug}/company-brief/company-brief-current.md`, `brand/{slug}/market-and-us/self/self-current.md`, `brand/{slug}/market-and-us/competitors/competitors-current.md`, `brand/{slug}/market-and-us/swot/swot-current.md`, `brand/{slug}/go-to-market/existing-customer-data/existing-customer-data-current.md` (si existe)
+2. Leer: `brand/{slug}/company-brief/company-brief.current.md`, `brand/{slug}/market-and-us/self/self.current.md`, `brand/{slug}/market-and-us/competitors/competitors.current.md`, `brand/{slug}/market-and-us/swot/swot.current.md`, `brand/{slug}/go-to-market/existing-customer-data/existing-customer-data.current.md` (si existe)
 3. Extraer: company_name, product, industry, target, country, context_type (B2B/B2C/Both)
 4. Si falta pilar crítico → informar al usuario, sugerir completar Foundation primero
 
