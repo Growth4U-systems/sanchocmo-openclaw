@@ -39,17 +39,27 @@ before(async () => {
     JSON.stringify({
       version: "3.0",
       sections: {
-        "fast-foundation": {
+        "company-brief": {
           status: "approved",
           pillars: {
             "company-brief": {
               status: "approved",
               output_file: `brand/${slug}/company-brief/company-brief.current.md`,
             },
+          },
+        },
+        "brand-book": {
+          status: "approved",
+          pillars: {
             "brand-voice": {
               status: "approved",
               output_file: `brand/${slug}/brand-voice/current.md`,
             },
+          },
+        },
+        "go-to-market": {
+          status: "approved",
+          pillars: {
             ecps: {
               status: "completed",
               output_file: `brand/${slug}/go-to-market/ecps/segments.md`,

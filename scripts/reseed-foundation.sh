@@ -149,12 +149,8 @@ NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 # NOTE: this canonical section/pillar tree is mirrored in
 # config/foundation-state.default.json, which MC's client creation seeds
 # (src/pages/api/clients/create.ts → seedFoundationState). Keep the two in sync.
-# Divergence (intentional, SAN-3): the creation scaffold OMITS the company-brief
-# `company-brief` merge pillar. With #449's FF→company-brief map, a placeholder
-# merge pillar gets flipped to "approved" off the disposable fastcontext grounding
-# (and points at a company-brief.current.md that doesn't exist yet) — i.e. the
-# Company Brief reads "done" when only grounding ran. Omitting it keeps a fresh
-# client's Company Brief honestly not-started until the real pillars run.
+# W4 (SAN-3): single Layer-0 section is company-brief (one pillar, skill=kickoff,
+# output=company-brief/company-brief.current.md). Legacy grounding flow retired.
 cat > "$BRAND_DIR/foundation-state.json" << FJSON
 {
   "version": "3.0",
@@ -170,23 +166,12 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
     "positioning": ""
   },
   "sections": {
-    "fast-foundation": {
-      "status": "not-started",
-      "layer": 0,
-      "skill": "fast-foundation",
-      "pillars": {
-        "fast-context": {"status": "not-started", "output_file": "brand/$SLUG/fastcontext/fastcontext.current.md", "skill": "fast-foundation"}
-      }
-    },
     "company-brief": {
       "status": "not-started",
       "layer": 0,
       "output_dir": "brand/$SLUG/company-brief/",
       "pillars": {
-        "company-context": {"status": "not-started", "skill": "company-context", "output_file": "brand/$SLUG/company-context/company-context.current.md"},
-        "business-model": {"status": "not-started", "skill": "business-model-audit", "output_file": "brand/$SLUG/business-model/business-model.current.md"},
-        "budget": {"status": "not-started", "skill": "budget-constraints", "output_file": "brand/$SLUG/budget/budget.current.md"},
-        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/$SLUG/company-brief/company-brief.current.md", "note": "merge view auto-generated"}
+        "company-brief": {"status": "not-started", "skill": "kickoff", "output_file": "brand/$SLUG/company-brief/company-brief.current.md"}
       }
     },
     "market-and-us": {
@@ -255,16 +240,16 @@ cat > "$BRAND_DIR/foundation-state.json" << FJSON
 FJSON
 echo "  ✓ foundation-state.json (v3.0, todos los pilares not-started)"
 
-# P00-Fast-Foundation
-mkdir -p "$BRAND_DIR/projects/P00-Fast-Foundation"
-cat > "$BRAND_DIR/projects/P00-Fast-Foundation/project.json" << 'PROJJSON_FF'
+# P00-Company-Brief
+mkdir -p "$BRAND_DIR/projects/P00-Company-Brief"
+cat > "$BRAND_DIR/projects/P00-Company-Brief/project.json" << 'PROJJSON_FF'
 {
-  "id": "P00-Fast-Foundation",
-  "name": "Fast Foundation",
-  "description": "Intake rápido (~30 min): URL → un único archivo de grounding fastcontext.current.md (secciones Company/Self/Market/Brand Voice/Niche). Grounding inicial para empezar a ejecutar; NUNCA source of truth.",
-  "approach": "El usuario introduce la URL de su web. El skill fast-foundation scrapea, genera UN único fastcontext/fastcontext.current.md (grounding desechable, secciones H2) y valida con el usuario. Si no hay URL, modo conversacional (6 preguntas). NO toca carpetas de pilares.",
+  "id": "P00-Company-Brief",
+  "name": "Company Brief",
+  "description": "Kickoff de onboarding (~30 min): URL → company-brief.current.md con todo el contexto de la empresa consolidado. Grounding canónico y vivo para todas las skills de Foundation.",
+  "approach": "El usuario introduce la URL de su web. El skill kickoff scrapea, genera company-brief/company-brief.current.md y valida con el usuario. Si no hay URL, modo conversacional. El Company Brief es el source of truth para Foundation.",
   "objective": {
-    "description": "Grounding inicial (fastcontext.current.md) generado y validado",
+    "description": "Company Brief generado y validado",
     "metric": "docs_completed",
     "baseline": 0,
     "target": 1,
@@ -278,26 +263,26 @@ cat > "$BRAND_DIR/projects/P00-Fast-Foundation/project.json" << 'PROJJSON_FF'
 }
 PROJJSON_FF
 
-cat > "$BRAND_DIR/projects/P00-Fast-Foundation/tasks.json" << 'TASKSJSON_FF'
+cat > "$BRAND_DIR/projects/P00-Company-Brief/tasks.json" << 'TASKSJSON_FF'
 [
   {
-    "id": "P00-FF-T01",
-    "name": "Ejecutar Fast Foundation",
-    "description": "Intake rápido (~30 min) donde Sancho te hace preguntas sobre tu empresa y genera el archivo de grounding base (Company Context, Business Model, Market, Brand Voice, ECPs iniciales) en una sola conversación en #onboarding.",
-    "deliverable": "fastcontext/fastcontext.current.md",
-    "done_criteria": "Archivo de grounding fastcontext.current.md generado y validado por el cliente.",
+    "id": "P00-CB-T01",
+    "name": "Ejecutar Company Brief (Kickoff)",
+    "description": "Kickoff de onboarding (~30 min) donde Sancho recoge el contexto completo de la empresa y genera el Company Brief canónico en una sola conversación en #onboarding.",
+    "deliverable": "company-brief/company-brief.current.md",
+    "done_criteria": "Archivo company-brief.current.md generado y validado por el cliente.",
     "depends_on": null,
     "owner": "Sancho",
     "status": "pending",
     "channel": "onboarding",
     "type": "foundation",
-    "skill": "fast-foundation",
-    "pillars": ["fast-context"],
-    "sections": ["fast-foundation"]
+    "skill": "kickoff",
+    "pillars": ["company-brief"],
+    "sections": ["company-brief"]
   }
 ]
 TASKSJSON_FF
-echo "  ✓ projects/P00-Fast-Foundation/ (1 task)"
+echo "  ✓ projects/P00-Company-Brief/ (1 task)"
 
 # P00-Full-Foundation
 mkdir -p "$BRAND_DIR/projects/P00-Full-Foundation"
@@ -305,8 +290,8 @@ cat > "$BRAND_DIR/projects/P00-Full-Foundation/project.json" << 'PROJJSON_FUL'
 {
   "id": "P00-Full-Foundation",
   "name": "Full Foundation",
-  "description": "Foundation completa: research profundo de mercado, competencia, self-analysis, síntesis SWOT, positioning, pricing, brand voice y visual identity. Profundiza el grounding inicial de Fast Foundation.",
-  "approach": "Tras Fast Foundation, cada skill lee su sección de fastcontext.current.md como grounding opcional y profundiza: Market Intelligence (3+ fuentes), Competitor Intelligence (3 lenses), Self Intelligence (3 lenses), Market Synthesis (SWOT+Summary+OPE Canvas+Presentación), Niche Discovery (100+ empresas), Positioning (por ECP), Pricing, Brand Voice (full guide), Visual Identity.",
+  "description": "Foundation completa: research profundo de mercado, competencia, self-analysis, síntesis SWOT, positioning, pricing, brand voice y visual identity. Profundiza el Company Brief.",
+  "approach": "Tras el Company Brief, cada skill lee company-brief.current.md como grounding y profundiza: Market Intelligence (3+ fuentes), Competitor Intelligence (3 lenses), Self Intelligence (3 lenses), Market Synthesis (SWOT+Summary+OPE Canvas+Presentación), Niche Discovery (100+ empresas), Positioning (por ECP), Pricing, Brand Voice (full guide), Visual Identity.",
   "objective": {
     "description": "Foundation completa ejecutada",
     "metric": "pillars_completed",
@@ -621,7 +606,7 @@ echo "  ✓ projects/P00-Strategic-Plan/ (2 tasks)"
 echo ""
 echo "✅ Reseed Foundation completo para $NAME (slug=$SLUG)"
 echo "   Archive: $ARCHIVE_DIR"
-echo "   Proyectos canónicos: P00-Fast-Foundation, P00-Full-Foundation, P00-Metrics, P00-Strategic-Plan"
+echo "   Proyectos canónicos: P00-Company-Brief, P00-Full-Foundation, P00-Metrics, P00-Strategic-Plan"
 echo "   Foundation state: v3.0, 7 secciones, todos los pilares not-started"
 echo ""
 echo "   Próximo paso: reiniciar el contenedor de la app para que tome el estado nuevo."

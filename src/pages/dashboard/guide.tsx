@@ -39,12 +39,12 @@ const i18n = {
     phasesSubtitle: 'Todo cliente pasa por estas fases. <code class="text-xs">sancho-start</code> detecta automáticamente en cuál estás y te enruta.',
     phases: [
       { phase: "P0 · Diagnose", time: "~2 horas · automático", question: "¿Dónde está el cuello de botella?", desc: 'Sancho escanea web, reviews, competencia. Determina la "meta": ¿ARREGLAR, LANZAR, LEADS, o ESCALAR? Enruta a la fase correcta.' },
-      { phase: "P1 · Foundation", time: "1 día (Lite) — 1 semana (Deep)", question: "¿Quiénes somos, a quién servimos, qué decimos?", desc: "12 pilares en 6 layers (DAG v2.0): Company Brief → Research → Synthesis → Discovery → Activation → Brand Identity. Conversacional desde Discord en #onboarding con Sancho." },
+      { phase: "P1 · Foundation", time: "1 día (Lite) — 1 semana (Deep)", question: "¿Quiénes somos, a quién servimos, qué decimos?", desc: "12 pilares en 6 layers (DAG v2.0): Kickoff (Company Brief) → Research → Synthesis → Discovery → Activation → Brand Identity. Conversacional desde Discord en #onboarding con Sancho." },
       { phase: "P2 · Funnel", time: "1 — 2 semanas", question: "Si mando 1.000 personas, ¿cuántas convierten?", desc: "Landing pages (El Arquitecto), email sequences (El Comercial), lead magnets, trust engine (casos de éxito). La infraestructura de conversión." },
       { phase: "P3 · Scale", time: "Continuo", question: "¿Cómo generamos tráfico y crecemos?", desc: "Los 4 canales Hormozi en acción. Daily Pulse + Thief Marketer alimentan ideas. Content Calendar planifica. Agentes ejecutan. Learning loops mejoran." },
     ],
     foundationTitle: "🏗️ Foundation — Los 16 Pilares",
-    foundationSubtitle: 'Organizados en capas (DAG). Cada capa depende de la anterior. <strong>Lite</strong> = 7 pilares esenciales. <strong>Deep</strong> = los 16.',
+    foundationSubtitle: 'Organizados en capas (DAG). Cada capa depende de la anterior. <strong>Lite</strong> = 7 pilares esenciales. <strong>Deep</strong> = los 13.',
     foundationLayers: [
       { label: "L0", title: "Siempre primero (en paralelo)", checkpoint: "" },
       { label: "L1", title: "Análisis paralelo", checkpoint: "" },
@@ -123,10 +123,10 @@ const i18n = {
       '<strong>Ejecutar:</strong> click "▶️ Ejecutar" o escribe: <em>"Ejecuta T-XXX"</em>.',
       '<strong>Completada:</strong> Sancho registra en <code>CHANGELOG.md</code> automáticamente.',
     ],
-    skillsTitle: "🧰 38 Skills — El arsenal",
+    skillsTitle: "🧰 35 Skills — El arsenal",
     skillsSubtitle: "Cada skill es un módulo especializado. Sancho elige cuál usar según el contexto.",
     skillCategories: [
-      { name: "Foundation", count: 16, desc: "empresa, mercado, competidores, nicho, posicionamiento, voz, visual..." },
+      { name: "Foundation", count: 13, desc: "company brief, mercado, competidores, nicho, posicionamiento, voz, visual..." },
       { name: "Decide", count: 3, desc: "canales, calendario, outreach sequences" },
       { name: "Intelligence", count: 5, desc: "daily pulse, meetings, patterns, thief marketer, signals" },
       { name: "Content", count: 7, desc: "SEO, atomizer, newsletter, email, lead magnet, copy, keyword" },
@@ -178,12 +178,12 @@ const i18n = {
     phasesSubtitle: 'Every client goes through these phases. <code class="text-xs">sancho-start</code> automatically detects where you are and routes you.',
     phases: [
       { phase: "P0 · Diagnose", time: "~2 hours · automatic", question: "Where is the bottleneck?", desc: 'Sancho scans web, reviews, competition. Determines the "goal": FIX, LAUNCH, LEADS, or SCALE? Routes to the right phase.' },
-      { phase: "P1 · Foundation", time: "1 day (Lite) — 1 week (Deep)", question: "Who are we, who do we serve, what do we say?", desc: "12 pillars in 6 layers (DAG v2.0): Company Brief → Research → Synthesis → Discovery → Activation → Brand Identity. Conversational from Discord in #onboarding with Sancho." },
+      { phase: "P1 · Foundation", time: "1 day (Lite) — 1 week (Deep)", question: "Who are we, who do we serve, what do we say?", desc: "12 pillars in 6 layers (DAG v2.0): Kickoff (Company Brief) → Research → Synthesis → Discovery → Activation → Brand Identity. Conversational from Discord in #onboarding with Sancho." },
       { phase: "P2 · Funnel", time: "1 — 2 weeks", question: "If I send 1,000 people, how many convert?", desc: "Landing pages (El Arquitecto), email sequences (El Comercial), lead magnets, trust engine (case studies). The conversion infrastructure." },
       { phase: "P3 · Scale", time: "Ongoing", question: "How do we generate traffic and grow?", desc: "The 4 Hormozi channels in action. Daily Pulse + Thief Marketer feed ideas. Content Calendar plans. Agents execute. Learning loops improve." },
     ],
     foundationTitle: "🏗️ Foundation — The 16 Pillars",
-    foundationSubtitle: 'Organized in layers (DAG). Each layer depends on the previous one. <strong>Lite</strong> = 7 essential pillars. <strong>Deep</strong> = all 16.',
+    foundationSubtitle: 'Organized in layers (DAG). Each layer depends on the previous one. <strong>Lite</strong> = 7 essential pillars. <strong>Deep</strong> = all 13.',
     foundationLayers: [
       { label: "L0", title: "Always first (in parallel)", checkpoint: "" },
       { label: "L1", title: "Parallel analysis", checkpoint: "" },
@@ -262,10 +262,10 @@ const i18n = {
       '<strong>Execute:</strong> click "▶️ Execute" or type: <em>"Execute T-XXX"</em>.',
       '<strong>Completed:</strong> Sancho logs it in <code>CHANGELOG.md</code> automatically.',
     ],
-    skillsTitle: "🧰 38 Skills — The arsenal",
+    skillsTitle: "🧰 35 Skills — The arsenal",
     skillsSubtitle: "Each skill is a specialized module. Sancho chooses which to use based on context.",
     skillCategories: [
-      { name: "Foundation", count: 16, desc: "company, market, competitors, niche, positioning, voice, visual..." },
+      { name: "Foundation", count: 13, desc: "company brief, market, competitors, niche, positioning, voice, visual..." },
       { name: "Decide", count: 3, desc: "channels, calendar, outreach sequences" },
       { name: "Intelligence", count: 5, desc: "daily pulse, meetings, patterns, thief marketer, signals" },
       { name: "Content", count: 7, desc: "SEO, atomizer, newsletter, email, lead magnet, copy, keyword" },
@@ -292,7 +292,7 @@ const i18n = {
 
 // Foundation layers — shared structure, only titles differ per locale
 const FOUNDATION_PILLARS = [
-  { color: "bg-red-500 text-white", pillars: ["🏢 company-context", "💰 budget-constraints", "📊 business-model"] },
+  { color: "bg-red-500 text-white", pillars: ["📋 company-brief"] },
   { color: "bg-amber-400 text-black", pillars: ["🔬 self-intelligence", "🕵️ competitor-intel", "🌍 market-intel"], optional: ["📋 customer-data"] },
   { color: "bg-violet-500 text-white", pillars: ["⚔️ SWOT + TOWS"] },
   { color: "bg-green-500 text-black", pillars: ["🎯 niche-discovery-100x → ECPs"], optional: ["🧪 ecp-validation"] },

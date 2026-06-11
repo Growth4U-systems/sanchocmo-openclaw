@@ -53,7 +53,7 @@ const SKILL_ALIASES: Record<string, string> = {
   "escudero-content": "social-writer",
   "email-sequences": "email-sequence",
   "landing-pages": "page-cro",
-  "fast-foundation": "sancho-manager",
+  "kickoff": "sancho-manager",
   "strategic-plan": "sancho-manager",
 };
 

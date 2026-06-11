@@ -10,21 +10,9 @@ La Foundation genera documentos organizados en 4 secciones + operacional:
 
 ```
 brand/{slug}/
-├── company-context/
-│   ├── company-context.current.md        ← STANDALONE (fuente de verdad): Identity
-│   ├── v1.md, v2.md...
-│   └── history.json
-├── business-model/
-│   ├── business-model.current.md        ← STANDALONE (fuente de verdad): Model
-│   ├── v1.md, v2.md...
-│   └── history.json
-├── budget/
-│   ├── budget.current.md        ← STANDALONE (fuente de verdad): Resources (money + time + team + tools)
-│   ├── v1.md, v2.md...
-│   └── history.json
 ├── company-brief/
-│   ├── company-brief.current.md        ← MERGE VIEW (auto-generated): Identity + Model + Resources (label semántica; la carpeta se llama `budget/` por compat histórica)
-│   ├── v1.md, v2.md...   ← snapshots del merge view
+│   ├── company-brief.current.md        ← Company Brief inicial (escrito por Kickoff, un archivo, secciones H2)
+│   ├── v1.md, v2.md...
 │   └── history.json
 ├── market-and-us/
 │   ├── market/market.current.md           ← TAM, segmentos, tendencias, regulación
@@ -56,11 +44,11 @@ brand/{slug}/
 ## DAG — 6 Layers
 
 ```
-LAYER 0 — INTAKE (sin dependencias)
-  company-brief ← 3 skills en flujo continuo: company-context → business-model → budget
+LAYER 0 — KICKOFF (sin dependencias)
+  company-brief ← kickoff skill (1 skill → company-brief/company-brief.current.md)
   → 1 sola aprobación del doc completo
 
-LAYER 1 — RESEARCH (requires: company-brief)
+LAYER 1 — RESEARCH (sin dependencias; Kickoff enriquece si está approved)
   market-analysis ← market-intelligence skill
   competitor-analysis ← competitor-intelligence skill
   self-analysis ← self-intelligence skill
@@ -104,15 +92,15 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 
 | Pilar | requires | enriches_with |
 |-------|----------|---------------|
-| company-brief | — | — |
-| market-analysis | company-brief | competitor-analysis, self-analysis |
-| competitor-analysis | company-brief | market-analysis, self-analysis |
-| self-analysis | company-brief | market-analysis, competitor-analysis |
+| company-brief (kickoff) | — | — |
+| market-analysis | — | company-brief, competitor-analysis, self-analysis |
+| competitor-analysis | — | company-brief, market-analysis, self-analysis |
+| self-analysis | — | company-brief, market-analysis, competitor-analysis |
 | summary (síntesis) | market-analysis, competitor-analysis, self-analysis | — |
 | swot | market-analysis, competitor-analysis, self-analysis | — |
 | ope-canvas (síntesis) | market-analysis, competitor-analysis, self-analysis | — |
 | niche-discovery | swot | existing-customer-data |
-| existing-customer-data | company-brief | — |
+| existing-customer-data | — | — |
 | positioning | niche-discovery | — |
 | pricing | niche-discovery | positioning |
 | metrics-plan | niche-discovery | positioning, pricing |
@@ -123,32 +111,15 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 
 ---
 
-## Company Brief — Arquitectura "standalone + merge view"
+## Company Brief — Arquitectura Kickoff
 
-**Cada skill escribe su propio standalone (fuente de verdad).** El `company-brief/company-brief.current.md` es un **merge view auto-generado** de los 3 standalones — no se edita a mano.
+El **Company Brief** es el documento de intake del cliente. Lo produce directamente el skill `kickoff` en una sesión única de ~30 min.
 
-1. **company-context** → escribe `brand/{slug}/company-context/company-context.current.md` (standalone).
-2. **business-model-audit** → escribe `brand/{slug}/business-model/business-model.current.md` (standalone).
-3. **budget-constraints** → escribe `brand/{slug}/budget/budget.current.md` (standalone).
-
-**Beneficios del diseño:**
-- Cada skill se puede re-correr standalone con versionado granular propio (puedo tener business-model v5 sin que afecte a company-context v2).
-- El merge view siempre refleja el estado consolidado.
-- Consumers que necesitan info parcial leen el standalone directamente; los que necesitan la foto leen el merge view.
-
-**Warning header obligatorio en el merge view:**
-```
-<!-- auto-generated from: company-context/, business-model/, budget/ -->
-<!-- DO NOT EDIT HERE — edits will be overwritten on next regeneration -->
-```
-
-**Flujo Fast-Foundation:**
-Fast Foundation produce `brand/{slug}/fastcontext/fastcontext.current.md` (un archivo de grounding desechable con secciones H2). NO toca carpetas de pilares ni genera merge views. El grounding inicial de Company, Market, Brand Voice y ECPs vive en ese único archivo. Fast Foundation NO es un nodo del DAG de dependencias ni prerequisito de ningún pilar — es grounding opcional. El Layer 0 del DAG (`company-brief`) son los 3 standalones full (company-context, business-model, budget).
-
-**Quién regenera el merge view:**
-`regenerate-company-brief.py` — solo cuando al menos un standalone full (company-context, business-model o budget) está aprobado. Escribe `company-brief/company-brief.current.md`. Si ningún standalone full existe aún, no se genera merge view; el grounding inicial vive en `fastcontext.current.md`.
-
-**Detalles operativos del merge** (formato, secciones, cuándo se dispara): ver el script `workspace-sancho/scripts/regenerate-company-brief.py` y la regla de regeneración en `skills/foundation-orchestrator/SKILL.md`.
+- **Output**: `brand/{slug}/company-brief/company-brief.current.md` (un archivo, secciones H2: Company, Market, Brand Voice, ECPs).
+- **Quién lo escribe**: el skill `kickoff` (thread `{slug}:kickoff`). No hay skills separadas de company-context / business-model / budget-constraints, ni script de merge.
+- **Rol downstream**: las skills full (market-intelligence, self-intelligence, brand-voice, competitor-intelligence, niche-discovery-100x) leen su sección de `company-brief/company-brief.current.md` como **grounding opcional**. Si el archivo no existe, arrancan standalone. El Kickoff NO es prerequisito de ningún pilar de Layer 1+.
+- **No hay merge view**: el Company Brief es el documento directo; no se regenera desde standalones.
+- **Versionado**: versiones anteriores se guardan como `v1.md`, `v2.md`… en la misma carpeta.
 
 ---
 
@@ -156,7 +127,7 @@ Fast Foundation produce `brand/{slug}/fastcontext/fastcontext.current.md` (un ar
 
 Los competidores no son una lista fija. Se descubren y añaden en múltiples momentos:
 
-1. **Company Brief** (Layer 0): preguntar al usuario "¿quiénes son tus competidores principales?"
+1. **Kickoff** (Layer 0): preguntar al usuario "¿quiénes son tus competidores principales?"
 2. **Market Analysis** (Layer 1): descubrir competidores adicionales durante research
 3. **Niche Discovery** (Layer 3): descubrir competidores por nicho específico
 4. En cualquier momento: el orchestrator puede preguntar "¿hay otros competidores que deberíamos analizar?"
@@ -206,14 +177,14 @@ Se genera al completar positioning. Se regenera si cambian positioning o pricing
 5. **Persistir**: actualizar foundation-state.json + regenerar MC
 6. **Upstream enrichment** (OBLIGATORIO): al completar una layer, revisar docs upstream que dependen de los datos nuevos y actualizarlos:
    - **OPE Canvas**: enriquecer con ECPs, UVPs, pricing hooks, channel data
-   - **Company Brief**: resolver Discovery Tasks pendientes (ej: "Pricing visible")
+   - **Company Brief**: resolver Discovery Tasks pendientes (ej: "Pricing visible") — editar `company-brief/company-brief.current.md` directamente
    - **Summary/Syntheses**: actualizar con datos de la layer completada
    - **foundation-state.json**: actualizar status de sección padre si todos los pilares están completos
    - Sugerir proactivamente al usuario — no esperar a que pregunte
 
 **Flujo automático**: al aprobar, el siguiente pilar arranca automáticamente. El usuario nunca tiene que escribir un comando para continuar.
 
-**Excepción Company Brief**: los 3 skills internos fluyen sin aprobación intermedia. Solo al final del Brief completo se pide aprobación.
+**Kickoff**: es una sesión única de intake. Solo al aprobar el Company Brief completo se desbloquea el resto.
 
 ---
 
@@ -248,4 +219,4 @@ Al completar toda la Foundation, presentar resumen ejecutivo consolidado con hig
 
 ### brand_summary (obligatorio)
 
-Debe existir para todo cliente con al menos Fast Foundation completado. Contiene: company_name, sector, description, north_star, icps, competitors, positioning, url.
+Debe existir para todo cliente con al menos Kickoff completado. Contiene: company_name, sector, description, north_star, icps, competitors, positioning, url.

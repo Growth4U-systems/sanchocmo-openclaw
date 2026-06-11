@@ -14,7 +14,7 @@ metadata:
 context_required:
 - brand/{slug}/company-brief/company-brief.current.md
 - brand/{slug}/go-to-market/positioning/*/*.current.md
-- brand/{slug}/fastcontext/fastcontext.current.md   # optional grounding (read your section; skip if absent)
+- brand/{slug}/company-brief/company-brief.current.md   # optional Company Brief grounding (read your section; skip if absent)
 context_writes:
 - brand/{slug}/brand-voice/brand-voice.current.md
 ---

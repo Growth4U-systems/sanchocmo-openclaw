@@ -211,8 +211,8 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "xlsx": "merlin",
   "yalc-operator": "rocinante",
   "youtube-transcript": "dulcinea",
-  // Fast Foundation intake runs on the research agent (SAN-3 FF flow wiring).
-  "fast-foundation": "hamete",
+  // The Kickoff intake (SAN-3 W4, was fast-foundation) runs on the research agent.
+  "kickoff": "hamete",
 };
 
 /** Return the owner agent slug for a skill, or undefined if it belongs to Sancho default. */
@@ -346,8 +346,8 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
     }
     if (lower.includes("strategic plan")) return { skill: "strategic-plan", skills: ["strategic-plan"] };
     if (lower.includes("metrics")) return { skill: "metrics-setup", skills: ["metrics-setup", "connect-api"] };
-    if (lower.includes("fast foundation")) {
-      return toResolution(cfg.pillars?.["fast-foundation"]) ?? { skill: "fast-foundation", skills: ["fast-foundation"] };
+    if (lower.includes("kickoff") || lower.includes("fast foundation")) {
+      return toResolution(cfg.pillars?.["company-brief"]) ?? { skill: "kickoff", skills: ["kickoff"] };
     }
     if (lower.includes("full foundation")) {
       return { skill: "market-intelligence", skills: ["market-intelligence", "competitor-intelligence", "self-intelligence"] };
@@ -389,9 +389,10 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
  *  the chat→Sancho regression (SAN-26/98); extended to all Foundation pillars in
  *  SAN-102 (research/synthesis/niche → Hamete, positioning → Dulcinea,
  *  pricing/strategic-plan → Sancho default).
- *  `fast-foundation` / `company-brief` are intentionally absent — that flow is
- *  owned by Fast Foundation and reworked in SAN-13. */
+ *  W4 (SAN-3): `company-brief` → the `kickoff` skill (owner hamete). The Kickoff
+ *  produces the living Company Brief; the old fast-foundation flow is retired. */
 const PILLAR_SKILL_ALIAS: Record<string, string> = {
+  "company-brief": "kickoff",
   "market-analysis": "market-intelligence",
   "competitor-analysis": "competitor-intelligence",
   "self-analysis": "self-intelligence",
@@ -417,8 +418,4 @@ const HOMONYMOUS_SKILL_PILLARS = new Set([
   "niche-discovery-100x",
   "positioning-messaging",
   "pricing",
-  "company-brief",
-  // SAN-3: FF intake pillar resolves to the `fast-foundation` skill (owner: hamete),
-  // instead of falling through to the sancho-manager fallback.
-  "fast-foundation",
 ]);

@@ -9,24 +9,21 @@
  * doesn't have an output_file for the pillar).
  * Each entry is an array of paths to try in order.
  *
- * Lite fallback convention (added v1.1, 2026-05-20):
- *   For pillars whose canonical path is also a fast-foundation output target,
- *   we list `current.md` first and the sibling `lite.md` second. `current.md`
- *   is produced by the full skill; `lite.md` is produced by `fast-foundation`
- *   as a preliminary seed. The dashboard shows whichever exists, preferring full.
+ * Lite fallback convention (added v1.1, 2026-05-20; seeds retired SAN-13/W4):
+ *   A few entries still list a sibling `lite.md` after `current.md`. `current.md`
+ *   is produced by the full skill; `lite.md` was a preliminary seed from the old
+ *   Fast Foundation flow (retired — the Kickoff now writes one Company Brief, not
+ *   per-pillar seeds). The `lite.md` paths are kept as harmless fallbacks for
+ *   legacy clients; the dashboard shows whichever exists, preferring full.
  *
  *   Consumers MUST treat lite.md as preliminary (badge "lite" in UI). Cross-
  *   skill consumers (positioning, pricing, etc.) DO NOT fall back to lite —
  *   that's intentional and lives in each consumer's `context_required`.
  */
 export const PILLAR_DOC_PATHS: Record<string, string[]> = {
-  // no lite fallback by design (SAN-13): fastcontext is FF's single canonical output
-  "fast-context": ["fastcontext/fastcontext.current.md"],
-  "fast-foundation": ["fastcontext/fastcontext.current.md"],
-  "company-brief": ["company-brief/company-brief.current.md", "company-brief/lite.md"],
-  "company-context": ["company-context/company-context.current.md", "company-context/lite.md"],
-  "business-model": ["business-model/business-model.current.md", "business-model/lite.md"],
-  "budget": ["budget/budget.current.md", "budget/lite.md"],
+  // W4 (SAN-3): the Kickoff writes the Company Brief — its single canonical output.
+  // The deep company-context/business-model/budget skills are retired (absorbed).
+  "company-brief": ["company-brief/company-brief.current.md"],
   "seo-audit": ["site-audit/seo-audit/seo-audit.current.md", "trust-engine/seo-audit.json"],
   "own-media-audit": ["site-audit/own-media-audit/own-media-audit.current.md", "trust-engine/own-media-audit.json"],
   "market-analysis": ["market-and-us/market/market.current.md", "market-and-us/market/lite.md"],

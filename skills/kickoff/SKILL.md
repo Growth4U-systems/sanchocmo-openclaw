@@ -1,15 +1,17 @@
 ---
-name: fast-foundation
-description: "Sesión de intake rápida (~30 min) que genera los cimientos mínimos viables para un cliente. Modo URL (95%): scrape web + sociales → pre-fill → validar → completar gaps. Modo manual (5%): preguntas conversacionales. Produce UN único archivo fastcontext.current.md con secciones H2: Company Identity, Business Model, Budget & Resources, Self Intelligence L1, Market Intelligence L1, Brand Voice Snapshot, Niche / ECPs. Es el primer skill que se ejecuta para cualquier cliente nuevo. Absorbe: sancho-start, company-context, business-model-audit, budget-constraints, brand-voice Quick, self-intelligence Lens 1, market-intelligence L1, niche-discovery básico."
+name: kickoff
+description: "Sesión de intake rápida (~30 min) que genera los cimientos mínimos viables para un cliente. Modo URL (95%): scrape web + sociales → pre-fill → validar → completar gaps. Modo manual (5%): preguntas conversacionales. Produce UN único archivo company-brief.current.md con secciones H2: Company Identity, Business Model, Budget & Resources, Self Intelligence L1, Market Intelligence L1, Brand Voice Snapshot, Niche / ECPs. Es el primer skill que se ejecuta para cualquier cliente nuevo. Absorbe: sancho-start, company-context, business-model-audit, budget-constraints, brand-voice Quick, self-intelligence Lens 1, market-intelligence L1, niche-discovery básico."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '2.0'
+  version: '3.0'
   system: SanchoCMO
   phase: Foundation
-  pillar: fast-foundation
+  pillar: company-brief
   layer: '0'
-  updated: '2026-06-09'
+  updated: '2026-06-11'
   changes: |
+    v3.0 — SAN-3 W4: renombrado fast-foundation→kickoff; output fastcontext→company-brief/company-brief.current.md;
+           absorbe company-context/business-model/budget (retiradas).
     v2.0 — SAN-13: FF escribe UN único archivo `fastcontext/fastcontext.current.md`
            (grounding desechable, secciones H2). NO toca ninguna carpeta de pilar.
            Las skills full lo leen como seed opcional. Archivos lite por pilar retirados.
@@ -20,17 +22,17 @@ metadata:
     v1.0 — Merge de 8 skills en 1 sesión de intake unificada.
 context_required: []
 context_writes:
-- brand/{slug}/fastcontext/fastcontext.current.md
+- brand/{slug}/company-brief/company-brief.current.md
 ---
 
-# Fast Foundation — Intake Rápido
+# Kickoff — Intake Rápido
 
 > Una sesión. Una URL. Un documento de grounding base. Todo lo que necesitas para empezar a ejecutar.
 
 **Input**: URL del sitio web (o conversación manual si no hay URL)
-**Output**: `brand/{slug}/fastcontext/fastcontext.current.md` (grounding inicial desechable)
+**Output**: `brand/{slug}/company-brief/company-brief.current.md` (grounding inicial desechable)
 **Duración**: ~30 minutos
-**Thread**: `{slug}:fast-foundation`
+**Thread**: `{slug}:kickoff`
 
 ---
 
@@ -44,9 +46,9 @@ El dashboard, el Brand Brain y las APIs de foundation **solo leen** `brand/{slug
 
 Si el estado no tiene `sections[*].pillars[*].output_file`, **la marca queda invisible en la UI aunque los `.md` existan en disco**. Por eso:
 
-1. **FF tiene PROHIBIDO tocar carpetas de pilares** — las rutas `company-context/`, `business-model/`, `budget/`, `market-and-us/`, `brand-voice/`, `go-to-market/`, `company-brief/` y análogas son territorio exclusivo de las skills Full Foundation. FF opera únicamente bajo `brand/{slug}/fastcontext/`.
-2. FF produce **un único** `fastcontext/fastcontext.current.md` (+ versionado `fastcontext.v{N}.md` + `history.json`), con secciones H2.
-3. La sección de estado `fast-foundation` tiene **un solo pilar** `fast-context` cuyo `output_file` es `brand/{slug}/fastcontext/fastcontext.current.md`. Lo mantiene el `foundation-orchestrator`.
+1. **Kickoff tiene PROHIBIDO tocar carpetas de pilares analíticos** — las rutas `market-and-us/`, `brand-voice/`, `go-to-market/` y análogas son territorio exclusivo de las skills Full Foundation. Kickoff opera únicamente bajo `brand/{slug}/company-brief/`.
+2. Kickoff produce **un único** `company-brief/company-brief.current.md` (+ versionado `company-brief.v{N}.md` + `history.json`), con secciones H2.
+3. La sección de estado `company-brief` tiene **un solo pilar** `company-brief` cuyo `output_file` es `brand/{slug}/company-brief/company-brief.current.md`. Lo mantiene el `foundation-orchestrator`.
 4. Si se corrió en otro schema, recuperá con `scripts/rebuild-foundation-state.mjs <slug> --apply`.
 
 ---
@@ -57,7 +59,7 @@ Si el estado no tiene `sections[*].pillars[*].output_file`, **la marca queda inv
 El usuario introduce la URL de su web en el dashboard. El skill:
 1. Scrapea homepage, about, pricing, producto, blog (3-5 posts)
 2. Revisa perfiles sociales (LinkedIn, Twitter/X, Instagram)
-3. Pre-rellena las secciones del fastcontext con lo que encuentra
+3. Pre-rellena las secciones del company-brief con lo que encuentra
 4. Presenta al usuario para validar y completar gaps
 
 ### Modo Manual (5% — sin URL)
@@ -69,7 +71,7 @@ Para empresas pre-lanzamiento o sin presencia web:
    - Paso 4: ¿Quiénes son tus competidores?
    - Paso 5: ¿Qué presupuesto y equipo tienes?
    - Paso 6: ¿Qué has probado antes en marketing?
-2. Genera `fastcontext.current.md` desde las respuestas
+2. Genera `company-brief.current.md` desde las respuestas
 
 ---
 
@@ -102,7 +104,7 @@ elif usuario dice "no tengo web" / "pre-lanzamiento":
 - Instagram: bio, estética, frecuencia, engagement
 
 **1c. Pre-fill secciones**
-Con lo extraído, pre-rellenar las secciones H2 de `fastcontext.current.md`:
+Con lo extraído, pre-rellenar las secciones H2 de `company-brief.current.md`:
 - Company Identity: identidad, producto, modelo de negocio estimado
 - Self Intelligence L1: qué dicen de sí mismos, assets encontrados, tono
 - Brand Voice Snapshot: patrones de voz (tono, vocabulario, POV, ritmo)
@@ -123,7 +125,7 @@ Una pregunta a la vez. Tono CMO cercano. Follow-up si respuesta vaga (max 1).
 Presentar lo inferido agrupado (NO campo por campo):
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 FAST CONTEXT — Lo que he encontrado
+📋 COMPANY BRIEF — Lo que he encontrado
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🏢 Empresa: [nombre] — [tagline]
 📦 Producto: [descripción corta]
@@ -155,17 +157,17 @@ De la conversación y el scraping:
 2. Para cada ECP: dolor principal, cómo buscan solución, dónde están
 3. NO validación exhaustiva — es un primer mapa
 
-### Step 5: Generar `fastcontext.current.md`
+### Step 5: Generar `company-brief.current.md`
 
-> **Regla de paths (v2.0 / SAN-13)**: FF escribe SIEMPRE y SOLO a
-> `brand/{slug}/fastcontext/fastcontext.current.md`. NUNCA toca carpetas de pilares.
+> **Regla de paths (v3.0 / SAN-3)**: Kickoff escribe SIEMPRE y SOLO a
+> `brand/{slug}/company-brief/company-brief.current.md`. NUNCA toca carpetas de pilares analíticos.
 
 Un único archivo con secciones H2. Header obligatorio, luego las secciones:
 
 ```markdown
-# Fast Context — {Cliente}
-<!-- mode: grounding | source: fast-foundation | regenerated: YYYY-MM-DD -->
-<!-- Grounding inicial desechable. NUNCA source of truth. -->
+# Company Brief — {Cliente}
+<!-- mode: grounding | source: kickoff -->
+<!-- Company Brief inicial desechable. NUNCA source of truth. Se refina al avanzar la Foundation. -->
 
 ## Company Identity
 ## Business Model
@@ -177,8 +179,8 @@ Un único archivo con secciones H2. Header obligatorio, luego las secciones:
 ```
 
 Versionado (mismo patrón que las skills de pilar):
-- **Primera corrida** (no existe `fastcontext/`): crear `fastcontext/fastcontext.current.md` + `fastcontext/fastcontext.v1.md` (copia idéntica) + `fastcontext/history.json` con una entrada inicial.
-- **Re-corrida** (ya existe): copiar la actual a `fastcontext/fastcontext.v{N+1}.md`, sobrescribir `fastcontext/fastcontext.current.md`, y añadir la entrada a `history.json`.
+- **Primera corrida** (no existe `company-brief/`): crear `company-brief/company-brief.current.md` + `company-brief/company-brief.v1.md` (copia idéntica) + `company-brief/history.json` con una entrada inicial.
+- **Re-corrida** (ya existe): copiar la actual a `company-brief/company-brief.v{N+1}.md`, sobrescribir `company-brief/company-brief.current.md`, y añadir la entrada a `history.json`.
 
 `history.json` = lista de `{ "version": N, "date": "YYYY-MM-DD", "note": "..." }`.
 
@@ -186,11 +188,11 @@ Versionado (mismo patrón que las skills de pilar):
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ FAST FOUNDATION — Completada
+✅ KICKOFF — Completado
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 Fast Context  ✅ brand/{slug}/fastcontext/fastcontext.current.md (grounding inicial)
+📋 Company Brief  ✅ brand/{slug}/company-brief/company-brief.current.md (grounding inicial)
 
-Siguiente paso: Full Foundation. Las skills full leen fastcontext.current.md como
+Siguiente paso: Full Foundation. Las skills full leen company-brief.current.md como
 seed opcional (si no existe, corren standalone). Las skills full escriben en sus
 propias carpetas de pilar con {carpeta}.current.md como fuente de verdad.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -200,7 +202,7 @@ propias carpetas de pilar con {carpeta}.current.md como fuente de verdad.
 
 ## Contenido de cada sección H2
 
-Las secciones siguientes describen qué va en cada H2 de `fastcontext.current.md`.
+Las secciones siguientes describen qué va en cada H2 de `company-brief.current.md`.
 Las skills full leen estas secciones como grounding opcional antes de profundizar.
 
 ### `## Company Identity`
@@ -253,11 +255,11 @@ Quick snapshot. Formato detallado en la sección "Brand Voice Snapshot — Forma
 
 ## Brand Voice Snapshot — Formato de la sección H2
 
-El contenido siguiente va en la sección `## Brand Voice Snapshot` de `fastcontext.current.md`:
+El contenido siguiente va en la sección `## Brand Voice Snapshot` de `company-brief.current.md`:
 
 ```markdown
 ## Brand Voice Snapshot
-<!-- mode: grounding | source: fast-foundation -->
+<!-- mode: grounding | source: kickoff -->
 
 ### Tres Adjetivos
 [adj1], [adj2], [adj3]
@@ -289,11 +291,11 @@ Serio ◻◻◻◼◻ Playful
 
 ## Self Intelligence L1 — Formato de la sección H2
 
-El contenido siguiente va en la sección `## Self Intelligence L1` de `fastcontext.current.md`:
+El contenido siguiente va en la sección `## Self Intelligence L1` de `company-brief.current.md`:
 
 ```markdown
 ## Self Intelligence L1
-<!-- mode: grounding | source: fast-foundation -->
+<!-- mode: grounding | source: kickoff -->
 
 ### Lo que dicen de sí mismos
 - **Web**: [resumen de messaging en homepage/about]
@@ -323,31 +325,31 @@ El contenido siguiente va en la sección `## Self Intelligence L1` de `fastconte
 ## Cross-Pillar Data Flow
 
 ```
-FAST FOUNDATION genera fastcontext.current.md (grounding inicial desechable)
+KICKOFF genera company-brief.current.md (grounding inicial desechable)
     ↓ seed opcional ↓
-FULL FOUNDATION lee fastcontext.current.md y profundiza en sus propias carpetas:
+FULL FOUNDATION lee company-brief.current.md y profundiza en sus propias carpetas:
   market-intelligence   ← lee § Market Intelligence L1, amplía con 3+ fuentes
-  competitor-intelligence ← nuevo (no hay sección en fastcontext)
+  competitor-intelligence ← nuevo (no hay sección en company-brief)
   self-intelligence     ← lee § Self Intelligence L1, añade Lens 2 + Lens 3
   brand-voice           ← lee § Brand Voice Snapshot, genera Full Guide + AI Brand Kit
   niche-discovery-100x  ← lee § Niche / ECPs, valida con 100+ empresas
 ```
 
-Si `fastcontext.current.md` no existe, las skills full corren standalone sin seed.
+Si `company-brief.current.md` no existe, las skills full corren standalone sin seed.
 
 ---
 
 ## Almacenamiento
 
-`fastcontext.current.md` se guarda con versionado estándar:
+`company-brief.current.md` se guarda con versionado estándar:
 ```
-brand/{slug}/fastcontext/
-├── fastcontext.current.md      ← versión activa (grounding inicial)
-├── fastcontext.v{N}.md         ← snapshot de cada regeneración
-└── history.json                ← log de versiones
+brand/{slug}/company-brief/
+├── company-brief.current.md      ← versión activa (grounding inicial)
+├── company-brief.v{N}.md         ← snapshot de cada regeneración
+└── history.json                  ← log de versiones
 ```
 
-Las carpetas de pilar (`company-context/`, `business-model/`, `budget/`, `market-and-us/`, `brand-voice/`, `go-to-market/`) son propiedad exclusiva de las skills Full Foundation y sus orquestadores. FF nunca escribe en ellas.
+Las carpetas de pilar analíticas (`market-and-us/`, `brand-voice/`, `go-to-market/`) son propiedad exclusiva de las skills Full Foundation y sus orquestadores. Kickoff nunca escribe en ellas.
 
 ---
 

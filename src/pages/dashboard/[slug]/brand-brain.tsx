@@ -69,15 +69,15 @@ const FF_PILLAR_MAP: Record<string, string> = {
   "niche-basic": "niche-discovery",
 };
 
-const EXCLUDED_SECTIONS = ["fast-foundation", "foundation-presentation"];
+const EXCLUDED_SECTIONS = ["foundation-presentation"];
 
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
-  const ff = sections["fast-foundation"];
-  if (!ff) return done;
-  for (const [ffName, pInfo] of Object.entries(ff.pillars || {})) {
+  const cb = sections["company-brief"];
+  if (!cb) return done;
+  for (const [cbName, pInfo] of Object.entries(cb.pillars || {})) {
     if (["approved", "done"].includes(pInfo.status)) {
-      done.add(FF_PILLAR_MAP[ffName] || ffName);
+      done.add(FF_PILLAR_MAP[cbName] || cbName);
     }
   }
   return done;
@@ -482,7 +482,7 @@ export default function BrandBrainPage() {
           {docUsedFallback && docCanonicalPath?.endsWith("/lite.md") && (
             <span
               className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200 flex-shrink-0"
-              title={`Mostrando ${docCanonicalPath} (preliminar de fast-foundation). Ejecuta la skill full para producir current.md.`}
+              title={`Mostrando ${docCanonicalPath} (preliminar de kickoff). Ejecuta la skill full para producir current.md.`}
             >
               Preliminar (lite)
             </span>

@@ -20,7 +20,7 @@ Esto:
 > opcional que se configura aparte (ver canales en MC → Settings).
 
 ### Paso 3: Correr Foundation (lo hace Sancho por chat)
-Desde el chat del cliente, pedirle a Sancho que corra **Fast Foundation** y
+Desde el chat del cliente, pedirle a Sancho que corra el **Kickoff** y
 luego la **Full Foundation**. Las skills de foundation se auto-bootstrappean:
 
 - ✅ El `foundation-orchestrator` crea/actualiza `brand/{slug}/foundation-state.json`
@@ -30,7 +30,7 @@ luego la **Full Foundation**. Las skills de foundation se auto-bootstrappean:
 
 ### Paso 4: Verificar
 1. Confirmar que el cliente aparece en `clients.json` y en Mission Control.
-2. Tras correr Fast Foundation, confirmar que `brand/{slug}/foundation-state.json`
+2. Tras correr el Kickoff, confirmar que `brand/{slug}/foundation-state.json`
    existe y que los pilares se ven en el Brand Brain de MC.
 
 ### Paso 5: Reportar resultado
@@ -48,7 +48,7 @@ Informar al usuario con:
 
 ## Scripts/Skills relacionados
 - Mission Control → **New client** — registra el cliente + carpeta base
-- skill `fast-foundation` / `foundation-orchestrator` — scaffolding + estado
+- skill `kickoff` / `foundation-orchestrator` — scaffolding + estado
 - `scripts/regenerate.py` — regenerar Mission Control / persistir estado
 - `scripts/rebuild-foundation-state.mjs <slug> --apply` — recuperar
   `foundation-state.json` v3.0 desde los docs en disco (fallback)

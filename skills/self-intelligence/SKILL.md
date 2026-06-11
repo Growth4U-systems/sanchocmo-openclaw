@@ -13,7 +13,7 @@ metadata:
   changes: v4 — Restructured per skill-creator principles.
 context_required:
 - brand/{slug}/company-brief/company-brief.current.md
-- brand/{slug}/fastcontext/fastcontext.current.md   # optional grounding (read your section; skip if absent)
+- brand/{slug}/company-brief/company-brief.current.md   # optional Company Brief grounding (read your section; skip if absent)
 context_writes:
 - brand/{slug}/market-and-us/self/self.current.md
 - brand/{slug}/operational/learnings.md

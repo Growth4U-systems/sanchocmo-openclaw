@@ -624,7 +624,7 @@ export function buildRecurringThread(
 
 /** Hardcoded pillar canonical fallback (overridden by chat-config.json if available) */
 const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {
-  "company-brief": "fast-foundation",
+  "company-brief": "kickoff",
 };
 
 /**

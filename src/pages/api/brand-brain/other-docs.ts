@@ -14,9 +14,6 @@ import { brandDir } from "@/lib/data/paths";
 const FOUNDATION_FOLDERS = new Set([
   "company-brief", "market-and-us", "go-to-market",
   "brand-book", "metrics-setup", "strategic-plan",
-  // `fast-foundation` is the legacy section name; `fastcontext` is the actual
-  // folder Fast Foundation writes (SAN-13). Both are foundation, not "other docs".
-  "fast-foundation", "fastcontext",
 ]);
 
 const IGNORED_FOLDERS = new Set([
@@ -135,26 +132,6 @@ function collectDocs(dir: string, brandSlug: string, relPath: string): DocEntry[
   return docs;
 }
 
-/**
- * Surface the Fast Foundation output (`fastcontext/fastcontext.current.md`) as a
- * standalone "Grounding" doc. SAN-13 moved FF to write `fastcontext/`, and #449
- * folded it under the Company Brief pillar — but FF is disposable grounding, not
- * the deep Company Brief (SAN-3). When the deep Company Brief pillars haven't run,
- * the section is honestly not-started and the grounding doc would otherwise have
- * no viewable home (fastcontext stays in FOUNDATION_FOLDERS so its folder isn't
- * dumped wholesale). A dedicated group keeps it a single, well-labeled entry
- * (no `.vN.md` version noise). Pending SAN-3 W4, where FF *becomes* the Company Brief.
- */
-function groundingGroup(dir: string, slug: string): DocGroup | null {
-  const rel = "fastcontext/fastcontext.current.md";
-  if (!fs.existsSync(path.join(dir, "fastcontext", "fastcontext.current.md"))) return null;
-  return {
-    folder: "fastcontext",
-    label: "Grounding (Fast Foundation)",
-    docs: [{ name: "Fast Context", path: rel, fullPath: `brand/${slug}/${rel}` }],
-  };
-}
-
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
@@ -165,8 +142,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!fs.existsSync(dir)) return res.status(404).json({ error: "Brand not found" });
 
   const groups = scanDir(dir, slug, "");
-  const grounding = groundingGroup(dir, slug);
-  if (grounding) groups.unshift(grounding);
   res.status(200).json({ ok: true, groups });
 }
 
