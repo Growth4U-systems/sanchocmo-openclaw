@@ -222,6 +222,12 @@ export function ChannelsTab({ slug, onGo }: Props) {
                 </button>
               </div>
             ))}
+            {antennasFor.antennas.every((a) => !a.jobId) && (
+              <div className="border-2 border-dashed border-border rounded-lg p-3 text-xs text-muted-foreground text-center">
+                Las antenas de esta marca aún no están registradas como crons — se crean con el
+                setup del Content Engine. Hasta entonces este canal no recibe señales automáticas.
+              </div>
+            )}
             <button
               type="button"
               onClick={() => { const ch = antennasFor.channel; setAntennasFor(null); onGo("setup", ch); }}
