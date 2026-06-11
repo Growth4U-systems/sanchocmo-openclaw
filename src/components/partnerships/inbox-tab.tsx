@@ -31,7 +31,7 @@ import {
   insertAnalysisParagraph,
   negotiationBreakEven,
 } from "@/lib/partnerships/negotiation";
-import { formatFollowers, formatTier, leadDisplayName } from "@/lib/partnerships/stage-mapping";
+import { formatFollowers, formatIntEs, formatTier, leadDisplayName } from "@/lib/partnerships/stage-mapping";
 import type { PartnershipLead } from "@/lib/partnerships/types";
 import { NarratorCaption, ToastViewport, useToast } from "./ui";
 
@@ -101,10 +101,6 @@ function timeAgo(date?: string | null): string {
   if (hours < 24) return `hace ${hours} h`;
   const days = Math.floor(hours / 24);
   return `hace ${days} d`;
-}
-
-function fmtEs(value: number): string {
-  return Math.round(value).toLocaleString("es-ES");
 }
 
 export function InboxTab({ slug }: { slug: string }) {
@@ -437,7 +433,7 @@ export function InboxTab({ slug }: { slug: string }) {
                   >
                     <h3 className="flex flex-wrap items-center gap-2 font-heading text-lg text-rust">
                       🧮 Sancho ha detectado un precio:{" "}
-                      <span data-testid="detected-price">{fmtEs(fee ?? detectedPrice.amountEur)}€</span>
+                      <span data-testid="detected-price">{formatIntEs(fee ?? detectedPrice.amountEur)}€</span>
                     </h3>
 
                     <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-bold text-muted-foreground">
@@ -473,7 +469,7 @@ export function InboxTab({ slug }: { slug: string }) {
                     <div className="mt-3 grid grid-cols-3 gap-2.5" data-testid="panel-cells">
                       <div className="rounded-lg border-2 border-border bg-background p-2.5 text-center">
                         <div className="font-heading text-xl leading-none text-navy" data-testid="panel-necesarias">
-                          {Number.isFinite(breakEven.necesarias) ? fmtEs(breakEven.necesarias) : "∞"}
+                          {Number.isFinite(breakEven.necesarias) ? formatIntEs(breakEven.necesarias) : "∞"}
                         </div>
                         <div className="mt-1 text-[9px] font-semibold text-muted-foreground">
                           conversiones necesarias
@@ -482,7 +478,7 @@ export function InboxTab({ slug }: { slug: string }) {
                       </div>
                       <div className="rounded-lg border-2 border-border bg-background p-2.5 text-center">
                         <div className="font-heading text-xl leading-none text-navy" data-testid="panel-alcanzable">
-                          ~{fmtEs(breakEven.alcanzable)}
+                          ~{formatIntEs(breakEven.alcanzable)}
                         </div>
                         <div className="mt-1 text-[9px] font-semibold text-muted-foreground">
                           alcanzables estimadas
@@ -523,7 +519,7 @@ export function InboxTab({ slug }: { slug: string }) {
                         className="mt-3 -rotate-[0.4deg] rounded-md border-2 border-ink bg-yellow-200 px-3 py-2 text-[13px] font-semibold text-ink shadow-comic-sm"
                         data-testid="panel-contraoferta"
                       >
-                        💡 <b>Contraoferta sugerida:</b> {fmtEs(breakEven.contraofertaEur)}€ —{" "}
+                        💡 <b>Contraoferta sugerida:</b> {formatIntEs(breakEven.contraofertaEur)}€ —{" "}
                         {breakEven.contraofertaNota}
                       </div>
                     )}

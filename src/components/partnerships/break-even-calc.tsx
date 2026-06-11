@@ -12,6 +12,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { negotiationBreakEven } from "@/lib/partnerships/negotiation";
+import { formatIntEs } from "@/lib/partnerships/stage-mapping";
 import type { PartnershipLead } from "@/lib/partnerships/types";
 
 const FORMATS = [
@@ -34,10 +35,6 @@ const VERDICT_STYLES: Record<string, string> = {
   amber: "border-ink bg-yellow-300 text-ink",
   red: "border-ink bg-destructive text-white",
 };
-
-function fmtEs(value: number): string {
-  return Math.round(value).toLocaleString("es-ES");
-}
 
 export function BreakEvenCalc({ lead }: { lead: PartnershipLead }) {
   const [posts, setPosts] = useState(3);
@@ -188,7 +185,7 @@ export function BreakEvenCalc({ lead }: { lead: PartnershipLead }) {
           <div className="mt-4 grid grid-cols-3 gap-3" data-testid="breakeven-cells">
             <div className="rounded-lg border-2 border-border bg-background p-3 text-center">
               <div className="font-heading text-2xl leading-none text-navy" data-testid="be-necesarias">
-                {Number.isFinite(result.necesarias) ? fmtEs(result.necesarias) : "∞"}
+                {Number.isFinite(result.necesarias) ? formatIntEs(result.necesarias) : "∞"}
               </div>
               <div className="mt-1 text-[10px] font-semibold text-muted-foreground">
                 conversiones necesarias
@@ -197,7 +194,7 @@ export function BreakEvenCalc({ lead }: { lead: PartnershipLead }) {
             </div>
             <div className="rounded-lg border-2 border-border bg-background p-3 text-center">
               <div className="font-heading text-2xl leading-none text-navy" data-testid="be-alcanzable">
-                ~{fmtEs(result.alcanzable)}
+                ~{formatIntEs(result.alcanzable)}
               </div>
               <div className="mt-1 text-[10px] font-semibold text-muted-foreground">
                 alcanzables estimadas
@@ -242,7 +239,7 @@ export function BreakEvenCalc({ lead }: { lead: PartnershipLead }) {
               className="mt-3 -rotate-[0.4deg] rounded-md border-2 border-ink bg-yellow-200 px-3 py-2 text-sm font-semibold text-ink shadow-comic-sm"
               data-testid="be-contraoferta"
             >
-              💡 Contraoferta sugerida: <b>{fmtEs(result.contraofertaEur)}€</b>
+              💡 Contraoferta sugerida: <b>{formatIntEs(result.contraofertaEur)}€</b>
               {" — "}
               {result.contraofertaNota}
             </div>
