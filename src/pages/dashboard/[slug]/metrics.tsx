@@ -1021,8 +1021,8 @@ function PlanFunnelCard({ plan, sources, metricsData }: { plan: NonNullable<Metr
 type MetricsTab = "funnel" | "partnerships";
 
 const METRICS_TABS: { key: MetricsTab; label: string }[] = [
-  { key: "funnel", label: "🔻 Funnel" },
-  { key: "partnerships", label: "🤝 Partnerships" },
+  { key: "funnel", label: "Funnel" },
+  { key: "partnerships", label: "Partnerships" },
 ];
 
 export default function MetricsPage() {
@@ -1328,8 +1328,8 @@ export default function MetricsPage() {
             type="button"
             onClick={() => selectTab(item.key)}
             className={cn(
-              "px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all",
-              tab === item.key ? "bg-rust text-white border-rust" : "border-border hover:border-rust"
+              "px-3.5 py-1.5 border rounded-md text-[13px] font-semibold transition-colors",
+              tab === item.key ? "border-rust bg-rust text-white" : "border-border bg-background hover:bg-muted"
             )}
           >
             {item.label}
