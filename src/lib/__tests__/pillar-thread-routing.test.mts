@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-// chat-openers is client-safe (no fs import), so it loads without a workspace.
+// chat-openers + task-execution-contract are client-safe (no fs import).
 const { buildPillarThread } = await import("../chat-openers");
+const { inferTaskExecutionContract } = await import("../data/task-execution-contract");
 
 // Regression for SAN-3 W4: buildPillarThread() maps the pillarKey through
 // PILLAR_CANONICAL_FALLBACK *before* calling resolveThreadSkills({ pillar }).
@@ -29,4 +30,18 @@ test("buildPillarThread keeps pillar key as canonical for analytical pillars", (
   const selfA = buildPillarThread("teros", "self-analysis", undefined);
   assert.equal(selfA.threadId, "teros:self-analysis");
   assert.equal(selfA.skill, "self-intelligence");
+});
+
+// The task path (inferTaskExecutionContract) had the same SAN-3 W4 regression:
+// SKILL_ALIASES aliased `kickoff → sancho-manager` (carried over from the old
+// `fast-foundation` entry), so a Kickoff *task* resolved to the manager instead
+// of hamete and never wrote company-brief.current.md.
+test("a kickoff task resolves to the Kickoff skill on Hamete, not sancho-manager", () => {
+  const withSkill = inferTaskExecutionContract({ type: "execution", skill: "kickoff", pillar: "company-brief" });
+  assert.equal(withSkill.skill, "kickoff");
+  assert.equal(withSkill.agent, "hamete");
+
+  const fromPillar = inferTaskExecutionContract({ type: "execution", pillar: "company-brief" });
+  assert.equal(fromPillar.skill, "kickoff");
+  assert.equal(fromPillar.agent, "hamete");
 });
