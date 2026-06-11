@@ -1,0 +1,57 @@
+{
+  "_comment": "SECTION TASK MANIFEST (SAN-167 F1) — declarative, deterministic seed for the Content section. One entry per predefined task/document: id, display name, the skill that runs it, the AGENT that owns it (co-located — not resolved indirectly via SKILL_OWNER_MAP), the canonical output path (relative to brand/{slug}/), and dependencies. Seeded per client (extends the Foundation pattern in config/foundation-state.default.json). Verified by src/lib/__tests__/section-manifest.test.mts (owner-check: agent === skill owner) and rendered by the Content UI instead of hardcoded arrays. Mirrors the canonical flow in src/pages/api/content-creation/create-project.ts.",
+  "section": "content",
+  "label": "Content Creation",
+  "tasks": [
+    {
+      "id": "content-strategy",
+      "name": "Content Strategy (14 decisiones globales)",
+      "skill": "content-strategy",
+      "agent": "dulcinea",
+      "docPath": "content/strategy-decisions.md",
+      "dependsOn": []
+    },
+    {
+      "id": "content-pillars",
+      "name": "Content Pillars (3-5 temas)",
+      "skill": "content-pillars",
+      "agent": "dulcinea",
+      "docPath": "content/content-pillars.md",
+      "dependsOn": ["content-strategy"]
+    },
+    {
+      "id": "pov-bank",
+      "name": "Build POV Bank",
+      "skill": "pov-bank-builder",
+      "agent": "dulcinea",
+      "docPath": "content/pov-bank.json",
+      "dependsOn": ["content-pillars"]
+    },
+    {
+      "id": "content-setup",
+      "name": "Setup configs por pillar",
+      "skill": "content-engine-setup",
+      "agent": "dulcinea",
+      "docPath": "content/configs/setup.md",
+      "dependsOn": ["pov-bank"]
+    },
+    {
+      "id": "visual-templates",
+      "name": "Visual Templates (5 plantillas HTML)",
+      "skill": "{slug}-visual-generator",
+      "skillTemplated": true,
+      "agent": "maese-pedro",
+      "docPath": "brand-book/visual-identity/templates/",
+      "dependsOn": ["content-strategy", "content-pillars"]
+    },
+    {
+      "id": "channel-strategy",
+      "name": "Estrategia del canal",
+      "skill": "content-strategy",
+      "agent": "dulcinea",
+      "docPath": "content/strategy/{channel}-strategy.md",
+      "perChannel": true,
+      "dependsOn": ["content-strategy"]
+    }
+  ]
+}
