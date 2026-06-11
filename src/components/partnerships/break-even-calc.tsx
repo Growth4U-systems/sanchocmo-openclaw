@@ -37,10 +37,6 @@ const VERDICT_STYLES: Record<string, string> = {
   red: "border-destructive/50 bg-destructive/10 text-destructive",
 };
 
-function fmtEs(value: number): string {
-  return Math.round(value).toLocaleString("es-ES");
-}
-
 export function BreakEvenCalc({
   lead,
   config,
