@@ -17,8 +17,6 @@ workspace-sancho/
 │
 ├── skills/                        # 120+ marketing skills (framework)
 │   └── {skill-name}/SKILL.md
-├── personas/                      # 9 worker personas (framework)
-│   └── {persona}.md
 ├── scripts/                       # Automation utilities (framework)
 │
 ├── _system/                       # Protocols, schemas, config
@@ -70,7 +68,7 @@ workspace-sancho/
 
 | Type | Location | Example |
 |---|---|---|
-| Client brand data | `brand/{slug}/` following Foundation structure | `brand/acme/company-brief/current.md` |
+| Client brand data | `brand/{slug}/` following Foundation structure | `brand/acme/company-brief/company-brief.current.md` |
 | Daily log | `memory/YYYY-MM-DD.md` | `memory/2026-04-06.md` |
 | Client memory | `memory/clients/{slug}.md` | `memory/clients/hospital-capilar.md` |
 | Task definition | `memory/archive/prds/T-NNN.md` | `memory/archive/prds/T-060.md` |
@@ -81,7 +79,7 @@ workspace-sancho/
 
 ### Framework vs Instance
 
-- **Framework** (versionado in git): skills/, personas/, scripts/, _system/, templates/, SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md
+- **Framework** (versionado in git): skills/, scripts/, _system/, templates/, SOUL.md, AGENTS.md, HEARTBEAT.md, IDENTITY.md
 - **Instance** (gitignored): memory/, brand/{slug}/ (except example/), config files via symlinks
 
 NEVER put client data, API keys, or deployment-specific info in framework files.
@@ -132,7 +130,7 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
    - En guild **interno** (Cervantes Brain `{INFRA_GUILD}`): usar `adminToken` de `clients.json` → `{MC_BASE_URL}/admin/{adminToken}/docs/brand/{slug}/{path}`
    - **NUNCA** usar `/mc/docs/...` ni `/mc/connect/...` sin token — esos endpoints devuelven 403.
 4. **No narrar pasos** — Max 2 msgs por hilo: inicio + resultado. CERO "Voy a leerlo..."
-5. **Versionado** — `brand/{slug}/{pilar}/current.md` con historial. Ver `_system/foundation/versioning-protocol.md`.
+5. **Versionado** — `brand/{slug}/{pilar}/{pilar}.current.md` con historial. Ver `_system/foundation/versioning-protocol.md`.
 6. **Gate check Foundation** — Verificar `brand/{slug}/foundation-state.json` prerequisitos antes de ejecutar. Ver `_system/foundation/foundation-protocol.md`.
 7. **Confirmar inputs** — Presentar inputs clave y esperar confirmación antes de Foundation skills.
 8. **Leer todo antes de generar** — TODOS los docs del cliente. Cruzar información.
@@ -203,6 +201,6 @@ Playbooks en `_system/`:
 - **intelligence/**: intelligence-protocol, brand-memory, morning-metrics-protocol
 - **governance/**: client-context-isolation, execution-gate
 - **onboarding/**: onboarding-playbook, new-client-protocol, client-onboarding, client-onboarding-checklist
-- **output/**: output-format, presentation-summary-protocol, discord-thread-protocol, project-threads-protocol
+- **output/**: output-format, presentation-summary-protocol, html-canonical-protocol (sibling .html = doc canónico vía skill html-output), publish-protocol (cron output → /api/integrations/publish, transport-agnostic), project-threads-protocol
 - **technical/**: mc-links-protocol, image-optimization, token-optimization-guide
 Cargar solo cuando se necesite.

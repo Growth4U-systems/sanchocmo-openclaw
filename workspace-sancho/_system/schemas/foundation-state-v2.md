@@ -11,12 +11,14 @@
     "company-brief": {
       "status": "approved|in-progress|not-started",
       "layer": 0,
-      "output_dir": "brand/{slug}/company-brief/",
-      "approved_at": "ISO timestamp or null",
-      "skills": {
-        "company-context": { "status": "approved", "completed_at": "ISO" },
-        "business-model": { "status": "approved", "completed_at": "ISO" },
-        "budget": { "status": "approved", "completed_at": "ISO" }
+      "pillars": {
+        "company-brief": {
+          "status": "approved|in-progress|not-started",
+          "layer": 0,
+          "output_file": "brand/{slug}/company-brief/company-brief.current.md",
+          "skill": "kickoff",
+          "approved_at": "ISO timestamp or null"
+        }
       }
     },
     "market-and-us": {
@@ -27,8 +29,8 @@
         "market-analysis": {
           "status": "approved",
           "layer": 1,
-          "requires": ["company-brief"],
-          "enriches_with": ["competitor-analysis", "self-analysis"],
+          "requires": [],
+          "enriches_with": ["company-brief", "competitor-analysis", "self-analysis"],
           "output_file": "brand/{slug}/market-and-us/market-analysis.md",
           "approved_at": "ISO",
           "skill": "market-intelligence"
@@ -36,8 +38,8 @@
         "competitor-analysis": {
           "status": "in-progress",
           "layer": 1,
-          "requires": ["company-brief"],
-          "enriches_with": ["market-analysis", "self-analysis"],
+          "requires": [],
+          "enriches_with": ["company-brief", "market-analysis", "self-analysis"],
           "output_files": [
             "brand/{slug}/market-and-us/competitor-acme.md",
             "brand/{slug}/market-and-us/competitor-betacorp.md"
@@ -47,8 +49,8 @@
         "self-analysis": {
           "status": "not-started",
           "layer": 1,
-          "requires": ["company-brief"],
-          "enriches_with": ["market-analysis", "competitor-analysis"],
+          "requires": [],
+          "enriches_with": ["company-brief", "market-analysis", "competitor-analysis"],
           "output_file": "brand/{slug}/market-and-us/self-analysis.md",
           "skill": "self-intelligence"
         },
@@ -91,7 +93,7 @@
         "existing-customer-data": {
           "status": "not-started",
           "layer": 3,
-          "requires": ["company-brief"],
+          "requires": [],
           "optional": true,
           "output_file": "brand/{slug}/go-to-market/existing-customer-data.md",
           "skill": "existing-customer-data"
@@ -155,7 +157,7 @@
 
 ## brand_summary (obligatorio)
 
-Resumen ejecutivo de la marca. Debe existir para todo cliente con al menos Fast Foundation completado.
+Resumen ejecutivo de la marca. Debe existir para todo cliente con al menos Kickoff completado.
 
 ```json
 {
@@ -183,15 +185,15 @@ Resumen ejecutivo de la marca. Debe existir para todo cliente con al menos Fast 
   "file_index": {
     "competitors": {
       "sources": "market-and-us/competitors/sources.json",
-      "summary": "market-and-us/competitors/current.md",
+      "summary": "market-and-us/competitors/competitors.current.md",
       "battle_cards": {
-        "{slug}": "market-and-us/competitors/{slug}/current.md"
+        "{slug}": "market-and-us/competitors/{slug}/{slug}.current.md"
       }
     },
     "integrations": "integrations.json",
     "metrics": {
       "plan_json": "metrics-plan.json",
-      "plan_doc": "go-to-market/metrics-plan/current.md",
+      "plan_doc": "go-to-market/metrics-plan/metrics-plan.current.md",
       "data_dir": "metrics/"
     },
     "brand_assets": {
@@ -237,9 +239,10 @@ Resumen ejecutivo de la marca. Debe existir para todo cliente con al menos Fast 
 ## Notas
 
 - `sections.X.status` = status agregado de la sección (derived de sus pillars)
-- `company-brief` es especial: tiene `skills` en vez de `pillars` porque las 3 skills escriben al mismo doc
+- `company-brief` tiene un único pilar `company-brief` cuyo `output_file` es `brand/{slug}/company-brief/company-brief.current.md` (escrito por el skill `kickoff`, un archivo, secciones H2). Kickoff NO escribe a carpetas de pilares.
 - `competitor-analysis` usa `output_files` (array) porque genera 1 archivo por competidor
 - `positioning` usa `output_pattern` porque genera 1 archivo por ECP
 - `syntheses` son generadas por el orchestrator, no por skills dedicados
 - `optional: true` indica pilares que se pueden skipear sin bloquear downstream
 - Los `requires` y `enriches_with` redundan lo del foundation-protocol.md — esto permite gate check programático
+- Layer 1 (research) tiene `requires: []` — no bloquean en company-brief; el Company Brief es grounding opcional vía `enriches_with`

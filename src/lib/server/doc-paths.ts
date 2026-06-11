@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import {
   cleanDocPath,
+  htmlSiblingOf,
   normalizeBrandDocPath,
   normalizeWorkspaceDocPath,
   slugFromBrandDocPath,
@@ -14,6 +15,13 @@ export interface ResolvedDocPath {
   exists: boolean;
   usedFallback: boolean;
   slug: string | null;
+  /**
+   * HTML-canonical sibling (SAN-149): when the resolved doc is a `.md` and
+   * a same-basename `.html` exists on disk, this holds its workspace path.
+   * Consumers decide whether to open/share the HTML; `canonicalPath` keeps
+   * pointing at the resolved file so markdown stays editable.
+   */
+  htmlSibling: string | null;
 }
 
 function safeAbs(baseDir: string, relPath: string): string {
@@ -49,12 +57,19 @@ function currentAliasFallback(absPath: string): string | null {
   if (!fs.existsSync(dir)) return null;
 
   const folderName = path.basename(dir).toLowerCase();
+  // Prefer candidates with the requested extension: a folder may hold an
+  // md/html canonical pair (SAN-149), and a request for `current.md` must
+  // not silently resolve to `*.current.html`.
+  const requestedExt = path.extname(absPath).toLowerCase();
   const candidates = fs
     .readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
     .filter((name) => CANONICAL_DOC_RE.test(name))
     .sort((a, b) => {
+      const aExt = path.extname(a).toLowerCase() === requestedExt;
+      const bExt = path.extname(b).toLowerCase() === requestedExt;
+      if (aExt !== bExt) return aExt ? -1 : 1;
       const aFolder = a.toLowerCase().startsWith(`${folderName}.current.`);
       const bFolder = b.toLowerCase().startsWith(`${folderName}.current.`);
       if (aFolder !== bFolder) return aFolder ? -1 : 1;
@@ -70,7 +85,7 @@ function currentAliasFallback(absPath: string): string | null {
 /**
  * Lite sibling fallback: when a caller requests a canonical doc
  * (`current.md` or `{folder}.current.md`) and it does not exist, return
- * the sibling `lite.md` if present. fast-foundation
+ * the sibling `lite.md` if present. The kickoff skill
  * writes preliminary outputs to `lite.md`; full skills produce the real
  * `current.md` later. This fallback lets the dashboard surface preliminary
  * content (with `usedFallback: true` so the UI can badge it as such).
@@ -82,13 +97,31 @@ function currentAliasFallback(absPath: string): string | null {
  * (positioning reading ECPs, niche-discovery reading SWOT) will NOT
  * silently degrade to lite. That problem (Philippe's complaint,
  * 2026-05-19) was caused by lite content sitting at the `current.md` path
- * itself — solved by the fast-foundation rename, not by this fallback.
+ * itself — solved by the kickoff rename, not by this fallback.
  */
 function liteSiblingFallback(absPath: string): string | null {
   if (!/(^|\.)current\.md$/i.test(path.basename(absPath))) return null;
   const litePath = path.join(path.dirname(absPath), "lite.md");
   if (fs.existsSync(litePath) && fs.statSync(litePath).isFile()) {
     return litePath;
+  }
+  return null;
+}
+
+/**
+ * HTML-canonical sibling on disk (SAN-149): for a resolved `.md` doc,
+ * return the workspace path of the same-basename `.html` if it exists.
+ */
+function htmlSiblingOnDisk(baseDir: string, canonicalPath: string): string | null {
+  const sibling = htmlSiblingOf(canonicalPath);
+  if (!sibling) return null;
+  try {
+    const absSibling = safeAbs(baseDir, sibling);
+    if (fs.existsSync(absSibling) && fs.statSync(absSibling).isFile()) {
+      return sibling;
+    }
+  } catch {
+    // unsafe sibling path — treat as absent
   }
   return null;
 }
@@ -118,6 +151,7 @@ export function resolveWorkspaceDocPath(
       exists: true,
       usedFallback: false,
       slug: opts.slug || slugFromBrandDocPath(normalizedPath),
+      htmlSibling: htmlSiblingOnDisk(baseDir, normalizedPath),
     };
   }
 
@@ -131,6 +165,7 @@ export function resolveWorkspaceDocPath(
       exists: true,
       usedFallback: true,
       slug: opts.slug || slugFromBrandDocPath(canonicalPath),
+      htmlSibling: htmlSiblingOnDisk(baseDir, canonicalPath),
     };
   }
 
@@ -141,5 +176,6 @@ export function resolveWorkspaceDocPath(
     exists: false,
     usedFallback: false,
     slug: opts.slug || slugFromBrandDocPath(normalizedPath),
+    htmlSibling: null,
   };
 }

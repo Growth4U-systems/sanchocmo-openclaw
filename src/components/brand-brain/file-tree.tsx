@@ -16,14 +16,11 @@ import type { BrandBrainState, Section, Pillar } from "@/types";
 import type { OtherDocGroup } from "@/hooks/useBrandBrain";
 
 const FF_PILLAR_MAP: Record<string, string> = {
-  // SAN-13: Fast Foundation collapsed to a single `fast-context` pillar whose doc
-  // is the Company Brief. Older clients still carry the pre-SAN-13 sub-pillars below.
+  // SAN-3 W4: the Kickoff writes a single `company-brief` pillar (the living
+  // Company Brief). `fast-context` is the pre-W4 name for the same pillar, kept
+  // so legacy clients still resolve to the Company Brief section.
   "fast-context": "company-brief",
   "company-brief": "company-brief",
-  "self-l1": "self-analysis",
-  "market-l1": "market-analysis",
-  "brand-voice-snapshot": "brand-voice",
-  "niche-basic": "niche-discovery",
 };
 
 const SECTION_DEFS = [
@@ -83,7 +80,7 @@ function CommentBadge({ n }: { n: number }) {
 
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
-  const ff = sections["fast-foundation"];
+  const ff = sections["company-brief"];
   if (!ff) return done;
   for (const [ffName, pInfo] of Object.entries(ff.pillars || {})) {
     if (["approved", "done"].includes(pInfo.status)) {
@@ -119,9 +116,26 @@ function DownloadBtn({ docPath }: { docPath: string }) {
   );
 }
 
-interface DocEntry { name: string; fullPath: string }
+interface DocEntry { name: string; fullPath: string; kind?: "md" | "html"; hasHtml?: boolean }
 interface SubfolderEntry { name: string; mainDoc: string; files: DocEntry[]; versions: DocEntry[] }
 interface PillarExtra { subfolders: SubfolderEntry[]; versions: DocEntry[]; otherFiles: DocEntry[] }
+
+/** Doc-type chip (SAN-149): tells md sources, HTML deliverables and md/html
+ *  canonical pairs apart at a glance. */
+function KindBadge({ kind, hasHtml }: { kind?: "md" | "html"; hasHtml?: boolean }) {
+  if (!kind) return null;
+  const label = hasHtml ? "MD + HTML" : kind.toUpperCase();
+  const cls =
+    kind === "html" || hasHtml
+      ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800"
+      : "bg-muted/40 text-muted-foreground border-border";
+  return (
+    <span className={`text-[8px] font-bold uppercase tracking-wide border rounded px-1 py-px flex-shrink-0 ${cls}`}
+      title={hasHtml ? "Fuente markdown con documento HTML canónico generado" : kind === "html" ? "Documento HTML" : "Documento markdown"}>
+      {label}
+    </span>
+  );
+}
 
 function VersionChips({ versions, onSelectOtherDoc }: { versions: DocEntry[]; onSelectOtherDoc: (p: string, n: string, parentPillar?: string) => void }) {
   return (
@@ -186,7 +200,7 @@ function DeepDiveRow({ sf, onSelectOtherDoc, parentPillar }: { sf: SubfolderEntr
           {sf.files.map((f) => (
             <div key={f.fullPath} className="flex items-center gap-2 px-3 py-1.5 hover:bg-muted/20 transition-colors">
               <span className="text-[10px] text-muted-foreground">{"📄"}</span>
-              <span className="flex-1 text-[11px] font-medium text-foreground/60">{f.name}</span>
+              <span className="flex-1 text-[11px] font-medium text-foreground/60 flex items-center gap-1.5">{f.name}<KindBadge kind={f.kind} hasHtml={f.hasHtml} /></span>
               <div className="flex items-center gap-1">
                 <DownloadBtn docPath={f.fullPath} />
                 <button type="button" onClick={() => onSelectOtherDoc(f.fullPath, f.name, parentPillar)}
@@ -332,7 +346,7 @@ function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOption
               {extra.otherFiles.map((f) => (
                 <div key={f.fullPath} className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-muted/20 transition-colors">
                   <span className="text-[11px] text-muted-foreground">{"📄"}</span>
-                  <span className="flex-1 text-xs font-medium text-foreground/60 flex items-center gap-1.5">{f.name}{commentCount(f.fullPath) > 0 && <CommentBadge n={commentCount(f.fullPath)} />}</span>
+                  <span className="flex-1 text-xs font-medium text-foreground/60 flex items-center gap-1.5">{f.name}<KindBadge kind={f.kind} hasHtml={f.hasHtml} />{commentCount(f.fullPath) > 0 && <CommentBadge n={commentCount(f.fullPath)} />}</span>
                   <div className="flex items-center gap-1">
                     <DownloadBtn docPath={f.fullPath} />
                     <button type="button" onClick={() => onSelectOtherDoc(f.fullPath, f.name, pillarKey)}
@@ -370,7 +384,6 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
   const commentCount = (fp: string) => commentCounts?.[relKey(fp)] ?? 0;
   const sections = foundation.sections || {};
   const ffDone = ffDonePillars(sections);
-  const ffSection = sections["fast-foundation"]?.pillars || {};
 
   const [search, setSearch] = useState("");
 
@@ -470,11 +483,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
               const raw = p.status || "not-started";
               const norm = normalizeStatus(raw, ffDone, pName);
               const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
-              let docUrl = p.output_file || "";
-              if (!docUrl) {
-                const ffKey = Object.entries(FF_PILLAR_MAP).find(([, v]) => v === pName);
-                if (ffKey && ffSection[ffKey[0]]) docUrl = ffSection[ffKey[0]].output_file || "";
-              }
+              const docUrl = p.output_file || "";
               const hasDoc = !!docUrl;
 
               return (
@@ -528,11 +537,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                     const norm = normalizeStatus(raw, ffDone, pName);
                     const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
                     const name = displayName(pName);
-                    let docUrl = p.output_file || "";
-                    if (!docUrl) {
-                      const ffKey = Object.entries(FF_PILLAR_MAP).find(([, v]) => v === pName);
-                      if (ffKey && ffSection[ffKey[0]]) docUrl = ffSection[ffKey[0]].output_file || "";
-                    }
+                    const docUrl = p.output_file || "";
                     const hasDoc = !!docUrl;
 
                     return (
@@ -624,7 +629,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                 <div className="divide-y divide-border/40">
                   {group.docs.map((doc) => (
                     <div key={doc.fullPath} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/20 transition-colors">
-                      <span className="flex-1 text-sm font-medium text-foreground/80 pl-8 flex items-center gap-2">{doc.name}{commentCount(doc.fullPath) > 0 && <CommentBadge n={commentCount(doc.fullPath)} />}</span>
+                      <span className="flex-1 text-sm font-medium text-foreground/80 pl-8 flex items-center gap-2">{doc.name}<KindBadge kind={doc.fullPath.endsWith(".html") ? "html" : "md"} hasHtml={doc.hasHtml} />{commentCount(doc.fullPath) > 0 && <CommentBadge n={commentCount(doc.fullPath)} />}</span>
                       <div className="flex items-center gap-1">
                         <DownloadBtn docPath={doc.fullPath} />
                         <button type="button" onClick={() => onSelectOtherDoc(doc.fullPath, doc.name)}

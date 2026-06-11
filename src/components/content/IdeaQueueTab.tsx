@@ -6,6 +6,10 @@ import { cn } from "@/lib/utils";
 import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { DraftCards } from "@/components/content/DraftCards";
+import { DesyncBadge } from "@/components/content/DesyncBadge";
+import { useReconcileState, desyncsForContentTask } from "@/hooks/useContentReconcile";
+import { suggestAuthor } from "@/lib/data/persona-loops";
+import type { ChannelLoopState } from "@/types";
 
 interface Idea {
   id: string;
@@ -28,6 +32,8 @@ interface Idea {
   dispatch_date?: string;
   dispatch_slot?: string;
   source_signals?: string[];
+  /** Founder-Led persona this idea is assigned to (SAN-163). */
+  author?: string;
 }
 
 // Strip "Nuestro POV:" / "POV:" / etc prefix from angle text. The UI/Slack
@@ -121,6 +127,14 @@ interface Props {
   slug: string;
   openChat?: (slug: string, config: ThreadConfig) => void;
   focusId?: string | null;
+  /** Pre-select the Canal filter — set when arriving from a channel loop card (SAN-141). */
+  initialChannel?: string | null;
+  /** Pre-select the status filter (canonical ContentTaskStatus, e.g. "New"). */
+  initialStatus?: string | null;
+  /** Pre-select the persona/author filter — set from a persona sub-loop drill-down (SAN-163). */
+  initialAuthor?: string | null;
+  /** Show only unassigned ideas — set from the "sin repartir" pool strip (SAN-163). */
+  initialUnassigned?: boolean;
 }
 
 // Content type → comic color (rust = hot, sage = proof, navy = framework, yellow = personal, aged = listicle)
@@ -146,16 +160,47 @@ function writerSkillFor(channel: string): string {
   return "social-writer"; // linkedin, twitter, default
 }
 
-export function IdeaQueueTab({ slug, openChat }: Props) {
+export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus, initialAuthor, initialUnassigned }: Props) {
   const router = useRouter();
+  // Last persisted reconciler run (SAN-153) — desync badges per content task.
+  const { data: reconcileState } = useReconcileState(slug || null);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [counts, setCounts] = useState<IdeasCounts | null>(null);
   const [pillars, setPillars] = useState<PillarLite[]>([]);
   const [dispatchCron, setDispatchCron] = useState<CronLite | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>(initialStatus || "all");
   // New filters
-  const [filterChannel, setFilterChannel] = useState<string>("all");
+  const [filterChannel, setFilterChannel] = useState<string>(initialChannel || "all");
+  // SAN-163 — persona/author filter + per-channel voices for assignment.
+  const [filterAuthor, setFilterAuthor] = useState<string>(
+    initialUnassigned ? "__unassigned__" : initialAuthor || "all",
+  );
+  const [channelsForPersonas, setChannelsForPersonas] = useState<ChannelLoopState[]>([]);
+
+  // Keep filters in sync with channel-loop drill-downs while mounted.
+  useEffect(() => { if (initialChannel) setFilterChannel(initialChannel); }, [initialChannel]);
+  useEffect(() => { if (initialStatus) setFilter(initialStatus); }, [initialStatus]);
+  useEffect(() => {
+    if (initialUnassigned) setFilterAuthor("__unassigned__");
+    else if (initialAuthor) setFilterAuthor(initialAuthor);
+  }, [initialAuthor, initialUnassigned]);
+
+  // Personas per channel (id, name, slant) — drives the author filter + the
+  // per-idea "asignar voz" dropdown. Sourced from the channel-loops aggregator.
+  useEffect(() => {
+    if (!slug) return;
+    fetch(`/api/content-engine/channel-loops?slug=${slug}`)
+      .then((r) => r.json())
+      .then((d) => setChannelsForPersonas(d.channels || []))
+      .catch(() => {});
+  }, [slug]);
+
+  // Flat list of all declared personas across channels (for the filter dropdown).
+  const allPersonas = channelsForPersonas.flatMap((c) => c.personas);
+  // Personas available for a given idea's target channel (for assignment).
+  const personasForChannel = (channel: string): ChannelLoopState["personas"] =>
+    channelsForPersonas.find((c) => c.channel === channel)?.personas || [];
   const [filterPillar, setFilterPillar] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<"all" | "today" | "week" | "month">("all");
   const [filterSource, setFilterSource] = useState<"all" | "news" | "paa" | "keywords" | "competitors" | "other">("all");
@@ -307,6 +352,13 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
   // Apply secondary filters + sort: today's dispatch first, then most recent signal
   const visibleIdeas = ideas
     .filter((i) => filterChannel === "all" || i.target_channel === filterChannel)
+    .filter((i) =>
+      filterAuthor === "all"
+        ? true
+        : filterAuthor === "__unassigned__"
+          ? !i.author
+          : i.author === filterAuthor,
+    )
     .filter((i) => filterPillar === "all" || i.pillar_id === filterPillar)
     .filter((i) => {
       if (filterDate === "all") return true;
@@ -478,6 +530,20 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
           <option value="blog">📝 Blog</option>
           <option value="newsletter">📧 Newsletter</option>
         </select>
+        {allPersonas.length > 0 && (
+          <select
+            value={filterAuthor}
+            onChange={(e) => setFilterAuthor(e.target.value)}
+            className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
+            style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+          >
+            <option value="all">Voz: Todas</option>
+            <option value="__unassigned__">📥 Sin repartir</option>
+            {allPersonas.map((p) => (
+              <option key={p.id} value={p.id}>👤 {p.name}</option>
+            ))}
+          </select>
+        )}
         <select
           value={filterPillar}
           onChange={(e) => setFilterPillar(e.target.value)}
@@ -655,6 +721,7 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
                               >{sv.label}</span>
                             );
                           })()}
+                          <DesyncBadge desyncs={desyncsForContentTask(reconcileState, idea.content_task_id)} />
                           <span className="inline-flex items-center gap-1.5" title={`Confianza ${conf}%`}>
                             <span
                               className="inline-block h-2 w-12 rounded-sc-pill border overflow-hidden"
@@ -736,6 +803,34 @@ export function IdeaQueueTab({ slug, openChat }: Props) {
 
                       {/* Acciones — vertical stack */}
                       <td style={{ ...cellBase, padding: "16px 12px" }}>
+                        {(() => {
+                          const personas = personasForChannel(idea.target_channel);
+                          if (personas.length === 0) return null;
+                          const suggested = idea.author
+                            ? null
+                            : suggestAuthor(
+                                { title: idea.title, angle_draft: idea.angle_draft, pillar_id: idea.pillar_id },
+                                personas.map((p) => ({ id: p.id, name: p.name, pillars_slant: p.pillarsSlant })),
+                              );
+                          return (
+                            <div className="mb-2">
+                              <select
+                                value={idea.author || ""}
+                                onChange={(e) => updateIdea(idea.id, { author: e.target.value || null })}
+                                className="w-full font-heading uppercase text-[10px] tracking-wider px-2 py-1 rounded border-2 focus:outline-none"
+                                style={{ background: idea.author ? "var(--sc-sage-100)" : "var(--sc-paper-3)", borderColor: "var(--sc-ink)" }}
+                                title="Asignar voz / persona"
+                              >
+                                <option value="">👤 Sin voz…</option>
+                                {personas.map((p) => (
+                                  <option key={p.id} value={p.id}>
+                                    👤 {p.name}{suggested === p.id ? " ⭐ sugerida" : ""}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        })()}
                         {idea.status === "Discarded" && (
                           <span className="text-xs italic" style={{ color: "var(--sc-fg-muted)" }}>
                             Descartada

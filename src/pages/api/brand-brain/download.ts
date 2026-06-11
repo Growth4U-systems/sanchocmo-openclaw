@@ -26,7 +26,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const docPaths: { filePath: string; zipName: string }[] = [];
 
   for (const [secKey, secData] of Object.entries(sections) as [string, { pillars?: Record<string, { output_file?: string }> }][]) {
-    if (secKey === "fast-foundation" || secKey === "foundation-presentation") continue;
+    if (secKey === "foundation-presentation") continue;
     const pillars = secData.pillars || {};
     for (const [pName, pInfo] of Object.entries(pillars)) {
       if (!pInfo.output_file) continue;

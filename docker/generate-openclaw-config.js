@@ -81,6 +81,24 @@ async function main() {
     console.log('[config] Removed agents.defaults.heartbeat (deprecated in this project)');
   }
 
+  // --- Model providers ---
+  // Raise the model idle watchdog for Anthropic (default cap: 120s without
+  // provider timeout). Sonnet/Opus runs with long thinking or heavy load can
+  // exceed 120s between stream chunks, killing the run with
+  // "LLM request timed out". agents.defaults.timeoutSeconds (48h default)
+  // stays untouched — only the per-provider idle window is extended.
+  // OpenClaw >= 2026.5.18 requires baseUrl + models on any models.providers.<id>
+  // entry (a timeout-only entry fails validation and blocks gateway startup).
+  // models:[] merges with — does not replace — the built-in Anthropic catalog.
+  if (!config.models) config.models = {};
+  if (!config.models.providers) config.models.providers = {};
+  if (!config.models.providers.anthropic) config.models.providers.anthropic = {};
+  const anthropicProvider = config.models.providers.anthropic;
+  if (!anthropicProvider.baseUrl) anthropicProvider.baseUrl = 'https://api.anthropic.com';
+  if (!anthropicProvider.api) anthropicProvider.api = 'anthropic-messages';
+  if (!anthropicProvider.models) anthropicProvider.models = [];
+  anthropicProvider.timeoutSeconds = anthropicProvider.timeoutSeconds || 300;
+
   // --- Session agents (escudero, rocinante, hamete, alarife) ---
   config.agents.list = [
     { id: 'escudero', workspace: path.join(OPENCLAW_ROOT, 'workspace-escudero') },

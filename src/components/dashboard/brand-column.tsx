@@ -15,17 +15,15 @@ import type { BrandBrainState, Section } from "@/types";
 // Brand Column — Faithful port of renderV2Foundation()
 // ============================================================
 
-// FF_PILLAR_MAP: Fast Foundation pillar names -> real pillar names
+// FF_PILLAR_MAP: Kickoff pillar names -> real pillar names. SAN-3 W4: the Kickoff
+// writes a single `company-brief` pillar; `fast-context` is its pre-W4 alias.
 const FF_PILLAR_MAP: Record<string, string> = {
+  "fast-context": "company-brief",
   "company-brief": "company-brief",
-  "self-l1": "self-analysis",
-  "market-l1": "market-analysis",
-  "brand-voice-snapshot": "brand-voice",
-  "niche-basic": "niche-discovery",
 };
 
 // Sections excluded from foundation stats (meta-sections)
-const EXCLUDED_SECTIONS = ["fast-foundation", "foundation-presentation"];
+const EXCLUDED_SECTIONS = ["foundation-presentation"];
 
 // Section display metadata
 const SECTION_META = [
@@ -57,10 +55,10 @@ const STATUS_BORDER: Record<string, string> = {
   todo: "",
 };
 
-/** Build set of real pillar names completed by fast-foundation */
+/** Build set of real pillar names completed by the Kickoff (Company Brief). */
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
-  const ff = sections["fast-foundation"];
+  const ff = sections["company-brief"];
   if (!ff) return done;
   const pillars = ff.pillars || {};
   for (const [ffName, pInfo] of Object.entries(pillars)) {
@@ -122,8 +120,10 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
   const handleAnalyze = () => {
     const trimmed = url.trim();
     if (!trimmed) return;
-    const config = buildPillarThread(slug, "fast-foundation");
-    config.initialMessage = `Haz el Fast Foundation de esta empresa: ${trimmed}`;
+    // Pin the Company Brief doc so the Kickoff thread isn't "Sin documento asociado" (SAN-3 W4).
+    const cbDoc = foundation?.sections?.["company-brief"]?.pillars?.["company-brief"]?.output_file;
+    const config = buildPillarThread(slug, "company-brief", cbDoc || undefined);
+    config.initialMessage = `Haz el Kickoff de esta empresa: ${trimmed}`;
     config.threadState = "create";
     openChat(slug, config);
     setUrl("");
@@ -168,9 +168,6 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
   const bs = foundation.brand_summary;
   const sections = foundation.sections || {};
   const ffDone = ffDonePillars(sections);
-
-  // Get FF section for doc URL fallback
-  const ffSection = sections["fast-foundation"]?.pillars || {};
 
   const hasSnapshotData =
     bs?.company_name || bs?.description || (bs?.competitors && bs.competitors.length > 0);
@@ -310,15 +307,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
                 const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
                 const name = displayName(pName);
 
-                // Resolve doc URL: own section first, then FF section
-                let docUrl = p.output_file || "";
-                if (!docUrl) {
-                  const ffKey = Object.entries(FF_PILLAR_MAP).find(([, v]) => v === pName);
-                  if (ffKey && ffSection[ffKey[0]]) {
-                    docUrl = ffSection[ffKey[0]].output_file || "";
-                  }
-                }
-
+                const docUrl = p.output_file || "";
                 const hasDoc = !!docUrl;
 
                 const handleChat = () => {

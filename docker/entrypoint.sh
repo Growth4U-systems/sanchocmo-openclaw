@@ -263,6 +263,34 @@ else
 fi
 
 # ===========================================================
+# 1a. ENSURE MODEL PROVIDER TIMEOUTS (runs every startup)
+# ===========================================================
+# Staging/prod volumes keep openclaw.json between deploys, so changes in
+# generate-openclaw-config.js never reach existing instances. Ensure the
+# Anthropic model idle watchdog is extended past OpenClaw's 120s default —
+# long thinking runs (e.g. Dulcinea on Sonnet) trip it with
+# "LLM request timed out". Respects a manually-set timeout value.
+# OpenClaw >= 2026.5.18 requires baseUrl + models on any models.providers.<id>
+# entry (a timeout-only entry fails validation and blocks gateway startup), so
+# write the full entry; models:[] merges with — does not replace — the
+# built-in Anthropic catalog. Also repairs a partial entry left by the
+# previous version of this step.
+python3 -c "
+import json
+f='$OPENCLAW_CONFIG'
+c=json.load(open(f))
+p=c.setdefault('models',{}).setdefault('providers',{}).setdefault('anthropic',{})
+changed=False
+for k,v in (('baseUrl','https://api.anthropic.com'),('api','anthropic-messages'),('models',[]),('timeoutSeconds',300)):
+    if k not in p:
+        p[k]=v
+        changed=True
+if changed:
+    json.dump(c, open(f,'w'), indent=2)
+    print('[entrypoint] Ensured full models.providers.anthropic entry (timeoutSeconds=%s)' % p['timeoutSeconds'])
+" 2>/dev/null || true
+
+# ===========================================================
 # 1b. ENSURE MC-CHAT PLUGIN (runs every startup)
 # ===========================================================
 MC_CHAT_PLUGIN="/root/.openclaw/plugins/mc-chat"
