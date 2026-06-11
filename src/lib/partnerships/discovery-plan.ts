@@ -7,7 +7,7 @@
  */
 
 import { DEFAULT_CREATOR_MODEL_CONFIG } from "@/lib/calc-creator-core";
-import type { QualificationMode, TierKey } from "@/lib/calc-creator-core";
+import type { CreatorModelConfig, QualificationMode, TierKey } from "@/lib/calc-creator-core";
 import type { DiscoveryPlan } from "./discovery-types";
 
 export class DiscoveryPlanError extends Error {
@@ -60,8 +60,15 @@ function finiteNumber(value: unknown): number | undefined {
 /**
  * Valida y normaliza el plan de la skill/MCP/UI. Reglas mínimas: título,
  * al menos un sector y una red. Tiers desconocidos o vacíos → todos.
+ *
+ * `config` (SAN-76): config EFECTIVA del modelo (defaults + overrides de
+ * Yalc) — de ahí salen el modo de cualificación y el umbral cuando el plan
+ * no los trae. Default: la sembrada (caminos sin slug o Yalc caído).
  */
-export function parseDiscoveryPlan(input: unknown): DiscoveryPlan {
+export function parseDiscoveryPlan(
+  input: unknown,
+  config: CreatorModelConfig = DEFAULT_CREATOR_MODEL_CONFIG,
+): DiscoveryPlan {
   if (!isRecord(input)) {
     throw new DiscoveryPlanError("plan must be a JSON object");
   }
@@ -110,8 +117,8 @@ export function parseDiscoveryPlan(input: unknown): DiscoveryPlan {
       competitorBrands,
     },
     templates: stringList(input.templates),
-    qualificationMode: (rawMode as QualificationMode | undefined) ?? DEFAULT_CREATOR_MODEL_CONFIG.qualification.defaultMode,
-    disqualifyThreshold: threshold ?? DEFAULT_CREATOR_MODEL_CONFIG.qualification.threshold,
+    qualificationMode: (rawMode as QualificationMode | undefined) ?? config.qualification.defaultMode,
+    disqualifyThreshold: threshold ?? config.qualification.threshold,
     notes: typeof input.notes === "string" && input.notes.trim() ? input.notes.trim() : undefined,
   };
 }

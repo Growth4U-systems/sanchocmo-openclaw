@@ -85,16 +85,23 @@ test("tools/list exposes expected MCP schemas", async () => {
       "yalc_create_search",
       // SAN-81: reporting por creator (misma agregación que la UI de Metrics)
       "yalc_creator_report",
+      // SAN-76: model settings (lectura efectiva + PUT parcial espejo de la UI)
+      "yalc_get_model_config",
       "yalc_get_overview",
       "yalc_list_campaigns",
       "yalc_list_gates",
       "yalc_list_leads",
       "yalc_set_lead_stage",
+      "yalc_update_model_config",
     ]);
 
     const sendMessage = result.tools.find((tool) => tool.name === "sancho_send_message");
     assert.ok(sendMessage);
     assert.deepEqual(sendMessage.inputSchema.required, ["clientSlug", "text"]);
+
+    const updateModelConfig = result.tools.find((tool) => tool.name === "yalc_update_model_config");
+    assert.ok(updateModelConfig);
+    assert.deepEqual(updateModelConfig.inputSchema.required, ["clientSlug"]);
 
     const setLeadStage = result.tools.find((tool) => tool.name === "yalc_set_lead_stage");
     assert.ok(setLeadStage);
@@ -477,6 +484,89 @@ test("yalc_create_search is dry-run by default and previews the parsed plan", as
     assert.equal(plan.qualificationMode, "hybrid");
     assert.equal(plan.disqualifyThreshold, 40);
     assert.deepEqual(plan.signals.competitorBrands, ["N26", "Revolut"]);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_update_model_config requires yalc:write scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_update_model_config",
+      arguments: { clientSlug: "alpha", disqualifyThreshold: 55 },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:write/);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_update_model_config is dry-run by default and previews the merged config", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:write"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_update_model_config",
+      arguments: {
+        clientSlug: "alpha",
+        erBenchmarks: { micro: 6.5 },
+        verticals: ["fintech", "cripto"],
+        qualificationMode: "hybrid",
+        disqualifyThreshold: 55,
+      },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.dryRun, true);
+    assert.equal(payload.requiresConfirmation, true);
+    // El partial que viajaría a Yalc: params tipados → documento de overrides.
+    assert.deepEqual(payload.partial, {
+      tiers: [{ key: "micro", erBenchmarkPct: 6.5 }],
+      verticals: ["fintech", "cripto"],
+      qualification: { defaultMode: "hybrid", threshold: 55 },
+    });
+    // Preview de la efectiva (defaults + partial — sin Yalc en este harness).
+    const preview = payload.preview as {
+      config: {
+        tiers: Array<{ key: string; erBenchmarkPct: number }>;
+        verticals: string[];
+        qualification: { threshold: number };
+      };
+    };
+    assert.equal(preview.config.tiers.find((tier) => tier.key === "micro")?.erBenchmarkPct, 6.5);
+    assert.equal(preview.config.tiers.find((tier) => tier.key === "nano")?.erBenchmarkPct, 8.0);
+    assert.deepEqual(preview.config.verticals, ["fintech", "cripto"]);
+    assert.equal(preview.config.qualification.threshold, 55);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_update_model_config rejects unknown override keys", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:write"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_update_model_config",
+      arguments: { clientSlug: "alpha", overrides: { tires: [{ key: "nano" }] } },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /Unknown model-config keys: tires/);
   } finally {
     await close();
   }

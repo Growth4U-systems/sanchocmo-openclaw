@@ -20,6 +20,7 @@ import { resolveYalcConfig, yalcFetch } from "@/lib/yalc/client";
 import { normalizeCandidates } from "./discovery-normalize";
 import { getSearch, updateRunnerState } from "./discovery-store";
 import { fixturesEnabledByEnv, loadFixtureCandidates } from "./fixtures";
+import { getEffectiveModelConfig } from "./model-config";
 import { qualifyCandidates } from "./qualify-enrich";
 import type { DiscoveryRunnerStats, DiscoverySearchRecord } from "./discovery-types";
 import type { QualifiedCandidate } from "./qualify-enrich";
@@ -97,8 +98,11 @@ export async function runDiscoverySearch(options: RunDiscoveryOptions): Promise<
       );
     }
 
-    // qualify-enrich: quality score real (calc-creator-core) por candidato.
-    const qualified = qualifyCandidates(candidates, { searchId });
+    // qualify-enrich: quality score real (calc-creator-core) por candidato,
+    // con la config EFECTIVA del modelo (Yalc model-config + defaults, SAN-76;
+    // degrada a la sembrada si Yalc no responde).
+    const effective = await getEffectiveModelConfig(slug);
+    const qualified = qualifyCandidates(candidates, { searchId, config: effective.config });
 
     // Inserción en Yalc — resolveEntryStatus decide Sourced/Disqualified/drop.
     const response = await yalcFetch<YalcAssignResponse>(

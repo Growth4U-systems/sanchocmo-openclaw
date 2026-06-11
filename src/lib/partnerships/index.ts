@@ -150,3 +150,16 @@ export {
 
 export { creatorReportForSlug, parseReportPeriod, REPORT_PERIODS } from "./report-service";
 export type { CreatorReportServiceOptions } from "./report-service";
+
+// ── SAN-76 · Model config (defaults calc-creator-core + overrides en Yalc) ──
+
+export {
+  assertModelConfigPartial,
+  defaultModelConfig,
+  getEffectiveModelConfig,
+  mergeOverrideDocuments,
+  ModelConfigValidationError,
+  previewModelConfigUpdate,
+  putModelConfigOverrides,
+} from "./model-config";
+export type { EffectiveModelConfig, ModelConfigPreview } from "./model-config";

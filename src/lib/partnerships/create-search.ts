@@ -13,6 +13,7 @@
 import { createTask } from "@/lib/data/tasks";
 import { resolveYalcConfig, yalcFetch } from "@/lib/yalc/client";
 import { buildCampaignPayload, describePlan, parseDiscoveryPlan } from "./discovery-plan";
+import { getEffectiveModelConfig } from "./model-config";
 import { newSearchId, saveSearch, searchRelativePath } from "./discovery-store";
 import type { DiscoveryPlan, DiscoverySearchRecord } from "./discovery-types";
 
@@ -41,7 +42,11 @@ export async function createDiscoverySearch(options: {
   plan: unknown;
 }): Promise<CreateSearchResult> {
   const { slug } = options;
-  const plan = parseDiscoveryPlan(options.plan);
+  // SAN-76: el modo/umbral de cualificación por defecto sale de la config
+  // EFECTIVA (Yalc model-config + defaults) — un umbral editado en Settings
+  // aplica a las búsquedas NUEVAS (nunca retro-aplica a campañas existentes).
+  const effective = await getEffectiveModelConfig(slug);
+  const plan = parseDiscoveryPlan(options.plan, effective.config);
 
   // 1 · Campaign Partnerships en Yalc (modo de cualificación del plan).
   const config = resolveYalcConfig(slug);
