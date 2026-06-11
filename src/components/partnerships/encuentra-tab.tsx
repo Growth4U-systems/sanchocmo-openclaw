@@ -46,6 +46,9 @@ interface EncuentraTabProps {
   onCreateSearch: () => void;
 }
 
+/** Orden de cards como el mockup: en marcha primero, drafts al final. */
+const STATE_ORDER: Record<SearchState, number> = { running: 0, done: 1, paused: 2, draft: 3 };
+
 export function EncuentraTab({
   campaigns,
   leads,
@@ -55,6 +58,9 @@ export function EncuentraTab({
   onCreateSearch,
 }: EncuentraTabProps) {
   const [filter, setFilter] = useState<"todas" | "archivadas">("todas");
+  const ordered = campaigns
+    .slice()
+    .sort((a, b) => STATE_ORDER[searchState(a)] - STATE_ORDER[searchState(b)]);
 
   return (
     <div data-testid="encuentra-tab">
@@ -93,7 +99,7 @@ export function EncuentraTab({
         />
       ) : (
         <div className="space-y-4">
-          {campaigns.map((campaign) => {
+          {ordered.map((campaign) => {
             const state = searchState(campaign);
             const meta = STATE_META[state];
             const campaignLeads = leads.filter((lead) => lead.campaignId === campaign.id);
