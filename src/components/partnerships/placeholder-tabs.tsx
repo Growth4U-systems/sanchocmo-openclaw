@@ -1,7 +1,6 @@
 /**
- * Placeholders de Outreach·Partnerships (SAN-78): Inbox y Plantillas llegan
- * con SAN-80; Settings del modelo con SAN-76. Zero-states navegables para que
- * la página esté completa mientras tanto.
+ * Placeholder de Outreach·Partnerships: Settings del modelo llega con SAN-76.
+ * (Inbox y Plantillas ya son reales — SAN-80: inbox-tab.tsx / plantillas-tab.tsx.)
  */
 
 "use client";
@@ -61,42 +60,6 @@ function PlaceholderShell({
         </span>
       </div>
     </div>
-  );
-}
-
-export function InboxPlaceholder({ onGoContactos }: PlaceholderProps) {
-  return (
-    <PlaceholderShell
-      emoji="📬"
-      quote="«Las respuestas llegarán, señor, y aquí las leeremos todas.»"
-      title="INBOX DE NEGOCIACIÓN"
-      body="Aquí se negociará con cada creator sin salir de Sancho: respuestas reales del email del canal, filtradas por estado del pipeline."
-      bullets={[
-        "Hilos de respuesta por creator (reusa el gmail-reply-webhook-handler de Yalc).",
-        "Filtros por estado: En cola · Contactado · Respondió · Reunión · Negociando · Parado.",
-        "Sancho calcula el break-even sobre cada precio que llegue y sugiere contraoferta.",
-      ]}
-      action={onGoContactos ? { label: "Ver contactos del pipeline", onClick: onGoContactos } : undefined}
-      issue="SAN-80"
-    />
-  );
-}
-
-export function PlantillasPlaceholder({ onGoContactos }: PlaceholderProps) {
-  return (
-    <PlaceholderShell
-      emoji="📄"
-      quote="«Cada carta, como cada lanza, se templa antes de usarse.»"
-      title="PLANTILLAS & BRIEFS"
-      body="Biblioteca de secuencias de contacto y briefs creativos como assets estilo Documents: cada búsqueda instancia sus copias desde aquí."
-      bullets={[
-        "Secuencias de primer contacto y re-engagement (se aprueban vía gates antes de enviar).",
-        "Briefs de campaña por formato (reel educativo, post comparativa, compliance).",
-        "Asignación por búsqueda desde Encuentra — el original queda en la biblioteca.",
-      ]}
-      action={onGoContactos ? { label: "Ver contactos del pipeline", onClick: onGoContactos } : undefined}
-      issue="SAN-80"
-    />
   );
 }
 

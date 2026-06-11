@@ -4,8 +4,13 @@
  *
  * Sub-nav del mockup: Encuentra · Contactos · Inbox · Plantillas, con el
  * engranaje ⚙️ Settings fijo arriba a la derecha (decisión de diseño nº 3 —
- * misma lógica que Content Creation). Inbox/Plantillas/Settings son
- * placeholders (SAN-80/SAN-76).
+ * misma lógica que Content Creation). Inbox y Plantillas son reales (SAN-80);
+ * Settings sigue placeholder (SAN-76).
+ *
+ * SAN-80: "Contactar" (bulk de la Lista o mover a Contacted) instancia la
+ * secuencia de la búsqueda vía POST /api/partnerships/contact → GateItem en
+ * Yalc; el modal de aprobación (human-in-the-loop) aprueba con
+ * POST /api/yalc/gates (dry-run: nunca un email real en dev).
  *
  * Estado en query params (?tab=&vista=&busqueda=) para que Encuentra pueda
  * enlazar a Contactos · Lista filtrado por búsqueda y el verificador navegue
@@ -37,12 +42,16 @@ import type {
   PartnershipLead,
   PartnershipLeadsPayload,
 } from "@/lib/partnerships/types";
+import type { DiscoverySearchRecord } from "@/lib/partnerships/discovery-types";
+import type { TemplateSummary } from "@/lib/partnerships/templates";
 import { TipoSelector } from "./tipo-selector";
 import { EncuentraTab } from "./encuentra-tab";
 import { KanbanView } from "./kanban-view";
 import { ListaView } from "./lista-view";
 import { PartnerDrawer } from "./partner-drawer";
-import { InboxPlaceholder, PlantillasPlaceholder, SettingsPlaceholder } from "./placeholder-tabs";
+import { InboxTab } from "./inbox-tab";
+import { PlantillasTab } from "./plantillas-tab";
+import { SettingsPlaceholder } from "./placeholder-tabs";
 import { NarratorCaption, ToastViewport, useToast } from "./ui";
 
 type PartnershipsTab = "encuentra" | "contactos" | "inbox" | "plantillas" | "settings";
@@ -154,6 +163,24 @@ export function PartnershipsView() {
     enabled: !!slug,
   });
 
+  // SAN-80: búsquedas (con plantillas instanciadas) + biblioteca para el picker.
+  const searchesQuery = useQuery({
+    queryKey: ["partnerships", slug, "searches"],
+    queryFn: () =>
+      fetchJson<{ searches?: DiscoverySearchRecord[] }>(
+        `/api/partnerships/searches?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug,
+  });
+  const templatesQuery = useQuery({
+    queryKey: ["partnerships", slug, "templates"],
+    queryFn: () =>
+      fetchJson<{ summaries?: TemplateSummary[] }>(
+        `/api/partnerships/templates?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug,
+  });
+
   const campaigns = useMemo(
     () => (campaignsQuery.data?.campaigns || []).filter((c) => (c.type || "") === "Partnerships"),
     [campaignsQuery.data],
@@ -224,6 +251,12 @@ export function PartnershipsView() {
   });
 
   function moveLead(lead: PartnershipLead, target: StageFilterKey, note?: string) {
+    // SAN-80: mover a Contacted NO es un PATCH a secas — instancia la
+    // secuencia de la búsqueda y crea el gate (el estado avanza a Queued).
+    if (target === "Contacted") {
+      void contactLeads([lead]);
+      return;
+    }
     stageMutation.mutate(
       { lead, target, note },
       {
@@ -241,6 +274,10 @@ export function PartnershipsView() {
   }
 
   async function moveMany(leads: PartnershipLead[], target: StageFilterKey) {
+    if (target === "Contacted") {
+      await contactLeads(leads);
+      return;
+    }
     const status = canonicalStatusForStage(target);
     try {
       await Promise.all(
@@ -262,6 +299,70 @@ export function PartnershipsView() {
     } finally {
       void queryClient.invalidateQueries({ queryKey: activeLeadsKey });
       void queryClient.invalidateQueries({ queryKey: discardedLeadsKey });
+    }
+  }
+
+  // ── SAN-80 · Contactar (instancia secuencia + GateItem) ──
+  interface PendingContactGate {
+    runId: string;
+    prompt: string;
+    dryRun: boolean;
+    queuedLeads: number;
+    sequenceName: string;
+    sent?: boolean;
+  }
+  const [contactGate, setContactGate] = useState<PendingContactGate | null>(null);
+
+  async function contactLeads(leadsToContact: PartnershipLead[]) {
+    try {
+      const payload = await fetchJson<{ gates: PendingContactGate[] & Array<{ runId: string }> }>(
+        `/api/partnerships/contact?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            leads: leadsToContact.map((lead) => ({ id: lead.id, campaignId: lead.campaignId })),
+          }),
+        },
+      );
+      const first = payload.gates?.[0];
+      if (first) setContactGate({ ...first, sent: false });
+      void queryClient.invalidateQueries({ queryKey: activeLeadsKey });
+      void queryClient.invalidateQueries({ queryKey: discardedLeadsKey });
+    } catch (error) {
+      showToast(`⚠️ ${error instanceof Error ? error.message : "No se pudo contactar"}`, "warn");
+    }
+  }
+
+  async function approveContactGate(runId: string) {
+    try {
+      await fetchJson(`/api/yalc/gates?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runId, action: "approve" }),
+      });
+      setContactGate((prev) => (prev ? { ...prev, sent: true } : prev));
+      void queryClient.invalidateQueries({ queryKey: activeLeadsKey });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "partnerships", "inbox-leads"] });
+    } catch (error) {
+      showToast(`⚠️ ${error instanceof Error ? error.message : "No se pudo aprobar"}`, "warn");
+    }
+  }
+
+  async function assignTemplate(campaign: PartnershipCampaign, templateId: string) {
+    try {
+      await fetchJson(
+        `/api/partnerships/templates/${encodeURIComponent(templateId)}/assign?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ campaignId: campaign.id }),
+        },
+      );
+      showToast(`✓ Plantilla instanciada en «${campaign.title || campaign.id}»`);
+      void queryClient.invalidateQueries({ queryKey: ["partnerships", slug, "searches"] });
+    } catch (error) {
+      showToast(`⚠️ ${error instanceof Error ? error.message : "No se pudo asignar"}`, "warn");
     }
   }
 
@@ -373,6 +474,10 @@ export function PartnershipsView() {
                 onOpenSearch={(campaign) => pushQuery({ tab: "contactos", vista: "lista", busqueda: campaign.id })}
                 onContinueDraft={(campaign) => openDiscoveryChat(campaign)}
                 onCreateSearch={() => openDiscoveryChat()}
+                searches={searchesQuery.data?.searches || []}
+                templateLibrary={templatesQuery.data?.summaries || []}
+                onAssignTemplate={(campaign, templateId) => void assignTemplate(campaign, templateId)}
+                onCreateTemplate={() => pushQuery({ tab: "plantillas" })}
               />
             )}
 
@@ -453,14 +558,15 @@ export function PartnershipsView() {
                     onOpen={(lead) => setSelectedLeadId(lead.id)}
                     onBulkMove={(leads, target) => void moveMany(leads, target)}
                     onBulkDiscard={(leads) => void moveMany(leads, DISCARDED_STAGE)}
+                    onBulkContact={(leads) => void contactLeads(leads)}
                     busy={stageMutation.isPending}
                   />
                 )}
               </div>
             )}
 
-            {tab === "inbox" && <InboxPlaceholder onGoContactos={() => pushQuery({ tab: "contactos" })} />}
-            {tab === "plantillas" && <PlantillasPlaceholder onGoContactos={() => pushQuery({ tab: "contactos" })} />}
+            {tab === "inbox" && <InboxTab slug={slug} />}
+            {tab === "plantillas" && <PlantillasTab slug={slug} />}
             {tab === "settings" && (
               <SettingsPlaceholder
                 onGoB2B={() => {
@@ -477,11 +583,89 @@ export function PartnershipsView() {
       </div>
 
       <PartnerDrawer
+        slug={slug}
         lead={selectedLead}
         onClose={() => setSelectedLeadId(null)}
         onMove={moveLead}
         busy={stageMutation.isPending}
       />
+
+      {/* ── GATE de contacto (GateItem · human-in-the-loop) ── */}
+      {contactGate && (
+        <div className="fixed inset-0 z-[600]">
+          <div className="fixed inset-0 bg-ink/45" onClick={() => setContactGate(null)} aria-hidden />
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed left-1/2 top-1/2 w-[min(540px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-2 border-ink bg-background p-6 shadow-comic"
+            data-testid="contact-gate-modal"
+          >
+            {!contactGate.sent ? (
+              <>
+                <h2 className="font-heading text-2xl text-navy">🚦 GATE: APROBAR ENVÍO</h2>
+                <span className="mt-1 inline-block -rotate-2 rounded border-2 border-rust px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-rust">
+                  GateItem · requiere humano
+                </span>
+                <div className="mt-3 space-y-1.5 text-sm">
+                  <div className="rounded-md border-2 border-border bg-card px-3 py-1.5">
+                    <b>Secuencia:</b> {contactGate.sequenceName}
+                  </div>
+                  <div className="rounded-md border-2 border-border bg-card px-3 py-1.5">
+                    <b>Acción:</b> {contactGate.prompt}
+                  </div>
+                  <div className="rounded-md border-2 border-border bg-card px-3 py-1.5">
+                    <b>Gate:</b> {contactGate.runId}
+                    {contactGate.dryRun && " · dry-run (no saldrá ningún email real)"}
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void approveContactGate(contactGate.runId)}
+                    className="rounded-md border-2 border-ink bg-rust px-4 py-2 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5"
+                    data-testid="approve-contact-gate"
+                  >
+                    ✅ Aprobar y enviar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setContactGate(null);
+                      showToast("Gate pendiente — lo tienes también en el Cockpit (yalc_list_gates)");
+                    }}
+                    className="rounded-md border-2 border-border bg-card px-4 py-2 text-sm font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-ink"
+                  >
+                    ✋ Luego
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] italic text-muted-foreground">
+                  Los creators quedan «En cola» hasta tu OK. El mismo gate se puede aprobar desde el
+                  chat (Rocinante) o desde Claude Code (yalc_approve_gate).
+                </p>
+              </>
+            ) : (
+              <div className="py-4 text-center" data-testid="contact-gate-sent">
+                <span className="inline-block -rotate-3 rounded-xl border-4 border-sage px-6 py-2 font-heading text-2xl tracking-wide text-sage">
+                  ¡ENVIADO!
+                </span>
+                <p className="mx-auto mt-3 max-w-sm text-sm italic text-muted-foreground">
+                  Secuencia lanzada{contactGate.dryRun ? " en dry-run (sin email real)" : ""} a{" "}
+                  {contactGate.queuedLeads} creator{contactGate.queuedLeads === 1 ? "" : "s"} — el primer
+                  toque ya está en su hilo del Inbox.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setContactGate(null)}
+                  className="mt-4 rounded-md border-2 border-border bg-card px-4 py-2 text-sm font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-ink"
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <ToastViewport toast={toast} />
     </DashboardLayout>
   );

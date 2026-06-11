@@ -49,6 +49,8 @@ interface ListaViewProps {
   onOpen: (lead: PartnershipLead) => void;
   onBulkMove: (leads: PartnershipLead[], target: StageFilterKey) => void;
   onBulkDiscard: (leads: PartnershipLead[]) => void;
+  /** SAN-80: instancia la secuencia de la búsqueda y crea el GateItem. */
+  onBulkContact?: (leads: PartnershipLead[]) => void;
   busy?: boolean;
 }
 
@@ -60,6 +62,7 @@ export function ListaView({
   onOpen,
   onBulkMove,
   onBulkDiscard,
+  onBulkContact,
   busy,
 }: ListaViewProps) {
   const [search, setSearch] = useState("");
@@ -337,6 +340,21 @@ export function ListaView({
               </option>
             ))}
           </select>
+          {onBulkContact && (
+            <button
+              type="button"
+              disabled={busy}
+              title="Instancia la secuencia de la búsqueda para estos creators y crea el gate de aprobación (dry-run)"
+              onClick={() => {
+                onBulkContact(selectedLeads);
+                clearSelection();
+              }}
+              className="rounded-md border-2 border-white/70 bg-rust px-3 py-1.5 text-sm font-bold transition-transform hover:-translate-y-0.5"
+              data-testid="bulk-contactar"
+            >
+              📨 Contactar
+            </button>
+          )}
           <button
             type="button"
             disabled={busy}

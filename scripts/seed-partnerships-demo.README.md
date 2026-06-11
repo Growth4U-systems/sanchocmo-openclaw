@@ -1,9 +1,10 @@
-# Seed · Partnerships demo (SAN-78)
+# Seed · Partnerships demo (SAN-78 + SAN-80)
 
 Siembra el **Yalc local** con los 9 creators canónicos del mockup
-(`OUTPUTS/sanchocmo/mockups-partnerships/contactos-lista.html`) para desarrollar
-y verificar la UI de Outreach·Partnerships: Encuentra, Contactos (kanban/lista)
-y el drawer del partner.
+(`OUTPUTS/sanchocmo/mockups-partnerships/contactos-lista.html`) + las
+conversaciones del Inbox (`inbox.html`) para desarrollar y verificar la UI de
+Outreach·Partnerships: Encuentra, Contactos (kanban/lista), drawer (con calc
+break-even), Inbox de negociación y Plantillas.
 
 ## Prerrequisitos
 
@@ -31,14 +32,19 @@ y el drawer del partner.
 Desde la raíz de `sanchocmo-openclaw`:
 
 ```bash
-# Defaults: YALC_BASE_URL=http://localhost:3847 · DB=~/.gtm-os/gtm-os.db · sin token
+# Defaults: YALC_BASE_URL=http://localhost:3847 · DB=~/.gtm-os/gtm-os.db ·
+# sin token · SANCHO_SLUG=monzo (cliente cuyo brand/ recibe búsquedas+plantillas)
 npx tsx scripts/seed-partnerships-demo.ts
 
 # Con token y/o rutas custom
 YALC_API_TOKEN=<token> YALC_BASE_URL=http://localhost:3847 \
-YALC_DB=~/.gtm-os/gtm-os.db \
+YALC_DB=~/.gtm-os/gtm-os.db SANCHO_SLUG=<slug> \
 npx tsx scripts/seed-partnerships-demo.ts
 ```
+
+> SAN-80 necesita la rama Yalc de SAN-80 (`alfonso/san-80-contacto-inbox-yalc`):
+> trae `lead_messages`, `POST /api/webhooks/reply` y el flujo
+> `partner-contact` + framework `partner-outreach` (gates).
 
 Es **idempotente**: re-ejecutarlo actualiza (ancla `provider_id='seed:<handle>'`)
 en lugar de duplicar.
@@ -67,6 +73,21 @@ en lugar de duplicar.
   Los 2 descartados NO salen en el kanban (Descartado no es columna): se ven en
   Contactos · Lista con el filtro Stage → 🗑 Descartados, y son reversibles.
 
+- **(SAN-80)** Búsquedas registradas en Sancho (`brand/{SANCHO_SLUG}/outreach/searches/`)
+  con la secuencia **"Primer contacto creators fintech" instanciada** en la búsqueda
+  activa, biblioteca de plantillas del mockup (3 secuencias + 3 briefs) y 6
+  conversaciones del Inbox (mensajes out en dry-run + replies vía
+  `POST /api/webhooks/reply`):
+
+  | Hilo | Estado Inbox | Detalle |
+  |---|---|---|
+  | @finanzasconlucia | Negociando | reply con **3.500€** → panel break-even + borrador contraoferta |
+  | @davidfintech | Respondió | reply con 1.200€ |
+  | @ahorroconmarta | Contactado | primer toque enviado, sin respuesta |
+  | @elclubdelahorro (extra) | Reunión | Demo_Booked + calendly |
+  | @podcastdinero (extra) | Parado | No_Reply tras 2 follow-ups |
+  | @criptoclara (extra) | Rebotado | email bounced (prioridad sobre lifecycle) |
+
 ## Verificar la UI (DoD SAN-78)
 
 ```bash
@@ -88,3 +109,24 @@ Abre `/dashboard/<slug>/yalc` (cliente demo; Outreach en el sidebar):
    datos del creator, hueco calc break-even (Ola 2) y contact log placeholder;
    botón ⤢ Expandir a pantalla completa.
 5. Selector **Tipo: B2B** → el cockpit YALC de siempre, intacto.
+
+## Verificar SAN-80 (Plantillas · Contacto · Inbox)
+
+6. **Plantillas** — biblioteca con 3 secuencias + 3 briefs; hover en una línea:
+   ⬇️ descarga el .md · 📄 doc renderizado (doc-slideover) · 💬 chat con Sancho
+   (hilo de la plantilla, Rocinante) · 📋 va a la búsqueda que la instancia.
+   Click en línea = editor (pasos + delays + variables insertables); ＋ Nueva.
+7. **Encuentra** — fila "Plantillas de esta búsqueda" con chips de instancias y
+   "＋ asignar plantilla" (picker de la biblioteca → Instanciar).
+8. **Contactar** — en Contactos·Lista selecciona leads en Shortlist → bulk
+   "📨 Contactar" (o mueve una card a Contacted): se instancia la secuencia y
+   se abre el GATE (GateItem). "✅ Aprobar y enviar" = envío **dry-run** (jamás
+   email real) → el lead pasa a Contactado y su hilo aparece en el Inbox.
+9. **Inbox** — chips con contadores (Negociando/Respondió/Contactado/Reunión/
+   Parado/Rebotado encendidos por el seed); el hilo de @finanzasconlucia
+   muestra el panel "🧮 Sancho ha detectado un precio: 3.500€" con el
+   break-even real (44 necesarias · ~52 alcanzables · VIABLE · contraoferta
+   4.100€), "📎 Insertar análisis" añade el P.D. al borrador, y 📨 Enviar
+   abre el gate de la respuesta.
+10. **Drawer** — calc break-even interactiva (posts/formato/precio/estructura/
+    CPA/CAC/incentivo) recalculando en vivo + contact log con el hilo real.

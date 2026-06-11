@@ -107,7 +107,26 @@ export async function createDiscoverySearch(options: {
   }
 
   record.taskId = taskId;
-  const search = saveSearch(record);
+  let search = saveSearch(record);
+
+  // 4 · Fila "Plantillas" del plan (SAN-79 la emite, SAN-80 la materializa):
+  //     instancia copias de la biblioteca que coincidan por nombre/id.
+  //     Tolerante: nombres desconocidos quedan en el plan para crearlos luego.
+  try {
+    const { assignTemplatesFromPlan } = await import("./template-store");
+    const { assigned, missing } = assignTemplatesFromPlan(slug, search);
+    if (assigned.length > 0) {
+      const refreshed = (await import("./discovery-store")).getSearch(slug, search.id);
+      if (refreshed) search = refreshed;
+    }
+    if (missing.length > 0) {
+      console.warn(
+        `[partnerships] plan templates without library match for ${searchId} (${slug}): ${missing.join(", ")}`,
+      );
+    }
+  } catch (err) {
+    console.error(`[partnerships] assignTemplatesFromPlan failed for ${searchId} (${slug}):`, err);
+  }
 
   return { search, campaignId, taskId, plan };
 }

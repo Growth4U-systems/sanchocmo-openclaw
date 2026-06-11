@@ -77,6 +77,11 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_mcp_status",
       "sancho_send_message",
       "sancho_update_task",
+      // SAN-80: gates de envío + plantillas (escritura espejo de la UI)
+      "yalc_approve_gate",
+      "yalc_assign_template",
+      // SAN-75b: calc break-even (registrada por registerYalcBreakevenTool)
+      "yalc_breakeven",
       "yalc_create_search",
       "yalc_get_overview",
       "yalc_list_campaigns",

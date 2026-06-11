@@ -19,6 +19,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { stageForStatus } from "@/lib/partnerships/stage-mapping";
 import type { PartnershipCampaign, PartnershipLead } from "@/lib/partnerships/types";
+import type { DiscoverySearchRecord } from "@/lib/partnerships/discovery-types";
+import type { TemplateSummary } from "@/lib/partnerships/templates";
 
 type SearchState = "running" | "done" | "draft" | "paused";
 
@@ -44,6 +46,12 @@ interface EncuentraTabProps {
   onOpenSearch: (campaign: PartnershipCampaign) => void;
   onContinueDraft: (campaign: PartnershipCampaign) => void;
   onCreateSearch: () => void;
+  /** Búsquedas (SAN-79) con sus plantillas instanciadas (SAN-80). */
+  searches?: DiscoverySearchRecord[];
+  /** Biblioteca de plantillas para el picker "＋ asignar plantilla". */
+  templateLibrary?: TemplateSummary[];
+  onAssignTemplate?: (campaign: PartnershipCampaign, templateId: string) => void;
+  onCreateTemplate?: () => void;
 }
 
 /** Orden de cards como el mockup: en marcha primero, drafts al final. */
@@ -56,8 +64,13 @@ export function EncuentraTab({
   onOpenSearch,
   onContinueDraft,
   onCreateSearch,
+  searches = [],
+  templateLibrary = [],
+  onAssignTemplate,
+  onCreateTemplate,
 }: EncuentraTabProps) {
   const [filter, setFilter] = useState<"todas" | "archivadas">("todas");
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   const ordered = campaigns
     .slice()
     .sort((a, b) => STATE_ORDER[searchState(a)] - STATE_ORDER[searchState(b)]);
@@ -176,21 +189,86 @@ export function EncuentraTab({
                   </p>
                 </div>
 
-                {/* Plantillas instanciadas por búsqueda — llegan con SAN-80 */}
+                {/* Plantillas instanciadas por búsqueda (SAN-80) */}
                 {!isDraft && (
                   <div
-                    className="flex flex-wrap items-center gap-2 border-t-2 border-dashed border-border px-5 py-2.5"
+                    className="relative flex flex-wrap items-center gap-2 border-t-2 border-dashed border-border px-5 py-2.5"
                     onClick={(event) => event.stopPropagation()}
+                    data-testid="search-templates-row"
                   >
                     <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                       Plantillas de esta búsqueda:
                     </span>
-                    <span
-                      className="rounded-full border-2 border-dashed border-border px-3 py-0.5 text-xs font-semibold text-muted-foreground"
-                      title="Secuencias y briefs como assets — se instancian desde la biblioteca (SAN-80)"
+                    {(searches.find((search) => search.campaignId === campaign.id)?.templates || []).map(
+                      (instance) => (
+                        <span
+                          key={instance.instanceId}
+                          title={`Instancia de «${instance.name}» (copia congelada al asignar)`}
+                          className="rounded-full border-2 border-ink bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-ink shadow-comic-sm"
+                          data-template-instance={instance.templateId}
+                        >
+                          {instance.kind === "sequence" ? "✉️" : "📝"} {instance.name}
+                        </span>
+                      ),
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setPickerFor(pickerFor === campaign.id ? null : campaign.id)}
+                      className="rounded-full border-2 border-dashed border-border px-3 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-ink hover:text-foreground"
+                      title="Instanciar una plantilla de la biblioteca en esta búsqueda"
+                      data-testid="assign-template-chip"
                     >
-                      ＋ asignar plantilla — llega con Plantillas (SAN-80)
-                    </span>
+                      ＋ asignar plantilla
+                    </button>
+
+                    {/* Picker de la biblioteca */}
+                    {pickerFor === campaign.id && (
+                      <div
+                        className="absolute left-5 top-full z-20 mt-1 w-80 overflow-hidden rounded-xl border-2 border-ink bg-card shadow-comic"
+                        data-testid="template-picker"
+                      >
+                        <div className="border-b-2 border-border bg-yellow-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                          Instanciar desde la biblioteca
+                        </div>
+                        {templateLibrary.length === 0 && (
+                          <p className="px-3 py-3 text-xs italic text-muted-foreground">Biblioteca vacía.</p>
+                        )}
+                        {templateLibrary.map((template) => (
+                          <button
+                            key={template.id}
+                            type="button"
+                            onClick={() => {
+                              onAssignTemplate?.(campaign, template.id);
+                              setPickerFor(null);
+                            }}
+                            className="flex w-full items-center gap-2 border-b border-border/50 px-3 py-2 text-left text-xs transition-colors last:border-b-0 hover:bg-yellow-50"
+                            data-picker-template={template.id}
+                          >
+                            <span aria-hidden>{template.kind === "sequence" ? "✉️" : "📝"}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-bold text-ink">{template.name}</span>
+                              <span className="block truncate text-[10px] text-muted-foreground">
+                                {template.description}
+                              </span>
+                            </span>
+                            <span className="shrink-0 rounded border border-ink bg-yellow-200 px-1.5 text-[9px] font-bold">
+                              Instanciar
+                            </span>
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPickerFor(null);
+                            onCreateTemplate?.();
+                          }}
+                          className="w-full border-t-2 border-border px-3 py-2 text-left text-xs font-bold text-rust transition-colors hover:bg-yellow-50"
+                          data-testid="picker-create-new"
+                        >
+                          ✨ Crear nueva en Plantillas →
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </section>

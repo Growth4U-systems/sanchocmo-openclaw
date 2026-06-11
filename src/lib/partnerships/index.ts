@@ -57,3 +57,66 @@ export type { CreateSearchResult } from "./create-search";
 
 export { runDiscoverySearch } from "./discovery-runner";
 export type { RunDiscoveryOptions, RunDiscoveryResult } from "./discovery-runner";
+
+// ── SAN-80 · Plantillas + Contacto + Inbox + negotiation-assist ─────────────
+
+export {
+  instantiateTemplate,
+  parseTemplate,
+  renderTemplateText,
+  serializeTemplate,
+  slugifyTemplateName,
+  templateRelativePath,
+  templateSummary,
+  TEMPLATE_VARIABLES,
+  toYalcSequence,
+} from "./templates";
+export type {
+  AssignedTemplate,
+  PartnershipTemplate,
+  TemplateCampaignType,
+  TemplateKind,
+  TemplateRenderContext,
+  TemplateStep,
+  TemplateSummary,
+} from "./templates";
+
+export { SEED_TEMPLATES } from "./template-seeds";
+
+export {
+  assignTemplatesFromPlan,
+  assignTemplateToSearch,
+  ensureSeedTemplates,
+  findSearchByCampaign,
+  findSearchSequence,
+  getTemplate,
+  listAssignedTemplates,
+  listTemplates,
+  listTemplateSummaries,
+  saveTemplate,
+  templateFile,
+  templatesDir,
+  TemplateValidationError,
+} from "./template-store";
+export type { AssignTemplateResult, SaveTemplateInput } from "./template-store";
+
+export { contactPartnerLeads, PartnerContactError } from "./contact";
+export type { ContactGateResult, ContactLeadsInput } from "./contact";
+
+export {
+  INBOX_STATE_LABELS,
+  INBOX_STATES,
+  inboxConversations,
+  inboxStateCounts,
+  inboxStateForLead,
+} from "./inbox-mapping";
+export type { InboxLeadLike, InboxStateKey, InboxStateMeta } from "./inbox-mapping";
+
+export {
+  detectLatestPrice,
+  detectPrices,
+  insertAnalysisParagraph,
+  negotiationBreakEven,
+  NICHE_ER_BENCHMARK_PCT,
+} from "./negotiation";
+export type { DetectedPrice, NegotiationCalcInput } from "./negotiation";

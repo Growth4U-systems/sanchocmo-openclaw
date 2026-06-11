@@ -183,6 +183,30 @@ export function buildDiscoverySearchThread(
 }
 
 /**
+ * Plantillas de Outreach·Partnerships (SAN-80) — 💬 "Chat con Sancho" de cada
+ * plantilla (secuencia o brief). Hilo estable por plantilla, atendido por
+ * Rocinante (agente owner de Outreach) con la skill de secuencias; el doc
+ * anclado es el .md de la plantilla (mismo fichero que ⬇️/📄).
+ */
+export function buildOutreachTemplateThread(
+  slug: string,
+  template: { id: string; name: string; kind?: "sequence" | "brief" },
+): ThreadConfig {
+  const kindLabel = template.kind === "brief" ? "brief" : "secuencia";
+  return {
+    threadId: `${slug}:outreach-template:${template.id.toLowerCase()}`,
+    threadName: `Plantilla: ${template.name}`,
+    skill: "outreach-sequence-builder",
+    skills: ["outreach-sequence-builder", "outreach-playbook"],
+    linkedTo: `outreach/templates/${template.id}`,
+    docPath: `brand/${slug}/outreach/templates/${template.id}.md`,
+    threadState: "continue",
+    agent: "rocinante",
+    initialMessage: `Estoy mirando la plantilla de outreach "${template.name}" (${kindLabel}, brand/${slug}/outreach/templates/${template.id}.md). Puedes ajustar tono, pasos, delays o variables ({{handle}}, {{quality_score}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK.`,
+  };
+}
+
+/**
  * Find the task thread that "owns" a given doc path, if any. A task owns a
  * doc if the path matches either its `deliverable_file` OR any entry in its
  * `attachments[]`. Returns a ThreadConfig pointing at that task's thread

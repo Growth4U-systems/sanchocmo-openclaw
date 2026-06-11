@@ -1,0 +1,254 @@
+/**
+ * Calc break-even interactiva (SAN-80) — rellena el hueco "Ola 2" del drawer
+ * del partner (SAN-78). Paridad de comportamiento con drawer-partner.html:
+ * deal editable (posts × formato · precio total · estructura fijo/mixto ·
+ * CPA variable · CAC objetivo · multiplicador de incentivo) recalculando EN
+ * VIVO con el motor real de calc-creator-core (SAN-75b). El mismo cálculo
+ * que la skill negotiation-assist y la tool MCP `yalc_breakeven`.
+ */
+
+"use client";
+
+import { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
+import { negotiationBreakEven } from "@/lib/partnerships/negotiation";
+import type { PartnershipLead } from "@/lib/partnerships/types";
+
+const FORMATS = [
+  { key: "reel", label: "Reel" },
+  { key: "post", label: "Post" },
+  { key: "story", label: "Story" },
+  { key: "video", label: "Vídeo largo" },
+  { key: "carrusel", label: "Carrusel" },
+] as const;
+
+const MULTIPLIERS = [
+  { value: 1, label: "×1 (sin código)" },
+  { value: 1.5, label: "×1.5 (código descuento)" },
+  { value: 2, label: "×2 (bono bienvenida)" },
+  { value: 3, label: "×3 (bono + sorteo)" },
+] as const;
+
+const VERDICT_STYLES: Record<string, string> = {
+  green: "border-ink bg-sage text-white",
+  amber: "border-ink bg-yellow-300 text-ink",
+  red: "border-ink bg-destructive text-white",
+};
+
+function fmtEs(value: number): string {
+  return Math.round(value).toLocaleString("es-ES");
+}
+
+export function BreakEvenCalc({ lead }: { lead: PartnershipLead }) {
+  const [posts, setPosts] = useState(3);
+  const [format, setFormat] = useState<string>("reel");
+  const [fee, setFee] = useState<number>(
+    typeof lead.offeredPrice === "number" && lead.offeredPrice > 0 ? lead.offeredPrice : 3500,
+  );
+  const [structure, setStructure] = useState<"fijo" | "mixto">("fijo");
+  const [variableCpa, setVariableCpa] = useState(10);
+  const [cac, setCac] = useState(80);
+  const [multiplier, setMultiplier] = useState(1);
+
+  const result = useMemo(() => {
+    try {
+      return negotiationBreakEven({
+        feeEur: Number.isFinite(fee) ? Math.max(0, fee) : 0,
+        followers: lead.followers,
+        engagementRatePct: lead.engagementRate,
+        posts: Number.isFinite(posts) ? Math.max(1, posts) : 1,
+        format,
+        structure,
+        variableCpaEur: structure === "mixto" ? Math.max(0, variableCpa) : undefined,
+        targetCacEur: Number.isFinite(cac) ? Math.max(1, cac) : 80,
+        incentiveMultiplier: multiplier,
+      });
+    } catch {
+      return null;
+    }
+  }, [lead.followers, lead.engagementRate, posts, format, fee, structure, variableCpa, cac, multiplier]);
+
+  const inputCls =
+    "w-24 rounded-md border-2 border-border bg-background px-2 py-1 text-sm font-bold text-foreground focus:border-ink focus:outline-none";
+  const labelCls = "flex items-center gap-2 text-xs font-bold text-muted-foreground";
+
+  return (
+    <section
+      className="rounded-xl border-2 border-border bg-card p-4 shadow-comic-sm"
+      data-testid="breakeven-calc"
+    >
+      <h3 className="font-heading text-base uppercase tracking-wide text-navy">
+        🧮 Calc break-even — negociación
+      </h3>
+      <p className="mt-1 text-[11px] italic text-muted-foreground">
+        Le damos la vuelta: cuántas conversiones debe producir el deal para salir rentable a tu CAC
+        objetivo. Motor calc-creator-core (el mismo del chat y del MCP).
+      </p>
+
+      {/* Deal editable */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2" data-testid="breakeven-controls">
+        <label className={labelCls}>
+          Posts
+          <input
+            type="number"
+            min={1}
+            value={posts}
+            onChange={(e) => setPosts(parseInt(e.target.value, 10) || 1)}
+            className={cn(inputCls, "w-16")}
+            data-testid="be-posts"
+          />
+        </label>
+        <label className={labelCls}>
+          Formato
+          <select
+            value={format}
+            onChange={(e) => setFormat(e.target.value)}
+            className={cn(inputCls, "w-auto")}
+            data-testid="be-format"
+          >
+            {FORMATS.map((f) => (
+              <option key={f.key} value={f.key}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={labelCls}>
+          Precio 💶
+          <input
+            type="number"
+            min={0}
+            step={50}
+            value={fee}
+            onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
+            className={inputCls}
+            data-testid="be-fee"
+          />
+        </label>
+        <label className={labelCls}>
+          Estructura
+          <select
+            value={structure}
+            onChange={(e) => setStructure(e.target.value === "mixto" ? "mixto" : "fijo")}
+            className={cn(inputCls, "w-auto")}
+            data-testid="be-structure"
+          >
+            <option value="fijo">Solo fijo</option>
+            <option value="mixto">Fijo + variable</option>
+          </select>
+        </label>
+        {structure === "mixto" && (
+          <label className={labelCls}>
+            CPA var. €
+            <input
+              type="number"
+              min={0}
+              value={variableCpa}
+              onChange={(e) => setVariableCpa(parseFloat(e.target.value) || 0)}
+              className={cn(inputCls, "w-16")}
+              data-testid="be-cpa"
+            />
+          </label>
+        )}
+        <label className={labelCls}>
+          CAC obj. €
+          <input
+            type="number"
+            min={1}
+            value={cac}
+            onChange={(e) => setCac(parseFloat(e.target.value) || 80)}
+            className={cn(inputCls, "w-16")}
+            data-testid="be-cac"
+          />
+        </label>
+        <label className={labelCls}>
+          Incentivo 🎁
+          <select
+            value={String(multiplier)}
+            onChange={(e) => setMultiplier(parseFloat(e.target.value) || 1)}
+            className={cn(inputCls, "w-auto")}
+            data-testid="be-mult"
+          >
+            {MULTIPLIERS.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {!result ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          Faltan followers del creator para estimar lo alcanzable (los trae el discovery).
+        </p>
+      ) : (
+        <>
+          {/* Métricas */}
+          <div className="mt-4 grid grid-cols-3 gap-3" data-testid="breakeven-cells">
+            <div className="rounded-lg border-2 border-border bg-background p-3 text-center">
+              <div className="font-heading text-2xl leading-none text-navy" data-testid="be-necesarias">
+                {Number.isFinite(result.necesarias) ? fmtEs(result.necesarias) : "∞"}
+              </div>
+              <div className="mt-1 text-[10px] font-semibold text-muted-foreground">
+                conversiones necesarias
+                <br />({result.formulaNecesarias})
+              </div>
+            </div>
+            <div className="rounded-lg border-2 border-border bg-background p-3 text-center">
+              <div className="font-heading text-2xl leading-none text-navy" data-testid="be-alcanzable">
+                ~{fmtEs(result.alcanzable)}
+              </div>
+              <div className="mt-1 text-[10px] font-semibold text-muted-foreground">
+                alcanzables estimadas
+                <br />
+                (×{result.deal.incentiveMultiplier} incentivo)
+              </div>
+            </div>
+            <div className="rounded-lg border-2 border-border bg-background p-3 text-center">
+              <div className="font-heading text-2xl leading-none text-navy" data-testid="be-ratio">
+                {result.ratio === Infinity ? "∞" : `${Math.round(result.ratio * 100)}%`}
+              </div>
+              <div className="mt-1 text-[10px] font-semibold text-muted-foreground">
+                cobertura del break-even
+              </div>
+            </div>
+          </div>
+
+          {/* Veredicto */}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <span
+              className={cn(
+                "-rotate-1 rounded-md border-2 px-3 py-1 font-heading text-base tracking-wide shadow-comic-sm",
+                VERDICT_STYLES[result.veredictoColor],
+              )}
+              data-testid="be-verdict"
+            >
+              {result.veredictoColor === "green" && "✅ "}
+              {result.veredictoColor === "amber" && "⚠️ "}
+              {result.veredictoColor === "red" && "⛔ "}
+              {result.veredictoLabel}
+            </span>
+            <span className="text-xs italic text-muted-foreground">{result.frase}</span>
+          </div>
+
+          <p className="mt-2 text-[11px] text-muted-foreground" data-testid="be-modelo">
+            {result.modelo}
+          </p>
+
+          {/* Contraoferta */}
+          {result.contraofertaEur !== null && result.contraofertaEur > 0 && (
+            <div
+              className="mt-3 -rotate-[0.4deg] rounded-md border-2 border-ink bg-yellow-200 px-3 py-2 text-sm font-semibold text-ink shadow-comic-sm"
+              data-testid="be-contraoferta"
+            >
+              💡 Contraoferta sugerida: <b>{fmtEs(result.contraofertaEur)}€</b>
+              {" — "}
+              {result.contraofertaNota}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}

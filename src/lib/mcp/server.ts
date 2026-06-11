@@ -14,7 +14,13 @@ import { loadClients } from "@/lib/data/clients";
 import { getInternalClientStatus } from "@/lib/sancho-internal-api";
 import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
-import { createDiscoverySearch, parseDiscoveryPlan, runDiscoverySearch } from "@/lib/partnerships";
+import {
+  assignTemplateToSearch,
+  createDiscoverySearch,
+  parseDiscoveryPlan,
+  runDiscoverySearch,
+  TemplateValidationError,
+} from "@/lib/partnerships";
 import {
   resolveOdConfig,
   odHealth,
@@ -687,6 +693,105 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           message:
             "Search queued. The discovery-search-runner agent picks it up (live scraping), or POST /api/partnerships/searches/{id}/run with fixtures=true.",
         });
+      }),
+  );
+
+  // Plantillas de Partnerships (SAN-80): instanciar una copia de la
+  // biblioteca en una búsqueda — espejo de POST
+  // /api/partnerships/templates/{id}/assign y del picker de Encuentra.
+  server.registerTool(
+    "yalc_assign_template",
+    {
+      title: "Assign Partnerships template to search",
+      description:
+        "Instantiates a frozen COPY of an outreach template (sequence or brief) from the Partnerships library into a discovery search (by searchId or YALC campaignId). The search's sequence instance is what the contact engine sends after the human gate. Idempotent per template. Requires yalc:write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        templateId: z
+          .string()
+          .min(1)
+          .describe("Library template id (e.g. 'primer-contacto-creators-fintech'). List them via GET /api/partnerships/templates."),
+        searchId: z.string().min(1).optional().describe("Discovery search id (ds-…)."),
+        campaignId: z
+          .string()
+          .min(1)
+          .optional()
+          .describe("YALC Partnerships campaign id (alternative to searchId)."),
+      },
+    },
+    async ({ clientSlug, templateId, searchId, campaignId }) =>
+      runTool(context, "yalc_assign_template", clientSlug, async () => {
+        assertClientScope(context, "yalc:write", clientSlug);
+        if (!searchId && !campaignId) {
+          return errorResult("Provide searchId or campaignId.");
+        }
+        try {
+          const result = assignTemplateToSearch(clientSlug, templateId, { searchId, campaignId });
+          return jsonResult({
+            ok: true,
+            instance: {
+              instanceId: result.instance.instanceId,
+              templateId: result.instance.templateId,
+              name: result.instance.name,
+              kind: result.instance.kind,
+              steps: result.instance.steps.length,
+              assignedAt: result.instance.assignedAt,
+            },
+            searchId: result.search.id,
+            campaignId: result.search.campaignId,
+            templatesInSearch: (result.search.templates ?? []).map((item) => ({
+              instanceId: item.instanceId,
+              name: item.name,
+              kind: item.kind,
+            })),
+          });
+        } catch (err) {
+          if (err instanceof TemplateValidationError) return errorResult(err.message);
+          throw err;
+        }
+      }),
+  );
+
+  // Gates de envío (SAN-80): aprobar/rechazar el GateItem humano del flujo
+  // de contacto (partner-outreach) — espejo del POST /api/yalc/gates de la
+  // UI. Aprobar reanuda el framework en Yalc y ejecuta el envío (dry-run
+  // por defecto en el payload del gate).
+  server.registerTool(
+    "yalc_approve_gate",
+    {
+      title: "Approve or reject YALC gate",
+      description:
+        "Approves or rejects a human gate from /api/gates/awaiting (e.g. the partner-outreach 'approve-send' GateItem). Approving resumes the framework run — for partner contacts that executes the send step (dry-run by default, no external email unless the batch was queued with dryRun=false). Optional edits patch the gate payload before resuming (human-in-the-loop edits). Requires yalc:write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        runId: z.string().min(1).describe("Gate run id (from yalc_list_gates)."),
+        action: z.enum(["approve", "reject"]).describe("approve = resume + send · reject = stop."),
+        reason: z.string().min(1).optional().describe("Required when rejecting."),
+        edits: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Optional payload edits applied on approve (e.g. tweaked draft bodies)."),
+      },
+    },
+    async ({ clientSlug, runId, action, reason, edits }) =>
+      runTool(context, "yalc_approve_gate", clientSlug, async () => {
+        assertClientScope(context, "yalc:write", clientSlug);
+        const config = resolveYalcConfig(clientSlug);
+        if (action === "reject") {
+          if (!reason) return errorResult("reason is required to reject a gate.");
+          const data = await yalcFetch(
+            config,
+            `/api/gates/${encodeURIComponent(runId)}/reject`,
+            { method: "POST", body: { reason }, headers: traceHeaders(context) },
+          );
+          return jsonResult(data);
+        }
+        const data = await yalcFetch(config, `/api/gates/${encodeURIComponent(runId)}/approve`, {
+          method: "POST",
+          body: { edits },
+          headers: traceHeaders(context),
+        });
+        return jsonResult(data);
       }),
   );
 

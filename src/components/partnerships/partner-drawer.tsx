@@ -7,15 +7,19 @@
  *     (paridad drawer-partner.html; los componentes vienen del lead Yalc
  *     `qualityComponents` = { erVsTier, authenticity, sectorFit, audienceEs, consistency }).
  *  2. Datos del creator (red, followers, ER, tier, campaña, fuente).
- *  3. Hueco "Calc break-even" — llega en la Ola 2 (SAN-75b + SAN-80).
- *  4. Contact log placeholder (el log real llega con el Inbox, SAN-80).
+ *  3. Calc break-even interactiva (SAN-80 · motor SAN-75b): deal editable
+ *     recalculando en vivo — paridad drawer-partner.html.
+ *  4. Contact log: hechos del pipeline + hilo real de mensajes (lead_messages
+ *     de Yalc, el mismo del Inbox).
  */
 
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { SlideOver } from "@/components/shared/slide-over";
+import { BreakEvenCalc } from "./break-even-calc";
 import {
   DISCARDED_STAGE,
   feeStageNote,
@@ -40,15 +44,40 @@ const COMPONENT_ROWS: Array<{ key: keyof QualityComponentsMap; label: string }> 
 ];
 
 interface PartnerDrawerProps {
+  slug?: string;
   lead: PartnershipLead | null;
   onClose: () => void;
   onMove: (lead: PartnershipLead, target: StageFilterKey, note?: string) => void;
   busy?: boolean;
 }
 
-export function PartnerDrawer({ lead, onClose, onMove, busy }: PartnerDrawerProps) {
+interface DrawerMessage {
+  id: string;
+  direction: "in" | "out";
+  subject?: string | null;
+  body: string;
+  status: string;
+  createdAt?: string | null;
+}
+
+export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDrawerProps) {
   const [expanded, setExpanded] = useState(false);
+
+  // Hilo real del lead (lead_messages de Yalc — el mismo que el Inbox).
+  const thread = useQuery({
+    queryKey: ["yalc", slug, "lead-messages", lead?.id],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/yalc/leads/${encodeURIComponent(lead!.id)}/messages?slug=${encodeURIComponent(slug!)}`,
+      );
+      if (!res.ok) throw new Error(`messages ${res.status}`);
+      return (await res.json()) as { messages?: DrawerMessage[] };
+    },
+    enabled: !!slug && !!lead,
+  });
+
   if (!lead) return null;
+  const threadMessages = (thread.data?.messages || []).filter((m) => m.status !== "draft");
 
   const stage = stageForStatus(lead.lifecycleStatus);
   const band = qualityBand(lead.qualityScore);
@@ -210,28 +239,8 @@ export function PartnerDrawer({ lead, onClose, onMove, busy }: PartnerDrawerProp
           </dl>
         </section>
 
-        {/* Hueco: calc break-even (Ola 2) */}
-        <section
-          className="rounded-xl border-2 border-dashed border-border bg-background p-4"
-          data-testid="breakeven-placeholder"
-        >
-          <h3 className="font-heading text-base uppercase tracking-wide text-muted-foreground">
-            🧮 Calc break-even — Ola 2
-          </h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Aquí vivirá la calculadora de negociación (SAN-75b + SAN-80): con el precio
-            negociado le damos la vuelta — <b>cuántas conversiones necesita producir para salir
-            rentable</b> a tu CAC objetivo (solo fijo: fee / CAC; fijo + variable: fee / (CAC − CPA
-            variable)), multiplicador de incentivo ×1/1.5/2/3 del lado de lo alcanzable y veredicto
-            verde/ámbar/rojo con contraoferta sugerida.
-          </p>
-          {typeof lead.offeredPrice === "number" && (
-            <p className="mt-2 text-sm font-semibold text-foreground">
-              Precio sobre la mesa: {formatEur(lead.offeredPrice)}
-              {feeNote ? ` · ${feeNote}` : ""} — la calc lo evaluará en cuanto llegue.
-            </p>
-          )}
-        </section>
+        {/* Calc break-even interactiva (SAN-80 · motor calc-creator-core) */}
+        <BreakEvenCalc lead={lead} />
 
         {/* Contact log (placeholder hasta el Inbox de SAN-80) */}
         <section className="rounded-xl border-2 border-border bg-card p-4 shadow-comic-sm" data-testid="contact-log">
@@ -251,9 +260,23 @@ export function PartnerDrawer({ lead, onClose, onMove, busy }: PartnerDrawerProp
               />
             )}
           </div>
+          {threadMessages.length > 0 && (
+            <div className="mt-2 space-y-2" data-testid="contact-log-messages">
+              {threadMessages.map((message) => (
+                <LogRow
+                  key={message.id}
+                  icon={message.direction === "out" ? "📨" : "📩"}
+                  title={`${message.direction === "out" ? "Email enviado" : "Respuesta recibida"}${
+                    message.subject ? ` — ${message.subject}` : ""
+                  }${message.status === "dry_run" ? " (dry-run)" : ""}`}
+                  date={message.createdAt}
+                />
+              ))}
+            </div>
+          )}
           <p className="mt-3 rounded-md border border-dashed border-border bg-background px-3 py-2 text-[12px] italic text-muted-foreground">
-            El log completo de toques (emails, respuestas, reuniones) llega con el Inbox de
-            negociación (SAN-80) — reusa el gmail-reply-webhook-handler de Yalc.
+            El hilo completo (con detección de precios y break-even sobre cada oferta) vive en el
+            Inbox de negociación.
           </p>
         </section>
       </div>

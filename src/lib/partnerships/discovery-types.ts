@@ -129,6 +129,12 @@ export interface DiscoverySearchRecord {
   /** Tarea Outreach madre en el sistema de tasks de Sancho. */
   taskId: string | null;
   runner: DiscoveryRunnerState;
+  /**
+   * Plantillas INSTANCIADAS en esta búsqueda (SAN-80): copias congeladas de
+   * la biblioteca (`AssignedTemplate` de ./templates). La biblioteca guarda
+   * los originales; el motor de Contacto envía la secuencia de aquí.
+   */
+  templates?: import("./templates").AssignedTemplate[];
   createdAt: string;
   updatedAt: string;
 }

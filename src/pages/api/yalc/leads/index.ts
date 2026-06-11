@@ -5,8 +5,9 @@ import { resolveYalcConfig, yalcErrorResponse, yalcFetch } from "@/lib/yalc/clie
 // Forwarded YALC filters — see YALC GET /api/leads:
 //   campaignId, lifecycleStatus (comma-separated, incl. Disqualified), type
 //   ('B2B'|'Partnerships'), q (search). Disqualified leads are excluded unless
-//   explicitly requested via lifecycleStatus.
-const FORWARDED_QUERY_PARAMS = ["campaignId", "lifecycleStatus", "type", "q"] as const;
+//   explicitly requested via lifecycleStatus. include=lastMessage (SAN-80)
+//   adjunta el último mensaje del hilo por lead (snippets del Inbox).
+const FORWARDED_QUERY_PARAMS = ["campaignId", "lifecycleStatus", "type", "q", "include"] as const;
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {

@@ -1,7 +1,8 @@
 /**
- * seed-partnerships-demo.ts (SAN-78) — siembra el Yalc LOCAL con los 9 creators
- * canónicos del mockup contactos-lista.html para desarrollar/verificar la UI
- * de Outreach·Partnerships (Encuentra + Contactos + drawer).
+ * seed-partnerships-demo.ts (SAN-78 + SAN-80) — siembra el Yalc LOCAL con los
+ * 9 creators canónicos del mockup contactos-lista.html + las conversaciones
+ * del Inbox (inbox.html) para desarrollar/verificar la UI de
+ * Outreach·Partnerships (Encuentra + Contactos + drawer + Inbox + Plantillas).
  *
  * Uso (ver scripts/seed-partnerships-demo.README.md):
  *
@@ -19,6 +20,14 @@
  *     seed escribe lo que el runner escribirá.
  *  4. Mueve cada lead a su stage del mockup vía PATCH /api/leads/:id/stage
  *     (incl. los 2 Descartados con su nota auto/manual, reversibles).
+ *  5. (SAN-80) Registra las búsquedas en Sancho (`brand/{slug}/outreach/
+ *     searches/`), siembra la biblioteca de plantillas del mockup e instancia
+ *     la secuencia "Primer contacto creators fintech" en la búsqueda activa —
+ *     lo que necesita el flujo Contactar (gate + dry-run).
+ *  6. (SAN-80) Siembra las conversaciones del Inbox: hilos out/in vía
+ *     `POST /api/leads/:id/messages` y `POST /api/webhooks/reply` (replies con
+ *     precio para el panel break-even) + 3 personas extra para encender los
+ *     chips Reunión / Parado / Rebotado.
  *
  * Idempotente: re-ejecutarlo actualiza en vez de duplicar (ancla provider_id='seed:<handle>').
  *
@@ -27,6 +36,7 @@
  *   YALC_API_TOKEN  o GTM_OS_API_TOKEN (bearer; opcional si el server no exige token)
  *   YALC_DB         ruta a la SQLite de Yalc (default ~/.gtm-os/gtm-os.db;
  *                   también respeta DATABASE_URL=file:<path>)
+ *   SANCHO_SLUG     slug del cliente en Sancho para el paso 5 (default: monzo)
  */
 
 import { execFileSync } from "node:child_process";
@@ -36,12 +46,21 @@ import { join } from "node:path";
 
 import { computeQualityScore, SEED_CREATORS } from "../src/lib/calc-creator-core";
 import type { SeedCreator } from "../src/lib/calc-creator-core";
+import {
+  assignTemplateToSearch,
+  ensureSeedTemplates,
+  getSearch,
+  listSearches,
+  saveSearch,
+} from "../src/lib/partnerships";
+import type { DiscoverySearchRecord } from "../src/lib/partnerships";
 
 // ── Config ──
 
 const BASE_URL = (process.env.YALC_BASE_URL || "http://localhost:3847").replace(/\/+$/, "");
 const TOKEN = process.env.YALC_API_TOKEN || process.env.GTM_OS_API_TOKEN || "";
 const DB_PATH = resolveDbPath();
+const SANCHO_SLUG = process.env.SANCHO_SLUG || "monzo";
 
 function resolveDbPath(): string {
   if (process.env.YALC_DB) return process.env.YALC_DB;
@@ -275,6 +294,12 @@ async function main(): Promise<void> {
     });
   }
 
+  // ── 5 · (SAN-80) Búsquedas en Sancho + plantillas instanciadas ──
+  await seedSanchoSearchesAndTemplates(campaignIds);
+
+  // ── 6 · (SAN-80) Conversaciones del Inbox ──
+  await seedInboxConversations(campaignIds);
+
   // Verificación final contra la API (lo que verá la UI)
   const check = await api<{ leads?: unknown[]; count?: number }>("/api/leads?type=Partnerships");
   const checkDiscarded = await api<{ count?: number }>("/api/leads?type=Partnerships&lifecycleStatus=Disqualified");
@@ -285,6 +310,367 @@ async function main(): Promise<void> {
     `✔ Yalc listo: ${check.count ?? check.leads?.length ?? 0} leads en pipeline + ${checkDiscarded.count ?? 0} descartados (type=Partnerships).`,
   );
   console.log("→ Arranca Sancho (npm run dev con YALC_BASE_URL/YALC_API_TOKEN) y abre /dashboard/<slug>/yalc");
+}
+
+// ════════ SAN-80 · Búsquedas Sancho-side + plantillas ════════
+
+/**
+ * El flujo Contactar necesita el registro de búsqueda de Sancho
+ * (brand/{slug}/outreach/searches/{id}.json) con su secuencia INSTANCIADA.
+ * El seed lo crea para las 2 búsquedas con candidatos (SAN-79 lo hace solo
+ * para búsquedas creadas por chat) y siembra la biblioteca del mockup.
+ */
+async function seedSanchoSearchesAndTemplates(campaignIds: Map<SearchDef["key"], string>): Promise<void> {
+  console.log(`\n▸ Sancho: búsquedas + plantillas para slug "${SANCHO_SLUG}" (SANCHO_SLUG)`);
+  ensureSeedTemplates(SANCHO_SLUG);
+
+  const PLAN_BY_KEY: Record<string, { sectors: string[]; networks: string[] }> = {
+    "finanzas-es": { sectors: ["finanzas personales", "ahorro"], networks: ["instagram", "tiktok"] },
+    "youtubers-inversion": { sectors: ["inversión", "bolsa"], networks: ["youtube"] },
+  };
+
+  for (const search of SEARCHES) {
+    if (search.status === "draft") continue; // la draft nace por chat (SAN-79)
+    const campaignId = campaignIds.get(search.key)!;
+    const existing = listSearches(SANCHO_SLUG).find((item) => item.campaignId === campaignId);
+    if (existing) {
+      console.log(`= Búsqueda Sancho ya existe: ${existing.id} (${search.title})`);
+      continue;
+    }
+    const now = new Date().toISOString();
+    const record: DiscoverySearchRecord = {
+      id: `ds-seed-${search.key}`,
+      slug: SANCHO_SLUG,
+      title: search.title,
+      plan: {
+        title: search.title,
+        sectors: PLAN_BY_KEY[search.key]?.sectors ?? ["finanzas"],
+        networks: PLAN_BY_KEY[search.key]?.networks ?? ["instagram"],
+        tiers: ["micro", "mid", "macro"],
+        signals: { adLibrary: true, competitorBrands: ["N26", "Revolut"] },
+        templates: [],
+        qualificationMode: "hybrid",
+        disqualifyThreshold: 40,
+      },
+      campaignId,
+      taskId: null,
+      runner: {
+        status: "done",
+        mode: "fixtures",
+        queuedAt: now,
+        startedAt: now,
+        finishedAt: now,
+        error: null,
+        stats: null,
+      },
+      createdAt: now,
+      updatedAt: now,
+    };
+    saveSearch(record);
+    console.log(`+ Búsqueda Sancho creada: ${record.id} (${search.title})`);
+  }
+
+  // Instanciar la secuencia del mockup en la búsqueda activa (idempotente).
+  const activeSearch = listSearches(SANCHO_SLUG).find(
+    (item) => item.campaignId === campaignIds.get("finanzas-es"),
+  );
+  if (activeSearch) {
+    const result = assignTemplateToSearch(SANCHO_SLUG, "primer-contacto-creators-fintech", {
+      searchId: activeSearch.id,
+    });
+    const refreshed = getSearch(SANCHO_SLUG, activeSearch.id);
+    console.log(
+      `✔ Plantillas de «${activeSearch.title}»: ${(refreshed?.templates ?? []).map((t) => t.name).join(" · ") || result.instance.name}`,
+    );
+  }
+}
+
+// ════════ SAN-80 · Conversaciones del Inbox ════════
+
+interface ConvoMessage {
+  direction: "in" | "out";
+  subject?: string;
+  body: string;
+  /** Días hacia atrás desde ahora. */
+  daysAgo: number;
+  /** Solo para direction in: entra por el reply-webhook (marca Replied). */
+  viaWebhook?: boolean;
+}
+
+interface ConvoDef {
+  handle: string;
+  /** Estado FINAL tras sembrar los mensajes (los replies mueven a Replied). */
+  finalStatus?: string;
+  /** Marca el primer toque como ya enviado (email_sent_at + dry_run). */
+  markSent?: boolean;
+  messages: ConvoMessage[];
+  draft?: string;
+}
+
+/** Personas extra del Inbox (no están en contactos-lista): encienden Reunión/Parado/Rebotado. */
+const EXTRA_INBOX_CREATORS: Array<{
+  handle: string;
+  network: string;
+  followers: number;
+  er: number;
+  tier: string;
+  quality: number;
+  busqueda: SearchDef["key"];
+}> = [
+  { handle: "@elclubdelahorro", network: "Instagram", followers: 96_000, er: 5.1, tier: "mid", quality: 81, busqueda: "finanzas-es" },
+  { handle: "@podcastdinero", network: "TikTok", followers: 38_000, er: 4.2, tier: "micro", quality: 72, busqueda: "finanzas-es" },
+  { handle: "@criptoclara", network: "Instagram", followers: 54_000, er: 3.6, tier: "micro", quality: 64, busqueda: "finanzas-es" },
+];
+
+const INBOX_CONVOS: ConvoDef[] = [
+  {
+    // Negociando — el hilo estrella del mockup (precio 3.500€ → panel break-even)
+    handle: "@finanzasconlucia",
+    finalStatus: "Negotiating",
+    markSent: true,
+    messages: [
+      {
+        direction: "out",
+        subject: "Colaboración Monzo × Lucía",
+        daysAgo: 4,
+        body:
+          "Hola Lucía, soy parte del equipo de partnerships de Monzo en España. Llevamos semanas siguiendo tu contenido — el reel sobre los gastos hormiga nos pareció exactamente el tono que buscamos. Estamos lanzando un programa con creators de finanzas (20K€ de presupuesto este trimestre) y nos encantaría contar contigo. ¿Te cuadraría una colaboración de 2-3 reels presentando la cuenta Monzo a tu audiencia?",
+      },
+      {
+        direction: "in",
+        daysAgo: 0,
+        viaWebhook: true,
+        body:
+          "¡Hola! Gracias por escribirme, conozco Monzo y la verdad es que me encaja mucho con mi línea de contenido. Por un pack de 3 reels (guion mío, una ronda de revisión vuestra) mi tarifa sería de 3.500€. Incluiría también compartirlos en stories la semana de publicación. ¿Cómo lo veis?",
+      },
+    ],
+    draft:
+      "Hola Lucía,\n\n¡Gracias por la respuesta y por la propuesta tan clara! El formato de 3 reels + stories nos encaja perfecto. El presupuesto que manejamos para este tier está un poco por debajo de tu tarifa, así que te proponemos una alternativa: 2.800€ fijos + 10€ por cada cuenta verificada que llegue desde tu audiencia (link trackeado). Con tu engagement, la parte variable puede superar de largo la diferencia.\n\n¿Lo vemos en una llamada esta semana?\n\nUn saludo,\nEquipo Monzo",
+  },
+  {
+    // Respondió — segunda reply con precio (1.200€)
+    handle: "@davidfintech",
+    finalStatus: "Replied",
+    markSent: true,
+    messages: [
+      {
+        direction: "out",
+        subject: "Programa creators Monzo España",
+        daysAgo: 3,
+        body:
+          "Hola David, desde Monzo estamos lanzando un programa con creators de finanzas en España. Tu contenido sobre fintech encaja de lleno. ¿Te interesa una colaboración este trimestre?",
+      },
+      {
+        direction: "in",
+        daysAgo: 0,
+        viaWebhook: true,
+        body:
+          "¡Me interesa! El año pasado hice algo parecido con N26 y funcionó muy bien. Mi tarifa ronda 1.200€ por reel, negociable si es un pack. ¿Qué teníais en mente?",
+      },
+    ],
+  },
+  {
+    // Contactado — primer toque enviado, sin respuesta
+    handle: "@ahorroconmarta",
+    markSent: true,
+    messages: [
+      {
+        direction: "out",
+        subject: "Monzo × Marta — programa creators",
+        daysAgo: 1,
+        body:
+          "Hola Marta, desde Monzo estamos lanzando un programa con creators de ahorro y finanzas personales en España. Tu serie de retos de ahorro en TikTok es exactamente el enfoque que buscamos. ¿Hablamos esta semana?",
+      },
+    ],
+  },
+  {
+    // Reunión — persona extra (Demo_Booked)
+    handle: "@elclubdelahorro",
+    finalStatus: "Demo_Booked",
+    markSent: true,
+    messages: [
+      {
+        direction: "out",
+        subject: "Monzo × El Club del Ahorro",
+        daysAgo: 2,
+        body: "Hola, desde Monzo nos encantaría contar con vosotros en el programa de creators. ¿Os va una llamada?",
+      },
+      {
+        direction: "in",
+        daysAgo: 1,
+        viaWebhook: true,
+        body: "Perfecto, nos vemos el jueves a las 10:00. Os paso mi calendly: calendly.com/elclubdelahorro",
+      },
+    ],
+  },
+  {
+    // Parado — persona extra (No_Reply tras 2 follow-ups)
+    handle: "@podcastdinero",
+    finalStatus: "No_Reply",
+    markSent: true,
+    messages: [
+      {
+        direction: "out",
+        subject: "Monzo × Podcast Dinero",
+        daysAgo: 9,
+        body: "Hola, ¿os encajaría una colaboración con Monzo para el podcast? Presupuesto del trimestre abierto.",
+      },
+      {
+        direction: "out",
+        subject: "Re: Monzo × Podcast Dinero",
+        daysAgo: 6,
+        body: "Reflote rápido — seguimos con hueco para este trimestre. Sin respuesta tras 2 follow-ups, Sancho sugiere pausar 2 semanas.",
+      },
+    ],
+  },
+  {
+    // Rebotado — persona extra (email bounced; prioridad sobre lifecycle)
+    handle: "@criptoclara",
+    finalStatus: "Queued",
+    markSent: true,
+    messages: [
+      {
+        direction: "out",
+        subject: "Monzo × Clara",
+        daysAgo: 2,
+        body: "Hola Clara, nos encantaría hablar de una colaboración con Monzo.",
+      },
+    ],
+  },
+];
+
+async function seedInboxConversations(campaignIds: Map<SearchDef["key"], string>): Promise<void> {
+  console.log("\n▸ Inbox: conversaciones (SAN-80)");
+
+  // Personas extra (alta mínima + creator-fields por SQL, como el resto del seed)
+  for (const extra of EXTRA_INBOX_CREATORS) {
+    const campaignId = campaignIds.get(extra.busqueda)!;
+    const providerId = `seed:${extra.handle}`;
+    const [active, discarded] = await Promise.all([
+      api<{ leads?: YalcLead[] }>(`/api/leads?campaignId=${encodeURIComponent(campaignId)}`),
+      api<{ leads?: YalcLead[] }>(
+        `/api/leads?campaignId=${encodeURIComponent(campaignId)}&lifecycleStatus=Disqualified`,
+      ),
+    ]);
+    let lead = [...(active.leads || []), ...(discarded.leads || [])].find(
+      (item) => item.providerId === providerId || item.handle === extra.handle,
+    );
+    if (!lead) {
+      const inserted = await api<{ leads: YalcLead[] }>(`/api/campaigns/${campaignId}/leads/assign`, {
+        method: "POST",
+        body: {
+          leads: [
+            {
+              providerId,
+              firstName: extra.handle,
+              source: "pre_scored",
+              qualificationScore: extra.quality,
+              tags: ["seed:mockup-partnerships", "seed:inbox", `busqueda:${extra.busqueda}`],
+            },
+          ],
+        },
+      });
+      lead = inserted.leads[0];
+      console.log(`+ Lead inbox creado: ${extra.handle} (${lead.id})`);
+    }
+    runSql([
+      `UPDATE campaign_leads SET ` +
+        `handle=${sqlValue(extra.handle)}, network=${sqlValue(extra.network)}, ` +
+        `followers=${sqlValue(extra.followers)}, engagement_rate=${sqlValue(extra.er)}, ` +
+        `tier=${sqlValue(extra.tier)}, quality_score=${sqlValue(extra.quality)}, ` +
+        `qualification_score=${sqlValue(extra.quality)}, updated_at=datetime('now') ` +
+        `WHERE provider_id=${sqlQuote(providerId)};`,
+    ]);
+  }
+
+  // Hilos de conversación
+  for (const convo of INBOX_CONVOS) {
+    const found = await api<{ leads?: YalcLead[] }>(
+      `/api/leads?type=Partnerships&q=${encodeURIComponent(convo.handle)}`,
+    );
+    const lead = (found.leads || []).find((item) => item.handle === convo.handle);
+    if (!lead) {
+      console.warn(`! Inbox: lead no encontrado para ${convo.handle} — me lo salto`);
+      continue;
+    }
+
+    // Idempotencia: si el hilo ya tiene mensajes no-draft, no re-sembrar.
+    const thread = await api<{ messages?: Array<{ status?: string }> }>(
+      `/api/leads/${encodeURIComponent(lead.id)}/messages`,
+    );
+    const alreadySeeded = (thread.messages || []).some((message) => message.status !== "draft");
+    if (!alreadySeeded) {
+      for (const message of convo.messages) {
+        const createdAt = new Date(Date.now() - message.daysAgo * 86_400_000).toISOString();
+        if (message.direction === "in" && message.viaWebhook) {
+          // El camino REAL de ingestión (gmail-reply-webhook): marca Replied + hilo.
+          await api("/api/webhooks/reply", {
+            method: "POST",
+            body: {
+              leadId: lead.id,
+              subject: message.subject,
+              body: message.body,
+              receivedAt: createdAt,
+            },
+          });
+        } else {
+          await api(`/api/leads/${encodeURIComponent(lead.id)}/messages`, {
+            method: "POST",
+            body: {
+              direction: message.direction,
+              subject: message.subject,
+              body: message.body,
+              status: message.direction === "out" ? "dry_run" : "received",
+              createdAt,
+            },
+          });
+        }
+      }
+      console.log(`+ Hilo sembrado: ${convo.handle} (${convo.messages.length} mensajes)`);
+    } else {
+      console.log(`= Hilo ya existe: ${convo.handle}`);
+    }
+
+    // Borrador del Inbox (upsert — siempre se refresca)
+    if (convo.draft) {
+      await api(`/api/leads/${encodeURIComponent(lead.id)}/messages`, {
+        method: "POST",
+        body: { direction: "out", body: convo.draft, status: "draft" },
+      });
+    }
+
+    // Email tracking + estado final (los replies del webhook mueven a Replied;
+    // re-asentamos el estado del mockup DESPUÉS de los mensajes).
+    if (convo.markSent) {
+      const oldestOut = convo.messages.find((message) => message.direction === "out");
+      const sentAt = new Date(Date.now() - (oldestOut?.daysAgo ?? 1) * 86_400_000).toISOString();
+      runSql([
+        `UPDATE campaign_leads SET email_sent_at=${sqlValue(sentAt)}, ` +
+          `email_status=${sqlValue(convo.handle === "@criptoclara" ? "bounced" : "dry_run")}` +
+          `${convo.handle === "@criptoclara" ? `, email_bounced_at=${sqlValue(sentAt)}` : ""} ` +
+          `WHERE id=${sqlQuote(lead.id)};`,
+      ]);
+    }
+    if (convo.finalStatus && lead.lifecycleStatus !== convo.finalStatus) {
+      await api(`/api/leads/${encodeURIComponent(lead.id)}/stage`, {
+        method: "PATCH",
+        body: { lifecycleStatus: convo.finalStatus },
+      });
+    } else if (convo.finalStatus) {
+      // El webhook puede haberlo movido a Replied — re-asentar el estado final.
+      const fresh = await api<{ leads?: YalcLead[] }>(
+        `/api/leads?type=Partnerships&q=${encodeURIComponent(convo.handle)}`,
+      );
+      const current = (fresh.leads || []).find((item) => item.id === lead.id);
+      if (current && current.lifecycleStatus !== convo.finalStatus) {
+        await api(`/api/leads/${encodeURIComponent(lead.id)}/stage`, {
+          method: "PATCH",
+          body: { lifecycleStatus: convo.finalStatus },
+        });
+      }
+    }
+  }
+  console.log("✔ Inbox listo: Negociando · Respondió · Contactado · Reunión · Parado · Rebotado");
 }
 
 main().catch((error) => {
