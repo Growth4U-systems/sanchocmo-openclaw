@@ -25,8 +25,10 @@ import type {
   ChannelLoopsPayload,
   ChannelMode,
   ContentTask,
+  PersonaProfile,
   RepurposeEntry,
 } from "@/types";
+import { buildPersonaLoops } from "@/lib/data/persona-loops";
 
 // ── cadence-config ──────────────────────────────────────────────
 
@@ -42,6 +44,18 @@ interface CadenceChannelYaml {
   strategy_doc?: string;
   metrics_provider?: string;
   primary_kpi?: string;
+  // SAN-163 — Founder-Led voices declared under this channel.
+  profiles?: Array<{
+    id?: string;
+    name: string;
+    role?: string;
+    handle?: string;
+    pillars_slant?: string[];
+    voice_doc?: string;
+    owner?: string;
+    metricool_profile_id?: string;
+    primary_kpi?: string;
+  }>;
 }
 
 const DEFAULT_LABELS: Record<string, string> = {
@@ -287,6 +301,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
     const ch = cadenceChannels[key] || {};
     const mine = cts.filter((ct) => ctMatchesChannel(ct, key));
 
+    // SAN-163 — split into per-persona sub-loops when the channel declares voices.
+    const personaProfiles: PersonaProfile[] = (ch.profiles || []).map((p) => ({
+      id: p.id || "",
+      name: p.name,
+      role: p.role,
+      handle: p.handle,
+      pillars_slant: p.pillars_slant,
+      voice_doc: p.voice_doc,
+      owner: p.owner,
+      metricool_profile_id: p.metricool_profile_id,
+      primary_kpi: p.primary_kpi,
+    }));
+    const { personas, unassignedPool } = buildPersonaLoops(mine, personaProfiles);
+
     const newCount = mine.filter((c) => c.status === "New").length;
     const approvedCount = mine.filter((c) => c.status === "Approved").length;
     const draftingCts = mine.filter((c) => c.status === "Draft" || c.status === "Approved");
@@ -367,6 +395,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
         outgoing: repurposing.filter((r) => r.fromChannel === key).length,
       },
       antennas,
+      personas,
+      unassignedPool,
     };
   });
 
