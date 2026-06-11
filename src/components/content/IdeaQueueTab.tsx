@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { DraftCards } from "@/components/content/DraftCards";
+import { DesyncBadge } from "@/components/content/DesyncBadge";
+import { useReconcileState, desyncsForContentTask } from "@/hooks/useContentReconcile";
 
 interface Idea {
   id: string;
@@ -152,6 +154,8 @@ function writerSkillFor(channel: string): string {
 
 export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus }: Props) {
   const router = useRouter();
+  // Last persisted reconciler run (SAN-153) — desync badges per content task.
+  const { data: reconcileState } = useReconcileState(slug || null);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [counts, setCounts] = useState<IdeasCounts | null>(null);
   const [pillars, setPillars] = useState<PillarLite[]>([]);
@@ -663,6 +667,7 @@ export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus }: 
                               >{sv.label}</span>
                             );
                           })()}
+                          <DesyncBadge desyncs={desyncsForContentTask(reconcileState, idea.content_task_id)} />
                           <span className="inline-flex items-center gap-1.5" title={`Confianza ${conf}%`}>
                             <span
                               className="inline-block h-2 w-12 rounded-sc-pill border overflow-hidden"

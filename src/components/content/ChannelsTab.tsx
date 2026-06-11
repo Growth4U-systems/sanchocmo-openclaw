@@ -17,6 +17,7 @@ import { ChannelLoopCard, CHANNEL_EMOJI, type LoopStageKey } from "@/components/
 import { SlideOver } from "@/components/shared/slide-over";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { KpiCard } from "@/components/shared/kpi-card";
+import { ReconcileBar } from "@/components/content/ReconcileBar";
 import type { ChannelLoopState } from "@/types";
 
 interface ActivityEvent {
@@ -104,6 +105,8 @@ export function ChannelsTab({ slug, onGo }: Props) {
 
   return (
     <div className="space-y-5">
+      {channels.length > 0 && <ReconcileBar slug={slug} />}
+
       {channels.length === 0 && (
         <div className="text-center py-12">
           <span className="text-4xl mb-3 block">📡</span>
