@@ -414,6 +414,8 @@ export interface PersonaLoopState {
   name: string;
   role: string | null;
   handle: string | null;
+  /** Topic slant keywords — powers the client-side author suggestion (SAN-163). */
+  pillarsSlant: string[];
   stages: {
     ideation: { newCount: number; approvedCount: number };
     creation: { draftingCount: number; clarifyCount: number; readyCount: number };

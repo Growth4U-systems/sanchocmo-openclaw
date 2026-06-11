@@ -49,7 +49,7 @@ test("suggestAuthor returns null when no personas have slants", () => {
 
 test("buildPersonaLoops groups CTs by author and counts the unassigned pool", () => {
   const personas = [
-    { id: "alfonso", name: "Alfonso", role: "CMO" },
+    { id: "alfonso", name: "Alfonso", role: "CMO", pillars_slant: ["AI agents"] },
     { id: "martin", name: "Martín" },
   ];
   const cts = [
@@ -64,6 +64,7 @@ test("buildPersonaLoops groups CTs by author and counts the unassigned pool", ()
   assert.equal(alfonso.stages.ideation.newCount, 1);
   assert.equal(alfonso.stages.ideation.approvedCount, 1);
   assert.equal(alfonso.role, "CMO");
+  assert.deepEqual(alfonso.pillarsSlant, ["AI agents"]);
   const martin = out.personas.find((p) => p.id === "martin")!;
   assert.equal(martin.stages.creation.readyCount, 1);
   assert.equal(martin.role, null);

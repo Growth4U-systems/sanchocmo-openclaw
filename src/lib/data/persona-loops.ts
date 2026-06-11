@@ -66,6 +66,7 @@ export function buildPersonaLoops(
       name: p.name,
       role: p.role ?? null,
       handle: p.handle ?? null,
+      pillarsSlant: p.pillars_slant ?? [],
       stages: {
         ideation: { newCount, approvedCount },
         creation: { draftingCount, clarifyCount, readyCount },

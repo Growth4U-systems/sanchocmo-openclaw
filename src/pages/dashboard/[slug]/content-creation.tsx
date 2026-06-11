@@ -46,12 +46,21 @@ export default function ContentCreationPage() {
 
   const channelParam = typeof router.query.channel === "string" ? router.query.channel : null;
   const statusParam = typeof router.query.status === "string" ? router.query.status : null;
+  const authorParam = typeof router.query.author === "string" ? router.query.author : null;
+  const unassignedParam = router.query.unassigned === "1";
 
-  const switchTab = (key: TabKey, channel?: string | null, status?: string | null) => {
+  const switchTab = (
+    key: TabKey,
+    channel?: string | null,
+    status?: string | null,
+    extra?: { author?: string; unassigned?: boolean },
+  ) => {
     setActiveTab(key);
     const query: Record<string, string | string[] | undefined> = { ...router.query, tab: key };
     if (channel) query.channel = channel; else delete query.channel;
     if (status) query.status = status; else delete query.status;
+    if (extra?.author) query.author = extra.author; else delete query.author;
+    if (extra?.unassigned) query.unassigned = "1"; else delete query.unassigned;
     delete query.focus;
     router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
   };
@@ -115,7 +124,7 @@ export default function ContentCreationPage() {
         <StrategyDocsTab slug={slug} data={data} openChat={openChat} />
       )}
       {!isLoading && slug && hasProject && activeTab === "channels" && (
-        <ChannelsTab slug={slug} onGo={(tab, channel, status) => switchTab(tab, channel, status)} />
+        <ChannelsTab slug={slug} onGo={(tab, channel, status, extra) => switchTab(tab, channel, status, extra)} />
       )}
       {!isLoading && slug && hasProject && activeTab === "setup" && (
         <SetupTab slug={slug} openChat={openChat} focusChannel={channelParam} />
@@ -127,6 +136,8 @@ export default function ContentCreationPage() {
           focusId={typeof router.query.focus === "string" ? router.query.focus : null}
           initialChannel={channelParam}
           initialStatus={statusParam}
+          initialAuthor={authorParam}
+          initialUnassigned={unassignedParam}
         />
       )}
       {!isLoading && slug && hasProject && activeTab === "calendar" && (

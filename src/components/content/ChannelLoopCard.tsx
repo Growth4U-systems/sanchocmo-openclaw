@@ -111,9 +111,13 @@ interface Props {
   onNextAction: () => void;
   onOpenSetup: () => void;
   onOpenStrategy: () => void;
+  /** Drill into Ideas filtered by this persona (SAN-163). */
+  onPersonaClick?: (personaId: string) => void;
+  /** Drill into the channel's unassigned idea pool (SAN-163). */
+  onPoolClick?: () => void;
 }
 
-export function ChannelLoopCard({ loop, onStageClick, onNextAction, onOpenSetup, onOpenStrategy }: Props) {
+export function ChannelLoopCard({ loop, onStageClick, onNextAction, onOpenSetup, onOpenStrategy, onPersonaClick, onPoolClick }: Props) {
   const emoji = CHANNEL_EMOJI[loop.channel] || "📄";
   const defs = stageDefs(loop.channel);
   const s = loop.stages;
@@ -255,6 +259,49 @@ export function ChannelLoopCard({ loop, onStageClick, onNextAction, onOpenSetup,
           );
         })}
       </div>
+
+      {/* Voces / personas (SAN-163) — Founder-Led splits into one sub-loop per voice */}
+      {loop.personas.length > 0 && (
+        <div className="mx-4 mt-1 mb-2 border-t-2 border-dashed border-ink/20 pt-2 space-y-1.5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-1">
+            👥 {loop.personas.length} {loop.personas.length === 1 ? "voz" : "voces"}
+          </p>
+          {loop.personas.map((p) => {
+            const st = p.stages;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => onPersonaClick?.(p.id)}
+                className="w-full text-left flex items-center gap-2 flex-wrap border-2 border-ink rounded-lg px-3 py-2 bg-card hover:-translate-y-0.5 hover:shadow-comic transition-all"
+                style={{ boxShadow: "var(--pop-xs)" }}
+              >
+                <span className="font-bold text-sm">👤 {p.name}</span>
+                {p.role && <span className="text-[11px] text-muted-foreground">· {p.role}</span>}
+                {p.handle && <span className="text-[11px] text-muted-foreground">· {p.handle}</span>}
+                <span className="text-[12px] text-ink ml-auto whitespace-nowrap">
+                  💡 {st.ideation.newCount} · ✍️ {st.creation.draftingCount + st.creation.readyCount} · 🚀 {st.published.thisMonth}
+                </span>
+                {p.nextAction && (
+                  <span className="text-[11px] font-semibold border-2 border-ink rounded px-1.5 bg-yellow-400/30 text-ink w-full sm:w-auto">
+                    ⚡ {p.nextAction.label}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          {loop.unassignedPool > 0 && (
+            <button
+              type="button"
+              onClick={() => onPoolClick?.()}
+              className="w-full text-left flex items-center gap-2 border-2 border-dashed border-ink/50 rounded-lg px-3 py-1.5 bg-muted/30 hover:-translate-y-0.5 transition-all text-[13px]"
+            >
+              📥 <span className="flex-1">Pool de marca: <b>{loop.unassignedPool}</b> sin repartir</span>
+              <span className="font-heading text-rust">repartir →</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Intelligence return line — the loop closes manually for now */}
       <div className="flex items-center gap-2 mx-4 px-2 py-1 text-[11px] italic text-muted-foreground">
