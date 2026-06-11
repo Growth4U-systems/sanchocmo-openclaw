@@ -80,11 +80,55 @@ test("tools/list exposes expected MCP schemas", async () => {
       "yalc_get_overview",
       "yalc_list_campaigns",
       "yalc_list_gates",
+      "yalc_list_leads",
+      "yalc_set_lead_stage",
     ]);
 
     const sendMessage = result.tools.find((tool) => tool.name === "sancho_send_message");
     assert.ok(sendMessage);
     assert.deepEqual(sendMessage.inputSchema.required, ["clientSlug", "text"]);
+
+    const setLeadStage = result.tools.find((tool) => tool.name === "yalc_set_lead_stage");
+    assert.ok(setLeadStage);
+    assert.deepEqual(setLeadStage.inputSchema.required, ["clientSlug", "leadId", "stage"]);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_list_leads requires yalc:read scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_list_leads",
+      arguments: { clientSlug: "alpha" },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:read/);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_set_lead_stage requires yalc:write scope (read is not enough)", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_set_lead_stage",
+      arguments: { clientSlug: "alpha", leadId: "lead-1", stage: "Qualified" },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:write/);
   } finally {
     await close();
   }

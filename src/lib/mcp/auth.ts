@@ -8,6 +8,7 @@ export type McpScope =
   | "tasks:read"
   | "tasks:write"
   | "yalc:read"
+  | "yalc:write"
   | "open-design:read";
 
 export interface McpPrincipal {

@@ -487,6 +487,85 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   );
 
   server.registerTool(
+    "yalc_list_leads",
+    {
+      title: "List YALC leads",
+      description:
+        "Lists YALC outreach/partnership leads for a Sancho client with optional filters: stage (lifecycleStatus, comma-separated, e.g. 'Sourced' or 'Disqualified' — discarded leads are excluded unless requested), campaignId, campaign type ('B2B'|'Partnerships') and free-text search. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        stage: z
+          .string()
+          .min(1)
+          .optional()
+          .describe(
+            "lifecycleStatus filter, comma-separated (Sourced, Qualified, Disqualified, Queued, Replied, Negotiating, Deal_Created, Closed_Won, ...).",
+          ),
+        campaignId: z.string().min(1).optional().describe("Only leads in this YALC campaign."),
+        type: z
+          .enum(["B2B", "Partnerships"])
+          .optional()
+          .describe("Only leads in campaigns of this type."),
+        search: z.string().min(1).optional().describe("Search by name, company, handle or email."),
+      },
+    },
+    async ({ clientSlug, stage, campaignId, type, search }) =>
+      runTool(context, "yalc_list_leads", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const params = new URLSearchParams();
+        if (stage) params.set("lifecycleStatus", stage);
+        if (campaignId) params.set("campaignId", campaignId);
+        if (type) params.set("type", type);
+        if (search) params.set("q", search);
+        const query = params.toString();
+        const data = await yalcFetch(
+          resolveYalcConfig(clientSlug),
+          `/api/leads${query ? `?${query}` : ""}`,
+          { headers: traceHeaders(context) },
+        );
+        return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
+    "yalc_set_lead_stage",
+    {
+      title: "Set YALC lead stage",
+      description:
+        "Moves a YALC lead to another lifecycle stage (triage: shortlist with 'Qualified', discard with 'Disqualified', restore with 'Sourced'/'Qualified', or any pipeline stage). Discarding records a note ('manual · <date>' when omitted); restoring clears it. Requires yalc:write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        leadId: z.string().min(1).describe("YALC lead id."),
+        stage: z
+          .string()
+          .min(1)
+          .describe(
+            "Target lifecycleStatus (Sourced, Qualified, Disqualified, Queued, Replied, Negotiating, Deal_Created, Closed_Won, Closed_Lost, ...).",
+          ),
+        note: z
+          .string()
+          .min(1)
+          .optional()
+          .describe("Optional transition note — stored as the discard note when stage is 'Disqualified'."),
+      },
+    },
+    async ({ clientSlug, leadId, stage, note }) =>
+      runTool(context, "yalc_set_lead_stage", clientSlug, async () => {
+        assertClientScope(context, "yalc:write", clientSlug);
+        const data = await yalcFetch(
+          resolveYalcConfig(clientSlug),
+          `/api/leads/${encodeURIComponent(leadId)}/stage`,
+          {
+            method: "PATCH",
+            body: note ? { lifecycleStatus: stage, note } : { lifecycleStatus: stage },
+            headers: traceHeaders(context),
+          },
+        );
+        return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
     "open_design_health",
     {
       title: "Check Open Design health",
