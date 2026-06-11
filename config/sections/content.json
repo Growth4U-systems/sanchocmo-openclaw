@@ -1,47 +1,96 @@
 {
-  "_comment": "SECTION TASK MANIFEST (SAN-167 F1) — declarative, deterministic seed for the Content section. One entry per predefined task/document: id, display name, the skill that runs it, the AGENT that owns it (co-located — not resolved indirectly via SKILL_OWNER_MAP), the canonical output path (relative to brand/{slug}/), and dependencies. Seeded per client (extends the Foundation pattern in config/foundation-state.default.json). Verified by src/lib/__tests__/section-manifest.test.mts (owner-check: agent === skill owner) and rendered by the Content UI instead of hardcoded arrays. Mirrors the canonical flow in src/pages/api/content-creation/create-project.ts.",
+  "_comment": "SECTION TASK MANIFEST (SAN-167) — declarative, deterministic seed for the Content section. One entry per predefined task/document: id, display name, the skill that runs it, the AGENT that owns it (co-located — not resolved indirectly via SKILL_OWNER_MAP), the canonical output path(s) relative to brand/{slug}/, type/channel and dependencies. The 5 content-engine tasks (taskKey T01–T05) are seeded as the Content Engine project by src/lib/data/content-engine-tasks.ts (consumed by api/content-creation/create-project.ts); descriptions/deliverable prose live there. channel-strategy (perChannel) is rendered ad-hoc per active channel by the Content UI. Verified by src/lib/__tests__/section-manifest.test.mts (owner-check + create-project equivalence). Extends the Foundation pattern in config/foundation-state.default.json.",
   "section": "content",
   "label": "Content Creation",
   "tasks": [
     {
       "id": "content-strategy",
+      "taskKey": "T01",
       "name": "Content Strategy (14 decisiones globales)",
       "skill": "content-strategy",
       "agent": "dulcinea",
+      "type": "foundation",
+      "channel": "strategy",
+      "phase": 1,
       "docPath": "content/strategy-decisions.md",
+      "deliverableFiles": ["content/strategy-decisions.md"],
+      "outputFiles": ["strategy-decisions.md"],
       "dependsOn": []
     },
     {
       "id": "content-pillars",
+      "taskKey": "T02",
       "name": "Content Pillars (3-5 temas)",
       "skill": "content-pillars",
       "agent": "dulcinea",
+      "type": "foundation",
+      "channel": "strategy",
+      "phase": 1,
       "docPath": "content/content-pillars.md",
+      "deliverableFiles": ["content/content-pillars.md"],
+      "outputFiles": ["content-pillars.md"],
       "dependsOn": ["content-strategy"]
     },
     {
-      "id": "pov-bank",
-      "name": "Build POV Bank",
-      "skill": "pov-bank-builder",
-      "agent": "dulcinea",
-      "docPath": "content/pov-bank.json",
-      "dependsOn": ["content-pillars"]
-    },
-    {
       "id": "content-setup",
+      "taskKey": "T03",
       "name": "Setup configs por pillar",
       "skill": "content-engine-setup",
       "agent": "dulcinea",
+      "type": "execution",
+      "channel": "strategy",
+      "phase": 1,
       "docPath": "content/configs/setup.md",
+      "deliverableFiles": ["content/configs/setup.md"],
+      "outputFiles": [
+        "setup.md",
+        "cadence-config.yml",
+        "news-prompts/*.yml",
+        "paa-queries/*.yml",
+        "keywords-seed/*.yml",
+        "../../market-and-us/competitors/sources.json"
+      ],
       "dependsOn": ["pov-bank"]
     },
     {
+      "id": "pov-bank",
+      "taskKey": "T04",
+      "name": "Build POV Bank",
+      "skill": "pov-bank-builder",
+      "agent": "dulcinea",
+      "type": "execution",
+      "channel": "strategy",
+      "phase": 1,
+      "docPath": "content/pov-bank.json",
+      "deliverableFiles": ["content/pov-bank.json"],
+      "outputFiles": ["pov-bank.json", "pov-bank-history.json"],
+      "dependsOn": ["content-pillars"]
+    },
+    {
       "id": "visual-templates",
+      "taskKey": "T05",
       "name": "Visual Templates (5 plantillas HTML)",
       "skill": "{slug}-visual-generator",
       "skillTemplated": true,
       "agent": "maese-pedro",
+      "type": "foundation",
+      "channel": "visual",
+      "phase": 1,
       "docPath": "brand-book/visual-identity/templates/",
+      "deliverableFiles": [
+        "brand-book/visual-identity/templates/linkedin-quote/template.html",
+        "brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+        "brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+        "brand-book/visual-identity/templates/blog-post/template.html",
+        "brand-book/visual-identity/templates/blog-title/template.html"
+      ],
+      "outputFiles": [
+        "brand-book/visual-identity/templates/linkedin-quote/template.html",
+        "brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+        "brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+        "brand-book/visual-identity/templates/blog-post/template.html",
+        "brand-book/visual-identity/templates/blog-title/template.html"
+      ],
       "dependsOn": ["content-strategy", "content-pillars"]
     },
     {

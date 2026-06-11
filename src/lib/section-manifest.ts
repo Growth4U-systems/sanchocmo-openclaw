@@ -19,6 +19,10 @@ import contentManifest from "../../config/sections/content.json";
 export interface SectionTask {
   /** Stable id, unique within the section. */
   id: string;
+  /** Stable task number (T01…) for sections seeded as a project. When set, the
+   *  task is seeded into the section's project (see content-engine-tasks.ts);
+   *  the concrete task id becomes `${projectId}-${taskKey}`. */
+  taskKey?: string;
   /** Human-facing task/document name. */
   name: string;
   /** Skill that runs the task. May contain `{slug}` when `skillTemplated`. */
@@ -28,9 +32,20 @@ export interface SectionTask {
   skillTemplated?: boolean;
   /** Owner agent slug — the single source of truth for dispatch. */
   agent: string;
+  /** Task type (foundation | execution | …) as stored on the seeded task. */
+  type?: string;
+  /** Channel bucket (strategy | visual | …) as stored on the seeded task. */
+  channel?: string;
+  /** Project phase the seeded task belongs to. */
+  phase?: number;
   /** Canonical output path relative to `brand/{slug}/`. May contain
    *  `{slug}` and (for `perChannel` tasks) `{channel}`. */
   docPath: string;
+  /** All deliverable file paths relative to `brand/{slug}/` (a task may write
+   *  several, e.g. the 5 visual templates). The first is the primary. */
+  deliverableFiles?: string[];
+  /** `output_files` as stored on the seeded task (verbatim, mixed convention). */
+  outputFiles?: string[];
   /** Task ids in the same section this one depends on. */
   dependsOn: string[];
   /** When true, the task is instantiated once per active channel, with
