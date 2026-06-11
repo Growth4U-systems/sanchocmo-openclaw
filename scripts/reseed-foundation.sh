@@ -149,6 +149,12 @@ NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 # NOTE: this canonical section/pillar tree is mirrored in
 # config/foundation-state.default.json, which MC's client creation seeds
 # (src/pages/api/clients/create.ts → seedFoundationState). Keep the two in sync.
+# Divergence (intentional, SAN-3): the creation scaffold OMITS the company-brief
+# `company-brief` merge pillar. With #449's FF→company-brief map, a placeholder
+# merge pillar gets flipped to "approved" off the disposable fastcontext grounding
+# (and points at a company-brief.current.md that doesn't exist yet) — i.e. the
+# Company Brief reads "done" when only grounding ran. Omitting it keeps a fresh
+# client's Company Brief honestly not-started until the real pillars run.
 cat > "$BRAND_DIR/foundation-state.json" << FJSON
 {
   "version": "3.0",
