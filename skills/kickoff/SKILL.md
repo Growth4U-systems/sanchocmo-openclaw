@@ -3,13 +3,16 @@ name: kickoff
 description: "Sesión de intake rápida (~30 min) que genera los cimientos mínimos viables para un cliente. Modo URL (95%): scrape web + sociales → pre-fill → validar → completar gaps. Modo manual (5%): preguntas conversacionales. Produce UN único archivo company-brief.current.md con secciones H2: Company Identity, Business Model, Budget & Resources, Self Intelligence L1, Market Intelligence L1, Brand Voice Snapshot, Niche / ECPs. Es el primer skill que se ejecuta para cualquier cliente nuevo. Absorbe: sancho-start, company-context, business-model-audit, budget-constraints, brand-voice Quick, self-intelligence Lens 1, market-intelligence L1, niche-discovery básico."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '3.0'
+  version: '3.1'
   system: SanchoCMO
   phase: Foundation
   pillar: company-brief
   layer: '0'
-  updated: '2026-06-11'
+  updated: '2026-06-12'
   changes: |
+    v3.1 — SAN-3: regla de ejecución explícita — el Kickoff DEBE escribir el fichero con la
+           Write tool (no solo imprimirlo en el chat) y actualizar foundation-state; escribe el
+           draft pronto y re-escribe al validar. Antes la skill se quedaba conversando sin persistir.
     v3.0 — SAN-3 W4: renombrado fast-foundation→kickoff; output fastcontext→company-brief/company-brief.current.md;
            absorbe company-context/business-model/budget (retiradas).
     v2.0 — SAN-13: FF escribe UN único archivo `fastcontext/fastcontext.current.md`
@@ -50,6 +53,27 @@ Si el estado no tiene `sections[*].pillars[*].output_file`, **la marca queda inv
 2. Kickoff produce **un único** `company-brief/company-brief.current.md` (+ versionado `company-brief.v{N}.md` + `history.json`), con secciones H2.
 3. La sección de estado `company-brief` tiene **un solo pilar** `company-brief` cuyo `output_file` es `brand/{slug}/company-brief/company-brief.current.md`. Lo mantiene el `foundation-orchestrator`.
 4. Si se corrió en otro schema, recuperá con `scripts/rebuild-foundation-state.mjs <slug> --apply`.
+
+---
+
+## 🚨 Regla de ejecución (NO negociable)
+
+El Kickoff produce un **fichero en disco**, no un mensaje de chat. El brief que generes
+**no cuenta** hasta que exista `brand/{slug}/company-brief/company-brief.current.md`.
+
+- **USA TU HERRAMIENTA DE ESCRITURA (Write) para crear el fichero.** Imprimir el brief en
+  la conversación **NO lo persiste**: el dashboard y el Brand Brain leen el disco, no el
+  chat. Si solo lo escribes en el chat, el pilar se queda en 0% y el cliente no ve nada.
+- **Escribe el draft en cuanto tengas las secciones rellenas** (tras el scrape en modo URL,
+  o tras las preguntas en modo manual). NO esperes a una validación "perfecta": el Company
+  Brief es **vivo y provisional** (nunca source of truth) → se escribe pronto y se
+  **re-escribe** al refinar. Validar viene DESPUÉS de tener el draft en disco, no antes.
+- Tras escribir, **actualiza `foundation-state.json`**:
+  `sections["company-brief"].pillars["company-brief"].status = "generated"` y
+  `output_file = "brand/{slug}/company-brief/company-brief.current.md"`. Así el dashboard lo
+  muestra como generado / pendiente de revisión.
+- El Kickoff **NO está completo** —y **NO ofrezcas avanzar a Full Foundation**— hasta que el
+  fichero exista en disco y el estado esté actualizado. "Lo tengo redactado en el chat" ≠ completado.
 
 ---
 
@@ -122,6 +146,9 @@ Una pregunta a la vez. Tono CMO cercano. Follow-up si respuesta vaga (max 1).
 
 ### Step 2: Validar & Completar Gaps
 
+> Para entonces el **draft ya está escrito en disco** (ver "🚨 Regla de ejecución"). Validar
+> sirve para refinar y **re-escribir**, no es un requisito previo a crear el fichero.
+
 Presentar lo inferido agrupado (NO campo por campo):
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -157,10 +184,15 @@ De la conversación y el scraping:
 2. Para cada ECP: dolor principal, cómo buscan solución, dónde están
 3. NO validación exhaustiva — es un primer mapa
 
-### Step 5: Generar `company-brief.current.md`
+### Step 5: Escribir `company-brief.current.md` (con tu Write tool)
 
 > **Regla de paths (v3.0 / SAN-3)**: Kickoff escribe SIEMPRE y SOLO a
 > `brand/{slug}/company-brief/company-brief.current.md`. NUNCA toca carpetas de pilares analíticos.
+
+**Esto NO es opcional ni "más tarde": usa tu herramienta de escritura para crear el fichero
+AHORA.** Idealmente ya escribiste el draft tras el Step 1 (ver "🚨 Regla de ejecución"); aquí
+lo confirmas o lo re-escribes con lo validado, y actualizas el `status` en foundation-state.json.
+Si terminas el turno sin que el fichero exista en disco, el Kickoff ha FALLADO.
 
 Un único archivo con secciones H2. Header obligatorio, luego las secciones:
 
