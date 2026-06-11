@@ -14,7 +14,9 @@ import { brandDir } from "@/lib/data/paths";
 const FOUNDATION_FOLDERS = new Set([
   "company-brief", "market-and-us", "go-to-market",
   "brand-book", "metrics-setup", "strategic-plan",
-  "fast-foundation",
+  // `fast-foundation` is the legacy section name; `fastcontext` is the actual
+  // folder Fast Foundation writes (SAN-13). Both are foundation, not "other docs".
+  "fast-foundation", "fastcontext",
 ]);
 
 const IGNORED_FOLDERS = new Set([
