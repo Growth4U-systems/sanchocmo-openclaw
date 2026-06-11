@@ -451,13 +451,23 @@ export default function BrandBrainPage() {
 
     const btnClass = "inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] bg-transparent border border-[#E5E2DC] dark:border-[#313244] rounded-md cursor-pointer text-[#7A7A7A] dark:text-[#6c7086] hover:bg-[#E5E2DC] dark:hover:bg-[#313244] hover:text-[#1A1A1A] dark:hover:text-[#cdd6f4] transition-colors";
 
+    // HTML deliverables take the whole content area (SAN-149): full-bleed
+    // layout with the header bar padded manually and the iframe filling the
+    // rest of the viewport. Carousel templates keep the boxed TemplateViewer.
+    const tplDoc = /^brand\/[^/]+\/brand-book\/visual-identity\/templates\/[^/]+\/(slide-cover|slide-body|slide-cta|template)\.html$/.test(selectedDoc.docPath);
+    const viewingHtml =
+      !editing && !docLoading && !!docContent && !tplDoc &&
+      (selectedDoc.docPath.endsWith(".html") ||
+        docContent.trimStart().startsWith("<!DOCTYPE") ||
+        docContent.trimStart().startsWith("<html"));
+
     return (
-      <DashboardLayout>
+      <DashboardLayout fullBleed={viewingHtml}>
         <Head>
           <title>{`${pillarTitle} - ${slug} - Mission Control`}</title>
         </Head>
 
-        <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+        <div className={`flex items-center gap-2.5 flex-wrap ${viewingHtml ? "px-6 py-3 mb-0 border-b border-[#E5E2DC] dark:border-[#313244]" : "mb-4"}`}>
           <button
             type="button"
             onClick={handleBack}
@@ -589,7 +599,7 @@ export default function BrandBrainPage() {
           const dc = commentsByRel.get(docRelKey(selectedDoc.docPath));
           if (!dc || dc.comments.length === 0) return null;
           return (
-            <div className="mb-4 rounded-lg border border-yellow-300/60 bg-yellow-50/60 dark:bg-yellow-900/10 p-4">
+            <div className={`mb-4 rounded-lg border border-yellow-300/60 bg-yellow-50/60 dark:bg-yellow-900/10 p-4 ${viewingHtml ? "mx-6 mt-4" : ""}`}>
               <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                 <span className="text-sm font-bold text-yellow-900 dark:text-yellow-200">
                   💬 Comentarios del cliente ({dc.count})
@@ -662,11 +672,15 @@ export default function BrandBrainPage() {
                 />
               );
             }
+            // Served by URL (not srcDoc) so in-page anchors (`#section`)
+            // navigate within the iframe document instead of resolving
+            // against the dashboard URL (SAN-149). Full-bleed: the iframe
+            // fills everything below the header bar.
             return (
               <iframe
-                srcDoc={docContent}
-                className="w-full border border-[#E5E2DC] rounded-lg bg-white"
-                style={{ minHeight: "80vh" }}
+                src={`/api/docs/${docCanonicalPath || selectedDoc.docPath}?raw=1`}
+                className="w-full border-0 bg-white block"
+                style={{ height: "calc(100vh - 58px)" }}
                 sandbox="allow-same-origin"
                 title={pillarTitle}
               />
