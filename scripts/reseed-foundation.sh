@@ -146,6 +146,9 @@ fi
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 # Foundation state v3
+# NOTE: this canonical section/pillar tree is mirrored in
+# config/foundation-state.default.json, which MC's client creation seeds
+# (src/pages/api/clients/create.ts → seedFoundationState). Keep the two in sync.
 cat > "$BRAND_DIR/foundation-state.json" << FJSON
 {
   "version": "3.0",
