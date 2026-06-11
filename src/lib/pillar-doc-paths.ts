@@ -4,52 +4,39 @@
 // Used by the pinned document system in chat threads.
 // ============================================================
 
-/**
- * Default doc paths per pillar (fallback when foundation-state.json
- * doesn't have an output_file for the pillar).
- * Each entry is an array of paths to try in order.
- *
- * Lite fallback convention (added v1.1, 2026-05-20; seeds retired SAN-13/W4):
- *   A few entries still list a sibling `lite.md` after `current.md`. `current.md`
- *   is produced by the full skill; `lite.md` was a preliminary seed from the old
- *   Fast Foundation flow (retired — the Kickoff now writes one Company Brief, not
- *   per-pillar seeds). The `lite.md` paths are kept as harmless fallbacks for
- *   legacy clients; the dashboard shows whichever exists, preferring full.
- *
- *   Consumers MUST treat lite.md as preliminary (badge "lite" in UI). Cross-
- *   skill consumers (positioning, pricing, etc.) DO NOT fall back to lite —
- *   that's intentional and lives in each consumer's `context_required`.
- */
-export const PILLAR_DOC_PATHS: Record<string, string[]> = {
-  // W4 (SAN-3): the Kickoff writes the Company Brief — its single canonical output.
-  // The deep company-context/business-model/budget skills are retired (absorbed).
-  "company-brief": ["company-brief/company-brief.current.md"],
-  "seo-audit": ["site-audit/seo-audit/seo-audit.current.md", "trust-engine/seo-audit.json"],
-  "own-media-audit": ["site-audit/own-media-audit/own-media-audit.current.md", "trust-engine/own-media-audit.json"],
-  "market-analysis": ["market-and-us/market/market.current.md", "market-and-us/market/lite.md"],
-  "competitor-analysis": ["market-and-us/competitors/competitors.current.md"],
-  "self-analysis": ["market-and-us/self/self.current.md", "market-and-us/self/lite.md"],
-  "market-synthesis": ["market-and-us/swot/swot.current.md"],
-  "niche-discovery": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"],
-  "niche-basic": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"],
-  "existing-customer-data": ["go-to-market/existing-customers/existing-customers.current.md"],
-  "ecp-validation": ["go-to-market/ecp-validation/ecp-validation.current.md"],
-  positioning: ["go-to-market/positioning/positioning.current.md"],
-  pricing: ["go-to-market/pricing/pricing.current.md"],
-  "brand-voice": ["brand-identity/voice-profile/voice-profile.current.md", "brand-identity/brand-voice/brand-voice.current.md"],
-  "brand-voice-snapshot": ["brand-voice/brand-voice.current.md", "brand-voice/lite.md"],
-  "visual-identity": ["brand-identity/visual-identity/visual-identity.current.md"],
-  "content-strategy": ["strategies/content/content.current.md"],
-  "social-media-strategy": ["strategies/social/social.current.md"],
-  "email-strategy": ["strategies/email/email.current.md"],
-  "paid-media-strategy": ["strategies/paid/paid.current.md"],
-  "partnership-strategy": ["strategies/partnerships/partnerships.current.md"],
-  "web-strategy": ["strategies/web/web.current.md"],
-  "metrics-setup": ["metrics/setup/setup.current.md"],
-  "strategic-plan": ["strategic-plan/strategic-plan.current.md"],
-  "foundation-presentation": ["presentations/foundation-deck.html"],
-  "strategic-presentation": ["presentations/strategic-deck.html"],
+import pillarManifest from "../../config/pillar-manifest.json";
+
+/** Shape of one pillar entry in the single source of truth config/pillar-manifest.json. */
+type ManifestPillarEntry = {
+  docPaths?: string[];
+  skillAlias?: string;
+  homonymous?: boolean;
+  chatConfig?: { skill: string; skills: string[]; agent?: string };
 };
+/** The pillar map from config/pillar-manifest.json — edit the JSON, never this. */
+export const MANIFEST_PILLARS = (
+  pillarManifest as unknown as { pillars: Record<string, ManifestPillarEntry> }
+).pillars;
+
+/**
+ * Default doc paths per pillar (fallback when foundation-state.json doesn't have
+ * an output_file for the pillar). Each entry is an array of paths to try in order.
+ *
+ * DERIVED from the single source of truth `config/pillar-manifest.json` (F0) — do
+ * NOT hand-edit; edit the manifest. Equivalence with the previous hardcoded map is
+ * frozen in src/lib/__tests__/pillar-manifest.test.mts.
+ *
+ * Lite fallback convention: for pillars whose canonical path is also a
+ * fast-foundation output target, the manifest lists `…current.md` first and the
+ * sibling `lite.md` second. `current.md` is produced by the full skill; `lite.md`
+ * by `fast-foundation` as a preliminary seed. Cross-skill consumers (positioning,
+ * pricing, …) do NOT fall back to lite — that lives in each `context_required`.
+ */
+export const PILLAR_DOC_PATHS: Record<string, string[]> = Object.fromEntries(
+  Object.entries(MANIFEST_PILLARS)
+    .filter(([, entry]) => entry.docPaths)
+    .map(([key, entry]) => [key, entry.docPaths as string[]]),
+);
 
 /**
  * Resolve the doc path for a pillar, checking foundation-state.json first,
