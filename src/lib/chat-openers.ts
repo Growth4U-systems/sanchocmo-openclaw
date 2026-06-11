@@ -784,9 +784,12 @@ export function buildSkillEditorThread(
  * HTML-canonical sibling via the `html-output` skill (SAN-149).
  *
  * Reuses the convergence rule: if a task owns the doc, the conversion runs
- * in the task's thread; otherwise a doc thread is created. Either way the
- * skill/agent are forced to html-output/maese-pedro for this message and
- * the instruction is auto-sent on open (`initialMessage`).
+ * in the task's thread; otherwise a doc thread is created. The skill is
+ * forced to html-output for this message, but the conversion is done by
+ * the doc's AUTHOR agent (the one the task/pillar thread resolved) — same
+ * principle as the review-comments loop (SAN-148): whoever wrote the doc
+ * owns its revisions. maese-pedro (skill owner) is only the fallback when
+ * no task/pillar claims the doc.
  */
 export function buildHtmlConversionThread(
   slug: string,
@@ -814,7 +817,7 @@ export function buildHtmlConversionThread(
     ...base,
     skill: "html-output",
     skills: ["html-output", ...base.skills.filter((s) => s !== "html-output")],
-    agent: "maese-pedro",
+    agent: base.agent || "maese-pedro",
     docPath: normalizedDocPath,
     initialMessage:
       `Ejecuta la skill html-output sobre ${normalizedDocPath}: genera el documento HTML ` +

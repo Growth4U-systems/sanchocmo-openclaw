@@ -20,7 +20,7 @@
 ## Reglas para agentes
 
 1. **Si editas un `.md` que tiene sibling `.html`, regenera el `.html`** en la misma sesión (skill `html-output`). Un HTML desactualizado es peor que no tener HTML.
-2. Cuando el usuario pide "hazlo en HTML" / "documento bonito" → ejecutar `html-output` sobre el doc. Owner: maese-pedro; cualquier agente puede invocarla sobre sus propios deliverables.
+2. Cuando el usuario pide "hazlo en HTML" / "documento bonito" → ejecutar `html-output` sobre el doc. La conversión de un doc existente la hace su **agente autor** (el del thread de la task/pilar) — mismo principio que el loop review-comments. Maese Pedro (owner de la skill) solo entra cuando el contenido nace sin doc/task detrás.
 3. El tema visual se resuelve sin preguntar: explícito en mensaje → design system del brand (`brand-book/visual-identity/`) → visual identity (`brand-identity/visual-identity/visual-identity.current.md`) → default Sancho (Parchment + Tinta).
 4. NO inyectar scripts de comentarios en el HTML — la capa de comentarios la añade Mission Control al servir el documento compartido.
 5. Presentaciones siguen su propio protocolo (`presentation-summary-protocol.md`) y viven en `brand/{slug}/presentations/` — NO usan la convención sibling.
