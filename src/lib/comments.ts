@@ -13,7 +13,8 @@
  */
 
 import crypto from "crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { commentedDocPathFamily } from "@/lib/comments-file";
 import { db } from "@/db/drizzle";
 import { sharedDocComments } from "@/db/schema";
 
@@ -254,6 +255,31 @@ export async function loadDocComments(
   const baseWhere = docPath
     ? and(eq(sharedDocComments.slug, slug), eq(sharedDocComments.docPath, docPath))
     : eq(sharedDocComments.slug, slug);
+  return loadWhere(baseWhere, opts);
+}
+
+/**
+ * Load every comment for a doc FAMILY (SAN-149): a deliverable shared both
+ * as `.md` and as its HTML-canonical sibling stores comments under either
+ * commented path. Use this whenever the caller identifies the doc rather
+ * than the exact shared file (agent loop, dashboards, triage).
+ */
+export async function loadDocCommentsFamily(
+  slug: string,
+  docPath: string,
+  opts: { openOnly?: boolean } = {},
+): Promise<CommentRow[]> {
+  const family = commentedDocPathFamily(docPath);
+  return loadWhere(
+    and(eq(sharedDocComments.slug, slug), inArray(sharedDocComments.docPath, family)),
+    opts,
+  );
+}
+
+async function loadWhere(
+  baseWhere: ReturnType<typeof and> | ReturnType<typeof eq>,
+  opts: { openOnly?: boolean },
+): Promise<CommentRow[]> {
 
   const rows = await db
     .select()
