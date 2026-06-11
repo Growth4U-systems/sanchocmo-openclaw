@@ -177,7 +177,7 @@ endpoint NO es solo lo que se te ocurre. Es:
 {tu prompt content-specific}
 ```
 
-El endpoint `generate-image` ya prepende `visual-identity.current.md`
+El endpoint `generate-image` ya prepende `visual-identity-current.md`
 del brand-book automaticamente (ver
 `src/pages/api/content-engine/generate-image.ts`). Pero el
 `prompt_prefix` del manifest es **mas operativo** (estilo concreto,

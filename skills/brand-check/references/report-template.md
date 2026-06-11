@@ -42,18 +42,18 @@ brand/{slug}/compliance/brand-check-{YYYY-MM-DD}-{asset-slug}.md
 
 ✅ **Aligned** ({N})
 - *Cita del asset*: "..."
-  *Anchor*: brand-voice.current.md → sección "..."
+  *Anchor*: brand-voice-current.md → sección "..."
   *Por qué*: [breve razonamiento]
 
 ⚠️ **Partial** ({N})
 - *Cita del asset*: "..."
-  *Anchor*: brand-voice.current.md → "..."
+  *Anchor*: brand-voice-current.md → "..."
   *Issue*: [qué falla]
   *Fix sugerido*: [reescritura concreta o ajuste]
 
 ❌ **Misaligned** ({N})
 - *Cita del asset*: "..."
-  *Anchor*: brand-voice.current.md → "..."
+  *Anchor*: brand-voice-current.md → "..."
   *Issue*: [qué viola, ej. uso de palabra "don't"]
   *Fix sugerido*: [palabra/frase alternativa]
 
@@ -96,7 +96,7 @@ brand/{slug}/compliance/brand-check-{YYYY-MM-DD}-{asset-slug}.md
 
 ❌ **Misaligned**
 - *Elemento*: "...".
-  *Anchor*: visual-identity.current.md → "..."
+  *Anchor*: visual-identity-current.md → "..."
   *Issue*: [color fuera de paleta, fuente no autorizada, logo deformado, etc.]
   *Fix sugerido*: [token correcto a aplicar]
 
@@ -139,7 +139,7 @@ brand/{slug}/compliance/brand-check-{YYYY-MM-DD}-{asset-slug}.md
 
 - **Claims numéricos detectados**: {sí/no}. {Si sí: "Recomendar pasar el asset por qa-bot vía deep-research para verificar fact-checks antes de publicar."}
 - **Foundation files leídos**:
-  - `brand/{slug}/brand-book/brand-voice/brand-voice.current.md`
+  - `brand/{slug}/brand-book/brand-voice/brand-voice-current.md`
   - `brand/{slug}/go-to-market/positioning/shared/messaging-summary.md`
   - {visual-identity / seo-guidelines si aplican}
 - **Foundation files faltantes (saltados con warning)**: {lista o "ninguno"}

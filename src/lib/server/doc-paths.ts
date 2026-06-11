@@ -25,22 +25,24 @@ function safeAbs(baseDir: string, relPath: string): string {
   return absPath;
 }
 
-// Matches a canonical-doc filename: `current.<ext>` or `<name>.current.<ext>`.
-const CANONICAL_DOC_RE = /(^|\.)current\.(md|html|json)$/i;
+// Matches a canonical-doc filename: `current.<ext>`, `<name>.current.<ext>`
+// (legacy SAN-103 dot form) or `<name>-current.<ext>` (canonical hyphen form, SAN-156).
+const CANONICAL_DOC_RE = /(^|[.-])current\.(md|html|json)$/i;
 
 /**
- * Name-agnostic canonical-doc fallback (SAN-103). Foundation pillar docs
- * live one-per-folder and may be physically named either `current.md`
- * (legacy) or `{folder}.current.md` (canonical). A caller may request
- * EITHER name, so when the exact requested file is missing, scan the
- * folder for the single canonical `*.current.*` doc and serve it. This
- * makes the rename safe in both directions:
+ * Name-agnostic canonical-doc fallback (SAN-103 / SAN-156). Foundation pillar
+ * docs live one-per-folder and may be physically named `{folder}-current.md`
+ * (canonical, SAN-156), `{folder}.current.md` (legacy SAN-103 dot form) or bare
+ * `current.md` (older legacy). A caller may request ANY of these names, so when
+ * the exact requested file is missing, scan the folder for the single canonical
+ * `*current.*` doc and serve it. This makes the rename safe in every direction:
  *
- *   request `x/current.md`     (legacy)    → serves `x/x.current.md` if present
- *   request `x/x.current.md`   (canonical) → serves `x/current.md` for un-migrated data
+ *   request `x/x.current.md`   → serves `x/x-current.md` if present (and vice versa)
+ *   request `x/current.md`     → serves `x/x-current.md` if present
+ *   request `x/x-current.md`   → serves `x/current.md` for un-migrated data
  *
- * Preference order: folder-named `{folder}.current.*` first, then any
- * other `*.current.*`, then bare `current.*`.
+ * Preference order: folder-named `{folder}-current.*` / `{folder}.current.*`
+ * first, then any other `*current.*`, then bare `current.*`.
  */
 function currentAliasFallback(absPath: string): string | null {
   if (!CANONICAL_DOC_RE.test(path.basename(absPath))) return null;
@@ -49,14 +51,18 @@ function currentAliasFallback(absPath: string): string | null {
   if (!fs.existsSync(dir)) return null;
 
   const folderName = path.basename(dir).toLowerCase();
+  const isFolderNamed = (name: string) => {
+    const lower = name.toLowerCase();
+    return lower.startsWith(`${folderName}-current.`) || lower.startsWith(`${folderName}.current.`);
+  };
   const candidates = fs
     .readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
     .filter((name) => CANONICAL_DOC_RE.test(name))
     .sort((a, b) => {
-      const aFolder = a.toLowerCase().startsWith(`${folderName}.current.`);
-      const bFolder = b.toLowerCase().startsWith(`${folderName}.current.`);
+      const aFolder = isFolderNamed(a);
+      const bFolder = isFolderNamed(b);
       if (aFolder !== bFolder) return aFolder ? -1 : 1;
       const aBare = /^current\./i.test(a);
       const bBare = /^current\./i.test(b);
@@ -85,7 +91,7 @@ function currentAliasFallback(absPath: string): string | null {
  * itself — solved by the fast-foundation rename, not by this fallback.
  */
 function liteSiblingFallback(absPath: string): string | null {
-  if (!/(^|\.)current\.md$/i.test(path.basename(absPath))) return null;
+  if (!/(^|[.-])current\.md$/i.test(path.basename(absPath))) return null;
   const litePath = path.join(path.dirname(absPath), "lite.md");
   if (fs.existsSync(litePath) && fs.statSync(litePath).isFile()) {
     return litePath;

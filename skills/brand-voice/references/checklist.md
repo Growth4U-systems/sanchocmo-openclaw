@@ -79,7 +79,7 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/brand-voice/brand-voice.current.md`
+- [ ] **Guardado en** `brand/{{slug}}/brand-voice/brand-voice-current.md`
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 

@@ -12,11 +12,11 @@ metadata:
   updated: '2026-02-27'
   changes: v2 — Restructured per skill-creator principles. SKILL.md lean (~110 lines). References created.
 context_required:
-- brand/{slug}/company-brief/company-brief.current.md
-- brand/{slug}/go-to-market/ecps/ecps.current.md
-- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/company-brief/company-brief-current.md
+- brand/{slug}/go-to-market/ecps/ecps-current.md
+- brand/{slug}/go-to-market/ecps/ecps-current.md
 context_writes:
-- brand/{slug}/go-to-market/existing-customer-data/existing-customer-data.current.md
+- brand/{slug}/go-to-market/existing-customer-data/existing-customer-data-current.md
 ---
 
 # Existing Customer Data — Customer Intelligence (OPTIONAL)
@@ -24,7 +24,7 @@ context_writes:
 > **OPTIONAL** — Skip if pre-launch or no CRM. Analiza customer data para identificar best customers, segments, churn patterns, y upgrade triggers.
 
 **Input**: CRM export / API / manual summary (>50 customers)
-**Output**: Customer intelligence → `brand/{slug}/customer-data/customer-data.current.md`
+**Output**: Customer intelligence → `brand/{slug}/customer-data/customer-data-current.md`
 
 ## References
 
@@ -78,9 +78,9 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/customer-data/customer-data.current.md`
+- Ruta: `brand/{slug}/customer-data/customer-data-current.md`
 - Backup + versionado + history.json
-- Link: `<MC_BASE>/docs/brand/{slug}/customer-data/customer-data.current.md`
+- Link: `<MC_BASE>/docs/brand/{slug}/customer-data/customer-data-current.md`
 
 ---
 
@@ -111,13 +111,13 @@ Al entregar, añade:
 
 ```
 brand/{{slug}}/customer-data/
-├── customer-data.current.md      ← versión activa
+├── customer-data-current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
 └── qa-log.md       ← historial de QA
 ```
 
 1. Identifica slug desde systemPrompt
-2. Si existe `customer-data.current.md` → backup como `v{N+1}.md`
-3. Si no existe → crea carpeta + `customer-data.current.md` + `v1.md` + `history.json`
-4. Link: `<MC_BASE>/docs/brand/{slug}/customer-data/customer-data.current.md`
+2. Si existe `customer-data-current.md` → backup como `v{N+1}.md`
+3. Si no existe → crea carpeta + `customer-data-current.md` + `v1.md` + `history.json`
+4. Link: `<MC_BASE>/docs/brand/{slug}/customer-data/customer-data-current.md`

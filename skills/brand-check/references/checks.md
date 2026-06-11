@@ -30,7 +30,7 @@ Si un canal no está en la tabla, aplicar **Voice & Tone + Messaging** por defec
 
 ## Dominio 1: Voice & Tone
 
-**Foundation file**: `brand/{slug}/brand-book/brand-voice/brand-voice.current.md`
+**Foundation file**: `brand/{slug}/brand-book/brand-voice/brand-voice-current.md`
 
 **Qué busca:**
 - Tono coherente con el documento (ej. insider-vulnerable, coaching, data-driven, provocativo)
@@ -63,7 +63,7 @@ Si un canal no está en la tabla, aplicar **Voice & Tone + Messaging** por defec
 
 **Foundation files**:
 - `brand/{slug}/go-to-market/positioning/shared/messaging-summary.md` (UVPs, USPs, claims aprobados)
-- `brand/{slug}/go-to-market/positioning/ecp{N}-*/...current.md` (cuando el asset apunta a un ECP específico)
+- `brand/{slug}/go-to-market/positioning/ecp{N}-*/..-current.md` (cuando el asset apunta a un ECP específico)
 
 **Qué busca:**
 - Claims del asset coherentes con UVPs/USPs aprobados
@@ -94,7 +94,7 @@ Si un canal no está en la tabla, aplicar **Voice & Tone + Messaging** por defec
 
 ## Dominio 3: Visual Identity
 
-**Foundation file**: `brand/{slug}/brand-book/visual-identity/visual-identity.current.md` (+ `design-tokens.json` si existe)
+**Foundation file**: `brand/{slug}/brand-book/visual-identity/visual-identity-current.md` (+ `design-tokens.json` si existe)
 
 **Aplicabilidad**: solo cuando el asset tiene componente visual (image, slide, frontend, ad, instagram, tiktok, youtube). Para canales puramente texto (linkedin/twitter/email/etc.), saltar este dominio.
 

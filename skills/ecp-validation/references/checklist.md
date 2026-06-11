@@ -53,7 +53,7 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/ecp-validation/ecp-validation.current.md`
+- [ ] **Guardado en** `brand/{{slug}}/ecp-validation/ecp-validation-current.md`
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 

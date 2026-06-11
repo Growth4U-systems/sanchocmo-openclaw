@@ -2,7 +2,7 @@
 
 ## Data Required (per competitor)
 
-From `brand/{slug}/market-and-us/competitors/competitors.current.md` (roll-up) or `brand/{slug}/market-and-us/competitors/{nombre}/{nombre}.current.md` (deep-dive per competitor), extract:
+From `brand/{slug}/market-and-us/competitors/competitors-current.md` (roll-up) or `brand/{slug}/market-and-us/competitors/{nombre}/{nombre}-current.md` (deep-dive per competitor), extract:
 
 ```yaml
 name: "Competitor Name"
@@ -303,8 +303,8 @@ Key styles (add to the presentation's `<style>` block):
 
 When generating a Competitor Deep-Dive slide:
 
-1. Read `brand/{slug}/visual-identity/visual-identity.current.md` → resolve brand theme (see `brand-theme.md`)
-2. Read `brand/{slug}/market-and-us/competitors/competitors.current.md` (roll-up) or glob `brand/{slug}/market-and-us/competitors/*/*.current.md` (per-competitor deep-dives) → extract data per competitor
+1. Read `brand/{slug}/visual-identity/visual-identity-current.md` → resolve brand theme (see `brand-theme.md`)
+2. Read `brand/{slug}/market-and-us/competitors/competitors-current.md` (roll-up) or glob `brand/{slug}/market-and-us/competitors/*/*-current.md` (per-competitor deep-dives) → extract data per competitor
 3. For EACH competitor, generate one `<section class="slide competitor-deep-dive">` using the structure above
 4. Truncate text to fit viewport:
    - Headline thesis: max 120 chars

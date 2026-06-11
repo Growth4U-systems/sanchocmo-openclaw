@@ -124,8 +124,8 @@ TAREA:
 CONTEXTO DE MARCA:
 - PRIMERO lee ./brand/{slug}/foundation-state.json → usa brand_summary + file_index para resolver paths
 - Luego lee los archivos específicos:
-  - ./brand/{slug}/[archivo1]/[archivo1].current.md
-  - ./brand/{slug}/[archivo2]/[archivo2].current.md
+  - ./brand/{slug}/[archivo1]/[archivo1]-current.md
+  - ./brand/{slug}/[archivo2]/[archivo2]-current.md
   [solo los relevantes — ver context_required del skill]
 
 SKILLS A USAR:

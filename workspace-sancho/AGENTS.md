@@ -68,7 +68,7 @@ workspace-sancho/
 
 | Type | Location | Example |
 |---|---|---|
-| Client brand data | `brand/{slug}/` following Foundation structure | `brand/acme/company-brief/company-brief.current.md` |
+| Client brand data | `brand/{slug}/` following Foundation structure | `brand/acme/company-brief/company-brief-current.md` |
 | Daily log | `memory/YYYY-MM-DD.md` | `memory/2026-04-06.md` |
 | Client memory | `memory/clients/{slug}.md` | `memory/clients/hospital-capilar.md` |
 | Task definition | `memory/archive/prds/T-NNN.md` | `memory/archive/prds/T-060.md` |
@@ -130,7 +130,7 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
    - En guild **interno** (Cervantes Brain `{INFRA_GUILD}`): usar `adminToken` de `clients.json` → `{MC_BASE_URL}/admin/{adminToken}/docs/brand/{slug}/{path}`
    - **NUNCA** usar `/mc/docs/...` ni `/mc/connect/...` sin token — esos endpoints devuelven 403.
 4. **No narrar pasos** — Max 2 msgs por hilo: inicio + resultado. CERO "Voy a leerlo..."
-5. **Versionado** — `brand/{slug}/{pilar}/{pilar}.current.md` con historial. Ver `_system/foundation/versioning-protocol.md`.
+5. **Versionado** — `brand/{slug}/{pilar}/{pilar}-current.md` con historial. Ver `_system/foundation/versioning-protocol.md`.
 6. **Gate check Foundation** — Verificar `brand/{slug}/foundation-state.json` prerequisitos antes de ejecutar. Ver `_system/foundation/foundation-protocol.md`.
 7. **Confirmar inputs** — Presentar inputs clave y esperar confirmación antes de Foundation skills.
 8. **Leer todo antes de generar** — TODOS los docs del cliente. Cruzar información.

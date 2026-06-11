@@ -34,6 +34,6 @@
 
 ## Almacenamiento
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/customer-data/customer-data.current.md`
+- [ ] **Guardado en** `brand/{{slug}}/customer-data/customer-data-current.md`
 - [ ] **Versionado** correcto
 - [ ] **Link generado**

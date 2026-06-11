@@ -14,7 +14,7 @@ context_required:
 # Lite fallback (read-only, treat as preliminary seed, not as final truth):
 - brand/{slug}/company-context/lite.md          # own seed from fast-foundation (hydration only)
 context_writes:
-- brand/{slug}/company-context/company-context.current.md
+- brand/{slug}/company-context/company-context-current.md
 - brand/{slug}/operational/learnings.md
 ---
 
@@ -23,7 +23,7 @@ context_writes:
 > Captura QUIÉN es la empresa, QUÉ quieren y POR QUÉ existen. Bedrock de todos los pillars downstream.
 
 **Input**: URL, documentos, conversación con cliente
-**Output**: Company Context Profile → `brand/{slug}/company-context/company-context.current.md` (standalone — la única fuente de verdad que esta skill escribe).
+**Output**: Company Context Profile → `brand/{slug}/company-context/company-context-current.md` (standalone — la única fuente de verdad que esta skill escribe).
 
 ## References
 
@@ -66,11 +66,11 @@ context_writes:
 - Metadata: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ -->`
 
 ### 6. Guardar con versionado
-- Ruta: `brand/{slug}/company-context/company-context.current.md` (standalone, único archivo que esta skill escribe)
-- Si ya existe → backup como `v{N+1}.md`, sobreescribe `company-context.current.md`, actualiza `history.json`
-- Link: `<MC_BASE>/docs/brand/{slug}/company-context/company-context.current.md`
+- Ruta: `brand/{slug}/company-context/company-context-current.md` (standalone, único archivo que esta skill escribe)
+- Si ya existe → backup como `v{N+1}.md`, sobreescribe `company-context-current.md`, actualiza `history.json`
+- Link: `<MC_BASE>/docs/brand/{slug}/company-context/company-context-current.md`
 
-> **Merge view `company-brief/company-brief.current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa de fast-foundation — es aceptado por ahora.
+> **Merge view `company-brief/company-brief-current.md`**: lo regenera únicamente `fast-foundation` (no esta skill). Si esta skill se corre standalone, el merge view queda desfasado hasta la próxima corrida completa de fast-foundation — es aceptado por ahora.
 
 ---
 
@@ -102,13 +102,13 @@ Puedo lanzar deep-research para ampliar con más fuentes y validación cruzada.
 
 ```
 brand/{{slug}}/company-context/
-├── company-context.current.md      ← versión activa
+├── company-context-current.md      ← versión activa
 ├── v1.md, v2.md... ← versiones anteriores
 ├── history.json    ← log de versiones
 └── qa-log.md       ← historial de QA
 ```
 
 1. Identifica slug desde systemPrompt (`[CLIENTE: ... | slug: ...]`)
-2. Si existe `company-context.current.md` → backup como `v{N+1}.md`, pide confirmación
-3. Si no existe → crea carpeta + `company-context.current.md` + `v1.md` + `history.json`
-4. Link: `<MC_BASE>/docs/brand/{slug}/company-brief/company-brief.current.md`
+2. Si existe `company-context-current.md` → backup como `v{N+1}.md`, pide confirmación
+3. Si no existe → crea carpeta + `company-context-current.md` + `v1.md` + `history.json`
+4. Link: `<MC_BASE>/docs/brand/{slug}/company-brief/company-brief-current.md`

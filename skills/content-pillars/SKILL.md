@@ -2,12 +2,12 @@
 name: content-pillars
 description: "Define and maintain Content Pillars for a client. Uses a 5-layer methodology: Content Tilt → Pain-Based+JTBD → BOFU-First Prioritization → Topic Cluster Structure → Playground Tagging. Outputs readable markdown with rich context per pillar. Pillars = TOPICS the brand will own. POV is NOT decided here — POV lives at piece level during angle/clarify."
 context_required:
-- brand/{slug}/company-brief/company-brief.current.md
-- brand/{slug}/brand-voice/brand-voice.current.md
-- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/company-brief/company-brief-current.md
+- brand/{slug}/brand-voice/brand-voice-current.md
+- brand/{slug}/go-to-market/ecps/ecps-current.md
 - brand/{slug}/go-to-market/positioning/shared/messaging-summary.md
 - brand/{slug}/go-to-market/positioning/shared/value-criteria.md
-- brand/{slug}/strategic-plan/strategic-plan.current.md
+- brand/{slug}/strategic-plan/strategic-plan-current.md
 context_writes:
 - brand/{slug}/content/content-pillars.md
 ---

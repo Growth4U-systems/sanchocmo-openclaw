@@ -63,10 +63,13 @@ function declaredPaths(md: string): string[] {
   return out;
 }
 
-/** A canonical pillar doc: `…current.md` (or bare `current.md`) we can statically check. */
+/** Canonical pillar doc: `{name}-current.md` (canonical), `{name}.current.md`
+ *  (legacy dot form) or bare `current.md` — all statically checkable against the
+ *  manifest. Since the manifest is now hyphen-form, a leftover `.current.md`
+ *  declaration won't match and is flagged as stale. */
 function isCheckableCanonicalDoc(rel: string): boolean {
   if (rel.includes("*") || /\{(?!slug\})/.test(rel)) return false; // glob or non-slug placeholder
-  return /(^|\/)([a-z0-9][a-z0-9-]*\.)?current\.md$/i.test(rel);
+  return /(^|\/)([a-z0-9][a-z0-9-]*[.-])?current\.md$/i.test(rel);
 }
 
 const skillFiles = findSkillFiles(path.join(ROOT, "skills"));

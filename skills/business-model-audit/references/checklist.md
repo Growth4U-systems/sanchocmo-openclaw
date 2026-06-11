@@ -47,7 +47,7 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/business-model/business-model.current.md`
+- [ ] **Guardado en** `brand/{{slug}}/business-model/business-model-current.md`
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link generado** para el usuario
 

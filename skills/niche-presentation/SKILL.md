@@ -28,7 +28,7 @@ Foundation completa: company context, niche discovery, ECP profiles, positioning
 ### Encontrar los archivos
 Los clientes pueden tener Foundation en distintas rutas. **Siempre inventariar primero:**
 ```bash
-find brand/{slug} -name "*.current.md" | sort
+find brand/{slug} -name "*-current.md" | sort
 ```
 Rutas comunes:
 - `niche-discovery/` o `niche-discovery-100x/`
@@ -56,7 +56,7 @@ Responder: "No hay Foundation data para {cliente}. Necesito al menos niche-disco
 ### Phase 0: Read Foundation + Gate Check
 
 1. Identificar cliente (guild, mención, instrucción)
-2. `find brand/{slug} -name "*.current.md"` → inventariar
+2. `find brand/{slug} -name "*-current.md"` → inventariar
 3. Leer todos los docs disponibles
 4. **Gate check**: ¿Positioning aprobado? (ver reglas arriba). Si `pending-approval` → preguntar antes de generar.
 5. Anotar qué existe y qué falta → adaptar estructura de slides
@@ -66,7 +66,7 @@ Responder: "No hay Foundation data para {cliente}. Necesito al menos niche-disco
 La presentación usa los colores, fonts y logo del cliente. Todo vía CSS variables `--brand-*`.
 
 **Resolución de theme:**
-1. Leer `visual-identity/visual-identity.current.md` → mapear colores a CSS variables
+1. Leer `visual-identity/visual-identity-current.md` → mapear colores a CSS variables
 2. Si no hay visual-identity → buscar colores en company-context o web del cliente
 3. Si nada → fallback por sector (Salud→teal/navy, Tech→cyan/dark, B2B→blue/slate)
 

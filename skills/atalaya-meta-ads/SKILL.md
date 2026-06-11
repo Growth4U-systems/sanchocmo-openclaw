@@ -3,8 +3,8 @@ name: atalaya-meta-ads
 description: "Search Meta Ads Library for competitor ads. Extract full ad copy, creatives, CTAs. Generate adapted ad ideas."
 context_required:
 - brand/{slug}/market-and-us/competitors/sources.json
-- brand/{slug}/brand-voice/brand-voice.current.md
-- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/brand-voice/brand-voice-current.md
+- brand/{slug}/go-to-market/ecps/ecps-current.md
 context_writes:
 - brand/{slug}/atalaya/ads-scan/meta-YYYY-MM-DD.json
 - brand/{slug}/ideas.json

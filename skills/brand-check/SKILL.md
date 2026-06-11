@@ -13,12 +13,12 @@ metadata:
   updated: '2026-05-01'
 context_required:
   - brand/{slug}/foundation-state.json
-  - brand/{slug}/brand-voice/brand-voice.current.md
+  - brand/{slug}/brand-voice/brand-voice-current.md
   - brand/{slug}/go-to-market/positioning/shared/messaging-summary.md
 context_optional:
-  - brand/{slug}/brand-identity/visual-identity/visual-identity.current.md
+  - brand/{slug}/brand-identity/visual-identity/visual-identity-current.md
   - brand/{slug}/brand-book/seo-guidelines.md
-  - brand/{slug}/go-to-market/positioning/ecp{N}-{slug}/*.current.md
+  - brand/{slug}/go-to-market/positioning/ecp{N}-{slug}/*-current.md
 context_writes:
   - brand/{slug}/compliance/brand-check-{YYYY-MM-DD}-{asset-slug}.md
 ---
@@ -82,8 +82,8 @@ Si falta cualquiera, devolver al pipeline con error claro: `❌ brand-check: mis
 
 1. Leer `brand/{slug}/foundation-state.json` para resolver paths actuales (no hardcodear).
 2. Cargar Foundation files según los dominios aplicables al `channel`:
-   - **Siempre**: `brand-voice.current.md`, `messaging-summary.md`
-   - **Si visual-identity aplica al channel**: `visual-identity.current.md`
+   - **Siempre**: `brand-voice-current.md`, `messaging-summary.md`
+   - **Si visual-identity aplica al channel**: `visual-identity-current.md`
    - **Si SEO aplica al channel**: `seo-guidelines.md` (si existe; si no, gracefully skip dominio con warning)
 3. Si algún Foundation file mandatorio no existe → devolver: `⚠️ brand-check: foundation file missing: {path}. Pipeline puede continuar pero el dominio se salta.`
 

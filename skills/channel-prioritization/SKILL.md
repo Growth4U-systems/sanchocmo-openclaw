@@ -12,12 +12,12 @@ metadata:
     competitor-intelligence
   chains_to: content-calendar-planner, outreach-sequence-builder
 context_required:
-- brand/{slug}/company-brief/company-brief.current.md
-- brand/{slug}/company-brief/company-brief.current.md
-- brand/{slug}/go-to-market/ecps/ecps.current.md
-- brand/{slug}/go-to-market/positioning/*/*.current.md
-- brand/{slug}/market-and-us/competitors/competitors.current.md
-- brand/{slug}/market-and-us/self/self.current.md
+- brand/{slug}/company-brief/company-brief-current.md
+- brand/{slug}/company-brief/company-brief-current.md
+- brand/{slug}/go-to-market/ecps/ecps-current.md
+- brand/{slug}/go-to-market/positioning/*/*-current.md
+- brand/{slug}/market-and-us/competitors/competitors-current.md
+- brand/{slug}/market-and-us/self/self-current.md
 - brand/{slug}/operational/stack.md
 context_writes:
 - brand/{slug}/go-to-market/channel-plan.md
@@ -40,14 +40,14 @@ Follow _system/output/output-format.md (if using SanchoCMO framework)
 ## Prerequisites
 
 **Required (will not run without these):**
-- `./brand/{slug}/company-brief/company-brief.current.md` — Budget range, team capacity, timeline (from budget-constraints)
-- `./brand/{slug}/company-brief/company-brief.current.md` — Industry, stage, business model (from company-context)
-- `./brand/{slug}/go-to-market/ecps/ecps.current.md` — Target personas with pain points (from niche-discovery-100x)
+- `./brand/{slug}/company-brief/company-brief-current.md` — Budget range, team capacity, timeline (from budget-constraints)
+- `./brand/{slug}/company-brief/company-brief-current.md` — Industry, stage, business model (from company-context)
+- `./brand/{slug}/go-to-market/ecps/ecps-current.md` — Target personas with pain points (from niche-discovery-100x)
 
 **Recommended (better output with these):**
-- `./brand/{slug}/go-to-market/positioning/*/*.current.md` — Differentiation angles (from positioning-messaging)
-- `./brand/{slug}/market-and-us/competitors/competitors.current.md` — Competitor channel usage (from competitor-intelligence)
-- `./brand/{slug}/market-and-us/self/self.current.md` — Product strengths/weaknesses (from self-intelligence)
+- `./brand/{slug}/go-to-market/positioning/*/*-current.md` — Differentiation angles (from positioning-messaging)
+- `./brand/{slug}/market-and-us/competitors/competitors-current.md` — Competitor channel usage (from competitor-intelligence)
+- `./brand/{slug}/market-and-us/self/self-current.md` — Product strengths/weaknesses (from self-intelligence)
 - `./brand/{slug}/operational/stack.md` — Available tools and integrations (from sancho-start)
 
 ---
@@ -278,12 +278,12 @@ Append summary to `./brand/{slug}/operational/assets.md`:
 
 | Action | File | Description |
 |--------|------|-------------|
-| READ | `./brand/{slug}/company-brief/company-brief.current.md` | Budget range, team capacity, timeline |
-| READ | `./brand/{slug}/company-brief/company-brief.current.md` | Industry, stage, business model |
-| READ | `./brand/{slug}/go-to-market/ecps/ecps.current.md` | Target personas, online behavior |
-| READ | `./brand/{slug}/go-to-market/positioning/*/*.current.md` | Differentiation angles |
-| READ | `./brand/{slug}/market-and-us/competitors/competitors.current.md` | Competitor channel usage |
-| READ | `./brand/{slug}/market-and-us/self/self.current.md` | Product strengths/weaknesses |
+| READ | `./brand/{slug}/company-brief/company-brief-current.md` | Budget range, team capacity, timeline |
+| READ | `./brand/{slug}/company-brief/company-brief-current.md` | Industry, stage, business model |
+| READ | `./brand/{slug}/go-to-market/ecps/ecps-current.md` | Target personas, online behavior |
+| READ | `./brand/{slug}/go-to-market/positioning/*/*-current.md` | Differentiation angles |
+| READ | `./brand/{slug}/market-and-us/competitors/competitors-current.md` | Competitor channel usage |
+| READ | `./brand/{slug}/market-and-us/self/self-current.md` | Product strengths/weaknesses |
 | READ | `./brand/{slug}/operational/stack.md` | Available tools |
 | WRITE (owns) | `./brand/{slug}/go-to-market/channel-plan.md` | Channel mix + scoring + allocation |
 | APPEND | `./brand/{slug}/operational/assets.md` | Channel plan summary |

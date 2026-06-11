@@ -3,28 +3,28 @@
   "version": 1,
   "pillars": {
     "brand-voice": {
-      "docPaths": ["brand-voice/brand-voice.current.md"],
+      "docPaths": ["brand-voice/brand-voice-current.md"],
       "homonymous": true,
       "chatConfig": { "skill": "brand-voice", "skills": ["brand-voice"], "agent": "dulcinea" }
     },
     "brand-voice-snapshot": {
-      "docPaths": ["brand-voice/brand-voice.current.md", "brand-voice/lite.md"]
+      "docPaths": ["brand-voice/brand-voice-current.md", "brand-voice/lite.md"]
     },
     "budget": {
-      "docPaths": ["budget/budget.current.md", "budget/lite.md"]
+      "docPaths": ["budget/budget-current.md", "budget/lite.md"]
     },
     "business-model": {
-      "docPaths": ["business-model/business-model.current.md", "business-model/lite.md"]
+      "docPaths": ["business-model/business-model-current.md", "business-model/lite.md"]
     },
     "company-brief": {
-      "docPaths": ["company-brief/company-brief.current.md", "company-brief/lite.md"],
+      "docPaths": ["company-brief/company-brief-current.md", "company-brief/lite.md"],
       "homonymous": true
     },
     "company-context": {
-      "docPaths": ["company-context/company-context.current.md", "company-context/lite.md"]
+      "docPaths": ["company-context/company-context-current.md", "company-context/lite.md"]
     },
     "competitor-analysis": {
-      "docPaths": ["market-and-us/competitors/competitors.current.md"],
+      "docPaths": ["market-and-us/competitors/competitors-current.md"],
       "skillAlias": "competitor-intelligence",
       "chatConfig": { "skill": "competitor-intelligence", "skills": ["competitor-intelligence"], "agent": "hamete" }
     },
@@ -32,52 +32,52 @@
       "homonymous": true
     },
     "content-playbook": {
-      "docPaths": ["content-playbook/content-playbook.current.md"],
+      "docPaths": ["content-playbook/content-playbook-current.md"],
       "homonymous": true
     },
     "content-strategy": {
-      "docPaths": ["strategies/content/content.current.md"],
+      "docPaths": ["strategies/content/content-current.md"],
       "homonymous": true
     },
     "ecp-validation": {
-      "docPaths": ["go-to-market/ecp-validation/ecp-validation.current.md"],
+      "docPaths": ["go-to-market/ecp-validation/ecp-validation-current.md"],
       "skillAlias": "ecp-validation",
       "chatConfig": { "skill": "ecp-validation", "skills": ["ecp-validation"], "agent": "sanson" }
     },
     "email-strategy": {
-      "docPaths": ["strategies/email/email.current.md"]
+      "docPaths": ["strategies/email/email-current.md"]
     },
     "existing-customer-data": {
-      "docPaths": ["go-to-market/existing-customer-data/existing-customer-data.current.md"],
+      "docPaths": ["go-to-market/existing-customer-data/existing-customer-data-current.md"],
       "skillAlias": "existing-customer-data",
       "chatConfig": { "skill": "existing-customer-data", "skills": ["existing-customer-data"], "agent": "hamete" }
     },
     "fast-foundation": {
-      "docPaths": ["company-brief/company-brief.current.md", "company-brief/lite.md"]
+      "docPaths": ["company-brief/company-brief-current.md", "company-brief/lite.md"]
     },
     "foundation-presentation": {
       "docPaths": ["presentations/foundation-deck.html"]
     },
     "market-analysis": {
-      "docPaths": ["market-and-us/market/market.current.md", "market-and-us/market/lite.md"],
+      "docPaths": ["market-and-us/market/market-current.md", "market-and-us/market/lite.md"],
       "skillAlias": "market-intelligence",
       "chatConfig": { "skill": "market-intelligence", "skills": ["market-intelligence"], "agent": "hamete" }
     },
     "market-synthesis": {
-      "docPaths": ["market-and-us/swot/swot.current.md", "market-and-us/summary/summary.current.md", "market-and-us/ope-canvas/ope-canvas.current.md"],
+      "docPaths": ["market-and-us/swot/swot-current.md", "market-and-us/summary/summary-current.md", "market-and-us/ope-canvas/ope-canvas-current.md"],
       "skillAlias": "market-synthesis",
       "chatConfig": { "skill": "market-synthesis", "skills": ["market-synthesis"], "agent": "hamete" }
     },
     "metrics-setup": {
-      "docPaths": ["go-to-market/metrics-plan/metrics-plan.current.md"],
+      "docPaths": ["go-to-market/metrics-plan/metrics-plan-current.md"],
       "skillAlias": "metrics-setup",
       "chatConfig": { "skill": "metrics-setup", "skills": ["metrics-setup"], "agent": "merlin" }
     },
     "niche-basic": {
-      "docPaths": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"]
+      "docPaths": ["go-to-market/ecps/ecps-current.md", "go-to-market/ecps/lite.md"]
     },
     "niche-discovery": {
-      "docPaths": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"],
+      "docPaths": ["go-to-market/ecps/ecps-current.md", "go-to-market/ecps/lite.md"],
       "skillAlias": "niche-discovery-100x",
       "chatConfig": { "skill": "niche-discovery-100x", "skills": ["niche-discovery-100x"], "agent": "hamete" }
     },
@@ -85,19 +85,19 @@
       "homonymous": true
     },
     "outreach-playbook": {
-      "docPaths": ["outreach-playbook/outreach-playbook.current.md"]
+      "docPaths": ["outreach-playbook/outreach-playbook-current.md"]
     },
     "own-media-audit": {
-      "docPaths": ["site-audit/own-media-audit/own-media-audit.current.md", "trust-engine/own-media-audit.json"]
+      "docPaths": ["site-audit/own-media-audit/own-media-audit-current.md", "trust-engine/own-media-audit.json"]
     },
     "paid-media-strategy": {
-      "docPaths": ["strategies/paid/paid.current.md"]
+      "docPaths": ["strategies/paid/paid-current.md"]
     },
     "partnership-strategy": {
-      "docPaths": ["strategies/partnerships/partnerships.current.md"]
+      "docPaths": ["strategies/partnerships/partnerships-current.md"]
     },
     "positioning": {
-      "docPaths": ["go-to-market/positioning/positioning.current.md"],
+      "docPaths": ["go-to-market/positioning/positioning-current.md"],
       "skillAlias": "positioning-messaging",
       "chatConfig": { "skill": "positioning-messaging", "skills": ["positioning-messaging"], "agent": "dulcinea" }
     },
@@ -105,24 +105,24 @@
       "homonymous": true
     },
     "pricing": {
-      "docPaths": ["go-to-market/pricing/pricing.current.md"],
+      "docPaths": ["go-to-market/pricing/pricing-current.md"],
       "skillAlias": "pricing-strategy",
       "homonymous": true,
       "chatConfig": { "skill": "pricing-strategy", "skills": ["pricing-strategy"], "agent": "sancho" }
     },
     "seo-audit": {
-      "docPaths": ["site-audit/seo-audit/seo-audit.current.md", "trust-engine/seo-audit.json"]
+      "docPaths": ["site-audit/seo-audit/seo-audit-current.md", "trust-engine/seo-audit.json"]
     },
     "self-analysis": {
-      "docPaths": ["market-and-us/self/self.current.md", "market-and-us/self/lite.md"],
+      "docPaths": ["market-and-us/self/self-current.md", "market-and-us/self/lite.md"],
       "skillAlias": "self-intelligence",
       "chatConfig": { "skill": "self-intelligence", "skills": ["self-intelligence"], "agent": "hamete" }
     },
     "social-media-strategy": {
-      "docPaths": ["strategies/social/social.current.md"]
+      "docPaths": ["strategies/social/social-current.md"]
     },
     "strategic-plan": {
-      "docPaths": ["strategic-plan/strategic-plan.current.md"],
+      "docPaths": ["strategic-plan/strategic-plan-current.md"],
       "skillAlias": "strategic-plan",
       "chatConfig": { "skill": "strategic-plan", "skills": ["strategic-plan"], "agent": "sancho" }
     },
@@ -130,12 +130,12 @@
       "docPaths": ["presentations/strategic-deck.html"]
     },
     "visual-identity": {
-      "docPaths": ["brand-identity/visual-identity/visual-identity.current.md"],
+      "docPaths": ["brand-identity/visual-identity/visual-identity-current.md"],
       "homonymous": true,
       "chatConfig": { "skill": "visual-identity", "skills": ["visual-identity"], "agent": "maese-pedro" }
     },
     "web-strategy": {
-      "docPaths": ["strategies/web/web.current.md"]
+      "docPaths": ["strategies/web/web-current.md"]
     }
   }
 }

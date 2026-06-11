@@ -8,7 +8,7 @@
 
 ```
 brand/{slug}/{pilar}/
-  {pilar}.current.md     ← activo (siempre leer este)
+  {pilar}-current.md     ← activo (siempre leer este)
   v1.md          ← histórico
   v2.md          ← histórico
   history.json   ← log de versiones
@@ -20,9 +20,9 @@ brand/{slug}/{pilar}/
 
 ## Resolución de rutas
 
-Cuando un skill referencia `brand/{slug}/market.md` (en context_required o context_writes), lee/escribe `brand/{slug}/market/market.current.md`.
+Cuando un skill referencia `brand/{slug}/market.md` (en context_required o context_writes), lee/escribe `brand/{slug}/market/market-current.md`.
 
-**Regla**: `brand/{slug}/{nombre}.md` → `brand/{slug}/{nombre}/{nombre}.current.md`
+**Regla**: `brand/{slug}/{nombre}.md` → `brand/{slug}/{nombre}/{nombre}-current.md`
 
 ---
 
@@ -38,9 +38,9 @@ Cuando un skill referencia `brand/{slug}/market.md` (en context_required o conte
 
 ## Flujo de actualización
 
-1. Comprueba si `{pilar}/{pilar}.current.md` ya existe
+1. Comprueba si `{pilar}/{pilar}-current.md` ya existe
 2. Si existe → informa: "📄 Ya existe {pilar} (v{N}, {fecha}). ¿Quieres actualizarlo?"
-3. Si el usuario confirma → guarda actual como `v{N}.md`, genera nuevo como `{pilar}.current.md`, actualiza `history.json`
+3. Si el usuario confirma → guarda actual como `v{N}.md`, genera nuevo como `{pilar}-current.md`, actualiza `history.json`
 4. Si no confirma → no ejecutes
 
 ---

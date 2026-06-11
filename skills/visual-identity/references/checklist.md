@@ -130,7 +130,7 @@
 ## Almacenamiento
 
 - [ ] **Slug** correcto
-- [ ] **visual-identity.current.md** guardado en `brand/{slug}/visual-identity/`
+- [ ] **visual-identity-current.md** guardado en `brand/{slug}/visual-identity/`
 - [ ] **visual-guide.html** generado como entregable presentable
 - [ ] **Versionado** correcto (v1.md, history.json)
 - [ ] **Link MC** generado para el usuario

@@ -3,9 +3,9 @@ name: lead-magnet
 description: "Create high-converting lead magnets from concept to build. Use when the user wants to create, plan, or optimize a lead magnet for email capture or lead generation. Also use when the user mentions 'lead magnet,' 'gated content,' 'content upgrade,' 'downloadable,' 'ebook,' 'cheat sheet,' 'checklist,' 'template download,' 'opt-in,' 'freebie,' 'PDF download,' 'resource library,' 'content offer,' 'email capture content,' 'Notion template,' 'spreadsheet template,' or 'what should I give away for emails.' Pipeline: Context → Format Selection → Concept Generation → Build Mode → Funnel Chain. Supports 12+ formats. For interactive tools as lead magnets, see free-tool-strategy. For the email sequence after capture, see email-sequence."
 metadata:
   context_required:
-    - brand/{slug}/brand-voice/brand-voice.current.md
-    - brand/{slug}/go-to-market/positioning/*/*.current.md
-    - brand/{slug}/go-to-market/ecps/ecps.current.md
+    - brand/{slug}/brand-voice/brand-voice-current.md
+    - brand/{slug}/go-to-market/positioning/*/*-current.md
+    - brand/{slug}/go-to-market/ecps/ecps-current.md
   context_writes:
     - campaigns/{slug}/lead-magnet/
     - brand/{slug}/operational/learnings.md
@@ -95,5 +95,5 @@ Files saved to `campaigns/{slug}/lead-magnet/`
 1. **Hook > Content** — If the title doesn't make them click, the content doesn't matter
 2. **Quick Win mandatory** — Every lead magnet must deliver one actionable result immediately
 3. **Bridge to paid** — Always include natural transition to the paid offer
-4. **Brand voice** — Apply brand-voice/brand-voice.current.md tone throughout (not generic marketing speak)
+4. **Brand voice** — Apply brand-voice/brand-voice-current.md tone throughout (not generic marketing speak)
 5. **Competitive check** — Don't create what competitors already give away free

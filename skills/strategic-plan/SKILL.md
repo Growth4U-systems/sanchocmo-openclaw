@@ -10,12 +10,12 @@ metadata:
   chains_to: channel-prioritization, execution-skills
   context_required:
     - brand/{slug}/foundation-state.json
-    - brand/{slug}/company-brief/company-brief.current.md
-    - brand/{slug}/go-to-market/ecps/ecps.current.md
-    - brand/{slug}/go-to-market/positioning/*/*.current.md
-    - brand/{slug}/market-and-us/competitors/competitors.current.md
-    - brand/{slug}/market-and-us/self/self.current.md
-    - brand/{slug}/brand-voice/brand-voice.current.md
+    - brand/{slug}/company-brief/company-brief-current.md
+    - brand/{slug}/go-to-market/ecps/ecps-current.md
+    - brand/{slug}/go-to-market/positioning/*/*-current.md
+    - brand/{slug}/market-and-us/competitors/competitors-current.md
+    - brand/{slug}/market-and-us/self/self-current.md
+    - brand/{slug}/brand-voice/brand-voice-current.md
   context_writes:
     - brand/{slug}/strategic-plan.md
     - brand/{slug}/current-state.md
@@ -40,7 +40,7 @@ Mínimo: company-brief + ECPs + positioning + competitors + self-intelligence + 
 ## Mode Detection
 
 ```
-if brand/{slug}/strategic-plan/strategic-plan.current.md NOT exists:
+if brand/{slug}/strategic-plan/strategic-plan-current.md NOT exists:
     → MODE = INIT (pipeline completo, 8 pasos)
 else:
     → MODE = UPDATE (operación sobre plan existente)
@@ -54,7 +54,7 @@ else:
 > Para TODO lo demás (crear proyectos, tareas, hilos Discord, status, value review, ejecutar) → usar `sancho-manager`.
 > Este skill solo se reactiva para: nuevo ciclo de planificación (versionar plan + re-planificar desde cero).
 
-Leer `strategic-plan/strategic-plan.current.md`.
+Leer `strategic-plan/strategic-plan-current.md`.
 
 Detectar intención del usuario:
 
@@ -69,7 +69,7 @@ Detectar intención del usuario:
 
 ### Nuevo ciclo
 
-1. Copiar `strategic-plan/strategic-plan.current.md` → `strategic-plan/v{X}.md`
+1. Copiar `strategic-plan/strategic-plan-current.md` → `strategic-plan/v{X}.md`
 2. Actualizar `history.json`
 3. Ejecutar pipeline INIT con nuevos objetivos (reutiliza Foundation + datos acumulados)
 
@@ -284,7 +284,7 @@ Después de aprobación, ofrecer SIEMPRE:
 
 ## Output: Estructura narrativa del plan
 
-El documento `strategic-plan/strategic-plan.current.md` sigue un arco narrativo — NO el orden de los pasos internos. Debe leerse como una historia, no como un log de proceso.
+El documento `strategic-plan/strategic-plan-current.md` sigue un arco narrativo — NO el orden de los pasos internos. Debe leerse como una historia, no como un log de proceso.
 
 ```
 1. RESUMEN EJECUTIVO — 3-4 frases: quién eres, qué quieres, qué vamos a hacer
@@ -324,7 +324,7 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
 
 **Fase 1: Escribir archivos**
 
-1. Escribir `brand/{slug}/strategic-plan/strategic-plan.current.md` (documento vivo, versionable)
+1. Escribir `brand/{slug}/strategic-plan/strategic-plan-current.md` (documento vivo, versionable)
 2. **No existe `registry.json`** — el filesystem es el registro. Cada carpeta `P{XX}/` con su `project.json` define un proyecto. Para obtener el siguiente P{XX}, escanear directorios `P*/` existentes y usar max+1.
 3. Por cada estrategia aprobada → crear proyecto:
    - Carpeta `brand/{slug}/projects/P{XX}/`
@@ -417,20 +417,20 @@ Secuencial por cliente: P01, P02, P03... Tareas: P01-T01, P01-T02...
 El strategic plan NO es one-shot. Es la **fuente de verdad de qué se está haciendo y por qué**.
 
 ### Versionado
-- `strategic-plan.current.md` = plan activo
-- Cuando se completa un ciclo o cambian objetivos → copiar a `vX.md`, crear nuevo `strategic-plan.current.md`
+- `strategic-plan-current.md` = plan activo
+- Cuando se completa un ciclo o cambian objetivos → copiar a `vX.md`, crear nuevo `strategic-plan-current.md`
 - Cada versión = un ciclo (mensual o trimestral)
 
 ### Validación de nuevos proyectos
 
 Cuando surge un proyecto nuevo (de intelligence, usuario, o value review):
 
-1. Leer `strategic-plan/strategic-plan.current.md` + escanear `projects/P*/project.json`
+1. Leer `strategic-plan/strategic-plan-current.md` + escanear `projects/P*/project.json`
 2. Evaluar alineación con objetivos y proyectos activos
 3. Responder según el resultado:
 
 ```
-¿Alineado con strategic-plan/strategic-plan.current.md?
+¿Alineado con strategic-plan/strategic-plan-current.md?
 ├── SÍ → "Encaja con el plan. Lo creo como P{XX}."
 ├── PARCIAL → "Entiendo el interés, pero tienes P{XX}, P{YY} y P{ZZ} abiertos con deadlines en {fechas}. 
 │              Recomiendo terminar esos primero. Si insistes, lo creo pero afecta a {proyectos}."
@@ -485,7 +485,7 @@ Al completar un proyecto → generar `value-review.md`:
 |--------|---------------|
 | **Llama** | `channel-prioritization` (si no existe channel-plan.md) |
 | **Lee** | Foundation completa, phase-0-diagnostic (si existe), `references/strategies-catalog.json` |
-| **Produce** | `strategic-plan/strategic-plan.current.md`, `current-state.md`, `projects/P{XX}/project.json`, `projects/P{XX}/tasks.json` |
+| **Produce** | `strategic-plan/strategic-plan-current.md`, `current-state.md`, `projects/P{XX}/project.json`, `projects/P{XX}/tasks.json` |
 | **Encadena** | Execution skills por tarea. Value reviews al completar proyecto |
 | **Valida** | Nuevos proyectos propuestos vs plan activo |
 

@@ -77,7 +77,7 @@ Each phase produces an artifact. **Never skip a phase.** Output of each feeds th
 |------|------|
 | Documento final | `01-business/clients/{client}/research/{topic}-analysis.md` |
 | **Carpeta raw data** | `01-business/clients/{client}/research/{topic}-raw/` |
-| Profundización Foundation | `brand/{slug}/{pilar}/{pilar}.current.md` (backup `{pilar}.current.md` → `v{N+1}.md`) |
+| Profundización Foundation | `brand/{slug}/{pilar}/{pilar}-current.md` (backup `{pilar}-current.md` → `v{N+1}.md`) |
 | QA report | mismo directorio, prefijo `QA-REPORT-` |
 | Research log | `brand/{slug}/intelligence/research-log.json` |
 

@@ -12,11 +12,11 @@ metadata:
   updated: '2026-03-27'
   changes: v1.0 — Merge de acquisition-metrics-plan + connect-api + generate-plan.
 context_required:
-- brand/{slug}/company-brief/company-brief.current.md
-- brand/{slug}/go-to-market/positioning/positioning.current.md
-- brand/{slug}/go-to-market/pricing/pricing.current.md
+- brand/{slug}/company-brief/company-brief-current.md
+- brand/{slug}/go-to-market/positioning/positioning-current.md
+- brand/{slug}/go-to-market/pricing/pricing-current.md
 context_writes:
-- brand/{slug}/go-to-market/metrics-plan/metrics-plan.current.md
+- brand/{slug}/go-to-market/metrics-plan/metrics-plan-current.md
 - brand/{slug}/metrics-plan.json
 - brand/{slug}/integrations.json
 ---
@@ -41,7 +41,7 @@ context_writes:
 
 ### Step 1: Clasificar el Negocio (~2 min)
 
-Leer `company-brief/company-brief.current.md`. Inferir arquetipo:
+Leer `company-brief/company-brief-current.md`. Inferir arquetipo:
 
 | Arquetipo | Evento de Activación | KPI Primario | Value Metric |
 |-----------|---------------------|--------------|--------------|
@@ -286,7 +286,7 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 
 ## Output Files
 
-### 1. Metrics Plan Document → `brand/{slug}/go-to-market/metrics-plan/metrics-plan.current.md`
+### 1. Metrics Plan Document → `brand/{slug}/go-to-market/metrics-plan/metrics-plan-current.md`
 - Business profile y arquetipo
 - Activation event y justificación
 - KPIs Level 1-4 con definiciones

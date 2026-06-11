@@ -59,10 +59,10 @@ od:
     - web_fetch
     - surgical_edit
 context_required:
-  - brand/{slug}/company-brief/company-brief.current.md
-  - brand/{slug}/brand-voice/brand-voice.current.md (si existe)
-  - brand/{slug}/go-to-market/positioning/*/*.current.md (si existen)
-  - brand/{slug}/brand-identity/visual-identity/visual-identity.current.md (si existe — legacy)
+  - brand/{slug}/company-brief/company-brief-current.md
+  - brand/{slug}/brand-voice/brand-voice-current.md (si existe)
+  - brand/{slug}/go-to-market/positioning/*/*-current.md (si existen)
+  - brand/{slug}/brand-identity/visual-identity/visual-identity-current.md (si existe — legacy)
   - brand/{slug}/brand-book/visual-identity/design-tokens.json (si existe — legacy, para migración)
 context_writes:
   - brand/{slug}/brand-book/visual-identity/DESIGN.md
@@ -83,7 +83,7 @@ context_writes:
 
 ### R1 — Brand Assets PRIMERO
 ANTES de generar nada:
-1. Lee `brand/{slug}/company-brief/company-brief.current.md` → extrae `url_primary`.
+1. Lee `brand/{slug}/company-brief/company-brief-current.md` → extrae `url_primary`.
 2. `web_fetch(url_primary)` → analiza colores dominantes, tipografías, logo, estilo visual.
 3. Pregunta al cliente: **"¿Tienes brandbook, manual de marca, o guía de estilo? Si sí, pásalo ANTES de continuar."**
 4. Si hay brandbook → es la **fuente de verdad**. No inventes colores ni tipografías.
@@ -139,7 +139,7 @@ Máximo **2 rondas** de discovery interactivo. Si tras 2 rondas no hay claridad,
 ## Flujo de ejecución
 
 ### Step -1 — Brand Assets Intake (OBLIGATORIO)
-1. Leer `company-brief/company-brief.current.md` → extraer `url_primary`.
+1. Leer `company-brief/company-brief-current.md` → extraer `url_primary`.
 2. `web_fetch(url_primary)` → colores, tipografías, logo, estilo.
 3. Buscar `/assets`, `/brand`, `/press` en la web.
 4. Preguntar (si falta): "¿Tienes brandbook? ¿Logo SVG/AI? ¿Paleta y tipografías ya definidos?"
@@ -301,7 +301,7 @@ brand/{slug}/brand-book/visual-identity/
 ├── logo-dark.png            ← lo escribe ESTA skill (opcional)
 └── _archive/
     ├── design-tokens.json   ← legacy (archivado tras migración)
-    └── visual-identity.current.md  ← legacy
+    └── visual-identity-current.md  ← legacy
 ```
 
 `DESIGN.md` reemplaza completamente al antiguo `design-tokens.json`. Las plantillas HTML del brand se reescriben para leer DESIGN.md (vía parser server-side en MC).
@@ -345,7 +345,7 @@ Metadata final: `<!-- Self-QA: PASS | fecha | items: X✅ Y⚠️ 0❌ | mode: q
 
 ## Notas de migración (legacy → DESIGN.md)
 
-Cuando un brand tiene `design-tokens.json` + `visual-identity.current.md` legacy:
+Cuando un brand tiene `design-tokens.json` + `visual-identity-current.md` legacy:
 1. Ejecutar esta skill con input `mode=auto` + contexto = ambos archivos legacy.
 2. Maese Pedro produce DESIGN.md preservando paleta, tipografías, logo del legacy.
 3. Validar visualmente que captura todo.

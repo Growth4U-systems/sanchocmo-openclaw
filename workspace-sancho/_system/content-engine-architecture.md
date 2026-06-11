@@ -149,7 +149,7 @@ visual-identity (meta-skill, sistema)
    │  Vida del thread: SOLO onboarding. Cierra al generar el child.
    │
    ├──→ design-tokens.json
-   ├──→ visual-identity.current.md
+   ├──→ visual-identity-current.md
    ├──→ logo-light.{png,webp,svg}
    │
    └──→ genera el child skill:

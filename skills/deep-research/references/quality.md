@@ -70,7 +70,7 @@ Para cada ítem: ✅ | ⚠️ (justificado) | ❌ (seguir trabajando).
 - [ ] Source quality: NO blogs genéricos, NO pre-2023, NO Wikipedia (excepto puente a primary)
 - [ ] Coherencia con otros brand files (si Foundation)
 - [ ] Marca `<!-- deep-research: YYYY-MM-DD | fuentes: N | búsquedas: M -->` añadida (si Foundation)
-- [ ] Backup `{pilar}.current.md` → `v{N+1}.md` (si Foundation)
+- [ ] Backup `{pilar}-current.md` → `v{N+1}.md` (si Foundation)
 
 ---
 

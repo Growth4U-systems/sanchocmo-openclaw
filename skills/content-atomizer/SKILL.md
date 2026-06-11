@@ -3,7 +3,7 @@ name: content-atomizer
 version: 7.0
 description: Repurpose content across platforms.
 context_required:
-- brand/{slug}/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice-current.md
 - brand/{slug}/content-playbook/writing-guide.md
 - brand/{slug}/content-playbook/pillars.md
 - brand/{slug}/operational/learnings.md
@@ -74,13 +74,13 @@ Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
 
 This skill reads brand context to ensure every atomized piece sounds like the user's brand, adapts tone per platform, and builds on what has worked before. It also checks the learnings journal for platform performance data and the stack file for scheduling tool availability.
 
-**Reads:** `brand-voice/brand-voice.current.md`, `creative-kit.md`, `learnings.md`, `stack.md` (all optional)
+**Reads:** `brand-voice/brand-voice-current.md`, `creative-kit.md`, `learnings.md`, `stack.md` (all optional)
 - brand/{slug}/content-playbook/writing-guide.md
 - brand/{slug}/content-playbook/pillars.md
 
 On invocation, check for `./brand/` and load available context:
 
-1. **Load `brand-voice/brand-voice.current.md`** (if exists):
+1. **Load `brand-voice/brand-voice-current.md`** (if exists):
 - brand/{slug}/content-playbook/writing-guide.md
 - brand/{slug}/content-playbook/pillars.md
    - Extract tone DNA, vocabulary, sentence patterns, and formality level

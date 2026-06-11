@@ -73,7 +73,7 @@
 ## Almacenamiento
 
 - [ ] **Slug identificado** correctamente
-- [ ] **Guardado en** `brand/{{slug}}/channel-plan/channel-plan.current.md` (o `./brand/{slug}/go-to-market/channel-plan.md`)
+- [ ] **Guardado en** `brand/{{slug}}/channel-plan/channel-plan-current.md` (o `./brand/{slug}/go-to-market/channel-plan.md`)
 - [ ] **Versionado** correcto
 
 ## META (calidad)

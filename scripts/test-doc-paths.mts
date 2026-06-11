@@ -83,5 +83,32 @@ assert.equal(
   "brand/growth4u/strategic-plan/strategic-plan.current.md",
 );
 
+// SAN-156: hyphen canonical (`{folder}-current.md`) is the new on-disk name.
+// A request for the legacy dot form or bare `current.md` must resolve to it.
+fs.mkdirSync(path.join(tmp, "brand", "growth4u", "go-to-market", "pricing"), { recursive: true });
+fs.writeFileSync(
+  path.join(tmp, "brand", "growth4u", "go-to-market", "pricing", "pricing-current.md"),
+  "# Pricing (hyphen canonical)",
+);
+const hyphenViaDot = resolveWorkspaceDocPath(
+  tmp,
+  "brand/growth4u/go-to-market/pricing/pricing.current.md",
+  { slug: "growth4u", requireBrand: true },
+);
+assert.equal(hyphenViaDot.exists, true);
+assert.equal(hyphenViaDot.usedFallback, true);
+assert.equal(
+  hyphenViaDot.canonicalPath,
+  "brand/growth4u/go-to-market/pricing/pricing-current.md",
+);
+
+const hyphenDirect = resolveWorkspaceDocPath(
+  tmp,
+  "brand/growth4u/go-to-market/pricing/pricing-current.md",
+  { slug: "growth4u", requireBrand: true },
+);
+assert.equal(hyphenDirect.exists, true);
+assert.equal(hyphenDirect.usedFallback, false);
+
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log("doc path tests passed");

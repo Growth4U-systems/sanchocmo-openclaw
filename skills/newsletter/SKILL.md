@@ -3,11 +3,11 @@ name: newsletter
 version: 7.0
 description: Newsletter strategy and content.
 context_required:
-- brand/{slug}/brand-voice/brand-voice.current.md
+- brand/{slug}/brand-voice/brand-voice-current.md
 - brand/{slug}/content/content-pillars.md
 - brand/{slug}/content/pov-bank.json
 - brand/{slug}/content/strategy-decisions.md
-- brand/{slug}/go-to-market/ecps/ecps.current.md
+- brand/{slug}/go-to-market/ecps/ecps-current.md
 - brand/{slug}/operational/learnings.md
 context_writes:
 - campaigns/
@@ -75,11 +75,11 @@ Esta skill cumple `_system/media-persistence-protocol.md`. Reglas duras:
 
 This skill reads brand context to ensure every newsletter edition sounds like the user's brand, speaks to their actual audience, and builds on what has worked before. It also checks the learnings journal for send-time data, subject line performance, and format preferences.
 
-**Reads:** `brand-book/brand-voice/brand-voice.current.md`, `audience.md`, `learnings.md` (all optional)
+**Reads:** `brand-book/brand-voice/brand-voice-current.md`, `audience.md`, `learnings.md` (all optional)
 
 On invocation, check for `./brand/` and load available context:
 
-1. **Load `brand-book/brand-voice/brand-voice.current.md`** (if exists):
+1. **Load `brand-book/brand-voice/brand-voice-current.md`** (if exists):
    - Match the brand's tone, vocabulary, and sentence rhythm in every section
    - Apply voice DNA to subject lines, hooks, body copy, and sign-offs
    - A "direct, proof-heavy" voice writes different newsletters than a "warm, story-driven" voice
@@ -1533,7 +1533,7 @@ When a user invokes this skill, follow this sequence:
 
 ```
 1. Load brand context
-   ├── Read brand-book/brand-voice/brand-voice.current.md, audience.md, learnings.md
+   ├── Read brand-book/brand-voice/brand-voice-current.md, audience.md, learnings.md
    ├── Check ./campaigns/newsletters/ for past editions
    └── Display context loading tree
 

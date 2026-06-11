@@ -113,7 +113,7 @@ function resolveDoc(stem) {
   const base = path.basename(stem);
   const candidates = [
     `${stem}/current.md`,
-    `${stem}/${base}.current.md`,
+    `${stem}/${base}-current.md`,
     `${stem}.md`,
     `${stem}/${base}.md`,
     `${stem}/current.html`,

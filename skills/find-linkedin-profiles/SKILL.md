@@ -2,8 +2,8 @@
 name: find-linkedin-profiles
 description: "Find relevant LinkedIn profiles (thought leaders, influencers, creators) for a client's niche. Used in Atalaya chat thread atalaya:linkedin:{slug}."
 context_required:
-- brand/{slug}/company-brief/company-brief.current.md
-- brand/{slug}/go-to-market/positioning/positioning.current.md
+- brand/{slug}/company-brief/company-brief-current.md
+- brand/{slug}/go-to-market/positioning/positioning-current.md
 - brand/{slug}/atalaya/config.json
 context_writes:
 - brand/{slug}/atalaya/config.json
@@ -18,7 +18,7 @@ context_writes:
 ## Workflow
 
 ### 1. Understand the Niche
-Read `company-brief/company-brief.current.md` and `positioning/positioning.current.md` to understand:
+Read `company-brief/company-brief-current.md` and `positioning/positioning-current.md` to understand:
 - Industry and sector
 - Target audience (ICPs/ECPs)
 - Key topics and themes

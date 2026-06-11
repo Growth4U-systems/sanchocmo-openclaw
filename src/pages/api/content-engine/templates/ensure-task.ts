@@ -48,7 +48,7 @@ interface FoundationStateShape {
 
 /** Prerequisite: the brand needs `visual-identity` pillar approved in
  *  Foundation L5 before we let a Visual Templates task be created. The
- *  visual-generator skill needs design-tokens.json + visual-identity.current.md
+ *  visual-generator skill needs design-tokens.json + visual-identity-current.md
  *  to produce the HTMLs — without those it has nothing to consume. */
 function checkVisualIdentityApproved(slug: string): { ok: true } | { ok: false; reason: string } {
   const fsPath = path.join(BASE, "brand", slug, "foundation-state.json");
@@ -141,7 +141,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Prereq: visual-identity pillar must be approved before we let the
   // Visual Templates task land. Otherwise the visual-generator skill has
-  // no design-tokens.json / visual-identity.current.md to read from.
+  // no design-tokens.json / visual-identity-current.md to read from.
   const prereq = checkVisualIdentityApproved(slug);
   if (!prereq.ok) {
     return res.status(409).json({
@@ -159,7 +159,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     description:
       "Genera las 5 plantillas HTML brand-specific (linkedin-quote, linkedin-9-slide, " +
       "instagram-3-slide, blog-post, blog-title) ejecutando el skill " +
-      `${slug}-visual-generator. La skill lee design-tokens.json + visual-identity.current.md, ` +
+      `${slug}-visual-generator. La skill lee design-tokens.json + visual-identity-current.md, ` +
       "decide qué personajes incluir (Alfonso/Martín/Philippe), genera con nano-banana-pro " +
       "los assets faltantes, y produce los HTMLs en " +
       `brand/${slug}/brand-book/visual-identity/templates/{id}/. ` +
