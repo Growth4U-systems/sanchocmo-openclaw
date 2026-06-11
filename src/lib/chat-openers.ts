@@ -696,22 +696,35 @@ export function buildDocThread(
     return config;
   }
 
-  // Fallback: no pillar. This is the legacy strategy-doc shape that lives
-  // outside Foundation. Use a content-namespaced thread id so at least
-  // it's distinct from pillar threads.
+  // Fallback: no pillar. This is the strategy-doc shape that lives outside
+  // Foundation — e.g. per-channel strategy docs (`content-strategy` scoped to
+  // a channel) produced by SetupTab.createChannelStrategy. Resolve the skill
+  // and owner agent from `doc.skill`/`doc.channel` instead of hardcoding
+  // Sancho: dropping `doc.skill` here sent every channel-strategy chat to
+  // Sancho instead of Dulcinea (content-strategy's owner). When the doc has
+  // no skill at all, resolveThreadSkills falls back to sancho-manager — the
+  // previous behavior for genuinely generic docs.
   const rawDocPath = doc.docPath || doc.deliverable;
+  const resolved = resolveThreadSkills({
+    slug,
+    taskSkill: doc.skill ?? undefined,
+    channel: doc.channel ?? undefined,
+  });
+  const isPending =
+    doc.status === "pending" || doc.status === "not-started" || doc.status === "todo";
   return {
     threadId: `${slug}:content:${docKey}`,
     threadName: (doc.name || docKey).replace(/-/g, " "),
-    skill: "sancho",
-    skills: ["sancho"],
+    skill: resolved.skill,
+    skills: resolved.skills,
+    agent: resolved.agent,
     linkedTo: `content-creation/${docKey}`,
     docPath: rawDocPath
       ? rawDocPath.startsWith("brand/")
         ? rawDocPath
         : `brand/${slug}/${rawDocPath}`
       : null,
-    threadState: "continue",
+    threadState: isPending ? "create" : "continue",
   };
 }
 
