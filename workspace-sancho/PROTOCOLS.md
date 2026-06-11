@@ -27,7 +27,7 @@ ALWAYS publish links with token. See `_system/technical/mc-links-protocol.md` fo
 Max 2 messages per thread: initial + result. ZERO "Let me read it...", "I'll check...", "Checking now...". Do the work, then ship the result.
 
 ### 5. Versioning
-`brand/{slug}/{pillar}/{pillar}.current.md` with history. See `_system/versioning-protocol.md`.
+`brand/{slug}/{pillar}/current.md` with history. See `_system/versioning-protocol.md`.
 
 ### 6. Foundation gate check
 Verify `brand/{slug}/foundation-state.json` prerequisites before executing. See `_system/foundation-protocol.md`.

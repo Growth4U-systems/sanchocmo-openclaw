@@ -3,7 +3,7 @@
 > Cuando un strategic plan está aprobado y el usuario pide crear los proyectos en Discord.
 
 ## Prerequisitos
-- `strategic-plan/strategic-plan.current.md` aprobado
+- `strategic-plan/current.md` aprobado
 - `projects/P{XX}/project.json` + `tasks.json` creados
 - Canal `#projects` existe en el guild del cliente
 - Canales temáticos existen (web, content, prospecting, etc.)

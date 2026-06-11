@@ -20,12 +20,12 @@ Ninguna skill debería preguntar algo que otra skill ya capturó. Los datos fluy
 
 ```
 Para cada archivo en context_required:
-  1. Leer el archivo (ej: brand/{slug}/company-brief/company-brief.current.md, brand/{slug}/market-and-us/*.md)
+  1. Leer el archivo (ej: brand/{slug}/company-brief/current.md, brand/{slug}/market-and-us/*.md)
   2. Si no existe → degradar gracefully (ver Pattern 5 del skill-communication-protocol)
   3. Si existe → extraer campos según el hydration_map de esta skill
 
 Nota: en Foundation v2.0 los docs están en 4 secciones:
-  - company-brief/     → company-brief.current.md (§ Company Identity, § Business Model, § Budget)
+  - company-brief/     → current.md (§ Company Identity, § Business Model, § Budget)
   - market-and-us/     → market-analysis.md, competitor-{x}.md, self-analysis.md, swot.md
   - go-to-market/      → ecps.md, positioning-{ecp}.md, pricing.md
   - brand-identity/    → voice-profile.md, visual-identity.md

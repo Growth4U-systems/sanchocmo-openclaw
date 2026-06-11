@@ -2,10 +2,14 @@
 """
 Regenerate the company-brief merge view for a brand.
 
-Reads each standalone (company-context, business-model, budget) from its
-canonical `<folder>/<folder>.current.md`. Writes `company-brief/company-brief.current.md`
-only when AT LEAST ONE standalone is full. If none is full there is no merge
-view — initial grounding lives in `fastcontext/fastcontext.current.md` (SAN-13).
+Reads each standalone (company-context, business-model, budget). For each:
+  - Prefers `<section>/current.md` (full skill output)
+  - Falls back to `<section>/lite.md` (fast-foundation seed)
+  - Falls back to a "_pendiente_" placeholder if neither exists
+
+Writes `company-brief/current.md` if AT LEAST ONE source is full; otherwise
+writes `company-brief/lite.md`. This way the canonical `current.md` only
+exists once at least one full skill has produced its standalone.
 
 Usage:
   python3 scripts/regenerate-company-brief.py <brand-slug>
@@ -13,7 +17,7 @@ Usage:
 """
 
 from __future__ import annotations
-import os, sys
+import os, sys, re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -53,12 +57,13 @@ def strip_frontmatter(text: str) -> str:
 
 
 def read_section(brand_dir: Path, folder: str) -> tuple[str, str]:
-    """Return (source, content). source ∈ {"full", "missing"}.
-    Only the canonical {folder}.current.md counts. fast-foundation no longer
-    produces pillar lite.md seeds (SAN-13) — there is no lite fallback."""
-    full = brand_dir / folder / f"{folder}.current.md"
+    """Return (source, content). source ∈ {"full", "lite", "missing"}."""
+    full = brand_dir / folder / "current.md"
+    lite = brand_dir / folder / "lite.md"
     if full.exists() and full.is_file():
         return ("full", strip_frontmatter(full.read_text(encoding="utf-8")))
+    if lite.exists() and lite.is_file():
+        return ("lite", strip_frontmatter(lite.read_text(encoding="utf-8")))
     return ("missing", "")
 
 
@@ -70,21 +75,32 @@ def regenerate_brand(brand_dir: Path) -> str | None:
 
     parts: list[tuple[str, str, str]] = []  # (title, source, content)
     any_full = False
+    any_present = False
     for title, folder, skill_name in SECTIONS:
         source, content = read_section(brand_dir, folder)
         if source == "full":
             any_full = True
+            any_present = True
+        elif source == "lite":
+            any_present = True
         parts.append((title, source, content if content else f"_pendiente — correr {skill_name}_"))
 
-    if not any_full:
-        return None  # no full standalone yet → grounding lives in fastcontext, no merge view
+    if not any_present:
+        return None  # nothing to merge
 
-    target = brand_dir / "company-brief" / "company-brief.current.md"
+    # If at least one section is full, write to current.md (mixed if not all full).
+    # Otherwise write to lite.md (pure lite merge — what fast-foundation produces).
+    target_name = "current.md" if any_full else "lite.md"
+    target = brand_dir / "company-brief" / target_name
     target.parent.mkdir(parents=True, exist_ok=True)
 
-    modes = ", ".join(f"{title.lower().split()[0]}={src}" for title, src, _ in parts)
-    mode_tag = "full" if all(src == "full" for _, src, _ in parts) else "mixed"
-    header_source = f"regenerate-company-brief | sections: {modes}"
+    if any_full:
+        modes = ", ".join(f"{title.lower().split()[0]}={src}" for title, src, _ in parts)
+        mode_tag = "full" if all(src == "full" for _, src, _ in parts) else "mixed"
+        header_source = f"regenerate-company-brief | sections: {modes}"
+    else:
+        mode_tag = "lite"
+        header_source = "fast-foundation (merge view from lites)"
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines = [
@@ -137,7 +153,7 @@ def main():
             continue
         result = regenerate_brand(brand_dir)
         if result is None:
-            print(f"  SKIP   {slug} (no full standalone yet)")
+            print(f"  SKIP   {slug} (no standalones present)")
             skipped += 1
         else:
             # Strip workspace prefix for log readability

@@ -11,39 +11,39 @@ La Foundation genera documentos organizados en 4 secciones + operacional:
 ```
 brand/{slug}/
 ├── company-context/
-│   ├── company-context.current.md        ← STANDALONE (fuente de verdad): Identity
+│   ├── current.md        ← STANDALONE (fuente de verdad): Identity
 │   ├── v1.md, v2.md...
 │   └── history.json
 ├── business-model/
-│   ├── business-model.current.md        ← STANDALONE (fuente de verdad): Model
+│   ├── current.md        ← STANDALONE (fuente de verdad): Model
 │   ├── v1.md, v2.md...
 │   └── history.json
 ├── budget/
-│   ├── budget.current.md        ← STANDALONE (fuente de verdad): Resources (money + time + team + tools)
+│   ├── current.md        ← STANDALONE (fuente de verdad): Resources (money + time + team + tools)
 │   ├── v1.md, v2.md...
 │   └── history.json
 ├── company-brief/
-│   ├── company-brief.current.md        ← MERGE VIEW (auto-generated): Identity + Model + Resources (label semántica; la carpeta se llama `budget/` por compat histórica)
+│   ├── current.md        ← MERGE VIEW (auto-generated): Identity + Model + Resources (label semántica; la carpeta se llama `budget/` por compat histórica)
 │   ├── v1.md, v2.md...   ← snapshots del merge view
 │   └── history.json
 ├── market-and-us/
-│   ├── market/market.current.md           ← TAM, segmentos, tendencias, regulación
-│   ├── competitors/{nombre}/{nombre}.current.md  ← Battle card por competidor
-│   ├── self/self.current.md             ← 3 lentes de autopercepción
-│   ├── summary/summary.current.md          ← Síntesis: mercado + competidores + nosotros
-│   ├── swot/swot.current.md             ← SWOT + TOWS estratégico
-│   ├── ope-canvas/ope-canvas.current.md       ← One-Page Endgame (foto completa en 1 página)
+│   ├── market/current.md           ← TAM, segmentos, tendencias, regulación
+│   ├── competitors/{nombre}/current.md  ← Battle card por competidor
+│   ├── self/current.md             ← 3 lentes de autopercepción
+│   ├── summary/current.md          ← Síntesis: mercado + competidores + nosotros
+│   ├── swot/current.md             ← SWOT + TOWS estratégico
+│   ├── ope-canvas/current.md       ← One-Page Endgame (foto completa en 1 página)
 │   └── sources/                    ← Datos raw de scrapers
 ├── go-to-market/
-│   ├── ecps/ecps.current.md                     ← Perfiles ECP con JTBD integrado
-│   ├── positioning/{ecp-slug}/{ecp-slug}.current.md   ← Messaging playbook por ECP
+│   ├── ecps/current.md                     ← Perfiles ECP con JTBD integrado
+│   ├── positioning/{ecp-slug}/current.md   ← Messaging playbook por ECP
 │   ├── positioning/shared/                 ← Tier 2: value-criteria, assets, messaging-summary
-│   ├── pricing/pricing.current.md                  ← Framework de pricing + hooks
-│   ├── existing-customer-data/existing-customer-data.current.md   ← Datos clientes existentes (opcional)
+│   ├── pricing/current.md                  ← Framework de pricing + hooks
+│   ├── existing-customer-data/current.md   ← Datos clientes existentes (opcional)
 │   └── metrics-plan.md                     ← Sistema de métricas por arquetipo + Excel template
 ├── brand-identity/
-│   ├── voice-profile/voice-profile.current.md    ← Brand voice
-│   └── visual-identity/visual-identity.current.md  ← Sistema visual
+│   ├── voice-profile/current.md    ← Brand voice
+│   └── visual-identity/current.md  ← Sistema visual
 └── operational/
     ├── budget.md               ← Presupuesto detallado (viene de company-brief)
     ├── assets.md
@@ -125,11 +125,11 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 
 ## Company Brief — Arquitectura "standalone + merge view"
 
-**Cada skill escribe su propio standalone (fuente de verdad).** El `company-brief/company-brief.current.md` es un **merge view auto-generado** de los 3 standalones — no se edita a mano.
+**Cada skill escribe su propio standalone (fuente de verdad).** El `company-brief/current.md` es un **merge view auto-generado** de los 3 standalones — no se edita a mano.
 
-1. **company-context** → escribe `brand/{slug}/company-context/company-context.current.md` (standalone).
-2. **business-model-audit** → escribe `brand/{slug}/business-model/business-model.current.md` (standalone).
-3. **budget-constraints** → escribe `brand/{slug}/budget/budget.current.md` (standalone).
+1. **company-context** → escribe `brand/{slug}/company-context/current.md` (standalone). Regenera el merge view.
+2. **business-model-audit** → escribe `brand/{slug}/business-model/current.md` (standalone). Regenera el merge view.
+3. **budget-constraints** → escribe `brand/{slug}/budget/current.md` (standalone). Regenera el merge view.
 
 **Beneficios del diseño:**
 - Cada skill se puede re-correr standalone con versionado granular propio (puedo tener business-model v5 sin que afecte a company-context v2).
@@ -143,12 +143,12 @@ Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está
 ```
 
 **Flujo Fast-Foundation:**
-Fast Foundation produce `brand/{slug}/fastcontext/fastcontext.current.md` (un archivo de grounding desechable con secciones H2). NO toca carpetas de pilares ni genera merge views. El grounding inicial de Company, Market, Brand Voice y ECPs vive en ese único archivo. Fast Foundation NO es un nodo del DAG de dependencias ni prerequisito de ningún pilar — es grounding opcional. El Layer 0 del DAG (`company-brief`) son los 3 standalones full (company-context, business-model, budget).
+El orchestrator lanza las 3 skills en secuencia sin aprobación intermedia. Al final, regenera el merge view y presenta el Company Brief consolidado para una sola aprobación.
 
 **Quién regenera el merge view:**
-`regenerate-company-brief.py` — solo cuando al menos un standalone full (company-context, business-model o budget) está aprobado. Escribe `company-brief/company-brief.current.md`. Si ningún standalone full existe aún, no se genera merge view; el grounding inicial vive en `fastcontext.current.md`.
+Solo `fast-foundation`. Las skills productoras standalone NO lo tocan — solo escriben su propio standalone. Si una productora se corre fuera de fast-foundation, el merge view queda stale hasta la próxima corrida completa — comportamiento aceptado por ahora.
 
-**Detalles operativos del merge** (formato, secciones, cuándo se dispara): ver el script `workspace-sancho/scripts/regenerate-company-brief.py` y la regla de regeneración en `skills/foundation-orchestrator/SKILL.md`.
+**Detalles operativos del merge** (formato, placeholders, quién lo dispara): ver [fast-foundation/SKILL.md](../../skills/fast-foundation/SKILL.md) — sección "Company Brief — Arquitectura standalone + merge view".
 
 ---
 

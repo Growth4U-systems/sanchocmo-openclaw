@@ -53,7 +53,7 @@ import { PartnerDrawer } from "./partner-drawer";
 import { InboxTab } from "./inbox-tab";
 import { PlantillasTab } from "./plantillas-tab";
 import { SettingsTab } from "./settings-tab";
-import { NarratorCaption, ToastViewport, useToast } from "./ui";
+import { ToastViewport, useToast } from "./ui";
 
 type PartnershipsTab = "encuentra" | "contactos" | "inbox" | "plantillas" | "settings";
 type ContactosVista = "kanban" | "lista";
@@ -65,20 +65,18 @@ const TABS: Array<{ key: PartnershipsTab; label: string; icon: string }> = [
   { key: "plantillas", label: "Plantillas", icon: "📝" },
 ];
 
-const HEADERS: Record<PartnershipsTab, { narrator: string; title: string; sub: string }> = {
+const HEADERS: Record<PartnershipsTab, { title: string; sub: string }> = {
   encuentra: {
-    narrator: "Capítulo: en busca de creators dignos de la causa…",
-    title: "ENCUENTRA",
-    sub: "CREATORS",
+    title: "Encuentra creators",
+    sub: "Búsquedas de creators con quality score — los candidatos entran directos al pipeline",
   },
   contactos: {
-    narrator: "Capítulo: creators, un pipeline, y Sancho moviendo fichas…",
-    title: "CONTACTOS",
-    sub: "· PIPELINE",
+    title: "Contactos",
+    sub: "Pipeline de creators — kanban o lista, con triaje y bulk actions",
   },
-  inbox: { narrator: "Capítulo: cartas que llegan, tratos que se cierran…", title: "INBOX", sub: "· NEGOCIACIÓN" },
-  plantillas: { narrator: "Capítulo: el arsenal de cartas y briefs…", title: "PLANTILLAS", sub: "& BRIEFS" },
-  settings: { narrator: "Capítulo: los engranajes del modelo…", title: "SETTINGS", sub: "· OUTREACH" },
+  inbox: { title: "Inbox", sub: "Respuestas y negociación — Sancho detecta precios y calcula el break-even" },
+  plantillas: { title: "Plantillas", sub: "Secuencias de contacto y briefs — cada búsqueda instancia su copia" },
+  settings: { title: "Settings", sub: "Configuración de Outreach" },
 };
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -397,52 +395,49 @@ export function PartnershipsView() {
           onClick={() => pushQuery({ tab: "settings" })}
           title="Settings de Outreach (SAN-76)"
           className={cn(
-            "absolute right-0 top-0 z-10 grid h-10 w-10 place-items-center rounded-xl border-2 border-ink bg-card text-lg shadow-comic-sm transition-all hover:-translate-y-0.5 hover:rotate-12",
-            tab === "settings" && "bg-yellow-100",
+            "absolute right-0 top-0 z-10 grid h-9 w-9 place-items-center rounded-md border border-border bg-transparent text-base text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+            tab === "settings" && "bg-muted text-foreground",
           )}
           data-testid="gear-settings"
         >
           ⚙️
         </button>
 
-        <header className="flex flex-wrap items-end justify-between gap-4 pr-12">
-          <div>
-            <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              {slug || "cliente"} · Outreach
+        <header className="pr-12">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="m-0 font-heading text-2xl text-navy">🤝 {header.title}</h1>
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <span className="font-bold text-rust">{slug || "cliente"}</span>
+              <span>· Outreach</span>
             </div>
-            <div className="mt-1.5">
-              <NarratorCaption>{header.narrator}</NarratorCaption>
-            </div>
-            <h1 className="mt-1 font-heading text-3xl tracking-wide text-navy">
-              {header.title} <span className="text-rust">{header.sub}</span>
-            </h1>
+            {tab === "encuentra" && (
+              <button
+                type="button"
+                onClick={() => openDiscoveryChat()}
+                className="ml-auto rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
+                data-testid="crear-busqueda"
+              >
+                ✨ Crear nueva búsqueda
+              </button>
+            )}
           </div>
-          {tab === "encuentra" && (
-            <button
-              type="button"
-              onClick={() => openDiscoveryChat()}
-              className="rounded-md border-2 border-ink bg-rust px-4 py-2 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5"
-              data-testid="crear-busqueda"
-            >
-              ✨ Crear nueva búsqueda
-            </button>
-          )}
+          <p className="mb-0 mt-1 text-sm text-muted-foreground">{header.sub}</p>
         </header>
 
         {/* Sub-nav Outreach + selector Tipo */}
-        <div className="flex flex-wrap items-center gap-3 border-b-2 border-border pb-3">
-          <nav className="flex flex-wrap gap-2" data-testid="partnerships-tabs">
+        <div className="flex flex-wrap items-center gap-3">
+          <nav className="flex flex-wrap gap-2 overflow-x-auto" data-testid="partnerships-tabs">
             {TABS.map((item) => (
               <button
                 key={item.key}
                 type="button"
                 onClick={() => pushQuery({ tab: item.key })}
                 className={cn(
-                  "rounded-full border-2 px-4 py-1.5 text-sm font-bold shadow-comic-sm transition-all hover:-translate-y-0.5",
-                  tab === item.key ? "border-ink bg-navy text-white" : "border-border bg-card text-foreground hover:border-ink",
+                  "flex items-center gap-1.5 whitespace-nowrap rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all",
+                  tab === item.key ? "border-rust bg-rust text-white" : "border-border hover:border-rust",
                 )}
               >
-                <span className="mr-1.5" aria-hidden>{item.icon}</span>
+                <span aria-hidden>{item.icon}</span>
                 {item.label}
               </button>
             ))}
@@ -453,8 +448,8 @@ export function PartnershipsView() {
         </div>
 
         {notConfigured ? (
-          <div className="mx-auto max-w-2xl rounded-xl border-2 border-border bg-card p-8 text-center shadow-comic-sm">
-            <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full border-2 border-ink bg-sage/20 text-2xl">🚀</div>
+          <div className="mx-auto max-w-2xl rounded-xl border border-border bg-card p-8 text-center">
+            <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-sage/15 text-2xl">🚀</div>
             <h2 className="font-heading text-xl text-navy">Outreach no está activado</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
               YALC es el motor de outbound (búsquedas, leads, secuencias). Activalo con{" "}
@@ -467,7 +462,7 @@ export function PartnershipsView() {
         ) : (
           <>
             {leadsError && (
-              <div className="rounded-lg border-2 border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
                 {String((leadsError as Error).message || leadsError)}
               </div>
             )}
@@ -490,9 +485,8 @@ export function PartnershipsView() {
             {tab === "contactos" && (
               <div>
                 {/* Toolbar: vista + roster */}
-                <div className="mb-3 flex flex-wrap items-center gap-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Vista</span>
-                  <div className="inline-flex overflow-hidden rounded-full border-2 border-ink bg-card shadow-comic-sm" data-testid="vista-toggle">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <div className="flex gap-2" data-testid="vista-toggle">
                     {(
                       [
                         { key: "kanban" as const, label: "🗃️ Kanban" },
@@ -504,8 +498,10 @@ export function PartnershipsView() {
                         type="button"
                         onClick={() => pushQuery({ vista: option.key })}
                         className={cn(
-                          "px-3 py-1 text-xs font-bold transition-colors",
-                          vista === option.key ? "bg-navy text-white" : "bg-card text-foreground hover:bg-muted",
+                          "rounded-md border px-3 py-1.5 text-[12px] font-semibold transition-colors",
+                          vista === option.key
+                            ? "border-rust bg-rust text-white"
+                            : "border-border bg-background hover:bg-muted",
                         )}
                       >
                         {option.label}
@@ -520,15 +516,17 @@ export function PartnershipsView() {
                       title="Roster = este kanban filtrado a Signed/Active"
                       data-testid="roster-toggle"
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold shadow-comic-sm transition-all hover:-translate-y-0.5",
-                        roster ? "border-ink bg-yellow-200 text-ink" : "border-border bg-card text-muted-foreground",
+                        "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[12px] font-semibold transition-colors",
+                        roster
+                          ? "border-rust/50 bg-rust/10 text-rust"
+                          : "border-border bg-background text-muted-foreground hover:bg-muted",
                       )}
                     >
                       🏆 Roster
                     </button>
                   )}
 
-                  <span className="ml-auto text-xs font-semibold text-muted-foreground">
+                  <span className="ml-auto text-xs text-muted-foreground">
                     {activeLeadsQuery.isFetching || discardedLeadsQuery.isFetching
                       ? "Actualizando…"
                       : `${activeLeads.length} en pipeline · ${discardedLeads.length} descartados`}
@@ -536,11 +534,9 @@ export function PartnershipsView() {
                 </div>
 
                 {roster && vista === "kanban" && (
-                  <div className="mb-3">
-                    <NarratorCaption>
-                      El Roster no es otra pantalla: es <b>este mismo kanban filtrado</b> a Signed + Active — tus partners en activo.
-                    </NarratorCaption>
-                  </div>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    El Roster no es otra pantalla: es <b>este mismo kanban filtrado</b> a Signed + Active — tus partners en activo.
+                  </p>
                 )}
 
                 {vista === "kanban" ? (
@@ -596,27 +592,27 @@ export function PartnershipsView() {
       {/* ── GATE de contacto (GateItem · human-in-the-loop) ── */}
       {contactGate && (
         <div className="fixed inset-0 z-[600]">
-          <div className="fixed inset-0 bg-ink/45" onClick={() => setContactGate(null)} aria-hidden />
+          <div className="fixed inset-0 bg-black/30" onClick={() => setContactGate(null)} aria-hidden />
           <div
             role="dialog"
             aria-modal="true"
-            className="fixed left-1/2 top-1/2 w-[min(540px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-2 border-ink bg-background p-6 shadow-comic"
+            className="fixed left-1/2 top-1/2 w-[min(540px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-lg border-[3px] border-ink bg-card p-6 shadow-comic"
             data-testid="contact-gate-modal"
           >
             {!contactGate.sent ? (
               <>
-                <h2 className="font-heading text-2xl text-navy">🚦 GATE: APROBAR ENVÍO</h2>
-                <span className="mt-1 inline-block -rotate-2 rounded border-2 border-rust px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-rust">
+                <h2 className="text-lg font-semibold text-foreground">🚦 Aprobar envío</h2>
+                <span className="mt-1 inline-block rounded border border-rust/50 bg-rust/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rust">
                   GateItem · requiere humano
                 </span>
                 <div className="mt-3 space-y-1.5 text-sm">
-                  <div className="rounded-md border-2 border-border bg-card px-3 py-1.5">
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
                     <b>Secuencia:</b> {contactGate.sequenceName}
                   </div>
-                  <div className="rounded-md border-2 border-border bg-card px-3 py-1.5">
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
                     <b>Acción:</b> {contactGate.prompt}
                   </div>
-                  <div className="rounded-md border-2 border-border bg-card px-3 py-1.5">
+                  <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
                     <b>Gate:</b> {contactGate.runId}
                     {contactGate.dryRun && " · dry-run (no saldrá ningún email real)"}
                   </div>
@@ -625,7 +621,7 @@ export function PartnershipsView() {
                   <button
                     type="button"
                     onClick={() => void approveContactGate(contactGate.runId)}
-                    className="rounded-md border-2 border-ink bg-rust px-4 py-2 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5"
+                    className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
                     data-testid="approve-contact-gate"
                   >
                     ✅ Aprobar y enviar
@@ -636,22 +632,22 @@ export function PartnershipsView() {
                       setContactGate(null);
                       showToast("Gate pendiente — lo tienes también en el Cockpit (yalc_list_gates)");
                     }}
-                    className="rounded-md border-2 border-border bg-card px-4 py-2 text-sm font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-ink"
+                    className="rounded-lg border-2 border-border bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                   >
-                    ✋ Luego
+                    Luego
                   </button>
                 </div>
-                <p className="mt-2 text-[11px] italic text-muted-foreground">
+                <p className="mt-2 text-[11px] text-muted-foreground">
                   Los creators quedan «En cola» hasta tu OK. El mismo gate se puede aprobar desde el
                   chat (Rocinante) o desde Claude Code (yalc_approve_gate).
                 </p>
               </>
             ) : (
               <div className="py-4 text-center" data-testid="contact-gate-sent">
-                <span className="inline-block -rotate-3 rounded-xl border-4 border-sage px-6 py-2 font-heading text-2xl tracking-wide text-sage">
-                  ¡ENVIADO!
+                <span className="inline-flex items-center gap-2 rounded-lg border border-sage/50 bg-sage/10 px-5 py-2 font-heading text-xl text-sage">
+                  ✅ Enviado
                 </span>
-                <p className="mx-auto mt-3 max-w-sm text-sm italic text-muted-foreground">
+                <p className="mx-auto mt-3 max-w-sm text-sm text-muted-foreground">
                   Secuencia lanzada{contactGate.dryRun ? " en dry-run (sin email real)" : ""} a{" "}
                   {contactGate.queuedLeads} creator{contactGate.queuedLeads === 1 ? "" : "s"} — el primer
                   toque ya está en su hilo del Inbox.
@@ -659,7 +655,7 @@ export function PartnershipsView() {
                 <button
                   type="button"
                   onClick={() => setContactGate(null)}
-                  className="mt-4 rounded-md border-2 border-border bg-card px-4 py-2 text-sm font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5 hover:border-ink"
+                  className="mt-4 rounded-lg border-2 border-border bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
                 >
                   Cerrar
                 </button>

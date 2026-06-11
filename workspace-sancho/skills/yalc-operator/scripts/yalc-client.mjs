@@ -208,13 +208,7 @@ async function request(config, method, endpoint, body) {
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (config.token) headers.Authorization = `Bearer ${config.token}`
 
-  // Scope every call to the brand's YALC tenant (idempotent — overrides any
-  // tenant already on the endpoint). Without this, campaigns/skills/gates hit
-  // the `default` tenant instead of the brand.
-  const url = new URL(endpoint, config.baseUrl)
-  if (config.slug) url.searchParams.set('tenant', config.slug)
-
-  const res = await fetch(url, {
+  const res = await fetch(`${config.baseUrl}${endpoint}`, {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),

@@ -73,27 +73,27 @@ fast_foundation = {
     "pillars": {
         "company-brief": {
             "status": fast_status,
-            "output_file": f"brand/{slug}/company-brief/company-brief.current.md",
+            "output_file": f"brand/{slug}/company-brief/current.md",
             "skill": "fast-foundation"
         },
         "self-l1": {
             "status": fast_status if fast_status == "approved" else "not-started",
-            "output_file": f"brand/{slug}/market-and-us/self/self.current.md",
+            "output_file": f"brand/{slug}/market-and-us/self/current.md",
             "skill": "fast-foundation"
         },
         "market-l1": {
             "status": fast_status if fast_status == "approved" else "not-started",
-            "output_file": f"brand/{slug}/market-and-us/market/market.current.md",
+            "output_file": f"brand/{slug}/market-and-us/market/current.md",
             "skill": "fast-foundation"
         },
         "brand-voice-snapshot": {
             "status": fast_status if fast_status == "approved" else "not-started",
-            "output_file": f"brand/{slug}/brand-voice/brand-voice.current.md",
+            "output_file": f"brand/{slug}/brand-voice/current.md",
             "skill": "fast-foundation"
         },
         "niche-basic": {
             "status": fast_status if fast_status == "approved" else "not-started",
-            "output_file": f"brand/{slug}/go-to-market/ecps/ecps.current.md",
+            "output_file": f"brand/{slug}/go-to-market/ecps/current.md",
             "skill": "fast-foundation"
         }
     }
@@ -166,7 +166,7 @@ strategic_plan = {
     "layer": 7,
     "skill": "strategic-plan",
     "requires": ["metrics-setup"],
-    "output_file": f"brand/{slug}/strategic-plan/strategic-plan.current.md"
+    "output_file": f"brand/{slug}/strategic-plan/current.md"
 }
 # If strategic-plan was already a section, preserve its fields
 if sp_data.get("output_file"):

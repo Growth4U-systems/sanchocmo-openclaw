@@ -8,19 +8,6 @@
   "started_at": "ISO timestamp",
   "updated_at": "ISO timestamp",
   "sections": {
-    "fast-foundation": {
-      "status": "approved|in-progress|not-started",
-      "layer": 0,
-      "pillars": {
-        "fast-context": {
-          "status": "approved|in-progress|not-started",
-          "layer": 0,
-          "output_file": "brand/{slug}/fastcontext/fastcontext.current.md",
-          "skill": "fast-foundation",
-          "approved_at": "ISO timestamp or null"
-        }
-      }
-    },
     "company-brief": {
       "status": "approved|in-progress|not-started",
       "layer": 0,
@@ -196,15 +183,15 @@ Resumen ejecutivo de la marca. Debe existir para todo cliente con al menos Fast 
   "file_index": {
     "competitors": {
       "sources": "market-and-us/competitors/sources.json",
-      "summary": "market-and-us/competitors/competitors.current.md",
+      "summary": "market-and-us/competitors/current.md",
       "battle_cards": {
-        "{slug}": "market-and-us/competitors/{slug}/{slug}.current.md"
+        "{slug}": "market-and-us/competitors/{slug}/current.md"
       }
     },
     "integrations": "integrations.json",
     "metrics": {
       "plan_json": "metrics-plan.json",
-      "plan_doc": "go-to-market/metrics-plan/metrics-plan.current.md",
+      "plan_doc": "go-to-market/metrics-plan/current.md",
       "data_dir": "metrics/"
     },
     "brand_assets": {
@@ -250,7 +237,6 @@ Resumen ejecutivo de la marca. Debe existir para todo cliente con al menos Fast 
 ## Notas
 
 - `sections.X.status` = status agregado de la sección (derived de sus pillars)
-- `fast-foundation` tiene un único pilar `fast-context` cuyo `output_file` es `brand/{slug}/fastcontext/fastcontext.current.md` (un archivo de grounding desechable, secciones H2). Fast Foundation NO escribe a carpetas de pilares.
 - `company-brief` es especial: tiene `skills` en vez de `pillars` porque las 3 skills escriben al mismo doc
 - `competitor-analysis` usa `output_files` (array) porque genera 1 archivo por competidor
 - `positioning` usa `output_pattern` porque genera 1 archivo por ECP

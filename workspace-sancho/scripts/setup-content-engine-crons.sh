@@ -42,7 +42,7 @@ fi
 
 if [[ ! -f "$CONFIG" ]]; then
   echo "ERROR: client-config.json not found at $CONFIG" >&2
-  echo "Create the client from Mission Control first, then run Foundation." >&2
+  echo "Run new-client.sh first to create it." >&2
   exit 1
 fi
 

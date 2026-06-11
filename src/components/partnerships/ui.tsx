@@ -1,7 +1,8 @@
 /**
  * Partnerships (SAN-78) · piezas UI pequeñas compartidas por kanban/lista/drawer.
- * Estilo del producto real (tokens Tailwind navy/rust/sage/ink + shadow-comic),
- * NO el estilo comic de los mockups: los mockups mandan en comportamiento.
+ * Estilo del producto real (mismos patrones que metrics/content-creation/brand-brain):
+ * badges sobrios de un borde, sin estética cómic — los mockups mandan solo en
+ * comportamiento.
  */
 
 "use client";
@@ -21,9 +22,9 @@ import type { PartnershipLead } from "@/lib/partnerships/types";
 // ── Quality badge (verde ≥85 · ámbar 70-84 · rojo <70) ──
 
 const BAND_BADGE: Record<QualityBand, string> = {
-  high: "border-ink bg-sage text-white",
-  medium: "border-ink bg-yellow-300 text-ink",
-  low: "border-ink bg-destructive text-white",
+  high: "border-sage/60 bg-sage/15 text-sage",
+  medium: "border-amber-400/60 bg-amber-100 text-amber-800",
+  low: "border-destructive/50 bg-destructive/10 text-destructive",
 };
 
 export function QualityBadge({
@@ -42,7 +43,7 @@ export function QualityBadge({
           : "Sin quality score todavía (lo calcula el discovery, SAN-79)"
       }
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full border-2 font-heading shadow-comic-sm",
+        "inline-flex shrink-0 items-center justify-center rounded-full border font-heading font-semibold",
         size === "lg" ? "h-12 w-12 text-lg" : "h-9 w-9 text-sm",
         band ? BAND_BADGE[band] : "border-border bg-muted text-muted-foreground",
       )}
@@ -55,9 +56,9 @@ export function QualityBadge({
 // ── Chips de red / tier ──
 
 const NETWORK_META: Record<string, { label: string; emoji: string; className: string }> = {
-  instagram: { label: "Instagram", emoji: "📸", className: "border-pink-300 bg-pink-50 text-pink-800" },
-  youtube: { label: "YouTube", emoji: "▶️", className: "border-red-300 bg-red-50 text-red-800" },
-  tiktok: { label: "TikTok", emoji: "🎵", className: "border-ink/30 bg-muted text-foreground" },
+  instagram: { label: "Instagram", emoji: "📸", className: "border-pink-300/70 bg-pink-50 text-pink-800" },
+  youtube: { label: "YouTube", emoji: "▶️", className: "border-red-300/70 bg-red-50 text-red-800" },
+  tiktok: { label: "TikTok", emoji: "🎵", className: "border-border bg-muted text-foreground" },
   other: { label: "Red", emoji: "🌐", className: "border-border bg-muted/50 text-muted-foreground" },
 };
 
@@ -71,7 +72,7 @@ export function networkMeta(network?: string | null) {
 export function NetworkChip({ network }: { network?: string | null }) {
   const meta = networkMeta(network);
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] font-bold", meta.className)}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium", meta.className)}>
       <span aria-hidden>{meta.emoji}</span>
       {meta.label}
     </span>
@@ -82,7 +83,7 @@ export function TierChip({ tier }: { tier?: string | null }) {
   const label = formatTier(tier);
   if (!label) return null;
   return (
-    <span className="inline-flex items-center rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-bold text-muted-foreground">
+    <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
       Tier {label}
     </span>
   );
@@ -110,7 +111,7 @@ export function StageStamp({ lead }: { lead: PartnershipLead }) {
       <span
         title={`yalc: ${lead.lifecycleStatus || "?"}`}
         className={cn(
-          "inline-flex items-center rounded-md border-2 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide",
+          "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
           (stage && STAGE_STAMP[stage]) || "border-border bg-muted/50 text-muted-foreground",
         )}
       >
@@ -118,7 +119,7 @@ export function StageStamp({ lead }: { lead: PartnershipLead }) {
         {label}
       </span>
       {lead.discardNote && (
-        <span className="text-[10px] font-semibold text-muted-foreground">{lead.discardNote}</span>
+        <span className="text-[10px] text-muted-foreground">{lead.discardNote}</span>
       )}
     </span>
   );
@@ -129,7 +130,7 @@ export function StageStamp({ lead }: { lead: PartnershipLead }) {
 export function ScoreBar({ value, className }: { value: number; className?: string }) {
   const clamped = Math.max(0, Math.min(100, value));
   return (
-    <span className={cn("block h-2 w-full overflow-hidden rounded-full border border-ink/40 bg-background", className)}>
+    <span className={cn("block h-2 w-full overflow-hidden rounded-full bg-muted", className)}>
       <span
         className={cn(
           "block h-full rounded-full",
@@ -138,16 +139,6 @@ export function ScoreBar({ value, className }: { value: number; className?: stri
         style={{ width: `${clamped}%` }}
       />
     </span>
-  );
-}
-
-// ── Narrator caption (toque de producto, como las pages hermanas) ──
-
-export function NarratorCaption({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="inline-block rounded border-2 border-ink bg-yellow-200 px-3 py-0.5 font-serif text-[13px] italic text-ink shadow-comic-sm -rotate-1">
-      {children}
-    </div>
   );
 }
 
@@ -175,8 +166,10 @@ export function ToastViewport({ toast }: { toast: ToastState | null }) {
     <div
       role="status"
       className={cn(
-        "fixed bottom-6 left-1/2 z-[600] -translate-x-1/2 rounded-xl border-2 border-ink px-5 py-2.5 text-sm font-bold shadow-comic",
-        toast.tone === "ok" ? "bg-sage text-white" : "bg-yellow-200 text-ink",
+        "fixed bottom-6 left-1/2 z-[600] -translate-x-1/2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg",
+        toast.tone === "ok"
+          ? "border-border bg-card text-foreground"
+          : "border-yellow-300/60 bg-yellow-50 text-yellow-900",
       )}
     >
       {toast.message}

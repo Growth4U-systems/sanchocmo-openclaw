@@ -32,8 +32,8 @@ export function TipoSelector({ tipo }: { tipo: OutreachTipo }) {
 
   return (
     <div className="inline-flex items-center gap-2">
-      <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Tipo</span>
-      <div className="inline-flex overflow-hidden rounded-full border-2 border-ink bg-card shadow-comic-sm">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo</span>
+      <div className="inline-flex overflow-hidden rounded-md border border-border bg-background">
         {(
           [
             { key: "partnerships" as const, label: "Partnerships" },
@@ -46,8 +46,8 @@ export function TipoSelector({ tipo }: { tipo: OutreachTipo }) {
             onClick={() => setTipo(option.key)}
             title={option.key === "b2b" ? "Campañas B2B (cockpit YALC)" : "Campañas de creators (Partnerships)"}
             className={cn(
-              "px-3 py-1 text-xs font-bold transition-colors",
-              tipo === option.key ? "bg-rust text-white" : "bg-card text-foreground hover:bg-muted",
+              "px-3 py-1.5 text-xs font-semibold transition-colors",
+              tipo === option.key ? "bg-rust text-white" : "bg-background text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             {option.label}

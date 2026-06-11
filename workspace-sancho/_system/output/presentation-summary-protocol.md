@@ -4,14 +4,14 @@
 
 ## Cuándo añadir
 
-Todo documento `{carpeta}.current.md` que sea **presentable al cliente** debe incluir una sección `## Presentation Summary` al final. Aplica a:
+Todo documento `current.md` que sea **presentable al cliente** debe incluir una sección `## Presentation Summary` al final. Aplica a:
 
-- `strategic-plan/strategic-plan.current.md`
-- `go-to-market/positioning/*/*.current.md`
-- `market-and-us/competitors/competitors.current.md`
-- `market-and-us/market/market.current.md`
-- `market-and-us/swot/swot.current.md`
-- `go-to-market/pricing/pricing.current.md`
+- `strategic-plan/current.md`
+- `go-to-market/positioning/*/current.md`
+- `market-and-us/competitors/current.md`
+- `market-and-us/market/current.md`
+- `market-and-us/swot/current.md`
+- `go-to-market/pricing/current.md`
 - Cualquier otro documento que el usuario pueda querer presentar
 
 Documentos internos/operacionales (stack.md, foundation-state.json, registry.json) NO llevan Presentation Summary.
@@ -78,7 +78,7 @@ No todos los documentos tienen los 7 bloques. Adaptar al contenido.
 Cuando el usuario pide presentación de un documento:
 
 1. Leer el `## Presentation Summary` del documento
-2. Leer visual identity del cliente (`brand-identity/visual-identity/visual-identity.current.md`) si existe → extraer colores
+2. Leer visual identity del cliente (`brand-identity/visual-identity/current.md`) si existe → extraer colores
 3. Usar estilo base Electric Studio + colores del cliente
 4. Ejecutar frontend-slides con las slides definidas
 5. Incluir links "Ver detalle →" en cada slide que tenga `source`

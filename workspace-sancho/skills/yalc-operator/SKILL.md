@@ -11,10 +11,10 @@ metadata:
   depends_on: outreach-sequence-builder, contact-enrichment
   chains_to: campaign-tracking, performance-analysis
 context_required:
-  - brand/{slug}/company-brief/company-brief.current.md
-  - brand/{slug}/go-to-market/ecps/ecps.current.md
-  - brand/{slug}/go-to-market/positioning/*/*.current.md
-  - brand/{slug}/brand-voice/brand-voice.current.md
+  - brand/{slug}/company-brief/current.md
+  - brand/{slug}/go-to-market/ecps/current.md
+  - brand/{slug}/go-to-market/positioning/*/current.md
+  - brand/{slug}/brand-voice/current.md
   - brand/{slug}/integrations.json
 context_writes:
   - brand/{slug}/yalc/runs/
@@ -56,7 +56,7 @@ The wrapper also reads `brand/{slug}/.env` if present.
 
 ## Commands
 
-Use these from `workspace-sancho/`:
+Use these from `workspace-yalc/` or `workspace-sancho/`:
 
 ```bash
 node skills/yalc-operator/scripts/yalc-client.mjs health --slug growth4u

@@ -133,14 +133,14 @@ export function ListaView({
       {busqueda && (
         <div
           data-testid="busqueda-banner"
-          className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border-2 border-ink bg-yellow-100 px-4 py-2 text-sm font-semibold text-ink shadow-comic-sm"
+          className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border border-l-4 border-l-rust bg-card px-4 py-2 text-sm"
         >
           <span aria-hidden>🔭</span>
           Candidatos de la búsqueda: <b>{busquedaLabel || busqueda}</b>
           <button
             type="button"
             onClick={onClearBusqueda}
-            className="ml-auto rounded-md border-2 border-ink bg-card px-2 py-0.5 text-xs font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5"
+            className="ml-auto rounded-md border border-border bg-background px-2 py-0.5 text-xs font-semibold transition-colors hover:bg-muted"
           >
             ✕ quitar filtro
           </button>
@@ -156,14 +156,14 @@ export function ListaView({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Buscar por handle…"
-            className="w-56 rounded-md border-2 border-border bg-card py-1.5 pl-8 pr-3 text-sm font-semibold focus:border-rust focus:outline-none"
+            className="w-56 rounded-md border border-border bg-background py-1.5 pl-8 pr-3 text-sm focus:border-rust focus:outline-none"
           />
         </label>
 
         <select
           value={stage}
           onChange={(event) => setStage(event.target.value as StageFilterKey | "")}
-          className="rounded-md border-2 border-border bg-card px-2 py-1.5 text-sm font-semibold focus:border-rust focus:outline-none"
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
           title="Los descartados están excluidos por defecto — usa el filtro 🗑 Descartados para verlos"
         >
           <option value="">Stage: todos</option>
@@ -175,17 +175,17 @@ export function ListaView({
           <option value={DISCARDED_STAGE}>🗑 Descartados</option>
         </select>
 
-        <span className="ml-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Red</span>
+        <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Red</span>
         {NETWORK_FILTERS.map((net) => (
           <button
             key={net.key}
             type="button"
             onClick={() => toggleNetwork(net.key)}
             className={cn(
-              "rounded-full border-2 px-3 py-1 text-xs font-bold shadow-comic-sm transition-transform hover:-translate-y-0.5",
+              "rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors",
               networks.includes(net.key)
-                ? "border-ink bg-yellow-200 text-ink"
-                : "border-border bg-card text-muted-foreground",
+                ? "border-rust/50 bg-rust/10 text-rust"
+                : "border-border bg-background text-muted-foreground hover:bg-muted",
             )}
           >
             {net.label}
@@ -194,10 +194,10 @@ export function ListaView({
       </div>
 
       {/* Tabla */}
-      <div className="overflow-x-auto rounded-xl border-2 border-border bg-card shadow-comic-sm">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full min-w-[960px] text-left text-sm" data-testid="contactos-lista">
           <thead>
-            <tr className="border-b-2 border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+            <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
               <th className="w-10 px-3 py-2.5">
                 <input
                   type="checkbox"
@@ -240,7 +240,7 @@ export function ListaView({
                   onClick={() => onOpen(lead)}
                   className={cn(
                     "cursor-pointer border-b border-border/70 last:border-0 hover:bg-muted/40",
-                    selected[lead.id] && "bg-yellow-50",
+                    selected[lead.id] && "bg-rust/5",
                     discarded && "opacity-60",
                   )}
                 >
@@ -256,7 +256,7 @@ export function ListaView({
                     <div className="flex items-center gap-2">
                       <span className="text-base" aria-hidden>{networkMeta(lead.network).emoji}</span>
                       <span>
-                        <span className="font-bold text-foreground">{leadDisplayName(lead)}</span>
+                        <span className="font-semibold text-foreground">{leadDisplayName(lead)}</span>
                         <br />
                         <span className="text-[11px] text-muted-foreground">
                           {[
@@ -277,7 +277,7 @@ export function ListaView({
                   <td className="px-3 py-2.5">
                     {typeof fit === "number" ? (
                       <div className="w-24">
-                        <span className="text-xs font-bold">{Math.round(fit)}%</span>
+                        <span className="text-xs font-semibold">{Math.round(fit)}%</span>
                         <ScoreBar value={fit} className="mt-1" />
                       </div>
                     ) : (
@@ -286,9 +286,9 @@ export function ListaView({
                   </td>
                   <td className="px-3 py-2.5">
                     {typeof lead.offeredPrice === "number" ? (
-                      <span className="font-bold text-foreground">
+                      <span className="font-semibold text-foreground">
                         {formatEur(lead.offeredPrice)}
-                        {feeNote && <span className="ml-1 text-[11px] font-semibold text-muted-foreground">{feeNote}</span>}
+                        {feeNote && <span className="ml-1 text-[11px] font-normal text-muted-foreground">{feeNote}</span>}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">—</span>
@@ -307,11 +307,11 @@ export function ListaView({
         </table>
       </div>
 
-      <p className="mt-2 text-xs font-semibold text-muted-foreground">
+      <p className="mt-2 text-xs text-muted-foreground">
         Mostrando {visible.length} de {leads.length} creators
         {stage !== DISCARDED_STAGE && " · descartados excluidos por defecto (filtro Stage → 🗑 Descartados)"}
       </p>
-      <p className="mt-1 text-[11px] italic text-muted-foreground">
+      <p className="mt-1 text-[11px] text-muted-foreground">
         * Break-even y Veredicto se calculan con la calc de negociación (Ola 2 · SAN-75b): fee / CAC objetivo, con multiplicador de incentivo del lado de lo alcanzable.
       </p>
 
@@ -319,9 +319,9 @@ export function ListaView({
       {selectedLeads.length > 0 && (
         <div
           data-testid="bulk-bar"
-          className="fixed bottom-6 left-1/2 z-[550] flex -translate-x-1/2 flex-wrap items-center gap-3 rounded-xl border-2 border-ink bg-ink px-5 py-3 text-white shadow-comic"
+          className="fixed bottom-6 left-1/2 z-[550] flex -translate-x-1/2 flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 shadow-lg"
         >
-          <span className="font-heading text-base text-yellow-300">
+          <span className="text-sm font-semibold text-foreground">
             {selectedLeads.length} seleccionado{selectedLeads.length === 1 ? "" : "s"}
           </span>
           <select
@@ -334,7 +334,7 @@ export function ListaView({
               event.target.value = "";
               clearSelection();
             }}
-            className="rounded-md border-2 border-white/70 bg-ink px-2 py-1.5 text-sm font-bold text-white"
+            className="rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
           >
             <option value="">Mover a stage…</option>
             {PIPELINE_STAGES.map((s) => (
@@ -352,7 +352,7 @@ export function ListaView({
                 onBulkContact(selectedLeads);
                 clearSelection();
               }}
-              className="rounded-md border-2 border-white/70 bg-rust px-3 py-1.5 text-sm font-bold transition-transform hover:-translate-y-0.5"
+              className="rounded-lg border-2 border-rust bg-rust px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
               data-testid="bulk-contactar"
             >
               📨 Contactar
@@ -365,7 +365,7 @@ export function ListaView({
               onBulkDiscard(selectedLeads);
               clearSelection();
             }}
-            className="rounded-md border-2 border-white/70 px-3 py-1.5 text-sm font-bold transition-colors hover:bg-destructive"
+            className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
           >
             🗑 Descartar
           </button>
@@ -373,7 +373,7 @@ export function ListaView({
             type="button"
             onClick={clearSelection}
             title="Deseleccionar"
-            className="text-lg font-bold text-white/70 hover:text-white"
+            className="text-lg text-muted-foreground transition-colors hover:text-foreground"
           >
             ✕
           </button>

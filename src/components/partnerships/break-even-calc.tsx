@@ -32,9 +32,9 @@ const MULTIPLIERS = [
 ] as const;
 
 const VERDICT_STYLES: Record<string, string> = {
-  green: "border-ink bg-sage text-white",
-  amber: "border-ink bg-yellow-300 text-ink",
-  red: "border-ink bg-destructive text-white",
+  green: "border-sage/60 bg-sage/10 text-sage",
+  amber: "border-amber-400/60 bg-amber-100 text-amber-900",
+  red: "border-destructive/50 bg-destructive/10 text-destructive",
 };
 
 function fmtEs(value: number): string {
@@ -82,18 +82,18 @@ export function BreakEvenCalc({
   }, [lead.followers, lead.engagementRate, posts, format, fee, structure, variableCpa, effectiveCac, defaultCac, multiplier, config]);
 
   const inputCls =
-    "w-24 rounded-md border-2 border-border bg-background px-2 py-1 text-sm font-bold text-foreground focus:border-ink focus:outline-none";
-  const labelCls = "flex items-center gap-2 text-xs font-bold text-muted-foreground";
+    "w-24 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-rust focus:outline-none";
+  const labelCls = "flex items-center gap-2 text-xs font-semibold text-muted-foreground";
 
   return (
     <section
-      className="rounded-xl border-2 border-border bg-card p-4 shadow-comic-sm"
+      className="rounded-xl border border-border bg-card p-4"
       data-testid="breakeven-calc"
     >
-      <h3 className="font-heading text-base uppercase tracking-wide text-navy">
+      <h3 className="text-sm font-semibold text-foreground">
         🧮 Calc break-even — negociación
       </h3>
-      <p className="mt-1 text-[11px] italic text-muted-foreground">
+      <p className="mt-1 text-[11px] text-muted-foreground">
         Le damos la vuelta: cuántas conversiones debe producir el deal para salir rentable a tu CAC
         objetivo. Motor calc-creator-core (el mismo del chat y del MCP).
       </p>
@@ -199,30 +199,30 @@ export function BreakEvenCalc({
         <>
           {/* Métricas */}
           <div className="mt-4 grid grid-cols-3 gap-3" data-testid="breakeven-cells">
-            <div className="rounded-lg border-2 border-border bg-background p-3 text-center">
-              <div className="font-heading text-2xl leading-none text-navy" data-testid="be-necesarias">
+            <div className="rounded-lg border border-border bg-background p-3 text-center">
+              <div className="font-heading text-2xl font-semibold leading-none text-navy" data-testid="be-necesarias">
                 {Number.isFinite(result.necesarias) ? formatIntEs(result.necesarias) : "∞"}
               </div>
-              <div className="mt-1 text-[10px] font-semibold text-muted-foreground">
+              <div className="mt-1 text-[10px] text-muted-foreground">
                 conversiones necesarias
                 <br />({result.formulaNecesarias})
               </div>
             </div>
-            <div className="rounded-lg border-2 border-border bg-background p-3 text-center">
-              <div className="font-heading text-2xl leading-none text-navy" data-testid="be-alcanzable">
+            <div className="rounded-lg border border-border bg-background p-3 text-center">
+              <div className="font-heading text-2xl font-semibold leading-none text-navy" data-testid="be-alcanzable">
                 ~{formatIntEs(result.alcanzable)}
               </div>
-              <div className="mt-1 text-[10px] font-semibold text-muted-foreground">
+              <div className="mt-1 text-[10px] text-muted-foreground">
                 alcanzables estimadas
                 <br />
                 (×{result.deal.incentiveMultiplier} incentivo)
               </div>
             </div>
-            <div className="rounded-lg border-2 border-border bg-background p-3 text-center">
-              <div className="font-heading text-2xl leading-none text-navy" data-testid="be-ratio">
+            <div className="rounded-lg border border-border bg-background p-3 text-center">
+              <div className="font-heading text-2xl font-semibold leading-none text-navy" data-testid="be-ratio">
                 {result.ratio === Infinity ? "∞" : `${Math.round(result.ratio * 100)}%`}
               </div>
-              <div className="mt-1 text-[10px] font-semibold text-muted-foreground">
+              <div className="mt-1 text-[10px] text-muted-foreground">
                 cobertura del break-even
               </div>
             </div>
@@ -232,7 +232,7 @@ export function BreakEvenCalc({
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <span
               className={cn(
-                "-rotate-1 rounded-md border-2 px-3 py-1 font-heading text-base tracking-wide shadow-comic-sm",
+                "inline-flex items-center gap-1.5 rounded-md border px-3 py-1 text-sm font-semibold",
                 VERDICT_STYLES[result.veredictoColor],
               )}
               data-testid="be-verdict"
@@ -242,7 +242,7 @@ export function BreakEvenCalc({
               {result.veredictoColor === "red" && "⛔ "}
               {result.veredictoLabel}
             </span>
-            <span className="text-xs italic text-muted-foreground">{result.frase}</span>
+            <span className="text-xs text-muted-foreground">{result.frase}</span>
           </div>
 
           <p className="mt-2 text-[11px] text-muted-foreground" data-testid="be-modelo">
@@ -252,7 +252,7 @@ export function BreakEvenCalc({
           {/* Contraoferta */}
           {result.contraofertaEur !== null && result.contraofertaEur > 0 && (
             <div
-              className="mt-3 -rotate-[0.4deg] rounded-md border-2 border-ink bg-yellow-200 px-3 py-2 text-sm font-semibold text-ink shadow-comic-sm"
+              className="mt-3 rounded-md border border-yellow-300/60 bg-yellow-50/60 px-3 py-2 text-sm text-yellow-900"
               data-testid="be-contraoferta"
             >
               💡 Contraoferta sugerida: <b>{formatIntEs(result.contraofertaEur)}€</b>
