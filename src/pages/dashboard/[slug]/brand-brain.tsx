@@ -17,7 +17,8 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useBrandBrain, useBrandBrainOtherDocs, useUpdatePillarStatus } from "@/hooks/useBrandBrain";
 import { useOpenChat } from "@/hooks/useChat";
 import { useProjects } from "@/hooks/useProjects";
-import { buildPillarThread, findTaskThreadForDoc } from "@/lib/chat-openers";
+import { buildHtmlConversionThread, buildPillarThread, findTaskThreadForDoc } from "@/lib/chat-openers";
+import { htmlSiblingOf } from "@/lib/doc-paths";
 import { DepthBar } from "@/components/brand-brain/depth-bar";
 import { WarningsBanner } from "@/components/brand-brain/warnings-banner";
 import { FileTree } from "@/components/brand-brain/file-tree";
@@ -193,6 +194,20 @@ export default function BrandBrainPage() {
   const [docLoading, setDocLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
+  // ── HTML-canonical sibling (SAN-149) — same behavior as DocSlideOver ──
+  // When the .md has a generated .html sibling, the HTML is the canonical
+  // view by default, with a "Ver fuente (.md)" toggle back to the source.
+  const [htmlSibling, setHtmlSibling] = useState<string | null>(null);
+  const [htmlSiblingStale, setHtmlSiblingStale] = useState(false);
+  const [viewSource, setViewSource] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  useEffect(() => {
+    setViewSource(false);
+    setHtmlSibling(null);
+    setHtmlSiblingStale(false);
+  }, [selectedDoc?.docPath]);
+
   useEffect(() => {
     if (!selectedDoc?.docPath) {
       setDocContent(null);
@@ -201,25 +216,87 @@ export default function BrandBrainPage() {
       setDocCanonicalPath(null);
       return;
     }
+    let cancelled = false;
     setDocLoading(true);
     setDocContent(null);
     setDocLastModified(null);
     setDocUsedFallback(false);
     setDocCanonicalPath(null);
     setEditing(false);
-    fetch(`/api/docs/${selectedDoc.docPath}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.ok && data.content) {
-          setDocContent(data.content);
-          setDocLastModified(data.lastModified || null);
-          setDocUsedFallback(Boolean(data.usedFallback));
-          setDocCanonicalPath(data.canonicalPath || null);
+    (async () => {
+      try {
+        const res = await fetch(`/api/docs/${selectedDoc.docPath}`);
+        const data = await res.json();
+        if (cancelled || !data.ok || !data.content) return;
+        setHtmlSibling(data.htmlSibling || null);
+        setHtmlSiblingStale(Boolean(data.htmlSiblingStale));
+
+        if (data.htmlSibling && !viewSource) {
+          const sibRes = await fetch(`/api/docs/${data.htmlSibling}`);
+          if (sibRes.ok) {
+            const sib = await sibRes.json();
+            if (cancelled) return;
+            if (sib.ok && sib.content) {
+              setDocContent(sib.content);
+              setDocLastModified(sib.lastModified || null);
+              setDocCanonicalPath(sib.canonicalPath || data.htmlSibling);
+              return;
+            }
+          }
         }
-      })
-      .catch(() => {})
-      .finally(() => setDocLoading(false));
+
+        setDocContent(data.content);
+        setDocLastModified(data.lastModified || null);
+        setDocUsedFallback(Boolean(data.usedFallback));
+        setDocCanonicalPath(data.canonicalPath || null);
+      } catch {
+        // soft-fail: "Documento no encontrado" state
+      } finally {
+        if (!cancelled) setDocLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedDoc?.docPath, viewSource, refreshTick]);
+
+  // ── Convertir en HTML (SAN-149): dispatch html-output to the doc's
+  // author agent via its chat thread, then poll the expected sibling. ──
+  const [convertState, setConvertState] = useState<"idle" | "converting" | "error">("idle");
+  const expectedSibling = useMemo(() => {
+    if (!selectedDoc?.docPath) return null;
+    try { return htmlSiblingOf(selectedDoc.docPath); } catch { return null; }
   }, [selectedDoc?.docPath]);
+
+  const handleConvertToHtml = useCallback(() => {
+    if (!selectedDoc?.docPath || !slug || convertState === "converting") return;
+    const thread = buildHtmlConversionThread(slug, selectedDoc.docPath, projectsData);
+    openChat(slug, thread);
+    setConvertState("converting");
+  }, [selectedDoc?.docPath, slug, convertState, projectsData, openChat]);
+
+  useEffect(() => {
+    if (convertState !== "converting" || !expectedSibling) return;
+    const startedAt = Date.now();
+    const TIMEOUT_MS = 5 * 60 * 1000;
+    const interval = setInterval(async () => {
+      if (Date.now() - startedAt > TIMEOUT_MS) {
+        clearInterval(interval);
+        setConvertState("error");
+        return;
+      }
+      try {
+        const res = await fetch(`/api/docs/${expectedSibling}`);
+        if (res.ok) {
+          clearInterval(interval);
+          setConvertState("idle");
+          setViewSource(false);
+          setRefreshTick((t) => t + 1);
+        }
+      } catch {
+        // network hiccup — keep polling
+      }
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [convertState, expectedSibling]);
 
   useEffect(() => {
     const docParam = router.query.doc as string | undefined;
@@ -459,6 +536,41 @@ export default function BrandBrainPage() {
             >
               💬 Chat
             </button>
+
+            {/* HTML-canonical controls (SAN-149) */}
+            {htmlSibling && (
+              <button
+                type="button"
+                onClick={() => setViewSource((v) => !v)}
+                className={btnClass}
+                title={viewSource ? "Ver el documento HTML canónico" : "Ver la fuente markdown editable"}
+              >
+                {viewSource ? "📄 Ver HTML" : "📝 Ver fuente (.md)"}
+              </button>
+            )}
+            {selectedDoc.docPath.endsWith(".md") && docContent && (!htmlSibling || htmlSiblingStale) && (
+              <button
+                type="button"
+                onClick={handleConvertToHtml}
+                disabled={convertState === "converting"}
+                className={btnClass + (convertState === "converting" ? " opacity-60 cursor-wait" : "")}
+                title={
+                  convertState === "error"
+                    ? "La conversión sigue en el chat — el HTML tarda más de lo esperado"
+                    : htmlSiblingStale
+                      ? "El .md cambió después de generar el HTML — regenerar"
+                      : "Genera el documento HTML canónico con la skill html-output"
+                }
+              >
+                {convertState === "converting"
+                  ? "⏳ Generando HTML…"
+                  : convertState === "error"
+                    ? "⚠️ Reintentar HTML"
+                    : htmlSiblingStale
+                      ? "🔄 Regenerar HTML"
+                      : "🎨 Convertir en HTML"}
+              </button>
+            )}
 
             {!(selectedDoc.docPath.endsWith(".html") || (docContent && (docContent.trimStart().startsWith("<!DOCTYPE") || docContent.trimStart().startsWith("<html")))) && (
               <button
