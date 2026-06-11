@@ -47,6 +47,27 @@
     for (var i = 0; i < textIndex.segs.length; i++) {
       if (textIndex.segs[i].node === node) return textIndex.segs[i].start + off;
     }
+    // Element containers (triple-click / programmatic selections): the
+    // offset is a child index, not a character offset. Map to the first
+    // text segment of that child, or to the end of the element's last
+    // segment when the offset points past the final child.
+    if (node.nodeType === 1) {
+      var children = node.childNodes;
+      if (off < children.length) {
+        var child = children[off];
+        for (var j = 0; j < textIndex.segs.length; j++) {
+          var seg = textIndex.segs[j];
+          if (child === seg.node || (child.contains && child.contains(seg.node))) return seg.start;
+        }
+      } else {
+        var last = -1;
+        for (var k = 0; k < textIndex.segs.length; k++) {
+          var s2 = textIndex.segs[k];
+          if (node.contains(s2.node)) last = s2.start + s2.len;
+        }
+        return last;
+      }
+    }
     return -1;
   }
 
