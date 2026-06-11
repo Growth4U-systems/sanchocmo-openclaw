@@ -1,0 +1,96 @@
+{
+  "version": "3.0",
+  "started_at": "__NOW__",
+  "updated_at": "__NOW__",
+  "brand_summary": {
+    "company_name": "__NAME__",
+    "sector": "",
+    "description": "",
+    "north_star": "",
+    "icps": [],
+    "competitors": [],
+    "positioning": ""
+  },
+  "sections": {
+    "fast-foundation": {
+      "status": "not-started",
+      "layer": 0,
+      "skill": "fast-foundation",
+      "pillars": {
+        "fast-context": {"status": "not-started", "output_file": "brand/__SLUG__/fastcontext/fastcontext.current.md", "skill": "fast-foundation"}
+      }
+    },
+    "company-brief": {
+      "status": "not-started",
+      "layer": 0,
+      "output_dir": "brand/__SLUG__/company-brief/",
+      "pillars": {
+        "company-context": {"status": "not-started", "skill": "company-context", "output_file": "brand/__SLUG__/company-context/company-context.current.md"},
+        "business-model": {"status": "not-started", "skill": "business-model-audit", "output_file": "brand/__SLUG__/business-model/business-model.current.md"},
+        "budget": {"status": "not-started", "skill": "budget-constraints", "output_file": "brand/__SLUG__/budget/budget.current.md"},
+        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/__SLUG__/company-brief/company-brief.current.md", "note": "merge view auto-generated"}
+      }
+    },
+    "market-and-us": {
+      "status": "not-started",
+      "layer": 1,
+      "output_dir": "brand/__SLUG__/market-and-us/",
+      "pillars": {
+        "market-analysis": {"status": "not-started", "layer": 1, "skill": "market-intelligence", "output_file": "brand/__SLUG__/market-and-us/market/market.current.md"},
+        "competitor-analysis": {"status": "not-started", "layer": 1, "skill": "competitor-intelligence"},
+        "self-analysis": {"status": "not-started", "layer": 1, "skill": "self-intelligence", "output_file": "brand/__SLUG__/market-and-us/self/self.current.md"},
+        "market-synthesis": {"status": "not-started", "layer": 2, "skill": "market-synthesis"},
+        "foundation-presentation": {"status": "not-started", "layer": 2, "skill": "market-synthesis", "output_file": "brand/__SLUG__/presentations/foundation-report.html"}
+      }
+    },
+    "go-to-market": {
+      "status": "not-started",
+      "layer": 3,
+      "output_dir": "brand/__SLUG__/go-to-market/",
+      "pillars": {
+        "niche-discovery": {"status": "not-started", "layer": 3, "skill": "niche-discovery-100x", "output_file": "brand/__SLUG__/go-to-market/ecps/ecps.current.md"},
+        "existing-customer-data": {"status": "not-started", "layer": 3, "optional": true, "skill": "existing-customer-data"},
+        "positioning": {"status": "not-started", "layer": 4, "skill": "positioning-messaging", "output_file": "brand/__SLUG__/go-to-market/positioning/shared/messaging-summary.md"},
+        "pricing": {"status": "not-started", "layer": 4, "skill": "pricing-strategy", "output_file": "brand/__SLUG__/go-to-market/pricing/pricing.current.md"},
+        "ecp-validation": {"status": "not-started", "layer": 4, "optional": true, "skill": "ecp-validation"},
+        "gtm-presentation": {"status": "not-started", "layer": 4, "skill": "gtm-presentation", "output_file": "brand/__SLUG__/go-to-market/gtm-report.html"}
+      }
+    },
+    "brand-book": {
+      "status": "not-started",
+      "layer": 5,
+      "output_dir": "brand/__SLUG__/brand-book/",
+      "pillars": {
+        "brand-voice": {"status": "not-started", "layer": 5, "skill": "brand-voice", "output_file": "brand/__SLUG__/brand-book/brand-voice/brand-voice.current.md"},
+        "visual-identity": {"status": "not-started", "layer": 5, "skill": "visual-identity", "output_file": "brand/__SLUG__/brand-book/visual-identity/visual-identity.current.md"},
+        "brand-report": {"status": "not-started", "layer": 5, "optional": true, "skill": "brand-report", "output_file": "brand/__SLUG__/brand-book/brand-report.html"}
+      }
+    },
+    "metrics-setup": {
+      "status": "not-started",
+      "layer": 6,
+      "pillars": {
+        "metrics-setup": {"status": "not-started", "skill": "metrics-setup", "output_file": "brand/__SLUG__/go-to-market/metrics-plan.md"}
+      }
+    },
+    "strategic-plan": {
+      "status": "not-started",
+      "layer": 7,
+      "output_file": "brand/__SLUG__/strategic-plan/strategic-plan.current.md",
+      "pillars": {
+        "strategic-plan": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/__SLUG__/strategic-plan/strategic-plan.current.md"},
+        "strategic-presentation": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/__SLUG__/strategic-plan/strategic-presentation.html"}
+      }
+    }
+  },
+  "file_index": {
+    "competitors": {},
+    "integrations": "integrations.json",
+    "metrics": {},
+    "brand_assets": {},
+    "operational": {},
+    "projects": {"dir": "projects/"},
+    "presentations": {},
+    "memory": null
+  }
+}
