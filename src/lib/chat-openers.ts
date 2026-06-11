@@ -622,10 +622,23 @@ export function buildRecurringThread(
   };
 }
 
-/** Hardcoded pillar canonical fallback (overridden by chat-config.json if available) */
-const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {
-  "company-brief": "kickoff",
-};
+/**
+ * Hardcoded pillar canonical fallback (overridden by chat-config.json if available).
+ *
+ * Maps a pillarKey → the canonical PILLAR name used for the threadId and for
+ * `resolveThreadSkills({ pillar })`. The value must be a *pillar* key, never a
+ * skill name — buildPillarThread feeds it straight back to resolveThreadSkills
+ * as the pillar.
+ *
+ * Empty since SAN-3 W4: the only entry existed because the Fast Foundation doc
+ * lived in `fastcontext/` while the pillar was `company-brief`. W4 unified the
+ * folder to `company-brief`, so the pillar key == its folder == its canonical
+ * name; the `|| pillarKey` fallback in buildPillarThread now covers every pillar.
+ * Do NOT re-add `company-brief → kickoff`: `kickoff` is the *skill*, and
+ * resolving `{ pillar: "kickoff" }` falls through to sancho-manager — which
+ * improvises a brief and never writes company-brief.current.md.
+ */
+const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {};
 
 /**
  * Build thread config for a "content document" — the shape rendered by
