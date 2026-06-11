@@ -83,6 +83,8 @@ test("tools/list exposes expected MCP schemas", async () => {
       // SAN-75b: calc break-even (registrada por registerYalcBreakevenTool)
       "yalc_breakeven",
       "yalc_create_search",
+      // SAN-81: reporting por creator (misma agregación que la UI de Metrics)
+      "yalc_creator_report",
       "yalc_get_overview",
       "yalc_list_campaigns",
       "yalc_list_gates",

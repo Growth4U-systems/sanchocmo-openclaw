@@ -120,3 +120,33 @@ export {
   NICHE_ER_BENCHMARK_PCT,
 } from "./negotiation";
 export type { DetectedPrice, NegotiationCalcInput } from "./negotiation";
+
+// ── SAN-81 · Reporting por creator (vive en Metrics — cierra el loop) ───────
+
+export { buildCreatorReport, REPORT_SPARKLINE_BUCKETS } from "./creator-report";
+export type {
+  BuildCreatorReportOptions,
+  CreatorPerformancePost,
+  CreatorPerformanceRecord,
+  CreatorReport,
+  CreatorReportFeedback,
+  CreatorReportFeedbackDelta,
+  CreatorReportPostRow,
+  CreatorReportRow,
+  CreatorReportTotals,
+  PerformanceSource,
+  ReportPeriodDays,
+} from "./creator-report";
+
+export { materializePerformanceSeeds, SEED_PERFORMANCE } from "./performance-seeds";
+export type { SeedPerformanceCreator, SeedPerformancePost } from "./performance-seeds";
+
+export {
+  ensurePerformanceSeed,
+  loadPerformance,
+  performanceFile,
+  savePerformance,
+} from "./performance-store";
+
+export { creatorReportForSlug, parseReportPeriod, REPORT_PERIODS } from "./report-service";
+export type { CreatorReportServiceOptions } from "./report-service";
