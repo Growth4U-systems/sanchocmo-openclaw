@@ -17,7 +17,9 @@ import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@
 import {
   assignTemplateToSearch,
   createDiscoverySearch,
+  creatorReportForSlug,
   parseDiscoveryPlan,
+  parseReportPeriod,
   runDiscoverySearch,
   TemplateValidationError,
 } from "@/lib/partnerships";
@@ -792,6 +794,35 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           headers: traceHeaders(context),
         });
         return jsonResult(data);
+      }),
+  );
+
+  // Reporting por creator (SAN-81): performance real vs break-even de la
+  // calc, agregado a 30/90 días — la MISMA agregación que la vista
+  // Metrics · Partnerships y GET /api/partnerships/report (paridad
+  // UI = chat = MCP vía creatorReportForSlug).
+  server.registerTool(
+    "yalc_creator_report",
+    {
+      title: "Creator performance report",
+      description:
+        "Per-creator Partnerships performance report (the Metrics · Partnerships view): program KPIs (invested, posts live, clicks, signups, KYC, first-tx, real CPA, ROI) plus per-creator real CPA vs break-even (target CAC), conversions needed from the calc, ROI and suggested quality-score feedback deltas, aggregated over a 30 or 90-day window. Real tracking lands in Phase 2 (Impact); until then performance comes from the demo seed. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        period: z
+          .enum(["30", "90"])
+          .optional()
+          .describe("Aggregation window in days (default 90)."),
+      },
+    },
+    async ({ clientSlug, period }) =>
+      runTool(context, "yalc_creator_report", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const report = await creatorReportForSlug(clientSlug, {
+          periodDays: parseReportPeriod(period),
+          headers: traceHeaders(context),
+        });
+        return jsonResult(report);
       }),
   );
 

@@ -28,6 +28,11 @@
  *     `POST /api/leads/:id/messages` y `POST /api/webhooks/reply` (replies con
  *     precio para el panel break-even) + 3 personas extra para encender los
  *     chips Reunión / Parado / Rebotado.
+ *  7. (SAN-81) Siembra la performance fake de los 3 creators con deal
+ *     (posts → clicks → signups → KYC → first_tx, fechas relativas a hoy)
+ *     en `brand/{slug}/outreach/performance.json` — enciende Metrics ·
+ *     Partnerships (KPIs 90d del mockup: 11.300€ · 9 posts · 24.8K clicks ·
+ *     CPA real 13,6€ · ROI 5,9×). El tracking real llega en Fase 2 (Impact).
  *
  * Idempotente: re-ejecutarlo actualiza en vez de duplicar (ancla provider_id='seed:<handle>').
  *
@@ -48,6 +53,7 @@ import { computeQualityScore, SEED_CREATORS } from "../src/lib/calc-creator-core
 import type { SeedCreator } from "../src/lib/calc-creator-core";
 import {
   assignTemplateToSearch,
+  ensurePerformanceSeed,
   ensureSeedTemplates,
   getSearch,
   listSearches,
@@ -299,6 +305,13 @@ async function main(): Promise<void> {
 
   // ── 6 · (SAN-80) Conversaciones del Inbox ──
   await seedInboxConversations(campaignIds);
+
+  // ── 7 · (SAN-81) Performance por creator → Metrics · Partnerships ──
+  const perf = ensurePerformanceSeed(SANCHO_SLUG);
+  console.log(
+    `\n✔ Performance (SAN-81): ${perf.seeded} creators con posts sembrados → ` +
+      `Metrics · Partnerships (/dashboard/${SANCHO_SLUG}/metrics?tab=partnerships)`,
+  );
 
   // Verificación final contra la API (lo que verá la UI)
   const check = await api<{ leads?: unknown[]; count?: number }>("/api/leads?type=Partnerships");
