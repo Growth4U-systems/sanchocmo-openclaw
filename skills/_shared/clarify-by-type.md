@@ -158,8 +158,7 @@ channel: clarify
 kind: clarify
 item_type: <uno de los 7>          # ← NUEVO. Obligatorio en v2.
 iteration: 0
-status: pending
-clarify_status: pending
+clarify_status: pending            # NO escribas `status:` — ese campo ya no existe.
 created_at: <ISO>
 updated_at: <ISO>
 ---
@@ -172,28 +171,20 @@ updated_at: <ISO>
 
 ## Q1 — {tesis del tipo, p.ej. "La provocación"}
 
-**Pregunta**: {pregunta concreta del item}
-
-- **A**: {opción A con cifra/cliente/mecánica concreta}
-- **B**: {opción B distinta a A}
-- **C**: {opción C distinta a A/B}
-- **D**: {opción D distinta a A/B/C}
-- **Other**: (escribe libremente si ninguna te convence)
+:::ask
+{"id":"q_provoke","prompt":"{pregunta concreta del item}","mode":"single","options":[{"id":"a","label":"{opción A con cifra/cliente/mecánica concreta}"},{"id":"b","label":"{opción B distinta a A}"},{"id":"c","label":"{opción C distinta a A/B}"},{"id":"d","label":"{opción D distinta a A/B/C}"},{"id":"other","label":"Otro (lo escribo)"}]}
+:::
 
 **Respuesta humana**:
-> _Pega aquí tu elección (A/B/C/D) y/o tu texto libre._
+> _(la rellena el agente con la respuesta del humano)_
 
 ---
 
 ## Q2 — La evidencia propia
 
-**Pregunta**: ¿Con qué dato propio anclas esta tesis?
-
-- **A**: {anclaje en cliente histórico con cifra propuesta}
-- **B**: {anclaje en cliente actual con cifra propuesta}
-- **C**: {anclaje agregado de la consultoría}
-- **D**: {opción anónima con cifras hipotéticas marcadas [verifica]}
-- **Other**: (cifra propia que sea más fuerte que las propuestas)
+:::ask
+{"id":"q_evidence","prompt":"¿Con qué dato propio anclas esta tesis?","mode":"single","options":[{"id":"a","label":"{anclaje en cliente histórico con cifra propuesta}"},{"id":"b","label":"{anclaje en cliente actual con cifra propuesta}"},{"id":"c","label":"{anclaje agregado de la consultoría}"},{"id":"d","label":"{opción anónima con cifras hipotéticas marcadas [verifica]}"},{"id":"other","label":"Otro (lo escribo)"}]}
+:::
 
 **Respuesta humana**:
 >
@@ -202,14 +193,9 @@ updated_at: <ISO>
 
 ## Q3 — Lo que nadie más está diciendo
 
-**Pregunta**: ¿Qué insight ves en este tema que NADIE está contando?
-
-- **A**: Escribe en Other tu insight más afilado (esta pregunta es para tu
-  perspectiva única — las otras opciones son fallback)
-- **B**: El tema está saturado, no hay nada nuevo (skip)
-- **C**: {sub-aspecto técnico ignorado, según item_type}
-- **D**: {caso límite donde la tesis dominante rompe}
-- **Other**: (insight propio — recomendado)
+:::ask
+{"id":"q_insight","prompt":"¿Qué insight ves en este tema que NADIE está contando? (Other recomendado — esta pregunta es para tu perspectiva única)","mode":"single","options":[{"id":"a","label":"El tema está saturado, no hay nada nuevo (skip)"},{"id":"b","label":"{sub-aspecto técnico ignorado, según item_type}"},{"id":"c","label":"{caso límite donde la tesis dominante rompe}"},{"id":"other","label":"Otro (lo escribo) — recomendado"}]}
+:::
 
 **Respuesta humana**:
 >
@@ -218,41 +204,55 @@ updated_at: <ISO>
 
 ## Q4 — Aplicación + audiencia diana
 
-**Pregunta**: ¿Para quién escribes y cómo cierras?
-
-- **A**: Founder/CEO B2B SaaS · cierre con DM filtrado
-- **B**: CMO marca >5M revenue · cierre con pregunta provocadora
-- **C**: Marketer junior · cierre con regla de bolsillo
-- **D**: Mixto · pregunta abierta
-- **Other**: (otra audiencia o cierre)
+:::ask
+{"id":"q_audience","prompt":"¿Para quién escribes y cómo cierras?","mode":"single","options":[{"id":"a","label":"Founder/CEO B2B SaaS · cierre con DM filtrado"},{"id":"b","label":"CMO marca >5M revenue · cierre con pregunta provocadora"},{"id":"c","label":"Marketer junior · cierre con regla de bolsillo"},{"id":"d","label":"Mixto · pregunta abierta"},{"id":"other","label":"Otro (lo escribo)"}]}
+:::
 
 **Respuesta humana**:
 >
 ```
 
+**Ids estables obligatorios**: `q_provoke`, `q_evidence`, `q_insight`,
+`q_audience` — los mismos en `clarify.md` y en los bloques `:::ask` que
+postees al chat. Mission Control casa las respuestas `[ask:<id>]` del chat
+contra los ids declarados en el body de `clarify.md` para marcar
+`clarify_status: answered` automáticamente; si los ids no coinciden, esa
+detección no ocurre y la transición queda solo en tus manos.
+
 ---
 
 ## 5. Cuando el humano responde
 
-El humano edita `clarify.md` rellenando "Respuesta humana" en cada bloque.
-Mission Control parsea el archivo y, cuando detecta que las 4 respuestas no
-están vacías, marca `clarify_status: answered` y dispara al writer.
+El humano responde vía los componentes `:::ask` del chat de Mission Control,
+que envían un único mensaje con líneas `[ask:<id>] respuesta: …` al thread de
+la ContentTask. A partir de ahí, dos mecanismos redundantes (a propósito):
 
-El writer skill, al ejecutarse, lee `clarify_answers` del frontmatter del
-draft de canal — Mission Control lo rellena con las respuestas parseadas:
+1. **Mission Control (determinista)**: el endpoint de chat parsea esas líneas
+   y, cuando las respuestas cubren TODOS los `:::ask` declarados en el body de
+   `clarify.md`, marca `clarify_status: answered` y persiste el mapa
+   `clarify_answers` en el frontmatter (`src/lib/clarify-autostatus.ts`).
+   Para que esto funcione, los ids de los `:::ask` que posteas en el chat
+   deben ser LOS MISMOS que escribiste en `clarify.md`.
+2. **El agente (responsable último)**: al recibir el mensaje con respuestas,
+   copia cada una al bloque "Respuesta humana" de su pregunta en `clarify.md`
+   y verifica que `clarify_status: answered` está en el frontmatter (si MC ya
+   lo marcó, no lo toques). NUNCA empieces a redactar con `clarify_status:
+   pending`.
+
+El frontmatter resultante queda así:
 
 ```yaml
+clarify_status: answered
 clarify_answers:
-  q1: "C — Lo que importa es la API. En {cliente} ya vimos esto..."
-  q2: "Other — CAC -41% en 6 meses, no 18%"
-  q3: "Other — Nadie habla del coste de implementar este agent: 3 sprints mínimo"
-  q4: "B — CMO senior, pregunta provocadora"
-  item_type: "launch"
+  q_provoke: "C — Lo que importa es la API. En {cliente} ya vimos esto..."
+  q_evidence: "Other — CAC -41% en 6 meses, no 18%"
+  q_insight: "Other — Nadie habla del coste de implementar este agent: 3 sprints mínimo"
+  q_audience: "B — CMO senior, pregunta provocadora"
 ```
 
-El writer no inventa cifras — lee `q2` y la usa literal. Si `q2` está en
-formato vago ("creo que sí, sobre el 30%"), marca `[verifica cifra]` en el
-draft final.
+El writer no inventa cifras — lee `q_evidence` y la usa literal. Si
+`q_evidence` está en formato vago ("creo que sí, sobre el 30%"), marca
+`[verifica cifra]` en el draft final.
 
 ---
 
