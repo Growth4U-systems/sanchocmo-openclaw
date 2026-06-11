@@ -126,7 +126,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const fieldKeys: (keyof ContentTaskUpdateInput)[] = [
         "name", "skill", "target_channels", "documents",
         "mc_chat_thread_id", "discord_thread_id", "owner",
-        "scheduled_for", "clarify_status", "media_policy",
+        "scheduled_for", "clarify_status", "media_policy", "author",
       ];
       const fields: ContentTaskUpdateInput = {};
       for (const k of fieldKeys) {

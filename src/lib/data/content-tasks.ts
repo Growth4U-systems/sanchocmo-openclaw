@@ -420,6 +420,7 @@ export type ContentTaskUpdateInput = Partial<
     | "scheduled_for"
     | "clarify_status"
     | "media_policy"
+    | "author"
   >
 >;
 
@@ -434,6 +435,7 @@ const UPDATABLE_FIELDS: readonly (keyof ContentTaskUpdateInput)[] = [
   "scheduled_for",
   "clarify_status",
   "media_policy",
+  "author",
 ] as const;
 
 /**
