@@ -10,6 +10,10 @@ const IDEA_DISCOVERY_FIELDS = [
   "dispatch_date", "dispatch_slot",
   // Repurposing lineage (SAN-141) — written by content-atomizer on the idea.
   "derived_from",
+  // Founder-Led persona assignment (SAN-163) — set on the idea via the Ideas
+  // PATCH endpoint; must survive into the unified CT so the channel aggregator
+  // and the Ideas pool can group/filter by author.
+  "author",
   "approved_via", "approved_by",
   "archived_at", "archived_via", "archived_by",
   "deferred_by", "target_date",
