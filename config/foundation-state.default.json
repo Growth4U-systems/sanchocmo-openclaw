@@ -27,8 +27,7 @@
       "pillars": {
         "company-context": {"status": "not-started", "skill": "company-context", "output_file": "brand/__SLUG__/company-context/company-context.current.md"},
         "business-model": {"status": "not-started", "skill": "business-model-audit", "output_file": "brand/__SLUG__/business-model/business-model.current.md"},
-        "budget": {"status": "not-started", "skill": "budget-constraints", "output_file": "brand/__SLUG__/budget/budget.current.md"},
-        "company-brief": {"status": "not-started", "skill": "fast-foundation", "output_file": "brand/__SLUG__/company-brief/company-brief.current.md", "note": "merge view auto-generated"}
+        "budget": {"status": "not-started", "skill": "budget-constraints", "output_file": "brand/__SLUG__/budget/budget.current.md"}
       }
     },
     "market-and-us": {
