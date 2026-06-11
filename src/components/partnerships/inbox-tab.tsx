@@ -34,6 +34,7 @@ import {
 import { formatFollowers, formatTier, leadDisplayName } from "@/lib/partnerships/stage-mapping";
 import type { PartnershipLead } from "@/lib/partnerships/types";
 import { NarratorCaption, ToastViewport, useToast } from "./ui";
+import { useModelConfig } from "./use-model-config";
 
 interface LeadMessage {
   id: string;
@@ -114,6 +115,9 @@ export function InboxTab({ slug }: { slug: string }) {
   const [filter, setFilter] = useState<InboxStateKey | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // SAN-76: el break-even de negociación usa la config efectiva del modelo.
+  const modelConfig = useModelConfig(slug);
+
   const leadsKey = ["yalc", slug, "partnerships", "inbox-leads"] as const;
   const leadsQuery = useQuery({
     queryKey: leadsKey,
@@ -182,11 +186,12 @@ export function InboxTab({ slug }: { slug: string }) {
         followers: selected.followers,
         engagementRatePct: selected.engagementRate,
         incentiveMultiplier: multiplier,
+        config: modelConfig.data?.config,
       });
     } catch {
       return null;
     }
-  }, [fee, multiplier, selected]);
+  }, [fee, multiplier, selected, modelConfig.data?.config]);
 
   // ── Borrador ──
   const [draft, setDraft] = useState("");

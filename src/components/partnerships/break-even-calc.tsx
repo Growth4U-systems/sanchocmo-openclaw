@@ -11,6 +11,7 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import type { CreatorModelConfig } from "@/lib/calc-creator-core";
 import { negotiationBreakEven } from "@/lib/partnerships/negotiation";
 import type { PartnershipLead } from "@/lib/partnerships/types";
 
@@ -39,7 +40,15 @@ function fmtEs(value: number): string {
   return Math.round(value).toLocaleString("es-ES");
 }
 
-export function BreakEvenCalc({ lead }: { lead: PartnershipLead }) {
+export function BreakEvenCalc({
+  lead,
+  config,
+}: {
+  lead: PartnershipLead;
+  /** Config efectiva del modelo (SAN-76): reach/CTR/funnel/CAC de Settings. */
+  config?: CreatorModelConfig;
+}) {
+  const defaultCac = config?.breakEven.defaultTargetCacEur ?? 80;
   const [posts, setPosts] = useState(3);
   const [format, setFormat] = useState<string>("reel");
   const [fee, setFee] = useState<number>(
@@ -47,8 +56,10 @@ export function BreakEvenCalc({ lead }: { lead: PartnershipLead }) {
   );
   const [structure, setStructure] = useState<"fijo" | "mixto">("fijo");
   const [variableCpa, setVariableCpa] = useState(10);
-  const [cac, setCac] = useState(80);
+  // null = sin tocar → sigue el CAC objetivo de la config (referencia a Metrics).
+  const [cac, setCac] = useState<number | null>(null);
   const [multiplier, setMultiplier] = useState(1);
+  const effectiveCac = cac ?? defaultCac;
 
   const result = useMemo(() => {
     try {
@@ -60,13 +71,14 @@ export function BreakEvenCalc({ lead }: { lead: PartnershipLead }) {
         format,
         structure,
         variableCpaEur: structure === "mixto" ? Math.max(0, variableCpa) : undefined,
-        targetCacEur: Number.isFinite(cac) ? Math.max(1, cac) : 80,
+        targetCacEur: Number.isFinite(effectiveCac) ? Math.max(1, effectiveCac) : defaultCac,
         incentiveMultiplier: multiplier,
+        config,
       });
     } catch {
       return null;
     }
-  }, [lead.followers, lead.engagementRate, posts, format, fee, structure, variableCpa, cac, multiplier]);
+  }, [lead.followers, lead.engagementRate, posts, format, fee, structure, variableCpa, effectiveCac, defaultCac, multiplier, config]);
 
   const inputCls =
     "w-24 rounded-md border-2 border-border bg-background px-2 py-1 text-sm font-bold text-foreground focus:border-ink focus:outline-none";
@@ -150,13 +162,13 @@ export function BreakEvenCalc({ lead }: { lead: PartnershipLead }) {
             />
           </label>
         )}
-        <label className={labelCls}>
+        <label className={labelCls} title="Default: CAC objetivo de Settings (referenciado de Metrics)">
           CAC obj. €
           <input
             type="number"
             min={1}
-            value={cac}
-            onChange={(e) => setCac(parseFloat(e.target.value) || 80)}
+            value={effectiveCac}
+            onChange={(e) => setCac(parseFloat(e.target.value) || defaultCac)}
             className={cn(inputCls, "w-16")}
             data-testid="be-cac"
           />

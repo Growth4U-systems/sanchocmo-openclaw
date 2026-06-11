@@ -33,6 +33,7 @@ import {
 } from "@/lib/partnerships/stage-mapping";
 import type { PartnershipLead, QualityComponentsMap } from "@/lib/partnerships/types";
 import { NetworkChip, ScoreBar, StageStamp, TierChip } from "./ui";
+import { useModelConfig } from "./use-model-config";
 
 /** Orden + etiquetas del desglose (paridad mockup drawer-partner.html). */
 const COMPONENT_ROWS: Array<{ key: keyof QualityComponentsMap; label: string }> = [
@@ -62,6 +63,10 @@ interface DrawerMessage {
 
 export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDrawerProps) {
   const [expanded, setExpanded] = useState(false);
+
+  // SAN-76: la calc del drawer usa la config EFECTIVA del modelo (la de
+  // Settings/Yalc; degrada a la sembrada mientras carga o sin Yalc).
+  const modelConfig = useModelConfig(slug || "");
 
   // Hilo real del lead (lead_messages de Yalc — el mismo que el Inbox).
   const thread = useQuery({
@@ -240,7 +245,7 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
         </section>
 
         {/* Calc break-even interactiva (SAN-80 · motor calc-creator-core) */}
-        <BreakEvenCalc lead={lead} />
+        <BreakEvenCalc lead={lead} config={modelConfig.data?.config} />
 
         {/* Contact log (placeholder hasta el Inbox de SAN-80) */}
         <section className="rounded-xl border-2 border-border bg-card p-4 shadow-comic-sm" data-testid="contact-log">

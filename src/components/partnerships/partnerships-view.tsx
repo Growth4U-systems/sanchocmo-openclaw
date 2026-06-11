@@ -5,7 +5,8 @@
  * Sub-nav del mockup: Encuentra · Contactos · Inbox · Plantillas, con el
  * engranaje ⚙️ Settings fijo arriba a la derecha (decisión de diseño nº 3 —
  * misma lógica que Content Creation). Inbox y Plantillas son reales (SAN-80);
- * Settings sigue placeholder (SAN-76).
+ * Settings es real (SAN-76): modelo de creators editable + cualificación +
+ * funnel read-only (vive en Metrics) + Conexiones (providers del Cockpit).
  *
  * SAN-80: "Contactar" (bulk de la Lista o mover a Contacted) instancia la
  * secuencia de la búsqueda vía POST /api/partnerships/contact → GateItem en
@@ -51,7 +52,7 @@ import { ListaView } from "./lista-view";
 import { PartnerDrawer } from "./partner-drawer";
 import { InboxTab } from "./inbox-tab";
 import { PlantillasTab } from "./plantillas-tab";
-import { SettingsPlaceholder } from "./placeholder-tabs";
+import { SettingsTab } from "./settings-tab";
 import { NarratorCaption, ToastViewport, useToast } from "./ui";
 
 type PartnershipsTab = "encuentra" | "contactos" | "inbox" | "plantillas" | "settings";
@@ -113,16 +114,21 @@ export function PartnershipsView() {
     : "encuentra";
   const vista: ContactosVista = queryValue(router.query.vista) === "lista" ? "lista" : "kanban";
   const busqueda = queryValue(router.query.busqueda);
+  // SAN-76: ?stage=descartados — el link de Settings abre la Lista ya filtrada.
+  const stageParam = queryValue(router.query.stage);
 
   const [roster, setRoster] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
-  function pushQuery(next: Partial<{ tab: PartnershipsTab; vista: ContactosVista; busqueda: string }>) {
+  function pushQuery(
+    next: Partial<{ tab: PartnershipsTab; vista: ContactosVista; busqueda: string; stage: string }>,
+  ) {
     const query: Record<string, string> = { slug };
-    const merged = { tab, vista, busqueda, ...next };
+    const merged = { tab, vista, busqueda, stage: "", ...next };
     if (merged.tab !== "encuentra") query.tab = merged.tab;
     if (merged.tab === "contactos" && merged.vista !== "kanban") query.vista = merged.vista;
     if (merged.tab === "contactos" && merged.busqueda) query.busqueda = merged.busqueda;
+    if (merged.tab === "contactos" && merged.stage) query.stage = merged.stage;
     void router.push({ pathname: router.pathname, query }, undefined, { shallow: true });
   }
 
@@ -554,6 +560,7 @@ export function PartnershipsView() {
                     leads={allLeads}
                     busqueda={busqueda}
                     busquedaLabel={busquedaCampaign?.title}
+                    initialStage={stageParam === "descartados" ? DISCARDED_STAGE : undefined}
                     onClearBusqueda={() => pushQuery({ busqueda: "" })}
                     onOpen={(lead) => setSelectedLeadId(lead.id)}
                     onBulkMove={(leads, target) => void moveMany(leads, target)}
@@ -568,14 +575,10 @@ export function PartnershipsView() {
             {tab === "inbox" && <InboxTab slug={slug} />}
             {tab === "plantillas" && <PlantillasTab slug={slug} />}
             {tab === "settings" && (
-              <SettingsPlaceholder
-                onGoB2B={() => {
-                  void router.push(
-                    { pathname: router.pathname, query: { slug, tipo: "b2b" } },
-                    undefined,
-                    { shallow: true },
-                  );
-                }}
+              <SettingsTab
+                slug={slug}
+                onGoDiscarded={() => pushQuery({ tab: "contactos", vista: "lista", stage: "descartados" })}
+                onGoMetrics={() => void router.push(`/dashboard/${encodeURIComponent(slug)}/metrics`)}
               />
             )}
           </>

@@ -45,6 +45,8 @@ interface ListaViewProps {
   leads: PartnershipLead[];
   busqueda: string;
   busquedaLabel?: string | null;
+  /** Filtro Stage inicial (SAN-76: el link de Settings abre 🗑 Descartados). */
+  initialStage?: StageFilterKey | "";
   onClearBusqueda: () => void;
   onOpen: (lead: PartnershipLead) => void;
   onBulkMove: (leads: PartnershipLead[], target: StageFilterKey) => void;
@@ -58,6 +60,7 @@ export function ListaView({
   leads,
   busqueda,
   busquedaLabel,
+  initialStage,
   onClearBusqueda,
   onOpen,
   onBulkMove,
@@ -66,7 +69,7 @@ export function ListaView({
   busy,
 }: ListaViewProps) {
   const [search, setSearch] = useState("");
-  const [stage, setStage] = useState<StageFilterKey | "">("");
+  const [stage, setStage] = useState<StageFilterKey | "">(initialStage ?? "");
   const [networks, setNetworks] = useState<NetworkKey[]>([]);
   const [sortKey, setSortKey] = useState<ListSortKey | null>(null);
   const [sortDir, setSortDir] = useState<1 | -1>(-1);

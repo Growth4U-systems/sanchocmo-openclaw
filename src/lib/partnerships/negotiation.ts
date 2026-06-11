@@ -9,14 +9,17 @@
  * PARIDAD con los mockups (decisión SAN-75b): el benchmark de ER del nicho
  * está fijado en 4.8 (= ER de @finanzasconlucia → ajuste ×1,00). El motor
  * sin benchmark explícito caería al del tier (Mid 4.0 → ~62 alcanzables en
- * vez de ~52); las superficies de SAN-80 pasan SIEMPRE este valor hasta que
- * SAN-76 lo haga editable en Settings.
+ * vez de ~52); las superficies lo pasan SIEMPRE salvo override explícito.
+ *
+ * SAN-76: `config` opcional = config EFECTIVA del modelo (defaults +
+ * overrides de Yalc) — de ahí salen reach/CTR por formato, funnel 8/60/70 y
+ * CAC objetivo por defecto. Sin `config`, la sembrada (paridad intacta).
  *
  * CLIENT-SAFE: importa solo calc-creator-core (TS puro).
  */
 
 import { computeBreakEven } from "@/lib/calc-creator-core";
-import type { BreakEvenResult } from "@/lib/calc-creator-core";
+import type { BreakEvenResult, CreatorModelConfig } from "@/lib/calc-creator-core";
 
 /** Benchmark ER del nicho fintech-ES de los mockups (settings de SAN-76 lo hará editable). */
 export const NICHE_ER_BENCHMARK_PCT = 4.8;
@@ -98,6 +101,8 @@ export interface NegotiationCalcInput {
   incentiveMultiplier?: number;
   /** Override del benchmark (default: NICHE_ER_BENCHMARK_PCT por paridad). */
   erBenchmarkPct?: number;
+  /** Config efectiva del modelo (SAN-76); ausente → sembrada. */
+  config?: CreatorModelConfig;
 }
 
 /** Wrapper fino del motor con los defaults de paridad del mockup. */
@@ -117,6 +122,7 @@ export function negotiationBreakEven(input: NegotiationCalcInput): BreakEvenResu
       engagementRatePct: input.engagementRatePct ?? undefined,
       erBenchmarkPct: input.erBenchmarkPct ?? NICHE_ER_BENCHMARK_PCT,
     },
+    input.config,
   );
 }
 

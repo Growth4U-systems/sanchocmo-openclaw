@@ -17,7 +17,11 @@ import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@
 import {
   assignTemplateToSearch,
   createDiscoverySearch,
+  getEffectiveModelConfig,
+  ModelConfigValidationError,
   parseDiscoveryPlan,
+  previewModelConfigUpdate,
+  putModelConfigOverrides,
   runDiscoverySearch,
   TemplateValidationError,
 } from "@/lib/partnerships";
@@ -507,6 +511,11 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     run: (toolName, clientSlug, handler) => runTool(context, toolName, clientSlug, handler),
     jsonResult,
     fetchLeadMetrics: (clientSlug, leadId) => fetchYalcLeadMetrics(context, clientSlug, leadId),
+    // SAN-76: el break-even del MCP usa la config efectiva (Settings/Yalc).
+    fetchModelConfig: async (clientSlug) => {
+      const effective = await getEffectiveModelConfig(clientSlug);
+      return { config: effective.config, source: effective.source };
+    },
   });
 
   server.registerTool(
@@ -643,19 +652,25 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     }) =>
       runTool(context, "yalc_create_search", clientSlug, async () => {
         assertClientScope(context, "yalc:write", clientSlug);
-        const plan = parseDiscoveryPlan({
-          title,
-          sectors,
-          networks,
-          tiers,
-          audienceEsMinPct,
-          targetVolume,
-          signals: { adLibrary: true, competitorBrands: competitorBrands ?? [] },
-          templates,
-          qualificationMode,
-          disqualifyThreshold,
-          notes,
-        });
+        // SAN-76: el modo/umbral por defecto del preview sale de la config
+        // efectiva (la misma que aplicará createDiscoverySearch al crear).
+        const effective = await getEffectiveModelConfig(clientSlug);
+        const plan = parseDiscoveryPlan(
+          {
+            title,
+            sectors,
+            networks,
+            tiers,
+            audienceEsMinPct,
+            targetVolume,
+            signals: { adLibrary: true, competitorBrands: competitorBrands ?? [] },
+            templates,
+            qualificationMode,
+            disqualifyThreshold,
+            notes,
+          },
+          effective.config,
+        );
 
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
@@ -792,6 +807,156 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           headers: traceHeaders(context),
         });
         return jsonResult(data);
+      }),
+  );
+
+  // Model settings (SAN-76): editar el modelo de creators — espejo del PUT
+  // /api/yalc/model-config y del tab Settings de Outreach (paridad
+  // UI = chat = MCP). Yalc almacena solo OVERRIDES; los defaults viven en
+  // calc-creator-core y la efectiva se mergea Sancho-side.
+  server.registerTool(
+    "yalc_update_model_config",
+    {
+      title: "Update Partnerships creator-model config",
+      description:
+        "Partially updates the per-client creator-model config stored in YALC (SAN-76): tier ER benchmarks, verticals, formats, qualification mode + auto-disqualify threshold, and advanced overrides (weights/scoreBands/breakEven). Same action as Outreach → Settings → Guardar. PUT semantics: objects deep-merge, arrays replace wholesale, null deletes a stored override (the calc-creator-core default applies again). Threshold/mode changes apply to FUTURE discovery searches only — existing campaigns are never retro-applied. Defaults to dry-run (returns the would-be effective config); requires confirm=true with dryRun=false to write. Requires yalc:write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        erBenchmarks: z
+          .object({
+            nano: z.number().positive().lt(100).optional(),
+            micro: z.number().positive().lt(100).optional(),
+            mid: z.number().positive().lt(100).optional(),
+            macro: z.number().positive().lt(100).optional(),
+          })
+          .optional()
+          .describe("ER benchmark (%) per tier, e.g. { micro: 6.0 } — feeds the 'ER vs tier' quality component."),
+        verticals: z
+          .array(z.string().min(1))
+          .optional()
+          .describe("Program verticals — REPLACES the whole list (e.g. ['finanzas personales','fintech'])."),
+        formats: z
+          .array(z.string().min(1))
+          .optional()
+          .describe("Content formats — REPLACES the whole list (e.g. ['reel','post','story'])."),
+        qualificationMode: z
+          .enum(["auto", "manual", "hybrid"])
+          .optional()
+          .describe("Default qualification mode for NEW Partnerships searches (hybrid = auto-discard below threshold, human decides the rest)."),
+        disqualifyThreshold: z
+          .number()
+          .min(0)
+          .max(100)
+          .optional()
+          .describe("Auto-disqualify quality-score threshold (0-100) for NEW searches in auto/hybrid mode."),
+        overrides: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Advanced free-form deep-partial of CreatorModelConfig (tiers/weights/scoreBands/breakEven; null deletes a stored key). Merged with the first-class params above (those win)."),
+        reset: z
+          .boolean()
+          .default(false)
+          .describe("Clear the stored overrides document before applying this update (back to calc-creator-core defaults)."),
+        dryRun: z.boolean().default(true).describe("When true, previews the update without writing."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to write."),
+      },
+    },
+    async ({
+      clientSlug,
+      erBenchmarks,
+      verticals,
+      formats,
+      qualificationMode,
+      disqualifyThreshold,
+      overrides,
+      reset,
+      dryRun,
+      confirm,
+    }) =>
+      runTool(context, "yalc_update_model_config", clientSlug, async () => {
+        assertClientScope(context, "yalc:write", clientSlug);
+
+        // Partial del PUT: overrides libres primero, params tipados encima.
+        const partial: Record<string, unknown> = isRecord(overrides) ? { ...overrides } : {};
+        if (erBenchmarks) {
+          const tiers = Object.entries(erBenchmarks)
+            .filter(([, er]) => typeof er === "number")
+            .map(([key, er]) => ({ key, erBenchmarkPct: er }));
+          if (tiers.length > 0) partial.tiers = tiers;
+        }
+        if (verticals) partial.verticals = verticals;
+        if (formats) partial.formats = formats;
+        if (qualificationMode !== undefined || disqualifyThreshold !== undefined) {
+          const qualification = isRecord(partial.qualification) ? { ...partial.qualification } : {};
+          if (qualificationMode !== undefined) qualification.defaultMode = qualificationMode;
+          if (disqualifyThreshold !== undefined) qualification.threshold = disqualifyThreshold;
+          partial.qualification = qualification;
+        }
+
+        try {
+          if (dryRun !== false || confirm !== true) {
+            const preview = await previewModelConfigUpdate(clientSlug, partial, { reset });
+            return jsonResult({
+              ok: true,
+              dryRun: true,
+              requiresConfirmation: true,
+              message: "Set dryRun=false and confirm=true to apply this model-config update.",
+              partial,
+              reset: reset === true,
+              current: {
+                source: preview.current.source,
+                overrides: preview.current.overrides,
+                updatedAt: preview.current.updatedAt,
+                ...(preview.current.yalcError ? { yalcError: preview.current.yalcError } : {}),
+              },
+              preview: {
+                overrides: preview.wouldStore,
+                config: preview.configAfter,
+              },
+            });
+          }
+
+          const effective = await putModelConfigOverrides(clientSlug, partial, { reset });
+          return jsonResult({
+            ok: true,
+            applied: partial,
+            reset: reset === true,
+            source: effective.source,
+            overrides: effective.overrides,
+            config: effective.config,
+            updatedAt: effective.updatedAt,
+            note: "Threshold/mode apply to FUTURE discovery searches; existing campaigns keep their values.",
+          });
+        } catch (err) {
+          if (err instanceof ModelConfigValidationError) return errorResult(err.message);
+          throw err;
+        }
+      }),
+  );
+
+  // Lectura espejo: la config efectiva que consume la calc (GET del proxy).
+  server.registerTool(
+    "yalc_get_model_config",
+    {
+      title: "Get Partnerships creator-model config",
+      description:
+        "Reads the EFFECTIVE creator-model config for a client (calc-creator-core defaults + the overrides stored in YALC): tiers + ER benchmarks, verticals, formats, qualification mode/threshold, score bands and break-even seeds. source='defaults' means nothing was overridden (or YALC is unreachable). Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "yalc_get_model_config", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const effective = await getEffectiveModelConfig(clientSlug);
+        return jsonResult({
+          ok: true,
+          source: effective.source,
+          config: effective.config,
+          overrides: effective.overrides,
+          updatedAt: effective.updatedAt,
+          ...(effective.yalcError ? { yalcError: effective.yalcError } : {}),
+        });
       }),
   );
 

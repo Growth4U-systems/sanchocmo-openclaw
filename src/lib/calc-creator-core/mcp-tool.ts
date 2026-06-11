@@ -20,7 +20,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as z from "zod/v4";
 import { computeBreakEven } from "./break-even";
-import type { BreakEvenDeal, BreakEvenFunnel } from "./types";
+import type { BreakEvenDeal, BreakEvenFunnel, CreatorModelConfig } from "./types";
 
 export const YALC_BREAKEVEN_TOOL_NAME = "yalc_breakeven";
 
@@ -49,6 +49,14 @@ export interface RegisterYalcBreakevenToolOptions {
    * Opcional: sin él, `leadId` devuelve un error explicativo.
    */
   fetchLeadMetrics?: (clientSlug: string, leadId: string) => Promise<YalcBreakevenLeadMetrics>;
+  /**
+   * Config EFECTIVA del modelo (SAN-76: defaults + overrides de Yalc) — la
+   * misma que usan Settings y el drawer. Opcional: sin él (o si falla), el
+   * motor usa la config sembrada.
+   */
+  fetchModelConfig?: (
+    clientSlug: string,
+  ) => Promise<{ config: CreatorModelConfig; source?: string }>;
 }
 
 export const yalcBreakevenInputSchema = {
@@ -133,8 +141,24 @@ type YalcBreakevenInput = {
 export async function runYalcBreakeven(
   input: YalcBreakevenInput,
   fetchLeadMetrics?: RegisterYalcBreakevenToolOptions["fetchLeadMetrics"],
+  fetchModelConfig?: RegisterYalcBreakevenToolOptions["fetchModelConfig"],
 ): Promise<Record<string, unknown>> {
   let lead: (YalcBreakevenLeadMetrics & { id: string }) | null = null;
+
+  // SAN-76: config efectiva del modelo (paridad con Settings/drawer); si el
+  // lookup falla o no está inyectado, el motor cae a la sembrada.
+  let modelConfig: CreatorModelConfig | undefined;
+  let modelConfigSource = "defaults";
+  if (fetchModelConfig) {
+    try {
+      const effective = await fetchModelConfig(input.clientSlug);
+      modelConfig = effective.config;
+      modelConfigSource = effective.source ?? "yalc";
+    } catch {
+      modelConfig = undefined;
+      modelConfigSource = "defaults";
+    }
+  }
 
   if (input.leadId && (input.followers === undefined || input.engagementRatePct === undefined)) {
     if (!fetchLeadMetrics) {
@@ -179,7 +203,8 @@ export async function runYalcBreakeven(
     ok: true,
     clientSlug: input.clientSlug,
     lead: lead ? { id: lead.id, handle: lead.handle ?? null } : null,
-    breakeven: computeBreakEven(deal, funnel),
+    modelConfigSource,
+    breakeven: computeBreakEven(deal, funnel, modelConfig),
   };
 }
 
@@ -202,7 +227,11 @@ export function registerYalcBreakevenTool(
     async (input) =>
       options.run(YALC_BREAKEVEN_TOOL_NAME, input.clientSlug, async () => {
         await options.assertAccess(input.clientSlug);
-        const payload = await runYalcBreakeven(input as YalcBreakevenInput, options.fetchLeadMetrics);
+        const payload = await runYalcBreakeven(
+          input as YalcBreakevenInput,
+          options.fetchLeadMetrics,
+          options.fetchModelConfig,
+        );
         return options.jsonResult(payload);
       }),
   );

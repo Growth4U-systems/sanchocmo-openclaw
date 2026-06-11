@@ -63,11 +63,29 @@ const result = computeQualityScore(metrics /*, config? */);
 
 ## Config sembrada (`DEFAULT_CREATOR_MODEL_CONFIG`)
 
-Espejo de `settings.html` (hardcode v1 — **SAN-76** la hará editable; todos los tipos exportados):
+Espejo de `settings.html` (todos los tipos exportados; editable desde Settings vía SAN-76, ver siguiente sección):
 
 - **Tiers** (límite superior exclusivo): Nano <25K · Micro 25-100K · Mid 100-250K · Macro >250K, con ER benchmark 8.0 / 5.5 / 4.0 / 2.5.
 - **Verticals**: finanzas personales · inversión · ahorro · fintech. **Formats**: reel · post · story · video largo · carrusel.
 - **`breakEven`** (espejo del `<script>` de drawer-partner): alcance 30%/post · CTR por formato (reel 1.2 / post 0.9 / story 0.6 / video 1.4 / carrusel 1.0, en %) · funnel 8/60/70 · CAC objetivo 80€ · multiplicadores ×1/1.5/2/3 · veredicto verde ≥1 / ámbar ≥0.6. *(La semilla provisional `clickRatePct: 15` de la pasada A se retiró: el mockup final modela reach × CTR.)*
+
+## Model config: defaults + overrides (SAN-76) — contrato Sancho ↔ Yalc
+
+La config dejó de ser hardcode: es **defaults (aquí) + overrides (Yalc)**. Contrato completo en `./model-config.ts`; resumen:
+
+| Pieza | Dónde vive | Qué es |
+|---|---|---|
+| Defaults | `DEFAULT_CREATOR_MODEL_CONFIG` (este paquete) | **Única fuente de verdad** de los valores sembrados. Yalc NO los conoce. |
+| Overrides | Yalc, tabla `model_configs` (`GET/PUT /api/model-config`, bearer) | Documento JSON deep-partial de `CreatorModelConfig` por tenant: SOLO lo que el operador cambió. |
+| Efectiva | `mergeCreatorModelConfig(overrides)` (este paquete) | defaults + overrides saneados — lo que consumen calc, qualify-enrich y Settings. Se mergea SIEMPRE en Sancho. |
+
+**Semántica del merge (idéntica al PUT de Yalc):** objetos mergean campo a campo · arrays y escalares reemplazan enteros · `tiers` mergea POR `key` (taxonomía fija v1) · `null` en el PUT borra la clave almacenada (vuelve el default) · valores inválidos se DESCARTAN al mergear (`sanitizeCreatorModelOverrides`) — un documento corrupto nunca rompe la calc.
+
+**Superficies (paridad UI = chat = MCP):**
+
+- **UI**: tab Settings de Outreach → proxy `GET/PUT /api/yalc/model-config` (devuelve `{ config, overrides, defaults, source }`).
+- **MCP**: `yalc_update_model_config` (PUT parcial, dry-run por defecto + confirm) y `yalc_get_model_config` (lectura efectiva).
+- **Calc/discovery**: `getEffectiveModelConfig(slug)` (`src/lib/partnerships/model-config.ts`) — qualify-enrich puntúa con la efectiva; `createDiscoverySearch` toma de ahí el modo/umbral por defecto de las búsquedas NUEVAS (se congelan en la campaign: **nunca retro-aplica**); Yalc usa sus overrides almacenados como default al crear campañas Partnerships directas. Yalc caído ⇒ degrada a defaults (la calc nunca se bloquea).
 
 ## Seeds (`SEED_CREATORS`)
 

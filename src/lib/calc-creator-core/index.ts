@@ -50,6 +50,18 @@ export {
 } from "./config";
 
 export {
+  hasModelConfigOverrides,
+  mergeCreatorModelConfig,
+  MODEL_CONFIG_OVERRIDE_KEYS,
+  sanitizeCreatorModelOverrides,
+} from "./model-config";
+export type {
+  CreatorModelConfigOverrides,
+  ModelConfigOverrideKey,
+  TierOverride,
+} from "./model-config";
+
+export {
   BREAK_EVEN_VERDICT_LABELS,
   computeBreakEven,
   normalizeDealFormat,

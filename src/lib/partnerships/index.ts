@@ -120,3 +120,16 @@ export {
   NICHE_ER_BENCHMARK_PCT,
 } from "./negotiation";
 export type { DetectedPrice, NegotiationCalcInput } from "./negotiation";
+
+// ── SAN-76 · Model config (defaults calc-creator-core + overrides en Yalc) ──
+
+export {
+  assertModelConfigPartial,
+  defaultModelConfig,
+  getEffectiveModelConfig,
+  mergeOverrideDocuments,
+  ModelConfigValidationError,
+  previewModelConfigUpdate,
+  putModelConfigOverrides,
+} from "./model-config";
+export type { EffectiveModelConfig, ModelConfigPreview } from "./model-config";
