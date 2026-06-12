@@ -13,6 +13,7 @@ import {
 import { loadClients } from "@/lib/data/clients";
 import { getInternalClientStatus } from "@/lib/sancho-internal-api";
 import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
+import { getMcpDocument, listMcpDocuments } from "@/lib/mcp/documents";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
 import {
   assignTemplateToSearch,
@@ -43,6 +44,7 @@ import {
 } from "@/lib/calc-creator-core/mcp-tool";
 import {
   assertMcpClientAccess,
+  assertMcpBrandAccess,
   assertMcpScope,
   McpAuthError,
   type McpPrincipal,
@@ -61,6 +63,10 @@ const CHAT_THREAD_LIMIT_MAX = 100;
 const CHAT_MESSAGE_LIMIT_DEFAULT = 40;
 const CHAT_MESSAGE_LIMIT_MAX = 100;
 const CHAT_TEXT_MAX_CHARS = 12_000;
+const DOCUMENT_LIMIT_DEFAULT = 50;
+const DOCUMENT_LIMIT_MAX = 200;
+const DOCUMENT_MAX_CHARS_DEFAULT = 60_000;
+const DOCUMENT_MAX_CHARS_MAX = 200_000;
 
 const askQuestionSchema = z.object({
   id: z.string().min(1),
@@ -118,6 +124,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             id: context.principal.id,
             scopes: context.principal.scopes,
             clients: context.principal.clients,
+            brands: context.principal.brands ?? context.principal.clients,
           },
         }),
       ),
@@ -162,6 +169,65 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         const status = getInternalClientStatus(clientSlug);
         if (!status) throw new McpAuthError(404, `Client context not found: ${clientSlug}`);
         return jsonResult(status);
+      }),
+  );
+
+  server.registerTool(
+    "sancho_list_documents",
+    {
+      title: "List Sancho documents",
+      description:
+        "Lists Brand Brain/Foundation documents for an allowed brand. Requires docs:read and brand access.",
+      inputSchema: {
+        brandSlug: z.string().min(1).describe("Brand slug, e.g. growth4u or xhype."),
+        pathPrefix: z
+          .string()
+          .optional()
+          .describe("Optional brand-relative or full brand/... path prefix to filter by."),
+        query: z.string().optional().describe("Optional case-insensitive search over path/title."),
+        extensions: z
+          .array(z.enum(["md", "html"]))
+          .optional()
+          .describe("Document extensions to include. Defaults to ['md', 'html']."),
+        limit: z.number().int().min(1).max(DOCUMENT_LIMIT_MAX).optional().describe("Maximum docs to return."),
+      },
+    },
+    async ({ brandSlug, pathPrefix, query, extensions, limit }) =>
+      runTool(context, "sancho_list_documents", brandSlug, async () => {
+        assertBrandScope(context, brandSlug);
+        const max = clampLimit(limit, DOCUMENT_LIMIT_DEFAULT, DOCUMENT_LIMIT_MAX);
+        const result = listMcpDocuments(brandSlug, { pathPrefix, query, extensions, limit: max });
+        return jsonResult({ ...result, brandSlug, traceId: context.traceId });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_document",
+    {
+      title: "Get Sancho document",
+      description:
+        "Reads one Brand Brain/Foundation .md or .html document by path. Requires docs:read and brand access.",
+      inputSchema: {
+        brandSlug: z.string().min(1).describe("Brand slug, e.g. growth4u or xhype."),
+        docPath: z
+          .string()
+          .min(1)
+          .describe("Full brand/<slug>/... path or brand-relative path, e.g. market-and-us/market/current.md."),
+        maxChars: z
+          .number()
+          .int()
+          .min(1)
+          .max(DOCUMENT_MAX_CHARS_MAX)
+          .optional()
+          .describe("Maximum content characters to return. Defaults to 60000."),
+      },
+    },
+    async ({ brandSlug, docPath, maxChars }) =>
+      runTool(context, "sancho_get_document", brandSlug, async () => {
+        assertBrandScope(context, brandSlug);
+        const max = clampLimit(maxChars, DOCUMENT_MAX_CHARS_DEFAULT, DOCUMENT_MAX_CHARS_MAX);
+        const document = getMcpDocument(brandSlug, docPath, { maxChars: max });
+        return jsonResult({ ...document, brandSlug, maxChars: max, traceId: context.traceId });
       }),
   );
 
@@ -1035,6 +1101,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
 function assertClientScope(context: SanchoMcpContext, scope: McpScope, clientSlug: string): void {
   assertMcpScope(context.principal, scope);
   assertMcpClientAccess(context.principal, clientSlug);
+}
+
+function assertBrandScope(context: SanchoMcpContext, brandSlug: string): void {
+  assertMcpBrandAccess(context.principal, brandSlug);
 }
 
 /**

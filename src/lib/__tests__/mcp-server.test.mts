@@ -25,6 +25,12 @@ function seedClients() {
   );
 }
 
+function seedDocument(relPath: string, content: string) {
+  const absPath = path.join(tmp, relPath);
+  fs.mkdirSync(path.dirname(absPath), { recursive: true });
+  fs.writeFileSync(absPath, content, "utf8");
+}
+
 type McpServerMod = typeof import("../mcp/server");
 let mcpServerMod: McpServerMod;
 
@@ -70,9 +76,11 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_create_task",
       "sancho_get_chat_thread",
       "sancho_get_client_context",
+      "sancho_get_document",
       "sancho_get_task",
       "sancho_list_chat_threads",
       "sancho_list_clients",
+      "sancho_list_documents",
       "sancho_list_tasks",
       "sancho_mcp_status",
       "sancho_send_message",
@@ -188,6 +196,7 @@ test("sancho_mcp_status exposes trace id for request correlation", async () => {
     assert.equal(result.isError, undefined);
     const payload = JSON.parse(result.content[0].type === "text" ? result.content[0].text : "{}");
     assert.equal(payload.traceId, "trace-test-1");
+    assert.deepEqual(payload.principal.brands, ["*"]);
   } finally {
     await close();
   }
@@ -320,6 +329,143 @@ function payloadOf(result: Awaited<ReturnType<Client["callTool"]>>): Record<stri
   const first = Array.isArray(result.content) ? result.content[0] : undefined;
   return JSON.parse(first && first.type === "text" ? first.text : "{}");
 }
+
+test("sancho_list_documents lists allowed Brand Brain docs and skips chat/system folders", async () => {
+  seedDocument("brand/xhype/market-and-us/market/current.md", "# XHYPE Market\n\nMarket analysis");
+  seedDocument("brand/xhype/market-and-us/competitors/current.html", "<h1>Competitors</h1>");
+  seedDocument("brand/xhype/chat/internal.md", "# Chat should not be listed");
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["growth4u"],
+    brands: ["growth4u", "xhype"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_list_documents",
+      arguments: { brandSlug: "xhype", pathPrefix: "market-and-us", limit: 10 },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    const paths = (payload.documents as Array<{ path: string }>).map((doc) => doc.path).sort();
+    assert.deepEqual(paths, [
+      "brand/xhype/market-and-us/competitors/current.html",
+      "brand/xhype/market-and-us/market/current.md",
+    ]);
+    assert.equal(payload.brandSlug, "xhype");
+    assert.equal(payload.traceId, "trace-test-1");
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_get_document reads documents by relative and full path for an explicitly allowed sub-brand", async () => {
+  seedDocument("brand/xhype/market-and-us/self/current.md", "# XHYPE Self\n\nSelf analysis");
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["growth4u"],
+    brands: ["growth4u", "xhype"],
+    tokenHash: "x",
+  });
+  try {
+    const relative = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "market-and-us/self/current.md" },
+    });
+    assert.equal(relative.isError, undefined);
+    const relativePayload = payloadOf(relative);
+    assert.equal(relativePayload.path, "brand/xhype/market-and-us/self/current.md");
+    assert.match(String(relativePayload.content), /XHYPE Self/);
+    assert.equal(relativePayload.truncated, false);
+
+    const full = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "brand/xhype/market-and-us/self/current.md" },
+    });
+    assert.equal(payloadOf(full).canonicalPath, "brand/xhype/market-and-us/self/current.md");
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_get_document requires docs:read scope", async () => {
+  seedDocument("brand/xhype/market-and-us/market/current.md", "# XHYPE Market");
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:read"],
+    clients: ["growth4u"],
+    brands: ["xhype"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "market-and-us/market/current.md" },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /docs:read/);
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_get_document rejects denied brands, traversal, wrong brand paths, unsupported extensions and truncates", async () => {
+  seedDocument("brand/xhype/market-and-us/market/current.md", "# XHYPE Market");
+  seedDocument("brand/xhype/market-and-us/raw/data.json", "{}");
+  seedDocument("brand/xhype/market-and-us/long/current.md", "a".repeat(120));
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["growth4u"],
+    brands: ["xhype"],
+    tokenHash: "x",
+  });
+  try {
+    const denied = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "alpha", docPath: "market-and-us/market/current.md" },
+    });
+    assert.equal(denied.isError, true);
+    assert.match(denied.content[0].type === "text" ? denied.content[0].text : "", /not allowed to access brand/i);
+
+    const traversal = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "../alpha/market-and-us/market/current.md" },
+    });
+    assert.equal(traversal.isError, true);
+    assert.match(traversal.content[0].type === "text" ? traversal.content[0].text : "", /traversal/i);
+
+    const wrongBrand = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "brand/alpha/market-and-us/market/current.md" },
+    });
+    assert.equal(wrongBrand.isError, true);
+    assert.match(wrongBrand.content[0].type === "text" ? wrongBrand.content[0].text : "", /different brand/i);
+
+    const unsupported = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "market-and-us/raw/data.json" },
+    });
+    assert.equal(unsupported.isError, true);
+    assert.match(unsupported.content[0].type === "text" ? unsupported.content[0].text : "", /Unsupported document extension/i);
+
+    const truncated = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "market-and-us/long/current.md", maxChars: 10 },
+    });
+    const payload = payloadOf(truncated);
+    assert.equal(payload.truncated, true);
+    assert.equal(String(payload.content).length, 10);
+  } finally {
+    await close();
+  }
+});
 
 test("sancho_create_task is dry-run by default and writes nothing", async () => {
   const { client, close } = await createConnectedClient({
