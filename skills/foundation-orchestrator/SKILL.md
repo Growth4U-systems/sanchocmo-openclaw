@@ -3,7 +3,6 @@ name: foundation-orchestrator
 description: "Orquesta la Foundation v3.0: 6 secciones, 8 layers, gate checks con requires/enriches_with. Flujo: Kickoff (1 skill, company-brief.current.md) → Full Foundation (9 skills individuales) → Metrics Setup → Strategic Plan. Al aprobar un pilar, ejecuta automáticamente el siguiente. Leer pillar-registry.md para detalle de cada pilar."
 user-invocable: false
 context_required:
-- brand/{slug}/foundation-state.json
 - _system/foundation-protocol.md
 ---
 
@@ -13,7 +12,7 @@ context_required:
 
 **Protocolo**: `_system/foundation-protocol.md`
 **Registry**: `references/pillar-registry.md`
-**Estado**: `brand/{slug}/foundation-state.json` (schema v3.0)
+**Estado**: el status de cada pilar vive en su task 1:1 (proyectos P00). Se lee vía `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (mismo shape de siempre: sections→pillars→status, vocabulario canónico de task: `todo | in-progress | pending-review | completed | blocked | cancelled`) y se escribe vía `POST {MC_BASE}/api/brand-brain/pillar-status` con body `{"slug", "section", "pillar", "status"}`. Auth: header `x-admin-token` con el `adminToken` de la raíz de `clients.json` (mismo patrón que los crons).
 
 ## Secciones de Output
 
@@ -41,10 +40,10 @@ L7 STRATEGY:   strategic-plan
 
 ## Gate Check — requires vs enriches_with
 
-**ANTES de cada pilar**, leer foundation-state.json y verificar:
+**ANTES de cada pilar**, leer `GET {MC_BASE}/api/brand-brain/state?slug={slug}` y verificar:
 
-1. **requires** → TODOS deben ser `approved`. Si no → **BLOQUEAR**.
-2. **enriches_with** → Si `approved`, cargar como input. Si no → **funcionar sin él**.
+1. **requires** → TODOS deben ser `completed`. Si no → **BLOQUEAR**.
+2. **enriches_with** → Si `completed`, cargar como input. Si no → **funcionar sin él**.
 
 Ver `references/pillar-registry.md` para mapa completo de dependencias.
 
@@ -53,9 +52,9 @@ Ver `references/pillar-registry.md` para mapa completo de dependencias.
 ## Flujo de Entrada
 
 ### Paso 1: Leer Estado
-1. Leer `brand/{slug}/foundation-state.json`
-2. Si no existe o es v1.x/v2.x → crear v3.0 con todo en `not-started`
-3. Si version=3.0 → determinar dónde quedamos
+1. Leer `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (sections→pillars→status, vocabulario de task)
+2. Pilares sin task → `todo`
+3. Determinar dónde quedamos
 
 ### Paso 2: Mostrar Progreso
 
@@ -72,11 +71,11 @@ Ver `references/pillar-registry.md` para mapa completo de dependencias.
 Progreso: 6/13 pilares
 ```
 
-Iconos: ✅ approved | ⚠️ pending-review | 🔧 in-progress | ⬜ not-started | ➖ skipped
+Iconos: ✅ completed | ⚠️ pending-review | 🔧 in-progress | ⬜ todo | 🚫 blocked | ➖ cancelled
 
 ### Paso 3: Continuar
 - Si hay pilar en `pending-review` → re-presentar
-- Si hay pilar en `revision` → aplicar correcciones
+- Si hay pilar en `in-progress` con correcciones pedidas → aplicar correcciones
 - Else → ejecutar siguiente pilar disponible (gate check)
 
 ---
@@ -92,7 +91,7 @@ Sesión de intake única (~30 min):
 3. Validar con usuario → completar gaps
 4. Genera `brand/{slug}/company-brief/company-brief.current.md` (un archivo, secciones H2: Company, Market, Brand Voice, ECPs)
 
-Al aprobar → marcar `company-brief` section como `approved` → desbloquea Layer 1.
+Al aprobar → marcar el pilar `company-brief` como `completed` (POST pillar-status) → desbloquea Layer 1.
 
 ---
 
@@ -142,14 +141,12 @@ Invocar el skill del registry. Si hay enriches_with disponibles, pasarlos como c
 
 **Corrección** → aplicar cambios → re-presentar
 
-**Skip** → pedir razón → marcar skipped → siguiente
+**Skip** → pedir razón → marcar `cancelled` → siguiente
 
 ### 5. Persistir
-- Actualizar `foundation-state.json`:
-  - Status del pilar y sección padre
-  - `brand_summary` si hay datos nuevos (company_name, sector, ICPs, competidores, positioning, URL)
-  - `file_index` si se crearon archivos nuevos (ej: nuevo competidor → añadir a `file_index.competitors.battle_cards`, nueva presentación → añadir a `file_index.presentations`)
-- Ejecutar `python3 scripts/regenerate.py`
+- Actualizar el status del pilar vía `POST {MC_BASE}/api/brand-brain/pillar-status` con body `{"slug", "section", "pillar", "status"}` — status SIEMPRE en vocabulario canónico (`completed` | `in-progress` | `pending-review`).
+- El Brand Snapshot del dashboard se deriva automáticamente del company-brief — no hay que mantener `brand_summary` a mano.
+- Ejecutar `python3 scripts/regenerate.py` (legacy mc-data; no toca status)
 
 ---
 
@@ -176,7 +173,6 @@ Los competidores se descubren en múltiples momentos:
 3. **Niche Discovery** (L3): competidores por nicho
 
 Cada competidor → `market-and-us/competitors/{nombre}/{nombre}.current.md` (deep-dive). El roll-up consolidado vive en `market-and-us/competitors/competitors.current.md` y se regenera desde los subdirs.
-Actualizar `competitor-analysis.output_files[]` en state.
 
 El orchestrator puede preguntar proactivamente: "¿Hay otros competidores que deberíamos analizar?"
 
@@ -223,7 +219,7 @@ Docs en: brand/{slug}/
 - **API/Timeout** (rate limit, network, 5xx) → Retry
 - **Tool Error** (scraper failed, missing API key) → Retry con fallback
 - **Quality** (output incompleto, mal formato) → Retry con más contexto
-- **Unknown** → Notificar usuario + marcar error en state
+- **Unknown** → Notificar usuario + marcar pilar como `blocked` (POST pillar-status)
 
 **Paso 2: Retry con Model Fallback**
 
@@ -234,7 +230,7 @@ Docs en: brand/{slug}/
 | 3 | MiniMax-M2.5 | Normal | Fallback económico |
 
 **Paso 3: Si sigue fallando**
-1. Marcar pilar como `error` en foundation-state.json
+1. Marcar el pilar como `blocked` vía `POST {MC_BASE}/api/brand-brain/pillar-status` (status `"blocked"`)
 2. Notificar al usuario: qué falló, por qué, qué hacer
 3. Ofrecer: reintentar manualmente, skippear, o resolver el error
 
@@ -247,11 +243,10 @@ Docs en: brand/{slug}/
 3. **Flujo automático** — al aprobar, siguiente arranca solo
 4. **Kickoff = 1 skill** — produce Company Brief directamente; no hay merge-view ni scripts de regeneración separados
 5. **Market Synthesis = 1 skill** (SWOT + Summary + OPE Canvas + Presentación)
-6. **Estado siempre actualizado** — foundation-state.json tras cada transición
+6. **Status siempre actualizado** — `POST /api/brand-brain/pillar-status` tras cada transición (vocabulario canónico)
 7. **Retomable** — si la sesión se corta, retoma donde quedó
 8. **enriches_with es silencioso** — si no está disponible, funcionar sin avisar
 9. **Retry automático** — 3 intentos con model fallback antes de rendirse
 10. **Error = notificar** — nunca silently fail
 11. **Grounding** — las skills full leen su sección de `company-brief/company-brief.current.md` como seed opcional; nunca lo tratan como fuente final.
 12. **Path discipline** — kickoff escribe SOLO `company-brief/company-brief.current.md`. Nunca toca carpetas de pilares. `{carpeta}.current.md` = full (source of truth); `company-brief.current.md` = Company Brief inicial (grounding opcional).
-13. **file_index siempre actualizado** — al crear/mover/eliminar archivos, actualizar `file_index` en foundation-state.json. Incluye: competitors battle_cards, sources, integrations, metrics, brand_assets, presentations, operational files. Si un skill nuevo crea un archivo que no está en file_index → añadirlo.

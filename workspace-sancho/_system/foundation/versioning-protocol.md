@@ -61,15 +61,14 @@ Cuando un skill referencia `brand/{slug}/market.md` (en context_required o conte
 
 ## Foundation State
 
-Después de generar o actualizar un documento de Foundation, actualiza `brand/{slug}/foundation-state.json`:
+Después de generar o actualizar un documento de Foundation, actualiza el status del pilar vía `POST {MC_BASE}/api/brand-brain/pillar-status` con body `{"slug", "section", "pillar", "status"}` (vocabulario canónico de task):
 
 - Documento nuevo generado → `"status": "pending-review"`
-- Usuario aprueba/valida → `"status": "approved", "approved_at": "<ISO timestamp>"`
-- Actualiza `updated_at` del JSON raíz
+- Usuario aprueba/valida → `"status": "completed"`
 
 **Esto alimenta Mission Control y el doc viewer — SIN ESTO los cambios no se reflejan.**
 
-Después de actualizar a `approved`: **SIEMPRE ejecutar `python3 scripts/regenerate.py`**.
+Después de actualizar a `completed`: **SIEMPRE ejecutar `python3 scripts/regenerate.py`** (legacy mc-data; no toca status).
 
 ---
 

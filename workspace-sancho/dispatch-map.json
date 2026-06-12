@@ -399,7 +399,6 @@
         "web-publish"
       ],
       "brand_context": [
-        "foundation-state.json",
         "voice-profile.md",
         "visual-identity.md",
         "positioning.md"

@@ -1,5 +1,7 @@
 # foundation-state.json v2.0 Schema
 
+> ⚠️ **RETIRADO (SAN-183 F5)**: `foundation-state.json` ya no es el store de status. El status de cada pilar vive en su task 1:1 (proyectos P00): se escribe vía `POST {MC_BASE}/api/brand-brain/pillar-status` (vocabulario canónico de task: `todo | in-progress | pending-review | completed | blocked | cancelled`) y se lee vía `GET {MC_BASE}/api/brand-brain/state?slug={slug}`. `file_index` y `brand_summary` también están retirados. Este documento se conserva solo como referencia histórica.
+
 ## Estructura
 
 ```json

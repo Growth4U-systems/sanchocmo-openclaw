@@ -1,6 +1,6 @@
 # Pillar Registry v3.0
 <!-- Fuente de verdad para pilares, skills, dependencias y criterios -->
-<!-- Alineado con Mission Control threads y Discord threads (foundation-threads v3.0) -->
+<!-- Alineado con Mission Control threads -->
 
 ---
 

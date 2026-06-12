@@ -46,8 +46,7 @@ workspace-sancho/
 │       ├── go-to-market/          # § ECPs + Positioning + Pricing + Metrics
 │       ├── brand-identity/        # § Voice Profile + Visual Identity
 │       ├── operational/           # § Assets + Learnings (append-only)
-│       ├── sources.json           # Discord channels, cron config, integrations
-│       └── foundation-state.json  # Pillar completion status
+│       └── sources.json           # Discord channels, cron config, integrations
 │
 ├── memory/                        # Instance state (gitignored)
 │   ├── TASKS.md                   # Active task board
@@ -131,7 +130,7 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
    - **NUNCA** usar `/mc/docs/...` ni `/mc/connect/...` sin token — esos endpoints devuelven 403.
 4. **No narrar pasos** — Max 2 msgs por hilo: inicio + resultado. CERO "Voy a leerlo..."
 5. **Versionado** — `brand/{slug}/{pilar}/{pilar}-current.md` con historial. Ver `_system/foundation/versioning-protocol.md`.
-6. **Gate check Foundation** — Verificar `brand/{slug}/foundation-state.json` prerequisitos antes de ejecutar. Ver `_system/foundation/foundation-protocol.md`.
+6. **Gate check Foundation** — Verificar prerequisitos vía `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (status canónico de tasks: `completed`, etc.) antes de ejecutar. Ver `_system/foundation/foundation-protocol.md`.
 7. **Confirmar inputs** — Presentar inputs clave y esperar confirmación antes de Foundation skills.
 8. **Leer todo antes de generar** — TODOS los docs del cliente. Cruzar información.
 9. **Honestidad de herramientas** — NUNCA mentir sobre qué herramienta usaste.

@@ -23,15 +23,15 @@ Esto:
 Desde el chat del cliente, pedirle a Sancho que corra el **Kickoff** y
 luego la **Full Foundation**. Las skills de foundation se auto-bootstrappean:
 
-- ✅ El `foundation-orchestrator` crea/actualiza `brand/{slug}/foundation-state.json`
-  (schema v3.0) si no existe.
+- ✅ El status de cada pilar vive en su task 1:1 (proyectos P00); el
+  `foundation-orchestrator` lo mantiene vía `POST /api/brand-brain/pillar-status`.
 - ✅ Cada skill crea su sub-árbol de carpetas y su `current.md` a medida que
-  produce output (`regenerate.py` persiste el estado).
+  produce output.
 
 ### Paso 4: Verificar
 1. Confirmar que el cliente aparece en `clients.json` y en Mission Control.
-2. Tras correr el Kickoff, confirmar que `brand/{slug}/foundation-state.json`
-   existe y que los pilares se ven en el Brand Brain de MC.
+2. Tras correr el Kickoff, confirmar que los pilares se ven en el Brand Brain
+   de MC (`GET /api/brand-brain/state?slug={slug}`).
 
 ### Paso 5: Reportar resultado
 Informar al usuario con:
@@ -42,13 +42,11 @@ Informar al usuario con:
 
 ## Lo que NUNCA debes hacer
 - ❌ Crear estructura de `brand/` a mano (la generan las skills de foundation)
-- ❌ Inventar un `foundation-state.json` con schema propio (lo mantiene el
-  `foundation-orchestrator`, schema v3.0)
+- ❌ Escribir el status de pilares a mano en JSONs (el status vive en tasks;
+  usar `POST /api/brand-brain/pillar-status` con vocabulario canónico)
 - ❌ Inventar procesos que no están aquí
 
 ## Scripts/Skills relacionados
 - Mission Control → **New client** — registra el cliente + carpeta base
 - skill `kickoff` / `foundation-orchestrator` — scaffolding + estado
-- `scripts/regenerate.py` — regenerar Mission Control / persistir estado
-- `scripts/rebuild-foundation-state.mjs <slug> --apply` — recuperar
-  `foundation-state.json` v3.0 desde los docs en disco (fallback)
+- `scripts/regenerate.py` — regenerar Mission Control (legacy mc-data; no toca status)
