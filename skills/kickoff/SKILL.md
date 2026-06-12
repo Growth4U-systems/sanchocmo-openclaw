@@ -79,6 +79,27 @@ El Kickoff produce un **fichero en disco**, no un mensaje de chat. El brief que 
 
 ## Dos modos de entrada
 
+## Paso 0.5 — ¿Research o formulario? (SAN-17)
+
+Antes de scrapear o preguntar nada, pregunta al operador con `AskUserQuestion`:
+
+> "¿Investigo yo la empresa (research) o enviamos un formulario al cliente para que lo rellene?"
+>
+> - **Research** → seguimos el flujo normal (Modo URL / Modo Manual).
+> - **Enviar formulario** → rama de formulario (abajo).
+
+### Rama "Enviar formulario"
+
+1. Llama al MCP tool `sancho_intake_create_link` con el `clientSlug`. Devuelve `{ url }`.
+2. Presenta la URL al operador en el chat, con una línea para que se la pase al cliente
+   (email/WhatsApp). Ejemplo: "Comparte este link con el cliente: {url}".
+3. Marca el pilar `company-brief` como `pending-client-submission` en
+   `foundation-state.json` (status del pilar) y escribe un placeholder mínimo en
+   `brand/{slug}/company-brief/company-brief.current.md` ("Esperando respuestas del
+   formulario inicial del cliente").
+4. Termina el turno: "Formulario enviado. Avísame cuando el cliente responda y
+   retomo el company-brief." NO sigas con scrape/preguntas.
+
 ### Modo URL (95% de los casos)
 El usuario introduce la URL de su web en el dashboard. El skill:
 1. Scrapea homepage, about, pricing, producto, blog (3-5 posts)
@@ -185,6 +206,12 @@ De la conversación y el scraping:
 3. NO validación exhaustiva — es un primer mapa
 
 ### Step 5: Escribir `company-brief.current.md` (con tu Write tool)
+
+> **Reanudación tras formulario (SAN-17):** Si existe
+> `brand/{slug}/company-brief/form-inicial.md`, léelo PRIMERO y úsalo como fuente
+> principal para redactar el `company-brief.current.md` (es el documento inicial
+> rellenado por el cliente). Completa los huecos con research si hace falta, y
+> sigue con el flujo de aprobación normal.
 
 > **Regla de paths (v3.0 / SAN-3)**: Kickoff escribe SIEMPRE y SOLO a
 > `brand/{slug}/company-brief/company-brief.current.md`. NUNCA toca carpetas de pilares analíticos.
