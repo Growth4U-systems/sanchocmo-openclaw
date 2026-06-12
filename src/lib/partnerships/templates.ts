@@ -26,9 +26,10 @@
  *   ## Paso 2 · Follow-up (espera 3 días)
  *   …
  *
- * Variables soportadas: {{handle}} · {{quality_score}} · {{precio}} —
+ * Variables soportadas: {{nombre}} · {{handle}} · {{plataforma}} · {{seguidores}} · {{sector}} · {{precio}} —
  * el render de preview/envío las sustituye; el motor de envío real es
- * `renderPartnerVariables` en Yalc (mismas claves).
+ * `renderPartnerVariables` en Yalc (mismas claves). ({{quality_score}} sigue
+ * siendo una clave de render válida pero interna, no se ofrece como chip.)
  *
  * CLIENT-SAFE: sin Node — lo importan componentes y tests (`tsx --test`).
  */

@@ -6,8 +6,9 @@
  *    · 📄 Abrir (doc renderizado en doc-slideover) · 💬 Chat con Sancho
  *    (ChatSidebar real, hilo de la plantilla, Rocinante) · 📋 Ir a tarea
  *    (la búsqueda Outreach que la instancia).
- *  - Click en la línea = editor (pasos con delay + variables {{handle}}/
- *    {{quality_score}}/{{precio}} insertables en el cursor).
+ *  - Click en la línea = editor (pasos con delay + variables {{nombre}}/
+ *    {{handle}}/{{plataforma}}/{{seguidores}}/{{sector}}/{{precio}} insertables
+ *    en el cursor).
  *  - La biblioteca guarda ORIGINALES; cada búsqueda instancia copias
  *    (chip "＋ asignar plantilla" en Encuentra / fila Plantillas del plan).
  */
