@@ -86,7 +86,7 @@ export { SEED_TEMPLATES } from "./template-seeds";
 export {
   assignTemplatesFromPlan,
   assignTemplateToSearch,
-  ensureSeedTemplates,
+  seedDemoTemplates,
   findSearchByCampaign,
   findSearchSequence,
   getTemplate,

@@ -177,7 +177,7 @@ export function PlantillasTab({ slug }: { slug: string }) {
               <div className="overflow-hidden rounded-xl border border-border bg-card">
                 {rows.length === 0 && (
                   <p className="px-5 py-6 text-center text-sm text-muted-foreground">
-                    Nada por aquí — crea la primera con «＋ Nueva plantilla».
+                    Nada por aquí — crea la primera con «＋ Nueva plantilla» o pídesela a Sancho en el chat.
                   </p>
                 )}
                 {rows.map((template) => (
