@@ -364,6 +364,12 @@ export interface ContentTask {
    * badge and the repurposing strip in the Canales view.
    */
   derived_from?: { idea_id: string; channel: string; title?: string };
+  /**
+   * Founder-Led persona this piece belongs to (SAN-163). Matches a
+   * `cadence.channels.{key}.profiles[].id` for the target channel. Undefined =
+   * unassigned (lives in the brand-level "sin repartir" pool until routed).
+   */
+  author?: string;
 }
 
 // ─── Channel loops (SAN-141) ────────────────────────────────────────────────
@@ -383,6 +389,39 @@ export interface ChannelLoopAntenna {
   finding: string | null;
   count: number | null;
   status: string | null;
+}
+
+/**
+ * A Founder-Led voice declared under `cadence.channels.{key}.profiles[]`.
+ * `id` is the stable author key; legacy entries without one fall back to a
+ * slug of `name` (see personaId() in persona-loops.ts).
+ */
+export interface PersonaProfile {
+  id: string;
+  name: string;
+  role?: string;
+  handle?: string;
+  pillars_slant?: string[];
+  voice_doc?: string;
+  owner?: string;
+  metricool_profile_id?: string;
+  primary_kpi?: string;
+}
+
+/** One persona's slice of a channel loop, derived in persona-loops.ts. */
+export interface PersonaLoopState {
+  id: string;
+  name: string;
+  role: string | null;
+  handle: string | null;
+  /** Topic slant keywords — powers the client-side author suggestion (SAN-163). */
+  pillarsSlant: string[];
+  stages: {
+    ideation: { newCount: number; approvedCount: number };
+    creation: { draftingCount: number; clarifyCount: number; readyCount: number };
+    published: { thisMonth: number };
+  };
+  nextAction: { label: string; focusStatus?: string } | null;
 }
 
 export interface ChannelLoopState {
@@ -423,6 +462,10 @@ export interface ChannelLoopState {
   nextAction: { label: string; tab: "ideas" | "calendar" | "setup"; focusStatus?: string } | null;
   repurposing: { incoming: number; outgoing: number };
   antennas: ChannelLoopAntenna[];
+  /** Per-persona sub-loops when the channel declares `profiles[]` (SAN-163). Empty otherwise. */
+  personas: PersonaLoopState[];
+  /** Count of this channel's ContentTasks with no `author` yet (the "sin repartir" pool). */
+  unassignedPool: number;
 }
 
 export interface RepurposeEntry {

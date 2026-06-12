@@ -892,12 +892,19 @@ export function ChatSidebar() {
     }
   }, [activeThreadId, messagesQuery.isLoading, messages.length]);
 
-  // Auto-send initialMessage when thread opens with one
+  // Auto-send initialMessage when thread opens with one.
+  // SAN-177: wait for the history fetch to settle before deciding the thread
+  // is empty — while loading, `messages` is [] for a moment and the kickoff
+  // re-fired on EVERY reopen of stable threads (discovery searches, outreach
+  // templates…). The kickoff must go out only the first time, when the thread
+  // is truly empty.
   const initialSentRef = useRef<string | null>(null);
   useEffect(() => {
     if (
       meta?.initialMessage &&
       activeThreadId &&
+      !messagesQuery.isLoading &&
+      messagesQuery.isFetched &&
       messages.length === 0 &&
       !sendMutation.isPending &&
       initialSentRef.current !== activeThreadId
@@ -905,7 +912,14 @@ export function ChatSidebar() {
       initialSentRef.current = activeThreadId;
       sendMutation.mutate({ text: meta.initialMessage, threadId: activeThreadId });
     }
-  }, [meta?.initialMessage, activeThreadId, messages.length, sendMutation]);
+  }, [
+    meta?.initialMessage,
+    activeThreadId,
+    messagesQuery.isLoading,
+    messagesQuery.isFetched,
+    messages.length,
+    sendMutation,
+  ]);
 
   // Don't render if closed
   if (!sidebarOpen) return null;
@@ -1053,6 +1067,8 @@ export function ChatSidebar() {
                 </span>
               </button>
               <button
+                type="button"
+                onClick={() => handleSelectFromPanel(`${slug}:general`)}
                 className="bg-[#313244] hover:bg-[#45475a] text-green-500 w-7 h-7 rounded-lg flex items-center justify-center text-sm border border-[#45475a]"
                 title={t("newThread")}
               >

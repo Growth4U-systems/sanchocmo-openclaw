@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveYalcConfig, yalcFetch } from "../yalc/client";
+import * as yalcClientModule from "../yalc/client";
+
+// Interop CJS↔ESM de tsx (mismo patrón que break-even.test.mts).
+const yalcClient =
+  (yalcClientModule as unknown as { default: typeof yalcClientModule }).default ?? yalcClientModule;
+const { resolveYalcConfig, yalcFetch } = yalcClient;
 
 /**
  * Every Sancho→YALC call must be scoped to the brand's tenant via `?tenant=`.

@@ -70,6 +70,26 @@ export function getOriginalDocPath(docPath: string): string {
   return `${base.slice(0, -".commented".length)}${ext}`;
 }
 
+/**
+ * All commented docPaths a doc's feedback may live under (SAN-149): a
+ * deliverable can be shared as its `.md` source OR as its HTML-canonical
+ * sibling, and comments anchor to whichever was shared. Consumers that
+ * read or mutate feedback must look across the whole family.
+ *
+ * Accepts any member (original/commented, md/html); returns deduped
+ * commented paths, the requested form first.
+ */
+export function commentedDocPathFamily(docPath: string): string[] {
+  const original = getOriginalDocPath(docPath);
+  const family = [getCommentedDocPath(original)];
+  if (/\.md$/i.test(original)) {
+    family.push(getCommentedDocPath(original.replace(/\.md$/i, ".html")));
+  } else if (/\.html$/i.test(original)) {
+    family.push(getCommentedDocPath(original.replace(/\.html$/i, ".md")));
+  }
+  return [...new Set(family)];
+}
+
 export interface CommentBlockInput {
   id: string;
   author: string;

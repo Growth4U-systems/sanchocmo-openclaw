@@ -30,7 +30,12 @@ interface ActivityEvent {
 
 interface Props {
   slug: string;
-  onGo: (tab: "ideas" | "calendar" | "setup", channel?: string, focusStatus?: string) => void;
+  onGo: (
+    tab: "ideas" | "calendar" | "setup",
+    channel?: string,
+    focusStatus?: string,
+    extra?: { author?: string; unassigned?: boolean },
+  ) => void;
 }
 
 function relTime(iso: string | null): string {
@@ -136,6 +141,8 @@ export function ChannelsTab({ slug, onGo }: Props) {
           }}
           onOpenSetup={() => onGo("setup", loop.channel)}
           onOpenStrategy={() => loop.strategyDoc && setDocPath(`brand/${slug}/${loop.strategyDoc}`)}
+          onPersonaClick={(personaId) => onGo("ideas", loop.channel, undefined, { author: personaId })}
+          onPoolClick={() => onGo("ideas", loop.channel, undefined, { unassigned: true })}
         />
       ))}
 

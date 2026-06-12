@@ -227,6 +227,27 @@ if [ "${OPENAI_AUTH_MODE:-api_key}" = "subscription" ]; then
   echo "[entrypoint] Syncing Codex subscription auth across agents..."
   bash docker/sync-codex-auth.sh || \
     echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
+
+  # Agents created at RUNTIME (MC UI / `openclaw agents add`) get a real
+  # auth-profiles.json instead of the shared-store symlink, so they miss the
+  # subscription token until the next restart. Watch for non-symlink profiles
+  # and re-run the (idempotent) sync so every agent — existing or future —
+  # picks up the shared token automatically. The sync also creates symlinks
+  # for placeholder dirs, so each new agent triggers at most one re-sync.
+  (
+    while true; do
+      for d in /root/.openclaw/.openclaw/agents/*/; do
+        [ "$(basename "$d")" = "default" ] && continue
+        if [ ! -L "${d}agent/auth-profiles.json" ]; then
+          echo "[auth-watch] non-symlink auth profile in $(basename "$d") — re-running sync-codex-auth"
+          bash docker/sync-codex-auth.sh || true
+          break
+        fi
+      done
+      sleep 60
+    done
+  ) &
+  echo "[entrypoint] Codex auth watcher started (auto-links new agents to the shared store)"
 else
   echo "[entrypoint] OPENAI_AUTH_MODE=api_key — skipping Codex subscription sync (agents use OPENAI_API_KEY)"
 fi
@@ -289,6 +310,51 @@ if changed:
     json.dump(c, open(f,'w'), indent=2)
     print('[entrypoint] Ensured full models.providers.anthropic entry (timeoutSeconds=%s)' % p['timeoutSeconds'])
 " 2>/dev/null || true
+
+# ===========================================================
+# 1a2. ENSURE LATEST CODEX MODEL (runs every startup)
+# ===========================================================
+# Keep agents on the newest plain codex/gpt-X.Y from the catalog (SAN-172):
+# bump agents.defaults.model.primary and any agents.list[].model pinned to an
+# older plain codex id; the previous primary is kept as first fallback.
+# Variant ids (-mini/-codex/-spark) are never touched. Set CODEX_MODEL_PIN
+# (e.g. "codex/gpt-5.4") to pin a specific model and disable auto-tracking.
+if [ "${OPENAI_AUTH_MODE:-api_key}" = "subscription" ]; then
+  if [ -n "${CODEX_MODEL_PIN:-}" ]; then
+    TARGET_CODEX="$CODEX_MODEL_PIN"
+    echo "[entrypoint] CODEX_MODEL_PIN set — pinning codex agents to $TARGET_CODEX"
+  else
+    TARGET_CODEX=$(openclaw models list 2>/dev/null | grep -oE "^codex/gpt-[0-9]+\.[0-9]+ " | tr -d " " | sort -V | tail -1)
+  fi
+  if [ -n "$TARGET_CODEX" ]; then
+    TARGET_CODEX="$TARGET_CODEX" python3 - <<'PY' || true
+import json, os, re
+target = os.environ["TARGET_CODEX"]
+f = "/root/.openclaw/.openclaw/openclaw.json"
+c = json.load(open(f))
+pat = re.compile(r"^codex/gpt-\d+\.\d+$")
+changed = []
+m = c["agents"]["defaults"].get("model") or {}
+if pat.match(m.get("primary", "")) and m["primary"] != target:
+    old = m["primary"]
+    m["primary"] = target
+    fb = m.setdefault("fallbacks", [])
+    if old not in fb:
+        fb.insert(0, old)
+    changed.append("defaults: " + old + " -> " + target)
+for a in c["agents"].get("list", []):
+    am = a.get("model")
+    if isinstance(am, str) and pat.match(am) and am != target:
+        changed.append(a["id"] + ": " + am + " -> " + target)
+        a["model"] = target
+if changed:
+    json.dump(c, open(f, "w"), indent=2)
+    print("[entrypoint] Codex model update: " + "; ".join(changed))
+PY
+  else
+    echo "[entrypoint] WARNING: could not resolve latest codex model from catalog — keeping current pins"
+  fi
+fi
 
 # ===========================================================
 # 1b. ENSURE MC-CHAT PLUGIN (runs every startup)

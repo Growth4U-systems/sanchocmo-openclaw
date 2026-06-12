@@ -20,8 +20,7 @@
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
-import { type CommentRow, loadDocComments } from "@/lib/comments";
-import { getCommentedDocPath } from "@/lib/comments-file";
+import { type CommentRow, loadDocComments, loadDocCommentsFamily } from "@/lib/comments";
 import { requireInternalAuth } from "@/lib/sancho-internal-api";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -45,10 +44,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const docPathQ = Array.isArray(req.query.docPath) ? req.query.docPath[0] : req.query.docPath;
   const openOnly = req.query.open === "1";
 
-  // Comments live on the `.commented` sibling — translate transparently
-  // when the caller passes the original path.
-  const docPath = docPathQ ? getCommentedDocPath(docPathQ) : undefined;
-  const rows = await loadDocComments(slugStr, docPath, { openOnly });
+  // Comments live on the `.commented` sibling of whichever form was shared
+  // (.md or HTML-canonical .html) — query the whole family (SAN-149).
+  const rows = docPathQ
+    ? await loadDocCommentsFamily(slugStr, docPathQ, { openOnly })
+    : await loadDocComments(slugStr, undefined, { openOnly });
 
   const byDoc = new Map<string, ReturnType<typeof toApiShape>[]>();
   for (const r of rows) {

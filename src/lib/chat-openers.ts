@@ -77,6 +77,7 @@
 // ============================================================
 
 import { resolveThreadSkills, type SkillContext } from "./skill-resolver";
+import { getChatEntry } from "./data/task-blueprints";
 
 export interface ThreadConfig {
   threadId: string;
@@ -127,18 +128,101 @@ export const MC_CHAT_AGENTS: Record<string, { emoji: string; label: string; colo
   escudero: { emoji: "✍️", label: "Dulcinea", color: "#E11D74" },
 };
 
+/** Substitute `{slug}` + per-button `{param}` tokens in a chat-entry template.
+ *  Unknown tokens (e.g. `{{handle}}` placeholders in prose) are left intact. */
+function substEntryTemplate(s: string, vars: Record<string, string>): string {
+  return s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+}
+
+/**
+ * Build a ThreadConfig from a declared chat-opener BUTTON entry
+ * (config/pillar-manifest.json → chatEntries). Substitutes {slug} + params into
+ * the entry's templates. The single generic opener that the `buildXThread`
+ * wrappers delegate to — skill/skills/agent/initialMessage are DECLARED, not
+ * hardcoded.
+ */
+export function instantiateEntry(key: string, ctx: { slug: string; params?: Record<string, string> }): ThreadConfig {
+  const entry = getChatEntry(key);
+  if (!entry) throw new Error(`chat-openers: unknown chat entry "${key}"`);
+  const vars: Record<string, string> = { slug: ctx.slug, ...(ctx.params ?? {}) };
+  const sub = (s: string) => substEntryTemplate(s, vars);
+  const cfg: ThreadConfig = {
+    threadId: sub(entry.threadId),
+    threadName: sub(entry.threadName),
+    skill: entry.skill,
+    skills: entry.skills,
+    agent: entry.agent,
+    linkedTo: sub(entry.linkedTo),
+    docPath: entry.docPath != null ? sub(entry.docPath) : null,
+    threadState: entry.threadState,
+  };
+  if (entry.initialMessage) cfg.initialMessage = sub(entry.initialMessage);
+  if (entry.docKind) cfg.docKind = entry.docKind;
+  return cfg;
+}
+
 export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
-  return {
-    threadId: `${slug}:yalc`,
-    threadName: "YALC / GTM-OS",
-    skill: "yalc-operator",
-    skills: ["yalc-operator"],
+  const cfg = instantiateEntry("yalc", { slug });
+  cfg.initialMessage = prompt;
+  return cfg;
+}
+
+/**
+ * Partnerships (SAN-78) — "Crear nueva búsqueda" de creators abre el chat
+ * global con el plan de discovery. La skill `discovery-plan-builder` la
+ * construye SAN-79; mientras llega, Rocinante (agente owner de Outreach,
+ * SAN-116) atiende el hilo con sus skills de outreach.
+ *
+ * - Sin búsqueda: hilo nuevo por click (cada click = un plan nuevo).
+ * - Con búsqueda draft: hilo estable por campaña (continuar el plan).
+ */
+export function buildDiscoverySearchThread(
+  slug: string,
+  search?: { campaignId: string; title?: string },
+): ThreadConfig {
+  const base = {
+    skill: "discovery-plan-builder",
+    skills: ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"] as string[],
     linkedTo: "rocinante",
     docPath: null,
-    threadState: "continue",
     agent: "rocinante",
-    initialMessage: prompt,
   };
+
+  if (search) {
+    return {
+      ...base,
+      threadId: `${slug}:discovery:${search.campaignId.toLowerCase()}`,
+      threadName: search.title ? `Búsqueda: ${search.title}` : "Búsqueda de creators",
+      threadState: "continue",
+      initialMessage: `Quiero completar y lanzar la búsqueda de creators "${search.title || search.campaignId}" (campaña Yalc ${search.campaignId}, type=Partnerships). Repásame el plan de discovery (sectores, redes, tiers, volumen) y dime qué falta para lanzarla.`,
+    };
+  }
+
+  return {
+    ...base,
+    threadId: `${slug}:discovery:new-${Date.now()}`,
+    threadName: "Nueva búsqueda de creators",
+    threadState: "create",
+    initialMessage:
+      "Quiero crear una nueva búsqueda de creators para el programa de Partnerships. Proponme un plan de discovery: sectores con mejor fit, redes, tiers objetivo y volumen de candidatos. Cuando lo cerremos, lánzala como campaña type=Partnerships en Yalc.",
+  };
+}
+
+/**
+ * Plantillas de Outreach·Partnerships (SAN-80) — 💬 "Chat con Sancho" de cada
+ * plantilla (secuencia o brief). Hilo estable por plantilla, atendido por
+ * Rocinante (agente owner de Outreach) con la skill de secuencias; el doc
+ * anclado es el .md de la plantilla (mismo fichero que ⬇️/📄).
+ */
+export function buildOutreachTemplateThread(
+  slug: string,
+  template: { id: string; name: string; kind?: "sequence" | "brief" },
+): ThreadConfig {
+  const kindLabel = template.kind === "brief" ? "brief" : "secuencia";
+  return instantiateEntry("outreach-template", {
+    slug,
+    params: { id: template.id, idLower: template.id.toLowerCase(), name: template.name, kindLabel },
+  });
 }
 
 /**
@@ -402,6 +486,29 @@ export function resolveFullThreadConfig(
     };
   }
 
+  // ── No task: content-flavored threads still belong to Dulcinea ──
+  // Reopening a content draft/idea/calendar/cron thread whose task isn't in the
+  // loaded projectsData (e.g. a weekly P-Content-Semana-NN project not listed)
+  // must NOT fall back to Sancho. These namespaces are owned by the content
+  // writer. (The full fix is task=thread unification; this keeps the agent
+  // correct meanwhile.) Root cause of "Content → Ideas sigue saliendo Sancho".
+  const contentNs: Record<string, string> = {
+    content: "social-writer",
+    idea: "seo-content",
+    calendar: "content-calendar-planner",
+    cron: "idea-generation",
+  };
+  const contentMatch = shortId.match(/^(content|idea|calendar|cron)[-:](.+)$/i);
+  if (contentMatch) {
+    const ns = contentMatch[1].toLowerCase();
+    const skill = contentNs[ns];
+    return {
+      threadId, threadName: shortId.replace(/[-_:]/g, " "),
+      skill, skills: [skill], agent: "dulcinea",
+      linkedTo: `${ns}/${contentMatch[2]}`, docPath: null, threadState: "continue",
+    };
+  }
+
   // ── No task: handle typed threads ────────────────────────────
   if (/^(competitor-scan|meta-ads-scan|linkedin-scan)$/i.test(shortId)) {
     return {
@@ -410,7 +517,7 @@ export function resolveFullThreadConfig(
       docPath: null, threadState: "continue",
     };
   }
-  if (/^(strategy|idea|recurring)[-:]/i.test(shortId)) {
+  if (/^(strategy|recurring)[-:]/i.test(shortId)) {
     const m = shortId.match(/^([a-z]+)[-:](.+)$/i);
     if (m) {
       return {
@@ -622,10 +729,23 @@ export function buildRecurringThread(
   };
 }
 
-/** Hardcoded pillar canonical fallback (overridden by chat-config.json if available) */
-const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {
-  "company-brief": "kickoff",
-};
+/**
+ * Hardcoded pillar canonical fallback (overridden by chat-config.json if available).
+ *
+ * Maps a pillarKey → the canonical PILLAR name used for the threadId and for
+ * `resolveThreadSkills({ pillar })`. The value must be a *pillar* key, never a
+ * skill name — buildPillarThread feeds it straight back to resolveThreadSkills
+ * as the pillar.
+ *
+ * Empty since SAN-3 W4: the only entry existed because the Fast Foundation doc
+ * lived in `fastcontext/` while the pillar was `company-brief`. W4 unified the
+ * folder to `company-brief`, so the pillar key == its folder == its canonical
+ * name; the `|| pillarKey` fallback in buildPillarThread now covers every pillar.
+ * Do NOT re-add `company-brief → kickoff`: `kickoff` is the *skill*, and
+ * resolving `{ pillar: "kickoff" }` falls through to sancho-manager — which
+ * improvises a brief and never writes company-brief.current.md.
+ */
+const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {};
 
 /**
  * Build thread config for a "content document" — the shape rendered by
@@ -760,17 +880,7 @@ export function buildPillarThread(
 
 /** Build thread config for creating a new skill via chat */
 export function buildSkillCreatorThread(slug: string): ThreadConfig {
-  const threadId = `${slug}:skill-creator:${Date.now()}`;
-  return {
-    threadId,
-    threadName: "Crear nueva skill",
-    skill: "skill-creator",
-    skills: ["skill-creator"],
-    linkedTo: "skills/new",
-    docPath: null,
-    threadState: "create",
-    initialMessage: "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
-  };
+  return instantiateEntry("skill-creator", { slug, params: { nonce: String(Date.now()) } });
 }
 
 /** Build thread config for editing an existing skill via chat */
@@ -780,16 +890,9 @@ export function buildSkillEditorThread(
   skillName: string,
   docPath?: string
 ): ThreadConfig {
-  const threadId = `${slug}:skill:${skillId}`;
-  return {
-    threadId,
-    threadName: skillName,
-    skill: "skill-creator",
-    skills: ["skill-creator"],
-    linkedTo: `skills/${skillId}`,
-    docPath: docPath || null,
-    threadState: "continue",
-  };
+  const cfg = instantiateEntry("skill-editor", { slug, params: { skillId, skillName } });
+  cfg.docPath = docPath || null;
+  return cfg;
 }
 
 /**
@@ -870,6 +973,7 @@ export function buildTrustEngineModuleThread(
     linkedTo: `trust-engine/${moduleId}`,
     docPath: `brand/${slug}/trust-engine/${moduleFile}`,
     threadState: "continue",
+    agent: "hamete",
     initialMessage: moduleContexts[moduleId] || `Estoy revisando ${moduleName} del Trust Engine para ${slug}. Analiza los datos y dime las conclusiones clave.`,
   };
 }
@@ -885,22 +989,15 @@ export function buildMediaAssetThread(
   assetName: string,
   kind: "template" | "mockup" | "logo" | "style-reference" | "export" | "design-md" | "tokens" | "preview" | "misc",
 ): ThreadConfig {
-  // Sanitize for thread id
+  // Declaration (skill/agent/templates) from the registry; the kind→skill and
+  // sanitization are computed here and overlaid.
   const safe = assetRelativePath.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
-  const threadId = `${slug}:asset:${safe}`;
   const skill = kind === "design-md" || kind === "tokens" ? "design-system" : "od-refine";
-  return {
-    threadId,
-    threadName: `🎨 ${assetName}`,
-    skill,
-    skills: [skill, "od-generate", "od-export"],
-    linkedTo: `media-creation/asset/${assetRelativePath}`,
-    docPath: `brand/${slug}/${assetRelativePath}`,
-    docKind: kind === "template" ? "template" : "file",
-    threadState: "continue",
-    agent: "maese-pedro",
-    initialMessage: `Estoy mirando el asset "${assetName}" (\`${assetRelativePath}\`, kind=${kind}). Dame un resumen y las opciones de refinamiento.`,
-  };
+  const cfg = instantiateEntry("media-asset", { slug, params: { safe, assetRelativePath, assetName, kind } });
+  cfg.skill = skill;
+  cfg.skills = [skill, "od-generate", "od-export"];
+  cfg.docKind = kind === "template" ? "template" : "file";
+  return cfg;
 }
 
 /** Build thread config for chatting with Maese Pedro about Visual Identity (whole brand DESIGN.md). */
@@ -909,20 +1006,14 @@ export function buildVisualIdentityChatThread(
   block?: string,
 ): ThreadConfig {
   const blockSafe = block ? block.toLowerCase().replace(/[^a-z0-9-]+/g, "-") : "all";
-  const threadId = `${slug}:visual-identity:${blockSafe}`;
-  return {
-    threadId,
-    threadName: block ? `🎨 Visual Identity — ${block}` : "🎨 Visual Identity",
-    skill: "design-system",
-    skills: ["design-system", "od-generate"],
-    linkedTo: `media-creation/visual-identity/${blockSafe}`,
-    docPath: `brand/${slug}/brand-book/visual-identity/DESIGN.md`,
-    threadState: "continue",
-    agent: "maese-pedro",
-    initialMessage: block
-      ? `Quiero ajustar la sección "${block}" del Visual Identity. ¿Qué opciones tengo?`
-      : "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?",
-  };
+  const cfg = instantiateEntry("visual-identity", { slug, params: { blockSafe } });
+  // Block-specific threadName + prompt are computed (the entry holds the
+  // no-block defaults + the declared skill/agent/doc).
+  cfg.threadName = block ? `🎨 Visual Identity — ${block}` : "🎨 Visual Identity";
+  cfg.initialMessage = block
+    ? `Quiero ajustar la sección "${block}" del Visual Identity. ¿Qué opciones tengo?`
+    : "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?";
+  return cfg;
 }
 
 /** Build thread config for "use OD upstream skill on this brand" — generation request. */

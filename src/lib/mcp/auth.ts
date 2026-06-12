@@ -8,12 +8,15 @@ export type McpScope =
   | "tasks:read"
   | "tasks:write"
   | "yalc:read"
-  | "open-design:read";
+  | "yalc:write"
+  | "open-design:read"
+  | "docs:read";
 
 export interface McpPrincipal {
   id: string;
   scopes: string[];
   clients: string[];
+  brands?: string[];
   tokenHash: string;
 }
 
@@ -23,6 +26,7 @@ interface McpTokenConfig {
   tokenHash?: string;
   scopes?: string[];
   clients?: string[];
+  brands?: string[];
 }
 
 export class McpAuthError extends Error {
@@ -52,10 +56,14 @@ export function authenticateMcpRequest(req: NextApiRequest): McpPrincipal {
     throw new McpAuthError(403, "Invalid MCP bearer token");
   }
 
+  const clients = normalizeList(match.clients);
+  const brands = Array.isArray(match.brands) ? normalizeList(match.brands) : clients;
+
   return {
     id: match.id || `mcp-${tokenHash.slice(0, 12)}`,
     scopes: normalizeList(match.scopes),
-    clients: normalizeList(match.clients),
+    clients,
+    brands,
     tokenHash,
   };
 }
@@ -71,6 +79,18 @@ export function assertMcpClientAccess(principal: McpPrincipal, clientSlug: strin
   if (!loadClient(slug)) throw new McpAuthError(404, `Client not found: ${slug}`);
   if (principal.clients.includes("*") || principal.clients.includes(slug)) return;
   throw new McpAuthError(403, `MCP token is not allowed to access client: ${slug}`);
+}
+
+export function assertMcpBrandAccess(principal: McpPrincipal, brandSlug: string): void {
+  const slug = brandSlug.trim();
+  if (!slug) throw new McpAuthError(400, "brandSlug is required");
+  if (!/^[a-z0-9][a-z0-9-]*$/i.test(slug)) {
+    throw new McpAuthError(400, "brandSlug must be a simple slug");
+  }
+  assertMcpScope(principal, "docs:read");
+  const brands = principal.brands ?? principal.clients;
+  if (brands.includes("*") || brands.includes(slug)) return;
+  throw new McpAuthError(403, `MCP token is not allowed to access brand: ${slug}`);
 }
 
 export function hasMcpScope(principal: McpPrincipal, scope: McpScope): boolean {
@@ -102,6 +122,7 @@ function loadMcpTokenConfigs(): McpTokenConfig[] {
       token: singleToken,
       scopes: parseCsv(process.env.SANCHO_MCP_SCOPES),
       clients: parseCsv(process.env.SANCHO_MCP_CLIENTS),
+      brands: process.env.SANCHO_MCP_BRANDS === undefined ? undefined : parseCsv(process.env.SANCHO_MCP_BRANDS),
     });
   }
 
@@ -116,7 +137,8 @@ function isTokenConfig(value: unknown): value is McpTokenConfig {
   const idOk = record.id === undefined || typeof record.id === "string";
   const scopesOk = record.scopes === undefined || Array.isArray(record.scopes);
   const clientsOk = record.clients === undefined || Array.isArray(record.clients);
-  return tokenOk && tokenHashOk && idOk && scopesOk && clientsOk;
+  const brandsOk = record.brands === undefined || Array.isArray(record.brands);
+  return tokenOk && tokenHashOk && idOk && scopesOk && clientsOk && brandsOk;
 }
 
 function getBearerToken(req: NextApiRequest): string | null {

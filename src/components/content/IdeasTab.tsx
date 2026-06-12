@@ -21,6 +21,7 @@ export function IdeasTab({ slug, data: _data, openChat }: Props) {
         threadName: `Idea: ${ideaId}`,
         skill: "sancho",
         skills: ["sancho", "seo-content", "content-atomizer"],
+        agent: "dulcinea",
         linkedTo: `ideas/${ideaId}`,
         docPath: `brand/${slug}/ideas.json`,
         threadState: "continue",

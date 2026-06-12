@@ -155,7 +155,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const niches: Array<{ slug: string; name: string }> = [];
   const ecpDir = path.join(brandDir(slug), "go-to-market", "ecps");
   // Try multiple filename conventions
-  const ecpCandidates = ["current.md", "ecps.current.md", "ecps.md"];
+  const ecpCandidates = ["ecps-current.md", "ecps.current.md", "current.md", "ecps.md"];
   let ecpContent: string | null = null;
   for (const candidate of ecpCandidates) {
     ecpContent = readText(path.join(ecpDir, candidate));

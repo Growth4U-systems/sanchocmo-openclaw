@@ -4,6 +4,7 @@
 // falls back to hardcoded maps for backwards compatibility.
 // ============================================================
 
+import { MANIFEST_PILLARS } from "./pillar-doc-paths";
 
 export interface SkillResolution {
   skill: string;
@@ -116,6 +117,8 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "design-system": "maese-pedro",
   "direct-response-copy": "dulcinea",
   "directory-submissions": "rocinante",
+  "discovery-plan-builder": "rocinante",
+  "discovery-search-runner": "rocinante",
   "doc-coauthoring": "dulcinea",
   "ecp-validation": "sanson",
   "email-sequence": "rocinante",
@@ -390,32 +393,22 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
  *  SAN-102 (research/synthesis/niche → Hamete, positioning → Dulcinea,
  *  pricing/strategic-plan → Sancho default).
  *  W4 (SAN-3): `company-brief` → the `kickoff` skill (owner hamete). The Kickoff
- *  produces the living Company Brief; the old fast-foundation flow is retired. */
-const PILLAR_SKILL_ALIAS: Record<string, string> = {
-  "company-brief": "kickoff",
-  "market-analysis": "market-intelligence",
-  "competitor-analysis": "competitor-intelligence",
-  "self-analysis": "self-intelligence",
-  "market-synthesis": "market-synthesis",
-  "niche-discovery": "niche-discovery-100x",
-  positioning: "positioning-messaging",
-  pricing: "pricing-strategy",
-  "metrics-setup": "metrics-setup",
-  "strategic-plan": "strategic-plan",
-  "existing-customer-data": "existing-customer-data",
-  "ecp-validation": "ecp-validation",
-};
+ *  produces the living Company Brief; the old fast-foundation flow is retired —
+ *  `fast-foundation` is no longer a pillar alias.
+ *  DERIVED from `config/pillar-manifest.json` (F0) — do NOT hand-edit; edit the
+ *  manifest. Frozen equivalence in src/lib/__tests__/pillar-manifest.test.mts. */
+const PILLAR_SKILL_ALIAS: Record<string, string> = Object.fromEntries(
+  Object.entries(MANIFEST_PILLARS)
+    .filter(([, entry]) => entry.skillAlias)
+    .map(([key, entry]) => [key, entry.skillAlias as string]),
+);
 
 /** Pillars that ship with a child skill of the same name. Used by step 5b
  *  of `resolveThreadSkills` so threads land on the right skill even when
- *  `chat-config.json` doesn't list the pillar. */
-const HOMONYMOUS_SKILL_PILLARS = new Set([
-  "visual-identity",
-  "brand-voice",
-  "content-strategy",
-  "content-pillars",
-  "content-playbook",
-  "niche-discovery-100x",
-  "positioning-messaging",
-  "pricing",
-]);
+ *  `chat-config.json` doesn't list the pillar.
+ *  DERIVED from `config/pillar-manifest.json` (F0) — do NOT hand-edit. */
+const HOMONYMOUS_SKILL_PILLARS = new Set(
+  Object.entries(MANIFEST_PILLARS)
+    .filter(([, entry]) => entry.homonymous)
+    .map(([key]) => key),
+);

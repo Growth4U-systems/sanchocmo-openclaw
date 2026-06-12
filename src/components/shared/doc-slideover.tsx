@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
@@ -23,10 +23,26 @@ const MarkdownEditor = dynamic(
  * Body: markdown viewer OR Toast UI editor
  */
 
+/**
+ * Strips a leading YAML frontmatter block (`---\n…\n---`) before VIEW
+ * rendering. Brand Brain docs keep their metadata in HTML comments, which
+ * ReactMarkdown never paints — docs with YAML frontmatter (e.g. the
+ * Outreach/Partnerships templates) must behave the same, otherwise the
+ * block renders as an hr + setext heading. Only the rendered view is
+ * affected: the editor receives the raw content so the frontmatter
+ * round-trips intact on save.
+ */
+export function stripMarkdownFrontmatter(text: string): string {
+  const match = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+  return match ? text.slice(match[0].length) : text;
+}
+
 interface DocSlideOverProps {
   slug: string;
   docPath: string | null;
   onClose: () => void;
+  /** Optional action rendered first in the header action row (e.g. "Editar secuencia"). */
+  headerAction?: ReactNode;
 }
 
 const FOLDER_MAP: Record<string, string> = {
@@ -75,7 +91,7 @@ function findPillarInfo(
   return null;
 }
 
-export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
+export function DocSlideOver({ slug, docPath, onClose, headerAction }: DocSlideOverProps) {
   const [content, setContent] = useState<string | null>(null);
   const [lastModified, setLastModified] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -333,19 +349,24 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
     try { return JSON.parse(content); } catch { return null; }
   }, [isJson, content]);
 
-  // ── HTML 2-col edit/preview state ─────────────────────────────────
-  // For any `.html` document we render a split view: text editor (left) +
-  // live iframe preview (right). For carousel templates specifically, the
+  // ── HTML view state ───────────────────────────────────────────────
+  // HTML documents render as the document itself (full-width iframe) by
+  // default — the source + live-preview split only appears when the user
+  // explicitly hits "✏️ Editar HTML" (SAN-149). For carousel templates the
   // preview goes through the template-preview-html endpoint so `{{slot.*}}`
   // and `{{brand.*}}` placeholders get resolved to the brand's actual
   // values — that way you see the real render, not the template source.
   const isHtmlDoc = !!(activeDocPath?.endsWith(".html") || (content && (content.trimStart().startsWith("<!DOCTYPE") || content.trimStart().startsWith("<html"))));
+  const [editingHtml, setEditingHtml] = useState(false);
   const [htmlDraft, setHtmlDraft] = useState<string>("");
   const [savingHtml, setSavingHtml] = useState(false);
   const [previewRevision, setPreviewRevision] = useState(0);
   useEffect(() => {
     if (isHtmlDoc && content !== null) setHtmlDraft(content);
   }, [isHtmlDoc, content]);
+  useEffect(() => {
+    setEditingHtml(false);
+  }, [normalizedDocPath]);
 
   const templateInfo = useMemo(() => {
     if (!activeDocPath) return null;
@@ -408,6 +429,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
           </span>
 
           <div className="ml-auto flex items-center gap-2">
+            {headerAction}
             {pillarInfo && (
               <select
                 value={currentStatus}
@@ -462,16 +484,36 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               </button>
             )}
 
-            {isHtmlDoc && (
+            {isHtmlDoc && !editingHtml && (
               <button
                 type="button"
-                onClick={handleSaveHtml}
-                disabled={!isHtmlDirty || savingHtml}
-                className={cn(btnClass, isHtmlDirty && "!bg-rust !text-white !border-rust hover:!bg-rust/90")}
-                title={isHtmlDirty ? "Guardar cambios y refrescar preview" : "No hay cambios pendientes"}
+                onClick={() => setEditingHtml(true)}
+                className={btnClass}
+                title="Editar el código HTML manualmente"
               >
-                {savingHtml ? "Guardando..." : isHtmlDirty ? "💾 Guardar" : "💾 Guardado"}
+                ✏️ Editar HTML
               </button>
+            )}
+            {isHtmlDoc && editingHtml && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSaveHtml}
+                  disabled={!isHtmlDirty || savingHtml}
+                  className={cn(btnClass, isHtmlDirty && "!bg-rust !text-white !border-rust hover:!bg-rust/90")}
+                  title={isHtmlDirty ? "Guardar cambios y refrescar preview" : "No hay cambios pendientes"}
+                >
+                  {savingHtml ? "Guardando..." : isHtmlDirty ? "💾 Guardar" : "💾 Guardado"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingHtml(false)}
+                  className={btnClass}
+                  title="Volver a la vista del documento"
+                >
+                  👁 Ver
+                </button>
+              </>
             )}
 
             <button
@@ -568,6 +610,18 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
               onCancel={() => setEditing(false)}
             />
           </div>
+        ) : isHtmlDoc && content !== null && !editingHtml ? (
+          // Default HTML view (SAN-149): just the rendered document, full
+          // width. Source editing lives behind "✏️ Editar HTML".
+          <div className="flex-1 min-h-0">
+            <iframe
+              key={`view-${previewRevision}`}
+              src={previewSrc || `/api/docs/${activeDocPath}?raw=1&_=${previewRevision}`}
+              className="w-full h-full border-0 bg-white block"
+              sandbox="allow-same-origin"
+              title={displayTitle}
+            />
+          </div>
         ) : isHtmlDoc && content !== null ? (
           <div className="flex-1 min-h-0 grid grid-cols-2 divide-x divide-[#E5E2DC] dark:divide-[#313244]">
             {/* HTML editor (left) */}
@@ -649,7 +703,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
                   "prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/30 prose-th:text-left prose-th:text-xs prose-th:font-bold",
                   "prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:text-xs",
                 )}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{stripMarkdownFrontmatter(content)}</ReactMarkdown>
                 </article>
               )
             )}

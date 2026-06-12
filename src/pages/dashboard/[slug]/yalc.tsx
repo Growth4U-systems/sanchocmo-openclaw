@@ -21,11 +21,14 @@ import {
   Loader2,
   Rocket,
 } from "lucide-react";
+import { useRouter } from "next/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildYalcThread } from "@/lib/chat-openers";
+import { PartnershipsView } from "@/components/partnerships/partnerships-view";
+import { TipoSelector, tipoFromQuery } from "@/components/partnerships/tipo-selector";
 import { cn } from "@/lib/utils";
 
 type TabKey = "overview" | "campaigns" | "leads" | "gates" | "providers";
@@ -443,7 +446,22 @@ function outboundActionLabel(action: OutboundAction): string {
   return "Lanzar";
 }
 
-export default function YalcCockpitPage() {
+/**
+ * Outreach (= la UI de Yalc, SAN-115/SAN-78). Partnerships es un TIPO de
+ * campaña, no un módulo aparte: el selector Tipo filtra la página.
+ *
+ *  - tipo=partnerships (default) → Encuentra · Contactos · Inbox · Plantillas
+ *    (SAN-78, mockups OUTPUTS/sanchocmo/mockups-partnerships como spec).
+ *  - tipo=b2b → el cockpit YALC de siempre, flujos intactos.
+ */
+export default function OutreachPage() {
+  const router = useRouter();
+  const tipo = tipoFromQuery(router.query.tipo);
+  if (tipo === "b2b") return <YalcCockpitView />;
+  return <PartnershipsView />;
+}
+
+function YalcCockpitView() {
   const slug = useSlugSync();
   const openChat = useOpenChat();
   const queryClient = useQueryClient();
@@ -795,7 +813,9 @@ export default function YalcCockpitPage() {
               Operacion de campanas, leads, gates humanos y providers desde Mission Control.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Selector Tipo (SAN-78): B2B = este cockpit · Partnerships = Encuentra/Contactos */}
+            <TipoSelector tipo="b2b" />
             <button
               type="button"
               onClick={() => openYalcAgent()}

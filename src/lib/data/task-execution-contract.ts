@@ -53,7 +53,11 @@ const SKILL_ALIASES: Record<string, string> = {
   "escudero-content": "social-writer",
   "email-sequences": "email-sequence",
   "landing-pages": "page-cro",
-  "kickoff": "sancho-manager",
+  // `strategic-plan` is manager-fronted (buildStrategyThread runs it under
+  // sancho-manager), so it stays aliased. `kickoff` is NOT: SAN-3 W4 made it a
+  // real skill owned by hamete. The old `fast-foundation → sancho-manager` alias
+  // (renamed to `kickoff` in the W4 sweep) wrongly sent Kickoff *tasks* to the
+  // manager, which improvises and never writes company-brief.current.md.
   "strategic-plan": "sancho-manager",
 };
 

@@ -42,6 +42,10 @@ RUN npm ci
 COPY next.config.mjs tsconfig.json postcss.config.mjs tailwind.config.ts components.json drizzle.config.ts ./
 COPY src/ ./src/
 COPY public/ ./public/
+# pillar-manifest.json is imported at build time by src/lib/pillar-doc-paths.ts
+# (SAN-166) — without config/ in the build stage, `next build` fails with
+# "Module not found" even though GitHub CI (full checkout) passes.
+COPY config/ ./config/
 COPY scripts/apply-sql-migration.mjs ./scripts/apply-sql-migration.mjs
 # Local-Postgres baseline migrator (bundled local-db). Applies the journal-backed
 # baseline under src/db/migrations-local (copied via `COPY src/`) at boot — see
