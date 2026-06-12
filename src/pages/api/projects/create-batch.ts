@@ -9,6 +9,7 @@ import {
   TaskAnchorError,
   type TaskCreateInput,
 } from "@/lib/data/task-create-helpers";
+import { getTaskDefault } from "@/lib/data/task-blueprints";
 
 function resolveProjectDir(projectsDir: string, projectId: string): string | null {
   if (!projectId) return null;
@@ -104,7 +105,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     idea_ids: ideaIds,
     created_by: "manual",
     status: "todo",
-    channel: batchType === "outreach" ? "prospecting" : "content",
+    channel: getTaskDefault(batchType === "outreach" ? "outreach" : "content").channel,
     owner: "Sancho",
     skill,
     deliverable_file,
