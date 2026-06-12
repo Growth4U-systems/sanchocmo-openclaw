@@ -58,8 +58,8 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
 
   if (isLocked) {
     return (
-      <div className="my-2 rounded-lg border border-[#45475a] bg-[#1e1e2e]/70 p-3">
-        <div className="text-[13px] text-[#a6adc8] mb-1.5">{question.prompt}</div>
+      <div className="my-2 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-surface-2)] p-3">
+        <div className="text-[13px] text-[var(--chat-text-muted)] mb-1.5">{question.prompt}</div>
         <div className="flex flex-wrap gap-1.5">
           {submittedLabels.map((label, i) => (
             <span
@@ -75,8 +75,8 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
   }
 
   return (
-    <div className="my-2 rounded-lg border border-[#45475a] bg-[#1e1e2e]/70 p-3">
-      <div className="text-[14px] text-[#cdd6f4] font-medium mb-2">{question.prompt}</div>
+    <div className="my-2 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-surface-2)] p-3">
+      <div className="text-[14px] text-[var(--chat-text)] font-medium mb-2">{question.prompt}</div>
       <div className="flex flex-col gap-1.5 mb-2">
         {question.options.map((opt) => {
           const isSelected = state.selected.has(opt.id);
@@ -89,14 +89,14 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
                 "text-left text-[13px] rounded-md px-2.5 py-1.5 border transition-colors flex items-center gap-2 cursor-pointer",
                 isSelected
                   ? "border-rust bg-rust/15 text-white"
-                  : "border-[#45475a] bg-[#313244] text-[#cdd6f4] hover:border-rust/40 hover:bg-[#45475a]"
+                  : "border-[var(--chat-border)] bg-[var(--chat-surface)] text-[var(--chat-text)] hover:border-rust/40 hover:bg-[var(--chat-surface-2)]"
               )}
             >
               <span
                 className={cn(
                   "shrink-0 inline-flex items-center justify-center text-[10px] w-4 h-4 border",
                   isMulti ? "rounded-sm" : "rounded-full",
-                  isSelected ? "border-rust bg-rust text-white" : "border-[#6c7086] bg-transparent"
+                  isSelected ? "border-rust bg-rust text-white" : "border-[var(--chat-border-strong)] bg-transparent"
                 )}
               >
                 {isSelected ? "✓" : ""}
@@ -112,7 +112,7 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
           onChange={(e) => onChange({ ...state, otherText: e.target.value })}
           placeholder="Escribe tu respuesta…"
           rows={2}
-          className="w-full bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-[13px] px-2.5 py-1.5 rounded-md border border-[#45475a] focus:outline-none focus:border-rust resize-none"
+          className="w-full bg-[var(--chat-surface)] text-[var(--chat-text)] placeholder-[var(--chat-text-faint)] text-[13px] px-2.5 py-1.5 rounded-md border border-[var(--chat-border)] focus:outline-none focus:border-rust resize-none"
           autoFocus
         />
       )}
@@ -123,7 +123,7 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
 interface AskQuestionGroupProps {
   segments: MessageSegment[];
   threadId: string;
-  /** Renders inline text segments — passes through `formatMessage` from the parent. */
+  /** Renders inline text segments — the parent passes a `ChatMarkdown` renderer. */
   renderText: (text: string, key: number) => React.ReactNode;
   onSubmit: (canonicalText: string) => void;
 }
@@ -251,7 +251,7 @@ export function AskQuestionGroup({
       {!isLocked && totalQuestions > 0 && (
         <div className="flex items-center justify-end gap-2 mt-1">
           {totalQuestions > 1 && (
-            <span className="text-[11px] text-[#a6adc8]">
+            <span className="text-[11px] text-[var(--chat-text-muted)]">
               {answeredCount}/{totalQuestions} respondidas
             </span>
           )}

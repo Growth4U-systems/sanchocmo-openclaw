@@ -27,6 +27,8 @@ import { useRetriggerWriter } from "@/hooks/useContentTasks";
 import { ThreadListPanel } from "./thread-list-panel";
 import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
 import { ProgressTimeline } from "./progress-timeline";
+import { ChatMarkdown } from "./chat-markdown";
+import { groupChatMessages, stripAskProtocol } from "@/lib/chat-tool-echo";
 import { formatElapsed } from "@/lib/format-elapsed";
 import type { ProgressEvent } from "@/hooks/useChat";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
@@ -120,26 +122,36 @@ function readableDocName(docPath: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Simple markdown-ish formatter
+// OpenerNote — the auto-sent kickoff prompt, rendered discreetly
 // ---------------------------------------------------------------------------
 
-function formatMessage(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`([^`]+)`/g, '<code class="bg-[#45475a] px-1 py-0.5 rounded text-[15px]">$1</code>')
-    .replace(
-      /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener" class="underline text-blue-400 hover:text-blue-300 break-all">$1</a>'
-    )
-    .replace(
-      /(^|[^"'])(https?:\/\/[^\s<]+)/g,
-      '$1<a href="$2" target="_blank" rel="noopener" class="underline text-blue-400 hover:text-blue-300 break-all">$2</a>'
-    )
-    .replace(/\n/g, "<br>");
+/**
+ * The thread opener (`meta.initialMessage`) is auto-sent on the user's behalf
+ * to seed the agent with context. Shown verbatim it looked like a giant prompt
+ * the user supposedly typed — often long and technical. Here it collapses to a
+ * single faint line; the full text stays one click away for transparency.
+ */
+function OpenerNote({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex justify-center">
+      <div className="max-w-[90%] w-full flex flex-col items-center">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="text-[11px] text-[var(--chat-text-faint)] hover:text-[var(--chat-text-muted)] italic flex items-center gap-1 px-2 py-0.5"
+        >
+          <span>{open ? "▾" : "▸"}</span>
+          <span>Sancho arrancó con el contexto inicial</span>
+        </button>
+        {open && (
+          <div className="mt-1 w-full px-3 py-2 rounded-[10px] bg-[var(--chat-surface-2)] border border-[var(--chat-border)] text-[var(--chat-text-muted)] text-[13px]">
+            <ChatMarkdown text={text} className="text-[13px]" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -589,8 +601,15 @@ export function ChatSidebar() {
 
   // Messages for active thread
   const messagesQuery = useThreadMessages(activeThreadId ?? null);
-  const messages = messagesQuery.data?.messages ?? [];
+  const messages = useMemo(
+    () => messagesQuery.data?.messages ?? [],
+    [messagesQuery.data?.messages]
+  );
   const statusData = messagesQuery.data?.status;
+  // Fold runtime tool-call narration ("Write: to…", "run python3 inline
+  // script") into the collapsible "N pasos" timeline instead of letting each
+  // land as its own Sancho bubble. Real replies pass through untouched.
+  const renderItems = useMemo(() => groupChatMessages(messages), [messages]);
   const pendingProgress: ProgressEvent[] = messagesQuery.data?.pendingProgress ?? [];
 
   // Send / cancel / mark-read
@@ -935,19 +954,19 @@ export function ChatSidebar() {
   return (
     <div
       className="fixed top-0 right-0 h-screen flex"
-      style={{ width: panelWidth, zIndex: 400, backgroundColor: "#1E1E2E" }}
+      style={{ width: panelWidth, zIndex: 400, backgroundColor: "var(--chat-bg)" }}
     >
       {/* LEFT PANEL — thread list (only in fullscreen + free mode) */}
       {showThreadPanel && (
         <aside
-          className="w-[320px] flex-shrink-0 border-r border-[#313244] bg-[#181825] flex flex-col"
+          className="w-[320px] flex-shrink-0 border-r border-[var(--chat-border)] bg-[var(--chat-bg-deep)] flex flex-col"
           aria-label="Thread list"
         >
-          <div className="px-4 py-3 border-b border-[#313244] shrink-0 flex items-center gap-2">
-            <span className="text-[13px] font-semibold text-[#cdd6f4] uppercase tracking-wide">
+          <div className="px-4 py-3 border-b border-[var(--chat-border)] shrink-0 flex items-center gap-2">
+            <span className="text-[13px] font-semibold text-[var(--chat-text)] uppercase tracking-wide">
               Threads
             </span>
-            <span className="ml-auto text-[12px] text-[#a6adc8]">
+            <span className="ml-auto text-[12px] text-[var(--chat-text-muted)]">
               {threads.length}
             </span>
           </div>
@@ -963,25 +982,25 @@ export function ChatSidebar() {
       <div className="flex-1 flex flex-col min-w-0">
 
       {/* HEADER BAR */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#313244] shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--chat-border)] shrink-0">
         <div className="flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" />
-          <span className="text-[12px] font-semibold text-[#cdd6f4]">{t("title")}</span>
+          <span className="text-[12px] font-semibold text-[var(--chat-text)]">{t("title")}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#a6adc8]">
+          <span className="text-[10px] text-[var(--chat-text-muted)]">
             {statusData?.text || (isPolling ? t("connected") : t("waiting"))}
           </span>
           <button
             onClick={toggleFullscreen}
-            className="text-[#a6adc8] hover:text-[#cdd6f4] text-sm leading-none border border-[#45475a] rounded-md px-1.5 py-0.5"
+            className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
             title={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
           >
             {isFullscreen ? "⤡" : "⤢"}
           </button>
           <button
             onClick={closeSidebar}
-            className="text-[#a6adc8] hover:text-[#f38ba8] text-sm leading-none border border-[#45475a] rounded-md px-1.5 py-0.5"
+            className="text-[var(--chat-text-muted)] hover:text-[var(--chat-danger)] text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
             title={t("closeSidebar")}
           >
             ✕
@@ -990,7 +1009,7 @@ export function ChatSidebar() {
       </div>
 
       {/* THREAD BAR */}
-      <div className="px-3 py-2 border-b border-[#313244] shrink-0">
+      <div className="px-3 py-2 border-b border-[var(--chat-border)] shrink-0">
         <div className="space-y-2">
           {sidebarLocked && lockedThreadId ? (
             /* Locked mode */
@@ -1015,14 +1034,14 @@ export function ChatSidebar() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button
-                  className="text-[#a6adc8] hover:text-[#cdd6f4] text-sm border border-[#45475a] rounded-md px-1 py-0.5"
+                  className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm border border-[var(--chat-border)] rounded-md px-1 py-0.5"
                   title={t("syncDiscord")}
                 >
                   📱
                 </button>
                 <button
                   onClick={unlockSidebar}
-                  className="text-[#a6adc8] hover:text-[#cdd6f4] text-sm border border-[#45475a] rounded-md px-1 py-0.5"
+                  className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm border border-[var(--chat-border)] rounded-md px-1 py-0.5"
                   title={t("unlockFreeMode")}
                 >
                   🔓
@@ -1041,7 +1060,7 @@ export function ChatSidebar() {
                   // threads", so only toggle when NOT fullscreen.
                   if (!isFullscreen) toggleFullscreen();
                 }}
-                className="flex-1 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] text-[14px] px-3 py-2 rounded-lg border border-[#45475a] hover:border-rust truncate flex items-center gap-2 text-left transition-colors"
+                className="flex-1 bg-[var(--chat-surface)] hover:bg-[var(--chat-surface-2)] text-[var(--chat-text)] text-[14px] px-3 py-2 rounded-lg border border-[var(--chat-border)] hover:border-rust truncate flex items-center gap-2 text-left transition-colors"
                 title={isFullscreen ? t("selectThreadOption") : "Explorar threads (expande a pantalla completa)"}
               >
                 {activeThread ? (
@@ -1057,19 +1076,19 @@ export function ChatSidebar() {
                 ) : (
                   <>
                     <span className="flex-shrink-0">📋</span>
-                    <span className="text-[#a6adc8]">
+                    <span className="text-[var(--chat-text-muted)]">
                       {t("selectThreadOption")}
                     </span>
                   </>
                 )}
-                <span className="ml-auto text-[#6c7086] flex-shrink-0">
+                <span className="ml-auto text-[var(--chat-text-faint)] flex-shrink-0">
                   {isFullscreen ? "▾" : "▸"}
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectFromPanel(`${slug}:general`)}
-                className="bg-[#313244] hover:bg-[#45475a] text-green-500 w-7 h-7 rounded-lg flex items-center justify-center text-sm border border-[#45475a]"
+                className="bg-[var(--chat-surface)] hover:bg-[var(--chat-surface-2)] text-green-500 w-7 h-7 rounded-lg flex items-center justify-center text-sm border border-[var(--chat-border)]"
                 title={t("newThread")}
               >
                 +
@@ -1178,7 +1197,7 @@ export function ChatSidebar() {
                 <span
                   className={cn(
                     "truncate flex-1 font-medium",
-                    labelIsEmpty && "text-[#6c7086] italic"
+                    labelIsEmpty && "text-[var(--chat-text-faint)] italic"
                   )}
                 >
                   {label}
@@ -1192,15 +1211,15 @@ export function ChatSidebar() {
                   </span>
                 )}
                 {href && (
-                  <span className="text-[#6c7086] text-[11px] flex-shrink-0">
+                  <span className="text-[var(--chat-text-faint)] text-[11px] flex-shrink-0">
                     ↗
                   </span>
                 )}
               </>
             );
             const pillClass = cn(
-              "w-full bg-[#313244] rounded-lg px-3 py-2 text-[13px] text-[#cdd6f4] flex items-center gap-2 border border-transparent transition-colors text-left",
-              (href || isRealDoc) && "cursor-pointer hover:bg-[#45475a] hover:border-rust no-underline"
+              "w-full bg-[var(--chat-surface)] rounded-lg px-3 py-2 text-[13px] text-[var(--chat-text)] flex items-center gap-2 border border-transparent transition-colors text-left",
+              (href || isRealDoc) && "cursor-pointer hover:bg-[var(--chat-surface-2)] hover:border-rust no-underline"
             );
             // Template doc: open MediaAssetSlideover (multi-slide preview)
             // instead of DocSlideOver — DocSlideOver fetches /api/docs which
@@ -1263,13 +1282,13 @@ export function ChatSidebar() {
               return (
                 <Link
                   href={href}
-                  className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
+                  className="w-full bg-[var(--chat-surface)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--chat-text-muted)] flex items-center gap-2 hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
                 >
                   <span>{ctId ? "✍️" : "📋"}</span>
                   <span className="truncate flex-1">
                     {ctId ? `${taskId} → ${ctId}` : `Tarea: ${taskId}`}
                   </span>
-                  <span className="text-[11px] text-[#6c7086]">↗</span>
+                  <span className="text-[11px] text-[var(--chat-text-faint)]">↗</span>
                 </Link>
               );
             }
@@ -1278,11 +1297,11 @@ export function ChatSidebar() {
               return (
                 <Link
                   href={`/dashboard/${slug}/tasks/${projId}`}
-                  className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
+                  className="w-full bg-[var(--chat-surface)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--chat-text-muted)] flex items-center gap-2 hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
                 >
                   <span>📁</span>
                   <span className="truncate flex-1">Proyecto: {projId}</span>
-                  <span className="text-[11px] text-[#6c7086]">↗</span>
+                  <span className="text-[11px] text-[var(--chat-text-faint)]">↗</span>
                 </Link>
               );
             }
@@ -1311,8 +1330,8 @@ export function ChatSidebar() {
             if (!foundTask) return null;
             const attachments = Array.isArray(foundTask.attachments) ? foundTask.attachments : [];
             return (
-              <details className="w-full bg-[#313244] rounded-lg border border-transparent text-[#cdd6f4]" open={attachments.length > 0}>
-                <summary className="px-3 py-2 text-[12px] cursor-pointer select-none flex items-center gap-1.5 font-medium text-[#a6adc8] hover:text-[#cdd6f4]">
+              <details className="w-full bg-[var(--chat-surface)] rounded-lg border border-transparent text-[var(--chat-text)]" open={attachments.length > 0}>
+                <summary className="px-3 py-2 text-[12px] cursor-pointer select-none flex items-center gap-1.5 font-medium text-[var(--chat-text-muted)] hover:text-[var(--chat-text)]">
                   <span>📎</span>
                   <span className="flex-1">Attachments ({attachments.length})</span>
                   <button
@@ -1327,14 +1346,14 @@ export function ChatSidebar() {
                       runAttachScan(slug, taskId);
                     }}
                     title="Refresh attachments — re-scan task dir for new files"
-                    className="text-[12px] text-[#a6adc8] hover:text-rust transition-colors"
+                    className="text-[12px] text-[var(--chat-text-muted)] hover:text-rust transition-colors"
                   >
                     🔄
                   </button>
                 </summary>
                 <div className="px-3 pb-2 pt-1 flex flex-col gap-1">
                   {attachments.length === 0 && (
-                    <div className="text-[11px] text-[#6c7086] italic px-2 py-1">
+                    <div className="text-[11px] text-[var(--chat-text-faint)] italic px-2 py-1">
                       No hay archivos asociados aún. Pulsa 🔄 para escanear.
                     </div>
                   )}
@@ -1352,13 +1371,13 @@ export function ChatSidebar() {
                         type="button"
                         key={ai}
                         onClick={() => setOpenDocSlidePath(att.path)}
-                        className="flex items-center gap-2 text-[12px] text-[#cdd6f4] hover:text-white hover:bg-[#45475a] rounded px-2 py-1 transition-colors text-left w-full"
+                        className="flex items-center gap-2 text-[12px] text-[var(--chat-text)] hover:text-white hover:bg-[var(--chat-surface-2)] rounded px-2 py-1 transition-colors text-left w-full"
                         title={att.label || filename}
                       >
                         <span className="flex-shrink-0">{icon}</span>
                         <span className="truncate flex-1">{att.label || filename}</span>
                         {att.source && (
-                          <span className="text-[10px] text-[#6c7086] flex-shrink-0">
+                          <span className="text-[10px] text-[var(--chat-text-faint)] flex-shrink-0">
                             {att.source.startsWith("skill:") ? att.source.slice(6) : att.source}
                           </span>
                         )}
@@ -1381,11 +1400,11 @@ export function ChatSidebar() {
       >
         {dragOver && (
           <div className="absolute inset-0 bg-rust/10 flex items-center justify-center z-10 pointer-events-none rounded">
-            <span className="text-rust text-sm font-medium bg-[#1E1E2E]/90 px-4 py-2 rounded-lg">Suelta archivos aquí</span>
+            <span className="text-rust text-sm font-medium bg-[var(--chat-surface)] px-4 py-2 rounded-lg">Suelta archivos aquí</span>
           </div>
         )}
         {messages.length === 0 && (
-          <div className="max-w-[85%] px-[14px] py-[10px] rounded-[14px] text-base leading-relaxed bg-[#313244] text-[#cdd6f4]">
+          <div className="max-w-[85%] px-[14px] py-[10px] rounded-[16px] rounded-bl-[6px] text-base leading-relaxed bg-[var(--chat-surface)] text-[var(--chat-text)] border border-[var(--chat-border)] shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded bg-rust">
                 🤠 Sancho
@@ -1436,12 +1455,24 @@ export function ChatSidebar() {
           </div>
         )}
 
-        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number; progress?: ProgressEvent[]; from_agent?: string; to_agent?: string; errorDetail?: ErrorDetail }, i: number) => {
+        {renderItems.map((item) => {
+          // Folded run of tool-call echoes → one collapsible "N pasos" block.
+          if (item.kind === "tools") {
+            return (
+              <div key={item.key} className="flex justify-start">
+                <div className="max-w-[85%] w-full px-3 py-1 rounded-[12px] bg-[var(--chat-surface-2)] border border-[var(--chat-border)]">
+                  <ProgressTimeline events={item.events} mode="sealed" />
+                </div>
+              </div>
+            );
+          }
+          const msg = item.msg;
+          const i = item.key;
           if (msg.role === "system") {
             return (
               <div key={i} className="flex justify-center">
-                <div className="max-w-[90%] px-3 py-1.5 rounded-md text-[12px] leading-snug bg-amber-500/10 text-amber-200 border border-amber-500/30 italic">
-                  <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                <div className="max-w-[90%] px-3 py-1.5 rounded-md text-[12px] leading-snug bg-amber-500/10 text-amber-700 border border-amber-500/30 italic">
+                  <ChatMarkdown text={msg.text || ""} className="text-[12px]" />
                 </div>
               </div>
             );
@@ -1452,7 +1483,7 @@ export function ChatSidebar() {
             const toBadge = agentBadge(msg.to_agent);
             return (
               <div key={i} className="flex justify-center">
-                <div className="max-w-[90%] w-full px-3 py-2 rounded-md text-[12px] leading-snug bg-[#1E1E2E]/60 border border-[#45475a]/60 italic">
+                <div className="max-w-[90%] w-full px-3 py-2 rounded-md text-[12px] leading-snug bg-[var(--chat-surface)] border border-[var(--chat-border)] italic">
                   <div className="flex items-center justify-center gap-2 mb-1 not-italic">
                     <span className={cn(
                       "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
@@ -1460,7 +1491,7 @@ export function ChatSidebar() {
                     )}>
                       {fromBadge.emoji} {fromBadge.label}
                     </span>
-                    <span className="text-[#a6adc8] text-[14px]">→</span>
+                    <span className="text-[var(--chat-text-muted)] text-[14px]">→</span>
                     <span className={cn(
                       "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
                       toBadge.color
@@ -1469,7 +1500,9 @@ export function ChatSidebar() {
                     </span>
                   </div>
                   {msg.text && (
-                    <div className="text-center text-[#a6adc8]" dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                    <div className="text-center text-[var(--chat-text-muted)]">
+                      <ChatMarkdown text={msg.text} className="text-[12px]" />
+                    </div>
                   )}
                 </div>
               </div>
@@ -1479,12 +1512,24 @@ export function ChatSidebar() {
           const isUser = msg.role === "user";
           const badge = !isUser ? agentBadge(msg.agent) : null;
 
+          // The auto-sent kickoff prompt: render as a discreet, foldable note
+          // instead of a giant orange bubble the user never actually typed.
+          if (
+            isUser &&
+            meta?.initialMessage &&
+            (msg.text || "").trim() === meta.initialMessage.trim()
+          ) {
+            return <OpenerNote key={i} text={msg.text || ""} />;
+          }
+
           return (
             <div key={i} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
               <div
                 className={cn(
-                  "max-w-[85%] px-[14px] py-[10px] rounded-[14px] text-base leading-relaxed",
-                  isUser ? "bg-rust text-white" : "bg-[#313244] text-[#cdd6f4]"
+                  "max-w-[85%] px-[14px] py-[10px] rounded-[16px] text-base leading-relaxed",
+                  isUser
+                    ? "bg-rust text-white rounded-br-[6px] shadow-sm [--chat-link:#ffffff]"
+                    : "bg-[var(--chat-surface)] text-[var(--chat-text)] border border-[var(--chat-border)] rounded-bl-[6px] shadow-sm"
                 )}
               >
                 {badge && (
@@ -1498,13 +1543,12 @@ export function ChatSidebar() {
                   </div>
                 )}
                 <AskQuestionGroup
-                  segments={parseMessageSegments(msg.text || "")}
+                  segments={parseMessageSegments(
+                    isUser ? stripAskProtocol(msg.text) : (msg.text || "")
+                  )}
                   threadId={activeThreadId ?? ""}
                   renderText={(text, key) => (
-                    <div
-                      key={key}
-                      dangerouslySetInnerHTML={{ __html: formatMessage(text) }}
-                    />
+                    <ChatMarkdown key={key} text={text} />
                   )}
                   onSubmit={(text) =>
                     activeThreadId &&
@@ -1521,7 +1565,7 @@ export function ChatSidebar() {
                       if (isImage) {
                         return (
                           <a key={ai} href={att.url} target="_blank" rel="noopener noreferrer" className="block">
-                            <img src={att.url} alt={att.filename} className="max-w-[200px] max-h-[150px] rounded-lg border border-[#45475a]" />
+                            <img src={att.url} alt={att.filename} className="max-w-[200px] max-h-[150px] rounded-lg border border-[var(--chat-border)]" />
                           </a>
                         );
                       }
@@ -1534,7 +1578,7 @@ export function ChatSidebar() {
                           href={att.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 bg-[#45475a]/50 rounded-lg px-2.5 py-1.5 text-[11px] text-[#cdd6f4] hover:bg-[#45475a] transition-colors no-underline"
+                          className="flex items-center gap-1.5 bg-[var(--chat-surface-2)] rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)] transition-colors no-underline"
                         >
                           <span>{icon}</span>
                           <span className="max-w-[140px] truncate">{att.filename}</span>
@@ -1564,7 +1608,7 @@ export function ChatSidebar() {
         {/* Typing indicator + live progress timeline */}
         {showTyping && (
           <div className="flex justify-start">
-            <div className="bg-[#313244] text-[#a6adc8] px-[14px] py-[10px] rounded-[14px] text-[15px] italic max-w-[85%]">
+            <div className="bg-[var(--chat-surface)] text-[var(--chat-text-muted)] px-[14px] py-[10px] rounded-[16px] rounded-bl-[6px] text-[15px] italic max-w-[85%] border border-[var(--chat-border)] shadow-sm">
               <div className="flex items-center gap-2">
                 {typingBadge && (
                   <span className={cn(
@@ -1593,7 +1637,7 @@ export function ChatSidebar() {
 
       {/* QUICK-ACTIONS — suggested prompts above input (ChatGPT-style) */}
       {showQuickActions && (
-        <div className="px-3 py-2 border-t border-[#313244]/50 shrink-0 flex flex-col gap-1.5 max-h-[180px] overflow-y-auto">
+        <div className="px-3 py-2 border-t border-[var(--chat-border)] shrink-0 flex flex-col gap-1.5 max-h-[180px] overflow-y-auto">
           {quickActions.map((qa) => {
             const promptText = qa.prompt
               .replace(/\{name\}/g, meta?.threadName ?? "")
@@ -1604,7 +1648,7 @@ export function ChatSidebar() {
               <button
                 key={qa.label}
                 onClick={() => sendMutation.mutate({ text: promptText, threadId: activeThreadId! })}
-                className="w-full text-left px-3 py-2 text-[15px] leading-snug rounded-lg border border-[#45475a] text-[#cdd6f4] bg-[#313244]/50 hover:bg-[#45475a] hover:border-rust/40 transition-colors cursor-pointer"
+                className="w-full text-left px-3 py-2 text-[15px] leading-snug rounded-lg border border-[var(--chat-border)] text-[var(--chat-text)] bg-[var(--chat-surface-2)] hover:bg-[var(--chat-surface-2)] hover:border-rust/40 transition-colors cursor-pointer"
               >
                 {promptText}
               </button>
@@ -1614,22 +1658,22 @@ export function ChatSidebar() {
       )}
 
       {/* INPUT BAR */}
-      <div className="px-3 py-2 border-t border-[#313244] shrink-0">
+      <div className="px-3 py-2 border-t border-[var(--chat-border)] shrink-0">
         {/* Pending file previews */}
         {pendingFiles.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
             {pendingFiles.map((pf, idx) => (
-              <div key={idx} className="flex items-center gap-1 bg-[#313244] border border-[#45475a] rounded-lg px-2 py-1 text-[11px] text-[#cdd6f4]">
+              <div key={idx} className="flex items-center gap-1 bg-[var(--chat-surface)] border border-[var(--chat-border)] rounded-lg px-2 py-1 text-[11px] text-[var(--chat-text)]">
                 {pf.preview ? (
                   <img src={pf.preview} alt="" className="w-6 h-6 rounded object-cover" />
                 ) : (
                   <span>{pf.file.type.includes("pdf") ? "📄" : pf.file.type.includes("sheet") || pf.file.type.includes("csv") ? "📊" : "📎"}</span>
                 )}
                 <span className="max-w-[120px] truncate">{pf.file.name}</span>
-                <button onClick={() => removeFile(idx)} className="text-[#6c7086] hover:text-red-400 ml-0.5 bg-transparent border-none cursor-pointer text-xs">✕</button>
+                <button onClick={() => removeFile(idx)} className="text-[var(--chat-text-faint)] hover:text-red-400 ml-0.5 bg-transparent border-none cursor-pointer text-xs">✕</button>
               </div>
             ))}
-            {uploading && <span className="text-[10px] text-[#6c7086] animate-pulse self-center">Subiendo...</span>}
+            {uploading && <span className="text-[10px] text-[var(--chat-text-faint)] animate-pulse self-center">Subiendo...</span>}
           </div>
         )}
         <div className="flex items-end gap-2">
@@ -1637,7 +1681,7 @@ export function ChatSidebar() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={!activeThreadId || uploading}
-            className="text-[#6c7086] hover:text-rust w-8 h-8 flex items-center justify-center shrink-0 bg-transparent border-none cursor-pointer disabled:opacity-40 text-base"
+            className="text-[var(--chat-text-faint)] hover:text-rust w-8 h-8 flex items-center justify-center shrink-0 bg-transparent border-none cursor-pointer disabled:opacity-40 text-base"
             title="Adjuntar archivo"
           >
             📎
@@ -1664,7 +1708,7 @@ export function ChatSidebar() {
               el.style.height = "auto";
               el.style.height = Math.min(el.scrollHeight, 120) + "px";
             }}
-            className="chat-textarea flex-1 bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-base px-3 py-2 rounded-lg border border-[#45475a] focus:outline-none focus:border-rust disabled:opacity-50 resize-none overflow-y-auto leading-snug"
+            className="chat-textarea flex-1 bg-[var(--chat-surface)] text-[var(--chat-text)] placeholder-[var(--chat-text-faint)] text-base px-3 py-2 rounded-lg border border-[var(--chat-border)] focus:outline-none focus:border-rust disabled:opacity-50 resize-none overflow-y-auto leading-snug"
             style={{ maxHeight: 120 }}
           />
           {isAwaitingReply || cancelMutation.isPending || uploading ? (
