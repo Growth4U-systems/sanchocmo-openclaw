@@ -245,5 +245,50 @@
         }
       ]
     }
+  },
+  "_chatEntries_comment": "SAN-167 F2 — on-demand chat-opener BUTTONS declared once. Each button's skill/skills/agent/threadId/initialMessage live here (not hardcoded in chat-openers.ts). instantiateEntry(key, {slug, params}) substitutes {slug}+{params} into the templates and returns a ThreadConfig. Agent is EXPLICIT (validated by ownerCheckFindings). Builders are thin wrappers that prepare params + override the few runtime-only fields (e.g. yalc initialMessage = the passed prompt; skill-editor docPath).",
+  "chatEntries": {
+    "yalc": {
+      "threadId": "{slug}:yalc",
+      "threadName": "YALC / GTM-OS",
+      "skill": "yalc-operator",
+      "skills": ["yalc-operator"],
+      "agent": "rocinante",
+      "linkedTo": "rocinante",
+      "docPath": null,
+      "threadState": "continue"
+    },
+    "outreach-template": {
+      "threadId": "{slug}:outreach-template:{idLower}",
+      "threadName": "Plantilla: {name}",
+      "skill": "outreach-sequence-builder",
+      "skills": ["outreach-sequence-builder", "outreach-playbook"],
+      "agent": "rocinante",
+      "linkedTo": "outreach/templates/{id}",
+      "docPath": "brand/{slug}/outreach/templates/{id}.md",
+      "threadState": "continue",
+      "initialMessage": "Estoy mirando la plantilla de outreach \"{name}\" ({kindLabel}, brand/{slug}/outreach/templates/{id}.md). Puedes ajustar tono, pasos, delays o variables ({{nombre}}, {{handle}}, {{plataforma}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK."
+    },
+    "skill-creator": {
+      "threadId": "{slug}:skill-creator:{nonce}",
+      "threadName": "Crear nueva skill",
+      "skill": "skill-creator",
+      "skills": ["skill-creator"],
+      "agent": "cervantes",
+      "linkedTo": "skills/new",
+      "docPath": null,
+      "threadState": "create",
+      "initialMessage": "Quiero crear una nueva skill para el workspace. Guíame paso a paso."
+    },
+    "skill-editor": {
+      "threadId": "{slug}:skill:{skillId}",
+      "threadName": "{skillName}",
+      "skill": "skill-creator",
+      "skills": ["skill-creator"],
+      "agent": "cervantes",
+      "linkedTo": "skills/{skillId}",
+      "docPath": null,
+      "threadState": "continue"
+    }
   }
 }
