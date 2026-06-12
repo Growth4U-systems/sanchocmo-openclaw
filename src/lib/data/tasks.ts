@@ -7,7 +7,7 @@ import { MC_TASKS_BACKEND, MC_TASKS_WORKSPACE } from "@/lib/config";
 import { brandDir } from "@/lib/data/paths";
 import { readJSON, writeJSON, listDir } from "@/lib/data/json-io";
 import { getNextProjectId as getNextProjectIdFromJson } from "@/lib/data/projects";
-import { setTaskStatus as syncTaskStatus } from "@/lib/data/pillar-task-sync";
+import { setTaskStatus as syncTaskStatus } from "@/lib/data/foundation-status";
 import {
   attachDocumentToContentTask,
   createContentTask,
@@ -104,7 +104,6 @@ function dbRowToTaskObject(row: DbTaskRow): UnifiedTaskRow {
     scheduled_for: dbDate(row.scheduledFor),
     draft_statuses: row.draftStatuses || undefined,
     mc_chat_thread_id: row.mcChatThreadId || undefined,
-    discord_thread_id: row.discordThreadId || undefined,
     output_files: row.outputFiles || undefined,
     documents: row.documents || undefined,
     attachments: row.attachments || undefined,

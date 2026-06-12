@@ -34,13 +34,16 @@ const MarkdownEditor = dynamic(
   { ssr: false, loading: () => <p className="text-sm text-muted-foreground p-6">Cargando editor...</p> }
 );
 import remarkGfm from "remark-gfm";
-import type { BrandBrainState, Section, Pillar, PillarStatus } from "@/types";
+import type { BrandBrainState, Section, Pillar, TaskStatus } from "@/types";
 
+// SAN-183 F5: vocabulario único de task (el de pilar murió). Bloqueada se
+// muestra si está — "si está, está".
 const STATUS_OPTS = [
-  { value: "not-started", label: "No iniciado", bg: "#F5F5F5", border: "#D0D0D0", color: "#666" },
+  { value: "todo", label: "No iniciado", bg: "#F5F5F5", border: "#D0D0D0", color: "#666" },
   { value: "in-progress", label: "En progreso", bg: "#EFF6FF", border: "#93C5FD", color: "#1D4ED8" },
   { value: "pending-review", label: "Pendiente revision", bg: "#FFFBEB", border: "#FCD34D", color: "#B45309" },
-  { value: "approved", label: "Aprobado", bg: "#ECFDF5", border: "#6EE7B7", color: "#047857" },
+  { value: "completed", label: "Aprobado", bg: "#ECFDF5", border: "#6EE7B7", color: "#047857" },
+  { value: "blocked", label: "Bloqueada", bg: "#FEF2F2", border: "#FCA5A5", color: "#B91C1C" },
 ];
 
 function StatusDropdown({ slug, section, pillar, status }: { slug: string; section: string; pillar: string; status: string }) {
@@ -50,7 +53,7 @@ function StatusDropdown({ slug, section, pillar, status }: { slug: string; secti
   return (
     <select
       value={status}
-      onChange={(e) => mutate({ slug, section, pillar, status: e.target.value as PillarStatus })}
+      onChange={(e) => mutate({ slug, section, pillar, status: e.target.value as TaskStatus })}
       className="px-2 py-1 text-xs font-semibold rounded-md cursor-pointer border"
       style={{ background: current.bg, borderColor: current.border, color: current.color }}
     >
@@ -76,7 +79,7 @@ function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const cb = sections["company-brief"];
   if (!cb) return done;
   for (const [cbName, pInfo] of Object.entries(cb.pillars || {})) {
-    if (["approved", "done"].includes(pInfo.status)) {
+    if (pInfo.status === "completed") {
       done.add(FF_PILLAR_MAP[cbName] || cbName);
     }
   }
@@ -95,8 +98,8 @@ function calcBrandBrainStats(brandBrain: BrandBrainState | undefined) {
       if (pInfo.optional) continue;
       total++;
       const effective =
-        pInfo.status === "not-started" && ffDone.has(pName) ? "approved" : pInfo.status;
-      if (["approved", "done"].includes(effective)) approved++;
+        pInfo.status === "todo" && ffDone.has(pName) ? "completed" : pInfo.status;
+      if (effective === "completed") approved++;
     }
   }
   return { approved, total, pct: total > 0 ? Math.round((approved / total) * 100) : 0 };
@@ -368,12 +371,12 @@ export default function BrandBrainPage() {
       setSelectedDoc({
         sectionKey: "",
         pillarKey: "visual-identity",
-        pillar: { status: "approved" } as Pillar,
+        pillar: { status: "completed" } as Pillar,
         docPath: docParam,
       });
       return;
     }
-    setSelectedDoc({ sectionKey: "", pillarKey: docParam.split("/").pop()?.replace(".md", "") || "", pillar: { status: "approved" } as Pillar, docPath: docParam });
+    setSelectedDoc({ sectionKey: "", pillarKey: docParam.split("/").pop()?.replace(".md", "") || "", pillar: { status: "completed" } as Pillar, docPath: docParam });
   }, [router.query.doc, brandBrain, selectedDoc]);
 
   const handleSelectDoc = useCallback(
@@ -414,7 +417,7 @@ export default function BrandBrainPage() {
       setSelectedDoc({
         sectionKey: "",
         pillarKey,
-        pillar: { status: "approved" } as Pillar,
+        pillar: { status: "completed" } as Pillar,
         docPath,
         parentPillar,
       });
@@ -487,9 +490,8 @@ export default function BrandBrainPage() {
       .replace(/\b\w/g, (c: string) => c.toUpperCase());
     const displayPath = selectedDoc.docPath.replace(/^brand\/[^/]+\//, "");
     const normStatus =
-      (selectedDoc.pillar.status as string) === "done" ? "approved"
-        : selectedDoc.pillar.status === "generated" ? "pending-review"
-          : selectedDoc.pillar.status || "not-started";
+      (selectedDoc.pillar.status as string) === "done" ? "completed"
+        : selectedDoc.pillar.status || "todo";
 
     const btnClass = "inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] bg-transparent border border-[#E5E2DC] dark:border-[#313244] rounded-md cursor-pointer text-[#7A7A7A] dark:text-[#6c7086] hover:bg-[#E5E2DC] dark:hover:bg-[#313244] hover:text-[#1A1A1A] dark:hover:text-[#cdd6f4] transition-colors";
 

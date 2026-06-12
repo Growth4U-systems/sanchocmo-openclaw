@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
+import { assembleBrandBrainState, brandExists } from "@/lib/data/brand-brain-assembler";
 import { withErrorHandler, withAuth, compose } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
@@ -187,10 +188,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const pillar = req.query.pillar as string;
   if (!slug || !section || !pillar) return res.status(400).json({ error: "Missing params" });
 
-  const stateFile = path.join(BASE, "brand", slug, "foundation-state.json");
-  if (!fs.existsSync(stateFile)) return res.status(404).json({ error: "Not found" });
+  if (!brandExists(slug)) return res.status(404).json({ error: "Not found" });
 
-  const state = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
+  const state = assembleBrandBrainState(slug);
   const pillarInfo = state.sections?.[section]?.pillars?.[pillar];
   if (!pillarInfo?.output_file) return res.json({ ok: true, subfolders: [], versions: [], otherFiles: [] });
 

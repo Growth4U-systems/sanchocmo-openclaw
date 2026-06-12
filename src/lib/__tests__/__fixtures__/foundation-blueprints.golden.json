@@ -36,7 +36,6 @@
         "pillar": "company-brief",
         "section": "company-brief",
         "mc_chat_thread_id": "task-p00-cb-t01",
-        "discord_thread_id": null,
         "done_criteria": "Archivo company-brief.current.md generado y validado por el cliente."
       }
     ]
@@ -78,7 +77,6 @@
         "pillar": "market-analysis",
         "section": "market-and-us",
         "mc_chat_thread_id": "task-p00-ful-t01",
-        "discord_thread_id": null,
         "done_criteria": "Análisis aprobado con datos verificables."
       },
       {
@@ -98,7 +96,6 @@
         "pillar": "competitor-analysis",
         "section": "market-and-us",
         "mc_chat_thread_id": "task-p00-ful-t02",
-        "discord_thread_id": null,
         "done_criteria": "Mínimo 5 competidores mapeados."
       },
       {
@@ -118,7 +115,6 @@
         "pillar": "self-analysis",
         "section": "market-and-us",
         "mc_chat_thread_id": "task-p00-ful-t03",
-        "discord_thread_id": null,
         "done_criteria": "3 lenses completas. Assets únicos identificados."
       },
       {
@@ -146,7 +142,6 @@
         "pillar": "market-synthesis",
         "section": "market-and-us",
         "mc_chat_thread_id": "task-p00-ful-t04",
-        "discord_thread_id": null,
         "done_criteria": "Summary aprobado. SWOT con oportunidades y amenazas priorizadas. Presentación lista."
       },
       {
@@ -166,7 +161,6 @@
         "pillar": "niche-discovery",
         "section": "go-to-market",
         "mc_chat_thread_id": "task-p00-ful-t05",
-        "discord_thread_id": null,
         "done_criteria": "ECPs profundos documentados con datos verificables. Nichos priorizados por TAM y fit."
       },
       {
@@ -186,7 +180,6 @@
         "pillar": "positioning",
         "section": "go-to-market",
         "mc_chat_thread_id": "task-p00-ful-t06",
-        "discord_thread_id": null,
         "done_criteria": "Posicionamiento aprobado. Mensajes diferenciados para cada ECP."
       },
       {
@@ -206,7 +199,6 @@
         "pillar": "pricing",
         "section": "go-to-market",
         "mc_chat_thread_id": "task-p00-ful-t07",
-        "discord_thread_id": null,
         "done_criteria": "Pricing aprobado. Tiers documentados."
       },
       {
@@ -226,7 +218,6 @@
         "pillar": "brand-voice",
         "section": "brand-book",
         "mc_chat_thread_id": "task-p00-ful-t08",
-        "discord_thread_id": null,
         "done_criteria": "Voice guide aprobada. AI Brand Kit ready."
       },
       {
@@ -246,7 +237,6 @@
         "pillar": "visual-identity",
         "section": "brand-book",
         "mc_chat_thread_id": "task-p00-ful-t09",
-        "discord_thread_id": null,
         "done_criteria": "Visual identity aprobada. Assets exportados."
       },
       {
@@ -266,7 +256,6 @@
         "pillar": "foundation-presentation",
         "section": "market-and-us",
         "mc_chat_thread_id": "task-p00-ful-t10",
-        "discord_thread_id": null,
         "done_criteria": "Deck generado y revisado con el cliente."
       },
       {
@@ -286,7 +275,6 @@
         "pillar": "existing-customer-data",
         "section": "go-to-market",
         "mc_chat_thread_id": "task-p00-ful-t11",
-        "discord_thread_id": null,
         "done_criteria": "Análisis generado a partir de datos reales del cliente, o tarea descartada si no hay datos."
       },
       {
@@ -306,7 +294,6 @@
         "pillar": "ecp-validation",
         "section": "go-to-market",
         "mc_chat_thread_id": "task-p00-ful-t12",
-        "discord_thread_id": null,
         "done_criteria": "ECPs validados o ajustados con evidencia documentada."
       },
       {
@@ -329,7 +316,6 @@
         "pillar": "gtm-presentation",
         "section": "go-to-market",
         "mc_chat_thread_id": "task-p00-ful-t13",
-        "discord_thread_id": null,
         "done_criteria": "Deck GTM generado y revisado con el cliente."
       },
       {
@@ -352,7 +338,6 @@
         "pillar": "brand-report",
         "section": "brand-book",
         "mc_chat_thread_id": "task-p00-ful-t14",
-        "discord_thread_id": null,
         "done_criteria": "Brand report generado con voz e identidad aprobadas."
       }
     ]
@@ -394,7 +379,6 @@
         "pillar": "metrics-setup",
         "section": "metrics-setup",
         "mc_chat_thread_id": "task-p00-met-t01",
-        "discord_thread_id": null,
         "done_criteria": "Métricas definidas y aprobadas. Tareas de conexión generadas automáticamente."
       },
       {
@@ -411,7 +395,6 @@
         "skill": "meeting-intelligence",
         "agent": "hamete",
         "mc_chat_thread_id": "task-p00-met-t08",
-        "discord_thread_id": null,
         "done_criteria": "google_drive_folder_id configurado y Meeting Intelligence ejecutado con al menos 1 reunión.",
         "notes": "1) Crea o identifica una carpeta en Google Drive con tus notas de reuniones. 2) Comparte la carpeta con el agente. 3) Sancho configurará Meeting Intelligence automáticamente. Corre L-V a las 18h."
       },
@@ -429,7 +412,6 @@
         "skill": "sales-call-prep",
         "agent": "rocinante",
         "mc_chat_thread_id": "task-p00-met-t09",
-        "discord_thread_id": null,
         "done_criteria": "Call Prep ejecutado con al menos 1 briefing generado.",
         "notes": "Requiere: acceso a tu calendario + CRM con datos de leads. Dile a Sancho qué CRM usas y él configurará la integración."
       },
@@ -447,7 +429,6 @@
         "skill": "daily-pulse",
         "agent": "hamete",
         "mc_chat_thread_id": "task-p00-met-t10",
-        "discord_thread_id": null,
         "done_criteria": "Daily Pulse ejecutado con al menos 1 fuente conectada.",
         "notes": "Abre esta tarea y dile a Sancho qué herramientas de comunicación usa tu empresa. Él te guiará paso a paso para conectar cada una. Cuantas más fuentes conectes, más completo será tu Daily Pulse.",
         "connectors": [
@@ -541,7 +522,6 @@
         "pillar": "strategic-plan",
         "section": "strategic-plan",
         "mc_chat_thread_id": "task-p00-sp-t01",
-        "discord_thread_id": null,
         "done_criteria": "Plan aprobado. Proyectos P01+ creados en Mission Control."
       },
       {
@@ -558,7 +538,6 @@
         "skill": "strategic-plan",
         "agent": "sancho",
         "mc_chat_thread_id": "task-p00-sp-t02",
-        "discord_thread_id": null,
         "done_criteria": "Proyectos creados y en ejecución."
       },
       {
@@ -578,7 +557,6 @@
         "pillar": "strategic-presentation",
         "section": "strategic-plan",
         "mc_chat_thread_id": "task-p00-sp-t03",
-        "discord_thread_id": null,
         "done_criteria": "Deck estratégico generado y revisado con el cliente."
       }
     ]

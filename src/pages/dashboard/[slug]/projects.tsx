@@ -93,6 +93,7 @@ function sortByStatus(a: ProjectWithTasks, b: ProjectWithTasks): number {
 const KANBAN_TASK_COLS = [
   { key: "todo", label: "Por hacer", statuses: ["todo", "pending", "ready"], icon: "📋" },
   { key: "in-progress", label: "En progreso", statuses: ["in-progress", "in_progress"], icon: "🔧" },
+  { key: "pending-review", label: "Pendiente revisión", statuses: ["pending-review"], icon: "👀" },
   { key: "blocked", label: "Bloqueado", statuses: ["blocked"], icon: "⛔" },
   { key: "done", label: "Completado", statuses: ["completed", "done"], icon: "✅" },
   { key: "discarded", label: "Descartado", statuses: ["discarded", "cancelled"], icon: "🗑️" },

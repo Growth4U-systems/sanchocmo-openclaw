@@ -216,7 +216,6 @@ export function instantiateTaskSet(section: string, ctx: { slug: string; project
       ...(t.pillar ? { pillar: t.pillar } : {}),
       ...(t.section ? { section: t.section } : {}),
       mc_chat_thread_id: `task-${projectId.toLowerCase()}-${t.taskKey.toLowerCase()}`,
-      discord_thread_id: null,
       ...(t.extra ?? {}),
     };
   });

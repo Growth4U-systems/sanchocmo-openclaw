@@ -415,7 +415,6 @@ export type ContentTaskUpdateInput = Partial<
     | "target_channels"
     | "documents"
     | "mc_chat_thread_id"
-    | "discord_thread_id"
     | "owner"
     | "scheduled_for"
     | "clarify_status"
@@ -430,7 +429,6 @@ const UPDATABLE_FIELDS: readonly (keyof ContentTaskUpdateInput)[] = [
   "target_channels",
   "documents",
   "mc_chat_thread_id",
-  "discord_thread_id",
   "owner",
   "scheduled_for",
   "clarify_status",

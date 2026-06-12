@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
+import { resolveCoveringTask } from "@/lib/data/foundation-status";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
@@ -39,40 +40,26 @@ interface TaskShape {
   owner: string;
   skill: string;
   mc_chat_thread_id: string;
-  discord_thread_id: string | null;
 }
 
-interface FoundationStateShape {
-  sections?: Record<string, { pillars?: Record<string, { status?: string }> }>;
-}
-
-/** Prerequisite: the brand needs `visual-identity` pillar approved in
- *  Foundation L5 before we let a Visual Templates task be created. The
+/** Prerequisite: the brand needs the `visual-identity` pillar task completed
+ *  (Foundation L5) before we let a Visual Templates task be created. The
  *  visual-generator skill needs design-tokens.json + visual-identity-current.md
- *  to produce the HTMLs — without those it has nothing to consume. */
+ *  to produce the HTMLs — without those it has nothing to consume.
+ *  SAN-183 F5: el status vive en la task 1:1 del pilar, no en foundation-state. */
 function checkVisualIdentityApproved(slug: string): { ok: true } | { ok: false; reason: string } {
-  const fsPath = path.join(BASE, "brand", slug, "foundation-state.json");
-  if (!fs.existsSync(fsPath)) {
-    return { ok: false, reason: "No existe foundation-state.json. ¿Está la brand en Foundation?" };
-  }
-  let foundation: FoundationStateShape;
-  try {
-    foundation = JSON.parse(fs.readFileSync(fsPath, "utf-8")) as FoundationStateShape;
-  } catch {
-    return { ok: false, reason: "foundation-state.json no parseable." };
-  }
-  for (const section of Object.values(foundation.sections || {})) {
-    const vi = section.pillars?.["visual-identity"];
-    if (!vi) continue;
-    if (vi.status === "approved" || vi.status === "done") return { ok: true };
+  const covering = resolveCoveringTask(slug, "visual-identity");
+  if (!covering) {
     return {
       ok: false,
-      reason: `El pillar visual-identity está en estado "${vi.status || "not-started"}", no "approved". Lanza primero la skill visual-identity para definir paleta, tipografía y logo.`,
+      reason: "No hay task de visual-identity (proyectos P00 sin sembrar). Lanza primero Foundation.",
     };
   }
+  const status = String(covering.task.status || "todo");
+  if (status === "completed") return { ok: true };
   return {
     ok: false,
-    reason: "El pillar visual-identity no existe en foundation-state.json. Lanza primero la skill visual-identity (Foundation Layer 5).",
+    reason: `El pillar visual-identity está en estado "${status}", no "completed". Lanza primero la skill visual-identity para definir paleta, tipografía y logo.`,
   };
 }
 
@@ -183,7 +170,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     owner: "Sancho",
     skill: targetSkill,
     mc_chat_thread_id: `task-${newId.toLowerCase()}`,
-    discord_thread_id: null,
   };
 
   tasks.push(task);

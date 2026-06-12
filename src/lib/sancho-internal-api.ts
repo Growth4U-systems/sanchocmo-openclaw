@@ -2,10 +2,11 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import type { NextApiRequest, NextApiResponse } from "next";
-import type { Client, FoundationState, Project, Task } from "@/types";
+import type { Client, Project, Task } from "@/types";
 import { loadClient, loadClients } from "@/lib/data/clients";
 import { readJSON, readText } from "@/lib/data/json-io";
-import { BASE, brandDir, foundationStateFile } from "@/lib/data/paths";
+import { BASE, brandDir } from "@/lib/data/paths";
+import { assembleBrandBrainState } from "@/lib/data/brand-brain-assembler";
 
 export type SanchoClientStatus = "active" | "paused" | "done" | "unknown";
 export type SanchoWorkStatus =
@@ -433,12 +434,9 @@ function collectProjectWork(slug: string): SanchoWorkItem[] {
 }
 
 function collectFoundationWork(slug: string): SanchoWorkItem[] {
-  const state = readJSON<Partial<FoundationState>>(
-    foundationStateFile(slug),
-    {}
-  );
+  const state = assembleBrandBrainState(slug);
   const sections = state.sections || {};
-  const updatedAt = firstString(state.updated_at, statIso(foundationStateFile(slug)));
+  const updatedAt = firstString(state.updated_at);
   const work: SanchoWorkItem[] = [];
 
   for (const [sectionKey, section] of Object.entries(sections)) {
@@ -630,8 +628,6 @@ function walkMarkdownFiles(rootDir: string, maxDepth: number): FileHit[] {
 function getLastActivityAt(slug: string): string | null {
   const files = walkMarkdownFiles(brandDir(slug), 8);
   const dates = files.map((file) => file.stats.mtime.toISOString());
-  const foundationStat = statIso(foundationStateFile(slug));
-  if (foundationStat) dates.push(foundationStat);
   return maxIso(dates);
 }
 

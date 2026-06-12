@@ -1,32 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withAuth, withErrorHandler, compose, canAccessSlug } from "@/lib/api-middleware";
 import {
-  setPillarStatus,
-  normalizePillarStatus,
-} from "@/lib/data/pillar-task-sync";
+  setPillarStatusViaTask,
+  normalizeTaskStatus,
+  isLegacyStatusAlias,
+} from "@/lib/data/foundation-status";
+import { VALID_TASK_STATUSES } from "@/types";
 import { provisionYalcBrain } from "@/lib/yalc/provision";
-
-const RESYNC_STATUSES = new Set(["approved", "completed", "done"]);
-
-const VALID_STATUSES = [
-  "approved",
-  "completed",
-  "done",
-  "pending-review",
-  "not-started",
-  "in-progress",
-  "generated",
-  "request-changes",
-  "request-refresh",
-];
 
 /**
  * POST /api/brand-brain/pillar-status
  *
- * Updates a pillar's status in foundation-state.json AND propagates the
- * change to any matching foundation tasks in tasks.json files across all
- * projects of the slug. Both writes happen via `setPillarStatus` in
- * `lib/data/pillar-task-sync.ts`.
+ * Escribe el status de un pilar de Foundation — es decir, el status de SU
+ * task 1:1 (SAN-183 F5: las tasks son la única fuente; el árbol de
+ * foundation-state.json murió). Sin dual-write ni reconcile.
+ *
+ * Vocabulario canónico: VALID_TASK_STATUSES (todo|in-progress|pending-review|
+ * completed|blocked|cancelled). Los valores del vocabulario de pilar muerto
+ * (approved, not-started, generated, done…) se aceptan como ALIASES LEGACY
+ * transicionales y se normalizan con deprecation warning — retirar cuando las
+ * sesiones de agente ciclen (follow-up en Linear).
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -45,22 +38,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  if (!VALID_STATUSES.includes(status)) {
-    return res.status(400).json({ error: "Invalid status: " + status });
+  const lowered = String(status).toLowerCase();
+  if (
+    !(VALID_TASK_STATUSES as readonly string[]).includes(lowered) &&
+    !isLegacyStatusAlias(lowered)
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Invalid status: " + status, valid: VALID_TASK_STATUSES });
   }
 
-  const result = setPillarStatus(slug, section, pillar, status, { comment });
+  const canonical = normalizeTaskStatus(lowered);
+  const result = setPillarStatusViaTask(slug, section, pillar, lowered, { comment });
 
   if (!result.ok) {
     const code = result.error?.includes("not found") ? 404 : 500;
-    return res.status(code).json({ error: result.error || "sync failed" });
+    return res.status(code).json({ error: result.error || "status write failed" });
   }
 
-  // An approved pillar changes the brand's doctrine — re-sync the YALC brain
-  // so outbound runs on the freshly approved Foundation. Fire-and-forget so
-  // the approval response isn't blocked by synthesis; provisioning is
-  // idempotent, so repeated approvals are safe.
-  if (RESYNC_STATUSES.has(status) && result.pillarChanged) {
+  // Un pilar completado cambia la doctrina del brand — re-sync del brain de
+  // YALC para que el outbound corra sobre la Foundation recién aprobada.
+  // Fire-and-forget; el provisioning es idempotente.
+  if (canonical === "completed" && result.pillarChanged) {
     void provisionYalcBrain(slug).catch((err) =>
       console.error(`[pillar-status] YALC brain re-sync failed for ${slug}:`, err),
     );
@@ -73,7 +72,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     pillar,
     oldStatus: result.oldStatus,
     newStatus: result.newStatus,
-    canonicalStatus: normalizePillarStatus(status),
+    canonicalStatus: canonical,
     pillarChanged: result.pillarChanged,
     tasksChanged: result.tasksChanged,
   });
