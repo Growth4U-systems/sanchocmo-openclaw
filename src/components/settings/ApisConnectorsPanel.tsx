@@ -40,6 +40,7 @@ interface ApiCatalog {
 interface SystemEnvField {
   label: string;
   placeholder?: string;
+  help?: string;
   masked: string;
   hasValue: boolean;
 }
@@ -728,6 +729,9 @@ function SystemEnvPanel({
                       {field.hasValue ? field.masked : "sin valor"}
                     </span>
                   </div>
+                  {field.help && (
+                    <p className="text-[11px] leading-snug text-muted-foreground">{field.help}</p>
+                  )}
                   <div className="relative">
                     <input
                       type={isVisible ? "text" : "password"}
