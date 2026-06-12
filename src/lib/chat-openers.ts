@@ -77,7 +77,7 @@
 // ============================================================
 
 import { resolveThreadSkills, type SkillContext } from "./skill-resolver";
-import { getChatEntry, getChatOpener } from "./data/task-blueprints";
+import { getChatEntry, getThreadOpener } from "./data/task-blueprints";
 
 export interface ThreadConfig {
   threadId: string;
@@ -162,12 +162,12 @@ export function instantiateEntry(key: string, ctx: { slug: string; params?: Reco
 }
 
 /**
- * Resolve a declared opener (chatOpeners in the manifest) for a thread whose
+ * Resolve a declared opener (threadOpeners in the manifest) for a thread whose
  * identity is built by the caller. Substitutes {slug}+{params}; returns
  * undefined if the key isn't declared. SAN-179.
  */
 export function resolveOpener(key: string, vars: Record<string, string>): string | undefined {
-  const tpl = getChatOpener(key);
+  const tpl = getThreadOpener(key);
   return tpl ? substEntryTemplate(tpl, vars) : undefined;
 }
 
@@ -992,7 +992,7 @@ export function buildVisualIdentityChatThread(
   const blockSafe = block ? block.toLowerCase().replace(/[^a-z0-9-]+/g, "-") : "all";
   const cfg = instantiateEntry("visual-identity", { slug, params: { blockSafe } });
   // The entry holds the no-block defaults (threadName + opener). Only override
-  // for a specific block; the block opener lives in chatOpeners.
+  // for a specific block; the block opener lives in threadOpeners.
   if (block) {
     cfg.threadName = `🎨 Visual Identity — ${block}`;
     cfg.initialMessage = resolveOpener("visual-identity-block", { block });

@@ -375,8 +375,8 @@
       "threadState": "continue"
     }
   },
-  "_chatOpeners_comment": "SAN-179 — openers (initialMessage) sueltos, templados con {slug}+{params}, para hilos cuya IDENTIDAD se construye con lógica propia del builder (no un chatEntry completo): conversión a HTML, setup de Meeting Intelligence, y los openers por módulo del Trust Engine (un único hilo, opener distinto por módulo). resolveOpener(key, vars) los lee. Sin agente (no son declaraciones de hilo).",
-  "chatOpeners": {
+  "_threadOpeners_comment": "SAN-179 — openers (initialMessage) sueltos, templados con {slug}+{params}, para hilos cuya IDENTIDAD se construye con lógica propia del builder (no un chatEntry completo): conversión a HTML, setup de Meeting Intelligence, y los openers por módulo del Trust Engine (un único hilo, opener distinto por módulo). resolveOpener(key, vars) los lee. Sin agente (no son declaraciones de hilo).",
+  "threadOpeners": {
     "html-conversion": "Convierte {docPath} a HTML con la skill html-output: genera el .html self-contained junto al .md (mismo nombre de fichero), con la identidad visual del brand si existe, siguiendo _system/output/html-canonical-protocol.md. Al terminar, confírmame la ruta exacta del .html.",
     "meeting-intelligence-setup": "Configura Meeting Intelligence para este cliente: valida APIs/MCP, localiza y confirma la carpeta de Drive (URL/ID solo como fallback), elige la base/página de Notion y sus filtros, y deja listo el primer run sin tocar documentos canónicos.",
     "trust-engine:foundation-import": "Revisemos la configuración del Trust Engine de {slug}: verifica que nichos, subnichos y competidores están bien definidos antes de las auditorías.",
