@@ -486,6 +486,29 @@ export function resolveFullThreadConfig(
     };
   }
 
+  // ── No task: content-flavored threads still belong to Dulcinea ──
+  // Reopening a content draft/idea/calendar/cron thread whose task isn't in the
+  // loaded projectsData (e.g. a weekly P-Content-Semana-NN project not listed)
+  // must NOT fall back to Sancho. These namespaces are owned by the content
+  // writer. (The full fix is task=thread unification; this keeps the agent
+  // correct meanwhile.) Root cause of "Content → Ideas sigue saliendo Sancho".
+  const contentNs: Record<string, string> = {
+    content: "social-writer",
+    idea: "seo-content",
+    calendar: "content-calendar-planner",
+    cron: "idea-generation",
+  };
+  const contentMatch = shortId.match(/^(content|idea|calendar|cron)[-:](.+)$/i);
+  if (contentMatch) {
+    const ns = contentMatch[1].toLowerCase();
+    const skill = contentNs[ns];
+    return {
+      threadId, threadName: shortId.replace(/[-_:]/g, " "),
+      skill, skills: [skill], agent: "dulcinea",
+      linkedTo: `${ns}/${contentMatch[2]}`, docPath: null, threadState: "continue",
+    };
+  }
+
   // ── No task: handle typed threads ────────────────────────────
   if (/^(competitor-scan|meta-ads-scan|linkedin-scan)$/i.test(shortId)) {
     return {
@@ -494,7 +517,7 @@ export function resolveFullThreadConfig(
       docPath: null, threadState: "continue",
     };
   }
-  if (/^(strategy|idea|recurring)[-:]/i.test(shortId)) {
+  if (/^(strategy|recurring)[-:]/i.test(shortId)) {
     const m = shortId.match(/^([a-z]+)[-:](.+)$/i);
     if (m) {
       return {
