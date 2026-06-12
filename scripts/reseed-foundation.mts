@@ -127,23 +127,9 @@ act("mkdir árbol canónico", () => {
 // --- 3. Escribir templates canónicos ---
 console.log("\n🏗️ [3/3] Escribiendo templates canónicos...");
 if (dryRun) {
-  console.log("  [dry-run] foundation-state.json + 4 proyectos (CB/Full/Metrics/Strategic-Plan)");
+  console.log("  [dry-run] 4 proyectos (CB/Full/Metrics/Strategic-Plan)");
   console.log("\n✓ Reseed dry-run complete.");
   process.exit(0);
-}
-
-// Foundation state v3 (transicional — muere en F5 PR4; lo siembra la default igual que clients/create.ts)
-const templatePath = path.join(process.cwd(), "config", "foundation-state.default.json");
-if (fs.existsSync(templatePath)) {
-  const now = new Date().toISOString();
-  const seeded = fs.readFileSync(templatePath, "utf-8")
-    .replaceAll("__SLUG__", slug)
-    .replaceAll("__NAME__", name)
-    .replaceAll("__NOW__", now);
-  fs.writeFileSync(stateFile, seeded);
-  console.log("  ✓ foundation-state.json (v3.0, todos los pilares not-started)");
-} else {
-  console.log("  ⚠ config/foundation-state.default.json no encontrado — estado legacy no sembrado");
 }
 
 // Los 4 proyectos P00 desde el registro declarativo
