@@ -78,6 +78,8 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_get_client_context",
       "sancho_get_document",
       "sancho_get_task",
+      // SAN-17: public intake-form link (stateless token, read-only)
+      "sancho_intake_create_link",
       "sancho_list_chat_threads",
       "sancho_list_clients",
       "sancho_list_documents",

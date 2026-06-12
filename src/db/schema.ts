@@ -527,3 +527,21 @@ export const feedbackInsights = pgTable("feedback_insights", {
   index("feedback_insights_slug_status_idx").on(table.slug, table.status),
   index("feedback_insights_run_idx").on(table.runId),
 ]);
+
+// ============================================================
+// Intake submissions (SAN-17) — public kickoff form
+// ============================================================
+
+export const intakeSubmissions = pgTable("intake_submissions", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  respondentName: text("respondent_name").notNull(),
+  respondentEmail: text("respondent_email"),
+  answers: jsonb("answers").notNull(),
+  status: text("status").notNull().default("submitted"),
+  attachments: jsonb("attachments"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  submittedAt: timestamp("submitted_at").notNull().defaultNow(),
+}, (table) => [
+  index("intake_submissions_slug_idx").on(table.slug),
+]);
