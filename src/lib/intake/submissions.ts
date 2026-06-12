@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/drizzle";
 import { intakeSubmissions } from "@/db/schema";
 import type { NewIntakeSubmission } from "./validate";
+import type { IntakeAttachment } from "./attachments";
 
 export interface IntakeSubmissionRow {
   id: string;
@@ -17,6 +18,7 @@ export interface IntakeSubmissionRow {
   respondentName: string;
   respondentEmail: string | null;
   answers: Record<string, string>;
+  attachments?: IntakeAttachment[];
   status: string;
   createdAt: Date;
   submittedAt: Date;
@@ -25,6 +27,7 @@ export interface IntakeSubmissionRow {
 export async function upsertIntakeSubmission(
   slug: string,
   input: NewIntakeSubmission,
+  attachments?: IntakeAttachment[],
 ): Promise<IntakeSubmissionRow> {
   const now = new Date();
   const [row] = await db
@@ -35,6 +38,7 @@ export async function upsertIntakeSubmission(
       respondentName: input.respondentName,
       respondentEmail: input.respondentEmail,
       answers: input.answers,
+      attachments: attachments ?? null,
       status: "submitted",
       submittedAt: now,
     })
@@ -44,6 +48,7 @@ export async function upsertIntakeSubmission(
         respondentName: input.respondentName,
         respondentEmail: input.respondentEmail,
         answers: input.answers,
+        attachments: attachments ?? null,
         status: "submitted",
         submittedAt: now,
       },

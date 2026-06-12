@@ -10,6 +10,7 @@ import fs from "fs";
 import path from "path";
 import { brandDir } from "@/lib/data/paths";
 import { INTAKE_QUESTIONS, INTAKE_SECTIONS } from "./questions";
+import type { IntakeAttachment } from "./attachments";
 
 export interface IntakeRenderInput {
   clientName: string;
@@ -17,6 +18,7 @@ export interface IntakeRenderInput {
   respondentEmail: string | null;
   submittedAt: Date;
   answers: Record<string, string>;
+  attachments?: IntakeAttachment[];
 }
 
 export function renderIntakeMarkdown(input: IntakeRenderInput): string {
@@ -48,6 +50,15 @@ export function renderIntakeMarkdown(input: IntakeRenderInput): string {
       lines.push(input.answers[q.id]);
       lines.push("");
     }
+  }
+
+  if (input.attachments && input.attachments.length > 0) {
+    lines.push("## Adjuntos");
+    lines.push("");
+    for (const att of input.attachments) {
+      lines.push(`- [${att.filename}](${att.url})`);
+    }
+    lines.push("");
   }
 
   return lines.join("\n").trimEnd() + "\n";

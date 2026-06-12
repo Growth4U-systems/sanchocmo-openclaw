@@ -29,3 +29,37 @@ test("omits questions with no answer", () => {
   });
   assert.doesNotMatch(md, /Competidores principales/);
 });
+
+test("renders Adjuntos section with markdown links when attachments are passed", () => {
+  const md = renderIntakeMarkdown({
+    clientName: "Acme", respondentName: "Ana", respondentEmail: "ana@acme.com",
+    submittedAt: new Date("2026-06-12T10:00:00Z"),
+    answers: { company_name: "Acme" },
+    attachments: [
+      { url: "https://cdn.example.com/brief.pdf", filename: "brief.pdf", mimeType: "application/pdf", size: 54321 },
+      { url: "https://cdn.example.com/logo.png", filename: "logo.png" },
+    ],
+  });
+  assert.match(md, /## Adjuntos/);
+  assert.match(md, /\[brief\.pdf\]\(https:\/\/cdn\.example\.com\/brief\.pdf\)/);
+  assert.match(md, /\[logo\.png\]\(https:\/\/cdn\.example\.com\/logo\.png\)/);
+});
+
+test("does not render Adjuntos section when no attachments", () => {
+  const md = renderIntakeMarkdown({
+    clientName: "Acme", respondentName: "Ana", respondentEmail: null,
+    submittedAt: new Date("2026-06-12T10:00:00Z"),
+    answers: { company_name: "Acme" },
+  });
+  assert.doesNotMatch(md, /## Adjuntos/);
+});
+
+test("does not render Adjuntos section when attachments is empty array", () => {
+  const md = renderIntakeMarkdown({
+    clientName: "Acme", respondentName: "Ana", respondentEmail: null,
+    submittedAt: new Date("2026-06-12T10:00:00Z"),
+    answers: { company_name: "Acme" },
+    attachments: [],
+  });
+  assert.doesNotMatch(md, /## Adjuntos/);
+});
