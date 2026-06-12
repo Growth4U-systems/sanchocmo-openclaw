@@ -23,20 +23,42 @@ export interface SequenceEditorProps {
 export function SequenceEditor({ editor, onChange, onSave, saving }: SequenceEditorProps) {
   const lastTextarea = useRef<HTMLTextAreaElement | null>(null);
 
-  function insertVariable(variable: string) {
+  function patchStep(index: number, patch: Partial<TemplateStep>) {
+    onChange({ ...editor, steps: editor.steps.map((s, i) => (i === index ? { ...s, ...patch } : s)) });
+  }
+
+  function applyToBody(transform: (value: string, start: number, end: number) => { value: string; caret: number }) {
     const ta = lastTextarea.current;
     if (!ta) return;
     const index = Number(ta.dataset.step ?? -1);
     if (!Number.isInteger(index) || index < 0 || index >= editor.steps.length) return;
     const start = ta.selectionStart ?? ta.value.length;
     const end = ta.selectionEnd ?? ta.value.length;
-    const value = ta.value.slice(0, start) + variable + ta.value.slice(end);
-    const steps = editor.steps.map((step, i) => (i === index ? { ...step, body: value } : step));
-    onChange({ ...editor, steps });
+    const { value, caret } = transform(ta.value, start, end);
+    patchStep(index, { body: value });
     requestAnimationFrame(() => {
       ta.focus();
-      ta.selectionStart = ta.selectionEnd = start + variable.length;
+      ta.selectionStart = ta.selectionEnd = caret;
     });
+  }
+
+  function insertText(text: string) {
+    applyToBody((value, start, end) => ({
+      value: value.slice(0, start) + text + value.slice(end),
+      caret: start + text.length,
+    }));
+  }
+
+  function wrapSelection(token: string) {
+    applyToBody((value, start, end) => {
+      const sel = value.slice(start, end);
+      const wrapped = `${token}${sel}${token}`;
+      return { value: value.slice(0, start) + wrapped + value.slice(end), caret: start + token.length + sel.length + token.length };
+    });
+  }
+
+  function insertVariable(variable: string) {
+    insertText(variable);
   }
 
   return (
@@ -118,10 +140,7 @@ export function SequenceEditor({ editor, onChange, onSave, saving }: SequenceEdi
                 value={step.delayDays}
                 onChange={(e) => {
                   const delayDays = Math.max(1, parseInt(e.target.value, 10) || 1);
-                  onChange({
-                    ...editor,
-                    steps: editor.steps.map((s, i) => (i === index ? { ...s, delayDays } : s)),
-                  });
+                  patchStep(index, { delayDays });
                 }}
                 className="w-14 rounded-md border border-border bg-background px-2 py-0.5 text-center text-sm focus:border-rust focus:outline-none"
                 data-testid={`step-delay-${index}`}
@@ -136,12 +155,7 @@ export function SequenceEditor({ editor, onChange, onSave, saving }: SequenceEdi
               </span>
               <input
                 value={step.title}
-                onChange={(e) =>
-                  onChange({
-                    ...editor,
-                    steps: editor.steps.map((s, i) => (i === index ? { ...s, title: e.target.value } : s)),
-                  })
-                }
+                onChange={(e) => patchStep(index, { title: e.target.value })}
                 className="w-32 rounded border border-border bg-background px-2 py-0.5 text-xs font-semibold focus:border-rust focus:outline-none"
                 title="Título del paso"
               />
@@ -149,12 +163,7 @@ export function SequenceEditor({ editor, onChange, onSave, saving }: SequenceEdi
                 <input
                   value={step.subject ?? ""}
                   placeholder="Asunto…"
-                  onChange={(e) =>
-                    onChange({
-                      ...editor,
-                      steps: editor.steps.map((s, i) => (i === index ? { ...s, subject: e.target.value } : s)),
-                    })
-                  }
+                  onChange={(e) => patchStep(index, { subject: e.target.value })}
                   className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-0.5 text-xs focus:border-rust focus:outline-none"
                   data-testid={`step-subject-${index}`}
                 />
@@ -172,18 +181,19 @@ export function SequenceEditor({ editor, onChange, onSave, saving }: SequenceEdi
                 </button>
               )}
             </div>
+            <div className="mb-1 flex gap-1">
+              <button type="button" title="Negrita" onClick={() => wrapSelection("**")} className="grid h-6 w-6 place-items-center rounded border border-border bg-muted/40 text-xs font-bold hover:bg-muted">B</button>
+              <button type="button" title="Cursiva" onClick={() => wrapSelection("*")} className="grid h-6 w-6 place-items-center rounded border border-border bg-muted/40 text-xs italic hover:bg-muted">i</button>
+              <button type="button" title="Enlace" onClick={() => insertText("[texto](https://)")} className="grid h-6 w-6 place-items-center rounded border border-border bg-muted/40 text-xs hover:bg-muted">🔗</button>
+              <button type="button" title="Lista" onClick={() => insertText("\n- ")} className="grid h-6 w-6 place-items-center rounded border border-border bg-muted/40 text-xs hover:bg-muted">•</button>
+            </div>
             <textarea
               value={step.body}
               data-step={index}
               onFocus={(e) => {
                 lastTextarea.current = e.currentTarget;
               }}
-              onChange={(e) =>
-                onChange({
-                  ...editor,
-                  steps: editor.steps.map((s, i) => (i === index ? { ...s, body: e.target.value } : s)),
-                })
-              }
+              onChange={(e) => patchStep(index, { body: e.target.value })}
               className="min-h-[110px] w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed focus:border-rust focus:outline-none"
               data-testid={`step-body-${index}`}
             />
