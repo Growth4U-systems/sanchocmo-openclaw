@@ -244,6 +244,25 @@
           "dependsOn": ["content-strategy"]
         }
       ]
+    },
+    "meeting": {
+      "label": "Meeting Intelligence",
+      "tasks": [
+        {
+          "id": "meeting-setup",
+          "name": "Implementar/configurar Meeting Intelligence",
+          "skill": "meeting-intelligence",
+          "agent": "hamete",
+          "type": "foundation",
+          "channel": "intelligence",
+          "description": "Configurar Meeting Intelligence desde el chat sidebar: verificar MCP/APIs, usar Google Workspace/GOG para buscar y validar carpetas de Drive, aceptar ID/URL solo como fallback, seleccionar Notion database/page, cargar filtros como clients relation y ejecutar un primer run.\n\nNo aplicar cambios sobre StrategyPlan, POV Bank ni documentos canónicos sin revisión humana explícita.",
+          "deliverable": "Meeting Intelligence configurado con fuentes aprobadas, filtros guardados, routing revisado y primer run documentado.",
+          "deliverableFiles": ["intelligence/setup.md"],
+          "outputFiles": ["brand/{slug}/intelligence/config.json", "brand/{slug}/intelligence/setup.md"],
+          "dependsOn": [],
+          "extra": { "done_criteria": "Google Drive o Notion configurado; filtros/routing guardados; primer scan ejecutado con reuniones encontradas o reporte explícito de cero reuniones; setup.md actualizado." }
+        }
+      ]
     }
   },
   "_chatEntries_comment": "SAN-167 F2 — on-demand chat-opener BUTTONS declared once. Each button's skill/skills/agent/threadId/initialMessage live here (not hardcoded in chat-openers.ts). instantiateEntry(key, {slug, params}) substitutes {slug}+{params} into the templates and returns a ThreadConfig. Agent is EXPLICIT (validated by ownerCheckFindings). Builders are thin wrappers that prepare params + override the few runtime-only fields (e.g. yalc initialMessage = the passed prompt; skill-editor docPath).",

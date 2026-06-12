@@ -44,6 +44,8 @@ export interface TaskSetEntry {
   outputFiles?: string[];
   /** Semantic ids in the same set this depends on. */
   dependsOn?: string[];
+  /** Verbatim passthrough fields merged onto the seeded task (e.g. done_criteria). */
+  extra?: Record<string, unknown>;
 }
 
 export interface TaskSet {
@@ -150,6 +152,37 @@ export function instantiateTaskSet(section: string, ctx: { slug: string; project
       discord_thread_id: null,
     };
   });
+}
+
+/**
+ * Instantiate a SINGLETON task (the single entry of a set, no taskKey) with a
+ * caller-provided id — for sections whose task is placed imperatively (host
+ * project discovery, dedupe, nextTaskId), e.g. Meeting Intelligence setup. The
+ * placement logic stays in the consumer; the task contract comes from here.
+ */
+export function instantiateSingletonTask(section: string, ctx: { slug: string; id: string }): TaskCreateInput {
+  const set = getTaskSet(section);
+  if (!set) throw new Error(`task-blueprints: unknown task set "${section}"`);
+  const t = set.tasks[0];
+  if (!t) throw new Error(`task-blueprints: task set "${section}" has no tasks`);
+  const { slug } = ctx;
+  const rel = (t.deliverableFiles ?? t.docPaths ?? []).map((p) => `brand/${slug}/${p}`);
+  return {
+    id: ctx.id,
+    name: t.name,
+    description: t.description ? subst(t.description, slug) : "",
+    deliverable: t.deliverable ? subst(t.deliverable, slug) : "",
+    ...(t.extra ?? {}),
+    depends_on: null,
+    owner: "Sancho",
+    status: "todo",
+    channel: t.channel,
+    type: t.type,
+    skill: subst(t.skill, slug),
+    agent: t.agent,
+    deliverable_file: rel.length === 1 ? rel[0] : rel,
+    output_files: t.outputFiles?.map((p) => subst(p, slug)),
+  };
 }
 
 export interface OwnerCheckFinding {
