@@ -169,6 +169,7 @@
   },
   "chat": {
     "title": "Chat with Sancho",
+    "newTask": "New task",
     "connected": "Connected",
     "waiting": "Waiting",
     "exitFullscreen": "Exit fullscreen",

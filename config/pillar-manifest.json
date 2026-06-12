@@ -330,6 +330,16 @@
       "docPath": "brand/{slug}/brand-book/visual-identity/DESIGN.md",
       "threadState": "continue",
       "initialMessage": "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?"
+    },
+    "new-task": {
+      "threadId": "{slug}:new-task:{nonce}",
+      "threadName": "Nueva tarea",
+      "skill": "sancho-manager",
+      "skills": ["sancho-manager"],
+      "agent": "sancho",
+      "linkedTo": "new-task",
+      "docPath": null,
+      "threadState": "continue"
     }
   },
   "_taskDefaults_comment": "SAN-167 F4 — defaults por TIPO de tarea ad-hoc/idea-driven (Outreach/Content) que antes eran ternarios inline en create-execution-tasks.ts / create-batch.ts. getTaskDefault(type) los lee; el agente va co-localizado.",
