@@ -425,11 +425,11 @@ export function ChatSidebar() {
         return;
       }
 
-      // --- Tool threads: trust-engine, atalaya (or their sub-threads) ---
+      // --- Tool threads: atalaya (or its sub-threads) ---
       // These are MC-side tool pages (not docs). Link to the tool page.
-      // Sub-threads like `trust-engine-gap-analysis` collapse to the base
-      // tool page because MC doesn't have per-report routes yet.
-      for (const tool of ["trust-engine", "atalaya"]) {
+      // Sub-threads like `atalaya-...` collapse to the base tool page
+      // because MC doesn't have per-report routes yet.
+      for (const tool of ["atalaya"]) {
         if (shortId === tool || shortId.startsWith(`${tool}-`)) {
           selectThread({
             threadId,
@@ -1175,8 +1175,8 @@ export function ChatSidebar() {
               const navProjectId = projMatch?.[1] || "";
               href = navProjectId ? `/dashboard/${slug}/tasks/${navProjectId}` : null;
             } else if (toolMatch) {
-              // Tool page: trust-engine, atalaya (atalaya has no MC page —
-              // its threads are still backed by the backend skill).
+              // Tool page: atalaya (atalaya has no MC page — its threads are
+              // still backed by the backend skill).
               const toolName = toolMatch[1];
               icon = toolName === "atalaya" ? "🏰" : "🔍";
               label = prettify(toolName);

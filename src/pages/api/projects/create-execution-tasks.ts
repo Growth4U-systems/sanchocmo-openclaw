@@ -14,7 +14,7 @@ import { getTaskDefault } from "@/lib/data/task-blueprints";
 
 /**
  * POST /api/projects/create-execution-tasks — Auto-generate execution tasks with ideas.
- * Called by a tool skill (e.g., trust-engine) after completing its research phase.
+ * Called by a research/tool skill after completing its research phase.
  *
  * Body: {
  *   slug,
@@ -106,7 +106,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         status: "new",
         title: ideaDef.title || "",
         description: ideaDef.description || "",
-        source: ideaDef.source || "trust_engine",
+        source: ideaDef.source || "tool",
         list: ideaDef.list || d.ideaList,
         channels: ideaDef.channels || [],
         target_channel: ideaDef.target_channel || "",

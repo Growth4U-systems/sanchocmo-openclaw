@@ -17,7 +17,7 @@ interface ChatConfigSection {
 /**
  * GET /api/chat/quick-actions?slug=X&type=pillar&key=competitor-analysis
  * GET /api/chat/quick-actions?slug=X&type=task&taskType=content&channel=linkedin
- * GET /api/chat/quick-actions?slug=X&type=task&taskType=tool&tool=trust-engine
+ * GET /api/chat/quick-actions?slug=X&type=task&taskType=tool&tool=atalaya
  * GET /api/chat/quick-actions?slug=X&type=project
  * GET /api/chat/quick-actions?slug=X&type=skill
  * GET /api/chat/quick-actions?slug=X&type=general

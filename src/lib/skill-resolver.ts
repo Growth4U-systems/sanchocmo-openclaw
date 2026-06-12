@@ -206,7 +206,6 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "theme-factory": "maese-pedro",
   "thief-marketers": "hamete",
   "tiktok-growth": "dulcinea",
-  "trust-engine": "hamete",
   "video": "dulcinea",
   "visual-identity": "maese-pedro",
   "web-artifacts-builder": "maese-pedro",
@@ -245,7 +244,6 @@ export function resolveSkillForPillar(pillar: string | undefined): string | unde
 /** 25 strategies (#01-#25), each with primary skill + secondary skills */
 export const STRATEGY_SKILLS: Record<string, SkillResolution> = {
   "01": { skill: "company-finder", skills: ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder"] },
-  "02": { skill: "trust-engine", skills: ["trust-engine", "keyword-research", "seo-content", "company-finder", "outreach-sequence-builder", "content-atomizer"] },
   "03": { skill: "company-finder", skills: ["company-finder"] },
   "04": { skill: "direct-response-copy", skills: ["direct-response-copy", "content-atomizer"] },
   "05": { skill: "outreach-sequence-builder", skills: ["outreach-sequence-builder"] },

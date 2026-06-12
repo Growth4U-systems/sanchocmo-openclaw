@@ -19,7 +19,7 @@ const FOUNDATION_FOLDERS = new Set([
 const IGNORED_FOLDERS = new Set([
   "projects", "chat", "atalaya", "idea-generation",
   "recurring-tasks", "monitoring", "metrics", "daily-pulse",
-  "trust-engine", "leads", "_archive", "_system",
+  "leads", "_archive", "_system",
 ]);
 
 const IGNORED_FILES = new Set([
