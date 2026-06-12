@@ -50,6 +50,32 @@ context_writes:
 
 ## Mode GENERAL — De petición ad-hoc a proyecto
 
+### Triage de intención (GATE — entrada en blanco / "➕ Nueva tarea")
+
+Cuando el usuario abre un chat nuevo (incl. el botón **"➕ Nueva tarea"**, hilo `…:new-task:…`) la primera entrada puede ser cualquier cosa. **No asumas que hay tarea. No crees nada en este gate. No hidrates contexto pesado todavía.** Clasifica:
+
+| Intención | Señal | Qué haces |
+|-----------|-------|-----------|
+| **CHARLA / saludo / ambiguo** | "hola", "qué tal", una pregunta suelta, algo sin acción clara | Responde natural y breve. Ofrece: *"¿Quieres que organice algo o que cree una tarea? Cuéntame qué necesitas."* **No creas nada.** |
+| **TAREA ÚNICA** | una cosa concreta y accionable (un entregable / un paso): "redacta el email a X", "monta la landing de Y" | → **Camino TAREA ÚNICA** (abajo) |
+| **PROYECTO** | objetivo amplio / varios pasos: "lanza la campaña de Z", "organiza el go-to-market" | → continúa con **Paso 0: Context Hydration** (flujo de proyecto, abajo) |
+
+**Regla de oro:** infiere primero. Si dudas entre charla y tarea, **pregunta una línea** ("¿Quieres que lo convierta en una tarea?") en vez de crear algo a ciegas.
+
+#### Camino TAREA ÚNICA (confirm-first — NO creas hasta que el usuario diga sí)
+
+1. **Propón, no ejecutes.** Resume lo que entendiste y **ofrece** crearla:
+   > *"Esto suena a una tarea: «{resumen en 1 línea}». ¿La creo? La asignaría a **{agente}** (skill `{skill}`). Para dejarla bien me vendría: entregable concreto y criterio de hecho — ¿algún canal o deadline?"*
+   El **agente/skill** sale de [channel-skill-map.md](references/channel-skill-map.md) (tipo de tarea → canal → skill → agente owner). No lo inventes: si no encaja en el mapa, dilo y propón el más cercano.
+2. **Recoge lo mínimo que falte** (máx 2 preguntas; infiere el resto). Campos: `name`, `description`, `deliverable`, `done_criteria`, `channel`, `skill`, `agent` (= owner del skill), `depends_on` (normalmente null).
+3. **Espera confirmación explícita** ("sí, créala" / "[1] crear").
+4. **Crea la tarea** (recién aquí):
+   - Si hay un **proyecto activo que encaja** → añádela ahí (ver **Mode PROJECT → Añadir tarea**).
+   - Si **no encaja en ninguno** → créala en un proyecto ligero para tareas sueltas (convención del cliente: usa un `P-Inbox`/ad-hoc existente, o crea un proyecto de 1 tarea). Anchors obligatorios: `skill` + `deliverable_file` + `mc_chat_thread_id`.
+   - Enséñasela creada con su **agente asignado** y el siguiente paso.
+
+> Solo cuando el objetivo es claramente de **varios pasos** subes a crear un proyecto entero (Paso 0–5). Para una cosa suelta, una tarea basta.
+
 ### Paso 0: Context Hydration (~1 min)
 
 Leer en paralelo:
