@@ -29,6 +29,16 @@ const SERVICE_ENV_MAP: Record<string, { key: string; label: string; placeholder:
   slack: [{ key: "SLACK_BOT_TOKEN", label: "Bot Token", placeholder: "xoxb-..." }],
   instantly: [{ key: "INSTANTLY_API_KEY", label: "API Key", placeholder: "" }],
   metricool: [{ key: "METRICOOL_API_KEY", label: "API Key", placeholder: "" }],
+  // Cloudflare R2 (SAN-184) — object storage for media/uploads. Keys match the
+  // exact env var names read by src/lib/upload-r2.ts, so saving here makes
+  // uploadToR2() work with no code change (POST /api/env live-updates process.env).
+  r2: [
+    { key: "CLOUDFLARE_ACCOUNT_ID", label: "Account ID", placeholder: "" },
+    { key: "R2_UPLOAD_IMAGE_ACCESS_KEY_ID", label: "Access Key ID", placeholder: "" },
+    { key: "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY", label: "Secret Access Key", placeholder: "" },
+    { key: "R2_UPLOAD_IMAGE_BUCKET_NAME", label: "Bucket", placeholder: "sancho" },
+    { key: "R2_PUBLIC_URL", label: "Public URL", placeholder: "https://pub-xxxx.r2.dev" },
+  ],
 };
 
 function maskKey(val: string): string {

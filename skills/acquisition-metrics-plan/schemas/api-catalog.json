@@ -185,6 +185,21 @@
             { "key": "EMAIL", "label": "Email de Google", "type": "string", "sensitive": false, "help": "La cuenta de Gmail/Workspace del cliente (ej: info@suempresa.com)" }
           ],
           "docs": "https://developers.google.com/workspace"
+        },
+        "r2": {
+          "provider": "Cloudflare R2",
+          "icon": "☁️",
+          "desc": "Almacenamiento de objetos para imágenes y media (upload-media, generate-image, adjuntos de formularios)",
+          "ownership": "system",
+          "credentials": [
+            { "key": "ACCOUNT_ID", "label": "Account ID", "type": "string", "sensitive": true, "help": "Cloudflare dashboard → R2 → Overview (Account ID)" },
+            { "key": "ACCESS_KEY_ID", "label": "Access Key ID", "type": "string", "sensitive": true, "help": "Cloudflare → R2 → Manage API Tokens → Create token (Access Key ID)" },
+            { "key": "SECRET_ACCESS_KEY", "label": "Secret Access Key", "type": "string", "sensitive": true, "help": "Se muestra una sola vez al crear el token de R2" },
+            { "key": "BUCKET_NAME", "label": "Bucket", "type": "string", "sensitive": false, "help": "Nombre del bucket R2 (ej: sancho)" },
+            { "key": "PUBLIC_URL", "label": "Public URL", "type": "string", "sensitive": false, "help": "URL pública del bucket (ej: https://pub-xxxx.r2.dev)" }
+          ],
+          "config": [],
+          "docs": "https://developers.cloudflare.com/r2/"
         }
       }
     },
