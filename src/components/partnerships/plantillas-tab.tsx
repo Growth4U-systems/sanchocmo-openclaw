@@ -23,6 +23,7 @@ import { buildOutreachTemplateThread } from "@/lib/chat-openers";
 import { SlideOver } from "@/components/shared/slide-over";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 // Imports de LEAF modules client-safe (el index del paquete arrastra fs).
+import { TEMPLATE_VARIABLES } from "@/lib/partnerships/templates";
 import type { PartnershipTemplate, TemplateStep } from "@/lib/partnerships/templates";
 import type { DiscoverySearchRecord } from "@/lib/partnerships/discovery-types";
 import { ToastViewport, useToast } from "./ui";
@@ -40,8 +41,6 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   }
   return payload as T;
 }
-
-const VARIABLES = ["{{handle}}", "{{quality_score}}", "{{precio}}"] as const;
 
 interface EditorState {
   id: string | null; // null = nueva
@@ -368,7 +367,7 @@ export function PlantillasTab({ slug }: { slug: string }) {
             <div>
               <span className="text-xs font-semibold text-muted-foreground">Variables</span>
               <div className="mt-1 flex flex-wrap gap-2">
-                {VARIABLES.map((variable) => (
+                {TEMPLATE_VARIABLES.map((variable) => (
                   <button
                     key={variable}
                     type="button"

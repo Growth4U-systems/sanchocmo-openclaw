@@ -25,6 +25,7 @@ const {
   slugifyTemplateName,
   templateSummary,
   toYalcSequence,
+  TEMPLATE_VARIABLES,
 } = templatesLib;
 const { SEED_TEMPLATES } = seedsLib;
 
@@ -144,6 +145,19 @@ describe("templates · real variables + fallbacks (SAN-169)", () => {
   it("still renders legacy {{quality_score}} for backward compatibility", () => {
     const out = renderTemplateText("score {{quality_score}}", { qualityScore: 87 });
     assert.equal(out, "score 87");
+  });
+});
+
+describe("templates · chip catalogue (SAN-169)", () => {
+  it("offers the real send-variables and NOT quality_score", () => {
+    assert.deepEqual([...TEMPLATE_VARIABLES], [
+      "{{nombre}}",
+      "{{handle}}",
+      "{{plataforma}}",
+      "{{seguidores}}",
+      "{{sector}}",
+      "{{precio}}",
+    ]);
   });
 });
 

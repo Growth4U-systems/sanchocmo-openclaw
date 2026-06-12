@@ -77,7 +77,14 @@ export interface AssignedTemplate extends PartnershipTemplate {
   assignedAt: string;
 }
 
-export const TEMPLATE_VARIABLES = ["{{handle}}", "{{quality_score}}", "{{precio}}"] as const;
+export const TEMPLATE_VARIABLES = [
+  "{{nombre}}",
+  "{{handle}}",
+  "{{plataforma}}",
+  "{{seguidores}}",
+  "{{sector}}",
+  "{{precio}}",
+] as const;
 
 export function templateRelativePath(id: string): string {
   return `outreach/templates/${id}.md`;
