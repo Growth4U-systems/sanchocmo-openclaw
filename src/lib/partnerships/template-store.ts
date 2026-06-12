@@ -42,8 +42,13 @@ function writeTemplateFile(slug: string, template: PartnershipTemplate): void {
   fs.writeFileSync(templateFile(slug, template.id), serializeTemplate(template), "utf-8");
 }
 
-/** Siembra las plantillas del mockup si la biblioteca no existe aún. */
-export function ensureSeedTemplates(slug: string): void {
+/**
+ * Siembra las plantillas DEMO (solo `scripts/seed-partnerships-demo.ts`).
+ * NUNCA llamar en runtime: la biblioteca de cada cliente empieza vacía y se
+ * llena con sus propias plantillas (SAN-176 — antes el auto-seed escribía las
+ * plantillas de Monzo en cualquier cliente al abrir el tab).
+ */
+export function seedDemoTemplates(slug: string): void {
   const dir = templatesDir(slug);
   if (fs.existsSync(dir)) return;
   for (const template of SEED_TEMPLATES) {
@@ -58,7 +63,6 @@ export function getTemplate(slug: string, id: string): PartnershipTemplate | nul
 }
 
 export function listTemplates(slug: string): PartnershipTemplate[] {
-  ensureSeedTemplates(slug);
   const dir = templatesDir(slug);
   if (!fs.existsSync(dir)) return [];
   return fs
@@ -109,7 +113,6 @@ function normalizeSteps(input: SaveTemplateInput["steps"], kind: PartnershipTemp
 
 /** Crea o actualiza una plantilla (upsert por id). Devuelve la versión persistida. */
 export function saveTemplate(slug: string, input: SaveTemplateInput): PartnershipTemplate {
-  ensureSeedTemplates(slug);
   const name = (input.name || "").trim();
   if (!name) throw new TemplateValidationError("La plantilla necesita un nombre.");
   const kind = input.kind === "brief" ? "brief" : "sequence";

@@ -54,7 +54,7 @@ import type { SeedCreator } from "../src/lib/calc-creator-core";
 import {
   assignTemplateToSearch,
   ensurePerformanceSeed,
-  ensureSeedTemplates,
+  seedDemoTemplates,
   getSearch,
   listSearches,
   saveSearch,
@@ -335,7 +335,7 @@ async function main(): Promise<void> {
  */
 async function seedSanchoSearchesAndTemplates(campaignIds: Map<SearchDef["key"], string>): Promise<void> {
   console.log(`\n▸ Sancho: búsquedas + plantillas para slug "${SANCHO_SLUG}" (SANCHO_SLUG)`);
-  ensureSeedTemplates(SANCHO_SLUG);
+  seedDemoTemplates(SANCHO_SLUG);
 
   const PLAN_BY_KEY: Record<string, { sectors: string[]; networks: string[] }> = {
     "finanzas-es": { sectors: ["finanzas personales", "ahorro"], networks: ["instagram", "tiktok"] },

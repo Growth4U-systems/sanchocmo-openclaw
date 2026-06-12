@@ -96,6 +96,12 @@ Reglas del contrato:
   scoreado y el humano decide el shortlist. El score es información, no decisión.
 - `templates`: nombres de la biblioteca de Plantillas; se instancian al lanzar
   (la materialización es de SAN-80 — aquí solo viajan en el plan).
+- **Las plantillas NUNCA bloquean el lanzamiento** (SAN-176): discovery solo
+  busca candidatos; el contacto llega después (SAN-80). Si la biblioteca está
+  vacía, o ninguna plantilla encaja con el cliente, lanza con `templates: []`
+  y dilo en UNA línea («podrás asignar plantillas desde la búsqueda antes de
+  Contactar»). No trates las plantillas como requisito, no pidas crearlas ni
+  renombrarlas para poder lanzar, y no las marques como "blocker".
 
 Cierra SIEMPRE preguntando si lo lanzas ("decidme si lo lanzo"). No lances sin
 confirmación explícita del usuario en este thread.

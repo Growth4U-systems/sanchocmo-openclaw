@@ -187,3 +187,37 @@ describe("templates · instanciación (asignar a búsqueda)", () => {
     assert.equal(summary.stepCount, 2);
   });
 });
+
+// ── SAN-176 · el runtime NO auto-siembra; el seed demo es solo del script ────
+
+describe("templates · sin auto-seed en runtime (SAN-176)", () => {
+  it("listTemplates de un cliente nuevo no siembra nada (ni carpeta ni seeds de Monzo)", async () => {
+    const fs = await import("node:fs");
+    const storeModule = await import("../template-store");
+    const store =
+      (storeModule as unknown as { default: typeof storeModule }).default ?? storeModule;
+
+    // Slug único: da igual qué MC_WORKSPACE haya fijado otro fichero de tests
+    // (discovery/model-config lo setean a nivel de módulo) — este slug no
+    // existe en ninguno, así que cualquier seed que aparezca es el bug.
+    const slug = `san176-cliente-nuevo-${process.pid}`;
+    const dir = store.templatesDir(slug);
+    const seedIds = new Set(SEED_TEMPLATES.map((t) => t.id));
+
+    const listed = store.listTemplates(slug);
+    assert.deepEqual(
+      listed.filter((t) => seedIds.has(t.id)),
+      [],
+      "listTemplates no debe sembrar las plantillas demo (Monzo) en un cliente nuevo",
+    );
+    assert.equal(fs.existsSync(dir), false, "listTemplates no debe crear la carpeta del cliente");
+
+    // El seed demo sigue existiendo, pero solo se ejecuta explícitamente (script).
+    store.seedDemoTemplates(slug);
+    try {
+      assert.equal(store.listTemplates(slug).length, SEED_TEMPLATES.length);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
