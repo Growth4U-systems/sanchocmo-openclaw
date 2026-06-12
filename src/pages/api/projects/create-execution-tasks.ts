@@ -10,6 +10,7 @@ import {
   TaskAnchorError,
   type TaskCreateInput,
 } from "@/lib/data/task-create-helpers";
+import { getTaskDefault } from "@/lib/data/task-blueprints";
 
 /**
  * POST /api/projects/create-execution-tasks — Auto-generate execution tasks with ideas.
@@ -90,6 +91,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   for (const def of taskDefs) {
     taskCounter++;
     const taskId = `${projectId}-T${String(taskCounter).padStart(2, "0")}`;
+    // Defaults (skill/channel/agent/idea type+list) per task type, from the
+    // declarative registry (config/pillar-manifest.json → taskDefaults.byType).
+    const d = getTaskDefault(def.type === "outreach" ? "outreach" : "content");
 
     // Create ideas for this task
     const ideaIds: string[] = [];
@@ -98,12 +102,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       ideaIds.push(ideaId);
       allNewIdeas.push({
         id: ideaId,
-        type: ideaDef.type || (def.type === "outreach" ? "contact" : "content"),
+        type: ideaDef.type || d.ideaType,
         status: "new",
         title: ideaDef.title || "",
         description: ideaDef.description || "",
         source: ideaDef.source || "trust_engine",
-        list: ideaDef.list || (def.type === "outreach" ? "outreach" : "keywords"),
+        list: ideaDef.list || d.ideaList,
         channels: ideaDef.channels || [],
         target_channel: ideaDef.target_channel || "",
         priority_score: ideaDef.priority_score || 50,
@@ -120,8 +124,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       name: def.name || `Tarea ${taskCounter}`,
       description: def.description || "",
       type: def.type || "content",
-      skill: def.skill || (def.type === "outreach" ? "outreach-sequence-builder" : "seo-content"),
-      channel: def.channel || (def.type === "outreach" ? "prospecting" : "content"),
+      skill: def.skill || d.skill,
+      channel: def.channel || d.channel,
+      agent: d.agent,
       status: "todo",
       owner: "Sancho",
       idea_ids: ideaIds,

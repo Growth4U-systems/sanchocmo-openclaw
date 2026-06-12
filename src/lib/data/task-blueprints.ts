@@ -89,6 +89,38 @@ export function getChatEntry(key: string): ChatEntry | undefined {
   return MANIFEST_CHAT_ENTRIES[key];
 }
 
+/** Defaults for ad-hoc / idea-driven tasks, keyed by task type (outreach|content). */
+export interface TaskDefault {
+  skill: string;
+  channel: string;
+  agent: string;
+  ideaType: string;
+  ideaList: string;
+}
+
+const MANIFEST_TASK_DEFAULTS = (
+  pillarManifest as unknown as { taskDefaults?: { byType?: Record<string, TaskDefault> } }
+).taskDefaults?.byType ?? {};
+
+/** Default skill/channel/agent for a task type. Falls back to "content". */
+export function getTaskDefault(type: string): TaskDefault {
+  return MANIFEST_TASK_DEFAULTS[type] ?? MANIFEST_TASK_DEFAULTS.content;
+}
+
+/** Ordered skill pipeline (e.g. the outreach prospecting pipeline). */
+export interface Pipeline {
+  agent: string;
+  stages: string[];
+}
+
+const MANIFEST_PIPELINES = (
+  pillarManifest as unknown as { pipelines?: Record<string, Pipeline> }
+).pipelines ?? {};
+
+export function getPipeline(name: string): Pipeline | undefined {
+  return MANIFEST_PIPELINES[name];
+}
+
 const subst = (s: string, slug: string, projectId?: string, channel?: string): string =>
   s
     .replace(/\{slug\}/g, slug)
@@ -214,6 +246,22 @@ export function ownerCheckFindings(): OwnerCheckFinding[] {
     const owner = resolveAgentForSkill(entry.skill);
     if (owner && owner !== entry.agent) {
       findings.push({ section: "chatEntries", taskId: key, skill: entry.skill, declaredAgent: entry.agent, ownerAgent: owner });
+    }
+  }
+  // Type defaults: skill's owner must match the declared agent.
+  for (const [type, d] of Object.entries(MANIFEST_TASK_DEFAULTS)) {
+    const owner = resolveAgentForSkill(d.skill);
+    if (owner && owner !== d.agent) {
+      findings.push({ section: "taskDefaults", taskId: type, skill: d.skill, declaredAgent: d.agent, ownerAgent: owner });
+    }
+  }
+  // Pipelines: every stage skill must be owned by the pipeline's agent.
+  for (const [name, p] of Object.entries(MANIFEST_PIPELINES)) {
+    for (const skill of p.stages) {
+      const owner = resolveAgentForSkill(skill);
+      if (owner && owner !== p.agent) {
+        findings.push({ section: "pipelines", taskId: `${name}:${skill}`, skill, declaredAgent: p.agent, ownerAgent: owner });
+      }
     }
   }
   return findings;

@@ -309,5 +309,18 @@
       "docPath": null,
       "threadState": "continue"
     }
+  },
+  "_taskDefaults_comment": "SAN-167 F4 — defaults por TIPO de tarea ad-hoc/idea-driven (Outreach/Content) que antes eran ternarios inline en create-execution-tasks.ts / create-batch.ts. getTaskDefault(type) los lee; el agente va co-localizado.",
+  "taskDefaults": {
+    "byType": {
+      "outreach": { "skill": "outreach-sequence-builder", "channel": "prospecting", "agent": "rocinante", "ideaType": "contact", "ideaList": "outreach" },
+      "content": { "skill": "seo-content", "channel": "content", "agent": "dulcinea", "ideaType": "content", "ideaList": "keywords" }
+    }
+  },
+  "pipelines": {
+    "outreach": {
+      "agent": "rocinante",
+      "stages": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder"]
+    }
   }
 }
