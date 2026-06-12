@@ -89,6 +89,22 @@ export function getChatEntry(key: string): ChatEntry | undefined {
   return MANIFEST_CHAT_ENTRIES[key];
 }
 
+/**
+ * SAN-179 — opener (initialMessage) snippets for threads whose IDENTITY is
+ * built by the builder's own logic (not a full chatEntry): html conversion,
+ * Meeting Intelligence setup, and the per-module Trust Engine openers (one
+ * shared thread, a distinct opener per module). Flat `key → templated string`;
+ * resolveOpener(key, vars) in chat-openers.ts substitutes {slug}+{params}.
+ * No agent — these are not thread declarations.
+ */
+export const MANIFEST_CHAT_OPENERS = (
+  pillarManifest as unknown as { chatOpeners?: Record<string, string> }
+).chatOpeners ?? {};
+
+export function getChatOpener(key: string): string | undefined {
+  return MANIFEST_CHAT_OPENERS[key];
+}
+
 /** Defaults for ad-hoc / idea-driven tasks, keyed by task type (outreach|content). */
 export interface TaskDefault {
   skill: string;

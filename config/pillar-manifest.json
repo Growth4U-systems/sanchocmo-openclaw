@@ -330,7 +330,67 @@
       "docPath": "brand/{slug}/brand-book/visual-identity/DESIGN.md",
       "threadState": "continue",
       "initialMessage": "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?"
+    },
+    "discovery-search": {
+      "threadId": "{slug}:discovery:{campaignIdLower}",
+      "threadName": "Búsqueda: {searchName}",
+      "skill": "discovery-plan-builder",
+      "skills": ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"],
+      "agent": "rocinante",
+      "linkedTo": "rocinante",
+      "docPath": null,
+      "threadState": "continue",
+      "initialMessage": "Repasemos y lancemos la búsqueda de creators \"{searchName}\" (campaña Yalc {campaignId}, Partnerships): revisa el plan de discovery — sectores, redes, tiers, volumen — y dime qué falta para lanzarla."
+    },
+    "discovery-search-new": {
+      "threadId": "{slug}:discovery:new",
+      "threadName": "Nueva búsqueda de creators",
+      "skill": "discovery-plan-builder",
+      "skills": ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"],
+      "agent": "rocinante",
+      "linkedTo": "rocinante",
+      "docPath": null,
+      "threadState": "create",
+      "initialMessage": "Quiero crear una nueva búsqueda de creators para Partnerships. Propón un plan de discovery — sectores con mejor fit, redes, tiers y volumen — y cuando lo cerremos lánzala como campaña Partnerships en Yalc."
+    },
+    "od-generate": {
+      "threadId": "{slug}:od-generate:{safe}{dsTag}",
+      "threadName": "🎨 {upstreamSkillName}",
+      "skill": "od-generate",
+      "skills": ["od-generate", "od-refine", "od-export"],
+      "agent": "maese-pedro",
+      "linkedTo": "media-creation/od/{upstreamSkillId}",
+      "docPath": null,
+      "threadState": "create",
+      "initialMessage": "Genera un asset con la skill \"{upstreamSkillName}\" usando el DESIGN.md del brand. Pídeme los inputs que necesites antes de empezar."
+    },
+    "trust-engine": {
+      "threadId": "{slug}:trust-engine",
+      "threadName": "Trust Engine — {moduleName}",
+      "skill": "trust-engine",
+      "skills": ["trust-engine", "keyword-research", "seo-content", "outreach-sequence-builder"],
+      "agent": "hamete",
+      "linkedTo": "trust-engine/{moduleId}",
+      "docPath": "brand/{slug}/trust-engine/{moduleFile}",
+      "threadState": "continue"
     }
+  },
+  "_chatOpeners_comment": "SAN-179 — openers (initialMessage) sueltos, templados con {slug}+{params}, para hilos cuya IDENTIDAD se construye con lógica propia del builder (no un chatEntry completo): conversión a HTML, setup de Meeting Intelligence, y los openers por módulo del Trust Engine (un único hilo, opener distinto por módulo). resolveOpener(key, vars) los lee. Sin agente (no son declaraciones de hilo).",
+  "chatOpeners": {
+    "html-conversion": "Convierte {docPath} a HTML con la skill html-output: genera el .html self-contained junto al .md (mismo nombre de fichero), con la identidad visual del brand si existe, siguiendo _system/output/html-canonical-protocol.md. Al terminar, confírmame la ruta exacta del .html.",
+    "meeting-intelligence-setup": "Configura Meeting Intelligence para este cliente: valida APIs/MCP, localiza y confirma la carpeta de Drive (URL/ID solo como fallback), elige la base/página de Notion y sus filtros, y deja listo el primer run sin tocar documentos canónicos.",
+    "trust-engine:foundation-import": "Revisemos la configuración del Trust Engine de {slug}: verifica que nichos, subnichos y competidores están bien definidos antes de las auditorías.",
+    "trust-engine:seo-audit": "Revisemos el SEO Audit de {slug}: Lighthouse, Core Web Vitals, health checks e issues. Dime qué es crítico y qué atacar primero.",
+    "trust-engine:own-media-audit": "Revisemos el Own Media Audit de {slug}: blog, redes y presencia técnica. ¿Dónde hay quick wins y qué necesita mejora urgente?",
+    "trust-engine:geo-analysis": "Revisemos el GEO Analysis de {slug}: visibilidad en IA (ChatGPT, Gemini, Perplexity). ¿Dónde nos mencionan, dónde no, y qué oportunidades hay frente a competidores?",
+    "trust-engine:serp-analysis": "Revisemos el SERP Analysis de {slug}: posiciones en Google — top 3, top 10 e invisibles — y qué competidores dominan.",
+    "trust-engine:gap-analysis": "Revisemos el Gap Analysis de {slug}: gaps de presencia, densidad y tipo. ¿Dónde están los competidores y nosotros no? Prioriza por oportunidad.",
+    "trust-engine:recommendations": "Revisemos las recomendaciones del Trust Engine de {slug}: prioriza las de mayor impacto y dame el plan de acción. ¿Qué hacemos primero?",
+    "trust-engine:keywords": "Revisemos los keywords del Trust Engine de {slug}: top por oportunidad, layers de expansión y cobertura por subnicho. ¿Cuáles atacamos primero?",
+    "trust-engine:influencers": "Revisemos los influencers y medios identificados para {slug}: ¿a quién contactar primero, con qué tipo de colaboración y por qué?",
+    "trust-engine:_fallback": "Revisemos {moduleName} del Trust Engine de {slug}: analiza los datos y dame las conclusiones clave.",
+    "od-generate-ds": "Genera un asset con la skill \"{upstreamSkillName}\" aplicando el design system \"{designSystemId}\". Pídeme los inputs que necesites antes de empezar.",
+    "visual-identity-block": "Quiero ajustar la sección \"{block}\" del Visual Identity. ¿Qué opciones tengo?"
   },
   "_taskDefaults_comment": "SAN-167 F4 — defaults por TIPO de tarea ad-hoc/idea-driven (Outreach/Content) que antes eran ternarios inline en create-execution-tasks.ts / create-batch.ts. getTaskDefault(type) los lee; el agente va co-localizado.",
   "taskDefaults": {
