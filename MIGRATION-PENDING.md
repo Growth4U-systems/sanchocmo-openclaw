@@ -135,7 +135,21 @@ Se podría integrar la vista de orders/historial de pagos ahí en vez de en `/da
 
 ---
 
-## Sancho-side: migración a `update-pillar-status.py` helper — ✅ HECHO (2026-04-14)
+## SAN-183 F5: foundation-state.json retirado — status vive en tasks (2026-06-13)
+
+**Contexto:** Foundation status unificado en tasks. `foundation-state.json` está MUERTO como store: el status de cada pilar vive en su task 1:1 (proyectos P00-Company-Brief / P00-Full-Foundation / P00-Metrics / P00-Strategic-Plan).
+
+- **Vocabulario canónico** (el de task, único válido en prosa nueva): `todo | in-progress | pending-review | completed | blocked | cancelled`. El vocabulario viejo de pilar (not-started/approved/generated/request-changes/request-refresh) está muerto; el endpoint MC todavía normaliza aliases transicionalmente.
+- **Escribir status**: `POST {MC_BASE}/api/brand-brain/pillar-status` body `{"slug","section","pillar","status"}` (status canónico).
+- **Leer estado completo**: `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (mismo shape: sections→pillars→status, statuses en vocabulario de task).
+- **Task genérica**: `POST {MC_BASE}/api/projects/task-status` body `{"slug","taskId","status"}`.
+- `file_index` y `brand_summary` muertos: nada los lee; el Brand Snapshot se deriva automáticamente del company-brief.
+- Skill `foundation-threads` (hilos Discord por pilar) ELIMINADA — Discord retirado.
+- Esto deja **superseded** la sección de abajo (`update-pillar-status.py` helper): el helper escribía al JSON muerto; usar los endpoints.
+
+---
+
+## Sancho-side: migración a `update-pillar-status.py` helper — ⚠️ SUPERSEDED por SAN-183 F5 (era ✅ HECHO 2026-04-14)
 
 **Contexto:** Bug #4 (2026-04-13) — drift entre `foundation-state.json` y `<project>/tasks.json` porque Sancho escribía `status: "done"` direct al JSON pero el endpoint MC rechazaba ese valor.
 

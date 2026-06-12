@@ -9,7 +9,6 @@ metadata:
   depends_on: foundation-orchestrator
   chains_to: channel-prioritization, execution-skills
   context_required:
-    - brand/{slug}/foundation-state.json
     - brand/{slug}/company-brief/company-brief.current.md
     - brand/{slug}/go-to-market/ecps/ecps.current.md
     - brand/{slug}/go-to-market/positioning/*/*.current.md
@@ -29,7 +28,8 @@ metadata:
 ## Gate Check
 
 ```
-if foundation-state.json NOT exists OR status != "approved":
+state = GET {MC_BASE}/api/brand-brain/state?slug={slug}
+if pilares requeridos NOT "completed":
     STOP → "Foundation incompleta. Completa Foundation primero."
 ```
 

@@ -12,7 +12,6 @@ metadata:
 context_required:
   - brand/{slug}/strategic-plan/strategic-plan.current.md
   - brand/{slug}/projects/P*/project.json
-  - brand/{slug}/foundation-state.json
   - brand/{slug}/company-brief/company-brief.current.md
 context_writes:
   - brand/{slug}/projects/P{XX}/project.json
@@ -81,7 +80,7 @@ Cuando el usuario abre un chat nuevo (incl. el botón **"➕ Nueva tarea"**, hil
 Leer en paralelo:
 - `brand/{slug}/strategic-plan/strategic-plan.current.md` — objetivos y canales actuales
 - `brand/{slug}/projects/P*/project.json` — escanear proyectos existentes (evitar duplicación)
-- `brand/{slug}/foundation-state.json` — estado Foundation
+- `GET {MC_BASE}/api/brand-brain/state?slug={slug}` — estado Foundation (status por pilar, vocabulario de task)
 - `brand/{slug}/company-brief/company-brief.current.md` — contexto de negocio
 
 Si no hay directorios `P*/` en `projects/`, el primer proyecto será P01.
@@ -352,7 +351,8 @@ Recurring task (cron) → genera datos/insights
 
 ### 1. Foundation (soft)
 ```
-if foundation-state.json NOT exists OR sections.company-brief.status != "approved":
+state = GET {MC_BASE}/api/brand-brain/state?slug={slug}
+if state.sections.company-brief.status != "completed":
     WARN → "Foundation incompleta. Puedo crear el proyecto, pero sin contexto estratégico la alineación será limitada."
     CONTINUE (no bloquear)
 ```
@@ -404,7 +404,7 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 | Defiere a | `foundation-orchestrator` | Creación y gestión del DAG de Foundation |
 | Defiere a | `strategic-plan` (INIT) | Crear plan estratégico completo desde cero |
 | Lee de | `strategic-plan/strategic-plan.current.md` | Objetivos, canales, para alignment checks |
-| Lee de | `foundation-state.json` | Estado de Foundation |
+| Lee de | `GET /api/brand-brain/state?slug={slug}` | Estado de Foundation |
 | Lee de | `skills/strategic-plan/references/strategies-catalog.json` | Vincular tareas a estrategias del catálogo (poblar `strategy.catalog_id` en project.json) |
 | Escribe | project.json, tasks.json, playbook.md | Artefactos de proyecto |
 | Escribe | projects/P{XX}/project.json | Datos del proyecto (el filesystem es el registro) |

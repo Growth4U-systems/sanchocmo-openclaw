@@ -17,7 +17,7 @@ brand/{slug}/compliance/brand-check-{YYYY-MM-DD}-{asset-slug}.md
 **Channel**: {linkedin / blog / etc.}
 **Brand**: {slug}
 **Date**: YYYY-MM-DD
-**Foundation snapshot**: {hash o versión leída de foundation-state.json}
+**Foundation snapshot**: {statuses de pilares leídos de GET /api/brand-brain/state}
 
 ---
 

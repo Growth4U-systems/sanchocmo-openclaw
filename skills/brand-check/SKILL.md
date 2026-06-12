@@ -12,7 +12,7 @@ metadata:
   depends_on: []
   updated: '2026-05-01'
 context_required:
-  - brand/{slug}/foundation-state.json
+  - config/pillar-manifest.json
   - brand/{slug}/brand-book/brand-voice/brand-voice.current.md
   - brand/{slug}/go-to-market/positioning/shared/messaging-summary.md
 context_optional:
@@ -80,7 +80,7 @@ Si falta cualquiera, devolver al pipeline con error claro: `❌ brand-check: mis
 
 ### Phase 2: CONTEXT
 
-1. Leer `brand/{slug}/foundation-state.json` para resolver paths actuales (no hardcodear).
+1. Leer `config/pillar-manifest.json` (docPaths) para resolver paths actuales (no hardcodear).
 2. Cargar Foundation files según los dominios aplicables al `channel`:
    - **Siempre**: `brand-voice.current.md`, `messaging-summary.md`
    - **Si visual-identity aplica al channel**: `visual-identity.current.md`

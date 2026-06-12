@@ -71,7 +71,6 @@ That single line means: "Before I start, load relevant brand context using the p
 
   _archive/                 <- Versiones históricas pre-restructura. NUNCA leer salvo petición explícita.
 
-  foundation-state.json     <- Estado de Foundation v2.0 (source of truth para estado de pilares)
   integrations.json         <- Integraciones del cliente
 ```
 
@@ -178,25 +177,12 @@ On every skill invocation, check whether `./brand/` exists.
 - **If exists**: proceed to step 2
 - **If not exists**: skip brand loading entirely. Do NOT error. Proceed as first-time user with note: "I don't see brand memory yet. Run /sancho-start first, or I'll work without it."
 
-### 2. Read foundation-state.json FIRST (file_index)
+### 2. Resolve status and paths FIRST
 
-**Before loading any pillar docs**, read `brand/{slug}/foundation-state.json`. It contains:
+**Before loading any pillar docs**:
 
-- **`brand_summary`** — company name, sector, ICPs, competitors, positioning, URL
-- **`sections`** — pillar states with `output_file` paths, status, dependencies
-- **`file_index`** — index of ALL non-pillar files organized by domain:
-  - `competitors.battle_cards` — path to each competitor's battle card
-  - `competitors.sources` — path to competitor source URLs
-  - `integrations` — path to API connections config
-  - `metrics` — paths to metrics plan (JSON + doc) and data directory
-  - `brand_assets` — design tokens, visual guide, mockups
-  - `operational` — current-state, ideas, costs, leads
-  - `presentations` — HTML reports
-  - etc.
-
-**Use `file_index` to resolve paths.** Do NOT search directories or guess file locations. If you need competitor data, read `file_index.competitors.battle_cards`. If you need integrations, read the file at `file_index.integrations`.
-
-**All paths in `file_index` are relative to `brand/{slug}/`.**
+- **Pillar status** lives in each pillar's 1:1 task (P00 projects). Read it via `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (sections→pillars→status, canonical task vocabulary: `todo | in-progress | pending-review | completed | blocked | cancelled`).
+- **Doc paths**: resolve canonical paths from `config/pillar-manifest.json` (docPaths). Do NOT search directories or guess file locations.
 
 ### 3. Load Only What You Need (Context Matrix)
 

@@ -26,7 +26,8 @@ context_writes:
 **Antes de CUALQUIER ejecución, verifica:**
 
 ```
-if brand/{slug}/foundation-state.json NOT exists OR status != "approved":
+state = GET {MC_BASE}/api/brand-brain/state?slug={slug}
+if pilares de Foundation NOT "completed":
     STOP → "Foundation incompleta o no aprobada. No puedo ejecutar GTM.
             Completa Foundation primero (foundation-orchestrator)."
 ```

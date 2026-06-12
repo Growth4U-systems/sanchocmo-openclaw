@@ -14,7 +14,7 @@ Todo documento `{carpeta}-current.md` que sea **presentable al cliente** debe in
 - `go-to-market/pricing/pricing-current.md`
 - Cualquier otro documento que el usuario pueda querer presentar
 
-Documentos internos/operacionales (stack.md, foundation-state.json, registry.json) NO llevan Presentation Summary.
+Documentos internos/operacionales (stack.md, registry.json) NO llevan Presentation Summary.
 
 ## Formato
 

@@ -3,13 +3,17 @@ name: kickoff
 description: "Sesión de intake rápida (~30 min) que genera los cimientos mínimos viables para un cliente. Modo URL (95%): scrape web + sociales → pre-fill → validar → completar gaps. Modo manual (5%): preguntas conversacionales. Produce UN único archivo company-brief.current.md con secciones H2: Company Identity, Business Model, Budget & Resources, Self Intelligence L1, Market Intelligence L1, Brand Voice Snapshot, Niche / ECPs. Es el primer skill que se ejecuta para cualquier cliente nuevo. Absorbe: sancho-start, company-context, business-model-audit, budget-constraints, brand-voice Quick, self-intelligence Lens 1, market-intelligence L1, niche-discovery básico."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
-  version: '3.1'
+  version: '3.2'
   system: SanchoCMO
   phase: Foundation
   pillar: company-brief
   layer: '0'
-  updated: '2026-06-12'
+  updated: '2026-06-13'
   changes: |
+    v3.2 — SAN-183 F5: foundation-state.json retirado. El status del pilar vive en su task 1:1
+           (proyecto P00) y se actualiza vía POST /api/brand-brain/pillar-status (vocabulario
+           canónico de task); se lee vía GET /api/brand-brain/state. El Brand Snapshot se deriva
+           automáticamente del company-brief.
     v3.1 — SAN-3: regla de ejecución explícita — el Kickoff DEBE escribir el fichero con la
            Write tool (no solo imprimirlo en el chat) y actualizar foundation-state; escribe el
            draft pronto y re-escribe al validar. Antes la skill se quedaba conversando sin persistir.
@@ -41,18 +45,14 @@ context_writes:
 
 ## ⛔ Contrato de estado (LEER ANTES DE ESCRIBIR NADA)
 
-El dashboard, el Brand Brain y las APIs de foundation **solo leen** `brand/{slug}/foundation-state.json` en el **schema canónico v3.0**:
+El status de cada pilar vive en su **task 1:1** (proyectos P00). El dashboard, el Brand Brain y las APIs de foundation lo leen vía `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (sections→pillars→status, vocabulario canónico de task: `todo | in-progress | pending-review | completed | blocked | cancelled`) y se actualiza vía `POST {MC_BASE}/api/brand-brain/pillar-status` con body `{"slug", "section", "pillar", "status"}`.
 
-```
-{ "version": "3.0", "sections": { "<section>": { "pillars": { "<pillar>": { "status", "output_file" } } } }, "brand_summary": {...} }
-```
-
-Si el estado no tiene `sections[*].pillars[*].output_file`, **la marca queda invisible en la UI aunque los `.md` existan en disco**. Por eso:
+Si el `.md` existe en disco pero el status del pilar no se actualiza, **la marca queda desincronizada en la UI**. Por eso:
 
 1. **Kickoff tiene PROHIBIDO tocar carpetas de pilares analíticos** — las rutas `market-and-us/`, `brand-voice/`, `go-to-market/` y análogas son territorio exclusivo de las skills Full Foundation. Kickoff opera únicamente bajo `brand/{slug}/company-brief/`.
 2. Kickoff produce **un único** `company-brief/company-brief.current.md` (+ versionado `company-brief.v{N}.md` + `history.json`), con secciones H2.
-3. La sección de estado `company-brief` tiene **un solo pilar** `company-brief` cuyo `output_file` es `brand/{slug}/company-brief/company-brief.current.md`. Lo mantiene el `foundation-orchestrator`.
-4. Si se corrió en otro schema, recuperá con `scripts/rebuild-foundation-state.mjs <slug> --apply`.
+3. La sección de estado `company-brief` tiene **un solo pilar** `company-brief`. Lo mantiene el `foundation-orchestrator`.
+4. El Brand Snapshot del dashboard se deriva automáticamente del company-brief — no hay que mantener `brand_summary` a mano.
 
 ---
 
@@ -68,10 +68,9 @@ El Kickoff produce un **fichero en disco**, no un mensaje de chat. El brief que 
   o tras las preguntas en modo manual). NO esperes a una validación "perfecta": el Company
   Brief es **vivo y provisional** (nunca source of truth) → se escribe pronto y se
   **re-escribe** al refinar. Validar viene DESPUÉS de tener el draft en disco, no antes.
-- Tras escribir, **actualiza `foundation-state.json`**:
-  `sections["company-brief"].pillars["company-brief"].status = "generated"` y
-  `output_file = "brand/{slug}/company-brief/company-brief.current.md"`. Así el dashboard lo
-  muestra como generado / pendiente de revisión.
+- Tras escribir, **actualiza el status del pilar**: `POST {MC_BASE}/api/brand-brain/pillar-status`
+  con body `{"slug": "{slug}", "section": "company-brief", "pillar": "company-brief", "status": "pending-review"}`.
+  Así el dashboard lo muestra como generado / pendiente de revisión.
 - El Kickoff **NO está completo** —y **NO ofrezcas avanzar a Full Foundation**— hasta que el
   fichero exista en disco y el estado esté actualizado. "Lo tengo redactado en el chat" ≠ completado.
 
@@ -93,8 +92,8 @@ Antes de scrapear o preguntar nada, pregunta al operador con `AskUserQuestion`:
 1. Llama al MCP tool `sancho_intake_create_link` con el `clientSlug`. Devuelve `{ url }`.
 2. Presenta la URL al operador en el chat, con una línea para que se la pase al cliente
    (email/WhatsApp). Ejemplo: "Comparte este link con el cliente: {url}".
-3. Marca el pilar `company-brief` como `pending-client-submission` en
-   `foundation-state.json` (status del pilar) y escribe un placeholder mínimo en
+3. Marca el pilar `company-brief` como `in-progress` (esperando respuestas del cliente)
+   vía `POST {MC_BASE}/api/brand-brain/pillar-status` y escribe un placeholder mínimo en
    `brand/{slug}/company-brief/company-brief.current.md` ("Esperando respuestas del
    formulario inicial del cliente").
 4. Termina el turno: "Formulario enviado. Avísame cuando el cliente responda y
@@ -218,7 +217,7 @@ De la conversación y el scraping:
 
 **Esto NO es opcional ni "más tarde": usa tu herramienta de escritura para crear el fichero
 AHORA.** Idealmente ya escribiste el draft tras el Step 1 (ver "🚨 Regla de ejecución"); aquí
-lo confirmas o lo re-escribes con lo validado, y actualizas el `status` en foundation-state.json.
+lo confirmas o lo re-escribes con lo validado, y actualizas el status del pilar vía `POST {MC_BASE}/api/brand-brain/pillar-status`.
 Si terminas el turno sin que el fichero exista en disco, el Kickoff ha FALLADO.
 
 Un único archivo con secciones H2. Header obligatorio, luego las secciones:

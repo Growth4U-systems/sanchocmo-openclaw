@@ -48,7 +48,7 @@ LAYER 0 — KICKOFF (sin dependencias)
   company-brief ← kickoff skill (1 skill → company-brief/company-brief.current.md)
   → 1 sola aprobación del doc completo
 
-LAYER 1 — RESEARCH (sin dependencias; Kickoff enriquece si está approved)
+LAYER 1 — RESEARCH (sin dependencias; Kickoff enriquece si está completed)
   market-analysis ← market-intelligence skill
   competitor-analysis ← competitor-intelligence skill
   self-analysis ← self-intelligence skill
@@ -81,12 +81,12 @@ LAYER 5 — BRAND IDENTITY (requires: positioning)
 ## Gate Check — requires vs enriches_with
 
 ### requires (BLOQUEA)
-Si un pilar tiene `requires: [X, Y]`, X e Y deben estar `approved` antes de ejecutar.
-Si no están approved → **BLOQUEAR. NO ejecutar.**
+Si un pilar tiene `requires: [X, Y]`, X e Y deben estar `completed` antes de ejecutar.
+Si no están completed → **BLOQUEAR. NO ejecutar.**
 
 ### enriches_with (NO BLOQUEA)
-Si un pilar tiene `enriches_with: [X]`, usa X como input adicional si está `approved`.
-Si X no está approved → **funcionar sin él**. Notificar: "Nota: [X] no está disponible, el resultado será más básico."
+Si un pilar tiene `enriches_with: [X]`, usa X como input adicional si está `completed`.
+Si X no está completed → **funcionar sin él**. Notificar: "Nota: [X] no está disponible, el resultado será más básico."
 
 ### Mapa de dependencias
 
@@ -157,14 +157,16 @@ Se genera al completar positioning. Se regenera si cambian positioning o pricing
 
 ## Estados de Pilar
 
+Vocabulario canónico de task (el status vive en la task 1:1 del pilar, proyectos P00):
+
 | Estado | Significado |
 |--------|-------------|
-| `not-started` | No se ha ejecutado |
-| `in-progress` | Skill ejecutándose |
+| `todo` | No se ha ejecutado |
+| `in-progress` | Skill ejecutándose (o aplicando correcciones pedidas) |
 | `pending-review` | Presentado, esperando feedback |
-| `revision` | Usuario pidió cambios |
-| `approved` | Aprobado — pilar completo |
-| `skipped` | No aplica (con skip_reason) |
+| `completed` | Aprobado — pilar completo |
+| `blocked` | Error o bloqueado por dependencia/externo |
+| `cancelled` | No aplica (skip, con razón) |
 
 ---
 
@@ -174,12 +176,11 @@ Se genera al completar positioning. Se regenera si cambian positioning o pricing
 2. **Ejecutar skill**: invocar el skill correspondiente
 3. **Presentar resumen ejecutivo**: 5-10 bullets, NO el doc entero
 4. **Esperar respuesta**: aprobar → celebración + siguiente | corregir → revisión | skip → razón + siguiente
-5. **Persistir**: actualizar foundation-state.json + regenerar MC
+5. **Persistir**: actualizar status del pilar vía `POST {MC_BASE}/api/brand-brain/pillar-status` `{"slug", "section", "pillar", "status"}` (vocabulario canónico de task) + regenerar MC
 6. **Upstream enrichment** (OBLIGATORIO): al completar una layer, revisar docs upstream que dependen de los datos nuevos y actualizarlos:
    - **OPE Canvas**: enriquecer con ECPs, UVPs, pricing hooks, channel data
    - **Company Brief**: resolver Discovery Tasks pendientes (ej: "Pricing visible") — editar `company-brief/company-brief.current.md` directamente
    - **Summary/Syntheses**: actualizar con datos de la layer completada
-   - **foundation-state.json**: actualizar status de sección padre si todos los pilares están completos
    - Sugerir proactivamente al usuario — no esperar a que pregunte
 
 **Flujo automático**: al aprobar, el siguiente pilar arranca automáticamente. El usuario nunca tiene que escribir un comando para continuar.
@@ -206,17 +207,9 @@ Al completar toda la Foundation, presentar resumen ejecutivo consolidado con hig
 | Dato | Destino |
 |------|---------|
 | Documentos | `brand/{slug}/{seccion}/` (markdown) |
-| Estado | `brand/{slug}/foundation-state.json` |
-| brand_summary | `brand/{slug}/foundation-state.json` → `brand_summary` |
-| file_index | `brand/{slug}/foundation-state.json` → `file_index` |
-| MC | `python3 scripts/regenerate.py` |
+| Estado | Task 1:1 del pilar (proyectos P00) — escribir vía `POST /api/brand-brain/pillar-status`, leer vía `GET /api/brand-brain/state?slug={slug}` |
+| MC | `python3 scripts/regenerate.py` (legacy mc-data; no toca status) |
 
-### file_index (obligatorio)
+### Brand Snapshot
 
-`foundation-state.json` incluye un bloque `file_index` que indexa todos los archivos no-pilar del cliente (integrations, metrics, brand assets, competitors sources, etc.). Ver schema completo en `_system/schemas/foundation-state-v2.md`.
-
-**Regla para skills:** cuando un skill crea un archivo nuevo (ej: nuevo competidor, nueva presentación), debe añadir su entry al `file_index` correspondiente en `foundation-state.json`.
-
-### brand_summary (obligatorio)
-
-Debe existir para todo cliente con al menos Kickoff completado. Contiene: company_name, sector, description, north_star, icps, competitors, positioning, url.
+El Brand Snapshot del dashboard (company_name, sector, ICPs, competidores, positioning, URL) se deriva automáticamente del company-brief — no hay que mantener `brand_summary` a mano. `file_index` está retirado: nada lo lee, no mantenerlo.

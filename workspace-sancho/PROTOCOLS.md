@@ -30,7 +30,7 @@ Max 2 messages per thread: initial + result. ZERO "Let me read it...", "I'll che
 `brand/{slug}/{pillar}/{pillar}-current.md` with history. See `_system/versioning-protocol.md`.
 
 ### 6. Foundation gate check
-Verify `brand/{slug}/foundation-state.json` prerequisites before executing. See `_system/foundation-protocol.md`.
+Verify prerequisites via `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (canonical task statuses; require `completed`) before executing. See `_system/foundation-protocol.md`.
 
 ### 7. Confirm inputs
 Present key inputs and wait for confirmation before executing Foundation skills.
@@ -77,18 +77,11 @@ When completing any task that generates files:
 - If the skill takes >30 seconds, give an intermediate update: `🔄 Working on {X}...`
 - Rule 3 applies: resolve link with `clients.json` → `mcToken` → tokenized URL.
 
-### 16. 🗂️ `foundation-state.json` is the source of truth for ALL client files
-BEFORE searching, reading, or referencing any client file, read `brand/{slug}/foundation-state.json`. It contains:
-- `brand_summary` → who the client is (name, sector, ICPs, competitors, positioning, URL)
-- `sections` → state of each pillar with `output_file` (paths to docs)
-- `file_index` → index of ALL non-pillar files (integrations, competitor sources, battle cards, design tokens, metrics, ideas, presentations, etc.)
-
-**Separation:** pillar docs → `sections.*.pillars.*.output_file`. Everything else → `file_index`. Do NOT duplicate.
-- **NEVER search files with glob/find/ls.** Resolve paths from `file_index` or `output_file`.
-- **NEVER guess paths.** If it's not in `file_index` or in `output_file`, the file does not exist or it needs to be added.
-- **Keep file_index updated:** when creating/moving/deleting client files, update `file_index` in `foundation-state.json`.
-- All paths in `file_index` are **relative to `brand/{slug}/`**.
-- **Reconciliation:** `python3 scripts/verify-file-index.py [--fix]` checks and fixes discrepancies.
+### 16. 🗂️ Pillar status lives in tasks; paths live in the manifest
+The status of each Foundation pillar lives in its 1:1 task (P00 projects). It is updated via `POST {MC_BASE}/api/brand-brain/pillar-status` with body `{"slug", "section", "pillar", "status"}` — canonical task vocabulary only (`todo | in-progress | pending-review | completed | blocked | cancelled`) — and read via `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (sections→pillars→status).
+- **NEVER guess paths.** Resolve canonical doc paths from `config/pillar-manifest.json` (docPaths).
+- `file_index` is retired — nothing reads it; do not maintain it.
+- The dashboard's Brand Snapshot is derived automatically from the company-brief — do not maintain `brand_summary` by hand.
 
 ### 17. ⚠️ Acknowledge recovered tool failures in your final reply
 
@@ -183,6 +176,6 @@ Playbooks live in `_system/`. Load on demand:
 ## When in doubt
 
 1. Read `_system/brand-memory.md` for the relevant client
-2. Check `foundation-state.json` for the file you need
+2. Check `GET /api/brand-brain/state` (status) or `config/pillar-manifest.json` (docPaths) for what you need
 3. Ask the user once, then proceed with best inference
 4. Never block silently. Always communicate state.

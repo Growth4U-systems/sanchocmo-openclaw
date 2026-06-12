@@ -122,7 +122,7 @@ TAREA:
 [Descripción clara de la tarea]
 
 CONTEXTO DE MARCA:
-- PRIMERO lee ./brand/{slug}/foundation-state.json → usa brand_summary + file_index para resolver paths
+- PRIMERO resuelve los paths canónicos desde config/pillar-manifest.json (docPaths); el status de pilares se lee vía GET {MC_BASE}/api/brand-brain/state?slug={slug}
 - Luego lee los archivos específicos:
   - ./brand/{slug}/[archivo1]/[archivo1]-current.md
   - ./brand/{slug}/[archivo2]/[archivo2]-current.md
@@ -139,11 +139,10 @@ OUTPUT ESPERADO:
 ### Context Matrix Enforcement
 
 Cada skill declara `context_required` y `context_writes` en su frontmatter YAML. Cuando spawnes un Escudero:
-- **SIEMPRE** incluye `brand/{slug}/foundation-state.json` en el contexto — contiene `brand_summary` y `file_index` para resolver paths a cualquier archivo
+- Fuente de contexto = tasks (status vía `GET /api/brand-brain/state`) + paths canónicos de `config/pillar-manifest.json` (docPaths)
 - Lee `context_required` del skill que va a ejecutar
-- Pasa esos archivos como contexto al Escudero (resolviéndolos desde `file_index` cuando sea posible)
+- Pasa esos archivos como contexto al Escudero
 - NUNCA pases todo `./brand/` — solo lo que el skill necesita
-- Si el Escudero crea archivos nuevos, debe actualizar `file_index` en foundation-state.json
 
 ---
 
@@ -181,7 +180,7 @@ YALC REQUEST
 **Intent**: [health / providers / qualify-leads / campaign-dry-run / launch-confirmed / gates / reporting / setup / brain]
 **Confirmación live**: [ninguna / texto exacto de confirmación del usuario]
 **Contexto de marca**:
-- brand/{slug}/foundation-state.json
+- paths canónicos de config/pillar-manifest.json (docPaths)
 - [archivos concretos necesarios]
 **Payload o inputs**:
 [JSON o ruta a payload bajo brand/{slug}/yalc/]
@@ -209,7 +208,7 @@ HAMETE REQUEST
 **Intent**: [deep-research / market-intelligence / competitor-intelligence / signal-monitor / daily-pulse / meeting-intelligence / thief-marketers]
 **Brief**: [pregunta o alcance concreto del research; para deep-research, el prompt Market y/o Company]
 **Contexto de marca**:
-- brand/{slug}/foundation-state.json
+- paths canónicos de config/pillar-manifest.json (docPaths)
 - [archivos concretos: company-brief, competitors, market — solo los relevantes]
 **Output esperado**:
 [documento promocionable con fuentes citadas + qa-bot, guardado en su context_writes]
@@ -315,7 +314,7 @@ Cuando recibes un `[Internal task completion event]` de un subagente:
 
 **Protocolo para cada completion event:**
 
-1. **Actualizar estado** — `foundation-state.json` o tracking relevante (status → pending-review/completed)
+1. **Actualizar estado** — `POST {MC_BASE}/api/brand-brain/pillar-status` (status → `pending-review`/`completed`, vocabulario canónico de task) o tracking relevante
 2. **Verificar si hay más tareas pendientes del mismo batch** — Si hay N tareas lanzadas en paralelo, trackear cuántas han terminado.
 3. **Cuando TODAS las tareas del batch terminen:**
    - **Postear resumen consolidado** al hilo de Discord del usuario (NO al canal principal)
@@ -330,7 +329,7 @@ Cuando recibes un `[Internal task completion event]` de un subagente:
 
 Al lanzar N Escuderos en paralelo, crear tracker temporal:
 ```json
-// En foundation-state.json o inline en el dispatch
+// Inline en el dispatch
 {
   "batch_id": "uuid",
   "thread_id": "discord_thread_id",
