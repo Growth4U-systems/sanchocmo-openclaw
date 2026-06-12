@@ -38,7 +38,7 @@ declare -A AGENT_WORKSPACES=(
 declare -A AGENT_MODELS=(
   ["sancho"]="anthropic/claude-opus-4-7"
   ["escudero"]="anthropic/claude-sonnet-4-6"
-  ["cervantes"]="codex/gpt-5.4"
+  ["cervantes"]="codex/gpt-5.5"
   ["hamete"]="anthropic/claude-opus-4-7"
   ["dulcinea"]="anthropic/claude-sonnet-4-6"
   ["rocinante"]="anthropic/claude-sonnet-4-6"
@@ -97,7 +97,7 @@ if not config_path.exists():
 default_models = {
     "sancho": "anthropic/claude-opus-4-7",
     "escudero": "anthropic/claude-sonnet-4-6",
-    "cervantes": "codex/gpt-5.4",
+    "cervantes": "codex/gpt-5.5",
     "hamete": "anthropic/claude-opus-4-7",
     "dulcinea": "anthropic/claude-sonnet-4-6",
     "rocinante": "anthropic/claude-sonnet-4-6",
