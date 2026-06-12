@@ -14,9 +14,10 @@
  *   3. Default: "sancho".
  *
  * Also resolves the MC chat thread where notifications about the doc
- * should surface: the task's `mc_chat_thread_id` when present, else the
- * convergent thread id from chat-openers, else a doc-scoped feedback
- * thread.
+ * should surface: ALWAYS the convergent thread id from chat-openers (the
+ * same id every dashboard surface opens for this doc — convergence rule
+ * 2026-04-15), with the content-task `{slug}:content:{id}` convention as
+ * the one exception, else a doc-scoped feedback thread.
  */
 
 import { buildPillarThread, buildTaskThread } from "@/lib/chat-openers";
@@ -133,12 +134,22 @@ export async function resolveDocAuthor(
           typeof owner.deliverable_file === "string" ? owner.deliverable_file : undefined,
       },
     );
+    // CONVERGENCE: notifications must land in the SAME thread the UI opens
+    // for this doc — always the buildTaskThread resolution. The dashboard
+    // never reads `mc_chat_thread_id` for doc/task threads, so preferring
+    // it here sent the feedback messages (and the agent's reply) to a
+    // thread nobody was looking at (SAN-148 staging finding). Content
+    // tasks are the one surface keyed by their own `{slug}:content:{id}`.
+    const threadId =
+      (owner.type as string | undefined) === "content_task"
+        ? `${slug}:content:${owner.id.toLowerCase()}`
+        : thread.threadId;
     return {
       agent,
       skill,
       taskId: owner.id,
       pillar: (owner.pillar as string | undefined) || null,
-      threadId: (owner.mc_chat_thread_id as string | undefined) || thread.threadId,
+      threadId,
       threadName: thread.threadName,
     };
   }
