@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
@@ -41,6 +41,8 @@ interface DocSlideOverProps {
   slug: string;
   docPath: string | null;
   onClose: () => void;
+  /** Optional action rendered first in the header action row (e.g. "Editar secuencia"). */
+  headerAction?: ReactNode;
 }
 
 const FOLDER_MAP: Record<string, string> = {
@@ -89,7 +91,7 @@ function findPillarInfo(
   return null;
 }
 
-export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
+export function DocSlideOver({ slug, docPath, onClose, headerAction }: DocSlideOverProps) {
   const [content, setContent] = useState<string | null>(null);
   const [lastModified, setLastModified] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -427,6 +429,7 @@ export function DocSlideOver({ slug, docPath, onClose }: DocSlideOverProps) {
           </span>
 
           <div className="ml-auto flex items-center gap-2">
+            {headerAction}
             {pillarInfo && (
               <select
                 value={currentStatus}
