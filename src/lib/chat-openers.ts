@@ -202,7 +202,7 @@ export function buildOutreachTemplateThread(
     docPath: `brand/${slug}/outreach/templates/${template.id}.md`,
     threadState: "continue",
     agent: "rocinante",
-    initialMessage: `Estoy mirando la plantilla de outreach "${template.name}" (${kindLabel}, brand/${slug}/outreach/templates/${template.id}.md). Puedes ajustar tono, pasos, delays o variables ({{handle}}, {{quality_score}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK.`,
+    initialMessage: `Estoy mirando la plantilla de outreach "${template.name}" (${kindLabel}, brand/${slug}/outreach/templates/${template.id}.md). Puedes ajustar tono, pasos, delays o variables ({{nombre}}, {{handle}}, {{plataforma}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK.`,
   };
 }
 

@@ -25,6 +25,7 @@ const {
   slugifyTemplateName,
   templateSummary,
   toYalcSequence,
+  TEMPLATE_VARIABLES,
 } = templatesLib;
 const { SEED_TEMPLATES } = seedsLib;
 
@@ -111,6 +112,52 @@ describe("templates · render de variables", () => {
   it("leaves variables intact when context is missing (visible para el humano)", () => {
     const out = renderTemplateText("Fee: {{precio}}", {});
     assert.equal(out, "Fee: {{precio}}");
+  });
+});
+
+describe("templates · real variables + fallbacks (SAN-169)", () => {
+  it("substitutes the new creator variables", () => {
+    const ctx = {
+      name: "Ana",
+      handle: "@ana.finanzas",
+      network: "Instagram",
+      followers: 124000,
+      sector: "fintech",
+      precio: 3500,
+    };
+    const out = renderTemplateText(
+      "Hola {{nombre}} ({{handle}}) en {{plataforma}} · {{seguidores}} · {{sector}} · {{precio}}",
+      ctx,
+    );
+    assert.equal(out, "Hola Ana (@ana.finanzas) en Instagram · 124K · fintech · 3.500 €");
+  });
+
+  it("uses the fallback when a value is missing", () => {
+    const out = renderTemplateText('Hola {{nombre | "ahí"}},', { handle: "@x" });
+    assert.equal(out, "Hola ahí,");
+  });
+
+  it("leaves the raw token when no value and no fallback", () => {
+    const out = renderTemplateText("Hola {{nombre}},", { handle: "@x" });
+    assert.equal(out, "Hola {{nombre}},");
+  });
+
+  it("still renders legacy {{quality_score}} for backward compatibility", () => {
+    const out = renderTemplateText("score {{quality_score}}", { qualityScore: 87 });
+    assert.equal(out, "score 87");
+  });
+});
+
+describe("templates · chip catalogue (SAN-169)", () => {
+  it("offers the real send-variables and NOT quality_score", () => {
+    assert.deepEqual([...TEMPLATE_VARIABLES], [
+      "{{nombre}}",
+      "{{handle}}",
+      "{{plataforma}}",
+      "{{seguidores}}",
+      "{{sector}}",
+      "{{precio}}",
+    ]);
   });
 });
 
