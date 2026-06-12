@@ -19,6 +19,7 @@ export function FindIdeasTab({ slug, data, openChat }: Props) {
         threadName: cronName,
         skill: "sancho",
         skills: ["sancho", "idea-generation"],
+        agent: "dulcinea",
         linkedTo: `recurring-tasks/${cronName}`,
         docPath: null,
         threadState: "continue",

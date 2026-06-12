@@ -834,6 +834,7 @@ export function buildSkillCreatorThread(slug: string): ThreadConfig {
     linkedTo: "skills/new",
     docPath: null,
     threadState: "create",
+    agent: "cervantes",
     initialMessage: "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
   };
 }
@@ -854,6 +855,7 @@ export function buildSkillEditorThread(
     linkedTo: `skills/${skillId}`,
     docPath: docPath || null,
     threadState: "continue",
+    agent: "cervantes",
   };
 }
 
@@ -935,6 +937,7 @@ export function buildTrustEngineModuleThread(
     linkedTo: `trust-engine/${moduleId}`,
     docPath: `brand/${slug}/trust-engine/${moduleFile}`,
     threadState: "continue",
+    agent: "hamete",
     initialMessage: moduleContexts[moduleId] || `Estoy revisando ${moduleName} del Trust Engine para ${slug}. Analiza los datos y dime las conclusiones clave.`,
   };
 }

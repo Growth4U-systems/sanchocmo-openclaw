@@ -224,6 +224,7 @@ export default function TrustEnginePage() {
       threadName: currentNiche ? `Trust Engine — ${currentNiche.name}` : "Trust Engine",
       skill: "trust-engine",
       skills: ["trust-engine", "keyword-research", "seo-content", "outreach-sequence-builder"],
+      agent: "hamete",
       linkedTo: "trust-engine",
       docPath: null,
       threadState: undefined,
