@@ -230,7 +230,13 @@ export function templateSummary(template: PartnershipTemplate): TemplateSummary 
 // ── Render de variables (preview 📄 con datos demo / envío) ────────────────
 
 export interface TemplateRenderContext {
+  name?: string | null;
   handle?: string | null;
+  /** Red social: "Instagram" | "TikTok" | "YouTube"… */
+  network?: string | null;
+  followers?: number | null;
+  sector?: string | null;
+  /** Métrica INTERNA de priorización — soportada por compatibilidad, no es chip. */
   qualityScore?: number | null;
   /** Precio ya formateado ("3.500 €") o número (se formatea es-ES). */
   precio?: string | number | null;
@@ -248,9 +254,25 @@ function fmtIntEs(value: number): string {
   return `${sign}${out}`;
 }
 
+/** Compacta seguidores: 124000 → "124K", 1200000 → "1.2M". */
+function fmtFollowers(value: number): string {
+  if (!Number.isFinite(value)) return "";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (abs >= 1_000) return `${Math.round(value / 1_000)}K`;
+  return String(Math.round(value));
+}
+
 export function renderTemplateText(text: string, context: TemplateRenderContext): string {
   const values: Record<string, string | null> = {
+    nombre: context.name?.trim() || null,
     handle: context.handle?.trim() || null,
+    plataforma: context.network?.trim() || null,
+    seguidores:
+      typeof context.followers === "number" && Number.isFinite(context.followers)
+        ? fmtFollowers(context.followers)
+        : null,
+    sector: context.sector?.trim() || null,
     quality_score:
       typeof context.qualityScore === "number" && Number.isFinite(context.qualityScore)
         ? String(Math.round(context.qualityScore))
@@ -260,10 +282,15 @@ export function renderTemplateText(text: string, context: TemplateRenderContext)
         ? `${fmtIntEs(context.precio)} €`
         : context.precio?.trim() || null,
   };
-  return text.replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (raw, key: string) => {
-    const value = values[key.toLowerCase()];
-    return value === null || value === undefined ? raw : value;
-  });
+  // {{key}} ó {{key | "fallback"}} — el fallback sólo se usa si falta el valor.
+  return text.replace(
+    /\{\{\s*([a-z_]+)\s*(?:\|\s*"([^"]*)"\s*)?\}\}/gi,
+    (raw, key: string, fallback: string | undefined) => {
+      const value = values[key.toLowerCase()];
+      if (value !== null && value !== undefined) return value;
+      return fallback !== undefined ? fallback : raw;
+    },
+  );
 }
 
 // ── Instanciación (asignar a búsqueda = copia con snapshot) ────────────────
