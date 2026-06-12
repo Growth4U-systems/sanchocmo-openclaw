@@ -49,6 +49,7 @@ test("authenticateMcpRequest accepts configured bearer token", () => {
   assert.equal(principal.id, "test-operator");
   assert.deepEqual(principal.scopes, ["sancho:read", "tasks:read"]);
   assert.deepEqual(principal.clients, ["alpha"]);
+  assert.deepEqual(principal.brands, ["alpha"]);
   assert.equal(principal.tokenHash.length, 64);
 });
 
@@ -104,5 +105,57 @@ test("assertMcpClientAccess enforces client whitelist", () => {
   assert.throws(
     () => auth.assertMcpClientAccess(principal, "ghost"),
     (err) => err instanceof auth.McpAuthError && err.status === 404,
+  );
+});
+
+test("authenticateMcpRequest accepts explicit brand access separate from clients", () => {
+  const previousBrands = process.env.SANCHO_MCP_BRANDS;
+  process.env.SANCHO_MCP_BRANDS = "alpha,xhype";
+  try {
+    const principal = auth.authenticateMcpRequest(mockReq("Bearer dev-token") as never);
+    assert.deepEqual(principal.clients, ["alpha"]);
+    assert.deepEqual(principal.brands, ["alpha", "xhype"]);
+  } finally {
+    if (previousBrands === undefined) delete process.env.SANCHO_MCP_BRANDS;
+    else process.env.SANCHO_MCP_BRANDS = previousBrands;
+  }
+});
+
+test("assertMcpBrandAccess falls back to clients when brands are omitted", () => {
+  const principal = {
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  };
+
+  assert.doesNotThrow(() => auth.assertMcpBrandAccess(principal, "alpha"));
+  assert.throws(
+    () => auth.assertMcpBrandAccess(principal, "xhype"),
+    (err) => err instanceof auth.McpAuthError && err.status === 403,
+  );
+});
+
+test("assertMcpBrandAccess supports explicit and wildcard brand whitelists", () => {
+  const explicit = {
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["growth4u"],
+    brands: ["growth4u", "xhype"],
+    tokenHash: "x",
+  };
+  const wildcard = {
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["growth4u"],
+    brands: ["*"],
+    tokenHash: "x",
+  };
+
+  assert.doesNotThrow(() => auth.assertMcpBrandAccess(explicit, "xhype"));
+  assert.doesNotThrow(() => auth.assertMcpBrandAccess(wildcard, "other-brand"));
+  assert.throws(
+    () => auth.assertMcpBrandAccess(explicit, "other-brand"),
+    (err) => err instanceof auth.McpAuthError && err.status === 403,
   );
 });
