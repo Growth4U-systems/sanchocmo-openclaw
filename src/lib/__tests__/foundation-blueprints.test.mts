@@ -123,10 +123,10 @@ test("foundation block: 6 secciones, 18 pilares, todos con task 1:1 resoluble", 
   }
 });
 
-// ── Paridad con config/foundation-state.default.json (la fuente que muere) ──
-test("paridad estructural con foundation-state.default.json", () => {
+// ── Paridad con el default LEGACY (congelado como fixture; el fichero murió en F5 PR4) ──
+test("paridad estructural con el foundation-state.default congelado", () => {
   const def = JSON.parse(
-    fs.readFileSync(path.join(here, "..", "..", "..", "config", "foundation-state.default.json"), "utf-8"),
+    fs.readFileSync(path.join(here, "__fixtures__", "foundation-state.default.frozen.json"), "utf-8"),
   );
   const sections = getFoundationManifest();
   assert.deepEqual(

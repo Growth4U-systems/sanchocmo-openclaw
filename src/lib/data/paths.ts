@@ -26,10 +26,6 @@ export function ideasFile(slug: string) {
   return path.join(BASE, "brand", slug, "ideas.json");
 }
 
-export function foundationStateFile(slug: string) {
-  return path.join(BASE, "brand", slug, "foundation-state.json");
-}
-
 export function projectDir(slug: string, projectId: string) {
   return path.join(BASE, "brand", slug, "projects", projectId);
 }
