@@ -63,6 +63,30 @@ export function getTaskSetEntry(section: string, id: string): TaskSetEntry | und
   return MANIFEST_TASK_SETS[section]?.tasks.find((t) => t.id === id);
 }
 
+/** One on-demand chat-opener BUTTON declaration. String fields are templates
+ *  with `{slug}` + per-button `{params}`; instantiateEntry (chat-openers.ts)
+ *  substitutes them into a ThreadConfig. Agent is explicit. */
+export interface ChatEntry {
+  threadId: string;
+  threadName: string;
+  skill: string;
+  skills: string[];
+  agent: string;
+  linkedTo: string;
+  docPath: string | null;
+  threadState?: "create" | "continue";
+  initialMessage?: string;
+  docKind?: "file" | "template";
+}
+
+export const MANIFEST_CHAT_ENTRIES = (
+  pillarManifest as unknown as { chatEntries?: Record<string, ChatEntry> }
+).chatEntries ?? {};
+
+export function getChatEntry(key: string): ChatEntry | undefined {
+  return MANIFEST_CHAT_ENTRIES[key];
+}
+
 const subst = (s: string, slug: string, projectId?: string, channel?: string): string =>
   s
     .replace(/\{slug\}/g, slug)
@@ -149,6 +173,14 @@ export function ownerCheckFindings(): OwnerCheckFinding[] {
       if (owner && owner !== t.agent) {
         findings.push({ section, taskId: t.id, skill: t.skill, declaredAgent: t.agent, ownerAgent: owner });
       }
+    }
+  }
+  // Chat-opener button entries are validated the same way.
+  for (const [key, entry] of Object.entries(MANIFEST_CHAT_ENTRIES)) {
+    if (entry.skill.includes("{")) continue;
+    const owner = resolveAgentForSkill(entry.skill);
+    if (owner && owner !== entry.agent) {
+      findings.push({ section: "chatEntries", taskId: key, skill: entry.skill, declaredAgent: entry.agent, ownerAgent: owner });
     }
   }
   return findings;

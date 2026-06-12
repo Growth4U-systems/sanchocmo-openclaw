@@ -77,6 +77,7 @@
 // ============================================================
 
 import { resolveThreadSkills, type SkillContext } from "./skill-resolver";
+import { getChatEntry } from "./data/task-blueprints";
 
 export interface ThreadConfig {
   threadId: string;
@@ -127,18 +128,43 @@ export const MC_CHAT_AGENTS: Record<string, { emoji: string; label: string; colo
   escudero: { emoji: "✍️", label: "Dulcinea", color: "#E11D74" },
 };
 
-export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
-  return {
-    threadId: `${slug}:yalc`,
-    threadName: "YALC / GTM-OS",
-    skill: "yalc-operator",
-    skills: ["yalc-operator"],
-    linkedTo: "rocinante",
-    docPath: null,
-    threadState: "continue",
-    agent: "rocinante",
-    initialMessage: prompt,
+/** Substitute `{slug}` + per-button `{param}` tokens in a chat-entry template.
+ *  Unknown tokens (e.g. `{{handle}}` placeholders in prose) are left intact. */
+function substEntryTemplate(s: string, vars: Record<string, string>): string {
+  return s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+}
+
+/**
+ * Build a ThreadConfig from a declared chat-opener BUTTON entry
+ * (config/pillar-manifest.json → chatEntries). Substitutes {slug} + params into
+ * the entry's templates. The single generic opener that the `buildXThread`
+ * wrappers delegate to — skill/skills/agent/initialMessage are DECLARED, not
+ * hardcoded.
+ */
+export function instantiateEntry(key: string, ctx: { slug: string; params?: Record<string, string> }): ThreadConfig {
+  const entry = getChatEntry(key);
+  if (!entry) throw new Error(`chat-openers: unknown chat entry "${key}"`);
+  const vars: Record<string, string> = { slug: ctx.slug, ...(ctx.params ?? {}) };
+  const sub = (s: string) => substEntryTemplate(s, vars);
+  const cfg: ThreadConfig = {
+    threadId: sub(entry.threadId),
+    threadName: sub(entry.threadName),
+    skill: entry.skill,
+    skills: entry.skills,
+    agent: entry.agent,
+    linkedTo: sub(entry.linkedTo),
+    docPath: entry.docPath != null ? sub(entry.docPath) : null,
+    threadState: entry.threadState,
   };
+  if (entry.initialMessage) cfg.initialMessage = sub(entry.initialMessage);
+  if (entry.docKind) cfg.docKind = entry.docKind;
+  return cfg;
+}
+
+export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
+  const cfg = instantiateEntry("yalc", { slug });
+  cfg.initialMessage = prompt;
+  return cfg;
 }
 
 /**
@@ -193,17 +219,10 @@ export function buildOutreachTemplateThread(
   template: { id: string; name: string; kind?: "sequence" | "brief" },
 ): ThreadConfig {
   const kindLabel = template.kind === "brief" ? "brief" : "secuencia";
-  return {
-    threadId: `${slug}:outreach-template:${template.id.toLowerCase()}`,
-    threadName: `Plantilla: ${template.name}`,
-    skill: "outreach-sequence-builder",
-    skills: ["outreach-sequence-builder", "outreach-playbook"],
-    linkedTo: `outreach/templates/${template.id}`,
-    docPath: `brand/${slug}/outreach/templates/${template.id}.md`,
-    threadState: "continue",
-    agent: "rocinante",
-    initialMessage: `Estoy mirando la plantilla de outreach "${template.name}" (${kindLabel}, brand/${slug}/outreach/templates/${template.id}.md). Puedes ajustar tono, pasos, delays o variables ({{nombre}}, {{handle}}, {{plataforma}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK.`,
-  };
+  return instantiateEntry("outreach-template", {
+    slug,
+    params: { id: template.id, idLower: template.id.toLowerCase(), name: template.name, kindLabel },
+  });
 }
 
 /**
@@ -467,6 +486,29 @@ export function resolveFullThreadConfig(
     };
   }
 
+  // ── No task: content-flavored threads still belong to Dulcinea ──
+  // Reopening a content draft/idea/calendar/cron thread whose task isn't in the
+  // loaded projectsData (e.g. a weekly P-Content-Semana-NN project not listed)
+  // must NOT fall back to Sancho. These namespaces are owned by the content
+  // writer. (The full fix is task=thread unification; this keeps the agent
+  // correct meanwhile.) Root cause of "Content → Ideas sigue saliendo Sancho".
+  const contentNs: Record<string, string> = {
+    content: "social-writer",
+    idea: "seo-content",
+    calendar: "content-calendar-planner",
+    cron: "idea-generation",
+  };
+  const contentMatch = shortId.match(/^(content|idea|calendar|cron)[-:](.+)$/i);
+  if (contentMatch) {
+    const ns = contentMatch[1].toLowerCase();
+    const skill = contentNs[ns];
+    return {
+      threadId, threadName: shortId.replace(/[-_:]/g, " "),
+      skill, skills: [skill], agent: "dulcinea",
+      linkedTo: `${ns}/${contentMatch[2]}`, docPath: null, threadState: "continue",
+    };
+  }
+
   // ── No task: handle typed threads ────────────────────────────
   if (/^(competitor-scan|meta-ads-scan|linkedin-scan)$/i.test(shortId)) {
     return {
@@ -475,7 +517,7 @@ export function resolveFullThreadConfig(
       docPath: null, threadState: "continue",
     };
   }
-  if (/^(strategy|idea|recurring)[-:]/i.test(shortId)) {
+  if (/^(strategy|recurring)[-:]/i.test(shortId)) {
     const m = shortId.match(/^([a-z]+)[-:](.+)$/i);
     if (m) {
       return {
@@ -825,18 +867,7 @@ export function buildPillarThread(
 
 /** Build thread config for creating a new skill via chat */
 export function buildSkillCreatorThread(slug: string): ThreadConfig {
-  const threadId = `${slug}:skill-creator:${Date.now()}`;
-  return {
-    threadId,
-    threadName: "Crear nueva skill",
-    skill: "skill-creator",
-    skills: ["skill-creator"],
-    linkedTo: "skills/new",
-    docPath: null,
-    threadState: "create",
-    agent: "cervantes",
-    initialMessage: "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
-  };
+  return instantiateEntry("skill-creator", { slug, params: { nonce: String(Date.now()) } });
 }
 
 /** Build thread config for editing an existing skill via chat */
@@ -846,17 +877,9 @@ export function buildSkillEditorThread(
   skillName: string,
   docPath?: string
 ): ThreadConfig {
-  const threadId = `${slug}:skill:${skillId}`;
-  return {
-    threadId,
-    threadName: skillName,
-    skill: "skill-creator",
-    skills: ["skill-creator"],
-    linkedTo: `skills/${skillId}`,
-    docPath: docPath || null,
-    threadState: "continue",
-    agent: "cervantes",
-  };
+  const cfg = instantiateEntry("skill-editor", { slug, params: { skillId, skillName } });
+  cfg.docPath = docPath || null;
+  return cfg;
 }
 
 /**
