@@ -16,13 +16,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildOutreachTemplateThread } from "@/lib/chat-openers";
 import { SlideOver } from "@/components/shared/slide-over";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
+import { TaskSlideOver } from "@/components/shared/task-slideover";
 // Imports de LEAF modules client-safe (el index del paquete arrastra fs).
 import type { PartnershipTemplate } from "@/lib/partnerships/templates";
 import type { DiscoverySearchRecord } from "@/lib/partnerships/discovery-types";
@@ -55,7 +55,6 @@ function emptyEditor(): EditorState {
 }
 
 export function PlantillasTab({ slug }: { slug: string }) {
-  const router = useRouter();
   const openChat = useOpenChat();
   const queryClient = useQueryClient();
   const { toast, showToast } = useToast();
@@ -83,6 +82,7 @@ export function PlantillasTab({ slug }: { slug: string }) {
 
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [docPath, setDocPath] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
 
   const saveMutation = useMutation({
     mutationFn: (state: EditorState) => {
@@ -125,20 +125,11 @@ export function PlantillasTab({ slug }: { slug: string }) {
     });
   }
 
-  function gotoTask(template: PartnershipTemplate) {
+  function taskIdForTemplate(template: PartnershipTemplate): string | null {
     const owner = searches.find((search) =>
       (search.templates || []).some((instance) => instance.templateId === template.id),
     );
-    if (!owner) {
-      showToast("📋 Ninguna búsqueda instancia esta plantilla todavía — asígnala desde Encuentra", "warn");
-      return;
-    }
-    showToast(`📋 Búsqueda que la instancia: «${owner.title}» — abriendo Encuentra…`);
-    void router.push(
-      { pathname: router.pathname, query: { slug } }, // tab=encuentra es el default
-      undefined,
-      { shallow: true },
-    );
+    return owner?.taskId ?? null;
   }
 
   const sections: Array<{ key: "sequence" | "brief"; title: string; sub: string }> = [
@@ -245,15 +236,21 @@ export function PlantillasTab({ slug }: { slug: string }) {
                       >
                         💬
                       </button>
-                      <button
-                        type="button"
-                        title="Ir a la tarea/búsqueda que la instancia"
-                        onClick={() => gotoTask(template)}
-                        className="grid h-8 w-8 place-items-center rounded-md border border-border bg-transparent text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        data-action="goto-task"
-                      >
-                        📋
-                      </button>
+                      {(() => {
+                        const ownerTaskId = taskIdForTemplate(template);
+                        return (
+                          <button
+                            type="button"
+                            title={ownerTaskId ? "Abrir la tarea de la búsqueda que la instancia" : "Aún ninguna búsqueda usa esta plantilla — asígnala desde Encuentra"}
+                            disabled={!ownerTaskId}
+                            onClick={() => ownerTaskId && setTaskId(ownerTaskId)}
+                            className="grid h-8 w-8 place-items-center rounded-md border border-border bg-transparent text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+                            data-action="goto-task"
+                          >
+                            📋
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -310,6 +307,16 @@ export function PlantillasTab({ slug }: { slug: string }) {
           />
         );
       })()}
+
+      {taskId && (
+        <TaskSlideOver
+          slug={slug}
+          projectId={null}
+          taskId={taskId}
+          onClose={() => setTaskId(null)}
+          onOpenDoc={(p) => { setTaskId(null); setDocPath(p); }}
+        />
+      )}
 
       <ToastViewport toast={toast} />
     </div>

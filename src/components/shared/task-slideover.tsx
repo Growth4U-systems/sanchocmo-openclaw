@@ -26,11 +26,11 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
 export function TaskSlideOver({ slug, projectId, taskId, onClose, onOpenDoc, onOpenChat }: TaskSlideOverProps) {
   const router = useRouter();
   const { data: projectsData } = useProjects(slug || null);
-  const isOpen = !!taskId && !!projectId;
+  const isOpen = !!taskId;
 
   // Find the task from projectsData
   const { task, project } = useMemo(() => {
-    if (!projectsData || !projectId || !taskId) return { task: null, project: null };
+    if (!projectsData || !taskId) return { task: null, project: null };
     for (const pw of projectsData) {
       if (pw.project.id === projectId) {
         const t = pw.tasks.find((t) => t.id === taskId);
