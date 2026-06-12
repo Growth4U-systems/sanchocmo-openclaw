@@ -1,5 +1,8 @@
 {
   "docPaths": {
+    "brand-report": [
+      "brand-book/brand-report.html"
+    ],
     "brand-voice": [
       "brand-book/brand-voice/brand-voice.current.md",
       "brand-voice/brand-voice.current.md"
@@ -44,6 +47,9 @@
     "foundation-presentation": [
       "presentations/foundation-deck.html"
     ],
+    "gtm-presentation": [
+      "go-to-market/gtm-report.html"
+    ],
     "market-analysis": [
       "market-and-us/market/market.current.md",
       "market-and-us/market/lite.md"
@@ -83,13 +89,13 @@
     "pricing": [
       "go-to-market/pricing/pricing.current.md"
     ],
-    "seo-audit": [
-      "site-audit/seo-audit/seo-audit.current.md",
-      "trust-engine/seo-audit.json"
-    ],
     "self-analysis": [
       "market-and-us/self/self.current.md",
       "market-and-us/self/lite.md"
+    ],
+    "seo-audit": [
+      "site-audit/seo-audit/seo-audit.current.md",
+      "trust-engine/seo-audit.json"
     ],
     "social-media-strategy": [
       "strategies/social/social.current.md"

@@ -64,6 +64,11 @@ export class TaskAnchorError extends Error {
  * Enforce that a task has the 2 required anchors (`skill` + `deliverable_file`).
  * Throws a `TaskAnchorError` with the list of missing fields if not.
  *
+ * Exemption (SAN-183 F5): tasks of type `integration` (connect Meeting
+ * Intelligence / Call Prep / Daily Pulse) and `execution` (orchestration, e.g.
+ * "Ejecutar Strategic Plan") produce configuration or projects, not documents
+ * — `deliverable_file` is not required for them (skill + chat thread still are).
+ *
  * Callers should catch and return 400 to the API consumer.
  */
 export function requireTaskAnchors(task: TaskCreateInput): void {
@@ -71,9 +76,12 @@ export function requireTaskAnchors(task: TaskCreateInput): void {
   if (!task.skill || (typeof task.skill === "string" && task.skill.trim() === "")) {
     missing.push("skill");
   }
+  const deliverableExempt = task.type === "integration" || task.type === "execution";
   if (
-    !task.deliverable_file ||
-    (typeof task.deliverable_file === "string" && task.deliverable_file.trim() === "")
+    !deliverableExempt &&
+    (!task.deliverable_file ||
+      (typeof task.deliverable_file === "string" && task.deliverable_file.trim() === "") ||
+      (Array.isArray(task.deliverable_file) && task.deliverable_file.length === 0))
   ) {
     missing.push("deliverable_file");
   }
