@@ -11,6 +11,7 @@ import { withErrorHandler } from "@/lib/api-middleware";
 import { resolveIntakeRequest } from "@/lib/intake/request";
 import { renderIntakeMarkdown, writeIntakeSeedDoc } from "@/lib/intake/render";
 import { upsertIntakeSubmission } from "@/lib/intake/submissions";
+import { sanitizeAttachments } from "@/lib/intake/attachments";
 import { loadClient } from "@/lib/data/clients";
 import { addNotification } from "@/lib/data/notifications";
 
@@ -62,6 +63,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = resolved.slug!;
   const input = resolved.input!;
 
+  const attachments = sanitizeAttachments((req.body as Record<string, unknown>)?.attachments);
+
   const client = loadClient(slug);
   if (!client || client.active === false) {
     return res.status(403).json({ error: "Invalid token" });
@@ -75,6 +78,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       respondentEmail: input.respondentEmail,
       submittedAt: new Date(),
       answers: input.answers,
+      attachments,
     });
     writeIntakeSeedDoc(slug, markdown);
   } catch (e) {
@@ -84,7 +88,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    await upsertIntakeSubmission(slug, input);
+    await upsertIntakeSubmission(slug, input, attachments);
   } catch {
     return res.status(500).json({ error: "Could not save submission" });
   }
