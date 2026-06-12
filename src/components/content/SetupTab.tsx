@@ -26,7 +26,7 @@ import { ConfigSheet } from "@/components/content/config/ConfigSheet";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { PublishingSetupPanel } from "@/components/content/PublishingSetupPanel";
 import { buildDocThread, buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
-import { getSectionManifest } from "@/lib/section-manifest";
+import { getTaskSetEntry } from "@/lib/data/task-blueprints";
 import type { ProviderInfo } from "@/lib/publishing/types";
 import { cn } from "@/lib/utils";
 
@@ -145,7 +145,7 @@ export function SetupTab({ slug, openChat, focusChannel }: Props) {
     // single source of truth that keeps this thread routing to its owner
     // (Dulcinea) instead of Sancho. We also set `agent` explicitly so routing
     // is correct regardless of buildDocThread's fallback resolution (SAN-166).
-    const chTask = getSectionManifest("content")?.tasks.find((t) => t.id === "channel-strategy");
+    const chTask = getTaskSetEntry("content", "channel-strategy");
     const cfg = buildDocThread(slug, {
       key: `channel-strategy-${channel}`,
       name: `Estrategia del canal ${label}`,

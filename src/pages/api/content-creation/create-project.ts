@@ -9,7 +9,7 @@ import {
   TaskAnchorError,
   type ProjectCreateInput,
 } from "@/lib/data/task-create-helpers";
-import { buildContentEngineTasks } from "@/lib/data/content-engine-tasks";
+import { instantiateTaskSet } from "@/lib/data/task-blueprints";
 
 /**
  * POST /api/content-creation/create-project
@@ -95,10 +95,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   };
 
   // tasks.json — the canonical 5-task Content Engine flow, derived from the
-  // declarative section manifest (config/sections/content.json) via
-  // buildContentEngineTasks. Each task is born with its anchors (skill +
+  // declarative registry (config/pillar-manifest.json → taskSets.content) via
+  // instantiateTaskSet. Each task is born with its anchors (skill +
   // deliverable_file + mc_chat_thread_id) AND its owner agent co-located.
-  const tasks = buildContentEngineTasks(slug, projectId);
+  const tasks = instantiateTaskSet("content", { slug, projectId });
 
   // Apply anchors (validates + creates empty chat thread files).
   try {

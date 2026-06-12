@@ -134,5 +134,116 @@
     "web-strategy": {
       "docPaths": ["strategies/web/web.current.md"]
     }
+  },
+  "_taskSets_comment": "SAN-167 — preconfigured task SETS per zone, instantiated into tasks.json by src/lib/data/task-blueprints.ts::instantiateTaskSet. Each task declares its agent EXPLICITLY (co-located, not resolved). Prose uses {slug}/{projectId}/{channel} placeholders. taskKey => seeded as a fixed project set (id {projectId}-{taskKey}); no taskKey => on-demand entry (params substituted at create). Mirrors the canonical flow that used to live in create-project.ts / content-engine-tasks.ts.",
+  "taskSets": {
+    "content": {
+      "label": "Content Creation",
+      "tasks": [
+        {
+          "id": "content-strategy",
+          "taskKey": "T01",
+          "name": "Content Strategy (14 decisiones globales)",
+          "skill": "content-strategy",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Proceso 1 — Ejecutar content-strategy a nivel empresa. Define: nichos confirmados, Content Tilt, Villano, Trigger Events, canales activos, mix searchable/shareable, pillars a alto nivel, KPIs norte.",
+          "deliverable": "Documento con las 14 decisiones estrategicas globales del Content Engine",
+          "deliverableFiles": ["content/strategy-decisions.md"],
+          "outputFiles": ["strategy-decisions.md"],
+          "dependsOn": []
+        },
+        {
+          "id": "content-pillars",
+          "taskKey": "T02",
+          "name": "Content Pillars (3-5 temas)",
+          "skill": "content-pillars",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Proceso 1 — Ejecutar content-pillars. Define 3-5 pillars (TEMAS, no POV). Lee Foundation completa + strategy-decisions.md. Asigna funnel_role per pillar. El humano confirma la lista final.",
+          "deliverable": "Content pillars con funnel_role, pain_origin, expertise, related_topics",
+          "deliverableFiles": ["content/content-pillars.md"],
+          "outputFiles": ["content-pillars.md"],
+          "dependsOn": ["content-strategy"]
+        },
+        {
+          "id": "content-setup",
+          "taskKey": "T03",
+          "name": "Setup configs por pillar",
+          "skill": "content-engine-setup",
+          "agent": "dulcinea",
+          "type": "execution",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + pov-bank.json + Foundation. Genera ademas un setup.md narrativo que explica el por que de cada decision y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA. ORDEN DE EJECUCION: SE EJECUTA EL ULTIMO. Requiere {projectId}-T01 (Strategy) + {projectId}-T02 (Pillars) + {projectId}-T04 (POV Bank) en status:completed.",
+          "deliverable": "Configs por pillar + cadence + sources.json profiles + setup.md narrativo",
+          "deliverableFiles": ["content/configs/setup.md"],
+          "outputFiles": [
+            "setup.md",
+            "cadence-config.yml",
+            "news-prompts/*.yml",
+            "paa-queries/*.yml",
+            "keywords-seed/*.yml",
+            "../../market-and-us/competitors/sources.json"
+          ],
+          "dependsOn": ["pov-bank"]
+        },
+        {
+          "id": "pov-bank",
+          "taskKey": "T04",
+          "name": "Build POV Bank",
+          "skill": "pov-bank-builder",
+          "agent": "dulcinea",
+          "type": "execution",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Construye la BD de puntos de vista (pov-bank.json) per pillar: core_belief, we_say_yes_to/no_to, preferred_angles, evidence_we_cite. Lee brand-voice + content-pillars + clarify-history. El skill idea-builder consultara este doc para generar angle_drafts diferenciados (no genericos). Se refresca mensualmente con el cron POV Bank Refresh basado en patrones de clarify-history. ORDEN DE EJECUCION: VA ANTES que {projectId}-T03 (Setup configs) — el POV se decide primero, despues se configuran los inputs alineados con esa postura. Requiere {projectId}-T01 (Strategy) + {projectId}-T02 (Pillars) en status:completed.",
+          "deliverable": "POV Bank con opiniones por pillar (core_belief, we_say_yes/no, preferred_angles, evidence)",
+          "deliverableFiles": ["content/pov-bank.json"],
+          "outputFiles": ["pov-bank.json", "pov-bank-history.json"],
+          "dependsOn": ["content-pillars"]
+        },
+        {
+          "id": "visual-templates",
+          "taskKey": "T05",
+          "name": "Visual Templates (5 plantillas HTML)",
+          "skill": "{slug}-visual-generator",
+          "skillTemplated": true,
+          "agent": "maese-pedro",
+          "type": "foundation",
+          "channel": "visual",
+          "phase": 1,
+          "description": "Genera las 5 plantillas HTML brand-specific (linkedin-quote, linkedin-9-slide, instagram-3-slide, blog-post, blog-title) ejecutando el skill {slug}-visual-generator. La skill lee design-tokens.json + visual-identity-current.md, decide qué personajes incluir, genera con nano-banana-pro los assets faltantes, y produce los HTMLs en brand/{slug}/brand-book/visual-identity/templates/{id}/. Ver SKILL.md de la skill para el flow completo. Prerequisito de runtime: visual-identity pillar 'approved' en Foundation L5.",
+          "deliverable": "5 plantillas HTML (template.html o slide-*.html) + meta.json por plantilla",
+          "deliverableFiles": [
+            "brand-book/visual-identity/templates/linkedin-quote/template.html",
+            "brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+            "brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+            "brand-book/visual-identity/templates/blog-post/template.html",
+            "brand-book/visual-identity/templates/blog-title/template.html"
+          ],
+          "outputFiles": [
+            "brand-book/visual-identity/templates/linkedin-quote/template.html",
+            "brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+            "brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+            "brand-book/visual-identity/templates/blog-post/template.html",
+            "brand-book/visual-identity/templates/blog-title/template.html"
+          ],
+          "dependsOn": ["content-strategy", "content-pillars"]
+        },
+        {
+          "id": "channel-strategy",
+          "name": "Estrategia del canal",
+          "skill": "content-strategy",
+          "agent": "dulcinea",
+          "docPaths": ["content/strategy/{channel}-strategy.md"],
+          "dependsOn": ["content-strategy"]
+        }
+      ]
+    }
   }
 }
