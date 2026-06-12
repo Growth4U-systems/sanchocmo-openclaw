@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { readJSON, writeJSON } from "./json-io";
 import { notificationsFile } from "./paths";
 
@@ -37,4 +38,28 @@ export function markNotificationsSent(slug: string, ids: string[]): void {
     }
   }
   saveNotifications(slug, all);
+}
+
+/**
+ * Append a notification for a client. Returns the created record. The caller
+ * supplies type/title/body/metadata; id, created_at and sent_at are set here.
+ */
+export function addNotification(
+  slug: string,
+  n: { type: string; title: string; body: string; metadata?: Record<string, unknown> },
+): Notification {
+  const record: Notification = {
+    id: `ntf_${crypto.randomUUID()}`,
+    type: n.type,
+    title: n.title,
+    body: n.body,
+    slug,
+    created_at: new Date().toISOString(),
+    sent_at: null,
+    ...(n.metadata ? { metadata: n.metadata } : {}),
+  };
+  const all = loadNotifications(slug);
+  all.push(record);
+  saveNotifications(slug, all);
+  return record;
 }
