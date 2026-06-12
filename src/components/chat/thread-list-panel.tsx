@@ -135,7 +135,7 @@ export function ThreadListPanel({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8 text-[13px] text-[#6c7086]">
+      <div className="flex items-center justify-center py-8 text-[13px] text-[var(--chat-text-faint)]">
         {t("loading") ?? "Cargando..."}
       </div>
     );
@@ -145,7 +145,7 @@ export function ThreadListPanel({
     return (
       <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
         <span className="text-3xl mb-2">💬</span>
-        <p className="text-[14px] text-[#6c7086]">{t("noThreads") ?? "Sin threads todavía"}</p>
+        <p className="text-[14px] text-[var(--chat-text-faint)]">{t("noThreads") ?? "Sin threads todavía"}</p>
       </div>
     );
   }
@@ -155,19 +155,19 @@ export function ThreadListPanel({
       {/* Search input */}
       <div className="px-2 pt-2 pb-1">
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6c7086] text-[12px] pointer-events-none">🔍</span>
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--chat-text-faint)] text-[12px] pointer-events-none">🔍</span>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar threads..."
-            className="w-full bg-[#313244] border border-[#45475a] rounded-md pl-8 pr-3 py-1.5 text-[12px] text-[#cdd6f4] placeholder:text-[#6c7086] focus:outline-none focus:border-rust transition-colors"
+            className="w-full bg-[var(--chat-surface)] border border-[var(--chat-border)] rounded-md pl-8 pr-3 py-1.5 text-[12px] text-[var(--chat-text)] placeholder:text-[var(--chat-text-faint)] focus:outline-none focus:border-rust transition-colors"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6c7086] hover:text-[#cdd6f4] text-[11px]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--chat-text-faint)] hover:text-[var(--chat-text)] text-[11px]"
             >
               ✕
             </button>
@@ -191,7 +191,7 @@ export function ThreadListPanel({
                 "text-[11px] px-2 py-1 rounded-md whitespace-nowrap transition-colors flex-shrink-0",
                 filter === tab.key
                   ? "bg-rust text-white font-semibold"
-                  : "bg-[#313244] text-[#a6adc8] hover:bg-[#45475a] hover:text-[#cdd6f4]"
+                  : "bg-[var(--chat-surface)] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)]"
               )}
             >
               {tab.label}
@@ -206,7 +206,7 @@ export function ThreadListPanel({
       {/* Thread list */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 px-4 text-center">
-          <p className="text-[12px] text-[#6c7086]">
+          <p className="text-[12px] text-[var(--chat-text-faint)]">
             {search ? `Sin resultados para "${search}"` : "Sin threads en este filtro"}
           </p>
           {(search || filter !== "all") && (
@@ -235,8 +235,8 @@ export function ThreadListPanel({
               onClick={() => handleClick(thread.id)}
               className={cn(
                 "w-full text-left px-3 py-2.5 flex items-start gap-2.5 transition-colors",
-                "hover:bg-[#313244]",
-                isActive && "bg-[#45475a] border-l-2 border-l-rust"
+                "hover:bg-[var(--chat-surface)]",
+                isActive && "bg-[var(--chat-surface-2)] border-l-2 border-l-rust"
               )}
             >
               {/* Icon */}
@@ -257,20 +257,20 @@ export function ThreadListPanel({
                     className={cn(
                       "text-[14px] truncate flex-1 leading-snug",
                       thread.hasUnread
-                        ? "font-semibold text-[#cdd6f4]"
-                        : "text-[#cdd6f4]"
+                        ? "font-semibold text-[var(--chat-text)]"
+                        : "text-[var(--chat-text)]"
                     )}
                   >
                     {thread.displayName}
                   </span>
                   {lastTs && !narrow && (
-                    <span className="text-[11px] text-[#a6adc8] flex-shrink-0">
+                    <span className="text-[11px] text-[var(--chat-text-muted)] flex-shrink-0">
                       {relTime(lastTs)}
                     </span>
                   )}
                 </div>
                 {!narrow && preview && (
-                  <div className="text-[12px] text-[#a6adc8] truncate mt-1 leading-snug">
+                  <div className="text-[12px] text-[var(--chat-text-muted)] truncate mt-1 leading-snug">
                     {preview}
                   </div>
                 )}
