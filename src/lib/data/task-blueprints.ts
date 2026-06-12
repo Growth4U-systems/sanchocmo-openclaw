@@ -33,6 +33,12 @@ export interface TaskSetEntry {
   type?: string;
   channel?: string;
   phase?: number;
+  /** Human owner override (default "Sancho") — e.g. integration tasks owned by "Usuario". */
+  owner?: string;
+  /** Foundation pillar this task covers 1:1 (SAN-183 F5). */
+  pillar?: string;
+  /** Foundation section of the pillar (SAN-183 F5). */
+  section?: string;
   /** Prose, with {slug}/{projectId}/{channel} placeholders. */
   description?: string;
   deliverable?: string;
@@ -44,12 +50,18 @@ export interface TaskSetEntry {
   outputFiles?: string[];
   /** Semantic ids in the same set this depends on. */
   dependsOn?: string[];
+  /** Verbatim cross-project task ids this depends on (e.g. "P00-FUL-T09"). */
+  dependsOnExternal?: string[];
   /** Verbatim passthrough fields merged onto the seeded task (e.g. done_criteria). */
   extra?: Record<string, unknown>;
 }
 
 export interface TaskSet {
   label: string;
+  /** Foundation sets (SAN-183 F5): task ids become `{idPrefix}-{taskKey}` (e.g. P00-FUL-T01). */
+  idPrefix?: string;
+  /** Foundation sets (SAN-183 F5): the project.json this set seeds, verbatim. */
+  project?: Record<string, unknown> & { id: string; name: string };
   tasks: TaskSetEntry[];
 }
 
@@ -143,20 +155,23 @@ const subst = (s: string, slug: string, projectId?: string, channel?: string): s
     .replace(/\{projectId\}/g, projectId ?? "")
     .replace(/\{channel\}/g, channel ?? "");
 
-/** Format `depends_on` like the legacy seeder: [] → null, [x] → x, [x,y] → [x,y]. */
+/** Format `depends_on` like the legacy seeder: [] → null, [x] → x, [x,y] → [x,y].
+ *  `external` are verbatim cross-project ids (dependsOnExternal), appended as-is. */
 function formatDependsOn(
   deps: string[],
   keyById: Map<string, string>,
   projectId: string,
+  external: string[] = [],
 ): null | string | string[] {
   const ids = deps.map((d) => {
     const key = keyById.get(d);
     if (!key) throw new Error(`task-blueprints: dependsOn references unknown task "${d}"`);
     return `${projectId}-${key}`;
   });
-  if (ids.length === 0) return null;
-  if (ids.length === 1) return ids[0];
-  return ids;
+  const all = [...ids, ...external];
+  if (all.length === 0) return null;
+  if (all.length === 1) return all[0];
+  return all;
 }
 
 /**
@@ -177,27 +192,33 @@ export function instantiateTaskSet(section: string, ctx: { slug: string; project
 
   return seeded.map((t) => {
     const rel = (t.deliverableFiles ?? t.docPaths ?? []).map((p) => `brand/${slug}/${p}`);
-    const deliverable_file = rel.length === 1 ? rel[0] : rel;
     const skill = subst(t.skill, slug, projectId);
 
     return {
       id: `${projectId}-${t.taskKey}`,
       name: t.name,
       description: t.description ? subst(t.description, slug, projectId) : "",
-      phase: t.phase,
+      // Conditional keys: absent (not `undefined`) when undeclared, so seeded
+      // tasks.json stays clean and goldens can assert exact key presence.
+      ...(t.phase !== undefined ? { phase: t.phase } : {}),
       type: t.type,
       channel: t.channel,
       niche: null,
       status: "todo",
       deliverable: t.deliverable ? subst(t.deliverable, slug, projectId) : "",
-      deliverable_file,
-      output_files: t.outputFiles,
-      depends_on: formatDependsOn(t.dependsOn ?? [], keyById, projectId),
-      owner: "Sancho",
+      // Tasks without files (type integration/execution) omit deliverable_file
+      // entirely — requireTaskAnchors exempts those types.
+      ...(rel.length > 0 ? { deliverable_file: rel.length === 1 ? rel[0] : rel } : {}),
+      ...(t.outputFiles ? { output_files: t.outputFiles } : {}),
+      depends_on: formatDependsOn(t.dependsOn ?? [], keyById, projectId, t.dependsOnExternal ?? []),
+      owner: t.owner ?? "Sancho",
       skill,
       agent: t.agent,
+      ...(t.pillar ? { pillar: t.pillar } : {}),
+      ...(t.section ? { section: t.section } : {}),
       mc_chat_thread_id: `task-${projectId.toLowerCase()}-${t.taskKey.toLowerCase()}`,
       discord_thread_id: null,
+      ...(t.extra ?? {}),
     };
   });
 }
@@ -230,6 +251,83 @@ export function instantiateSingletonTask(section: string, ctx: { slug: string; i
     agent: t.agent,
     deliverable_file: rel.length === 1 ? rel[0] : rel,
     output_files: t.outputFiles?.map((p) => subst(p, slug)),
+  };
+}
+
+// ============================================================
+// Foundation (SAN-183 F5) — pillars as 1:1 tasks
+// ============================================================
+
+/** The four seeded Foundation projects, in dependency order. */
+export const FOUNDATION_TASK_SET_KEYS = [
+  "foundation-cb",
+  "foundation-full",
+  "foundation-metrics",
+  "foundation-sp",
+] as const;
+
+export interface FoundationPillarDecl {
+  key: string;
+  layer?: number;
+  optional?: boolean;
+  /** The task that covers this pillar 1:1: `{idPrefix}-{taskKey}` of the set entry. */
+  task: { set: string; id: string };
+}
+
+export interface FoundationSection {
+  key: string;
+  layer: number;
+  pillars: FoundationPillarDecl[];
+}
+
+const MANIFEST_FOUNDATION = (
+  pillarManifest as unknown as { foundation?: { sections?: FoundationSection[] } }
+).foundation?.sections ?? [];
+
+/** The Foundation structure: ordered sections → pillars + task binding. */
+export function getFoundationManifest(): FoundationSection[] {
+  return MANIFEST_FOUNDATION;
+}
+
+/** Locate a Foundation pillar declaration (and its section) by pillar key. */
+export function findFoundationPillar(
+  key: string,
+): { section: FoundationSection; pillar: FoundationPillarDecl } | undefined {
+  for (const section of MANIFEST_FOUNDATION) {
+    const pillar = section.pillars.find((p) => p.key === key);
+    if (pillar) return { section, pillar };
+  }
+  return undefined;
+}
+
+/** Concrete task id (`{idPrefix}-{taskKey}`) covering a Foundation pillar. */
+export function foundationTaskIdForPillar(key: string): string | undefined {
+  const found = findFoundationPillar(key);
+  if (!found) return undefined;
+  const set = getTaskSet(found.pillar.task.set);
+  const entry = set?.tasks.find((t) => t.id === found.pillar.task.id);
+  if (!set?.idPrefix || !entry?.taskKey) return undefined;
+  return `${set.idPrefix}-${entry.taskKey}`;
+}
+
+/**
+ * Instantiate one seeded Foundation project (project.json + tasks.json
+ * contents) from its task set. Pure — the consumer writes to disk and applies
+ * anchors. Task ids use the set's `idPrefix` (e.g. P00-FUL-T01), preserving
+ * the legacy ids from scripts/reseed-foundation.sh.
+ */
+export function instantiateFoundationProject(
+  setKey: string,
+  ctx: { slug: string },
+): { project: Record<string, unknown> & { id: string; name: string }; tasks: TaskCreateInput[] } {
+  const set = getTaskSet(setKey);
+  if (!set) throw new Error(`task-blueprints: unknown task set "${setKey}"`);
+  if (!set.project || !set.idPrefix) {
+    throw new Error(`task-blueprints: task set "${setKey}" declares no project/idPrefix`);
+  }
+  return {
+    project: { ...set.project },
+    tasks: instantiateTaskSet(setKey, { slug: ctx.slug, projectId: set.idPrefix }),
   };
 }
 

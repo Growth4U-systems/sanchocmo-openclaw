@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 #
+# ⚠️ DEPRECADO (SAN-183 F5): usar scripts/reseed-foundation.mts, que instancia
+# los proyectos desde el registro declarativo (pillar-manifest taskSets
+# foundation-*) en vez de estos heredocs. Este .sh se elimina en F5 PR4.
+#
 # reseed-foundation.sh — Reinstala el scaffolding canónico de Foundation
 # en un cliente existente, archivando el estado actual.
 #
