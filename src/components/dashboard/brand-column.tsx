@@ -183,8 +183,42 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
     }
   }
 
+  // SAN-3: keep the Kickoff URL launcher reachable while the Company Brief pillar
+  // is still not-started. The `!foundation` early-return above only fires for a
+  // brand with no foundation at all — but scaffolding (SAN-108) now always creates
+  // one, which hid the "Analizar" box for every new client.
+  const cbStatus = sections["company-brief"]?.pillars?.["company-brief"]?.status;
+  const showKickoffLauncher = !cbStatus || cbStatus === "not-started";
+
   return (
     <div className="space-y-0">
+      {/* Kickoff launcher — visible while the Company Brief is not-started (SAN-3) */}
+      {showKickoffLauncher && (
+        <div className="pb-3 mb-3 border-b border-border/60">
+          <p className="text-xs text-muted-foreground mb-2">
+            Introduce la URL para arrancar el Kickoff, o pulsa ▶ en Company Brief para el modo conversacional.
+          </p>
+          <div className="flex gap-1.5">
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+              placeholder="https://empresa.com"
+              className="flex-1 text-xs px-2 py-1.5 border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-rust"
+            />
+            <button
+              type="button"
+              onClick={handleAnalyze}
+              disabled={!url.trim()}
+              className="text-xs px-3 py-1.5 bg-rust text-white rounded-md hover:bg-rust/90 transition-colors disabled:opacity-40"
+            >
+              Analizar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Brand Snapshot */}
       {hasSnapshotData && bs && (
         <div className="pb-3">
