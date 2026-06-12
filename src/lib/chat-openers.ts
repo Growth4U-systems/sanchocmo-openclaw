@@ -178,6 +178,16 @@ export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
 }
 
 /**
+ * Build a fresh "Nueva tarea" thread — a blank chat with Sancho (manager),
+ * ready for the user to describe a new task. No initialMessage → nothing is
+ * auto-sent; the input opens empty. A new id per call so each "Nueva tarea"
+ * is its own conversation. Declared in chatEntries.new-task.
+ */
+export function buildNewTaskThread(slug: string): ThreadConfig {
+  return instantiateEntry("new-task", { slug, params: { nonce: String(Date.now()) } });
+}
+
+/**
  * Partnerships (SAN-78) — "Crear nueva búsqueda" de creators abre el chat
  * global con el plan de discovery. La skill `discovery-plan-builder` la
  * construye SAN-79; mientras llega, Rocinante (agente owner de Outreach,

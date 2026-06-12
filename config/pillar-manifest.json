@@ -331,6 +331,16 @@
       "threadState": "continue",
       "initialMessage": "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?"
     },
+    "new-task": {
+      "threadId": "{slug}:new-task:{nonce}",
+      "threadName": "Nueva tarea",
+      "skill": "sancho-manager",
+      "skills": ["sancho-manager"],
+      "agent": "sancho",
+      "linkedTo": "new-task",
+      "docPath": null,
+      "threadState": "continue"
+    },
     "discovery-search": {
       "threadId": "{slug}:discovery:{campaignIdLower}",
       "threadName": "Búsqueda: {searchName}",

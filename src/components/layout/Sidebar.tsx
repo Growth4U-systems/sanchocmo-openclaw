@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useSession, signOut } from "next-auth/react";
 import { useAppStore } from "@/stores/app";
 import { useChatStore } from "@/stores/chat";
+import { buildNewTaskThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
 import { navigateToClient } from "@/lib/navigation";
 import { useClients } from "@/hooks/useClients";
@@ -107,12 +108,17 @@ export function Sidebar() {
         {chatSlug && sidebarOpen && (
           <button
             onClick={() => {
-              useChatStore.getState().setCurrentSlug(chatSlug);
-              useChatStore.getState().toggleSidebar();
+              // "Nueva tarea": open a fresh blank chat with Sancho in fullscreen,
+              // ready to describe a new task (no auto-message). See chatEntries.new-task.
+              const cfg = buildNewTaskThread(chatSlug);
+              const chat = useChatStore.getState();
+              chat.setCurrentSlug(chatSlug);
+              chat.openSidebar(cfg);
+              useChatStore.setState({ isFullscreen: true });
             }}
             className="w-full flex items-center gap-2 px-3.5 py-2.5 mt-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center relative"
           >
-            💬 {t("chat.title")}
+            ➕ {t("chat.newTask")}
             {unreadCount > 0 && (
               <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                 {unreadCount}
