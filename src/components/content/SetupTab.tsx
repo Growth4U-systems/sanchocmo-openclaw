@@ -26,6 +26,7 @@ import { ConfigSheet } from "@/components/content/config/ConfigSheet";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { PublishingSetupPanel } from "@/components/content/PublishingSetupPanel";
 import { buildDocThread, buildTaskThread, type ThreadConfig } from "@/lib/chat-openers";
+import { getTaskSetEntry } from "@/lib/data/task-blueprints";
 import type { ProviderInfo } from "@/lib/publishing/types";
 import { cn } from "@/lib/utils";
 
@@ -139,16 +140,21 @@ export function SetupTab({ slug, openChat, focusChannel }: Props) {
   };
 
   const createChannelStrategy = (channel: string, label: string, strategyDoc: string | null) => {
-    // The strategy doc is created in chat (content-strategy scoped to the
-    // channel) — same pattern as every other doc-producing task.
+    // Skill + owner agent come from the Content section manifest
+    // (config/sections/content.json → channel-strategy), not hardcoded — the
+    // single source of truth that keeps this thread routing to its owner
+    // (Dulcinea) instead of Sancho. We also set `agent` explicitly so routing
+    // is correct regardless of buildDocThread's fallback resolution (SAN-166).
+    const chTask = getTaskSetEntry("content", "channel-strategy");
     const cfg = buildDocThread(slug, {
       key: `channel-strategy-${channel}`,
       name: `Estrategia del canal ${label}`,
-      skill: "content-strategy",
+      skill: chTask?.skill ?? "content-strategy",
       channel,
       docPath: strategyDoc,
       status: "pending",
     }, projectId);
+    if (chTask?.agent) cfg.agent = chTask.agent;
     cfg.initialMessage = [
       `Crea la estrategia del canal ${label} (${channel}) en ${strategyDoc || `content/strategy/${channel}-strategy.md`}.`,
       "Deriva de la marca madre (strategy-decisions.md + content-pillars.md + POV bank):",
