@@ -16,6 +16,7 @@ import { loadConfig } from "openclaw/plugin-sdk/config-runtime";
 import { mcChatPlugin } from "./channel.js";
 import { classifyAndRewriteError, mergeWithPriorCategory } from "./error-rewriter.js";
 import { errorTracker } from "./error-tracker.js";
+import { looksLikeToolEcho } from "./tool-echo.js";
 
 // Best-effort lookup of an agent's current Codex auth mode + account email.
 // Used to disambiguate "rate limit" errors: Codex CLI always emits the
@@ -65,6 +66,7 @@ function scrubAngleWrappedUrls(text) {
   if (typeof text !== "string" || text.length === 0) return text;
   return text.replace(/<(https?:\/\/[^\s<>]+)>/g, "$1");
 }
+
 
 export default defineChannelPluginEntry({
   id: "mc-chat",
@@ -281,6 +283,16 @@ export default defineChannelPluginEntry({
                     if (t) texts.push(t);
                   }
                 }
+                // Drop tool-call narration parts ("Write: to…", "run python3
+                // inline script") so they never persist as bubbles. The real
+                // reply is Spanish prose and never matches.
+                const beforeFilter = texts.length;
+                const delivered = texts.filter((t) => !looksLikeToolEcho(t));
+                if (delivered.length < beforeFilter) {
+                  logger.info(`[mc-chat] dropped ${beforeFilter - delivered.length} tool-echo part(s) thread=${threadId}`);
+                }
+                texts.length = 0;
+                texts.push(...delivered);
                 if (texts.length === 0) return;
 
                 // Detect which agent is responding
