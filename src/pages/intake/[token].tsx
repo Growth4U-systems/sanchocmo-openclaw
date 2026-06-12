@@ -3,10 +3,11 @@
  *
  * Conversational one-question-at-a-time flow styled with SanchoCMO's comic
  * brand (parchment + ink borders + offset shadows + halftone). No login.
- * getServerSideProps verifies the token, loads the client, and checks for an
- * existing submission. Answers post to /api/intake/[token]; files upload to
- * /api/intake/[token]/upload (R2). Backend is unchanged except the optional
- * `attachments` array carried in the final submit.
+ * File uploads live in a PERSISTENT side panel next to the form (not a step),
+ * available from the start. getServerSideProps verifies the token, loads the
+ * client, and checks for an existing submission. Answers post to
+ * /api/intake/[token]; files upload to /api/intake/[token]/upload (R2). The
+ * final submit carries the optional `attachments` array.
  */
 
 import { useCallback, useRef, useState } from "react";
@@ -58,7 +59,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
   };
 };
 
-type Phase = "intro" | "question" | "uploads" | "review" | "done";
+type Phase = "intro" | "question" | "review" | "done";
 
 const QUESTIONS = INTAKE_QUESTIONS;
 
@@ -74,6 +75,7 @@ export default function IntakePage(props: PageProps) {
   const total = QUESTIONS.length;
   const set = (id: string, v: string) => setValues((p) => ({ ...p, [id]: v }));
 
+  // --- Terminal panels (no aside) ---
   if (props.invalid) {
     return (
       <Shell>
@@ -102,58 +104,30 @@ export default function IntakePage(props: PageProps) {
     );
   }
 
-  // ---- intro ----
+  // --- Form column (varies by phase) ---
+  let column: React.ReactNode;
+
   if (phase === "intro") {
-    return (
-      <Shell>
-        <Panel>
-          <SanchoTag />
-          <h1 className="mt-4 font-heading text-3xl leading-tight text-navy">
-            Vamos a conocer {props.clientName}
-          </h1>
-          <Bubble>
-            ¡Hola! Soy Sancho. Te voy a hacer unas preguntas cortas sobre tu negocio para
-            arrancar con todo el contexto. No hace falta ser exhaustivo — lo que no sepas, lo
-            saltas. Son ~{total} preguntas y al final puedes adjuntar lo que quieras.
-          </Bubble>
-          <div className="mt-6">
-            <PrimaryButton onClick={() => setPhase("question")}>Empezar →</PrimaryButton>
-          </div>
-        </Panel>
-      </Shell>
+    column = (
+      <Panel>
+        <SanchoTag />
+        <h1 className="mt-4 font-heading text-3xl leading-tight text-navy">
+          Vamos a conocer {props.clientName}
+        </h1>
+        <Bubble>
+          ¡Hola! Soy Sancho. Te voy a hacer unas preguntas cortas sobre tu negocio para arrancar
+          con todo el contexto. No hace falta ser exhaustivo — lo que no sepas, lo saltas. Son ~
+          {total} preguntas, y lo que quieras adjuntar lo sueltas en el panel de al lado.
+        </Bubble>
+        <div className="mt-6">
+          <PrimaryButton onClick={() => setPhase("question")}>Empezar →</PrimaryButton>
+        </div>
+      </Panel>
     );
-  }
-
-  // ---- uploads ----
-  if (phase === "uploads") {
-    return (
-      <Shell>
-        <Progress value={100} label="Casi" />
-        <Panel>
-          <SectionStamp text="Adjuntos" />
-          <Bubble>
-            ¿Tienes algo que ayude a entender el negocio? Deck, brand guidelines, web, métricas,
-            lo que sea. Súbelo aquí (opcional).
-          </Bubble>
-          <UploadBox token={props.token!} attachments={attachments} setAttachments={setAttachments} />
-          <Nav
-            onBack={() => {
-              setPhase("question");
-              setQIndex(total - 1);
-            }}
-            onNext={() => setPhase("review")}
-            nextLabel="Revisar →"
-          />
-        </Panel>
-      </Shell>
-    );
-  }
-
-  // ---- review ----
-  if (phase === "review") {
+  } else if (phase === "review") {
     const answered = QUESTIONS.filter((qq) => values[qq.id]?.trim());
-    return (
-      <Shell>
+    column = (
+      <>
         <Progress value={100} label="Último paso" />
         <Panel>
           <SectionStamp text="Repasa y envía" />
@@ -178,7 +152,10 @@ export default function IntakePage(props: PageProps) {
           </div>
           {submitError && <p className="mt-4 font-bold text-destructive">{submitError}</p>}
           <Nav
-            onBack={() => setPhase("uploads")}
+            onBack={() => {
+              setPhase("question");
+              setQIndex(total - 1);
+            }}
             onNext={async () => {
               setSubmitting(true);
               setSubmitError(null);
@@ -203,54 +180,61 @@ export default function IntakePage(props: PageProps) {
             nextDisabled={submitting}
           />
         </Panel>
-      </Shell>
+      </>
+    );
+  } else {
+    // question phase
+    const q = QUESTIONS[qIndex];
+    const value = values[q.id] || "";
+    const isLast = qIndex === total - 1;
+    const goNext = () => {
+      if (q.required && !value.trim()) {
+        setError("Esta es obligatoria 🙂");
+        return;
+      }
+      setError(null);
+      if (isLast) setPhase("review");
+      else setQIndex((i) => i + 1);
+    };
+    const goBack = () => {
+      setError(null);
+      if (qIndex === 0) setPhase("intro");
+      else setQIndex((i) => i - 1);
+    };
+    column = (
+      <>
+        <Progress value={Math.round((qIndex / total) * 100)} label={`${qIndex + 1} / ${total}`} />
+        <Panel>
+          <SectionStamp text={q.section} />
+          <Bubble>
+            {q.label}
+            {q.required && <span className="text-rust"> *</span>}
+          </Bubble>
+          <QuestionInput q={q} value={value} onChange={(v) => set(q.id, v)} onEnter={goNext} error={error} />
+          <Nav
+            onBack={goBack}
+            onNext={goNext}
+            nextLabel={isLast ? "Continuar →" : "Siguiente →"}
+            skip={!q.required && !value.trim() ? goNext : undefined}
+          />
+        </Panel>
+      </>
     );
   }
 
-  // ---- question ----
-  const q = QUESTIONS[qIndex];
-  const value = values[q.id] || "";
-  const isLast = qIndex === total - 1;
-
-  const goNext = () => {
-    if (q.required && !value.trim()) {
-      setError("Esta es obligatoria 🙂");
-      return;
-    }
-    setError(null);
-    if (isLast) setPhase("uploads");
-    else setQIndex((i) => i + 1);
-  };
-  const goBack = () => {
-    setError(null);
-    if (qIndex === 0) setPhase("intro");
-    else setQIndex((i) => i - 1);
-  };
-
   return (
-    <Shell>
-      <Progress value={Math.round((qIndex / total) * 100)} label={`${qIndex + 1} / ${total}`} />
-      <Panel>
-        <SectionStamp text={q.section} />
-        <Bubble>
-          {q.label}
-          {q.required && <span className="text-rust"> *</span>}
-        </Bubble>
-        <QuestionInput q={q} value={value} onChange={(v) => set(q.id, v)} onEnter={goNext} error={error} />
-        <Nav
-          onBack={goBack}
-          onNext={goNext}
-          nextLabel={isLast ? "Continuar →" : "Siguiente →"}
-          skip={!q.required && !value.trim() ? goNext : undefined}
-        />
-      </Panel>
+    <Shell wide>
+      <div className="grid w-full items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div>{column}</div>
+        <AsideUploads token={props.token!} attachments={attachments} setAttachments={setAttachments} />
+      </div>
     </Shell>
   );
 }
 
 /* ---------------- presentational pieces ---------------- */
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
   return (
     <>
       <Head>
@@ -259,7 +243,11 @@ function Shell({ children }: { children: React.ReactNode }) {
       </Head>
       <main className="relative min-h-screen bg-parchment font-sans text-ink">
         <div className="sc-halftone pointer-events-none absolute inset-0 opacity-60" />
-        <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-4 py-10">
+        <div
+          className={`relative mx-auto flex min-h-screen flex-col justify-center px-4 py-10 ${
+            wide ? "max-w-4xl" : "max-w-2xl"
+          }`}
+        >
           {children}
         </div>
       </main>
@@ -270,6 +258,31 @@ function Shell({ children }: { children: React.ReactNode }) {
 function Panel({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-sc-lg border-[3px] border-ink bg-card p-6 shadow-comic sm:p-8">{children}</div>
+  );
+}
+
+function AsideUploads({
+  token,
+  attachments,
+  setAttachments,
+}: {
+  token: string;
+  attachments: Attachment[];
+  setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
+}) {
+  return (
+    <aside className="sc-halftone rounded-sc-lg border-[3px] border-ink bg-card p-6 shadow-comic lg:sticky lg:top-10">
+      <span className="inline-block -rotate-2 rounded-sc-pill border-2 border-ink bg-sage/20 px-3 py-1 font-heading text-xs uppercase tracking-wider text-navy">
+        Extra
+      </span>
+      <h2 className="mt-3 font-heading text-2xl leading-tight text-navy">
+        ¿Quieres darnos más información?
+      </h2>
+      <p className="mt-2 text-ink/70">
+        Agrega todo lo que quieras aquí — deck, brand guidelines, web, métricas, lo que sea.
+      </p>
+      <UploadBox token={token} attachments={attachments} setAttachments={setAttachments} />
+    </aside>
   );
 }
 
