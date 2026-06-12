@@ -352,6 +352,20 @@ function ConnectionsPanel({ slug }: { slug: string }) {
   });
   const providers = providersQuery.data?.providers || [];
 
+  // Conexiones MCP del lado Sancho (SAN-175): ScrapeCreators no es un provider
+  // de Yalc — lo usa discovery-search-runner vía mcp__scrapecreators__*.
+  const mcpQuery = useQuery({
+    queryKey: ["partnerships", slug, "mcp-health"],
+    queryFn: async (): Promise<{ connections?: Provider[] }> => {
+      const res = await fetch(`/api/partnerships/mcp-health?slug=${encodeURIComponent(slug)}`);
+      const payload = (await res.json()) as { connections?: Provider[]; error?: string };
+      if (!res.ok) throw new Error(payload?.error || `Request failed (${res.status})`);
+      return payload;
+    },
+    enabled: !!slug,
+  });
+  const mcpConnections = mcpQuery.data?.connections || [];
+
   const [testingId, setTestingId] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, { ok: boolean; detail: string }>>({});
 
@@ -380,11 +394,34 @@ function ConnectionsPanel({ slug }: { slug: string }) {
     }
   }
 
+  async function testMcpConnection(connection: Provider) {
+    setTestingId(connection.id);
+    try {
+      const res = await fetch(`/api/partnerships/mcp-health?slug=${encodeURIComponent(slug)}&ping=1`);
+      const payload = (await res.json()) as { connections?: Provider[]; error?: string };
+      const updated = payload.connections?.find((c) => c.id === connection.id);
+      setResults((prev) => ({
+        ...prev,
+        [connection.id]:
+          res.ok && updated
+            ? { ok: updated.status === "green", detail: updated.description || "Conexión OK" }
+            : { ok: false, detail: payload.error || `HTTP ${res.status}` },
+      }));
+    } catch (err) {
+      setResults((prev) => ({
+        ...prev,
+        [connection.id]: { ok: false, detail: err instanceof Error ? err.message : "Sin respuesta" },
+      }));
+    } finally {
+      setTestingId(null);
+    }
+  }
+
   return (
     <Panel
       emoji="🔌"
       title="Conexiones"
-      subtitle="providers del Cockpit · estado en vivo"
+      subtitle="motor Yalc (Cockpit) + MCPs de Sancho · estado en vivo"
       pill={<HeaderPill>{providersQuery.isLoading ? "…" : `${providers.length} providers`}</HeaderPill>}
       testid="panel-conexiones"
     >
@@ -394,6 +431,9 @@ function ConnectionsPanel({ slug }: { slug: string }) {
         </p>
       )}
       <div className="space-y-2.5">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground" data-testid="conn-group-yalc">
+          Motor de outreach · Yalc (Cockpit)
+        </div>
         {providers.map((provider) => {
           const result = results[provider.id];
           const testing = testingId === provider.id;
@@ -447,6 +487,72 @@ function ConnectionsPanel({ slug }: { slug: string }) {
         {!providersQuery.isLoading && providers.length === 0 && !providersQuery.error && (
           <p className="py-2 text-sm text-muted-foreground">
             YALC no devolvió providers — revisa el Cockpit (Outreach · tipo B2B → Providers).
+          </p>
+        )}
+
+        {/* Conexiones MCP del lado Sancho (SAN-175) — ScrapeCreators no es un
+            provider de Yalc: lo usa discovery-search-runner vía MCP. */}
+        <div
+          className="pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+          data-testid="conn-group-sancho"
+        >
+          Discovery · Sancho (MCP)
+        </div>
+        {mcpConnections.map((connection) => {
+          const result = results[connection.id];
+          const testing = testingId === connection.id;
+          return (
+            <div
+              key={connection.id}
+              className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background px-3.5 py-2.5 transition-colors hover:border-rust"
+              data-testid={`conn-row-${connection.id}`}
+            >
+              <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", connDot(connection.status))} aria-hidden />
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-foreground">{connection.name || connection.id}</div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {connection.description || ""} · usado por discovery-search-runner (perfiles + ad-library)
+                </div>
+                {result && (
+                  <div
+                    className={cn(
+                      "mt-1 inline-block rounded border px-1.5 py-0.5 text-[11px] font-medium",
+                      result.ok
+                        ? "border-sage/50 bg-sage/10 text-sage"
+                        : "border-destructive/50 bg-destructive/10 text-destructive",
+                    )}
+                  >
+                    {result.ok ? "✓" : "⚠"} {result.detail}
+                  </div>
+                )}
+              </div>
+              <div className="ml-auto">
+                <button
+                  type="button"
+                  disabled={testing || connection.hasHealthProbe === false}
+                  onClick={() => void testMcpConnection(connection)}
+                  title={
+                    connection.hasHealthProbe === false
+                      ? "Configura SCRAPECREATORS_API_KEY para poder probar la conexión"
+                      : "Hace una llamada real a la API de ScrapeCreators"
+                  }
+                  className={cn(
+                    "min-w-[140px] rounded-md border border-border bg-background px-3 py-1 text-[12px] font-semibold text-muted-foreground transition-colors",
+                    testing || connection.hasHealthProbe === false
+                      ? "cursor-not-allowed opacity-50"
+                      : "hover:border-rust hover:text-foreground",
+                  )}
+                  data-testid={`test-conn-${connection.id}`}
+                >
+                  {testing ? "Probando…" : "Probar conexión"}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {mcpQuery.error && (
+          <p className="py-1 text-xs text-destructive">
+            No se pudo consultar el estado MCP: {String((mcpQuery.error as Error).message)}
           </p>
         )}
 
