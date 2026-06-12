@@ -308,6 +308,28 @@
       "linkedTo": "skills/{skillId}",
       "docPath": null,
       "threadState": "continue"
+    },
+    "media-asset": {
+      "threadId": "{slug}:asset:{safe}",
+      "threadName": "🎨 {assetName}",
+      "skill": "od-refine",
+      "skills": ["od-refine", "od-generate", "od-export"],
+      "agent": "maese-pedro",
+      "linkedTo": "media-creation/asset/{assetRelativePath}",
+      "docPath": "brand/{slug}/{assetRelativePath}",
+      "threadState": "continue",
+      "initialMessage": "Estoy mirando el asset \"{assetName}\" (`{assetRelativePath}`, kind={kind}). Dame un resumen y las opciones de refinamiento."
+    },
+    "visual-identity": {
+      "threadId": "{slug}:visual-identity:{blockSafe}",
+      "threadName": "🎨 Visual Identity",
+      "skill": "design-system",
+      "skills": ["design-system", "od-generate"],
+      "agent": "maese-pedro",
+      "linkedTo": "media-creation/visual-identity/{blockSafe}",
+      "docPath": "brand/{slug}/brand-book/visual-identity/DESIGN.md",
+      "threadState": "continue",
+      "initialMessage": "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?"
     }
   },
   "_taskDefaults_comment": "SAN-167 F4 — defaults por TIPO de tarea ad-hoc/idea-driven (Outreach/Content) que antes eran ternarios inline en create-execution-tasks.ts / create-batch.ts. getTaskDefault(type) los lee; el agente va co-localizado.",
