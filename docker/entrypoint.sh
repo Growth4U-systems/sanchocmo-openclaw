@@ -227,6 +227,27 @@ if [ "${OPENAI_AUTH_MODE:-api_key}" = "subscription" ]; then
   echo "[entrypoint] Syncing Codex subscription auth across agents..."
   bash docker/sync-codex-auth.sh || \
     echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
+
+  # Agents created at RUNTIME (MC UI / `openclaw agents add`) get a real
+  # auth-profiles.json instead of the shared-store symlink, so they miss the
+  # subscription token until the next restart. Watch for non-symlink profiles
+  # and re-run the (idempotent) sync so every agent — existing or future —
+  # picks up the shared token automatically. The sync also creates symlinks
+  # for placeholder dirs, so each new agent triggers at most one re-sync.
+  (
+    while true; do
+      for d in /root/.openclaw/.openclaw/agents/*/; do
+        [ "$(basename "$d")" = "default" ] && continue
+        if [ ! -L "${d}agent/auth-profiles.json" ]; then
+          echo "[auth-watch] non-symlink auth profile in $(basename "$d") — re-running sync-codex-auth"
+          bash docker/sync-codex-auth.sh || true
+          break
+        fi
+      done
+      sleep 60
+    done
+  ) &
+  echo "[entrypoint] Codex auth watcher started (auto-links new agents to the shared store)"
 else
   echo "[entrypoint] OPENAI_AUTH_MODE=api_key — skipping Codex subscription sync (agents use OPENAI_API_KEY)"
 fi
