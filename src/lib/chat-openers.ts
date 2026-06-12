@@ -77,7 +77,7 @@
 // ============================================================
 
 import { resolveThreadSkills, type SkillContext } from "./skill-resolver";
-import { getChatEntry } from "./data/task-blueprints";
+import { getChatEntry, getChatOpener } from "./data/task-blueprints";
 
 export interface ThreadConfig {
   threadId: string;
@@ -161,6 +161,16 @@ export function instantiateEntry(key: string, ctx: { slug: string; params?: Reco
   return cfg;
 }
 
+/**
+ * Resolve a declared opener (chatOpeners in the manifest) for a thread whose
+ * identity is built by the caller. Substitutes {slug}+{params}; returns
+ * undefined if the key isn't declared. SAN-179.
+ */
+export function resolveOpener(key: string, vars: Record<string, string>): string | undefined {
+  const tpl = getChatOpener(key);
+  return tpl ? substEntryTemplate(tpl, vars) : undefined;
+}
+
 export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
   const cfg = instantiateEntry("yalc", { slug });
   cfg.initialMessage = prompt;
@@ -180,32 +190,26 @@ export function buildDiscoverySearchThread(
   slug: string,
   search?: { campaignId: string; title?: string },
 ): ThreadConfig {
-  const base = {
-    skill: "discovery-plan-builder",
-    skills: ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"] as string[],
-    linkedTo: "rocinante",
-    docPath: null,
-    agent: "rocinante",
-  };
-
+  // Existing search: registry holds skill/agent/doc + opener; threadName is the
+  // only field that's title-conditional, so it's overlaid here.
   if (search) {
-    return {
-      ...base,
-      threadId: `${slug}:discovery:${search.campaignId.toLowerCase()}`,
-      threadName: search.title ? `Búsqueda: ${search.title}` : "Búsqueda de creators",
-      threadState: "continue",
-      initialMessage: `Quiero completar y lanzar la búsqueda de creators "${search.title || search.campaignId}" (campaña Yalc ${search.campaignId}, type=Partnerships). Repásame el plan de discovery (sectores, redes, tiers, volumen) y dime qué falta para lanzarla.`,
-    };
+    const searchName = search.title || search.campaignId;
+    const cfg = instantiateEntry("discovery-search", {
+      slug,
+      params: {
+        campaignIdLower: search.campaignId.toLowerCase(),
+        campaignId: search.campaignId,
+        searchName,
+      },
+    });
+    cfg.threadName = search.title ? `Búsqueda: ${search.title}` : "Búsqueda de creators";
+    return cfg;
   }
 
-  return {
-    ...base,
-    threadId: `${slug}:discovery:new-${Date.now()}`,
-    threadName: "Nueva búsqueda de creators",
-    threadState: "create",
-    initialMessage:
-      "Quiero crear una nueva búsqueda de creators para el programa de Partnerships. Proponme un plan de discovery: sectores con mejor fit, redes, tiers objetivo y volumen de candidatos. Cuando lo cerremos, lánzala como campaña type=Partnerships en Yalc.",
-  };
+  // New search: a fresh thread id each time (Date.now is runtime-only).
+  const cfg = instantiateEntry("discovery-search-new", { slug });
+  cfg.threadId = `${slug}:discovery:new-${Date.now()}`;
+  return cfg;
 }
 
 /**
@@ -603,7 +607,7 @@ export function buildTaskThread(
     threadState: opts.taskStatus === "ready" || opts.taskStatus === "pending" ? "create" : "continue",
     agent: opts.agent || resolved.agent,
     initialMessage: opts.taskSkill === "meeting-intelligence" && taskName.toLowerCase().includes("configurar")
-      ? "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, usa Google Workspace/GOG para buscar y validar carpetas de Drive, acepta URL/ID solo como fallback, selecciona Notion database/page, carga filtros como clients relation y deja preparado el primer run sin aplicar cambios a documentos canonicos."
+      ? resolveOpener("meeting-intelligence-setup", { slug })
       : undefined,
     inputDocuments: opts.inputDocuments,
     requiredInputs: opts.requiredInputs,
@@ -935,47 +939,27 @@ export function buildHtmlConversionThread(
     skills: ["html-output", ...base.skills.filter((s) => s !== "html-output")],
     agent: base.agent || "maese-pedro",
     docPath: normalizedDocPath,
-    initialMessage:
-      `Ejecuta la skill html-output sobre ${normalizedDocPath}: genera el documento HTML ` +
-      `self-contained junto al .md (mismo nombre de fichero, extensión .html), usando la ` +
-      `identidad visual del brand si existe. Sigue _system/output/html-canonical-protocol.md. ` +
-      `Cuando termines, confirma la ruta exacta del .html generado.`,
+    initialMessage: resolveOpener("html-conversion", { slug, docPath: normalizedDocPath }),
   };
 }
 
-/** Build thread for a Trust Engine module — same thread for all modules */
+/** Build thread for a Trust Engine module — same thread for all modules.
+ *  Skeleton (skill/agent/threadId) is the `trust-engine` chatEntry; the opener
+ *  is the per-module `trust-engine:<moduleId>` chatOpener (SAN-179). */
 export function buildTrustEngineModuleThread(
   slug: string,
   moduleId: string,
   moduleName: string,
   moduleFile: string,
 ): ThreadConfig {
-  // Single thread for all Trust Engine modules — conversation persists across steps
-  const threadId = `${slug}:trust-engine`;
-
-  const moduleContexts: Record<string, string> = {
-    "foundation-import": `Estoy revisando la configuración del Trust Engine para ${slug}. Quiero verificar que los nichos, subnichos y competidores están bien definidos antes de continuar con las auditorías.`,
-    "seo-audit": `Estoy revisando el SEO Audit de ${slug}. Analiza los resultados: Lighthouse scores, Core Web Vitals, health checks e issues. Dime qué es crítico y qué acciones tomar primero.`,
-    "own-media-audit": `Estoy revisando el Own Media Audit de ${slug}. Analiza el blog, redes sociales, y presencia técnica. ¿Dónde hay quick wins y qué necesita mejora urgente?`,
-    "geo-analysis": `Estoy revisando el GEO Analysis de ${slug}. Analiza la visibilidad en IA (ChatGPT, Gemini, Perplexity). ¿Dónde nos mencionan, dónde no, y dónde hay oportunidades frente a competidores?`,
-    "serp-analysis": `Estoy revisando el SERP Analysis de ${slug}. Analiza las posiciones en Google: ¿en qué keywords estamos top 3, top 10, e invisible? ¿Qué competidores dominan?`,
-    "gap-analysis": `Estoy revisando el Gap Analysis de ${slug}. Muéstrame los gaps de presencia, densidad y tipo. ¿Dónde están nuestros competidores y nosotros no? Prioriza por oportunidad.`,
-    "recommendations": `Estoy revisando las recomendaciones del Trust Engine para ${slug}. Prioriza las más impactantes y dime el plan de acción concreto. ¿Qué hacemos primero?`,
-    "keywords": `Estoy revisando los keywords del Trust Engine para ${slug}. Analiza los top keywords por oportunidad, los layers de expansión, y la cobertura por subnicho. ¿Cuáles atacamos primero?`,
-    "influencers": `Estoy revisando los influencers y medios identificados para ${slug}. Analiza los accionables: ¿a quién contactar primero, con qué tipo de colaboración, y por qué?`,
-  };
-
-  return {
-    threadId,
-    threadName: `Trust Engine — ${moduleName}`,
-    skill: "trust-engine",
-    skills: ["trust-engine", "keyword-research", "seo-content", "outreach-sequence-builder"],
-    linkedTo: `trust-engine/${moduleId}`,
-    docPath: `brand/${slug}/trust-engine/${moduleFile}`,
-    threadState: "continue",
-    agent: "hamete",
-    initialMessage: moduleContexts[moduleId] || `Estoy revisando ${moduleName} del Trust Engine para ${slug}. Analiza los datos y dime las conclusiones clave.`,
-  };
+  // Single thread for all Trust Engine modules — conversation persists across
+  // steps. threadId/skill/agent + the {moduleId}/{moduleFile}/{moduleName}
+  // substitutions (threadName, linkedTo, docPath) all come from the entry.
+  const cfg = instantiateEntry("trust-engine", { slug, params: { moduleName, moduleId, moduleFile } });
+  cfg.initialMessage =
+    resolveOpener(`trust-engine:${moduleId}`, { slug, moduleName }) ??
+    resolveOpener("trust-engine:_fallback", { slug, moduleName });
+  return cfg;
 }
 
 // ============================================================
@@ -1007,12 +991,12 @@ export function buildVisualIdentityChatThread(
 ): ThreadConfig {
   const blockSafe = block ? block.toLowerCase().replace(/[^a-z0-9-]+/g, "-") : "all";
   const cfg = instantiateEntry("visual-identity", { slug, params: { blockSafe } });
-  // Block-specific threadName + prompt are computed (the entry holds the
-  // no-block defaults + the declared skill/agent/doc).
-  cfg.threadName = block ? `🎨 Visual Identity — ${block}` : "🎨 Visual Identity";
-  cfg.initialMessage = block
-    ? `Quiero ajustar la sección "${block}" del Visual Identity. ¿Qué opciones tengo?`
-    : "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?";
+  // The entry holds the no-block defaults (threadName + opener). Only override
+  // for a specific block; the block opener lives in chatOpeners.
+  if (block) {
+    cfg.threadName = `🎨 Visual Identity — ${block}`;
+    cfg.initialMessage = resolveOpener("visual-identity-block", { block });
+  }
   return cfg;
 }
 
@@ -1025,20 +1009,17 @@ export function buildOdGenerateThread(
 ): ThreadConfig {
   const safe = upstreamSkillId.toLowerCase().replace(/[^a-z0-9-:]+/g, "-");
   const dsTag = designSystemId ? `:ds-${designSystemId}` : "";
-  const threadId = `${slug}:od-generate:${safe}${dsTag}:${Date.now()}`;
-  return {
-    threadId,
-    threadName: `🎨 ${upstreamSkillName}${designSystemId ? ` × ${designSystemId}` : ""}`,
-    skill: "od-generate",
-    skills: ["od-generate", "od-refine", "od-export"],
-    linkedTo: `media-creation/od/${upstreamSkillId}`,
-    docPath: null,
-    threadState: "create",
-    agent: "maese-pedro",
-    initialMessage: `Genera un asset usando la skill upstream "${upstreamSkillId}"${
-      designSystemId ? ` aplicando el design system "${designSystemId}"` : " con el DESIGN.md del brand"
-    }. Pídeme los inputs que necesites antes de empezar.`,
-  };
+  const cfg = instantiateEntry("od-generate", {
+    slug,
+    params: { safe, dsTag, upstreamSkillId, upstreamSkillName },
+  });
+  // Runtime-only overlays: unique id per request, ds-conditional name + opener.
+  cfg.threadId = `${cfg.threadId}:${Date.now()}`;
+  cfg.threadName = `🎨 ${upstreamSkillName}${designSystemId ? ` × ${designSystemId}` : ""}`;
+  if (designSystemId) {
+    cfg.initialMessage = resolveOpener("od-generate-ds", { upstreamSkillName, designSystemId });
+  }
+  return cfg;
 }
 
 /**
