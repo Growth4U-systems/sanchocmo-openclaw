@@ -976,22 +976,15 @@ export function buildMediaAssetThread(
   assetName: string,
   kind: "template" | "mockup" | "logo" | "style-reference" | "export" | "design-md" | "tokens" | "preview" | "misc",
 ): ThreadConfig {
-  // Sanitize for thread id
+  // Declaration (skill/agent/templates) from the registry; the kind→skill and
+  // sanitization are computed here and overlaid.
   const safe = assetRelativePath.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
-  const threadId = `${slug}:asset:${safe}`;
   const skill = kind === "design-md" || kind === "tokens" ? "design-system" : "od-refine";
-  return {
-    threadId,
-    threadName: `🎨 ${assetName}`,
-    skill,
-    skills: [skill, "od-generate", "od-export"],
-    linkedTo: `media-creation/asset/${assetRelativePath}`,
-    docPath: `brand/${slug}/${assetRelativePath}`,
-    docKind: kind === "template" ? "template" : "file",
-    threadState: "continue",
-    agent: "maese-pedro",
-    initialMessage: `Estoy mirando el asset "${assetName}" (\`${assetRelativePath}\`, kind=${kind}). Dame un resumen y las opciones de refinamiento.`,
-  };
+  const cfg = instantiateEntry("media-asset", { slug, params: { safe, assetRelativePath, assetName, kind } });
+  cfg.skill = skill;
+  cfg.skills = [skill, "od-generate", "od-export"];
+  cfg.docKind = kind === "template" ? "template" : "file";
+  return cfg;
 }
 
 /** Build thread config for chatting with Maese Pedro about Visual Identity (whole brand DESIGN.md). */
@@ -1000,20 +993,14 @@ export function buildVisualIdentityChatThread(
   block?: string,
 ): ThreadConfig {
   const blockSafe = block ? block.toLowerCase().replace(/[^a-z0-9-]+/g, "-") : "all";
-  const threadId = `${slug}:visual-identity:${blockSafe}`;
-  return {
-    threadId,
-    threadName: block ? `🎨 Visual Identity — ${block}` : "🎨 Visual Identity",
-    skill: "design-system",
-    skills: ["design-system", "od-generate"],
-    linkedTo: `media-creation/visual-identity/${blockSafe}`,
-    docPath: `brand/${slug}/brand-book/visual-identity/DESIGN.md`,
-    threadState: "continue",
-    agent: "maese-pedro",
-    initialMessage: block
-      ? `Quiero ajustar la sección "${block}" del Visual Identity. ¿Qué opciones tengo?`
-      : "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?",
-  };
+  const cfg = instantiateEntry("visual-identity", { slug, params: { blockSafe } });
+  // Block-specific threadName + prompt are computed (the entry holds the
+  // no-block defaults + the declared skill/agent/doc).
+  cfg.threadName = block ? `🎨 Visual Identity — ${block}` : "🎨 Visual Identity";
+  cfg.initialMessage = block
+    ? `Quiero ajustar la sección "${block}" del Visual Identity. ¿Qué opciones tengo?`
+    : "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?";
+  return cfg;
 }
 
 /** Build thread config for "use OD upstream skill on this brand" — generation request. */
