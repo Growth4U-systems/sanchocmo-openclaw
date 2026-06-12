@@ -311,7 +311,6 @@ function resolveThreadType(threadId: string | null, meta?: ThreadMeta): string {
   if (short.startsWith("idea:")) return "idea";
   if (short.startsWith("recurring:")) return "recurring";
   if (short.startsWith("skill:") || short.startsWith("skill-creator:")) return "skill";
-  if (short === "trust-engine") return "task"; // Trust Engine is a tool task
   // Foundation pillar threads don't have a prefix — they're just slug:pillar-name
   return "pillar";
 }

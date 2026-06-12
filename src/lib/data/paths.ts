@@ -50,10 +50,6 @@ export function notificationsFile(slug: string) {
   return path.join(BASE, "brand", slug, "idea-generation", "notifications.json");
 }
 
-export function trustEngineDir(slug: string) {
-  return path.join(BASE, "brand", slug, "trust-engine");
-}
-
 export function chatDir(slug: string) {
   return path.join(BASE, "brand", slug, "chat");
 }

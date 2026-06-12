@@ -34,7 +34,7 @@ export interface Project {
   objective?: string | { description?: string; metric?: string; baseline?: number; target?: number; unit?: string };
   approach?: string;
   archive_reason?: string;
-  tool?: string;              // Research tool: "trust-engine", "atalaya", etc.
+  tool?: string;              // Research tool: "atalaya", etc.
 }
 
 export interface ProjectRegistry {
@@ -530,7 +530,7 @@ export interface Idea {
   action: string;           // Concrete next step
   list: IdeaList;           // Group: keywords, trending, gaps, etc.
   category: string;         // "guide", "comparison", "solution"...
-  source: string;           // "trust_engine", "keyword_research"...
+  source: string;           // "keyword_research", "monitoring"...
   goal: string;             // "awareness", "consideration", "conversion"
   theme: string;            // "educativo", "comparativo"...
   channels: string[];       // Normalized multi-channel

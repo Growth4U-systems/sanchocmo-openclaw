@@ -12,10 +12,10 @@ export function OutreachFindContactsTab({ slug }: Props) {
       icon="🔎"
       title="Encuentra Contactos"
       slug={slug}
-      description="Fuentes de descubrimiento de contactos: research tasks, imports desde Trust Engine, upload CSV manual."
+      description="Fuentes de descubrimiento de contactos: research tasks, descubrimiento de medios/creators, upload CSV manual."
       actions={[
         "Tareas activas de research (company-finder, decision-maker-finder, enrichment)",
-        "Import desde Trust Engine media list",
+        "Import desde medios/creators descubiertos (skill media-discovery)",
         "Upload CSV manual",
         "Botón 'Lanzar research' → Sancho dispatcha Hamete (research) o Rocinante (outreach) con el skill correcto",
       ]}

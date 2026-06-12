@@ -387,9 +387,7 @@ export default function TaskDetailPage() {
 
   // Tool tasks redirect to their dedicated page
   if (taskType === "tool" && task.skill) {
-    const toolPages: Record<string, string> = {
-      "trust-engine": "trust-engine",
-    };
+    const toolPages: Record<string, string> = {};
     const toolPage = toolPages[task.skill];
     if (toolPage) {
       router.replace(`/dashboard/${slug}/${toolPage}?from=${project.id}`);
@@ -575,7 +573,6 @@ export default function TaskDetailPage() {
             {editing ? (
               <select value={draft.skill || ""} onChange={(e) => setDraft((d) => ({ ...d, skill: e.target.value }))} className="w-full border border-[#E8E2D9] rounded-lg px-2 py-1 text-[13px] bg-white focus:outline-none focus:border-[#2C3E50]">
                 <option value="">— Seleccionar —</option>
-                <option value="trust-engine">Trust Engine</option>
                 <option value="content-flywheel">Content Flywheel</option>
                 <option value="strategic-plan">Strategic Plan</option>
               </select>

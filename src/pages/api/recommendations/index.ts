@@ -59,19 +59,6 @@ type MonitoringItem = {
   converted_to_task?: string;
 };
 
-type TrustEngineItem = {
-  rec_id?: string;
-  id?: string;
-  type?: string;
-  priority?: string;
-  severity?: string;
-  title?: string;
-  rationale?: string;
-  description?: string;
-  status?: string;
-  created_at?: string;
-};
-
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -132,26 +119,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       created_at: item.created_at || item.createdAt || "",
       converted_to: item.converted_to_task ? "task:" + item.converted_to_task : null,
       _file: "monitoring/pending-recommendations.json",
-    });
-  }
-
-  const trustEngine = readJSON<{
-    recommendations?: TrustEngineItem[];
-    data?: { recommendations?: TrustEngineItem[] };
-  }>(path.join(brandDir, "trust-engine", "recommendations.json"), {});
-  const trustItems = trustEngine.recommendations || trustEngine.data?.recommendations || [];
-  for (const item of trustItems) {
-    allRecs.push({
-      id: item.rec_id || item.id || "",
-      source: "trust-engine",
-      type: item.type || "content_idea",
-      priority: item.priority || item.severity || "medium",
-      title: item.title || "",
-      description: item.rationale || item.description || "",
-      rationale: item.rationale || "",
-      status: item.status || "pending",
-      created_at: item.created_at || "",
-      _file: "trust-engine/recommendations.json",
     });
   }
 

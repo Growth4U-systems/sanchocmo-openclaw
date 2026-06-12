@@ -17,7 +17,6 @@
       "intelligence": { "skill": "daily-pulse" }
     },
     "_byTool": {
-      "trust-engine": { "skill": "trust-engine" },
       "atalaya": { "skill": "competitor-intelligence" }
     }
   }

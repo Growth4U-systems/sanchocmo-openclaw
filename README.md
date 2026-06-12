@@ -175,7 +175,6 @@ The Next.js web app (default port `3000`) is the primary interface:
 - Foundation progress tracking
 - Brand document viewer
 - API connection pages
-- Trust Engine
 
 Exposed via reverse proxy (nginx on a server) or Tailscale Funnel (local dev).
 

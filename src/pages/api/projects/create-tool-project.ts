@@ -20,17 +20,11 @@ import {
  * - T01 research task with skill = tool
  * - Empty tasks.json with T01
  *
- * The tool field defaults to the strategy's tool if not provided.
- * Strategy #02 → tool: "trust-engine"
+ * The tool field defaults to the strategy's tool if not provided; otherwise the
+ * caller passes an explicit `tool` override (e.g. a research tool with no MC page).
  */
 
-const STRATEGY_TOOLS: Record<string, { tool: string; taskName: string; taskType: string }> = {
-  "02": {
-    tool: "trust-engine",
-    taskName: "Ejecutar Trust Engine",
-    taskType: "tool",
-  },
-};
+const STRATEGY_TOOLS: Record<string, { tool: string; taskName: string; taskType: string }> = {};
 
 function nextProjectId(projectsDir: string): string {
   let maxId = 0;
@@ -96,7 +90,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // report location inside the project dir so the sidebar can link directly
   // from task → report without retro-active heuristics.
   const taskName = strategyConfig?.taskName
-    ? `${strategyConfig.taskName} — ${name.replace(/^Trust Engine\s*[—-]\s*/i, "")}`
+    ? `${strategyConfig.taskName} — ${name}`
     : `Research — ${name}`;
 
   const deliverableFile = `brand/${slug}/projects/${dirName}/${tool}-report.md`;

@@ -74,8 +74,7 @@
       "outreach-playbook/outreach-playbook.current.md"
     ],
     "own-media-audit": [
-      "site-audit/own-media-audit/own-media-audit.current.md",
-      "trust-engine/own-media-audit.json"
+      "site-audit/own-media-audit/own-media-audit.current.md"
     ],
     "paid-media-strategy": [
       "strategies/paid/paid.current.md"
@@ -94,8 +93,7 @@
       "market-and-us/self/lite.md"
     ],
     "seo-audit": [
-      "site-audit/seo-audit/seo-audit.current.md",
-      "trust-engine/seo-audit.json"
+      "site-audit/seo-audit/seo-audit.current.md"
     ],
     "social-media-strategy": [
       "strategies/social/social.current.md"

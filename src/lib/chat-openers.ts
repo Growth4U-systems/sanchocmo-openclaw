@@ -62,9 +62,9 @@
 // history by entry point and confuse the user — they think the
 // chat "reset itself" when it only forked due to a bug.
 //
-// Non-foundation entities (calendar items, ideas, crons, the
-// trust-engine tool view) may use their own namespace because
-// they don't map to a pillar — those are documented case-by-case.
+// Non-foundation entities (calendar items, ideas, crons) may use
+// their own namespace because they don't map to a pillar — those
+// are documented case-by-case.
 // ============================================================
 //
 // CLIENT-SAFE: This file is imported by client-side components.
@@ -951,25 +951,6 @@ export function buildHtmlConversionThread(
     docPath: normalizedDocPath,
     initialMessage: resolveOpener("html-conversion", { slug, docPath: normalizedDocPath }),
   };
-}
-
-/** Build thread for a Trust Engine module — same thread for all modules.
- *  Skeleton (skill/agent/threadId) is the `trust-engine` chatEntry; the opener
- *  is the per-module `trust-engine:<moduleId>` chatOpener (SAN-179). */
-export function buildTrustEngineModuleThread(
-  slug: string,
-  moduleId: string,
-  moduleName: string,
-  moduleFile: string,
-): ThreadConfig {
-  // Single thread for all Trust Engine modules — conversation persists across
-  // steps. threadId/skill/agent + the {moduleId}/{moduleFile}/{moduleName}
-  // substitutions (threadName, linkedTo, docPath) all come from the entry.
-  const cfg = instantiateEntry("trust-engine", { slug, params: { moduleName, moduleId, moduleFile } });
-  cfg.initialMessage =
-    resolveOpener(`trust-engine:${moduleId}`, { slug, moduleName }) ??
-    resolveOpener("trust-engine:_fallback", { slug, moduleName });
-  return cfg;
 }
 
 // ============================================================

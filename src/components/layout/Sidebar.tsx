@@ -164,7 +164,6 @@ export function Sidebar() {
 
             {/* ── Herramientas ── */}
             <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
-            <NavLink href={clientHref("/trust-engine")} icon="🔍" label={t("nav.trustEngine")} active={isActive(clientHref("/trust-engine"))} collapsed={!sidebarOpen} />
             <NavLink href={clientHref("/intelligence")} icon="🧠" label="Intelligence" active={isActive(clientHref("/intelligence"))} collapsed={!sidebarOpen} />
           </>
         )}
