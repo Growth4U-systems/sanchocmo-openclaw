@@ -539,6 +539,7 @@ export const intakeSubmissions = pgTable("intake_submissions", {
   respondentEmail: text("respondent_email"),
   answers: jsonb("answers").notNull(),
   status: text("status").notNull().default("submitted"),
+  attachments: jsonb("attachments"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
 }, (table) => [
