@@ -117,7 +117,6 @@ function ensureWeeklyProjectAndTask(slug: string, ideaId: string): { projectId: 
       skill: "social-writer",
       deliverable_file: `brand/${slug}/content/published/${dateStr}.json`,
       mc_chat_thread_id: chatThreadId,
-      discord_thread_id: null,
       owner: "Dulcinea",
       created_at: now.toISOString(),
       idea_ids: [],

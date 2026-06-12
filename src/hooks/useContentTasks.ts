@@ -123,7 +123,6 @@ interface UpdateContentTaskBody {
       | "target_channels"
       | "documents"
       | "mc_chat_thread_id"
-      | "discord_thread_id"
       | "owner"
       | "scheduled_for"
       | "clarify_status"

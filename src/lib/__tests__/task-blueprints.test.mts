@@ -65,7 +65,6 @@ test("instantiateTaskSet('content') reproduces the legacy create-project spec (+
       skill: "content-strategy",
       agent: "dulcinea",
       mc_chat_thread_id: tid("t01"),
-      discord_thread_id: null,
     },
     {
       id: "P07-T02",
@@ -84,7 +83,6 @@ test("instantiateTaskSet('content') reproduces the legacy create-project spec (+
       skill: "content-pillars",
       agent: "dulcinea",
       mc_chat_thread_id: tid("t02"),
-      discord_thread_id: null,
     },
     {
       id: "P07-T03",
@@ -110,7 +108,6 @@ test("instantiateTaskSet('content') reproduces the legacy create-project spec (+
       skill: "content-engine-setup",
       agent: "dulcinea",
       mc_chat_thread_id: tid("t03"),
-      discord_thread_id: null,
     },
     {
       id: "P07-T04",
@@ -129,7 +126,6 @@ test("instantiateTaskSet('content') reproduces the legacy create-project spec (+
       skill: "pov-bank-builder",
       agent: "dulcinea",
       mc_chat_thread_id: tid("t04"),
-      discord_thread_id: null,
     },
     {
       id: "P07-T05",
@@ -160,7 +156,6 @@ test("instantiateTaskSet('content') reproduces the legacy create-project spec (+
       skill: `${slug}-visual-generator`,
       agent: "maese-pedro",
       mc_chat_thread_id: tid("t05"),
-      discord_thread_id: null,
     },
   ];
 

@@ -91,7 +91,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     review_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     status: "active",
     mc_chat_thread_id: `project-${projectId.toLowerCase()}`,
-    discord_thread_id: null,
   };
 
   // tasks.json — the canonical 5-task Content Engine flow, derived from the

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { BrandBrainState, PillarStatus } from "@/types";
+import type { BrandBrainState, TaskStatus } from "@/types";
 
 export interface OtherDocEntry {
   name: string;
@@ -56,7 +56,7 @@ export function useUpdatePillarStatus() {
       slug: string;
       section: string;
       pillar: string;
-      status: PillarStatus;
+      status: TaskStatus;
       comment?: string;
     }) => {
       const res = await fetch("/api/brand-brain/pillar-status", {

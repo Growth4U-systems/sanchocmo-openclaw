@@ -231,7 +231,7 @@ export default function TaskDetailPage() {
 
   useEffect(() => {
     if (!slug || !task?.pillar) return;
-    fetch(`/api/foundation/state?slug=${slug}`)
+    fetch(`/api/brand-brain/state?slug=${slug}`)
       .then((r) => r.ok ? r.json() : null)
       .then((s) => { if (s) setFoundationState(s); })
       .catch(() => {});

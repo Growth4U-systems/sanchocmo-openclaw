@@ -30,7 +30,7 @@ function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const cb = sections["company-brief"];
   if (!cb) return done;
   for (const [cbName, pInfo] of Object.entries(cb.pillars || {})) {
-    if (["approved", "done"].includes(pInfo.status)) {
+    if (pInfo.status === "completed") {
       done.add(FF_PILLAR_MAP[cbName] || cbName);
     }
   }
@@ -48,8 +48,8 @@ function calcFoundationStats(foundation: BrandBrainState | undefined) {
       if (pInfo.optional) continue;
       total++;
       const status = pInfo.status;
-      const effective = status === "not-started" && ffDone.has(pName) ? "approved" : status;
-      if (["approved", "done"].includes(effective)) approved++;
+      const effective = status === "todo" && ffDone.has(pName) ? "completed" : status;
+      if (effective === "completed") approved++;
     }
   }
   return { approved, total, pct: total > 0 ? Math.round((approved / total) * 100) : 0 };
@@ -293,7 +293,7 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
   const fStats = calcFoundationStats(foundation);
   const hasStrategicPlan =
     foundation?.sections?.["strategic-plan"] &&
-    ["approved", "done"].includes(foundation.sections["strategic-plan"].status || "");
+    (foundation.sections["strategic-plan"].status as string) === "completed";
   const foundationComplete = hasStrategicPlan || fStats.pct >= 90;
 
   // --- Decisions ---

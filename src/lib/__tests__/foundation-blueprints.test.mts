@@ -20,8 +20,8 @@ import { fileURLToPath } from "node:url";
 //      canónica del default state, el manifest y el árbol de carpetas).
 //   4. +deliverable_file canónico (pillars[key].docPaths[0]) — los heredocs
 //      no lo declaraban (resolución vía foundation-state, que muere en F5).
-//   5. +agent explícito (owner del skill), +mc_chat_thread_id,
-//      +discord_thread_id:null — los 3 anchors del task-create protocol.
+//   5. +agent explícito (owner del skill) y +mc_chat_thread_id (anchor del
+//      task-create protocol). discord_thread_id murió (Discord retirado).
 //   6. P00-Metrics tasks.json shape objeto {project_id,tasks} → array
 //      (mismo shape que los otros 3 proyectos).
 //   7. P00-CB-T01 "pillars"/"sections" (arrays plurales, que setPillarStatus

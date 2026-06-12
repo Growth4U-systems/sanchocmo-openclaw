@@ -47,23 +47,23 @@ export interface ProjectRegistry {
 // --- Tasks ---
 
 /**
- * Task status — hardcoded canonical vocabulary (2026-04-15).
+ * Task status — hardcoded canonical vocabulary (2026-04-15; +pending-review
+ * SAN-183 F5). THE single status vocabulary of the whole system: Foundation
+ * pillars are tasks 1:1, so this replaces the old 7-value PillarStatus too.
  *
- * Only these 5 values are valid. Sancho (and any code path writing to
+ * Only these 6 values are valid. Sancho (and any code path writing to
  * tasks.json) MUST use one of these — no aliases, no creative naming.
  * Enforced at runtime by:
- *   - `src/lib/data/pillar-task-sync.ts` → `setTaskStatus` helper
+ *   - `src/lib/data/foundation-status.ts` → status helpers
  *   - `src/pages/api/projects/task-status.ts` → MC API
- *   - `~/.openclaw/workspace-sancho/scripts/update-task-status.py` → CLI
  *
- * If someone writes `"ready"` or `"pending"` directly to tasks.json, the
- * reconcile pass in `reconcilePillarTasks` will (when it runs) bring the
- * task back to `todo` — because non-canonical values fall through to the
- * default bucket.
+ * `pending-review`: output produced, awaiting human review (the old pillar
+ * pending-review/generated states collapse here).
  */
 export type TaskStatus =
   | "todo"
   | "in-progress"
+  | "pending-review"
   | "completed"
   | "blocked"
   | "cancelled";
@@ -72,6 +72,7 @@ export type TaskStatus =
 export const VALID_TASK_STATUSES: readonly TaskStatus[] = [
   "todo",
   "in-progress",
+  "pending-review",
   "completed",
   "blocked",
   "cancelled",
@@ -140,7 +141,6 @@ export interface Task {
    * See `execution-gate.md` Fase B.2 + MC CHANGELOG [2.10.6].
    */
   attachments?: TaskAttachment[];
-  discord_thread_id?: string;
   mc_chat_thread_id?: string;
   idea_ids?: string[];      // Linked ideas
   /**
@@ -305,7 +305,6 @@ export interface ContentTask {
   target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these
   documents: { path: string; name?: string; channel?: string }[];
   mc_chat_thread_id?: string;
-  discord_thread_id?: string;
   owner?: string;                   // "Dulcinea"
   created_at: string;               // ISO8601
   updated_at?: string;
@@ -590,10 +589,14 @@ export interface Recommendation {
 
 // --- Foundation ---
 
-export type PillarStatus = "not-started" | "in-progress" | "approved" | "request-refresh" | "pending-review" | "generated" | "request-changes";
+// SAN-183 F5: el vocabulario de pilar (PillarStatus, 7 valores) MURIÓ — el
+// status de un pilar ES el status de su task 1:1 (TaskStatus, única fuente).
+// El shape BrandBrainState pervive como VISTA ensamblada desde manifest+tasks
+// (src/lib/data/brand-brain-assembler.ts); el fichero foundation-state.json
+// está deprecado y se archiva en la migración (scripts/migrate-foundation-state.mts).
 
 export interface Pillar {
-  status: PillarStatus;
+  status: TaskStatus;
   completed_at?: string;
   approved_at?: string;
   output_file?: string;
@@ -606,13 +609,13 @@ export interface Pillar {
 }
 
 export interface Synthesis {
-  status: PillarStatus;
+  status: TaskStatus;
   output_file?: string;
   requires: string[];
 }
 
 export interface Section {
-  status: PillarStatus;
+  status: TaskStatus;
   layer: number;            // 0-5
   output_dir: string;
   skill?: string;
@@ -628,8 +631,9 @@ export interface BrandSummary {
   sector: string;
   description: string;
   north_star: string;
-  icps: string[];
-  competitors: string[];
+  /** Nombres planos o {name, link} (link = doc path relativo a brand/{slug}/). */
+  icps: (string | { name: string; link?: string })[];
+  competitors: (string | { name: string; link?: string })[];
   positioning: string;
 }
 

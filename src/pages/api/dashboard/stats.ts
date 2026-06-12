@@ -3,8 +3,7 @@ import { withAuth, withErrorHandler, compose, canAccessSlug } from "@/lib/api-mi
 import { loadClients } from "@/lib/data/clients";
 import { loadAllProjects } from "@/lib/data/projects";
 import { loadIdeas } from "@/lib/data/ideas";
-import { readJSON } from "@/lib/data/json-io";
-import { foundationStateFile } from "@/lib/data/paths";
+import { assembleBrandBrainState } from "@/lib/data/brand-brain-assembler";
 import type { BrandBrainState } from "@/types";
 
 /**
@@ -64,14 +63,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 function getClientStats(slug: string) {
   // Foundation
-  const state = readJSON<BrandBrainState>(foundationStateFile(slug), {
-    version: "3.0",
-    started_at: "",
-    updated_at: "",
-    brand_summary: { company_name: "", sector: "", description: "", north_star: "", icps: [], competitors: [], positioning: "" },
-    sections: {},
-    presentations: [],
-  });
+  const state: BrandBrainState = assembleBrandBrainState(slug);
 
   let totalPillars = 0;
   let approvedPillars = 0;
@@ -79,7 +71,7 @@ function getClientStats(slug: string) {
     const pillars = section.pillars || {};
     for (const pillar of Object.values(pillars)) {
       totalPillars++;
-      if (pillar.status === "approved") approvedPillars++;
+      if (pillar.status === "completed") approvedPillars++;
     }
   }
 

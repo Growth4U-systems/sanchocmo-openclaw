@@ -1,7 +1,8 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { loadClient } from "../data/clients";
-import { BASE, foundationStateFile } from "../data/paths";
+import { BASE } from "../data/paths";
+import { loadFoundationState } from "../data/foundation";
 import { resolveYalcConfig, yalcFetch } from "./client";
 
 export interface ProvisionBrainOpts {
@@ -41,7 +42,7 @@ interface FoundationPillar {
 
 /**
  * Collect the approved Foundation pillars of a brand as YALC-readable doc
- * paths. Reads foundation-state.json (the DAG state Sancho already keeps per
+ * paths. Reads the assembled Brand Brain state (SAN-183 F5: tasks are the
  * brand), keeps only pillars with an approved-equivalent status whose output
  * file exists on disk, and translates workspace paths to the YALC container
  * mount. Brand-voice pillars are returned separately: YALC's synthesis treats
@@ -52,7 +53,7 @@ export function collectFoundationDocs(slug: string): FoundationDocs {
 
   let state: unknown;
   try {
-    state = JSON.parse(readFileSync(foundationStateFile(slug), "utf-8"));
+    state = loadFoundationState(slug);
   } catch {
     return result;
   }

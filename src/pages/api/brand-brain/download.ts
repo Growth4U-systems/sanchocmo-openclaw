@@ -3,7 +3,8 @@ import fs from "fs";
 import path from "path";
 import archiver from "archiver";
 import { withErrorHandler, withAuth, compose } from "@/lib/api-middleware";
-import { BASE, brandDir, foundationStateFile } from "@/lib/data/paths";
+import { BASE, brandDir } from "@/lib/data/paths";
+import { assembleBrandBrainState, brandExists } from "@/lib/data/brand-brain-assembler";
 
 /**
  * GET /api/brand-brain/download?slug=X
@@ -15,12 +16,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = req.query.slug as string;
   if (!slug) return res.status(400).json({ error: "Missing slug" });
 
-  const stateFile = foundationStateFile(slug);
-  if (!fs.existsSync(stateFile)) {
+  if (!brandExists(slug)) {
     return res.status(404).json({ error: "Brand Brain state not found" });
   }
 
-  const state = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
+  const state = assembleBrandBrainState(slug);
   const sections = state.sections || {};
 
   const docPaths: { filePath: string; zipName: string }[] = [];

@@ -419,7 +419,7 @@ export const tasks = pgTable("tasks", {
   draftStatuses: jsonb("draft_statuses"),
 
   mcChatThreadId: text("mc_chat_thread_id"),
-  discordThreadId: text("discord_thread_id"),
+  discordThreadId: text("discord_thread_id"), // DEPRECATED (Discord retirado, SAN-183 F5) — column drop pendiente de migración
 
   outputFiles: jsonb("output_files"),
   documents: jsonb("documents"),

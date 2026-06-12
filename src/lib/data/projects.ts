@@ -17,13 +17,13 @@ export function loadAllProjects(slug: string): { project: Project; tasks: Task[]
     const project = readJSON<Project | null>(projPath, null);
     if (!project) continue;
 
-    const tasksData = readJSON<{ tasks: Task[] } | { project_id: string; tasks: Task[] }>(
-      tasksPath,
-      { tasks: [] }
-    );
+    // tasks.json viene en dos shapes históricos: array plano (P00 Foundation,
+    // reseed) u objeto { tasks: [...] }. Soportar ambos — sin esto los
+    // proyectos Foundation eran invisibles aquí (SAN-183 F5).
+    const tasksData = readJSON<Task[] | { tasks?: Task[] }>(tasksPath, { tasks: [] });
     results.push({
       project,
-      tasks: tasksData.tasks || [],
+      tasks: Array.isArray(tasksData) ? tasksData : tasksData.tasks || [],
     });
   }
 

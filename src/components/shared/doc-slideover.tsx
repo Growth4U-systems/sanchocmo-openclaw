@@ -211,7 +211,7 @@ export function DocSlideOver({ slug, docPath, onClose, headerAction }: DocSlideO
   async function handleStatusChange(newStatus: string) {
     if (!pillarInfo) return;
     try {
-      await fetch("/api/foundation/pillar-status", {
+      await fetch("/api/brand-brain/pillar-status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug, section: pillarInfo.section, pillar: pillarInfo.pillar, status: newStatus }),

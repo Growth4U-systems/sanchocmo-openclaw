@@ -46,6 +46,9 @@ const STATUS_INFO: Record<string, { icon: string; cls: string; label: string }> 
   draft: { icon: "\uD83D\uDD04", cls: "wip", label: "Borrador" },
   "request-refresh": { icon: "\uD83D\uDD04", cls: "wip", label: "Solicitar actualizacion" },
   "not-started": { icon: "\u2B1C", cls: "todo", label: "Pendiente" },
+  completed: { icon: "\u2705", cls: "done", label: "Aprobado" },
+  todo: { icon: "\u2B1C", cls: "todo", label: "Pendiente" },
+  blocked: { icon: "\u26D4", cls: "review", label: "Bloqueada" },
 };
 
 const STATUS_BORDER: Record<string, string> = {
@@ -62,7 +65,7 @@ function ffDonePillars(sections: Record<string, Section>): Set<string> {
   if (!ff) return done;
   const pillars = ff.pillars || {};
   for (const [ffName, pInfo] of Object.entries(pillars)) {
-    if (["approved", "done"].includes(pInfo.status)) {
+    if (pInfo.status === "completed") {
       done.add(FF_PILLAR_MAP[ffName] || ffName);
     }
   }
@@ -83,8 +86,8 @@ function calcFoundationStats(foundation: BrandBrainState | undefined) {
       if (pInfo.optional) continue;
       total++;
       const status = pInfo.status;
-      const effective = status === "not-started" && ffDone.has(pName) ? "approved" : status;
-      if (["approved", "done"].includes(effective)) approved++;
+      const effective = status === "todo" && ffDone.has(pName) ? "completed" : status;
+      if (effective === "completed") approved++;
     }
   }
   return { approved, total, pct: total > 0 ? Math.round((approved / total) * 100) : 0 };
@@ -92,8 +95,8 @@ function calcFoundationStats(foundation: BrandBrainState | undefined) {
 
 /** Normalize status to a canonical form */
 function normalizeStatus(raw: string, ffDone: Set<string>, pillarName: string): string {
-  if (raw === "not-started" && ffDone.has(pillarName)) return "approved";
-  if (raw === "done") return "approved";
+  if (raw === "todo" && ffDone.has(pillarName)) return "completed";
+  if (raw === "done" || raw === "approved") return "completed";
   if (raw === "draft") return "in-progress";
   if (raw === "pending-approval" || raw === "generated") return "pending-review";
   return raw;
@@ -189,7 +192,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
   // brand with no foundation at all — but scaffolding (SAN-108) now always creates
   // one, which hid the "Analizar" box for every new client.
   const cbStatus = sections["company-brief"]?.pillars?.["company-brief"]?.status;
-  const showKickoffLauncher = !cbStatus || cbStatus === "not-started";
+  const showKickoffLauncher = !cbStatus || cbStatus === "todo";
 
   return (
     <div className="space-y-0">
@@ -250,7 +253,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
             const pKeys = Object.keys(pillars);
             const requiredKeys = pKeys.filter((k) => !pillars[k].optional);
             const secDone = requiredKeys.filter((k) =>
-              ["approved", "done"].includes(pillars[k].status)
+              pillars[k].status === "completed"
             ).length;
             const icon =
               secDone === requiredKeys.length && requiredKeys.length > 0
@@ -320,8 +323,8 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
           const requiredKeys = pillarKeys.filter((k) => !pillars[k].optional);
           const secDone = requiredKeys.filter((k) => {
             const st = pillars[k].status;
-            const eff = st === "not-started" && ffDone.has(k) ? "approved" : st;
-            return ["approved", "done"].includes(eff);
+            const eff = st === "todo" && ffDone.has(k) ? "completed" : st;
+            return eff === "completed";
           }).length;
 
           return (
@@ -338,9 +341,9 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
               {pillarKeys.map((pName) => {
                 const p = pillars[pName];
                 const isOptional = !!p.optional;
-                const raw = p.status || "not-started";
+                const raw = p.status || "todo";
                 const norm = normalizeStatus(raw, ffDone, pName);
-                const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
+                const si = STATUS_INFO[norm] || STATUS_INFO["todo"];
                 const name = displayName(pName);
 
                 const docUrl = p.output_file || "";

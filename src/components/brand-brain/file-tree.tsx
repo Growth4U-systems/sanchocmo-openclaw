@@ -34,6 +34,11 @@ const SECTION_DEFS = [
 ] as const;
 
 const STATUS_INFO: Record<string, { cls: string; labelKey: string }> = {
+  // Vocabulario canónico de task (SAN-183 F5)
+  completed: { cls: "done", labelKey: "approved" },
+  todo: { cls: "todo", labelKey: "notStarted" },
+  blocked: { cls: "review", labelKey: "blocked" },
+  // Claves legacy (datos viejos en disco; el ensamblador ya emite canónico)
   approved: { cls: "done", labelKey: "approved" },
   done: { cls: "done", labelKey: "completed" },
   "pending-review": { cls: "review", labelKey: "pendingReview" },
@@ -83,7 +88,7 @@ function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const ff = sections["company-brief"];
   if (!ff) return done;
   for (const [ffName, pInfo] of Object.entries(ff.pillars || {})) {
-    if (["approved", "done"].includes(pInfo.status)) {
+    if (pInfo.status === "completed") {
       done.add(FF_PILLAR_MAP[ffName] || ffName);
     }
   }
@@ -91,8 +96,8 @@ function ffDonePillars(sections: Record<string, Section>): Set<string> {
 }
 
 function normalizeStatus(raw: string, ffDone: Set<string>, pillarName: string): string {
-  if (raw === "not-started" && ffDone.has(pillarName)) return "approved";
-  if (raw === "done") return "approved";
+  if (raw === "todo" && ffDone.has(pillarName)) return "completed";
+  if (raw === "done" || raw === "approved") return "completed";
   if (raw === "draft") return "in-progress";
   if (raw === "pending-approval" || raw === "generated") return "pending-review";
   return raw;
@@ -471,8 +476,8 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
             const requiredKeys = allPillarKeys.filter((k) => !pillars[k].optional);
             const sectionApproved = requiredKeys.filter((k) => {
               const st = pillars[k].status;
-              const eff = st === "not-started" && ffDone.has(k) ? "approved" : st;
-              return ["approved", "done"].includes(eff);
+              const eff = st === "todo" && ffDone.has(k) ? "completed" : st;
+              return eff === "completed";
             }).length;
             const allDone = sectionApproved === requiredKeys.length && requiredKeys.length > 0;
             const isSinglePillar = allPillarKeys.length === 1 && allPillarKeys[0] === sec.key;
@@ -480,9 +485,9 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
             if (isSinglePillar && pillarKeys.length > 0) {
               const pName = pillarKeys[0];
               const p = pillars[pName];
-              const raw = p.status || "not-started";
+              const raw = p.status || "todo";
               const norm = normalizeStatus(raw, ffDone, pName);
-              const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
+              const si = STATUS_INFO[norm] || STATUS_INFO["todo"];
               const docUrl = p.output_file || "";
               const hasDoc = !!docUrl;
 
@@ -533,9 +538,9 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                   {pillarKeys.map((pName) => {
                     const p = pillars[pName];
                     const isOptional = !!p.optional;
-                    const raw = p.status || "not-started";
+                    const raw = p.status || "todo";
                     const norm = normalizeStatus(raw, ffDone, pName);
-                    const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
+                    const si = STATUS_INFO[norm] || STATUS_INFO["todo"];
                     const name = displayName(pName);
                     const docUrl = p.output_file || "";
                     const hasDoc = !!docUrl;
