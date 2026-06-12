@@ -192,7 +192,7 @@ export function PlantillasTab({ slug }: { slug: string }) {
                 {rows.map((template) => (
                   <div
                     key={template.id}
-                    onClick={() => openEditor(template)}
+                    onClick={() => setDocPath(`brand/${slug}/outreach/templates/${template.id}.md`)}
                     data-template-id={template.id}
                     className={cn(
                       "group flex cursor-pointer items-center gap-3 border-b border-border/60 px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/40",
@@ -238,15 +238,6 @@ export function PlantillasTab({ slug }: { slug: string }) {
                       </a>
                       <button
                         type="button"
-                        title="Ver documento"
-                        onClick={() => setDocPath(`brand/${slug}/outreach/templates/${template.id}.md`)}
-                        className="grid h-8 w-8 place-items-center rounded-md border border-border bg-transparent text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        data-action="open-doc"
-                      >
-                        📄
-                      </button>
-                      <button
-                        type="button"
                         title="Chat con Sancho sobre esta plantilla"
                         onClick={() => openChat(slug, buildOutreachTemplateThread(slug, template))}
                         className="grid h-8 w-8 place-items-center rounded-md border border-border bg-transparent text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -273,9 +264,9 @@ export function PlantillasTab({ slug }: { slug: string }) {
       )}
 
       <p className="text-[11px] text-muted-foreground">
-        * Las plantillas se comportan como los documentos de Brand Brain — ⬇️ descarga el .md ·
-        📄 abre el documento renderizado · 💬 chat con Sancho (hilo de la plantilla) · 📋 va a la
-        búsqueda que la instancia. Click en la línea abre el editor.
+        * Las plantillas se comportan como los documentos de Brand Brain — clic en la línea abre el
+        documento renderizado (y dentro, «✏️ Editar secuencia») · ⬇️ descarga el .md · 💬 chat con
+        Sancho · 📋 abre la tarea de la búsqueda que la instancia.
       </p>
 
       {/* ── Editor slideover ── */}
@@ -295,8 +286,30 @@ export function PlantillasTab({ slug }: { slug: string }) {
         )}
       </SlideOver>
 
-      {/* ── Doc renderizado (📄) ── */}
-      {docPath && <DocSlideOver slug={slug} docPath={docPath} onClose={() => setDocPath(null)} />}
+      {/* ── Doc renderizado (clic en la línea) + «✏️ Editar secuencia» dentro ── */}
+      {docPath && (() => {
+        const openId = docPath.split("/").pop()?.replace(/\.md$/, "") ?? "";
+        const tpl = templates.find((t) => t.id === openId) ?? null;
+        return (
+          <DocSlideOver
+            slug={slug}
+            docPath={docPath}
+            onClose={() => setDocPath(null)}
+            headerAction={
+              tpl ? (
+                <button
+                  type="button"
+                  onClick={() => { setDocPath(null); openEditor(tpl); }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  data-action="edit-structured"
+                >
+                  ✏️ {tpl.kind === "brief" ? "Editar brief" : "Editar secuencia"}
+                </button>
+              ) : null
+            }
+          />
+        );
+      })()}
 
       <ToastViewport toast={toast} />
     </div>
