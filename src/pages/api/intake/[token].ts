@@ -39,9 +39,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { token } = req.query;
   const tokenStr = Array.isArray(token) ? token[0] : token;
 
-  // Honeypot: bots filling the hidden `hp_url` field get a fake success.
+  // Honeypot: bots filling the hidden `company_url_confirm` field get a fake success.
   const body = req.body as Record<string, unknown> | undefined;
-  if (body && typeof body === "object" && typeof body.hp_url === "string" && body.hp_url) {
+  if (body && typeof body === "object" && typeof body.company_url_confirm === "string" && body.company_url_confirm) {
     return res.status(201).json({ ok: true });
   }
 
@@ -83,7 +83,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .json({ error: e instanceof Error ? e.message : "Could not write seed doc" });
   }
 
-  await upsertIntakeSubmission(slug, input);
+  try {
+    await upsertIntakeSubmission(slug, input);
+  } catch {
+    return res.status(500).json({ error: "Could not save submission" });
+  }
 
   // Notification (non-fatal if it fails).
   try {

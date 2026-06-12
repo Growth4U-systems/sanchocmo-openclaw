@@ -107,11 +107,12 @@ export default function IntakePage(props: PageProps) {
         {/* Honeypot — hidden from humans */}
         <input
           type="text"
-          name="hp_url"
+          name="company_url_confirm"
           tabIndex={-1}
           autoComplete="off"
+          aria-hidden="true"
           style={{ position: "absolute", left: "-9999px" }}
-          onChange={(e) => set("hp_url", e.target.value)}
+          onChange={(e) => set("company_url_confirm", e.target.value)}
         />
         {INTAKE_SECTIONS.map((section) => (
           <fieldset key={section} style={{ border: "none", padding: 0, margin: "28px 0" }}>
