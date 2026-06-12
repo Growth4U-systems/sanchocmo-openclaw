@@ -1053,6 +1053,8 @@ export function ChatSidebar() {
                 </span>
               </button>
               <button
+                type="button"
+                onClick={() => handleSelectFromPanel(`${slug}:general`)}
                 className="bg-[#313244] hover:bg-[#45475a] text-green-500 w-7 h-7 rounded-lg flex items-center justify-center text-sm border border-[#45475a]"
                 title={t("newThread")}
               >
