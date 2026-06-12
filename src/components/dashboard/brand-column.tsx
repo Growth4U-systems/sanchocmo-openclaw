@@ -157,6 +157,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
             Analizar
           </button>
         </div>
+        <ShareIntakeRow slug={slug} />
         <Link href={`/dashboard/${slug}/brand-brain`} className="text-xs text-rust mt-3 inline-block">
           Brand Documents {"\u2192"}
         </Link>
@@ -216,6 +217,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
               Analizar
             </button>
           </div>
+          <ShareIntakeRow slug={slug} />
         </div>
       )}
 
@@ -445,6 +447,51 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
           {"\uD83D\uDCC2"} Documents
         </Link>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Share the public intake-form link with the client (SAN-17). Shown only in the
+ * new-client kickoff launcher \u2014 mirrors the skill's "research vs send-form"
+ * choice. Fetches the signed URL from the admin endpoint and copies it.
+ */
+function ShareIntakeRow({ slug }: { slug: string }) {
+  const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const share = async () => {
+    setErr(null);
+    try {
+      const res = await fetch(`/api/intake-link/${slug}`);
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error || `HTTP ${res.status}`);
+      }
+      const { url } = (await res.json()) as { url?: string };
+      if (!url) throw new Error("Sin URL");
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "No se pudo copiar");
+    }
+  };
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">o env\u00EDale el formulario inicial:</span>
+        <button
+          type="button"
+          onClick={share}
+          className="text-xs px-2 py-1 border border-rust text-rust rounded-md hover:bg-rust/10 transition-colors"
+          title="Copia un link p\u00FAblico del formulario para que lo rellene el cliente"
+        >
+          {copied ? "\u2713 Copiado" : "\uD83D\uDD17 Copiar link"}
+        </button>
+      </div>
+      {err && <p className="text-[10px] text-destructive mt-1">{err}</p>}
     </div>
   );
 }
