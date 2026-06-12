@@ -36,6 +36,7 @@ import {
   odListProjects,
   odListSkills,
 } from "@/lib/open-design/client";
+import { buildIntakeUrl } from "@/lib/intake-tokens";
 import { auditMcpToolCall } from "@/lib/mcp/audit";
 import {
   registerYalcBreakevenTool,
@@ -1026,6 +1027,24 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "open-design:read", clientSlug);
         const items = await listOpenDesignCatalog(type, { filter, category }, context);
         return jsonResult({ type, items, count: Array.isArray(items) ? items.length : null });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_intake_create_link",
+    {
+      title: "Create public intake form link",
+      description:
+        "Returns the public intake-form URL for a client (SAN-17). Share it with the client to kick off the Full Foundation via the form branch. Read-only — the token is a stateless function of the slug. Requires sancho:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "sancho_intake_create_link", clientSlug, async () => {
+        assertClientScope(context, "sancho:read", clientSlug);
+        const url = buildIntakeUrl(clientSlug);
+        return jsonResult({ ok: true, clientSlug, url });
       }),
   );
 
