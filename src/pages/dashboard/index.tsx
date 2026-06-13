@@ -397,7 +397,7 @@ function ClientDashboardV2({ slug }: { slug: string }) {
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
             <span className="text-xs font-bold">{"🎯"} {t("nextSteps")}</span>
             <Link
-              href={`/dashboard/${slug}/projects`}
+              href={`/dashboard/${slug}/tasks`}
               className="text-[10px] font-semibold text-rust hover:underline"
             >
               {t("nextSteps")} {"→"}

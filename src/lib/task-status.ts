@@ -8,7 +8,7 @@
  *
  * Contiene:
  *   - `TASK_STATUS_OPTIONS`: los 6 valores canónicos con su label ES + estilo.
- *     Lo leen el selector de documento (Brand Brain), el de tarea (work-editor)
+ *     Lo leen el selector de documento (Brand Brain), el de tarea (/tasks)
  *     y los badges. NO declarar listas de status en componentes — importar esto.
  *   - `statusLabel()` / `statusStyle()`: helpers de presentación.
  *   - `normalizeTaskStatus` + la tabla de ALIASES LEGACY (shim transicional para
