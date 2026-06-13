@@ -29,7 +29,7 @@ export const MANIFEST_PILLARS = (
 // ciclo). resolveCoveringTask y getTaskSetEntry hacen lo análogo en runtime.
 // ---------------------------------------------------------------------------
 
-type _TaskSetEntry = { id: string; skill?: string; agent?: string };
+type _TaskSetEntry = { id: string; skill?: string; agent?: string; deliverableFiles?: string[]; docPaths?: string[] };
 type _FoundationPillarDecl = { key: string; task?: { set: string; id: string } };
 const _MANIFEST_FOUNDATION = (
   pillarManifest as unknown as { foundation?: { sections?: { pillars?: _FoundationPillarDecl[] }[] } }
@@ -38,13 +38,13 @@ const _MANIFEST_TASKSETS = (
   pillarManifest as unknown as { taskSets?: Record<string, { tasks?: _TaskSetEntry[] }> }
 ).taskSets ?? {};
 
-/** skill+agente de la task que cubre un pilar Foundation, o undefined. */
-function coveringTaskSkillAgent(pillar: string): { skill?: string; agent?: string } | undefined {
+/** La task que cubre un pilar Foundation (skill/agent/deliverableFiles), o undefined. */
+function coveringTask(pillar: string): _TaskSetEntry | undefined {
   for (const section of _MANIFEST_FOUNDATION?.sections ?? []) {
     const decl = (section.pillars ?? []).find((p) => p.key === pillar);
     if (decl?.task) {
       const t = (_MANIFEST_TASKSETS[decl.task.set]?.tasks ?? []).find((x) => x.id === decl.task!.id);
-      if (t) return { skill: t.skill, agent: t.agent };
+      if (t) return t;
     }
   }
   return undefined;
@@ -56,7 +56,7 @@ function coveringTaskSkillAgent(pillar: string): { skill?: string; agent?: strin
 export const PILLAR_CHAT_DEFAULTS: Record<string, { skill: string; skills: string[]; agent?: string }> = (() => {
   const out: Record<string, { skill: string; skills: string[]; agent?: string }> = {};
   for (const [key, entry] of Object.entries(MANIFEST_PILLARS)) {
-    const cov = coveringTaskSkillAgent(key);
+    const cov = coveringTask(key);
     const skill = cov?.skill ?? entry.skill;
     if (!skill) continue;
     out[key] = { skill, skills: [skill], agent: cov?.agent ?? entry.agent };
@@ -78,16 +78,24 @@ export const PILLAR_SKILL_ALIAS: Record<string, string> = Object.fromEntries(
  * NOT hand-edit; edit the manifest. Equivalence with the previous hardcoded map is
  * frozen in src/lib/__tests__/pillar-manifest.test.mts.
  *
- * Lite fallback convention: for pillars whose canonical path is also a
- * fast-foundation output target, the manifest lists `…current.md` first and the
- * sibling `lite.md` second. `current.md` is produced by the full skill; `lite.md`
- * by `fast-foundation` as a preliminary seed. Cross-skill consumers (positioning,
- * pricing, …) do NOT fall back to lite — that lives in each `context_required`.
+ * SAN-192 (W3): la ruta canónica vive en la TASK (`deliverableFiles`). Para
+ * pilares Foundation se DERIVA de su task cubriente; un pilar solo declara
+ * `docPaths` cuando aporta rutas extra de resolución que la task no produce
+ * (fallback `lite.md` del kickoff, ubicaciones legacy alternativas) o cuando no
+ * tiene task (documentos-pilar de Content). `docPaths` explícito gana.
+ *
+ * Lite fallback convention: para pilares cuyo path canónico es también target de
+ * fast-foundation, se lista `…current.md` (de la task) y el hermano `lite.md`
+ * (en `docPaths` del pilar). `current.md` lo produce la skill full; `lite.md` el
+ * kickoff como seed preliminar.
  */
 export const PILLAR_DOC_PATHS: Record<string, string[]> = Object.fromEntries(
   Object.entries(MANIFEST_PILLARS)
-    .filter(([, entry]) => entry.docPaths)
-    .map(([key, entry]) => [key, entry.docPaths as string[]]),
+    .map(([key, entry]) => {
+      const paths = entry.docPaths ?? coveringTask(key)?.deliverableFiles ?? coveringTask(key)?.docPaths;
+      return paths ? ([key, paths] as const) : null;
+    })
+    .filter((x): x is readonly [string, string[]] => x !== null),
 );
 
 /**

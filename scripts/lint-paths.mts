@@ -21,13 +21,12 @@ const ROOT = process.cwd();
 const STRICT = process.argv.includes("--strict");
 
 // --- valid canonical doc paths, from the single source of truth ----------------
-type ManifestEntry = { docPaths?: string[] };
-const manifest = JSON.parse(
-  fs.readFileSync(path.join(ROOT, "config", "pillar-manifest.json"), "utf8"),
-) as { pillars: Record<string, ManifestEntry> };
-const VALID_DOC_PATHS = new Set<string>(
-  Object.values(manifest.pillars).flatMap((e) => e.docPaths ?? []),
-);
+// SAN-192 (W3): la ruta canónica de los pilares Foundation se DERIVA de su task
+// (deliverableFiles) — leemos el mapa DERIVADO PILLAR_DOC_PATHS, no el `docPaths`
+// crudo del manifest (que ya no lo declara para esos pilares). Import dinámico por
+// el quirk ESM→CJS de tsx con módulos que default-importan JSON.
+const { PILLAR_DOC_PATHS } = await import("../src/lib/pillar-doc-paths");
+const VALID_DOC_PATHS = new Set<string>(Object.values(PILLAR_DOC_PATHS).flat());
 
 // --- walk skills/​**​/SKILL.md ---------------------------------------------------
 function findSkillFiles(dir: string): string[] {

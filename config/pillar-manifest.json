@@ -2,18 +2,12 @@
   "_comment": "SINGLE SOURCE OF TRUTH for the foundation pillar model (F0/F1). Owns, per pillar: doc paths, skill alias (pillar key -> installed skill), homonymous flag, and the default per-brand chat-config (skill+skills+agent). doc paths are aligned to what the owning skill actually writes (context_writes). Code derives PILLAR_DOC_PATHS, PILLAR_SKILL_ALIAS, HOMONYMOUS_SKILL_PILLARS and the chat-config pillar defaults from here via pillar-doc-paths.ts / skill-resolver.ts -- do NOT hand-edit those maps. Platform-core config, above any single agent. Validated by src/lib/__tests__/pillar-manifest.test.mts and scripts/lint-paths.mts.",
   "version": 1,
   "pillars": {
-    "brand-report": {
-      "docPaths": ["brand-book/brand-report.html"]
-    },
+    "brand-report": {},
     "brand-voice": {
       "docPaths": ["brand-book/brand-voice/brand-voice.current.md", "brand-voice/brand-voice.current.md"]
     },
-    "company-brief": {
-      "docPaths": ["company-brief/company-brief.current.md"]
-    },
-    "competitor-analysis": {
-      "docPaths": ["market-and-us/competitors/competitors.current.md"]
-    },
+    "company-brief": {},
+    "competitor-analysis": {},
     "content-pillars": {
       "skill": "content-pillars",
       "agent": "dulcinea"
@@ -28,51 +22,31 @@
       "skill": "content-strategy",
       "agent": "dulcinea"
     },
-    "ecp-validation": {
-      "docPaths": ["go-to-market/ecp-validation/ecp-validation.current.md"]
-    },
-    "existing-customer-data": {
-      "docPaths": ["go-to-market/existing-customer-data/existing-customer-data.current.md"]
-    },
-    "foundation-presentation": {
-      "docPaths": ["presentations/foundation-deck.html"]
-    },
-    "gtm-presentation": {
-      "docPaths": ["go-to-market/gtm-report.html"]
-    },
+    "ecp-validation": {},
+    "existing-customer-data": {},
+    "foundation-presentation": {},
+    "gtm-presentation": {},
     "market-analysis": {
       "docPaths": ["market-and-us/market/market.current.md", "market-and-us/market/lite.md"]
     },
-    "market-synthesis": {
-      "docPaths": ["market-and-us/swot/swot.current.md", "market-and-us/summary/summary.current.md", "market-and-us/ope-canvas/ope-canvas.current.md"]
-    },
-    "metrics-setup": {
-      "docPaths": ["go-to-market/metrics-plan/metrics-plan.current.md"]
-    },
+    "market-synthesis": {},
+    "metrics-setup": {},
     "niche-discovery": {
       "docPaths": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"]
     },
     "own-media-audit": {
       "docPaths": ["site-audit/own-media-audit/own-media-audit.current.md"]
     },
-    "positioning": {
-      "docPaths": ["go-to-market/positioning/positioning.current.md"]
-    },
-    "pricing": {
-      "docPaths": ["go-to-market/pricing/pricing.current.md"]
-    },
+    "positioning": {},
+    "pricing": {},
     "seo-audit": {
       "docPaths": ["site-audit/seo-audit/seo-audit.current.md"]
     },
     "self-analysis": {
       "docPaths": ["market-and-us/self/self.current.md", "market-and-us/self/lite.md"]
     },
-    "strategic-plan": {
-      "docPaths": ["strategic-plan/strategic-plan.current.md"]
-    },
-    "strategic-presentation": {
-      "docPaths": ["presentations/strategic-deck.html"]
-    },
+    "strategic-plan": {},
+    "strategic-presentation": {},
     "visual-identity": {
       "docPaths": ["brand-book/visual-identity/visual-identity.current.md", "brand-identity/visual-identity/visual-identity.current.md"]
     }
