@@ -12,6 +12,7 @@
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { statusLabel as statusText } from "@/lib/task-status";
 import type { BrandBrainState, Section, Pillar } from "@/types";
 import type { OtherDocGroup } from "@/hooks/useBrandBrain";
 
@@ -33,21 +34,25 @@ const SECTION_DEFS = [
   { key: "strategic-plan", icon: "📋", label: "Strategic Plan" },
 ] as const;
 
-const STATUS_INFO: Record<string, { cls: string; labelKey: string }> = {
+// SAN-192: el LABEL del badge sale de la fuente única (statusLabel, task-status.ts);
+// aquí solo vive el mapeo status → clase visual (color del badge).
+const STATUS_INFO: Record<string, { cls: string }> = {
   // Vocabulario canónico de task (SAN-183 F5)
-  completed: { cls: "done", labelKey: "approved" },
-  todo: { cls: "todo", labelKey: "notStarted" },
-  blocked: { cls: "review", labelKey: "blocked" },
+  completed: { cls: "done" },
+  todo: { cls: "todo" },
+  blocked: { cls: "review" },
+  cancelled: { cls: "todo" },
+  archived: { cls: "todo" },
+  "pending-review": { cls: "review" },
+  "in-progress": { cls: "wip" },
   // Claves legacy (datos viejos en disco; el ensamblador ya emite canónico)
-  approved: { cls: "done", labelKey: "approved" },
-  done: { cls: "done", labelKey: "completed" },
-  "pending-review": { cls: "review", labelKey: "pendingReview" },
-  "pending-approval": { cls: "review", labelKey: "pendingReview" },
-  generated: { cls: "review", labelKey: "generated" },
-  "in-progress": { cls: "wip", labelKey: "inProgress" },
-  draft: { cls: "wip", labelKey: "draft" },
-  "request-refresh": { cls: "wip", labelKey: "refresh" },
-  "not-started": { cls: "todo", labelKey: "notStarted" },
+  approved: { cls: "done" },
+  done: { cls: "done" },
+  "pending-approval": { cls: "review" },
+  generated: { cls: "review" },
+  draft: { cls: "wip" },
+  "request-refresh": { cls: "wip" },
+  "not-started": { cls: "todo" },
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -497,7 +502,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                     <span className="text-xl">{sec.icon}</span>
                     <span className="flex-1 text-base font-bold text-foreground">{sec.label}</span>
                     <span className={cn("text-[11px] font-medium px-2.5 py-1 rounded-full", STATUS_BADGE[si.cls] || STATUS_BADGE.todo)}>
-                      {t(si.labelKey)}
+                      {statusText(norm)}
                     </span>
                     <div className="flex items-center gap-1">
                       {hasDoc && <DownloadBtn docPath={docUrl} />}
@@ -556,7 +561,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                         name={name}
                         isOptional={isOptional}
                         statusCls={si.cls}
-                        statusLabel={t(si.labelKey)}
+                        statusLabel={statusText(norm)}
                         onSelectDoc={onSelectDoc}
                         onSelectOtherDoc={onSelectOtherDoc}
                         onOpenChat={onOpenChat}

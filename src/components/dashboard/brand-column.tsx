@@ -9,6 +9,7 @@ import { buildPillarThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { BrandSnapshot } from "@/components/shared/brand-snapshot";
 import { cn } from "@/lib/utils";
+import { statusLabel as statusText } from "@/lib/task-status";
 import type { BrandBrainState, Section } from "@/types";
 
 // ============================================================
@@ -35,20 +36,25 @@ const SECTION_META = [
   { key: "strategic-plan", icon: "\uD83D\uDDFA\uFE0F", label: "Strategic Plan" },
 ] as const;
 
-// Status display info
-const STATUS_INFO: Record<string, { icon: string; cls: string; label: string }> = {
-  approved: { icon: "\u2705", cls: "done", label: "Confirmado" },
-  done: { icon: "\u2705", cls: "done", label: "Completado" },
-  "pending-review": { icon: "\uD83D\uDFE1", cls: "review", label: "Esperando confirmacion" },
-  "pending-approval": { icon: "\uD83D\uDFE1", cls: "review", label: "Esperando confirmacion" },
-  generated: { icon: "\uD83D\uDFE1", cls: "review", label: "Generado" },
-  "in-progress": { icon: "\uD83D\uDD04", cls: "wip", label: "En progreso" },
-  draft: { icon: "\uD83D\uDD04", cls: "wip", label: "Borrador" },
-  "request-refresh": { icon: "\uD83D\uDD04", cls: "wip", label: "Solicitar actualizacion" },
-  "not-started": { icon: "\u2B1C", cls: "todo", label: "Pendiente" },
-  completed: { icon: "\u2705", cls: "done", label: "Aprobado" },
-  todo: { icon: "\u2B1C", cls: "todo", label: "Pendiente" },
-  blocked: { icon: "\u26D4", cls: "review", label: "Bloqueada" },
+// Status display info \u2014 SAN-192: el texto (tooltip) sale de la fuente \u00FAnica
+// (statusLabel, task-status.ts); aqu\u00ED solo el icono + la clase visual.
+const STATUS_INFO: Record<string, { icon: string; cls: string }> = {
+  // Vocabulario can\u00F3nico de task
+  completed: { icon: "\u2705", cls: "done" },
+  "pending-review": { icon: "\uD83D\uDFE1", cls: "review" },
+  "in-progress": { icon: "\uD83D\uDD04", cls: "wip" },
+  todo: { icon: "\u2B1C", cls: "todo" },
+  blocked: { icon: "\u26D4", cls: "review" },
+  cancelled: { icon: "\u2716\uFE0F", cls: "todo" },
+  archived: { icon: "\uD83D\uDCE6", cls: "todo" },
+  // Claves legacy (datos viejos en disco)
+  approved: { icon: "\u2705", cls: "done" },
+  done: { icon: "\u2705", cls: "done" },
+  "pending-approval": { icon: "\uD83D\uDFE1", cls: "review" },
+  generated: { icon: "\uD83D\uDFE1", cls: "review" },
+  draft: { icon: "\uD83D\uDD04", cls: "wip" },
+  "request-refresh": { icon: "\uD83D\uDD04", cls: "wip" },
+  "not-started": { icon: "\u2B1C", cls: "todo" },
 };
 
 const STATUS_BORDER: Record<string, string> = {
@@ -367,7 +373,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
                       STATUS_BORDER[si.cls] || "",
                       isOptional && norm === "not-started" && "opacity-45"
                     )}
-                    title={si.label}
+                    title={statusText(norm)}
                   >
                     <span className="text-[13px]">{si.icon}</span>
                     <span className="flex-1 font-medium">

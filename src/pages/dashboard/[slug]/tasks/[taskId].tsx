@@ -14,8 +14,11 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { type TaskRow, useTask, useTaskRows, useUpdateTask, useUpdateTaskStatus } from "@/hooks/useTasks";
 import { buildContentTaskThread, buildProjectThread, buildTaskThread } from "@/lib/chat-openers";
 import { taskBriefText, taskCompletionText, taskExecutionNotesText } from "@/lib/data/task-brief";
+import { VALID_TASK_STATUSES, statusLabel, normalizeTaskStatusQuiet } from "@/lib/task-status";
 
-const TASK_STATUS_OPTIONS = ["todo", "in-progress", "blocked", "completed", "cancelled"];
+// SAN-192: vocabulario único de task (6 valores, incl. pending-review). Fuente
+// en src/lib/task-status.ts — no declarar listas/labels/normalizadores locales.
+const TASK_STATUS_OPTIONS = VALID_TASK_STATUSES;
 const CONTENT_TASK_STATUS_OPTIONS = ["New", "Approved", "Draft", "Pending Media", "Ready", "Published", "Discarded", "Deferred"];
 const PROJECT_KANBAN_STATUSES = ["todo", "in-progress", "blocked", "completed"];
 const TASK_TYPE_OPTIONS = ["project", "content", "foundation", "research", "analysis", "execution", "outreach", "tool", "media"];
@@ -31,30 +34,8 @@ const AGENT_OPTIONS = [
   { value: "cervantes", label: "Cervantes" },
 ] as const;
 
-const TASK_STATUS_LABELS: Record<string, string> = {
-  todo: "Por hacer",
-  "in-progress": "En progreso",
-  blocked: "Bloqueada",
-  completed: "Completada",
-  cancelled: "Cancelada",
-};
-
 function isContentTask(row?: Partial<TaskRow> | null): boolean {
   return row?.type === "content_task" || row?.type === "content_subtask";
-}
-
-function normalizeOperationalStatus(status?: string | null): string {
-  const raw = (status || "").toLowerCase().trim();
-  if (["active", "in_progress", "running", "executing", "started"].includes(raw)) return "in-progress";
-  if (["done", "complete", "approved"].includes(raw)) return "completed";
-  if (["pending", "ready", "not-started", "not_started", ""].includes(raw)) return "todo";
-  if (["discarded", "archived"].includes(raw)) return "cancelled";
-  return raw;
-}
-
-function statusLabel(status?: string | null): string {
-  const normalized = normalizeOperationalStatus(status);
-  return TASK_STATUS_LABELS[normalized] || status || "Sin estado";
 }
 
 function rowTypeLabel(type?: string): string {
@@ -237,7 +218,7 @@ export default function UnifiedTaskDetailPage() {
   const isCt = isContentTask(task);
   const editorHref = task && isCt ? contentTaskEditorHref(slug, task) : null;
   const statusOptions = isCt ? CONTENT_TASK_STATUS_OPTIONS : TASK_STATUS_OPTIONS;
-  const selectedStatus = isCt ? task?.status || "" : normalizeOperationalStatus(task?.status);
+  const selectedStatus = isCt ? task?.status || "" : normalizeTaskStatusQuiet(task?.status);
   const brief = task ? taskBriefText(task) : "";
   const completion = task ? taskCompletionText(task) : "";
   const executionNotes = task ? taskExecutionNotesText(task) : "";
@@ -841,7 +822,7 @@ function ProjectChildrenKanban({ slug, childrenRows }: { slug: string; childrenR
       />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3">
         {PROJECT_KANBAN_STATUSES.map((status) => {
-          const tasks = childrenRows.filter((child) => normalizeOperationalStatus(child.status) === status);
+          const tasks = childrenRows.filter((child) => normalizeTaskStatusQuiet(child.status) === status);
           return (
             <div
               key={status}
@@ -853,7 +834,7 @@ function ProjectChildrenKanban({ slug, childrenRows }: { slug: string; childrenR
                 const childId = event.dataTransfer.getData("application/x-mc-task-id") || event.dataTransfer.getData("text/plain");
                 if (!childId) return;
                 const child = childrenRows.find((item) => item.id === childId);
-                if (!child || normalizeOperationalStatus(child.status) === status) return;
+                if (!child || normalizeTaskStatusQuiet(child.status) === status) return;
                 updateStatus.mutate({ slug, taskId: childId, status });
               }}
             >

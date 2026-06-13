@@ -19,7 +19,7 @@ import path from "node:path";
 
 let workspace: string;
 let assembler: typeof import("../data/brand-brain-assembler");
-let fstatus: typeof import("../data/foundation-status");
+let fstatus: typeof import("../data/task-status-store");
 let blueprints: typeof import("../data/task-blueprints");
 
 const SLUG = "acme";
@@ -34,7 +34,7 @@ before(async () => {
   workspace = mkdtempSync(path.join(tmpdir(), "bb-assembler-"));
   process.env.MC_WORKSPACE = workspace;
   assembler = await import("../data/brand-brain-assembler");
-  fstatus = await import("../data/foundation-status");
+  fstatus = await import("../data/task-status-store");
   blueprints = await import("../data/task-blueprints");
 
   // Sembrar los 4 proyectos P00 desde el registro (lo que hace clients/create).

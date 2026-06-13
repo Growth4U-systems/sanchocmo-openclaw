@@ -7,24 +7,8 @@
       "brand-book/brand-voice/brand-voice.current.md",
       "brand-voice/brand-voice.current.md"
     ],
-    "brand-voice-snapshot": [
-      "brand-voice/brand-voice.current.md",
-      "brand-voice/lite.md"
-    ],
-    "budget": [
-      "budget/budget.current.md",
-      "budget/lite.md"
-    ],
-    "business-model": [
-      "business-model/business-model.current.md",
-      "business-model/lite.md"
-    ],
     "company-brief": [
       "company-brief/company-brief.current.md"
-    ],
-    "company-context": [
-      "company-context/company-context.current.md",
-      "company-context/lite.md"
     ],
     "competitor-analysis": [
       "market-and-us/competitors/competitors.current.md"
@@ -37,9 +21,6 @@
     ],
     "ecp-validation": [
       "go-to-market/ecp-validation/ecp-validation.current.md"
-    ],
-    "email-strategy": [
-      "strategies/email/email.current.md"
     ],
     "existing-customer-data": [
       "go-to-market/existing-customer-data/existing-customer-data.current.md"
@@ -62,25 +43,12 @@
     "metrics-setup": [
       "go-to-market/metrics-plan/metrics-plan.current.md"
     ],
-    "niche-basic": [
-      "go-to-market/ecps/ecps.current.md",
-      "go-to-market/ecps/lite.md"
-    ],
     "niche-discovery": [
       "go-to-market/ecps/ecps.current.md",
       "go-to-market/ecps/lite.md"
     ],
-    "outreach-playbook": [
-      "outreach-playbook/outreach-playbook.current.md"
-    ],
     "own-media-audit": [
       "site-audit/own-media-audit/own-media-audit.current.md"
-    ],
-    "paid-media-strategy": [
-      "strategies/paid/paid.current.md"
-    ],
-    "partnership-strategy": [
-      "strategies/partnerships/partnerships.current.md"
     ],
     "positioning": [
       "go-to-market/positioning/positioning.current.md"
@@ -88,15 +56,12 @@
     "pricing": [
       "go-to-market/pricing/pricing.current.md"
     ],
-    "self-analysis": [
-      "market-and-us/self/self.current.md",
-      "market-and-us/self/lite.md"
-    ],
     "seo-audit": [
       "site-audit/seo-audit/seo-audit.current.md"
     ],
-    "social-media-strategy": [
-      "strategies/social/social.current.md"
+    "self-analysis": [
+      "market-and-us/self/self.current.md",
+      "market-and-us/self/lite.md"
     ],
     "strategic-plan": [
       "strategic-plan/strategic-plan.current.md"
@@ -107,16 +72,20 @@
     "visual-identity": [
       "brand-book/visual-identity/visual-identity.current.md",
       "brand-identity/visual-identity/visual-identity.current.md"
-    ],
-    "web-strategy": [
-      "strategies/web/web.current.md"
     ]
   },
   "skillAlias": {
+    "brand-report": "html-output",
+    "brand-voice": "brand-voice",
     "company-brief": "kickoff",
     "competitor-analysis": "competitor-intelligence",
+    "content-pillars": "content-pillars",
+    "content-playbook": "content-playbook",
+    "content-strategy": "content-strategy",
     "ecp-validation": "ecp-validation",
     "existing-customer-data": "existing-customer-data",
+    "foundation-presentation": "frontend-slides",
+    "gtm-presentation": "html-output",
     "market-analysis": "market-intelligence",
     "market-synthesis": "market-synthesis",
     "metrics-setup": "metrics-setup",
@@ -124,19 +93,18 @@
     "positioning": "positioning-messaging",
     "pricing": "pricing-strategy",
     "self-analysis": "self-intelligence",
-    "strategic-plan": "strategic-plan"
+    "strategic-plan": "strategic-plan",
+    "strategic-presentation": "frontend-slides",
+    "visual-identity": "visual-identity"
   },
-  "homonymous": [
-    "brand-voice",
-    "content-pillars",
-    "content-playbook",
-    "content-strategy",
-    "niche-discovery-100x",
-    "positioning-messaging",
-    "pricing",
-    "visual-identity"
-  ],
   "chatConfig": {
+    "brand-report": {
+      "skill": "html-output",
+      "skills": [
+        "html-output"
+      ],
+      "agent": "maese-pedro"
+    },
     "brand-voice": {
       "skill": "brand-voice",
       "skills": [
@@ -144,12 +112,40 @@
       ],
       "agent": "dulcinea"
     },
+    "company-brief": {
+      "skill": "kickoff",
+      "skills": [
+        "kickoff"
+      ],
+      "agent": "hamete"
+    },
     "competitor-analysis": {
       "skill": "competitor-intelligence",
       "skills": [
         "competitor-intelligence"
       ],
       "agent": "hamete"
+    },
+    "content-pillars": {
+      "skill": "content-pillars",
+      "skills": [
+        "content-pillars"
+      ],
+      "agent": "dulcinea"
+    },
+    "content-playbook": {
+      "skill": "content-playbook",
+      "skills": [
+        "content-playbook"
+      ],
+      "agent": "dulcinea"
+    },
+    "content-strategy": {
+      "skill": "content-strategy",
+      "skills": [
+        "content-strategy"
+      ],
+      "agent": "dulcinea"
     },
     "ecp-validation": {
       "skill": "ecp-validation",
@@ -164,6 +160,20 @@
         "existing-customer-data"
       ],
       "agent": "hamete"
+    },
+    "foundation-presentation": {
+      "skill": "frontend-slides",
+      "skills": [
+        "frontend-slides"
+      ],
+      "agent": "maese-pedro"
+    },
+    "gtm-presentation": {
+      "skill": "html-output",
+      "skills": [
+        "html-output"
+      ],
+      "agent": "maese-pedro"
     },
     "market-analysis": {
       "skill": "market-intelligence",
@@ -220,6 +230,13 @@
         "strategic-plan"
       ],
       "agent": "sancho"
+    },
+    "strategic-presentation": {
+      "skill": "frontend-slides",
+      "skills": [
+        "frontend-slides"
+      ],
+      "agent": "maese-pedro"
     },
     "visual-identity": {
       "skill": "visual-identity",

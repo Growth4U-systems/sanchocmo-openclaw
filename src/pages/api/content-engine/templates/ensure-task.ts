@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import { resolveCoveringTask } from "@/lib/data/foundation-status";
+import { resolveCoveringTask } from "@/lib/data/task-status-store";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 

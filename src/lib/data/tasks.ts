@@ -7,7 +7,8 @@ import { MC_TASKS_BACKEND, MC_TASKS_WORKSPACE } from "@/lib/config";
 import { brandDir } from "@/lib/data/paths";
 import { readJSON, writeJSON, listDir } from "@/lib/data/json-io";
 import { getNextProjectId as getNextProjectIdFromJson } from "@/lib/data/projects";
-import { setTaskStatus as syncTaskStatus } from "@/lib/data/foundation-status";
+import { setTaskStatus as syncTaskStatus } from "@/lib/data/task-status-store";
+import { normalizeTaskStatus } from "@/lib/task-status";
 import {
   attachDocumentToContentTask,
   createContentTask,
@@ -21,6 +22,7 @@ import {
 import { findContentTaskById as findFlatContentTaskById, loadUnifiedContentTasks, upsertContentTask } from "@/lib/data/content-tasks-flat";
 import { expandBriefPatch } from "@/lib/data/task-brief";
 import { inferTaskExecutionContract } from "@/lib/data/task-execution-contract";
+import { VALID_CONTENT_TASK_STATUSES } from "@/types";
 import type { ContentTask, ContentTaskStatus, Project, Task } from "@/types";
 
 export interface ProjectWithTasks {
@@ -437,10 +439,28 @@ export async function updateTask(slug: string, id: string, fields: Record<string
 
 export async function setTaskStatus(slug: string, id: string, status: string) {
   if (dbTasksEnabled()) {
-    const task = await updateTask(slug, id, { status });
-    return { ok: true, slug, task, newStatus: status };
+    // Shim de escritura (SAN-192): normaliza al vocabulario canónico de task,
+    // salvo que sea un status de ContentTask (otro vocabulario, capitalizado).
+    const isContentStatus = (VALID_CONTENT_TASK_STATUSES as readonly string[]).includes(status);
+    const normalized = isContentStatus ? status : normalizeTaskStatus(status);
+    const task = await updateTask(slug, id, { status: normalized });
+    return { ok: true, slug, task, newStatus: normalized };
   }
   const found = findTaskByIdAcrossBrand(slug, id);
+  // SAN-192 (B): un project (type=project) es una Task de primer nivel pero su
+  // status vive en project.json — antes se editaba por /projects (deprecado),
+  // ahora por /tasks/[id]. `found.projectId === id` ⟺ es el project, no una hija.
+  if (found && found.projectDir && found.projectId === id) {
+    const normalized = normalizeTaskStatus(status);
+    const projectPath = path.join(found.projectDir, "project.json");
+    const proj = readJSON<Record<string, unknown> | null>(projectPath, null);
+    if (proj) {
+      proj.status = normalized;
+      proj.updated_at = new Date().toISOString();
+      writeJSON(projectPath, proj);
+      return { ok: true, slug, task: { ...proj, status: normalized }, newStatus: normalized };
+    }
+  }
   if (found && isContentTaskRecord(found.task)) {
     const updated = upsertContentTask(slug, {
       ...found.task,

@@ -1,11 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withAuth, withErrorHandler, compose, canAccessSlug } from "@/lib/api-middleware";
-import {
-  setPillarStatusViaTask,
-  normalizeTaskStatus,
-  isLegacyStatusAlias,
-} from "@/lib/data/foundation-status";
-import { VALID_TASK_STATUSES } from "@/types";
+import { setPillarStatusViaTask } from "@/lib/data/task-status-store";
+import { normalizeTaskStatus, isLegacyStatusAlias, VALID_TASK_STATUSES } from "@/lib/task-status";
 import { provisionYalcBrain } from "@/lib/yalc/provision";
 
 /**

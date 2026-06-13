@@ -6,7 +6,7 @@ import { assembleBrandBrainState } from "./brand-brain-assembler";
  * ensambla desde manifest + tasks (única fuente de status). Este módulo queda
  * como fachada de compatibilidad para los lectores server-side existentes.
  * `saveFoundationState` murió: nadie escribe el shape entero; el status se
- * escribe vía setPillarStatusViaTask (foundation-status.ts).
+ * escribe vía setPillarStatusViaTask (task-status-store.ts).
  */
 export function loadFoundationState(slug: string): FoundationState {
   return assembleBrandBrainState(slug);
