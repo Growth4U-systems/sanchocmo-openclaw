@@ -112,7 +112,10 @@ const KANBAN_ICONS: Record<string, string> = {
   cancelled: "✖️",
   archived: "📦",
 };
-const KANBAN_COLUMNS = TASK_STATUS_OPTIONS.map((o) => ({
+// Cancelada/Archivada son terminales de descarte: se fijan desde el selector,
+// no merecen columna propia en el board (no ocupan espacio).
+const KANBAN_HIDDEN_STATUSES = new Set(["cancelled", "archived"]);
+const KANBAN_COLUMNS = TASK_STATUS_OPTIONS.filter((o) => !KANBAN_HIDDEN_STATUSES.has(o.value)).map((o) => ({
   key: o.value as string,
   label: o.label,
   icon: KANBAN_ICONS[o.value] ?? "•",

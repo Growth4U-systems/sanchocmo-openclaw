@@ -447,6 +447,20 @@ export async function setTaskStatus(slug: string, id: string, status: string) {
     return { ok: true, slug, task, newStatus: normalized };
   }
   const found = findTaskByIdAcrossBrand(slug, id);
+  // SAN-192 (B): un project (type=project) es una Task de primer nivel pero su
+  // status vive en project.json — antes se editaba por /projects (deprecado),
+  // ahora por /tasks/[id]. `found.projectId === id` ⟺ es el project, no una hija.
+  if (found && found.projectDir && found.projectId === id) {
+    const normalized = normalizeTaskStatus(status);
+    const projectPath = path.join(found.projectDir, "project.json");
+    const proj = readJSON<Record<string, unknown> | null>(projectPath, null);
+    if (proj) {
+      proj.status = normalized;
+      proj.updated_at = new Date().toISOString();
+      writeJSON(projectPath, proj);
+      return { ok: true, slug, task: { ...proj, status: normalized }, newStatus: normalized };
+    }
+  }
   if (found && isContentTaskRecord(found.task)) {
     const updated = upsertContentTask(slug, {
       ...found.task,
