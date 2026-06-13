@@ -33,6 +33,7 @@ declare -A AGENT_WORKSPACES=(
   ["mambrino"]="$OPENCLAW_ROOT/workspace-mambrino"
   ["merlin"]="$OPENCLAW_ROOT/workspace-merlin"
   ["sanson"]="$OPENCLAW_ROOT/workspace-sanson"
+  ["maese-pedro"]="$OPENCLAW_ROOT/workspace-maese-pedro"
 )
 
 declare -A AGENT_MODELS=(
@@ -45,16 +46,17 @@ declare -A AGENT_MODELS=(
   ["mambrino"]="anthropic/claude-sonnet-4-6"
   ["merlin"]="anthropic/claude-opus-4-7"
   ["sanson"]="anthropic/claude-opus-4-7"
+  ["maese-pedro"]="anthropic/claude-sonnet-4-6"
 )
 
-for AGENT_NAME in sancho escudero cervantes hamete dulcinea rocinante mambrino merlin sanson; do
+for AGENT_NAME in sancho escudero cervantes hamete dulcinea rocinante mambrino merlin sanson maese-pedro; do
   WORKSPACE="${AGENT_WORKSPACES[$AGENT_NAME]}"
   MODEL="${AGENT_MODELS[$AGENT_NAME]}"
   AGENT_DIR="$OPENCLAW_ROOT/agents/$AGENT_NAME/agent"
 
   if [ ! -d "$WORKSPACE" ]; then
-    echo "  - $AGENT_NAME workspace missing ($WORKSPACE), skipped"
-    continue
+    echo "  + $AGENT_NAME workspace missing, creating $WORKSPACE"
+    mkdir -p "$WORKSPACE"
   fi
 
   if echo "$EXISTING" | grep -q "^${AGENT_NAME}$"; then
@@ -104,6 +106,7 @@ default_models = {
     "mambrino": "anthropic/claude-sonnet-4-6",
     "merlin": "anthropic/claude-opus-4-7",
     "sanson": "anthropic/claude-opus-4-7",
+    "maese-pedro": "anthropic/claude-sonnet-4-6",
 }
 
 try:
