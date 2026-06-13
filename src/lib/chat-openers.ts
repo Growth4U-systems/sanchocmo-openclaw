@@ -217,8 +217,11 @@ export function buildDiscoverySearchThread(
   }
 
   // New search: a fresh thread id each time (Date.now is runtime-only).
+  // Dash-shaped (`discovery-new-<ts>`, no inner colon) so the client id matches
+  // what mc-chat.threadFile() persists after sanitizing `:` → `-` — otherwise
+  // useThreadList's exact-id dedup misses and paints a phantom row (SAN-193).
   const cfg = instantiateEntry("discovery-search-new", { slug });
-  cfg.threadId = `${slug}:discovery:new-${Date.now()}`;
+  cfg.threadId = `${slug}:discovery-new-${Date.now()}`;
   return cfg;
 }
 
@@ -520,6 +523,20 @@ export function resolveFullThreadConfig(
       threadId, threadName: shortId.replace(/[-_:]/g, " "),
       skill, skills: [skill], agent: "dulcinea",
       linkedTo: `${ns}/${contentMatch[2]}`, docPath: null, threadState: "continue",
+    };
+  }
+
+  // ── No task: Partnerships discovery threads belong to Rocinante ──
+  // A discovery search id is dynamic (`discovery-new-<ts>` for a fresh plan,
+  // `discovery-<campaignId>` for an existing search) so it has no task/registry
+  // row. Without this it falls through to the pillar fallback → sancho-manager,
+  // orphaning the search from its Outreach owner after a reload (SAN-193).
+  if (/^discovery[-:]/i.test(shortId)) {
+    const skills = ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"];
+    return {
+      threadId, threadName: shortId.replace(/[-_:]/g, " "),
+      skill: skills[0], skills, agent: "rocinante",
+      linkedTo: "rocinante", docPath: null, threadState: "continue",
     };
   }
 

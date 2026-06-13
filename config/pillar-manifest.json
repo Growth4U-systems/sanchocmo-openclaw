@@ -752,7 +752,7 @@
       "threadState": "continue"
     },
     "discovery-search": {
-      "threadId": "{slug}:discovery:{campaignIdLower}",
+      "threadId": "{slug}:discovery-{campaignIdLower}",
       "threadName": "Búsqueda: {searchName}",
       "skill": "discovery-plan-builder",
       "skills": ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"],
@@ -763,7 +763,7 @@
       "initialMessage": "Repasemos y lancemos la búsqueda de creators \"{searchName}\" (campaña Yalc {campaignId}, Partnerships): revisa el plan de discovery — sectores, redes, tiers, volumen — y dime qué falta para lanzarla."
     },
     "discovery-search-new": {
-      "threadId": "{slug}:discovery:new",
+      "threadId": "{slug}:discovery-new",
       "threadName": "Nueva búsqueda de creators",
       "skill": "discovery-plan-builder",
       "skills": ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"],

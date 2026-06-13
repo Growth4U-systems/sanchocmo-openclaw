@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { ThreadConfig } from "@/lib/chat-openers";
+import { canonicalThreadId } from "@/lib/thread-id";
 
 // ============================================================
 // Chat Store — Global state for the MC Chat execution system
@@ -82,29 +83,38 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   setCurrentSlug: (slug) => set({ currentSlug: slug }),
 
-  setCurrentThread: (threadId) => set({ currentThread: threadId }),
+  // SAN-193: every thread id entering the store is normalized to the canonical
+  // (on-disk) shape so currentThread / localThreads / threadMeta all speak the
+  // SAME id the server lists back. Without this, a builder's colon-shaped id
+  // (`<slug>:task:<id>`) never matches the sanitized id the storage layer
+  // persists (`<slug>:task-<id>`) → phantom duplicate row + lost highlight.
+  setCurrentThread: (threadId) =>
+    set({ currentThread: threadId == null ? threadId : canonicalThreadId(threadId) }),
 
   setThreadMeta: (threadId, meta) =>
     set((state) => ({
-      threadMeta: { ...state.threadMeta, [threadId]: meta },
+      threadMeta: { ...state.threadMeta, [canonicalThreadId(threadId)]: meta },
     })),
 
-  getThreadMeta: (threadId) => get().threadMeta[threadId],
+  getThreadMeta: (threadId) => get().threadMeta[canonicalThreadId(threadId)],
 
   registerThread: (threadId, name) =>
-    set((state) => ({
-      localThreads: state.localThreads.includes(threadId)
-        ? state.localThreads
-        : [...state.localThreads, threadId],
-      localThreadNames: { ...state.localThreadNames, [threadId]: name },
-    })),
+    set((state) => {
+      const tid = canonicalThreadId(threadId);
+      return {
+        localThreads: state.localThreads.includes(tid)
+          ? state.localThreads
+          : [...state.localThreads, tid],
+        localThreadNames: { ...state.localThreadNames, [tid]: name },
+      };
+    }),
 
   selectThread: (config) => {
     // Free-mode thread selection — keeps the sidebar unlocked so the
     // ThreadListPanel stays visible. Updates currentThread and
     // threadMeta so the chat view + doc panel render correctly.
     set({
-      currentThread: config.threadId,
+      currentThread: canonicalThreadId(config.threadId),
       sidebarLocked: false,
       lockedThreadId: null,
     });
@@ -128,8 +138,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       set({
         sidebarOpen: true,
         sidebarLocked: true,
-        lockedThreadId: config.threadId,
-        currentThread: config.threadId,
+        lockedThreadId: canonicalThreadId(config.threadId),
+        currentThread: canonicalThreadId(config.threadId),
       });
       // Set thread meta
       get().setThreadMeta(config.threadId, {
