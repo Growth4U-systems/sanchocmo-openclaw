@@ -24,6 +24,9 @@ interface ApiMeta {
   icon: string;
   desc?: string;
   ownership?: string;
+  /** Global infra credential with no per-client override (e.g. R2). Always uses
+   * the system store, even when a client is selected. */
+  systemOnly?: boolean;
   docs?: string;
   credentials?: Array<{ key: string; label: string }>;
 }
@@ -416,7 +419,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
                       {/* Actions */}
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-1.5 justify-end flex-wrap">
-                          {slug ? (
+                          {slug && !apiMeta.systemOnly ? (
                             <button
                               onClick={() => setConnectSlider({ apiId, provider: apiMeta.provider })}
                               className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"

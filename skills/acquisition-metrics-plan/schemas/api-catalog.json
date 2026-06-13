@@ -191,6 +191,7 @@
           "icon": "☁️",
           "desc": "Almacenamiento de objetos para imágenes y media (upload-media, generate-image, adjuntos de formularios)",
           "ownership": "system",
+          "systemOnly": true,
           "credentials": [
             { "key": "ACCOUNT_ID", "label": "Account ID", "type": "string", "sensitive": true, "help": "Cloudflare dashboard → R2 → Overview (Account ID)" },
             { "key": "ACCESS_KEY_ID", "label": "Access Key ID", "type": "string", "sensitive": true, "help": "Cloudflare → R2 → Manage API Tokens → Create token (Access Key ID)" },
