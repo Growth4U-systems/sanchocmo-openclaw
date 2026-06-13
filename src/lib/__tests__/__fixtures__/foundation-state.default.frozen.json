@@ -29,7 +29,7 @@
         "competitor-analysis": {"status": "not-started", "layer": 1, "skill": "competitor-intelligence"},
         "self-analysis": {"status": "not-started", "layer": 1, "skill": "self-intelligence", "output_file": "brand/__SLUG__/market-and-us/self/self.current.md"},
         "market-synthesis": {"status": "not-started", "layer": 2, "skill": "market-synthesis"},
-        "foundation-presentation": {"status": "not-started", "layer": 2, "skill": "market-synthesis", "output_file": "brand/__SLUG__/presentations/foundation-report.html"}
+        "foundation-presentation": {"status": "not-started", "layer": 2, "skill": "frontend-slides", "output_file": "brand/__SLUG__/presentations/foundation-report.html"}
       }
     },
     "go-to-market": {
@@ -42,7 +42,7 @@
         "positioning": {"status": "not-started", "layer": 4, "skill": "positioning-messaging", "output_file": "brand/__SLUG__/go-to-market/positioning/shared/messaging-summary.md"},
         "pricing": {"status": "not-started", "layer": 4, "skill": "pricing-strategy", "output_file": "brand/__SLUG__/go-to-market/pricing/pricing.current.md"},
         "ecp-validation": {"status": "not-started", "layer": 4, "optional": true, "skill": "ecp-validation"},
-        "gtm-presentation": {"status": "not-started", "layer": 4, "skill": "gtm-presentation", "output_file": "brand/__SLUG__/go-to-market/gtm-report.html"}
+        "gtm-presentation": {"status": "not-started", "layer": 4, "skill": "html-output", "output_file": "brand/__SLUG__/go-to-market/gtm-report.html"}
       }
     },
     "brand-book": {
@@ -52,7 +52,7 @@
       "pillars": {
         "brand-voice": {"status": "not-started", "layer": 5, "skill": "brand-voice", "output_file": "brand/__SLUG__/brand-book/brand-voice/brand-voice.current.md"},
         "visual-identity": {"status": "not-started", "layer": 5, "skill": "visual-identity", "output_file": "brand/__SLUG__/brand-book/visual-identity/visual-identity.current.md"},
-        "brand-report": {"status": "not-started", "layer": 5, "optional": true, "skill": "brand-report", "output_file": "brand/__SLUG__/brand-book/brand-report.html"}
+        "brand-report": {"status": "not-started", "layer": 5, "optional": true, "skill": "html-output", "output_file": "brand/__SLUG__/brand-book/brand-report.html"}
       }
     },
     "metrics-setup": {
@@ -68,7 +68,7 @@
       "output_file": "brand/__SLUG__/strategic-plan/strategic-plan.current.md",
       "pillars": {
         "strategic-plan": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/__SLUG__/strategic-plan/strategic-plan.current.md"},
-        "strategic-presentation": {"status": "not-started", "skill": "strategic-plan", "output_file": "brand/__SLUG__/strategic-plan/strategic-presentation.html"}
+        "strategic-presentation": {"status": "not-started", "skill": "frontend-slides", "output_file": "brand/__SLUG__/strategic-plan/strategic-presentation.html"}
       }
     }
   },

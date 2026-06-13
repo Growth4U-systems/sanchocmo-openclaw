@@ -10,21 +10,9 @@
       "homonymous": true,
       "chatConfig": { "skill": "brand-voice", "skills": ["brand-voice"], "agent": "dulcinea" }
     },
-    "brand-voice-snapshot": {
-      "docPaths": ["brand-voice/brand-voice.current.md", "brand-voice/lite.md"]
-    },
-    "budget": {
-      "docPaths": ["budget/budget.current.md", "budget/lite.md"]
-    },
-    "business-model": {
-      "docPaths": ["business-model/business-model.current.md", "business-model/lite.md"]
-    },
     "company-brief": {
       "docPaths": ["company-brief/company-brief.current.md"],
       "skillAlias": "kickoff"
-    },
-    "company-context": {
-      "docPaths": ["company-context/company-context.current.md", "company-context/lite.md"]
     },
     "competitor-analysis": {
       "docPaths": ["market-and-us/competitors/competitors.current.md"],
@@ -46,9 +34,6 @@
       "docPaths": ["go-to-market/ecp-validation/ecp-validation.current.md"],
       "skillAlias": "ecp-validation",
       "chatConfig": { "skill": "ecp-validation", "skills": ["ecp-validation"], "agent": "sanson" }
-    },
-    "email-strategy": {
-      "docPaths": ["strategies/email/email.current.md"]
     },
     "existing-customer-data": {
       "docPaths": ["go-to-market/existing-customer-data/existing-customer-data.current.md"],
@@ -76,36 +61,18 @@
       "skillAlias": "metrics-setup",
       "chatConfig": { "skill": "metrics-setup", "skills": ["metrics-setup"], "agent": "merlin" }
     },
-    "niche-basic": {
-      "docPaths": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"]
-    },
     "niche-discovery": {
       "docPaths": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"],
       "skillAlias": "niche-discovery-100x",
       "chatConfig": { "skill": "niche-discovery-100x", "skills": ["niche-discovery-100x"], "agent": "hamete" }
     },
-    "niche-discovery-100x": {
-      "homonymous": true
-    },
-    "outreach-playbook": {
-      "docPaths": ["outreach-playbook/outreach-playbook.current.md"]
-    },
     "own-media-audit": {
       "docPaths": ["site-audit/own-media-audit/own-media-audit.current.md"]
-    },
-    "paid-media-strategy": {
-      "docPaths": ["strategies/paid/paid.current.md"]
-    },
-    "partnership-strategy": {
-      "docPaths": ["strategies/partnerships/partnerships.current.md"]
     },
     "positioning": {
       "docPaths": ["go-to-market/positioning/positioning.current.md"],
       "skillAlias": "positioning-messaging",
       "chatConfig": { "skill": "positioning-messaging", "skills": ["positioning-messaging"], "agent": "dulcinea" }
-    },
-    "positioning-messaging": {
-      "homonymous": true
     },
     "pricing": {
       "docPaths": ["go-to-market/pricing/pricing.current.md"],
@@ -121,9 +88,6 @@
       "skillAlias": "self-intelligence",
       "chatConfig": { "skill": "self-intelligence", "skills": ["self-intelligence"], "agent": "hamete" }
     },
-    "social-media-strategy": {
-      "docPaths": ["strategies/social/social.current.md"]
-    },
     "strategic-plan": {
       "docPaths": ["strategic-plan/strategic-plan.current.md"],
       "skillAlias": "strategic-plan",
@@ -136,9 +100,6 @@
       "docPaths": ["brand-book/visual-identity/visual-identity.current.md", "brand-identity/visual-identity/visual-identity.current.md"],
       "homonymous": true,
       "chatConfig": { "skill": "visual-identity", "skills": ["visual-identity"], "agent": "maese-pedro" }
-    },
-    "web-strategy": {
-      "docPaths": ["strategies/web/web.current.md"]
     }
   },
   "_foundation_comment": "SAN-183 (F5) — la ESTRUCTURA de Foundation: secciones ordenadas por layer y, por pilar, su binding a la task que lo cubre (taskSets foundation-*, 1:1). Los doc paths canónicos NO se duplican aquí: viven en pillars[key].docPaths. El status de un pilar ES el status de su task (única fuente); el ensamblador de Brand Brain (brand-brain-assembler.ts) reconstruye el shape legacy de foundation-state desde este bloque + las tasks. Sustituye al árbol de config/foundation-state.default.json.",
@@ -527,8 +488,8 @@
           "id": "foundation-presentation",
           "taskKey": "T10",
           "name": "L2 — Foundation Presentation",
-          "skill": "market-synthesis",
-          "agent": "hamete",
+          "skill": "frontend-slides",
+          "agent": "maese-pedro",
           "type": "foundation",
           "channel": "strategy",
           "description": "Presentación ejecutiva de resultados de Foundation: research de mercado, competencia, self-analysis y síntesis en un deck navegable.",
@@ -575,8 +536,8 @@
           "id": "gtm-presentation",
           "taskKey": "T13",
           "name": "L4 — GTM Presentation",
-          "skill": "gtm-presentation",
-          "agent": "sancho",
+          "skill": "html-output",
+          "agent": "maese-pedro",
           "type": "foundation",
           "channel": "strategy",
           "description": "Presentación ejecutiva del Go-To-Market: nichos, positioning, pricing y plan de canales en un deck navegable.",
@@ -591,8 +552,8 @@
           "id": "brand-report",
           "taskKey": "T14",
           "name": "L5 — Brand Report (opcional)",
-          "skill": "brand-report",
-          "agent": "sancho",
+          "skill": "html-output",
+          "agent": "maese-pedro",
           "type": "foundation",
           "channel": "strategy",
           "description": "Informe consolidado de marca: voz, identidad visual y guidelines en un documento navegable.",
@@ -750,8 +711,8 @@
           "id": "strategic-presentation",
           "taskKey": "T03",
           "name": "L7 — Strategic Presentation",
-          "skill": "strategic-plan",
-          "agent": "sancho",
+          "skill": "frontend-slides",
+          "agent": "maese-pedro",
           "type": "foundation",
           "channel": "strategy",
           "description": "Presentación ejecutiva del Strategic Plan: SWOT, priorización de canales, roadmap y KPIs en un deck navegable.",
