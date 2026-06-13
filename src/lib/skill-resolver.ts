@@ -4,7 +4,7 @@
 // falls back to hardcoded maps for backwards compatibility.
 // ============================================================
 
-import { MANIFEST_PILLARS } from "./pillar-doc-paths";
+import { PILLAR_SKILL_ALIAS } from "./pillar-doc-paths";
 
 export interface SkillResolution {
   skill: string;
@@ -225,16 +225,13 @@ export function resolveAgentForSkill(skill: string | undefined): string | undefi
 
 /**
  * Resolve the skill that produces a Foundation pillar's doc (SAN-148).
- * Mirrors steps 2/5b of `resolveThreadSkills`: pillar alias first, then
- * homonymous pillar skills. Used by doc-owner resolution to route client
- * feedback on a pillar doc to the agent that authored it.
+ * Usa PILLAR_SKILL_ALIAS (derivado de la task cubriente, SAN-192 W2b). Used by
+ * doc-owner resolution to route client feedback on a pillar doc to the agent
+ * that authored it.
  */
 export function resolveSkillForPillar(pillar: string | undefined): string | undefined {
   if (!pillar) return undefined;
-  const aliased = PILLAR_SKILL_ALIAS[pillar];
-  if (aliased) return aliased;
-  if (HOMONYMOUS_SKILL_PILLARS.has(pillar)) return pillar;
-  return undefined;
+  return PILLAR_SKILL_ALIAS[pillar];
 }
 
 // ---------------------------------------------------------------------------
@@ -359,54 +356,19 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
   if (ctx.pillar) {
     const fromConfig = toResolution(cfg.pillars?.[ctx.pillar]);
     if (fromConfig) return fromConfig;
-    // 5a. Foundation pillars are named *-analysis in the UI/foundation, but the
-    // installed skills (and SKILL_OWNER_MAP) use *-intelligence (and other
-    // pillar-key ≠ skill-name mismatches). Bridge the naming so the pillar
-    // resolves to the REAL skill + its owner agent instead of a non-existent
-    // homonymous skill with no owner that falls back to Sancho. Root cause of the
-    // chat→Sancho regression (SAN-26/98); extended to all Foundation pillars in
-    // SAN-102 so research/synthesis/niche → Hamete, positioning → Dulcinea, etc.
+    // 5a. PILLAR_SKILL_ALIAS (SAN-192 W2b): pilar → skill derivado de su task
+    // cubriente (o skill explícito del pilar). Cubre el mismatch pillar-key ≠
+    // skill-name (market-analysis → market-intelligence, etc.) y los antes
+    // "homónimos" (visual-identity, brand-voice, content-strategy…). El agente
+    // sale del owner-map vía withOwnerAgent. Si no hay skill, cae a Sancho (6).
     const aliasedSkill = PILLAR_SKILL_ALIAS[ctx.pillar];
     if (aliasedSkill) return { skill: aliasedSkill, skills: [aliasedSkill] };
-    // 5b. Convention: meta-skill pillars have a homonymous skill installed
-    // alongside them. When the brand hasn't customized chat-config we fall
-    // through to that convention before going to the generic manager — so
-    // visual-identity → "visual-identity" skill, brand-voice → "brand-voice", etc.
-    if (HOMONYMOUS_SKILL_PILLARS.has(ctx.pillar)) {
-      return { skill: ctx.pillar, skills: [ctx.pillar] };
-    }
   }
 
   // 6. Fallback
   return { skill: "sancho-manager", skills: ["sancho-manager"] };
 }
 
-/** Foundation pillar key → installed skill. Foundation threads are opened by
- *  pillar key (the thread namespace, e.g. `{slug}:market-analysis`), which often
- *  differs from the installed skill name (`market-intelligence`) — and even when
- *  it matches, the homonymous skill may not exist. This bridge maps the pillar →
- *  its real skill so resolution lands on the owned skill and routes to the owner
- *  agent via SKILL_OWNER_MAP, instead of falling back to Sancho. Root cause of
- *  the chat→Sancho regression (SAN-26/98); extended to all Foundation pillars in
- *  SAN-102 (research/synthesis/niche → Hamete, positioning → Dulcinea,
- *  pricing/strategic-plan → Sancho default).
- *  W4 (SAN-3): `company-brief` → the `kickoff` skill (owner hamete). The Kickoff
- *  produces the living Company Brief; the old fast-foundation flow is retired —
- *  `fast-foundation` is no longer a pillar alias.
- *  DERIVED from `config/pillar-manifest.json` (F0) — do NOT hand-edit; edit the
- *  manifest. Frozen equivalence in src/lib/__tests__/pillar-manifest.test.mts. */
-const PILLAR_SKILL_ALIAS: Record<string, string> = Object.fromEntries(
-  Object.entries(MANIFEST_PILLARS)
-    .filter(([, entry]) => entry.skillAlias)
-    .map(([key, entry]) => [key, entry.skillAlias as string]),
-);
-
-/** Pillars that ship with a child skill of the same name. Used by step 5b
- *  of `resolveThreadSkills` so threads land on the right skill even when
- *  `chat-config.json` doesn't list the pillar.
- *  DERIVED from `config/pillar-manifest.json` (F0) — do NOT hand-edit. */
-const HOMONYMOUS_SKILL_PILLARS = new Set(
-  Object.entries(MANIFEST_PILLARS)
-    .filter(([, entry]) => entry.homonymous)
-    .map(([key]) => key),
-);
+// PILLAR_SKILL_ALIAS (pilar → skill) ahora se DERIVA de la task cubriente en
+// pillar-doc-paths.ts (SAN-192 W2b) — el manifest ya no declara skillAlias/
+// homonymous. Importado arriba. El agente lo añade withOwnerAgent vía owner-map.

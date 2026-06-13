@@ -56,12 +56,12 @@
     "pricing": [
       "go-to-market/pricing/pricing.current.md"
     ],
+    "seo-audit": [
+      "site-audit/seo-audit/seo-audit.current.md"
+    ],
     "self-analysis": [
       "market-and-us/self/self.current.md",
       "market-and-us/self/lite.md"
-    ],
-    "seo-audit": [
-      "site-audit/seo-audit/seo-audit.current.md"
     ],
     "strategic-plan": [
       "strategic-plan/strategic-plan.current.md"
@@ -75,10 +75,17 @@
     ]
   },
   "skillAlias": {
+    "brand-report": "html-output",
+    "brand-voice": "brand-voice",
     "company-brief": "kickoff",
     "competitor-analysis": "competitor-intelligence",
+    "content-pillars": "content-pillars",
+    "content-playbook": "content-playbook",
+    "content-strategy": "content-strategy",
     "ecp-validation": "ecp-validation",
     "existing-customer-data": "existing-customer-data",
+    "foundation-presentation": "frontend-slides",
+    "gtm-presentation": "html-output",
     "market-analysis": "market-intelligence",
     "market-synthesis": "market-synthesis",
     "metrics-setup": "metrics-setup",
@@ -86,17 +93,18 @@
     "positioning": "positioning-messaging",
     "pricing": "pricing-strategy",
     "self-analysis": "self-intelligence",
-    "strategic-plan": "strategic-plan"
+    "strategic-plan": "strategic-plan",
+    "strategic-presentation": "frontend-slides",
+    "visual-identity": "visual-identity"
   },
-  "homonymous": [
-    "brand-voice",
-    "content-pillars",
-    "content-playbook",
-    "content-strategy",
-    "pricing",
-    "visual-identity"
-  ],
   "chatConfig": {
+    "brand-report": {
+      "skill": "html-output",
+      "skills": [
+        "html-output"
+      ],
+      "agent": "maese-pedro"
+    },
     "brand-voice": {
       "skill": "brand-voice",
       "skills": [
@@ -104,12 +112,40 @@
       ],
       "agent": "dulcinea"
     },
+    "company-brief": {
+      "skill": "kickoff",
+      "skills": [
+        "kickoff"
+      ],
+      "agent": "hamete"
+    },
     "competitor-analysis": {
       "skill": "competitor-intelligence",
       "skills": [
         "competitor-intelligence"
       ],
       "agent": "hamete"
+    },
+    "content-pillars": {
+      "skill": "content-pillars",
+      "skills": [
+        "content-pillars"
+      ],
+      "agent": "dulcinea"
+    },
+    "content-playbook": {
+      "skill": "content-playbook",
+      "skills": [
+        "content-playbook"
+      ],
+      "agent": "dulcinea"
+    },
+    "content-strategy": {
+      "skill": "content-strategy",
+      "skills": [
+        "content-strategy"
+      ],
+      "agent": "dulcinea"
     },
     "ecp-validation": {
       "skill": "ecp-validation",
@@ -124,6 +160,20 @@
         "existing-customer-data"
       ],
       "agent": "hamete"
+    },
+    "foundation-presentation": {
+      "skill": "frontend-slides",
+      "skills": [
+        "frontend-slides"
+      ],
+      "agent": "maese-pedro"
+    },
+    "gtm-presentation": {
+      "skill": "html-output",
+      "skills": [
+        "html-output"
+      ],
+      "agent": "maese-pedro"
     },
     "market-analysis": {
       "skill": "market-intelligence",
@@ -180,6 +230,13 @@
         "strategic-plan"
       ],
       "agent": "sancho"
+    },
+    "strategic-presentation": {
+      "skill": "frontend-slides",
+      "skills": [
+        "frontend-slides"
+      ],
+      "agent": "maese-pedro"
     },
     "visual-identity": {
       "skill": "visual-identity",

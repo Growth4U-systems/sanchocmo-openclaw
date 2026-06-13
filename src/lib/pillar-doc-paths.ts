@@ -6,17 +6,69 @@
 
 import pillarManifest from "../../config/pillar-manifest.json";
 
-/** Shape of one pillar entry in the single source of truth config/pillar-manifest.json. */
+/** Shape of one pillar entry in the single source of truth config/pillar-manifest.json.
+ *  SAN-192 (W2b): un pilar ya NO declara skill/agente si una task lo cubre — se
+ *  DERIVAN de su task (bloque `foundation` → `taskSets`). `skill`/`agent`
+ *  explícitos solo para documentos-pilar SIN task aún (ej. estrategia de Content). */
 type ManifestPillarEntry = {
   docPaths?: string[];
-  skillAlias?: string;
-  homonymous?: boolean;
-  chatConfig?: { skill: string; skills: string[]; agent?: string };
+  /** Solo para documentos-pilar sin task cubriente (transitorio hasta convertirlos en task). */
+  skill?: string;
+  agent?: string;
 };
 /** The pillar map from config/pillar-manifest.json — edit the JSON, never this. */
 export const MANIFEST_PILLARS = (
   pillarManifest as unknown as { pillars: Record<string, ManifestPillarEntry> }
 ).pillars;
+
+// ---------------------------------------------------------------------------
+// Derivación skill+agente desde la TASK cubriente (SAN-192 W2b)
+// El manifest no duplica skill/agente: la task es la fuente. Aquí leemos el
+// bloque `foundation` (pilar → {set,id}) + `taskSets` (task → skill/agent) del
+// MISMO JSON (sin importar task-blueprints.ts, que importaría skill-resolver →
+// ciclo). resolveCoveringTask y getTaskSetEntry hacen lo análogo en runtime.
+// ---------------------------------------------------------------------------
+
+type _TaskSetEntry = { id: string; skill?: string; agent?: string };
+type _FoundationPillarDecl = { key: string; task?: { set: string; id: string } };
+const _MANIFEST_FOUNDATION = (
+  pillarManifest as unknown as { foundation?: { sections?: { pillars?: _FoundationPillarDecl[] }[] } }
+).foundation;
+const _MANIFEST_TASKSETS = (
+  pillarManifest as unknown as { taskSets?: Record<string, { tasks?: _TaskSetEntry[] }> }
+).taskSets ?? {};
+
+/** skill+agente de la task que cubre un pilar Foundation, o undefined. */
+function coveringTaskSkillAgent(pillar: string): { skill?: string; agent?: string } | undefined {
+  for (const section of _MANIFEST_FOUNDATION?.sections ?? []) {
+    const decl = (section.pillars ?? []).find((p) => p.key === pillar);
+    if (decl?.task) {
+      const t = (_MANIFEST_TASKSETS[decl.task.set]?.tasks ?? []).find((x) => x.id === decl.task!.id);
+      if (t) return { skill: t.skill, agent: t.agent };
+    }
+  }
+  return undefined;
+}
+
+/** Default chat config (skill+skills+agent) por pilar, DERIVADO: task cubriente
+ *  (Foundation) o skill/agent explícitos del pilar. Lo consumen chat-config.default.json
+ *  y el golden; el resolver usa PILLAR_SKILL_ALIAS (abajo) + owner-map para el agente. */
+export const PILLAR_CHAT_DEFAULTS: Record<string, { skill: string; skills: string[]; agent?: string }> = (() => {
+  const out: Record<string, { skill: string; skills: string[]; agent?: string }> = {};
+  for (const [key, entry] of Object.entries(MANIFEST_PILLARS)) {
+    const cov = coveringTaskSkillAgent(key);
+    const skill = cov?.skill ?? entry.skill;
+    if (!skill) continue;
+    out[key] = { skill, skills: [skill], agent: cov?.agent ?? entry.agent };
+  }
+  return out;
+})();
+
+/** Pilar → skill (derivado). Fuente única para skill-resolver (sustituye al
+ *  skillAlias/homonymous que vivían en el manifest). */
+export const PILLAR_SKILL_ALIAS: Record<string, string> = Object.fromEntries(
+  Object.entries(PILLAR_CHAT_DEFAULTS).map(([k, v]) => [k, v.skill]),
+);
 
 /**
  * Default doc paths per pillar (fallback when foundation-state.json doesn't have
