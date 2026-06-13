@@ -20,6 +20,20 @@ for (const [ns, threadId] of [
   });
 }
 
+// SAN-193: reopening a Partnerships discovery thread whose dynamic id has no
+// task/registry row must still route to Rocinante (Outreach owner), not fall
+// back to sancho-manager. Covers both the "new search" id (`discovery-new-<ts>`)
+// and an existing search (`discovery-<campaignId>`).
+for (const [ns, threadId] of [
+  ["discovery-new", "growth4u:discovery-new-1781340540550"],
+  ["discovery-campaign", "growth4u:discovery-camp_abc"],
+] as const) {
+  test(`reopen ${ns}: discovery thread (sin tarea) → rocinante`, () => {
+    const cfg = resolveFullThreadConfig("growth4u", threadId, emptyIdx);
+    assert.equal(cfg.agent, "rocinante", `${ns} → ${cfg.agent}`);
+  });
+}
+
 test("reopen indexed content task → dulcinea (sin regresión)", () => {
   const idx = buildTaskIndex([
     { project: { id: "P-Content-Semana-24" }, tasks: [{ id: "P-Content-Semana-24-T05", content_tasks: [{ id: "P-Content-Semana-24-T05-C02", name: "PLG", skill: "social-writer" }] }] },

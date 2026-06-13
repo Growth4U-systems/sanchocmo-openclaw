@@ -43,3 +43,27 @@ for (const { name, cfg } of CASES) {
     }
   });
 }
+
+// SAN-193: discovery threadIds must be minted in the same shape the storage
+// layer persists. `mc-chat.threadFile()` sanitizes the shortId for the
+// filesystem (`:` → `-`, then drops everything outside [a-zA-Z0-9-_]). If the
+// client registers a colon-shaped id (`discovery:new-<ts>`) it can NEVER match
+// the on-disk id (`discovery-new-<ts>`), so `useThreadList`'s exact-id dedup
+// misses and paints a phantom second row. The invariant: the shortId is already
+// idempotent under that sanitization.
+const sanitizeShort = (shortId: string) =>
+  shortId.replace(/:/g, "-").replace(/[^a-zA-Z0-9\-_]/g, "");
+
+for (const { name, cfg } of [
+  { name: "discovery-new", cfg: buildDiscoverySearchThread(SLUG) },
+  { name: "discovery-existing", cfg: buildDiscoverySearchThread(SLUG, { campaignId: "CAMP_abc", title: "Test" }) },
+] as const) {
+  test(`builder "${name}" threadId survives FS sanitization (client id == on-disk id)`, () => {
+    const shortId = cfg.threadId.startsWith(`${SLUG}:`) ? cfg.threadId.slice(SLUG.length + 1) : cfg.threadId;
+    assert.equal(
+      shortId,
+      sanitizeShort(shortId),
+      `shortId "${shortId}" must equal its sanitized form so the dedup in useThreadList matches`,
+    );
+  });
+}
