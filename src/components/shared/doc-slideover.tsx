@@ -11,6 +11,7 @@ import { useOpenChat } from "@/hooks/useChat";
 import { findTaskThreadForDoc, buildPillarThread, buildHtmlConversionThread } from "@/lib/chat-openers";
 import { htmlSiblingOf, normalizeBrandDocPath, stripBrandPrefix } from "@/lib/doc-paths";
 import { cn } from "@/lib/utils";
+import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet } from "@/lib/task-status";
 
 const MarkdownEditor = dynamic(
   () => import("@/components/brand-brain/markdown-editor").then((m) => m.MarkdownEditor),
@@ -55,19 +56,8 @@ const FOLDER_MAP: Record<string, string> = {
   "strategic-plan": "strategic-plan", "metrics-plan": "metrics-setup",
 };
 
-const STATUS_OPTIONS = [
-  { value: "not-started", label: "No iniciado" },
-  { value: "in-progress", label: "En progreso" },
-  { value: "pending-review", label: "Pendiente revision" },
-  { value: "approved", label: "Aprobado" },
-];
-
-const STATUS_STYLES: Record<string, { bg: string; border: string; color: string }> = {
-  "not-started": { bg: "#F5F5F5", border: "#D0D0D0", color: "#666" },
-  "in-progress": { bg: "#EFF6FF", border: "#93C5FD", color: "#1D4ED8" },
-  "pending-review": { bg: "#FFFBEB", border: "#FCD34D", color: "#B45309" },
-  approved: { bg: "#ECFDF5", border: "#6EE7B7", color: "#047857" },
-};
+// SAN-192: selector de DOCUMENTO con el vocabulario único de task (6 valores).
+// Fuente: src/lib/task-status.ts (TASK_STATUS_OPTIONS trae value+label+estilo).
 
 function docPathToLinkedKey(docPath: string): string {
   const parts = docPath.split("/").filter(Boolean);
@@ -197,11 +187,9 @@ export function DocSlideOver({ slug, docPath, onClose, headerAction }: DocSlideO
   // Pillar info for status dropdown
   const linkedKey = useMemo(() => activeDocPath ? docPathToLinkedKey(activeDocPath) : "", [activeDocPath]);
   const pillarInfo = useMemo(() => findPillarInfo(foundation, linkedKey), [foundation, linkedKey]);
-  const normStatus = pillarInfo
-    ? pillarInfo.status === "done" ? "approved" : pillarInfo.status === "generated" ? "pending-review" : pillarInfo.status
-    : null;
-  const currentStatus = normStatus && STATUS_STYLES[normStatus] ? normStatus : "not-started";
-  const statusStyle = STATUS_STYLES[currentStatus];
+  const currentStatus = pillarInfo ? normalizeTaskStatusQuiet(pillarInfo.status) : "todo";
+  const statusStyle =
+    TASK_STATUS_OPTIONS.find((o) => o.value === currentStatus) ?? TASK_STATUS_OPTIONS[0];
 
   // Title
   const displayTitle = activeDocPath
@@ -437,7 +425,7 @@ export function DocSlideOver({ slug, docPath, onClose, headerAction }: DocSlideO
                 className="px-2 py-1 text-xs font-semibold rounded-md cursor-pointer border"
                 style={{ background: statusStyle.bg, borderColor: statusStyle.border, color: statusStyle.color }}
               >
-                {STATUS_OPTIONS.map((opt) => (
+                {TASK_STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>

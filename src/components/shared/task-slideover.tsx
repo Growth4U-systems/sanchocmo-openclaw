@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { statusLabel, normalizeTaskStatusQuiet } from "@/lib/task-status";
 import { useProjects } from "@/hooks/useProjects";
 
 interface TaskSlideOverProps {
@@ -15,12 +16,14 @@ interface TaskSlideOverProps {
   onOpenChat?: () => void;
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  completed: { bg: "bg-green-50", text: "text-green-700", label: "Completado" },
-  "in-progress": { bg: "bg-blue-50", text: "text-blue-700", label: "En progreso" },
-  todo: { bg: "bg-gray-50", text: "text-gray-500", label: "Pendiente" },
-  blocked: { bg: "bg-red-50", text: "text-red-600", label: "Bloqueado" },
-  cancelled: { bg: "bg-gray-50", text: "text-gray-400", label: "Cancelado" },
+// SAN-192: el LABEL sale de la fuente única (statusLabel); aquí solo el color.
+const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+  completed: { bg: "bg-green-50", text: "text-green-700" },
+  "in-progress": { bg: "bg-blue-50", text: "text-blue-700" },
+  "pending-review": { bg: "bg-yellow-50", text: "text-yellow-700" },
+  todo: { bg: "bg-gray-50", text: "text-gray-500" },
+  blocked: { bg: "bg-red-50", text: "text-red-600" },
+  cancelled: { bg: "bg-gray-50", text: "text-gray-400" },
 };
 
 export function TaskSlideOver({ slug, projectId, taskId, onClose, onOpenDoc, onOpenChat }: TaskSlideOverProps) {
@@ -45,7 +48,7 @@ export function TaskSlideOver({ slug, projectId, taskId, onClose, onOpenDoc, onO
     return { task: null, project: null };
   }, [projectsData, projectId, taskId]);
 
-  const st = task ? (STATUS_STYLES[task.status] || STATUS_STYLES.todo) : STATUS_STYLES.todo;
+  const st = task ? (STATUS_STYLES[normalizeTaskStatusQuiet(task.status)] || STATUS_STYLES.todo) : STATUS_STYLES.todo;
 
   // Body scroll lock
   useEffect(() => {
@@ -94,7 +97,7 @@ export function TaskSlideOver({ slug, projectId, taskId, onClose, onOpenDoc, onO
             {task?.name || taskId}
           </span>
           <span className={cn("text-[10px] font-semibold px-2.5 py-1 rounded-full", st.bg, st.text)}>
-            {st.label}
+            {statusLabel(task?.status ?? "todo")}
           </span>
         </div>
 

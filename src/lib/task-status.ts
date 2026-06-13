@@ -53,13 +53,13 @@ const OPTION_BY_VALUE: Record<TaskStatus, TaskStatusOption> = Object.fromEntries
   TASK_STATUS_OPTIONS.map((o) => [o.value, o]),
 ) as Record<TaskStatus, TaskStatusOption>;
 
-/** Label ES de un status (acepta valores legacy: normaliza primero). */
-export function statusLabel(status: string): string {
+/** Label ES de un status (acepta valores legacy/nullish: normaliza primero). */
+export function statusLabel(status: string | null | undefined): string {
   return OPTION_BY_VALUE[normalizeTaskStatusQuiet(status)].label;
 }
 
-/** Opción completa (label + estilo) de un status (normaliza valores legacy). */
-export function statusOption(status: string): TaskStatusOption {
+/** Opción completa (label + estilo) de un status (normaliza valores legacy/nullish). */
+export function statusOption(status: string | null | undefined): TaskStatusOption {
   return OPTION_BY_VALUE[normalizeTaskStatusQuiet(status)];
 }
 
@@ -110,7 +110,7 @@ const LEGACY_STATUS_ALIASES: Record<string, TaskStatus> = {
  * Valores canónicos pasan tal cual; aliases legacy se traducen (con warning);
  * lo desconocido cae a "todo".
  */
-export function normalizeTaskStatus(input: string): TaskStatus {
+export function normalizeTaskStatus(input: string | null | undefined): TaskStatus {
   const s = (input || "").trim().toLowerCase();
   if ((VALID_TASK_STATUSES as readonly string[]).includes(s)) return s as TaskStatus;
   const alias = LEGACY_STATUS_ALIASES[s];
@@ -125,7 +125,7 @@ export function normalizeTaskStatus(input: string): TaskStatus {
 }
 
 /** normalize sin deprecation-warning (lecturas masivas de datos viejos). */
-export function normalizeTaskStatusQuiet(input: string): TaskStatus {
+export function normalizeTaskStatusQuiet(input: string | null | undefined): TaskStatus {
   const s = (input || "").trim().toLowerCase();
   if ((VALID_TASK_STATUSES as readonly string[]).includes(s)) return s as TaskStatus;
   return LEGACY_STATUS_ALIASES[s] ?? "todo";

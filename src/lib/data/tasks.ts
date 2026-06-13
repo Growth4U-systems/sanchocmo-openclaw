@@ -8,6 +8,7 @@ import { brandDir } from "@/lib/data/paths";
 import { readJSON, writeJSON, listDir } from "@/lib/data/json-io";
 import { getNextProjectId as getNextProjectIdFromJson } from "@/lib/data/projects";
 import { setTaskStatus as syncTaskStatus } from "@/lib/data/task-status-store";
+import { normalizeTaskStatus } from "@/lib/task-status";
 import {
   attachDocumentToContentTask,
   createContentTask,
@@ -21,6 +22,7 @@ import {
 import { findContentTaskById as findFlatContentTaskById, loadUnifiedContentTasks, upsertContentTask } from "@/lib/data/content-tasks-flat";
 import { expandBriefPatch } from "@/lib/data/task-brief";
 import { inferTaskExecutionContract } from "@/lib/data/task-execution-contract";
+import { VALID_CONTENT_TASK_STATUSES } from "@/types";
 import type { ContentTask, ContentTaskStatus, Project, Task } from "@/types";
 
 export interface ProjectWithTasks {
@@ -437,8 +439,12 @@ export async function updateTask(slug: string, id: string, fields: Record<string
 
 export async function setTaskStatus(slug: string, id: string, status: string) {
   if (dbTasksEnabled()) {
-    const task = await updateTask(slug, id, { status });
-    return { ok: true, slug, task, newStatus: status };
+    // Shim de escritura (SAN-192): normaliza al vocabulario canónico de task,
+    // salvo que sea un status de ContentTask (otro vocabulario, capitalizado).
+    const isContentStatus = (VALID_CONTENT_TASK_STATUSES as readonly string[]).includes(status);
+    const normalized = isContentStatus ? status : normalizeTaskStatus(status);
+    const task = await updateTask(slug, id, { status: normalized });
+    return { ok: true, slug, task, newStatus: normalized };
   }
   const found = findTaskByIdAcrossBrand(slug, id);
   if (found && isContentTaskRecord(found.task)) {
