@@ -273,7 +273,13 @@ export default function TasksPage() {
           </select>
           <select
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
+            onChange={(event) => {
+              const next = event.target.value;
+              setStatusFilter(next);
+              // Cancelada/Archivada no tienen columna en el kanban → saltar a Lista
+              // para que el filtro tenga dónde mostrarse (no callejón sin salida).
+              if (tab === "kanban" && KANBAN_HIDDEN_STATUSES.has(next)) setTab("tree");
+            }}
             className="h-10 min-w-0 rounded-sc-md border-2 bg-white px-3 font-heading text-[11px] uppercase tracking-wider focus:outline-none"
             style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
           >
