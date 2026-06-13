@@ -3,7 +3,7 @@ import path from "path";
 import { tasks } from "@/db/schema";
 import { canonicalChildTaskId } from "@/lib/data/tasks";
 import { taskBriefText, taskCompletionText, taskExecutionNotesText } from "@/lib/data/task-brief";
-import { normalizeTaskStatus } from "@/lib/data/foundation-status";
+import { normalizeTaskStatus } from "@/lib/task-status";
 
 const root = process.cwd();
 const apply = process.argv.includes("--apply");

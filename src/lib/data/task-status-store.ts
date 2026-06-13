@@ -1,99 +1,33 @@
 /**
- * foundation-status.ts — Status de Foundation con UNA sola fuente (SAN-183 F5).
+ * task-status-store.ts — Escritura/lectura en disco del status de task.
  *
- * Sucesor de pillar-task-sync.ts (~830 líneas, BORRADO): ya no hay dos stores
- * que sincronizar. El status de un pilar ES el status de su task 1:1 (binding
- * en config/pillar-manifest.json → foundation.sections[].pillars[].task).
- * Sin dual-writes, sin reconcile-on-read: una task, un status.
+ * El VOCABULARIO (valores, labels, normalización legacy) vive en
+ * `src/lib/task-status.ts` (client-safe). Este módulo es la capa de DISCO
+ * (necesita `fs`): localiza la task que cubre un documento-pilar y escribe su
+ * status. Sucesor de `foundation-status.ts` / `pillar-task-sync.ts` (BORRADOS):
+ * una task, un status — sin dual-writes, sin reconcile-on-read.
  *
  * Vive aquí:
- *   - normalizeTaskStatus + la tabla de ALIASES LEGACY del vocabulario de
- *     pilar (approved→completed, not-started→todo, generated→pending-review…).
- *     ⚠️ La tabla de aliases es un SHIM TRANSICIONAL para skills con prosa
- *     vieja — las skills hablan ya el vocabulario canónico (PR3); retirar los
- *     aliases es follow-up en Linear. Cada uso loggea un deprecation warning.
- *   - resolveCoveringTask: pilar → su task viva (lookup del manifest primero,
- *     fallback a scan por task.pillar para datos pre-manifest).
- *   - setPillarStatusViaTask: el único write path de status de pilar.
- *   - rollupProjectStatus / rollupAllProjects (task → project.json, sobreviven
- *     del módulo viejo — esa derivación sigue siendo válida).
+ *   - resolveCoveringTask: documento-pilar → su task viva (lookup del manifest
+ *     primero, fallback a scan por task.pillar para datos pre-manifest).
+ *   - setTaskStatus / setPillarStatusViaTask: write paths (normalizan en el
+ *     límite vía `normalizeTaskStatus` del módulo de vocabulario).
+ *   - rollupProjectStatus / rollupAllProjects (task → project.json). ⚠️ LEGACY:
+ *     `project.json` está en deprecación (todo es Task, type=project) — retirar
+ *     con la deprecación de projects (follow-up Linear).
  */
 
 import fs from "fs";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
 import type { TaskStatus } from "@/types";
-import { VALID_TASK_STATUSES } from "@/types";
+import { normalizeTaskStatus, normalizeTaskStatusQuiet } from "@/lib/task-status";
 import { findFoundationPillar, foundationTaskIdForPillar } from "./task-blueprints";
 
 type AnyRecord = Record<string, unknown>;
 
-// ---------------------------------------------------------------------------
-// Vocabulario — el de task es EL vocabulario (6 valores)
-// ---------------------------------------------------------------------------
-
-/**
- * Aliases LEGACY → status canónico de task. El vocabulario de pilar (7
- * valores) murió; estas entradas existen solo para prosa vieja de skills y
- * datos históricos. DEPRECADO — retirar cuando las sesiones de agente ciclen.
- */
-const LEGACY_STATUS_ALIASES: Record<string, TaskStatus> = {
-  // vocabulario de pilar muerto
-  "not-started": "todo",
-  not_started: "todo",
-  notstarted: "todo",
-  approved: "completed",
-  generated: "pending-review",
-  "request-changes": "todo",
-  request_changes: "todo",
-  "changes-requested": "todo",
-  "request-refresh": "todo",
-  request_refresh: "todo",
-  "refresh-requested": "todo",
-  // aliases genéricos históricos
-  done: "completed",
-  complete: "completed",
-  finished: "completed",
-  pending_review: "pending-review",
-  review: "pending-review",
-  in_progress: "in-progress",
-  inprogress: "in-progress",
-  running: "in-progress",
-  active: "in-progress",
-  wip: "in-progress",
-  lite: "in-progress",
-  pending: "todo",
-  ready: "todo",
-  new: "todo",
-  canceled: "cancelled",
-  discarded: "cancelled",
-  rejected: "cancelled",
-};
-
-/**
- * Normaliza cualquier status entrante al vocabulario canónico de task.
- * Valores canónicos pasan tal cual; aliases legacy se traducen (con warning);
- * lo desconocido cae a "todo".
- */
-export function normalizeTaskStatus(input: string): TaskStatus {
-  const s = (input || "").trim().toLowerCase();
-  if ((VALID_TASK_STATUSES as readonly string[]).includes(s)) return s as TaskStatus;
-  const alias = LEGACY_STATUS_ALIASES[s];
-  if (alias) {
-    console.warn(
-      `[foundation-status] DEPRECATED status alias "${s}" → "${alias}". ` +
-        `Usa el vocabulario canónico (${VALID_TASK_STATUSES.join("|")}).`,
-    );
-    return alias;
-  }
-  return "todo";
-}
-
-/** ¿Es un alias legacy (no canónico) que normalizamos? Para telemetría/respuestas. */
-export function isLegacyStatusAlias(input: string): boolean {
-  const s = (input || "").trim().toLowerCase();
-  return !((VALID_TASK_STATUSES as readonly string[]).includes(s)) && s in LEGACY_STATUS_ALIASES;
-}
+// Re-export del normalizador del límite de escritura para compat de importadores.
+export { normalizeTaskStatus };
 
 // ---------------------------------------------------------------------------
 // Tasks on disk (json backend)
@@ -205,15 +139,6 @@ function computeProjectStatus(tasks: AnyRecord[]): "pending" | "in-progress" | "
   return "pending";
 }
 
-/** normalize sin deprecation-warning (lecturas masivas de datos viejos). */
-function normalizeTaskStatusQuiet(input: string): TaskStatus {
-  const s = (input || "").trim().toLowerCase();
-  if ((VALID_TASK_STATUSES as readonly string[]).includes(s)) return s as TaskStatus;
-  return LEGACY_STATUS_ALIASES[s] ?? "todo";
-}
-
-export { normalizeTaskStatusQuiet };
-
 /**
  * Recompute the project.json status for a project directory from its tasks.
  * Writes only on change; only "upward" transitions (pending < in-progress <
@@ -312,7 +237,7 @@ export function setTaskStatus(slug: string, taskId: string, status: string): Syn
       }
       const projectChange = rollupProjectStatus(projDir);
       if (projectChange) {
-        console.log(`[foundation-status] ${slug}: project rollup: ${projectChange}`);
+        console.log(`[task-status-store] ${slug}: project rollup: ${projectChange}`);
       }
     }
 
@@ -376,7 +301,7 @@ export function setPillarStatusViaTask(
 
   const projectChange = rollupProjectStatus(covering.projectDir);
   if (projectChange) {
-    console.log(`[foundation-status] ${slug}: project rollup: ${projectChange}`);
+    console.log(`[task-status-store] ${slug}: project rollup: ${projectChange}`);
   }
 
   return {

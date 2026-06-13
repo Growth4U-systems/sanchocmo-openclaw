@@ -11,6 +11,7 @@ import {
 } from "@/hooks/useProjects";
 
 import { PRJ_CHANNELS } from "@/lib/constants";
+import { TASK_STATUS_OPTIONS } from "@/lib/task-status";
 import type { Project, Task, TaskStatus } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -32,25 +33,9 @@ interface WorkEditorProps {
 }
 
 // ---------------------------------------------------------------------------
-// Status options
+// Status options — fuente única en src/lib/task-status.ts (6 valores canónicos).
+// Tarea y project (que es una Task type=project) comparten vocabulario.
 // ---------------------------------------------------------------------------
-
-const TASK_STATUS_OPTIONS = [
-  { value: "todo", label: "Por hacer" },
-  { value: "in-progress", label: "En progreso" },
-  { value: "blocked", label: "Bloqueado" },
-  { value: "completed", label: "Completado" },
-  { value: "discarded", label: "Descartado" },
-];
-
-const PROJECT_STATUS_OPTIONS = [
-  { value: "todo", label: "Por hacer" },
-  { value: "in-progress", label: "En progreso" },
-  { value: "blocked", label: "Bloqueado" },
-  { value: "completed", label: "Completado" },
-  { value: "discarded", label: "Descartado" },
-  { value: "archived", label: "Archivado" },
-];
 
 const TASK_TYPE_OPTIONS = [
   { value: "execution", label: "⚙️ Execution" },
@@ -370,7 +355,7 @@ export function WorkEditor({
                     onChange={(e) => setProjStatus(e.target.value)}
                     className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#2C3E50] transition-colors"
                   >
-                    {PROJECT_STATUS_OPTIONS.map((o) => (
+                    {TASK_STATUS_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
                       </option>

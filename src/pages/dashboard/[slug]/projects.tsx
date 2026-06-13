@@ -10,6 +10,7 @@ import {
 import { useOpenChat } from "@/hooks/useChat";
 import { buildTaskThread, buildProjectThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
+import { TASK_STATUS_OPTIONS } from "@/lib/task-status";
 import type { Project, Task } from "@/types";
 
 import { StatCard } from "@/components/shared/stat-card";
@@ -510,12 +511,9 @@ export default function ProjectsPage() {
 // Project status dropdown options
 // ---------------------------------------------------------------------------
 
-const PROJECT_STATUS_OPTIONS = [
-  { value: "in-progress", label: "En progreso" },
-  { value: "todo", label: "Por hacer" },
-  { value: "blocked", label: "Pendiente de aprobar" },
-  { value: "completed", label: "Completado" },
-] as const;
+// SAN-192: status de project = status de task (type=project es una Task).
+// Fuente única en src/lib/task-status.ts.
+const PROJECT_STATUS_OPTIONS = TASK_STATUS_OPTIONS;
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 function ProjectCard({

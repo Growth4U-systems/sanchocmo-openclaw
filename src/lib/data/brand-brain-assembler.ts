@@ -20,7 +20,7 @@ import path from "path";
 import { BASE } from "@/lib/data/paths";
 import type { BrandBrainState, BrandSummary, Pillar, Section, Task, TaskStatus } from "@/types";
 import { getFoundationManifest, foundationTaskIdForPillar, getTaskSet } from "./task-blueprints";
-import { normalizeTaskStatusQuiet } from "./foundation-status";
+import { normalizeTaskStatusQuiet } from "@/lib/task-status";
 import { PILLAR_DOC_PATHS } from "@/lib/pillar-doc-paths";
 import { getTasksBackend } from "./tasks-backend";
 import { loadClients } from "./clients";

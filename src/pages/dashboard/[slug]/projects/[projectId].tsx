@@ -17,6 +17,7 @@ import { useIdeas } from "@/hooks/useIdeas";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildTaskThread, buildProjectThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
+import { TASK_STATUS_OPTIONS } from "@/lib/task-status";
 import type { Project, Task, Idea } from "@/types";
 
 import { StatusPill } from "@/components/shared/status-pill";
@@ -53,12 +54,9 @@ const PROJECT_STATUS_LABELS: Record<string, string> = {
   done: "completado",
 };
 
-const PROJECT_STATUS_OPTIONS = [
-  { value: "in-progress", label: "En progreso" },
-  { value: "todo", label: "Por hacer" },
-  { value: "blocked", label: "Pendiente de aprobar" },
-  { value: "completed", label: "Completado" },
-] as const;
+// SAN-192: status de project = status de task (type=project es una Task).
+// Fuente única en src/lib/task-status.ts.
+const PROJECT_STATUS_OPTIONS = TASK_STATUS_OPTIONS;
 
 function getObjectiveText(obj: Project["objective"]): string {
   if (!obj) return "";

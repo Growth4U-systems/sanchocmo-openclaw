@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
 import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
-import { setTaskStatus } from "@/lib/data/foundation-status";
+import { setTaskStatus } from "@/lib/data/task-status-store";
 import { BASE } from "@/lib/data/paths";
 import { VALID_TASK_STATUSES } from "@/types";
 
@@ -19,7 +19,7 @@ import { VALID_TASK_STATUSES } from "@/types";
  * error instead of a silent drift to a weird status.
  *
  * Both writes go through the centralized `setTaskStatus` helper in
- * `lib/data/foundation-status.ts`.
+ * `lib/data/task-status-store.ts`.
  *
  * Body: { slug, taskId, status, sourceThread? }
  */

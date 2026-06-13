@@ -7,7 +7,7 @@ import { MC_TASKS_BACKEND, MC_TASKS_WORKSPACE } from "@/lib/config";
 import { brandDir } from "@/lib/data/paths";
 import { readJSON, writeJSON, listDir } from "@/lib/data/json-io";
 import { getNextProjectId as getNextProjectIdFromJson } from "@/lib/data/projects";
-import { setTaskStatus as syncTaskStatus } from "@/lib/data/foundation-status";
+import { setTaskStatus as syncTaskStatus } from "@/lib/data/task-status-store";
 import {
   attachDocumentToContentTask,
   createContentTask,

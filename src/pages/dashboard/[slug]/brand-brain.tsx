@@ -35,20 +35,13 @@ const MarkdownEditor = dynamic(
 );
 import remarkGfm from "remark-gfm";
 import type { BrandBrainState, Section, Pillar, TaskStatus } from "@/types";
+import { TASK_STATUS_OPTIONS } from "@/lib/task-status";
 
-// SAN-183 F5: vocabulario único de task (el de pilar murió). Bloqueada se
-// muestra si está — "si está, está".
-const STATUS_OPTS = [
-  { value: "todo", label: "No iniciado", bg: "#F5F5F5", border: "#D0D0D0", color: "#666" },
-  { value: "in-progress", label: "En progreso", bg: "#EFF6FF", border: "#93C5FD", color: "#1D4ED8" },
-  { value: "pending-review", label: "Pendiente revision", bg: "#FFFBEB", border: "#FCD34D", color: "#B45309" },
-  { value: "completed", label: "Aprobado", bg: "#ECFDF5", border: "#6EE7B7", color: "#047857" },
-  { value: "blocked", label: "Bloqueada", bg: "#FEF2F2", border: "#FCA5A5", color: "#B91C1C" },
-];
-
+// SAN-192: el selector de DOCUMENTO usa el mismo vocabulario único de task que
+// el selector de TAREA — fuente única en src/lib/task-status.ts (6 valores).
 function StatusDropdown({ slug, section, pillar, status }: { slug: string; section: string; pillar: string; status: string }) {
   const { mutate } = useUpdatePillarStatus();
-  const current = STATUS_OPTS.find((o) => o.value === status) || STATUS_OPTS[0];
+  const current = TASK_STATUS_OPTIONS.find((o) => o.value === status) || TASK_STATUS_OPTIONS[0];
 
   return (
     <select
@@ -57,7 +50,7 @@ function StatusDropdown({ slug, section, pillar, status }: { slug: string; secti
       className="px-2 py-1 text-xs font-semibold rounded-md cursor-pointer border"
       style={{ background: current.bg, borderColor: current.border, color: current.color }}
     >
-      {STATUS_OPTS.map((opt) => (
+      {TASK_STATUS_OPTIONS.map((opt) => (
         <option key={opt.value} value={opt.value}>{opt.label}</option>
       ))}
     </select>

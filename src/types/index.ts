@@ -54,7 +54,7 @@ export interface ProjectRegistry {
  * Only these 6 values are valid. Sancho (and any code path writing to
  * tasks.json) MUST use one of these — no aliases, no creative naming.
  * Enforced at runtime by:
- *   - `src/lib/data/foundation-status.ts` → status helpers
+ *   - `src/lib/data/task-status-store.ts` → status helpers
  *   - `src/pages/api/projects/task-status.ts` → MC API
  *
  * `pending-review`: output produced, awaiting human review (the old pillar
