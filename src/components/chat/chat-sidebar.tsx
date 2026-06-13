@@ -527,6 +527,24 @@ export function ChatSidebar() {
         }
       }
 
+      // --- Partnerships discovery threads → Rocinante (Outreach owner) --
+      // Dynamic ids (`discovery-new-<ts>`, `discovery-<campaignId>`) have no
+      // task/registry row; without this they fall to the pillar fallback →
+      // sancho-manager, orphaning the search from its owner agent (SAN-193).
+      if (/^discovery[-:]/i.test(shortId)) {
+        selectThread({
+          threadId,
+          threadName: fallbackName,
+          skill: "discovery-plan-builder",
+          skills: ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"],
+          agent: "rocinante",
+          linkedTo: "rocinante",
+          docPath: null,
+          threadState: "continue",
+        });
+        return;
+      }
+
       // --- Other typed threads (strategy, idea, recurring) --------------
       if (shortId.includes(":") || /^(strategy|idea|recurring)[-:]/i.test(shortId)) {
         const m = shortId.match(/^([a-z]+)[-:](.+)$/i);
