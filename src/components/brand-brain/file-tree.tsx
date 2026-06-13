@@ -42,6 +42,7 @@ const STATUS_INFO: Record<string, { cls: string }> = {
   todo: { cls: "todo" },
   blocked: { cls: "review" },
   cancelled: { cls: "todo" },
+  archived: { cls: "todo" },
   "pending-review": { cls: "review" },
   "in-progress": { cls: "wip" },
   // Claves legacy (datos viejos en disco; el ensamblador ya emite canónico)

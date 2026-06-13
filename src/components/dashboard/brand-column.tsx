@@ -46,6 +46,7 @@ const STATUS_INFO: Record<string, { icon: string; cls: string }> = {
   todo: { icon: "\u2B1C", cls: "todo" },
   blocked: { icon: "\u26D4", cls: "review" },
   cancelled: { icon: "\u2716\uFE0F", cls: "todo" },
+  archived: { icon: "\uD83D\uDCE6", cls: "todo" },
   // Claves legacy (datos viejos en disco)
   approved: { icon: "\u2705", cls: "done" },
   done: { icon: "\u2705", cls: "done" },

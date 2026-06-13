@@ -66,7 +66,8 @@ export type TaskStatus =
   | "pending-review"
   | "completed"
   | "blocked"
-  | "cancelled";
+  | "cancelled"
+  | "archived";
 
 /** Runtime allowlist — mirror of the TaskStatus type for validation. */
 export const VALID_TASK_STATUSES: readonly TaskStatus[] = [
@@ -76,6 +77,7 @@ export const VALID_TASK_STATUSES: readonly TaskStatus[] = [
   "completed",
   "blocked",
   "cancelled",
+  "archived",
 ] as const;
 export type TaskType =
   | "project"

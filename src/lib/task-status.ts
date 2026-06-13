@@ -47,6 +47,7 @@ export const TASK_STATUS_OPTIONS: readonly TaskStatusOption[] = [
   { value: "completed", label: "Completada", bg: "#ECFDF5", border: "#6EE7B7", color: "#047857" },
   { value: "blocked", label: "Bloqueada", bg: "#FEF2F2", border: "#FCA5A5", color: "#B91C1C" },
   { value: "cancelled", label: "Cancelada", bg: "#F3F4F6", border: "#D1D5DB", color: "#6B7280" },
+  { value: "archived", label: "Archivada", bg: "#E5E7EB", border: "#9CA3AF", color: "#4B5563" },
 ] as const;
 
 const OPTION_BY_VALUE: Record<TaskStatus, TaskStatusOption> = Object.fromEntries(
