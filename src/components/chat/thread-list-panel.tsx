@@ -219,8 +219,9 @@ export function ThreadListPanel({
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1 px-2 pb-2 overflow-x-auto scrollbar-none">
+      {/* Filter tabs — wrap a 2ª línea en panel estrecho para que ninguna
+          pestaña (p.ej. "Archivados") quede cortada fuera del viewport. */}
+      <div className="flex flex-wrap gap-1 px-2 pb-2">
         {FILTER_TABS.map((tab) => {
           const count =
             tab.key === "unread"
