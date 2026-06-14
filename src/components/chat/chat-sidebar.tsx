@@ -41,8 +41,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useUpdateTaskStatus } from "@/hooks/useTasks";
 import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
-import { StatusPill } from "@/components/shared/status-pill";
-import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot } from "@/lib/task-status";
+import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot, statusLabel } from "@/lib/task-status";
 
 // ---------------------------------------------------------------------------
 // Agent badge config
@@ -1303,9 +1302,10 @@ export function ChatSidebar() {
                   type="button"
                   onClick={() => setHeaderStatusMenu((v) => !v)}
                   title="Cambiar estado / archivar"
-                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-[var(--chat-surface-2)] transition-colors"
+                  className="inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors"
                 >
-                  <StatusPill status={activeTaskStatus} size="sm" />
+                  <span>{statusDot(activeTaskStatus)}</span>
+                  <span className="font-medium">{statusLabel(activeTaskStatus)}</span>
                   <span className="text-[10px] text-[var(--chat-text-faint)]">▾</span>
                 </button>
                 {headerStatusMenu && (
@@ -1334,7 +1334,7 @@ export function ChatSidebar() {
                                 : "text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)]"
                             )}
                           >
-                            <StatusPill status={opt.value} size="sm" />
+                            <span>{statusDot(opt.value)}</span>
                             <span className="truncate">{opt.label}</span>
                             {current && <span className="ml-auto text-[11px]">✓</span>}
                           </button>

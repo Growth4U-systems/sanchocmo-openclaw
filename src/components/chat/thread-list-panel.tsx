@@ -30,7 +30,7 @@ import { useTaskRows, useUpdateTaskStatus } from "@/hooks/useTasks";
 import { threadIcon } from "@/lib/chat-openers";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
 import { StatusPill } from "@/components/shared/status-pill";
-import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot } from "@/lib/task-status";
+import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot, statusLabel } from "@/lib/task-status";
 
 /**
  * Extrae la clave de tarea (lowercase) de un shortId de hilo. Los hilos de
@@ -327,7 +327,7 @@ export function ThreadListPanel({
                 {!narrow && (thread.taskStatus || preview) && (
                   <div className="flex items-center gap-1.5 mt-1 min-w-0">
                     {thread.taskStatus && (
-                      <StatusPill status={thread.taskStatus} size="sm" />
+                      <StatusPill status={thread.taskStatus} size="sm" labelOverride={statusLabel(thread.taskStatus)} />
                     )}
                     {preview && (
                       <span className="text-[12px] text-[var(--chat-text-muted)] truncate leading-snug min-w-0">
@@ -391,7 +391,7 @@ export function ThreadListPanel({
                                 : "text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)]"
                             )}
                           >
-                            <StatusPill status={opt.value} size="sm" />
+                            <span>{statusDot(opt.value)}</span>
                             <span className="truncate">{opt.label}</span>
                             {current && <span className="ml-auto text-[11px]">✓</span>}
                           </button>
