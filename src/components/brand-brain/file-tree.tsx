@@ -25,14 +25,23 @@ const FF_PILLAR_MAP: Record<string, string> = {
 };
 
 const SECTION_DEFS = [
-  { key: "company-brief", icon: "📋", label: "Company Brief" },
-  { key: "site-audit", icon: "🔍", label: "Site Audit" },
-  { key: "market-and-us", icon: "📊", label: "Market & Us" },
-  { key: "go-to-market", icon: "🎯", label: "Go-To-Market" },
-  { key: "brand-book", icon: "🎨", label: "Brand Book" },
-  { key: "metrics-setup", icon: "📏", label: "Metrics Setup" },
-  { key: "strategic-plan", icon: "📋", label: "Strategic Plan" },
+  { key: "company-brief", icon: "/nav/sections/company-brief.webp", label: "Company Brief" },
+  { key: "site-audit", icon: "/nav/sections/site-audit.webp", label: "Site Audit" },
+  { key: "market-and-us", icon: "/nav/sections/market-and-us.webp", label: "Market & Us" },
+  { key: "go-to-market", icon: "/nav/sections/go-to-market.webp", label: "Go-To-Market" },
+  { key: "brand-book", icon: "/nav/sections/brand-book.webp", label: "Brand Book" },
+  { key: "metrics-setup", icon: "/nav/sections/metrics-setup.webp", label: "Metrics Setup" },
+  { key: "strategic-plan", icon: "/nav/sections/strategic-plan.webp", label: "Strategic Plan" },
 ] as const;
+
+// Renders a section icon: brand webp tile when the value is a path, emoji fallback otherwise.
+function SectionIcon({ icon }: { icon: string }) {
+  if (icon.startsWith("/")) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={icon} alt="" aria-hidden="true" className="w-6 h-6 object-contain flex-shrink-0" />;
+  }
+  return <span className="text-xl">{icon}</span>;
+}
 
 // SAN-192: el LABEL del badge sale de la fuente única (statusLabel, task-status.ts);
 // aquí solo vive el mapeo status → clase visual (color del badge).
@@ -465,7 +474,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
               return (
                 <div key={sec.key} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden opacity-50">
                   <div className="flex items-center gap-3 px-5 py-4">
-                    <span className="text-xl">{sec.icon}</span>
+                    <SectionIcon icon={sec.icon} />
                     <span className="text-base font-bold text-foreground">{sec.label}</span>
                     <span className={cn("ml-auto text-[11px] font-medium px-2.5 py-1 rounded-full", STATUS_BADGE.todo)}>
                       {t("notCreated")}
@@ -499,7 +508,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
               return (
                 <div key={sec.key} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                   <div className="flex items-center gap-3 px-5 py-4 hover:bg-muted/20 transition-colors">
-                    <span className="text-xl">{sec.icon}</span>
+                    <SectionIcon icon={sec.icon} />
                     <span className="flex-1 text-base font-bold text-foreground">{sec.label}</span>
                     <span className={cn("text-[11px] font-medium px-2.5 py-1 rounded-full", STATUS_BADGE[si.cls] || STATUS_BADGE.todo)}>
                       {statusText(norm)}
@@ -533,7 +542,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
             return (
               <div key={sec.key} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60">
-                  <span className="text-xl">{sec.icon}</span>
+                  <SectionIcon icon={sec.icon} />
                   <span className="text-base font-bold text-foreground">{sec.label}</span>
                   <span className={cn("ml-auto text-[11px] font-medium px-2.5 py-1 rounded-full", allDone ? STATUS_BADGE.done : STATUS_BADGE.todo)}>
                     {sectionApproved}/{requiredKeys.length} {t("completedCount")}

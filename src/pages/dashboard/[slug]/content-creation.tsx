@@ -6,6 +6,7 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useContentCreation } from "@/hooks/useContentCreation";
 import { useOpenChat } from "@/hooks/useChat";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { cn } from "@/lib/utils";
 import { ChannelsTab } from "@/components/content/ChannelsTab";
 import { SetupTab } from "@/components/content/SetupTab";
@@ -75,7 +76,7 @@ export default function ContentCreationPage() {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
-        <h1 className="font-heading text-2xl text-navy">Content Creation</h1>
+        <h1 className="font-heading text-2xl text-navy"><TitleIcon name="content" />Content Creation</h1>
         <div className="flex items-center gap-2">
           {data?.projectId && (
             <Link

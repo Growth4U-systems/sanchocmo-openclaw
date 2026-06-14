@@ -22,6 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { MetricsPartnershipsTab } from "@/components/partnerships/metrics-partnerships-tab";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
@@ -1291,7 +1292,7 @@ export default function MetricsPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
         <div>
-          <h1 className="font-heading text-2xl text-navy mb-1">{t("title")}</h1>
+          <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="metrics" />{t("title")}</h1>
           <p className="text-sm text-muted-foreground">
             {slug} {tab === "funnel" && <span className="text-[11px] ml-2">{rangeLabel}</span>}
           </p>

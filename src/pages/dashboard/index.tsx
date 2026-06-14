@@ -12,6 +12,7 @@ import {
   type DashboardLandingToken,
 } from "@/lib/data/dashboard-landing";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { useGlobalStats } from "@/hooks/useDashboardStats";
 import { useClients } from "@/hooks/useClients";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
@@ -82,7 +83,7 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div>
-      <h1 className="font-heading text-2xl text-navy mb-1">{t("dashboard.global")}</h1>
+      <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="dashboard" />{t("dashboard.global")}</h1>
       <p className="text-sm text-muted-foreground mb-6">{t("dashboard.allClients")}</p>
 
       {/* Stats grid — 6 cards */}

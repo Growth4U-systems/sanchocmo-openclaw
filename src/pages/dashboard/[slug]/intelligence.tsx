@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { FeedbackInsightsPanel } from "@/components/intelligence/FeedbackInsightsPanel";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useClients } from "@/hooks/useClients";
@@ -672,7 +673,7 @@ function IntelligencePageClient() {
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="font-heading text-[28px] leading-tight text-navy">
-                  Intelligence Center — {clientName}
+                  <TitleIcon name="intelligence" />Intelligence Center — {clientName}
                 </h1>
                 <Badge tone="proposal">Review-first</Badge>
               </div>
