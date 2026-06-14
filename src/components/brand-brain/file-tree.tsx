@@ -72,14 +72,14 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 const FOLDER_ICONS: Record<string, string> = {
-  presentations: "🎬",
-  "outreach-playbook": "📨",
-  "content-playbook": "✍️",
-  pages: "🌐",
-  "seo-audit": "🔍",
-  campaigns: "📣",
-  "brand-identity": "🎨",
-  _root: "📄",
+  presentations: "/nav/sections/presentations.webp",
+  "outreach-playbook": "/nav/outreach.webp",
+  "content-playbook": "/nav/content.webp",
+  pages: "/nav/sections/pages.webp",
+  "seo-audit": "/nav/sections/site-audit.webp",
+  campaigns: "/nav/sections/campaigns.webp",
+  "brand-identity": "/nav/sections/brand-identity.webp",
+  _root: "/nav/sections/document.webp",
 };
 
 function relKey(p: string): string {
@@ -614,7 +614,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
           )}
 
           {filteredOtherDocs.map((group) => {
-            const icon = FOLDER_ICONS[group.folder] || "📁";
+            const icon = FOLDER_ICONS[group.folder] || FOLDER_ICONS._root;
 
             if (group.docs.length === 1) {
               const doc = group.docs[0];
@@ -622,7 +622,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
               return (
                 <div key={group.folder} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                   <div className="flex items-center gap-3 px-5 py-4 hover:bg-muted/20 transition-colors">
-                    <span className="text-xl">{icon}</span>
+                    <SectionIcon icon={icon} />
                     <span className="flex-1 text-base font-bold text-foreground flex items-center gap-2">{title}{commentCount(doc.fullPath) > 0 && <CommentBadge n={commentCount(doc.fullPath)} />}</span>
                     <div className="flex items-center gap-1">
                       <DownloadBtn docPath={doc.fullPath} />
@@ -639,7 +639,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
             return (
               <div key={group.folder} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60">
-                  <span className="text-xl">{icon}</span>
+                  <SectionIcon icon={icon} />
                   <span className="text-base font-bold text-foreground">{group.label}</span>
                   <span className={cn("ml-auto text-[11px] font-medium px-2.5 py-1 rounded-full", STATUS_BADGE.todo)}>
                     {group.docs.length} {t("files")}
