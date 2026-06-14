@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { StatCard } from "@/components/shared/stat-card";
@@ -213,7 +214,7 @@ export default function TasksPage() {
 
       <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="font-heading text-2xl text-navy mb-1">📋 Tareas</h1>
+          <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="tasks" />Tareas</h1>
           <p className="text-sm text-muted-foreground">
             Gestion de tareas y proyectos raíz del plan estrategico
           </p>

@@ -13,6 +13,7 @@ import Head from "next/head";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useBrandBrain, useBrandBrainOtherDocs, useUpdatePillarStatus } from "@/hooks/useBrandBrain";
 import { useOpenChat } from "@/hooks/useChat";
@@ -755,7 +756,7 @@ export default function BrandBrainPage() {
 
       <div className="flex items-center gap-3 mb-2 flex-wrap">
         <h1 className="font-heading text-2xl text-navy m-0">
-          {"🧠"} Brand Brain
+          <TitleIcon name="brand-brain" />Brand Brain
         </h1>
         <div className="text-sm text-muted-foreground flex items-center gap-1.5">
           <span className="text-rust font-bold">{slug}</span>
