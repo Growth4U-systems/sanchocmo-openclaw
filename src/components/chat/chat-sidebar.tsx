@@ -38,8 +38,11 @@ import type { ErrorDetail } from "@/hooks/useChat";
 import { useBrandAssets, type BrandAsset } from "@/hooks/useBrandAssets";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
+import { useUpdateTaskStatus } from "@/hooks/useTasks";
 import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
+import { StatusPill } from "@/components/shared/status-pill";
+import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet } from "@/lib/task-status";
 
 // ---------------------------------------------------------------------------
 // Agent badge config
@@ -641,6 +644,21 @@ export function ChatSidebar() {
   const primarySkill = meta?.skill || skills[0];
   const extraSkillCount = skills.length > 1 ? skills.length - 1 : 0;
 
+  // Estado de la tarea ligada al thread ABIERTO (modo locked) → la cabecera
+  // muestra el StatusPill y ofrece "cambiar estado / archivar" inline. Solo
+  // para hilos de tarea reales (`task-…`/`task:…`); los Pilares Foundation no
+  // se archivan desde aquí.
+  const updateTaskStatus = useUpdateTaskStatus();
+  const [headerStatusMenu, setHeaderStatusMenu] = useState(false);
+  const lockedShortId = lockedThreadId ? lockedThreadId.split(":").slice(1).join(":") : "";
+  const lockedTaskEntry = /(?:^|:)task[:-]/i.test(lockedShortId)
+    ? (taskIndex.get(lockedShortId.toLowerCase()) ?? null)
+    : null;
+  const lockedTaskId: string | null = (lockedTaskEntry?.task?.id as string | undefined) ?? null;
+  const lockedTaskStatus = lockedTaskEntry
+    ? normalizeTaskStatusQuiet(lockedTaskEntry.task?.status as string | undefined)
+    : null;
+
   // Lazy auto-scan on task thread open: when the active thread is a task,
   // hit the task-attach-scan endpoint so any files the skill wrote since
   // last open get registered and shown in the Attachments section without
@@ -1051,6 +1069,54 @@ export function ChatSidebar() {
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                {/* Estado de la tarea + cambiar estado / archivar (solo task threads) */}
+                {lockedTaskId && lockedTaskStatus && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setHeaderStatusMenu((v) => !v)}
+                      title="Cambiar estado / archivar"
+                      className="flex items-center rounded-full hover:ring-2 hover:ring-rust/40 transition"
+                    >
+                      <StatusPill status={lockedTaskStatus} size="sm" />
+                    </button>
+                    {headerStatusMenu && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setHeaderStatusMenu(false)} />
+                        <div className="absolute right-0 top-7 z-20 w-44 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] py-1 shadow-lg">
+                          <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--chat-text-faint)]">
+                            Cambiar estado
+                          </div>
+                          {TASK_STATUS_OPTIONS.map((opt) => {
+                            const current = lockedTaskStatus === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                disabled={current || updateTaskStatus.isPending}
+                                onClick={() => {
+                                  setHeaderStatusMenu(false);
+                                  if (current || !lockedTaskId) return;
+                                  updateTaskStatus.mutate({ slug, taskId: lockedTaskId, status: opt.value });
+                                }}
+                                className={cn(
+                                  "flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors",
+                                  current
+                                    ? "text-[var(--chat-text-faint)] cursor-default"
+                                    : "text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)]"
+                                )}
+                              >
+                                <StatusPill status={opt.value} size="sm" />
+                                <span className="truncate">{opt.label}</span>
+                                {current && <span className="ml-auto text-[11px]">✓</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
                 <button
                   className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm border border-[var(--chat-border)] rounded-md px-1 py-0.5"
                   title={t("syncDiscord")}
