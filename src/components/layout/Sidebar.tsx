@@ -53,6 +53,17 @@ export function Sidebar() {
     return currentPath === href || currentPath.startsWith(href + "/");
   }
 
+  function openNewTask() {
+    if (!chatSlug) return;
+    // "Nueva tarea": open a fresh blank chat with Sancho in fullscreen,
+    // ready to describe a new task (no auto-message). See chatEntries.new-task.
+    const cfg = buildNewTaskThread(chatSlug);
+    const chat = useChatStore.getState();
+    chat.setCurrentSlug(chatSlug);
+    chat.openSidebar(cfg);
+    useChatStore.setState({ isFullscreen: true });
+  }
+
   return (
     <>
       {/* Mobile hamburger */}
@@ -91,8 +102,9 @@ export function Sidebar() {
           </div>
         ) : (
           <div className="mb-0.5 flex flex-col items-center gap-1.5">
+            {/* Collapsed: square Sancho face-tile (no wordmark) */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.webp" alt="SanchoCMO" className="w-10 h-10 object-contain" />
+            <img src="/logo-mark.webp" alt="SanchoCMO" className="w-11 h-11 object-contain" />
             <CollapseToggle collapsed={true} />
           </div>
         )}
@@ -107,20 +119,29 @@ export function Sidebar() {
         {/* Chat button (concrete client only — hidden in the global view) */}
         {chatSlug && sidebarOpen && (
           <button
-            onClick={() => {
-              // "Nueva tarea": open a fresh blank chat with Sancho in fullscreen,
-              // ready to describe a new task (no auto-message). See chatEntries.new-task.
-              const cfg = buildNewTaskThread(chatSlug);
-              const chat = useChatStore.getState();
-              chat.setCurrentSlug(chatSlug);
-              chat.openSidebar(cfg);
-              useChatStore.setState({ isFullscreen: true });
-            }}
+            onClick={openNewTask}
             className="w-full flex items-center gap-2 px-3.5 py-2.5 mt-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center relative"
           >
             ➕ {t("chat.newTask")}
             {unreadCount > 0 && (
               <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* Chat button — collapsed: icon-only, keeps the unread badge visible */}
+        {chatSlug && !sidebarOpen && (
+          <button
+            onClick={openNewTask}
+            title={t("chat.newTask")}
+            aria-label={t("chat.newTask")}
+            className="relative mt-2 mx-auto w-9 h-9 flex items-center justify-center bg-rust text-white rounded-lg font-bold text-base hover:opacity-90"
+          >
+            ➕
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
                 {unreadCount}
               </span>
             )}
@@ -133,7 +154,7 @@ export function Sidebar() {
         <SectionLabel text={t("nav.overview")} visible={sidebarOpen} />
         <NavLink
           href={activeSlug ? `/dashboard/${activeSlug}` : "/dashboard"}
-          icon="📊"
+          icon="/nav/dashboard.webp"
           label={t("nav.dashboard")}
           active={
             activeSlug
@@ -148,7 +169,7 @@ export function Sidebar() {
           <>
             <NavLink
               href={clientHref("/brand-brain")}
-              icon="🧠"
+              icon="/nav/brand-brain.webp"
               label={t("nav.brandBrain")}
               active={isActive(clientHref("/brand-brain")) || isActive(clientHref("/foundation"))}
               collapsed={!sidebarOpen}
@@ -156,15 +177,15 @@ export function Sidebar() {
 
             {/* ── Trabajo ── */}
             <SectionLabel text={t("nav.work")} visible={sidebarOpen} />
-            <NavLink href={clientHref("/tasks")} icon="📋" label={t("nav.tasks")} active={isActive(clientHref("/tasks"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/content-creation")} icon="✏️" label="Content Creation" active={isActive(clientHref("/content-creation"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/media-creation")} icon="🎨" label="Media Creation" active={isActive(clientHref("/media-creation"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/yalc")} icon="📤" label="Outreach" active={isActive(clientHref("/yalc"))} collapsed={!sidebarOpen} />
-            <NavLink href={clientHref("/metrics")} icon="📈" label={t("nav.metrics")} active={isActive(clientHref("/metrics"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/tasks")} icon="/nav/tasks.webp" label={t("nav.tasks")} active={isActive(clientHref("/tasks"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/content-creation")} icon="/nav/content.webp" label="Content Creation" active={isActive(clientHref("/content-creation"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/media-creation")} icon="/nav/media.webp" label="Media Creation" active={isActive(clientHref("/media-creation"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/yalc")} icon="/nav/outreach.webp" label="Outreach" active={isActive(clientHref("/yalc"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/metrics")} icon="/nav/metrics.webp" label={t("nav.metrics")} active={isActive(clientHref("/metrics"))} collapsed={!sidebarOpen} />
 
             {/* ── Herramientas ── */}
             <SectionLabel text={t("nav.tools")} visible={sidebarOpen} />
-            <NavLink href={clientHref("/intelligence")} icon="🧠" label="Intelligence" active={isActive(clientHref("/intelligence"))} collapsed={!sidebarOpen} />
+            <NavLink href={clientHref("/intelligence")} icon="/nav/intelligence.webp" label="Intelligence" active={isActive(clientHref("/intelligence"))} collapsed={!sidebarOpen} />
           </>
         )}
 
@@ -172,14 +193,14 @@ export function Sidebar() {
         <SectionLabel text={t("nav.system")} visible={sidebarOpen} />
         <NavLink
           href={activeSlug ? clientHref("/activity") : "/dashboard/admin/activity"}
-          icon="📡"
+          icon="/nav/activity.webp"
           label={t("nav.activity")}
           active={activeSlug ? isActive(clientHref("/activity")) : isActive("/dashboard/admin/activity")}
           collapsed={!sidebarOpen}
         />
         <NavLink
           href={activeSlug ? clientHref("/settings") : "/dashboard/admin/settings"}
-          icon="⚙️"
+          icon="/nav/settings.webp"
           label={t("nav.settings")}
           active={activeSlug ? isActive(clientHref("/settings")) : isActive("/dashboard/admin/settings")}
           collapsed={!sidebarOpen}
@@ -188,14 +209,14 @@ export function Sidebar() {
           <>
             <NavLink
               href="/dashboard/admin/clients"
-              icon="👥"
+              icon="/nav/clients.webp"
               label="Clientes"
               active={isActive("/dashboard/admin/clients")}
               collapsed={!sidebarOpen}
             />
             <NavLink
               href="/dashboard/admin/users"
-              icon="🔐"
+              icon="/nav/users.webp"
               label="Usuarios"
               active={isActive("/dashboard/admin/users")}
               collapsed={!sidebarOpen}
@@ -283,16 +304,38 @@ function NavLink({
         event.preventDefault();
         router.push(href);
       }}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all mb-px",
+        "relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all mb-px",
         active
-          ? "bg-background text-rust font-semibold"
+          ? "text-rust font-semibold"
           : "text-muted-foreground hover:bg-background hover:text-foreground",
         collapsed && "justify-center px-0"
       )}
+      // Rust-tinted active tile — theme-proof (rust is a CSS var, no Tailwind alpha).
+      style={active ? { backgroundColor: "color-mix(in srgb, var(--rust) 12%, transparent)" } : undefined}
       title={collapsed ? label : undefined}
     >
-      <span className="text-sm">{icon}</span>
+      {/* Left accent bar marks the active page at a glance */}
+      {active && (
+        <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-sm bg-rust" />
+      )}
+      {icon.startsWith("/") ? (
+        // Brand nav icon (webp tile).
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={icon}
+          alt=""
+          aria-hidden="true"
+          className={cn(
+            "flex-shrink-0 object-contain transition-transform",
+            collapsed ? "w-7 h-7" : "w-[22px] h-[22px]",
+            !active && "opacity-90"
+          )}
+        />
+      ) : (
+        <span className="text-sm">{icon}</span>
+      )}
       {!collapsed && <span className="flex-1 truncate">{label}</span>}
     </Link>
   );
