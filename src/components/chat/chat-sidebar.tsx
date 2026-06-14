@@ -41,6 +41,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useUpdateTaskStatus } from "@/hooks/useTasks";
 import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
+import { StatusPill } from "@/components/shared/status-pill";
 import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot, statusLabel } from "@/lib/task-status";
 
 // ---------------------------------------------------------------------------
@@ -659,6 +660,15 @@ export function ChatSidebar() {
   const activeTaskStatus = activeTaskEntry
     ? normalizeTaskStatusQuiet(activeTaskEntry.task?.status as string | undefined)
     : null;
+  // Tarea de CONTENIDO (linkedTo = projects/X/tasks/Y/content/Z): tiene su
+  // propio vocabulario de estado (New/Draft/Published/…), no el de Task. Se
+  // muestra el pill (solo lectura — el cambio de estado va por su pipeline).
+  const contentTaskId: string | null =
+    meta?.linkedTo?.match(/^projects\/[^/]+\/tasks\/[^/]+\/content\/([^/]+)$/i)?.[1] ?? null;
+  const contentTaskEntry = contentTaskId
+    ? (taskIndex.get(`content:${contentTaskId.toLowerCase()}`) ?? null)
+    : null;
+  const contentTaskStatus = ((contentTaskEntry?.contentTask as { status?: string } | undefined)?.status) || null;
 
   // Lazy auto-scan on task thread open: when the active thread is a task,
   // hit the task-attach-scan endpoint so any files the skill wrote since
@@ -1022,16 +1032,50 @@ export function ChatSidebar() {
       {/* RIGHT COLUMN — existing sidebar content */}
       <div className="flex-1 flex flex-col min-w-0">
 
-      {/* HEADER BAR */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--chat-border)] shrink-0">
-        <div className="flex items-center gap-2">
+      {/* HEADER BAR — título del hilo aquí mismo (una fila menos). Sin falso
+          desplegable: para explorar threads se usa el botón ⤢ (fullscreen). */}
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--chat-border)] shrink-0 gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" />
-          <span className="text-[12px] font-semibold text-[var(--chat-text)]">{t("title")}</span>
+          {activeThreadId ? (
+            <>
+              <span
+                className="text-sm shrink-0"
+                title={activeTaskStatus ? activeTaskStatus.replace(/-/g, " ") : undefined}
+              >
+                {activeTaskStatus ? statusDot(activeTaskStatus) : threadIcon(activeThreadId.split(":").slice(1).join(":"))}
+              </span>
+              <span className="text-[13px] font-semibold text-[var(--chat-text)] truncate font-heading">
+                {meta?.threadName
+                  ?? (activeThread
+                    ? formatThreadDisplayName({ shortId: activeThread.shortId, name: activeThread.name }, projectsData)
+                    : activeThreadId.split(":").slice(1).join(":").replace(/-/g, " "))}
+              </span>
+            </>
+          ) : (
+            <span className="text-[12px] font-semibold text-[var(--chat-text)]">{t("title")}</span>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[var(--chat-text-muted)]">
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="hidden md:inline text-[10px] text-[var(--chat-text-muted)]">
             {statusData?.text || (isPolling ? t("connected") : t("waiting"))}
           </span>
+          {sidebarLocked && lockedThreadId && (
+            <button
+              onClick={unlockSidebar}
+              title={t("unlockFreeMode")}
+              className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
+            >
+              🔓
+            </button>
+          )}
+          <button
+            onClick={() => handleSelectFromPanel(`${slug}:general`)}
+            title={t("newThread")}
+            className="text-green-500 hover:opacity-80 text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
+          >
+            +
+          </button>
           <button
             onClick={toggleFullscreen}
             className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
@@ -1049,91 +1093,10 @@ export function ChatSidebar() {
         </div>
       </div>
 
-      {/* THREAD BAR — compacto: fila 1 = identidad + estado; fila 2 = chips
-          (doc · tarea · adjuntos · skill). Antes eran 5 filas apiladas. */}
-      <div className="px-3 py-2 border-b border-[var(--chat-border)] shrink-0">
-        <div className="space-y-1.5">
-          {sidebarLocked && lockedThreadId ? (
-            /* Locked mode */
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                <span
-                  className="text-sm shrink-0"
-                  title={activeTaskStatus ? activeTaskStatus.replace(/-/g, " ") : undefined}
-                >
-                  {activeTaskStatus ? statusDot(activeTaskStatus) : threadIcon(lockedThreadId.split(":").slice(1).join(":"))}
-                </span>
-                <span
-                  className="text-[14px] font-semibold text-rust truncate font-heading"
-                >
-                  {meta?.threadName ?? lockedThreadId.split(":").slice(1).join(":").replace(/-/g, " ")}
-                </span>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm border border-[var(--chat-border)] rounded-md px-1 py-0.5"
-                  title={t("syncDiscord")}
-                >
-                  📱
-                </button>
-                <button
-                  onClick={unlockSidebar}
-                  className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm border border-[var(--chat-border)] rounded-md px-1 py-0.5"
-                  title={t("unlockFreeMode")}
-                >
-                  🔓
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* Free mode — click the thread name to open the full thread list
-               panel in fullscreen mode (design 2026-04-15). */
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  // If already in fullscreen, toggling here would collapse
-                  // back — but in free mode the click handler is for "browse
-                  // threads", so only toggle when NOT fullscreen.
-                  if (!isFullscreen) toggleFullscreen();
-                }}
-                className="flex-1 bg-[var(--chat-surface)] hover:bg-[var(--chat-surface-2)] text-[var(--chat-text)] text-[14px] px-3 py-2 rounded-lg border border-[var(--chat-border)] hover:border-rust truncate flex items-center gap-2 text-left transition-colors"
-                title={isFullscreen ? t("selectThreadOption") : "Explorar threads (expande a pantalla completa)"}
-              >
-                {activeThread ? (
-                  <>
-                    <span className="flex-shrink-0">{activeTaskStatus ? statusDot(activeTaskStatus) : threadIcon(activeThread.shortId)}</span>
-                    <span className="truncate font-semibold">
-                      {formatThreadDisplayName(
-                        { shortId: activeThread.shortId, name: activeThread.name },
-                        projectsData
-                      )}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="flex-shrink-0">📋</span>
-                    <span className="text-[var(--chat-text-muted)]">
-                      {t("selectThreadOption")}
-                    </span>
-                  </>
-                )}
-                <span className="ml-auto text-[var(--chat-text-faint)] flex-shrink-0">
-                  {isFullscreen ? "▾" : "▸"}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSelectFromPanel(`${slug}:general`)}
-                className="bg-[var(--chat-surface)] hover:bg-[var(--chat-surface-2)] text-green-500 w-7 h-7 rounded-lg flex items-center justify-center text-sm border border-[var(--chat-border)]"
-                title={t("newThread")}
-              >
-                +
-              </button>
-            </div>
-          )}
-
-          {/* ── Fila 2: chips de meta (doc · tarea · adjuntos · skill) ── */}
+      {/* THREAD BAR — solo chips de meta (doc · estado · tarea · adjuntos ·
+          skill). El título del hilo vive ahora en la HEADER BAR. */}
+      {activeThreadId && (meta?.docPath || meta?.linkedTo || primarySkill || activeTaskStatus || contentTaskStatus) && (
+      <div className="px-3 py-1.5 border-b border-[var(--chat-border)] shrink-0">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
 
           {/* Doc + skill pill — always rendered when there's an active
@@ -1347,6 +1310,17 @@ export function ChatSidebar() {
             );
           })()}
 
+          {/* Estado de tarea de CONTENIDO (solo lectura — vocabulario propio:
+              New/Draft/Published/… — el cambio va por el pipeline de contenido) */}
+          {!activeTaskStatus && contentTaskStatus && (
+            <span
+              className="inline-flex items-center"
+              title={`Estado de contenido: ${contentTaskStatus}`}
+            >
+              <StatusPill status={contentTaskStatus} size="sm" />
+            </span>
+          )}
+
           {/* Task/Project link pill — shows the associated task/project */}
           {activeThreadId && meta?.linkedTo && (() => {
             const taskMatch = meta.linkedTo.match(/^projects\/([^/]+)\/tasks\/([^/]+)(?:\/content\/([^/]+))?/i);
@@ -1493,8 +1467,8 @@ export function ChatSidebar() {
             </span>
           )}
           </div>
-        </div>
       </div>
+      )}
 
       {/* MESSAGES AREA — with drag & drop */}
       <div
