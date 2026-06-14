@@ -9,7 +9,6 @@ context_required:
 - brand/{slug}/market-and-us/competitors/sources.json
 - brand/{slug}/strategic-plan/strategic-plan.current.md
 context_writes:
-- brand/{slug}/outreach-playbook/outreach-playbook.current.md
 - brand/{slug}/outreach-playbook/discovery-guide.md
 - brand/{slug}/outreach-playbook/sequence-templates.md
 ---
