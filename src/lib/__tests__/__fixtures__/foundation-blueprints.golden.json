@@ -223,21 +223,21 @@
       {
         "id": "P00-FUL-T09",
         "name": "L5 — Visual Identity",
-        "description": "Sistema visual: paleta, tipografía, logo guidelines, templates.",
+        "description": "Sistema visual (DESIGN.md): paleta, tipografía, logo guidelines, illustration discipline.",
         "type": "foundation",
         "channel": "strategy",
         "niche": null,
         "status": "todo",
-        "deliverable": "brand-book/visual-identity/visual-identity.current.md",
-        "deliverable_file": "brand/innatica/brand-book/visual-identity/visual-identity.current.md",
+        "deliverable": "brand-book/visual-identity/DESIGN.md",
+        "deliverable_file": "brand/innatica/brand-book/visual-identity/DESIGN.md",
         "depends_on": "P00-FUL-T08",
         "owner": "Sancho",
-        "skill": "visual-identity",
+        "skill": "design-system",
         "agent": "maese-pedro",
         "pillar": "visual-identity",
         "section": "brand-book",
         "mc_chat_thread_id": "task-p00-ful-t09",
-        "done_criteria": "Visual identity aprobada. Assets exportados."
+        "done_criteria": "DESIGN.md aprobado. Logo persistido. Listo para od-generate."
       },
       {
         "id": "P00-FUL-T10",
