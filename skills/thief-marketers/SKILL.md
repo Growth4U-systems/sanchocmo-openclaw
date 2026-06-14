@@ -172,6 +172,6 @@ the same `idea-queue.json`).
 
 ## Related skills
 
-- `atalaya-competitors` — full competitive scan (deeper, less frequent). This is the DAILY lightweight version focused on content signals.
+- DAILY lightweight scan focused on content signals.
 - `news-monitor` — monitors news/publications. This skill monitors people/companies on social.
 - `idea-builder` — DEPRECATED. The combine-signals-into-ideas job is now done inline by this skill (and by `news-monitor`).
