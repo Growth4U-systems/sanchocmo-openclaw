@@ -26,13 +26,19 @@ function loadVisualSource(slug: string): VisualSource {
   const vid = path.join(brandDir(slug), "brand-book", "visual-identity");
   const designMdPath = path.join(vid, "DESIGN.md");
   if (fs.existsSync(designMdPath)) {
-    const parsed = parseDesignMd(fs.readFileSync(designMdPath, "utf8"));
-    return {
-      name: parsed.brandName,
-      headingFont: parsed.typography.display?.family,
-      primary: parsed.color.primary,
-      accent: parsed.color.accent,
-    };
+    // Read is wrapped: a TOCTOU race or permission error between existsSync and
+    // readFileSync must not kill the request — fall through to legacy tokens.
+    try {
+      const parsed = parseDesignMd(fs.readFileSync(designMdPath, "utf8"));
+      return {
+        name: parsed.brandName,
+        headingFont: parsed.typography.display?.family,
+        primary: parsed.color.primary,
+        accent: parsed.color.accent,
+      };
+    } catch (err) {
+      console.warn(`[carousel] DESIGN.md unreadable for ${slug}, falling back to design-tokens.json:`, err);
+    }
   }
   const tokens = readJSON<DesignTokens>(path.join(vid, "design-tokens.json"), {});
   return { name: tokens.brand, headingFont: tokens.typography?.families?.heading?.family };
