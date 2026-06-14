@@ -126,7 +126,9 @@ export interface DiscoverySearchRecord {
   plan: DiscoveryPlan;
   /** Campaign Partnerships creada en Yalc. */
   campaignId: string;
-  /** Tarea Outreach madre en el sistema de tasks de Sancho. */
+  /** Proyecto de campaña sembrado para esta búsqueda (SAN-195, type=project). */
+  projectId?: string | null;
+  /** Tarea madre de la búsqueda (T01 del proyecto de campaña: el runner). */
   taskId: string | null;
   runner: DiscoveryRunnerState;
   /**

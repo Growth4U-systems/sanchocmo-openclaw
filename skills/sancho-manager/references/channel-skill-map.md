@@ -1,6 +1,6 @@
 # Channel-Skill Map
 
-> Mapeo de tipo de tarea → canal Discord → skills sugeridos → especialista v4.
+> Mapeo de tipo de tarea → canal → skills sugeridos → especialista v4.
 > Derivado de `dispatch-map.json` (bloque `specialists`) y del Delegation Protocol de `workspace-sancho/SOUL.md`. Consultar este archivo al asignar canal y skill a cada tarea.
 
 ---

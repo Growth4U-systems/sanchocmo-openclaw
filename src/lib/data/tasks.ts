@@ -22,6 +22,8 @@ import {
 import { findContentTaskById as findFlatContentTaskById, loadUnifiedContentTasks, upsertContentTask } from "@/lib/data/content-tasks-flat";
 import { expandBriefPatch } from "@/lib/data/task-brief";
 import { inferTaskExecutionContract } from "@/lib/data/task-execution-contract";
+import { instantiateTaskSet, getTaskSet } from "@/lib/data/task-blueprints";
+import { applyTaskAnchors, TaskAnchorError, type TaskCreateInput } from "@/lib/data/task-create-helpers";
 import { VALID_CONTENT_TASK_STATUSES } from "@/types";
 import type { ContentTask, ContentTaskStatus, Project, Task } from "@/types";
 
@@ -476,7 +478,18 @@ export async function archiveTask(slug: string, id: string, reason = "Archivado 
   return updateTask(slug, id, { status: "archived", archive_reason: reason });
 }
 
-export async function createTask(slug: string, input: Partial<Project & Task> & { parent_id?: string; type?: string }) {
+export async function createTask(
+  slug: string,
+  input: Partial<Project & Task> & { parent_id?: string; type?: string; seedFromTaskSet?: string },
+) {
+  // SAN-195 (b): seed a declared task SET into a newly-created project. Reuses
+  // the existing creator (no parallel endpoint) — when `seedFromTaskSet` names a
+  // manifest taskSet, the project's children are instantiated from it via
+  // instantiateTaskSet + applyTaskAnchors (the same engine Foundation/content use).
+  const seedSection = input.seedFromTaskSet;
+  if (seedSection && !getTaskSet(seedSection)) {
+    throw new Error(`createTask: unknown seedFromTaskSet "${seedSection}"`);
+  }
   if (dbTasksEnabled()) {
     const now = new Date();
     const type = input.type || (!input.parent_id ? "project" : "execution");
@@ -541,12 +554,20 @@ export async function createTask(slug: string, input: Partial<Project & Task> & 
       target: tasksTable.sourceKey,
       set: { ...row, updatedAt: now },
     });
+    if (seedSection && type === "project") {
+      for (const t of instantiateTaskSet(seedSection, { slug, projectId: id })) {
+        const { id: childId, ...rest } = t as { id: string } & Record<string, unknown>;
+        await createTask(slug, { ...rest, id: childId, parent_id: id });
+      }
+    }
     return (await getDbRow(slug, id)) as unknown as Project | Task | ContentTask;
   }
   if (input.type === "project" || !input.parent_id) {
     const id = input.id || getNextProjectId(slug);
     const dir = path.join(brandDir(slug), "projects", input.slug || id);
     fs.mkdirSync(dir, { recursive: true });
+    // `seedFromTaskSet` is a creation directive, not a project field — keep it out of project.json.
+    const { seedFromTaskSet: _seed, ...projectInput } = input;
     const project = {
       id,
       slug: input.slug || id,
@@ -560,10 +581,23 @@ export async function createTask(slug: string, input: Partial<Project & Task> & 
       category: input.category || "",
       created_at: new Date().toISOString(),
       review_date: null,
-      ...input,
+      ...projectInput,
     } as Project;
     writeJSON(path.join(dir, "project.json"), project);
-    writeJSON(path.join(dir, "tasks.json"), []);
+    // SAN-195 (b): seed the declared task SET (anchored) instead of an empty list.
+    let seededTasks: TaskCreateInput[] = [];
+    if (seedSection) {
+      seededTasks = instantiateTaskSet(seedSection, { slug, projectId: id });
+      try {
+        for (const t of seededTasks) applyTaskAnchors(slug, t);
+      } catch (err) {
+        if (err instanceof TaskAnchorError) {
+          throw new Error(`createTask: task anchors invalid for seed "${seedSection}": ${err.message}`);
+        }
+        throw err;
+      }
+    }
+    writeJSON(path.join(dir, "tasks.json"), seededTasks);
     return project;
   }
   const found = findTaskByIdAcrossBrand(slug, input.parent_id);
