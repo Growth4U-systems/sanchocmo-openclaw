@@ -304,7 +304,10 @@ export default function TasksPage() {
       </div>
 
       {tab === "tree" ? (
-        <div className="space-y-2">
+        // key distinto por rama: las dos vistas ocupan la misma posición del JSX,
+        // así React desmonta una y monta la otra en vez de reusar el <div> y dejar
+        // filas de la Lista colgadas dentro del board del Kanban (SAN: list-leak).
+        <div key="view-tree" className="space-y-2">
           {filteredRows.map((row) => (
             <TaskTreeRow
               key={row.id}
@@ -316,7 +319,7 @@ export default function TasksPage() {
           ))}
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 420 }}>
+        <div key="view-kanban" className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 420 }}>
           {KANBAN_COLUMNS.map((col) => {
             const colRows = filteredRows.filter((row) => normalizeTaskStatusQuiet(row.status) === col.key);
             return (
