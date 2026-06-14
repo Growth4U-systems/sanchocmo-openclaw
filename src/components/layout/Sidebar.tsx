@@ -55,12 +55,14 @@ export function Sidebar() {
 
   function openNewTask() {
     if (!chatSlug) return;
-    // "Nueva tarea": open a fresh blank chat with Sancho in fullscreen,
-    // ready to describe a new task (no auto-message). See namespaceOwners.new-task.
+    // "Nueva tarea": abre el chat a pantalla completa pero en modo LIBRE (no
+    // bloqueado), con el hilo de nueva tarea seleccionado — así el usuario
+    // puede cambiar de hilo desde el panel. See namespaceOwners.new-task.
     const cfg = buildNewTaskThread(chatSlug);
     const chat = useChatStore.getState();
     chat.setCurrentSlug(chatSlug);
-    chat.openSidebar(cfg);
+    chat.openSidebar();        // modo libre (sidebarOpen, sin bloquear)
+    chat.selectThread(cfg);    // selecciona el hilo de nueva tarea sin bloquear
     useChatStore.setState({ isFullscreen: true });
   }
 
