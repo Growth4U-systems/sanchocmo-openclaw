@@ -8,20 +8,6 @@
     },
     "company-brief": {},
     "competitor-analysis": {},
-    "content-pillars": {
-      "skill": "content-pillars",
-      "agent": "dulcinea"
-    },
-    "content-playbook": {
-      "docPaths": ["content-playbook/content-playbook.current.md"],
-      "skill": "content-playbook",
-      "agent": "dulcinea"
-    },
-    "content-strategy": {
-      "docPaths": ["strategies/content/content.current.md"],
-      "skill": "content-strategy",
-      "agent": "dulcinea"
-    },
     "ecp-validation": {},
     "existing-customer-data": {},
     "foundation-presentation": {},
@@ -34,14 +20,8 @@
     "niche-discovery": {
       "docPaths": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"]
     },
-    "own-media-audit": {
-      "docPaths": ["site-audit/own-media-audit/own-media-audit.current.md"]
-    },
     "positioning": {},
     "pricing": {},
-    "seo-audit": {
-      "docPaths": ["site-audit/seo-audit/seo-audit.current.md"]
-    },
     "self-analysis": {
       "docPaths": ["market-and-us/self/self.current.md", "market-and-us/self/lite.md"]
     },
@@ -217,6 +197,21 @@
           "agent": "dulcinea",
           "docPaths": ["content/strategy/{channel}-strategy.md"],
           "dependsOn": ["content-strategy"]
+        },
+        {
+          "id": "seo-audit",
+          "taskKey": "T06",
+          "name": "SEO Audit (auditoría técnica web)",
+          "skill": "seo-audit",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Auditoría SEO técnica del sitio (crawlability, indexación, CWV, schema) como parte del setup de Content/blog. Punto de partida hasta que exista una sección 'web' que la absorba.",
+          "deliverable": "Informe de auditoría SEO técnica del sitio",
+          "deliverableFiles": ["site-audit/seo-audit/seo-audit.current.md"],
+          "outputFiles": ["seo-audit.current.md"],
+          "dependsOn": []
         }
       ]
     },

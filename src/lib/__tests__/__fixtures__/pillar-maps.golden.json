@@ -13,12 +13,6 @@
     "competitor-analysis": [
       "market-and-us/competitors/competitors.current.md"
     ],
-    "content-playbook": [
-      "content-playbook/content-playbook.current.md"
-    ],
-    "content-strategy": [
-      "strategies/content/content.current.md"
-    ],
     "ecp-validation": [
       "go-to-market/ecp-validation/ecp-validation.current.md"
     ],
@@ -47,17 +41,11 @@
       "go-to-market/ecps/ecps.current.md",
       "go-to-market/ecps/lite.md"
     ],
-    "own-media-audit": [
-      "site-audit/own-media-audit/own-media-audit.current.md"
-    ],
     "positioning": [
       "go-to-market/positioning/positioning.current.md"
     ],
     "pricing": [
       "go-to-market/pricing/pricing.current.md"
-    ],
-    "seo-audit": [
-      "site-audit/seo-audit/seo-audit.current.md"
     ],
     "self-analysis": [
       "market-and-us/self/self.current.md",
@@ -79,9 +67,6 @@
     "brand-voice": "brand-voice",
     "company-brief": "kickoff",
     "competitor-analysis": "competitor-intelligence",
-    "content-pillars": "content-pillars",
-    "content-playbook": "content-playbook",
-    "content-strategy": "content-strategy",
     "ecp-validation": "ecp-validation",
     "existing-customer-data": "existing-customer-data",
     "foundation-presentation": "frontend-slides",
@@ -125,27 +110,6 @@
         "competitor-intelligence"
       ],
       "agent": "hamete"
-    },
-    "content-pillars": {
-      "skill": "content-pillars",
-      "skills": [
-        "content-pillars"
-      ],
-      "agent": "dulcinea"
-    },
-    "content-playbook": {
-      "skill": "content-playbook",
-      "skills": [
-        "content-playbook"
-      ],
-      "agent": "dulcinea"
-    },
-    "content-strategy": {
-      "skill": "content-strategy",
-      "skills": [
-        "content-strategy"
-      ],
-      "agent": "dulcinea"
     },
     "ecp-validation": {
       "skill": "ecp-validation",
