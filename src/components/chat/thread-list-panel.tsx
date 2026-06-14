@@ -348,7 +348,7 @@ export function ThreadListPanel({
                   className={cn(
                     "absolute right-1 top-2 grid h-6 w-6 place-items-center rounded-md text-[14px]",
                     "text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)] transition",
-                    menuOpen ? "opacity-100 bg-[var(--chat-surface-2)]" : "opacity-0 group-hover:opacity-100"
+                    menuOpen ? "opacity-100 bg-[var(--chat-surface-2)]" : "opacity-60 group-hover:opacity-100"
                   )}
                 >
                   ⋯
