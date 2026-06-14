@@ -720,6 +720,7 @@ export function ChatSidebar() {
   interface PendingFile { file: File; preview?: string }
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -727,6 +728,7 @@ export function ChatSidebar() {
   const [thinkingNow, setThinkingNow] = useState(() => Date.now());
 
   const addFiles = useCallback((files: FileList | File[]) => {
+    setUploadError(null);
     const arr = Array.from(files).slice(0, 5); // Max 5 files
     const newPending: PendingFile[] = arr.map((f) => ({
       file: f,
@@ -749,9 +751,11 @@ export function ChatSidebar() {
       const form = new FormData();
       form.append("file", pf.file);
       const res = await fetch("/api/upload-file", { method: "POST", body: form });
-      if (res.ok) {
-        results.push(await res.json());
+      if (!res.ok) {
+        const detail = await res.json().catch(() => null);
+        throw new Error(detail?.error || `No se pudo subir "${pf.file.name}".`);
       }
+      results.push(await res.json());
     }
     return results;
   }, []);
@@ -908,6 +912,7 @@ export function ChatSidebar() {
     const trimmed = input.trim();
     const hasFiles = pendingFiles.length > 0;
     if ((!trimmed && !hasFiles) || !activeThreadId) return;
+    setUploadError(null);
 
     let attachments: { url: string; filename: string; mimeType: string; size: number }[] | undefined;
 
@@ -918,6 +923,7 @@ export function ChatSidebar() {
         attachments = await uploadFiles(pendingFiles);
       } catch (err) {
         console.error("[chat] Upload failed:", err);
+        setUploadError(err instanceof Error ? err.message : "No se pudo subir el archivo.");
         setUploading(false);
         return;
       }
@@ -1754,6 +1760,9 @@ export function ChatSidebar() {
             ))}
             {uploading && <span className="text-[10px] text-[var(--chat-text-faint)] animate-pulse self-center">Subiendo...</span>}
           </div>
+        )}
+        {uploadError && (
+          <div className="mb-2 text-[11px] text-red-400" role="alert">{uploadError}</div>
         )}
         <div className="flex items-end gap-2">
           {/* Clip button */}
