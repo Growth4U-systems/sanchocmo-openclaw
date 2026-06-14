@@ -178,7 +178,7 @@ export function ChatSidebar() {
     isPolling,
   } = useChatStore();
 
-  const { selectedClient } = useAppStore();
+  const { selectedClient, sidebarOpen: navExpanded } = useAppStore();
   const slug = selectedClient ?? "";
 
   // Reset chat state when client changes — avoid cross-client thread leaks
@@ -979,7 +979,11 @@ export function ChatSidebar() {
   // Don't render if closed
   if (!sidebarOpen) return null;
 
-  const panelWidth = isFullscreen ? "calc(100vw - 220px)" : "380px";
+  // Fullscreen chat fills everything except the nav sidebar. Its left edge
+  // must line up with the sidebar's right edge — 220px expanded / 60px
+  // collapsed — otherwise the dashboard peeks through the leftover gap.
+  const sidebarW = navExpanded ? 220 : 60;
+  const panelWidth = isFullscreen ? `calc(100vw - ${sidebarW}px)` : "380px";
 
   // Show the left-side ThreadListPanel only in fullscreen AND when the
   // sidebar is in free mode (not locked to a specific thread via a task
