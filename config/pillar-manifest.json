@@ -780,8 +780,8 @@
       ]
     }
   },
-  "_chatEntries_comment": "SAN-167 F2 — on-demand chat-opener BUTTONS declared once. Each button's skill/skills/agent/threadId/initialMessage live here (not hardcoded in chat-openers.ts). instantiateEntry(key, {slug, params}) substitutes {slug}+{params} into the templates and returns a ThreadConfig. Agent is EXPLICIT (validated by ownerCheckFindings). Builders are thin wrappers that prepare params + override the few runtime-only fields (e.g. yalc initialMessage = the passed prompt; skill-editor docPath).",
-  "chatEntries": {
+  "_namespaceOwners_comment": "SAN-205 — single data-driven registry that OWNS every non-task chat namespace, replacing the old chatEntries block AND the hardcoded namespace fallbacks in resolveFullThreadConfig. One source for BOTH directions: (open) build*Thread call instantiateNamespace(key, {slug, params}) → substitutes {slug}+{params} into the templates → ThreadConfig; (reopen) resolveFullThreadConfig matches a threadId against `nsKey`+`match` and rebuilds the owner config from the same entry (threadName derived from the shortId when its template still has tokens, linkedTo from reopenLinkedTo with {rest}/{restUpper}, threadState forced to continue, no initialMessage). Entries WITH a threadId are openable BUTTONS (validated by ownerCheckFindings); entries WITHOUT one are reopen-only namespaces (content/idea/calendar/cron/project/scan/strategy/recurring). `match`: exact => shortId === nsKey; prefix => shortId starts with `nsKey:` or `nsKey-` (longest nsKey wins). Closes 'todo es Task': no thread is a 'concept apart' — it's either a real task (task index) or a namespace whose declared skill+agent the eventual task inherits when the agent persists it on confirm.",
+  "namespaceOwners": {
     "yalc": {
       "threadId": "{slug}:yalc",
       "threadName": "YALC / GTM-OS",
@@ -790,7 +790,10 @@
       "agent": "rocinante",
       "linkedTo": "rocinante",
       "docPath": null,
-      "threadState": "continue"
+      "threadState": "continue",
+      "nsKey": "yalc",
+      "match": "exact",
+      "reopenLinkedTo": "rocinante"
     },
     "outreach-template": {
       "threadId": "{slug}:outreach-template:{idLower}",
@@ -801,7 +804,10 @@
       "linkedTo": "outreach/templates/{id}",
       "docPath": "brand/{slug}/outreach/templates/{id}.md",
       "threadState": "continue",
-      "initialMessage": "Estoy mirando la plantilla de outreach \"{name}\" ({kindLabel}, brand/{slug}/outreach/templates/{id}.md). Puedes ajustar tono, pasos, delays o variables ({{nombre}}, {{handle}}, {{plataforma}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK."
+      "initialMessage": "Estoy mirando la plantilla de outreach \"{name}\" ({kindLabel}, brand/{slug}/outreach/templates/{id}.md). Puedes ajustar tono, pasos, delays o variables ({{nombre}}, {{handle}}, {{plataforma}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK.",
+      "nsKey": "outreach-template",
+      "match": "prefix",
+      "reopenLinkedTo": "outreach/templates/{rest}"
     },
     "skill-creator": {
       "threadId": "{slug}:skill-creator:{nonce}",
@@ -812,7 +818,10 @@
       "linkedTo": "skills/new",
       "docPath": null,
       "threadState": "create",
-      "initialMessage": "Quiero crear una nueva skill para el workspace. Guíame paso a paso."
+      "initialMessage": "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
+      "nsKey": "skill-creator",
+      "match": "prefix",
+      "reopenLinkedTo": "skills/new"
     },
     "skill-editor": {
       "threadId": "{slug}:skill:{skillId}",
@@ -822,7 +831,10 @@
       "agent": "cervantes",
       "linkedTo": "skills/{skillId}",
       "docPath": null,
-      "threadState": "continue"
+      "threadState": "continue",
+      "nsKey": "skill",
+      "match": "prefix",
+      "reopenLinkedTo": "skills/{rest}"
     },
     "media-asset": {
       "threadId": "{slug}:asset:{safe}",
@@ -833,7 +845,10 @@
       "linkedTo": "media-creation/asset/{assetRelativePath}",
       "docPath": "brand/{slug}/{assetRelativePath}",
       "threadState": "continue",
-      "initialMessage": "Estoy mirando el asset \"{assetName}\" (`{assetRelativePath}`, kind={kind}). Dame un resumen y las opciones de refinamiento."
+      "initialMessage": "Estoy mirando el asset \"{assetName}\" (`{assetRelativePath}`, kind={kind}). Dame un resumen y las opciones de refinamiento.",
+      "nsKey": "asset",
+      "match": "prefix",
+      "reopenLinkedTo": "media-creation/asset/{rest}"
     },
     "visual-identity": {
       "threadId": "{slug}:visual-identity:{blockSafe}",
@@ -844,7 +859,10 @@
       "linkedTo": "media-creation/visual-identity/{blockSafe}",
       "docPath": "brand/{slug}/brand-book/visual-identity/DESIGN.md",
       "threadState": "continue",
-      "initialMessage": "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?"
+      "initialMessage": "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?",
+      "nsKey": "visual-identity",
+      "match": "prefix",
+      "reopenLinkedTo": "media-creation/visual-identity/{rest}"
     },
     "new-task": {
       "threadId": "{slug}:new-task:{nonce}",
@@ -854,7 +872,10 @@
       "agent": "sancho",
       "linkedTo": "new-task",
       "docPath": null,
-      "threadState": "continue"
+      "threadState": "continue",
+      "nsKey": "new-task",
+      "match": "prefix",
+      "reopenLinkedTo": "new-task"
     },
     "discovery-search": {
       "threadId": "{slug}:discovery-{campaignIdLower}",
@@ -865,7 +886,10 @@
       "linkedTo": "rocinante",
       "docPath": null,
       "threadState": "continue",
-      "initialMessage": "Repasemos y lancemos la búsqueda de creators \"{searchName}\" (campaña Yalc {campaignId}, Partnerships): revisa el plan de discovery — sectores, redes, tiers, volumen — y dime qué falta para lanzarla."
+      "initialMessage": "Repasemos y lancemos la búsqueda de creators \"{searchName}\" (campaña Yalc {campaignId}, Partnerships): revisa el plan de discovery — sectores, redes, tiers, volumen — y dime qué falta para lanzarla.",
+      "nsKey": "discovery",
+      "match": "prefix",
+      "reopenLinkedTo": "rocinante"
     },
     "discovery-search-new": {
       "threadId": "{slug}:discovery-new",
@@ -876,7 +900,10 @@
       "linkedTo": "rocinante",
       "docPath": null,
       "threadState": "create",
-      "initialMessage": "Quiero crear una nueva búsqueda de creators para Partnerships. Propón un plan de discovery — sectores con mejor fit, redes, tiers y volumen — y cuando lo cerremos lánzala como campaña Partnerships en Yalc."
+      "initialMessage": "Quiero crear una nueva búsqueda de creators para Partnerships. Propón un plan de discovery — sectores con mejor fit, redes, tiers y volumen — y cuando lo cerremos lánzala como campaña Partnerships en Yalc.",
+      "nsKey": "discovery",
+      "match": "prefix",
+      "reopenLinkedTo": "rocinante"
     },
     "od-generate": {
       "threadId": "{slug}:od-generate:{safe}{dsTag}",
@@ -887,7 +914,85 @@
       "linkedTo": "media-creation/od/{upstreamSkillId}",
       "docPath": null,
       "threadState": "create",
-      "initialMessage": "Genera un asset con la skill \"{upstreamSkillName}\" usando el DESIGN.md del brand. Pídeme los inputs que necesites antes de empezar."
+      "initialMessage": "Genera un asset con la skill \"{upstreamSkillName}\" usando el DESIGN.md del brand. Pídeme los inputs que necesites antes de empezar.",
+      "nsKey": "od-generate",
+      "match": "prefix",
+      "reopenLinkedTo": "media-creation/od/{rest}"
+    },
+    "content": {
+      "skill": "social-writer",
+      "skills": ["social-writer"],
+      "agent": "dulcinea",
+      "nsKey": "content",
+      "match": "prefix",
+      "reopenLinkedTo": "content/{rest}"
+    },
+    "idea": {
+      "skill": "seo-content",
+      "skills": ["seo-content"],
+      "agent": "dulcinea",
+      "nsKey": "idea",
+      "match": "prefix",
+      "reopenLinkedTo": "idea/{rest}"
+    },
+    "calendar": {
+      "skill": "content-calendar-planner",
+      "skills": ["content-calendar-planner"],
+      "agent": "dulcinea",
+      "nsKey": "calendar",
+      "match": "prefix",
+      "reopenLinkedTo": "calendar/{rest}"
+    },
+    "cron": {
+      "skill": "idea-generation",
+      "skills": ["idea-generation"],
+      "agent": "dulcinea",
+      "nsKey": "cron",
+      "match": "prefix",
+      "reopenLinkedTo": "cron/{rest}"
+    },
+    "project": {
+      "skill": "sancho-manager",
+      "skills": ["sancho-manager"],
+      "nsKey": "project",
+      "match": "prefix",
+      "reopenName": "restUpper",
+      "reopenLinkedTo": "projects/{restUpper}"
+    },
+    "competitor-scan": {
+      "skill": "atalaya",
+      "skills": ["atalaya"],
+      "nsKey": "competitor-scan",
+      "match": "exact",
+      "reopenLinkedTo": "tool/atalaya"
+    },
+    "meta-ads-scan": {
+      "skill": "atalaya",
+      "skills": ["atalaya"],
+      "nsKey": "meta-ads-scan",
+      "match": "exact",
+      "reopenLinkedTo": "tool/atalaya"
+    },
+    "linkedin-scan": {
+      "skill": "atalaya",
+      "skills": ["atalaya"],
+      "nsKey": "linkedin-scan",
+      "match": "exact",
+      "reopenLinkedTo": "tool/atalaya"
+    },
+    "strategy": {
+      "skill": "sancho",
+      "skills": ["sancho"],
+      "nsKey": "strategy",
+      "match": "prefix",
+      "reopenLinkedTo": "strategy/{rest}"
+    },
+    "recurring": {
+      "skill": "sancho",
+      "skills": ["sancho"],
+      "nsKey": "recurring",
+      "match": "prefix",
+      "reopenLinkedTo": "recurring/{rest}"
     }
   },
   "_threadOpeners_comment": "SAN-179 — openers (initialMessage) sueltos, templados con {slug}+{params}, para hilos cuya IDENTIDAD se construye con lógica propia del builder (no un chatEntry completo): conversión a HTML, setup de Meeting Intelligence. resolveOpener(key, vars) los lee. Sin agente (no son declaraciones de hilo).",

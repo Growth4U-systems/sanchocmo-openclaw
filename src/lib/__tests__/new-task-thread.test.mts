@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-const { buildNewTaskThread, instantiateEntry } = await import("../chat-openers");
+const { buildNewTaskThread, instantiateNamespace } = await import("../chat-openers");
 const { ownerCheckFindings } = await import("../data/task-blueprints");
 
 test("buildNewTaskThread → blank Sancho thread, ready to write", () => {
@@ -18,7 +18,7 @@ test("buildNewTaskThread → blank Sancho thread, ready to write", () => {
 
 test("each call is a fresh thread (deterministic via nonce param)", () => {
   assert.equal(
-    instantiateEntry("new-task", { slug: "growth4u", params: { nonce: "42" } }).threadId,
+    instantiateNamespace("new-task", { slug: "growth4u", params: { nonce: "42" } }).threadId,
     "growth4u:new-task:42",
   );
 });
