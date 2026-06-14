@@ -89,6 +89,13 @@ jobs:
           UNIPILE_API_KEY: ${{ secrets.UNIPILE_API_KEY }}
           UNIPILE_DSN: ${{ secrets.UNIPILE_DSN }}
           DATAFORSEO_API_KEY: ${{ secrets.DATAFORSEO_API_KEY }}
+          # ── R2 / Supabase / Cloudflare / Apify (secrets que vivían solo en el VPS) ──
+          R2_UPLOAD_IMAGE_ACCESS_KEY_ID: ${{ secrets.R2_UPLOAD_IMAGE_ACCESS_KEY_ID }}
+          R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY: ${{ secrets.R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           # ── Variables (non-sensitive config) ─────────────────────────
           BASE_URL: ${{ vars.BASE_URL }}
           NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
@@ -137,6 +144,10 @@ jobs:
               "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",
               "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID", "PAGESPEED_API_KEY",
               "UNIPILE_API_KEY", "UNIPILE_DSN", "DATAFORSEO_API_KEY",
+              # R2 / Supabase / Cloudflare / Apify
+              "R2_UPLOAD_IMAGE_ACCESS_KEY_ID", "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
+              "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY",
+              "CLOUDFLARE_ACCOUNT_ID", "APIFY_TOKEN",
               # Variables (non-sensitive config)
               "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL",
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE", "YALC_IMAGE",
