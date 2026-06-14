@@ -44,8 +44,9 @@ interface TaskShape {
 
 /** Prerequisite: the brand needs the `visual-identity` pillar task completed
  *  (Foundation L5) before we let a Visual Templates task be created. The
- *  visual-generator skill needs design-tokens.json + visual-identity-current.md
- *  to produce the HTMLs — without those it has nothing to consume.
+ *  visual-generator skill needs DESIGN.md (the source-of-truth produced by the
+ *  `design-system` skill; legacy fallback: design-tokens.json +
+ *  visual-identity.current.md) to produce the HTMLs — without it nothing to consume.
  *  SAN-183 F5: el status vive en la task 1:1 del pilar, no en foundation-state. */
 function checkVisualIdentityApproved(slug: string): { ok: true } | { ok: false; reason: string } {
   const covering = resolveCoveringTask(slug, "visual-identity");
@@ -59,7 +60,7 @@ function checkVisualIdentityApproved(slug: string): { ok: true } | { ok: false; 
   if (status === "completed") return { ok: true };
   return {
     ok: false,
-    reason: `El pillar visual-identity está en estado "${status}", no "completed". Lanza primero la skill visual-identity para definir paleta, tipografía y logo.`,
+    reason: `El pillar visual-identity está en estado "${status}", no "completed". Lanza primero la skill design-system para definir el DESIGN.md (paleta, tipografía y logo).`,
   };
 }
 
@@ -128,13 +129,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Prereq: visual-identity pillar must be approved before we let the
   // Visual Templates task land. Otherwise the visual-generator skill has
-  // no design-tokens.json / visual-identity-current.md to read from.
+  // no DESIGN.md to read from (legacy: design-tokens.json / visual-identity.current.md).
   const prereq = checkVisualIdentityApproved(slug);
   if (!prereq.ok) {
     return res.status(409).json({
       error: "Prerequisito no cumplido: visual-identity no está aprobado.",
       reason: prereq.reason,
-      remediation: "Lanza la skill visual-identity en Foundation Layer 5 antes de crear esta task.",
+      remediation: "Lanza la skill design-system en Foundation Layer 5 (produce el DESIGN.md) antes de crear esta task.",
     });
   }
 
@@ -146,7 +147,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     description:
       "Genera las 5 plantillas HTML brand-specific (linkedin-quote, linkedin-9-slide, " +
       "instagram-3-slide, blog-post, blog-title) ejecutando el skill " +
-      `${slug}-visual-generator. La skill lee design-tokens.json + visual-identity-current.md, ` +
+      `${slug}-visual-generator. La skill lee el DESIGN.md (source-of-truth), ` +
       "decide qué personajes incluir (Alfonso/Martín/Philippe), genera con nano-banana-pro " +
       "los assets faltantes, y produce los HTMLs en " +
       `brand/${slug}/brand-book/visual-identity/templates/{id}/. ` +

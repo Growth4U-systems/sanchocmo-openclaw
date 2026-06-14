@@ -77,9 +77,10 @@ test("canonicalizaciones documentadas respecto a reseed-foundation.sh", () => {
   assert.equal(byId("P00-FUL-T08").section, "brand-book");
   assert.equal(byId("P00-FUL-T09").section, "brand-book");
   // (4) deliverable_file canónico desde pillars[key].docPaths[0]
+  //     SAN-211: visual-identity → design-system; DESIGN.md es el source-of-truth.
   assert.equal(
     byId("P00-FUL-T09").deliverable_file,
-    "brand/innatica/brand-book/visual-identity/visual-identity.current.md",
+    "brand/innatica/brand-book/visual-identity/DESIGN.md",
   );
   // (7) singular pillar/section en el task de Company Brief
   const cb = golden["foundation-cb"].tasks[0];

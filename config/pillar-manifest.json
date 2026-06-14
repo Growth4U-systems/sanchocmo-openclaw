@@ -28,7 +28,7 @@
     "strategic-plan": {},
     "strategic-presentation": {},
     "visual-identity": {
-      "docPaths": ["brand-book/visual-identity/visual-identity.current.md", "brand-identity/visual-identity/visual-identity.current.md"]
+      "docPaths": ["brand-book/visual-identity/DESIGN.md", "brand-book/visual-identity/visual-identity.current.md", "brand-identity/visual-identity/visual-identity.current.md"]
     }
   },
   "_foundation_comment": "SAN-183 (F5) — la ESTRUCTURA de Foundation: secciones ordenadas por layer y, por pilar, su binding a la task que lo cubre (taskSets foundation-*, 1:1). Los doc paths canónicos NO se duplican aquí: viven en pillars[key].docPaths. El status de un pilar ES el status de su task (única fuente); el ensamblador de Brand Brain (brand-brain-assembler.ts) reconstruye el shape legacy de foundation-state desde este bloque + las tasks. Sustituye al árbol de config/foundation-state.default.json.",
@@ -416,17 +416,17 @@
           "id": "visual-identity",
           "taskKey": "T09",
           "name": "L5 — Visual Identity",
-          "skill": "visual-identity",
+          "skill": "design-system",
           "agent": "maese-pedro",
           "type": "foundation",
           "channel": "strategy",
-          "description": "Sistema visual: paleta, tipografía, logo guidelines, templates.",
-          "deliverable": "brand-book/visual-identity/visual-identity.current.md",
-          "deliverableFiles": ["brand-book/visual-identity/visual-identity.current.md"],
+          "description": "Sistema visual (DESIGN.md): paleta, tipografía, logo guidelines, illustration discipline.",
+          "deliverable": "brand-book/visual-identity/DESIGN.md",
+          "deliverableFiles": ["brand-book/visual-identity/DESIGN.md"],
           "pillar": "visual-identity",
           "section": "brand-book",
           "dependsOn": ["brand-voice"],
-          "extra": { "done_criteria": "Visual identity aprobada. Assets exportados." }
+          "extra": { "done_criteria": "DESIGN.md aprobado. Logo persistido. Listo para od-generate." }
         },
         {
           "id": "foundation-presentation",

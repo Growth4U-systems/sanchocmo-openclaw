@@ -8,7 +8,7 @@ Genera imágenes de marca para Growth4U usando el sistema visual aprobado.
 - **Paleta**: Navy `#032149`, Royal `#1a3690`, Electric `#3f45fe`, Sky `#45b6f7`, Teal `#0faec1`, Purple `#6351d5`
 - **Tipografía**: Manrope (títulos) + Roboto (cuerpo)
 - **Assets base**: `brand/growth4u/brand-identity/visual-identity/mockups/`
-- **Design tokens**: `brand/growth4u/brand-identity/visual-identity/design-tokens.json`
+- **Sistema visual (source-of-truth)**: `brand/growth4u/brand-book/visual-identity/DESIGN.md` — paleta, tipografía, illustration discipline, composición. (Legacy fallback: `design-tokens.json` + `visual-identity.current.md`.)
 - **Idea mapping**: `brand/growth4u/brand-identity/visual-identity/idea-mapping.md`
 
 ## Personajes disponibles
@@ -133,6 +133,7 @@ Lo escribe esta skill al final de cada ejecución. Es el índice que
   "brand_slug": "growth4u",
   "schema_version": "1",
   "updated_at": "2026-05-06T12:00:00Z",
+  "design_md_path": "DESIGN.md",
   "design_tokens_path": "design-tokens.json",
   "visual_identity_md_path": "visual-identity.current.md",
   "templates": {
@@ -339,10 +340,11 @@ skill las crea desde cero — no hay defaults del sistema.
 #### Step 0 — Prerequisito (BLOCKING)
 
 Antes de hacer NADA, verifica que el pillar `visual-identity` está
-`completed` en Foundation L5. Es el pillar que produce
-`design-tokens.json` (paleta + tipografía) y `visual-identity.current.md`
-(reglas de composición, personajes). Sin esos dos archivos no se puede
-producir ningún template — los templates los CONSUMEN, no los crean.
+`completed` en Foundation L5. Es el pillar que produce el `DESIGN.md`
+(paleta, tipografía, illustration discipline, reglas de composición) vía la
+skill `design-system`. Sin `DESIGN.md` no se puede producir ningún template
+— los templates lo CONSUMEN, no lo crean. (Brands sin migrar: fallback a
+`design-tokens.json` + `visual-identity.current.md`.)
 
 ```bash
 # Comprobación
@@ -354,9 +356,9 @@ Si el resultado NO es `completed`:
 
 ```
 ✗ Prerequisito no cumplido: visual-identity está en estado <X>.
-  Lanza primero la skill visual-identity (Foundation Layer 5):
+  Lanza primero la skill design-system (Foundation Layer 5):
   · Define paleta navy/teal/etc.
-  · Aprueba design-tokens.json
+  · Aprueba el DESIGN.md
   · Genera personajes (Alfonso, Martín, Philippe)
   Cuando esté completed, reanuda esta skill.
 PARA. No produzcas templates.
@@ -370,10 +372,11 @@ gateway sin pasar por MC).
 
 #### Step 1 — Lectura de contexto (read-only)
 
-- `brand/{slug}/brand-book/visual-identity/design-tokens.json` — paleta,
-  typography, gradients oficiales (incluido el `gradient.brand` multi-stop).
-- `brand/{slug}/brand-book/visual-identity/visual-identity.current.md` —
-  reglas de composición, personajes, anti-pegote.
+- `brand/{slug}/brand-book/visual-identity/DESIGN.md` — **source-of-truth**:
+  paleta, typography, gradients oficiales (incluido el `gradient.brand`
+  multi-stop), reglas de composición, personajes, anti-pegote, illustration
+  discipline. (Brands sin migrar: fallback a `design-tokens.json` +
+  `visual-identity.current.md`.)
 - `brand/{slug}/brand-book/brand-voice/brand-voice.current.md` — tone of
   voice, anti-AI-writing, signature patterns.
 - `brand/{slug}/brand-book/visual-identity/templates/{id}/` — versión actual del brand

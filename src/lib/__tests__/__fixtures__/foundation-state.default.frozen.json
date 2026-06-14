@@ -51,7 +51,7 @@
       "output_dir": "brand/__SLUG__/brand-book/",
       "pillars": {
         "brand-voice": {"status": "not-started", "layer": 5, "skill": "brand-voice", "output_file": "brand/__SLUG__/brand-book/brand-voice/brand-voice.current.md"},
-        "visual-identity": {"status": "not-started", "layer": 5, "skill": "visual-identity", "output_file": "brand/__SLUG__/brand-book/visual-identity/visual-identity.current.md"},
+        "visual-identity": {"status": "not-started", "layer": 5, "skill": "design-system", "output_file": "brand/__SLUG__/brand-book/visual-identity/DESIGN.md"},
         "brand-report": {"status": "not-started", "layer": 5, "optional": true, "skill": "html-output", "output_file": "brand/__SLUG__/brand-book/brand-report.html"}
       }
     },

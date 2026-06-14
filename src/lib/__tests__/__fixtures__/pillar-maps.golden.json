@@ -58,6 +58,7 @@
       "presentations/strategic-deck.html"
     ],
     "visual-identity": [
+      "brand-book/visual-identity/DESIGN.md",
       "brand-book/visual-identity/visual-identity.current.md",
       "brand-identity/visual-identity/visual-identity.current.md"
     ]
@@ -80,7 +81,7 @@
     "self-analysis": "self-intelligence",
     "strategic-plan": "strategic-plan",
     "strategic-presentation": "frontend-slides",
-    "visual-identity": "visual-identity"
+    "visual-identity": "design-system"
   },
   "chatConfig": {
     "brand-report": {
@@ -203,9 +204,9 @@
       "agent": "maese-pedro"
     },
     "visual-identity": {
-      "skill": "visual-identity",
+      "skill": "design-system",
       "skills": [
-        "visual-identity"
+        "design-system"
       ],
       "agent": "maese-pedro"
     }
