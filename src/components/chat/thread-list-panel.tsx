@@ -34,12 +34,13 @@ import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet } from "@/lib/task-status
 
 /**
  * Extrae la clave de tarea (lowercase) de un shortId de hilo. Los hilos de
- * tarea son `task:<id>` o `<algo>:task:<id>`. Devuelve null para hilos sin
- * tarea (Pilares Foundation, libres, proyectos, ideas…) → esos no llevan
- * badge de estado ni acción de archivar.
+ * tarea llegan como `task-<id>` (el thread store reemplaza `:`→`-` al
+ * persistir el fichero) o, en su forma canónica, `task:<id>` /
+ * `<algo>:task:<id>`. Devuelve null para hilos sin tarea (Pilares Foundation,
+ * libres, proyectos, ideas…) → esos no llevan badge ni acción de archivar.
  */
 function taskKeyFromShortId(shortId: string): string | null {
-  const m = shortId.match(/(?:^|:)task:(.+)$/);
+  const m = shortId.match(/(?:^|:)task[:-](.+)$/i);
   return m ? m[1].toLowerCase() : null;
 }
 
@@ -136,23 +137,19 @@ export function ThreadListPanel({
       if (filter === "unread") {
         result = result.filter((t) => t.hasUnread);
       } else if (filter === "tasks") {
-        result = result.filter((t) =>
-          t.shortId.startsWith("task:") || t.shortId.match(/^[^:]+:task:/)
-        );
+        result = result.filter((t) => taskKeyFromShortId(t.shortId) !== null);
       } else if (filter === "foundation") {
+        // Solo hilos de Pilar: ni tarea, ni proyecto/estrategia/recurrente/idea,
+        // ni el general. Los separadores llegan como `:` (canónico) o `-` (al
+        // persistir el fichero), así que se contemplan ambos.
         result = result.filter((t) => {
           const sid = t.shortId;
-          return (
-            !sid.includes("task:") &&
-            !sid.includes("project:") &&
-            !sid.includes("strategy:") &&
-            !sid.includes("recurring:") &&
-            !sid.includes("idea:") &&
-            !sid.includes("general")
-          );
+          if (taskKeyFromShortId(sid)) return false;
+          if (/(?:^|:)(project|strategy|recurring|idea)[:-]/i.test(sid)) return false;
+          return !sid.includes("general");
         });
       } else if (filter === "projects") {
-        result = result.filter((t) => t.shortId.includes("project:"));
+        result = result.filter((t) => /(?:^|:)project[:-]/i.test(t.shortId));
       }
     }
 
