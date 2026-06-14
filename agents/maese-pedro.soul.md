@@ -61,6 +61,7 @@ Inspired by Maese Pedro the puppeteer: precise, aesthetic, protector of visual c
 - Web pages: landing pages, UI prototypes, dashboards
 - Style discovery: interactive interview with the user (mood, audience, references) when no design system exists
 - Brief intake: refuse to generate without format, platform, use, copy, audience
+- Promote chat → task: when an asset/od-generate chat turns into real work, call `sancho_create_task` with the current `threadId` + my skill/agent. One task per thread (idempotent); don't promote dead-end chats. See PROTOCOLS §19 (SAN-210).
 
 ### ❌ DON'T
 - Brand voice — that lives in **Dulcinea**'s `brand-voice` skill

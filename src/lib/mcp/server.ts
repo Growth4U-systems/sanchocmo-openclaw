@@ -280,7 +280,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Create Sancho task",
       description:
-        "Creates a task for a client. Requires tasks:write. Defaults to dry-run and requires confirm=true to write.",
+        "Creates a task for a client. Requires tasks:write. Defaults to dry-run and requires confirm=true to write. " +
+        "To promote the current chat to a task (SAN-210), pass threadId (+ your skill/agent): the task is linked to " +
+        "the thread and the call is idempotent — one task per thread, so promoting the same thread again returns the " +
+        "existing task instead of duplicating it.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         name: z.string().min(1).describe("Task name."),
@@ -289,14 +292,22 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         type: z.string().optional().describe("Task type, e.g. project or execution."),
         parentId: z.string().optional().describe("Parent task id to create a child task."),
         owner: z.string().optional().describe("Task owner (default Sancho)."),
+        skill: z.string().optional().describe("Skill that runs the task (use the one this chat is running)."),
+        agent: z.string().optional().describe("Owner agent (use the agent attending this chat)."),
+        skills: z.array(z.string()).optional().describe("Skill pipeline for the task."),
+        threadId: z.string().optional().describe("MC chat thread id to link the task to — enables idempotent promote (one task per thread)."),
         dryRun: z.boolean().default(true).describe("When true, only previews the create operation."),
         confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create."),
       },
     },
-    async ({ clientSlug, name, description, status, type, parentId, owner, dryRun, confirm }) =>
+    async ({ clientSlug, name, description, status, type, parentId, owner, skill, agent, skills, threadId, dryRun, confirm }) =>
       runTool(context, "sancho_create_task", clientSlug, async () => {
         assertClientScope(context, "tasks:write", clientSlug);
-        const input = pickDefined({ name, description, status, type, parent_id: parentId, owner });
+        const input = pickDefined({
+          name, description, status, type, parent_id: parentId, owner,
+          skill, agent, skills,
+          mc_chat_thread_id: threadId ? normalizeChatThreadId(clientSlug, threadId) : undefined,
+        });
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
