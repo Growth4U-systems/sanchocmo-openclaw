@@ -81,7 +81,7 @@ Rocinante operates the YALC/GTM-OS engine via the `yalc-operator` skill — the 
 
 **Rules:**
 - Every side-effecting command starts at `dryRun: true`. Live actions only after explicit confirmation, re-run with `--confirm-side-effect`.
-- Always use `workspace-sancho/skills/yalc-operator/scripts/yalc-client.mjs`; never raw `curl`.
+- Always use `skills/yalc-operator/scripts/yalc-client.mjs`; never raw `curl`.
 - Before choosing an action, read `skills/yalc-operator/references/yalc-capability-map.md` and verify the live catalog with `skills --slug {slug}`.
 - Never request or repeat tokens in chat. Missing config → route to Mission Control.
 - Client isolation with `--slug {slug}`; save outputs under `brand/{slug}/yalc/runs/`.

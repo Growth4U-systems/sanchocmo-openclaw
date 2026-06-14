@@ -162,6 +162,38 @@ test("instantiateTaskSet('content') reproduces the legacy create-project spec (+
   assert.deepEqual(instantiateTaskSet("content", { slug, projectId }), expected);
 });
 
+// ── SAN-195: Outreach task sets (setup + per-search campaign) ──────
+// Structural contract (drift guard) — description prose stays free to edit.
+const project = (t: { [k: string]: unknown }) => ({
+  id: t.id,
+  type: t.type,
+  channel: t.channel,
+  status: t.status,
+  skill: t.skill,
+  agent: t.agent,
+  depends_on: t.depends_on,
+  hasDeliverableFile: t.deliverable_file !== undefined,
+  thread: t.mc_chat_thread_id,
+  done_criteria: t.done_criteria,
+});
+
+test("instantiateTaskSet('outreach-setup') — contract (rocinante; integration tasks omit deliverable_file)", () => {
+  assert.deepEqual(instantiateTaskSet("outreach-setup", { slug: "growth4u", projectId: "P09" }).map(project), [
+    { id: "P09-T01", type: "integration", channel: "prospecting", status: "todo", skill: "yalc-operator", agent: "rocinante", depends_on: null, hasDeliverableFile: false, thread: "task-p09-t01", done_criteria: "Al menos un proveedor de envío y uno de datos con test de salud OK en el cockpit de YALC." },
+    { id: "P09-T02", type: "outreach", channel: "strategy", status: "todo", skill: "outreach-playbook", agent: "rocinante", depends_on: null, hasDeliverableFile: true, thread: "task-p09-t02", done_criteria: "Outreach Playbook aprobado con discovery-guide y plantillas base." },
+    { id: "P09-T03", type: "integration", channel: "prospecting", status: "todo", skill: "yalc-operator", agent: "rocinante", depends_on: ["P09-T01", "P09-T02"], hasDeliverableFile: false, thread: "task-p09-t03", done_criteria: "Provision OK: YALC responde con el brain del brand cargado." },
+  ]);
+});
+
+test("instantiateTaskSet('outreach-campaign') — contract (runner → enrich → sequences → launch)", () => {
+  assert.deepEqual(instantiateTaskSet("outreach-campaign", { slug: "growth4u", projectId: "P09" }).map(project), [
+    { id: "P09-T01", type: "execution", channel: "prospecting", status: "todo", skill: "discovery-search-runner", agent: "rocinante", depends_on: null, hasDeliverableFile: false, thread: "task-p09-t01", done_criteria: "Runner completado: candidatos insertados con quality score." },
+    { id: "P09-T02", type: "execution", channel: "prospecting", status: "todo", skill: "contact-enrichment", agent: "rocinante", depends_on: "P09-T01", hasDeliverableFile: false, thread: "task-p09-t02", done_criteria: "Contactos enriquecidos con email válido cuando aplica." },
+    { id: "P09-T03", type: "execution", channel: "prospecting", status: "todo", skill: "outreach-sequence-builder", agent: "rocinante", depends_on: "P09-T01", hasDeliverableFile: false, thread: "task-p09-t03", done_criteria: "Secuencia revisable guardada en la campaña de YALC." },
+    { id: "P09-T04", type: "execution", channel: "prospecting", status: "todo", skill: "yalc-operator", agent: "rocinante", depends_on: ["P09-T02", "P09-T03"], hasDeliverableFile: false, thread: "task-p09-t04", done_criteria: "Campaña live confirmada y reportada." },
+  ]);
+});
+
 test("unknown task set throws", () => {
   assert.throws(() => instantiateTaskSet("nope", { slug: "x", projectId: "P1" }));
   assert.equal(getTaskSet("nope"), undefined);

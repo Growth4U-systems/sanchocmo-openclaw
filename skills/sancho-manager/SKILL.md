@@ -36,7 +36,7 @@ context_writes:
 
 ```
 1. ¿Hay contexto de proyecto activo?
-   - Hilo Discord contiene [P{XX}] → MODE = PROJECT
+   - El hilo de chat referencia [P{XX}] → MODE = PROJECT
    - Usuario menciona P{XX} explícitamente → MODE = PROJECT
 
 2. ¿Pide status general sin proyecto específico?
@@ -183,7 +183,6 @@ Al aprobar:
      "objective": { "description": "...", "metric": "...", "baseline": 0, "target": 0, "unit": "..." },
      "strategy": { "catalog_id": null, "description": "..." },
      "channels": ["..."],
-     "discord": { "project_thread_id": null, "project_channel": "projects" },
      "tasks_total": N,
      "tasks_completed": 0,
      "value_review": null
@@ -195,17 +194,20 @@ Al aprobar:
      "project_id": "P{XX}",
      "tasks": [
        {
-         "id": "T01",
+         "id": "P{XX}-T01",
          "name": "...",
          "description": "...",
          "deliverable": "...",
          "done_criteria": "...",
          "depends_on": null,
-         "status": "pending",
+         "status": "todo",
          "owner": "Sancho",
+         "agent": "{owner del skill}",
          "channel": "...",
-         "discord_thread_id": null,
+         "type": "...",
          "skill": "...",
+         "deliverable_file": "brand/{slug}/.../output.md",
+         "mc_chat_thread_id": "task-p{xx}-t01",
          "created": "{hoy}",
          "completed": null,
          "output_files": [],
@@ -214,10 +216,10 @@ Al aprobar:
      ]
    }
    ```
+   > **Anchors obligatorios** (los 3, en cada task): `skill` + `deliverable_file` + `mc_chat_thread_id` (= `task-{id en minúsculas}`). `status` arranca en `todo` (vocabulario canónico de [task-status]; nunca `pending`). `agent` = owner del skill (ver [channel-skill-map.md](references/channel-skill-map.md)). Tasks `type: integration`/`execution` pueden omitir `deliverable_file`.
 4. **Crear `projects/P{XX}/playbook.md`** — Resumen con links a playbooks de tareas
 5. **Crear `projects/P{XX}/T{YY}/playbook.md`** — Por cada tarea, instrucciones detalladas
-6. **Regenerar MC data:** `python3 scripts/regenerate.py` (para que MC refleje el nuevo proyecto)
-8. **Ofrecer crear hilos Discord** — "¿Creo los hilos en Discord?" → Si sí, seguir `_system/project-threads-protocol.md` (resolver channel IDs desde `brand/{slug}/discord-channels.json` primero; si no existe, ejecutar `message(action=channel-list)` para crearlo)
+6. **Crear el hilo de chat vacío** de cada task en `brand/{slug}/chat/{mc_chat_thread_id}.json` (`{ "messages": [], "createdAt": "{hoy}" }`). Mission Control lee `tasks.json` + estos hilos **en vivo** — no hay paso de regeneración.
 
 ---
 
@@ -230,21 +232,17 @@ Detectar sub-modo:
 ### Add Task
 
 1. Leer `tasks.json` → determinar siguiente T{YY}
-2. Proponer tarea con todos los campos obligatorios (usar `depends_on: "P{XX}-T{YY}"` formato completo)
+2. Proponer tarea con todos los campos obligatorios + los 3 anchors (`depends_on: "P{XX}-T{YY}"` formato completo)
 3. **ESPERAR aprobación**
-4. Crear en `tasks.json` + crear `T{YY}/playbook.md`
-5. Actualizar `tasks_total` en `project.json`
-6. **Regenerar MC data:** `python3 scripts/regenerate.py`
-7. Ofrecer crear hilo Discord en canal temático
+4. Crear en `tasks.json` (status `todo`) + `T{YY}/playbook.md` + el hilo de chat vacío `brand/{slug}/chat/{mc_chat_thread_id}.json`
+5. Actualizar `tasks_total` en `project.json` (MC lo refleja en vivo)
 
 ### Edit Task
 
 1. Leer `tasks.json` → encontrar tarea por ID
 2. Presentar campos actuales, proponer cambios
 3. **ESPERAR aprobación**
-4. Actualizar campos en `tasks.json` + actualizar `T{YY}/playbook.md` si aplica
-5. **Regenerar MC data:** `python3 scripts/regenerate.py`
-6. Si el hilo Discord existe y cambió el nombre → renombrar hilo
+4. Actualizar campos en `tasks.json` + actualizar `T{YY}/playbook.md` si aplica (MC lo refleja en vivo)
 
 ### Status Review
 
@@ -278,19 +276,13 @@ Trigger: todas las tareas completadas O `review_date` alcanzada.
 1. Leer `project.json` — objetivo, métricas baseline/target
 2. Obtener métricas actuales (preguntar al usuario si no disponibles)
 3. Generar `value-review.md` siguiendo template de [data-model.md](../strategic-plan/references/data-model.md)
-4. Actualizar `project.json` → status = `reviewed`
-5. **Regenerar MC data:** `python3 scripts/regenerate.py`
-7. Renombrar hilo Discord: `✅ [P{XX}] {nombre} — Reviewed`
-8. Si learnings sugieren acción → proponer nuevo proyecto (vuelve a Mode GENERAL)
+4. Actualizar `project.json` → status = `reviewed` (MC lo refleja en vivo)
+5. Si learnings sugieren acción → proponer nuevo proyecto (vuelve a Mode GENERAL)
 
 ### Close / Cancel
 
 1. Confirmar con usuario
-2. Actualizar status en `project.json`
-3. **Regenerar MC data:** `python3 scripts/regenerate.py`
-4. Renombrar hilo Discord según protocolo:
-   - Completed: `✅ [P{XX}] {nombre}`
-   - Cancelled: `❌ [P{XX}] {nombre}`
+2. Actualizar status en `project.json` (`completed`/`cancelled`; MC lo refleja en vivo)
 
 ---
 
@@ -387,12 +379,11 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 - [ ] Skills asignados existen en `skills/` directory
 - [ ] Owner = "Sancho" por defecto, "Equipo" solo si requiere acción humana genuina
 - [ ] Carpeta `P{XX}/` creada con `project.json` válido
+- [ ] Cada task tiene sus 3 anchors (`skill` + `deliverable_file` + `mc_chat_thread_id`) y status `todo`
+- [ ] Hilo de chat vacío creado en `brand/{slug}/chat/{mc_chat_thread_id}.json` por task
 - [ ] Alignment check ejecutado vs strategic plan (si existe)
 - [ ] Estimaciones usan velocidad-AI (no timelines de agencia)
 - [ ] `description` y `approach` escritos para ser legibles por cualquiera (no técnico)
-- [ ] `python3 scripts/regenerate.py` ejecutado después de crear/actualizar proyectos o tareas
-- [ ] Hilos Discord mencionan al usuario (`<@{sender_id}>`) en el primer mensaje
-- [ ] Links cruzados: proyecto→tareas + tarea→proyecto en Discord
 - [ ] Links al usuario usan MC tokenizado (nunca rutas de archivo)
 
 ---
@@ -408,5 +399,5 @@ Antes de crear/presentar cualquier proyecto o tarea, verificar:
 | Lee de | `skills/strategic-plan/references/strategies-catalog.json` | Vincular tareas a estrategias del catálogo (poblar `strategy.catalog_id` en project.json) |
 | Escribe | project.json, tasks.json, playbook.md | Artefactos de proyecto |
 | Escribe | projects/P{XX}/project.json | Datos del proyecto (el filesystem es el registro) |
+| Escribe | brand/{slug}/chat/{mc_chat_thread_id}.json | Hilo de chat vacío por task (anchor) |
 | Encadena con | Skills de ejecución | Via dispatch para ejecutar tareas |
-| Encadena con | `project-threads-protocol.md` | Para creación de hilos Discord |

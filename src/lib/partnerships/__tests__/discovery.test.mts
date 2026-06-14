@@ -270,17 +270,29 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
   assert.equal(campaignBody.disqualifyThreshold, 40);
   assert.equal(created.campaignId, "camp-monzo-1");
 
-  // Búsqueda persistida con runner encolado + tarea Outreach madre.
+  // Búsqueda persistida con runner encolado + proyecto de campaña sembrado (SAN-195).
   assert.equal(created.search.runner.status, "queued");
   assert.equal(created.search.campaignId, "camp-monzo-1");
-  assert.ok(created.taskId, "tarea Outreach creada");
+  const projectId = created.search.projectId;
+  assert.ok(projectId, "proyecto de campaña creado");
+  assert.equal(created.taskId, `${projectId}-T01`, "tarea madre = T01 (runner)");
   firstTaskId = created.taskId;
-  const taskFile = path.join(tmp, "brand", "monzo", "projects", String(created.taskId), "project.json");
-  const task = JSON.parse(fs.readFileSync(taskFile, "utf-8")) as Record<string, unknown>;
-  assert.equal(task.type, "outreach");
-  assert.equal(task.skill, "discovery-search-runner");
-  assert.match(String(task.description), /camp-monzo-1/);
-  assert.deepEqual(task.output_files, [`outreach/searches/${created.search.id}.json`]);
+
+  // project.json: type=project, category outreach-campaign, referencia la campaña.
+  const projDir = path.join(tmp, "brand", "monzo", "projects", String(projectId));
+  const proj = JSON.parse(fs.readFileSync(path.join(projDir, "project.json"), "utf-8")) as Record<string, unknown>;
+  assert.equal(proj.category, "outreach-campaign");
+  assert.match(String(proj.description), /camp-monzo-1/);
+  assert.equal(proj.seedFromTaskSet, undefined, "seed directive no se filtra a project.json");
+
+  // tasks.json: el task-set outreach-campaign sembrado y anclado.
+  const seeded = JSON.parse(fs.readFileSync(path.join(projDir, "tasks.json"), "utf-8")) as Array<Record<string, unknown>>;
+  assert.equal(seeded.length, 4, "4 tareas sembradas (runner→enrich→sequences→launch)");
+  assert.equal(seeded[0].id, `${projectId}-T01`);
+  assert.equal(seeded[0].skill, "discovery-search-runner");
+  assert.equal(seeded[0].agent, "rocinante");
+  assert.equal(seeded[0].mc_chat_thread_id, `task-${String(projectId).toLowerCase()}-t01`);
+  assert.equal(seeded[3].skill, "yalc-operator");
 
   // Runner en modo fixtures: 9 creators fake, sin ScrapeCreators.
   const run = await lib.runDiscoverySearch({ slug: "monzo", searchId: created.search.id, fixtures: true });
@@ -323,8 +335,9 @@ test("runDiscoverySearch sin candidatos explica el camino agentic y marca error"
     slug: "monzo",
     plan: { title: "Sin candidatos", sectors: ["fintech"], networks: ["instagram"] },
   });
-  // Regresión: cada búsqueda crea SU tarea (P00 nunca debe reciclarse).
+  // Regresión: cada búsqueda crea SU proyecto/tarea (nunca debe reciclarse).
   assert.ok(created.taskId, "segunda tarea creada");
+  assert.ok(created.search.projectId, "segundo proyecto creado");
   assert.notEqual(created.taskId, firstTaskId, "task id distinto por búsqueda");
   await assert.rejects(
     () => lib.runDiscoverySearch({ slug: "monzo", searchId: created.search.id }),

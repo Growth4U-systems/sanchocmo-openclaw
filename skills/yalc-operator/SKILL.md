@@ -19,6 +19,8 @@ context_required:
 context_writes:
   - brand/{slug}/yalc/runs/
   - brand/{slug}/operational/learnings.md
+  - brand/{slug}/projects/P*/tasks.json
+  - brand/{slug}/chat/
 ---
 
 # Yalc Agent Operator
@@ -56,7 +58,7 @@ The wrapper also reads `brand/{slug}/.env` if present.
 
 ## Commands
 
-Use these from `workspace-sancho/`:
+Run these from the agent workspace (`skills/` resolves to the central skills catalog — this skill is owned by Rocinante):
 
 ```bash
 node skills/yalc-operator/scripts/yalc-client.mjs health --slug growth4u
@@ -208,6 +210,44 @@ Chat copy is not enough. Yalc Agent must persist a YALC campaign draft before In
 Never jump from chat copy directly to an Instantly placeholder campaign when no YALC campaign ID exists. If the user says "crea la campana para revisar", that means create the YALC draft, not a live external campaign.
 
 Never say a campaign is ready for approval if the YALC draft has no email sequence saved. In that case, generate the sequence and attach it with `add-campaign-step` first.
+
+## Crear task de seguimiento al confirmar (manager-intake)
+
+La consola YALC es una herramienta persistente; lo que se materializa como **task** en Mission Control es el **trabajo que lanzas desde ella**: una **campaña** que se publica/lanza o una **búsqueda de discovery** que se confirma. Crea la task **al confirmar**, nunca al abrir el chat (confirm-first, igual que `sancho-manager`).
+
+**Cuándo crear la task**
+- Tras `campaign-publish`/`campaign-live` confirmado → 1 task de campaña (seguimiento del run).
+- Al confirmar una nueva búsqueda de discovery desde la consola (si no la creó ya la app vía "Nueva búsqueda") → 1 task de búsqueda.
+- No dupliques: si la búsqueda/campaña ya tiene una task (la app pudo sembrarla), añade el resultado a esa task en vez de crear otra.
+
+**Cómo (confirm-first)**
+1. **Propón, no ejecutes.** "Esto lo registro como una task de seguimiento: «{resumen}». ¿La creo? La asignaría a **Rocinante** (skill `yalc-operator`)." Recoge lo mínimo que falte (máx 2 preguntas).
+2. **Espera confirmación explícita** ("sí, créala").
+3. **Crea la task** (recién aquí), añadida al proyecto de Outreach activo (`project.category == "outreach"`) si existe; si no, a un proyecto ligero. Shape canónico (los **3 anchors**: `skill` + `deliverable_file` + `mc_chat_thread_id`; status `todo`):
+   ```json
+   {
+     "id": "P{XX}-T{YY}",
+     "name": "Campaña: {título}",
+     "description": "Seguimiento del run de la campaña/búsqueda lanzada desde YALC.",
+     "deliverable": "Run de la campaña en brand/{slug}/yalc/runs/",
+     "done_criteria": "Campaña lanzada y reportada.",
+     "depends_on": null,
+     "status": "todo",
+     "owner": "Sancho",
+     "agent": "rocinante",
+     "channel": "prospecting",
+     "type": "execution",
+     "skill": "yalc-operator",
+     "deliverable_file": "brand/{slug}/yalc/runs/{run-id}.json",
+     "mc_chat_thread_id": "task-p{xx}-t{yy}",
+     "created": "{hoy}",
+     "completed": null,
+     "output_files": []
+   }
+   ```
+4. Crea el **hilo de chat vacío** `brand/{slug}/chat/{mc_chat_thread_id}.json` (`{ "messages": [], "createdAt": "{hoy}" }`) y actualiza `tasks_total` en `project.json`. Mission Control lee `tasks.json` **en vivo** — sin paso de regeneración.
+
+> Para búsquedas de discovery cuyo ejecutor es `discovery-search-runner`, usa `skill: "discovery-search-runner"` (también owner Rocinante) y `deliverable_file` la ruta de la búsqueda.
 
 ## Current Limitation
 

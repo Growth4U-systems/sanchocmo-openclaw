@@ -82,35 +82,35 @@ export async function createDiscoverySearch(options: {
     updatedAt: now.toISOString(),
   };
 
-  // 3 · Tarea Outreach madre — guarda plan + campaignId + estado del runner
-  //     (el detalle vive en el JSON de la búsqueda, referenciado en la tarea).
+  // 3 · Proyecto de campaña (SAN-195) — al generar una nueva búsqueda se siembra
+  //     el task-set `outreach-campaign` (búsqueda+scoring → enriquecer →
+  //     secuencias → lanzar) reutilizando el creador genérico (seedFromTaskSet).
+  //     La tarea madre = T01 del proyecto (el runner); el detalle del estado vive
+  //     en el JSON de la búsqueda, referenciado en la tarea.
   let taskId: string | null = null;
+  let projectId: string | null = null;
   try {
-    const task = await createTask(slug, {
-      name: `Búsqueda · ${plan.title}`,
-      type: DISCOVERY_TASK_TYPE,
-      channel: "outreach",
+    const project = await createTask(slug, {
+      type: "project",
+      name: `Campaña · ${plan.title}`,
+      category: "outreach-campaign",
       status: "in-progress",
       owner: "Sancho",
-      agent: "rocinante",
-      skill: DISCOVERY_RUNNER_SKILL,
       description:
-        `Búsqueda de creators (discovery-plan-builder).\n\n${describePlan(plan)}\n\n` +
-        `Campaign Yalc: ${campaignId}\nBúsqueda: ${searchId} (outreach/searches/${searchId}.json)`,
-      brief: `Descubrir ~${plan.targetVolume ?? 40} creators de ${plan.sectors.join(", ")} en ${plan.networks.join("+")} y puntuarlos con quality score.`,
-      completion:
-        "Runner completado: candidatos insertados en la campaign de Yalc con quality score (5 componentes); " +
-        "los < umbral entran Disqualified con nota auto y el resto Sourced para triaje humano.",
-      deliverable: `Leads scoreados en la campaign ${campaignId} (Outreach · Encuentra)`,
-      output_files: [searchRelativePath(searchId)],
+        `Campaña de outreach a partir de la búsqueda de creators (discovery-plan-builder).\n\n${describePlan(plan)}\n\n` +
+        `Campaign Yalc: ${campaignId}\nBúsqueda: ${searchId} (${searchRelativePath(searchId)})`,
+      seedFromTaskSet: "outreach-campaign",
     });
-    taskId = (task as { id?: string })?.id ?? null;
+    projectId = (project as { id?: string })?.id ?? null;
+    // T01 del set es el runner (discovery-search-runner) → tarea madre de la búsqueda.
+    taskId = projectId ? `${projectId}-T01` : null;
   } catch (err) {
-    // La búsqueda sigue siendo operable sin tarea (p.ej. workspace sin tasks);
+    // La búsqueda sigue siendo operable sin proyecto (p.ej. workspace sin tasks);
     // se registra y se continúa — el runner no depende de la tarea.
-    console.error(`[partnerships] createTask failed for search ${searchId} (${slug}):`, err);
+    console.error(`[partnerships] seed campaign project failed for search ${searchId} (${slug}):`, err);
   }
 
+  record.projectId = projectId;
   record.taskId = taskId;
   let search = saveSearch(record);
 

@@ -673,6 +673,116 @@
           "extra": { "done_criteria": "Deck estratégico generado y revisado con el cliente." }
         }
       ]
+    },
+    "outreach-setup": {
+      "label": "Outreach",
+      "tasks": [
+        {
+          "id": "connect-providers",
+          "taskKey": "T01",
+          "name": "Conectar proveedores de Outreach",
+          "skill": "yalc-operator",
+          "agent": "rocinante",
+          "type": "integration",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Conectar y verificar los proveedores que YALC necesita para operar: envío de email (Instantly o Gmail) y datos/enrichment (Apollo, Hunter…). Se hace desde el cockpit de YALC → pestaña Providers (/api/yalc/providers/*): añadir API key, test de salud verde.",
+          "deliverable": "Proveedores de envío y datos conectados y verificados en YALC.",
+          "dependsOn": [],
+          "extra": { "done_criteria": "Al menos un proveedor de envío y uno de datos con test de salud OK en el cockpit de YALC." }
+        },
+        {
+          "id": "outreach-strategy",
+          "taskKey": "T02",
+          "name": "Definir estrategia de Outreach",
+          "skill": "outreach-playbook",
+          "agent": "rocinante",
+          "type": "outreach",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Ejecutar outreach-playbook para definir la estrategia: stack y dominios de envío, canales, volumen y cadencia, ECPs objetivo, discovery-guide por ECP y plantillas base de secuencias.",
+          "deliverable": "Outreach Playbook del cliente (estrategia, discovery-guide y plantillas base).",
+          "deliverableFiles": ["outreach-playbook/outreach-playbook.current.md"],
+          "outputFiles": ["outreach-playbook.current.md", "discovery-guide.md", "sequence-templates.md"],
+          "dependsOn": [],
+          "extra": { "done_criteria": "Outreach Playbook aprobado con discovery-guide y plantillas base." }
+        },
+        {
+          "id": "provision-brain",
+          "taskKey": "T03",
+          "name": "Provisionar el brain de YALC",
+          "skill": "yalc-operator",
+          "agent": "rocinante",
+          "type": "integration",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Provisionar el brain de YALC con el contexto del brand (docs de Foundation aprobados: ECPs, positioning, brand-voice) vía POST /api/yalc/provision, para que YALC pueda cualificar y secuenciar alineado con la marca.",
+          "deliverable": "Brain de YALC provisionado con el contexto del brand.",
+          "dependsOn": ["connect-providers", "outreach-strategy"],
+          "extra": { "done_criteria": "Provision OK: YALC responde con el brain del brand cargado." }
+        }
+      ]
+    },
+    "outreach-campaign": {
+      "label": "Campaña de Outreach",
+      "tasks": [
+        {
+          "id": "discovery-run",
+          "taskKey": "T01",
+          "name": "Ejecutar búsqueda y scoring",
+          "skill": "discovery-search-runner",
+          "agent": "rocinante",
+          "type": "execution",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Ejecutar la búsqueda confirmada: sourcing de candidatos en las redes/segmentos del plan e inserción en la campaña de YALC con quality score (los < umbral entran Disqualified, el resto Sourced para triaje humano).",
+          "deliverable": "Candidatos scoreados en la campaña de YALC.",
+          "dependsOn": [],
+          "extra": { "done_criteria": "Runner completado: candidatos insertados con quality score." }
+        },
+        {
+          "id": "enrich-contacts",
+          "taskKey": "T02",
+          "name": "Enriquecer contactos",
+          "skill": "contact-enrichment",
+          "agent": "rocinante",
+          "type": "execution",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Enriquecer los contactos cualificados (emails, perfiles, datos de contacto) para dejarlos listos para secuenciar.",
+          "deliverable": "Contactos cualificados enriquecidos y listos para outreach.",
+          "dependsOn": ["discovery-run"],
+          "extra": { "done_criteria": "Contactos enriquecidos con email válido cuando aplica." }
+        },
+        {
+          "id": "build-sequences",
+          "taskKey": "T03",
+          "name": "Construir secuencias de outreach",
+          "skill": "outreach-sequence-builder",
+          "agent": "rocinante",
+          "type": "execution",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Construir la secuencia multi-paso de outreach (subject lines, body, delays, variables) para esta campaña, partiendo de las plantillas base del Outreach Playbook.",
+          "deliverable": "Secuencia de outreach lista para revisión y aprobación.",
+          "dependsOn": ["discovery-run"],
+          "extra": { "done_criteria": "Secuencia revisable guardada en la campaña de YALC." }
+        },
+        {
+          "id": "launch-campaign",
+          "taskKey": "T04",
+          "name": "Lanzar campaña",
+          "skill": "yalc-operator",
+          "agent": "rocinante",
+          "type": "execution",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Cerrar el ciclo en YALC: aprobar la secuencia, dry-run en Instantly, publicar y lanzar live (cada paso con confirmación humana explícita).",
+          "deliverable": "Campaña lanzada en Instantly vía YALC.",
+          "dependsOn": ["enrich-contacts", "build-sequences"],
+          "extra": { "done_criteria": "Campaña live confirmada y reportada." }
+        }
+      ]
     }
   },
   "_chatEntries_comment": "SAN-167 F2 — on-demand chat-opener BUTTONS declared once. Each button's skill/skills/agent/threadId/initialMessage live here (not hardcoded in chat-openers.ts). instantiateEntry(key, {slug, params}) substitutes {slug}+{params} into the templates and returns a ThreadConfig. Agent is EXPLICIT (validated by ownerCheckFindings). Builders are thin wrappers that prepare params + override the few runtime-only fields (e.g. yalc initialMessage = the passed prompt; skill-editor docPath).",
