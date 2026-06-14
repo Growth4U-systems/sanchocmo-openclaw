@@ -644,19 +644,20 @@ export function ChatSidebar() {
   const primarySkill = meta?.skill || skills[0];
   const extraSkillCount = skills.length > 1 ? skills.length - 1 : 0;
 
-  // Estado de la tarea ligada al thread ABIERTO (modo locked) → la cabecera
-  // muestra el StatusPill y ofrece "cambiar estado / archivar" inline. Solo
-  // para hilos de tarea reales (`task-…`/`task:…`); los Pilares Foundation no
-  // se archivan desde aquí.
+  // Estado de la tarea ligada al thread ABIERTO → la cabecera muestra el
+  // StatusPill y ofrece "cambiar estado / archivar" inline. Se resuelve por
+  // `meta.linkedTo` (fiable en modo locked y free). Archivar una tarea de
+  // Foundation no afecta a la UI de Pilares (Brand Brain no filtra por
+  // archivado), así que el control es uniforme para todo hilo de tarea.
   const updateTaskStatus = useUpdateTaskStatus();
   const [headerStatusMenu, setHeaderStatusMenu] = useState(false);
-  const lockedShortId = lockedThreadId ? lockedThreadId.split(":").slice(1).join(":") : "";
-  const lockedTaskEntry = /(?:^|:)task[:-]/i.test(lockedShortId)
-    ? (taskIndex.get(lockedShortId.toLowerCase()) ?? null)
+  const activeTaskId: string | null =
+    meta?.linkedTo?.match(/^projects\/[^/]+\/tasks\/([^/]+)$/i)?.[1] ?? null;
+  const activeTaskEntry = activeTaskId
+    ? (taskIndex.get(`task:${activeTaskId.toLowerCase()}`) ?? null)
     : null;
-  const lockedTaskId: string | null = (lockedTaskEntry?.task?.id as string | undefined) ?? null;
-  const lockedTaskStatus = lockedTaskEntry
-    ? normalizeTaskStatusQuiet(lockedTaskEntry.task?.status as string | undefined)
+  const activeTaskStatus = activeTaskEntry
+    ? normalizeTaskStatusQuiet(activeTaskEntry.task?.status as string | undefined)
     : null;
 
   // Lazy auto-scan on task thread open: when the active thread is a task,
@@ -1073,54 +1074,6 @@ export function ChatSidebar() {
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                {/* Estado de la tarea + cambiar estado / archivar (solo task threads) */}
-                {lockedTaskId && lockedTaskStatus && (
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setHeaderStatusMenu((v) => !v)}
-                      title="Cambiar estado / archivar"
-                      className="flex items-center rounded-full hover:ring-2 hover:ring-rust/40 transition"
-                    >
-                      <StatusPill status={lockedTaskStatus} size="sm" />
-                    </button>
-                    {headerStatusMenu && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setHeaderStatusMenu(false)} />
-                        <div className="absolute right-0 top-7 z-20 w-44 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] py-1 shadow-lg">
-                          <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--chat-text-faint)]">
-                            Cambiar estado
-                          </div>
-                          {TASK_STATUS_OPTIONS.map((opt) => {
-                            const current = lockedTaskStatus === opt.value;
-                            return (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                disabled={current || updateTaskStatus.isPending}
-                                onClick={() => {
-                                  setHeaderStatusMenu(false);
-                                  if (current || !lockedTaskId) return;
-                                  updateTaskStatus.mutate({ slug, taskId: lockedTaskId, status: opt.value });
-                                }}
-                                className={cn(
-                                  "flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors",
-                                  current
-                                    ? "text-[var(--chat-text-faint)] cursor-default"
-                                    : "text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)]"
-                                )}
-                              >
-                                <StatusPill status={opt.value} size="sm" />
-                                <span className="truncate">{opt.label}</span>
-                                {current && <span className="ml-auto text-[11px]">✓</span>}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
                 <button
                   className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm border border-[var(--chat-border)] rounded-md px-1 py-0.5"
                   title={t("syncDiscord")}
@@ -1346,11 +1299,74 @@ export function ChatSidebar() {
               );
             }
             return href ? (
-              <Link href={href} className={pillClass} title="Abrir">
+              <Link href={href} className={pillClass} title="Abrir" onClick={closeSidebar}>
                 {pillContent}
               </Link>
             ) : (
               <div className={pillClass}>{pillContent}</div>
+            );
+          })()}
+
+          {/* Estado de la tarea ligada — visible en modo locked Y free. En
+              tareas normales el pill abre el menú "Cambiar estado / archivar";
+              en tareas de Pilar es solo informativo (no se cambian aquí). */}
+          {activeTaskId && activeTaskStatus && (() => {
+            const rowClass =
+              "w-full bg-[var(--chat-surface)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--chat-text-muted)] flex items-center gap-2";
+            const rowInner = (
+              <>
+                <span>🏷️</span>
+                <span>Estado</span>
+                <StatusPill status={activeTaskStatus} size="sm" />
+                <span className="ml-auto text-[11px] text-[var(--chat-text-faint)]">▾</span>
+              </>
+            );
+            return (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setHeaderStatusMenu((v) => !v)}
+                  title="Cambiar estado / archivar"
+                  className={cn(rowClass, "hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors")}
+                >
+                  {rowInner}
+                </button>
+                {headerStatusMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setHeaderStatusMenu(false)} />
+                    <div className="absolute right-2 top-9 z-20 w-44 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] py-1 shadow-lg">
+                      <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--chat-text-faint)]">
+                        Cambiar estado
+                      </div>
+                      {TASK_STATUS_OPTIONS.map((opt) => {
+                        const current = activeTaskStatus === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            disabled={current || updateTaskStatus.isPending}
+                            onClick={() => {
+                              setHeaderStatusMenu(false);
+                              if (current || !activeTaskId) return;
+                              updateTaskStatus.mutate({ slug, taskId: activeTaskId, status: opt.value });
+                            }}
+                            className={cn(
+                              "flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors",
+                              current
+                                ? "text-[var(--chat-text-faint)] cursor-default"
+                                : "text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)]"
+                            )}
+                          >
+                            <StatusPill status={opt.value} size="sm" />
+                            <span className="truncate">{opt.label}</span>
+                            {current && <span className="ml-auto text-[11px]">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             );
           })()}
 
@@ -1370,6 +1386,7 @@ export function ChatSidebar() {
               return (
                 <Link
                   href={href}
+                  onClick={closeSidebar}
                   className="w-full bg-[var(--chat-surface)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--chat-text-muted)] flex items-center gap-2 hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
                 >
                   <span>{ctId ? "✍️" : "📋"}</span>
@@ -1385,6 +1402,7 @@ export function ChatSidebar() {
               return (
                 <Link
                   href={`/dashboard/${slug}/tasks/${projId}`}
+                  onClick={closeSidebar}
                   className="w-full bg-[var(--chat-surface)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--chat-text-muted)] flex items-center gap-2 hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
                 >
                   <span>📁</span>
