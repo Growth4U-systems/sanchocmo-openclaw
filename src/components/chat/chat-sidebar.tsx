@@ -42,7 +42,7 @@ import { useUpdateTaskStatus } from "@/hooks/useTasks";
 import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
 import { StatusPill } from "@/components/shared/status-pill";
-import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet } from "@/lib/task-status";
+import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot } from "@/lib/task-status";
 
 // ---------------------------------------------------------------------------
 // Agent badge config
@@ -651,6 +651,7 @@ export function ChatSidebar() {
   // archivado), así que el control es uniforme para todo hilo de tarea.
   const updateTaskStatus = useUpdateTaskStatus();
   const [headerStatusMenu, setHeaderStatusMenu] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
   const activeTaskId: string | null =
     meta?.linkedTo?.match(/^projects\/[^/]+\/tasks\/([^/]+)$/i)?.[1] ?? null;
   const activeTaskEntry = activeTaskId
@@ -1049,29 +1050,25 @@ export function ChatSidebar() {
         </div>
       </div>
 
-      {/* THREAD BAR */}
+      {/* THREAD BAR — compacto: fila 1 = identidad + estado; fila 2 = chips
+          (doc · tarea · adjuntos · skill). Antes eran 5 filas apiladas. */}
       <div className="px-3 py-2 border-b border-[var(--chat-border)] shrink-0">
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {sidebarLocked && lockedThreadId ? (
             /* Locked mode */
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-rust text-sm">
-                  {threadIcon(lockedThreadId.split(":").slice(1).join(":"))}
+                <span
+                  className="text-sm shrink-0"
+                  title={activeTaskStatus ? activeTaskStatus.replace(/-/g, " ") : undefined}
+                >
+                  {activeTaskStatus ? statusDot(activeTaskStatus) : threadIcon(lockedThreadId.split(":").slice(1).join(":"))}
                 </span>
                 <span
                   className="text-[14px] font-semibold text-rust truncate font-heading"
                 >
                   {meta?.threadName ?? lockedThreadId.split(":").slice(1).join(":").replace(/-/g, " ")}
                 </span>
-                {primarySkill && (
-                  <span className="inline-flex items-center gap-0.5 bg-rust/15 text-[11px] text-rust px-2 py-0.5 rounded-full shrink-0 font-semibold">
-                    {primarySkill}
-                    {extraSkillCount > 0 && (
-                      <span className="opacity-70"> +{extraSkillCount}</span>
-                    )}
-                  </span>
-                )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button
@@ -1106,7 +1103,7 @@ export function ChatSidebar() {
               >
                 {activeThread ? (
                   <>
-                    <span className="flex-shrink-0">{threadIcon(activeThread.shortId)}</span>
+                    <span className="flex-shrink-0">{activeTaskStatus ? statusDot(activeTaskStatus) : threadIcon(activeThread.shortId)}</span>
                     <span className="truncate font-semibold">
                       {formatThreadDisplayName(
                         { shortId: activeThread.shortId, name: activeThread.name },
@@ -1136,6 +1133,9 @@ export function ChatSidebar() {
               </button>
             </div>
           )}
+
+          {/* ── Fila 2: chips de meta (doc · tarea · adjuntos · skill) ── */}
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
 
           {/* Doc + skill pill — always rendered when there's an active
               thread. Shows the most useful "link target" for the thread:
@@ -1232,35 +1232,21 @@ export function ChatSidebar() {
               labelIsEmpty = true;
             }
 
+            // Sin doc/tarea/proyecto/tool/skill asociado → no pintamos chip
+            // (no malgastamos la fila con "Sin documento asociado").
+            if (labelIsEmpty) return null;
             const pillContent = (
               <>
-                <span className="text-base flex-shrink-0">{icon}</span>
-                <span
-                  className={cn(
-                    "truncate flex-1 font-medium",
-                    labelIsEmpty && "text-[var(--chat-text-faint)] italic"
-                  )}
-                >
-                  {label}
-                </span>
-                {primarySkill && (
-                  <span className="inline-flex items-center bg-rust/15 text-[11px] text-rust px-2 py-0.5 rounded-full shrink-0 font-semibold">
-                    {primarySkill}
-                    {extraSkillCount > 0 && (
-                      <span className="opacity-70"> +{extraSkillCount}</span>
-                    )}
-                  </span>
-                )}
+                <span className="text-[12px] flex-shrink-0">{icon}</span>
+                <span className="truncate max-w-[130px] font-medium">{label}</span>
                 {href && (
-                  <span className="text-[var(--chat-text-faint)] text-[11px] flex-shrink-0">
-                    ↗
-                  </span>
+                  <span className="text-[var(--chat-text-faint)] text-[10px] flex-shrink-0">↗</span>
                 )}
               </>
             );
             const pillClass = cn(
-              "w-full bg-[var(--chat-surface)] rounded-lg px-3 py-2 text-[13px] text-[var(--chat-text)] flex items-center gap-2 border border-transparent transition-colors text-left",
-              (href || isRealDoc) && "cursor-pointer hover:bg-[var(--chat-surface-2)] hover:border-rust no-underline"
+              "inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] border border-transparent transition-colors text-left",
+              (href || isRealDoc) && "cursor-pointer hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] no-underline"
             );
             // Template doc: open MediaAssetSlideover (multi-slide preview)
             // instead of DocSlideOver — DocSlideOver fetches /api/docs which
@@ -1311,30 +1297,21 @@ export function ChatSidebar() {
               tareas normales el pill abre el menú "Cambiar estado / archivar";
               en tareas de Pilar es solo informativo (no se cambian aquí). */}
           {activeTaskId && activeTaskStatus && (() => {
-            const rowClass =
-              "w-full bg-[var(--chat-surface)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--chat-text-muted)] flex items-center gap-2";
-            const rowInner = (
-              <>
-                <span>🏷️</span>
-                <span>Estado</span>
-                <StatusPill status={activeTaskStatus} size="sm" />
-                <span className="ml-auto text-[11px] text-[var(--chat-text-faint)]">▾</span>
-              </>
-            );
             return (
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setHeaderStatusMenu((v) => !v)}
                   title="Cambiar estado / archivar"
-                  className={cn(rowClass, "hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors")}
+                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-[var(--chat-surface-2)] transition-colors"
                 >
-                  {rowInner}
+                  <StatusPill status={activeTaskStatus} size="sm" />
+                  <span className="text-[10px] text-[var(--chat-text-faint)]">▾</span>
                 </button>
                 {headerStatusMenu && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setHeaderStatusMenu(false)} />
-                    <div className="absolute right-2 top-9 z-20 w-44 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] py-1 shadow-lg">
+                    <div className="absolute left-0 top-8 z-20 w-44 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] py-1 shadow-lg">
                       <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--chat-text-faint)]">
                         Cambiar estado
                       </div>
@@ -1387,13 +1364,12 @@ export function ChatSidebar() {
                 <Link
                   href={href}
                   onClick={closeSidebar}
-                  className="w-full bg-[var(--chat-surface)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--chat-text-muted)] flex items-center gap-2 hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
+                  className="inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
+                  title={ctId ? `${taskId} → ${ctId}` : `Tarea ${taskId}`}
                 >
                   <span>{ctId ? "✍️" : "📋"}</span>
-                  <span className="truncate flex-1">
-                    {ctId ? `${taskId} → ${ctId}` : `Tarea: ${taskId}`}
-                  </span>
-                  <span className="text-[11px] text-[var(--chat-text-faint)]">↗</span>
+                  <span className="truncate max-w-[130px]">{ctId ? `${taskId} → ${ctId}` : taskId}</span>
+                  <span className="text-[10px] text-[var(--chat-text-faint)]">↗</span>
                 </Link>
               );
             }
@@ -1403,11 +1379,12 @@ export function ChatSidebar() {
                 <Link
                   href={`/dashboard/${slug}/tasks/${projId}`}
                   onClick={closeSidebar}
-                  className="w-full bg-[var(--chat-surface)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--chat-text-muted)] flex items-center gap-2 hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
+                  className="inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
+                  title={`Proyecto ${projId}`}
                 >
                   <span>📁</span>
-                  <span className="truncate flex-1">Proyecto: {projId}</span>
-                  <span className="text-[11px] text-[var(--chat-text-faint)]">↗</span>
+                  <span className="truncate max-w-[130px]">{projId}</span>
+                  <span className="text-[10px] text-[var(--chat-text-faint)]">↗</span>
                 </Link>
               );
             }
@@ -1436,64 +1413,86 @@ export function ChatSidebar() {
             if (!foundTask) return null;
             const attachments = Array.isArray(foundTask.attachments) ? foundTask.attachments : [];
             return (
-              <details className="w-full bg-[var(--chat-surface)] rounded-lg border border-transparent text-[var(--chat-text)]" open={attachments.length > 0}>
-                <summary className="px-3 py-2 text-[12px] cursor-pointer select-none flex items-center gap-1.5 font-medium text-[var(--chat-text-muted)] hover:text-[var(--chat-text)]">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setAttachOpen((v) => !v)}
+                  title="Adjuntos del hilo"
+                  className="inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors"
+                >
                   <span>📎</span>
-                  <span className="flex-1">Attachments ({attachments.length})</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Reset the scanned ref so the effect can re-run if the
-                      // user navigates away and comes back, AND fire an immediate
-                      // manual scan now.
-                      lastScannedRef.current = null;
-                      runAttachScan(slug, taskId);
-                    }}
-                    title="Refresh attachments — re-scan task dir for new files"
-                    className="text-[12px] text-[var(--chat-text-muted)] hover:text-rust transition-colors"
-                  >
-                    🔄
-                  </button>
-                </summary>
-                <div className="px-3 pb-2 pt-1 flex flex-col gap-1">
-                  {attachments.length === 0 && (
-                    <div className="text-[11px] text-[var(--chat-text-faint)] italic px-2 py-1">
-                      No hay archivos asociados aún. Pulsa 🔄 para escanear.
+                  <span>{attachments.length}</span>
+                  <span className="text-[10px] text-[var(--chat-text-faint)]">▾</span>
+                </button>
+                {attachOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setAttachOpen(false)} />
+                    <div className="absolute left-0 top-8 z-20 w-64 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] py-1 shadow-lg">
+                      <div className="px-3 py-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--chat-text-faint)]">
+                        <span className="flex-1">Adjuntos ({attachments.length})</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            lastScannedRef.current = null;
+                            runAttachScan(slug, taskId);
+                          }}
+                          title="Re-escanear el directorio de la tarea"
+                          className="text-[12px] hover:text-rust transition-colors"
+                        >
+                          🔄
+                        </button>
+                      </div>
+                      {attachments.length === 0 && (
+                        <div className="text-[11px] text-[var(--chat-text-faint)] italic px-3 py-1.5">
+                          No hay archivos aún. Pulsa 🔄 para escanear.
+                        </div>
+                      )}
+                      {attachments.map((att: { path: string; type?: string; source?: string; label?: string; added_at: string }, ai: number) => {
+                        const filename = att.path.split("/").pop() || att.path;
+                        const isImage = (att.type || "").startsWith("image/");
+                        const icon = isImage ? "🖼️"
+                          : (att.type || "").includes("pdf") ? "📕"
+                          : (att.type || "").includes("markdown") ? "📝"
+                          : (att.type || "").includes("json") ? "🧩"
+                          : (att.type || "").includes("csv") || (att.type || "").includes("sheet") ? "📊"
+                          : "📄";
+                        return (
+                          <button
+                            type="button"
+                            key={ai}
+                            onClick={() => { setAttachOpen(false); setOpenDocSlidePath(att.path); }}
+                            className="flex items-center gap-2 text-[12px] text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)] rounded px-3 py-1 transition-colors text-left w-full"
+                            title={att.label || filename}
+                          >
+                            <span className="flex-shrink-0">{icon}</span>
+                            <span className="truncate flex-1">{att.label || filename}</span>
+                            {att.source && (
+                              <span className="text-[10px] text-[var(--chat-text-faint)] flex-shrink-0">
+                                {att.source.startsWith("skill:") ? att.source.slice(6) : att.source}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
-                  )}
-                  {attachments.map((att: { path: string; type?: string; source?: string; label?: string; added_at: string }, ai: number) => {
-                    const filename = att.path.split("/").pop() || att.path;
-                    const isImage = (att.type || "").startsWith("image/");
-                    const icon = isImage ? "🖼️"
-                      : (att.type || "").includes("pdf") ? "📕"
-                      : (att.type || "").includes("markdown") ? "📝"
-                      : (att.type || "").includes("json") ? "🧩"
-                      : (att.type || "").includes("csv") || (att.type || "").includes("sheet") ? "📊"
-                      : "📄";
-                    return (
-                      <button
-                        type="button"
-                        key={ai}
-                        onClick={() => setOpenDocSlidePath(att.path)}
-                        className="flex items-center gap-2 text-[12px] text-[var(--chat-text)] hover:text-white hover:bg-[var(--chat-surface-2)] rounded px-2 py-1 transition-colors text-left w-full"
-                        title={att.label || filename}
-                      >
-                        <span className="flex-shrink-0">{icon}</span>
-                        <span className="truncate flex-1">{att.label || filename}</span>
-                        {att.source && (
-                          <span className="text-[10px] text-[var(--chat-text-faint)] flex-shrink-0">
-                            {att.source.startsWith("skill:") ? att.source.slice(6) : att.source}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </details>
+                  </>
+                )}
+              </div>
             );
           })()}
+
+          {/* Skill chip — siempre que el hilo tenga skill asociada */}
+          {primarySkill && (
+            <span
+              className="inline-flex items-center gap-0.5 bg-rust/15 text-[10px] text-rust px-2 py-1 rounded-md shrink-0 font-semibold"
+              title={(meta?.skills && meta.skills.length ? meta.skills : [primarySkill]).join(", ")}
+            >
+              🛠️ {primarySkill}
+              {extraSkillCount > 0 && <span className="opacity-70"> +{extraSkillCount}</span>}
+            </span>
+          )}
+          </div>
         </div>
       </div>
 

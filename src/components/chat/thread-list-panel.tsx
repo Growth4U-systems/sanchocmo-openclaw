@@ -30,7 +30,7 @@ import { useTaskRows, useUpdateTaskStatus } from "@/hooks/useTasks";
 import { threadIcon } from "@/lib/chat-openers";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
 import { StatusPill } from "@/components/shared/status-pill";
-import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet } from "@/lib/task-status";
+import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot } from "@/lib/task-status";
 
 /**
  * Extrae la clave de tarea (lowercase) de un shortId de hilo. Los hilos de
@@ -290,9 +290,13 @@ export function ThreadListPanel({
                 isActive && "bg-[var(--chat-surface-2)] border-l-2 border-l-rust"
               )}
             >
-              {/* Icon */}
-              <span className="text-lg flex-shrink-0 leading-tight mt-0.5">
-                {threadIcon(thread.shortId)}
+              {/* Icon — punto de color del estado si el hilo tiene tarea;
+                  si no, el icono genérico por tipo de hilo. */}
+              <span
+                className="text-lg flex-shrink-0 leading-tight mt-0.5"
+                title={thread.taskStatus ? thread.taskStatus.replace(/-/g, " ") : undefined}
+              >
+                {thread.taskStatus ? statusDot(thread.taskStatus) : threadIcon(thread.shortId)}
               </span>
 
               {/* Name + preview */}
