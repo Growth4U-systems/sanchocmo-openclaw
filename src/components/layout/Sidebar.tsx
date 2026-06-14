@@ -56,7 +56,7 @@ export function Sidebar() {
   function openNewTask() {
     if (!chatSlug) return;
     // "Nueva tarea": open a fresh blank chat with Sancho in fullscreen,
-    // ready to describe a new task (no auto-message). See chatEntries.new-task.
+    // ready to describe a new task (no auto-message). See namespaceOwners.new-task.
     const cfg = buildNewTaskThread(chatSlug);
     const chat = useChatStore.getState();
     chat.setCurrentSlug(chatSlug);

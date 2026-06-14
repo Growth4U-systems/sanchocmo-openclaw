@@ -77,7 +77,12 @@
 // ============================================================
 
 import { resolveThreadSkills, type SkillContext } from "./skill-resolver";
-import { getChatEntry, getThreadOpener } from "./data/task-blueprints";
+import {
+  getNamespaceOwner,
+  getThreadOpener,
+  NAMESPACE_OWNERS_BY_SPECIFICITY,
+  type NamespaceOwner,
+} from "./data/task-blueprints";
 
 export interface ThreadConfig {
   threadId: string;
@@ -135,15 +140,19 @@ function substEntryTemplate(s: string, vars: Record<string, string>): string {
 }
 
 /**
- * Build a ThreadConfig from a declared chat-opener BUTTON entry
- * (config/pillar-manifest.json → chatEntries). Substitutes {slug} + params into
- * the entry's templates. The single generic opener that the `buildXThread`
- * wrappers delegate to — skill/skills/agent/initialMessage are DECLARED, not
- * hardcoded.
+ * Build a ThreadConfig from a declared OPENER namespace
+ * (config/pillar-manifest.json → namespaceOwners, entries with a `threadId`).
+ * Substitutes {slug} + params into the entry's templates. The single generic
+ * opener that the `buildXThread` wrappers delegate to — skill/skills/agent/
+ * initialMessage are DECLARED, not hardcoded. (SAN-205; replaces the old
+ * instantiateEntry over the chatEntries block.)
  */
-export function instantiateEntry(key: string, ctx: { slug: string; params?: Record<string, string> }): ThreadConfig {
-  const entry = getChatEntry(key);
-  if (!entry) throw new Error(`chat-openers: unknown chat entry "${key}"`);
+export function instantiateNamespace(key: string, ctx: { slug: string; params?: Record<string, string> }): ThreadConfig {
+  const entry = getNamespaceOwner(key);
+  if (!entry) throw new Error(`chat-openers: unknown namespace "${key}"`);
+  if (!entry.threadId || !entry.threadName || !entry.linkedTo) {
+    throw new Error(`chat-openers: namespace "${key}" is reopen-only (no opener template)`);
+  }
   const vars: Record<string, string> = { slug: ctx.slug, ...(ctx.params ?? {}) };
   const sub = (s: string) => substEntryTemplate(s, vars);
   const cfg: ThreadConfig = {
@@ -172,7 +181,7 @@ export function resolveOpener(key: string, vars: Record<string, string>): string
 }
 
 export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
-  const cfg = instantiateEntry("yalc", { slug });
+  const cfg = instantiateNamespace("yalc", { slug });
   cfg.initialMessage = prompt;
   return cfg;
 }
@@ -181,10 +190,10 @@ export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
  * Build a fresh "Nueva tarea" thread — a blank chat with Sancho (manager),
  * ready for the user to describe a new task. No initialMessage → nothing is
  * auto-sent; the input opens empty. A new id per call so each "Nueva tarea"
- * is its own conversation. Declared in chatEntries.new-task.
+ * is its own conversation. Declared in namespaceOwners.new-task.
  */
 export function buildNewTaskThread(slug: string): ThreadConfig {
-  return instantiateEntry("new-task", { slug, params: { nonce: String(Date.now()) } });
+  return instantiateNamespace("new-task", { slug, params: { nonce: String(Date.now()) } });
 }
 
 /**
@@ -204,7 +213,7 @@ export function buildDiscoverySearchThread(
   // only field that's title-conditional, so it's overlaid here.
   if (search) {
     const searchName = search.title || search.campaignId;
-    const cfg = instantiateEntry("discovery-search", {
+    const cfg = instantiateNamespace("discovery-search", {
       slug,
       params: {
         campaignIdLower: search.campaignId.toLowerCase(),
@@ -220,7 +229,7 @@ export function buildDiscoverySearchThread(
   // Dash-shaped (`discovery-new-<ts>`, no inner colon) so the client id matches
   // what mc-chat.threadFile() persists after sanitizing `:` → `-` — otherwise
   // useThreadList's exact-id dedup misses and paints a phantom row (SAN-193).
-  const cfg = instantiateEntry("discovery-search-new", { slug });
+  const cfg = instantiateNamespace("discovery-search-new", { slug });
   cfg.threadId = `${slug}:discovery-new-${Date.now()}`;
   return cfg;
 }
@@ -236,7 +245,7 @@ export function buildOutreachTemplateThread(
   template: { id: string; name: string; kind?: "sequence" | "brief" },
 ): ThreadConfig {
   const kindLabel = template.kind === "brief" ? "brief" : "secuencia";
-  return instantiateEntry("outreach-template", {
+  return instantiateNamespace("outreach-template", {
     slug,
     params: { id: template.id, idLower: template.id.toLowerCase(), name: template.name, kindLabel },
   });
@@ -402,6 +411,64 @@ export function buildTaskIndex(
 }
 
 /**
+/**
+ * Match a thread's shortId against the declared namespace registry
+ * (config/pillar-manifest.json → namespaceOwners). Longest nsKey wins, so
+ * `skill-creator` beats `skill`. Returns the owning entry + the captured `rest`
+ * (the part after `nsKey:`/`nsKey-`), or undefined when no namespace claims it.
+ */
+function matchNamespaceOwner(shortId: string): { owner: NamespaceOwner; rest: string } | undefined {
+  for (const owner of NAMESPACE_OWNERS_BY_SPECIFICITY) {
+    if (owner.match === "exact") {
+      if (shortId === owner.nsKey) return { owner, rest: "" };
+      continue;
+    }
+    if (shortId.startsWith(`${owner.nsKey}:`) || shortId.startsWith(`${owner.nsKey}-`)) {
+      return { owner, rest: shortId.slice(owner.nsKey.length + 1) };
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Rebuild a ThreadConfig when REOPENING a namespace thread from the thread list
+ * (only the threadId is known — no params). Owner agent/skill come from the
+ * matched namespace entry; threadName is the entry's static template when it has
+ * no leftover tokens (e.g. "YALC / GTM-OS"), else derived from the shortId;
+ * linkedTo from `reopenLinkedTo` ({rest}/{restUpper}); state forced to continue.
+ */
+function reopenFromNamespace(
+  threadId: string,
+  shortId: string,
+  owner: NamespaceOwner,
+  rest: string,
+): ThreadConfig {
+  const restUpper = rest.toUpperCase();
+  const subRest = (s: string) => s.replace(/\{rest\}/g, rest).replace(/\{restUpper\}/g, restUpper);
+
+  let threadName: string;
+  if (owner.reopenName === "restUpper") {
+    threadName = restUpper;
+  } else if (owner.threadName && !owner.threadName.replace(/\{slug\}/g, "").includes("{")) {
+    // Static name (no per-call tokens left once {slug} is stripped) → keep it.
+    threadName = owner.threadName;
+  } else {
+    threadName = shortId.replace(/[-_:]/g, " ");
+  }
+
+  return {
+    threadId,
+    threadName,
+    skill: owner.skill,
+    skills: owner.skills,
+    agent: owner.agent,
+    linkedTo: subRest(owner.reopenLinkedTo),
+    docPath: null,
+    threadState: "continue",
+  };
+}
+
+/**
  * resolveFullThreadConfig — SINGLE SOURCE OF TRUTH for thread resolution.
  *
  * Given a threadId, resolves the COMPLETE ThreadConfig by:
@@ -409,7 +476,7 @@ export function buildTaskIndex(
  *   2. Reading doc, skill, linkedTo directly from task fields
  *   3. NO scanning, NO path matching, NO heuristics
  *
- * If no task found, falls back to pillar/generic thread.
+ * If no task found, falls back to the declared namespace owner, then pillar.
  */
 export function resolveFullThreadConfig(
   slug: string,
@@ -420,10 +487,6 @@ export function resolveFullThreadConfig(
   const shortId = threadId.startsWith(slug + ":")
     ? threadId.slice(slug.length + 1)
     : threadId;
-
-  if (shortId === "yalc") {
-    return buildYalcThread(slug);
-  }
 
   // ── O(1) lookup: find the task that owns this thread ─────────
   const entry = taskIndex.get(shortId) ||
@@ -493,73 +556,17 @@ export function resolveFullThreadConfig(
     return config;
   }
 
-  // ── No task: handle project threads ──────────────────────────
-  if (shortId.startsWith("project:") || shortId.startsWith("project-")) {
-    const rawId = shortId.replace(/^project[-:]/, "").toUpperCase();
-    return {
-      threadId, threadName: rawId, skill: "sancho-manager",
-      skills: ["sancho-manager"], linkedTo: `projects/${rawId}`,
-      docPath: null, threadState: "continue",
-    };
-  }
+  // ── No task: data-driven namespace owner (SAN-205) ───────────
+  // Every non-task namespace (project, content/idea/calendar/cron, discovery,
+  // scans, strategy/recurring, plus the button namespaces yalc/new-task/skill/
+  // asset/…) is declared once in config/pillar-manifest.json → namespaceOwners.
+  // Matching the shortId against that registry rebuilds the owning agent+skill
+  // so reopening a thread NEVER falls back to Sancho (the SAN-166/SAN-193 class
+  // of bug) and the open/reopen paths share one source of truth.
+  const ns = matchNamespaceOwner(shortId);
+  if (ns) return reopenFromNamespace(threadId, shortId, ns.owner, ns.rest);
 
-  // ── No task: content-flavored threads still belong to Dulcinea ──
-  // Reopening a content draft/idea/calendar/cron thread whose task isn't in the
-  // loaded projectsData (e.g. a weekly P-Content-Semana-NN project not listed)
-  // must NOT fall back to Sancho. These namespaces are owned by the content
-  // writer. (The full fix is task=thread unification; this keeps the agent
-  // correct meanwhile.) Root cause of "Content → Ideas sigue saliendo Sancho".
-  const contentNs: Record<string, string> = {
-    content: "social-writer",
-    idea: "seo-content",
-    calendar: "content-calendar-planner",
-    cron: "idea-generation",
-  };
-  const contentMatch = shortId.match(/^(content|idea|calendar|cron)[-:](.+)$/i);
-  if (contentMatch) {
-    const ns = contentMatch[1].toLowerCase();
-    const skill = contentNs[ns];
-    return {
-      threadId, threadName: shortId.replace(/[-_:]/g, " "),
-      skill, skills: [skill], agent: "dulcinea",
-      linkedTo: `${ns}/${contentMatch[2]}`, docPath: null, threadState: "continue",
-    };
-  }
-
-  // ── No task: Partnerships discovery threads belong to Rocinante ──
-  // A discovery search id is dynamic (`discovery-new-<ts>` for a fresh plan,
-  // `discovery-<campaignId>` for an existing search) so it has no task/registry
-  // row. Without this it falls through to the pillar fallback → sancho-manager,
-  // orphaning the search from its Outreach owner after a reload (SAN-193).
-  if (/^discovery[-:]/i.test(shortId)) {
-    const skills = ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"];
-    return {
-      threadId, threadName: shortId.replace(/[-_:]/g, " "),
-      skill: skills[0], skills, agent: "rocinante",
-      linkedTo: "rocinante", docPath: null, threadState: "continue",
-    };
-  }
-
-  // ── No task: handle typed threads ────────────────────────────
-  if (/^(competitor-scan|meta-ads-scan|linkedin-scan)$/i.test(shortId)) {
-    return {
-      threadId, threadName: shortId.replace(/-/g, " "), skill: "atalaya",
-      skills: ["atalaya"], linkedTo: "tool/atalaya",
-      docPath: null, threadState: "continue",
-    };
-  }
-  if (/^(strategy|recurring)[-:]/i.test(shortId)) {
-    const m = shortId.match(/^([a-z]+)[-:](.+)$/i);
-    if (m) {
-      return {
-        threadId, threadName: shortId.replace(/[-_:]/g, " "), skill: "sancho",
-        skills: ["sancho"], linkedTo: `${m[1]}/${m[2]}`,
-        docPath: null, threadState: "continue",
-      };
-    }
-  }
-
-  // ── No task, no type: pillar fallback ────────────────────────
+  // ── No task, no namespace: pillar fallback ───────────────────
   const pillarDoc = resolvePillarDoc?.(shortId) || undefined;
   return buildPillarThread(slug, shortId, pillarDoc);
 }
@@ -911,7 +918,7 @@ export function buildPillarThread(
 
 /** Build thread config for creating a new skill via chat */
 export function buildSkillCreatorThread(slug: string): ThreadConfig {
-  return instantiateEntry("skill-creator", { slug, params: { nonce: String(Date.now()) } });
+  return instantiateNamespace("skill-creator", { slug, params: { nonce: String(Date.now()) } });
 }
 
 /** Build thread config for editing an existing skill via chat */
@@ -921,7 +928,7 @@ export function buildSkillEditorThread(
   skillName: string,
   docPath?: string
 ): ThreadConfig {
-  const cfg = instantiateEntry("skill-editor", { slug, params: { skillId, skillName } });
+  const cfg = instantiateNamespace("skill-editor", { slug, params: { skillId, skillName } });
   cfg.docPath = docPath || null;
   return cfg;
 }
@@ -985,7 +992,7 @@ export function buildMediaAssetThread(
   // sanitization are computed here and overlaid.
   const safe = assetRelativePath.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
   const skill = kind === "design-md" || kind === "tokens" ? "design-system" : "od-refine";
-  const cfg = instantiateEntry("media-asset", { slug, params: { safe, assetRelativePath, assetName, kind } });
+  const cfg = instantiateNamespace("media-asset", { slug, params: { safe, assetRelativePath, assetName, kind } });
   cfg.skill = skill;
   cfg.skills = [skill, "od-generate", "od-export"];
   cfg.docKind = kind === "template" ? "template" : "file";
@@ -998,7 +1005,7 @@ export function buildVisualIdentityChatThread(
   block?: string,
 ): ThreadConfig {
   const blockSafe = block ? block.toLowerCase().replace(/[^a-z0-9-]+/g, "-") : "all";
-  const cfg = instantiateEntry("visual-identity", { slug, params: { blockSafe } });
+  const cfg = instantiateNamespace("visual-identity", { slug, params: { blockSafe } });
   // The entry holds the no-block defaults (threadName + opener). Only override
   // for a specific block; the block opener lives in threadOpeners.
   if (block) {
@@ -1017,7 +1024,7 @@ export function buildOdGenerateThread(
 ): ThreadConfig {
   const safe = upstreamSkillId.toLowerCase().replace(/[^a-z0-9-:]+/g, "-");
   const dsTag = designSystemId ? `:ds-${designSystemId}` : "";
-  const cfg = instantiateEntry("od-generate", {
+  const cfg = instantiateNamespace("od-generate", {
     slug,
     params: { safe, dsTag, upstreamSkillId, upstreamSkillName },
   });

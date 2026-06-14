@@ -77,29 +77,57 @@ export function getTaskSetEntry(section: string, id: string): TaskSetEntry | und
   return MANIFEST_TASK_SETS[section]?.tasks.find((t) => t.id === id);
 }
 
-/** One on-demand chat-opener BUTTON declaration. String fields are templates
- *  with `{slug}` + per-button `{params}`; instantiateEntry (chat-openers.ts)
- *  substitutes them into a ThreadConfig. Agent is explicit. */
-export interface ChatEntry {
-  threadId: string;
-  threadName: string;
+/**
+ * One entry of the single namespace registry (SAN-205) — the data behind BOTH
+ * thread directions, replacing the old `chatEntries` block AND the hardcoded
+ * fallbacks in resolveFullThreadConfig.
+ *
+ * Two flavours, distinguished by whether `threadId` is present:
+ *   - OPENER (has `threadId`): an on-demand chat-opener BUTTON. String fields
+ *     are templates with `{slug}` + per-button `{params}`; instantiateNamespace
+ *     (chat-openers.ts) substitutes them into a ThreadConfig. Agent is explicit
+ *     and validated by ownerCheckFindings.
+ *   - REOPEN-ONLY (no `threadId`): a namespace whose threads are only ever
+ *     re-opened from the thread list (content/idea/calendar/cron/project/scan/
+ *     strategy/recurring). Only owner fields + reopen hints are declared.
+ *
+ * Reopen matching uses `nsKey` + `match`:
+ *   - "exact":  shortId === nsKey
+ *   - "prefix": shortId starts with `nsKey:` or `nsKey-` (longest nsKey wins)
+ * `reopenLinkedTo` templates {rest}/{restUpper}; `reopenName: "restUpper"`
+ * upper-cases the captured rest for the thread name (project threads).
+ */
+export interface NamespaceOwner {
   skill: string;
   skills: string[];
-  agent: string;
-  linkedTo: string;
-  docPath: string | null;
+  agent?: string;
+  /** Reopen matching. */
+  nsKey: string;
+  match: "exact" | "prefix";
+  reopenLinkedTo: string;
+  reopenName?: "restUpper";
+  /** OPENER-only template fields (present iff this namespace has a button). */
+  threadId?: string;
+  threadName?: string;
+  linkedTo?: string;
+  docPath?: string | null;
   threadState?: "create" | "continue";
   initialMessage?: string;
   docKind?: "file" | "template";
 }
 
-export const MANIFEST_CHAT_ENTRIES = (
-  pillarManifest as unknown as { chatEntries?: Record<string, ChatEntry> }
-).chatEntries ?? {};
+export const MANIFEST_NAMESPACE_OWNERS = (
+  pillarManifest as unknown as { namespaceOwners?: Record<string, NamespaceOwner> }
+).namespaceOwners ?? {};
 
-export function getChatEntry(key: string): ChatEntry | undefined {
-  return MANIFEST_CHAT_ENTRIES[key];
+export function getNamespaceOwner(key: string): NamespaceOwner | undefined {
+  return MANIFEST_NAMESPACE_OWNERS[key];
 }
+
+/** Namespace owners sorted by nsKey length DESC — so longest-prefix wins when
+ *  matching a shortId (e.g. `skill-creator` before `skill`). */
+export const NAMESPACE_OWNERS_BY_SPECIFICITY: ReadonlyArray<NamespaceOwner> =
+  Object.values(MANIFEST_NAMESPACE_OWNERS).sort((a, b) => b.nsKey.length - a.nsKey.length);
 
 /**
  * SAN-179 — opener (initialMessage) snippets for threads whose IDENTITY is
@@ -352,12 +380,15 @@ export function ownerCheckFindings(): OwnerCheckFinding[] {
       }
     }
   }
-  // Chat-opener button entries are validated the same way.
-  for (const [key, entry] of Object.entries(MANIFEST_CHAT_ENTRIES)) {
+  // Chat-opener BUTTON entries (those with a threadId template) are validated
+  // the same way. Reopen-only namespaces (no threadId, no explicit agent) are
+  // not buttons — their owner is derived on reopen, so they're skipped here.
+  for (const [key, entry] of Object.entries(MANIFEST_NAMESPACE_OWNERS)) {
+    if (!entry.threadId || entry.agent === undefined) continue;
     if (entry.skill.includes("{")) continue;
     const owner = resolveAgentForSkill(entry.skill);
     if (owner && owner !== entry.agent) {
-      findings.push({ section: "chatEntries", taskId: key, skill: entry.skill, declaredAgent: entry.agent, ownerAgent: owner });
+      findings.push({ section: "namespaceOwners", taskId: key, skill: entry.skill, declaredAgent: entry.agent, ownerAgent: owner });
     }
   }
   // Type defaults: skill's owner must match the declared agent.

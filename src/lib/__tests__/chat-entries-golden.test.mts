@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 // chat-openers + task-blueprints are client-safe (no fs) → load directly.
-const { buildYalcThread, buildOutreachTemplateThread, buildSkillEditorThread, instantiateEntry } = await import(
+const { buildYalcThread, buildOutreachTemplateThread, buildSkillEditorThread, instantiateNamespace } = await import(
   "../chat-openers"
 );
 const { ownerCheckFindings } = await import("../data/task-blueprints");
@@ -10,7 +10,7 @@ const { ownerCheckFindings } = await import("../data/task-blueprints");
 const SLUG = "growth4u";
 
 // Migrated builders must produce byte-identical output to the pre-refactor
-// hardcoded versions (only the source moved: TS → manifest chatEntries).
+// hardcoded versions (only the source moved: TS → manifest namespaceOwners).
 
 test("buildYalcThread === frozen spec", () => {
   assert.deepEqual(buildYalcThread(SLUG, "hola"), {
@@ -42,7 +42,7 @@ test("buildOutreachTemplateThread === frozen spec (preserves {{vars}})", () => {
 });
 
 test("skill-creator entry === frozen spec (nonce param)", () => {
-  assert.deepEqual(instantiateEntry("skill-creator", { slug: SLUG, params: { nonce: "123" } }), {
+  assert.deepEqual(instantiateNamespace("skill-creator", { slug: SLUG, params: { nonce: "123" } }), {
     threadId: "growth4u:skill-creator:123",
     threadName: "Crear nueva skill",
     skill: "skill-creator",
@@ -70,9 +70,9 @@ test("buildSkillEditorThread === frozen spec (+ docPath override)", () => {
 });
 
 test("unknown chat entry throws", () => {
-  assert.throws(() => instantiateEntry("nope", { slug: SLUG }));
+  assert.throws(() => instantiateNamespace("nope", { slug: SLUG }));
 });
 
-test("ownerCheckFindings still clean (now covers chatEntries)", () => {
+test("ownerCheckFindings still clean (now covers namespaceOwners openers)", () => {
   assert.deepEqual(ownerCheckFindings(), []);
 });
