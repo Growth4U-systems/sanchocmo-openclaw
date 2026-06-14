@@ -54,6 +54,25 @@ const OPTION_BY_VALUE: Record<TaskStatus, TaskStatusOption> = Object.fromEntries
   TASK_STATUS_OPTIONS.map((o) => [o.value, o]),
 ) as Record<TaskStatus, TaskStatusOption>;
 
+/**
+ * Punto de color por estado — para usar como icono "de un vistazo" en listas
+ * de hilos/tareas (sustituye al icono genérico cuando el hilo tiene tarea).
+ */
+export const TASK_STATUS_DOT: Record<TaskStatus, string> = {
+  todo: "⚪️",
+  "in-progress": "🟡",
+  "pending-review": "🔵",
+  completed: "🟢",
+  blocked: "🔴",
+  cancelled: "⚫️",
+  archived: "📦",
+};
+
+/** Devuelve el punto de color del estado (normaliza valores legacy). */
+export function statusDot(status: string | null | undefined): string {
+  return TASK_STATUS_DOT[normalizeTaskStatusQuiet(status)];
+}
+
 /** Label ES de un status (acepta valores legacy/nullish: normaliza primero). */
 export function statusLabel(status: string | null | undefined): string {
   return OPTION_BY_VALUE[normalizeTaskStatusQuiet(status)].label;
