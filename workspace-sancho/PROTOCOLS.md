@@ -106,6 +106,15 @@ When publishing MC/portal/admin links, post them as **plain URLs**, not Discord-
 
 Markdown links also work: `[Voice Profile](https://…/file.md)`. Auto-linkification handles bare URLs cleanly.
 
+### 19. 🧵→📋 Promote a chat to a task when there's real work (SAN-210)
+
+A chat that opens from a button (new skill, new search, outreach template, asset, yalc, od-generate…) is **just a conversation** until there's something real behind it. The moment the user confirms there's actual work, **materialize it as a task** — don't leave the work living only in chat.
+
+- Create it with `sancho_create_task` passing your **current `threadId`** plus **your own `skill`/`agent`** (you are already running as the right specialist for this thread — reuse that identity, don't improvise a different one).
+- **One task per thread.** The call is idempotent on `threadId`: if the thread already owns a task it returns that one, so re-promoting while you keep editing the same resource never duplicates.
+- If a **clearly distinct** new piece of work appears in the same chat, say so explicitly ("te genero otra tarea para esto") and create a separate task for it.
+- Don't force it: if the chat goes nowhere, create nothing. The task is born on confirmation, never on the button click.
+
 ---
 
 ## API Connection Protocol (P0)

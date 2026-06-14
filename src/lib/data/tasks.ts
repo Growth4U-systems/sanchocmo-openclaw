@@ -392,6 +392,39 @@ export function findTaskByIdAcrossBrand(
   return null;
 }
 
+/**
+ * SAN-210 — find the task a chat thread already owns (mc_chat_thread_id), if any.
+ * Powers the idempotent "promote thread to task" gesture: one task per thread.
+ * Returns the first match or null. Works in both backends.
+ */
+export async function findTaskByThreadId(
+  slug: string,
+  threadId: string,
+): Promise<Project | Task | ContentTask | null> {
+  if (!threadId) return null;
+  if (dbTasksEnabled()) {
+    const rows = await db
+      .select()
+      .from(tasksTable)
+      .where(and(
+        eq(tasksTable.workspaceSlug, MC_TASKS_WORKSPACE),
+        eq(tasksTable.brandSlug, slug),
+        eq(tasksTable.mcChatThreadId, threadId),
+      ))
+      .limit(1);
+    if (!rows[0]) return null;
+    return (await getDbRow(slug, rows[0].id)) as unknown as Project | Task | ContentTask | null;
+  }
+  for (const dir of projectDirs(slug)) {
+    const projDir = path.join(brandDir(slug), "projects", dir);
+    const { tasks } = readProjectTasksFile(path.join(projDir, "tasks.json"));
+    for (const task of tasks) {
+      if ((task as { mc_chat_thread_id?: string }).mc_chat_thread_id === threadId) return task;
+    }
+  }
+  return null;
+}
+
 export function canonicalChildTaskId(projectId: string, taskId: string): string {
   if (taskId.startsWith(`${projectId}-`)) return taskId;
   if (/^T\d+/i.test(taskId)) return `${projectId}-${taskId}`;
@@ -480,7 +513,7 @@ export async function archiveTask(slug: string, id: string, reason = "Archivado 
 
 export async function createTask(
   slug: string,
-  input: Partial<Project & Task> & { parent_id?: string; type?: string; seedFromTaskSet?: string },
+  input: Partial<Project & Task> & { parent_id?: string; type?: string; seedFromTaskSet?: string; mc_chat_thread_id?: string },
 ) {
   // SAN-195 (b): seed a declared task SET into a newly-created project. Reuses
   // the existing creator (no parallel endpoint) — when `seedFromTaskSet` names a
@@ -490,9 +523,23 @@ export async function createTask(
   if (seedSection && !getTaskSet(seedSection)) {
     throw new Error(`createTask: unknown seedFromTaskSet "${seedSection}"`);
   }
+  // SAN-210: promoting a chat thread to a task is idempotent — one task per
+  // thread. If the thread already owns a task (mc_chat_thread_id), reuse it
+  // instead of creating a duplicate when the user keeps editing the same
+  // resource. The agent can still create a *distinct* task on purpose by using
+  // a different thread / not passing one.
+  if (input.mc_chat_thread_id) {
+    const existing = await findTaskByThreadId(slug, input.mc_chat_thread_id);
+    if (existing) return existing;
+  }
   if (dbTasksEnabled()) {
     const now = new Date();
-    const type = input.type || (!input.parent_id ? "project" : "execution");
+    // A thread-linked task with no parent is a standalone task (not a project):
+    // the "promote this chat to a task" gesture (SAN-210). Without a thread and
+    // no parent it stays a project (unchanged).
+    const type =
+      input.type ||
+      (input.parent_id ? "execution" : input.mc_chat_thread_id ? "execution" : "project");
     const id = input.id || (type === "project"
       ? await getNextProjectId(slug)
       : await getNextChildTaskId(slug, input.parent_id || ""));
@@ -546,6 +593,7 @@ export async function createTask(
       outputDocuments: contract.outputDocuments,
       createdAt: now,
       updatedAt: now,
+      mcChatThreadId: input.mc_chat_thread_id || null,
       outputFiles: input.output_files || [],
       documents: input.documents || [],
       attachments: input.attachments || [],
@@ -619,6 +667,8 @@ export async function createTask(
     channel: input.channel || "execution",
     type: input.type || "execution",
     skill: input.skill || "",
+    ...(input.agent ? { agent: input.agent } : {}),
+    ...(input.mc_chat_thread_id ? { mc_chat_thread_id: input.mc_chat_thread_id } : {}),
     output_files: input.output_files || [],
   } as Task;
   data.tasks.push(task);

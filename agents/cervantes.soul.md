@@ -66,6 +66,7 @@ The author of the story: he observes, documents, builds. Like Cervantes, he sees
 - Research marketing trends to propose new skills
 - Improve existing skills based on real results
 - Propose changes to Sancho's SOUL.md, BRAIN.md, workflows
+- Promote chat → task: when a skill-creation/edit chat turns into real work, call `sancho_create_task` with the current `threadId` + my skill/agent. One task per thread (idempotent); don't promote dead-end chats. See PROTOCOLS §19 (SAN-210).
 
 ### 2. Infrastructure
 - Gateway, Tailscale, LaunchAgents, servers, OpenClaw config
