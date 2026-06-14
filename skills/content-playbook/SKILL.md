@@ -7,7 +7,6 @@ context_required:
 - brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/go-to-market/positioning/positioning.current.md
 - brand/{slug}/market-and-us/competitors/sources.json
-- brand/{slug}/atalaya/config.json
 - brand/{slug}/strategic-plan/strategic-plan.current.md
 context_writes:
 - brand/{slug}/content-playbook/pillars.md

@@ -85,7 +85,6 @@ Skills live in `~/.openclaw/skills/` (central catalog). All agents read them nat
 | `competitor-intelligence` | owned | Deep competitor analysis |
 | `market-intelligence` | owned | Market analysis: size, trends, dynamics |
 | `deep-research` | owned | Long-form research investigations |
-| `atalaya-*` (7 variants) | owned | Competitive scrape across channels |
 | `pattern-detector` | shared with Merlín | Qualitative pattern detection |
 
 ---
