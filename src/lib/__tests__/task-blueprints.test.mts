@@ -157,6 +157,24 @@ test("instantiateTaskSet('content') reproduces the legacy create-project spec (+
       agent: "maese-pedro",
       mc_chat_thread_id: tid("t05"),
     },
+    {
+      id: "P07-T06",
+      name: "SEO Audit (auditoría técnica web)",
+      description: "Auditoría SEO técnica del sitio (crawlability, indexación, CWV, schema) como parte del setup de Content/blog. Punto de partida hasta que exista una sección 'web' que la absorba.",
+      phase: 1,
+      type: "foundation",
+      channel: "strategy",
+      niche: null,
+      status: "todo",
+      deliverable: "Informe de auditoría SEO técnica del sitio",
+      deliverable_file: `brand/${slug}/site-audit/seo-audit/seo-audit.current.md`,
+      output_files: ["seo-audit.current.md"],
+      depends_on: null,
+      owner: "Sancho",
+      skill: "seo-audit",
+      agent: "dulcinea",
+      mc_chat_thread_id: tid("t06"),
+    },
   ];
 
   assert.deepEqual(instantiateTaskSet("content", { slug, projectId }), expected);
