@@ -19,7 +19,7 @@ For local development:
 
 ```bash
 SANCHO_MCP_TOKEN="dev-token" \
-SANCHO_MCP_SCOPES="sancho:read,tasks:read,yalc:read,open-design:read,sancho:chat,docs:read" \
+SANCHO_MCP_SCOPES="sancho:read,tasks:read,yalc:read,open-design:read,sancho:chat,docs:read,intelligence:read" \
 SANCHO_MCP_CLIENTS="client-slug" \
 SANCHO_MCP_BRANDS="client-slug" \
 npm run dev -- -p 3057
@@ -39,7 +39,7 @@ Production should configure tokens with `SANCHO_MCP_TOKENS`:
   {
     "id": "claude-code-operator",
     "tokenHash": "sha256-hex-token-hash",
-    "scopes": ["sancho:read", "tasks:read", "yalc:read", "open-design:read", "docs:read"],
+    "scopes": ["sancho:read", "tasks:read", "yalc:read", "open-design:read", "docs:read", "intelligence:read"],
     "clients": ["client-slug"],
     "brands": ["client-slug"]
   }
@@ -74,6 +74,7 @@ Available scopes:
 - `yalc:read`
 - `open-design:read`
 - `docs:read`
+- `intelligence:read`
 
 Client isolation is explicit. Every client-scoped tool requires `clientSlug`, and the token must include that slug in `clients` or `*`.
 
@@ -95,6 +96,9 @@ Current scaffolded tools:
 - `sancho_send_message`
 - `sancho_list_chat_threads`
 - `sancho_get_chat_thread`
+- `sancho_list_meetings`
+- `sancho_get_meeting`
+- `sancho_list_intelligence`
 - `yalc_get_overview`
 - `yalc_list_campaigns`
 - `yalc_list_gates`
@@ -138,6 +142,22 @@ Examples:
 
 `docPath` can be either brand-relative or a full `brand/<slug>/...` path. Reads are capped by `maxChars` (default `60000`, max `200000`) and return `truncated:true` when content is clipped.
 
+### Intelligence read flow
+
+Use `sancho_list_meetings` to get a lightweight index of a client's Meeting Intelligence meetings (id, title, date, source, status, decision/action counts) plus totals and last sync/run, then `sancho_get_meeting` to read one meeting's full detail (artifact, insights, decisions, document impacts, recommendations). Use `sancho_list_intelligence` to read the cross-meeting feed (insights, decisions, impacted documents, proposals) without opening each meeting; filter it with the optional `kind` (`Decision`, `Action`, `Insight`, `Quote`, `Risk`) and `status` arguments.
+
+All three require `intelligence:read` and are read-only — run/approve/reject actions are intentionally not exposed. They wrap the same shared services as the Intelligence UI, so Claude Code and Sancho read the exact same data. When Meeting Intelligence has no database configured they degrade cleanly: empty arrays and `storage.configured:false`, never an error.
+
+Examples:
+
+```json
+{ "clientSlug": "growth4u", "limit": 20 }
+```
+
+```json
+{ "clientSlug": "growth4u", "kind": "Decision" }
+```
+
 ## Audit
 
 Tool calls append JSONL audit entries to:
@@ -177,7 +197,7 @@ The staging GitHub Environment must define:
 The current staging token is a single shared operator token enabled for all clients (`clients: ["*"]`) with:
 
 ```json
-["sancho:read", "tasks:read", "tasks:write", "yalc:read", "open-design:read", "sancho:chat", "docs:read"]
+["sancho:read", "tasks:read", "tasks:write", "yalc:read", "open-design:read", "sancho:chat", "docs:read", "intelligence:read"]
 ```
 
 This is a shared token: audit events attribute every call to the same principal, and it can read and write across any staging client. For production, issue per-person/per-client tokens scoped to the narrowest set needed.

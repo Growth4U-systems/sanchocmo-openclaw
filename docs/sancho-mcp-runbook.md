@@ -19,6 +19,7 @@ Operational guide for issuing access, troubleshooting, and safely disabling the 
 | `yalc:read` | YALC overview / campaigns / gates (read) | none |
 | `open-design:read` | OD health / catalog (read) | none |
 | `docs:read` | list/read Brand Brain/Foundation docs by `brandSlug` + path | none |
+| `intelligence:read` | list/read Meeting Intelligence meetings + cross-meeting insights | none |
 | `sancho:chat` | read chat threads **and** `sancho_send_message` | sends chat messages (dry-run default) |
 | `tasks:write` | `sancho_create_task`, `sancho_update_task` | writes tasks (dry-run default) |
 
@@ -41,7 +42,7 @@ Notes:
      {
        "id": "claude-code-<person-or-purpose>",
        "tokenHash": "<sha256-hex>",
-       "scopes": ["sancho:read", "tasks:read", "yalc:read", "open-design:read", "docs:read"],
+       "scopes": ["sancho:read", "tasks:read", "yalc:read", "open-design:read", "docs:read", "intelligence:read"],
        "clients": ["growth4u"],
        "brands": ["growth4u", "xhype"]
      }
