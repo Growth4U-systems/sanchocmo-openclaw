@@ -557,6 +557,28 @@ test("sancho_create_task is dry-run by default and writes nothing", async () => 
   }
 });
 
+test("sancho_send_message dry-run returns a non-blocking work hint pointing to sancho_create_task (SAN-216)", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:chat"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_send_message",
+      arguments: { clientSlug: "alpha", text: "necesito un research de influencers y podcasts" },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.dryRun, true);
+    assert.equal(payload.requiresConfirmation, true);
+    assert.match(String(payload.workHint), /sancho_create_task/);
+  } finally {
+    await close();
+  }
+});
+
 test("sancho_create_task creates a task with confirm and it is retrievable", async () => {
   const { client, close } = await createConnectedClient({
     id: "operator",

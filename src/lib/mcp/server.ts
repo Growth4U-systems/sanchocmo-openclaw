@@ -289,7 +289,11 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Creates a task for a client. Requires tasks:write. Defaults to dry-run and requires confirm=true to write. " +
         "To promote the current chat to a task (SAN-210), pass threadId (+ your skill/agent): the task is linked to " +
         "the thread and the call is idempotent — one task per thread, so promoting the same thread again returns the " +
-        "existing task instead of duplicating it.",
+        "existing task instead of duplicating it. " +
+        "This is the right tool when the user asks for a unit of work (research, a prospect/influencer/podcast list, " +
+        "content, ads, a visual, data, or a web page): set `agent` to the owning specialist — hamete (research/market intel), " +
+        "rocinante (outreach/prospecting), dulcinea (content), mambrino (ads), maese-pedro (visual), merlin (data), " +
+        "alarife (web) — so the work is routed to and executed by that specialist instead of answered inline in chat.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         name: z.string().min(1).describe("Task name."),
@@ -377,7 +381,11 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Send Sancho chat message",
       description:
-        "Sends a message into Sancho Mission Control chat. Requires sancho:chat. Defaults to dry-run and requires confirm=true for execution.",
+        "Sends a message into Sancho Mission Control chat. Requires sancho:chat. Defaults to dry-run and requires confirm=true for execution. " +
+        "Use it for conversational messages, questions, and answering pending :::ask prompts. " +
+        "If the request is a discrete unit of work (research, a prospect/influencer/podcast list, content, ads, a visual, data, or a web page), " +
+        "do NOT just send it here and treat Sancho's inline reply as the deliverable — call sancho_create_task with the owning specialist as `agent` " +
+        "and send the brief to that task's threadId so the specialist actually does the work.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         text: z.string().min(1).describe("Message text."),
@@ -412,6 +420,11 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             dryRun: true,
             requiresConfirmation: true,
             message: "Set dryRun=false and confirm=true to send this chat message.",
+            workHint:
+              "If this is a unit of work (research, a prospect/influencer/podcast list, content, ads, a visual, data, or a web page), " +
+              "prefer sancho_create_task with the owning specialist as `agent` (hamete=research, rocinante=outreach, dulcinea=content, " +
+              "mambrino=ads, maese-pedro=visual, merlin=data, alarife=web) and send the brief to that task's thread — " +
+              "don't treat an inline chat reply as the deliverable.",
             payload,
           });
         }
