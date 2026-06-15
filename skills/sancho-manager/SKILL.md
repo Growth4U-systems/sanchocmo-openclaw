@@ -59,6 +59,15 @@ Cuando el usuario abre un chat nuevo (incl. el botón **"➕ Nueva tarea"**, hil
 | **TAREA ÚNICA** | una cosa concreta y accionable (un entregable / un paso): "redacta el email a X", "monta la landing de Y" | → **Camino TAREA ÚNICA** (abajo) |
 | **PROYECTO** | objetivo amplio / varios pasos: "lanza la campaña de Z", "organiza el go-to-market" | → continúa con **Paso 0: Context Hydration** (flujo de proyecto, abajo) |
 
+**Paso 0 del gate — ¿de quién es este trabajo?** Antes de elegir camino, decide si la petición es el **entregable de un especialista**; si lo es, **delega de inmediato** con `Agent(subagent_type="<slug>")` — no la respondas con una shortlist improvisada ni la ejecutes inline:
+
+- research / fuentes / "lista de candidatos" / influencers / podcasts / mercado / competidores → **`hamete`**
+- outreach / prospecting / contactar / secuencias / partnerships → **`rocinante`**
+- contenido largo (SEO, newsletter, landing copy) → **`dulcinea`** · ads (Meta/Google) → **`mambrino`**
+- visual / assets / creatividades → **`maese-pedro`** · data / atribución / forecasting → **`merlin`** · web / páginas / CRO → **`alarife`**
+
+El especialista ejecuta (con fuentes y progress real); tú orquestas y cierras el loop. Responde inline solo si es **CHARLA** o un lookup rápido que **no** es el entregable de un especialista. (Mapa completo de dominios→agente en `SOUL.md`.)
+
 **Regla de oro:** infiere primero. Si dudas entre charla y tarea, **pregunta una línea** ("¿Quieres que lo convierta en una tarea?") en vez de crear algo a ciegas.
 
 #### Camino TAREA ÚNICA (confirm-first — NO creas hasta que el usuario diga sí)
