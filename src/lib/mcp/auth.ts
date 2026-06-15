@@ -10,7 +10,8 @@ export type McpScope =
   | "yalc:read"
   | "yalc:write"
   | "open-design:read"
-  | "docs:read";
+  | "docs:read"
+  | "intelligence:read";
 
 export interface McpPrincipal {
   id: string;

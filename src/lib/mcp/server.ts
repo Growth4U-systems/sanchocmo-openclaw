@@ -13,6 +13,10 @@ import {
 import { loadClients } from "@/lib/data/clients";
 import { getInternalClientStatus } from "@/lib/sancho-internal-api";
 import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
+import {
+  getMeetingIntelligenceMeeting,
+  getMeetingIntelligenceState,
+} from "@/lib/data/meeting-intelligence-db";
 import { getMcpDocument, listMcpDocuments } from "@/lib/mcp/documents";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
 import {
@@ -68,6 +72,8 @@ const DOCUMENT_LIMIT_DEFAULT = 50;
 const DOCUMENT_LIMIT_MAX = 200;
 const DOCUMENT_MAX_CHARS_DEFAULT = 60_000;
 const DOCUMENT_MAX_CHARS_MAX = 200_000;
+const MEETING_LIMIT_DEFAULT = 50;
+const MEETING_LIMIT_MAX = 200;
 
 const askQuestionSchema = z.object({
   id: z.string().min(1),
@@ -1122,6 +1128,101 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "sancho:read", clientSlug);
         const url = buildIntakeUrl(clientSlug);
         return jsonResult({ ok: true, clientSlug, url });
+      }),
+  );
+
+  // SAN-217: Meeting Intelligence read tools (parity Claude Code + Sancho via intelligence:read).
+  // These wrap the same shared services the Intelligence UI uses — read-only, no run/approve/reject.
+  server.registerTool(
+    "sancho_list_meetings",
+    {
+      title: "List Meeting Intelligence meetings",
+      description:
+        "Lists a client's Meeting Intelligence meetings as a lightweight index (id, title, date, source, status, decision/action counts) plus totals and last sync/run. Read-only. When Meeting Intelligence has no database configured it returns an empty index with storage.configured=false (clean degradation, no error). Requires intelligence:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        limit: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Max meetings to return (default 50, max 200)."),
+      },
+    },
+    async ({ clientSlug, limit }) =>
+      runTool(context, "sancho_list_meetings", clientSlug, async () => {
+        assertClientScope(context, "intelligence:read", clientSlug);
+        const state = await getMeetingIntelligenceState(clientSlug);
+        const max = clampLimit(limit, MEETING_LIMIT_DEFAULT, MEETING_LIMIT_MAX);
+        return jsonResult({
+          ok: state.ok,
+          storage: state.storage,
+          meetings: [...state.meetings].slice(0, max),
+          totals: state.totals,
+          lastSync: state.lastSync,
+          lastCheckStatus: state.lastCheckStatus,
+          lastRun: state.lastRun,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_meeting",
+    {
+      title: "Get Meeting Intelligence meeting detail",
+      description:
+        "Returns the full Meeting Intelligence detail for one meeting: meeting metadata, artifact (raw/summary text), insights, decisions, document impacts and recommendations. Read-only. Returns ok:false when the meeting is not found or no database is configured. Requires intelligence:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        meetingId: z.string().min(1).describe("Meeting id from sancho_list_meetings."),
+      },
+    },
+    async ({ clientSlug, meetingId }) =>
+      runTool(context, "sancho_get_meeting", clientSlug, async () => {
+        assertClientScope(context, "intelligence:read", clientSlug);
+        return jsonResult(await getMeetingIntelligenceMeeting(clientSlug, meetingId));
+      }),
+  );
+
+  server.registerTool(
+    "sancho_list_intelligence",
+    {
+      title: "List cross-meeting intelligence",
+      description:
+        "Returns a client's cross-meeting intelligence without opening each meeting: the unified insight feed, decisions, impacted documents, recommendations/proposals and totals. Optional kind/status filters narrow the insight feed. Read-only. Requires intelligence:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        kind: z
+          .enum(["Decision", "Action", "Insight", "Quote", "Risk"])
+          .optional()
+          .describe("Filter the insight feed by type."),
+        status: z
+          .string()
+          .optional()
+          .describe(
+            "Filter the insight feed by status (draft, reviewable, accepted, rejected, converted).",
+          ),
+      },
+    },
+    async ({ clientSlug, kind, status }) =>
+      runTool(context, "sancho_list_intelligence", clientSlug, async () => {
+        assertClientScope(context, "intelligence:read", clientSlug);
+        const state = await getMeetingIntelligenceState(clientSlug);
+        const statusFilter = status?.trim().toLowerCase();
+        const intelligence = [...state.intelligence].filter((item) => {
+          if (kind && item.type !== kind) return false;
+          if (statusFilter && item.status.toLowerCase() !== statusFilter) return false;
+          return true;
+        });
+        return jsonResult({
+          ok: state.ok,
+          storage: state.storage,
+          totals: state.totals,
+          intelligence,
+          decisions: state.decisions,
+          documents: state.documents,
+          proposals: state.proposals,
+        });
       }),
   );
 

@@ -77,12 +77,16 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_get_chat_thread",
       "sancho_get_client_context",
       "sancho_get_document",
+      // SAN-217: Meeting Intelligence read tools
+      "sancho_get_meeting",
       "sancho_get_task",
       // SAN-17: public intake-form link (stateless token, read-only)
       "sancho_intake_create_link",
       "sancho_list_chat_threads",
       "sancho_list_clients",
       "sancho_list_documents",
+      "sancho_list_intelligence",
+      "sancho_list_meetings",
       "sancho_list_tasks",
       "sancho_mcp_status",
       "sancho_send_message",
@@ -178,6 +182,66 @@ test("sancho_list_clients only returns clients allowed by principal", async () =
     assert.equal(result.isError, undefined);
     const payload = JSON.parse(result.content[0].type === "text" ? result.content[0].text : "{}");
     assert.deepEqual(payload.clients.map((clientRow: { slug: string }) => clientRow.slug), ["alpha"]);
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_list_meetings requires intelligence:read scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_list_meetings",
+      arguments: { clientSlug: "alpha" },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /intelligence:read/);
+  } finally {
+    await close();
+  }
+});
+
+test("intelligence read tools are wired and degrade cleanly without a database", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["intelligence:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const meetings = await client.callTool({
+      name: "sancho_list_meetings",
+      arguments: { clientSlug: "alpha" },
+    });
+    assert.equal(meetings.isError, undefined);
+    const meetingsPayload = JSON.parse(meetings.content[0].type === "text" ? meetings.content[0].text : "{}");
+    assert.deepEqual(meetingsPayload.meetings, []);
+    assert.equal(meetingsPayload.storage.configured, false);
+
+    const intelligence = await client.callTool({
+      name: "sancho_list_intelligence",
+      arguments: { clientSlug: "alpha" },
+    });
+    assert.equal(intelligence.isError, undefined);
+    const intelligencePayload = JSON.parse(
+      intelligence.content[0].type === "text" ? intelligence.content[0].text : "{}",
+    );
+    assert.deepEqual(intelligencePayload.intelligence, []);
+    assert.equal(intelligencePayload.storage.configured, false);
+
+    const meeting = await client.callTool({
+      name: "sancho_get_meeting",
+      arguments: { clientSlug: "alpha", meetingId: "missing" },
+    });
+    assert.equal(meeting.isError, undefined);
+    const meetingPayload = JSON.parse(meeting.content[0].type === "text" ? meeting.content[0].text : "{}");
+    assert.equal(meetingPayload.ok, false);
+    assert.equal(meetingPayload.storage.configured, false);
   } finally {
     await close();
   }
