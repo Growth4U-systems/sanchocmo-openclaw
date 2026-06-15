@@ -206,6 +206,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "theme-factory": "maese-pedro",
   "thief-marketers": "hamete",
   "tiktok-growth": "dulcinea",
+  "trust-score": "dulcinea",
   "video": "dulcinea",
   "visual-identity": "maese-pedro",
   "web-artifacts-builder": "maese-pedro",

@@ -3,7 +3,7 @@
  * reseed-foundation.mts — Reinstala el scaffolding canónico de Foundation
  * en un cliente existente, archivando el estado actual.
  *
- * Sucesor de scripts/reseed-foundation.sh (SAN-183 F5): los 4 proyectos P00
+ * Sucesor de scripts/reseed-foundation.sh (SAN-183 F5): los 5 proyectos P00
  * ya NO viven en heredocs — se instancian del registro declarativo
  * (config/pillar-manifest.json → taskSets foundation-*) vía
  * src/lib/data/task-blueprints.ts::instantiateFoundationProject. Misma
@@ -127,12 +127,12 @@ act("mkdir árbol canónico", () => {
 // --- 3. Escribir templates canónicos ---
 console.log("\n🏗️ [3/3] Escribiendo templates canónicos...");
 if (dryRun) {
-  console.log("  [dry-run] 4 proyectos (CB/Full/Metrics/Strategic-Plan)");
+  console.log("  [dry-run] 5 proyectos (CB/Site-Audit/Full/Metrics/Strategic-Plan)");
   console.log("\n✓ Reseed dry-run complete.");
   process.exit(0);
 }
 
-// Los 4 proyectos P00 desde el registro declarativo
+// Los 5 proyectos P00 desde el registro declarativo
 for (const setKey of FOUNDATION_TASK_SET_KEYS) {
   const { project, tasks } = instantiateFoundationProject(setKey, { slug });
   const projDir = path.join(projectsDir, project.id);

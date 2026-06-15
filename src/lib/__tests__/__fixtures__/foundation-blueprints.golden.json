@@ -40,6 +40,47 @@
       }
     ]
   },
+  "foundation-site-audit": {
+    "project": {
+      "id": "P00-Site-Audit",
+      "name": "Site Audit",
+      "description": "Auditoría de la presencia digital del cliente: Trust Score (borrowed trust, SERP, brand assets, GEO/IA, outbound readiness, demand engine) con gap vs un set fijo de competidores.",
+      "approach": "El Trust Score Analyzer corre en modo compare: self-score standalone + gap vs competidores fijados en el kickoff. La métrica diaria se persiste bajo sources.trust_score; el pilar consolida pilares, findings y verdict en un doc navegable.",
+      "objective": {
+        "description": "Trust Score auditado con gap competitivo",
+        "metric": "docs_completed",
+        "baseline": 0,
+        "target": 1,
+        "unit": " archivo"
+      },
+      "origin": "onboarding",
+      "phase": -1,
+      "category": "foundation",
+      "review_date": null,
+      "status": "pending"
+    },
+    "tasks": [
+      {
+        "id": "P00-SA-T01",
+        "name": "Trust Score Audit (L0)",
+        "description": "Ejecutar el Trust Score Analyzer en modo compare contra el set de competidores fijado: borrowed trust, SERP, brand assets, GEO/IA, outbound readiness y demand engine. Consolida score global, pilares con findings, brechas vs competidores y verdict en el doc del pilar, y persiste la métrica diaria.",
+        "type": "foundation",
+        "channel": "strategy",
+        "niche": null,
+        "status": "todo",
+        "deliverable": "site-audit/trust-score/trust-score.current.md con el Trust Score, pilares, brechas y verdict.",
+        "deliverable_file": "brand/innatica/site-audit/trust-score/trust-score.current.md",
+        "depends_on": null,
+        "owner": "Sancho",
+        "skill": "trust-score",
+        "agent": "dulcinea",
+        "pillar": "trust-score",
+        "section": "site-audit",
+        "mc_chat_thread_id": "task-p00-sa-t01",
+        "done_criteria": "Trust Score generado con gap vs competidores fijados y verdict documentado."
+      }
+    ]
+  },
   "foundation-full": {
     "project": {
       "id": "P00-Full-Foundation",

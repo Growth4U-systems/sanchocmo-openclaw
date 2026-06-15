@@ -1,6 +1,6 @@
 ---
 name: foundation-orchestrator
-description: "Orquesta la Foundation v3.0: 6 secciones, 8 layers, gate checks con requires/enriches_with. Flujo: Kickoff (1 skill, company-brief.current.md) → Full Foundation (9 skills individuales) → Metrics Setup → Strategic Plan. Al aprobar un pilar, ejecuta automáticamente el siguiente. Leer pillar-registry.md para detalle de cada pilar."
+description: "Orquesta la Foundation v3.0: 7 secciones, 8 layers, gate checks con requires/enriches_with. Flujo: Kickoff (1 skill, company-brief.current.md) → Trust Score (opcional, auto-arranca tras Company Brief) → Full Foundation (9 skills individuales) → Metrics Setup → Strategic Plan. Al aprobar un pilar, ejecuta automáticamente el siguiente. Leer pillar-registry.md para detalle de cada pilar."
 user-invocable: false
 context_required:
 - _system/foundation-protocol.md
@@ -19,6 +19,7 @@ context_required:
 | Sección | Dir | Qué contiene |
 |---------|-----|-------------|
 | Company Brief | `company-brief/` | Company Brief inicial: `company-brief.current.md` (un archivo, secciones H2) |
+| Site Audit | `site-audit/` | Trust Score (opcional, auto-arranca tras Company Brief): `trust-score/trust-score.current.md` (6 pilares + gap vs competidores + verdict) |
 | Market & Us | `market-and-us/` | Research profundo + Market Synthesis (SWOT, Summary, OPE Canvas, Presentación) |
 | Go-To-Market | `go-to-market/` | Niche Discovery, Positioning, Pricing |
 | Brand Identity | `brand-identity/` + `brand-voice/` | Full Voice Guide + Visual Identity |
@@ -29,6 +30,7 @@ context_required:
 
 ```
 L0 KICKOFF:    kickoff (1 skill → company-brief/company-brief.current.md)
+                 └─ trust-score? (OPCIONAL, auto-arranca tras company-brief — requires URL; no bloquea)
 L1 RESEARCH:   market-intelligence + competitor-intelligence + self-intelligence
 L2 SYNTHESIS:  market-synthesis (SWOT + Summary + OPE Canvas + Presentación)
 L3 DISCOVERY:  niche-discovery-100x + existing-customer-data?
@@ -62,6 +64,7 @@ Ver `references/pillar-registry.md` para mapa completo de dependencias.
 🏗️ FOUNDATION — [Cliente]
 
 📋 Kickoff               ✅ (company-brief/company-brief.current.md)
+🔍 Site Audit            ⬜ Trust Score (opcional)
 📊 Market & Us           ✅ Market · ⬜ Competitors · ✅ Self · ⬜ Synthesis
 🎯 Go-To-Market          ⬜ Niches · ⬜ Positioning · ⬜ Pricing
 🎨 Brand Identity        ⬜ Voice · ⬜ Visual
@@ -92,6 +95,8 @@ Sesión de intake única (~30 min):
 4. Genera `brand/{slug}/company-brief/company-brief.current.md` (un archivo, secciones H2: Company, Market, Brand Voice, ECPs)
 
 Al aprobar → marcar el pilar `company-brief` como `completed` (POST pillar-status) → desbloquea Layer 1.
+
+**Auto-arranque del Trust Score (Layer 0, OPCIONAL):** justo tras marcar `company-brief` como `completed` (ya hay URL), disparar el skill `trust-score` (agente `dulcinea`, thread `{slug}:trust-score`, sección `site-audit`). Es **fire-and-forget y NO bloqueante**: la skill corre el analyzer, escribe `site-audit/trust-score/trust-score.current.md` y se auto-marca `completed` vía `POST /api/brand-brain/pillar-status` (`section: "site-audit"`, `pillar: "trust-score"`). El orquestador **no lo gatea ni lo espera**: Layer 1 procede en paralelo. Si el analyzer falla (sin competidores descubribles → 409, discovery caído → 502, o `_stale`), el pilar `trust-score` queda pendiente **sin trabar** el avance ni el gate de Foundation completa. `trust-score` nunca es `requires` de ningún pilar downstream.
 
 ---
 

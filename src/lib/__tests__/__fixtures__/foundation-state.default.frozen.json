@@ -20,6 +20,14 @@
         "company-brief": {"status": "not-started", "skill": "kickoff", "output_file": "brand/__SLUG__/company-brief/company-brief.current.md"}
       }
     },
+    "site-audit": {
+      "status": "not-started",
+      "layer": 0,
+      "output_dir": "brand/__SLUG__/site-audit/",
+      "pillars": {
+        "trust-score": {"status": "not-started", "layer": 0, "optional": true, "skill": "trust-score", "output_file": "brand/__SLUG__/site-audit/trust-score/trust-score.current.md"}
+      }
+    },
     "market-and-us": {
       "status": "not-started",
       "layer": 1,

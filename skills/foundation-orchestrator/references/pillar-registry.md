@@ -19,6 +19,19 @@
 
 ---
 
+## SITE AUDIT — LAYER 0 (opcional, tras Kickoff)
+
+### trust-score
+**Skill**: `trust-score`
+**Agent**: `dulcinea`
+**Thread**: `{slug}:trust-score`
+**Output**: `brand/{slug}/site-audit/trust-score/trust-score.current.md` (Trust Score: 6 pilares + gap vs un set fijo de competidores + verdict). El doc lo escribe el endpoint `/api/trust-score`; la skill lo dispara y marca el pilar completed.
+**requires**: company-brief (ya hay URL)
+**optional**: sí — no bloquea Foundation. Si el analyzer falla o no hay competidores descubribles, el pilar queda pendiente sin trabar el avance.
+**Done**: doc generado con los 6 pilares + verdict, y pilar marcado completed.
+
+---
+
 ## FULL FOUNDATION — LAYER 1: RESEARCH
 
 ### market-analysis

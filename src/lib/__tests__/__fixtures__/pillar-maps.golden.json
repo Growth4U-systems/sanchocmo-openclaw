@@ -57,6 +57,9 @@
     "strategic-presentation": [
       "presentations/strategic-deck.html"
     ],
+    "trust-score": [
+      "site-audit/trust-score/trust-score.current.md"
+    ],
     "visual-identity": [
       "brand-book/visual-identity/DESIGN.md",
       "brand-book/visual-identity/visual-identity.current.md",
@@ -81,6 +84,7 @@
     "self-analysis": "self-intelligence",
     "strategic-plan": "strategic-plan",
     "strategic-presentation": "frontend-slides",
+    "trust-score": "trust-score",
     "visual-identity": "design-system"
   },
   "chatConfig": {
@@ -202,6 +206,13 @@
         "frontend-slides"
       ],
       "agent": "maese-pedro"
+    },
+    "trust-score": {
+      "skill": "trust-score",
+      "skills": [
+        "trust-score"
+      ],
+      "agent": "dulcinea"
     },
     "visual-identity": {
       "skill": "design-system",
