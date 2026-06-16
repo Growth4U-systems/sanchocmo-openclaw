@@ -5,9 +5,8 @@ description: Use BEFORE creating any branch, commit, PR, or release in sanchocmo
 
 # Git workflow — sanchocmo-openclaw
 
-Authoritative summary for agents. Full rationale: `docs/CONTRIBUTING.md` +
-`docs/plans/branching-release-model-proposal.md`. **These rules are mandatory —
-follow them without being asked.**
+Authoritative summary for agents. Full detail: `docs/CONTRIBUTING.md`. **These
+rules are mandatory — follow them without being asked.**
 
 ## The one model
 
@@ -72,8 +71,8 @@ Merging the release PR does **not** freeze staging — keep working immediately.
 No special procedure. A hotfix is a `fix:` change: branch from `staging`, commit
 `fix: ...`, squash-PR to `staging`, then it ships via the next (patch) release PR.
 The only exception — prod down *and* staging has unreleasable work in flight — is
-the emergency runbook in `docs/plans/branching-release-model-proposal.md`
-(Apéndice A); it's the only time you touch git by hand. Not the default.
+the emergency runbook in `docs/CONTRIBUTING.md` (§Hotfixes); it's the only time you
+touch git by hand. Not the default.
 
 ## Never
 

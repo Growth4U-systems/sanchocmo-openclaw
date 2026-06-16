@@ -22,7 +22,7 @@ feature/foo ──PR(squash)──▶ staging ──auto-deploy─────�
 `main` **never receives work** — not a PR, not a push, not a merge. It is a
 fast-forward-only pointer to the latest release, moved only by `promote-main.yml`.
 Because it can only advance to commits that already live on `staging`, it can
-**never diverge**. (Rationale + history: `docs/plans/branching-release-model-proposal.md`.)
+**never diverge**.
 
 - **`staging`** auto-deploys on every merge (no gate). It is the trunk; keep it
   always releasable — small PRs, feature-flag incomplete work.
@@ -149,11 +149,17 @@ git checkout -b nahuel/san-123-fix-summary
 # fix it, commit with `fix: ...`, push, PR to staging — done.
 ```
 
-> **Emergency only** — prod is broken *and* `staging` has unreleasable work in
-> flight (so you can't ship its tip): that's the single case needing git by hand.
-> Branch from the **last prod tag**, fix, tag a patch, ff `main`, deploy, then
-> forward-merge the fix back to `staging`. See the emergency runbook in
-> `docs/plans/branching-release-model-proposal.md` (Apéndice A). Not the everyday path.
+### Emergency runbook (the only time you touch git by hand)
+
+The single exception is **prod down *and* `staging` has unreleasable work in
+flight** (so you can't ship staging's tip). Not the everyday path — a dev runs it:
+
+1. `git fetch && git switch -c hotfix/<desc> <last-prod-tag>`
+2. Minimal fix + a `fix:` Conventional Commit.
+3. Tag a patch on the hotfix + fast-forward `main` to it + deploy (or
+   `deploy-prod.yml` `workflow_dispatch` with that tag).
+4. **Forward-merge the hotfix back to `staging`** (squash PR) so it isn't lost and
+   the invariant is restored (`main` is an ancestor of `staging` again).
 
 ---
 
@@ -208,5 +214,5 @@ Each environment exposes the same secret/variable names with different values:
 ## Questions / problems
 
 - Deploy or VPS issues → `docs/DEPLOY.md`
-- Branching/release model rationale, migration, and emergency runbook → `docs/plans/branching-release-model-proposal.md`
+- Original (pre-redesign) workflow notes → `docs/plans/2026-05-07-git-workflow-main-staging.md`
 - Original (pre-redesign) workflow notes → `docs/plans/2026-05-07-git-workflow-main-staging.md`
