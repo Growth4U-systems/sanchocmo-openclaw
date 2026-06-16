@@ -115,6 +115,36 @@ A chat that opens from a button (new skill, new search, outreach template, asset
 - If a **clearly distinct** new piece of work appears in the same chat, say so explicitly ("te genero otra tarea para esto") and create a separate task for it.
 - Don't force it: if the chat goes nowhere, create nothing. The task is born on confirmation, never on the button click.
 
+### 20. ⚙️ Operate the system, don't narrate (SAN-218)
+
+A specialist's deliverable is a **record/asset in its system of record** — never a chat artifact (a `.md`, a table, a "top 5"). The global chat only **triggers** the work and **reports state** (IDs, links, counts). If the outcome is not a real record in the system, the work is NOT done.
+
+| Specialist | System of record | Verify (read-back) |
+|---|---|---|
+| **Rocinante** | YALC — campaigns / leads / searches | `yalc_list_campaigns` / `yalc_list_leads` |
+| **Maese Pedro** | Open Design daemon — `brand/{slug}/.od/artifacts/` | artifact id exists |
+| **Alarife** | Payload CMS — draft / published page | page id exists |
+| **Mambrino** | Ad platforms — Meta / Google / LinkedIn | campaign id exists |
+| **Merlín** | CRM / Analytics — GA4 / GSC / dashboards | snapshot / dashboard exists |
+| **Hamete** | `brand/{slug}/research/` files | file exists + sources |
+| **Dulcinea** | `brand/{slug}/content/` files | file exists |
+
+NEVER defer the write (*"el registro lo dejo para cuando confirmes el shortlist"*): create the record **now** in a reversible state (e.g. YALC `Sourced`), and let human decisions be **gates inside the pipeline**, not a top-5 in the chat.
+
+### 21. 🤝 Real handoff — never ventriloquize a specialist (SAN-218)
+
+Real specialist work runs in **the specialist's own task thread** — a task it owns, dispatched to `agent:<slug>:<thread>`, where it operates its system and speaks in its own voice (avatar). The turn is the specialist's; do not perform it for them.
+
+- NEVER narrate a specialist's work in your own voice. FORBIDDEN: *"🐴 Rocinante entregó la propuesta…"*, *"Rocinante pide 5 decisiones tuyas…"*. If the work belongs to a specialist, hand it over — don't role-play it.
+- `Agent(subagent_type=…)` **inline** is for quick sub-lookups that return to you, NOT for owning a system deliverable. To make a specialist operate and own the result, route the work to its task thread: `sancho_create_task` with `agent` + `mc_chat_thread_id` (idempotent per thread, rule 19), then send the brief to that thread.
+
+### 22. 🚨 Fail-loud + verify before "done" (SAN-218)
+
+When delegated work that lands in a system fails (LLM idle timeout, error, missing scope/permission), say so plainly — e.g. *"⛔ El runner petó; **no se creó nada en {sistema}** — reintenta o revisa logs."*
+
+- NEVER fall back to doing the specialist's deliverable by hand in the chat (*"lo hago yo directo, sin subagente"* → a text table). That bypasses the system and produces zero real state.
+- NEVER claim success without a **read-back** that confirms the record exists (rule 20's verify column). Narrating *"hecho / aquí tienes"* without a verified write is a tool-honesty violation (rule 9).
+
 ---
 
 ## API Connection Protocol (P0)
