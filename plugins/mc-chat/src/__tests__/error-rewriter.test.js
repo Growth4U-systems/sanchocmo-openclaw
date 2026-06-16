@@ -217,3 +217,78 @@ test("insufficient_quota: detects raw OpenAI billing error directly", () => {
   assert.equal(out.errorDetail.category, "insufficient_quota");
   assert.ok(out.text.startsWith("⚠️ **API key OpenAI sin cuota**"));
 });
+
+// -----------------------------------------------------------------------------
+// anthropic_billing — Claude subscription "out of extra usage" vs API-key
+// -----------------------------------------------------------------------------
+
+// Raw upstream message Anthropic returns when the Claude (Max) subscription has
+// exhausted its extra-usage pool. Taken from staging failover logs 2026-06-15.
+const FIXTURE_ANTHROPIC_EXTRA_USAGE =
+  "You're out of extra usage. Add more at claude.ai/settings/usage and keep going.";
+
+// Generic OpenClaw wrapper text actually delivered to the chat for any billing
+// failover. Always says "API key" even when the agent runs on the subscription
+// — the misleading message this classifier exists to fix.
+const FIXTURE_OPENCLAW_BILLING_GENERIC =
+  "⚠️ API provider returned a billing error — your API key has run out of credits " +
+  "or has an insufficient balance. Check your provider's billing dashboard and top up " +
+  "or switch to a different API key.";
+
+test("anthropic_billing: raw extra-usage message → subscription wording", () => {
+  const out = classifyAndRewriteError(FIXTURE_ANTHROPIC_EXTRA_USAGE);
+  assert.equal(out.errorDetail.category, "anthropic_billing");
+  assert.ok(out.text.startsWith("⚠️ **Suscripción Claude sin extra-usage**"));
+  assert.ok(out.text.includes("claude.ai/settings/usage"));
+});
+
+test("anthropic_billing: generic wrapper + anthropicAuthMode=subscription → extra-usage wording", () => {
+  const out = classifyAndRewriteError(FIXTURE_OPENCLAW_BILLING_GENERIC, {
+    anthropicAuthMode: "subscription",
+  });
+  assert.equal(out.errorDetail.category, "anthropic_billing");
+  assert.equal(out.errorDetail.anthropicAuthMode, "subscription");
+  assert.ok(out.text.startsWith("⚠️ **Suscripción Claude sin extra-usage**"));
+  assert.ok(out.text.includes("claude.ai/settings/usage"));
+  // Must NOT keep the misleading "switch your API key" advice.
+  assert.ok(!/switch to a different api key/i.test(out.text));
+  assert.ok(!out.text.includes("run out of credits"));
+});
+
+test("anthropic_billing: generic wrapper + anthropicAuthMode=api_key → API-key wording", () => {
+  const out = classifyAndRewriteError(FIXTURE_OPENCLAW_BILLING_GENERIC, {
+    anthropicAuthMode: "api_key",
+  });
+  assert.equal(out.errorDetail.category, "anthropic_billing");
+  assert.ok(out.text.startsWith("⚠️ **API key Anthropic sin saldo**"));
+  assert.ok(!out.text.includes("extra-usage"));
+});
+
+test("anthropic_billing: explicit extra-usage text overrides api_key mode (unambiguous)", () => {
+  const out = classifyAndRewriteError(FIXTURE_ANTHROPIC_EXTRA_USAGE, {
+    anthropicAuthMode: "api_key",
+  });
+  // The phrase is subscription-only; trust the text over the (stale) mode hint.
+  assert.ok(out.text.startsWith("⚠️ **Suscripción Claude sin extra-usage**"));
+});
+
+test("anthropic_billing: generic wrapper + no mode → neutral billing header", () => {
+  const out = classifyAndRewriteError(FIXTURE_OPENCLAW_BILLING_GENERIC);
+  assert.equal(out.errorDetail.category, "anthropic_billing");
+  assert.ok(out.text.startsWith("⚠️ **Saldo del proveedor agotado**"));
+});
+
+test("anthropic_billing: 'apikey' alias normalizes to api_key wording", () => {
+  const out = classifyAndRewriteError(FIXTURE_OPENCLAW_BILLING_GENERIC, {
+    anthropicAuthMode: "apikey",
+  });
+  assert.ok(out.text.startsWith("⚠️ **API key Anthropic sin saldo**"));
+});
+
+test("anthropic_billing: does not swallow OpenAI insufficient_quota", () => {
+  const raw =
+    'OpenAI API error: {"type":"insufficient_quota","message":"You exceeded your current quota, ' +
+    'please check your plan and billing details."}';
+  const out = classifyAndRewriteError(raw, { anthropicAuthMode: "subscription" });
+  assert.equal(out.errorDetail.category, "insufficient_quota");
+});

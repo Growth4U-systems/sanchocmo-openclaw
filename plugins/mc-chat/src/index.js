@@ -316,7 +316,10 @@ export default defineChannelPluginEntry({
                 // the user-facing text is replaced with a clear Spanish summary
                 // and the raw payload is surfaced as `errorDetail` for the UI
                 // modal. Untouched otherwise.
-                const authInfo = readCodexAuthInfo(respondingAgent) || {};
+                const authInfo = {
+                  ...(readCodexAuthInfo(respondingAgent) || {}),
+                  anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
+                };
                 for (const msgText of texts) {
                   const { text: rewritten, errorDetail: classified } = classifyAndRewriteError(msgText, authInfo);
                   let errorDetail = classified;
@@ -355,7 +358,10 @@ export default defineChannelPluginEntry({
                 // timed out — last seen rate_limit"). Best-effort only.
                 try {
                   const respondingAgent = requestedAgent || "sancho";
-                  const authInfo = readCodexAuthInfo(respondingAgent) || {};
+                  const authInfo = {
+                    ...(readCodexAuthInfo(respondingAgent) || {}),
+                    anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
+                  };
                   const { errorDetail } = classifyAndRewriteError(err?.message || String(err), authInfo);
                   if (errorDetail) errorTracker.record(respondingAgent, errorDetail);
                 } catch {}
