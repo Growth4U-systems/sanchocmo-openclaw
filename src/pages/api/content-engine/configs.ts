@@ -422,12 +422,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           content_types: Array.isArray(ch.contentTypes) ? ch.contentTypes : [],
           profiles: Array.isArray(ch.profiles)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ? ch.profiles.map((p: any) => ({
-                name: p.name || "",
-                handle: p.handle || "",
-                role: p.role || "",
-                posts_per_week: typeof p.postsPerWeek === "number" ? p.postsPerWeek : Number(p.postsPerWeek) || 0,
-              }))
+            ? ch.profiles.map((p: any) => {
+                // Preserve the rich SAN-163 voice fields the cadence editor UI
+                // doesn't surface (id, metricool_profile_id, voice_doc,
+                // pillars_slant, owner, primary_kpi). Match the existing profile
+                // by id or name so a UI cadence edit never wipes the founder-led
+                // voice config written by the `founder-led-setup` skill.
+                const prev =
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  ((existingCh.profiles as any[]) || []).find(
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (q: any) => (p.id && q.id === p.id) || q.name === p.name,
+                  ) || {};
+                return {
+                  ...prev,
+                  name: p.name || "",
+                  handle: p.handle || "",
+                  role: p.role || "",
+                  posts_per_week: typeof p.postsPerWeek === "number" ? p.postsPerWeek : Number(p.postsPerWeek) || 0,
+                };
+              })
             : [],
         };
       }
