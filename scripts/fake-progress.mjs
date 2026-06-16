@@ -46,13 +46,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const sequence = [
   { kind: "thinking", label: "Leyendo el contexto del thread", agent: "sancho" },
-  { kind: "agent_handoff", label: "Delegando a Escudero", target: "escudero", agent: "sancho" },
-  { kind: "read", label: "Abriendo brand brief", target: "foundation/brand-book/voice.current.md", agent: "escudero" },
-  { kind: "search", label: "Buscando contenido reciente", target: "content/posts/", agent: "escudero" },
-  { kind: "tool_call", label: "Generando draft", target: "draft-writer", agent: "escudero" },
-  { kind: "file_write", label: "Escribiendo borrador", target: "drafts/2026-05-08-post-1.md", agent: "escudero" },
+  { kind: "agent_handoff", label: "Delegando a Dulcinea", target: "dulcinea", agent: "sancho" },
+  { kind: "read", label: "Abriendo brand brief", target: "foundation/brand-book/voice.current.md", agent: "dulcinea" },
+  { kind: "search", label: "Buscando contenido reciente", target: "content/posts/", agent: "dulcinea" },
+  { kind: "tool_call", label: "Generando draft", target: "draft-writer", agent: "dulcinea" },
+  { kind: "file_write", label: "Escribiendo borrador", target: "drafts/2026-05-08-post-1.md", agent: "dulcinea" },
   { kind: "tool_call", label: "Revisando con Hamete", target: "fact-checker", agent: "hamete" },
-  { kind: "thinking", label: "Componiendo respuesta final", agent: "escudero" },
+  { kind: "thinking", label: "Componiendo respuesta final", agent: "dulcinea" },
 ];
 
 (async () => {
@@ -84,7 +84,7 @@ const sequence = [
     threadId,
     slug,
     text: "Listo. Borrador guardado y revisado.",
-    agent: "escudero",
+    agent: "dulcinea",
   });
   console.log("[fake-progress] Final bot reply sent. Pending progress sealed.");
 })();
