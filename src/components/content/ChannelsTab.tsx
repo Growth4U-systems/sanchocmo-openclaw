@@ -63,6 +63,9 @@ const REPURPOSE_STATUS_LABEL: Record<string, string> = {
   Published: "publicada",
 };
 
+/** Personal-voice networks that collapse into the unified Founder-Led section. */
+const FOUNDER_LED_CHANNELS = new Set(["linkedin", "twitter", "x"]);
+
 export function ChannelsTab({ slug, onGo, openChat }: Props) {
   const { data, isLoading } = useChannelLoops(slug);
   const [antennasFor, setAntennasFor] = useState<ChannelLoopState | null>(null);
@@ -130,10 +133,12 @@ export function ChannelsTab({ slug, onGo, openChat }: Props) {
   }
 
   const channels = data.channels;
-  // Founder-led networks (those carrying voices) collapse into ONE unified
-  // "Founder-Led Content" section; the rest (blog, etc.) stay standalone cards.
-  const founderLed = channels.filter((c) => c.personas.length > 0);
-  const standalone = channels.filter((c) => c.personas.length === 0);
+  // Founder-led networks collapse into ONE unified "Founder-Led Content"
+  // section — keyed by network (not by "has voices") so the section + its
+  // "+ Añadir voz" CTA show even before the first voice exists. Inactive
+  // networks fall back to standalone cards (so their "Activar" flow still works).
+  const founderLed = channels.filter((c) => c.active && FOUNDER_LED_CHANNELS.has(c.channel));
+  const standalone = channels.filter((c) => !(c.active && FOUNDER_LED_CHANNELS.has(c.channel)));
 
   return (
     <div className="space-y-5">
@@ -162,6 +167,7 @@ export function ChannelsTab({ slug, onGo, openChat }: Props) {
           onGo={onGo}
           onAddVoice={addVoice}
           onOpenStrategy={(doc) => setDocPath(`brand/${slug}/${doc}`)}
+          onOpenSetup={(channel) => onGo("setup", channel)}
         />
       )}
 

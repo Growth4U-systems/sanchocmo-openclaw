@@ -7,8 +7,11 @@
  * channel-loops into a flat list of voice cards (Alfonso·LinkedIn,
  * Martín·LinkedIn, Alfonso·X), each tagged with its network logo.
  *
- * "+ Añadir voz" is wired by the parent (ChannelsTab) to the `founder-led-voice`
- * on-demand entry in the pillar-manifest (skill `founder-led-setup`).
+ * The section renders for every active founder-led network even before any
+ * voice exists, so "+ Añadir voz" (wired by ChannelsTab to the
+ * `founder-led-voice` pillar-manifest entry → skill `founder-led-setup`) is
+ * always reachable. Per-network strategy state and the unassigned pool stay
+ * per-channel — collapsing the cards must not hide either.
  */
 
 import type { ChannelLoopState } from "@/types";
@@ -46,20 +49,19 @@ type OnGo = (
 
 interface Props {
   slug: string;
-  /** Founder-led channels (those that carry voices/personas). */
+  /** Founder-led channels (the personal-voice networks, active). */
   channels: ChannelLoopState[];
   onGo: OnGo;
   onAddVoice: () => void;
   onOpenStrategy: (strategyDoc: string) => void;
+  onOpenSetup: (channel: string) => void;
 }
 
-export function FounderLedSection({ channels, onGo, onAddVoice, onOpenStrategy }: Props) {
+export function FounderLedSection({ channels, onGo, onAddVoice, onOpenStrategy, onOpenSetup }: Props) {
   // One voice per (person, network): flatten personas across the founder-led channels.
   const voices = channels.flatMap((ch) => ch.personas.map((persona) => ({ persona, channel: ch.channel })));
   const networks = channels.length;
-  const unassigned = channels.reduce((n, ch) => n + ch.unassignedPool, 0);
-  // A founder-led section carries one shared strategy doc — use the first that exists.
-  const strategyDoc = channels.find((c) => c.strategyDocExists)?.strategyDoc || null;
+  const pools = channels.filter((ch) => ch.unassignedPool > 0);
 
   return (
     <section className="border-[3px] border-ink rounded-lg bg-card overflow-hidden" style={{ boxShadow: "var(--pop-md)" }}>
@@ -70,14 +72,6 @@ export function FounderLedSection({ channels, onGo, onAddVoice, onOpenStrategy }
           <h3 className="font-heading text-lg text-ink leading-tight">Founder-Led Content</h3>
           <p className="text-[11px] text-muted-foreground">
             {voices.length} {voices.length === 1 ? "voz" : "voces"} · {networks} {networks === 1 ? "red" : "redes"}
-            {strategyDoc && (
-              <>
-                {" · "}
-                <button type="button" onClick={() => onOpenStrategy(strategyDoc)} className="underline text-rust hover:opacity-80">
-                  estrategia founder-led
-                </button>
-              </>
-            )}
           </p>
         </div>
         <button
@@ -89,11 +83,38 @@ export function FounderLedSection({ channels, onGo, onAddVoice, onOpenStrategy }
         </button>
       </header>
 
+      {/* Per-network strategy — collapsing the cards must not hide each network's
+          strategy doc (or its missing-strategy warning). One chip per network. */}
+      <div className="flex flex-wrap gap-2 px-4 pt-3">
+        {channels.map((ch) =>
+          ch.strategyDocExists && ch.strategyDoc ? (
+            <button
+              key={ch.channel}
+              type="button"
+              onClick={() => ch.strategyDoc && onOpenStrategy(ch.strategyDoc)}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold border-2 border-ink rounded-full px-2.5 py-1 bg-card hover:-translate-y-0.5 transition-all"
+            >
+              <NetworkLogo channel={ch.channel} /> {NETWORK_LABEL[ch.channel] || ch.channel} · 📜 estrategia
+            </button>
+          ) : (
+            <button
+              key={ch.channel}
+              type="button"
+              onClick={() => onOpenSetup(ch.channel)}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold border-2 border-destructive text-destructive rounded-full px-2.5 py-1 bg-card hover:-translate-y-0.5 transition-all"
+              title="Crear la estrategia del canal en Setup"
+            >
+              <NetworkLogo channel={ch.channel} /> {NETWORK_LABEL[ch.channel] || ch.channel} · ⚠ sin estrategia
+            </button>
+          ),
+        )}
+      </div>
+
       {/* Voice cards — one per (person, network) */}
       <div className="px-4 py-3 space-y-1.5">
         {voices.length === 0 && (
           <p className="text-sm text-muted-foreground italic px-1 py-2">
-            Aún no hay voces. Usa <b>+ Añadir voz</b> para dar de alta a una persona en una red.
+            Aún no hay voces. Usa <b>+ Añadir voz</b> para dar de alta a una persona en una red (p. ej. «Alfonso · LinkedIn»).
           </p>
         )}
         {voices.map(({ persona: p, channel }) => {
@@ -125,16 +146,21 @@ export function FounderLedSection({ channels, onGo, onAddVoice, onOpenStrategy }
           );
         })}
 
-        {unassigned > 0 && (
+        {/* Unassigned pool — kept PER network so the click lands on the right
+            channel's pool (Ideas filters by channel before "unassigned"). */}
+        {pools.map((ch) => (
           <button
+            key={`pool-${ch.channel}`}
             type="button"
-            onClick={() => onGo("ideas", channels[0]?.channel, undefined, { unassigned: true })}
+            onClick={() => onGo("ideas", ch.channel, undefined, { unassigned: true })}
             className="w-full text-left flex items-center gap-2 border-2 border-dashed border-ink/50 rounded-lg px-3 py-1.5 bg-muted/30 hover:-translate-y-0.5 transition-all text-[13px]"
           >
-            📥 <span className="flex-1">Pool de marca: <b>{unassigned}</b> sin repartir</span>
+            📥 <span className="flex-1">
+              Pool {NETWORK_LABEL[ch.channel] || ch.channel}: <b>{ch.unassignedPool}</b> sin repartir
+            </span>
             <span className="font-heading text-rust">repartir →</span>
           </button>
-        )}
+        ))}
       </div>
     </section>
   );
