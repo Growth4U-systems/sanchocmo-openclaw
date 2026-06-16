@@ -24,6 +24,7 @@ const CASES: Array<{ pillar: string; skill: string; agent: string | undefined }>
   { pillar: "strategic-plan", skill: "strategic-plan", agent: undefined },
   { pillar: "existing-customer-data", skill: "existing-customer-data", agent: "hamete" },
   { pillar: "ecp-validation", skill: "ecp-validation", agent: "sanson" },
+  { pillar: "trust-score", skill: "trust-score", agent: "dulcinea" },
 ];
 
 for (const c of CASES) {

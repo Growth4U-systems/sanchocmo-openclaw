@@ -37,7 +37,7 @@ before(async () => {
   fstatus = await import("../data/task-status-store");
   blueprints = await import("../data/task-blueprints");
 
-  // Sembrar los 4 proyectos P00 desde el registro (lo que hace clients/create).
+  // Sembrar los 5 proyectos P00 desde el registro (lo que hace clients/create).
   for (const setKey of blueprints.FOUNDATION_TASK_SET_KEYS) {
     const { project, tasks } = blueprints.instantiateFoundationProject(setKey, { slug: SLUG });
     writeBrandFile(`projects/${project.id}/project.json`, JSON.stringify(project, null, 2));
@@ -49,11 +49,11 @@ after(() => {
   rmSync(workspace, { recursive: true, force: true });
 });
 
-test("estado ensamblado: 6 secciones, 18 pilares, todo en 'todo' tras el seed", () => {
+test("estado ensamblado: 7 secciones, 19 pilares, todo en 'todo' tras el seed", () => {
   const state = assembler.assembleBrandBrainState(SLUG);
-  assert.equal(Object.keys(state.sections).length, 6);
+  assert.equal(Object.keys(state.sections).length, 7);
   const pillars = Object.values(state.sections).flatMap((s) => Object.entries(s.pillars ?? {}));
-  assert.equal(pillars.length, 18);
+  assert.equal(pillars.length, 19);
   for (const [key, p] of pillars) {
     assert.equal(p.status, "todo", `${key} status inicial`);
     assert.ok(p.output_file, `${key} sin output_file`);

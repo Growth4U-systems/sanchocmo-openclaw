@@ -150,6 +150,7 @@ Metadata de un proyecto individual.
 | `user-request` | El usuario pidió algo directamente |
 | `value-review` | Sale de la review de un proyecto anterior |
 | `metrics` | Los datos sugieren una acción |
+| `trust-score` | Nace de un pilar flojo del Trust Score (SAN-194) |
 
 ### Campos `status`
 

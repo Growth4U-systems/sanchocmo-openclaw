@@ -4,7 +4,7 @@
  * pilar pasa del árbol de foundation-state.json a su task 1:1 (única fuente).
  *
  * Por cliente:
- *   1. Asegura los 4 proyectos P00 con sus tasks (instancia del manifest;
+ *   1. Asegura los 5 proyectos P00 con sus tasks (instancia del manifest;
  *      NUNCA pisa una task existente — solo añade las que falten).
  *   2. Copia el status legacy de cada pilar → task.status (vocabulario
  *      canónico: approved→completed, not-started→todo, generated→

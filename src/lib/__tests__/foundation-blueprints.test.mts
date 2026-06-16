@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 // ============================================================
 // SAN-183 F5 — Foundation declarada en el registro (golden)
 // ============================================================
-// Los 4 proyectos P00 (Company-Brief, Full-Foundation, Metrics,
+// Los 5 proyectos P00 (Company-Brief, Site-Audit, Full-Foundation, Metrics,
 // Strategic-Plan) se instancian del manifest (taskSets foundation-*) en vez
 // de los heredocs de scripts/reseed-foundation.sh. El golden congela la
 // salida; las DIVERGENCIAS respecto a los heredocs son canonicalizaciones
@@ -89,12 +89,12 @@ test("canonicalizaciones documentadas respecto a reseed-foundation.sh", () => {
   assert.equal("pillars" in cb, false);
 });
 
-// ── Estructura: el bloque foundation cubre los 18 pilares 1:1 ──────────────
-test("foundation block: 6 secciones, 18 pilares, todos con task 1:1 resoluble", () => {
+// ── Estructura: el bloque foundation cubre los 19 pilares 1:1 ──────────────
+test("foundation block: 7 secciones, 19 pilares, todos con task 1:1 resoluble", () => {
   const sections = getFoundationManifest();
-  assert.equal(sections.length, 6);
+  assert.equal(sections.length, 7);
   const pillars = sections.flatMap((s) => s.pillars);
-  assert.equal(pillars.length, 18);
+  assert.equal(pillars.length, 19);
 
   const seen = new Set<string>();
   for (const p of pillars) {

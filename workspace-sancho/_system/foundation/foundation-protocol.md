@@ -1,12 +1,12 @@
 # Foundation Protocol v2.0 — SanchoCMO
 
-> 4 secciones de output. 6 layers. Gate checks con requires/enriches_with.
+> 5 secciones de output (Layer 0-5). Site Audit (trust-score) es Layer 0 opcional, no bloquea. Gate checks con requires/enriches_with.
 
 ---
 
 ## Secciones de Output
 
-La Foundation genera documentos organizados en 4 secciones + operacional:
+La Foundation genera documentos organizados en 5 secciones + operacional:
 
 ```
 brand/{slug}/
@@ -14,6 +14,8 @@ brand/{slug}/
 │   ├── company-brief.current.md        ← Company Brief inicial (escrito por Kickoff, un archivo, secciones H2)
 │   ├── v1.md, v2.md...
 │   └── history.json
+├── site-audit/                            ← Layer 0, OPCIONAL (auto-arranca tras company-brief)
+│   └── trust-score/trust-score.current.md ← Trust Score: borrowed-trust, SERP, brand-assets, GEO/IA, outbound-readiness, demand-engine + gap vs competidores
 ├── market-and-us/
 │   ├── market/market.current.md           ← TAM, segmentos, tendencias, regulación
 │   ├── competitors/{nombre}/{nombre}.current.md  ← Battle card por competidor
@@ -47,6 +49,14 @@ brand/{slug}/
 LAYER 0 — KICKOFF (sin dependencias)
   company-brief ← kickoff skill (1 skill → company-brief/company-brief.current.md)
   → 1 sola aprobación del doc completo
+
+LAYER 0 — SITE AUDIT (OPCIONAL, requires: []; NO bloquea Foundation)
+  trust-score ← trust-score skill / agente dulcinea → site-audit/trust-score/trust-score.current.md
+  → AUTO-ARRANCA en el kickoff justo después de aprobar el company-brief (ya hay URL).
+    Corre en paralelo, no bloquea Layer 1. La skill se auto-marca `completed` vía
+    POST /api/brand-brain/pillar-status (no requiere status manual). Si falla (sin
+    competidores fijados / discovery caído / cache stale) → `blocked`/`cancelled` con
+    razón, y Foundation sigue igual. Sección/task: site-audit (P00-Site-Audit).
 
 LAYER 1 — RESEARCH (sin dependencias; Kickoff enriquece si está completed)
   market-analysis ← market-intelligence skill
@@ -93,6 +103,7 @@ Si X no está completed → **funcionar sin él**. Notificar: "Nota: [X] no est�
 | Pilar | requires | enriches_with |
 |-------|----------|---------------|
 | company-brief (kickoff) | — | — |
+| trust-score (site-audit, OPCIONAL, L0) | — | company-brief |
 | market-analysis | — | company-brief, competitor-analysis, self-analysis |
 | competitor-analysis | — | company-brief, market-analysis, self-analysis |
 | self-analysis | — | company-brief, market-analysis, competitor-analysis |
@@ -186,6 +197,8 @@ Vocabulario canónico de task (el status vive en la task 1:1 del pilar, proyecto
 **Flujo automático**: al aprobar, el siguiente pilar arranca automáticamente. El usuario nunca tiene que escribir un comando para continuar.
 
 **Kickoff**: es una sesión única de intake. Solo al aprobar el Company Brief completo se desbloquea el resto.
+
+**Trust Score (auto-arranque)**: al aprobar el Company Brief, el orchestrator dispara automáticamente el pilar `trust-score` (sección `site-audit`, Layer 0, opcional) sin pedir comando — la URL ya está en el company-brief. Corre en paralelo y NO bloquea Layer 1: el research arranca aunque el Trust Score siga corriendo o falle. La skill `trust-score` se auto-marca `completed`; si falla, queda `blocked`/`cancelled` con razón y la Foundation continúa.
 
 ---
 

@@ -284,9 +284,10 @@ export function instantiateSingletonTask(section: string, ctx: { slug: string; i
 // Foundation (SAN-183 F5) — pillars as 1:1 tasks
 // ============================================================
 
-/** The four seeded Foundation projects, in dependency order. */
+/** The five seeded Foundation projects, in dependency order. */
 export const FOUNDATION_TASK_SET_KEYS = [
   "foundation-cb",
+  "foundation-site-audit",
   "foundation-full",
   "foundation-metrics",
   "foundation-sp",
