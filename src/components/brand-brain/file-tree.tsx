@@ -12,37 +12,56 @@
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { statusLabel as statusText } from "@/lib/task-status";
 import type { BrandBrainState, Section, Pillar } from "@/types";
 import type { OtherDocGroup } from "@/hooks/useBrandBrain";
 
 const FF_PILLAR_MAP: Record<string, string> = {
+  // SAN-3 W4: the Kickoff writes a single `company-brief` pillar (the living
+  // Company Brief). `fast-context` is the pre-W4 name for the same pillar, kept
+  // so legacy clients still resolve to the Company Brief section.
+  "fast-context": "company-brief",
   "company-brief": "company-brief",
-  "self-l1": "self-analysis",
-  "market-l1": "market-analysis",
-  "brand-voice-snapshot": "brand-voice",
-  "niche-basic": "niche-discovery",
 };
 
 const SECTION_DEFS = [
-  { key: "company-brief", icon: "📋", label: "Company Brief" },
-  { key: "site-audit", icon: "🔍", label: "Site Audit" },
-  { key: "market-and-us", icon: "📊", label: "Market & Us" },
-  { key: "go-to-market", icon: "🎯", label: "Go-To-Market" },
-  { key: "brand-book", icon: "🎨", label: "Brand Book" },
-  { key: "metrics-setup", icon: "📏", label: "Metrics Setup" },
-  { key: "strategic-plan", icon: "📋", label: "Strategic Plan" },
+  { key: "company-brief", icon: "/nav/sections/company-brief.webp", label: "Company Brief" },
+  { key: "site-audit", icon: "/nav/sections/site-audit.webp", label: "Site Audit" },
+  { key: "market-and-us", icon: "/nav/sections/market-and-us.webp", label: "Market & Us" },
+  { key: "go-to-market", icon: "/nav/sections/go-to-market.webp", label: "Go-To-Market" },
+  { key: "brand-book", icon: "/nav/sections/brand-book.webp", label: "Brand Book" },
+  { key: "metrics-setup", icon: "/nav/sections/metrics-setup.webp", label: "Metrics Setup" },
+  { key: "strategic-plan", icon: "/nav/sections/strategic-plan.webp", label: "Strategic Plan" },
 ] as const;
 
-const STATUS_INFO: Record<string, { cls: string; labelKey: string }> = {
-  approved: { cls: "done", labelKey: "approved" },
-  done: { cls: "done", labelKey: "completed" },
-  "pending-review": { cls: "review", labelKey: "pendingReview" },
-  "pending-approval": { cls: "review", labelKey: "pendingReview" },
-  generated: { cls: "review", labelKey: "generated" },
-  "in-progress": { cls: "wip", labelKey: "inProgress" },
-  draft: { cls: "wip", labelKey: "draft" },
-  "request-refresh": { cls: "wip", labelKey: "refresh" },
-  "not-started": { cls: "todo", labelKey: "notStarted" },
+// Renders a section icon: brand webp tile when the value is a path, emoji fallback otherwise.
+function SectionIcon({ icon }: { icon: string }) {
+  if (icon.startsWith("/")) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={icon} alt="" aria-hidden="true" className="w-6 h-6 object-contain flex-shrink-0" />;
+  }
+  return <span className="text-xl">{icon}</span>;
+}
+
+// SAN-192: el LABEL del badge sale de la fuente única (statusLabel, task-status.ts);
+// aquí solo vive el mapeo status → clase visual (color del badge).
+const STATUS_INFO: Record<string, { cls: string }> = {
+  // Vocabulario canónico de task (SAN-183 F5)
+  completed: { cls: "done" },
+  todo: { cls: "todo" },
+  blocked: { cls: "review" },
+  cancelled: { cls: "todo" },
+  archived: { cls: "todo" },
+  "pending-review": { cls: "review" },
+  "in-progress": { cls: "wip" },
+  // Claves legacy (datos viejos en disco; el ensamblador ya emite canónico)
+  approved: { cls: "done" },
+  done: { cls: "done" },
+  "pending-approval": { cls: "review" },
+  generated: { cls: "review" },
+  draft: { cls: "wip" },
+  "request-refresh": { cls: "wip" },
+  "not-started": { cls: "todo" },
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -53,14 +72,14 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 const FOLDER_ICONS: Record<string, string> = {
-  presentations: "🎬",
-  "outreach-playbook": "📨",
-  "content-playbook": "✍️",
-  pages: "🌐",
-  "seo-audit": "🔍",
-  campaigns: "📣",
-  "brand-identity": "🎨",
-  _root: "📄",
+  presentations: "/nav/sections/presentations.webp",
+  "outreach-playbook": "/nav/outreach.webp",
+  "content-playbook": "/nav/content.webp",
+  pages: "/nav/sections/pages.webp",
+  "seo-audit": "/nav/sections/site-audit.webp",
+  campaigns: "/nav/sections/campaigns.webp",
+  "brand-identity": "/nav/sections/brand-identity.webp",
+  _root: "/nav/sections/document.webp",
 };
 
 function relKey(p: string): string {
@@ -80,10 +99,10 @@ function CommentBadge({ n }: { n: number }) {
 
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
-  const ff = sections["fast-foundation"];
+  const ff = sections["company-brief"];
   if (!ff) return done;
   for (const [ffName, pInfo] of Object.entries(ff.pillars || {})) {
-    if (["approved", "done"].includes(pInfo.status)) {
+    if (pInfo.status === "completed") {
       done.add(FF_PILLAR_MAP[ffName] || ffName);
     }
   }
@@ -91,8 +110,8 @@ function ffDonePillars(sections: Record<string, Section>): Set<string> {
 }
 
 function normalizeStatus(raw: string, ffDone: Set<string>, pillarName: string): string {
-  if (raw === "not-started" && ffDone.has(pillarName)) return "approved";
-  if (raw === "done") return "approved";
+  if (raw === "todo" && ffDone.has(pillarName)) return "completed";
+  if (raw === "done" || raw === "approved") return "completed";
   if (raw === "draft") return "in-progress";
   if (raw === "pending-approval" || raw === "generated") return "pending-review";
   return raw;
@@ -116,9 +135,26 @@ function DownloadBtn({ docPath }: { docPath: string }) {
   );
 }
 
-interface DocEntry { name: string; fullPath: string }
+interface DocEntry { name: string; fullPath: string; kind?: "md" | "html"; hasHtml?: boolean }
 interface SubfolderEntry { name: string; mainDoc: string; files: DocEntry[]; versions: DocEntry[] }
 interface PillarExtra { subfolders: SubfolderEntry[]; versions: DocEntry[]; otherFiles: DocEntry[] }
+
+/** Doc-type chip (SAN-149): tells md sources, HTML deliverables and md/html
+ *  canonical pairs apart at a glance. */
+function KindBadge({ kind, hasHtml }: { kind?: "md" | "html"; hasHtml?: boolean }) {
+  if (!kind) return null;
+  const label = hasHtml ? "MD + HTML" : kind.toUpperCase();
+  const cls =
+    kind === "html" || hasHtml
+      ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800"
+      : "bg-muted/40 text-muted-foreground border-border";
+  return (
+    <span className={`text-[8px] font-bold uppercase tracking-wide border rounded px-1 py-px flex-shrink-0 ${cls}`}
+      title={hasHtml ? "Fuente markdown con documento HTML canónico generado" : kind === "html" ? "Documento HTML" : "Documento markdown"}>
+      {label}
+    </span>
+  );
+}
 
 function VersionChips({ versions, onSelectOtherDoc }: { versions: DocEntry[]; onSelectOtherDoc: (p: string, n: string, parentPillar?: string) => void }) {
   return (
@@ -183,7 +219,7 @@ function DeepDiveRow({ sf, onSelectOtherDoc, parentPillar }: { sf: SubfolderEntr
           {sf.files.map((f) => (
             <div key={f.fullPath} className="flex items-center gap-2 px-3 py-1.5 hover:bg-muted/20 transition-colors">
               <span className="text-[10px] text-muted-foreground">{"📄"}</span>
-              <span className="flex-1 text-[11px] font-medium text-foreground/60">{f.name}</span>
+              <span className="flex-1 text-[11px] font-medium text-foreground/60 flex items-center gap-1.5">{f.name}<KindBadge kind={f.kind} hasHtml={f.hasHtml} /></span>
               <div className="flex items-center gap-1">
                 <DownloadBtn docPath={f.fullPath} />
                 <button type="button" onClick={() => onSelectOtherDoc(f.fullPath, f.name, parentPillar)}
@@ -329,7 +365,7 @@ function PillarRow({ slug, sectionKey, pillarKey, hasDoc, docUrl, name, isOption
               {extra.otherFiles.map((f) => (
                 <div key={f.fullPath} className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-muted/20 transition-colors">
                   <span className="text-[11px] text-muted-foreground">{"📄"}</span>
-                  <span className="flex-1 text-xs font-medium text-foreground/60 flex items-center gap-1.5">{f.name}{commentCount(f.fullPath) > 0 && <CommentBadge n={commentCount(f.fullPath)} />}</span>
+                  <span className="flex-1 text-xs font-medium text-foreground/60 flex items-center gap-1.5">{f.name}<KindBadge kind={f.kind} hasHtml={f.hasHtml} />{commentCount(f.fullPath) > 0 && <CommentBadge n={commentCount(f.fullPath)} />}</span>
                   <div className="flex items-center gap-1">
                     <DownloadBtn docPath={f.fullPath} />
                     <button type="button" onClick={() => onSelectOtherDoc(f.fullPath, f.name, pillarKey)}
@@ -367,7 +403,6 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
   const commentCount = (fp: string) => commentCounts?.[relKey(fp)] ?? 0;
   const sections = foundation.sections || {};
   const ffDone = ffDonePillars(sections);
-  const ffSection = sections["fast-foundation"]?.pillars || {};
 
   const [search, setSearch] = useState("");
 
@@ -439,7 +474,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
               return (
                 <div key={sec.key} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden opacity-50">
                   <div className="flex items-center gap-3 px-5 py-4">
-                    <span className="text-xl">{sec.icon}</span>
+                    <SectionIcon icon={sec.icon} />
                     <span className="text-base font-bold text-foreground">{sec.label}</span>
                     <span className={cn("ml-auto text-[11px] font-medium px-2.5 py-1 rounded-full", STATUS_BADGE.todo)}>
                       {t("notCreated")}
@@ -455,8 +490,8 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
             const requiredKeys = allPillarKeys.filter((k) => !pillars[k].optional);
             const sectionApproved = requiredKeys.filter((k) => {
               const st = pillars[k].status;
-              const eff = st === "not-started" && ffDone.has(k) ? "approved" : st;
-              return ["approved", "done"].includes(eff);
+              const eff = st === "todo" && ffDone.has(k) ? "completed" : st;
+              return eff === "completed";
             }).length;
             const allDone = sectionApproved === requiredKeys.length && requiredKeys.length > 0;
             const isSinglePillar = allPillarKeys.length === 1 && allPillarKeys[0] === sec.key;
@@ -464,23 +499,19 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
             if (isSinglePillar && pillarKeys.length > 0) {
               const pName = pillarKeys[0];
               const p = pillars[pName];
-              const raw = p.status || "not-started";
+              const raw = p.status || "todo";
               const norm = normalizeStatus(raw, ffDone, pName);
-              const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
-              let docUrl = p.output_file || "";
-              if (!docUrl) {
-                const ffKey = Object.entries(FF_PILLAR_MAP).find(([, v]) => v === pName);
-                if (ffKey && ffSection[ffKey[0]]) docUrl = ffSection[ffKey[0]].output_file || "";
-              }
+              const si = STATUS_INFO[norm] || STATUS_INFO["todo"];
+              const docUrl = p.output_file || "";
               const hasDoc = !!docUrl;
 
               return (
                 <div key={sec.key} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                   <div className="flex items-center gap-3 px-5 py-4 hover:bg-muted/20 transition-colors">
-                    <span className="text-xl">{sec.icon}</span>
+                    <SectionIcon icon={sec.icon} />
                     <span className="flex-1 text-base font-bold text-foreground">{sec.label}</span>
                     <span className={cn("text-[11px] font-medium px-2.5 py-1 rounded-full", STATUS_BADGE[si.cls] || STATUS_BADGE.todo)}>
-                      {t(si.labelKey)}
+                      {statusText(norm)}
                     </span>
                     <div className="flex items-center gap-1">
                       {hasDoc && <DownloadBtn docPath={docUrl} />}
@@ -511,7 +542,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
             return (
               <div key={sec.key} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60">
-                  <span className="text-xl">{sec.icon}</span>
+                  <SectionIcon icon={sec.icon} />
                   <span className="text-base font-bold text-foreground">{sec.label}</span>
                   <span className={cn("ml-auto text-[11px] font-medium px-2.5 py-1 rounded-full", allDone ? STATUS_BADGE.done : STATUS_BADGE.todo)}>
                     {sectionApproved}/{requiredKeys.length} {t("completedCount")}
@@ -521,15 +552,11 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                   {pillarKeys.map((pName) => {
                     const p = pillars[pName];
                     const isOptional = !!p.optional;
-                    const raw = p.status || "not-started";
+                    const raw = p.status || "todo";
                     const norm = normalizeStatus(raw, ffDone, pName);
-                    const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
+                    const si = STATUS_INFO[norm] || STATUS_INFO["todo"];
                     const name = displayName(pName);
-                    let docUrl = p.output_file || "";
-                    if (!docUrl) {
-                      const ffKey = Object.entries(FF_PILLAR_MAP).find(([, v]) => v === pName);
-                      if (ffKey && ffSection[ffKey[0]]) docUrl = ffSection[ffKey[0]].output_file || "";
-                    }
+                    const docUrl = p.output_file || "";
                     const hasDoc = !!docUrl;
 
                     return (
@@ -543,7 +570,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                         name={name}
                         isOptional={isOptional}
                         statusCls={si.cls}
-                        statusLabel={t(si.labelKey)}
+                        statusLabel={statusText(norm)}
                         onSelectDoc={onSelectDoc}
                         onSelectOtherDoc={onSelectOtherDoc}
                         onOpenChat={onOpenChat}
@@ -587,7 +614,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
           )}
 
           {filteredOtherDocs.map((group) => {
-            const icon = FOLDER_ICONS[group.folder] || "📁";
+            const icon = FOLDER_ICONS[group.folder] || FOLDER_ICONS._root;
 
             if (group.docs.length === 1) {
               const doc = group.docs[0];
@@ -595,7 +622,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
               return (
                 <div key={group.folder} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                   <div className="flex items-center gap-3 px-5 py-4 hover:bg-muted/20 transition-colors">
-                    <span className="text-xl">{icon}</span>
+                    <SectionIcon icon={icon} />
                     <span className="flex-1 text-base font-bold text-foreground flex items-center gap-2">{title}{commentCount(doc.fullPath) > 0 && <CommentBadge n={commentCount(doc.fullPath)} />}</span>
                     <div className="flex items-center gap-1">
                       <DownloadBtn docPath={doc.fullPath} />
@@ -612,7 +639,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
             return (
               <div key={group.folder} className="rounded-xl border border-border bg-white dark:bg-card overflow-hidden">
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60">
-                  <span className="text-xl">{icon}</span>
+                  <SectionIcon icon={icon} />
                   <span className="text-base font-bold text-foreground">{group.label}</span>
                   <span className={cn("ml-auto text-[11px] font-medium px-2.5 py-1 rounded-full", STATUS_BADGE.todo)}>
                     {group.docs.length} {t("files")}
@@ -621,7 +648,7 @@ export function FileTree({ slug, foundation, otherDocs, onSelectDoc, onSelectOth
                 <div className="divide-y divide-border/40">
                   {group.docs.map((doc) => (
                     <div key={doc.fullPath} className="flex items-center gap-3 px-5 py-3 hover:bg-muted/20 transition-colors">
-                      <span className="flex-1 text-sm font-medium text-foreground/80 pl-8 flex items-center gap-2">{doc.name}{commentCount(doc.fullPath) > 0 && <CommentBadge n={commentCount(doc.fullPath)} />}</span>
+                      <span className="flex-1 text-sm font-medium text-foreground/80 pl-8 flex items-center gap-2">{doc.name}<KindBadge kind={doc.fullPath.endsWith(".html") ? "html" : "md"} hasHtml={doc.hasHtml} />{commentCount(doc.fullPath) > 0 && <CommentBadge n={commentCount(doc.fullPath)} />}</span>
                       <div className="flex items-center gap-1">
                         <DownloadBtn docPath={doc.fullPath} />
                         <button type="button" onClick={() => onSelectOtherDoc(doc.fullPath, doc.name)}

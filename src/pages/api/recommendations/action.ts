@@ -211,7 +211,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const searchFiles = [
     path.join(brandDir, "recommendations.json"),
     path.join(brandDir, "monitoring", "pending-recommendations.json"),
-    path.join(brandDir, "trust-engine", "recommendations.json"),
   ];
 
   let found = false;

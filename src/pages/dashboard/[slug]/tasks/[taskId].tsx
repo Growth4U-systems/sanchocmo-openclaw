@@ -14,8 +14,11 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { type TaskRow, useTask, useTaskRows, useUpdateTask, useUpdateTaskStatus } from "@/hooks/useTasks";
 import { buildContentTaskThread, buildProjectThread, buildTaskThread } from "@/lib/chat-openers";
 import { taskBriefText, taskCompletionText, taskExecutionNotesText } from "@/lib/data/task-brief";
+import { VALID_TASK_STATUSES, statusLabel, normalizeTaskStatusQuiet } from "@/lib/task-status";
 
-const TASK_STATUS_OPTIONS = ["todo", "in-progress", "blocked", "completed", "cancelled"];
+// SAN-192: vocabulario único de task (6 valores, incl. pending-review). Fuente
+// en src/lib/task-status.ts — no declarar listas/labels/normalizadores locales.
+const TASK_STATUS_OPTIONS = VALID_TASK_STATUSES;
 const CONTENT_TASK_STATUS_OPTIONS = ["New", "Approved", "Draft", "Pending Media", "Ready", "Published", "Discarded", "Deferred"];
 const PROJECT_KANBAN_STATUSES = ["todo", "in-progress", "blocked", "completed"];
 const TASK_TYPE_OPTIONS = ["project", "content", "foundation", "research", "analysis", "execution", "outreach", "tool", "media"];
@@ -31,30 +34,8 @@ const AGENT_OPTIONS = [
   { value: "cervantes", label: "Cervantes" },
 ] as const;
 
-const TASK_STATUS_LABELS: Record<string, string> = {
-  todo: "Por hacer",
-  "in-progress": "En progreso",
-  blocked: "Bloqueada",
-  completed: "Completada",
-  cancelled: "Cancelada",
-};
-
 function isContentTask(row?: Partial<TaskRow> | null): boolean {
   return row?.type === "content_task" || row?.type === "content_subtask";
-}
-
-function normalizeOperationalStatus(status?: string | null): string {
-  const raw = (status || "").toLowerCase().trim();
-  if (["active", "in_progress", "running", "executing", "started"].includes(raw)) return "in-progress";
-  if (["done", "complete", "approved"].includes(raw)) return "completed";
-  if (["pending", "ready", "not-started", "not_started", ""].includes(raw)) return "todo";
-  if (["discarded", "archived"].includes(raw)) return "cancelled";
-  return raw;
-}
-
-function statusLabel(status?: string | null): string {
-  const normalized = normalizeOperationalStatus(status);
-  return TASK_STATUS_LABELS[normalized] || status || "Sin estado";
 }
 
 function rowTypeLabel(type?: string): string {
@@ -237,7 +218,7 @@ export default function UnifiedTaskDetailPage() {
   const isCt = isContentTask(task);
   const editorHref = task && isCt ? contentTaskEditorHref(slug, task) : null;
   const statusOptions = isCt ? CONTENT_TASK_STATUS_OPTIONS : TASK_STATUS_OPTIONS;
-  const selectedStatus = isCt ? task?.status || "" : normalizeOperationalStatus(task?.status);
+  const selectedStatus = isCt ? task?.status || "" : normalizeTaskStatusQuiet(task?.status);
   const brief = task ? taskBriefText(task) : "";
   const completion = task ? taskCompletionText(task) : "";
   const executionNotes = task ? taskExecutionNotesText(task) : "";
@@ -384,10 +365,10 @@ export default function UnifiedTaskDetailPage() {
     <DashboardLayout>
       <Head><title>{`${task.id} — ${task.name} — Mission Control`}</title></Head>
 
-      <div className="mb-5">
+      <div className="mb-3">
         <Link
           href={`/dashboard/${slug}/tasks`}
-          className="inline-flex items-center gap-1.5 rounded-sc-md border-2 px-3 py-1.5 text-[12px] font-semibold no-underline transition-colors hover:bg-[var(--sc-paper-2)]"
+          className="inline-flex items-center gap-1.5 rounded-sc-md border-2 px-3 py-1 text-[12px] font-semibold no-underline transition-colors hover:bg-[var(--sc-paper-2)]"
           style={{ borderColor: "var(--sc-ink)", background: "var(--sc-paper-3)", color: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
         >
           ← Tareas
@@ -395,31 +376,31 @@ export default function UnifiedTaskDetailPage() {
       </div>
 
       <div
-        className="rounded-sc-lg border-[3px] p-5 mb-5"
+        className="rounded-sc-lg border-[3px] p-4 mb-3"
         style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-md)" }}
       >
-        <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <span
-                className="rounded-sc-pill border-2 px-2.5 py-1 font-mono text-[11px] font-bold"
+                className="rounded-sc-pill border-2 px-2.5 py-1 font-mono text-[11px] font-bold shrink-0"
                 style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)", color: "var(--sc-rust-600)" }}
               >
                 {task.id}
               </span>
-              {task.parent_name && <span className="text-xs text-muted-foreground">Bajo {task.parent_name}</span>}
+              {editorOpen ? (
+                <input
+                  value={draftName}
+                  onChange={(event) => setDraftName(event.target.value)}
+                  className="flex-1 min-w-[12rem] rounded-sc-md border-2 bg-white px-3 py-1.5 font-heading text-2xl font-bold leading-tight focus:outline-none"
+                  style={{ borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
+                  aria-label="Nombre"
+                />
+              ) : (
+                <h1 className="font-heading text-2xl font-bold leading-tight m-0" style={{ color: "var(--sc-ink)" }}>{task.name}</h1>
+              )}
             </div>
-            {editorOpen ? (
-              <input
-                value={draftName}
-                onChange={(event) => setDraftName(event.target.value)}
-                className="w-full rounded-sc-md border-2 bg-white px-3 py-2 font-heading text-3xl font-bold leading-tight focus:outline-none"
-                style={{ borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
-                aria-label="Nombre"
-              />
-            ) : (
-              <h1 className="font-heading text-3xl font-bold leading-tight m-0" style={{ color: "var(--sc-ink)" }}>{task.name}</h1>
-            )}
+            {task.parent_name && <span className="text-xs text-muted-foreground mt-1 block">Bajo {task.parent_name}</span>}
           </div>
           <div className="flex gap-2 shrink-0 items-center flex-wrap">
             <select
@@ -428,7 +409,7 @@ export default function UnifiedTaskDetailPage() {
                 if (editorOpen) setDraftStatus(event.target.value);
                 else updateStatus.mutate({ slug, taskId: task.id, status: event.target.value });
               }}
-              className="h-10 rounded-sc-md border-2 bg-white px-3 text-sm font-semibold"
+              className="h-9 rounded-sc-md border-2 bg-white px-3 text-sm font-semibold"
               style={{ borderColor: "var(--sc-ink)", color: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
             >
               {statusOptions.map((status) => <option key={status} value={status}>{isCt ? status : statusLabel(status)}</option>)}
@@ -436,7 +417,7 @@ export default function UnifiedTaskDetailPage() {
             {editorOpen && (
               <button
                 onClick={cancelEdit}
-                className="h-10 rounded-sc-md border-2 px-3.5 text-[13px] font-heading font-bold transition-all sc-pop-hover"
+                className="h-9 rounded-sc-md border-2 px-3.5 text-[13px] font-heading font-bold transition-all sc-pop-hover"
                 style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
               >
                 Cancelar
@@ -445,7 +426,7 @@ export default function UnifiedTaskDetailPage() {
             <button
               onClick={editorOpen ? saveInlineEdit : beginEdit}
               disabled={editorOpen && updateTask.isPending}
-              className="h-10 rounded-sc-md border-2 px-3.5 text-[13px] font-heading font-bold transition-all sc-pop-hover"
+              className="h-9 rounded-sc-md border-2 px-3.5 text-[13px] font-heading font-bold transition-all sc-pop-hover"
               style={{ background: editorOpen ? "var(--sc-navy-500)" : "var(--sc-sun-300)", borderColor: "var(--sc-ink)", color: editorOpen ? "var(--sc-paper-3)" : "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
               title={editorOpen && requiredMissing.length > 0 ? `Falta: ${requiredMissing.map(([label]) => label).join(", ")}` : undefined}
             >
@@ -454,7 +435,7 @@ export default function UnifiedTaskDetailPage() {
             <button
               onClick={handleChat}
               disabled={isCt && (!task.parent_id || !task.project_id)}
-              className="h-10 rounded-sc-md border-2 px-3.5 text-[13px] font-heading font-bold transition-all sc-pop-hover disabled:opacity-50"
+              className="h-9 rounded-sc-md border-2 px-3.5 text-[13px] font-heading font-bold transition-all sc-pop-hover disabled:opacity-50"
               style={{ background: "var(--sc-navy-500)", borderColor: "var(--sc-ink)", color: "var(--sc-paper-3)", boxShadow: "var(--pop-xs)" }}
             >
               Chat
@@ -464,7 +445,7 @@ export default function UnifiedTaskDetailPage() {
       </div>
 
       <div
-        className="rounded-sc-md border-2 px-3 py-2.5 mb-6"
+        className="rounded-sc-md border-2 px-3 py-2 mb-3"
         style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
       >
         <div className="task-detail-meta-grid">
@@ -516,7 +497,7 @@ export default function UnifiedTaskDetailPage() {
         .task-detail-meta-grid {
           display: grid;
           grid-template-columns: minmax(8rem, 0.75fr) minmax(8rem, 0.75fr) minmax(12rem, 1.4fr) minmax(9rem, 0.85fr) minmax(9rem, 0.85fr);
-          gap: 0.75rem;
+          gap: 0.5rem 0.75rem;
           align-items: start;
         }
 
@@ -534,10 +515,10 @@ export default function UnifiedTaskDetailPage() {
       `}</style>
 
       <div
-        className="rounded-sc-lg border-[3px] overflow-hidden mb-6"
+        className="rounded-sc-lg border-[3px] overflow-hidden mb-3"
         style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-md)" }}
       >
-        <div className="px-4 py-3 border-b-2 flex items-center justify-between gap-3 flex-wrap" style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}>
+        <div className="px-4 py-2 border-b-2 flex items-center justify-between gap-3 flex-wrap" style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}>
           <div>
             <h2 className="font-heading font-bold text-sm m-0" style={{ color: "var(--sc-ink)" }}>Brief operativo</h2>
             <p className="text-[11px] mt-0.5" style={{ color: "var(--sc-fg-muted)" }}>
@@ -553,7 +534,7 @@ export default function UnifiedTaskDetailPage() {
             </span>
           )}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-3">
           <InfoCard accent="var(--sc-rust-500)" title="Brief">
             {editorOpen ? (
               <InlineTextarea
@@ -561,7 +542,7 @@ export default function UnifiedTaskDetailPage() {
                 onChange={setDraftBrief}
                 label="Brief"
                 helper="Qué significa la tarea, por qué existe y qué resultado busca."
-                rows={5}
+                rows={4}
               />
             ) : brief || missingBriefText("qué es esta tarea, por qué existe y qué resultado busca")}
           </InfoCard>
@@ -572,7 +553,7 @@ export default function UnifiedTaskDetailPage() {
                 onChange={setDraftCompletion}
                 label="Completion"
                 helper="Evidencia observable de que la tarea está terminada, incluyendo el entregable si aplica."
-                rows={5}
+                rows={4}
               />
             ) : completion || missingBriefText("qué evidencia demuestra que está terminada")}
           </InfoCard>
@@ -608,11 +589,17 @@ export default function UnifiedTaskDetailPage() {
       </div>
 
       {task.type === "project" && (
-        <div className="grid grid-cols-1 mb-6">
-          <InfoCard accent="var(--sc-sage-500)" title="Progreso">
-            <ProgressBar value={progress} showPercent />
-            <p className="text-xs text-muted-foreground mt-2">{completedChildren}/{children.length} tareas completadas</p>
-          </InfoCard>
+        <div
+          className="flex items-center gap-3 rounded-sc-md border-2 px-3 py-1.5 mb-3"
+          style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
+        >
+          <span className="font-heading text-[10px] uppercase tracking-wider shrink-0" style={{ color: "var(--sc-fg-muted)" }}>Progreso</span>
+          <div className="flex-1 min-w-0">
+            <ProgressBar value={progress} />
+          </div>
+          <span className="text-[11px] font-bold shrink-0 tabular-nums" style={{ color: "var(--sc-ink)" }}>
+            {completedChildren}/{children.length} · {progress}%
+          </span>
         </div>
       )}
 
@@ -622,7 +609,7 @@ export default function UnifiedTaskDetailPage() {
 
       {task.type !== "project" && children.length > 0 && (
         <div
-          className="rounded-sc-lg border-[3px] overflow-hidden mb-6"
+          className="rounded-sc-lg border-[3px] overflow-hidden mb-3"
           style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-md)" }}
         >
           <SectionHeader
@@ -653,7 +640,7 @@ export default function UnifiedTaskDetailPage() {
       )}
 
       <div
-        className="rounded-sc-lg border-[3px] overflow-hidden mb-6"
+        className="rounded-sc-lg border-[3px] overflow-hidden mb-3"
         style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-md)" }}
       >
         <SectionHeader
@@ -797,13 +784,13 @@ function SectionHeader({
 }) {
   return (
     <div
-      className="border-b-2 px-4 py-3"
+      className="border-b-2 px-4 py-2"
       style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}
     >
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-sc-md border-2 font-heading text-sm font-bold"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-sc-md border-2 font-heading text-sm font-bold"
             style={{ background: accent, borderColor: "var(--sc-ink)", color: "var(--sc-paper-3)", boxShadow: "var(--pop-xs)" }}
           >
             {icon}
@@ -829,7 +816,7 @@ function ProjectChildrenKanban({ slug, childrenRows }: { slug: string; childrenR
 
   return (
     <div
-      className="rounded-sc-lg border-[3px] overflow-hidden mb-6"
+      className="rounded-sc-lg border-[3px] overflow-hidden mb-3"
       style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-md)" }}
     >
       <SectionHeader
@@ -839,13 +826,13 @@ function ProjectChildrenKanban({ slug, childrenRows }: { slug: string; childrenR
         count={childrenRows.length}
         accent="var(--sc-sage-500)"
       />
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 p-2.5">
         {PROJECT_KANBAN_STATUSES.map((status) => {
-          const tasks = childrenRows.filter((child) => normalizeOperationalStatus(child.status) === status);
+          const tasks = childrenRows.filter((child) => normalizeTaskStatusQuiet(child.status) === status);
           return (
             <div
               key={status}
-              className="rounded-sc-md border-2 min-h-[130px] overflow-hidden"
+              className="rounded-sc-md border-2 min-h-[88px] overflow-hidden"
               style={{ background: "var(--sc-paper-2)", borderColor: "var(--sc-ink)" }}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
@@ -853,7 +840,7 @@ function ProjectChildrenKanban({ slug, childrenRows }: { slug: string; childrenR
                 const childId = event.dataTransfer.getData("application/x-mc-task-id") || event.dataTransfer.getData("text/plain");
                 if (!childId) return;
                 const child = childrenRows.find((item) => item.id === childId);
-                if (!child || normalizeOperationalStatus(child.status) === status) return;
+                if (!child || normalizeTaskStatusQuiet(child.status) === status) return;
                 updateStatus.mutate({ slug, taskId: childId, status });
               }}
             >
@@ -863,7 +850,7 @@ function ProjectChildrenKanban({ slug, childrenRows }: { slug: string; childrenR
               </div>
               <div className="p-2 space-y-2">
                 {tasks.length === 0 ? (
-                  <div className="py-8 text-center text-xs italic" style={{ color: "var(--sc-fg-subtle)" }}>Sin tareas</div>
+                  <div className="py-5 text-center text-xs italic" style={{ color: "var(--sc-fg-subtle)" }}>Sin tareas</div>
                 ) : (
                   tasks.map((child) => (
                     <Link
@@ -926,10 +913,10 @@ function InlineTextarea({
 function InfoCard({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) {
   return (
     <div
-      className="rounded-sc-md border-2 p-4 border-l-[10px]"
+      className="rounded-sc-md border-2 p-3 border-l-[10px]"
       style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", borderLeftColor: accent, boxShadow: "var(--pop-xs)" }}
     >
-      <div className="font-heading font-bold text-sm mb-2" style={{ color: "var(--sc-ink)" }}>{title}</div>
+      <div className="font-heading font-bold text-sm mb-1.5" style={{ color: "var(--sc-ink)" }}>{title}</div>
       <div className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: "var(--sc-fg-soft)" }}>{children}</div>
     </div>
   );

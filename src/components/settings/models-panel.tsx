@@ -31,7 +31,7 @@ const RECOMMENDATIONS = [
     note: "Máxima calidad, mejor seguimiento de contexto y outputs largos. Evitar Codex como default para el análisis final.",
   },
   {
-    workload: "Research largo, Trust Engine y síntesis",
+    workload: "Research largo y síntesis",
     primary: ["anthropic/claude-opus-4-7", "anthropic/claude-opus-4-6"],
     fallback: "anthropic/claude-sonnet-4-6",
     route: "API Anthropic",

@@ -5,9 +5,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 /**
- * collectFoundationDocs reads a brand's foundation-state.json and returns the
- * approved pillars as YALC-container paths (/sancho-brands/...). Voice pillars
- * travel separately so YALC's synthesis can treat them as voice samples.
+ * collectFoundationDocs reads the ASSEMBLED Brand Brain state (SAN-183 F5:
+ * pillar status = its 1:1 task's status; foundation-state.json is dead) and
+ * returns the completed pillars as YALC-container paths (/sancho-brands/...).
+ * Voice pillars travel separately so YALC's synthesis treats them as voice
+ * samples. The fixture seeds TASKS (the single source), not the legacy file.
  *
  * MC_WORKSPACE must be set before importing the module: lib/data/paths.ts
  * resolves BASE at import time.
@@ -33,39 +35,72 @@ before(async () => {
   writeBrandFile(slug, "go-to-market/ecps/segments.md");
   // NOTE: market-and-us/swot.md intentionally NOT written (missing on disk).
 
+  // Tasks = única fuente de status. Ids canónicos del binding del manifest.
   writeBrandFile(
     slug,
-    "foundation-state.json",
-    JSON.stringify({
-      version: "3.0",
-      sections: {
-        "fast-foundation": {
-          status: "approved",
-          pillars: {
-            "company-brief": {
-              status: "approved",
-              output_file: `brand/${slug}/company-brief/company-brief.current.md`,
-            },
-            "brand-voice": {
-              status: "approved",
-              output_file: `brand/${slug}/brand-voice/current.md`,
-            },
-            ecps: {
-              status: "completed",
-              output_file: `brand/${slug}/go-to-market/ecps/segments.md`,
-            },
-            swot: {
-              status: "approved",
-              output_file: `brand/${slug}/market-and-us/swot.md`,
-            },
-            positioning: {
-              status: "pending-review",
-              output_file: `brand/${slug}/go-to-market/positioning/one-pager.md`,
-            },
-          },
-        },
+    "projects/P00-Company-Brief/project.json",
+    JSON.stringify({ id: "P00-Company-Brief", name: "Company Brief" }),
+  );
+  writeBrandFile(
+    slug,
+    "projects/P00-Company-Brief/tasks.json",
+    JSON.stringify([
+      {
+        id: "P00-CB-T01",
+        name: "Kickoff",
+        status: "completed",
+        pillar: "company-brief",
+        section: "company-brief",
+        deliverable_file: `brand/${slug}/company-brief/company-brief.current.md`,
       },
-    }),
+    ]),
+  );
+  writeBrandFile(
+    slug,
+    "projects/P00-Full-Foundation/project.json",
+    JSON.stringify({ id: "P00-Full-Foundation", name: "Full Foundation" }),
+  );
+  writeBrandFile(
+    slug,
+    "projects/P00-Full-Foundation/tasks.json",
+    JSON.stringify([
+      // completed + fichero presente → viaja a YALC
+      {
+        id: "P00-FUL-T05",
+        name: "Niche Discovery",
+        status: "completed",
+        pillar: "niche-discovery",
+        section: "go-to-market",
+        deliverable_file: `brand/${slug}/go-to-market/ecps/segments.md`,
+      },
+      // completed pero el fichero NO existe en disco → se salta
+      {
+        id: "P00-FUL-T04",
+        name: "Market Summary",
+        status: "completed",
+        pillar: "market-synthesis",
+        section: "market-and-us",
+        deliverable_file: `brand/${slug}/market-and-us/swot.md`,
+      },
+      // no completada → se salta
+      {
+        id: "P00-FUL-T06",
+        name: "Positioning",
+        status: "pending-review",
+        pillar: "positioning",
+        section: "go-to-market",
+        deliverable_file: `brand/${slug}/go-to-market/positioning/one-pager.md`,
+      },
+      // brand-voice completada → viaja como voice, no como doc
+      {
+        id: "P00-FUL-T08",
+        name: "Brand Voice",
+        status: "completed",
+        pillar: "brand-voice",
+        section: "brand-book",
+        deliverable_file: `brand/${slug}/brand-voice/current.md`,
+      },
+    ]),
   );
 });
 
@@ -102,7 +137,7 @@ test("non-approved pillars are skipped", () => {
   assert.ok(!out.docs.some((d) => d.includes("positioning")));
 });
 
-test("brand without foundation-state.json returns empty", () => {
+test("brand without seeded foundation tasks returns empty", () => {
   const out = collectFoundationDocs("ghost-brand");
   assert.deepEqual(out, { docs: [] });
 });

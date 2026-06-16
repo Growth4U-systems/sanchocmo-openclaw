@@ -26,7 +26,6 @@
     "projects": "Proyectos",
     "recurringTasks": "Tareas Recurrentes",
     "metrics": "Métricas",
-    "trustEngine": "Trust Engine",
     "skills": "Skills",
     "campaigns": "Campañas",
     "tasks": "Tareas",
@@ -141,22 +140,6 @@
     "plan": "Plan",
     "sheets": "Sheets"
   },
-  "trustEngine": {
-    "title": "Trust Engine",
-    "subtitle": "Pipeline de auditoría y análisis de confianza",
-    "completed": "completados",
-    "running": "ejecutando",
-    "pending": "pendientes",
-    "locked": "bloqueados",
-    "error": "con error",
-    "launch": "Lanzar",
-    "rerun": "Rerun",
-    "viewData": "Ver datos",
-    "retry": "Reintentar",
-    "changeNiche": "Cambiar nicho",
-    "back": "Volver",
-    "selectClient": "Selecciona un cliente para ver Trust Engine."
-  },
   "theme": {
     "light": "Claro",
     "dark": "Oscuro",
@@ -169,6 +152,7 @@
   },
   "chat": {
     "title": "Chat con Sancho",
+    "newTask": "Nueva tarea",
     "connected": "Conectado",
     "waiting": "En espera",
     "exitFullscreen": "Salir de pantalla completa",

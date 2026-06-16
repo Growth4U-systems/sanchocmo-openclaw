@@ -25,6 +25,12 @@ function seedClients() {
   );
 }
 
+function seedDocument(relPath: string, content: string) {
+  const absPath = path.join(tmp, relPath);
+  fs.mkdirSync(path.dirname(absPath), { recursive: true });
+  fs.writeFileSync(absPath, content, "utf8");
+}
+
 type McpServerMod = typeof import("../mcp/server");
 let mcpServerMod: McpServerMod;
 
@@ -70,21 +76,92 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_create_task",
       "sancho_get_chat_thread",
       "sancho_get_client_context",
+      "sancho_get_document",
+      // SAN-217: Meeting Intelligence read tools
+      "sancho_get_meeting",
       "sancho_get_task",
+      // SAN-17: public intake-form link (stateless token, read-only)
+      "sancho_intake_create_link",
       "sancho_list_chat_threads",
       "sancho_list_clients",
+      "sancho_list_documents",
+      "sancho_list_intelligence",
+      "sancho_list_meetings",
       "sancho_list_tasks",
       "sancho_mcp_status",
       "sancho_send_message",
       "sancho_update_task",
+      // SAN-80: gates de envío + plantillas (escritura espejo de la UI)
+      "yalc_approve_gate",
+      "yalc_assign_template",
+      // SAN-75b: calc break-even (registrada por registerYalcBreakevenTool)
+      "yalc_breakeven",
+      "yalc_create_search",
+      // SAN-81: reporting por creator (misma agregación que la UI de Metrics)
+      "yalc_creator_report",
+      // SAN-76: model settings (lectura efectiva + PUT parcial espejo de la UI)
+      "yalc_get_model_config",
       "yalc_get_overview",
       "yalc_list_campaigns",
       "yalc_list_gates",
+      "yalc_list_leads",
+      "yalc_set_lead_stage",
+      "yalc_update_model_config",
     ]);
 
     const sendMessage = result.tools.find((tool) => tool.name === "sancho_send_message");
     assert.ok(sendMessage);
     assert.deepEqual(sendMessage.inputSchema.required, ["clientSlug", "text"]);
+
+    const updateModelConfig = result.tools.find((tool) => tool.name === "yalc_update_model_config");
+    assert.ok(updateModelConfig);
+    assert.deepEqual(updateModelConfig.inputSchema.required, ["clientSlug"]);
+
+    const setLeadStage = result.tools.find((tool) => tool.name === "yalc_set_lead_stage");
+    assert.ok(setLeadStage);
+    assert.deepEqual(setLeadStage.inputSchema.required, ["clientSlug", "leadId", "stage"]);
+
+    const createSearch = result.tools.find((tool) => tool.name === "yalc_create_search");
+    assert.ok(createSearch);
+    assert.deepEqual(createSearch.inputSchema.required, ["clientSlug", "title", "sectors", "networks"]);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_list_leads requires yalc:read scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_list_leads",
+      arguments: { clientSlug: "alpha" },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:read/);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_set_lead_stage requires yalc:write scope (read is not enough)", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_set_lead_stage",
+      arguments: { clientSlug: "alpha", leadId: "lead-1", stage: "Qualified" },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:write/);
   } finally {
     await close();
   }
@@ -110,6 +187,66 @@ test("sancho_list_clients only returns clients allowed by principal", async () =
   }
 });
 
+test("sancho_list_meetings requires intelligence:read scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_list_meetings",
+      arguments: { clientSlug: "alpha" },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /intelligence:read/);
+  } finally {
+    await close();
+  }
+});
+
+test("intelligence read tools are wired and degrade cleanly without a database", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["intelligence:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const meetings = await client.callTool({
+      name: "sancho_list_meetings",
+      arguments: { clientSlug: "alpha" },
+    });
+    assert.equal(meetings.isError, undefined);
+    const meetingsPayload = JSON.parse(meetings.content[0].type === "text" ? meetings.content[0].text : "{}");
+    assert.deepEqual(meetingsPayload.meetings, []);
+    assert.equal(meetingsPayload.storage.configured, false);
+
+    const intelligence = await client.callTool({
+      name: "sancho_list_intelligence",
+      arguments: { clientSlug: "alpha" },
+    });
+    assert.equal(intelligence.isError, undefined);
+    const intelligencePayload = JSON.parse(
+      intelligence.content[0].type === "text" ? intelligence.content[0].text : "{}",
+    );
+    assert.deepEqual(intelligencePayload.intelligence, []);
+    assert.equal(intelligencePayload.storage.configured, false);
+
+    const meeting = await client.callTool({
+      name: "sancho_get_meeting",
+      arguments: { clientSlug: "alpha", meetingId: "missing" },
+    });
+    assert.equal(meeting.isError, undefined);
+    const meetingPayload = JSON.parse(meeting.content[0].type === "text" ? meeting.content[0].text : "{}");
+    assert.equal(meetingPayload.ok, false);
+    assert.equal(meetingPayload.storage.configured, false);
+  } finally {
+    await close();
+  }
+});
+
 test("sancho_mcp_status exposes trace id for request correlation", async () => {
   const { client, close } = await createConnectedClient({
     id: "operator",
@@ -125,6 +262,7 @@ test("sancho_mcp_status exposes trace id for request correlation", async () => {
     assert.equal(result.isError, undefined);
     const payload = JSON.parse(result.content[0].type === "text" ? result.content[0].text : "{}");
     assert.equal(payload.traceId, "trace-test-1");
+    assert.deepEqual(payload.principal.brands, ["*"]);
   } finally {
     await close();
   }
@@ -258,6 +396,143 @@ function payloadOf(result: Awaited<ReturnType<Client["callTool"]>>): Record<stri
   return JSON.parse(first && first.type === "text" ? first.text : "{}");
 }
 
+test("sancho_list_documents lists allowed Brand Brain docs and skips chat/system folders", async () => {
+  seedDocument("brand/xhype/market-and-us/market/current.md", "# XHYPE Market\n\nMarket analysis");
+  seedDocument("brand/xhype/market-and-us/competitors/current.html", "<h1>Competitors</h1>");
+  seedDocument("brand/xhype/chat/internal.md", "# Chat should not be listed");
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["growth4u"],
+    brands: ["growth4u", "xhype"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_list_documents",
+      arguments: { brandSlug: "xhype", pathPrefix: "market-and-us", limit: 10 },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    const paths = (payload.documents as Array<{ path: string }>).map((doc) => doc.path).sort();
+    assert.deepEqual(paths, [
+      "brand/xhype/market-and-us/competitors/current.html",
+      "brand/xhype/market-and-us/market/current.md",
+    ]);
+    assert.equal(payload.brandSlug, "xhype");
+    assert.equal(payload.traceId, "trace-test-1");
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_get_document reads documents by relative and full path for an explicitly allowed sub-brand", async () => {
+  seedDocument("brand/xhype/market-and-us/self/current.md", "# XHYPE Self\n\nSelf analysis");
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["growth4u"],
+    brands: ["growth4u", "xhype"],
+    tokenHash: "x",
+  });
+  try {
+    const relative = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "market-and-us/self/current.md" },
+    });
+    assert.equal(relative.isError, undefined);
+    const relativePayload = payloadOf(relative);
+    assert.equal(relativePayload.path, "brand/xhype/market-and-us/self/current.md");
+    assert.match(String(relativePayload.content), /XHYPE Self/);
+    assert.equal(relativePayload.truncated, false);
+
+    const full = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "brand/xhype/market-and-us/self/current.md" },
+    });
+    assert.equal(payloadOf(full).canonicalPath, "brand/xhype/market-and-us/self/current.md");
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_get_document requires docs:read scope", async () => {
+  seedDocument("brand/xhype/market-and-us/market/current.md", "# XHYPE Market");
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:read"],
+    clients: ["growth4u"],
+    brands: ["xhype"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "market-and-us/market/current.md" },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /docs:read/);
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_get_document rejects denied brands, traversal, wrong brand paths, unsupported extensions and truncates", async () => {
+  seedDocument("brand/xhype/market-and-us/market/current.md", "# XHYPE Market");
+  seedDocument("brand/xhype/market-and-us/raw/data.json", "{}");
+  seedDocument("brand/xhype/market-and-us/long/current.md", "a".repeat(120));
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["growth4u"],
+    brands: ["xhype"],
+    tokenHash: "x",
+  });
+  try {
+    const denied = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "alpha", docPath: "market-and-us/market/current.md" },
+    });
+    assert.equal(denied.isError, true);
+    assert.match(denied.content[0].type === "text" ? denied.content[0].text : "", /not allowed to access brand/i);
+
+    const traversal = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "../alpha/market-and-us/market/current.md" },
+    });
+    assert.equal(traversal.isError, true);
+    assert.match(traversal.content[0].type === "text" ? traversal.content[0].text : "", /traversal/i);
+
+    const wrongBrand = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "brand/alpha/market-and-us/market/current.md" },
+    });
+    assert.equal(wrongBrand.isError, true);
+    assert.match(wrongBrand.content[0].type === "text" ? wrongBrand.content[0].text : "", /different brand/i);
+
+    const unsupported = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "market-and-us/raw/data.json" },
+    });
+    assert.equal(unsupported.isError, true);
+    assert.match(unsupported.content[0].type === "text" ? unsupported.content[0].text : "", /Unsupported document extension/i);
+
+    const truncated = await client.callTool({
+      name: "sancho_get_document",
+      arguments: { brandSlug: "xhype", docPath: "market-and-us/long/current.md", maxChars: 10 },
+    });
+    const payload = payloadOf(truncated);
+    assert.equal(payload.truncated, true);
+    assert.equal(String(payload.content).length, 10);
+  } finally {
+    await close();
+  }
+});
+
 test("sancho_create_task is dry-run by default and writes nothing", async () => {
   const { client, close } = await createConnectedClient({
     id: "operator",
@@ -277,6 +552,28 @@ test("sancho_create_task is dry-run by default and writes nothing", async () => 
 
     const list = await client.callTool({ name: "sancho_list_tasks", arguments: { clientSlug: "alpha" } });
     assert.equal(payloadOf(list).count, 0);
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_send_message dry-run returns a non-blocking work hint pointing to sancho_create_task (SAN-216)", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:chat"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_send_message",
+      arguments: { clientSlug: "alpha", text: "necesito un research de influencers y podcasts" },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.dryRun, true);
+    assert.equal(payload.requiresConfirmation, true);
+    assert.match(String(payload.workHint), /sancho_create_task/);
   } finally {
     await close();
   }
@@ -354,6 +651,156 @@ test("sancho_update_task requires at least one field to change", async () => {
     });
     assert.equal(result.isError, true);
     assert.match(result.content[0].type === "text" ? result.content[0].text : "", /no fields/i);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_create_search requires yalc:write scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_create_search",
+      arguments: {
+        clientSlug: "alpha",
+        title: "Finanzas ES",
+        sectors: ["finanzas personales"],
+        networks: ["instagram"],
+      },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:write/);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_create_search is dry-run by default and previews the parsed plan", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:write"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_create_search",
+      arguments: {
+        clientSlug: "alpha",
+        title: "Finanzas personales ES · IG+TikTok",
+        sectors: ["Finanzas Personales", "ahorro"],
+        networks: ["IG", "tiktok"],
+        tiers: ["micro", "mid"],
+        targetVolume: 40,
+        competitorBrands: ["N26", "Revolut"],
+      },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.dryRun, true);
+    assert.equal(payload.requiresConfirmation, true);
+    const plan = payload.plan as {
+      networks: string[];
+      sectors: string[];
+      tiers: string[];
+      qualificationMode: string;
+      disqualifyThreshold: number;
+      signals: { competitorBrands: string[] };
+    };
+    assert.deepEqual(plan.networks, ["instagram", "tiktok"]);
+    assert.deepEqual(plan.sectors, ["finanzas personales", "ahorro"]);
+    assert.deepEqual(plan.tiers, ["micro", "mid"]);
+    assert.equal(plan.qualificationMode, "hybrid");
+    assert.equal(plan.disqualifyThreshold, 40);
+    assert.deepEqual(plan.signals.competitorBrands, ["N26", "Revolut"]);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_update_model_config requires yalc:write scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_update_model_config",
+      arguments: { clientSlug: "alpha", disqualifyThreshold: 55 },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:write/);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_update_model_config is dry-run by default and previews the merged config", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:write"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_update_model_config",
+      arguments: {
+        clientSlug: "alpha",
+        erBenchmarks: { micro: 6.5 },
+        verticals: ["fintech", "cripto"],
+        qualificationMode: "hybrid",
+        disqualifyThreshold: 55,
+      },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.dryRun, true);
+    assert.equal(payload.requiresConfirmation, true);
+    // El partial que viajaría a Yalc: params tipados → documento de overrides.
+    assert.deepEqual(payload.partial, {
+      tiers: [{ key: "micro", erBenchmarkPct: 6.5 }],
+      verticals: ["fintech", "cripto"],
+      qualification: { defaultMode: "hybrid", threshold: 55 },
+    });
+    // Preview de la efectiva (defaults + partial — sin Yalc en este harness).
+    const preview = payload.preview as {
+      config: {
+        tiers: Array<{ key: string; erBenchmarkPct: number }>;
+        verticals: string[];
+        qualification: { threshold: number };
+      };
+    };
+    assert.equal(preview.config.tiers.find((tier) => tier.key === "micro")?.erBenchmarkPct, 6.5);
+    assert.equal(preview.config.tiers.find((tier) => tier.key === "nano")?.erBenchmarkPct, 8.0);
+    assert.deepEqual(preview.config.verticals, ["fintech", "cripto"]);
+    assert.equal(preview.config.qualification.threshold, 55);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_update_model_config rejects unknown override keys", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:write"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_update_model_config",
+      arguments: { clientSlug: "alpha", overrides: { tires: [{ key: "nano" }] } },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /Unknown model-config keys: tires/);
   } finally {
     await close();
   }

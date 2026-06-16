@@ -74,6 +74,50 @@ export const ALLOWED_MIME_TYPES = new Set([
   "text/markdown",
 ]);
 
+/**
+ * Allowed file extensions → canonical MIME type.
+ *
+ * Browsers often send a generic or empty Content-Type for non-image files
+ * (notably PDFs arriving as `application/octet-stream`), which made the strict
+ * MIME allowlist reject perfectly valid files (SAN-117). We fall back to the
+ * extension and normalize to the canonical MIME type below.
+ */
+export const ALLOWED_EXTENSIONS: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+  svg: "image/svg+xml",
+  pdf: "application/pdf",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  csv: "text/csv",
+  txt: "text/plain",
+  md: "text/markdown",
+};
+
+/** Generic/opaque MIME types browsers emit when they can't classify a file. */
+const GENERIC_MIME_TYPES = new Set(["", "application/octet-stream", "binary/octet-stream", "application/x-download"]);
+
+/**
+ * Resolve the canonical, allowed MIME type for an uploaded file.
+ *
+ * Trusts the browser-declared MIME only when it is specific and allowed;
+ * otherwise falls back to the file extension. Returns `null` when the file is
+ * not allowed by either signal.
+ */
+export function resolveUploadMime(
+  declaredMime: string | null | undefined,
+  filename: string | null | undefined,
+): string | null {
+  if (declaredMime && !GENERIC_MIME_TYPES.has(declaredMime) && ALLOWED_MIME_TYPES.has(declaredMime)) {
+    return declaredMime;
+  }
+  const ext = filename?.split(".").pop()?.toLowerCase() ?? "";
+  return ALLOWED_EXTENSIONS[ext] ?? null;
+}
+
 /** Human-readable accept string for file inputs */
 export const ACCEPT_STRING =
   "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,application/pdf,.xlsx,.docx,.csv,.txt,.md";

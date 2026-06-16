@@ -42,6 +42,10 @@ RUN npm ci
 COPY next.config.mjs tsconfig.json postcss.config.mjs tailwind.config.ts components.json drizzle.config.ts ./
 COPY src/ ./src/
 COPY public/ ./public/
+# pillar-manifest.json is imported at build time by src/lib/pillar-doc-paths.ts
+# (SAN-166) — without config/ in the build stage, `next build` fails with
+# "Module not found" even though GitHub CI (full checkout) passes.
+COPY config/ ./config/
 COPY scripts/apply-sql-migration.mjs ./scripts/apply-sql-migration.mjs
 # Local-Postgres baseline migrator (bundled local-db). Applies the journal-backed
 # baseline under src/db/migrations-local (copied via `COPY src/`) at boot — see
@@ -74,14 +78,14 @@ COPY cron/ ./cron/
 COPY config/ ./config/
 COPY workspace-sancho/ ./workspace-sancho/
 COPY workspace-cervantes/ ./workspace-cervantes/
-COPY workspace-escudero/ ./workspace-escudero/
 COPY workspace-hamete/ ./workspace-hamete/
 COPY workspace-dulcinea/ ./workspace-dulcinea/
 COPY workspace-rocinante/ ./workspace-rocinante/
 COPY workspace-mambrino/ ./workspace-mambrino/
 COPY workspace-merlin/ ./workspace-merlin/
 COPY workspace-sanson/ ./workspace-sanson/
-COPY workspace-yalc/ ./workspace-yalc/
+COPY workspace-alarife/ ./workspace-alarife/
+COPY workspace-maese-pedro/ ./workspace-maese-pedro/
 # Version marker: init-home.sh refreshes the framework only when this changes
 # (avoids re-copying ~180 MB of skills on every container restart).
 RUN echo "${GIT_COMMIT:-$(date +%s)}" > /opt/sancho-seed/.seed-version \

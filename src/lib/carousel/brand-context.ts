@@ -1,7 +1,9 @@
+import fs from "fs";
 import path from "path";
 import { brandDir } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
 import { getEffectiveContentConfig } from "@/lib/data/content-config-effective";
+import { parseDesignMd } from "@/lib/open-design/design-md-parser";
 import type { BrandContext } from "@/lib/carousel/types";
 
 interface DesignTokens {
@@ -9,22 +11,55 @@ interface DesignTokens {
   typography?: { families?: { heading?: { family?: string } } };
 }
 
+interface VisualSource {
+  name?: string;
+  headingFont?: string;
+  primary?: string;
+  accent?: string;
+}
+
+/**
+ * Source-of-truth for the brand's visual tokens, with SAN-211 precedence:
+ * `DESIGN.md` (canonical) → legacy `design-tokens.json` (un-migrated brands).
+ */
+function loadVisualSource(slug: string): VisualSource {
+  const vid = path.join(brandDir(slug), "brand-book", "visual-identity");
+  const designMdPath = path.join(vid, "DESIGN.md");
+  if (fs.existsSync(designMdPath)) {
+    // Read is wrapped: a TOCTOU race or permission error between existsSync and
+    // readFileSync must not kill the request — fall through to legacy tokens.
+    try {
+      const parsed = parseDesignMd(fs.readFileSync(designMdPath, "utf8"));
+      return {
+        name: parsed.brandName,
+        headingFont: parsed.typography.display?.family,
+        primary: parsed.color.primary,
+        accent: parsed.color.accent,
+      };
+    } catch (err) {
+      console.warn(`[carousel] DESIGN.md unreadable for ${slug}, falling back to design-tokens.json:`, err);
+    }
+  }
+  const tokens = readJSON<DesignTokens>(path.join(vid, "design-tokens.json"), {});
+  return { name: tokens.brand, headingFont: tokens.typography?.families?.heading?.family };
+}
+
 /**
  * Build the brand context the carousel templates render with. Pulls the
  * effective config so:
- *   - Colors come from `content/config.json` overrides first, then
- *     `design-tokens.json colors.primary.*`.
+ *   - Colors come from `content/config.json` overrides first, then the
+ *     visual source-of-truth (`DESIGN.md` → legacy `design-tokens.json`),
+ *     then a hardcoded default.
  *   - Logo URL prefers an explicit override, then falls through to the
  *     `/api/brand-asset/...` URL of `brand-book/visual-identity/logo-light.png`
  *     when that file exists. If neither, the templates fall back to their
  *     wordmark-style footer.
- *   - Footer text is override-only — there's no equivalent in design-tokens
- *     today, so until the user fills it (via the Setup panel or the
+ *   - Footer text is override-only — there's no equivalent in the visual
+ *     source today, so until the user fills it (via the Setup panel or the
  *     content-engine-setup skill) the templates show the brand short name.
  */
 export function loadBrandContext(slug: string): BrandContext {
-  const tokensPath = path.join(brandDir(slug), "brand-book", "visual-identity", "design-tokens.json");
-  const tokens = readJSON<DesignTokens>(tokensPath, {});
+  const visual = loadVisualSource(slug);
   const eff = getEffectiveContentConfig(slug).carousel;
 
   // Build absolute URLs for any logo asset path so Playwright can fetch it
@@ -41,19 +76,19 @@ export function loadBrandContext(slug: string): BrandContext {
       : `${baseUrl.replace(/\/$/, "")}${rawLogo}`
     : null;
 
-  const primary = eff.primary_color.value || "#032149";
-  const accent = eff.accent_color.value || "#0faec1";
+  const primary = eff.primary_color.value || visual.primary || "#032149";
+  const accent = eff.accent_color.value || visual.accent || "#0faec1";
 
   return {
     slug,
-    name: tokens.brand || slug,
+    name: visual.name || slug,
     primaryColor: primary,
     primaryDarkColor: shiftLightness(primary, -0.15),
     primaryLightColor: shiftLightness(primary, 0.15),
     accentColor: accent,
     accentDarkColor: shiftLightness(accent, -0.15),
     logoUrl: logoAbsoluteUrl,
-    font: tokens.typography?.families?.heading?.family || "Inter",
+    font: visual.headingFont || "Inter",
     footerText: eff.footer_text.value || undefined,
   };
 }

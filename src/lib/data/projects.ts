@@ -17,13 +17,13 @@ export function loadAllProjects(slug: string): { project: Project; tasks: Task[]
     const project = readJSON<Project | null>(projPath, null);
     if (!project) continue;
 
-    const tasksData = readJSON<{ tasks: Task[] } | { project_id: string; tasks: Task[] }>(
-      tasksPath,
-      { tasks: [] }
-    );
+    // tasks.json viene en dos shapes históricos: array plano (P00 Foundation,
+    // reseed) u objeto { tasks: [...] }. Soportar ambos — sin esto los
+    // proyectos Foundation eran invisibles aquí (SAN-183 F5).
+    const tasksData = readJSON<Task[] | { tasks?: Task[] }>(tasksPath, { tasks: [] });
     results.push({
       project,
-      tasks: tasksData.tasks || [],
+      tasks: Array.isArray(tasksData) ? tasksData : tasksData.tasks || [],
     });
   }
 
@@ -66,7 +66,10 @@ export function getNextProjectId(slug: string): string {
   const projectsDir = path.join(brandDir(slug), "projects");
   const dirs = listDir(projectsDir)
     .filter((d) => /^P\d+/.test(d))
-    .map((d) => parseInt(d.replace(/^P0*/, ""), 10))
+    // Strip only the "P" prefix — stripping leading zeros too turned "P00"
+    // into "" (NaN), so P00 was never counted and the next id collided with
+    // it forever (every new project silently overwrote P00).
+    .map((d) => parseInt(d.replace(/^P/, ""), 10))
     .filter((n) => !isNaN(n));
 
   const maxId = dirs.length > 0 ? Math.max(...dirs) : -1;

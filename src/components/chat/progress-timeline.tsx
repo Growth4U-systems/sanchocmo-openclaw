@@ -55,11 +55,11 @@ export function ProgressTimeline({ events, mode }: Props) {
     // last one always reads "recién" (delta = 0).
     const anchorTs = events[events.length - 1]?.ts ?? 0;
     return (
-      <div className="mt-2 border-t border-[#45475a]/50 pt-2">
+      <div className="mt-2 border-t border-[var(--chat-border)] pt-2">
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="text-[11px] text-[#a6adc8] hover:text-[#cdd6f4] flex items-center gap-1"
+          className="text-[11px] text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] flex items-center gap-1"
         >
           <span>{expanded ? "▾" : "▸"}</span>
           <span>{events.length} {events.length === 1 ? "paso" : "pasos"}</span>
@@ -74,13 +74,13 @@ export function ProgressTimeline({ events, mode }: Props) {
               return (
                 <li
                   key={i}
-                  className="text-[11px] text-[#a6adc8] flex items-start gap-1.5 leading-snug"
+                  className="text-[11px] text-[var(--chat-text-muted)] flex items-start gap-1.5 leading-snug"
                 >
                   <span className="shrink-0">{icon}</span>
                   <span className="flex-1 break-words">
                     {body}
                     {relative && (
-                      <span className="text-[#6c7086]"> · {relative}</span>
+                      <span className="text-[var(--chat-text-faint)]"> · {relative}</span>
                     )}
                   </span>
                 </li>
@@ -110,21 +110,21 @@ export function ProgressTimeline({ events, mode }: Props) {
               key={i}
               className={cn(
                 "text-[11px] flex items-start gap-1.5 leading-snug",
-                isLast ? "text-[#cdd6f4]" : "text-[#a6adc8]"
+                isLast ? "text-[var(--chat-text)]" : "text-[var(--chat-text-muted)]"
               )}
             >
               <span className="shrink-0">{icon}</span>
               <span className="flex-1 break-words">
                 {body}
                 {isLast && (
-                  <span className="text-[#a6adc8]"> · {formatElapsed(lastElapsedMs)}</span>
+                  <span className="text-[var(--chat-text-muted)]"> · {formatElapsed(lastElapsedMs)}</span>
                 )}
               </span>
             </li>
           );
         })}
       </ul>
-      <div className="text-[10px] text-[#6c7086] italic mt-0.5">
+      <div className="text-[10px] text-[var(--chat-text-faint)] italic mt-0.5">
         ⏱️ {formatElapsed(totalElapsedMs)} en este turno
       </div>
     </>

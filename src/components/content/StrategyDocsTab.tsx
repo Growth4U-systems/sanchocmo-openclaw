@@ -84,6 +84,7 @@ export function StrategyDocsTab({ slug, data, openChat }: Props) {
           threadName: `Content Engine — ${nicheSlug}`,
           skill: "sancho-manager",
           skills: ["sancho-manager", "strategic-plan", "content-strategy"],
+          agent: "sancho",
           linkedTo: `projects/${result.projectSlug || ""}`,
           docPath: `brand/${slug}/strategic-plan/current.md`,
           threadState: "create",

@@ -1,7 +1,7 @@
 {
   "version": 4,
   "dispatch_mode": "sessions",
-  "note": "v4 (Fase 2 — 2026-05-11/12): Bloque `personas` reemplazado por `specialists` con los 7 agentes del nuevo equipo. Escudero archivado en .archived/fase2-2026-05-11/. Sancho dispatcha directamente a cada especialista via Agent(subagent_type=<slug>) en lugar de pasar todo por Escudero. Fase 5 (2026-05-12): dispatch end-to-end activado — el campo `agent` del payload de /api/chat/send se propaga al gateway via SessionKey prefix `agent:<slug>:` (fix en plugins/mc-chat/src/index.js). Fase 7 (2026-05-12): skills viven en ~/.openclaw/skills/ (catálogo central global, leído nativamente por OpenClaw's built-in managed-skills root).",
+  "note": "v4 (Fase 2 — 2026-05-11/12): Bloque `personas` reemplazado por `specialists` con los 7 agentes del nuevo equipo. Escudero archivado en .archived/fase2-2026-05-11/. Sancho dispatcha directamente a cada especialista via Agent(subagent_type=<slug>) en lugar de pasar todo por Escudero. Fase 5 (2026-05-12): dispatch end-to-end activado — el campo `agent` del payload de /api/chat/send se propaga al gateway via SessionKey prefix `agent:<slug>:` (fix en plugins/mc-chat/src/index.js). Fase 7 (2026-05-12): skills viven en ~/.openclaw/skills/ (catálogo central global, leído nativamente por OpenClaw's built-in managed-skills root). SAN-148 (2026-06-11): `review-comments` es una shared skill SIN owner fijo — la ejecuta el agente AUTOR del doc; el trigger de MC (review-comments-trigger.ts) resuelve doc→task→skill→agente y pasa `agent` explícito en el payload, que tiene precedencia sobre SKILL_OWNER_MAP.",
   "channel_roles": {
     "decision": {
       "description": "No execution. Propose, discuss, redirect.",
@@ -115,7 +115,6 @@
         "competitor-intelligence",
         "market-intelligence",
         "deep-research",
-        "trust-engine",
         "pattern-detector"
       ],
       "skills_owned": [
@@ -130,7 +129,6 @@
         "niche-discovery-100x",
         "existing-customer-data",
         "deep-research",
-        "trust-engine",
         "apify",
         "competitor-alternatives",
         "competitor-profiling",
@@ -322,7 +320,8 @@
         "sancho-visual",
         "visual-template",
         "mockup",
-        "logo-refresh"
+        "logo-refresh",
+        "html-output"
       ],
       "skills_owned": [
         "design-system",
@@ -340,6 +339,7 @@
         "frontend-slides",
         "growth4u-ui-system",
         "growth4u-visual-generator",
+        "html-output",
         "niche-presentation",
         "slack-gif-creator",
         "theme-factory",
@@ -399,7 +399,6 @@
         "web-publish"
       ],
       "brand_context": [
-        "foundation-state.json",
         "voice-profile.md",
         "visual-identity.md",
         "positioning.md"

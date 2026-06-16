@@ -1,6 +1,6 @@
 # Project Lifecycle
 
-> Máquina de estados completa de proyectos y tareas. Transiciones, responsables, y sincronización Discord.
+> Máquina de estados completa de proyectos y tareas. Transiciones y responsables. Mission Control lee `project.json` + `tasks.json` **en vivo** — no hay paso de regeneración ni sincronización externa.
 
 ---
 
@@ -23,18 +23,21 @@ proposed → active → completed → reviewed
 
 ## Estados de Tarea
 
+Vocabulario canónico (ver `src/lib/task-status.ts`). El estado inicial es **`todo`** (nunca `pending`).
+
 ```
-pending → in-progress → completed
-                      ↘ blocked
-                      ↘ cancelled
+todo → in-progress → pending-review → completed
+                   ↘ blocked
+                   ↘ cancelled
 ```
 
 | Estado | Significado | Quién triggerea |
 |--------|------------|-----------------|
-| `pending` | Creada, no empezada | Sancho Manager (al crear) |
-| `in-progress` | En ejecución | Escudero (al empezar) |
+| `todo` | Creada, no empezada | Sancho Manager (al crear) |
+| `in-progress` | En ejecución | Agente ejecutor (al empezar) |
+| `pending-review` | Entregable listo, pendiente revisión humana | Agente ejecutor |
 | `blocked` | Bloqueada por dependencia | Automático (si depends_on no completada) |
-| `completed` | Terminada | Escudero (al entregar deliverable) |
+| `completed` | Terminada y aprobada | Usuario / agente (tras revisión) |
 | `cancelled` | Cancelada | Usuario |
 
 ---
@@ -44,73 +47,46 @@ pending → in-progress → completed
 ### Proyecto: proposed → active
 - **Trigger:** Usuario aprueba propuesta del Manager
 - **Acciones:**
-  1. Crear `project.json` + `tasks.json` + `playbook.md`
-  2. `python3 scripts/regenerate.py`
-  4. (Opcional) Crear hilo en #projects — mencionar usuario con `<@{sender_id}>`
+  1. Crear `project.json` + `tasks.json` (tasks en `todo`) + `playbook.md`
+  2. Crear el hilo de chat vacío de cada task en `brand/{slug}/chat/{mc_chat_thread_id}.json`
 
 ### Proyecto: active → completed
 - **Trigger:** Última tarea marcada como completed
 - **Acciones:**
   1. Actualizar status en `project.json`
-  2. `python3 scripts/regenerate.py`
-  3. Proponer value review al usuario
-  4. Mensaje en hilo del proyecto: "Todas las tareas completadas. ¿Hacemos value review?"
+  2. Proponer value review al usuario
 
 ### Proyecto: completed → reviewed
 - **Trigger:** Value review generada y aprobada
 - **Acciones:**
   1. Generar `value-review.md`
   2. Actualizar status en `project.json`
-  3. `python3 scripts/regenerate.py`
-  4. Renombrar hilo Discord: `✅ [P{XX}] {nombre} — Reviewed`
-  5. Si learnings sugieren acción → proponer nuevo proyecto
+  3. Si learnings sugieren acción → proponer nuevo proyecto
 
-### Tarea: pending → in-progress
-- **Trigger:** Usuario confirma "¿La ejecuto?" o Escudero empieza
+### Tarea: todo → in-progress
+- **Trigger:** Usuario confirma "¿La ejecuto?" o el agente ejecutor empieza
 - **Acciones:**
   1. Actualizar status en `tasks.json`
-  2. Renombrar hilo Discord: `🔧 [P{XX}-T{YY}] {nombre}`
 
-### Tarea: in-progress → completed
+### Tarea: in-progress → pending-review → completed
 - **Trigger:** Deliverable entregado y validado
 - **Acciones:**
-  1. Actualizar status en `tasks.json` + `completed` date
+  1. Actualizar status en `tasks.json` (+ `completed` date al cerrar)
   2. Registrar `output_files` en `tasks.json`
   3. Actualizar `tasks_completed` en `project.json`
-  4. `python3 scripts/regenerate.py`
-  5. Renombrar hilo Discord: `✅ [P{XX}-T{YY}] {nombre}`
-  6. Mensaje en hilo del proyecto: "✅ T{YY} completada. Progreso: X/Y"
-  7. Si era la última → trigger proyecto completed
+  4. Si era la última → trigger proyecto completed
 
 ### Tarea: → blocked
 - **Trigger:** depends_on tiene tarea no completada
 - **Acciones:**
   1. Actualizar status en `tasks.json`
-  2. Renombrar hilo Discord: `⛔ [P{XX}-T{YY}] {nombre}`
-  3. Notificar en hilo del proyecto qué la bloquea
+  2. Notificar al usuario qué la bloquea
 
 ---
 
-## Sincronización Discord
+## Sincronización
 
-Cada cambio de estado actualiza SIEMPRE:
-1. **Nombre del hilo Discord** (visual para el usuario)
-2. **Status en JSON** (datos para Mission Control)
-3. **`python3 scripts/regenerate.py`** (para que MC refleje los cambios)
-
-> Nota: El estado inicial de tareas es `pending` (no `todo`). Usar `pending` consistentemente en todos los JSONs.
-
-### Emojis en hilos
-
-| Estado | Emoji | Ejemplo hilo |
-|--------|-------|--------------|
-| pending | (ninguno) | `[P01-T03] Unificar booking` |
-| in-progress | 🔧 | `🔧 [P01-T03] Unificar booking` |
-| completed | ✅ | `✅ [P01-T03] Unificar booking` |
-| blocked | ⛔ | `⛔ [P01-T04] Landing page` |
-| cancelled | ❌ | `❌ [P01-T05] A/B test` |
-| paused (proyecto) | ⏸️ | `⏸️ [P03] Cold Email` |
-| reviewed (proyecto) | ✅ | `✅ [P01] Fontanería — Reviewed` |
+Cada cambio de estado actualiza el **status en el JSON** (`project.json` / `tasks.json`). Mission Control lo refleja en vivo — no hay regeneración ni sistemas externos que sincronizar.
 
 ---
 

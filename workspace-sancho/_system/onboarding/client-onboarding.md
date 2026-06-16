@@ -18,8 +18,8 @@ carpeta base `brand/{slug}/`. No se necesita Discord ni Guild ID.
 Desde el chat del cliente, pedirle a Sancho que corra **Fast Foundation** y luego
 la **Full Foundation**. Las skills hacen el scaffolding y el estado:
 
-- El `foundation-orchestrator` crea `brand/{slug}/foundation-state.json`
-  (schema v3.0) si no existe.
+- El status de cada pilar vive en su task 1:1 (proyectos P00); el
+  `foundation-orchestrator` lo mantiene vía `POST /api/brand-brain/pillar-status`.
 - Cada skill crea su sub-árbol de carpetas y su `current.md` a medida que produce
   output.
 

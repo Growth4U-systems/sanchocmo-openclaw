@@ -103,7 +103,7 @@ say "${B}SanchoCMO — setup wizard${RST}"
 say "${DIM}Generates .env + config/*.json so you can 'docker compose up'.${RST}"
 
 # --- 1. Model provider + API key --------------------------------------------
-step "1/5  Model provider"
+step "1/6  Model provider"
 PROVIDER="$(ask PROVIDER "Provider — anthropic, openai, or both" "anthropic")"
 ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 OPENAI_API_KEY="${OPENAI_API_KEY:-}"
@@ -117,12 +117,12 @@ ANTHROPIC_AUTH_MODE="$(ask ANTHROPIC_AUTH_MODE "Anthropic auth mode — api_key 
 OPENAI_AUTH_MODE="$(ask OPENAI_AUTH_MODE "OpenAI auth mode — api_key or subscription" "api_key")"
 
 # --- 2. Admin access ---------------------------------------------------------
-step "2/5  Admin access"
+step "2/6  Admin access"
 ADMIN_EMAIL_DOMAIN="$(ask ADMIN_EMAIL_DOMAIN "Admin email domain (emails @this become admins)" "example.com")"
 ADMIN_IDENTITY_EMAIL="$(ask ADMIN_IDENTITY_EMAIL "Admin contact email" "admin@${ADMIN_EMAIL_DOMAIN}")"
 
 # --- 3. Database -------------------------------------------------------------
-step "3/5  Database"
+step "3/6  Database"
 say "  ${DIM}'local' uses the bundled Postgres (recommended). 'external' uses your own (e.g. Neon).${RST}"
 DB_MODE="$(ask DB_MODE "Database — local or external" "local")"
 if [ "$DB_MODE" = "external" ]; then
@@ -135,13 +135,24 @@ else
 fi
 
 # --- 4. URLs -----------------------------------------------------------------
-step "4/5  Access URL"
+step "4/6  Access URL"
 BASE_URL="$(ask BASE_URL "Base URL where you'll reach Mission Control" "http://localhost:3000")"
 
 # --- 5. First brand ----------------------------------------------------------
-step "5/5  First brand"
+step "5/6  First brand"
 FIRST_BRAND_SLUG="$(ask FIRST_BRAND_SLUG "First brand slug (lowercase-hyphens)" "my-brand")"
 FIRST_BRAND_NAME="$(ask FIRST_BRAND_NAME "First brand display name" "My Brand")"
+
+# --- 6. Outreach (YALC) — optional ------------------------------------------
+step "6/6  Outreach (optional)"
+say "  ${DIM}YALC powers cold outbound (campaigns, leads, sequences). It runs as an${RST}"
+say "  ${DIM}opt-in container; you can also enable it later. Sending email needs your${RST}"
+say "  ${DIM}own provider key (e.g. Instantly), configured afterwards in the cockpit.${RST}"
+ENABLE_YALC="$(ask ENABLE_YALC "Enable Outreach (YALC)? — yes or no" "no")"
+case "$(printf '%s' "$ENABLE_YALC" | tr '[:upper:]' '[:lower:]')" in
+  y|yes|true|1) ENABLE_YALC=1 ;;
+  *)            ENABLE_YALC=0 ;;
+esac
 
 # --- Generate secrets --------------------------------------------------------
 step "Generating secrets"
@@ -151,6 +162,11 @@ SANCHO_INTERNAL_API_TOKEN="$(gen_hex)"
 ADMIN_TOKEN="$(gen_hex)"
 MC_TOKEN="$(gen_hex)"
 ok "NEXTAUTH_SECRET, ENCRYPTION_KEY, SANCHO_INTERNAL_API_TOKEN, adminToken, mcToken"
+# YALC shares a bearer token between Sancho and the YALC container.
+if [ "$ENABLE_YALC" = "1" ]; then
+  YALC_API_TOKEN="$(gen_hex)"
+  ok "YALC_API_TOKEN (Outreach enabled)"
+fi
 
 # --- Write .env --------------------------------------------------------------
 step "Writing $ENV_FILE"
@@ -169,6 +185,12 @@ set_env COMPOSE_PROFILES "$COMPOSE_PROFILES_VAL"
 set_env BASE_URL "$BASE_URL"
 set_env NEXTAUTH_URL "$BASE_URL"
 [ "${DB_MODE:-local}" = "local" ] && set_env POSTGRES_PASSWORD "${POSTGRES_PASSWORD:-}"
+# Outreach: wire Sancho ↔ YALC over the compose network. install.sh reads a
+# non-empty YALC_API_TOKEN as the signal to bring up the YALC overlay.
+if [ "$ENABLE_YALC" = "1" ]; then
+  set_env YALC_API_TOKEN "$YALC_API_TOKEN"
+  set_env YALC_BASE_URL "http://yalc:3847"
+fi
 ok "$ENV_FILE written"
 
 # --- Write config/instance.json (minimal, no Discord) ------------------------
@@ -215,9 +237,17 @@ if [ "${DB_MODE:-local}" = "local" ]; then
   say "   ${DIM}(bundled Postgres is enabled via COMPOSE_PROFILES=local-db)${RST}"
 fi
 say ""
+if [ "$ENABLE_YALC" = "1" ]; then
+  say "${B}Outreach (YALC) is enabled.${RST}"
+  say "   ${DIM}install.sh starts it automatically (or add -f docker-compose.yalc.yml).${RST}"
+  say "   ${DIM}Add your email provider key (e.g. Instantly) in the Outreach cockpit to send.${RST}"
+  say ""
+fi
 say "${B}Optional integrations${RST} — configure later (all off by default):"
 say "   • Slack          → Mission Control → Settings → APIs"
 say "   • Open Design     → add  -f docker-compose.od.yml  (needs OD_API_TOKEN)"
-say "   • YALC            → add  -f docker-compose.yalc.yml"
+if [ "$ENABLE_YALC" != "1" ]; then
+  say "   • YALC / Outreach → re-run with WIZARD: ENABLE_YALC=yes, or add -f docker-compose.yalc.yml"
+fi
 say "   • Discord         → set DISCORD_BOT_TOKEN in .env"
 say ""

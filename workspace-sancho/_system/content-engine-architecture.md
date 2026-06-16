@@ -2,7 +2,7 @@
 
 > Aprobado: 2026-04-25 tras 2 QA passes + revision de Alfonso.
 > Refs: plan_contenido_SanchoCMO.md, Content Creation thread, QA reports.
-> Agent: Escudero Content ejecuta. Sancho orquesta.
+> Agent: Dulcinea (especialista de contenido) ejecuta. Sancho orquesta.
 
 ---
 
@@ -58,11 +58,11 @@ Recurring task: "Content Inputs" (diaria/semanal)
 └── Actualiza: brand/{slug}/content/idea-queue.json
 ```
 
-Tipo: `execution`. Background automatico. Escudero Content lo opera.
+Tipo: `execution`. Background automatico. Dulcinea lo opera.
 
 ### Capa B: Redaccion (proyecto semanal auto-creado)
 
-**Proyecto**: `P-Content-Semana-{NN}` (auto-creado lunes 6am por Escudero Content)
+**Proyecto**: `P-Content-Semana-{NN}` (auto-creado lunes 6am por Dulcinea)
 
 | Tarea | Tipo | Deliverable_file |
 |-------|------|------------------|
@@ -76,7 +76,7 @@ Cada dia = 1 tarea, 1 thread. TODAS las piezas del dia (LinkedIn + X + lo
 que toque) conviven en el mismo thread.
 
 **Flujo de cada tarea diaria**:
-1. Escudero Content selecciona ideas del dia de idea-queue.json (recency-aware)
+1. Dulcinea selecciona ideas del dia de idea-queue.json (recency-aware)
 2. Dispatcha N candidatos al Idea Approval Loop (Discord): Si/No/Mas tarde
 3. Ideas aprobadas → Clarify (SIEMPRE, no se salta)
 4. Writer genera drafts (social-writer / seo-content / newsletter)
@@ -130,7 +130,7 @@ Endpoint operativo:
 
 ### Skill puente: `content-image`
 
-Para que el agente del chat pueda invocar estos endpoints sin recordar
+Para que el agente del chat (Dulcinea o Sancho) pueda invocar estos endpoints sin recordar
 HTTP/payloads, existe la skill `content-image` (en
 `workspace-sancho/skills/content-image/`). Envuelve `generate-image` y
 `upload-media`, lee `slug/ideaId/channel` del thread context, y devuelve
@@ -144,16 +144,17 @@ sitio (`brand/{slug}/brand-book/visual-identity/`) y multiples
 consumidores la leen. Tres actores, sin solapes:
 
 ```
-visual-identity (meta-skill, sistema)
+design-system (skill canónica de Maese Pedro, sistema)   ← SAN-211
    │  Thread: Foundation L5 → pillar visual-identity
    │  Vida del thread: SOLO onboarding. Cierra al generar el child.
+   │  (Absorbe la antigua meta-skill `visual-identity`, ahora parked.)
    │
-   ├──→ design-tokens.json
-   ├──→ visual-identity.current.md
+   ├──→ DESIGN.md   (source-of-truth; reemplaza design-tokens.json + visual-identity.current.md, ahora _archive/)
+   ├──→ design-preview.html
    ├──→ logo-light.{png,webp,svg}
    │
-   └──→ genera el child skill:
-        [brand]-visual-generator (skill per-brand)
+   └──→ el bootstrap del child skill (paso aparte del Content-Engine, T07):
+        [brand]-visual-generator (skill per-brand) — lee DESIGN.md
               │  Thread: P14-Content-Engine → T07
               │  Vida del thread: PERMANENTE. Bootstrap +
               │  refrescos + extensiones + ediciones.
@@ -186,11 +187,13 @@ Reglas duras:
   pillar visual-identity.
 - **`[brand]-visual-generator` solo se invoca para extender o refrescar
   el catalogo visual.** No participa en la creacion per-pieza. Su thread
-  permanente vive en T07 de P14-Content-Engine.
-- **`visual-identity` (meta-skill) solo se invoca al onboarding o
-  cuando la marca cambia su DNA.** Su thread (Foundation L5 pillar) se
-  cierra cuando el child existe. No se ejecuta como parte del Content
-  Engine en operacion continua.
+  permanente vive en T07 de P14-Content-Engine. Lee `DESIGN.md` como
+  source-of-truth (fallback legacy: design-tokens.json + visual-identity.current.md).
+- **`design-system` solo se invoca al onboarding o cuando la marca cambia
+  su DNA.** Su thread (Foundation L5 pillar visual-identity) se cierra
+  cuando el child existe. No se ejecuta como parte del Content Engine en
+  operacion continua. (SAN-211: sustituye a la meta-skill `visual-identity`,
+  que queda parked; `DESIGN.md` es el único documento de spec.)
 
 Patron de referencia: design tokens W3C 2026 / Wyndo Claude Design Brand
 System (ver investigacion 2026-05-06). Ver tambien

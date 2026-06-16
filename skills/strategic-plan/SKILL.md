@@ -9,7 +9,6 @@ metadata:
   depends_on: foundation-orchestrator
   chains_to: channel-prioritization, execution-skills
   context_required:
-    - brand/{slug}/foundation-state.json
     - brand/{slug}/company-brief/company-brief.current.md
     - brand/{slug}/go-to-market/ecps/ecps.current.md
     - brand/{slug}/go-to-market/positioning/*/*.current.md
@@ -29,7 +28,8 @@ metadata:
 ## Gate Check
 
 ```
-if foundation-state.json NOT exists OR status != "approved":
+state = GET {MC_BASE}/api/brand-brain/state?slug={slug}
+if pilares requeridos NOT "completed":
     STOP → "Foundation incompleta. Completa Foundation primero."
 ```
 
@@ -330,7 +330,7 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
    - Carpeta `brand/{slug}/projects/P{XX}/`
    - `project.json` con objetivo, métricas baseline/target, origin, review_date
    - `tasks.json` con tareas iniciales, canal temático asignado, descripción, owner, **skill** (ver [data-model.md](references/data-model.md))
-   - ⚠️ **SIEMPRE asignar `"skill"` a cada tarea** — es el skill de Escudero que ejecutará la tarea. Consultar `strategies-catalog.json` campo `skills` de la estrategia. Si no hay match claro, usar `doc-coauthoring`. Flujo: Escudero ejecuta con el skill → Rocinante verifica contra Foundation + Brand Voice + Brand Visual.
+   - ⚠️ **SIEMPRE asignar `"skill"` a cada tarea** — es el skill con el que el especialista dueño ejecutará la tarea. Consultar `strategies-catalog.json` campo `skills` de la estrategia. Si no hay match claro, usar `doc-coauthoring`. Flujo: Sancho delega al especialista (`Agent(subagent_type="<slug>")`) que ejecuta con el skill → Rocinante verifica contra Foundation + Brand Voice + Brand Visual.
    - `playbook.md` resumen del proyecto con links a playbooks de tareas
    - `T{YY}/playbook.md` por cada tarea — detalle individual de la tarea
    - ⚠️ **NUNCA juntar todo en un solo playbook.** Cada tarea = su propia carpeta + playbook.

@@ -105,10 +105,10 @@
 ### Nueva Campaña (flujo completo)
 1. Define objetivo + ECP target + canales
 2. Crea entrada en tabla `campaigns`
-3. Spawna Escuderos en paralelo para las piezas:
-   - `sessions_spawn` Escudero persona `redactor` para contenido
-   - `sessions_spawn` Escudero persona `creativo` para assets
-   - `sessions_spawn` Escudero persona `amplificador` para ad copy
+3. Delega a los especialistas en paralelo para las piezas:
+   - `Agent(subagent_type="dulcinea")` para contenido
+   - `Agent(subagent_type="maese-pedro")` para assets visuales
+   - `Agent(subagent_type="mambrino")` para ad copy
 4. Recibe resultados y envía a Rocinante para brand check
 5. Publica resultados aprobados en canales correspondientes
 6. Trackea progreso en hilos de #campaigns

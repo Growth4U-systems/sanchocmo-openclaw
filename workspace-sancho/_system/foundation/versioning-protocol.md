@@ -8,7 +8,7 @@
 
 ```
 brand/{slug}/{pilar}/
-  {pilar}.current.md     ← activo (siempre leer este)
+  {pilar}-current.md     ← activo (siempre leer este)
   v1.md          ← histórico
   v2.md          ← histórico
   history.json   ← log de versiones
@@ -20,9 +20,9 @@ brand/{slug}/{pilar}/
 
 ## Resolución de rutas
 
-Cuando un skill referencia `brand/{slug}/market.md` (en context_required o context_writes), lee/escribe `brand/{slug}/market/market.current.md`.
+Cuando un skill referencia `brand/{slug}/market.md` (en context_required o context_writes), lee/escribe `brand/{slug}/market/market-current.md`.
 
-**Regla**: `brand/{slug}/{nombre}.md` → `brand/{slug}/{nombre}/{nombre}.current.md`
+**Regla**: `brand/{slug}/{nombre}.md` → `brand/{slug}/{nombre}/{nombre}-current.md`
 
 ---
 
@@ -38,9 +38,9 @@ Cuando un skill referencia `brand/{slug}/market.md` (en context_required o conte
 
 ## Flujo de actualización
 
-1. Comprueba si `{pilar}/{pilar}.current.md` ya existe
+1. Comprueba si `{pilar}/{pilar}-current.md` ya existe
 2. Si existe → informa: "📄 Ya existe {pilar} (v{N}, {fecha}). ¿Quieres actualizarlo?"
-3. Si el usuario confirma → guarda actual como `v{N}.md`, genera nuevo como `{pilar}.current.md`, actualiza `history.json`
+3. Si el usuario confirma → guarda actual como `v{N}.md`, genera nuevo como `{pilar}-current.md`, actualiza `history.json`
 4. Si no confirma → no ejecutes
 
 ---
@@ -61,15 +61,14 @@ Cuando un skill referencia `brand/{slug}/market.md` (en context_required o conte
 
 ## Foundation State
 
-Después de generar o actualizar un documento de Foundation, actualiza `brand/{slug}/foundation-state.json`:
+Después de generar o actualizar un documento de Foundation, actualiza el status del pilar vía `POST {MC_BASE}/api/brand-brain/pillar-status` con body `{"slug", "section", "pillar", "status"}` (vocabulario canónico de task):
 
 - Documento nuevo generado → `"status": "pending-review"`
-- Usuario aprueba/valida → `"status": "approved", "approved_at": "<ISO timestamp>"`
-- Actualiza `updated_at` del JSON raíz
+- Usuario aprueba/valida → `"status": "completed"`
 
 **Esto alimenta Mission Control y el doc viewer — SIN ESTO los cambios no se reflejan.**
 
-Después de actualizar a `approved`: **SIEMPRE ejecutar `python3 scripts/regenerate.py`**.
+Después de actualizar a `completed`: **SIEMPRE ejecutar `python3 scripts/regenerate.py`** (legacy mc-data; no toca status).
 
 ---
 

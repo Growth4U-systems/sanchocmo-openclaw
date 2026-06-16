@@ -21,6 +21,7 @@ export function CalendarTab({ slug, data: _data, openChat }: Props) {
         threadName: `Calendar: ${itemId}`,
         skill: "sancho",
         skills: ["sancho", "content-calendar"],
+        agent: "dulcinea",
         linkedTo: `calendar/${itemId}`,
         docPath: `brand/${slug}/go-to-market/content-calendar.md`,
         threadState: "continue",

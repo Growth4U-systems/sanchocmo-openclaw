@@ -13,11 +13,13 @@ import Head from "next/head";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useBrandBrain, useBrandBrainOtherDocs, useUpdatePillarStatus } from "@/hooks/useBrandBrain";
 import { useOpenChat } from "@/hooks/useChat";
 import { useProjects } from "@/hooks/useProjects";
-import { buildPillarThread, findTaskThreadForDoc } from "@/lib/chat-openers";
+import { buildHtmlConversionThread, buildPillarThread, findTaskThreadForDoc } from "@/lib/chat-openers";
+import { htmlSiblingOf } from "@/lib/doc-paths";
 import { DepthBar } from "@/components/brand-brain/depth-bar";
 import { WarningsBanner } from "@/components/brand-brain/warnings-banner";
 import { FileTree } from "@/components/brand-brain/file-tree";
@@ -33,27 +35,23 @@ const MarkdownEditor = dynamic(
   { ssr: false, loading: () => <p className="text-sm text-muted-foreground p-6">Cargando editor...</p> }
 );
 import remarkGfm from "remark-gfm";
-import type { BrandBrainState, Section, Pillar, PillarStatus } from "@/types";
+import type { BrandBrainState, Section, Pillar, TaskStatus } from "@/types";
+import { TASK_STATUS_OPTIONS } from "@/lib/task-status";
 
-const STATUS_OPTS = [
-  { value: "not-started", label: "No iniciado", bg: "#F5F5F5", border: "#D0D0D0", color: "#666" },
-  { value: "in-progress", label: "En progreso", bg: "#EFF6FF", border: "#93C5FD", color: "#1D4ED8" },
-  { value: "pending-review", label: "Pendiente revision", bg: "#FFFBEB", border: "#FCD34D", color: "#B45309" },
-  { value: "approved", label: "Aprobado", bg: "#ECFDF5", border: "#6EE7B7", color: "#047857" },
-];
-
+// SAN-192: el selector de DOCUMENTO usa el mismo vocabulario único de task que
+// el selector de TAREA — fuente única en src/lib/task-status.ts (6 valores).
 function StatusDropdown({ slug, section, pillar, status }: { slug: string; section: string; pillar: string; status: string }) {
   const { mutate } = useUpdatePillarStatus();
-  const current = STATUS_OPTS.find((o) => o.value === status) || STATUS_OPTS[0];
+  const current = TASK_STATUS_OPTIONS.find((o) => o.value === status) || TASK_STATUS_OPTIONS[0];
 
   return (
     <select
       value={status}
-      onChange={(e) => mutate({ slug, section, pillar, status: e.target.value as PillarStatus })}
+      onChange={(e) => mutate({ slug, section, pillar, status: e.target.value as TaskStatus })}
       className="px-2 py-1 text-xs font-semibold rounded-md cursor-pointer border"
       style={{ background: current.bg, borderColor: current.border, color: current.color }}
     >
-      {STATUS_OPTS.map((opt) => (
+      {TASK_STATUS_OPTIONS.map((opt) => (
         <option key={opt.value} value={opt.value}>{opt.label}</option>
       ))}
     </select>
@@ -68,15 +66,15 @@ const FF_PILLAR_MAP: Record<string, string> = {
   "niche-basic": "niche-discovery",
 };
 
-const EXCLUDED_SECTIONS = ["fast-foundation", "foundation-presentation"];
+const EXCLUDED_SECTIONS = ["foundation-presentation"];
 
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
-  const ff = sections["fast-foundation"];
-  if (!ff) return done;
-  for (const [ffName, pInfo] of Object.entries(ff.pillars || {})) {
-    if (["approved", "done"].includes(pInfo.status)) {
-      done.add(FF_PILLAR_MAP[ffName] || ffName);
+  const cb = sections["company-brief"];
+  if (!cb) return done;
+  for (const [cbName, pInfo] of Object.entries(cb.pillars || {})) {
+    if (pInfo.status === "completed") {
+      done.add(FF_PILLAR_MAP[cbName] || cbName);
     }
   }
   return done;
@@ -94,8 +92,8 @@ function calcBrandBrainStats(brandBrain: BrandBrainState | undefined) {
       if (pInfo.optional) continue;
       total++;
       const effective =
-        pInfo.status === "not-started" && ffDone.has(pName) ? "approved" : pInfo.status;
-      if (["approved", "done"].includes(effective)) approved++;
+        pInfo.status === "todo" && ffDone.has(pName) ? "completed" : pInfo.status;
+      if (effective === "completed") approved++;
     }
   }
   return { approved, total, pct: total > 0 ? Math.round((approved / total) * 100) : 0 };
@@ -136,7 +134,14 @@ export default function BrandBrainPage() {
     staleTime: 30_000,
   });
   const docRelKey = useCallback(
-    (p: string) => p.replace(/^brand\/[^/]+\//, "").replace(/\.commented(?=\.[a-z0-9]+$|$)/i, ""),
+    // Collapse .commented siblings AND the md/html canonical pair (SAN-149)
+    // onto the .md key so a doc's feedback matches no matter which form
+    // was shared or is being viewed.
+    (p: string) =>
+      p
+        .replace(/^brand\/[^/]+\//, "")
+        .replace(/\.commented(?=\.[a-z0-9]+$|$)/i, "")
+        .replace(/\.html$/i, ".md"),
     [],
   );
   const { commentCounts, commentsByRel } = useMemo(() => {
@@ -146,12 +151,16 @@ export default function BrandBrainPage() {
       { count: number; comments: Array<{ id: string; author: string; body: string; anchorText: string | null; createdAt: string }> }
     >();
     for (const d of clientComments?.documents ?? []) {
-      const key = d.docPath.replace(/^brand\/[^/]+\//, "").replace(/\.commented(?=\.[a-z0-9]+$|$)/i, "");
+      const key = docRelKey(d.docPath);
       counts[key] = (counts[key] ?? 0) + d.count;
-      byRel.set(key, { count: d.count, comments: d.comments });
+      const prev = byRel.get(key);
+      byRel.set(key, {
+        count: (prev?.count ?? 0) + d.count,
+        comments: [...(prev?.comments ?? []), ...d.comments],
+      });
     }
     return { commentCounts: counts, commentsByRel: byRel };
-  }, [clientComments]);
+  }, [clientComments, docRelKey]);
 
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeMsg, setAnalyzeMsg] = useState<string | null>(null);
@@ -182,6 +191,37 @@ export default function BrandBrainPage() {
     [slug],
   );
 
+  // Author-agent review loop (SAN-148): visible counterpart of the
+  // 15-minute auto-dispatch — asks the doc's AUTHOR to read the open
+  // threads, propose an Apply/Skip plan in the doc's chat and resolve.
+  const [applying, setApplying] = useState(false);
+  const applyFeedback = useCallback(
+    async (docPath: string) => {
+      if (!slug) return;
+      setApplying(true);
+      setAnalyzeMsg(null);
+      try {
+        const res = await fetch(`/api/clients/${slug}/review-comments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ docPath: docPath.startsWith("brand/") ? docPath : `brand/${slug}/${docPath}` }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d.error || "No se pudo despachar la revisión");
+        setAnalyzeMsg(
+          d.forwardedToGateway
+            ? `Revisión despachada a ${d.agent} — propondrá el plan Apply/Skip en el chat del documento (botón 💬 Chat).`
+            : `No se despachó: ${d.error || "sin comentarios abiertos"}`,
+        );
+      } catch (e) {
+        setAnalyzeMsg(e instanceof Error ? e.message : "Error");
+      } finally {
+        setApplying(false);
+      }
+    },
+    [slug],
+  );
+
   const [selectedDoc, setSelectedDoc] = useState<SelectedDoc | null>(null);
   const [taskSlideOver, setTaskSlideOver] = useState<{ projectId: string; taskId: string } | null>(null);
   const [docSlideOverPath, setDocSlideOverPath] = useState<string | null>(null);
@@ -193,6 +233,20 @@ export default function BrandBrainPage() {
   const [docLoading, setDocLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
+  // ── HTML-canonical sibling (SAN-149) — same behavior as DocSlideOver ──
+  // When the .md has a generated .html sibling, the HTML is the canonical
+  // view by default, with a "Ver fuente (.md)" toggle back to the source.
+  const [htmlSibling, setHtmlSibling] = useState<string | null>(null);
+  const [htmlSiblingStale, setHtmlSiblingStale] = useState(false);
+  const [viewSource, setViewSource] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  useEffect(() => {
+    setViewSource(false);
+    setHtmlSibling(null);
+    setHtmlSiblingStale(false);
+  }, [selectedDoc?.docPath]);
+
   useEffect(() => {
     if (!selectedDoc?.docPath) {
       setDocContent(null);
@@ -201,25 +255,87 @@ export default function BrandBrainPage() {
       setDocCanonicalPath(null);
       return;
     }
+    let cancelled = false;
     setDocLoading(true);
     setDocContent(null);
     setDocLastModified(null);
     setDocUsedFallback(false);
     setDocCanonicalPath(null);
     setEditing(false);
-    fetch(`/api/docs/${selectedDoc.docPath}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.ok && data.content) {
-          setDocContent(data.content);
-          setDocLastModified(data.lastModified || null);
-          setDocUsedFallback(Boolean(data.usedFallback));
-          setDocCanonicalPath(data.canonicalPath || null);
+    (async () => {
+      try {
+        const res = await fetch(`/api/docs/${selectedDoc.docPath}`);
+        const data = await res.json();
+        if (cancelled || !data.ok || !data.content) return;
+        setHtmlSibling(data.htmlSibling || null);
+        setHtmlSiblingStale(Boolean(data.htmlSiblingStale));
+
+        if (data.htmlSibling && !viewSource) {
+          const sibRes = await fetch(`/api/docs/${data.htmlSibling}`);
+          if (sibRes.ok) {
+            const sib = await sibRes.json();
+            if (cancelled) return;
+            if (sib.ok && sib.content) {
+              setDocContent(sib.content);
+              setDocLastModified(sib.lastModified || null);
+              setDocCanonicalPath(sib.canonicalPath || data.htmlSibling);
+              return;
+            }
+          }
         }
-      })
-      .catch(() => {})
-      .finally(() => setDocLoading(false));
+
+        setDocContent(data.content);
+        setDocLastModified(data.lastModified || null);
+        setDocUsedFallback(Boolean(data.usedFallback));
+        setDocCanonicalPath(data.canonicalPath || null);
+      } catch {
+        // soft-fail: "Documento no encontrado" state
+      } finally {
+        if (!cancelled) setDocLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedDoc?.docPath, viewSource, refreshTick]);
+
+  // ── Convertir en HTML (SAN-149): dispatch html-output to the doc's
+  // author agent via its chat thread, then poll the expected sibling. ──
+  const [convertState, setConvertState] = useState<"idle" | "converting" | "error">("idle");
+  const expectedSibling = useMemo(() => {
+    if (!selectedDoc?.docPath) return null;
+    try { return htmlSiblingOf(selectedDoc.docPath); } catch { return null; }
   }, [selectedDoc?.docPath]);
+
+  const handleConvertToHtml = useCallback(() => {
+    if (!selectedDoc?.docPath || !slug || convertState === "converting") return;
+    const thread = buildHtmlConversionThread(slug, selectedDoc.docPath, projectsData);
+    openChat(slug, thread);
+    setConvertState("converting");
+  }, [selectedDoc?.docPath, slug, convertState, projectsData, openChat]);
+
+  useEffect(() => {
+    if (convertState !== "converting" || !expectedSibling) return;
+    const startedAt = Date.now();
+    const TIMEOUT_MS = 5 * 60 * 1000;
+    const interval = setInterval(async () => {
+      if (Date.now() - startedAt > TIMEOUT_MS) {
+        clearInterval(interval);
+        setConvertState("error");
+        return;
+      }
+      try {
+        const res = await fetch(`/api/docs/${expectedSibling}`);
+        if (res.ok) {
+          clearInterval(interval);
+          setConvertState("idle");
+          setViewSource(false);
+          setRefreshTick((t) => t + 1);
+        }
+      } catch {
+        // network hiccup — keep polling
+      }
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [convertState, expectedSibling]);
 
   useEffect(() => {
     const docParam = router.query.doc as string | undefined;
@@ -249,12 +365,12 @@ export default function BrandBrainPage() {
       setSelectedDoc({
         sectionKey: "",
         pillarKey: "visual-identity",
-        pillar: { status: "approved" } as Pillar,
+        pillar: { status: "completed" } as Pillar,
         docPath: docParam,
       });
       return;
     }
-    setSelectedDoc({ sectionKey: "", pillarKey: docParam.split("/").pop()?.replace(".md", "") || "", pillar: { status: "approved" } as Pillar, docPath: docParam });
+    setSelectedDoc({ sectionKey: "", pillarKey: docParam.split("/").pop()?.replace(".md", "") || "", pillar: { status: "completed" } as Pillar, docPath: docParam });
   }, [router.query.doc, brandBrain, selectedDoc]);
 
   const handleSelectDoc = useCallback(
@@ -295,7 +411,7 @@ export default function BrandBrainPage() {
       setSelectedDoc({
         sectionKey: "",
         pillarKey,
-        pillar: { status: "approved" } as Pillar,
+        pillar: { status: "completed" } as Pillar,
         docPath,
         parentPillar,
       });
@@ -368,19 +484,28 @@ export default function BrandBrainPage() {
       .replace(/\b\w/g, (c: string) => c.toUpperCase());
     const displayPath = selectedDoc.docPath.replace(/^brand\/[^/]+\//, "");
     const normStatus =
-      (selectedDoc.pillar.status as string) === "done" ? "approved"
-        : selectedDoc.pillar.status === "generated" ? "pending-review"
-          : selectedDoc.pillar.status || "not-started";
+      (selectedDoc.pillar.status as string) === "done" ? "completed"
+        : selectedDoc.pillar.status || "todo";
 
     const btnClass = "inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] bg-transparent border border-[#E5E2DC] dark:border-[#313244] rounded-md cursor-pointer text-[#7A7A7A] dark:text-[#6c7086] hover:bg-[#E5E2DC] dark:hover:bg-[#313244] hover:text-[#1A1A1A] dark:hover:text-[#cdd6f4] transition-colors";
 
+    // HTML deliverables take the whole content area (SAN-149): full-bleed
+    // layout with the header bar padded manually and the iframe filling the
+    // rest of the viewport. Carousel templates keep the boxed TemplateViewer.
+    const tplDoc = /^brand\/[^/]+\/brand-book\/visual-identity\/templates\/[^/]+\/(slide-cover|slide-body|slide-cta|template)\.html$/.test(selectedDoc.docPath);
+    const viewingHtml =
+      !editing && !docLoading && !!docContent && !tplDoc &&
+      (selectedDoc.docPath.endsWith(".html") ||
+        docContent.trimStart().startsWith("<!DOCTYPE") ||
+        docContent.trimStart().startsWith("<html"));
+
     return (
-      <DashboardLayout>
+      <DashboardLayout fullBleed={viewingHtml}>
         <Head>
           <title>{`${pillarTitle} - ${slug} - Mission Control`}</title>
         </Head>
 
-        <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+        <div className={`flex items-center gap-2.5 flex-wrap ${viewingHtml ? "px-6 py-3 mb-0 border-b border-[#E5E2DC] dark:border-[#313244]" : "mb-4"}`}>
           <button
             type="button"
             onClick={handleBack}
@@ -395,7 +520,7 @@ export default function BrandBrainPage() {
           {docUsedFallback && docCanonicalPath?.endsWith("/lite.md") && (
             <span
               className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200 flex-shrink-0"
-              title={`Mostrando ${docCanonicalPath} (preliminar de fast-foundation). Ejecuta la skill full para producir current.md.`}
+              title={`Mostrando ${docCanonicalPath} (preliminar de kickoff). Ejecuta la skill full para producir current.md.`}
             >
               Preliminar (lite)
             </span>
@@ -460,6 +585,41 @@ export default function BrandBrainPage() {
               💬 Chat
             </button>
 
+            {/* HTML-canonical controls (SAN-149) */}
+            {htmlSibling && (
+              <button
+                type="button"
+                onClick={() => setViewSource((v) => !v)}
+                className={btnClass}
+                title={viewSource ? "Ver el documento HTML canónico" : "Ver la fuente markdown editable"}
+              >
+                {viewSource ? "📄 Ver HTML" : "📝 Ver fuente (.md)"}
+              </button>
+            )}
+            {selectedDoc.docPath.endsWith(".md") && docContent && (!htmlSibling || htmlSiblingStale) && (
+              <button
+                type="button"
+                onClick={handleConvertToHtml}
+                disabled={convertState === "converting"}
+                className={btnClass + (convertState === "converting" ? " opacity-60 cursor-wait" : "")}
+                title={
+                  convertState === "error"
+                    ? "La conversión sigue en el chat — el HTML tarda más de lo esperado"
+                    : htmlSiblingStale
+                      ? "El .md cambió después de generar el HTML — regenerar"
+                      : "Genera el documento HTML canónico con la skill html-output"
+                }
+              >
+                {convertState === "converting"
+                  ? "⏳ Generando HTML…"
+                  : convertState === "error"
+                    ? "⚠️ Reintentar HTML"
+                    : htmlSiblingStale
+                      ? "🔄 Regenerar HTML"
+                      : "🎨 Convertir en HTML"}
+              </button>
+            )}
+
             {!(selectedDoc.docPath.endsWith(".html") || (docContent && (docContent.trimStart().startsWith("<!DOCTYPE") || docContent.trimStart().startsWith("<html")))) && (
               <button
                 type="button"
@@ -477,21 +637,37 @@ export default function BrandBrainPage() {
           const dc = commentsByRel.get(docRelKey(selectedDoc.docPath));
           if (!dc || dc.comments.length === 0) return null;
           return (
-            <div className="mb-4 rounded-lg border border-yellow-300/60 bg-yellow-50/60 dark:bg-yellow-900/10 p-4">
+            <div className={`mb-4 rounded-lg border border-yellow-300/60 bg-yellow-50/60 dark:bg-yellow-900/10 p-4 ${viewingHtml ? "mx-6 mt-4" : ""}`}>
               <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                 <span className="text-sm font-bold text-yellow-900 dark:text-yellow-200">
                   💬 Comentarios del cliente ({dc.count})
                 </span>
-                <button
-                  type="button"
-                  onClick={() => analyzeFeedback(selectedDoc.docPath)}
-                  disabled={analyzing}
-                  className="inline-flex items-center gap-1 rounded-md border border-rust/40 bg-rust/10 px-3 py-1 text-xs font-bold text-rust hover:bg-rust/15 disabled:opacity-50"
-                >
-                  🛡️ {analyzing ? "Analizando..." : "Analizar feedback"}
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => applyFeedback(selectedDoc.docPath)}
+                    disabled={applying || analyzing}
+                    className="inline-flex items-center gap-1 rounded-md border-2 border-[#1B1720] bg-[#F7C948] px-3 py-1 text-xs font-bold text-[#1B1720] shadow-[2px_2px_0_#1B1720] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_#1B1720] disabled:opacity-50"
+                    title="El agente autor del doc lee el feedback, propone un plan Apply/Skip en el chat del documento y resuelve los comentarios"
+                  >
+                    💬 {applying ? "Despachando..." : "Aplicar feedback"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => analyzeFeedback(selectedDoc.docPath)}
+                    disabled={analyzing || applying}
+                    className="inline-flex items-center gap-1 rounded-md border border-rust/40 bg-rust/10 px-3 py-1 text-xs font-bold text-rust hover:bg-rust/15 disabled:opacity-50"
+                    title="Sansón clasifica el feedback en insights de mejora (pestaña Mejoras de Intelligence)"
+                  >
+                    🛡️ {analyzing ? "Analizando..." : "Clasificar (Mejoras)"}
+                  </button>
+                </div>
               </div>
-              {analyzeMsg && <p className="mb-2 text-[11px] text-muted-foreground">{analyzeMsg}</p>}
+              {analyzeMsg && (
+                <p className="mb-2 rounded-md border border-border bg-background/70 px-3 py-2 text-[12px] font-medium text-foreground">
+                  {analyzeMsg}
+                </p>
+              )}
               <ul className="space-y-2 m-0 list-none p-0">
                 {dc.comments.map((c) => (
                   <li key={c.id} className="text-[12px]">
@@ -550,11 +726,15 @@ export default function BrandBrainPage() {
                 />
               );
             }
+            // Served by URL (not srcDoc) so in-page anchors (`#section`)
+            // navigate within the iframe document instead of resolving
+            // against the dashboard URL (SAN-149). Full-bleed: the iframe
+            // fills everything below the header bar.
             return (
               <iframe
-                srcDoc={docContent}
-                className="w-full border border-[#E5E2DC] rounded-lg bg-white"
-                style={{ minHeight: "80vh" }}
+                src={`/api/docs/${docCanonicalPath || selectedDoc.docPath}?raw=1`}
+                className="w-full border-0 bg-white block"
+                style={{ height: "calc(100vh - 58px)" }}
                 sandbox="allow-same-origin"
                 title={pillarTitle}
               />
@@ -576,7 +756,7 @@ export default function BrandBrainPage() {
 
       <div className="flex items-center gap-3 mb-2 flex-wrap">
         <h1 className="font-heading text-2xl text-navy m-0">
-          {"🧠"} Brand Brain
+          <TitleIcon name="brand-brain" />Brand Brain
         </h1>
         <div className="text-sm text-muted-foreground flex items-center gap-1.5">
           <span className="text-rust font-bold">{slug}</span>

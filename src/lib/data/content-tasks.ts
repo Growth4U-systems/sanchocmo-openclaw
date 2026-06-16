@@ -3,6 +3,12 @@ import path from "path";
 import { BASE } from "@/lib/data/paths";
 import { listDrafts, loadDraft } from "@/lib/data/drafts";
 import {
+  aggregateChannelPhases,
+  computeRollbackPreview,
+  deriveStatusFromPhase,
+  isForwardMove,
+} from "@/lib/content-task-state";
+import {
   ContentTask,
   ContentTaskStatus,
   ContentTaskPipelineState,
@@ -214,102 +220,12 @@ export function setContentTaskStatus(
 // skill PATCHes `channel_phases` via the API; setChannelPhase auto-promotes
 // CT.status forward only; user-driven reverts symmetrically roll back the
 // affected channel_phases entries (see PATCH handler).
+//
+// The pure state-machine rules (ranks, aggregate, forward-move) live in
+// `@/lib/content-task-state` so fs-free modules (desync detector, client
+// code) can share them. Re-exported here for back-compat.
 
-const CHANNEL_PHASE_RANK: Record<ChannelPhase, number> = {
-  researching: 0,
-  "clarify-needed": 1,
-  drafting: 2,
-  draft: 3,
-  approved: 4,
-  published: 5,
-};
-
-const STATUS_RANK: Record<ContentTaskStatus, number> = {
-  New: 0,
-  Approved: 1,
-  Draft: 2,
-  "Pending Media": 3,
-  Ready: 4,
-  Published: 5,
-  // Terminal off-axis states — never reached by forward ratchet.
-  Discarded: 99,
-  Deferred: 99,
-};
-
-const PIPELINE_RANK: Record<ContentTaskPipelineState, number> = {
-  researching: 0,
-  "clarify-needed": 1,
-  drafting: 2,
-  "generating-media": 0,
-  "media-review": 1,
-};
-
-/** Lowest-ranked phase across the map (least-advanced channel wins). */
-export function aggregateChannelPhases(
-  phases: Record<string, ChannelPhase> | undefined,
-): ChannelPhase | null {
-  if (!phases) return null;
-  const entries = Object.values(phases);
-  if (entries.length === 0) return null;
-  return entries.reduce((acc, p) =>
-    CHANNEL_PHASE_RANK[p] < CHANNEL_PHASE_RANK[acc] ? p : acc,
-  );
-}
-
-/**
- * Map a (least-advanced) channel phase to the canonical CT (status,
- * pipeline_state) it implies. `null` for unmapped or unsupported.
- */
-function deriveStatusFromPhase(
-  phase: ChannelPhase,
-): { status: ContentTaskStatus; pipeline_state: ContentTaskPipelineState | null } {
-  switch (phase) {
-    case "researching":
-      return { status: "Approved", pipeline_state: "researching" };
-    case "clarify-needed":
-      return { status: "Approved", pipeline_state: "clarify-needed" };
-    case "drafting":
-      return { status: "Approved", pipeline_state: "drafting" };
-    case "draft":
-      return { status: "Draft", pipeline_state: null };
-    case "approved":
-      return { status: "Pending Media", pipeline_state: "generating-media" };
-    case "published":
-      return { status: "Published", pipeline_state: null };
-  }
-}
-
-/** Forward-only: returns true if `target` is a strict advance over `current`. */
-function isForwardMove(
-  current: { status: ContentTaskStatus; pipeline_state?: ContentTaskPipelineState | null },
-  target: { status: ContentTaskStatus; pipeline_state: ContentTaskPipelineState | null },
-): boolean {
-  const cs = STATUS_RANK[current.status] ?? 0;
-  const ts = STATUS_RANK[target.status] ?? 0;
-  if (ts > cs) return true;
-  if (ts < cs) return false;
-  // Same status: compare pipeline_state ranks. Only meaningful for "Approved"
-  // (researching → clarify-needed → drafting). For "Pending Media" the
-  // generating-media → media-review move is owned by the media subsystem,
-  // not by channel_phases — never auto-promote within Pending Media here.
-  if (current.status !== "Approved") return false;
-  const cp = current.pipeline_state ? PIPELINE_RANK[current.pipeline_state] ?? -1 : -1;
-  const tp = target.pipeline_state ? PIPELINE_RANK[target.pipeline_state] ?? -1 : -1;
-  return tp > cp;
-}
-
-/**
- * Maximum channel phase consistent with a given CT.status. Used to symmetrically
- * roll back channel_phases when the user reverts CT.status backward.
- */
-const STATUS_MAX_PHASE: Partial<Record<ContentTaskStatus, ChannelPhase>> = {
-  New: undefined,                  // No phases applicable yet.
-  Approved: "drafting",            // Within Approved: researching/clarify-needed/drafting allowed.
-  Draft: "draft",
-  "Pending Media": "approved",
-  Ready: "approved",
-  Published: "published",
-};
+export { aggregateChannelPhases };
 
 /**
  * Update one channel's phase under a ContentTask. Persists to `tasks.json` and
@@ -429,31 +345,21 @@ export function rollbackChannelPhasesToStatus(
   if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
   if (!ct.channel_phases) return ct;
 
-  const cap = STATUS_MAX_PHASE[ct.status];
-  if (cap === undefined) {
+  // Single source of truth with the UI preview: apply exactly what
+  // computeRollbackPreview reports.
+  const changes = computeRollbackPreview(ct.channel_phases, ct.status);
+  if (changes.length === 0) return ct;
+
+  if (changes.some((c) => c.to === null)) {
     // No applicable phases (status=New) → clear the map entirely.
     delete ct.channel_phases;
-    ct.updated_at = new Date().toISOString();
-    saveProjectTasks(file);
-    return ct;
-  }
-
-  const capRank = CHANNEL_PHASE_RANK[cap];
-  let mutated = false;
-  const next: Record<string, ChannelPhase> = {};
-  for (const [ch, p] of Object.entries(ct.channel_phases)) {
-    if (CHANNEL_PHASE_RANK[p] > capRank) {
-      next[ch] = cap;
-      mutated = true;
-    } else {
-      next[ch] = p;
-    }
-  }
-  if (mutated) {
+  } else {
+    const next: Record<string, ChannelPhase> = { ...ct.channel_phases };
+    for (const c of changes) next[c.channel] = c.to as ChannelPhase;
     ct.channel_phases = next;
-    ct.updated_at = new Date().toISOString();
-    saveProjectTasks(file);
   }
+  ct.updated_at = new Date().toISOString();
+  saveProjectTasks(file);
   return ct;
 }
 
@@ -509,11 +415,11 @@ export type ContentTaskUpdateInput = Partial<
     | "target_channels"
     | "documents"
     | "mc_chat_thread_id"
-    | "discord_thread_id"
     | "owner"
     | "scheduled_for"
     | "clarify_status"
     | "media_policy"
+    | "author"
   >
 >;
 
@@ -523,11 +429,11 @@ const UPDATABLE_FIELDS: readonly (keyof ContentTaskUpdateInput)[] = [
   "target_channels",
   "documents",
   "mc_chat_thread_id",
-  "discord_thread_id",
   "owner",
   "scheduled_for",
   "clarify_status",
   "media_policy",
+  "author",
 ] as const;
 
 /**
@@ -571,6 +477,9 @@ export function findContentTaskByIdAcrossProjects(
 ): { ct: ContentTask; parentTaskId: string; projectDir: string } | null {
   const root = projectsDir(slug);
   if (!fs.existsSync(root)) return null;
+  // Case-insensitive: chat thread ids carry the CT id lowercased
+  // (writer-trigger#buildThreadId), while tasks.json stores it mixed-case.
+  const wanted = contentTaskId.toLowerCase();
   for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const tasksPath = path.join(root, entry.name, "tasks.json");
@@ -581,7 +490,7 @@ export function findContentTaskByIdAcrossProjects(
     } catch { continue; }
     for (const t of tasks) {
       const cts = (t.content_tasks as ContentTask[] | undefined) || [];
-      const match = cts.find((c) => c.id === contentTaskId);
+      const match = cts.find((c) => c.id.toLowerCase() === wanted);
       if (match) {
         return {
           ct: match,
@@ -592,6 +501,56 @@ export function findContentTaskByIdAcrossProjects(
     }
   }
   return null;
+}
+
+/**
+ * Enumerate every ContentTask of the brand with its parent context. Same scan
+ * as `findContentTaskByIdAcrossProjects` but exhaustive — used by the content
+ * reconciler to sweep the whole pipeline.
+ */
+export function listAllContentTasks(
+  slug: string,
+): Array<{ ct: ContentTask; parentTaskId: string; projectDir: string }> {
+  const root = projectsDir(slug);
+  if (!fs.existsSync(root)) return [];
+  const out: Array<{ ct: ContentTask; parentTaskId: string; projectDir: string }> = [];
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const tasksPath = path.join(root, entry.name, "tasks.json");
+    if (!fs.existsSync(tasksPath)) continue;
+    let tasks: Record<string, unknown>[];
+    try {
+      tasks = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
+    } catch { continue; }
+    for (const t of tasks) {
+      const cts = (t.content_tasks as ContentTask[] | undefined) || [];
+      for (const ct of cts) {
+        out.push({ ct, parentTaskId: t.id as string, projectDir: path.join(root, entry.name) });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Re-run the aggregate→status promotion without touching channel_phases.
+ * Rescues the case where the phases were persisted but the forward promote
+ * never landed (e.g. process died between the two saves). Forward-only, same
+ * rules as the ratchet inside `setChannelPhase`. Returns the CT (updated or
+ * not), or null when it doesn't exist.
+ */
+export function promoteStatusFromAggregate(
+  slug: string,
+  parentTaskId: string,
+  contentTaskId: string,
+): ContentTask | null {
+  const found = findContentTask(slug, parentTaskId, contentTaskId);
+  if (!found) return null;
+  const agg = aggregateChannelPhases(found.channel_phases);
+  if (!agg) return found;
+  const target = deriveStatusFromPhase(agg);
+  if (!isForwardMove(found, target)) return found;
+  return setContentTaskStatus(slug, parentTaskId, contentTaskId, target.status, target.pipeline_state);
 }
 
 /**

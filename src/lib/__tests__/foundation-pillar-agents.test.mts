@@ -7,9 +7,10 @@ const { resolveThreadSkills } = await import("../skill-resolver");
 // Expected skill + owner agent per Foundation pillar key, as opened by
 // buildPillarThread → resolveThreadSkills({ pillar }) with NO chat-config.json.
 // agent === undefined means "no specialist owner → defaults to Sancho downstream".
-// fast-foundation / company-brief are intentionally excluded (owned by Fast
-// Foundation, reworked in SAN-13).
+// W4: company-brief is now the single Layer-0 pillar (skill=kickoff, owner=hamete).
+// fast-foundation and fast-context are retired.
 const CASES: Array<{ pillar: string; skill: string; agent: string | undefined }> = [
+  { pillar: "company-brief", skill: "kickoff", agent: "hamete" },
   { pillar: "market-analysis", skill: "market-intelligence", agent: "hamete" },
   { pillar: "competitor-analysis", skill: "competitor-intelligence", agent: "hamete" },
   { pillar: "self-analysis", skill: "self-intelligence", agent: "hamete" },
@@ -18,7 +19,7 @@ const CASES: Array<{ pillar: string; skill: string; agent: string | undefined }>
   { pillar: "positioning", skill: "positioning-messaging", agent: "dulcinea" },
   { pillar: "pricing", skill: "pricing-strategy", agent: undefined },
   { pillar: "brand-voice", skill: "brand-voice", agent: "dulcinea" },
-  { pillar: "visual-identity", skill: "visual-identity", agent: "maese-pedro" },
+  { pillar: "visual-identity", skill: "design-system", agent: "maese-pedro" }, // SAN-211: visual-identity → design-system (DESIGN.md)
   { pillar: "metrics-setup", skill: "metrics-setup", agent: "merlin" },
   { pillar: "strategic-plan", skill: "strategic-plan", agent: undefined },
   { pillar: "existing-customer-data", skill: "existing-customer-data", agent: "hamete" },

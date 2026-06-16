@@ -165,6 +165,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       "deferred_at", "deferred_by",
       "target_date", "dispatch_date", "dispatch_slot", "published_at",
       "project_task_id", "angle_draft", "pillar_id", "target_channel", "content_type",
+      "author",
     ];
     for (const [k, v] of Object.entries(fields)) {
       if (!allowed.includes(k)) continue;

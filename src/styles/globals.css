@@ -119,6 +119,24 @@
 
     /* Halftone texture */
     --sc-halftone-dots: radial-gradient(rgba(31,20,16,0.12) 1.2px, transparent 1.6px);
+
+    /* ============================================================
+       Sancho Chat — warm parchment surface (light)
+       Centralizes the chat palette so the sidebar matches the brand
+       instead of the old slate/Catppuccin dark. Referenced via
+       bg-[var(--chat-*)] / text-[var(--chat-*)] utilities.
+       ============================================================ */
+    --chat-bg: #F4EEE1;          /* chat canvas — warm paper */
+    --chat-bg-deep: #EBE2D1;     /* thread-list rail */
+    --chat-surface: #FFFCF6;     /* bot bubble / cards — cream */
+    --chat-surface-2: #F0E7D6;   /* inputs, chips, secondary fills */
+    --chat-border: #E4D9C4;      /* hairline warm border */
+    --chat-border-strong: #D2C4AC;
+    --chat-text: #332E26;        /* primary ink */
+    --chat-text-muted: #6E6553;  /* secondary */
+    --chat-text-faint: #9A8E78;  /* timestamps, hints */
+    --chat-link: #A34A28;        /* rust-600 — readable on parchment */
+    --chat-danger: #B4322E;
   }
 
   /* Comic UI — Dark (Catppuccin-inspired) */
@@ -169,6 +187,20 @@
     --orange: #fb923c;
     --blue: #60a5fa;
     --purple: #D4734F;
+
+    /* Sancho Chat — warm dark (preserves the old slate feel for
+       dark-mode users instead of regressing them to parchment) */
+    --chat-bg: #1E1B26;
+    --chat-bg-deep: #181621;
+    --chat-surface: #2C2838;
+    --chat-surface-2: #3A3548;
+    --chat-border: #3D3A4C;
+    --chat-border-strong: #56516A;
+    --chat-text: #E8E2D6;
+    --chat-text-muted: #A8A192;
+    --chat-text-faint: #756E63;
+    --chat-link: #E0915F;
+    --chat-danger: #f38ba8;
   }
 
   * {

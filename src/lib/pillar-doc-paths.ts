@@ -4,53 +4,99 @@
 // Used by the pinned document system in chat threads.
 // ============================================================
 
-/**
- * Default doc paths per pillar (fallback when foundation-state.json
- * doesn't have an output_file for the pillar).
- * Each entry is an array of paths to try in order.
- *
- * Lite fallback convention (added v1.1, 2026-05-20):
- *   For pillars whose canonical path is also a fast-foundation output target,
- *   we list `current.md` first and the sibling `lite.md` second. `current.md`
- *   is produced by the full skill; `lite.md` is produced by `fast-foundation`
- *   as a preliminary seed. The dashboard shows whichever exists, preferring full.
- *
- *   Consumers MUST treat lite.md as preliminary (badge "lite" in UI). Cross-
- *   skill consumers (positioning, pricing, etc.) DO NOT fall back to lite —
- *   that's intentional and lives in each consumer's `context_required`.
- */
-export const PILLAR_DOC_PATHS: Record<string, string[]> = {
-  "fast-foundation": ["company-brief/company-brief.current.md", "company-brief/lite.md"],
-  "company-brief": ["company-brief/company-brief.current.md", "company-brief/lite.md"],
-  "company-context": ["company-context/company-context.current.md", "company-context/lite.md"],
-  "business-model": ["business-model/business-model.current.md", "business-model/lite.md"],
-  "budget": ["budget/budget.current.md", "budget/lite.md"],
-  "seo-audit": ["site-audit/seo-audit/seo-audit.current.md", "trust-engine/seo-audit.json"],
-  "own-media-audit": ["site-audit/own-media-audit/own-media-audit.current.md", "trust-engine/own-media-audit.json"],
-  "market-analysis": ["market-and-us/market/market.current.md", "market-and-us/market/lite.md"],
-  "competitor-analysis": ["market-and-us/competitors/competitors.current.md"],
-  "self-analysis": ["market-and-us/self/self.current.md", "market-and-us/self/lite.md"],
-  "market-synthesis": ["market-and-us/swot/swot.current.md"],
-  "niche-discovery": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"],
-  "niche-basic": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"],
-  "existing-customer-data": ["go-to-market/existing-customers/existing-customers.current.md"],
-  "ecp-validation": ["go-to-market/ecp-validation/ecp-validation.current.md"],
-  positioning: ["go-to-market/positioning/positioning.current.md"],
-  pricing: ["go-to-market/pricing/pricing.current.md"],
-  "brand-voice": ["brand-identity/voice-profile/voice-profile.current.md", "brand-identity/brand-voice/brand-voice.current.md"],
-  "brand-voice-snapshot": ["brand-voice/brand-voice.current.md", "brand-voice/lite.md"],
-  "visual-identity": ["brand-identity/visual-identity/visual-identity.current.md"],
-  "content-strategy": ["strategies/content/content.current.md"],
-  "social-media-strategy": ["strategies/social/social.current.md"],
-  "email-strategy": ["strategies/email/email.current.md"],
-  "paid-media-strategy": ["strategies/paid/paid.current.md"],
-  "partnership-strategy": ["strategies/partnerships/partnerships.current.md"],
-  "web-strategy": ["strategies/web/web.current.md"],
-  "metrics-setup": ["metrics/setup/setup.current.md"],
-  "strategic-plan": ["strategic-plan/strategic-plan.current.md"],
-  "foundation-presentation": ["presentations/foundation-deck.html"],
-  "strategic-presentation": ["presentations/strategic-deck.html"],
+import pillarManifest from "../../config/pillar-manifest.json";
+
+/** Shape of one pillar entry in the single source of truth config/pillar-manifest.json.
+ *  SAN-192 (W2b): un pilar ya NO declara skill/agente si una task lo cubre — se
+ *  DERIVAN de su task (bloque `foundation` → `taskSets`). `skill`/`agent`
+ *  explícitos solo para documentos-pilar SIN task aún (ej. estrategia de Content). */
+type ManifestPillarEntry = {
+  docPaths?: string[];
+  /** Solo para documentos-pilar sin task cubriente (transitorio hasta convertirlos en task). */
+  skill?: string;
+  agent?: string;
 };
+/** The pillar map from config/pillar-manifest.json — edit the JSON, never this. */
+export const MANIFEST_PILLARS = (
+  pillarManifest as unknown as { pillars: Record<string, ManifestPillarEntry> }
+).pillars;
+
+// ---------------------------------------------------------------------------
+// Derivación skill+agente desde la TASK cubriente (SAN-192 W2b)
+// El manifest no duplica skill/agente: la task es la fuente. Aquí leemos el
+// bloque `foundation` (pilar → {set,id}) + `taskSets` (task → skill/agent) del
+// MISMO JSON (sin importar task-blueprints.ts, que importaría skill-resolver →
+// ciclo). resolveCoveringTask y getTaskSetEntry hacen lo análogo en runtime.
+// ---------------------------------------------------------------------------
+
+type _TaskSetEntry = { id: string; skill?: string; agent?: string; deliverableFiles?: string[]; docPaths?: string[] };
+type _FoundationPillarDecl = { key: string; task?: { set: string; id: string } };
+const _MANIFEST_FOUNDATION = (
+  pillarManifest as unknown as { foundation?: { sections?: { pillars?: _FoundationPillarDecl[] }[] } }
+).foundation;
+const _MANIFEST_TASKSETS = (
+  pillarManifest as unknown as { taskSets?: Record<string, { tasks?: _TaskSetEntry[] }> }
+).taskSets ?? {};
+
+/** La task que cubre un pilar Foundation (skill/agent/deliverableFiles), o undefined. */
+function coveringTask(pillar: string): _TaskSetEntry | undefined {
+  for (const section of _MANIFEST_FOUNDATION?.sections ?? []) {
+    const decl = (section.pillars ?? []).find((p) => p.key === pillar);
+    if (decl?.task) {
+      const t = (_MANIFEST_TASKSETS[decl.task.set]?.tasks ?? []).find((x) => x.id === decl.task!.id);
+      if (t) return t;
+    }
+  }
+  return undefined;
+}
+
+/** Default chat config (skill+skills+agent) por pilar, DERIVADO: task cubriente
+ *  (Foundation) o skill/agent explícitos del pilar. Lo consumen chat-config.default.json
+ *  y el golden; el resolver usa PILLAR_SKILL_ALIAS (abajo) + owner-map para el agente. */
+export const PILLAR_CHAT_DEFAULTS: Record<string, { skill: string; skills: string[]; agent?: string }> = (() => {
+  const out: Record<string, { skill: string; skills: string[]; agent?: string }> = {};
+  for (const [key, entry] of Object.entries(MANIFEST_PILLARS)) {
+    const cov = coveringTask(key);
+    const skill = cov?.skill ?? entry.skill;
+    if (!skill) continue;
+    out[key] = { skill, skills: [skill], agent: cov?.agent ?? entry.agent };
+  }
+  return out;
+})();
+
+/** Pilar → skill (derivado). Fuente única para skill-resolver (sustituye al
+ *  skillAlias/homonymous que vivían en el manifest). */
+export const PILLAR_SKILL_ALIAS: Record<string, string> = Object.fromEntries(
+  Object.entries(PILLAR_CHAT_DEFAULTS).map(([k, v]) => [k, v.skill]),
+);
+
+/**
+ * Default doc paths per pillar (fallback when foundation-state.json doesn't have
+ * an output_file for the pillar). Each entry is an array of paths to try in order.
+ *
+ * DERIVED from the single source of truth `config/pillar-manifest.json` (F0) — do
+ * NOT hand-edit; edit the manifest. Equivalence with the previous hardcoded map is
+ * frozen in src/lib/__tests__/pillar-manifest.test.mts.
+ *
+ * SAN-192 (W3): la ruta canónica vive en la TASK (`deliverableFiles`). Para
+ * pilares Foundation se DERIVA de su task cubriente; un pilar solo declara
+ * `docPaths` cuando aporta rutas extra de resolución que la task no produce
+ * (fallback `lite.md` del kickoff, ubicaciones legacy alternativas) o cuando no
+ * tiene task (documentos-pilar de Content). `docPaths` explícito gana.
+ *
+ * Lite fallback convention: para pilares cuyo path canónico es también target de
+ * fast-foundation, se lista `…current.md` (de la task) y el hermano `lite.md`
+ * (en `docPaths` del pilar). `current.md` lo produce la skill full; `lite.md` el
+ * kickoff como seed preliminar.
+ */
+export const PILLAR_DOC_PATHS: Record<string, string[]> = Object.fromEntries(
+  Object.entries(MANIFEST_PILLARS)
+    .map(([key, entry]) => {
+      const paths = entry.docPaths ?? coveringTask(key)?.deliverableFiles ?? coveringTask(key)?.docPaths;
+      return paths ? ([key, paths] as const) : null;
+    })
+    .filter((x): x is readonly [string, string[]] => x !== null),
+);
 
 /**
  * Resolve the doc path for a pillar, checking foundation-state.json first,

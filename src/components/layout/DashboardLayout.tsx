@@ -20,7 +20,12 @@ export function DashboardLayout({ children, fullBleed }: DashboardLayoutProps) {
   const { sidebarOpen } = useAppStore();
   const { sidebarOpen: chatOpen, isFullscreen: chatFullscreen } = useChatStore();
 
-  const chatWidth = chatOpen ? (chatFullscreen ? "calc(100vw - 220px)" : "380px") : "0px";
+  // Fullscreen chat must leave a gap exactly the width of the nav sidebar
+  // (220px expanded / 60px collapsed — see Sidebar `lg:w-[...]` and the
+  // `lg:ml-[...]` offsets below). Hardcoding 220 left a 160px strip of the
+  // dashboard peeking through when the sidebar was collapsed.
+  const sidebarW = sidebarOpen ? 220 : 60;
+  const chatWidth = chatOpen ? (chatFullscreen ? `calc(100vw - ${sidebarW}px)` : "380px") : "0px";
 
   return (
     <div className="min-h-screen bg-background">

@@ -18,12 +18,15 @@ Operational guide for issuing access, troubleshooting, and safely disabling the 
 | `tasks:read` | list/get tasks | none |
 | `yalc:read` | YALC overview / campaigns / gates (read) | none |
 | `open-design:read` | OD health / catalog (read) | none |
+| `docs:read` | list/read Brand Brain/Foundation docs by `brandSlug` + path | none |
+| `intelligence:read` | list/read Meeting Intelligence meetings + cross-meeting insights | none |
 | `sancho:chat` | read chat threads **and** `sancho_send_message` | sends chat messages (dry-run default) |
 | `tasks:write` | `sancho_create_task`, `sancho_update_task` | writes tasks (dry-run default) |
 
 Notes:
 - `yalc:write` is **not shipped** (SAN-68 paused — single shared YALC daemon has no per-tenant isolation). Do not add it until that blocker is resolved.
 - `clients` is an explicit allowlist of slugs, or `["*"]` for all. Every client-scoped tool requires `clientSlug` and the token must include it.
+- `brands` is an explicit allowlist for document tools. If omitted, it defaults to `clients`. Use it for sub-brands like XHYPE: `clients: ["growth4u"]`, `brands: ["growth4u", "xhype"]`.
 - **Principle of least privilege:** grant the narrowest scopes + the fewest clients a user actually needs. Prefer read-only tokens for anyone just exploring.
 
 ### 1.2 Issue a token
@@ -39,8 +42,9 @@ Notes:
      {
        "id": "claude-code-<person-or-purpose>",
        "tokenHash": "<sha256-hex>",
-       "scopes": ["sancho:read", "tasks:read", "yalc:read", "open-design:read"],
-       "clients": ["growth4u"]
+       "scopes": ["sancho:read", "tasks:read", "yalc:read", "open-design:read", "docs:read", "intelligence:read"],
+       "clients": ["growth4u"],
+       "brands": ["growth4u", "xhype"]
      }
    ]
    ```
@@ -67,10 +71,12 @@ There is no per-tool toggle in code; the lever is the **token config** + redeplo
 
 | Goal | Action |
 |------|--------|
-| Stop all **writes/sends**, keep reads | Re-issue `SANCHO_MCP_TOKENS` with only `*:read` scopes (drop `sancho:chat` and `tasks:write`), deploy. |
+| Stop task writes, keep reads | Re-issue `SANCHO_MCP_TOKENS` without `tasks:write`, deploy. |
+| Stop chat sends | Remove `sancho:chat`, deploy. Note: this also disables chat thread reads because chat history uses the same scope today. |
 | Disable the MCP **entirely** | Remove `SANCHO_MCP_TOKENS` (and `SANCHO_MCP_TOKEN`) → endpoint returns `503` for everyone. |
 | Cut off **one** user/token | Remove that entry's hash, deploy → that token gets `403`. |
 | Lock to specific clients | Set `clients` to an explicit slug list (remove `["*"]`), deploy. |
+| Lock document access to specific brands | Set `brands` to an explicit slug list (remove `["*"]`), deploy. |
 
 All side-effecting tools (`sancho_send_message`, `sancho_create_task`, `sancho_update_task`) already default to **dry-run** and only execute with `dryRun=false` + `confirm=true`, so accidental fire requires an explicit override.
 
@@ -126,11 +132,13 @@ Run after any deploy that touches the MCP, with a real token:
 - [ ] `sancho_mcp_status` → `ok`, expected `scopes` + `clients`, `traceId` present.
 - [ ] `sancho_list_clients` → expected client set (matches token `clients`).
 - [ ] `sancho_get_client_context` for one client → returns status.
+- [ ] `sancho_list_documents` for one allowed brand → returns expected Brand Brain/Foundation docs.
+- [ ] `sancho_get_document` for one allowed `.md` path → returns content, `canonicalPath`, `traceId`.
 - [ ] `sancho_list_tasks` / `sancho_get_task` → OK.
 - [ ] `sancho_create_task` **dry-run** (no `confirm`) → `dryRun:true, requiresConfirmation:true`, nothing written.
 - [ ] `sancho_list_chat_threads` + `sancho_get_chat_thread` → reads; `:::ask` detection works.
 - [ ] `yalc_get_overview`, `open_design_health` → reachable or clean structured error.
-- [ ] Negative: a tool requiring a scope the token lacks → `403`; a disallowed `clientSlug` → `403`.
+- [ ] Negative: a tool requiring a scope the token lacks → `403`; a disallowed `clientSlug` or `brandSlug` → `403`; path traversal in `docPath` → error.
 
 ---
 
@@ -142,7 +150,7 @@ Run after any deploy that touches the MCP, with a real token:
 
 To inspect recent audit events (DB):
 ```sql
-SELECT created_at, principal_id, tool, client_slug, success, error
+SELECT created_at, principal_id, tool_name, client_slug, ok, error
 FROM mcp_audit_events ORDER BY created_at DESC LIMIT 50;
 ```
 

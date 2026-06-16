@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { useTranslations } from "next-intl";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { TabGroup } from "@/components/shared/tab-group";
 import { ApisConnectorsPanel } from "@/components/settings/ApisConnectorsPanel";
 import { AgentsPanel } from "@/components/settings/agents-panel";
@@ -67,7 +68,7 @@ export default function ClientSettingsPage() {
   return (
     <DashboardLayout>
       <Head><title>{t("title")} — {slug} — Mission Control</title></Head>
-      <h1 className="font-heading text-2xl text-navy mb-1">⚙️ {t("title")}</h1>
+      <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="settings" />{t("title")}</h1>
       <p className="text-sm text-muted-foreground mb-6">{slug} — {t("subtitle")}</p>
 
       <TabGroup

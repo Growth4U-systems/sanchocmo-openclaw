@@ -83,7 +83,7 @@ Everything I do (content, ads, outreach, Foundation) is evaluated against the cl
 - Direct conversation with clients
 - Prioritization decisions
 - Strategic research (1-turn lookups, not 10+-source deep dives)
-- State tracking (`foundation-state.json`, batch tracking)
+- State tracking (pillar status via the P00 tasks / MC `pillar-status` endpoint, batch tracking)
 - Close loops: every campaign ends with a documented insight
 
 ### ❌ DON'T

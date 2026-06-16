@@ -36,13 +36,8 @@ function resolveClientUrl(slug: string, queryUrl: string | null): string | null 
     {},
   );
   if (clients[slug]?.url) return clients[slug].url ?? null;
-
-  const state = readJSON<{ brand_summary?: { url?: string } }>(
-    path.join(BASE, "brand", slug, "foundation-state.json"),
-    {},
-  );
-  if (state.brand_summary?.url) return state.brand_summary.url;
-
+  // (El fallback a foundation-state.json brand_summary.url murió con el
+  // fichero — SAN-183 F5. clients.json es la fuente de la URL del cliente.)
   return queryUrl;
 }
 
