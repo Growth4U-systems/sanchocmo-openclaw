@@ -371,7 +371,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         metricsProvider: ch.metrics_provider || "",
         primaryKpi: ch.primary_kpi || "",
         profiles: (ch.profiles || []).map((p: Record<string, unknown>) => ({
-          name: p.name, handle: p.handle, role: p.role, postsPerWeek: p.posts_per_week,
+          id: p.id,
+          name: p.name,
+          handle: p.handle,
+          role: p.role,
+          postsPerWeek: p.posts_per_week,
+          metricool_profile_id: p.metricool_profile_id,
+          voice_doc: p.voice_doc,
+          pillars_slant: p.pillars_slant,
+          owner: p.owner,
+          primary_kpi: p.primary_kpi,
         })),
       })),
     };

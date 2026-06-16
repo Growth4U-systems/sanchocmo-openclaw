@@ -34,7 +34,18 @@ interface CadenceChannel {
   key: string; active: boolean; frequency: string;
   bestDays: string[]; bestTimes: string[];
   gating: string; contentTypes: string[];
-  profiles: { name: string; handle: string; role: string; postsPerWeek: number }[];
+  profiles: {
+    id?: string;
+    name: string;
+    handle: string;
+    role: string;
+    postsPerWeek: number;
+    metricool_profile_id?: string;
+    voice_doc?: string;
+    pillars_slant?: string[];
+    owner?: string;
+    primary_kpi?: string;
+  }[];
 }
 
 interface PillarPov {

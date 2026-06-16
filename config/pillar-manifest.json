@@ -145,7 +145,10 @@
             "keywords-seed/*.yml",
             "../../market-and-us/competitors/sources.json"
           ],
-          "dependsOn": ["pov-bank"]
+          "dependsOn": ["pov-bank"],
+          "extra": {
+            "skills": ["content-engine-setup", "founder-led-setup"]
+          }
         },
         {
           "id": "pov-bank",

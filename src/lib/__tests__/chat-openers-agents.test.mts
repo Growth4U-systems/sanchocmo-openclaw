@@ -17,6 +17,10 @@ const { resolveAgentForSkill } = await import("../skill-resolver");
 
 const SLUG = "growth4u";
 
+test("founder-led-setup is owned by dulcinea", () => {
+  assert.equal(resolveAgentForSkill("founder-led-setup"), "dulcinea");
+});
+
 // Every chat-opener button must route to the agent that OWNS its skill — no
 // undefined-agent for owned skills (the SAN-166 class of bug at the button
 // level). For each builder, assert agent === resolveAgentForSkill(skill).
