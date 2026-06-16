@@ -74,6 +74,21 @@ const DOCUMENT_MAX_CHARS_DEFAULT = 60_000;
 const DOCUMENT_MAX_CHARS_MAX = 200_000;
 const MEETING_LIMIT_DEFAULT = 50;
 const MEETING_LIMIT_MAX = 200;
+const AGENT_SLUG_RE = /^[a-z0-9-]+$/;
+// Keep this in sync with docker/setup-agents.sh. sancho is the orchestrator,
+// not a delegate target; escudero is retired there and must stay rejected here.
+const DELEGATE_AGENT_SLUGS = [
+  "cervantes",
+  "hamete",
+  "dulcinea",
+  "rocinante",
+  "mambrino",
+  "merlin",
+  "sanson",
+  "maese-pedro",
+] as const;
+const DELEGATE_AGENT_SET = new Set<string>(DELEGATE_AGENT_SLUGS);
+const DELEGATE_AGENT_LIST = DELEGATE_AGENT_SLUGS.join(", ");
 
 const askQuestionSchema = z.object({
   id: z.string().min(1),
@@ -290,10 +305,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "To promote the current chat to a task (SAN-210), pass threadId (+ your skill/agent): the task is linked to " +
         "the thread and the call is idempotent — one task per thread, so promoting the same thread again returns the " +
         "existing task instead of duplicating it. " +
-        "This is the right tool when the user asks for a unit of work (research, a prospect/influencer/podcast list, " +
-        "content, ads, a visual, data, or a web page): set `agent` to the owning specialist — hamete (research/market intel), " +
-        "rocinante (outreach/prospecting), dulcinea (content), mambrino (ads), maese-pedro (visual), merlin (data), " +
-        "alarife (web) — so the work is routed to and executed by that specialist instead of answered inline in chat.",
+        "This is passive task creation. When the user asks for a unit of work owned by an active specialist, prefer " +
+        "sancho_delegate: it creates/reuses the task thread, sets `agent` to an allowed active delegate — " +
+        "cervantes (skills/docs), hamete (research/market intel), dulcinea (content), rocinante (outreach/prospecting), " +
+        "mambrino (ads), merlin (data), sanson (feedback/QA), maese-pedro (visual) — and dispatches the brief.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         name: z.string().min(1).describe("Task name."),
@@ -329,6 +344,93 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         }
         const task = await createTask(clientSlug, input as Parameters<typeof createTask>[1]);
         return jsonResult({ ok: true, task });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_delegate",
+    {
+      title: "Delegate Sancho work to a specialist",
+      description:
+        "Creates or reuses an idempotent specialist-owned task thread, then dispatches the brief to that specialist via " +
+        "Mission Control chat. Requires tasks:write and sancho:chat. Defaults to dry-run and requires confirm=true. " +
+        "Use this for real work (skills/docs, research, content, outreach, ads, data, feedback/QA, visual assets) instead of asking " +
+        "Sancho to answer inline or using Agent(subagent_type=...) for an owning deliverable.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        agent: z.string().min(1).describe(`Active delegate agent id. Allowed: ${DELEGATE_AGENT_LIST}.`),
+        name: z.string().min(1).describe("Task name shown in Mission Control."),
+        brief: z.string().min(1).describe("Brief to dispatch to the specialist thread."),
+        threadId: z.string().optional().describe("Optional MC chat thread id. Defaults to an idempotent delegate-<agent>-<name> thread."),
+        threadName: z.string().optional().describe("Optional thread display name. Defaults to the task name."),
+        parentId: z.string().optional().describe("Optional parent task id."),
+        owner: z.string().optional().describe("Task owner label. Defaults to the specialist agent."),
+        skill: z.string().optional().describe("Skill that should run the task, when known."),
+        skills: z.array(z.string()).optional().describe("Skill pipeline for the task, when known."),
+        status: z.string().optional().describe("Initial task status (default todo)."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the create+dispatch operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create/reuse and dispatch."),
+      },
+    },
+    async ({ clientSlug, agent, name, brief, threadId, threadName, parentId, owner, skill, skills, status, dryRun, confirm }) =>
+      runTool(context, "sancho_delegate", clientSlug, async () => {
+        assertClientScope(context, "tasks:write", clientSlug);
+        assertClientScope(context, "sancho:chat", clientSlug);
+        const agentSlug = normalizeDelegateAgent(agent);
+        const tid = threadId
+          ? normalizeChatThreadId(clientSlug, threadId)
+          : defaultDelegateThreadId(clientSlug, agentSlug, name);
+        const taskInput = pickDefined({
+          name,
+          description: brief,
+          brief,
+          status,
+          type: "execution",
+          parent_id: parentId,
+          owner: owner || agentSlug,
+          skill,
+          agent: agentSlug,
+          skills,
+          mc_chat_thread_id: tid,
+        });
+        const payload = {
+          slug: clientSlug,
+          threadId: tid,
+          threadName: threadName || name,
+          text: brief,
+          userId: `mcp:${context.principal.id}`,
+          userName: "Claude Code",
+          isAdmin: true,
+          senderRole: "admin",
+          _source: "mcp_delegate",
+          agentId: agentSlug,
+          agent: agentSlug,
+        };
+
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to create/reuse this task thread and dispatch the brief.",
+            threadId: tid,
+            taskInput: { clientSlug, ...taskInput },
+            payload,
+          });
+        }
+
+        const task = await createTask(clientSlug, taskInput as Parameters<typeof createTask>[1]);
+        addMessage(tid, "user", brief);
+        try {
+          const dispatch = await dispatchMcChatMessage(context, payload);
+          return jsonResult({ ok: true, task, threadId: tid, agent: agentSlug, dispatch });
+        } catch (err) {
+          const taskId = isRecord(task) && typeof task.id === "string" ? task.id : "unknown";
+          const message = err instanceof Error ? err.message : "Unknown gateway dispatch error";
+          throw new Error(
+            `Created/reused task ${taskId} for ${agentSlug} at thread ${tid}, but the specialist was NOT dispatched: ${message}`,
+          );
+        }
       }),
   );
 
@@ -383,9 +485,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       description:
         "Sends a message into Sancho Mission Control chat. Requires sancho:chat. Defaults to dry-run and requires confirm=true for execution. " +
         "Use it for conversational messages, questions, and answering pending :::ask prompts. " +
-        "If the request is a discrete unit of work (research, a prospect/influencer/podcast list, content, ads, a visual, data, or a web page), " +
-        "do NOT just send it here and treat Sancho's inline reply as the deliverable — call sancho_create_task with the owning specialist as `agent` " +
-        "and send the brief to that task's threadId so the specialist actually does the work.",
+        "If the request is a discrete unit of work owned by an active specialist (research, prospecting, content, ads, visual, data, feedback/QA, skills/docs), " +
+        "do NOT just send it here and treat Sancho's inline reply as the deliverable — call sancho_delegate with the owning specialist as `agent` " +
+        "so the specialist actually does the work in its own task thread.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         text: z.string().min(1).describe("Message text."),
@@ -421,30 +523,17 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             requiresConfirmation: true,
             message: "Set dryRun=false and confirm=true to send this chat message.",
             workHint:
-              "If this is a unit of work (research, a prospect/influencer/podcast list, content, ads, a visual, data, or a web page), " +
-              "prefer sancho_create_task with the owning specialist as `agent` (hamete=research, rocinante=outreach, dulcinea=content, " +
-              "mambrino=ads, maese-pedro=visual, merlin=data, alarife=web) and send the brief to that task's thread — " +
+              "If this is a unit of work owned by an active specialist (research, prospecting, content, ads, visual, data, feedback/QA, skills/docs), " +
+              "prefer sancho_delegate with the owning specialist as `agent` (cervantes=skills/docs, hamete=research, dulcinea=content, " +
+              "rocinante=outreach, mambrino=ads, merlin=data, sanson=feedback/QA, maese-pedro=visual). It creates/reuses the task thread and dispatches the brief — " +
               "don't treat an inline chat reply as the deliverable.",
             payload,
           });
         }
 
         addMessage(tid, "user", text);
-        const secret = getChatSecret();
-        const response = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...traceHeaders(context),
-            ...(secret ? { "X-MC-Secret": secret } : {}),
-          },
-          body: JSON.stringify(payload),
-        });
-        const data = (await response.json()) as unknown;
-        if (!response.ok) {
-          throw new Error(`Mission Control gateway rejected message: ${response.status}`);
-        }
-        return jsonResult({ ok: true, chatId: extractChatId(data) || tid, gateway: data });
+        const dispatch = await dispatchMcChatMessage(context, payload);
+        return jsonResult({ ok: true, chatId: dispatch.chatId, gateway: dispatch.gateway });
       }),
   );
 
@@ -1363,6 +1452,68 @@ function clampLimit(
 function extractChatId(value: unknown): string | null {
   if (!isRecord(value)) return null;
   return typeof value.chatId === "string" ? value.chatId : null;
+}
+
+async function dispatchMcChatMessage(
+  context: SanchoMcpContext,
+  payload: { threadId: string } & Record<string, unknown>,
+): Promise<{ chatId: string; gateway: unknown }> {
+  const secret = getChatSecret();
+  const response = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...traceHeaders(context),
+      ...(secret ? { "X-MC-Secret": secret } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  const raw = await response.text();
+  const data = parseGatewayBody(raw);
+  if (!response.ok) {
+    const detail = raw ? `: ${raw.slice(0, 500)}` : "";
+    throw new Error(`Mission Control gateway rejected message: HTTP ${response.status}${detail}`);
+  }
+  return { chatId: extractChatId(data) || payload.threadId, gateway: data };
+}
+
+function parseGatewayBody(raw: string): unknown {
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return { raw };
+  }
+}
+
+function normalizeDelegateAgent(agent: string): string {
+  const slug = agent.trim().toLowerCase();
+  if (!AGENT_SLUG_RE.test(slug)) {
+    throw new McpAuthError(400, "agent must be a lowercase slug using letters, numbers and hyphens");
+  }
+  if (!DELEGATE_AGENT_SET.has(slug)) {
+    throw new McpAuthError(
+      400,
+      `sancho_delegate requires an active delegate agent (${DELEGATE_AGENT_LIST}); received "${slug}"`,
+    );
+  }
+  return slug;
+}
+
+function defaultDelegateThreadId(clientSlug: string, agent: string, name: string): string {
+  return `${clientSlug}:delegate-${agent}-${slugForThread(name)}`;
+}
+
+function slugForThread(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+  return slug || "task";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
