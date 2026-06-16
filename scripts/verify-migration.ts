@@ -5,7 +5,7 @@ import { db } from "@/db/drizzle";
 import { tasks } from "@/db/schema";
 
 const root = process.cwd();
-const workspaces = ["workspace-cervantes", "workspace-escudero", "workspace-main", "workspace-rocinante", "workspace-sancho"];
+const workspaces = ["workspace-cervantes", "workspace-main", "workspace-rocinante", "workspace-sancho"];
 
 function readJSON(file: string, fallback: any) {
   try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return fallback; }

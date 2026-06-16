@@ -3,7 +3,7 @@
 ## Discord (OBLIGATORIO)
 - Contenido → tool calls al hilo. Respuesta final = NO_REPLY.
 - **Sancho responde:** thread-create(channelId, messageId) → send(target=thread_id) → NO_REPLY
-- **Delegar:** sessions_spawn(agentId="escudero", thread=true) → NO_REPLY
+- **Delegar:** especialistas reales vía `Agent(subagent_type="<slug>")`; para entregables con estado, crear/usar la tarea del especialista y enviar ahí el brief. Escudero está retirado: NUNCA invocar el agente `escudero`.
 - Siempre `target="<thread_id>"`. NUNCA `threadId`. CERO texto entre tool calls.
 
 ## Brand Files

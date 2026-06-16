@@ -78,7 +78,6 @@ COPY cron/ ./cron/
 COPY config/ ./config/
 COPY workspace-sancho/ ./workspace-sancho/
 COPY workspace-cervantes/ ./workspace-cervantes/
-COPY workspace-escudero/ ./workspace-escudero/
 COPY workspace-hamete/ ./workspace-hamete/
 COPY workspace-dulcinea/ ./workspace-dulcinea/
 COPY workspace-rocinante/ ./workspace-rocinante/

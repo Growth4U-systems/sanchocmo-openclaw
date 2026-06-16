@@ -40,7 +40,7 @@ const i18n = {
     phases: [
       { phase: "P0 · Diagnose", time: "~2 horas · automático", question: "¿Dónde está el cuello de botella?", desc: 'Sancho escanea web, reviews, competencia. Determina la "meta": ¿ARREGLAR, LANZAR, LEADS, o ESCALAR? Enruta a la fase correcta.' },
       { phase: "P1 · Foundation", time: "1 día (Lite) — 1 semana (Deep)", question: "¿Quiénes somos, a quién servimos, qué decimos?", desc: "12 pilares en 6 layers (DAG v2.0): Kickoff (Company Brief) → Research → Synthesis → Discovery → Activation → Brand Identity. Conversacional desde Discord en #onboarding con Sancho." },
-      { phase: "P2 · Funnel", time: "1 — 2 semanas", question: "Si mando 1.000 personas, ¿cuántas convierten?", desc: "Landing pages (El Arquitecto), email sequences (El Comercial), lead magnets, trust engine (casos de éxito). La infraestructura de conversión." },
+      { phase: "P2 · Funnel", time: "1 — 2 semanas", question: "Si mando 1.000 personas, ¿cuántas convierten?", desc: "Landing pages (Alarife), email sequences (Dulcinea), lead magnets, trust engine (casos de éxito). La infraestructura de conversión." },
       { phase: "P3 · Scale", time: "Continuo", question: "¿Cómo generamos tráfico y crecemos?", desc: "Los 4 canales Hormozi en acción. Daily Pulse + Thief Marketer alimentan ideas. Content Calendar planifica. Agentes ejecutan. Learning loops mejoran." },
     ],
     foundationTitle: "🏗️ Foundation — Los 16 Pilares",
@@ -179,7 +179,7 @@ const i18n = {
     phases: [
       { phase: "P0 · Diagnose", time: "~2 hours · automatic", question: "Where is the bottleneck?", desc: 'Sancho scans web, reviews, competition. Determines the "goal": FIX, LAUNCH, LEADS, or SCALE? Routes to the right phase.' },
       { phase: "P1 · Foundation", time: "1 day (Lite) — 1 week (Deep)", question: "Who are we, who do we serve, what do we say?", desc: "12 pillars in 6 layers (DAG v2.0): Kickoff (Company Brief) → Research → Synthesis → Discovery → Activation → Brand Identity. Conversational from Discord in #onboarding with Sancho." },
-      { phase: "P2 · Funnel", time: "1 — 2 weeks", question: "If I send 1,000 people, how many convert?", desc: "Landing pages (El Arquitecto), email sequences (El Comercial), lead magnets, trust engine (case studies). The conversion infrastructure." },
+      { phase: "P2 · Funnel", time: "1 — 2 weeks", question: "If I send 1,000 people, how many convert?", desc: "Landing pages (Alarife), email sequences (Dulcinea), lead magnets, trust engine (case studies). The conversion infrastructure." },
       { phase: "P3 · Scale", time: "Ongoing", question: "How do we generate traffic and grow?", desc: "The 4 Hormozi channels in action. Daily Pulse + Thief Marketer feed ideas. Content Calendar plans. Agents execute. Learning loops improve." },
     ],
     foundationTitle: "🏗️ Foundation — The 16 Pillars",
@@ -314,8 +314,8 @@ const HORMOZI_COLORS = ["bg-blue-500/5", "bg-green-500/5", "bg-amber-500/5", "bg
 const HORMOZI_SKILLS = [
   ["company-finder", "decision-maker", "outreach-sequences"],
   ["seo-content", "content-atomizer", "newsletter"],
-  ["El Conector"],
-  ["El Amplificador"],
+  ["co-marketing", "referrals", "community-marketing"],
+  ["ad-creative", "ads"],
 ];
 const HORMOZI_GAPS = [false, false, true, true];
 

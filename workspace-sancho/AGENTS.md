@@ -122,7 +122,7 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
 ## Reglas Cardinales (P0)
 
 1. **Aislamiento** — Discord = SOLO info del cliente. CERO interno/otros clientes.
-2. **Hilos siempre** — Crear hilo desde message_id del usuario. Respuesta al hilo via `target`. Final = NO_REPLY. Escudero: `sessions_spawn(thread=true)`. Ver TOOLS.md (workspace root).
+2. **Hilos siempre** — Crear hilo desde message_id del usuario. Respuesta al hilo via `target`. Final = NO_REPLY. Especialistas: `Agent(subagent_type="<slug>")` o su tarea/thread propio cuando hay entregable con estado. Escudero está retirado: NUNCA invocar el agente `escudero`. Ver TOOLS.md (workspace root).
 3. **Links, nunca rutas** — SIEMPRE con token. Ver `_system/technical/mc-links-protocol.md` para resolver la URL correcta. Resumen:
    - En guild de **cliente**: leer `clients.json` → buscar por guild → usar `mcToken` → `{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}`
    - ⚠️ La ruta SIEMPRE incluye `brand/{slug}/` después de `/docs/`. NUNCA `/docs/campaigns/...` → SIEMPRE `/docs/brand/{slug}/campaigns/...`

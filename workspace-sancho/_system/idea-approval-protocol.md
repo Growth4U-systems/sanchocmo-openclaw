@@ -31,7 +31,7 @@ LIMIT 3-5
 
 ### 2. Dispatch a Discord
 
-Escudero Content envia UN mensaje al canal configurado del cliente con
+Dulcinea envia UN mensaje al canal configurado del cliente con
 N ideas candidatas. Formato por idea:
 
 ```
@@ -45,14 +45,14 @@ N ideas candidatas. Formato por idea:
 
 ### 3. Humano marca
 
-- **✅ Si** → `status = approved`. Escudero Content responde con un
+- **✅ Si** → `status = approved`. Dulcinea responde con un
   **link directo al thread del dia en MC UI**. Todo el resto (Clarify +
   Draft + edit + approve) ocurre alli.
 - **⏰ Mas tarde** → `status = ready` + flag `revisit_after`. Se vuelve a
   proponer manana.
 - **❌ No** → `status = archived`.
 
-### 4. En MC UI (Sancho/Escudero Content)
+### 4. En MC UI (Sancho/Dulcinea)
 
 El humano sigue el link al thread del dia. Alli:
 1. Clarify (siempre, ver `clarify-protocol.md`)

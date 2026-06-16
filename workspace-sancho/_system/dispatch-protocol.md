@@ -1,30 +1,51 @@
-# Dispatch Protocol — SanchoCMO (v4 — 5 Agents)
+# Dispatch Protocol — SanchoCMO (v4 — Sancho + team of specialists)
 
-> Cómo Sancho despacha trabajo a agentes via sessions.
+> Cómo Sancho delega trabajo al especialista dueño de cada tipo de tarea.
 
 ---
 
 ## Principio
 
-Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (sessions_spawn), **research & market intelligence a Hamete** (sessions_send -> `hamete`), operaciones GTM-OS a Rocinante (sessions_send -> `rocinante`, skill `yalc-operator`) y verificación a Sansón (sessions_send). Admin requests van a Cervantes (message a #cervantes-admin en Discord).
+Sancho orquesta y ejecuta estrategia directamente. Para todo lo demás delega al **especialista dueño** del tipo de tarea vía `Agent(subagent_type="<slug>")`. No hay un agente genérico ni personas: cada dominio tiene su especialista.
+
+- **Contenido / SEO / newsletters / copy de landing** → Dulcinea (`dulcinea`)
+- **Prospecting / outreach / partnerships** → Rocinante (`rocinante`)
+- **Paid ads** → Mambrino (`mambrino`)
+- **Creatividad visual** → Maese Pedro (`maese-pedro`)
+- **Research & market intelligence** → Hamete (`hamete`)
+- **CRM / datos / integraciones de métricas** → Merlín (`merlin`)
+- **Web / páginas (Payload CMS)** → Alarife (`alarife`)
+- **Verificación / brand check / devil's advocate** → Sansón (`sanson`)
+- **GTM-OS / YALC** → Rocinante (`rocinante`, skill `yalc-operator`)
+
+Admin requests van a Cervantes (message a #cervantes-admin en Discord; Cervantes ya no está en OpenClaw).
 
 ---
 
 ## Cuándo ejecutar vs delegar
 
-**Ejecuta directamente** (sin spawnar):
+**Ejecuta directamente** (sin delegar):
 - Preguntas conversacionales del usuario
 - Consultas estratégicas y de planificación
 - Tareas rápidas que no requieren especialización
 - Cualquier tarea que puedas resolver en menos de 1 turno
 
-**Delega a Escudero** (via `sessions_spawn`):
+**Delega al especialista de contenido — Dulcinea** (via `Agent(subagent_type="dulcinea")`):
 - Contenido largo (artículos SEO, newsletters, secuencias de email)
-- Tareas de ejecución que necesitan especialización (prospecting pipeline, ad copy, landing pages)
-- Tareas paralelas (lanzar 3 Escuderos a la vez para diferentes piezas)
-- Tareas donde MiniMax/Qwen es suficiente y quieres ahorrar coste
+- Atomización de contenido y copy de landing
+- Tareas paralelas (lanzar varias delegaciones a la vez para diferentes piezas)
 
-**Usa Hamete** (via `sessions_send` al agente `hamete` — Research & Market Intelligence 📜):
+**Delega prospecting/outreach/partnerships — Rocinante** (via `Agent(subagent_type="rocinante")`):
+- Pipeline de prospecting, decision-maker finding, contact enrichment
+- Outreach y partnerships
+
+**Delega paid ads — Mambrino** (via `Agent(subagent_type="mambrino")`):
+- Ad copy y creatividades de paid
+
+**Delega visuales — Maese Pedro** (via `Agent(subagent_type="maese-pedro")`):
+- Assets visuales, imágenes generadas, identidad visual aplicada
+
+**Usa Hamete** (via `Agent(subagent_type="hamete")` — Research & Market Intelligence 📜):
 - Deep research de mercado, producto, regulación (skill `deep-research`)
 - Competitive intelligence y battle cards (skill `competitor-intelligence`)
 - Market analysis / sizing / segmentación (skill `market-intelligence`)
@@ -32,7 +53,7 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Cualquier tarea cuyo entregable sea "realidad externa documentada con fuentes"
 - Hamete corre el preflight de providers (`scraping-preflight.md`) y usa el stack conectado (scrapecreators MCP, DataForSEO MCP, smart-scrape). NO uses "Gemini Deep Research" (no existe): el research es `deep-research` vía Hamete.
 
-**Usa Rocinante para GTM-OS** (via `sessions_send` al agente `rocinante`; usa `yalc-operator`):
+**Usa Rocinante para GTM-OS** (via `Agent(subagent_type="rocinante")`; usa `yalc-operator`):
 - Health checks y troubleshooting de GTM-OS/YALC
 - Provider status y MCP-backed provider checks expuestos por YALC
 - Brain/setup/gates de YALC cuando el usuario pide operar GTM-OS
@@ -49,11 +70,11 @@ Sancho orquesta. Ejecuta estrategia directamente. Delega ejecución a Escudero (
 - Importación/exportación de sites y migraciones de CMS
 - Alarife solicita el copy a Dulcinea y los visuales a Maese Pedro; nunca publica sin aprobación explícita
 
-### Selección de modelo para spawn (IMPORTANTE)
+### Selección de modelo (IMPORTANTE)
 
-> Nota: research profundo / competitive intel / market analysis ya **no** se spawnan como Escudero — van a **Hamete** (`sessions_send`). La tabla de abajo aplica a tareas de Escudero (contenido, prospecting, ejecución). Hamete gestiona su propio modelo de research.
+> Nota: research profundo / competitive intel / market analysis van a **Hamete**, que gestiona su propio modelo. La guía de abajo aplica a tareas de ejecución (contenido, prospecting) de los especialistas que corren sobre modelos económicos.
 
-Escudero tiene 2 modelos disponibles. Elige según la necesidad de contexto:
+Los especialistas de ejecución pueden correr sobre 2 modelos. Elige según la necesidad de contexto:
 
 | Tipo de tarea | Modelo | Por qué |
 |---|---|---|
@@ -66,11 +87,9 @@ Escudero tiene 2 modelos disponibles. Elige según la necesidad de contexto:
 
 **Regla simple**: si la tarea necesita leer/procesar >10 fuentes o documentos largos → Qwen. Si es generación o ejecución con contexto acotado → MiniMax.
 
-**Cómo especificar**: añadir `model: "openrouter/qwen/qwen3.6-plus:free"` en el spawn cuando sea tarea de research. Si no se especifica modelo, usa el default del agente (MiniMax M2.7).
-
 **PRIVACIDAD**: Qwen (Alibaba) recopila datos de prompts/completions. NUNCA enviar datos sensibles de clientes (nombres reales, emails, datos financieros, credenciales) por Qwen. Solo research genérico, análisis de mercado público, y datos anonimizados.
 
-**Envía a Sansón** (via `sessions_send`):
+**Envía a Sansón** (via `Agent(subagent_type="sanson")`):
 - Verificación de marca antes de publicar contenido importante
 - Devil's advocate para propuestas estratégicas
 - Verificación de coherencia post-Foundation
@@ -86,38 +105,40 @@ Usa message(action=send, channel=discord, target=<CERVANTES_ADMIN_CHANNEL_ID>) c
 
 ---
 
-## Mapeo de tareas a personas
+## Mapeo de tareas a especialistas
 
-Para mapping completo de personas a tareas, ver `dispatch-map.json`.
+Para el mapping completo de roles a tareas, ver `dispatch-map.json`.
 
-| Tipo de tarea | Agente | Via | Persona (Escudero) | Skills principales |
-|---|---|---|---|---|
-| Prospecting, outreach | Escudero | spawn | `personas/explorador.md` | company-finder, decision-maker-finder, contact-enrichment |
-| SEO content, artículos | Escudero | spawn | `personas/redactor.md` | keyword-research, seo-content |
-| Social media, newsletter | Escudero | spawn | `personas/comunicador.md` | content-atomizer, newsletter |
-| Assets visuales | Escudero | spawn | `personas/creativo.md` | visual-identity, nano-banana-pro |
-| Paid ads, ad copy | Escudero | spawn | `personas/amplificador.md` | direct-response-copy |
-| Partnerships | Escudero | spawn | `personas/conector.md` | company-finder, direct-response-copy |
-| Propuestas, battlecards | Escudero | spawn | `personas/comercial.md` | positioning-messaging, pricing-strategy |
-| Landing pages, CRO | Escudero | spawn | `personas/arquitecto.md` | direct-response-copy, lead-magnet |
-| **Deep research, market analysis** | **Hamete** | **send** | — | deep-research, market-intelligence |
-| **Competitive intel, battle cards** | **Hamete** | **send** | — | competitor-intelligence, thief-marketers |
-| **Signals, daily pulse, patterns, meeting intel** | **Hamete** | **send** | — | signal-monitor, daily-pulse, pattern-detector, meeting-intelligence |
-| YALC/GTM-OS execution | Rocinante | send | — | yalc-operator |
-| **Web/page build & publish** | **Alarife** | **spawn** | — | alarife-integration, payload, site-architecture, frontend-design, page-cro |
-| Brand check, QA | Sansón | send | — | Brand verification, devil's advocate |
-| Admin, bugs, infra | Cervantes | message (Discord) | — | System tasks |
+Cada tipo de tarea se delega a su especialista dueño vía `Agent(subagent_type="<slug>")`:
+
+| Tipo de tarea | Especialista | Slug | Skills principales |
+|---|---|---|---|
+| Prospecting, outreach | Rocinante | `rocinante` | company-finder, decision-maker-finder, contact-enrichment |
+| SEO content, artículos | Dulcinea | `dulcinea` | keyword-research, seo-content |
+| Social media, newsletter | Dulcinea | `dulcinea` | content-atomizer, newsletter |
+| Assets visuales | Maese Pedro | `maese-pedro` | visual-identity, nano-banana-pro |
+| Paid ads, ad copy | Mambrino | `mambrino` | direct-response-copy |
+| Partnerships | Rocinante | `rocinante` | company-finder, direct-response-copy |
+| Propuestas, battlecards | Dulcinea | `dulcinea` | positioning-messaging, pricing-strategy |
+| Landing pages, CRO | Dulcinea | `dulcinea` | direct-response-copy, lead-magnet |
+| **Deep research, market analysis** | **Hamete** | `hamete` | deep-research, market-intelligence |
+| **Competitive intel, battle cards** | **Hamete** | `hamete` | competitor-intelligence, thief-marketers |
+| **Signals, daily pulse, patterns, meeting intel** | **Hamete** | `hamete` | signal-monitor, daily-pulse, pattern-detector, meeting-intelligence |
+| CRM, datos, integraciones de métricas | Merlín | `merlin` | metrics-setup, integrations |
+| YALC/GTM-OS execution | Rocinante | `rocinante` | yalc-operator |
+| **Web/page build & publish** | **Alarife** | `alarife` | alarife-integration, payload, site-architecture, frontend-design, page-cro |
+| Brand check, QA | Sansón | `sanson` | Brand verification, devil's advocate |
+| Admin, bugs, infra | Cervantes | — (message Discord) | System tasks |
+
+> El copy de las páginas que construye Alarife lo produce Dulcinea; los visuales, Maese Pedro.
 
 ---
 
-## Formato del spawn prompt
+## Formato de la delegación
+
+Al delegar a un especialista con `Agent(subagent_type="<slug>")`, el prompt incluye:
 
 ```
-Eres Escudero operando como [PERSONA].
-
-Lee y adopta esta persona:
-[contenido de ./personas/[nombre].md]
-
 TAREA:
 [Descripción clara de la tarea]
 
@@ -138,15 +159,15 @@ OUTPUT ESPERADO:
 
 ### Context Matrix Enforcement
 
-Cada skill declara `context_required` y `context_writes` en su frontmatter YAML. Cuando spawnes un Escudero:
+Cada skill declara `context_required` y `context_writes` en su frontmatter YAML. Cuando delegues a un especialista:
 - Fuente de contexto = tasks (status vía `GET /api/brand-brain/state`) + paths canónicos de `config/pillar-manifest.json` (docPaths)
 - Lee `context_required` del skill que va a ejecutar
-- Pasa esos archivos como contexto al Escudero
+- Pasa esos archivos como contexto al especialista
 - NUNCA pases todo `./brand/` — solo lo que el skill necesita
 
 ---
 
-## QA con Sansón (sessions_send)
+## QA con Sansón (`Agent(subagent_type="sanson")`)
 
 Formato:
 
@@ -169,7 +190,7 @@ QA REQUEST
 - Respuestas conversacionales en Discord
 - Outputs solo para uso interno
 
-## Rocinante — GTM-OS/YALC (sessions_send)
+## Rocinante — GTM-OS/YALC (`Agent(subagent_type="rocinante")`)
 
 Formato:
 
@@ -197,7 +218,7 @@ Reglas:
 
 ---
 
-## Hamete (sessions_send) — Research & Market Intelligence 📜
+## Hamete (`Agent(subagent_type="hamete")`) — Research & Market Intelligence 📜
 
 Formato:
 
@@ -271,9 +292,9 @@ Toda tarea que dure más de ~2 minutos DEBE incluir progress updates en el hilo 
 
 **Cadencia**: ~5 minutos (configurable por cliente/tarea).
 
-### Para Escudero (spawn)
+### Para los especialistas (delegación)
 
-Añadir al final de CADA spawn prompt:
+Añadir al final de CADA prompt de delegación:
 
 ```
 ⚠️ PROGRESS UPDATES — REGLA HARD (NO OPCIONAL):
@@ -327,7 +348,7 @@ Cuando recibes un `[Internal task completion event]` de un subagente:
 
 ### Tracking de batches
 
-Al lanzar N Escuderos en paralelo, crear tracker temporal:
+Al lanzar N especialistas en paralelo, crear tracker temporal:
 ```json
 // Inline en el dispatch
 {
@@ -375,7 +396,7 @@ message(action=send, channel=discord, target="<thread_id>", message="───\n
 
 ```
 # ❌ MAL — Recibo completion, actualizo JSON, respondo NO_REPLY en TODOS
-# El usuario ve "Session ended" en los hilos de Escudero y nada más
+# El usuario ve "Session ended" en los hilos de especialistas y nada más
 # El flujo se detiene completamente
 
 # ❌ MAL — Dumpar los 3 resúmenes en un solo mensaje en el hilo existente
@@ -386,13 +407,13 @@ message(action=send, channel=discord, target="<thread_id>", message="───\n
 
 ## Reglas
 
-1. **Un spawn por tarea.** No mezclar tareas en un solo Escudero.
+1. **Una delegación por tarea.** No mezclar tareas en un solo especialista.
 2. **Context Matrix.** Pasar SOLO los archivos que el skill necesita.
-3. **Persona obligatoria.** Todo Escudero recibe un persona profile.
+3. **Especialista correcto.** Cada tarea va al dueño de su sistema de record.
 4. **QA antes de publicar.** Contenido importante pasa por Rocinante.
 5. **Trackear en TASKS.md.** Todo dispatch genera o referencia una tarea.
 6. **Progress updates.** Toda tarea >2 min incluye updates cada ~5 min (ver sección arriba).
-7. **Cron safety net.** Al spawnar tarea larga, activar cron `progress-update-steer` (ID: `bf4b712d-1ed4-49df-acac-1c7ce4d19097`):
+7. **Cron safety net.** Al delegar una tarea larga, activar cron `progress-update-steer` (ID: `bf4b712d-1ed4-49df-acac-1c7ce4d19097`):
    - Activar: `cron(action=update, jobId="bf4b712d-1ed4-49df-acac-1c7ce4d19097", patch={enabled: true})`
    - El cron usa Haiku (barato) cada 5 min para steer sub-agentes activos
    - Se auto-desactiva cuando detecta 0 sub-agentes activos

@@ -99,9 +99,8 @@ async function main() {
   if (!anthropicProvider.models) anthropicProvider.models = [];
   anthropicProvider.timeoutSeconds = anthropicProvider.timeoutSeconds || 300;
 
-  // --- Session agents (escudero, rocinante, hamete, alarife) ---
+  // --- Session agents (rocinante, hamete, alarife) ---
   config.agents.list = [
-    { id: 'escudero', workspace: path.join(OPENCLAW_ROOT, 'workspace-escudero') },
     { id: 'rocinante', workspace: path.join(OPENCLAW_ROOT, 'workspace-rocinante') },
     // Hamete — Research & Market Intelligence agent (deep-research, competitor/market intel,
     // signals). Runs the scraping-preflight + /deep-research stack. See dispatch-protocol.md.

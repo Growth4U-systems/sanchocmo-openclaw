@@ -664,7 +664,6 @@
   .v2-msg-u { background: #C45D35; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
   .v2-msg-who { font-size: 10px; margin-bottom: 2px; font-weight: 600; }
   .v2-msg-who[data-agent="sancho"] { color: #C45D35; }
-  .v2-msg-who[data-agent="escudero"] { color: #22A06B; }
   .v2-msg-who[data-agent="rocinante"] { color: #3B9EBF; }
   .v2-msg-who[data-agent="cervantes"] { color: #9B59B6; }
   .v2-msg-who:not([data-agent]) { color: #C45D35; }
@@ -1679,7 +1678,6 @@ const AGENTS = [
   {name:"Cervantes",ch:"Webchat + #admin",model:"Opus 4.6",role:"Arquitecto del sistema",emoji:"✒️"},
   {name:"Sancho",ch:"Todos los canales Discord (default)",model:"Opus 4.6",role:"CMO Estratega / Orchestrator",emoji:"🐴"},
   {name:"Rocinante",ch:"Invocado por Sancho (QA)",model:"Sonnet 4.5",role:"QA & Brand Check",emoji:"🐎"},
-  {name:"Escudero",ch:"Invocado por Sancho (ejecución)",model:"Sonnet 4.5",role:"Ejecución de tareas",emoji:"⚔️"},
 ];
 
 const SKILL_CATS = {
@@ -3746,7 +3744,7 @@ function renderGuide() {
     <div class="card" style="margin-bottom:24px;padding:32px;background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(139,92,246,.02));border-color:rgba(139,92,246,.3);">
       <div style="font-size:32px;font-weight:800;margin-bottom:8px;">🐴 Bienvenido a SanchoCMO</div>
       <div style="font-size:17px;color:var(--muted);line-height:1.8;max-width:680px;">
-        Un CMO virtual con <strong style="color:var(--text);">4 agentes de IA</strong>: Cervantes (arquitecto), Sancho (CMO estratega), Rocinante (QA) y Escudero (ejecución).<br>
+        Un CMO virtual con <strong style="color:var(--text);">3 agentes de IA</strong>: Cervantes (arquitecto), Sancho (CMO estratega), Rocinante (QA).<br>
         <strong style="color:var(--fg);">Tú decides. Sancho orquesta. Los agentes ejecutan.</strong>
       </div>
     </div>
@@ -5866,7 +5864,6 @@ async function mcChatPollOnce() {
 // Agent display config
 const MC_CHAT_AGENTS = {
   sancho:    { emoji: '🤠', label: 'Sancho', color: '#C45D35' },
-  escudero:  { emoji: '⚔️', label: 'Escudero', color: '#22A06B' },
   rocinante: { emoji: '🐴', label: 'Rocinante', color: '#3B9EBF' },
   cervantes: { emoji: '✒️', label: 'Cervantes', color: '#9B59B6' },
 };
