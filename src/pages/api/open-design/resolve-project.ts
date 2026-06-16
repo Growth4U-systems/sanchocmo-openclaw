@@ -8,7 +8,7 @@
  *
  * Sin `scope` (o vacío) → comportamiento legacy: el brand entero como proyecto.
  *
- * Response: { projectId, baseDir, webUrl, daemonUrl, scope }
+ * Response: { projectId, baseDir, webUrl, webBase, daemonUrl, scope }
  */
 
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -159,7 +159,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     projectId,
     baseDir: absTarget,
     scope,
+    // `webUrl`: raíz del proyecto en la web app agéntica de OD.
+    // `webBase`: origen público de OD (sin path), para construir links a la
+    //   API del daemon (`<webBase>/api/projects/<id>/files/<path>`), que es la
+    //   única ruta que sirve el contenido de un archivo. La forma web
+    //   `/projects/<id>/files/<path>` NO existe en el daemon → 404.
     webUrl: `${config.webUrl}/projects/${projectId}`,
+    webBase: config.webUrl,
     daemonUrl: config.daemonUrl,
   });
 }
