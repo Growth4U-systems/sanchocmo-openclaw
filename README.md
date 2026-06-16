@@ -18,12 +18,12 @@ notification/publishing channels, not requirements.
               │
       OpenClaw Gateway (:18789)
               │
-  ┌───────────┼───────────────┐
-  │           │               │
-Sancho      Escudero        Sansón
-(Strategist) (Worker)     (QA Guardian)
+  ┌───────────────────────────┐
+  │                           │
+Sancho                      Sansón
+(CMO Strategist)        (QA Guardian)
   │                            ▲
-  ├── sessions_spawn ─► Escudero
+  ├── Agent(subagent_type=…) ─► specialists (Hamete · Dulcinea · Rocinante · Maese Pedro · Mambrino · Merlín · Alarife)
   ├── sessions_send ──► Sansón ┘
   ├── sessions_send ─► Rocinante ─► YALC/GTM-OS API
   └── sessions_send ──► Cervantes
@@ -39,17 +39,15 @@ without either.
 | Agent | Role | How it activates |
 |-------|------|------------------|
 | **Sancho** | CMO Strategist & Orchestrator | Mission Control chat (per client) + cron jobs |
-| **Escudero** | Execution worker (adopts personas) | `sessions_spawn` from Sancho |
+| **Hamete** | Research, market & competitive intelligence, signals | `Agent(subagent_type="hamete")` from Sancho |
+| **Dulcinea** | Written content — SEO, newsletters, landing copy, brand voice | `Agent(subagent_type="dulcinea")` from Sancho |
+| **Maese Pedro** | Visual Director — design system, assets, web visuals, ad creatives (Open Design) | `Agent(subagent_type="maese-pedro")` from Sancho |
+| **Mambrino** | Paid ads — Meta, Google, retargeting, ROAS | `Agent(subagent_type="mambrino")` from Sancho |
+| **Merlín** | Data, attribution, forecasting, CRM analysis | `Agent(subagent_type="merlin")` from Sancho |
 | **Sansón** | Brand Guardian / QA | `sessions_send` from Sancho |
 | **Rocinante** | Outreach, Partnerships & GTM-OS execution — provider/MCP status, brain/setup, gates, lead qualification, cold email dry-runs/live confirmed launches, campaign status and reporting via `yalc-operator` | `sessions_send` from Sancho |
 | **Alarife** | Web/Page Builder (Payload, site architecture, frontend, CRO) | `Agent(subagent_type="alarife")` from Sancho |
 | **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Can edit Sancho's skills, SOUL.md, and cron jobs. |
-
-### Personas (Escudero)
-
-Escudero has no fixed personality. Sancho assigns one of 9 personas per task:
-
-Explorador (prospecting), Redactor (SEO/content), Comunicador (social/newsletters), Creativo (visual), Amplificador (paid media), Investigador (research), Comercial (sales), Arquitecto (landing pages), Conector (partnerships).
 
 ### Skills
 
@@ -133,7 +131,6 @@ workspace-sancho/                # Main CMO agent
   brand/{slug}/                  # Client data (Foundation structure)
 
 workspace-cervantes/             # System architect agent
-workspace-escudero/              # Worker agent (symlinks to sancho)
 workspace-rocinante/             # Outreach & GTM-OS agent
 workspace-alarife/               # Web/Page Builder agent (Payload, site architecture, frontend, CRO)
 

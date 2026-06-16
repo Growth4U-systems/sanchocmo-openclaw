@@ -25,7 +25,6 @@ except:
 # Agent definitions: name, workspace, model
 declare -A AGENT_WORKSPACES=(
   ["sancho"]="$OPENCLAW_ROOT/workspace-sancho"
-  ["escudero"]="$OPENCLAW_ROOT/workspace-escudero"
   ["cervantes"]="$OPENCLAW_ROOT/workspace-cervantes"
   ["hamete"]="$OPENCLAW_ROOT/workspace-hamete"
   ["dulcinea"]="$OPENCLAW_ROOT/workspace-dulcinea"
@@ -38,7 +37,6 @@ declare -A AGENT_WORKSPACES=(
 
 declare -A AGENT_MODELS=(
   ["sancho"]="anthropic/claude-opus-4-7"
-  ["escudero"]="anthropic/claude-sonnet-4-6"
   ["cervantes"]="codex/gpt-5.5"
   ["hamete"]="anthropic/claude-opus-4-7"
   ["dulcinea"]="anthropic/claude-sonnet-4-6"
@@ -49,7 +47,7 @@ declare -A AGENT_MODELS=(
   ["maese-pedro"]="anthropic/claude-sonnet-4-6"
 )
 
-for AGENT_NAME in sancho escudero cervantes hamete dulcinea rocinante mambrino merlin sanson maese-pedro; do
+for AGENT_NAME in sancho cervantes hamete dulcinea rocinante mambrino merlin sanson maese-pedro; do
   WORKSPACE="${AGENT_WORKSPACES[$AGENT_NAME]}"
   MODEL="${AGENT_MODELS[$AGENT_NAME]}"
   AGENT_DIR="$OPENCLAW_ROOT/agents/$AGENT_NAME/agent"
@@ -98,7 +96,6 @@ if not config_path.exists():
 
 default_models = {
     "sancho": "anthropic/claude-opus-4-7",
-    "escudero": "anthropic/claude-sonnet-4-6",
     "cervantes": "codex/gpt-5.5",
     "hamete": "anthropic/claude-opus-4-7",
     "dulcinea": "anthropic/claude-sonnet-4-6",

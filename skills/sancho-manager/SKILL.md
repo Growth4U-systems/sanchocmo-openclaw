@@ -1,6 +1,6 @@
 ---
 name: sancho-manager
-description: "Universal project manager. Breaks ANY objective into projects and tasks with measurable outcomes. Two modes: FROM GENERAL (ad-hoc → project/tasks) and FROM PROJECT (manage tasks within existing project). Use when: user asks 'organiza esto', 'necesito hacer X', 'crea proyecto', 'add task to P01', 'edita la tarea T03', 'qué hago primero', 'next steps', 'project status', 'value review', 'priorizar', 'roadmap', 'plan de trabajo', 'backlog', or any multi-step request that doesn't match a specific skill. Also use for operational next steps ('qué hago ahora', 'siguiente tarea') — distinct from strategic-plan which handles post-Foundation strategic direction. NOT for: Foundation (foundation-orchestrator), creating strategic plan from scratch (strategic-plan INIT), or executing individual tasks (Escudero). Triggers: organiza, planifica, desglosa, break down, plan this, crea proyecto, add task, edit task, task management, project status, qué hago primero, siguiente paso, next steps, value review, project review, priorizar, roadmap, plan de trabajo, backlog."
+description: "Universal project manager. Breaks ANY objective into projects and tasks with measurable outcomes. Two modes: FROM GENERAL (ad-hoc → project/tasks) and FROM PROJECT (manage tasks within existing project). Use when: user asks 'organiza esto', 'necesito hacer X', 'crea proyecto', 'add task to P01', 'edita la tarea T03', 'qué hago primero', 'next steps', 'project status', 'value review', 'priorizar', 'roadmap', 'plan de trabajo', 'backlog', or any multi-step request that doesn't match a specific skill. Also use for operational next steps ('qué hago ahora', 'siguiente tarea') — distinct from strategic-plan which handles post-Foundation strategic direction. NOT for: Foundation (foundation-orchestrator), creating strategic plan from scratch (strategic-plan INIT), or executing individual tasks (delega al especialista dueño). Triggers: organiza, planifica, desglosa, break down, plan this, crea proyecto, add task, edit task, task management, project status, qué hago primero, siguiente paso, next steps, value review, project review, priorizar, roadmap, plan de trabajo, backlog."
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
@@ -370,7 +370,7 @@ Incluso si el usuario dice "ejecuta los proyectos" o "arranca todo":
 1. Listar tareas pendientes con su estado
 2. Preguntar: "¿Cuál quieres que ejecute primero?" o "¿Todas en paralelo?"
 3. Esperar confirmación ESPECÍFICA por tarea o grupo de tareas
-4. Ejecutar via dispatch a Escudero (no directamente)
+4. Ejecutar **delegando al especialista dueño** del skill vía `Agent(subagent_type=<slug>)` (no inline) — ver **Paso 0 del gate**
 
 ⚠️ **"Apruebo el plan" / "Crea los proyectos" = crear estructura (JSONs + playbooks)**
 ⚠️ **"Ejecuta T01" / "Arranca la Fase 0" = confirmación de ejecución**

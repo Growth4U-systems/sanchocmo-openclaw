@@ -81,7 +81,7 @@ fi
 
 # --- Data-bearing dirs: seed ONLY if absent (never overwrite user data) ------
 for d in agents config cron \
-         workspace-sancho workspace-cervantes workspace-escudero workspace-hamete \
+         workspace-sancho workspace-cervantes workspace-hamete \
          workspace-dulcinea workspace-rocinante workspace-mambrino workspace-merlin \
          workspace-sanson; do
   if [ -d "$SEED/$d" ] && [ ! -e "$HOME_DIR/$d" ]; then
