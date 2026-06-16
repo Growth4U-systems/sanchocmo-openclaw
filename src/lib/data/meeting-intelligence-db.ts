@@ -1331,6 +1331,12 @@ export async function applyMeetingRecommendationAction(slug: string, recommendat
       const { config } = await getMeetingIntelligenceConfig(slug);
       const owner = config.routing?.reviewOwner || "Alfonso";
       const task = await createTask(slug, {
+        // Deterministic, unique id per recommendation. Without it createTask falls
+        // back to getNextChildTaskId(slug, "") — which is FS-based and returns the
+        // same "-T01" for every parentless task, so a second convert would collide
+        // on sourceKey and overwrite the first task in the db backend. The explicit
+        // id makes convert collision-proof and idempotent across both backends.
+        id: `task-${existing.id}`,
         name: existing.title,
         description: existing.description ?? undefined,
         owner,

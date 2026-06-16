@@ -1815,7 +1815,7 @@ function ProposalReview({
                   href={`/dashboard/${slug}/tasks/${proposal.taskId}`}
                   className="inline-flex items-center gap-1 text-[11px] font-bold text-rust underline-offset-2 hover:underline"
                 >
-                  <ExternalLink className="h-3 w-3" /> Ver tarea {proposal.taskId}
+                  <ExternalLink className="h-3 w-3" /> Ver tarea creada →
                 </a>
               )}
             </>
