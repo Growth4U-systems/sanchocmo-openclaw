@@ -216,10 +216,18 @@ jobs:
             rm -f /tmp/upsert-env.py
 
             echo "▶ Checking out $TAG…"
-            # Self-heal: discard stray local edits under src/ that would abort the tag
-            # checkout (e.g. a leftover src/lib/chat-openers.ts). Runtime state under
-            # agents/ and workspace-*/ is preserved.
-            git checkout -- src 2>/dev/null || true
+            # Self-heal: discard tracked files that are regenerated or locally
+            # edited on the VPS and would abort the tag checkout. Runtime data
+            # under workspace-sancho/brand is backed up/restored above.
+            git checkout -- \
+              src \
+              workspace-escudero/skills \
+              workspace-sancho/AGENTS.md \
+              workspace-sancho/PROTOCOLS.md \
+              workspace-sancho/TOOLS.md \
+              workspace-sancho/_system/output/presentation-summary-protocol.md \
+              workspace-sancho/mission-control.html \
+              2>/dev/null || true
             git checkout "$TAG"
             export GIT_COMMIT="$(git rev-parse HEAD)"
 
