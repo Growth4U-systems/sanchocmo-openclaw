@@ -19,6 +19,9 @@ import { SlideOver } from "@/components/shared/slide-over";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { ReconcileBar } from "@/components/content/ReconcileBar";
+import { FounderLedSection } from "@/components/content/FounderLedSection";
+import { buildDocThread, type ThreadConfig } from "@/lib/chat-openers";
+import { getTaskSetEntry } from "@/lib/data/task-blueprints";
 import type { ChannelLoopState } from "@/types";
 
 interface ActivityEvent {
@@ -36,6 +39,7 @@ interface Props {
     focusStatus?: string,
     extra?: { author?: string; unassigned?: boolean },
   ) => void;
+  openChat: (slug: string, config: ThreadConfig) => void;
 }
 
 function relTime(iso: string | null): string {
@@ -59,7 +63,7 @@ const REPURPOSE_STATUS_LABEL: Record<string, string> = {
   Published: "publicada",
 };
 
-export function ChannelsTab({ slug, onGo }: Props) {
+export function ChannelsTab({ slug, onGo, openChat }: Props) {
   const { data, isLoading } = useChannelLoops(slug);
   const [antennasFor, setAntennasFor] = useState<ChannelLoopState | null>(null);
   const [metricsFor, setMetricsFor] = useState<ChannelLoopState | null>(null);
@@ -103,11 +107,33 @@ export function ChannelsTab({ slug, onGo }: Props) {
     }
   };
 
+  // "+ Añadir voz" — instantiate the founder-led-voice on-demand entry from the
+  // pillar-manifest (skill + owner agent come from there, never hardcoded), then
+  // open its chat. Mirrors SetupTab.createChannelStrategy.
+  const addVoice = () => {
+    const entry = getTaskSetEntry("content", "founder-led-voice");
+    const cfg = buildDocThread(slug, {
+      key: "founder-led-voice",
+      name: entry?.name ?? "Añadir voz founder-led",
+      skill: entry?.skill ?? "founder-led-setup",
+      channel: "strategy",
+      status: "pending",
+    });
+    if (entry?.agent) cfg.agent = entry.agent;
+    cfg.initialMessage =
+      "Añade una voz founder-led: dime quién es, en qué red (LinkedIn o X), su handle, la cadencia y la cuenta de publicación (Metricool). Una voz = una persona en una red.";
+    openChat(slug, cfg);
+  };
+
   if (isLoading || !data) {
     return <p className="text-muted-foreground text-sm py-8 text-center">Cargando canales…</p>;
   }
 
   const channels = data.channels;
+  // Founder-led networks (those carrying voices) collapse into ONE unified
+  // "Founder-Led Content" section; the rest (blog, etc.) stay standalone cards.
+  const founderLed = channels.filter((c) => c.personas.length > 0);
+  const standalone = channels.filter((c) => c.personas.length === 0);
 
   return (
     <div className="space-y-5">
@@ -129,7 +155,17 @@ export function ChannelsTab({ slug, onGo }: Props) {
         </div>
       )}
 
-      {channels.map((loop) => (
+      {founderLed.length > 0 && (
+        <FounderLedSection
+          slug={slug}
+          channels={founderLed}
+          onGo={onGo}
+          onAddVoice={addVoice}
+          onOpenStrategy={(doc) => setDocPath(`brand/${slug}/${doc}`)}
+        />
+      )}
+
+      {standalone.map((loop) => (
         <ChannelLoopCard
           key={loop.channel}
           loop={loop}

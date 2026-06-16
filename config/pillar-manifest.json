@@ -202,6 +202,15 @@
           "dependsOn": ["content-strategy"]
         },
         {
+          "id": "founder-led-voice",
+          "name": "Añadir voz founder-led",
+          "skill": "founder-led-setup",
+          "agent": "dulcinea",
+          "channel": "strategy",
+          "description": "Da de alta o edita una voz founder-led (persona + red): quién, en qué red (LinkedIn/X), handle, cadencia, cuenta de publicacion (metricool_profile_id) y tono -> profiles[] en cadence-config.yml. Una voz = una persona en una red.",
+          "dependsOn": ["content-setup"]
+        },
+        {
           "id": "seo-audit",
           "taskKey": "T06",
           "name": "SEO Audit (auditoría técnica web)",
