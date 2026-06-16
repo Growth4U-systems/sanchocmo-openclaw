@@ -2,7 +2,7 @@
 
 > Aprobado: 2026-04-25 tras 2 QA passes + revision de Alfonso.
 > Refs: plan_contenido_SanchoCMO.md, Content Creation thread, QA reports.
-> Agent: Escudero Content ejecuta. Sancho orquesta.
+> Agent: Dulcinea (especialista de contenido) ejecuta. Sancho orquesta.
 
 ---
 
@@ -58,11 +58,11 @@ Recurring task: "Content Inputs" (diaria/semanal)
 └── Actualiza: brand/{slug}/content/idea-queue.json
 ```
 
-Tipo: `execution`. Background automatico. Escudero Content lo opera.
+Tipo: `execution`. Background automatico. Dulcinea lo opera.
 
 ### Capa B: Redaccion (proyecto semanal auto-creado)
 
-**Proyecto**: `P-Content-Semana-{NN}` (auto-creado lunes 6am por Escudero Content)
+**Proyecto**: `P-Content-Semana-{NN}` (auto-creado lunes 6am por Dulcinea)
 
 | Tarea | Tipo | Deliverable_file |
 |-------|------|------------------|
@@ -76,7 +76,7 @@ Cada dia = 1 tarea, 1 thread. TODAS las piezas del dia (LinkedIn + X + lo
 que toque) conviven en el mismo thread.
 
 **Flujo de cada tarea diaria**:
-1. Escudero Content selecciona ideas del dia de idea-queue.json (recency-aware)
+1. Dulcinea selecciona ideas del dia de idea-queue.json (recency-aware)
 2. Dispatcha N candidatos al Idea Approval Loop (Discord): Si/No/Mas tarde
 3. Ideas aprobadas → Clarify (SIEMPRE, no se salta)
 4. Writer genera drafts (social-writer / seo-content / newsletter)
@@ -130,7 +130,7 @@ Endpoint operativo:
 
 ### Skill puente: `content-image`
 
-Para que el agente del chat pueda invocar estos endpoints sin recordar
+Para que el agente del chat (Dulcinea o Sancho) pueda invocar estos endpoints sin recordar
 HTTP/payloads, existe la skill `content-image` (en
 `workspace-sancho/skills/content-image/`). Envuelve `generate-image` y
 `upload-media`, lee `slug/ideaId/channel` del thread context, y devuelve

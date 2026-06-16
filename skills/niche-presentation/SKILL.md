@@ -320,5 +320,5 @@ Ver `slide-templates.md` → Navigation Boilerplate para implementación complet
 4. **Competencia temprano** — slide 3-4, da contexto antes de los nichos
 5. **Rutas variables** — siempre `find` antes de generar
 6. **`box-sizing: border-box`** en `.slide` para que padding no rompa viewport
-7. **Escudero timeout** en generaciones grandes — para >15 slides, generar la estructura base y inyectar las campaign slides via script Python
+7. **Timeout del especialista** en generaciones grandes — para >15 slides, generar la estructura base y inyectar las campaign slides via script Python
 8. **Gate check positioning** — siempre verificar si positioning está aprobado antes de generar. Si pending → preguntar al usuario si avanzar solo con nichos o esperar messaging completo

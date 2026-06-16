@@ -263,7 +263,7 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 
 **Reglas según ownership y estado:**
 - API ya conectada (`status: "connected"` en integrations.json) → crear tarea con `status: "completed"`, nota "Ya conectada"
-- API no conectada + `ownership: "system"` → `status: "todo"`, `owner: "Sancho"` — Escudero la puede conectar directamente
+- API no conectada + `ownership: "system"` → `status: "todo"`, `owner: "Sancho"` — el especialista de datos (Merlín) la puede conectar directamente
 - API no conectada + `ownership: "client"` → `status: "todo"`, `owner: "Equipo"`, descripción: "Enlace de conexión: <MC_BASE>/admin/{adminToken}/connect/{slug}/{apiId}\n\nContactar al equipo de {cliente} para obtener credenciales de {api}. Mientras tanto, trackear vía Excel."
 
 6. Añadir tarea final de verificación:
