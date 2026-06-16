@@ -62,9 +62,9 @@
 // history by entry point and confuse the user — they think the
 // chat "reset itself" when it only forked due to a bug.
 //
-// Non-foundation entities (calendar items, ideas, crons, the
-// trust-engine tool view) may use their own namespace because
-// they don't map to a pillar — those are documented case-by-case.
+// Non-foundation entities (calendar items, ideas, crons) may use
+// their own namespace because they don't map to a pillar — those
+// are documented case-by-case.
 // ============================================================
 //
 // CLIENT-SAFE: This file is imported by client-side components.
@@ -77,6 +77,12 @@
 // ============================================================
 
 import { resolveThreadSkills, type SkillContext } from "./skill-resolver";
+import {
+  getNamespaceOwner,
+  getThreadOpener,
+  NAMESPACE_OWNERS_BY_SPECIFICITY,
+  type NamespaceOwner,
+} from "./data/task-blueprints";
 
 export interface ThreadConfig {
   threadId: string;
@@ -127,18 +133,122 @@ export const MC_CHAT_AGENTS: Record<string, { emoji: string; label: string; colo
   escudero: { emoji: "✍️", label: "Dulcinea", color: "#E11D74" },
 };
 
-export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
-  return {
-    threadId: `${slug}:yalc`,
-    threadName: "YALC / GTM-OS",
-    skill: "yalc-operator",
-    skills: ["yalc-operator"],
-    linkedTo: "rocinante",
-    docPath: null,
-    threadState: "continue",
-    agent: "rocinante",
-    initialMessage: prompt,
+/** Substitute `{slug}` + per-button `{param}` tokens in a chat-entry template.
+ *  Unknown tokens (e.g. `{{handle}}` placeholders in prose) are left intact. */
+function substEntryTemplate(s: string, vars: Record<string, string>): string {
+  return s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+}
+
+/**
+ * Build a ThreadConfig from a declared OPENER namespace
+ * (config/pillar-manifest.json → namespaceOwners, entries with a `threadId`).
+ * Substitutes {slug} + params into the entry's templates. The single generic
+ * opener that the `buildXThread` wrappers delegate to — skill/skills/agent/
+ * initialMessage are DECLARED, not hardcoded. (SAN-205; replaces the old
+ * instantiateEntry over the chatEntries block.)
+ */
+export function instantiateNamespace(key: string, ctx: { slug: string; params?: Record<string, string> }): ThreadConfig {
+  const entry = getNamespaceOwner(key);
+  if (!entry) throw new Error(`chat-openers: unknown namespace "${key}"`);
+  if (!entry.threadId || !entry.threadName || !entry.linkedTo) {
+    throw new Error(`chat-openers: namespace "${key}" is reopen-only (no opener template)`);
+  }
+  const vars: Record<string, string> = { slug: ctx.slug, ...(ctx.params ?? {}) };
+  const sub = (s: string) => substEntryTemplate(s, vars);
+  const cfg: ThreadConfig = {
+    threadId: sub(entry.threadId),
+    threadName: sub(entry.threadName),
+    skill: entry.skill,
+    skills: entry.skills,
+    agent: entry.agent,
+    linkedTo: sub(entry.linkedTo),
+    docPath: entry.docPath != null ? sub(entry.docPath) : null,
+    threadState: entry.threadState,
   };
+  if (entry.initialMessage) cfg.initialMessage = sub(entry.initialMessage);
+  if (entry.docKind) cfg.docKind = entry.docKind;
+  return cfg;
+}
+
+/**
+ * Resolve a declared opener (threadOpeners in the manifest) for a thread whose
+ * identity is built by the caller. Substitutes {slug}+{params}; returns
+ * undefined if the key isn't declared. SAN-179.
+ */
+export function resolveOpener(key: string, vars: Record<string, string>): string | undefined {
+  const tpl = getThreadOpener(key);
+  return tpl ? substEntryTemplate(tpl, vars) : undefined;
+}
+
+export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
+  const cfg = instantiateNamespace("yalc", { slug });
+  cfg.initialMessage = prompt;
+  return cfg;
+}
+
+/**
+ * Build a fresh "Nueva tarea" thread — a blank chat with Sancho (manager),
+ * ready for the user to describe a new task. No initialMessage → nothing is
+ * auto-sent; the input opens empty. A new id per call so each "Nueva tarea"
+ * is its own conversation. Declared in namespaceOwners.new-task.
+ */
+export function buildNewTaskThread(slug: string): ThreadConfig {
+  return instantiateNamespace("new-task", { slug, params: { nonce: String(Date.now()) } });
+}
+
+/**
+ * Partnerships (SAN-78) — "Crear nueva búsqueda" de creators abre el chat
+ * global con el plan de discovery. La skill `discovery-plan-builder` la
+ * construye SAN-79; mientras llega, Rocinante (agente owner de Outreach,
+ * SAN-116) atiende el hilo con sus skills de outreach.
+ *
+ * - Sin búsqueda: hilo nuevo por click (cada click = un plan nuevo).
+ * - Con búsqueda draft: hilo estable por campaña (continuar el plan).
+ */
+export function buildDiscoverySearchThread(
+  slug: string,
+  search?: { campaignId: string; title?: string },
+): ThreadConfig {
+  // Existing search: registry holds skill/agent/doc + opener; threadName is the
+  // only field that's title-conditional, so it's overlaid here.
+  if (search) {
+    const searchName = search.title || search.campaignId;
+    const cfg = instantiateNamespace("discovery-search", {
+      slug,
+      params: {
+        campaignIdLower: search.campaignId.toLowerCase(),
+        campaignId: search.campaignId,
+        searchName,
+      },
+    });
+    cfg.threadName = search.title ? `Búsqueda: ${search.title}` : "Búsqueda de creators";
+    return cfg;
+  }
+
+  // New search: a fresh thread id each time (Date.now is runtime-only).
+  // Dash-shaped (`discovery-new-<ts>`, no inner colon) so the client id matches
+  // what mc-chat.threadFile() persists after sanitizing `:` → `-` — otherwise
+  // useThreadList's exact-id dedup misses and paints a phantom row (SAN-193).
+  const cfg = instantiateNamespace("discovery-search-new", { slug });
+  cfg.threadId = `${slug}:discovery-new-${Date.now()}`;
+  return cfg;
+}
+
+/**
+ * Plantillas de Outreach·Partnerships (SAN-80) — 💬 "Chat con Sancho" de cada
+ * plantilla (secuencia o brief). Hilo estable por plantilla, atendido por
+ * Rocinante (agente owner de Outreach) con la skill de secuencias; el doc
+ * anclado es el .md de la plantilla (mismo fichero que ⬇️/📄).
+ */
+export function buildOutreachTemplateThread(
+  slug: string,
+  template: { id: string; name: string; kind?: "sequence" | "brief" },
+): ThreadConfig {
+  const kindLabel = template.kind === "brief" ? "brief" : "secuencia";
+  return instantiateNamespace("outreach-template", {
+    slug,
+    params: { id: template.id, idLower: template.id.toLowerCase(), name: template.name, kindLabel },
+  });
 }
 
 /**
@@ -168,20 +278,26 @@ export function findTaskThreadForDoc(
 
   // Normalize the input path. We compare both the brand-relative form
   // (`brand/{slug}/...`) and the slug-relative form (`...`) because
-  // different surfaces use different conventions.
-  const normalized = docPath.replace(/^\/+/, "");
-  const stripBrand = normalized.startsWith(`brand/${slug}/`)
-    ? normalized.slice(`brand/${slug}/`.length)
-    : normalized;
-  const withBrand = normalized.startsWith("brand/")
-    ? normalized
-    : `brand/${slug}/${normalized}`;
+  // different surfaces use different conventions. A `.md` and its
+  // HTML-canonical sibling `.html` (SAN-149) count as the SAME doc, so
+  // opening either file converges on the task thread that owns the pair.
+  const variants = new Set<string>();
+  const addVariants = (p: string) => {
+    const norm = p.replace(/^\/+/, "");
+    variants.add(norm);
+    variants.add(
+      norm.startsWith(`brand/${slug}/`) ? norm.slice(`brand/${slug}/`.length) : norm
+    );
+    variants.add(norm.startsWith("brand/") ? norm : `brand/${slug}/${norm}`);
+  };
+  addVariants(docPath);
+  if (/\.md$/i.test(docPath)) addVariants(docPath.replace(/\.md$/i, ".html"));
+  if (/\.html$/i.test(docPath)) addVariants(docPath.replace(/\.html$/i, ".md"));
 
   const matches = (candidate: unknown): boolean => {
     if (!candidate) return false;
     if (typeof candidate === "string") {
-      const c = candidate.replace(/^\/+/, "");
-      return c === normalized || c === stripBrand || c === withBrand;
+      return variants.has(candidate.replace(/^\/+/, ""));
     }
     if (Array.isArray(candidate)) {
       return candidate.some((x) => matches(x));
@@ -295,6 +411,64 @@ export function buildTaskIndex(
 }
 
 /**
+/**
+ * Match a thread's shortId against the declared namespace registry
+ * (config/pillar-manifest.json → namespaceOwners). Longest nsKey wins, so
+ * `skill-creator` beats `skill`. Returns the owning entry + the captured `rest`
+ * (the part after `nsKey:`/`nsKey-`), or undefined when no namespace claims it.
+ */
+function matchNamespaceOwner(shortId: string): { owner: NamespaceOwner; rest: string } | undefined {
+  for (const owner of NAMESPACE_OWNERS_BY_SPECIFICITY) {
+    if (owner.match === "exact") {
+      if (shortId === owner.nsKey) return { owner, rest: "" };
+      continue;
+    }
+    if (shortId.startsWith(`${owner.nsKey}:`) || shortId.startsWith(`${owner.nsKey}-`)) {
+      return { owner, rest: shortId.slice(owner.nsKey.length + 1) };
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Rebuild a ThreadConfig when REOPENING a namespace thread from the thread list
+ * (only the threadId is known — no params). Owner agent/skill come from the
+ * matched namespace entry; threadName is the entry's static template when it has
+ * no leftover tokens (e.g. "YALC / GTM-OS"), else derived from the shortId;
+ * linkedTo from `reopenLinkedTo` ({rest}/{restUpper}); state forced to continue.
+ */
+function reopenFromNamespace(
+  threadId: string,
+  shortId: string,
+  owner: NamespaceOwner,
+  rest: string,
+): ThreadConfig {
+  const restUpper = rest.toUpperCase();
+  const subRest = (s: string) => s.replace(/\{rest\}/g, rest).replace(/\{restUpper\}/g, restUpper);
+
+  let threadName: string;
+  if (owner.reopenName === "restUpper") {
+    threadName = restUpper;
+  } else if (owner.threadName && !owner.threadName.replace(/\{slug\}/g, "").includes("{")) {
+    // Static name (no per-call tokens left once {slug} is stripped) → keep it.
+    threadName = owner.threadName;
+  } else {
+    threadName = shortId.replace(/[-_:]/g, " ");
+  }
+
+  return {
+    threadId,
+    threadName,
+    skill: owner.skill,
+    skills: owner.skills,
+    agent: owner.agent,
+    linkedTo: subRest(owner.reopenLinkedTo),
+    docPath: null,
+    threadState: "continue",
+  };
+}
+
+/**
  * resolveFullThreadConfig — SINGLE SOURCE OF TRUTH for thread resolution.
  *
  * Given a threadId, resolves the COMPLETE ThreadConfig by:
@@ -302,7 +476,7 @@ export function buildTaskIndex(
  *   2. Reading doc, skill, linkedTo directly from task fields
  *   3. NO scanning, NO path matching, NO heuristics
  *
- * If no task found, falls back to pillar/generic thread.
+ * If no task found, falls back to the declared namespace owner, then pillar.
  */
 export function resolveFullThreadConfig(
   slug: string,
@@ -313,10 +487,6 @@ export function resolveFullThreadConfig(
   const shortId = threadId.startsWith(slug + ":")
     ? threadId.slice(slug.length + 1)
     : threadId;
-
-  if (shortId === "yalc") {
-    return buildYalcThread(slug);
-  }
 
   // ── O(1) lookup: find the task that owns this thread ─────────
   const entry = taskIndex.get(shortId) ||
@@ -386,36 +556,17 @@ export function resolveFullThreadConfig(
     return config;
   }
 
-  // ── No task: handle project threads ──────────────────────────
-  if (shortId.startsWith("project:") || shortId.startsWith("project-")) {
-    const rawId = shortId.replace(/^project[-:]/, "").toUpperCase();
-    return {
-      threadId, threadName: rawId, skill: "sancho-manager",
-      skills: ["sancho-manager"], linkedTo: `projects/${rawId}`,
-      docPath: null, threadState: "continue",
-    };
-  }
+  // ── No task: data-driven namespace owner (SAN-205) ───────────
+  // Every non-task namespace (project, content/idea/calendar/cron, discovery,
+  // scans, strategy/recurring, plus the button namespaces yalc/new-task/skill/
+  // asset/…) is declared once in config/pillar-manifest.json → namespaceOwners.
+  // Matching the shortId against that registry rebuilds the owning agent+skill
+  // so reopening a thread NEVER falls back to Sancho (the SAN-166/SAN-193 class
+  // of bug) and the open/reopen paths share one source of truth.
+  const ns = matchNamespaceOwner(shortId);
+  if (ns) return reopenFromNamespace(threadId, shortId, ns.owner, ns.rest);
 
-  // ── No task: handle typed threads ────────────────────────────
-  if (/^(competitor-scan|meta-ads-scan|linkedin-scan)$/i.test(shortId)) {
-    return {
-      threadId, threadName: shortId.replace(/-/g, " "), skill: "atalaya",
-      skills: ["atalaya"], linkedTo: "tool/atalaya",
-      docPath: null, threadState: "continue",
-    };
-  }
-  if (/^(strategy|idea|recurring)[-:]/i.test(shortId)) {
-    const m = shortId.match(/^([a-z]+)[-:](.+)$/i);
-    if (m) {
-      return {
-        threadId, threadName: shortId.replace(/[-_:]/g, " "), skill: "sancho",
-        skills: ["sancho"], linkedTo: `${m[1]}/${m[2]}`,
-        docPath: null, threadState: "continue",
-      };
-    }
-  }
-
-  // ── No task, no type: pillar fallback ────────────────────────
+  // ── No task, no namespace: pillar fallback ───────────────────
   const pillarDoc = resolvePillarDoc?.(shortId) || undefined;
   return buildPillarThread(slug, shortId, pillarDoc);
 }
@@ -490,7 +641,7 @@ export function buildTaskThread(
     threadState: opts.taskStatus === "ready" || opts.taskStatus === "pending" ? "create" : "continue",
     agent: opts.agent || resolved.agent,
     initialMessage: opts.taskSkill === "meeting-intelligence" && taskName.toLowerCase().includes("configurar")
-      ? "Empieza la configuracion de Meeting Intelligence para este cliente. Verifica APIs/MCP, usa Google Workspace/GOG para buscar y validar carpetas de Drive, acepta URL/ID solo como fallback, selecciona Notion database/page, carga filtros como clients relation y deja preparado el primer run sin aplicar cambios a documentos canonicos."
+      ? resolveOpener("meeting-intelligence-setup", { slug })
       : undefined,
     inputDocuments: opts.inputDocuments,
     requiredInputs: opts.requiredInputs,
@@ -616,10 +767,23 @@ export function buildRecurringThread(
   };
 }
 
-/** Hardcoded pillar canonical fallback (overridden by chat-config.json if available) */
-const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {
-  "company-brief": "fast-foundation",
-};
+/**
+ * Hardcoded pillar canonical fallback (overridden by chat-config.json if available).
+ *
+ * Maps a pillarKey → the canonical PILLAR name used for the threadId and for
+ * `resolveThreadSkills({ pillar })`. The value must be a *pillar* key, never a
+ * skill name — buildPillarThread feeds it straight back to resolveThreadSkills
+ * as the pillar.
+ *
+ * Empty since SAN-3 W4: the only entry existed because the Fast Foundation doc
+ * lived in `fastcontext/` while the pillar was `company-brief`. W4 unified the
+ * folder to `company-brief`, so the pillar key == its folder == its canonical
+ * name; the `|| pillarKey` fallback in buildPillarThread now covers every pillar.
+ * Do NOT re-add `company-brief → kickoff`: `kickoff` is the *skill*, and
+ * resolving `{ pillar: "kickoff" }` falls through to sancho-manager — which
+ * improvises a brief and never writes company-brief.current.md.
+ */
+const PILLAR_CANONICAL_FALLBACK: Record<string, string> = {};
 
 /**
  * Build thread config for a "content document" — the shape rendered by
@@ -690,22 +854,35 @@ export function buildDocThread(
     return config;
   }
 
-  // Fallback: no pillar. This is the legacy strategy-doc shape that lives
-  // outside Foundation. Use a content-namespaced thread id so at least
-  // it's distinct from pillar threads.
+  // Fallback: no pillar. This is the strategy-doc shape that lives outside
+  // Foundation — e.g. per-channel strategy docs (`content-strategy` scoped to
+  // a channel) produced by SetupTab.createChannelStrategy. Resolve the skill
+  // and owner agent from `doc.skill`/`doc.channel` instead of hardcoding
+  // Sancho: dropping `doc.skill` here sent every channel-strategy chat to
+  // Sancho instead of Dulcinea (content-strategy's owner). When the doc has
+  // no skill at all, resolveThreadSkills falls back to sancho-manager — the
+  // previous behavior for genuinely generic docs.
   const rawDocPath = doc.docPath || doc.deliverable;
+  const resolved = resolveThreadSkills({
+    slug,
+    taskSkill: doc.skill ?? undefined,
+    channel: doc.channel ?? undefined,
+  });
+  const isPending =
+    doc.status === "pending" || doc.status === "not-started" || doc.status === "todo";
   return {
     threadId: `${slug}:content:${docKey}`,
     threadName: (doc.name || docKey).replace(/-/g, " "),
-    skill: "sancho",
-    skills: ["sancho"],
+    skill: resolved.skill,
+    skills: resolved.skills,
+    agent: resolved.agent,
     linkedTo: `content-creation/${docKey}`,
     docPath: rawDocPath
       ? rawDocPath.startsWith("brand/")
         ? rawDocPath
         : `brand/${slug}/${rawDocPath}`
       : null,
-    threadState: "continue",
+    threadState: isPending ? "create" : "continue",
   };
 }
 
@@ -741,17 +918,7 @@ export function buildPillarThread(
 
 /** Build thread config for creating a new skill via chat */
 export function buildSkillCreatorThread(slug: string): ThreadConfig {
-  const threadId = `${slug}:skill-creator:${Date.now()}`;
-  return {
-    threadId,
-    threadName: "Crear nueva skill",
-    skill: "skill-creator",
-    skills: ["skill-creator"],
-    linkedTo: "skills/new",
-    docPath: null,
-    threadState: "create",
-    initialMessage: "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
-  };
+  return instantiateNamespace("skill-creator", { slug, params: { nonce: String(Date.now()) } });
 }
 
 /** Build thread config for editing an existing skill via chat */
@@ -761,49 +928,52 @@ export function buildSkillEditorThread(
   skillName: string,
   docPath?: string
 ): ThreadConfig {
-  const threadId = `${slug}:skill:${skillId}`;
-  return {
-    threadId,
-    threadName: skillName,
-    skill: "skill-creator",
-    skills: ["skill-creator"],
-    linkedTo: `skills/${skillId}`,
-    docPath: docPath || null,
-    threadState: "continue",
-  };
+  const cfg = instantiateNamespace("skill-editor", { slug, params: { skillId, skillName } });
+  cfg.docPath = docPath || null;
+  return cfg;
 }
 
-/** Build thread for a Trust Engine module — same thread for all modules */
-export function buildTrustEngineModuleThread(
+/**
+ * Build the thread that asks the agent to convert a markdown doc into its
+ * HTML-canonical sibling via the `html-output` skill (SAN-149).
+ *
+ * Reuses the convergence rule: if a task owns the doc, the conversion runs
+ * in the task's thread; otherwise a doc thread is created. The skill is
+ * forced to html-output for this message, but the conversion is done by
+ * the doc's AUTHOR agent (the one the task/pillar thread resolved) — same
+ * principle as the review-comments loop (SAN-148): whoever wrote the doc
+ * owns its revisions. maese-pedro (skill owner) is only the fallback when
+ * no task/pillar claims the doc.
+ */
+export function buildHtmlConversionThread(
   slug: string,
-  moduleId: string,
-  moduleName: string,
-  moduleFile: string,
+  docPath: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  projectsData: any[] | undefined
 ): ThreadConfig {
-  // Single thread for all Trust Engine modules — conversation persists across steps
-  const threadId = `${slug}:trust-engine`;
+  const normalizedDocPath = docPath.startsWith("brand/")
+    ? docPath
+    : `brand/${slug}/${docPath.replace(/^\/+/, "")}`;
+  const docKey = normalizedDocPath
+    .split("/")
+    .slice(2)
+    .join("/")
+    .replace(/\.md$/i, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
 
-  const moduleContexts: Record<string, string> = {
-    "foundation-import": `Estoy revisando la configuración del Trust Engine para ${slug}. Quiero verificar que los nichos, subnichos y competidores están bien definidos antes de continuar con las auditorías.`,
-    "seo-audit": `Estoy revisando el SEO Audit de ${slug}. Analiza los resultados: Lighthouse scores, Core Web Vitals, health checks e issues. Dime qué es crítico y qué acciones tomar primero.`,
-    "own-media-audit": `Estoy revisando el Own Media Audit de ${slug}. Analiza el blog, redes sociales, y presencia técnica. ¿Dónde hay quick wins y qué necesita mejora urgente?`,
-    "geo-analysis": `Estoy revisando el GEO Analysis de ${slug}. Analiza la visibilidad en IA (ChatGPT, Gemini, Perplexity). ¿Dónde nos mencionan, dónde no, y dónde hay oportunidades frente a competidores?`,
-    "serp-analysis": `Estoy revisando el SERP Analysis de ${slug}. Analiza las posiciones en Google: ¿en qué keywords estamos top 3, top 10, e invisible? ¿Qué competidores dominan?`,
-    "gap-analysis": `Estoy revisando el Gap Analysis de ${slug}. Muéstrame los gaps de presencia, densidad y tipo. ¿Dónde están nuestros competidores y nosotros no? Prioriza por oportunidad.`,
-    "recommendations": `Estoy revisando las recomendaciones del Trust Engine para ${slug}. Prioriza las más impactantes y dime el plan de acción concreto. ¿Qué hacemos primero?`,
-    "keywords": `Estoy revisando los keywords del Trust Engine para ${slug}. Analiza los top keywords por oportunidad, los layers de expansión, y la cobertura por subnicho. ¿Cuáles atacamos primero?`,
-    "influencers": `Estoy revisando los influencers y medios identificados para ${slug}. Analiza los accionables: ¿a quién contactar primero, con qué tipo de colaboración, y por qué?`,
-  };
+  const base =
+    findTaskThreadForDoc(slug, normalizedDocPath, projectsData) ??
+    buildDocThread(slug, { key: `html-${docKey}`, docPath: normalizedDocPath });
 
   return {
-    threadId,
-    threadName: `Trust Engine — ${moduleName}`,
-    skill: "trust-engine",
-    skills: ["trust-engine", "keyword-research", "seo-content", "outreach-sequence-builder"],
-    linkedTo: `trust-engine/${moduleId}`,
-    docPath: `brand/${slug}/trust-engine/${moduleFile}`,
-    threadState: "continue",
-    initialMessage: moduleContexts[moduleId] || `Estoy revisando ${moduleName} del Trust Engine para ${slug}. Analiza los datos y dime las conclusiones clave.`,
+    ...base,
+    skill: "html-output",
+    skills: ["html-output", ...base.skills.filter((s) => s !== "html-output")],
+    agent: base.agent || "maese-pedro",
+    docPath: normalizedDocPath,
+    initialMessage: resolveOpener("html-conversion", { slug, docPath: normalizedDocPath }),
   };
 }
 
@@ -818,22 +988,15 @@ export function buildMediaAssetThread(
   assetName: string,
   kind: "template" | "mockup" | "logo" | "style-reference" | "export" | "design-md" | "tokens" | "preview" | "misc",
 ): ThreadConfig {
-  // Sanitize for thread id
+  // Declaration (skill/agent/templates) from the registry; the kind→skill and
+  // sanitization are computed here and overlaid.
   const safe = assetRelativePath.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
-  const threadId = `${slug}:asset:${safe}`;
   const skill = kind === "design-md" || kind === "tokens" ? "design-system" : "od-refine";
-  return {
-    threadId,
-    threadName: `🎨 ${assetName}`,
-    skill,
-    skills: [skill, "od-generate", "od-export"],
-    linkedTo: `media-creation/asset/${assetRelativePath}`,
-    docPath: `brand/${slug}/${assetRelativePath}`,
-    docKind: kind === "template" ? "template" : "file",
-    threadState: "continue",
-    agent: "maese-pedro",
-    initialMessage: `Estoy mirando el asset "${assetName}" (\`${assetRelativePath}\`, kind=${kind}). Dame un resumen y las opciones de refinamiento.`,
-  };
+  const cfg = instantiateNamespace("media-asset", { slug, params: { safe, assetRelativePath, assetName, kind } });
+  cfg.skill = skill;
+  cfg.skills = [skill, "od-generate", "od-export"];
+  cfg.docKind = kind === "template" ? "template" : "file";
+  return cfg;
 }
 
 /** Build thread config for chatting with Maese Pedro about Visual Identity (whole brand DESIGN.md). */
@@ -842,20 +1005,14 @@ export function buildVisualIdentityChatThread(
   block?: string,
 ): ThreadConfig {
   const blockSafe = block ? block.toLowerCase().replace(/[^a-z0-9-]+/g, "-") : "all";
-  const threadId = `${slug}:visual-identity:${blockSafe}`;
-  return {
-    threadId,
-    threadName: block ? `🎨 Visual Identity — ${block}` : "🎨 Visual Identity",
-    skill: "design-system",
-    skills: ["design-system", "od-generate"],
-    linkedTo: `media-creation/visual-identity/${blockSafe}`,
-    docPath: `brand/${slug}/brand-book/visual-identity/DESIGN.md`,
-    threadState: "continue",
-    agent: "maese-pedro",
-    initialMessage: block
-      ? `Quiero ajustar la sección "${block}" del Visual Identity. ¿Qué opciones tengo?`
-      : "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?",
-  };
+  const cfg = instantiateNamespace("visual-identity", { slug, params: { blockSafe } });
+  // The entry holds the no-block defaults (threadName + opener). Only override
+  // for a specific block; the block opener lives in threadOpeners.
+  if (block) {
+    cfg.threadName = `🎨 Visual Identity — ${block}`;
+    cfg.initialMessage = resolveOpener("visual-identity-block", { block });
+  }
+  return cfg;
 }
 
 /** Build thread config for "use OD upstream skill on this brand" — generation request. */
@@ -867,20 +1024,17 @@ export function buildOdGenerateThread(
 ): ThreadConfig {
   const safe = upstreamSkillId.toLowerCase().replace(/[^a-z0-9-:]+/g, "-");
   const dsTag = designSystemId ? `:ds-${designSystemId}` : "";
-  const threadId = `${slug}:od-generate:${safe}${dsTag}:${Date.now()}`;
-  return {
-    threadId,
-    threadName: `🎨 ${upstreamSkillName}${designSystemId ? ` × ${designSystemId}` : ""}`,
-    skill: "od-generate",
-    skills: ["od-generate", "od-refine", "od-export"],
-    linkedTo: `media-creation/od/${upstreamSkillId}`,
-    docPath: null,
-    threadState: "create",
-    agent: "maese-pedro",
-    initialMessage: `Genera un asset usando la skill upstream "${upstreamSkillId}"${
-      designSystemId ? ` aplicando el design system "${designSystemId}"` : " con el DESIGN.md del brand"
-    }. Pídeme los inputs que necesites antes de empezar.`,
-  };
+  const cfg = instantiateNamespace("od-generate", {
+    slug,
+    params: { safe, dsTag, upstreamSkillId, upstreamSkillName },
+  });
+  // Runtime-only overlays: unique id per request, ds-conditional name + opener.
+  cfg.threadId = `${cfg.threadId}:${Date.now()}`;
+  cfg.threadName = `🎨 ${upstreamSkillName}${designSystemId ? ` × ${designSystemId}` : ""}`;
+  if (designSystemId) {
+    cfg.initialMessage = resolveOpener("od-generate-ds", { upstreamSkillName, designSystemId });
+  }
+  return cfg;
 }
 
 /**

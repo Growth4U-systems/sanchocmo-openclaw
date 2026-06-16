@@ -59,7 +59,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
       throw err;
     }
-    const updated = await updateComment(idStr, payload.slug, commentedDocPath, patch);
+    let updated;
+    try {
+      updated = await updateComment(idStr, payload.slug, commentedDocPath, patch);
+    } catch (err) {
+      if (err instanceof CommentValidationError) {
+        return res.status(400).json({ error: err.message });
+      }
+      throw err;
+    }
     if (!updated) {
       return res.status(404).json({ error: "Comment not found" });
     }
@@ -72,6 +80,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         createdAt: updated.createdAt,
         body: updated.body,
         anchorText: updated.anchorText,
+        parentId: updated.parentId,
+        resolved: updated.resolved,
       });
     } catch (e) {
       fileWarning = e instanceof Error ? e.message : "file update failed";
@@ -84,20 +94,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       anchorText: updated.anchorText,
       anchorContext: updated.anchorContext,
       anchorDocOffset: updated.anchorDocOffset,
+      parentId: updated.parentId,
+      resolved: updated.resolved,
+      resolvedAt: updated.resolvedAt ? updated.resolvedAt.toISOString() : null,
+      resolvedBy: updated.resolvedBy,
       createdAt: updated.createdAt.toISOString(),
       ...(fileWarning ? { fileWarning } : {}),
     });
   }
 
   if (req.method === "DELETE") {
-    const deleted = await deleteComment(idStr, payload.slug, commentedDocPath);
-    if (!deleted) {
+    // v2 (SAN-148): deleting a root cascades to its replies; every deleted
+    // id gets its file block excised.
+    const deletedIds = await deleteComment(idStr, payload.slug, commentedDocPath);
+    if (deletedIds.length === 0) {
       return res.status(404).json({ error: "Comment not found" });
     }
     let fileWarning: string | null = null;
     let commentedFileDeleted = false;
     try {
-      removeCommentFromFile(BASE, commentedDocPath, idStr);
+      for (const deletedId of deletedIds) {
+        removeCommentFromFile(BASE, commentedDocPath, deletedId);
+      }
       // If this was the last comment for the doc, drop the sibling so
       // the share viewer falls back to serving the clean original
       // (and the displayed filename reverts).
@@ -107,6 +125,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     return res.status(200).json({
       ok: true,
+      deletedIds,
       commentedFileDeleted,
       ...(fileWarning ? { fileWarning } : {}),
     });

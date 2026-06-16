@@ -4,6 +4,7 @@
 // falls back to hardcoded maps for backwards compatibility.
 // ============================================================
 
+import { PILLAR_SKILL_ALIAS } from "./pillar-doc-paths";
 
 export interface SkillResolution {
   skill: string;
@@ -116,6 +117,8 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "design-system": "maese-pedro",
   "direct-response-copy": "dulcinea",
   "directory-submissions": "rocinante",
+  "discovery-plan-builder": "rocinante",
+  "discovery-search-runner": "rocinante",
   "doc-coauthoring": "dulcinea",
   "ecp-validation": "sanson",
   "email-sequence": "rocinante",
@@ -124,6 +127,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "find-instagram-profiles": "hamete",
   "find-linkedin-profiles": "hamete",
   "find-twitter-profiles": "hamete",
+  "founder-led-setup": "dulcinea",
   "form-cro": "alarife",
   "frontend-design": "alarife",
   "frontend-slides": "maese-pedro",
@@ -133,6 +137,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "growth4u-ui-system": "maese-pedro",
   "growth4u-visual-generator": "maese-pedro",
   "gsc": "merlin",
+  "html-output": "maese-pedro",
   "image": "dulcinea",
   "insight-classifier": "dulcinea",
   "insight-to-content-mapper": "dulcinea",
@@ -202,7 +207,6 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "theme-factory": "maese-pedro",
   "thief-marketers": "hamete",
   "tiktok-growth": "dulcinea",
-  "trust-engine": "hamete",
   "video": "dulcinea",
   "visual-identity": "maese-pedro",
   "web-artifacts-builder": "maese-pedro",
@@ -210,12 +214,25 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "xlsx": "merlin",
   "yalc-operator": "rocinante",
   "youtube-transcript": "dulcinea",
+  // The Kickoff intake (SAN-3 W4, was fast-foundation) runs on the research agent.
+  "kickoff": "hamete",
 };
 
 /** Return the owner agent slug for a skill, or undefined if it belongs to Sancho default. */
 export function resolveAgentForSkill(skill: string | undefined): string | undefined {
   if (!skill) return undefined;
   return SKILL_OWNER_MAP[skill];
+}
+
+/**
+ * Resolve the skill that produces a Foundation pillar's doc (SAN-148).
+ * Usa PILLAR_SKILL_ALIAS (derivado de la task cubriente, SAN-192 W2b). Used by
+ * doc-owner resolution to route client feedback on a pillar doc to the agent
+ * that authored it.
+ */
+export function resolveSkillForPillar(pillar: string | undefined): string | undefined {
+  if (!pillar) return undefined;
+  return PILLAR_SKILL_ALIAS[pillar];
 }
 
 // ---------------------------------------------------------------------------
@@ -225,7 +242,6 @@ export function resolveAgentForSkill(skill: string | undefined): string | undefi
 /** 25 strategies (#01-#25), each with primary skill + secondary skills */
 export const STRATEGY_SKILLS: Record<string, SkillResolution> = {
   "01": { skill: "company-finder", skills: ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder"] },
-  "02": { skill: "trust-engine", skills: ["trust-engine", "keyword-research", "seo-content", "company-finder", "outreach-sequence-builder", "content-atomizer"] },
   "03": { skill: "company-finder", skills: ["company-finder"] },
   "04": { skill: "direct-response-copy", skills: ["direct-response-copy", "content-atomizer"] },
   "05": { skill: "outreach-sequence-builder", skills: ["outreach-sequence-builder"] },
@@ -329,8 +345,8 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
     }
     if (lower.includes("strategic plan")) return { skill: "strategic-plan", skills: ["strategic-plan"] };
     if (lower.includes("metrics")) return { skill: "metrics-setup", skills: ["metrics-setup", "connect-api"] };
-    if (lower.includes("fast foundation")) {
-      return toResolution(cfg.pillars?.["fast-foundation"]) ?? { skill: "fast-foundation", skills: ["fast-foundation"] };
+    if (lower.includes("kickoff") || lower.includes("fast foundation")) {
+      return toResolution(cfg.pillars?.["company-brief"]) ?? { skill: "kickoff", skills: ["kickoff"] };
     }
     if (lower.includes("full foundation")) {
       return { skill: "market-intelligence", skills: ["market-intelligence", "competitor-intelligence", "self-intelligence"] };
@@ -341,64 +357,19 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
   if (ctx.pillar) {
     const fromConfig = toResolution(cfg.pillars?.[ctx.pillar]);
     if (fromConfig) return fromConfig;
-    // 5a. Foundation pillars are named *-analysis in the UI/foundation, but the
-    // installed skills (and SKILL_OWNER_MAP) use *-intelligence (and other
-    // pillar-key ≠ skill-name mismatches). Bridge the naming so the pillar
-    // resolves to the REAL skill + its owner agent instead of a non-existent
-    // homonymous skill with no owner that falls back to Sancho. Root cause of the
-    // chat→Sancho regression (SAN-26/98); extended to all Foundation pillars in
-    // SAN-102 so research/synthesis/niche → Hamete, positioning → Dulcinea, etc.
+    // 5a. PILLAR_SKILL_ALIAS (SAN-192 W2b): pilar → skill derivado de su task
+    // cubriente (o skill explícito del pilar). Cubre el mismatch pillar-key ≠
+    // skill-name (market-analysis → market-intelligence, etc.) y los antes
+    // "homónimos" (visual-identity, brand-voice, content-strategy…). El agente
+    // sale del owner-map vía withOwnerAgent. Si no hay skill, cae a Sancho (6).
     const aliasedSkill = PILLAR_SKILL_ALIAS[ctx.pillar];
     if (aliasedSkill) return { skill: aliasedSkill, skills: [aliasedSkill] };
-    // 5b. Convention: meta-skill pillars have a homonymous skill installed
-    // alongside them. When the brand hasn't customized chat-config we fall
-    // through to that convention before going to the generic manager — so
-    // visual-identity → "visual-identity" skill, brand-voice → "brand-voice", etc.
-    if (HOMONYMOUS_SKILL_PILLARS.has(ctx.pillar)) {
-      return { skill: ctx.pillar, skills: [ctx.pillar] };
-    }
   }
 
   // 6. Fallback
   return { skill: "sancho-manager", skills: ["sancho-manager"] };
 }
 
-/** Foundation pillar key → installed skill. Foundation threads are opened by
- *  pillar key (the thread namespace, e.g. `{slug}:market-analysis`), which often
- *  differs from the installed skill name (`market-intelligence`) — and even when
- *  it matches, the homonymous skill may not exist. This bridge maps the pillar →
- *  its real skill so resolution lands on the owned skill and routes to the owner
- *  agent via SKILL_OWNER_MAP, instead of falling back to Sancho. Root cause of
- *  the chat→Sancho regression (SAN-26/98); extended to all Foundation pillars in
- *  SAN-102 (research/synthesis/niche → Hamete, positioning → Dulcinea,
- *  pricing/strategic-plan → Sancho default).
- *  `fast-foundation` / `company-brief` are intentionally absent — that flow is
- *  owned by Fast Foundation and reworked in SAN-13. */
-const PILLAR_SKILL_ALIAS: Record<string, string> = {
-  "market-analysis": "market-intelligence",
-  "competitor-analysis": "competitor-intelligence",
-  "self-analysis": "self-intelligence",
-  "market-synthesis": "market-synthesis",
-  "niche-discovery": "niche-discovery-100x",
-  positioning: "positioning-messaging",
-  pricing: "pricing-strategy",
-  "metrics-setup": "metrics-setup",
-  "strategic-plan": "strategic-plan",
-  "existing-customer-data": "existing-customer-data",
-  "ecp-validation": "ecp-validation",
-};
-
-/** Pillars that ship with a child skill of the same name. Used by step 5b
- *  of `resolveThreadSkills` so threads land on the right skill even when
- *  `chat-config.json` doesn't list the pillar. */
-const HOMONYMOUS_SKILL_PILLARS = new Set([
-  "visual-identity",
-  "brand-voice",
-  "content-strategy",
-  "content-pillars",
-  "content-playbook",
-  "niche-discovery-100x",
-  "positioning-messaging",
-  "pricing",
-  "company-brief",
-]);
+// PILLAR_SKILL_ALIAS (pilar → skill) ahora se DERIVA de la task cubriente en
+// pillar-doc-paths.ts (SAN-192 W2b) — el manifest ya no declara skillAlias/
+// homonymous. Importado arriba. El agente lo añade withOwnerAgent vía owner-map.

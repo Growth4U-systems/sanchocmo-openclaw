@@ -1,6 +1,6 @@
 # QA Document Checklist — Rocinante
 
-> Checklist para validar cualquier documento generado por skills de Sancho/Escudero antes de entregarlo al cliente.
+> Checklist para validar cualquier documento generado por Sancho o cualquier especialista (Dulcinea, Hamete, etc.) antes de entregarlo al cliente.
 
 ---
 

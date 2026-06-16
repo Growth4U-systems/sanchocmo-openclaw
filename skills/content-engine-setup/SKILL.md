@@ -187,12 +187,17 @@ DO NOT touch: `pillar_id`, file structure.
 Workshop with human. Ask:
 1. Active channels (LinkedIn, X/Twitter, Blog, Newsletter, …)
 2. Frequency per channel
-3. Publishing profiles (names + handles + posts/week)
-4. Best days + times
-5. Gating (ungated / gated_top_funnel / gated_bottom_funnel)
-6. Content types per channel
+3. Best days + times
+4. Gating (ungated / gated_top_funnel / gated_bottom_funnel)
+5. Content types per channel
 
-Write to `cadence-config.yml`. Preserve top-level keys not in the form
+For the **Founder-Led voices** (who publishes as a person, on which network, with which publishing
+account), **delegate to the `founder-led-setup` skill** — it owns the voice model (una voz = persona
++ red) and writes the per-voice `profiles[]` (handle, `metricool_profile_id`, `pillars_slant`,
+`voice_doc`) under each channel. Don't capture publishing profiles here by hand; routing them through
+`founder-led-setup` keeps the voice fields complete and consistent.
+
+Write the rest to `cadence-config.yml`. Preserve top-level keys not in the form
 (`batch_workflow`, `rules`).
 
 ### 4b. Configure dispatch channel (transport + canal)

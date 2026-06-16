@@ -9,12 +9,10 @@
  * The 3 anchors:
  *   1. `deliverable_file` — the concrete file path the skill writes
  *   2. `skill` — the slug of the skill that executes the task
- *   3. chat thread identifiers:
- *      - `mc_chat_thread_id` — canonical name of the MC chat JSON file
- *         (`brand/{slug}/chat/{mc_chat_thread_id}.json`)
- *      - `discord_thread_id` — numeric Discord thread id (optional at
- *         create time; Sancho populates when he creates the Discord
- *         thread via the gateway plugin)
+ *   3. `mc_chat_thread_id` — canonical name of the MC chat JSON file
+ *      (`brand/{slug}/chat/{mc_chat_thread_id}.json`)
+ *
+ * (`discord_thread_id` was the 4th anchor — Discord retired, SAN-183 F5.)
  *
  * This module is the enforcement layer for API endpoints that create
  * tasks / projects. Every create endpoint MUST:
@@ -23,8 +21,6 @@
  *      validate them via `requireTaskAnchors()` BEFORE writing.
  *   2. Generate `mc_chat_thread_id` via `canonicalChatThreadId(taskId)`.
  *   3. Create the empty chat thread JSON file via `ensureEmptyChatThread()`.
- *   4. Leave `discord_thread_id` as `null` at create time if not provided
- *      — Sancho will populate it when he creates the Discord thread.
  */
 
 import fs from "fs";
@@ -37,7 +33,6 @@ export interface TaskCreateInput {
   name: string;
   skill?: string;
   deliverable_file?: string | string[];
-  discord_thread_id?: string | null;
   mc_chat_thread_id?: string;
   [key: string]: unknown;
 }
@@ -48,7 +43,6 @@ export interface ProjectCreateInput {
   name: string;
   skill?: string;            // optional for projects (projects are orchestrators)
   deliverable_file?: string; // optional for projects
-  discord_thread_id?: string | null;
   mc_chat_thread_id?: string;
   [key: string]: unknown;
 }
@@ -64,6 +58,11 @@ export class TaskAnchorError extends Error {
  * Enforce that a task has the 2 required anchors (`skill` + `deliverable_file`).
  * Throws a `TaskAnchorError` with the list of missing fields if not.
  *
+ * Exemption (SAN-183 F5): tasks of type `integration` (connect Meeting
+ * Intelligence / Call Prep / Daily Pulse) and `execution` (orchestration, e.g.
+ * "Ejecutar Strategic Plan") produce configuration or projects, not documents
+ * — `deliverable_file` is not required for them (skill + chat thread still are).
+ *
  * Callers should catch and return 400 to the API consumer.
  */
 export function requireTaskAnchors(task: TaskCreateInput): void {
@@ -71,9 +70,12 @@ export function requireTaskAnchors(task: TaskCreateInput): void {
   if (!task.skill || (typeof task.skill === "string" && task.skill.trim() === "")) {
     missing.push("skill");
   }
+  const deliverableExempt = task.type === "integration" || task.type === "execution";
   if (
-    !task.deliverable_file ||
-    (typeof task.deliverable_file === "string" && task.deliverable_file.trim() === "")
+    !deliverableExempt &&
+    (!task.deliverable_file ||
+      (typeof task.deliverable_file === "string" && task.deliverable_file.trim() === "") ||
+      (Array.isArray(task.deliverable_file) && task.deliverable_file.length === 0))
   ) {
     missing.push("deliverable_file");
   }
@@ -125,10 +127,9 @@ export function ensureEmptyChatThread(slug: string, chatThreadId: string): void 
 }
 
 /**
- * Populate the 4 anchors on a task-input before writing to tasks.json.
+ * Populate the anchors on a task-input before writing to tasks.json.
  * Mutates `task` in place. Validates `skill` + `deliverable_file` first;
- * auto-computes `mc_chat_thread_id` if missing; leaves `discord_thread_id`
- * as `null` if not provided.
+ * auto-computes `mc_chat_thread_id` if missing.
  *
  * Also creates the empty chat thread JSON file.
  *
@@ -138,9 +139,6 @@ export function applyTaskAnchors(slug: string, task: TaskCreateInput): TaskCreat
   requireTaskAnchors(task);
   const mcChatThreadId = task.mc_chat_thread_id || canonicalChatThreadId(task.id);
   task.mc_chat_thread_id = mcChatThreadId;
-  if (!("discord_thread_id" in task)) {
-    task.discord_thread_id = null;
-  }
   ensureEmptyChatThread(slug, mcChatThreadId);
   return task;
 }
@@ -150,9 +148,6 @@ export function applyProjectAnchors(slug: string, project: ProjectCreateInput): 
   const mcChatThreadId =
     project.mc_chat_thread_id || canonicalProjectChatThreadId(project.id);
   project.mc_chat_thread_id = mcChatThreadId;
-  if (!("discord_thread_id" in project)) {
-    project.discord_thread_id = null;
-  }
   ensureEmptyChatThread(slug, mcChatThreadId);
   return project;
 }

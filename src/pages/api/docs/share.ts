@@ -47,7 +47,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
   }
 
-  const token = signShareToken({ slug, docPath: resolved.canonicalPath });
+  // HTML-canonical sibling (SAN-149): when sharing a .md that has a
+  // generated .html sibling, share the HTML — that's the client-facing
+  // canonical document. `sharedPath` reveals the substitution.
+  const sharedPath = resolved.htmlSibling ?? resolved.canonicalPath;
+
+  const token = signShareToken({ slug, docPath: sharedPath });
   // Prefer explicit env config over request headers — behind a reverse
   // proxy (Tailscale, Cloudflare, ngrok) the Host header can be wrong.
   // buildShareUrl handles the fallback chain BASE_URL → NEXTAUTH_URL.
@@ -57,9 +62,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     ok: true,
     token,
     url,
-    path: resolved.canonicalPath,
+    path: sharedPath,
     requestedPath: resolved.requestedPath,
     canonicalPath: resolved.canonicalPath,
+    sharedPath,
     usedFallback: resolved.usedFallback,
   });
 }

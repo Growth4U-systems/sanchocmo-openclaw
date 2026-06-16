@@ -3,12 +3,12 @@ import path from "path";
 import { tasks } from "@/db/schema";
 import { canonicalChildTaskId } from "@/lib/data/tasks";
 import { taskBriefText, taskCompletionText, taskExecutionNotesText } from "@/lib/data/task-brief";
-import { normalizeTaskStatus } from "@/lib/data/pillar-task-sync";
+import { normalizeTaskStatus } from "@/lib/task-status";
 
 const root = process.cwd();
 const apply = process.argv.includes("--apply");
 const dryRun = process.argv.includes("--dry-run");
-const workspaces = ["workspace-cervantes", "workspace-escudero", "workspace-main", "workspace-rocinante", "workspace-sancho"];
+const workspaces = ["workspace-cervantes", "workspace-main", "workspace-rocinante", "workspace-sancho"];
 
 if (!apply && !dryRun) {
   console.error("Usage: tsx scripts/migrate-projects-to-db.ts --dry-run | --apply");

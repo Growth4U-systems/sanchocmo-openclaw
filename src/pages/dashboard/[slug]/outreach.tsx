@@ -18,6 +18,7 @@ import { useState } from "react";
 import Head from "next/head";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { cn } from "@/lib/utils";
 import { OutreachStrategyTab } from "@/components/outreach/OutreachStrategyTab";
 import { OutreachFindContactsTab } from "@/components/outreach/OutreachFindContactsTab";
@@ -50,7 +51,7 @@ export default function OutreachPage() {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
-        <h1 className="font-heading text-2xl text-navy">Outreach</h1>
+        <h1 className="font-heading text-2xl text-navy"><TitleIcon name="outreach" />Outreach</h1>
       </div>
       <p className="text-sm text-muted-foreground mb-6">{slug}</p>
 

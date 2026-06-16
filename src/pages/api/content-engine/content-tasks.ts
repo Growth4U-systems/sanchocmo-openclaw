@@ -125,8 +125,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // Apply generic field updates first (skill, name, target_channels, documents, ...)
       const fieldKeys: (keyof ContentTaskUpdateInput)[] = [
         "name", "skill", "target_channels", "documents",
-        "mc_chat_thread_id", "discord_thread_id", "owner",
-        "scheduled_for", "clarify_status", "media_policy",
+        "mc_chat_thread_id", "owner",
+        "scheduled_for", "clarify_status", "media_policy", "author",
       ];
       const fields: ContentTaskUpdateInput = {};
       for (const k of fieldKeys) {

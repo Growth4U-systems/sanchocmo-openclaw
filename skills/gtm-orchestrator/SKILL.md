@@ -26,7 +26,8 @@ context_writes:
 **Antes de CUALQUIER ejecución, verifica:**
 
 ```
-if brand/{slug}/foundation-state.json NOT exists OR status != "approved":
+state = GET {MC_BASE}/api/brand-brain/state?slug={slug}
+if pilares de Foundation NOT "completed":
     STOP → "Foundation incompleta o no aprobada. No puedo ejecutar GTM.
             Completa Foundation primero (foundation-orchestrator)."
 ```
@@ -45,7 +46,7 @@ Todos los outputs van a `campaigns/{slug}/`.
 campaigns/{slug}/
   brief.md            ← objetivo, audiencia, canales, timeline
   gtm-state.json      ← estado del DAG (ver abajo)
-  tasks/              ← tareas dispatched a Escuderos
+  tasks/              ← tareas delegadas a los especialistas
   content/            ← outputs de ejecución
   qa/                 ← reviews de Rocinante
   results.md          ← métricas post-lanzamiento
@@ -136,7 +137,7 @@ No avanzar al siguiente paso sin aprobación explícita del usuario.
 - **Output:** `campaigns/{slug}/tasks/creative-briefs/` — un brief por asset necesario
 - **Presenta:** Lista de assets necesarios (imágenes, videos, carousels) con specs
 - **Aprobación:** Usuario aprueba briefs (o ajusta)
-- **Dispatch:** Enviar briefs a Escudero (creativo) via `sessions_spawn`
+- **Dispatch:** Delegar los briefs visuales a Maese Pedro via `Agent(subagent_type="maese-pedro")`
 
 ### Step 9: Launch Checklist
 - **Input:** Todo lo anterior aprobado
@@ -181,5 +182,5 @@ Cuando Step 9 se aprueba con GO, cambiar `status` raíz a `"launched"`.
 2. **campaigns/{slug}/ es el workspace** — todo output aquí
 3. **Sin aprobación no se avanza** — cada paso necesita OK del usuario
 4. **HARD STOP si Foundation incompleta** — no improvisar
-5. **Rocinante QA** — dispatch QA a Rocinante para Steps 5, 6, 7 (copy-heavy)
-6. **Escudero para ejecución** — dispatch a Escudero para creative assets (Step 8)
+5. **Rocinante QA** — delegar QA a Rocinante para Steps 5, 6, 7 (copy-heavy)
+6. **Maese Pedro para creatividad** — delegar a Maese Pedro los creative assets (Step 8)

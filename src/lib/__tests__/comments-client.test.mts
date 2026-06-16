@@ -220,3 +220,11 @@ test("deriveDocTitle: falls back to 'Documento' when both inputs are empty", () 
   assert.equal(deriveDocTitle(undefined, undefined), "Documento");
   assert.equal(deriveDocTitle("", ""), "Documento");
 });
+
+test("stripCommentMarkers also strips v2 reply markers with parent attr", () => {
+  const input = "texto\n<!-- cmt:cmt_a parent:cmt_root -->\nbloque\n<!-- /cmt:cmt_a -->\nfin";
+  const out = stripCommentMarkers(input);
+  assert.ok(!out.includes("cmt:"));
+  assert.ok(out.includes("texto"));
+  assert.ok(out.includes("fin"));
+});

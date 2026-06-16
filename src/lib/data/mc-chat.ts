@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { BASE, chatReadStateFile } from "./paths";
 import { readJSON, writeJSON } from "./json-io";
+import { sanitizeShortId } from "../thread-id";
 
 /**
  * MC-Chat state management — ported from mc-server.js in-memory state.
@@ -184,8 +185,9 @@ function threadFile(threadId: string): string {
   if (colonIdx < 0) return path.join(BASE, "brand", threadId, "chat", "general.json");
   const slug = threadId.slice(0, colonIdx);
   const shortId = threadId.slice(colonIdx + 1);
-  // Sanitize shortId for filesystem — must match mc-server.js logic (: → -)
-  const safeId = shortId.replace(/:/g, "-").replace(/[^a-zA-Z0-9\-_]/g, "");
+  // Sanitize shortId for filesystem — shared with the client via thread-id.ts
+  // so the id the client registers matches the one we persist/list (SAN-193).
+  const safeId = sanitizeShortId(shortId);
   const chatDir = path.join(BASE, "brand", slug, "chat");
   return path.join(chatDir, `${safeId}.json`);
 }

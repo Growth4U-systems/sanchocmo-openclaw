@@ -34,7 +34,7 @@ export interface Project {
   objective?: string | { description?: string; metric?: string; baseline?: number; target?: number; unit?: string };
   approach?: string;
   archive_reason?: string;
-  tool?: string;              // Research tool: "trust-engine", "atalaya", etc.
+  tool?: string;              // Research tool: "atalaya", etc.
 }
 
 export interface ProjectRegistry {
@@ -47,34 +47,37 @@ export interface ProjectRegistry {
 // --- Tasks ---
 
 /**
- * Task status — hardcoded canonical vocabulary (2026-04-15).
+ * Task status — hardcoded canonical vocabulary (2026-04-15; +pending-review
+ * SAN-183 F5). THE single status vocabulary of the whole system: Foundation
+ * pillars are tasks 1:1, so this replaces the old 7-value PillarStatus too.
  *
- * Only these 5 values are valid. Sancho (and any code path writing to
+ * Only these 6 values are valid. Sancho (and any code path writing to
  * tasks.json) MUST use one of these — no aliases, no creative naming.
  * Enforced at runtime by:
- *   - `src/lib/data/pillar-task-sync.ts` → `setTaskStatus` helper
+ *   - `src/lib/data/task-status-store.ts` → status helpers
  *   - `src/pages/api/projects/task-status.ts` → MC API
- *   - `~/.openclaw/workspace-sancho/scripts/update-task-status.py` → CLI
  *
- * If someone writes `"ready"` or `"pending"` directly to tasks.json, the
- * reconcile pass in `reconcilePillarTasks` will (when it runs) bring the
- * task back to `todo` — because non-canonical values fall through to the
- * default bucket.
+ * `pending-review`: output produced, awaiting human review (the old pillar
+ * pending-review/generated states collapse here).
  */
 export type TaskStatus =
   | "todo"
   | "in-progress"
+  | "pending-review"
   | "completed"
   | "blocked"
-  | "cancelled";
+  | "cancelled"
+  | "archived";
 
 /** Runtime allowlist — mirror of the TaskStatus type for validation. */
 export const VALID_TASK_STATUSES: readonly TaskStatus[] = [
   "todo",
   "in-progress",
+  "pending-review",
   "completed",
   "blocked",
   "cancelled",
+  "archived",
 ] as const;
 export type TaskType =
   | "project"
@@ -140,7 +143,6 @@ export interface Task {
    * See `execution-gate.md` Fase B.2 + MC CHANGELOG [2.10.6].
    */
   attachments?: TaskAttachment[];
-  discord_thread_id?: string;
   mc_chat_thread_id?: string;
   idea_ids?: string[];      // Linked ideas
   /**
@@ -305,7 +307,6 @@ export interface ContentTask {
   target_channels: string[];        // ["linkedin", "twitter"] — drafts produced for these
   documents: { path: string; name?: string; channel?: string }[];
   mc_chat_thread_id?: string;
-  discord_thread_id?: string;
   owner?: string;                   // "Dulcinea"
   created_at: string;               // ISO8601
   updated_at?: string;
@@ -358,6 +359,132 @@ export interface ContentTask {
    * card lives in (status of the least-advanced channel wins).
    */
   draft_statuses?: Record<string, string>;
+  /**
+   * Repurposing lineage (SAN-141): set by content-atomizer when this piece
+   * was derived from a piece in another channel. Powers the "♻️ derivado"
+   * badge and the repurposing strip in the Canales view.
+   */
+  derived_from?: { idea_id: string; channel: string; title?: string };
+  /**
+   * Founder-Led persona this piece belongs to (SAN-163). Matches a
+   * `cadence.channels.{key}.profiles[].id` for the target channel. Undefined =
+   * unassigned (lives in the brand-level "sin repartir" pool until routed).
+   */
+  author?: string;
+}
+
+// ─── Channel loops (SAN-141) ────────────────────────────────────────────────
+// Per-channel loop state for the 📡 Canales view. ALWAYS derived at request
+// time by /api/content-engine/channel-loops from idea-queue, channel_phases,
+// cadence-config, drafts and crons — never persisted (a stored copy would
+// drift from the sources of truth).
+
+export type ChannelMode = "scheduled" | "always-on";
+
+export interface ChannelLoopAntenna {
+  baseName: string;
+  jobId: string | null;
+  enabled: boolean;
+  schedule: string | null;
+  lastRunAt: string | null;
+  finding: string | null;
+  count: number | null;
+  status: string | null;
+}
+
+/**
+ * A Founder-Led voice declared under `cadence.channels.{key}.profiles[]`.
+ * `id` is the stable author key; legacy entries without one fall back to a
+ * slug of `name` (see personaId() in persona-loops.ts).
+ */
+export interface PersonaProfile {
+  id: string;
+  name: string;
+  role?: string;
+  handle?: string;
+  pillars_slant?: string[];
+  voice_doc?: string;
+  owner?: string;
+  metricool_profile_id?: string;
+  primary_kpi?: string;
+}
+
+/** One persona's slice of a channel loop, derived in persona-loops.ts. */
+export interface PersonaLoopState {
+  id: string;
+  name: string;
+  role: string | null;
+  handle: string | null;
+  /** Topic slant keywords — powers the client-side author suggestion (SAN-163). */
+  pillarsSlant: string[];
+  stages: {
+    ideation: { newCount: number; approvedCount: number };
+    creation: { draftingCount: number; clarifyCount: number; readyCount: number };
+    published: { thisMonth: number };
+  };
+  nextAction: { label: string; focusStatus?: string } | null;
+}
+
+export interface ChannelLoopState {
+  channel: string;
+  label: string;
+  active: boolean;
+  mode: ChannelMode;
+  cadence: { frequency: string; bestDays: string[]; bestTimes: string[] };
+  /** Brand-relative path of the per-channel strategy doc, null when not configured. */
+  strategyDoc: string | null;
+  strategyDocExists: boolean;
+  metricsProvider: "metricool" | "gsc-pending" | "none" | string;
+  primaryKpi: string | null;
+  stages: {
+    antennas: { enabled: number; total: number; hasError: boolean; lastRunAt: string | null };
+    ideation: { newCount: number; approvedCount: number };
+    creation: { draftingCount: number; clarifyCount: number; readyCount: number; pendingMediaCount: number };
+    published: { thisMonth: number; nextSlot: string | null };
+    metrics: {
+      provider: string;
+      /** Average engagement % across published snapshots, null when unavailable. */
+      engagementPct: number | null;
+      impressions30d: number | null;
+      postsWithMetrics: number;
+      /** Search Console aggregates for the blog channel (SAN-161). Present
+       *  only when the gsc data source is connected and has daily files —
+       *  otherwise the UI keeps the honest "pendiente" state. */
+      gsc?: {
+        clicks30d: number;
+        impressions30d: number;
+        avgPosition: number | null;
+        /** Previous 30-day window for the trend delta. Null without history. */
+        prevClicks30d: number | null;
+        prevImpressions30d: number | null;
+      } | null;
+    };
+  };
+  nextAction: { label: string; tab: "ideas" | "calendar" | "setup"; focusStatus?: string } | null;
+  repurposing: { incoming: number; outgoing: number };
+  antennas: ChannelLoopAntenna[];
+  /** Per-persona sub-loops when the channel declares `profiles[]` (SAN-163). Empty otherwise. */
+  personas: PersonaLoopState[];
+  /** Count of this channel's ContentTasks with no `author` yet (the "sin repartir" pool). */
+  unassignedPool: number;
+}
+
+export interface RepurposeEntry {
+  fromChannel: string;
+  fromTitle: string;
+  toChannel: string;
+  toTitle: string;
+  toStatus: string;
+  toId: string;
+}
+
+export interface ChannelLoopsPayload {
+  ok: boolean;
+  channels: ChannelLoopState[];
+  repurposing: RepurposeEntry[];
+  /** Cross-channel connection states the Setup checklist reflects (SAN-161). */
+  connections: { gsc: boolean };
+  verifiedAt: string;
 }
 
 /** One artifact attached to a task — doc, image, csv, json, etc. */
@@ -404,7 +531,7 @@ export interface Idea {
   action: string;           // Concrete next step
   list: IdeaList;           // Group: keywords, trending, gaps, etc.
   category: string;         // "guide", "comparison", "solution"...
-  source: string;           // "trust_engine", "keyword_research"...
+  source: string;           // "keyword_research", "monitoring"...
   goal: string;             // "awareness", "consideration", "conversion"
   theme: string;            // "educativo", "comparativo"...
   channels: string[];       // Normalized multi-channel
@@ -464,10 +591,14 @@ export interface Recommendation {
 
 // --- Foundation ---
 
-export type PillarStatus = "not-started" | "in-progress" | "approved" | "request-refresh" | "pending-review" | "generated" | "request-changes";
+// SAN-183 F5: el vocabulario de pilar (PillarStatus, 7 valores) MURIÓ — el
+// status de un pilar ES el status de su task 1:1 (TaskStatus, única fuente).
+// El shape BrandBrainState pervive como VISTA ensamblada desde manifest+tasks
+// (src/lib/data/brand-brain-assembler.ts); el fichero foundation-state.json
+// está deprecado y se archiva en la migración (scripts/migrate-foundation-state.mts).
 
 export interface Pillar {
-  status: PillarStatus;
+  status: TaskStatus;
   completed_at?: string;
   approved_at?: string;
   output_file?: string;
@@ -480,13 +611,13 @@ export interface Pillar {
 }
 
 export interface Synthesis {
-  status: PillarStatus;
+  status: TaskStatus;
   output_file?: string;
   requires: string[];
 }
 
 export interface Section {
-  status: PillarStatus;
+  status: TaskStatus;
   layer: number;            // 0-5
   output_dir: string;
   skill?: string;
@@ -502,8 +633,9 @@ export interface BrandSummary {
   sector: string;
   description: string;
   north_star: string;
-  icps: string[];
-  competitors: string[];
+  /** Nombres planos o {name, link} (link = doc path relativo a brand/{slug}/). */
+  icps: (string | { name: string; link?: string })[];
+  competitors: (string | { name: string; link?: string })[];
   positioning: string;
 }
 

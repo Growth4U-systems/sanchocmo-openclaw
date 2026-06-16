@@ -29,6 +29,7 @@ the minimum to boot and generates the rest:
 | Database | `local` (bundled Postgres, recommended) or `external` (e.g. Neon) |
 | Base URL | where you'll reach Mission Control (default `http://localhost:3000`) |
 | First brand | slug + display name |
+| Outreach (YALC) | optional — off by default. When enabled, generates `YALC_API_TOKEN`, wires `YALC_BASE_URL`, and `install.sh` brings the overlay up automatically |
 
 It then **generates** `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`,
 `SANCHO_INTERNAL_API_TOKEN`, the admin token and the brand's `mcToken`, and
@@ -48,6 +49,7 @@ Set `WIZARD_ASSUME_YES=1` and pass answers as environment variables:
 WIZARD_ASSUME_YES=1 PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-... \
   ADMIN_EMAIL_DOMAIN=acme.com DB_MODE=local FIRST_BRAND_SLUG=acme \
   FIRST_BRAND_NAME="Acme Inc" bash scripts/wizard.sh
+# Add ENABLE_YALC=yes to provision Outreach in the same run.
 ```
 
 ## Running
@@ -68,9 +70,25 @@ Mission Control is then reachable at the **Base URL** you chose.
 All off by default. Turn them on when you need them:
 
 - **Open Design** (agentic visual editor) — `-f docker-compose.od.yml`, set `OD_API_TOKEN`.
-- **YALC** (GTM/outbound) — `-f docker-compose.yalc.yml`.
 - **Discord** — set `DISCORD_BOT_TOKEN` in `.env` (Discord is one comms channel; Mission Control chat is the primary interface).
 - **Slack** — configure in Mission Control → Settings → APIs.
+
+### Outreach (YALC)
+
+YALC is the outbound engine (campaigns, leads, sequences). It runs as an opt-in
+container pulled from a public image — no source checkout needed.
+
+1. **Enable it** — answer *yes* to the Outreach step in the wizard, or run
+   `./install.sh --yalc`. Either way Sancho and YALC share a generated
+   `YALC_API_TOKEN` and Sancho reaches it at `YALC_BASE_URL=http://yalc:3847`.
+2. **Connect an email provider** — sending outbound needs *your own* provider
+   account (the install can't provide one). Open **Mission Control → Trabajo →
+   Outreach** and add your provider key (e.g. Instantly) from the cockpit; pin
+   a specific image with `YALC_IMAGE=ghcr.io/growth4u-systems/yalc:vX.Y.Z` in
+   `.env` if you don't want the rolling `:edge` tag.
+
+Without YALC enabled, the Outreach page shows a short "not activated" placeholder
+instead of errors — nothing else in Mission Control depends on it.
 
 ## Database
 
@@ -97,10 +115,28 @@ three. Set `DATABASE_DRIVER=neon|postgres` only to override that.
 
 ## Updating
 
+The core runs from a versioned public image, so an update is a **pull** — no
+rebuild, no `git pull`:
+
 ```bash
-git pull
-docker compose -f docker-compose.yml up -d --build
+docker compose pull     # fetch the new sanchocmo image (+ od / yalc if enabled)
+docker compose up -d    # recreate the changed containers
 ```
+
+`./install.sh` (no flags) does the same `pull && up -d` for you. Add the overlay
+flags (`-f docker-compose.od.yml`, `-f docker-compose.yalc.yml`) to both commands
+if you run those services.
+
+Pin a specific release in `.env` for reproducible upgrades:
+
+```bash
+SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z
+```
+
+Omit it to track `:latest`, or use `:edge` for the rolling staging build.
+
+> Hacking on a clone instead of running the published image? Build from your
+> source tree with `docker compose up -d --build` (or `./install.sh --build`).
 
 Schema migrations for the bundled Postgres are **applied automatically at boot**,
 so a new version that adds tables just works — your `postgres_data` volume (and

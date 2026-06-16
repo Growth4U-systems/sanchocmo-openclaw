@@ -8,20 +8,17 @@
 import { useUpdatePillarStatus } from "@/hooks/useBrandBrain";
 import { StatusPill } from "@/components/shared/status-pill";
 import { cn } from "@/lib/utils";
-import type { PillarStatus } from "@/types";
+import type { TaskStatus } from "@/types";
 
 // Status actions available
-const STATUS_ACTIONS: { status: PillarStatus; label: string; cls: string }[] = [
-  { status: "approved", label: "\u2705 Aprobar", cls: "bg-green-500 text-white hover:bg-green-600" },
+// SAN-183 F5: vocabulario único — "Pedir cambios"/"Actualizar" colapsan en
+// reabrir la task (todo); el porqué se cuenta en el chat del pilar.
+const STATUS_ACTIONS: { status: TaskStatus; label: string; cls: string }[] = [
+  { status: "completed", label: "\u2705 Aprobar", cls: "bg-green-500 text-white hover:bg-green-600" },
   {
-    status: "request-changes",
+    status: "todo",
     label: "\u26A0\uFE0F Pedir cambios",
     cls: "bg-yellow-400 text-black hover:bg-yellow-500",
-  },
-  {
-    status: "request-refresh",
-    label: "\uD83D\uDD04 Actualizar",
-    cls: "bg-blue-500 text-white hover:bg-blue-600",
   },
 ];
 
@@ -32,7 +29,7 @@ interface StatusBarProps {
   status: string;
   approvedAt?: string;
   completedAt?: string;
-  onStatusChange?: (status: PillarStatus) => void;
+  onStatusChange?: (status: TaskStatus) => void;
 }
 
 export function StatusBar({
@@ -46,7 +43,7 @@ export function StatusBar({
 }: StatusBarProps) {
   const mutation = useUpdatePillarStatus();
 
-  const handleAction = (newStatus: PillarStatus) => {
+  const handleAction = (newStatus: TaskStatus) => {
     mutation.mutate(
       { slug, section, pillar, status: newStatus },
       {
@@ -60,13 +57,13 @@ export function StatusBar({
   // Normalize for display
   const displayStatus =
     status === "done"
-      ? "approved"
+      ? "completed"
       : status === "generated"
         ? "pending-review"
         : status;
 
   // Show Generate button if not-started
-  const isNotStarted = status === "not-started";
+  const isNotStarted = status === "todo";
 
   // Timestamp
   const lastModified = approvedAt || completedAt;

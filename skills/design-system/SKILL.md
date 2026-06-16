@@ -117,7 +117,8 @@ Incluir en DESIGN.md la siguiente tabla, no negociable:
 | 1920×1080 (blog/web) | ≥ 16px | ≥ 32px | ≥ 40px | ≥ 20px |
 
 ### R6 — Discovery acotado
-Máximo **2 rondas** de discovery interactivo. Si tras 2 rondas no hay claridad, propón defaults razonables y deja al cliente validar/ajustar.
+- **Quick / auto**: máximo **2 rondas** de discovery interactivo. Si tras 2 rondas no hay claridad, propón defaults razonables y deja al cliente validar/ajustar.
+- **Full**: las **3 rondas** estructuradas de `references/prompt.md` (15 preguntas). No es un cuestionario suelto — propón valores basados en brand-voice + brandbook y confirma. No abras rondas extra más allá de las 3.
 
 ---
 
@@ -127,7 +128,12 @@ Máximo **2 rondas** de discovery interactivo. Si tras 2 rondas no hay claridad,
 1 ronda de discovery (Path A si hay URL/brandbook; Path B si no). Output: DESIGN.md mínimo viable.
 
 ### Full mode (~2-3 h)
-3 rondas (personalidad+color, tipografía+imagery, world+mapping). Output: DESIGN.md completo + design-preview.html + composition table.
+3 rondas guiadas por las **15 preguntas estratégicas** de `references/prompt.md` (R1 personalidad+color, R2 tipografía+imagery, R3 world+mapping) + el **discovery 3-layer**:
+- **Layer 1 — Visual World** (`references/visual-world.md`): inventario de objetos/escenas/personajes del universo del brand.
+- **Layer 2 — Idea Mapping** (`references/idea-mapping.md`): árbol de decisión content type → concepto visual.
+- **Layer 3 — Aesthetic** (`references/visual-style.md`): 7 dimensiones estéticas + librería de prompts AI.
+
+Output: DESIGN.md completo (con Illustration Discipline alimentada por los 3 layers + Agent Prompt Guide desde Layer 3) + design-preview.html + composition table.
 
 ### Auto (default)
 - Si hay brandbook completo → Quick.
@@ -356,8 +362,13 @@ Cuando un brand tiene `design-tokens.json` + `visual-identity.current.md` legacy
 
 ## Referencias
 
-- `references/composition-rules.md` — Reglas de composición por canal (heredado de visual-identity).
+- `references/composition-rules.md` — Reglas de composición por canal (anti-pegote, tamaños).
 - `references/hydration.md` — Mapeo de campos upstream para pre-rellenar.
+- `references/prompt.md` — **Discovery profundo**: 15 preguntas estratégicas en 3 rondas + pipeline de 9 steps (Full mode). Absorbido de `visual-identity` (SAN-211).
+- `references/visual-world.md` — **Layer 1**: inventario de objetos/escenas/personajes del universo visual del brand. Alimenta la sección Illustration Discipline del DESIGN.md.
+- `references/idea-mapping.md` — **Layer 2**: árbol de decisión content type → concepto visual → objetos. Lo consumen las skills downstream que ilustran.
+- `references/visual-style.md` — **Layer 3**: especificación estética (7 dimensiones + librería de prompts AI). Alimenta Agent Prompt Guide + Illustration Discipline.
 - Skill upstream `design-brief`: `/Users/ragi/open-design/skills/design-brief/SKILL.md` (vocabulario base).
 - Schema OD design-systems: `/Users/ragi/open-design/docs/design-systems.md`.
-- Legacy reference: `~/.openclaw/workspace-maese-pedro/skills/visual-identity/SKILL.md` (hasta archivar).
+
+> **SAN-211**: esta skill absorbió el discovery 3-layer de la antigua meta-skill `visual-identity` (parked). `DESIGN.md` es el único source-of-truth visual; `visual-identity.current.md` + `design-tokens.json` quedan legacy (`_archive/`).

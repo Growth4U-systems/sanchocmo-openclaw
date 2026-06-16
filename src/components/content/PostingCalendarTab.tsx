@@ -160,7 +160,7 @@ function defaultTimeFor(dayIso: string): string {
   return `${String(future.getHours()).padStart(2, "0")}:${String(future.getMinutes()).padStart(2, "0")}`;
 }
 
-export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?: string | null }) {
+export function PostingCalendarTab({ slug, focusKey, channelFilter }: { slug: string; focusKey?: string | null; channelFilter?: string | null }) {
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const fromIso = isoDate(weekStart);
   const toIso = isoDate(addDays(weekStart, 6));
@@ -174,7 +174,11 @@ export function PostingCalendarTab({ slug, focusKey }: { slug: string; focusKey?
   const [scheduleTarget, setScheduleTarget] = useState<{ dayIso: string; draft: ReadyDraft; rescheduleFrom?: CalendarEvent } | null>(null);
   const [previewItem, setPreviewItem] = useState<PreviewItem | null>(null);
 
-  const { scheduled, ready_queue } = calendar.data ?? { scheduled: [] as CalendarEvent[], ready_queue: [] as ReadyDraft[] };
+  const all = calendar.data ?? { scheduled: [] as CalendarEvent[], ready_queue: [] as ReadyDraft[] };
+  // Channel drill-down from the Canales view (SAN-141) — data already carries
+  // a channel per event/draft, so filtering stays client-side.
+  const scheduled = channelFilter ? all.scheduled.filter((e) => e.channel === channelFilter) : all.scheduled;
+  const ready_queue = channelFilter ? all.ready_queue.filter((d) => d.channel === channelFilter) : all.ready_queue;
 
   // Group scheduled events by day for fast lookup
   const eventsByDay = useMemo(() => {

@@ -50,18 +50,52 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
       return;
     }
+
+    // ?raw=1 — serve the file inline (SAN-149). HTML deliverables render in
+    // an iframe via this URL so the document has a REAL base URL: in-page
+    // anchors (`href="#section"`) navigate within the iframe document. With
+    // srcDoc the base URL is the parent page, so a TOC click loaded the
+    // whole dashboard inside the iframe.
+    if (req.query.raw === "1") {
+      try {
+        if (!resolved.exists) {
+          return res.status(404).json({ ok: false, error: "Not found", path: resolved.canonicalPath });
+        }
+        const mimeType = ext === ".html" ? "text/html; charset=utf-8" : "text/plain; charset=utf-8";
+        res.setHeader("Content-Type", mimeType);
+        res.setHeader("Cache-Control", "no-store");
+        const stream = fs.createReadStream(fullPath);
+        stream.pipe(res);
+      } catch {
+        res.status(404).json({ ok: false, error: "Not found" });
+      }
+      return;
+    }
     try {
       if (!resolved.exists) {
         return res.status(404).json({ ok: false, error: "Not found", path: resolved.canonicalPath });
       }
       const content = fs.readFileSync(fullPath, "utf-8");
       const stat = fs.statSync(fullPath);
+      // HTML-canonical sibling (SAN-149): stale when the .md source is
+      // newer than its generated .html.
+      let htmlSiblingStale = false;
+      if (resolved.htmlSibling) {
+        try {
+          const siblingStat = fs.statSync(path.join(path.resolve(BASE), resolved.htmlSibling));
+          htmlSiblingStale = stat.mtime.getTime() > siblingStat.mtime.getTime();
+        } catch {
+          // sibling vanished between resolve and stat — ignore
+        }
+      }
       res.status(200).json({
         ok: true,
         path: resolved.canonicalPath,
         requestedPath: resolved.requestedPath,
         canonicalPath: resolved.canonicalPath,
         usedFallback: resolved.usedFallback,
+        htmlSibling: resolved.htmlSibling,
+        htmlSiblingStale,
         content,
         lastModified: stat.mtime.toISOString(),
         size: stat.size,

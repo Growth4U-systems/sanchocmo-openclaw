@@ -15,6 +15,7 @@ import { useRouter } from "next/router";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { cn } from "@/lib/utils";
 import {
   buildMediaAssetThread,
@@ -84,7 +85,7 @@ export default function MediaCreationPage() {
       </Head>
 
       {/* Header */}
-      <h1 className="font-heading text-2xl text-navy mb-1">Media Creation</h1>
+      <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="media" />Media Creation</h1>
       <p className="text-sm text-muted-foreground mb-6">{slug}</p>
 
       {/* Tabs + acción launch-editor */}

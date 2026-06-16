@@ -27,10 +27,10 @@ ALWAYS publish links with token. See `_system/technical/mc-links-protocol.md` fo
 Max 2 messages per thread: initial + result. ZERO "Let me read it...", "I'll check...", "Checking now...". Do the work, then ship the result.
 
 ### 5. Versioning
-`brand/{slug}/{pillar}/{pillar}.current.md` with history. See `_system/versioning-protocol.md`.
+`brand/{slug}/{pillar}/{pillar}-current.md` with history. See `_system/versioning-protocol.md`.
 
 ### 6. Foundation gate check
-Verify `brand/{slug}/foundation-state.json` prerequisites before executing. See `_system/foundation-protocol.md`.
+Verify prerequisites via `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (canonical task statuses; require `completed`) before executing. See `_system/foundation-protocol.md`.
 
 ### 7. Confirm inputs
 Present key inputs and wait for confirmation before executing Foundation skills.
@@ -77,18 +77,11 @@ When completing any task that generates files:
 - If the skill takes >30 seconds, give an intermediate update: `🔄 Working on {X}...`
 - Rule 3 applies: resolve link with `clients.json` → `mcToken` → tokenized URL.
 
-### 16. 🗂️ `foundation-state.json` is the source of truth for ALL client files
-BEFORE searching, reading, or referencing any client file, read `brand/{slug}/foundation-state.json`. It contains:
-- `brand_summary` → who the client is (name, sector, ICPs, competitors, positioning, URL)
-- `sections` → state of each pillar with `output_file` (paths to docs)
-- `file_index` → index of ALL non-pillar files (integrations, competitor sources, battle cards, design tokens, metrics, ideas, presentations, etc.)
-
-**Separation:** pillar docs → `sections.*.pillars.*.output_file`. Everything else → `file_index`. Do NOT duplicate.
-- **NEVER search files with glob/find/ls.** Resolve paths from `file_index` or `output_file`.
-- **NEVER guess paths.** If it's not in `file_index` or in `output_file`, the file does not exist or it needs to be added.
-- **Keep file_index updated:** when creating/moving/deleting client files, update `file_index` in `foundation-state.json`.
-- All paths in `file_index` are **relative to `brand/{slug}/`**.
-- **Reconciliation:** `python3 scripts/verify-file-index.py [--fix]` checks and fixes discrepancies.
+### 16. 🗂️ Pillar status lives in tasks; paths live in the manifest
+The status of each Foundation pillar lives in its 1:1 task (P00 projects). It is updated via `POST {MC_BASE}/api/brand-brain/pillar-status` with body `{"slug", "section", "pillar", "status"}` — canonical task vocabulary only (`todo | in-progress | pending-review | completed | blocked | cancelled`) — and read via `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (sections→pillars→status).
+- **NEVER guess paths.** Resolve canonical doc paths from `config/pillar-manifest.json` (docPaths).
+- `file_index` is retired — nothing reads it; do not maintain it.
+- The dashboard's Brand Snapshot is derived automatically from the company-brief — do not maintain `brand_summary` by hand.
 
 ### 17. ⚠️ Acknowledge recovered tool failures in your final reply
 
@@ -112,6 +105,45 @@ When publishing MC/portal/admin links, post them as **plain URLs**, not Discord-
 ✅ CORRECTO:   `https://staging.sanchocmo.ai/mc/portal/{token}/docs/brand/{slug}/file.md`
 
 Markdown links also work: `[Voice Profile](https://…/file.md)`. Auto-linkification handles bare URLs cleanly.
+
+### 19. 🧵→📋 Promote a chat to a task when there's real work (SAN-210)
+
+A chat that opens from a button (new skill, new search, outreach template, asset, yalc, od-generate…) is **just a conversation** until there's something real behind it. The moment the user confirms there's actual work, **materialize it as a task** — don't leave the work living only in chat.
+
+- Create it with `sancho_create_task` passing your **current `threadId`** plus **your own `skill`/`agent`** (you are already running as the right specialist for this thread — reuse that identity, don't improvise a different one).
+- **One task per thread.** The call is idempotent on `threadId`: if the thread already owns a task it returns that one, so re-promoting while you keep editing the same resource never duplicates.
+- If a **clearly distinct** new piece of work appears in the same chat, say so explicitly ("te genero otra tarea para esto") and create a separate task for it.
+- Don't force it: if the chat goes nowhere, create nothing. The task is born on confirmation, never on the button click.
+
+### 20. ⚙️ Operate the system, don't narrate (SAN-218)
+
+A specialist's deliverable is a **record/asset in its system of record** — never a chat artifact (a `.md`, a table, a "top 5"). The global chat only **triggers** the work and **reports state** (IDs, links, counts). If the outcome is not a real record in the system, the work is NOT done.
+
+| Specialist | System of record | Verify (read-back) |
+|---|---|---|
+| **Rocinante** | YALC — campaigns / leads / searches | `yalc_list_campaigns` / `yalc_list_leads` |
+| **Maese Pedro** | Open Design daemon — `brand/{slug}/.od/artifacts/` | artifact id exists |
+| **Alarife** | Payload CMS — draft / published page | page id exists |
+| **Mambrino** | Ad platforms — Meta / Google / LinkedIn | campaign id exists |
+| **Merlín** | CRM / Analytics — GA4 / GSC / dashboards | snapshot / dashboard exists |
+| **Hamete** | `brand/{slug}/research/` files | file exists + sources |
+| **Dulcinea** | `brand/{slug}/content/` files | file exists |
+
+NEVER defer the write (*"el registro lo dejo para cuando confirmes el shortlist"*): create the record **now** in a reversible state (e.g. YALC `Sourced`), and let human decisions be **gates inside the pipeline**, not a top-5 in the chat.
+
+### 21. 🤝 Real handoff — never ventriloquize a specialist (SAN-218)
+
+Real specialist work runs in **the specialist's own task thread** — a task it owns, dispatched to `agent:<slug>:<thread>`, where it operates its system and speaks in its own voice (avatar). The turn is the specialist's; do not perform it for them.
+
+- NEVER narrate a specialist's work in your own voice. FORBIDDEN: *"🐴 Rocinante entregó la propuesta…"*, *"Rocinante pide 5 decisiones tuyas…"*. If the work belongs to a specialist, hand it over — don't role-play it.
+- `Agent(subagent_type=…)` **inline** is for quick sub-lookups that return to you, NOT for owning a system deliverable. To make a specialist operate and own the result, route the work to its task thread: `sancho_create_task` with `agent` + `mc_chat_thread_id` (idempotent per thread, rule 19), then send the brief to that thread.
+
+### 22. 🚨 Fail-loud + verify before "done" (SAN-218)
+
+When delegated work that lands in a system fails (LLM idle timeout, error, missing scope/permission), say so plainly — e.g. *"⛔ El runner petó; **no se creó nada en {sistema}** — reintenta o revisa logs."*
+
+- NEVER fall back to doing the specialist's deliverable by hand in the chat (*"lo hago yo directo, sin subagente"* → a text table). That bypasses the system and produces zero real state.
+- NEVER claim success without a **read-back** that confirms the record exists (rule 20's verify column). Narrating *"hecho / aquí tienes"* without a verified write is a tool-honesty violation (rule 9).
 
 ---
 
@@ -183,6 +215,6 @@ Playbooks live in `_system/`. Load on demand:
 ## When in doubt
 
 1. Read `_system/brand-memory.md` for the relevant client
-2. Check `foundation-state.json` for the file you need
+2. Check `GET /api/brand-brain/state` (status) or `config/pillar-manifest.json` (docPaths) for what you need
 3. Ask the user once, then proceed with best inference
 4. Never block silently. Always communicate state.

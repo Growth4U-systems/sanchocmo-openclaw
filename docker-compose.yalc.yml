@@ -8,8 +8,9 @@ services:
       - YALC_API_TOKEN=${YALC_API_TOKEN:-}
 
   yalc:
-    build:
-      context: ${YALC_BUILD_CONTEXT:-../Yalc-Growth4U}
+    # Public image on GHCR (built by Yalc-Growth4U/.github/workflows/docker-image.yml).
+    # Override the tag with YALC_IMAGE (e.g. a pinned :vX.Y.Z) in .env.
+    image: ${YALC_IMAGE:-ghcr.io/growth4u-systems/yalc:edge}
     container_name: yalc-gtm-os
     restart: unless-stopped
     env_file:

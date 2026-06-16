@@ -62,6 +62,8 @@ context_required:
 context_writes:
   - .od/artifacts/{id}/{primaryFile} (histórico OD)
   - brand/{slug}/brand-book/visual-identity/_generated/{id}/{primaryFile} (canónico tras promoción)
+  - brand/{slug}/projects/P*/tasks.json (task de asset al confirmar)
+  - brand/{slug}/chat/ (hilo de la task)
 ---
 
 # od-generate — orchestrator OD-compliant multi-strategy
@@ -413,6 +415,36 @@ Lee `meta.od_kind` y mueve el output según extensión real:
 `.od/artifacts/<id>/` queda como histórico auditable.
 
 **Importante**: las nuevas generaciones aterrizan en `_generated/` para no sustituir los templates legacy. Esos siguen siendo el "canónico estable"; lo nuevo es iteración.
+
+### 9. Crear task de seguimiento al confirmar (manager-intake)
+
+Cuando una generación se **promueve** (asset aprobado, no un render exploratorio), regístrala como **task** en Mission Control para que el asset sea trazable y revisable. Crea la task **al confirmar** la promoción, nunca al abrir el chat (confirm-first, igual que `sancho-manager`).
+
+1. **Propón, no ejecutes.** Tras promover: "¿Registro este asset como una task de media? La asignaría a **Maese Pedro** (skill `od-generate`)." (máx 2 preguntas si falta algo).
+2. **Espera confirmación explícita** ("sí").
+3. **Crea la task**, añadida al proyecto de Media activo (`project.category == "media"`) si existe; si no, a un proyecto ligero. Shape canónico (**3 anchors**: `skill` + `deliverable_file` + `mc_chat_thread_id`; status `todo`):
+   ```json
+   {
+     "id": "P{XX}-T{YY}",
+     "name": "Asset: {nombre}",
+     "description": "Asset generado y promovido vía od-generate.",
+     "deliverable": "Asset canónico en brand/{slug}/brand-book/visual-identity/_generated/",
+     "done_criteria": "Asset aprobado y promovido a su ubicación canónica.",
+     "depends_on": null,
+     "status": "todo",
+     "owner": "Sancho",
+     "agent": "maese-pedro",
+     "channel": "media",
+     "type": "media",
+     "skill": "od-generate",
+     "deliverable_file": "brand/{slug}/brand-book/visual-identity/_generated/{id}/{primaryFile}",
+     "mc_chat_thread_id": "task-p{xx}-t{yy}",
+     "created": "{hoy}",
+     "completed": null,
+     "output_files": []
+   }
+   ```
+4. Crea el **hilo de chat vacío** `brand/{slug}/chat/{mc_chat_thread_id}.json` (`{ "messages": [], "createdAt": "{hoy}" }`) y actualiza `tasks_total` en `project.json`. Mission Control lee `tasks.json` **en vivo** — sin paso de regeneración.
 
 ---
 

@@ -2469,7 +2469,7 @@ function buildSettingsPage(slug, baseUrl, clientName, guildId) {
 
   // Read agent .md files (NO openclaw.json — contains secrets)
   const agentsDataObj = {};
-  for (const agentSlug of ['cervantes', 'sancho', 'rocinante', 'escudero']) {
+  for (const agentSlug of ['cervantes', 'sancho', 'rocinante']) {
     const agentDir = path.join('/Users/ragi/.openclaw', 'workspace-' + agentSlug);
     const files = {};
     try {
@@ -2684,7 +2684,7 @@ if (IS_EMBED) document.documentElement.classList.add('embed');
 <!-- Tab 2: Agents -->
 <div id="panel-agents" class="settings-panel">
   <h2 style="font-family:'Space Grotesk',sans-serif;font-size:18px;margin-bottom:4px;">🤖 Agentes</h2>
-  <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">4 agentes — Cervantes, Sancho, Rocinante, Escudero</p>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">3 agentes — Cervantes, Sancho, Rocinante</p>
   <div id="agents-list"></div>
   <div id="agent-file-viewer" class="card" style="display:none;margin-top:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -2922,7 +2922,6 @@ const AGENTS = [
   {name:"Cervantes",ch:"Webchat + #admin",model:"Opus 4.6",role:"Arquitecto del sistema",emoji:"✒️"},
   {name:"Sancho",ch:"Todos los canales Discord (default)",model:"Opus 4.6",role:"CMO Estratega / Orchestrator",emoji:"🐴"},
   {name:"Rocinante",ch:"Invocado por Sancho (QA)",model:"Sonnet 4.5",role:"QA & Brand Check",emoji:"🐎"},
-  {name:"Escudero",ch:"Invocado por Sancho (ejecución)",model:"Sonnet 4.5",role:"Ejecución de tareas",emoji:"⚔️"},
 ];
 
 const AGENTS_DATA = ${JSON.stringify(agentsDataObj).replace(/<\//g, '<\\/')};
@@ -3341,7 +3340,7 @@ async function testAllClientIntegrations() {
 // ============ TAB 2: Agents ============
 let _agentSlug = '', _agentFile = '';
 function renderAgents() {
-  const slugMap = {'Cervantes':'cervantes','Sancho':'sancho','Rocinante':'rocinante','Escudero':'escudero'};
+  const slugMap = {'Cervantes':'cervantes','Sancho':'sancho','Rocinante':'rocinante'};
   document.getElementById('agents-list').innerHTML = AGENTS.map(a => {
     const slug = slugMap[a.name] || '';
     const ad = AGENTS_DATA[slug];

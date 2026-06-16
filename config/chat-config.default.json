@@ -1,18 +1,23 @@
 {
-  "_comment": "Default per-brand chat config copied to brand/{slug}/chat-config.json on client creation (src/pages/api/clients/create.ts). The `pillars` block declares, per Foundation pillar, the skill that runs it and the agent that owns it. This is the per-brand override point; the hardcoded fallback lives in src/lib/skill-resolver.ts (FOUNDATION_PILLAR_SKILL + SKILL_OWNER_MAP). Keep both in sync. fast-foundation / company-brief are intentionally omitted — owned by the Fast Foundation flow, reworked in SAN-13.",
+  "_comment": "Default per-brand chat config copied to brand/{slug}/chat-config.json on client creation (src/pages/api/clients/create.ts). El bloque `pillars` declara, por documento-pilar, la skill que lo produce y el agente que lo posee. SAN-192 (W2b): DERIVADO de config/pillar-manifest.json — skill/agente salen de la task cubriente (bloque foundation -> taskSets) o, para documentos-pilar sin task aun, de skill/agent explicitos del pilar. NO editar a mano: regenerar con scripts/regen-pillar-derived.mts. El resolver usa el mismo mapa via skill-resolver.",
   "pillars": {
-    "market-analysis": { "skill": "market-intelligence", "skills": ["market-intelligence"], "agent": "hamete" },
+    "brand-report": { "skill": "html-output", "skills": ["html-output"], "agent": "maese-pedro" },
+    "brand-voice": { "skill": "brand-voice", "skills": ["brand-voice"], "agent": "dulcinea" },
+    "company-brief": { "skill": "kickoff", "skills": ["kickoff"], "agent": "hamete" },
     "competitor-analysis": { "skill": "competitor-intelligence", "skills": ["competitor-intelligence"], "agent": "hamete" },
-    "self-analysis": { "skill": "self-intelligence", "skills": ["self-intelligence"], "agent": "hamete" },
+    "ecp-validation": { "skill": "ecp-validation", "skills": ["ecp-validation"], "agent": "sanson" },
+    "existing-customer-data": { "skill": "existing-customer-data", "skills": ["existing-customer-data"], "agent": "hamete" },
+    "foundation-presentation": { "skill": "frontend-slides", "skills": ["frontend-slides"], "agent": "maese-pedro" },
+    "gtm-presentation": { "skill": "html-output", "skills": ["html-output"], "agent": "maese-pedro" },
+    "market-analysis": { "skill": "market-intelligence", "skills": ["market-intelligence"], "agent": "hamete" },
     "market-synthesis": { "skill": "market-synthesis", "skills": ["market-synthesis"], "agent": "hamete" },
+    "metrics-setup": { "skill": "metrics-setup", "skills": ["metrics-setup"], "agent": "merlin" },
     "niche-discovery": { "skill": "niche-discovery-100x", "skills": ["niche-discovery-100x"], "agent": "hamete" },
     "positioning": { "skill": "positioning-messaging", "skills": ["positioning-messaging"], "agent": "dulcinea" },
     "pricing": { "skill": "pricing-strategy", "skills": ["pricing-strategy"], "agent": "sancho" },
-    "brand-voice": { "skill": "brand-voice", "skills": ["brand-voice"], "agent": "dulcinea" },
-    "visual-identity": { "skill": "visual-identity", "skills": ["visual-identity"], "agent": "maese-pedro" },
-    "metrics-setup": { "skill": "metrics-setup", "skills": ["metrics-setup"], "agent": "merlin" },
+    "self-analysis": { "skill": "self-intelligence", "skills": ["self-intelligence"], "agent": "hamete" },
     "strategic-plan": { "skill": "strategic-plan", "skills": ["strategic-plan"], "agent": "sancho" },
-    "existing-customer-data": { "skill": "existing-customer-data", "skills": ["existing-customer-data"], "agent": "hamete" },
-    "ecp-validation": { "skill": "ecp-validation", "skills": ["ecp-validation"], "agent": "sanson" }
+    "strategic-presentation": { "skill": "frontend-slides", "skills": ["frontend-slides"], "agent": "maese-pedro" },
+    "visual-identity": { "skill": "design-system", "skills": ["design-system"], "agent": "maese-pedro" }
   }
 }

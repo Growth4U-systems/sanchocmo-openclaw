@@ -7,7 +7,10 @@ import { parseEnvContent, upsertEnvContent, removeKeysFromEnvContent } from "@/l
 
 const ENV_FILE = path.join(BASE, "..", ".env");
 
-const SERVICE_ENV_MAP: Record<string, { key: string; label: string; placeholder: string }[]> = {
+const SERVICE_ENV_MAP: Record<
+  string,
+  { key: string; label: string; placeholder: string; help?: string }[]
+> = {
   anthropic: [{ key: "ANTHROPIC_API_KEY", label: "API Key", placeholder: "sk-ant-..." }],
   openrouter: [{ key: "OPENROUTER_API_KEY", label: "API Key", placeholder: "sk-or-..." }],
   openai: [{ key: "OPENAI_API_KEY", label: "API Key", placeholder: "sk-..." }],
@@ -29,6 +32,41 @@ const SERVICE_ENV_MAP: Record<string, { key: string; label: string; placeholder:
   slack: [{ key: "SLACK_BOT_TOKEN", label: "Bot Token", placeholder: "xoxb-..." }],
   instantly: [{ key: "INSTANTLY_API_KEY", label: "API Key", placeholder: "" }],
   metricool: [{ key: "METRICOOL_API_KEY", label: "API Key", placeholder: "" }],
+  // Cloudflare R2 (SAN-184) — object storage for media/uploads. Keys match the
+  // exact env var names read by src/lib/upload-r2.ts, so saving here makes
+  // uploadToR2() work with no code change (POST /api/env live-updates process.env).
+  r2: [
+    {
+      key: "CLOUDFLARE_ACCOUNT_ID",
+      label: "Account ID",
+      placeholder: "32-char hex",
+      help: "Cloudflare dashboard → R2 → Overview. Es el Account ID que sale a la derecha (también en la URL del panel).",
+    },
+    {
+      key: "R2_UPLOAD_IMAGE_ACCESS_KEY_ID",
+      label: "Access Key ID",
+      placeholder: "",
+      help: "Cloudflare → R2 → Manage R2 API Tokens → Create API token (permiso Object Read & Write). Copia el Access Key ID.",
+    },
+    {
+      key: "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
+      label: "Secret Access Key",
+      placeholder: "",
+      help: "Se muestra UNA sola vez al crear el token, junto al Access Key ID. Si lo perdiste, crea un token nuevo.",
+    },
+    {
+      key: "R2_UPLOAD_IMAGE_BUCKET_NAME",
+      label: "Bucket",
+      placeholder: "sancho",
+      help: "Nombre del bucket R2 donde se guardan las subidas (Cloudflare → R2 → tu bucket). Por defecto: sancho.",
+    },
+    {
+      key: "R2_PUBLIC_URL",
+      label: "Public URL",
+      placeholder: "https://pub-xxxx.r2.dev",
+      help: "URL pública del bucket. Actívala en R2 → Settings → Public access (r2.dev) o usa tu dominio conectado. Sin barra final.",
+    },
+  ],
 };
 
 function maskKey(val: string): string {
@@ -75,6 +113,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         result[field.key] = {
           label: field.label,
           placeholder: field.placeholder,
+          help: field.help,
           masked: maskKey(envVars[field.key] || ""),
           hasValue: !!(envVars[field.key]),
         };

@@ -51,6 +51,25 @@ export function publicYalcConfig(config: YalcRuntimeConfig) {
   };
 }
 
+/**
+ * Whether Outreach (YALC) is intentionally wired up for this install/brand.
+ * `resolveYalcConfig` always returns a localhost fallback baseUrl, so a bare
+ * default can't be told apart from a real config by the URL alone. We treat
+ * an explicitly-set YALC_BASE_URL or YALC_API_TOKEN (brand-prefixed or global)
+ * as the signal that the operator turned Outreach on. When false, the cockpit
+ * shows a "set up Outreach" placeholder instead of a wall of unreachable errors.
+ */
+export function isYalcConfigured(slug?: string): boolean {
+  const prefix = envPrefix(slug);
+  const candidates = [
+    prefix ? process.env[`${prefix}_YALC_BASE_URL`] : undefined,
+    process.env.YALC_BASE_URL,
+    prefix ? process.env[`${prefix}_YALC_API_TOKEN`] : undefined,
+    process.env.YALC_API_TOKEN,
+  ];
+  return candidates.some((v) => typeof v === "string" && v.trim() !== "");
+}
+
 export async function yalcFetch<T = unknown>(
   config: YalcRuntimeConfig,
   path: string,

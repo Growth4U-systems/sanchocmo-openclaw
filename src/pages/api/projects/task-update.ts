@@ -2,8 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
 import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
-import { BASE, foundationStateFile } from "@/lib/data/paths";
-import { safeWriteJSON } from "@/lib/data/json-io";
+import { BASE } from "@/lib/data/paths";
 
 function resolveProjectDir(projectsDir: string, projectId: string): string | null {
   if (!projectId) return null;
@@ -17,63 +16,8 @@ function resolveProjectDir(projectsDir: string, projectId: string): string | nul
   return null;
 }
 
-const TASK_TO_PILLAR: Record<string, string> = {
-  completed: "approved",
-  done: "approved",
-  "in-progress": "in-progress",
-  todo: "not-started",
-};
-
-function syncTaskToPillar(slug: string, task: Record<string, unknown>, newStatus: string): void {
-  if (!task.pillar) return;
-  const pillarStatus = TASK_TO_PILLAR[newStatus];
-  if (!pillarStatus) return;
-  try {
-    const stateFile = foundationStateFile(slug);
-    if (!fs.existsSync(stateFile)) return;
-    const state = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
-    const sections = state.sections || {};
-    let changed = false;
-
-    if (task.section && sections[task.section as string]) {
-      const pillars = sections[task.section as string].pillars || {};
-      if (pillars[task.pillar as string] && pillars[task.pillar as string].status !== pillarStatus) {
-        console.log(
-          `[syncTaskToPillar] ${slug}: ${task.section}/${task.pillar} ${pillars[task.pillar as string].status} -> ${pillarStatus}`
-        );
-        pillars[task.pillar as string].status = pillarStatus;
-        pillars[task.pillar as string].updated_at = new Date().toISOString();
-        if (pillarStatus === "approved") pillars[task.pillar as string].approved_at = new Date().toISOString();
-        changed = true;
-      }
-    }
-
-    if (sections[task.pillar as string]) {
-      const secPillars = sections[task.pillar as string].pillars || {};
-      for (const [pName, pInfo] of Object.entries(secPillars)) {
-        const info = pInfo as Record<string, unknown>;
-        if (info.status !== pillarStatus) {
-          console.log(
-            `[syncTaskToPillar] ${slug}: ${task.pillar}/${pName} ${info.status} -> ${pillarStatus}`
-          );
-          info.status = pillarStatus;
-          info.updated_at = new Date().toISOString();
-          if (pillarStatus === "approved") info.approved_at = new Date().toISOString();
-          changed = true;
-        }
-      }
-    }
-
-    if (changed) {
-      safeWriteJSON(stateFile, state, (d: unknown) => {
-        const obj = d as Record<string, unknown>;
-        return !!obj.sections;
-      });
-    }
-  } catch (e) {
-    console.error("[syncTaskToPillar] error:", (e as Error).message);
-  }
-}
+// SAN-183 F5: syncTaskToPillar murió — el status de un pilar ES el status de
+// su task 1:1; ya no hay foundation-state.json que sincronizar.
 
 const ALLOWED_TASK_FIELDS = [
   "name",
@@ -92,7 +36,6 @@ const ALLOWED_TASK_FIELDS = [
   "section",
   "documents",
   "mc_chat_thread_id",
-  "discord_thread_id",
 ];
 
 /**
@@ -138,7 +81,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(404).json({ error: "Task not found" });
   }
 
-  const oldStatus = task.status;
+  const _oldStatus = task.status;
   for (const [k, v] of Object.entries(fields as Record<string, unknown>)) {
     if (ALLOWED_TASK_FIELDS.includes(k)) task[k] = v;
   }
@@ -189,15 +132,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     ? tasks
     : { ...(tasksData as Record<string, unknown>), tasks };
   fs.writeFileSync(tasksFilePath, JSON.stringify(writeData, null, 2));
-
-  if (fields.status && fields.status !== oldStatus) {
-    syncTaskToPillar(slug, task, fields.status as string);
-    if ((task.type === "foundation" || task.batch_type === "foundation") && !task.pillar) {
-      console.warn(
-        `[syncTaskToPillar] Task ${taskId} is type=foundation but has no pillar field -- foundation-state.json will NOT be updated`
-      );
-    }
-  }
 
   return res.status(200).json({ ok: true, task });
 }

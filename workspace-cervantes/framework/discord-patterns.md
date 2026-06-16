@@ -12,16 +12,16 @@ Los metadatos del mensaje incluyen `topic_id` y `thread_label` cuando el mensaje
 ### Notas técnicas
 - **thinkingDefault: high** — razonamiento va a thinking tokens (internos, no se publican). Resuelve el problema de texto intermedio publicándose en canal.
 - **thread-create con messageId** del usuario → hilo vinculado al mensaje original (mejor UX que standalone)
-- **Escudero en hilos**: sessions_spawn con thread:true → OpenClaw crea hilo, Escudero trabaja dentro
-- **Sancho → NO_REPLY**: después de crear hilo + enviar contenido, o después de spawnar Escudero
-- **Rocinante sin hilos**: usa sessions_send, no sessions_spawn → no crea hilos (QA es invisible)
+- **Especialistas en hilos**: Sancho delega vía `Agent(subagent_type="<slug>")` dentro del hilo activo; el especialista trabaja en ese hilo
+- **Sancho → NO_REPLY**: después de crear hilo + enviar contenido, o después de delegar a un especialista
+- **Rocinante invisible**: el QA corre como `Agent(subagent_type="rocinante")` y su resultado vuelve a Sancho (no abre hilo propio)
 
 ## Config Clave
 
 - `agents.defaults.thinkingDefault: high` — global, no por agente. Niveles: off/minimal/low/medium/high/xhigh
 - `channels.discord.threadBindings.enabled: true`
-- `channels.discord.threadBindings.spawnSubagentSessions: true` — Escudero crea hilos propios
-- `spawnSubagentSessions` estaba en `false` para evitar hilos de Rocinante → ahora `true` porque Rocinante usa sessions_send (no spawn)
+- `channels.discord.threadBindings.spawnSubagentSessions: true` — permite a los especialistas trabajar en hilos propios cuando aplica
+- Rocinante no abre hilo propio: su QA corre como `Agent(subagent_type="rocinante")` y devuelve el resultado a Sancho
 
 ## systemPrompts por Canal
 
@@ -37,7 +37,7 @@ Todos los crons que publican en Discord deben usar patrón:
 ## Continuidad entre hilos (cross-thread context)
 
 ### Problema
-Los hilos de Discord crean sesiones aisladas en OpenClaw. Cada hilo tiene su propia sesión, separada del canal padre y de otros hilos. Un agente que participa en el hilo A no tiene contexto de lo que pasó en el hilo B, incluso si ambos son del mismo canal.
+Los hilos de Discord crean sesiones aisladas en OpenClaw. Cada hilo tiene su propia sesión, separada del canal padre y de otros hilos. Un agente o especialista que participa en el hilo A no tiene contexto de lo que pasó en el hilo B, incluso si ambos son del mismo canal.
 
 ### Solución: registro de hilos en memory
 Mantener un archivo `memory/discord-threads.md` que actúa como índice de continuidad:

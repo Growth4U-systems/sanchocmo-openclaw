@@ -10,8 +10,8 @@
 
 import crypto from "crypto";
 import { addMessage, getChatSecret, getGatewayUrl } from "./mc-chat";
-import { type CommentRow, loadDocComments } from "@/lib/comments";
-import { getCommentedDocPath, getOriginalDocPath } from "@/lib/comments-file";
+import { type CommentRow, loadDocComments, loadDocCommentsFamily } from "@/lib/comments";
+import { getOriginalDocPath } from "@/lib/comments-file";
 
 export interface TriggerFeedbackTriageInput {
   slug: string;
@@ -38,7 +38,9 @@ export function feedbackThreadId(slug: string, docPath: string): string {
 /** Resolve comments for a doc, tolerant of the `.commented` sibling and of
  *  directory-style docPaths (content drafts have per-channel commented files). */
 async function resolveComments(slug: string, docPath: string): Promise<CommentRow[]> {
-  const exact = await loadDocComments(slug, getCommentedDocPath(docPath));
+  // Family lookup (SAN-149): comments may live under the .md or the .html
+  // commented sibling, depending on which form was shared with the client.
+  const exact = await loadDocCommentsFamily(slug, docPath);
   if (exact.length > 0) return exact;
   const all = await loadDocComments(slug);
   // Match children of a directory-style docPath (content drafts store
@@ -129,6 +131,10 @@ export async function triggerFeedbackTriage(
         ...(secret ? { "X-MC-Secret": secret } : {}),
       },
       body: JSON.stringify(payload),
+      // Never hang the caller on a slow/down gateway: the manual buttons
+      // in the dashboard await this request, and without a timeout the UI
+      // sits in "Despachando..." forever (SAN-148 staging finding).
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");

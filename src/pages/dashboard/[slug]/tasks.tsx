@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { StatCard } from "@/components/shared/stat-card";
@@ -10,6 +11,7 @@ import { TaskTypeBadge } from "@/components/shared/task-type-badge";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { type TaskRow, useTaskRows, useUpdateTaskStatus } from "@/hooks/useTasks";
 import { cn } from "@/lib/utils";
+import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusLabel } from "@/lib/task-status";
 
 const OPERATIONAL_DONE = new Set(["completed", "done", "cancelled", "archived"]);
 const STATUS_FILTER_ACTIVE = "__active__";
@@ -18,9 +20,11 @@ const TASK_STATUS_FILTERS = [
   { value: "all", label: "Todos los estados" },
   { value: "todo", label: "Por hacer" },
   { value: "in-progress", label: "En progreso" },
+  { value: "pending-review", label: "Pendiente revisión" },
   { value: "blocked", label: "Bloqueadas" },
   { value: "completed", label: "Completadas" },
   { value: "cancelled", label: "Canceladas" },
+  { value: "archived", label: "Archivadas" },
 ] as const;
 
 function isContentTask(row: TaskRow): boolean {
@@ -32,20 +36,12 @@ function isDone(row: TaskRow): boolean {
 }
 
 function isActive(row: TaskRow): boolean {
-  return taskStatusKey(row.status) === "in-progress";
+  return normalizeTaskStatusQuiet(row.status) === "in-progress";
 }
 
+// SAN-192: status canónico de task (7 valores) — sin colapsar. Fuente: task-status.ts.
 function displayStatus(row: TaskRow): string {
-  return taskStatusKey(row.status);
-}
-
-function taskStatusKey(status: string): "todo" | "in-progress" | "blocked" | "completed" | "cancelled" {
-  const normalized = status.toLowerCase().replace(/_/g, "-");
-  if (normalized === "active" || normalized === "in-progress" || normalized === "executing") return "in-progress";
-  if (normalized === "completed" || normalized === "done") return "completed";
-  if (normalized === "blocked") return "blocked";
-  if (normalized === "cancelled" || normalized === "archived") return "cancelled";
-  return "todo";
+  return normalizeTaskStatusQuiet(row.status);
 }
 
 function rowTypeLabel(type: string): string {
@@ -71,14 +67,6 @@ function rowDepth(row: TaskRow): 0 | 1 | 2 {
   if (isContentTask(row) && row.parent_id) return 2;
   if (row.parent_id) return 1;
   return 0;
-}
-
-function kanbanKey(row: TaskRow): "todo" | "progress" | "blocked" | "done" {
-  const status = taskStatusKey(row.status);
-  if (status === "blocked") return "blocked";
-  if (status === "completed") return "done";
-  if (status === "in-progress") return "progress";
-  return "todo";
 }
 
 function typeOptionLabel(type: string): string {
@@ -114,19 +102,25 @@ function completionSummary(children: TaskRow[]): string | null {
   return `${done}/${children.length} tareas completadas`;
 }
 
-const KANBAN_COLUMNS = [
-  { key: "todo", label: "Por hacer", icon: "📋" },
-  { key: "progress", label: "En progreso", icon: "🔄" },
-  { key: "blocked", label: "Bloqueada", icon: "⛔" },
-  { key: "done", label: "Completadas", icon: "✅" },
-] as const;
-
-const KANBAN_STATUS_BY_KEY: Record<(typeof KANBAN_COLUMNS)[number]["key"], string> = {
-  todo: "todo",
-  progress: "in-progress",
-  blocked: "blocked",
-  done: "completed",
+// SAN-192: una columna por estado canónico (incl. pending-review, cancelled,
+// archived). key = el propio status → arrastrar fija ese status directamente.
+const KANBAN_ICONS: Record<string, string> = {
+  todo: "📋",
+  "in-progress": "🔄",
+  "pending-review": "🔎",
+  completed: "✅",
+  blocked: "⛔",
+  cancelled: "✖️",
+  archived: "📦",
 };
+// Cancelada/Archivada son terminales de descarte: se fijan desde el selector,
+// no merecen columna propia en el board (no ocupan espacio).
+const KANBAN_HIDDEN_STATUSES = new Set(["cancelled", "archived"]);
+const KANBAN_COLUMNS = TASK_STATUS_OPTIONS.filter((o) => !KANBAN_HIDDEN_STATUSES.has(o.value)).map((o) => ({
+  key: o.value as string,
+  label: o.label,
+  icon: KANBAN_ICONS[o.value] ?? "•",
+}));
 
 export default function TasksPage() {
   const slug = useSlugSync() || "";
@@ -172,7 +166,7 @@ export default function TasksPage() {
       if (
         statusFilter !== STATUS_FILTER_ACTIVE
         && statusFilter !== "all"
-        && taskStatusKey(row.status) !== statusFilter
+        && normalizeTaskStatusQuiet(row.status) !== statusFilter
       ) return false;
       if (agentFilter !== "all") {
         const childRows = childrenByParent.get(row.id) || [];
@@ -220,7 +214,7 @@ export default function TasksPage() {
 
       <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="font-heading text-2xl text-navy mb-1">📋 Tareas</h1>
+          <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="tasks" />Tareas</h1>
           <p className="text-sm text-muted-foreground">
             Gestion de tareas y proyectos raíz del plan estrategico
           </p>
@@ -280,7 +274,13 @@ export default function TasksPage() {
           </select>
           <select
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
+            onChange={(event) => {
+              const next = event.target.value;
+              setStatusFilter(next);
+              // Cancelada/Archivada no tienen columna en el kanban → saltar a Lista
+              // para que el filtro tenga dónde mostrarse (no callejón sin salida).
+              if (tab === "kanban" && KANBAN_HIDDEN_STATUSES.has(next)) setTab("tree");
+            }}
             className="h-10 min-w-0 rounded-sc-md border-2 bg-white px-3 font-heading text-[11px] uppercase tracking-wider focus:outline-none"
             style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
           >
@@ -304,7 +304,10 @@ export default function TasksPage() {
       </div>
 
       {tab === "tree" ? (
-        <div className="space-y-2">
+        // key distinto por rama: las dos vistas ocupan la misma posición del JSX,
+        // así React desmonta una y monta la otra en vez de reusar el <div> y dejar
+        // filas de la Lista colgadas dentro del board del Kanban (SAN: list-leak).
+        <div key="view-tree" className="space-y-2">
           {filteredRows.map((row) => (
             <TaskTreeRow
               key={row.id}
@@ -316,9 +319,9 @@ export default function TasksPage() {
           ))}
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 420 }}>
+        <div key="view-kanban" className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 420 }}>
           {KANBAN_COLUMNS.map((col) => {
-            const colRows = filteredRows.filter((row) => kanbanKey(row) === col.key);
+            const colRows = filteredRows.filter((row) => normalizeTaskStatusQuiet(row.status) === col.key);
             return (
               <div
                 key={col.key}
@@ -329,8 +332,8 @@ export default function TasksPage() {
                   const taskId = event.dataTransfer.getData("application/x-mc-task-id") || event.dataTransfer.getData("text/plain");
                   if (!taskId || !slug) return;
                   const task = filteredRows.find((row) => row.id === taskId);
-                  const nextStatus = KANBAN_STATUS_BY_KEY[col.key];
-                  if (!task || taskStatusKey(task.status) === nextStatus) return;
+                  const nextStatus = col.key;
+                  if (!task || normalizeTaskStatusQuiet(task.status) === nextStatus) return;
                   updateStatus.mutate({ slug, taskId, status: nextStatus });
                 }}
               >
@@ -410,7 +413,7 @@ function TaskTreeRow({
         </Link>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 text-xs sm:max-w-[48%]">
           <TaskTypeBadge type={rowTypeLabel(row.type)} />
-          <StatusPill status={displayStatus(row)} size="md" />
+          <StatusPill status={displayStatus(row)} size="md" labelOverride={statusLabel(row.status)} />
           {completion ? (
             <span className="font-semibold text-sage">{completion}</span>
           ) : relation ? (
@@ -443,7 +446,7 @@ function TaskKanbanCard({ row, slug, children }: { row: TaskRow; slug: string; c
     >
       <div className="flex items-center gap-2 mb-2">
         <TaskTypeBadge type={rowTypeLabel(row.type)} />
-        <StatusPill status={displayStatus(row)} />
+        <StatusPill status={displayStatus(row)} labelOverride={statusLabel(row.status)} />
       </div>
       <div className="font-semibold text-sm leading-snug text-foreground">{row.name}</div>
       <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">

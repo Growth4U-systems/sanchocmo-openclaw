@@ -7,12 +7,9 @@ metadata:
   system: SanchoCMO
   phase: '1'
   pillar: ope-canvas
-  depends_on: company-context, business-model, budget, self-intelligence
+  depends_on: self-intelligence, market-intelligence, competitor-intelligence
   updated: '2026-02-27'
 context_required:
-- brand/{slug}/company-context/company-context.current.md
-- brand/{slug}/business-model/business-model.current.md
-- brand/{slug}/budget/budget.current.md
 - brand/{slug}/market-and-us/self/self.current.md
 - brand/{slug}/market-and-us/market/market.current.md
 - brand/{slug}/market-and-us/competitors/competitors.current.md

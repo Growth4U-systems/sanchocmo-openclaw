@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
+import { assembleBrandBrainState, brandExists } from "@/lib/data/brand-brain-assembler";
 import { withErrorHandler, withAuth, compose } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
@@ -9,13 +10,64 @@ import { BASE } from "@/lib/data/paths";
  * Returns sub-content for a pillar, split into:
  *   - subfolders: deep-dive directories with their own files
  *   - versions: historical vN.md files
+ *
+ * Listing hygiene (SAN-149):
+ *   - `.commented.*` siblings (feedback transcripts, SAN-15/148) are hidden.
+ *   - md/html canonical pairs collapse into ONE md entry with `hasHtml` —
+ *     the viewer resolves it to the canonical HTML.
+ *   - bare `current.<ext>` is hidden when a named `{x}.current.<ext>` exists
+ *     (legacy alias of the same doc, SAN-103).
  */
 
 const VERSION_RE = /^v\d+\.md$/;
 const IGNORED_DIRS = new Set(["_archive", "_qa", "_system"]);
+const COMMENTED_RE = /\.commented\.(md|html)$/i;
 
-interface DocEntry { name: string; fullPath: string }
+interface DocEntry { name: string; fullPath: string; kind?: "md" | "html"; hasHtml?: boolean }
 interface SubfolderEntry { name: string; mainDoc: string; files: DocEntry[]; versions: DocEntry[] }
+
+function listDocFiles(dir: string): string[] {
+  return fs.readdirSync(dir).filter((f) => {
+    const stat = fs.statSync(path.join(dir, f));
+    return stat.isFile() && (f.endsWith(".md") || f.endsWith(".html")) && !COMMENTED_RE.test(f);
+  });
+}
+
+/** Prefer the `.current.md` source as a folder's main doc, then any `.current.*`. */
+function pickMainFile(files: string[]): string {
+  return (
+    files.find((f) => f.includes(".current.") && f.endsWith(".md")) ||
+    files.find((f) => f.includes(".current.")) ||
+    ""
+  );
+}
+
+/**
+ * Files that should not appear as separate rows next to `mainFile`:
+ * the main doc itself, its html-canonical sibling, and the legacy bare
+ * `current.<ext>` alias when a named canonical doc exists.
+ */
+function isShadowOfMain(fileName: string, mainFile: string, siblings: Set<string>): boolean {
+  if (fileName === mainFile) return true;
+  if (mainFile.endsWith(".md") && fileName === mainFile.replace(/\.md$/, ".html")) return true;
+  if (/^current\.(md|html)$/i.test(fileName) && [...siblings].some((s) => /\.current\.(md|html)$/i.test(s))) {
+    return true;
+  }
+  return false;
+}
+
+/** Build a DocEntry, collapsing md/html canonical pairs into the md row. */
+function buildEntry(fileName: string, siblings: Set<string>, fullPath: string): DocEntry | null {
+  const isHtml = fileName.endsWith(".html");
+  if (isHtml && siblings.has(fileName.replace(/\.html$/, ".md"))) return null;
+  const entry: DocEntry = {
+    name: fileName.replace(/\.(md|html)$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    fullPath,
+    kind: isHtml ? "html" : "md",
+  };
+  if (!isHtml && siblings.has(fileName.replace(/\.md$/, ".html"))) entry.hasHtml = true;
+  return entry;
+}
 
 function scanDir(dir: string, baseResolve: string): { subfolders: SubfolderEntry[]; versions: DocEntry[]; otherFiles: DocEntry[] } {
   const subfolders: SubfolderEntry[] = [];
@@ -24,11 +76,9 @@ function scanDir(dir: string, baseResolve: string): { subfolders: SubfolderEntry
 
   if (!fs.existsSync(dir)) return { subfolders, versions, otherFiles };
 
-  const allFiles = fs.readdirSync(dir).filter((f) => {
-    const stat = fs.statSync(path.join(dir, f));
-    return stat.isFile() && (f.endsWith(".md") || f.endsWith(".html"));
-  });
-  const mainFile = allFiles.find((f) => f.includes(".current.")) || "";
+  const allFiles = listDocFiles(dir);
+  const allSet = new Set(allFiles);
+  const mainFile = pickMainFile(allFiles);
 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
@@ -36,10 +86,7 @@ function scanDir(dir: string, baseResolve: string): { subfolders: SubfolderEntry
 
     if (entry.isDirectory()) {
       const subDir = path.join(dir, entry.name);
-      const subFiles = fs.readdirSync(subDir).filter((f) => {
-        const s = fs.statSync(path.join(subDir, f));
-        return s.isFile() && (f.endsWith(".md") || f.endsWith(".html"));
-      });
+      const subFiles = listDocFiles(subDir);
 
       // Special case: directories that ONLY contain other directories (like
       // `templates/` which holds `blog-post/`, `linkedin-quote/`, …) are
@@ -50,30 +97,26 @@ function scanDir(dir: string, baseResolve: string): { subfolders: SubfolderEntry
           .filter((e) => e.isDirectory() && !e.name.startsWith(".") && !IGNORED_DIRS.has(e.name));
         for (const nested of nestedDirs) {
           const nestedDir = path.join(subDir, nested.name);
-          const nestedFiles = fs.readdirSync(nestedDir).filter((f) => {
-            const s = fs.statSync(path.join(nestedDir, f));
-            return s.isFile() && (f.endsWith(".md") || f.endsWith(".html"));
-          });
+          const nestedFiles = listDocFiles(nestedDir);
           if (nestedFiles.length === 0) continue;
+          const nestedSet = new Set(nestedFiles);
 
           const nestedMain =
             nestedFiles.find((f) => f === "template.html") ||
             nestedFiles.find((f) => f === "slide-cover.html") ||
-            nestedFiles.find((f) => f.includes(".current.")) ||
+            pickMainFile(nestedFiles) ||
             nestedFiles[0];
 
           const nestedVersions: DocEntry[] = [];
           const nestedOther: DocEntry[] = [];
           for (const nf of nestedFiles) {
-            if (nf === nestedMain) continue;
+            if (isShadowOfMain(nf, nestedMain, nestedSet)) continue;
             const rel = path.relative(baseResolve, path.join(nestedDir, nf));
             if (VERSION_RE.test(nf)) {
               nestedVersions.push({ name: nf.replace(/\.md$/, ""), fullPath: rel });
             } else {
-              nestedOther.push({
-                name: nf.replace(/\.(md|html)$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-                fullPath: rel,
-              });
+              const doc = buildEntry(nf, nestedSet, rel);
+              if (doc) nestedOther.push(doc);
             }
           }
 
@@ -88,20 +131,19 @@ function scanDir(dir: string, baseResolve: string): { subfolders: SubfolderEntry
         continue;
       }
 
-      const subCurrent = subFiles.find((f) => f.includes(".current.")) || subFiles[0];
+      const subSet = new Set(subFiles);
+      const subCurrent = pickMainFile(subFiles) || subFiles[0];
       const subVersions: DocEntry[] = [];
       const subOther: DocEntry[] = [];
 
       for (const sf of subFiles) {
-        if (sf === subCurrent) continue;
+        if (isShadowOfMain(sf, subCurrent, subSet)) continue;
         const relPath = path.relative(baseResolve, path.join(subDir, sf));
         if (VERSION_RE.test(sf)) {
           subVersions.push({ name: sf.replace(/\.md$/, ""), fullPath: relPath });
         } else {
-          subOther.push({
-            name: sf.replace(/\.(md|html)$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-            fullPath: relPath,
-          });
+          const doc = buildEntry(sf, subSet, relPath);
+          if (doc) subOther.push(doc);
         }
       }
 
@@ -117,15 +159,14 @@ function scanDir(dir: string, baseResolve: string): { subfolders: SubfolderEntry
         files: subOther,
         versions: subVersions,
       });
-    } else if (entry.isFile() && entry.name !== mainFile) {
+    } else if (entry.isFile() && allSet.has(entry.name)) {
+      if (isShadowOfMain(entry.name, mainFile, allSet)) continue;
       const relPath = path.relative(baseResolve, path.join(dir, entry.name));
       if (VERSION_RE.test(entry.name)) {
         versions.push({ name: entry.name.replace(/\.md$/, ""), fullPath: relPath });
-      } else if (entry.name.endsWith(".md") || entry.name.endsWith(".html")) {
-        otherFiles.push({
-          name: entry.name.replace(/\.(md|html)$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-          fullPath: relPath,
-        });
+      } else {
+        const doc = buildEntry(entry.name, allSet, relPath);
+        if (doc) otherFiles.push(doc);
       }
     }
   }
@@ -147,10 +188,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const pillar = req.query.pillar as string;
   if (!slug || !section || !pillar) return res.status(400).json({ error: "Missing params" });
 
-  const stateFile = path.join(BASE, "brand", slug, "foundation-state.json");
-  if (!fs.existsSync(stateFile)) return res.status(404).json({ error: "Not found" });
+  if (!brandExists(slug)) return res.status(404).json({ error: "Not found" });
 
-  const state = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
+  const state = assembleBrandBrainState(slug);
   const pillarInfo = state.sections?.[section]?.pillars?.[pillar];
   if (!pillarInfo?.output_file) return res.json({ ok: true, subfolders: [], versions: [], otherFiles: [] });
 

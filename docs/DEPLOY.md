@@ -24,8 +24,8 @@ Deploy SanchoCMO to a VPS using Docker Compose and nginx.
 | Domain | A record pointing to VPS IP |
 | Discord (OpenClaw) | Bot token + client ID + Message Content Intent enabled |
 | Discord (Cervantes) | Separate bot token for Cervantes Claude Code Channel + webhook URL for #cervantes-admin |
-| Anthropic | API key (for Sancho/Escudero/Rocinante via OpenClaw) |
-| MiniMax (optional) | API key for MiniMax M2.7 — cheaper execution for Escudero/Rocinante |
+| Anthropic | API key (for Sancho + specialist agents via OpenClaw) |
+| MiniMax (optional) | API key for MiniMax M2.7 — cheaper execution for specialist agents |
 | Claude Code | Membership auth via `claude setup-token` (for Cervantes) |
 | Bun + unzip | Required by the Claude Code Discord Channel plugin |
 | Neon / PostgreSQL | Database URL for Next.js Mission Control |
@@ -148,7 +148,7 @@ DISCORD_WEBHOOK_CERVANTES=https://discord.com/api/webhooks/XXXX/YYYY
 Optional but recommended:
 
 ```env
-# Alternative model providers (cheaper execution for Escudero/Rocinante)
+# Alternative model providers (cheaper execution for specialist agents)
 MINIMAX_API_KEY=...          # MiniMax M2.7 — used for task execution
 XAI_API_KEY=...              # xAI Grok models
 OPENROUTER_API_KEY=...       # OpenRouter proxy
@@ -291,8 +291,14 @@ and conventions (sites-available vs sites-enabled, backup snapshots).
 docker compose -f docker-compose.yml -f docker-compose.yalc.yml up -d --build
 ```
 
-First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho, escudero, rocinante, yalc), and auto-detects Discord guilds.
+First launch builds the Docker image (~2-3 minutes), generates `openclaw.json`, registers agents (sancho plus the specialist team, yalc), and auto-detects Discord guilds.
 The YALC container exposes its API inside Docker as `http://yalc:3847`, persists SQLite state under `/root/.gtm-os`, and serves `/healthz` without bearer auth for Docker health checks.
+
+> **Don't want to build from source?** The core ships as a public image. Set
+> `SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z` in `.env` and run
+> `docker compose pull && docker compose up -d` instead of `--build`. Updating is
+> then just `pull && up -d` (no `git pull`, no rebuild). This guide otherwise
+> assumes a source build because the G4U deploy pipeline builds on the host.
 
 > **Cervantes** does NOT run inside Docker. See step 8 below.
 
@@ -496,7 +502,7 @@ crontab -l
 The entrypoint automatically:
 
 1. **Generates `openclaw.json`** — detects Discord guilds via API, binds client guilds to sancho. Also registers the `mc-chat` plugin (Mission Control webchat) and creates the `mc-chat → sancho` binding.
-2. **Registers agents** — sancho (Opus), escudero (Sonnet), rocinante (Opus)
+2. **Registers agents** — sancho (Opus, orchestrator) plus the specialist team Sancho delegates to via `Agent(subagent_type="<slug>")` (e.g. hamete, dulcinea, rocinante, …)
 3. **Injects env vars** — replaces `{MC_BASE_URL}`, etc. in SOUL.md and protocol files
 4. **Installs dependencies** — `npm install` for MC server (ws module)
 5. **Generates dashboard** — runs `regenerate.py` for Mission Control HTML/JS
@@ -757,7 +763,7 @@ tail -f /var/log/cervantes-*.log
 
 ```
 Internet → nginx (:443, SSL) → Docker container
-                                  ├── OpenClaw Gateway (:18789)  ← Sancho, Escudero, Rocinante
+                                  ├── OpenClaw Gateway (:18789)  ← Sancho + specialist agents
                                   └── MC Server (:18790)
 
 Discord → Claude Code (Cervantes)     ← runs on host, NOT in Docker
