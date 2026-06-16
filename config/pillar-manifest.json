@@ -134,7 +134,7 @@
           "type": "execution",
           "channel": "strategy",
           "phase": 1,
-          "description": "Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + pov-bank.json + Foundation. Genera ademas un setup.md narrativo que explica el por que de cada decision y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA. ORDEN DE EJECUCION: SE EJECUTA EL ULTIMO. Requiere {projectId}-T01 (Strategy) + {projectId}-T02 (Pillars) + {projectId}-T04 (POV Bank) en status:completed.",
+          "description": "Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + pov-bank.json + Foundation. Genera ademas un setup.md narrativo que explica el por que de cada decision y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA. Las voces founder-led (persona + red + handle + cuenta de publicacion) se delegan en la sub-skill founder-led-setup, que escribe los profiles[] por voz bajo cada canal en cadence-config.yml. ORDEN DE EJECUCION: SE EJECUTA EL ULTIMO. Requiere {projectId}-T01 (Strategy) + {projectId}-T02 (Pillars) + {projectId}-T04 (POV Bank) en status:completed.",
           "deliverable": "Configs por pillar + cadence + sources.json profiles + setup.md narrativo",
           "deliverableFiles": ["content/configs/setup.md"],
           "outputFiles": [
@@ -145,7 +145,10 @@
             "keywords-seed/*.yml",
             "../../market-and-us/competitors/sources.json"
           ],
-          "dependsOn": ["pov-bank"]
+          "dependsOn": ["pov-bank"],
+          "extra": {
+            "skills": ["content-engine-setup", "founder-led-setup"]
+          }
         },
         {
           "id": "pov-bank",

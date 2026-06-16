@@ -87,7 +87,7 @@ test("instantiateTaskSet('content') reproduces the legacy create-project spec (+
     {
       id: "P07-T03",
       name: "Setup configs por pillar",
-      description: `Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + pov-bank.json + Foundation. Genera ademas un setup.md narrativo que explica el por que de cada decision y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA. ORDEN DE EJECUCION: SE EJECUTA EL ULTIMO. Requiere ${projectId}-T01 (Strategy) + ${projectId}-T02 (Pillars) + ${projectId}-T04 (POV Bank) en status:completed.`,
+      description: `Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + pov-bank.json + Foundation. Genera ademas un setup.md narrativo que explica el por que de cada decision y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA. Las voces founder-led (persona + red + handle + cuenta de publicacion) se delegan en la sub-skill founder-led-setup, que escribe los profiles[] por voz bajo cada canal en cadence-config.yml. ORDEN DE EJECUCION: SE EJECUTA EL ULTIMO. Requiere ${projectId}-T01 (Strategy) + ${projectId}-T02 (Pillars) + ${projectId}-T04 (POV Bank) en status:completed.`,
       phase: 1,
       type: "execution",
       channel: "strategy",
@@ -108,6 +108,7 @@ test("instantiateTaskSet('content') reproduces the legacy create-project spec (+
       skill: "content-engine-setup",
       agent: "dulcinea",
       mc_chat_thread_id: tid("t03"),
+      skills: ["content-engine-setup", "founder-led-setup"],
     },
     {
       id: "P07-T04",

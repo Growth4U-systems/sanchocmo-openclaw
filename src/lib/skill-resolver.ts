@@ -127,6 +127,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "find-instagram-profiles": "hamete",
   "find-linkedin-profiles": "hamete",
   "find-twitter-profiles": "hamete",
+  "founder-led-setup": "dulcinea",
   "form-cro": "alarife",
   "frontend-design": "alarife",
   "frontend-slides": "maese-pedro",
