@@ -125,7 +125,7 @@ export default function ContentCreationPage() {
         <StrategyDocsTab slug={slug} data={data} openChat={openChat} />
       )}
       {!isLoading && slug && hasProject && activeTab === "channels" && (
-        <ChannelsTab slug={slug} onGo={(tab, channel, status, extra) => switchTab(tab, channel, status, extra)} />
+        <ChannelsTab slug={slug} openChat={openChat} onGo={(tab, channel, status, extra) => switchTab(tab, channel, status, extra)} />
       )}
       {!isLoading && slug && hasProject && activeTab === "setup" && (
         <SetupTab slug={slug} openChat={openChat} focusChannel={channelParam} />
