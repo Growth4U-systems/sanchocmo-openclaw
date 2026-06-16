@@ -83,7 +83,7 @@ fi
 for d in agents config cron \
          workspace-sancho workspace-cervantes workspace-escudero workspace-hamete \
          workspace-dulcinea workspace-rocinante workspace-mambrino workspace-merlin \
-         workspace-sanson; do
+         workspace-sanson workspace-alarife workspace-maese-pedro; do
   if [ -d "$SEED/$d" ] && [ ! -e "$HOME_DIR/$d" ]; then
     cp -a "$SEED/$d" "$HOME_DIR/$d"
     log "seeded $d (first run)"

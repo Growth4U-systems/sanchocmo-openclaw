@@ -85,6 +85,8 @@ COPY workspace-rocinante/ ./workspace-rocinante/
 COPY workspace-mambrino/ ./workspace-mambrino/
 COPY workspace-merlin/ ./workspace-merlin/
 COPY workspace-sanson/ ./workspace-sanson/
+COPY workspace-alarife/ ./workspace-alarife/
+COPY workspace-maese-pedro/ ./workspace-maese-pedro/
 # Version marker: init-home.sh refreshes the framework only when this changes
 # (avoids re-copying ~180 MB of skills on every container restart).
 RUN echo "${GIT_COMMIT:-$(date +%s)}" > /opt/sancho-seed/.seed-version \
