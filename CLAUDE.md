@@ -6,12 +6,18 @@ truth for each topic rather than duplicating it.
 
 ## Git workflow — read this before creating branches, committing, or merging
 
-The full workflow lives in **[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)**.
-Do not invent branch/merge conventions — follow that doc. The essentials:
+The full workflow lives in **[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)** and,
+for agents, in the **`git-workflow` skill** (`.claude/skills/git-workflow/`) —
+invoke it before any branch/commit/PR/release work; it fires automatically when
+you're about to do git in this repo. Do not invent branch/merge conventions. The
+essentials:
 
 - **`staging` is the trunk.** Every change — feature, fix, *and* hotfix — branches
   off `staging`, uses Conventional Commits, and PRs back into `staging` with
   **squash**. There is no separate hotfix procedure (see `docs/CONTRIBUTING.md` §Hotfixes).
+- **Branch from fresh `origin/staging`; name it `<author>/san-<n>-<kebab-desc>`**
+  (e.g. `nahuel/san-230-branching-model`). Every code change needs a Linear
+  `SAN-<n>` in the branch/title/body or CI fails — create the issue first if none.
 - **`main` never receives direct work.** It is a **fast-forward-only pointer** to
   the latest production release, moved *only* by automation (`promote-main.yml`).
   Never open a PR into `main`, never push to it, never merge into it.
