@@ -7,20 +7,35 @@ Workflow guide for sanchocmo-openclaw.
 ## Branch model
 
 ```
-feature/foo ──PR(squash)──▶ staging ──auto-deploy──▶ staging VPS
+feature/foo ──PR(squash)──▶ staging ──auto-deploy──────────▶ staging VPS
                               │
-                              └──PR(merge commit)──▶ main ──release-please──▶ release PR ──merge──▶ tag vX.Y.Z ──auto-deploy──▶ prod VPS
+                              │  release-please runs ON staging:
+                              │  keeps one "chore: release vX.Y.Z" PR open
+                              ▼
+                   merge release PR (squash) ──▶ tag vX.Y.Z + GitHub Release
+                              │
+                              ├──▶ promote-main.yml: main FAST-FORWARDS to the tag
+                              │
+                              └──▶ deploy-prod.yml ──(manual approval: `production` gate)──▶ prod VPS
 ```
 
-- **`staging`** auto-deploys on every merge (no gate).
-- **`main`** only deploys on a published release. The deploy is **automatic** (no approval gate today); merging the release PR is the go/no-go. PRs into `main` must use a **merge commit, not squash** (see §6).
+`main` **never receives work** — not a PR, not a push, not a merge. It is a
+fast-forward-only pointer to the latest release, moved only by `promote-main.yml`.
+Because it can only advance to commits that already live on `staging`, it can
+**never diverge**. (Rationale + history: `docs/plans/branching-release-model-proposal.md`.)
+
+- **`staging`** auto-deploys on every merge (no gate). It is the trunk; keep it
+  always releasable — small PRs, feature-flag incomplete work.
+- **`main`** is automation-only. A published release fast-forwards it to the tag.
+- **Prod deploy is gated.** `deploy-prod.yml` runs on a published release but
+  **pauses for manual approval** on the `production` GitHub Environment. That
+  approval is the go/no-go for *when* a release reaches prod.
 
 | Branch | Purpose | Protection |
 |---|---|---|
-| `main` | Production. Every merge → auto-tag + deploy | Locked: PR + 1 approval + green CI required, no force-push |
-| `staging` | QA. Where features accumulate before a release | Locked: PR + green CI required |
-| `feature/*`, `fix/*`, `chore/*`, `refactor/*` | Short-lived work branches | Open |
-| `hotfix/*` | Urgent production fixes (branch from `main`) | Open |
+| `main` | Production pointer. Fast-forwarded to each release tag by automation | Locked: **no PRs, no direct pushes** — only `promote-main.yml` (via PAT) moves it; ff-only |
+| `staging` | Trunk. Where everything integrates; release-please cuts releases here | Locked: PR + green CI required, linear history (squash) |
+| `feature/*`, `fix/*`, `chore/*`, `refactor/*` | Short-lived work branches (incl. hotfixes) | Open |
 | `main-old` | Frozen snapshot of the legacy `main` (pre-2026-05-07) | Read-only reference |
 
 ---
@@ -81,22 +96,40 @@ Merging to `staging` automatically triggers `deploy-staging.yml`, which SSHes in
 
 ### 6. Release to production
 
-When staging is validated and ready to go live, it's a **two-merge** flow and the deploy is automatic:
+Releases are cut **from `staging`** — there is no `staging → main` promotion. The
+go-live is **two human decisions**: *merge the release PR* (cut the version) and
+*approve the prod gate* (let it deploy). Everything else is automated.
 
-1. **Open a PR `staging → main`** (`gh pr create --base main --head staging`).
-   - ⚠️ **Merge it with a _merge commit_ — NOT squash.** Squashing collapses every Conventional Commit into one, so release-please can't compute the version bump or build the CHANGELOG.
+1. **`release-please.yml` runs on `staging`** and keeps **one** open "release PR"
+   (`chore: release vX.Y.Z`, base `staging`) with the version bump + CHANGELOG. It
+   doesn't bump on every merge — it **accumulates** every Conventional Commit since
+   the last release into that single PR and recomputes the proposed version.
+   - Version comes from commit types: `feat:` → minor, `fix:` → patch,
+     `feat!:`/`BREAKING CHANGE` → major.
+   - It authenticates with the `RELEASE_PLEASE_TOKEN` repo secret (a PAT), because
+     the org disallows the default `GITHUB_TOKEN` from creating PRs.
 
-2. **`release-please.yml` runs on `main`** and opens a "release PR" (`chore: release vX.Y.Z`) with the version bump + CHANGELOG.
-   - Version comes from commit types: `feat:` → minor, `fix:` → patch, `feat!:`/`BREAKING CHANGE` → major.
-   - It authenticates with the `RELEASE_PLEASE_TOKEN` repo secret (a PAT), because the org disallows the default `GITHUB_TOKEN` from creating PRs. It also pins `target-branch: main` (the repo's default branch is `staging`, which release-please would otherwise target).
+2. **Merge the release PR** when you decide to cut the version. **Squash, like any
+   staging PR** (staging keeps a linear history). On merge, release-please creates
+   the tag `vX.Y.Z` + GitHub Release **on the staging commit**. This is the "we're
+   cutting vX.Y.Z" decision — it does **not** freeze staging; you can keep merging
+   work immediately and release-please opens the next release PR.
 
-3. **Merge the release PR** — ⚠️ **again with a _merge commit_, NOT squash.** With squash, release-please can't find its release commit on `main` and never creates the tag. On merge it creates the tag `vX.Y.Z` + GitHub Release.
+3. **Publishing the Release fires two jobs in parallel:**
+   - **`promote-main.yml`** fast-forwards `main` to the tag — `main` becomes the
+     immutable pointer to what's released. (No PR, no merge; pure ff.)
+   - **`deploy-prod.yml`** targets the `production` Environment and **pauses for
+     manual approval**. Approve it ("Approve and deploy") to roll the tag to the
+     prod VPS (checkout tag → build → `docker compose up -d` with the YALC overlay,
+     health check, auto-rollback on failure). Until you approve, prod is untouched.
 
-4. **Publishing the Release triggers `deploy-prod.yml`**, which deploys to the prod VPS **automatically** (checkout tag → build → `docker compose up -d` with the YALC overlay). There is currently **no manual-approval gate** — merging the release PR is your go/no-go. To add a gate, set required reviewers on the `production` GitHub Environment.
+You don't manually create tags or touch `main` — automation owns both. You also
+don't have to deploy every tag: approve the gate when you want it live, or use
+`deploy-prod.yml`'s `workflow_dispatch(tag)` to (re)deploy or roll back any tag.
 
-You don't manually create tags — release-please owns versioning.
-
-> **Merge-method rule of thumb:** PRs into `staging` → **squash**. PRs into `main` (the `staging → main` promotion *and* the release PR) → **merge commit**.
+> **Merge method:** **everything is squash now.** PRs into `staging` (feature, fix,
+> and the release PR) → **squash**. Nothing ever merges into `main` — it only
+> fast-forwards.
 
 > **Data ≠ code.** A release ships code only. Client data (brand docs, chats, tasks, Neon DB) is migrated separately via `scripts/resync-staging-to-prod.sh` while staging is the source of truth.
 
@@ -104,19 +137,23 @@ You don't manually create tags — release-please owns versioning.
 
 ## Hotfixes
 
-When prod is broken and you can't wait for the staging cycle:
+**There is no separate hotfix procedure.** A hotfix is just a `fix:` change:
+branch from `staging` → commit `fix: ...` → squash PR to `staging` (deploys to
+staging, verify) → merge the release PR release-please cuts (a patch bump) →
+approve the `production` gate. Identical to any other change. This works because
+`staging` is kept always-releasable (small PRs + feature flags).
 
 ```bash
-git checkout main
-git pull
-git checkout -b hotfix/<bug-summary>
-# fix it, commit with `fix: ...`
-git push -u origin hotfix/<bug-summary>
-# open PR to main
+git checkout staging && git pull
+git checkout -b nahuel/san-123-fix-summary
+# fix it, commit with `fix: ...`, push, PR to staging — done.
 ```
 
-After the hotfix ships:
-1. Merge `main` back into `staging` (or cherry-pick the fix) so staging stays in sync.
+> **Emergency only** — prod is broken *and* `staging` has unreleasable work in
+> flight (so you can't ship its tip): that's the single case needing git by hand.
+> Branch from the **last prod tag**, fix, tag a patch, ff `main`, deploy, then
+> forward-merge the fix back to `staging`. See the emergency runbook in
+> `docs/plans/branching-release-model-proposal.md` (Apéndice A). Not the everyday path.
 
 ---
 
@@ -142,6 +179,8 @@ The pre-push lifecycle is enforced in CI; running locally just saves a round tri
 
 ## Operating expectations
 
+- **Never touch `main`** — no PRs, no pushes, no merges, no manual tags. Only
+  `promote-main.yml` moves it. The base for every PR is `staging`.
 - **No direct pushes to `main` or `staging`** (branch protection enforces this).
 - **No force-push** to protected branches.
 - **No skipping hooks** (`--no-verify`) without an explicit reason — commit-msg lint exists for a reason.
@@ -157,7 +196,7 @@ The deploy workflows resolve VPS credentials from two **GitHub Environments** (S
 | Environment | Triggered by | Required reviewers | Used by |
 |---|---|---|---|
 | `staging` | merge / push to `staging` | none (auto) | `deploy-staging.yml` |
-| `production` | release published | none (auto-deploy; add required reviewers to gate) | `deploy-prod.yml` |
+| `production` | release published | **required (manual approval gate)** | `deploy-prod.yml` |
 
 Each environment exposes the same secret/variable names with different values:
 
@@ -169,4 +208,5 @@ Each environment exposes the same secret/variable names with different values:
 ## Questions / problems
 
 - Deploy or VPS issues → `docs/DEPLOY.md`
-- Workflow rationale and decisions → `docs/plans/2026-05-07-git-workflow-main-staging.md`
+- Branching/release model rationale, migration, and emergency runbook → `docs/plans/branching-release-model-proposal.md`
+- Original (pre-redesign) workflow notes → `docs/plans/2026-05-07-git-workflow-main-staging.md`

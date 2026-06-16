@@ -1,8 +1,16 @@
 name: Release Please
 
+# Branching model (docs/plans/branching-release-model-proposal.md):
+# release-please runs on `staging` — the trunk where all work integrates.
+# It keeps a single open "release PR" (chore: release vX.Y.Z) that accumulates
+# every Conventional Commit since the last release. Merging that PR cuts the
+# tag + GitHub Release FROM staging; a separate job (promote-main.yml) then
+# fast-forwards `main` to the tag. `main` never receives a release PR — that is
+# what keeps it from diverging.
+
 on:
   push:
-    branches: [main]
+    branches: [staging]
 
 permissions:
   contents: write
@@ -20,11 +28,10 @@ jobs:
           # GitHub Actions from creating PRs, so the default token can't
           # open the release PR. A user PAT bypasses that org restriction.
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          # Target main explicitly. The repo's default branch is `staging`,
-          # and release-please-action defaults to the default branch — so
-          # without this it opens the release PR against staging instead of
-          # main (where production releases/tags must come from).
-          target-branch: main
+          # No target-branch: the repo's default branch is `staging`, which is
+          # exactly where the release PR + tag must live now. (Previously this
+          # pinned `main`; the new model cuts releases from staging instead, and
+          # promote-main.yml fast-forwards main to the resulting tag.)
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
     outputs:

@@ -9,22 +9,25 @@ truth for each topic rather than duplicating it.
 The full workflow lives in **[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)**.
 Do not invent branch/merge conventions — follow that doc. The essentials:
 
-- **Default branch is `staging`.** Feature/fix/chore work branches off `staging`
-  and PRs back into it. PRs into `staging` are merged with **squash**.
-- **`staging` → production is a two-merge release flow** owned by release-please.
-  Promote with a PR `staging → main`, then merge release-please's `chore: release vX.Y.Z` PR.
-- **⚠️ Merge-method rule:** PRs into `staging` → **squash**. PRs into `main`
-  (both the `staging → main` promotion *and* the release PR) → **merge commit, NOT squash**.
-  Squashing a merge into `main` breaks release-please: it can't compute the
-  version bump or create the tag. See `docs/CONTRIBUTING.md` §6.
+- **`staging` is the trunk.** Every change — feature, fix, *and* hotfix — branches
+  off `staging`, uses Conventional Commits, and PRs back into `staging` with
+  **squash**. There is no separate hotfix procedure (see `docs/CONTRIBUTING.md` §Hotfixes).
+- **`main` never receives direct work.** It is a **fast-forward-only pointer** to
+  the latest production release, moved *only* by automation (`promote-main.yml`).
+  Never open a PR into `main`, never push to it, never merge into it.
+- **Releases are cut from `staging`.** release-please runs on `staging` and keeps
+  one open `chore: release vX.Y.Z` PR (base `staging`, **squash** like any other).
+  Merging it creates the tag from staging; `main` then fast-forwards to that tag,
+  and `deploy-prod.yml` deploys **after a manual approval** on the `production`
+  environment gate.
 - **Commits use Conventional Commits** (enforced by commitlint): `feat:` → minor,
   `fix:` → patch, `feat!:`/`BREAKING CHANGE:` → major. release-please reads these.
 - **Never push directly to `main` or `staging`**, never force-push protected
-  branches, never `--no-verify` without a stated reason.
-- **Hotfixes** branch from `main`, PR to `main`, then back-merge into `staging`.
+  branches, never `--no-verify` without a stated reason. You don't create tags or
+  touch `main` by hand — automation owns both.
 
-When creating PRs in this repo, default the base to **`staging`** (never `main`
-unless it's an explicit hotfix).
+When creating PRs in this repo, the base is **always `staging`**. A PR into `main`
+is never correct.
 
 ## Other source-of-truth docs
 
