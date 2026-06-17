@@ -38,6 +38,15 @@ yarn-error.log*
 !.env.example
 !.env.template
 
+# Runtime/agent files that frequently capture secrets — never track. Found on
+# prod as untracked-but-committable holding live secrets (SAN-233):
+#  - Codex shell-history snapshots (env + commands)
+#  - timestamped *.old.<date>/ backup dirs and *.bak-<ts> files
+**/shell_snapshots/
+*.old.[0-9]*/
+*.bak-*
+*.bak.[0-9]*
+
 # vercel
 .vercel
 
