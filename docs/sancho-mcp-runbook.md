@@ -138,7 +138,26 @@ Run after any deploy that touches the MCP, with a real token:
 - [ ] `sancho_create_task` **dry-run** (no `confirm`) → `dryRun:true, requiresConfirmation:true`, nothing written.
 - [ ] `sancho_list_chat_threads` + `sancho_get_chat_thread` → reads; `:::ask` detection works.
 - [ ] `yalc_get_overview`, `open_design_health` → reachable or clean structured error.
+- [ ] `alarife_list_instances` for `growth4u` → returns `web` and `sancho-web`.
+- [ ] `alarife_list_instances` for `paymatico` → returns `web`.
+- [ ] `alarife_get_mcp_config` → returns MCP URL + secret reference, **not** the bearer token.
+- [ ] `alarife_validate_mcp_connection` → `ok:true`, expected tool count, `leadDestinationsExposed:false`.
 - [ ] Negative: a tool requiring a scope the token lacks → `403`; a disallowed `clientSlug` or `brandSlug` → `403`; path traversal in `docPath` → error.
+
+### Alarife MCP secrets
+
+Alarife tokens live under the client workspace, not globally:
+
+```text
+brand/growth4u/.env
+GROWTH4U_ALARIFE_WEB_MCP_TOKEN=<secret>
+GROWTH4U_ALARIFE_SANCHO_WEB_MCP_TOKEN=<secret>
+
+brand/paymatico/.env
+PAYMATICO_ALARIFE_WEB_MCP_TOKEN=<secret>
+```
+
+Do not paste these tokens in Slack, Linear, GitHub, or MCP responses. The Alarife helper tools only expose secret ids/env var names and use the secret internally for validation.
 
 ---
 

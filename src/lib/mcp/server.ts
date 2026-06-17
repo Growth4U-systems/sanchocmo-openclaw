@@ -44,6 +44,13 @@ import {
 import { buildIntakeUrl } from "@/lib/intake-tokens";
 import { auditMcpToolCall } from "@/lib/mcp/audit";
 import {
+  buildAlarifeMcpInstallProfile,
+  getAlarifeMcpInstance,
+  listAlarifeMcpInstances,
+  publicAlarifeMcpInstance,
+  validateAlarifeMcpConnection,
+} from "@/lib/mcp/alarife";
+import {
   registerYalcBreakevenTool,
   type YalcBreakevenLeadMetrics,
 } from "@/lib/calc-creator-core/mcp-tool";
@@ -176,6 +183,86 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         const status = getInternalClientStatus(clientSlug);
         if (!status) throw new McpAuthError(404, `Client context not found: ${clientSlug}`);
         return jsonResult(status);
+      }),
+  );
+
+  server.registerTool(
+    "alarife_list_instances",
+    {
+      title: "List Alarife MCP instances",
+      description:
+        "Lists Alarife MCP instances registered for the allowed Sancho client. Requires sancho:read.",
+      inputSchema: {
+        clientSlug: z.string().optional().describe("Optional Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "alarife_list_instances", clientSlug, async () => {
+        assertMcpScope(context.principal, "sancho:read");
+        const requestedClient = clientSlug?.trim();
+        if (requestedClient) assertMcpClientAccess(context.principal, requestedClient);
+
+        const instances = listAlarifeMcpInstances(requestedClient)
+          .filter(
+            (instance) =>
+              context.principal.clients.includes("*") ||
+              context.principal.clients.includes(instance.clientSlug),
+          )
+          .map(publicAlarifeMcpInstance);
+
+        return jsonResult({ instances, count: instances.length, traceId: context.traceId });
+      }),
+  );
+
+  server.registerTool(
+    "alarife_get_mcp_config",
+    {
+      title: "Get Alarife MCP config",
+      description:
+        "Returns safe MCP install metadata for one Alarife instance. It never returns bearer tokens. Requires sancho:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        alarifeSlug: z.string().min(1).describe("Alarife slug inside the client, e.g. web or sancho-web."),
+      },
+    },
+    async ({ clientSlug, alarifeSlug }) =>
+      runTool(context, "alarife_get_mcp_config", clientSlug, async () => {
+        assertClientScope(context, "sancho:read", clientSlug);
+        const instance = getAlarifeMcpInstance(clientSlug, alarifeSlug);
+        return jsonResult({
+          ...publicAlarifeMcpInstance(instance),
+          installProfile: buildAlarifeMcpInstallProfile(instance),
+          tokenReturned: false,
+          traceId: context.traceId,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "alarife_validate_mcp_connection",
+    {
+      title: "Validate Alarife MCP connection",
+      description:
+        "Validates one Alarife MCP connection by running tools/list with Sancho's stored secret. It never returns bearer tokens. Requires sancho:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        alarifeSlug: z.string().min(1).describe("Alarife slug inside the client, e.g. web or sancho-web."),
+      },
+    },
+    async ({ clientSlug, alarifeSlug }) =>
+      runTool(context, "alarife_validate_mcp_connection", clientSlug, async () => {
+        assertClientScope(context, "sancho:read", clientSlug);
+        const instance = getAlarifeMcpInstance(clientSlug, alarifeSlug);
+        const validation = await validateAlarifeMcpConnection(instance);
+        return jsonResult({
+          clientSlug: instance.clientSlug,
+          alarifeSlug: instance.alarifeSlug,
+          mcpUrl: instance.mcpUrl,
+          secretId: instance.secretId,
+          tokenReturned: false,
+          ...validation,
+          traceId: context.traceId,
+        });
       }),
   );
 
