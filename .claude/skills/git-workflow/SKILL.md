@@ -66,13 +66,84 @@ the last release.
 
 Merging the release PR does **not** freeze staging — keep working immediately.
 
-## Hotfix = normal flow
+## Hotfix
 
-No special procedure. A hotfix is a `fix:` change: branch from `staging`, commit
-`fix: ...`, squash-PR to `staging`, then it ships via the next (patch) release PR.
-The only exception — prod down *and* staging has unreleasable work in flight — is
-the emergency runbook in `docs/CONTRIBUTING.md` (§Hotfixes); it's the only time you
-touch git by hand. Not the default.
+A "hotfix" request is a **decision, not a fixed procedure**. Answer one question
+first: **can we ship staging's current tip to prod right now?**
+
+### Case A — staging is shippable → it's a normal `fix:` (the default)
+
+Almost every hotfix is this. There is no special path: branch from `staging`,
+commit `fix: ...`, squash-PR to `staging`, then it ships via the next (patch)
+release PR + prod-gate approval. Don't touch `main`, don't tag by hand. This works
+because `staging` is kept always-releasable (small PRs + feature flags).
+
+### Case B — TRUE emergency: prod is broken AND staging has unreleasable work in flight
+
+The **only** time you touch git by hand. You can't ship staging's tip (half-done
+features / no flags), but prod is down. Confirm both conditions hold before doing
+this — if staging is shippable, use Case A. Execute:
+
+```bash
+# 1. Branch from the EXACT tag running in prod (the latest published release),
+#    NOT from staging. Confirm it's what prod actually runs if unsure.
+git fetch origin --tags
+PROD_TAG="$(git tag --sort=-creatordate | grep '^v' | head -1)"   # e.g. v0.6.0
+git switch -c hotfix/san-<n>-<desc> "$PROD_TAG"
+
+# 2. Minimal fix + a fix: Conventional Commit. Push the branch.
+git commit -am "fix: <summary> (SAN-<n>)"
+git push -u origin hotfix/san-<n>-<desc>
+
+# 3. Patch-bump the prod tag, push it, publish a Release on it. Publishing the
+#    release fires promote-main (ff main → tag), docker-image (build), and
+#    deploy-prod (waits at the production gate).
+NEW="v0.6.1"   # patch bump of $PROD_TAG
+git tag -a "$NEW" -m "hotfix: <summary> (SAN-<n>)"
+git push origin "$NEW"
+gh release create "$NEW" --title "$NEW" --notes "Hotfix: <summary> (SAN-<n>)"
+
+# 4. A human approves the `production` gate → prod deploys the hotfix.
+```
+
+Then **restore the invariant** so the next normal release stays a fast-forward —
+forward-merge the hotfix into `staging` (it must not be lost, and `main` must
+become an ancestor of `staging` again):
+
+- Open a **squash PR** `hotfix/san-<n>-<desc> → staging`.
+- In that PR, bump `.release-please-manifest.json` to the hotfix version (`0.6.1`)
+  so release-please continues from there and doesn't collide on the next release.
+- Merge (squash).
+
+Why this stays ff-only: the hotfix tag is built **on top of** the prod tag, so it's
+a descendant of where `main` points → moving `main` to it is a legitimate
+fast-forward, never a rewrite. Guardrails: never `gh pr create --base main`; never
+tag a hotfix off `staging`; never skip step 4's forward-merge (skipping it makes
+`main` stop being an ancestor of `staging` and breaks the next release).
+
+#### Versioning a hotfix — avoid number collisions
+
+The hotfix version is the **next patch above the tag prod runs**, regardless of
+where `staging` is. Prod on `v0.6.0` → the hotfix is `v0.6.1` — *even if `staging`
+already has an in-flight `v0.6.1`* in release-please's open PR. The manifest bump in
+the forward-merge makes that pending staging release **slide up** to `v0.6.2`, so no
+number is ever issued twice and both releases carry the fix. Do the forward-merge
+**promptly** — if someone merges the stale `v0.6.1` release PR before the manifest
+bump lands, *that* collides.
+
+Two edge cases:
+
+- **`main` is already past prod** (a newer release was published but is stuck at the
+  prod gate, so prod still runs the old tag): the hotfix tag won't descend from
+  `main`, so you can't ff it. Don't try — deploy the patch with `deploy-prod.yml`
+  **`workflow_dispatch`** (any tag, doesn't touch `main`) and just forward-port. The
+  real fix is to not let `main` get ahead of prod.
+- **The would-be hotfix version is already a published tag**: you can't reuse it —
+  fall back to `workflow_dispatch` deploy + forward-port, as above.
+
+`main` only ever fast-forwards and **physically refuses** any non-descendant move
+(`promote-main`'s `is-ancestor` guard), so it can never be silently clobbered by an
+older-line tag.
 
 ## Never
 

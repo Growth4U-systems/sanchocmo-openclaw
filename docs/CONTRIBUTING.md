@@ -152,14 +152,60 @@ git checkout -b nahuel/san-123-fix-summary
 ### Emergency runbook (the only time you touch git by hand)
 
 The single exception is **prod down *and* `staging` has unreleasable work in
-flight** (so you can't ship staging's tip). Not the everyday path — a dev runs it:
+flight** (so you can't ship staging's tip). Not the everyday path. Confirm **both**
+conditions hold — if staging is shippable, use the normal flow above.
 
-1. `git fetch && git switch -c hotfix/<desc> <last-prod-tag>`
-2. Minimal fix + a `fix:` Conventional Commit.
-3. Tag a patch on the hotfix + fast-forward `main` to it + deploy (or
-   `deploy-prod.yml` `workflow_dispatch` with that tag).
-4. **Forward-merge the hotfix back to `staging`** (squash PR) so it isn't lost and
-   the invariant is restored (`main` is an ancestor of `staging` again).
+```bash
+# 1. Branch from the tag running in prod (latest published release), NOT staging.
+git fetch origin --tags
+PROD_TAG="$(git tag --sort=-creatordate | grep '^v' | head -1)"   # e.g. v0.6.0
+git switch -c hotfix/san-<n>-<desc> "$PROD_TAG"
+
+# 2. Minimal fix + a fix: Conventional Commit, then push the branch.
+git commit -am "fix: <summary> (SAN-<n>)"
+git push -u origin hotfix/san-<n>-<desc>
+
+# 3. Patch-bump the prod tag and publish a Release on it. The published release
+#    fires promote-main (ff main → tag), docker-image (build) and deploy-prod.
+NEW="v0.6.1"   # patch bump of $PROD_TAG
+git tag -a "$NEW" -m "hotfix: <summary> (SAN-<n>)"
+git push origin "$NEW"
+gh release create "$NEW" --title "$NEW" --notes "Hotfix: <summary> (SAN-<n>)"
+#    (or run deploy-prod.yml via workflow_dispatch with that tag)
+
+# 4. A human approves the `production` gate → prod deploys.
+```
+
+Because the hotfix tag is built **on top of** `$PROD_TAG` (where `main` points), it
+is a descendant of `main` → moving `main` to it is a fast-forward, never a rewrite.
+
+Finally, **restore the invariant** — forward-merge the hotfix into `staging` so it
+isn't lost and `main` is an ancestor of `staging` again:
+
+- Open a **squash PR** `hotfix/san-<n>-<desc> → staging`.
+- In that PR, bump `.release-please-manifest.json` to the hotfix version (`0.6.1`)
+  so release-please continues from there and doesn't collide on the next release.
+- Merge (squash).
+
+#### Versioning — avoiding number collisions
+
+The hotfix version is the **next patch above the tag prod runs**, no matter where
+`staging` is. Prod on `v0.6.0` → the hotfix is `v0.6.1`, *even if `staging` already
+has an in-flight `v0.6.1`* in release-please's open PR: the manifest bump above makes
+that pending release **slide up** to `v0.6.2`, so no number is issued twice and both
+releases carry the fix. Do the forward-merge promptly — merging the stale `v0.6.1`
+release PR before the bump lands is the one thing that collides.
+
+Two edge cases fall back to **`deploy-prod.yml` `workflow_dispatch`** (deploys any
+tag without moving `main`) plus the usual forward-port:
+
+- `main` is already past prod — a newer release was published but is stuck at the
+  gate, so the hotfix tag won't fast-forward `main`. Deploy via `workflow_dispatch`;
+  don't move `main`. (Root cause to avoid: `main` getting ahead of prod.)
+- the would-be hotfix version is already a published tag — you can't reuse it.
+
+`main` only ever fast-forwards and refuses any non-descendant move, so it can never
+be silently clobbered by an older-line tag.
 
 ---
 
