@@ -121,6 +121,30 @@ fast-forward, never a rewrite. Guardrails: never `gh pr create --base main`; nev
 tag a hotfix off `staging`; never skip step 4's forward-merge (skipping it makes
 `main` stop being an ancestor of `staging` and breaks the next release).
 
+#### Versioning a hotfix — avoid number collisions
+
+The hotfix version is the **next patch above the tag prod runs**, regardless of
+where `staging` is. Prod on `v0.6.0` → the hotfix is `v0.6.1` — *even if `staging`
+already has an in-flight `v0.6.1`* in release-please's open PR. The manifest bump in
+the forward-merge makes that pending staging release **slide up** to `v0.6.2`, so no
+number is ever issued twice and both releases carry the fix. Do the forward-merge
+**promptly** — if someone merges the stale `v0.6.1` release PR before the manifest
+bump lands, *that* collides.
+
+Two edge cases:
+
+- **`main` is already past prod** (a newer release was published but is stuck at the
+  prod gate, so prod still runs the old tag): the hotfix tag won't descend from
+  `main`, so you can't ff it. Don't try — deploy the patch with `deploy-prod.yml`
+  **`workflow_dispatch`** (any tag, doesn't touch `main`) and just forward-port. The
+  real fix is to not let `main` get ahead of prod.
+- **The would-be hotfix version is already a published tag**: you can't reuse it —
+  fall back to `workflow_dispatch` deploy + forward-port, as above.
+
+`main` only ever fast-forwards and **physically refuses** any non-descendant move
+(`promote-main`'s `is-ancestor` guard), so it can never be silently clobbered by an
+older-line tag.
+
 ## Never
 
 - Touch `main` — no PR, no push, no merge, no manual tag. Automation owns it.

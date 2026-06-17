@@ -187,6 +187,26 @@ isn't lost and `main` is an ancestor of `staging` again:
   so release-please continues from there and doesn't collide on the next release.
 - Merge (squash).
 
+#### Versioning — avoiding number collisions
+
+The hotfix version is the **next patch above the tag prod runs**, no matter where
+`staging` is. Prod on `v0.6.0` → the hotfix is `v0.6.1`, *even if `staging` already
+has an in-flight `v0.6.1`* in release-please's open PR: the manifest bump above makes
+that pending release **slide up** to `v0.6.2`, so no number is issued twice and both
+releases carry the fix. Do the forward-merge promptly — merging the stale `v0.6.1`
+release PR before the bump lands is the one thing that collides.
+
+Two edge cases fall back to **`deploy-prod.yml` `workflow_dispatch`** (deploys any
+tag without moving `main`) plus the usual forward-port:
+
+- `main` is already past prod — a newer release was published but is stuck at the
+  gate, so the hotfix tag won't fast-forward `main`. Deploy via `workflow_dispatch`;
+  don't move `main`. (Root cause to avoid: `main` getting ahead of prod.)
+- the would-be hotfix version is already a published tag — you can't reuse it.
+
+`main` only ever fast-forwards and refuses any non-descendant move, so it can never
+be silently clobbered by an older-line tag.
+
 ---
 
 ## Local setup
