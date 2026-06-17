@@ -19,6 +19,8 @@ function seedClients() {
       clients: [
         { slug: "alpha", name: "Alpha", active: true, plan: "pro", status: "active" },
         { slug: "beta", name: "Beta", active: true, plan: "pro", status: "active" },
+        { slug: "growth4u", name: "Growth4U", active: true, plan: "pro", status: "active" },
+        { slug: "paymatico", name: "Paymatico", active: true, plan: "pro", status: "active" },
       ],
       adminToken: null,
     }),
@@ -71,6 +73,9 @@ test("tools/list exposes expected MCP schemas", async () => {
     const result = await client.listTools();
     const names = result.tools.map((tool) => tool.name).sort();
     assert.deepEqual(names, [
+      "alarife_get_mcp_config",
+      "alarife_list_instances",
+      "alarife_validate_mcp_connection",
       "open_design_health",
       "open_design_list_catalog",
       "sancho_create_task",
@@ -124,6 +129,68 @@ test("tools/list exposes expected MCP schemas", async () => {
     const createSearch = result.tools.find((tool) => tool.name === "yalc_create_search");
     assert.ok(createSearch);
     assert.deepEqual(createSearch.inputSchema.required, ["clientSlug", "title", "sectors", "networks"]);
+
+    const alarifeConfig = result.tools.find((tool) => tool.name === "alarife_get_mcp_config");
+    assert.ok(alarifeConfig);
+    assert.deepEqual(alarifeConfig.inputSchema.required, ["clientSlug", "alarifeSlug"]);
+  } finally {
+    await close();
+  }
+});
+
+test("Alarife registry lists Growth4U and Paymatico instances without secrets", async () => {
+  const previousToken = process.env.GROWTH4U_ALARIFE_WEB_MCP_TOKEN;
+  process.env.GROWTH4U_ALARIFE_WEB_MCP_TOKEN = "super-secret-alarife-token";
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:read"],
+    clients: ["growth4u"],
+    tokenHash: "x",
+  });
+  try {
+    const list = await client.callTool({
+      name: "alarife_list_instances",
+      arguments: { clientSlug: "growth4u" },
+    });
+    const listed = JSON.parse(list.content[0].type === "text" ? list.content[0].text : "{}");
+    assert.equal(listed.count, 2);
+    assert.deepEqual(
+      listed.instances.map((instance: { alarifeSlug: string }) => instance.alarifeSlug).sort(),
+      ["sancho-web", "web"],
+    );
+
+    const config = await client.callTool({
+      name: "alarife_get_mcp_config",
+      arguments: { clientSlug: "growth4u", alarifeSlug: "web" },
+    });
+    const payload = JSON.parse(config.content[0].type === "text" ? config.content[0].text : "{}");
+    const serialized = JSON.stringify(payload);
+    assert.equal(payload.secretConfigured, true);
+    assert.equal(payload.tokenReturned, false);
+    assert.equal(payload.secretEnvKey, "GROWTH4U_ALARIFE_WEB_MCP_TOKEN");
+    assert.equal(payload.installProfile.headers.Authorization, "Bearer ${GROWTH4U_ALARIFE_WEB_MCP_TOKEN}");
+    assert.equal(serialized.includes("super-secret-alarife-token"), false);
+  } finally {
+    if (previousToken === undefined) delete process.env.GROWTH4U_ALARIFE_WEB_MCP_TOKEN;
+    else process.env.GROWTH4U_ALARIFE_WEB_MCP_TOKEN = previousToken;
+    await close();
+  }
+});
+
+test("Alarife registry blocks cross-client access", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "paymatico-operator",
+    scopes: ["sancho:read"],
+    clients: ["paymatico"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "alarife_get_mcp_config",
+      arguments: { clientSlug: "growth4u", alarifeSlug: "web" },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /not allowed to access client: growth4u/);
   } finally {
     await close();
   }

@@ -84,6 +84,9 @@ Document access is brand-scoped. Document tools require `docs:read` and a `brand
 
 Current scaffolded tools:
 
+- `alarife_list_instances`
+- `alarife_get_mcp_config`
+- `alarife_validate_mcp_connection`
 - `sancho_mcp_status`
 - `sancho_list_clients`
 - `sancho_get_client_context`
@@ -156,6 +159,38 @@ Examples:
 
 ```json
 { "clientSlug": "growth4u", "kind": "Decision" }
+```
+
+### Alarife MCP registry flow
+
+Use `alarife_list_instances` to discover the Alarife instances registered for the authenticated Sancho client. The registry is intentionally per client:
+
+- `growth4u` → `web`, `sancho-web`
+- `paymatico` → `web`
+
+Use `alarife_get_mcp_config` to get the safe MCP URL and install profile for one instance. It returns the secret id/env var reference, but never returns the bearer token.
+
+Use `alarife_validate_mcp_connection` to have Sancho load the stored secret internally and run `tools/list` against that Alarife MCP endpoint. The result includes status, tool count and whether `LeadDestinations` appears; it never returns the token.
+
+Secret env keys:
+
+```text
+brand/growth4u/.env:
+  GROWTH4U_ALARIFE_WEB_MCP_TOKEN
+  GROWTH4U_ALARIFE_SANCHO_WEB_MCP_TOKEN
+
+brand/paymatico/.env:
+  PAYMATICO_ALARIFE_WEB_MCP_TOKEN
+```
+
+Examples:
+
+```json
+{ "clientSlug": "growth4u" }
+```
+
+```json
+{ "clientSlug": "growth4u", "alarifeSlug": "sancho-web" }
 ```
 
 ## Audit
