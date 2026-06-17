@@ -184,6 +184,20 @@ export async function validateAlarifeMcpConnection(instance: AlarifeMcpInstance)
 }
 
 function parseToolNames(payload: string): string[] {
+  const candidates = [payload];
+  for (const line of payload.split(/\r?\n/)) {
+    if (line.startsWith("data:")) candidates.push(line.slice("data:".length).trim());
+  }
+
+  for (const candidate of candidates) {
+    const names = parseToolNamesFromJson(candidate);
+    if (names.length > 0) return names;
+  }
+
+  return [];
+}
+
+function parseToolNamesFromJson(payload: string): string[] {
   try {
     const json = JSON.parse(payload) as JsonRpcToolsList;
     const tools = json.result?.tools || [];
