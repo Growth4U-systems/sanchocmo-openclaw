@@ -1,5 +1,10 @@
 import { readBrandSecret } from "@/lib/brand-env";
-import { McpAuthError } from "@/lib/mcp/auth";
+import {
+  McpAuthError,
+  assertMcpClientAccess,
+  assertMcpScope,
+  type McpPrincipal,
+} from "@/lib/mcp/auth";
 
 export interface AlarifeMcpInstance {
   clientSlug: string;
@@ -70,6 +75,52 @@ export function getAlarifeMcpInstance(clientSlug: string, alarifeSlug: string): 
 
 export function resolveAlarifeMcpSecret(instance: AlarifeMcpInstance): string | undefined {
   return readBrandSecret(instance.clientSlug, instance.secretApiId, "MCP_TOKEN");
+}
+
+export interface AlarifeMcpTokenDelivery {
+  clientSlug: string;
+  alarifeSlug: string;
+  name: string;
+  mcpUrl: string;
+  mcpServerName: string;
+  secretEnvKey: string;
+  token: string;
+}
+
+/**
+ * Resolves the real Alarife MCP bearer token for an allowed (clientSlug, alarifeSlug)
+ * so an install flow can configure a DIRECT Claude Code connection to that Alarife.
+ *
+ * SECURITY: this returns the secret value, so it MUST NOT be wired into an MCP tool
+ * (that would leak the token into an LLM transcript). Only the dedicated authenticated
+ * HTTP endpoint (`/api/alarife/mcp-token`) and the install script may call it.
+ *
+ * Access is gated by the principal scope (`sancho:read`) AND allowed-clients; a token
+ * scoped to one client can never resolve another client's Alarife secret (fails closed).
+ */
+export function deliverAlarifeMcpToken(
+  principal: McpPrincipal,
+  clientSlug: string,
+  alarifeSlug: string,
+): AlarifeMcpTokenDelivery {
+  assertMcpScope(principal, "sancho:read");
+  assertMcpClientAccess(principal, clientSlug);
+
+  const instance = getAlarifeMcpInstance(clientSlug, alarifeSlug);
+  const token = resolveAlarifeMcpSecret(instance);
+  if (!token) {
+    throw new McpAuthError(424, `Missing Sancho secret: ${instance.secretId}`);
+  }
+
+  return {
+    clientSlug: instance.clientSlug,
+    alarifeSlug: instance.alarifeSlug,
+    name: instance.name,
+    mcpUrl: instance.mcpUrl,
+    mcpServerName: `alarife-${instance.clientSlug}-${instance.alarifeSlug}`,
+    secretEnvKey: instance.secretEnvKey,
+    token,
+  };
 }
 
 export function publicAlarifeMcpInstance(instance: AlarifeMcpInstance) {
