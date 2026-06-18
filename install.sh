@@ -76,7 +76,7 @@ pull_images() {
     echo "  ⚠ pull falló — se intentará build desde el source local"
     return 0
   fi
-  die "No se pudo bajar la imagen y no hay source para buildear. Logueate a GHCR y reintentá."
+  die "No se pudo bajar la imagen y no hay source para buildear. Si es por acceso (imagen privada) logueate a GHCR (docker login ghcr.io); si es de red, verificá la conexión y reintentá."
 }
 
 # Permite `source install.sh` en tests para definir las funciones sin ejecutar
@@ -130,6 +130,7 @@ COMPOSE_ARGS="-f docker-compose.yml"
 if [ "$DO_UP" = "1" ]; then
   echo ""
   if [ "$BUILD" = "1" ]; then
+    [ -f "$SCRIPT_DIR/Dockerfile" ] || die "--build necesita el source (Dockerfile) en $SCRIPT_DIR. En una instalación de producto (sin clonar) usá el modo normal (sin --build)."
     bold "Building & starting containers ($COMPOSE $COMPOSE_ARGS up -d --build)"
     # shellcheck disable=SC2086
     $COMPOSE $COMPOSE_ARGS up -d --build

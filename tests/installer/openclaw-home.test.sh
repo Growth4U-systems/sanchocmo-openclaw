@@ -24,4 +24,10 @@ printf 'NEXTAUTH_SECRET=x\nOPENCLAW_HOME=/custom/home\n' > "$TMP/.env"
 grep -q '^OPENCLAW_HOME=/custom/home$' "$TMP/.env" || { echo "FAIL B: se pisó OPENCLAW_HOME"; cat "$TMP/.env"; exit 1; }
 [ "$(grep -c '^OPENCLAW_HOME=' "$TMP/.env")" -eq 1 ] || { echo "FAIL B: OPENCLAW_HOME duplicado"; exit 1; }
 
+# Caso C: .env con OPENCLAW_HOME COMENTADO (como en .env.example) → se agrega el valor activo.
+printf 'NEXTAUTH_SECRET=x\n# OPENCLAW_HOME=~/.openclaw\n' > "$TMP/.env"
+( cd "$TMP" && bash install.sh --no-up >/dev/null )
+grep -q "^OPENCLAW_HOME=$TMP\$" "$TMP/.env" || { echo "FAIL C: la línea comentada bloqueó el append"; cat "$TMP/.env"; exit 1; }
+[ "$(grep -c '^OPENCLAW_HOME=' "$TMP/.env")" -eq 1 ] || { echo "FAIL C: OPENCLAW_HOME activo duplicado"; exit 1; }
+
 echo "PASS"
