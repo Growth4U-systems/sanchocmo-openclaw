@@ -76,12 +76,26 @@ jobs:
           context: .
           # .dockerignore (not .gitignore) keeps per-instance data/runtime out
           # of the baked framework seed — see Dockerfile §"Bake the OpenClaw home".
-          platforms: linux/amd64,linux/arm64
+          # amd64-only: building arm64 here means QEMU emulation of `npm ci` +
+          # `next build`, which alone pushed every build past ~40 min. Native
+          # arm64 runners (`ubuntu-24.04-arm`) need a Team plan on a private repo;
+          # re-enable multi-arch (ideally via a matrix of native runners) once the
+          # repo is public or the plan supports them. No ARM consumers yet.
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GIT_COMMIT=${{ github.sha }}
-          # Speed up repeat builds (npm ci + next build) across runs.
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Registry cache (not gha): the GitHub Actions cache is capped at 10 GB
+          # per repo, and a ~2.7 GB image with mode=max blows past it, so entries
+          # get evicted between runs and every build starts cold. A registry-backed
+          # cache has no such cap and isn't branch-scoped, so the layers actually
+          # persist across runs (warm builds reuse npm ci + next build). gha kept
+          # as a fallback.
+          cache-from: |
+            type=registry,ref=ghcr.io/growth4u-systems/sanchocmo:buildcache
+            type=gha
+          cache-to: |
+            type=registry,ref=ghcr.io/growth4u-systems/sanchocmo:buildcache,mode=max
+            type=gha,mode=max
