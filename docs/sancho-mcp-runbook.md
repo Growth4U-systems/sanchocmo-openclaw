@@ -10,6 +10,23 @@ Operational guide for issuing access, troubleshooting, and safely disabling the 
 
 ## 1. Tokens: issuance, scopes, rotation
 
+### 1.0 UI operativa
+
+La forma preferida de inspeccionar y emitir tokens es:
+
+```text
+Dashboard → Admin → Settings → MCP
+/dashboard/admin/settings?tab=mcp
+```
+
+La UI muestra `id`, scopes, clientes, brands, origen y fingerprint del hash. No
+muestra tokens existentes en claro: en producción deben vivir como hash SHA-256,
+por lo que no son recuperables. Para entregar acceso, genera un token nuevo desde
+la UI; Sancho lo muestra una sola vez y guarda solo el hash en `SANCHO_MCP_TOKENS`.
+
+Después de generar/activar un token desde UI, sincroniza el GitHub Environment
+secret `SANCHO_MCP_TOKENS` para que el cambio sobreviva al siguiente deploy.
+
 ### 1.1 Scope selection
 
 | Scope | Grants | Side effects |

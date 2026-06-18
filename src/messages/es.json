@@ -176,6 +176,7 @@
     "subtitle": "Configuración del sistema",
     "tabs": {
       "apis": "APIs",
+      "mcp": "MCP",
       "agents": "Agentes",
       "models": "Modelos",
       "skills": "Skills",
