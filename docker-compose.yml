@@ -33,16 +33,14 @@ services:
       - MC_BIND_ADDRESS=0.0.0.0
       - MC_WORKSPACE=/root/.openclaw/workspace-sancho
       - LEGACY_PORT=18790
-      # Anthropic auth: every agent in this container runs on the Claude
-      # subscription (ANTHROPIC_AUTH_MODE=subscription + ANTHROPIC_OAUTH_TOKEN).
-      # `.env` still ships ANTHROPIC_API_KEY because the `open-design` container
-      # genuinely needs it (its baked-in `claude` CLI has no subscription path —
-      # see docker-compose.od.yml). Force the key empty HERE so a subscription
-      # glitch can never silently fall back to API-key billing for Sancho's
-      # agents: the provider resolves ANTHROPIC_OAUTH_TOKEN first, and an empty
-      # key fails loud instead of quietly billing API credit (the historical
-      # footgun). Scoped to sanchocmo — open-design keeps its key.
-      - ANTHROPIC_API_KEY=
+      # Anthropic auth: pass ANTHROPIC_API_KEY through so `api_key` mode works
+      # (the product default — without this the key never reaches Sancho and
+      # preflight aborts). The subscription-billing guard is mode-aware in the
+      # entrypoint: when ANTHROPIC_AUTH_MODE=subscription it blanks this key for
+      # Sancho's process so the provider can only resolve ANTHROPIC_OAUTH_TOKEN
+      # (never a silent API-billing fallback — the historical footgun). Scoped
+      # to sanchocmo — open-design keeps its own key from its env_file.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       # Tasks backend: "json" (default), "db-shadow" or "db".
       # When "db" or "db-shadow", DATABASE_URL must resolve to a Postgres with
       # the schema applied (the bundled local-db does this at boot; Neon/managed

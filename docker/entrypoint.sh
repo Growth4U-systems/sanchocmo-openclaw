@@ -279,6 +279,13 @@ if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
     export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
     echo "[entrypoint] ANTHROPIC_OAUTH_TOKEN derived from CLAUDE_CODE_OAUTH_TOKEN (gateway → Claude subscription)"
   fi
+  # Blank ANTHROPIC_API_KEY for Sancho's process so the provider can only resolve
+  # the OAuth token — never a silent fall-through to API-key billing (the
+  # historical footgun). This guard used to live as a hardcoded empty value in
+  # docker-compose.yml, but that broke `api_key` mode (the key never reached the
+  # container); it is mode-aware here instead. Process-scoped — open-design keeps
+  # its own key from its env_file.
+  export ANTHROPIC_API_KEY=
 else
   echo "[entrypoint] ANTHROPIC_AUTH_MODE=api_key — using ANTHROPIC_API_KEY (anthropic:default token profile)"
 fi
