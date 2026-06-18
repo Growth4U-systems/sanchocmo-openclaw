@@ -86,6 +86,14 @@ COPY workspace-merlin/ ./workspace-merlin/
 COPY workspace-sanson/ ./workspace-sanson/
 COPY workspace-alarife/ ./workspace-alarife/
 COPY workspace-maese-pedro/ ./workspace-maese-pedro/
+# Bake runtime Node deps into the seed so a fresh product install boots without
+# the entrypoint's first-run `npm install` (workspace-sancho scripts +
+# metrics-collector GA4/GSC adapters) — that step added ~1-2 min to first boot.
+# buildx runs this per target arch, so the modules match the platform.
+RUN cd /opt/sancho-seed/workspace-sancho \
+      && npm install --omit=dev --no-audit --no-fund --quiet \
+    && cd /opt/sancho-seed/skills/metrics-collector/scripts \
+      && npm install --omit=dev --no-audit --no-fund --quiet
 # Version marker: init-home.sh refreshes the framework only when this changes
 # (avoids re-copying ~180 MB of skills on every container restart).
 RUN echo "${GIT_COMMIT:-$(date +%s)}" > /opt/sancho-seed/.seed-version \

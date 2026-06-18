@@ -7,17 +7,15 @@ name: Publish sanchocmo image
 #   • release: published   → :vX.Y.Z + :latest   (hooks into release-please)
 #   • workflow_dispatch     → :<input>            (default :edge, for private tests)
 #
-# We DON'T build on every push to staging: the multi-arch (amd64 + arm64) build
-# runs the arm64 leg under QEMU emulation (~15-20 min) and is billed per-minute
-# on this private repo. Staging never consumed that image anyway — deploy-staging
-# builds `sanchocmo` from source on the VPS (it has a compose `build:` directive),
-# and docker-compose.yml defaults to `:latest`, not `:edge`. So the image is only
-# needed for a real production release (multi-arch, versioned) or an on-demand
-# test build via workflow_dispatch. See docs/plans/sanchocmo-packaging-plan.md.
+# Multi-arch (amd64 + arm64) is built on NATIVE runners in parallel — amd64 on
+# ubuntu-latest, arm64 on ubuntu-24.04-arm — then merged into one manifest list.
+# No QEMU emulation (the old single-runner build emulated the arm64 leg and took
+# ~40 min). Native arm64 runners are available on this org's GitHub Team plan.
+# We don't build on every push to staging: deploy-staging builds `sanchocmo`
+# from source on the VPS, and docker-compose.yml defaults to `:latest`.
 #
 # NOTE: the GHCR package starts PRIVATE. Making it public is gated on Fase 0
-# (secret + client-data purge) — until then this still works for VPS/CI hosts
-# that authenticate to GHCR. See docs/plans/sanchocmo-packaging-plan.md.
+# (secret + client-data purge). See docs/plans/sanchocmo-packaging-plan.md.
 
 on:
   release:
@@ -41,14 +39,82 @@ env:
   IMAGE: ghcr.io/growth4u-systems/sanchocmo
 
 jobs:
-  publish:
-    name: Build & push (multi-arch)
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata (labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+
+      - name: Build & push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # .dockerignore (not .gitignore) keeps per-instance data/runtime out
+          # of the baked framework seed — see Dockerfile §"Bake the OpenClaw home".
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Push by digest only; the merge job assembles the tagged manifest list.
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+          # Per-arch registry buildcache: no 10 GB cap like gha (which evicted a
+          # ~2.7 GB image between runs → cold builds), not branch-scoped, and a
+          # separate ref per arch so the two parallel jobs never race the cache.
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.arch }},mode=max
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Merge & push manifest
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
@@ -70,18 +136,14 @@ jobs:
             type=raw,value=latest,enable=${{ github.event_name == 'release' }}
             type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          # .dockerignore (not .gitignore) keeps per-instance data/runtime out
-          # of the baked framework seed — see Dockerfile §"Bake the OpenClaw home".
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            GIT_COMMIT=${{ github.sha }}
-          # Speed up repeat builds (npm ci + next build) across runs.
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.IMAGE }}@sha256:%s ' *)
+
+      - name: Inspect
+        run: |
+          TAG=$(jq -r '.tags[0]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          docker buildx imagetools inspect "$TAG"
