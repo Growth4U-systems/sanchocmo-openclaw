@@ -82,13 +82,22 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           # Push by digest only; the merge job assembles the tagged manifest list.
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          # Supply-chain attestations (the 2025 standard): full build provenance
+          # (SLSA) + an SBOM, per platform. They surface as `unknown/unknown`
+          # entries in the registry's OS/Arch list — that's the correct, expected
+          # shape, not a defect. (Not yet cryptographically signed — cosign is a
+          # follow-up, see SAN-240.)
+          provenance: mode=max
+          sbom: true
           build-args: |
             GIT_COMMIT=${{ github.sha }}
-          # Per-arch registry buildcache: no 10 GB cap like gha (which evicted a
-          # ~2.7 GB image between runs → cold builds), not branch-scoped, and a
-          # separate ref per arch so the two parallel jobs never race the cache.
-          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.arch }}
-          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.arch }},mode=max
+          # Registry buildcache in a SEPARATE package (`sanchocmo-buildcache`), not
+          # the image package: keeps the image's tag list to real, pullable images,
+          # and lets the cache stay private when the image goes public. Per-arch ref
+          # so the two parallel jobs never race. Read by every future build
+          # (cache-from) and updated by every build (cache-to).
+          cache-from: type=registry,ref=${{ env.IMAGE }}-buildcache:${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.IMAGE }}-buildcache:${{ matrix.arch }},mode=max
 
       - name: Export digest
         run: |
