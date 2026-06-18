@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.7.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.6.0...v0.7.0) (2026-06-18)
+
+
+### Features
+
+* **mcp:** add Alarife registry helper ([176d9ac](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/176d9ac7afb2e5469504644f838ec840e6e0220b))
+* **mcp:** deliver Alarife MCP token for direct Claude Code connection ([#649](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/649)) ([1efe75c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1efe75cdd79e6cd1b2cf612e1e9cd96170607435))
+* **mcp:** manage Sancho MCP tokens in admin UI - SAN-234 ([#661](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/661)) ([d94055c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d94055c7d5a35bd0b1be9ebbb92a77df2c98aad5))
+* **souls:** cada especialista declara su sistema de registro (SAN-223) ([#627](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/627)) ([00ca762](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/00ca762795e601d40707ab090b7694a530d824b7))
+* **trust-score:** integrar Trust Score Analyzer en Sancho (SAN-194) ([#610](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/610)) ([423eeac](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/423eeacf853261c5ef8dbcd29a50fe793cb13a2a))
+
+
+### Bug Fixes
+
+* **chat:** mensaje correcto de billing Anthropic + cerrar footgun API key (SAN-224) ([#633](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/633)) ([64a2795](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/64a27950c0d9a9d099c7f6542aa1cff47b8e87ea))
+* **mcp:** parse Alarife SSE tool list ([#654](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/654)) ([47a75a3](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/47a75a33473229ea88e089cedbfa6402e5eb5da7))
+* **media-creation:** link de archivo OD a la API del daemon (SAN-225) ([#635](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/635)) ([f9308a9](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f9308a9f6964b56706d167a60639cda78f069eba))
+
 ## [0.5.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.4.2...v0.5.0) (2026-06-10)
 
 
