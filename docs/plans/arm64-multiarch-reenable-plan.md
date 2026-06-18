@@ -1,30 +1,25 @@
-# Plan: re-enable arm64 multi-arch image builds
+# Native multi-arch image builds (amd64 + arm64)
 
-> **Status:** deferred — gated on the repo going public or a Team/Enterprise plan.
-> **Linear:** SAN-237 · **Reverses part of:** SAN-236 · **Shares billing gate with:** SAN-230 (prod approval reviewers).
+> **Status:** ✅ implemented in SAN-236 (`docker-image.yml` matrix + merge).
+> **Linear:** SAN-237 · **Related:** SAN-236, SAN-230.
 
 ## Context
 
-`docker-image.yml` currently builds **amd64-only** (SAN-236). arm64 was dropped
-because building it on an amd64 runner means **QEMU emulation** of `npm ci` +
-`next build`, which alone pushed every image build past **~40 min**. The proper
-fix — **native** arm64 runners — isn't available: `ubuntu-24.04-arm` hosted
-runners need a **Team/Enterprise** plan on a **private** repo. The same billing
-limit blocks the prod approval gate (SAN-230).
+The image build used a single amd64 runner building `linux/amd64,linux/arm64`
+together — the arm64 leg ran under **QEMU emulation** of `npm ci` + `next build`,
+which pushed every build past **~40 min**. An interim amd64-only switch was
+considered, but it turned out **native arm64 runners are available** here:
 
-The product isn't distributed yet (private GHCR package, no ARM consumers), so
-amd64-only is fine for now. This plan describes bringing arm64 back **fast**
-(native, not emulated) once the constraint lifts.
+- The org (`Growth4U-systems`) is on **GitHub Team** (`gh api orgs/... .plan.name
+  → "team"`), and **verified empirically** (2026-06-18) — a throwaway job on
+  `runs-on: ubuntu-24.04-arm` completed successfully (`uname -m → aarch64`).
 
-## Preconditions (either unlocks native arm64 runners)
+So we did **not** defer arm64 or wait for the repo to go public. The fix is to
+build each arch on its **own native runner in parallel** and merge the manifest.
 
-1. **Repo is public** — after the Fase 0 secret purge (packaging plan). Public
-   repos get `ubuntu-24.04-arm` hosted runners for free, **or**
-2. **GitHub plan upgraded to Team/Enterprise** — native arm64 runners for
-   private repos.
-
-Don't re-enable arm64 via QEMU emulation just to have it — that reintroduces the
-40-min builds. Wait for native runners.
+(My earlier read that this needed a public repo / plan upgrade was wrong — Team
+already includes native arm64 hosted runners. Same as the prod-gate billing
+question — worth re-checking that too, since Team should support it.)
 
 ## Approach: matrix of native runners + manifest merge
 
