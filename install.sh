@@ -60,6 +60,25 @@ else
   echo "  ✓ .env already present — skipping wizard (use --force to reconfigure)"
 fi
 
+# --- 2.5 Ensure OPENCLAW_HOME points at this install dir ---------------------
+# The wizard writes .env + config/ into SCRIPT_DIR. The container reads config
+# from OPENCLAW_HOME (default ~/.openclaw). For a product (non-git) or local
+# clone install nobody sets it, so the preflight (SAN-138) can't find
+# config/clients.json and boot fails. Pin it to SCRIPT_DIR here — but never
+# clobber an existing value (the G4U deploy defines it). init-home.sh handles
+# the git-vs-seed distinction, so SCRIPT_DIR is correct for both paths.
+ensure_env_default() {  # ensure_env_default KEY VALUE
+  local key="$1" val="$2"
+  # Ya definido en el entorno → respetar, no tocar .env.
+  [ -n "${!key:-}" ] && return 0
+  # Ya presente y NO comentado en .env → respetar.
+  grep -qE "^[[:space:]]*${key}=" .env 2>/dev/null && return 0
+  printf '%s=%s\n' "$key" "$val" >> .env
+  echo "  ✓ ${key}=${val} (added to .env)"
+}
+ensure_env_default OPENCLAW_HOME "$SCRIPT_DIR"
+ensure_env_default SNAPSHOT_DATA_DIR "$SCRIPT_DIR/snapshots"
+
 # --- 3. Bring the stack up ---------------------------------------------------
 # The wizard turns Outreach on by provisioning a YALC_API_TOKEN; honor that
 # here so `install.sh` (no flag) still brings the overlay up when the user
