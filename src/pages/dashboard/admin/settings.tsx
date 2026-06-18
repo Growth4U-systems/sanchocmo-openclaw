@@ -13,6 +13,7 @@ import { AdminRecurringPanel } from "@/components/settings/admin-recurring-panel
 import { ApisConnectorsPanel } from "@/components/settings/ApisConnectorsPanel";
 import { ModelsPanel } from "@/components/settings/models-panel";
 import { DataSyncPanel } from "@/components/settings/data-sync-panel";
+import { McpTokensPanel } from "@/components/settings/mcp-tokens-panel";
 
 /**
  * /dashboard/admin/settings — global ("all clients") configuration.
@@ -31,11 +32,12 @@ import { DataSyncPanel } from "@/components/settings/data-sync-panel";
  *   - /dashboard/admin/users
  */
 
-const TAB_KEYS = ["apis", "agents", "models", "skills", "recurring", "datasync", "preferences"] as const;
+const TAB_KEYS = ["apis", "mcp", "agents", "models", "skills", "recurring", "datasync", "preferences"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
 const TAB_ICONS: Record<TabKey, string> = {
   apis: "🔌",
+  mcp: "🔐",
   agents: "🤖",
   models: "🧠",
   skills: "🧰",
@@ -96,6 +98,7 @@ export default function SettingsPage() {
       />
 
       {activeTab === "apis" && <ApisConnectorsPanel />}
+      {activeTab === "mcp" && <McpTokensPanel />}
       {activeTab === "agents" && <AgentsPanel />}
       {activeTab === "models" && <ModelsPanel />}
       {activeTab === "skills" && <SkillsPanel />}
