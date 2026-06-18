@@ -36,11 +36,31 @@ essentials:
 When creating PRs in this repo, the base is **always `staging`**. A PR into `main`
 is never correct.
 
+## Engineering standards — how code should be designed here
+
+Full detail (and the *why*): **[`docs/engineering-standards.md`](docs/engineering-standards.md)**,
+mirrored for agents in the **`engineering-standards` skill**. Rules are enforced in
+layers — a machine blocks the mechanical ones (hooks + CI), skills guide the rest —
+so quality does not depend on a non-developer catching it in review. Three
+non-negotiables:
+
+1. **A change to how data is stored ships with its migration + an application
+   plan.** DB schema, on-disk brand files, or JSON document shapes — if you change
+   the shape, you ship the script that brings *existing* data forward and record
+   how it's applied in [`docs/runbooks/storage-structure-change.md`](docs/runbooks/storage-structure-change.md).
+   The `lint:storage` check blocks the push otherwise. (Skill: `storage-change`.)
+2. **Never commit a secret.** Secrets live in `.env` (untracked), surfaced via env
+   vars. A `gitleaks` scan blocks both the push and the PR.
+3. **Follow SOLID** — and improve code as you touch it, but only **within your
+   task's scope** (file bigger debt as a Linear issue, don't balloon the diff).
+   (Skills: `engineering-standards`, `improve-as-you-go`.)
+
 ## Other source-of-truth docs
 
 | Topic | Doc |
 |---|---|
 | Branch model, commits, release flow, CI | [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) |
+| Engineering standards, design principles, debt register | [`docs/engineering-standards.md`](docs/engineering-standards.md) |
 | Deploy, VPS setup, SSH keys, environments | [`docs/DEPLOY.md`](docs/DEPLOY.md) |
 | Server operations | [`docs/SERVER-OPS.md`](docs/SERVER-OPS.md) |
 | Local setup & install | [`docs/INSTALL.md`](docs/INSTALL.md) |
