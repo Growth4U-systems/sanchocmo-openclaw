@@ -575,3 +575,23 @@ export const metricSnapshots = pgTable("metric_snapshots", {
   index("metric_snapshots_slug_source_metric_idx").on(table.slug, table.source, table.metricName),
   index("metric_snapshots_slug_source_date_idx").on(table.slug, table.source, table.metricDate),
 ]);
+
+// ============================================================
+// Metric dashboards (SAN-265 · Métricas v2) — versioned dashboard definition
+// (presentation + plan + custom), one row per slug, with an append-only
+// version_history of full snapshots for revert. Modeled on POV Bank.
+// ============================================================
+
+export const metricDashboards = pgTable("metric_dashboards", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  version: integer("version").notNull().default(1),
+  definition: jsonb("definition").$type<Record<string, unknown>>().notNull().default({}),
+  versionHistory: jsonb("version_history").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  status: text("status").notNull().default("active"),
+  source: text("source").notNull().default("neon"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_dashboards_slug_idx").on(table.slug),
+]);
