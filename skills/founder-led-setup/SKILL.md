@@ -8,6 +8,7 @@ context_required:
 - brand/{slug}/brand-voice/brand-voice.current.md      # voice_doc por defecto
 context_writes:
 - brand/{slug}/content/configs/cadence-config.yml      # profiles[] bajo channels.{red}
+- brand/{slug}/content/voices/{voiceId}-voice.md       # doc de tono por-founder (opcional, SAN-160)
 ---
 
 # Founder-Led Setup — Voces (persona × red)
@@ -92,8 +93,13 @@ X/Twitter, 3 si aún no sabes la red):
 mismo orden voz-first: nombre, rol, red, cadencia (sugiere la recomendada: LinkedIn 3/sem · X 5/sem),
 handle, y `metricool_profile_id` (déjalo vacío si aún no existe).
 
-*(Opcional, en cualquier superficie)* `pillars_slant` (1-3 temas, derivados de `content-pillars.md`)
-y `voice_doc` (por defecto la brand voice; un doc de voz por-founder es opcional).
+*(Opcional, en cualquier superficie)* `pillars_slant` (1-3 temas, derivados de `content-pillars.md`).
+
+**Voz propia del founder (recomendado).** Ofrece crear un doc de tono por-founder en
+`content/voices/{id}-voice.md` y apunta ahí `voice_doc`. **Ligero** (no un brand-voice completo):
+3 adjetivos de tono · 3-5 do/don't · 2-3 frases de muestra · en qué se diferencia de las otras voces.
+Derívalo de la brand voice (`brand-book/brand-voice/brand-voice.current.md`) + rol/handle/muestras de
+esa persona. Si la declina, deja `voice_doc` vacío → el writer usa la brand voice.
 
 Presenta lo capturado como matriz **voz × red → cuenta** y pide confirmación antes de escribir.
 
