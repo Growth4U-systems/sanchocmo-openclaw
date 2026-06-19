@@ -34,6 +34,8 @@
  * CLIENT-SAFE: sin Node — lo importan componentes y tests (`tsx --test`).
  */
 
+import { slugify } from "@/lib/slugify";
+
 export type TemplateKind = "sequence" | "brief";
 export type TemplateCampaignType = "partnerships" | "b2b";
 
@@ -92,15 +94,7 @@ export function templateRelativePath(id: string): string {
 }
 
 export function slugifyTemplateName(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 64) || "plantilla"
-  );
+  return slugify(name, { maxLen: 64, fallback: "plantilla" });
 }
 
 // ── Serialize ───────────────────────────────────────────────────────────────
