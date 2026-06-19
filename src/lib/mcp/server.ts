@@ -18,6 +18,7 @@ import {
   getMeetingIntelligenceState,
 } from "@/lib/data/meeting-intelligence-db";
 import { getMetricsTimeSeries, getSurfaceSummary, getTrend, getNorthStar } from "@/lib/data/metrics";
+import { getDashboardDefinition } from "@/lib/data/metric-dashboard";
 import { getMcpDocument, listMcpDocuments } from "@/lib/mcp/documents";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
 import {
@@ -1445,6 +1446,25 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           return jsonResult(await getTrend(clientSlug, { source, metric, from: start, to: end }));
         }
         return jsonResult(await getMetricsTimeSeries(clientSlug, { source, metric, grain, from, to }));
+      }),
+  );
+
+  // Métricas v2 (SAN-265): read the active dashboard definition (presentation +
+  // plan + custom surfaces/metrics), seeded lazily from metrics-plan. metrics:read.
+  server.registerTool(
+    "sancho_get_metrics_dashboard",
+    {
+      title: "Get Sancho metrics dashboard definition",
+      description:
+        "Returns a client's versioned metrics dashboard definition: archetype, North Star, tabs, surfaces, the analytical plan (funnel + KPIs) and any custom surfaces/metrics, plus the current version and version history. Seeded lazily from metrics-plan.json on first access. Read-only; returns configured=false without a database. Requires metrics:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "sancho_get_metrics_dashboard", clientSlug, async () => {
+        assertClientScope(context, "metrics:read", clientSlug);
+        return jsonResult(await getDashboardDefinition(clientSlug));
       }),
   );
 
