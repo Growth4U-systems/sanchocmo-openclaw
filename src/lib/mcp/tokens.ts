@@ -10,6 +10,8 @@ export const MCP_SCOPES = [
   "open-design:read",
   "docs:read",
   "intelligence:read",
+  "metrics:read",
+  "metrics:write",
 ] as const;
 
 export type McpScope = (typeof MCP_SCOPES)[number];

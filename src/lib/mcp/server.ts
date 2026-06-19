@@ -17,6 +17,7 @@ import {
   getMeetingIntelligenceMeeting,
   getMeetingIntelligenceState,
 } from "@/lib/data/meeting-intelligence-db";
+import { getMetricsTimeSeries, getSurfaceSummary, getTrend, getNorthStar } from "@/lib/data/metrics";
 import { getMcpDocument, listMcpDocuments } from "@/lib/mcp/documents";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
 import {
@@ -1412,6 +1413,38 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           documents: state.documents,
           proposals: state.proposals,
         });
+      }),
+  );
+
+  // Métricas v2 (SAN-264): time-series read over metric_snapshots. Clean
+  // degradation (configured=false) when no DB is set. Requires metrics:read.
+  server.registerTool(
+    "sancho_get_metrics_timeseries",
+    {
+      title: "Get Sancho metrics (time-series)",
+      description:
+        "Reads a client's metrics from the metric_snapshots time-series. view=series → a bucketed series (day/week/month) for an optional source+metric; view=surfaces → the latest headline value per surface (reputation/web/product/pipeline/paid/email/social/partnerships); view=trend → current-vs-previous-window delta for a source+metric; view=northstar → the client's metrics-plan North Star/KPIs. Read-only; returns configured=false when no database is set. Requires metrics:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        view: z.enum(["series", "surfaces", "trend", "northstar"]).default("series").describe("Which view to return."),
+        source: z.string().optional().describe("Metric source (e.g. ga4, gsc, meta-ads, ghl, trust_score)."),
+        metric: z.string().optional().describe("Metric name within the source."),
+        grain: z.enum(["day", "week", "month"]).optional().describe("Bucket size for view=series (default day)."),
+        from: z.string().optional().describe("Start date YYYY-MM-DD."),
+        to: z.string().optional().describe("End date YYYY-MM-DD."),
+      },
+    },
+    async ({ clientSlug, view, source, metric, grain, from, to }) =>
+      runTool(context, "sancho_get_metrics_timeseries", clientSlug, async () => {
+        assertClientScope(context, "metrics:read", clientSlug);
+        if (view === "surfaces") return jsonResult(await getSurfaceSummary(clientSlug, { from, to }));
+        if (view === "northstar") return jsonResult(getNorthStar(clientSlug));
+        if (view === "trend") {
+          const end = to ?? new Date().toISOString().slice(0, 10);
+          const start = from ?? new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+          return jsonResult(await getTrend(clientSlug, { source, metric, from: start, to: end }));
+        }
+        return jsonResult(await getMetricsTimeSeries(clientSlug, { source, metric, grain, from, to }));
       }),
   );
 
