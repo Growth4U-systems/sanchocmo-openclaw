@@ -545,3 +545,102 @@ export const intakeSubmissions = pgTable("intake_submissions", {
 }, (table) => [
   index("intake_submissions_slug_idx").on(table.slug),
 ]);
+
+// ============================================================
+// Intelligence Engine (SAN-270) — normalized signal + proposals + metrics plan
+// The spine of the continuous-improvement loop (Plan 03). One engine, many
+// detectors: adapters write `signals`, the engine emits `improvement_proposals`.
+// ============================================================
+
+// Normalized time series. Adapters (P2) write here; detectors query it
+// (percentiles / period-over-period / group-by) instead of scanning JSONs.
+export const signals = pgTable("signals", {
+  id: text("id").primaryKey(), // sig_<stableId(slug,category,provider,entity,metric,dims,capturedAt)>
+  slug: text("slug").notNull(),
+  category: text("category").notNull(), // content | web_analytics | crm | outreach | ads | meeting
+  provider: text("provider").notNull(), // metricool | ga4 | gsc | meeting | ...
+  entityType: text("entity_type"), // post | page | sequence | meeting | ...
+  entityId: text("entity_id"),
+  dims: jsonb("dims").$type<Record<string, string | number | null>>(), // {author, content_type, pillar, channel, hour, ...}
+  metric: text("metric").notNull(), // impressions | engagement_pct | raw_text | ...
+  value: real("value"), // numeric signal (null for text signals)
+  text: text("text"), // text signal (meetings/comments) → feeds textMatch
+  capturedAt: timestamp("captured_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("signals_slug_idx").on(table.slug),
+  slugCategoryMetricIdx: index("signals_slug_category_metric_idx").on(table.slug, table.category, table.metric),
+  capturedAtIdx: index("signals_captured_at_idx").on(table.capturedAt),
+}));
+
+// Generalizes mi_recommendations + domain/signalRef/confidence/rationale.
+// Backbone of the unified Improvement Inbox (P3).
+export const improvementProposals = pgTable("improvement_proposals", {
+  id: text("id").primaryKey(), // prop_<stableId(slug,domain,ruleId,dimKey,window)>
+  slug: text("slug").notNull(),
+  domain: text("domain").notNull(), // content | seo | cro | outreach | ads | meeting | skill
+  ruleId: text("rule_id"), // rule that emitted it
+  signalRef: text("signal_ref"), // soft ref to signals.id (no FK: the series is pruned)
+  title: text("title").notNull(),
+  description: text("description"),
+  rationale: text("rationale"), // narrative with numbers
+  confidence: real("confidence"), // 0..1
+  priority: text("priority").notNull().default("medium"),
+  targetType: text("target_type").notNull().default("task"),
+  targetId: text("target_id"),
+  targetSkill: text("target_skill"), // suggested skill (content-atomizer, ...)
+  targetAgent: text("target_agent"), // Dulcinea | Rocinante | Merlin | ...
+  documentName: text("document_name"),
+  status: text("status").notNull().default("recommended"), // recommended → approved/rejected → converted
+  taskId: text("task_id"),
+  taskStatus: text("task_status").notNull().default("recommended"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  rejectedAt: timestamp("rejected_at"),
+  convertedAt: timestamp("converted_at"),
+}, (table) => ({
+  slugIdx: index("improvement_proposals_slug_idx").on(table.slug),
+  slugStatusIdx: index("improvement_proposals_slug_status_idx").on(table.slug, table.status),
+  slugDomainIdx: index("improvement_proposals_slug_domain_idx").on(table.slug, table.domain),
+}));
+
+// Living metrics plan (Metrics First). Grain = slug·category·metric.
+// approvalMode/threshold are slug-level (carried by the north-star row in practice).
+export const metricsPlan = pgTable("metrics_plan", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  category: text("category").notNull(),
+  provider: text("provider"), // active provider for this category
+  metric: text("metric"), // target metric
+  target: real("target"),
+  direction: text("direction"), // higher_better | lower_better
+  isNorthStar: boolean("is_north_star").notNull().default(false),
+  active: boolean("active").notNull().default(true),
+  approvalMode: text("approval_mode").notNull().default("review_all"), // review_all | auto_apply
+  autoApplyConfidenceThreshold: real("auto_apply_confidence_threshold"),
+  config: jsonb("config").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("metrics_plan_slug_idx").on(table.slug),
+  slugCategoryIdx: index("metrics_plan_slug_category_idx").on(table.slug, table.category),
+}));
+
+// Closes the loop (worked/didn't) → calibrates confidence in future cycles.
+export const proposalOutcomes = pgTable("proposal_outcomes", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  proposalId: text("proposal_id").notNull().references(() => improvementProposals.id, { onDelete: "cascade" }),
+  outcome: text("outcome").notNull(), // worked | didnt | inconclusive
+  metricBefore: real("metric_before"),
+  metricAfter: real("metric_after"),
+  notes: text("notes"),
+  measuredAt: timestamp("measured_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  slugIdx: index("proposal_outcomes_slug_idx").on(table.slug),
+  proposalIdx: index("proposal_outcomes_proposal_idx").on(table.proposalId),
+}));
