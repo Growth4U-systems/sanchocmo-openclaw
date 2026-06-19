@@ -61,6 +61,7 @@ Each phase produces an artifact. **Never skip a phase.** Output of each feeds th
 
 ## Mandatory Rules
 
+0. **⛔ Fail loud si la búsqueda no funciona (SAN-238)** — si `web_search` / `WebSearch` / Firecrawl está caído o devuelve errores, NO inventes fuentes, NO escribas un `research.md` plausible de memoria, y NO falsees el marcador `<!-- … | fuentes: N | búsquedas: M -->`. POSTEA **`⛔ web_search no disponible — no se pudo hacer research, no entrego nada fabricado. Reintenta o revisa el conector.`** y PARA. Es la regla 22 de `workspace-sancho/PROTOCOLS.md` ("opera el sistema, no narres": fallo explícito, nunca un entregable hecho a mano). La pipeline lo verifica server-side: la research gate (`assertResearchReady`, `src/lib/data/content-tasks.ts`) bloquea la transición `→ clarify-needed`/`→ drafting` con **422** salvo que existan los 3 artefactos (`research.md`, `QA-REPORT-research.md`, `brand/{slug}/intelligence/research-log.json`) y `research.md` tenga suficientes **URLs reales** — cuenta enlaces `http(s)://` de verdad, NO el marcador auto-reportado. Un research fabricado se rechaza, no se acepta en silencio.
 1. **QA es obligatorio (Phase 6)** — invocar `qa-bot` al documento generado, antes de entregar. No hay deep-research sin QA.
 2. **Cero claims sin fuente** — toda afirmación numérica/factual cita fuente verificada (URL visitada, NO inventada).
 3. **Mínimo 10 fuentes únicas** + ≥2 fuentes por entidad (≥1 oficial).

@@ -295,6 +295,166 @@ export function assertMediaReady(
 }
 // ── end media gate ──────────────────────────────────────────────────────────
 
+// ── Fail-loud research gate (SAN-238 P1) ─────────────────────────────────────
+// SELF-CONTAINED BLOCK, mirrors the media gate above. Keep it delimited so a
+// neighbouring gate can be added with minimal conflict.
+//
+// Problem: the research→clarify→write contract is enforced ONLY by prose in the
+// dispatch prompt. A non-compliant agent can skip deep-research, fabricate a
+// "Research Pack" from memory (including a faked `<!-- … | fuentes: N -->`
+// marker), and the pipeline accepts it — the empty research.md scaffold
+// (`## Sources` / `## Queries` / `## Key findings`, no URLs) written by
+// generate-drafts looks "present" but has no real evidence. This is the same
+// failure class as SAN-244's confabulated media path, one phase earlier.
+//
+// Fix: a REAL code gate (not agent obedience). The pipeline must NOT advance a
+// channel INTO the post-research phases (`clarify-needed` / `drafting`) unless
+// all THREE deep-research artifacts exist AND research.md carries enough REAL,
+// unique source URLs. We count actual `http(s)://` URLs parsed from the body —
+// we do NOT read the self-reported `<!-- fuentes: N -->` marker, because that
+// marker is exactly what a non-compliant agent fakes (qa-reports.ts parses it
+// for display; trusting it here would let the fabrication through).
+//
+// CATASTROPHIC-FAILURE GUARD / KILL-SWITCH: if web_search/Firecrawl ever breaks
+// again, real research can't reach the threshold and this gate would freeze ALL
+// content tasks. So it ships behind an env flag, default ON (enforcing). Set
+// `CONTENT_RESEARCH_GATE=off` to disable instantly (no code revert / redeploy
+// of logic) — `assertResearchReady` then becomes a no-op. Confirm web_search
+// liveness on the deploy; flip the flag off if research is flaky.
+const RESEARCH_GATE_ENABLED = process.env.CONTENT_RESEARCH_GATE !== "off";
+
+// Phases that mean "research is done, we've moved past it". Entering either of
+// these is the chokepoint we gate. `researching` (still doing research),
+// `draft`/`approved`/`published` (way past — gating those would block normal
+// forward flow and re-publishes for tasks whose research predates this gate)
+// are intentionally NOT gated.
+const RESEARCH_GATED_PHASES: ReadonlySet<ChannelPhase> = new Set<ChannelPhase>([
+  "clarify-needed",
+  "drafting",
+]);
+
+// Minimum distinct real source URLs that must appear in research.md before the
+// pipeline will accept the research as "done".
+//
+// The deep-research contract (skills/deep-research/SKILL.md, Mandatory Rule 3)
+// demands ≥10 unique sources. We deliberately do NOT gate at 10: that's the
+// quality bar the skill self-enforces, and hard-blocking at 10 would freeze
+// legitimately short pieces (a single strong primary source + a corroborating
+// secondary one) and over-couple the gate to one skill's rubric. The job of
+// THIS gate is narrower: catch the "0 real sources, fabricated from memory"
+// failure mode (and the empty scaffold, which has 0 URLs). A conservative floor
+// of 3 distinct URLs cleanly separates "did no real research" from "did real
+// research", without policing depth. Tune via the constant if needed.
+const RESEARCH_MIN_SOURCES = 3;
+
+/** Thrown by `assertResearchReady`. Carries 422 (Unprocessable Entity): the
+ *  request is well-formed but the CT's research state can't satisfy the
+ *  requested phase advance. Distinct from MediaGateError's 409 so the two gates
+ *  surface differently to the caller. */
+export class ResearchGateError extends Error {
+  readonly statusCode = 422;
+  constructor(message: string) {
+    super(message);
+    this.name = "ResearchGateError";
+  }
+}
+
+/**
+ * Count DISTINCT real source URLs in a research document body. Parses actual
+ * `http(s)://…` URLs (Sources Index, inline citations, anywhere), normalizes
+ * and dedupes them. Pure + side-effect-free so tests and callers can reuse it.
+ *
+ * Intentionally ignores the `<!-- … | fuentes: N -->` self-reported marker:
+ * that count is agent-authored and is the first thing a non-compliant agent
+ * fakes. Only URLs that are physically present count.
+ */
+export function countResearchSourceUrls(body: string | null | undefined): number {
+  if (!body) return 0;
+  // Strip HTML comments first so a faked `<!-- fuentes: 12 -->` marker — or any
+  // URL parked inside a comment — can never contribute to the count.
+  const visible = body.replace(/<!--[\s\S]*?-->/g, "");
+  // Match http(s) URLs; stop at whitespace or markdown/sentence delimiters so
+  // trailing `)`, `]`, `,`, `.` etc. don't fork one URL into "distinct" ones.
+  const matches = visible.match(/https?:\/\/[^\s<>)"'\]]+/gi) || [];
+  const seen = new Set<string>();
+  for (const raw of matches) {
+    // Normalize: drop a trailing punctuation run, lowercase host via URL when
+    // parseable, strip a trailing slash. Fall back to the trimmed string.
+    let url = raw.replace(/[.,;:!?]+$/, "");
+    try {
+      const u = new URL(url);
+      url = `${u.protocol}//${u.host.toLowerCase()}${u.pathname.replace(/\/$/, "")}${u.search}`;
+    } catch {
+      url = url.replace(/\/$/, "");
+    }
+    seen.add(url);
+  }
+  return seen.size;
+}
+
+/**
+ * Fail-loud gate for the `→ clarify-needed` / `→ drafting` transition.
+ *
+ * Throws `ResearchGateError` (→ 422) when a channel is advanced INTO a
+ * post-research phase but the deep-research deliverables aren't really there:
+ *   1. `{ideaDir}/research.md` missing, OR
+ *   2. `{ideaDir}/QA-REPORT-research.md` missing, OR
+ *   3. `brand/{slug}/intelligence/research-log.json` missing, OR
+ *   4. research.md contains fewer than `RESEARCH_MIN_SOURCES` distinct real
+ *      source URLs (the fabricated/empty-scaffold case).
+ *
+ * No-op for any non-gated phase, and a full no-op when the kill-switch
+ * (`CONTENT_RESEARCH_GATE=off`) is set. `ideaDir` is derived from `ct.idea_id`
+ * exactly like the per-channel drafts (`brand/{slug}/content/drafts/{ideaId}/`),
+ * matching the paths the writer-trigger prompt instructs the agent to write.
+ */
+export function assertResearchReady(
+  slug: string,
+  ct: ContentTask,
+  channel: string,
+  phase: ChannelPhase,
+): void {
+  if (!RESEARCH_GATE_ENABLED) return;
+  if (!RESEARCH_GATED_PHASES.has(phase)) return;
+
+  const ideaDir = path.join(BASE, "brand", slug, "content", "drafts", ct.idea_id);
+  const researchPath = path.join(ideaDir, "research.md");
+  const qaReportPath = path.join(ideaDir, "QA-REPORT-research.md");
+  const researchLogPath = path.join(BASE, "brand", slug, "intelligence", "research-log.json");
+
+  const fail = (why: string): never => {
+    throw new ResearchGateError(
+      `Channel "${channel}" cannot advance to "${phase}": ${why}. The ` +
+        `research→clarify→write contract requires a real deep-research pass — ` +
+        `research.md + QA-REPORT-research.md + intelligence/research-log.json, ` +
+        `with ≥${RESEARCH_MIN_SOURCES} distinct real source URLs in research.md ` +
+        `(the self-reported "fuentes" marker is NOT counted). Run deep-research ` +
+        `for real and retry. If web_search/Firecrawl is down, set ` +
+        `CONTENT_RESEARCH_GATE=off to bypass this gate.`,
+    );
+  };
+
+  if (!fs.existsSync(researchPath)) fail("research.md is missing");
+  if (!fs.existsSync(qaReportPath)) fail("QA-REPORT-research.md is missing");
+  if (!fs.existsSync(researchLogPath)) fail("intelligence/research-log.json is missing");
+
+  let researchBody = "";
+  try {
+    researchBody = fs.readFileSync(researchPath, "utf-8");
+  } catch {
+    fail("research.md could not be read");
+  }
+  const sourceCount = countResearchSourceUrls(researchBody);
+  if (sourceCount < RESEARCH_MIN_SOURCES) {
+    fail(
+      `research.md has only ${sourceCount} distinct real source URL(s) ` +
+        `(need ≥${RESEARCH_MIN_SOURCES}) — looks like an empty scaffold or ` +
+        `research fabricated from memory`,
+    );
+  }
+}
+// ── end research gate ────────────────────────────────────────────────────────
+
 /**
  * Update one channel's phase under a ContentTask. Persists to `tasks.json` and
  * forward-only auto-promotes `ct.status` / `pipeline_state` based on the new
@@ -315,6 +475,11 @@ export function setChannelPhase(
   const list = (parent.content_tasks as ContentTask[] | undefined) || [];
   const ct = list.find((c) => c.id === contentTaskId);
   if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
+
+  // Fail-loud research gate (SAN-238 P1): block `→ clarify-needed`/`→ drafting`
+  // unless the 3 deep-research artifacts exist with ≥N real source URLs.
+  // Kill-switch: CONTENT_RESEARCH_GATE=off → no-op. Shared with setChannelPhases.
+  assertResearchReady(slug, ct, channel, phase);
 
   // Fail-loud media gate (SAN-244, extends SAN-153): block `→ approved` with
   // empty required media unless an explicit `media_status:"skipped"` escape is
@@ -358,9 +523,11 @@ export function setChannelPhases(
   const ct = list.find((c) => c.id === contentTaskId);
   if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
 
-  // Fail-loud media gate (SAN-244) — same rule as setChannelPhase, applied to
-  // every channel in the bulk patch that's being moved to "approved".
+  // Fail-loud gates (SAN-238 research + SAN-244 media) — same rules as
+  // setChannelPhase, applied to every channel in the bulk patch. Research gate
+  // fires on `→ clarify-needed`/`→ drafting`; media gate on `→ approved`.
   for (const [channel, p] of Object.entries(patch)) {
+    assertResearchReady(slug, ct, channel, p);
     assertMediaReady(slug, ct, channel, p);
   }
 
