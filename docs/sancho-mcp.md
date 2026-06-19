@@ -32,13 +32,14 @@ Reference: https://code.claude.com/docs/en/mcp
 
 ## Authentication
 
-Production should configure tokens with `SANCHO_MCP_TOKENS`:
+Production tokens are managed from Sancho Admin and stored in the VPS runtime
+environment, not in GitHub. The runtime key is `SANCHO_MCP_TOKENS`:
 
 ```json
 [
   {
     "id": "claude-code-operator",
-    "tokenHash": "sha256-hex-token-hash",
+    "token": "recoverable-plaintext-token",
     "scopes": ["sancho:read", "tasks:read", "yalc:read", "open-design:read", "docs:read", "intelligence:read"],
     "clients": ["client-slug"],
     "brands": ["client-slug"]
@@ -51,6 +52,9 @@ Generate a token hash with:
 ```bash
 printf %s "$SANCHO_MCP_TOKEN" | shasum -a 256
 ```
+
+Use `tokenHash` instead of `token` only when the token should be hash-only. A
+hash-only token can authenticate, but Sancho Admin cannot reveal/copy its value.
 
 Development can use the single-token fallback:
 
@@ -220,14 +224,16 @@ Audit records include timestamp, principal id, token hash, tool name, client slu
 
 ## Staging Deploy
 
-The staging GitHub Environment must define:
+The staging runtime must define:
 
-- Secret `SANCHO_MCP_TOKENS`
 - Variable `SANCHO_MCP_AUDIT_BACKEND=db`
 - Variable `SANCHO_MCP_AUDIT_FAIL_CLOSED=true`
 - Variable `RUN_DB_MIGRATIONS=1`
 
-`deploy-staging.yml` applies those values to the VPS `.env` and runs `npm run db:migrate:mcp` in the `sanchocmo` container when `RUN_DB_MIGRATIONS=1`.
+`SANCHO_MCP_TOKENS` is intentionally not applied from GitHub Environments.
+Sancho Admin writes it to the VPS runtime `.env`. `deploy-staging.yml` still
+applies non-token deploy config and runs `npm run db:migrate:mcp` in the
+`sanchocmo` container when `RUN_DB_MIGRATIONS=1`.
 
 The current staging token is a single shared operator token enabled for all clients (`clients: ["*"]`) with:
 

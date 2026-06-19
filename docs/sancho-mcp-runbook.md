@@ -4,7 +4,7 @@ Operational guide for issuing access, troubleshooting, and safely disabling the 
 
 - **Staging endpoint:** `https://staging.sanchocmo.ai/api/mcp/sancho`
 - **One MCP server, one endpoint.** What a caller can do is decided entirely by the **token** (its scopes + allowed clients).
-- **Repo:** `Growth4U-systems/sanchocmo-openclaw`. Token config lives in the GitHub **Environment** secret `SANCHO_MCP_TOKENS` (per environment: `staging`, `production`).
+- **Repo:** `Growth4U-systems/sanchocmo-openclaw`. Token config is runtime state on the VPS (`.env` / environment secrets), managed from Sancho Admin. Do not store MCP tokens in GitHub.
 
 ---
 
@@ -22,20 +22,20 @@ Dashboard → Admin → Settings → MCP
 La UI separa dos cosas distintas:
 
 - **Sancho MCP**: tokens para `https://app.sanchocmo.ai/api/mcp/sancho`.
-  El formulario **genera este tipo de token**. La UI muestra `id`, scopes,
-  clientes, brands, origen y fingerprint del hash. No muestra tokens existentes
-  en claro: en producción deben vivir como hash SHA-256, por lo que no son
-  recuperables.
+  El formulario **genera este tipo de token** y lo guarda en el runtime del VPS
+  cuando se activa. La UI muestra `id`, scopes, clientes y fingerprint. Los
+  tokens nuevos generados desde Sancho son revelables por admins; los antiguos
+  que vivan solo como hash SHA-256 no son recuperables.
 - **Alarife MCP**: instancias directas por sitio Alarife. La UI lista endpoint,
-  secret env, estado e instalación, pero **no genera ni rota** esos tokens.
+  secret env, estado y valor revelable si el secreto existe, pero **no genera
+  ni rota** esos tokens.
   Growth4U tiene dos instancias Alarife separadas: `growth4u/web` y
   `growth4u/sancho-web`.
 
-Para entregar acceso a Sancho MCP, genera un token nuevo desde la UI; Sancho lo
-muestra una sola vez y guarda solo el hash en `SANCHO_MCP_TOKENS`.
-
-Después de generar/activar un token desde UI, sincroniza el GitHub Environment
-secret `SANCHO_MCP_TOKENS` para que el cambio sobreviva al siguiente deploy.
+Para entregar acceso a Sancho MCP, genera un token nuevo desde la UI. Si lo
+activas, Sancho actualiza `SANCHO_MCP_TOKENS` en el runtime del VPS y en el
+proceso actual. El deploy ya no aplica `SANCHO_MCP_TOKENS` desde GitHub para no
+pisar estos cambios.
 
 ### 1.1 Scope selection
 
@@ -58,17 +58,21 @@ Notes:
 
 ### 1.2 Issue a token
 
+Preferred path: use the Admin UI (`Dashboard → Admin → Settings → MCP`) and generate a Sancho MCP token there.
+
+Manual emergency path:
+
 1. Generate a strong random token (e.g. `openssl rand -hex 32`). **Never commit it; never paste it in a channel.**
 2. Hash it:
    ```bash
    printf %s "$SANCHO_MCP_TOKEN" | shasum -a 256
    ```
-3. Add an entry to the `SANCHO_MCP_TOKENS` JSON array (store **only the hash**):
+3. Add an entry to the `SANCHO_MCP_TOKENS` JSON array in the VPS runtime `.env`. Store `token` if admins must be able to reveal/copy it from the UI later, or `tokenHash` if it should be hash-only:
    ```json
    [
      {
        "id": "claude-code-<person-or-purpose>",
-       "tokenHash": "<sha256-hex>",
+       "token": "<plaintext-token-or-use-tokenHash-instead>",
        "scopes": ["sancho:read", "tasks:read", "yalc:read", "open-design:read", "docs:read", "intelligence:read"],
        "clients": ["growth4u"],
        "brands": ["growth4u", "xhype"]
@@ -76,16 +80,13 @@ Notes:
    ]
    ```
    The `id` is what shows up in the audit log — make it identifiable (per person/purpose).
-4. Push the updated secret and redeploy (the deploy applies it to the VPS `.env`):
-   ```bash
-   printf '%s' "$JSON" | gh secret set SANCHO_MCP_TOKENS --env staging --repo Growth4U-systems/sanchocmo-openclaw
-   ```
-5. Deliver the **plaintext** token to the user via a secure channel (1Password / Bitwarden), never git or chat.
+4. Restart the `sanchocmo` container if you edited `.env` manually. The Admin UI path updates the current process automatically.
+5. Deliver the **plaintext** token via a secure channel (1Password / Bitwarden), never git or chat.
 
 ### 1.3 Rotate / revoke a token
 
-- **Rotate (no downtime):** add the new token's hash to the array *alongside* the old one, deploy, hand out the new token, then remove the old hash and deploy again.
-- **Revoke immediately:** remove that entry's hash from `SANCHO_MCP_TOKENS` and redeploy. The old token then fails auth (`403`).
+- **Rotate (no downtime):** add the new token *alongside* the old one, hand out the new token, then remove the old entry and restart the container if edited manually.
+- **Revoke immediately:** remove that entry from `SANCHO_MCP_TOKENS` and restart the container if edited manually. The old token then fails auth (`403`).
 - A token is just a bearer string → treat a leak like a credential leak: revoke + reissue.
 
 > ⚠️ The current staging token is a **single shared operator token** with `clients: ["*"]` and write scopes. Shared tokens mean audit attributes every call to the same `id`. For production, issue **per-person, per-client** tokens.
@@ -94,16 +95,16 @@ Notes:
 
 ## 2. Kill switches — disable side-effecting tools fast
 
-There is no per-tool toggle in code; the lever is the **token config** + redeploy.
+There is no per-tool toggle in code; the lever is the **runtime token config**.
 
 | Goal | Action |
 |------|--------|
-| Stop task writes, keep reads | Re-issue `SANCHO_MCP_TOKENS` without `tasks:write`, deploy. |
-| Stop chat sends | Remove `sancho:chat`, deploy. Note: this also disables chat thread reads because chat history uses the same scope today. |
+| Stop task writes, keep reads | Re-issue `SANCHO_MCP_TOKENS` without `tasks:write`, update runtime. |
+| Stop chat sends | Remove `sancho:chat`, update runtime. Note: this also disables chat thread reads because chat history uses the same scope today. |
 | Disable the MCP **entirely** | Remove `SANCHO_MCP_TOKENS` (and `SANCHO_MCP_TOKEN`) → endpoint returns `503` for everyone. |
-| Cut off **one** user/token | Remove that entry's hash, deploy → that token gets `403`. |
-| Lock to specific clients | Set `clients` to an explicit slug list (remove `["*"]`), deploy. |
-| Lock document access to specific brands | Set `brands` to an explicit slug list (remove `["*"]`), deploy. |
+| Cut off **one** user/token | Remove that entry, update runtime → that token gets `403`. |
+| Lock to specific clients | Set `clients` to an explicit slug list (remove `["*"]`), update runtime. |
+| Lock document access to specific brands | Set `brands` to an explicit slug list (remove `["*"]`), update runtime. |
 
 All side-effecting tools (`sancho_send_message`, `sancho_create_task`, `sancho_update_task`) already default to **dry-run** and only execute with `dryRun=false` + `confirm=true`, so accidental fire requires an explicit override.
 
@@ -136,10 +137,10 @@ claude mcp add --scope local --transport http sancho-staging \
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | Tools don't appear after install | Session not reloaded | **Close and reopen Cursor / restart the Claude Code session.** |
-| `503` on every call | No token configured server-side | Check `SANCHO_MCP_TOKENS` exists for that environment + was deployed. |
+| `503` on every call | No token configured server-side | Check `SANCHO_MCP_TOKENS` exists in the VPS runtime env. |
 | `401` | No / malformed `Authorization` header | Ensure `--header "Authorization: Bearer <token>"`. |
-| `403 Invalid MCP bearer token` | Wrong token or hash not in `SANCHO_MCP_TOKENS` | Verify the token; confirm its hash is in the deployed secret. |
-| `403 missing required scope` | Token lacks the scope the tool needs | Add the scope (see §1.1) and redeploy. |
+| `403 Invalid MCP bearer token` | Wrong token or hash not in `SANCHO_MCP_TOKENS` | Verify the token; confirm its token/hash entry exists in runtime config. |
+| `403 missing required scope` | Token lacks the scope the tool needs | Add the scope (see §1.1) and update runtime config. |
 | `403 not allowed to access client` | `clientSlug` not in token's `clients` | Add the slug or use a token scoped to it. |
 | Token visible to teammates / in repo | Installed with `--scope project` | Use `--scope local` so the header/token isn't written to repo config. |
 | `sancho-local` not found / refused | Local dev server not running | Start the app on the expected port with the dev env vars (see `sancho-mcp.md`). |
@@ -204,6 +205,6 @@ FROM mcp_audit_events ORDER BY created_at DESC LIMIT 50;
 
 ## 7. Escalation
 
-- **Auth/scope/client errors:** operator can fix via `SANCHO_MCP_TOKENS` + redeploy (§1, §2).
+- **Auth/scope/client errors:** operator can fix via Sancho Admin or `SANCHO_MCP_TOKENS` in the VPS runtime env (§1, §2).
 - **YALC/OD/gateway down:** infra/daemon owner (the MCP only proxies).
 - **Resuming YALC write tools (SAN-68):** blocked on per-tenant YALC daemon isolation — see the SAN-68 comment for the design, must-fixes, and preconditions before re-opening.
