@@ -1,6 +1,4 @@
 import crypto from "crypto";
-import fs from "fs";
-import path from "path";
 import { execFileSync } from "child_process";
 import { and, eq } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
@@ -13,7 +11,8 @@ import {
   miRuns,
   miSources,
 } from "@/db/schema";
-import { BASE, apiHealthFile } from "@/lib/data/paths";
+import { apiHealthFile } from "@/lib/data/paths";
+import { readBrandSecret } from "@/lib/brand-env";
 import { readJSON } from "@/lib/data/json-io";
 import {
   createMeetingIntelligenceRun,
@@ -60,28 +59,10 @@ function checksum(text: string) {
   return crypto.createHash("sha256").update(text).digest("hex");
 }
 
-function parseEnvFile(filePath: string): Record<string, string> {
-  try {
-    const vars: Record<string, string> = {};
-    const content = fs.readFileSync(filePath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      vars[trimmed.slice(0, eq)] = trimmed.slice(eq + 1).replace(/^["']|["']$/g, "");
-    }
-    return vars;
-  } catch {
-    return {};
-  }
-}
-
-function getNotionKey() {
-  const root = path.join(BASE, "..");
-  const envLocal = parseEnvFile(path.join(root, ".env.local"));
-  const env = parseEnvFile(path.join(root, ".env"));
-  return process.env.NOTION_API_KEY || envLocal.NOTION_API_KEY || env.NOTION_API_KEY || "";
+// Per-client Notion token ({SLUG}_NOTION_API_KEY in brand/{slug}/.env), falling back
+// to the workspace/global NOTION_API_KEY. Same precedence as the other connectors.
+function getNotionKey(slug: string) {
+  return readBrandSecret(slug, "notion", "API_KEY") || "";
 }
 
 function getGogAccount() {
@@ -394,10 +375,10 @@ async function fetchNotionPageText(pageId: string, key: string) {
   return normalizeText(lines.join("\n"));
 }
 
-async function fetchNotionMeetings(source: SourceRow, limit: number, errors: string[]) {
-  const key = getNotionKey();
+async function fetchNotionMeetings(source: SourceRow, limit: number, errors: string[], slug: string) {
+  const key = getNotionKey(slug);
   if (!key) {
-    errors.push("NOTION_API_KEY not configured.");
+    errors.push(`Notion no conectado para "${slug}".`);
     return [];
   }
   if (!source.sourceId) return [];
@@ -766,7 +747,7 @@ export async function runMeetingIntelligenceSync(input: {
       if (source.kind === "google_drive") {
         fetched.push(...await fetchDriveMeetings(source, limit, errors));
       } else if (source.kind === "notion_database") {
-        fetched.push(...await fetchNotionMeetings(source, limit, errors));
+        fetched.push(...await fetchNotionMeetings(source, limit, errors, input.slug));
       }
     }
     metrics.fetched = fetched.length;
