@@ -545,3 +545,33 @@ export const intakeSubmissions = pgTable("intake_submissions", {
 }, (table) => [
   index("intake_submissions_slug_idx").on(table.slug),
 ]);
+
+// ============================================================
+// Metric snapshots (SAN-263 · Métricas v2) — time-series mirror of
+// brand/<slug>/metrics/<date>.json. One tidy row per
+// slug/date/source/metric/dimensions; the JSON files stay source of truth.
+// ============================================================
+
+export const metricSnapshots = pgTable("metric_snapshots", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  metricDate: text("metric_date").notNull(),
+  source: text("source").notNull(),
+  metricName: text("metric_name").notNull(),
+  value: real("value"),
+  valueText: text("value_text"),
+  dimensions: jsonb("dimensions").$type<Record<string, string> | null>(),
+  dimsKey: text("dims_key").notNull().default(""),
+  grain: text("grain").notNull().default("day"),
+  collectedAt: timestamp("collected_at"),
+  ingestRunId: text("ingest_run_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  // Uniqueness is the deterministic hashed `id` PK (collision-negligible); no
+  // raw-dims_key unique index, which could exceed Postgres' btree index-row
+  // size limit on long GSC/GA4 URL/query dimensions (Codex review).
+  index("metric_snapshots_slug_date_idx").on(table.slug, table.metricDate),
+  index("metric_snapshots_slug_source_metric_idx").on(table.slug, table.source, table.metricName),
+  index("metric_snapshots_slug_source_date_idx").on(table.slug, table.source, table.metricDate),
+]);

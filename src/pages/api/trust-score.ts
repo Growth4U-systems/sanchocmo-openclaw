@@ -16,6 +16,7 @@ import path from "path";
 import { compose, withErrorHandler, withMethod, withSlugAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
+import { ingestSourceMetrics } from "@/lib/data/metrics-snapshots";
 import { serializeFrontmatter } from "@/lib/data/markdown-frontmatter";
 import { loadClient } from "@/lib/data/clients";
 import {
@@ -54,12 +55,13 @@ function persistDailyMetric(slug: string, metricsDir: string, result: CompareRes
   }>(dailyFile, {});
   daily.sources = daily.sources || {};
   const p = result.primary.pillars;
+  const metrics = [
+    { name: "trust_score", value: result.primary.trust_score, date: today },
+    ...TRUST_PILLAR_KEYS.map((k) => ({ name: k, value: p?.[k]?.score ?? null, date: today })),
+  ];
   daily.sources.trust_score = {
     status: "ok",
-    metrics: [
-      { name: "trust_score", value: result.primary.trust_score, date: today },
-      ...TRUST_PILLAR_KEYS.map((k) => ({ name: k, value: p?.[k]?.score ?? null, date: today })),
-    ],
+    metrics,
     gap: {
       competitors: result.competitors.map((c) => ({
         brand: c.brand_name,
@@ -71,6 +73,9 @@ function persistDailyMetric(slug: string, metricsDir: string, result: CompareRes
   daily.slug = daily.slug || slug;
   daily.collectedAt = daily.collectedAt || new Date().toISOString();
   writeJSON(dailyFile, daily);
+  // Best-effort mirror into the metric_snapshots time-series (SAN-263). Never
+  // blocks or breaks the JSON write; no-op when DATABASE_URL is unset.
+  void ingestSourceMetrics(slug, "trust_score", metrics, today).catch(() => {});
 }
 
 const TRUST_PILLAR_LABELS: Record<string, string> = {
