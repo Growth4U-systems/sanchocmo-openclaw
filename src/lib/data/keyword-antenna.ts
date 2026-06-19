@@ -6,16 +6,15 @@
 // keyword candidates, shape them into enriched `seo` Ideas, and read/write the
 // blog Idea queue. The MCP tool calls it in-process; the skill calls it over HTTP
 // via /api/content-engine/keyword-antenna. One implementation, two surfaces.
-import path from "node:path";
 import { readJSON, writeJSON } from "./json-io";
-import { BASE } from "./paths";
+import { contentIdeaQueueFile } from "./paths";
 
 // ── Input shapes (the antenna's discovery step fills these) ──────────────────
 export type DiscoveryMode = "identity" | "six-circles" | "competitor-gap" | "gsc-nearmiss" | "demand";
 export type KeywordIntent = "informational" | "commercial" | "transactional" | "navigational";
 
 export interface KeywordDemand {
-  volume?: number | null; // monthly searches (DataForSEO) — null until connected
+  volume?: number | null; // monthly searches (DataForSEO) — null/0 = unmeasured
   gscImpressions?: number | null;
   trend?: "up" | "flat" | "down" | null;
 }
@@ -93,7 +92,9 @@ export interface SeoEnrichment {
 }
 
 const STRATEGIC_FLOOR = 50; // declared targets never score below this
-const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+// Non-finite-safe: NaN/Infinity (from a bad agent-supplied number) → 0, so they
+// can never poison the multiplicative score or defeat the strategic floor.
+const clamp01 = (n: number) => Math.max(0, Math.min(1, Number.isFinite(n) ? n : 0));
 
 // ── Pure scoring ─────────────────────────────────────────────────────────────
 function bofuDefault(bofuCategory?: string): number {
@@ -105,11 +106,12 @@ function bofuDefault(bofuCategory?: string): number {
 }
 
 function demandFactor(d?: KeywordDemand | null): number {
-  // log scale: ~100/mo → 0.44, ~1k → 0.67, ~10k → 0.89
-  const n =
-    typeof d?.volume === "number" ? d.volume : typeof d?.gscImpressions === "number" ? d.gscImpressions : null;
-  if (n === null) return 0.4; // unknown demand (v1 native, no paid data) → modest
-  return clamp01(Math.log10(Math.max(1, n)) / 4.5);
+  const raw = typeof d?.volume === "number" ? d.volume : typeof d?.gscImpressions === "number" ? d.gscImpressions : null;
+  // 0 / negative / non-finite = "no data" (DataForSEO reports 0 for unmeasured
+  // long-tail) → treat as unknown demand (0.4), NOT a hard zero that buries it.
+  const n = raw !== null && Number.isFinite(raw) && raw > 0 ? raw : null;
+  if (n === null) return 0.4;
+  return clamp01(Math.log10(Math.max(1, n)) / 4.5); // ~100/mo → 0.44, ~1k → 0.67, ~10k → 0.89
 }
 
 function trendMultiplier(d?: KeywordDemand | null): number {
@@ -119,8 +121,10 @@ function trendMultiplier(d?: KeywordDemand | null): number {
 function winnabilityFactor(w?: KeywordWinnability | null): number {
   if (!w) return 0.5;
   let f = 0.5;
-  if (typeof w.kdGap === "number") f = clamp01(0.5 + w.kdGap / 100); // +gap = favorable
-  if (typeof w.currentRank === "number" && w.currentRank >= 8 && w.currentRank <= 20) f = Math.max(f, 0.8); // page-2 near-miss
+  if (typeof w.kdGap === "number" && Number.isFinite(w.kdGap)) f = clamp01(0.5 + w.kdGap / 100); // +gap = favorable
+  if (typeof w.currentRank === "number" && Number.isFinite(w.currentRank) && w.currentRank >= 8 && w.currentRank <= 20) {
+    f = Math.max(f, 0.8); // page-2 near-miss
+  }
   return clamp01(f);
 }
 
@@ -139,7 +143,7 @@ export function scoreAiOpportunity(ai?: KeywordAiCitability | null): number {
 
 export function isProgrammaticRisk(c: KeywordCandidate): boolean {
   if (/programmatic/i.test(c.recommendedPageType || "")) return true;
-  const volume = typeof c.demand?.volume === "number" ? c.demand!.volume! : 0;
+  const volume = typeof c.demand?.volume === "number" && Number.isFinite(c.demand.volume) ? c.demand.volume : 0;
   // high volume + weak winnability + no brand anchor → thin-programmatic risk
   return volume > 5000 && winnabilityFactor(c.winnability) < 0.4 && !c.strategicFlag && !c.pillarId;
 }
@@ -150,12 +154,14 @@ export function scoreKeyword(c: KeywordCandidate, opts?: { now?: string }): Scor
   const demand = clamp01(demandFactor(c.demand) * trendMultiplier(c.demand));
   const fit = strategicFit(c);
 
+  // Each factor is clamped to 0..1, so the product ×100 is already in 0..100;
+  // the strategic floor (≤100) keeps it bounded — no extra clamp needed.
   let priority = businessValue * winnability * demand * fit * 100; // multiplicative
   if (c.strategicFlag) priority = Math.max(priority, STRATEGIC_FLOOR);
 
   return {
     ...c,
-    priorityScore: Math.round(clamp01(priority / 100) * 100),
+    priorityScore: Math.round(priority),
     aiOpportunity: scoreAiOpportunity(c.aiCitability),
     programmaticRiskFlag: isProgrammaticRisk(c),
     lastScoredAt: opts?.now ?? new Date().toISOString(),
@@ -163,14 +169,28 @@ export function scoreKeyword(c: KeywordCandidate, opts?: { now?: string }): Scor
 }
 
 // ── Shaping ──────────────────────────────────────────────────────────────────
+// Deterministic 32-bit string hash → base36 (~6 chars). Used only to disambiguate
+// slugs, never for security.
+function shortHash(s: string): string {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
 export function keywordSlug(keyword: string): string {
-  return keyword
+  const norm = keyword
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[̀-ͯ]/g, "") // strip combining diacritics
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
+    .replace(/^-+|-+$/g, "");
+  const truncated = norm.slice(0, 48);
+  // Append/fallback to a hash of the FULL keyword when the readable slug is empty
+  // (non-latin keywords) or was truncated, so two distinct keywords never collide
+  // on the same slug/id/dedupe-key.
+  if (!truncated) return `x${shortHash(keyword)}`;
+  if (norm.length > 48) return `${truncated}-${shortHash(keyword)}`;
+  return truncated;
 }
 
 function fallbackAngleDraft(k: ScoredKeyword): string {
@@ -187,7 +207,7 @@ export function toSeoIdea(k: ScoredKeyword, opts: { now?: string }): SeoIdeaReco
   const slug = keywordSlug(k.keyword);
   const signalId = `kw-${date}-${slug}`;
   return {
-    id: `idea-${date}-${signalId}`,
+    id: `idea-${date}-kw-${slug}`,
     type: "content",
     status: "New",
     title: k.keyword,
@@ -221,15 +241,16 @@ export function toSeoIdea(k: ScoredKeyword, opts: { now?: string }): SeoIdeaReco
   };
 }
 
+// Merge candidates that normalize to the same keyword (seen via ≥2 modes ranks up).
 export function dedupeCandidates(cands: KeywordCandidate[]): KeywordCandidate[] {
   const seen = new Map<string, KeywordCandidate>();
   for (const c of cands) {
+    if (!c.keyword || !c.keyword.trim()) continue; // drop blanks
     const key = keywordSlug(c.keyword);
     const prev = seen.get(key);
     if (!prev) {
       seen.set(key, c);
     } else {
-      // merge discoveredBy (keyword seen via ≥2 modes ranks up), keep richest fields
       const discoveredBy = Array.from(new Set([...(prev.discoveredBy ?? []), ...(c.discoveredBy ?? [])]));
       seen.set(key, { ...prev, ...c, discoveredBy, strategicFlag: prev.strategicFlag || c.strategicFlag });
     }
@@ -237,11 +258,13 @@ export function dedupeCandidates(cands: KeywordCandidate[]): KeywordCandidate[] 
   return Array.from(seen.values());
 }
 
-// ── Queue read/promote: pure cores + thin IO wrappers ───────────────────────
-function ideaQueueFile(slug: string): string {
-  return path.join(BASE, "brand", slug, "content", "idea-queue.json");
+// Dedupe + score in one pass — the shared "score" step used by BOTH surfaces
+// (MCP tool + HTTP endpoint) so they can never drift.
+export function scoreCandidates(candidates: KeywordCandidate[], opts: { now?: string } = {}): ScoredKeyword[] {
+  return dedupeCandidates(candidates).map((c) => scoreKeyword(c, opts));
 }
 
+// ── Queue read/promote: pure cores + thin IO wrappers ───────────────────────
 function isKeywordAntennaIdea(raw: unknown): raw is SeoIdeaRecord {
   return !!raw && typeof raw === "object" && (raw as { source?: string }).source === "keyword-antenna";
 }
@@ -270,8 +293,9 @@ export interface PromoteResult {
   total: number; // queue length after write
 }
 
-// Pure: append scored keywords onto an existing queue, deduped by keyword against
-// prior keyword-antenna ideas. Returns the next queue + what changed.
+// Pure: append scored keywords onto an existing queue. Every input ends up EITHER
+// created OR skipped-with-a-reason (no silent loss): blanks, duplicates within the
+// batch, and keywords already in the queue are each accounted for.
 export function appendScoredToQueue(
   queue: unknown[],
   scored: ScoredKeyword[],
@@ -281,14 +305,21 @@ export function appendScoredToQueue(
   const existingKw = new Set(
     base.filter(isKeywordAntennaIdea).map((i) => keywordSlug(i.seo?.keyword ?? i.title ?? "")),
   );
+  const seenThisRun = new Set<string>();
   const created: SeoIdeaRecord[] = [];
   const skipped: Array<{ keyword: string; reason: string }> = [];
-  for (const k of dedupeScored(scored)) {
-    const slug = keywordSlug(k.keyword);
-    if (!slug) {
-      skipped.push({ keyword: k.keyword, reason: "empty-slug" });
+  for (const k of scored) {
+    const kw = (k.keyword || "").trim();
+    if (!kw) {
+      skipped.push({ keyword: k.keyword, reason: "empty-keyword" });
       continue;
     }
+    const slug = keywordSlug(kw);
+    if (seenThisRun.has(slug)) {
+      skipped.push({ keyword: k.keyword, reason: "duplicate-in-batch" });
+      continue;
+    }
+    seenThisRun.add(slug);
     if (existingKw.has(slug)) {
       skipped.push({ keyword: k.keyword, reason: "already-in-queue" });
       continue;
@@ -301,48 +332,22 @@ export function appendScoredToQueue(
   return { next: base, result: { created, skipped } };
 }
 
-function dedupeScored(scored: ScoredKeyword[]): ScoredKeyword[] {
-  const seen = new Set<string>();
-  const out: ScoredKeyword[] = [];
-  for (const k of scored) {
-    const slug = keywordSlug(k.keyword);
-    if (seen.has(slug)) continue;
-    seen.add(slug);
-    out.push(k);
-  }
-  return out;
-}
-
 // IO: read the blog idea-queue, return scored keyword opportunities.
 export function listKeywordOpportunities(slug: string, filters: KeywordOpportunityFilters = {}): SeoIdeaRecord[] {
-  const queue = readJSON<unknown[]>(ideaQueueFile(slug), []);
+  const queue = readJSON<unknown[]>(contentIdeaQueueFile(slug), []);
   return selectKeywordOpportunities(queue, filters);
 }
 
-// IO: append enriched `seo` Ideas to the blog idea-queue (append-only, dedupe,
-// verify-after-write). The shared write path used by both the MCP tool and the
-// /api/content-engine/keyword-antenna endpoint (the skill's HTTP face).
+// IO: append enriched `seo` Ideas to the blog idea-queue (append-only). Refuses to
+// overwrite a non-array queue file (drift/corruption) rather than silently clobber
+// it. The shared write path used by both the MCP tool and the HTTP endpoint.
 export function promoteKeywordsToIdeas(slug: string, scored: ScoredKeyword[], opts: { now?: string } = {}): PromoteResult {
-  const file = ideaQueueFile(slug);
+  const file = contentIdeaQueueFile(slug);
   const queue = readJSON<unknown[]>(file, []);
-  const before = Array.isArray(queue) ? queue.length : 0;
-  const { next, result } = appendScoredToQueue(queue, scored, opts);
-  if (result.created.length > 0) {
-    writeJSON(file, next);
-    const after = readJSON<unknown[]>(file, []).length; // verify-after-write
-    if (after < before + result.created.length) {
-      throw new Error(`keyword-antenna: idea-queue write verification failed (before=${before}, after=${after})`);
-    }
+  if (!Array.isArray(queue)) {
+    throw new Error(`keyword-antenna: ${file} is not a JSON array (refusing to overwrite)`);
   }
+  const { next, result } = appendScoredToQueue(queue, scored, opts);
+  if (result.created.length > 0) writeJSON(file, next);
   return { ...result, total: next.length };
-}
-
-// Convenience: score + promote in one call (the MCP write path).
-export function scoreAndPromote(slug: string, candidates: KeywordCandidate[], opts: { now?: string } = {}): {
-  scored: ScoredKeyword[];
-  promote: PromoteResult;
-} {
-  const scored = dedupeCandidates(candidates).map((c) => scoreKeyword(c, opts));
-  const promote = promoteKeywordsToIdeas(slug, scored, opts);
-  return { scored, promote };
 }

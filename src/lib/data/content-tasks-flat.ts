@@ -7,6 +7,10 @@ import type { ContentTask, ContentTaskStatus } from "@/types";
 const IDEA_DISCOVERY_FIELDS = [
   "title", "pillar_id", "content_type", "target_channel",
   "signal", "angle_draft", "pov_confidence", "signal_type", "source_signals",
+  // Keyword Antenna (SAN-260) — carry the enriched seo block + source/list into the
+  // unified pool so future surfaces can read priorityScore / aiOpportunity /
+  // programmaticRiskFlag (today only the dedicated list endpoint reads them).
+  "seo", "source", "list",
   "dispatch_date", "dispatch_slot",
   // Repurposing lineage (SAN-141) — written by content-atomizer on the idea.
   "derived_from",

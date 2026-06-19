@@ -14,8 +14,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as z from "zod/v4";
 import {
-  scoreKeyword,
-  dedupeCandidates,
+  scoreCandidates,
   promoteKeywordsToIdeas,
   listKeywordOpportunities,
   type KeywordCandidate,
@@ -108,7 +107,7 @@ export function registerKeywordAntennaTools(server: McpServer, options: Register
     async (input) =>
       options.run(RUN_KEYWORD_ANTENNA_TOOL, input.clientSlug, async () => {
         await options.assertWriteAccess(input.clientSlug);
-        const scored = dedupeCandidates(input.candidates as KeywordCandidate[]).map((c) => scoreKeyword(c));
+        const scored = scoreCandidates(input.candidates as KeywordCandidate[]);
         if (input.dryRun !== false || input.confirm !== true) {
           return options.jsonResult({
             ok: true,

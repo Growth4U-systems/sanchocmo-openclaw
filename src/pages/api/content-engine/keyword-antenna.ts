@@ -14,13 +14,19 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import {
-  scoreKeyword,
-  dedupeCandidates,
+  scoreCandidates,
   promoteKeywordsToIdeas,
   listKeywordOpportunities,
   type KeywordCandidate,
   type DiscoveryMode,
 } from "@/lib/data/keyword-antenna";
+
+/** Numeric query param → number, or undefined for missing/non-finite (e.g. ?limit=abc). */
+function numParam(v: string | string[] | undefined): number | undefined {
+  if (v === undefined) return undefined;
+  const n = Number(Array.isArray(v) ? v[0] : v);
+  return Number.isFinite(n) ? n : undefined;
+}
 
 export default withErrorHandler(async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "GET") {
@@ -28,9 +34,9 @@ export default withErrorHandler(async (req: NextApiRequest, res: NextApiResponse
     if (!slug) return res.status(400).json({ error: "Missing slug" });
     const ideas = listKeywordOpportunities(slug, {
       pillarId: req.query.pillarId ? String(req.query.pillarId) : undefined,
-      minPriority: req.query.minPriority ? Number(req.query.minPriority) : undefined,
+      minPriority: numParam(req.query.minPriority),
       mode: req.query.mode ? (String(req.query.mode) as DiscoveryMode) : undefined,
-      limit: req.query.limit ? Number(req.query.limit) : undefined,
+      limit: numParam(req.query.limit),
     });
     return res.status(200).json({ ok: true, count: ideas.length, ideas });
   }
@@ -45,7 +51,7 @@ export default withErrorHandler(async (req: NextApiRequest, res: NextApiResponse
     if (!Array.isArray(candidates) || candidates.length === 0) {
       return res.status(400).json({ error: "Missing candidates[]" });
     }
-    const scored = dedupeCandidates(candidates).map((c) => scoreKeyword(c));
+    const scored = scoreCandidates(candidates);
     if (action === "score") {
       return res.status(200).json({ ok: true, action: "score", scored });
     }

@@ -52,13 +52,16 @@ function todayKey(): string {
 }
 
 function classifySignalSource(idea: Idea): string {
-  // Heuristic: derive what input cron produced this idea from source_signals ids.
-  const ids = idea.source_signals || [];
-  const joined = ids.join(",").toLowerCase();
-  if (joined.includes("news")) return "news";
-  if (joined.includes("paa")) return "paa";
-  if (joined.includes("kw") || joined.includes("keyword")) return "keywords";
-  if (joined.includes("creator") || joined.includes("competitor") || joined.includes("compet")) return "competitors";
+  // Classify by the signal id's TYPE PREFIX (`{type}-{date}-{slug}`), not a
+  // substring anywhere — otherwise a keyword slug like "newsletter"/"competitor"
+  // would match "news"/"compet" and land in the wrong Fuente filter.
+  const prefix = ((idea.source_signals || [])[0] || "").toLowerCase().split("-")[0];
+  if (prefix === "news") return "news";
+  if (prefix === "paa") return "paa";
+  if (prefix === "kw" || prefix === "keyword" || prefix === "keywords") return "keywords";
+  if (prefix === "creator" || prefix === "creators" || prefix === "competitor" || prefix === "competitors") {
+    return "competitors";
+  }
   return "other";
 }
 

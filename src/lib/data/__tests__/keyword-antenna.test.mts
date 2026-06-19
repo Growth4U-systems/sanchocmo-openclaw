@@ -112,3 +112,46 @@ test("selectKeywordOpportunities — filters to antenna ideas, sorts by priority
   assert.deepEqual(ka.selectKeywordOpportunities(queue, { pillarId: "P1", minPriority: 50 }).map((i) => i.seo.keyword), ["b"]);
   assert.deepEqual(ka.selectKeywordOpportunities(queue, { mode: "identity", limit: 1 }).map((i) => i.seo.keyword), ["c"]);
 });
+
+test("demandFactor — volume 0 (DataForSEO 'no data') scores like unknown, not a hard zero", () => {
+  const zero = ka.scoreKeyword({ keyword: "a long tail term", pillarId: "P1", demand: { volume: 0 } }, { now: NOW });
+  const unknown = ka.scoreKeyword({ keyword: "a long tail term", pillarId: "P1" }, { now: NOW });
+  assert.equal(zero.priorityScore, unknown.priorityScore);
+  assert.ok(zero.priorityScore > 0, `volume 0 should not bury the keyword, got ${zero.priorityScore}`);
+});
+
+test("scoreKeyword — non-finite inputs don't poison the score or defeat the floor", () => {
+  const s = ka.scoreKeyword(
+    { keyword: "x", strategicFlag: true, demand: { volume: NaN }, winnability: { kdGap: NaN } },
+    { now: NOW },
+  );
+  assert.ok(Number.isFinite(s.priorityScore), "priorityScore must be finite");
+  assert.ok(s.priorityScore >= 50, `floor still applies, got ${s.priorityScore}`);
+});
+
+test("keywordSlug — non-latin keywords get a stable, non-empty, distinct slug", () => {
+  const a = ka.keywordSlug("中文关键词");
+  const b = ka.keywordSlug("日本語のキーワード");
+  assert.ok(a.length > 0 && b.length > 0, "never empty");
+  assert.notEqual(a, b, "distinct keywords must not both slug to ''");
+  assert.equal(a, ka.keywordSlug("中文关键词"), "deterministic");
+});
+
+test("keywordSlug — two long keywords sharing a 48-char prefix don't collide", () => {
+  const a = ka.keywordSlug("best project management software for remote engineering teams 2026");
+  const b = ka.keywordSlug("best project management software for remote engineering squads 2026");
+  assert.notEqual(a, b);
+});
+
+test("appendScoredToQueue — every input is accounted for (created or skipped), no silent loss", () => {
+  const scored = [
+    ka.scoreKeyword({ keyword: "alpha" }, { now: NOW }),
+    ka.scoreKeyword({ keyword: "Alpha" }, { now: NOW }), // dup within the batch
+    ka.scoreKeyword({ keyword: "   " }, { now: NOW }), // blank
+    ka.scoreKeyword({ keyword: "beta" }, { now: NOW }),
+  ];
+  const { result } = ka.appendScoredToQueue([], scored, { now: NOW });
+  assert.equal(result.created.length + result.skipped.length, scored.length, "nothing vanishes");
+  assert.equal(result.created.length, 2);
+  assert.deepEqual(result.created.map((i) => i.seo.keyword).sort(), ["alpha", "beta"]);
+});
