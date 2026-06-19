@@ -3,6 +3,8 @@ name: content-engine-setup
 description: "Populates Content Engine config files with client-specific data and writes a narrative setup.md explaining what was set up and which crons consume it. The infrastructure (folders, YAML templates, cron jobs) already exists — this skill only FILLS IN the client-editable fields and DOCUMENTS what was done."
 context_required:
 - brand/{slug}/content/content-pillars.md
+- brand/{slug}/go-to-market/keyword-plan.md
+- brand/{slug}/go-to-market/keyword-clusters.json
 - brand/{slug}/content/pov-bank.json
 - brand/{slug}/company-brief/company-brief.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
@@ -30,12 +32,13 @@ context_writes:
 
 ## ⚠️ Prerequisite check (ANTES de ejecutar)
 
-Esta skill se ejecuta **EL ÚLTIMO** del setup. Solo debe correr si los 3 anteriores están completed:
+Esta skill se ejecuta **EL ÚLTIMO** del setup. Solo debe correr si los anteriores están completed:
 
 1. Lee `brand/{slug}/projects/P14-Content-Engine/tasks.json`
 2. Verifica que existen y están `status: completed`:
    - La task con `skill: "content-strategy"` (P14-T01)
    - La task con `skill: "content-pillars"` (P14-T02)
+   - **La task con `skill: "keyword-research"` (P14-T07) ← imprescindible (produce el keyword-plan validado que alimenta keywords-seed)**
    - **La task con `skill: "pov-bank-builder"` (P14-T04) ← imprescindible**
 3. Si alguna NO está completed:
    - **NO ejecutes la skill**
@@ -157,6 +160,7 @@ Editable via MC UI → Inputs → Cadencia. Same shape as before:
 ### 1. Read inputs
 
 - `content-pillars.md` — names, pain_origin, expertise, related_topics
+- `keyword-plan.md` + `keyword-clusters.json` — the **VALIDATED keyword strategy** (clusters por pillar, intent, priority) que produjo `keyword-research` (T07). **Esta es la fuente de `keywords_seed`.**
 - `company-brief` — sector, business model
 - `ecps` — ICP clusters
 - `sources.json` — existing profiles (may be empty for new brands)
@@ -168,7 +172,7 @@ For each `P{n}.yml` in news-prompts/, paa-queries/, keywords-seed/:
 - Set `pillar_name` from content-pillars.md
 - For news: write a SINGLE rich `prompt` (not an array of prompts) covering the pillar's topics + sector context
 - For PAA: write a SINGLE `prompt` describing the DataforSEO query for that pillar
-- For keywords: 5-8 BOFU-first seeds in `keywords_seed[]`
+- For keywords: **deriva `keywords_seed[]` del `keyword-clusters.json` / `keyword-plan.md` validado** (T07) — toma los hubs + spokes de mayor prioridad del cluster de ese pillar, BOFU-first. **NO inventes seeds genéricos cuando existe el plan validado**; cae a 5-8 BOFU-first seeds propios SOLO si no hay keyword plan presente.
 
 DO NOT touch: `pillar_id`, file structure.
 
