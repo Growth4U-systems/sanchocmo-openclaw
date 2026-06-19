@@ -5,6 +5,11 @@ import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { parseEnvContent, upsertEnvContent } from "@/lib/env-file";
 import {
+  buildAlarifeMcpInstallProfile,
+  listAlarifeMcpInstances,
+  publicAlarifeMcpInstance,
+} from "@/lib/mcp/alarife";
+import {
   MCP_SCOPES,
   appendMcpTokenConfig,
   generateMcpToken,
@@ -59,22 +64,48 @@ function toStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
+function listAlarifeSummaries() {
+  return listAlarifeMcpInstances().map((instance) => ({
+    ...publicAlarifeMcpInstance(instance),
+    mcpServerName: `alarife-${instance.clientSlug}-${instance.alarifeSlug}`,
+    installProfile: buildAlarifeMcpInstallProfile(instance),
+    tokenReturned: false,
+  }));
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
 
   if (req.method === "GET") {
     const raw = readRuntimeMcpTokensRaw();
+    const tokens = listMcpTokenSummaries({
+      ...process.env,
+      ...(raw ? { SANCHO_MCP_TOKENS: raw } : {}),
+    });
+    const alarifeInstances = listAlarifeSummaries();
+
     return res.status(200).json({
       ok: true,
       envFile: ENV_FILE,
+      sanchoEndpoint: "/api/mcp/sancho",
       availableScopes: ISSUABLE_SCOPES,
       defaultScopes: DEFAULT_SCOPES,
       configured: Boolean(process.env.SANCHO_MCP_TOKENS || process.env.SANCHO_MCP_TOKEN || raw),
-      tokens: listMcpTokenSummaries({
-        ...process.env,
-        ...(raw ? { SANCHO_MCP_TOKENS: raw } : {}),
-      }),
-      note: "Existing MCP bearer tokens are not recoverable from hashes. Generate a new token to reveal it once.",
+      tokens,
+      sancho: {
+        endpoint: "/api/mcp/sancho",
+        configured: tokens.length > 0,
+        tokens,
+        note: "Generate here only creates Sancho MCP bearer tokens.",
+      },
+      alarife: {
+        deliveryEndpoint: "/api/alarife/mcp-token",
+        count: alarifeInstances.length,
+        configuredCount: alarifeInstances.filter((instance) => instance.secretConfigured).length,
+        instances: alarifeInstances,
+        note: "Alarife MCP tokens are existing per-site secrets. This screen lists them but does not rotate or replace them.",
+      },
+      note: "Existing MCP bearer tokens are not recoverable from hashes. Generate a new Sancho token to reveal it once.",
     });
   }
 

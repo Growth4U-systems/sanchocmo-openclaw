@@ -19,10 +19,20 @@ Dashboard → Admin → Settings → MCP
 /dashboard/admin/settings?tab=mcp
 ```
 
-La UI muestra `id`, scopes, clientes, brands, origen y fingerprint del hash. No
-muestra tokens existentes en claro: en producción deben vivir como hash SHA-256,
-por lo que no son recuperables. Para entregar acceso, genera un token nuevo desde
-la UI; Sancho lo muestra una sola vez y guarda solo el hash en `SANCHO_MCP_TOKENS`.
+La UI separa dos cosas distintas:
+
+- **Sancho MCP**: tokens para `https://app.sanchocmo.ai/api/mcp/sancho`.
+  El formulario **genera este tipo de token**. La UI muestra `id`, scopes,
+  clientes, brands, origen y fingerprint del hash. No muestra tokens existentes
+  en claro: en producción deben vivir como hash SHA-256, por lo que no son
+  recuperables.
+- **Alarife MCP**: instancias directas por sitio Alarife. La UI lista endpoint,
+  secret env, estado e instalación, pero **no genera ni rota** esos tokens.
+  Growth4U tiene dos instancias Alarife separadas: `growth4u/web` y
+  `growth4u/sancho-web`.
+
+Para entregar acceso a Sancho MCP, genera un token nuevo desde la UI; Sancho lo
+muestra una sola vez y guarda solo el hash en `SANCHO_MCP_TOKENS`.
 
 Después de generar/activar un token desde UI, sincroniza el GitHub Environment
 secret `SANCHO_MCP_TOKENS` para que el cambio sobreviva al siguiente deploy.

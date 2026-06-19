@@ -61,6 +61,20 @@ test("delivers the token for an allowed client/alarife", () => {
   assert.equal(delivery.secretEnvKey, "GROWTH4U_ALARIFE_WEB_MCP_TOKEN");
 });
 
+test("keeps Sancho web as a separate Alarife instance inside Growth4U", () => {
+  const growth4uInstances = alarife.listAlarifeMcpInstances("growth4u");
+
+  assert.deepEqual(
+    growth4uInstances.map((instance) => instance.alarifeSlug).sort(),
+    ["sancho-web", "web"],
+  );
+
+  const sanchoWeb = alarife.getAlarifeMcpInstance("growth4u", "sancho-web");
+  assert.equal(sanchoWeb.clientSlug, "growth4u");
+  assert.equal(sanchoWeb.secretEnvKey, "GROWTH4U_ALARIFE_SANCHO_WEB_MCP_TOKEN");
+  assert.match(sanchoWeb.description || "", /dentro del cliente Growth4U/);
+});
+
 test("fails closed for a client outside the token scope", () => {
   assert.throws(
     () => alarife.deliverAlarifeMcpToken(principal({ clients: ["growth4u"] }), "paymatico", "web"),
