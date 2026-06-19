@@ -644,3 +644,53 @@ export const proposalOutcomes = pgTable("proposal_outcomes", {
   slugIdx: index("proposal_outcomes_slug_idx").on(table.slug),
   proposalIdx: index("proposal_outcomes_proposal_idx").on(table.proposalId),
 }));
+
+// ============================================================
+// Metric snapshots (SAN-263 · Métricas v2) — time-series mirror of
+// brand/<slug>/metrics/<date>.json. One tidy row per
+// slug/date/source/metric/dimensions; the JSON files stay source of truth.
+// ============================================================
+
+export const metricSnapshots = pgTable("metric_snapshots", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  metricDate: text("metric_date").notNull(),
+  source: text("source").notNull(),
+  metricName: text("metric_name").notNull(),
+  value: real("value"),
+  valueText: text("value_text"),
+  dimensions: jsonb("dimensions").$type<Record<string, string> | null>(),
+  dimsKey: text("dims_key").notNull().default(""),
+  grain: text("grain").notNull().default("day"),
+  collectedAt: timestamp("collected_at"),
+  ingestRunId: text("ingest_run_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  // Uniqueness is the deterministic hashed `id` PK (collision-negligible); no
+  // raw-dims_key unique index, which could exceed Postgres' btree index-row
+  // size limit on long GSC/GA4 URL/query dimensions (Codex review).
+  index("metric_snapshots_slug_date_idx").on(table.slug, table.metricDate),
+  index("metric_snapshots_slug_source_metric_idx").on(table.slug, table.source, table.metricName),
+  index("metric_snapshots_slug_source_date_idx").on(table.slug, table.source, table.metricDate),
+]);
+
+// ============================================================
+// Metric dashboards (SAN-265 · Métricas v2) — versioned dashboard definition
+// (presentation + plan + custom), one row per slug, with an append-only
+// version_history of full snapshots for revert. Modeled on POV Bank.
+// ============================================================
+
+export const metricDashboards = pgTable("metric_dashboards", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  version: integer("version").notNull().default(1),
+  definition: jsonb("definition").$type<Record<string, unknown>>().notNull().default({}),
+  versionHistory: jsonb("version_history").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  status: text("status").notNull().default("active"),
+  source: text("source").notNull().default("neon"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_dashboards_slug_idx").on(table.slug),
+]);

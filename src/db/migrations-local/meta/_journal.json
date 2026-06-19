@@ -15,6 +15,13 @@
       "when": 1781906468341,
       "tag": "0001_neat_hawkeye",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781910538328,
+      "tag": "0002_silly_vargas",
+      "breakpoints": true
     }
   ]
 }

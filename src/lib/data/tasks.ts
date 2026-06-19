@@ -417,6 +417,8 @@ export async function findTaskByThreadId(
   }
   for (const dir of projectDirs(slug)) {
     const projDir = path.join(brandDir(slug), "projects", dir);
+    const project = readJSON<Project | null>(path.join(projDir, "project.json"), null);
+    if ((project as { mc_chat_thread_id?: string } | null)?.mc_chat_thread_id === threadId) return project;
     const { tasks } = readProjectTasksFile(path.join(projDir, "tasks.json"));
     for (const task of tasks) {
       if ((task as { mc_chat_thread_id?: string }).mc_chat_thread_id === threadId) return task;

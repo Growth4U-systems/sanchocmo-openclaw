@@ -242,6 +242,29 @@ async function runCollection() {
   } catch (e) {
     console.warn(`⚠ Reconcile skipped (MC unreachable at ${mcBase}): ${e.message}`);
   }
+
+  // --- Mirror the daily snapshot into the metric_snapshots time-series ---
+  // SAN-263 (Métricas v2): the JSON files stay the source of truth; this just
+  // pings MC to upsert the same metrics into Postgres so trends/comparatives
+  // become queryable. Best-effort + idempotent — never fails the collection.
+  try {
+    const ingestRes = await fetch(`${mcBase}/api/metrics/ingest`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.MC_ADMIN_TOKEN ? { 'x-admin-token': process.env.MC_ADMIN_TOKEN } : {}),
+      },
+      body: JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources }),
+    });
+    if (ingestRes.ok) {
+      const data = await ingestRes.json().catch(() => ({}));
+      console.log(`🗃  Ingest: ${data.rows ?? 0} metric row(s) mirrored to DB`);
+    } else {
+      console.warn(`⚠ Ingest endpoint returned HTTP ${ingestRes.status}`);
+    }
+  } catch (e) {
+    console.warn(`⚠ Ingest skipped (MC unreachable at ${mcBase}): ${e.message}`);
+  }
 }
 
 runCollection().catch((err) => {
