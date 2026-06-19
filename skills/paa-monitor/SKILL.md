@@ -4,8 +4,11 @@ description: "People Also Ask monitor. Extracts real questions audiences ask per
 context_required:
 - brand/{slug}/content/configs/paa-queries/*.yml
 - brand/{slug}/content/content-pillars.md
+- brand/{slug}/content/pov-bank.json
 context_writes:
 - brand/{slug}/content/research-signals/{date}-paa.json
+- brand/{slug}/content/idea-queue.json
+- brand/{slug}/recurring-tasks/content-paa-monitor/{date}.json
 ---
 
 # PAA Monitor
@@ -15,19 +18,19 @@ context_writes:
 
 ## Tool
 
-**DataforSEO SERP API** — Google Organic Live Advanced endpoint. Devuelve
-los items `people_also_ask_element` ya estructurados (preguntas reales que
-Google muestra), sin necesidad de scraping.
+**Fuente primaria: WebSearch (gratis).** Por cada seed query, busca People Also
+Ask + related searches + autocomplete y quedate con las preguntas REALES que
+aparecen. Es la fuente por defecto (alineado con subscription-first) y es
+suficiente; nunca bloquees por falta de datos de pago.
 
-- MCP tool name: busca un tool DataforSEO de la familia
-  `serp_google_organic_live_advanced` (o equivalente que exponga PAA en la
-  respuesta). Si la cuenta solo tiene SERP regular, usa la respuesta SERP
-  estandar y filtra los items con `type == "people_also_ask_element"`.
-- Auth: credenciales ya configuradas en `_system/api-catalog.json`
-  (LOGIN + PASSWORD en `auth-profiles.json`). El MCP server gestiona la
-  autenticacion automaticamente; no leas las credenciales en el codigo.
-- NO uses `WebSearch` ni `WebFetch` como fallback. Si DataforSEO falla,
-  reporta el error en el resumen y skip esa semana — no scrapees.
+- **DataforSEO (opcional, si está conectado):** la familia
+  `serp_google_organic_live_advanced` devuelve los items
+  `people_also_ask_element` ya estructurados (más limpio que WebSearch). Úsalo
+  para ENRIQUECER si está disponible (auth en `_system/api-catalog.json`; el MCP
+  gestiona credenciales — no las leas en el código). Si no está, sigue con
+  WebSearch sin problema.
+- **Calidad > cantidad:** quedate solo con preguntas reales y bien formadas;
+  descarta ruido. La deduplicación agresiva (abajo) protege la señal.
 
 ## Why separate from keyword-research?
 
@@ -85,6 +88,34 @@ to inspect what you just wrote.
 
 Deduplicate against previous weeks (same question = skip).
 
+### 5. Create content ideas (close the loop)
+
+Questions are only useful once they become Ideas — previously this step did not
+exist, so PAA questions never reached the queue. After writing the audit, pick the
+highest-value questions (dedupe against `content/idea-queue.json`; cap **8 ideas
+per run**; prefer clear pillar fit + clear intent) and **append** a complete blog
+Idea per question to `content/idea-queue.json` (flat array, append-only,
+verify-after-write):
+
+```json
+{
+  "id": "idea-{date}-paa-{hash}",
+  "title": "<the question, 40-90 chars>",
+  "pillar_id": "P{N}",
+  "content_type": "FAQ",
+  "target_channel": "blog",
+  "signal": { "summary": "La gente busca: '<question>'. <why it matters for the pillar>", "source": "paa", "date": "{date}" },
+  "source_signals": ["paa-{date}-{hash}"],
+  "angle_draft": "<60-80 words: how the brand answers it from its POV (read pov-bank.json for the pillar); end with Frame: '...'>",
+  "pov_confidence": 0.6,
+  "created_at": "<ISO>",
+  "status": "New"
+}
+```
+
+The `source_signals: ["paa-…"]` lights up the **PAA** filter in the Ideas tab and
+lets the idea flow approve → draft. Skip trivial or already-covered questions.
+
 ## Rules
 
 - **Deduplicate aggressively** — PAA questions repeat week to week. Only add NEW questions.
@@ -95,8 +126,8 @@ Deduplicate against previous weeks (same question = skip).
 
 ## Error handling
 
-If DataforSEO fails (auth, rate limit, missing scope), reporta el error
-en `recurring-tasks/content-paa-monitor/{date}.json` con
-`status: "failed"` y skip esa semana. NO uses WebSearch ni WebFetch como
-fallback — las preguntas extraidas asi son ruido y rompen la deduplicacion.
-Las preguntas no cambian rapido; perder una semana esta bien.
+If WebSearch fails (and DataforSEO isn't connected either), report the error in
+`recurring-tasks/content-paa-monitor/{date}.json` with `status: "failed"`,
+`questions_added: 0`, `ideas_created: 0`, and skip the week. Keep questions
+real and well-formed — discard noise so dedup stays clean. Questions evolve
+slowly; missing one week is fine.
