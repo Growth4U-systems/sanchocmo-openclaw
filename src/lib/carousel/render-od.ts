@@ -41,6 +41,7 @@ import {
   odReadProjectFile,
   odReadProjectFileBinary,
   resolveOdConfig,
+  type OdProjectFile,
 } from "@/lib/open-design/client";
 import type { OdClientConfig } from "@/lib/open-design/types";
 import { templateFileRelPath } from "@/lib/carousel/file-templates";
@@ -71,6 +72,70 @@ export interface RenderCarouselViaOdResult {
   urls: string[];
   /** The draft after the last `attachMediaToDraft`, mirroring render-carousel. */
   draft: Draft | null;
+}
+
+export interface SelectFreshOdExportFilesParams {
+  files: OdProjectFile[];
+  projectId: string;
+  templateId: string;
+  slideCount: number;
+  exportStartedAt: number;
+}
+
+export interface SelectFreshOdExportFilesResult {
+  pdfFile: OdProjectFile | undefined;
+  pngFiles: OdProjectFile[];
+}
+
+export function selectFreshOdExportFiles(
+  params: SelectFreshOdExportFilesParams,
+): SelectFreshOdExportFilesResult {
+  const { files, projectId, templateId, slideCount, exportStartedAt } = params;
+  const isCarousel = slideCount > 1;
+  const expectedPngs = slideCount;
+  const expectedPdfs = isCarousel ? 1 : 0;
+
+  // Keep files written at/after the export started; keep files with an unknown
+  // mtime so the exact-count assertion can fail loud instead of hiding them.
+  const isFresh = (f: { mtime?: number }): boolean =>
+    typeof f.mtime !== "number" || f.mtime >= exportStartedAt;
+
+  const freshPdfs = files.filter(
+    (f) => f.type === "file" && f.path.toLowerCase().endsWith(".pdf") && isFresh(f),
+  );
+  const freshPngs = files
+    .filter(
+      (f) => f.type === "file" && f.path.toLowerCase().endsWith(".png") && isFresh(f),
+    )
+    // Stable order so slide-1, slide-2, … attach in sequence. OD typically
+    // names them with a numeric suffix; lexical sort with numeric awareness.
+    .sort((a, b) =>
+      a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: "base" }),
+    );
+
+  if (freshPngs.length !== expectedPngs) {
+    throw new Error(
+      `OD export PNG count mismatch: expected exactly ${expectedPngs} ` +
+        `(template "${templateId}" slideCount=${slideCount}) but found ` +
+        `${freshPngs.length} fresh PNG(s) in project ${projectId}. Refusing to ` +
+        `attach a wrong asset set (stale exports or template source files may ` +
+        `be leaking in). Fresh PNGs: ${freshPngs.map((f) => f.path).join(", ") || "(none)"}`,
+    );
+  }
+  if (freshPdfs.length !== expectedPdfs) {
+    throw new Error(
+      `OD export PDF count mismatch: expected exactly ${expectedPdfs} ` +
+        `(${isCarousel ? "multi-slide carousel needs the swipeable PDF" : "single image needs no PDF"}) ` +
+        `but found ${freshPdfs.length} fresh PDF(s) in project ${projectId}. ` +
+        `Refusing to attach a wrong asset set. Fresh PDFs: ` +
+        `${freshPdfs.map((f) => f.path).join(", ") || "(none)"}`,
+    );
+  }
+
+  return {
+    pdfFile: isCarousel ? freshPdfs[0] : undefined,
+    pngFiles: freshPngs,
+  };
 }
 
 /** Plain-text snippets of the approved copy, used for the fidelity assertion.
@@ -272,8 +337,6 @@ export async function renderCarouselViaOd(
   //    path needs the hosted OD daemon). Until then this is the most specific
   //    scoping the OD API exposes.
   const isCarousel = template.slideCount > 1;
-  const expectedPngs = template.slideCount;
-  const expectedPdfs = isCarousel ? 1 : 0;
 
   // Small backward tolerance: guards against coarse mtime granularity / minor
   // clock skew between this process and the daemon's filesystem. Wide enough to
@@ -286,48 +349,14 @@ export async function renderCarouselViaOd(
   // Re-list after export so the PDF/PNGs the daemon just wrote are visible.
   const afterExport = await odListProjectFiles(projectId, config);
 
-  // (b) Freshness filter. Keep files written at/after the export started; keep
-  // files with an unknown mtime (the count assertion below still guards those).
-  const isFresh = (f: { mtime?: number }): boolean =>
-    typeof f.mtime !== "number" || f.mtime >= exportStartedAt;
-
-  const freshPdfs = afterExport.filter(
-    (f) => f.type === "file" && f.path.toLowerCase().endsWith(".pdf") && isFresh(f),
-  );
-  const freshPngs = afterExport
-    .filter(
-      (f) => f.type === "file" && f.path.toLowerCase().endsWith(".png") && isFresh(f),
-    )
-    // Stable order so slide-1, slide-2, … attach in sequence. OD typically
-    // names them with a numeric suffix; lexical sort with numeric awareness.
-    .sort((a, b) =>
-      a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: "base" }),
-    );
-
-  // (c) EXACT-COUNT assertions — fail-loud. These run on the freshness-scoped
-  // set, so they catch both stale residue (too many) and a short export (too
-  // few). Never silently attach a wrong set.
-  if (freshPngs.length !== expectedPngs) {
-    throw new Error(
-      `OD export PNG count mismatch: expected exactly ${expectedPngs} ` +
-        `(template "${template.id}" slideCount=${template.slideCount}) but found ` +
-        `${freshPngs.length} fresh PNG(s) in project ${projectId}. Refusing to ` +
-        `attach a wrong asset set (stale exports or template source files may ` +
-        `be leaking in). Fresh PNGs: ${freshPngs.map((f) => f.path).join(", ") || "(none)"}`,
-    );
-  }
-  if (freshPdfs.length !== expectedPdfs) {
-    throw new Error(
-      `OD export PDF count mismatch: expected exactly ${expectedPdfs} ` +
-        `(${isCarousel ? "multi-slide carousel needs the swipeable PDF" : "single image needs no PDF"}) ` +
-        `but found ${freshPdfs.length} fresh PDF(s) in project ${projectId}. ` +
-        `Refusing to attach a wrong asset set. Fresh PDFs: ` +
-        `${freshPdfs.map((f) => f.path).join(", ") || "(none)"}`,
-    );
-  }
-
-  const pdfFile = isCarousel ? freshPdfs[0] : undefined;
-  const pngFiles = freshPngs;
+  // (b)+(c) freshness + exact-count scoping. Never silently attach a wrong set.
+  const { pdfFile, pngFiles } = selectFreshOdExportFiles({
+    files: afterExport,
+    projectId,
+    templateId: template.id,
+    slideCount: template.slideCount,
+    exportStartedAt,
+  });
 
   const urls: string[] = [];
   let lastDraft: Draft | null = null;
