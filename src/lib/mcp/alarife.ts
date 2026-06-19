@@ -10,6 +10,7 @@ export interface AlarifeMcpInstance {
   clientSlug: string;
   alarifeSlug: string;
   name: string;
+  description?: string;
   adminUrl: string;
   mcpUrl: string;
   secretId: string;
@@ -28,6 +29,7 @@ const ALARIFE_MCP_INSTANCES: AlarifeMcpInstance[] = [
     clientSlug: "growth4u",
     alarifeSlug: "web",
     name: "Growth4U web",
+    description: "Sitio web principal de Growth4U.",
     adminUrl: "https://admin.alarife-payload.growth4u.io/admin",
     mcpUrl: "https://admin.alarife-payload.growth4u.io/api/mcp",
     secretId: "alarife/growth4u/web/mcp-token",
@@ -38,6 +40,7 @@ const ALARIFE_MCP_INSTANCES: AlarifeMcpInstance[] = [
     clientSlug: "growth4u",
     alarifeSlug: "sancho-web",
     name: "Sancho web",
+    description: "Web de Sancho dentro del cliente Growth4U.",
     adminUrl: "https://admin.alarife.sanchocmo.ai/admin",
     mcpUrl: "https://admin.alarife.sanchocmo.ai/api/mcp",
     secretId: "alarife/growth4u/sancho-web/mcp-token",
@@ -48,6 +51,7 @@ const ALARIFE_MCP_INSTANCES: AlarifeMcpInstance[] = [
     clientSlug: "paymatico",
     alarifeSlug: "web",
     name: "Paymatico web",
+    description: "Sitio web principal de Paymatico.",
     adminUrl: "https://admin.alarife-paymatico.growth4u.io/admin",
     mcpUrl: "https://admin.alarife-paymatico.growth4u.io/api/mcp",
     secretId: "alarife/paymatico/web/mcp-token",
@@ -129,6 +133,7 @@ export function publicAlarifeMcpInstance(instance: AlarifeMcpInstance) {
     clientSlug: instance.clientSlug,
     alarifeSlug: instance.alarifeSlug,
     name: instance.name,
+    description: instance.description,
     adminUrl: instance.adminUrl,
     mcpUrl: instance.mcpUrl,
     secretId: instance.secretId,
