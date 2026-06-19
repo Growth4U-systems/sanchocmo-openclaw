@@ -18,6 +18,12 @@ test("listMcpTokenSummaries exposes metadata without plaintext tokens", () => {
         scopes: ["sancho:read"],
         clients: ["growth4u"],
       },
+      {
+        id: "recoverable-token",
+        token: "recoverable-secret",
+        scopes: ["docs:read"],
+        clients: ["growth4u"],
+      },
     ]),
     SANCHO_MCP_TOKEN: "legacy-dummy",
     SANCHO_MCP_TOKEN_ID: "legacy",
@@ -26,12 +32,17 @@ test("listMcpTokenSummaries exposes metadata without plaintext tokens", () => {
   };
 
   const summaries = listMcpTokenSummaries(env);
-  assert.equal(summaries.length, 2);
+  assert.equal(summaries.length, 3);
   assert.equal(summaries[0].id, "team-token");
   assert.equal(summaries[0].storage, "sha256-hash");
   assert.equal(summaries[0].tokenRecoverable, false);
   assert.deepEqual(summaries[0].brands, ["growth4u"]);
+  assert.equal(summaries[1].id, "recoverable-token");
+  assert.equal(summaries[1].storage, "plain-env");
+  assert.equal(summaries[1].tokenRecoverable, true);
+  assert.equal(summaries[2].tokenRecoverable, true);
   assert.equal(JSON.stringify(summaries).includes("secret-token"), false);
+  assert.equal(JSON.stringify(summaries).includes("recoverable-secret"), false);
   assert.equal(JSON.stringify(summaries).includes("legacy-dummy"), false);
 });
 

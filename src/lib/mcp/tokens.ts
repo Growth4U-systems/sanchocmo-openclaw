@@ -31,7 +31,7 @@ export interface McpTokenSummary {
   clients: string[];
   brands: string[];
   hashFingerprint: string;
-  tokenRecoverable: false;
+  tokenRecoverable: boolean;
 }
 
 export interface GeneratedMcpToken {
@@ -78,12 +78,12 @@ export function listMcpTokenSummaries(env: EnvLike = process.env): McpTokenSumma
         summaries.push({
           id: entry.id || `mcp-${tokenHash.slice(0, 12) || index + 1}`,
           source: "SANCHO_MCP_TOKENS",
-          storage: entry.tokenHash ? "sha256-hash" : "plain-env",
+          storage: entry.token ? "plain-env" : "sha256-hash",
           scopes: normalizeStringList(entry.scopes),
           clients: normalizeStringList(entry.clients),
           brands: entry.brands === undefined ? normalizeStringList(entry.clients) : normalizeStringList(entry.brands),
           hashFingerprint: fingerprintHash(tokenHash),
-          tokenRecoverable: false,
+          tokenRecoverable: Boolean(entry.token),
         });
       });
   }
@@ -99,7 +99,7 @@ export function listMcpTokenSummaries(env: EnvLike = process.env): McpTokenSumma
       clients: parseCsv(env.SANCHO_MCP_CLIENTS),
       brands: env.SANCHO_MCP_BRANDS === undefined ? parseCsv(env.SANCHO_MCP_CLIENTS) : parseCsv(env.SANCHO_MCP_BRANDS),
       hashFingerprint: fingerprintHash(tokenHash),
-      tokenRecoverable: false,
+      tokenRecoverable: true,
     });
   }
 

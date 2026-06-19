@@ -59,6 +59,16 @@ function activateToken(config: McpTokenConfig): { nextJson: string; count: numbe
   return { nextJson, count: parseMcpTokensJson(nextJson).length };
 }
 
+function toRecoverableRuntimeConfig(config: McpTokenConfig, token: string): McpTokenConfig {
+  return {
+    id: config.id,
+    token,
+    scopes: config.scopes,
+    clients: config.clients,
+    ...(config.brands !== undefined ? { brands: config.brands } : {}),
+  };
+}
+
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string");
@@ -128,11 +138,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     let activated = false;
     let persistedCount: number | null = null;
+    const runtimeConfig = toRecoverableRuntimeConfig(generated.config, generated.token);
     const configJson = JSON.stringify(generated.config, null, 2);
 
     if (activate) {
       try {
-        const result = activateToken(generated.config);
+        const result = activateToken(runtimeConfig);
         activated = true;
         persistedCount = result.count;
       } catch (err) {
@@ -146,10 +157,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       token: generated.token,
       config: generated.config,
       configJson,
+      runtimeStorage: activate ? "plain-env" : "not-activated",
       activated,
       persistedCount,
       tokens: listMcpTokenSummaries(),
-      warning: "This is the only response that includes the plaintext token. Store it in a secure password manager now.",
+      warning: activate
+        ? "Stored in this server runtime env and recoverable by admins from this screen."
+        : "This token is not active until its config is stored in the server runtime env.",
     });
   }
 
