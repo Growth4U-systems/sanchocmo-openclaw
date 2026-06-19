@@ -260,6 +260,18 @@ export function insightsNeedingRecommendation<T extends { id: string }>(
   return insights.filter((insight) => !linked.has(insight.id));
 }
 
+export function recommendationEvidenceRefreshPatch(input: {
+  description: string;
+  priority: "high" | "medium" | "low";
+  updatedAt: Date;
+}) {
+  return {
+    description: input.description,
+    priority: input.priority,
+    updatedAt: input.updatedAt,
+  } satisfies Partial<typeof miRecommendations.$inferInsert>;
+}
+
 async function fetchDriveMeetings(source: SourceRow, limit: number, errors: string[]) {
   const account = getGogAccount();
   if (!account) {
@@ -597,13 +609,7 @@ async function writeInsightImpacts(
       updatedAt: now,
     }).onConflictDoUpdate({
       target: miRecommendations.id,
-      set: {
-        description,
-        priority,
-        status: "recommended",
-        taskStatus: "recommended",
-        updatedAt: now,
-      },
+      set: recommendationEvidenceRefreshPatch({ description, priority, updatedAt: now }),
     });
     recommendationCount += 1;
   }

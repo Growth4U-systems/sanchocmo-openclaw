@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 // SAN-222 — fix A. The DB-bound pieces (backfill writes, Convert→createTask) are
 // covered by the staging e2e; here we lock the two PURE cores the loop depends on
 // plus the no-DB degradation, all runnable without DATABASE_URL.
-const { insightsNeedingRecommendation, documentsForText, backfillMeetingRecommendations } = await import(
+const { insightsNeedingRecommendation, documentsForText, recommendationEvidenceRefreshPatch, backfillMeetingRecommendations } = await import(
   "../data/meeting-intelligence-runner"
 );
 
@@ -46,6 +46,19 @@ test("documentsForText mines a POV signal from a metric mention", () => {
 
 test("documentsForText returns nothing for irrelevant text (no spurious recommendations)", () => {
   assert.deepEqual(documentsForText("Hola, buenos dias a todos"), []);
+});
+
+test("recommendationEvidenceRefreshPatch preserves human workflow fields on upsert", () => {
+  const updatedAt = new Date("2026-06-19T00:00:00.000Z");
+  const patch = recommendationEvidenceRefreshPatch({
+    description: "Refreshed evidence copy",
+    priority: "high",
+    updatedAt,
+  });
+  assert.deepEqual(Object.keys(patch).sort(), ["description", "priority", "updatedAt"]);
+  assert.equal((patch as { status?: string }).status, undefined);
+  assert.equal((patch as { taskStatus?: string }).taskStatus, undefined);
+  assert.equal((patch as { taskId?: string }).taskId, undefined);
 });
 
 test("backfillMeetingRecommendations degrades cleanly without a database", async () => {
