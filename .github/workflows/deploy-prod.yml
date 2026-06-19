@@ -96,8 +96,12 @@ jobs:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
           PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
-          UNIPILE_API_KEY: ${{ secrets.UNIPILE_API_KEY }}
-          UNIPILE_DSN: ${{ secrets.UNIPILE_DSN }}
+          # UNIPILE_API_KEY / UNIPILE_DSN are intentionally NOT injected here:
+          # they are YALC provider credentials managed from the Sancho UI, which
+          # writes them to YALC's own key store (a persistent volume). Injecting
+          # them from secrets would override the UI choice on every deploy (the
+          # container env wins over the key store at boot). Sancho has no direct
+          # consumer of these vars — only YALC reads them. (SAN-36)
           DATAFORSEO_API_KEY: ${{ secrets.DATAFORSEO_API_KEY }}
           # ── R2 / Supabase / Cloudflare / Apify (secrets que vivían solo en el VPS) ──
           R2_UPLOAD_IMAGE_ACCESS_KEY_ID: ${{ secrets.R2_UPLOAD_IMAGE_ACCESS_KEY_ID }}
@@ -152,7 +156,8 @@ jobs:
               # Tier 3 — Skill APIs
               "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",
               "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID", "PAGESPEED_API_KEY",
-              "UNIPILE_API_KEY", "UNIPILE_DSN", "DATAFORSEO_API_KEY",
+              # UNIPILE_* omitted on purpose — UI-managed via YALC key store (SAN-36)
+              "DATAFORSEO_API_KEY",
               # R2 / Supabase / Cloudflare / Apify
               "R2_UPLOAD_IMAGE_ACCESS_KEY_ID", "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
               "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY",
