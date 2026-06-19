@@ -1,8 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs";
-import path from "path";
 import { compose, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
-import { BASE } from "@/lib/data/paths";
+import { readBrandSecret } from "@/lib/brand-env";
 
 const NOTION_VERSION = "2022-06-28";
 
@@ -21,28 +19,10 @@ type NotionSearchResponse = {
   results?: NotionSearchResult[];
 };
 
-function parseEnvFile(filePath: string): Record<string, string> {
-  try {
-    const vars: Record<string, string> = {};
-    const content = fs.readFileSync(filePath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      vars[trimmed.slice(0, eq)] = trimmed.slice(eq + 1).replace(/^["']|["']$/g, "");
-    }
-    return vars;
-  } catch {
-    return {};
-  }
-}
-
-function getNotionKey() {
-  const root = path.join(BASE, "..");
-  const envLocal = parseEnvFile(path.join(root, ".env.local"));
-  const env = parseEnvFile(path.join(root, ".env"));
-  return process.env.NOTION_API_KEY || envLocal.NOTION_API_KEY || env.NOTION_API_KEY || "";
+// Per-client Notion token ({SLUG}_NOTION_API_KEY in brand/{slug}/.env), falling back
+// to the workspace/global NOTION_API_KEY. Same precedence as the other connectors.
+function getNotionKey(slug: string) {
+  return readBrandSecret(slug, "notion", "API_KEY") || "";
 }
 
 function richTextPlain(items: RichText[] | undefined): string {
@@ -64,8 +44,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
 
-  const key = getNotionKey();
-  if (!key) return res.status(200).json({ ok: false, error: "NOTION_API_KEY not configured.", results: [] });
+  const slug = String(req.query.slug || "").trim();
+  const key = getNotionKey(slug);
+  if (!key) return res.status(200).json({ ok: false, error: `Notion no conectado para "${slug}". Conectalo en Settings → APIs.`, results: [] });
 
   const query = String(req.query.q || "").trim();
   const object = String(req.query.object || "database") === "page" ? "page" : "database";
