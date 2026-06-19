@@ -317,7 +317,8 @@ if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
   # historical footgun). This guard used to live as a hardcoded empty value in
   # docker-compose.yml, but that broke `api_key` mode (the key never reached the
   # container); it is mode-aware here instead. Process-scoped — open-design keeps
-  # its own key from its env_file.
+  # its own key from its env_file. The usage-monitor auth-source alert backs this
+  # up: if the gateway ever resolves to an sk-ant-api key, it pages 🔴🔴.
   export ANTHROPIC_API_KEY=
 else
   echo "[entrypoint] ANTHROPIC_AUTH_MODE=api_key — using ANTHROPIC_API_KEY (anthropic:default token profile)"
