@@ -441,13 +441,12 @@ export const metricoolProvider: PublishProvider = {
 };
 
 /**
- * Pull connected networks + brand name from Metricool. Used by the
- * `/api/publishing/account-info` endpoint to surface in MC "publishing on
- * X account, networks Y/Z" so the user can verify before scheduling.
- *
- * Endpoint is `/admin/simpleProfiles` (no /v2 prefix — admin endpoints
- * live under /api directly). Returns an array of brands that this user
- * has access to; we filter to the one matching the configured blogId.
+ * Metricool brand helpers. `/admin/simpleProfiles` (no /v2 prefix — admin
+ * endpoints live under /api directly) returns every brand the user can access.
+ *  - `fetchAccountInfo` filters to the configured blogId — "publishing on X
+ *    account, networks Y/Z" before scheduling.
+ *  - `fetchMetricoolBrands` returns them all (SAN-162) so the operator can pick
+ *    a voice's `metricool_profile_id` (= a brand's blogId).
  */
 export interface AccountInfo {
   brand_name: string | null;
@@ -455,18 +454,52 @@ export interface AccountInfo {
   networks: Array<{ network: string; handle?: string | null; connected: boolean }>;
 }
 
-export async function fetchAccountInfo(slug: string): Promise<{ ok: true; info: AccountInfo } | { ok: false; error: string }> {
+export interface MetricoolBrand {
+  id: string;            // blogId — use as a voice's metricool_profile_id
+  name: string | null;
+  networks: AccountInfo["networks"];
+}
+
+function pickHandle(value: unknown): string | null {
+  if (typeof value === "string" && value) return value;
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    if (typeof obj.username === "string") return obj.username;
+    if (typeof obj.name === "string") return obj.name;
+  }
+  return null;
+}
+
+/** Map one Metricool `simpleProfiles` entry to our uniform brand shape. */
+function mapBrand(brand: Record<string, unknown>): MetricoolBrand {
+  const name =
+    (typeof brand.title === "string" && brand.title) ||
+    (typeof brand.label === "string" && brand.label) ||
+    (typeof brand.name === "string" && brand.name) ||
+    null;
+  const networks: AccountInfo["networks"] = [
+    { network: "linkedin",  handle: pickHandle(brand.linkedinCompany), connected: !!brand.linkedinCompany },
+    { network: "instagram", handle: pickHandle(brand.instagram),       connected: !!brand.instagram },
+    { network: "facebook",  handle: pickHandle(brand.facebook),        connected: !!brand.facebook || !!brand.facebookPageId },
+    { network: "twitter",   handle: pickHandle(brand.twitter),         connected: !!brand.twitter },
+    { network: "tiktok",    handle: pickHandle(brand.tiktok),          connected: !!brand.tiktok },
+    { network: "youtube",   handle: pickHandle(brand.youtube),         connected: !!brand.youtube },
+  ];
+  return { id: String(brand.id ?? ""), name, networks };
+}
+
+/** Fetch the raw list of brands the user can access. */
+async function fetchSimpleProfiles(
+  slug: string,
+): Promise<{ ok: true; profiles: Array<Record<string, unknown>>; blogId: string } | { ok: false; error: string }> {
   const result = loadConfig(slug);
   if (!result.ok) return { ok: false, error: result.missing };
   const cfg = result.cfg;
-
-  // Admin endpoints live at /api/admin/*, not /api/v2/admin/*.
   const url =
     `https://app.metricool.com/api/admin/simpleProfiles` +
     `?userToken=${encodeURIComponent(cfg.apiToken)}` +
     `&userId=${encodeURIComponent(cfg.userId)}` +
     `&blogId=${encodeURIComponent(cfg.blogId)}`;
-
   try {
     const res = await fetch(url, {
       headers: { "X-Mc-Auth": cfg.apiToken, "Content-Type": "application/json" },
@@ -480,48 +513,26 @@ export async function fetchAccountInfo(slug: string): Promise<{ ok: true; info: 
     let data: unknown;
     try { data = JSON.parse(rawText); } catch { return { ok: false, error: "Invalid JSON from Metricool" }; }
     if (!Array.isArray(data)) return { ok: false, error: "Unexpected response shape from simpleProfiles" };
-    const profiles = data as Array<Record<string, unknown>>;
-    const brand = profiles.find((p) => String(p.id) === String(cfg.blogId));
-    if (!brand) return { ok: false, error: `Blog ${cfg.blogId} not found in user profiles` };
-
-    // Extract a sensible name. Metricool exposes "title" (brand display name)
-    // and sometimes "url". Fall back to whichever non-empty string we find.
-    const brandName =
-      (typeof brand.title === "string" && brand.title) ||
-      (typeof brand.label === "string" && brand.label) ||
-      (typeof brand.name === "string" && brand.name) ||
-      null;
-
-    function pickHandle(value: unknown): string | null {
-      if (typeof value === "string" && value) return value;
-      if (value && typeof value === "object") {
-        const obj = value as Record<string, unknown>;
-        if (typeof obj.username === "string") return obj.username;
-        if (typeof obj.name === "string") return obj.name;
-      }
-      return null;
-    }
-
-    const networks: AccountInfo["networks"] = [
-      { network: "linkedin",  handle: pickHandle(brand.linkedinCompany), connected: !!brand.linkedinCompany },
-      { network: "instagram", handle: pickHandle(brand.instagram),       connected: !!brand.instagram },
-      { network: "facebook",  handle: pickHandle(brand.facebook),        connected: !!brand.facebook || !!brand.facebookPageId },
-      { network: "twitter",   handle: pickHandle(brand.twitter),         connected: !!brand.twitter },
-      { network: "tiktok",    handle: pickHandle(brand.tiktok),          connected: !!brand.tiktok },
-      { network: "youtube",   handle: pickHandle(brand.youtube),         connected: !!brand.youtube },
-    ];
-
-    return {
-      ok: true,
-      info: {
-        brand_name: brandName,
-        brand_id: cfg.blogId,
-        networks,
-      },
-    };
+    return { ok: true, profiles: data as Array<Record<string, unknown>>, blogId: cfg.blogId };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+export async function fetchAccountInfo(slug: string): Promise<{ ok: true; info: AccountInfo } | { ok: false; error: string }> {
+  const result = await fetchSimpleProfiles(slug);
+  if (!result.ok) return { ok: false, error: result.error };
+  const brand = result.profiles.find((p) => String(p.id) === String(result.blogId));
+  if (!brand) return { ok: false, error: `Blog ${result.blogId} not found in user profiles` };
+  const mapped = mapBrand(brand);
+  return { ok: true, info: { brand_name: mapped.name, brand_id: mapped.id || result.blogId, networks: mapped.networks } };
+}
+
+/** SAN-162 — every Metricool brand the user can publish from. */
+export async function fetchMetricoolBrands(slug: string): Promise<{ ok: true; brands: MetricoolBrand[] } | { ok: false; error: string }> {
+  const result = await fetchSimpleProfiles(slug);
+  if (!result.ok) return { ok: false, error: result.error };
+  return { ok: true, brands: result.profiles.map(mapBrand).filter((b) => b.id) };
 }
 
 export const _internals = { loadConfig, NETWORK_BY_CHANNEL } as const;
