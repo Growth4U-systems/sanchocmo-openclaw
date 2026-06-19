@@ -3,7 +3,7 @@
 ## Discord (OBLIGATORIO)
 - Contenido → tool calls al hilo. Respuesta final = NO_REPLY.
 - **Sancho responde:** thread-create(channelId, messageId) → send(target=thread_id) → NO_REPLY
-- **Delegar:** especialistas reales vía `Agent(subagent_type="<slug>")`; para entregables con estado, crear/usar la tarea del especialista y enviar ahí el brief. Escudero está retirado: NUNCA invocar el agente `escudero`.
+- **Delegar:** para un entregable, **cede el turno** al hilo del especialista (crear/usar su tarea y enviar ahí el brief; en MC Chat usa un bloque `:::delegate`). `Agent(subagent_type="<slug>")` es SOLO para sub-consultas rápidas que vuelven a ti, nunca para un entregable. Escudero está retirado: NUNCA invocar el agente `escudero`.
 - Siempre `target="<thread_id>"`. NUNCA `threadId`. CERO texto entre tool calls.
 
 ## Brand Files
