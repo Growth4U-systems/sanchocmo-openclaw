@@ -15,6 +15,7 @@
  */
 
 import type { ChannelLoopState } from "@/types";
+import { MetricoolBrandsList } from "@/components/content/MetricoolBrandsList";
 
 function NetworkLogo({ channel }: { channel: string }) {
   if (channel === "linkedin") {
@@ -57,7 +58,7 @@ interface Props {
   onOpenSetup: (channel: string) => void;
 }
 
-export function FounderLedSection({ channels, onGo, onAddVoice, onOpenStrategy, onOpenSetup }: Props) {
+export function FounderLedSection({ slug, channels, onGo, onAddVoice, onOpenStrategy, onOpenSetup }: Props) {
   // One voice per (person, network): flatten personas across the founder-led channels.
   const voices = channels.flatMap((ch) => ch.personas.map((persona) => ({ persona, channel: ch.channel })));
   const networks = channels.length;
@@ -161,6 +162,8 @@ export function FounderLedSection({ channels, onGo, onAddVoice, onOpenStrategy, 
             <span className="font-heading text-rust">repartir →</span>
           </button>
         ))}
+
+        <MetricoolBrandsList slug={slug} />
       </div>
     </section>
   );
