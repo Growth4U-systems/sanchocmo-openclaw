@@ -127,11 +127,49 @@ You don't manually create tags or touch `main` — automation owns both. You als
 don't have to deploy every tag: approve the gate when you want it live, or use
 `deploy-prod.yml`'s `workflow_dispatch(tag)` to (re)deploy or roll back any tag.
 
+> **Never create a tag or GitHub Release by hand for a normal release** (CLI or
+> web UI). Releases come *only* from release-please merging its `chore: release`
+> PR, so every release commit lives on `staging`'s linear history. A hand-made tag
+> — or a tag on a commit built off an old base (e.g. a GitHub-UI commit) — points
+> `main` at a commit that isn't on `staging`, silently diverging the two; the
+> break only surfaces at the *next* release, when `promote-main` refuses the
+> now-impossible fast-forward. `promote-main.yml` refuses to promote any tag that
+> isn't reachable from `staging` (the emergency hotfix below is the sole opt-in
+> exception, via `[hotfix-off-staging]`). If `main` ever diverges, see
+> "Reconciling a diverged `main`" below. (This is what bit v0.7.1 → SAN-255.)
+
 > **Merge method:** **everything is squash now.** PRs into `staging` (feature, fix,
 > and the release PR) → **squash**. Nothing ever merges into `main` — it only
 > fast-forwards.
 
 > **Data ≠ code.** A release ships code only. Client data (brand docs, chats, tasks, Neon DB) is migrated separately via `scripts/resync-staging-to-prod.sh` while staging is the source of truth.
+
+### Reconciling a diverged `main`
+
+If `main` ever stops being an ancestor of `staging` (e.g. an out-of-band tag got
+promoted), `promote-main` refuses every future release with `main (…) is not an
+ancestor of …`. Because `main` is a **pure pointer** to the latest release and
+carries no unique work, the fix is to move it onto the current release commit —
+never a merge or PR (both forbidden on `main`). First confirm nothing unique lives
+on `main`:
+
+```bash
+git fetch origin --tags
+# Must print nothing — anything listed is work that exists ONLY on main:
+git log --oneline origin/main --not origin/staging
+```
+
+If empty, point `main` at the release tag it should reflect. This is a one-time
+admin force-update — `main`'s ruleset blocks it, so relax the ruleset (or use a
+bypass actor) for the push, then restore it:
+
+```bash
+TAG_SHA="$(git rev-parse v0.8.0^{commit})"   # the latest release
+git push --force origin "${TAG_SHA}:refs/heads/main"
+```
+
+`promote-main` then no-ops on the next release (main already at the tag). If the
+`git log` above is **not** empty, forward-merge that commit into `staging` first.
 
 ---
 
@@ -170,7 +208,9 @@ git push -u origin hotfix/san-<n>-<desc>
 NEW="v0.6.1"   # patch bump of $PROD_TAG
 git tag -a "$NEW" -m "hotfix: <summary> (SAN-<n>)"
 git push origin "$NEW"
-gh release create "$NEW" --title "$NEW" --notes "Hotfix: <summary> (SAN-<n>)"
+# [hotfix-off-staging] opts this tag past promote-main's "tag must be on staging"
+# guard — the only sanctioned off-staging promote. Forward-merge to staging (below).
+gh release create "$NEW" --title "$NEW" --notes "Hotfix: <summary> (SAN-<n>) [hotfix-off-staging]"
 #    (or run deploy-prod.yml via workflow_dispatch with that tag)
 
 # 4. A human approves the `production` gate → prod deploys.
@@ -260,5 +300,4 @@ Each environment exposes the same secret/variable names with different values:
 ## Questions / problems
 
 - Deploy or VPS issues → `docs/DEPLOY.md`
-- Original (pre-redesign) workflow notes → `docs/plans/2026-05-07-git-workflow-main-staging.md`
-- Original (pre-redesign) workflow notes → `docs/plans/2026-05-07-git-workflow-main-staging.md`
+- Branch model, commits, releases, hotfixes → this document (above)
