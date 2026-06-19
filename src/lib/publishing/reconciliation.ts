@@ -236,7 +236,7 @@ export async function reconcileScheduledDrafts(slug: string): Promise<ReconcileR
         const provider = getProvider(pub.provider);
         if (provider?.getStatus) {
           try {
-            const st = await provider.getStatus(slug, pub.external_job_id);
+            const st = await provider.getStatus(slug, pub.external_job_id, pub.account_id);
             // Accept any positive signal: status, externalUrl, or publishedAt.
             // Previously we required `status === "published" && (publishedAt || externalUrl)`.
             // Metricool occasionally returns `status="published"` without a URL
@@ -375,6 +375,7 @@ async function refreshMetricsForPublished(slug: string): Promise<number> {
         channel: p.channel,
         externalUrl: p.draft.meta.publishing!.external_url!,
         publishedAt: p.draft.meta.publishing!.published_at ?? null,
+        accountId: p.draft.meta.publishing!.account_id,
       }));
       const snapshots = await provider.fetchPostMetrics(slug, inputs);
       for (const p of drafts) {

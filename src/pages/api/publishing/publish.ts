@@ -152,6 +152,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         published_at: result.publishedAt ?? null,
         external_job_id: result.externalJobId,
         external_url: result.externalUrl ?? null,
+        account_id: accountId,  // SAN-162 — remember the account for the lifecycle
         error: null,
       }
     : {

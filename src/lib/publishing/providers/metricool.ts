@@ -285,8 +285,8 @@ export const metricoolProvider: PublishProvider = {
     }
   },
 
-  async getStatus(slug, externalJobId): Promise<PublishStatus> {
-    const result = loadConfig(slug);
+  async getStatus(slug, externalJobId, accountId): Promise<PublishStatus> {
+    const result = loadConfig(slug, accountId);
     if (!result.ok) return { status: "failed", error: result.missing };
     try {
       const res = await metricoolFetch(result.cfg, `/scheduler/posts/${encodeURIComponent(externalJobId)}`);
@@ -327,8 +327,8 @@ export const metricoolProvider: PublishProvider = {
     }
   },
 
-  async cancel(slug, externalJobId) {
-    const result = loadConfig(slug);
+  async cancel(slug, externalJobId, accountId) {
+    const result = loadConfig(slug, accountId);
     if (!result.ok) return { ok: false, error: result.missing };
     try {
       const res = await metricoolFetch(result.cfg, `/scheduler/posts/${encodeURIComponent(externalJobId)}`, {
@@ -354,21 +354,9 @@ export const metricoolProvider: PublishProvider = {
   async fetchPostMetrics(slug, inputs) {
     const out = new Map<string, import("@/lib/data/drafts").PostMetricsSnapshot>();
     if (inputs.length === 0) return out;
-    const result = loadConfig(slug);
-    if (!result.ok) return out;
-    const cfg = result.cfg;
 
-    // Group requests by Metricool network.
-    const byNetwork = new Map<string, typeof inputs>();
-    for (const q of inputs) {
-      const net = NETWORK_BY_CHANNEL[q.channel];
-      if (!net) continue;
-      const list = byNetwork.get(net) || [];
-      list.push(q);
-      byNetwork.set(net, list);
-    }
-
-    // Earliest publishedAt across the batch, default to 90 days ago.
+    // Earliest publishedAt across the batch, default to 90 days ago. One time
+    // window covers every account/network call below.
     const ninetyDaysAgo = new Date(Date.now() - 90 * 86400_000);
     const earliest = inputs
       .map((q) => (q.publishedAt ? Date.parse(q.publishedAt) : NaN))
@@ -378,48 +366,74 @@ export const metricoolProvider: PublishProvider = {
     const fromStr = `${fromDate.toISOString().slice(0, 10)}T00:00:00`;
     const todayStr = new Date().toISOString().slice(0, 10) + "T23:59:59";
 
-    for (const [network, queries] of byNetwork) {
-      try {
-        const endpoint =
-          `/analytics/posts/${encodeURIComponent(network)}` +
-          `?from=${encodeURIComponent(fromStr)}` +
-          `&to=${encodeURIComponent(todayStr)}`;
-        const res = await metricoolFetch(cfg, endpoint);
-        if (!res.ok) {
+    // SAN-162 — group by account (the voice's blogId) first: a post's metrics
+    // must be read from the account it was published on, not the brand default.
+    const byAccount = new Map<string, typeof inputs>();
+    for (const q of inputs) {
+      const key = q.accountId || "";
+      const list = byAccount.get(key) || [];
+      list.push(q);
+      byAccount.set(key, list);
+    }
+
+    for (const [accountId, accInputs] of byAccount) {
+      const result = loadConfig(slug, accountId || undefined);
+      if (!result.ok) continue;
+      const cfg = result.cfg;
+
+      // Group this account's requests by Metricool network.
+      const byNetwork = new Map<string, typeof inputs>();
+      for (const q of accInputs) {
+        const net = NETWORK_BY_CHANNEL[q.channel];
+        if (!net) continue;
+        const list = byNetwork.get(net) || [];
+        list.push(q);
+        byNetwork.set(net, list);
+      }
+
+      for (const [network, queries] of byNetwork) {
+        try {
+          const endpoint =
+            `/analytics/posts/${encodeURIComponent(network)}` +
+            `?from=${encodeURIComponent(fromStr)}` +
+            `&to=${encodeURIComponent(todayStr)}`;
+          const res = await metricoolFetch(cfg, endpoint);
+          if (!res.ok) {
+            // eslint-disable-next-line no-console
+            console.warn(`[metricool] analytics ${network} HTTP ${res.status}`);
+            continue;
+          }
+          const data = await res.json().catch(() => ({})) as { data?: unknown[] };
+          const posts = (Array.isArray(data) ? data : data.data) as Array<Record<string, unknown>> | undefined;
+          if (!Array.isArray(posts)) continue;
+
+          const byUrl = new Map<string, Record<string, unknown>>();
+          for (const post of posts) {
+            const url = typeof post.url === "string" ? post.url : "";
+            if (url) byUrl.set(url, post);
+          }
+
+          const measured_at = new Date().toISOString();
+          for (const q of queries) {
+            const post = byUrl.get(q.externalUrl);
+            if (!post) continue;
+            const num = (k: string) => {
+              const v = post[k];
+              return typeof v === "number" ? v : 0;
+            };
+            out.set(q.externalUrl, {
+              impressions: num("impressions"),
+              likes: num("likes") || num("likeCount"),
+              clicks: num("clicks"),
+              comments: num("comments") || num("commentCount"),
+              engagement_pct: Math.round((num("engagement") || 0) * 100) / 100,
+              measured_at,
+            });
+          }
+        } catch (e) {
           // eslint-disable-next-line no-console
-          console.warn(`[metricool] analytics ${network} HTTP ${res.status}`);
-          continue;
+          console.warn(`[metricool] analytics ${network} failed: ${(e as Error).message}`);
         }
-        const data = await res.json().catch(() => ({})) as { data?: unknown[] };
-        const posts = (Array.isArray(data) ? data : data.data) as Array<Record<string, unknown>> | undefined;
-        if (!Array.isArray(posts)) continue;
-
-        const byUrl = new Map<string, Record<string, unknown>>();
-        for (const post of posts) {
-          const url = typeof post.url === "string" ? post.url : "";
-          if (url) byUrl.set(url, post);
-        }
-
-        const measured_at = new Date().toISOString();
-        for (const q of queries) {
-          const post = byUrl.get(q.externalUrl);
-          if (!post) continue;
-          const num = (k: string) => {
-            const v = post[k];
-            return typeof v === "number" ? v : 0;
-          };
-          out.set(q.externalUrl, {
-            impressions: num("impressions"),
-            likes: num("likes") || num("likeCount"),
-            clicks: num("clicks"),
-            comments: num("comments") || num("commentCount"),
-            engagement_pct: Math.round((num("engagement") || 0) * 100) / 100,
-            measured_at,
-          });
-        }
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn(`[metricool] analytics ${network} failed: ${(e as Error).message}`);
       }
     }
     return out;

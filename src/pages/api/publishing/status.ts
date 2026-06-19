@@ -33,7 +33,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({ publishing: pub });
   }
 
-  const remote = await provider.getStatus(slug, pub.external_job_id);
+  const remote = await provider.getStatus(slug, pub.external_job_id, pub.account_id);
   const next: PublishingMeta = {
     ...pub,
     external_url: remote.externalUrl ?? pub.external_url ?? null,
