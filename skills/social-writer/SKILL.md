@@ -58,7 +58,12 @@ An approved idea from `idea-queue.json`:
 ## Workflow
 
 ### 1. Read Context
-- Brand Voice (tone, vocabulary, do/don't)
+- Brand Voice (tone, vocabulary, do/don't) — the brand-wide guardrail.
+- **Founder voice (SAN-160).** If the idea has an `author` (the assigned voice), read that voice's
+  `voice_doc` from `cadence-config.yml` (`channels.{target_channel}.profiles[]` where `id` === `author`
+  → `voice_doc`). If it's set, **load that file and write in THAT founder's voice** — the brand voice
+  stays the guardrail, the founder's `voice_doc` is the personal style on top. If absent (no author or
+  no `voice_doc`), use the brand voice as usual.
 - Content Pillars (which pillar this idea belongs to)
 - Clarify History (learn from past decisions)
 - Cadence Config (channel rules)

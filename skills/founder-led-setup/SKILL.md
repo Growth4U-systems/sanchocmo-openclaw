@@ -8,6 +8,7 @@ context_required:
 - brand/{slug}/brand-voice/brand-voice.current.md      # voice_doc por defecto
 context_writes:
 - brand/{slug}/content/configs/cadence-config.yml      # profiles[] bajo channels.{red}
+- brand/{slug}/content/voices/{voiceId}-voice.md       # doc de tono por-founder (opcional, SAN-160)
 ---
 
 # Founder-Led Setup — Voces (persona × red)
@@ -52,8 +53,12 @@ Cada voz es una entrada en `cadence-config.yml` → `channels.{red}.profiles[]`.
 5. **Cuenta de publicación** = `metricool_profile_id` (el perfil/blogId de Metricool de **esta** voz
    y red). Es lo que usará la publicación para enrutar a la cuenta correcta. Si aún no existe, déjalo
    vacío y avisa: *"sin cuenta → esta voz no se podrá programar hasta conectarla"*.
-6. *(Opcional)* `pillars_slant` (1-3 temas, derivados de `content-pillars.md`) y `voice_doc` (por
-   defecto la brand voice; un doc de voz por-founder es opcional).
+6. *(Opcional)* `pillars_slant` (1-3 temas, derivados de `content-pillars.md`).
+7. **Voz propia del founder (recomendado).** Ofrece crear un doc de tono por-founder en
+   `content/voices/{id}-voice.md` y apunta ahí `voice_doc`. **Ligero** (no un brand-voice completo):
+   3 adjetivos de tono · 3-5 do/don't · 2-3 frases de muestra · en qué se diferencia de las otras
+   voces. Derívalo de la brand voice (`brand-book/brand-voice/brand-voice.current.md`) + rol/handle/
+   muestras de esa persona. Si la declina, deja `voice_doc` vacío → el writer usa la brand voice.
 
 Presenta lo capturado como matriz **voz × red → cuenta** y pide confirmación antes de escribir.
 
