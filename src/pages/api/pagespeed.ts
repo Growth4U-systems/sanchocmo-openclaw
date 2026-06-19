@@ -4,6 +4,7 @@ import path from "path";
 import { compose, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
+import { ingestSourceMetrics } from "@/lib/data/metrics-snapshots";
 
 const PSI_BASE = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
 const PSI_CATEGORIES =
@@ -112,21 +113,21 @@ function persistDailyMetrics(
     sources?: Record<string, unknown>;
   }>(dailyFile, {});
   daily.sources = daily.sources || {};
-  daily.sources.pagespeed = {
-    status: "ok",
-    metrics: [
-      { name: "performance_mobile", value: mobile.performance, date: today },
-      { name: "seo_mobile", value: mobile.seo, date: today },
-      { name: "performance_desktop", value: desktop.performance, date: today },
-      { name: "seo_desktop", value: desktop.seo, date: today },
-      { name: "lcp_mobile", value: mobile.lcp, date: today },
-      { name: "cls_mobile", value: mobile.cls, date: today },
-      { name: "tbt_mobile", value: mobile.tbt, date: today },
-    ],
-  };
+  const metrics = [
+    { name: "performance_mobile", value: mobile.performance, date: today },
+    { name: "seo_mobile", value: mobile.seo, date: today },
+    { name: "performance_desktop", value: desktop.performance, date: today },
+    { name: "seo_desktop", value: desktop.seo, date: today },
+    { name: "lcp_mobile", value: mobile.lcp, date: today },
+    { name: "cls_mobile", value: mobile.cls, date: today },
+    { name: "tbt_mobile", value: mobile.tbt, date: today },
+  ];
+  daily.sources.pagespeed = { status: "ok", metrics };
   daily.slug = daily.slug || slug;
   daily.collectedAt = daily.collectedAt || new Date().toISOString();
   writeJSON(dailyFile, daily);
+  // Best-effort mirror into the metric_snapshots time-series (SAN-263).
+  void ingestSourceMetrics(slug, "pagespeed", metrics, today).catch(() => {});
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
