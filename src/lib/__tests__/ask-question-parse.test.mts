@@ -45,6 +45,41 @@ test("parseMessageSegments: can MIX text + single blocks in one message", () => 
   assert.equal(asks[1].question.mode, "single");
 });
 
+test("parseMessageSegments: malformed :::ask (unescaped quote in label) → placeholder, NO raw-JSON leak (SAN-238)", () => {
+  // The label contains an unescaped `"` which breaks JSON.parse.
+  const text =
+    ':::ask\n{"id":"q_x","prompt":"P","mode":"single","options":[{"id":"a","label":"El "playbook" ya no funciona"}]}\n:::';
+  const segs = parseMessageSegments(text);
+
+  // Yields a malformed placeholder segment…
+  assert.equal(segs.some((s) => s.type === "ask-malformed"), true);
+  // …and NO valid ask segment…
+  assert.equal(segs.some((s) => s.type === "ask"), false);
+  // …and the raw JSON must NOT leak into any text segment.
+  const textLeak = segs.some(
+    (s) => s.type === "text" && s.content.includes(":::ask"),
+  );
+  assert.equal(textLeak, false, "raw :::ask JSON leaked into a text segment");
+  const playbookLeak = segs.some(
+    (s) => s.type === "text" && s.content.includes("playbook"),
+  );
+  assert.equal(playbookLeak, false, "raw label leaked into a text segment");
+});
+
+test("parseMessageSegments: malformed block surrounded by text keeps the real text but drops the JSON (SAN-238)", () => {
+  const text =
+    'Antes.\n:::ask\n{"id":"q_x","prompt":"P","mode":"single","options":[{"id":"a","label":"un " roto"}]}\n:::\nDespués.';
+  const segs = parseMessageSegments(text);
+  assert.equal(segs.some((s) => s.type === "ask-malformed"), true);
+  const joined = segs
+    .filter((s) => s.type === "text")
+    .map((s) => s.content)
+    .join("");
+  assert.equal(joined.includes("Antes."), true);
+  assert.equal(joined.includes("Después."), true);
+  assert.equal(joined.includes(":::ask"), false);
+});
+
 test("initialQuestionState: single pre-selects the recommended option", () => {
   const state = initialQuestionState({
     id: "q_c",

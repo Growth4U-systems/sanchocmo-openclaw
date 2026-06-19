@@ -53,6 +53,15 @@ Para items manuales (sin noticia), trátalos como `caso_historia` por defecto.
 5. **Lee `proposal.md → angle_draft` y `research.md` ANTES de redactar las
    preguntas.** Las opciones deben empujar al humano a refinar o desafiar el
    ángulo propuesto, no a aceptarlo.
+6. **JSON válido SIEMPRE — los `label` (y `prompt`) no pueden contener comillas
+   dobles sin escapar ni nada que rompa el JSON.** Cada bloque `:::ask` es un
+   objeto JSON que Mission Control parsea; si una etiqueta lleva un `"` suelto,
+   el `JSON.parse` falla y la pregunta se renderiza como "⚠️ pregunta mal
+   formada (reintentar)" en lugar de mostrarse. Usa comillas tipográficas
+   (`«…»` o `“…”`) o escapa con `\"` dentro del string.
+   - ❌ Mal: `{"id":"a","label":"El "playbook" ya no funciona"}`  ← rompe el JSON
+   - ✅ Bien: `{"id":"a","label":"El «playbook» ya no funciona"}`
+   - ✅ Bien (escapado): `{"id":"a","label":"El \"playbook\" ya no funciona"}`
 
 ### Q1 — La PROVOCACIÓN (fuerza posición)
 

@@ -163,6 +163,111 @@ test("extractAskIds: ignores blocks inside code fences and dedupes", () => {
   assert.deepEqual(mod.extractAskIds(body), ["q_real"]);
 });
 
+// ── checkClarifyCompliance (canonical 4-question contract, SAN-238 P3) ───────
+
+test("checkClarifyCompliance: canonical 4 ids → compliant", () => {
+  const res = mod.checkClarifyCompliance([
+    "q_provoke",
+    "q_evidence",
+    "q_insight",
+    "q_audience",
+  ]);
+  assert.equal(res.compliant, true);
+  assert.deepEqual(res.missing, []);
+  assert.deepEqual(res.unexpected, []);
+});
+
+test("checkClarifyCompliance: order does not matter", () => {
+  const res = mod.checkClarifyCompliance([
+    "q_audience",
+    "q_provoke",
+    "q_insight",
+    "q_evidence",
+  ]);
+  assert.equal(res.compliant, true);
+});
+
+test("checkClarifyCompliance: only 3 questions → flagged with the missing id", () => {
+  const res = mod.checkClarifyCompliance(["q_provoke", "q_evidence", "q_insight"]);
+  assert.equal(res.compliant, false);
+  assert.deepEqual(res.missing, ["q_audience"]);
+  assert.deepEqual(res.unexpected, []);
+});
+
+test("checkClarifyCompliance: custom/wrong ids → flagged (missing + unexpected)", () => {
+  const res = mod.checkClarifyCompliance(["q1", "q2", "q3", "q4"]);
+  assert.equal(res.compliant, false);
+  assert.deepEqual(res.missing.sort(), [
+    "q_audience",
+    "q_evidence",
+    "q_insight",
+    "q_provoke",
+  ]);
+  assert.deepEqual(res.unexpected, ["q1", "q2", "q3", "q4"]);
+});
+
+test("checkClarifyCompliance: 4 canonical + 1 extra → flagged as unexpected, not missing", () => {
+  const res = mod.checkClarifyCompliance([
+    "q_provoke",
+    "q_evidence",
+    "q_insight",
+    "q_audience",
+    "q_bonus",
+  ]);
+  assert.equal(res.compliant, false);
+  assert.deepEqual(res.missing, []);
+  assert.deepEqual(res.unexpected, ["q_bonus"]);
+});
+
+test("maybeMarkClarifyAnswered: still marks a non-compliant clarify but reports compliant:false", () => {
+  // CLARIFY_BODY_BLOCK only has q_provoke + q_evidence → not the canonical 4.
+  const { clarifyPath } = setupWorkspace();
+  const res = mod.maybeMarkClarifyAnswered(
+    SLUG,
+    THREAD_ID,
+    "[ask:q_provoke] respuesta: A\n[ask:q_evidence] respuesta: B",
+  );
+  // Detection must NOT block the marking (fail-safe).
+  assert.equal(res.marked, true);
+  assert.equal(res.compliant, false);
+  assert.deepEqual(res.missingAskIds, ["q_insight", "q_audience"]);
+  assert.equal(readClarifyMeta(clarifyPath).clarify_status, "answered");
+});
+
+test("maybeMarkClarifyAnswered: canonical 4-question clarify reports compliant:true", () => {
+  const body = `
+# Clarify · hot_take
+
+:::ask
+{"id":"q_provoke","prompt":"P","mode":"single","options":[{"id":"a","label":"A"},{"id":"other","label":"Otro"}]}
+:::
+
+:::ask
+{"id":"q_evidence","prompt":"E","mode":"single","options":[{"id":"a","label":"A"},{"id":"other","label":"Otro"}]}
+:::
+
+:::ask
+{"id":"q_insight","prompt":"I","mode":"single","options":[{"id":"a","label":"A"},{"id":"other","label":"Otro"}]}
+:::
+
+:::ask
+{"id":"q_audience","prompt":"Au","mode":"single","options":[{"id":"a","label":"A"},{"id":"other","label":"Otro"}]}
+:::
+`;
+  const { clarifyPath } = setupWorkspace({ clarifyBody: body });
+  const msg = [
+    "[ask:q_provoke] respuesta: A",
+    "[ask:q_evidence] respuesta: B",
+    "[ask:q_insight] respuesta: C",
+    "[ask:q_audience] respuesta: D",
+  ].join("\n");
+  const res = mod.maybeMarkClarifyAnswered(SLUG, THREAD_ID, msg);
+  assert.equal(res.marked, true);
+  assert.equal(res.compliant, true);
+  assert.equal(res.missingAskIds, undefined);
+  assert.equal(readClarifyMeta(clarifyPath).clarify_status, "answered");
+});
+
 // ── parseContentThreadId ────────────────────────────────────────────────────
 
 test("parseContentThreadId: extracts ct id from content threads only", () => {
