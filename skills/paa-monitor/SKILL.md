@@ -49,13 +49,15 @@ suficiente; nunca bloquees por falta de datos de pago.
 
 ### 2. Query per pillar
 For each seed query in the config:
-- Llama al MCP tool de DataforSEO SERP Google Organic Live Advanced con
-  `keyword: <seed>`, `location_code: 2724` (Spain) o el adecuado, y
-  `language_code: es`.
-- Recorre `tasks[0].result[0].items` y filtra los que tengan
-  `type == "people_also_ask_element"`. Cada uno trae un array de
-  preguntas con `title`, `xpath`, `expanded_element`. Quedate con `title`.
-- Agrupa por pillar_id usando el seed query del config.
+- Usa WebSearch como fuente primaria: busca el seed query junto con "People Also
+  Ask", "preguntas frecuentes", related searches y autocomplete.
+- Extrae solo preguntas reales y bien formadas que aparezcan en los resultados;
+  descarta headings, sugerencias ambiguas, frases incompletas y ruido.
+- Si DataForSEO esta conectado, puedes enriquecer con
+  `serp_google_organic_live_advanced` y sus `people_also_ask_element`, pero no
+  bloquees ni marques fallo por falta de DataForSEO.
+- Agrupa por `pillar_id` usando el seed query del config y el encaje semantico
+  con `content-pillars.md`.
 
 ### 3. Extract signals
 ```json
