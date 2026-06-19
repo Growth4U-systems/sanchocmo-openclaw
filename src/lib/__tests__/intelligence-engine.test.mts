@@ -161,6 +161,28 @@ test("detect: irrelevant meeting text yields no proposals", () => {
   assert.deepEqual(detect([signal], meetingDocumentRules), []);
 });
 
+test("detect: textMatch proposal ids stay unique per triggering signal", () => {
+  const signals: Signal[] = [
+    { id: "sig-1", slug: "growth4u", category: "meeting", provider: "meeting", metric: "raw_text", text: "foo" },
+    { id: "sig-2", slug: "growth4u", category: "meeting", provider: "meeting", metric: "raw_text", text: "foo" },
+  ];
+  const rule: Rule = {
+    id: "text-hit",
+    domain: "meeting",
+    primitive: "textMatch",
+    category: "meeting",
+    metric: "raw_text",
+    params: { anyOf: [/foo/] },
+    proposal: { title: "Text hit" },
+  };
+
+  const proposals = detect(signals, [rule]);
+
+  assert.equal(proposals.length, 2);
+  assert.equal(new Set(proposals.map((proposal) => proposal.id)).size, 2);
+  assert.deepEqual(proposals.map((proposal) => proposal.signalRef), ["sig-1", "sig-2"]);
+});
+
 test("documentsForText collapses POV Bank to one entry keeping the highest severity", () => {
   // Both a direct POV signal (pov) and a mineable one (cac, 30%) match.
   const docs = documentsForText("Revisamos el pov y bajamos el CAC un 30%");
@@ -173,4 +195,13 @@ test("documentsForText keeps a mineable-only POV signal at low severity", () => 
   const docs = documentsForText("Bajamos el CAC un 30% con un nuevo proceso");
   const pov = docs.find((doc) => doc.name === "POV Bank");
   assert.equal(pov?.severity, "low");
+});
+
+test("documentsForText mines an uppercase-X numeric metric (case-insensitive regression)", () => {
+  // "10X" is the ONLY mineable token here (no POV keyword), so this exercises
+  // the numeric regex directly. The original matcher lowercased text first
+  // ("10X"→"10x"); the engine must stay case-insensitive or POV Bank is dropped.
+  const docs = documentsForText("Crecimos 10X interanual");
+  const pov = docs.find((doc) => doc.name === "POV Bank");
+  assert.equal(pov?.severity, "low", "uppercase-X multiplier must still mine a POV signal");
 });

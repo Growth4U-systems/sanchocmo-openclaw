@@ -245,7 +245,7 @@ function runTextMatch(rule: Rule, signals: Signal[]): Proposal[] {
     out.push(
       buildProposal(rule, {
         signal,
-        dimKey: null,
+        dimKey: dimKeyOf(signal),
         severity: rule.proposal.severity ?? "medium",
         confidence: 0.6,
         rationale: rule.proposal.reason ?? rule.proposal.suggestedAction ?? `Coincidencia de texto (${rule.id}).`,

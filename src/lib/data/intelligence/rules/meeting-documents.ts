@@ -50,7 +50,7 @@ export const meetingDocumentRules: Rule[] = [
       // OR of the two original mineable matchers (keyword set + numeric metric).
       anyOf: [
         /\b(aha|insight|nos dimos cuenta|realizamos que|problema resuelto|solucionamos|framework|proceso|sistema|ritual|contrario|mito|best practice|pasamos de|fuimos de|mrr|cac|ltv|payback|conversion|conversión|frustracion|frustración|fallo|duda)\b/i,
-        /\b\d+\s*(%|x|€|\$)\b/,
+        /\b\d+\s*(%|x|€|\$)\b/i,
       ],
     },
     proposal: {
