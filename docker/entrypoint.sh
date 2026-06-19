@@ -419,6 +419,10 @@ if channel.get('enabled') is not True:
 if not channel.get('mcServerUrl'):
     channel['mcServerUrl']='http://localhost:18790'
     changed=True
+context_pack_url=(os.environ.get('MC_CONTEXT_PACK_URL') or 'http://localhost:3000').rstrip('/')
+if not channel.get('contextPackUrl'):
+    channel['contextPackUrl']=context_pack_url
+    changed=True
 secret=os.environ.get('MC_CHAT_SECRET') or ''
 if secret and channel.get('sharedSecret') != secret:
     channel['sharedSecret']=secret

@@ -227,6 +227,74 @@ export function setContentTaskStatus(
 
 export { aggregateChannelPhases };
 
+// ── Fail-loud media gate (SAN-244) ──────────────────────────────────────────
+// SELF-CONTAINED BLOCK. A neighbouring gate (e.g. SAN-238 research gate) can be
+// added right beside this one with minimal conflict — keep it delimited.
+//
+// Decision (Alfonso): a REAL code gate, not agent obedience. The pipeline must
+// NOT advance a channel to the dispatch-ready phase (`approved`, the phase the
+// publish endpoint requires before sending to a provider) unless either:
+//   (a) there is ≥1 real media asset on the channel draft, OR
+//   (b) the user/agent set an explicit `media_status: "skipped"` escape.
+// This is the hard stop that turns Dulcinea's "I saved a visual at <path>"
+// confabulation into a 409 instead of a silently text-only carousel.
+//
+// Extends the original SAN-153 gate (which blocked empty media → approved but
+// had no skip escape and threw a generic Error → 400). Consolidated here so the
+// two write paths (setChannelPhase / setChannelPhases) share one rule, and the
+// PATCH endpoint can map it to a precise 409.
+
+/** Thrown by `assertMediaReady`. Carries an HTTP status so the API layer can
+ *  return 409 (Conflict) instead of a generic 400/500. */
+export class MediaGateError extends Error {
+  readonly statusCode = 409;
+  constructor(message: string) {
+    super(message);
+    this.name = "MediaGateError";
+  }
+}
+
+/**
+ * Fail-loud gate for the `→ approved` (dispatch-ready) transition.
+ *
+ * Throws `MediaGateError` (→ 409) when a channel declares
+ * `media_policy="required"` but its draft has no media AND the CT has no
+ * explicit `media_status:"skipped"` escape. No-op for any other phase, any
+ * non-required channel, or when the escape is set.
+ *
+ * Mirrors the publish-time check in `src/pages/api/publishing/publish.ts`,
+ * applied earlier (at the phase transition) so curl/agent paths that PATCH
+ * `channel_phases` directly can't reach a media-ready state with a fabricated
+ * asset path.
+ */
+export function assertMediaReady(
+  slug: string,
+  ct: ContentTask,
+  channel: string,
+  phase: ChannelPhase,
+): void {
+  // Only the dispatch-ready phase is gated. `approved` is the publishing-ready
+  // phase — publish.ts refuses any channel not in `approved`/`published`. There
+  // is no separate "media-ready" ChannelPhase to gate; `approved` IS it.
+  if (phase !== "approved") return;
+  if (ct.media_policy?.[channel] !== "required") return;
+
+  // Explicit escape: the user/agent deliberately chose to ship text-only.
+  if (ct.media_status === "skipped") return;
+
+  const draft = loadDraft(slug, ct.idea_id, channel);
+  const mediaCount = draft?.meta.media?.length ?? 0;
+  if (mediaCount === 0) {
+    throw new MediaGateError(
+      `Channel "${channel}" requires media (media_policy="required") but its ` +
+        `draft has no media attached — cannot advance to "approved" ` +
+        `(dispatch-ready). Upload the carousel / image(s) and retry, or set ` +
+        `media_status:"skipped" on the content task to ship it text-only.`,
+    );
+  }
+}
+// ── end media gate ──────────────────────────────────────────────────────────
+
 /**
  * Update one channel's phase under a ContentTask. Persists to `tasks.json` and
  * forward-only auto-promotes `ct.status` / `pipeline_state` based on the new
@@ -248,20 +316,10 @@ export function setChannelPhase(
   const ct = list.find((c) => c.id === contentTaskId);
   if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
 
-  // Media Gate (defense in depth): a channel marked `media_policy=required`
-  // cannot reach `approved` (publishing-ready) without media attached on the
-  // corresponding draft. The publish endpoint also enforces this — duplicating
-  // the check here means curl / agent paths that flip channel_phases directly
-  // can't bypass it.
-  if (phase === "approved" && ct.media_policy?.[channel] === "required") {
-    const draft = loadDraft(slug, ct.idea_id, channel);
-    const mediaCount = draft?.meta.media?.length ?? 0;
-    if (mediaCount === 0) {
-      throw new Error(
-        `Channel ${channel} requires media (media_policy="required") — cannot advance to "approved" without media attached.`,
-      );
-    }
-  }
+  // Fail-loud media gate (SAN-244, extends SAN-153): block `→ approved` with
+  // empty required media unless an explicit `media_status:"skipped"` escape is
+  // set. Single rule shared with setChannelPhases + the publish endpoint.
+  assertMediaReady(slug, ct, channel, phase);
 
   ct.channel_phases = { ...(ct.channel_phases || {}), [channel]: phase };
   ct.updated_at = new Date().toISOString();
@@ -300,18 +358,10 @@ export function setChannelPhases(
   const ct = list.find((c) => c.id === contentTaskId);
   if (!ct) throw new Error(`ContentTask ${contentTaskId} not found under ${parentTaskId}`);
 
-  // Media Gate (defense in depth) — same rule as setChannelPhase, applied to
+  // Fail-loud media gate (SAN-244) — same rule as setChannelPhase, applied to
   // every channel in the bulk patch that's being moved to "approved".
   for (const [channel, p] of Object.entries(patch)) {
-    if (p !== "approved") continue;
-    if (ct.media_policy?.[channel] !== "required") continue;
-    const draft = loadDraft(slug, ct.idea_id, channel);
-    const mediaCount = draft?.meta.media?.length ?? 0;
-    if (mediaCount === 0) {
-      throw new Error(
-        `Channel ${channel} requires media (media_policy="required") — cannot advance to "approved" without media attached.`,
-      );
-    }
+    assertMediaReady(slug, ct, channel, p);
   }
 
   ct.channel_phases = { ...(ct.channel_phases || {}), ...patch };
@@ -419,6 +469,7 @@ export type ContentTaskUpdateInput = Partial<
     | "scheduled_for"
     | "clarify_status"
     | "media_policy"
+    | "media_status"
     | "author"
   >
 >;
@@ -433,6 +484,7 @@ const UPDATABLE_FIELDS: readonly (keyof ContentTaskUpdateInput)[] = [
   "scheduled_for",
   "clarify_status",
   "media_policy",
+  "media_status",
   "author",
 ] as const;
 
