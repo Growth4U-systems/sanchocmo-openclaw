@@ -31,6 +31,7 @@ import {
   setChannelPhases,
   rollbackChannelPhasesToStatus,
   MediaGateError,
+  ResearchGateError,
   ContentTaskUpdateInput,
 } from "@/lib/data/content-tasks";
 import { listDrafts } from "@/lib/data/drafts";
@@ -211,6 +212,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // Fail-loud media gate (SAN-244) surfaces as 409 Conflict — the CT is in a
       // state that conflicts with the requested phase advance (no real media).
       if (e instanceof MediaGateError) {
+        return res.status(e.statusCode).json({ error: e.message });
+      }
+      // Fail-loud research gate (SAN-238 P1) surfaces as 422 — the requested
+      // post-research phase can't be satisfied (research artifacts missing or
+      // fabricated). Same mapping shape as the media gate above.
+      if (e instanceof ResearchGateError) {
         return res.status(e.statusCode).json({ error: e.message });
       }
       return res.status(400).json({ error: (e as Error).message });

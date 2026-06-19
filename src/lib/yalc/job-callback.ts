@@ -215,7 +215,7 @@ export async function dispatchJobResult(
   deps: Partial<DispatchDeps> = {},
 ): Promise<DispatchResult> {
   const { fetch: fetchImpl, getGatewayUrl, getChatSecret, addMessage } = { ...defaultDeps, ...deps };
-  const { slug, threadId, agent } = payload.callbackContext;
+  const { threadId, agent } = payload.callbackContext;
   const succeeded = payload.event === "job.completed";
 
   const note = succeeded
