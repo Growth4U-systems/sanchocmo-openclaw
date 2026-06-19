@@ -34,6 +34,7 @@ async function main() {
   const discordToken = process.env.DISCORD_BOT_TOKEN;
   const cervantesGuildId = process.env.CERVANTES_GUILD_ID || '';
   const mcChatSecret = process.env.MC_CHAT_SECRET || '';
+  const contextPackUrl = (process.env.MC_CONTEXT_PACK_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
   // --- Auth profiles ---
   // ANTHROPIC_AUTH_MODE selects how Anthropic inference authenticates:
@@ -186,11 +187,18 @@ async function main() {
     config.plugins.entries['mc-chat'] = { enabled: true, config: {} };
   }
   if (!config.channels['mc-chat']) {
-    config.channels['mc-chat'] = { enabled: true, mcServerUrl: 'http://localhost:18790' };
+    config.channels['mc-chat'] = {
+      enabled: true,
+      mcServerUrl: 'http://localhost:18790',
+      contextPackUrl,
+    };
   }
   config.channels['mc-chat'].enabled = true;
   if (!config.channels['mc-chat'].mcServerUrl) {
     config.channels['mc-chat'].mcServerUrl = 'http://localhost:18790';
+  }
+  if (!config.channels['mc-chat'].contextPackUrl) {
+    config.channels['mc-chat'].contextPackUrl = contextPackUrl;
   }
   if (mcChatSecret) {
     config.channels['mc-chat'].sharedSecret = mcChatSecret;

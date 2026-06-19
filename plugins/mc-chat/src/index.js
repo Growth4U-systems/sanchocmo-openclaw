@@ -17,6 +17,7 @@ import { mcChatPlugin } from "./channel.js";
 import { classifyAndRewriteError, mergeWithPriorCategory } from "./error-rewriter.js";
 import { errorTracker } from "./error-tracker.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
+import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
 
 // Best-effort lookup of an agent's current Codex auth mode + account email.
 // Used to disambiguate "rate limit" errors: Codex CLI always emits the
@@ -178,7 +179,38 @@ export default defineChannelPluginEntry({
         contextLines.push(`Modos: "single" para radios (1 opción), "multi" para checkboxes, "text" para CAMPOS ABIERTOS (nombre, handle, una URL…). Un bloque de texto se escribe SIN "options": {"id":"q_<short>","prompt":"<etiqueta>","mode":"text","placeholder":"<pista>","optional":true|false} → renderiza un input real, sin opciones ni "Otro" ("optional":true permite dejarlo vacío). SOLO para single/multi es OBLIGATORIO que la ÚLTIMA opción sea {"id":"other","label":"Otro (lo escribo)"} — es un requisito del componente para dar respuesta libre; en "text" NO va "Otro". En cualquier opción de single/multi puedes marcar "recommended":true: esa opción sale PRE-SELECCIONADA con un badge "recomendado" y el usuario puede cambiarla (útil para sugerir un valor por defecto, p.ej. una cadencia). NO uses ":::ask" para invitaciones a un monólogo largo ("cuéntame todo sobre tu negocio"); para datos concretos sí, aunque sean abiertos, usa "text". Puedes MEZCLAR bloques de choice y de text en un MISMO mensaje para construir UN solo formulario (p.ej. nombre[text] + red[single] + cadencia[single recommended] + handle[text]); el componente los pinta juntos con un único botón "Enviar" y espera a que el usuario responda TODOS antes de devolverte un único mensaje con las respuestas en líneas separadas: "[ask:q1] respuesta: …\\n[ask:q2] respuesta: …". NO ejecutes nada hasta recibir ese mensaje completo. En "text" verás el texto que escribió; si en single/multi eligió "Otro" verás su texto literal en lugar de la etiqueta.`);
         contextLines.push(`[/MC Chat Context]`);
 
-        const bodyForAgent = contextLines.join('\n') + '\n\n' + text;
+        // ─── Specialist grounding (SAN-246) ───
+        // A thread dispatched DIRECTLY to a specialist (agent:dulcinea) gets no
+        // client context — the agent starts blind (instance of SAN-218). Fetch
+        // a bounded context pack from Next and prepend it to the user text, OR a
+        // STOP directive when the client has no Foundation. Skip for sancho (the
+        // orchestrator carries its own grounding). FAIL-SOFT: any failure logs a
+        // warning and continues WITHOUT blocking the dispatch — never crash the
+        // gateway over grounding.
+        let groundedText = text;
+        if (requestedAgent && requestedAgent !== "sancho") {
+          try {
+            const pack = await fetchContextPack(slug, skill || null, {
+              contextPackUrl: channelCfg?.contextPackUrl,
+              nextServerUrl: channelCfg?.nextServerUrl,
+              secret: channelCfg?.sharedSecret,
+              logger,
+            });
+            if (pack) {
+              const prefix = pack.verdict === "missing"
+                ? buildFoundationDirective(pack)
+                : buildClientContextBlock(pack);
+              if (prefix) {
+                groundedText = `${prefix}\n\n${text}`;
+                logger.info(`[mc-chat] context-pack injected (agent=${requestedAgent} slug=${slug} verdict=${pack.verdict} docs=${Array.isArray(pack.docPaths) ? pack.docPaths.length : 0})`);
+              }
+            }
+          } catch (e) {
+            logger.warn(`[mc-chat] context-pack injection skipped: ${e?.message || e}`);
+          }
+        }
+
+        const bodyForAgent = contextLines.join('\n') + '\n\n' + groundedText;
 
         // Resolve sender identity based on admin/client role
         // This maps to toolsBySender keys in openclaw.json:
