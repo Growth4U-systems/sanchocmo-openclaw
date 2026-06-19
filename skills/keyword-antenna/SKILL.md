@@ -13,6 +13,7 @@ context_required:
 - brand/{slug}/go-to-market/keyword-clusters.json
 - brand/{slug}/market-and-us/competitors/competitors.current.md
 context_writes:
+- brand/{slug}/content/idea-queue.json
 - brand/{slug}/content/research-signals/{date}-keywords.json
 - brand/{slug}/recurring-tasks/content-keyword-research/{date}.json
 ---
@@ -28,7 +29,9 @@ pillars**, and leaves them as enriched `seo` Ideas in the queue → approve → 
 **Scoring + writing are NOT your job** — the shared data layer does both. You run
 discovery and POST candidates; the endpoint scores them (priority = businessValue
 × winnability × demand × strategicFit; AEO `aiOpportunity` separate; anti-thin
-guardrail) and writes the enriched `seo` Ideas. One implementation, two surfaces
+guardrail) and writes the enriched `seo` Ideas. If you have a strong brand POV
+angle, include `angleDraft`; otherwise the endpoint generates a deterministic SEO
+angle so approvals never create blank drafts. One implementation, two surfaces
 (the MCP tool `sancho_run_keyword_antenna` does the same in-process).
 
 > **cwd warning (cron):** the cron runs with cwd at `~/.openclaw`, not
@@ -57,6 +60,7 @@ Map every candidate onto an **existing pillar** (`pillarId: "P1"…`). A keyword
 - **AEO** — `aiCitability: { aiOverviewPresent, citedNow, shareOfVoice }`.
 
 If DataForSEO / GSC / AEO signals are unavailable, **skip those modes** and leave their fields out (the scorer treats missing demand/winnability/AEO as unknown, not zero). Never invent volumes or rankings. Dedupe before sending; cap ~20 new candidates per run.
+When possible, include `angleDraft`: one concise editorial angle from the brand POV.
 
 ## PASO 3 — Promote (same rail as the antennas)
 POST the candidates to the shared endpoint — it scores + writes the enriched `seo` Ideas (lossless):
@@ -68,10 +72,11 @@ curl -fsS -X POST "$MC_BASE/api/content-engine/keyword-antenna" \
         {"keyword":"mejores agencias de growth","pillarId":"P1","discoveredBy":["identity","competitor-gap"],
          "intent":"commercial","bofuCategory":"best-of","strategicFlag":true,
          "demand":{"volume":1300,"trend":"up"},"winnability":{"kdGap":12,"currentRank":14,"serpPageType":"listicle"},
-         "aiCitability":{"aiOverviewPresent":true,"citedNow":false,"shareOfVoice":0},"recommendedPageType":"comparison"}
+         "aiCitability":{"aiOverviewPresent":true,"citedNow":false,"shareOfVoice":0},"recommendedPageType":"comparison",
+         "angleDraft":"Responder desde el POV de marca: que hace que una agencia sea realmente de growth y que senales separan sistema de ruido."}
       ]}'
 ```
-The response is `{ ok, action:"promote", created:[...], skipped:[...], total }`. Each created Idea carries `source:"keyword-antenna"`, the enriched `seo` block, and `source_signals:["kw-…"]` (which lights up the **🔑 Keywords** filter in the Ideas tab). Append-only and deduped by keyword — re-running is safe.
+The response is `{ ok, action:"promote", created:[...], skipped:[...], total }`. Each created Idea carries top-level `pillar_id`, `angle_draft`, `source:"keyword-antenna"`, the enriched `seo` block, and `source_signals:["kw-…"]` (which lights up the **🔑 Keywords** filter in the Ideas tab). Append-only and deduped by keyword — re-running is safe.
 
 ## PASO 4 — Audit log + recurring-task (fills the blog antenna slot)
 1. Audit log → `brand/{slug}/content/research-signals/{YYYY-MM-DD}-keywords.json` (the raw candidates you sent, for traceability — nothing else reads it).

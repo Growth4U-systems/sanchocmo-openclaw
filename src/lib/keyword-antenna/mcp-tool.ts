@@ -42,6 +42,8 @@ const DISCOVERY_MODES = ["identity", "six-circles", "competitor-gap", "gsc-nearm
 const candidateSchema = z.object({
   keyword: z.string().min(1),
   pillarId: z.string().optional().describe("Content pillar key (P1, P2, …) from content-pillars.md."),
+  angleDraft: z.string().optional().describe("Optional editorial angle for the idea. If omitted, Sancho generates a deterministic SEO angle."),
+  angle_draft: z.string().optional().describe("Alias for angleDraft when callers reuse idea-queue field names."),
   discoveredBy: z.array(z.enum(DISCOVERY_MODES)).optional(),
   intent: z.enum(["informational", "commercial", "transactional", "navigational"]).optional(),
   bofuCategory: z.string().optional(),

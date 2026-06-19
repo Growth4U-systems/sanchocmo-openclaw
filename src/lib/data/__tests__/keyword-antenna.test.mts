@@ -59,10 +59,20 @@ test("toSeoIdea — enriched shape + source_signals that lights up the Keywords 
   assert.equal(idea.list, "keywords");
   assert.equal(idea.target_channel, "blog");
   assert.equal(idea.status, "New");
+  assert.equal(idea.pillar_id, "P2");
+  assert.ok(idea.angle_draft.length > 0, "keyword ideas must not create blank approved-angle drafts");
   assert.match(idea.source_signals[0], /^kw-2026-06-19-/); // → "keywords" bucket in classifySignalSource
   assert.equal(idea.seo.keyword, "Qué es un CMO open source");
   assert.equal(idea.seo.pillarId, "P2");
   assert.equal(idea.seo.priorityScore, s.priorityScore);
+});
+
+test("toSeoIdea — preserves agent-supplied angle draft when present", () => {
+  const angleDraft = "Responder desde el POV propio y cerrar con un marco editorial claro.";
+  const s = ka.scoreKeyword({ keyword: "growth loops", pillarId: "P1", angleDraft }, { now: NOW });
+  const idea = ka.toSeoIdea(s, { now: NOW });
+  assert.equal(idea.pillar_id, "P1");
+  assert.equal(idea.angle_draft, angleDraft);
 });
 
 test("dedupeCandidates — merges discoveredBy and keeps strategicFlag", () => {

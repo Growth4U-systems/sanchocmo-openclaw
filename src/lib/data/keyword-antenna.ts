@@ -34,6 +34,8 @@ export interface KeywordAiCitability {
 export interface KeywordCandidate {
   keyword: string;
   pillarId?: string; // P1, P2, … (from content-pillars.md)
+  angleDraft?: string; // optional editorial angle supplied by the discovery agent
+  angle_draft?: string; // tolerate the idea-queue field name when callers reuse it
   discoveredBy?: DiscoveryMode[];
   intent?: KeywordIntent;
   bofuCategory?: string; // "best-of" | "comparison" | "category" | "how-to" | …
@@ -60,6 +62,7 @@ export interface SeoIdeaRecord {
   type: "content";
   status: "New";
   title: string;
+  pillar_id: string;
   target_channel: "blog";
   content_type: string;
   source: "keyword-antenna";
@@ -170,6 +173,14 @@ export function keywordSlug(keyword: string): string {
     .slice(0, 48);
 }
 
+function fallbackAngleDraft(k: ScoredKeyword): string {
+  const supplied = (k.angleDraft || k.angle_draft || "").trim();
+  if (supplied) return supplied;
+  const pillar = k.pillarId ? ` del pilar ${k.pillarId}` : "";
+  const pageType = (k.recommendedPageType || k.bofuCategory || "SEO Article").toLowerCase();
+  return `Responder "${k.keyword}" desde el POV de marca${pillar}, no como una definicion generica. Convertir la intencion de busqueda en una pieza ${pageType} que explique que decision tiene que tomar el buyer, que criterio diferencia a la marca y que siguiente paso practico debe probar. Frame: "${k.keyword} como decision de negocio, no solo busqueda SEO".`;
+}
+
 export function toSeoIdea(k: ScoredKeyword, opts: { now?: string }): SeoIdeaRecord {
   const nowIso = opts.now ?? new Date().toISOString();
   const date = nowIso.slice(0, 10);
@@ -180,13 +191,14 @@ export function toSeoIdea(k: ScoredKeyword, opts: { now?: string }): SeoIdeaReco
     type: "content",
     status: "New",
     title: k.keyword,
+    pillar_id: k.pillarId ?? "",
     target_channel: "blog",
     content_type: k.recommendedPageType || "SEO Article",
     source: "keyword-antenna",
     list: "keywords",
     source_signals: [signalId],
     signal: { summary: `Keyword opportunity: "${k.keyword}"`, source: "keyword-antenna", date },
-    angle_draft: "",
+    angle_draft: fallbackAngleDraft(k),
     pov_confidence: clamp01(k.priorityScore / 100),
     created_at: nowIso,
     seo: {
