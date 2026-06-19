@@ -1,6 +1,6 @@
 name: Release Please
 
-# Branching model (docs/plans/branching-release-model-proposal.md):
+# Branching model (docs/CONTRIBUTING.md → "Release to production"):
 # release-please runs on `staging` — the trunk where all work integrates.
 # It keeps a single open "release PR" (chore: release vX.Y.Z) that accumulates
 # every Conventional Commit since the last release. Merging that PR cuts the

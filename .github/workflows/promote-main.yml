@@ -1,6 +1,6 @@
 name: Promote main to release tag
 
-# Branching model (docs/plans/branching-release-model-proposal.md):
+# Branching model (docs/CONTRIBUTING.md → "Release to production"):
 # `main` is a fast-forward-only pointer to the latest production release.
 # release-please cuts the tag + Release from `staging`; when that Release is
 # published this job fast-forwards `main` to the tag's commit. `main` never
@@ -35,6 +35,11 @@ jobs:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
       - name: Fast-forward main to the release tag
+        env:
+          # Passed via env, never inlined as ${{ }} in the script: the Release body
+          # is user-controlled, so interpolating it directly would be a shell
+          # injection vector. Read as "$RELEASE_BODY" below.
+          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
           set -euo pipefail
           TAG="${{ github.event.release.tag_name }}"
@@ -49,10 +54,30 @@ jobs:
             exit 0
           fi
 
+          # Guard: a normal release is cut by release-please FROM staging, so its
+          # commit is always reachable from staging's tip. A tag that isn't on
+          # staging was created out-of-band — by hand, or on a commit built off an
+          # old base (e.g. a GitHub-UI commit) — and promoting it diverges main.
+          # That is exactly what bit v0.7.1 (SAN-255). Refuse it, UNLESS the one
+          # sanctioned exception opts in: the emergency hotfix runbook tags on top
+          # of the prod tag on purpose and forward-merges to staging right after,
+          # signalling it with [hotfix-off-staging] in the Release body.
+          # ($RELEASE_BODY comes from the step env, never inlined — see the step.)
+          git fetch origin staging --quiet
+          STAGING_SHA="$(git rev-parse origin/staging)"
+          if ! git merge-base --is-ancestor "${TAG_SHA}" "${STAGING_SHA}"; then
+            if printf '%s' "${RELEASE_BODY:-}" | grep -qF '[hotfix-off-staging]'; then
+              echo "::warning::Release ${TAG} is not on staging but is marked [hotfix-off-staging] — promoting per the emergency runbook. Forward-merge it to staging now to restore the invariant."
+            else
+              echo "::error::Release ${TAG} (${TAG_SHA}) is NOT on staging (${STAGING_SHA}). Normal releases must be cut by release-please from staging — never tag or publish a Release by hand. (Emergency hotfix? add [hotfix-off-staging] to the Release body.) Refusing to promote main." >&2
+              exit 1
+            fi
+          fi
+
           # Refuse anything that isn't a true fast-forward. In the healthy model
           # the tag is cut from staging and main is an ancestor of staging, so
           # this is always a ff. A non-ff means main diverged and a human must
-          # reconcile it (it should never happen by construction).
+          # reconcile it (see CONTRIBUTING.md → "Reconciling a diverged main").
           if ! git merge-base --is-ancestor "${MAIN_SHA}" "${TAG_SHA}"; then
             echo "::error::main (${MAIN_SHA}) is not an ancestor of ${TAG} (${TAG_SHA}) — refusing non-fast-forward promote. Reconcile main↔staging." >&2
             exit 1
