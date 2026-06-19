@@ -29,7 +29,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const provider = pub.provider ? getProvider(pub.provider) : null;
   if (provider?.cancel && pub.external_job_id) {
-    const r = await provider.cancel(slug, pub.external_job_id);
+    const r = await provider.cancel(slug, pub.external_job_id, pub.account_id);
     if (!r.ok) return res.status(502).json({ error: r.error || "Cancel failed" });
   }
 

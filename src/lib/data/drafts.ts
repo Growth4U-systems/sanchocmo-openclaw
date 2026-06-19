@@ -86,6 +86,10 @@ export interface PublishingMeta {
   published_at?: string | null;
   external_job_id?: string;           // provider-side scheduled post id
   external_url?: string | null;       // canonical URL once published
+  /** SAN-162 — the provider account this post was published from (Metricool:
+   *  the voice's blogId). Persisted so status / cancel / metrics use the SAME
+   *  account, not the brand default. Absent = the provider's default account. */
+  account_id?: string;
   error?: string | null;
   /** Latest engagement snapshot. Refreshed daily by the metrics-collector
    *  cron via `/api/publishing/reconcile`. Older snapshots are not retained;

@@ -45,6 +45,12 @@ export interface PublishInput {
   };
   media: MediaAsset[];
   schedule?: { publishAt: string };  // ISO; absent = publish now
+  /**
+   * SAN-162 — provider-specific account/profile selector for multi-account
+   * publishing (Metricool: the voice's `metricool_profile_id` / blogId).
+   * Absent = the provider's default account.
+   */
+  accountId?: string;
 }
 
 export interface PublishResult {
@@ -72,6 +78,9 @@ export interface PostMetricsQuery {
   externalUrl: string;
   /** When the post went live; helps narrow the analytics range. ISO 8601. */
   publishedAt?: string | null;
+  /** SAN-162 — the account this post was published from (Metricool: the voice's
+   *  blogId). Metrics must be read from that same account. */
+  accountId?: string;
 }
 
 export interface PublishProvider {
@@ -87,11 +96,12 @@ export interface PublishProvider {
   publish(input: PublishInput): Promise<PublishResult>;
 
   /** Optional: providers that don't expose status polling can omit this and
-   *  the UI will only know what `publish()` returned. */
-  getStatus?(slug: string, externalJobId: string): Promise<PublishStatus>;
+   *  the UI will only know what `publish()` returned. `accountId` (SAN-162) is
+   *  the account the post was published from, so status is read from it. */
+  getStatus?(slug: string, externalJobId: string, accountId?: string): Promise<PublishStatus>;
 
-  /** Optional: cancel a scheduled post. */
-  cancel?(slug: string, externalJobId: string): Promise<{ ok: boolean; error?: string }>;
+  /** Optional: cancel a scheduled post (on the account it was scheduled on). */
+  cancel?(slug: string, externalJobId: string, accountId?: string): Promise<{ ok: boolean; error?: string }>;
 
   /** Optional: refresh engagement metrics for a batch of published posts.
    *  Returns one snapshot per input matched by external URL. Providers
