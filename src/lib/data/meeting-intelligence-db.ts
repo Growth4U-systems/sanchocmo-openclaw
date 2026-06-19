@@ -15,6 +15,7 @@ import {
 } from "@/db/schema";
 import { BASE, brandDir, meetingIntelligenceConfigFile, meetingIntelligenceDir } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
+import { createTask } from "@/lib/data/tasks";
 
 export type MeetingStatus = "needs_raw_sync" | "raw_available" | "processed" | "needs_review" | "failed";
 export type InsightStatus = "draft" | "reviewable" | "accepted" | "rejected" | "converted";
@@ -151,6 +152,7 @@ export interface ProposalEntry {
   taskStatus: string;
   meetingId?: string | null;
   insightId?: string | null;
+  taskId?: string | null;
 }
 
 export interface MeetingDetailRecord {
@@ -1038,6 +1040,7 @@ function mapRecommendation(row: typeof miRecommendations.$inferSelect, meetingTi
     taskStatus: row.taskStatus,
     meetingId: row.meetingId,
     insightId: row.insightId,
+    taskId: row.taskId,
   };
 }
 
@@ -1307,20 +1310,57 @@ export async function createMeetingIntelligenceRun(input: {
 export async function applyMeetingRecommendationAction(slug: string, recommendationId: string, action: RecommendationAction) {
   if (!hasDatabase) return { ok: false, storage: STORAGE_NOT_CONFIGURED, recommendation: null };
   await ensureMeetingIntelligenceStorage();
+  const database = getDb();
   const now = new Date();
+  const storage = { configured: true, provider: "neon" };
+
+  // Fix B (SAN-222): "Convert" creates a REAL task on the board (this is where the
+  // loop used to die — it only flipped status). Idempotent: only create the task
+  // the first time; a re-convert reuses the stored taskId, and createTask is also
+  // keyed by thread (`mi-rec-<id>`) as a backstop against duplicates.
+  if (action === "convert") {
+    const existing = (await database
+      .select()
+      .from(miRecommendations)
+      .where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.id, recommendationId)))
+      .limit(1))[0];
+    if (!existing) return { ok: true, storage, recommendation: null };
+
+    let taskId = existing.taskId;
+    if (!taskId) {
+      const { config } = await getMeetingIntelligenceConfig(slug);
+      const owner = config.routing?.reviewOwner || "Alfonso";
+      const task = await createTask(slug, {
+        // Deterministic, unique id per recommendation. Without it createTask falls
+        // back to getNextChildTaskId(slug, "") — which is FS-based and returns the
+        // same "-T01" for every parentless task, so a second convert would collide
+        // on sourceKey and overwrite the first task in the db backend. The explicit
+        // id makes convert collision-proof and idempotent across both backends.
+        id: `task-${existing.id}`,
+        name: existing.title,
+        description: existing.description ?? undefined,
+        owner,
+        type: "execution",
+        mc_chat_thread_id: `mi-rec-${existing.id}`,
+      });
+      taskId = (task as { id?: string } | null)?.id ?? null;
+    }
+
+    const updated = await database
+      .update(miRecommendations)
+      .set({ status: "converted", taskStatus: "todo", taskId, convertedAt: now, updatedAt: now })
+      .where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.id, recommendationId)))
+      .returning();
+    return { ok: true, storage, recommendation: updated[0] ? mapRecommendation(updated[0]) : null };
+  }
+
   const update = action === "reject"
     ? { status: "rejected", taskStatus: "rejected", rejectedAt: now, updatedAt: now }
-    : action === "convert"
-      ? { status: "converted", taskStatus: "todo", convertedAt: now, updatedAt: now }
-      : { status: "approved", taskStatus: "todo", approvedAt: now, updatedAt: now };
-  const updated = await getDb()
+    : { status: "approved", taskStatus: "todo", approvedAt: now, updatedAt: now };
+  const updated = await database
     .update(miRecommendations)
     .set(update)
     .where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.id, recommendationId)))
     .returning();
-  return {
-    ok: true,
-    storage: { configured: true, provider: "neon" },
-    recommendation: updated[0] ? mapRecommendation(updated[0]) : null,
-  };
+  return { ok: true, storage, recommendation: updated[0] ? mapRecommendation(updated[0]) : null };
 }

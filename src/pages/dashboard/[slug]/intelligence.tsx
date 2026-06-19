@@ -163,6 +163,7 @@ interface ProposalEntry {
   taskStatus?: string;
   meetingId?: string | null;
   insightId?: string | null;
+  taskId?: string | null;
 }
 
 interface DocumentRecord {
@@ -227,6 +228,22 @@ interface MeetingDetailPayload {
 
 function meetingDateTime(meeting: Meeting) {
   return meeting.time ? `${meeting.date} · ${meeting.time}` : meeting.date;
+}
+
+// Run surface (fix C, SAN-222). Rendered client-side only (state loads in an
+// effect), so locale/timezone formatting won't cause a hydration mismatch.
+function formatRunTimestamp(iso: string) {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function runStatusTone(status: string): "ok" | "proposal" | "critical" | "low" {
+  if (status === "completed") return "ok";
+  if (status === "failed") return "critical";
+  if (status === "running" || status === "queued") return "proposal";
+  return "low";
 }
 
 function emptyScope(): SourceScope {
@@ -691,6 +708,16 @@ function IntelligencePageClient() {
               { value: activeTotals.sources, label: "Sources" },
             ]}
           />
+          {meetingState?.lastRun && (
+            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+              <span className="font-extrabold uppercase tracking-[0.08em] text-foreground">Último aprendizaje</span>
+              <span>{formatRunTimestamp(meetingState.lastRun.date)}</span>
+              <span aria-hidden>·</span>
+              <Badge tone={runStatusTone(meetingState.lastRun.status)}>{meetingState.lastRun.status}</Badge>
+              <span aria-hidden>·</span>
+              <span>{activeIntelligence.length} insights · {activeTotals.proposals} proposals</span>
+            </p>
+          )}
         </header>
 
         {meetingState?.storage?.configured === false && (
@@ -1783,6 +1810,14 @@ function ProposalReview({
                 <strong>{proposal.title}</strong><br /><br />
                 Documento afectado: {affectedDocument}. Fuente: {proposal.source}. Estado: {proposal.status || "recommended"}. Task draft: {proposal.taskStatus || "recommended"}.
               </ReviewBox>
+              {proposal.status === "converted" && proposal.taskId && (
+                <a
+                  href={`/dashboard/${slug}/tasks/${proposal.taskId}`}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-rust underline-offset-2 hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" /> Ver tarea creada →
+                </a>
+              )}
             </>
           ) : (
             <ReviewBox><strong>No pending proposal</strong><br /><br />Cuando un scan detecte impacto documental, Sancho lo convertira aqui en una propuesta revisable antes de tocar StrategyPlan, POV Bank u otro documento canonico.</ReviewBox>
