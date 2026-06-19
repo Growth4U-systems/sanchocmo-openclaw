@@ -17,6 +17,7 @@ import { mcChatPlugin } from "./channel.js";
 import { classifyAndRewriteError, mergeWithPriorCategory } from "./error-rewriter.js";
 import { errorTracker } from "./error-tracker.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
+import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
 
 // Best-effort lookup of an agent's current Codex auth mode + account email.
 // Used to disambiguate "rate limit" errors: Codex CLI always emits the
@@ -178,7 +179,37 @@ export default defineChannelPluginEntry({
         contextLines.push(`Usa "single" para radios (1 opción) y "multi" para checkboxes. OBLIGATORIO: la ÚLTIMA opción debe ser SIEMPRE {"id":"other","label":"Otro (lo escribo)"} — no es opcional, es un requisito del componente para que el usuario pueda dar respuesta libre. Si la omites, el usuario queda encajonado. NO uses ":::ask" para preguntas abiertas (ej. "cuéntame sobre tu negocio") — solo para decisiones discretas. Puedes incluir VARIOS bloques ":::ask" en un mismo mensaje (ej. preguntar tono + formato + audiencia a la vez); el componente espera a que el usuario responda TODAS antes de devolverte un único mensaje con todas las respuestas en líneas separadas: "[ask:q1] respuesta: …\\n[ask:q2] respuesta: …". NO ejecutes nada hasta recibir ese mensaje completo. Si el usuario eligió "Otro" verás su texto literal en lugar de la etiqueta.`);
         contextLines.push(`[/MC Chat Context]`);
 
-        const bodyForAgent = contextLines.join('\n') + '\n\n' + text;
+        // ─── Specialist grounding (SAN-246) ───
+        // A thread dispatched DIRECTLY to a specialist (agent:dulcinea) gets no
+        // client context — the agent starts blind (instance of SAN-218). Fetch
+        // a bounded context pack from Next and prepend it to the user text, OR a
+        // STOP directive when the client has no Foundation. Skip for sancho (the
+        // orchestrator carries its own grounding). FAIL-SOFT: any failure logs a
+        // warning and continues WITHOUT blocking the dispatch — never crash the
+        // gateway over grounding.
+        let groundedText = text;
+        if (requestedAgent && requestedAgent !== "sancho") {
+          try {
+            const pack = await fetchContextPack(slug, skill || null, {
+              mcServerUrl: channelCfg?.mcServerUrl,
+              secret: channelCfg?.sharedSecret,
+              logger,
+            });
+            if (pack) {
+              const prefix = pack.verdict === "missing"
+                ? buildFoundationDirective(pack)
+                : buildClientContextBlock(pack);
+              if (prefix) {
+                groundedText = `${prefix}\n\n${text}`;
+                logger.info(`[mc-chat] context-pack injected (agent=${requestedAgent} slug=${slug} verdict=${pack.verdict} docs=${Array.isArray(pack.docPaths) ? pack.docPaths.length : 0})`);
+              }
+            }
+          } catch (e) {
+            logger.warn(`[mc-chat] context-pack injection skipped: ${e?.message || e}`);
+          }
+        }
+
+        const bodyForAgent = contextLines.join('\n') + '\n\n' + groundedText;
 
         // Resolve sender identity based on admin/client role
         // This maps to toolsBySender keys in openclaw.json:
