@@ -5,6 +5,7 @@ import { attachMediaToDraft, buildMediaKey } from "@/lib/publishing/media-helper
 import { loadDraft } from "@/lib/data/drafts";
 import { getCarouselTemplate } from "@/lib/carousel/templates";
 import { renderHtmlToPng, renderSlidesToPdf } from "@/lib/carousel/render";
+import { renderCarouselViaOd } from "@/lib/carousel/render-od";
 import { loadBrandContext } from "@/lib/carousel/brand-context";
 
 /**
@@ -151,6 +152,34 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     );
   }
 
+  // Backend switch (SAN-245). DEFAULT is "playwright" (render.ts) so nothing
+  // changes until OD render capacity is confirmed on Staging (SAN-44). Set
+  // CONTENT_RENDER_BACKEND=od on the daemon-equipped Staging environment to
+  // route rendering through the Open Design daemon (which has its own Chromium)
+  // instead of relying on Chromium being present in our Docker image — it isn't.
+  // The OD path is NOT e2e-verifiable locally; see render-od.ts.
+  const backend = process.env.CONTENT_RENDER_BACKEND ?? "playwright";
+  if (backend === "od") {
+    try {
+      const result = await renderCarouselViaOd({
+        slug,
+        ideaId,
+        channel,
+        template,
+        slots: safeSlots,
+        perSlide: safePerSlide,
+        brand,
+        slideHtmls,
+      });
+      return res.status(200).json({ ok: true, urls: result.urls, draft: result.draft });
+    } catch (e) {
+      return res.status(502).json({
+        error: `OD render failed: ${e instanceof Error ? e.message : String(e)}`,
+      });
+    }
+  }
+
+  // ── Default backend: in-process Playwright (render.ts) ──────────────────
   const urls: string[] = [];
   let lastDraft = null;
   const isCarousel = template.slideCount > 1;

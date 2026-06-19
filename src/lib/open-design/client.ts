@@ -11,6 +11,8 @@
 
 import { promises as fs } from "fs";
 import path from "path";
+import os from "os";
+import { brandDir } from "@/lib/data/paths";
 import type {
   OdArtifact,
   OdChatRequest,
@@ -309,6 +311,119 @@ export async function odFindProjectByBaseDir(
 }
 
 // ---------------------------------------------------------------------------
+// Project resolution (slug + scope → projectId)
+//
+// Extracted from the /api/open-design/resolve-project route so server-side
+// callers (e.g. the carousel OD-render path) can resolve a project WITHOUT an
+// HTTP self-call. The route now delegates here. Mapping persistence and the
+// designSystemId patch behave exactly as before.
+// ---------------------------------------------------------------------------
+
+/** `~/.openclaw/workspace-maese-pedro/od-projects.json`. mapping[slug][scope] = projectId. */
+const OD_PROJECT_MAPPING_FILE = path.join(
+  process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
+  "workspace-maese-pedro",
+  "od-projects.json",
+);
+
+interface OdProjectMapping {
+  [slug: string]: Record<string, string>;
+}
+
+async function readOdProjectMapping(): Promise<OdProjectMapping> {
+  try {
+    return JSON.parse(await fs.readFile(OD_PROJECT_MAPPING_FILE, "utf8")) as OdProjectMapping;
+  } catch {
+    return {};
+  }
+}
+
+async function writeOdProjectMapping(mapping: OdProjectMapping): Promise<void> {
+  await fs.mkdir(path.dirname(OD_PROJECT_MAPPING_FILE), { recursive: true });
+  await fs.writeFile(OD_PROJECT_MAPPING_FILE, JSON.stringify(mapping, null, 2) + "\n", "utf8");
+}
+
+export interface OdResolveProjectResult {
+  projectId: string;
+  /** Absolute path of the resolved scope directory on disk. */
+  baseDir: string;
+  /** Echoes back the scope (brand-relative folder, "" = brand root). */
+  scope: string;
+}
+
+/**
+ * Resolve the OD projectId for a brand sub-folder (`scope`, brand-relative;
+ * "" = brand root). Mapping → daemon lookup → lazy import. Also ensures the
+ * project's `designSystemId === slug` so the agentic editor uses the brand's
+ * DESIGN.md (best-effort; ignored if the design system isn't in OD's catalog).
+ *
+ * @throws OdDaemonOfflineError when the daemon can't be reached.
+ * @throws Error when the scope escapes the brand dir or isn't a directory.
+ */
+export async function odResolveProject(
+  slug: string,
+  scope = "",
+  config: OdClientConfig = resolveOdConfig(),
+): Promise<OdResolveProjectResult> {
+  const root = brandDir(slug);
+  const absTarget = path.resolve(scope ? path.join(root, scope) : root);
+
+  // Path-traversal guard — scope must stay inside the brand dir.
+  if (!absTarget.startsWith(path.resolve(root))) {
+    throw new Error(`Forbidden — scope outside brand dir: ${scope}`);
+  }
+  const stat = await fs.stat(absTarget).catch(() => null);
+  if (!stat) throw new Error(`scope not found: ${scope}`);
+  if (!stat.isDirectory()) throw new Error(`scope must be a directory: ${scope}`);
+
+  const mapping = await readOdProjectMapping();
+  let projectId: string | undefined = mapping[slug]?.[scope];
+  let projectRecord: { id: string; designSystemId: string | null } | undefined;
+
+  // List projects: validate the cached mapping + capture current designSystemId.
+  const projects = await odListProjects(config);
+  if (projectId) {
+    const found = projects.find((p) => p.id === projectId);
+    if (!found) projectId = undefined; // orphan — re-import below
+    else projectRecord = { id: found.id, designSystemId: found.designSystemId ?? null };
+  }
+  if (!projectId) {
+    const existing = projects.find((p) => p.metadata?.baseDir === absTarget);
+    if (existing) {
+      projectId = existing.id;
+      projectRecord = { id: existing.id, designSystemId: existing.designSystemId ?? null };
+    }
+  }
+
+  // Still missing → lazy-create by importing the folder.
+  if (!projectId) {
+    const result = await odImportFolder({ baseDir: absTarget }, config);
+    projectId = result.project.id;
+    projectRecord = { id: result.project.id, designSystemId: result.project.designSystemId ?? null };
+  }
+
+  // Persist mapping if it changed.
+  if (mapping[slug]?.[scope] !== projectId) {
+    if (!mapping[slug]) mapping[slug] = {};
+    mapping[slug][scope] = projectId;
+    await writeOdProjectMapping(mapping);
+  }
+
+  // Ensure designSystemId === slug so OD uses the brand DESIGN.md. Best-effort:
+  // if the slug isn't a design system in OD's catalog the patch errors and we
+  // ignore it (editor still opens, just without the design system).
+  if (projectRecord && projectRecord.designSystemId !== slug) {
+    try {
+      await odPatchProject(projectId, { designSystemId: slug }, config);
+    } catch (err) {
+      console.warn(`[odResolveProject] could not set designSystemId="${slug}":`, err);
+    }
+  }
+
+  return { projectId, baseDir: absTarget, scope };
+}
+
+// ---------------------------------------------------------------------------
 // Chat (SSE)
 // ---------------------------------------------------------------------------
 
@@ -316,11 +431,23 @@ export async function odChat(
   body: OdChatRequest,
   config: OdClientConfig = resolveOdConfig(),
 ): Promise<AsyncGenerator<OdSseEvent>> {
-  const response = await fetch(`${config.daemonUrl}/api/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify(body),
-  }).catch((err) => {
+  // SSE needs the raw streaming `fetch` (odFetch consumes nothing but returns a
+  // Response we'd have to hand off — we keep the stream here), but the request
+  // init still goes through `withOdAuth` so the Bearer token + Origin header are
+  // attached when the hosted Staging daemon enforces Phase 5 auth. Previously
+  // this POST sent no Authorization header and the daemon rejected it once
+  // OD_API_TOKEN was set (SAN-245).
+  const response = await fetch(
+    `${config.daemonUrl}/api/chat`,
+    withOdAuth(
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+        body: JSON.stringify(body),
+      },
+      config,
+    ),
+  ).catch((err) => {
     throw new OdDaemonOfflineError(config.daemonUrl, err);
   });
   // El orquestador od-generate inyecta `context.template` con el contrato meta.json
@@ -449,23 +576,63 @@ export async function odListProjectFiles(
   return pickItems<OdProjectFile>(payload, ["files", "items"]);
 }
 
+/** Build the daemon URL that serves a single project file's bytes.
+ *  The web form `/projects/<id>/files/<path>` does NOT exist on the daemon
+ *  (→404); only this `/api/...` form returns the file content. */
+function odProjectFileUrl(projectId: string, filePath: string, config: OdClientConfig): string {
+  return `${config.daemonUrl}/api/projects/${encodeURIComponent(projectId)}/files/${filePath
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/")}`;
+}
+
 /** Lee el contenido de un archivo concreto del proyecto OD (string). */
 export async function odReadProjectFile(
   projectId: string,
   filePath: string,
   config: OdClientConfig = resolveOdConfig(),
 ): Promise<string | null> {
-  const url = `${config.daemonUrl}/api/projects/${encodeURIComponent(projectId)}/files/${filePath
-    .split("/")
-    .map(encodeURIComponent)
-    .join("/")}`;
+  const url = odProjectFileUrl(projectId, filePath, config);
   try {
-    const response = await fetch(url);
+    // Goes through withOdAuth so the Bearer header is attached for the hosted
+    // Staging daemon (Phase 5). GET → no Origin header needed.
+    const response = await fetch(url, withOdAuth({ method: "GET" }, config));
     if (!response.ok) return null;
     return await response.text();
   } catch {
     return null;
   }
+}
+
+/**
+ * Read a single project file as raw bytes (Buffer). The text sibling
+ * `odReadProjectFile` decodes as UTF-8 which corrupts binary assets (PNG/PDF),
+ * so the carousel OD-render path (render-od.ts) uses this to pull the exported
+ * PDF and per-slide PNGs back from the daemon before uploading them to R2.
+ *
+ * Throws on a non-OK response (unlike the text reader which returns null) —
+ * the OD render path treats a missing exported asset as fatal: we must not
+ * silently publish a carousel with missing slides.
+ */
+export async function odReadProjectFileBinary(
+  projectId: string,
+  filePath: string,
+  config: OdClientConfig = resolveOdConfig(),
+): Promise<Buffer> {
+  const url = odProjectFileUrl(projectId, filePath, config);
+  let response: Response;
+  try {
+    response = await fetch(url, withOdAuth({ method: "GET" }, config));
+  } catch (err) {
+    throw new OdDaemonOfflineError(config.daemonUrl, err);
+  }
+  if (!response.ok) {
+    throw new Error(
+      `odReadProjectFileBinary failed: ${response.status} for ${filePath} in project ${projectId}`,
+    );
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 export interface ArtifactValidation {
