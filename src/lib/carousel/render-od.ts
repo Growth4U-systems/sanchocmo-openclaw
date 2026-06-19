@@ -244,30 +244,90 @@ export async function renderCarouselViaOd(
   }
 
   // 4. Export the swipeable PDF, then recover the per-slide PNGs OD rendered.
+  //
+  //    ⚠️ SCOPING (SAN-245). OD projects are REUSED per template folder — the
+  //    resolve maps slug+template → a PERSISTENT projectId, so the project dir
+  //    can already contain stale `.pdf`/`.png` files from PRIOR exports plus the
+  //    template's own source/thumbnail PNGs. Picking "the first PDF + every PNG"
+  //    would wrongly attach those to THIS draft. We scope to the assets THIS
+  //    export produced with two independent guards used together:
+  //
+  //      (b) FRESHNESS — `OdProjectFile.mtime` (epoch ms) lets us keep only
+  //          files written at/after `exportStartedAt`. We capture that BEFORE
+  //          `odExport`. `mtime` is optional in the daemon payload, so files
+  //          lacking it are treated as "unknown age" and kept as candidates.
+  //      (c) EXACT COUNT — independent of (b): a carousel MUST yield exactly
+  //          `slideCount` PNGs + exactly 1 PDF; a single MUST yield exactly 1
+  //          PNG + 0 PDFs. A mismatch means stale residue leaked in (or the
+  //          export under-produced) → we THROW (fail-loud) rather than attach a
+  //          wrong set. This is the gate that catches what (b) can't.
+  //
+  //    `odExport` returns only `{ ok, path? }` (at most ONE path, the PDF
+  //    destination), not the PNG set, so strategy (a) can't scope all assets on
+  //    its own — we rely on (b)+(c).
+  //
+  //    RESIDUAL RISK: if two exports of the SAME template land within the same
+  //    coarse mtime tick AND both leave the same count, (b)+(c) can't tell them
+  //    apart by metadata alone. That can only be confirmed on Staging e2e (this
+  //    path needs the hosted OD daemon). Until then this is the most specific
+  //    scoping the OD API exposes.
+  const isCarousel = template.slideCount > 1;
+  const expectedPngs = template.slideCount;
+  const expectedPdfs = isCarousel ? 1 : 0;
+
+  // Small backward tolerance: guards against coarse mtime granularity / minor
+  // clock skew between this process and the daemon's filesystem. Wide enough to
+  // never drop a file the export just wrote, narrow enough to exclude older runs.
+  const MTIME_TOLERANCE_MS = 5_000;
+  const exportStartedAt = Date.now() - MTIME_TOLERANCE_MS;
+
   await odExport({ artifactId, format: "pdf" }, config);
 
   // Re-list after export so the PDF/PNGs the daemon just wrote are visible.
   const afterExport = await odListProjectFiles(projectId, config);
-  const pdfFile = afterExport.find(
-    (f) => f.type === "file" && f.path.toLowerCase().endsWith(".pdf"),
+
+  // (b) Freshness filter. Keep files written at/after the export started; keep
+  // files with an unknown mtime (the count assertion below still guards those).
+  const isFresh = (f: { mtime?: number }): boolean =>
+    typeof f.mtime !== "number" || f.mtime >= exportStartedAt;
+
+  const freshPdfs = afterExport.filter(
+    (f) => f.type === "file" && f.path.toLowerCase().endsWith(".pdf") && isFresh(f),
   );
-  const pngFiles = afterExport
-    .filter((f) => f.type === "file" && f.path.toLowerCase().endsWith(".png"))
+  const freshPngs = afterExport
+    .filter(
+      (f) => f.type === "file" && f.path.toLowerCase().endsWith(".png") && isFresh(f),
+    )
     // Stable order so slide-1, slide-2, … attach in sequence. OD typically
     // names them with a numeric suffix; lexical sort with numeric awareness.
     .sort((a, b) =>
       a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: "base" }),
     );
 
-  const isCarousel = template.slideCount > 1;
-  if (isCarousel && !pdfFile) {
+  // (c) EXACT-COUNT assertions — fail-loud. These run on the freshness-scoped
+  // set, so they catch both stale residue (too many) and a short export (too
+  // few). Never silently attach a wrong set.
+  if (freshPngs.length !== expectedPngs) {
     throw new Error(
-      "OD export produced no PDF — a multi-slide carousel needs the swipeable PDF",
+      `OD export PNG count mismatch: expected exactly ${expectedPngs} ` +
+        `(template "${template.id}" slideCount=${template.slideCount}) but found ` +
+        `${freshPngs.length} fresh PNG(s) in project ${projectId}. Refusing to ` +
+        `attach a wrong asset set (stale exports or template source files may ` +
+        `be leaking in). Fresh PNGs: ${freshPngs.map((f) => f.path).join(", ") || "(none)"}`,
     );
   }
-  if (pngFiles.length === 0) {
-    throw new Error("OD export produced no per-slide PNGs");
+  if (freshPdfs.length !== expectedPdfs) {
+    throw new Error(
+      `OD export PDF count mismatch: expected exactly ${expectedPdfs} ` +
+        `(${isCarousel ? "multi-slide carousel needs the swipeable PDF" : "single image needs no PDF"}) ` +
+        `but found ${freshPdfs.length} fresh PDF(s) in project ${projectId}. ` +
+        `Refusing to attach a wrong asset set. Fresh PDFs: ` +
+        `${freshPdfs.map((f) => f.path).join(", ") || "(none)"}`,
+    );
   }
+
+  const pdfFile = isCarousel ? freshPdfs[0] : undefined;
+  const pngFiles = freshPngs;
 
   const urls: string[] = [];
   let lastDraft: Draft | null = null;
