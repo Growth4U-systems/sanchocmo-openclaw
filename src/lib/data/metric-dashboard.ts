@@ -115,10 +115,24 @@ const ARCHETYPE_TEMPLATES: Record<string, { activationEvent: string; northStarLa
     northStarLabel: "Pedidos",
     funnel: ["Visita", "Carrito", "Checkout", "Compra"],
   },
+  fintech: {
+    activationEvent: "Primera operación / cuenta verificada",
+    northStarLabel: "Cuentas activas",
+    funnel: ["Visita", "Signup", "KYC", "1ª operación"],
+  },
+};
+
+// Generated metrics-plans use aliases (saas-app, ecommerce-d2c…) — map them onto
+// the template keys so the client's real archetype is preserved (Codex review).
+const ARCHETYPE_ALIASES: Record<string, string> = {
+  "saas-app": "saas",
+  "ecommerce-d2c": "ecommerce",
+  "ecommerce-dtc": "ecommerce",
 };
 
 function normalizeArchetype(value: unknown): string {
-  const key = String(value ?? "lead-to-sale").toLowerCase().replace(/[\s_]+/g, "-");
+  const raw = String(value ?? "lead-to-sale").toLowerCase().replace(/[\s_]+/g, "-");
+  const key = ARCHETYPE_ALIASES[raw] ?? raw;
   return ARCHETYPE_TEMPLATES[key] ? key : "lead-to-sale";
 }
 
@@ -147,6 +161,37 @@ function readMetricsPlan(slug: string): Record<string, unknown> | null {
   }
 }
 
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value ? value : undefined;
+}
+
+// Generated metrics-plan funnel entries are { step, source, metric, manual } and
+// KPIs vary; normalize the name field (step / label / metric → name) so a real
+// plan isn't dropped to the generic template on first seed (Codex review).
+function normalizeFunnel(value: unknown): Array<Record<string, unknown>> | null {
+  if (!Array.isArray(value)) return null;
+  const steps: Array<Record<string, unknown>> = [];
+  for (const raw of value) {
+    const obj = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    const name = String(obj.name ?? obj.step ?? obj.label ?? "").trim();
+    if (!name) continue;
+    steps.push({ name, source: asString(obj.source), metric: asString(obj.metric), manual: typeof obj.manual === "boolean" ? obj.manual : undefined });
+  }
+  return steps.length ? steps : null;
+}
+
+function normalizeKpis(value: unknown): Array<Record<string, unknown>> | null {
+  if (!Array.isArray(value)) return null;
+  const kpis: Array<Record<string, unknown>> = [];
+  for (const raw of value) {
+    const obj = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    const name = String(obj.name ?? obj.label ?? obj.metric ?? "").trim();
+    if (!name) continue;
+    kpis.push({ name, source: asString(obj.source), metric: asString(obj.metric), category: asString(obj.category), format: asString(obj.format), formula: asString(obj.formula) });
+  }
+  return kpis.length ? kpis : null;
+}
+
 /** Seed a definition from the client's metrics-plan.json, falling back to the archetype template. */
 export function buildSeedDefinition(slug: string): DashboardDefinition {
   const plan = readMetricsPlan(slug);
@@ -155,11 +200,11 @@ export function buildSeedDefinition(slug: string): DashboardDefinition {
   if (!plan) return base;
   const enriched: Record<string, unknown> = {
     ...base,
-    activationEvent: (plan.activationEvent as string) ?? base.activationEvent,
+    activationEvent: asString(plan.activationEvent) ?? base.activationEvent,
     plan: {
-      activationEvent: (plan.activationEvent as string) ?? base.plan.activationEvent,
-      funnel: Array.isArray(plan.funnel) && plan.funnel.length ? plan.funnel : base.plan.funnel,
-      kpis: Array.isArray(plan.kpis) ? plan.kpis : base.plan.kpis,
+      activationEvent: asString(plan.activationEvent) ?? base.plan.activationEvent,
+      funnel: normalizeFunnel(plan.funnel) ?? base.plan.funnel,
+      kpis: normalizeKpis(plan.kpis) ?? base.plan.kpis,
     },
   };
   try {
