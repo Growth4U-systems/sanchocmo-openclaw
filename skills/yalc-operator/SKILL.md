@@ -142,6 +142,30 @@ Other YALC API surfaces covered by the wrapper:
 - `api` for intentionally confirmed `/api/*` gaps, except credential writes
 - `cli` for allowlisted read-only CLI fallback commands only
 
+## Async jobs
+
+YALC converts long-running ops to background jobs. The long ops are: lead enrichment (`campaign-leads-enrich`), Instantly publish (`campaign-publish`), skill runs (`run-skill`), and gate resume (`approve-gate` / `reject-gate`). When YALC runs one as a job, the wrapper returns `{ "ok": true, "async": true, "jobId": "…", "statusUrl": "…" }` (top-level `async: true`) instead of the normal sync result.
+
+When you call any of these long ops you MUST:
+
+1. **Pass `--callback-context`** so YALC can deliver the result back to this exact chat thread. Build it from the `[MC Chat Context]` block at the top of the turn:
+
+   ```bash
+   node skills/yalc-operator/scripts/yalc-client.mjs campaign-leads-enrich \
+     --slug growth4u \
+     --id <yalc-campaign-id> \
+     --confirm-side-effect \
+     --callback-context '{"slug":"<slug>","threadId":"<threadId>","agent":"<agent>"}'
+   ```
+
+   `slug`, `threadId`, and `agent` come from `[MC Chat Context]`. The wrapper attaches `callbackUrl` (`SANCHO_BASE_URL`/`BASE_URL` + `/api/yalc/job-callback`) automatically.
+
+2. **On `async: true`, tell the user it's running and you'll notify them when it finishes** (e.g. "Lo dejé corriendo en YALC, te aviso en este hilo cuando termine."), then **END the turn**.
+
+3. **Do NOT poll `/api/jobs/:id` or `statusUrl` in a loop.** The result arrives as a brand-new message in this same thread when the job completes — YALC POSTs to `/api/yalc/job-callback`, which re-engages you with a synthetic prompt summarizing the job (status, type, output, jobId). At that point you report the result to the user (e.g. "✅ YALC terminó: 132 leads. ¿Enriquezco?") and suggest the next step.
+
+If the op returns a normal sync result (no `async` flag), handle it as before. Always pass `--callback-context` on the long ops regardless, so the async path works whenever YALC decides to background the work.
+
 ## Routing
 
 Use YALC for:
