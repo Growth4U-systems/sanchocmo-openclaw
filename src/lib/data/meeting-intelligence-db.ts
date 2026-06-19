@@ -1307,6 +1307,15 @@ export async function createMeetingIntelligenceRun(input: {
   return { ok: true, storage: { configured: true, provider: "neon" }, run };
 }
 
+// Deterministic id for the task created when a recommendation is converted.
+// MUST start with "P": the json backend's projectDirs() only lists top-level
+// dirs that start with "P", so a non-P id would be created but never surfaced.
+// Stable per recommendation → idempotent re-converts; unique → no "-T01"
+// collision in the db backend.
+export function convertedRecommendationTaskId(recommendationId: string) {
+  return `P-mirec-${recommendationId.replace(/^mirc_/, "")}`;
+}
+
 export async function applyMeetingRecommendationAction(slug: string, recommendationId: string, action: RecommendationAction) {
   if (!hasDatabase) return { ok: false, storage: STORAGE_NOT_CONFIGURED, recommendation: null };
   await ensureMeetingIntelligenceStorage();
@@ -1331,12 +1340,13 @@ export async function applyMeetingRecommendationAction(slug: string, recommendat
       const { config } = await getMeetingIntelligenceConfig(slug);
       const owner = config.routing?.reviewOwner || "Alfonso";
       const task = await createTask(slug, {
-        // Deterministic, unique id per recommendation. Without it createTask falls
-        // back to getNextChildTaskId(slug, "") — which is FS-based and returns the
-        // same "-T01" for every parentless task, so a second convert would collide
-        // on sourceKey and overwrite the first task in the db backend. The explicit
-        // id makes convert collision-proof and idempotent across both backends.
-        id: `task-${existing.id}`,
+        // Deterministic, unique, P-prefixed id per recommendation. The "P" prefix is
+        // REQUIRED: in the json backend a parentless createTask writes a top-level
+        // project dir, and projectDirs() only lists dirs that start with "P" — a
+        // non-P id is invisible to every listing and detail lookup ("Tarea no
+        // encontrada"). The explicit id also keeps convert collision-proof +
+        // idempotent in the db backend (else getNextChildTaskId(slug,"") → "-T01").
+        id: convertedRecommendationTaskId(existing.id),
         name: existing.title,
         description: existing.description ?? undefined,
         owner,
