@@ -145,12 +145,25 @@ function draftsDir(slug: string, ideaId: string): string {
   return path.join(BASE, "brand", slug, "content", "drafts", ideaId);
 }
 
+/**
+ * Channel ids are the lowercase canonical form on disk: `generate-drafts`
+ * expands every channel via `expandChannels` (which only emits lowercase
+ * `linkedin`/`twitter`/`blog`) and writes `{channel}.md`. Some callers (e.g.
+ * the render-carousel UI) pass display-cased values like `"LinkedIn"`, so we
+ * normalize at the path-building boundary to keep lookups case-insensitive and
+ * consistent with how files are stored. Without this, `loadDraft("LinkedIn")`
+ * builds `LinkedIn.md`, misses the on-disk `linkedin.md`, and 404s (SAN-245).
+ */
+function normalizeChannel(channel: string): string {
+  return channel.toLowerCase();
+}
+
 export function draftRelPath(ideaId: string, channel: string): string {
-  return `content/drafts/${ideaId}/${channel}.md`;
+  return `content/drafts/${ideaId}/${normalizeChannel(channel)}.md`;
 }
 
 export function draftAbsPath(slug: string, ideaId: string, channel: string): string {
-  return path.join(draftsDir(slug, ideaId), `${channel}.md`);
+  return path.join(draftsDir(slug, ideaId), `${normalizeChannel(channel)}.md`);
 }
 
 export function loadDraft(slug: string, ideaId: string, channel: string): Draft | null {
