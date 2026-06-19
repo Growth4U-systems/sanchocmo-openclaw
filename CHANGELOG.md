@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.10.0...v0.10.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* **ci:** drop orphaned frontend-slides gitlink + no-recurse submodules in promote-main ([#714](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/714)) ([c313d49](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c313d49bfd3a8eaabc37ad192ef7b6e09be37a51))
+
 ## [0.10.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.9.0...v0.10.0) (2026-06-19)
 
 
