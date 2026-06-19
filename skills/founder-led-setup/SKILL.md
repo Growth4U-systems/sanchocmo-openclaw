@@ -44,16 +44,56 @@ Cada voz es una entrada en `cadence-config.yml` → `channels.{red}.profiles[]`.
 - Mapea **red → canal**: LinkedIn → `linkedin`, X/Twitter → `twitter`. Usa la **clave de canal que ya
   exista** en el YAML (no crees `x` si ya hay `twitter`). Blog/newsletter no llevan voces founder-led.
 
-### 1. Por cada voz, pregunta (voz-first)
-1. **¿Quién?** nombre + rol.
-2. **¿En qué red?** (LinkedIn / X / …). El mismo founder en dos redes = **una voz por red**.
-3. **Handle** en esa red.
-4. **Cadencia** (posts/semana; días/horas si aplica).
-5. **Cuenta de publicación** = `metricool_profile_id` (el perfil/blogId de Metricool de **esta** voz
-   y red). Es lo que usará la publicación para enrutar a la cuenta correcta. Si aún no existe, déjalo
-   vacío y avisa: *"sin cuenta → esta voz no se podrá programar hasta conectarla"*.
-6. *(Opcional)* `pillars_slant` (1-3 temas, derivados de `content-pillars.md`) y `voice_doc` (por
-   defecto la brand voice; un doc de voz por-founder es opcional).
+### 1. Por cada voz, captura los datos (voz-first, UN solo formulario)
+
+Mantén el orden **voz-first** (quién → red → cadencia → handle → cuenta). Captura **toda la voz de
+una vez** en lugar de una pregunta por mensaje.
+
+**Cadencia recomendada por red** (pre-selecciónala según la red conocida o probable):
+
+| Red | Recomendado |
+|---|---|
+| LinkedIn | **3** posts/semana |
+| X / Twitter | **5** posts/semana |
+| Desconocida | 3 (por defecto) |
+
+**En MC Chat** (`channel: mc-chat`): emite **UN solo mensaje** con varios bloques `:::ask` que el
+componente pinta como un formulario único con un botón "Enviar". Usa estos ids estables y marca
+`"recommended":true` en la opción de cadencia que corresponda a la red (3 si es LinkedIn, 5 si es
+X/Twitter, 3 si aún no sabes la red):
+
+```
+:::ask
+{"id":"q_name","prompt":"¿Quién es? (nombre)","mode":"text","placeholder":"p.ej. Martín","optional":false}
+:::
+:::ask
+{"id":"q_role","prompt":"¿Cuál es su rol?","mode":"text","placeholder":"p.ej. Co-founder, CEO","optional":false}
+:::
+:::ask
+{"id":"q_network","prompt":"¿En qué red publica esta voz?","mode":"single","options":[{"id":"linkedin","label":"LinkedIn"},{"id":"twitter","label":"X / Twitter"},{"id":"other","label":"Otro (lo escribo)"}]}
+:::
+:::ask
+{"id":"q_cadence","prompt":"¿Cuántos posts por semana?","mode":"single","options":[{"id":"1","label":"1"},{"id":"2","label":"2"},{"id":"3","label":"3","recommended":true},{"id":"4","label":"4"},{"id":"5","label":"5+"},{"id":"other","label":"Otro (lo escribo)"}]}
+:::
+:::ask
+{"id":"q_handle","prompt":"Handle en esa red","mode":"text","placeholder":"p.ej. @martin","optional":false}
+:::
+:::ask
+{"id":"q_metricool","prompt":"Cuenta de publicación · Metricool profile id","mode":"text","placeholder":"déjalo vacío si aún no la tienes","optional":true}
+:::
+```
+
+- Mueve el `"recommended":true` a la opción **3** (LinkedIn) o **5+** (X/Twitter) según la red que ya
+  sepas o sea más probable; si no sabes la red, déjalo en **3**.
+- `q_metricool` es **opcional** (`"optional":true`): si lo deja vacío, avisa *"sin cuenta → esta voz
+  no se podrá programar hasta conectarla"*.
+
+**Fuera de MC Chat** (otra superficie): pregunta los **mismos campos** como lista breve en prosa,
+mismo orden voz-first: nombre, rol, red, cadencia (sugiere la recomendada: LinkedIn 3/sem · X 5/sem),
+handle, y `metricool_profile_id` (déjalo vacío si aún no existe).
+
+*(Opcional, en cualquier superficie)* `pillars_slant` (1-3 temas, derivados de `content-pillars.md`)
+y `voice_doc` (por defecto la brand voice; un doc de voz por-founder es opcional).
 
 Presenta lo capturado como matriz **voz × red → cuenta** y pide confirmación antes de escribir.
 
