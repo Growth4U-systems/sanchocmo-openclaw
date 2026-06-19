@@ -297,6 +297,16 @@ export interface ContentTask {
    * etc.
    */
   media_policy?: Record<string, "required" | "optional">;
+  /**
+   * Explicit escape hatch for the fail-loud media gate (SAN-244). When set to
+   * `"skipped"`, a `media_policy="required"` channel is allowed to advance to
+   * the dispatch-ready phase (`approved`) with empty `media[]` — the user has
+   * deliberately decided to ship text-only. `undefined` / `"pending"` means the
+   * gate is active and real media is required. Set by the user (UI "skip media"
+   * action) or the writer skill via PATCH. Never confabulate a media URL to get
+   * past the gate — set this field instead.
+   */
+  media_status?: "pending" | "skipped";
   clarify_status?: "pending" | "answered" | "skipped";
   skill?: string;                   // social-writer | seo-content | instagram-content | newsletter — assigned at Approved
   agent?: string;                   // Canonical executing agent slug

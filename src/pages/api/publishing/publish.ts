@@ -44,11 +44,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const ctId = draft.meta.content_task_id;
   let parentTaskId: string | null = null;
   let ctMediaPolicy: "required" | "optional" | undefined;
+  let mediaStatus: "pending" | "skipped" | undefined;
   let authorId: string | undefined;
   if (ctId) {
     const found = findContentTaskByIdAcrossProjects(slug, ctId);
     parentTaskId = found?.parentTaskId ?? null;
     ctMediaPolicy = found?.ct.media_policy?.[channel];
+    mediaStatus = found?.ct.media_status;
     authorId = found?.ct.author;
     const phase = found?.ct.channel_phases?.[channel];
     if (phase !== "approved" && phase !== "published") {
@@ -63,8 +65,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // visual-thread post from going out as text-only when the user (or agent)
   // skipped uploading media. The Ready Queue UI also disables the "Programar"
   // button in this case — this is the server-side enforcement.
+  //
+  // SAN-244 escape: an explicit CT-wide `media_status:"skipped"` means the user
+  // deliberately chose to ship text-only. The phase gate (assertMediaReady)
+  // already let the channel reach `approved` under this escape, so the publish
+  // gate must honor the same flag — otherwise a deliberately-skipped channel
+  // gets stuck at "approved" and fails here with "requires media". Bypasses the
+  // whole block, including the per-network PDF/image sub-checks.
+  const mediaSkipped = mediaStatus === "skipped";
   const requiresMedia =
-    draft.meta.media_policy === "required" || ctMediaPolicy === "required";
+    !mediaSkipped &&
+    (draft.meta.media_policy === "required" || ctMediaPolicy === "required");
   const mediaList = Array.isArray(draft.meta.media) ? draft.meta.media : [];
   if (requiresMedia) {
     // Per-network media contract — different platforms expect different
