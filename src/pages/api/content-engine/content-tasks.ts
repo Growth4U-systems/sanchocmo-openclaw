@@ -30,6 +30,7 @@ import {
   removeDocumentFromContentTask,
   setChannelPhases,
   rollbackChannelPhasesToStatus,
+  MediaGateError,
   ContentTaskUpdateInput,
 } from "@/lib/data/content-tasks";
 import { listDrafts } from "@/lib/data/drafts";
@@ -117,6 +118,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
     }
 
+    // ── Fail-loud media gate escape (SAN-244) ────────────────────────────────
+    // `media_status` is the explicit escape that lets a `media_policy="required"`
+    // channel reach the dispatch-ready phase without media (ship text-only). The
+    // gate itself lives in setChannelPhase(s) → assertMediaReady; here we only
+    // validate the field on the way in. (SAN-238's research gate, when added,
+    // slots in beside this block.)
+    const mediaStatusRaw = (rest as Record<string, unknown>).media_status;
+    if (mediaStatusRaw !== undefined && mediaStatusRaw !== "pending" && mediaStatusRaw !== "skipped") {
+      return res.status(400).json({
+        error: `Invalid media_status: ${String(mediaStatusRaw)} (must be 'pending' or 'skipped')`,
+      });
+    }
+
     try {
       let updated = findContentTask(slug, parentTaskId, id);
       if (!updated) return res.status(404).json({ error: "ContentTask not found" });
@@ -126,7 +140,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const fieldKeys: (keyof ContentTaskUpdateInput)[] = [
         "name", "skill", "target_channels", "documents",
         "mc_chat_thread_id", "owner",
-        "scheduled_for", "clarify_status", "media_policy", "author",
+        "scheduled_for", "clarify_status", "media_policy", "media_status", "author",
       ];
       const fields: ContentTaskUpdateInput = {};
       for (const k of fieldKeys) {
@@ -194,6 +208,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
       return respondAndEmit(updated);
     } catch (e) {
+      // Fail-loud media gate (SAN-244) surfaces as 409 Conflict — the CT is in a
+      // state that conflicts with the requested phase advance (no real media).
+      if (e instanceof MediaGateError) {
+        return res.status(e.statusCode).json({ error: e.message });
+      }
       return res.status(400).json({ error: (e as Error).message });
     }
   }
