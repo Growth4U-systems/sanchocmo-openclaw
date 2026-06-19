@@ -61,11 +61,31 @@ export function MediaGallery({
 
   const chatThreadId = `${slug}:content:${contentTaskId.toLowerCase()}`;
 
+  // Anti-double-fire (SAN-238 P4): the quick-action was firing TWICE — a rapid
+  // double-click (or a re-render) could call `mutate` again before
+  // `sendMessage.isPending` flipped, posting the prompt to the thread twice.
+  // A synchronous ref guard closes that window: it's set the instant we
+  // dispatch and only cleared on settle, so a second call within the same tick
+  // is a no-op regardless of React render timing. `askedOnce` then keeps the
+  // button as a one-shot per draft so it can't be spammed.
+  const inFlightRef = useRef(false);
+  const [askedOnce, setAskedOnce] = useState(false);
+
   function askSancho() {
-    sendMessage.mutate({
-      threadId: chatThreadId,
-      text: `Genérame media para este draft (canal: ${activeChannel}). Pregúntame qué formato necesito (carrusel, imagen, header...) y proponme los textos antes de renderizar.`,
-    });
+    if (inFlightRef.current || sendMessage.isPending || askedOnce) return;
+    inFlightRef.current = true;
+    sendMessage.mutate(
+      {
+        threadId: chatThreadId,
+        text: `Genérame media para este draft (canal: ${activeChannel}). Pregúntame qué formato necesito (carrusel, imagen, header...) y proponme los textos antes de renderizar.`,
+      },
+      {
+        onSuccess: () => setAskedOnce(true),
+        onSettled: () => {
+          inFlightRef.current = false;
+        },
+      },
+    );
   }
 
   function handleFiles(files: FileList | null) {
@@ -186,18 +206,23 @@ export function MediaGallery({
           <button
             type="button"
             onClick={askSancho}
-            disabled={sendMessage.isPending}
+            disabled={sendMessage.isPending || askedOnce}
             className="flex-1 min-w-[280px] flex items-center gap-3 px-4 py-3 bg-gradient-to-br from-[#6E4EF5] to-rust text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 text-left"
             title="Sancho elige la plantilla (carrusel, header, etc.) y propone los textos"
           >
             <span className="text-2xl">✨</span>
             <span className="flex-1">
               <span className="block text-sm font-semibold">
-                {sendMessage.isPending ? "Pidiéndoselo a Sancho..." : "Pedírselo a Sancho"}
+                {sendMessage.isPending
+                  ? "Pidiéndoselo a Sancho..."
+                  : askedOnce
+                    ? "Pedido a Sancho ✓"
+                    : "Pedírselo a Sancho"}
               </span>
               <span className="block text-[11px] opacity-90 mt-0.5">
-                Te pregunta el formato (carrusel, imagen, header) y lo construye
-                con la plantilla de la marca.
+                {askedOnce
+                  ? "Te responde en el chat con las opciones de formato."
+                  : "Te pregunta el formato (carrusel, imagen, header) y lo construye con la plantilla de la marca."}
               </span>
             </span>
           </button>

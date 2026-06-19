@@ -288,10 +288,19 @@ export function AskQuestionGroup({
 
   return (
     <>
-      {segments.map((seg, i) =>
-        seg.type === "text" ? (
-          renderText(seg.content, i)
-        ) : (
+      {segments.map((seg, i) => {
+        if (seg.type === "text") return renderText(seg.content, i);
+        if (seg.type === "ask-malformed") {
+          return (
+            <div
+              key={i}
+              className="my-2 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-surface-2)] px-3 py-2 text-[13px] text-[var(--chat-text-muted)]"
+            >
+              ⚠️ pregunta mal formada (reintentar)
+            </div>
+          );
+        }
+        return (
           <AskQuestion
             key={i}
             question={seg.question}
@@ -301,8 +310,8 @@ export function AskQuestionGroup({
               setStates((prev) => ({ ...prev, [seg.question.id]: next }))
             }
           />
-        ),
-      )}
+        );
+      })}
       {!isLocked && totalQuestions > 0 && (
         <div className="flex items-center justify-end gap-2 mt-1">
           {totalQuestions > 1 && (
@@ -329,7 +338,14 @@ const CODE_FENCE_REGEX = /```[\s\S]*?```/g;
 
 export type MessageSegment =
   | { type: "text"; content: string }
-  | { type: "ask"; question: AskQuestionData };
+  | { type: "ask"; question: AskQuestionData }
+  /**
+   * A `:::ask` block that matched the protocol but failed to JSON-parse or
+   * validate. We render a discreet warning instead of letting the raw JSON
+   * leak into the page as plain text (SAN-238). `raw` is kept (truncated)
+   * only for diagnostics — it is NOT shown to the user.
+   */
+  | { type: "ask-malformed"; raw: string };
 
 /**
  * Split a message into text and `:::ask` segments.
@@ -390,11 +406,26 @@ export function parseMessageSegments(text: string): MessageSegment[] {
       // fall through
     }
 
-    if (!parsed) continue;
-
     if (start > cursor) {
       segments.push({ type: "text", content: text.slice(cursor, start) });
     }
+
+    if (!parsed) {
+      // Malformed `:::ask` (bad JSON or failed validation — e.g. a label with
+      // an unescaped `"`). Don't leak the raw block as plain text: emit a
+      // placeholder, advance the cursor PAST the block so the JSON is not
+      // re-emitted by the trailing `text.slice(cursor)`, and log for diagnosis.
+      const raw = match[1];
+      // eslint-disable-next-line no-console
+      console.error(
+        "[ask] malformed :::ask block, rendering placeholder:",
+        raw.length > 300 ? `${raw.slice(0, 300)}…` : raw,
+      );
+      segments.push({ type: "ask-malformed", raw });
+      cursor = end;
+      continue;
+    }
+
     segments.push({ type: "ask", question: parsed });
     cursor = end;
   }
