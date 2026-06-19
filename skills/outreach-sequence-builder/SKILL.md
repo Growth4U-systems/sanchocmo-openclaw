@@ -355,3 +355,28 @@ Log feedback to `./brand/{slug}/operational/learnings.md`:
 ```
 [date] outreach-sequence-builder: [ECP] — [feedback summary]
 ```
+
+---
+
+## Plantillas de Partnerships (SAN-80) — biblioteca + asignación + gates
+
+Para campañas de **creators (Outreach·Partnerships)** las secuencias y briefs viven como
+**plantillas-asset** en `brand/{slug}/outreach/templates/*.md` (frontmatter + pasos
+`## Paso N · Título (espera Xd)` con `**Asunto:**`). Variables soportadas: `{{handle}}`,
+`{{quality_score}}`, `{{precio}}` — el motor de envío las rellena por creator.
+
+Acciones disponibles (paridad UI = chat = MCP — usa SIEMPRE estos endpoints, no toques los .md a mano):
+
+| Acción | Endpoint | MCP tool |
+|---|---|---|
+| Listar biblioteca | `GET /api/partnerships/templates?slug={slug}` | — |
+| Crear/editar plantilla | `POST /api/partnerships/templates` · `PUT /api/partnerships/templates/{id}` | — |
+| Asignar (instanciar copia) a una búsqueda | `POST /api/partnerships/templates/{id}/assign` `{searchId\|campaignId}` | `yalc_assign_template` |
+| Contactar creators (instancia secuencia → GateItem) | `POST /api/partnerships/contact` `{leads:[{id,campaignId}]}` | — (gate vía tools) |
+| Listar gates pendientes | `GET /api/yalc/gates?slug={slug}` | `yalc_list_gates` |
+| Aprobar/rechazar gate de envío | `POST /api/yalc/gates` `{runId, action}` | `yalc_approve_gate` |
+
+Reglas:
+- La biblioteca guarda **originales**; cada búsqueda congela **copias** (instancias). Editar el original NO cambia búsquedas ya asignadas.
+- El plan de discovery puede traer la fila `templates: [nombres]` — `createDiscoverySearch` las asigna solo si existen en la biblioteca; ofrece crear las que falten.
+- El envío SIEMPRE pasa por el gate humano (dry-run por defecto: jamás un email real sin `dryRun:false` explícito y proveedor configurado). No apruebes gates sin instrucción del usuario.

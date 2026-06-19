@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { cn } from "@/lib/utils";
+import { TRUST_PILLAR_KEYS, type TrustPillarKey } from "@/lib/trust-score/client";
 
 // ============================================================
 // Metrics Column — Faithful port of renderV2Metrics()
@@ -57,6 +58,19 @@ interface HealthScore {
 
 interface MetricsColumnProps {
   slug: string;
+}
+
+interface TrustScoreData {
+  primary?: {
+    trust_score?: number;
+    pillars?: Record<TrustPillarKey, { score?: number; findings?: string[] }>;
+    top_gaps?: string[];
+    verdict?: string;
+  };
+  competitors?: Array<{ brand_name?: string; trust_score?: number }>;
+  comparison?: { primary_gaps?: string[] };
+  fetchedAt?: string;
+  _stale?: boolean;
 }
 
 // --- Helpers ---
@@ -188,6 +202,21 @@ const HEALTH_CAT_LABELS: Record<string, string> = {
   social: "Social",
 };
 
+const TRUST_PILLAR_LABELS: Record<TrustPillarKey, string> = {
+  borrowed_trust: "Borrowed Trust",
+  serp_trust: "SERP Trust",
+  brand_assets: "Brand Assets",
+  geo_presence: "GEO Presence",
+  outbound_readiness: "Outbound",
+  demand_engine: "Demand Engine",
+};
+
+function tsColor(score: number): string {
+  if (score >= 70) return "#4A5D23";
+  if (score >= 40) return "#B8860B";
+  return "#C45D35";
+}
+
 // Aggregate entries across date range
 function aggregate(entries: Array<{ sources?: Record<string, MetricsSource> }>) {
   const merged: Record<string, MetricsSource> = {};
@@ -299,6 +328,17 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
     staleTime: 120_000,
   });
 
+  const { data: tsData } = useQuery<TrustScoreData | null>({
+    queryKey: ["trust-score", slug],
+    queryFn: async () => {
+      const res = await fetch(`/api/trust-score?slug=${slug}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!slug,
+    staleTime: 120_000,
+  });
+
   if (isLoading) {
     return <div className="text-xs text-muted-foreground py-6 text-center">Cargando metricas...</div>;
   }
@@ -345,6 +385,7 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
 
         {/* PageSpeed placeholder */}
         <PageSpeedSection data={psiData} />
+        <TrustScoreSection data={tsData} history={metricsData?.daily} />
       </div>
     );
   }
@@ -402,6 +443,9 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
 
       {/* PageSpeed */}
       <PageSpeedSection data={psiData} />
+
+      {/* Trust Score */}
+      <TrustScoreSection data={tsData} history={metricsData?.daily} />
 
       {/* Link to full metrics */}
       <div className="text-center mt-2">
@@ -744,6 +788,126 @@ function PageSpeedSection({ data }: { data: { mobile?: Record<string, number>; f
         <div className="text-[9px] text-muted-foreground text-center">
           {age}
           {data?._stale ? " (cache)" : ""} {"\u00B7"} Mobile
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TrustScoreSection({
+  data,
+  history,
+}: {
+  data: TrustScoreData | null | undefined;
+  history?: Array<{ date: string; sources?: Record<string, { metrics?: Array<{ name: string; value: number }> }> }>;
+}) {
+  const primary = data?.primary;
+  const score = primary?.trust_score ?? null;
+  const pillars = primary?.pillars || ({} as NonNullable<TrustScoreData["primary"]>["pillars"]);
+  const gaps = data?.comparison?.primary_gaps || primary?.top_gaps || [];
+  const competitors = data?.competitors || [];
+
+  // Tendencia del score global desde la m\u00E9trica diaria persistida (sources.trust_score).
+  const trend: number[] = (history || [])
+    .map((d) => {
+      const m = d.sources?.trust_score?.metrics?.find((x) => x.name === "trust_score");
+      return m ? m.value : null;
+    })
+    .filter((v): v is number => v != null);
+  // Delta dentro de la MISMA serie persistida (consistente con el sparkline): último vs anterior.
+  const trendLast = trend.length ? trend[trend.length - 1] : null;
+  const trendPrev = trend.length > 1 ? trend[trend.length - 2] : null;
+  const delta = trendLast != null && trendPrev != null ? Math.round(trendLast - trendPrev) : null;
+
+  const age = data?.fetchedAt
+    ? new Date(data.fetchedAt).toLocaleDateString("es-ES", { day: "numeric", month: "short" })
+    : "";
+  const hasData = score != null;
+  const max = trend.length ? Math.max(...trend, 1) : 1;
+  const bars = trend.slice(-14);
+
+  return (
+    <div className="mt-3 mb-2">
+      <div className="flex items-center justify-between text-[11px] font-bold mb-2">
+        <span>{"\uD83D\uDEE1\uFE0F"} Trust Score</span>
+        {delta != null && delta !== 0 && (
+          <span className={cn("text-[10px] font-semibold", delta > 0 ? "text-[#4A5D23]" : "text-rust")}>
+            {delta > 0 ? "\u2191" : "\u2193"} {Math.abs(delta)}
+          </span>
+        )}
+      </div>
+
+      {/* Score global + sparkline */}
+      <div className="flex items-center gap-3.5 mb-3">
+        <div
+          className="w-[52px] h-[52px] rounded-full border-4 flex items-center justify-center shrink-0"
+          style={{ borderColor: hasData ? tsColor(score!) : "#E5E2DC" }}
+        >
+          <span className="text-[19px] font-extrabold" style={{ color: hasData ? tsColor(score!) : "#7A7A7A" }}>
+            {hasData ? score : "\u2026"}
+          </span>
+        </div>
+        {bars.length > 1 && (
+          <div className="flex-1 flex items-end gap-0.5 h-[40px]">
+            {bars.map((v, i) => (
+              <div
+                key={i}
+                className="flex-1 rounded-sm"
+                style={{ height: `${Math.max(8, (v / max) * 100)}%`, background: tsColor(v), opacity: 0.55 + (i / Math.max(1, bars.length - 1)) * 0.45 }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 6 pilares */}
+      <div className="grid grid-cols-2 gap-x-3.5 gap-y-1.5 mb-2">
+        {TRUST_PILLAR_KEYS.map((k) => {
+          const pScore = pillars?.[k]?.score ?? null;
+          const barColor = pScore != null ? tsColor(pScore) : "#E5E2DC";
+          return (
+            <div key={k} className="flex items-center gap-1.5">
+              <span className="text-[9px] text-muted-foreground w-[64px] truncate" title={TRUST_PILLAR_LABELS[k]}>
+                {TRUST_PILLAR_LABELS[k]}
+              </span>
+              <div className="flex-1 h-1.5 bg-[#E5E2DC] rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${pScore ?? 0}%`, background: barColor }} />
+              </div>
+              <span className="text-[10px] font-bold w-6 text-right" style={{ color: barColor }}>
+                {pScore ?? "\u2014"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Gaps vs competidores */}
+      {gaps.length > 0 && (
+        <div className="bg-muted/30 rounded-md p-2 mb-1">
+          <div className="text-[9px] font-bold text-muted-foreground mb-1">PRINCIPALES GAPS</div>
+          {gaps.slice(0, 3).map((g, i) => (
+            <div key={i} className="text-[10px] text-muted-foreground py-0.5 flex gap-1">
+              <span className="text-rust">{"\u2022"}</span>
+              <span className="flex-1">{g}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Scores de competidores */}
+      {competitors.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-1">
+          {competitors.map((c, i) => (
+            <span key={i} className="text-[9px] bg-[#E5E2DC] text-muted-foreground px-1.5 py-0.5 rounded-full">
+              {c.brand_name || "?"}: <b style={{ color: tsColor(c.trust_score ?? 0) }}>{c.trust_score ?? "\u2014"}</b>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {age && (
+        <div className="text-[9px] text-muted-foreground text-center">
+          {age}{data?._stale ? " (cache)" : ""}
         </div>
       )}
     </div>

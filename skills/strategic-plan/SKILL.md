@@ -9,13 +9,13 @@ metadata:
   depends_on: foundation-orchestrator
   chains_to: channel-prioritization, execution-skills
   context_required:
-    - brand/{slug}/foundation-state.json
     - brand/{slug}/company-brief/company-brief.current.md
     - brand/{slug}/go-to-market/ecps/ecps.current.md
     - brand/{slug}/go-to-market/positioning/*/*.current.md
     - brand/{slug}/market-and-us/competitors/competitors.current.md
     - brand/{slug}/market-and-us/self/self.current.md
     - brand/{slug}/brand-voice/brand-voice.current.md
+    - brand/{slug}/site-audit/trust-score/trust-score.current.md
   context_writes:
     - brand/{slug}/strategic-plan.md
     - brand/{slug}/current-state.md
@@ -29,7 +29,8 @@ metadata:
 ## Gate Check
 
 ```
-if foundation-state.json NOT exists OR status != "approved":
+state = GET {MC_BASE}/api/brand-brain/state?slug={slug}
+if pilares requeridos NOT "completed":
     STOP → "Foundation incompleta. Completa Foundation primero."
 ```
 
@@ -91,6 +92,8 @@ Leer TODOS los docs de Foundation. No preguntar nada. Extraer:
 
 Si `phase-0-diagnostic` se ejecutó → leer sus scores como contexto.
 
+Si existe `brand/{slug}/site-audit/trust-score/trust-score.current.md` (Trust Score, SAN-194), leerlo como **input de auditoría**. El frontmatter trae `trust_score` global y `pillars` con el score (0-100) de cada uno: `borrowed_trust`, `serp_trust`, `brand_assets`, `geo_presence`, `outbound_readiness`, `demand_engine`. El cuerpo trae los `findings` por pilar, las brechas vs competidores y el `verdict`. Ordenar los pilares de MENOR a MAYOR score: los de score más bajo son el material directo de los gaps (Paso 4) y de los primeros proyectos (Paso 7). Si el doc no existe, continuar sin él (el plan no se bloquea), pero anotarlo como gap 🟡 "falta auditoría Trust Score".
+
 ---
 
 ### Paso 2: Consolidar Estado Actual (~3 min)
@@ -132,6 +135,25 @@ Cruzar Foundation + estado actual + objetivo → listar qué FALTA:
 - 🔴 **Crítico** (resolver ANTES de ejecutar): sin destino de conversión, sin analytics
 - 🟡 **Alto** (resolver en paralelo): sin blog/CMS, sin email tool, sin casos de éxito
 - 🟢 **Bajo** (resolver cuando convenga): sin social scheduling, sin CRM completo
+
+**Pilares flojos del Trust Score como gaps directos.** Si se leyó el Trust Score en Paso 1, mapear cada pilar a un gap por su `score`:
+- pilar con `score` < 40 → gap 🔴 (crítico, va a Fase 0)
+- pilar con `score` 40-59 → gap 🟡 (alto)
+- pilar con `score` 60-74 → gap 🟢 (bajo)
+- pilar con `score` ≥ 75 → fortaleza (no genera gap)
+- pilar sin dato (no auditado) → gap 🔴 (incertidumbre = riesgo)
+
+Pilar y acción sugerida:
+| Pilar | Qué mide | Gap, acción |
+| -- | -- | -- |
+| `borrowed_trust` | reviews, testimonios, social proof | reunir casos de éxito, reviews, logos |
+| `serp_trust` | presencia y autoridad en Google | SEO técnico + contenido |
+| `brand_assets` | claridad de marca, web, mensajes | reescritura web + identidad |
+| `geo_presence` | visibilidad en respuestas de IA (GEO) | contenido GEO, schema, menciones |
+| `outbound_readiness` | infra para prospección en frío | dominios, listas, secuencias |
+| `demand_engine` | captación recurrente de demanda | funnel + lead magnet + canales |
+
+Citar en cada gap el `score` del pilar y 1-2 `findings` como evidencia.
 
 Gaps 🔴 bloquean ejecución. Incluirlos como Fase 0 del plan.
 
@@ -177,6 +199,15 @@ Plan temporal con 3 fases + revisión:
 - **FASE 1** (Semana 1): Ejecutar estrategias A y B — pasos concretos + KPI target
 - **FASE 2** (Semana 2-3): Medir Fase 1 → ajustar → activar estrategia C si procede
 - **REVISIÓN**: A las 4 semanas, re-evaluar con datos reales
+
+**Orden de los primeros proyectos: pilares flojos del Trust Score.** Solo generan proyecto los pilares que son gap (Paso 4): 🔴 (<40, o sin dato) y 🟡 (40-59). Los 🟢 (60-74) NO generan proyecto propio (se resuelven cuando convenga); los ≥75 tampoco. Orden:
+- Los 🔴 van a Fase 0, ANTES de las estrategias del catálogo, por `score` ASCENDENTE (el más bajo es P01).
+- Los 🟡 se intercalan con las estrategias del catálogo (Paso 6) según prioridad.
+
+Cada proyecto que ataca un pilar lleva:
+- `objective.metric`: la key del pilar (ej. `geo_presence`); `baseline`: su `score` actual; `target`: 75; `unit`: `"pts"` (el "≥ 75" va en prosa / done_criteria).
+- `origin.type`: `"trust-score"`; `origin.detail`: el `verdict` + los `findings` del pilar.
+- tareas con el `skill` que mueve ese pilar (borrowed_trust → `sales-enablement`; serp_trust → `seo-audit`; brand_assets → `direct-response-copy`; geo_presence → `ai-seo`; outbound_readiness → `outreach-sequence-builder`; demand_engine → `lead-magnet`).
 
 Cada estrategia aprobada genera un proyecto:
 ```
@@ -330,7 +361,7 @@ Ver [references/data-model.md](references/data-model.md) para schemas de `projec
    - Carpeta `brand/{slug}/projects/P{XX}/`
    - `project.json` con objetivo, métricas baseline/target, origin, review_date
    - `tasks.json` con tareas iniciales, canal temático asignado, descripción, owner, **skill** (ver [data-model.md](references/data-model.md))
-   - ⚠️ **SIEMPRE asignar `"skill"` a cada tarea** — es el skill de Escudero que ejecutará la tarea. Consultar `strategies-catalog.json` campo `skills` de la estrategia. Si no hay match claro, usar `doc-coauthoring`. Flujo: Escudero ejecuta con el skill → Rocinante verifica contra Foundation + Brand Voice + Brand Visual.
+   - ⚠️ **SIEMPRE asignar `"skill"` a cada tarea** — es el skill con el que el especialista dueño ejecutará la tarea. Consultar `strategies-catalog.json` campo `skills` de la estrategia. Si no hay match claro, usar `doc-coauthoring`. Flujo: Sancho delega al especialista (`Agent(subagent_type="<slug>")`) que ejecuta con el skill → Rocinante verifica contra Foundation + Brand Voice + Brand Visual.
    - `playbook.md` resumen del proyecto con links a playbooks de tareas
    - `T{YY}/playbook.md` por cada tarea — detalle individual de la tarea
    - ⚠️ **NUNCA juntar todo en un solo playbook.** Cada tarea = su propia carpeta + playbook.

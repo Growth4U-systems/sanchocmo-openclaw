@@ -3,7 +3,7 @@
 Cost Tracker v2 — T-022 complete implementation.
 - Classifies sessions → clients via guild mapping (Discord channels)
 - Daily breakdown for trend charts
-- Per-agent breakdown (sancho/escudero/rocinante/cervantes)
+- Per-agent breakdown (sancho/rocinante/cervantes/specialists)
 - Alerts when daily spend > threshold
 - Month-end projection
 - Outputs: costs-global.json, costs-daily.json, brand/{slug}/costs.json

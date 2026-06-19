@@ -1,28 +1,21 @@
 import crypto from "crypto";
 import type { NextApiRequest } from "next";
 import { loadClient } from "@/lib/data/clients";
+import {
+  loadMcpTokenConfigs,
+  normalizeStringList,
+  type McpScope,
+  type McpTokenConfig,
+} from "@/lib/mcp/tokens";
 
-export type McpScope =
-  | "sancho:read"
-  | "sancho:chat"
-  | "tasks:read"
-  | "tasks:write"
-  | "yalc:read"
-  | "open-design:read";
+export type { McpScope } from "@/lib/mcp/tokens";
 
 export interface McpPrincipal {
   id: string;
   scopes: string[];
   clients: string[];
+  brands?: string[];
   tokenHash: string;
-}
-
-interface McpTokenConfig {
-  id?: string;
-  token?: string;
-  tokenHash?: string;
-  scopes?: string[];
-  clients?: string[];
 }
 
 export class McpAuthError extends Error {
@@ -36,7 +29,13 @@ export class McpAuthError extends Error {
 }
 
 export function authenticateMcpRequest(req: NextApiRequest): McpPrincipal {
-  const configuredTokens = loadMcpTokenConfigs();
+  let configuredTokens;
+  try {
+    configuredTokens = loadMcpTokenConfigs();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Sancho MCP token configuration is invalid";
+    throw new McpAuthError(503, message);
+  }
   if (configuredTokens.length === 0) {
     throw new McpAuthError(503, "Sancho MCP token configuration is missing");
   }
@@ -52,10 +51,14 @@ export function authenticateMcpRequest(req: NextApiRequest): McpPrincipal {
     throw new McpAuthError(403, "Invalid MCP bearer token");
   }
 
+  const clients = normalizeStringList(match.clients);
+  const brands = Array.isArray(match.brands) ? normalizeStringList(match.brands) : clients;
+
   return {
     id: match.id || `mcp-${tokenHash.slice(0, 12)}`,
-    scopes: normalizeList(match.scopes),
-    clients: normalizeList(match.clients),
+    scopes: normalizeStringList(match.scopes),
+    clients,
+    brands,
     tokenHash,
   };
 }
@@ -73,50 +76,23 @@ export function assertMcpClientAccess(principal: McpPrincipal, clientSlug: strin
   throw new McpAuthError(403, `MCP token is not allowed to access client: ${slug}`);
 }
 
+export function assertMcpBrandAccess(principal: McpPrincipal, brandSlug: string): void {
+  const slug = brandSlug.trim();
+  if (!slug) throw new McpAuthError(400, "brandSlug is required");
+  if (!/^[a-z0-9][a-z0-9-]*$/i.test(slug)) {
+    throw new McpAuthError(400, "brandSlug must be a simple slug");
+  }
+  assertMcpScope(principal, "docs:read");
+  const brands = principal.brands ?? principal.clients;
+  if (brands.includes("*") || brands.includes(slug)) return;
+  throw new McpAuthError(403, `MCP token is not allowed to access brand: ${slug}`);
+}
+
 export function hasMcpScope(principal: McpPrincipal, scope: McpScope): boolean {
   if (principal.scopes.includes("*")) return true;
   if (principal.scopes.includes(scope)) return true;
   const [namespace] = scope.split(":");
   return principal.scopes.includes(`${namespace}:*`);
-}
-
-function loadMcpTokenConfigs(): McpTokenConfig[] {
-  const configs: McpTokenConfig[] = [];
-
-  const rawJson = process.env.SANCHO_MCP_TOKENS?.trim();
-  if (rawJson) {
-    const parsed = JSON.parse(rawJson) as unknown;
-    if (Array.isArray(parsed)) {
-      configs.push(...parsed.filter(isTokenConfig));
-    } else if (isTokenConfig(parsed)) {
-      configs.push(parsed);
-    } else {
-      throw new McpAuthError(503, "SANCHO_MCP_TOKENS must be a token config object or array");
-    }
-  }
-
-  const singleToken = process.env.SANCHO_MCP_TOKEN?.trim();
-  if (singleToken) {
-    configs.push({
-      id: process.env.SANCHO_MCP_TOKEN_ID || "sancho-mcp",
-      token: singleToken,
-      scopes: parseCsv(process.env.SANCHO_MCP_SCOPES),
-      clients: parseCsv(process.env.SANCHO_MCP_CLIENTS),
-    });
-  }
-
-  return configs.filter((entry) => entry.token || entry.tokenHash);
-}
-
-function isTokenConfig(value: unknown): value is McpTokenConfig {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const record = value as Record<string, unknown>;
-  const tokenOk = record.token === undefined || typeof record.token === "string";
-  const tokenHashOk = record.tokenHash === undefined || typeof record.tokenHash === "string";
-  const idOk = record.id === undefined || typeof record.id === "string";
-  const scopesOk = record.scopes === undefined || Array.isArray(record.scopes);
-  const clientsOk = record.clients === undefined || Array.isArray(record.clients);
-  return tokenOk && tokenHashOk && idOk && scopesOk && clientsOk;
 }
 
 function getBearerToken(req: NextApiRequest): string | null {
@@ -142,24 +118,4 @@ function safeEqual(a: string, b: string): boolean {
   const bBuf = Buffer.from(b);
   if (aBuf.length !== bBuf.length) return false;
   return crypto.timingSafeEqual(aBuf, bBuf);
-}
-
-function normalizeList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return Array.from(
-    new Set(
-      value
-        .filter((item): item is string => typeof item === "string")
-        .map((item) => item.trim())
-        .filter(Boolean),
-    ),
-  );
-}
-
-function parseCsv(value: string | undefined): string[] {
-  if (!value) return [];
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
 }

@@ -5,6 +5,9 @@ import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { brandDir, chatConfigFile, CLIENTS_FILE } from "@/lib/data/paths";
 import { writeClientsFile } from "@/lib/data/clients";
+import { provisionYalcBrain } from "@/lib/yalc/provision";
+import { FOUNDATION_TASK_SET_KEYS, instantiateFoundationProject } from "@/lib/data/task-blueprints";
+import { applyProjectAnchors, applyTaskAnchors } from "@/lib/data/task-create-helpers";
 
 type ClientsFileData = {
   clients?: Array<Record<string, unknown>>;
@@ -36,6 +39,32 @@ function createClientDirs(slug: string): void {
   }
 
   seedChatConfig(slug);
+  seedFoundationProjects(slug);
+}
+
+/**
+ * Seed the 4 canonical Foundation projects (P00-Company-Brief, P00-Full-
+ * Foundation, P00-Metrics, P00-Strategic-Plan) with their pillar tasks from
+ * the declarative registry (SAN-183 F5: every Foundation pillar is a task
+ * 1:1; task.status is becoming the single status source). Idempotent — an
+ * existing project directory with tasks.json is left untouched. Best-effort:
+ * never block client creation.
+ */
+function seedFoundationProjects(slug: string): void {
+  for (const setKey of FOUNDATION_TASK_SET_KEYS) {
+    try {
+      const { project, tasks } = instantiateFoundationProject(setKey, { slug });
+      const projDir = path.join(brandDir(slug), "projects", project.id);
+      if (fs.existsSync(path.join(projDir, "tasks.json"))) continue;
+      fs.mkdirSync(projDir, { recursive: true });
+      applyProjectAnchors(slug, project);
+      const anchored = tasks.map((t) => applyTaskAnchors(slug, t));
+      fs.writeFileSync(path.join(projDir, "project.json"), JSON.stringify(project, null, 2));
+      fs.writeFileSync(path.join(projDir, "tasks.json"), JSON.stringify(anchored, null, 2));
+    } catch (err) {
+      console.error(`[clients/create] Foundation project seed failed (${setKey}, ${slug}):`, err);
+    }
+  }
 }
 
 /**
@@ -104,6 +133,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   data.clients = [...clients, client];
   writeClientsFile(data);
   createClientDirs(slug);
+
+  // Auto-provision the brand's YALC brain from its website — no CLI, no manual
+  // step. Fire-and-forget so brand creation isn't blocked by YALC synthesis;
+  // a missing/late website just no-ops (re-sync later via /api/yalc/provision).
+  void provisionYalcBrain(slug, { website: url }).catch((err) =>
+    console.error(`[clients/create] YALC brain provisioning failed for ${slug}:`, err),
+  );
 
   return res.status(201).json({
     ok: true,

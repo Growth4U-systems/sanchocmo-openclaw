@@ -6,8 +6,12 @@ import { cn } from "@/lib/utils";
 export interface AskQuestionData {
   id: string;
   prompt: string;
-  mode: "single" | "multi";
-  options: { id: string; label: string }[];
+  mode: "single" | "multi" | "text";
+  options?: { id: string; label: string; recommended?: boolean }[];
+  /** text mode: placeholder for the input/textarea. */
+  placeholder?: string;
+  /** text mode: when true the field can be left empty. */
+  optional?: boolean;
 }
 
 interface QuestionState {
@@ -26,14 +30,38 @@ function storageKey(threadId: string, questionId: string) {
   return `ask:${threadId}:${questionId}`;
 }
 
+/**
+ * Initial state for a question. Options flagged `recommended` are pre-selected:
+ * single → only the (first) recommended option; multi → every recommended one.
+ * Text mode starts empty.
+ */
+export function initialQuestionState(question: AskQuestionData): QuestionState {
+  const selected = new Set<string>();
+  if (question.mode !== "text") {
+    const recommended = (question.options ?? []).filter((o) => o.recommended);
+    if (question.mode === "single") {
+      if (recommended[0]) selected.add(recommended[0].id);
+    } else {
+      for (const o of recommended) selected.add(o.id);
+    }
+  }
+  return { selected, otherText: "" };
+}
+
 function isQuestionAnswered(question: AskQuestionData, state: QuestionState): boolean {
+  if (question.mode === "text") {
+    return question.optional === true || state.otherText.trim() !== "";
+  }
   if (state.selected.size === 0) return false;
   if (state.selected.has("other") && state.otherText.trim().length === 0) return false;
   return true;
 }
 
 function buildAnswerLabels(question: AskQuestionData, state: QuestionState): string[] {
-  return question.options
+  if (question.mode === "text") {
+    return [state.otherText.trim()];
+  }
+  return (question.options ?? [])
     .filter((o) => state.selected.has(o.id))
     .map((o) => (o.id === "other" ? state.otherText.trim() : o.label));
 }
@@ -45,8 +73,10 @@ function buildAnswerLabels(question: AskQuestionData, state: QuestionState): str
  */
 function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestionProps) {
   const isMulti = question.mode === "multi";
+  const isText = question.mode === "text";
   const isLocked = submittedLabels !== null;
   const otherSelected = state.selected.has("other");
+  const options = question.options ?? [];
 
   const toggle = (id: string) => {
     if (isLocked) return;
@@ -58,8 +88,8 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
 
   if (isLocked) {
     return (
-      <div className="my-2 rounded-lg border border-[#45475a] bg-[#1e1e2e]/70 p-3">
-        <div className="text-[13px] text-[#a6adc8] mb-1.5">{question.prompt}</div>
+      <div className="my-2 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-surface-2)] p-3">
+        <div className="text-[13px] text-[var(--chat-text-muted)] mb-1.5">{question.prompt}</div>
         <div className="flex flex-wrap gap-1.5">
           {submittedLabels.map((label, i) => (
             <span
@@ -74,11 +104,31 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
     );
   }
 
+  if (isText) {
+    return (
+      <div className="my-2 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-surface-2)] p-3">
+        <label className="block text-[14px] text-[var(--chat-text)] font-medium mb-2">
+          {question.prompt}
+          {question.optional && (
+            <span className="ml-1.5 text-[11px] text-[var(--chat-text-faint)] font-normal">(opcional)</span>
+          )}
+        </label>
+        <textarea
+          value={state.otherText}
+          onChange={(e) => onChange({ ...state, otherText: e.target.value })}
+          placeholder={question.placeholder ?? "Escribe tu respuesta…"}
+          rows={2}
+          className="w-full bg-[var(--chat-surface)] text-[var(--chat-text)] placeholder-[var(--chat-text-faint)] text-[13px] px-2.5 py-1.5 rounded-md border border-[var(--chat-border)] focus:outline-none focus:border-rust resize-none"
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="my-2 rounded-lg border border-[#45475a] bg-[#1e1e2e]/70 p-3">
-      <div className="text-[14px] text-[#cdd6f4] font-medium mb-2">{question.prompt}</div>
+    <div className="my-2 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-surface-2)] p-3">
+      <div className="text-[14px] text-[var(--chat-text)] font-medium mb-2">{question.prompt}</div>
       <div className="flex flex-col gap-1.5 mb-2">
-        {question.options.map((opt) => {
+        {options.map((opt) => {
           const isSelected = state.selected.has(opt.id);
           return (
             <button
@@ -89,19 +139,24 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
                 "text-left text-[13px] rounded-md px-2.5 py-1.5 border transition-colors flex items-center gap-2 cursor-pointer",
                 isSelected
                   ? "border-rust bg-rust/15 text-white"
-                  : "border-[#45475a] bg-[#313244] text-[#cdd6f4] hover:border-rust/40 hover:bg-[#45475a]"
+                  : "border-[var(--chat-border)] bg-[var(--chat-surface)] text-[var(--chat-text)] hover:border-rust/40 hover:bg-[var(--chat-surface-2)]"
               )}
             >
               <span
                 className={cn(
                   "shrink-0 inline-flex items-center justify-center text-[10px] w-4 h-4 border",
                   isMulti ? "rounded-sm" : "rounded-full",
-                  isSelected ? "border-rust bg-rust text-white" : "border-[#6c7086] bg-transparent"
+                  isSelected ? "border-rust bg-rust text-white" : "border-[var(--chat-border-strong)] bg-transparent"
                 )}
               >
                 {isSelected ? "✓" : ""}
               </span>
               <span>{opt.label}</span>
+              {opt.recommended && (
+                <span className="ml-auto shrink-0 inline-flex items-center text-[10px] font-semibold uppercase tracking-wide text-rust border border-rust/45 bg-rust/10 rounded-full px-1.5 py-px">
+                  recomendado
+                </span>
+              )}
             </button>
           );
         })}
@@ -112,7 +167,7 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
           onChange={(e) => onChange({ ...state, otherText: e.target.value })}
           placeholder="Escribe tu respuesta…"
           rows={2}
-          className="w-full bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-[13px] px-2.5 py-1.5 rounded-md border border-[#45475a] focus:outline-none focus:border-rust resize-none"
+          className="w-full bg-[var(--chat-surface)] text-[var(--chat-text)] placeholder-[var(--chat-text-faint)] text-[13px] px-2.5 py-1.5 rounded-md border border-[var(--chat-border)] focus:outline-none focus:border-rust resize-none"
           autoFocus
         />
       )}
@@ -123,7 +178,7 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
 interface AskQuestionGroupProps {
   segments: MessageSegment[];
   threadId: string;
-  /** Renders inline text segments — passes through `formatMessage` from the parent. */
+  /** Renders inline text segments — the parent passes a `ChatMarkdown` renderer. */
   renderText: (text: string, key: number) => React.ReactNode;
   onSubmit: (canonicalText: string) => void;
 }
@@ -154,7 +209,7 @@ export function AskQuestionGroup({
   const [states, setStates] = useState<Record<string, QuestionState>>(() => {
     const init: Record<string, QuestionState> = {};
     for (const q of questions) {
-      init[q.id] = { selected: new Set(), otherText: "" };
+      init[q.id] = initialQuestionState(q);
     }
     return init;
   });
@@ -167,7 +222,7 @@ export function AskQuestionGroup({
       if (missing.length === 0) return prev;
       const next = { ...prev };
       for (const q of missing) {
-        next[q.id] = { selected: new Set(), otherText: "" };
+        next[q.id] = initialQuestionState(q);
       }
       return next;
     });
@@ -251,7 +306,7 @@ export function AskQuestionGroup({
       {!isLocked && totalQuestions > 0 && (
         <div className="flex items-center justify-end gap-2 mt-1">
           {totalQuestions > 1 && (
-            <span className="text-[11px] text-[#a6adc8]">
+            <span className="text-[11px] text-[var(--chat-text-muted)]">
               {answeredCount}/{totalQuestions} respondidas
             </span>
           )}
@@ -308,19 +363,26 @@ export function parseMessageSegments(text: string): MessageSegment[] {
     let parsed: AskQuestionData | null = null;
     try {
       const json = JSON.parse(match[1]);
-      if (
-        json &&
-        typeof json.id === "string" &&
-        typeof json.prompt === "string" &&
-        (json.mode === "single" || json.mode === "multi") &&
-        Array.isArray(json.options) &&
+      const hasValidOptions =
+        Array.isArray(json?.options) &&
         json.options.every(
           (o: unknown) =>
             typeof o === "object" &&
             o !== null &&
             typeof (o as { id?: unknown }).id === "string" &&
             typeof (o as { label?: unknown }).label === "string",
-        )
+        );
+      const baseValid =
+        json && typeof json.id === "string" && typeof json.prompt === "string";
+      // text mode: open input, no options required.
+      // single/multi: options are mandatory (and must be well-formed).
+      // Extra fields (placeholder, optional, recommended) are tolerated.
+      if (baseValid && json.mode === "text") {
+        parsed = json as AskQuestionData;
+      } else if (
+        baseValid &&
+        (json.mode === "single" || json.mode === "multi") &&
+        hasValidOptions
       ) {
         parsed = json as AskQuestionData;
       }

@@ -10,7 +10,7 @@
 ### #onboarding
 • 🏷️ Type: EXECUTION
 • 🔔 Mention required: No
-• ⚙️ Skills: foundation-threads, sancho-start, foundation-orchestrator, company-context, niche-discovery-100x, ecp-validation
+• ⚙️ Skills: sancho-start, foundation-orchestrator, company-context, niche-discovery-100x, ecp-validation
 • 🇬🇧 Build your brand's strategic foundation. <@&1478771661124931681> guides you through each pillar (company context, business model, budget, positioning, brand voice…) in dedicated threads — one question at a time. Each completed pillar is saved as a reviewable document.
 • 🇪🇸 Construye la base estratégica de tu marca. <@&1478771661124931681> te guía por cada pilar (contexto, modelo de negocio, presupuesto, posicionamiento, voz de marca…) en hilos dedicados — una pregunta a la vez. Cada pilar completado se guarda como documento consultable.
 

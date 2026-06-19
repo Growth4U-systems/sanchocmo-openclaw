@@ -173,9 +173,10 @@ Crear una Google Sheet para input manual de métricas que no vienen de APIs (fun
    ```
    Del output JSON, extraer `spreadsheetId` y construir la URL: `https://docs.google.com/spreadsheets/d/{spreadsheetId}/edit`
 
-2. **Compartir con el Service Account** (para que el collector pueda leerla):
+2. **Compartir con el Service Account** (para que el collector pueda leerla). El email es el `client_email` del Service Account del sistema — leerlo del JSON, nunca hardcodearlo:
    ```bash
-   gog drive share "{spreadsheetId}" --email "sancho-analytics@gen-lang-client-0422972889.iam.gserviceaccount.com" --role reader
+   SA_EMAIL=$(jq -r .client_email "${MC_WORKSPACE:-$HOME/.openclaw/workspace-sancho}/.secrets/google-service-account.json")
+   gog drive share "{spreadsheetId}" --email "$SA_EMAIL" --role reader
    ```
 
 3. **Escribir la plantilla de input manual** en la pestaña `Summary`:
@@ -262,7 +263,7 @@ Tras generar el Metrics Plan y el dashboard, crear tareas individuales en el pro
 
 **Reglas según ownership y estado:**
 - API ya conectada (`status: "connected"` en integrations.json) → crear tarea con `status: "completed"`, nota "Ya conectada"
-- API no conectada + `ownership: "system"` → `status: "todo"`, `owner: "Sancho"` — Escudero la puede conectar directamente
+- API no conectada + `ownership: "system"` → `status: "todo"`, `owner: "Sancho"` — el especialista de datos (Merlín) la puede conectar directamente
 - API no conectada + `ownership: "client"` → `status: "todo"`, `owner: "Equipo"`, descripción: "Enlace de conexión: <MC_BASE>/admin/{adminToken}/connect/{slug}/{apiId}\n\nContactar al equipo de {cliente} para obtener credenciales de {api}. Mientras tanto, trackear vía Excel."
 
 6. Añadir tarea final de verificación:

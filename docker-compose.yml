@@ -1,5 +1,15 @@
 services:
   sanchocmo:
+    # Product default is `docker compose pull` of a versioned public image.
+    # `build:` stays so the source-of-truth deploy (and anyone hacking on a
+    # clone) can build locally — Compose tags that local build with this same
+    # `image:` name, so the two paths converge:
+    #   • Product / update:  docker compose pull && up -d   → uses the registry image
+    #   • G4U deploy / clone: docker compose build           → tags the build as this image
+    # The deploy's `pull --ignore-buildable` skips this service (it has a
+    # `build:`), so a build host never pulls a foreign image. Pin a version
+    # with SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z.
+    image: ${SANCHOCMO_IMAGE:-ghcr.io/growth4u-systems/sanchocmo:latest}
     build:
       context: .
       args:
@@ -23,6 +33,14 @@ services:
       - MC_BIND_ADDRESS=0.0.0.0
       - MC_WORKSPACE=/root/.openclaw/workspace-sancho
       - LEGACY_PORT=18790
+      # Anthropic auth: pass ANTHROPIC_API_KEY through so `api_key` mode works
+      # (the product default — without this the key never reaches Sancho and
+      # preflight aborts). The subscription-billing guard is mode-aware in the
+      # entrypoint: when ANTHROPIC_AUTH_MODE=subscription it blanks this key for
+      # Sancho's process so the provider can only resolve ANTHROPIC_OAUTH_TOKEN
+      # (never a silent API-billing fallback — the historical footgun). Scoped
+      # to sanchocmo — open-design keeps its own key from its env_file.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       # Tasks backend: "json" (default), "db-shadow" or "db".
       # When "db" or "db-shadow", DATABASE_URL must resolve to a Postgres with
       # the schema applied (the bundled local-db does this at boot; Neon/managed

@@ -23,15 +23,15 @@ const FF_PILLAR_MAP: Record<string, string> = {
   "brand-voice-snapshot": "brand-voice",
   "niche-basic": "niche-discovery",
 };
-const EXCLUDED_SECTIONS = ["fast-foundation", "foundation-presentation"];
+const EXCLUDED_SECTIONS = ["foundation-presentation"];
 
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
-  const ff = sections["fast-foundation"];
-  if (!ff) return done;
-  for (const [ffName, pInfo] of Object.entries(ff.pillars || {})) {
-    if (["approved", "done"].includes(pInfo.status)) {
-      done.add(FF_PILLAR_MAP[ffName] || ffName);
+  const cb = sections["company-brief"];
+  if (!cb) return done;
+  for (const [cbName, pInfo] of Object.entries(cb.pillars || {})) {
+    if (pInfo.status === "completed") {
+      done.add(FF_PILLAR_MAP[cbName] || cbName);
     }
   }
   return done;
@@ -48,8 +48,8 @@ function calcFoundationStats(foundation: BrandBrainState | undefined) {
       if (pInfo.optional) continue;
       total++;
       const status = pInfo.status;
-      const effective = status === "not-started" && ffDone.has(pName) ? "approved" : status;
-      if (["approved", "done"].includes(effective)) approved++;
+      const effective = status === "todo" && ffDone.has(pName) ? "completed" : status;
+      if (effective === "completed") approved++;
     }
   }
   return { approved, total, pct: total > 0 ? Math.round((approved / total) * 100) : 0 };
@@ -293,7 +293,7 @@ export function NextStepsColumn({ slug, onOpenDoc }: NextStepsColumnProps) {
   const fStats = calcFoundationStats(foundation);
   const hasStrategicPlan =
     foundation?.sections?.["strategic-plan"] &&
-    ["approved", "done"].includes(foundation.sections["strategic-plan"].status || "");
+    (foundation.sections["strategic-plan"].status as string) === "completed";
   const foundationComplete = hasStrategicPlan || fStats.pct >= 90;
 
   // --- Decisions ---

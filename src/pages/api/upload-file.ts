@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm, type File } from "formidable";
 import fs from "fs";
-import { uploadToR2, ALLOWED_MIME_TYPES } from "@/lib/upload-r2";
+import { uploadToR2, resolveUploadMime } from "@/lib/upload-r2";
 
 export const config = {
   api: { bodyParser: false },
@@ -31,9 +31,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "No file provided" });
     }
 
-    if (!file.mimetype || !ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    // Browsers frequently send a generic/empty Content-Type for non-image
+    // files (e.g. PDFs as application/octet-stream), so fall back to the file
+    // extension and normalize to a canonical MIME type (SAN-117).
+    const mimeType = resolveUploadMime(file.mimetype, file.originalFilename);
+    if (!mimeType) {
       return res.status(400).json({
-        error: `File type not allowed: ${file.mimetype}. Allowed: images, PDF, XLSX, DOCX, CSV, TXT, MD`,
+        error: `File type not allowed: ${file.originalFilename || file.mimetype || "unknown"}. Allowed: images, PDF, XLSX, DOCX, CSV, TXT, MD`,
       });
     }
 
@@ -42,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ext = originalName.split(".").pop() || "bin";
     const key = `chat/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-    const url = await uploadToR2(buffer, key, file.mimetype);
+    const url = await uploadToR2(buffer, key, mimeType);
 
     // Clean up temp file
     fs.unlinkSync(file.filepath);
@@ -50,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.json({
       url,
       filename: originalName,
-      mimeType: file.mimetype,
+      mimeType,
       size: file.size || buffer.length,
     });
   } catch (error) {

@@ -6,7 +6,7 @@
  * /api/integrations/publish) have a Slack publish_channel configured vs. which
  * are missing or still point at a Discord id. Use right after deploying the
  * configurable-publish-channel change to see what to set in Recurring Tasks →
- * 📢 Canal (see docs/plans/d5-g4u-publish-cutover.md).
+ * 📢 Canal.
  *
  * Usage:
  *   node scripts/audit-publish-channels.mjs                  # uses $MC_WORKSPACE or ./workspace-sancho

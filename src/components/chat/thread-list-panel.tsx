@@ -26,8 +26,23 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useThreadList } from "@/hooks/useChat";
 import { useProjects } from "@/hooks/useProjects";
+import { useTaskRows, useUpdateTaskStatus } from "@/hooks/useTasks";
 import { threadIcon } from "@/lib/chat-openers";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
+import { StatusPill } from "@/components/shared/status-pill";
+import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot, statusLabel } from "@/lib/task-status";
+
+/**
+ * Extrae la clave de tarea (lowercase) de un shortId de hilo. Los hilos de
+ * tarea llegan como `task-<id>` (el thread store reemplaza `:`→`-` al
+ * persistir el fichero) o, en su forma canónica, `task:<id>` /
+ * `<algo>:task:<id>`. Devuelve null para hilos sin tarea (Pilares Foundation,
+ * libres, proyectos, ideas…) → esos no llevan badge ni acción de archivar.
+ */
+function taskKeyFromShortId(shortId: string): string | null {
+  const m = shortId.match(/(?:^|:)task[:-](.+)$/i);
+  return m ? m[1].toLowerCase() : null;
+}
 
 interface Props {
   slug: string;
@@ -58,11 +73,15 @@ export function ThreadListPanel({
   const t = useTranslations("chat");
   const { data: threads = [], isLoading } = useThreadList(slug);
   const { data: projects } = useProjects(slug);
+  const { data: taskRows = [] } = useTaskRows(slug);
+  const updateTaskStatus = useUpdateTaskStatus();
 
   // ── Search + filter state ─────────────────────────────────────────
   const [search, setSearch] = useState("");
-  type FilterTab = "all" | "unread" | "tasks" | "foundation" | "projects";
+  type FilterTab = "all" | "unread" | "tasks" | "foundation" | "projects" | "archived";
   const [filter, setFilter] = useState<FilterTab>("all");
+  // Qué hilo tiene el menú "cambiar estado" abierto (null = ninguno).
+  const [menuFor, setMenuFor] = useState<string | null>(null);
 
   const handleClick = useCallback(
     (threadId: string) => {
@@ -71,43 +90,67 @@ export function ThreadListPanel({
     [onSelectThread]
   );
 
-  // ── Derive display names once, then filter on them ────────────────
+  // ── Índice tarea→estado (lowercase id → { id real, estado canónico }) ──
+  // El shortId del hilo lleva el id en minúsculas; guardamos el id real para
+  // poder mutar el estado vía el endpoint (que espera el id tal cual).
+  const taskByLower = useMemo(() => {
+    const m = new Map<string, { id: string; status: string }>();
+    for (const r of taskRows) {
+      m.set(r.id.toLowerCase(), { id: r.id, status: normalizeTaskStatusQuiet(r.status) });
+    }
+    return m;
+  }, [taskRows]);
+
+  // ── Derive display names + estado de la tarea ligada ──────────────
   const threadsWithNames = useMemo(
     () =>
-      threads.map((thread) => ({
-        ...thread,
-        displayName: formatThreadDisplayName(
-          { shortId: thread.shortId, name: thread.name },
-          projects
-        ),
-      })),
-    [threads, projects]
+      threads.map((thread) => {
+        const taskKey = taskKeyFromShortId(thread.shortId);
+        const task = taskKey ? taskByLower.get(taskKey) : undefined;
+        return {
+          ...thread,
+          displayName: formatThreadDisplayName(
+            { shortId: thread.shortId, name: thread.name },
+            projects
+          ),
+          taskId: task?.id ?? null,
+          taskStatus: task?.status ?? null,
+        };
+      }),
+    [threads, projects, taskByLower]
+  );
+
+  const archivedCount = useMemo(
+    () => threadsWithNames.filter((t) => t.taskStatus === "archived").length,
+    [threadsWithNames]
   );
 
   const filtered = useMemo(() => {
     let result = threadsWithNames;
 
-    // Tab filter
-    if (filter === "unread") {
-      result = result.filter((t) => t.hasUnread);
-    } else if (filter === "tasks") {
-      result = result.filter((t) =>
-        t.shortId.startsWith("task:") || t.shortId.match(/^[^:]+:task:/)
-      );
-    } else if (filter === "foundation") {
-      result = result.filter((t) => {
-        const sid = t.shortId;
-        return (
-          !sid.includes("task:") &&
-          !sid.includes("project:") &&
-          !sid.includes("strategy:") &&
-          !sid.includes("recurring:") &&
-          !sid.includes("idea:") &&
-          !sid.includes("general")
-        );
-      });
-    } else if (filter === "projects") {
-      result = result.filter((t) => t.shortId.includes("project:"));
+    // Pestaña Archivados = SOLO hilos con tarea archivada. El resto de
+    // pestañas excluyen siempre los archivados (no aparecen nunca fuera).
+    if (filter === "archived") {
+      result = result.filter((t) => t.taskStatus === "archived");
+    } else {
+      result = result.filter((t) => t.taskStatus !== "archived");
+      if (filter === "unread") {
+        result = result.filter((t) => t.hasUnread);
+      } else if (filter === "tasks") {
+        result = result.filter((t) => taskKeyFromShortId(t.shortId) !== null);
+      } else if (filter === "foundation") {
+        // Solo hilos de Pilar: ni tarea, ni proyecto/estrategia/recurrente/idea,
+        // ni el general. Los separadores llegan como `:` (canónico) o `-` (al
+        // persistir el fichero), así que se contemplan ambos.
+        result = result.filter((t) => {
+          const sid = t.shortId;
+          if (taskKeyFromShortId(sid)) return false;
+          if (/(?:^|:)(project|strategy|recurring|idea)[:-]/i.test(sid)) return false;
+          return !sid.includes("general");
+        });
+      } else if (filter === "projects") {
+        result = result.filter((t) => /(?:^|:)project[:-]/i.test(t.shortId));
+      }
     }
 
     // Text search
@@ -131,11 +174,12 @@ export function ThreadListPanel({
     { key: "tasks", label: "Tareas" },
     { key: "foundation", label: "Foundation" },
     { key: "projects", label: "Proyectos" },
+    { key: "archived", label: "Archivados" },
   ];
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8 text-[13px] text-[#6c7086]">
+      <div className="flex items-center justify-center py-8 text-[13px] text-[var(--chat-text-faint)]">
         {t("loading") ?? "Cargando..."}
       </div>
     );
@@ -145,7 +189,7 @@ export function ThreadListPanel({
     return (
       <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
         <span className="text-3xl mb-2">💬</span>
-        <p className="text-[14px] text-[#6c7086]">{t("noThreads") ?? "Sin threads todavía"}</p>
+        <p className="text-[14px] text-[var(--chat-text-faint)]">{t("noThreads") ?? "Sin threads todavía"}</p>
       </div>
     );
   }
@@ -155,19 +199,19 @@ export function ThreadListPanel({
       {/* Search input */}
       <div className="px-2 pt-2 pb-1">
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6c7086] text-[12px] pointer-events-none">🔍</span>
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--chat-text-faint)] text-[12px] pointer-events-none">🔍</span>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar threads..."
-            className="w-full bg-[#313244] border border-[#45475a] rounded-md pl-8 pr-3 py-1.5 text-[12px] text-[#cdd6f4] placeholder:text-[#6c7086] focus:outline-none focus:border-rust transition-colors"
+            className="w-full bg-[var(--chat-surface)] border border-[var(--chat-border)] rounded-md pl-8 pr-3 py-1.5 text-[12px] text-[var(--chat-text)] placeholder:text-[var(--chat-text-faint)] focus:outline-none focus:border-rust transition-colors"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6c7086] hover:text-[#cdd6f4] text-[11px]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--chat-text-faint)] hover:text-[var(--chat-text)] text-[11px]"
             >
               ✕
             </button>
@@ -175,13 +219,16 @@ export function ThreadListPanel({
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1 px-2 pb-2 overflow-x-auto scrollbar-none">
+      {/* Filter tabs — wrap a 2ª línea en panel estrecho para que ninguna
+          pestaña (p.ej. "Archivados") quede cortada fuera del viewport. */}
+      <div className="flex flex-wrap gap-1 px-2 pb-2">
         {FILTER_TABS.map((tab) => {
           const count =
             tab.key === "unread"
               ? threadsWithNames.filter((t) => t.hasUnread).length
-              : undefined;
+              : tab.key === "archived"
+                ? archivedCount
+                : undefined;
           return (
             <button
               key={tab.key}
@@ -191,7 +238,7 @@ export function ThreadListPanel({
                 "text-[11px] px-2 py-1 rounded-md whitespace-nowrap transition-colors flex-shrink-0",
                 filter === tab.key
                   ? "bg-rust text-white font-semibold"
-                  : "bg-[#313244] text-[#a6adc8] hover:bg-[#45475a] hover:text-[#cdd6f4]"
+                  : "bg-[var(--chat-surface)] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)]"
               )}
             >
               {tab.label}
@@ -206,7 +253,7 @@ export function ThreadListPanel({
       {/* Thread list */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 px-4 text-center">
-          <p className="text-[12px] text-[#6c7086]">
+          <p className="text-[12px] text-[var(--chat-text-faint)]">
             {search ? `Sin resultados para "${search}"` : "Sin threads en este filtro"}
           </p>
           {(search || filter !== "all") && (
@@ -228,20 +275,28 @@ export function ThreadListPanel({
         const preview =
           lastText.length > 80 ? lastText.slice(0, 80) + "…" : lastText;
 
+        const canManage = !narrow && !!thread.taskId;
+        const menuOpen = menuFor === thread.id;
+
         return (
-          <li key={thread.id}>
+          <li key={thread.id} className="relative group">
             <button
               type="button"
               onClick={() => handleClick(thread.id)}
               className={cn(
                 "w-full text-left px-3 py-2.5 flex items-start gap-2.5 transition-colors",
-                "hover:bg-[#313244]",
-                isActive && "bg-[#45475a] border-l-2 border-l-rust"
+                "hover:bg-[var(--chat-surface)]",
+                canManage && "pr-8",
+                isActive && "bg-[var(--chat-surface-2)] border-l-2 border-l-rust"
               )}
             >
-              {/* Icon */}
-              <span className="text-lg flex-shrink-0 leading-tight mt-0.5">
-                {threadIcon(thread.shortId)}
+              {/* Icon — punto de color del estado si el hilo tiene tarea;
+                  si no, el icono genérico por tipo de hilo. */}
+              <span
+                className="text-lg flex-shrink-0 leading-tight mt-0.5"
+                title={thread.taskStatus ? thread.taskStatus.replace(/-/g, " ") : undefined}
+              >
+                {thread.taskStatus ? statusDot(thread.taskStatus) : threadIcon(thread.shortId)}
               </span>
 
               {/* Name + preview */}
@@ -257,25 +312,96 @@ export function ThreadListPanel({
                     className={cn(
                       "text-[14px] truncate flex-1 leading-snug",
                       thread.hasUnread
-                        ? "font-semibold text-[#cdd6f4]"
-                        : "text-[#cdd6f4]"
+                        ? "font-semibold text-[var(--chat-text)]"
+                        : "text-[var(--chat-text)]"
                     )}
                   >
                     {thread.displayName}
                   </span>
                   {lastTs && !narrow && (
-                    <span className="text-[11px] text-[#a6adc8] flex-shrink-0">
+                    <span className="text-[11px] text-[var(--chat-text-muted)] flex-shrink-0">
                       {relTime(lastTs)}
                     </span>
                   )}
                 </div>
-                {!narrow && preview && (
-                  <div className="text-[12px] text-[#a6adc8] truncate mt-1 leading-snug">
-                    {preview}
+                {!narrow && (thread.taskStatus || preview) && (
+                  <div className="flex items-center gap-1.5 mt-1 min-w-0">
+                    {thread.taskStatus && (
+                      <StatusPill status={thread.taskStatus} size="sm" labelOverride={statusLabel(thread.taskStatus)} />
+                    )}
+                    {preview && (
+                      <span className="text-[12px] text-[var(--chat-text-muted)] truncate leading-snug min-w-0">
+                        {preview}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
             </button>
+
+            {/* Kebab "cambiar estado" — solo en hilos con tarea ligada */}
+            {canManage && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Cambiar estado"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuFor(menuOpen ? null : thread.id);
+                  }}
+                  className={cn(
+                    "absolute right-1 top-2 grid h-6 w-6 place-items-center rounded-md text-[14px]",
+                    "text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)] transition",
+                    menuOpen ? "opacity-100 bg-[var(--chat-surface-2)]" : "opacity-60 group-hover:opacity-100"
+                  )}
+                >
+                  ⋯
+                </button>
+                {menuOpen && (
+                  <>
+                    {/* Backdrop para cerrar al hacer click fuera */}
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setMenuFor(null)}
+                    />
+                    <div className="absolute right-1 top-8 z-20 w-44 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] py-1 shadow-lg">
+                      <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--chat-text-faint)]">
+                        Cambiar estado
+                      </div>
+                      {TASK_STATUS_OPTIONS.map((opt) => {
+                        const current = thread.taskStatus === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            disabled={current || updateTaskStatus.isPending}
+                            onClick={() => {
+                              setMenuFor(null);
+                              if (current || !thread.taskId) return;
+                              updateTaskStatus.mutate({
+                                slug,
+                                taskId: thread.taskId,
+                                status: opt.value,
+                              });
+                            }}
+                            className={cn(
+                              "flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors",
+                              current
+                                ? "text-[var(--chat-text-faint)] cursor-default"
+                                : "text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)]"
+                            )}
+                          >
+                            <span>{statusDot(opt.value)}</span>
+                            <span className="truncate">{opt.label}</span>
+                            {current && <span className="ml-auto text-[11px]">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </li>
         );
       })}

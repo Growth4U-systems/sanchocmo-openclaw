@@ -419,7 +419,7 @@ export const tasks = pgTable("tasks", {
   draftStatuses: jsonb("draft_statuses"),
 
   mcChatThreadId: text("mc_chat_thread_id"),
-  discordThreadId: text("discord_thread_id"),
+  discordThreadId: text("discord_thread_id"), // DEPRECATED (Discord retirado, SAN-183 F5) — column drop pendiente de migración
 
   outputFiles: jsonb("output_files"),
   documents: jsonb("documents"),
@@ -455,7 +455,7 @@ export const tasks = pgTable("tasks", {
 ]);
 
 // ============================================================
-// Shared Document Comments (SAN-15)
+// Shared Document Comments (SAN-15, v2 threads/resolve SAN-148)
 // ============================================================
 
 export const sharedDocComments = pgTable("shared_doc_comments", {
@@ -469,10 +469,21 @@ export const sharedDocComments = pgTable("shared_doc_comments", {
   anchorText: text("anchor_text"),
   anchorContext: text("anchor_context"),
   anchorDocOffset: integer("anchor_doc_offset"),
+  // v2 (SAN-148): 1-level threads — replies carry parentId and NO anchor
+  parentId: text("parent_id"),
+  // v2 (SAN-148): resolve/reopen, public and reversible (Notion model)
+  resolved: boolean("resolved").notNull().default(false),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: text("resolved_by"),
+  // v2 (SAN-148): W3C TextQuoteSelector context for robust re-anchoring
+  anchorPrefix: text("anchor_prefix"),
+  anchorSuffix: text("anchor_suffix"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
   index("shared_doc_comments_slug_idx").on(table.slug),
   index("shared_doc_comments_slug_doc_idx").on(table.slug, table.docPath, table.createdAt),
+  index("shared_doc_comments_parent_idx").on(table.parentId),
+  index("shared_doc_comments_open_idx").on(table.slug, table.docPath, table.resolved, table.createdAt),
 ]);
 
 // ============================================================
@@ -515,4 +526,22 @@ export const feedbackInsights = pgTable("feedback_insights", {
   index("feedback_insights_slug_idx").on(table.slug),
   index("feedback_insights_slug_status_idx").on(table.slug, table.status),
   index("feedback_insights_run_idx").on(table.runId),
+]);
+
+// ============================================================
+// Intake submissions (SAN-17) — public kickoff form
+// ============================================================
+
+export const intakeSubmissions = pgTable("intake_submissions", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  respondentName: text("respondent_name").notNull(),
+  respondentEmail: text("respondent_email"),
+  answers: jsonb("answers").notNull(),
+  status: text("status").notNull().default("submitted"),
+  attachments: jsonb("attachments"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  submittedAt: timestamp("submitted_at").notNull().defaultNow(),
+}, (table) => [
+  index("intake_submissions_slug_idx").on(table.slug),
 ]);

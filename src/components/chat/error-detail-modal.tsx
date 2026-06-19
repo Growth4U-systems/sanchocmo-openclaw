@@ -47,17 +47,17 @@ export function ErrorDetailModal({ open, onClose, detail }: ErrorDetailModalProp
         {(detail.provider || detail.account || detail.model || detail.correlatedWith) && (
           <div className="flex flex-wrap gap-1.5">
             {detail.provider && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#45475a]/60 text-[#cdd6f4]">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[var(--chat-surface-2)] text-[var(--chat-text)]">
                 provider · {detail.provider}
               </span>
             )}
             {detail.account && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#45475a]/60 text-[#cdd6f4]">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[var(--chat-surface-2)] text-[var(--chat-text)]">
                 cuenta · {detail.account}
               </span>
             )}
             {detail.model && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#45475a]/60 text-[#cdd6f4]">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[var(--chat-surface-2)] text-[var(--chat-text)]">
                 modelo · {detail.model}
               </span>
             )}
@@ -69,7 +69,7 @@ export function ErrorDetailModal({ open, onClose, detail }: ErrorDetailModalProp
           </div>
         )}
 
-        <pre className="text-[11px] leading-relaxed bg-[#1E1E2E] text-[#cdd6f4] p-3 rounded-md max-h-[60vh] overflow-auto whitespace-pre-wrap break-words border border-[#45475a]/60">
+        <pre className="text-[11px] leading-relaxed bg-[var(--chat-bg)] text-[var(--chat-text)] p-3 rounded-md max-h-[60vh] overflow-auto whitespace-pre-wrap break-words border border-[var(--chat-border)]">
           {detail.raw}
         </pre>
       </div>

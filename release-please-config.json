@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "node",
+  "last-release-sha": "7775969b59192661f45f26f29e4c0e8826dc6f78",
   "packages": {
     ".": {
       "package-name": "mission-control",
@@ -12,5 +13,6 @@
     }
   },
   "pull-request-title-pattern": "chore: release v${version}",
+  "group-pull-request-title-pattern": "chore: release v${version}",
   "separate-pull-requests": false
 }

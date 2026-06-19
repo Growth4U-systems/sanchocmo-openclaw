@@ -3,6 +3,7 @@ import path from "path";
 import { BASE, brandDir } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
 import { applyTaskAnchors, type TaskCreateInput } from "@/lib/data/task-create-helpers";
+import { instantiateSingletonTask } from "@/lib/data/task-blueprints";
 import type { Project, Task } from "@/types";
 
 export const MEETING_INTELLIGENCE_SETUP_TASK_NAME = "Implementar/configurar Meeting Intelligence";
@@ -177,27 +178,9 @@ function findCanonicalTask(records: ProjectRecord[]): MeetingIntelligenceSetupTa
 }
 
 function buildSetupTask(slug: string, taskId: string): TaskCreateInput {
-  return {
-    id: taskId,
-    name: MEETING_INTELLIGENCE_SETUP_TASK_NAME,
-    description: [
-      "Configurar Meeting Intelligence desde el chat sidebar: verificar MCP/APIs, usar Google Workspace/GOG para buscar y validar carpetas de Drive, aceptar ID/URL solo como fallback, seleccionar Notion database/page, cargar filtros como clients relation y ejecutar un primer run.",
-      "No aplicar cambios sobre StrategyPlan, POV Bank ni documentos canónicos sin revisión humana explícita.",
-    ].join("\n\n"),
-    deliverable: "Meeting Intelligence configurado con fuentes aprobadas, filtros guardados, routing revisado y primer run documentado.",
-    done_criteria: "Google Drive o Notion configurado; filtros/routing guardados; primer scan ejecutado con reuniones encontradas o reporte explícito de cero reuniones; setup.md actualizado.",
-    depends_on: null,
-    owner: "Sancho",
-    status: "todo",
-    channel: "intelligence",
-    type: "foundation",
-    skill: "meeting-intelligence",
-    deliverable_file: `brand/${slug}/intelligence/setup.md`,
-    output_files: [
-      `brand/${slug}/intelligence/config.json`,
-      `brand/${slug}/intelligence/setup.md`,
-    ],
-  };
+  // Task contract from the declarative registry (config/pillar-manifest.json →
+  // taskSets.meeting); placement (host project, dedupe, id) stays imperative.
+  return instantiateSingletonTask("meeting", { slug, id: taskId });
 }
 
 export function getMeetingIntelligenceSetupTask(slug: string): MeetingIntelligenceSetupTaskInfo | null {

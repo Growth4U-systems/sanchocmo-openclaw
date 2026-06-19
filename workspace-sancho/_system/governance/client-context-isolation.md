@@ -34,7 +34,7 @@ Para cada cliente, el output debe limitarse a:
 | Categoría | Ejemplos |
 |-----------|----------|
 | **Tareas internas** | TASKS.md, PRDs, tareas de sistema, backlogs |
-| **Agentes/Sistema** | Spawning de Escudero/Rocinante, sessions_spawn, sessions_send |
+| **Agentes/Sistema** | Delegación a especialistas (Dulcinea, Rocinante, Hamete…), `Agent(subagent_type=...)`, internals de orquestación |
 | **Config/Skills** | Cambios de skills, actualizaciones de SOUL.md, BRAIN.md |
 | **Logs del sistema** | Errores, bugs, crashes, heartbeats, cron logs |
 | **Infraestructura** | Tailscale, base de datos, LaunchAgents, Gateway status |

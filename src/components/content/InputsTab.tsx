@@ -34,7 +34,18 @@ interface CadenceChannel {
   key: string; active: boolean; frequency: string;
   bestDays: string[]; bestTimes: string[];
   gating: string; contentTypes: string[];
-  profiles: { name: string; handle: string; role: string; postsPerWeek: number }[];
+  profiles: {
+    id?: string;
+    name: string;
+    handle: string;
+    role: string;
+    postsPerWeek: number;
+    metricool_profile_id?: string;
+    voice_doc?: string;
+    pillars_slant?: string[];
+    owner?: string;
+    primary_kpi?: string;
+  }[];
 }
 
 interface PillarPov {
@@ -439,7 +450,17 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
       )}
 
       {activeSection === "dispatch-channel" && <DispatchChannelForm slug={slug} current={dispatchChannel} onSaved={fetchAll} />}
-      {activeSection === "news" && <NewsPromptsForm configs={configs.newsPrompts} slug={slug} onSaved={fetchAll} />}
+      {activeSection === "news" && (configs.newsPrompts.length === 0 ? (
+        <EmptyConfigState
+          title="news prompts"
+          hint="Sin prompts por pilar, la antena News Monitor no sabe qué noticias escuchar para esta marca."
+          slug={slug}
+          setupTask={configs.setupTask}
+          openChat={openChat}
+        />
+      ) : (
+        <NewsPromptsForm configs={configs.newsPrompts} slug={slug} onSaved={fetchAll} />
+      ))}
       {activeSection === "profiles" && (
         <MonitoredProfilesForm
           profiles={configs.monitoredProfiles}
@@ -448,10 +469,68 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
           onSaved={fetchAll}
         />
       )}
-      {activeSection === "keywords" && <KeywordsForm configs={configs.keywordsSeed} slug={slug} onSaved={fetchAll} />}
-      {activeSection === "paa" && <PaaForm configs={configs.paaQueries} slug={slug} onSaved={fetchAll} />}
+      {activeSection === "keywords" && (configs.keywordsSeed.length === 0 ? (
+        <EmptyConfigState
+          title="keywords seed"
+          hint="Sin keywords por pilar, la antena de Keyword Research no tiene de dónde partir para el canal SEO/Blog."
+          slug={slug}
+          setupTask={configs.setupTask}
+          openChat={openChat}
+        />
+      ) : (
+        <KeywordsForm configs={configs.keywordsSeed} slug={slug} onSaved={fetchAll} />
+      ))}
+      {activeSection === "paa" && (configs.paaQueries.length === 0 ? (
+        <EmptyConfigState
+          title="queries de People Also Ask"
+          hint="Sin queries por pilar, la antena PAA Monitor no puede vigilar qué pregunta la gente en Google."
+          slug={slug}
+          setupTask={configs.setupTask}
+          openChat={openChat}
+        />
+      ) : (
+        <PaaForm configs={configs.paaQueries} slug={slug} onSaved={fetchAll} />
+      ))}
       {activeSection === "cadence" && <CadenceForm cadence={configs.cadence} slug={slug} onSaved={fetchAll} />}
       {docSlideOver}
+    </div>
+  );
+}
+
+// ── EMPTY CONFIG STATE ────────────────────────────────────────
+// A brand with no per-pillar configs used to render a mute editor (header +
+// Guardar and nothing else). Make the gap explicit and route to the flow
+// that creates them: the Content Engine setup task, in chat (SAN-141).
+function EmptyConfigState({ title, hint, slug, setupTask, openChat }: {
+  title: string;
+  hint: string;
+  slug: string;
+  setupTask: SetupTask | null;
+  openChat: (slug: string, config: ThreadConfig) => void;
+}) {
+  return (
+    <div className="text-center py-12 px-6 border-2 border-dashed border-border rounded-lg">
+      <span className="text-4xl block mb-3">📡</span>
+      <p className="font-semibold text-sm mb-1">Esta marca aún no tiene {title} configurados</p>
+      <p className="text-xs text-muted-foreground mb-5 max-w-md mx-auto">{hint}</p>
+      {setupTask ? (
+        <button
+          type="button"
+          onClick={() =>
+            openChat(slug, buildTaskThread(slug, setupTask.taskId, setupTask.taskName, setupTask.projectId, {
+              taskSkill: setupTask.skill,
+              taskStatus: setupTask.status,
+            }))
+          }
+          className="px-4 py-2 text-sm font-semibold border-2 border-ink rounded-lg bg-rust text-white hover:-translate-y-0.5 hover:shadow-comic transition-all"
+        >
+          💬 Crear con Sancho (setup del Content Engine)
+        </button>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Se generan con la tarea &ldquo;Setup configs&rdquo; del proyecto Content Engine — créalo desde Content Creation.
+        </p>
+      )}
     </div>
   );
 }
@@ -1511,7 +1590,10 @@ function CadenceForm({
               >
                 <span
                   className={cn(
-                    "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
+                    // left-0 anchors the knob to the pill — without it the
+                    // absolute span inherits the button's centered static
+                    // position and overflows onto the channel name.
+                    "absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
                     ch.active ? "translate-x-4" : "translate-x-0.5"
                   )}
                 />

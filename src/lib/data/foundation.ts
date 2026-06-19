@@ -1,32 +1,13 @@
-import { readJSON, safeWriteJSON } from "./json-io";
-import { foundationStateFile } from "./paths";
 import type { FoundationState } from "@/types";
+import { assembleBrandBrainState } from "./brand-brain-assembler";
 
-const EMPTY_STATE: FoundationState = {
-  version: "3.0",
-  started_at: "",
-  updated_at: "",
-  brand_summary: {
-    company_name: "",
-    sector: "",
-    description: "",
-    north_star: "",
-    icps: [],
-    competitors: [],
-    positioning: "",
-  },
-  sections: {},
-  presentations: [],
-};
-
+/**
+ * SAN-183 F5: el BrandBrainState ya no se lee de foundation-state.json — se
+ * ensambla desde manifest + tasks (única fuente de status). Este módulo queda
+ * como fachada de compatibilidad para los lectores server-side existentes.
+ * `saveFoundationState` murió: nadie escribe el shape entero; el status se
+ * escribe vía setPillarStatusViaTask (task-status-store.ts).
+ */
 export function loadFoundationState(slug: string): FoundationState {
-  return readJSON<FoundationState>(foundationStateFile(slug), EMPTY_STATE);
-}
-
-export function saveFoundationState(slug: string, state: FoundationState): void {
-  state.updated_at = new Date().toISOString();
-  safeWriteJSON(foundationStateFile(slug), state, (d) => {
-    const s = d as FoundationState;
-    return !!s.sections;
-  });
+  return assembleBrandBrainState(slug);
 }

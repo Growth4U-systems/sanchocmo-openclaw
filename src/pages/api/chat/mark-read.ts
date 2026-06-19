@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { markThreadRead } from "@/lib/data/mc-chat";
+import { sanitizeShortId } from "@/lib/thread-id";
 
 /**
  * POST /api/chat/mark-read
@@ -12,11 +13,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { slug, threadId } = req.body;
   if (!slug || !threadId) return res.status(400).json({ error: "slug and threadId required" });
 
-  // Extract shortId from full threadId (slug:shortId)
+  // Extract shortId from full threadId (slug:shortId) and sanitize to the same
+  // on-disk form threadFile() uses — shared via thread-id.ts so they can't drift.
   const colonIdx = threadId.indexOf(":");
   const shortId = colonIdx >= 0 ? threadId.slice(colonIdx + 1) : threadId;
-  // Sanitize same as threadFile() in mc-chat.ts
-  const safeId = shortId.replace(/:/g, "-").replace(/[^a-zA-Z0-9\-_]/g, "");
+  const safeId = sanitizeShortId(shortId);
 
   markThreadRead(slug, safeId);
 

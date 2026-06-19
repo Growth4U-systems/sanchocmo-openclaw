@@ -9,23 +9,22 @@ import { buildPillarThread, findTaskThreadForDoc } from "@/lib/chat-openers";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { BrandSnapshot } from "@/components/shared/brand-snapshot";
 import { cn } from "@/lib/utils";
+import { statusLabel as statusText } from "@/lib/task-status";
 import type { BrandBrainState, Section } from "@/types";
 
 // ============================================================
 // Brand Column — Faithful port of renderV2Foundation()
 // ============================================================
 
-// FF_PILLAR_MAP: Fast Foundation pillar names -> real pillar names
+// FF_PILLAR_MAP: Kickoff pillar names -> real pillar names. SAN-3 W4: the Kickoff
+// writes a single `company-brief` pillar; `fast-context` is its pre-W4 alias.
 const FF_PILLAR_MAP: Record<string, string> = {
+  "fast-context": "company-brief",
   "company-brief": "company-brief",
-  "self-l1": "self-analysis",
-  "market-l1": "market-analysis",
-  "brand-voice-snapshot": "brand-voice",
-  "niche-basic": "niche-discovery",
 };
 
 // Sections excluded from foundation stats (meta-sections)
-const EXCLUDED_SECTIONS = ["fast-foundation", "foundation-presentation"];
+const EXCLUDED_SECTIONS = ["foundation-presentation"];
 
 // Section display metadata
 const SECTION_META = [
@@ -37,17 +36,25 @@ const SECTION_META = [
   { key: "strategic-plan", icon: "\uD83D\uDDFA\uFE0F", label: "Strategic Plan" },
 ] as const;
 
-// Status display info
-const STATUS_INFO: Record<string, { icon: string; cls: string; label: string }> = {
-  approved: { icon: "\u2705", cls: "done", label: "Confirmado" },
-  done: { icon: "\u2705", cls: "done", label: "Completado" },
-  "pending-review": { icon: "\uD83D\uDFE1", cls: "review", label: "Esperando confirmacion" },
-  "pending-approval": { icon: "\uD83D\uDFE1", cls: "review", label: "Esperando confirmacion" },
-  generated: { icon: "\uD83D\uDFE1", cls: "review", label: "Generado" },
-  "in-progress": { icon: "\uD83D\uDD04", cls: "wip", label: "En progreso" },
-  draft: { icon: "\uD83D\uDD04", cls: "wip", label: "Borrador" },
-  "request-refresh": { icon: "\uD83D\uDD04", cls: "wip", label: "Solicitar actualizacion" },
-  "not-started": { icon: "\u2B1C", cls: "todo", label: "Pendiente" },
+// Status display info \u2014 SAN-192: el texto (tooltip) sale de la fuente \u00FAnica
+// (statusLabel, task-status.ts); aqu\u00ED solo el icono + la clase visual.
+const STATUS_INFO: Record<string, { icon: string; cls: string }> = {
+  // Vocabulario can\u00F3nico de task
+  completed: { icon: "\u2705", cls: "done" },
+  "pending-review": { icon: "\uD83D\uDFE1", cls: "review" },
+  "in-progress": { icon: "\uD83D\uDD04", cls: "wip" },
+  todo: { icon: "\u2B1C", cls: "todo" },
+  blocked: { icon: "\u26D4", cls: "review" },
+  cancelled: { icon: "\u2716\uFE0F", cls: "todo" },
+  archived: { icon: "\uD83D\uDCE6", cls: "todo" },
+  // Claves legacy (datos viejos en disco)
+  approved: { icon: "\u2705", cls: "done" },
+  done: { icon: "\u2705", cls: "done" },
+  "pending-approval": { icon: "\uD83D\uDFE1", cls: "review" },
+  generated: { icon: "\uD83D\uDFE1", cls: "review" },
+  draft: { icon: "\uD83D\uDD04", cls: "wip" },
+  "request-refresh": { icon: "\uD83D\uDD04", cls: "wip" },
+  "not-started": { icon: "\u2B1C", cls: "todo" },
 };
 
 const STATUS_BORDER: Record<string, string> = {
@@ -57,14 +64,14 @@ const STATUS_BORDER: Record<string, string> = {
   todo: "",
 };
 
-/** Build set of real pillar names completed by fast-foundation */
+/** Build set of real pillar names completed by the Kickoff (Company Brief). */
 function ffDonePillars(sections: Record<string, Section>): Set<string> {
   const done = new Set<string>();
-  const ff = sections["fast-foundation"];
+  const ff = sections["company-brief"];
   if (!ff) return done;
   const pillars = ff.pillars || {};
   for (const [ffName, pInfo] of Object.entries(pillars)) {
-    if (["approved", "done"].includes(pInfo.status)) {
+    if (pInfo.status === "completed") {
       done.add(FF_PILLAR_MAP[ffName] || ffName);
     }
   }
@@ -85,8 +92,8 @@ function calcFoundationStats(foundation: BrandBrainState | undefined) {
       if (pInfo.optional) continue;
       total++;
       const status = pInfo.status;
-      const effective = status === "not-started" && ffDone.has(pName) ? "approved" : status;
-      if (["approved", "done"].includes(effective)) approved++;
+      const effective = status === "todo" && ffDone.has(pName) ? "completed" : status;
+      if (effective === "completed") approved++;
     }
   }
   return { approved, total, pct: total > 0 ? Math.round((approved / total) * 100) : 0 };
@@ -94,8 +101,8 @@ function calcFoundationStats(foundation: BrandBrainState | undefined) {
 
 /** Normalize status to a canonical form */
 function normalizeStatus(raw: string, ffDone: Set<string>, pillarName: string): string {
-  if (raw === "not-started" && ffDone.has(pillarName)) return "approved";
-  if (raw === "done") return "approved";
+  if (raw === "todo" && ffDone.has(pillarName)) return "completed";
+  if (raw === "done" || raw === "approved") return "completed";
   if (raw === "draft") return "in-progress";
   if (raw === "pending-approval" || raw === "generated") return "pending-review";
   return raw;
@@ -122,8 +129,10 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
   const handleAnalyze = () => {
     const trimmed = url.trim();
     if (!trimmed) return;
-    const config = buildPillarThread(slug, "fast-foundation");
-    config.initialMessage = `Haz el Fast Foundation de esta empresa: ${trimmed}`;
+    // Pin the Company Brief doc so the Kickoff thread isn't "Sin documento asociado" (SAN-3 W4).
+    const cbDoc = foundation?.sections?.["company-brief"]?.pillars?.["company-brief"]?.output_file;
+    const config = buildPillarThread(slug, "company-brief", cbDoc || undefined);
+    config.initialMessage = `Haz el Kickoff de esta empresa: ${trimmed}`;
     config.threadState = "create";
     openChat(slug, config);
     setUrl("");
@@ -157,6 +166,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
             Analizar
           </button>
         </div>
+        <ShareIntakeRow slug={slug} />
         <Link href={`/dashboard/${slug}/brand-brain`} className="text-xs text-rust mt-3 inline-block">
           Brand Documents {"\u2192"}
         </Link>
@@ -168,9 +178,6 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
   const bs = foundation.brand_summary;
   const sections = foundation.sections || {};
   const ffDone = ffDonePillars(sections);
-
-  // Get FF section for doc URL fallback
-  const ffSection = sections["fast-foundation"]?.pillars || {};
 
   const hasSnapshotData =
     bs?.company_name || bs?.description || (bs?.competitors && bs.competitors.length > 0);
@@ -186,8 +193,43 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
     }
   }
 
+  // SAN-3: keep the Kickoff URL launcher reachable while the Company Brief pillar
+  // is still not-started. The `!foundation` early-return above only fires for a
+  // brand with no foundation at all — but scaffolding (SAN-108) now always creates
+  // one, which hid the "Analizar" box for every new client.
+  const cbStatus = sections["company-brief"]?.pillars?.["company-brief"]?.status;
+  const showKickoffLauncher = !cbStatus || cbStatus === "todo";
+
   return (
     <div className="space-y-0">
+      {/* Kickoff launcher — visible while the Company Brief is not-started (SAN-3) */}
+      {showKickoffLauncher && (
+        <div className="pb-3 mb-3 border-b border-border/60">
+          <p className="text-xs text-muted-foreground mb-2">
+            Introduce la URL para arrancar el Kickoff, o pulsa ▶ en Company Brief para el modo conversacional.
+          </p>
+          <div className="flex gap-1.5">
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+              placeholder="https://empresa.com"
+              className="flex-1 text-xs px-2 py-1.5 border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-rust"
+            />
+            <button
+              type="button"
+              onClick={handleAnalyze}
+              disabled={!url.trim()}
+              className="text-xs px-3 py-1.5 bg-rust text-white rounded-md hover:bg-rust/90 transition-colors disabled:opacity-40"
+            >
+              Analizar
+            </button>
+          </div>
+          <ShareIntakeRow slug={slug} />
+        </div>
+      )}
+
       {/* Brand Snapshot */}
       {hasSnapshotData && bs && (
         <div className="pb-3">
@@ -217,7 +259,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
             const pKeys = Object.keys(pillars);
             const requiredKeys = pKeys.filter((k) => !pillars[k].optional);
             const secDone = requiredKeys.filter((k) =>
-              ["approved", "done"].includes(pillars[k].status)
+              pillars[k].status === "completed"
             ).length;
             const icon =
               secDone === requiredKeys.length && requiredKeys.length > 0
@@ -287,8 +329,8 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
           const requiredKeys = pillarKeys.filter((k) => !pillars[k].optional);
           const secDone = requiredKeys.filter((k) => {
             const st = pillars[k].status;
-            const eff = st === "not-started" && ffDone.has(k) ? "approved" : st;
-            return ["approved", "done"].includes(eff);
+            const eff = st === "todo" && ffDone.has(k) ? "completed" : st;
+            return eff === "completed";
           }).length;
 
           return (
@@ -305,20 +347,12 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
               {pillarKeys.map((pName) => {
                 const p = pillars[pName];
                 const isOptional = !!p.optional;
-                const raw = p.status || "not-started";
+                const raw = p.status || "todo";
                 const norm = normalizeStatus(raw, ffDone, pName);
-                const si = STATUS_INFO[norm] || STATUS_INFO["not-started"];
+                const si = STATUS_INFO[norm] || STATUS_INFO["todo"];
                 const name = displayName(pName);
 
-                // Resolve doc URL: own section first, then FF section
-                let docUrl = p.output_file || "";
-                if (!docUrl) {
-                  const ffKey = Object.entries(FF_PILLAR_MAP).find(([, v]) => v === pName);
-                  if (ffKey && ffSection[ffKey[0]]) {
-                    docUrl = ffSection[ffKey[0]].output_file || "";
-                  }
-                }
-
+                const docUrl = p.output_file || "";
                 const hasDoc = !!docUrl;
 
                 const handleChat = () => {
@@ -339,7 +373,7 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
                       STATUS_BORDER[si.cls] || "",
                       isOptional && norm === "not-started" && "opacity-45"
                     )}
-                    title={si.label}
+                    title={statusText(norm)}
                   >
                     <span className="text-[13px]">{si.icon}</span>
                     <span className="flex-1 font-medium">
@@ -422,6 +456,51 @@ export function BrandColumn({ slug, onOpenDoc }: BrandColumnProps) {
           {"\uD83D\uDCC2"} Documents
         </Link>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Share the public intake-form link with the client (SAN-17). Shown only in the
+ * new-client kickoff launcher \u2014 mirrors the skill's "research vs send-form"
+ * choice. Fetches the signed URL from the admin endpoint and copies it.
+ */
+function ShareIntakeRow({ slug }: { slug: string }) {
+  const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const share = async () => {
+    setErr(null);
+    try {
+      const res = await fetch(`/api/intake-link/${slug}`);
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error || `HTTP ${res.status}`);
+      }
+      const { url } = (await res.json()) as { url?: string };
+      if (!url) throw new Error("Sin URL");
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "No se pudo copiar");
+    }
+  };
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">o env\u00EDale el formulario inicial:</span>
+        <button
+          type="button"
+          onClick={share}
+          className="text-xs px-2 py-1 border border-rust text-rust rounded-md hover:bg-rust/10 transition-colors"
+          title="Copia un link p\u00FAblico del formulario para que lo rellene el cliente"
+        >
+          {copied ? "\u2713 Copiado" : "\uD83D\uDD17 Copiar link"}
+        </button>
+      </div>
+      {err && <p className="text-[10px] text-destructive mt-1">{err}</p>}
     </div>
   );
 }

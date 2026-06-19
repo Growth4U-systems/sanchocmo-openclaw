@@ -45,7 +45,7 @@ agents.defaults.thinkingDefault: "medium"  # o "low" para tareas simples
 O mejor, **por agente:**
 - Sancho (estrategia): `"high"` — necesita razonamiento profundo
 - Cervantes (infra): `"medium"` — tareas más procedurales
-- Escudero (contenido): `"low"` o `"medium"` — genera, no razona
+- Especialistas de contenido (Dulcinea): `"low"` o `"medium"` — generan, no razonan
 - Rocinante (QA): `"medium"`
 
 **Ahorro estimado:** 30-50% en output tokens por respuesta
@@ -56,7 +56,7 @@ O mejor, **por agente:**
 **Haiku:** $0.80 input / $4 output — **~19x más barato**
 
 **Oportunidades:**
-- **Escudero ya usa Sonnet** ✅
+- **Los especialistas ya usan Sonnet/MiniMax** ✅
 - **Rocinante ya usa Sonnet** ✅
 - **Cervantes podría bajar a Sonnet** para tareas de infra rutinarias
 - **Heartbeats ya usan MiniMax** ✅
@@ -109,7 +109,7 @@ O mejor, **por agente:**
 - **`contextPruning.mode: "cache-ttl"`** ya activo ✅ — buen setup
 
 ### 9. Delegation = Token Savings
-Cada vez que Sancho delega a Escudero (Sonnet), ahorras 5x vs hacer todo en Opus. Maximizar delegación de:
+Cada vez que Sancho delega a un especialista (Sonnet/MiniMax), ahorras ~5x vs hacer todo en Opus. Maximizar delegación de:
 - Generación de contenido largo
 - Research que no necesita razonamiento estratégico profundo
 - Tareas paralelas independientes

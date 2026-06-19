@@ -25,8 +25,8 @@ Channel plugin that connects the Mission Control dashboard webchat to OpenClaw a
            │ OpenClaw internals
 ┌──────────▼──────────────┐
 │  OpenClaw Gateway        │
-│  Sancho / Escudero /     │
-│  Rocinante process msg   │
+│  Sancho (+ specialists   │
+│  it delegates to)        │
 └──────────┬──────────────┘
            │ outbound sendText
 ┌──────────▼──────────────┐
@@ -55,6 +55,7 @@ Add to `~/.openclaw/openclaw.json`:
   "channels": {
     "mc-chat": {
       "mcServerUrl": "http://localhost:18790",
+      "contextPackUrl": "http://localhost:3000",
       "sharedSecret": "your-shared-secret-here"
     }
   },
@@ -129,7 +130,7 @@ Plugin sends agent responses here.
 Each MC thread maps to an OpenClaw session:
 - Session key: `mc-chat:{slug}:{threadId}`
 - Thread metadata (linkedTo, skill) is passed as context prefix
-- Multiple agents (Sancho, Escudero, Rocinante) share the same session/thread
+- Sancho and the specialists it delegates to (via `Agent(subagent_type="<slug>")`) share the same session/thread
 
 ## Health Check
 

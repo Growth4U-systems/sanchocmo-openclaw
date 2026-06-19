@@ -26,6 +26,24 @@ if [ -z "${APIFY_TOKEN:-}" ] && [ -n "${APIFY_API_KEY:-}" ]; then
   echo "[entrypoint] APIFY_TOKEN derived from APIFY_API_KEY (apify skill enabled)"
 fi
 
+# Agents' bash tool builds content-engine / pov-bank / phase-reporting URLs as
+# `$MC_BASE/api/...`. Without MC_BASE in the sandbox env, `curl "$MC_BASE/api/..."`
+# hits a malformed URL (HTTP 000) and phases never report — research degrades and
+# the UI lies about progress (SAN-241). The content-engine API is served at the
+# site origin (`$BASE_URL/api/...`), NOT under `/mc`, so derive MC_BASE from
+# BASE_URL (NEXTAUTH_URL as a safety net), trailing slash stripped. Exported
+# before `openclaw gateway run` so the gateway and its agents inherit it.
+if [ -z "${MC_BASE:-}" ]; then
+  _mc_base="${BASE_URL:-${NEXTAUTH_URL:-}}"
+  _mc_base="${_mc_base%/}"
+  if [ -n "$_mc_base" ]; then
+    export MC_BASE="$_mc_base"
+    echo "[entrypoint] MC_BASE exported as $MC_BASE (agents → content-engine/pov-bank/phase-reporting)"
+  else
+    echo "[entrypoint] WARNING: BASE_URL/NEXTAUTH_URL unset — MC_BASE not exported; phase-reporting will fail"
+  fi
+fi
+
 # ===========================================================
 # 0. ENSURE CONFIG SYMLINKS (runs every startup)
 # ===========================================================
@@ -59,7 +77,91 @@ for ws in /root/.openclaw/workspace-*; do
     ln -sfn ../skills "$link"
     echo "[entrypoint] Linked $(basename "$ws")/skills -> ../skills"
   fi
+  # `_system` (protocols, instance.json) and `brand` (brand context) are owned by
+  # Sancho and shared into each specialist workspace by symlink. The seed shipped
+  # these as macOS-absolute links (`/Users/ragi/.openclaw/...`) that dangle in the
+  # container, so specialists (dulcinea, sanson, merlin, mambrino) lost brand +
+  # protocol context and degraded — fabricating content with no foundation
+  # (SAN-241, root of SAN-238). Repair to the relative path that resolves here.
+  # Only fix an EXISTING symlink (broken or not) — never invent a mount in a
+  # workspace that never had one, nor clobber a real directory.
+  for shared in _system brand; do
+    sl="$ws/$shared"
+    if [ -L "$sl" ]; then
+      ln -sfn "../workspace-sancho/$shared" "$sl"
+      echo "[entrypoint] Relinked $(basename "$ws")/$shared -> ../workspace-sancho/$shared"
+    fi
+  done
 done
+
+# ===========================================================
+# 0c. PREFLIGHT — validate MUST config, fail fast & clear
+# ===========================================================
+# A fresh install missing an essential var or config file should fail here
+# with an actionable message, not crash later inside generate-openclaw-config
+# or the gateway with an opaque error. Runs every boot (cheap), after the
+# config symlinks (section 0) so config/*.json resolve, and before the heavy
+# setup. Uses if/then (not `cond && action`) because `set -e` (line 2) would
+# treat a false short-circuit as a fatal error. G4U sets all of these via its
+# deploy, so the checks pass unchanged — purely additive, no regression.
+preflight() {
+  local errors=() warnings=()
+
+  if [ -z "${NEXTAUTH_SECRET:-}" ]; then errors+=("NEXTAUTH_SECRET is not set"); fi
+  if [ -z "${ENCRYPTION_KEY:-}" ]; then errors+=("ENCRYPTION_KEY is not set"); fi
+
+  local f
+  for f in clients.json instance.json; do
+    if [ ! -f "config/$f" ]; then
+      errors+=("config/$f is missing")
+    elif ! python3 -c "import json; json.load(open('config/$f'))" 2>/dev/null; then
+      errors+=("config/$f is not valid JSON")
+    fi
+  done
+
+  # At least one usable model credential for the active auth mode. Anthropic is
+  # Sancho's primary agent; OpenAI/Codex is secondary.
+  local anthropic_ok=0 openai_ok=0
+  if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
+    if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}${ANTHROPIC_OAUTH_TOKEN:-}" ]; then anthropic_ok=1; fi
+  else
+    if [ -n "${ANTHROPIC_API_KEY:-}" ]; then anthropic_ok=1; fi
+  fi
+  if [ -n "${OPENAI_API_KEY:-}" ]; then openai_ok=1; fi
+  if [ "$anthropic_ok" = 0 ] && [ "$openai_ok" = 0 ]; then
+    errors+=("No usable model credential for the active auth mode(s) — set ANTHROPIC_API_KEY (or the subscription token), and/or OPENAI_API_KEY")
+  elif [ "$anthropic_ok" = 0 ]; then
+    warnings+=("Anthropic credential absent — Sancho's primary agent needs it; only OpenAI/Codex agents will work")
+  fi
+
+  # DATABASE_URL is only required when tasks are DB-backed (default is json).
+  case "${MC_TASKS_BACKEND:-json}" in
+    db|db-shadow)
+      if [ -z "${DATABASE_URL:-}" ]; then
+        errors+=("MC_TASKS_BACKEND=${MC_TASKS_BACKEND} requires DATABASE_URL")
+      fi
+      ;;
+  esac
+
+  if [ "${#warnings[@]}" -gt 0 ]; then
+    local w
+    for w in "${warnings[@]}"; do echo "[entrypoint] ⚠ preflight: $w"; done
+  fi
+
+  if [ "${#errors[@]}" -gt 0 ]; then
+    echo "[entrypoint] ❌ Preflight failed — required configuration is missing:"
+    local e
+    for e in "${errors[@]}"; do echo "   • $e"; done
+    echo "[entrypoint] Fix: run scripts/wizard.sh (or edit .env / config/*.json), then restart the container."
+    echo "[entrypoint] (To bypass for debugging only: set SKIP_PREFLIGHT=1.)"
+    exit 1
+  fi
+  echo "[entrypoint] ✓ Preflight checks passed"
+}
+
+if [ "${SKIP_PREFLIGHT:-0}" != "1" ]; then
+  preflight
+fi
 
 # ===========================================================
 # 1-4. SETUP
@@ -158,6 +260,27 @@ if [ "${OPENAI_AUTH_MODE:-api_key}" = "subscription" ]; then
   echo "[entrypoint] Syncing Codex subscription auth across agents..."
   bash docker/sync-codex-auth.sh || \
     echo "[entrypoint] WARNING: sync-codex-auth failed; agents may diverge on subscription tokens"
+
+  # Agents created at RUNTIME (MC UI / `openclaw agents add`) get a real
+  # auth-profiles.json instead of the shared-store symlink, so they miss the
+  # subscription token until the next restart. Watch for non-symlink profiles
+  # and re-run the (idempotent) sync so every agent — existing or future —
+  # picks up the shared token automatically. The sync also creates symlinks
+  # for placeholder dirs, so each new agent triggers at most one re-sync.
+  (
+    while true; do
+      for d in /root/.openclaw/.openclaw/agents/*/; do
+        [ "$(basename "$d")" = "default" ] && continue
+        if [ ! -L "${d}agent/auth-profiles.json" ]; then
+          echo "[auth-watch] non-symlink auth profile in $(basename "$d") — re-running sync-codex-auth"
+          bash docker/sync-codex-auth.sh || true
+          break
+        fi
+      done
+      sleep 60
+    done
+  ) &
+  echo "[entrypoint] Codex auth watcher started (auto-links new agents to the shared store)"
 else
   echo "[entrypoint] OPENAI_AUTH_MODE=api_key — skipping Codex subscription sync (agents use OPENAI_API_KEY)"
 fi
@@ -189,19 +312,89 @@ if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
     export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
     echo "[entrypoint] ANTHROPIC_OAUTH_TOKEN derived from CLAUDE_CODE_OAUTH_TOKEN (gateway → Claude subscription)"
   fi
-  # HARD GUARD: with a subscription OAuth token in scope, strip ANTHROPIC_API_KEY
-  # from the gateway env so the model layer (pi-ai resolves
-  # ANTHROPIC_OAUTH_TOKEN → ANTHROPIC_API_KEY) can NEVER silently fall back to
-  # API-credit billing. If the OAuth token ever breaks, Anthropic calls fail
-  # loudly (and usage-monitor's auth-source alert fires) instead of quietly
-  # spending on the API — which is exactly the footgun that drained the key.
-  # OD runs in its own container, unaffected by this unset.
-  if [ -n "${ANTHROPIC_OAUTH_TOKEN:-}" ] && [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-    unset ANTHROPIC_API_KEY
-    echo "[entrypoint] subscription mode: dropped ANTHROPIC_API_KEY from gateway env (no API fallback possible)"
-  fi
+  # Blank ANTHROPIC_API_KEY for Sancho's process so the provider can only resolve
+  # the OAuth token — never a silent fall-through to API-key billing (the
+  # historical footgun). This guard used to live as a hardcoded empty value in
+  # docker-compose.yml, but that broke `api_key` mode (the key never reached the
+  # container); it is mode-aware here instead. Process-scoped — open-design keeps
+  # its own key from its env_file. The usage-monitor auth-source alert backs this
+  # up: if the gateway ever resolves to an sk-ant-api key, it pages 🔴🔴.
+  export ANTHROPIC_API_KEY=
 else
   echo "[entrypoint] ANTHROPIC_AUTH_MODE=api_key — using ANTHROPIC_API_KEY (anthropic:default token profile)"
+fi
+
+# ===========================================================
+# 1a. ENSURE MODEL PROVIDER TIMEOUTS (runs every startup)
+# ===========================================================
+# Staging/prod volumes keep openclaw.json between deploys, so changes in
+# generate-openclaw-config.js never reach existing instances. Ensure the
+# Anthropic model idle watchdog is extended past OpenClaw's 120s default —
+# long thinking runs (e.g. Dulcinea on Sonnet) trip it with
+# "LLM request timed out". Respects a manually-set timeout value.
+# OpenClaw >= 2026.5.18 requires baseUrl + models on any models.providers.<id>
+# entry (a timeout-only entry fails validation and blocks gateway startup), so
+# write the full entry; models:[] merges with — does not replace — the
+# built-in Anthropic catalog. Also repairs a partial entry left by the
+# previous version of this step.
+python3 -c "
+import json
+f='$OPENCLAW_CONFIG'
+c=json.load(open(f))
+p=c.setdefault('models',{}).setdefault('providers',{}).setdefault('anthropic',{})
+changed=False
+for k,v in (('baseUrl','https://api.anthropic.com'),('api','anthropic-messages'),('models',[]),('timeoutSeconds',300)):
+    if k not in p:
+        p[k]=v
+        changed=True
+if changed:
+    json.dump(c, open(f,'w'), indent=2)
+    print('[entrypoint] Ensured full models.providers.anthropic entry (timeoutSeconds=%s)' % p['timeoutSeconds'])
+" 2>/dev/null || true
+
+# ===========================================================
+# 1a2. ENSURE LATEST CODEX MODEL (runs every startup)
+# ===========================================================
+# Keep agents on the newest plain codex/gpt-X.Y from the catalog (SAN-172):
+# bump agents.defaults.model.primary and any agents.list[].model pinned to an
+# older plain codex id; the previous primary is kept as first fallback.
+# Variant ids (-mini/-codex/-spark) are never touched. Set CODEX_MODEL_PIN
+# (e.g. "codex/gpt-5.4") to pin a specific model and disable auto-tracking.
+if [ "${OPENAI_AUTH_MODE:-api_key}" = "subscription" ]; then
+  if [ -n "${CODEX_MODEL_PIN:-}" ]; then
+    TARGET_CODEX="$CODEX_MODEL_PIN"
+    echo "[entrypoint] CODEX_MODEL_PIN set — pinning codex agents to $TARGET_CODEX"
+  else
+    TARGET_CODEX=$(openclaw models list 2>/dev/null | grep -oE "^codex/gpt-[0-9]+\.[0-9]+ " | tr -d " " | sort -V | tail -1)
+  fi
+  if [ -n "$TARGET_CODEX" ]; then
+    TARGET_CODEX="$TARGET_CODEX" python3 - <<'PY' || true
+import json, os, re
+target = os.environ["TARGET_CODEX"]
+f = "/root/.openclaw/.openclaw/openclaw.json"
+c = json.load(open(f))
+pat = re.compile(r"^codex/gpt-\d+\.\d+$")
+changed = []
+m = c["agents"]["defaults"].get("model") or {}
+if pat.match(m.get("primary", "")) and m["primary"] != target:
+    old = m["primary"]
+    m["primary"] = target
+    fb = m.setdefault("fallbacks", [])
+    if old not in fb:
+        fb.insert(0, old)
+    changed.append("defaults: " + old + " -> " + target)
+for a in c["agents"].get("list", []):
+    am = a.get("model")
+    if isinstance(am, str) and pat.match(am) and am != target:
+        changed.append(a["id"] + ": " + am + " -> " + target)
+        a["model"] = target
+if changed:
+    json.dump(c, open(f, "w"), indent=2)
+    print("[entrypoint] Codex model update: " + "; ".join(changed))
+PY
+  else
+    echo "[entrypoint] WARNING: could not resolve latest codex model from catalog — keeping current pins"
+  fi
 fi
 
 # ===========================================================
@@ -226,6 +419,10 @@ if channel.get('enabled') is not True:
     changed=True
 if not channel.get('mcServerUrl'):
     channel['mcServerUrl']='http://localhost:18790'
+    changed=True
+context_pack_url=(os.environ.get('MC_CONTEXT_PACK_URL') or 'http://localhost:3000').rstrip('/')
+if not channel.get('contextPackUrl'):
+    channel['contextPackUrl']=context_pack_url
     changed=True
 secret=os.environ.get('MC_CHAT_SECRET') or ''
 if secret and channel.get('sharedSecret') != secret:

@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { ComicCard } from "@/components/shared/comic-card";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +56,7 @@ export default function ClientActivityPage() {
   return (
     <DashboardLayout>
       <Head><title>📡 {slug} — Mission Control</title></Head>
-      <h1 className="font-heading text-2xl text-navy mb-1">📡 {t("nav.activity")}</h1>
+      <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="activity" />{t("nav.activity")}</h1>
       <p className="text-sm text-muted-foreground mb-6">{slug}</p>
 
       <ComicCard>

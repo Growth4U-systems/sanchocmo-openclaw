@@ -12,6 +12,7 @@ import {
   type DashboardLandingToken,
 } from "@/lib/data/dashboard-landing";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TitleIcon } from "@/components/layout/title-icon";
 import { useGlobalStats } from "@/hooks/useDashboardStats";
 import { useClients } from "@/hooks/useClients";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
@@ -82,7 +83,7 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div>
-      <h1 className="font-heading text-2xl text-navy mb-1">{t("dashboard.global")}</h1>
+      <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="dashboard" />{t("dashboard.global")}</h1>
       <p className="text-sm text-muted-foreground mb-6">{t("dashboard.allClients")}</p>
 
       {/* Stats grid — 6 cards */}
@@ -238,7 +239,7 @@ function ClientCard({
   let fApproved = 0;
   let fTotal = 0;
   if (foundation?.sections) {
-    const excluded = ["fast-foundation", "foundation-presentation"];
+    const excluded = ["foundation-presentation"];
     for (const [secKey, secData] of Object.entries(foundation.sections)) {
       if (excluded.includes(secKey)) continue;
       for (const [, pInfo] of Object.entries(secData.pillars || {})) {
@@ -397,7 +398,7 @@ function ClientDashboardV2({ slug }: { slug: string }) {
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
             <span className="text-xs font-bold">{"🎯"} {t("nextSteps")}</span>
             <Link
-              href={`/dashboard/${slug}/projects`}
+              href={`/dashboard/${slug}/tasks`}
               className="text-[10px] font-semibold text-rust hover:underline"
             >
               {t("nextSteps")} {"→"}

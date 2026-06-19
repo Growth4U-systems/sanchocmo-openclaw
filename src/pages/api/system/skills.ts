@@ -4,6 +4,7 @@ import path from "path";
 import os from "os";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { resolveAgentForSkill } from "@/lib/skill-resolver";
+import { parseSkillFrontmatter } from "@/lib/server/skill-frontmatter";
 
 // Fase 7 (2026-05-11/12): skills live in `~/.openclaw/skills/` (OpenClaw's
 // built-in managed-skills root, read natively by all agents). The Settings →
@@ -28,56 +29,12 @@ function skillDirFor(skillId: string): { dir: string; workspaceId: string } | nu
   return null;
 }
 
-interface SkillMeta {
-  name: string;
-  description: string;
-  metadata?: Record<string, string>;
-  context_required?: string[];
-  context_writes?: string[];
-}
-
-function parseYamlFrontmatter(content: string): { meta: SkillMeta; body: string } {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-  if (!match) return { meta: { name: "", description: "" }, body: content };
-
-  const yamlStr = match[1];
-  const body = match[2];
-  const meta: Record<string, unknown> = {};
-
-  let currentKey = "";
-  for (const line of yamlStr.split("\n")) {
-    const kvMatch = line.match(/^(\w[\w_]*)\s*:\s*(.*)$/);
-    if (kvMatch) {
-      currentKey = kvMatch[1];
-      const val = kvMatch[2].trim();
-      if (val === "" || val === "[]") {
-        meta[currentKey] = val === "[]" ? [] : {};
-      } else if (val.startsWith('"') || val.startsWith("'")) {
-        meta[currentKey] = val.replace(/^['"]|['"]$/g, "");
-      } else {
-        meta[currentKey] = val;
-      }
-    } else if (line.startsWith("- ") && currentKey) {
-      if (!Array.isArray(meta[currentKey])) meta[currentKey] = [];
-      (meta[currentKey] as string[]).push(line.slice(2).trim());
-    } else if (line.startsWith("  ") && currentKey === "metadata") {
-      const subMatch = line.trim().match(/^(\w[\w_]*)\s*:\s*['"]?(.+?)['"]?\s*$/);
-      if (subMatch) {
-        if (typeof meta.metadata !== "object" || Array.isArray(meta.metadata)) meta.metadata = {};
-        (meta.metadata as Record<string, string>)[subMatch[1]] = subMatch[2];
-      }
-    }
-  }
-
-  return { meta: meta as unknown as SkillMeta, body };
-}
-
 function readSkill(skillDir: string, skillId: string, workspaceId: string) {
   const skillMdPath = path.join(skillDir, "SKILL.md");
   if (!fs.existsSync(skillMdPath)) return null;
 
   const skillMd = fs.readFileSync(skillMdPath, "utf-8");
-  const { meta, body } = parseYamlFrontmatter(skillMd);
+  const { meta, body } = parseSkillFrontmatter(skillMd);
 
   const refsDir = path.join(skillDir, "references");
   const references: { name: string; content: string }[] = [];
@@ -161,7 +118,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         if (!fs.existsSync(skillMdPath)) continue;
 
         const content = fs.readFileSync(skillMdPath, "utf-8");
-        const { meta } = parseYamlFrontmatter(content);
+        const { meta } = parseSkillFrontmatter(content);
 
         const refsDir = path.join(skillDir, "references");
         const scriptsDir = path.join(skillDir, "scripts");

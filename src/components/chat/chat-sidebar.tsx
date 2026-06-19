@@ -27,6 +27,8 @@ import { useRetriggerWriter } from "@/hooks/useContentTasks";
 import { ThreadListPanel } from "./thread-list-panel";
 import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
 import { ProgressTimeline } from "./progress-timeline";
+import { ChatMarkdown } from "./chat-markdown";
+import { groupChatMessages, stripAskProtocol } from "@/lib/chat-tool-echo";
 import { formatElapsed } from "@/lib/format-elapsed";
 import type { ProgressEvent } from "@/hooks/useChat";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
@@ -36,8 +38,11 @@ import type { ErrorDetail } from "@/hooks/useChat";
 import { useBrandAssets, type BrandAsset } from "@/hooks/useBrandAssets";
 import { useBrandBrain } from "@/hooks/useBrandBrain";
 import { useProjects } from "@/hooks/useProjects";
+import { useUpdateTaskStatus } from "@/hooks/useTasks";
 import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
+import { StatusPill } from "@/components/shared/status-pill";
+import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot, statusLabel } from "@/lib/task-status";
 
 // ---------------------------------------------------------------------------
 // Agent badge config
@@ -120,26 +125,36 @@ function readableDocName(docPath: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Simple markdown-ish formatter
+// OpenerNote — the auto-sent kickoff prompt, rendered discreetly
 // ---------------------------------------------------------------------------
 
-function formatMessage(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`([^`]+)`/g, '<code class="bg-[#45475a] px-1 py-0.5 rounded text-[15px]">$1</code>')
-    .replace(
-      /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener" class="underline text-blue-400 hover:text-blue-300 break-all">$1</a>'
-    )
-    .replace(
-      /(^|[^"'])(https?:\/\/[^\s<]+)/g,
-      '$1<a href="$2" target="_blank" rel="noopener" class="underline text-blue-400 hover:text-blue-300 break-all">$2</a>'
-    )
-    .replace(/\n/g, "<br>");
+/**
+ * The thread opener (`meta.initialMessage`) is auto-sent on the user's behalf
+ * to seed the agent with context. Shown verbatim it looked like a giant prompt
+ * the user supposedly typed — often long and technical. Here it collapses to a
+ * single faint line; the full text stays one click away for transparency.
+ */
+function OpenerNote({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex justify-center">
+      <div className="max-w-[90%] w-full flex flex-col items-center">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="text-[11px] text-[var(--chat-text-faint)] hover:text-[var(--chat-text-muted)] italic flex items-center gap-1 px-2 py-0.5"
+        >
+          <span>{open ? "▾" : "▸"}</span>
+          <span>Sancho arrancó con el contexto inicial</span>
+        </button>
+        {open && (
+          <div className="mt-1 w-full px-3 py-2 rounded-[10px] bg-[var(--chat-surface-2)] border border-[var(--chat-border)] text-[var(--chat-text-muted)] text-[13px]">
+            <ChatMarkdown text={text} className="text-[13px]" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -163,7 +178,7 @@ export function ChatSidebar() {
     isPolling,
   } = useChatStore();
 
-  const { selectedClient } = useAppStore();
+  const { selectedClient, sidebarOpen: navExpanded } = useAppStore();
   const slug = selectedClient ?? "";
 
   // Reset chat state when client changes — avoid cross-client thread leaks
@@ -413,11 +428,11 @@ export function ChatSidebar() {
         return;
       }
 
-      // --- Tool threads: trust-engine, atalaya (or their sub-threads) ---
+      // --- Tool threads: atalaya (or its sub-threads) ---
       // These are MC-side tool pages (not docs). Link to the tool page.
-      // Sub-threads like `trust-engine-gap-analysis` collapse to the base
-      // tool page because MC doesn't have per-report routes yet.
-      for (const tool of ["trust-engine", "atalaya"]) {
+      // Sub-threads like `atalaya-...` collapse to the base tool page
+      // because MC doesn't have per-report routes yet.
+      for (const tool of ["atalaya"]) {
         if (shortId === tool || shortId.startsWith(`${tool}-`)) {
           selectThread({
             threadId,
@@ -515,6 +530,24 @@ export function ChatSidebar() {
         }
       }
 
+      // --- Partnerships discovery threads → Rocinante (Outreach owner) --
+      // Dynamic ids (`discovery-new-<ts>`, `discovery-<campaignId>`) have no
+      // task/registry row; without this they fall to the pillar fallback →
+      // sancho-manager, orphaning the search from its owner agent (SAN-193).
+      if (/^discovery[-:]/i.test(shortId)) {
+        selectThread({
+          threadId,
+          threadName: fallbackName,
+          skill: "discovery-plan-builder",
+          skills: ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"],
+          agent: "rocinante",
+          linkedTo: "rocinante",
+          docPath: null,
+          threadState: "continue",
+        });
+        return;
+      }
+
       // --- Other typed threads (strategy, idea, recurring) --------------
       if (shortId.includes(":") || /^(strategy|idea|recurring)[-:]/i.test(shortId)) {
         const m = shortId.match(/^([a-z]+)[-:](.+)$/i);
@@ -589,8 +622,15 @@ export function ChatSidebar() {
 
   // Messages for active thread
   const messagesQuery = useThreadMessages(activeThreadId ?? null);
-  const messages = messagesQuery.data?.messages ?? [];
+  const messages = useMemo(
+    () => messagesQuery.data?.messages ?? [],
+    [messagesQuery.data?.messages]
+  );
   const statusData = messagesQuery.data?.status;
+  // Fold runtime tool-call narration ("Write: to…", "run python3 inline
+  // script") into the collapsible "N pasos" timeline instead of letting each
+  // land as its own Sancho bubble. Real replies pass through untouched.
+  const renderItems = useMemo(() => groupChatMessages(messages), [messages]);
   const pendingProgress: ProgressEvent[] = messagesQuery.data?.pendingProgress ?? [];
 
   // Send / cancel / mark-read
@@ -603,6 +643,32 @@ export function ChatSidebar() {
   const skills = meta?.skills ?? [];
   const primarySkill = meta?.skill || skills[0];
   const extraSkillCount = skills.length > 1 ? skills.length - 1 : 0;
+
+  // Estado de la tarea ligada al thread ABIERTO → la cabecera muestra el
+  // StatusPill y ofrece "cambiar estado / archivar" inline. Se resuelve por
+  // `meta.linkedTo` (fiable en modo locked y free). Archivar una tarea de
+  // Foundation no afecta a la UI de Pilares (Brand Brain no filtra por
+  // archivado), así que el control es uniforme para todo hilo de tarea.
+  const updateTaskStatus = useUpdateTaskStatus();
+  const [headerStatusMenu, setHeaderStatusMenu] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const activeTaskId: string | null =
+    meta?.linkedTo?.match(/^projects\/[^/]+\/tasks\/([^/]+)$/i)?.[1] ?? null;
+  const activeTaskEntry = activeTaskId
+    ? (taskIndex.get(`task:${activeTaskId.toLowerCase()}`) ?? null)
+    : null;
+  const activeTaskStatus = activeTaskEntry
+    ? normalizeTaskStatusQuiet(activeTaskEntry.task?.status as string | undefined)
+    : null;
+  // Tarea de CONTENIDO (linkedTo = projects/X/tasks/Y/content/Z): tiene su
+  // propio vocabulario de estado (New/Draft/Published/…), no el de Task. Se
+  // muestra el pill (solo lectura — el cambio de estado va por su pipeline).
+  const contentTaskId: string | null =
+    meta?.linkedTo?.match(/^projects\/[^/]+\/tasks\/[^/]+\/content\/([^/]+)$/i)?.[1] ?? null;
+  const contentTaskEntry = contentTaskId
+    ? (taskIndex.get(`content:${contentTaskId.toLowerCase()}`) ?? null)
+    : null;
+  const contentTaskStatus = ((contentTaskEntry?.contentTask as { status?: string } | undefined)?.status) || null;
 
   // Lazy auto-scan on task thread open: when the active thread is a task,
   // hit the task-attach-scan endpoint so any files the skill wrote since
@@ -654,6 +720,7 @@ export function ChatSidebar() {
   interface PendingFile { file: File; preview?: string }
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -661,6 +728,7 @@ export function ChatSidebar() {
   const [thinkingNow, setThinkingNow] = useState(() => Date.now());
 
   const addFiles = useCallback((files: FileList | File[]) => {
+    setUploadError(null);
     const arr = Array.from(files).slice(0, 5); // Max 5 files
     const newPending: PendingFile[] = arr.map((f) => ({
       file: f,
@@ -683,9 +751,11 @@ export function ChatSidebar() {
       const form = new FormData();
       form.append("file", pf.file);
       const res = await fetch("/api/upload-file", { method: "POST", body: form });
-      if (res.ok) {
-        results.push(await res.json());
+      if (!res.ok) {
+        const detail = await res.json().catch(() => null);
+        throw new Error(detail?.error || `No se pudo subir "${pf.file.name}".`);
       }
+      results.push(await res.json());
     }
     return results;
   }, []);
@@ -842,6 +912,7 @@ export function ChatSidebar() {
     const trimmed = input.trim();
     const hasFiles = pendingFiles.length > 0;
     if ((!trimmed && !hasFiles) || !activeThreadId) return;
+    setUploadError(null);
 
     let attachments: { url: string; filename: string; mimeType: string; size: number }[] | undefined;
 
@@ -852,6 +923,7 @@ export function ChatSidebar() {
         attachments = await uploadFiles(pendingFiles);
       } catch (err) {
         console.error("[chat] Upload failed:", err);
+        setUploadError(err instanceof Error ? err.message : "No se pudo subir el archivo.");
         setUploading(false);
         return;
       }
@@ -892,12 +964,19 @@ export function ChatSidebar() {
     }
   }, [activeThreadId, messagesQuery.isLoading, messages.length]);
 
-  // Auto-send initialMessage when thread opens with one
+  // Auto-send initialMessage when thread opens with one.
+  // SAN-177: wait for the history fetch to settle before deciding the thread
+  // is empty — while loading, `messages` is [] for a moment and the kickoff
+  // re-fired on EVERY reopen of stable threads (discovery searches, outreach
+  // templates…). The kickoff must go out only the first time, when the thread
+  // is truly empty.
   const initialSentRef = useRef<string | null>(null);
   useEffect(() => {
     if (
       meta?.initialMessage &&
       activeThreadId &&
+      !messagesQuery.isLoading &&
+      messagesQuery.isFetched &&
       messages.length === 0 &&
       !sendMutation.isPending &&
       initialSentRef.current !== activeThreadId
@@ -905,12 +984,23 @@ export function ChatSidebar() {
       initialSentRef.current = activeThreadId;
       sendMutation.mutate({ text: meta.initialMessage, threadId: activeThreadId });
     }
-  }, [meta?.initialMessage, activeThreadId, messages.length, sendMutation]);
+  }, [
+    meta?.initialMessage,
+    activeThreadId,
+    messagesQuery.isLoading,
+    messagesQuery.isFetched,
+    messages.length,
+    sendMutation,
+  ]);
 
   // Don't render if closed
   if (!sidebarOpen) return null;
 
-  const panelWidth = isFullscreen ? "calc(100vw - 220px)" : "380px";
+  // Fullscreen chat fills everything except the nav sidebar. Its left edge
+  // must line up with the sidebar's right edge — 220px expanded / 60px
+  // collapsed — otherwise the dashboard peeks through the leftover gap.
+  const sidebarW = navExpanded ? 220 : 60;
+  const panelWidth = isFullscreen ? `calc(100vw - ${sidebarW}px)` : "380px";
 
   // Show the left-side ThreadListPanel only in fullscreen AND when the
   // sidebar is in free mode (not locked to a specific thread via a task
@@ -921,19 +1011,19 @@ export function ChatSidebar() {
   return (
     <div
       className="fixed top-0 right-0 h-screen flex"
-      style={{ width: panelWidth, zIndex: 400, backgroundColor: "#1E1E2E" }}
+      style={{ width: panelWidth, zIndex: 400, backgroundColor: "var(--chat-bg)" }}
     >
       {/* LEFT PANEL — thread list (only in fullscreen + free mode) */}
       {showThreadPanel && (
         <aside
-          className="w-[320px] flex-shrink-0 border-r border-[#313244] bg-[#181825] flex flex-col"
+          className="w-[320px] flex-shrink-0 border-r border-[var(--chat-border)] bg-[var(--chat-bg-deep)] flex flex-col"
           aria-label="Thread list"
         >
-          <div className="px-4 py-3 border-b border-[#313244] shrink-0 flex items-center gap-2">
-            <span className="text-[13px] font-semibold text-[#cdd6f4] uppercase tracking-wide">
+          <div className="px-4 py-3 border-b border-[var(--chat-border)] shrink-0 flex items-center gap-2">
+            <span className="text-[13px] font-semibold text-[var(--chat-text)] uppercase tracking-wide">
               Threads
             </span>
-            <span className="ml-auto text-[12px] text-[#a6adc8]">
+            <span className="ml-auto text-[12px] text-[var(--chat-text-muted)]">
               {threads.length}
             </span>
           </div>
@@ -948,26 +1038,60 @@ export function ChatSidebar() {
       {/* RIGHT COLUMN — existing sidebar content */}
       <div className="flex-1 flex flex-col min-w-0">
 
-      {/* HEADER BAR */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#313244] shrink-0">
-        <div className="flex items-center gap-2">
+      {/* HEADER BAR — título del hilo aquí mismo (una fila menos). Sin falso
+          desplegable: para explorar threads se usa el botón ⤢ (fullscreen). */}
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--chat-border)] shrink-0 gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" />
-          <span className="text-[12px] font-semibold text-[#cdd6f4]">{t("title")}</span>
+          {activeThreadId ? (
+            <>
+              <span
+                className="text-sm shrink-0"
+                title={activeTaskStatus ? activeTaskStatus.replace(/-/g, " ") : undefined}
+              >
+                {activeTaskStatus ? statusDot(activeTaskStatus) : threadIcon(activeThreadId.split(":").slice(1).join(":"))}
+              </span>
+              <span className="text-[13px] font-semibold text-[var(--chat-text)] truncate font-heading">
+                {meta?.threadName
+                  ?? (activeThread
+                    ? formatThreadDisplayName({ shortId: activeThread.shortId, name: activeThread.name }, projectsData)
+                    : activeThreadId.split(":").slice(1).join(":").replace(/-/g, " "))}
+              </span>
+            </>
+          ) : (
+            <span className="text-[12px] font-semibold text-[var(--chat-text)]">{t("title")}</span>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#a6adc8]">
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="hidden md:inline text-[10px] text-[var(--chat-text-muted)]">
             {statusData?.text || (isPolling ? t("connected") : t("waiting"))}
           </span>
+          {sidebarLocked && lockedThreadId && (
+            <button
+              onClick={unlockSidebar}
+              title={t("unlockFreeMode")}
+              className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
+            >
+              🔓
+            </button>
+          )}
+          <button
+            onClick={() => handleSelectFromPanel(`${slug}:general`)}
+            title={t("newThread")}
+            className="text-green-500 hover:opacity-80 text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
+          >
+            +
+          </button>
           <button
             onClick={toggleFullscreen}
-            className="text-[#a6adc8] hover:text-[#cdd6f4] text-sm leading-none border border-[#45475a] rounded-md px-1.5 py-0.5"
+            className="text-[var(--chat-text-muted)] hover:text-[var(--chat-text)] text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
             title={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
           >
             {isFullscreen ? "⤡" : "⤢"}
           </button>
           <button
             onClick={closeSidebar}
-            className="text-[#a6adc8] hover:text-[#f38ba8] text-sm leading-none border border-[#45475a] rounded-md px-1.5 py-0.5"
+            className="text-[var(--chat-text-muted)] hover:text-[var(--chat-danger)] text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
             title={t("closeSidebar")}
           >
             ✕
@@ -975,91 +1099,11 @@ export function ChatSidebar() {
         </div>
       </div>
 
-      {/* THREAD BAR */}
-      <div className="px-3 py-2 border-b border-[#313244] shrink-0">
-        <div className="space-y-2">
-          {sidebarLocked && lockedThreadId ? (
-            /* Locked mode */
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-rust text-sm">
-                  {threadIcon(lockedThreadId.split(":").slice(1).join(":"))}
-                </span>
-                <span
-                  className="text-[14px] font-semibold text-rust truncate font-heading"
-                >
-                  {meta?.threadName ?? lockedThreadId.split(":").slice(1).join(":").replace(/-/g, " ")}
-                </span>
-                {primarySkill && (
-                  <span className="inline-flex items-center gap-0.5 bg-rust/15 text-[11px] text-rust px-2 py-0.5 rounded-full shrink-0 font-semibold">
-                    {primarySkill}
-                    {extraSkillCount > 0 && (
-                      <span className="opacity-70"> +{extraSkillCount}</span>
-                    )}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  className="text-[#a6adc8] hover:text-[#cdd6f4] text-sm border border-[#45475a] rounded-md px-1 py-0.5"
-                  title={t("syncDiscord")}
-                >
-                  📱
-                </button>
-                <button
-                  onClick={unlockSidebar}
-                  className="text-[#a6adc8] hover:text-[#cdd6f4] text-sm border border-[#45475a] rounded-md px-1 py-0.5"
-                  title={t("unlockFreeMode")}
-                >
-                  🔓
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* Free mode — click the thread name to open the full thread list
-               panel in fullscreen mode (design 2026-04-15). */
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  // If already in fullscreen, toggling here would collapse
-                  // back — but in free mode the click handler is for "browse
-                  // threads", so only toggle when NOT fullscreen.
-                  if (!isFullscreen) toggleFullscreen();
-                }}
-                className="flex-1 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] text-[14px] px-3 py-2 rounded-lg border border-[#45475a] hover:border-rust truncate flex items-center gap-2 text-left transition-colors"
-                title={isFullscreen ? t("selectThreadOption") : "Explorar threads (expande a pantalla completa)"}
-              >
-                {activeThread ? (
-                  <>
-                    <span className="flex-shrink-0">{threadIcon(activeThread.shortId)}</span>
-                    <span className="truncate font-semibold">
-                      {formatThreadDisplayName(
-                        { shortId: activeThread.shortId, name: activeThread.name },
-                        projectsData
-                      )}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="flex-shrink-0">📋</span>
-                    <span className="text-[#a6adc8]">
-                      {t("selectThreadOption")}
-                    </span>
-                  </>
-                )}
-                <span className="ml-auto text-[#6c7086] flex-shrink-0">
-                  {isFullscreen ? "▾" : "▸"}
-                </span>
-              </button>
-              <button
-                className="bg-[#313244] hover:bg-[#45475a] text-green-500 w-7 h-7 rounded-lg flex items-center justify-center text-sm border border-[#45475a]"
-                title={t("newThread")}
-              >
-                +
-              </button>
-            </div>
-          )}
+      {/* THREAD BAR — solo chips de meta (doc · estado · tarea · adjuntos ·
+          skill). El título del hilo vive ahora en la HEADER BAR. */}
+      {activeThreadId && (meta?.docPath || meta?.linkedTo || primarySkill || activeTaskStatus || contentTaskStatus) && (
+      <div className="px-3 py-1.5 border-b border-[var(--chat-border)] shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
 
           {/* Doc + skill pill — always rendered when there's an active
               thread. Shows the most useful "link target" for the thread:
@@ -1140,8 +1184,8 @@ export function ChatSidebar() {
               const navProjectId = projMatch?.[1] || "";
               href = navProjectId ? `/dashboard/${slug}/tasks/${navProjectId}` : null;
             } else if (toolMatch) {
-              // Tool page: trust-engine, atalaya (atalaya has no MC page —
-              // its threads are still backed by the backend skill).
+              // Tool page: atalaya (atalaya has no MC page — its threads are
+              // still backed by the backend skill).
               const toolName = toolMatch[1];
               icon = toolName === "atalaya" ? "🏰" : "🔍";
               label = prettify(toolName);
@@ -1156,35 +1200,21 @@ export function ChatSidebar() {
               labelIsEmpty = true;
             }
 
+            // Sin doc/tarea/proyecto/tool/skill asociado → no pintamos chip
+            // (no malgastamos la fila con "Sin documento asociado").
+            if (labelIsEmpty) return null;
             const pillContent = (
               <>
-                <span className="text-base flex-shrink-0">{icon}</span>
-                <span
-                  className={cn(
-                    "truncate flex-1 font-medium",
-                    labelIsEmpty && "text-[#6c7086] italic"
-                  )}
-                >
-                  {label}
-                </span>
-                {primarySkill && (
-                  <span className="inline-flex items-center bg-rust/15 text-[11px] text-rust px-2 py-0.5 rounded-full shrink-0 font-semibold">
-                    {primarySkill}
-                    {extraSkillCount > 0 && (
-                      <span className="opacity-70"> +{extraSkillCount}</span>
-                    )}
-                  </span>
-                )}
+                <span className="text-[12px] flex-shrink-0">{icon}</span>
+                <span className="truncate max-w-[130px] font-medium">{label}</span>
                 {href && (
-                  <span className="text-[#6c7086] text-[11px] flex-shrink-0">
-                    ↗
-                  </span>
+                  <span className="text-[var(--chat-text-faint)] text-[10px] flex-shrink-0">↗</span>
                 )}
               </>
             );
             const pillClass = cn(
-              "w-full bg-[#313244] rounded-lg px-3 py-2 text-[13px] text-[#cdd6f4] flex items-center gap-2 border border-transparent transition-colors text-left",
-              (href || isRealDoc) && "cursor-pointer hover:bg-[#45475a] hover:border-rust no-underline"
+              "inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] border border-transparent transition-colors text-left",
+              (href || isRealDoc) && "cursor-pointer hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] no-underline"
             );
             // Template doc: open MediaAssetSlideover (multi-slide preview)
             // instead of DocSlideOver — DocSlideOver fetches /api/docs which
@@ -1223,13 +1253,79 @@ export function ChatSidebar() {
               );
             }
             return href ? (
-              <Link href={href} className={pillClass} title="Abrir">
+              <Link href={href} className={pillClass} title="Abrir" onClick={closeSidebar}>
                 {pillContent}
               </Link>
             ) : (
               <div className={pillClass}>{pillContent}</div>
             );
           })()}
+
+          {/* Estado de la tarea ligada — visible en modo locked Y free. En
+              tareas normales el pill abre el menú "Cambiar estado / archivar";
+              en tareas de Pilar es solo informativo (no se cambian aquí). */}
+          {activeTaskId && activeTaskStatus && (() => {
+            return (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setHeaderStatusMenu((v) => !v)}
+                  title="Cambiar estado / archivar"
+                  className="inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors"
+                >
+                  <span>{statusDot(activeTaskStatus)}</span>
+                  <span className="font-medium">{statusLabel(activeTaskStatus)}</span>
+                  <span className="text-[10px] text-[var(--chat-text-faint)]">▾</span>
+                </button>
+                {headerStatusMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setHeaderStatusMenu(false)} />
+                    <div className="absolute left-0 top-8 z-20 w-44 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] py-1 shadow-lg">
+                      <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[var(--chat-text-faint)]">
+                        Cambiar estado
+                      </div>
+                      {TASK_STATUS_OPTIONS.map((opt) => {
+                        const current = activeTaskStatus === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            disabled={current || updateTaskStatus.isPending}
+                            onClick={() => {
+                              setHeaderStatusMenu(false);
+                              if (current || !activeTaskId) return;
+                              updateTaskStatus.mutate({ slug, taskId: activeTaskId, status: opt.value });
+                            }}
+                            className={cn(
+                              "flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors",
+                              current
+                                ? "text-[var(--chat-text-faint)] cursor-default"
+                                : "text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)]"
+                            )}
+                          >
+                            <span>{statusDot(opt.value)}</span>
+                            <span className="truncate">{opt.label}</span>
+                            {current && <span className="ml-auto text-[11px]">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Estado de tarea de CONTENIDO (solo lectura — vocabulario propio:
+              New/Draft/Published/… — el cambio va por el pipeline de contenido) */}
+          {!activeTaskStatus && contentTaskStatus && (
+            <span
+              className="inline-flex items-center"
+              title={`Estado de contenido: ${contentTaskStatus}`}
+            >
+              <StatusPill status={contentTaskStatus} size="sm" />
+            </span>
+          )}
 
           {/* Task/Project link pill — shows the associated task/project */}
           {activeThreadId && meta?.linkedTo && (() => {
@@ -1247,13 +1343,13 @@ export function ChatSidebar() {
               return (
                 <Link
                   href={href}
-                  className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
+                  onClick={closeSidebar}
+                  className="inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
+                  title={ctId ? `${taskId} → ${ctId}` : `Tarea ${taskId}`}
                 >
                   <span>{ctId ? "✍️" : "📋"}</span>
-                  <span className="truncate flex-1">
-                    {ctId ? `${taskId} → ${ctId}` : `Tarea: ${taskId}`}
-                  </span>
-                  <span className="text-[11px] text-[#6c7086]">↗</span>
+                  <span className="truncate max-w-[130px]">{ctId ? `${taskId} → ${ctId}` : taskId}</span>
+                  <span className="text-[10px] text-[var(--chat-text-faint)]">↗</span>
                 </Link>
               );
             }
@@ -1262,11 +1358,13 @@ export function ChatSidebar() {
               return (
                 <Link
                   href={`/dashboard/${slug}/tasks/${projId}`}
-                  className="w-full bg-[#313244] rounded-lg px-3 py-1.5 text-[12px] text-[#a6adc8] flex items-center gap-2 hover:bg-[#45475a] hover:text-[#cdd6f4] transition-colors no-underline"
+                  onClick={closeSidebar}
+                  className="inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors no-underline"
+                  title={`Proyecto ${projId}`}
                 >
                   <span>📁</span>
-                  <span className="truncate flex-1">Proyecto: {projId}</span>
-                  <span className="text-[11px] text-[#6c7086]">↗</span>
+                  <span className="truncate max-w-[130px]">{projId}</span>
+                  <span className="text-[10px] text-[var(--chat-text-faint)]">↗</span>
                 </Link>
               );
             }
@@ -1295,66 +1393,88 @@ export function ChatSidebar() {
             if (!foundTask) return null;
             const attachments = Array.isArray(foundTask.attachments) ? foundTask.attachments : [];
             return (
-              <details className="w-full bg-[#313244] rounded-lg border border-transparent text-[#cdd6f4]" open={attachments.length > 0}>
-                <summary className="px-3 py-2 text-[12px] cursor-pointer select-none flex items-center gap-1.5 font-medium text-[#a6adc8] hover:text-[#cdd6f4]">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setAttachOpen((v) => !v)}
+                  title="Adjuntos del hilo"
+                  className="inline-flex items-center gap-1 bg-[var(--chat-surface)] rounded-md px-2 py-1 text-[11px] text-[var(--chat-text-muted)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)] transition-colors"
+                >
                   <span>📎</span>
-                  <span className="flex-1">Attachments ({attachments.length})</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Reset the scanned ref so the effect can re-run if the
-                      // user navigates away and comes back, AND fire an immediate
-                      // manual scan now.
-                      lastScannedRef.current = null;
-                      runAttachScan(slug, taskId);
-                    }}
-                    title="Refresh attachments — re-scan task dir for new files"
-                    className="text-[12px] text-[#a6adc8] hover:text-rust transition-colors"
-                  >
-                    🔄
-                  </button>
-                </summary>
-                <div className="px-3 pb-2 pt-1 flex flex-col gap-1">
-                  {attachments.length === 0 && (
-                    <div className="text-[11px] text-[#6c7086] italic px-2 py-1">
-                      No hay archivos asociados aún. Pulsa 🔄 para escanear.
+                  <span>{attachments.length}</span>
+                  <span className="text-[10px] text-[var(--chat-text-faint)]">▾</span>
+                </button>
+                {attachOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setAttachOpen(false)} />
+                    <div className="absolute left-0 top-8 z-20 w-64 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] py-1 shadow-lg">
+                      <div className="px-3 py-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--chat-text-faint)]">
+                        <span className="flex-1">Adjuntos ({attachments.length})</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            lastScannedRef.current = null;
+                            runAttachScan(slug, taskId);
+                          }}
+                          title="Re-escanear el directorio de la tarea"
+                          className="text-[12px] hover:text-rust transition-colors"
+                        >
+                          🔄
+                        </button>
+                      </div>
+                      {attachments.length === 0 && (
+                        <div className="text-[11px] text-[var(--chat-text-faint)] italic px-3 py-1.5">
+                          No hay archivos aún. Pulsa 🔄 para escanear.
+                        </div>
+                      )}
+                      {attachments.map((att: { path: string; type?: string; source?: string; label?: string; added_at: string }, ai: number) => {
+                        const filename = att.path.split("/").pop() || att.path;
+                        const isImage = (att.type || "").startsWith("image/");
+                        const icon = isImage ? "🖼️"
+                          : (att.type || "").includes("pdf") ? "📕"
+                          : (att.type || "").includes("markdown") ? "📝"
+                          : (att.type || "").includes("json") ? "🧩"
+                          : (att.type || "").includes("csv") || (att.type || "").includes("sheet") ? "📊"
+                          : "📄";
+                        return (
+                          <button
+                            type="button"
+                            key={ai}
+                            onClick={() => { setAttachOpen(false); setOpenDocSlidePath(att.path); }}
+                            className="flex items-center gap-2 text-[12px] text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)] rounded px-3 py-1 transition-colors text-left w-full"
+                            title={att.label || filename}
+                          >
+                            <span className="flex-shrink-0">{icon}</span>
+                            <span className="truncate flex-1">{att.label || filename}</span>
+                            {att.source && (
+                              <span className="text-[10px] text-[var(--chat-text-faint)] flex-shrink-0">
+                                {att.source.startsWith("skill:") ? att.source.slice(6) : att.source}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
-                  )}
-                  {attachments.map((att: { path: string; type?: string; source?: string; label?: string; added_at: string }, ai: number) => {
-                    const filename = att.path.split("/").pop() || att.path;
-                    const isImage = (att.type || "").startsWith("image/");
-                    const icon = isImage ? "🖼️"
-                      : (att.type || "").includes("pdf") ? "📕"
-                      : (att.type || "").includes("markdown") ? "📝"
-                      : (att.type || "").includes("json") ? "🧩"
-                      : (att.type || "").includes("csv") || (att.type || "").includes("sheet") ? "📊"
-                      : "📄";
-                    return (
-                      <button
-                        type="button"
-                        key={ai}
-                        onClick={() => setOpenDocSlidePath(att.path)}
-                        className="flex items-center gap-2 text-[12px] text-[#cdd6f4] hover:text-white hover:bg-[#45475a] rounded px-2 py-1 transition-colors text-left w-full"
-                        title={att.label || filename}
-                      >
-                        <span className="flex-shrink-0">{icon}</span>
-                        <span className="truncate flex-1">{att.label || filename}</span>
-                        {att.source && (
-                          <span className="text-[10px] text-[#6c7086] flex-shrink-0">
-                            {att.source.startsWith("skill:") ? att.source.slice(6) : att.source}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </details>
+                  </>
+                )}
+              </div>
             );
           })()}
-        </div>
+
+          {/* Skill chip — siempre que el hilo tenga skill asociada */}
+          {primarySkill && (
+            <span
+              className="inline-flex items-center gap-0.5 bg-rust/15 text-[10px] text-rust px-2 py-1 rounded-md shrink-0 font-semibold"
+              title={(meta?.skills && meta.skills.length ? meta.skills : [primarySkill]).join(", ")}
+            >
+              🛠️ {primarySkill}
+              {extraSkillCount > 0 && <span className="opacity-70"> +{extraSkillCount}</span>}
+            </span>
+          )}
+          </div>
       </div>
+      )}
 
       {/* MESSAGES AREA — with drag & drop */}
       <div
@@ -1365,11 +1485,11 @@ export function ChatSidebar() {
       >
         {dragOver && (
           <div className="absolute inset-0 bg-rust/10 flex items-center justify-center z-10 pointer-events-none rounded">
-            <span className="text-rust text-sm font-medium bg-[#1E1E2E]/90 px-4 py-2 rounded-lg">Suelta archivos aquí</span>
+            <span className="text-rust text-sm font-medium bg-[var(--chat-surface)] px-4 py-2 rounded-lg">Suelta archivos aquí</span>
           </div>
         )}
         {messages.length === 0 && (
-          <div className="max-w-[85%] px-[14px] py-[10px] rounded-[14px] text-base leading-relaxed bg-[#313244] text-[#cdd6f4]">
+          <div className="max-w-[85%] px-[14px] py-[10px] rounded-[16px] rounded-bl-[6px] text-base leading-relaxed bg-[var(--chat-surface)] text-[var(--chat-text)] border border-[var(--chat-border)] shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded bg-rust">
                 🤠 Sancho
@@ -1420,12 +1540,24 @@ export function ChatSidebar() {
           </div>
         )}
 
-        {messages.map((msg: { role: string; text: string; agent?: string; ts?: number; progress?: ProgressEvent[]; from_agent?: string; to_agent?: string; errorDetail?: ErrorDetail }, i: number) => {
+        {renderItems.map((item) => {
+          // Folded run of tool-call echoes → one collapsible "N pasos" block.
+          if (item.kind === "tools") {
+            return (
+              <div key={item.key} className="flex justify-start">
+                <div className="max-w-[85%] w-full px-3 py-1 rounded-[12px] bg-[var(--chat-surface-2)] border border-[var(--chat-border)]">
+                  <ProgressTimeline events={item.events} mode="sealed" />
+                </div>
+              </div>
+            );
+          }
+          const msg = item.msg;
+          const i = item.key;
           if (msg.role === "system") {
             return (
               <div key={i} className="flex justify-center">
-                <div className="max-w-[90%] px-3 py-1.5 rounded-md text-[12px] leading-snug bg-amber-500/10 text-amber-200 border border-amber-500/30 italic">
-                  <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                <div className="max-w-[90%] px-3 py-1.5 rounded-md text-[12px] leading-snug bg-amber-500/10 text-amber-700 border border-amber-500/30 italic">
+                  <ChatMarkdown text={msg.text || ""} className="text-[12px]" />
                 </div>
               </div>
             );
@@ -1436,7 +1568,7 @@ export function ChatSidebar() {
             const toBadge = agentBadge(msg.to_agent);
             return (
               <div key={i} className="flex justify-center">
-                <div className="max-w-[90%] w-full px-3 py-2 rounded-md text-[12px] leading-snug bg-[#1E1E2E]/60 border border-[#45475a]/60 italic">
+                <div className="max-w-[90%] w-full px-3 py-2 rounded-md text-[12px] leading-snug bg-[var(--chat-surface)] border border-[var(--chat-border)] italic">
                   <div className="flex items-center justify-center gap-2 mb-1 not-italic">
                     <span className={cn(
                       "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
@@ -1444,7 +1576,7 @@ export function ChatSidebar() {
                     )}>
                       {fromBadge.emoji} {fromBadge.label}
                     </span>
-                    <span className="text-[#a6adc8] text-[14px]">→</span>
+                    <span className="text-[var(--chat-text-muted)] text-[14px]">→</span>
                     <span className={cn(
                       "inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded",
                       toBadge.color
@@ -1453,7 +1585,9 @@ export function ChatSidebar() {
                     </span>
                   </div>
                   {msg.text && (
-                    <div className="text-center text-[#a6adc8]" dangerouslySetInnerHTML={{ __html: formatMessage(msg.text || "") }} />
+                    <div className="text-center text-[var(--chat-text-muted)]">
+                      <ChatMarkdown text={msg.text} className="text-[12px]" />
+                    </div>
                   )}
                 </div>
               </div>
@@ -1463,12 +1597,24 @@ export function ChatSidebar() {
           const isUser = msg.role === "user";
           const badge = !isUser ? agentBadge(msg.agent) : null;
 
+          // The auto-sent kickoff prompt: render as a discreet, foldable note
+          // instead of a giant orange bubble the user never actually typed.
+          if (
+            isUser &&
+            meta?.initialMessage &&
+            (msg.text || "").trim() === meta.initialMessage.trim()
+          ) {
+            return <OpenerNote key={i} text={msg.text || ""} />;
+          }
+
           return (
             <div key={i} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
               <div
                 className={cn(
-                  "max-w-[85%] px-[14px] py-[10px] rounded-[14px] text-base leading-relaxed",
-                  isUser ? "bg-rust text-white" : "bg-[#313244] text-[#cdd6f4]"
+                  "max-w-[85%] px-[14px] py-[10px] rounded-[16px] text-base leading-relaxed",
+                  isUser
+                    ? "bg-rust text-white rounded-br-[6px] shadow-sm [--chat-link:#ffffff]"
+                    : "bg-[var(--chat-surface)] text-[var(--chat-text)] border border-[var(--chat-border)] rounded-bl-[6px] shadow-sm"
                 )}
               >
                 {badge && (
@@ -1482,13 +1628,12 @@ export function ChatSidebar() {
                   </div>
                 )}
                 <AskQuestionGroup
-                  segments={parseMessageSegments(msg.text || "")}
+                  segments={parseMessageSegments(
+                    isUser ? stripAskProtocol(msg.text) : (msg.text || "")
+                  )}
                   threadId={activeThreadId ?? ""}
                   renderText={(text, key) => (
-                    <div
-                      key={key}
-                      dangerouslySetInnerHTML={{ __html: formatMessage(text) }}
-                    />
+                    <ChatMarkdown key={key} text={text} />
                   )}
                   onSubmit={(text) =>
                     activeThreadId &&
@@ -1505,7 +1650,7 @@ export function ChatSidebar() {
                       if (isImage) {
                         return (
                           <a key={ai} href={att.url} target="_blank" rel="noopener noreferrer" className="block">
-                            <img src={att.url} alt={att.filename} className="max-w-[200px] max-h-[150px] rounded-lg border border-[#45475a]" />
+                            <img src={att.url} alt={att.filename} className="max-w-[200px] max-h-[150px] rounded-lg border border-[var(--chat-border)]" />
                           </a>
                         );
                       }
@@ -1518,7 +1663,7 @@ export function ChatSidebar() {
                           href={att.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 bg-[#45475a]/50 rounded-lg px-2.5 py-1.5 text-[11px] text-[#cdd6f4] hover:bg-[#45475a] transition-colors no-underline"
+                          className="flex items-center gap-1.5 bg-[var(--chat-surface-2)] rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--chat-text)] hover:bg-[var(--chat-surface-2)] transition-colors no-underline"
                         >
                           <span>{icon}</span>
                           <span className="max-w-[140px] truncate">{att.filename}</span>
@@ -1548,7 +1693,7 @@ export function ChatSidebar() {
         {/* Typing indicator + live progress timeline */}
         {showTyping && (
           <div className="flex justify-start">
-            <div className="bg-[#313244] text-[#a6adc8] px-[14px] py-[10px] rounded-[14px] text-[15px] italic max-w-[85%]">
+            <div className="bg-[var(--chat-surface)] text-[var(--chat-text-muted)] px-[14px] py-[10px] rounded-[16px] rounded-bl-[6px] text-[15px] italic max-w-[85%] border border-[var(--chat-border)] shadow-sm">
               <div className="flex items-center gap-2">
                 {typingBadge && (
                   <span className={cn(
@@ -1577,7 +1722,7 @@ export function ChatSidebar() {
 
       {/* QUICK-ACTIONS — suggested prompts above input (ChatGPT-style) */}
       {showQuickActions && (
-        <div className="px-3 py-2 border-t border-[#313244]/50 shrink-0 flex flex-col gap-1.5 max-h-[180px] overflow-y-auto">
+        <div className="px-3 py-2 border-t border-[var(--chat-border)] shrink-0 flex flex-col gap-1.5 max-h-[180px] overflow-y-auto">
           {quickActions.map((qa) => {
             const promptText = qa.prompt
               .replace(/\{name\}/g, meta?.threadName ?? "")
@@ -1588,7 +1733,7 @@ export function ChatSidebar() {
               <button
                 key={qa.label}
                 onClick={() => sendMutation.mutate({ text: promptText, threadId: activeThreadId! })}
-                className="w-full text-left px-3 py-2 text-[15px] leading-snug rounded-lg border border-[#45475a] text-[#cdd6f4] bg-[#313244]/50 hover:bg-[#45475a] hover:border-rust/40 transition-colors cursor-pointer"
+                className="w-full text-left px-3 py-2 text-[15px] leading-snug rounded-lg border border-[var(--chat-border)] text-[var(--chat-text)] bg-[var(--chat-surface-2)] hover:bg-[var(--chat-surface-2)] hover:border-rust/40 transition-colors cursor-pointer"
               >
                 {promptText}
               </button>
@@ -1598,30 +1743,33 @@ export function ChatSidebar() {
       )}
 
       {/* INPUT BAR */}
-      <div className="px-3 py-2 border-t border-[#313244] shrink-0">
+      <div className="px-3 py-2 border-t border-[var(--chat-border)] shrink-0">
         {/* Pending file previews */}
         {pendingFiles.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
             {pendingFiles.map((pf, idx) => (
-              <div key={idx} className="flex items-center gap-1 bg-[#313244] border border-[#45475a] rounded-lg px-2 py-1 text-[11px] text-[#cdd6f4]">
+              <div key={idx} className="flex items-center gap-1 bg-[var(--chat-surface)] border border-[var(--chat-border)] rounded-lg px-2 py-1 text-[11px] text-[var(--chat-text)]">
                 {pf.preview ? (
                   <img src={pf.preview} alt="" className="w-6 h-6 rounded object-cover" />
                 ) : (
                   <span>{pf.file.type.includes("pdf") ? "📄" : pf.file.type.includes("sheet") || pf.file.type.includes("csv") ? "📊" : "📎"}</span>
                 )}
                 <span className="max-w-[120px] truncate">{pf.file.name}</span>
-                <button onClick={() => removeFile(idx)} className="text-[#6c7086] hover:text-red-400 ml-0.5 bg-transparent border-none cursor-pointer text-xs">✕</button>
+                <button onClick={() => removeFile(idx)} className="text-[var(--chat-text-faint)] hover:text-red-400 ml-0.5 bg-transparent border-none cursor-pointer text-xs">✕</button>
               </div>
             ))}
-            {uploading && <span className="text-[10px] text-[#6c7086] animate-pulse self-center">Subiendo...</span>}
+            {uploading && <span className="text-[10px] text-[var(--chat-text-faint)] animate-pulse self-center">Subiendo...</span>}
           </div>
+        )}
+        {uploadError && (
+          <div className="mb-2 text-[11px] text-red-400" role="alert">{uploadError}</div>
         )}
         <div className="flex items-end gap-2">
           {/* Clip button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={!activeThreadId || uploading}
-            className="text-[#6c7086] hover:text-rust w-8 h-8 flex items-center justify-center shrink-0 bg-transparent border-none cursor-pointer disabled:opacity-40 text-base"
+            className="text-[var(--chat-text-faint)] hover:text-rust w-8 h-8 flex items-center justify-center shrink-0 bg-transparent border-none cursor-pointer disabled:opacity-40 text-base"
             title="Adjuntar archivo"
           >
             📎
@@ -1648,7 +1796,7 @@ export function ChatSidebar() {
               el.style.height = "auto";
               el.style.height = Math.min(el.scrollHeight, 120) + "px";
             }}
-            className="chat-textarea flex-1 bg-[#313244] text-[#cdd6f4] placeholder-[#6c7086] text-base px-3 py-2 rounded-lg border border-[#45475a] focus:outline-none focus:border-rust disabled:opacity-50 resize-none overflow-y-auto leading-snug"
+            className="chat-textarea flex-1 bg-[var(--chat-surface)] text-[var(--chat-text)] placeholder-[var(--chat-text-faint)] text-base px-3 py-2 rounded-lg border border-[var(--chat-border)] focus:outline-none focus:border-rust disabled:opacity-50 resize-none overflow-y-auto leading-snug"
             style={{ maxHeight: 120 }}
           />
           {isAwaitingReply || cancelMutation.isPending || uploading ? (

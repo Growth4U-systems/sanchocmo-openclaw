@@ -18,8 +18,10 @@
 #     absent — existing user data is never overwritten.
 #
 # The seed lives at /opt/sancho-seed, a path the OPENCLAW_HOME mount does not shadow.
-# Safe for Growth4U's VPS (OPENCLAW_HOME = git checkout): same version marker ->
-# refresh is skipped; data dirs already present -> seed-if-absent is a no-op.
+# Git-checkout homes (Growth4U's VPS: staging builds from source, prod checks out a
+# tag) are skipped entirely below — there git owns the framework, and seeding from
+# the image would overwrite tracked files, dirty the worktree, and abort the next
+# deploy's `git checkout`. Only fresh, non-git product installs are seeded.
 set -uo pipefail
 
 SEED="${SANCHO_SEED_DIR:-/opt/sancho-seed}"
@@ -29,6 +31,17 @@ log() { echo "[init-home] $*"; }
 
 if [ ! -d "$SEED" ]; then
   log "seed dir $SEED missing — nothing to seed (source/bind-mount dev mode)."
+  exit 0
+fi
+
+# Git-managed home → the deploy owns the framework via `git checkout`; seeding from
+# the image here would overwrite tracked files (docker/, skills/, plugins/), write
+# .sancho-seed-version, and leave the worktree dirty enough to abort the *next*
+# deploy's checkout. Skip the whole seed: this is Growth4U's VPS (staging always
+# builds from source; prod checks out a tag). Fresh product installs have no .git
+# and fall through to the real seed below. See SAN-146.
+if [ -d "$HOME_DIR/.git" ]; then
+  log "home $HOME_DIR is a git checkout — deploy manages the framework; skipping image seed."
   exit 0
 fi
 
@@ -68,9 +81,9 @@ fi
 
 # --- Data-bearing dirs: seed ONLY if absent (never overwrite user data) ------
 for d in agents config cron \
-         workspace-sancho workspace-cervantes workspace-escudero workspace-hamete \
+         workspace-sancho workspace-cervantes workspace-hamete \
          workspace-dulcinea workspace-rocinante workspace-mambrino workspace-merlin \
-         workspace-sanson workspace-yalc; do
+         workspace-sanson workspace-alarife workspace-maese-pedro; do
   if [ -d "$SEED/$d" ] && [ ! -e "$HOME_DIR/$d" ]; then
     cp -a "$SEED/$d" "$HOME_DIR/$d"
     log "seeded $d (first run)"

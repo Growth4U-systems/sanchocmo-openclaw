@@ -26,7 +26,6 @@
     "projects": "Projects",
     "recurringTasks": "Recurring Tasks",
     "metrics": "Metrics",
-    "trustEngine": "Trust Engine",
     "skills": "Skills",
     "campaigns": "Campaigns",
     "tasks": "Tasks",
@@ -141,22 +140,6 @@
     "plan": "Plan",
     "sheets": "Sheets"
   },
-  "trustEngine": {
-    "title": "Trust Engine",
-    "subtitle": "Trust audit and analysis pipeline",
-    "completed": "completed",
-    "running": "running",
-    "pending": "pending",
-    "locked": "locked",
-    "error": "with errors",
-    "launch": "Launch",
-    "rerun": "Rerun",
-    "viewData": "View data",
-    "retry": "Retry",
-    "changeNiche": "Change niche",
-    "back": "Back",
-    "selectClient": "Select a client to view Trust Engine."
-  },
   "theme": {
     "light": "Light",
     "dark": "Dark",
@@ -169,6 +152,7 @@
   },
   "chat": {
     "title": "Chat with Sancho",
+    "newTask": "New task",
     "connected": "Connected",
     "waiting": "Waiting",
     "exitFullscreen": "Exit fullscreen",
@@ -192,11 +176,13 @@
     "subtitle": "System configuration",
     "tabs": {
       "apis": "APIs",
+      "mcp": "MCP",
       "agents": "Agents",
       "models": "Models",
       "skills": "Skills",
       "strategies": "Strategies",
       "recurring": "Recurring",
+      "datasync": "Sync Prod",
       "task-index": "Task Index",
       "preferences": "Preferences"
     },

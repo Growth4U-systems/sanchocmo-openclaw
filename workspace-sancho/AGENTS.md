@@ -46,8 +46,7 @@ workspace-sancho/
 │       ├── go-to-market/          # § ECPs + Positioning + Pricing + Metrics
 │       ├── brand-identity/        # § Voice Profile + Visual Identity
 │       ├── operational/           # § Assets + Learnings (append-only)
-│       ├── sources.json           # Discord channels, cron config, integrations
-│       └── foundation-state.json  # Pillar completion status
+│       └── sources.json           # Discord channels, cron config, integrations
 │
 ├── memory/                        # Instance state (gitignored)
 │   ├── TASKS.md                   # Active task board
@@ -68,7 +67,7 @@ workspace-sancho/
 
 | Type | Location | Example |
 |---|---|---|
-| Client brand data | `brand/{slug}/` following Foundation structure | `brand/acme/company-brief/company-brief.current.md` |
+| Client brand data | `brand/{slug}/` following Foundation structure | `brand/acme/company-brief/company-brief-current.md` |
 | Daily log | `memory/YYYY-MM-DD.md` | `memory/2026-04-06.md` |
 | Client memory | `memory/clients/{slug}.md` | `memory/clients/hospital-capilar.md` |
 | Task definition | `memory/archive/prds/T-NNN.md` | `memory/archive/prds/T-060.md` |
@@ -123,15 +122,15 @@ Lee `_system/instance.json` al inicio de cada sesión para resolver:
 ## Reglas Cardinales (P0)
 
 1. **Aislamiento** — Discord = SOLO info del cliente. CERO interno/otros clientes.
-2. **Hilos siempre** — Crear hilo desde message_id del usuario. Respuesta al hilo via `target`. Final = NO_REPLY. Escudero: `sessions_spawn(thread=true)`. Ver TOOLS.md (workspace root).
+2. **Hilos siempre** — Crear hilo desde message_id del usuario. Respuesta al hilo via `target`. Final = NO_REPLY. Especialistas: `Agent(subagent_type="<slug>")` o su tarea/thread propio cuando hay entregable con estado. Escudero está retirado: NUNCA invocar el agente `escudero`. Ver TOOLS.md (workspace root).
 3. **Links, nunca rutas** — SIEMPRE con token. Ver `_system/technical/mc-links-protocol.md` para resolver la URL correcta. Resumen:
    - En guild de **cliente**: leer `clients.json` → buscar por guild → usar `mcToken` → `{MC_BASE_URL}/portal/{mcToken}/docs/brand/{slug}/{path}`
    - ⚠️ La ruta SIEMPRE incluye `brand/{slug}/` después de `/docs/`. NUNCA `/docs/campaigns/...` → SIEMPRE `/docs/brand/{slug}/campaigns/...`
    - En guild **interno** (Cervantes Brain `{INFRA_GUILD}`): usar `adminToken` de `clients.json` → `{MC_BASE_URL}/admin/{adminToken}/docs/brand/{slug}/{path}`
    - **NUNCA** usar `/mc/docs/...` ni `/mc/connect/...` sin token — esos endpoints devuelven 403.
 4. **No narrar pasos** — Max 2 msgs por hilo: inicio + resultado. CERO "Voy a leerlo..."
-5. **Versionado** — `brand/{slug}/{pilar}/{pilar}.current.md` con historial. Ver `_system/foundation/versioning-protocol.md`.
-6. **Gate check Foundation** — Verificar `brand/{slug}/foundation-state.json` prerequisitos antes de ejecutar. Ver `_system/foundation/foundation-protocol.md`.
+5. **Versionado** — `brand/{slug}/{pilar}/{pilar}-current.md` con historial. Ver `_system/foundation/versioning-protocol.md`.
+6. **Gate check Foundation** — Verificar prerequisitos vía `GET {MC_BASE}/api/brand-brain/state?slug={slug}` (status canónico de tasks: `completed`, etc.) antes de ejecutar. Ver `_system/foundation/foundation-protocol.md`.
 7. **Confirmar inputs** — Presentar inputs clave y esperar confirmación antes de Foundation skills.
 8. **Leer todo antes de generar** — TODOS los docs del cliente. Cruzar información.
 9. **Honestidad de herramientas** — NUNCA mentir sobre qué herramienta usaste.
@@ -201,6 +200,6 @@ Playbooks en `_system/`:
 - **intelligence/**: intelligence-protocol, brand-memory, morning-metrics-protocol
 - **governance/**: client-context-isolation, execution-gate
 - **onboarding/**: onboarding-playbook, new-client-protocol, client-onboarding, client-onboarding-checklist
-- **output/**: output-format, presentation-summary-protocol, publish-protocol (cron output → /api/integrations/publish, transport-agnostic), project-threads-protocol
+- **output/**: output-format, presentation-summary-protocol, html-canonical-protocol (sibling .html = doc canónico vía skill html-output), publish-protocol (cron output → /api/integrations/publish, transport-agnostic), project-threads-protocol
 - **technical/**: mc-links-protocol, image-optimization, token-optimization-guide
 Cargar solo cuando se necesite.

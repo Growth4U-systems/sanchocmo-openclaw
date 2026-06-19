@@ -18,6 +18,7 @@ interface ResolveProjectResponse {
   baseDir: string;
   scope: string;
   webUrl: string;
+  webBase: string;
   daemonUrl: string;
 }
 
@@ -44,7 +45,10 @@ export default function MediaCreationEditorPage() {
   const slug = useSlugSync() || ((router.query.slug as string) ?? null);
 
   // `scope`: subfolder relativo al brand que se registra como proyecto OD.
-  // `file`: archivo dentro del scope (deep-link OD `/files/<file>`).
+  // `file`: archivo dentro del scope. Para ver un archivo puntual apuntamos a
+  //   la API del daemon (`<webBase>/api/projects/<id>/files/<path>`), única
+  //   ruta que sirve su contenido. La forma web `/projects/<id>/files/<path>`
+  //   no existe en el daemon (404 "Cannot GET").
   const scopeQuery = router.query.scope;
   const scope = (Array.isArray(scopeQuery) ? scopeQuery[0] : scopeQuery) ?? "";
   const fileQuery = router.query.file;
@@ -56,7 +60,7 @@ export default function MediaCreationEditorPage() {
     if (!data) return null;
     if (filePath) {
       const encoded = filePath.split("/").map(encodeURIComponent).join("/");
-      return `${data.webUrl}/files/${encoded}`;
+      return `${data.webBase}/api/projects/${encodeURIComponent(data.projectId)}/files/${encoded}`;
     }
     return data.webUrl;
   })();

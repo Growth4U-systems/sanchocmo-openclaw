@@ -29,9 +29,23 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# local env files + ALL .env variants (backups, pre-rotation snapshots, etc.)
+# Operators create ad-hoc .env backups during key rotations with arbitrary
+# suffixes (.env.bak-*, .env.backup-*, .env.pre-*, ...). Catch them all and
+# only allow the committed templates/examples back in. See SAN-233.
 .env
+.env.*
+!.env.example
+!.env.template
+
+# Runtime/agent files that frequently capture secrets — never track. Found on
+# prod as untracked-but-committable holding live secrets (SAN-233):
+#  - Codex shell-history snapshots (env + commands)
+#  - timestamped *.old.<date>/ backup dirs and *.bak-<ts> files
+**/shell_snapshots/
+*.old.[0-9]*/
+*.bak-*
+*.bak.[0-9]*
 
 # vercel
 .vercel
@@ -201,7 +215,6 @@ screenshots/mc-inspect/
 # === Main workspace (from origin/main) ===
 workspace-main/
 workspace/
-workspace-maese-pedro/
 
 # === Refactor-side additions (instance-specific runtime) ===
 

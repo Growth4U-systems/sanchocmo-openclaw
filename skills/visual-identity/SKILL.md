@@ -1,9 +1,24 @@
 ---
 name: visual-identity
-description: "Visual identity meta-skill: defines how brand LOOKS and generates production child skills. Use when: establishing visual identity, defining brand aesthetics, creating visual guidelines, building design system, generating brand illustration style, defining color/typography/imagery systems. Two modes: Quick (~30min, Visual Snapshot from URL + brandbook) and Full (~2-3h, 3-layer system + child skills). Triggers: visual identity, brand visuals, look and feel, design system, brand aesthetics, visual guidelines, brand style, illustration style, visual DNA. ALWAYS asks for brandbook/brand assets FIRST. Generates HTML deliverables for MC. NOT for: creating images directly (use generated child skills), brand voice (use brand-voice), or content creation."
+description: "PARKED (SAN-211) — absorbida por `design-system`. NO usar para definir el visual identity de un brand: usa `design-system`, que produce el DESIGN.md (único source-of-truth visual). Esta skill queda como referencia histórica del discovery 3-layer (ya copiado a design-system/references/)."
+metadata:
+  author: Alfonso Sainz de Baranda (Growth4U)
+  version: '3.0'
+  system: SanchoCMO
+  status: parked
+  superseded_by: design-system
+  deprecated_origin: SAN-211
 ---
 
 # Visual Identity (Meta-Skill) v3
+
+> **⚠️ PARKED SKILL (SAN-211)** — Fusionada en `design-system`. El visual identity de un brand
+> ahora se define con la skill **`design-system`**, cuyo output es el **`DESIGN.md`** (único
+> source-of-truth visual). El discovery 3-layer (Visual World, Idea Mapping, Aesthetic) y las 15
+> preguntas estratégicas viven ya en `skills/design-system/references/`. La fábrica de plantillas
+> (`[brand]-visual-generator`) se mantiene aparte como step del Content-Engine (T07), consumiendo
+> `DESIGN.md`. NO está cableada a la task T09 de Foundation (ahora apunta a `design-system`).
+> Conservada como referencia histórica del meta-skill flow; pendiente de borrado definitivo.
 
 > Define cómo se ve la brand y genera skills de producción. Meta-skill: no crea imágenes — crea los SKILLS que crean imágenes.
 

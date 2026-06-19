@@ -7,7 +7,8 @@ import { MC_TASKS_BACKEND, MC_TASKS_WORKSPACE } from "@/lib/config";
 import { brandDir } from "@/lib/data/paths";
 import { readJSON, writeJSON, listDir } from "@/lib/data/json-io";
 import { getNextProjectId as getNextProjectIdFromJson } from "@/lib/data/projects";
-import { setTaskStatus as syncTaskStatus } from "@/lib/data/pillar-task-sync";
+import { setTaskStatus as syncTaskStatus } from "@/lib/data/task-status-store";
+import { normalizeTaskStatus } from "@/lib/task-status";
 import {
   attachDocumentToContentTask,
   createContentTask,
@@ -21,6 +22,9 @@ import {
 import { findContentTaskById as findFlatContentTaskById, loadUnifiedContentTasks, upsertContentTask } from "@/lib/data/content-tasks-flat";
 import { expandBriefPatch } from "@/lib/data/task-brief";
 import { inferTaskExecutionContract } from "@/lib/data/task-execution-contract";
+import { instantiateTaskSet, getTaskSet } from "@/lib/data/task-blueprints";
+import { applyTaskAnchors, TaskAnchorError, type TaskCreateInput } from "@/lib/data/task-create-helpers";
+import { VALID_CONTENT_TASK_STATUSES } from "@/types";
 import type { ContentTask, ContentTaskStatus, Project, Task } from "@/types";
 
 export interface ProjectWithTasks {
@@ -104,7 +108,6 @@ function dbRowToTaskObject(row: DbTaskRow): UnifiedTaskRow {
     scheduled_for: dbDate(row.scheduledFor),
     draft_statuses: row.draftStatuses || undefined,
     mc_chat_thread_id: row.mcChatThreadId || undefined,
-    discord_thread_id: row.discordThreadId || undefined,
     output_files: row.outputFiles || undefined,
     documents: row.documents || undefined,
     attachments: row.attachments || undefined,
@@ -389,6 +392,39 @@ export function findTaskByIdAcrossBrand(
   return null;
 }
 
+/**
+ * SAN-210 — find the task a chat thread already owns (mc_chat_thread_id), if any.
+ * Powers the idempotent "promote thread to task" gesture: one task per thread.
+ * Returns the first match or null. Works in both backends.
+ */
+export async function findTaskByThreadId(
+  slug: string,
+  threadId: string,
+): Promise<Project | Task | ContentTask | null> {
+  if (!threadId) return null;
+  if (dbTasksEnabled()) {
+    const rows = await db
+      .select()
+      .from(tasksTable)
+      .where(and(
+        eq(tasksTable.workspaceSlug, MC_TASKS_WORKSPACE),
+        eq(tasksTable.brandSlug, slug),
+        eq(tasksTable.mcChatThreadId, threadId),
+      ))
+      .limit(1);
+    if (!rows[0]) return null;
+    return (await getDbRow(slug, rows[0].id)) as unknown as Project | Task | ContentTask | null;
+  }
+  for (const dir of projectDirs(slug)) {
+    const projDir = path.join(brandDir(slug), "projects", dir);
+    const { tasks } = readProjectTasksFile(path.join(projDir, "tasks.json"));
+    for (const task of tasks) {
+      if ((task as { mc_chat_thread_id?: string }).mc_chat_thread_id === threadId) return task;
+    }
+  }
+  return null;
+}
+
 export function canonicalChildTaskId(projectId: string, taskId: string): string {
   if (taskId.startsWith(`${projectId}-`)) return taskId;
   if (/^T\d+/i.test(taskId)) return `${projectId}-${taskId}`;
@@ -438,10 +474,28 @@ export async function updateTask(slug: string, id: string, fields: Record<string
 
 export async function setTaskStatus(slug: string, id: string, status: string) {
   if (dbTasksEnabled()) {
-    const task = await updateTask(slug, id, { status });
-    return { ok: true, slug, task, newStatus: status };
+    // Shim de escritura (SAN-192): normaliza al vocabulario canónico de task,
+    // salvo que sea un status de ContentTask (otro vocabulario, capitalizado).
+    const isContentStatus = (VALID_CONTENT_TASK_STATUSES as readonly string[]).includes(status);
+    const normalized = isContentStatus ? status : normalizeTaskStatus(status);
+    const task = await updateTask(slug, id, { status: normalized });
+    return { ok: true, slug, task, newStatus: normalized };
   }
   const found = findTaskByIdAcrossBrand(slug, id);
+  // SAN-192 (B): un project (type=project) es una Task de primer nivel pero su
+  // status vive en project.json — antes se editaba por /projects (deprecado),
+  // ahora por /tasks/[id]. `found.projectId === id` ⟺ es el project, no una hija.
+  if (found && found.projectDir && found.projectId === id) {
+    const normalized = normalizeTaskStatus(status);
+    const projectPath = path.join(found.projectDir, "project.json");
+    const proj = readJSON<Record<string, unknown> | null>(projectPath, null);
+    if (proj) {
+      proj.status = normalized;
+      proj.updated_at = new Date().toISOString();
+      writeJSON(projectPath, proj);
+      return { ok: true, slug, task: { ...proj, status: normalized }, newStatus: normalized };
+    }
+  }
   if (found && isContentTaskRecord(found.task)) {
     const updated = upsertContentTask(slug, {
       ...found.task,
@@ -457,10 +511,35 @@ export async function archiveTask(slug: string, id: string, reason = "Archivado 
   return updateTask(slug, id, { status: "archived", archive_reason: reason });
 }
 
-export async function createTask(slug: string, input: Partial<Project & Task> & { parent_id?: string; type?: string }) {
+export async function createTask(
+  slug: string,
+  input: Partial<Project & Task> & { parent_id?: string; type?: string; seedFromTaskSet?: string; mc_chat_thread_id?: string },
+) {
+  // SAN-195 (b): seed a declared task SET into a newly-created project. Reuses
+  // the existing creator (no parallel endpoint) — when `seedFromTaskSet` names a
+  // manifest taskSet, the project's children are instantiated from it via
+  // instantiateTaskSet + applyTaskAnchors (the same engine Foundation/content use).
+  const seedSection = input.seedFromTaskSet;
+  if (seedSection && !getTaskSet(seedSection)) {
+    throw new Error(`createTask: unknown seedFromTaskSet "${seedSection}"`);
+  }
+  // SAN-210: promoting a chat thread to a task is idempotent — one task per
+  // thread. If the thread already owns a task (mc_chat_thread_id), reuse it
+  // instead of creating a duplicate when the user keeps editing the same
+  // resource. The agent can still create a *distinct* task on purpose by using
+  // a different thread / not passing one.
+  if (input.mc_chat_thread_id) {
+    const existing = await findTaskByThreadId(slug, input.mc_chat_thread_id);
+    if (existing) return existing;
+  }
   if (dbTasksEnabled()) {
     const now = new Date();
-    const type = input.type || (!input.parent_id ? "project" : "execution");
+    // A thread-linked task with no parent is a standalone task (not a project):
+    // the "promote this chat to a task" gesture (SAN-210). Without a thread and
+    // no parent it stays a project (unchanged).
+    const type =
+      input.type ||
+      (input.parent_id ? "execution" : input.mc_chat_thread_id ? "execution" : "project");
     const id = input.id || (type === "project"
       ? await getNextProjectId(slug)
       : await getNextChildTaskId(slug, input.parent_id || ""));
@@ -514,6 +593,7 @@ export async function createTask(slug: string, input: Partial<Project & Task> & 
       outputDocuments: contract.outputDocuments,
       createdAt: now,
       updatedAt: now,
+      mcChatThreadId: input.mc_chat_thread_id || null,
       outputFiles: input.output_files || [],
       documents: input.documents || [],
       attachments: input.attachments || [],
@@ -522,12 +602,20 @@ export async function createTask(slug: string, input: Partial<Project & Task> & 
       target: tasksTable.sourceKey,
       set: { ...row, updatedAt: now },
     });
+    if (seedSection && type === "project") {
+      for (const t of instantiateTaskSet(seedSection, { slug, projectId: id })) {
+        const { id: childId, ...rest } = t as { id: string } & Record<string, unknown>;
+        await createTask(slug, { ...rest, id: childId, parent_id: id });
+      }
+    }
     return (await getDbRow(slug, id)) as unknown as Project | Task | ContentTask;
   }
   if (input.type === "project" || !input.parent_id) {
     const id = input.id || getNextProjectId(slug);
     const dir = path.join(brandDir(slug), "projects", input.slug || id);
     fs.mkdirSync(dir, { recursive: true });
+    // `seedFromTaskSet` is a creation directive, not a project field — keep it out of project.json.
+    const { seedFromTaskSet: _seed, ...projectInput } = input;
     const project = {
       id,
       slug: input.slug || id,
@@ -541,10 +629,23 @@ export async function createTask(slug: string, input: Partial<Project & Task> & 
       category: input.category || "",
       created_at: new Date().toISOString(),
       review_date: null,
-      ...input,
+      ...projectInput,
     } as Project;
     writeJSON(path.join(dir, "project.json"), project);
-    writeJSON(path.join(dir, "tasks.json"), []);
+    // SAN-195 (b): seed the declared task SET (anchored) instead of an empty list.
+    let seededTasks: TaskCreateInput[] = [];
+    if (seedSection) {
+      seededTasks = instantiateTaskSet(seedSection, { slug, projectId: id });
+      try {
+        for (const t of seededTasks) applyTaskAnchors(slug, t);
+      } catch (err) {
+        if (err instanceof TaskAnchorError) {
+          throw new Error(`createTask: task anchors invalid for seed "${seedSection}": ${err.message}`);
+        }
+        throw err;
+      }
+    }
+    writeJSON(path.join(dir, "tasks.json"), seededTasks);
     return project;
   }
   const found = findTaskByIdAcrossBrand(slug, input.parent_id);
@@ -566,6 +667,8 @@ export async function createTask(slug: string, input: Partial<Project & Task> & 
     channel: input.channel || "execution",
     type: input.type || "execution",
     skill: input.skill || "",
+    ...(input.agent ? { agent: input.agent } : {}),
+    ...(input.mc_chat_thread_id ? { mc_chat_thread_id: input.mc_chat_thread_id } : {}),
     output_files: input.output_files || [],
   } as Task;
   data.tasks.push(task);

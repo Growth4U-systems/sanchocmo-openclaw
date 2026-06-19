@@ -34,6 +34,7 @@ async function main() {
   const discordToken = process.env.DISCORD_BOT_TOKEN;
   const cervantesGuildId = process.env.CERVANTES_GUILD_ID || '';
   const mcChatSecret = process.env.MC_CHAT_SECRET || '';
+  const contextPackUrl = (process.env.MC_CONTEXT_PACK_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
   // --- Auth profiles ---
   // ANTHROPIC_AUTH_MODE selects how Anthropic inference authenticates:
@@ -81,9 +82,26 @@ async function main() {
     console.log('[config] Removed agents.defaults.heartbeat (deprecated in this project)');
   }
 
-  // --- Session agents (escudero, rocinante, hamete, alarife) ---
+  // --- Model providers ---
+  // Raise the model idle watchdog for Anthropic (default cap: 120s without
+  // provider timeout). Sonnet/Opus runs with long thinking or heavy load can
+  // exceed 120s between stream chunks, killing the run with
+  // "LLM request timed out". agents.defaults.timeoutSeconds (48h default)
+  // stays untouched — only the per-provider idle window is extended.
+  // OpenClaw >= 2026.5.18 requires baseUrl + models on any models.providers.<id>
+  // entry (a timeout-only entry fails validation and blocks gateway startup).
+  // models:[] merges with — does not replace — the built-in Anthropic catalog.
+  if (!config.models) config.models = {};
+  if (!config.models.providers) config.models.providers = {};
+  if (!config.models.providers.anthropic) config.models.providers.anthropic = {};
+  const anthropicProvider = config.models.providers.anthropic;
+  if (!anthropicProvider.baseUrl) anthropicProvider.baseUrl = 'https://api.anthropic.com';
+  if (!anthropicProvider.api) anthropicProvider.api = 'anthropic-messages';
+  if (!anthropicProvider.models) anthropicProvider.models = [];
+  anthropicProvider.timeoutSeconds = anthropicProvider.timeoutSeconds || 300;
+
+  // --- Session agents (rocinante, hamete, alarife) ---
   config.agents.list = [
-    { id: 'escudero', workspace: path.join(OPENCLAW_ROOT, 'workspace-escudero') },
     { id: 'rocinante', workspace: path.join(OPENCLAW_ROOT, 'workspace-rocinante') },
     // Hamete — Research & Market Intelligence agent (deep-research, competitor/market intel,
     // signals). Runs the scraping-preflight + /deep-research stack. See dispatch-protocol.md.
@@ -169,11 +187,18 @@ async function main() {
     config.plugins.entries['mc-chat'] = { enabled: true, config: {} };
   }
   if (!config.channels['mc-chat']) {
-    config.channels['mc-chat'] = { enabled: true, mcServerUrl: 'http://localhost:18790' };
+    config.channels['mc-chat'] = {
+      enabled: true,
+      mcServerUrl: 'http://localhost:18790',
+      contextPackUrl,
+    };
   }
   config.channels['mc-chat'].enabled = true;
   if (!config.channels['mc-chat'].mcServerUrl) {
     config.channels['mc-chat'].mcServerUrl = 'http://localhost:18790';
+  }
+  if (!config.channels['mc-chat'].contextPackUrl) {
+    config.channels['mc-chat'].contextPackUrl = contextPackUrl;
   }
   if (mcChatSecret) {
     config.channels['mc-chat'].sharedSecret = mcChatSecret;

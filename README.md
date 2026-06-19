@@ -2,46 +2,52 @@
 
 **Fractional CMO AI** — A multi-agent marketing system built on [OpenClaw](https://openclaw.ai).
 
-SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients, builds brand foundations, plans campaigns, creates content, tracks metrics, and manages everything through Discord.
+SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients,
+builds brand foundations, plans campaigns, creates content, and tracks metrics.
+You operate it through **Mission Control** — a web dashboard where each client
+gets a chat that talks directly to Sancho. Discord and Slack are optional
+notification/publishing channels, not requirements.
 
 ## Architecture
 
 ```
-   Client Discord Guilds              Cervantes Brain Guild
-   (1 per client)                     (internal infra)
-          │                                   │
-          └──────── OpenClaw Gateway (:18789) ─┘
-                            │
-            ┌───────────────┼───────────────┐
-            │               │               │
-        Sancho          Escudero        Sanson
-      (Strategist)      (Worker)      (QA Guardian)
-       Opus 4.6        Sonnet 4.5      Opus 4.6
-            │                               ▲
-            ├── sessions_spawn ─► Escudero   │
-            ├── sessions_send ──► Sanson ────┘
-            ├── sessions_send ─► Rocinante ─► YALC/GTM-OS API
-            └── sessions_send ──► Cervantes
-                                  (System Architect)
-                                   Opus 4.6
+        Mission Control (web)              Optional channels
+        chat per client  ───┐              (Discord / Slack)
+                            │                     │
+              ┌─────────────┴─────────────────────┘
+              │
+      OpenClaw Gateway (:18789)
+              │
+  ┌───────────────────────────┐
+  │                           │
+Sancho                      Sansón
+(CMO Strategist)        (QA Guardian)
+  │                            ▲
+  ├── Agent(subagent_type=…) ─► specialists (Hamete · Dulcinea · Rocinante · Maese Pedro · Mambrino · Merlín · Alarife)
+  ├── sessions_send ──► Sansón ┘
+  ├── sessions_send ─► Rocinante ─► YALC/GTM-OS API
+  └── sessions_send ──► Cervantes
+                        (System Architect)
 ```
+
+The primary interface is **Mission Control chat** (`mc-chat → sancho`). Discord
+and Slack can be wired in as additional channels, but the product boots and runs
+without either.
 
 ### Agents
 
 | Agent | Role | How it activates |
 |-------|------|------------------|
-| **Sancho** | CMO Strategist & Orchestrator | Discord messages (client guilds) + cron jobs |
-| **Escudero** | Execution worker (adopts personas) | `sessions_spawn` from Sancho |
+| **Sancho** | CMO Strategist & Orchestrator | Mission Control chat (per client) + cron jobs |
+| **Hamete** | Research, market & competitive intelligence, signals | `Agent(subagent_type="hamete")` from Sancho |
+| **Dulcinea** | Written content — SEO, newsletters, landing copy, brand voice | `Agent(subagent_type="dulcinea")` from Sancho |
+| **Maese Pedro** | Visual Director — design system, assets, web visuals, ad creatives (Open Design) | `Agent(subagent_type="maese-pedro")` from Sancho |
+| **Mambrino** | Paid ads — Meta, Google, retargeting, ROAS | `Agent(subagent_type="mambrino")` from Sancho |
+| **Merlín** | Data, attribution, forecasting, CRM analysis | `Agent(subagent_type="merlin")` from Sancho |
 | **Sansón** | Brand Guardian / QA | `sessions_send` from Sancho |
 | **Rocinante** | Outreach, Partnerships & GTM-OS execution — provider/MCP status, brain/setup, gates, lead qualification, cold email dry-runs/live confirmed launches, campaign status and reporting via `yalc-operator` | `sessions_send` from Sancho |
 | **Alarife** | Web/Page Builder (Payload, site architecture, frontend, CRO) | `Agent(subagent_type="alarife")` from Sancho |
-| **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Operates in Cervantes Brain guild (#admin, #infra, #tasks, #changelog). Can edit Sancho's skills, SOUL.md, and cron jobs. |
-
-### Personas (Escudero)
-
-Escudero has no fixed personality. Sancho assigns one of 9 personas per task:
-
-Explorador (prospecting), Redactor (SEO/content), Comunicador (social/newsletters), Creativo (visual), Amplificador (paid media), Investigador (research), Comercial (sales), Arquitecto (landing pages), Conector (partnerships).
+| **Cervantes** | System Architect & Infra | Own cron jobs + `sessions_send` from Sancho. Can edit Sancho's skills, SOUL.md, and cron jobs. |
 
 ### Skills
 
@@ -49,51 +55,65 @@ Explorador (prospecting), Redactor (SEO/content), Comunicador (social/newsletter
 
 ### YALC Cockpit
 
-Mission Control includes a native YALC cockpit at `/dashboard/<slug>/yalc`. It uses Sancho-authenticated proxy routes under `/api/yalc/*`, not an iframe, and covers runtime health, campaigns, lead tables, lead detail, human gates, and provider status. In Docker/staging, run Sancho with `docker-compose.yalc.yml` so the app talks to YALC at `http://yalc:3847`.
+Mission Control includes a native YALC cockpit at `/dashboard/<slug>/yalc`. It uses Sancho-authenticated proxy routes under `/api/yalc/*`, not an iframe, and covers runtime health, campaigns, lead tables, lead detail, human gates, and provider status. YALC is an opt-in overlay: enable it with `docker-compose.yalc.yml` so the app talks to YALC at `http://yalc:3847`. When it's off, the cockpit shows a graceful "Outreach not enabled" placeholder instead of a broken screen.
 
 ### Multi-Client
 
 One instance serves multiple clients with strict isolation:
-- Each client = 1 Discord guild with standard channels (general, brand, campaigns, content, intelligence, etc.)
-- 1 additional infra guild ("Cervantes Brain") for system operations, alerts, and cost tracking
-- Brand data stored in `brand/{slug}/` (Foundation v2.0 structure)
-- Channel IDs and config per client in `brand/{slug}/sources.json`
-- Zero data leakage between clients enforced at every level
+- Each client = a brand in Mission Control, created from Admin → *New client* (slug + display name).
+- Brand data stored in `brand/{slug}/` (Foundation structure).
+- Per-client sources and channel config (incl. optional Discord/Slack IDs) in `brand/{slug}/sources.json`.
+- Zero data leakage between clients enforced at every level.
 
 ## Quick Start
 
+The fastest path is the one-command installer, which runs a setup wizard and
+brings the stack up with Docker.
+
 ### Prerequisites
 
-- [OpenClaw](https://docs.openclaw.ai/start/getting-started) (Node 24+ recommended)
-- A Discord bot (with token)
-- Anthropic API key (Claude)
-- A Discord server created from the template
+- Docker + Docker Compose
+- `openssl` (used by the wizard to generate secrets)
+- An **Anthropic** and/or **OpenAI** API key (or a subscription, see auth modes)
 
-### Setup
+> Discord, Slack, Open Design, YALC and an external Postgres are all **optional**.
+> The base stack runs with a bundled local Postgres (or `MC_TASKS_BACKEND=json`,
+> no DB at all) and no comms integrations.
+
+### Install
+
+**Option 1 — one command (recommended, no clone needed):**
 
 ```bash
-# 1. Clone
-git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git
-cd sanchocmo-openclaw
-
-# 2. Configure environment
-cp .env.example .env
-# Edit .env with your API keys and Discord bot token
-
-# 3. Configure instance
-cp config/instance.json.example config/instance.json
-# Edit with your MC URL and Discord IDs
-
-# 4. Configure clients
-cp config/clients.json.example config/clients.json
-# Add your first client
-
-# 5. Start OpenClaw gateway
-openclaw daemon start
-
-# 6. Start Mission Control (optional)
-node workspace-sancho/scripts/mc-server.js &
+curl -fsSL https://raw.githubusercontent.com/Growth4U-systems/sanchocmo-openclaw/main/get.sh | bash
 ```
+
+Downloads the latest release runtime to `~/sanchocmo` (override with `SANCHO_DIR`),
+runs the wizard, and brings the stack up. If the GHCR image is still private, the
+installer walks you through `docker login` and retries.
+
+**Option 2 — development (clone the repo):**
+
+```bash
+git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git sanchocmo && cd sanchocmo
+
+# Install (runs the wizard if .env is missing, then `docker compose up`)
+./install.sh
+
+# Optional overlays:
+#   ./install.sh --od     # also start Open Design
+#   ./install.sh --yalc   # also start YALC (Outreach)
+#   ./install.sh --no-up   # configure only, don't start containers
+```
+
+The wizard asks for the essentials (provider + auth mode, API key, admin email
+domain, first brand) and generates the secrets (`NEXTAUTH_SECRET`,
+`ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `adminToken`, `mcToken`), writing
+`.env`, `config/instance.json`, and `config/clients.json` for you. A boot
+preflight then validates the must-have config and fails fast with a clear list
+if anything is missing.
+
+Full guide: [docs/INSTALL.md](docs/INSTALL.md).
 
 ### Adding a Client
 
@@ -108,8 +128,8 @@ tree and generate `foundation-state.json` on demand — no extra script needed.
 
 ```
 config/                          # Instance-specific configuration
-  instance.json                  # URLs, Discord IDs, accounts
-  clients.json                   # Client registry (tokens, guilds)
+  instance.json                  # MC URL, ports, accounts (Discord IDs optional)
+  clients.json                   # Client registry (tokens)
   dispatch-map.json              # Channel → role routing
 
 workspace-sancho/                # Main CMO agent
@@ -118,10 +138,9 @@ workspace-sancho/                # Main CMO agent
   _system/                       # Protocols, schemas, templates
   skills/                        # 120+ marketing skills
   scripts/                       # Automation scripts
-  brand/{slug}/                  # Client data (Foundation v2.0)
+  brand/{slug}/                  # Client data (Foundation structure)
 
 workspace-cervantes/             # System architect agent
-workspace-escudero/              # Worker agent (symlinks to sancho)
 workspace-rocinante/             # Outreach & GTM-OS agent
 workspace-alarife/               # Web/Page Builder agent (Payload, site architecture, frontend, CRO)
 
@@ -134,34 +153,37 @@ All instance-specific data lives in `config/`:
 
 | File | Purpose | Gitignored |
 |------|---------|------------|
-| `instance.json` | MC URL, Discord IDs, ports, accounts | Yes |
-| `clients.json` | Client tokens, guilds | Yes |
+| `instance.json` | MC URL, ports, accounts (Discord IDs optional) | Yes |
+| `clients.json` | Client tokens | Yes |
 | `dispatch-map.json` | Channel role mapping | No (framework) |
 
-Templates (`.example` files) are provided for all gitignored configs.
+Templates (`.example` files) are provided for all gitignored configs, and the
+setup wizard generates them on a fresh install.
 
 ## Cron Jobs
 
-19+ automated jobs handle daily operations:
+Automated jobs handle daily operations, for example:
 
-- **Daily Pulse** — Extract insights from Discord (per client)
+- **Daily Pulse** — Extract and synthesize daily insights per client
 - **Meeting Intelligence** — Process meeting notes from Google Drive
 - **Weekly Synthesis** — Detect patterns and trends
-- **Healthcheck** — Monitor 23+ services every 6 hours
+- **Healthcheck** — Monitor services on a schedule
 - **Cost Tracker** — Track API costs per client
 
-Templates in `_system/cron-templates.json` generate per-client jobs automatically via `scripts/create-client-crons.sh`.
+Where a job publishes its output is configurable per client
+(`crons.<cronKey>.publish_transport` / `publish_channel` in `client-config.json`,
+editable from Mission Control), with Slack and Discord as the available channels.
 
 ## Mission Control
 
-Web dashboard (`mc-server.js`) on port 18790:
+The Next.js web app (default port `3000`) is the primary interface:
+- Per-client chat that talks to Sancho (`mc-chat → sancho`)
 - Client portal with token-based access
 - Foundation progress tracking
 - Brand document viewer
 - API connection pages
-- Trust Engine
 
-Exposed via reverse proxy (nginx on VPS) or Tailscale Funnel (local dev).
+Exposed via reverse proxy (nginx on a server) or Tailscale Funnel (local dev).
 
 ## Development workflow
 
@@ -182,4 +204,4 @@ Full guide: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md). Deploy details: [docs/
 
 [Sustainable Use License (SUL)](LICENSE.md)
 
-You may use, modify, and distribute this software for internal business or personal purposes. Commercial redistribution as a hosted service requires a separate agreement.
+You may use, modify, and distribute this software for internal business or personal purposes. Offering it to third parties as a hosted or managed service requires a separate agreement.

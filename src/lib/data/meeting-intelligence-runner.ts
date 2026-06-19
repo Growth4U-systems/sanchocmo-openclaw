@@ -1,6 +1,4 @@
 import crypto from "crypto";
-import fs from "fs";
-import path from "path";
 import { execFileSync } from "child_process";
 import { and, eq } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
@@ -13,7 +11,8 @@ import {
   miRuns,
   miSources,
 } from "@/db/schema";
-import { BASE, apiHealthFile } from "@/lib/data/paths";
+import { apiHealthFile } from "@/lib/data/paths";
+import { readBrandSecret } from "@/lib/brand-env";
 import { readJSON } from "@/lib/data/json-io";
 import {
   createMeetingIntelligenceRun,
@@ -60,28 +59,10 @@ function checksum(text: string) {
   return crypto.createHash("sha256").update(text).digest("hex");
 }
 
-function parseEnvFile(filePath: string): Record<string, string> {
-  try {
-    const vars: Record<string, string> = {};
-    const content = fs.readFileSync(filePath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      vars[trimmed.slice(0, eq)] = trimmed.slice(eq + 1).replace(/^["']|["']$/g, "");
-    }
-    return vars;
-  } catch {
-    return {};
-  }
-}
-
-function getNotionKey() {
-  const root = path.join(BASE, "..");
-  const envLocal = parseEnvFile(path.join(root, ".env.local"));
-  const env = parseEnvFile(path.join(root, ".env"));
-  return process.env.NOTION_API_KEY || envLocal.NOTION_API_KEY || env.NOTION_API_KEY || "";
+// Per-client Notion token ({SLUG}_NOTION_API_KEY in brand/{slug}/.env), falling back
+// to the workspace/global NOTION_API_KEY. Same precedence as the other connectors.
+function getNotionKey(slug: string) {
+  return readBrandSecret(slug, "notion", "API_KEY") || "";
 }
 
 function getGogAccount() {
@@ -214,7 +195,7 @@ function inferInsights(rawText: string) {
   return { decisions, actions, risks, insights };
 }
 
-function documentsForText(text: string) {
+export function documentsForText(text: string) {
   const lower = text.toLowerCase();
   const docs: Array<{ name: string; severity: "high" | "medium" | "low"; reason: string }> = [];
   if (/\b(strategyplan|strategy plan|estrategia|prioridad|roadmap|go[- ]?to[- ]?market|gtm)\b/i.test(lower)) {
@@ -245,6 +226,31 @@ function documentsForText(text: string) {
     docs.push({ name: "Company Brief", severity: "low", reason: "Afecta contexto canónico de compañía o producto." });
   }
   return docs;
+}
+
+// Pure: which insights still lack a recommendation (keyed by insightId). The
+// backfill (fix A, SAN-222) uses this so it NEVER re-touches an insight whose
+// recommendation a human may have already approved/converted/rejected.
+export function insightsNeedingRecommendation<T extends { id: string }>(
+  insights: T[],
+  recommendations: Array<{ insightId: string | null }>,
+): T[] {
+  const linked = new Set(
+    recommendations.map((rec) => rec.insightId).filter((id): id is string => Boolean(id)),
+  );
+  return insights.filter((insight) => !linked.has(insight.id));
+}
+
+export function recommendationEvidenceRefreshPatch(input: {
+  description: string;
+  priority: "high" | "medium" | "low";
+  updatedAt: Date;
+}) {
+  return {
+    description: input.description,
+    priority: input.priority,
+    updatedAt: input.updatedAt,
+  } satisfies Partial<typeof miRecommendations.$inferInsert>;
 }
 
 async function fetchDriveMeetings(source: SourceRow, limit: number, errors: string[]) {
@@ -369,10 +375,10 @@ async function fetchNotionPageText(pageId: string, key: string) {
   return normalizeText(lines.join("\n"));
 }
 
-async function fetchNotionMeetings(source: SourceRow, limit: number, errors: string[]) {
-  const key = getNotionKey();
+async function fetchNotionMeetings(source: SourceRow, limit: number, errors: string[], slug: string) {
+  const key = getNotionKey(slug);
   if (!key) {
-    errors.push("NOTION_API_KEY not configured.");
+    errors.push(`Notion no conectado para "${slug}".`);
     return [];
   }
   if (!source.sourceId) return [];
@@ -510,6 +516,87 @@ async function upsertFetchedMeeting(slug: string, runId: string, item: FetchedMe
   return meetingId;
 }
 
+type MeetingIntelligenceDb = ReturnType<typeof getDb>;
+
+interface InsightForImpact {
+  id: string;
+  title: string;
+  body?: string | null;
+  meetingId?: string | null;
+}
+
+// Extracted from writeAnalysis (fix A, SAN-222): for one insight, materialize its
+// document impacts + a review-first recommendation per impacted document.
+// Idempotent via stableId. `fromRaw` only changes the human-facing provenance
+// copy — the raw path keeps its exact wording, the backfill path flags that no
+// raw_text was available. Nothing here applies changes without human approval.
+async function writeInsightImpacts(
+  database: MeetingIntelligenceDb,
+  slug: string,
+  insight: InsightForImpact,
+  sourceTitle: string,
+  now: Date,
+  opts: { fromRaw: boolean },
+): Promise<number> {
+  const meetingId = insight.meetingId ?? null;
+  const docs = documentsForText(`${insight.title}\n${insight.body || ""}`);
+  const provenance = opts.fromRaw
+    ? `Recommendation creada desde raw_text. Fuente: ${sourceTitle}.`
+    : `Recommendation generada desde un insight existente (raw no disponible). Fuente: ${sourceTitle}.`;
+  let recommendationCount = 0;
+  for (const doc of docs) {
+    const impactId = `mip_${stableId(slug, meetingId, insight.id, doc.name)}`;
+    const priority = doc.severity === "high" ? "high" : doc.severity === "low" ? "low" : "medium";
+    const description = `${provenance} No aplica cambios sin aprobación humana.`;
+    await database.insert(miDocumentImpacts).values({
+      id: impactId,
+      slug,
+      meetingId,
+      insightId: insight.id,
+      documentName: doc.name,
+      documentPath: null,
+      impactType: doc.name === "StrategyPlan" ? "conflict_check" : "possible_update",
+      status: doc.name === "StrategyPlan" ? "conflict" : "possible_update",
+      severity: doc.severity,
+      reason: doc.reason,
+      proposedChange: `Revisar ${doc.name} con evidencia de "${sourceTitle}".`,
+      createdAt: now,
+      updatedAt: now,
+    }).onConflictDoUpdate({
+      target: miDocumentImpacts.id,
+      set: {
+        reason: doc.reason,
+        proposedChange: `Revisar ${doc.name} con evidencia de "${sourceTitle}".`,
+        severity: doc.severity,
+        updatedAt: now,
+      },
+    });
+    await database.insert(miRecommendations).values({
+      id: `mirc_${stableId(slug, meetingId, insight.id, doc.name)}`,
+      slug,
+      meetingId,
+      insightId: insight.id,
+      impactId,
+      title: `Revisar ${doc.name}: ${insight.title}`,
+      description,
+      priority,
+      targetType: "task",
+      targetId: null,
+      documentName: doc.name,
+      status: "recommended",
+      taskId: null,
+      taskStatus: "recommended",
+      createdAt: now,
+      updatedAt: now,
+    }).onConflictDoUpdate({
+      target: miRecommendations.id,
+      set: recommendationEvidenceRefreshPatch({ description, priority, updatedAt: now }),
+    });
+    recommendationCount += 1;
+  }
+  return recommendationCount;
+}
+
 async function writeAnalysis(slug: string, runId: string, meetingId: string, item: FetchedMeeting) {
   const database = getDb();
   const now = new Date();
@@ -566,64 +653,38 @@ async function writeAnalysis(slug: string, runId: string, meetingId: string, ite
 
   let recommendationCount = 0;
   for (const insight of rows) {
-    const docs = documentsForText(`${insight.title}\n${insight.body || ""}`);
-    for (const doc of docs) {
-      const impactId = `mip_${stableId(slug, meetingId, insight.id, doc.name)}`;
-      const priority = doc.severity === "high" ? "high" : doc.severity === "low" ? "low" : "medium";
-      await database.insert(miDocumentImpacts).values({
-        id: impactId,
-        slug,
-        meetingId,
-        insightId: insight.id,
-        documentName: doc.name,
-        documentPath: null,
-        impactType: doc.name === "StrategyPlan" ? "conflict_check" : "possible_update",
-        status: doc.name === "StrategyPlan" ? "conflict" : "possible_update",
-        severity: doc.severity,
-        reason: doc.reason,
-        proposedChange: `Revisar ${doc.name} con evidencia de "${item.title}".`,
-        createdAt: now,
-        updatedAt: now,
-      }).onConflictDoUpdate({
-        target: miDocumentImpacts.id,
-        set: {
-          reason: doc.reason,
-          proposedChange: `Revisar ${doc.name} con evidencia de "${item.title}".`,
-          severity: doc.severity,
-          updatedAt: now,
-        },
-      });
-      await database.insert(miRecommendations).values({
-        id: `mirc_${stableId(slug, meetingId, insight.id, doc.name)}`,
-        slug,
-        meetingId,
-        insightId: insight.id,
-        impactId,
-        title: `Revisar ${doc.name}: ${insight.title}`,
-        description: `Recommendation creada desde raw_text. Fuente: ${item.title}. No aplica cambios sin aprobación humana.`,
-        priority,
-        targetType: "task",
-        targetId: null,
-        documentName: doc.name,
-        status: "recommended",
-        taskId: null,
-        taskStatus: "recommended",
-        createdAt: now,
-        updatedAt: now,
-      }).onConflictDoUpdate({
-        target: miRecommendations.id,
-        set: {
-          description: `Recommendation creada desde raw_text. Fuente: ${item.title}. No aplica cambios sin aprobación humana.`,
-          priority,
-          status: "recommended",
-          taskStatus: "recommended",
-          updatedAt: now,
-        },
-      });
-      recommendationCount += 1;
-    }
+    recommendationCount += await writeInsightImpacts(database, slug, insight, item.title, now, { fromRaw: true });
   }
   return { insights: rows.length, recommendations: recommendationCount };
+}
+
+// Fix A (SAN-222): generate review-first recommendations from insights that have
+// none yet — including legacy/seeded insights with no raw_text. This unblocks the
+// "Convert to task" loop for clients whose meetings were never raw-synced (e.g.
+// growth4u: 29 insights, 0 proposals). Idempotent and cheap after the first run:
+// once every insight has a recommendation, `pending` is empty and nothing writes.
+export async function backfillMeetingRecommendations(
+  slug: string,
+): Promise<{ recommendations: number; insightsScanned: number }> {
+  if (!hasDatabase) return { recommendations: 0, insightsScanned: 0 };
+  const database = getDb();
+  const now = new Date();
+  const [insightRows, recommendationRows, meetingRows] = await Promise.all([
+    database.select().from(miInsights).where(eq(miInsights.slug, slug)),
+    database.select({ insightId: miRecommendations.insightId }).from(miRecommendations).where(eq(miRecommendations.slug, slug)),
+    database.select({ id: miMeetings.id, title: miMeetings.title }).from(miMeetings).where(eq(miMeetings.slug, slug)),
+  ]);
+  const titleByMeeting = new Map(meetingRows.map((meeting) => [meeting.id, meeting.title]));
+  const pending = insightsNeedingRecommendation(insightRows, recommendationRows);
+  let recommendationCount = 0;
+  for (const insight of pending) {
+    const sourceTitle =
+      (insight.meetingId ? titleByMeeting.get(insight.meetingId) : null) ||
+      insight.sourceLabel ||
+      "Meeting Intelligence";
+    recommendationCount += await writeInsightImpacts(database, slug, insight, sourceTitle, now, { fromRaw: false });
+  }
+  return { recommendations: recommendationCount, insightsScanned: insightRows.length };
 }
 
 export async function runMeetingIntelligenceSync(input: {
@@ -686,7 +747,7 @@ export async function runMeetingIntelligenceSync(input: {
       if (source.kind === "google_drive") {
         fetched.push(...await fetchDriveMeetings(source, limit, errors));
       } else if (source.kind === "notion_database") {
-        fetched.push(...await fetchNotionMeetings(source, limit, errors));
+        fetched.push(...await fetchNotionMeetings(source, limit, errors, input.slug));
       }
     }
     metrics.fetched = fetched.length;
@@ -705,6 +766,15 @@ export async function runMeetingIntelligenceSync(input: {
       metrics.povProposals = povReconcile.proposalsUpserted || 0;
     } catch (error) {
       errors.push(`POV Bank reconcile: ${error instanceof Error ? error.message : "failed"}`);
+    }
+
+    // Fix A (SAN-222): close the loop even when no raw was synced this run —
+    // generate review-first recommendations from any insight that still lacks one.
+    try {
+      const backfill = await backfillMeetingRecommendations(input.slug);
+      metrics.recommendations += backfill.recommendations;
+    } catch (error) {
+      errors.push(`Recommendation backfill: ${error instanceof Error ? error.message : "failed"}`);
     }
 
     const finishedAt = new Date();

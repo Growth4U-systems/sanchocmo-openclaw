@@ -1,0 +1,1072 @@
+{
+  "_comment": "SINGLE SOURCE OF TRUTH for the foundation pillar model (F0/F1). Owns, per pillar: doc paths, skill alias (pillar key -> installed skill), homonymous flag, and the default per-brand chat-config (skill+skills+agent). doc paths are aligned to what the owning skill actually writes (context_writes). Code derives PILLAR_DOC_PATHS, PILLAR_SKILL_ALIAS, HOMONYMOUS_SKILL_PILLARS and the chat-config pillar defaults from here via pillar-doc-paths.ts / skill-resolver.ts -- do NOT hand-edit those maps. Platform-core config, above any single agent. Validated by src/lib/__tests__/pillar-manifest.test.mts and scripts/lint-paths.mts.",
+  "version": 1,
+  "pillars": {
+    "brand-report": {},
+    "brand-voice": {
+      "docPaths": ["brand-book/brand-voice/brand-voice.current.md", "brand-voice/brand-voice.current.md"]
+    },
+    "company-brief": {},
+    "competitor-analysis": {},
+    "ecp-validation": {},
+    "existing-customer-data": {},
+    "foundation-presentation": {},
+    "gtm-presentation": {},
+    "market-analysis": {
+      "docPaths": ["market-and-us/market/market.current.md", "market-and-us/market/lite.md"]
+    },
+    "market-synthesis": {},
+    "metrics-setup": {},
+    "niche-discovery": {
+      "docPaths": ["go-to-market/ecps/ecps.current.md", "go-to-market/ecps/lite.md"]
+    },
+    "positioning": {},
+    "pricing": {},
+    "self-analysis": {
+      "docPaths": ["market-and-us/self/self.current.md", "market-and-us/self/lite.md"]
+    },
+    "strategic-plan": {},
+    "strategic-presentation": {},
+    "trust-score": {},
+    "visual-identity": {
+      "docPaths": ["brand-book/visual-identity/DESIGN.md", "brand-book/visual-identity/visual-identity.current.md", "brand-identity/visual-identity/visual-identity.current.md"]
+    }
+  },
+  "_foundation_comment": "SAN-183 (F5) — la ESTRUCTURA de Foundation: secciones ordenadas por layer y, por pilar, su binding a la task que lo cubre (taskSets foundation-*, 1:1). Los doc paths canónicos NO se duplican aquí: viven en pillars[key].docPaths. El status de un pilar ES el status de su task (única fuente); el ensamblador de Brand Brain (brand-brain-assembler.ts) reconstruye el shape legacy de foundation-state desde este bloque + las tasks. Sustituye al árbol de config/foundation-state.default.json.",
+  "foundation": {
+    "sections": [
+      {
+        "key": "company-brief",
+        "layer": 0,
+        "pillars": [
+          { "key": "company-brief", "layer": 0, "task": { "set": "foundation-cb", "id": "kickoff" } }
+        ]
+      },
+      {
+        "key": "site-audit",
+        "layer": 0,
+        "pillars": [
+          { "key": "trust-score", "layer": 0, "optional": true, "task": { "set": "foundation-site-audit", "id": "trust-score" } }
+        ]
+      },
+      {
+        "key": "market-and-us",
+        "layer": 1,
+        "pillars": [
+          { "key": "market-analysis", "layer": 1, "task": { "set": "foundation-full", "id": "market-intelligence" } },
+          { "key": "competitor-analysis", "layer": 1, "task": { "set": "foundation-full", "id": "competitor-intelligence" } },
+          { "key": "self-analysis", "layer": 1, "task": { "set": "foundation-full", "id": "self-intelligence" } },
+          { "key": "market-synthesis", "layer": 2, "task": { "set": "foundation-full", "id": "market-synthesis" } },
+          { "key": "foundation-presentation", "layer": 2, "task": { "set": "foundation-full", "id": "foundation-presentation" } }
+        ]
+      },
+      {
+        "key": "go-to-market",
+        "layer": 3,
+        "pillars": [
+          { "key": "niche-discovery", "layer": 3, "task": { "set": "foundation-full", "id": "niche-discovery" } },
+          { "key": "existing-customer-data", "layer": 3, "optional": true, "task": { "set": "foundation-full", "id": "existing-customer-data" } },
+          { "key": "positioning", "layer": 4, "task": { "set": "foundation-full", "id": "positioning" } },
+          { "key": "pricing", "layer": 4, "task": { "set": "foundation-full", "id": "pricing" } },
+          { "key": "ecp-validation", "layer": 4, "optional": true, "task": { "set": "foundation-full", "id": "ecp-validation" } },
+          { "key": "gtm-presentation", "layer": 4, "task": { "set": "foundation-full", "id": "gtm-presentation" } }
+        ]
+      },
+      {
+        "key": "brand-book",
+        "layer": 5,
+        "pillars": [
+          { "key": "brand-voice", "layer": 5, "task": { "set": "foundation-full", "id": "brand-voice" } },
+          { "key": "visual-identity", "layer": 5, "task": { "set": "foundation-full", "id": "visual-identity" } },
+          { "key": "brand-report", "layer": 5, "optional": true, "task": { "set": "foundation-full", "id": "brand-report" } }
+        ]
+      },
+      {
+        "key": "metrics-setup",
+        "layer": 6,
+        "pillars": [
+          { "key": "metrics-setup", "layer": 6, "task": { "set": "foundation-metrics", "id": "metrics-setup" } }
+        ]
+      },
+      {
+        "key": "strategic-plan",
+        "layer": 7,
+        "pillars": [
+          { "key": "strategic-plan", "layer": 7, "task": { "set": "foundation-sp", "id": "strategic-plan" } },
+          { "key": "strategic-presentation", "layer": 7, "task": { "set": "foundation-sp", "id": "strategic-presentation" } }
+        ]
+      }
+    ]
+  },
+  "_taskSets_comment": "SAN-167 — preconfigured task SETS per zone, instantiated into tasks.json by src/lib/data/task-blueprints.ts::instantiateTaskSet. Each task declares its agent EXPLICITLY (co-located, not resolved). Prose uses {slug}/{projectId}/{channel} placeholders. taskKey => seeded as a fixed project set (id {projectId}-{taskKey}); no taskKey => on-demand entry (params substituted at create). Mirrors the canonical flow that used to live in create-project.ts / content-engine-tasks.ts.",
+  "taskSets": {
+    "content": {
+      "label": "Content Creation",
+      "tasks": [
+        {
+          "id": "content-strategy",
+          "taskKey": "T01",
+          "name": "Content Strategy (14 decisiones globales)",
+          "skill": "content-strategy",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Proceso 1 — Ejecutar content-strategy a nivel empresa. Define: nichos confirmados, Content Tilt, Villano, Trigger Events, canales activos, mix searchable/shareable, pillars a alto nivel, KPIs norte.",
+          "deliverable": "Documento con las 14 decisiones estrategicas globales del Content Engine",
+          "deliverableFiles": ["content/strategy-decisions.md"],
+          "outputFiles": ["strategy-decisions.md"],
+          "dependsOn": []
+        },
+        {
+          "id": "content-pillars",
+          "taskKey": "T02",
+          "name": "Content Pillars (3-5 temas)",
+          "skill": "content-pillars",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Proceso 1 — Ejecutar content-pillars. Define 3-5 pillars (TEMAS, no POV). Lee Foundation completa + strategy-decisions.md. Asigna funnel_role per pillar. El humano confirma la lista final.",
+          "deliverable": "Content pillars con funnel_role, pain_origin, expertise, related_topics",
+          "deliverableFiles": ["content/content-pillars.md"],
+          "outputFiles": ["content-pillars.md"],
+          "dependsOn": ["content-strategy"]
+        },
+        {
+          "id": "content-setup",
+          "taskKey": "T03",
+          "name": "Setup configs por pillar",
+          "skill": "content-engine-setup",
+          "agent": "dulcinea",
+          "type": "execution",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + pov-bank.json + Foundation. Genera ademas un setup.md narrativo que explica el por que de cada decision y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA. Las voces founder-led (persona + red + handle + cuenta de publicacion) se delegan en la sub-skill founder-led-setup, que escribe los profiles[] por voz bajo cada canal en cadence-config.yml. ORDEN DE EJECUCION: SE EJECUTA EL ULTIMO. Requiere {projectId}-T01 (Strategy) + {projectId}-T02 (Pillars) + {projectId}-T04 (POV Bank) en status:completed.",
+          "deliverable": "Configs por pillar + cadence + sources.json profiles + setup.md narrativo",
+          "deliverableFiles": ["content/configs/setup.md"],
+          "outputFiles": [
+            "setup.md",
+            "cadence-config.yml",
+            "news-prompts/*.yml",
+            "paa-queries/*.yml",
+            "keywords-seed/*.yml",
+            "../../market-and-us/competitors/sources.json"
+          ],
+          "dependsOn": ["pov-bank"],
+          "extra": {
+            "skills": ["content-engine-setup", "founder-led-setup"]
+          }
+        },
+        {
+          "id": "pov-bank",
+          "taskKey": "T04",
+          "name": "Build POV Bank",
+          "skill": "pov-bank-builder",
+          "agent": "dulcinea",
+          "type": "execution",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Construye la BD de puntos de vista (pov-bank.json) per pillar: core_belief, we_say_yes_to/no_to, preferred_angles, evidence_we_cite. Lee brand-voice + content-pillars + clarify-history. El skill idea-builder consultara este doc para generar angle_drafts diferenciados (no genericos). Se refresca mensualmente con el cron POV Bank Refresh basado en patrones de clarify-history. ORDEN DE EJECUCION: VA ANTES que {projectId}-T03 (Setup configs) — el POV se decide primero, despues se configuran los inputs alineados con esa postura. Requiere {projectId}-T01 (Strategy) + {projectId}-T02 (Pillars) en status:completed.",
+          "deliverable": "POV Bank con opiniones por pillar (core_belief, we_say_yes/no, preferred_angles, evidence)",
+          "deliverableFiles": ["content/pov-bank.json"],
+          "outputFiles": ["pov-bank.json", "pov-bank-history.json"],
+          "dependsOn": ["content-pillars"]
+        },
+        {
+          "id": "visual-templates",
+          "taskKey": "T05",
+          "name": "Visual Templates (5 plantillas HTML)",
+          "skill": "{slug}-visual-generator",
+          "skillTemplated": true,
+          "agent": "maese-pedro",
+          "type": "foundation",
+          "channel": "visual",
+          "phase": 1,
+          "description": "Genera las 5 plantillas HTML brand-specific (linkedin-quote, linkedin-9-slide, instagram-3-slide, blog-post, blog-title) ejecutando el skill {slug}-visual-generator. La skill lee design-tokens.json + visual-identity-current.md, decide qué personajes incluir, genera con nano-banana-pro los assets faltantes, y produce los HTMLs en brand/{slug}/brand-book/visual-identity/templates/{id}/. Ver SKILL.md de la skill para el flow completo. Prerequisito de runtime: visual-identity pillar 'approved' en Foundation L5.",
+          "deliverable": "5 plantillas HTML (template.html o slide-*.html) + meta.json por plantilla",
+          "deliverableFiles": [
+            "brand-book/visual-identity/templates/linkedin-quote/template.html",
+            "brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+            "brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+            "brand-book/visual-identity/templates/blog-post/template.html",
+            "brand-book/visual-identity/templates/blog-title/template.html"
+          ],
+          "outputFiles": [
+            "brand-book/visual-identity/templates/linkedin-quote/template.html",
+            "brand-book/visual-identity/templates/linkedin-9-slide/slide-cover.html",
+            "brand-book/visual-identity/templates/instagram-3-slide/slide-cover.html",
+            "brand-book/visual-identity/templates/blog-post/template.html",
+            "brand-book/visual-identity/templates/blog-title/template.html"
+          ],
+          "dependsOn": ["content-strategy", "content-pillars"]
+        },
+        {
+          "id": "channel-strategy",
+          "name": "Estrategia del canal",
+          "skill": "content-strategy",
+          "agent": "dulcinea",
+          "docPaths": ["content/strategy/{channel}-strategy.md"],
+          "dependsOn": ["content-strategy"]
+        },
+        {
+          "id": "founder-led-voice",
+          "name": "Añadir voz founder-led",
+          "skill": "founder-led-setup",
+          "agent": "dulcinea",
+          "channel": "strategy",
+          "description": "Da de alta o edita una voz founder-led (persona + red): quién, en qué red (LinkedIn/X), handle, cadencia, cuenta de publicacion (metricool_profile_id) y tono -> profiles[] en cadence-config.yml. Una voz = una persona en una red.",
+          "dependsOn": ["content-setup"]
+        },
+        {
+          "id": "seo-audit",
+          "taskKey": "T06",
+          "name": "SEO Audit (auditoría técnica web)",
+          "skill": "seo-audit",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Auditoría SEO técnica del sitio (crawlability, indexación, CWV, schema) como parte del setup de Content/blog. Punto de partida hasta que exista una sección 'web' que la absorba.",
+          "deliverable": "Informe de auditoría SEO técnica del sitio",
+          "deliverableFiles": ["site-audit/seo-audit/seo-audit.current.md"],
+          "outputFiles": ["seo-audit.current.md"],
+          "dependsOn": []
+        }
+      ]
+    },
+    "meeting": {
+      "label": "Meeting Intelligence",
+      "tasks": [
+        {
+          "id": "meeting-setup",
+          "name": "Implementar/configurar Meeting Intelligence",
+          "skill": "meeting-intelligence",
+          "agent": "hamete",
+          "type": "foundation",
+          "channel": "intelligence",
+          "description": "Configurar Meeting Intelligence desde el chat sidebar: verificar MCP/APIs, usar Google Workspace/GOG para buscar y validar carpetas de Drive, aceptar ID/URL solo como fallback, seleccionar Notion database/page, cargar filtros como clients relation y ejecutar un primer run.\n\nNo aplicar cambios sobre StrategyPlan, POV Bank ni documentos canónicos sin revisión humana explícita.",
+          "deliverable": "Meeting Intelligence configurado con fuentes aprobadas, filtros guardados, routing revisado y primer run documentado.",
+          "deliverableFiles": ["intelligence/setup.md"],
+          "outputFiles": ["brand/{slug}/intelligence/config.json", "brand/{slug}/intelligence/setup.md"],
+          "dependsOn": [],
+          "extra": { "done_criteria": "Google Drive o Notion configurado; filtros/routing guardados; primer scan ejecutado con reuniones encontradas o reporte explícito de cero reuniones; setup.md actualizado." }
+        }
+      ]
+    },
+    "foundation-cb": {
+      "label": "Company Brief",
+      "idPrefix": "P00-CB",
+      "project": {
+        "id": "P00-Company-Brief",
+        "name": "Company Brief",
+        "description": "Kickoff de onboarding (~30 min): URL → company-brief.current.md con todo el contexto de la empresa consolidado. Grounding canónico y vivo para todas las skills de Foundation.",
+        "approach": "El usuario introduce la URL de su web. El skill kickoff scrapea, genera company-brief/company-brief.current.md y valida con el usuario. Si no hay URL, modo conversacional. El Company Brief es el source of truth para Foundation.",
+        "objective": { "description": "Company Brief generado y validado", "metric": "docs_completed", "baseline": 0, "target": 1, "unit": " archivo" },
+        "origin": "onboarding",
+        "phase": -1,
+        "category": "foundation",
+        "review_date": null,
+        "status": "active"
+      },
+      "tasks": [
+        {
+          "id": "kickoff",
+          "taskKey": "T01",
+          "name": "Ejecutar Company Brief (Kickoff)",
+          "skill": "kickoff",
+          "agent": "hamete",
+          "type": "foundation",
+          "channel": "onboarding",
+          "description": "Kickoff de onboarding (~30 min) donde Sancho recoge el contexto completo de la empresa y genera el Company Brief canónico en una sola conversación en #onboarding.",
+          "deliverable": "company-brief/company-brief.current.md",
+          "deliverableFiles": ["company-brief/company-brief.current.md"],
+          "pillar": "company-brief",
+          "section": "company-brief",
+          "dependsOn": [],
+          "extra": { "done_criteria": "Archivo company-brief.current.md generado y validado por el cliente." }
+        }
+      ]
+    },
+    "foundation-site-audit": {
+      "label": "Site Audit",
+      "idPrefix": "P00-SA",
+      "project": {
+        "id": "P00-Site-Audit",
+        "name": "Site Audit",
+        "description": "Auditoría de la presencia digital del cliente: Trust Score (borrowed trust, SERP, brand assets, GEO/IA, outbound readiness, demand engine) con gap vs un set fijo de competidores.",
+        "approach": "El Trust Score Analyzer corre en modo compare: self-score standalone + gap vs competidores fijados en el kickoff. La métrica diaria se persiste bajo sources.trust_score; el pilar consolida pilares, findings y verdict en un doc navegable.",
+        "objective": { "description": "Trust Score auditado con gap competitivo", "metric": "docs_completed", "baseline": 0, "target": 1, "unit": " archivo" },
+        "origin": "onboarding",
+        "phase": -1,
+        "category": "foundation",
+        "review_date": null,
+        "status": "pending"
+      },
+      "tasks": [
+        {
+          "id": "trust-score",
+          "taskKey": "T01",
+          "name": "Trust Score Audit (L0)",
+          "skill": "trust-score",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Ejecutar el Trust Score Analyzer en modo compare contra el set de competidores fijado: borrowed trust, SERP, brand assets, GEO/IA, outbound readiness y demand engine. Consolida score global, pilares con findings, brechas vs competidores y verdict en el doc del pilar, y persiste la métrica diaria.",
+          "deliverable": "site-audit/trust-score/trust-score.current.md con el Trust Score, pilares, brechas y verdict.",
+          "deliverableFiles": ["site-audit/trust-score/trust-score.current.md"],
+          "pillar": "trust-score",
+          "section": "site-audit",
+          "dependsOn": [],
+          "extra": { "done_criteria": "Trust Score generado con gap vs competidores fijados y verdict documentado." }
+        }
+      ]
+    },
+    "foundation-full": {
+      "label": "Full Foundation",
+      "idPrefix": "P00-FUL",
+      "project": {
+        "id": "P00-Full-Foundation",
+        "name": "Full Foundation",
+        "description": "Foundation completa: research profundo de mercado, competencia, self-analysis, síntesis SWOT, positioning, pricing, brand voice y visual identity. Profundiza el Company Brief.",
+        "approach": "Tras el Company Brief, cada skill lee company-brief.current.md como grounding y profundiza: Market Intelligence (3+ fuentes), Competitor Intelligence (3 lenses), Self Intelligence (3 lenses), Market Synthesis (SWOT+Summary+OPE Canvas+Presentación), Niche Discovery (100+ empresas), Positioning (por ECP), Pricing, Brand Voice (full guide), Visual Identity.",
+        "objective": { "description": "Foundation completa ejecutada", "metric": "pillars_completed", "baseline": 0, "target": 9, "unit": " pillars" },
+        "origin": "onboarding",
+        "phase": -1,
+        "category": "foundation",
+        "review_date": null,
+        "status": "pending"
+      },
+      "tasks": [
+        {
+          "id": "market-intelligence",
+          "taskKey": "T01",
+          "name": "L1 — Market Intelligence",
+          "skill": "market-intelligence",
+          "agent": "hamete",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Research profundo del mercado: tamaño, tendencias, regulación, tecnología, comportamiento de compradores.",
+          "deliverable": "market-and-us/market/market.current.md con análisis completo del mercado.",
+          "deliverableFiles": ["market-and-us/market/market.current.md"],
+          "pillar": "market-analysis",
+          "section": "market-and-us",
+          "dependsOn": [],
+          "extra": { "done_criteria": "Análisis aprobado con datos verificables." }
+        },
+        {
+          "id": "competitor-intelligence",
+          "taskKey": "T02",
+          "name": "L1 — Competitor Intelligence",
+          "skill": "competitor-intelligence",
+          "agent": "hamete",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Mapear competidores principales con análisis 3-Lens.",
+          "deliverable": "market-and-us/competitors/ con fichas y battle cards.",
+          "deliverableFiles": ["market-and-us/competitors/competitors.current.md"],
+          "pillar": "competitor-analysis",
+          "section": "market-and-us",
+          "dependsOn": [],
+          "extra": { "done_criteria": "Mínimo 5 competidores mapeados." }
+        },
+        {
+          "id": "self-intelligence",
+          "taskKey": "T03",
+          "name": "L1 — Self Intelligence",
+          "skill": "self-intelligence",
+          "agent": "hamete",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Análisis interno: 3 lenses (autopercepción, terceros, consumidores).",
+          "deliverable": "market-and-us/self/self.current.md",
+          "deliverableFiles": ["market-and-us/self/self.current.md"],
+          "pillar": "self-analysis",
+          "section": "market-and-us",
+          "dependsOn": [],
+          "extra": { "done_criteria": "3 lenses completas. Assets únicos identificados." }
+        },
+        {
+          "id": "market-synthesis",
+          "taskKey": "T04",
+          "name": "L2 — Market Summary",
+          "skill": "market-synthesis",
+          "agent": "hamete",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Síntesis de todo el research: SWOT+TOWS con ICE prioritization, Market Summary ejecutivo, OPE Canvas y presentación de resultados.",
+          "deliverable": "market-and-us/swot/swot.current.md + market-and-us/summary/summary.current.md + market-and-us/ope-canvas/ope-canvas.current.md",
+          "deliverableFiles": ["market-and-us/swot/swot.current.md", "market-and-us/summary/summary.current.md", "market-and-us/ope-canvas/ope-canvas.current.md"],
+          "pillar": "market-synthesis",
+          "section": "market-and-us",
+          "dependsOn": ["market-intelligence", "competitor-intelligence", "self-intelligence"],
+          "extra": { "done_criteria": "Summary aprobado. SWOT con oportunidades y amenazas priorizadas. Presentación lista." }
+        },
+        {
+          "id": "niche-discovery",
+          "taskKey": "T05",
+          "name": "L3 — Niche Discovery 100x",
+          "skill": "niche-discovery-100x",
+          "agent": "hamete",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Research profundo de nichos: análisis de 100+ empresas, segmentación avanzada, ECPs detallados con pain points, triggers y objeciones.",
+          "deliverable": "go-to-market/ecps/ecps.current.md con ECPs completos.",
+          "deliverableFiles": ["go-to-market/ecps/ecps.current.md"],
+          "pillar": "niche-discovery",
+          "section": "go-to-market",
+          "dependsOn": ["market-synthesis"],
+          "extra": { "done_criteria": "ECPs profundos documentados con datos verificables. Nichos priorizados por TAM y fit." }
+        },
+        {
+          "id": "positioning",
+          "taskKey": "T06",
+          "name": "L4 — Positioning & Messaging",
+          "skill": "positioning-messaging",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Posicionamiento diferenciado, propuesta de valor y messaging framework por ECP.",
+          "deliverable": "go-to-market/positioning/{ecp-slug}/{ecp-slug}.current.md por ECP.",
+          "deliverableFiles": ["go-to-market/positioning/positioning.current.md"],
+          "pillar": "positioning",
+          "section": "go-to-market",
+          "dependsOn": ["niche-discovery"],
+          "extra": { "done_criteria": "Posicionamiento aprobado. Mensajes diferenciados para cada ECP." }
+        },
+        {
+          "id": "pricing",
+          "taskKey": "T07",
+          "name": "L4 — Pricing Strategy",
+          "skill": "pricing-strategy",
+          "agent": "sancho",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Modelo de pricing, tiers, value metrics y hooks de conversión.",
+          "deliverable": "go-to-market/pricing/pricing.current.md",
+          "deliverableFiles": ["go-to-market/pricing/pricing.current.md"],
+          "pillar": "pricing",
+          "section": "go-to-market",
+          "dependsOn": ["positioning"],
+          "extra": { "done_criteria": "Pricing aprobado. Tiers documentados." }
+        },
+        {
+          "id": "brand-voice",
+          "taskKey": "T08",
+          "name": "L5 — Brand Voice",
+          "skill": "brand-voice",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Full Voice Guide + AI Brand Kit + adaptación por ECP/canal.",
+          "deliverable": "brand-book/brand-voice/brand-voice.current.md",
+          "deliverableFiles": ["brand-book/brand-voice/brand-voice.current.md"],
+          "pillar": "brand-voice",
+          "section": "brand-book",
+          "dependsOn": ["positioning"],
+          "extra": { "done_criteria": "Voice guide aprobada. AI Brand Kit ready." }
+        },
+        {
+          "id": "visual-identity",
+          "taskKey": "T09",
+          "name": "L5 — Visual Identity",
+          "skill": "design-system",
+          "agent": "maese-pedro",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Sistema visual (DESIGN.md): paleta, tipografía, logo guidelines, illustration discipline.",
+          "deliverable": "brand-book/visual-identity/DESIGN.md",
+          "deliverableFiles": ["brand-book/visual-identity/DESIGN.md"],
+          "pillar": "visual-identity",
+          "section": "brand-book",
+          "dependsOn": ["brand-voice"],
+          "extra": { "done_criteria": "DESIGN.md aprobado. Logo persistido. Listo para od-generate." }
+        },
+        {
+          "id": "foundation-presentation",
+          "taskKey": "T10",
+          "name": "L2 — Foundation Presentation",
+          "skill": "frontend-slides",
+          "agent": "maese-pedro",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Presentación ejecutiva de resultados de Foundation: research de mercado, competencia, self-analysis y síntesis en un deck navegable.",
+          "deliverable": "presentations/foundation-deck.html con la presentación de resultados de Foundation.",
+          "deliverableFiles": ["presentations/foundation-deck.html"],
+          "pillar": "foundation-presentation",
+          "section": "market-and-us",
+          "dependsOn": ["market-synthesis"],
+          "extra": { "done_criteria": "Deck generado y revisado con el cliente." }
+        },
+        {
+          "id": "existing-customer-data",
+          "taskKey": "T11",
+          "name": "L3 — Existing Customer Data (opcional)",
+          "skill": "existing-customer-data",
+          "agent": "hamete",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Análisis de la base de clientes existente: segmentos reales, patrones de compra, churn y expansión como evidencia para los ECPs.",
+          "deliverable": "go-to-market/existing-customer-data/existing-customer-data.current.md",
+          "deliverableFiles": ["go-to-market/existing-customer-data/existing-customer-data.current.md"],
+          "pillar": "existing-customer-data",
+          "section": "go-to-market",
+          "dependsOn": [],
+          "extra": { "done_criteria": "Análisis generado a partir de datos reales del cliente, o tarea descartada si no hay datos." }
+        },
+        {
+          "id": "ecp-validation",
+          "taskKey": "T12",
+          "name": "L4 — ECP Validation (opcional)",
+          "skill": "ecp-validation",
+          "agent": "sanson",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Validación de los ECPs con datos reales: entrevistas, señales de demanda y evidencia de mercado.",
+          "deliverable": "go-to-market/ecp-validation/ecp-validation.current.md",
+          "deliverableFiles": ["go-to-market/ecp-validation/ecp-validation.current.md"],
+          "pillar": "ecp-validation",
+          "section": "go-to-market",
+          "dependsOn": ["niche-discovery"],
+          "extra": { "done_criteria": "ECPs validados o ajustados con evidencia documentada." }
+        },
+        {
+          "id": "gtm-presentation",
+          "taskKey": "T13",
+          "name": "L4 — GTM Presentation",
+          "skill": "html-output",
+          "agent": "maese-pedro",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Presentación ejecutiva del Go-To-Market: nichos, positioning, pricing y plan de canales en un deck navegable.",
+          "deliverable": "go-to-market/gtm-report.html con la presentación del GTM.",
+          "deliverableFiles": ["go-to-market/gtm-report.html"],
+          "pillar": "gtm-presentation",
+          "section": "go-to-market",
+          "dependsOn": ["positioning", "pricing"],
+          "extra": { "done_criteria": "Deck GTM generado y revisado con el cliente." }
+        },
+        {
+          "id": "brand-report",
+          "taskKey": "T14",
+          "name": "L5 — Brand Report (opcional)",
+          "skill": "html-output",
+          "agent": "maese-pedro",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Informe consolidado de marca: voz, identidad visual y guidelines en un documento navegable.",
+          "deliverable": "brand-book/brand-report.html con el informe de marca.",
+          "deliverableFiles": ["brand-book/brand-report.html"],
+          "pillar": "brand-report",
+          "section": "brand-book",
+          "dependsOn": ["brand-voice", "visual-identity"],
+          "extra": { "done_criteria": "Brand report generado con voz e identidad aprobadas." }
+        }
+      ]
+    },
+    "foundation-metrics": {
+      "label": "Métricas y Conexiones",
+      "idPrefix": "P00-MET",
+      "project": {
+        "id": "P00-Metrics",
+        "name": "Métricas y Conexiones",
+        "description": "Definir plan de métricas, conectar herramientas de analytics/ads/CRM, y generar el dashboard de Mission Control.",
+        "approach": "Clasificar el negocio por arquetipo (SaaS, Lead-to-Sale, etc.), definir KPIs por nivel, conectar integraciones (GA4, Meta Ads, CRM) vía Mission Control, y generar metrics-plan.json para el dashboard.",
+        "objective": { "description": "Dashboard de métricas operativo con integraciones conectadas", "metric": "integrations_connected", "baseline": 0, "target": 3, "unit": " integrations" },
+        "origin": "onboarding",
+        "phase": -1,
+        "category": "foundation",
+        "review_date": null,
+        "status": "pending"
+      },
+      "tasks": [
+        {
+          "id": "metrics-setup",
+          "taskKey": "T01",
+          "name": "L6 — Acquisition Metrics Plan",
+          "skill": "metrics-setup",
+          "agent": "merlin",
+          "type": "foundation",
+          "channel": "intelligence",
+          "description": "Definir métricas clave de adquisición por canal: CPL, CAC, conversion rates, pipeline velocity.",
+          "deliverable": "go-to-market/metrics-plan.md con KPIs por canal.",
+          "deliverableFiles": ["go-to-market/metrics-plan/metrics-plan.current.md"],
+          "pillar": "metrics-setup",
+          "section": "metrics-setup",
+          "dependsOn": [],
+          "dependsOnExternal": ["P00-FUL-T09"],
+          "extra": { "done_criteria": "Métricas definidas y aprobadas. Tareas de conexión generadas automáticamente." }
+        },
+        {
+          "id": "meeting-intelligence",
+          "taskKey": "T08",
+          "name": "Conectar reuniones (Meeting Intelligence)",
+          "skill": "meeting-intelligence",
+          "agent": "hamete",
+          "type": "integration",
+          "channel": "intelligence",
+          "owner": "Usuario",
+          "description": "Comparte una carpeta de Google Drive con tus notas o grabaciones de reuniones. Sancho extraerá decisiones, acciones e insights automáticamente después de cada reunión.",
+          "deliverable": "Meeting Intelligence configurado y ejecutando automáticamente.",
+          "dependsOn": [],
+          "extra": {
+            "done_criteria": "google_drive_folder_id configurado y Meeting Intelligence ejecutado con al menos 1 reunión.",
+            "notes": "1) Crea o identifica una carpeta en Google Drive con tus notas de reuniones. 2) Comparte la carpeta con el agente. 3) Sancho configurará Meeting Intelligence automáticamente. Corre L-V a las 18h."
+          }
+        },
+        {
+          "id": "sales-call-prep",
+          "taskKey": "T09",
+          "name": "Configurar preparación de reuniones (Call Prep)",
+          "skill": "sales-call-prep",
+          "agent": "rocinante",
+          "type": "integration",
+          "channel": "intelligence",
+          "owner": "Usuario",
+          "description": "Si tienes un CRM con calendario de reuniones (GHL, HubSpot, etc.), Sancho puede preparar briefings automáticos antes de cada llamada con un lead.",
+          "deliverable": "Call Prep configurado y generando briefings.",
+          "dependsOn": [],
+          "extra": {
+            "done_criteria": "Call Prep ejecutado con al menos 1 briefing generado.",
+            "notes": "Requiere: acceso a tu calendario + CRM con datos de leads. Dile a Sancho qué CRM usas y él configurará la integración."
+          }
+        },
+        {
+          "id": "daily-pulse",
+          "taskKey": "T10",
+          "name": "Conectar comunicaciones internas",
+          "skill": "daily-pulse",
+          "agent": "hamete",
+          "type": "integration",
+          "channel": "insights",
+          "owner": "Usuario",
+          "description": "Sancho funciona mejor cuanto más contexto tiene de tu negocio. Al conectar tus canales de comunicación (email, Slack, etc.), puede leer tus conversaciones con clientes, propuestas, decisiones internas y oportunidades — y usar todo eso para darte recomendaciones más relevantes, priorizar mejor tu trabajo, y generar un Daily Pulse cada mañana con lo más importante del día anterior.",
+          "deliverable": "Al menos 1 canal de comunicación conectado y Daily Pulse ejecutando.",
+          "dependsOn": [],
+          "extra": {
+            "done_criteria": "Daily Pulse ejecutado con al menos 1 fuente conectada.",
+            "notes": "Abre esta tarea y dile a Sancho qué herramientas de comunicación usa tu empresa. Él te guiará paso a paso para conectar cada una. Cuantas más fuentes conectes, más completo será tu Daily Pulse.",
+            "connectors": [
+              { "id": "gmail", "name": "Gmail", "icon": "email", "status": "available", "config_hint": "Cuenta Gmail + labels a ignorar" },
+              { "id": "outlook", "name": "Outlook / Microsoft 365", "icon": "mail", "status": "available", "config_hint": "Cuenta Outlook + carpetas a monitorizar" },
+              { "id": "slack", "name": "Slack", "icon": "chat", "status": "available", "config_hint": "Bot token (xoxb-) + canales a monitorizar" },
+              { "id": "teams", "name": "Microsoft Teams", "icon": "teams", "status": "coming_soon", "config_hint": "Requiere app registrada en Azure AD" },
+              { "id": "whatsapp", "name": "WhatsApp Business", "icon": "wa", "status": "coming_soon", "config_hint": "API de WhatsApp Business" },
+              { "id": "intercom", "name": "Intercom", "icon": "ic", "status": "coming_soon", "config_hint": "API key de Intercom" },
+              { "id": "zendesk", "name": "Zendesk", "icon": "zd", "status": "coming_soon", "config_hint": "Subdomain + API token" }
+            ]
+          }
+        }
+      ]
+    },
+    "foundation-sp": {
+      "label": "Strategic Plan",
+      "idPrefix": "P00-SP",
+      "project": {
+        "id": "P00-Strategic-Plan",
+        "name": "Strategic Plan",
+        "description": "Creación y ejecución del plan estratégico completo: análisis SWOT, priorización de canales, roadmap de proyectos y KPIs.",
+        "approach": "Tras Full Foundation, sintetizamos todo el contexto en un SWOT ejecutivo. Priorizamos canales (Outreach, Contenido, Partners, Ads) según ajuste al ICP y recursos. Creamos roadmap de proyectos con fases 0-3. Definimos métricas de éxito. Ejecutamos los proyectos del plan.",
+        "objective": { "description": "Plan estratégico creado y proyectos en ejecución", "metric": "plan_status", "baseline": "not-started", "target": "executing", "unit": "" },
+        "origin": "onboarding",
+        "phase": -1,
+        "category": "foundation",
+        "review_date": null,
+        "status": "pending"
+      },
+      "tasks": [
+        {
+          "id": "strategic-plan",
+          "taskKey": "T01",
+          "name": "L7 — Crear Strategic Plan",
+          "skill": "strategic-plan",
+          "agent": "sancho",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Generar plan estratégico: SWOT ejecutivo, channel prioritization, roadmap de proyectos, KPIs.",
+          "deliverable": "strategic-plan/strategic-plan.current.md",
+          "deliverableFiles": ["strategic-plan/strategic-plan.current.md"],
+          "pillar": "strategic-plan",
+          "section": "strategic-plan",
+          "dependsOn": [],
+          "dependsOnExternal": ["P00-MET-T01"],
+          "extra": { "done_criteria": "Plan aprobado. Proyectos P01+ creados en Mission Control." }
+        },
+        {
+          "id": "strategic-plan-execution",
+          "taskKey": "T02",
+          "name": "Ejecutar Strategic Plan",
+          "skill": "strategic-plan",
+          "agent": "sancho",
+          "type": "execution",
+          "channel": "strategy",
+          "description": "Crear los proyectos P01+ del roadmap con tareas, skills y canales asignados.",
+          "deliverable": "Proyectos P01+ creados en MC con tareas detalladas.",
+          "dependsOn": ["strategic-plan"],
+          "extra": { "done_criteria": "Proyectos creados y en ejecución." }
+        },
+        {
+          "id": "strategic-presentation",
+          "taskKey": "T03",
+          "name": "L7 — Strategic Presentation",
+          "skill": "frontend-slides",
+          "agent": "maese-pedro",
+          "type": "foundation",
+          "channel": "strategy",
+          "description": "Presentación ejecutiva del Strategic Plan: SWOT, priorización de canales, roadmap y KPIs en un deck navegable.",
+          "deliverable": "presentations/strategic-deck.html con la presentación del plan estratégico.",
+          "deliverableFiles": ["presentations/strategic-deck.html"],
+          "pillar": "strategic-presentation",
+          "section": "strategic-plan",
+          "dependsOn": ["strategic-plan"],
+          "extra": { "done_criteria": "Deck estratégico generado y revisado con el cliente." }
+        }
+      ]
+    },
+    "outreach-setup": {
+      "label": "Outreach",
+      "tasks": [
+        {
+          "id": "connect-providers",
+          "taskKey": "T01",
+          "name": "Conectar proveedores de Outreach",
+          "skill": "yalc-operator",
+          "agent": "rocinante",
+          "type": "integration",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Conectar y verificar los proveedores que YALC necesita para operar: envío de email (Instantly o Gmail) y datos/enrichment (Apollo, Hunter…). Se hace desde el cockpit de YALC → pestaña Providers (/api/yalc/providers/*): añadir API key, test de salud verde.",
+          "deliverable": "Proveedores de envío y datos conectados y verificados en YALC.",
+          "dependsOn": [],
+          "extra": { "done_criteria": "Al menos un proveedor de envío y uno de datos con test de salud OK en el cockpit de YALC." }
+        },
+        {
+          "id": "outreach-strategy",
+          "taskKey": "T02",
+          "name": "Definir estrategia de Outreach",
+          "skill": "outreach-playbook",
+          "agent": "rocinante",
+          "type": "outreach",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Ejecutar outreach-playbook para definir la estrategia: stack y dominios de envío, canales, volumen y cadencia, ECPs objetivo, discovery-guide por ECP y plantillas base de secuencias.",
+          "deliverable": "Outreach Playbook del cliente (estrategia, discovery-guide y plantillas base).",
+          "deliverableFiles": ["outreach-playbook/outreach-playbook.current.md"],
+          "outputFiles": ["outreach-playbook.current.md", "discovery-guide.md", "sequence-templates.md"],
+          "dependsOn": [],
+          "extra": { "done_criteria": "Outreach Playbook aprobado con discovery-guide y plantillas base." }
+        },
+        {
+          "id": "provision-brain",
+          "taskKey": "T03",
+          "name": "Provisionar el brain de YALC",
+          "skill": "yalc-operator",
+          "agent": "rocinante",
+          "type": "integration",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Provisionar el brain de YALC con el contexto del brand (docs de Foundation aprobados: ECPs, positioning, brand-voice) vía POST /api/yalc/provision, para que YALC pueda cualificar y secuenciar alineado con la marca.",
+          "deliverable": "Brain de YALC provisionado con el contexto del brand.",
+          "dependsOn": ["connect-providers", "outreach-strategy"],
+          "extra": { "done_criteria": "Provision OK: YALC responde con el brain del brand cargado." }
+        }
+      ]
+    },
+    "outreach-campaign": {
+      "label": "Campaña de Outreach",
+      "tasks": [
+        {
+          "id": "discovery-run",
+          "taskKey": "T01",
+          "name": "Ejecutar búsqueda y scoring",
+          "skill": "discovery-search-runner",
+          "agent": "rocinante",
+          "type": "execution",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Ejecutar la búsqueda confirmada: sourcing de candidatos en las redes/segmentos del plan e inserción en la campaña de YALC con quality score (los < umbral entran Disqualified, el resto Sourced para triaje humano).",
+          "deliverable": "Candidatos scoreados en la campaña de YALC.",
+          "dependsOn": [],
+          "extra": { "done_criteria": "Runner completado: candidatos insertados con quality score." }
+        },
+        {
+          "id": "enrich-contacts",
+          "taskKey": "T02",
+          "name": "Enriquecer contactos",
+          "skill": "contact-enrichment",
+          "agent": "rocinante",
+          "type": "execution",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Enriquecer los contactos cualificados (emails, perfiles, datos de contacto) para dejarlos listos para secuenciar.",
+          "deliverable": "Contactos cualificados enriquecidos y listos para outreach.",
+          "dependsOn": ["discovery-run"],
+          "extra": { "done_criteria": "Contactos enriquecidos con email válido cuando aplica." }
+        },
+        {
+          "id": "build-sequences",
+          "taskKey": "T03",
+          "name": "Construir secuencias de outreach",
+          "skill": "outreach-sequence-builder",
+          "agent": "rocinante",
+          "type": "execution",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Construir la secuencia multi-paso de outreach (subject lines, body, delays, variables) para esta campaña, partiendo de las plantillas base del Outreach Playbook.",
+          "deliverable": "Secuencia de outreach lista para revisión y aprobación.",
+          "dependsOn": ["discovery-run"],
+          "extra": { "done_criteria": "Secuencia revisable guardada en la campaña de YALC." }
+        },
+        {
+          "id": "launch-campaign",
+          "taskKey": "T04",
+          "name": "Lanzar campaña",
+          "skill": "yalc-operator",
+          "agent": "rocinante",
+          "type": "execution",
+          "channel": "prospecting",
+          "phase": 1,
+          "description": "Cerrar el ciclo en YALC: aprobar la secuencia, dry-run en Instantly, publicar y lanzar live (cada paso con confirmación humana explícita).",
+          "deliverable": "Campaña lanzada en Instantly vía YALC.",
+          "dependsOn": ["enrich-contacts", "build-sequences"],
+          "extra": { "done_criteria": "Campaña live confirmada y reportada." }
+        }
+      ]
+    }
+  },
+  "_namespaceOwners_comment": "SAN-205 — single data-driven registry that OWNS every non-task chat namespace, replacing the old chatEntries block AND the hardcoded namespace fallbacks in resolveFullThreadConfig. One source for BOTH directions: (open) build*Thread call instantiateNamespace(key, {slug, params}) → substitutes {slug}+{params} into the templates → ThreadConfig; (reopen) resolveFullThreadConfig matches a threadId against `nsKey`+`match` and rebuilds the owner config from the same entry (threadName derived from the shortId when its template still has tokens, linkedTo from reopenLinkedTo with {rest}/{restUpper}, threadState forced to continue, no initialMessage). Entries WITH a threadId are openable BUTTONS (validated by ownerCheckFindings); entries WITHOUT one are reopen-only namespaces (content/idea/calendar/cron/project/scan/strategy/recurring). `match`: exact => shortId === nsKey; prefix => shortId starts with `nsKey:` or `nsKey-` (longest nsKey wins). Closes 'todo es Task': no thread is a 'concept apart' — it's either a real task (task index) or a namespace whose declared skill+agent the eventual task inherits when the agent persists it on confirm.",
+  "namespaceOwners": {
+    "yalc": {
+      "threadId": "{slug}:yalc",
+      "threadName": "YALC / GTM-OS",
+      "skill": "yalc-operator",
+      "skills": ["yalc-operator"],
+      "agent": "rocinante",
+      "linkedTo": "rocinante",
+      "docPath": null,
+      "threadState": "continue",
+      "nsKey": "yalc",
+      "match": "exact",
+      "reopenLinkedTo": "rocinante"
+    },
+    "outreach-template": {
+      "threadId": "{slug}:outreach-template:{idLower}",
+      "threadName": "Plantilla: {name}",
+      "skill": "outreach-sequence-builder",
+      "skills": ["outreach-sequence-builder", "outreach-playbook"],
+      "agent": "rocinante",
+      "linkedTo": "outreach/templates/{id}",
+      "docPath": "brand/{slug}/outreach/templates/{id}.md",
+      "threadState": "continue",
+      "initialMessage": "Estoy mirando la plantilla de outreach \"{name}\" ({kindLabel}, brand/{slug}/outreach/templates/{id}.md). Puedes ajustar tono, pasos, delays o variables ({{nombre}}, {{handle}}, {{plataforma}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK.",
+      "nsKey": "outreach-template",
+      "match": "prefix",
+      "reopenLinkedTo": "outreach/templates/{rest}"
+    },
+    "skill-creator": {
+      "threadId": "{slug}:skill-creator:{nonce}",
+      "threadName": "Crear nueva skill",
+      "skill": "skill-creator",
+      "skills": ["skill-creator"],
+      "agent": "cervantes",
+      "linkedTo": "skills/new",
+      "docPath": null,
+      "threadState": "create",
+      "initialMessage": "Quiero crear una nueva skill para el workspace. Guíame paso a paso.",
+      "nsKey": "skill-creator",
+      "match": "prefix",
+      "reopenLinkedTo": "skills/new"
+    },
+    "skill-editor": {
+      "threadId": "{slug}:skill:{skillId}",
+      "threadName": "{skillName}",
+      "skill": "skill-creator",
+      "skills": ["skill-creator"],
+      "agent": "cervantes",
+      "linkedTo": "skills/{skillId}",
+      "docPath": null,
+      "threadState": "continue",
+      "nsKey": "skill",
+      "match": "prefix",
+      "reopenLinkedTo": "skills/{rest}"
+    },
+    "media-asset": {
+      "threadId": "{slug}:asset:{safe}",
+      "threadName": "🎨 {assetName}",
+      "skill": "od-refine",
+      "skills": ["od-refine", "od-generate", "od-export"],
+      "agent": "maese-pedro",
+      "linkedTo": "media-creation/asset/{assetRelativePath}",
+      "docPath": "brand/{slug}/{assetRelativePath}",
+      "threadState": "continue",
+      "initialMessage": "Estoy mirando el asset \"{assetName}\" (`{assetRelativePath}`, kind={kind}). Dame un resumen y las opciones de refinamiento.",
+      "nsKey": "asset",
+      "match": "prefix",
+      "reopenLinkedTo": "media-creation/asset/{rest}"
+    },
+    "visual-identity": {
+      "threadId": "{slug}:visual-identity:{blockSafe}",
+      "threadName": "🎨 Visual Identity",
+      "skill": "design-system",
+      "skills": ["design-system", "od-generate"],
+      "agent": "maese-pedro",
+      "linkedTo": "media-creation/visual-identity/{blockSafe}",
+      "docPath": "brand/{slug}/brand-book/visual-identity/DESIGN.md",
+      "threadState": "continue",
+      "initialMessage": "Hablemos del Visual Identity del brand. ¿Por dónde empezamos?",
+      "nsKey": "visual-identity",
+      "match": "prefix",
+      "reopenLinkedTo": "media-creation/visual-identity/{rest}"
+    },
+    "new-task": {
+      "threadId": "{slug}:new-task:{nonce}",
+      "threadName": "Nueva tarea",
+      "skill": "sancho-manager",
+      "skills": ["sancho-manager"],
+      "agent": "sancho",
+      "linkedTo": "new-task",
+      "docPath": null,
+      "threadState": "continue",
+      "nsKey": "new-task",
+      "match": "prefix",
+      "reopenLinkedTo": "new-task"
+    },
+    "discovery-search": {
+      "threadId": "{slug}:discovery-{campaignIdLower}",
+      "threadName": "Búsqueda: {searchName}",
+      "skill": "discovery-plan-builder",
+      "skills": ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"],
+      "agent": "rocinante",
+      "linkedTo": "rocinante",
+      "docPath": null,
+      "threadState": "continue",
+      "initialMessage": "Repasemos y lancemos la búsqueda de creators \"{searchName}\" (campaña Yalc {campaignId}, Partnerships): revisa el plan de discovery — sectores, redes, tiers, volumen — y dime qué falta para lanzarla.",
+      "nsKey": "discovery",
+      "match": "prefix",
+      "reopenLinkedTo": "rocinante"
+    },
+    "discovery-search-new": {
+      "threadId": "{slug}:discovery-new",
+      "threadName": "Nueva búsqueda de creators",
+      "skill": "discovery-plan-builder",
+      "skills": ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"],
+      "agent": "rocinante",
+      "linkedTo": "rocinante",
+      "docPath": null,
+      "threadState": "create",
+      "initialMessage": "Quiero crear una nueva búsqueda de creators para Partnerships. Propón un plan de discovery — sectores con mejor fit, redes, tiers y volumen — y cuando lo cerremos lánzala como campaña Partnerships en Yalc.",
+      "nsKey": "discovery",
+      "match": "prefix",
+      "reopenLinkedTo": "rocinante"
+    },
+    "od-generate": {
+      "threadId": "{slug}:od-generate:{safe}{dsTag}",
+      "threadName": "🎨 {upstreamSkillName}",
+      "skill": "od-generate",
+      "skills": ["od-generate", "od-refine", "od-export"],
+      "agent": "maese-pedro",
+      "linkedTo": "media-creation/od/{upstreamSkillId}",
+      "docPath": null,
+      "threadState": "create",
+      "initialMessage": "Genera un asset con la skill \"{upstreamSkillName}\" usando el DESIGN.md del brand. Pídeme los inputs que necesites antes de empezar.",
+      "nsKey": "od-generate",
+      "match": "prefix",
+      "reopenLinkedTo": "media-creation/od/{rest}"
+    },
+    "content": {
+      "skill": "social-writer",
+      "skills": ["social-writer"],
+      "agent": "dulcinea",
+      "nsKey": "content",
+      "match": "prefix",
+      "reopenLinkedTo": "content/{rest}"
+    },
+    "idea": {
+      "skill": "seo-content",
+      "skills": ["seo-content"],
+      "agent": "dulcinea",
+      "nsKey": "idea",
+      "match": "prefix",
+      "reopenLinkedTo": "idea/{rest}"
+    },
+    "calendar": {
+      "skill": "content-calendar-planner",
+      "skills": ["content-calendar-planner"],
+      "agent": "dulcinea",
+      "nsKey": "calendar",
+      "match": "prefix",
+      "reopenLinkedTo": "calendar/{rest}"
+    },
+    "cron": {
+      "skill": "idea-generation",
+      "skills": ["idea-generation"],
+      "agent": "dulcinea",
+      "nsKey": "cron",
+      "match": "prefix",
+      "reopenLinkedTo": "cron/{rest}"
+    },
+    "project": {
+      "skill": "sancho-manager",
+      "skills": ["sancho-manager"],
+      "nsKey": "project",
+      "match": "prefix",
+      "reopenName": "restUpper",
+      "reopenLinkedTo": "projects/{restUpper}"
+    },
+    "competitor-scan": {
+      "skill": "atalaya",
+      "skills": ["atalaya"],
+      "nsKey": "competitor-scan",
+      "match": "exact",
+      "reopenLinkedTo": "tool/atalaya"
+    },
+    "meta-ads-scan": {
+      "skill": "atalaya",
+      "skills": ["atalaya"],
+      "nsKey": "meta-ads-scan",
+      "match": "exact",
+      "reopenLinkedTo": "tool/atalaya"
+    },
+    "linkedin-scan": {
+      "skill": "atalaya",
+      "skills": ["atalaya"],
+      "nsKey": "linkedin-scan",
+      "match": "exact",
+      "reopenLinkedTo": "tool/atalaya"
+    },
+    "strategy": {
+      "skill": "sancho",
+      "skills": ["sancho"],
+      "nsKey": "strategy",
+      "match": "prefix",
+      "reopenLinkedTo": "strategy/{rest}"
+    },
+    "recurring": {
+      "skill": "sancho",
+      "skills": ["sancho"],
+      "nsKey": "recurring",
+      "match": "prefix",
+      "reopenLinkedTo": "recurring/{rest}"
+    }
+  },
+  "_threadOpeners_comment": "SAN-179 — openers (initialMessage) sueltos, templados con {slug}+{params}, para hilos cuya IDENTIDAD se construye con lógica propia del builder (no un chatEntry completo): conversión a HTML, setup de Meeting Intelligence. resolveOpener(key, vars) los lee. Sin agente (no son declaraciones de hilo).",
+  "threadOpeners": {
+    "html-conversion": "Convierte {docPath} a HTML con la skill html-output: genera el .html self-contained junto al .md (mismo nombre de fichero), con la identidad visual del brand si existe, siguiendo _system/output/html-canonical-protocol.md. Al terminar, confírmame la ruta exacta del .html.",
+    "meeting-intelligence-setup": "Configura Meeting Intelligence para este cliente: valida APIs/MCP, localiza y confirma la carpeta de Drive (URL/ID solo como fallback), elige la base/página de Notion y sus filtros, y deja listo el primer run sin tocar documentos canónicos.",
+    "od-generate-ds": "Genera un asset con la skill \"{upstreamSkillName}\" aplicando el design system \"{designSystemId}\". Pídeme los inputs que necesites antes de empezar.",
+    "visual-identity-block": "Quiero ajustar la sección \"{block}\" del Visual Identity. ¿Qué opciones tengo?"
+  },
+  "_taskDefaults_comment": "SAN-167 F4 — defaults por TIPO de tarea ad-hoc/idea-driven (Outreach/Content) que antes eran ternarios inline en create-execution-tasks.ts / create-batch.ts. getTaskDefault(type) los lee; el agente va co-localizado.",
+  "taskDefaults": {
+    "byType": {
+      "outreach": { "skill": "outreach-sequence-builder", "channel": "prospecting", "agent": "rocinante", "ideaType": "contact", "ideaList": "outreach" },
+      "content": { "skill": "seo-content", "channel": "content", "agent": "dulcinea", "ideaType": "content", "ideaList": "keywords" }
+    }
+  },
+  "pipelines": {
+    "outreach": {
+      "agent": "rocinante",
+      "stages": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder"]
+    }
+  }
+}

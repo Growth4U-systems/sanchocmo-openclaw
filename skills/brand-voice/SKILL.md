@@ -14,9 +14,7 @@ metadata:
 context_required:
 - brand/{slug}/company-brief/company-brief.current.md
 - brand/{slug}/go-to-market/positioning/*/*.current.md
-# Lite fallbacks (read-only, treat as preliminary seed, not as final truth):
-- brand/{slug}/company-brief/lite.md            # merge view fallback (always lite today)
-- brand/{slug}/brand-voice/lite.md              # own seed from fast-foundation (hydration only)
+- brand/{slug}/company-brief/company-brief.current.md   # optional Company Brief grounding (read your section; skip if absent)
 context_writes:
 - brand/{slug}/brand-voice/brand-voice.current.md
 ---

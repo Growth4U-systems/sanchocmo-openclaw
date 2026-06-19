@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
+import { resolveCoveringTask } from "@/lib/data/task-status-store";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 
@@ -39,40 +40,27 @@ interface TaskShape {
   owner: string;
   skill: string;
   mc_chat_thread_id: string;
-  discord_thread_id: string | null;
 }
 
-interface FoundationStateShape {
-  sections?: Record<string, { pillars?: Record<string, { status?: string }> }>;
-}
-
-/** Prerequisite: the brand needs `visual-identity` pillar approved in
- *  Foundation L5 before we let a Visual Templates task be created. The
- *  visual-generator skill needs design-tokens.json + visual-identity.current.md
- *  to produce the HTMLs — without those it has nothing to consume. */
+/** Prerequisite: the brand needs the `visual-identity` pillar task completed
+ *  (Foundation L5) before we let a Visual Templates task be created. The
+ *  visual-generator skill needs DESIGN.md (the source-of-truth produced by the
+ *  `design-system` skill; legacy fallback: design-tokens.json +
+ *  visual-identity.current.md) to produce the HTMLs — without it nothing to consume.
+ *  SAN-183 F5: el status vive en la task 1:1 del pilar, no en foundation-state. */
 function checkVisualIdentityApproved(slug: string): { ok: true } | { ok: false; reason: string } {
-  const fsPath = path.join(BASE, "brand", slug, "foundation-state.json");
-  if (!fs.existsSync(fsPath)) {
-    return { ok: false, reason: "No existe foundation-state.json. ¿Está la brand en Foundation?" };
-  }
-  let foundation: FoundationStateShape;
-  try {
-    foundation = JSON.parse(fs.readFileSync(fsPath, "utf-8")) as FoundationStateShape;
-  } catch {
-    return { ok: false, reason: "foundation-state.json no parseable." };
-  }
-  for (const section of Object.values(foundation.sections || {})) {
-    const vi = section.pillars?.["visual-identity"];
-    if (!vi) continue;
-    if (vi.status === "approved" || vi.status === "done") return { ok: true };
+  const covering = resolveCoveringTask(slug, "visual-identity");
+  if (!covering) {
     return {
       ok: false,
-      reason: `El pillar visual-identity está en estado "${vi.status || "not-started"}", no "approved". Lanza primero la skill visual-identity para definir paleta, tipografía y logo.`,
+      reason: "No hay task de visual-identity (proyectos P00 sin sembrar). Lanza primero Foundation.",
     };
   }
+  const status = String(covering.task.status || "todo");
+  if (status === "completed") return { ok: true };
   return {
     ok: false,
-    reason: "El pillar visual-identity no existe en foundation-state.json. Lanza primero la skill visual-identity (Foundation Layer 5).",
+    reason: `El pillar visual-identity está en estado "${status}", no "completed". Lanza primero la skill design-system para definir el DESIGN.md (paleta, tipografía y logo).`,
   };
 }
 
@@ -141,13 +129,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Prereq: visual-identity pillar must be approved before we let the
   // Visual Templates task land. Otherwise the visual-generator skill has
-  // no design-tokens.json / visual-identity.current.md to read from.
+  // no DESIGN.md to read from (legacy: design-tokens.json / visual-identity.current.md).
   const prereq = checkVisualIdentityApproved(slug);
   if (!prereq.ok) {
     return res.status(409).json({
       error: "Prerequisito no cumplido: visual-identity no está aprobado.",
       reason: prereq.reason,
-      remediation: "Lanza la skill visual-identity en Foundation Layer 5 antes de crear esta task.",
+      remediation: "Lanza la skill design-system en Foundation Layer 5 (produce el DESIGN.md) antes de crear esta task.",
     });
   }
 
@@ -159,7 +147,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     description:
       "Genera las 5 plantillas HTML brand-specific (linkedin-quote, linkedin-9-slide, " +
       "instagram-3-slide, blog-post, blog-title) ejecutando el skill " +
-      `${slug}-visual-generator. La skill lee design-tokens.json + visual-identity.current.md, ` +
+      `${slug}-visual-generator. La skill lee el DESIGN.md (source-of-truth), ` +
       "decide qué personajes incluir (Alfonso/Martín/Philippe), genera con nano-banana-pro " +
       "los assets faltantes, y produce los HTMLs en " +
       `brand/${slug}/brand-book/visual-identity/templates/{id}/. ` +
@@ -183,7 +171,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     owner: "Sancho",
     skill: targetSkill,
     mc_chat_thread_id: `task-${newId.toLowerCase()}`,
-    discord_thread_id: null,
   };
 
   tasks.push(task);

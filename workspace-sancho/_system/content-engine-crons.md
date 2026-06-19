@@ -94,7 +94,7 @@ skill: insight-to-content-mapper (extended)
 input:
   signals: "brand/{slug}/content/research-signals/{YYYY-MM-DD}-*.json"
   pillars: "brand/{slug}/content/content-pillars.md"
-  brand_voice: "brand/{slug}/brand-book/brand-voice/brand-voice.current.md"
+  brand_voice: "brand/{slug}/brand-book/brand-voice/brand-voice-current.md"
 output: "brand/{slug}/content/idea-queue.json (append)"
 notes: "Convierte signals clasificados en ideas con angle_draft. Cada idea lleva signal.summary + signal.url + signal.date + angle_draft + pov_confidence."
 ```
@@ -127,7 +127,7 @@ schedule: "0 9 1 * *"  # dia 1 del mes, 9am
 skill: brand-voice
 input:
   pov_bank: "Neon tables: pov_banks, pov_pillars, pov_clarify_patterns, pov_evidence_items"
-  current_voice: "brand/{slug}/brand-book/brand-voice/brand-voice.current.md"
+  current_voice: "brand/{slug}/brand-book/brand-voice/brand-voice-current.md"
 output: "Crea propuestas revisables en Neon; no modifica postura canonica sin aprobacion humana"
 notes: "Cierra el feedback loop. Los patterns de Clarify viven en Neon y refinan el POV Bank mediante propuestas."
 ```
