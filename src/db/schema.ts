@@ -8,7 +8,6 @@ import {
   real,
   text,
   timestamp,
-  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // ============================================================
@@ -569,13 +568,9 @@ export const metricSnapshots = pgTable("metric_snapshots", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [
-  uniqueIndex("metric_snapshots_unique_idx").on(
-    table.slug,
-    table.metricDate,
-    table.source,
-    table.metricName,
-    table.dimsKey,
-  ),
+  // Uniqueness is the deterministic hashed `id` PK (collision-negligible); no
+  // raw-dims_key unique index, which could exceed Postgres' btree index-row
+  // size limit on long GSC/GA4 URL/query dimensions (Codex review).
   index("metric_snapshots_slug_date_idx").on(table.slug, table.metricDate),
   index("metric_snapshots_slug_source_metric_idx").on(table.slug, table.source, table.metricName),
   index("metric_snapshots_slug_source_date_idx").on(table.slug, table.source, table.metricDate),

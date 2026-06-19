@@ -15,8 +15,9 @@ CREATE TABLE IF NOT EXISTS "metric_snapshots" (
   "updated_at" timestamp DEFAULT now() NOT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "metric_snapshots_unique_idx"
-  ON "metric_snapshots" ("slug", "metric_date", "source", "metric_name", "dims_key");
+-- Uniqueness is enforced by the deterministic hashed `id` primary key
+-- (collision-negligible). A raw-dims_key btree unique index could exceed
+-- Postgres' index-row size limit on long GSC/GA4 URL/query dimensions.
 CREATE INDEX IF NOT EXISTS "metric_snapshots_slug_date_idx"
   ON "metric_snapshots" ("slug", "metric_date");
 CREATE INDEX IF NOT EXISTS "metric_snapshots_slug_source_metric_idx"
