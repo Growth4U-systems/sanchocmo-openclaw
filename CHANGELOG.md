@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.8.0...v0.8.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* **mcp:** separate Sancho and Alarife token admin UI - SAN-234 ([#704](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/704)) ([5fb4694](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5fb46941c58345b6597b0cfe09a5268051bcaedb))
+
 ## [0.8.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.7.0...v0.8.0) (2026-06-19)
 
 
