@@ -45,6 +45,12 @@ export interface PublishInput {
   };
   media: MediaAsset[];
   schedule?: { publishAt: string };  // ISO; absent = publish now
+  /**
+   * SAN-162 — provider-specific account/profile selector for multi-account
+   * publishing (Metricool: the voice's `metricool_profile_id` / blogId).
+   * Absent = the provider's default account.
+   */
+  accountId?: string;
 }
 
 export interface PublishResult {

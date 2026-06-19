@@ -51,13 +51,19 @@ interface IntegrationsData {
   dataSources?: Record<string, { config?: Record<string, string> }>;
 }
 
-function loadConfig(slug: string): { ok: true; cfg: MetricoolConfig } | { ok: false; missing: string } {
+function loadConfig(
+  slug: string,
+  overrideBlogId?: string,
+): { ok: true; cfg: MetricoolConfig } | { ok: false; missing: string } {
   const apiToken = readBrandSecret(slug, "metricool", "API_TOKEN");
   if (!apiToken) return { ok: false, missing: "Falta API_TOKEN de Metricool. Conéctala en Ajustes → APIs." };
 
   const integrations = readJSON<IntegrationsData>(integrationsFile(slug), {});
   const url = integrations.dataSources?.metricool?.config?.METRICOOL_URL || "";
-  const blogId = url.match(/[?&]blogId=([^&]+)/)?.[1];
+  // SAN-162 — a voice can publish from its OWN Metricool brand. The override
+  // (the voice's metricool_profile_id) replaces the blogId; userId + token stay
+  // shared (one Metricool login, many brands). Absent → the default blogId.
+  const blogId = overrideBlogId?.trim() || url.match(/[?&]blogId=([^&]+)/)?.[1];
   const userId = url.match(/[?&]userId=([^&]+)/)?.[1];
   if (!blogId || !userId) {
     return {
@@ -149,7 +155,9 @@ export const metricoolProvider: PublishProvider = {
   },
 
   async publish(input: PublishInput): Promise<PublishResult> {
-    const result = loadConfig(input.slug);
+    // SAN-162 — `input.accountId` (the voice's metricool_profile_id) routes to
+    // that voice's brand; absent → default blogId.
+    const result = loadConfig(input.slug, input.accountId);
     if (!result.ok) return { ok: false, error: result.missing };
     const cfg = result.cfg;
 

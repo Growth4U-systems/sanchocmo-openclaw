@@ -3,6 +3,7 @@ import { withErrorHandler } from "@/lib/api-middleware";
 import { loadDraft, updateDraft } from "@/lib/data/drafts";
 import { findContentTaskByIdAcrossProjects, setChannelPhase } from "@/lib/data/content-tasks";
 import { getProvider } from "@/lib/publishing/registry";
+import { getVoiceMetricoolProfileId } from "@/lib/data/voice-routing";
 import type { Channel } from "@/lib/publishing/types";
 import type { PublishingMeta } from "@/lib/data/drafts";
 
@@ -43,10 +44,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const ctId = draft.meta.content_task_id;
   let parentTaskId: string | null = null;
   let ctMediaPolicy: "required" | "optional" | undefined;
+  let authorId: string | undefined;
   if (ctId) {
     const found = findContentTaskByIdAcrossProjects(slug, ctId);
     parentTaskId = found?.parentTaskId ?? null;
     ctMediaPolicy = found?.ct.media_policy?.[channel];
+    authorId = found?.ct.author;
     const phase = found?.ct.channel_phases?.[channel];
     if (phase !== "approved" && phase !== "published") {
       return res.status(400).json({
@@ -120,12 +123,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   };
   updateDraft(slug, ideaId, channel, { meta: { publishing: optimistic } });
 
+  // SAN-162 — route to the voice's own publishing account. The author (voice)
+  // resolves to its `metricool_profile_id` in cadence-config; absent → the
+  // provider's default account (back-compat for channels without voices).
+  const accountId = getVoiceMetricoolProfileId(slug, channel, authorId) ?? undefined;
+
   const validSchedule = schedule?.publishAt ? { publishAt: schedule.publishAt } : undefined;
   const result = await provider.publish({
     slug,
     draft: { ideaId, channel, body: draft.body },
     media: draft.meta.media || [],
     schedule: validSchedule,
+    accountId,
   });
 
   // `status` in frontmatter only carries non-terminal states. When the
