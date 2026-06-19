@@ -141,6 +141,10 @@ Options:
   --json '<json>'               Inline JSON payload for run-skill
   --confirm-side-effect         Required for live sends, campaign status writes, gates, setup commits, and generic mutating API calls
                                 Not required for create-campaign-draft because it only creates an internal YALC review draft
+  --callback-context '<json>'   For long ops (campaign-leads-enrich, campaign-publish, run-skill, approve-gate, reject-gate):
+                                {"slug","threadId","agent"} captured from the [MC Chat Context]. When YALC runs the op as a
+                                background job (202), it POSTs the result to SANCHO_BASE_URL/api/yalc/job-callback, which
+                                re-engages this chat thread. The agent must say "te aviso cuando termine" and END the turn.
 `)
 }
 
@@ -233,12 +237,33 @@ async function request(config, method, endpoint, body) {
     err.data = data
     throw err
   }
+  // YALC returns 202 {jobId, statusUrl} for long-running ops it has converted
+  // to async jobs. The result is delivered later via the callbackUrl we passed
+  // in the request body; the agent must NOT poll. Surface the async marker so
+  // callAndSave/commands can report "te aviso cuando termine" and end the turn.
+  if (res.status === 202) {
+    return {
+      ok: true,
+      async: true,
+      jobId: data?.jobId ?? null,
+      statusUrl: data?.statusUrl ?? null,
+    }
+  }
   return data
 }
 
 async function callAndSave(config, label, method, endpoint, body) {
   const data = await request(config, method, endpoint, body)
   const out = { ok: true, data, request: { method, endpoint } }
+  // Hoist the async marker so the agent sees it at the top level: YALC accepted
+  // the long op as a background job and will deliver the result via callback.
+  // The agent MUST tell the user "te aviso cuando termine" and END the turn —
+  // do NOT poll statusUrl in a loop.
+  if (data && data.async === true) {
+    out.async = true
+    out.jobId = data.jobId
+    out.statusUrl = data.statusUrl
+  }
   out.savedTo = saveRun(config.slug, label, out)
   console.log(JSON.stringify(out, null, 2))
   return out
@@ -280,6 +305,46 @@ function requireConfirmation(args, action) {
 function endpointWithTenant(endpoint, slug) {
   const sep = endpoint.includes('?') ? '&' : '?'
   return `${endpoint}${sep}tenant=${encodeURIComponent(slug)}`
+}
+
+// Sancho's own base URL — where YALC POSTs job-completion callbacks. This is the
+// Sancho/Mission-Control app, NOT the YALC base URL.
+function sanchoBaseUrl() {
+  const base = process.env.SANCHO_BASE_URL || process.env.BASE_URL || 'http://localhost:3000'
+  return base.replace(/\/+$/, '')
+}
+
+function callbackUrl() {
+  return `${sanchoBaseUrl()}/api/yalc/job-callback`
+}
+
+// Long-op commands hit YALC endpoints that may return 202 + run async. For
+// those we attach callbackUrl + callbackContext so YALC can re-engage the
+// originating chat thread when the job finishes. callbackContext is passed in
+// by the agent as `--callback-context '{"slug":..,"threadId":..,"agent":..}'`
+// captured from the [MC Chat Context] block. When absent (e.g. a manual CLI
+// run with no chat thread), we omit the fields and the op stays fire-and-poll
+// only if the user asks — but normal agent use always supplies it.
+function parseCallbackContext(args) {
+  if (!args.callbackContext) return null
+  let ctx
+  try {
+    ctx = JSON.parse(args.callbackContext)
+  } catch {
+    throw new Error('--callback-context must be JSON, e.g. \'{"slug":"acme","threadId":"acme:abc","agent":"rocinante"}\'')
+  }
+  if (!ctx || typeof ctx !== 'object' || !ctx.slug || !ctx.threadId || !ctx.agent) {
+    throw new Error('--callback-context requires { slug, threadId, agent }')
+  }
+  return { slug: ctx.slug, threadId: ctx.threadId, agent: ctx.agent }
+}
+
+// Merge callbackUrl + callbackContext into a long-op POST body when the agent
+// supplied a chat context. Returns the body unchanged when no context is given.
+function withAsyncCallback(body, args) {
+  const ctx = parseCallbackContext(args)
+  if (!ctx) return body
+  return { ...(body || {}), callbackUrl: callbackUrl(), callbackContext: ctx }
 }
 
 function normalizeLiveSkillIds(skillsData) {
@@ -490,7 +555,7 @@ async function main() {
   if (command === 'campaign-leads-enrich') {
     requireConfirmation(args, command)
     const id = requireArg(args, 'id')
-    const payload = readPayload(args)
+    const payload = withAsyncCallback(readPayload(args), args)
     return callAndSave(config, `campaign-${id}-leads-enrich`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/leads/enrich`, payload)
   }
 
@@ -565,10 +630,10 @@ async function main() {
   if (command === 'campaign-publish') {
     requireConfirmation(args, command)
     const id = requireArg(args, 'id')
-    return callAndSave(config, `campaign-${id}-publish`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/publish`, {
+    return callAndSave(config, `campaign-${id}-publish`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/publish`, withAsyncCallback({
       ...readPayload(args),
       confirmInstantlyPublish: true,
-    })
+    }, args))
   }
 
   if (command === 'campaign-live') {
@@ -616,7 +681,7 @@ async function main() {
   if (command === 'approve-gate') {
     requireConfirmation(args, command)
     const runId = requireArg(args, 'runId')
-    const payload = readPayload(args)
+    const payload = withAsyncCallback(readPayload(args), args)
     return callAndSave(config, `gate-${runId}-approve`, 'POST', `/api/gates/${encodeURIComponent(runId)}/approve`, payload)
   }
 
@@ -624,7 +689,7 @@ async function main() {
     requireConfirmation(args, command)
     const runId = requireArg(args, 'runId')
     const reason = requireArg(args, 'reason')
-    return callAndSave(config, `gate-${runId}-reject`, 'POST', `/api/gates/${encodeURIComponent(runId)}/reject`, { reason })
+    return callAndSave(config, `gate-${runId}-reject`, 'POST', `/api/gates/${encodeURIComponent(runId)}/reject`, withAsyncCallback({ reason }, args))
   }
 
   if (command === 'providers') {
@@ -706,7 +771,10 @@ async function main() {
     if (sideEffecting && payload.dryRun !== true && !args.confirmSideEffect) {
       throw new Error(`Skill "${skill}" can modify external systems. Re-run with --confirm-side-effect after user approval.`)
     }
-    const data = await request(config, 'POST', `/api/skills/run/${encodeURIComponent(skill)}`, payload)
+    // Skill runs are long ops on the YALC side — attach the callback so a 202
+    // job can re-engage the originating chat thread when it finishes.
+    const body = withAsyncCallback(payload, args)
+    const data = await request(config, 'POST', `/api/skills/run/${encodeURIComponent(skill)}`, body)
     const out = {
       ok: true,
       data,
@@ -715,6 +783,11 @@ async function main() {
         dryRunForced: sideEffecting && !args.confirmSideEffect,
         sideEffecting,
       },
+    }
+    if (data && data.async === true) {
+      out.async = true
+      out.jobId = data.jobId
+      out.statusUrl = data.statusUrl
     }
     out.savedTo = saveRun(config.slug, `run-${skill}`, out)
     console.log(JSON.stringify(out, null, 2))
