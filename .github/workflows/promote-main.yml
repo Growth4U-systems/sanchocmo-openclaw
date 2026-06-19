@@ -43,7 +43,11 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${{ github.event.release.tag_name }}"
-          git fetch origin --tags --quiet
+          # --no-recurse-submodules: the tree carries a legacy gitlink
+          # (skill-repos/frontend-slides) with no .gitmodules entry; a plain
+          # fetch would recurse into it and abort with "No url found for
+          # submodule path". We only need refs here, never submodule contents.
+          git fetch origin --tags --no-recurse-submodules --quiet
           TAG_SHA="$(git rev-parse "${TAG}^{commit}")"
           MAIN_SHA="$(git rev-parse origin/main)"
           echo "Release ${TAG} → ${TAG_SHA}"
@@ -63,7 +67,7 @@ jobs:
           # of the prod tag on purpose and forward-merges to staging right after,
           # signalling it with [hotfix-off-staging] in the Release body.
           # ($RELEASE_BODY comes from the step env, never inlined — see the step.)
-          git fetch origin staging --quiet
+          git fetch origin staging --no-recurse-submodules --quiet
           STAGING_SHA="$(git rev-parse origin/staging)"
           if ! git merge-base --is-ancestor "${TAG_SHA}" "${STAGING_SHA}"; then
             if printf '%s' "${RELEASE_BODY:-}" | grep -qF '[hotfix-off-staging]'; then
