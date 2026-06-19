@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.8.1...v0.9.0) (2026-06-19)
+
+
+### Features
+
+* **yalc:** async job callback returns result to the chat (PR-2) ([#707](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/707)) ([e8ec154](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e8ec154b0ebd54178b77bbf03932de99922b19bd))
+
+
+### Bug Fixes
+
+* **mcp:** simplify token management UI SAN-234 ([#709](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/709)) ([a05d64d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a05d64d4f646b523d1d0b287f87199aff09b4739))
+
 ## [0.8.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.8.0...v0.8.1) (2026-06-19)
 
 
