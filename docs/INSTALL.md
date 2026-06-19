@@ -1,9 +1,21 @@
 # Installing SanchoCMO
 
-SanchoCMO ships as Docker images plus a thin installer. The fastest path:
+SanchoCMO ships as Docker images plus a thin installer.
+
+**Un comando (recomendado, sin clonar):**
 
 ```bash
-git clone <this-repo> sanchocmo && cd sanchocmo
+curl -fsSL https://raw.githubusercontent.com/Growth4U-systems/sanchocmo-openclaw/main/get.sh | bash
+```
+
+Baja el runtime del último release a `~/sanchocmo` (override `SANCHO_DIR`),
+corre el wizard y levanta el stack. Si la imagen de GHCR todavía es privada, el
+instalador te guía el `docker login` y reintenta.
+
+**Para desarrollo (clonando):**
+
+```bash
+git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git sanchocmo && cd sanchocmo
 ./install.sh
 ```
 
