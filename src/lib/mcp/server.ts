@@ -18,7 +18,14 @@ import {
   getMeetingIntelligenceState,
 } from "@/lib/data/meeting-intelligence-db";
 import { getMetricsTimeSeries, getSurfaceSummary, getTrend, getNorthStar } from "@/lib/data/metrics";
-import { getDashboardDefinition } from "@/lib/data/metric-dashboard";
+import {
+  addCustomMetric,
+  applyDashboardTemplate,
+  getDashboardDefinition,
+  revertDashboardDefinition,
+  saveDashboardDefinition,
+} from "@/lib/data/metric-dashboard";
+import { isSafeFormula } from "@/lib/metrics/dashboard-schema";
 import { getMcpDocument, listMcpDocuments } from "@/lib/mcp/documents";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
 import {
@@ -1465,6 +1472,120 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       runTool(context, "sancho_get_metrics_dashboard", clientSlug, async () => {
         assertClientScope(context, "metrics:read", clientSlug);
         return jsonResult(await getDashboardDefinition(clientSlug));
+      }),
+  );
+
+  // Métricas v2 (SAN-266): Merlin's write tools over the dashboard definition.
+  // All metrics:write, dry-run by default (confirm=true to mutate), audited via
+  // runTool. Connections/credentials are NOT here — those stay in the UI.
+  server.registerTool(
+    "sancho_update_metrics_dashboard",
+    {
+      title: "Update Sancho metrics dashboard",
+      description:
+        "Replaces a client's dashboard definition with a new validated version (presentation + plan + custom surfaces/metrics). Pass the full definition as a JSON string — get the current one from sancho_get_metrics_dashboard, edit it, send it back. Defaults to dry-run; set dryRun=false and confirm=true to save. Each save is a new revertible version. Requires metrics:write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        definition: z.string().min(1).describe("Full dashboard definition as a JSON string."),
+        changeNote: z.string().optional().describe("Human-readable note for the version history."),
+        dryRun: z.boolean().default(true).describe("When true, only previews."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to save."),
+      },
+    },
+    async ({ clientSlug, definition, changeNote, dryRun, confirm }) =>
+      runTool(context, "sancho_update_metrics_dashboard", clientSlug, async () => {
+        assertClientScope(context, "metrics:write", clientSlug);
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(definition);
+        } catch {
+          throw new McpAuthError(400, "definition must be valid JSON");
+        }
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: "Set dryRun=false and confirm=true to save.", preview: parsed });
+        }
+        const result = await saveDashboardDefinition(clientSlug, parsed, { trigger: "chat", changeNote });
+        return jsonResult({ ok: true, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_add_custom_metric",
+    {
+      title: "Add Sancho custom metric",
+      description:
+        "Adds a custom (formula) metric card to the client's dashboard as a new version. The formula references connected sources as source.metric (e.g. 'meta-ads.spend / ghl.newContacts'); only identifiers, numbers and arithmetic are allowed (no function calls). Defaults to dry-run. Requires metrics:write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        label: z.string().min(1).describe("Card label, e.g. 'Coste por reunión'."),
+        formula: z.string().min(1).describe("Formula over source.metric refs, e.g. 'meta-ads.spend / ghl.newContacts'."),
+        format: z.string().optional().describe("Display format hint (e.g. currency, percent)."),
+        tier: z.string().optional().describe("KPI tier: primary | leading | lagging."),
+        surface: z.string().optional().describe("Optional surface to attach the card to."),
+        changeNote: z.string().optional(),
+        dryRun: z.boolean().default(true),
+        confirm: z.boolean().default(false),
+      },
+    },
+    async ({ clientSlug, label, formula, format, tier, surface, changeNote, dryRun, confirm }) =>
+      runTool(context, "sancho_add_custom_metric", clientSlug, async () => {
+        assertClientScope(context, "metrics:write", clientSlug);
+        if (!isSafeFormula(formula)) {
+          throw new McpAuthError(400, "Unsafe formula: only source.metric refs, numbers and arithmetic are allowed.");
+        }
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: "Set dryRun=false and confirm=true to add.", input: { label, formula, format, tier, surface } });
+        }
+        const result = await addCustomMetric(clientSlug, { label, formula, format, tier, surface }, { changeNote });
+        return jsonResult({ ok: true, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_revert_metrics_dashboard",
+    {
+      title: "Revert Sancho metrics dashboard",
+      description:
+        "Reverts the dashboard to a prior version by appending a NEW version that copies that snapshot (append-only; nothing is lost). Get available versions from sancho_get_metrics_dashboard. Defaults to dry-run. Requires metrics:write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        toVersion: z.number().int().min(1).describe("Version number to restore."),
+        dryRun: z.boolean().default(true),
+        confirm: z.boolean().default(false),
+      },
+    },
+    async ({ clientSlug, toVersion, dryRun, confirm }) =>
+      runTool(context, "sancho_revert_metrics_dashboard", clientSlug, async () => {
+        assertClientScope(context, "metrics:write", clientSlug);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: `Set dryRun=false and confirm=true to revert to v${toVersion}.` });
+        }
+        const result = await revertDashboardDefinition(clientSlug, toVersion);
+        return jsonResult({ ok: true, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_apply_metrics_template",
+    {
+      title: "Apply Sancho metrics template",
+      description:
+        "Resets the dashboard to an archetype template (lead-to-sale | marketplace | saas | ecommerce) as a new version. Defaults to dry-run. Requires metrics:write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        archetype: z.string().min(1).describe("Archetype: lead-to-sale | marketplace | saas | ecommerce."),
+        dryRun: z.boolean().default(true),
+        confirm: z.boolean().default(false),
+      },
+    },
+    async ({ clientSlug, archetype, dryRun, confirm }) =>
+      runTool(context, "sancho_apply_metrics_template", clientSlug, async () => {
+        assertClientScope(context, "metrics:write", clientSlug);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: `Set dryRun=false and confirm=true to apply the ${archetype} template.` });
+        }
+        const result = await applyDashboardTemplate(clientSlug, archetype);
+        return jsonResult({ ok: true, ...result });
       }),
   );
 
