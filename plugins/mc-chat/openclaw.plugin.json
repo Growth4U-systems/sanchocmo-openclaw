@@ -16,6 +16,10 @@
             "type": "string",
             "description": "Base URL of the MC server (e.g. http://localhost:18790)"
           },
+          "contextPackUrl": {
+            "type": "string",
+            "description": "Base URL of the Next.js Mission Control API used for /api/chat/context-pack (e.g. http://localhost:3000)"
+          },
           "sharedSecret": {
             "type": "string",
             "description": "Shared secret for authenticating webhook callbacks between gateway and MC server"
@@ -33,6 +37,10 @@
     "mcServerUrl": {
       "label": "MC Server URL",
       "placeholder": "http://localhost:18790"
+    },
+    "contextPackUrl": {
+      "label": "Context Pack API URL",
+      "placeholder": "http://localhost:3000"
     },
     "sharedSecret": {
       "label": "Shared Secret",

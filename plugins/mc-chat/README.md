@@ -55,6 +55,7 @@ Add to `~/.openclaw/openclaw.json`:
   "channels": {
     "mc-chat": {
       "mcServerUrl": "http://localhost:18790",
+      "contextPackUrl": "http://localhost:3000",
       "sharedSecret": "your-shared-secret-here"
     }
   },

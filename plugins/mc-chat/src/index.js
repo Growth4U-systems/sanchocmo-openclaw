@@ -191,7 +191,8 @@ export default defineChannelPluginEntry({
         if (requestedAgent && requestedAgent !== "sancho") {
           try {
             const pack = await fetchContextPack(slug, skill || null, {
-              mcServerUrl: channelCfg?.mcServerUrl,
+              contextPackUrl: channelCfg?.contextPackUrl,
+              nextServerUrl: channelCfg?.nextServerUrl,
               secret: channelCfg?.sharedSecret,
               logger,
             });

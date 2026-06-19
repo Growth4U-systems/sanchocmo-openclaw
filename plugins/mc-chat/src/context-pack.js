@@ -24,18 +24,18 @@
  *
  * @param {string} slug
  * @param {string|null} skill
- * @param {{ mcServerUrl?: string, secret?: string, logger?: { warn?: Function }, fetchImpl?: Function }} opts
+ * @param {{ contextPackUrl?: string, nextServerUrl?: string, secret?: string, logger?: { warn?: Function }, fetchImpl?: Function }} opts
  * @returns {Promise<null | { slug: string, skill: string|null, summary: string, docPaths: string[], verdict: string }>}
  */
 export async function fetchContextPack(slug, skill, opts = {}) {
-  const mcUrl = opts.mcServerUrl || "http://localhost:3000";
+  const contextPackUrl = resolveContextPackBaseUrl(opts);
   const secret = opts.secret;
   const logger = opts.logger;
   const doFetch = opts.fetchImpl || fetch;
 
   if (!slug) return null;
 
-  const url = `${mcUrl}/api/chat/context-pack`;
+  const url = `${contextPackUrl}/api/chat/context-pack`;
   const headers = {
     "Content-Type": "application/json",
     ...(secret ? { "X-MC-Secret": secret } : {}),
@@ -62,6 +62,18 @@ export async function fetchContextPack(slug, skill, opts = {}) {
     );
     return null;
   }
+}
+
+export function resolveContextPackBaseUrl(opts = {}) {
+  const raw =
+    opts.contextPackUrl ||
+    opts.nextServerUrl ||
+    process.env.MC_CONTEXT_PACK_URL ||
+    process.env.MC_NEXT_URL ||
+    process.env.BASE_URL ||
+    process.env.NEXTAUTH_URL ||
+    "http://localhost:3000";
+  return String(raw).replace(/\/+$/, "");
 }
 
 /**
