@@ -10,9 +10,13 @@
  * whitelists idea fields and would drop the enriched `seo` block. This routes
  * through the SAME shared data layer (`@/lib/data/keyword-antenna`) the MCP tools
  * use, so the Ideas the skill creates match `sancho_run_keyword_antenna`'s.
+ *
+ * Auth: `withSlugAuth` — caller must be admin / scoped to the slug (mirrors the
+ * `seo:write` gate the MCP surface enforces). The cron/skill passes the admin
+ * token via `x-admin-token` (same pattern as editorial-dispatch).
  */
 import type { NextApiRequest, NextApiResponse } from "next";
-import { withErrorHandler } from "@/lib/api-middleware";
+import { withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import {
   scoreCandidates,
   promoteKeywordsToIdeas,
@@ -28,40 +32,41 @@ function numParam(v: string | string[] | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export default withErrorHandler(async (req: NextApiRequest, res: NextApiResponse) => {
-  if (req.method === "GET") {
-    const slug = String(req.query.slug || "");
-    if (!slug) return res.status(400).json({ error: "Missing slug" });
-    const ideas = listKeywordOpportunities(slug, {
-      pillarId: req.query.pillarId ? String(req.query.pillarId) : undefined,
-      minPriority: numParam(req.query.minPriority),
-      mode: req.query.mode ? (String(req.query.mode) as DiscoveryMode) : undefined,
-      limit: numParam(req.query.limit),
-    });
-    return res.status(200).json({ ok: true, count: ideas.length, ideas });
-  }
+export default withErrorHandler(
+  withSlugAuth(async (req: NextApiRequest, res: NextApiResponse) => {
+    if (req.method === "GET") {
+      const slug = String(req.query.slug || "");
+      const ideas = listKeywordOpportunities(slug, {
+        pillarId: req.query.pillarId ? String(req.query.pillarId) : undefined,
+        minPriority: numParam(req.query.minPriority),
+        mode: req.query.mode ? (String(req.query.mode) as DiscoveryMode) : undefined,
+        limit: numParam(req.query.limit),
+      });
+      return res.status(200).json({ ok: true, count: ideas.length, ideas });
+    }
 
-  if (req.method === "POST") {
-    const { slug, action, candidates } = (req.body || {}) as {
-      slug?: string;
-      action?: string;
-      candidates?: KeywordCandidate[];
-    };
-    if (!slug) return res.status(400).json({ error: "Missing slug" });
-    if (!Array.isArray(candidates) || candidates.length === 0) {
-      return res.status(400).json({ error: "Missing candidates[]" });
+    if (req.method === "POST") {
+      const { slug, action, candidates } = (req.body || {}) as {
+        slug?: string;
+        action?: string;
+        candidates?: KeywordCandidate[];
+      };
+      if (!slug) return res.status(400).json({ error: "Missing slug" });
+      if (!Array.isArray(candidates) || candidates.length === 0) {
+        return res.status(400).json({ error: "Missing candidates[]" });
+      }
+      const scored = scoreCandidates(candidates);
+      if (action === "score") {
+        return res.status(200).json({ ok: true, action: "score", scored });
+      }
+      if (action === "promote") {
+        const promote = promoteKeywordsToIdeas(slug, scored);
+        return res.status(200).json({ ok: true, action: "promote", ...promote });
+      }
+      return res.status(400).json({ error: 'action must be "score" or "promote"' });
     }
-    const scored = scoreCandidates(candidates);
-    if (action === "score") {
-      return res.status(200).json({ ok: true, action: "score", scored });
-    }
-    if (action === "promote") {
-      const promote = promoteKeywordsToIdeas(slug, scored);
-      return res.status(200).json({ ok: true, action: "promote", ...promote });
-    }
-    return res.status(400).json({ error: 'action must be "score" or "promote"' });
-  }
 
-  res.setHeader("Allow", "GET, POST");
-  return res.status(405).json({ error: "Method not allowed" });
-});
+    res.setHeader("Allow", "GET, POST");
+    return res.status(405).json({ error: "Method not allowed" });
+  }),
+);

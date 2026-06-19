@@ -63,11 +63,16 @@ If DataForSEO / GSC / AEO signals are unavailable, **skip those modes** and leav
 When possible, include `angleDraft`: one concise editorial angle from the brand POV.
 
 ## PASO 3 — Promote (same rail as the antennas)
-POST the candidates to the shared endpoint — it scores + writes the enriched `seo` Ideas (lossless):
+POST the candidates to the shared endpoint — it scores + writes the enriched `seo` Ideas (lossless).
+The endpoint requires **admin auth** (same rail as Editorial Dispatch): read `adminToken` from the
+**root** of `~/.openclaw/workspace-sancho/clients.json` (file-read tool, **not** shell — it sits at the
+same level as `clients`, not inside any client entry) and pass it as the `x-admin-token` header. A
+`403` means the token wasn't read correctly — re-read `clients.json`.
 
 ```bash
 curl -fsS -X POST "$MC_BASE/api/content-engine/keyword-antenna" \
   -H "Content-Type: application/json" \
+  -H "x-admin-token: <adminToken de la raíz de clients.json>" \
   -d '{"slug":"{slug}","action":"promote","candidates":[
         {"keyword":"mejores agencias de growth","pillarId":"P1","discoveredBy":["identity","competitor-gap"],
          "intent":"commercial","bofuCategory":"best-of","strategicFlag":true,

@@ -147,6 +147,12 @@ const CONTENT_TYPE_VISUAL: Record<string, { label: string; bg: string; emoji: st
   Framework:        { label: "FRAMEWORK", bg: "bg-navy    text-white", emoji: "🧩" },
   "Personal Story": { label: "PERSONAL",  bg: "bg-yellow  text-ink",   emoji: "💬" },
   Listicle:         { label: "LISTICLE",  bg: "bg-aged    text-ink",   emoji: "📋" },
+  // Blog SEO content types (keyword-antenna / PAA — SAN-260/261)
+  "SEO Article":    { label: "SEO",       bg: "bg-navy    text-white", emoji: "🔍" },
+  FAQ:              { label: "FAQ",        bg: "bg-sage    text-white", emoji: "❓" },
+  Guide:            { label: "GUÍA",       bg: "bg-navy    text-white", emoji: "📖" },
+  Comparison:       { label: "VS",         bg: "bg-rust    text-white", emoji: "⚖️" },
+  "How-to":         { label: "HOW-TO",     bg: "bg-aged    text-ink",   emoji: "🛠️" },
 };
 
 const CHANNEL_VISUAL: Record<string, { label: string; emoji: string }> = {
@@ -588,12 +594,17 @@ export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus, in
           className="font-heading uppercase text-[11px] tracking-wider px-2.5 py-1.5 rounded-sc-md border-2 focus:outline-none"
           style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", boxShadow: "var(--pop-xs)" }}
         >
-          <option value="all">Framework: Todos</option>
+          <option value="all">Tipo: Todos</option>
           <option value="Hot Take">🔥 Hot Take</option>
           <option value="Proof Post">📚 Proof</option>
           <option value="Framework">🧩 Framework</option>
           <option value="Personal Story">💬 Personal</option>
           <option value="Listicle">📋 Listicle</option>
+          <option value="SEO Article">🔍 SEO Article</option>
+          <option value="FAQ">❓ FAQ</option>
+          <option value="Guide">📖 Guía</option>
+          <option value="Comparison">⚖️ Comparativa</option>
+          <option value="How-to">🛠️ How-to</option>
         </select>
         <select
           value={sortBy}
