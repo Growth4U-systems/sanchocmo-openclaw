@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.9.0...v0.10.0) (2026-06-19)
+
+
+### Features
+
+* **monitor:** alert on API-vs-subscription auth source + hard guard ([#711](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/711)) ([53261a1](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/53261a188c0a4b48d57d76f19c829f9aab526566))
+
 ## [0.9.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.8.1...v0.9.0) (2026-06-19)
 
 
