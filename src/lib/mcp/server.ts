@@ -54,6 +54,7 @@ import {
   registerYalcBreakevenTool,
   type YalcBreakevenLeadMetrics,
 } from "@/lib/calc-creator-core/mcp-tool";
+import { registerKeywordAntennaTools } from "@/lib/keyword-antenna/mcp-tool";
 import {
   assertMcpClientAccess,
   assertMcpBrandAccess,
@@ -702,6 +703,15 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       const effective = await getEffectiveModelConfig(clientSlug);
       return { config: effective.config, source: effective.source };
     },
+  });
+
+  // Keyword Antenna (SAN-260): score agent-supplied candidates + promote to seo
+  // Ideas (write), and list opportunities (read). Discovery runs agent-side.
+  registerKeywordAntennaTools(server, {
+    assertReadAccess: (clientSlug) => assertClientScope(context, "seo:read", clientSlug),
+    assertWriteAccess: (clientSlug) => assertClientScope(context, "seo:write", clientSlug),
+    run: (toolName, clientSlug, handler) => runTool(context, toolName, clientSlug, handler),
+    jsonResult,
   });
 
   server.registerTool(
