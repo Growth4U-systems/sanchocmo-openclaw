@@ -7,7 +7,7 @@ Workflow guide for sanchocmo-openclaw.
 ## Branch model
 
 ```
-feature/foo ──PR(squash)──▶ staging ──auto-deploy──────────▶ staging VPS
+<author>/san-<n>-desc ──PR(squash)──▶ staging ──auto-deploy──▶ staging VPS
                               │
                               │  release-please runs ON staging:
                               │  keeps one "chore: release vX.Y.Z" PR open
@@ -35,7 +35,7 @@ Because it can only advance to commits that already live on `staging`, it can
 |---|---|---|
 | `main` | Production pointer. Fast-forwarded to each release tag by automation | Locked: **no PRs, no direct pushes** — only `promote-main.yml` (via PAT) moves it; ff-only |
 | `staging` | Trunk. Where everything integrates; release-please cuts releases here | Locked: PR + green CI required, linear history (squash) |
-| `feature/*`, `fix/*`, `chore/*`, `refactor/*` | Short-lived work branches (incl. hotfixes) | Open |
+| `<author>/san-<n>-<kebab-desc>` | Short-lived work branches (incl. hotfixes); e.g. `nahuel/san-243-fix-release-title` | Open |
 | `main-old` | Frozen snapshot of the legacy `main` (pre-2026-05-07) | Read-only reference |
 
 ---

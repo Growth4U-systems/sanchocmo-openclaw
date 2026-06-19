@@ -13,5 +13,6 @@
     }
   },
   "pull-request-title-pattern": "chore: release v${version}",
+  "group-pull-request-title-pattern": "chore: release v${version}",
   "separate-pull-requests": false
 }
