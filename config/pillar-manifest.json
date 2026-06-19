@@ -153,7 +153,7 @@
             "keywords-seed/*.yml",
             "../../market-and-us/competitors/sources.json"
           ],
-          "dependsOn": ["pov-bank"],
+          "dependsOn": ["pov-bank", "keyword-research"],
           "extra": {
             "skills": ["content-engine-setup", "founder-led-setup"]
           }
@@ -232,6 +232,21 @@
           "deliverableFiles": ["site-audit/seo-audit/seo-audit.current.md"],
           "outputFiles": ["seo-audit.current.md"],
           "dependsOn": []
+        },
+        {
+          "id": "keyword-research",
+          "taskKey": "T07",
+          "name": "Keyword Research & SERP Clustering",
+          "skill": "keyword-research",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Ejecutar keyword-research: valida los spokes de content-pillars.md contra datos de búsqueda reales (6 Circles + SERP-overlap clustering + 4-test pillar validation) y escribe keyword-plan.md (lo lee el writer seo-content) + keyword-clusters.json. ORDEN: corre tras T02 (Pillars); T03 (Setup) lo consume para derivar keywords-seed del plan validado.",
+          "deliverable": "Keyword plan validado (clusters por SERP-overlap + 4-test pillars) que alimenta keywords-seed y el writer",
+          "deliverableFiles": ["go-to-market/keyword-plan.md"],
+          "outputFiles": ["keyword-plan.md", "keyword-clusters.json"],
+          "dependsOn": ["content-pillars"]
         }
       ]
     },
