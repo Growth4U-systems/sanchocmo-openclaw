@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.8.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.7.0...v0.8.0) (2026-06-19)
+
+
+### Features
+
+* **chat:** inject client context-pack into specialist dispatch (SAN-246) ([#688](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/688)) ([92d2e40](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/92d2e40b014cdaff0c34543a219bc3b47363bca0))
+* **content-engine:** :::ask text-mode + recommended option + founder-led single form (SAN-247) ([#687](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/687)) ([4e769ff](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4e769fffa27e721328f9f752999b37eb593b0b26))
+* **content:** emit draft-updated event from updateDraft (SAN-244) ([#684](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/684)) ([ca64181](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ca64181ed5c71dc26c368789b3e9b6a315d457e6))
+* **content:** fail-loud media gate on phase transition + skipped escape (SAN-244) ([#685](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/685)) ([0d43227](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0d43227fec73354498a00f572b8833eeb54ee358))
+* **content:** per-founder voice_doc — distinct voice per founder (SAN-160) ([#690](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/690)) ([ea6d14f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ea6d14f780f6a69c7451ab949a602a20810399f7))
+* **installer:** instalador de un comando sin clonar (SAN-242) ([#677](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/677)) ([678ab39](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/678ab3946dfaf970dce67a9033a7af9feacf7bfa))
+* **intelligence:** close the meetings loop end-to-end (SAN-222) ([#625](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/625)) ([450141c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/450141cf5ea80624a8125caf6b227738baa2c1a2))
+* **publishing:** list available Metricool brands for voice setup (SAN-162) ([#689](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/689)) ([667acae](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/667acae3c6d4ca6d75922f7b731b9f3bdca4f861))
+* **publishing:** route Metricool publishing to each voice's account (SAN-162) ([#678](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/678)) ([b1ebf13](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b1ebf13a31154af17adaa1b51db657a402e889d7))
+
+
+### Bug Fixes
+
+* **docker:** make api_key auth mode work — mode-aware ANTHROPIC_API_KEY guard (SAN-235) ([#663](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/663)) ([cb67040](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/cb670404d1268003bbdfa88f24af06bb6235cba9))
+* **notion:** wire per-client Notion connection end-to-end (SAN-251) ([f370cb7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f370cb781043bfb8297546d1c7111d118de6e3e0))
+* **release:** version grouped release PR title to stop recurring autorelease block ([#676](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/676)) ([d98e33e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d98e33ef078080265d131442141425ecb1654059))
+* **runtime:** export MC_BASE + repair specialist mounts + sub-aware anthropic health ([#672](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/672)) ([0fc4dcb](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0fc4dcb56f29756a541e289a9540c99c7f1fb28c))
+
+
+### Performance Improvements
+
+* **docker:** amd64-only + registry cache + bake runtime deps — cut &gt;40min builds (SAN-236) ([#665](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/665)) ([2886e83](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2886e8356b38dc2bfd321eaae5bbcf81f96c40ba))
+
 ## [0.7.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.6.0...v0.7.0) (2026-06-18)
 
 
