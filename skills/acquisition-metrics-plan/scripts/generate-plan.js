@@ -250,9 +250,28 @@ if (!hasPrimary && config.primaryKPI) {
   // "meeting" links "Qualified Meeting(s)" to the "Meetings/Demos" step → it sources
   // from ghl.appointments/hubspot rather than the wrong final step. Falls back to
   // the last step only when nothing matches.
-  const stepTokens = (s) => (s || '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2).map((w) => w.replace(/s$/, ''));
-  const actTokens = new Set([primaryName, activationStep].flatMap(stepTokens));
-  const activation = funnel.find((f) => stepTokens(f.step).some((w) => actTokens.has(w))) || funnel[funnel.length - 1] || {};
+  // SCORE each step (don't take the first token match): exact phrase > full-phrase
+  // containment > most shared tokens. Single-token overlap is too greedy — "visit"
+  // links BOTH "Searches/Visits" and "First Visits", so a first-match would source
+  // the "First Visits" North Star from ga4.sessions. Falls back to the last step
+  // only when nothing scores.
+  const normStr = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const toks = (s) => normStr(s).split(' ').filter((w) => w.length > 2).map((w) => w.replace(/s$/, ''));
+  const targetPhrases = [primaryName, activationStep].map(normStr).filter(Boolean);
+  const targetTokens = new Set([primaryName, activationStep].flatMap(toks));
+  const scoreStep = (stepName) => {
+    const sNorm = normStr(stepName);
+    if (!sNorm) return 0;
+    if (targetPhrases.some((t) => t === sNorm)) return 1000;
+    if (targetPhrases.some((t) => sNorm.includes(t) || t.includes(sNorm))) return 500;
+    return toks(stepName).filter((w) => targetTokens.has(w)).length;
+  };
+  let activation = funnel[funnel.length - 1] || {};
+  let bestScore = 0;
+  for (const f of funnel) {
+    const sc = scoreStep(f.step);
+    if (sc > bestScore) { bestScore = sc; activation = f; }
+  }
   kpis.unshift({
     name: config.primaryKPI,
     source: activation.manual ? null : activation.source,
