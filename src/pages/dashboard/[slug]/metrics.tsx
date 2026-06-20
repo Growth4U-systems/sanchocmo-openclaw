@@ -119,7 +119,9 @@ const SOURCE_NAMES: Record<string, string> = {
 // ============================================================
 
 function mVal(src: SourceData | undefined, name: string): number | null {
-  if (!src) return null;
+  // Guard malformed/failed source payloads (no metrics array) — raw daily
+  // snapshots can carry a failed source without `metrics`.
+  if (!src || !Array.isArray(src.metrics)) return null;
   const m = src.metrics.find((x) => x.name === name && !x.dimensions);
   return m ? m.value : null;
 }
@@ -251,7 +253,10 @@ function bucketDaily(
 ): number[] {
   const buckets = new Map<string, number>();
   for (const day of allDaily) {
-    const src = pickSource(day.sources, source);
+    // Raw daily files may miss `sources` or carry a failed source payload; skip
+    // them (mirrors aggregateEntries) so a malformed day never crashes the page.
+    const src = day?.sources ? pickSource(day.sources, source) : undefined;
+    if (!src || src.status !== "ok") continue;
     const v = mVal(src, metric);
     if (v == null) continue;
     const key = grain === "day" ? day.date : grain === "week" ? isoWeekKey(day.date) : day.date.slice(0, 7);
