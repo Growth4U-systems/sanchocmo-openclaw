@@ -916,6 +916,24 @@ export function buildPillarThread(
   };
 }
 
+/**
+ * Fresh Merlín thread for an on-demand "edit metrics with Merlin" action
+ * (Métricas v2 PR-5b). A new dash-shaped id per click — like discovery-new — so
+ * the contextual prompt ALWAYS auto-sends; the stable `metrics-setup` pillar
+ * thread swallows `initialMessage` once it has history. Skill/owner-agent resolve
+ * from the metrics-setup pillar (Merlín), so the edit lands with the right agent.
+ */
+export function buildMetricsEditThread(slug: string, message: string): ThreadConfig {
+  // Declared namespace owner (config/pillar-manifest.json → namespaceOwners.metrics-edit,
+  // agent merlin) so REOPENING a metrics-edit-<ts> thread resolves back to Merlín
+  // instead of falling through to Sancho; a fresh dash-shaped id per click keeps the
+  // contextual prompt auto-sending.
+  const cfg = instantiateNamespace("metrics-edit", { slug });
+  cfg.threadId = `${slug}:metrics-edit-${Date.now()}`;
+  cfg.initialMessage = message;
+  return cfg;
+}
+
 /** Build thread config for creating a new skill via chat */
 export function buildSkillCreatorThread(slug: string): ThreadConfig {
   return instantiateNamespace("skill-creator", { slug, params: { nonce: String(Date.now()) } });

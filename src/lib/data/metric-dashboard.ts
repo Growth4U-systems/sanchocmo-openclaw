@@ -1,11 +1,11 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-import { eq, sql as drizzleSql } from "drizzle-orm";
+import { and, eq, sql as drizzleSql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricDashboards } from "@/db/schema";
 import { BASE } from "@/lib/data/paths";
-import { SURFACES } from "@/lib/metrics/surfaces";
+import { SURFACES, type SurfaceKey } from "@/lib/metrics/surfaces";
 import {
   dashboardDefinitionSchema,
   isSafeFormula,
@@ -238,48 +238,80 @@ async function readRow(slug: string) {
 
 async function writeDefinition(
   slug: string,
-  definition: DashboardDefinition,
+  definitionOrProducer: DashboardDefinition | ((current: DashboardDefinition | null) => DashboardDefinition),
   opts: { trigger: string; changeNote?: string },
 ): Promise<DashboardRecord> {
   const database = getDb();
-  const existing = await readRow(slug);
-  const prevHistory: HistoryEntry[] = Array.isArray(existing?.versionHistory)
-    ? (existing!.versionHistory as unknown as HistoryEntry[])
-    : [];
-  const version = (existing?.version ?? 0) + 1;
-  const now = new Date();
-  const snapshot: HistoryEntry = {
-    version,
-    date: now.toISOString().slice(0, 10),
-    trigger: opts.trigger,
-    changes: opts.changeNote,
-    definition,
-  };
-  const history = [...prevHistory, snapshot].slice(-MAX_HISTORY);
-  const id = existing?.id ?? dashboardId(slug);
-  await database
-    .insert(metricDashboards)
-    .values({
-      id,
-      slug,
+  const isProducer = typeof definitionOrProducer === "function";
+  // Producer (field-merge) writes use OPTIMISTIC CONCURRENCY: recompute from the
+  // freshly-read row and commit only if the version hasn't moved, retrying on a
+  // conflicting concurrent write so an intervening edit is never dropped. Plain
+  // object writes keep last-write-wins (an intentional full replace).
+  const maxAttempts = isProducer ? 5 : 1;
+  for (let attempt = 1; ; attempt++) {
+    const existing = await readRow(slug);
+    let currentDef: DashboardDefinition | null = null;
+    if (existing) {
+      try { currentDef = parseDashboardDefinition(existing.definition); } catch { currentDef = null; }
+    }
+    // A producer (field-merge, e.g. surface reorder) needs the current definition to
+    // merge onto. If the row EXISTS but its stored definition is unparseable (schema
+    // drift), refuse rather than re-seed from template — that would overwrite the
+    // client's real North Star / KPIs / custom metrics on a mere reorder.
+    if (isProducer && existing && currentDef === null) {
+      throw new Error("metric_dashboards: stored definition is unparseable; refusing a merge write");
+    }
+    const definition = isProducer
+      ? (definitionOrProducer as (current: DashboardDefinition | null) => DashboardDefinition)(currentDef)
+      : (definitionOrProducer as DashboardDefinition);
+    const prevHistory: HistoryEntry[] = Array.isArray(existing?.versionHistory)
+      ? (existing!.versionHistory as unknown as HistoryEntry[])
+      : [];
+    const expectedVersion = existing?.version ?? 0;
+    const version = expectedVersion + 1;
+    const now = new Date();
+    const snapshot: HistoryEntry = {
       version,
-      definition: definition as unknown as Record<string, unknown>,
-      versionHistory: history as unknown as Array<Record<string, unknown>>,
-      status: "active",
-      source: "neon",
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: metricDashboards.id,
-      set: {
-        version,
-        definition: definition as unknown as Record<string, unknown>,
-        versionHistory: history as unknown as Array<Record<string, unknown>>,
-        updatedAt: now,
-      },
-    });
-  return { configured: true, slug, version, definition, versions: metaFromHistory(history) };
+      date: now.toISOString().slice(0, 10),
+      trigger: opts.trigger,
+      changes: opts.changeNote,
+      definition,
+    };
+    const history = [...prevHistory, snapshot].slice(-MAX_HISTORY);
+    const id = existing?.id ?? dashboardId(slug);
+    const jsonDefinition = definition as unknown as Record<string, unknown>;
+    const jsonHistory = history as unknown as Array<Record<string, unknown>>;
+    const result: DashboardRecord = { configured: true, slug, version, definition, versions: metaFromHistory(history) };
+
+    if (!isProducer) {
+      await database
+        .insert(metricDashboards)
+        .values({ id, slug, version, definition: jsonDefinition, versionHistory: jsonHistory, status: "active", source: "neon", createdAt: existing?.createdAt ?? now, updatedAt: now })
+        .onConflictDoUpdate({ target: metricDashboards.id, set: { version, definition: jsonDefinition, versionHistory: jsonHistory, updatedAt: now } });
+      return result;
+    }
+
+    // Producer path — compare-and-set. New row: insert only if still absent;
+    // existing row: update only if the version is unchanged since the read.
+    if (!existing) {
+      const inserted = await database
+        .insert(metricDashboards)
+        .values({ id, slug, version, definition: jsonDefinition, versionHistory: jsonHistory, status: "active", source: "neon", createdAt: now, updatedAt: now })
+        .onConflictDoNothing()
+        .returning({ id: metricDashboards.id });
+      if (inserted.length > 0) return result;
+    } else {
+      const updated = await database
+        .update(metricDashboards)
+        .set({ version, definition: jsonDefinition, versionHistory: jsonHistory, updatedAt: now })
+        .where(and(eq(metricDashboards.id, id), eq(metricDashboards.version, expectedVersion)))
+        .returning({ id: metricDashboards.id });
+      if (updated.length > 0) return result;
+    }
+    if (attempt >= maxAttempts) {
+      throw new Error("metric_dashboards: concurrent update conflict (retries exhausted)");
+    }
+  }
 }
 
 /** Get the active definition, lazily seeding from the metrics-plan/template on first access. */
@@ -343,7 +375,15 @@ export async function revertDashboardDefinition(
   if (!target?.definition) {
     throw new Error(`No snapshot found for version ${toVersion}`);
   }
-  return writeDefinition(slug, parseDashboardDefinition(target.definition), {
+  // Reverting to the current version is a no-op — don't append a redundant version
+  // (that would bloat history toward MAX_HISTORY and evict older snapshots).
+  if (existing && existing.version === toVersion) {
+    return getDashboardDefinition(slug);
+  }
+  // Use the producer/CAS path so a revert that races a concurrent reorder commits
+  // at the correct next version instead of clobbering it with a duplicate number.
+  const snapshot = parseDashboardDefinition(target.definition);
+  return writeDefinition(slug, () => snapshot, {
     trigger: "revert",
     changeNote: opts.changeNote ?? `Revertido a v${toVersion}`,
   });
@@ -388,4 +428,44 @@ export async function addCustomMetric(
     trigger: "chat",
     changeNote: opts.changeNote ?? `Métrica custom «${metric.label}»`,
   });
+}
+
+/**
+ * Reorder the dashboard surfaces and persist as a new version. The reorder is
+ * applied via a producer against the row `writeDefinition` reads, so it merges
+ * onto the latest state and never clobbers an intervening North Star/KPI/custom-
+ * metric edit (UI drag-and-drop, trigger "user-drag").
+ */
+export async function reorderDashboardSurfaces(
+  slug: string,
+  keys: string[],
+  opts: { trigger?: string; changeNote?: string } = {},
+): Promise<DashboardRecord> {
+  if (!hasDatabase) return NOT_CONFIGURED(slug);
+  await ensureMetricsDashboardStorage();
+  return writeDefinition(
+    slug,
+    (current) => {
+      const def = current ?? buildSeedDefinition(slug);
+      // A valid definition can have surfaces: [] (the UI then shows all SURFACES);
+      // seed from the default refs so a reorder never persists an empty list.
+      const baseSurfaces = def.surfaces && def.surfaces.length > 0 ? def.surfaces : defaultSurfaceRefs();
+      const prev = new Map(baseSurfaces.map((r) => [r.surface, r]));
+      // Dedupe + drop unknown keys so a malformed/stale request can't persist
+      // duplicate surface refs (the schema doesn't enforce uniqueness).
+      const used = new Set<SurfaceKey>();
+      const reordered: { surface: SurfaceKey; visible: boolean; order: number }[] = [];
+      for (const k of keys) {
+        const key = k as SurfaceKey;
+        if (!prev.has(key) || used.has(key)) continue;
+        used.add(key);
+        reordered.push({ surface: key, visible: prev.get(key)?.visible ?? true, order: reordered.length });
+      }
+      const extra = baseSurfaces
+        .filter((r) => !used.has(r.surface))
+        .map((r, i) => ({ ...r, order: reordered.length + i }));
+      return { ...def, surfaces: [...reordered, ...extra] };
+    },
+    { trigger: opts.trigger ?? "user-drag", changeNote: opts.changeNote },
+  );
 }
