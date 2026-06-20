@@ -26,7 +26,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "POST") {
     const body = (req.body ?? {}) as { definition?: unknown; surfacesOrder?: unknown; trigger?: unknown; changeNote?: unknown };
-    const trigger = typeof body.trigger === "string" ? body.trigger : "user-drag";
+    // Let each data-module fn apply its own default trigger (reorder → "user-drag",
+    // full save → "edit") so version-history badges stay accurate.
+    const trigger = typeof body.trigger === "string" ? body.trigger : undefined;
     const changeNote = typeof body.changeNote === "string" ? body.changeNote : undefined;
 
     // Targeted surface reorder: apply onto the LATEST definition server-side so a

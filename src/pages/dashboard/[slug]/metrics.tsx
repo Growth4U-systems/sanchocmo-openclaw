@@ -1827,9 +1827,10 @@ export default function MetricsPage() {
   }
 
   function handleSurfaceDragEnd(event: DragEndEvent) {
-    // Ignore drags until the dashboard record has loaded — we can't know yet
-    // whether the order would persist, so don't leave an unsaved optimistic order.
-    if (!dashboardRec) return;
+    // Ignore drags until the dashboard record has loaded (we can't know yet whether
+    // the order would persist) and while a save is in flight (so overlapping saves
+    // can't commit the older order last). The handle is disabled in both cases too.
+    if (!dashboardRec || saving) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const keys = (surfaceOrder ?? orderedSurfaces.map((s) => s.key)).slice();
@@ -1953,7 +1954,7 @@ export default function MetricsPage() {
               {displayedSurfaces.map((s) => {
                 const info = surfaceInfoFor(s);
                 return (
-                  <SortableSurfaceCard key={s.key} id={s.key} disabled={!dashboardRec}>
+                  <SortableSurfaceCard key={s.key} id={s.key} disabled={!dashboardRec || saving}>
                     <SurfaceCard
                       surface={s}
                       connected={info.connected}
