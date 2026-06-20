@@ -161,7 +161,7 @@
     "provides": {
       "pageviews": { "metric": "pageviews", "label": "Pageviews" },
       "activationEvents": { "metric": "activation_events", "label": "Activation Events" },
-      "funnelDropoff": { "metric": "funnel_step_dropoff", "dimension": "step", "label": "Funnel Dropoff by Step" },
+      "funnelReached": { "metric": "funnel_step_reached", "dimension": "step", "label": "Funnel Reached by Step" },
       "sessionRecordings": { "metric": "session_recordings", "label": "Session Recordings" }
     },
     "funnelMaps": {

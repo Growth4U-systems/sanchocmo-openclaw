@@ -78,18 +78,19 @@ export async function collect(config, env, dateRange) {
   const to = dateRange.to;
   const where = `timestamp >= toDateTime('${sqlStr(from)} 00:00:00') AND timestamp <= toDateTime('${sqlStr(to)} 23:59:59')`;
 
-  // --- Pageviews ---
-  try {
+  // --- Pageviews (CANARY) ---
+  // NOT wrapped in try/catch on purpose: a failure here means a bad key / project /
+  // host, so let it propagate → collect.js marks the source FAILED instead of
+  // recording an empty "ok" snapshot that looks connected. (The later, non-essential
+  // queries below stay graceful so one flaky sub-query doesn't fail the whole pull.)
+  {
     const rows = await runQuery(
       host,
       projectId,
       headers,
       `SELECT count() FROM events WHERE event = '$pageview' AND ${where}`,
     );
-    const pageviews = Number(rows?.[0]?.[0]) || 0;
-    metrics.push({ name: 'pageviews', value: pageviews, date: from });
-  } catch (err) {
-    console.warn(`  ⚠️  PostHog pageviews error: ${err.message}`);
+    metrics.push({ name: 'pageviews', value: Number(rows?.[0]?.[0]) || 0, date: from });
   }
 
   // --- Activation events ---
