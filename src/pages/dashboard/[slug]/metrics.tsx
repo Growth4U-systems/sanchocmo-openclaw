@@ -1,9 +1,9 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useTranslations } from "next-intl";
 import { useSlugSync } from "@/hooks/useSlugSync";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
   closestCenter,
@@ -29,6 +29,8 @@ import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { SlideOver } from "@/components/shared/slide-over";
 import { JsonViewer } from "@/components/shared/doc-slideover";
 import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, type SurfaceSummaryEntry } from "@/hooks/useMetrics";
+import { useOpenChat } from "@/hooks/useChat";
+import { buildPillarThread } from "@/lib/chat-openers";
 import { SURFACES, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
@@ -1274,6 +1276,45 @@ function SurfaceCard({ surface, connected, connectedSources, value, valueLabel, 
   );
 }
 
+/** Version trigger pill (chat / user-drag / template / seed / revert). */
+function TriggerBadge({ trigger }: { trigger: string }) {
+  const map: Record<string, { bg: string; fg: string }> = {
+    chat: { bg: "#3B9EBF", fg: "#ffffff" },
+    "user-drag": { bg: "#D8C9A3", fg: "#3a3320" },
+    drag: { bg: "#D8C9A3", fg: "#3a3320" },
+    template: { bg: "#E6A817", fg: "#3a2e00" },
+    seed: { bg: "#4A5D23", fg: "#ffffff" },
+    revert: { bg: "#C45D35", fg: "#ffffff" },
+    edit: { bg: "#E5DDCF", fg: "#3a3320" },
+  };
+  const c = map[trigger] ?? { bg: "#E5DDCF", fg: "#3a3320" };
+  return (
+    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: c.bg, color: c.fg }}>{trigger}</span>
+  );
+}
+
+/** Sortable wrapper for a surface card — drag via the corner handle so the card's
+ *  own click/link (open detail, Conectar →) keeps working. */
+function SortableSurfaceCard({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="absolute top-2 right-2 z-10 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground text-[13px] leading-none p-1 bg-card/80 rounded"
+        title="Arrastra para reordenar"
+        aria-label="Reordenar superficie"
+      >
+        {"☰"}
+      </button>
+      {children}
+    </div>
+  );
+}
+
 // ============================================================
 // Main Component
 // ============================================================
@@ -1340,6 +1381,63 @@ export default function MetricsPage() {
   const { data: dashboardRec, isLoading: dashboardLoading } = useDashboardDefinition(slug);
   const { data: surfaceSummary } = useSurfaceSummary(slug);
   const definition: DashboardDefinition | null = dashboardRec?.definition ?? null;
+
+  const queryClient = useQueryClient();
+  const openChat = useOpenChat();
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  // Optimistic surface order (keys) held until a server-side drag save resolves.
+  const [surfaceOrder, setSurfaceOrder] = useState<string[] | null>(null);
+  const surfaceSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Persist a full definition (validated + version-bumped server-side). Keeps the
+  // optimistic order until the fresh definition arrives to avoid a flash-back.
+  async function saveDefinition(def: unknown, opts: { trigger: string; changeNote?: string }) {
+    if (!slug) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/metrics/dashboard?slug=${slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ definition: def, trigger: opts.trigger, changeNote: opts.changeNote }),
+      });
+      if (res.ok) {
+        await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", slug] });
+        setSurfaceOrder(null);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function revertTo(version: number) {
+    if (!slug) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/metrics/dashboard/revert?slug=${slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toVersion: version }),
+      });
+      if (res.ok) await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", slug] });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Open the Merlin metrics-setup chat thread (manifest-driven; Merlin is the
+  // pillar owner) with a contextual opener. The actual edits run through the MCP
+  // write tools — this never handles credentials.
+  function openMerlin(message: string) {
+    if (!slug) return;
+    const cfg = buildPillarThread(slug, "metrics-setup");
+    cfg.threadName = "🔮 Métricas — Merlín";
+    cfg.initialMessage = message;
+    openChat(slug, cfg);
+  }
+
+  // Flush the debounced drag-save timer on unmount.
+  useEffect(() => () => { if (surfaceSaveTimer.current) clearTimeout(surfaceSaveTimer.current); }, []);
 
   const { data: metricsData, refetch: refetchMetrics } = useQuery<MetricsData>({
     queryKey: ["metrics-data", slug],
@@ -1696,6 +1794,43 @@ export default function MetricsPage() {
     return { connected: connectedSources.length > 0, connectedSources, value, valueLabel };
   }
 
+  // Server-side DnD: reorder definition.surfaces and persist (debounced) as a new
+  // "user-drag" version. The definition is the source of truth; surfaceOrder is
+  // only the optimistic paint until the save resolves (no localStorage).
+  function persistSurfaceOrder(keys: string[]) {
+    if (!definition) return;
+    if (surfaceSaveTimer.current) clearTimeout(surfaceSaveTimer.current);
+    surfaceSaveTimer.current = setTimeout(() => {
+      const prev = new Map((definition.surfaces || []).map((r) => [r.surface, r]));
+      const reordered = keys.map((key, i) => ({ surface: key, visible: prev.get(key as SurfaceKey)?.visible ?? true, order: i }));
+      const extra = (definition.surfaces || [])
+        .filter((r) => !keys.includes(r.surface))
+        .map((r, i) => ({ ...r, order: keys.length + i }));
+      void saveDefinition({ ...definition, surfaces: [...reordered, ...extra] }, { trigger: "user-drag", changeNote: "Reordenadas superficies" });
+    }, 800);
+  }
+
+  function handleSurfaceDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const keys = (surfaceOrder ?? orderedSurfaces.map((s) => s.key)).slice();
+    const oldIndex = keys.indexOf(String(active.id));
+    const newIndex = keys.indexOf(String(over.id));
+    if (oldIndex === -1 || newIndex === -1) return;
+    const next = arrayMove(keys, oldIndex, newIndex);
+    setSurfaceOrder(next);
+    persistSurfaceOrder(next);
+  }
+
+  // Surfaces in optimistic (drag) order when set, else the definition order.
+  const displayedSurfaces: SurfaceDef[] = (() => {
+    if (!surfaceOrder) return orderedSurfaces;
+    const byKey = new Map(orderedSurfaces.map((s) => [s.key, s]));
+    const ordered = surfaceOrder.map((k) => byKey.get(k as SurfaceKey)).filter((s): s is SurfaceDef => Boolean(s));
+    const missing = orderedSurfaces.filter((s) => !surfaceOrder.includes(s.key));
+    return [...ordered, ...missing];
+  })();
+
   const topPages = useMemo(() => {
     if (!ga4?.metrics) return [] as MetricEntry[];
     return ga4.metrics.filter((x) => x.name === "topPage").sort((a, b) => b.value - a.value).slice(0, 10);
@@ -1793,22 +1928,30 @@ export default function MetricsPage() {
     return (
       <>
         {dataBanners}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSurfaceDragEnd}>
+          <SortableContext items={displayedSurfaces.map((s) => s.key)} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              {displayedSurfaces.map((s) => {
+                const info = surfaceInfoFor(s);
+                return (
+                  <SortableSurfaceCard key={s.key} id={s.key}>
+                    <SurfaceCard
+                      surface={s}
+                      connected={info.connected}
+                      connectedSources={info.connectedSources}
+                      value={info.value}
+                      valueLabel={info.valueLabel}
+                      slug={slug}
+                      onOpen={s.key === "partnerships" ? () => selectTab("partnerships") : undefined}
+                    />
+                  </SortableSurfaceCard>
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
+        {/* Custom surfaces (bespoke) + create-with-Merlin — outside the standard reorder. */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {orderedSurfaces.map((s) => {
-            const info = surfaceInfoFor(s);
-            return (
-              <SurfaceCard
-                key={s.key}
-                surface={s}
-                connected={info.connected}
-                connectedSources={info.connectedSources}
-                value={info.value}
-                valueLabel={info.valueLabel}
-                slug={slug}
-                onOpen={s.key === "partnerships" ? () => selectTab("partnerships") : undefined}
-              />
-            );
-          })}
           {definition?.customSurfaces?.map((cs) => (
             <div key={cs.key} className="border-2 rounded-xl p-4 bg-card" style={{ borderColor: "#3B9EBF" }}>
               <div className="flex items-center gap-2 mb-1">
@@ -1819,6 +1962,15 @@ export default function MetricsPage() {
               <div className="text-[12px] text-muted-foreground">{cs.cards?.length ? `${cs.cards.length} cards` : "—"}</div>
             </div>
           ))}
+          <button
+            type="button"
+            onClick={() => openMerlin("Quiero crear una superficie custom (p.ej. A/B tests, satisfacción). ¿Qué fuentes necesito y qué cards proponemos?")}
+            className="text-left border-2 border-dashed rounded-xl p-4 bg-card hover:border-rust transition-colors"
+            style={{ borderColor: "#3B9EBF" }}
+          >
+            <div className="flex items-center gap-2 mb-1"><span className="text-xl">{"➕"}</span><span className="font-heading font-bold text-[15px]">Nueva superficie custom</span></div>
+            <div className="text-[12px] font-semibold" style={{ color: "#3B9EBF" }}>{"🔮"} Crear con Merlin {"→"}</div>
+          </button>
         </div>
         {sourcePills.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
@@ -1970,6 +2122,49 @@ export default function MetricsPage() {
     );
   }
 
+  function renderVersions() {
+    const versions = dashboardRec?.versions ?? [];
+    const current = dashboardRec?.version ?? 0;
+    return (
+      <div>
+        <button type="button" onClick={() => setVersionsOpen(false)} className="mb-4 px-3 py-1.5 border border-border rounded-md text-[12px] font-semibold bg-background hover:border-rust transition-colors">
+          {"←"} Volver
+        </button>
+        <div className="border-[3px] border-navy rounded-xl bg-card p-5 shadow-comic mb-6">
+          <div className="font-heading font-bold text-lg">{"🕓"} Versiones del dashboard</div>
+          <div className="text-[13px] text-muted-foreground mt-1">Cada cambio (chat, arrastre, plantilla) crea una versión inmutable. Revertir copia ese estado a una versión nueva — append-only y auditado.</div>
+        </div>
+        {!dashboardRec?.configured ? (
+          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">El versionado requiere base de datos (no disponible en este entorno).</div>
+        ) : versions.length === 0 ? (
+          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">Aún no hay versiones guardadas.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {versions.map((v) => {
+              const isCurrent = v.version === current;
+              return (
+                <div key={v.version} className={cn("border-2 rounded-xl p-4 bg-card", isCurrent ? "border-navy" : "border-border")} style={isCurrent ? { borderLeftWidth: 5, borderLeftColor: "#E6A817" } : undefined}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-heading font-bold">v{v.version}{isCurrent ? " · actual" : ""}</span>
+                      <TriggerBadge trigger={v.trigger} />
+                    </div>
+                    {!isCurrent && (
+                      <button type="button" onClick={() => revertTo(v.version)} disabled={saving} className="text-[11px] text-rust font-semibold disabled:opacity-50 hover:underline">
+                        {"↩︎"} Revertir a v{v.version}
+                      </button>
+                    )}
+                  </div>
+                  <div className="text-[12px] text-muted-foreground">{v.date}{v.changes ? ` · ${v.changes}` : ""}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   function renderActiveTab() {
     switch (tab) {
       case "overview": return renderOverview();
@@ -2005,9 +2200,20 @@ export default function MetricsPage() {
           </p>
         </div>
 
-        {isDataTab && (
         <div className="flex items-center gap-2 flex-wrap">
-          <DateRangeFilter options={DATE_RANGE_OPTIONS} value={range} onChange={(v) => setRange(v as DateRange)} />
+          {!versionsOpen && (
+            <>
+              <button type="button" onClick={() => setVersionsOpen(true)} className="px-3 py-1 border border-navy rounded-md text-[11px] font-semibold text-navy bg-background hover:bg-muted transition-colors">
+                {"🕓"} Versiones{(dashboardRec?.versions?.length ?? 0) > 0 ? ` ${dashboardRec?.versions.length}` : ""}
+              </button>
+              <button type="button" onClick={() => openMerlin("Quiero editar el dashboard de métricas (North Star, KPIs, superficies o una métrica custom). ¿Qué cambiamos?")} className="px-3 py-1 rounded-md text-[11px] font-semibold text-white transition-colors" style={{ background: "#3B9EBF" }}>
+                {"✨"} Editar con Merlin
+              </button>
+            </>
+          )}
+          {isDataTab && !versionsOpen && (
+            <>
+              <DateRangeFilter options={DATE_RANGE_OPTIONS} value={range} onChange={(v) => setRange(v as DateRange)} />
 
           <div className="flex gap-1.5">
             <a href={`/dashboard/${slug}/settings?tab=apis`} className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
@@ -2024,11 +2230,14 @@ export default function MetricsPage() {
               </a>
             )}
           </div>
+            </>
+          )}
         </div>
-        )}
       </div>
 
-      {/* Sub-tabs: Funnel \u00B7 Partnerships (SAN-81) */}
+      {versionsOpen ? renderVersions() : (
+      <>
+      {/* Tabs renderizadas desde la definici\u00F3n versionada (M\u00E9tricas v2) */}
       <div className="flex flex-wrap gap-2 mb-6">
         {tabs.map((item) => (
           <button
@@ -2046,6 +2255,8 @@ export default function MetricsPage() {
       </div>
 
       {renderActiveTab()}
+      </>
+      )}
 
       <SlideOver open={planOpen} onClose={() => setPlanOpen(false)} title={`${t("plan")} — ${slug}`}>
         {effectivePlan ? <JsonViewer data={effectivePlan} /> : null}
