@@ -233,20 +233,26 @@ function isPrimaryKpi(kpi) {
     .some((target) => n === target || n.includes(target) || target.includes(n));
 }
 let hasPrimary = false;
+// Cost / efficiency KPIs are LAGGING regardless of category — the `paid` category
+// default is `leading` (clicks/CTR are leading activity), but Ad Spend / CPC / CPA
+// are cost outcomes and belong in lagging per the tiering contract.
+const COST_RE = /\b(spend|cost|cpc|cpa|cpl|cpm|cac|roas|roi)\b/i;
 for (const kpi of kpis) {
-  kpi.tier = isPrimaryKpi(kpi) ? 'primary' : tierForCategory(kpi.category);
-  if (kpi.tier === 'primary') hasPrimary = true;
+  if (isPrimaryKpi(kpi)) { kpi.tier = 'primary'; hasPrimary = true; }
+  else if (COST_RE.test(kpi.name || '')) kpi.tier = 'lagging';
+  else kpi.tier = tierForCategory(kpi.category);
 }
 if (!hasPrimary && config.primaryKPI) {
-  // North Star sourced from the funnel's ACTIVATION step — matched by the
-  // primaryKPI / activationEvent name, NOT just the last step (e.g. saas-app's
-  // "Core Feature Used" or lead-to-sale's "First Visits" come before the final
-  // step). Falls back to the last step only when nothing matches.
-  const activationTargets = [primaryName, activationStep].filter(Boolean);
-  const activation = funnel.find((f) => {
-    const s = (f.step || '').toLowerCase();
-    return activationTargets.some((t) => s === t || s.includes(t) || t.includes(s));
-  }) || funnel[funnel.length - 1] || {};
+  // Match the funnel's ACTIVATION step by SHARED KEYWORD (crude singularization),
+  // NOT just the last step: substring alone misses "Qualified Meetings" vs the
+  // "Meetings/Demos" funnel step, and the activation step is often not last
+  // (saas-app "Core Feature Used", lead-to-sale "First Visits"). So e.g. the token
+  // "meeting" links "Qualified Meeting(s)" to the "Meetings/Demos" step → it sources
+  // from ghl.appointments/hubspot rather than the wrong final step. Falls back to
+  // the last step only when nothing matches.
+  const stepTokens = (s) => (s || '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2).map((w) => w.replace(/s$/, ''));
+  const actTokens = new Set([primaryName, activationStep].flatMap(stepTokens));
+  const activation = funnel.find((f) => stepTokens(f.step).some((w) => actTokens.has(w))) || funnel[funnel.length - 1] || {};
   kpis.unshift({
     name: config.primaryKPI,
     source: activation.manual ? null : activation.source,
