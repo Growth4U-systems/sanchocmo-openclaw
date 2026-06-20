@@ -30,7 +30,7 @@ import { SlideOver } from "@/components/shared/slide-over";
 import { JsonViewer } from "@/components/shared/doc-slideover";
 import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, type SurfaceSummaryEntry } from "@/hooks/useMetrics";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildPillarThread } from "@/lib/chat-openers";
+import { buildMetricsEditThread } from "@/lib/chat-openers";
 import { SURFACES, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
@@ -1435,10 +1435,7 @@ export default function MetricsPage() {
   // write tools — this never handles credentials.
   function openMerlin(message: string) {
     if (!slug) return;
-    const cfg = buildPillarThread(slug, "metrics-setup");
-    cfg.threadName = "🔮 Métricas — Merlín";
-    cfg.initialMessage = message;
-    openChat(slug, cfg);
+    openChat(slug, buildMetricsEditThread(slug, message));
   }
 
   // Flush the debounced drag-save timer on unmount.

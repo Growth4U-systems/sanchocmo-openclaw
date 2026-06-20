@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-import { eq, sql as drizzleSql } from "drizzle-orm";
+import { and, eq, sql as drizzleSql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricDashboards } from "@/db/schema";
 import { BASE } from "@/lib/data/paths";
@@ -242,52 +242,69 @@ async function writeDefinition(
   opts: { trigger: string; changeNote?: string },
 ): Promise<DashboardRecord> {
   const database = getDb();
-  const existing = await readRow(slug);
-  // When a producer is passed, resolve the definition from the freshly-read row so
-  // a field-level merge (e.g. surface reorder) applies atomically to the latest
-  // state instead of a stale client / earlier-read snapshot.
-  let currentDef: DashboardDefinition | null = null;
-  if (existing) {
-    try { currentDef = parseDashboardDefinition(existing.definition); } catch { currentDef = null; }
-  }
-  const definition = typeof definitionOrProducer === "function" ? definitionOrProducer(currentDef) : definitionOrProducer;
-  const prevHistory: HistoryEntry[] = Array.isArray(existing?.versionHistory)
-    ? (existing!.versionHistory as unknown as HistoryEntry[])
-    : [];
-  const version = (existing?.version ?? 0) + 1;
-  const now = new Date();
-  const snapshot: HistoryEntry = {
-    version,
-    date: now.toISOString().slice(0, 10),
-    trigger: opts.trigger,
-    changes: opts.changeNote,
-    definition,
-  };
-  const history = [...prevHistory, snapshot].slice(-MAX_HISTORY);
-  const id = existing?.id ?? dashboardId(slug);
-  await database
-    .insert(metricDashboards)
-    .values({
-      id,
-      slug,
+  const isProducer = typeof definitionOrProducer === "function";
+  // Producer (field-merge) writes use OPTIMISTIC CONCURRENCY: recompute from the
+  // freshly-read row and commit only if the version hasn't moved, retrying on a
+  // conflicting concurrent write so an intervening edit is never dropped. Plain
+  // object writes keep last-write-wins (an intentional full replace).
+  const maxAttempts = isProducer ? 5 : 1;
+  for (let attempt = 1; ; attempt++) {
+    const existing = await readRow(slug);
+    let currentDef: DashboardDefinition | null = null;
+    if (existing) {
+      try { currentDef = parseDashboardDefinition(existing.definition); } catch { currentDef = null; }
+    }
+    const definition = isProducer
+      ? (definitionOrProducer as (current: DashboardDefinition | null) => DashboardDefinition)(currentDef)
+      : (definitionOrProducer as DashboardDefinition);
+    const prevHistory: HistoryEntry[] = Array.isArray(existing?.versionHistory)
+      ? (existing!.versionHistory as unknown as HistoryEntry[])
+      : [];
+    const expectedVersion = existing?.version ?? 0;
+    const version = expectedVersion + 1;
+    const now = new Date();
+    const snapshot: HistoryEntry = {
       version,
-      definition: definition as unknown as Record<string, unknown>,
-      versionHistory: history as unknown as Array<Record<string, unknown>>,
-      status: "active",
-      source: "neon",
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: metricDashboards.id,
-      set: {
-        version,
-        definition: definition as unknown as Record<string, unknown>,
-        versionHistory: history as unknown as Array<Record<string, unknown>>,
-        updatedAt: now,
-      },
-    });
-  return { configured: true, slug, version, definition, versions: metaFromHistory(history) };
+      date: now.toISOString().slice(0, 10),
+      trigger: opts.trigger,
+      changes: opts.changeNote,
+      definition,
+    };
+    const history = [...prevHistory, snapshot].slice(-MAX_HISTORY);
+    const id = existing?.id ?? dashboardId(slug);
+    const jsonDefinition = definition as unknown as Record<string, unknown>;
+    const jsonHistory = history as unknown as Array<Record<string, unknown>>;
+    const result: DashboardRecord = { configured: true, slug, version, definition, versions: metaFromHistory(history) };
+
+    if (!isProducer) {
+      await database
+        .insert(metricDashboards)
+        .values({ id, slug, version, definition: jsonDefinition, versionHistory: jsonHistory, status: "active", source: "neon", createdAt: existing?.createdAt ?? now, updatedAt: now })
+        .onConflictDoUpdate({ target: metricDashboards.id, set: { version, definition: jsonDefinition, versionHistory: jsonHistory, updatedAt: now } });
+      return result;
+    }
+
+    // Producer path — compare-and-set. New row: insert only if still absent;
+    // existing row: update only if the version is unchanged since the read.
+    if (!existing) {
+      const inserted = await database
+        .insert(metricDashboards)
+        .values({ id, slug, version, definition: jsonDefinition, versionHistory: jsonHistory, status: "active", source: "neon", createdAt: now, updatedAt: now })
+        .onConflictDoNothing()
+        .returning({ id: metricDashboards.id });
+      if (inserted.length > 0) return result;
+    } else {
+      const updated = await database
+        .update(metricDashboards)
+        .set({ version, definition: jsonDefinition, versionHistory: jsonHistory, updatedAt: now })
+        .where(and(eq(metricDashboards.id, id), eq(metricDashboards.version, expectedVersion)))
+        .returning({ id: metricDashboards.id });
+      if (updated.length > 0) return result;
+    }
+    if (attempt >= maxAttempts) {
+      throw new Error("metric_dashboards: concurrent update conflict (retries exhausted)");
+    }
+  }
 }
 
 /** Get the active definition, lazily seeding from the metrics-plan/template on first access. */
@@ -415,11 +432,14 @@ export async function reorderDashboardSurfaces(
     slug,
     (current) => {
       const def = current ?? buildSeedDefinition(slug);
-      const prev = new Map((def.surfaces || []).map((r) => [r.surface, r]));
+      // A valid definition can have surfaces: [] (the UI then shows all SURFACES);
+      // seed from the default refs so a reorder never persists an empty list.
+      const baseSurfaces = def.surfaces && def.surfaces.length > 0 ? def.surfaces : defaultSurfaceRefs();
+      const prev = new Map(baseSurfaces.map((r) => [r.surface, r]));
       const reordered = keys
         .filter((k) => prev.has(k as SurfaceKey))
         .map((k, i) => ({ surface: k as SurfaceKey, visible: prev.get(k as SurfaceKey)?.visible ?? true, order: i }));
-      const extra = (def.surfaces || [])
+      const extra = baseSurfaces
         .filter((r) => !keys.includes(r.surface))
         .map((r, i) => ({ ...r, order: reordered.length + i }));
       return { ...def, surfaces: [...reordered, ...extra] };
