@@ -1,0 +1,235 @@
+import crypto from "crypto";
+import { sql as drizzleSql } from "drizzle-orm";
+import { getDb, hasDatabase } from "@/db/drizzle";
+import { metricSnapshots } from "@/db/schema";
+
+/**
+ * Time-series storage for client metrics (SAN-263 · Métricas v2 PR-1).
+ *
+ * The JSON files under `brand/<slug>/metrics/<date>.json` stay the source of
+ * truth; this module mirrors them into the `metric_snapshots` table (one tidy
+ * row per slug/date/source/metric/dimensions) so trends, comparatives and drift
+ * become queryable. Mirrors the meeting-intelligence-db.ts pattern: guard on
+ * `hasDatabase`, lazily `ensureMetricsStorage()`, upsert idempotently.
+ */
+
+export interface RawMetric {
+  name: string;
+  value?: number | string | null;
+  date?: string | null;
+  dimensions?: Record<string, unknown> | null;
+}
+
+export interface SourcePayload {
+  status?: string;
+  collectedAt?: string | null;
+  metrics?: RawMetric[];
+}
+
+export interface DailySnapshotInput {
+  slug?: string;
+  collectedAt?: string | null;
+  sources?: Record<string, SourcePayload>;
+}
+
+export interface IngestResult {
+  ok: boolean;
+  rows: number;
+  sources: string[];
+  skipped: string[];
+  storage: { configured: boolean };
+}
+
+const STORAGE_NOT_CONFIGURED = { configured: false } as const;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// Keep byte-aligned with src/db/migrations/0011_metric_snapshots.sql so the
+// runtime ensure (local / no-drizzle-kit envs) and the deploy migration agree.
+const ENSURE_STATEMENTS = [
+  `CREATE TABLE IF NOT EXISTS "metric_snapshots" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "metric_date" text NOT NULL, "source" text NOT NULL, "metric_name" text NOT NULL, "value" real, "value_text" text, "dimensions" jsonb, "dims_key" text DEFAULT '' NOT NULL, "grain" text DEFAULT 'day' NOT NULL, "collected_at" timestamp, "ingest_run_id" text, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS "metric_snapshots_slug_date_idx" ON "metric_snapshots" ("slug", "metric_date")`,
+  `CREATE INDEX IF NOT EXISTS "metric_snapshots_slug_source_metric_idx" ON "metric_snapshots" ("slug", "source", "metric_name")`,
+  `CREATE INDEX IF NOT EXISTS "metric_snapshots_slug_source_date_idx" ON "metric_snapshots" ("slug", "source", "metric_date")`,
+];
+
+let ensurePromise: Promise<void> | null = null;
+
+export async function ensureMetricsStorage(): Promise<void> {
+  if (!hasDatabase) return;
+  if (!ensurePromise) {
+    ensurePromise = (async () => {
+      const database = getDb();
+      for (const statement of ENSURE_STATEMENTS) {
+        await database.execute(drizzleSql.raw(statement));
+      }
+    })();
+  }
+  await ensurePromise;
+}
+
+export function metricsStorageConfigured(): boolean {
+  return hasDatabase;
+}
+
+function stableId(...parts: Array<string | number | null | undefined>): string {
+  return crypto
+    .createHash("sha1")
+    .update(parts.map((part) => (part == null ? "" : String(part))).join(" "))
+    .digest("hex")
+    .slice(0, 24);
+}
+
+function canonicalDimensions(dimensions?: Record<string, unknown> | null): {
+  dimsKey: string;
+  dims: Record<string, string> | null;
+} {
+  if (!dimensions || typeof dimensions !== "object") return { dimsKey: "", dims: null };
+  const entries = Object.entries(dimensions)
+    .filter(([, value]) => value != null && value !== "")
+    .map(([key, value]) => [key, String(value)] as [string, string])
+    .sort((a, b) => a[0].localeCompare(b[0]));
+  if (!entries.length) return { dimsKey: "", dims: null };
+  const dims: Record<string, string> = {};
+  for (const [key, value] of entries) dims[key] = value;
+  return { dimsKey: JSON.stringify(entries), dims };
+}
+
+function toNumber(value: unknown): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    // Tolerate "1,234.5", "12.5%", "€96", "4.2x" → numeric core.
+    const cleaned = trimmed.replace(/[\s,_]/g, "").replace(/[^0-9.+-]/g, "");
+    if (!cleaned || !/[0-9]/.test(cleaned)) return null;
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function toDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+}
+
+type SnapshotRow = typeof metricSnapshots.$inferInsert;
+
+function rowsFromMetrics(
+  slug: string,
+  source: string,
+  metrics: RawMetric[],
+  dateKey: string,
+  collectedAt: string | null | undefined,
+  runId: string | null,
+): SnapshotRow[] {
+  const now = new Date();
+  const collected = toDate(collectedAt);
+  const rows: SnapshotRow[] = [];
+  for (const metric of metrics) {
+    if (!metric || typeof metric.name !== "string" || !metric.name) continue;
+    const metricDate = typeof metric.date === "string" && DATE_RE.test(metric.date) ? metric.date : dateKey;
+    if (!DATE_RE.test(metricDate)) continue;
+    const { dimsKey, dims } = canonicalDimensions(metric.dimensions);
+    const numeric = toNumber(metric.value);
+    rows.push({
+      id: `ms_${stableId(slug, metricDate, source, metric.name, dimsKey)}`,
+      slug,
+      metricDate,
+      source,
+      metricName: metric.name,
+      value: numeric,
+      valueText: numeric === null && metric.value != null ? String(metric.value).slice(0, 500) : null,
+      dimensions: dims,
+      dimsKey,
+      grain: "day",
+      collectedAt: collected,
+      ingestRunId: runId,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  return rows;
+}
+
+async function upsertRows(rows: SnapshotRow[]): Promise<number> {
+  if (!rows.length) return 0;
+  // De-dupe within the batch (same logical key → one row) so a single
+  // INSERT ... ON CONFLICT never tries to touch the same row twice.
+  const byId = new Map<string, SnapshotRow>();
+  for (const row of rows) byId.set(row.id as string, row);
+  const unique = [...byId.values()];
+  const database = getDb();
+  const CHUNK = 500;
+  for (let i = 0; i < unique.length; i += CHUNK) {
+    const chunk = unique.slice(i, i + CHUNK);
+    await database
+      .insert(metricSnapshots)
+      .values(chunk)
+      .onConflictDoUpdate({
+        target: metricSnapshots.id,
+        set: {
+          value: drizzleSql`excluded."value"`,
+          valueText: drizzleSql`excluded."value_text"`,
+          dimensions: drizzleSql`excluded."dimensions"`,
+          collectedAt: drizzleSql`excluded."collected_at"`,
+          ingestRunId: drizzleSql`excluded."ingest_run_id"`,
+          updatedAt: new Date(),
+        },
+      });
+  }
+  return unique.length;
+}
+
+/** Mirror one source's metrics for a given date. Best-effort, idempotent. */
+export async function ingestSourceMetrics(
+  slug: string,
+  source: string,
+  metrics: RawMetric[],
+  dateKey: string,
+  opts: { collectedAt?: string | null; runId?: string | null } = {},
+): Promise<IngestResult> {
+  if (!hasDatabase) {
+    return { ok: false, rows: 0, sources: [], skipped: source ? [source] : [], storage: STORAGE_NOT_CONFIGURED };
+  }
+  if (!slug || !source || !Array.isArray(metrics) || !metrics.length || !DATE_RE.test(dateKey)) {
+    return { ok: true, rows: 0, sources: [], skipped: source ? [source] : [], storage: { configured: true } };
+  }
+  await ensureMetricsStorage();
+  const runId = opts.runId ?? `mri_${stableId(slug, dateKey, source, opts.collectedAt ?? "")}`;
+  const rows = rowsFromMetrics(slug, source, metrics, dateKey, opts.collectedAt, runId);
+  const count = await upsertRows(rows);
+  return { ok: true, rows: count, sources: count ? [source] : [], skipped: count ? [] : [source], storage: { configured: true } };
+}
+
+/** Mirror a full daily snapshot (`{ sources: { <source>: { status, metrics } } }`). */
+export async function ingestDailySnapshot(slug: string, dateKey: string, daily: DailySnapshotInput): Promise<IngestResult> {
+  if (!hasDatabase) {
+    return { ok: false, rows: 0, sources: [], skipped: [], storage: STORAGE_NOT_CONFIGURED };
+  }
+  if (!slug || !DATE_RE.test(dateKey)) {
+    return { ok: false, rows: 0, sources: [], skipped: [], storage: { configured: true } };
+  }
+  await ensureMetricsStorage();
+  const sources = daily?.sources && typeof daily.sources === "object" ? daily.sources : {};
+  const runId = `mri_${stableId(slug, dateKey, daily?.collectedAt ?? "")}`;
+  const allRows: SnapshotRow[] = [];
+  const used: string[] = [];
+  const skipped: string[] = [];
+  for (const [source, payload] of Object.entries(sources)) {
+    const metrics = payload?.metrics;
+    if (payload?.status !== "ok" || !Array.isArray(metrics) || !metrics.length) {
+      skipped.push(source);
+      continue;
+    }
+    used.push(source);
+    allRows.push(...rowsFromMetrics(slug, source, metrics, dateKey, payload.collectedAt ?? daily.collectedAt, runId));
+  }
+  const count = await upsertRows(allRows);
+  return { ok: true, rows: count, sources: used, skipped, storage: { configured: true } };
+}

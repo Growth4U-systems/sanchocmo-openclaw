@@ -268,8 +268,8 @@ jobs:
               # The repo's historical SQL migrations are not a safe input for
               # `drizzle-kit migrate` yet: there is no Drizzle journal in git,
               # and one old migration drops/recreates `tasks`. Apply only the
-              # additive deploy migrations (MCP audit + feedback_insights) via
-              # the non-destructive single-file runner.
+              # curated additive deploy migrations via the non-destructive
+              # single-file runner.
               # Redirect stdin so the one-off container cannot consume the
               # remaining SSH heredoc before `docker compose up` runs.
               docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:deploy" < /dev/null

@@ -78,12 +78,18 @@ test("tools/list exposes expected MCP schemas", async () => {
       "alarife_validate_mcp_connection",
       "open_design_health",
       "open_design_list_catalog",
+      // Métricas v2 MCP surface (SAN-264+): read + Merlin write tools
+      "sancho_add_custom_metric",
+      "sancho_apply_metrics_template",
       "sancho_create_task",
+      "sancho_delegate",
       "sancho_get_chat_thread",
       "sancho_get_client_context",
       "sancho_get_document",
       // SAN-217: Meeting Intelligence read tools
       "sancho_get_meeting",
+      "sancho_get_metrics_dashboard",
+      "sancho_get_metrics_timeseries",
       "sancho_get_task",
       // SAN-17: public intake-form link (stateless token, read-only)
       "sancho_intake_create_link",
@@ -96,9 +102,11 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_list_meetings",
       "sancho_list_tasks",
       "sancho_mcp_status",
+      "sancho_revert_metrics_dashboard",
       // SAN-260: Keyword Antenna (seo:write, dryRun/confirm)
       "sancho_run_keyword_antenna",
       "sancho_send_message",
+      "sancho_update_metrics_dashboard",
       "sancho_update_task",
       // SAN-80: gates de envío + plantillas (escritura espejo de la UI)
       "yalc_approve_gate",
@@ -121,6 +129,10 @@ test("tools/list exposes expected MCP schemas", async () => {
     const sendMessage = result.tools.find((tool) => tool.name === "sancho_send_message");
     assert.ok(sendMessage);
     assert.deepEqual(sendMessage.inputSchema.required, ["clientSlug", "text"]);
+
+    const delegate = result.tools.find((tool) => tool.name === "sancho_delegate");
+    assert.ok(delegate);
+    assert.deepEqual(delegate.inputSchema.required, ["clientSlug", "agent", "name", "brief"]);
 
     const updateModelConfig = result.tools.find((tool) => tool.name === "yalc_update_model_config");
     assert.ok(updateModelConfig);
@@ -628,7 +640,7 @@ test("sancho_create_task is dry-run by default and writes nothing", async () => 
   }
 });
 
-test("sancho_send_message dry-run returns a non-blocking work hint pointing to sancho_create_task (SAN-216)", async () => {
+test("sancho_send_message dry-run returns a non-blocking work hint pointing to sancho_delegate (SAN-216/SAN-220)", async () => {
   const { client, close } = await createConnectedClient({
     id: "operator",
     scopes: ["sancho:chat"],
@@ -644,7 +656,7 @@ test("sancho_send_message dry-run returns a non-blocking work hint pointing to s
     const payload = payloadOf(result);
     assert.equal(payload.dryRun, true);
     assert.equal(payload.requiresConfirmation, true);
-    assert.match(String(payload.workHint), /sancho_create_task/);
+    assert.match(String(payload.workHint), /sancho_delegate/);
   } finally {
     await close();
   }
@@ -671,6 +683,191 @@ test("sancho_create_task creates a task with confirm and it is retrievable", asy
     const get = await client.callTool({ name: "sancho_get_task", arguments: { clientSlug: "alpha", taskId: task.id } });
     assert.equal(payloadOf(get).name, "Lanzar Foundation");
   } finally {
+    await close();
+  }
+});
+
+test("sancho_delegate dry-run previews an idempotent specialist thread without dispatching", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["tasks:write", "sancho:chat"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        clientSlug: "alpha",
+        agent: "hamete",
+        name: "Research Itnig",
+        brief: "Investiga Itnig con fuentes verificadas.",
+      },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.dryRun, true);
+    assert.equal(payload.requiresConfirmation, true);
+    assert.equal(payload.threadId, "alpha:delegate-hamete-research-itnig");
+    assert.equal((payload.taskInput as { agent: string }).agent, "hamete");
+    assert.equal((payload.taskInput as { mc_chat_thread_id: string }).mc_chat_thread_id, payload.threadId);
+    assert.equal((payload.payload as { agentId: string }).agentId, "hamete");
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_delegate only accepts active delegate agents", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["tasks:write", "sancho:chat"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    for (const agent of ["sancho", "escudero", "hammette", "alarife"]) {
+      const result = await client.callTool({
+        name: "sancho_delegate",
+        arguments: {
+          clientSlug: "alpha",
+          agent,
+          name: `Rejected ${agent}`,
+          brief: "Esto no debe despacharse.",
+        },
+      });
+      assert.equal(result.isError, true, `${agent} should be rejected`);
+      const text = result.content[0].type === "text" ? result.content[0].text : "";
+      assert.match(text, /active delegate agent/);
+    }
+
+    for (const agent of ["cervantes", "sanson", "hamete"]) {
+      const result = await client.callTool({
+        name: "sancho_delegate",
+        arguments: {
+          clientSlug: "alpha",
+          agent,
+          name: `Accepted ${agent}`,
+          brief: "Dry-run válido.",
+        },
+      });
+      assert.equal(result.isError, undefined, `${agent} should be accepted`);
+      assert.equal((payloadOf(result).taskInput as { agent: string }).agent, agent);
+    }
+  } finally {
+    await close();
+  }
+});
+
+test("sancho_delegate creates/reuses a specialist task thread and dispatches the brief", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalGateway = process.env.MC_CHAT_GATEWAY;
+  const calls: Array<{ url: string; body: Record<string, unknown>; headers: Headers }> = [];
+  process.env.MC_CHAT_GATEWAY = "http://gateway.test";
+  globalThis.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+    calls.push({ url: String(url), body, headers: new Headers(init?.headers) });
+    return new Response(JSON.stringify({ ok: true, chatId: body.threadId }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }) as typeof fetch;
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["tasks:write", "tasks:read", "sancho:chat"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const args = {
+      clientSlug: "alpha",
+      agent: "Hamete",
+      name: "Research Itnig SAN220",
+      brief: "Investiga Itnig y Bernat Farrero con URLs y encaje.",
+      dryRun: false,
+      confirm: true,
+    };
+    const first = await client.callTool({ name: "sancho_delegate", arguments: args });
+    assert.equal(first.isError, undefined);
+    const firstPayload = payloadOf(first);
+    assert.equal(firstPayload.ok, true);
+    assert.equal(firstPayload.threadId, "alpha:delegate-hamete-research-itnig-san220");
+    assert.equal(firstPayload.agent, "hamete");
+    const firstTask = firstPayload.task as { id: string; agent: string; mc_chat_thread_id: string };
+    assert.ok(firstTask.id);
+    assert.equal(firstTask.agent, "hamete");
+    assert.equal(firstTask.mc_chat_thread_id, firstPayload.threadId);
+
+    const second = await client.callTool({ name: "sancho_delegate", arguments: args });
+    const secondTask = payloadOf(second).task as { id: string };
+    assert.equal(secondTask.id, firstTask.id, "same delegate thread reuses the same task");
+
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0].url, "http://gateway.test/mc-chat/inbound");
+    assert.equal(calls[0].headers.get("X-Sancho-MCP-Trace-Id"), "trace-test-1");
+    assert.deepEqual(
+      {
+        threadId: calls[0].body.threadId,
+        threadName: calls[0].body.threadName,
+        text: calls[0].body.text,
+        agent: calls[0].body.agent,
+        agentId: calls[0].body.agentId,
+        source: calls[0].body._source,
+      },
+      {
+        threadId: "alpha:delegate-hamete-research-itnig-san220",
+        threadName: "Research Itnig SAN220",
+        text: "Investiga Itnig y Bernat Farrero con URLs y encaje.",
+        agent: "hamete",
+        agentId: "hamete",
+        source: "mcp_delegate",
+      },
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalGateway === undefined) delete process.env.MC_CHAT_GATEWAY;
+    else process.env.MC_CHAT_GATEWAY = originalGateway;
+    await close();
+  }
+});
+
+test("sancho_delegate is fail-loud when the task is created but gateway dispatch fails", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalGateway = process.env.MC_CHAT_GATEWAY;
+  process.env.MC_CHAT_GATEWAY = "http://gateway.test";
+  globalThis.fetch = (async () =>
+    new Response("runner unavailable", {
+      status: 502,
+      headers: { "content-type": "text/plain" },
+    })) as typeof fetch;
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["tasks:write", "sancho:chat"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        clientSlug: "alpha",
+        agent: "rocinante",
+        name: "Outreach Itnig SAN220",
+        brief: "Prepara outreach para Itnig.",
+        dryRun: false,
+        confirm: true,
+      },
+    });
+    assert.equal(result.isError, true);
+    const text = result.content[0].type === "text" ? result.content[0].text : "";
+    assert.match(text, /NOT dispatched/);
+    assert.match(text, /HTTP 502/);
+    assert.match(text, /alpha:delegate-rocinante-outreach-itnig-san220/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalGateway === undefined) delete process.env.MC_CHAT_GATEWAY;
+    else process.env.MC_CHAT_GATEWAY = originalGateway;
     await close();
   }
 });

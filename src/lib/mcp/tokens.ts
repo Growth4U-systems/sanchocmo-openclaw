@@ -12,6 +12,8 @@ export const MCP_SCOPES = [
   "intelligence:read",
   "seo:read",
   "seo:write",
+  "metrics:read",
+  "metrics:write",
 ] as const;
 
 export type McpScope = (typeof MCP_SCOPES)[number];

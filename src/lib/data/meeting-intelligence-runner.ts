@@ -20,6 +20,8 @@ import {
   getMeetingIntelligenceConfig,
 } from "@/lib/data/meeting-intelligence-db";
 import { reconcileMeetingsToPovBank } from "@/lib/data/pov-bank";
+import { detect, type Severity } from "@/lib/data/intelligence/engine";
+import { meetingDocumentRules } from "@/lib/data/intelligence/rules/meeting-documents";
 
 const GOG_BIN = "/opt/homebrew/bin/gog";
 const NOTION_VERSION = "2022-06-28";
@@ -195,37 +197,33 @@ function inferInsights(rawText: string) {
   return { decisions, actions, risks, insights };
 }
 
-export function documentsForText(text: string) {
-  const lower = text.toLowerCase();
-  const docs: Array<{ name: string; severity: "high" | "medium" | "low"; reason: string }> = [];
-  if (/\b(strategyplan|strategy plan|estrategia|prioridad|roadmap|go[- ]?to[- ]?market|gtm)\b/i.test(lower)) {
-    docs.push({ name: "StrategyPlan", severity: "high", reason: "Afecta estrategia, prioridades o roadmap." });
+// Foundation-document detector for meeting insights — now expressed as a TEXT
+// rule of the Intelligence engine (SAN-270). Same signature and output shape as
+// before; the keyword logic lives in ./intelligence/rules/meeting-documents.ts.
+// Duplicate documentNames (POV Bank direct+mineable) collapse keeping the
+// highest severity, reproducing the original `direct ? "medium" : "low"`.
+const DOC_SEVERITY_RANK: Record<Severity, number> = { high: 3, medium: 2, low: 1 };
+
+export function documentsForText(text: string): Array<{ name: string; severity: Severity; reason: string }> {
+  const proposals = detect(
+    [{ slug: "", category: "meeting", provider: "meeting", metric: "raw_text", text }],
+    meetingDocumentRules,
+  );
+  const byName = new Map<string, { name: string; severity: Severity; reason: string }>();
+  const order: string[] = [];
+  for (const proposal of proposals) {
+    const name = proposal.documentName;
+    const severity = proposal.severity;
+    if (!name || !severity) continue;
+    const existing = byName.get(name);
+    if (!existing) {
+      byName.set(name, { name, severity, reason: proposal.rationale });
+      order.push(name);
+    } else if (DOC_SEVERITY_RANK[severity] > DOC_SEVERITY_RANK[existing.severity]) {
+      byName.set(name, { name, severity, reason: proposal.rationale });
+    }
   }
-  const directPovSignal = /\b(pov|proof point|creencia|belief|objecion|objeción|argumento|customer language|lenguaje de cliente)\b/i.test(lower);
-  const mineablePovSignal = /\b(aha|insight|nos dimos cuenta|realizamos que|problema resuelto|solucionamos|framework|proceso|sistema|ritual|contrario|mito|best practice|pasamos de|fuimos de|mrr|cac|ltv|payback|conversion|conversión|frustracion|frustración|fallo|duda)\b/i.test(lower)
-    || /\b\d+\s*(%|x|€|\$)\b/.test(lower);
-  if (directPovSignal || mineablePovSignal) {
-    docs.push({
-      name: "POV Bank",
-      severity: directPovSignal ? "medium" : "low",
-      reason: directPovSignal
-        ? "Afecta POV, proof points u objeciones."
-        : "Contiene una señal mineable para POV: insight, proceso, métrica, conflicto o lenguaje de cliente.",
-    });
-  }
-  if (/\b(posicionamiento|positioning|diferenciacion|diferenciación|competidor|competencia)\b/i.test(lower)) {
-    docs.push({ name: "Positioning", severity: "medium", reason: "Afecta posicionamiento o diferenciación." });
-  }
-  if (/\b(contenido|content|pilar|pillar|editorial)\b/i.test(lower)) {
-    docs.push({ name: "Content Pillars", severity: "low", reason: "Afecta temas o ángulos de contenido." });
-  }
-  if (/\b(tono|voice|mensaje|copy|lenguaje)\b/i.test(lower)) {
-    docs.push({ name: "Brand Voice", severity: "low", reason: "Afecta tono o lenguaje de marca." });
-  }
-  if (/\b(company brief|empresa|producto|cliente|oferta)\b/i.test(lower)) {
-    docs.push({ name: "Company Brief", severity: "low", reason: "Afecta contexto canónico de compañía o producto." });
-  }
-  return docs;
+  return order.map((name) => byName.get(name)!);
 }
 
 // Pure: which insights still lack a recommendation (keyed by insightId). The
