@@ -113,7 +113,7 @@ const RANGE_DAYS: Record<DateRange, number> = { "1d": 1, "7d": 7, "30d": 30, all
 const SOURCE_NAMES: Record<string, string> = {
   ga4: "GA4", gsc: "Search Console", metricool: "Social",
   "meta-ads": "Meta Ads", meta_ads: "Meta Ads", ghl: "CRM",
-  instantly: "Outreach", sheets: "Manual",
+  instantly: "Outreach", sheets: "Manual", posthog: "Product",
 };
 
 // ============================================================
@@ -1528,6 +1528,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
   const ads = sources["meta-ads"] || sources.meta_ads;
   const mc = sources.metricool;
   const ghl = sources.ghl;
+  const posthog = sources.posthog;
   const pGa4 = prevSources.ga4;
   const pGsc = prevSources.gsc;
 
@@ -2006,6 +2007,66 @@ function MetricsPageInner({ slug }: { slug: string }) {
   }
 
   function renderConversion() {
+    // Connected? Use the SAME file-based detection the Surfaces tab uses.
+    const posthogConnected = connectedFromFiles.has("posthog");
+    if (posthogConnected) {
+      const pageviews = mVal(posthog, "pageviews");
+      const activation = mVal(posthog, "activation_events");
+      const recordings = mVal(posthog, "session_recordings");
+      // Per-step reached counts (stable { step, order } dims); derive dropoff from
+      // consecutive counts here so the adapter keeps a varying count out of dims.
+      const reachedRows = (posthog?.metrics || [])
+        .filter((x) => x.name === "funnel_step_reached" && x.dimensions)
+        .sort((a, b) => (Number(a.dimensions?.order) || 0) - (Number(b.dimensions?.order) || 0));
+      const funnel = reachedRows.map((s, i) => ({
+        step: String(s.dimensions?.step ?? ""),
+        reached: s.value,
+        dropoff: i === 0 ? 0 : Math.max(0, reachedRows[i - 1].value - s.value),
+      }));
+      return (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Pageviews", value: pageviews, hint: "PostHog" },
+              { label: "Activación", value: activation, hint: "activación" },
+              { label: "Dropoff total", value: funnel.length ? funnel.reduce((s, x) => s + x.dropoff, 0) : null, hint: "perdidos en el funnel" },
+              { label: "Grabaciones", value: recordings, hint: "session recordings" },
+            ].map((c) => (
+              <div key={c.label} className="border-2 border-border rounded-xl p-3 bg-card">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{c.label}</div>
+                <div className="text-[22px] font-heading font-bold text-navy mt-0.5">{c.value == null ? "—" : c.value.toLocaleString()}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">{c.hint}</div>
+              </div>
+            ))}
+          </div>
+          {funnel.length > 0 ? (
+            <div className="border-2 border-border rounded-xl p-4 bg-card">
+              <div className="font-heading font-bold mb-3">Funnel de producto <span className="text-[11px] text-muted-foreground font-normal">(PostHog · dropoff por paso)</span></div>
+              <table className="w-full border-collapse text-[13px]">
+                <thead><tr>
+                  <th className="text-left text-[10px] uppercase tracking-wide text-muted-foreground p-1">Paso</th>
+                  <th className="text-right text-[10px] uppercase tracking-wide text-muted-foreground p-1">Alcanzaron</th>
+                  <th className="text-right text-[10px] uppercase tracking-wide text-muted-foreground p-1">Dropoff</th>
+                </tr></thead>
+                <tbody>
+                  {funnel.map((r, i) => (
+                    <tr key={i} className="border-t border-border">
+                      <td className="p-1.5">{r.step}</td>
+                      <td className="p-1.5 text-right font-heading font-semibold">{r.reached.toLocaleString()}</td>
+                      <td className={cn("p-1.5 text-right", r.dropoff > 0 && "text-destructive")}>{i === 0 ? "—" : `−${r.dropoff.toLocaleString()}`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="border-2 border-border rounded-xl bg-card p-6 text-center text-[13px] text-muted-foreground">
+              PostHog conectado. Define <code className="text-[11px]">funnelSteps</code> en los ajustes de la integración para ver el dropoff por paso.
+            </div>
+          )}
+        </div>
+      );
+    }
     return (
       <div className="space-y-4">
         <div className="border-2 border-dashed rounded-xl p-6 bg-card text-center" style={{ borderColor: "#3B9EBF" }}>

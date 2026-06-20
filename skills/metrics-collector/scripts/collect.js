@@ -111,7 +111,7 @@ for (const [key, val] of Object.entries(rawEnv)) {
 }
 
 // --- Available adapters ---
-const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'ghl', 'instantly', 'sheets'];
+const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'ghl', 'instantly', 'sheets', 'posthog'];
 
 // --- Determine which adapters to run ---
 const ds = integrations.dataSources || integrations;

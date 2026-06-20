@@ -155,6 +155,25 @@
     "funnelMaps": {}
   },
 
+  "posthog": {
+    "label": "PostHog",
+    "aliases": ["post_hog", "product_analytics"],
+    "provides": {
+      "pageviews": { "metric": "pageviews", "label": "Pageviews" },
+      "activationEvents": { "metric": "activation_events", "label": "Activation Events" },
+      "funnelReached": { "metric": "funnel_step_reached", "dimension": "step", "label": "Funnel Reached by Step" },
+      "sessionRecordings": { "metric": "session_recordings", "label": "Session Recordings" }
+    },
+    "funnelMaps": {
+      "Activation": "activation_events",
+      "Activated": "activation_events",
+      "Signup → Activation": "activation_events",
+      "Downloads": "pageviews",
+      "Visits": "pageviews",
+      "Visits/Installs": "pageviews"
+    }
+  },
+
   "instantly": {
     "label": "Instantly",
     "provides": {
