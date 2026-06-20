@@ -8,6 +8,7 @@ import type {
   PublishResult,
   PublishStatus,
 } from "@/lib/publishing/types";
+import { slugify } from "@/lib/slugify";
 
 /**
  * Alarife Payload publishing provider (SAN-161).
@@ -73,13 +74,7 @@ function loadConfig(slug: string): { ok: true; cfg: AlarifeConfig } | { ok: fals
 }
 
 export function slugifyPath(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || "articulo";
+  return slugify(title, { maxLen: 80, fallback: "articulo" });
 }
 
 interface AlarifePage {
