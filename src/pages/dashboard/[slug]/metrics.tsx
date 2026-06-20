@@ -1434,30 +1434,12 @@ export default function MetricsPage() {
     const calculated: { name: string; value: string; category: string; isGood: boolean }[] = [];
     for (const kpi of displayPlan.kpis) {
       if (!kpi.formula) continue;
-      if (!isSafeFormula(kpi.formula)) continue;
-      try {
-        const parts = kpi.formula.match(/([a-z-]+)\.(\w+)/g) || [];
-        let formula = kpi.formula;
-        let canCalc = true;
-        for (const part of parts) {
-          const [src, metric] = part.split(".");
-          const srcData = sources[src] || sources[src.replace(/-/g, "_")];
-          if (srcData?.status === "ok") {
-            const m = srcData.metrics.find((x) => x.name === metric && !x.dimensions);
-            if (m) formula = formula.replace(part, String(m.value));
-            else canCalc = false;
-          } else canCalc = false;
-        }
-        if (canCalc) {
-          // eslint-disable-next-line no-eval
-          const result = eval(formula);
-          if (typeof result === "number" && isFinite(result)) {
-            const fmtVal = kpi.format === "currency" ? `\u20AC${result.toFixed(2)}` : kpi.format === "percent" ? `${result.toFixed(1)}%` : result.toFixed(1);
-            const isGood = kpi.name === "CPL" ? result < 20 : true;
-            calculated.push({ name: kpi.name, value: fmtVal, category: kpi.category, isGood });
-          }
-        }
-      } catch { /* skip */ }
+      // One formula engine: evalFormula validates (isSafeFormula) + resolves
+      // source.metric refs (underscore/hyphen/decimal-safe) before eval.
+      const result = evalFormula(kpi.formula, sources);
+      if (result == null) continue;
+      const isGood = kpi.name === "CPL" ? result < 20 : true;
+      calculated.push({ name: kpi.name, value: fmtByFormat(result, kpi.format), category: kpi.category || "", isGood });
     }
     return calculated;
   }, [displayPlan, sources]);
@@ -1841,10 +1823,15 @@ export default function MetricsPage() {
   }
 
   function renderChannels() {
-    return displayPlan?.funnel && hasData ? (
-      <PlanFunnelCard plan={displayPlan} sources={sources} metricsData={metricsData || {}} />
-    ) : (
-      <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">Sin datos de canales aún. Conecta fuentes para ver el funnel por canal.</div>
+    return (
+      <>
+        {dataBanners}
+        {displayPlan?.funnel && hasData ? (
+          <PlanFunnelCard plan={displayPlan} sources={sources} metricsData={metricsData || {}} />
+        ) : (
+          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">Sin datos de canales aún. Conecta fuentes para ver el funnel por canal.</div>
+        )}
+      </>
     );
   }
 
