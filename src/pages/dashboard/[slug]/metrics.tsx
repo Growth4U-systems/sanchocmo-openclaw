@@ -1,9 +1,9 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useTranslations } from "next-intl";
 import { useSlugSync } from "@/hooks/useSlugSync";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   DndContext,
   closestCenter,
@@ -28,7 +28,7 @@ import { KpiCard } from "@/components/shared/kpi-card";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { SlideOver } from "@/components/shared/slide-over";
 import { JsonViewer } from "@/components/shared/doc-slideover";
-import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, type SurfaceSummaryEntry } from "@/hooks/useMetrics";
+import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, type SurfaceSummaryEntry, type DashboardRecord } from "@/hooks/useMetrics";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildMetricsEditThread } from "@/lib/chat-openers";
 import { SURFACES, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
@@ -1276,6 +1276,21 @@ function SurfaceCard({ surface, connected, connectedSources, value, valueLabel, 
   );
 }
 
+/** Reorder surface refs by a key order: dedupe + drop unknowns, append any not in
+ *  `keys` at the tail, renumber `order`. Used for the optimistic DnD cache update
+ *  (mirrors the server's reorderDashboardSurfaces). */
+function reorderSurfaceRefs<T extends { surface: string; order: number }>(refs: T[], keys: string[]): T[] {
+  const byKey = new Map(refs.map((r) => [r.surface, r]));
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const k of keys) {
+    const r = byKey.get(k);
+    if (r && !seen.has(k)) { seen.add(k); out.push({ ...r, order: out.length }); }
+  }
+  for (const r of refs) if (!seen.has(r.surface)) out.push({ ...r, order: out.length });
+  return out;
+}
+
 /** Version trigger pill (chat / user-drag / template / seed / revert). */
 function TriggerBadge({ trigger }: { trigger: string }) {
   const map: Record<string, { bg: string; fg: string }> = {
@@ -1347,7 +1362,14 @@ const SURFACE_HEADLINE: Partial<Record<SurfaceKey, { source: string; metric: str
 };
 
 export default function MetricsPage() {
+  // Key the page by slug so it REMOUNTS on client change instead of being reused
+  // across clients — that resets all per-client state (DnD order, in-flight saves,
+  // tab) for free, so no slug-guards are needed inside (SAN-294).
   const slug = useSlugSync();
+  return <MetricsPageInner key={slug || "__none__"} slug={slug} />;
+}
+
+function MetricsPageInner({ slug }: { slug: string }) {
   const t = useTranslations("metrics");
   const router = useRouter();
   const [tab, setTab] = useState<string>("overview");
@@ -1386,94 +1408,58 @@ export default function MetricsPage() {
   const queryClient = useQueryClient();
   const openChat = useOpenChat();
   const [versionsOpen, setVersionsOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  // Optimistic surface order (keys) held until a server-side drag save resolves.
-  const [surfaceOrder, setSurfaceOrder] = useState<string[] | null>(null);
-  const surfaceSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingReorder = useRef<{ slug: string; keys: string[] } | null>(null);
-  const slugRef = useRef(slug);
-  slugRef.current = slug; // latest slug, for guarding async saves after navigation
 
-  // Persist a surface reorder: send only the key order; the server merges it onto
-  // the LATEST definition (no lost-update of intervening edits). Keep the optimistic
-  // order until the fresh definition arrives to avoid a flash-back.
-  async function saveSurfaceOrder(targetSlug: string, keys: string[]) {
-    setSaving(true);
-    try {
-      await fetch(`/api/metrics/dashboard?slug=${targetSlug}`, {
+  // Surface reorder + revert as React Query mutations (optimistic update + rollback
+  // + invalidate) — the house pattern. The page remounts on slug change (key=slug),
+  // so there is no cross-client state to guard, no debounce, and no keepalive flush.
+  const reorderMutation = useMutation({
+    mutationFn: async (keys: string[]) => {
+      const res = await fetch(`/api/metrics/dashboard?slug=${slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ surfacesOrder: keys, trigger: "user-drag", changeNote: "Reordenadas superficies" }),
-      }).catch(() => undefined);
-      // Reconcile to the server's truth: refetch (the optimistic order is held until
-      // it arrives → no flash on a successful save) then drop the optimistic order.
-      // A FAILED save (non-2xx or network error) thus ROLLS BACK to the persisted
-      // order instead of looking saved. Guard shared state by slug — the page is
-      // reused across clients, so a late save for A mustn't stomp B's order.
-      await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", targetSlug] });
-      if (slugRef.current === targetSlug) setSurfaceOrder(null);
-    } finally {
-      if (slugRef.current === targetSlug) setSaving(false);
-    }
-  }
+      });
+      if (!res.ok) throw new Error("Failed to save surface order");
+    },
+    onMutate: async (keys: string[]) => {
+      await queryClient.cancelQueries({ queryKey: ["metrics-dashboard", slug] });
+      const prev = queryClient.getQueryData<DashboardRecord>(["metrics-dashboard", slug]);
+      if (prev?.definition?.surfaces) {
+        queryClient.setQueryData<DashboardRecord>(["metrics-dashboard", slug], {
+          ...prev,
+          definition: { ...prev.definition, surfaces: reorderSurfaceRefs(prev.definition.surfaces, keys) },
+        });
+      }
+      return { prev };
+    },
+    onError: (_err, _keys, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["metrics-dashboard", slug], ctx.prev);
+    },
+    onSettled: () => { void queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", slug] }); },
+  });
 
-  async function revertTo(version: number) {
-    if (!slug) return;
-    const targetSlug = slug;
-    // Cancel any pending debounced drag save + drop the optimistic order so it
-    // can't re-post the old surface order on top of the reverted snapshot.
-    if (surfaceSaveTimer.current) { clearTimeout(surfaceSaveTimer.current); surfaceSaveTimer.current = null; }
-    pendingReorder.current = null;
-    setSurfaceOrder(null);
-    setSaving(true);
-    try {
-      await fetch(`/api/metrics/dashboard/revert?slug=${targetSlug}`, {
+  const revertMutation = useMutation({
+    mutationFn: async (version: number) => {
+      const res = await fetch(`/api/metrics/dashboard/revert?slug=${slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toVersion: version }),
-      }).catch(() => undefined);
-      // Reconcile to the server (refetch shows the reverted state, or the current
-      // state if it failed). Guard shared state by slug — the page is reused across
-      // clients, so a late revert for A mustn't stomp B.
-      await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", targetSlug] });
-    } finally {
-      if (slugRef.current === targetSlug) setSaving(false);
-    }
-  }
+      });
+      if (!res.ok) throw new Error("Failed to revert dashboard");
+    },
+    onSettled: () => { void queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", slug] }); },
+  });
 
-  // Open the Merlin metrics-setup chat thread (manifest-driven; Merlin is the
-  // pillar owner) with a contextual opener. The actual edits run through the MCP
-  // write tools — this never handles credentials.
+  const saving = reorderMutation.isPending || revertMutation.isPending;
+  const revertTo = (version: number) => revertMutation.mutate(version);
+
+  // Open the Merlin metrics-setup chat thread (manifest-driven; Merlin is the pillar
+  // owner) with a contextual opener. The actual edits run through the MCP write tools
+  // — this never handles credentials.
   function openMerlin(message: string) {
     if (!slug) return;
     openChat(slug, buildMetricsEditThread(slug, message));
   }
-
-  // On slug change OR unmount, cancel the timer, FLUSH any pending reorder
-  // (keepalive so it survives a route change / unload), and reset the optimistic
-  // order so it never leaks into another client's dashboard. The metrics page stays
-  // mounted across `/dashboard/<slug>/metrics` slug changes, so this must key on
-  // `slug`, not just run on unmount. Refs only → no stale closure; p.slug is the
-  // slug captured when the drag was scheduled.
-  useEffect(() => () => {
-    if (surfaceSaveTimer.current) { clearTimeout(surfaceSaveTimer.current); surfaceSaveTimer.current = null; }
-    const p = pendingReorder.current;
-    if (p) {
-      pendingReorder.current = null;
-      void fetch(`/api/metrics/dashboard?slug=${p.slug}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ surfacesOrder: p.keys, trigger: "user-drag", changeNote: "Reordenadas superficies" }),
-        keepalive: true,
-      });
-      // Mark the (now inactive) dashboard query stale so returning to this client
-      // refetches the saved order instead of serving the pre-drag cache.
-      void queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", p.slug] });
-    }
-    // Reset shared in-flight state so the next client doesn't inherit it.
-    setSurfaceOrder(null);
-    setSaving(false);
-  }, [slug, queryClient]);
 
   const { data: metricsData, refetch: refetchMetrics } = useQuery<MetricsData>({
     queryKey: ["metrics-data", slug],
@@ -1830,43 +1816,21 @@ export default function MetricsPage() {
     return { connected: connectedSources.length > 0, connectedSources, value, valueLabel };
   }
 
-  // Server-side DnD: reorder definition.surfaces and persist (debounced) as a new
-  // "user-drag" version. The definition is the source of truth; surfaceOrder is
-  // only the optimistic paint until the save resolves (no localStorage).
-  function persistSurfaceOrder(keys: string[]) {
-    if (!slug || !dashboardRec?.configured) return; // no DB → optimistic only, nothing to persist
-    if (surfaceSaveTimer.current) clearTimeout(surfaceSaveTimer.current);
-    pendingReorder.current = { slug, keys };
-    surfaceSaveTimer.current = setTimeout(() => {
-      pendingReorder.current = null;
-      void saveSurfaceOrder(slug, keys);
-    }, 800);
-  }
-
+  // Server-side DnD: reorder and persist via reorderMutation (optimistic cache
+  // update + rollback). dnd-kit fires once per drop, so no debounce is needed, and
+  // orderedSurfaces already reflects the optimistic order via the query cache.
   function handleSurfaceDragEnd(event: DragEndEvent) {
-    // Ignore drags until the dashboard record has loaded (we can't know yet whether
-    // the order would persist) and while a save is in flight (so overlapping saves
-    // can't commit the older order last). The handle is disabled in both cases too.
-    if (!dashboardRec || saving) return;
+    // Only when the dashboard is loaded + DB-backed and not mid-save (the handle is
+    // disabled in those cases too — this is just defense).
+    if (!dashboardRec?.configured || saving) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const keys = (surfaceOrder ?? orderedSurfaces.map((s) => s.key)).slice();
+    const keys: string[] = orderedSurfaces.map((s) => s.key);
     const oldIndex = keys.indexOf(String(active.id));
     const newIndex = keys.indexOf(String(over.id));
     if (oldIndex === -1 || newIndex === -1) return;
-    const next = arrayMove(keys, oldIndex, newIndex);
-    setSurfaceOrder(next);
-    persistSurfaceOrder(next);
+    reorderMutation.mutate(arrayMove(keys, oldIndex, newIndex));
   }
-
-  // Surfaces in optimistic (drag) order when set, else the definition order.
-  const displayedSurfaces: SurfaceDef[] = useMemo(() => {
-    if (!surfaceOrder) return orderedSurfaces;
-    const byKey = new Map(orderedSurfaces.map((s) => [s.key, s]));
-    const ordered = surfaceOrder.map((k) => byKey.get(k as SurfaceKey)).filter((s): s is SurfaceDef => Boolean(s));
-    const missing = orderedSurfaces.filter((s) => !surfaceOrder.includes(s.key));
-    return [...ordered, ...missing];
-  }, [orderedSurfaces, surfaceOrder]);
 
   const topPages = useMemo(() => {
     if (!ga4?.metrics) return [] as MetricEntry[];
@@ -1966,12 +1930,12 @@ export default function MetricsPage() {
       <>
         {dataBanners}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSurfaceDragEnd}>
-          <SortableContext items={displayedSurfaces.map((s) => s.key)} strategy={rectSortingStrategy}>
+          <SortableContext items={orderedSurfaces.map((s) => s.key)} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              {displayedSurfaces.map((s) => {
+              {orderedSurfaces.map((s) => {
                 const info = surfaceInfoFor(s);
                 return (
-                  <SortableSurfaceCard key={s.key} id={s.key} disabled={!dashboardRec || saving}>
+                  <SortableSurfaceCard key={s.key} id={s.key} disabled={!dashboardRec?.configured || saving}>
                     <SurfaceCard
                       surface={s}
                       connected={info.connected}
