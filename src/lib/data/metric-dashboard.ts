@@ -254,6 +254,13 @@ async function writeDefinition(
     if (existing) {
       try { currentDef = parseDashboardDefinition(existing.definition); } catch { currentDef = null; }
     }
+    // A producer (field-merge, e.g. surface reorder) needs the current definition to
+    // merge onto. If the row EXISTS but its stored definition is unparseable (schema
+    // drift), refuse rather than re-seed from template — that would overwrite the
+    // client's real North Star / KPIs / custom metrics on a mere reorder.
+    if (isProducer && existing && currentDef === null) {
+      throw new Error("metric_dashboards: stored definition is unparseable; refusing a merge write");
+    }
     const definition = isProducer
       ? (definitionOrProducer as (current: DashboardDefinition | null) => DashboardDefinition)(currentDef)
       : (definitionOrProducer as DashboardDefinition);
@@ -368,7 +375,15 @@ export async function revertDashboardDefinition(
   if (!target?.definition) {
     throw new Error(`No snapshot found for version ${toVersion}`);
   }
-  return writeDefinition(slug, parseDashboardDefinition(target.definition), {
+  // Reverting to the current version is a no-op — don't append a redundant version
+  // (that would bloat history toward MAX_HISTORY and evict older snapshots).
+  if (existing && existing.version === toVersion) {
+    return getDashboardDefinition(slug);
+  }
+  // Use the producer/CAS path so a revert that races a concurrent reorder commits
+  // at the correct next version instead of clobbering it with a duplicate number.
+  const snapshot = parseDashboardDefinition(target.definition);
+  return writeDefinition(slug, () => snapshot, {
     trigger: "revert",
     changeNote: opts.changeNote ?? `Revertido a v${toVersion}`,
   });

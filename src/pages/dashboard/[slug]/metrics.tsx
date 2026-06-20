@@ -1281,7 +1281,6 @@ function TriggerBadge({ trigger }: { trigger: string }) {
   const map: Record<string, { bg: string; fg: string }> = {
     chat: { bg: "#3B9EBF", fg: "#ffffff" },
     "user-drag": { bg: "#D8C9A3", fg: "#3a3320" },
-    drag: { bg: "#D8C9A3", fg: "#3a3320" },
     template: { bg: "#E6A817", fg: "#3a2e00" },
     seed: { bg: "#4A5D23", fg: "#ffffff" },
     revert: { bg: "#C45D35", fg: "#ffffff" },
@@ -1420,6 +1419,7 @@ export default function MetricsPage() {
 
   async function revertTo(version: number) {
     if (!slug) return;
+    const targetSlug = slug;
     // Cancel any pending debounced drag save + drop the optimistic order so it
     // can't re-post the old surface order on top of the reverted snapshot.
     if (surfaceSaveTimer.current) { clearTimeout(surfaceSaveTimer.current); surfaceSaveTimer.current = null; }
@@ -1427,14 +1427,17 @@ export default function MetricsPage() {
     setSurfaceOrder(null);
     setSaving(true);
     try {
-      const res = await fetch(`/api/metrics/dashboard/revert?slug=${slug}`, {
+      await fetch(`/api/metrics/dashboard/revert?slug=${targetSlug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toVersion: version }),
-      });
-      if (res.ok) await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", slug] });
+      }).catch(() => undefined);
+      // Reconcile to the server (refetch shows the reverted state, or the current
+      // state if it failed). Guard shared state by slug — the page is reused across
+      // clients, so a late revert for A mustn't stomp B.
+      await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", targetSlug] });
     } finally {
-      setSaving(false);
+      if (slugRef.current === targetSlug) setSaving(false);
     }
   }
 
@@ -1857,13 +1860,13 @@ export default function MetricsPage() {
   }
 
   // Surfaces in optimistic (drag) order when set, else the definition order.
-  const displayedSurfaces: SurfaceDef[] = (() => {
+  const displayedSurfaces: SurfaceDef[] = useMemo(() => {
     if (!surfaceOrder) return orderedSurfaces;
     const byKey = new Map(orderedSurfaces.map((s) => [s.key, s]));
     const ordered = surfaceOrder.map((k) => byKey.get(k as SurfaceKey)).filter((s): s is SurfaceDef => Boolean(s));
     const missing = orderedSurfaces.filter((s) => !surfaceOrder.includes(s.key));
     return [...ordered, ...missing];
-  })();
+  }, [orderedSurfaces, surfaceOrder]);
 
   const topPages = useMemo(() => {
     if (!ga4?.metrics) return [] as MetricEntry[];
