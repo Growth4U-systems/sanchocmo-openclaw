@@ -436,11 +436,18 @@ export async function reorderDashboardSurfaces(
       // seed from the default refs so a reorder never persists an empty list.
       const baseSurfaces = def.surfaces && def.surfaces.length > 0 ? def.surfaces : defaultSurfaceRefs();
       const prev = new Map(baseSurfaces.map((r) => [r.surface, r]));
-      const reordered = keys
-        .filter((k) => prev.has(k as SurfaceKey))
-        .map((k, i) => ({ surface: k as SurfaceKey, visible: prev.get(k as SurfaceKey)?.visible ?? true, order: i }));
+      // Dedupe + drop unknown keys so a malformed/stale request can't persist
+      // duplicate surface refs (the schema doesn't enforce uniqueness).
+      const used = new Set<SurfaceKey>();
+      const reordered: { surface: SurfaceKey; visible: boolean; order: number }[] = [];
+      for (const k of keys) {
+        const key = k as SurfaceKey;
+        if (!prev.has(key) || used.has(key)) continue;
+        used.add(key);
+        reordered.push({ surface: key, visible: prev.get(key)?.visible ?? true, order: reordered.length });
+      }
       const extra = baseSurfaces
-        .filter((r) => !keys.includes(r.surface))
+        .filter((r) => !used.has(r.surface))
         .map((r, i) => ({ ...r, order: reordered.length + i }));
       return { ...def, surfaces: [...reordered, ...extra] };
     },

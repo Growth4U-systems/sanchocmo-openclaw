@@ -1401,18 +1401,18 @@ export default function MetricsPage() {
   async function saveSurfaceOrder(targetSlug: string, keys: string[]) {
     setSaving(true);
     try {
-      const res = await fetch(`/api/metrics/dashboard?slug=${targetSlug}`, {
+      await fetch(`/api/metrics/dashboard?slug=${targetSlug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ surfacesOrder: keys, trigger: "user-drag", changeNote: "Reordenadas superficies" }),
-      });
-      if (res.ok) {
-        // Always refresh the target client's cache so its saved order shows on return.
-        await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", targetSlug] });
-        // Only touch shared page state if we're still viewing that client — the page
-        // is reused across slugs, so a late save for A mustn't stomp B's order.
-        if (slugRef.current === targetSlug) setSurfaceOrder(null);
-      }
+      }).catch(() => undefined);
+      // Reconcile to the server's truth: refetch (the optimistic order is held until
+      // it arrives → no flash on a successful save) then drop the optimistic order.
+      // A FAILED save (non-2xx or network error) thus ROLLS BACK to the persisted
+      // order instead of looking saved. Guard shared state by slug — the page is
+      // reused across clients, so a late save for A mustn't stomp B's order.
+      await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", targetSlug] });
+      if (slugRef.current === targetSlug) setSurfaceOrder(null);
     } finally {
       if (slugRef.current === targetSlug) setSaving(false);
     }
