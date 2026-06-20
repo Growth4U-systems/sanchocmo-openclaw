@@ -97,10 +97,14 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_list_clients",
       "sancho_list_documents",
       "sancho_list_intelligence",
+      // SAN-260: Keyword Antenna (seo:read)
+      "sancho_list_keyword_opportunities",
       "sancho_list_meetings",
       "sancho_list_tasks",
       "sancho_mcp_status",
       "sancho_revert_metrics_dashboard",
+      // SAN-260: Keyword Antenna (seo:write, dryRun/confirm)
+      "sancho_run_keyword_antenna",
       "sancho_send_message",
       "sancho_update_metrics_dashboard",
       "sancho_update_task",

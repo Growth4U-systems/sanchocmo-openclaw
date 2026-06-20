@@ -1,15 +1,6 @@
-import path from "path";
 import { readJSON, writeJSON } from "./json-io";
-import { ideasFile } from "./paths";
-import { BASE } from "./paths";
+import { ideasFile, contentIdeaQueueFile } from "./paths";
 import type { Idea } from "@/types";
-
-// Path of the Content Engine idea queue (ideas produced by the content
-// engine crons + skill `idea-builder`). Different schema/file from the
-// generic ideas.json — we merge both into a single list when callers ask.
-function contentIdeaQueueFile(slug: string): string {
-  return path.join(BASE, "brand", slug, "content", "idea-queue.json");
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeContentIdea(raw: any): Idea {

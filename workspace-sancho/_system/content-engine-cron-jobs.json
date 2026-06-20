@@ -85,6 +85,20 @@
         "model": "anthropic/claude-sonnet-4-5"
       },
       "delivery": { "mode": "none" }
+    },
+    {
+      "agentId": "sancho",
+      "name": "Content: Keyword Research — {NAME}",
+      "enabled": true,
+      "schedule": { "kind": "cron", "expr": "0 6 * * 2", "tz": "Europe/Madrid" },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Ejecuta keyword-antenna para {NAME}.\n\ncwd: el cron corre en `~/.openclaw` (no en workspace-sancho/). Usá los paths brand/{SLUG}/... tal cual con tus tools de archivo; NO uses shell (jq/cat/ls) contra paths relativos (el cron registraría un fallo aunque el archivo se escriba bien).\n\nLa antena es el ÚLTIMO paso del SEO de blog: descubre keywords NUEVAS contra los pillars YA validados y las deja como Ideas `seo`. El scoring + la escritura los hace la capa compartida vía endpoint; tú solo descubres y POSTeas candidatos.\n\nPASO 1 — LEER: brand/{SLUG}/content/content-pillars.md; brand/{SLUG}/go-to-market/keyword-plan.md + keyword-clusters.json (si no existen, corre con pillars + targets declarados, confianza menor); brand/{SLUG}/market-and-us/competitors/competitors.current.md; targets SEO declarados.\n\nPASO 2 — DESCUBRIR candidatos nuevos mapeados a un pillar (pillarId P1/P2…). Nativo (sin datos de pago): ① Identidad (targets + spokes sin cubrir → strategicFlag:true, discoveredBy:[\"identity\"]) y ③ 6-Circles/autocomplete vía WebSearch (discoveredBy:[\"six-circles\"]). Si Intelligence está conectado: competitor-gap / gsc-nearmiss (currentRank 8-20) / AEO (aiCitability). NUNCA inventes volúmenes ni rankings — si una fuente falta, omití esos campos. Deduplica; máx ~20.\n\nPASO 3 — PROMOVER (mismo raíl que las antenas): el endpoint requiere admin auth — leé el adminToken de la RAÍZ de ~/.openclaw/workspace-sancho/clients.json (file-read, NO shell; al mismo nivel que clients, no dentro de un cliente) y pasalo como header x-admin-token (403 = token mal leído, igual que Editorial Dispatch). POST a $MC_BASE/api/content-engine/keyword-antenna con {\"slug\":\"{SLUG}\",\"action\":\"promote\",\"candidates\":[{keyword, pillarId, discoveredBy, intent, bofuCategory, strategicFlag, demand, winnability, aiCitability, recommendedPageType}]}. El endpoint puntúa + escribe las Ideas `seo` (lossless) con source_signals:[\"kw-…\"] (enciende el filtro Keywords). Respuesta {ok, created[], skipped[], total}; append-only, dedup por keyword.\n\nPASO 4 — AUDIT + RECURRING TASK: escribe brand/{SLUG}/content/research-signals/{YYYY-MM-DD}-keywords.json (candidatos enviados) y brand/{SLUG}/recurring-tasks/content-keyword-research/{YYYY-MM-DD}.json (rellena la antena 'Keyword Research' del loop de Blog): {\"cronName\": \"Content: Keyword Research — {NAME}\", \"slug\": \"{SLUG}\", \"date\": \"YYYY-MM-DD\", \"runAtMs\": <ts>, \"status\": \"ok\", \"last_finding\": \"<1-2 frases: N ideas SEO nuevas + highlight de mayor prioridad>\", \"ideas_created\": <N>, \"signals_count\": <N>, \"per_pillar\": {\"P1\": <n>}}. signals_count = ideas_created (lo que lee el loop). Si faltó DataForSEO/GSC → status \"degraded\" y dilo en last_finding; si falló del todo → status \"error\", ideas_created 0.",
+        "model": "anthropic/claude-sonnet-4-5"
+      },
+      "delivery": { "mode": "none" }
     }
   ]
 }

@@ -10,6 +10,8 @@ export const MCP_SCOPES = [
   "open-design:read",
   "docs:read",
   "intelligence:read",
+  "seo:read",
+  "seo:write",
   "metrics:read",
   "metrics:write",
 ] as const;

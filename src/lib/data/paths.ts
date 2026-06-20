@@ -26,6 +26,13 @@ export function ideasFile(slug: string) {
   return path.join(BASE, "brand", slug, "ideas.json");
 }
 
+// Content Engine idea queue (antennas + idea-builder). Different file/schema from
+// ideas.json; both are merged by loadIdeas(). Centralized here so every reader/
+// writer points at the same location.
+export function contentIdeaQueueFile(slug: string) {
+  return path.join(BASE, "brand", slug, "content", "idea-queue.json");
+}
+
 export function projectDir(slug: string, projectId: string) {
   return path.join(BASE, "brand", slug, "projects", projectId);
 }
