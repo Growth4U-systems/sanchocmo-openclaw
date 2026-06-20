@@ -5,7 +5,7 @@ import { eq, sql as drizzleSql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricDashboards } from "@/db/schema";
 import { BASE } from "@/lib/data/paths";
-import { SURFACES } from "@/lib/metrics/surfaces";
+import { SURFACES, type SurfaceKey } from "@/lib/metrics/surfaces";
 import {
   dashboardDefinitionSchema,
   isSafeFormula,
@@ -238,11 +238,19 @@ async function readRow(slug: string) {
 
 async function writeDefinition(
   slug: string,
-  definition: DashboardDefinition,
+  definitionOrProducer: DashboardDefinition | ((current: DashboardDefinition | null) => DashboardDefinition),
   opts: { trigger: string; changeNote?: string },
 ): Promise<DashboardRecord> {
   const database = getDb();
   const existing = await readRow(slug);
+  // When a producer is passed, resolve the definition from the freshly-read row so
+  // a field-level merge (e.g. surface reorder) applies atomically to the latest
+  // state instead of a stale client / earlier-read snapshot.
+  let currentDef: DashboardDefinition | null = null;
+  if (existing) {
+    try { currentDef = parseDashboardDefinition(existing.definition); } catch { currentDef = null; }
+  }
+  const definition = typeof definitionOrProducer === "function" ? definitionOrProducer(currentDef) : definitionOrProducer;
   const prevHistory: HistoryEntry[] = Array.isArray(existing?.versionHistory)
     ? (existing!.versionHistory as unknown as HistoryEntry[])
     : [];
@@ -388,4 +396,34 @@ export async function addCustomMetric(
     trigger: "chat",
     changeNote: opts.changeNote ?? `Métrica custom «${metric.label}»`,
   });
+}
+
+/**
+ * Reorder the dashboard surfaces and persist as a new version. The reorder is
+ * applied via a producer against the row `writeDefinition` reads, so it merges
+ * onto the latest state and never clobbers an intervening North Star/KPI/custom-
+ * metric edit (UI drag-and-drop, trigger "user-drag").
+ */
+export async function reorderDashboardSurfaces(
+  slug: string,
+  keys: string[],
+  opts: { trigger?: string; changeNote?: string } = {},
+): Promise<DashboardRecord> {
+  if (!hasDatabase) return NOT_CONFIGURED(slug);
+  await ensureMetricsDashboardStorage();
+  return writeDefinition(
+    slug,
+    (current) => {
+      const def = current ?? buildSeedDefinition(slug);
+      const prev = new Map((def.surfaces || []).map((r) => [r.surface, r]));
+      const reordered = keys
+        .filter((k) => prev.has(k as SurfaceKey))
+        .map((k, i) => ({ surface: k as SurfaceKey, visible: prev.get(k as SurfaceKey)?.visible ?? true, order: i }));
+      const extra = (def.surfaces || [])
+        .filter((r) => !keys.includes(r.surface))
+        .map((r, i) => ({ ...r, order: reordered.length + i }));
+      return { ...def, surfaces: [...reordered, ...extra] };
+    },
+    { trigger: opts.trigger ?? "user-drag", changeNote: opts.changeNote },
+  );
 }

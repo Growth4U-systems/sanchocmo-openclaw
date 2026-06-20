@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
-import { getDashboardDefinition, saveDashboardDefinition } from "@/lib/data/metric-dashboard";
-import type { SurfaceKey } from "@/lib/metrics/surfaces";
+import { getDashboardDefinition, saveDashboardDefinition, reorderDashboardSurfaces } from "@/lib/data/metric-dashboard";
 
 /**
  * The versioned dashboard DEFINITION for a client (Métricas v2 PR-5a/PR-5b).
@@ -36,19 +35,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (Array.isArray(body.surfacesOrder)) {
       const keys = body.surfacesOrder.filter((k): k is string => typeof k === "string");
       try {
-        const current = await getDashboardDefinition(slug);
-        if (!current.configured || !current.definition) {
-          return res.status(200).json(current); // no DB → nothing to persist
-        }
-        const def = current.definition;
-        const prev = new Map((def.surfaces || []).map((r) => [r.surface, r]));
-        const reordered = keys
-          .filter((k) => prev.has(k as SurfaceKey))
-          .map((k, i) => ({ surface: k as SurfaceKey, visible: prev.get(k as SurfaceKey)?.visible ?? true, order: i }));
-        const extra = (def.surfaces || [])
-          .filter((r) => !keys.includes(r.surface))
-          .map((r, i) => ({ ...r, order: reordered.length + i }));
-        const record = await saveDashboardDefinition(slug, { ...def, surfaces: [...reordered, ...extra] }, { trigger, changeNote });
+        const record = await reorderDashboardSurfaces(slug, keys, { trigger, changeNote });
         return res.status(200).json(record);
       } catch (err) {
         return res.status(400).json({ error: err instanceof Error ? err.message : "Reorder failed" });

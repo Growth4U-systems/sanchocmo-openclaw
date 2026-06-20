@@ -1413,6 +1413,10 @@ export default function MetricsPage() {
 
   async function revertTo(version: number) {
     if (!slug) return;
+    // Cancel any pending debounced drag save + drop the optimistic order so it
+    // can't re-post the old surface order on top of the reverted snapshot.
+    if (surfaceSaveTimer.current) { clearTimeout(surfaceSaveTimer.current); surfaceSaveTimer.current = null; }
+    setSurfaceOrder(null);
     setSaving(true);
     try {
       const res = await fetch(`/api/metrics/dashboard/revert?slug=${slug}`, {
