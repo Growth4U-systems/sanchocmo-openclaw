@@ -1389,6 +1389,7 @@ export default function MetricsPage() {
   // Optimistic surface order (keys) held until a server-side drag save resolves.
   const [surfaceOrder, setSurfaceOrder] = useState<string[] | null>(null);
   const surfaceSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingReorder = useRef<{ slug: string; keys: string[] } | null>(null);
 
   // Persist a surface reorder: send only the key order; the server merges it onto
   // the LATEST definition (no lost-update of intervening edits). Keep the optimistic
@@ -1416,6 +1417,7 @@ export default function MetricsPage() {
     // Cancel any pending debounced drag save + drop the optimistic order so it
     // can't re-post the old surface order on top of the reverted snapshot.
     if (surfaceSaveTimer.current) { clearTimeout(surfaceSaveTimer.current); surfaceSaveTimer.current = null; }
+    pendingReorder.current = null;
     setSurfaceOrder(null);
     setSaving(true);
     try {
@@ -1438,8 +1440,21 @@ export default function MetricsPage() {
     openChat(slug, buildMetricsEditThread(slug, message));
   }
 
-  // Flush the debounced drag-save timer on unmount.
-  useEffect(() => () => { if (surfaceSaveTimer.current) clearTimeout(surfaceSaveTimer.current); }, []);
+  // On unmount, cancel the timer but FLUSH any pending reorder (best-effort,
+  // keepalive so it survives a route change / unload) so a drag right before
+  // leaving isn't silently lost. Uses only the ref — no stale closure.
+  useEffect(() => () => {
+    if (surfaceSaveTimer.current) clearTimeout(surfaceSaveTimer.current);
+    const p = pendingReorder.current;
+    if (p) {
+      void fetch(`/api/metrics/dashboard?slug=${p.slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ surfacesOrder: p.keys, trigger: "user-drag", changeNote: "Reordenadas superficies" }),
+        keepalive: true,
+      });
+    }
+  }, []);
 
   const { data: metricsData, refetch: refetchMetrics } = useQuery<MetricsData>({
     queryKey: ["metrics-data", slug],
@@ -1802,7 +1817,11 @@ export default function MetricsPage() {
   function persistSurfaceOrder(keys: string[]) {
     if (!slug || !dashboardRec?.configured) return; // no DB → optimistic only, nothing to persist
     if (surfaceSaveTimer.current) clearTimeout(surfaceSaveTimer.current);
-    surfaceSaveTimer.current = setTimeout(() => { void saveSurfaceOrder(keys); }, 800);
+    pendingReorder.current = { slug, keys };
+    surfaceSaveTimer.current = setTimeout(() => {
+      pendingReorder.current = null;
+      void saveSurfaceOrder(keys);
+    }, 800);
   }
 
   function handleSurfaceDragEnd(event: DragEndEvent) {
