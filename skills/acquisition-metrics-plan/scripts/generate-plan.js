@@ -43,11 +43,26 @@ if (!slug) {
 const templateScript = fs.readFileSync(path.join(__dirname, 'generate-template.js'), 'utf-8');
 const archMatch = templateScript.match(/const ARCHETYPES = ({[\s\S]*?});/);
 const variantMatch = templateScript.match(/const LEAD_TO_SALE_VARIANTS = ({[\s\S]*?});/);
+const tierMatch = templateScript.match(/const TIER_BY_CATEGORY = ({[\s\S]*?});/);
 
 if (!archMatch) { console.error('Cannot parse ARCHETYPES from generate-template.js'); process.exit(1); }
 
 const ARCHETYPES = eval('(' + archMatch[1] + ')');
 const LEAD_TO_SALE_VARIANTS = variantMatch ? eval('(' + variantMatch[1] + ')') : {};
+// Single source of truth for KPI tiering (defined alongside ARCHETYPES). Falls
+// back to a local copy so the generator still tiers KPIs if the block moves.
+const TIER_BY_CATEGORY = tierMatch ? eval('(' + tierMatch[1] + ')') : {
+  funnel: 'leading', traffic: 'leading', seo: 'leading', paid: 'leading',
+  social: 'leading', outreach: 'leading', crm: 'leading',
+  efficiency: 'lagging', cost: 'lagging', value: 'lagging', quality: 'lagging',
+  primary: 'primary',
+};
+
+// Map a KPI's category onto its tier (primary / leading / lagging). Unknown
+// categories are upstream signals → "leading".
+function tierForCategory(category) {
+  return TIER_BY_CATEGORY[category] || 'leading';
+}
 
 // --- Load integration mappings ---
 const mappings = JSON.parse(fs.readFileSync(path.join(SCHEMAS, 'integration-mappings.json'), 'utf-8'));
@@ -197,6 +212,44 @@ if (connectedSources.has('metricool')) {
 if (connectedSources.has('instantly')) {
   kpis.push({ name: 'Emails Sent', source: 'instantly', metric: 'sent', category: 'outreach' });
   kpis.push({ name: 'Reply Rate', source: 'instantly', metric: 'replies', category: 'outreach' });
+}
+
+// --- Tier every KPI (SAN-296) ---
+// 1) default each KPI's tier from its category (primary/leading/lagging);
+// 2) promote the KPI that represents the archetype's North Star (the primary
+//    activation count) to `primary`; 3) if no connected KPI maps to it, prepend
+//    a synthetic primary KPI so the dashboard Overview always has a North Star
+//    anchor — its value comes from the funnel's activation step at render time.
+const primaryName = (config.primaryKPI || '').toLowerCase();
+const activationStep = (config.activationEvent || '').toLowerCase();
+const lastFunnelStep = (funnel[funnel.length - 1]?.step || '').toLowerCase();
+function isPrimaryKpi(kpi) {
+  const n = (kpi.name || '').toLowerCase();
+  // Conversion-rate KPIs (e.g. "Leads → Meetings Rate") are leading signals,
+  // never the North Star, even if their name contains the primary keyword.
+  if (kpi.category === 'funnel') return false;
+  return [primaryName, activationStep, lastFunnelStep]
+    .filter(Boolean)
+    .some((target) => n === target || n.includes(target) || target.includes(n));
+}
+let hasPrimary = false;
+for (const kpi of kpis) {
+  kpi.tier = isPrimaryKpi(kpi) ? 'primary' : tierForCategory(kpi.category);
+  if (kpi.tier === 'primary') hasPrimary = true;
+}
+if (!hasPrimary && config.primaryKPI) {
+  // North Star sourced from the funnel's activation step when connected; manual
+  // otherwise. Carries the canonical primaryKPI label so the Overview can anchor it.
+  const activation = funnel[funnel.length - 1] || {};
+  kpis.unshift({
+    name: config.primaryKPI,
+    source: activation.manual ? null : activation.source,
+    metric: activation.manual ? null : activation.metric,
+    category: 'primary',
+    tier: 'primary',
+    manual: activation.manual !== false,
+    northStar: true,
+  });
 }
 
 // --- Determine which integration modules to show ---
