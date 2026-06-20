@@ -1392,25 +1392,29 @@ export default function MetricsPage() {
   const [surfaceOrder, setSurfaceOrder] = useState<string[] | null>(null);
   const surfaceSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingReorder = useRef<{ slug: string; keys: string[] } | null>(null);
+  const slugRef = useRef(slug);
+  slugRef.current = slug; // latest slug, for guarding async saves after navigation
 
   // Persist a surface reorder: send only the key order; the server merges it onto
   // the LATEST definition (no lost-update of intervening edits). Keep the optimistic
   // order until the fresh definition arrives to avoid a flash-back.
-  async function saveSurfaceOrder(keys: string[]) {
-    if (!slug) return;
+  async function saveSurfaceOrder(targetSlug: string, keys: string[]) {
     setSaving(true);
     try {
-      const res = await fetch(`/api/metrics/dashboard?slug=${slug}`, {
+      const res = await fetch(`/api/metrics/dashboard?slug=${targetSlug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ surfacesOrder: keys, trigger: "user-drag", changeNote: "Reordenadas superficies" }),
       });
       if (res.ok) {
-        await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", slug] });
-        setSurfaceOrder(null);
+        // Always refresh the target client's cache so its saved order shows on return.
+        await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", targetSlug] });
+        // Only touch shared page state if we're still viewing that client — the page
+        // is reused across slugs, so a late save for A mustn't stomp B's order.
+        if (slugRef.current === targetSlug) setSurfaceOrder(null);
       }
     } finally {
-      setSaving(false);
+      if (slugRef.current === targetSlug) setSaving(false);
     }
   }
 
@@ -1463,7 +1467,9 @@ export default function MetricsPage() {
       // refetches the saved order instead of serving the pre-drag cache.
       void queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", p.slug] });
     }
+    // Reset shared in-flight state so the next client doesn't inherit it.
     setSurfaceOrder(null);
+    setSaving(false);
   }, [slug, queryClient]);
 
   const { data: metricsData, refetch: refetchMetrics } = useQuery<MetricsData>({
@@ -1830,7 +1836,7 @@ export default function MetricsPage() {
     pendingReorder.current = { slug, keys };
     surfaceSaveTimer.current = setTimeout(() => {
       pendingReorder.current = null;
-      void saveSurfaceOrder(keys);
+      void saveSurfaceOrder(slug, keys);
     }, 800);
   }
 
