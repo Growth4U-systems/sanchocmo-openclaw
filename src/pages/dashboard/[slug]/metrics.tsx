@@ -1442,13 +1442,17 @@ export default function MetricsPage() {
     openChat(slug, buildMetricsEditThread(slug, message));
   }
 
-  // On unmount, cancel the timer but FLUSH any pending reorder (best-effort,
-  // keepalive so it survives a route change / unload) so a drag right before
-  // leaving isn't silently lost. Uses only the ref — no stale closure.
+  // On slug change OR unmount, cancel the timer, FLUSH any pending reorder
+  // (keepalive so it survives a route change / unload), and reset the optimistic
+  // order so it never leaks into another client's dashboard. The metrics page stays
+  // mounted across `/dashboard/<slug>/metrics` slug changes, so this must key on
+  // `slug`, not just run on unmount. Refs only → no stale closure; p.slug is the
+  // slug captured when the drag was scheduled.
   useEffect(() => () => {
-    if (surfaceSaveTimer.current) clearTimeout(surfaceSaveTimer.current);
+    if (surfaceSaveTimer.current) { clearTimeout(surfaceSaveTimer.current); surfaceSaveTimer.current = null; }
     const p = pendingReorder.current;
     if (p) {
+      pendingReorder.current = null;
       void fetch(`/api/metrics/dashboard?slug=${p.slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1456,7 +1460,8 @@ export default function MetricsPage() {
         keepalive: true,
       });
     }
-  }, []);
+    setSurfaceOrder(null);
+  }, [slug]);
 
   const { data: metricsData, refetch: refetchMetrics } = useQuery<MetricsData>({
     queryKey: ["metrics-data", slug],
