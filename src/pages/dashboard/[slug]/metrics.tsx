@@ -1409,11 +1409,27 @@ export default function MetricsPage() {
   // Merge plan from both sources
   const effectivePlan = metricsData?.plan || plan;
 
-  // Calculate plan-driven KPIs
+  // Display plan — prefers the ACTIVE definition's plan (funnel/kpis/activation)
+  // so Merlin's edits show in the funnel + KPI views; falls back to the file plan.
+  const displayPlan = useMemo(() => {
+    const defPlan = definition?.plan;
+    if (!defPlan || (!defPlan.funnel?.length && !defPlan.kpis?.length)) return effectivePlan;
+    return {
+      ...(effectivePlan || {}),
+      archetype: definition?.archetype ?? effectivePlan?.archetype,
+      activationEvent: defPlan.activationEvent ?? effectivePlan?.activationEvent,
+      funnel: defPlan.funnel?.length
+        ? defPlan.funnel.map((s) => ({ step: s.name, source: s.source, metric: s.metric, manual: s.manual }))
+        : effectivePlan?.funnel,
+      kpis: defPlan.kpis?.length ? defPlan.kpis : effectivePlan?.kpis,
+    };
+  }, [definition, effectivePlan]);
+
+  // Calculate plan-driven KPIs (from the active definition's plan when present)
   const planKpis = useMemo(() => {
-    if (!effectivePlan?.kpis) return [];
+    if (!displayPlan?.kpis) return [];
     const calculated: { name: string; value: string; category: string; isGood: boolean }[] = [];
-    for (const kpi of effectivePlan.kpis) {
+    for (const kpi of displayPlan.kpis) {
       if (!kpi.formula) continue;
       if (!isSafeFormula(kpi.formula)) continue;
       try {
@@ -1441,7 +1457,7 @@ export default function MetricsPage() {
       } catch { /* skip */ }
     }
     return calculated;
-  }, [effectivePlan, sources]);
+  }, [displayPlan, sources]);
 
   // Health KPI cards
   const healthCards: HealthCard[] = useMemo(() => {
@@ -1733,7 +1749,7 @@ export default function MetricsPage() {
             {customMetricCards.map((c) => <CustomMetricCard key={c.label} label={c.label} value={c.value} formula={c.formula} />)}
           </div>
         )}
-        {effectivePlan?.funnel && hasData && <FunnelStrip plan={effectivePlan} sources={sources} />}
+        {displayPlan?.funnel && hasData && <FunnelStrip plan={displayPlan} sources={sources} />}
         {healthCards.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
             {healthCards.map((card) => <KpiCard key={card.label} value={card.value} label={card.label} delta={card.delta} status={card.status} />)}
@@ -1815,8 +1831,8 @@ export default function MetricsPage() {
   }
 
   function renderChannels() {
-    return effectivePlan?.funnel && hasData ? (
-      <PlanFunnelCard plan={effectivePlan} sources={sources} metricsData={metricsData || {}} />
+    return displayPlan?.funnel && hasData ? (
+      <PlanFunnelCard plan={displayPlan} sources={sources} metricsData={metricsData || {}} />
     ) : (
       <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">Sin datos de canales aún. Conecta fuentes para ver el funnel por canal.</div>
     );
@@ -1942,14 +1958,21 @@ export default function MetricsPage() {
 
   function renderActiveTab() {
     switch (tab) {
+      case "overview": return renderOverview();
       case "surfaces": return renderSurfaces();
       case "channels": return renderChannels();
       case "conversion": return renderConversion();
       case "trends": return renderTrends();
       case "conexiones": return renderConexiones();
       case "partnerships": return <MetricsPartnershipsTab slug={slug} />;
-      case "overview":
-      default: return renderOverview();
+      // Tabs are data-driven: a definition could declare a key this build doesn't
+      // render yet. Show an honest placeholder instead of silently falling to Overview.
+      default:
+        return (
+          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">
+            La pestaña «{tabs.find((tb) => tb.key === tab)?.label || tab}» aún no está disponible en esta vista.
+          </div>
+        );
     }
   }
 
