@@ -87,7 +87,7 @@ const DEFAULT_TABS = [
   { key: "channels", label: "Channels", visible: true, order: 2 },
   { key: "conversion", label: "Conversion", visible: true, order: 3 },
   { key: "trends", label: "Trends", visible: true, order: 4 },
-  { key: "conexiones", label: "Conexiones", visible: true, order: 5 },
+  { key: "conexiones", label: "Setup", visible: true, order: 5 },
 ];
 
 function defaultSurfaceRefs() {
