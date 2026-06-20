@@ -130,7 +130,12 @@ export async function collect(config, env, dateRange) {
           host,
           projectId,
           headers,
-          `SELECT count(DISTINCT person_id) FROM events WHERE event = '${sqlStr(stepName)}' AND ${where}`,
+          // count() (events), NOT count(DISTINCT person_id): the collector stores
+          // daily snapshots that aggregateEntries SUMS over the dashboard range, and
+          // distinct-person counts aren't additive across days (a person active on
+          // two days would be double-counted). Event counts are additive and preserve
+          // the funnel shape (step1 ≥ step2 ≥ …).
+          `SELECT count() FROM events WHERE event = '${sqlStr(stepName)}' AND ${where}`,
         );
         const count = Number(rows?.[0]?.[0]) || 0;
         // value = the reached count; dimensions are STABLE { step, order } ONLY.
@@ -160,13 +165,14 @@ export async function collect(config, env, dateRange) {
     const resp = await fetch(url, { headers });
     if (resp.ok) {
       const data = await resp.json();
-      // `count` is the total matching recordings; fall back to results length.
-      const count = Number.isFinite(data.count)
-        ? data.count
-        : Array.isArray(data.results)
-          ? data.results.length
-          : 0;
-      metrics.push({ name: 'session_recordings', value: count, date: from });
+      // Trust only the endpoint's total `count`. The request uses limit=1, so a
+      // `results.length` fallback would cap the value at 1 — skip the metric instead
+      // of reporting a wrong number when no count is returned.
+      if (Number.isFinite(data.count)) {
+        metrics.push({ name: 'session_recordings', value: data.count, date: from });
+      } else {
+        console.warn('  ⚠️  PostHog session recordings: no numeric count in response, skipping');
+      }
     } else {
       const text = await resp.text().catch(() => '');
       console.warn(`  ⚠️  PostHog session recordings ${resp.status}: ${text.slice(0, 100)}`);
