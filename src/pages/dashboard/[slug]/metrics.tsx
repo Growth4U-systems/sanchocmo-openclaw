@@ -1295,21 +1295,23 @@ function TriggerBadge({ trigger }: { trigger: string }) {
 
 /** Sortable wrapper for a surface card — drag via the corner handle so the card's
  *  own click/link (open detail, Conectar →) keeps working. */
-function SortableSurfaceCard({ id, children }: { id: string; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+function SortableSurfaceCard({ id, disabled, children }: { id: string; disabled?: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   return (
     <div ref={setNodeRef} style={style} className="relative">
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        className="absolute top-2 right-2 z-10 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground text-[13px] leading-none p-1 bg-card/80 rounded"
-        title="Arrastra para reordenar"
-        aria-label="Reordenar superficie"
-      >
-        {"☰"}
-      </button>
+      {!disabled && (
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 right-2 z-10 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground text-[13px] leading-none p-1 bg-card/80 rounded"
+          title="Arrastra para reordenar"
+          aria-label="Reordenar superficie"
+        >
+          {"☰"}
+        </button>
+      )}
       {children}
     </div>
   );
@@ -1825,6 +1827,9 @@ export default function MetricsPage() {
   }
 
   function handleSurfaceDragEnd(event: DragEndEvent) {
+    // Ignore drags until the dashboard record has loaded — we can't know yet
+    // whether the order would persist, so don't leave an unsaved optimistic order.
+    if (!dashboardRec) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const keys = (surfaceOrder ?? orderedSurfaces.map((s) => s.key)).slice();
@@ -1948,7 +1953,7 @@ export default function MetricsPage() {
               {displayedSurfaces.map((s) => {
                 const info = surfaceInfoFor(s);
                 return (
-                  <SortableSurfaceCard key={s.key} id={s.key}>
+                  <SortableSurfaceCard key={s.key} id={s.key} disabled={!dashboardRec}>
                     <SurfaceCard
                       surface={s}
                       connected={info.connected}
