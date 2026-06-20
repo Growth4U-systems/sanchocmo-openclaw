@@ -28,7 +28,10 @@ import { KpiCard } from "@/components/shared/kpi-card";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { SlideOver } from "@/components/shared/slide-over";
 import { JsonViewer } from "@/components/shared/doc-slideover";
-import { useMetricsPlan } from "@/hooks/useMetrics";
+import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, type SurfaceSummaryEntry } from "@/hooks/useMetrics";
+import { SURFACES, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
+import { isSafeFormula } from "@/lib/metrics/formula";
+import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { cn } from "@/lib/utils";
 
 // ============================================================
@@ -116,7 +119,9 @@ const SOURCE_NAMES: Record<string, string> = {
 // ============================================================
 
 function mVal(src: SourceData | undefined, name: string): number | null {
-  if (!src) return null;
+  // Guard malformed/failed source payloads (no metrics array) — raw daily
+  // snapshots can carry a failed source without `metrics`.
+  if (!src || !Array.isArray(src.metrics)) return null;
   const m = src.metrics.find((x) => x.name === name && !x.dimensions);
   return m ? m.value : null;
 }
@@ -184,6 +189,80 @@ function normSources(entries: { date: string; sources: Record<string, SourceData
     out[k.replace(/-/g, "_")] = v;
   }
   return out;
+}
+
+/** Resolve a source from a (possibly normalized) source map, tolerating - / _ variants. */
+function pickSource(sources: Record<string, SourceData>, name: string): SourceData | undefined {
+  return sources[name] || sources[name.replace(/-/g, "_")] || sources[name.replace(/_/g, "-")];
+}
+
+/**
+ * Evaluate a `source.metric` arithmetic formula against the live (file-based)
+ * sources — the same engine that powers planKpis. Returns null if any token is
+ * unresolved (source not connected / metric missing) so the UI shows "—".
+ * Formulas are validated server-side via isSafeFormula before they land in the
+ * definition, so eval here only ever sees numbers + arithmetic.
+ */
+function evalFormula(formula: string, sources: Record<string, SourceData>): number | null {
+  // Defense-in-depth: the full-definition update path (saveDashboardDefinition)
+  // only zod-parses `formula` as a string, so a metric that didn't go through
+  // addCustomMetric could carry unsafe JS. Re-validate here — a formula with no
+  // source.metric tokens or trailing JS is rejected before it can reach eval.
+  if (!isSafeFormula(formula)) return null;
+  try {
+    // Source must start with an identifier char so decimal constants (e.g. `0.02`)
+    // aren't mistaken for a `source.metric` ref — that would fail to resolve and
+    // null out an otherwise valid formula.
+    const parts = formula.match(/([a-z_][\w-]*)\.(\w+)/gi) || [];
+    let expr = formula;
+    for (const part of parts) {
+      const [src, metric] = part.split(".");
+      const srcData = pickSource(sources, src);
+      const m = srcData?.status === "ok" ? srcData.metrics.find((x) => x.name === metric && !x.dimensions) : undefined;
+      if (!m) return null;
+      expr = expr.replace(part, String(m.value));
+    }
+    // eslint-disable-next-line no-eval
+    const result = eval(expr);
+    return typeof result === "number" && isFinite(result) ? result : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Format a numeric value per a KPI/metric format hint (currency/percent/number). */
+function fmtByFormat(value: number, format?: string): string {
+  if (format === "currency") return `€${value.toFixed(2)}`;
+  if (format === "percent") return `${value.toFixed(1)}%`;
+  return value.toLocaleString(undefined, { maximumFractionDigits: 1 });
+}
+
+function isoWeekKey(date: string): string {
+  const d = new Date(date + "T00:00:00Z");
+  const day = (d.getUTCDay() + 6) % 7; // Mon = 0
+  d.setUTCDate(d.getUTCDate() - day);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Bucket a metric's daily values by grain (day/week/month) for sparklines/trends. */
+function bucketDaily(
+  allDaily: { date: string; sources: Record<string, SourceData> }[],
+  source: string,
+  metric: string,
+  grain: "day" | "week" | "month",
+): number[] {
+  const buckets = new Map<string, number>();
+  for (const day of allDaily) {
+    // Raw daily files may miss `sources` or carry a failed source payload; skip
+    // them (mirrors aggregateEntries) so a malformed day never crashes the page.
+    const src = day?.sources ? pickSource(day.sources, source) : undefined;
+    if (!src || src.status !== "ok") continue;
+    const v = mVal(src, metric);
+    if (v == null) continue;
+    const key = grain === "day" ? day.date : grain === "week" ? isoWeekKey(day.date) : day.date.slice(0, 7);
+    buckets.set(key, (buckets.get(key) || 0) + v);
+  }
+  return [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
 }
 
 // ============================================================
@@ -1014,48 +1093,253 @@ function PlanFunnelCard({ plan, sources, metricsData }: { plan: NonNullable<Metr
 }
 
 // ============================================================
+// Métricas v2 — tab views from the dashboard definition (PR-5a)
+// ============================================================
+
+/** Build the horizontal funnel steps from a plan + live sources (shared strip). */
+function buildFunnelSteps(funnel: NonNullable<MetricsData["plan"]>["funnel"], sources: Record<string, SourceData>) {
+  if (!funnel) return [] as { step: string; value: string; statusDot: string; statusLabel: string; automated: boolean }[];
+  return funnel.map((step) => {
+    let value = "—";
+    let automated = false;
+    let hasManualData = false;
+    if (step.source) {
+      const src = pickSource(sources, step.source);
+      if (src && src.status === "ok") {
+        const m = src.metrics.find((x) => x.name === step.metric && (!x.dimensions || (x.dimensions as Record<string, string>).source === "manual"));
+        if (m) {
+          value = typeof m.value === "number" ? m.value.toLocaleString() : String(m.value);
+          if (step.manual) hasManualData = true; else automated = true;
+        }
+      }
+    }
+    const statusDot = automated ? "🟢" : hasManualData ? "🟢" : step.manual ? "🟡" : "🔴";
+    const statusLabel = automated ? "auto" : hasManualData ? "sheets" : "manual";
+    return { step: step.step, value, statusDot, statusLabel, automated: automated || hasManualData };
+  });
+}
+
+/** Compact activation funnel for the Overview tab (the rich card lives in Channels). */
+function FunnelStrip({ plan, sources }: { plan: NonNullable<MetricsData["plan"]>; sources: Record<string, SourceData> }) {
+  const steps = buildFunnelSteps(plan.funnel, sources);
+  if (!steps.length) return null;
+  return (
+    <div className="border-2 border-border rounded-xl bg-card p-4 mb-6">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{"🎯"} {plan.activationEvent || "Activation funnel"}</div>
+      <div className="flex items-center justify-center gap-1 flex-wrap">
+        {steps.map((s, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <div className="text-center min-w-[88px]">
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{s.step}</div>
+              <div className={cn("text-[22px] font-bold font-heading my-0.5", !s.automated && "text-muted-foreground")}>{s.value}</div>
+              <div className="text-[10px]">{s.statusDot} {s.statusLabel}</div>
+            </div>
+            {i < steps.length - 1 && <div className="text-lg text-muted-foreground mx-1">{"→"}</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Tiny bar sparkline. */
+function Sparkline({ values, color = "bg-rust" }: { values: number[]; color?: string }) {
+  if (!values.length) return null;
+  const max = Math.max(...values, 1);
+  return (
+    <div className="flex items-end gap-0.5 h-8">
+      {values.map((v, i) => (
+        <div key={i} className={cn("w-1.5 rounded-sm", color)} style={{ height: `${Math.max(8, (v / max) * 100)}%` }} />
+      ))}
+    </div>
+  );
+}
+
+/** Overview spotlight: North Star vs target (ring), Δ vs prev, sparkline. */
+function NorthStarCard({ label, value, target, delta, spark, caption }: {
+  label: string;
+  value: number | null;
+  target: number | null;
+  delta: { value: string; direction: "up" | "down" | "flat" };
+  spark: number[];
+  caption: string;
+}) {
+  const pct = target != null && value != null && target > 0 ? Math.min(100, Math.round((value / target) * 100)) : null;
+  return (
+    <div className="border-[3px] border-navy rounded-xl bg-card p-5 shadow-comic mb-6 relative">
+      <div className="absolute -top-2.5 left-4 bg-card px-2 text-[11px] uppercase tracking-widest text-navy font-bold">{"⭐"} North Star</div>
+      <div className="flex items-center justify-between gap-4 flex-wrap mt-2">
+        <div>
+          <div className="text-[13px] text-muted-foreground uppercase tracking-wide">{label}</div>
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-[40px] font-heading font-bold text-navy leading-none">{value != null ? value.toLocaleString() : "—"}</span>
+            {target != null && <span className="text-sm text-muted-foreground">/ {target.toLocaleString()} objetivo</span>}
+          </div>
+          {caption && <div className="text-[11px] text-muted-foreground mt-1">{"≈"} {caption}</div>}
+        </div>
+        <div className="flex items-center gap-4">
+          {delta.value && (
+            <span className={cn("text-sm font-semibold", delta.direction === "up" ? "text-sage" : delta.direction === "down" ? "text-destructive" : "text-muted-foreground")}>
+              {delta.direction === "up" ? "▲" : delta.direction === "down" ? "▼" : "■"} {delta.value}
+            </span>
+          )}
+          {pct != null && (
+            <div className="relative w-16 h-16">
+              <svg viewBox="0 0 36 36" className="w-16 h-16 -rotate-90">
+                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#E5DDCF" strokeWidth="3" />
+                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#4A5D23" strokeWidth="3" strokeDasharray={`${pct} 100`} strokeLinecap="round" />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[13px] font-bold font-heading">{pct}%</span>
+            </div>
+          )}
+          {spark.length > 1 && <Sparkline values={spark} color="bg-navy" />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** A custom (formula) metric created via Merlin chat — badge + live value + formula. */
+function CustomMetricCard({ label, value, formula }: { label: string; value: string; formula: string }) {
+  return (
+    <div className="border-2 rounded-xl bg-card p-4" style={{ borderColor: "#3B9EBF", borderLeftWidth: 5 }}>
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</span>
+        <span className="text-[9px] text-white px-1.5 py-0.5 rounded-full font-semibold" style={{ background: "#3B9EBF" }}>{"✨"} chat</span>
+      </div>
+      <div className="text-[26px] font-heading font-bold text-navy">{value}</div>
+      <code className="text-[10px] text-muted-foreground font-mono break-all">{formula}</code>
+    </div>
+  );
+}
+
+/** One surface card: connected → value + sources; not connected → striped "Conectar →". */
+function SurfaceCard({ surface, connected, connectedSources, value, valueLabel, slug, onOpen }: {
+  surface: SurfaceDef;
+  connected: boolean;
+  connectedSources: string[];
+  value: string | null;
+  valueLabel: string | null;
+  slug: string;
+  onOpen?: () => void;
+}) {
+  if (!connected) {
+    return (
+      <a
+        href={`/dashboard/${slug}/settings?tab=apis`}
+        className="block border-2 border-dashed border-border rounded-xl p-4 hover:border-rust transition-colors"
+        style={{ background: "repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(0,0,0,0.03) 8px, rgba(0,0,0,0.03) 16px)" }}
+      >
+        <div className="flex items-center gap-2 mb-1 opacity-70">
+          <span className="text-xl">{surface.emoji}</span>
+          <span className="font-heading font-bold text-[15px]">{surface.name}</span>
+        </div>
+        <div className="text-[12px] text-muted-foreground mb-3">{surface.what}</div>
+        <div className="text-[12px] font-semibold text-rust">{"🔌"} Conectar {"→"}</div>
+      </a>
+    );
+  }
+  const inner = (
+    <>
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{surface.emoji}</span>
+          <span className="font-heading font-bold text-[15px]">{surface.name}</span>
+        </div>
+        <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+      </div>
+      <div className="text-[12px] text-muted-foreground mb-2">{surface.what}</div>
+      {value != null ? (
+        <div>
+          <span className="text-[24px] font-heading font-bold text-navy">{value}</span>
+          {valueLabel && <span className="text-[11px] text-muted-foreground ml-1">{valueLabel}</span>}
+        </div>
+      ) : (
+        <div className="text-[12px] text-sage font-semibold">{"✓"} Conectado</div>
+      )}
+      {connectedSources.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {connectedSources.map((s) => (
+            <span key={s} className="text-[9px] bg-muted border border-border rounded px-1.5 py-0.5">{s}</span>
+          ))}
+        </div>
+      )}
+      {onOpen && <div className="text-[11px] text-rust font-semibold mt-2">Abrir detalle {"→"}</div>}
+    </>
+  );
+  return onOpen ? (
+    <button type="button" onClick={onOpen} className="text-left border-2 border-border rounded-xl p-4 bg-card hover:border-rust transition-colors">{inner}</button>
+  ) : (
+    <div className="border-2 border-border rounded-xl p-4 bg-card">{inner}</div>
+  );
+}
+
+// ============================================================
 // Main Component
 // ============================================================
 
-// Sub-tabs de Metrics (SAN-81): Funnel = la vista clásica por fuentes ·
-// Partnerships = reporting por creator (cierra el loop de la calc).
-type MetricsTab = "funnel" | "partnerships";
+interface MetricsTabItem { key: string; label: string }
 
-const METRICS_TABS: { key: MetricsTab; label: string }[] = [
-  { key: "funnel", label: "Funnel" },
-  { key: "partnerships", label: "Partnerships" },
+// Client-side fallback tabs when the definition isn't configured (no DATABASE_URL
+// locally) — mirrors DEFAULT_TABS in metric-dashboard.ts so the page still works.
+const FALLBACK_TABS: MetricsTabItem[] = [
+  { key: "overview", label: "Overview" },
+  { key: "surfaces", label: "Surfaces" },
+  { key: "channels", label: "Channels" },
+  { key: "conversion", label: "Conversion" },
+  { key: "trends", label: "Trends" },
+  { key: "conexiones", label: "Conexiones" },
 ];
+
+const TAB_LABELS: Record<string, string> = {
+  overview: "Overview", surfaces: "Surfaces", channels: "Channels",
+  conversion: "Conversion", trends: "Trends", conexiones: "Conexiones", partnerships: "Partnerships",
+};
+
+// File-based headline metric per surface (used when the time-series DB is empty).
+const SURFACE_HEADLINE: Partial<Record<SurfaceKey, { source: string; metric: string; label: string; format?: string }>> = {
+  web: { source: "ga4", metric: "sessions", label: "sessions" },
+  paid: { source: "meta-ads", metric: "spend", label: "spend", format: "currency" },
+  pipeline: { source: "ghl", metric: "newContacts", label: "new leads" },
+  social: { source: "metricool", metric: "impressions", label: "impresiones" },
+};
 
 export default function MetricsPage() {
   const slug = useSlugSync();
   const t = useTranslations("metrics");
   const router = useRouter();
-  const [tab, setTab] = useState<MetricsTab>("funnel");
+  const [tab, setTab] = useState<string>("overview");
   const [range, setRange] = useState<DateRange>("7d");
+  const [grain, setGrain] = useState<"day" | "week" | "month">("day");
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [collecting, setCollecting] = useState(false);
   const [collectStatus, setCollectStatus] = useState("");
   const [planOpen, setPlanOpen] = useState(false);
 
-  // Tab inicial por URL (?tab=partnerships) — enlazable desde chat/MCP.
+  // Tab inicial por URL (?tab=surfaces|partnerships…) — enlazable desde chat/MCP.
+  // Legacy ?tab=funnel → channels (la vista del funnel vive ahí ahora).
   useEffect(() => {
     if (!router.isReady) return;
     const queryTab = Array.isArray(router.query.tab) ? router.query.tab[0] : router.query.tab;
-    if (queryTab === "partnerships" || queryTab === "funnel") setTab(queryTab);
+    if (queryTab === "funnel") setTab("channels");
+    else if (queryTab) setTab(queryTab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
   const selectTab = useCallback(
-    (next: MetricsTab) => {
+    (next: string) => {
       setTab(next);
       const query = { ...router.query, tab: next } as Record<string, string | string[]>;
-      if (next === "funnel") delete query.tab;
+      if (next === "overview") delete query.tab;
       router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
     },
     [router],
   );
 
   const { data: plan, isLoading: planLoading } = useMetricsPlan(slug);
+  const { data: dashboardRec, isLoading: dashboardLoading } = useDashboardDefinition(slug);
+  const { data: surfaceSummary } = useSurfaceSummary(slug);
+  const definition: DashboardDefinition | null = dashboardRec?.definition ?? null;
 
   const { data: metricsData, refetch: refetchMetrics } = useQuery<MetricsData>({
     queryKey: ["metrics-data", slug],
@@ -1133,38 +1417,37 @@ export default function MetricsPage() {
   // Merge plan from both sources
   const effectivePlan = metricsData?.plan || plan;
 
-  // Calculate plan-driven KPIs
+  // Display plan — prefers the ACTIVE definition's plan (funnel/kpis/activation)
+  // so Merlin's edits show in the funnel + KPI views; falls back to the file plan.
+  const displayPlan = useMemo(() => {
+    const defPlan = definition?.plan;
+    if (!defPlan || (!defPlan.funnel?.length && !defPlan.kpis?.length)) return effectivePlan;
+    return {
+      ...(effectivePlan || {}),
+      archetype: definition?.archetype ?? effectivePlan?.archetype,
+      activationEvent: defPlan.activationEvent ?? effectivePlan?.activationEvent,
+      funnel: defPlan.funnel?.length
+        ? defPlan.funnel.map((s) => ({ step: s.name, source: s.source, metric: s.metric, manual: s.manual }))
+        : effectivePlan?.funnel,
+      kpis: defPlan.kpis?.length ? defPlan.kpis : effectivePlan?.kpis,
+    };
+  }, [definition, effectivePlan]);
+
+  // Calculate plan-driven KPIs (from the active definition's plan when present)
   const planKpis = useMemo(() => {
-    if (!effectivePlan?.kpis) return [];
+    if (!displayPlan?.kpis) return [];
     const calculated: { name: string; value: string; category: string; isGood: boolean }[] = [];
-    for (const kpi of effectivePlan.kpis) {
+    for (const kpi of displayPlan.kpis) {
       if (!kpi.formula) continue;
-      try {
-        const parts = kpi.formula.match(/([a-z-]+)\.(\w+)/g) || [];
-        let formula = kpi.formula;
-        let canCalc = true;
-        for (const part of parts) {
-          const [src, metric] = part.split(".");
-          const srcData = sources[src] || sources[src.replace(/-/g, "_")];
-          if (srcData?.status === "ok") {
-            const m = srcData.metrics.find((x) => x.name === metric && !x.dimensions);
-            if (m) formula = formula.replace(part, String(m.value));
-            else canCalc = false;
-          } else canCalc = false;
-        }
-        if (canCalc) {
-          // eslint-disable-next-line no-eval
-          const result = eval(formula);
-          if (typeof result === "number" && isFinite(result)) {
-            const fmtVal = kpi.format === "currency" ? `\u20AC${result.toFixed(2)}` : kpi.format === "percent" ? `${result.toFixed(1)}%` : result.toFixed(1);
-            const isGood = kpi.name === "CPL" ? result < 20 : true;
-            calculated.push({ name: kpi.name, value: fmtVal, category: kpi.category, isGood });
-          }
-        }
-      } catch { /* skip */ }
+      // One formula engine: evalFormula validates (isSafeFormula) + resolves
+      // source.metric refs (underscore/hyphen/decimal-safe) before eval.
+      const result = evalFormula(kpi.formula, sources);
+      if (result == null) continue;
+      const isGood = kpi.name === "CPL" ? result < 20 : true;
+      calculated.push({ name: kpi.name, value: fmtByFormat(result, kpi.format), category: kpi.category || "", isGood });
     }
     return calculated;
-  }, [effectivePlan, sources]);
+  }, [displayPlan, sources]);
 
   // Health KPI cards
   const healthCards: HealthCard[] = useMemo(() => {
@@ -1283,6 +1566,430 @@ export default function MetricsPage() {
     }
   }
 
+  // ── Métricas v2: tabs + computed views from the definition (PR-5a) ──────────
+  const tabs: MetricsTabItem[] = useMemo(() => {
+    const defTabs = definition?.tabs;
+    const base: MetricsTabItem[] = defTabs?.length
+      ? [...defTabs].filter((tb) => tb.visible).sort((a, b) => a.order - b.order).map((tb) => ({ key: tb.key, label: tb.label || TAB_LABELS[tb.key] || tb.key }))
+      : [...FALLBACK_TABS];
+    if (!base.some((tb) => tb.key === "partnerships")) base.push({ key: "partnerships", label: "Partnerships" });
+    return base;
+  }, [definition]);
+
+  // Snap to the first visible tab if the active one isn't among the definition's
+  // tabs (e.g. a definition hides/omits `overview`, or a stale ?tab in the URL),
+  // so the rendered content always matches a visible tab button. Gated on the
+  // definition having loaded — otherwise a cold load with ?tab=<definition-only
+  // tab> would reset to overview before that tab exists in `tabs`.
+  useEffect(() => {
+    if (dashboardLoading) return;
+    if (tabs.length > 0 && !tabs.some((tb) => tb.key === tab)) setTab(tabs[0].key);
+  }, [tabs, tab, dashboardLoading]);
+
+  const isDataTab = ["overview", "surfaces", "channels", "conversion", "trends"].includes(tab);
+
+  // North Star spotlight — prefers the ACTIVE dashboard definition (northStar.kpiRef
+  // → definition.plan.kpis, then definition.plan.funnel), so Merlin's edits are
+  // reflected; falls back to the file-based plan's deepest resolvable funnel step.
+  const northStar = useMemo(() => {
+    const ns = definition?.northStar;
+    const label = ns?.label || effectivePlan?.activationEvent || effectivePlan?.primaryKPI || "North Star";
+    const target = ns?.target ?? null;
+    const defFunnel = definition?.plan?.funnel;
+    const fileFunnel = (effectivePlan?.funnel || []) as { step?: string; name?: string; source?: string; metric?: string }[];
+    const funnel: { label: string; source?: string; metric?: string }[] = defFunnel?.length
+      ? defFunnel.map((s) => ({ label: s.name, source: s.source, metric: s.metric }))
+      : fileFunnel.map((s) => ({ label: s.step || s.name || "", source: s.source, metric: s.metric }));
+
+    let value: number | null = null;
+    let prev: number | null = null;
+    let spark: number[] = [];
+    let caption = "";
+
+    // 1) Honor northStar.kpiRef against the active definition's KPIs.
+    const kpi = ns?.kpiRef ? definition?.plan?.kpis?.find((k) => k.name === ns.kpiRef) : undefined;
+    if (kpi) {
+      if (kpi.formula) {
+        value = evalFormula(kpi.formula, sources);
+      } else if (kpi.source && kpi.metric) {
+        value = mVal(pickSource(sources, kpi.source), kpi.metric);
+        if (value != null) {
+          prev = mVal(pickSource(prevSources, kpi.source), kpi.metric);
+          spark = bucketDaily(rangeEntries, kpi.source, kpi.metric, "day");
+        }
+      }
+      if (value != null) caption = kpi.name;
+    }
+
+    // 2) Fall back to the deepest funnel step that resolves.
+    if (value == null) {
+      for (let i = funnel.length - 1; i >= 0; i--) {
+        const step = funnel[i];
+        if (!step.source || !step.metric) continue;
+        const cur = mVal(pickSource(sources, step.source), step.metric);
+        if (cur != null) {
+          value = cur;
+          prev = mVal(pickSource(prevSources, step.source), step.metric);
+          spark = bucketDaily(rangeEntries, step.source, step.metric, "day");
+          caption = step.label;
+          break;
+        }
+      }
+    }
+
+    return { label, value, target, delta: mDelta(value, prev), spark, caption };
+  }, [definition, effectivePlan, sources, prevSources, rangeEntries]);
+
+  // Custom (formula) metrics created via Merlin — evaluated against live sources.
+  const customMetricCards = useMemo(() => {
+    return (definition?.customMetrics || []).map((cm) => {
+      const num = evalFormula(cm.formula, sources);
+      return { label: cm.label, value: num != null ? fmtByFormat(num, cm.format) : "—", formula: cm.formula };
+    });
+  }, [definition, sources]);
+
+  const orderedSurfaces: SurfaceDef[] = useMemo(() => {
+    const refs = definition?.surfaces;
+    if (refs?.length) {
+      return [...refs].filter((r) => r.visible).sort((a, b) => a.order - b.order)
+        .map((r) => SURFACES.find((s) => s.key === r.surface))
+        .filter((s): s is SurfaceDef => Boolean(s));
+    }
+    return SURFACES;
+  }, [definition]);
+
+  // Connected sources from the file-based pipeline (works without the time-series DB).
+  const connectedFromFiles = useMemo(() => {
+    const set = new Set<string>();
+    const add = (k: string) => { set.add(k); set.add(k.replace(/_/g, "-")); set.add(k.replace(/-/g, "_")); };
+    const ds = metricsData?.dataSources || {};
+    for (const [k, v] of Object.entries(ds)) { if (v.status === "ok" || v.status === "connected") add(k); }
+    for (const [k, v] of Object.entries(sources)) { if (v.status === "ok") add(k); }
+    return set;
+  }, [metricsData?.dataSources, sources]);
+
+  function surfaceInfoFor(surface: SurfaceDef): { connected: boolean; connectedSources: string[]; value: string | null; valueLabel: string | null } {
+    const summaryEntry: SurfaceSummaryEntry | undefined = surfaceSummary?.configured ? surfaceSummary.surfaces.find((s) => s.surface === surface.key) : undefined;
+    const set = new Set<string>(surface.sources.filter((s) => connectedFromFiles.has(s)));
+    if (summaryEntry) for (const s of summaryEntry.sources) set.add(s);
+    const connectedSources = [...set];
+    let value: string | null = null;
+    let valueLabel: string | null = null;
+    const head = SURFACE_HEADLINE[surface.key];
+    if (head) {
+      const v = mVal(pickSource(sources, head.source), head.metric);
+      if (v != null) { value = fmtByFormat(v, head.format); valueLabel = head.label; }
+    }
+    if (value == null && summaryEntry?.metrics?.length) {
+      // summaryEntry.metrics is ordered by date only, so for surfaces with several
+      // metrics prefer the intended headline (SURFACE_HEADLINE source.metric) before
+      // falling back to the first — otherwise Paid could show clicks/CPC, not spend.
+      const candidates = summaryEntry.metrics.filter((x) => x.value != null);
+      const m = (head && (candidates.find((x) => x.source === head.source && x.metric === head.metric)
+        || candidates.find((x) => x.metric === head.metric))) || candidates[0];
+      if (m && m.value != null) {
+        const isHeadline = !!head && m.metric === head.metric;
+        value = isHeadline ? fmtByFormat(m.value, head!.format) : m.value.toLocaleString();
+        valueLabel = isHeadline ? head!.label : m.metric;
+      }
+    }
+    return { connected: connectedSources.length > 0, connectedSources, value, valueLabel };
+  }
+
+  const topPages = useMemo(() => {
+    if (!ga4?.metrics) return [] as MetricEntry[];
+    return ga4.metrics.filter((x) => x.name === "topPage").sort((a, b) => b.value - a.value).slice(0, 10);
+  }, [ga4]);
+
+  const dataBanners = (
+    <>
+      {metricsData?.manualDataPending && metricsData.metricsSheet?.url && (
+        <div className="flex items-center gap-3 p-3 mb-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
+          <span className="text-lg">{"📝"}</span>
+          <div className="flex-1">
+            <div className="text-[13px] font-bold text-yellow-800">{t("manualBanner")}</div>
+            <div className="text-[11px] text-muted-foreground">Signups, KYC, depósitos... Rellena la Sheet y pulsa Sincronizar.</div>
+          </div>
+          <a href={metricsData.metricsSheet.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-yellow-500 text-white font-semibold rounded text-[12px] whitespace-nowrap">
+            Rellenar en Sheets {"→"}
+          </a>
+          <button onClick={handleCollect} disabled={collecting} className="px-3 py-1.5 bg-sage text-white font-semibold rounded text-[12px] whitespace-nowrap disabled:opacity-50">
+            Sincronizar
+          </button>
+          {collectStatus && <span className="text-[10px] text-muted-foreground">{collectStatus}</span>}
+        </div>
+      )}
+      {!hasData && hasConnectedApis && (
+        <div className="border-2 border-sage rounded-lg bg-green-50 p-5 text-center mb-6">
+          <div className="text-xl mb-2">{"✅"} APIs conectadas: {Object.entries(metricsData?.dataSources || {}).filter(([, v]) => v.status === "connected").map(([k]) => k.toUpperCase()).join(", ")}</div>
+          <div className="text-[13px] text-muted-foreground mb-3">Las APIs están conectadas pero aún no se han recolectado datos. Pulsa el botón para lanzar la primera recolección.</div>
+          <button onClick={handleCollect} disabled={collecting} className="px-6 py-2.5 bg-sage text-white font-bold rounded-md text-sm disabled:opacity-50">
+            Recolectar datos ahora
+          </button>
+          {collectStatus && <div className="mt-2 text-[12px] text-muted-foreground">{collectStatus}</div>}
+        </div>
+      )}
+    </>
+  );
+
+  const modulesGrid = planLoading ? (
+    <p className="text-muted-foreground">Cargando módulos de métricas...</p>
+  ) : orderedModules.length > 0 ? (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={orderedModules.map((m) => m.id)} strategy={rectSortingStrategy}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {orderedModules.map((mod) => (
+            <SortableModuleCard key={mod.id} mod={mod} expanded={expandedModule === mod.id} onToggleExpand={() => setExpandedModule(expandedModule === mod.id ? null : mod.id)}>
+              {renderModuleContent(mod)}
+            </SortableModuleCard>
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  ) : null;
+
+  function renderOverview() {
+    return (
+      <>
+        {dataBanners}
+        <NorthStarCard label={northStar.label} value={northStar.value} target={northStar.target} delta={northStar.delta} spark={northStar.spark} caption={northStar.caption} />
+        {customMetricCards.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+            {customMetricCards.map((c) => <CustomMetricCard key={c.label} label={c.label} value={c.value} formula={c.formula} />)}
+          </div>
+        )}
+        {displayPlan?.funnel && hasData && <FunnelStrip plan={displayPlan} sources={sources} />}
+        {healthCards.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+            {healthCards.map((card) => <KpiCard key={card.label} value={card.value} label={card.label} delta={card.delta} status={card.status} />)}
+          </div>
+        ) : !hasData && !hasConnectedApis ? (
+          <div className="border-[3px] border-ink rounded-lg bg-card p-10 shadow-comic text-center">
+            <p className="text-muted-foreground">{t("noModules")}</p>
+            <p className="text-xs text-muted-foreground mt-2">{t("emptyData")}</p>
+          </div>
+        ) : null}
+        {monitoring?.health_score && (
+          <div className="mt-6 border-[3px] border-ink rounded-lg bg-card p-5 shadow-comic">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center font-heading text-xl text-white border-2 border-ink"
+                style={{ background: (monitoring.health_score.score || 0) >= 70 ? "var(--sage)" : (monitoring.health_score.score || 0) >= 40 ? "var(--yellow)" : "var(--red, #ef4444)" }}
+              >
+                {monitoring.health_score.score || "—"}
+              </div>
+              <div>
+                <h2 className="font-semibold text-sm">{t("monitoring")}</h2>
+                <p className="text-xs text-muted-foreground">{monitoring.health_score.summary || "Health score"}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  function renderSurfaces() {
+    return (
+      <>
+        {dataBanners}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {orderedSurfaces.map((s) => {
+            const info = surfaceInfoFor(s);
+            return (
+              <SurfaceCard
+                key={s.key}
+                surface={s}
+                connected={info.connected}
+                connectedSources={info.connectedSources}
+                value={info.value}
+                valueLabel={info.valueLabel}
+                slug={slug}
+                onOpen={s.key === "partnerships" ? () => selectTab("partnerships") : undefined}
+              />
+            );
+          })}
+          {definition?.customSurfaces?.map((cs) => (
+            <div key={cs.key} className="border-2 rounded-xl p-4 bg-card" style={{ borderColor: "#3B9EBF" }}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xl">{cs.emoji || "🧩"}</span>
+                <span className="font-heading font-bold text-[15px]">{cs.name}</span>
+                <span className="text-[9px] text-white px-1.5 py-0.5 rounded-full" style={{ background: "#3B9EBF" }}>custom</span>
+              </div>
+              <div className="text-[12px] text-muted-foreground">{cs.cards?.length ? `${cs.cards.length} cards` : "—"}</div>
+            </div>
+          ))}
+        </div>
+        {sourcePills.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {sourcePills.map((pill) => {
+              const dotColor = pill.status === "ok" ? "bg-green-500" : pill.status === "error" ? "bg-red-500" : "bg-yellow-400";
+              return (
+                <span key={pill.name} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-card border border-border rounded-full text-[12px] font-medium">
+                  <span className={cn("w-2 h-2 rounded-full shrink-0", dotColor)} />
+                  {pill.label}
+                </span>
+              );
+            })}
+          </div>
+        )}
+        {orderedModules.length > 0 && <div className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">Detalle por sistema conectado</div>}
+        {modulesGrid}
+      </>
+    );
+  }
+
+  function renderChannels() {
+    return (
+      <>
+        {dataBanners}
+        {displayPlan?.funnel && hasData ? (
+          <PlanFunnelCard plan={displayPlan} sources={sources} metricsData={metricsData || {}} />
+        ) : (
+          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">Sin datos de canales aún. Conecta fuentes para ver el funnel por canal.</div>
+        )}
+      </>
+    );
+  }
+
+  function renderConversion() {
+    return (
+      <div className="space-y-4">
+        <div className="border-2 border-dashed rounded-xl p-6 bg-card text-center" style={{ borderColor: "#3B9EBF" }}>
+          <div className="text-3xl mb-2">{"🎯"}</div>
+          <div className="font-heading font-bold text-lg mb-1">Conversion & Producto</div>
+          <div className="text-[13px] text-muted-foreground mb-3 max-w-md mx-auto">Conecta PostHog para heatmaps, grabaciones de sesión y dropoff por paso del funnel de producto.</div>
+          <a href={`/dashboard/${slug}/settings?tab=apis`} className="inline-block px-4 py-2 text-white rounded-md text-[13px] font-semibold" style={{ background: "#3B9EBF" }}>{"🔌"} Conectar PostHog {"→"}</a>
+        </div>
+        {topPages.length > 0 && (
+          <div className="border-2 border-border rounded-xl p-4 bg-card">
+            <div className="font-heading font-bold mb-3">Top páginas <span className="text-[11px] text-muted-foreground font-normal">(GA4 · proxy de dropoff)</span></div>
+            <table className="w-full border-collapse text-[13px]">
+              <thead><tr>
+                <th className="text-left text-[10px] uppercase tracking-wide text-muted-foreground p-1">Página</th>
+                <th className="text-right text-[10px] uppercase tracking-wide text-muted-foreground p-1">Views</th>
+                <th className="text-right text-[10px] uppercase tracking-wide text-muted-foreground p-1">Engagement</th>
+              </tr></thead>
+              <tbody>
+                {topPages.map((p, i) => {
+                  const pg = (p.dimensions as Record<string, string>)?.page || "";
+                  const short = pg.length > 50 ? pg.slice(0, 50) + "…" : pg;
+                  const engPct = (p.dimensions as Record<string, number>)?.engagementRate || 0;
+                  return (
+                    <tr key={i} className="border-t border-border">
+                      <td className="p-1.5 max-w-[320px] overflow-hidden text-ellipsis whitespace-nowrap" title={pg}>{short}</td>
+                      <td className="p-1.5 text-right font-heading font-semibold">{p.value}</td>
+                      <td className={cn("p-1.5 text-right", engPct >= 60 && "text-sage")}>{engPct}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderTrends() {
+    const trendMetrics = ([
+      { source: "ga4", metric: "sessions", label: "Sessions", color: "bg-navy" },
+      { source: "ghl", metric: "newContacts", label: "New leads", color: "bg-sage" },
+      { source: "meta-ads", metric: "spend", label: "Spend", color: "bg-rust", format: "currency" },
+      { source: "gsc", metric: "impressions", label: "SEO impressions", color: "bg-navy" },
+    ] as { source: string; metric: string; label: string; color: string; format?: string }[])
+      .filter((m) => mVal(pickSource(sources, m.source), m.metric) != null);
+    return (
+      <>
+        <div className="flex gap-1.5 mb-4">
+          {(["day", "week", "month"] as const).map((g) => (
+            <TabButton key={g} label={g === "day" ? "Día" : g === "week" ? "Semana" : "Mes"} active={grain === g} onClick={() => setGrain(g)} />
+          ))}
+        </div>
+        {trendMetrics.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trendMetrics.map((m) => {
+              const cur = mVal(pickSource(sources, m.source), m.metric) || 0;
+              const prev = mVal(pickSource(prevSources, m.source), m.metric);
+              const d = mDelta(cur, prev);
+              const series = bucketDaily(rangeEntries, m.source, m.metric, grain);
+              return (
+                <div key={m.label} className="border-2 border-border rounded-xl p-4 bg-card">
+                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{m.label}</div>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-[24px] font-heading font-bold text-navy">{fmtByFormat(cur, m.format)}</span>
+                    {d.value && <span className={cn("text-[12px] font-semibold", d.direction === "up" ? "text-sage" : d.direction === "down" ? "text-destructive" : "text-muted-foreground")}>{d.value}</span>}
+                  </div>
+                  <div className="mt-2"><Sparkline values={series} color={m.color} /></div>
+                  <div className="text-[10px] text-muted-foreground mt-1">{series.length} {grain === "day" ? "días" : grain === "week" ? "semanas" : "meses"} · vs periodo anterior</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">Sin datos de tendencia aún.</div>
+        )}
+      </>
+    );
+  }
+
+  function renderConexiones() {
+    const connectedCount = SURFACES.filter((s) => surfaceInfoFor(s).connected).length;
+    return (
+      <>
+        <div className="border-[3px] border-navy rounded-xl bg-card p-5 shadow-comic mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-heading font-bold text-lg">{"🔌"} Conexiones</div>
+            <div className="text-sm text-muted-foreground">{connectedCount}/{SURFACES.length} superficies conectadas</div>
+          </div>
+          <ProgressBar value={connectedCount} max={SURFACES.length} color="bg-sage" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {SURFACES.map((s) => {
+            const info = surfaceInfoFor(s);
+            return (
+              <div key={s.key} className="border-2 border-border rounded-xl p-4 bg-card">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2"><span className="text-xl">{s.emoji}</span><span className="font-heading font-bold text-[15px]">{s.name}</span></div>
+                  {info.connected
+                    ? <span className="text-[11px] text-sage font-semibold">{"✓"} conectado</span>
+                    : <a href={`/dashboard/${slug}/settings?tab=apis`} className="text-[11px] text-rust font-semibold">Conectar {"→"}</a>}
+                </div>
+                <div className="text-[12px] text-muted-foreground mb-2">{s.what}</div>
+                <div className="flex flex-wrap gap-1">
+                  {s.requires.mandatory.map((r) => <span key={r} className="text-[9px] rounded px-1.5 py-0.5" style={{ background: "#FBE9E7", border: "1px solid #FFCDD2", color: "#B71C1C" }}>{r}</span>)}
+                  {s.requires.oneOf.map((r) => <span key={r} className="text-[9px] rounded px-1.5 py-0.5" style={{ background: "#E0F4F9", border: "1px solid #B3E0EC", color: "#1A6E84" }}>{r}</span>)}
+                  {s.requires.optional.map((r) => <span key={r} className="text-[9px] bg-muted border border-border text-muted-foreground rounded px-1.5 py-0.5">{r}</span>)}
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-2">{s.how}</div>
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
+  }
+
+  function renderActiveTab() {
+    switch (tab) {
+      case "overview": return renderOverview();
+      case "surfaces": return renderSurfaces();
+      case "channels": return renderChannels();
+      case "conversion": return renderConversion();
+      case "trends": return renderTrends();
+      case "conexiones": return renderConexiones();
+      case "partnerships": return <MetricsPartnershipsTab slug={slug} />;
+      // Tabs are data-driven: a definition could declare a key this build doesn't
+      // render yet. Show an honest placeholder instead of silently falling to Overview.
+      default:
+        return (
+          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">
+            La pestaña «{tabs.find((tb) => tb.key === tab)?.label || tab}» aún no está disponible en esta vista.
+          </div>
+        );
+    }
+  }
+
   return (
     <DashboardLayout>
       <Head>
@@ -1294,11 +2001,11 @@ export default function MetricsPage() {
         <div>
           <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="metrics" />{t("title")}</h1>
           <p className="text-sm text-muted-foreground">
-            {slug} {tab === "funnel" && <span className="text-[11px] ml-2">{rangeLabel}</span>}
+            {slug} {isDataTab && <span className="text-[11px] ml-2">{rangeLabel}</span>}
           </p>
         </div>
 
-        {tab === "funnel" && (
+        {isDataTab && (
         <div className="flex items-center gap-2 flex-wrap">
           <DateRangeFilter options={DATE_RANGE_OPTIONS} value={range} onChange={(v) => setRange(v as DateRange)} />
 
@@ -1323,7 +2030,7 @@ export default function MetricsPage() {
 
       {/* Sub-tabs: Funnel \u00B7 Partnerships (SAN-81) */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {METRICS_TABS.map((item) => (
+        {tabs.map((item) => (
           <button
             key={item.key}
             type="button"
@@ -1338,123 +2045,11 @@ export default function MetricsPage() {
         ))}
       </div>
 
-      {tab === "partnerships" && <MetricsPartnershipsTab slug={slug} />}
-
-      {tab === "funnel" && (
-      <>
-      {/* Manual data banner */}
-      {metricsData?.manualDataPending && metricsData.metricsSheet?.url && (
-        <div className="flex items-center gap-3 p-3 mb-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
-          <span className="text-lg">{"\uD83D\uDCDD"}</span>
-          <div className="flex-1">
-            <div className="text-[13px] font-bold text-yellow-800">{t("manualBanner")}</div>
-            <div className="text-[11px] text-muted-foreground">Signups, KYC, dep\u00f3sitos... Rellena la Sheet y pulsa Sincronizar.</div>
-          </div>
-          <a href={metricsData.metricsSheet.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-yellow-500 text-white font-semibold rounded text-[12px] whitespace-nowrap">
-            Rellenar en Sheets {"\u2192"}
-          </a>
-          <button onClick={handleCollect} disabled={collecting} className="px-3 py-1.5 bg-sage text-white font-semibold rounded text-[12px] whitespace-nowrap disabled:opacity-50">
-            Sincronizar
-          </button>
-          {collectStatus && <span className="text-[10px] text-muted-foreground">{collectStatus}</span>}
-        </div>
-      )}
-
-      {/* No data but APIs connected — collect prompt */}
-      {!hasData && hasConnectedApis && (
-        <div className="border-2 border-sage rounded-lg bg-green-50 p-5 text-center mb-6">
-          <div className="text-xl mb-2">{"\u2705"} APIs conectadas: {Object.entries(metricsData?.dataSources || {}).filter(([, v]) => v.status === "connected").map(([k]) => k.toUpperCase()).join(", ")}</div>
-          <div className="text-[13px] text-muted-foreground mb-3">Las APIs est\u00e1n conectadas pero a\u00fan no se han recolectado datos. Pulsa el bot\u00f3n para lanzar la primera recolecci\u00f3n.</div>
-          <button onClick={handleCollect} disabled={collecting} className="px-6 py-2.5 bg-sage text-white font-bold rounded-md text-sm disabled:opacity-50">
-            Recolectar datos ahora
-          </button>
-          {collectStatus && <div className="mt-2 text-[12px] text-muted-foreground">{collectStatus}</div>}
-        </div>
-      )}
-
-      {/* Plan-driven funnel card */}
-      {effectivePlan?.funnel && hasData && (
-        <PlanFunnelCard plan={effectivePlan} sources={sources} metricsData={metricsData || {}} />
-      )}
-
-      {/* Health KPI grid */}
-      {healthCards.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
-          {healthCards.map((card) => (
-            <KpiCard key={card.label} value={card.value} label={card.label} delta={card.delta} status={card.status} />
-          ))}
-        </div>
-      )}
-
-      {/* Source pills */}
-      {sourcePills.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {sourcePills.map((pill) => {
-            const dotColor = pill.status === "ok" ? "bg-green-500" : pill.status === "error" ? "bg-red-500" : "bg-yellow-400";
-            return (
-              <span key={pill.name} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-card border border-border rounded-full text-[12px] font-medium">
-                <span className={cn("w-2 h-2 rounded-full shrink-0", dotColor)} />
-                {pill.label}
-              </span>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Dynamic metric modules grid (draggable) */}
-      {planLoading ? (
-        <p className="text-muted-foreground">Cargando m\u00f3dulos de m\u00e9tricas...</p>
-      ) : orderedModules.length > 0 ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={orderedModules.map((m) => m.id)} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {orderedModules.map((mod) => (
-                <SortableModuleCard
-                  key={mod.id}
-                  mod={mod}
-                  expanded={expandedModule === mod.id}
-                  onToggleExpand={() => setExpandedModule(expandedModule === mod.id ? null : mod.id)}
-                >
-                  {renderModuleContent(mod)}
-                </SortableModuleCard>
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      ) : !hasData && !hasConnectedApis ? (
-        <div className="border-[3px] border-ink rounded-lg bg-card p-10 shadow-comic text-center">
-          <p className="text-muted-foreground">{t("noModules")}</p>
-          <p className="text-xs text-muted-foreground mt-2">{t("emptyData")}</p>
-        </div>
-      ) : null}
-
-      {/* Monitoring / Performance analysis */}
-      {monitoring?.health_score && (
-        <div className="mt-6 border-[3px] border-ink rounded-lg bg-card p-5 shadow-comic">
-          <div className="flex items-center gap-4 mb-4">
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center font-heading text-xl text-white border-2 border-ink"
-              style={{
-                background: (monitoring.health_score.score || 0) >= 70
-                  ? "var(--sage)" : (monitoring.health_score.score || 0) >= 40
-                    ? "var(--yellow)" : "var(--red, #ef4444)",
-              }}
-            >
-              {monitoring.health_score.score || "\u2014"}
-            </div>
-            <div>
-              <h2 className="font-semibold text-sm">{t("monitoring")}</h2>
-              <p className="text-xs text-muted-foreground">{monitoring.health_score.summary || "Health score"}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {renderActiveTab()}
 
       <SlideOver open={planOpen} onClose={() => setPlanOpen(false)} title={`${t("plan")} — ${slug}`}>
         {effectivePlan ? <JsonViewer data={effectivePlan} /> : null}
       </SlideOver>
-      </>
-      )}
     </DashboardLayout>
   );
 }
