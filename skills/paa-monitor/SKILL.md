@@ -4,7 +4,6 @@ description: "People Also Ask monitor. Extracts real questions audiences ask per
 context_required:
 - brand/{slug}/content/configs/paa-queries/*.yml
 - brand/{slug}/content/content-pillars.md
-- brand/{slug}/content/pov-bank.json
 context_writes:
 - brand/{slug}/content/research-signals/{date}-paa.json
 - brand/{slug}/content/idea-queue.json
@@ -24,7 +23,7 @@ aparecen. Es la fuente por defecto (alineado con subscription-first) y es
 suficiente; nunca bloquees por falta de datos de pago.
 
 - **DataforSEO (opcional, si está conectado):** la familia
-  `serp_google_organic_live_advanced` devuelve los items
+  `serp_organic_live_advanced` devuelve los items
   `people_also_ask_element` ya estructurados (más limpio que WebSearch). Úsalo
   para ENRIQUECER si está disponible (auth en `_system/api-catalog.json`; el MCP
   gestiona credenciales — no las leas en el código). Si no está, sigue con
@@ -54,7 +53,7 @@ For each seed query in the config:
 - Extrae solo preguntas reales y bien formadas que aparezcan en los resultados;
   descarta headings, sugerencias ambiguas, frases incompletas y ruido.
 - Si DataForSEO esta conectado, puedes enriquecer con
-  `serp_google_organic_live_advanced` y sus `people_also_ask_element`, pero no
+  `serp_organic_live_advanced` y sus `people_also_ask_element`, pero no
   bloquees ni marques fallo por falta de DataForSEO.
 - Agrupa por `pillar_id` usando el seed query del config y el encaje semantico
   con `content-pillars.md`.
@@ -88,7 +87,10 @@ path like `brand/<slug>/...` won't resolve and the run will be marked as
 failed even though the write succeeded. Use the file-read tool if you need
 to inspect what you just wrote.
 
-Deduplicate against previous weeks (same question = skip).
+Deduplicate against previous weeks by question AND topic — skip near-duplicates
+and rephrasings of a question already captured, not only byte-identical matches
+(the weekly Idea Dedupe Audit can't catch PAA near-dups, so this write-time pass
+is the real guard).
 
 ### 5. Create content ideas (close the loop)
 
@@ -97,7 +99,14 @@ exist, so PAA questions never reached the queue. After writing the audit, pick t
 highest-value questions (dedupe against `content/idea-queue.json`; cap **8 ideas
 per run**; prefer clear pillar fit + clear intent) and **append** a complete blog
 Idea per question to `content/idea-queue.json` (flat array, append-only,
-verify-after-write):
+verify-after-write).
+
+For the `angle_draft`, ground each idea in the brand's POV read from Neon via
+`curl -fsS "$MC_BASE/api/content-engine/pov-bank?slug={slug}"` — the same source
+the News and Competitor antennas use. Do **NOT** read
+`brand/{slug}/content/pov-bank.json` as a fallback (it is a stale day-0 seed;
+Neon is the source of truth and is the only place POV Bank Refresh / Merlin edits
+land).
 
 ```json
 {
@@ -108,7 +117,7 @@ verify-after-write):
   "target_channel": "blog",
   "signal": { "summary": "La gente busca: '<question>'. <why it matters for the pillar>", "source": "paa", "date": "{date}" },
   "source_signals": ["paa-{date}-{hash}"],
-  "angle_draft": "<60-80 words: how the brand answers it from its POV (read pov-bank.json for the pillar); end with Frame: '...'>",
+  "angle_draft": "<60-80 words: how the brand answers it from its POV (from the pov-bank endpoint above); end with Frame: '...'>",
   "pov_confidence": 0.6,
   "created_at": "<ISO>",
   "status": "New"
