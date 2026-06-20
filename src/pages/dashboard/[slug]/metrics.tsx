@@ -1390,16 +1390,17 @@ export default function MetricsPage() {
   const [surfaceOrder, setSurfaceOrder] = useState<string[] | null>(null);
   const surfaceSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Persist a full definition (validated + version-bumped server-side). Keeps the
-  // optimistic order until the fresh definition arrives to avoid a flash-back.
-  async function saveDefinition(def: unknown, opts: { trigger: string; changeNote?: string }) {
+  // Persist a surface reorder: send only the key order; the server merges it onto
+  // the LATEST definition (no lost-update of intervening edits). Keep the optimistic
+  // order until the fresh definition arrives to avoid a flash-back.
+  async function saveSurfaceOrder(keys: string[]) {
     if (!slug) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/metrics/dashboard?slug=${slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ definition: def, trigger: opts.trigger, changeNote: opts.changeNote }),
+        body: JSON.stringify({ surfacesOrder: keys, trigger: "user-drag", changeNote: "Reordenadas superficies" }),
       });
       if (res.ok) {
         await queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", slug] });
@@ -1798,16 +1799,9 @@ export default function MetricsPage() {
   // "user-drag" version. The definition is the source of truth; surfaceOrder is
   // only the optimistic paint until the save resolves (no localStorage).
   function persistSurfaceOrder(keys: string[]) {
-    if (!definition) return;
+    if (!slug || !dashboardRec?.configured) return; // no DB → optimistic only, nothing to persist
     if (surfaceSaveTimer.current) clearTimeout(surfaceSaveTimer.current);
-    surfaceSaveTimer.current = setTimeout(() => {
-      const prev = new Map((definition.surfaces || []).map((r) => [r.surface, r]));
-      const reordered = keys.map((key, i) => ({ surface: key, visible: prev.get(key as SurfaceKey)?.visible ?? true, order: i }));
-      const extra = (definition.surfaces || [])
-        .filter((r) => !keys.includes(r.surface))
-        .map((r, i) => ({ ...r, order: keys.length + i }));
-      void saveDefinition({ ...definition, surfaces: [...reordered, ...extra] }, { trigger: "user-drag", changeNote: "Reordenadas superficies" });
-    }, 800);
+    surfaceSaveTimer.current = setTimeout(() => { void saveSurfaceOrder(keys); }, 800);
   }
 
   function handleSurfaceDragEnd(event: DragEndEvent) {

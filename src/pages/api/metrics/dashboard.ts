@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { getDashboardDefinition, saveDashboardDefinition } from "@/lib/data/metric-dashboard";
+import type { SurfaceKey } from "@/lib/metrics/surfaces";
 
 /**
  * The versioned dashboard DEFINITION for a client (Métricas v2 PR-5a/PR-5b).
@@ -25,17 +26,40 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === "POST") {
-    const { definition, trigger, changeNote } = (req.body ?? {}) as {
-      definition?: unknown; trigger?: unknown; changeNote?: unknown;
-    };
-    if (definition == null) {
-      return res.status(400).json({ error: "Missing definition" });
+    const body = (req.body ?? {}) as { definition?: unknown; surfacesOrder?: unknown; trigger?: unknown; changeNote?: unknown };
+    const trigger = typeof body.trigger === "string" ? body.trigger : "user-drag";
+    const changeNote = typeof body.changeNote === "string" ? body.changeNote : undefined;
+
+    // Targeted surface reorder: apply onto the LATEST definition server-side so a
+    // stale client (e.g. an intervening Merlin/chat edit, or an in-flight earlier
+    // drag) can't clobber other changes by replacing the whole definition.
+    if (Array.isArray(body.surfacesOrder)) {
+      const keys = body.surfacesOrder.filter((k): k is string => typeof k === "string");
+      try {
+        const current = await getDashboardDefinition(slug);
+        if (!current.configured || !current.definition) {
+          return res.status(200).json(current); // no DB → nothing to persist
+        }
+        const def = current.definition;
+        const prev = new Map((def.surfaces || []).map((r) => [r.surface, r]));
+        const reordered = keys
+          .filter((k) => prev.has(k as SurfaceKey))
+          .map((k, i) => ({ surface: k as SurfaceKey, visible: prev.get(k as SurfaceKey)?.visible ?? true, order: i }));
+        const extra = (def.surfaces || [])
+          .filter((r) => !keys.includes(r.surface))
+          .map((r, i) => ({ ...r, order: reordered.length + i }));
+        const record = await saveDashboardDefinition(slug, { ...def, surfaces: [...reordered, ...extra] }, { trigger, changeNote });
+        return res.status(200).json(record);
+      } catch (err) {
+        return res.status(400).json({ error: err instanceof Error ? err.message : "Reorder failed" });
+      }
+    }
+
+    if (body.definition == null) {
+      return res.status(400).json({ error: "Missing definition or surfacesOrder" });
     }
     try {
-      const record = await saveDashboardDefinition(slug, definition, {
-        trigger: typeof trigger === "string" ? trigger : "user-drag",
-        changeNote: typeof changeNote === "string" ? changeNote : undefined,
-      });
+      const record = await saveDashboardDefinition(slug, body.definition, { trigger, changeNote });
       return res.status(200).json(record);
     } catch (err) {
       return res.status(400).json({ error: err instanceof Error ? err.message : "Invalid definition" });
