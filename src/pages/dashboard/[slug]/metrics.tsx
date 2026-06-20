@@ -24,23 +24,35 @@ import { CSS } from "@dnd-kit/utilities";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TitleIcon } from "@/components/layout/title-icon";
 import { MetricsPartnershipsTab } from "@/components/partnerships/metrics-partnerships-tab";
-import { KpiCard } from "@/components/shared/kpi-card";
-import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { SlideOver } from "@/components/shared/slide-over";
 import { JsonViewer } from "@/components/shared/doc-slideover";
+import {
+  BackButton,
+  Button as MetricButton,
+  Chip as MetricChip,
+  DataTable,
+  MetricTile,
+  Panel as MetricPanel,
+  ProgressBar as MetricProgressBar,
+  Sparkline as MetricSparkline,
+  TabBar as MetricTabBar,
+} from "@/components/dashboard/metrics-v2";
 import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, type SurfaceSummaryEntry, type DashboardRecord } from "@/hooks/useMetrics";
+import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildMetricsEditThread } from "@/lib/chat-openers";
+import { buildMetricsEditThread, buildTaskThread } from "@/lib/chat-openers";
+import { getTaskSet } from "@/lib/data/task-blueprints";
 import { SURFACES, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
+import { normalizeTaskStatusQuiet, statusLabel, statusOption } from "@/lib/task-status";
 import { cn } from "@/lib/utils";
 
 // ============================================================
 // Types
 // ============================================================
 
-type DateRange = "1d" | "7d" | "30d" | "all";
+type DateRange = "1d" | "7d" | "30d" | "all" | "custom";
 
 interface HealthCard {
   label: string;
@@ -53,6 +65,13 @@ interface SourcePill {
   name: string;
   label: string;
   status: "ok" | "error" | "partial" | "disconnected";
+}
+
+interface DynModule {
+  id: string;
+  icon: string;
+  title: string;
+  priority: number;
 }
 
 interface MetricEntry {
@@ -90,11 +109,40 @@ interface MonitoringData {
   pending_recommendations?: { title: string; rationale?: string }[] | { recommendations: { title: string; rationale?: string }[] };
 }
 
-interface DynModule {
-  id: string;
+interface ChannelRow {
+  key: string;
+  channel: string;
   icon: string;
-  title: string;
-  priority: number;
+  leads: number;
+  sessions: number;
+  spend: number;
+  cpl: number | null;
+  delta?: { value: string; direction: "up" | "down" | "flat" };
+}
+
+type MetricsSubView =
+  | { kind: "surface"; key: SurfaceKey }
+  | { kind: "customSurface"; key: string }
+  | { kind: "channel"; key: string }
+  | null;
+
+interface SetupTaskView {
+  id: string;
+  name: string;
+  status?: string;
+  description?: string;
+  deliverable?: string;
+  done_criteria?: string;
+  owner?: string;
+  agent?: string;
+  skill?: string;
+  skills?: string[];
+  channel?: string;
+  type?: string;
+  pillar?: string;
+  depends_on?: unknown;
+  deliverable_file?: string | string[];
+  isBlueprint?: boolean;
 }
 
 // ============================================================
@@ -108,13 +156,76 @@ const DATE_RANGE_OPTIONS: { label: string; value: DateRange }[] = [
   { label: "Todo", value: "all" },
 ];
 
-const RANGE_DAYS: Record<DateRange, number> = { "1d": 1, "7d": 7, "30d": 30, all: 0 };
+const RANGE_DAYS: Record<DateRange, number> = { "1d": 1, "7d": 7, "30d": 30, all: 0, custom: 0 };
 
 const SOURCE_NAMES: Record<string, string> = {
   ga4: "GA4", gsc: "Search Console", metricool: "Social",
   "meta-ads": "Meta Ads", meta_ads: "Meta Ads", ghl: "CRM",
   instantly: "Outreach", sheets: "Manual", posthog: "Product",
 };
+
+const METRICS_PROJECT_ID = "P00-Metrics";
+const METRICS_SETUP_TASK_ID = "P00-MET-T01";
+const METRICS_PREREQ_TASK_ID = "P00-FUL-T09";
+const METRICS_SETUP_BLUEPRINT = getTaskSet("foundation-metrics");
+
+function isTaskCompleted(status?: string): boolean {
+  return normalizeTaskStatusQuiet(status) === "completed";
+}
+
+function dependencyIds(value: unknown): string[] {
+  const raw = Array.isArray(value) ? value.join(",") : String(value || "");
+  return raw.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function firstDeliverableFile(value?: string | string[]): string | undefined {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value[0];
+  return undefined;
+}
+
+function prettyAgent(value?: string): string {
+  if (!value) return "Sancho";
+  if (value === "merlin") return "Merlin";
+  if (value === "maese-pedro") return "Maese Pedro";
+  return value.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+}
+
+function TaskStatusBadge({ status }: { status?: string }) {
+  const opt = statusOption(status);
+  return (
+    <span
+      className="text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap"
+      style={{ background: opt.bg, borderColor: opt.border, color: opt.color }}
+    >
+      {statusLabel(status)}
+    </span>
+  );
+}
+
+function blueprintMetricTasks(slug: string): SetupTaskView[] {
+  const set = METRICS_SETUP_BLUEPRINT;
+  if (!set?.idPrefix) return [];
+  return set.tasks
+    .filter((task) => task.taskKey)
+    .map((task) => ({
+      id: `${set.idPrefix}-${task.taskKey}`,
+      name: task.name,
+      status: "todo",
+      description: task.description,
+      deliverable: task.deliverable,
+      done_criteria: typeof task.extra?.done_criteria === "string" ? task.extra.done_criteria : undefined,
+      owner: task.owner ?? "Sancho",
+      agent: task.agent,
+      skill: task.skill,
+      channel: task.channel,
+      type: task.type,
+      pillar: task.pillar,
+      depends_on: [...(task.dependsOn ?? []), ...(task.dependsOnExternal ?? [])],
+      deliverable_file: task.deliverableFiles?.[0] ? `brand/${slug}/${task.deliverableFiles[0]}` : undefined,
+      isBlueprint: true,
+    }));
+}
 
 // ============================================================
 // Helpers
@@ -244,6 +355,24 @@ function isoWeekKey(date: string): string {
   const day = (d.getUTCDay() + 6) % 7; // Mon = 0
   d.setUTCDate(d.getUTCDate() - day);
   return d.toISOString().slice(0, 10);
+}
+
+function parseLocalIsoDate(value: string): Date {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year || 1970, (month || 1) - 1, day || 1);
+}
+
+function formatLocalIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addLocalDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
 }
 
 /** Bucket a metric's daily values by grain (day/week/month) for sparklines/trends. */
@@ -936,165 +1065,6 @@ function CrmModule({ ghl, locationId }: { ghl: SourceData; locationId: string })
 }
 
 // ============================================================
-// Plan Funnel Card
-// ============================================================
-
-function PlanFunnelCard({ plan, sources, metricsData }: { plan: NonNullable<MetricsData["plan"]>; sources: Record<string, SourceData>; metricsData: MetricsData }) {
-  const [tab, setTab] = useState<"overview" | "channels">("overview");
-
-  if (!plan.funnel) return null;
-
-  // Build funnel
-  const funnelSteps = plan.funnel.map((step) => {
-    let value: string = "\u2014";
-    let automated = false;
-    let hasManualData = false;
-    if (step.source) {
-      const src = sources[step.source] || sources[step.source.replace(/-/g, "_")] || sources[step.source.replace(/_/g, "-")];
-      if (src && src.status === "ok") {
-        const m = src.metrics.find((x) => x.name === step.metric && (!x.dimensions || (x.dimensions as Record<string, string>).source === "manual"));
-        if (m) {
-          value = typeof m.value === "number" ? m.value.toLocaleString() : String(m.value);
-          if (step.manual) hasManualData = true; else automated = true;
-        }
-      }
-    }
-    const statusDot = automated ? "\uD83D\uDFE2" : hasManualData ? "\uD83D\uDFE2" : step.manual ? "\uD83D\uDFE1" : "\uD83D\uDD34";
-    const statusLabel = automated ? "auto" : hasManualData ? "sheets" : "manual";
-    return { step: step.step, value, statusDot, statusLabel, automated: automated || hasManualData };
-  });
-
-  // Channel breakdown
-  const crmSrc = sources.ghl || sources["go-high-level"];
-  const channelLeads: Record<string, number> = {};
-  if (crmSrc?.metrics) {
-    crmSrc.metrics.filter((m) => m.name === "newContacts" && (m.dimensions as Record<string, string>)?.channel)
-      .forEach((m) => {
-        const ch = (m.dimensions as Record<string, string>).channel;
-        channelLeads[ch] = (channelLeads[ch] || 0) + m.value;
-      });
-  }
-  const adsSrc = sources["meta-ads"] || sources.meta_ads;
-  const adsSpend = adsSrc ? (mVal(adsSrc, "spend") || 0) : 0;
-  const ga4 = sources.ga4;
-  const ga4Channels: Record<string, number> = {};
-  if (ga4?.metrics) {
-    ga4.metrics.filter((m) => m.name === "sessions" && (m.dimensions as Record<string, string>)?.channel)
-      .forEach((m) => { ga4Channels[(m.dimensions as Record<string, string>).channel] = m.value; });
-  }
-
-  // Merge channels
-  const channelMap: Record<string, { name: string; icon: string }> = {
-    Facebook: { name: "Facebook Ads", icon: "\uD83D\uDCD8" },
-    "facebook/Paid Social": { name: "Facebook Ads", icon: "\uD83D\uDCD8" },
-  };
-  const merged: Record<string, { channel: string; icon: string; leads: number; sessions: number; spend: number; cpl: number | null }> = {};
-  for (const [ch, lds] of Object.entries(channelLeads).sort((a, b) => b[1] - a[1])) {
-    const info = channelMap[ch] || { name: ch, icon: "\uD83D\uDCE1" };
-    const isPaid = ch === "Facebook" || ch.includes("facebook") || ch.includes("Paid");
-    if (merged[info.name]) {
-      merged[info.name].leads += lds;
-      if (isPaid) merged[info.name].spend = adsSpend;
-    } else {
-      merged[info.name] = { channel: info.name, icon: info.icon, leads: lds, spend: isPaid ? adsSpend : 0, sessions: 0, cpl: null };
-    }
-  }
-  for (const r of Object.values(merged)) {
-    r.cpl = r.spend > 0 && r.leads > 0 ? r.spend / r.leads : null;
-  }
-  // GA4 organic channels
-  for (const [ch, ses] of Object.entries(ga4Channels)) {
-    const existing = Object.values(merged).find((r) => r.channel.toLowerCase().includes(ch.toLowerCase().split(" ")[0]));
-    if (existing) { existing.sessions += ses; }
-    else if (ch !== "Direct" && ch !== "(not set)") {
-      const icon = ch.includes("Social") ? "\uD83D\uDCF1" : ch.includes("Search") ? "\uD83D\uDD0D" : ch.includes("Referral") ? "\uD83D\uDD17" : ch.includes("Email") ? "\uD83D\uDCE7" : "\uD83D\uDCE1";
-      merged[ch] = { channel: ch, icon, leads: 0, sessions: ses, spend: 0, cpl: null };
-    }
-  }
-  const channelRows = Object.values(merged).sort((a, b) => (b.leads || 0) - (a.leads || 0) || (b.sessions || 0) - (a.sessions || 0));
-
-  return (
-    <div className="border-2 border-rust rounded-xl bg-card p-5 mb-5 relative">
-      <div className="absolute -top-2.5 left-4 bg-card px-2 text-[11px] uppercase tracking-widest text-rust font-bold">
-        {"\uD83D\uDCCB"} Metrics Plan · {plan.label || plan.archetype}
-      </div>
-
-      <div className="flex justify-between items-center mt-2 mb-2">
-        <div className="text-[13px] text-muted-foreground">
-          Activation: <strong className="text-foreground">{plan.activationEvent}</strong> · Primary KPI: <strong className="text-foreground">{plan.primaryKPI}</strong>
-        </div>
-        <div className="flex gap-1">
-          <TabButton label="Overview" active={tab === "overview"} onClick={() => setTab("overview")} />
-          <TabButton label="By Channel" active={tab === "channels"} onClick={() => setTab("channels")} />
-        </div>
-      </div>
-
-      {tab === "overview" && (
-        <div className="flex items-center justify-center gap-1 py-4 flex-wrap">
-          {funnelSteps.map((s, i) => (
-            <div key={i} className="flex items-center gap-1">
-              <div className="text-center min-w-[100px]">
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{s.step}</div>
-                <div className={cn("text-[28px] font-bold font-heading my-1", !s.automated && "text-muted-foreground")}>{s.value}</div>
-                <div className="text-[10px]">{s.statusDot} {s.statusLabel}</div>
-              </div>
-              {i < funnelSteps.length - 1 && <div className="text-xl text-muted-foreground mx-1">{"\u2192"}</div>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab === "channels" && (
-        channelRows.length > 0 ? (
-          <table className="w-full border-collapse text-[13px] mt-3 table-fixed">
-            <colgroup>
-              <col style={{ width: "35%" }} />
-              <col style={{ width: "13%" }} />
-              <col style={{ width: "15%" }} />
-              <col style={{ width: "17%" }} />
-              <col style={{ width: "20%" }} />
-            </colgroup>
-            <thead><tr>
-              <th className="text-left text-[10px] uppercase text-muted-foreground p-1">Canal</th>
-              <th className="text-right text-[10px] uppercase text-muted-foreground p-1">Leads</th>
-              <th className="text-right text-[10px] uppercase text-muted-foreground p-1">Sessions</th>
-              <th className="text-right text-[10px] uppercase text-muted-foreground p-1">Spend</th>
-              <th className="text-right text-[10px] uppercase text-muted-foreground p-1">CPL</th>
-            </tr></thead>
-            <tbody>
-              {channelRows.map((r) => (
-                <tr key={r.channel} className="border-t border-border">
-                  <td className="p-1.5 overflow-hidden text-ellipsis whitespace-nowrap">{r.icon} {r.channel}</td>
-                  <td className={cn("p-1.5 text-right font-bold", r.leads > 0 && "text-sage")}>{r.leads || "\u2014"}</td>
-                  <td className="p-1.5 text-right">{r.sessions || "\u2014"}</td>
-                  <td className="p-1.5 text-right">{r.spend > 0 ? `\u20AC${r.spend.toFixed(0)}` : "\u2014"}</td>
-                  <td className={cn("p-1.5 text-right", r.cpl != null && r.cpl < 20 && "text-sage")}>{r.cpl != null ? `\u20AC${r.cpl.toFixed(2)}` : "\u2014"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : <p className="text-muted-foreground text-center py-4">Sin datos per-channel a\u00fan</p>
-      )}
-
-      {/* Recommended integrations */}
-      {metricsData.recommended && metricsData.recommended.length > 0 && (
-        <div className="border-t border-border pt-2.5 mt-3">
-          <div className="text-[11px] text-muted-foreground mb-1.5">{"\u26A0\uFE0F"} Integraciones pendientes:</div>
-          <div className="flex flex-wrap gap-1.5">
-            {metricsData.recommended.map((r) => (
-              <span key={r.label} className="px-2.5 py-1 bg-muted border border-yellow-400 rounded-full text-[11px] inline-flex items-center gap-1">
-                {r.label}
-                {r.apiId && <span className="text-[9px] text-rust">conectar {"\u2192"}</span>}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================
 // Métricas v2 — tab views from the dashboard definition (PR-5a)
 // ============================================================
 
@@ -1119,161 +1089,6 @@ function buildFunnelSteps(funnel: NonNullable<MetricsData["plan"]>["funnel"], so
     const statusLabel = automated ? "auto" : hasManualData ? "sheets" : "manual";
     return { step: step.step, value, statusDot, statusLabel, automated: automated || hasManualData };
   });
-}
-
-/** Compact activation funnel for the Overview tab (the rich card lives in Channels). */
-function FunnelStrip({ plan, sources }: { plan: NonNullable<MetricsData["plan"]>; sources: Record<string, SourceData> }) {
-  const steps = buildFunnelSteps(plan.funnel, sources);
-  if (!steps.length) return null;
-  return (
-    <div className="border-2 border-border rounded-xl bg-card p-4 mb-6">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{"🎯"} {plan.activationEvent || "Activation funnel"}</div>
-      <div className="flex items-center justify-center gap-1 flex-wrap">
-        {steps.map((s, i) => (
-          <div key={i} className="flex items-center gap-1">
-            <div className="text-center min-w-[88px]">
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{s.step}</div>
-              <div className={cn("text-[22px] font-bold font-heading my-0.5", !s.automated && "text-muted-foreground")}>{s.value}</div>
-              <div className="text-[10px]">{s.statusDot} {s.statusLabel}</div>
-            </div>
-            {i < steps.length - 1 && <div className="text-lg text-muted-foreground mx-1">{"→"}</div>}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Tiny bar sparkline. */
-function Sparkline({ values, color = "bg-rust" }: { values: number[]; color?: string }) {
-  if (!values.length) return null;
-  const max = Math.max(...values, 1);
-  return (
-    <div className="flex items-end gap-0.5 h-8">
-      {values.map((v, i) => (
-        <div key={i} className={cn("w-1.5 rounded-sm", color)} style={{ height: `${Math.max(8, (v / max) * 100)}%` }} />
-      ))}
-    </div>
-  );
-}
-
-/** Overview spotlight: North Star vs target (ring), Δ vs prev, sparkline. */
-function NorthStarCard({ label, value, target, delta, spark, caption }: {
-  label: string;
-  value: number | null;
-  target: number | null;
-  delta: { value: string; direction: "up" | "down" | "flat" };
-  spark: number[];
-  caption: string;
-}) {
-  const pct = target != null && value != null && target > 0 ? Math.min(100, Math.round((value / target) * 100)) : null;
-  return (
-    <div className="border-[3px] border-navy rounded-xl bg-card p-5 shadow-comic mb-6 relative">
-      <div className="absolute -top-2.5 left-4 bg-card px-2 text-[11px] uppercase tracking-widest text-navy font-bold">{"⭐"} North Star</div>
-      <div className="flex items-center justify-between gap-4 flex-wrap mt-2">
-        <div>
-          <div className="text-[13px] text-muted-foreground uppercase tracking-wide">{label}</div>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-[40px] font-heading font-bold text-navy leading-none">{value != null ? value.toLocaleString() : "—"}</span>
-            {target != null && <span className="text-sm text-muted-foreground">/ {target.toLocaleString()} objetivo</span>}
-          </div>
-          {caption && <div className="text-[11px] text-muted-foreground mt-1">{"≈"} {caption}</div>}
-        </div>
-        <div className="flex items-center gap-4">
-          {delta.value && (
-            <span className={cn("text-sm font-semibold", delta.direction === "up" ? "text-sage" : delta.direction === "down" ? "text-destructive" : "text-muted-foreground")}>
-              {delta.direction === "up" ? "▲" : delta.direction === "down" ? "▼" : "■"} {delta.value}
-            </span>
-          )}
-          {pct != null && (
-            <div className="relative w-16 h-16">
-              <svg viewBox="0 0 36 36" className="w-16 h-16 -rotate-90">
-                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#E5DDCF" strokeWidth="3" />
-                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#4A5D23" strokeWidth="3" strokeDasharray={`${pct} 100`} strokeLinecap="round" />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-[13px] font-bold font-heading">{pct}%</span>
-            </div>
-          )}
-          {spark.length > 1 && <Sparkline values={spark} color="bg-navy" />}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** A custom (formula) metric created via Merlin chat — badge + live value + formula. */
-function CustomMetricCard({ label, value, formula }: { label: string; value: string; formula: string }) {
-  return (
-    <div className="border-2 rounded-xl bg-card p-4" style={{ borderColor: "#3B9EBF", borderLeftWidth: 5 }}>
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</span>
-        <span className="text-[9px] text-white px-1.5 py-0.5 rounded-full font-semibold" style={{ background: "#3B9EBF" }}>{"✨"} chat</span>
-      </div>
-      <div className="text-[26px] font-heading font-bold text-navy">{value}</div>
-      <code className="text-[10px] text-muted-foreground font-mono break-all">{formula}</code>
-    </div>
-  );
-}
-
-/** One surface card: connected → value + sources; not connected → striped "Conectar →". */
-function SurfaceCard({ surface, connected, connectedSources, value, valueLabel, slug, onOpen }: {
-  surface: SurfaceDef;
-  connected: boolean;
-  connectedSources: string[];
-  value: string | null;
-  valueLabel: string | null;
-  slug: string;
-  onOpen?: () => void;
-}) {
-  if (!connected) {
-    return (
-      <a
-        href={`/dashboard/${slug}/settings?tab=apis`}
-        className="block border-2 border-dashed border-border rounded-xl p-4 hover:border-rust transition-colors"
-        style={{ background: "repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(0,0,0,0.03) 8px, rgba(0,0,0,0.03) 16px)" }}
-      >
-        <div className="flex items-center gap-2 mb-1 opacity-70">
-          <span className="text-xl">{surface.emoji}</span>
-          <span className="font-heading font-bold text-[15px]">{surface.name}</span>
-        </div>
-        <div className="text-[12px] text-muted-foreground mb-3">{surface.what}</div>
-        <div className="text-[12px] font-semibold text-rust">{"🔌"} Conectar {"→"}</div>
-      </a>
-    );
-  }
-  const inner = (
-    <>
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">{surface.emoji}</span>
-          <span className="font-heading font-bold text-[15px]">{surface.name}</span>
-        </div>
-        <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-      </div>
-      <div className="text-[12px] text-muted-foreground mb-2">{surface.what}</div>
-      {value != null ? (
-        <div>
-          <span className="text-[24px] font-heading font-bold text-navy">{value}</span>
-          {valueLabel && <span className="text-[11px] text-muted-foreground ml-1">{valueLabel}</span>}
-        </div>
-      ) : (
-        <div className="text-[12px] text-sage font-semibold">{"✓"} Conectado</div>
-      )}
-      {connectedSources.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
-          {connectedSources.map((s) => (
-            <span key={s} className="text-[9px] bg-muted border border-border rounded px-1.5 py-0.5">{s}</span>
-          ))}
-        </div>
-      )}
-      {onOpen && <div className="text-[11px] text-rust font-semibold mt-2">Abrir detalle {"→"}</div>}
-    </>
-  );
-  return onOpen ? (
-    <button type="button" onClick={onOpen} className="text-left border-2 border-border rounded-xl p-4 bg-card hover:border-rust transition-colors">{inner}</button>
-  ) : (
-    <div className="border-2 border-border rounded-xl p-4 bg-card">{inner}</div>
-  );
 }
 
 /** Reorder surface refs by a key order: dedupe + drop unknowns, append any not in
@@ -1345,12 +1160,22 @@ const FALLBACK_TABS: MetricsTabItem[] = [
   { key: "channels", label: "Channels" },
   { key: "conversion", label: "Conversion" },
   { key: "trends", label: "Trends" },
-  { key: "conexiones", label: "Conexiones" },
+  { key: "conexiones", label: "Setup" },
 ];
 
 const TAB_LABELS: Record<string, string> = {
   overview: "Overview", surfaces: "Surfaces", channels: "Channels",
-  conversion: "Conversion", trends: "Trends", conexiones: "Conexiones", partnerships: "Partnerships",
+  conversion: "Conversion", trends: "Trends", conexiones: "Setup", partnerships: "Partnerships",
+};
+
+const TAB_ICONS: Record<string, string> = {
+  overview: "⭐",
+  surfaces: "🗂️",
+  channels: "📡",
+  conversion: "🎯",
+  trends: "📉",
+  conexiones: "🔌",
+  partnerships: "🤝",
 };
 
 // File-based headline metric per surface (used when the time-series DB is empty).
@@ -1361,7 +1186,7 @@ const SURFACE_HEADLINE: Partial<Record<SurfaceKey, { source: string; metric: str
   social: { source: "metricool", metric: "impressions", label: "impresiones" },
 };
 
-export default function MetricsPage() {
+function MetricsPage() {
   // Key the page by slug so it REMOUNTS on client change instead of being reused
   // across clients — that resets all per-client state (DnD order, in-flight saves,
   // tab) for free, so no slug-guards are needed inside (SAN-294).
@@ -1369,12 +1194,18 @@ export default function MetricsPage() {
   return <MetricsPageInner key={slug || "__none__"} slug={slug} />;
 }
 
+export default MetricsPage;
+
 function MetricsPageInner({ slug }: { slug: string }) {
   const t = useTranslations("metrics");
   const router = useRouter();
   const [tab, setTab] = useState<string>("overview");
   const [range, setRange] = useState<DateRange>("7d");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [grain, setGrain] = useState<"day" | "week" | "month">("day");
+  const [subView, setSubView] = useState<MetricsSubView>(null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [collecting, setCollecting] = useState(false);
   const [collectStatus, setCollectStatus] = useState("");
@@ -1393,6 +1224,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
   const selectTab = useCallback(
     (next: string) => {
       setTab(next);
+      setSubView(null);
       const query = { ...router.query, tab: next } as Record<string, string | string[]>;
       if (next === "overview") delete query.tab;
       router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
@@ -1403,7 +1235,29 @@ function MetricsPageInner({ slug }: { slug: string }) {
   const { data: plan, isLoading: planLoading } = useMetricsPlan(slug);
   const { data: dashboardRec, isLoading: dashboardLoading } = useDashboardDefinition(slug);
   const { data: surfaceSummary } = useSurfaceSummary(slug);
+  const { data: projectsData } = useProjects(slug || null);
   const definition: DashboardDefinition | null = dashboardRec?.definition ?? null;
+  const metricsProjectRecord = useMemo(
+    () => projectsData?.find((entry) => entry.project.id === METRICS_PROJECT_ID) || null,
+    [projectsData],
+  );
+  const metricsSetupTasks = useMemo<SetupTaskView[]>(() => {
+    if (metricsProjectRecord?.tasks?.length) {
+      return metricsProjectRecord.tasks.map((task) => ({ ...task, isBlueprint: false }));
+    }
+    return blueprintMetricTasks(slug);
+  }, [metricsProjectRecord, slug]);
+  const metricsSetupTask = useMemo(
+    () => metricsSetupTasks.find((task) => task.id === METRICS_SETUP_TASK_ID || task.pillar === "metrics-setup" || task.skill === "metrics-setup") || metricsSetupTasks[0] || null,
+    [metricsSetupTasks],
+  );
+  const metricsPrereqTask = useMemo(() => {
+    for (const entry of projectsData || []) {
+      const task = entry.tasks.find((candidate) => candidate.id === METRICS_PREREQ_TASK_ID);
+      if (task) return task as SetupTaskView;
+    }
+    return null;
+  }, [projectsData]);
 
   const queryClient = useQueryClient();
   const openChat = useOpenChat();
@@ -1461,6 +1315,21 @@ function MetricsPageInner({ slug }: { slug: string }) {
     openChat(slug, buildMetricsEditThread(slug, message));
   }
 
+  function openSetupTaskChat(task: SetupTaskView) {
+    if (!slug || !metricsProjectRecord || task.isBlueprint) return;
+    openChat(slug, buildTaskThread(slug, task.id, task.name, METRICS_PROJECT_ID, {
+      taskSkill: task.skill,
+      taskChannel: task.channel,
+      taskStatus: task.status,
+      taskType: task.type,
+      pillar: task.pillar,
+      deliverableFile: firstDeliverableFile(task.deliverable_file),
+      agent: task.agent,
+      skills: task.skills?.length ? task.skills : task.skill ? [task.skill] : undefined,
+      dependsOn: dependencyIds(task.depends_on),
+    }));
+  }
+
   const { data: metricsData, refetch: refetchMetrics } = useQuery<MetricsData>({
     queryKey: ["metrics-data", slug],
     queryFn: async () => {
@@ -1503,16 +1372,30 @@ function MetricsPageInner({ slug }: { slug: string }) {
   }, [metricsData?.daily]);
 
   const rangeEntries = useMemo(() => {
+    if (range === "custom") {
+      if (!customFrom && !customTo) return allDaily;
+      return allDaily.filter((entry) => {
+        if (customFrom && entry.date < customFrom) return false;
+        if (customTo && entry.date > customTo) return false;
+        return true;
+      });
+    }
     if (days === 0) return allDaily;
     if (days === 1) return allDaily.slice(-1);
     return allDaily.slice(-days);
-  }, [allDaily, days]);
+  }, [allDaily, customFrom, customTo, days, range]);
 
   const prevEntries = useMemo(() => {
+    if (range === "custom") {
+      const count = rangeEntries.length;
+      const firstDate = rangeEntries[0]?.date;
+      if (!count || !firstDate) return [];
+      return allDaily.filter((entry) => entry.date < firstDate).slice(-count);
+    }
     if (days === 0) return [];
     if (days === 1) return allDaily.length > 1 ? allDaily.slice(-2, -1) : [];
     return allDaily.slice(-days * 2, -days);
-  }, [allDaily, days]);
+  }, [allDaily, days, range, rangeEntries]);
 
   const sources = useMemo(() => normSources(rangeEntries), [rangeEntries]);
   const prevSources = useMemo(() => normSources(prevEntries), [prevEntries]);
@@ -1520,7 +1403,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
   // Date range label
   const dateFrom = rangeEntries[0]?.date || "?";
   const dateTo = rangeEntries[rangeEntries.length - 1]?.date || "?";
-  const rangeLabel = days === 1 ? `· ${dateTo}` : rangeEntries.length > 0 ? `· ${dateFrom} \u2192 ${dateTo} (${rangeEntries.length} d\u00edas)` : "";
+  const rangeLabel = days === 1 && range !== "custom" ? `· ${dateTo}` : rangeEntries.length > 0 ? `· ${dateFrom} \u2192 ${dateTo} (${rangeEntries.length} d\u00edas)` : "";
 
   // Source declarations
   const ga4 = sources.ga4;
@@ -1609,7 +1492,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
   }, [ga4, gsc, ads, ghl, pGa4, pGsc, planKpis]);
 
   // Source pills
-  const sourcePills: SourcePill[] = useMemo(() => {
+  const _sourcePills: SourcePill[] = useMemo(() => {
     const ds = metricsData?.dataSources || {};
     return Object.keys(ds).map((s) => {
       const src = sources[s] || sources[s.replace(/_/g, "-")] || sources[s.replace(/-/g, "_")];
@@ -1691,7 +1574,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
   const tabs: MetricsTabItem[] = useMemo(() => {
     const defTabs = definition?.tabs;
     const base: MetricsTabItem[] = defTabs?.length
-      ? [...defTabs].filter((tb) => tb.visible).sort((a, b) => a.order - b.order).map((tb) => ({ key: tb.key, label: tb.label || TAB_LABELS[tb.key] || tb.key }))
+      ? [...defTabs].filter((tb) => tb.visible).sort((a, b) => a.order - b.order).map((tb) => ({ key: tb.key, label: tb.key === "conexiones" ? "Setup" : tb.label || TAB_LABELS[tb.key] || tb.key }))
       : [...FALLBACK_TABS];
     if (!base.some((tb) => tb.key === "partnerships")) base.push({ key: "partnerships", label: "Partnerships" });
     return base;
@@ -1838,6 +1721,73 @@ function MetricsPageInner({ slug }: { slug: string }) {
     return ga4.metrics.filter((x) => x.name === "topPage").sort((a, b) => b.value - a.value).slice(0, 10);
   }, [ga4]);
 
+  const channelRows = useMemo<ChannelRow[]>(() => {
+    const crmSrc = sources.ghl || sources["go-high-level"];
+    const channelLeads: Record<string, number> = {};
+    if (crmSrc?.metrics) {
+      crmSrc.metrics.filter((m) => m.name === "newContacts" && (m.dimensions as Record<string, string>)?.channel)
+        .forEach((m) => {
+          const ch = (m.dimensions as Record<string, string>).channel;
+          channelLeads[ch] = (channelLeads[ch] || 0) + m.value;
+        });
+    }
+
+    const adsSrc = sources["meta-ads"] || sources.meta_ads;
+    const adsSpend = adsSrc ? (mVal(adsSrc, "spend") || 0) : 0;
+    const ga4Src = sources.ga4;
+    const ga4Channels: Record<string, number> = {};
+    if (ga4Src?.metrics) {
+      ga4Src.metrics.filter((m) => m.name === "sessions" && (m.dimensions as Record<string, string>)?.channel)
+        .forEach((m) => { ga4Channels[(m.dimensions as Record<string, string>).channel] = m.value; });
+    }
+
+    const channelMap: Record<string, { name: string; icon: string }> = {
+      Facebook: { name: "Meta Ads", icon: "💰" },
+      "facebook/Paid Social": { name: "Meta Ads", icon: "💰" },
+      "Paid Social": { name: "Meta Ads", icon: "💰" },
+      Email: { name: "Cold Email", icon: "📧" },
+      Organic: { name: "Organic Search", icon: "🌐" },
+    };
+    const merged: Record<string, ChannelRow> = {};
+
+    for (const [ch, leads] of Object.entries(channelLeads).sort((a, b) => b[1] - a[1])) {
+      const info = channelMap[ch] || { name: ch, icon: "📡" };
+      const isPaid = ch === "Facebook" || ch.includes("facebook") || ch.includes("Paid");
+      const existing = merged[info.name];
+      if (existing) {
+        existing.leads += leads;
+        if (isPaid) existing.spend = adsSpend;
+      } else {
+        merged[info.name] = {
+          key: info.name,
+          channel: info.name,
+          icon: info.icon,
+          leads,
+          spend: isPaid ? adsSpend : 0,
+          sessions: 0,
+          cpl: null,
+          delta: { value: "—", direction: "flat" },
+        };
+      }
+    }
+
+    for (const row of Object.values(merged)) {
+      row.cpl = row.spend > 0 && row.leads > 0 ? row.spend / row.leads : null;
+    }
+
+    for (const [ch, sessions] of Object.entries(ga4Channels)) {
+      const existing = Object.values(merged).find((row) => row.channel.toLowerCase().includes(ch.toLowerCase().split(" ")[0]));
+      if (existing) {
+        existing.sessions += sessions;
+      } else if (ch !== "Direct" && ch !== "(not set)") {
+        const icon = ch.includes("Social") ? "📱" : ch.includes("Search") ? "🌐" : ch.includes("Referral") ? "🔗" : ch.includes("Email") ? "📧" : "📡";
+        merged[ch] = { key: ch, channel: ch, icon, leads: 0, sessions, spend: 0, cpl: null, delta: { value: "—", direction: "flat" } };
+      }
+    }
+
+    return Object.values(merged).sort((a, b) => (b.leads || 0) - (a.leads || 0) || (b.sessions || 0) - (a.sessions || 0));
+  }, [sources]);
+
   const dataBanners = (
     <>
       {metricsData?.manualDataPending && metricsData.metricsSheet?.url && (
@@ -1869,7 +1819,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
     </>
   );
 
-  const modulesGrid = planLoading ? (
+  const _modulesGrid = planLoading ? (
     <p className="text-muted-foreground">Cargando módulos de métricas...</p>
   ) : orderedModules.length > 0 ? (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -1885,67 +1835,183 @@ function MetricsPageInner({ slug }: { slug: string }) {
     </DndContext>
   ) : null;
 
+  function deltaChip(delta?: { value: string; direction: "up" | "down" | "flat" }) {
+    if (!delta?.value) return null;
+    const tone = delta.direction === "up" ? "up" : delta.direction === "down" ? "down" : "flat";
+    const marker = delta.direction === "up" ? "▲" : delta.direction === "down" ? "▼" : "•";
+    return <MetricChip tone={tone}>{marker} {delta.value}</MetricChip>;
+  }
+
+  function surfaceStatusDot(connected: boolean, sourceCount: number) {
+    if (connected) return "bg-sage";
+    if (sourceCount > 0) return "bg-[var(--yellow)]";
+    return "bg-[var(--sc-fg-subtle)]";
+  }
+
   function renderOverview() {
+    const connectedCount = SURFACES.filter((s) => surfaceInfoFor(s).connected).length;
+    const pct = northStar.target != null && northStar.value != null && northStar.target > 0
+      ? Math.min(100, Math.round((northStar.value / northStar.target) * 100))
+      : null;
+    const leadingCards = healthCards.slice(0, 3);
+    const laggingCards = healthCards.slice(3, 6);
+
+    if (!hasData && !hasConnectedApis) {
+      return (
+        <>
+          {dataBanners}
+          <MetricPanel halftone className="mb-6 border-navy p-10 text-center">
+            <div className="text-4xl">📈</div>
+            <h2 className="mt-3 font-heading text-2xl font-bold text-navy">Métricas — aún sin conectar</h2>
+            <p className="mx-auto mt-2 max-w-xl text-[13px] text-[var(--sc-fg-muted)]">
+              El dashboard se enciende al conectar fuentes. Puedes empezar por credenciales o pedirle a Merlin que diseñe el primer mapa de métricas.
+            </p>
+            <div className="mx-auto mt-5 flex max-w-md items-center justify-center gap-3">
+              <span className="font-heading text-lg font-bold text-navy">{connectedCount}/{SURFACES.length}</span>
+              <MetricProgressBar value={connectedCount} max={SURFACES.length} />
+            </div>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <a href={`/dashboard/${slug}/settings?tab=apis`} className="inline-flex items-center gap-1.5 rounded-sc-md border-2 border-ink bg-navy px-3 py-1.5 font-heading text-[12px] font-bold text-white shadow-pop-xs no-underline">
+                🔌 Conectar fuentes
+              </a>
+              <MetricButton variant="cyan" onClick={() => openMerlin("Quiero diseñar el dashboard de métricas desde cero. Primero pregúntame qué objetivo quiero medir.")}>
+                🔮 Diseñar con Merlin
+              </MetricButton>
+            </div>
+          </MetricPanel>
+          <div className="mb-3 flex items-center gap-2 font-heading text-base font-bold text-navy">
+            <span>🗂️</span> Lo que vas a poder medir <span className="text-[12px] font-semibold text-[var(--sc-fg-muted)]">· todo por conectar</span>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {SURFACES.map((surface) => (
+              <MetricPanel key={surface.key} className="border-dashed p-4 opacity-80" halftone>
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-heading text-[13px] font-bold text-navy"><span>{surface.emoji}</span>{surface.name}</div>
+                  <span className="h-2.5 w-2.5 rounded-full border border-ink bg-[var(--sc-fg-subtle)]" />
+                </div>
+                <p className="text-[12px] text-[var(--sc-fg-muted)]">{surface.what}</p>
+                <a href={`/dashboard/${slug}/settings?tab=apis`} className="mt-3 inline-flex font-heading text-[12px] font-bold text-rust no-underline">Conectar {"->"}</a>
+              </MetricPanel>
+            ))}
+          </div>
+        </>
+      );
+    }
+
     return (
       <>
         {dataBanners}
-        <NorthStarCard label={northStar.label} value={northStar.value} target={northStar.target} delta={northStar.delta} spark={northStar.spark} caption={northStar.caption} />
-        {customMetricCards.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-            {customMetricCards.map((c) => <CustomMetricCard key={c.label} label={c.label} value={c.value} formula={c.formula} />)}
-          </div>
-        )}
-        {displayPlan?.funnel && hasData && <FunnelStrip plan={displayPlan} sources={sources} />}
-        {healthCards.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
-            {healthCards.map((card) => <KpiCard key={card.label} value={card.value} label={card.label} delta={card.delta} status={card.status} />)}
-          </div>
-        ) : !hasData && !hasConnectedApis ? (
-          <div className="border-[3px] border-ink rounded-lg bg-card p-10 shadow-comic text-center">
-            <p className="text-muted-foreground">{t("noModules")}</p>
-            <p className="text-xs text-muted-foreground mt-2">{t("emptyData")}</p>
-          </div>
-        ) : null}
-        {monitoring?.health_score && (
-          <div className="mt-6 border-[3px] border-ink rounded-lg bg-card p-5 shadow-comic">
-            <div className="flex items-center gap-4">
-              <div
-                className="w-14 h-14 rounded-full flex items-center justify-center font-heading text-xl text-white border-2 border-ink"
-                style={{ background: (monitoring.health_score.score || 0) >= 70 ? "var(--sage)" : (monitoring.health_score.score || 0) >= 40 ? "var(--yellow)" : "var(--red, #ef4444)" }}
-              >
-                {monitoring.health_score.score || "—"}
+        <MetricPanel halftone pad={false} className="mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr]">
+            <div className="border-b-[2.5px] border-ink bg-[var(--sc-paper-3)] p-5 lg:border-b-0 lg:border-r-[2.5px]">
+              <div className="font-heading text-[12px] font-bold uppercase tracking-wide text-rust">⭐ North Star</div>
+              <div className="mt-4 flex items-center gap-4">
+                <div>
+                  <div className="font-heading text-[46px] font-bold leading-none text-navy">{northStar.value != null ? northStar.value.toLocaleString() : "—"}</div>
+                  <div className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">{northStar.label}</div>
+                </div>
+                {pct != null && (
+                  <svg viewBox="0 0 96 96" className="h-24 w-24 shrink-0">
+                    <circle cx="48" cy="48" r="42" fill="none" stroke="#E8DCC8" strokeWidth="9" />
+                    <circle cx="48" cy="48" r="42" fill="none" stroke="#C45D35" strokeWidth="9" strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 42}`} strokeDashoffset={`${2 * Math.PI * 42 * (1 - pct / 100)}`} transform="rotate(-90 48 48)" />
+                    <text x="48" y="54" textAnchor="middle" className="fill-navy font-heading text-[20px] font-bold">{pct}%</text>
+                  </svg>
+                )}
               </div>
-              <div>
-                <h2 className="font-semibold text-sm">{t("monitoring")}</h2>
-                <p className="text-xs text-muted-foreground">{monitoring.health_score.summary || "Health score"}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {northStar.target != null && <span className="text-[12px] text-[var(--sc-fg-muted)]">Objetivo <b className="font-heading text-navy">{northStar.target.toLocaleString()}</b></span>}
+                {deltaChip(northStar.delta)}
+                <span className="text-[11px] text-[var(--sc-fg-muted)]">vs periodo previo</span>
+              </div>
+              <MetricSparkline values={northStar.spark} color="navy" className="mt-4" />
+              <p className="mt-3 text-[12px] text-[var(--sc-fg-muted)]">
+                Activación: <b>{displayPlan?.activationEvent || northStar.caption || "—"}</b><br />
+                Arquetipo: <b>{displayPlan?.archetype || definition?.archetype || "—"}</b>
+              </p>
+            </div>
+            <div className="p-5">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="font-heading text-[10.5px] font-bold uppercase tracking-widest text-rust">Leading {"->"} ⭐ {"->"} Lagging</div>
+                {monitoring?.health_score ? (
+                  <MetricChip tone={(monitoring.health_score.score || 0) >= 60 ? "ok" : "warn"}>Health {monitoring.health_score.score || "—"}</MetricChip>
+                ) : (
+                  <MetricChip tone="flat">Onboarding</MetricChip>
+                )}
+              </div>
+              <div className="mb-2 font-heading text-[11px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">Inputs (leading)</div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {leadingCards.map((card) => (
+                  <MetricTile key={card.label} label={card.label} value={card.value} hint={deltaChip(card.delta)} tone="leading" />
+                ))}
+                {leadingCards.length === 0 && <MetricTile label="Inputs" value="—" hint="Conecta fuentes para medir inputs." tone="leading" />}
+              </div>
+              <div className="mb-2 mt-4 font-heading text-[11px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">Resultados (lagging){customMetricCards.length > 0 ? " · custom" : ""}</div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {laggingCards.map((card) => (
+                  <MetricTile key={card.label} label={card.label} value={card.value} hint={deltaChip(card.delta)} tone="lagging" />
+                ))}
+                {customMetricCards.map((card) => (
+                  <MetricTile key={card.label} label={card.label} value={card.value} tone="custom" hint={<><MetricChip tone="chat">chat</MetricChip><code className="mt-1 block break-all font-mono text-[10px]">{card.formula}</code></>} />
+                ))}
               </div>
             </div>
           </div>
+        </MetricPanel>
+        {displayPlan?.funnel && (
+          <MetricPanel className="mb-6">
+            <div className="mb-3 flex items-center gap-2 font-heading text-base font-bold text-navy"><span>🪜</span> Embudo de activación</div>
+            <div className="flex flex-wrap items-stretch">
+              {buildFunnelSteps(displayPlan.funnel, sources).map((step, index, arr) => (
+                <div key={`${step.step}-${index}`} className="relative min-w-[96px] flex-1 px-2 py-2 text-center">
+                  <div className="font-heading text-[10px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">{step.step}</div>
+                  <div className={cn("my-1 font-heading text-[24px] font-bold text-navy", !step.automated && "text-[var(--sc-fg-subtle)]")}>{step.value}</div>
+                  <div className="inline-flex items-center gap-1 text-[10px] text-[var(--sc-fg-muted)]">{step.statusDot} {step.statusLabel}</div>
+                  {index < arr.length - 1 && <span className="absolute right-[-6px] top-1/2 hidden -translate-y-1/2 font-heading text-xl text-[var(--sc-fg-subtle)] sm:block">{"->"}</span>}
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-[var(--sc-fg-muted)]">
+              <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-sage" /> automático</span>
+              <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-[var(--yellow)]" /> Sheets/manual</span>
+              <span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-destructive" /> sin conectar</span>
+            </div>
+          </MetricPanel>
         )}
       </>
     );
   }
 
   function renderSurfaces() {
+    if (subView?.kind === "surface") return renderSurfaceDetail(subView.key);
+    if (subView?.kind === "customSurface") return renderCustomSurfaceDetail(subView.key);
+
     return (
       <>
         {dataBanners}
+        <div className="mb-4 text-[12.5px] text-[var(--sc-fg-muted)]">
+          <b className="text-navy">Surfaces = tus sistemas/activos.</b> Una card por sistema. Las 8 estándar son iguales para todo cliente; las Custom son ilimitadas y bespoke.
+        </div>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSurfaceDragEnd}>
           <SortableContext items={orderedSurfaces.map((s) => s.key)} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {orderedSurfaces.map((s) => {
                 const info = surfaceInfoFor(s);
+                const head = SURFACE_HEADLINE[s.key];
+                const series = head ? bucketDaily(rangeEntries, head.source, head.metric, "day") : [];
                 return (
                   <SortableSurfaceCard key={s.key} id={s.key} disabled={!dashboardRec?.configured || saving}>
-                    <SurfaceCard
-                      surface={s}
-                      connected={info.connected}
-                      connectedSources={info.connectedSources}
-                      value={info.value}
-                      valueLabel={info.valueLabel}
-                      slug={slug}
-                      onOpen={s.key === "partnerships" ? () => selectTab("partnerships") : undefined}
-                    />
+                    <button type="button" onClick={() => setSubView({ kind: "surface", key: s.key })} className="block h-full w-full text-left">
+                      <MetricPanel className={cn("h-full p-4 transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-pop-md", !info.connected && "border-dashed bg-[repeating-linear-gradient(135deg,var(--aged),var(--aged)_9px,#e3d6bf_9px,#e3d6bf_18px)]")}>
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 font-heading text-[13px] font-bold text-navy"><span>{s.emoji}</span>{s.name}</div>
+                          <span className={cn("h-2.5 w-2.5 rounded-full border border-ink", surfaceStatusDot(info.connected, info.connectedSources.length))} />
+                        </div>
+                        <div className="font-heading text-[26px] font-bold leading-none text-navy">{info.value || (info.connected ? "✓" : "—")}</div>
+                        <p className="mt-1 text-[11.5px] text-[var(--sc-fg-muted)]">{info.valueLabel || s.what}</p>
+                        <MetricSparkline values={series} color={info.connected ? "navy" : "rust"} className="mt-3" />
+                        <div className="mt-3 font-heading text-[11px] font-bold text-rust">{info.connected ? "Abrir detalle ->" : "Conectar ->"}</div>
+                      </MetricPanel>
+                    </button>
                   </SortableSurfaceCard>
                 );
               })}
@@ -1953,68 +2019,274 @@ function MetricsPageInner({ slug }: { slug: string }) {
           </SortableContext>
         </DndContext>
         {/* Custom surfaces (bespoke) + create-with-Merlin — outside the standard reorder. */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {definition?.customSurfaces?.map((cs) => (
-            <div key={cs.key} className="border-2 rounded-xl p-4 bg-card" style={{ borderColor: "#3B9EBF" }}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xl">{cs.emoji || "🧩"}</span>
-                <span className="font-heading font-bold text-[15px]">{cs.name}</span>
-                <span className="text-[9px] text-white px-1.5 py-0.5 rounded-full" style={{ background: "#3B9EBF" }}>custom</span>
-              </div>
-              <div className="text-[12px] text-muted-foreground">{cs.cards?.length ? `${cs.cards.length} cards` : "—"}</div>
-            </div>
+            <button key={cs.key} type="button" onClick={() => setSubView({ kind: "customSurface", key: cs.key })} className="block h-full text-left">
+              <MetricPanel className="h-full border-dashed border-[var(--sc-rust-700)] bg-[#FBF1E8] p-4">
+                <div className="mb-2 flex items-center gap-2 font-heading text-[13px] font-bold text-[var(--sc-rust-700)]">
+                  <span>{cs.emoji || "⚗️"}</span>{cs.name}<MetricChip tone="custom">bespoke</MetricChip>
+                </div>
+                <div className="font-heading text-[26px] font-bold text-navy">{cs.cards?.length || 0}</div>
+                <p className="text-[11.5px] text-[var(--sc-fg-muted)]">{cs.cards?.map((card) => card.title).slice(0, 2).join(" · ") || "Superficie custom"}</p>
+                <div className="mt-3 font-heading text-[11px] font-bold text-rust">Abrir detalle {"->"}</div>
+              </MetricPanel>
+            </button>
           ))}
-          <button
-            type="button"
-            onClick={() => openMerlin("Quiero crear una superficie custom (p.ej. A/B tests, satisfacción). ¿Qué fuentes necesito y qué cards proponemos?")}
-            className="text-left border-2 border-dashed rounded-xl p-4 bg-card hover:border-rust transition-colors"
-            style={{ borderColor: "#3B9EBF" }}
-          >
-            <div className="flex items-center gap-2 mb-1"><span className="text-xl">{"➕"}</span><span className="font-heading font-bold text-[15px]">Nueva superficie custom</span></div>
-            <div className="text-[12px] font-semibold" style={{ color: "#3B9EBF" }}>{"🔮"} Crear con Merlin {"→"}</div>
+          <button type="button" onClick={() => openMerlin("Quiero crear una superficie custom (p.ej. A/B tests, satisfacción). ¿Qué fuentes necesito y qué cards proponemos?")} className="text-left">
+            <MetricPanel className="flex min-h-[132px] flex-col items-center justify-center border-dashed border-[var(--sc-rust-700)] bg-[#FBF1E8] p-4 text-center">
+              <div className="text-2xl">⚗️</div>
+              <div className="font-heading font-bold text-[var(--sc-rust-700)]">Nueva superficie custom</div>
+              <p className="mt-1 text-[11.5px] text-[var(--sc-fg-muted)]">Diseñar con Merlin / A·B</p>
+              <span className="mt-3 inline-flex rounded-sc-pill border-2 border-ink bg-[var(--cyan)] px-3 py-1 font-heading text-[11.5px] font-bold text-white shadow-pop-xs">🔮 Crear con Merlin {"->"}</span>
+            </MetricPanel>
           </button>
         </div>
-        {sourcePills.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {sourcePills.map((pill) => {
-              const dotColor = pill.status === "ok" ? "bg-green-500" : pill.status === "error" ? "bg-red-500" : "bg-yellow-400";
-              return (
-                <span key={pill.name} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-card border border-border rounded-full text-[12px] font-medium">
-                  <span className={cn("w-2 h-2 rounded-full shrink-0", dotColor)} />
-                  {pill.label}
-                </span>
-              );
-            })}
-          </div>
-        )}
-        {orderedModules.length > 0 && <div className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">Detalle por sistema conectado</div>}
-        {modulesGrid}
       </>
+    );
+  }
+
+  function renderSurfaceDetail(key: SurfaceKey) {
+    const surface = SURFACES.find((s) => s.key === key);
+    if (!surface) return null;
+    const info = surfaceInfoFor(surface);
+    const head = SURFACE_HEADLINE[surface.key];
+    const sourceMetrics = surface.sources.flatMap((sourceName) => {
+      const src = pickSource(sources, sourceName);
+      if (!src?.metrics) return [] as MetricEntry[];
+      return src.metrics.filter((metric) => !metric.dimensions).slice(0, 4);
+    }).slice(0, 6);
+
+    return (
+      <div>
+        <BackButton onClick={() => setSubView(null)}>Volver a Surfaces</BackButton>
+        <div className="mb-5 flex flex-wrap items-center gap-3 border-b-[2.5px] border-ink pb-4">
+          <h2 className="font-heading text-2xl font-bold text-navy">{surface.emoji} {surface.name}</h2>
+          <span className="text-[13px] text-[var(--sc-fg-muted)]">detalle de superficie</span>
+          <MetricButton variant="cyan" className="ml-auto" onClick={() => openMerlin(`Quiero editar la superficie ${surface.name}. Revisa sus fuentes, cards y métricas.`)}>
+            ✨ Editar con Merlin
+          </MetricButton>
+        </div>
+
+        {!info.connected ? (
+          <MetricPanel halftone className="max-w-3xl p-7">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="text-4xl">{surface.emoji}</div>
+              <div>
+                <h3 className="font-heading text-xl font-bold text-navy">{surface.name} sin conectar</h3>
+                <p className="text-[13px] text-[var(--sc-fg-muted)]">{surface.what}</p>
+              </div>
+            </div>
+            <div className="mb-2 font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Qué necesita para encenderse</div>
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {surface.requires.mandatory.map((r) => <MetricChip key={r} tone="must">obligatorio · {r}</MetricChip>)}
+              {surface.requires.oneOf.map((r) => <MetricChip key={r} tone="one">uno de · {r}</MetricChip>)}
+              {surface.requires.optional.map((r) => <MetricChip key={r} tone="opt">opcional · {r}</MetricChip>)}
+            </div>
+            <p className="text-[12.5px] italic text-[var(--sc-fg-muted)]">{surface.how}</p>
+            <a href={`/dashboard/${slug}/settings?tab=apis`} className="mt-4 inline-flex rounded-sc-pill border-2 border-ink bg-navy px-4 py-2 font-heading text-[12px] font-bold text-white shadow-pop-xs no-underline">
+              🔌 Conectar en Ajustes › APIs {"->"}
+            </a>
+          </MetricPanel>
+        ) : (
+          <>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {info.connectedSources.map((source) => <MetricChip key={source} tone="flat">🔗 {source} ✓</MetricChip>)}
+            </div>
+            <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricTile label={info.valueLabel || "Headline"} value={info.value || "✓"} hint={surface.what} />
+              {sourceMetrics.slice(0, 3).map((metric) => (
+                <MetricTile key={`${metric.name}-${metric.value}`} label={metric.name} value={fmtByFormat(metric.value)} hint="último periodo" />
+              ))}
+            </div>
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <div>
+                <div className="mb-2 font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Tendencia ({rangeEntries.length || 0}d)</div>
+                <MetricPanel>
+                  <MetricSparkline values={head ? bucketDaily(rangeEntries, head.source, head.metric, "day") : []} color="navy" className="h-28" />
+                </MetricPanel>
+              </div>
+              <div>
+                <div className="mb-2 font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Desglose</div>
+                {sourceMetrics.length > 0 ? (
+                  <DataTable
+                    columns={["Métrica", "Valor"]}
+                    rows={sourceMetrics.map((metric) => ({
+                      key: metric.name,
+                      cells: [metric.name, <span key="value" className="font-heading font-bold">{fmtByFormat(metric.value)}</span>],
+                    }))}
+                  />
+                ) : (
+                  <MetricPanel className="p-5 text-[13px] text-[var(--sc-fg-muted)]">Sin desglose disponible para esta superficie.</MetricPanel>
+                )}
+              </div>
+            </div>
+            <p className="mt-5 text-[12.5px] text-[var(--sc-fg-muted)]">
+              Esto es la profundidad del sistema <b>{surface.name}</b>. Para verlo como ruta de adquisición, ve a <b>Channels</b>.
+            </p>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  function renderCustomSurfaceDetail(key: string) {
+    const custom = definition?.customSurfaces?.find((surface) => surface.key === key);
+    if (!custom) return null;
+    return (
+      <div>
+        <BackButton onClick={() => setSubView(null)}>Volver a Surfaces</BackButton>
+        <div className="mb-5 flex flex-wrap items-center gap-3 border-b-[2.5px] border-ink pb-4">
+          <h2 className="font-heading text-2xl font-bold text-navy">{custom.emoji || "⚗️"} {custom.name}</h2>
+          <span className="text-[13px] text-[var(--sc-fg-muted)]">superficie custom · bespoke</span>
+          <MetricButton variant="cyan" className="ml-auto" onClick={() => openMerlin(`Quiero añadir o editar cards en la superficie custom ${custom.name}.`)}>
+            ✨ Editar con Merlin
+          </MetricButton>
+        </div>
+        {custom.cards.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {custom.cards.map((card) => (
+              <MetricPanel key={card.title} className="border-dashed border-[var(--sc-rust-700)] bg-[#FBF1E8]">
+                <div className="font-heading text-[13px] font-bold text-[var(--sc-rust-700)]">{custom.emoji || "⚗️"} {card.title}</div>
+                <div className="mt-2 font-heading text-[26px] font-bold text-navy">{card.value || "—"}</div>
+                <p className="mt-1 text-[11px] text-[var(--sc-fg-muted)]">{card.subtitle || card.source || "custom"}</p>
+              </MetricPanel>
+            ))}
+          </div>
+        ) : (
+          <MetricPanel halftone className="max-w-3xl p-8 text-center">
+            <div className="text-4xl">{custom.emoji || "⚗️"}</div>
+            <h3 className="mt-3 font-heading text-xl font-bold text-navy">Superficie a medida (opt-in)</h3>
+            <p className="mx-auto mt-2 max-w-xl text-[13px] text-[var(--sc-fg-muted)]">
+              Para datos bespoke que no encajan en las 8 estándar: A/B tests, experimentos y KPIs propios.
+            </p>
+            <MetricButton variant="rust" className="mt-5" onClick={() => openMerlin(`Quiero crear la primera métrica para la superficie custom ${custom.name}.`)}>
+              + Crear primera métrica {"->"}
+            </MetricButton>
+          </MetricPanel>
+        )}
+        <p className="mt-4 text-[12.5px] text-[var(--sc-fg-muted)]">
+          Superficie bespoke (fuente: <b>{custom.source || "custom"}</b>) — fuera de las 8 estándar, versionada igual. Puedes tener tantas como quieras.
+        </p>
+      </div>
     );
   }
 
   function renderChannels() {
+    if (subView?.kind === "channel") return renderChannelDetail(subView.key);
+    const winnerKey = channelRows[0]?.key;
     return (
       <>
         {dataBanners}
-        {displayPlan?.funnel && hasData ? (
-          <PlanFunnelCard plan={displayPlan} sources={sources} metricsData={metricsData || {}} />
+        <div className="mb-4 text-[12.5px] text-[var(--sc-fg-muted)]">
+          <b className="text-navy">Channels = tus rutas de adquisición, comparadas.</b> Una fila por ruta: input, coste, CPL/CPA y avance hacia la North Star.
+        </div>
+        {channelRows.length > 0 ? (
+          <DataTable
+            columns={["Canal", "Input", "Spend", "Leads/Reg.", "CPL / CPA", "Δ"]}
+            rows={channelRows.map((row) => ({
+              key: row.key,
+              selected: row.key === winnerKey,
+              onClick: () => setSubView({ kind: "channel", key: row.key }),
+              cells: [
+                <div key="channel" className="flex items-center gap-2 font-heading font-bold text-navy"><span>{row.icon}</span>{row.channel}{row.key === winnerKey && <MetricChip tone="ok">GANADOR</MetricChip>}</div>,
+                <span key="input" className={row.sessions ? "" : "text-[var(--sc-fg-subtle)]"}>{row.sessions ? `${row.sessions.toLocaleString()} sessions` : "—"}</span>,
+                <span key="spend" className="font-heading">{row.spend > 0 ? `€${row.spend.toFixed(0)}` : "—"}</span>,
+                <span key="leads" className="font-heading">{row.leads || "—"}</span>,
+                <b key="cpl" className="font-heading">{row.cpl != null ? `€${row.cpl.toFixed(1)}` : "—"}</b>,
+                row.delta?.value && row.delta.value !== "—" ? deltaChip(row.delta) : <span key="delta" className="text-[var(--sc-fg-subtle)]">—</span>,
+              ],
+            }))}
+          />
         ) : (
-          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">Sin datos de canales aún. Conecta fuentes para ver el funnel por canal.</div>
+          <MetricPanel className="p-8 text-center text-[var(--sc-fg-muted)]">Sin datos de canales aún. Conecta fuentes para ver el funnel por canal.</MetricPanel>
         )}
+        <p className="mt-3 text-[12px] text-[var(--sc-fg-muted)]">Ordenado por rendimiento; el ganador se resalta. Click en una fila para el embudo y campañas del canal.</p>
       </>
     );
   }
 
+  function renderChannelDetail(key: string) {
+    const row = channelRows.find((candidate) => candidate.key === key);
+    if (!row) return null;
+    const funnel = displayPlan?.funnel ? buildFunnelSteps(displayPlan.funnel, sources) : [];
+    const campaignMetrics = (ads?.metrics || []).filter((metric) => metric.dimensions && (metric.dimensions as Record<string, string>).campaign);
+    const campaigns: Record<string, Record<string, number>> = {};
+    for (const metric of campaignMetrics) {
+      const campaign = String((metric.dimensions as Record<string, string>).campaign);
+      campaigns[campaign] ||= {};
+      campaigns[campaign][metric.name] = metric.value;
+    }
+    const campaignRows = Object.entries(campaigns).slice(0, 6);
+
+    return (
+      <div>
+        <BackButton onClick={() => setSubView(null)}>Volver a Channels</BackButton>
+        <div className="mb-5 flex flex-wrap items-center gap-3 border-b-[2.5px] border-ink pb-4">
+          <h2 className="font-heading text-2xl font-bold text-navy">{row.icon} {row.channel}</h2>
+          <span className="text-[13px] text-[var(--sc-fg-muted)]">detalle de canal</span>
+          <MetricButton variant="cyan" className="ml-auto" onClick={() => openMerlin(`Quiero revisar el canal ${row.channel}. Mira su CPL, campañas y contribución a la North Star.`)}>
+            ✨ Editar con Merlin
+          </MetricButton>
+        </div>
+        {funnel.length > 0 && (
+          <>
+            <div className="mb-2 font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Embudo de esta ruta {"->"} hacia la North Star</div>
+            <MetricPanel className="mb-5">
+              <div className="flex flex-wrap items-stretch">
+                {funnel.map((step, index, arr) => (
+                  <div key={`${step.step}-${index}`} className="relative min-w-[96px] flex-1 px-2 py-2 text-center">
+                    <div className="font-heading text-[10px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">{step.step}</div>
+                    <div className="my-1 font-heading text-[24px] font-bold text-navy">{step.value}</div>
+                    {index < arr.length - 1 && <span className="absolute right-[-6px] top-1/2 hidden -translate-y-1/2 font-heading text-xl text-[var(--sc-fg-subtle)] sm:block">{"->"}</span>}
+                  </div>
+                ))}
+              </div>
+            </MetricPanel>
+          </>
+        )}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <div>
+            <div className="mb-2 font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Coste & eficiencia</div>
+            <div className="grid grid-cols-2 gap-3">
+              <MetricTile label="Spend" value={row.spend > 0 ? `€${row.spend.toFixed(0)}` : "—"} />
+              <MetricTile label="Leads" value={row.leads || "—"} />
+              <MetricTile label="CPL/CPA" value={row.cpl != null ? `€${row.cpl.toFixed(1)}` : "—"} />
+              <MetricTile label="Δ periodo" value={row.delta?.value || "—"} />
+            </div>
+          </div>
+          <div>
+            <div className="mb-2 font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Campañas que alimentan el canal</div>
+            {campaignRows.length > 0 ? (
+              <DataTable
+                columns={["Campaña", "Spend", "Leads", "CPL"]}
+                rows={campaignRows.map(([campaign, metrics]) => {
+                  const spend = metrics.spend || 0;
+                  const leads = metrics.leads || metrics.newContacts || 0;
+                  const cpl = spend > 0 && leads > 0 ? spend / leads : null;
+                  return {
+                    key: campaign,
+                    cells: [campaign, spend ? `€${spend.toFixed(0)}` : "—", leads || "—", cpl != null ? `€${cpl.toFixed(1)}` : "—"],
+                  };
+                })}
+              />
+            ) : (
+              <MetricPanel className="p-5 text-[13px] text-[var(--sc-fg-muted)]">Sin desglose por campaña en el periodo seleccionado.</MetricPanel>
+            )}
+          </div>
+        </div>
+        <p className="mt-5 text-[12.5px] text-[var(--sc-fg-muted)]">
+          Esto es la contribución al embudo de la ruta <b>{row.channel}</b>. Para la salud del sistema completo, abre la superficie correspondiente en Surfaces.
+        </p>
+      </div>
+    );
+  }
+
   function renderConversion() {
-    // Connected? Use the SAME file-based detection the Surfaces tab uses.
     const posthogConnected = connectedFromFiles.has("posthog");
     if (posthogConnected) {
       const pageviews = mVal(posthog, "pageviews");
       const activation = mVal(posthog, "activation_events");
       const recordings = mVal(posthog, "session_recordings");
-      // Per-step reached counts (stable { step, order } dims); derive dropoff from
-      // consecutive counts here so the adapter keeps a varying count out of dims.
       const reachedRows = (posthog?.metrics || [])
         .filter((x) => x.name === "funnel_step_reached" && x.dimensions)
         .sort((a, b) => (Number(a.dimensions?.order) || 0) - (Number(b.dimensions?.order) || 0));
@@ -2024,81 +2296,79 @@ function MetricsPageInner({ slug }: { slug: string }) {
         dropoff: i === 0 ? 0 : Math.max(0, reachedRows[i - 1].value - s.value),
       }));
       return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="space-y-5">
+          <MetricPanel halftone className="border-[3px] border-navy">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Conversion & Producto</div>
+                <h2 className="mt-1 font-heading text-2xl font-bold text-navy">PostHog conectado</h2>
+                <p className="mt-1 max-w-2xl text-[13px] text-[var(--sc-fg-muted)]">Heatmaps, grabaciones y dropoff por paso para entender dónde se atasca la activación.</p>
+              </div>
+              <MetricChip tone="ok">activo</MetricChip>
+            </div>
+          </MetricPanel>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
               { label: "Pageviews", value: pageviews, hint: "PostHog" },
               { label: "Activación", value: activation, hint: "activación" },
               { label: "Dropoff total", value: funnel.length ? funnel.reduce((s, x) => s + x.dropoff, 0) : null, hint: "perdidos en el funnel" },
               { label: "Grabaciones", value: recordings, hint: "session recordings" },
             ].map((c) => (
-              <div key={c.label} className="border-2 border-border rounded-xl p-3 bg-card">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{c.label}</div>
-                <div className="text-[22px] font-heading font-bold text-navy mt-0.5">{c.value == null ? "—" : c.value.toLocaleString()}</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">{c.hint}</div>
-              </div>
+              <MetricTile key={c.label} label={c.label} value={c.value == null ? "—" : c.value.toLocaleString()} hint={c.hint} tone="leading" />
             ))}
           </div>
           {funnel.length > 0 ? (
-            <div className="border-2 border-border rounded-xl p-4 bg-card">
-              <div className="font-heading font-bold mb-3">Funnel de producto <span className="text-[11px] text-muted-foreground font-normal">(PostHog · dropoff por paso)</span></div>
-              <table className="w-full border-collapse text-[13px]">
-                <thead><tr>
-                  <th className="text-left text-[10px] uppercase tracking-wide text-muted-foreground p-1">Paso</th>
-                  <th className="text-right text-[10px] uppercase tracking-wide text-muted-foreground p-1">Alcanzaron</th>
-                  <th className="text-right text-[10px] uppercase tracking-wide text-muted-foreground p-1">Dropoff</th>
-                </tr></thead>
-                <tbody>
-                  {funnel.map((r, i) => (
-                    <tr key={i} className="border-t border-border">
-                      <td className="p-1.5">{r.step}</td>
-                      <td className="p-1.5 text-right font-heading font-semibold">{r.reached.toLocaleString()}</td>
-                      <td className={cn("p-1.5 text-right", r.dropoff > 0 && "text-destructive")}>{i === 0 ? "—" : `−${r.dropoff.toLocaleString()}`}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={["Paso", "Alcanzaron", "Dropoff"]}
+              rows={funnel.map((r, i) => ({
+                key: `${r.step}-${i}`,
+                cells: [
+                  <span key="step" className="font-heading font-bold text-navy">{r.step}</span>,
+                  <span key="reached" className="font-heading font-bold">{r.reached.toLocaleString()}</span>,
+                  <span key="drop" className={cn(r.dropoff > 0 && "font-semibold text-destructive")}>{i === 0 ? "—" : `-${r.dropoff.toLocaleString()}`}</span>,
+                ],
+              }))}
+            />
           ) : (
-            <div className="border-2 border-border rounded-xl bg-card p-6 text-center text-[13px] text-muted-foreground">
+            <MetricPanel className="p-6 text-center text-[13px] text-[var(--sc-fg-muted)]">
               PostHog conectado. Define <code className="text-[11px]">funnelSteps</code> en los ajustes de la integración para ver el dropoff por paso.
-            </div>
+            </MetricPanel>
           )}
         </div>
       );
     }
     return (
-      <div className="space-y-4">
-        <div className="border-2 border-dashed rounded-xl p-6 bg-card text-center" style={{ borderColor: "#3B9EBF" }}>
-          <div className="text-3xl mb-2">{"🎯"}</div>
-          <div className="font-heading font-bold text-lg mb-1">Conversion & Producto</div>
-          <div className="text-[13px] text-muted-foreground mb-3 max-w-md mx-auto">Conecta PostHog para heatmaps, grabaciones de sesión y dropoff por paso del funnel de producto.</div>
-          <a href={`/dashboard/${slug}/settings?tab=apis`} className="inline-block px-4 py-2 text-white rounded-md text-[13px] font-semibold" style={{ background: "#3B9EBF" }}>{"🔌"} Conectar PostHog {"→"}</a>
-        </div>
+      <div className="space-y-5">
+        <MetricPanel halftone className="border-[3px] border-[var(--cyan)] text-center">
+          <div className="mx-auto max-w-xl">
+            <div className="text-3xl">{"🎯"}</div>
+            <h2 className="mt-2 font-heading text-2xl font-bold text-navy">Conversion & Producto</h2>
+            <p className="mt-2 text-[13px] text-[var(--sc-fg-muted)]">Conecta PostHog para heatmaps, grabaciones de sesión y dropoff por paso del funnel de producto.</p>
+            <a href={`/dashboard/${slug}/settings?tab=apis`} className="mt-4 inline-flex">
+              <MetricButton variant="cyan">{"🔌"} Conectar PostHog {"->"}</MetricButton>
+            </a>
+          </div>
+        </MetricPanel>
         {topPages.length > 0 && (
-          <div className="border-2 border-border rounded-xl p-4 bg-card">
-            <div className="font-heading font-bold mb-3">Top páginas <span className="text-[11px] text-muted-foreground font-normal">(GA4 · proxy de dropoff)</span></div>
-            <table className="w-full border-collapse text-[13px]">
-              <thead><tr>
-                <th className="text-left text-[10px] uppercase tracking-wide text-muted-foreground p-1">Página</th>
-                <th className="text-right text-[10px] uppercase tracking-wide text-muted-foreground p-1">Views</th>
-                <th className="text-right text-[10px] uppercase tracking-wide text-muted-foreground p-1">Engagement</th>
-              </tr></thead>
-              <tbody>
-                {topPages.map((p, i) => {
-                  const pg = (p.dimensions as Record<string, string>)?.page || "";
-                  const short = pg.length > 50 ? pg.slice(0, 50) + "…" : pg;
-                  const engPct = (p.dimensions as Record<string, number>)?.engagementRate || 0;
-                  return (
-                    <tr key={i} className="border-t border-border">
-                      <td className="p-1.5 max-w-[320px] overflow-hidden text-ellipsis whitespace-nowrap" title={pg}>{short}</td>
-                      <td className="p-1.5 text-right font-heading font-semibold">{p.value}</td>
-                      <td className={cn("p-1.5 text-right", engPct >= 60 && "text-sage")}>{engPct}%</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div>
+            <div className="mb-2 font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Top páginas <span className="font-normal text-[var(--sc-fg-muted)]">(GA4 · proxy de dropoff)</span></div>
+            <DataTable
+              columns={["Página", "Views", "Engagement"]}
+              rows={topPages.map((p, i) => {
+                const pg = (p.dimensions as Record<string, string>)?.page || "";
+                const short = pg.length > 58 ? `${pg.slice(0, 58)}...` : pg;
+                const engPct = Number((p.dimensions as Record<string, number>)?.engagementRate || 0);
+                return {
+                  key: `${pg}-${i}`,
+                  cells: [
+                    <span key="page" className="block max-w-[420px] overflow-hidden text-ellipsis whitespace-nowrap" title={pg}>{short}</span>,
+                    <span key="views" className="font-heading font-bold">{p.value.toLocaleString()}</span>,
+                    <MetricChip key="eng" tone={engPct >= 60 ? "ok" : "flat"}>{engPct}%</MetricChip>,
+                  ],
+                };
+              })}
+            />
           </div>
         )}
       </div>
@@ -2107,80 +2377,248 @@ function MetricsPageInner({ slug }: { slug: string }) {
 
   function renderTrends() {
     const trendMetrics = ([
-      { source: "ga4", metric: "sessions", label: "Sessions", color: "bg-navy" },
-      { source: "ghl", metric: "newContacts", label: "New leads", color: "bg-sage" },
-      { source: "meta-ads", metric: "spend", label: "Spend", color: "bg-rust", format: "currency" },
-      { source: "gsc", metric: "impressions", label: "SEO impressions", color: "bg-navy" },
-    ] as { source: string; metric: string; label: string; color: string; format?: string }[])
+      { source: "ga4", metric: "sessions", label: "Sessions", color: "navy" },
+      { source: "ghl", metric: "newContacts", label: "New leads", color: "sage" },
+      { source: "meta-ads", metric: "spend", label: "Spend", color: "rust", format: "currency" },
+      { source: "gsc", metric: "impressions", label: "SEO impressions", color: "cyan" },
+    ] as { source: string; metric: string; label: string; color: "rust" | "navy" | "sage" | "cyan"; format?: string }[])
       .filter((m) => mVal(pickSource(sources, m.source), m.metric) != null);
     return (
-      <>
-        <div className="flex gap-1.5 mb-4">
+      <div className="space-y-5">
+        <div className="inline-flex rounded-sc-lg border-2 border-ink bg-aged p-1 shadow-pop-xs">
           {(["day", "week", "month"] as const).map((g) => (
-            <TabButton key={g} label={g === "day" ? "Día" : g === "week" ? "Semana" : "Mes"} active={grain === g} onClick={() => setGrain(g)} />
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGrain(g)}
+              className={cn(
+                "rounded-sc-md px-4 py-1.5 font-heading text-[12px] font-bold transition-colors",
+                grain === g ? "border-2 border-ink bg-rust text-white shadow-pop-xs" : "text-[var(--sc-fg-muted)]"
+              )}
+            >
+              {g === "day" ? "Día" : g === "week" ? "Semana" : "Mes"}
+            </button>
           ))}
         </div>
         {trendMetrics.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {trendMetrics.map((m) => {
               const cur = mVal(pickSource(sources, m.source), m.metric) || 0;
               const prev = mVal(pickSource(prevSources, m.source), m.metric);
               const d = mDelta(cur, prev);
               const series = bucketDaily(rangeEntries, m.source, m.metric, grain);
               return (
-                <div key={m.label} className="border-2 border-border rounded-xl p-4 bg-card">
-                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{m.label}</div>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-[24px] font-heading font-bold text-navy">{fmtByFormat(cur, m.format)}</span>
-                    {d.value && <span className={cn("text-[12px] font-semibold", d.direction === "up" ? "text-sage" : d.direction === "down" ? "text-destructive" : "text-muted-foreground")}>{d.value}</span>}
+                <MetricPanel key={m.label} className="min-h-[176px]">
+                  <div className="font-heading text-[11px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">{m.label}</div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="font-heading text-[28px] font-bold text-navy">{fmtByFormat(cur, m.format)}</span>
+                    {deltaChip(d)}
                   </div>
-                  <div className="mt-2"><Sparkline values={series} color={m.color} /></div>
-                  <div className="text-[10px] text-muted-foreground mt-1">{series.length} {grain === "day" ? "días" : grain === "week" ? "semanas" : "meses"} · vs periodo anterior</div>
-                </div>
+                  <MetricSparkline values={series} color={m.color} className="mt-5" />
+                  <div className="mt-2 text-[10.5px] text-[var(--sc-fg-muted)]">{series.length} {grain === "day" ? "días" : grain === "week" ? "semanas" : "meses"} · vs periodo anterior</div>
+                </MetricPanel>
               );
             })}
           </div>
         ) : (
-          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">Sin datos de tendencia aún.</div>
+          <MetricPanel className="p-8 text-center text-[var(--sc-fg-muted)]">Sin datos de tendencia aún.</MetricPanel>
         )}
-      </>
+      </div>
     );
   }
 
-  function renderConexiones() {
+  function renderSetup() {
     const connectedCount = SURFACES.filter((s) => surfaceInfoFor(s).connected).length;
+    const projectExists = Boolean(metricsProjectRecord);
+    const projectName = metricsProjectRecord?.project.name || String(METRICS_SETUP_BLUEPRINT?.project?.name || "Métricas y Conexiones");
+    const projectDescription = metricsProjectRecord?.project.description || String(METRICS_SETUP_BLUEPRINT?.project?.description || "Define el plan de métricas, las integraciones y el dashboard operativo.");
+    const totalTasks = metricsSetupTasks.length;
+    const completedTasks = metricsSetupTasks.filter((task) => isTaskCompleted(task.status)).length;
+    const progressLabel = totalTasks ? `${completedTasks}/${totalTasks} tareas` : "Sin tareas";
+    const projectHref = `/dashboard/${slug}/tasks/${METRICS_PROJECT_ID}`;
+    const secondaryTasks = metricsSetupTasks.filter((task) => task.id !== metricsSetupTask?.id);
+
+    const renderTaskActions = (task: SetupTaskView, primary = false) => (
+      <div className="flex flex-wrap gap-2">
+        {projectExists ? (
+          <>
+            <a href={`/dashboard/${slug}/tasks/${task.id}`} className="inline-flex">
+              <MetricButton variant="paper">Abrir tarea</MetricButton>
+            </a>
+            <MetricButton type="button" variant={primary ? "cyan" : "navy"} onClick={() => openSetupTaskChat(task)}>
+              {primary ? "Continuar con Merlin" : "Chat"}
+            </MetricButton>
+          </>
+        ) : (
+          <MetricChip tone="warn">Pendiente de instanciar</MetricChip>
+        )}
+      </div>
+    );
+
     return (
-      <>
-        <div className="border-[3px] border-navy rounded-xl bg-card p-5 shadow-comic mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <div className="font-heading font-bold text-lg">{"🔌"} Conexiones</div>
-            <div className="text-sm text-muted-foreground">{connectedCount}/{SURFACES.length} superficies conectadas</div>
-          </div>
-          <ProgressBar value={connectedCount} max={SURFACES.length} color="bg-sage" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {SURFACES.map((s) => {
-            const info = surfaceInfoFor(s);
-            return (
-              <div key={s.key} className="border-2 border-border rounded-xl p-4 bg-card">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2"><span className="text-xl">{s.emoji}</span><span className="font-heading font-bold text-[15px]">{s.name}</span></div>
-                  {info.connected
-                    ? <span className="text-[11px] text-sage font-semibold">{"✓"} conectado</span>
-                    : <a href={`/dashboard/${slug}/settings?tab=apis`} className="text-[11px] text-rust font-semibold">Conectar {"→"}</a>}
-                </div>
-                <div className="text-[12px] text-muted-foreground mb-2">{s.what}</div>
-                <div className="flex flex-wrap gap-1">
-                  {s.requires.mandatory.map((r) => <span key={r} className="text-[9px] rounded px-1.5 py-0.5" style={{ background: "#FBE9E7", border: "1px solid #FFCDD2", color: "#B71C1C" }}>{r}</span>)}
-                  {s.requires.oneOf.map((r) => <span key={r} className="text-[9px] rounded px-1.5 py-0.5" style={{ background: "#E0F4F9", border: "1px solid #B3E0EC", color: "#1A6E84" }}>{r}</span>)}
-                  {s.requires.optional.map((r) => <span key={r} className="text-[9px] bg-muted border border-border text-muted-foreground rounded px-1.5 py-0.5">{r}</span>)}
-                </div>
-                <div className="text-[11px] text-muted-foreground mt-2">{s.how}</div>
+      <div className="space-y-5">
+        <MetricPanel halftone className="border-[3px] border-navy">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-[240px] flex-1">
+              <div className="font-heading text-[11px] font-bold uppercase tracking-wide text-rust">{METRICS_PROJECT_ID}</div>
+              <h2 className="mt-1 font-heading text-2xl font-bold text-navy">{"📐"} Setup de Métricas</h2>
+              <div className="mt-1 text-[13px] text-[var(--sc-fg-muted)]">
+                <span className="font-semibold text-navy">{projectName}</span> · {projectDescription}
               </div>
-            );
-          })}
+            </div>
+            <div className="text-right min-w-[140px]">
+              <div className="font-heading text-3xl font-bold text-navy">{completedTasks}/{totalTasks || 0}</div>
+              <div className="text-[11px] font-semibold text-[var(--sc-fg-muted)]">tareas completadas</div>
+            </div>
+          </div>
+          <MetricProgressBar value={completedTasks} max={totalTasks} />
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink pt-4">
+            <div className="text-[12px] text-[var(--sc-fg-muted)]">
+              Setup operativo: <b className="text-navy">{progressLabel}</b>. Las credenciales viven en Settings; Merlin guía el proceso.
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {projectExists && (
+                <a href={projectHref} className="inline-flex">
+                  <MetricButton variant="paper">Abrir P00-Metrics</MetricButton>
+                </a>
+              )}
+              <a href={`/dashboard/${slug}/settings?tab=apis`} className="inline-flex">
+                <MetricButton variant="rust">{"🔌"} Settings/API</MetricButton>
+              </a>
+              <MetricButton variant="cyan" onClick={() => openMerlin("Quiero completar las conexiones de Métricas. Prioriza obligatorias, uno de y opcionales.")}>
+                ✨ Merlin
+              </MetricButton>
+            </div>
+          </div>
+          {!projectExists && (
+            <div className="mt-4 rounded-sc-md border-2 border-dashed border-ink bg-aged px-3 py-2 text-[12px] text-[var(--sc-fg-muted)]">
+              P00-Metrics aún no existe para este cliente. Esta vista muestra el setup declarado en config/pillar-manifest.json hasta que el proyecto se instancie.
+            </div>
+          )}
+        </MetricPanel>
+
+        {metricsPrereqTask && (
+          <MetricPanel className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Prerequisito Foundation</div>
+              <div className="font-heading text-[15px] font-bold text-navy">{metricsPrereqTask.id} · {metricsPrereqTask.name}</div>
+            </div>
+            <TaskStatusBadge status={metricsPrereqTask.status} />
+          </MetricPanel>
+        )}
+
+        {metricsSetupTask && (
+          <MetricPanel className="border-l-[7px] border-l-[var(--cyan)]">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-[260px] flex-1">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Tarea principal</span>
+                  <TaskStatusBadge status={metricsSetupTask.status} />
+                  {metricsSetupTask.isBlueprint && <MetricChip tone="flat">blueprint</MetricChip>}
+                </div>
+                <h2 className="font-heading text-xl font-bold text-navy">{metricsSetupTask.name}</h2>
+                <p className="mt-1 text-[13px] leading-relaxed text-[var(--sc-fg-muted)]">{metricsSetupTask.description || "Define el sistema de métricas y deja el dashboard preparado para operar."}</p>
+                {metricsSetupTask.deliverable && (
+                  <div className="mt-3 text-[12px] text-[var(--sc-fg-muted)]">
+                    <span className="font-semibold text-navy">Entregable:</span> {metricsSetupTask.deliverable}
+                  </div>
+                )}
+              </div>
+              <div className="flex min-w-[190px] flex-col items-start gap-3 md:items-end">
+                <div className="text-[12px] text-[var(--sc-fg-muted)]">
+                  Owner <span className="font-semibold text-navy">{prettyAgent(metricsSetupTask.agent || metricsSetupTask.owner)}</span>
+                </div>
+                {renderTaskActions(metricsSetupTask, true)}
+              </div>
+            </div>
+          </MetricPanel>
+        )}
+
+        {secondaryTasks.length > 0 && (
+          <div>
+            <div className="mb-3 font-heading text-lg font-bold text-navy">Tareas del setup</div>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {secondaryTasks.map((task) => (
+                <MetricPanel key={task.id}>
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-heading text-[10px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">{task.id}</div>
+                      <div className="font-heading text-[15px] font-bold leading-snug text-navy">{task.name}</div>
+                    </div>
+                    <TaskStatusBadge status={task.status} />
+                  </div>
+                  <p className="min-h-[48px] text-[12px] leading-relaxed text-[var(--sc-fg-muted)]">{task.description || task.deliverable || "Tarea de configuración del setup de métricas."}</p>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-[11px] text-[var(--sc-fg-muted)]">{prettyAgent(task.agent || task.owner)}</span>
+                    {renderTaskActions(task)}
+                  </div>
+                </MetricPanel>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <MetricPanel halftone className="border-dashed">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-[240px] flex-1">
+                <div className="font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Subsección</div>
+                <h2 className="mt-1 font-heading text-xl font-bold text-navy">Fuentes del dashboard</h2>
+                <div className="mt-1 text-[13px] text-[var(--sc-fg-muted)]">APIs y superficies que alimentan las métricas. Las credenciales se gestionan solo desde Settings.</div>
+              </div>
+              <div className="flex min-w-[150px] flex-col items-start gap-2 md:items-end">
+                <div className="font-heading text-2xl font-bold text-navy">{connectedCount}/{SURFACES.length}</div>
+                <a href={`/dashboard/${slug}/settings?tab=apis`} className="inline-flex">
+                  <MetricButton variant="rust">Settings/API</MetricButton>
+                </a>
+              </div>
+            </div>
+            <MetricProgressBar value={connectedCount} max={SURFACES.length} className="mt-4" />
+          </MetricPanel>
+
+          <div className="grid grid-cols-1 gap-3">
+            {SURFACES.map((s) => {
+              const info = surfaceInfoFor(s);
+              return (
+                <MetricPanel key={s.key} className="p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-[220px] flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{s.emoji}</span>
+                        <span className="font-heading text-[16px] font-bold text-navy">{s.name}</span>
+                        <span className={cn("h-3 w-3 rounded-full border-2 border-ink", surfaceStatusDot(info.connected, info.connectedSources.length))} />
+                      </div>
+                      <div className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">{s.what}</div>
+                    </div>
+                    {info.connected ? (
+                      <MetricChip tone="ok">conectado</MetricChip>
+                    ) : (
+                      <a href={`/dashboard/${slug}/settings?tab=apis`} className="inline-flex">
+                        <MetricButton variant="paper">Conectar {"->"}</MetricButton>
+                      </a>
+                    )}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {s.requires.mandatory.map((r) => <MetricChip key={r} tone="must">obligatorio · {r}</MetricChip>)}
+                    {s.requires.oneOf.map((r) => <MetricChip key={r} tone="one">uno de · {r}</MetricChip>)}
+                    {s.requires.optional.map((r) => <MetricChip key={r} tone="opt">opcional · {r}</MetricChip>)}
+                  </div>
+                  <div className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">{s.how}</div>
+                </MetricPanel>
+              );
+            })}
+            <MetricPanel halftone className="border-dashed">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="font-heading text-[15px] font-bold text-navy">Custom lab</div>
+                  <div className="text-[12px] text-[var(--sc-fg-muted)]">Superficies custom ilimitadas para métricas que no viven en el stack estándar.</div>
+                </div>
+                <MetricButton variant="cyan" onClick={() => openMerlin("Quiero diseñar una superficie custom para Métricas. Ayúdame a definir fuente, señal y KPI.")}>Nueva custom</MetricButton>
+              </div>
+            </MetricPanel>
+          </div>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -2188,40 +2626,166 @@ function MetricsPageInner({ slug }: { slug: string }) {
     const versions = dashboardRec?.versions ?? [];
     const current = dashboardRec?.version ?? 0;
     return (
-      <div>
-        <button type="button" onClick={() => setVersionsOpen(false)} className="mb-4 px-3 py-1.5 border border-border rounded-md text-[12px] font-semibold bg-background hover:border-rust transition-colors">
-          {"←"} Volver
-        </button>
-        <div className="border-[3px] border-navy rounded-xl bg-card p-5 shadow-comic mb-6">
-          <div className="font-heading font-bold text-lg">{"🕓"} Versiones del dashboard</div>
-          <div className="text-[13px] text-muted-foreground mt-1">Cada cambio (chat, arrastre, plantilla) crea una versión inmutable. Revertir copia ese estado a una versión nueva — append-only y auditado.</div>
-        </div>
+      <div className="space-y-5">
+        <BackButton onClick={() => setVersionsOpen(false)}>Volver a Métricas</BackButton>
+        <MetricPanel halftone className="border-[3px] border-navy">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Historial append-only</div>
+              <h2 className="mt-1 font-heading text-2xl font-bold text-navy">{"🕓"} Versiones del dashboard</h2>
+              <div className="mt-1 max-w-2xl text-[13px] text-[var(--sc-fg-muted)]">Cada cambio por chat, arrastre o plantilla crea una versión inmutable. Revertir copia ese estado a una versión nueva, auditada.</div>
+            </div>
+            <MetricChip tone="warn">actual v{current}</MetricChip>
+          </div>
+        </MetricPanel>
         {!dashboardRec?.configured ? (
-          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">El versionado requiere base de datos (no disponible en este entorno).</div>
+          <MetricPanel className="p-8 text-center text-[var(--sc-fg-muted)]">El versionado requiere base de datos (no disponible en este entorno).</MetricPanel>
         ) : versions.length === 0 ? (
-          <div className="border-2 border-border rounded-xl bg-card p-8 text-center text-muted-foreground">Aún no hay versiones guardadas.</div>
+          <MetricPanel className="p-8 text-center text-[var(--sc-fg-muted)]">Aún no hay versiones guardadas.</MetricPanel>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {versions.map((v) => {
               const isCurrent = v.version === current;
               return (
-                <div key={v.version} className={cn("border-2 rounded-xl p-4 bg-card", isCurrent ? "border-navy" : "border-border")} style={isCurrent ? { borderLeftWidth: 5, borderLeftColor: "#E6A817" } : undefined}>
-                  <div className="flex items-center justify-between mb-1">
+                <MetricPanel key={v.version} className={cn(isCurrent && "border-l-[7px] border-l-[var(--yellow)]")}>
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-heading font-bold">v{v.version}{isCurrent ? " · actual" : ""}</span>
+                      <span className="font-heading text-xl font-bold text-navy">v{v.version}{isCurrent ? " · actual" : ""}</span>
                       <TriggerBadge trigger={v.trigger} />
                     </div>
                     {!isCurrent && (
-                      <button type="button" onClick={() => revertTo(v.version)} disabled={saving} className="text-[11px] text-rust font-semibold disabled:opacity-50 hover:underline">
-                        {"↩︎"} Revertir a v{v.version}
-                      </button>
+                      <MetricButton type="button" variant="paper" onClick={() => revertTo(v.version)} disabled={saving}>
+                        Revertir a v{v.version}
+                      </MetricButton>
                     )}
                   </div>
-                  <div className="text-[12px] text-muted-foreground">{v.date}{v.changes ? ` · ${v.changes}` : ""}</div>
-                </div>
+                  <div className="text-[12px] text-[var(--sc-fg-muted)]">{v.date}{v.changes ? ` · ${v.changes}` : ""}</div>
+                </MetricPanel>
               );
             })}
           </div>
+        )}
+      </div>
+    );
+  }
+
+  function applyCalendarShortcut(kind: "week" | "month" | "prevMonth" | "90d" | "quarter" | "year") {
+    const latestDate = allDaily[allDaily.length - 1]?.date || formatLocalIsoDate(new Date());
+    const end = parseLocalIsoDate(latestDate);
+    let from = new Date(end);
+    let to = new Date(end);
+
+    if (kind === "week") {
+      const mondayOffset = (end.getDay() + 6) % 7;
+      from = addLocalDays(end, -mondayOffset);
+    } else if (kind === "month") {
+      from = new Date(end.getFullYear(), end.getMonth(), 1);
+    } else if (kind === "prevMonth") {
+      from = new Date(end.getFullYear(), end.getMonth() - 1, 1);
+      to = new Date(end.getFullYear(), end.getMonth(), 0);
+    } else if (kind === "90d") {
+      from = addLocalDays(end, -89);
+    } else if (kind === "quarter") {
+      const quarterMonth = Math.floor(end.getMonth() / 3) * 3;
+      from = new Date(end.getFullYear(), quarterMonth, 1);
+    } else if (kind === "year") {
+      from = new Date(end.getFullYear(), 0, 1);
+    }
+
+    setCustomFrom(formatLocalIsoDate(from));
+    setCustomTo(formatLocalIsoDate(to));
+    setRange("custom");
+    setDatePickerOpen(false);
+  }
+
+  function renderDateRangeControl() {
+    const dateButtonLabel = range === "custom"
+      ? `${customFrom || "Desde"} -> ${customTo || "Hasta"}`
+      : DATE_RANGE_OPTIONS.find((option) => option.value === range)?.label || "Periodo";
+    return (
+      <div className="relative">
+        <div className="flex flex-wrap items-center gap-1 rounded-sc-lg border-2 border-ink bg-aged p-1 shadow-pop-xs">
+          {DATE_RANGE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                setRange(option.value);
+                setDatePickerOpen(false);
+              }}
+              className={cn(
+                "rounded-sc-md px-2.5 py-1.5 font-heading text-[11px] font-bold transition-colors",
+                range === option.value ? "border-2 border-ink bg-rust text-white shadow-pop-xs" : "text-[var(--sc-fg-muted)]"
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setDatePickerOpen((open) => !open)}
+            className={cn(
+              "rounded-sc-md px-2.5 py-1.5 font-heading text-[11px] font-bold transition-colors",
+              range === "custom" ? "border-2 border-ink bg-navy text-white shadow-pop-xs" : "text-[var(--sc-fg-muted)]"
+            )}
+            aria-label="Abrir calendario"
+          >
+            📅 {range === "custom" ? dateButtonLabel : "Fechas"}
+          </button>
+        </div>
+        {datePickerOpen && (
+          <MetricPanel className="absolute right-0 top-full z-30 mt-2 w-[min(92vw,380px)] p-4">
+            <div className="mb-3 font-heading text-[12px] font-bold uppercase tracking-wide text-rust">Atajos</div>
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              {[
+                ["week", "Esta semana"],
+                ["month", "Este mes"],
+                ["prevMonth", "Mes pasado"],
+                ["90d", "Últimos 90d"],
+                ["quarter", "Este trimestre"],
+                ["year", "Este año"],
+              ].map(([kind, label]) => (
+                <MetricButton key={kind} variant="paper" className="justify-start" onClick={() => applyCalendarShortcut(kind as "week" | "month" | "prevMonth" | "90d" | "quarter" | "year")}>
+                  {label}
+                </MetricButton>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="font-heading text-[11px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">
+                Desde
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(event) => {
+                    setCustomFrom(event.target.value);
+                    setRange("custom");
+                  }}
+                  className="mt-1 w-full rounded-sc-md border-2 border-ink bg-background px-2 py-2 font-sans text-[13px] text-foreground"
+                />
+              </label>
+              <label className="font-heading text-[11px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">
+                Hasta
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(event) => {
+                    setCustomTo(event.target.value);
+                    setRange("custom");
+                  }}
+                  className="mt-1 w-full rounded-sc-md border-2 border-ink bg-background px-2 py-2 font-sans text-[13px] text-foreground"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <MetricButton variant="ghost" onClick={() => setDatePickerOpen(false)}>Cerrar</MetricButton>
+              <MetricButton variant="navy" onClick={() => {
+                setRange("custom");
+                setDatePickerOpen(false);
+              }}>
+                Aplicar
+              </MetricButton>
+            </div>
+          </MetricPanel>
         )}
       </div>
     );
@@ -2234,7 +2798,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
       case "channels": return renderChannels();
       case "conversion": return renderConversion();
       case "trends": return renderTrends();
-      case "conexiones": return renderConexiones();
+      case "conexiones": return renderSetup();
       case "partnerships": return <MetricsPartnershipsTab slug={slug} />;
       // Tabs are data-driven: a definition could declare a key this build doesn't
       // render yet. Show an honest placeholder instead of silently falling to Overview.
@@ -2253,72 +2817,48 @@ function MetricsPageInner({ slug }: { slug: string }) {
         <title>{t("title")} — {slug} — Mission Control</title>
       </Head>
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
-        <div>
-          <h1 className="font-heading text-2xl text-navy mb-1"><TitleIcon name="metrics" />{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {slug} {isDataTab && <span className="text-[11px] ml-2">{rangeLabel}</span>}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {!versionsOpen && (
-            <>
-              <button type="button" onClick={() => setVersionsOpen(true)} className="px-3 py-1 border border-navy rounded-md text-[11px] font-semibold text-navy bg-background hover:bg-muted transition-colors">
-                {"🕓"} Versiones{(dashboardRec?.versions?.length ?? 0) > 0 ? ` ${dashboardRec?.versions.length}` : ""}
-              </button>
-              <button type="button" onClick={() => openMerlin("Quiero editar el dashboard de métricas (North Star, KPIs, superficies o una métrica custom). ¿Qué cambiamos?")} className="px-3 py-1 rounded-md text-[11px] font-semibold text-white transition-colors" style={{ background: "#3B9EBF" }}>
-                {"✨"} Editar con Merlin
-              </button>
-            </>
-          )}
-          {isDataTab && !versionsOpen && (
-            <>
-              <DateRangeFilter options={DATE_RANGE_OPTIONS} value={range} onChange={(v) => setRange(v as DateRange)} />
-
-          <div className="flex gap-1.5">
-            <a href={`/dashboard/${slug}/settings?tab=apis`} className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
-              {"\uD83D\uDD0C"} {t("apis")}
-            </a>
-            {effectivePlan && (
-              <button type="button" onClick={() => setPlanOpen(true)} className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
-                {"\uD83D\uDCCB"} {t("plan")}
-              </button>
-            )}
-            {metricsData?.metricsSheet?.url && (
-              <a href={metricsData.metricsSheet.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1 border border-border rounded-md text-[11px] font-semibold text-muted-foreground bg-background hover:border-rust transition-colors">
-                {"\uD83D\uDCCA"} {t("sheets")}
-              </a>
+      <div className="mx-auto max-w-[1180px]">
+        <MetricPanel halftone className="mb-5 border-[3px] border-navy">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-[240px] flex-1">
+              <h1 className="font-heading text-3xl font-bold text-navy"><TitleIcon name="metrics" />{t("title")}</h1>
+              <p className="mt-1 text-sm text-[var(--sc-fg-muted)]">
+                {slug} {isDataTab && !versionsOpen && <span className="ml-2 text-[11px]">{rangeLabel}</span>}
+              </p>
+            </div>
+            {!versionsOpen && (
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {isDataTab && renderDateRangeControl()}
+                <MetricButton variant="paper" onClick={() => setPlanOpen(true)} disabled={!effectivePlan}>
+                  📋 Plan
+                </MetricButton>
+                <MetricButton variant="navy" onClick={() => {
+                  setVersionsOpen(true);
+                  setSubView(null);
+                }}>
+                  🕓 Versiones{(dashboardRec?.versions?.length ?? 0) > 0 ? ` ${dashboardRec?.versions.length}` : ""}
+                </MetricButton>
+                <MetricButton variant="cyan" onClick={() => openMerlin("Quiero editar el dashboard de métricas (North Star, KPIs, superficies o una métrica custom). ¿Qué cambiamos?")}>
+                  ✨ Merlin
+                </MetricButton>
+              </div>
             )}
           </div>
-            </>
-          )}
-        </div>
-      </div>
+        </MetricPanel>
 
-      {versionsOpen ? renderVersions() : (
-      <>
-      {/* Tabs renderizadas desde la definici\u00F3n versionada (M\u00E9tricas v2) */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {tabs.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => selectTab(item.key)}
-            className={cn(
-              "px-3.5 py-1.5 border rounded-md text-[13px] font-semibold transition-colors",
-              tab === item.key ? "border-rust bg-rust text-white" : "border-border bg-background hover:bg-muted"
-            )}
-          >
-            {item.label}
-          </button>
-        ))}
+        {versionsOpen ? renderVersions() : (
+          <>
+            <MetricTabBar
+              tabs={tabs.map((item) => ({ ...item, icon: TAB_ICONS[item.key] }))}
+              active={tab}
+              onSelect={selectTab}
+            />
+            <div className="mt-5">
+              {renderActiveTab()}
+            </div>
+          </>
+        )}
       </div>
-
-      {renderActiveTab()}
-      </>
-      )}
 
       <SlideOver open={planOpen} onClose={() => setPlanOpen(false)} title={`${t("plan")} — ${slug}`}>
         {effectivePlan ? <JsonViewer data={effectivePlan} /> : null}
