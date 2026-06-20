@@ -269,8 +269,8 @@ jobs:
             docker compose $COMPOSE_ARGS build --pull
             if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
               echo "▶ Running DB migrations…"
-              # Apply only the additive deploy migrations (MCP audit + feedback_insights)
-              # via the non-destructive single-file runner — mirrors deploy-staging.yml.
+              # Apply only the curated additive deploy migrations via the
+              # non-destructive single-file runner — mirrors deploy-staging.yml.
               # The repo's historical SQL migrations are not a safe input for
               # `drizzle-kit migrate` (no journal in git; one old migration drops/recreates
               # `tasks`). Redirect stdin so the one-off container can't eat the SSH heredoc.
