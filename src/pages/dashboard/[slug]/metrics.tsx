@@ -1673,8 +1673,17 @@ export default function MetricsPage() {
       if (v != null) { value = fmtByFormat(v, head.format); valueLabel = head.label; }
     }
     if (value == null && summaryEntry?.metrics?.length) {
-      const m = summaryEntry.metrics.find((x) => x.value != null);
-      if (m && m.value != null) { value = m.value.toLocaleString(); valueLabel = m.metric; }
+      // summaryEntry.metrics is ordered by date only, so for surfaces with several
+      // metrics prefer the intended headline (SURFACE_HEADLINE source.metric) before
+      // falling back to the first — otherwise Paid could show clicks/CPC, not spend.
+      const candidates = summaryEntry.metrics.filter((x) => x.value != null);
+      const m = (head && (candidates.find((x) => x.source === head.source && x.metric === head.metric)
+        || candidates.find((x) => x.metric === head.metric))) || candidates[0];
+      if (m && m.value != null) {
+        const isHeadline = !!head && m.metric === head.metric;
+        value = isHeadline ? fmtByFormat(m.value, head!.format) : m.value.toLocaleString();
+        valueLabel = isHeadline ? head!.label : m.metric;
+      }
     }
     return { connected: connectedSources.length > 0, connectedSources, value, valueLabel };
   }
