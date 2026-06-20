@@ -21,8 +21,8 @@ export function DashboardLayout({ children, fullBleed }: DashboardLayoutProps) {
   const { sidebarOpen: chatOpen, isFullscreen: chatFullscreen } = useChatStore();
 
   // Fullscreen chat must leave a gap exactly the width of the nav sidebar
-  // (220px expanded / 60px collapsed — see Sidebar `lg:w-[...]` and the
-  // `lg:ml-[...]` offsets below). Hardcoding 220 left a 160px strip of the
+  // (220px expanded / 60px collapsed — see Sidebar `md:w-[...]` and the
+  // `md:ml-[...]` offsets below). Hardcoding 220 left a 160px strip of the
   // dashboard peeking through when the sidebar was collapsed.
   const sidebarW = sidebarOpen ? 220 : 60;
   const chatWidth = chatOpen ? (chatFullscreen ? `calc(100vw - ${sidebarW}px)` : "380px") : "0px";
@@ -33,8 +33,11 @@ export function DashboardLayout({ children, fullBleed }: DashboardLayoutProps) {
       <div
         className={cn(
           "transition-all duration-200",
-          // Desktop: offset by sidebar width; Mobile: no offset (sidebar is overlay or hidden)
-          sidebarOpen ? "lg:ml-[220px] ml-0" : "lg:ml-[60px] ml-0"
+          // Tablet/desktop (≥md, 768px): offset by sidebar width. Phone (<md):
+          // no offset — the sidebar is an off-canvas hamburger drawer. The
+          // breakpoint is `md` (not `lg`) so non-maximized desktop windows keep
+          // the persistent collapsible rail instead of the overlay drawer.
+          sidebarOpen ? "md:ml-[220px] ml-0" : "md:ml-[60px] ml-0"
         )}
         style={{ marginRight: chatOpen ? chatWidth : undefined }}
       >

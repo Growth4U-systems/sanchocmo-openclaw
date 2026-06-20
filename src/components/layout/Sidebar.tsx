@@ -68,29 +68,32 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger */}
+      {/* Mobile hamburger (phone only, <md) */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-3 left-3 z-[60] w-10 h-10 rounded-lg bg-card border-2 border-ink flex items-center justify-center shadow-comic-sm"
+        className="md:hidden fixed top-3 left-3 z-[60] w-10 h-10 rounded-lg bg-card border-2 border-ink flex items-center justify-center shadow-comic-sm"
         aria-label="Open menu"
       >
         ☰
       </button>
 
-      {/* Mobile overlay */}
+      {/* Mobile overlay (phone only, <md) */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/40 z-[55]"
+          className="md:hidden fixed inset-0 bg-black/40 z-[55]"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
+      {/* ≥md: persistent collapsible rail (220px / 60px). <md: off-canvas drawer
+          (260px) that slides in over a backdrop. `md` (not `lg`) keeps the rail
+          on non-maximized desktop windows so it tucks away instead of covering. */}
       <aside
         className={cn(
           "fixed top-0 left-0 h-screen bg-card border-r-2 border-border z-[60] flex flex-col transition-all duration-200 overflow-hidden",
-          sidebarOpen ? "lg:w-[220px]" : "lg:w-[60px]",
-          mobileOpen ? "w-[260px]" : "max-lg:-translate-x-full",
-          "max-lg:w-[260px]"
+          sidebarOpen ? "md:w-[220px]" : "md:w-[60px]",
+          mobileOpen ? "w-[260px]" : "max-md:-translate-x-full",
+          "max-md:w-[260px]"
         )}
         style={{ padding: sidebarOpen ? "16px 12px" : "16px 8px" }}
       >
@@ -240,12 +243,12 @@ export function Sidebar() {
 // --- Sub-components ---
 
 function CollapseToggle({ collapsed }: { collapsed: boolean }) {
-  // Desktop only — on mobile the sidebar is a full-width drawer.
+  // Tablet/desktop only (≥md) — on phones the sidebar is a full-width drawer.
   return (
     <button
       type="button"
       onClick={() => useAppStore.getState().toggleSidebar()}
-      className="hidden lg:flex w-6 h-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground flex-shrink-0 transition-colors"
+      className="hidden md:flex w-6 h-6 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground flex-shrink-0 transition-colors"
       aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
       title={collapsed ? "Expandir" : "Colapsar"}
     >
