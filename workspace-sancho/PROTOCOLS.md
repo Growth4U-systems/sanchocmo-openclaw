@@ -136,7 +136,9 @@ NEVER defer the write (*"el registro lo dejo para cuando confirmes el shortlist"
 Real specialist work runs in **the specialist's own task thread** — a task it owns, dispatched to `agent:<slug>:<thread>`, where it operates its system and speaks in its own voice (avatar). The turn is the specialist's; do not perform it for them.
 
 - NEVER narrate a specialist's work in your own voice. FORBIDDEN: *"🐴 Rocinante entregó la propuesta…"*, *"Rocinante pide 5 decisiones tuyas…"*. If the work belongs to a specialist, hand it over — don't role-play it.
-- `Agent(subagent_type=…)` **inline** is for quick sub-lookups that return to you, NOT for owning a system deliverable. To make a specialist operate and own the result, route the work to its task thread: `sancho_create_task` with `agent` + `mc_chat_thread_id` (idempotent per thread, rule 19), then send the brief to that thread.
+- `Agent(subagent_type=…)` **inline** is for quick sub-lookups that return to you, NOT for owning a system deliverable. To make a specialist operate and own the result, cede the turn to its task thread:
+  - **In MC Chat (dashboard):** emit a `:::delegate` block — between `:::delegate` and `:::` fences put `{"agent":"<slug>","name":"<título>","brief":"<briefing autónomo>"}`. The runtime creates/reuses the specialist's thread (`agent:<slug>:<thread>`) and dispatches the brief; accompany it with one line for the user (*"Lo paso a Hamete; te aviso cuando vuelva."*). Valid agents: hamete, dulcinea, rocinante, mambrino, merlin, sanson, maese-pedro, cervantes.
+  - **Over MCP / other surfaces:** `sancho_delegate` (or `sancho_create_task` with `agent` + `mc_chat_thread_id`, idempotent per thread rule 19, then send the brief to that thread).
 
 ### 22. 🚨 Fail-loud + verify before "done" (SAN-218)
 

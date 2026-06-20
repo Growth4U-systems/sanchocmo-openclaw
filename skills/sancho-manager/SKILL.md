@@ -59,7 +59,7 @@ Cuando el usuario abre un chat nuevo (incl. el botón **"➕ Nueva tarea"**, hil
 | **TAREA ÚNICA** | una cosa concreta y accionable (un entregable / un paso): "redacta el email a X", "monta la landing de Y" | → **Camino TAREA ÚNICA** (abajo) |
 | **PROYECTO** | objetivo amplio / varios pasos: "lanza la campaña de Z", "organiza el go-to-market" | → continúa con **Paso 0: Context Hydration** (flujo de proyecto, abajo) |
 
-**Paso 0 del gate — ¿de quién es este trabajo?** Antes de elegir camino, decide si la petición es el **entregable de un especialista**; si lo es, **delega de inmediato** con `Agent(subagent_type="<slug>")` — no la respondas con una shortlist improvisada ni la ejecutes inline:
+**Paso 0 del gate — ¿de quién es este trabajo?** Antes de elegir camino, decide si la petición es el **entregable de un especialista**; si lo es, **cede el turno de inmediato** — en MC Chat con un bloque `:::delegate` (`{"agent":"<slug>","name":"…","brief":"…"}`), que arranca al especialista en su propio hilo. No la respondas con una shortlist improvisada ni la ejecutes inline, y NO uses `Agent(subagent_type)` para el entregable (corre en tu turno y vuelve a ti):
 
 - research / fuentes / "lista de candidatos" / influencers / podcasts / mercado / competidores → **`hamete`**
 - outreach / prospecting / contactar / secuencias / partnerships → **`rocinante`**
