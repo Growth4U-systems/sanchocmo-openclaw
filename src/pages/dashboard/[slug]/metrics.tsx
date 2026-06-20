@@ -208,7 +208,10 @@ function evalFormula(formula: string, sources: Record<string, SourceData>): numb
   // source.metric tokens or trailing JS is rejected before it can reach eval.
   if (!isSafeFormula(formula)) return null;
   try {
-    const parts = formula.match(/([a-z0-9_-]+)\.(\w+)/gi) || [];
+    // Source must start with an identifier char so decimal constants (e.g. `0.02`)
+    // aren't mistaken for a `source.metric` ref — that would fail to resolve and
+    // null out an otherwise valid formula.
+    const parts = formula.match(/([a-z_][\w-]*)\.(\w+)/gi) || [];
     let expr = formula;
     for (const part of parts) {
       const [src, metric] = part.split(".");
@@ -1585,6 +1588,13 @@ export default function MetricsPage() {
     if (!base.some((tb) => tb.key === "partnerships")) base.push({ key: "partnerships", label: "Partnerships" });
     return base;
   }, [definition]);
+
+  // Snap to the first visible tab if the active one isn't among the definition's
+  // tabs (e.g. a definition hides/omits `overview`, or a stale ?tab in the URL),
+  // so the rendered content always matches a visible tab button.
+  useEffect(() => {
+    if (tabs.length > 0 && !tabs.some((tb) => tb.key === tab)) setTab(tabs[0].key);
+  }, [tabs, tab]);
 
   const isDataTab = ["overview", "surfaces", "channels", "conversion", "trends"].includes(tab);
 
