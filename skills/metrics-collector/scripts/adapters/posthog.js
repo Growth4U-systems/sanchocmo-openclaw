@@ -5,7 +5,7 @@
  * the HogQL Query API and the count of session recordings:
  *   - pageviews           total $pageview events in the range
  *   - activation_events   total activation events (config.activationEvent, default `$identify`)
- *   - funnel_step_dropoff per-step counts, dimensioned by { step } (config.funnelSteps)
+ *   - funnel_step_reached per-step reached counts, dims { step, order } (config.funnelSteps)
  *   - session_recordings  count of recordings captured in the range
  *
  * Auth: personal API key (Bearer) from {SLUG}_POSTHOG_API_KEY / POSTHOG_API_KEY.
@@ -66,7 +66,7 @@ export async function collect(config, env, dateRange) {
     env.POSTHOG_API_KEY;
   if (!apiKey) throw new Error('PostHog: missing POSTHOG_API_KEY in .env');
 
-  const host = normalizeHost(config.host || config.posthogHost || config.POSTHOG_HOST);
+  const host = normalizeHost(config.host || config.HOST || config.posthogHost || config.POSTHOG_HOST);
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
@@ -102,7 +102,10 @@ export async function collect(config, env, dateRange) {
       `SELECT count() FROM events WHERE event = '${sqlStr(activationEvent)}' AND ${where}`,
     );
     const activation = Number(rows?.[0]?.[0]) || 0;
-    metrics.push({ name: 'activation_events', value: activation, date: from, dimensions: { event: activationEvent } });
+    // Roll-up (NO dimensions) so plan funnel steps / KPI formulas referencing
+    // `posthog.activation_events` resolve — the resolvers only match no-dimension
+    // metrics (a dimensioned-only metric would render "—" despite collected data).
+    metrics.push({ name: 'activation_events', value: activation, date: from });
   } catch (err) {
     console.warn(`  ⚠️  PostHog activation events error: ${err.message}`);
   }
@@ -117,7 +120,6 @@ export async function collect(config, env, dateRange) {
       ? config.funnel_steps
       : [];
   if (funnelSteps.length > 0) {
-    let prevCount = null;
     for (let i = 0; i < funnelSteps.length; i++) {
       const step = funnelSteps[i];
       const stepName = typeof step === 'string' ? step : step?.event || step?.name;
@@ -130,14 +132,16 @@ export async function collect(config, env, dateRange) {
           `SELECT count(DISTINCT person_id) FROM events WHERE event = '${sqlStr(stepName)}' AND ${where}`,
         );
         const count = Number(rows?.[0]?.[0]) || 0;
-        const dropoff = prevCount == null ? 0 : Math.max(0, prevCount - count);
+        // value = the reached count; dimensions are STABLE { step, order } ONLY.
+        // Putting the (daily-varying) count in dimensions would make aggregateEntries
+        // key each day separately → duplicate per-day funnel rows. The UI derives the
+        // per-step dropoff from consecutive reached counts.
         metrics.push({
-          name: 'funnel_step_dropoff',
-          value: dropoff,
+          name: 'funnel_step_reached',
+          value: count,
           date: from,
-          dimensions: { step: stepName, order: i + 1, reached: count },
+          dimensions: { step: stepName, order: i + 1 },
         });
-        prevCount = count;
       } catch (err) {
         console.warn(`  ⚠️  PostHog funnel step "${stepName}" error: ${err.message}`);
       }

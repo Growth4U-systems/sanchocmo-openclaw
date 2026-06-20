@@ -2011,19 +2011,25 @@ function MetricsPageInner({ slug }: { slug: string }) {
     const posthogConnected = connectedFromFiles.has("posthog");
     if (posthogConnected) {
       const pageviews = mVal(posthog, "pageviews");
-      const activation = posthog?.metrics?.find((x) => x.name === "activation_events");
+      const activation = mVal(posthog, "activation_events");
       const recordings = mVal(posthog, "session_recordings");
-      // Dimensioned funnel-step rows, ordered by the `order` dimension the adapter sets.
-      const funnel = (posthog?.metrics || [])
-        .filter((x) => x.name === "funnel_step_dropoff" && x.dimensions)
+      // Per-step reached counts (stable { step, order } dims); derive dropoff from
+      // consecutive counts here so the adapter keeps a varying count out of dims.
+      const reachedRows = (posthog?.metrics || [])
+        .filter((x) => x.name === "funnel_step_reached" && x.dimensions)
         .sort((a, b) => (Number(a.dimensions?.order) || 0) - (Number(b.dimensions?.order) || 0));
+      const funnel = reachedRows.map((s, i) => ({
+        step: String(s.dimensions?.step ?? ""),
+        reached: s.value,
+        dropoff: i === 0 ? 0 : Math.max(0, reachedRows[i - 1].value - s.value),
+      }));
       return (
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: "Pageviews", value: pageviews, hint: "PostHog" },
-              { label: "Activación", value: activation?.value ?? null, hint: String(activation?.dimensions?.event ?? "evento") },
-              { label: "Dropoff total", value: funnel.length ? funnel.reduce((s, x) => s + x.value, 0) : null, hint: "perdidos en el funnel" },
+              { label: "Activación", value: activation, hint: "activación" },
+              { label: "Dropoff total", value: funnel.length ? funnel.reduce((s, x) => s + x.dropoff, 0) : null, hint: "perdidos en el funnel" },
               { label: "Grabaciones", value: recordings, hint: "session recordings" },
             ].map((c) => (
               <div key={c.label} className="border-2 border-border rounded-xl p-3 bg-card">
@@ -2043,17 +2049,13 @@ function MetricsPageInner({ slug }: { slug: string }) {
                   <th className="text-right text-[10px] uppercase tracking-wide text-muted-foreground p-1">Dropoff</th>
                 </tr></thead>
                 <tbody>
-                  {funnel.map((s, i) => {
-                    const step = String(s.dimensions?.step ?? "");
-                    const reached = Number(s.dimensions?.reached ?? 0);
-                    return (
-                      <tr key={i} className="border-t border-border">
-                        <td className="p-1.5">{step}</td>
-                        <td className="p-1.5 text-right font-heading font-semibold">{reached.toLocaleString()}</td>
-                        <td className={cn("p-1.5 text-right", s.value > 0 && "text-destructive")}>{i === 0 ? "—" : `−${s.value.toLocaleString()}`}</td>
-                      </tr>
-                    );
-                  })}
+                  {funnel.map((r, i) => (
+                    <tr key={i} className="border-t border-border">
+                      <td className="p-1.5">{r.step}</td>
+                      <td className="p-1.5 text-right font-heading font-semibold">{r.reached.toLocaleString()}</td>
+                      <td className={cn("p-1.5 text-right", r.dropoff > 0 && "text-destructive")}>{i === 0 ? "—" : `−${r.dropoff.toLocaleString()}`}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
