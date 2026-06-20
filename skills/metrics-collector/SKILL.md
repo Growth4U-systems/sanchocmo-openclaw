@@ -42,6 +42,7 @@ node collect.js --slug <client-slug> --source meta-ads
 node collect.js --slug <client-slug> --source ghl
 node collect.js --slug <client-slug> --source instantly
 node collect.js --slug <client-slug> --source sheets
+node collect.js --slug <client-slug> --source posthog
 ```
 
 ### Custom date range
@@ -79,6 +80,7 @@ node sync-sheets.js --slug <client-slug>
 | GHL | Bearer token | `{SLUG}_GHL_API_KEY` in .env, `ghl.locationId` in integrations.json |
 | Instantly | API key | `{SLUG}_INSTANTLY_API_KEY` in .env |
 | Sheets | Service account | `sheets.spreadsheetId`, `sheets.range` in integrations.json |
+| PostHog | Personal API key (Bearer) | `{SLUG}_POSTHOG_API_KEY` in .env, `posthog.projectId` (+ optional `posthog.host`, `posthog.activationEvent`, `posthog.funnelSteps`) in integrations.json |
 
 ## integrations.json Example
 ```json
@@ -89,6 +91,7 @@ node sync-sheets.js --slug <client-slug>
   "meta-ads": { "enabled": true, "accountId": "act_123456" },
   "ghl": { "enabled": true, "locationId": "loc_abc123" },
   "instantly": { "enabled": true },
-  "sheets": { "enabled": true, "spreadsheetId": "1ABC...", "range": "ManualData!A:Z" }
+  "sheets": { "enabled": true, "spreadsheetId": "1ABC...", "range": "ManualData!A:Z" },
+  "posthog": { "enabled": true, "projectId": "12345", "host": "https://us.posthog.com", "activationEvent": "user signed up", "funnelSteps": ["$pageview", "signed up", "activated"] }
 }
 ```
