@@ -1337,7 +1337,7 @@ export default function MetricsPage() {
   );
 
   const { data: plan, isLoading: planLoading } = useMetricsPlan(slug);
-  const { data: dashboardRec } = useDashboardDefinition(slug);
+  const { data: dashboardRec, isLoading: dashboardLoading } = useDashboardDefinition(slug);
   const { data: surfaceSummary } = useSurfaceSummary(slug);
   const definition: DashboardDefinition | null = dashboardRec?.definition ?? null;
 
@@ -1578,10 +1578,13 @@ export default function MetricsPage() {
 
   // Snap to the first visible tab if the active one isn't among the definition's
   // tabs (e.g. a definition hides/omits `overview`, or a stale ?tab in the URL),
-  // so the rendered content always matches a visible tab button.
+  // so the rendered content always matches a visible tab button. Gated on the
+  // definition having loaded — otherwise a cold load with ?tab=<definition-only
+  // tab> would reset to overview before that tab exists in `tabs`.
   useEffect(() => {
+    if (dashboardLoading) return;
     if (tabs.length > 0 && !tabs.some((tb) => tb.key === tab)) setTab(tabs[0].key);
-  }, [tabs, tab]);
+  }, [tabs, tab, dashboardLoading]);
 
   const isDataTab = ["overview", "surfaces", "channels", "conversion", "trends"].includes(tab);
 
