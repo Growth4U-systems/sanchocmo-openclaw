@@ -78,6 +78,9 @@ test("tools/list exposes expected MCP schemas", async () => {
       "alarife_validate_mcp_connection",
       "open_design_health",
       "open_design_list_catalog",
+      // Métricas v2 MCP surface (SAN-264+): read + Merlin write tools
+      "sancho_add_custom_metric",
+      "sancho_apply_metrics_template",
       "sancho_create_task",
       "sancho_delegate",
       "sancho_get_chat_thread",
@@ -85,6 +88,8 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_get_document",
       // SAN-217: Meeting Intelligence read tools
       "sancho_get_meeting",
+      "sancho_get_metrics_dashboard",
+      "sancho_get_metrics_timeseries",
       "sancho_get_task",
       // SAN-17: public intake-form link (stateless token, read-only)
       "sancho_intake_create_link",
@@ -95,7 +100,9 @@ test("tools/list exposes expected MCP schemas", async () => {
       "sancho_list_meetings",
       "sancho_list_tasks",
       "sancho_mcp_status",
+      "sancho_revert_metrics_dashboard",
       "sancho_send_message",
+      "sancho_update_metrics_dashboard",
       "sancho_update_task",
       // SAN-80: gates de envío + plantillas (escritura espejo de la UI)
       "yalc_approve_gate",
