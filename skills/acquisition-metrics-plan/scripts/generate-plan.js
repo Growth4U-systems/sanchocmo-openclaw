@@ -215,72 +215,29 @@ if (connectedSources.has('instantly')) {
 }
 
 // --- Tier every KPI (SAN-296) ---
-// 1) default each KPI's tier from its category (primary/leading/lagging);
-// 2) promote the KPI that represents the archetype's North Star (the primary
-//    activation count) to `primary`; 3) if no connected KPI maps to it, prepend
-//    a synthetic primary KPI so the dashboard Overview always has a North Star
-//    anchor — its value comes from the funnel's activation step at render time.
+// Each KPI gets a tier so the dashboard Overview groups primary / leading / lagging:
+//   - default from its category (TIER_BY_CATEGORY);
+//   - cost / efficiency KPIs (spend/cpc/cpa/...) are lagging regardless of category;
+//   - a KPI whose name IS the archetype's primaryKPI / activationEvent -> `primary`.
+// The North Star is NOT (re)derived here: it is already defined by the archetype
+// (config.primaryKPI / activationEvent, via metrics-setup) and resolved by the
+// dashboard (buildSeedDefinition seeds northStar.label/kpiRef; the metrics page
+// resolves the value). No synthetic KPI is injected.
 const primaryName = (config.primaryKPI || '').toLowerCase();
-const activationStep = (config.activationEvent || '').toLowerCase();
-const lastFunnelStep = (funnel[funnel.length - 1]?.step || '').toLowerCase();
+const activationName = (config.activationEvent || '').toLowerCase();
 function isPrimaryKpi(kpi) {
   const n = (kpi.name || '').toLowerCase();
-  // Conversion-rate KPIs (e.g. "Leads → Meetings Rate") are leading signals,
-  // never the North Star, even if their name contains the primary keyword.
-  if (kpi.category === 'funnel') return false;
-  return [primaryName, activationStep, lastFunnelStep]
-    .filter(Boolean)
-    .some((target) => n === target || n.includes(target) || target.includes(n));
+  if (kpi.category === 'funnel') return false; // conversion-rate KPIs are leading, never the North Star
+  return [primaryName, activationName].filter(Boolean).some((t) => n === t || n.includes(t) || t.includes(n));
 }
-let hasPrimary = false;
-// Cost / efficiency KPIs are LAGGING regardless of category — the `paid` category
-// default is `leading` (clicks/CTR are leading activity), but Ad Spend / CPC / CPA
-// are cost outcomes and belong in lagging per the tiering contract.
+// Cost / efficiency KPIs are LAGGING regardless of category — the `paid` default is
+// `leading` (clicks/CTR are leading activity), but Ad Spend / CPC / CPA are cost
+// outcomes and belong in lagging.
 const COST_RE = /\b(spend|cost|cpc|cpa|cpl|cpm|cac|roas|roi)\b/i;
 for (const kpi of kpis) {
-  if (isPrimaryKpi(kpi)) { kpi.tier = 'primary'; hasPrimary = true; }
+  if (isPrimaryKpi(kpi)) kpi.tier = 'primary';
   else if (COST_RE.test(kpi.name || '')) kpi.tier = 'lagging';
   else kpi.tier = tierForCategory(kpi.category);
-}
-if (!hasPrimary && config.primaryKPI) {
-  // Match the funnel's ACTIVATION step by SHARED KEYWORD (crude singularization),
-  // NOT just the last step: substring alone misses "Qualified Meetings" vs the
-  // "Meetings/Demos" funnel step, and the activation step is often not last
-  // (saas-app "Core Feature Used", lead-to-sale "First Visits"). So e.g. the token
-  // "meeting" links "Qualified Meeting(s)" to the "Meetings/Demos" step → it sources
-  // from ghl.appointments/hubspot rather than the wrong final step. Falls back to
-  // the last step only when nothing matches.
-  // SCORE each step (don't take the first token match): exact phrase > full-phrase
-  // containment > most shared tokens. Single-token overlap is too greedy — "visit"
-  // links BOTH "Searches/Visits" and "First Visits", so a first-match would source
-  // the "First Visits" North Star from ga4.sessions. Falls back to the last step
-  // only when nothing scores.
-  const normStr = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-  const toks = (s) => normStr(s).split(' ').filter((w) => w.length > 2).map((w) => w.replace(/s$/, ''));
-  const targetPhrases = [primaryName, activationStep].map(normStr).filter(Boolean);
-  const targetTokens = new Set([primaryName, activationStep].flatMap(toks));
-  const scoreStep = (stepName) => {
-    const sNorm = normStr(stepName);
-    if (!sNorm) return 0;
-    if (targetPhrases.some((t) => t === sNorm)) return 1000;
-    if (targetPhrases.some((t) => sNorm.includes(t) || t.includes(sNorm))) return 500;
-    return toks(stepName).filter((w) => targetTokens.has(w)).length;
-  };
-  let activation = funnel[funnel.length - 1] || {};
-  let bestScore = 0;
-  for (const f of funnel) {
-    const sc = scoreStep(f.step);
-    if (sc > bestScore) { bestScore = sc; activation = f; }
-  }
-  kpis.unshift({
-    name: config.primaryKPI,
-    source: activation.manual ? null : activation.source,
-    metric: activation.manual ? null : activation.metric,
-    category: 'primary',
-    tier: 'primary',
-    manual: activation.manual !== false,
-    northStar: true,
-  });
 }
 
 // --- Determine which integration modules to show ---
