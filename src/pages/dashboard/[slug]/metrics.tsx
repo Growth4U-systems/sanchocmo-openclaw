@@ -1459,9 +1459,12 @@ export default function MetricsPage() {
         body: JSON.stringify({ surfacesOrder: p.keys, trigger: "user-drag", changeNote: "Reordenadas superficies" }),
         keepalive: true,
       });
+      // Mark the (now inactive) dashboard query stale so returning to this client
+      // refetches the saved order instead of serving the pre-drag cache.
+      void queryClient.invalidateQueries({ queryKey: ["metrics-dashboard", p.slug] });
     }
     setSurfaceOrder(null);
-  }, [slug]);
+  }, [slug, queryClient]);
 
   const { data: metricsData, refetch: refetchMetrics } = useQuery<MetricsData>({
     queryKey: ["metrics-data", slug],

@@ -931,6 +931,19 @@
       "match": "prefix",
       "reopenLinkedTo": "new-task"
     },
+    "metrics-edit": {
+      "threadId": "{slug}:metrics-edit",
+      "threadName": "🔮 Métricas — Merlín",
+      "skill": "metrics-setup",
+      "skills": ["metrics-setup"],
+      "agent": "merlin",
+      "linkedTo": "metrics-setup",
+      "docPath": null,
+      "threadState": "create",
+      "nsKey": "metrics-edit",
+      "match": "prefix",
+      "reopenLinkedTo": "metrics-setup"
+    },
     "discovery-search": {
       "threadId": "{slug}:discovery-{campaignIdLower}",
       "threadName": "Búsqueda: {searchName}",

@@ -924,14 +924,14 @@ export function buildPillarThread(
  * from the metrics-setup pillar (Merlín), so the edit lands with the right agent.
  */
 export function buildMetricsEditThread(slug: string, message: string): ThreadConfig {
-  const base = buildPillarThread(slug, "metrics-setup");
-  return {
-    ...base,
-    threadId: `${slug}:metrics-edit-${Date.now()}`,
-    threadName: "🔮 Métricas — Merlín",
-    threadState: "create",
-    initialMessage: message,
-  };
+  // Declared namespace owner (config/pillar-manifest.json → namespaceOwners.metrics-edit,
+  // agent merlin) so REOPENING a metrics-edit-<ts> thread resolves back to Merlín
+  // instead of falling through to Sancho; a fresh dash-shaped id per click keeps the
+  // contextual prompt auto-sending.
+  const cfg = instantiateNamespace("metrics-edit", { slug });
+  cfg.threadId = `${slug}:metrics-edit-${Date.now()}`;
+  cfg.initialMessage = message;
+  return cfg;
 }
 
 /** Build thread config for creating a new skill via chat */
