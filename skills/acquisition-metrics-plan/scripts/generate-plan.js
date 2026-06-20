@@ -238,9 +238,15 @@ for (const kpi of kpis) {
   if (kpi.tier === 'primary') hasPrimary = true;
 }
 if (!hasPrimary && config.primaryKPI) {
-  // North Star sourced from the funnel's activation step when connected; manual
-  // otherwise. Carries the canonical primaryKPI label so the Overview can anchor it.
-  const activation = funnel[funnel.length - 1] || {};
+  // North Star sourced from the funnel's ACTIVATION step — matched by the
+  // primaryKPI / activationEvent name, NOT just the last step (e.g. saas-app's
+  // "Core Feature Used" or lead-to-sale's "First Visits" come before the final
+  // step). Falls back to the last step only when nothing matches.
+  const activationTargets = [primaryName, activationStep].filter(Boolean);
+  const activation = funnel.find((f) => {
+    const s = (f.step || '').toLowerCase();
+    return activationTargets.some((t) => s === t || s.includes(t) || t.includes(s));
+  }) || funnel[funnel.length - 1] || {};
   kpis.unshift({
     name: config.primaryKPI,
     source: activation.manual ? null : activation.source,
