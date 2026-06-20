@@ -165,6 +165,17 @@ function asString(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
 }
 
+// KPIs carry a tier (SAN-296): primary = North Star / activation, leading =
+// upstream demand & funnel signals, lagging = cost/quality outcomes. The schema
+// only accepts these three; anything else (incl. legacy plans without a tier)
+// passes through as undefined so the Overview falls back to its default grouping.
+const VALID_TIERS = new Set(["primary", "leading", "lagging"]);
+function asTier(value: unknown): "primary" | "leading" | "lagging" | undefined {
+  return typeof value === "string" && VALID_TIERS.has(value)
+    ? (value as "primary" | "leading" | "lagging")
+    : undefined;
+}
+
 // Generated metrics-plan funnel entries are { step, source, metric, manual } and
 // KPIs vary; normalize the name field (step / label / metric → name) so a real
 // plan isn't dropped to the generic template on first seed (Codex review).
@@ -187,7 +198,9 @@ function normalizeKpis(value: unknown): Array<Record<string, unknown>> | null {
     const obj = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     const name = String(obj.name ?? obj.label ?? obj.metric ?? "").trim();
     if (!name) continue;
-    kpis.push({ name, source: asString(obj.source), metric: asString(obj.metric), category: asString(obj.category), format: asString(obj.format), formula: asString(obj.formula) });
+    // Preserve `tier` end-to-end (metrics-plan.json → definition.plan.kpis) so a
+    // freshly-seeded dashboard's Overview can group KPIs by tier (SAN-296).
+    kpis.push({ name, source: asString(obj.source), metric: asString(obj.metric), category: asString(obj.category), tier: asTier(obj.tier), format: asString(obj.format), formula: asString(obj.formula) });
   }
   return kpis.length ? kpis : null;
 }
@@ -198,13 +211,25 @@ export function buildSeedDefinition(slug: string): DashboardDefinition {
   const archetype = normalizeArchetype(plan?.archetype);
   const base = buildTemplateDefinition(archetype);
   if (!plan) return base;
+  const kpis = normalizeKpis(plan.kpis) ?? base.plan.kpis;
+  // North Star comes from the plan's own primary KPI when present (so marketplace
+  // seeds GMV / first-transaction and lead-to-sale seeds consultations/meetings
+  // straight from the definition), falling back to the archetype template label.
+  // kpiRef points at the primary-tier KPI so the Overview can anchor on it.
+  const primaryKpi = kpis.find((k) => k.tier === "primary");
+  const northStarLabel = asString(plan.primaryKPI) ?? primaryKpi?.name ?? base.northStar.label;
   const enriched: Record<string, unknown> = {
     ...base,
     activationEvent: asString(plan.activationEvent) ?? base.activationEvent,
+    northStar: {
+      ...base.northStar,
+      label: northStarLabel,
+      kpiRef: primaryKpi?.name ?? base.northStar.kpiRef,
+    },
     plan: {
       activationEvent: asString(plan.activationEvent) ?? base.plan.activationEvent,
       funnel: normalizeFunnel(plan.funnel) ?? base.plan.funnel,
-      kpis: normalizeKpis(plan.kpis) ?? base.plan.kpis,
+      kpis,
     },
   };
   try {

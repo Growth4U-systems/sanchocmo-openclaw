@@ -43,11 +43,26 @@ if (!slug) {
 const templateScript = fs.readFileSync(path.join(__dirname, 'generate-template.js'), 'utf-8');
 const archMatch = templateScript.match(/const ARCHETYPES = ({[\s\S]*?});/);
 const variantMatch = templateScript.match(/const LEAD_TO_SALE_VARIANTS = ({[\s\S]*?});/);
+const tierMatch = templateScript.match(/const TIER_BY_CATEGORY = ({[\s\S]*?});/);
 
 if (!archMatch) { console.error('Cannot parse ARCHETYPES from generate-template.js'); process.exit(1); }
 
 const ARCHETYPES = eval('(' + archMatch[1] + ')');
 const LEAD_TO_SALE_VARIANTS = variantMatch ? eval('(' + variantMatch[1] + ')') : {};
+// Single source of truth for KPI tiering (defined alongside ARCHETYPES). Falls
+// back to a local copy so the generator still tiers KPIs if the block moves.
+const TIER_BY_CATEGORY = tierMatch ? eval('(' + tierMatch[1] + ')') : {
+  funnel: 'leading', traffic: 'leading', seo: 'leading', paid: 'leading',
+  social: 'leading', outreach: 'leading', crm: 'leading',
+  efficiency: 'lagging', cost: 'lagging', value: 'lagging', quality: 'lagging',
+  primary: 'primary',
+};
+
+// Map a KPI's category onto its tier (primary / leading / lagging). Unknown
+// categories are upstream signals → "leading".
+function tierForCategory(category) {
+  return TIER_BY_CATEGORY[category] || 'leading';
+}
 
 // --- Load integration mappings ---
 const mappings = JSON.parse(fs.readFileSync(path.join(SCHEMAS, 'integration-mappings.json'), 'utf-8'));
@@ -197,6 +212,32 @@ if (connectedSources.has('metricool')) {
 if (connectedSources.has('instantly')) {
   kpis.push({ name: 'Emails Sent', source: 'instantly', metric: 'sent', category: 'outreach' });
   kpis.push({ name: 'Reply Rate', source: 'instantly', metric: 'replies', category: 'outreach' });
+}
+
+// --- Tier every KPI (SAN-296) ---
+// Each KPI gets a tier so the dashboard Overview groups primary / leading / lagging:
+//   - default from its category (TIER_BY_CATEGORY);
+//   - cost / efficiency KPIs (spend/cpc/cpa/...) are lagging regardless of category;
+//   - a KPI whose name IS the archetype's primaryKPI / activationEvent -> `primary`.
+// The North Star is NOT (re)derived here: it is already defined by the archetype
+// (config.primaryKPI / activationEvent, via metrics-setup) and resolved by the
+// dashboard (buildSeedDefinition seeds northStar.label/kpiRef; the metrics page
+// resolves the value). No synthetic KPI is injected.
+const primaryName = (config.primaryKPI || '').toLowerCase();
+const activationName = (config.activationEvent || '').toLowerCase();
+function isPrimaryKpi(kpi) {
+  const n = (kpi.name || '').toLowerCase();
+  if (kpi.category === 'funnel') return false; // conversion-rate KPIs are leading, never the North Star
+  return [primaryName, activationName].filter(Boolean).some((t) => n === t || n.includes(t) || t.includes(n));
+}
+// Cost / efficiency KPIs are LAGGING regardless of category — the `paid` default is
+// `leading` (clicks/CTR are leading activity), but Ad Spend / CPC / CPA are cost
+// outcomes and belong in lagging.
+const COST_RE = /\b(spend|cost|cpc|cpa|cpl|cpm|cac|roas|roi)\b/i;
+for (const kpi of kpis) {
+  if (isPrimaryKpi(kpi)) kpi.tier = 'primary';
+  else if (COST_RE.test(kpi.name || '')) kpi.tier = 'lagging';
+  else kpi.tier = tierForCategory(kpi.category);
 }
 
 // --- Determine which integration modules to show ---
