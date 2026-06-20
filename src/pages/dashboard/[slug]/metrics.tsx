@@ -30,6 +30,7 @@ import { SlideOver } from "@/components/shared/slide-over";
 import { JsonViewer } from "@/components/shared/doc-slideover";
 import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, type SurfaceSummaryEntry } from "@/hooks/useMetrics";
 import { SURFACES, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
+import { isSafeFormula } from "@/lib/metrics/formula";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { cn } from "@/lib/utils";
 
@@ -201,6 +202,11 @@ function pickSource(sources: Record<string, SourceData>, name: string): SourceDa
  * definition, so eval here only ever sees numbers + arithmetic.
  */
 function evalFormula(formula: string, sources: Record<string, SourceData>): number | null {
+  // Defense-in-depth: the full-definition update path (saveDashboardDefinition)
+  // only zod-parses `formula` as a string, so a metric that didn't go through
+  // addCustomMetric could carry unsafe JS. Re-validate here — a formula with no
+  // source.metric tokens or trailing JS is rejected before it can reach eval.
+  if (!isSafeFormula(formula)) return null;
   try {
     const parts = formula.match(/([a-z0-9_-]+)\.(\w+)/gi) || [];
     let expr = formula;
@@ -1409,6 +1415,7 @@ export default function MetricsPage() {
     const calculated: { name: string; value: string; category: string; isGood: boolean }[] = [];
     for (const kpi of effectivePlan.kpis) {
       if (!kpi.formula) continue;
+      if (!isSafeFormula(kpi.formula)) continue;
       try {
         const parts = kpi.formula.match(/([a-z-]+)\.(\w+)/g) || [];
         let formula = kpi.formula;
@@ -1565,29 +1572,57 @@ export default function MetricsPage() {
 
   const isDataTab = ["overview", "surfaces", "channels", "conversion", "trends"].includes(tab);
 
-  // North Star spotlight — value taken from the deepest funnel step that resolves.
+  // North Star spotlight — prefers the ACTIVE dashboard definition (northStar.kpiRef
+  // → definition.plan.kpis, then definition.plan.funnel), so Merlin's edits are
+  // reflected; falls back to the file-based plan's deepest resolvable funnel step.
   const northStar = useMemo(() => {
-    const label = definition?.northStar?.label || effectivePlan?.activationEvent || effectivePlan?.primaryKPI || "North Star";
-    const target = definition?.northStar?.target ?? null;
-    const funnel = effectivePlan?.funnel || [];
+    const ns = definition?.northStar;
+    const label = ns?.label || effectivePlan?.activationEvent || effectivePlan?.primaryKPI || "North Star";
+    const target = ns?.target ?? null;
+    const defFunnel = definition?.plan?.funnel;
+    const fileFunnel = (effectivePlan?.funnel || []) as { step?: string; name?: string; source?: string; metric?: string }[];
+    const funnel: { label: string; source?: string; metric?: string }[] = defFunnel?.length
+      ? defFunnel.map((s) => ({ label: s.name, source: s.source, metric: s.metric }))
+      : fileFunnel.map((s) => ({ label: s.step || s.name || "", source: s.source, metric: s.metric }));
+
     let value: number | null = null;
     let prev: number | null = null;
     let spark: number[] = [];
     let caption = "";
-    for (let i = funnel.length - 1; i >= 0; i--) {
-      const step = funnel[i];
-      if (!step.source || !step.metric) continue;
-      const cur = mVal(pickSource(sources, step.source), step.metric);
-      if (cur != null) {
-        value = cur;
-        prev = mVal(pickSource(prevSources, step.source), step.metric);
-        spark = bucketDaily(allDaily, step.source, step.metric, "day");
-        caption = step.step;
-        break;
+
+    // 1) Honor northStar.kpiRef against the active definition's KPIs.
+    const kpi = ns?.kpiRef ? definition?.plan?.kpis?.find((k) => k.name === ns.kpiRef) : undefined;
+    if (kpi) {
+      if (kpi.formula) {
+        value = evalFormula(kpi.formula, sources);
+      } else if (kpi.source && kpi.metric) {
+        value = mVal(pickSource(sources, kpi.source), kpi.metric);
+        if (value != null) {
+          prev = mVal(pickSource(prevSources, kpi.source), kpi.metric);
+          spark = bucketDaily(rangeEntries, kpi.source, kpi.metric, "day");
+        }
+      }
+      if (value != null) caption = kpi.name;
+    }
+
+    // 2) Fall back to the deepest funnel step that resolves.
+    if (value == null) {
+      for (let i = funnel.length - 1; i >= 0; i--) {
+        const step = funnel[i];
+        if (!step.source || !step.metric) continue;
+        const cur = mVal(pickSource(sources, step.source), step.metric);
+        if (cur != null) {
+          value = cur;
+          prev = mVal(pickSource(prevSources, step.source), step.metric);
+          spark = bucketDaily(rangeEntries, step.source, step.metric, "day");
+          caption = step.label;
+          break;
+        }
       }
     }
+
     return { label, value, target, delta: mDelta(value, prev), spark, caption };
-  }, [definition, effectivePlan, sources, prevSources, allDaily]);
+  }, [definition, effectivePlan, sources, prevSources, rangeEntries]);
 
   // Custom (formula) metrics created via Merlin — evaluated against live sources.
   const customMetricCards = useMemo(() => {
@@ -1847,7 +1882,7 @@ export default function MetricsPage() {
               const cur = mVal(pickSource(sources, m.source), m.metric) || 0;
               const prev = mVal(pickSource(prevSources, m.source), m.metric);
               const d = mDelta(cur, prev);
-              const series = bucketDaily(allDaily, m.source, m.metric, grain);
+              const series = bucketDaily(rangeEntries, m.source, m.metric, grain);
               return (
                 <div key={m.label} className="border-2 border-border rounded-xl p-4 bg-card">
                   <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{m.label}</div>

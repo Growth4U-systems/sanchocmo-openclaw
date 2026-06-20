@@ -106,18 +106,7 @@ export function parseDashboardDefinition(value: unknown): DashboardDefinition {
   return dashboardDefinitionSchema.parse(value);
 }
 
-/**
- * Validate a custom-metric formula without evaluating it: only identifiers,
- * dotted source.metric refs, numbers, arithmetic, parentheses and whitespace.
- * No function calls, no `eval`-able constructs. (SAN-266 will evaluate it
- * against connected sources via the existing planKpis engine.)
- */
-const FORMULA_RE = /^[\w.\s()+\-*/%,]+$/;
-export function isSafeFormula(formula: string): boolean {
-  if (typeof formula !== "string") return false;
-  const trimmed = formula.trim();
-  if (!trimmed || trimmed.length > 500) return false;
-  if (!FORMULA_RE.test(trimmed)) return false;
-  if (/[a-zA-Z_]\w*\s*\(/.test(trimmed)) return false; // reject function calls
-  return /[a-zA-Z0-9]/.test(trimmed);
-}
+// The formula validator lives in a zero-dependency module so the client metrics
+// page can import it without pulling zod into its bundle. Re-exported here so
+// existing server-side importers (metric-dashboard, MCP server) are unchanged.
+export { isSafeFormula } from "./formula";
