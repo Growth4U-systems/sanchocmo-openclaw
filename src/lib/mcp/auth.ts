@@ -68,6 +68,11 @@ export function assertMcpScope(principal: McpPrincipal, scope: McpScope): void {
   throw new McpAuthError(403, `MCP token is missing required scope: ${scope}`);
 }
 
+export function assertMcpAnyScope(principal: McpPrincipal, scopes: McpScope[]): void {
+  if (scopes.some((scope) => hasMcpScope(principal, scope))) return;
+  throw new McpAuthError(403, `MCP token is missing one of required scopes: ${scopes.join(", ")}`);
+}
+
 export function assertMcpClientAccess(principal: McpPrincipal, clientSlug: string): void {
   const slug = clientSlug.trim();
   if (!slug) throw new McpAuthError(400, "clientSlug is required");
@@ -76,13 +81,13 @@ export function assertMcpClientAccess(principal: McpPrincipal, clientSlug: strin
   throw new McpAuthError(403, `MCP token is not allowed to access client: ${slug}`);
 }
 
-export function assertMcpBrandAccess(principal: McpPrincipal, brandSlug: string): void {
+export function assertMcpBrandAccess(principal: McpPrincipal, brandSlug: string, scope: "docs:read" | "docs:write" = "docs:read"): void {
   const slug = brandSlug.trim();
   if (!slug) throw new McpAuthError(400, "brandSlug is required");
   if (!/^[a-z0-9][a-z0-9-]*$/i.test(slug)) {
     throw new McpAuthError(400, "brandSlug must be a simple slug");
   }
-  assertMcpScope(principal, "docs:read");
+  assertMcpScope(principal, scope);
   const brands = principal.brands ?? principal.clients;
   if (brands.includes("*") || brands.includes(slug)) return;
   throw new McpAuthError(403, `MCP token is not allowed to access brand: ${slug}`);
@@ -91,6 +96,7 @@ export function assertMcpBrandAccess(principal: McpPrincipal, brandSlug: string)
 export function hasMcpScope(principal: McpPrincipal, scope: McpScope): boolean {
   if (principal.scopes.includes("*")) return true;
   if (principal.scopes.includes(scope)) return true;
+  if ((scope === "chat:read" || scope === "chat:write") && principal.scopes.includes("sancho:chat")) return true;
   const [namespace] = scope.split(":");
   return principal.scopes.includes(`${namespace}:*`);
 }

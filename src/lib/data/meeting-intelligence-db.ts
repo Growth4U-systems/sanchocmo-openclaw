@@ -177,6 +177,11 @@ export interface MeetingDetailRecord {
   recommendations: ProposalEntry[];
 }
 
+interface MeetingIntelligenceReadOptions {
+  prepareStorage?: boolean;
+  backfillLegacy?: boolean;
+}
+
 const STORAGE_NOT_CONFIGURED = {
   configured: false,
   provider: "neon",
@@ -195,6 +200,10 @@ function asString(value: unknown, fallback = "") {
 
 function asBoolean(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
+}
+
+function messageFromError(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function emptyScope(): SourceScope {
@@ -1142,7 +1151,7 @@ export async function saveMeetingIntelligenceConfig(slug: string, input: Partial
   return getMeetingIntelligenceConfig(slug);
 }
 
-export async function getMeetingIntelligenceState(slug: string) {
+export async function getMeetingIntelligenceState(slug: string, options: MeetingIntelligenceReadOptions = {}) {
   if (!hasDatabase) {
     return {
       ok: false,
@@ -1159,19 +1168,50 @@ export async function getMeetingIntelligenceState(slug: string) {
     };
   }
 
-  await ensureMeetingIntelligenceStorage();
-  await seedLegacyIfEmpty(slug);
-  await relinkLegacyDraftInsights(slug);
+  if (options.prepareStorage !== false) {
+    await ensureMeetingIntelligenceStorage();
+  }
+  if (options.backfillLegacy !== false) {
+    await seedLegacyIfEmpty(slug);
+    await relinkLegacyDraftInsights(slug);
+  }
   const database = getDb();
-  const [sourceRows, meetingRows, artifactRows, insightRows, impactRows, recommendationRows, runRows] = await Promise.all([
-    database.select().from(miSources).where(eq(miSources.slug, slug)),
-    database.select().from(miMeetings).where(eq(miMeetings.slug, slug)).orderBy(desc(miMeetings.meetingDate), desc(miMeetings.meetingTime)),
-    database.select().from(miMeetingArtifacts).where(eq(miMeetingArtifacts.slug, slug)),
-    database.select().from(miInsights).where(eq(miInsights.slug, slug)).orderBy(desc(miInsights.createdAt)),
-    database.select().from(miDocumentImpacts).where(eq(miDocumentImpacts.slug, slug)),
-    database.select().from(miRecommendations).where(eq(miRecommendations.slug, slug)).orderBy(desc(miRecommendations.createdAt)),
-    database.select().from(miRuns).where(eq(miRuns.slug, slug)).orderBy(desc(miRuns.startedAt)).limit(1),
-  ]);
+  let sourceRows: Array<typeof miSources.$inferSelect>;
+  let meetingRows: Array<typeof miMeetings.$inferSelect>;
+  let artifactRows: Array<typeof miMeetingArtifacts.$inferSelect>;
+  let insightRows: Array<typeof miInsights.$inferSelect>;
+  let impactRows: Array<typeof miDocumentImpacts.$inferSelect>;
+  let recommendationRows: Array<typeof miRecommendations.$inferSelect>;
+  let runRows: Array<typeof miRuns.$inferSelect>;
+  try {
+    [sourceRows, meetingRows, artifactRows, insightRows, impactRows, recommendationRows, runRows] = await Promise.all([
+      database.select().from(miSources).where(eq(miSources.slug, slug)),
+      database.select().from(miMeetings).where(eq(miMeetings.slug, slug)).orderBy(desc(miMeetings.meetingDate), desc(miMeetings.meetingTime)),
+      database.select().from(miMeetingArtifacts).where(eq(miMeetingArtifacts.slug, slug)),
+      database.select().from(miInsights).where(eq(miInsights.slug, slug)).orderBy(desc(miInsights.createdAt)),
+      database.select().from(miDocumentImpacts).where(eq(miDocumentImpacts.slug, slug)),
+      database.select().from(miRecommendations).where(eq(miRecommendations.slug, slug)).orderBy(desc(miRecommendations.createdAt)),
+      database.select().from(miRuns).where(eq(miRuns.slug, slug)).orderBy(desc(miRuns.startedAt)).limit(1),
+    ]);
+  } catch (error) {
+    return {
+      ok: false,
+      storage: {
+        configured: true,
+        provider: "neon",
+        message: `Meeting Intelligence read failed: ${messageFromError(error)}`,
+      },
+      meetings: [],
+      totals: { meetings: 0, decisions: 0, actions: 0, proposals: 0, sources: 0 },
+      intelligence: [],
+      decisions: [],
+      documents: [],
+      proposals: [],
+      lastSync: null,
+      lastCheckStatus: "read_failed",
+      lastRun: null,
+    };
+  }
 
   const artifactsByMeeting = new Map(artifactRows.map((artifact) => [artifact.meetingId, artifact]));
   const countsByMeeting = new Map<string, { decisions: number; actions: number }>();
@@ -1223,22 +1263,59 @@ export async function getMeetingIntelligenceState(slug: string) {
   };
 }
 
-export async function getMeetingIntelligenceMeeting(slug: string, meetingId: string): Promise<{ ok: boolean; storage: RawRecord; detail: MeetingDetailRecord | null; error?: string }> {
+export async function getMeetingIntelligenceMeeting(
+  slug: string,
+  meetingId: string,
+  options: MeetingIntelligenceReadOptions = {},
+): Promise<{ ok: boolean; storage: RawRecord; detail: MeetingDetailRecord | null; error?: string }> {
   if (!hasDatabase) {
     return { ok: false, storage: STORAGE_NOT_CONFIGURED, detail: null, error: STORAGE_NOT_CONFIGURED.message };
   }
-  await ensureMeetingIntelligenceStorage();
+  if (options.prepareStorage !== false) {
+    await ensureMeetingIntelligenceStorage();
+  }
   const database = getDb();
-  const meeting = (await database.select().from(miMeetings).where(and(eq(miMeetings.slug, slug), eq(miMeetings.id, meetingId))).limit(1))[0];
+  let meeting: typeof miMeetings.$inferSelect | undefined;
+  try {
+    meeting = (await database.select().from(miMeetings).where(and(eq(miMeetings.slug, slug), eq(miMeetings.id, meetingId))).limit(1))[0];
+  } catch (error) {
+    return {
+      ok: false,
+      storage: {
+        configured: true,
+        provider: "neon",
+        message: `Meeting Intelligence read failed: ${messageFromError(error)}`,
+      },
+      detail: null,
+      error: messageFromError(error),
+    };
+  }
   if (!meeting) {
     return { ok: false, storage: { configured: true, provider: "neon" }, detail: null, error: "Meeting not found" };
   }
-  const [artifact, insightRows, impactRows, recommendationRows] = await Promise.all([
-    database.select().from(miMeetingArtifacts).where(eq(miMeetingArtifacts.meetingId, meetingId)).limit(1),
-    database.select().from(miInsights).where(and(eq(miInsights.slug, slug), eq(miInsights.meetingId, meetingId))).orderBy(desc(miInsights.createdAt)),
-    database.select().from(miDocumentImpacts).where(and(eq(miDocumentImpacts.slug, slug), eq(miDocumentImpacts.meetingId, meetingId))),
-    database.select().from(miRecommendations).where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.meetingId, meetingId))),
-  ]);
+  let artifact: Array<typeof miMeetingArtifacts.$inferSelect>;
+  let insightRows: Array<typeof miInsights.$inferSelect>;
+  let impactRows: Array<typeof miDocumentImpacts.$inferSelect>;
+  let recommendationRows: Array<typeof miRecommendations.$inferSelect>;
+  try {
+    [artifact, insightRows, impactRows, recommendationRows] = await Promise.all([
+      database.select().from(miMeetingArtifacts).where(eq(miMeetingArtifacts.meetingId, meetingId)).limit(1),
+      database.select().from(miInsights).where(and(eq(miInsights.slug, slug), eq(miInsights.meetingId, meetingId))).orderBy(desc(miInsights.createdAt)),
+      database.select().from(miDocumentImpacts).where(and(eq(miDocumentImpacts.slug, slug), eq(miDocumentImpacts.meetingId, meetingId))),
+      database.select().from(miRecommendations).where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.meetingId, meetingId))),
+    ]);
+  } catch (error) {
+    return {
+      ok: false,
+      storage: {
+        configured: true,
+        provider: "neon",
+        message: `Meeting Intelligence read failed: ${messageFromError(error)}`,
+      },
+      detail: null,
+      error: messageFromError(error),
+    };
+  }
   const artifactsByMeeting = new Map([[meetingId, artifact[0]]].filter(([, item]) => Boolean(item)) as Array<[string, typeof miMeetingArtifacts.$inferSelect]>);
   const countsByMeeting = new Map<string, { decisions: number; actions: number }>();
   insightRows.forEach((insight) => {

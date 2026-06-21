@@ -97,7 +97,7 @@ workspace-sancho/mc/
 workspace-sancho/clients.js
 
 # === Media (binary) ===
-media/
+/media/
 
 # === Shell completions (installed by CLI) ===
 completions/

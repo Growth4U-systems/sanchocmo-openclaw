@@ -89,6 +89,37 @@ test("assertMcpScope supports exact and namespace wildcard scopes", () => {
   );
 });
 
+test("assertMcpScope treats legacy sancho:chat as chat read/write", () => {
+  const legacy = {
+    id: "legacy",
+    scopes: ["sancho:chat"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  };
+
+  assert.doesNotThrow(() => auth.assertMcpScope(legacy, "chat:read"));
+  assert.doesNotThrow(() => auth.assertMcpScope(legacy, "chat:write"));
+  assert.throws(
+    () => auth.assertMcpScope(legacy, "tasks:read"),
+    (err) => err instanceof auth.McpAuthError && err.status === 403,
+  );
+});
+
+test("assertMcpAnyScope accepts any matching scope", () => {
+  const principal = {
+    id: "operator",
+    scopes: ["clients:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  };
+
+  assert.doesNotThrow(() => auth.assertMcpAnyScope(principal, ["clients:read", "sancho:read"]));
+  assert.throws(
+    () => auth.assertMcpAnyScope(principal, ["agents:read", "sancho:read"]),
+    (err) => err instanceof auth.McpAuthError && err.status === 403,
+  );
+});
+
 test("assertMcpClientAccess enforces client whitelist", () => {
   const principal = {
     id: "operator",
@@ -158,4 +189,27 @@ test("assertMcpBrandAccess supports explicit and wildcard brand whitelists", () 
     () => auth.assertMcpBrandAccess(explicit, "other-brand"),
     (err) => err instanceof auth.McpAuthError && err.status === 403,
   );
+});
+
+test("assertMcpBrandAccess can require docs:write separately from docs:read", () => {
+  const readOnly = {
+    id: "operator",
+    scopes: ["docs:read"],
+    clients: ["alpha"],
+    brands: ["alpha"],
+    tokenHash: "x",
+  };
+  const write = {
+    id: "operator",
+    scopes: ["docs:write"],
+    clients: ["alpha"],
+    brands: ["alpha"],
+    tokenHash: "x",
+  };
+
+  assert.throws(
+    () => auth.assertMcpBrandAccess(readOnly, "alpha", "docs:write"),
+    (err) => err instanceof auth.McpAuthError && err.status === 403,
+  );
+  assert.doesNotThrow(() => auth.assertMcpBrandAccess(write, "alpha", "docs:write"));
 });

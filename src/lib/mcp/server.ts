@@ -1,5 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { execFileSync } from "child_process";
+import { promises as fs } from "fs";
+import path from "path";
 import * as z from "zod/v4";
 import {
   addMessage,
@@ -10,14 +13,30 @@ import {
   getThread,
   listThreadsForSlug,
 } from "@/lib/data/mc-chat";
-import { loadClients } from "@/lib/data/clients";
-import { getInternalClientStatus } from "@/lib/sancho-internal-api";
-import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
+import { loadClient, loadClients, loadClientsData, writeClientsFile } from "@/lib/data/clients";
 import {
+  listAgentsRich,
+  setAgentModel,
+  type AgentRichEntry,
+} from "@/lib/data/openclaw-config";
+import { getModelCatalog, invalidateCatalogCache, isModelAvailable } from "@/lib/data/models-catalog";
+import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
+import { enrichCrons, humanizeSchedule, type EnrichedCron } from "@/lib/data/openclaw-crons";
+import {
+  applyMeetingRecommendationAction,
+  getMeetingIntelligenceConfig,
   getMeetingIntelligenceMeeting,
   getMeetingIntelligenceState,
+  normalizeMeetingIntelligenceConfig,
+  saveMeetingIntelligenceConfig,
+  type MeetingIntelligenceConfig,
+  type RecommendationAction,
+  type DecisionEntry,
+  type DocumentRecord,
+  type IntelligenceItem,
+  type ProposalEntry,
 } from "@/lib/data/meeting-intelligence-db";
-import { getMetricsTimeSeries, getSurfaceSummary, getTrend, getNorthStar } from "@/lib/data/metrics";
+import { getMetricsTimeSeries, getNorthStar, getSurfaceSummary, getTrend } from "@/lib/data/metrics";
 import {
   addCustomMetric,
   applyDashboardTemplate,
@@ -25,9 +44,95 @@ import {
   revertDashboardDefinition,
   saveDashboardDefinition,
 } from "@/lib/data/metric-dashboard";
+import { getMeetingIntelligenceCronStatus, syncMeetingIntelligenceCron } from "@/lib/data/meeting-intelligence-cron";
+import { runMeetingIntelligenceSync } from "@/lib/data/meeting-intelligence-runner";
+import { getInternalClientStatus } from "@/lib/sancho-internal-api";
+import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
+import { brandDir, EXEC_PATH } from "@/lib/data/paths";
 import { isSafeFormula } from "@/lib/metrics/dashboard-schema";
-import { getMcpDocument, listMcpDocuments } from "@/lib/mcp/documents";
+import { getContentConfig, updateContentConfig, type ContentConfig } from "@/lib/data/content-config";
+import { approveContentIdea, previewContentIdeaApproval } from "@/lib/data/content-approval";
+import { loadIdeas } from "@/lib/data/ideas";
+import {
+  loadDraft,
+  listDrafts,
+  updateDraft,
+  VALID_CONTENT_ITEM_TYPES,
+  type Draft,
+  type DraftFrontmatter,
+} from "@/lib/data/drafts";
+import {
+  findContentTaskByIdAcrossProjects,
+  rollbackChannelPhasesToStatus,
+  setChannelPhases,
+  setContentTaskStatus,
+  updateContentTask,
+  type ContentTaskUpdateInput,
+} from "@/lib/data/content-tasks";
+import { loadUnifiedContentTasks } from "@/lib/data/content-tasks-flat";
+import { readActivity } from "@/lib/data/activity-log";
+import {
+  previewDraftIteration,
+  previewRetriggerContentWriter,
+  requestDraftIteration,
+  retriggerContentWriter,
+  serializeDraftIterationResult,
+} from "@/lib/content/actions";
+import {
+  readReconcileState,
+  reconcileContentTasks,
+} from "@/lib/content/content-reconciliation";
+import {
+  getContentCalendar,
+  getContentChannelLoops,
+  getContentDispatchConfig,
+  getContentPillars,
+  getContentPovBank,
+  listContentCarouselTemplates,
+  listContentSignals,
+} from "@/lib/content/read-model";
+import {
+  getMcpDocument,
+  listMcpDocuments,
+  previewUpdateMcpDocument,
+  updateMcpDocument,
+} from "@/lib/mcp/documents";
+import {
+  getSanitizedIntegrationStatus,
+  loadIntegrationCatalog,
+  previewPublishIntegrationMessage,
+  previewTestIntegrationConnection,
+  publishIntegrationMessage,
+  testIntegrationConnection,
+} from "@/lib/integrations/actions";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
+import { getAvailableProviders } from "@/lib/publishing/registry";
+import { fetchAccountInfo } from "@/lib/publishing/providers/metricool";
+import { getCronPublishConfig, setCronPublishConfig } from "@/lib/publish/cron-publish-config";
+import { registeredTransports } from "@/lib/publish/registry";
+import {
+  cancelScheduledPost,
+  getStoredPublishingStatus,
+  previewCancelScheduledPost,
+  previewPublishDraft,
+  previewPublishingReconciliation,
+  publishDraft,
+  reconcilePublishing,
+  refreshPublishingStatus,
+} from "@/lib/publishing/actions";
+import type { Channel } from "@/lib/publishing/types";
+import {
+  attachDraftMedia,
+  generateDraftImage,
+  listDraftMedia,
+  listImageGenerationProviders,
+  previewAttachDraftMedia,
+  previewGenerateDraftImage,
+  previewRemoveDraftMedia,
+  previewSetPrimaryDraftMedia,
+  removeDraftMedia,
+  setPrimaryDraftMedia,
+} from "@/lib/media/actions";
 import {
   assignTemplateToSearch,
   createDiscoverySearch,
@@ -46,10 +151,20 @@ import {
   odHealth,
   odListCraftGuides,
   odListDesignSystems,
+  odListArtifacts,
   odListPromptTemplates,
+  odListProjectFiles,
   odListProjects,
   odListSkills,
+  odExport,
+  odPatchProject,
+  odReadProjectFile,
 } from "@/lib/open-design/client";
+import {
+  ensureOpenDesignProject,
+  previewOpenDesignProjectImport,
+  resolveExistingOpenDesignProject,
+} from "@/lib/open-design/actions";
 import { buildIntakeUrl } from "@/lib/intake-tokens";
 import { auditMcpToolCall } from "@/lib/mcp/audit";
 import {
@@ -67,11 +182,21 @@ import { registerKeywordAntennaTools } from "@/lib/keyword-antenna/mcp-tool";
 import {
   assertMcpClientAccess,
   assertMcpBrandAccess,
+  assertMcpAnyScope,
   assertMcpScope,
   McpAuthError,
   type McpPrincipal,
   type McpScope,
 } from "@/lib/mcp/auth";
+import {
+  VALID_CONTENT_TASK_STATUSES,
+  type ChannelPhase,
+  type Client,
+  type ContentTask,
+  type ContentTaskPipelineState,
+  type ContentTaskStatus,
+  type RecurringTask,
+} from "@/types";
 
 interface SanchoMcpContext {
   principal: McpPrincipal;
@@ -91,6 +216,56 @@ const DOCUMENT_MAX_CHARS_DEFAULT = 60_000;
 const DOCUMENT_MAX_CHARS_MAX = 200_000;
 const MEETING_LIMIT_DEFAULT = 50;
 const MEETING_LIMIT_MAX = 200;
+const RECURRING_LIMIT_DEFAULT = 50;
+const RECURRING_LIMIT_MAX = 200;
+const RECURRING_PROMPT_MAX_CHARS_DEFAULT = 4_000;
+const RECURRING_PROMPT_MAX_CHARS_MAX = 20_000;
+const CONTENT_LIMIT_DEFAULT = 50;
+const CONTENT_LIMIT_MAX = 200;
+const CONTENT_DRAFT_MAX_CHARS_DEFAULT = 60_000;
+const CONTENT_DRAFT_MAX_CHARS_MAX = 200_000;
+const CONTENT_BODY_MAX_CHARS_DEFAULT = 4_000;
+const CONTENT_BODY_MAX_CHARS_MAX = 50_000;
+const CONTENT_SIGNAL_DAYS_DEFAULT = 1;
+const CONTENT_SIGNAL_DAYS_MAX = 90;
+const PUBLISHING_CHANNELS = ["linkedin", "twitter", "x", "instagram", "blog", "email", "youtube", "tiktok"] as const;
+const OD_PROJECT_FILE_LIMIT_DEFAULT = 200;
+const OD_PROJECT_FILE_LIMIT_MAX = 1000;
+const OD_PROJECT_FILE_MAX_CHARS_DEFAULT = 60_000;
+const OD_PROJECT_FILE_MAX_CHARS_MAX = 200_000;
+const OD_EXPORT_FORMAT_VALUES = ["html", "pdf", "pptx", "zip", "mp4", "md"] as const;
+const MCP_RECURRING_STATUS_VALUES = ["active", "paused"] as const;
+const MCP_RECURRING_SOURCE_VALUES = ["openclaw-cron", "local"] as const;
+const MCP_CONTENT_TASK_STATUS_VALUES = [
+  "New",
+  "Approved",
+  "Draft",
+  "Pending Media",
+  "Ready",
+  "Discarded",
+  "Deferred",
+] as const;
+const MCP_CONTENT_TASK_PIPELINE_STATE_VALUES = [
+  "researching",
+  "clarify-needed",
+  "drafting",
+  "generating-media",
+  "media-review",
+] as const;
+const MCP_CHANNEL_PHASE_VALUES = [
+  "researching",
+  "clarify-needed",
+  "drafting",
+  "draft",
+  "approved",
+] as const;
+const MCP_CONTENT_TASK_ACTION_VALUES = [
+  "approve-draft",
+  "approve-media",
+  "discard",
+  "defer",
+] as const;
+const CONTENT_DRAFT_CLARIFY_STATUS_VALUES = ["pending", "answered", "skipped"] as const;
 const AGENT_SLUG_RE = /^[a-z0-9-]+$/;
 // Keep this in sync with docker/setup-agents.sh. sancho is the orchestrator,
 // not a delegate target; escudero is retired there and must stay rejected here.
@@ -173,12 +348,12 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_list_clients",
     {
       title: "List Sancho clients",
-      description: "Lists clients allowed by the MCP token. Requires sancho:read.",
+      description: "Lists clients allowed by the MCP token. Requires clients:read or legacy sancho:read.",
       inputSchema: {},
     },
     async () =>
       runTool(context, "sancho_list_clients", undefined, async () => {
-        assertMcpScope(context.principal, "sancho:read");
+        assertMcpAnyScope(context.principal, ["clients:read", "sancho:read"]);
         const allowed = new Set(context.principal.clients);
         const clients = loadClients()
           .filter((client) => allowed.has("*") || allowed.has(client.slug))
@@ -197,17 +372,150 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_get_client_context",
     {
       title: "Get Sancho client context",
-      description: "Returns status, active work, blockers and recent outputs for one client. Requires sancho:read.",
+      description: "Returns status, active work, blockers and recent outputs for one client. Requires clients:read or legacy sancho:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
     },
     async ({ clientSlug }) =>
       runTool(context, "sancho_get_client_context", clientSlug, async () => {
-        assertClientScope(context, "sancho:read", clientSlug);
+        assertClientReadScope(context, clientSlug);
         const status = getInternalClientStatus(clientSlug);
         if (!status) throw new McpAuthError(404, `Client context not found: ${clientSlug}`);
         return jsonResult(status);
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_client",
+    {
+      title: "Get Sancho client",
+      description: "Returns sanitized client configuration for one allowed client. Requires clients:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "sancho_get_client", clientSlug, async () => {
+        assertClientScope(context, "clients:read", clientSlug);
+        const client = loadClient(clientSlug);
+        if (!client) throw new McpAuthError(404, `Client not found: ${clientSlug}`);
+        return jsonResult({ ok: true, client: sanitizeClientForMcp(client) });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_update_client",
+    {
+      title: "Update Sancho client",
+      description:
+        "Updates safe client metadata fields. Requires clients:write and client access. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        updates: z
+          .object({
+            active: z.boolean().optional(),
+            name: z.string().min(1).optional(),
+            emoji: z.string().optional(),
+            phase: z.number().int().min(0).optional(),
+            url: z.string().optional(),
+            language: z.enum(["es", "en"]).optional(),
+            enabledFeatures: z.array(z.string().min(1)).optional(),
+          })
+          .describe("Safe client fields to update."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the update operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({ clientSlug, updates, dryRun = true, confirm = false }) =>
+      runTool(context, "sancho_update_client", clientSlug, async () => {
+        assertClientScope(context, "clients:write", clientSlug);
+        const preview = updateClientMetadata(clientSlug, updates, { dryRun: true });
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ...preview,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to update this client.",
+          });
+        }
+        const result = updateClientMetadata(clientSlug, updates, { dryRun: false });
+        return jsonResult({ ...result, dryRun: false });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_list_agents",
+    {
+      title: "List Sancho agents",
+      description: "Lists OpenClaw/Sancho agents, model overrides and recommendations. Requires agents:read.",
+      inputSchema: {},
+    },
+    async () =>
+      runTool(context, "sancho_list_agents", undefined, async () => {
+        assertMcpScope(context.principal, "agents:read");
+        const agents = listAgentsRich();
+        return jsonResult({ ok: true, agents, count: agents.length });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_agent",
+    {
+      title: "Get Sancho agent",
+      description: "Returns one OpenClaw/Sancho agent profile. Requires agents:read.",
+      inputSchema: {
+        agentId: z.string().min(1).describe("Agent id, e.g. sancho, hamete, dulcinea."),
+      },
+    },
+    async ({ agentId }) =>
+      runTool(context, "sancho_get_agent", undefined, async () => {
+        assertMcpScope(context.principal, "agents:read");
+        const agent = getMcpAgent(agentId);
+        if (!agent) throw new McpAuthError(404, `Agent not found: ${agentId}`);
+        return jsonResult({ ok: true, agent });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_set_agent_model",
+    {
+      title: "Set Sancho agent model",
+      description:
+        "Sets or clears an agent model override. Requires agents:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        agentId: z.string().min(1).describe("Agent id, e.g. sancho, hamete, dulcinea."),
+        model: z.string().min(1).nullable().describe("Model id to set, or null to inherit the default model."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the model change."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({ agentId, model, dryRun = true, confirm = false }) =>
+      runTool(context, "sancho_set_agent_model", undefined, async () => {
+        assertMcpScope(context.principal, "agents:write");
+        const before = getMcpAgent(agentId);
+        if (!before) throw new McpAuthError(404, `Agent not found: ${agentId}`);
+        const requestedModel = model ?? null;
+        const modelCheck = await validateAgentModel(requestedModel);
+        const preview = {
+          ok: true,
+          agentId,
+          before,
+          after: { ...before, overrideModel: requestedModel },
+          warning: modelCheck.warning,
+        };
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ...preview,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to update this agent model override.",
+          });
+        }
+        setAgentModel(agentId, requestedModel);
+        invalidateCatalogCache();
+        const updated = getMcpAgent(agentId) || { ...before, overrideModel: requestedModel };
+        return jsonResult({ ok: true, agentId, model: requestedModel, warning: modelCheck.warning, agent: updated });
       }),
   );
 
@@ -216,14 +524,14 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "List Alarife MCP instances",
       description:
-        "Lists Alarife MCP instances registered for the allowed Sancho client. Requires sancho:read.",
+        "Lists Alarife MCP instances registered for the allowed Sancho client. Requires clients:read or legacy sancho:read.",
       inputSchema: {
         clientSlug: z.string().optional().describe("Optional Sancho client slug."),
       },
     },
     async ({ clientSlug }) =>
       runTool(context, "alarife_list_instances", clientSlug, async () => {
-        assertMcpScope(context.principal, "sancho:read");
+        assertMcpAnyScope(context.principal, ["clients:read", "sancho:read"]);
         const requestedClient = clientSlug?.trim();
         if (requestedClient) assertMcpClientAccess(context.principal, requestedClient);
 
@@ -244,7 +552,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Get Alarife MCP config",
       description:
-        "Returns safe MCP install metadata for one Alarife instance. It never returns bearer tokens. Requires sancho:read.",
+        "Returns safe MCP install metadata for one Alarife instance. It never returns bearer tokens. Requires clients:read or legacy sancho:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         alarifeSlug: z.string().min(1).describe("Alarife slug inside the client, e.g. web or sancho-web."),
@@ -252,7 +560,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     },
     async ({ clientSlug, alarifeSlug }) =>
       runTool(context, "alarife_get_mcp_config", clientSlug, async () => {
-        assertClientScope(context, "sancho:read", clientSlug);
+        assertClientReadScope(context, clientSlug);
         const instance = getAlarifeMcpInstance(clientSlug, alarifeSlug);
         return jsonResult({
           ...publicAlarifeMcpInstance(instance),
@@ -268,7 +576,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Validate Alarife MCP connection",
       description:
-        "Validates one Alarife MCP connection by running tools/list with Sancho's stored secret. It never returns bearer tokens. Requires sancho:read.",
+        "Performs a live validation call against an Alarife MCP instance using Sancho's stored token. Requires clients:read or legacy sancho:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         alarifeSlug: z.string().min(1).describe("Alarife slug inside the client, e.g. web or sancho-web."),
@@ -276,18 +584,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     },
     async ({ clientSlug, alarifeSlug }) =>
       runTool(context, "alarife_validate_mcp_connection", clientSlug, async () => {
-        assertClientScope(context, "sancho:read", clientSlug);
+        assertClientReadScope(context, clientSlug);
         const instance = getAlarifeMcpInstance(clientSlug, alarifeSlug);
         const validation = await validateAlarifeMcpConnection(instance);
-        return jsonResult({
-          clientSlug: instance.clientSlug,
-          alarifeSlug: instance.alarifeSlug,
-          mcpUrl: instance.mcpUrl,
-          secretId: instance.secretId,
-          tokenReturned: false,
-          ...validation,
-          traceId: context.traceId,
-        });
+        return jsonResult({ ...publicAlarifeMcpInstance(instance), validation, traceId: context.traceId });
       }),
   );
 
@@ -351,6 +651,291 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   );
 
   server.registerTool(
+    "sancho_update_document",
+    {
+      title: "Update Sancho document",
+      description:
+        "Replaces one Brand Brain/Foundation .md or .html document by path. Requires docs:write and brand access; dry-run by default.",
+      inputSchema: {
+        brandSlug: z.string().min(1).describe("Brand slug, e.g. growth4u or xhype."),
+        docPath: z
+          .string()
+          .min(1)
+          .describe("Full brand/<slug>/... path or brand-relative path, e.g. market-and-us/market/current.md."),
+        content: z.string().max(500_000).describe("Full replacement document content."),
+        createIfMissing: z.boolean().default(false).describe("Allow creating the document when the path does not exist."),
+        expectedSha256: z
+          .string()
+          .regex(/^[a-f0-9]{64}$/i)
+          .optional()
+          .describe("Optional current document sha256 guard from sancho_get_document/update preview."),
+        dryRun: z.boolean().default(true).describe("Preview without writing."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to write."),
+      },
+    },
+    async ({ brandSlug, docPath, content, createIfMissing = false, expectedSha256, dryRun = true, confirm = false }) =>
+      runTool(context, "sancho_update_document", brandSlug, async () => {
+        assertBrandWriteScope(context, brandSlug);
+        const preview = previewUpdateMcpDocument(brandSlug, docPath, content, { createIfMissing });
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to replace this document.",
+            preview,
+          });
+        }
+        const result = updateMcpDocument(brandSlug, docPath, content, {
+          createIfMissing,
+          expectedSha256,
+        });
+        return jsonResult({ ok: true, ...result, traceId: context.traceId });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_list_meetings",
+    {
+      title: "List Meeting Intelligence meetings",
+      description:
+        "Lists Meeting Intelligence meetings for a client, plus totals and last sync/run metadata. Requires intelligence:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        limit: z.number().int().min(1).max(MEETING_LIMIT_MAX).optional().describe("Maximum meetings to return."),
+      },
+    },
+    async ({ clientSlug, limit }) =>
+      runTool(context, "sancho_list_meetings", clientSlug, async () => {
+        assertClientScope(context, "intelligence:read", clientSlug);
+        const max = clampLimit(limit, MEETING_LIMIT_DEFAULT, MEETING_LIMIT_MAX);
+        const state = await getMeetingIntelligenceState(clientSlug, {
+          prepareStorage: false,
+          backfillLegacy: false,
+        });
+        const meetings = state.meetings.slice(0, max);
+        return jsonResult({
+          ok: state.ok,
+          clientSlug,
+          storage: state.storage,
+          meetings,
+          count: meetings.length,
+          totalMeetings: state.meetings.length,
+          limit: max,
+          totals: state.totals,
+          lastSync: state.lastSync,
+          lastCheckStatus: state.lastCheckStatus,
+          lastRun: state.lastRun,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_meeting",
+    {
+      title: "Get Meeting Intelligence meeting",
+      description:
+        "Returns full Meeting Intelligence detail for one meeting: artifact, insights, decisions, impacts and recommendations. Requires intelligence:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        meetingId: z.string().min(1).describe("Meeting Intelligence meeting id."),
+      },
+    },
+    async ({ clientSlug, meetingId }) =>
+      runTool(context, "sancho_get_meeting", clientSlug, async () => {
+        assertClientScope(context, "intelligence:read", clientSlug);
+        const result = await getMeetingIntelligenceMeeting(clientSlug, meetingId, {
+          prepareStorage: false,
+          backfillLegacy: false,
+        });
+        if (result.storage.configured === true && !result.detail) {
+          throw new McpAuthError(404, result.error || `Meeting not found: ${meetingId}`);
+        }
+        return jsonResult({ clientSlug, meetingId, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_list_intelligence",
+    {
+      title: "List Meeting Intelligence items",
+      description:
+        "Lists cross-meeting intelligence, decisions, impacted documents and proposals for a client. Optional kind/status filters apply to compatible item collections. Requires intelligence:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        kind: z
+          .enum(["Decision", "Action", "Insight", "Quote", "Risk", "Run"])
+          .optional()
+          .describe("Optional intelligence item kind filter."),
+        status: z.string().min(1).optional().describe("Optional case-insensitive status filter."),
+      },
+    },
+    async ({ clientSlug, kind, status }) =>
+      runTool(context, "sancho_list_intelligence", clientSlug, async () => {
+        assertClientScope(context, "intelligence:read", clientSlug);
+        const state = await getMeetingIntelligenceState(clientSlug, {
+          prepareStorage: false,
+          backfillLegacy: false,
+        });
+        const intelligence = filterIntelligenceItems(state.intelligence, kind, status);
+        const decisions = filterDecisionItems(state.decisions, kind, status);
+        const documents = filterDocumentItems(state.documents, kind, status);
+        const proposals = filterProposalItems(state.proposals, kind, status);
+        return jsonResult({
+          ok: state.ok,
+          clientSlug,
+          storage: state.storage,
+          filters: pickDefined({ kind, status }),
+          intelligence,
+          decisions,
+          documents,
+          proposals,
+          totals: {
+            ...state.totals,
+            returnedIntelligence: intelligence.length,
+            returnedDecisions: decisions.length,
+            returnedDocuments: documents.length,
+            returnedProposals: proposals.length,
+          },
+          lastSync: state.lastSync,
+          lastCheckStatus: state.lastCheckStatus,
+          lastRun: state.lastRun,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_get_meeting_intelligence_config",
+    {
+      title: "Get Meeting Intelligence config",
+      description:
+        "Reads Meeting Intelligence source/sync/routing config and cron status for a client. Requires intelligence:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "sancho_get_meeting_intelligence_config", clientSlug, async () => {
+        assertClientScope(context, "intelligence:read", clientSlug);
+        const result = await getMeetingIntelligenceConfig(clientSlug);
+        const cron = result.config ? getMeetingIntelligenceCronStatus(clientSlug, result.config.sync?.cronJobId) : null;
+        return jsonResult({ clientSlug, ...result, cron });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_update_meeting_intelligence_config",
+    {
+      title: "Update Meeting Intelligence config",
+      description:
+        "Saves Meeting Intelligence source/sync/routing config for a client and syncs its cron job. Requires intelligence:write; dry-run by default.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        config: z
+          .record(z.string(), z.unknown())
+          .describe("Meeting Intelligence config object, same shape as /api/meeting-intelligence/config."),
+        dryRun: z.boolean().default(true).describe("Preview normalized config without writing."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to save config and sync cron."),
+      },
+    },
+    async ({ clientSlug, config, dryRun = true, confirm = false }) =>
+      runTool(context, "sancho_update_meeting_intelligence_config", clientSlug, async () => {
+        assertClientScope(context, "intelligence:write", clientSlug);
+        const normalized = normalizeMeetingIntelligenceConfig(
+          clientSlug,
+          config as Partial<MeetingIntelligenceConfig> & Record<string, unknown>,
+        );
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to save this Meeting Intelligence config and sync cron.",
+            preview: {
+              clientSlug,
+              config: normalized,
+              cronWillSync: true,
+            },
+          });
+        }
+        const result = await saveMeetingIntelligenceConfig(
+          clientSlug,
+          config as Partial<MeetingIntelligenceConfig> & Record<string, unknown>,
+        );
+        const cron = result.ok && result.config ? syncMeetingIntelligenceCron(result.config) : null;
+        return jsonResult({ ...result, cron });
+      }),
+  );
+
+  server.registerTool(
+    "sancho_run_meeting_intelligence_sync",
+    {
+      title: "Run Meeting Intelligence sync",
+      description:
+        "Runs a Meeting Intelligence sync for one client, pulling configured sources and writing meetings/insights/recommendations. Requires intelligence:write; dry-run by default.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        trigger: z.string().min(1).optional().describe("Run trigger label. Defaults to mcp."),
+        limit: z.number().int().min(1).max(60).optional().describe("Max source items per source. Defaults to 30, max 60."),
+        dryRun: z.boolean().default(true).describe("Preview without running source fetch/analysis."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to run sync."),
+      },
+    },
+    async ({ clientSlug, trigger, limit, dryRun = true, confirm = false }) =>
+      runTool(context, "sancho_run_meeting_intelligence_sync", clientSlug, async () => {
+        assertClientScope(context, "intelligence:write", clientSlug);
+        const max = clampLimit(limit, 30, 60);
+        const runRequest = { slug: clientSlug, trigger: trigger || "mcp", limit: max };
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to run Meeting Intelligence sync.",
+            preview: runRequest,
+          });
+        }
+        const result = await runMeetingIntelligenceSync(runRequest);
+        return jsonResult(result);
+      }),
+  );
+
+  server.registerTool(
+    "sancho_apply_meeting_recommendation",
+    {
+      title: "Apply Meeting Intelligence recommendation action",
+      description:
+        "Approves, rejects or converts one Meeting Intelligence recommendation. Does not edit target documents directly. Requires intelligence:write; dry-run by default.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        recommendationId: z.string().min(1).describe("Meeting Intelligence recommendation id."),
+        action: z.enum(["approve", "reject", "convert"]).describe("Recommendation action to apply."),
+        dryRun: z.boolean().default(true).describe("Preview without changing recommendation status."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to apply the action."),
+      },
+    },
+    async ({ clientSlug, recommendationId, action, dryRun = true, confirm = false }) =>
+      runTool(context, "sancho_apply_meeting_recommendation", clientSlug, async () => {
+        assertClientScope(context, "intelligence:write", clientSlug);
+        const request = { clientSlug, recommendationId, action };
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to apply this recommendation action.",
+            preview: request,
+          });
+        }
+        const result = await applyMeetingRecommendationAction(clientSlug, recommendationId, action as RecommendationAction);
+        if (result.storage.configured === true && !result.recommendation) {
+          throw new McpAuthError(404, `Meeting recommendation not found: ${recommendationId}`);
+        }
+        return jsonResult(result);
+      }),
+  );
+
+  server.registerTool(
     "sancho_list_tasks",
     {
       title: "List Sancho tasks",
@@ -398,14 +983,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Create Sancho task",
       description:
-        "Creates a task for a client. Requires tasks:write. Defaults to dry-run and requires confirm=true to write. " +
-        "To promote the current chat to a task (SAN-210), pass threadId (+ your skill/agent): the task is linked to " +
-        "the thread and the call is idempotent — one task per thread, so promoting the same thread again returns the " +
-        "existing task instead of duplicating it. " +
-        "This is passive task creation. When the user asks for a unit of work owned by an active specialist, prefer " +
-        "sancho_delegate: it creates/reuses the task thread, sets `agent` to an allowed active delegate — " +
-        "cervantes (skills/docs), hamete (research/market intel), dulcinea (content), rocinante (outreach/prospecting), " +
-        "mambrino (ads), merlin (data), sanson (feedback/QA), maese-pedro (visual) — and dispatches the brief.",
+        "Creates a task for a client. Requires tasks:write. Defaults to dry-run and requires confirm=true to write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         name: z.string().min(1).describe("Task name."),
@@ -414,22 +992,14 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         type: z.string().optional().describe("Task type, e.g. project or execution."),
         parentId: z.string().optional().describe("Parent task id to create a child task."),
         owner: z.string().optional().describe("Task owner (default Sancho)."),
-        skill: z.string().optional().describe("Skill that runs the task (use the one this chat is running)."),
-        agent: z.string().optional().describe("Owner agent (use the agent attending this chat)."),
-        skills: z.array(z.string()).optional().describe("Skill pipeline for the task."),
-        threadId: z.string().optional().describe("MC chat thread id to link the task to — enables idempotent promote (one task per thread)."),
         dryRun: z.boolean().default(true).describe("When true, only previews the create operation."),
         confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create."),
       },
     },
-    async ({ clientSlug, name, description, status, type, parentId, owner, skill, agent, skills, threadId, dryRun, confirm }) =>
+    async ({ clientSlug, name, description, status, type, parentId, owner, dryRun, confirm }) =>
       runTool(context, "sancho_create_task", clientSlug, async () => {
         assertClientScope(context, "tasks:write", clientSlug);
-        const input = pickDefined({
-          name, description, status, type, parent_id: parentId, owner,
-          skill, agent, skills,
-          mc_chat_thread_id: threadId ? normalizeChatThreadId(clientSlug, threadId) : undefined,
-        });
+        const input = pickDefined({ name, description, status, type, parent_id: parentId, owner });
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
@@ -445,14 +1015,57 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   );
 
   server.registerTool(
+    "sancho_update_task",
+    {
+      title: "Update Sancho task",
+      description:
+        "Updates whitelisted fields of a task. Requires tasks:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        taskId: z.string().min(1).describe("Task id."),
+        name: z.string().optional().describe("New task name."),
+        status: z.string().optional().describe("New status."),
+        description: z.string().optional().describe("New description."),
+        brief: z.string().optional().describe("New brief."),
+        completion: z.string().optional().describe("New completion/done criteria."),
+        owner: z.string().optional().describe("New owner."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the update operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({ clientSlug, taskId, name, status, description, brief, completion, owner, dryRun, confirm }) =>
+      runTool(context, "sancho_update_task", clientSlug, async () => {
+        assertClientScope(context, "tasks:write", clientSlug);
+        const patch = pickDefined({ name, status, description, brief, completion, owner });
+        if (Object.keys(patch).length === 0) {
+          throw new McpAuthError(
+            400,
+            "No fields to update; provide at least one of: name, status, description, brief, completion, owner",
+          );
+        }
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to apply this update.",
+            taskId,
+            patch,
+          });
+        }
+        const task = await updateTask(clientSlug, taskId, patch);
+        return jsonResult({ ok: true, task });
+      }),
+  );
+
+  server.registerTool(
     "sancho_delegate",
     {
       title: "Delegate Sancho work to a specialist",
       description:
         "Creates or reuses an idempotent specialist-owned task thread, then dispatches the brief to that specialist via " +
-        "Mission Control chat. Requires tasks:write and sancho:chat. Defaults to dry-run and requires confirm=true. " +
-        "Use this for real work (skills/docs, research, content, outreach, ads, data, feedback/QA, visual assets) instead of asking " +
-        "Sancho to answer inline or using Agent(subagent_type=...) for an owning deliverable.",
+        "Mission Control chat. Requires tasks:write and chat:write. Defaults to dry-run and requires confirm=true. " +
+        "Use this for real work owned by a specialist instead of asking Sancho to answer inline.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         agent: z.string().min(1).describe(`Active delegate agent id. Allowed: ${DELEGATE_AGENT_LIST}.`),
@@ -472,7 +1085,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug, agent, name, brief, threadId, threadName, parentId, owner, skill, skills, status, dryRun, confirm }) =>
       runTool(context, "sancho_delegate", clientSlug, async () => {
         assertClientScope(context, "tasks:write", clientSlug);
-        assertClientScope(context, "sancho:chat", clientSlug);
+        assertClientScope(context, "chat:write", clientSlug);
         const agentSlug = normalizeDelegateAgent(agent);
         const tid = threadId
           ? normalizeChatThreadId(clientSlug, threadId)
@@ -532,46 +1145,101 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   );
 
   server.registerTool(
-    "sancho_update_task",
+    "recurring_list_tasks",
     {
-      title: "Update Sancho task",
+      title: "List recurring tasks",
       description:
-        "Updates whitelisted fields of a task. Requires tasks:write. Defaults to dry-run and requires confirm=true to write.",
+        "Lists recurring tasks and OpenClaw cron jobs for one client, with status/source filters. Requires recurring:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        taskId: z.string().min(1).describe("Task id."),
-        name: z.string().optional().describe("New task name."),
-        status: z.string().optional().describe("New status."),
-        description: z.string().optional().describe("New description."),
-        brief: z.string().optional().describe("New brief."),
-        completion: z.string().optional().describe("New completion/done criteria."),
-        owner: z.string().optional().describe("New owner."),
-        dryRun: z.boolean().default(true).describe("When true, only previews the update operation."),
-        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+        status: z.enum(MCP_RECURRING_STATUS_VALUES).optional().describe("Optional status filter."),
+        source: z.enum(MCP_RECURRING_SOURCE_VALUES).optional().describe("Optional source filter."),
+        query: z.string().optional().describe("Optional case-insensitive search over name/description/prompt."),
+        limit: z.number().int().min(1).max(RECURRING_LIMIT_MAX).optional().describe("Maximum tasks to return."),
+        maxPromptChars: z
+          .number()
+          .int()
+          .min(1)
+          .max(RECURRING_PROMPT_MAX_CHARS_MAX)
+          .optional()
+          .describe("Maximum prompt characters per task. Defaults to 4000."),
       },
     },
-    async ({ clientSlug, taskId, name, status, description, brief, completion, owner, dryRun, confirm }) =>
-      runTool(context, "sancho_update_task", clientSlug, async () => {
-        assertClientScope(context, "tasks:write", clientSlug);
-        const patch = pickDefined({ name, status, description, brief, completion, owner });
-        if (Object.keys(patch).length === 0) {
-          throw new McpAuthError(
-            400,
-            "No fields to update; provide at least one of: name, status, description, brief, completion, owner",
-          );
-        }
-        if (dryRun !== false || confirm !== true) {
+    async ({ clientSlug, status, source, query, limit, maxPromptChars }) =>
+      runTool(context, "recurring_list_tasks", clientSlug, async () => {
+        assertClientScope(context, "recurring:read", clientSlug);
+        const max = clampLimit(limit, RECURRING_LIMIT_DEFAULT, RECURRING_LIMIT_MAX);
+        const promptMax = clampLimit(
+          maxPromptChars,
+          RECURRING_PROMPT_MAX_CHARS_DEFAULT,
+          RECURRING_PROMPT_MAX_CHARS_MAX,
+        );
+        const result = listMcpRecurringTasks(clientSlug, {
+          status,
+          source,
+          query,
+          limit: max,
+          maxPromptChars: promptMax,
+        });
+        return jsonResult({ ...result, clientSlug, filters: pickDefined({ status, source, query }) });
+      }),
+  );
+
+  server.registerTool(
+    "recurring_set_task_status",
+    {
+      title: "Set recurring task status",
+      description:
+        "Pauses or activates one local recurring task or OpenClaw cron job by id. Requires recurring:write; dry-run by default.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        taskId: z.string().min(1).describe("Recurring task or OpenClaw cron id."),
+        desiredStatus: z.enum(MCP_RECURRING_STATUS_VALUES).describe("Target status."),
+        dryRun: z.boolean().default(true).describe("Preview without changing the task/cron."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update status."),
+      },
+    },
+    async ({ clientSlug, taskId, desiredStatus, dryRun = true, confirm = false }) =>
+      runTool(context, "recurring_set_task_status", clientSlug, async () => {
+        assertClientScope(context, "recurring:write", clientSlug);
+        const target = findMcpRecurringTask(clientSlug, taskId);
+        if (!target) throw new McpAuthError(404, `Recurring task not found: ${taskId}`);
+        const preview = {
+          clientSlug,
+          taskId,
+          source: target.source,
+          currentStatus: target.status,
+          desiredStatus,
+          noOp: target.status === desiredStatus,
+        };
+        if (dryRun || !confirm) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message: "Set dryRun=false and confirm=true to apply this update.",
-            taskId,
-            patch,
+            message: "Set dryRun=false and confirm=true to update this recurring task status.",
+            preview,
           });
         }
-        const task = await updateTask(clientSlug, taskId, patch);
-        return jsonResult({ ok: true, task });
+        if (target.status === desiredStatus) {
+          return jsonResult({ ok: true, ...preview });
+        }
+        if (target.source === "openclaw-cron") {
+          execFileSync("openclaw", ["cron", desiredStatus === "active" ? "enable" : "disable", taskId], {
+            timeout: 10_000,
+            encoding: "utf-8",
+            env: { ...process.env, PATH: EXEC_PATH },
+          });
+          return jsonResult({ ok: true, ...preview });
+        }
+        const tasks = loadRecurringTasks(clientSlug);
+        const task = tasks.find((item) => item.id === taskId);
+        if (!task) throw new McpAuthError(404, `Recurring task not found: ${taskId}`);
+        task.status = desiredStatus;
+        task.active = desiredStatus === "active";
+        task.updated_at = new Date().toISOString();
+        saveRecurringTasks(clientSlug, tasks);
+        return jsonResult({ ok: true, ...preview, task: serializeLocalRecurringTask(task, clientSlug, RECURRING_PROMPT_MAX_CHARS_DEFAULT) });
       }),
   );
 
@@ -580,11 +1248,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Send Sancho chat message",
       description:
-        "Sends a message into Sancho Mission Control chat. Requires sancho:chat. Defaults to dry-run and requires confirm=true for execution. " +
-        "Use it for conversational messages, questions, and answering pending :::ask prompts. " +
-        "If the request is a discrete unit of work owned by an active specialist (research, prospecting, content, ads, visual, data, feedback/QA, skills/docs), " +
-        "do NOT just send it here and treat Sancho's inline reply as the deliverable — call sancho_delegate with the owning specialist as `agent` " +
-        "so the specialist actually does the work in its own task thread.",
+        "Sends a message into Sancho Mission Control chat. Requires chat:write (legacy sancho:chat still works). Defaults to dry-run and requires confirm=true for execution.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         text: z.string().min(1).describe("Message text."),
@@ -597,7 +1261,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     },
     async ({ clientSlug, text, threadId, threadName, agent, dryRun, confirm }) =>
       runTool(context, "sancho_send_message", clientSlug, async () => {
-        assertClientScope(context, "sancho:chat", clientSlug);
+        assertClientScope(context, "chat:write", clientSlug);
         const tid = threadId || `${clientSlug}:mcp`;
         const payload = {
           slug: clientSlug,
@@ -619,18 +1283,26 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             dryRun: true,
             requiresConfirmation: true,
             message: "Set dryRun=false and confirm=true to send this chat message.",
-            workHint:
-              "If this is a unit of work owned by an active specialist (research, prospecting, content, ads, visual, data, feedback/QA, skills/docs), " +
-              "prefer sancho_delegate with the owning specialist as `agent` (cervantes=skills/docs, hamete=research, dulcinea=content, " +
-              "rocinante=outreach, mambrino=ads, merlin=data, sanson=feedback/QA, maese-pedro=visual). It creates/reuses the task thread and dispatches the brief — " +
-              "don't treat an inline chat reply as the deliverable.",
             payload,
           });
         }
 
         addMessage(tid, "user", text);
-        const dispatch = await dispatchMcChatMessage(context, payload);
-        return jsonResult({ ok: true, chatId: dispatch.chatId, gateway: dispatch.gateway });
+        const secret = getChatSecret();
+        const response = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...traceHeaders(context),
+            ...(secret ? { "X-MC-Secret": secret } : {}),
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = (await response.json()) as unknown;
+        if (!response.ok) {
+          throw new Error(`Mission Control gateway rejected message: ${response.status}`);
+        }
+        return jsonResult({ ok: true, chatId: extractChatId(data) || tid, gateway: data });
       }),
   );
 
@@ -638,7 +1310,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_list_chat_threads",
     {
       title: "List Sancho chat threads",
-      description: "Lists Mission Control chat threads for a client. Requires sancho:chat.",
+      description: "Lists Mission Control chat threads for a client. Requires chat:read (legacy sancho:chat still works).",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         limit: z
@@ -652,7 +1324,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     },
     async ({ clientSlug, limit }) =>
       runTool(context, "sancho_list_chat_threads", clientSlug, async () => {
-        assertClientScope(context, "sancho:chat", clientSlug);
+        assertClientScope(context, "chat:read", clientSlug);
         const max = clampLimit(limit, CHAT_THREAD_LIMIT_DEFAULT, CHAT_THREAD_LIMIT_MAX);
         const threads = listThreadsForSlug(clientSlug).slice(0, max);
         return jsonResult({ threads, count: threads.length, limit: max });
@@ -664,7 +1336,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Get Sancho chat thread",
       description:
-        "Reads recent Mission Control chat messages for a client and extracts pending :::ask multiple-choice questions. Requires sancho:chat.",
+        "Reads recent Mission Control chat messages for a client and extracts pending :::ask multiple-choice questions. Requires chat:read (legacy sancho:chat still works).",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         threadId: z.string().min(1).describe("Thread id, either full '<client>:<thread>' or short id."),
@@ -679,7 +1351,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     },
     async ({ clientSlug, threadId, limit }) =>
       runTool(context, "sancho_get_chat_thread", clientSlug, async () => {
-        assertClientScope(context, "sancho:chat", clientSlug);
+        assertClientScope(context, "chat:read", clientSlug);
         const tid = normalizeChatThreadId(clientSlug, threadId);
         const thread = getThread(tid);
         if (!chatThreadExists(clientSlug, tid) && thread.messages.length === 0) {
@@ -706,6 +1378,1556 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           pendingQuestions,
           responseFormat: buildAskResponseFormat(pendingQuestions),
         });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_state",
+    {
+      title: "Get Content Engine state",
+      description:
+        "Returns read-only Content Engine operational state for a client: config, idea/task counts and recent activity. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        activityLimit: z
+          .number()
+          .int()
+          .min(1)
+          .max(CONTENT_LIMIT_MAX)
+          .optional()
+          .describe("Maximum recent activity events to include."),
+      },
+    },
+    async ({ clientSlug, activityLimit }) =>
+      runTool(context, "content_get_state", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const ideas = loadIdeas(clientSlug);
+        const contentTasks = loadUnifiedContentTasks(clientSlug);
+        const maxActivity = clampLimit(activityLimit, 25, CONTENT_LIMIT_MAX);
+        const activity = readActivity(clientSlug, maxActivity);
+        return jsonResult({
+          ok: true,
+          clientSlug,
+          config: getContentConfig(clientSlug),
+          ideas: {
+            count: ideas.length,
+            counts: statusCounts(ideas, (idea) => idea.status),
+          },
+          contentTasks: {
+            count: contentTasks.length,
+            counts: statusCounts(contentTasks, (task) => task.status),
+          },
+          activity,
+          activityCount: activity.length,
+          activityLimit: maxActivity,
+          verifiedAt: new Date().toISOString(),
+        });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_config",
+    {
+      title: "Get Content Engine config",
+      description: "Reads the Content Engine config for a client. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "content_get_config", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        return jsonResult({ ok: true, clientSlug, config: getContentConfig(clientSlug) });
+      }),
+  );
+
+  server.registerTool(
+    "content_update_config",
+    {
+      title: "Update Content Engine config",
+      description:
+        "Updates the Content Engine config for a client. Requires content:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        imageGeneration: z
+          .object({
+            mode: z.enum(["ask", "fixed"]).optional(),
+            provider: z.string().nullable().optional(),
+            model: z.string().nullable().optional(),
+          })
+          .optional()
+          .describe("Optional image generation config patch."),
+        carousel: z
+          .object({
+            logoUrl: z.string().nullable().optional(),
+            footerText: z.string().nullable().optional(),
+            primaryColor: z.string().nullable().optional(),
+            accentColor: z.string().nullable().optional(),
+            enabledTemplates: z.array(z.string().min(1)).nullable().optional(),
+          })
+          .optional()
+          .describe("Optional carousel config patch."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the config update."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({ clientSlug, imageGeneration, carousel, dryRun, confirm }) =>
+      runTool(context, "content_update_config", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        const patch = buildContentConfigPatch(imageGeneration, carousel);
+        if (Object.keys(patch).length === 0) {
+          throw new McpAuthError(400, "No config fields to update; provide imageGeneration and/or carousel");
+        }
+        const current = getContentConfig(clientSlug);
+        const preview = mergeContentConfig(current, patch);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to update the Content Engine config.",
+            current,
+            patch,
+            preview,
+          });
+        }
+        const config = updateContentConfig(clientSlug, patch);
+        return jsonResult({ ok: true, clientSlug, config });
+      }),
+  );
+
+  server.registerTool(
+    "content_create_idea",
+    {
+      title: "Create Content Engine idea",
+      description:
+        "Creates one Content Engine idea in content/idea-queue.json. Requires content:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        id: z.string().min(1).optional().describe("Optional desired idea id. Collisions get a suffix."),
+        title: z.string().min(1).describe("Idea title/headline."),
+        pillarId: z.string().optional().describe("Optional content pillar id."),
+        contentType: z.string().optional().describe("Optional content type."),
+        targetChannel: z.string().optional().describe("Optional target channel."),
+        angleDraft: z.string().optional().describe("Optional angle/POV draft."),
+        povConfidence: z.number().min(0).max(1).optional().describe("Optional POV confidence from 0 to 1."),
+        signalSummary: z.string().optional().describe("Optional source signal summary."),
+        signalSource: z.string().optional().describe("Optional source signal name."),
+        signalUrl: z.string().url().optional().describe("Optional source signal URL."),
+        signalDate: z.string().optional().describe("Optional source signal date, defaults to today."),
+        sourceSignals: z.array(z.string().min(1)).optional().describe("Optional source signal ids/paths."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the create operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create."),
+      },
+    },
+    async ({
+      clientSlug,
+      id,
+      title,
+      pillarId,
+      contentType,
+      targetChannel,
+      angleDraft,
+      povConfidence,
+      signalSummary,
+      signalSource,
+      signalUrl,
+      signalDate,
+      sourceSignals,
+      dryRun,
+      confirm,
+    }) =>
+      runTool(context, "content_create_idea", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        const ideas = await loadContentIdeaQueue(clientSlug);
+        const idea = buildContentIdea({
+          existing: ideas,
+          id,
+          title,
+          pillarId,
+          contentType,
+          targetChannel,
+          angleDraft,
+          povConfidence,
+          signalSummary,
+          signalSource,
+          signalUrl,
+          signalDate,
+          sourceSignals,
+        });
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to create this Content Engine idea.",
+            idea,
+            existingCount: ideas.length,
+          });
+        }
+        await saveContentIdeaQueue(clientSlug, [...ideas, idea]);
+        return jsonResult({ ok: true, clientSlug, idea, count: ideas.length + 1 });
+      }),
+  );
+
+  server.registerTool(
+    "content_update_idea",
+    {
+      title: "Update Content Engine idea",
+      description:
+        "Updates safe fields on one Content Engine idea. Requires content:write. Does not approve/generate drafts; use a dedicated approval tool for that. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        status: z
+          .enum(["New", "Discarded", "Deferred", "Published"])
+          .optional()
+          .describe("Safe status update. Approved is intentionally excluded because it triggers generation."),
+        angleDraft: z.string().nullable().optional().describe("New angle/POV draft, or null to clear."),
+        pillarId: z.string().nullable().optional().describe("New pillar id, or null to clear."),
+        targetChannel: z.string().nullable().optional().describe("New target channel, or null to clear."),
+        contentType: z.string().nullable().optional().describe("New content type, or null to clear."),
+        author: z.string().nullable().optional().describe("New author/persona id, or null to clear."),
+        targetDate: z.string().nullable().optional().describe("New target date, or null to clear."),
+        dispatchDate: z.string().nullable().optional().describe("New dispatch date, or null to clear."),
+        dispatchSlot: z.string().nullable().optional().describe("New dispatch slot, or null to clear."),
+        projectTaskId: z.string().nullable().optional().describe("New linked project task id, or null to clear."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the update operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({
+      clientSlug,
+      ideaId,
+      status,
+      angleDraft,
+      pillarId,
+      targetChannel,
+      contentType,
+      author,
+      targetDate,
+      dispatchDate,
+      dispatchSlot,
+      projectTaskId,
+      dryRun,
+      confirm,
+    }) =>
+      runTool(context, "content_update_idea", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        const ideas = await loadContentIdeaQueue(clientSlug);
+        const index = ideas.findIndex((idea) => idea.id === ideaId);
+        if (index < 0) throw new McpAuthError(404, `Content Engine idea not found: ${ideaId}`);
+        const patch = buildContentIdeaPatch({
+          status,
+          angleDraft,
+          pillarId,
+          targetChannel,
+          contentType,
+          author,
+          targetDate,
+          dispatchDate,
+          dispatchSlot,
+          projectTaskId,
+        });
+        if (Object.keys(patch).length === 0) {
+          throw new McpAuthError(400, "No idea fields to update");
+        }
+        const current = ideas[index];
+        const updated = applyContentIdeaPatch(current, patch);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to update this Content Engine idea.",
+            ideaId,
+            current,
+            patch,
+            preview: updated,
+          });
+        }
+        const next = ideas.slice();
+        next[index] = updated;
+        await saveContentIdeaQueue(clientSlug, next);
+        return jsonResult({ ok: true, clientSlug, idea: updated });
+      }),
+  );
+
+  server.registerTool(
+    "content_approve_idea",
+    {
+      title: "Approve Content Engine idea",
+      description:
+        "Approves one Content Engine idea and provisions its ContentTask/drafts. Requires content:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        approvedBy: z.string().min(1).optional().describe("Optional operator/user id to stamp on the idea."),
+        approvedVia: z.string().min(1).optional().describe("Optional approval source, defaults to mcp."),
+        triggerWriter: z
+          .boolean()
+          .default(true)
+          .describe("When confirmed, best-effort trigger the writer skill through the ContentTask chat thread."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the approval/provisioning operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to approve and provision."),
+      },
+    },
+    async ({ clientSlug, ideaId, approvedBy, approvedVia, triggerWriter, dryRun, confirm }) =>
+      runTool(context, "content_approve_idea", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        const preview = previewContentIdeaApproval(clientSlug, ideaId, { triggerWriter });
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to approve this idea and provision its ContentTask/drafts.",
+            preview,
+          });
+        }
+        const result = await approveContentIdea(clientSlug, ideaId, {
+          approvedBy,
+          approvedVia,
+          triggerWriter,
+        });
+        return jsonResult({ ok: true, clientSlug, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "content_list_ideas",
+    {
+      title: "List Content Engine ideas",
+      description: "Lists Content Engine ideas for a client with optional status/channel/query filters. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        status: z.string().min(1).optional().describe("Optional case-insensitive idea status filter."),
+        channel: z.string().min(1).optional().describe("Optional target channel filter."),
+        query: z.string().min(1).optional().describe("Optional case-insensitive search over title/description/angle."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum ideas to return."),
+      },
+    },
+    async ({ clientSlug, status, channel, query, limit }) =>
+      runTool(context, "content_list_ideas", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
+        const all = loadIdeas(clientSlug);
+        const ideas = all
+          .filter((idea) => matchesLooseStatus(idea.status, status))
+          .filter((idea) => !channel || idea.target_channel === channel || idea.channels?.includes(channel))
+          .filter((idea) =>
+            matchesQuery(query, [
+              idea.id,
+              idea.title,
+              idea.description,
+              String((idea as unknown as Record<string, unknown>).angle_draft || ""),
+            ]),
+          )
+          .slice(0, max);
+        return jsonResult({
+          ok: true,
+          clientSlug,
+          ideas,
+          count: ideas.length,
+          totalIdeas: all.length,
+          counts: statusCounts(all, (idea) => idea.status),
+          filters: pickDefined({ status, channel, query }),
+          limit: max,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "content_list_tasks",
+    {
+      title: "List Content Engine tasks",
+      description:
+        "Lists unified Content Engine tasks for a client with optional status/channel/query filters. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        status: z.string().min(1).optional().describe("Optional case-insensitive ContentTask status filter."),
+        channel: z.string().min(1).optional().describe("Optional target channel filter."),
+        query: z.string().min(1).optional().describe("Optional case-insensitive search over id/name/title/angle."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum tasks to return."),
+      },
+    },
+    async ({ clientSlug, status, channel, query, limit }) =>
+      runTool(context, "content_list_tasks", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
+        const all = loadUnifiedContentTasks(clientSlug);
+        const contentTasks = all
+          .filter((task) => matchesLooseStatus(task.status, status))
+          .filter((task) => !channel || task.target_channel === channel || task.target_channels?.includes(channel))
+          .filter((task) =>
+            matchesQuery(query, [task.id, task.name, task.title, task.angle_draft]),
+          )
+          .slice(0, max);
+        return jsonResult({
+          ok: true,
+          clientSlug,
+          contentTasks,
+          count: contentTasks.length,
+          totalContentTasks: all.length,
+          counts: statusCounts(all, (task) => task.status),
+          filters: pickDefined({ status, channel, query }),
+          limit: max,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_task",
+    {
+      title: "Get Content Engine task",
+      description: "Reads one unified Content Engine task by id. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        contentTaskId: z.string().min(1).describe("ContentTask id."),
+      },
+    },
+    async ({ clientSlug, contentTaskId }) =>
+      runTool(context, "content_get_task", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const task = loadUnifiedContentTasks(clientSlug).find((item) => item.id === contentTaskId);
+        if (!task) throw new McpAuthError(404, `Content task not found: ${contentTaskId}`);
+        return jsonResult({ ok: true, clientSlug, contentTask: task });
+      }),
+  );
+
+  server.registerTool(
+    "content_update_task",
+    {
+      title: "Update Content Engine task",
+      description:
+        "Updates safe ContentTask fields, status/pipeline_state and per-channel phases. Requires content:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        contentTaskId: z.string().min(1).describe("ContentTask id."),
+        name: z.string().min(1).optional().describe("Optional ContentTask name."),
+        skill: z.string().min(1).optional().describe("Optional writer skill id."),
+        targetChannels: z.array(z.string().min(1)).optional().describe("Optional replacement target channel list."),
+        owner: z.string().min(1).optional().describe("Optional owner."),
+        scheduledFor: z.string().min(1).optional().describe("Optional scheduling date/time metadata."),
+        clarifyStatus: z.string().min(1).optional().describe("Optional clarify status metadata."),
+        mediaPolicy: z
+          .record(z.string(), z.enum(["required", "optional"]))
+          .optional()
+          .describe("Optional per-channel media policy map."),
+        author: z.string().min(1).optional().describe("Optional author/persona id."),
+        status: z.enum(MCP_CONTENT_TASK_STATUS_VALUES).optional().describe("Optional ContentTask status. Publishing is intentionally excluded."),
+        pipelineState: z
+          .enum(MCP_CONTENT_TASK_PIPELINE_STATE_VALUES)
+          .nullable()
+          .optional()
+          .describe("Optional pipeline_state. Null clears it."),
+        channelPhases: z
+          .record(z.string(), z.enum(MCP_CHANNEL_PHASE_VALUES))
+          .optional()
+          .describe("Optional per-channel phase patch. The published phase is intentionally excluded."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the task update."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({
+      clientSlug,
+      contentTaskId,
+      name,
+      skill,
+      targetChannels,
+      owner,
+      scheduledFor,
+      clarifyStatus,
+      mediaPolicy,
+      author,
+      status,
+      pipelineState,
+      channelPhases,
+      dryRun,
+      confirm,
+    }) =>
+      runTool(context, "content_update_task", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        assertContentPathSegment("contentTaskId", contentTaskId);
+        const found = requireMcpContentTask(clientSlug, contentTaskId);
+        const plan = buildContentTaskUpdatePlan({
+          name,
+          skill,
+          targetChannels,
+          owner,
+          scheduledFor,
+          clarifyStatus,
+          mediaPolicy,
+          author,
+          status,
+          pipelineState,
+          channelPhases,
+        });
+        if (!plan.hasChanges) throw new McpAuthError(400, "No ContentTask fields to update");
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to update this ContentTask.",
+            contentTaskId,
+            parentTaskId: found.parentTaskId,
+            current: found.ct,
+            plan,
+          });
+        }
+        const updated = applyContentTaskUpdatePlan(clientSlug, found.parentTaskId, contentTaskId, found.ct, plan);
+        return jsonResult({ ok: true, clientSlug, parentTaskId: found.parentTaskId, contentTask: updated });
+      }),
+  );
+
+  server.registerTool(
+    "content_transition_task",
+    {
+      title: "Transition Content Engine task",
+      description:
+        "Runs one canonical ContentTask lifecycle action such as approve-draft, approve-media, discard or defer. Requires content:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        contentTaskId: z.string().min(1).describe("ContentTask id."),
+        action: z.enum(MCP_CONTENT_TASK_ACTION_VALUES).describe("Lifecycle action. Publishing is intentionally excluded."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the lifecycle transition."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to transition."),
+      },
+    },
+    async ({ clientSlug, contentTaskId, action, dryRun, confirm }) =>
+      runTool(context, "content_transition_task", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        assertContentPathSegment("contentTaskId", contentTaskId);
+        const found = requireMcpContentTask(clientSlug, contentTaskId);
+        const transition = buildContentTaskTransition(clientSlug, found.ct, action);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to run this ContentTask transition.",
+            contentTaskId,
+            parentTaskId: found.parentTaskId,
+            current: found.ct,
+            transition,
+          });
+        }
+        const updated = setContentTaskStatus(
+          clientSlug,
+          found.parentTaskId,
+          contentTaskId,
+          transition.status,
+          transition.pipelineState,
+        );
+        return jsonResult({ ok: true, clientSlug, parentTaskId: found.parentTaskId, contentTask: updated, transition });
+      }),
+  );
+
+  server.registerTool(
+    "content_list_drafts",
+    {
+      title: "List Content Engine drafts",
+      description:
+        "Lists Content Engine draft document summaries for one idea or all discovered draft folders. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).optional().describe("Optional idea id. When omitted, lists all discovered draft folders."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum draft summaries to return."),
+      },
+    },
+    async ({ clientSlug, ideaId, limit }) =>
+      runTool(context, "content_list_drafts", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        if (ideaId) assertContentPathSegment("ideaId", ideaId);
+        const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
+        const ideaIds = ideaId ? [ideaId] : await listContentDraftIdeaIds(clientSlug);
+        const drafts = ideaIds.flatMap((id) => listDrafts(clientSlug, id).map(serializeContentDraftSummary)).slice(0, max);
+        return jsonResult({
+          ok: true,
+          clientSlug,
+          drafts,
+          count: drafts.length,
+          ideaCount: ideaIds.length,
+          filters: pickDefined({ ideaId }),
+          limit: max,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "content_update_draft",
+    {
+      title: "Update Content Engine draft",
+      description:
+        "Updates one Content Engine draft body and safe frontmatter fields. Requires content:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Idea id."),
+        channel: z.string().min(1).describe("Draft channel/file name without .md, e.g. linkedin, proposal or clarify."),
+        body: z.string().optional().describe("Optional replacement markdown body."),
+        clarifyStatus: z.enum(CONTENT_DRAFT_CLARIFY_STATUS_VALUES).optional().describe("Optional clarify_status frontmatter."),
+        itemType: z.enum(VALID_CONTENT_ITEM_TYPES).optional().describe("Optional content item type frontmatter."),
+        mediaPolicy: z.enum(["required", "optional"]).optional().describe("Optional media_policy frontmatter."),
+        model: z.string().min(1).optional().describe("Optional model metadata."),
+        researchUsed: z.boolean().optional().describe("Optional research_used metadata."),
+        selfQa: z.enum(["PASS", "FAIL"]).optional().describe("Optional self_qa verdict."),
+        selfQaNotes: z.array(z.string()).optional().describe("Optional self_qa_notes list."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the draft update."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({
+      clientSlug,
+      ideaId,
+      channel,
+      body,
+      clarifyStatus,
+      itemType,
+      mediaPolicy,
+      model,
+      researchUsed,
+      selfQa,
+      selfQaNotes,
+      dryRun,
+      confirm,
+    }) =>
+      runTool(context, "content_update_draft", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        assertContentPathSegment("channel", channel);
+        const current = loadDraft(clientSlug, ideaId, channel);
+        if (!current) throw new McpAuthError(404, `Content draft not found: ${ideaId}/${channel}`);
+        const patch = buildContentDraftPatch({
+          body,
+          clarifyStatus,
+          itemType,
+          mediaPolicy,
+          model,
+          researchUsed,
+          selfQa,
+          selfQaNotes,
+        });
+        if (!patch.bodyChanged && Object.keys(patch.meta).length === 0) {
+          throw new McpAuthError(400, "No draft fields to update");
+        }
+        const preview = previewContentDraftUpdate(current, patch);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to update this draft.",
+            current: serializeContentDraftSummary(current),
+            patch: {
+              meta: patch.meta,
+              bodyChanged: patch.bodyChanged,
+              bodyChars: patch.body?.length ?? current.body.length,
+            },
+            preview,
+          });
+        }
+        const draft = updateDraft(clientSlug, ideaId, channel, {
+          meta: Object.keys(patch.meta).length > 0 ? patch.meta : undefined,
+          body: patch.body,
+        });
+        return jsonResult({ ok: true, clientSlug, draft: serializeContentDraft(draft, CONTENT_DRAFT_MAX_CHARS_DEFAULT) });
+      }),
+  );
+
+  server.registerTool(
+    "content_request_draft_iteration",
+    {
+      title: "Request Content Engine draft iteration",
+      description:
+        "Snapshots a draft, stores an iteration request in frontmatter, moves the channel phase back to drafting and posts a chat marker. Requires content:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Idea id."),
+        channel: z.string().min(1).describe("Draft channel/file name without .md."),
+        instruction: z.string().min(1).describe("Human iteration instruction for the writer."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the iteration request."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to request iteration."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel, instruction, dryRun, confirm }) =>
+      runTool(context, "content_request_draft_iteration", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        assertContentPathSegment("channel", channel);
+        const preview = previewDraftIteration(clientSlug, ideaId, channel, instruction);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to request this draft iteration.",
+            preview,
+          });
+        }
+        const result = requestDraftIteration(clientSlug, ideaId, channel, instruction);
+        return jsonResult({
+          ...result,
+          ok: true,
+          clientSlug,
+          draft: serializeDraftIterationResult(result.draft),
+        });
+      }),
+  );
+
+  server.registerTool(
+    "content_retrigger_writer",
+    {
+      title: "Retrigger Content Engine writer",
+      description:
+        "Best-effort re-triggers the writer skill for an existing ContentTask. With instruction it triggers an iteration; without instruction it triggers the initial writer flow. Requires content:write. Defaults to dry-run and requires confirm=true to forward to the gateway.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        contentTaskId: z.string().min(1).describe("ContentTask id."),
+        channel: z.string().min(1).optional().describe("Optional channel scope for iteration."),
+        instruction: z.string().min(1).optional().describe("Optional free-text iteration instruction."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the writer trigger."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to trigger writer."),
+      },
+    },
+    async ({ clientSlug, contentTaskId, channel, instruction, dryRun, confirm }) =>
+      runTool(context, "content_retrigger_writer", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        assertContentPathSegment("contentTaskId", contentTaskId);
+        if (channel) assertContentPathSegment("channel", channel);
+        const preview = previewRetriggerContentWriter(clientSlug, contentTaskId, { channel, instruction });
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to re-trigger the Content Engine writer.",
+            preview,
+          });
+        }
+        const result = await retriggerContentWriter(clientSlug, contentTaskId, { channel, instruction });
+        return jsonResult({ ...result, ok: true, clientSlug });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_reconcile_state",
+    {
+      title: "Get Content Engine reconcile state",
+      description:
+        "Reads the last persisted Content Engine reconciler run without computing or mutating state. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "content_get_reconcile_state", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const state = readReconcileState(clientSlug);
+        return jsonResult(state ? { ok: true, clientSlug, neverRan: false, state } : { ok: true, clientSlug, neverRan: true });
+      }),
+  );
+
+  server.registerTool(
+    "content_reconcile",
+    {
+      title: "Run Content Engine reconciler",
+      description:
+        "Runs the deterministic Content Engine reconciler for one client, promoting forward-only safe phases and persisting reconcile-state.json. Requires content:write. Defaults to dry-run and requires confirm=true to run.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        dryRun: z.boolean().default(true).describe("When true, only previews that reconcile would run."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to run the reconciler."),
+      },
+    },
+    async ({ clientSlug, dryRun, confirm }) =>
+      runTool(context, "content_reconcile", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        const lastState = readReconcileState(clientSlug);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to run the Content Engine reconciler.",
+            preview: { clientSlug, lastState },
+          });
+        }
+        const result = await reconcileContentTasks(clientSlug);
+        return jsonResult({ ok: true, clientSlug, result });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_draft",
+    {
+      title: "Get Content Engine draft",
+      description: "Reads one Content Engine draft body and metadata. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Idea id."),
+        channel: z.string().min(1).describe("Draft channel/file name without .md, e.g. linkedin or blog."),
+        maxChars: z
+          .number()
+          .int()
+          .min(1)
+          .max(CONTENT_DRAFT_MAX_CHARS_MAX)
+          .optional()
+          .describe("Maximum draft body characters to return. Defaults to 60000."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel, maxChars }) =>
+      runTool(context, "content_get_draft", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        assertContentPathSegment("channel", channel);
+        const max = clampLimit(maxChars, CONTENT_DRAFT_MAX_CHARS_DEFAULT, CONTENT_DRAFT_MAX_CHARS_MAX);
+        const draft = loadDraft(clientSlug, ideaId, channel);
+        if (!draft) throw new McpAuthError(404, `Content draft not found: ${ideaId}/${channel}`);
+        return jsonResult({ ok: true, clientSlug, draft: serializeContentDraft(draft, max), maxChars: max });
+      }),
+  );
+
+  server.registerTool(
+    "content_list_activity",
+    {
+      title: "List Content Engine activity",
+      description: "Lists recent Content Engine activity events for a client. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum events to return."),
+      },
+    },
+    async ({ clientSlug, limit }) =>
+      runTool(context, "content_list_activity", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
+        const activity = readActivity(clientSlug, max);
+        return jsonResult({ ok: true, clientSlug, activity, count: activity.length, limit: max });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_calendar",
+    {
+      title: "Get Content Engine calendar",
+      description:
+        "Reads scheduled posts and Ready Queue drafts for the Content Engine posting calendar without running reconciliation. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        from: z.string().min(1).optional().describe("Optional inclusive start date/ISO timestamp."),
+        to: z.string().min(1).optional().describe("Optional inclusive end date/ISO timestamp."),
+        maxBodyChars: z
+          .number()
+          .int()
+          .min(1)
+          .max(CONTENT_BODY_MAX_CHARS_MAX)
+          .optional()
+          .describe("Maximum draft body characters per calendar item."),
+      },
+    },
+    async ({ clientSlug, from, to, maxBodyChars }) =>
+      runTool(context, "content_get_calendar", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const max = clampLimit(maxBodyChars, CONTENT_BODY_MAX_CHARS_DEFAULT, CONTENT_BODY_MAX_CHARS_MAX);
+        const calendar = getContentCalendar(clientSlug, { from, to, maxBodyChars: max });
+        return jsonResult({ ...calendar, clientSlug, filters: pickDefined({ from, to }), maxBodyChars: max });
+      }),
+  );
+
+  server.registerTool(
+    "content_list_signals",
+    {
+      title: "List Content Engine research signals",
+      description: "Lists Content Engine research signals from brand content/research-signals files. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        date: z.string().min(1).optional().describe("Optional YYYY-MM-DD date filter."),
+        days: z
+          .number()
+          .int()
+          .min(1)
+          .max(CONTENT_SIGNAL_DAYS_MAX)
+          .optional()
+          .describe("Number of recent days to include when date is omitted."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum signal files to scan."),
+      },
+    },
+    async ({ clientSlug, date, days, limit }) =>
+      runTool(context, "content_list_signals", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const maxDays = clampLimit(days, CONTENT_SIGNAL_DAYS_DEFAULT, CONTENT_SIGNAL_DAYS_MAX);
+        const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
+        const payload = listContentSignals(clientSlug, { date, days: maxDays, limit: max });
+        return jsonResult({ ...payload, clientSlug, filters: pickDefined({ date, days: maxDays }), limit: max });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_channel_loops",
+    {
+      title: "Get Content Engine channel loops",
+      description:
+        "Returns derived per-channel loop state: cadence, antennas, ideation, creation, published and metrics stages. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "content_get_channel_loops", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const payload = getContentChannelLoops(clientSlug);
+        return jsonResult({ ...payload, clientSlug });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_pillars",
+    {
+      title: "Get Content Engine pillars",
+      description: "Reads brand content/content-pillars.md and parsed pillar summaries. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "content_get_pillars", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        return jsonResult({ clientSlug, ...getContentPillars(clientSlug) });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_pov_bank",
+    {
+      title: "Get Content Engine POV bank",
+      description:
+        "Reads the Neon-backed POV Bank state and storage diagnostic without legacy JSON bootstrap. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "content_get_pov_bank", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const payload = await getContentPovBank(clientSlug);
+        return jsonResult({ clientSlug, ...payload });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_dispatch_config",
+    {
+      title: "Get Content Engine dispatch config",
+      description: "Reads the Editorial Dispatch transport/channel config from dispatch-channel.yml. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "content_get_dispatch_config", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        return jsonResult({ clientSlug, ...getContentDispatchConfig(clientSlug) });
+      }),
+  );
+
+  server.registerTool(
+    "content_list_carousel_templates",
+    {
+      title: "List Content Engine carousel templates",
+      description: "Lists brand visual-identity carousel templates available to Content Engine. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        channel: z.string().min(1).optional().describe("Optional channel filter, e.g. linkedin."),
+        includeDisabled: z
+          .boolean()
+          .default(false)
+          .describe("When true, includes templates disabled by Content Engine config."),
+      },
+    },
+    async ({ clientSlug, channel, includeDisabled }) =>
+      runTool(context, "content_list_carousel_templates", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        return jsonResult({
+          clientSlug,
+          filters: pickDefined({ channel, includeDisabled }),
+          ...listContentCarouselTemplates(clientSlug, { channel, includeDisabled }),
+        });
+      }),
+  );
+
+  server.registerTool(
+    "content_list_crons",
+    {
+      title: "List Content Engine crons",
+      description:
+        "Lists OpenClaw cron jobs scoped to Content Engine for one client, including schedule, run metadata and prompt preview. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        status: z.enum(MCP_RECURRING_STATUS_VALUES).optional().describe("Optional active/paused filter."),
+        query: z.string().optional().describe("Optional case-insensitive search over name/baseName/prompt."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum crons to return."),
+        maxPromptChars: z
+          .number()
+          .int()
+          .min(1)
+          .max(RECURRING_PROMPT_MAX_CHARS_MAX)
+          .optional()
+          .describe("Maximum prompt characters per cron. Defaults to 4000."),
+      },
+    },
+    async ({ clientSlug, status, query, limit, maxPromptChars }) =>
+      runTool(context, "content_list_crons", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
+        const promptMax = clampLimit(
+          maxPromptChars,
+          RECURRING_PROMPT_MAX_CHARS_DEFAULT,
+          RECURRING_PROMPT_MAX_CHARS_MAX,
+        );
+        const payload = listMcpContentCrons(clientSlug, { status, query, limit: max, maxPromptChars: promptMax });
+        return jsonResult({ ...payload, clientSlug, filters: pickDefined({ status, query }), limit: max });
+      }),
+  );
+
+  server.registerTool(
+    "content_get_cron_publish_config",
+    {
+      title: "Get Content Engine cron publish config",
+      description:
+        "Reads the publish destination configured for one Content Engine/recurring cron key. Requires content:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        cronKey: z.string().min(1).describe("Cron key under client-config.json crons.<cronKey>."),
+      },
+    },
+    async ({ clientSlug, cronKey }) =>
+      runTool(context, "content_get_cron_publish_config", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        assertContentPathSegment("cronKey", cronKey);
+        return jsonResult({ ok: true, clientSlug, cronKey, config: getCronPublishConfig(clientSlug, cronKey) });
+      }),
+  );
+
+  server.registerTool(
+    "content_update_cron_publish_config",
+    {
+      title: "Update Content Engine cron publish config",
+      description:
+        "Updates the publish destination for one Content Engine/recurring cron key. Requires content:write and explicit confirmation.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        cronKey: z.string().min(1).describe("Cron key under client-config.json crons.<cronKey>."),
+        transport: z.string().min(1).describe("Registered publish transport, e.g. slack."),
+        channelId: z.string().min(1).describe("Transport channel id."),
+        channelName: z.string().optional().describe("Optional human-readable channel name."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the config update."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
+      },
+    },
+    async ({ clientSlug, cronKey, transport, channelId, channelName, dryRun, confirm }) =>
+      runTool(context, "content_update_cron_publish_config", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        assertContentPathSegment("cronKey", cronKey);
+        const transports = registeredTransports();
+        if (!transports.includes(transport)) {
+          throw new McpAuthError(400, `Invalid transport; registered: [${transports.join(", ")}]`);
+        }
+        const current = getCronPublishConfig(clientSlug, cronKey);
+        const next = { transport, channel_id: channelId, channel_name: channelName };
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to update this cron publish config.",
+            clientSlug,
+            cronKey,
+            current,
+            preview: next,
+          });
+        }
+        const config = setCronPublishConfig(clientSlug, cronKey, next);
+        return jsonResult({ ok: true, clientSlug, cronKey, config });
+      }),
+  );
+
+  server.registerTool(
+    "media_list_image_providers",
+    {
+      title: "List image generation providers",
+      description:
+        "Lists configured image-generation providers, brand image config and storage readiness. Requires media:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "media_list_image_providers", clientSlug, async () => {
+        assertClientScope(context, "media:read", clientSlug);
+        return jsonResult({ ok: true, clientSlug, ...listImageGenerationProviders(clientSlug) });
+      }),
+  );
+
+  server.registerTool(
+    "media_list_draft_assets",
+    {
+      title: "List draft media assets",
+      description: "Lists media[] attached to one Content Engine draft. Requires media:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel }) =>
+      runTool(context, "media_list_draft_assets", clientSlug, async () => {
+        assertClientScope(context, "media:read", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        return jsonResult({ ok: true, clientSlug, ...listDraftMedia(clientSlug, ideaId, channel) });
+      }),
+  );
+
+  server.registerTool(
+    "media_attach_asset",
+    {
+      title: "Attach media asset to draft",
+      description:
+        "Attaches an existing public media URL to a draft's media[] using the canonical MediaAsset schema. Requires media:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
+        url: z.string().url().describe("Public media URL, usually an R2 URL."),
+        type: z.string().min(1).describe("MIME type, e.g. image/png or application/pdf."),
+        source: z.enum(["uploaded", "ai-generated"]).default("uploaded").describe("Media source."),
+        prompt: z.string().nullable().optional().describe("Optional generation prompt metadata."),
+        model: z.string().nullable().optional().describe("Optional generation model metadata."),
+        aspectRatio: z.string().nullable().optional().describe("Optional aspect ratio metadata."),
+        createdAt: z.string().nullable().optional().describe("Optional ISO creation timestamp; defaults to now."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the attachment."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to attach."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel, url, type, source, prompt, model, aspectRatio, createdAt, dryRun, confirm }) =>
+      runTool(context, "media_attach_asset", clientSlug, async () => {
+        assertClientScope(context, "media:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        const input = { url, type, source, prompt, model, aspectRatio, createdAt };
+        const preview = previewAttachDraftMedia(clientSlug, ideaId, channel, input);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to attach this media asset.",
+            preview,
+          });
+        }
+        const result = attachDraftMedia(clientSlug, ideaId, channel, input);
+        return jsonResult({ ok: true, clientSlug, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "media_remove_asset",
+    {
+      title: "Remove media asset from draft",
+      description:
+        "Removes one media[] entry from a draft by URL. Does not delete the remote file. Requires media:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
+        url: z.string().url().describe("Media URL to remove."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the removal."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to remove."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel, url, dryRun, confirm }) =>
+      runTool(context, "media_remove_asset", clientSlug, async () => {
+        assertClientScope(context, "media:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        const preview = previewRemoveDraftMedia(clientSlug, ideaId, channel, url);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to remove this media asset.",
+            preview,
+          });
+        }
+        const result = removeDraftMedia(clientSlug, ideaId, channel, url);
+        return jsonResult({ ok: true, clientSlug, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "media_set_primary_asset",
+    {
+      title: "Set primary draft media asset",
+      description:
+        "Moves one media[] entry to index 0 so it becomes the primary preview asset. Requires media:write. Defaults to dry-run and requires confirm=true to write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
+        url: z.string().url().describe("Media URL to promote."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the reorder."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to reorder."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel, url, dryRun, confirm }) =>
+      runTool(context, "media_set_primary_asset", clientSlug, async () => {
+        assertClientScope(context, "media:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        const preview = previewSetPrimaryDraftMedia(clientSlug, ideaId, channel, url);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to set this asset as primary.",
+            preview,
+          });
+        }
+        const result = setPrimaryDraftMedia(clientSlug, ideaId, channel, url);
+        return jsonResult({ ok: true, clientSlug, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "media_generate_image",
+    {
+      title: "Generate draft image",
+      description:
+        "Generates an image via the configured image provider, uploads it to R2 and attaches it to the draft. Requires media:write. Defaults to dry-run and requires confirm=true to spend provider credits.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
+        prompt: z.string().min(1).describe("Image generation prompt."),
+        aspectRatio: z.string().optional().describe("Optional aspect ratio; unsupported values fall back to provider default."),
+        providerId: z.string().optional().describe("Optional image provider id. Defaults to brand config or first configured provider."),
+        model: z.string().optional().describe("Optional provider model id."),
+        dryRun: z.boolean().default(true).describe("When true, only previews provider/model/storage resolution."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to generate and attach."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel, prompt, aspectRatio, providerId, model, dryRun, confirm }) =>
+      runTool(context, "media_generate_image", clientSlug, async () => {
+        assertClientScope(context, "media:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        const input = { slug: clientSlug, ideaId, channel, prompt, aspectRatio, providerId, model };
+        const preview = previewGenerateDraftImage(input);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to generate this image, upload it and attach it to the draft.",
+            preview,
+          });
+        }
+        const result = await generateDraftImage(input);
+        return jsonResult({ clientSlug, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "publishing_list_providers",
+    {
+      title: "List publishing providers",
+      description: "Lists publishing providers and configuration status for a client. Requires publishing:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        channel: z.string().min(1).optional().describe("Optional channel filter, e.g. linkedin, blog or twitter."),
+      },
+    },
+    async ({ clientSlug, channel }) =>
+      runTool(context, "publishing_list_providers", clientSlug, async () => {
+        assertClientScope(context, "publishing:read", clientSlug);
+        const providers = getAvailableProviders(clientSlug, channel as Parameters<typeof getAvailableProviders>[1]);
+        return jsonResult({ ok: true, clientSlug, channel: channel || null, providers, count: providers.length });
+      }),
+  );
+
+  server.registerTool(
+    "publishing_get_account_info",
+    {
+      title: "Get publishing account info",
+      description: "Reads connected publishing account/network info where available. Requires publishing:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        provider: z.enum(["metricool"]).default("metricool").describe("Publishing provider. Currently metricool."),
+      },
+    },
+    async ({ clientSlug, provider }) =>
+      runTool(context, "publishing_get_account_info", clientSlug, async () => {
+        assertClientScope(context, "publishing:read", clientSlug);
+        if (provider !== "metricool") throw new McpAuthError(400, `Unsupported publishing provider: ${provider}`);
+        const result = await fetchAccountInfo(clientSlug);
+        if (!result.ok) return jsonResult({ ok: false, clientSlug, provider, error: result.error });
+        return jsonResult({ ok: true, clientSlug, provider, info: result.info });
+      }),
+  );
+
+  server.registerTool(
+    "publishing_get_post_metrics",
+    {
+      title: "Get publishing post metrics",
+      description: "Reads the latest stored metrics snapshot for a published post URL. Requires publishing:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        externalUrl: z.string().url().describe("Published post URL to look up in stored metrics snapshots."),
+      },
+    },
+    async ({ clientSlug, externalUrl }) =>
+      runTool(context, "publishing_get_post_metrics", clientSlug, async () => {
+        assertClientScope(context, "publishing:read", clientSlug);
+        const result = await getPublishingPostMetrics(clientSlug, externalUrl);
+        return jsonResult({ ok: true, clientSlug, externalUrl, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "publishing_publish_draft",
+    {
+      title: "Publish or schedule a draft",
+      description:
+        "Publishes now or schedules one approved Content Engine draft through a configured provider. Requires publishing:write. Defaults to dry-run and requires confirm=true to execute.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel to publish."),
+        providerId: z.string().min(1).describe("Publishing provider id, e.g. metricool, wordpress or alarife-payload."),
+        publishAt: z
+          .string()
+          .min(1)
+          .optional()
+          .describe("Optional ISO timestamp to schedule. Omit to publish now."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the publish operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to publish/schedule."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel, providerId, publishAt, dryRun, confirm }) =>
+      runTool(context, "publishing_publish_draft", clientSlug, async () => {
+        assertClientScope(context, "publishing:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        const input = {
+          slug: clientSlug,
+          ideaId,
+          channel: channel as Channel,
+          providerId,
+          schedule: publishAt ? { publishAt } : undefined,
+        };
+        const preview = previewPublishDraft(input);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to publish or schedule this draft.",
+            preview,
+          });
+        }
+        const result = await publishDraft(input);
+        return jsonResult({ clientSlug, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "publishing_cancel_post",
+    {
+      title: "Cancel scheduled publishing post",
+      description:
+        "Cancels one scheduled draft in the provider when possible and marks the local draft as canceled. Requires publishing:write. Defaults to dry-run and requires confirm=true to execute.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel to cancel."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the cancel operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to cancel."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel, dryRun, confirm }) =>
+      runTool(context, "publishing_cancel_post", clientSlug, async () => {
+        assertClientScope(context, "publishing:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        const preview = previewCancelScheduledPost(clientSlug, ideaId, channel);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to cancel this scheduled post.",
+            preview,
+          });
+        }
+        const result = await cancelScheduledPost(clientSlug, ideaId, channel);
+        return jsonResult({ clientSlug, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "publishing_get_status",
+    {
+      title: "Get publishing status",
+      description:
+        "Reads one draft's stored publishing status. Optional refresh polls the provider and may update local state; refresh requires publishing:write.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        ideaId: z.string().min(1).describe("Content Engine idea id."),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
+        refresh: z.boolean().default(false).describe("When true, poll provider and persist any changed status."),
+      },
+    },
+    async ({ clientSlug, ideaId, channel, refresh }) =>
+      runTool(context, "publishing_get_status", clientSlug, async () => {
+        assertClientScope(context, "publishing:read", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        if (refresh) {
+          assertClientScope(context, "publishing:write", clientSlug);
+          const result = await refreshPublishingStatus(clientSlug, ideaId, channel);
+          if (!result.draft) throw new McpAuthError(404, `Content draft not found: ${ideaId}/${channel}`);
+          return jsonResult({ ok: true, clientSlug, ideaId, channel, refreshed: true, ...result });
+        }
+        const result = getStoredPublishingStatus(clientSlug, ideaId, channel);
+        if (!result.draft) throw new McpAuthError(404, `Content draft not found: ${ideaId}/${channel}`);
+        return jsonResult({ ok: true, clientSlug, ideaId, channel, refreshed: false, publishing: result.publishing });
+      }),
+  );
+
+  server.registerTool(
+    "publishing_reconcile",
+    {
+      title: "Reconcile scheduled publishing posts",
+      description:
+        "Reconciles due scheduled posts for one client, refreshing local publishing state and metrics. Requires publishing:write. Defaults to dry-run and requires confirm=true to execute.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Max due drafts to include in dry-run preview."),
+        dryRun: z.boolean().default(true).describe("When true, only previews due scheduled posts."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to reconcile."),
+      },
+    },
+    async ({ clientSlug, limit, dryRun, confirm }) =>
+      runTool(context, "publishing_reconcile", clientSlug, async () => {
+        assertClientScope(context, "publishing:write", clientSlug);
+        const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
+        const preview = previewPublishingReconciliation(clientSlug, max);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to reconcile due scheduled posts for this client.",
+            preview,
+          });
+        }
+        const result = await reconcilePublishing(clientSlug);
+        return jsonResult({ ok: true, clientSlug, ...result });
+      }),
+  );
+
+  server.registerTool(
+    "integrations_list_catalog",
+    {
+      title: "List integrations catalog",
+      description: "Reads the available integrations catalog without returning secrets. Requires integrations:read.",
+      inputSchema: {},
+    },
+    async () =>
+      runTool(context, "integrations_list_catalog", undefined, async () => {
+        assertMcpScope(context.principal, "integrations:read");
+        const catalog = loadIntegrationCatalog();
+        return jsonResult({ ok: catalog.found, found: catalog.found, catalog: catalog.catalog });
+      }),
+  );
+
+  server.registerTool(
+    "integrations_get_status",
+    {
+      title: "Get integrations status",
+      description:
+        "Reads sanitized integration status for a client without returning secret/config values. Requires integrations:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+      },
+    },
+    async ({ clientSlug }) =>
+      runTool(context, "integrations_get_status", clientSlug, async () => {
+        assertClientScope(context, "integrations:read", clientSlug);
+        return jsonResult({ ok: true, clientSlug, integrations: getSanitizedIntegrationStatus(clientSlug) });
+      }),
+  );
+
+  server.registerTool(
+    "integrations_test_connection",
+    {
+      title: "Test integration connection",
+      description:
+        "Runs Sancho's integration connection test for one source or all configured sources. Requires integrations:write and explicit confirmation.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        source: z.string().min(1).optional().describe("Integration source id to test."),
+        all: z.boolean().default(false).describe("Test all configured sources for the client."),
+        dryRun: z.boolean().default(true).describe("Preview without running the connection test."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to execute."),
+      },
+    },
+    async ({ clientSlug, source, all = false, dryRun = true, confirm = false }) =>
+      runTool(context, "integrations_test_connection", clientSlug, async () => {
+        assertClientScope(context, "integrations:write", clientSlug);
+        const preview = previewTestIntegrationConnection({ clientSlug, source, all });
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to run integration connection tests.",
+            preview,
+          });
+        }
+        const result = testIntegrationConnection({ clientSlug, source, all });
+        return jsonResult(result);
+      }),
+  );
+
+  server.registerTool(
+    "integrations_publish_message",
+    {
+      title: "Publish integration message",
+      description:
+        "Publishes one generic integration message through a configured transport or cron publish target. Requires integrations:write and explicit confirmation.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        cronKey: z.string().min(1).optional().describe("Cron key whose publish target should be used."),
+        transport: z.string().min(1).optional().describe("Explicit transport, for example slack."),
+        channel: z.string().min(1).optional().describe("Explicit target channel id/name."),
+        title: z.string().min(1).max(2000).describe("Root message title."),
+        body: z.string().min(1).max(20_000).describe("Message body/thread content."),
+        dryRun: z.boolean().default(true).describe("Preview without sending a message."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to publish."),
+      },
+    },
+    async ({ clientSlug, cronKey, transport, channel, title, body, dryRun = true, confirm = false }) =>
+      runTool(context, "integrations_publish_message", clientSlug, async () => {
+        assertClientScope(context, "integrations:write", clientSlug);
+        const preview = previewPublishIntegrationMessage({ clientSlug, cronKey, transport, channel, title, body });
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to publish this integration message.",
+            preview,
+          });
+        }
+        const result = await publishIntegrationMessage({ clientSlug, cronKey, transport, channel, title, body });
+        return jsonResult({ ...result, ok: result.ok, clientSlug });
       }),
   );
 
@@ -768,6 +2990,72 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   );
 
   server.registerTool(
+    "yalc_get_campaign",
+    {
+      title: "Get YALC campaign",
+      description: "Reads one YALC campaign detail by id for a Sancho client. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        campaignId: z.string().min(1).describe("YALC campaign id."),
+      },
+    },
+    async ({ clientSlug, campaignId }) =>
+      runTool(context, "yalc_get_campaign", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const data = await yalcFetch(
+          resolveYalcConfig(clientSlug),
+          `/api/campaigns/${encodeURIComponent(campaignId)}`,
+          { headers: traceHeaders(context) },
+        );
+        return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
+    "yalc_get_campaign_events",
+    {
+      title: "Get YALC campaign events",
+      description: "Reads the event stream/history for one YALC campaign. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        campaignId: z.string().min(1).describe("YALC campaign id."),
+      },
+    },
+    async ({ clientSlug, campaignId }) =>
+      runTool(context, "yalc_get_campaign_events", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const data = await yalcFetch(
+          resolveYalcConfig(clientSlug),
+          `/api/campaigns/${encodeURIComponent(campaignId)}/events`,
+          { headers: traceHeaders(context) },
+        );
+        return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
+    "yalc_get_campaign_readiness",
+    {
+      title: "Get YALC campaign readiness",
+      description: "Reads readiness checks for one YALC campaign before publish/live operations. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        campaignId: z.string().min(1).describe("YALC campaign id."),
+      },
+    },
+    async ({ clientSlug, campaignId }) =>
+      runTool(context, "yalc_get_campaign_readiness", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const data = await yalcFetch(
+          resolveYalcConfig(clientSlug),
+          `/api/campaigns/${encodeURIComponent(campaignId)}/readiness`,
+          { headers: traceHeaders(context) },
+        );
+        return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
     "yalc_list_gates",
     {
       title: "List YALC approval gates",
@@ -801,15 +3089,6 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       const effective = await getEffectiveModelConfig(clientSlug);
       return { config: effective.config, source: effective.source };
     },
-  });
-
-  // Keyword Antenna (SAN-260): score agent-supplied candidates + promote to seo
-  // Ideas (write), and list opportunities (read). Discovery runs agent-side.
-  registerKeywordAntennaTools(server, {
-    assertReadAccess: (clientSlug) => assertClientScope(context, "seo:read", clientSlug),
-    assertWriteAccess: (clientSlug) => assertClientScope(context, "seo:write", clientSlug),
-    run: (toolName, clientSlug, handler) => runTool(context, toolName, clientSlug, handler),
-    jsonResult,
   });
 
   server.registerTool(
@@ -847,6 +3126,51 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         const data = await yalcFetch(
           resolveYalcConfig(clientSlug),
           `/api/leads${query ? `?${query}` : ""}`,
+          { headers: traceHeaders(context) },
+        );
+        return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
+    "yalc_get_lead",
+    {
+      title: "Get YALC lead",
+      description: "Reads one YALC campaign lead by id. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        campaignId: z.string().min(1).describe("YALC campaign id that owns the lead."),
+        leadId: z.string().min(1).describe("YALC lead id."),
+      },
+    },
+    async ({ clientSlug, campaignId, leadId }) =>
+      runTool(context, "yalc_get_lead", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const data = await yalcFetch(
+          resolveYalcConfig(clientSlug),
+          `/api/campaigns/${encodeURIComponent(campaignId)}/leads/${encodeURIComponent(leadId)}`,
+          { headers: traceHeaders(context) },
+        );
+        return jsonResult(data);
+      }),
+  );
+
+  server.registerTool(
+    "yalc_list_lead_messages",
+    {
+      title: "List YALC lead messages",
+      description: "Reads the Inbox conversation/messages for one YALC lead. Requires yalc:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        leadId: z.string().min(1).describe("YALC lead id."),
+      },
+    },
+    async ({ clientSlug, leadId }) =>
+      runTool(context, "yalc_list_lead_messages", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const data = await yalcFetch(
+          resolveYalcConfig(clientSlug),
+          `/api/leads/${encodeURIComponent(leadId)}/messages`,
           { headers: traceHeaders(context) },
         );
         return jsonResult(data);
@@ -1322,134 +3646,283 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   );
 
   server.registerTool(
+    "open_design_resolve_project",
+    {
+      title: "Resolve existing Open Design project",
+      description:
+        "Finds an existing Open Design project for a client brand folder and optional scope without importing or creating projects. Requires open-design:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        scope: z.string().optional().describe("Optional brand-relative folder scope, e.g. 'content/assets'."),
+      },
+    },
+    async ({ clientSlug, scope }) =>
+      runTool(context, "open_design_resolve_project", clientSlug, async () => {
+        assertClientScope(context, "open-design:read", clientSlug);
+        const resolution = await resolveExistingOpenDesignProject(clientSlug, scope, odConfig(context));
+        return jsonResult(resolution);
+      }),
+  );
+
+  server.registerTool(
+    "open_design_import_project",
+    {
+      title: "Import Open Design project",
+      description:
+        "Ensures a brand folder/scope is registered as an Open Design project and persists the project mapping. Requires open-design:write and explicit confirmation.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        scope: z.string().optional().describe("Optional brand-relative folder scope, e.g. 'content/assets'."),
+        applyDesignSystem: z
+          .boolean()
+          .default(true)
+          .describe("Best-effort set the project designSystemId to the client slug."),
+        dryRun: z.boolean().default(true).describe("Preview without importing or writing mapping."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to import/persist."),
+      },
+    },
+    async ({ clientSlug, scope, applyDesignSystem = true, dryRun = true, confirm = false }) =>
+      runTool(context, "open_design_import_project", clientSlug, async () => {
+        assertClientScope(context, "open-design:write", clientSlug);
+        const preview = await previewOpenDesignProjectImport(clientSlug, scope, { applyDesignSystem });
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to import/register this Open Design project.",
+            preview,
+          });
+        }
+        const result = await ensureOpenDesignProject(clientSlug, scope, {
+          applyDesignSystem,
+          config: odConfig(context),
+        });
+        return jsonResult(result);
+      }),
+  );
+
+  server.registerTool(
+    "open_design_update_project",
+    {
+      title: "Update Open Design project",
+      description:
+        "Updates curated Open Design project metadata (name, skillId, designSystemId). Requires open-design:write and explicit confirmation.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        projectId: z.string().min(1).describe("Open Design project id."),
+        name: z.string().min(1).max(200).optional().describe("Optional project display name."),
+        skillId: z.string().min(1).optional().describe("Optional OD skill id to set."),
+        designSystemId: z.string().min(1).optional().describe("Optional OD design system id to set."),
+        clearSkill: z.boolean().default(false).describe("Set skillId to null."),
+        clearDesignSystem: z.boolean().default(false).describe("Set designSystemId to null."),
+        dryRun: z.boolean().default(true).describe("Preview without patching the OD project."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to patch."),
+      },
+    },
+    async ({
+      clientSlug,
+      projectId,
+      name,
+      skillId,
+      designSystemId,
+      clearSkill = false,
+      clearDesignSystem = false,
+      dryRun = true,
+      confirm = false,
+    }) =>
+      runTool(context, "open_design_update_project", clientSlug, async () => {
+        assertClientScope(context, "open-design:write", clientSlug);
+        const patch = buildOpenDesignProjectPatch({
+          name,
+          skillId,
+          designSystemId,
+          clearSkill,
+          clearDesignSystem,
+        });
+        const preview = { clientSlug, projectId, patch };
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to update this Open Design project.",
+            preview,
+          });
+        }
+        const project = await odPatchProject(projectId, patch, odConfig(context));
+        return jsonResult({ ok: true, clientSlug, projectId, project });
+      }),
+  );
+
+  server.registerTool(
+    "open_design_export_artifact",
+    {
+      title: "Export Open Design artifact",
+      description:
+        "Exports one Open Design artifact through the OD daemon. Requires open-design:write and explicit confirmation.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        artifactId: z.string().min(1).describe("Open Design artifact id."),
+        format: z.enum(OD_EXPORT_FORMAT_VALUES).describe("Export format."),
+        destination: z.string().min(1).optional().describe("Optional daemon-side destination path."),
+        dryRun: z.boolean().default(true).describe("Preview without exporting."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to export."),
+      },
+    },
+    async ({ clientSlug, artifactId, format, destination, dryRun = true, confirm = false }) =>
+      runTool(context, "open_design_export_artifact", clientSlug, async () => {
+        assertClientScope(context, "open-design:write", clientSlug);
+        const request = pickDefined({ artifactId, format, destination }) as {
+          artifactId: string;
+          format: (typeof OD_EXPORT_FORMAT_VALUES)[number];
+          destination?: string;
+        };
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to export this Open Design artifact.",
+            preview: { clientSlug, request },
+          });
+        }
+        const result = await odExport(request, odConfig(context));
+        return jsonResult({ ...result, ok: result.ok, clientSlug, artifactId, format, destination: destination ?? null });
+      }),
+  );
+
+  server.registerTool(
+    "open_design_list_project_files",
+    {
+      title: "List Open Design project files",
+      description: "Lists files for an existing Open Design project. Requires open-design:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        projectId: z.string().min(1).describe("Open Design project id."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(OD_PROJECT_FILE_LIMIT_MAX)
+          .optional()
+          .describe("Maximum files to return."),
+      },
+    },
+    async ({ clientSlug, projectId, limit }) =>
+      runTool(context, "open_design_list_project_files", clientSlug, async () => {
+        assertClientScope(context, "open-design:read", clientSlug);
+        const max = clampLimit(limit, OD_PROJECT_FILE_LIMIT_DEFAULT, OD_PROJECT_FILE_LIMIT_MAX);
+        const files = await odListProjectFiles(projectId, odConfig(context));
+        return jsonResult({
+          ok: true,
+          clientSlug,
+          projectId,
+          files: files.slice(0, max),
+          count: Math.min(files.length, max),
+          totalFiles: files.length,
+          limit: max,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "open_design_get_project_file",
+    {
+      title: "Get Open Design project file",
+      description:
+        "Reads a UTF-8 text file from an existing Open Design project by project-relative path. Requires open-design:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        projectId: z.string().min(1).describe("Open Design project id."),
+        filePath: z.string().min(1).describe("Project-relative file path."),
+        maxChars: z
+          .number()
+          .int()
+          .min(1)
+          .max(OD_PROJECT_FILE_MAX_CHARS_MAX)
+          .optional()
+          .describe("Maximum characters to return."),
+      },
+    },
+    async ({ clientSlug, projectId, filePath, maxChars }) =>
+      runTool(context, "open_design_get_project_file", clientSlug, async () => {
+        assertClientScope(context, "open-design:read", clientSlug);
+        const safePath = assertRelativeProjectPath(filePath);
+        const max = clampLimit(maxChars, OD_PROJECT_FILE_MAX_CHARS_DEFAULT, OD_PROJECT_FILE_MAX_CHARS_MAX);
+        const content = await odReadProjectFile(projectId, safePath, odConfig(context));
+        if (content == null) throw new McpAuthError(404, `Open Design project file not found: ${safePath}`);
+        const truncated = content.length > max;
+        return jsonResult({
+          ok: true,
+          clientSlug,
+          projectId,
+          filePath: safePath,
+          size: content.length,
+          maxChars: max,
+          content: truncated ? content.slice(0, max) : content,
+          truncated,
+        });
+      }),
+  );
+
+  server.registerTool(
+    "open_design_list_artifacts",
+    {
+      title: "List Open Design project artifacts",
+      description: "Lists artifacts for an existing Open Design project. Requires open-design:read.",
+      inputSchema: {
+        clientSlug: z.string().min(1).describe("Sancho client slug."),
+        projectId: z.string().min(1).describe("Open Design project id."),
+      },
+    },
+    async ({ clientSlug, projectId }) =>
+      runTool(context, "open_design_list_artifacts", clientSlug, async () => {
+        assertClientScope(context, "open-design:read", clientSlug);
+        const artifacts = await odListArtifacts(projectId, odConfig(context));
+        return jsonResult({ ok: true, clientSlug, projectId, artifacts, count: artifacts.length });
+      }),
+  );
+
+  server.registerTool(
     "sancho_intake_create_link",
     {
       title: "Create public intake form link",
       description:
-        "Returns the public intake-form URL for a client (SAN-17). Share it with the client to kick off the Full Foundation via the form branch. Read-only — the token is a stateless function of the slug. Requires sancho:read.",
+        "Creates a signed public intake form URL for an allowed client. Requires clients:read or legacy sancho:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
     },
     async ({ clientSlug }) =>
       runTool(context, "sancho_intake_create_link", clientSlug, async () => {
-        assertClientScope(context, "sancho:read", clientSlug);
+        assertClientReadScope(context, clientSlug);
         const url = buildIntakeUrl(clientSlug);
         return jsonResult({ ok: true, clientSlug, url });
       }),
   );
 
-  // SAN-217: Meeting Intelligence read tools (parity Claude Code + Sancho via intelligence:read).
-  // These wrap the same shared services the Intelligence UI uses — read-only, no run/approve/reject.
-  server.registerTool(
-    "sancho_list_meetings",
-    {
-      title: "List Meeting Intelligence meetings",
-      description:
-        "Lists a client's Meeting Intelligence meetings as a lightweight index (id, title, date, source, status, decision/action counts) plus totals and last sync/run. Read-only. When Meeting Intelligence has no database configured it returns an empty index with storage.configured=false (clean degradation, no error). Requires intelligence:read.",
-      inputSchema: {
-        clientSlug: z.string().min(1).describe("Sancho client slug."),
-        limit: z
-          .number()
-          .int()
-          .positive()
-          .optional()
-          .describe("Max meetings to return (default 50, max 200)."),
-      },
-    },
-    async ({ clientSlug, limit }) =>
-      runTool(context, "sancho_list_meetings", clientSlug, async () => {
-        assertClientScope(context, "intelligence:read", clientSlug);
-        const state = await getMeetingIntelligenceState(clientSlug);
-        const max = clampLimit(limit, MEETING_LIMIT_DEFAULT, MEETING_LIMIT_MAX);
-        return jsonResult({
-          ok: state.ok,
-          storage: state.storage,
-          meetings: [...state.meetings].slice(0, max),
-          totals: state.totals,
-          lastSync: state.lastSync,
-          lastCheckStatus: state.lastCheckStatus,
-          lastRun: state.lastRun,
-        });
-      }),
-  );
+  registerKeywordAntennaTools(server, {
+    assertReadAccess: (clientSlug) => assertClientScope(context, "seo:read", clientSlug),
+    assertWriteAccess: (clientSlug) => assertClientScope(context, "seo:write", clientSlug),
+    run: (toolName, clientSlug, handler) => runTool(context, toolName, clientSlug, handler),
+    jsonResult,
+  });
 
-  server.registerTool(
-    "sancho_get_meeting",
-    {
-      title: "Get Meeting Intelligence meeting detail",
-      description:
-        "Returns the full Meeting Intelligence detail for one meeting: meeting metadata, artifact (raw/summary text), insights, decisions, document impacts and recommendations. Read-only. Returns ok:false when the meeting is not found or no database is configured. Requires intelligence:read.",
-      inputSchema: {
-        clientSlug: z.string().min(1).describe("Sancho client slug."),
-        meetingId: z.string().min(1).describe("Meeting id from sancho_list_meetings."),
-      },
-    },
-    async ({ clientSlug, meetingId }) =>
-      runTool(context, "sancho_get_meeting", clientSlug, async () => {
-        assertClientScope(context, "intelligence:read", clientSlug);
-        return jsonResult(await getMeetingIntelligenceMeeting(clientSlug, meetingId));
-      }),
-  );
-
-  server.registerTool(
-    "sancho_list_intelligence",
-    {
-      title: "List cross-meeting intelligence",
-      description:
-        "Returns a client's cross-meeting intelligence without opening each meeting: the unified insight feed, decisions, impacted documents, recommendations/proposals and totals. Optional kind/status filters narrow the insight feed. Read-only. Requires intelligence:read.",
-      inputSchema: {
-        clientSlug: z.string().min(1).describe("Sancho client slug."),
-        kind: z
-          .enum(["Decision", "Action", "Insight", "Quote", "Risk"])
-          .optional()
-          .describe("Filter the insight feed by type."),
-        status: z
-          .string()
-          .optional()
-          .describe(
-            "Filter the insight feed by status (draft, reviewable, accepted, rejected, converted).",
-          ),
-      },
-    },
-    async ({ clientSlug, kind, status }) =>
-      runTool(context, "sancho_list_intelligence", clientSlug, async () => {
-        assertClientScope(context, "intelligence:read", clientSlug);
-        const state = await getMeetingIntelligenceState(clientSlug);
-        const statusFilter = status?.trim().toLowerCase();
-        const intelligence = [...state.intelligence].filter((item) => {
-          if (kind && item.type !== kind) return false;
-          if (statusFilter && item.status.toLowerCase() !== statusFilter) return false;
-          return true;
-        });
-        return jsonResult({
-          ok: state.ok,
-          storage: state.storage,
-          totals: state.totals,
-          intelligence,
-          decisions: state.decisions,
-          documents: state.documents,
-          proposals: state.proposals,
-        });
-      }),
-  );
-
-  // Métricas v2 (SAN-264): time-series read over metric_snapshots. Clean
-  // degradation (configured=false) when no DB is set. Requires metrics:read.
   server.registerTool(
     "sancho_get_metrics_timeseries",
     {
       title: "Get Sancho metrics (time-series)",
       description:
-        "Reads a client's metrics from the metric_snapshots time-series. view=series → a bucketed series (day/week/month) for an optional source+metric; view=surfaces → the latest headline value per surface (reputation/web/product/pipeline/paid/email/social/partnerships); view=trend → current-vs-previous-window delta for a source+metric; view=northstar → the client's metrics-plan North Star/KPIs. Read-only; returns configured=false when no database is set. Requires metrics:read.",
+        "Reads a client's metrics from the metric_snapshots time-series. view=series returns buckets; view=surfaces returns latest headline values; view=trend returns current-vs-previous delta; view=northstar returns the metrics-plan North Star/KPIs. Requires metrics:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         view: z.enum(["series", "surfaces", "trend", "northstar"]).default("series").describe("Which view to return."),
-        source: z.string().optional().describe("Metric source (e.g. ga4, gsc, meta-ads, ghl, trust_score)."),
-        metric: z.string().optional().describe("Metric name within the source."),
-        grain: z.enum(["day", "week", "month"]).optional().describe("Bucket size for view=series (default day)."),
-        from: z.string().optional().describe("Start date YYYY-MM-DD."),
-        to: z.string().optional().describe("End date YYYY-MM-DD."),
+        source: z.string().optional().describe("Metric source, e.g. meta-ads, ghl, ga4."),
+        metric: z.string().optional().describe("Metric name/key."),
+        grain: z.enum(["day", "week", "month"]).default("day").describe("Bucket grain for series view."),
+        from: z.string().optional().describe("Inclusive ISO date/time lower bound."),
+        to: z.string().optional().describe("Inclusive ISO date/time upper bound."),
       },
     },
     async ({ clientSlug, view, source, metric, grain, from, to }) =>
@@ -1458,22 +3931,22 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         if (view === "surfaces") return jsonResult(await getSurfaceSummary(clientSlug, { from, to }));
         if (view === "northstar") return jsonResult(getNorthStar(clientSlug));
         if (view === "trend") {
-          const end = to ?? new Date().toISOString().slice(0, 10);
-          const start = from ?? new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
-          return jsonResult(await getTrend(clientSlug, { source, metric, from: start, to: end }));
+          if (!source || !metric) throw new McpAuthError(400, "source and metric are required for view=trend");
+          if (!from || !to) throw new McpAuthError(400, "from and to are required for view=trend");
+          const trendSource = source;
+          const trendMetric = metric;
+          return jsonResult(await getTrend(clientSlug, { source: trendSource, metric: trendMetric, from, to }));
         }
         return jsonResult(await getMetricsTimeSeries(clientSlug, { source, metric, grain, from, to }));
       }),
   );
 
-  // Métricas v2 (SAN-265): read the active dashboard definition (presentation +
-  // plan + custom surfaces/metrics), seeded lazily from metrics-plan. metrics:read.
   server.registerTool(
     "sancho_get_metrics_dashboard",
     {
       title: "Get Sancho metrics dashboard definition",
       description:
-        "Returns a client's versioned metrics dashboard definition: archetype, North Star, tabs, surfaces, the analytical plan (funnel + KPIs) and any custom surfaces/metrics, plus the current version and version history. Seeded lazily from metrics-plan.json on first access. Read-only; returns configured=false without a database. Requires metrics:read.",
+        "Returns a client's versioned metrics dashboard definition: archetype, North Star, tabs, surfaces, analytical plan, custom metrics and version history. Requires metrics:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -1485,21 +3958,18 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       }),
   );
 
-  // Métricas v2 (SAN-266): Merlin's write tools over the dashboard definition.
-  // All metrics:write, dry-run by default (confirm=true to mutate), audited via
-  // runTool. Connections/credentials are NOT here — those stay in the UI.
   server.registerTool(
     "sancho_update_metrics_dashboard",
     {
       title: "Update Sancho metrics dashboard",
       description:
-        "Replaces a client's dashboard definition with a new validated version (presentation + plan + custom surfaces/metrics). Pass the full definition as a JSON string — get the current one from sancho_get_metrics_dashboard, edit it, send it back. Defaults to dry-run; set dryRun=false and confirm=true to save. Each save is a new revertible version. Requires metrics:write.",
+        "Replaces a client's dashboard definition with a new validated version. Defaults to dry-run; set dryRun=false and confirm=true to save. Requires metrics:write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         definition: z.string().min(1).describe("Full dashboard definition as a JSON string."),
-        changeNote: z.string().optional().describe("Human-readable note for the version history."),
-        dryRun: z.boolean().default(true).describe("When true, only previews."),
-        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to save."),
+        changeNote: z.string().optional().describe("Optional version note."),
+        dryRun: z.boolean().default(true),
+        confirm: z.boolean().default(false),
       },
     },
     async ({ clientSlug, definition, changeNote, dryRun, confirm }) =>
@@ -1512,10 +3982,15 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           throw new McpAuthError(400, "definition must be valid JSON");
         }
         if (dryRun !== false || confirm !== true) {
-          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: "Set dryRun=false and confirm=true to save.", preview: parsed });
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to save this metrics dashboard.",
+            preview: parsed,
+          });
         }
-        const result = await saveDashboardDefinition(clientSlug, parsed, { trigger: "chat", changeNote });
-        return jsonResult({ ok: true, ...result });
+        return jsonResult(await saveDashboardDefinition(clientSlug, parsed, { changeNote }));
       }),
   );
 
@@ -1524,14 +3999,14 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Add Sancho custom metric",
       description:
-        "Adds a custom (formula) metric card to the client's dashboard as a new version. The formula references connected sources as source.metric (e.g. 'meta-ads.spend / ghl.newContacts'); only identifiers, numbers and arithmetic are allowed (no function calls). Defaults to dry-run. Requires metrics:write.",
+        "Adds a custom formula metric card to the client's dashboard as a new version. Defaults to dry-run. Requires metrics:write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        label: z.string().min(1).describe("Card label, e.g. 'Coste por reunión'."),
-        formula: z.string().min(1).describe("Formula over source.metric refs, e.g. 'meta-ads.spend / ghl.newContacts'."),
-        format: z.string().optional().describe("Display format hint (e.g. currency, percent)."),
-        tier: z.string().optional().describe("KPI tier: primary | leading | lagging."),
-        surface: z.string().optional().describe("Optional surface to attach the card to."),
+        label: z.string().min(1).describe("Card label, e.g. Coste por reunion."),
+        formula: z.string().min(1).describe("Formula using source.metric refs, numbers and arithmetic."),
+        format: z.enum(["number", "currency", "percent", "ratio"]).default("number"),
+        tier: z.enum(["north-star", "leading", "diagnostic"]).default("diagnostic"),
+        surface: z.string().optional().describe("Surface/tab id to attach to."),
         changeNote: z.string().optional(),
         dryRun: z.boolean().default(true),
         confirm: z.boolean().default(false),
@@ -1544,10 +4019,11 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           throw new McpAuthError(400, "Unsafe formula: only source.metric refs, numbers and arithmetic are allowed.");
         }
         if (dryRun !== false || confirm !== true) {
-          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: "Set dryRun=false and confirm=true to add.", input: { label, formula, format, tier, surface } });
+          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, preview: { label, formula, format, tier, surface } });
         }
-        const result = await addCustomMetric(clientSlug, { label, formula, format, tier, surface }, { changeNote });
-        return jsonResult({ ok: true, ...result });
+        return jsonResult(
+          await addCustomMetric(clientSlug, { label, formula, format, tier, surface }, { changeNote }),
+        );
       }),
   );
 
@@ -1556,7 +4032,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Revert Sancho metrics dashboard",
       description:
-        "Reverts the dashboard to a prior version by appending a NEW version that copies that snapshot (append-only; nothing is lost). Get available versions from sancho_get_metrics_dashboard. Defaults to dry-run. Requires metrics:write.",
+        "Reverts the dashboard to a prior version by appending a new version that copies that snapshot. Defaults to dry-run. Requires metrics:write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         toVersion: z.number().int().min(1).describe("Version number to restore."),
@@ -1570,8 +4046,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         if (dryRun !== false || confirm !== true) {
           return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: `Set dryRun=false and confirm=true to revert to v${toVersion}.` });
         }
-        const result = await revertDashboardDefinition(clientSlug, toVersion);
-        return jsonResult({ ok: true, ...result });
+        return jsonResult(await revertDashboardDefinition(clientSlug, toVersion));
       }),
   );
 
@@ -1580,7 +4055,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Apply Sancho metrics template",
       description:
-        "Resets the dashboard to an archetype template (lead-to-sale | marketplace | saas | ecommerce) as a new version. Defaults to dry-run. Requires metrics:write.",
+        "Resets the dashboard to an archetype template as a new version. Defaults to dry-run. Requires metrics:write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         archetype: z.string().min(1).describe("Archetype: lead-to-sale | marketplace | saas | ecommerce."),
@@ -1594,8 +4069,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         if (dryRun !== false || confirm !== true) {
           return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: `Set dryRun=false and confirm=true to apply the ${archetype} template.` });
         }
-        const result = await applyDashboardTemplate(clientSlug, archetype);
-        return jsonResult({ ok: true, ...result });
+        return jsonResult(await applyDashboardTemplate(clientSlug, archetype));
       }),
   );
 
@@ -1607,8 +4081,352 @@ function assertClientScope(context: SanchoMcpContext, scope: McpScope, clientSlu
   assertMcpClientAccess(context.principal, clientSlug);
 }
 
+function assertClientReadScope(context: SanchoMcpContext, clientSlug: string): void {
+  assertMcpAnyScope(context.principal, ["clients:read", "sancho:read"]);
+  assertMcpClientAccess(context.principal, clientSlug);
+}
+
 function assertBrandScope(context: SanchoMcpContext, brandSlug: string): void {
   assertMcpBrandAccess(context.principal, brandSlug);
+}
+
+function assertBrandWriteScope(context: SanchoMcpContext, brandSlug: string): void {
+  assertMcpBrandAccess(context.principal, brandSlug, "docs:write");
+}
+
+function sanitizeClientForMcp(client: Client): Record<string, unknown> {
+  const {
+    mcToken: _mcToken,
+    ...safe
+  } = client;
+  return {
+    slug: safe.slug,
+    name: safe.name,
+    emoji: safe.emoji,
+    url: safe.url,
+    email: safe.email,
+    language: safe.language,
+    active: safe.active,
+    guild: safe.guild,
+    workspace: safe.workspace,
+    phase: safe.phase,
+    paths: safe.paths,
+    channels: safe.channels,
+    metrics: safe.metrics,
+    enabledFeatures: safe.enabledFeatures,
+    plan: safe.plan,
+    status: safe.status,
+    subscriptionStatus: safe.subscriptionStatus,
+  };
+}
+
+type ClientMetadataUpdates = {
+  active?: boolean;
+  name?: string;
+  emoji?: string;
+  phase?: number;
+  url?: string;
+  language?: "es" | "en";
+  enabledFeatures?: string[];
+};
+
+function updateClientMetadata(
+  clientSlug: string,
+  updates: ClientMetadataUpdates,
+  options: { dryRun: boolean },
+): Record<string, unknown> {
+  const data = loadClientsData();
+  const clients = data.clients || [];
+  const index = clients.findIndex((client) => client.slug === clientSlug);
+  if (index < 0) throw new McpAuthError(404, `Client not found: ${clientSlug}`);
+
+  const current = clients[index];
+  const safeUpdates = pickDefined({
+    active: updates.active,
+    name: updates.name?.trim(),
+    emoji: updates.emoji?.trim(),
+    phase: updates.phase,
+    url: updates.url?.trim(),
+    language: updates.language,
+    enabledFeatures: updates.enabledFeatures,
+  }) as Partial<Client>;
+
+  if (Object.keys(safeUpdates).length === 0) {
+    throw new McpAuthError(400, "No supported client fields were provided");
+  }
+
+  const next = { ...current, ...safeUpdates };
+  if (!options.dryRun) {
+    const updatedClients = clients.slice();
+    updatedClients[index] = next;
+    writeClientsFile({ ...data, clients: updatedClients });
+  }
+
+  return {
+    ok: true,
+    clientSlug,
+    updates: safeUpdates,
+    before: sanitizeClientForMcp(current),
+    after: sanitizeClientForMcp(next),
+  };
+}
+
+function getMcpAgent(agentId: string): AgentRichEntry | null {
+  const normalized = agentId.trim();
+  if (!normalized) throw new McpAuthError(400, "agentId is required");
+  return listAgentsRich().find((agent) => agent.id === normalized) || null;
+}
+
+async function validateAgentModel(model: string | null): Promise<{ warning?: string }> {
+  if (model === null) return {};
+  const catalog = await getModelCatalog();
+  const check = isModelAvailable(catalog, model);
+  if (!check.ok) throw new McpAuthError(400, check.reason || "Model is not available");
+  return { warning: check.warning };
+}
+
+function matchesStatus(actual: string | null | undefined, expected: string | undefined): boolean {
+  if (!expected) return true;
+  return (actual || "").toLowerCase() === expected.toLowerCase();
+}
+
+function filterIntelligenceItems(
+  items: IntelligenceItem[],
+  kind: IntelligenceItem["type"] | undefined,
+  status: string | undefined,
+): IntelligenceItem[] {
+  return items
+    .filter((item) => !kind || item.type === kind)
+    .filter((item) => matchesStatus(item.status, status));
+}
+
+function filterDecisionItems(
+  items: DecisionEntry[],
+  kind: IntelligenceItem["type"] | undefined,
+  status: string | undefined,
+): DecisionEntry[] {
+  return items
+    .filter(() => !kind || kind === "Decision")
+    .filter((item) => matchesStatus(item.status, status));
+}
+
+function filterDocumentItems(
+  items: DocumentRecord[],
+  kind: IntelligenceItem["type"] | undefined,
+  status: string | undefined,
+): DocumentRecord[] {
+  return items
+    .filter(() => !kind)
+    .filter((item) => matchesStatus(item.status, status));
+}
+
+function filterProposalItems(
+  items: ProposalEntry[],
+  kind: IntelligenceItem["type"] | undefined,
+  status: string | undefined,
+): ProposalEntry[] {
+  return items
+    .filter(() => !kind)
+    .filter((item) => matchesStatus(item.status, status));
+}
+
+type McpRecurringStatus = (typeof MCP_RECURRING_STATUS_VALUES)[number];
+type McpRecurringSource = (typeof MCP_RECURRING_SOURCE_VALUES)[number];
+
+function listMcpRecurringTasks(
+  clientSlug: string,
+  options: {
+    status?: McpRecurringStatus;
+    source?: McpRecurringSource;
+    query?: string;
+    limit: number;
+    maxPromptChars: number;
+  },
+) {
+  const clients = loadClients().map((client) => ({ slug: client.slug, name: client.name }));
+  const localTasks = loadRecurringTasks(clientSlug);
+  const localIds = new Set(localTasks.map((task) => task.id));
+  const { crons } = enrichCrons({ slug: clientSlug, includeSystem: false, clients });
+  const tasks = [
+    ...crons
+      .filter((cron) => !localIds.has(cron.id))
+      .map((cron) => serializeOpenClawRecurringTask(cron, options.maxPromptChars)),
+    ...localTasks.map((task) => serializeLocalRecurringTask(task, clientSlug, options.maxPromptChars)),
+  ];
+  const filtered = tasks
+    .filter((task) => !options.status || task.status === options.status)
+    .filter((task) => !options.source || task.source === options.source)
+    .filter((task) => matchesQuery(options.query, [task.name, task.description, task.prompt]))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return {
+    tasks: filtered.slice(0, options.limit),
+    count: Math.min(filtered.length, options.limit),
+    totalTasks: filtered.length,
+    limit: options.limit,
+  };
+}
+
+function findMcpRecurringTask(
+  clientSlug: string,
+  taskId: string,
+): { source: McpRecurringSource; status: McpRecurringStatus; name: string } | null {
+  const local = loadRecurringTasks(clientSlug).find((task) => task.id === taskId);
+  if (local) {
+    return {
+      source: local._source === "openclaw-cron" ? "openclaw-cron" : "local",
+      status: recurringStatusFromLocalTask(local),
+      name: local.name,
+    };
+  }
+  const clients = loadClients().map((client) => ({ slug: client.slug, name: client.name }));
+  const cron = enrichCrons({ slug: clientSlug, includeSystem: false, clients }).crons.find((item) => item.id === taskId);
+  if (!cron) return null;
+  return {
+    source: "openclaw-cron",
+    status: cron.enabled ? "active" : "paused",
+    name: cron.name,
+  };
+}
+
+function listMcpContentCrons(
+  clientSlug: string,
+  options: {
+    status?: McpRecurringStatus;
+    query?: string;
+    limit: number;
+    maxPromptChars: number;
+  },
+) {
+  const clients = loadClients().map((client) => ({ slug: client.slug, name: client.name }));
+  const { crons } = enrichCrons({ slug: clientSlug, includeSystem: false, clients });
+  const contentCrons = crons
+    .filter((cron) => cron.name.startsWith("Content:"))
+    .map((cron) => {
+      const prompt = cron.prompt || "";
+      const baseName = cron.name
+        .replace(/^Content:\s*/, "")
+        .replace(/\s*(?:-|\u2014)\s*.*$/, "")
+        .trim();
+      return {
+        id: cron.id,
+        name: cron.name,
+        baseName,
+        enabled: cron.enabled,
+        status: cron.enabled ? "active" as const : "paused" as const,
+        category: cron.category,
+        schedule: humanizeSchedule(cron.schedule_raw || undefined),
+        scheduleRaw: cron.schedule_raw,
+        timezone: cron.schedule_raw?.tz || null,
+        agent: cron.agent,
+        model: cron.model,
+        description: cron.description,
+        promptPreview: truncateText(prompt, Math.min(options.maxPromptChars, 200)),
+        prompt: truncateText(prompt, options.maxPromptChars),
+        promptTruncated: prompt.length > options.maxPromptChars,
+        lastRunAt: cron.last_run_at,
+        nextRunAt: cron.next_run_at,
+        lastStatus: cron.last_status,
+        lastDurationMs: cron.last_duration_ms,
+        consecutiveErrors: cron.consecutive_errors,
+        lastDiagnosticSummary: cron.last_diagnostic_summary,
+        lastError: cron.last_error,
+        lastErrorReason: cron.last_error_reason,
+        lastFinding: cron.last_finding,
+        running: cron.running,
+      };
+    })
+    .filter((cron) => !options.status || cron.status === options.status)
+    .filter((cron) => matchesQuery(options.query, [cron.name, cron.baseName, cron.description, cron.prompt]));
+
+  return {
+    crons: contentCrons.slice(0, options.limit),
+    count: Math.min(contentCrons.length, options.limit),
+    totalCrons: contentCrons.length,
+    stats: {
+      total: contentCrons.length,
+      active: contentCrons.filter((cron) => cron.status === "active").length,
+      paused: contentCrons.filter((cron) => cron.status === "paused").length,
+      lastRunAt: contentCrons
+        .map((cron) => cron.lastRunAt)
+        .filter(Boolean)
+        .sort()
+        .reverse()[0] || null,
+    },
+  };
+}
+
+function serializeOpenClawRecurringTask(cron: EnrichedCron, maxPromptChars: number) {
+  const prompt = cron.prompt || "";
+  return {
+    id: cron.id,
+    name: cron.name,
+    source: "openclaw-cron" as const,
+    status: cron.enabled ? "active" as const : "paused" as const,
+    enabled: cron.enabled,
+    category: cron.category,
+    schedule: humanizeSchedule(cron.schedule_raw || undefined),
+    scheduleRaw: cron.schedule_raw,
+    agent: cron.agent,
+    model: cron.model,
+    description: cron.description,
+    prompt: truncateText(prompt, maxPromptChars),
+    promptTruncated: prompt.length > maxPromptChars,
+    clientSlug: cron.client_slug,
+    lastRunAt: cron.last_run_at,
+    nextRunAt: cron.next_run_at,
+    lastStatus: cron.last_status,
+    lastDurationMs: cron.last_duration_ms,
+    consecutiveErrors: cron.consecutive_errors,
+    lastDiagnosticSummary: cron.last_diagnostic_summary,
+    lastError: cron.last_error,
+    lastErrorReason: cron.last_error_reason,
+    lastFinding: cron.last_finding,
+    running: cron.running,
+  };
+}
+
+function serializeLocalRecurringTask(task: RecurringTask, clientSlug: string, maxPromptChars: number) {
+  const prompt = typeof task.prompt === "string" ? task.prompt : "";
+  const description = typeof task.description === "string" ? task.description : "";
+  const source = task._source === "openclaw-cron" ? "openclaw-cron" as const : "local" as const;
+  return {
+    id: task.id,
+    name: task.name,
+    source,
+    status: recurringStatusFromLocalTask(task),
+    enabled: recurringStatusFromLocalTask(task) === "active",
+    category: typeof task.task_type === "string" ? task.task_type : "other",
+    schedule: task.schedule,
+    scheduleRaw: task.schedule,
+    agent: typeof task.agent === "string" ? task.agent : null,
+    model: typeof task.model === "string" ? task.model : null,
+    skill: task.skill,
+    description,
+    prompt: truncateText(prompt, maxPromptChars),
+    promptTruncated: prompt.length > maxPromptChars,
+    clientSlug: typeof task.client_slug === "string" ? task.client_slug : clientSlug,
+    lastRunAt: typeof task.last_run_at === "string" ? task.last_run_at : null,
+    nextRunAt: typeof task.next_run_at === "string" ? task.next_run_at : null,
+    lastStatus: typeof task.last_status === "string" ? task.last_status : null,
+    lastDurationMs: typeof task.last_duration_ms === "number" ? task.last_duration_ms : null,
+    consecutiveErrors: typeof task.consecutive_errors === "number" ? task.consecutive_errors : 0,
+    lastDiagnosticSummary: typeof task.last_diagnostic_summary === "string" ? task.last_diagnostic_summary : null,
+    lastError: typeof task.last_error === "string" ? task.last_error : null,
+    lastErrorReason: typeof task.last_error_reason === "string" ? task.last_error_reason : null,
+    lastFinding: typeof task.last_finding === "string" ? task.last_finding : null,
+    running: task.running || null,
+    createdAt: task.created_at || null,
+    updatedAt: task.updated_at || null,
+  };
+}
+
+function recurringStatusFromLocalTask(task: RecurringTask): McpRecurringStatus {
+  if (task.status === "active" || task.status === "paused") return task.status;
+  return task.active === false ? "paused" : "active";
+}
+
+function truncateText(value: string, maxChars: number): string {
+  return value.length > maxChars ? value.slice(0, maxChars) : value;
 }
 
 /**
@@ -1654,15 +4472,18 @@ async function runTool(
   handler: () => Promise<CallToolResult>,
 ): Promise<CallToolResult> {
   try {
-    const result = await handler();
+    const result = withTraceId(await handler(), context.traceId);
+    const isError = result.isError === true;
+    const error = isError ? firstTextContent(result) : undefined;
     const auditError = await auditToolCall({
       principal: context.principal,
       toolName,
       clientSlug,
-      ok: true,
+      ok: !isError,
+      error,
       metadata: { traceId: context.traceId },
     });
-    if (auditError) return errorResult(`MCP audit failed: ${auditError}`);
+    if (auditError) return errorResult(`MCP audit failed: ${auditError}`, context.traceId);
     return result;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown MCP tool error";
@@ -1674,7 +4495,7 @@ async function runTool(
       error: message,
       metadata: { traceId: context.traceId },
     });
-    return errorResult(auditError ? `${message}; MCP audit failed: ${auditError}` : message);
+    return errorResult(auditError ? `${message}; MCP audit failed: ${auditError}` : message, context.traceId);
   }
 }
 
@@ -1699,7 +4520,7 @@ function jsonResult(value: unknown): CallToolResult {
   };
 }
 
-function errorResult(message: string): CallToolResult {
+function errorResult(message: string, traceId?: string): CallToolResult {
   return {
     isError: true,
     content: [
@@ -1708,7 +4529,35 @@ function errorResult(message: string): CallToolResult {
         text: message,
       },
     ],
+    structuredContent: traceId ? { error: message, traceId } : { error: message },
   };
+}
+
+function withTraceId(result: CallToolResult, traceId: string): CallToolResult {
+  const structuredContent = isRecord(result.structuredContent)
+    ? { ...result.structuredContent, traceId: result.structuredContent.traceId || traceId }
+    : { traceId };
+  return {
+    ...result,
+    content: result.content.map((item) => {
+      if (item.type !== "text") return item;
+      try {
+        const parsed = JSON.parse(item.text) as unknown;
+        if (!isRecord(parsed)) return item;
+        return {
+          ...item,
+          text: JSON.stringify({ ...parsed, traceId: parsed.traceId || traceId }, null, 2),
+        };
+      } catch {
+        return item;
+      }
+    }),
+    structuredContent,
+  };
+}
+
+function firstTextContent(result: CallToolResult): string | undefined {
+  return result.content.find((item) => item.type === "text")?.text;
 }
 
 function clampLimit(
@@ -1902,6 +4751,543 @@ function buildAskResponseFormat(questions: Array<AskQuestion & { sourceMessageIn
     .join("\n");
 }
 
+function statusCounts<T>(items: T[], getStatus: (item: T) => unknown): Record<string, number> & { total: number } {
+  const counts: Record<string, number> = { total: items.length };
+  for (const item of items) {
+    const status = String(getStatus(item) || "unknown");
+    counts[status] = (counts[status] || 0) + 1;
+  }
+  return counts as Record<string, number> & { total: number };
+}
+
+function matchesLooseStatus(actual: unknown, expected: string | undefined): boolean {
+  if (!expected) return true;
+  return String(actual || "").toLowerCase() === expected.toLowerCase();
+}
+
+function matchesQuery(query: string | undefined, fields: Array<string | null | undefined>): boolean {
+  if (!query) return true;
+  const needle = query.toLowerCase();
+  return fields.some((field) => String(field || "").toLowerCase().includes(needle));
+}
+
+function assertContentPathSegment(name: string, value: string): void {
+  if (!/^[a-z0-9][a-z0-9._-]*$/i.test(value)) {
+    throw new McpAuthError(400, `${name} must be a simple path segment`);
+  }
+}
+
+async function listContentDraftIdeaIds(clientSlug: string): Promise<string[]> {
+  const draftsRoot = path.join(brandDir(clientSlug), "content", "drafts");
+  try {
+    const entries = await fs.readdir(draftsRoot, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+      .map((entry) => entry.name)
+      .filter((entry) => /^[a-z0-9][a-z0-9._-]*$/i.test(entry))
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+function serializeContentDraftSummary(draft: Draft) {
+  return {
+    ideaId: draft.meta.idea_id,
+    channel: draft.meta.channel,
+    kind: draft.meta.kind || "channel-draft",
+    relPath: draft.relPath,
+    bodyChars: draft.body.length,
+    meta: draft.meta,
+  };
+}
+
+function serializeContentDraft(draft: Draft, maxChars: number) {
+  const truncated = draft.body.length > maxChars;
+  return {
+    ...serializeContentDraftSummary(draft),
+    content: truncated ? draft.body.slice(0, maxChars) : draft.body,
+    truncated,
+  };
+}
+
+function requireMcpContentTask(clientSlug: string, contentTaskId: string): {
+  ct: ContentTask;
+  parentTaskId: string;
+  projectDir: string;
+} {
+  const found = findContentTaskByIdAcrossProjects(clientSlug, contentTaskId);
+  if (!found) throw new McpAuthError(404, `ContentTask not found: ${contentTaskId}`);
+  return found;
+}
+
+type McpContentTaskUpdatePlan = {
+  fields: ContentTaskUpdateInput;
+  status?: ContentTaskStatus;
+  pipelineState?: ContentTaskPipelineState | null;
+  channelPhases?: Record<string, ChannelPhase>;
+  hasChanges: boolean;
+};
+
+function buildContentTaskUpdatePlan(input: {
+  name?: string;
+  skill?: string;
+  targetChannels?: string[];
+  owner?: string;
+  scheduledFor?: string;
+  clarifyStatus?: string;
+  mediaPolicy?: Record<string, "required" | "optional">;
+  author?: string;
+  status?: (typeof MCP_CONTENT_TASK_STATUS_VALUES)[number];
+  pipelineState?: (typeof MCP_CONTENT_TASK_PIPELINE_STATE_VALUES)[number] | null;
+  channelPhases?: Record<string, (typeof MCP_CHANNEL_PHASE_VALUES)[number]>;
+}): McpContentTaskUpdatePlan {
+  const fields = pickDefined({
+    name: input.name,
+    skill: input.skill,
+    target_channels: input.targetChannels,
+    owner: input.owner,
+    scheduled_for: input.scheduledFor,
+    clarify_status: input.clarifyStatus,
+    media_policy: input.mediaPolicy,
+    author: input.author,
+  }) as ContentTaskUpdateInput;
+
+  const status = input.status as ContentTaskStatus | undefined;
+  const pipelineState = input.pipelineState === undefined && status
+    ? defaultPipelineStateForStatus(status)
+    : input.pipelineState as ContentTaskPipelineState | null | undefined;
+  const channelPhases = input.channelPhases as Record<string, ChannelPhase> | undefined;
+
+  return {
+    fields,
+    status,
+    pipelineState,
+    channelPhases,
+    hasChanges:
+      Object.keys(fields).length > 0 ||
+      status !== undefined ||
+      input.pipelineState !== undefined ||
+      channelPhases !== undefined,
+  };
+}
+
+function applyContentTaskUpdatePlan(
+  clientSlug: string,
+  parentTaskId: string,
+  contentTaskId: string,
+  current: ContentTask,
+  plan: McpContentTaskUpdatePlan,
+): ContentTask {
+  let updated = current;
+  const previousStatus = current.status;
+
+  if (Object.keys(plan.fields).length > 0) {
+    updated = updateContentTask(clientSlug, parentTaskId, contentTaskId, plan.fields);
+  }
+
+  if (plan.status !== undefined) {
+    updated = setContentTaskStatus(
+      clientSlug,
+      parentTaskId,
+      contentTaskId,
+      plan.status,
+      plan.pipelineState,
+    );
+    const movedBackward =
+      VALID_CONTENT_TASK_STATUSES.indexOf(updated.status) <
+      VALID_CONTENT_TASK_STATUSES.indexOf(previousStatus);
+    if (movedBackward) {
+      updated = rollbackChannelPhasesToStatus(clientSlug, parentTaskId, contentTaskId);
+    }
+  } else if (plan.pipelineState !== undefined) {
+    updated = setContentTaskStatus(
+      clientSlug,
+      parentTaskId,
+      contentTaskId,
+      updated.status,
+      plan.pipelineState,
+    );
+  }
+
+  if (plan.channelPhases !== undefined) {
+    updated = setChannelPhases(clientSlug, parentTaskId, contentTaskId, plan.channelPhases);
+  }
+
+  return updated;
+}
+
+function defaultPipelineStateForStatus(status: ContentTaskStatus): ContentTaskPipelineState | null {
+  if (status === "Approved") return "researching";
+  if (status === "Pending Media") return "generating-media";
+  return null;
+}
+
+function buildContentTaskTransition(
+  clientSlug: string,
+  ct: ContentTask,
+  action: (typeof MCP_CONTENT_TASK_ACTION_VALUES)[number],
+): {
+  action: (typeof MCP_CONTENT_TASK_ACTION_VALUES)[number];
+  status: ContentTaskStatus;
+  pipelineState: ContentTaskPipelineState | null;
+  hasMedia?: boolean;
+} {
+  if (action === "approve-draft") {
+    if (ct.status !== "Draft") {
+      throw new McpAuthError(409, `approve-draft requires status="Draft" (current: "${ct.status}")`);
+    }
+    const hasMedia = contentTaskHasAnyMedia(clientSlug, ct);
+    return {
+      action,
+      status: "Pending Media",
+      pipelineState: hasMedia ? "media-review" : "generating-media",
+      hasMedia,
+    };
+  }
+
+  if (action === "approve-media") {
+    if (ct.status !== "Pending Media") {
+      throw new McpAuthError(409, `approve-media requires status="Pending Media" (current: "${ct.status}")`);
+    }
+    const hasMedia = contentTaskHasAnyMedia(clientSlug, ct);
+    if (!hasMedia) {
+      throw new McpAuthError(409, "approve-media requires at least one media asset attached to the draft(s)");
+    }
+    return { action, status: "Ready", pipelineState: null, hasMedia };
+  }
+
+  if (action === "discard" || action === "defer") {
+    if (ct.status === "Published" || ct.status === "Discarded" || ct.status === "Deferred") {
+      throw new McpAuthError(409, `${action} not allowed from terminal status "${ct.status}"`);
+    }
+    return {
+      action,
+      status: action === "discard" ? "Discarded" : "Deferred",
+      pipelineState: null,
+    };
+  }
+
+  throw new McpAuthError(400, `Unsupported ContentTask action: ${action}`);
+}
+
+function contentTaskHasAnyMedia(clientSlug: string, ct: ContentTask): boolean {
+  const channels = new Set(ct.target_channels || []);
+  return listDrafts(clientSlug, ct.idea_id)
+    .filter((draft) => {
+      const channel = draft.meta.channel || draft.relPath.split("/").pop()?.replace(".md", "") || "";
+      return channels.has(channel);
+    })
+    .some((draft) => (draft.meta.media?.length ?? 0) > 0);
+}
+
+type ContentDraftPatch = {
+  meta: Partial<DraftFrontmatter>;
+  body?: string;
+  bodyChanged: boolean;
+};
+
+function buildContentDraftPatch(input: {
+  body?: string;
+  clarifyStatus?: (typeof CONTENT_DRAFT_CLARIFY_STATUS_VALUES)[number];
+  itemType?: (typeof VALID_CONTENT_ITEM_TYPES)[number];
+  mediaPolicy?: "required" | "optional";
+  model?: string;
+  researchUsed?: boolean;
+  selfQa?: "PASS" | "FAIL";
+  selfQaNotes?: string[];
+}): ContentDraftPatch {
+  const meta = pickDefined({
+    clarify_status: input.clarifyStatus,
+    item_type: input.itemType,
+    media_policy: input.mediaPolicy,
+    model: input.model,
+    research_used: input.researchUsed,
+    self_qa: input.selfQa,
+    self_qa_notes: input.selfQaNotes,
+  }) as Partial<DraftFrontmatter>;
+  return {
+    meta,
+    body: input.body,
+    bodyChanged: input.body !== undefined,
+  };
+}
+
+function previewContentDraftUpdate(draft: Draft, patch: ContentDraftPatch) {
+  return {
+    ideaId: draft.meta.idea_id,
+    channel: draft.meta.channel,
+    relPath: draft.relPath,
+    meta: {
+      ...draft.meta,
+      ...patch.meta,
+    },
+    bodyChanged: patch.bodyChanged,
+    bodyChars: patch.body?.length ?? draft.body.length,
+  };
+}
+
+type ContentImageGenerationPatch = {
+  mode?: "ask" | "fixed";
+  provider?: string | null;
+  model?: string | null;
+};
+
+type ContentCarouselPatch = {
+  logoUrl?: string | null;
+  footerText?: string | null;
+  primaryColor?: string | null;
+  accentColor?: string | null;
+  enabledTemplates?: string[] | null;
+};
+
+type ContentIdeaStatus = "New" | "Approved" | "Discarded" | "Deferred" | "Published";
+type ContentIdea = Record<string, unknown> & {
+  id: string;
+  status: ContentIdeaStatus;
+  title?: string;
+  pillar_id?: string;
+  content_type?: string;
+  target_channel?: string;
+  angle_draft?: string;
+  pov_confidence?: number;
+  source_signals?: string[];
+  created_at: string;
+  updated_at?: string;
+};
+
+const CONTENT_IDEA_STATUSES = new Set<ContentIdeaStatus>([
+  "New",
+  "Approved",
+  "Discarded",
+  "Deferred",
+  "Published",
+]);
+
+function buildContentConfigPatch(
+  imageGeneration: ContentImageGenerationPatch | undefined,
+  carousel: ContentCarouselPatch | undefined,
+): Partial<ContentConfig> {
+  const patch: Partial<ContentConfig> = {};
+  if (imageGeneration) {
+    const imagePatch = pickDefined({
+      mode: imageGeneration.mode,
+      provider: imageGeneration.provider,
+      model: imageGeneration.model,
+    });
+    if (Object.keys(imagePatch).length > 0) {
+      patch.image_generation = imagePatch as Partial<ContentConfig>["image_generation"];
+    }
+  }
+  if (carousel) {
+    const carouselPatch = pickDefined({
+      logo_url: carousel.logoUrl,
+      footer_text: carousel.footerText,
+      primary_color: carousel.primaryColor,
+      accent_color: carousel.accentColor,
+      enabled_templates: carousel.enabledTemplates,
+    });
+    if (Object.keys(carouselPatch).length > 0) {
+      patch.carousel = carouselPatch as unknown as Partial<ContentConfig>["carousel"];
+    }
+  }
+  return patch;
+}
+
+function mergeContentConfig(current: ContentConfig, patch: Partial<ContentConfig>): ContentConfig {
+  return {
+    image_generation: {
+      ...current.image_generation,
+      ...(patch.image_generation || {}),
+    },
+    carousel: {
+      ...current.carousel,
+      ...(patch.carousel || {}),
+    },
+  };
+}
+
+function contentIdeaQueuePath(clientSlug: string): string {
+  return path.join(brandDir(clientSlug), "content", "idea-queue.json");
+}
+
+async function loadContentIdeaQueue(clientSlug: string): Promise<ContentIdea[]> {
+  try {
+    const raw = JSON.parse(await fs.readFile(contentIdeaQueuePath(clientSlug), "utf8")) as unknown;
+    const rows = Array.isArray(raw) ? raw : isRecord(raw) && Array.isArray(raw.ideas) ? raw.ideas : [];
+    return rows.filter(isRecord).map(normalizeContentIdea);
+  } catch {
+    return [];
+  }
+}
+
+async function saveContentIdeaQueue(clientSlug: string, ideas: ContentIdea[]): Promise<void> {
+  const filePath = contentIdeaQueuePath(clientSlug);
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, `${JSON.stringify(ideas, null, 2)}\n`, "utf8");
+}
+
+function normalizeContentIdea(value: Record<string, unknown>): ContentIdea {
+  const id = typeof value.id === "string" && value.id.trim() ? value.id.trim() : `idea-${Date.now()}`;
+  return {
+    ...value,
+    id,
+    status: canonicalContentIdeaStatus(value.status),
+    created_at: typeof value.created_at === "string" ? value.created_at : new Date().toISOString(),
+  };
+}
+
+function canonicalContentIdeaStatus(value: unknown): ContentIdeaStatus {
+  if (typeof value !== "string") return "New";
+  const exact = value as ContentIdeaStatus;
+  if (CONTENT_IDEA_STATUSES.has(exact)) return exact;
+  const lower = value.toLowerCase();
+  if (lower === "approved") return "Approved";
+  if (lower === "discarded" || lower === "archived") return "Discarded";
+  if (lower === "deferred" || lower === "stale") return "Deferred";
+  if (lower === "published") return "Published";
+  return "New";
+}
+
+function buildContentIdea(input: {
+  existing: ContentIdea[];
+  id?: string;
+  title: string;
+  pillarId?: string;
+  contentType?: string;
+  targetChannel?: string;
+  angleDraft?: string;
+  povConfidence?: number;
+  signalSummary?: string;
+  signalSource?: string;
+  signalUrl?: string;
+  signalDate?: string;
+  sourceSignals?: string[];
+}): ContentIdea {
+  const now = new Date().toISOString();
+  const today = now.slice(0, 10);
+  const id = resolveContentIdeaId(input.existing, input.id || `idea-${today}-${Math.random().toString(36).slice(2, 6)}`);
+  return {
+    id,
+    title: input.title,
+    pillar_id: input.pillarId || "",
+    content_type: input.contentType || "",
+    target_channel: input.targetChannel || "",
+    signal: {
+      summary: input.signalSummary || "",
+      source: input.signalSource || "manual",
+      ...(input.signalUrl ? { url: input.signalUrl } : {}),
+      date: input.signalDate || today,
+    },
+    angle_draft: input.angleDraft || "",
+    pov_confidence: input.povConfidence ?? 0.5,
+    source_signals: input.sourceSignals || [],
+    created_at: now,
+    updated_at: now,
+    status: "New",
+  };
+}
+
+function resolveContentIdeaId(existing: ContentIdea[], desired: string): string {
+  const base = desired.trim();
+  if (!base) throw new McpAuthError(400, "Idea id cannot be empty");
+  if (!/^[a-z0-9][a-z0-9._-]*$/i.test(base)) {
+    throw new McpAuthError(400, "Idea id must be a simple path segment");
+  }
+  const ids = new Set(existing.map((idea) => idea.id));
+  if (!ids.has(base)) return base;
+  for (let n = 2; ; n++) {
+    const candidate = `${base}-${String.fromCharCode(96 + n)}`;
+    if (!ids.has(candidate)) return candidate;
+  }
+}
+
+function buildContentIdeaPatch(input: {
+  status?: "New" | "Discarded" | "Deferred" | "Published";
+  angleDraft?: string | null;
+  pillarId?: string | null;
+  targetChannel?: string | null;
+  contentType?: string | null;
+  author?: string | null;
+  targetDate?: string | null;
+  dispatchDate?: string | null;
+  dispatchSlot?: string | null;
+  projectTaskId?: string | null;
+}): Record<string, unknown> {
+  return pickDefined({
+    status: input.status,
+    angle_draft: input.angleDraft,
+    pillar_id: input.pillarId,
+    target_channel: input.targetChannel,
+    content_type: input.contentType,
+    author: input.author,
+    target_date: input.targetDate,
+    dispatch_date: input.dispatchDate,
+    dispatch_slot: input.dispatchSlot,
+    project_task_id: input.projectTaskId,
+  });
+}
+
+function applyContentIdeaPatch(idea: ContentIdea, patch: Record<string, unknown>): ContentIdea {
+  const next: ContentIdea = { ...idea, updated_at: new Date().toISOString() };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === null) {
+      delete next[key];
+    } else if (key === "status") {
+      next.status = canonicalContentIdeaStatus(value);
+    } else {
+      next[key] = value;
+    }
+  }
+  return next;
+}
+
+async function getPublishingPostMetrics(clientSlug: string, externalUrl: string) {
+  const metricsRoot = path.join(brandDir(clientSlug), "metrics");
+  let files: string[];
+  try {
+    files = (await fs.readdir(metricsRoot))
+      .filter((file) => /^\d{4}-\d{2}-\d{2}\.json$/.test(file))
+      .sort()
+      .reverse();
+  } catch {
+    return { found: false };
+  }
+
+  for (const file of files) {
+    let data: unknown;
+    try {
+      data = JSON.parse(await fs.readFile(path.join(metricsRoot, file), "utf8")) as unknown;
+    } catch {
+      continue;
+    }
+    const metricool = isRecord(data)
+      && isRecord(data.sources)
+      && isRecord(data.sources.metricool)
+      && Array.isArray(data.sources.metricool.metrics)
+      ? data.sources.metricool.metrics
+      : [];
+    for (const entry of metricool) {
+      if (!isRecord(entry) || entry.name !== "postDetail" || !isRecord(entry.dimensions)) continue;
+      const dimensions = entry.dimensions;
+      if (dimensions.url !== externalUrl) continue;
+      return {
+        found: true,
+        metrics: {
+          impressions: typeof entry.value === "number" ? entry.value : 0,
+          likes: typeof dimensions.likes === "number" ? dimensions.likes : 0,
+          clicks: typeof dimensions.clicks === "number" ? dimensions.clicks : 0,
+          engagement: typeof dimensions.engagement === "number" ? dimensions.engagement : 0,
+          network: typeof dimensions.network === "string" ? dimensions.network : "",
+          url: externalUrl,
+          measured_at: typeof entry.date === "string" ? entry.date : file.replace(".json", ""),
+        },
+      };
+    }
+  }
+  return { found: false };
+}
+
 async function listOpenDesignCatalog(
   type: "skills" | "design-systems" | "prompt-templates" | "craft-guides" | "projects",
   options: { filter?: string; category?: "image" | "video" | "audio" },
@@ -1913,6 +5299,46 @@ async function listOpenDesignCatalog(
   if (type === "prompt-templates") return odListPromptTemplates(options.category, config);
   if (type === "craft-guides") return odListCraftGuides(config);
   return odListProjects(config);
+}
+
+function buildOpenDesignProjectPatch(input: {
+  name?: string;
+  skillId?: string;
+  designSystemId?: string;
+  clearSkill?: boolean;
+  clearDesignSystem?: boolean;
+}) {
+  if (input.skillId && input.clearSkill) {
+    throw new McpAuthError(400, "Provide either skillId or clearSkill, not both");
+  }
+  if (input.designSystemId && input.clearDesignSystem) {
+    throw new McpAuthError(400, "Provide either designSystemId or clearDesignSystem, not both");
+  }
+
+  const patch = pickDefined({
+    name: input.name,
+    skillId: input.clearSkill ? null : input.skillId,
+    designSystemId: input.clearDesignSystem ? null : input.designSystemId,
+  }) as Partial<{ designSystemId: string | null; skillId: string | null; name: string }>;
+
+  if (Object.keys(patch).length === 0) {
+    throw new McpAuthError(400, "At least one project field is required");
+  }
+
+  return patch;
+}
+
+function assertRelativeProjectPath(filePath: string): string {
+  const raw = filePath.trim().replace(/\\/g, "/");
+  if (!raw) throw new McpAuthError(400, "filePath is required");
+  if (raw.startsWith("/") || /^[a-zA-Z]:\//.test(raw)) {
+    throw new McpAuthError(400, "filePath must be project-relative");
+  }
+  const normalized = path.posix.normalize(raw);
+  if (normalized === "." || normalized === ".." || normalized.startsWith("../")) {
+    throw new McpAuthError(403, "Open Design project file traversal is not allowed");
+  }
+  return normalized;
 }
 
 function odConfig(context: SanchoMcpContext) {
