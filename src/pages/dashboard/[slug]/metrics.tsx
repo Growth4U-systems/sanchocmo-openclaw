@@ -2619,11 +2619,11 @@ function MetricsPageInner({ slug }: { slug: string }) {
             desc="Superficies, North Star y métricas custom · versionado append-only (revertible)"
             onChat={() => openMerlin("Repasemos la definición del dashboard (superficies, North Star, métricas custom). ¿Qué cambiamos?")}
             taskHref={projectExists ? `/dashboard/${slug}/tasks/${METRICS_PROJECT_ID}` : undefined}
-            onOpen={() => { setSetupOpen(false); setVersionsOpen(true); }}
+            onOpen={() => setVersionsOpen(true)}
             openLabel="Abrir →"
             fourthIcon="🕓"
             fourthTitle="Historial de versiones"
-            onFourth={() => { setSetupOpen(false); setVersionsOpen(true); }}
+            onFourth={() => setVersionsOpen(true)}
           />
         </MetricPanel>
 
@@ -2728,28 +2728,26 @@ function MetricsPageInner({ slug }: { slug: string }) {
     );
   }
 
-  function renderVersions() {
+  // Versiones is a right-side SlideOver (like Plan), not a full-screen view — this
+  // renders only its body; the panel chrome + close come from <SlideOver>.
+  function renderVersionsContent() {
     const versions = dashboardRec?.versions ?? [];
     const current = dashboardRec?.version ?? 0;
     return (
-      <div className="space-y-5">
-        <BackButton onClick={() => setVersionsOpen(false)}>Volver a Métricas</BackButton>
-        <MetricPanel halftone className="border-[3px] border-navy">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Historial append-only</div>
-              <h2 className="mt-1 font-heading text-2xl font-bold text-navy">{"🕓"} Versiones del dashboard</h2>
-              <div className="mt-1 max-w-2xl text-[13px] text-[var(--sc-fg-muted)]">Cada cambio por chat, arrastre o plantilla crea una versión inmutable. Revertir copia ese estado a una versión nueva, auditada.</div>
-            </div>
+      <div className="space-y-4">
+        <div className="rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-3 text-[12.5px] text-[var(--sc-fg-muted)]">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <span className="font-heading text-[10.5px] font-bold uppercase tracking-wide text-rust">Historial append-only</span>
             <MetricChip tone="warn">actual v{current}</MetricChip>
           </div>
-        </MetricPanel>
+          Cada cambio por chat, arrastre o plantilla crea una versión inmutable. Revertir copia ese estado a una versión nueva, auditada.
+        </div>
         {!dashboardRec?.configured ? (
-          <MetricPanel className="p-8 text-center text-[var(--sc-fg-muted)]">El versionado requiere base de datos (no disponible en este entorno).</MetricPanel>
+          <MetricPanel className="p-6 text-center text-[var(--sc-fg-muted)]">El versionado requiere base de datos (no disponible en este entorno).</MetricPanel>
         ) : versions.length === 0 ? (
-          <MetricPanel className="p-8 text-center text-[var(--sc-fg-muted)]">Aún no hay versiones guardadas.</MetricPanel>
+          <MetricPanel className="p-6 text-center text-[var(--sc-fg-muted)]">Aún no hay versiones guardadas.</MetricPanel>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-3">
             {versions.map((v) => {
               const isCurrent = v.version === current;
               return (
@@ -2927,33 +2925,31 @@ function MetricsPageInner({ slug }: { slug: string }) {
             <div className="min-w-[240px] flex-1">
               <h1 className="font-heading text-3xl font-bold text-navy"><TitleIcon name="metrics" />{t("title")}</h1>
               <p className="mt-1 text-sm text-[var(--sc-fg-muted)]">
-                {slug} {isDataTab && !versionsOpen && !setupOpen && <span className="ml-2 text-[11px]">{rangeLabel}</span>}
+                {slug} {isDataTab && !setupOpen && <span className="ml-2 text-[11px]">{rangeLabel}</span>}
               </p>
             </div>
-            {!versionsOpen && (
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                {!setupOpen && (
-                  <>
-                    {isDataTab && renderDateRangeControl()}
-                    <MetricButton variant="paper" onClick={() => setPlanOpen(true)} disabled={!effectivePlan}>📋 Plan</MetricButton>
-                    <MetricButton variant="navy" onClick={() => { setVersionsOpen(true); setSubView(null); }}>
-                      🕓 Versiones{(dashboardRec?.versions?.length ?? 0) > 0 ? ` ${dashboardRec?.versions.length}` : ""}
-                    </MetricButton>
-                    <MetricButton variant="cyan" onClick={() => openMerlin("Quiero editar el dashboard de métricas (North Star, KPIs, superficies o una métrica custom). ¿Qué cambiamos?")}>✨ Merlin</MetricButton>
-                  </>
-                )}
-                <a href={`/dashboard/${slug}/tasks/${METRICS_PROJECT_ID}`} className="inline-flex">
-                  <MetricButton variant="paper">📁 Proyecto: {METRICS_PROJECT_ID}</MetricButton>
-                </a>
-                <MetricButton variant={setupOpen ? "navy" : "paper"} onClick={() => { setSetupOpen((v) => !v); setSubView(null); setVersionsOpen(false); }}>
-                  ⚙️ Setup
-                </MetricButton>
-              </div>
-            )}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {!setupOpen && (
+                <>
+                  {isDataTab && renderDateRangeControl()}
+                  <MetricButton variant="paper" onClick={() => setPlanOpen(true)} disabled={!effectivePlan}>📋 Plan</MetricButton>
+                  <MetricButton variant="navy" onClick={() => setVersionsOpen(true)}>
+                    🕓 Versiones{(dashboardRec?.versions?.length ?? 0) > 0 ? ` ${dashboardRec?.versions.length}` : ""}
+                  </MetricButton>
+                  <MetricButton variant="cyan" onClick={() => openMerlin("Quiero editar el dashboard de métricas (North Star, KPIs, superficies o una métrica custom). ¿Qué cambiamos?")}>✨ Merlin</MetricButton>
+                </>
+              )}
+              <a href={`/dashboard/${slug}/tasks/${METRICS_PROJECT_ID}`} className="inline-flex">
+                <MetricButton variant="paper">📁 Proyecto: {METRICS_PROJECT_ID}</MetricButton>
+              </a>
+              <MetricButton variant={setupOpen ? "navy" : "paper"} onClick={() => { setSetupOpen((v) => !v); setSubView(null); setVersionsOpen(false); }}>
+                ⚙️ Setup
+              </MetricButton>
+            </div>
           </div>
         </MetricPanel>
 
-        {versionsOpen ? renderVersions() : setupOpen ? renderSetup() : (
+        {setupOpen ? renderSetup() : (
           <>
             <MetricTabBar tabs={tabs.map((item) => ({ ...item, icon: TAB_ICONS[item.key] }))} active={tab} onSelect={selectTab} />
             <div className="mt-5">{renderActiveTab()}</div>
@@ -2963,6 +2959,10 @@ function MetricsPageInner({ slug }: { slug: string }) {
 
       <SlideOver open={planOpen} onClose={() => setPlanOpen(false)} title={`${t("plan")} — ${slug}`}>
         {effectivePlan ? <JsonViewer data={effectivePlan} /> : null}
+      </SlideOver>
+
+      <SlideOver open={versionsOpen} onClose={() => setVersionsOpen(false)} title={`🕓 Versiones — ${slug}`}>
+        {renderVersionsContent()}
       </SlideOver>
 
       {setupDocPath && <DocSlideOver slug={slug} docPath={setupDocPath} onClose={() => setSetupDocPath(null)} />}
