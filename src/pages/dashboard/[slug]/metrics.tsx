@@ -2811,7 +2811,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
       ? `${customFrom || "Desde"} -> ${customTo || "Hasta"}`
       : DATE_RANGE_OPTIONS.find((option) => option.value === range)?.label || "Periodo";
     return (
-      <>
+      <div className="relative">
         <div className="flex flex-wrap items-center gap-1 rounded-sc-lg border-2 border-ink bg-aged p-1 shadow-pop-xs">
           {DATE_RANGE_OPTIONS.map((option) => (
             <button
@@ -2842,7 +2842,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
           </button>
         </div>
         {datePickerOpen && (
-          <MetricPanel className="absolute right-0 top-full z-30 mt-2 w-[min(92vw,380px)] p-4">
+          <MetricPanel className="absolute left-0 top-full z-30 mt-2 w-[min(82vw,380px)] p-4 sm:left-auto sm:right-0 sm:w-[min(92vw,380px)]">
             <div className="mb-3 font-heading text-[12px] font-bold uppercase tracking-wide text-rust">Atajos</div>
             <div className="mb-4 grid grid-cols-2 gap-2">
               {[
@@ -2895,7 +2895,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
             </div>
           </MetricPanel>
         )}
-      </>
+      </div>
     );
   }
 
@@ -2932,7 +2932,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
                 {slug} {isDataTab && !setupOpen && <span className="ml-2 text-[11px]">{rangeLabel}</span>}
               </p>
             </div>
-            <div className="relative flex flex-wrap items-center justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               {!setupOpen && (
                 <>
                   {isDataTab && renderDateRangeControl()}
