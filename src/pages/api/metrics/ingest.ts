@@ -34,7 +34,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     sources?: Record<string, { status?: string; collectedAt?: string | null; metrics?: RawMetric[] }>;
     source?: string;
     metrics?: RawMetric[];
+    deleteStale?: boolean;
   };
+  const deleteStale = body.deleteStale === true;
 
   const slug = typeof body.slug === "string" ? body.slug.trim() : "";
   if (!slug) {
@@ -44,12 +46,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const date = typeof body.date === "string" && DATE_RE.test(body.date) ? body.date : new Date().toISOString().slice(0, 10);
 
   if (typeof body.source === "string" && Array.isArray(body.metrics)) {
-    const result = await ingestSourceMetrics(slug, body.source, body.metrics, date, { collectedAt: body.collectedAt });
+    const result = await ingestSourceMetrics(slug, body.source, body.metrics, date, { collectedAt: body.collectedAt, deleteStale });
     res.status(200).json(result);
     return;
   }
   if (body.sources && typeof body.sources === "object") {
-    const result = await ingestDailySnapshot(slug, date, { slug, collectedAt: body.collectedAt, sources: body.sources });
+    const result = await ingestDailySnapshot(slug, date, { slug, collectedAt: body.collectedAt, sources: body.sources }, { deleteStale });
     res.status(200).json(result);
     return;
   }

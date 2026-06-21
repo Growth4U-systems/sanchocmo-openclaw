@@ -444,6 +444,7 @@ export interface SourceHealth {
   overdue: boolean;
   lastStatus: string | null;
   lastError: string | null;
+  lastDeletedCount: number | null;
 }
 
 export interface MetricsHealthResult {
@@ -522,6 +523,7 @@ export async function getMetricsHealth(slug: string): Promise<MetricsHealthResul
       overdue,
       lastStatus: run?.status ?? null,
       lastError: run?.error ?? null,
+      lastDeletedCount: run?.deletedCount ?? null,
     };
   });
   const overall = !anyData ? "no-data" : anyStale ? "stale" : "ok";

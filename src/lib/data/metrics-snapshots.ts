@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { sql as drizzleSql } from "drizzle-orm";
+import { and, eq, inArray, notInArray, sql as drizzleSql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricSnapshots, metricSourceRuns } from "@/db/schema";
 
@@ -37,6 +37,7 @@ export interface IngestResult {
   rows: number;
   sources: string[];
   skipped: string[];
+  deleted?: number;
   storage: { configured: boolean };
 }
 
@@ -192,6 +193,31 @@ async function upsertRows(rows: SnapshotRow[]): Promise<number> {
   return unique.length;
 }
 
+/**
+ * Convergence (SAN-300): after re-ingesting a (slug, source), remove rows for the
+ * exact metric_dates the payload restated whose id is not in the freshly-upserted
+ * set. Scoped to those dates only, so legitimately-lagged GSC rows for OTHER dates
+ * are never touched. Must run AFTER upsertRows (so kept ids exist). Returns the
+ * number of stale rows removed.
+ */
+async function deleteStaleRows(slug: string, source: string, presentDates: string[], keepIds: string[]): Promise<number> {
+  const dates = [...new Set(presentDates)];
+  if (!dates.length || !keepIds.length) return 0;
+  const database = getDb();
+  const deleted = await database
+    .delete(metricSnapshots)
+    .where(
+      and(
+        eq(metricSnapshots.slug, slug),
+        eq(metricSnapshots.source, source),
+        inArray(metricSnapshots.metricDate, dates),
+        notInArray(metricSnapshots.id, keepIds),
+      ),
+    )
+    .returning({ id: metricSnapshots.id });
+  return deleted.length;
+}
+
 export type SourceRunStatus = "ok" | "error" | "skipped";
 
 export interface SourceRunInput {
@@ -250,7 +276,7 @@ export async function ingestSourceMetrics(
   source: string,
   metrics: RawMetric[],
   dateKey: string,
-  opts: { collectedAt?: string | null; runId?: string | null } = {},
+  opts: { collectedAt?: string | null; runId?: string | null; deleteStale?: boolean } = {},
 ): Promise<IngestResult> {
   if (!hasDatabase) {
     return { ok: false, rows: 0, sources: [], skipped: source ? [source] : [], storage: STORAGE_NOT_CONFIGURED };
@@ -262,16 +288,30 @@ export async function ingestSourceMetrics(
   const runId = opts.runId ?? `mri_${stableId(slug, dateKey, source, opts.collectedAt ?? "")}`;
   const rows = rowsFromMetrics(slug, source, metrics, dateKey, opts.collectedAt, runId);
   const count = await upsertRows(rows);
+  let deleted = 0;
+  if (opts.deleteStale) {
+    deleted = await deleteStaleRows(
+      slug,
+      source,
+      rows.map((row) => row.metricDate as string),
+      rows.map((row) => row.id as string),
+    );
+  }
   try {
-    await recordSourceRun({ slug, metricDate: dateKey, source, status: count ? "ok" : "skipped", rowCount: count, collectedAt: opts.collectedAt });
+    await recordSourceRun({ slug, metricDate: dateKey, source, status: count ? "ok" : "skipped", rowCount: count, deletedCount: deleted, collectedAt: opts.collectedAt });
   } catch {
     /* ledger is best-effort */
   }
-  return { ok: true, rows: count, sources: count ? [source] : [], skipped: count ? [] : [source], storage: { configured: true } };
+  return { ok: true, rows: count, sources: count ? [source] : [], skipped: count ? [] : [source], deleted, storage: { configured: true } };
 }
 
 /** Mirror a full daily snapshot (`{ sources: { <source>: { status, metrics } } }`). */
-export async function ingestDailySnapshot(slug: string, dateKey: string, daily: DailySnapshotInput): Promise<IngestResult> {
+export async function ingestDailySnapshot(
+  slug: string,
+  dateKey: string,
+  daily: DailySnapshotInput,
+  opts: { deleteStale?: boolean } = {},
+): Promise<IngestResult> {
   if (!hasDatabase) {
     return { ok: false, rows: 0, sources: [], skipped: [], storage: STORAGE_NOT_CONFIGURED };
   }
@@ -285,6 +325,7 @@ export async function ingestDailySnapshot(slug: string, dateKey: string, daily: 
   const used: string[] = [];
   const skipped: string[] = [];
   const ledger: SourceRunInput[] = [];
+  const bySource = new Map<string, SnapshotRow[]>();
   for (const [source, payload] of Object.entries(sources)) {
     const metrics = payload?.metrics;
     const collectedAt = payload?.collectedAt ?? daily.collectedAt;
@@ -296,9 +337,31 @@ export async function ingestDailySnapshot(slug: string, dateKey: string, daily: 
     used.push(source);
     const srcRows = rowsFromMetrics(slug, source, metrics, dateKey, collectedAt, runId);
     allRows.push(...srcRows);
-    ledger.push({ slug, metricDate: dateKey, source, status: "ok", rowCount: srcRows.length, collectedAt });
+    bySource.set(source, srcRows);
+    // Count distinct ids — what upsertRows actually writes — so the ledger
+    // matches the DB even when a source emits duplicate logical keys.
+    const written = new Set(srcRows.map((row) => row.id as string)).size;
+    ledger.push({ slug, metricDate: dateKey, source, status: "ok", rowCount: written, collectedAt });
   }
   const count = await upsertRows(allRows);
+  // Convergence: only after the upsert, and only for sources actually present.
+  // An errored/skipped source has no rows here, so its prior data is never wiped.
+  let deleted = 0;
+  if (opts.deleteStale) {
+    for (const [source, srcRows] of bySource) {
+      const del = await deleteStaleRows(
+        slug,
+        source,
+        srcRows.map((row) => row.metricDate as string),
+        srcRows.map((row) => row.id as string),
+      );
+      deleted += del;
+      if (del) {
+        const entry = ledger.find((l) => l.source === source && l.status === "ok");
+        if (entry) entry.deletedCount = del;
+      }
+    }
+  }
   await recordSourceRuns(ledger);
-  return { ok: true, rows: count, sources: used, skipped, storage: { configured: true } };
+  return { ok: true, rows: count, sources: used, skipped, deleted, storage: { configured: true } };
 }
