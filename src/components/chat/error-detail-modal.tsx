@@ -1,7 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Modal } from "@/components/shared/modal";
 import type { ErrorDetail, ErrorCategory } from "@/lib/data/mc-chat";
+import { consoleUrlFor, consoleLabelFor } from "@/lib/provider-console";
+import { providerDisplayName } from "@/lib/provider-auth-display";
 
 const CATEGORY_LABEL: Record<ErrorCategory, string> = {
   rate_limit: "Rate limit alcanzado",
@@ -35,8 +39,15 @@ interface ErrorDetailModalProps {
 }
 
 export function ErrorDetailModal({ open, onClose, detail }: ErrorDetailModalProps) {
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as { role?: string })?.role === "admin";
   if (!detail) return null;
   const label = CATEGORY_LABEL[detail.category] ?? detail.category;
+  // Engine CTA: only for limit/auth failures, and only for admins (the engine and
+  // its accounts live in the admin-only Runtime/Motor surface).
+  const showEngineCta = isAdmin && (detail.category === "rate_limit" || detail.category === "auth");
+  const consoleUrl = detail.provider ? consoleUrlFor(detail.provider) : null;
+  const consoleHost = detail.provider ? consoleLabelFor(detail.provider) : null;
   return (
     <Modal open={open} onClose={onClose} title={`⚠️ ${label}`} size="lg">
       <div className="space-y-3">
@@ -66,6 +77,40 @@ export function ErrorDetailModal({ open, onClose, detail }: ErrorDetailModalProp
                 correlacionado con · {CATEGORY_LABEL[detail.correlatedWith] ?? detail.correlatedWith}
               </span>
             )}
+          </div>
+        )}
+
+        {showEngineCta && (
+          <div className="rounded-md border-2 border-[var(--chat-link)] bg-[var(--chat-surface-2)] px-3 py-2.5 space-y-2">
+            <p className="text-xs leading-relaxed text-[var(--chat-text)]">
+              {detail.provider ? (
+                <>
+                  El motor usa <strong>{providerDisplayName(detail.provider)}</strong> y alcanzó su límite o no tiene
+                  credencial. Revisa la cuenta o cambia de motor:
+                </>
+              ) : (
+                <>El motor alcanzó su límite o le falta credencial. Revisa la cuenta o cambia de motor:</>
+              )}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {consoleUrl && (
+                <a
+                  href={consoleUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border border-[var(--chat-link)] px-2.5 py-1 text-[11px] font-semibold text-[var(--chat-link)] hover:bg-[var(--chat-link)] hover:text-white transition-colors"
+                >
+                  🔗 Abrir consola{consoleHost ? ` (${consoleHost})` : ""}
+                </a>
+              )}
+              <Link
+                href="/dashboard/admin/settings?tab=apis&cat=runtime"
+                onClick={onClose}
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--chat-border)] px-2.5 py-1 text-[11px] font-semibold text-[var(--chat-text)] hover:bg-[var(--chat-surface)] transition-colors"
+              >
+                🚂 Cambiar motor →
+              </Link>
+            </div>
           </div>
         )}
 

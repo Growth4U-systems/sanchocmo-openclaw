@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
+import { RuntimeMotorSection } from "@/components/settings/runtime-motor-section";
 import { useAppStore } from "@/stores/app";
 import { cn } from "@/lib/utils";
 import { isYalcProviderApiId } from "@/lib/yalc/provider-catalog";
@@ -93,6 +95,15 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const qc = useQueryClient();
+  const router = useRouter();
+
+  // Deep-link support: `?cat=runtime` (from the chat rate-limit modal) preselects
+  // a category. Only honored on the standalone panel, not embedded scoped views.
+  useEffect(() => {
+    if (categories) return;
+    const cat = router.query.cat;
+    if (typeof cat === "string" && cat) setCategoryFilter(cat);
+  }, [router.query.cat, categories]);
 
   const [checkingService, setCheckingService] = useState<string | null>(null);
 
@@ -151,11 +162,15 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
     for (const [catKey, catData] of Object.entries(catalog.categories)) {
       if (categories && !categories.includes(catKey)) continue;
       for (const [apiId, apiMeta] of Object.entries(catData.apis || {})) {
+        // The engine providers (anthropic/openai/openrouter/gemini/xai) move into
+        // the dedicated "Runtime / Motor" category in system scope, so they don't
+        // also show as plain api-key rows there.
+        if (!slug && !categories && GATEWAY_ENV_SERVICES.has(apiId)) continue;
         result.push({ apiId, meta: apiMeta, catKey, catLabel: catData.label });
       }
     }
     return result;
-  }, [catalog, categories]);
+  }, [catalog, categories, slug]);
 
   // Counters scoped to the (potentially filtered) set
   let connected = 0, pending = 0, errored = 0, notConfigured = 0;
@@ -172,8 +187,11 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
   const categoryOptions = useMemo(() => {
     if (categories) return [];
     if (!catalog?.categories) return [];
-    return Object.entries(catalog.categories).map(([key, cat]) => ({ key, label: cat.label }));
-  }, [catalog, categories]);
+    const opts = Object.entries(catalog.categories).map(([key, cat]) => ({ key, label: cat.label }));
+    // Admin/system scope gets a synthetic "Runtime / Motor" category (the chat engine).
+    if (!slug) return [{ key: "runtime", label: "🚂 Runtime / Motor" }, ...opts];
+    return opts;
+  }, [catalog, categories, slug]);
 
   const getApiStatus = useCallback((apiId: string, ownership: string) => {
     const svc = services[apiId];
@@ -192,6 +210,9 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
 
   const filteredApis = useMemo(() => {
     const q = search.toLowerCase().trim();
+    // The "runtime" category is rendered by <RuntimeMotorSection/>, not the
+    // generic table — so the generic list is empty under that filter.
+    if (categoryFilter === "runtime") return [];
     return allApis.filter((item) => {
       if (categoryFilter !== "all" && item.catKey !== categoryFilter) return false;
       if (statusFilter !== "all") {
@@ -331,6 +352,13 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando...</p>}
+
+      {/* Runtime / Motor — engine accounts + primary-model selector (admin/system only) */}
+      {categoryFilter === "runtime" && !slug && (
+        <RuntimeMotorSection
+          onOpenSystemKey={(apiId, provider) => setSystemKeySlider({ apiId, provider })}
+        />
+      )}
 
       {/* API Table */}
       {!isLoading && filteredApis.length > 0 && (
