@@ -77,6 +77,8 @@ export interface ChatAttachment {
 // UI can open a modal with the full technical detail.
 // ---------------------------------------------------------------------------
 export type ErrorCategory =
+  | "insufficient_quota"
+  | "anthropic_billing"
   | "rate_limit"
   | "auth"
   | "context_overflow"
@@ -90,11 +92,15 @@ export interface ErrorDetail {
   provider?: string;
   account?: string;
   model?: string;
+  authMode?: string;
+  anthropicAuthMode?: string;
   classifiedAt: number;
   correlatedWith?: ErrorCategory;
 }
 
 const VALID_CATEGORIES: ReadonlySet<ErrorCategory> = new Set([
+  "insufficient_quota",
+  "anthropic_billing",
   "rate_limit",
   "auth",
   "context_overflow",
@@ -123,6 +129,8 @@ export function normalizeErrorDetail(input: unknown): ErrorDetail | undefined {
   if (typeof v.provider === "string") out.provider = v.provider.slice(0, 64);
   if (typeof v.account === "string") out.account = v.account.slice(0, 128);
   if (typeof v.model === "string") out.model = v.model.slice(0, 64);
+  if (typeof v.authMode === "string") out.authMode = v.authMode.slice(0, 32);
+  if (typeof v.anthropicAuthMode === "string") out.anthropicAuthMode = v.anthropicAuthMode.slice(0, 32);
   if (
     typeof v.correlatedWith === "string" &&
     VALID_CATEGORIES.has(v.correlatedWith as ErrorCategory)

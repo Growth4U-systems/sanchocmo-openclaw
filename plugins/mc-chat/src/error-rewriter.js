@@ -17,7 +17,7 @@
 const CLASSIFIERS = [
   {
     category: "insufficient_quota",
-    regex: /insufficient_quota|exceeded your current quota|plan and billing|you have run out of credits/i,
+    regex: /\binsufficient_quota\b|you (?:have )?exceeded your current quota|you have run out of credits/i,
     header: "API key OpenAI sin cuota",
     hint: "El proyecto OpenAI ligado al `OPENAI_API_KEY` se quedó sin saldo. Recargá billing o reemplazá la key.",
   },
@@ -36,7 +36,7 @@ const CLASSIFIERS = [
   },
   {
     category: "rate_limit",
-    regex: /rate.?limit|usage limit|quota.*exceed(ed)?|\b429\b/i,
+    regex: /\b(?:rate_limit|usage_limit)\b|\b429\b|you(?:'ve| have) reached your .{0,80}usage limit|codex subscription usage limit|rate limit exceeded/i,
     header: "Rate limit alcanzado",
     hint: "Reintentá cuando se libere la cuota.",
   },

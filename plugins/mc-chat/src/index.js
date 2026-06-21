@@ -20,14 +20,52 @@ import { looksLikeToolEcho } from "./tool-echo.js";
 import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
 import { parseDelegateMarkers, slugForThread } from "./delegate-marker.js";
 
-// Best-effort lookup of an agent's current Codex auth mode + account email.
-// Used to disambiguate "rate limit" errors: Codex CLI always emits the
-// "subscription usage limit" wording even when auth_mode is apikey, which
-// confuses debugging. The rewriter consumes this to pick auth-aware copy.
-// Returns null if anything goes wrong; the rewriter then falls back to the
-// generic message.
-function readCodexAuthInfo(agentId) {
-  if (!agentId || typeof agentId !== "string") return null;
+function normalizeOpenAiAuthMode(mode) {
+  if (typeof mode !== "string") return null;
+  const m = mode.toLowerCase();
+  if (m === "subscription" || m === "chatgpt") return "chatgpt";
+  if (m === "api_key" || m === "apikey") return "apikey";
+  return null;
+}
+
+function emailFromProfile(profileId, profile) {
+  if (typeof profile?.email === "string" && profile.email) return profile.email;
+  if (typeof profile?.accountEmail === "string" && profile.accountEmail) return profile.accountEmail;
+  const m = typeof profileId === "string"
+    ? profileId.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)
+    : null;
+  return m ? m[0] : null;
+}
+
+function readCodexAuthProfilesInfo(agentId) {
+  const home = process.env.OPENCLAW_HOME;
+  if (!home) return null;
+  const candidates = [
+    path.join(home, ".openclaw", "agents", agentId, "agent", "auth-profiles.json"),
+    path.join(home, "agents", agentId, "agent", "auth-profiles.json"),
+    path.join(home, ".openclaw", "shared", "auth-profiles.json"),
+  ];
+  for (const p of candidates) {
+    try {
+      const data = JSON.parse(fs.readFileSync(p, "utf8"));
+      const profiles = data?.profiles && typeof data.profiles === "object" ? data.profiles : {};
+      for (const [profileId, profile] of Object.entries(profiles)) {
+        const provider = typeof profile?.provider === "string" ? profile.provider : "";
+        if (provider !== "openai-codex" && !String(profileId).startsWith("openai-codex:")) continue;
+        const type = typeof profile?.type === "string" ? profile.type
+          : (typeof profile?.mode === "string" ? profile.mode : "");
+        const authMode = /oauth|chatgpt/i.test(type) ? "chatgpt"
+          : (/token|api.?key|apikey/i.test(type) ? "apikey" : null);
+        return { authMode, authEmail: emailFromProfile(profileId, profile) };
+      }
+    } catch {
+      // try next candidate path
+    }
+  }
+  return null;
+}
+
+function readCodexHomeAuthInfo(agentId) {
   const home = process.env.OPENCLAW_HOME;
   if (!home) return null;
   const candidates = [
@@ -52,6 +90,26 @@ function readCodexAuthInfo(agentId) {
     }
   }
   return null;
+}
+
+// Best-effort lookup of an agent's current Codex auth mode + account email.
+// Used to disambiguate real rate-limit errors. Prefer the configured deployment
+// mode and OpenClaw's auth-profiles store over codex-home/auth.json: the latter
+// can be a stale Codex CLI file left behind after switching to subscription
+// mode, and should not decide user-facing billing copy.
+function readCodexAuthInfo(agentId) {
+  if (!agentId || typeof agentId !== "string") return null;
+  const configuredMode = normalizeOpenAiAuthMode(process.env.OPENAI_AUTH_MODE);
+  const profilesInfo = readCodexAuthProfilesInfo(agentId);
+  const codexHomeInfo = readCodexHomeAuthInfo(agentId);
+  if (configuredMode) {
+    return {
+      authMode: configuredMode,
+      authEmail: profilesInfo?.authEmail || codexHomeInfo?.authEmail || undefined,
+    };
+  }
+  if (profilesInfo?.authMode) return profilesInfo;
+  return codexHomeInfo;
 }
 
 const CHANNEL_KEY = "mc-chat";
