@@ -6,14 +6,16 @@ import { metricSnapshots } from "@/db/schema";
 import { BASE } from "@/lib/data/paths";
 import { ensureMetricsStorage } from "@/lib/data/metrics-snapshots";
 import { SURFACES, surfaceForSource, type SurfaceKey } from "@/lib/metrics/surfaces";
+import { aggFor, type AggStrategy } from "@/lib/metrics/aggregation";
 
 /**
  * Read layer over the `metric_snapshots` time-series (SAN-264 · Métricas v2 PR-2).
  * All functions degrade cleanly (`configured: false`) when DATABASE_URL is unset.
- * Note: aggregation is `sum` per bucket — correct for additive metrics (sessions,
- * spend, leads…). Snapshot-style metrics (trust_score, avg position) use the
- * latest-in-window value via getSurfaceSummary; per-metric snapshot aggregation
- * in series is a PR-5 refinement.
+ * Aggregation is per-metric (SAN-300): additive metrics SUM, rates AVG, and
+ * snapshots (trust_score, PageSpeed scores, CRM running totals) take the LATEST
+ * value — see `aggFor` in @/lib/metrics/aggregation. The strategy applies to both
+ * the bucketed series and the trend windows; an unpinned/mixed query keeps the
+ * legacy SUM, so existing call sites never regress.
  */
 
 export type Grain = "day" | "week" | "month";
@@ -48,6 +50,22 @@ export interface TimeSeriesResult {
   points: SeriesPoint[];
 }
 
+/**
+ * SQL reducer for a metric over a GROUP BY bucket (or a whole window when no
+ * groupBy is applied). `sum`/`avg` are plain aggregates; `latest` picks the value
+ * at the max metric_date via array_agg — no window function needed, so it composes
+ * with the existing grouped query shape and works on both Neon and postgres-js.
+ */
+function aggExpr(strategy: AggStrategy) {
+  const value = metricSnapshots.value;
+  const date = metricSnapshots.metricDate;
+  if (strategy === "avg") return dsql<number>`coalesce(avg(${value}), 0)`;
+  if (strategy === "latest") {
+    return dsql<number>`coalesce((array_agg(${value} order by ${date} desc) filter (where ${value} is not null))[1], 0)`;
+  }
+  return dsql<number>`coalesce(sum(${value}), 0)`;
+}
+
 export async function getMetricsTimeSeries(slug: string, query: TimeSeriesQuery = {}): Promise<TimeSeriesResult> {
   const grain = normGrain(query.grain);
   if (!hasDatabase) return { configured: false, grain, points: [] };
@@ -67,7 +85,7 @@ export async function getMetricsTimeSeries(slug: string, query: TimeSeriesQuery 
   const rows = await database
     .select({
       bucket: dsql<string>`to_char(${bucket}, 'YYYY-MM-DD')`,
-      total: dsql<number>`coalesce(sum(${metricSnapshots.value}), 0)`,
+      total: aggExpr(aggFor(query.source, query.metric)),
     })
     .from(metricSnapshots)
     .where(and(...conditions))
@@ -90,7 +108,9 @@ export interface TrendResult {
   direction: "up" | "down" | "flat";
 }
 
-async function sumWindow(
+/** Reduce a metric over a single window using its per-metric strategy
+ *  (sum/avg/latest). Latest = the value at the max metric_date in the window. */
+async function aggregateWindow(
   slug: string,
   source: string | undefined,
   metric: string | undefined,
@@ -107,7 +127,7 @@ async function sumWindow(
   if (source) conditions.push(eq(metricSnapshots.source, source));
   if (metric) conditions.push(eq(metricSnapshots.metricName, metric));
   const rows = await database
-    .select({ total: dsql<number>`coalesce(sum(${metricSnapshots.value}), 0)` })
+    .select({ total: aggExpr(aggFor(source, metric)) })
     .from(metricSnapshots)
     .where(and(...conditions));
   return Number(rows[0]?.total ?? 0);
@@ -124,12 +144,169 @@ export async function getTrend(
   const spanMs = Math.max(0, toDate.getTime() - fromDate.getTime());
   const prevTo = new Date(fromDate.getTime() - DAY_MS);
   const prevFrom = new Date(prevTo.getTime() - spanMs);
-  const current = await sumWindow(slug, query.source, query.metric, query.from, query.to);
-  const previous = await sumWindow(slug, query.source, query.metric, fmtDate(prevFrom), fmtDate(prevTo));
+  const current = await aggregateWindow(slug, query.source, query.metric, query.from, query.to);
+  const previous = await aggregateWindow(slug, query.source, query.metric, fmtDate(prevFrom), fmtDate(prevTo));
   const deltaPct = previous === 0 ? (current === 0 ? 0 : null) : ((current - previous) / previous) * 100;
   const direction: TrendResult["direction"] =
     deltaPct == null ? "flat" : deltaPct > 0.5 ? "up" : deltaPct < -0.5 ? "down" : "flat";
   return { configured: true, current, previous, deltaPct, direction };
+}
+
+export interface DailyMetricEntry {
+  name: string;
+  value: number;
+}
+
+export interface DailySource {
+  status: "ok";
+  metrics: DailyMetricEntry[];
+}
+
+export interface DailyEntry {
+  date: string;
+  sources: Record<string, DailySource>;
+}
+
+export interface DailyHistoryResult {
+  configured: boolean;
+  days: number;
+  daily: DailyEntry[];
+}
+
+/**
+ * Reconstruct the file-shaped daily snapshots from `metric_snapshots` so the
+ * dashboard can read the FULL history (not just the last ~30 day-files). Emits
+ * un-dimensioned (dims_key='') numeric roll-up rows only — exactly what the UI's
+ * mVal / bucketDaily / aggregateEntries consume — so it's a drop-in replacement
+ * for the file loop. Degrades to { configured:false, days:0, daily:[] } when
+ * DATABASE_URL is unset (caller falls back to files).
+ */
+export async function getDailySnapshots(
+  slug: string,
+  query: { from?: string; to?: string } = {},
+): Promise<DailyHistoryResult> {
+  if (!hasDatabase) return { configured: false, days: 0, daily: [] };
+  await ensureMetricsStorage();
+  const database = getDb();
+  const conditions = [eq(metricSnapshots.slug, slug), eq(metricSnapshots.dimsKey, "")];
+  if (query.from) conditions.push(gte(metricSnapshots.metricDate, query.from));
+  if (query.to) conditions.push(lte(metricSnapshots.metricDate, query.to));
+  const rows = await database
+    .select({
+      date: metricSnapshots.metricDate,
+      source: metricSnapshots.source,
+      metric: metricSnapshots.metricName,
+      value: metricSnapshots.value,
+    })
+    .from(metricSnapshots)
+    .where(and(...conditions))
+    .orderBy(metricSnapshots.metricDate);
+
+  const byDate = new Map<string, Map<string, DailyMetricEntry[]>>();
+  for (const row of rows) {
+    if (row.value == null) continue; // text-only metrics: UI expects numbers
+    const date = String(row.date);
+    let sources = byDate.get(date);
+    if (!sources) sources = byDate.set(date, new Map()).get(date)!;
+    let metrics = sources.get(row.source);
+    if (!metrics) metrics = sources.set(row.source, []).get(row.source)!;
+    metrics.push({ name: row.metric, value: Number(row.value) });
+  }
+
+  const daily: DailyEntry[] = [...byDate.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([date, sources]) => ({
+      date,
+      sources: Object.fromEntries(
+        [...sources.entries()].map(([source, metrics]) => [source, { status: "ok" as const, metrics }]),
+      ),
+    }));
+  return { configured: true, days: daily.length, daily };
+}
+
+/** JS-side reducer mirroring `aggExpr` for the scorecard pivot (small windows). */
+function reduceSeries(strategy: AggStrategy, series: Array<{ date: string; value: number }>): number {
+  if (!series.length) return 0;
+  if (strategy === "latest") {
+    let best = series[0];
+    for (const point of series) if (point.date >= best.date) best = point;
+    return best.value;
+  }
+  const total = series.reduce((acc, point) => acc + point.value, 0);
+  return strategy === "avg" ? total / series.length : total;
+}
+
+export interface SourceScorecardMetric {
+  metric: string;
+  value: number;
+  agg: AggStrategy;
+}
+
+export interface SourceScorecard {
+  source: string;
+  surface: SurfaceKey | null;
+  metrics: SourceScorecardMetric[];
+}
+
+export interface SourceScorecardsResult {
+  configured: boolean;
+  from: string;
+  to: string;
+  sources: SourceScorecard[];
+}
+
+/**
+ * "One row per tool" pivot for the dashboard cards: each connected source with
+ * its roll-up metrics aggregated over [from,to] using the per-metric strategy
+ * (so a card never sums a position or a trust score). Defaults to the last 30
+ * days. Degrades to { configured:false } when DATABASE_URL is unset.
+ */
+export async function getSourceScorecards(
+  slug: string,
+  query: { from?: string; to?: string } = {},
+): Promise<SourceScorecardsResult> {
+  const to = query.to ?? fmtDate(new Date());
+  const from = query.from ?? fmtDate(new Date(Date.now() - 30 * DAY_MS));
+  if (!hasDatabase) return { configured: false, from, to, sources: [] };
+  await ensureMetricsStorage();
+  const database = getDb();
+  const rows = await database
+    .select({
+      date: metricSnapshots.metricDate,
+      source: metricSnapshots.source,
+      metric: metricSnapshots.metricName,
+      value: metricSnapshots.value,
+    })
+    .from(metricSnapshots)
+    .where(
+      and(
+        eq(metricSnapshots.slug, slug),
+        eq(metricSnapshots.dimsKey, ""),
+        gte(metricSnapshots.metricDate, from),
+        lte(metricSnapshots.metricDate, to),
+      ),
+    )
+    .orderBy(metricSnapshots.metricDate);
+
+  const grouped = new Map<string, Map<string, Array<{ date: string; value: number }>>>();
+  for (const row of rows) {
+    if (row.value == null) continue;
+    let metrics = grouped.get(row.source);
+    if (!metrics) metrics = grouped.set(row.source, new Map()).get(row.source)!;
+    let series = metrics.get(row.metric);
+    if (!series) series = metrics.set(row.metric, []).get(row.metric)!;
+    series.push({ date: String(row.date), value: Number(row.value) });
+  }
+
+  const sources: SourceScorecard[] = [...grouped.entries()].map(([source, metrics]) => ({
+    source,
+    surface: surfaceForSource(source),
+    metrics: [...metrics.entries()].map(([metric, series]) => {
+      const agg = aggFor(source, metric);
+      return { metric, value: reduceSeries(agg, series), agg };
+    }),
+  }));
+  return { configured: true, from, to, sources };
 }
 
 export interface SurfaceSummaryEntry {
