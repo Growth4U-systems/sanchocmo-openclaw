@@ -46,8 +46,12 @@ export function ErrorDetailModal({ open, onClose, detail }: ErrorDetailModalProp
   // Engine CTA: only for limit/auth failures, and only for admins (the engine and
   // its accounts live in the admin-only Runtime/Motor surface).
   const showEngineCta = isAdmin && (detail.category === "rate_limit" || detail.category === "auth");
-  const consoleUrl = detail.provider ? consoleUrlFor(detail.provider) : null;
-  const consoleHost = detail.provider ? consoleLabelFor(detail.provider) : null;
+  // An `auth` failure is a missing/invalid key → send them to the API-key console;
+  // a `rate_limit` is most likely the subscription (engine is subscription-first),
+  // so leave the route undefined to default to the subscription console.
+  const consoleRoute = detail.category === "auth" ? "api" : undefined;
+  const consoleUrl = detail.provider ? consoleUrlFor(detail.provider, consoleRoute) : null;
+  const consoleHost = detail.provider ? consoleLabelFor(detail.provider, consoleRoute) : null;
   return (
     <Modal open={open} onClose={onClose} title={`⚠️ ${label}`} size="lg">
       <div className="space-y-3">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ModelPicker } from "@/components/admin/ModelPicker";
 import {
@@ -46,6 +47,23 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const providers = useMemo(() => catalog?.providers ?? [], [catalog]);
   const models = useMemo(() => catalog?.models ?? [], [catalog]);
 
+  // The model catalog only knows whether a credential is *present* (route), not
+  // whether the provider *accepts* it. api-health actually pings the provider, so
+  // a present-but-rejected system key surfaces here as status "error" — without
+  // this, a broken engine key would look healthy in the table.
+  const { data: health } = useQuery<{
+    services?: Record<string, { status?: string; error?: string; details?: { error?: string } }>;
+  }>({
+    queryKey: ["api-health", ""],
+    queryFn: async () => {
+      const res = await fetch("/api/system/api-health");
+      if (!res.ok) return { services: {} };
+      return res.json();
+    },
+    staleTime: 30_000,
+  });
+  const services = useMemo(() => health?.services ?? {}, [health]);
+
   const current = defaultModel?.model ?? null;
   const pickerValue = draft !== null ? draft : current;
   const dirty = draft !== null && draft !== current;
@@ -60,9 +78,12 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         const engineModel = pickEngineModel(rp, models);
         const isEngine = currentProviderId !== null && rp.catalogIds.includes(currentProviderId);
         const usingModel = isEngine ? current : engineModel;
-        return { rp, provider, route, configured, engineModel, isEngine, usingModel };
+        const svc = services[rp.apiId];
+        const healthError =
+          svc?.status === "error" ? svc.details?.error || svc.error || "credencial rechazada" : null;
+        return { rp, provider, route, configured, engineModel, isEngine, usingModel, healthError };
       }),
-    [providers, models, current, currentProviderId],
+    [providers, models, current, currentProviderId, services],
   );
 
   const saveModel = (model: string) =>
@@ -134,7 +155,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 </td>
               </tr>
             ) : (
-              rows.map(({ rp, provider, route, configured, engineModel, isEngine, usingModel }) => {
+              rows.map(({ rp, provider, route, configured, engineModel, isEngine, usingModel, healthError }) => {
                 const consoleUrl = consoleUrlFor(rp.key, route);
                 const consoleHost = consoleLabelFor(rp.key, route);
                 return (
@@ -164,6 +185,14 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                       >
                         {configured ? routeLabel(route) : "sin auth"}
                       </span>
+                      {healthError && (
+                        <div
+                          className="mt-1 max-w-[200px] truncate text-[10px] font-bold text-red-600"
+                          title={healthError}
+                        >
+                          ⚠ key inválida
+                        </div>
+                      )}
                     </td>
                     <td className="px-3 py-2.5">
                       <span

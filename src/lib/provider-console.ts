@@ -41,7 +41,7 @@ export const RUNTIME_PROVIDERS: RuntimeProvider[] = [
     key: "codex",
     apiId: "openai",
     catalogIds: ["codex", "openai-codex", "openai"],
-    name: "OpenAI Codex",
+    name: "OpenAI / Codex",
     icon: "⚙️",
     preferredModels: ["codex/gpt-5.4", "codex/gpt-5.4-mini", "openai-codex/gpt-5.3-codex"],
   },

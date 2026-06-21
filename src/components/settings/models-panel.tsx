@@ -653,6 +653,8 @@ function ProvidersSection() {
           <tbody>
             {providerRows.map((p) => {
               const route = effectiveRoute(p);
+              const consoleUrl = consoleUrlFor(p.id, route);
+              const consoleHost = consoleLabelFor(p.id, route);
               const reasoning = models.filter((m) => m.provider === p.id && m.reasoning);
               const shownReasoning = reasoning.slice(0, 2).map((m) => m.name || m.id).join(", ");
               const hiddenCount = Math.max(0, reasoning.length - 2);
@@ -734,14 +736,14 @@ function ProvidersSection() {
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex flex-col items-end gap-1">
-                      {consoleUrlFor(p.id, route) && (
+                      {consoleUrl && (
                         <a
-                          href={consoleUrlFor(p.id, route)!}
+                          href={consoleUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[11px] font-semibold text-rust underline-offset-2 hover:underline whitespace-nowrap"
                         >
-                          🔗 {consoleLabelFor(p.id, route) || "consola"}
+                          🔗 {consoleHost || "consola"}
                         </a>
                       )}
                       {["anthropic", "openrouter", "openai", "google"].includes(p.id) ? (
