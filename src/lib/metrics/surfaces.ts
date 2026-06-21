@@ -145,6 +145,21 @@ export const SURFACE_MANDATORY_SOURCES: Partial<Record<SurfaceKey, { allOf?: str
   partnerships: { anyOf: ["yalc", "creators"] },
 };
 
+/** Catalog apiIds (see api-catalog.json) that a surface's "Conectar" links should
+ *  filter the APIs settings page to. Drives the `?surface=` deep-link.
+ *  `pagespeed` and `trust_score` are non-connectable (auto or internal) and are omitted.
+ *  An empty array (reputation) means nothing to connect — show "Automático" instead. */
+export const SURFACE_API_PROVIDERS: Record<SurfaceKey, string[]> = {
+  reputation: [],                                       // Trust Engine — nothing to connect
+  web: ["ga4", "gsc"],
+  product: ["posthog", "ga4", "amplitude"],
+  pipeline: ["ghl", "hubspot", "pipedrive"],
+  paid: ["meta_ads", "google_ads", "linkedin_ads", "tiktok_ads"],
+  email: ["instantly", "lemlist"],
+  social: ["metricool"],
+  partnerships: ["yalc"],
+};
+
 export const SURFACE_BY_SOURCE: Record<string, SurfaceKey> = (() => {
   const map: Record<string, SurfaceKey> = {};
   for (const surface of SURFACES) {

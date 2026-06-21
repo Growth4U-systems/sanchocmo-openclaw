@@ -6,6 +6,8 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TitleIcon } from "@/components/layout/title-icon";
 import { TabGroup } from "@/components/shared/tab-group";
 import { ApisConnectorsPanel } from "@/components/settings/ApisConnectorsPanel";
+import { SURFACE_API_PROVIDERS, getSurface } from "@/lib/metrics/surfaces";
+import type { SurfaceKey } from "@/lib/metrics/surfaces";
 import { AgentsPanel } from "@/components/settings/agents-panel";
 import { SkillsPanel } from "@/components/settings/skills-panel";
 import { StrategiesPanel } from "@/components/settings/strategies-panel";
@@ -50,6 +52,21 @@ export default function ClientSettingsPage() {
   const slug = router.query.slug as string | undefined;
   const queryTab = router.query.tab;
 
+  // ?surface=<key> deep-link from Métricas Conexiones rows — scopes the APIs panel to that
+  // surface's providers. reputation resolves to [] → activeProviders collapses to no filter
+  // (it's automatic and never deep-linked); an unknown key → undefined → no filter.
+  const surfaceParam = typeof router.query.surface === "string" ? router.query.surface : undefined;
+  const surfaceProviders =
+    surfaceParam && surfaceParam in SURFACE_API_PROVIDERS
+      ? SURFACE_API_PROVIDERS[surfaceParam as SurfaceKey]
+      : undefined;
+  const surfaceLabel = surfaceParam ? getSurface(surfaceParam as SurfaceKey)?.name : undefined;
+  const clearSurfaceFilter = () => {
+    const q = { ...router.query };
+    delete q.surface;
+    router.replace({ pathname: router.pathname, query: q }, undefined, { shallow: true });
+  };
+
   const TABS = useMemo(
     () => TAB_KEYS.map((key) => ({
       key,
@@ -81,7 +98,13 @@ export default function ClientSettingsPage() {
         }}
       />
 
-      {activeTab === "apis" && <ApisConnectorsPanel />}
+      {activeTab === "apis" && (
+        <ApisConnectorsPanel
+          providers={surfaceProviders}
+          filterLabel={surfaceLabel}
+          onClearProviders={clearSurfaceFilter}
+        />
+      )}
       {activeTab === "agents" && <AgentsPanel />}
       {activeTab === "skills" && <SkillsPanel slug={slug} />}
       {activeTab === "strategies" && <StrategiesPanel />}
