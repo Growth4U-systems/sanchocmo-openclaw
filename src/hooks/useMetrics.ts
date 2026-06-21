@@ -131,6 +131,7 @@ export interface SourceHealthItem {
   overdue: boolean;
   lastStatus: string | null;
   lastError: string | null;
+  lastDeletedCount: number | null;
 }
 
 export interface MetricsHealthResult {

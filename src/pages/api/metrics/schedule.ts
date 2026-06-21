@@ -17,8 +17,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "GET") {
     // due-check mode for the collector: which of these sources run today?
-    if (req.query.due && typeof req.query.sources === "string") {
-      const sources = req.query.sources.split(",").map((s) => s.trim()).filter(Boolean);
+    // Triggered by the presence of `sources` (string, or repeated → string[]);
+    // the `due` value itself is irrelevant, so ?due=0 can't confuse it.
+    const rawSources = req.query.sources;
+    const sources = (Array.isArray(rawSources) ? rawSources.flatMap((s) => s.split(",")) : typeof rawSources === "string" ? rawSources.split(",") : [])
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (sources.length) {
       const due = await getDueSources(slug, sources);
       return res.status(200).json({ slug, due });
     }

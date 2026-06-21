@@ -17,7 +17,9 @@ import { neon } from "@neondatabase/serverless";
 const args = process.argv.slice(2);
 const getArg = (name, def = null) => {
   const i = args.indexOf(`--${name}`);
-  return i !== -1 && args[i + 1] ? args[i + 1] : def;
+  const val = i !== -1 ? args[i + 1] : undefined;
+  // Don't swallow the next flag as this one's value (e.g. `--to --format csv`).
+  return val && !val.startsWith("--") ? val : def;
 };
 
 const slug = getArg("slug", "all");
@@ -79,8 +81,8 @@ function exportParquet() {
   const whereSql = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
   const ddl =
     `INSTALL postgres; LOAD postgres; ` +
-    `ATTACH '${url}' AS neon (TYPE postgres, READ_ONLY); ` +
-    `COPY (SELECT ${COLS.join(", ")} FROM neon.metric_snapshots ${whereSql}) TO '${out}' (FORMAT parquet);`;
+    `ATTACH '${esc(url)}' AS neon (TYPE postgres, READ_ONLY); ` +
+    `COPY (SELECT ${COLS.join(", ")} FROM neon.metric_snapshots ${whereSql}) TO '${esc(out)}' (FORMAT parquet);`;
   const res = spawnSync("duckdb", ["-c", ddl], { stdio: ["ignore", "inherit", "inherit"] });
   if (res.error) {
     console.error(`⚠ duckdb CLI not found (${res.error.message}). Install DuckDB (https://duckdb.org) or use --format csv.`);

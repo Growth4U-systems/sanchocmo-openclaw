@@ -9,7 +9,10 @@
  *   node collect.js --slug <client> --source <adapter>
  *   node collect.js --slug <client> --source ga4 --from 2024-01-01 --to 2024-01-31
  *
- * Env: METRICS_WRITE_JSON=0 skips the JSON snapshot/rolling files (DB is source of truth).
+ * Env: METRICS_WRITE_JSON=0 skips the JSON snapshot/rolling files. NOTE: do NOT
+ *   set this yet — getClientMetricsSummary (Sancho MCP report) and publishing
+ *   reconciliation still read brand/<slug>/metrics/*.json with no DB fallback.
+ *   Flip it only once those readers are migrated to the DB.
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
@@ -157,6 +160,34 @@ async function filterDueSources(candidates) {
   }
 }
 
+// Promote drafts whose Metricool schedule fired since the last cron
+// (scheduled → published). Cadence-independent and idempotent; best-effort.
+async function reconcileDrafts() {
+  try {
+    const res = await fetch(`${MC_BASE}/api/publishing/reconcile?slug=${encodeURIComponent(slug)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const n = (data.reconciled || []).length;
+      console.log(`🔁 Reconcile: ${n} draft${n === 1 ? '' : 's'} promoted to published`);
+      for (const entry of data.reconciled || []) {
+        console.log(`   → ${entry.ideaId}/${entry.channel}: ${entry.url}`);
+      }
+    } else {
+      console.warn(`⚠ Reconcile endpoint returned HTTP ${res.status}`);
+    }
+  } catch (e) {
+    console.warn(`⚠ Reconcile skipped (MC unreachable at ${MC_BASE}): ${e.message}`);
+  }
+}
+
+// delete-stale (convergence) runs ONLY on the routine full daily collection —
+// never on a single --source or an explicit --from/--to re-pull, which are
+// partial and would otherwise converge-delete legitimate rows (SAN-300 review).
+const allowDeleteStale = collectAll && !fromDate && !toDate;
+
 async function runCollection() {
   if (dueOnly) {
     const due = await filterDueSources(toRun);
@@ -164,7 +195,8 @@ async function runCollection() {
     toRun = toRun.filter((s) => due.includes(s));
     if (notDue.length) console.log(`⏭  No tocan hoy (cadencia): ${notDue.join(', ')}`);
     if (toRun.length === 0) {
-      console.log('🟰 Nada que recoger hoy según la cadencia. Fin.');
+      console.log('🟰 Nada que recoger hoy según la cadencia.');
+      await reconcileDrafts(); // still promote any drafts that published overnight
       return;
     }
     console.log(`📅 Due hoy: ${toRun.join(', ')}`);
@@ -265,43 +297,23 @@ async function runCollection() {
   const errCount = Object.values(result.sources).filter((s) => s.status === 'error').length;
   console.log(`\n🏁 Done: ${okCount} ok, ${errCount} errors, ${Object.keys(result.sources).length} total`);
 
-  // --- Reconcile published-but-not-acknowledged drafts ---
-  // After analytics are pulled, ping MC's reconcile endpoint so any draft
-  // whose Metricool schedule has fired since the last cron gets promoted
-  // from `scheduled` → `published` with the real URL. The endpoint is
-  // idempotent and bails fast when nothing's pending.
-  const mcBase = process.env.MC_BASE_URL || 'http://localhost:3000';
-  try {
-    const reconcileRes = await fetch(`${mcBase}/api/publishing/reconcile?slug=${encodeURIComponent(slug)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    if (reconcileRes.ok) {
-      const data = await reconcileRes.json().catch(() => ({}));
-      const n = (data.reconciled || []).length;
-      console.log(`🔁 Reconcile: ${n} draft${n === 1 ? '' : 's'} promoted to published`);
-      for (const entry of data.reconciled || []) {
-        console.log(`   → ${entry.ideaId}/${entry.channel}: ${entry.url}`);
-      }
-    } else {
-      console.warn(`⚠ Reconcile endpoint returned HTTP ${reconcileRes.status}`);
-    }
-  } catch (e) {
-    console.warn(`⚠ Reconcile skipped (MC unreachable at ${mcBase}): ${e.message}`);
-  }
+  // Reconcile runs regardless of what was collected (it's cadence-independent).
+  await reconcileDrafts();
 
   // --- Write the daily snapshot into the metric_snapshots time-series ---
-  // SAN-300: the DB is the source of truth. `deleteStale:true` makes the DB
-  // converge to this payload (stale rows for the restated dates are removed,
-  // GSC-lagged dates untouched). Still best-effort — never fails the collection.
+  // SAN-300: the DB is the source of truth. `deleteStale` converges the DB to
+  // this payload (stale rows for the restated dates removed, GSC-lagged dates
+  // untouched). It's gated to the routine FULL daily collection — a single
+  // --source or an explicit --from/--to re-pull is partial, so it must NOT
+  // converge-delete. Best-effort — never fails the collection.
   try {
-    const ingestRes = await fetch(`${mcBase}/api/metrics/ingest`, {
+    const ingestRes = await fetch(`${MC_BASE}/api/metrics/ingest`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(process.env.MC_ADMIN_TOKEN ? { 'x-admin-token': process.env.MC_ADMIN_TOKEN } : {}),
       },
-      body: JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources, deleteStale: true }),
+      body: JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources, deleteStale: allowDeleteStale }),
     });
     if (ingestRes.ok) {
       const data = await ingestRes.json().catch(() => ({}));
@@ -310,7 +322,7 @@ async function runCollection() {
       console.warn(`⚠ Ingest endpoint returned HTTP ${ingestRes.status}`);
     }
   } catch (e) {
-    console.warn(`⚠ Ingest skipped (MC unreachable at ${mcBase}): ${e.message}`);
+    console.warn(`⚠ Ingest skipped (MC unreachable at ${MC_BASE}): ${e.message}`);
   }
 }
 

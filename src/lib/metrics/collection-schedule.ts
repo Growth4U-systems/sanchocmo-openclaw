@@ -6,6 +6,11 @@
  * table): most sources are daily; trust_score & pagespeed default to weekly
  * (Mondays) since they're slow-moving / expensive. `daysOfWeek` uses JS
  * getDay() — 0=Sun … 6=Sat.
+ *
+ * NOTE on timezone: isDueToday uses the passed Date's LOCAL day. The collector
+ * and MC run in the same container (UTC by default), so "due today" and the
+ * snapshot's date agree. If a container ever sets TZ, the weekday is that TZ's —
+ * pin a fixed TZ here if the cron's locale must drive the calendar day.
  */
 
 export type Cadence = "daily" | "weekly" | "twice_weekly" | "custom";

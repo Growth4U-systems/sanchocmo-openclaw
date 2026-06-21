@@ -80,9 +80,14 @@ export async function setCollectionSchedule(slug: string, source: string, patch:
   const database = getDb();
   const base = defaultScheduleFor(source);
   const cadence = normalizeCadence(patch.cadence ?? base.cadence);
-  const daysOfWeek = Array.isArray(patch.daysOfWeek)
+  let daysOfWeek = Array.isArray(patch.daysOfWeek)
     ? patch.daysOfWeek.filter((n) => Number.isInteger(n) && n >= 0 && n <= 6)
     : base.daysOfWeek;
+  // A weekly/twice_weekly source with no day would never be due → default to
+  // Monday, so the cadence is robust regardless of what the caller sent.
+  if ((cadence === "weekly" || cadence === "twice_weekly") && daysOfWeek.length === 0) {
+    daysOfWeek = [1];
+  }
   const cronExpr = patch.cronExpr === undefined ? base.cronExpr : patch.cronExpr || null;
   const enabled = patch.enabled === undefined ? true : Boolean(patch.enabled);
   const now = new Date();
@@ -108,6 +113,7 @@ export interface SourceRun {
   metricDate: string;
   status: string;
   rowCount: number;
+  deletedCount: number;
   collectedAt: string | null;
   cadence: string | null;
   error: string | null;
@@ -124,6 +130,7 @@ export async function getLatestSourceRuns(slug: string): Promise<SourceRun[]> {
       metricDate: metricSourceRuns.metricDate,
       status: metricSourceRuns.status,
       rowCount: metricSourceRuns.rowCount,
+      deletedCount: metricSourceRuns.deletedCount,
       collectedAt: metricSourceRuns.collectedAt,
       cadence: metricSourceRuns.cadence,
       error: metricSourceRuns.error,
@@ -141,6 +148,7 @@ export async function getLatestSourceRuns(slug: string): Promise<SourceRun[]> {
       metricDate: String(row.metricDate),
       status: row.status,
       rowCount: row.rowCount,
+      deletedCount: row.deletedCount,
       collectedAt: row.collectedAt ? new Date(row.collectedAt).toISOString() : null,
       cadence: row.cadence ?? null,
       error: row.error ?? null,

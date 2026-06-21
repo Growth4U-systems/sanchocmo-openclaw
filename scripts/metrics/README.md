@@ -54,7 +54,9 @@ METRICS_RO_URL=... npm run export:metrics -- --slug growth4u --format csv --out 
 Flags: `--slug <slug|all>` (default `all`), `--from` / `--to` (YYYY-MM-DD),
 `--format csv|parquet`, `--out <path>`.
 
-- **CSV** uses the Neon HTTP driver (works for Neon URLs) — zero extra deps.
+- **CSV** uses the Neon HTTP driver (`@neondatabase/serverless`), so the URL
+  **must be a Neon endpoint** (the prod DB and its read-only roles are Neon). It
+  won't connect to a plain (non-Neon) Postgres replica — use Parquet for that.
 - **Parquet** shells out to the DuckDB CLI (read-only attach; works for any
   Postgres URL). If `duckdb` isn't installed it exits with a clear message — use
   `--format csv` instead.

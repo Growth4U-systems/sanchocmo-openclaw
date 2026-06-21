@@ -338,7 +338,10 @@ export async function ingestDailySnapshot(
     const srcRows = rowsFromMetrics(slug, source, metrics, dateKey, collectedAt, runId);
     allRows.push(...srcRows);
     bySource.set(source, srcRows);
-    ledger.push({ slug, metricDate: dateKey, source, status: "ok", rowCount: srcRows.length, collectedAt });
+    // Count distinct ids — what upsertRows actually writes — so the ledger
+    // matches the DB even when a source emits duplicate logical keys.
+    const written = new Set(srcRows.map((row) => row.id as string)).size;
+    ledger.push({ slug, metricDate: dateKey, source, status: "ok", rowCount: written, collectedAt });
   }
   const count = await upsertRows(allRows);
   // Convergence: only after the upsert, and only for sources actually present.
