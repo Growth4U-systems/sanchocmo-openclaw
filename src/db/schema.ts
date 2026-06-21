@@ -694,3 +694,49 @@ export const metricDashboards = pgTable("metric_dashboards", {
 }, (table) => [
   index("metric_dashboards_slug_idx").on(table.slug),
 ]);
+
+// ============================================================
+// Metric collection schedule (SAN-300) — editable per-source cadence. One row
+// per (slug, source); the daily "Morning Metrics" cron collects only the sources
+// due today. Sensible defaults live in code (collection-schedule.ts); a row here
+// is an override. `days_of_week` uses JS getDay() (0=Sun…6=Sat).
+// ============================================================
+
+export const metricCollectionSchedule = pgTable("metric_collection_schedule", {
+  id: text("id").primaryKey(), // hash(slug, source)
+  slug: text("slug").notNull(),
+  source: text("source").notNull(),
+  cadence: text("cadence").notNull().default("daily"), // daily | weekly | twice_weekly | custom
+  daysOfWeek: jsonb("days_of_week").$type<number[]>().notNull().default([]),
+  cronExpr: text("cron_expr"),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_collection_schedule_slug_idx").on(table.slug),
+]);
+
+// ============================================================
+// Metric source runs (SAN-300) — collection ledger: exactly one row per
+// (slug, day, source) recording how that tool's collection went (ok/error/
+// skipped), when, and how many rows it wrote/removed. This is the "one row per
+// tool per day" view and the home for health/monitoring once JSON is retired.
+// ============================================================
+
+export const metricSourceRuns = pgTable("metric_source_runs", {
+  id: text("id").primaryKey(), // hash(slug, metric_date, source)
+  slug: text("slug").notNull(),
+  metricDate: text("metric_date").notNull(),
+  source: text("source").notNull(),
+  status: text("status").notNull(), // ok | error | skipped
+  collectedAt: timestamp("collected_at"),
+  rowCount: integer("row_count").notNull().default(0),
+  deletedCount: integer("deleted_count").notNull().default(0),
+  cadence: text("cadence"),
+  error: text("error"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_source_runs_slug_date_idx").on(table.slug, table.metricDate),
+  index("metric_source_runs_slug_source_idx").on(table.slug, table.source),
+]);

@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { sql as drizzleSql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
-import { metricSnapshots } from "@/db/schema";
+import { metricSnapshots, metricSourceRuns } from "@/db/schema";
 
 /**
  * Time-series storage for client metrics (SAN-263 · Métricas v2 PR-1).
@@ -43,13 +43,19 @@ export interface IngestResult {
 const STORAGE_NOT_CONFIGURED = { configured: false } as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-// Keep byte-aligned with src/db/migrations/0011_metric_snapshots.sql so the
-// runtime ensure (local / no-drizzle-kit envs) and the deploy migration agree.
+// Keep byte-aligned with src/db/migrations/0011_metric_snapshots.sql and
+// 0014_metric_schedule_runs.sql so the runtime ensure (local / no-drizzle-kit
+// envs) and the deploy migration agree.
 const ENSURE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS "metric_snapshots" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "metric_date" text NOT NULL, "source" text NOT NULL, "metric_name" text NOT NULL, "value" real, "value_text" text, "dimensions" jsonb, "dims_key" text DEFAULT '' NOT NULL, "grain" text DEFAULT 'day' NOT NULL, "collected_at" timestamp, "ingest_run_id" text, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS "metric_snapshots_slug_date_idx" ON "metric_snapshots" ("slug", "metric_date")`,
   `CREATE INDEX IF NOT EXISTS "metric_snapshots_slug_source_metric_idx" ON "metric_snapshots" ("slug", "source", "metric_name")`,
   `CREATE INDEX IF NOT EXISTS "metric_snapshots_slug_source_date_idx" ON "metric_snapshots" ("slug", "source", "metric_date")`,
+  `CREATE TABLE IF NOT EXISTS "metric_collection_schedule" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "source" text NOT NULL, "cadence" text DEFAULT 'daily' NOT NULL, "days_of_week" jsonb DEFAULT '[]'::jsonb NOT NULL, "cron_expr" text, "enabled" boolean DEFAULT true NOT NULL, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS "metric_collection_schedule_slug_idx" ON "metric_collection_schedule" ("slug")`,
+  `CREATE TABLE IF NOT EXISTS "metric_source_runs" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "metric_date" text NOT NULL, "source" text NOT NULL, "status" text NOT NULL, "collected_at" timestamp, "row_count" integer DEFAULT 0 NOT NULL, "deleted_count" integer DEFAULT 0 NOT NULL, "cadence" text, "error" text, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS "metric_source_runs_slug_date_idx" ON "metric_source_runs" ("slug", "metric_date")`,
+  `CREATE INDEX IF NOT EXISTS "metric_source_runs_slug_source_idx" ON "metric_source_runs" ("slug", "source")`,
 ];
 
 let ensurePromise: Promise<void> | null = null;
@@ -71,7 +77,7 @@ export function metricsStorageConfigured(): boolean {
   return hasDatabase;
 }
 
-function stableId(...parts: Array<string | number | null | undefined>): string {
+export function stableId(...parts: Array<string | number | null | undefined>): string {
   return crypto
     .createHash("sha1")
     .update(parts.map((part) => (part == null ? "" : String(part))).join(" "))
@@ -186,6 +192,58 @@ async function upsertRows(rows: SnapshotRow[]): Promise<number> {
   return unique.length;
 }
 
+export type SourceRunStatus = "ok" | "error" | "skipped";
+
+export interface SourceRunInput {
+  slug: string;
+  metricDate: string;
+  source: string;
+  status: SourceRunStatus;
+  rowCount?: number;
+  deletedCount?: number;
+  collectedAt?: string | Date | null;
+  cadence?: string | null;
+  error?: string | null;
+}
+
+/**
+ * Upsert the collection-ledger row for one (slug, day, source) — the "one row
+ * per tool per day" record powering health/monitoring (SAN-300). The day is the
+ * collection date (dateKey), regardless of which metric_dates the payload wrote.
+ */
+export async function recordSourceRun(run: SourceRunInput): Promise<void> {
+  if (!hasDatabase) return;
+  if (!run.slug || !run.source || !DATE_RE.test(run.metricDate)) return;
+  await ensureMetricsStorage();
+  const database = getDb();
+  const now = new Date();
+  const id = `msr_${stableId(run.slug, run.metricDate, run.source)}`;
+  const set = {
+    status: run.status,
+    collectedAt: toDate(run.collectedAt) ?? now,
+    rowCount: run.rowCount ?? 0,
+    deletedCount: run.deletedCount ?? 0,
+    cadence: run.cadence ?? null,
+    error: run.error ?? null,
+    updatedAt: now,
+  };
+  await database
+    .insert(metricSourceRuns)
+    .values({ id, slug: run.slug, metricDate: run.metricDate, source: run.source, createdAt: now, ...set })
+    .onConflictDoUpdate({ target: metricSourceRuns.id, set });
+}
+
+/** Record many ledger rows, best-effort — a ledger hiccup never fails ingest. */
+async function recordSourceRuns(runs: SourceRunInput[]): Promise<void> {
+  for (const run of runs) {
+    try {
+      await recordSourceRun(run);
+    } catch {
+      /* best-effort */
+    }
+  }
+}
+
 /** Mirror one source's metrics for a given date. Best-effort, idempotent. */
 export async function ingestSourceMetrics(
   slug: string,
@@ -204,6 +262,11 @@ export async function ingestSourceMetrics(
   const runId = opts.runId ?? `mri_${stableId(slug, dateKey, source, opts.collectedAt ?? "")}`;
   const rows = rowsFromMetrics(slug, source, metrics, dateKey, opts.collectedAt, runId);
   const count = await upsertRows(rows);
+  try {
+    await recordSourceRun({ slug, metricDate: dateKey, source, status: count ? "ok" : "skipped", rowCount: count, collectedAt: opts.collectedAt });
+  } catch {
+    /* ledger is best-effort */
+  }
   return { ok: true, rows: count, sources: count ? [source] : [], skipped: count ? [] : [source], storage: { configured: true } };
 }
 
@@ -221,15 +284,21 @@ export async function ingestDailySnapshot(slug: string, dateKey: string, daily: 
   const allRows: SnapshotRow[] = [];
   const used: string[] = [];
   const skipped: string[] = [];
+  const ledger: SourceRunInput[] = [];
   for (const [source, payload] of Object.entries(sources)) {
     const metrics = payload?.metrics;
+    const collectedAt = payload?.collectedAt ?? daily.collectedAt;
     if (payload?.status !== "ok" || !Array.isArray(metrics) || !metrics.length) {
       skipped.push(source);
+      ledger.push({ slug, metricDate: dateKey, source, status: payload?.status === "error" ? "error" : "skipped", rowCount: 0, collectedAt });
       continue;
     }
     used.push(source);
-    allRows.push(...rowsFromMetrics(slug, source, metrics, dateKey, payload.collectedAt ?? daily.collectedAt, runId));
+    const srcRows = rowsFromMetrics(slug, source, metrics, dateKey, collectedAt, runId);
+    allRows.push(...srcRows);
+    ledger.push({ slug, metricDate: dateKey, source, status: "ok", rowCount: srcRows.length, collectedAt });
   }
   const count = await upsertRows(allRows);
+  await recordSourceRuns(ledger);
   return { ok: true, rows: count, sources: used, skipped, storage: { configured: true } };
 }

@@ -37,6 +37,7 @@ import {
   Sparkline as MetricSparkline,
   TabBar as MetricTabBar,
 } from "@/components/dashboard/metrics-v2";
+import { CadencePanel } from "@/components/dashboard/metrics-cadence-panel";
 import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, type SurfaceSummaryEntry, type DashboardRecord } from "@/hooks/useMetrics";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
@@ -2697,6 +2698,9 @@ function MetricsPageInner({ slug }: { slug: string }) {
             <span className="ml-auto">Cada estado → <b>Ajustes › APIs</b> filtrado por esa superficie. Credenciales nunca por chat.</span>
           </div>
         </MetricPanel>
+
+        {/* 3b · cadencia de recogida + salud (SAN-300) — null until sources exist */}
+        <CadencePanel slug={slug} />
 
         {/* 4 · integraciones operativas (T08–T10) */}
         {operationalIntegrations.length > 0 && (
