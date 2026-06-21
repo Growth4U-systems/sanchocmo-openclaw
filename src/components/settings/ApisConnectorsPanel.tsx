@@ -308,7 +308,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
           <span className="text-ink/50">—</span>
           <button
             type="button"
-            onClick={onClearProviders}
+            onClick={() => onClearProviders?.()}
             className="font-heading text-[11.5px] font-bold text-rust hover:underline"
           >
             ver todas las APIs →

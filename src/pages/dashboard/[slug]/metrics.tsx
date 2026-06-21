@@ -42,7 +42,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildMetricsEditThread, buildTaskThread } from "@/lib/chat-openers";
 import { getTaskSet } from "@/lib/data/task-blueprints";
-import { SURFACES, SURFACE_MANDATORY_SOURCES, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
+import { SURFACES, SURFACE_MANDATORY_SOURCES, SURFACE_API_PROVIDERS, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { normalizeTaskStatusQuiet, statusLabel, statusOption } from "@/lib/task-status";
@@ -2597,7 +2597,9 @@ function MetricsPageInner({ slug }: { slug: string }) {
                 done={done}
                 path={file}
                 desc={task.description || task.deliverable || "Plan de KPIs, North Star y embudo — lo genera Merlin."}
-                onChat={() => openSetupTaskChat(task)}
+                onChat={() => task.isBlueprint
+                  ? openMerlin(`Quiero arrancar el plan de métricas («${task.name}»): definir North Star, KPIs por canal y embudo. ¿Por dónde empezamos?`)
+                  : openSetupTaskChat(task)}
                 taskHref={projectExists ? `/dashboard/${slug}/tasks/${task.id}` : undefined}
                 onOpen={() => {
                   if (!file) { openSetupTaskChat(task); return; }
@@ -2617,11 +2619,11 @@ function MetricsPageInner({ slug }: { slug: string }) {
             desc="Superficies, North Star y métricas custom · versionado append-only (revertible)"
             onChat={() => openMerlin("Repasemos la definición del dashboard (superficies, North Star, métricas custom). ¿Qué cambiamos?")}
             taskHref={projectExists ? `/dashboard/${slug}/tasks/${METRICS_PROJECT_ID}` : undefined}
-            onOpen={() => setVersionsOpen(true)}
+            onOpen={() => { setSetupOpen(false); setVersionsOpen(true); }}
             openLabel="Abrir →"
             fourthIcon="🕓"
             fourthTitle="Historial de versiones"
-            onFourth={() => setVersionsOpen(true)}
+            onFourth={() => { setSetupOpen(false); setVersionsOpen(true); }}
           />
         </MetricPanel>
 
@@ -2640,7 +2642,9 @@ function MetricsPageInner({ slug }: { slug: string }) {
 
           <div className="space-y-1.5">
             {connStates.map(({ surface: s, info, state }) => {
-              const isReputation = s.key === "reputation";
+              // Surfaces with no connectable API providers (e.g. Reputation = Trust
+              // Engine) are automatic — show a static badge, not a deep-link.
+              const autoSurface = SURFACE_API_PROVIDERS[s.key].length === 0;
               return (
                 <div
                   key={s.key}
@@ -2655,12 +2659,13 @@ function MetricsPageInner({ slug }: { slug: string }) {
                     <span className="text-[11px] text-[var(--sc-fg-muted)]">{connWhat(s, info.connectedSources)}</span>
                     {state !== "on" && (
                       <span className="flex flex-wrap items-center gap-1">
+                        {s.requires.mandatory.map((r) => <MetricChip key={r} tone="must">obligatorio · {r}</MetricChip>)}
                         {s.requires.oneOf.length > 0 && <MetricChip tone="one">uno de · {s.requires.oneOf.join(" / ")}</MetricChip>}
                         {s.requires.optional.map((r) => <MetricChip key={r} tone="opt">opcional · {r}</MetricChip>)}
                       </span>
                     )}
                   </div>
-                  {isReputation ? (
+                  {autoSurface ? (
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-sc-pill border-[1.5px] border-ink bg-aged px-2.5 py-1 font-heading text-[11px] font-bold text-ink shadow-pop-xs">⚙️ Automático</span>
                   ) : (
                     <SetupApiLink slug={slug} surfaceKey={s.key} state={state} />
