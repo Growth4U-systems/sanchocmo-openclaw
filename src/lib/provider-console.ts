@@ -11,39 +11,80 @@ import type { ProviderAuthRoute } from "@/hooks/useModels";
  */
 
 export interface RuntimeProvider {
-  /** Stable row id, also used for console lookup + the engine radio group. */
+  /** Stable, unique row id. Providers with a subscription appear as two rows
+   * (one per route), so this is NOT the same as `apiId`. */
   key: string;
-  /** api-catalog id used by the "Key sistema" flow (`/api/env`) + gateway restart. */
+  /** api-catalog id used by the "Key sistema" flow (`/api/env`) + gateway restart.
+   * Stable per provider — shared by the two route rows (e.g. both Anthropic rows
+   * use `anthropic`). */
   apiId: string;
-  /** model-catalog provider ids whose auth/route describes this engine provider. */
+  /** model-catalog provider ids whose auth/route describes this engine provider.
+   * The subscription and API rows point at different catalog ids when they
+   * resolve to different auth state (Codex vs OpenAI). */
   catalogIds: string[];
   name: string;
   icon: string;
-  /** Preferred engine model when this provider is chosen as the primary motor. */
-  preferredModels: string[];
+  /** The auth route this row represents. `undefined` = single-route provider
+   * (API key only — no subscription exists), rendered as one row. */
+  route?: "subscription" | "api";
+  /** Whether this route can be activated from the UI at runtime. Anthropic: yes.
+   * Codex subscription: no (its token is minted interactively over SSH and the
+   * per-agent symlink-sync has no idempotent inverse) — shown read-only. */
+  runtimeSwitchable?: boolean;
+  /** For a subscription row whose token can be pasted: the env var it writes
+   * (e.g. `ANTHROPIC_OAUTH_TOKEN`). Absent when the token isn't pasteable (Codex). */
+  subscriptionTokenEnv?: string;
 }
 
 /**
- * The five providers the gateway authenticates (mirrors `GATEWAY_ENV_SERVICES`
- * in ApisConnectorsPanel). Codex is OpenAI's subscription route, so it maps onto
- * the OpenAI api-catalog id for the "Key sistema" / console family.
+ * The runtime/engine providers the gateway authenticates, as **auth-route rows**.
+ * Providers with a subscription appear twice — one row per route (Suscripción /
+ * API Key) — because the route is a global credential choice, not a model choice.
+ * `apiId` stays stable per provider (shared by its two rows) so the "Key sistema"
+ * flow (`/api/env`) + `GATEWAY_ENV_SERVICES` keep working. Providers without a
+ * subscription (OpenRouter, Gemini, xAI) are a single API-key row.
  */
 export const RUNTIME_PROVIDERS: RuntimeProvider[] = [
+  // Anthropic — both routes fully functional (paste sk-ant-oat token / activate).
   {
     key: "anthropic",
     apiId: "anthropic",
     catalogIds: ["anthropic"],
     name: "Anthropic",
     icon: "🧠",
-    preferredModels: ["anthropic/claude-opus-4-7", "anthropic/claude-opus-4-6", "anthropic/claude-sonnet-4-6"],
+    route: "subscription",
+    runtimeSwitchable: true,
+    subscriptionTokenEnv: "ANTHROPIC_OAUTH_TOKEN",
   },
+  {
+    key: "anthropic-api",
+    apiId: "anthropic",
+    catalogIds: ["anthropic"],
+    name: "Anthropic",
+    icon: "🧠",
+    route: "api",
+    runtimeSwitchable: true,
+  },
+  // Codex (ChatGPT subscription) — informative only this iteration: its token is
+  // minted interactively (`openclaw models auth login`) over SSH, not pasteable,
+  // and the per-agent symlink-sync has no idempotent inverse, so no runtime flip.
   {
     key: "codex",
     apiId: "openai",
-    catalogIds: ["codex", "openai-codex", "openai"],
-    name: "OpenAI / Codex",
+    catalogIds: ["codex", "openai-codex"],
+    name: "Codex",
     icon: "⚙️",
-    preferredModels: ["codex/gpt-5.4", "codex/gpt-5.4-mini", "openai-codex/gpt-5.3-codex"],
+    route: "subscription",
+    runtimeSwitchable: false,
+  },
+  {
+    key: "openai-api",
+    apiId: "openai",
+    catalogIds: ["openai"],
+    name: "OpenAI",
+    icon: "⚙️",
+    route: "api",
+    runtimeSwitchable: false,
   },
   {
     key: "openrouter",
@@ -51,7 +92,6 @@ export const RUNTIME_PROVIDERS: RuntimeProvider[] = [
     catalogIds: ["openrouter"],
     name: "OpenRouter",
     icon: "🔀",
-    preferredModels: ["openrouter/openai/gpt-5.5"],
   },
   {
     key: "google",
@@ -59,7 +99,6 @@ export const RUNTIME_PROVIDERS: RuntimeProvider[] = [
     catalogIds: ["google"],
     name: "Gemini",
     icon: "✨",
-    preferredModels: ["google/gemini-2.5-flash"],
   },
   {
     key: "xai",
@@ -67,7 +106,6 @@ export const RUNTIME_PROVIDERS: RuntimeProvider[] = [
     catalogIds: ["xai"],
     name: "xAI (Grok)",
     icon: "𝕏",
-    preferredModels: [],
   },
 ];
 

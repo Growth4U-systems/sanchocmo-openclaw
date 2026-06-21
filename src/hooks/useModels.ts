@@ -98,6 +98,26 @@ export function useSetDefaultModel() {
   });
 }
 
+export function useSetAuthRoute() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { provider: string; route: "subscription" | "api" }) => {
+      const res = await fetch("/api/admin/auth-route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "No se pudo cambiar la ruta de autenticación");
+      return body as { ok: true; provider: string; route: string; restarted: boolean; warning?: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["models-catalog"] });
+      qc.invalidateQueries({ queryKey: ["api-health"] });
+    },
+  });
+}
+
 export function useSetAgentModel() {
   const qc = useQueryClient();
   return useMutation({
