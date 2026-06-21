@@ -1160,8 +1160,11 @@ const FALLBACK_TABS: MetricsTabItem[] = [
   { key: "channels", label: "Channels" },
   { key: "conversion", label: "Conversion" },
   { key: "trends", label: "Trends" },
-  { key: "conexiones", label: "Setup" },
 ];
+
+// Setup is a header ⚙️ toggle (not a tab); Partnerships is surface #8, opened as a
+// surface detail — so neither renders in the tab bar.
+const HIDDEN_TAB_KEYS = new Set(["conexiones", "partnerships"]);
 
 const TAB_LABELS: Record<string, string> = {
   overview: "Overview", surfaces: "Surfaces", channels: "Channels",
@@ -1210,13 +1213,16 @@ function MetricsPageInner({ slug }: { slug: string }) {
   const [collecting, setCollecting] = useState(false);
   const [collectStatus, setCollectStatus] = useState("");
   const [planOpen, setPlanOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   // Tab inicial por URL (?tab=surfaces|partnerships…) — enlazable desde chat/MCP.
-  // Legacy ?tab=funnel → channels (la vista del funnel vive ahí ahora).
+  // Legacy ?tab=funnel → channels; ?tab=conexiones → setupOpen; ?tab=partnerships → surface detail.
   useEffect(() => {
     if (!router.isReady) return;
     const queryTab = Array.isArray(router.query.tab) ? router.query.tab[0] : router.query.tab;
     if (queryTab === "funnel") setTab("channels");
+    else if (queryTab === "conexiones") setSetupOpen(true);
+    else if (queryTab === "partnerships") { setTab("surfaces"); setSubView({ kind: "surface", key: "partnerships" }); }
     else if (queryTab) setTab(queryTab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
@@ -1225,6 +1231,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
     (next: string) => {
       setTab(next);
       setSubView(null);
+      setSetupOpen(false);
       const query = { ...router.query, tab: next } as Record<string, string | string[]>;
       if (next === "overview") delete query.tab;
       router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
@@ -1574,9 +1581,11 @@ function MetricsPageInner({ slug }: { slug: string }) {
   const tabs: MetricsTabItem[] = useMemo(() => {
     const defTabs = definition?.tabs;
     const base: MetricsTabItem[] = defTabs?.length
-      ? [...defTabs].filter((tb) => tb.visible).sort((a, b) => a.order - b.order).map((tb) => ({ key: tb.key, label: tb.key === "conexiones" ? "Setup" : tb.label || TAB_LABELS[tb.key] || tb.key }))
-      : [...FALLBACK_TABS];
-    if (!base.some((tb) => tb.key === "partnerships")) base.push({ key: "partnerships", label: "Partnerships" });
+      ? [...defTabs]
+          .filter((tb) => tb.visible && !HIDDEN_TAB_KEYS.has(tb.key))
+          .sort((a, b) => a.order - b.order)
+          .map((tb) => ({ key: tb.key, label: tb.label || TAB_LABELS[tb.key] || tb.key }))
+      : FALLBACK_TABS.filter((tb) => !HIDDEN_TAB_KEYS.has(tb.key));
     return base;
   }, [definition]);
 
@@ -2046,6 +2055,14 @@ function MetricsPageInner({ slug }: { slug: string }) {
   }
 
   function renderSurfaceDetail(key: SurfaceKey) {
+    if (key === "partnerships") {
+      return (
+        <div>
+          <BackButton onClick={() => setSubView(null)}>Volver a Surfaces</BackButton>
+          <MetricsPartnershipsTab slug={slug} />
+        </div>
+      );
+    }
     const surface = SURFACES.find((s) => s.key === key);
     if (!surface) return null;
     const info = surfaceInfoFor(surface);
@@ -2798,8 +2815,6 @@ function MetricsPageInner({ slug }: { slug: string }) {
       case "channels": return renderChannels();
       case "conversion": return renderConversion();
       case "trends": return renderTrends();
-      case "conexiones": return renderSetup();
-      case "partnerships": return <MetricsPartnershipsTab slug={slug} />;
       // Tabs are data-driven: a definition could declare a key this build doesn't
       // render yet. Show an honest placeholder instead of silently falling to Overview.
       default:
@@ -2823,39 +2838,36 @@ function MetricsPageInner({ slug }: { slug: string }) {
             <div className="min-w-[240px] flex-1">
               <h1 className="font-heading text-3xl font-bold text-navy"><TitleIcon name="metrics" />{t("title")}</h1>
               <p className="mt-1 text-sm text-[var(--sc-fg-muted)]">
-                {slug} {isDataTab && !versionsOpen && <span className="ml-2 text-[11px]">{rangeLabel}</span>}
+                {slug} {isDataTab && !versionsOpen && !setupOpen && <span className="ml-2 text-[11px]">{rangeLabel}</span>}
               </p>
             </div>
             {!versionsOpen && (
               <div className="flex flex-wrap items-center justify-end gap-2">
-                {isDataTab && renderDateRangeControl()}
-                <MetricButton variant="paper" onClick={() => setPlanOpen(true)} disabled={!effectivePlan}>
-                  📋 Plan
-                </MetricButton>
-                <MetricButton variant="navy" onClick={() => {
-                  setVersionsOpen(true);
-                  setSubView(null);
-                }}>
-                  🕓 Versiones{(dashboardRec?.versions?.length ?? 0) > 0 ? ` ${dashboardRec?.versions.length}` : ""}
-                </MetricButton>
-                <MetricButton variant="cyan" onClick={() => openMerlin("Quiero editar el dashboard de métricas (North Star, KPIs, superficies o una métrica custom). ¿Qué cambiamos?")}>
-                  ✨ Merlin
+                {!setupOpen && (
+                  <>
+                    {isDataTab && renderDateRangeControl()}
+                    <MetricButton variant="paper" onClick={() => setPlanOpen(true)} disabled={!effectivePlan}>📋 Plan</MetricButton>
+                    <MetricButton variant="navy" onClick={() => { setVersionsOpen(true); setSubView(null); }}>
+                      🕓 Versiones{(dashboardRec?.versions?.length ?? 0) > 0 ? ` ${dashboardRec?.versions.length}` : ""}
+                    </MetricButton>
+                    <MetricButton variant="cyan" onClick={() => openMerlin("Quiero editar el dashboard de métricas (North Star, KPIs, superficies o una métrica custom). ¿Qué cambiamos?")}>✨ Merlin</MetricButton>
+                  </>
+                )}
+                <a href={`/dashboard/${slug}/tasks/${METRICS_PROJECT_ID}`} className="inline-flex">
+                  <MetricButton variant="paper">📁 Proyecto: {METRICS_PROJECT_ID}</MetricButton>
+                </a>
+                <MetricButton variant={setupOpen ? "navy" : "paper"} onClick={() => { setSetupOpen((v) => !v); setSubView(null); setVersionsOpen(false); }}>
+                  ⚙️ Setup
                 </MetricButton>
               </div>
             )}
           </div>
         </MetricPanel>
 
-        {versionsOpen ? renderVersions() : (
+        {versionsOpen ? renderVersions() : setupOpen ? renderSetup() : (
           <>
-            <MetricTabBar
-              tabs={tabs.map((item) => ({ ...item, icon: TAB_ICONS[item.key] }))}
-              active={tab}
-              onSelect={selectTab}
-            />
-            <div className="mt-5">
-              {renderActiveTab()}
-            </div>
+            <MetricTabBar tabs={tabs.map((item) => ({ ...item, icon: TAB_ICONS[item.key] }))} active={tab} onSelect={selectTab} />
+            <div className="mt-5">{renderActiveTab()}</div>
           </>
         )}
       </div>
