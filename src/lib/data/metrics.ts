@@ -7,6 +7,9 @@ import { BASE } from "@/lib/data/paths";
 import { ensureMetricsStorage } from "@/lib/data/metrics-snapshots";
 import { SURFACES, surfaceForSource, type SurfaceKey } from "@/lib/metrics/surfaces";
 import { aggFor, type AggStrategy } from "@/lib/metrics/aggregation";
+import { getResolvedSchedules, getLatestSourceRuns } from "@/lib/data/metrics-schedule";
+import { isDueToday, type Cadence } from "@/lib/metrics/collection-schedule";
+import { loadJobsState } from "@/lib/data/openclaw-crons";
 
 /**
  * Read layer over the `metric_snapshots` time-series (SAN-264 · Métricas v2 PR-2).
@@ -412,4 +415,115 @@ export function getNorthStar(slug: string): NorthStarResult {
   } catch {
     return { configured: hasDatabase, plan: null };
   }
+}
+
+// ── Health / monitoring (SAN-300) ───────────────────────────────────────────
+
+const HEALTH_GRACE_DAYS = 2;
+function maxIntervalDays(cadence: Cadence): number {
+  switch (cadence) {
+    case "daily":
+      return 1;
+    case "twice_weekly":
+      return 4;
+    case "weekly":
+    case "custom":
+    default:
+      return 7;
+  }
+}
+
+export interface SourceHealth {
+  source: string;
+  cadence: Cadence;
+  enabled: boolean;
+  lastMetricDate: string | null;
+  lastCollectedAt: string | null;
+  ageDays: number | null;
+  dueToday: boolean;
+  overdue: boolean;
+  lastStatus: string | null;
+  lastError: string | null;
+}
+
+export interface MetricsHealthResult {
+  configured: boolean;
+  slug: string;
+  generatedAt: string;
+  sources: SourceHealth[];
+  cron: { degraded: boolean; reasons: string[] };
+  overall: "ok" | "stale" | "no-data";
+}
+
+/** Global cron signal from cron/jobs-state.json: degraded when a job is stuck on
+ *  a billing error ("out of extra usage"). Best-effort; never throws. */
+function readCronHealth(): { degraded: boolean; reasons: string[] } {
+  try {
+    const state = loadJobsState();
+    const reasons: string[] = [];
+    for (const job of Object.values(state)) {
+      const s = job.state;
+      if (!s) continue;
+      const status = (s.lastRunStatus || s.lastStatus) ?? null;
+      if (status === "error" && s.lastErrorReason) reasons.push(s.lastErrorReason);
+    }
+    return { degraded: reasons.length > 0, reasons: [...new Set(reasons)] };
+  } catch {
+    return { degraded: false, reasons: [] };
+  }
+}
+
+/**
+ * Per-source collection health: last data, age, due-today and overdue (relative
+ * to each source's cadence, not a fixed threshold), plus the latest ledger status
+ * and a global cron-degraded flag. Degrades to { configured:false } without a DB.
+ */
+export async function getMetricsHealth(slug: string): Promise<MetricsHealthResult> {
+  const generatedAt = new Date().toISOString();
+  const cron = readCronHealth();
+  if (!hasDatabase) return { configured: false, slug, generatedAt, sources: [], cron, overall: "no-data" };
+  await ensureMetricsStorage();
+  const database = getDb();
+  const [lastRows, schedules, runs] = await Promise.all([
+    database
+      .select({ source: metricSnapshots.source, last: dsql<string>`max(${metricSnapshots.metricDate})` })
+      .from(metricSnapshots)
+      .where(eq(metricSnapshots.slug, slug))
+      .groupBy(metricSnapshots.source),
+    getResolvedSchedules(slug),
+    getLatestSourceRuns(slug),
+  ]);
+  const lastBySource = new Map(lastRows.map((row) => [row.source, String(row.last)]));
+  const runBySource = new Map(runs.map((run) => [run.source, run]));
+  const today = new Date();
+  let anyData = false;
+  let anyStale = false;
+  const sources: SourceHealth[] = schedules.map((schedule) => {
+    const lastMetricDate = lastBySource.get(schedule.source) ?? null;
+    const run = runBySource.get(schedule.source) ?? null;
+    const ageDays = lastMetricDate
+      ? Math.floor((today.getTime() - new Date(lastMetricDate).getTime()) / DAY_MS)
+      : null;
+    if (lastMetricDate) anyData = true;
+    const overdue = !schedule.enabled
+      ? false
+      : lastMetricDate == null
+        ? true
+        : (ageDays ?? 0) > maxIntervalDays(schedule.cadence) + HEALTH_GRACE_DAYS;
+    if (overdue && lastMetricDate) anyStale = true;
+    return {
+      source: schedule.source,
+      cadence: schedule.cadence,
+      enabled: schedule.enabled,
+      lastMetricDate,
+      lastCollectedAt: run?.collectedAt ?? null,
+      ageDays,
+      dueToday: isDueToday(schedule, today),
+      overdue,
+      lastStatus: run?.status ?? null,
+      lastError: run?.error ?? null,
+    };
+  });
+  const overall = !anyData ? "no-data" : anyStale ? "stale" : "ok";
+  return { configured: true, slug, generatedAt, sources, cron, overall };
 }
