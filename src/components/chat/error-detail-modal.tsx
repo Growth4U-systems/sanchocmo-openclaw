@@ -4,6 +4,8 @@ import { Modal } from "@/components/shared/modal";
 import type { ErrorDetail, ErrorCategory } from "@/lib/data/mc-chat";
 
 const CATEGORY_LABEL: Record<ErrorCategory, string> = {
+  insufficient_quota: "API key OpenAI sin cuota",
+  anthropic_billing: "Saldo del proveedor agotado",
   rate_limit: "Rate limit alcanzado",
   auth: "Credenciales no configuradas",
   context_overflow: "Contexto demasiado largo",
@@ -44,7 +46,7 @@ export function ErrorDetailModal({ open, onClose, detail }: ErrorDetailModalProp
           Clasificado: {formatTimestamp(detail.classifiedAt)}
         </div>
 
-        {(detail.provider || detail.account || detail.model || detail.correlatedWith) && (
+        {(detail.provider || detail.account || detail.model || detail.authMode || detail.anthropicAuthMode || detail.correlatedWith) && (
           <div className="flex flex-wrap gap-1.5">
             {detail.provider && (
               <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[var(--chat-surface-2)] text-[var(--chat-text)]">
@@ -59,6 +61,16 @@ export function ErrorDetailModal({ open, onClose, detail }: ErrorDetailModalProp
             {detail.model && (
               <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[var(--chat-surface-2)] text-[var(--chat-text)]">
                 modelo · {detail.model}
+              </span>
+            )}
+            {detail.authMode && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[var(--chat-surface-2)] text-[var(--chat-text)]">
+                OpenAI auth · {detail.authMode}
+              </span>
+            )}
+            {detail.anthropicAuthMode && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[var(--chat-surface-2)] text-[var(--chat-text)]">
+                Anthropic auth · {detail.anthropicAuthMode}
               </span>
             )}
             {detail.correlatedWith && (

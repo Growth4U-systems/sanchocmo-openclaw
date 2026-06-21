@@ -43,6 +43,18 @@ const FIXTURE_NORMAL_REPLY =
   "2. Market intelligence — listo\n" +
   "¿Querés que avance con la siguiente fase?";
 
+const FIXTURE_NORMAL_METRICS_PLAN_WITH_RATE_LIMITS =
+  "Plan completo confirmado. Antes de ejecutar, te enseño exactamente qué voy a correr.\n\n" +
+  "### Paso 2 — Backfill 11-may → 20-jun (40 días)\n" +
+  "- **Riesgo medio:** consume rate-limits de APIs (Meta Ads y GA4 sobre todo). " +
+  "Lo hago secuencial con pausa de 2s entre días, no en paralelo.";
+
+const FIXTURE_NORMAL_METRICS_REPLY_WITH_QUOTA_EXAMPLE =
+  "Pequeña aclaración primero: **el problema NO es saldo**. " +
+  'El collector lleva 40 días sin ejecutarse — no es un fallo de API que diga "402 / quota exceeded".\n\n' +
+  "| **Google Workspace** | `alfonso@growth4u.io` | Suscripción mensual. |\n\n" +
+  "Cargar saldo a ciegas ahora mismo no resuelve nada porque el problema parece de scheduler.";
+
 // -----------------------------------------------------------------------------
 // classifyAndRewriteError
 // -----------------------------------------------------------------------------
@@ -101,6 +113,22 @@ test("passthrough: normal bot reply is returned unchanged", () => {
   const out = classifyAndRewriteError(FIXTURE_NORMAL_REPLY);
   assert.equal(out.errorDetail, null);
   assert.equal(out.text, FIXTURE_NORMAL_REPLY);
+});
+
+test("passthrough: normal metric plan mentioning API rate-limits is not rewritten", () => {
+  const out = classifyAndRewriteError(FIXTURE_NORMAL_METRICS_PLAN_WITH_RATE_LIMITS, {
+    authMode: "apikey",
+  });
+  assert.equal(out.errorDetail, null);
+  assert.equal(out.text, FIXTURE_NORMAL_METRICS_PLAN_WITH_RATE_LIMITS);
+});
+
+test("passthrough: normal explanation quoting quota exceeded is not rewritten or account-extracted", () => {
+  const out = classifyAndRewriteError(FIXTURE_NORMAL_METRICS_REPLY_WITH_QUOTA_EXAMPLE, {
+    authMode: "apikey",
+  });
+  assert.equal(out.errorDetail, null);
+  assert.equal(out.text, FIXTURE_NORMAL_METRICS_REPLY_WITH_QUOTA_EXAMPLE);
 });
 
 test("passthrough: empty/null input returns input as-is with no detail", () => {
