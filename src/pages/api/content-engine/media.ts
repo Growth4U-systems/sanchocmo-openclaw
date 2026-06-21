@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { loadDraft, updateDraft } from "@/lib/data/drafts";
-import { maybePromoteContentTaskFromMedia } from "@/lib/data/content-tasks";
+import { removeDraftMedia, setPrimaryDraftMedia } from "@/lib/media/actions";
 
 /**
  * /api/content-engine/media
@@ -22,37 +21,35 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Missing slug, ideaId, channel or url" });
   }
 
-  const draft = loadDraft(slug, ideaId, channel);
-  if (!draft) return res.status(404).json({ error: "Draft not found" });
-  const current = draft.meta.media || [];
-  const idx = current.findIndex((m) => m.url === url);
-  if (idx === -1) return res.status(404).json({ error: "Media not in draft" });
-
   if (req.method === "PATCH") {
     if (req.body?.primary !== true) {
       return res.status(400).json({ error: "PATCH requires primary: true" });
     }
-    if (idx === 0) return res.status(200).json({ ok: true, draft });
-    const next = [current[idx], ...current.filter((_, i) => i !== idx)];
-    const updated = updateDraft(slug, ideaId, channel, { meta: { media: next } });
-    return res.status(200).json({ ok: true, draft: updated });
+    try {
+      const result = setPrimaryDraftMedia(slug, ideaId, channel, url);
+      return res.status(200).json({ ok: true, draft: result.draft });
+    } catch (err) {
+      return mediaError(res, err);
+    }
   }
 
   if (req.method === "DELETE") {
-    const next = current.filter((_, i) => i !== idx);
-    const updated = updateDraft(slug, ideaId, channel, { meta: { media: next } });
-    // While the CT is in "Pending Media", the promoter syncs pipeline_state
-    // between `media-review` (any media present) and `generating-media` (none).
-    // Status changes outside of Pending Media are user-driven.
-    const ctId = updated.meta.content_task_id;
-    if (ctId) {
-      try { maybePromoteContentTaskFromMedia(slug, ctId); } catch { /* non-fatal */ }
+    try {
+      const result = removeDraftMedia(slug, ideaId, channel, url);
+      return res.status(200).json({ ok: true, draft: result.draft });
+    } catch (err) {
+      return mediaError(res, err);
     }
-    return res.status(200).json({ ok: true, draft: updated });
   }
 
   res.setHeader("Allow", "PATCH, DELETE");
   return res.status(405).json({ error: "Method not allowed" });
+}
+
+function mediaError(res: NextApiResponse, err: unknown) {
+  const message = err instanceof Error ? err.message : "Media update failed";
+  const status = message === "Draft not found" || message === "Media not in draft" ? 404 : 400;
+  return res.status(status).json({ error: message });
 }
 
 export default withErrorHandler(handler);

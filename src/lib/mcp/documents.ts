@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { BASE, brandDir } from "@/lib/data/paths";
 import { cleanDocPath, normalizeBrandDocPath, stripBrandPrefix } from "@/lib/doc-paths";
 import { resolveWorkspaceDocPath } from "@/lib/server/doc-paths";
@@ -22,10 +23,31 @@ export interface McpDocumentDetail extends McpDocumentSummary {
   truncated: boolean;
 }
 
+export interface McpDocumentWritePreview {
+  brandSlug: string;
+  requestedPath: string;
+  canonicalPath: string;
+  path: string;
+  extension: McpDocumentExtension;
+  exists: boolean;
+  createIfMissing: boolean;
+  usedFallback: boolean;
+  currentSize: number | null;
+  nextSize: number;
+  currentSha256: string | null;
+  nextSha256: string;
+  changed: boolean;
+}
+
+export interface McpDocumentWriteResult extends McpDocumentWritePreview {
+  updatedAt: string;
+}
+
 const DEFAULT_LIST_LIMIT = 50;
 const MAX_LIST_LIMIT = 200;
 const DEFAULT_MAX_CHARS = 60_000;
 const MAX_MAX_CHARS = 200_000;
+const MAX_WRITE_CHARS = 500_000;
 const MAX_WALK_FILES = 5_000;
 const DEFAULT_EXTENSIONS: McpDocumentExtension[] = ["md", "html"];
 const SKIPPED_DIRS = new Set(["chat", "_archive", "_system"]);
@@ -104,6 +126,100 @@ export function getMcpDocument(
   };
 }
 
+export function previewUpdateMcpDocument(
+  brandSlug: string,
+  docPath: string,
+  content: string,
+  options: { createIfMissing?: boolean } = {},
+): McpDocumentWritePreview {
+  return buildWritePreview(brandSlug, docPath, content, options);
+}
+
+export function updateMcpDocument(
+  brandSlug: string,
+  docPath: string,
+  content: string,
+  options: { createIfMissing?: boolean; expectedSha256?: string } = {},
+): McpDocumentWriteResult {
+  const preview = buildWritePreview(brandSlug, docPath, content, options);
+  if (options.expectedSha256 && preview.currentSha256 !== options.expectedSha256) {
+    throw new Error("Document hash mismatch; read the document again before writing");
+  }
+
+  const resolved = resolveWritableDocument(brandSlug, docPath, Boolean(options.createIfMissing));
+  fs.mkdirSync(path.dirname(resolved.absPath), { recursive: true });
+  fs.writeFileSync(resolved.absPath, content, "utf8");
+  const stat = fs.statSync(resolved.absPath);
+
+  return {
+    ...preview,
+    exists: true,
+    currentSize: stat.size,
+    currentSha256: preview.nextSha256,
+    changed: preview.changed,
+    updatedAt: stat.mtime.toISOString(),
+  };
+}
+
+function buildWritePreview(
+  brandSlug: string,
+  docPath: string,
+  content: string,
+  options: { createIfMissing?: boolean } = {},
+): McpDocumentWritePreview {
+  if (content.length > MAX_WRITE_CHARS) {
+    throw new Error(`Document content exceeds max size of ${MAX_WRITE_CHARS} chars`);
+  }
+  const slug = normalizeBrandSlug(brandSlug);
+  const resolved = resolveWritableDocument(slug, docPath, Boolean(options.createIfMissing));
+  const extension = extensionFromPath(resolved.canonicalPath);
+  if (!extension) {
+    throw new Error("Unsupported document extension; only .md and .html are writable through MCP");
+  }
+
+  const current = resolved.exists ? fs.readFileSync(resolved.absPath, "utf8") : null;
+  const currentStat = resolved.exists ? fs.statSync(resolved.absPath) : null;
+  const nextSha256 = sha256(content);
+  const currentSha256 = current === null ? null : sha256(current);
+
+  return {
+    brandSlug: slug,
+    requestedPath: resolved.requestedPath,
+    canonicalPath: resolved.canonicalPath,
+    path: resolved.canonicalPath,
+    extension,
+    exists: resolved.exists,
+    createIfMissing: Boolean(options.createIfMissing),
+    usedFallback: resolved.usedFallback,
+    currentSize: currentStat?.size ?? null,
+    nextSize: Buffer.byteLength(content, "utf8"),
+    currentSha256,
+    nextSha256,
+    changed: currentSha256 !== nextSha256,
+  };
+}
+
+function resolveWritableDocument(brandSlug: string, docPath: string, createIfMissing: boolean) {
+  const slug = normalizeBrandSlug(brandSlug);
+  const requestedPath = cleanDocPath(docPath);
+  const normalizedPath = normalizeBrandDocPath(slug, requestedPath);
+  const resolved = resolveWorkspaceDocPath(BASE, normalizedPath, { slug, requireBrand: true });
+
+  if (!resolved.canonicalPath.startsWith(`brand/${slug}/`)) {
+    throw new Error("Document path belongs to a different brand");
+  }
+  if (isSkippedDocumentPath(slug, resolved.canonicalPath)) {
+    throw new Error("Document path is in a hidden/system folder");
+  }
+  if (!extensionFromPath(resolved.canonicalPath)) {
+    throw new Error("Unsupported document extension; only .md and .html are writable through MCP");
+  }
+  if (!resolved.exists && !createIfMissing) {
+    throw new Error(`Document not found: ${resolved.canonicalPath}`);
+  }
+  return resolved;
+}
+
 function* walkDocumentFiles(
   root: string,
   brandSlug: string,
@@ -175,6 +291,16 @@ function matchesPathPrefix(documentPath: string, prefix: string): boolean {
 function extensionFromPath(value: string): McpDocumentExtension | null {
   const ext = path.extname(value).replace(/^\./, "").toLowerCase();
   return ext === "md" || ext === "html" ? ext : null;
+}
+
+function isSkippedDocumentPath(slug: string, canonicalPath: string): boolean {
+  const brandPrefix = `brand/${slug}/`;
+  const rel = canonicalPath.startsWith(brandPrefix) ? canonicalPath.slice(brandPrefix.length) : canonicalPath;
+  return rel.split("/").some((segment) => segment.startsWith(".") || SKIPPED_DIRS.has(segment));
+}
+
+function sha256(value: string): string {
+  return crypto.createHash("sha256").update(value).digest("hex");
 }
 
 function titleFromPath(value: string): string {
