@@ -2734,7 +2734,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
           </button>
         </div>
         {datePickerOpen && (
-          <MetricPanel className="absolute right-0 top-full z-30 mt-2 w-[min(92vw,380px)] p-4">
+          <MetricPanel className="absolute left-0 top-full z-30 mt-2 w-[min(82vw,380px)] p-4 sm:left-auto sm:right-0 sm:w-[min(92vw,380px)]">
             <div className="mb-3 font-heading text-[12px] font-bold uppercase tracking-wide text-rust">Atajos</div>
             <div className="mb-4 grid grid-cols-2 gap-2">
               {[
@@ -2818,7 +2818,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
       </Head>
 
       <div className="mx-auto max-w-[1180px]">
-        <MetricPanel halftone className="mb-5 border-[3px] border-navy">
+        <MetricPanel halftone className="mb-5 overflow-visible border-[3px] border-navy">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-[240px] flex-1">
               <h1 className="font-heading text-3xl font-bold text-navy"><TitleIcon name="metrics" />{t("title")}</h1>
