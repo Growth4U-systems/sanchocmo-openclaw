@@ -82,9 +82,24 @@ interface ApisConnectorsPanelProps {
    * Defaults to true (Settings preserves its current header).
    */
   showHeader?: boolean;
+  /**
+   * If provided (and non-empty), only APIs whose apiId is in this list are shown,
+   * and the category selector is hidden. Driven by the `?surface=` deep-link from
+   * the Métricas Conexiones rows. An empty array means "nothing to filter" and is
+   * treated as no filter (all APIs shown, no banner).
+   */
+  providers?: string[];
+  /**
+   * Human-readable label for the active providers filter banner (e.g. the surface name).
+   */
+  filterLabel?: string;
+  /**
+   * Called when the user clicks "ver todas las APIs →" in the providers banner.
+   */
+  onClearProviders?: () => void;
 }
 
-export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConnectorsPanelProps = {}) {
+export function ApisConnectorsPanel({ categories, showHeader = true, providers, filterLabel, onClearProviders }: ApisConnectorsPanelProps = {}) {
   const statusBadge = useStatusBadge();
   const selectedClient = useAppStore((s) => s.selectedClient);
   const setSelectedClient = useAppStore((s) => s.setSelectedClient);
@@ -169,7 +184,9 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
 
   // Flatten all APIs with their category for filtering. If a categories prop is
   // provided, restrict to that scope up-front so counters + table both reflect
-  // only the in-scope APIs.
+  // only the in-scope APIs. If providers is provided (and non-empty), further
+  // restrict to only those apiIds — counters and table both scope to it.
+  const activeProviders = providers && providers.length > 0 ? providers : null;
   const allApis = useMemo(() => {
     if (!catalog?.categories) return [];
     const result: Array<{ apiId: string; meta: ApiMeta; catKey: string; catLabel: string }> = [];
@@ -178,13 +195,18 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
       for (const [apiId, apiMeta] of Object.entries(catData.apis || {})) {
         // The engine providers (anthropic/openai/openrouter/gemini/xai) move into
         // the dedicated "Runtime / Motor" category in system scope, so they don't
-        // also show as plain api-key rows there.
-        if (!slug && !categories && GATEWAY_ENV_SERVICES.has(apiId)) continue;
+        // also show as plain api-key rows there — unless an explicit `?surface=`
+        // providers filter asked for them, in which case that filter wins.
+        if (!slug && !categories && !activeProviders && GATEWAY_ENV_SERVICES.has(apiId)) continue;
+        if (activeProviders && !activeProviders.includes(apiId)) continue;
         result.push({ apiId, meta: apiMeta, catKey, catLabel: catData.label });
       }
     }
     return result;
-  }, [catalog, categories, slug]);
+  // activeProviders is derived from the `providers` prop; joining to a string stabilises
+  // the dep across array-identity changes so the memo re-runs only when the set differs.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catalog, categories, slug, activeProviders?.join(",")]);
 
   // Counters scoped to the (potentially filtered) set
   let connected = 0, pending = 0, errored = 0, notConfigured = 0;
@@ -324,6 +346,22 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
         </ComicCard>
       </div>
 
+      {/* Surface providers banner — shown when ?surface= scopes the panel; rendered
+          above the controls so the user sees the active filter context first. */}
+      {activeProviders && (
+        <div className="mb-4 flex items-center gap-2 rounded-sc-md border border-dashed border-ink bg-aged/40 px-3 py-2 text-[12px]">
+          <span className="font-heading font-bold text-navy">🔌 Filtrado por la superficie «{filterLabel ?? "superficie"}»</span>
+          <span className="text-ink/50">—</span>
+          <button
+            type="button"
+            onClick={() => onClearProviders?.()}
+            className="font-heading text-[11.5px] font-bold text-rust hover:underline"
+          >
+            ver todas las APIs →
+          </button>
+        </div>
+      )}
+
       {/* Search + Category Filter */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[220px] max-w-md">
@@ -344,7 +382,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
             </button>
           )}
         </div>
-        {!categories && (
+        {!categories && !activeProviders && (
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
@@ -385,7 +423,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true }: ApisConne
       )}
 
       {/* The engine providers moved to Runtime/Motor — point admins there from their old category. */}
-      {!slug && categoryFilter !== "runtime" && (categoryFilter === "all" || categoryFilter === engineCatKey) && (
+      {!slug && !activeProviders && categoryFilter !== "runtime" && (categoryFilter === "all" || categoryFilter === engineCatKey) && (
         <div className="mb-4 px-3 py-2 rounded-md border border-sage/40 bg-sage/5 text-[12px] text-foreground/80 flex items-center gap-2">
           <span>🚂</span>
           <span>

@@ -3,10 +3,15 @@ import fs from "fs";
 import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { BASE, integrationsFile } from "@/lib/data/paths";
+import { getDailySnapshots } from "@/lib/data/metrics";
 
 /**
  * GET /api/metrics?slug=hospital-capilar
  * Returns metrics data — ported from mc-server.js:9888
+ *
+ * `daily` is served from the metric_snapshots DB (full history) when available,
+ * falling back to the on-disk day-files (last 30) when the DB is unconfigured or
+ * hasn't caught up (SAN-300). `dailySource` reports which one was used.
  */
 
 const _metricsCache: Record<string, { json: string; ts: number }> = {};
@@ -69,6 +74,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
+  // Prefer the DB-reconstructed full history (SAN-300); fall back to the on-disk
+  // day-files when the DB is unconfigured or hasn't caught up. No merge — that
+  // would double-count any day present in both sets. manualDataPending below
+  // stays computed against the file set (sheet-freshness semantics unchanged).
+  let daily: unknown[] = dailyFiles;
+  let dailySource: "db" | "files" = "files";
+  try {
+    const db = await getDailySnapshots(slug);
+    if (db.configured && db.days > 0 && db.days >= dailyFiles.length) {
+      daily = db.daily;
+      dailySource = "db";
+    }
+  } catch { /* DB hiccup → keep the file-based daily */ }
+
   // Read metrics plan
   let metricsPlan: { manualDataCadence?: string } | null = null;
   const planFile = path.join(BASE, "brand", slug, "metrics-plan.json");
@@ -103,7 +122,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     metricsSheet: integrations.metricsSheet || null,
     dataSources: ds,
     rolling: metrics,
-    daily: dailyFiles,
+    daily,
+    dailySource,
     recommended,
     manualDataPending,
     manualDataCadence: manualCadence,

@@ -3,6 +3,7 @@ import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-mi
 import {
   getMetricsTimeSeries,
   getSurfaceSummary,
+  getSourceScorecards,
   getTrend,
   getNorthStar,
 } from "@/lib/data/metrics";
@@ -10,7 +11,7 @@ import {
 /**
  * Read layer over the metric_snapshots time-series (Métricas v2 PR-5a). Mirrors
  * the MCP tool `sancho_get_metrics_timeseries` so the UI and Merlin read the same
- * data: `view=series|surfaces|trend|northstar`. All views degrade to
+ * data: `view=series|surfaces|scorecards|trend|northstar`. All views degrade to
  * `{ configured: false }` without DATABASE_URL — the page then falls back to the
  * file-based `/api/metrics` pipeline.
  */
@@ -43,6 +44,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   switch (view) {
     case "surfaces":
       return res.status(200).json(await getSurfaceSummary(slug, { from, to }));
+    case "scorecards":
+      return res.status(200).json(await getSourceScorecards(slug, { from, to }));
     case "northstar":
       return res.status(200).json(getNorthStar(slug));
     case "trend": {
