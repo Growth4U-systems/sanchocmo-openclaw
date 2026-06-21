@@ -5,8 +5,11 @@
  *
  * Usage:
  *   node collect.js --slug <client> --all
+ *   node collect.js --slug <client> --all --due     # only sources due today (cadence)
  *   node collect.js --slug <client> --source <adapter>
  *   node collect.js --slug <client> --source ga4 --from 2024-01-01 --to 2024-01-31
+ *
+ * Env: METRICS_WRITE_JSON=0 skips the JSON snapshot/rolling files (DB is source of truth).
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
@@ -32,6 +35,7 @@ const hasFlag = (name) => args.includes(`--${name}`);
 const slug = getArg('slug');
 const sourceFilter = getArg('source');
 const collectAll = hasFlag('all');
+const dueOnly = hasFlag('due'); // collect only sources whose cadence is due today (SAN-300)
 const fromDate = getArg('from');
 const toDate = getArg('to');
 
@@ -115,7 +119,7 @@ const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'ghl', 'instantly', 'sh
 
 // --- Determine which adapters to run ---
 const ds = integrations.dataSources || integrations;
-const toRun = collectAll
+let toRun = collectAll
   ? ADAPTERS.filter((a) => {
       const entry = ds[a] || ds[a.replace('-', '_')];
       return entry && entry.status && entry.status !== 'not_configured';
@@ -130,7 +134,42 @@ if (toRun.length === 0) {
 }
 
 // --- Run collection ---
+const MC_BASE = process.env.MC_BASE_URL || 'http://localhost:3000';
+
+// Ask MC which of the candidate sources are due today (per the editable cadence).
+// On any failure, fall back to collecting all candidates — better to over-collect
+// than to silently miss a source (SAN-300).
+async function filterDueSources(candidates) {
+  try {
+    const res = await fetch(
+      `${MC_BASE}/api/metrics/schedule?slug=${encodeURIComponent(slug)}&due=1&sources=${encodeURIComponent(candidates.join(','))}`,
+      { headers: { ...(process.env.MC_ADMIN_TOKEN ? { 'x-admin-token': process.env.MC_ADMIN_TOKEN } : {}) } },
+    );
+    if (!res.ok) {
+      console.warn(`⚠ Due-check HTTP ${res.status}; collecting all connected sources`);
+      return candidates;
+    }
+    const data = await res.json().catch(() => ({}));
+    return Array.isArray(data.due) ? data.due : candidates;
+  } catch (e) {
+    console.warn(`⚠ Due-check unreachable (${e.message}); collecting all connected sources`);
+    return candidates;
+  }
+}
+
 async function runCollection() {
+  if (dueOnly) {
+    const due = await filterDueSources(toRun);
+    const notDue = toRun.filter((s) => !due.includes(s));
+    toRun = toRun.filter((s) => due.includes(s));
+    if (notDue.length) console.log(`⏭  No tocan hoy (cadencia): ${notDue.join(', ')}`);
+    if (toRun.length === 0) {
+      console.log('🟰 Nada que recoger hoy según la cadencia. Fin.');
+      return;
+    }
+    console.log(`📅 Due hoy: ${toRun.join(', ')}`);
+  }
+
   const result = {
     slug,
     collectedAt: new Date().toISOString(),
@@ -177,41 +216,49 @@ async function runCollection() {
     }
   }
 
-  // --- Save daily snapshot ---
-  const metricsDir = path.join(brandDir, 'metrics');
-  mkdirSync(metricsDir, { recursive: true });
-
   const today = new Date().toISOString().split('T')[0];
-  const snapshotPath = path.join(metricsDir, `${today}.json`);
-  writeFileSync(snapshotPath, JSON.stringify(result, null, 2));
-  console.log(`\n💾 Daily snapshot saved: ${snapshotPath}`);
 
-  // --- Append to rolling metrics-data.json (90 days) ---
-  const rollingPath = path.join(metricsDir, 'metrics-data.json');
-  let rolling = [];
-  if (existsSync(rollingPath)) {
-    try {
-      rolling = JSON.parse(readFileSync(rollingPath, 'utf-8'));
-    } catch {
-      rolling = [];
+  // --- Save daily snapshot + rolling history (JSON) ---
+  // Optional once the DB is the source of truth: set METRICS_WRITE_JSON=0 to skip
+  // writing files entirely (DB ingest below still runs) (SAN-300).
+  const writeJson = process.env.METRICS_WRITE_JSON !== '0';
+  if (writeJson) {
+    const metricsDir = path.join(brandDir, 'metrics');
+    mkdirSync(metricsDir, { recursive: true });
+
+    const snapshotPath = path.join(metricsDir, `${today}.json`);
+    writeFileSync(snapshotPath, JSON.stringify(result, null, 2));
+    console.log(`\n💾 Daily snapshot saved: ${snapshotPath}`);
+
+    // --- Append to rolling metrics-data.json (90 days) ---
+    const rollingPath = path.join(metricsDir, 'metrics-data.json');
+    let rolling = [];
+    if (existsSync(rollingPath)) {
+      try {
+        rolling = JSON.parse(readFileSync(rollingPath, 'utf-8'));
+      } catch {
+        rolling = [];
+      }
     }
+
+    // Remove entries older than 90 days
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 90);
+    const cutoffStr = cutoff.toISOString();
+    rolling = rolling.filter((entry) => entry.collectedAt >= cutoffStr);
+
+    // Remove existing entry for today (idempotent)
+    rolling = rolling.filter((entry) => {
+      const entryDate = entry.collectedAt?.split('T')[0];
+      return entryDate !== today;
+    });
+
+    rolling.push(result);
+    writeFileSync(rollingPath, JSON.stringify(rolling, null, 2));
+    console.log(`📈 Rolling data updated: ${rollingPath} (${rolling.length} entries)`);
+  } else {
+    console.log('\n🗄  JSON snapshot/rolling skipped (METRICS_WRITE_JSON=0); DB is source of truth.');
   }
-
-  // Remove entries older than 90 days
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 90);
-  const cutoffStr = cutoff.toISOString();
-  rolling = rolling.filter((entry) => entry.collectedAt >= cutoffStr);
-
-  // Remove existing entry for today (idempotent)
-  rolling = rolling.filter((entry) => {
-    const entryDate = entry.collectedAt?.split('T')[0];
-    return entryDate !== today;
-  });
-
-  rolling.push(result);
-  writeFileSync(rollingPath, JSON.stringify(rolling, null, 2));
-  console.log(`📈 Rolling data updated: ${rollingPath} (${rolling.length} entries)`);
 
   // Summary
   const okCount = Object.values(result.sources).filter((s) => s.status === 'ok').length;
@@ -243,10 +290,10 @@ async function runCollection() {
     console.warn(`⚠ Reconcile skipped (MC unreachable at ${mcBase}): ${e.message}`);
   }
 
-  // --- Mirror the daily snapshot into the metric_snapshots time-series ---
-  // SAN-263 (Métricas v2): the JSON files stay the source of truth; this just
-  // pings MC to upsert the same metrics into Postgres so trends/comparatives
-  // become queryable. Best-effort + idempotent — never fails the collection.
+  // --- Write the daily snapshot into the metric_snapshots time-series ---
+  // SAN-300: the DB is the source of truth. `deleteStale:true` makes the DB
+  // converge to this payload (stale rows for the restated dates are removed,
+  // GSC-lagged dates untouched). Still best-effort — never fails the collection.
   try {
     const ingestRes = await fetch(`${mcBase}/api/metrics/ingest`, {
       method: 'POST',
@@ -254,11 +301,11 @@ async function runCollection() {
         'Content-Type': 'application/json',
         ...(process.env.MC_ADMIN_TOKEN ? { 'x-admin-token': process.env.MC_ADMIN_TOKEN } : {}),
       },
-      body: JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources }),
+      body: JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources, deleteStale: true }),
     });
     if (ingestRes.ok) {
       const data = await ingestRes.json().catch(() => ({}));
-      console.log(`🗃  Ingest: ${data.rows ?? 0} metric row(s) mirrored to DB`);
+      console.log(`🗃  Ingest: ${data.rows ?? 0} row(s) written, ${data.deleted ?? 0} stale removed`);
     } else {
       console.warn(`⚠ Ingest endpoint returned HTTP ${ingestRes.status}`);
     }
