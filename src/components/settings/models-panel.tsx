@@ -18,6 +18,16 @@ import {
   type ModelCatalogResponse,
   type ProviderAuthRoute,
 } from "@/hooks/useModels";
+import {
+  routeLabel,
+  routeClass,
+  effectiveRoute,
+  providerDisplayName,
+  connectionLabel,
+  connectionClass,
+  maskAuthLabel,
+} from "@/lib/provider-auth-display";
+import { consoleUrlFor, consoleLabelFor } from "@/lib/provider-console";
 import { cn } from "@/lib/utils";
 
 const LLM_PROVIDER_ORDER = ["anthropic", "codex", "openai-codex", "openrouter", "openai", "google"];
@@ -60,29 +70,6 @@ const RECOMMENDATIONS = [
   },
 ];
 
-function routeLabel(route: ProviderAuthRoute | undefined): string {
-  if (route === undefined) return "cargando";
-  if (route === "subscription") return "suscripción";
-  if (route === "api") return "API key";
-  if (route === "env") return "env key";
-  return "sin auth";
-}
-
-function routeClass(route: ProviderAuthRoute | undefined, configured = route !== "missing") {
-  if (route === undefined) return "bg-muted text-muted-foreground";
-  if (!configured || route === "missing") return "bg-muted text-muted-foreground";
-  if (route === "subscription") return "bg-sage/20 text-sage";
-  if (route === "api") return "bg-rust/10 text-rust";
-  if (route === "env") return "bg-blue-500/10 text-blue-700";
-  return "bg-muted text-muted-foreground";
-}
-
-function effectiveRoute(provider: CatalogProvider | undefined): ProviderAuthRoute | undefined {
-  if (!provider) return undefined;
-  if (!provider.auth) return provider.configured ? "api" : "missing";
-  return provider.auth.effective !== "missing" ? provider.auth.effective : provider.auth.preferred;
-}
-
 function AuthRouteBadge({
   route,
   configured = route !== "missing",
@@ -101,40 +88,6 @@ function AuthRouteBadge({
       {routeLabel(route)}
     </span>
   );
-}
-
-function providerDisplayName(providerId: string): string {
-  if (providerId === "anthropic") return "Anthropic";
-  if (providerId === "codex") return "Codex";
-  if (providerId === "openai-codex") return "OpenAI Codex";
-  if (providerId === "openrouter") return "OpenRouter";
-  if (providerId === "openai") return "OpenAI";
-  if (providerId === "google") return "Gemini";
-  return providerId;
-}
-
-function connectionLabel(route: ProviderAuthRoute | undefined, configured: boolean): string {
-  if (!configured || !route || route === "missing") return "Sin auth";
-  if (route === "subscription") return "Conectado por suscripción";
-  if (route === "api") return "Conectado por API key";
-  if (route === "env") return "Conectado por env";
-  return "Sin auth";
-}
-
-function connectionClass(route: ProviderAuthRoute | undefined, configured: boolean): string {
-  if (!configured || !route || route === "missing") return "bg-muted text-muted-foreground";
-  if (route === "subscription") return "bg-sage/20 text-sage";
-  if (route === "api") return "bg-rust/10 text-rust";
-  if (route === "env") return "bg-blue-500/10 text-blue-700";
-  return "bg-muted text-muted-foreground";
-}
-
-function maskAuthLabel(label: string): string {
-  return label
-    .replace(/sk-ant-api[\w-]*/gi, (value) => `${value.slice(0, 12)}...${value.slice(-4)}`)
-    .replace(/sk-ant-o[\w-]*/gi, (value) => `${value.slice(0, 10)}...${value.slice(-4)}`)
-    .replace(/sk-or-v1[\w-]*/gi, (value) => `${value.slice(0, 11)}...${value.slice(-4)}`)
-    .replace(/sk-[\w-]{16,}/gi, (value) => `${value.slice(0, 7)}...${value.slice(-4)}`);
 }
 
 function authSourceLines(provider: CatalogProvider): string[] {
@@ -700,6 +653,8 @@ function ProvidersSection() {
           <tbody>
             {providerRows.map((p) => {
               const route = effectiveRoute(p);
+              const consoleUrl = consoleUrlFor(p.id, route);
+              const consoleHost = consoleLabelFor(p.id, route);
               const reasoning = models.filter((m) => m.provider === p.id && m.reasoning);
               const shownReasoning = reasoning.slice(0, 2).map((m) => m.name || m.id).join(", ");
               const hiddenCount = Math.max(0, reasoning.length - 2);
@@ -780,16 +735,28 @@ function ProvidersSection() {
                     )}
                   </td>
                   <td className="px-3 py-2 text-right">
-                    {["anthropic", "openrouter", "openai", "google"].includes(p.id) ? (
-                      <Link
-                        href="/dashboard/admin/settings?tab=apis"
-                        className="text-[11px] font-semibold text-rust underline-offset-2 hover:underline"
-                      >
-                        Gestionar APIs
-                      </Link>
-                    ) : (
-                      <code className="text-[10px] text-muted-foreground">openclaw auth</code>
-                    )}
+                    <div className="flex flex-col items-end gap-1">
+                      {consoleUrl && (
+                        <a
+                          href={consoleUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] font-semibold text-rust underline-offset-2 hover:underline whitespace-nowrap"
+                        >
+                          🔗 {consoleHost || "consola"}
+                        </a>
+                      )}
+                      {["anthropic", "openrouter", "openai", "google"].includes(p.id) ? (
+                        <Link
+                          href="/dashboard/admin/settings?tab=apis&cat=runtime"
+                          className="text-[11px] text-muted-foreground underline-offset-2 hover:underline"
+                        >
+                          Gestionar
+                        </Link>
+                      ) : (
+                        <code className="text-[10px] text-muted-foreground">openclaw auth</code>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

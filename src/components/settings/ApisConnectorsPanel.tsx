@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
+import { RuntimeMotorSection } from "@/components/settings/runtime-motor-section";
 import { useAppStore } from "@/stores/app";
 import { cn } from "@/lib/utils";
 import { isYalcProviderApiId } from "@/lib/yalc/provider-catalog";
@@ -99,7 +101,9 @@ interface ApisConnectorsPanelProps {
 
 export function ApisConnectorsPanel({ categories, showHeader = true, providers, filterLabel, onClearProviders }: ApisConnectorsPanelProps = {}) {
   const statusBadge = useStatusBadge();
-  const slug = useAppStore((s) => s.selectedClient) || "";
+  const selectedClient = useAppStore((s) => s.selectedClient);
+  const setSelectedClient = useAppStore((s) => s.setSelectedClient);
+  const slug = selectedClient || "";
   const [checking, setChecking] = useState(false);
   const [checkStatus, setCheckStatus] = useState("");
   const [connectSlider, setConnectSlider] = useState<{ apiId: string; provider: string } | null>(null);
@@ -108,6 +112,27 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const qc = useQueryClient();
+  const router = useRouter();
+
+  // Deep-link support: `?cat=...` (from the chat error modal / models panel)
+  // preselects a category. Only honored on the standalone panel, not embedded
+  // scoped views. The Runtime/Motor category is system-scoped, so landing on it
+  // forces "all clients" scope — its links target the admin global settings page,
+  // and without this the section is gated off (`!slug`) and the panel renders blank.
+  useEffect(() => {
+    if (categories) return;
+    const cat = router.query.cat;
+    if (typeof cat !== "string" || !cat) return;
+    if (cat === "runtime") setSelectedClient(null);
+    setCategoryFilter(cat);
+  }, [router.query.cat, categories, setSelectedClient]);
+
+  // Safety net: "runtime" is only valid in system scope. If a client gets selected
+  // while it's active, fall back to "all" so the category <select> never holds a
+  // value with no matching <option> (which would blank the table area).
+  useEffect(() => {
+    if (slug && categoryFilter === "runtime") setCategoryFilter("all");
+  }, [slug, categoryFilter]);
 
   const [checkingService, setCheckingService] = useState<string | null>(null);
 
@@ -168,6 +193,11 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
     for (const [catKey, catData] of Object.entries(catalog.categories)) {
       if (categories && !categories.includes(catKey)) continue;
       for (const [apiId, apiMeta] of Object.entries(catData.apis || {})) {
+        // The engine providers (anthropic/openai/openrouter/gemini/xai) move into
+        // the dedicated "Runtime / Motor" category in system scope, so they don't
+        // also show as plain api-key rows there — unless an explicit `?surface=`
+        // providers filter asked for them, in which case that filter wins.
+        if (!slug && !categories && !activeProviders && GATEWAY_ENV_SERVICES.has(apiId)) continue;
         if (activeProviders && !activeProviders.includes(apiId)) continue;
         result.push({ apiId, meta: apiMeta, catKey, catLabel: catData.label });
       }
@@ -176,7 +206,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   // activeProviders is derived from the `providers` prop; joining to a string stabilises
   // the dep across array-identity changes so the memo re-runs only when the set differs.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catalog, categories, activeProviders?.join(",")]);
+  }, [catalog, categories, slug, activeProviders?.join(",")]);
 
   // Counters scoped to the (potentially filtered) set
   let connected = 0, pending = 0, errored = 0, notConfigured = 0;
@@ -193,8 +223,21 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   const categoryOptions = useMemo(() => {
     if (categories) return [];
     if (!catalog?.categories) return [];
-    return Object.entries(catalog.categories).map(([key, cat]) => ({ key, label: cat.label }));
-  }, [catalog, categories]);
+    const opts = Object.entries(catalog.categories).map(([key, cat]) => ({ key, label: cat.label }));
+    // Admin/system scope gets a synthetic "Runtime / Motor" category (the chat engine).
+    if (!slug) return [{ key: "runtime", label: "🚂 Runtime / Motor" }, ...opts];
+    return opts;
+  }, [catalog, categories, slug]);
+
+  // The catalog category that holds the engine providers — used to point admins
+  // to the Runtime/Motor category, since those rows are moved out of it in system scope.
+  const engineCatKey = useMemo(() => {
+    if (!catalog?.categories) return null;
+    for (const [key, cat] of Object.entries(catalog.categories)) {
+      if (Object.keys(cat.apis || {}).some((id) => GATEWAY_ENV_SERVICES.has(id))) return key;
+    }
+    return null;
+  }, [catalog]);
 
   const getApiStatus = useCallback((apiId: string, ownership: string) => {
     const svc = services[apiId];
@@ -213,6 +256,9 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
 
   const filteredApis = useMemo(() => {
     const q = search.toLowerCase().trim();
+    // The "runtime" category is rendered by <RuntimeMotorSection/>, not the
+    // generic table — so the generic list is empty under that filter.
+    if (categoryFilter === "runtime") return [];
     return allApis.filter((item) => {
       if (categoryFilter !== "all" && item.catKey !== categoryFilter) return false;
       if (statusFilter !== "all") {
@@ -369,6 +415,31 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando...</p>}
 
+      {/* Runtime / Motor — engine accounts + primary-model selector (admin/system only) */}
+      {categoryFilter === "runtime" && !slug && (
+        <RuntimeMotorSection
+          onOpenSystemKey={(apiId, provider) => setSystemKeySlider({ apiId, provider })}
+        />
+      )}
+
+      {/* The engine providers moved to Runtime/Motor — point admins there from their old category. */}
+      {!slug && !activeProviders && categoryFilter !== "runtime" && (categoryFilter === "all" || categoryFilter === engineCatKey) && (
+        <div className="mb-4 px-3 py-2 rounded-md border border-sage/40 bg-sage/5 text-[12px] text-foreground/80 flex items-center gap-2">
+          <span>🚂</span>
+          <span>
+            Los proveedores del motor (Anthropic, OpenAI, OpenRouter, Gemini, xAI) viven en{" "}
+            <button
+              type="button"
+              onClick={() => setCategoryFilter("runtime")}
+              className="font-semibold text-rust hover:underline"
+            >
+              Runtime / Motor
+            </button>
+            .
+          </span>
+        </div>
+      )}
+
       {/* API Table */}
       {!isLoading && filteredApis.length > 0 && (
         <div className="border-2 border-ink rounded-lg overflow-hidden shadow-comic">
@@ -499,7 +570,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
         </div>
       )}
 
-      {!isLoading && filteredApis.length === 0 && search && (
+      {!isLoading && filteredApis.length === 0 && search && categoryFilter !== "runtime" && (
         <div className="text-center py-8 text-muted-foreground">
           <p className="text-sm">No se encontraron integraciones para &quot;{search}&quot;</p>
           <button
