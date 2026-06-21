@@ -168,6 +168,10 @@ const METRICS_PROJECT_ID = "P00-Metrics";
 const METRICS_PREREQ_TASK_ID = "P00-FUL-T09";
 const METRICS_SETUP_BLUEPRINT = getTaskSet("foundation-metrics");
 
+/** Operational integration task skills (T08–T10) — distinguishes them from
+ *  auto-generated surface-connection tasks to avoid duplication in the Setup view. */
+const OPERATIONAL_INTEGRATION_SKILLS = new Set(["meeting-intelligence", "sales-call-prep", "daily-pulse"]);
+
 function isTaskCompleted(status?: string): boolean {
   return normalizeTaskStatusQuiet(status) === "completed";
 }
@@ -187,12 +191,19 @@ function firstDeliverableFile(value?: string | string[]): string | undefined {
  *  missing), "on" (single-source/oneOf surfaces, or all mandatory met). */
 function surfaceConnState(surface: SurfaceDef, info: { connected: boolean; connectedSources: string[] }): "on" | "partial" | "off" {
   if (!info.connected) return "off";
-  const mandatory = SURFACE_MANDATORY_SOURCES[surface.key];
-  if (!mandatory?.length) return "on"; // oneOf/single-source surfaces: any source = on
+  const req = SURFACE_MANDATORY_SOURCES[surface.key];
+  if (!req) return "on";
   const has = new Set(info.connectedSources);
-  // partnerships-style "≥1 of"; others require ALL listed mandatory sources.
-  const met = surface.key === "partnerships" ? mandatory.some((s) => has.has(s)) : mandatory.every((s) => has.has(s));
-  return met ? "on" : "partial";
+  const allOk = !req.allOf || req.allOf.every((s) => has.has(s));
+  const anyOk = !req.anyOf || req.anyOf.some((s) => has.has(s));
+  return allOk && anyOk ? "on" : "partial";
+}
+
+/** Short "what feeds this surface" line — connected source names, or a hint. */
+function connWhat(s: SurfaceDef, sources: string[]): string {
+  if (sources.length) return sources.map((src) => SOURCE_NAMES[src] || src).join(" · ");
+  const oneOf = s.requires.oneOf.length ? s.requires.oneOf.slice(0, 2).join(" / ") : "";
+  return oneOf || s.what;
 }
 
 function TaskStatusBadge({ status }: { status?: string }) {
@@ -450,12 +461,35 @@ function SetupDocCard({ index, title, done, path, desc, onChat, taskHref, onOpen
       <div className="flex items-center gap-1.5">
         <button type="button" onClick={onChat} title="Chat con Merlin" className={iconBtn}>💬</button>
         {taskHref && <a href={taskHref} title="Ver tarea" className={cn(iconBtn, "no-underline")}>📋</a>}
-        <button type="button" onClick={onFourth} title={fourthTitle} className={iconBtn}>{fourthIcon}</button>
+        {onFourth ? (
+          <button type="button" onClick={onFourth} title={fourthTitle} className={iconBtn}>{fourthIcon}</button>
+        ) : (
+          <span title={fourthTitle} className={cn(iconBtn, "cursor-help")}>{fourthIcon}</span>
+        )}
         {done
           ? <button type="button" onClick={onOpen} className="rounded-sc-md border-2 border-ink bg-rust px-3 py-1.5 font-heading text-[11.5px] font-bold uppercase text-white shadow-pop-xs transition-all hover:-translate-y-px">{openLabel}</button>
           : <button type="button" onClick={onChat} className="rounded-sc-md border-2 border-ink bg-sage px-3 py-1.5 font-heading text-[11.5px] font-bold text-white shadow-pop-xs transition-all hover:-translate-y-px">{openLabel}</button>}
       </div>
     </div>
+  );
+}
+
+// ============================================================
+// Setup API link pill — surface connection status + deep-link to APIs settings
+// ============================================================
+
+/** Status pill that doubles as the deep-link to the surface-filtered APIs page
+ *  (the `?surface=` param is consumed by PR C; until then it lands on the
+ *  unfiltered APIs tab). Requires `slug` as an explicit prop so it can live at
+ *  module scope (no closure over MetricsPageInner). */
+function SetupApiLink({ slug, surfaceKey, state }: { slug: string; surfaceKey: SurfaceKey; state: "on" | "partial" | "off" }) {
+  const href = `/dashboard/${slug}/settings?tab=apis&surface=${surfaceKey}`;
+  const cls = state === "on" ? "bg-sage text-white" : state === "partial" ? "bg-[var(--sc-sun-300)] text-ink" : "bg-navy text-white";
+  const label = state === "on" ? "✓ Conectado" : state === "partial" ? "◐ Parcial" : "🔌 Conectar API";
+  return (
+    <a href={href} className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-sc-pill border-[1.5px] border-ink px-2.5 py-1 font-heading text-[11px] font-bold no-underline shadow-pop-xs transition-all hover:-translate-y-px", cls)}>
+      {label}{state === "off" ? " →" : <span className="opacity-70">· API ↗</span>}
+    </a>
   );
 }
 
@@ -2485,20 +2519,6 @@ function MetricsPageInner({ slug }: { slug: string }) {
     );
   }
 
-  /** Status pill that doubles as the deep-link to the surface-filtered APIs page
-   *  (the `?surface=` param is consumed by PR C; until then it lands on the
-   *  unfiltered APIs tab). Closes over `slug`. */
-  function SetupApiLink({ surfaceKey, state }: { surfaceKey: SurfaceKey; state: "on" | "partial" | "off" }) {
-    const href = `/dashboard/${slug}/settings?tab=apis&surface=${surfaceKey}`;
-    const cls = state === "on" ? "bg-sage text-white" : state === "partial" ? "bg-[var(--sc-sun-300)] text-ink" : "bg-navy text-white";
-    const label = state === "on" ? "✓ Conectado" : state === "partial" ? "◐ Parcial" : "🔌 Conectar API";
-    return (
-      <a href={href} className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-sc-pill border-[1.5px] border-ink px-2.5 py-1 font-heading text-[11px] font-bold no-underline shadow-pop-xs transition-all hover:-translate-y-px", cls)}>
-        {label}{state === "off" ? " →" : <span className="opacity-70">· API ↗</span>}
-      </a>
-    );
-  }
-
   function renderSetup() {
     const projectExists = Boolean(metricsProjectRecord);
 
@@ -2525,17 +2545,9 @@ function MetricsPageInner({ slug }: { slug: string }) {
 
     // Operational integrations only (T08–T10) — auto-generated surface-connection
     // tasks are excluded so they don't duplicate the Conexiones block.
-    const OPERATIONAL_INTEGRATION_SKILLS = new Set(["meeting-intelligence", "sales-call-prep", "daily-pulse"]);
     const operationalIntegrations = metricsSetupTasks.filter(
       (t) => t.type === "integration" && t.skill && OPERATIONAL_INTEGRATION_SKILLS.has(t.skill),
     );
-
-    // Short "what feeds this" line — connected source names, else a hint.
-    const connWhat = (s: SurfaceDef, sources: string[]): string => {
-      if (sources.length) return sources.map((src) => SOURCE_NAMES[src] || src).join(" · ");
-      const oneOf = s.requires.oneOf.length ? s.requires.oneOf.slice(0, 2).join(" / ") : "";
-      return oneOf || s.what;
-    };
 
     return (
       <div className="space-y-4">
@@ -2555,7 +2567,9 @@ function MetricsPageInner({ slug }: { slug: string }) {
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <h2 className="mb-2 font-heading text-[17px] font-bold text-navy">🔧 Setup de Métricas — {doneSteps}/{totalSteps} pasos</h2>
-              <MetricProgressBar value={doneSteps} max={totalSteps} />
+              <div className="h-4 overflow-hidden rounded-sc-pill border-2 border-ink bg-aged shadow-pop-xs">
+                <i className={cn("block h-full border-r-2 border-ink", setupPct === 100 ? "bg-sage" : "bg-rust")} style={{ width: `${setupPct}%` }} />
+              </div>
             </div>
             <span className="font-heading text-3xl font-bold text-navy">{setupPct}%</span>
           </div>
@@ -2632,7 +2646,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
                   key={s.key}
                   className={cn(
                     "flex flex-wrap items-center gap-2.5 rounded-sc-md border-2 border-ink px-2.5 py-1.5 shadow-pop-xs",
-                    state === "on" ? "bg-[var(--sc-sage-100)]" : state === "partial" ? "bg-[#FBF6E2]" : "bg-card",
+                    state === "on" ? "bg-[var(--sc-sage-100)]" : state === "partial" ? "bg-[#FBF6E2]" : "bg-card", /* amber tint — matches the mockup; no app token for this shade yet */
                   )}
                 >
                   <span className="w-[21px] flex-shrink-0 text-center text-[16px]">{s.emoji}</span>
@@ -2649,7 +2663,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
                   {isReputation ? (
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-sc-pill border-[1.5px] border-ink bg-aged px-2.5 py-1 font-heading text-[11px] font-bold text-ink shadow-pop-xs">⚙️ Automático</span>
                   ) : (
-                    <SetupApiLink surfaceKey={s.key} state={state} />
+                    <SetupApiLink slug={slug} surfaceKey={s.key} state={state} />
                   )}
                 </div>
               );

@@ -134,14 +134,15 @@ export const SURFACES: SurfaceDef[] = [
   },
 ];
 
-/** Source ids that MUST be connected for a surface to be fully "on" (drives the
- *  3-state Conexiones badge). Surfaces absent here are "on" as soon as they have
- *  any connected source (they are oneOf / single-source). */
-export const SURFACE_MANDATORY_SOURCES: Partial<Record<SurfaceKey, string[]>> = {
-  reputation: ["trust_score"],
-  web: ["gsc"],
-  social: ["metricool"],
-  partnerships: ["yalc", "creators"], // any one of these counts (see surfaceConnState)
+/** Connection requirements for a surface's 3-state Conexiones badge.
+ *  `allOf` — every listed source must be connected.
+ *  `anyOf` — at least one of the listed sources must be connected.
+ *  Surfaces absent here are "on" as soon as they have any connected source. */
+export const SURFACE_MANDATORY_SOURCES: Partial<Record<SurfaceKey, { allOf?: string[]; anyOf?: string[] }>> = {
+  reputation: { allOf: ["trust_score"] },
+  web: { allOf: ["gsc"] },
+  social: { allOf: ["metricool"] },
+  partnerships: { anyOf: ["yalc", "creators"] },
 };
 
 export const SURFACE_BY_SOURCE: Record<string, SurfaceKey> = (() => {
