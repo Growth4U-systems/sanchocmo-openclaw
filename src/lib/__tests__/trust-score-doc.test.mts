@@ -1,15 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-// renderTrustScoreDoc vive en src/pages/api/trust-score.ts (función exportada para test).
+// renderTrustScoreDoc vive en src/lib/trust-score/doc.ts (extraído de la ruta API en SAN-309).
 // parseFrontmatter es el parser canónico del repo: el round-trip de abajo prueba que el
 // frontmatter que emite el render siempre se vuelve a parsear (antes se armaba a mano y
 // rompía el YAML, ver SAN-194). Mismo patrón CJS/namespace que strip-markdown-frontmatter.test.mts.
-import * as apiMod from "../../pages/api/trust-score";
+import * as docMod from "../trust-score/doc";
 import * as fmMod from "../data/markdown-frontmatter";
 
 const { renderTrustScoreDoc } =
-  (apiMod as unknown as { default: typeof apiMod }).default ?? apiMod;
+  (docMod as unknown as { default: typeof docMod }).default ?? docMod;
 const { parseFrontmatter } =
   (fmMod as unknown as { default: typeof fmMod }).default ?? fmMod;
 

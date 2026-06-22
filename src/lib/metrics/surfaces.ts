@@ -53,7 +53,7 @@ export const SURFACES: SurfaceDef[] = [
     sources: ["trust_score"],
     spendMetric: null,
     requires: { mandatory: ["Trust Engine corre sobre el dominio"], oneOf: [], optional: ["Competidores fijados"] },
-    how: "Automático — se enciende cuando el Trust Engine corre en el kickoff. Nada que conectar.",
+    how: "Automático — se enciende solo al aprobar el Company Brief en el kickoff (tarda unos minutos en correr). Nada que conectar.",
   },
   {
     key: "web",
