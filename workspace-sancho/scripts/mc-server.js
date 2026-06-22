@@ -8179,10 +8179,18 @@ async function doTest() {
       try {
         const { slug } = JSON.parse(body);
         if (!slug) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end('{"error":"Missing slug"}'); return; }
-        const collectScript = path.join(BASE, 'skills', 'metrics-collector', 'scripts', 'collect.js');
-        if (!fs.existsSync(collectScript)) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end('{"error":"collect.js not found"}'); return; }
+        // Resolve collect.js across dev (openclaw home: skills under BASE) and
+        // deploy (/opt/sancho-seed: skills live one level ABOVE workspace-sancho)
+        // layouts; an explicit env override wins. Use the first that exists.
+        // Fixes the deploy 500 where BASE/skills did not exist (SAN-311).
+        const collectScript = [
+          process.env.METRICS_COLLECT_SCRIPT,
+          path.join(BASE, 'skills', 'metrics-collector', 'scripts', 'collect.js'),
+          path.join(BASE, '..', 'skills', 'metrics-collector', 'scripts', 'collect.js'),
+        ].find((p) => p && fs.existsSync(p));
+        if (!collectScript) { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end('{"error":"collect.js not found"}'); return; }
         // Run collector asynchronously
-        const child = execCb(`/opt/homebrew/bin/node "${collectScript}" --slug ${slug} --all`, { cwd: BASE, timeout: 120000, env: { ...process.env, HOME: process.env.HOME || '/Users/ragi' } }, (err, stdout, stderr) => {
+        const child = execCb(`"${process.execPath}" "${collectScript}" --slug ${slug} --all`, { cwd: BASE, timeout: 120000, env: { ...process.env, HOME: process.env.HOME || '/root' } }, (err, stdout, stderr) => {
           // Invalidate server-side metrics cache for this slug
           if (global._metricsCache && global._metricsCache[slug]) delete global._metricsCache[slug];
           if (err) {
