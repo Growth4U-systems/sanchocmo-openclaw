@@ -8,6 +8,7 @@ import { writeClientsFile } from "@/lib/data/clients";
 import { provisionYalcBrain } from "@/lib/yalc/provision";
 import { FOUNDATION_TASK_SET_KEYS, instantiateFoundationProject } from "@/lib/data/task-blueprints";
 import { applyProjectAnchors, applyTaskAnchors } from "@/lib/data/task-create-helpers";
+import { seedClientConfig } from "@/lib/data/client-config-seed";
 
 type ClientsFileData = {
   clients?: Array<Record<string, unknown>>;
@@ -133,6 +134,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   data.clients = [...clients, client];
   writeClientsFile(data);
   createClientDirs(slug);
+
+  // Sembrar client-config.json con los crons de auto-onboarding (default-on, p.ej.
+  // Trust Score refresh) para que el cliente quede cron-ready (SAN-309). Best-effort.
+  seedClientConfig(slug, name, language);
 
   // Auto-provision the brand's YALC brain from its website — no CLI, no manual
   // step. Fire-and-forget so brand creation isn't blocked by YALC synthesis;
