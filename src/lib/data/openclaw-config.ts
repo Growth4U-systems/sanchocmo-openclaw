@@ -2,6 +2,13 @@ import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { EXEC_PATH, BASE } from "@/lib/data/paths";
+import { upsertEnvContent, parseEnvContent, removeKeysFromEnvContent } from "@/lib/env-file";
+import {
+  applyAnthropicRouteToProfiles,
+  ANTHROPIC_OAUTH_PROFILE,
+  ANTHROPIC_API_PROFILE,
+  type AnthropicAuthRoute,
+} from "@/lib/data/anthropic-auth-route";
 
 interface ExecOptions {
   timeoutMs?: number;
@@ -435,4 +442,186 @@ export function getDefaultPrimaryModel(): string | null {
   const raw = getOpenclawConfig("agents.defaults.model.primary");
   if (typeof raw === "string") return raw;
   return null;
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Anthropic auth route (subscription/OAuth ↔ API key) — global, runtime switch.
+//
+// The gateway and this Next.js server are sibling processes launched at
+// container boot; `openclaw gateway restart` does NOT re-read .env. So the
+// effective runtime selector is the on-disk auth profile: openclaw.json
+// (`auth.order`/`auth.profiles`) + each agent's auth-profiles.json — the gateway
+// re-reads these on restart. This mirrors docker/ensure-anthropic-subscription-auth.js
+// (boot-time, subscription only); here we cover BOTH directions at runtime.
+// ──────────────────────────────────────────────────────────────────────────
+
+export type { AnthropicAuthRoute };
+
+const OPENCLAW_ROOT = process.env.OPENCLAW_HOME || path.join(BASE, "..");
+const SYSTEM_ENV_FILE = path.join(BASE, "..", ".env");
+
+function readJsonOr<T>(file: string, fallback: T): T {
+  const parsed = readJsonFile<T>(file);
+  return parsed === null ? fallback : parsed;
+}
+
+function writeJsonFile(file: string, value: unknown): void {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", "utf-8");
+}
+
+function listAgentAuthDirs(): string[] {
+  const roots = [path.join(OPENCLAW_ROOT, ".openclaw", "agents"), path.join(OPENCLAW_ROOT, "agents")];
+  const dirs: string[] = [];
+  for (const root of roots) {
+    try {
+      for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+        if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
+        dirs.push(path.join(root, entry.name, "agent"));
+      }
+    } catch {
+      // Missing agent roots are fine on fresh installs.
+    }
+  }
+  return dirs;
+}
+
+function uniqueRealPaths(files: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const file of files) {
+    let key = file;
+    try { key = fs.realpathSync(file); } catch { /* not present yet */ }
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(file);
+  }
+  return out;
+}
+
+/** Rewrite every agent's auth store + state for the target Anthropic route. */
+function writeAgentAnthropicAuth(route: AnthropicAuthRoute): void {
+  const sub = route === "subscription";
+  const targetId = sub ? ANTHROPIC_OAUTH_PROFILE : ANTHROPIC_API_PROFILE;
+  const agentDirs = listAgentAuthDirs();
+
+  const profileFiles = uniqueRealPaths([
+    path.join(OPENCLAW_ROOT, ".openclaw", "shared", "auth-profiles.json"),
+    ...agentDirs.map((d) => path.join(d, "auth-profiles.json")),
+  ]);
+  for (const file of profileFiles) {
+    const store = readJsonOr<{ version?: number; profiles?: Record<string, unknown> }>(file, {
+      version: 1,
+      profiles: {},
+    });
+    store.version = store.version || 1;
+    store.profiles = applyAnthropicRouteToProfiles(store.profiles || {}, route, "type");
+    writeJsonFile(file, store);
+    try { fs.chmodSync(file, 0o600); } catch { /* best effort */ }
+  }
+
+  for (const file of uniqueRealPaths(agentDirs.map((d) => path.join(d, "auth-state.json")))) {
+    if (!fs.existsSync(file)) continue;
+    const state = readJsonOr<{ version?: number; lastGood?: Record<string, unknown>; usageStats?: Record<string, unknown> }>(
+      file,
+      { version: 1 },
+    );
+    state.version = state.version || 1;
+    state.lastGood = { ...(state.lastGood || {}), anthropic: targetId };
+    if (state.usageStats && typeof state.usageStats === "object") {
+      for (const key of Object.keys(state.usageStats)) {
+        if (key.startsWith("anthropic:")) delete state.usageStats[key];
+      }
+    }
+    writeJsonFile(file, state);
+  }
+}
+
+function readSystemEnv(): Record<string, string> {
+  try { return parseEnvContent(fs.readFileSync(SYSTEM_ENV_FILE, "utf-8")); } catch { return {}; }
+}
+
+function writeSystemEnv(updates: Record<string, string>): void {
+  let content = "";
+  try { content = fs.readFileSync(SYSTEM_ENV_FILE, "utf-8"); } catch { /* new file */ }
+  fs.writeFileSync(SYSTEM_ENV_FILE, upsertEnvContent(content, updates), "utf-8");
+  for (const [k, v] of Object.entries(updates)) process.env[k] = v;
+}
+
+function removeSystemEnv(keys: string[]): void {
+  let content = "";
+  try { content = fs.readFileSync(SYSTEM_ENV_FILE, "utf-8"); } catch { return; }
+  fs.writeFileSync(SYSTEM_ENV_FILE, removeKeysFromEnvContent(content, keys), "utf-8");
+  for (const k of keys) delete process.env[k];
+}
+
+/** Whether a Claude subscription (OAuth) token is resolvable by the gateway. */
+export function hasAnthropicSubscriptionToken(): boolean {
+  if (process.env.ANTHROPIC_OAUTH_TOKEN || process.env.CLAUDE_CODE_OAUTH_TOKEN) return true;
+  const env = readSystemEnv();
+  return !!(env.ANTHROPIC_OAUTH_TOKEN || env.CLAUDE_CODE_OAUTH_TOKEN);
+}
+
+/** Whether an Anthropic API key is present (process env or system .env). */
+export function hasAnthropicApiKey(): boolean {
+  if (process.env.ANTHROPIC_API_KEY) return true;
+  return !!readSystemEnv().ANTHROPIC_API_KEY;
+}
+
+/**
+ * Switch the global Anthropic auth route. Rewrites openclaw.json + every agent
+ * auth store on disk (the runtime selector) and persists ANTHROPIC_AUTH_MODE to
+ * .env. Does NOT restart the gateway — the caller does, then checks the result.
+ */
+export function setAnthropicAuthRoute(route: AnthropicAuthRoute): void {
+  const sub = route === "subscription";
+
+  // 1. openclaw.json auth.profiles + auth.order (replace-path: a merge patch
+  //    cannot delete the opposite-route profile key).
+  const currentProfiles = getOpenclawConfig("auth.profiles");
+  const profiles = applyAnthropicRouteToProfiles(
+    currentProfiles && typeof currentProfiles === "object" ? (currentProfiles as Record<string, unknown>) : {},
+    route,
+    "mode",
+  );
+  patchOpenclawConfigReplacePath("auth.profiles", { auth: { profiles } });
+
+  const currentOrder = getOpenclawConfig("auth.order");
+  const order: Record<string, unknown> =
+    currentOrder && typeof currentOrder === "object" ? { ...(currentOrder as Record<string, unknown>) } : {};
+  order.anthropic = [sub ? ANTHROPIC_OAUTH_PROFILE : ANTHROPIC_API_PROFILE];
+  patchOpenclawConfigReplacePath("auth.order", { auth: { order } });
+
+  // 2. per-agent auth stores (openclaw.json alone is not enough for agent inference).
+  writeAgentAnthropicAuth(route);
+
+  // 3. env: persist the mode + align the credential the provider resolves (it
+  //    prefers ANTHROPIC_OAUTH_TOKEN over ANTHROPIC_API_KEY in env order, see
+  //    docker/entrypoint.sh). For subscription, ensure the OAuth token is present;
+  //    for api_key, drop it so the provider falls to ANTHROPIC_API_KEY — it's
+  //    re-derivable from CLAUDE_CODE_OAUTH_TOKEN on the next subscription switch.
+  if (sub) {
+    const env = readSystemEnv();
+    const updates: Record<string, string> = { ANTHROPIC_AUTH_MODE: "subscription" };
+    const token =
+      process.env.ANTHROPIC_OAUTH_TOKEN ||
+      process.env.CLAUDE_CODE_OAUTH_TOKEN ||
+      env.ANTHROPIC_OAUTH_TOKEN ||
+      env.CLAUDE_CODE_OAUTH_TOKEN;
+    if (token) updates.ANTHROPIC_OAUTH_TOKEN = token;
+    writeSystemEnv(updates);
+  } else {
+    writeSystemEnv({ ANTHROPIC_AUTH_MODE: "api_key" });
+    removeSystemEnv(["ANTHROPIC_OAUTH_TOKEN"]);
+  }
+}
+
+/** Restart the OpenClaw gateway so it re-reads the on-disk auth profiles. */
+export function restartGateway(): { ok: boolean; error?: string } {
+  try {
+    runOpenclaw(["gateway", "restart"], { timeoutMs: 30_000 });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message.slice(0, 200) : String(e) };
+  }
 }

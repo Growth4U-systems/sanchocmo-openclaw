@@ -50,7 +50,10 @@ interface SystemEnvField {
   hasValue: boolean;
 }
 
-const GATEWAY_ENV_SERVICES = new Set(["anthropic", "openai", "openrouter", "gemini", "xai"]);
+// Saving any of these restarts the gateway to apply the credential. `anthropic-oauth`
+// is a modal-only service id (the subscription token paste) — not a catalog apiId, so
+// it never appears in the providers table; it only needs the post-save restart.
+const GATEWAY_ENV_SERVICES = new Set(["anthropic", "anthropic-oauth", "openai", "openrouter", "gemini", "xai"]);
 
 function useStatusBadge() {
   const t = useTranslations("settings.apiStatus");
@@ -107,7 +110,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   const [checking, setChecking] = useState(false);
   const [checkStatus, setCheckStatus] = useState("");
   const [connectSlider, setConnectSlider] = useState<{ apiId: string; provider: string } | null>(null);
-  const [systemKeySlider, setSystemKeySlider] = useState<{ apiId: string; provider: string } | null>(null);
+  const [systemKeySlider, setSystemKeySlider] = useState<{ apiId: string; provider: string; route?: "subscription" | "api" } | null>(null);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -418,7 +421,15 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       {/* Runtime / Motor — engine accounts + primary-model selector (admin/system only) */}
       {categoryFilter === "runtime" && !slug && (
         <RuntimeMotorSection
-          onOpenSystemKey={(apiId, provider) => setSystemKeySlider({ apiId, provider })}
+          onOpenSystemKey={(apiId, provider, route) =>
+            setSystemKeySlider({
+              // The subscription token lives under a modal-only service id; the API
+              // key (and single-route providers) use the real provider apiId.
+              apiId: route === "subscription" ? `${apiId}-oauth` : apiId,
+              provider,
+              route,
+            })
+          }
         />
       )}
 
@@ -638,7 +649,9 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <h3 className="font-heading text-base text-navy">
-                🔑 Key sistema: {systemKeySlider.provider}
+                {systemKeySlider.route === "subscription"
+                  ? `🎫 Suscripción (OAuth): ${systemKeySlider.provider}`
+                  : `🔑 Key sistema: ${systemKeySlider.provider}`}
               </h3>
               <button
                 onClick={() => {

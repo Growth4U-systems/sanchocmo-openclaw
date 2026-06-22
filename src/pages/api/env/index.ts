@@ -12,6 +12,18 @@ const SERVICE_ENV_MAP: Record<
   { key: string; label: string; placeholder: string; help?: string }[]
 > = {
   anthropic: [{ key: "ANTHROPIC_API_KEY", label: "API Key", placeholder: "sk-ant-..." }],
+  // Subscription/OAuth route for the motor. Modal-only service id (the runtime
+  // table opens it for the "Anthropic · Suscripción" row); shares the `anthropic`
+  // provider for health/console. The token is pasted, not logged in via OAuth in
+  // the app — generate it with `claude setup-token` / `openclaw models auth login`.
+  "anthropic-oauth": [
+    {
+      key: "ANTHROPIC_OAUTH_TOKEN",
+      label: "Token de suscripción (OAuth)",
+      placeholder: "sk-ant-oat-...",
+      help: "Token de tu suscripción Claude (Max). Genéralo con `claude setup-token` (Claude Code) o `openclaw models auth login` y pégalo aquí — no hay login OAuth dentro de la app. Para activarlo como ruta del motor, pulsa «Activar» en la fila de suscripción.",
+    },
+  ],
   openrouter: [{ key: "OPENROUTER_API_KEY", label: "API Key", placeholder: "sk-or-..." }],
   openai: [{ key: "OPENAI_API_KEY", label: "API Key", placeholder: "sk-..." }],
   gemini: [{ key: "GEMINI_API_KEY", label: "API Key", placeholder: "AIza..." }],
