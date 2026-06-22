@@ -359,11 +359,13 @@ function PerAgentSection() {
               <li
                 key={a.id}
                 className={cn(
-                  "flex items-center gap-3 rounded border-2 border-ink p-2",
+                  // flex-wrap so a narrow panel wraps the controls instead of
+                  // squeezing the (shrink-0) name cell to zero width.
+                  "flex flex-wrap items-center gap-3 rounded border-2 border-ink p-2",
                   !a.registered && "opacity-80"
                 )}
               >
-                <span className="flex items-center gap-1 w-40 truncate">
+                <span className="flex shrink-0 items-center gap-1 w-40 truncate">
                   {a.emoji && <span>{a.emoji}</span>}
                   <span className="font-mono font-semibold text-sm truncate">{a.id}</span>
                   {a.isDefault && (
