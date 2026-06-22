@@ -45,7 +45,7 @@ export function AgentsPanel() {
 
   // Per-agent model data (override/resolved/recommended) — joined to the
   // identity list by id === slug.
-  const { data: richData } = useAgentsList();
+  const { data: richData, isLoading: richLoading, error: richError } = useAgentsList();
   const { data: defaultModel } = useDefaultModel();
   const globalDefault = defaultModel?.model ?? null;
   const richById = useMemo(() => {
@@ -119,6 +119,13 @@ export function AgentsPanel() {
       {/* Global default model — agents inherit this unless overridden */}
       <DefaultModelSection />
 
+      {richError && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          No se pudo cargar el modelo por agente ({richError instanceof Error ? richError.message : "error"}). Las
+          tarjetas muestran el modelo estático hasta reintentar.
+        </div>
+      )}
+
       {/* Agent cards: identity + per-agent model + file editor */}
       <div className="space-y-3">
         {agents?.map((agent) => {
@@ -148,9 +155,11 @@ export function AgentsPanel() {
               <div className="mt-3 border-t border-dashed border-border pt-3">
                 {rich ? (
                   <AgentModelControl agent={rich} globalDefault={globalDefault} />
+                ) : richLoading ? (
+                  <span className="text-xs text-muted-foreground">cargando modelo…</span>
                 ) : (
                   <span className="text-xs text-muted-foreground">
-                    Modelo: <code>{agent.model}</code> — sin datos de override (agente no registrado en el motor).
+                    Modelo: <code>{agent.model}</code> — no registrado en el motor.
                   </span>
                 )}
               </div>
