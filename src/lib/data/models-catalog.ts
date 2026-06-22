@@ -54,18 +54,39 @@ export interface ModelCatalog {
   complete: boolean;
 }
 
+// Shortlist shown by default in the model picker (the rest is behind "todos").
+// Kept explicit because `openclaw models list --all` can't enumerate provider
+// catalogs when the engine runs on subscription/OAuth (no provider API keys), so
+// the full registry is unreliable here — these always appear and are selectable.
 export const CURATED_MODELS = [
+  // Codex / OpenAI (subscription)
+  "codex/gpt-5.5",
   "codex/gpt-5.4",
   "codex/gpt-5.4-mini",
   "openai-codex/gpt-5.3-codex",
-  "anthropic/claude-sonnet-4-6",
+  // Anthropic (subscription / API)
+  "anthropic/claude-opus-4-8",
   "anthropic/claude-opus-4-7",
   "anthropic/claude-opus-4-6",
-  "openrouter/openai/gpt-5.5",
+  "anthropic/claude-sonnet-4-6",
+  // Google (native, env key)
   "google/gemini-2.5-flash",
+  // OpenRouter (env key) — many providers behind one key
+  "openrouter/openai/gpt-5.5",
+  "openrouter/z-ai/glm-5.2",
+  "openrouter/moonshotai/kimi-k2.7-code",
+  "openrouter/qwen/qwen3.7-plus",
+  "openrouter/qwen/qwen3.7-max",
+  "openrouter/minimax/minimax-m3",
+  "openrouter/google/gemini-3.5-flash",
+  "openrouter/google/gemma-4-26b-a4b-it",
 ];
 
 const CURATED_MODEL_METADATA: Record<string, Pick<CatalogModel, "contextWindow" | "tags">> = {
+  "anthropic/claude-opus-4-8": {
+    contextWindow: 1_000_000,
+    tags: ["extended-context", "1m"],
+  },
   "anthropic/claude-opus-4-7": {
     contextWindow: 1_000_000,
     tags: ["extended-context", "1m"],
