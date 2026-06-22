@@ -150,7 +150,7 @@ const TESTERS = {
   async posthog(config, env, slug) {
     const apiKey = env[`${slug}_POSTHOG_API_KEY`];
     const projectId = config.projectId || config.PROJECT_ID;
-    const host = config.host || config.HOST || 'https://app.posthog.com';
+    const host = config.host || config.HOST || 'https://us.posthog.com';
     if (!apiKey) return { ok: false, error: `Env var ${slug}_POSTHOG_API_KEY not set` };
     if (!projectId) return { ok: false, error: 'projectId not configured' };
 
