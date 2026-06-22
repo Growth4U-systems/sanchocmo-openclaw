@@ -3,8 +3,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ComicCard } from "@/components/shared/comic-card";
-import { cn } from "@/lib/utils";
 import { SettingsSlideOver } from "./settings-slideover";
+import { DefaultModelSection, AgentModelControl } from "./models-panel";
+import { useAgentsList, useDefaultModel, type RichAgent } from "@/hooks/useModels";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -26,7 +27,8 @@ interface Agent {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Component                                                          */
+/*  Component — identity + per-agent model (the "motor concreto") in   */
+/*  one place. Crons live in Recurrentes; auth routes in Conexiones.   */
 /* ------------------------------------------------------------------ */
 
 export function AgentsPanel() {
@@ -40,6 +42,17 @@ export function AgentsPanel() {
       return res.json();
     },
   });
+
+  // Per-agent model data (override/resolved/recommended) — joined to the
+  // identity list by id === slug.
+  const { data: richData } = useAgentsList();
+  const { data: defaultModel } = useDefaultModel();
+  const globalDefault = defaultModel?.model ?? null;
+  const richById = useMemo(() => {
+    const m = new Map<string, RichAgent>();
+    for (const a of richData?.agents || []) m.set(a.id, a);
+    return m;
+  }, [richData]);
 
   const saveMutation = useMutation({
     mutationFn: async (body: { slug: string; fileName: string; content: string }) => {
@@ -70,14 +83,10 @@ export function AgentsPanel() {
     await saveMutation.mutateAsync({ slug: selected.slug, fileName, content });
   }, [selected, saveMutation]);
 
-  // Header content for SlideOver: agent metadata
   const slideHeaderContent = selected ? (
     <div className="flex flex-wrap gap-2">
       <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 font-semibold border border-blue-500/20">
         {selected.channel}
-      </span>
-      <span className="text-[10px] px-2 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
-        {selected.model}
       </span>
       <span className="text-[10px] px-2 py-0.5 rounded bg-rust/10 text-rust font-semibold border border-rust/20">
         {selected.role}
@@ -103,44 +112,54 @@ export function AgentsPanel() {
       <div>
         <h2 className="font-heading text-xl text-navy">🤖 Agentes</h2>
         <p className="text-sm text-muted-foreground">
-          {agents?.length ?? 0} agentes — {agents?.map((a) => a.name).join(", ")}
+          {agents?.length ?? 0} agentes — su <strong>modelo</strong> (motor) y sus ficheros, en un sitio.
         </p>
       </div>
 
-      {/* Agent rows */}
-      <div className="space-y-2">
-        {agents?.map((agent) => (
-          <ComicCard
-            key={agent.slug}
-            hover
-            onClick={() => setSelectedSlug(agent.slug)}
-            className={cn(
-              "cursor-pointer",
-              selectedSlug === agent.slug && "ring-2 ring-rust"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              {/* Status dot */}
-              <span className="h-2.5 w-2.5 rounded-full bg-green-500 shrink-0" />
+      {/* Global default model — agents inherit this unless overridden */}
+      <DefaultModelSection />
 
-              {/* Name */}
-              <span className="font-bold min-w-[130px] text-[14px]">
-                {agent.emoji} {agent.name}
-              </span>
+      {/* Agent cards: identity + per-agent model + file editor */}
+      <div className="space-y-3">
+        {agents?.map((agent) => {
+          const rich = richById.get(agent.slug);
+          return (
+            <ComicCard key={agent.slug} className="p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="h-2.5 w-2.5 rounded-full bg-green-500 shrink-0" />
+                <span className="font-bold text-[14px]">
+                  {agent.emoji} {agent.name}
+                </span>
+                <span className="text-[12px] text-muted-foreground">{agent.role}</span>
+                <span className="text-[12px] text-blue-600">{agent.channel}</span>
+                <span className="ml-auto flex items-center gap-3">
+                  <span className="text-[11px] text-muted-foreground">{agent.files.length} archivos</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSlug(agent.slug)}
+                    className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                  >
+                    📝 editar ficheros
+                  </button>
+                </span>
+              </div>
 
-              {/* Channel */}
-              <span className="text-[13px] text-blue-600">{agent.channel}</span>
-
-              {/* Model + role + file count */}
-              <span className="ml-auto text-[12px] text-muted-foreground text-right">
-                {agent.model} · {agent.role} · {agent.files.length} archivos
-              </span>
-            </div>
-          </ComicCard>
-        ))}
+              {/* Per-agent model (motor concreto) */}
+              <div className="mt-3 border-t border-dashed border-border pt-3">
+                {rich ? (
+                  <AgentModelControl agent={rich} globalDefault={globalDefault} />
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Modelo: <code>{agent.model}</code> — sin datos de override (agente no registrado en el motor).
+                  </span>
+                )}
+              </div>
+            </ComicCard>
+          );
+        })}
       </div>
 
-      {/* SlideOver detail panel */}
+      {/* SlideOver detail panel — agent files */}
       <SettingsSlideOver
         open={!!selected}
         onClose={() => setSelectedSlug(null)}

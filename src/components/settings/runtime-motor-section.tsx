@@ -115,10 +115,10 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         (su «motor concreto») se elige en{" "}
         <button
           type="button"
-          onClick={() => router.replace({ query: { ...router.query, tab: "models" } }, undefined, { shallow: true })}
+          onClick={() => router.replace({ query: { ...router.query, tab: "agents" } }, undefined, { shallow: true })}
           className="font-semibold text-rust hover:underline"
         >
-          Modelos → Por agente
+          Agentes
         </button>
         .
       </div>
