@@ -268,15 +268,26 @@
     "title": "PostHog Analytics",
     "difficulty": "baja",
     "time": "3 min",
+    "warning": "El <strong>Host URL</strong> debe coincidir con la región de tu cuenta PostHog (<strong>UE</strong> o <strong>EE.UU.</strong>). Si no coincide, la Personal API Key dará <code>401 — invalid key</code> aunque sea correcta.",
     "steps": [
       {
-        "title": "Crea una Personal API Key",
-        "instructions": "En <a href='https://app.posthog.com' target='_blank'>PostHog</a> → avatar (abajo izquierda) → ⚙️ → <strong>Personal API Keys → \"+ Create\"</strong>. Ponle nombre, selecciona scopes. <strong>Cópiala inmediatamente</strong> (empieza por <code>phx_</code>).",
+        "title": "Identifica tu región (Host URL)",
+        "instructions": "Mira el dominio en la barra de direcciones mientras estás dentro de PostHog:<ul><li>Si pone <code>eu.posthog.com</code> → tu Host URL es <code>https://eu.posthog.com</code></li><li>Si pone <code>us.posthog.com</code> → tu Host URL es <code>https://us.posthog.com</code></li></ul>Usa esa URL <strong>exacta</strong> (sin barra final ni rutas). La clave y el Project ID deben ser de <strong>esa misma región</strong>.",
         "alwaysShow": true
       },
       {
-        "title": "Pega las credenciales",
-        "instructions": "Introduce tu <strong>Personal API Key</strong> y tu <strong>Project ID</strong> (lo ves en Project Settings)."
+        "title": "Crea una Personal API Key",
+        "instructions": "En <a href='https://posthog.com' target='_blank'>PostHog</a> → tu cuenta (abajo a la izquierda) → <strong>Settings → Personal API keys</strong> → <strong>\"+ Create personal API key\"</strong>. Ponle nombre y, en <strong>Scopes</strong>, marca acceso de <strong>lectura (Read)</strong> a <code>Project</code>, <code>Query</code> y <code>Session recording</code> — o, para simplificar, <em>All access</em>. En <strong>Organization &amp; project access</strong> incluye el proyecto que vas a conectar. <strong>Cópiala al instante</strong> (empieza por <code>phx_</code>, solo se muestra una vez).",
+        "alwaysShow": true
+      },
+      {
+        "title": "Copia el Project ID",
+        "instructions": "PostHog → <strong>Settings → Project</strong> → campo <strong>Project ID</strong> (un número, p. ej. <code>137870</code>). También aparece en la URL: <code>.../project/137870/...</code>.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Pega las credenciales y testea",
+        "instructions": "Rellena los tres campos — <strong>Personal API Key</strong> (<code>phx_…</code>), <strong>Project ID</strong> (número) y <strong>Host URL</strong> (la URL de tu región) — y pulsa <strong>Conectar y testear</strong>."
       }
     ]
   },
