@@ -13,12 +13,12 @@ interface ModelPickerProps {
 }
 
 const MVP_MODELS = [
+  "anthropic/claude-opus-4-8",
   "anthropic/claude-opus-4-7",
-  "anthropic/claude-opus-4-6",
   "anthropic/claude-sonnet-4-6",
+  "codex/gpt-5.5",
   "codex/gpt-5.4",
-  "codex/gpt-5.4-mini",
-  "openrouter/openai/gpt-5.5",
+  "openrouter/z-ai/glm-5.2",
   "google/gemini-2.5-flash",
 ];
 
