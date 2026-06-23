@@ -1,0 +1,7 @@
+{
+  "//": "Test-only tsconfig for tsx --test on .tsx component tests (metrics rigor primitives, SAN-319). Overrides jsx:preserve → react-jsx (automatic runtime) so renderToStaticMarkup works under tsx without an explicit `import React` in idiomatic component files. Not used by Next build or `tsc --noEmit`.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}

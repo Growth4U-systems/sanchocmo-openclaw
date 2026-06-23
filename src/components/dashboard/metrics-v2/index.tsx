@@ -252,3 +252,7 @@ export function DataTable({
     </Panel>
   );
 }
+
+// Rigor primitives (data provenance) live in a sibling file — re-export so consumers
+// import everything from `@/components/dashboard/metrics-v2`.
+export * from "./rigor";
