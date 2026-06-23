@@ -205,6 +205,15 @@ jobs:
               done
             fi
 
+            # Prod can accumulate tracked local edits from historical runtime
+            # generators/manual hotfixes. A tag checkout must not abort on those.
+            # Stash tracked changes only: untracked runtime data remains in place,
+            # and brand folders are backed up/restored explicitly above/below.
+            if ! git diff --quiet || ! git diff --cached --quiet; then
+              echo "▶ Stashing tracked local changes before tag checkout…"
+              git stash push -m "deploy-prod-$(date -u +%Y%m%dT%H%M%SZ)" || true
+            fi
+
             # Apply GitHub `production` Environment to ~/.openclaw/.env.
             # When unpopulated (current state), this is a no-op — empty
             # secrets/vars are filtered out by the payload builder.
