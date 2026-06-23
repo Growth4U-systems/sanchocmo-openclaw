@@ -13,9 +13,9 @@ import { instantiateTaskSet } from "@/lib/data/task-blueprints";
 
 /**
  * POST /api/content-creation/create-project
- * Creates a Content Engine project mirroring the canonical 5-task flow that
- * ships in growth4u/P14-Content-Engine: Strategy → Pillars → POV Bank →
- * Setup configs → Visual Templates. T03 (Setup configs) runs the
+ * Creates a Content Engine project mirroring the canonical 6-task flow that
+ * ships in growth4u/P14-Content-Engine: Strategy → Pillars → POV Bank → Keyword
+ * Research → Setup configs → Visual Templates. T03 (Setup configs) runs the
  * `content-engine-setup` skill whose step 6 seeds the runtime cron jobs.
  *
  * The ConfigurationPipeline UI consumes this exact structure — it looks up

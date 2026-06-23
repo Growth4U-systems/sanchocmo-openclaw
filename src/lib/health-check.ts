@@ -131,10 +131,25 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
     switch (serviceId) {
       // ── LLM Providers (Bearer / API key header → /models) ──
       case "anthropic": {
+        // Subscription-first: when ANTHROPIC_AUTH_MODE=subscription (or an OAuth
+        // token is present), the gateway bills the Claude Max subscription via
+        // ANTHROPIC_OAUTH_TOKEN, and ANTHROPIC_API_KEY is intentionally blank for
+        // Sancho's process (see docker/entrypoint.sh). Checking ANTHROPIC_API_KEY
+        // here would misattribute a healthy subscription as "not configured" and
+        // send people to fix the wrong credential (SAN-241).
+        const mode = getKey(envVars, "ANTHROPIC_AUTH_MODE");
+        const oauth = getKey(envVars, "ANTHROPIC_OAUTH_TOKEN") || getKey(envVars, "CLAUDE_CODE_OAUTH_TOKEN");
+        if (mode === "subscription" || oauth.includes("sk-ant-oat")) {
+          if (!oauth) return notConfigured("ANTHROPIC_OAUTH_TOKEN");
+          // OAuth (Claude Max) tokens are not validatable via the x-api-key
+          // /v1/models path; report presence + mode here. Runtime liveness is
+          // covered by the agent capability probe (SAN-241).
+          return ok({ mode: "subscription", auth: "oauth" });
+        }
         const key = getKey(envVars, "ANTHROPIC_API_KEY");
         if (!key) return notConfigured("ANTHROPIC_API_KEY");
         const r = await httpCheck("https://api.anthropic.com/v1/models", { "x-api-key": key, "anthropic-version": "2023-06-01" });
-        return r.ok ? ok({ httpCode: r.httpCode }) : error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
+        return r.ok ? ok({ httpCode: r.httpCode, mode: "api_key" }) : error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
       }
       case "openrouter": {
         const key = getKey(envVars, "OPENROUTER_API_KEY");

@@ -4,15 +4,12 @@
  * per-persona sub-loops and by the UI to suggest an author for an idea.
  */
 import type { ContentTask, PersonaProfile, PersonaLoopState } from "@/types";
+import { slugify } from "@/lib/slugify";
 
 /** Stable author key for a profile: explicit id, else a slug of its name. */
 export function personaId(p: { id?: string; name: string }): string {
   if (p.id && p.id.trim()) return p.id.trim();
-  return p.name
-    .toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return slugify(p.name);
 }
 
 /**

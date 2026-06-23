@@ -7,6 +7,7 @@ import {
   readFrontmatterFile,
   writeFrontmatterFile,
 } from "@/lib/data/markdown-frontmatter";
+import { publish as publishEvent } from "@/lib/data/events";
 
 /**
  * Drafts-as-documents storage.
@@ -86,10 +87,14 @@ export interface PublishingMeta {
   published_at?: string | null;
   external_job_id?: string;           // provider-side scheduled post id
   external_url?: string | null;       // canonical URL once published
+  /** SAN-162 — the provider account this post was published from (Metricool:
+   *  the voice's blogId). Persisted so status / cancel / metrics use the SAME
+   *  account, not the brand default. Absent = the provider's default account. */
+  account_id?: string;
   error?: string | null;
   /** Latest engagement snapshot. Refreshed daily by the metrics-collector
-   *  cron via `/api/publishing/reconcile`. Older snapshots are not retained;
-   *  if you need history pull from `brand/{slug}/metrics/*.json`. */
+   *  cron via `/api/publishing/reconcile`. Older snapshots are not retained
+   *  on the draft; history lives in `metric_snapshots`. */
   metrics?: PostMetricsSnapshot;
 }
 
@@ -393,6 +398,18 @@ export function updateDraft(
   };
   const body = patch.body !== undefined ? patch.body : existing.body;
   writeFrontmatterFile(existing.absPath, meta, body);
+
+  // SAN-244 — single chokepoint for draft writes. Every mutator (clarify
+  // auto-status flip, the drafts PATCH endpoint, media attach, iterate-draft,
+  // publishing meta) routes through updateDraft, so emitting here lets SSE
+  // clients invalidate their `["draft", ...]` / `["drafts", ...]` caches the
+  // moment a write lands — no polling window. Mirrors the
+  // `content-task-updated` emit in /api/content-engine/content-tasks.ts.
+  // Only fires on real writes; read paths (loadDraft/listDraft) never reach
+  // here, and publish() is a no-op when no client is subscribed, so there is
+  // no loop risk.
+  publishEvent({ type: "draft-updated", slug, ideaId, channel });
+
   return { meta, body, relPath: existing.relPath, absPath: existing.absPath };
 }
 

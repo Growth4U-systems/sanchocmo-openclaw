@@ -17,7 +17,7 @@
 const CLASSIFIERS = [
   {
     category: "insufficient_quota",
-    regex: /insufficient_quota|exceeded your current quota|plan and billing|you have run out of credits/i,
+    regex: /\binsufficient_quota\b|you (?:have )?exceeded your current quota|you have run out of credits/i,
     header: "API key OpenAI sin cuota",
     hint: "El proyecto OpenAI ligado al `OPENAI_API_KEY` se quedó sin saldo. Recargá billing o reemplazá la key.",
   },
@@ -36,7 +36,7 @@ const CLASSIFIERS = [
   },
   {
     category: "rate_limit",
-    regex: /rate.?limit|usage limit|quota.*exceed(ed)?|\b429\b/i,
+    regex: /\b(?:rate_limit|usage_limit)\b|\b429\b|you(?:'ve| have) reached your .{0,80}usage limit|codex subscription usage limit|rate limit exceeded/i,
     header: "Rate limit alcanzado",
     hint: "Reintentá cuando se libere la cuota.",
   },
@@ -45,6 +45,12 @@ const CLASSIFIERS = [
     regex: /context.{0,15}length|maximum.{0,15}token|too many token/i,
     header: "Contexto demasiado largo",
     hint: "Reducí el prompt o reiniciá el thread.",
+  },
+  {
+    category: "invalid_thinking_signature",
+    regex: /invalid signature in thinking block|thinkingSignature|messages\.\d+\.content\.\d+/i,
+    header: "Historial interno corrupto",
+    hint: "Sancho detectó bloques internos de razonamiento persistidos. El runtime los limpia antes de reintentar para conservar la memoria visible sin romper la request.",
   },
   {
     category: "model_unavailable",

@@ -11,6 +11,34 @@
 const ExcelJS = require('exceljs');
 const path = require('path');
 
+// --- KPI tiering (SAN-296) ---
+//
+// Every generated KPI carries a `tier` so the dashboard Overview can group them
+// the way a CMO reads a scorecard:
+//   - primary  → the North Star / activation KPI (the one number that matters)
+//   - leading  → upstream demand & funnel-mid signals that PREDICT the North Star
+//                (traffic, SEO reach, ad clicks, funnel step-conversion, social/outreach)
+//   - lagging  → cost, quality & efficiency outcomes that CONFIRM it after the fact
+//                (CAC/CPL, spend, value metric like GMV/AOV/Deal Size, ROAS)
+//
+// `TIER_BY_CATEGORY` is the single source of truth (consumed by generate-plan.js
+// via the same eval bridge that reads ARCHETYPES). Categories not listed default
+// to "leading" (an upstream signal until proven otherwise).
+const TIER_BY_CATEGORY = {
+  funnel: 'leading',
+  traffic: 'leading',
+  seo: 'leading',
+  paid: 'leading',
+  social: 'leading',
+  outreach: 'leading',
+  crm: 'leading',
+  efficiency: 'lagging',
+  cost: 'lagging',
+  value: 'lagging',
+  quality: 'lagging',
+  primary: 'primary',
+};
+
 // --- Archetype Configurations ---
 
 const ARCHETYPES = {
@@ -29,7 +57,7 @@ const ARCHETYPES = {
       { group: 'Referral', name: 'Referral Program' },
       { group: 'Affiliates', name: '[Partner name]' },
     ],
-    valueMetric: { name: 'MRR per User', formula: 'subscription price' },
+    valueMetric: { name: 'MRR per User', formula: 'subscription price', tier: 'lagging' },
     benchmarks: { activationRate: '15-30%', cacPayback: '6-12 months', ltvCac: '>3x' },
     dataSources: [
       { metric: 'Web Traffic', source: 'PostHog / GA4', method: 'api-auto', frequency: 'Daily' },
@@ -59,7 +87,7 @@ const ARCHETYPES = {
       { group: 'Referral', name: 'Referral Program' },
       { group: 'Offline', name: 'Events' },
     ],
-    valueMetric: { name: 'Amount Deposited', formula: 'total EUR deposited' },
+    valueMetric: { name: 'Amount Deposited', formula: 'total EUR deposited', tier: 'lagging' },
     benchmarks: { activationRate: '20-25%', cacPayback: '3-6 months', ltvCac: '>4x' },
     dataSources: [
       { metric: 'Downloads / Installs', source: 'AppsFlyer / App Store', method: 'api-auto', frequency: 'Daily' },
@@ -87,7 +115,7 @@ const ARCHETYPES = {
       { group: 'Affiliates', name: '[Partner name]' },
       { group: 'Offline', name: 'Events' },
     ],
-    valueMetric: { name: 'GMV', formula: 'transaction value' },
+    valueMetric: { name: 'GMV', formula: 'transaction value', tier: 'lagging' },
     benchmarks: { activationRate: '10-20%', cacPayback: 'Variable', ltvCac: '>3x' },
     dataSources: [
       { metric: 'Web Traffic', source: 'GA4 / PostHog', method: 'api-auto', frequency: 'Daily' },
@@ -114,7 +142,7 @@ const ARCHETYPES = {
       { group: 'Affiliates', name: '[Affiliate name]' },
       { group: 'Referral', name: 'Referral Program' },
     ],
-    valueMetric: { name: 'AOV', formula: 'average order value' },
+    valueMetric: { name: 'AOV', formula: 'average order value', tier: 'lagging' },
     benchmarks: { activationRate: '2-5%', cacPayback: 'Immediate-3m', ltvCac: '>3x' },
     dataSources: [
       { metric: 'Web Traffic', source: 'GA4', method: 'api-auto', frequency: 'Daily' },
@@ -142,7 +170,7 @@ const ARCHETYPES = {
       { group: 'Referral', name: 'Referral Partners' },
       { group: 'Offline', name: 'Events / Networking' },
     ],
-    valueMetric: { name: 'Deal Size', formula: 'average deal value' },
+    valueMetric: { name: 'Deal Size', formula: 'average deal value', tier: 'lagging' },
     benchmarks: { activationRate: '10-25%', cacPayback: '1-6 months', ltvCac: '>3x' },
     dataSources: [
       { metric: 'Web Traffic', source: 'GA4', method: 'api-auto', frequency: 'Daily' },

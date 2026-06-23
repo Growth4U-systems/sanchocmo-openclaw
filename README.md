@@ -82,12 +82,22 @@ brings the stack up with Docker.
 
 ### Install
 
-```bash
-# 1. Clone
-git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git
-cd sanchocmo-openclaw
+**Option 1 — one command (recommended, no clone needed):**
 
-# 2. Install (runs the wizard if .env is missing, then `docker compose up`)
+```bash
+curl -fsSL https://raw.githubusercontent.com/Growth4U-systems/sanchocmo-openclaw/main/get.sh | bash
+```
+
+Downloads the latest release runtime to `~/sanchocmo` (override with `SANCHO_DIR`),
+runs the wizard, and brings the stack up. If the GHCR image is still private, the
+installer walks you through `docker login` and retries.
+
+**Option 2 — development (clone the repo):**
+
+```bash
+git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git sanchocmo && cd sanchocmo
+
+# Install (runs the wizard if .env is missing, then `docker compose up`)
 ./install.sh
 
 # Optional overlays:

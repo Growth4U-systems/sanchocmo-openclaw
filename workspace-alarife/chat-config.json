@@ -9,7 +9,7 @@
     "_byType": {
       "web-build": {
         "skill": "alarife-integration",
-        "skills": ["alarife-integration", "payload", "site-architecture", "frontend-design", "page-cro", "form-cro"]
+        "skills": ["alarife-integration", "payload", "site-architecture", "frontend-design", "page-cro", "form-cro", "lighthouse-landing-qa"]
       }
     },
     "_byChannel": {

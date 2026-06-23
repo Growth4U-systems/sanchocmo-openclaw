@@ -142,7 +142,7 @@
           "type": "execution",
           "channel": "strategy",
           "phase": 1,
-          "description": "Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + pov-bank.json + Foundation. Genera ademas un setup.md narrativo que explica el por que de cada decision y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA. Las voces founder-led (persona + red + handle + cuenta de publicacion) se delegan en la sub-skill founder-led-setup, que escribe los profiles[] por voz bajo cada canal en cadence-config.yml. ORDEN DE EJECUCION: SE EJECUTA EL ULTIMO. Requiere {projectId}-T01 (Strategy) + {projectId}-T02 (Pillars) + {projectId}-T04 (POV Bank) en status:completed.",
+          "description": "Rellena los configs existentes (news-prompts, paa-queries, keywords-seed, sources.json profiles, cadence-config.yml) con datos derivados de content-pillars.md + pov-bank.json + el keyword-plan validado (keyword-clusters.json, T07) + Foundation. keywords-seed deriva de los clusters validados de T07, no de seeds genericos. Genera ademas un setup.md narrativo que explica el por que de cada decision y enlaza con los crones que consumen cada config. La infraestructura (carpetas + YAMLs + crons) ya existe — esta tarea solo MODIFICA los campos editables y DOCUMENTA. Las voces founder-led (persona + red + handle + cuenta de publicacion) se delegan en la sub-skill founder-led-setup, que escribe los profiles[] por voz bajo cada canal en cadence-config.yml. ORDEN DE EJECUCION: SE EJECUTA EL ULTIMO. Requiere {projectId}-T01 (Strategy) + {projectId}-T02 (Pillars) + {projectId}-T04 (POV Bank) + {projectId}-T07 (Keyword Research) en status:completed.",
           "deliverable": "Configs por pillar + cadence + sources.json profiles + setup.md narrativo",
           "deliverableFiles": ["content/configs/setup.md"],
           "outputFiles": [
@@ -153,7 +153,7 @@
             "keywords-seed/*.yml",
             "../../market-and-us/competitors/sources.json"
           ],
-          "dependsOn": ["pov-bank"],
+          "dependsOn": ["pov-bank", "keyword-research"],
           "extra": {
             "skills": ["content-engine-setup", "founder-led-setup"]
           }
@@ -232,6 +232,21 @@
           "deliverableFiles": ["site-audit/seo-audit/seo-audit.current.md"],
           "outputFiles": ["seo-audit.current.md"],
           "dependsOn": []
+        },
+        {
+          "id": "keyword-research",
+          "taskKey": "T07",
+          "name": "Keyword Research & SERP Clustering",
+          "skill": "keyword-research",
+          "agent": "dulcinea",
+          "type": "foundation",
+          "channel": "strategy",
+          "phase": 1,
+          "description": "Ejecutar keyword-research: valida los spokes de content-pillars.md contra datos de búsqueda reales (6 Circles + SERP-overlap clustering + 4-test pillar validation) y escribe keyword-plan.md (lo lee el writer seo-content) + keyword-clusters.json. ORDEN: corre tras T02 (Pillars); T03 (Setup) lo consume para derivar keywords-seed del plan validado.",
+          "deliverable": "Keyword plan validado (clusters por SERP-overlap + 4-test pillars) que alimenta keywords-seed y el writer",
+          "deliverableFiles": ["go-to-market/keyword-plan.md"],
+          "outputFiles": ["keyword-plan.md", "keyword-clusters.json"],
+          "dependsOn": ["content-pillars"]
         }
       ]
     },
@@ -930,6 +945,19 @@
       "nsKey": "new-task",
       "match": "prefix",
       "reopenLinkedTo": "new-task"
+    },
+    "metrics-edit": {
+      "threadId": "{slug}:metrics-edit",
+      "threadName": "🔮 Métricas — Merlín",
+      "skill": "metrics-setup",
+      "skills": ["metrics-setup"],
+      "agent": "merlin",
+      "linkedTo": "metrics-setup",
+      "docPath": null,
+      "threadState": "create",
+      "nsKey": "metrics-edit",
+      "match": "prefix",
+      "reopenLinkedTo": "metrics-setup"
     },
     "discovery-search": {
       "threadId": "{slug}:discovery-{campaignIdLower}",

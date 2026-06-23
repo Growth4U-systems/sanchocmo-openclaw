@@ -11,8 +11,10 @@ context_required:
 - brand/{slug}/go-to-market/positioning/*/*.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/market-and-us/competitors/competitors.current.md
+- brand/{slug}/content/content-pillars.md
 context_writes:
 - brand/{slug}/go-to-market/keyword-plan.md
+- brand/{slug}/go-to-market/keyword-clusters.json
 - brand/{slug}/operational/learnings.md
 - brand/{slug}/operational/assets.md
 ---
@@ -466,6 +468,13 @@ After web search, present findings before clustering:
 
 ## Phase 4: Cluster
 
+**Start from `content-pillars.md`.** If `brand/{slug}/content/content-pillars.md`
+exists, its pillars are TOPICS (pain/JTBD) that already carry hub-and-spoke spokes +
+keyword hints. Your job here is to **validate and enrich those spokes with real
+search data**, not to invent a new taxonomy: map each expanded keyword onto an
+existing pillar/spoke, flag spokes with no search demand, and collect keywords that
+fit no pillar as candidate new spokes for the human to confirm.
+
 Group expanded keywords (including web search discoveries) into content pillars
 using the hub-and-spoke model:
 
@@ -498,6 +507,29 @@ Ask: "Could this be a complete guide that thoroughly covers the topic?"
 4. **Identify supporting keywords** -- More specific variations
 5. **Attach PAA questions** -- Map People Also Ask questions to the cluster they belong to
 6. **Note competitor coverage** -- Mark which competitors cover this cluster
+
+### SERP-Overlap Clustering (validate against Google, not text similarity)
+
+Steps 1-2 above (semantic + intent) are a fast PRE-GROUP only. Keywords that look
+similar do not always rank together — cluster by **how Google actually ranks them**:
+
+1. Pre-group by intent guess to cut pairwise comparisons.
+2. For each candidate pair, fetch the SERP for both (DataForSEO MCP
+   `serp_organic_live_advanced`, or WebSearch fallback with a noted lower confidence).
+3. Count URLs **shared in the top 10 organic** (ignore ads, featured snippet, PAA).
+4. Apply thresholds:
+
+| Shared results (top 10) | Relationship | Action |
+|-------------------------|--------------|--------|
+| 7-10 | Same post | Merge into one target page |
+| 4-6  | Same cluster | Group under the same hub (pillar -> spokes) |
+| 2-3  | Interlink | Adjacent clusters, cross-link only |
+| 0-1  | Separate | Different clusters, or exclude long-tail |
+
+**Cost control:** full pairwise on 40 keywords = 780 comparisons. Pre-group by intent
+(4 groups x 10 = ~180), only cross-check boundary pairs, and skip pairs that are
+obvious long-tail of the same head term. If DataForSEO is unavailable, fall back to
+WebSearch and record the lower confidence in the plan.
 
 ### Example Cluster (with v2 search data)
 
@@ -876,6 +908,44 @@ Content pieces planned: {N}
 - SERPs analyzed: {N}
 - Competitor pages reviewed: {N}
 - Date of search: {YYYY-MM-DD}
+```
+
+---
+
+## Keyword Clusters JSON (machine-readable, for the Content Engine)
+
+Also write `./brand/{slug}/go-to-market/keyword-clusters.json` — the machine-readable
+hub-and-spoke that `content-engine-setup` (keywords-seed) and the Keyword Antenna
+consume. Map clusters onto the existing `content-pillars.md` pillar keys (`P1`, `P2`,
+…); carry the SERP-overlap relations and the 4-test verdict.
+
+```json
+{
+  "generated_at": "{YYYY-MM-DD}",
+  "source": "keyword-research",
+  "pillars": [
+    {
+      "id": "P1",
+      "name": "{pillar name from content-pillars.md}",
+      "validation": { "search_volume": "PASS", "market_centric": "PASS", "competitive": "PASS", "proprietary": "YES", "verdict": "VALID" },
+      "clusters": [
+        {
+          "id": "P1-C1",
+          "hub_keyword": "{broadest term}",
+          "intent": "informational|commercial|transactional",
+          "content_type": "guide|listicle|comparison|definition",
+          "priority": "H|M|L",
+          "keywords": [
+            { "term": "{kw}", "role": "hub|spoke", "volume_proxy": "{autocomplete-depth|N/mo}", "serp_overlap_with_hub": 7 }
+          ],
+          "links": [ { "cluster": "P1-C2", "shared": 3, "relation": "interlink" } ]
+        }
+      ]
+    }
+  ],
+  "unmapped_keywords": ["{kw with no pillar — candidate new spoke}"],
+  "spokes_without_demand": ["{spoke from content-pillars.md with no search demand}"]
+}
 ```
 
 ---

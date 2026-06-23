@@ -26,6 +26,24 @@ if [ -z "${APIFY_TOKEN:-}" ] && [ -n "${APIFY_API_KEY:-}" ]; then
   echo "[entrypoint] APIFY_TOKEN derived from APIFY_API_KEY (apify skill enabled)"
 fi
 
+# Agents' bash tool builds content-engine / pov-bank / phase-reporting URLs as
+# `$MC_BASE/api/...`. Without MC_BASE in the sandbox env, `curl "$MC_BASE/api/..."`
+# hits a malformed URL (HTTP 000) and phases never report — research degrades and
+# the UI lies about progress (SAN-241). The content-engine API is served at the
+# site origin (`$BASE_URL/api/...`), NOT under `/mc`, so derive MC_BASE from
+# BASE_URL (NEXTAUTH_URL as a safety net), trailing slash stripped. Exported
+# before `openclaw gateway run` so the gateway and its agents inherit it.
+if [ -z "${MC_BASE:-}" ]; then
+  _mc_base="${BASE_URL:-${NEXTAUTH_URL:-}}"
+  _mc_base="${_mc_base%/}"
+  if [ -n "$_mc_base" ]; then
+    export MC_BASE="$_mc_base"
+    echo "[entrypoint] MC_BASE exported as $MC_BASE (agents → content-engine/pov-bank/phase-reporting)"
+  else
+    echo "[entrypoint] WARNING: BASE_URL/NEXTAUTH_URL unset — MC_BASE not exported; phase-reporting will fail"
+  fi
+fi
+
 # ===========================================================
 # 0. ENSURE CONFIG SYMLINKS (runs every startup)
 # ===========================================================
@@ -59,6 +77,21 @@ for ws in /root/.openclaw/workspace-*; do
     ln -sfn ../skills "$link"
     echo "[entrypoint] Linked $(basename "$ws")/skills -> ../skills"
   fi
+  # `_system` (protocols, instance.json) and `brand` (brand context) are owned by
+  # Sancho and shared into each specialist workspace by symlink. The seed shipped
+  # these as macOS-absolute links (`/Users/ragi/.openclaw/...`) that dangle in the
+  # container, so specialists (dulcinea, sanson, merlin, mambrino) lost brand +
+  # protocol context and degraded — fabricating content with no foundation
+  # (SAN-241, root of SAN-238). Repair to the relative path that resolves here.
+  # Only fix an EXISTING symlink (broken or not) — never invent a mount in a
+  # workspace that never had one, nor clobber a real directory.
+  for shared in _system brand; do
+    sl="$ws/$shared"
+    if [ -L "$sl" ]; then
+      ln -sfn "../workspace-sancho/$shared" "$sl"
+      echo "[entrypoint] Relinked $(basename "$ws")/$shared -> ../workspace-sancho/$shared"
+    fi
+  done
 done
 
 # ===========================================================
@@ -279,6 +312,14 @@ if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
     export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
     echo "[entrypoint] ANTHROPIC_OAUTH_TOKEN derived from CLAUDE_CODE_OAUTH_TOKEN (gateway → Claude subscription)"
   fi
+  # Blank ANTHROPIC_API_KEY for Sancho's process so the provider can only resolve
+  # the OAuth token — never a silent fall-through to API-key billing (the
+  # historical footgun). This guard used to live as a hardcoded empty value in
+  # docker-compose.yml, but that broke `api_key` mode (the key never reached the
+  # container); it is mode-aware here instead. Process-scoped — open-design keeps
+  # its own key from its env_file. The usage-monitor auth-source alert backs this
+  # up: if the gateway ever resolves to an sk-ant-api key, it pages 🔴🔴.
+  export ANTHROPIC_API_KEY=
 else
   echo "[entrypoint] ANTHROPIC_AUTH_MODE=api_key — using ANTHROPIC_API_KEY (anthropic:default token profile)"
 fi
@@ -378,6 +419,10 @@ if channel.get('enabled') is not True:
     changed=True
 if not channel.get('mcServerUrl'):
     channel['mcServerUrl']='http://localhost:18790'
+    changed=True
+context_pack_url=(os.environ.get('MC_CONTEXT_PACK_URL') or 'http://localhost:3000').rstrip('/')
+if not channel.get('contextPackUrl'):
+    channel['contextPackUrl']=context_pack_url
     changed=True
 secret=os.environ.get('MC_CHAT_SECRET') or ''
 if secret and channel.get('sharedSecret') != secret:

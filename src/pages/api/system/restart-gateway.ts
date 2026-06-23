@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { execSync } from "child_process";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
+import { restartGateway } from "@/lib/data/openclaw-config";
 
 /**
  * GET /api/system/restart-gateway
@@ -18,16 +18,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   res.setHeader("Access-Control-Allow-Origin", "*");
-  try {
-    execSync("openclaw gateway restart 2>&1", {
-      timeout: 30000,
-      encoding: "utf-8",
-    });
-    res.status(200).json({ ok: true });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message.slice(0, 200) : "Unknown error";
-    res.status(200).json({ ok: false, error: msg });
-  }
+  const result = restartGateway();
+  res.status(200).json(result);
 }
 
 export default compose(withErrorHandler, withAuth)(handler);

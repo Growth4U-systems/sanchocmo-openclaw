@@ -59,7 +59,9 @@ CRIT = float(os.environ.get("USAGE_CRIT_THRESHOLD", "0.92"))
 REALERT_SECONDS = int(os.environ.get("USAGE_REALERT_SECONDS", str(6 * 3600)))
 
 # Severity ranking so we can detect escalation vs. de-escalation.
-SEVERITY = {"ok": 0, "warning": 1, "critical": 2, "exhausted": 3, "auth_error": 3}
+# wrong_auth is the highest: using the API key at all means billing leaks to
+# API credit — that's the failure mode we never want, so it overrides usage.
+SEVERITY = {"ok": 0, "warning": 1, "critical": 2, "exhausted": 3, "auth_error": 3, "wrong_auth": 4}
 
 
 def probe():
@@ -98,6 +100,31 @@ def _f(headers, key, default=0.0):
         return default
 
 
+def check_auth_source():
+    """¿El gateway está conectado por suscripción o por API key?
+
+    Replica la resolución de credencial Anthropic de pi-ai
+    (`ANTHROPIC_OAUTH_TOKEN` primero, luego `ANTHROPIC_API_KEY`) y la clasifica
+    por prefijo del token:
+      - "sk-ant-oat…"  → suscripción (OAuth)  ✅
+      - "sk-ant-api…"  → API key (consume crédito de API)  ❌
+    `api_key_present` marca si ANTHROPIC_API_KEY sigue en el env aunque se use
+    OAuth (riesgo de fallback silencioso — conviene sacarla).
+    """
+    oat = os.environ.get("ANTHROPIC_OAUTH_TOKEN", "").strip()
+    apikey = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    effective = oat or apikey  # mismo orden que pi-ai
+    if not effective:
+        source = "none"
+    elif "sk-ant-oat" in effective:
+        source = "subscription"
+    elif effective.startswith("sk-ant-api"):
+        source = "api"
+    else:
+        source = "unknown"
+    return {"source": source, "api_key_present": bool(apikey)}
+
+
 def evaluate(status, headers):
     """Map (http status, headers) → a structured verdict dict."""
     unified = (headers.get("anthropic-ratelimit-unified-status") or "").lower()
@@ -126,8 +153,17 @@ def evaluate(status, headers):
     else:
         level = "ok"
 
+    # Auth-source guard — overrides usage. If the gateway resolves to the API
+    # key (or has no credential), that's the worst case (billing leaks to API),
+    # so it always wins over any usage level.
+    auth = check_auth_source()
+    if auth["source"] in ("api", "none", "unknown"):
+        level = "wrong_auth"
+
     return {
         "level": level,
+        "auth_source": auth["source"],
+        "api_key_present": auth["api_key_present"],
         "http_status": status,
         "unified_status": unified,
         "util": round(util, 4),
@@ -164,6 +200,20 @@ def format_message(v):
     if v["overage_status"] in ("rejected", "disabled"):
         reason = f" ({v['overage_reason']})" if v["overage_reason"] else ""
         lines.append(f"⚠️ Overage (créditos extra) deshabilitado{reason}: al 100% se **corta**, no hay colchón.")
+
+    # Auth-source alert (máxima prioridad): el gateway NO está en suscripción.
+    if v["level"] == "wrong_auth":
+        src = v.get("auth_source")
+        if src == "api":
+            return ("🔴🔴", "Sancho está consumiendo la API, NO la suscripción",
+                    "El gateway resolvió la credencial Anthropic a una **API key** (`sk-ant-api…`) — "
+                    "está gastando crédito de API. Falta `ANTHROPIC_OAUTH_TOKEN` (token de suscripción `sk-ant-oat…`) "
+                    "o quedó pisado. Revisar el `.env` del contenedor ya.")
+        if src == "none":
+            return ("🔴🔴", "Sancho: SIN credencial Anthropic",
+                    "Ni `ANTHROPIC_OAUTH_TOKEN` ni `ANTHROPIC_API_KEY` están seteados — las llamadas Anthropic van a fallar.")
+        return ("🔴🔴", "Sancho: credencial Anthropic no reconocida",
+                "El token efectivo no es ni `sk-ant-oat` (suscripción) ni `sk-ant-api` (API). Revisar config.")
 
     if v["level"] == "warning":
         return ("🟡", "Suscripción Claude: te estás quedando sin extra usage",
@@ -254,9 +304,13 @@ def main():
     state = load_state()
     do_alert = args.force or should_alert(verdict["level"], state, now_epoch)
 
-    print(f"[usage-monitor] level={verdict['level']} util={verdict['util']} "
+    print(f"[usage-monitor] level={verdict['level']} auth={verdict.get('auth_source')} "
+          f"api_key_present={verdict.get('api_key_present')} util={verdict['util']} "
           f"(5h={verdict['util_5h']} 7d={verdict['util_7d']}) status={verdict['http_status']} "
           f"alert={'yes' if do_alert else 'no'}")
+    if verdict.get("auth_source") == "subscription" and verdict.get("api_key_present"):
+        print("[usage-monitor] NOTE: en suscripción, pero ANTHROPIC_API_KEY sigue en el env "
+              "(riesgo de fallback a API — recomendado sacarla).")
 
     if do_alert:
         emoji, title, body = format_message(verdict)

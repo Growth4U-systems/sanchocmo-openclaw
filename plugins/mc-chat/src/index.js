@@ -17,15 +17,56 @@ import { mcChatPlugin } from "./channel.js";
 import { classifyAndRewriteError, mergeWithPriorCategory } from "./error-rewriter.js";
 import { errorTracker } from "./error-tracker.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
+import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
+import { parseDelegateMarkers, slugForThread } from "./delegate-marker.js";
+import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 
-// Best-effort lookup of an agent's current Codex auth mode + account email.
-// Used to disambiguate "rate limit" errors: Codex CLI always emits the
-// "subscription usage limit" wording even when auth_mode is apikey, which
-// confuses debugging. The rewriter consumes this to pick auth-aware copy.
-// Returns null if anything goes wrong; the rewriter then falls back to the
-// generic message.
-function readCodexAuthInfo(agentId) {
-  if (!agentId || typeof agentId !== "string") return null;
+function normalizeOpenAiAuthMode(mode) {
+  if (typeof mode !== "string") return null;
+  const m = mode.toLowerCase();
+  if (m === "subscription" || m === "chatgpt") return "chatgpt";
+  if (m === "api_key" || m === "apikey") return "apikey";
+  return null;
+}
+
+function emailFromProfile(profileId, profile) {
+  if (typeof profile?.email === "string" && profile.email) return profile.email;
+  if (typeof profile?.accountEmail === "string" && profile.accountEmail) return profile.accountEmail;
+  const m = typeof profileId === "string"
+    ? profileId.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)
+    : null;
+  return m ? m[0] : null;
+}
+
+function readCodexAuthProfilesInfo(agentId) {
+  const home = process.env.OPENCLAW_HOME;
+  if (!home) return null;
+  const candidates = [
+    path.join(home, ".openclaw", "agents", agentId, "agent", "auth-profiles.json"),
+    path.join(home, "agents", agentId, "agent", "auth-profiles.json"),
+    path.join(home, ".openclaw", "shared", "auth-profiles.json"),
+  ];
+  for (const p of candidates) {
+    try {
+      const data = JSON.parse(fs.readFileSync(p, "utf8"));
+      const profiles = data?.profiles && typeof data.profiles === "object" ? data.profiles : {};
+      for (const [profileId, profile] of Object.entries(profiles)) {
+        const provider = typeof profile?.provider === "string" ? profile.provider : "";
+        if (provider !== "openai-codex" && !String(profileId).startsWith("openai-codex:")) continue;
+        const type = typeof profile?.type === "string" ? profile.type
+          : (typeof profile?.mode === "string" ? profile.mode : "");
+        const authMode = /oauth|chatgpt/i.test(type) ? "chatgpt"
+          : (/token|api.?key|apikey/i.test(type) ? "apikey" : null);
+        return { authMode, authEmail: emailFromProfile(profileId, profile) };
+      }
+    } catch {
+      // try next candidate path
+    }
+  }
+  return null;
+}
+
+function readCodexHomeAuthInfo(agentId) {
   const home = process.env.OPENCLAW_HOME;
   if (!home) return null;
   const candidates = [
@@ -50,6 +91,26 @@ function readCodexAuthInfo(agentId) {
     }
   }
   return null;
+}
+
+// Best-effort lookup of an agent's current Codex auth mode + account email.
+// Used to disambiguate real rate-limit errors. Prefer the configured deployment
+// mode and OpenClaw's auth-profiles store over codex-home/auth.json: the latter
+// can be a stale Codex CLI file left behind after switching to subscription
+// mode, and should not decide user-facing billing copy.
+function readCodexAuthInfo(agentId) {
+  if (!agentId || typeof agentId !== "string") return null;
+  const configuredMode = normalizeOpenAiAuthMode(process.env.OPENAI_AUTH_MODE);
+  const profilesInfo = readCodexAuthProfilesInfo(agentId);
+  const codexHomeInfo = readCodexHomeAuthInfo(agentId);
+  if (configuredMode) {
+    return {
+      authMode: configuredMode,
+      authEmail: profilesInfo?.authEmail || codexHomeInfo?.authEmail || undefined,
+    };
+  }
+  if (profilesInfo?.authMode) return profilesInfo;
+  return codexHomeInfo;
 }
 
 const CHANNEL_KEY = "mc-chat";
@@ -175,10 +236,48 @@ export default defineChannelPluginEntry({
         contextLines.push(`:::ask`);
         contextLines.push(`{"id":"q_<short>","prompt":"<pregunta>","mode":"single"|"multi","options":[{"id":"<key>","label":"<texto>"}]}`);
         contextLines.push(`:::`);
-        contextLines.push(`Usa "single" para radios (1 opción) y "multi" para checkboxes. OBLIGATORIO: la ÚLTIMA opción debe ser SIEMPRE {"id":"other","label":"Otro (lo escribo)"} — no es opcional, es un requisito del componente para que el usuario pueda dar respuesta libre. Si la omites, el usuario queda encajonado. NO uses ":::ask" para preguntas abiertas (ej. "cuéntame sobre tu negocio") — solo para decisiones discretas. Puedes incluir VARIOS bloques ":::ask" en un mismo mensaje (ej. preguntar tono + formato + audiencia a la vez); el componente espera a que el usuario responda TODAS antes de devolverte un único mensaje con todas las respuestas en líneas separadas: "[ask:q1] respuesta: …\\n[ask:q2] respuesta: …". NO ejecutes nada hasta recibir ese mensaje completo. Si el usuario eligió "Otro" verás su texto literal en lugar de la etiqueta.`);
+        contextLines.push(`Modos: "single" para radios (1 opción), "multi" para checkboxes, "text" para CAMPOS ABIERTOS (nombre, handle, una URL…). Un bloque de texto se escribe SIN "options": {"id":"q_<short>","prompt":"<etiqueta>","mode":"text","placeholder":"<pista>","optional":true|false} → renderiza un input real, sin opciones ni "Otro" ("optional":true permite dejarlo vacío). SOLO para single/multi es OBLIGATORIO que la ÚLTIMA opción sea {"id":"other","label":"Otro (lo escribo)"} — es un requisito del componente para dar respuesta libre; en "text" NO va "Otro". En cualquier opción de single/multi puedes marcar "recommended":true: esa opción sale PRE-SELECCIONADA con un badge "recomendado" y el usuario puede cambiarla (útil para sugerir un valor por defecto, p.ej. una cadencia). NO uses ":::ask" para invitaciones a un monólogo largo ("cuéntame todo sobre tu negocio"); para datos concretos sí, aunque sean abiertos, usa "text". Puedes MEZCLAR bloques de choice y de text en un MISMO mensaje para construir UN solo formulario (p.ej. nombre[text] + red[single] + cadencia[single recommended] + handle[text]); el componente los pinta juntos con un único botón "Enviar" y espera a que el usuario responda TODOS antes de devolverte un único mensaje con las respuestas en líneas separadas: "[ask:q1] respuesta: …\\n[ask:q2] respuesta: …". NO ejecutes nada hasta recibir ese mensaje completo. En "text" verás el texto que escribió; si en single/multi eligió "Otro" verás su texto literal en lugar de la etiqueta.`);
+        if (requestedAgent === "sancho") {
+          contextLines.push(`🤝 DELEGAR (cesión real de turno): cuando la petición es el ENTREGABLE de un especialista (research, contenido, outreach, ads, datos, visual, QA, skills/docs), NO la ejecutes inline ni con Agent(subagent_type=…) — eso corre dentro de TU turno y vuelve a ti (narras en vez de ceder). Emite un bloque ":::delegate": el especialista arranca en SU PROPIO hilo, opera su sistema y habla en su voz. Formato:`);
+          contextLines.push(`:::delegate`);
+          contextLines.push(`{"agent":"hamete","name":"<título corto>","brief":"<briefing completo y autónomo: objetivo, contexto, qué entregable y dónde>"}`);
+          contextLines.push(`:::`);
+          contextLines.push(`Agentes válidos: cervantes (skills/docs), hamete (research/market intel), dulcinea (contenido), rocinante (outreach/prospecting), mambrino (ads), merlin (datos), sanson (QA/feedback), maese-pedro (visual). Puedes emitir VARIOS bloques. Acompaña el/los bloque(s) con UNA línea para el usuario ("Lo paso a Hamete; te aviso cuando vuelva."). Reserva Agent(subagent_type=…) SOLO para sub-consultas rápidas que vuelven a ti, nunca para un entregable.`);
+        }
         contextLines.push(`[/MC Chat Context]`);
 
-        const bodyForAgent = contextLines.join('\n') + '\n\n' + text;
+        // ─── Specialist grounding (SAN-246) ───
+        // A thread dispatched DIRECTLY to a specialist (agent:dulcinea) gets no
+        // client context — the agent starts blind (instance of SAN-218). Fetch
+        // a bounded context pack from Next and prepend it to the user text, OR a
+        // STOP directive when the client has no Foundation. Skip for sancho (the
+        // orchestrator carries its own grounding). FAIL-SOFT: any failure logs a
+        // warning and continues WITHOUT blocking the dispatch — never crash the
+        // gateway over grounding.
+        let groundedText = text;
+        if (requestedAgent && requestedAgent !== "sancho") {
+          try {
+            const pack = await fetchContextPack(slug, skill || null, {
+              contextPackUrl: channelCfg?.contextPackUrl,
+              nextServerUrl: channelCfg?.nextServerUrl,
+              secret: channelCfg?.sharedSecret,
+              logger,
+            });
+            if (pack) {
+              const prefix = pack.verdict === "missing"
+                ? buildFoundationDirective(pack)
+                : buildClientContextBlock(pack);
+              if (prefix) {
+                groundedText = `${prefix}\n\n${text}`;
+                logger.info(`[mc-chat] context-pack injected (agent=${requestedAgent} slug=${slug} verdict=${pack.verdict} docs=${Array.isArray(pack.docPaths) ? pack.docPaths.length : 0})`);
+              }
+            }
+          } catch (e) {
+            logger.warn(`[mc-chat] context-pack injection skipped: ${e?.message || e}`);
+          }
+        }
+
+        const bodyForAgent = contextLines.join('\n') + '\n\n' + groundedText;
 
         // Resolve sender identity based on admin/client role
         // This maps to toolsBySender keys in openclaw.json:
@@ -227,6 +326,15 @@ export default defineChannelPluginEntry({
 
         // Dispatch to agent asynchronously
         try {
+          try {
+            const result = sanitizeAgentThinkingHistory(requestedAgent, { home: process.env.OPENCLAW_HOME });
+            if (result.removedBlocks > 0) {
+              logger.warn(`[mc-chat] sanitized ${result.removedBlocks} thinking block(s) from ${result.filesChanged} ${requestedAgent} session file(s) before dispatch`);
+            }
+          } catch (e) {
+            logger.warn(`[mc-chat] thinking-history sanitizer skipped: ${e?.message || e}`);
+          }
+
           // Default to Next.js (port 3000) — it owns chat thread writes since
           // the strangler-fig migration. mc-server.js's /webhook/mc-chat/response
           // is dead code but still proxied through Next's fallback rewrite.
@@ -298,6 +406,34 @@ export default defineChannelPluginEntry({
                 // Detect which agent is responding
                 const respondingAgent = replyPayload?.agentId || replyPayload?.agent || requestedAgent || "sancho";
 
+                // ─── Real turn-cession (SAN-220, UI side) ───
+                // Strip any :::delegate blocks Sancho emitted and collect the
+                // delegations; each is dispatched to the specialist's own thread
+                // AFTER this reply posts. Only the orchestrator (sancho) may cede.
+                // FAIL-SOFT: a parse bug must never break the normal reply.
+                let delegations = [];
+                if (respondingAgent === "sancho") {
+                  try {
+                    const cleaned = [];
+                    for (const t of texts) {
+                      const parsed = parseDelegateMarkers(t);
+                      if (parsed.delegations.length) delegations.push(...parsed.delegations);
+                      if (parsed.malformed.length) {
+                        logger.warn(`[mc-chat] ${parsed.malformed.length} malformed :::delegate block(s) thread=${threadId}`);
+                      }
+                      if (parsed.text) cleaned.push(parsed.text);
+                    }
+                    texts.length = 0;
+                    texts.push(...cleaned);
+                    if (delegations.length && texts.length === 0) {
+                      texts.push(`🤝 Paso el trabajo a ${[...new Set(delegations.map((d) => d.agent))].join(", ")}.`);
+                    }
+                  } catch (e) {
+                    logger.warn(`[mc-chat] :::delegate parse skipped: ${e?.message || e}`);
+                    delegations = [];
+                  }
+                }
+
                 // Check if thread is linked to Discord
                 let discordLink = null;
                 try {
@@ -348,6 +484,33 @@ export default defineChannelPluginEntry({
                     } catch (discordErr) {
                       logger.error(`[mc-chat] Discord relay error: ${discordErr?.message}`);
                     }
+                  }
+                }
+
+                // Dispatch the collected delegations AFTER the reply is posted:
+                // POST each brief to the specialist's own task thread →
+                // /api/chat/send sets agentId → gateway routes to
+                // workspace-<agent> (the by-thread cession rail). FAIL-LOUD if a
+                // dispatch fails; never throw out of deliver.
+                for (const d of delegations) {
+                  const delegateThreadId = `${slug}:delegate-${d.agent}-${slugForThread(d.name || d.brief)}`;
+                  const dispatched = await postWithRetry(sendUrl, {
+                    slug,
+                    threadId: delegateThreadId,
+                    threadName: d.name || `${d.agent}: ${d.brief.slice(0, 48)}`,
+                    text: d.brief,
+                    agent: d.agent,
+                    userName: "Sancho",
+                    _source: "agent_delegate",
+                  }, `Delegate→${d.agent}`);
+                  if (dispatched) {
+                    logger.info(`[mc-chat] delegated → ${d.agent} thread=${delegateThreadId}`);
+                  } else {
+                    await postWithRetry(callbackUrl, {
+                      slug, threadId, role: "bot", agent: respondingAgent,
+                      text: `⚠️ No pude arrancar a **${d.agent}** (fallo al despachar a su hilo). No se despachó nada — reinténtalo.`,
+                      ts: new Date().toISOString(),
+                    }, "Delegate fail-loud");
                   }
                 }
               },

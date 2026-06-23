@@ -58,7 +58,14 @@ An approved idea from `idea-queue.json`:
 ## Workflow
 
 ### 1. Read Context
-- Brand Voice (tone, vocabulary, do/don't)
+- Brand Voice (tone, vocabulary, do/don't) — the brand-wide guardrail.
+- **Founder voice (SAN-160).** If the idea has an `author` (the assigned voice), read that voice's
+  `voice_doc` from `cadence-config.yml`: find the profile in
+  `channels.{target_channel}.profiles[]` whose stable author key matches `author` (explicit `id`,
+  otherwise slug of `name`, mirroring `personaId()`), then read `voice_doc`. If it's set, **load that
+  file and write in THAT founder's voice** — the brand voice stays the guardrail, the founder's
+  `voice_doc` is the personal style on top. If absent (no author, no matching profile, or no
+  `voice_doc`), use the brand voice as usual.
 - Content Pillars (which pillar this idea belongs to)
 - Clarify History (learn from past decisions)
 - Cadence Config (channel rules)
@@ -81,6 +88,22 @@ Output goes into a `research_pack` object that the Clarify step shows the human 
 ```
 
 Skip ONLY if `signal_type` is purely `personal-story` and there's nothing external to verify. In that case write `research_pack: { skipped: true, reason: "personal-story" }` so the next step still has the field.
+
+**⛔ HARD RULE — fail loud, never fabricate research (SAN-238).** If
+`web_search` / `WebSearch` / Firecrawl is unavailable or erroring, you do NOT
+invent a Research Pack from memory, you do NOT write a plausible-looking
+`research.md`, and you do NOT fake the `<!-- … | fuentes: N | búsquedas: M -->`
+marker. POST **`⛔ web_search no disponible — no se hizo research, no avanzo a
+Clarify. Reintenta o revisa el conector.`** and **STOP**. This mirrors
+`workspace-sancho/PROTOCOLS.md` rule 22 ("opera el sistema, no narres":
+fail-loud, never hand-fake a system deliverable). The pipeline now enforces this
+server-side: the research gate (`assertResearchReady`,
+`src/lib/data/content-tasks.ts`) blocks the `→ clarify-needed`/`→ drafting`
+transition with **422** unless `research.md`, `QA-REPORT-research.md` and
+`brand/{slug}/intelligence/research-log.json` all exist AND `research.md`
+carries enough **real source URLs** — it counts actual `http(s)://` links, NOT
+the self-reported marker, so a fabricated research pack will be rejected, not
+silently accepted.
 
 ### 2. Clarify (ALWAYS — see _system/clarify-protocol.md)
 

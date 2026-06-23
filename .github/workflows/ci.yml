@@ -31,6 +31,13 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Gates the src/lib unit tests (tsx --test) so tool-registry goldens and
+      # other lib invariants can't silently rot (SAN-285). Runs before Build for
+      # fast feedback. Kept in this job (not renamed) so the required-check name
+      # "Typecheck + Build" stays valid for branch protection.
+      - name: Lib tests
+        run: npm run test:lib
+
       - name: Build
         env:
           # Build-time stubs. Production values come from VPS .env at runtime.

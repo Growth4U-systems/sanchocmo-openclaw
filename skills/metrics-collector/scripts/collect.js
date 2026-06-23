@@ -5,11 +5,16 @@
  *
  * Usage:
  *   node collect.js --slug <client> --all
+ *   node collect.js --slug <client> --all --due     # only sources due today (cadence)
  *   node collect.js --slug <client> --source <adapter>
  *   node collect.js --slug <client> --source ga4 --from 2024-01-01 --to 2024-01-31
+ *
+ * Runtime storage is DB-only: metrics are ingested into `metric_snapshots`.
+ * Historical JSON import/export remains in scripts/metrics, but the collector no
+ * longer writes brand/<slug>/metrics/YYYY-MM-DD.json or metrics-data.json.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -32,6 +37,7 @@ const hasFlag = (name) => args.includes(`--${name}`);
 const slug = getArg('slug');
 const sourceFilter = getArg('source');
 const collectAll = hasFlag('all');
+const dueOnly = hasFlag('due'); // collect only sources whose cadence is due today (SAN-300)
 const fromDate = getArg('from');
 const toDate = getArg('to');
 
@@ -61,6 +67,7 @@ const dateRange = {
 // --- Load integrations.json ---
 const brandDir = path.join(WORKSPACE, 'brand', slug);
 const integrationsPath = path.join(brandDir, 'integrations.json');
+const clientsPath = path.join(WORKSPACE, 'clients.json');
 
 if (!existsSync(integrationsPath)) {
   console.error(`No integrations.json found at ${integrationsPath}`);
@@ -68,6 +75,22 @@ if (!existsSync(integrationsPath)) {
 }
 
 const integrations = JSON.parse(readFileSync(integrationsPath, 'utf-8'));
+
+function getAdminToken() {
+  if (process.env.MC_ADMIN_TOKEN) return process.env.MC_ADMIN_TOKEN;
+  if (!existsSync(clientsPath)) return '';
+  try {
+    const data = JSON.parse(readFileSync(clientsPath, 'utf-8'));
+    return typeof data.adminToken === 'string' ? data.adminToken : '';
+  } catch {
+    return '';
+  }
+}
+
+const adminToken = getAdminToken();
+if (!adminToken) {
+  console.warn(`⚠ No admin token found in MC_ADMIN_TOKEN or ${clientsPath}; due-check/DB ingest may fail`);
+}
 
 // --- Load .env ---
 // Layering: process.env (global secrets injected by the VPS deploy) is the
@@ -111,11 +134,11 @@ for (const [key, val] of Object.entries(rawEnv)) {
 }
 
 // --- Available adapters ---
-const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'ghl', 'instantly', 'sheets'];
+const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'ghl', 'instantly', 'sheets', 'posthog'];
 
 // --- Determine which adapters to run ---
 const ds = integrations.dataSources || integrations;
-const toRun = collectAll
+let toRun = collectAll
   ? ADAPTERS.filter((a) => {
       const entry = ds[a] || ds[a.replace('-', '_')];
       return entry && entry.status && entry.status !== 'not_configured';
@@ -130,7 +153,71 @@ if (toRun.length === 0) {
 }
 
 // --- Run collection ---
+const MC_BASE = process.env.MC_BASE_URL || 'http://localhost:3000';
+
+// Ask MC which of the candidate sources are due today (per the editable cadence).
+// On any failure, fall back to collecting all candidates — better to over-collect
+// than to silently miss a source (SAN-300).
+async function filterDueSources(candidates) {
+  try {
+    const res = await fetch(
+      `${MC_BASE}/api/metrics/schedule?slug=${encodeURIComponent(slug)}&due=1&sources=${encodeURIComponent(candidates.join(','))}`,
+      { headers: { ...(adminToken ? { 'x-admin-token': adminToken } : {}) } },
+    );
+    if (!res.ok) {
+      console.warn(`⚠ Due-check HTTP ${res.status}; collecting all connected sources`);
+      return candidates;
+    }
+    const data = await res.json().catch(() => ({}));
+    return Array.isArray(data.due) ? data.due : candidates;
+  } catch (e) {
+    console.warn(`⚠ Due-check unreachable (${e.message}); collecting all connected sources`);
+    return candidates;
+  }
+}
+
+// Promote drafts whose Metricool schedule fired since the last cron
+// (scheduled → published). Cadence-independent and idempotent; best-effort.
+async function reconcileDrafts() {
+  try {
+    const res = await fetch(`${MC_BASE}/api/publishing/reconcile?slug=${encodeURIComponent(slug)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const n = (data.reconciled || []).length;
+      console.log(`🔁 Reconcile: ${n} draft${n === 1 ? '' : 's'} promoted to published`);
+      for (const entry of data.reconciled || []) {
+        console.log(`   → ${entry.ideaId}/${entry.channel}: ${entry.url}`);
+      }
+    } else {
+      console.warn(`⚠ Reconcile endpoint returned HTTP ${res.status}`);
+    }
+  } catch (e) {
+    console.warn(`⚠ Reconcile skipped (MC unreachable at ${MC_BASE}): ${e.message}`);
+  }
+}
+
+// delete-stale (convergence) runs ONLY on the routine full daily collection —
+// never on a single --source or an explicit --from/--to re-pull, which are
+// partial and would otherwise converge-delete legitimate rows (SAN-300 review).
+const allowDeleteStale = collectAll && !fromDate && !toDate;
+
 async function runCollection() {
+  if (dueOnly) {
+    const due = await filterDueSources(toRun);
+    const notDue = toRun.filter((s) => !due.includes(s));
+    toRun = toRun.filter((s) => due.includes(s));
+    if (notDue.length) console.log(`⏭  No tocan hoy (cadencia): ${notDue.join(', ')}`);
+    if (toRun.length === 0) {
+      console.log('🟰 Nada que recoger hoy según la cadencia.');
+      await reconcileDrafts(); // still promote any drafts that published overnight
+      return;
+    }
+    console.log(`📅 Due hoy: ${toRun.join(', ')}`);
+  }
+
   const result = {
     slug,
     collectedAt: new Date().toISOString(),
@@ -177,70 +264,43 @@ async function runCollection() {
     }
   }
 
-  // --- Save daily snapshot ---
-  const metricsDir = path.join(brandDir, 'metrics');
-  mkdirSync(metricsDir, { recursive: true });
-
   const today = new Date().toISOString().split('T')[0];
-  const snapshotPath = path.join(metricsDir, `${today}.json`);
-  writeFileSync(snapshotPath, JSON.stringify(result, null, 2));
-  console.log(`\n💾 Daily snapshot saved: ${snapshotPath}`);
 
-  // --- Append to rolling metrics-data.json (90 days) ---
-  const rollingPath = path.join(metricsDir, 'metrics-data.json');
-  let rolling = [];
-  if (existsSync(rollingPath)) {
-    try {
-      rolling = JSON.parse(readFileSync(rollingPath, 'utf-8'));
-    } catch {
-      rolling = [];
-    }
-  }
-
-  // Remove entries older than 90 days
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 90);
-  const cutoffStr = cutoff.toISOString();
-  rolling = rolling.filter((entry) => entry.collectedAt >= cutoffStr);
-
-  // Remove existing entry for today (idempotent)
-  rolling = rolling.filter((entry) => {
-    const entryDate = entry.collectedAt?.split('T')[0];
-    return entryDate !== today;
-  });
-
-  rolling.push(result);
-  writeFileSync(rollingPath, JSON.stringify(rolling, null, 2));
-  console.log(`📈 Rolling data updated: ${rollingPath} (${rolling.length} entries)`);
+  console.log('\n🗄  JSON snapshot/rolling skipped; metric_snapshots DB is source of truth.');
 
   // Summary
   const okCount = Object.values(result.sources).filter((s) => s.status === 'ok').length;
   const errCount = Object.values(result.sources).filter((s) => s.status === 'error').length;
   console.log(`\n🏁 Done: ${okCount} ok, ${errCount} errors, ${Object.keys(result.sources).length} total`);
 
-  // --- Reconcile published-but-not-acknowledged drafts ---
-  // After analytics are pulled, ping MC's reconcile endpoint so any draft
-  // whose Metricool schedule has fired since the last cron gets promoted
-  // from `scheduled` → `published` with the real URL. The endpoint is
-  // idempotent and bails fast when nothing's pending.
-  const mcBase = process.env.MC_BASE_URL || 'http://localhost:3000';
+  // Reconcile runs regardless of what was collected (it's cadence-independent).
+  await reconcileDrafts();
+
+  // --- Write the daily snapshot into the metric_snapshots time-series ---
+  // SAN-300: the DB is the source of truth. `deleteStale` converges the DB to
+  // this payload (stale rows for the restated dates removed, GSC-lagged dates
+  // untouched). It's gated to the routine FULL daily collection — a single
+  // --source or an explicit --from/--to re-pull is partial, so it must NOT
+  // converge-delete. DB ingest is required now that the collector no longer
+  // writes JSON snapshots.
   try {
-    const reconcileRes = await fetch(`${mcBase}/api/publishing/reconcile?slug=${encodeURIComponent(slug)}`, {
+    const ingestRes = await fetch(`${MC_BASE}/api/metrics/ingest`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(adminToken ? { 'x-admin-token': adminToken } : {}),
+      },
+      body: JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources, deleteStale: allowDeleteStale }),
     });
-    if (reconcileRes.ok) {
-      const data = await reconcileRes.json().catch(() => ({}));
-      const n = (data.reconciled || []).length;
-      console.log(`🔁 Reconcile: ${n} draft${n === 1 ? '' : 's'} promoted to published`);
-      for (const entry of data.reconciled || []) {
-        console.log(`   → ${entry.ideaId}/${entry.channel}: ${entry.url}`);
-      }
-    } else {
-      console.warn(`⚠ Reconcile endpoint returned HTTP ${reconcileRes.status}`);
+    if (!ingestRes.ok) {
+      const body = await ingestRes.text().catch(() => "");
+      throw new Error(`HTTP ${ingestRes.status}${body ? `: ${body.slice(0, 200)}` : ""}`);
     }
+    const data = await ingestRes.json().catch(() => ({}));
+    console.log(`🗃  Ingest: ${data.rows ?? 0} row(s) written, ${data.deleted ?? 0} stale removed`);
   } catch (e) {
-    console.warn(`⚠ Reconcile skipped (MC unreachable at ${mcBase}): ${e.message}`);
+    console.error(`❌ Ingest failed (${MC_BASE}/api/metrics/ingest): ${e.message}`);
+    process.exitCode = 1;
   }
 }
 

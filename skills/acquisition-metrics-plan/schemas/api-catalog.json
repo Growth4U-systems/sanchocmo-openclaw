@@ -316,11 +316,11 @@
           "desc": "Product analytics",
           "ownership": "client",
           "credentials": [
-            { "key": "API_KEY", "label": "Personal API Key", "type": "string", "sensitive": true, "help": "PostHog → Settings → Personal API Keys → Create" }
+            { "key": "API_KEY", "label": "Personal API Key", "type": "string", "sensitive": true, "required": true, "placeholder": "phx_…", "help": "PostHog → Settings → Personal API keys → Create. Empieza por phx_. Debe ser de la misma región (UE/EE.UU.) que el Host URL." }
           ],
           "config": [
-            { "key": "PROJECT_ID", "label": "Project ID", "type": "string", "sensitive": false },
-            { "key": "HOST", "label": "Host URL", "type": "string", "sensitive": false, "default": "https://app.posthog.com" }
+            { "key": "PROJECT_ID", "label": "Project ID", "type": "string", "sensitive": false, "required": true, "placeholder": "137870", "help": "Número del proyecto. PostHog → Settings → Project → Project ID (o el número en la URL .../project/<ID>/)." },
+            { "key": "HOST", "label": "Host URL", "type": "string", "sensitive": false, "required": true, "placeholder": "https://eu.posthog.com", "help": "La URL de tu región, sin barra final: https://eu.posthog.com (UE) o https://us.posthog.com (EE.UU.). Mírala en la barra de direcciones de PostHog.", "default": "https://us.posthog.com" }
           ],
           "docs": "https://posthog.com/docs/api"
         },

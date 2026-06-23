@@ -1,0 +1,91 @@
+name: Promote main to release tag
+
+# Branching model (docs/CONTRIBUTING.md → "Release to production"):
+# `main` is a fast-forward-only pointer to the latest production release.
+# release-please cuts the tag + Release from `staging`; when that Release is
+# published this job fast-forwards `main` to the tag's commit. `main` never
+# receives direct work or a PR, so it can never diverge from `staging`.
+#
+# This does NOT deploy — deploy-prod.yml handles prod (also on release:
+# published, behind the `production` environment approval gate).
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+# Never run two promotions at once; let an in-flight one finish.
+concurrency:
+  group: promote-main
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Fast-forward main to ${{ github.event.release.tag_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # PAT: main's ruleset blocks direct pushes for everyone except this
+          # token's identity (bypass actor). The default GITHUB_TOKEN can't get
+          # past the pull-request requirement. Same secret release-please uses.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+      - name: Fast-forward main to the release tag
+        env:
+          # Passed via env, never inlined as ${{ }} in the script: the Release body
+          # is user-controlled, so interpolating it directly would be a shell
+          # injection vector. Read as "$RELEASE_BODY" below.
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.release.tag_name }}"
+          # --no-recurse-submodules: the tree carries a legacy gitlink
+          # (skill-repos/frontend-slides) with no .gitmodules entry; a plain
+          # fetch would recurse into it and abort with "No url found for
+          # submodule path". We only need refs here, never submodule contents.
+          git fetch origin --tags --no-recurse-submodules --quiet
+          TAG_SHA="$(git rev-parse "${TAG}^{commit}")"
+          MAIN_SHA="$(git rev-parse origin/main)"
+          echo "Release ${TAG} → ${TAG_SHA}"
+          echo "Current main → ${MAIN_SHA}"
+
+          if [ "${TAG_SHA}" = "${MAIN_SHA}" ]; then
+            echo "✓ main already at ${TAG} — nothing to do."
+            exit 0
+          fi
+
+          # Guard: a normal release is cut by release-please FROM staging, so its
+          # commit is always reachable from staging's tip. A tag that isn't on
+          # staging was created out-of-band — by hand, or on a commit built off an
+          # old base (e.g. a GitHub-UI commit) — and promoting it diverges main.
+          # That is exactly what bit v0.7.1 (SAN-255). Refuse it, UNLESS the one
+          # sanctioned exception opts in: the emergency hotfix runbook tags on top
+          # of the prod tag on purpose and forward-merges to staging right after,
+          # signalling it with [hotfix-off-staging] in the Release body.
+          # ($RELEASE_BODY comes from the step env, never inlined — see the step.)
+          git fetch origin staging --no-recurse-submodules --quiet
+          STAGING_SHA="$(git rev-parse origin/staging)"
+          if ! git merge-base --is-ancestor "${TAG_SHA}" "${STAGING_SHA}"; then
+            if printf '%s' "${RELEASE_BODY:-}" | grep -qF '[hotfix-off-staging]'; then
+              echo "::warning::Release ${TAG} is not on staging but is marked [hotfix-off-staging] — promoting per the emergency runbook. Forward-merge it to staging now to restore the invariant."
+            else
+              echo "::error::Release ${TAG} (${TAG_SHA}) is NOT on staging (${STAGING_SHA}). Normal releases must be cut by release-please from staging — never tag or publish a Release by hand. (Emergency hotfix? add [hotfix-off-staging] to the Release body.) Refusing to promote main." >&2
+              exit 1
+            fi
+          fi
+
+          # Refuse anything that isn't a true fast-forward. In the healthy model
+          # the tag is cut from staging and main is an ancestor of staging, so
+          # this is always a ff. A non-ff means main diverged and a human must
+          # reconcile it (see CONTRIBUTING.md → "Reconciling a diverged main").
+          if ! git merge-base --is-ancestor "${MAIN_SHA}" "${TAG_SHA}"; then
+            echo "::error::main (${MAIN_SHA}) is not an ancestor of ${TAG} (${TAG_SHA}) — refusing non-fast-forward promote. Reconcile main↔staging." >&2
+            exit 1
+          fi
+
+          git push origin "${TAG_SHA}:refs/heads/main"
+          echo "✓ main fast-forwarded to ${TAG}"

@@ -143,6 +143,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "insight-to-content-mapper": "dulcinea",
   "instagram-content": "dulcinea",
   "internal-comms": "dulcinea",
+  "keyword-antenna": "dulcinea",
   "keyword-research": "dulcinea",
   "landing-pages": "dulcinea",
   "larry": "dulcinea",
@@ -150,6 +151,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "lead-intelligence-hub": "rocinante",
   "lead-magnet": "dulcinea",
   "lead-magnets": "dulcinea",
+  "lighthouse-landing-qa": "alarife",
   "market-intelligence": "hamete",
   "market-synthesis": "hamete",
   "mcp-builder": "cervantes",
@@ -280,10 +282,11 @@ export const STRATEGY_SKILLS: Record<string, SkillResolution> = {
  *   3. content task + channel → _byChannel from chat-config.json
  *   4. tool task + tool name → _byTool from chat-config.json
  *   5. task type → _byType from chat-config.json
- *   6. strategy ID → STRATEGY_SKILLS
- *   7. strategy name pattern
- *   8. pillar → chat-config.json pillars
- *   9. Fallback → sancho-manager
+ *   6. web-build fallback → Alarife Lighthouse build pipeline
+ *   7. strategy ID → STRATEGY_SKILLS
+ *   8. strategy name pattern
+ *   9. pillar → chat-config.json pillars
+ *   10. Fallback → sancho-manager
  *
  * After resolution, the result is enriched with the owner agent from
  * SKILL_OWNER_MAP (Fase 3/8) so the dispatch routes to the correct workspace.
@@ -325,7 +328,25 @@ function resolveSkillCore(ctx: SkillContext, cfg: ChatConfig): SkillResolution {
     const fromType = toResolution(cfg.tasks?._byType?.[ctx.taskType]);
     if (fromType) return fromType;
 
-    // 2e. Fallback defaults from config
+    // 2e. Web build fallback: Sancho must delegate page creation to Alarife,
+    // including the Lighthouse QA loop, even when no brand chat-config is loaded.
+    if (ctx.taskType === "web-build") {
+      return {
+        skill: "alarife-integration",
+        agent: "alarife",
+        skills: [
+          "alarife-integration",
+          "payload",
+          "site-architecture",
+          "frontend-design",
+          "page-cro",
+          "form-cro",
+          "lighthouse-landing-qa",
+        ],
+      };
+    }
+
+    // 2f. Fallback defaults from config
     const fromDefaults = toResolution(cfg.tasks?._defaults);
     if (fromDefaults) return fromDefaults;
   }

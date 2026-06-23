@@ -11,7 +11,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Missing slug" });
   }
 
-  const status = getInternalClientStatus(slug);
+  const status = await getInternalClientStatus(slug);
   if (!status) {
     return res.status(404).json({ error: "Client not found" });
   }

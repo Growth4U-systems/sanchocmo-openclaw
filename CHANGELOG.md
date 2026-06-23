@@ -1,5 +1,231 @@
 # Changelog
 
+## [0.11.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.11.1...v0.11.2) (2026-06-23)
+
+
+### Bug Fixes
+
+* **release:** make release-please componentless (SAN-316) ([817fff8](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/817fff880b2ab9770ed2ee7d05d112a324697ccc))
+
+## [0.11.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.11.0...v0.11.1) (2026-06-23)
+
+
+### Bug Fixes
+
+* **mc-chat:** sanitize persisted thinking blocks ([36d4a27](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/36d4a270681fdf7df1bff228fede01659c16a57a))
+
+## [0.11.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.10.1...v0.11.0) (2026-06-23)
+
+
+### Features
+
+* **alarife:** add Lighthouse 95 web-build gate (SAN-316) ([06b9ca1](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/06b9ca1a4a958412bd1ccaca7f8a15bfd1d70183))
+* **chat:** cesión real de turno vía marcador :::delegate en MC Chat (SAN-220) ([#758](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/758)) ([1c48bd6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1c48bd6f1ac8dc1ebe5bdc49efe79623d79bc6e9))
+* **content-engine:** keyword antenna v1 — score + promote seo Ideas (MCP + skill + cron) ([#722](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/722)) ([46ba608](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/46ba608f23135b3f31caa1eb58be8ad866f8360e))
+* **content-engine:** seed keyword-research as T07 + wire content-pillars to keyword-plan ([#720](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/720)) ([d97133f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d97133f2bf137a1932d3eba455ad87f8f510c16a))
+* **content-engine:** server-side research hard-gate with kill-switch (SAN-238) ([#717](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/717)) ([afe8107](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/afe81077495289dece35774079cdba2962f5f246))
+* **intelligence:** Intelligence Engine spine — signals/proposals schema + detect engine (SAN-270) ([#749](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/749)) ([9e984a6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9e984a6ee80718820dab199383ae3d38660ca40f))
+* **mcp:** expand Sancho MCP control tools (SAN-226) ([e369e8b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e369e8bc60011c4bdbf9c732928acbaf901e3441))
+* **metrics:** always-visible Recolectar button in the metrics header ([#815](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/815)) ([91fc510](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/91fc5103d02c1f1abb8941500d43cdde8ac94147))
+* **metrics:** convert connections tab into setup view (SAN-298) ([#781](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/781)) ([bc6bb73](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/bc6bb737b54175b8992ecee2798ebfe1f4a2a634))
+* **metrics:** editable per-source cadence + collection ledger + health (SAN-300) ([#790](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/790)) ([e666cbb](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e666cbb559394f9572431cd21eee0694c9d67519))
+* **metrics:** Merlin write tools for the dashboard definition (MCP) ([#748](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/748)) ([6afd759](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6afd75936c563b343de93fce5bac33b4c1a0464f))
+* **metrics:** per-source --due collection + delete-stale + DuckDB export (SAN-300) ([#791](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/791)) ([a0926aa](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a0926aa4481b04ddc57f5e8cf434d13eab66fa1e))
+* **metrics:** pillar-style Setup view + filtered API deep-links (SAN-298) ([#783](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/783)) ([e04062b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e04062bc20d900df9afe06facf61f3c430cb5652))
+* **metrics:** PostHog adapter + real Conversion tab (PR-6) ([53d0258](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/53d02589a19a49599b27b385ecdbf2b65dfaf766))
+* **metrics:** read dashboard history from the DB + per-metric aggregation ([#789](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/789)) ([fb53135](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/fb531359ae283c470ea0c2b8a0d4e451d879f36e))
+* **metrics:** read module + surfaces model + MCP read tool ([#750](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/750)) ([fb58548](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/fb5854862989f7ee9cefbe140f9a6d758ecaeb96))
+* **metrics:** render metrics tabs from the versioned dashboard definition (PR-5a) ([971af72](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/971af7235d49a9debe962031e5d9d2cace57373e))
+* **metrics:** seed auto-onboarding crons in client-config (Trust Score refresh default-on) ([#810](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/810)) ([d845080](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d845080e2195cab243830678b85897d82b4d2d78))
+* **metrics:** tier on generated KPIs, propagated to the definition (PR-7) ([3eb9f96](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3eb9f96c7baef3346adb9e8d6df8f4d29ceb98bd))
+* **metrics:** time-series storage (metric_snapshots) + ingest + backfill ([#745](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/745)) ([b342b01](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b342b01e59791de8037983c6b7f68e58017961dc))
+* **metrics:** versioned dashboard definition + templates + MCP read ([#747](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/747)) ([1d82ee6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1d82ee661b00671b365991cbbbb0412ef98d01f7))
+* **metrics:** Versiones as a slide-over (reuse SlideOver, like Plan) ([#788](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/788)) ([dbbca0f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/dbbca0f75aa1335752658e4c5e1c996beef3a003))
+* **metrics:** versions panel + revert, server-side surface DnD, Merlin buttons (PR-5b) ([da7a45b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/da7a45b583765cd3606a60a71bddc72c70951894))
+* **settings:** engine auth routes (subscription/OAuth + API key) in Conexiones ([#795](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/795)) ([3f47be7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3f47be7332c9f0d134237d0a945146088c753851))
+* **settings:** merge Agentes + Modelos — per-agent model on the agent card ([#805](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/805)) ([abe758b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/abe758b125f9382aef8976d96aa2251d8740771f))
+* **settings:** Runtime/Motor engine accounts in APIs panel (SAN-299) ([997236f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/997236fd8fe8f8060e7da6d4a5f90089e056f0be))
+* **trust-score:** auto-run en el kickoff al aprobar el Company Brief ([#807](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/807)) ([ab01cd9](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ab01cd909cd271aa9673a65d484d22f63268ee48))
+
+
+### Bug Fixes
+
+* **content-engine:** harden :::ask parse, flag non-compliant clarify, dedupe media quick-action (SAN-238) ([#691](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/691)) ([a00f384](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a00f384e8d80f9c4bcfb9da0922989c053c6e302))
+* **content-engine:** PAA monitor creates Ideas + WebSearch-primary (no more dead-end) ([#724](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/724)) ([70caa40](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/70caa4065259bc4166d639c167cca019ec92b54d))
+* **deploy:** propagate MCP token config ([#780](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/780)) ([441ec88](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/441ec88073982d1cb37cccd3203a92c364a5050f))
+* **deploy:** stop injecting UNIPILE creds — UI/YALC keystore is source of truth ([#718](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/718)) ([12154b6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/12154b63a36991ca0b39a76f7a4100d78a64127f))
+* **layout:** sidebar collapses to a rail below lg instead of covering content ([#779](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/779)) ([7776aa0](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7776aa09c5e7faa631c5fd3b56d302cb541c6fd0))
+* **mc-chat:** avoid false quota warnings ([bc9da28](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/bc9da280fac7332d0873bc9f0417739b7e28e38c))
+* **metrics:** keep date-range popover anchored & on-screen (SAN-298) ([#793](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/793)) ([7a85d84](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7a85d84f62b501773fafc36baf72bc4a56a9771a))
+* **metrics:** make /api/metrics-collect collector trigger work in deploy (SAN-311) ([#812](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/812)) ([5a410b1](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5a410b18bb539f367fbe218d00693842b7e0991a))
+* **metrics:** make metrics runtime DB-only (SAN-300) ([#816](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/816)) ([b26e8ea](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b26e8eaad2db6766eda71d7d758ce8b6411f94f7))
+* **SAN-36:** authenticate GHCR pulls for YALC deploys ([d103b8b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d103b8b3e2940b49fe9614c36336ebc4f21630fa))
+* **sancho-mcp:** delegar trabajo a hilos de especialista (SAN-220) ([d3d9a70](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d3d9a7037ca1e8305cf133f58427d3d527a44f5f))
+* **settings:** compact, responsive Runtime/Motor table (SAN-299) ([9b7a085](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9b7a085ff5d933f12caa33042a65d2a878038304))
+* **settings:** expand the curated model list (Opus 4.8, OpenRouter GLM/Kimi/Qwen) ([#803](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/803)) ([4ec4fd5](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4ec4fd515fad353b85e88821bf4a8fa2e8b23036))
+* **settings:** explain PostHog region/Host URL to stop the 401 invalid-key ([#809](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/809)) ([6f124cf](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6f124cf32eefc7b119ee719fee8be9b8a5416a77))
+* **settings:** keep the agent name visible in Modelos por agente ([#797](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/797)) ([b4036d2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b4036d279b15dc4975e32639c8ae9bc9457ab192))
+
+## [0.10.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.10.0...v0.10.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* **ci:** drop orphaned frontend-slides gitlink + no-recurse submodules in promote-main ([#714](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/714)) ([c313d49](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c313d49bfd3a8eaabc37ad192ef7b6e09be37a51))
+
+## [0.10.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.9.0...v0.10.0) (2026-06-19)
+
+
+### Features
+
+* **monitor:** alert on API-vs-subscription auth source + hard guard ([#711](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/711)) ([53261a1](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/53261a188c0a4b48d57d76f19c829f9aab526566))
+
+## [0.9.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.8.1...v0.9.0) (2026-06-19)
+
+
+### Features
+
+* **yalc:** async job callback returns result to the chat (PR-2) ([#707](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/707)) ([e8ec154](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e8ec154b0ebd54178b77bbf03932de99922b19bd))
+
+
+### Bug Fixes
+
+* **mcp:** simplify token management UI SAN-234 ([#709](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/709)) ([a05d64d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a05d64d4f646b523d1d0b287f87199aff09b4739))
+
+## [0.8.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.8.0...v0.8.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* **mcp:** separate Sancho and Alarife token admin UI - SAN-234 ([#704](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/704)) ([5fb4694](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5fb46941c58345b6597b0cfe09a5268051bcaedb))
+
+## [0.8.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.7.0...v0.8.0) (2026-06-19)
+
+
+### Features
+
+* **chat:** inject client context-pack into specialist dispatch (SAN-246) ([#688](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/688)) ([92d2e40](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/92d2e40b014cdaff0c34543a219bc3b47363bca0))
+* **content-engine:** :::ask text-mode + recommended option + founder-led single form (SAN-247) ([#687](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/687)) ([4e769ff](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4e769fffa27e721328f9f752999b37eb593b0b26))
+* **content:** emit draft-updated event from updateDraft (SAN-244) ([#684](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/684)) ([ca64181](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ca64181ed5c71dc26c368789b3e9b6a315d457e6))
+* **content:** fail-loud media gate on phase transition + skipped escape (SAN-244) ([#685](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/685)) ([0d43227](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0d43227fec73354498a00f572b8833eeb54ee358))
+* **content:** per-founder voice_doc — distinct voice per founder (SAN-160) ([#690](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/690)) ([ea6d14f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ea6d14f780f6a69c7451ab949a602a20810399f7))
+* **installer:** instalador de un comando sin clonar (SAN-242) ([#677](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/677)) ([678ab39](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/678ab3946dfaf970dce67a9033a7af9feacf7bfa))
+* **intelligence:** close the meetings loop end-to-end (SAN-222) ([#625](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/625)) ([450141c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/450141cf5ea80624a8125caf6b227738baa2c1a2))
+* **publishing:** list available Metricool brands for voice setup (SAN-162) ([#689](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/689)) ([667acae](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/667acae3c6d4ca6d75922f7b731b9f3bdca4f861))
+* **publishing:** route Metricool publishing to each voice's account (SAN-162) ([#678](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/678)) ([b1ebf13](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b1ebf13a31154af17adaa1b51db657a402e889d7))
+
+
+### Bug Fixes
+
+* **docker:** make api_key auth mode work — mode-aware ANTHROPIC_API_KEY guard (SAN-235) ([#663](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/663)) ([cb67040](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/cb670404d1268003bbdfa88f24af06bb6235cba9))
+* **notion:** wire per-client Notion connection end-to-end (SAN-251) ([f370cb7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f370cb781043bfb8297546d1c7111d118de6e3e0))
+* **release:** version grouped release PR title to stop recurring autorelease block ([#676](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/676)) ([d98e33e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d98e33ef078080265d131442141425ecb1654059))
+* **runtime:** export MC_BASE + repair specialist mounts + sub-aware anthropic health ([#672](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/672)) ([0fc4dcb](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0fc4dcb56f29756a541e289a9540c99c7f1fb28c))
+
+
+### Performance Improvements
+
+* **docker:** amd64-only + registry cache + bake runtime deps — cut &gt;40min builds (SAN-236) ([#665](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/665)) ([2886e83](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2886e8356b38dc2bfd321eaae5bbcf81f96c40ba))
+
+## [0.7.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.6.0...v0.7.0) (2026-06-18)
+
+
+### Features
+
+* **mcp:** add Alarife registry helper ([176d9ac](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/176d9ac7afb2e5469504644f838ec840e6e0220b))
+* **mcp:** deliver Alarife MCP token for direct Claude Code connection ([#649](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/649)) ([1efe75c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1efe75cdd79e6cd1b2cf612e1e9cd96170607435))
+* **mcp:** manage Sancho MCP tokens in admin UI - SAN-234 ([#661](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/661)) ([d94055c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d94055c7d5a35bd0b1be9ebbb92a77df2c98aad5))
+* **souls:** cada especialista declara su sistema de registro (SAN-223) ([#627](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/627)) ([00ca762](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/00ca762795e601d40707ab090b7694a530d824b7))
+* **trust-score:** integrar Trust Score Analyzer en Sancho (SAN-194) ([#610](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/610)) ([423eeac](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/423eeacf853261c5ef8dbcd29a50fe793cb13a2a))
+
+
+### Bug Fixes
+
+* **chat:** mensaje correcto de billing Anthropic + cerrar footgun API key (SAN-224) ([#633](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/633)) ([64a2795](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/64a27950c0d9a9d099c7f6542aa1cff47b8e87ea))
+* **mcp:** parse Alarife SSE tool list ([#654](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/654)) ([47a75a3](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/47a75a33473229ea88e089cedbfa6402e5eb5da7))
+* **media-creation:** link de archivo OD a la API del daemon (SAN-225) ([#635](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/635)) ([f9308a9](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f9308a9f6964b56706d167a60639cda78f069eba))
+
+## [0.5.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.4.2...v0.5.0) (2026-06-10)
+
+
+### Features
+
+* add Sancho MCP server ([cf7f787](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/cf7f7877ffa07689d87393d74b03137af9fbe0eb))
+* add Sancho MCP task write tools (SAN-64) ([#314](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/314)) ([5d44d5d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5d44d5d88c3314fed3cdc47a511f7da84d7717fe))
+* **agents:** roster v4.1 — merge Yalc into Rocinante + promote Alarife to full agent (SAN-116) ([#391](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/391)) ([855ae5d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/855ae5da61f9f0c8c6af78f84bd8ede9a78edbd7))
+* **comments:** SAN-15 — commented-snapshot model with file-side append ([#232](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/232)) ([d165220](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d1652209f4cd5d5127372acbb447941a57bc0897))
+* **comments:** SAN-15 — inline anchor highlights, hover tooltip, detail modal, edit/delete ([#231](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/231)) ([25545d7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/25545d7ef4cb55bedbffc7d0fe888677cd1f781b))
+* **comments:** SAN-15 — internal Mission Control doc viewer overlay + Sancho protocol ([#234](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/234)) ([98a743d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/98a743dff06f5634273d8573ba210137cf58a0d4))
+* **comments:** SAN-15 PR1 — schema, endpoints, and helper for shared doc comments ([#228](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/228)) ([6264d42](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6264d427ada0cc88f11a2e82dd76fbe9d30528e7))
+* **comments:** SAN-15 PR2 — public comments UI on /share/[token] ([#229](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/229)) ([d32c881](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d32c88136a7731a111cb6e7a347cb2cd33c74442))
+* configurable admin domain (ADMIN_EMAIL_DOMAIN) ([#208](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/208)) ([7ef3228](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7ef3228478652cd739584fe75de3baa2299dbb95))
+* dual model auth (api_key | subscription) for Anthropic and OpenAI ([#219](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/219)) ([58f98a7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/58f98a7b716d1522775aef7bee85b94d8924cf76))
+* **foundation:** declare and route owner agent per Foundation thread (SAN-102) ([#352](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/352)) ([2fe886f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2fe886ff609f43d3e95e6c4134ba503ad132648e))
+* **intelligence+agents:** provider preflight + /deep-research routing + wire Hamete (SAN-100, SAN-101) ([#358](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/358)) ([952c73b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/952c73b63aefec42e4ff60969160b7e8bf01e4b0))
+* **internal-api:** include client metrics summary in /status ([#336](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/336)) ([01f384e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/01f384ed6b14fa4bbca77764a4906b7652e20c64))
+* **packaging:** bundled local Postgres with conditional driver (B9) ([#366](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/366)) ([a6a0274](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a6a02746376da2698adb22c98d0974663dcf0c31))
+* **packaging:** configurable cron publish channel (Slack, extensible) — D5 + D5b UI ([#372](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/372)) ([5e4c3ab](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5e4c3ab4c17e347cf906966aea0989f89b31df23))
+* **packaging:** one-command install.sh + setup wizard (Fase 4/6) ([#331](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/331)) ([19a587f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/19a587ff6af6f2fbe4e63c78a9eefcdbdb9e1808))
+* **packaging:** self-contained image — seed OpenClaw home from the image ([#369](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/369)) ([854c599](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/854c599652cbd959d3ef8d699570581bb86706e1))
+* SAN-36 add YALC outbound publish flow ([fe22a49](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/fe22a49bf9dd7966cc9aeb36cd16c0d2e6cae3b1))
+* SAN-36 add YALC outbound publish flow ([2a070af](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2a070af2a2ac2225ef85c131b3bbac0791715178))
+* **settings:** remove system API keys from the UI ([#392](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/392)) ([ea93573](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ea93573c5be7701b943d73bfdcd9fcd089e910b8))
+* **settings:** staging-only "Sync with Prod" data sync (A/B/C) ([#401](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/401)) ([5bfb84f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5bfb84ff4b523ccea5d8d7030fbdd3722caa9e7a))
+* surface YALC provider keys in API settings ([fa514f5](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/fa514f5e1c9d3a9001fad774759067a34a7e4280))
+* surface YALC provider keys in API settings ([3ed538b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3ed538b330d0f53d12a8a1ec45f2f5754a829438))
+* **yalc:** auto-provision each brand's YALC brain from Sancho ([3456a0e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3456a0e9ee5105fa72c208ffba08ab7a99544319))
+* **yalc:** auto-provision each brand's YALC brain from Sancho (no CLI) ([1a6afa5](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1a6afa55c9b27725c18f5e638fbdfb28d97d981d))
+* **yalc:** sync approved Foundation docs into each brand's YALC brain ([#429](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/429)) ([f3d38c7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f3d38c768fe57989239b6b10c304e4844e214dbc))
+
+
+### Bug Fixes
+
+* **auth:** route gateway Anthropic calls through Claude subscription + extra-usage alert ([#388](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/388)) ([bc69383](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/bc693839dd61f843191f54fe2b46c752855d6621))
+* avoid duplicate YALC API catalog entries ([2a51870](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2a51870590b0b3437487a3c588b152207d656525))
+* avoid duplicate YALC API catalog entries ([3127d96](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3127d96ec9081897235c49fade978f17ed935f7c))
+* **chat:** alias *-analysis pillars to *-intelligence skills (SAN-98) ([#348](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/348)) ([aa37af2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/aa37af22bebd0775d7439a37e6c6d4924f675421))
+* **comments:** SAN-15 — drop commented sibling when no comments, clean title and render ([#233](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/233)) ([f828821](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f828821e9f02383cfdbdba1336df8eb90794524b))
+* **comments:** SAN-15 PR2 — popup dismissal + viewport-relative positioning ([#230](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/230)) ([c6ca083](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c6ca0839defbaaa2ea670fc70aa4f05040b3b23c))
+* **content:** guard Ideas tab against ideas missing content_type ([#342](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/342)) ([9aecff6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9aecff683c526aa6b21581f84f29a164f693a818))
+* **content:** guard Ideas tab against ideas missing content_type ([#342](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/342)) ([650af77](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/650af775c5732753298f13ca4842dd91208541b2))
+* **dashboard:** redirect non-admins to their client dashboard (SAN-99) ([#347](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/347)) ([8a1ae32](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8a1ae32ed4cfecd2f769a071e3e7e5c31586d1ca))
+* **deploy:** inject YALC_BASE_URL into prod/staging .env ([eaf631c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/eaf631c365d4e2eec6ede35c7cfae56d7e5a32f8))
+* **deploy:** inject YALC_BASE_URL so the cockpit never falls back to localhost ([8b1e99e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8b1e99e899579910e1ca8fca356eb0673338dea3))
+* **deploy:** self-heal stray src/ edits before tag checkout ([227b3bc](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/227b3bc5b43ec179f1ac4ec57ee2ebdb907eb6f5))
+* **deploy:** self-heal stray src/ edits before tag checkout ([252a293](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/252a2932fb39a85b9d0c882927e9e8779acd10ee))
+* force staging deploy to serve built image ([b4aa612](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b4aa612c9adc8606545b2cbc98d62d6dd75fbe32))
+* **foundation:** SAN-27 decouple Full from Fast + add reseed script + chat timeout fix ([#226](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/226)) ([1462c0a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1462c0af15b8419bb42d9ec903522750bbfbfe1a))
+* include drizzle config in staging image ([14e5d9c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/14e5d9cf59ff29047463950f03b9eebdc0ace183))
+* keep staging deploy heredoc after migration ([18ec48d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/18ec48db51454eac02ad113ecf6330e59709727b))
+* **lint:** clear 60 pre-existing lint errors + make pre-push lint blocking ([#322](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/322)) ([e308197](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e30819708523c9e506e412d3a7624ba124493fb6))
+* **models:** correct cron model arg + validate availability before persist ([#218](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/218)) ([3d45ddc](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3d45ddc98a9917d93e70776f4b554a2028fdfc12))
+* **packaging:** wizard wrote duplicate DATABASE_URL for local-db (B9 follow-up) ([#367](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/367)) ([2293ec5](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2293ec506e24fafd043d51ec102e2e6d73f9eb90))
+* prevent mc chat long generation aborts ([#201](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/201)) ([e208553](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e208553e1f6354a3a01b9df461fa71eda17726d7))
+* run API connection tests in workspace path ([ce6c04b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ce6c04b8c31363075fb8cf0674a74855fb8d8af3))
+* run staging migrations without app entrypoint ([10717ba](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/10717ba2dc89b4676e49293542c6be38c65b9a45))
+* SAN-36 avoid stale chat cancel swallowing replies ([3e449e4](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3e449e4c2d123f716b058bd67a937eb3cdfcee3c))
+* SAN-36 avoid stale chat cancel swallowing replies ([17f9819](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/17f98197997eca147ad344e37d7d6ee303b8c2fd))
+* SAN-36 harden mc-chat YALC dispatch ([#254](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/254)) ([6407f43](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6407f433b962fea4362a934460ceb1e4b6ffd86a))
+* SAN-36 harden mc-chat YALC dispatch ([#254](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/254)) ([7d6ea12](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7d6ea12c03ef364ccf338913fb9c24f369c09e89))
+* SAN-36 keep YALC chat responsive ([1114505](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/11145056fc607719c41a6376e7abf4c2a8eae6bc))
+* SAN-36 keep YALC chat responsive ([91b2f42](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/91b2f42827ee95035602df222986fdc7a63974d9))
+* SAN-36 route chat cancel to selected agent ([0bbdb86](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0bbdb86aff3d2edb0cebd502dd07908f600cad33))
+* SAN-36 route chat cancel to selected agent ([078fa87](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/078fa87f2cf62d498ab9d953ea7a46970cfdc365))
+* SAN-36 route outbound campaigns through YALC drafts ([#262](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/262)) ([46ea6b9](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/46ea6b92cf386b45152baec966727804510a7d1f))
+* SAN-36 route outbound campaigns through YALC drafts ([#262](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/262)) ([fe29b2d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/fe29b2dfcb9ce222e338bbbe5062dcf8d9c4b332))
+* SAN-36 run YALC on Anthropic ([#256](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/256)) ([0acd8ad](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0acd8adfc2ea8c2ffb4ca74fd7b258ee01b994fb))
+* SAN-36 run YALC on Anthropic ([#256](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/256)) ([eca30f7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/eca30f70a4912745763571da55a8c648c781351b))
+* SAN-36 run YALC on GPT-5.5 ([#255](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/255)) ([d44b238](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d44b2389e71a6a8555982e69c0e22c81a25c6a20))
+* SAN-36 run YALC on GPT-5.5 ([#255](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/255)) ([146375a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/146375a80148c0c36a528080d9c533799094f186))
+* SAN-36 show YALC email sequence drafts ([#293](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/293)) ([deeaeb4](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/deeaeb42f51f716e630236d0a3dc803efb273ebe))
+* SAN-36 show YALC email sequence drafts ([#293](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/293)) ([7ec35a5](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7ec35a53e3c9823a4a7faa27463051e77cb81749))
+* Sancho skills — Apify scraping, run timeouts, chat→owner-agent routing (SAN-98) ([#343](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/343)) ([f58f37b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f58f37bf1b54a157c34e88dff6e7b99994c61df3))
+* use safe MCP audit migration runner ([0931459](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0931459a250eea2244384e914c6c39e115bf12c3))
+* **yalc:** add explicit campaign lifecycle commands ([bec2ba5](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/bec2ba5abd30d8dc17541795fa3cea979356501c))
+* **yalc:** add explicit campaign lifecycle commands ([f834da9](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f834da966a4b928337aaf226fedb1cbdc111469a))
+* **yalc:** scope every Sancho-&gt;YALC call to the brand tenant ([2a29418](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2a29418ebe450daf51cbc2742488c994a7300e8e))
+* **yalc:** scope every Sancho→YALC call to the brand tenant ([2b193ed](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2b193ed3a630047eaf67b7be3f308b09b64c9ef0))
+
 ## [0.4.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.4.1...v0.4.2) (2026-05-27)
 
 ### Bug Fixes

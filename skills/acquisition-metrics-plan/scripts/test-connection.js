@@ -150,7 +150,7 @@ const TESTERS = {
   async posthog(config, env, slug) {
     const apiKey = env[`${slug}_POSTHOG_API_KEY`];
     const projectId = config.projectId || config.PROJECT_ID;
-    const host = config.host || config.HOST || 'https://app.posthog.com';
+    const host = config.host || config.HOST || 'https://us.posthog.com';
     if (!apiKey) return { ok: false, error: `Env var ${slug}_POSTHOG_API_KEY not set` };
     if (!projectId) return { ok: false, error: 'projectId not configured' };
 
@@ -232,6 +232,27 @@ const TESTERS = {
         { headers: { 'Authorization': `Bearer ${apiKey}` } }
       );
       if (res.status === 200) return { ok: true, detail: 'Instantly v2 authenticated' };
+      return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
+  async notion(config, env, slug) {
+    const token = env[`${slug}_NOTION_API_KEY`];
+    if (!token) return { ok: false, error: `Env var ${slug}_NOTION_API_KEY not set` };
+
+    try {
+      const res = await httpRequest(
+        'https://api.notion.com/v1/users/me',
+        { headers: { 'Authorization': `Bearer ${token}`, 'Notion-Version': '2022-06-28' } }
+      );
+      if (res.status === 200) {
+        let name = 'token valid';
+        try { const me = JSON.parse(res.body); name = me?.bot?.workspace_name ? `workspace "${me.bot.workspace_name}"` : (me?.name || name); } catch {}
+        return { ok: true, detail: `Notion ${name}` };
+      }
+      if (res.status === 401) return { ok: false, error: 'Invalid or revoked Notion token (HTTP 401)' };
       return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
     } catch (e) {
       return { ok: false, error: e.message };

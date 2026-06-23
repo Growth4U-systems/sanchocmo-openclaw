@@ -15,6 +15,7 @@ import {
 } from "@/db/schema";
 import { BASE, brandDir, meetingIntelligenceConfigFile, meetingIntelligenceDir } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
+import { createTask } from "@/lib/data/tasks";
 
 export type MeetingStatus = "needs_raw_sync" | "raw_available" | "processed" | "needs_review" | "failed";
 export type InsightStatus = "draft" | "reviewable" | "accepted" | "rejected" | "converted";
@@ -151,6 +152,7 @@ export interface ProposalEntry {
   taskStatus: string;
   meetingId?: string | null;
   insightId?: string | null;
+  taskId?: string | null;
 }
 
 export interface MeetingDetailRecord {
@@ -175,6 +177,11 @@ export interface MeetingDetailRecord {
   recommendations: ProposalEntry[];
 }
 
+interface MeetingIntelligenceReadOptions {
+  prepareStorage?: boolean;
+  backfillLegacy?: boolean;
+}
+
 const STORAGE_NOT_CONFIGURED = {
   configured: false,
   provider: "neon",
@@ -193,6 +200,10 @@ function asString(value: unknown, fallback = "") {
 
 function asBoolean(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
+}
+
+function messageFromError(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function emptyScope(): SourceScope {
@@ -1038,6 +1049,7 @@ function mapRecommendation(row: typeof miRecommendations.$inferSelect, meetingTi
     taskStatus: row.taskStatus,
     meetingId: row.meetingId,
     insightId: row.insightId,
+    taskId: row.taskId,
   };
 }
 
@@ -1139,7 +1151,7 @@ export async function saveMeetingIntelligenceConfig(slug: string, input: Partial
   return getMeetingIntelligenceConfig(slug);
 }
 
-export async function getMeetingIntelligenceState(slug: string) {
+export async function getMeetingIntelligenceState(slug: string, options: MeetingIntelligenceReadOptions = {}) {
   if (!hasDatabase) {
     return {
       ok: false,
@@ -1156,19 +1168,50 @@ export async function getMeetingIntelligenceState(slug: string) {
     };
   }
 
-  await ensureMeetingIntelligenceStorage();
-  await seedLegacyIfEmpty(slug);
-  await relinkLegacyDraftInsights(slug);
+  if (options.prepareStorage !== false) {
+    await ensureMeetingIntelligenceStorage();
+  }
+  if (options.backfillLegacy !== false) {
+    await seedLegacyIfEmpty(slug);
+    await relinkLegacyDraftInsights(slug);
+  }
   const database = getDb();
-  const [sourceRows, meetingRows, artifactRows, insightRows, impactRows, recommendationRows, runRows] = await Promise.all([
-    database.select().from(miSources).where(eq(miSources.slug, slug)),
-    database.select().from(miMeetings).where(eq(miMeetings.slug, slug)).orderBy(desc(miMeetings.meetingDate), desc(miMeetings.meetingTime)),
-    database.select().from(miMeetingArtifacts).where(eq(miMeetingArtifacts.slug, slug)),
-    database.select().from(miInsights).where(eq(miInsights.slug, slug)).orderBy(desc(miInsights.createdAt)),
-    database.select().from(miDocumentImpacts).where(eq(miDocumentImpacts.slug, slug)),
-    database.select().from(miRecommendations).where(eq(miRecommendations.slug, slug)).orderBy(desc(miRecommendations.createdAt)),
-    database.select().from(miRuns).where(eq(miRuns.slug, slug)).orderBy(desc(miRuns.startedAt)).limit(1),
-  ]);
+  let sourceRows: Array<typeof miSources.$inferSelect>;
+  let meetingRows: Array<typeof miMeetings.$inferSelect>;
+  let artifactRows: Array<typeof miMeetingArtifacts.$inferSelect>;
+  let insightRows: Array<typeof miInsights.$inferSelect>;
+  let impactRows: Array<typeof miDocumentImpacts.$inferSelect>;
+  let recommendationRows: Array<typeof miRecommendations.$inferSelect>;
+  let runRows: Array<typeof miRuns.$inferSelect>;
+  try {
+    [sourceRows, meetingRows, artifactRows, insightRows, impactRows, recommendationRows, runRows] = await Promise.all([
+      database.select().from(miSources).where(eq(miSources.slug, slug)),
+      database.select().from(miMeetings).where(eq(miMeetings.slug, slug)).orderBy(desc(miMeetings.meetingDate), desc(miMeetings.meetingTime)),
+      database.select().from(miMeetingArtifacts).where(eq(miMeetingArtifacts.slug, slug)),
+      database.select().from(miInsights).where(eq(miInsights.slug, slug)).orderBy(desc(miInsights.createdAt)),
+      database.select().from(miDocumentImpacts).where(eq(miDocumentImpacts.slug, slug)),
+      database.select().from(miRecommendations).where(eq(miRecommendations.slug, slug)).orderBy(desc(miRecommendations.createdAt)),
+      database.select().from(miRuns).where(eq(miRuns.slug, slug)).orderBy(desc(miRuns.startedAt)).limit(1),
+    ]);
+  } catch (error) {
+    return {
+      ok: false,
+      storage: {
+        configured: true,
+        provider: "neon",
+        message: `Meeting Intelligence read failed: ${messageFromError(error)}`,
+      },
+      meetings: [],
+      totals: { meetings: 0, decisions: 0, actions: 0, proposals: 0, sources: 0 },
+      intelligence: [],
+      decisions: [],
+      documents: [],
+      proposals: [],
+      lastSync: null,
+      lastCheckStatus: "read_failed",
+      lastRun: null,
+    };
+  }
 
   const artifactsByMeeting = new Map(artifactRows.map((artifact) => [artifact.meetingId, artifact]));
   const countsByMeeting = new Map<string, { decisions: number; actions: number }>();
@@ -1220,22 +1263,59 @@ export async function getMeetingIntelligenceState(slug: string) {
   };
 }
 
-export async function getMeetingIntelligenceMeeting(slug: string, meetingId: string): Promise<{ ok: boolean; storage: RawRecord; detail: MeetingDetailRecord | null; error?: string }> {
+export async function getMeetingIntelligenceMeeting(
+  slug: string,
+  meetingId: string,
+  options: MeetingIntelligenceReadOptions = {},
+): Promise<{ ok: boolean; storage: RawRecord; detail: MeetingDetailRecord | null; error?: string }> {
   if (!hasDatabase) {
     return { ok: false, storage: STORAGE_NOT_CONFIGURED, detail: null, error: STORAGE_NOT_CONFIGURED.message };
   }
-  await ensureMeetingIntelligenceStorage();
+  if (options.prepareStorage !== false) {
+    await ensureMeetingIntelligenceStorage();
+  }
   const database = getDb();
-  const meeting = (await database.select().from(miMeetings).where(and(eq(miMeetings.slug, slug), eq(miMeetings.id, meetingId))).limit(1))[0];
+  let meeting: typeof miMeetings.$inferSelect | undefined;
+  try {
+    meeting = (await database.select().from(miMeetings).where(and(eq(miMeetings.slug, slug), eq(miMeetings.id, meetingId))).limit(1))[0];
+  } catch (error) {
+    return {
+      ok: false,
+      storage: {
+        configured: true,
+        provider: "neon",
+        message: `Meeting Intelligence read failed: ${messageFromError(error)}`,
+      },
+      detail: null,
+      error: messageFromError(error),
+    };
+  }
   if (!meeting) {
     return { ok: false, storage: { configured: true, provider: "neon" }, detail: null, error: "Meeting not found" };
   }
-  const [artifact, insightRows, impactRows, recommendationRows] = await Promise.all([
-    database.select().from(miMeetingArtifacts).where(eq(miMeetingArtifacts.meetingId, meetingId)).limit(1),
-    database.select().from(miInsights).where(and(eq(miInsights.slug, slug), eq(miInsights.meetingId, meetingId))).orderBy(desc(miInsights.createdAt)),
-    database.select().from(miDocumentImpacts).where(and(eq(miDocumentImpacts.slug, slug), eq(miDocumentImpacts.meetingId, meetingId))),
-    database.select().from(miRecommendations).where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.meetingId, meetingId))),
-  ]);
+  let artifact: Array<typeof miMeetingArtifacts.$inferSelect>;
+  let insightRows: Array<typeof miInsights.$inferSelect>;
+  let impactRows: Array<typeof miDocumentImpacts.$inferSelect>;
+  let recommendationRows: Array<typeof miRecommendations.$inferSelect>;
+  try {
+    [artifact, insightRows, impactRows, recommendationRows] = await Promise.all([
+      database.select().from(miMeetingArtifacts).where(eq(miMeetingArtifacts.meetingId, meetingId)).limit(1),
+      database.select().from(miInsights).where(and(eq(miInsights.slug, slug), eq(miInsights.meetingId, meetingId))).orderBy(desc(miInsights.createdAt)),
+      database.select().from(miDocumentImpacts).where(and(eq(miDocumentImpacts.slug, slug), eq(miDocumentImpacts.meetingId, meetingId))),
+      database.select().from(miRecommendations).where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.meetingId, meetingId))),
+    ]);
+  } catch (error) {
+    return {
+      ok: false,
+      storage: {
+        configured: true,
+        provider: "neon",
+        message: `Meeting Intelligence read failed: ${messageFromError(error)}`,
+      },
+      detail: null,
+      error: messageFromError(error),
+    };
+  }
   const artifactsByMeeting = new Map([[meetingId, artifact[0]]].filter(([, item]) => Boolean(item)) as Array<[string, typeof miMeetingArtifacts.$inferSelect]>);
   const countsByMeeting = new Map<string, { decisions: number; actions: number }>();
   insightRows.forEach((insight) => {
@@ -1307,20 +1387,57 @@ export async function createMeetingIntelligenceRun(input: {
 export async function applyMeetingRecommendationAction(slug: string, recommendationId: string, action: RecommendationAction) {
   if (!hasDatabase) return { ok: false, storage: STORAGE_NOT_CONFIGURED, recommendation: null };
   await ensureMeetingIntelligenceStorage();
+  const database = getDb();
   const now = new Date();
+  const storage = { configured: true, provider: "neon" };
+
+  // Fix B (SAN-222): "Convert" creates a REAL task on the board (this is where the
+  // loop used to die — it only flipped status). Idempotent: only create the task
+  // the first time; a re-convert reuses the stored taskId, and createTask is also
+  // keyed by thread (`mi-rec-<id>`) as a backstop against duplicates.
+  if (action === "convert") {
+    const existing = (await database
+      .select()
+      .from(miRecommendations)
+      .where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.id, recommendationId)))
+      .limit(1))[0];
+    if (!existing) return { ok: true, storage, recommendation: null };
+
+    let taskId = existing.taskId;
+    if (!taskId) {
+      const { config } = await getMeetingIntelligenceConfig(slug);
+      const owner = config.routing?.reviewOwner || "Alfonso";
+      const task = await createTask(slug, {
+        // Deterministic, unique id per recommendation. Without it createTask falls
+        // back to getNextChildTaskId(slug, "") — which is FS-based and returns the
+        // same "-T01" for every parentless task, so a second convert would collide
+        // on sourceKey and overwrite the first task in the db backend. The explicit
+        // id makes convert collision-proof and idempotent across both backends.
+        id: `task-${existing.id}`,
+        name: existing.title,
+        description: existing.description ?? undefined,
+        owner,
+        type: "execution",
+        mc_chat_thread_id: `mi-rec-${existing.id}`,
+      });
+      taskId = (task as { id?: string } | null)?.id ?? null;
+    }
+
+    const updated = await database
+      .update(miRecommendations)
+      .set({ status: "converted", taskStatus: "todo", taskId, convertedAt: now, updatedAt: now })
+      .where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.id, recommendationId)))
+      .returning();
+    return { ok: true, storage, recommendation: updated[0] ? mapRecommendation(updated[0]) : null };
+  }
+
   const update = action === "reject"
     ? { status: "rejected", taskStatus: "rejected", rejectedAt: now, updatedAt: now }
-    : action === "convert"
-      ? { status: "converted", taskStatus: "todo", convertedAt: now, updatedAt: now }
-      : { status: "approved", taskStatus: "todo", approvedAt: now, updatedAt: now };
-  const updated = await getDb()
+    : { status: "approved", taskStatus: "todo", approvedAt: now, updatedAt: now };
+  const updated = await database
     .update(miRecommendations)
     .set(update)
     .where(and(eq(miRecommendations.slug, slug), eq(miRecommendations.id, recommendationId)))
     .returning();
-  return {
-    ok: true,
-    storage: { configured: true, provider: "neon" },
-    recommendation: updated[0] ? mapRecommendation(updated[0]) : null,
-  };
+  return { ok: true, storage, recommendation: updated[0] ? mapRecommendation(updated[0]) : null };
 }

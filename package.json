@@ -1,6 +1,6 @@
 {
   "name": "mission-control",
-  "version": "0.4.2",
+  "version": "0.11.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:plugins": "node --test plugins/mc-chat/src/__tests__/*.test.js",
-    "test:lib": "tsx --test src/lib/__tests__/*.test.mts src/lib/data/__tests__/*.test.mts src/lib/calc-creator-core/__tests__/*.test.mts src/lib/partnerships/__tests__/*.test.mts",
+    "test:lib": "tsx --test src/lib/__tests__/*.test.mts src/lib/data/__tests__/*.test.mts src/lib/metrics/__tests__/*.test.mts src/lib/calc-creator-core/__tests__/*.test.mts src/lib/partnerships/__tests__/*.test.mts",
     "test:calc": "tsx --test src/lib/calc-creator-core/__tests__/*.test.mts",
     "test:partnerships": "tsx --test src/lib/partnerships/__tests__/*.test.mts",
     "migrate:media": "tsx scripts/migrate-legacy-media.mts",
@@ -23,8 +23,10 @@
     "db:migrate:local": "node scripts/migrate-local.mjs",
     "db:generate:local": "drizzle-kit generate --config drizzle.local.config.ts",
     "db:migrate:mcp": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql",
-    "db:migrate:deploy": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql src/db/migrations/0007_feedback_insights.sql src/db/migrations/0008_comments_v2.sql",
+    "db:migrate:deploy": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql src/db/migrations/0007_feedback_insights.sql src/db/migrations/0008_comments_v2.sql src/db/migrations/0011_metric_snapshots.sql src/db/migrations/0012_metric_dashboards.sql src/db/migrations/0013_intelligence_engine.sql src/db/migrations/0014_metric_schedule_runs.sql",
     "db:verify": "tsx scripts/verify-migration.ts",
+    "backfill:metrics": "tsx scripts/metrics/backfill-metric-snapshots.ts",
+    "export:metrics": "node scripts/metrics/export-metric-snapshots.mjs",
     "db:sync-tasks": "tsx scripts/migrate-projects-to-db.ts --apply",
     "db:sync-tasks:dry": "tsx scripts/migrate-projects-to-db.ts --dry-run",
     "prepare": "husky"
@@ -79,6 +81,7 @@
     "postcss": "^8",
     "prettier": "^3.8.1",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

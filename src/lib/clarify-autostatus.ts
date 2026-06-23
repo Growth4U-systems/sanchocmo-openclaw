@@ -67,6 +67,47 @@ export function extractAskIds(body: string): string[] {
 }
 
 /**
+ * The clarify contract (see `skills/_shared/clarify-by-type.md` §2/§4): the
+ * writer must post EXACTLY these 4 `:::ask` ids, in this set. A degraded
+ * clarify (3 questions, custom ids) is technically still answerable, but it
+ * means the writer skipped the structure that forces a real angle out of the
+ * human — so we want a non-silent signal when it happens.
+ */
+export const CANONICAL_CLARIFY_IDS = [
+  "q_provoke",
+  "q_evidence",
+  "q_insight",
+  "q_audience",
+] as const;
+
+export interface ClarifyComplianceResult {
+  /** true ⟺ the parsed ids are EXACTLY the canonical 4 (set-equal, any order). */
+  compliant: boolean;
+  /** Canonical ids the doc is missing (empty when compliant). */
+  missing: string[];
+  /** Ids present in the doc that aren't part of the canonical contract. */
+  unexpected: string[];
+}
+
+/**
+ * Pure, side-effect-free check of a clarify doc's ask ids against the canonical
+ * 4-question contract. Order-insensitive; duplicates are ignored (the caller's
+ * `extractAskIds` already dedupes). Lives here so both the autostatus path and
+ * tests can reuse it without touching the filesystem.
+ */
+export function checkClarifyCompliance(askIds: string[]): ClarifyComplianceResult {
+  const present = new Set(askIds);
+  const canonical = new Set<string>(CANONICAL_CLARIFY_IDS);
+  const missing = CANONICAL_CLARIFY_IDS.filter((id) => !present.has(id));
+  const unexpected = askIds.filter((id) => !canonical.has(id));
+  return {
+    compliant: missing.length === 0 && unexpected.length === 0,
+    missing,
+    unexpected,
+  };
+}
+
+/**
  * Content threads are `{slug}:content:{contentTaskId.toLowerCase()}` (see
  * `writer-trigger.ts#buildThreadId`). Returns the (lowercased) content task
  * id, or null when the thread doesn't belong to this slug's content engine.
@@ -90,6 +131,16 @@ export interface ClarifyAutostatusResult {
     | "not-pending"
     | "no-ask-ids"
     | "incomplete";
+  /**
+   * Whether the clarify doc honored the canonical 4-question contract
+   * (`q_provoke / q_evidence / q_insight / q_audience`). `undefined` when we
+   * never got far enough to read the ask ids (no doc, wrong thread, etc.).
+   * Detection-only and fail-safe: a non-compliant clarify is still marked
+   * answered — this flag just exposes the degradation to logs / callers / UI.
+   */
+  compliant?: boolean;
+  /** Canonical ids missing from the doc (only set when `compliant === false`). */
+  missingAskIds?: string[];
 }
 
 /**
@@ -124,6 +175,24 @@ export function maybeMarkClarifyAnswered(
   const askIds = extractAskIds(clarify.body);
   if (askIds.length === 0) return { marked: false, reason: "no-ask-ids" };
 
+  // Non-compliance detection (SAN-238 P3): flag — but never block — a clarify
+  // that doesn't match the canonical 4-question contract. This is purely a
+  // signal; the answered-marking below runs exactly as before regardless.
+  const compliance = checkClarifyCompliance(askIds);
+  if (!compliance.compliant) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[clarify-autostatus] non-compliant clarify for ${slug}/${found.ct.idea_id}: ` +
+        `expected canonical ids [${CANONICAL_CLARIFY_IDS.join(", ")}], got [${askIds.join(", ")}]` +
+        (compliance.missing.length ? ` — missing [${compliance.missing.join(", ")}]` : "") +
+        (compliance.unexpected.length ? ` — unexpected [${compliance.unexpected.join(", ")}]` : ""),
+    );
+  }
+  const complianceFields = {
+    compliant: compliance.compliant,
+    ...(compliance.compliant ? {} : { missingAskIds: compliance.missing }),
+  };
+
   // Answers can arrive split across messages (each ask group submits its own
   // message). Merge the thread history first, current message last so the
   // newest answer wins.
@@ -135,7 +204,7 @@ export function maybeMarkClarifyAnswered(
   Object.assign(merged, currentAnswers);
 
   if (!askIds.every((id) => id in merged)) {
-    return { marked: false, reason: "incomplete" };
+    return { marked: false, reason: "incomplete", ...complianceFields };
   }
 
   const clarifyAnswers: Record<string, string> = {};
@@ -144,5 +213,5 @@ export function maybeMarkClarifyAnswered(
   updateDraft(slug, found.ct.idea_id, "clarify", {
     meta: { clarify_status: "answered", clarify_answers: clarifyAnswers },
   });
-  return { marked: true, reason: "marked" };
+  return { marked: true, reason: "marked", ...complianceFields };
 }

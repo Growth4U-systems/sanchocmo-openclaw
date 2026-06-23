@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { loadDraft, updateDraft } from "@/lib/data/drafts";
-import { getProvider } from "@/lib/publishing/registry";
+import { cancelScheduledPost } from "@/lib/publishing/actions";
 
 /**
  * POST /api/publishing/cancel
@@ -20,25 +19,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Missing slug, ideaId or channel" });
   }
 
-  const draft = loadDraft(slug, ideaId, channel);
-  if (!draft) return res.status(404).json({ error: "Draft not found" });
-  const pub = draft.meta.publishing;
-  if (!pub || pub.status !== "scheduled") {
-    return res.status(400).json({ error: "Draft is not currently scheduled" });
+  try {
+    const result = await cancelScheduledPost(slug, ideaId, channel);
+    return res.status(result.ok ? 200 : 502).json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Cancel failed";
+    const status = message === "Draft not found" ? 404 : 400;
+    return res.status(status).json({ error: message });
   }
-
-  const provider = pub.provider ? getProvider(pub.provider) : null;
-  if (provider?.cancel && pub.external_job_id) {
-    const r = await provider.cancel(slug, pub.external_job_id);
-    if (!r.ok) return res.status(502).json({ error: r.error || "Cancel failed" });
-  }
-
-  const updated = updateDraft(slug, ideaId, channel, {
-    meta: {
-      publishing: { ...pub, status: "canceled", error: null },
-    },
-  });
-  return res.status(200).json({ ok: true, draft: updated });
 }
 
 export default withErrorHandler(handler);
