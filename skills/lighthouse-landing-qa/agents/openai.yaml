@@ -1,0 +1,3 @@
+display_name: Lighthouse Landing QA
+short_description: Enforces mobile Lighthouse >=95 before Alarife web publish.
+default_prompt: Verify the preview URL with mobile Lighthouse/PageSpeed, keep improving the draft until the average score is at least 95, and record any approved waivers only for non-scoring audits.

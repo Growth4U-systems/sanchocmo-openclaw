@@ -5,6 +5,7 @@ import {
   useReconcileNow,
   useReconcileState,
 } from "@/hooks/useContentReconcile";
+import type { ReconcileStateResponse } from "@/hooks/useContentReconcile";
 
 /**
  * Slim status bar for the content reconciler (SAN-153), shown on the Canales
@@ -25,12 +26,18 @@ function relTime(iso?: string): string {
   return `hace ${Math.floor(hr / 24)}d`;
 }
 
+function hasCompletedRun(
+  state: ReconcileStateResponse | undefined,
+): state is Exclude<ReconcileStateResponse, { never_ran: true }> {
+  return Boolean(state && !("never_ran" in state));
+}
+
 export function ReconcileBar({ slug }: { slug: string }) {
   const { data: state } = useReconcileState(slug);
   const reconcileNow = useReconcileNow();
   const [summary, setSummary] = useState<string | null>(null);
 
-  const lastRun = state && !("never_ran" in state) ? state : null;
+  const lastRun = hasCompletedRun(state) ? state : null;
   const desyncCount = lastRun?.desyncs.length ?? 0;
   const stale =
     lastRun && Date.now() - Date.parse(lastRun.ran_at) > 60 * 60_000;
