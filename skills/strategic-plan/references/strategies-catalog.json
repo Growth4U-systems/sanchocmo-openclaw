@@ -815,12 +815,13 @@
         "brand-voice",
         "content-calendar-planner",
         "content-atomizer",
+        "linkedin-comment",
         "outreach-sequence-builder"
       ],
       "workflow": {
         "objetivo": "Sistema LinkedIn-específico con output medible: contenido → warm prospects → DMs → calls. Estrategia #1 para B2B early-stage.",
         "ideacion": "Mix de contenido:\n\n| Tipo | % | Ejemplos |\n|------|---|----------|\n| Dolores ICP | 40% | Opinión propia, objeciones resueltas |\n| Frameworks accionables | 20% | Templates, procesos, checklists |\n| Building in Public | 20% | Revenue updates, failures, decisiones |\n| Case studies mini | 20% | Antes/después con datos |",
-        "creacion": "- Cada post: 1 dolor × 1 perspectiva única. Formato nativo (sin links externos)\n- Pre-engagement: seguir, comentar prospects antes del DM",
+        "creacion": "- Cada post: 1 dolor × 1 perspectiva única. Formato nativo (sin links externos)\n- Pre-engagement: seguir y comentar prospects antes del DM. Instrumentado con la skill `linkedin-comment` (arma grupo foco, elige a quién comentar con cooldown, deja el borrador en la voz del cliente) + el cron recurrente `linkedin_engagement` que sugiere proactivamente a quién comentar",
         "ejecucion": "- Trackear quién interactúa → DM: \"Vi que comentaste en mi post sobre [X]...\"\n- Compounding: más contenido → más warm prospects → cierre más fácil\n- 3-5 posts/semana, 15+ DMs/semana",
         "medicion": "| Métrica | Target |\n|---------|--------|\n| Qualified calls/week | ≥3 |\n| Reply rate DMs warm | >30% |\n| Connection accept rate | >40% |\n| Pipeline atribuido LinkedIn | tracking CRM |"
       },
