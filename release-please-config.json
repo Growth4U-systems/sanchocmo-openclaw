@@ -4,6 +4,7 @@
   "last-release-sha": "7775969b59192661f45f26f29e4c0e8826dc6f78",
   "packages": {
     ".": {
+      "component": "mission-control",
       "package-name": "mission-control",
       "changelog-path": "CHANGELOG.md",
       "include-v-in-tag": true,
