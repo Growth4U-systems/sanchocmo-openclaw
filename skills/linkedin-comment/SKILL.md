@@ -7,6 +7,7 @@ context_required:
 - brand/{slug}/go-to-market/positioning/positioning.current.md
 context_writes:
 - brand/{slug}/engagement/linkedin-focus-group.json
+- brand/{slug}/engagement/linkedin-focus-group.md
 - brand/{slug}/engagement/linkedin-comments-YYYY-MM-DD.json
 - brand/{slug}/engagement/linkedin-comments-YYYY-MM-DD.md
 - brand/{slug}/operational/learnings.md
@@ -65,7 +66,7 @@ A diferencia de la versión personal, acá el contexto se LEE del cliente, no se
 Proponé una lista de personas reales que valga la pena comentar, clasificadas en las dos lanes, cada una con evidencia de que postea. Método completo (búsqueda multi-ángulo, reglas duras, clasificación, tiers) en `references/target-discovery.md`.
 - **Lane A (ICP)**: curación con `web_search` anclada a los ECPs del cliente. Esta es la parte de más valor y la más difícil; se hace acá, con criterio.
 - **Lane B (creators)**: opcionalmente delegá el descubrimiento masivo a la discovery de Sancho (`discovery-plan-builder` → `discovery-search-runner`, owner Rocinante, vía ScrapeCreators), que trae creators por sector/tier/ER. Aplicá tu fit encima de lo que devuelva; no metas todo lo que venga.
-- Persistí la lista aprobada en `brand/{slug}/engagement/linkedin-focus-group.json` con tier por persona (ver `references/selection-and-cadence.md` para sembrar tiers). NO la persistas en YALC ni la acoples a otra cosa: este artefacto es propio del engagement.
+- Persistí la lista aprobada en `brand/{slug}/engagement/linkedin-focus-group.json` con tier por persona (ver `references/selection-and-cadence.md` para sembrar tiers). NO la persistas en YALC ni la acoples a otra cosa: este artefacto es propio del engagement. Escribí también un espejo legible `linkedin-focus-group.md` (cada perfil con lane, tier y por qué entra) para que el grupo foco se liste en el árbol del Brand Brain y se abra en el visor sin depender del chat.
 
 ### 3. Elegir a quién comentarle hoy
 Con la lista en mano, decidí a quién comentar de forma sostenible: modelo de dos tiers (un núcleo chico que se comenta siempre + un banco más grande que se rota con cooldown) más un pick diario por relevancia y frescura. Método en `references/selection-and-cadence.md`. Tope realista: 8 a 12 por corrida.
