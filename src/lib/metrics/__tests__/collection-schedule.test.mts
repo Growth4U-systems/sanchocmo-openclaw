@@ -7,7 +7,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as mod from "../collection-schedule";
 
-const { defaultScheduleFor, isDueToday, cronDueOnDate, normalizeCadence } =
+const { defaultScheduleFor, isDueToday, cronDueOnDate, normalizeCadence, getKnownDirty } =
   (mod as unknown as { default: typeof mod }).default ?? mod;
 
 test("defaults: trust_score & pagespeed weekly Monday, everything else daily", () => {
@@ -70,4 +70,13 @@ test("cron Sunday accepts both 0 and 7", () => {
   assert.equal(sunday.getDay(), 0);
   assert.equal(cronDueOnDate("0 9 * * 7", sunday), true);
   assert.equal(cronDueOnDate("0 9 * * 0", sunday), true);
+});
+
+test("getKnownDirty: flags ghl as known-dirty with a reason; clean sources are not", () => {
+  const ghl = getKnownDirty("ghl");
+  assert.equal(ghl.knownDirty, true);
+  assert.ok(typeof ghl.dirtyReason === "string" && ghl.dirtyReason.length > 0);
+  const ga4 = getKnownDirty("ga4");
+  assert.equal(ga4.knownDirty, false);
+  assert.equal(ga4.dirtyReason, undefined);
 });

@@ -47,6 +47,22 @@ export function normalizeCadence(value: unknown): Cadence {
   return (CADENCES as string[]).includes(value as string) ? (value as Cadence) : "daily";
 }
 
+/**
+ * Sources with a known instrumentation problem — surfaced as a data-health flag
+ * (`getMetricsHealth` → `DataHealthBadge`), never silently shown as a clean number.
+ * GHL inflates appointment events (1 cita → 100+ eventos) and rounds leads ±10, so its
+ * raw counts are unreliable as exact figures.
+ */
+export const KNOWN_DIRTY: Record<string, string> = {
+  ghl: "Eventos inflados (1 cita → 100+ eventos) y leads redondeados ±10 — conteos poco fiables como cifra exacta",
+};
+
+/** Per-source data-health flag: known-dirty (with reason) or clean. Pure, no DB. */
+export function getKnownDirty(source: string): { knownDirty: boolean; dirtyReason?: string } {
+  const reason = KNOWN_DIRTY[source];
+  return reason ? { knownDirty: true, dirtyReason: reason } : { knownDirty: false };
+}
+
 /** True when `source` should be collected on `date` per its schedule. */
 export function isDueToday(
   schedule: Pick<CollectionSchedule, "cadence" | "daysOfWeek" | "cronExpr" | "enabled">,
