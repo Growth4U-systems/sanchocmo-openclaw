@@ -160,8 +160,10 @@ const DATE_RANGE_OPTIONS: { label: string; value: DateRange }[] = [
 const RANGE_DAYS: Record<DateRange, number> = { "1d": 1, "7d": 7, "30d": 30, all: 0, custom: 0 };
 
 const SOURCE_NAMES: Record<string, string> = {
-  ga4: "GA4", gsc: "Search Console", metricool: "Social",
-  "meta-ads": "Meta Ads", meta_ads: "Meta Ads", ghl: "CRM",
+  ga4: "GA4", "google-analytics": "GA4", gsc: "Search Console", "google-search-console": "Search Console", metricool: "Social",
+  "meta-ads": "Meta Ads", meta_ads: "Meta Ads", google_ads: "Google Ads", "google-ads": "Google Ads",
+  linkedin_ads: "LinkedIn Ads", "linkedin-ads": "LinkedIn Ads", tiktok_ads: "TikTok Ads", "tiktok-ads": "TikTok Ads",
+  ghl: "CRM", "go-high-level": "CRM",
   instantly: "Outreach", sheets: "Manual", posthog: "Product",
 };
 
@@ -1260,11 +1262,14 @@ const TAB_ICONS: Record<string, string> = {
   partnerships: "🤝",
 };
 
-// File-based headline metric per surface (used when the time-series DB is empty).
+// Headline metric per surface from the DB-backed daily payload.
 const SURFACE_HEADLINE: Partial<Record<SurfaceKey, { source: string; metric: string; label: string; format?: string }>> = {
+  reputation: { source: "trust_score", metric: "trust_score", label: "Trust Score" },
   web: { source: "ga4", metric: "sessions", label: "sessions" },
+  product: { source: "posthog", metric: "activation_events", label: "activaciones" },
   paid: { source: "meta-ads", metric: "spend", label: "spend", format: "currency" },
   pipeline: { source: "ghl", metric: "newContacts", label: "new leads" },
+  email: { source: "instantly", metric: "replies", label: "replies" },
   social: { source: "metricool", metric: "impressions", label: "impresiones" },
 };
 
@@ -1766,8 +1771,15 @@ function MetricsPageInner({ slug }: { slug: string }) {
     let valueLabel: string | null = null;
     const head = SURFACE_HEADLINE[surface.key];
     if (head) {
-      const v = mVal(pickSource(sources, head.source), head.metric);
-      if (v != null) { value = fmtByFormat(v, head.format); valueLabel = head.label; }
+      const sourceCandidates = [head.source, ...surface.sources.filter((source) => source !== head.source)];
+      for (const sourceName of sourceCandidates) {
+        const v = mVal(pickSource(sources, sourceName), head.metric);
+        if (v != null) {
+          value = fmtByFormat(v, head.format);
+          valueLabel = head.label;
+          break;
+        }
+      }
     }
     if (value == null && summaryEntry?.metrics?.length) {
       // summaryEntry.metrics is ordered by date only, so for surfaces with several
@@ -1783,6 +1795,16 @@ function MetricsPageInner({ slug }: { slug: string }) {
       }
     }
     return { connected: connectedSources.length > 0, connectedSources, value, valueLabel };
+  }
+
+  function surfaceHeadlineSeries(surface: SurfaceDef, head: (typeof SURFACE_HEADLINE)[SurfaceKey] | undefined): number[] {
+    if (!head) return [];
+    const sourceCandidates = [head.source, ...surface.sources.filter((source) => source !== head.source)];
+    for (const sourceName of sourceCandidates) {
+      const series = bucketDaily(rangeEntries, sourceName, head.metric, "day");
+      if (series.some((value) => value !== 0)) return series;
+    }
+    return bucketDaily(rangeEntries, head.source, head.metric, "day");
   }
 
   // Server-side DnD: reorder and persist via reorderMutation (optimistic cache
@@ -2082,7 +2104,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
               {orderedSurfaces.map((s) => {
                 const info = surfaceInfoFor(s);
                 const head = SURFACE_HEADLINE[s.key];
-                const series = head ? bucketDaily(rangeEntries, head.source, head.metric, "day") : [];
+                const series = surfaceHeadlineSeries(s, head);
                 return (
                   <SortableSurfaceCard key={s.key} id={s.key} disabled={!dashboardRec?.configured || saving}>
                     <button type="button" onClick={() => setSubView({ kind: "surface", key: s.key })} className="block h-full w-full text-left">
@@ -2195,7 +2217,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
               <div>
                 <div className="mb-2 font-heading text-[11px] font-bold uppercase tracking-wide text-rust">Tendencia ({rangeEntries.length || 0}d)</div>
                 <MetricPanel>
-                  <MetricSparkline values={head ? bucketDaily(rangeEntries, head.source, head.metric, "day") : []} color="navy" className="h-28" />
+                  <MetricSparkline values={surfaceHeadlineSeries(surface, head)} color="navy" className="h-28" />
                 </MetricPanel>
               </div>
               <div>
