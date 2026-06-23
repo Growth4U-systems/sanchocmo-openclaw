@@ -44,6 +44,10 @@ if [ -z "${MC_BASE:-}" ]; then
   fi
 fi
 
+# The metrics collector (a separate ESM script in the seed dir) runs the app's
+# TS ingest from the Next app dir via tsx (SAN-318) — tell it where the app is.
+export MC_NEXTJS_DIR="${MC_NEXTJS_DIR:-/app/mc-nextjs}"
+
 # ===========================================================
 # 0. ENSURE CONFIG SYMLINKS (runs every startup)
 # ===========================================================
