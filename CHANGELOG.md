@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.11.1...v0.11.2) (2026-06-23)
+
+
+### Bug Fixes
+
+* **release:** make release-please componentless (SAN-316) ([817fff8](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/817fff880b2ab9770ed2ee7d05d112a324697ccc))
+
 ## [0.11.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.11.0...v0.11.1) (2026-06-23)
 
 
