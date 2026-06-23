@@ -67,6 +67,7 @@ node collect.js --slug <client-slug> --all --due
 
 ## Output
 - Runtime source of truth: `metric_snapshots` DB table
+- Persistence (SAN-318): the collector pipes its in-memory daily snapshot to `scripts/ingest-metrics.ts` (run via `tsx` from `MC_NEXTJS_DIR`), which writes to Neon through the app's `ingestDailySnapshot()` (`getDb()`, in-process — no HTTP, no admin token). Needs `DATABASE_URL` in the env.
 - Historical JSON files can be backfilled with `npm run backfill:metrics`, but the collector no longer writes `brand/{slug}/metrics/YYYY-MM-DD.json` or `metrics-data.json`.
 - Row format: see `schemas/metrics-schema.json` for adapter payloads before ingest.
 
