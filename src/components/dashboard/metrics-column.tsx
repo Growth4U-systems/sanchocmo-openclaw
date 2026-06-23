@@ -69,6 +69,8 @@ interface TrustScoreData {
   };
   competitors?: Array<{ brand_name?: string; trust_score?: number }>;
   comparison?: { primary_gaps?: string[] };
+  /** "defined" = competidores humanos (kickoff/operador); "auto" = auto-descubiertos. */
+  competitorsSource?: "defined" | "auto";
   fetchedAt?: string;
   _stale?: boolean;
 }
@@ -896,12 +898,19 @@ function TrustScoreSection({
 
       {/* Scores de competidores */}
       {competitors.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-1">
-          {competitors.map((c, i) => (
-            <span key={i} className="text-[9px] bg-[#E5E2DC] text-muted-foreground px-1.5 py-0.5 rounded-full">
-              {c.brand_name || "?"}: <b style={{ color: tsColor(c.trust_score ?? 0) }}>{c.trust_score ?? "\u2014"}</b>
-            </span>
-          ))}
+        <div className="mb-1">
+          {data?.competitorsSource === "auto" && (
+            <div className="text-[9px] text-rust font-semibold mb-1" title="El kickoff no fij\u00f3 competidores: el Trust Score los auto-descubri\u00f3. Rev\u00edsalos y f\u00edjalos en Ajustes.">
+              {"\u26a0"} Competidores auto-descubiertos {"\u2014"} revisar
+            </div>
+          )}
+          <div className="flex flex-wrap gap-1.5">
+            {competitors.map((c, i) => (
+              <span key={i} className="text-[9px] bg-[#E5E2DC] text-muted-foreground px-1.5 py-0.5 rounded-full">
+                {c.brand_name || "?"}: <b style={{ color: tsColor(c.trust_score ?? 0) }}>{c.trust_score ?? "\u2014"}</b>
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

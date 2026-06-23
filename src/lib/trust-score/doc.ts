@@ -9,6 +9,7 @@
  */
 import { serializeFrontmatter } from "@/lib/data/markdown-frontmatter";
 import { TRUST_PILLAR_KEYS, type CompareResult } from "@/lib/trust-score/client";
+import type { CompetitorSource } from "@/lib/trust-score/competitors";
 
 const TRUST_PILLAR_LABELS: Record<string, string> = {
   borrowed_trust: "Borrowed Trust",
@@ -23,7 +24,12 @@ const TRUST_PILLAR_LABELS: Record<string, string> = {
 // nunca rompa una celda de tabla ni inyecte estructura markdown.
 const cell = (s: unknown): string => String(s ?? "").replace(/[\r\n]+/g, " ").replace(/\|/g, "\\|").trim();
 
-export function renderTrustScoreDoc(result: CompareResult, url: string, fetchedAt: string): string {
+export function renderTrustScoreDoc(
+  result: CompareResult,
+  url: string,
+  fetchedAt: string,
+  competitorsSource?: CompetitorSource,
+): string {
   const p = result.primary;
   const pillars = p.pillars;
   // Sin dato (null) = prioridad MÁXIMA (incertidumbre = riesgo): va primero, no último.
@@ -64,7 +70,14 @@ export function renderTrustScoreDoc(result: CompareResult, url: string, fetchedA
   if (gaps.length) lines.push("## Brechas vs competidores", "", ...gaps.map((g) => `- ${cell(g)}`), "");
   const comp = result.competitors ?? [];
   if (comp.length) {
-    lines.push("## Competidores", "", "| Marca | Trust Score |", "| -- | -- |");
+    lines.push("## Competidores", "");
+    if (competitorsSource === "auto") {
+      lines.push(
+        "> ⚠️ Competidores **auto-descubiertos** (no confirmados): el kickoff no fijó un set. Revisá y fijá los reales del cliente.",
+        "",
+      );
+    }
+    lines.push("| Marca | Trust Score |", "| -- | -- |");
     lines.push(...comp.map((c) => `| ${cell(c.brand_name || "?")} | ${c.trust_score ?? "n/d"} |`), "");
   }
   lines.push(

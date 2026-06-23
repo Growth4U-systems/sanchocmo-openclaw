@@ -27,17 +27,19 @@ import {
   type CompetitorInput,
 } from "@/lib/trust-score/client";
 import { renderTrustScoreDoc } from "@/lib/trust-score/doc";
+import {
+  pinCompetitors,
+  readPinnedCompetitors,
+  type CompetitorSource,
+} from "@/lib/trust-score/competitors";
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-
-interface PinnedCompetitors {
-  competitors: CompetitorInput[];
-  pinnedAt: string;
-}
 
 export interface TrustScoreCache extends CompareResult {
   url: string;
   fetchedAt: string;
+  /** Procedencia del set de competidores usado: "defined" (humano) | "auto" (descubierto). */
+  competitorsSource?: CompetitorSource;
   _stale?: boolean;
 }
 
@@ -102,7 +104,12 @@ function resolveClientUrl(slug: string, queryUrl: string | null): string | null 
   return loadClient(slug)?.url ?? queryUrl;
 }
 
-function persistDailyMetric(slug: string, metricsDir: string, result: CompareResult) {
+function persistDailyMetric(
+  slug: string,
+  metricsDir: string,
+  result: CompareResult,
+  competitorsSource: CompetitorSource,
+) {
   const today = new Date().toISOString().slice(0, 10);
   const dailyFile = path.join(metricsDir, today + ".json");
   const daily = readJSON<{
@@ -124,6 +131,7 @@ function persistDailyMetric(slug: string, metricsDir: string, result: CompareRes
         brand: c.brand_name,
         trust_score: c.trust_score,
       })),
+      competitors_source: competitorsSource,
       primary_gaps: result.comparison?.primary_gaps ?? [],
     },
   };
@@ -137,11 +145,17 @@ function persistDailyMetric(slug: string, metricsDir: string, result: CompareRes
 
 // Best-effort: una falla escribiendo el doc no debe abortar la corrida ni
 // hacer que se devuelva el cache fresco etiquetado como stale.
-function writeTrustScoreDoc(slug: string, result: CompareResult, url: string, fetchedAt: string) {
+function writeTrustScoreDoc(
+  slug: string,
+  result: CompareResult,
+  url: string,
+  fetchedAt: string,
+  competitorsSource: CompetitorSource,
+) {
   try {
     const docPath = path.join(BASE, "brand", slug, "site-audit", "trust-score", "trust-score.current.md");
     fs.mkdirSync(path.dirname(docPath), { recursive: true });
-    fs.writeFileSync(docPath, renderTrustScoreDoc(result, url, fetchedAt));
+    fs.writeFileSync(docPath, renderTrustScoreDoc(result, url, fetchedAt, competitorsSource));
   } catch (err) {
     console.warn("Trust Score doc write failed:", err);
   }
@@ -166,7 +180,6 @@ export async function runTrustScore(
 
   const metricsDir = metricsDirFor(slug);
   const cacheFile = cacheFileFor(slug);
-  const pinnedFile = path.join(metricsDir, "trust-score-competitors.json");
 
   // Si no es refresh y NO se mandó un set explícito, y hay cache fresco, servirlo.
   if (!refresh && !provided?.length) {
@@ -182,10 +195,12 @@ export async function runTrustScore(
   }
   if (!clientUrl.startsWith("http")) clientUrl = "https://" + clientUrl;
 
-  // Orden de resolución del set: explícito (kickoff) > pinned (reutilizado).
-  // Si no hay ninguno, auto-descubrir vía el analyzer y tratarlo como kickoff.
-  const pinned = readJSON<PinnedCompetitors | null>(pinnedFile, null);
+  // Orden de resolución del set: explícito (kickoff/operador) > pinned (reutilizado).
+  // Si no hay ninguno, auto-descubrir vía el analyzer. La procedencia (source) viaja al
+  // cache/métrica/doc para poder marcar "competidores auto-descubiertos — revisar".
+  const pinned = readPinnedCompetitors(slug);
   let competitors = provided?.length ? provided : pinned?.competitors;
+  let competitorsSource: CompetitorSource = provided?.length ? "defined" : (pinned?.source ?? "auto");
   let autoDiscovered = false;
 
   if (!competitors?.length) {
@@ -208,6 +223,7 @@ export async function runTrustScore(
       };
     }
     autoDiscovered = true;
+    competitorsSource = "auto";
   }
 
   // Normalizar urls de competidores igual que la primaria (el analyzer espera protocolo).
@@ -216,23 +232,25 @@ export async function runTrustScore(
   try {
     const result = await runCompare(clientUrl, competitors);
 
-    // Fijar el set: un set explícito del operador SIEMPRE re-fija (decisión deliberada);
-    // el auto-descubierto solo fija si no había uno previo. Así el gap queda comparable
-    // y no se mezclan dos sets distintos en la serie temporal.
-    if (provided?.length || (autoDiscovered && !pinned)) {
-      const toPin: PinnedCompetitors = { competitors, pinnedAt: new Date().toISOString() };
-      writeJSON(pinnedFile, toPin);
+    // Fijar el set con su procedencia: un set explícito SIEMPRE re-fija (defined,
+    // decisión deliberada del operador/kickoff); el auto-descubierto fija solo si no
+    // había uno previo. Así el gap queda comparable y no se mezclan dos sets distintos.
+    if (provided?.length) {
+      pinCompetitors(slug, competitors, "defined");
+    } else if (autoDiscovered && !pinned) {
+      pinCompetitors(slug, competitors, "auto");
     }
 
     const cache: TrustScoreCache = {
       ...result,
       url: clientUrl,
       fetchedAt: new Date().toISOString(),
+      competitorsSource,
     };
     writeJSON(cacheFile, cache);
-    persistDailyMetric(slug, metricsDir, result);
+    persistDailyMetric(slug, metricsDir, result, competitorsSource);
     // Doc del pilar Foundation (lo consume el Brand Brain y el Strategic Plan).
-    writeTrustScoreDoc(slug, result, cache.url, cache.fetchedAt);
+    writeTrustScoreDoc(slug, result, cache.url, cache.fetchedAt, competitorsSource);
 
     return { ok: true, cache, ran: true };
   } catch (err) {

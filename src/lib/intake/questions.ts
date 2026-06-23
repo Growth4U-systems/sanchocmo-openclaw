@@ -40,7 +40,7 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
   { id: "acquisition", section: "Cliente / ICP", label: "¿Cómo llegan los clientes hoy? (canales actuales)", type: "textarea", required: true, pillar: "icp" },
   { id: "objections", section: "Cliente / ICP", label: "Objeciones frecuentes del cliente", type: "textarea", required: false, pillar: "icp" },
 
-  { id: "competitors", section: "Competencia", label: "Competidores principales", type: "textarea", required: true, pillar: "competitor-analysis" },
+  { id: "competitors", section: "Competencia", label: "Competidores principales (uno por línea, con su web)", help: "Formato: Nombre — https://web.com (uno por línea). La web nos deja medir tu Trust Score frente a ellos.", type: "textarea", required: true, pillar: "competitor-analysis" },
 
   { id: "metrics", section: "Métricas y objetivos", label: "Métricas actuales clave (revenue, usuarios… lo que tengáis)", type: "textarea", required: false, pillar: "north-star" },
   { id: "goals", section: "Métricas y objetivos", label: "Objetivos a 3 / 6 / 12 meses", type: "textarea", required: true, pillar: "north-star" },

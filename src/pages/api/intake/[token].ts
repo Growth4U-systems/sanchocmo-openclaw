@@ -14,6 +14,7 @@ import { upsertIntakeSubmission } from "@/lib/intake/submissions";
 import { sanitizeAttachments } from "@/lib/intake/attachments";
 import { loadClient } from "@/lib/data/clients";
 import { addNotification } from "@/lib/data/notifications";
+import { parseCompetitors, pinCompetitors } from "@/lib/trust-score/competitors";
 
 // Soft per-IP rate limit (mirrors the comments endpoint).
 const RATE_WINDOW_MS = 60_000;
@@ -91,6 +92,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     await upsertIntakeSubmission(slug, input, attachments);
   } catch {
     return res.status(500).json({ error: "Could not save submission" });
+  }
+
+  // Fijar los competidores DEFINIDOS por el cliente para el Trust Score (SAN-309):
+  // parsea "Nombre — URL" del campo competitors. Best-effort y no-fatal — si no hay
+  // URLs reconocibles no fija nada (el Trust Score auto-descubrirá y marcará el dato
+  // como "revisar"). La submission ya está persistida.
+  try {
+    const parsed = parseCompetitors(input.answers.competitors || "");
+    if (parsed.length) pinCompetitors(slug, parsed, "defined");
+  } catch {
+    // swallow — no debe tumbar una submission válida
   }
 
   // Notification (non-fatal if it fails).

@@ -187,8 +187,22 @@ Presentar lo inferido agrupado (NO campo por campo):
 - The Core Three: ¿Quién eres? ¿Qué vendes? ¿A quién?
 - Modelo de negocio: B2B/B2C, cómo monetiza
 - Budget: rango mensual, equipo disponible
-- Competidores: al menos 2-3 nombres
+- Competidores: al menos 2-3, **con su URL** (el Trust Score los necesita — ver abajo)
 - Objetivo principal a 3-6 meses
+
+### Competidores → Trust Score (SAN-309)
+
+El Trust Score **auto-arranca al aprobar el `company-brief`** y compara la marca contra un set
+de competidores **con URL**. Captura la **URL** de cada competidor (no solo el nombre) y, **antes
+de marcar `company-brief` como `completed`**, fíjalos para que el Trust Score use los REALES del
+cliente en vez de auto-descubrir:
+
+`POST {MC_BASE}/api/trust-score/competitors` con header `x-admin-token: <adminToken>` (el de la raíz
+de `clients.json`) y body `{ "slug": "{slug}", "competitors": [{ "url": "https://competidor.com", "name": "Competidor" }] }`.
+Es barato (solo fija; NO corre el analyzer ni gasta créditos).
+
+Si el cliente no da URLs, no bloquees: el Trust Score auto-descubrirá y marcará el dato como
+"competidores auto-descubiertos — revisar".
 
 ### Step 3: Market Intelligence L1 (búsqueda rápida)
 
