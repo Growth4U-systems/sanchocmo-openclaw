@@ -19,6 +19,7 @@ import { errorTracker } from "./error-tracker.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
 import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
 import { parseDelegateMarkers, slugForThread } from "./delegate-marker.js";
+import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 
 function normalizeOpenAiAuthMode(mode) {
   if (typeof mode !== "string") return null;
@@ -325,6 +326,15 @@ export default defineChannelPluginEntry({
 
         // Dispatch to agent asynchronously
         try {
+          try {
+            const result = sanitizeAgentThinkingHistory(requestedAgent, { home: process.env.OPENCLAW_HOME });
+            if (result.removedBlocks > 0) {
+              logger.warn(`[mc-chat] sanitized ${result.removedBlocks} thinking block(s) from ${result.filesChanged} ${requestedAgent} session file(s) before dispatch`);
+            }
+          } catch (e) {
+            logger.warn(`[mc-chat] thinking-history sanitizer skipped: ${e?.message || e}`);
+          }
+
           // Default to Next.js (port 3000) — it owns chat thread writes since
           // the strangler-fig migration. mc-server.js's /webhook/mc-chat/response
           // is dead code but still proxied through Next's fallback rewrite.
