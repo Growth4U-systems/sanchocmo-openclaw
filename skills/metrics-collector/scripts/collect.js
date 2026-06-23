@@ -17,6 +17,7 @@
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execFileSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -89,7 +90,7 @@ function getAdminToken() {
 
 const adminToken = getAdminToken();
 if (!adminToken) {
-  console.warn(`⚠ No admin token found in MC_ADMIN_TOKEN or ${clientsPath}; due-check/DB ingest may fail`);
+  console.warn(`⚠ No admin token found in MC_ADMIN_TOKEN or ${clientsPath}; due-check/reconcile may fail`);
 }
 
 // --- Load .env ---
@@ -283,23 +284,20 @@ async function runCollection() {
   // --source or an explicit --from/--to re-pull is partial, so it must NOT
   // converge-delete. DB ingest is required now that the collector no longer
   // writes JSON snapshots.
+  // SAN-318: persist via the app's ingestDailySnapshot (getDb, no HTTP, no admin
+  // token). The Next app (tsconfig/node_modules/@/ aliases/scripts) lives in a
+  // SEPARATE deploy dir from this collector, so run tsx FROM the app dir and pipe
+  // the in-memory snapshot to its stdin (no temp file — DB is the source of truth).
   try {
-    const ingestRes = await fetch(`${MC_BASE}/api/metrics/ingest`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(adminToken ? { 'x-admin-token': adminToken } : {}),
-      },
-      body: JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources, deleteStale: allowDeleteStale }),
+    const appDir = process.env.MC_NEXTJS_DIR || '/app/mc-nextjs';
+    const ingestScript = path.join(appDir, 'scripts', 'ingest-metrics.ts');
+    const payload = JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources, deleteStale: allowDeleteStale });
+    const out = execFileSync('npx', ['tsx', ingestScript], {
+      cwd: appDir, input: payload, encoding: 'utf-8', timeout: 60000, env: { ...process.env },
     });
-    if (!ingestRes.ok) {
-      const body = await ingestRes.text().catch(() => "");
-      throw new Error(`HTTP ${ingestRes.status}${body ? `: ${body.slice(0, 200)}` : ""}`);
-    }
-    const data = await ingestRes.json().catch(() => ({}));
-    console.log(`🗃  Ingest: ${data.rows ?? 0} row(s) written, ${data.deleted ?? 0} stale removed`);
+    process.stdout.write(out);
   } catch (e) {
-    console.error(`❌ Ingest failed (${MC_BASE}/api/metrics/ingest): ${e.message}`);
+    console.error(`❌ Neon persist failed: ${e.stderr || e.message}`);
     process.exitCode = 1;
   }
 }
