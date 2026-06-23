@@ -181,8 +181,8 @@ export interface DailyHistoryResult {
  * dashboard can read the FULL history (not just the last ~30 day-files). Emits
  * un-dimensioned (dims_key='') numeric roll-up rows only — exactly what the UI's
  * mVal / bucketDaily / aggregateEntries consume — so it's a drop-in replacement
- * for the file loop. Degrades to { configured:false, days:0, daily:[] } when
- * DATABASE_URL is unset (caller falls back to files).
+ * for the old file loop. Degrades to { configured:false, days:0, daily:[] } when
+ * DATABASE_URL is unset.
  */
 export async function getDailySnapshots(
   slug: string,
@@ -225,6 +225,140 @@ export async function getDailySnapshots(
       ),
     }));
   return { configured: true, days: daily.length, daily };
+}
+
+export interface LatestMetricSummaryValue {
+  name: string;
+  value: number | string;
+  date?: string;
+}
+
+export interface LatestMetricSummarySource {
+  source: string;
+  status: "ok";
+  metrics: LatestMetricSummaryValue[];
+}
+
+export interface LatestMetricSummaryResult {
+  configured: boolean;
+  collectedAt: string | null;
+  sources: LatestMetricSummarySource[];
+}
+
+/**
+ * Compact "latest by source/metric" snapshot for internal status surfaces. This
+ * replaces the old latest JSON file read: metric_snapshots is the runtime source
+ * of truth, and we keep the same output shape for callers.
+ */
+export async function getLatestMetricSummary(slug: string, limitPerSource = 20): Promise<LatestMetricSummaryResult> {
+  if (!hasDatabase) return { configured: false, collectedAt: null, sources: [] };
+  await ensureMetricsStorage();
+  const database = getDb();
+  const rows = await database
+    .select({
+      source: metricSnapshots.source,
+      metric: metricSnapshots.metricName,
+      value: metricSnapshots.value,
+      valueText: metricSnapshots.valueText,
+      metricDate: metricSnapshots.metricDate,
+      collectedAt: metricSnapshots.collectedAt,
+    })
+    .from(metricSnapshots)
+    .where(and(eq(metricSnapshots.slug, slug), eq(metricSnapshots.dimsKey, "")))
+    .orderBy(desc(metricSnapshots.metricDate), desc(metricSnapshots.updatedAt));
+
+  const bySource = new Map<string, LatestMetricSummarySource>();
+  const seen = new Set<string>();
+  let collectedAt: string | null = null;
+  for (const row of rows) {
+    if (row.collectedAt) {
+      const iso = new Date(row.collectedAt).toISOString();
+      if (!collectedAt || iso > collectedAt) collectedAt = iso;
+    }
+    const key = `${row.source}:${row.metric}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const value = row.value == null ? row.valueText : Number(row.value);
+    if (typeof value !== "number" && typeof value !== "string") continue;
+    let source = bySource.get(row.source);
+    if (!source) {
+      source = { source: row.source, status: "ok", metrics: [] };
+      bySource.set(row.source, source);
+    }
+    if (source.metrics.length >= limitPerSource) continue;
+    source.metrics.push({ name: row.metric, value, date: String(row.metricDate) });
+  }
+  return { configured: true, collectedAt, sources: [...bySource.values()] };
+}
+
+export interface MetricoolPostDetailDim {
+  network?: string;
+  url?: string;
+  text?: string;
+  likes?: number;
+  clicks?: number;
+  engagement?: number;
+}
+
+export interface MetricoolPostDetailEntry {
+  name: "postDetail";
+  value: number;
+  date: string;
+  dimensions: MetricoolPostDetailDim;
+}
+
+function numberDim(dimensions: Record<string, string> | null | undefined, key: string): number | undefined {
+  const raw = dimensions?.[key];
+  if (raw == null || raw === "") return undefined;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+/**
+ * Post-level Metricool metrics from the DB. `dimensions` are string-normalized at
+ * ingest time, so numeric dimension fields are parsed back for legacy consumers.
+ */
+export async function listMetricoolPostDetails(slug: string): Promise<Array<{ metricDate: string; entry: MetricoolPostDetailEntry }>> {
+  if (!hasDatabase) return [];
+  await ensureMetricsStorage();
+  const database = getDb();
+  const rows = await database
+    .select({
+      metricDate: metricSnapshots.metricDate,
+      value: metricSnapshots.value,
+      dimensions: metricSnapshots.dimensions,
+    })
+    .from(metricSnapshots)
+    .where(
+      and(
+        eq(metricSnapshots.slug, slug),
+        eq(metricSnapshots.source, "metricool"),
+        eq(metricSnapshots.metricName, "postDetail"),
+      ),
+    )
+    .orderBy(desc(metricSnapshots.metricDate), desc(metricSnapshots.updatedAt));
+
+  return rows.map((row) => ({
+    metricDate: String(row.metricDate),
+    entry: {
+      name: "postDetail",
+      value: row.value == null ? 0 : Number(row.value),
+      date: String(row.metricDate),
+      dimensions: {
+        network: row.dimensions?.network,
+        url: row.dimensions?.url,
+        text: row.dimensions?.text,
+        likes: numberDim(row.dimensions, "likes"),
+        clicks: numberDim(row.dimensions, "clicks"),
+        engagement: numberDim(row.dimensions, "engagement"),
+      },
+    },
+  }));
+}
+
+export async function findMetricoolPostByUrl(slug: string, externalUrl: string): Promise<MetricoolPostDetailEntry | null> {
+  const entries = await listMetricoolPostDetails(slug);
+  return entries.find(({ entry }) => entry.dimensions.url === externalUrl)?.entry ?? null;
 }
 
 /** JS-side reducer mirroring `aggExpr` for the scorecard pivot (small windows). */
@@ -511,7 +645,7 @@ export async function getMetricsHealth(slug: string): Promise<MetricsHealthResul
       : lastMetricDate == null
         ? true
         : (ageDays ?? 0) > maxIntervalDays(schedule.cadence) + HEALTH_GRACE_DAYS;
-    if (overdue && lastMetricDate) anyStale = true;
+    if (overdue) anyStale = true;
     return {
       source: schedule.source,
       cadence: schedule.cadence,

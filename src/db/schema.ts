@@ -646,9 +646,8 @@ export const proposalOutcomes = pgTable("proposal_outcomes", {
 }));
 
 // ============================================================
-// Metric snapshots (SAN-263 · Métricas v2) — time-series mirror of
-// brand/<slug>/metrics/<date>.json. One tidy row per
-// slug/date/source/metric/dimensions; the JSON files stay source of truth.
+// Metric snapshots (SAN-263/SAN-300 · Métricas v2) — DB-only time-series
+// source of truth. One tidy row per slug/date/source/metric/dimensions.
 // ============================================================
 
 export const metricSnapshots = pgTable("metric_snapshots", {

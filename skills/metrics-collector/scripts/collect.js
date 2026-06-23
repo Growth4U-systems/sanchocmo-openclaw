@@ -9,13 +9,12 @@
  *   node collect.js --slug <client> --source <adapter>
  *   node collect.js --slug <client> --source ga4 --from 2024-01-01 --to 2024-01-31
  *
- * Env: METRICS_WRITE_JSON=0 skips the JSON snapshot/rolling files. NOTE: do NOT
- *   set this yet — getClientMetricsSummary (Sancho MCP report) and publishing
- *   reconciliation still read brand/<slug>/metrics/*.json with no DB fallback.
- *   Flip it only once those readers are migrated to the DB.
+ * Runtime storage is DB-only: metrics are ingested into `metric_snapshots`.
+ * Historical JSON import/export remains in scripts/metrics, but the collector no
+ * longer writes brand/<slug>/metrics/YYYY-MM-DD.json or metrics-data.json.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -68,6 +67,7 @@ const dateRange = {
 // --- Load integrations.json ---
 const brandDir = path.join(WORKSPACE, 'brand', slug);
 const integrationsPath = path.join(brandDir, 'integrations.json');
+const clientsPath = path.join(WORKSPACE, 'clients.json');
 
 if (!existsSync(integrationsPath)) {
   console.error(`No integrations.json found at ${integrationsPath}`);
@@ -75,6 +75,22 @@ if (!existsSync(integrationsPath)) {
 }
 
 const integrations = JSON.parse(readFileSync(integrationsPath, 'utf-8'));
+
+function getAdminToken() {
+  if (process.env.MC_ADMIN_TOKEN) return process.env.MC_ADMIN_TOKEN;
+  if (!existsSync(clientsPath)) return '';
+  try {
+    const data = JSON.parse(readFileSync(clientsPath, 'utf-8'));
+    return typeof data.adminToken === 'string' ? data.adminToken : '';
+  } catch {
+    return '';
+  }
+}
+
+const adminToken = getAdminToken();
+if (!adminToken) {
+  console.warn(`⚠ No admin token found in MC_ADMIN_TOKEN or ${clientsPath}; due-check/DB ingest may fail`);
+}
 
 // --- Load .env ---
 // Layering: process.env (global secrets injected by the VPS deploy) is the
@@ -146,7 +162,7 @@ async function filterDueSources(candidates) {
   try {
     const res = await fetch(
       `${MC_BASE}/api/metrics/schedule?slug=${encodeURIComponent(slug)}&due=1&sources=${encodeURIComponent(candidates.join(','))}`,
-      { headers: { ...(process.env.MC_ADMIN_TOKEN ? { 'x-admin-token': process.env.MC_ADMIN_TOKEN } : {}) } },
+      { headers: { ...(adminToken ? { 'x-admin-token': adminToken } : {}) } },
     );
     if (!res.ok) {
       console.warn(`⚠ Due-check HTTP ${res.status}; collecting all connected sources`);
@@ -250,47 +266,7 @@ async function runCollection() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  // --- Save daily snapshot + rolling history (JSON) ---
-  // Optional once the DB is the source of truth: set METRICS_WRITE_JSON=0 to skip
-  // writing files entirely (DB ingest below still runs) (SAN-300).
-  const writeJson = process.env.METRICS_WRITE_JSON !== '0';
-  if (writeJson) {
-    const metricsDir = path.join(brandDir, 'metrics');
-    mkdirSync(metricsDir, { recursive: true });
-
-    const snapshotPath = path.join(metricsDir, `${today}.json`);
-    writeFileSync(snapshotPath, JSON.stringify(result, null, 2));
-    console.log(`\n💾 Daily snapshot saved: ${snapshotPath}`);
-
-    // --- Append to rolling metrics-data.json (90 days) ---
-    const rollingPath = path.join(metricsDir, 'metrics-data.json');
-    let rolling = [];
-    if (existsSync(rollingPath)) {
-      try {
-        rolling = JSON.parse(readFileSync(rollingPath, 'utf-8'));
-      } catch {
-        rolling = [];
-      }
-    }
-
-    // Remove entries older than 90 days
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 90);
-    const cutoffStr = cutoff.toISOString();
-    rolling = rolling.filter((entry) => entry.collectedAt >= cutoffStr);
-
-    // Remove existing entry for today (idempotent)
-    rolling = rolling.filter((entry) => {
-      const entryDate = entry.collectedAt?.split('T')[0];
-      return entryDate !== today;
-    });
-
-    rolling.push(result);
-    writeFileSync(rollingPath, JSON.stringify(rolling, null, 2));
-    console.log(`📈 Rolling data updated: ${rollingPath} (${rolling.length} entries)`);
-  } else {
-    console.log('\n🗄  JSON snapshot/rolling skipped (METRICS_WRITE_JSON=0); DB is source of truth.');
-  }
+  console.log('\n🗄  JSON snapshot/rolling skipped; metric_snapshots DB is source of truth.');
 
   // Summary
   const okCount = Object.values(result.sources).filter((s) => s.status === 'ok').length;
@@ -305,24 +281,26 @@ async function runCollection() {
   // this payload (stale rows for the restated dates removed, GSC-lagged dates
   // untouched). It's gated to the routine FULL daily collection — a single
   // --source or an explicit --from/--to re-pull is partial, so it must NOT
-  // converge-delete. Best-effort — never fails the collection.
+  // converge-delete. DB ingest is required now that the collector no longer
+  // writes JSON snapshots.
   try {
     const ingestRes = await fetch(`${MC_BASE}/api/metrics/ingest`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(process.env.MC_ADMIN_TOKEN ? { 'x-admin-token': process.env.MC_ADMIN_TOKEN } : {}),
+        ...(adminToken ? { 'x-admin-token': adminToken } : {}),
       },
       body: JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources, deleteStale: allowDeleteStale }),
     });
-    if (ingestRes.ok) {
-      const data = await ingestRes.json().catch(() => ({}));
-      console.log(`🗃  Ingest: ${data.rows ?? 0} row(s) written, ${data.deleted ?? 0} stale removed`);
-    } else {
-      console.warn(`⚠ Ingest endpoint returned HTTP ${ingestRes.status}`);
+    if (!ingestRes.ok) {
+      const body = await ingestRes.text().catch(() => "");
+      throw new Error(`HTTP ${ingestRes.status}${body ? `: ${body.slice(0, 200)}` : ""}`);
     }
+    const data = await ingestRes.json().catch(() => ({}));
+    console.log(`🗃  Ingest: ${data.rows ?? 0} row(s) written, ${data.deleted ?? 0} stale removed`);
   } catch (e) {
-    console.warn(`⚠ Ingest skipped (MC unreachable at ${MC_BASE}): ${e.message}`);
+    console.error(`❌ Ingest failed (${MC_BASE}/api/metrics/ingest): ${e.message}`);
+    process.exitCode = 1;
   }
 }
 

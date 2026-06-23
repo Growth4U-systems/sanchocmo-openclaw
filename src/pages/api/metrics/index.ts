@@ -9,9 +9,9 @@ import { getDailySnapshots } from "@/lib/data/metrics";
  * GET /api/metrics?slug=hospital-capilar
  * Returns metrics data — ported from mc-server.js:9888
  *
- * `daily` is served from the metric_snapshots DB (full history) when available,
- * falling back to the on-disk day-files (last 30) when the DB is unconfigured or
- * hasn't caught up (SAN-300). `dailySource` reports which one was used.
+ * DB-only metrics runtime: `metric_snapshots` is the source of truth. `rolling`
+ * is kept as an alias of `daily` for legacy UI components that still read that
+ * property, but it is reconstructed from the DB rather than metrics-data.json.
  */
 
 const _metricsCache: Record<string, { json: string; ts: number }> = {};
@@ -41,13 +41,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return;
   }
 
-  const metricsFile = path.join(BASE, "brand", slug, "metrics", "metrics-data.json");
   const intFile = integrationsFile(slug);
-
-  let metrics: unknown[] = [];
-  if (fs.existsSync(metricsFile)) {
-    try { metrics = JSON.parse(fs.readFileSync(metricsFile, "utf-8")); } catch { /* skip */ }
-  }
 
   let integrations: {
     dataSources?: Record<string, { status?: string }>;
@@ -58,35 +52,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     try { integrations = JSON.parse(fs.readFileSync(intFile, "utf-8")); } catch { /* skip */ }
   }
 
-  // Read daily metric files (last 30 days)
-  const metricsDir = path.join(BASE, "brand", slug, "metrics");
-  const dailyFiles: unknown[] = [];
-  if (fs.existsSync(metricsDir)) {
-    const files = fs.readdirSync(metricsDir)
-      .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
-      .sort()
-      .slice(-30);
-    for (const f of files) {
-      try {
-        const data = JSON.parse(fs.readFileSync(path.join(metricsDir, f), "utf-8"));
-        dailyFiles.push({ date: f.replace(".json", ""), ...data });
-      } catch { /* skip */ }
-    }
-  }
-
-  // Prefer the DB-reconstructed full history (SAN-300); fall back to the on-disk
-  // day-files when the DB is unconfigured or hasn't caught up. No merge — that
-  // would double-count any day present in both sets. manualDataPending below
-  // stays computed against the file set (sheet-freshness semantics unchanged).
-  let daily: unknown[] = dailyFiles;
-  let dailySource: "db" | "files" = "files";
+  let daily: unknown[] = [];
+  const dailySource = "db" as const;
+  let storage = { configured: false };
   try {
     const db = await getDailySnapshots(slug);
-    if (db.configured && db.days > 0 && db.days >= dailyFiles.length) {
-      daily = db.daily;
-      dailySource = "db";
-    }
-  } catch { /* DB hiccup → keep the file-based daily */ }
+    storage = { configured: db.configured };
+    daily = db.daily;
+  } catch {
+    daily = [];
+  }
 
   // Read metrics plan
   let metricsPlan: { manualDataCadence?: string } | null = null;
@@ -105,7 +80,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const monday = new Date(now_);
     monday.setDate(monday.getDate() - ((day + 6) % 7));
     const mondayStr = monday.toISOString().slice(0, 10);
-    const hasSheetData = (dailyFiles as { date: string; sources?: Record<string, { status?: string; metrics?: unknown[] }> }[])
+    const hasSheetData = (daily as { date: string; sources?: Record<string, { status?: string; metrics?: unknown[] }> }[])
       .some((d) => d.date >= mondayStr && d.sources?.sheets?.status === "ok" && (d.sources.sheets.metrics || []).length > 0);
     if (!hasSheetData) manualDataPending = true;
   }
@@ -121,9 +96,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     plan: metricsPlan,
     metricsSheet: integrations.metricsSheet || null,
     dataSources: ds,
-    rolling: metrics,
+    rolling: daily,
     daily,
     dailySource,
+    storage,
     recommended,
     manualDataPending,
     manualDataCadence: manualCadence,

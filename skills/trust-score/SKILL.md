@@ -16,7 +16,7 @@ metadata:
 
 El Trust Score evalúa la confianza digital de una marca desde su URL en 6 pilares: Borrowed Trust, SERP Trust, Brand Assets, GEO Presence (IA), Outbound Readiness y Demand Engine. Es el diagnóstico de apertura: sus pilares mapean casi 1:1 con el programa de growth, así que enmarca el plan completo.
 
-No reimplementes el análisis. El motor vive detrás del endpoint `/api/trust-score`, que corre el modo compare, persiste la métrica diaria (`sources.trust_score`) y escribe este doc.
+No reimplementes el análisis. El motor vive detrás del endpoint `/api/trust-score`, que corre el modo compare, persiste la métrica diaria en `metric_snapshots` (`source=trust_score`) y escribe este doc.
 
 ## Pasos
 

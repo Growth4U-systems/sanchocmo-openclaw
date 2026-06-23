@@ -1943,30 +1943,7 @@ test("publishing and integrations read tools require their read scopes", async (
   }
 });
 
-test("publishing metrics and integrations status read sanitized local state", async () => {
-  seedDocument(
-    "brand/alpha/metrics/2026-06-16.json",
-    JSON.stringify({
-      sources: {
-        metricool: {
-          metrics: [
-            {
-              name: "postDetail",
-              value: 1234,
-              date: "2026-06-16T12:00:00.000Z",
-              dimensions: {
-                network: "linkedin",
-                url: "https://example.com/posts/alpha",
-                likes: 42,
-                clicks: 17,
-                engagement: 3.4,
-              },
-            },
-          ],
-        },
-      },
-    }),
-  );
+test("publishing metrics degrade without DB and integrations status reads sanitized local state", async () => {
   seedDocument(
     "brand/alpha/integrations.json",
     JSON.stringify({
@@ -2017,9 +1994,7 @@ test("publishing metrics and integrations status read sanitized local state", as
     });
     assert.equal(metrics.isError, undefined);
     const metricsPayload = payloadOf(metrics);
-    assert.equal(metricsPayload.found, true);
-    assert.equal((metricsPayload.metrics as { impressions: number; clicks: number }).impressions, 1234);
-    assert.equal((metricsPayload.metrics as { impressions: number; clicks: number }).clicks, 17);
+    assert.equal(metricsPayload.found, false);
 
     const integrations = await client.callTool({
       name: "integrations_get_status",

@@ -178,7 +178,7 @@ For each metric in the hierarchy, identify WHERE the data comes from and HOW to 
 - Frequency: daily, weekly, monthly
 - Owner: who is responsible for the data being accurate
 
-**Storage**: JSON as source of truth (`metrics-data.json`), synced to Google Sheets for client visibility.
+**Storage**: `metric_snapshots` DB as the runtime source of truth, exposed through `/api/metrics?slug={slug}`. Google Sheets can be used as a client-facing export/view, not as the canonical store.
 
 ---
 

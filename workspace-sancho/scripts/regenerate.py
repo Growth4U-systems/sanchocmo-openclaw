@@ -574,27 +574,11 @@ def parse_foundation():
 
             client_data["projects"] = projects_list
 
-            # Metrics
-            metrics_file = client_dir / "metrics" / "metrics-data.json"
-            if metrics_file.exists():
-                try:
-                    metrics_data = json.loads(metrics_file.read_text())
-                    client_data["metrics"] = metrics_data
-                except:
-                    client_data["metrics"] = {}
-            else:
-                client_data["metrics"] = {}
-
-            # Latest daily metrics
-            metrics_dir = client_dir / "metrics"
-            if metrics_dir.exists():
-                daily_files = sorted([f for f in metrics_dir.iterdir() if f.name.startswith("20") and f.suffix == ".json"], reverse=True)
-                if daily_files:
-                    try:
-                        client_data["metrics_latest"] = json.loads(daily_files[0].read_text())
-                        client_data["metrics_latest"]["_date"] = daily_files[0].stem
-                    except:
-                        client_data["metrics_latest"] = {}
+            # Metrics live in the metric_snapshots DB now. This filesystem-only
+            # bundle intentionally does not read legacy metrics-data.json or
+            # daily metric files.
+            client_data["metrics"] = {}
+            client_data["metrics_latest"] = {}
 
             # Brand Summary — extract key fields from company-brief/current.md
             brand_summary = extract_brand_summary(client_dir)

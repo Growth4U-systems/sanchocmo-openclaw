@@ -6,11 +6,11 @@ import { metricSnapshots, metricSourceRuns } from "@/db/schema";
 /**
  * Time-series storage for client metrics (SAN-263 · Métricas v2 PR-1).
  *
- * The JSON files under `brand/<slug>/metrics/<date>.json` stay the source of
- * truth; this module mirrors them into the `metric_snapshots` table (one tidy
- * row per slug/date/source/metric/dimensions) so trends, comparatives and drift
- * become queryable. Mirrors the meeting-intelligence-db.ts pattern: guard on
- * `hasDatabase`, lazily `ensureMetricsStorage()`, upsert idempotently.
+ * DB-only time-series storage for client metrics. The collector and score
+ * refreshers ingest directly into `metric_snapshots` (one tidy row per
+ * slug/date/source/metric/dimensions); historical JSON backfill remains a script,
+ * not a runtime dependency. Mirrors the meeting-intelligence-db.ts pattern:
+ * guard on `hasDatabase`, lazily `ensureMetricsStorage()`, upsert idempotently.
  */
 
 export interface RawMetric {

@@ -3,6 +3,7 @@ import path from "path";
 import { BASE } from "@/lib/data/paths";
 import { listDrafts, updateDraft, type Draft } from "@/lib/data/drafts";
 import { findContentTaskByIdAcrossProjects, setChannelPhase } from "@/lib/data/content-tasks";
+import { listMetricoolPostDetails } from "@/lib/data/metrics";
 import { getProvider } from "@/lib/publishing/registry";
 
 /**
@@ -13,9 +14,8 @@ import { getProvider } from "@/lib/publishing/registry";
  *
  * This helper scans drafts whose `publishing.status === "scheduled"` and
  * `scheduled_at` is in the past, then cross-references against the daily
- * `metrics-collector` output (`brand/{slug}/metrics/*.json`). A match
- * promotes the draft to `published` with the real `external_url` and
- * `published_at`.
+ * `metric_snapshots` postDetail rows from the metrics DB. A match promotes the
+ * draft to `published` with the real `external_url` and `published_at`.
  *
  * Match strategy (network + text prefix):
  *   - Network must equal the draft's channel (linkedin/twitter/...).
@@ -26,8 +26,8 @@ import { getProvider } from "@/lib/publishing/registry";
  *   - Tie-breaker: closest `created.dateTime` to `scheduled_at`.
  *
  * Cheap to call on every calendar GET: the early-out short-circuits when
- * no drafts are due reconciliation, so we only open metrics files when
- * something's actually pending.
+ * no drafts are due reconciliation, so we only query metrics when something's
+ * actually pending.
  */
 
 const NETWORK_BY_CHANNEL: Record<string, string> = {
@@ -55,10 +55,6 @@ interface PostDetail {
   dimensions?: PostDetailDim;
 }
 
-interface MetricsFile {
-  sources?: { metricool?: { metrics?: PostDetail[] } };
-}
-
 interface PendingDraft {
   ideaId: string;
   channel: string;
@@ -67,10 +63,6 @@ interface PendingDraft {
 
 function projectsDir(slug: string): string {
   return path.join(BASE, "brand", slug, "projects");
-}
-
-function metricsDir(slug: string): string {
-  return path.join(BASE, "brand", slug, "metrics");
 }
 
 /** Strip markdown headers, blank lines, list markers — keep the first 80
@@ -128,27 +120,11 @@ function findPendingDrafts(slug: string): PendingDraft[] {
   return out;
 }
 
-/** Load every metrics/*.json file with postDetail entries. Returns a flat
- *  list with file date for tie-breaking. We keep this as a single pass
- *  instead of opening files per draft. */
-function loadAllPostDetails(slug: string): Array<{ fileDate: string; entry: PostDetail }> {
-  const dir = metricsDir(slug);
-  if (!fs.existsSync(dir)) return [];
-  const out: Array<{ fileDate: string; entry: PostDetail }> = [];
-  for (const file of fs.readdirSync(dir)) {
-    if (!/^\d{4}-\d{2}-\d{2}\.json$/.test(file)) continue;
-    let data: MetricsFile;
-    try {
-      data = JSON.parse(fs.readFileSync(path.join(dir, file), "utf-8"));
-    } catch {
-      continue;
-    }
-    const fileDate = file.replace(".json", "");
-    for (const entry of data.sources?.metricool?.metrics || []) {
-      if (entry.name === "postDetail") out.push({ fileDate, entry });
-    }
-  }
-  return out;
+/** Load DB postDetail rows once and keep the old fileDate key for the existing
+ *  tie-breaking code. */
+async function loadAllPostDetails(slug: string): Promise<Array<{ fileDate: string; entry: PostDetail }>> {
+  const rows = await listMetricoolPostDetails(slug);
+  return rows.map(({ metricDate, entry }) => ({ fileDate: metricDate, entry }));
 }
 
 interface ReconcileMatch {
@@ -223,7 +199,7 @@ export async function reconcileScheduledDrafts(slug: string): Promise<ReconcileR
 
   // ── Pass 1: scheduled → published (status reconciliation) ────────────
   if (pending.length > 0) {
-    const posts = loadAllPostDetails(slug);
+    const posts = await loadAllPostDetails(slug);
 
     for (const p of pending) {
       let url: string | null = null;
