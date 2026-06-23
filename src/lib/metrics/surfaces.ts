@@ -61,7 +61,7 @@ export const SURFACES: SurfaceDef[] = [
     emoji: "🌐",
     channel: "web",
     what: "Visitas, qué queries rankean, velocidad del sitio.",
-    sources: ["ga4", "gsc", "pagespeed"],
+    sources: ["ga4", "google-analytics", "gsc", "google-search-console", "pagespeed"],
     spendMetric: null,
     requires: { mandatory: ["Google Search Console"], oneOf: ["Google Analytics 4", "PostHog"], optional: ["PageSpeed (auto, solo URL)"] },
     how: "Ajustes › APIs: autoriza el Service Account del sistema en GSC + GA4. PageSpeed solo necesita la URL.",
@@ -83,7 +83,7 @@ export const SURFACES: SurfaceDef[] = [
     emoji: "📇",
     channel: "prospecting",
     what: "Leads, citas, etapas de pipeline y valor.",
-    sources: ["ghl", "hubspot", "pipedrive"],
+    sources: ["ghl", "go-high-level", "hubspot", "pipedrive"],
     spendMetric: null,
     requires: { mandatory: [], oneOf: ["GoHighLevel", "HubSpot", "Pipedrive"], optional: ["Mapping de etapas"] },
     how: "Ajustes › APIs: API key del CRM + locationId; mapear etapas.",
@@ -94,7 +94,7 @@ export const SURFACES: SurfaceDef[] = [
     emoji: "💰",
     channel: "paid-ads",
     what: "Inversión, CTR, CPC, CPL por campaña.",
-    sources: ["meta-ads", "google_ads", "linkedin_ads"],
+    sources: ["meta-ads", "meta_ads", "google_ads", "google-ads", "linkedin_ads", "linkedin-ads", "tiktok_ads", "tiktok-ads"],
     spendMetric: "spend",
     requires: { mandatory: [], oneOf: ["Meta Ads", "Google Ads", "LinkedIn Ads"], optional: [] },
     how: "Ajustes › APIs: token + accountId de cada plataforma de ads.",
@@ -140,7 +140,7 @@ export const SURFACES: SurfaceDef[] = [
  *  Surfaces absent here are "on" as soon as they have any connected source. */
 export const SURFACE_MANDATORY_SOURCES: Partial<Record<SurfaceKey, { allOf?: string[]; anyOf?: string[] }>> = {
   reputation: { allOf: ["trust_score"] },
-  web: { allOf: ["gsc"] },
+  web: { anyOf: ["gsc", "google-search-console"] },
   social: { allOf: ["metricool"] },
   partnerships: { anyOf: ["yalc", "creators"] },
 };
