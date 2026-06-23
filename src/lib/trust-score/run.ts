@@ -102,37 +102,17 @@ function resolveClientUrl(slug: string, queryUrl: string | null): string | null 
   return loadClient(slug)?.url ?? queryUrl;
 }
 
-function persistDailyMetric(slug: string, metricsDir: string, result: CompareResult) {
+async function persistDailyMetric(slug: string, result: CompareResult) {
   const today = new Date().toISOString().slice(0, 10);
-  const dailyFile = path.join(metricsDir, today + ".json");
-  const daily = readJSON<{
-    slug?: string;
-    collectedAt?: string;
-    sources?: Record<string, unknown>;
-  }>(dailyFile, {});
-  daily.sources = daily.sources || {};
   const p = result.primary.pillars;
   const metrics = [
     { name: "trust_score", value: result.primary.trust_score, date: today },
     ...TRUST_PILLAR_KEYS.map((k) => ({ name: k, value: p?.[k]?.score ?? null, date: today })),
   ];
-  daily.sources.trust_score = {
-    status: "ok",
-    metrics,
-    gap: {
-      competitors: result.competitors.map((c) => ({
-        brand: c.brand_name,
-        trust_score: c.trust_score,
-      })),
-      primary_gaps: result.comparison?.primary_gaps ?? [],
-    },
-  };
-  daily.slug = daily.slug || slug;
-  daily.collectedAt = daily.collectedAt || new Date().toISOString();
-  writeJSON(dailyFile, daily);
-  // Best-effort mirror into the metric_snapshots time-series (SAN-263). Never
-  // blocks or breaks the JSON write; no-op when DATABASE_URL is unset.
-  void ingestSourceMetrics(slug, "trust_score", metrics, today).catch(() => {});
+  const ingest = await ingestSourceMetrics(slug, "trust_score", metrics, today, { collectedAt: new Date().toISOString() });
+  if (!ingest.ok) {
+    throw new Error("metric_snapshots storage is not configured for Trust Score metrics");
+  }
 }
 
 // Best-effort: una falla escribiendo el doc no debe abortar la corrida ni
@@ -229,8 +209,8 @@ export async function runTrustScore(
       url: clientUrl,
       fetchedAt: new Date().toISOString(),
     };
+    await persistDailyMetric(slug, result);
     writeJSON(cacheFile, cache);
-    persistDailyMetric(slug, metricsDir, result);
     // Doc del pilar Foundation (lo consume el Brand Brain y el Strategic Plan).
     writeTrustScoreDoc(slug, result, cache.url, cache.fetchedAt);
 

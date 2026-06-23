@@ -99,20 +99,8 @@ async function fetchPSI(clientUrl: string, strategy: "mobile" | "desktop"): Prom
   };
 }
 
-function persistDailyMetrics(
-  slug: string,
-  metricsDir: string,
-  mobile: StrategyResult,
-  desktop: StrategyResult,
-) {
+async function persistDailyMetrics(slug: string, mobile: StrategyResult, desktop: StrategyResult) {
   const today = new Date().toISOString().slice(0, 10);
-  const dailyFile = path.join(metricsDir, today + ".json");
-  const daily = readJSON<{
-    slug?: string;
-    collectedAt?: string;
-    sources?: Record<string, unknown>;
-  }>(dailyFile, {});
-  daily.sources = daily.sources || {};
   const metrics = [
     { name: "performance_mobile", value: mobile.performance, date: today },
     { name: "seo_mobile", value: mobile.seo, date: today },
@@ -122,12 +110,10 @@ function persistDailyMetrics(
     { name: "cls_mobile", value: mobile.cls, date: today },
     { name: "tbt_mobile", value: mobile.tbt, date: today },
   ];
-  daily.sources.pagespeed = { status: "ok", metrics };
-  daily.slug = daily.slug || slug;
-  daily.collectedAt = daily.collectedAt || new Date().toISOString();
-  writeJSON(dailyFile, daily);
-  // Best-effort mirror into the metric_snapshots time-series (SAN-263).
-  void ingestSourceMetrics(slug, "pagespeed", metrics, today).catch(() => {});
+  const ingest = await ingestSourceMetrics(slug, "pagespeed", metrics, today, { collectedAt: new Date().toISOString() });
+  if (!ingest.ok) {
+    throw new Error("metric_snapshots storage is not configured for PageSpeed metrics");
+  }
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -168,9 +154,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       fetchedAt: new Date().toISOString(),
     };
 
+    await persistDailyMetrics(slug, mobile, desktop);
     if (!fs.existsSync(metricsDir)) fs.mkdirSync(metricsDir, { recursive: true });
     writeJSON(cacheFile, result);
-    persistDailyMetrics(slug, metricsDir, mobile, desktop);
 
     return res.status(200).json(result);
   } catch (err) {

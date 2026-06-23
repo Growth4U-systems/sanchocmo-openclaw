@@ -1,6 +1,6 @@
 # metrics-collector
 
-Unified metrics collector that pulls data from connected APIs for each client and stores it in standardized JSON format + syncs to Google Sheets.
+Unified metrics collector that pulls data from connected APIs for each client and ingests standardized rows into the `metric_snapshots` DB.
 
 ## Trigger
 Use when: collecting metrics, pulling analytics data, syncing client KPIs, running daily/weekly data pulls, or when user says "collect metrics", "pull data", "sync metrics", "run metrics collector", "update metrics".
@@ -19,7 +19,7 @@ scripts/
 │   ├── ghl.js              # GoHighLevel CRM
 │   ├── instantly.js        # Instantly.ai cold email
 │   └── sheets.js           # Manual data from Google Sheets
-├── sync-sheets.js          # Push metrics to Google Sheets
+├── sync-sheets.js          # Legacy JSON-to-Sheets helper (not runtime source)
 └── package.json
 schemas/
 └── metrics-schema.json     # Standard output format
@@ -50,9 +50,9 @@ node collect.js --slug <client-slug> --source posthog
 node collect.js --slug <client-slug> --all --from 2024-01-01 --to 2024-01-31
 ```
 
-### Sync to Google Sheets
+### Due-only scheduled collection
 ```bash
-node sync-sheets.js --slug <client-slug>
+node collect.js --slug <client-slug> --all --due
 ```
 
 ## Prerequisites
@@ -66,9 +66,9 @@ node sync-sheets.js --slug <client-slug>
 - `npm install` in `scripts/` directory
 
 ## Output
-- Daily snapshot: `brand/{slug}/metrics/YYYY-MM-DD.json`
-- Rolling data: `brand/{slug}/metrics/metrics-data.json` (90 days)
-- Format: see `schemas/metrics-schema.json`
+- Runtime source of truth: `metric_snapshots` DB table
+- Historical JSON files can be backfilled with `npm run backfill:metrics`, but the collector no longer writes `brand/{slug}/metrics/YYYY-MM-DD.json` or `metrics-data.json`.
+- Row format: see `schemas/metrics-schema.json` for adapter payloads before ingest.
 
 ## Auth Reference
 | Source | Auth Method | Config Key |

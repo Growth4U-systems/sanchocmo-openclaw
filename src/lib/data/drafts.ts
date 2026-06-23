@@ -93,8 +93,8 @@ export interface PublishingMeta {
   account_id?: string;
   error?: string | null;
   /** Latest engagement snapshot. Refreshed daily by the metrics-collector
-   *  cron via `/api/publishing/reconcile`. Older snapshots are not retained;
-   *  if you need history pull from `brand/{slug}/metrics/*.json`. */
+   *  cron via `/api/publishing/reconcile`. Older snapshots are not retained
+   *  on the draft; history lives in `metric_snapshots`. */
   metrics?: PostMetricsSnapshot;
 }
 

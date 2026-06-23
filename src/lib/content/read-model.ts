@@ -7,6 +7,7 @@ import { cronJobsFile, cronJobsStateFile } from "@/lib/data/openclaw-paths";
 import { loadIdeas } from "@/lib/data/ideas";
 import { loadUnifiedContentTasks } from "@/lib/data/content-tasks-flat";
 import { loadDraft, type MediaAsset, type PostMetricsSnapshot } from "@/lib/data/drafts";
+import { getMetricsTimeSeries, type SeriesPoint } from "@/lib/data/metrics";
 import { loadPovBankFromNeon } from "@/lib/data/pov-bank";
 import { buildPersonaLoops } from "@/lib/data/persona-loops";
 import { listAllCarouselTemplates, listCarouselTemplates } from "@/lib/carousel/templates";
@@ -103,16 +104,6 @@ interface CronJob {
 
 interface JobsState {
   jobs: Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string; lastError?: string } }>;
-}
-
-interface DailyMetricEntry {
-  name?: string;
-  value?: number;
-  dimensions?: Record<string, string | number>;
-}
-
-interface DailyMetricsFile {
-  sources?: Record<string, { status?: string; metrics?: DailyMetricEntry[] }>;
 }
 
 const DEFAULT_LABELS: Record<string, string> = {
@@ -356,13 +347,13 @@ export function listContentCarouselTemplates(
   return { ok: true, templates, count: templates.length, includeDisabled: !!opts.includeDisabled };
 }
 
-export function getContentChannelLoops(slug: string): ChannelLoopsPayload {
+export async function getContentChannelLoops(slug: string): Promise<ChannelLoopsPayload> {
   const cadenceChannels = readCadenceChannels(slug);
   const cts = loadUnifiedContentTasks(slug);
   const jobs = loadContentJobs(slug);
   const jobsState = readJSON<JobsState>(cronJobsStateFile(), { jobs: {} }).jobs;
   const gscConnected = isGscConnected(slug);
-  const gscData = gscConnected ? gscAggregates(slug) : null;
+  const gscData = gscConnected ? await gscAggregates(slug) : null;
 
   const channelKeys = Object.keys(cadenceChannels);
   if (channelKeys.length === 0) {
@@ -621,45 +612,38 @@ function isGscConnected(slug: string): boolean {
   return integrations.dataSources?.gsc?.status === "connected";
 }
 
-function gscAggregates(slug: string): NonNullable<ChannelLoopState["stages"]["metrics"]["gsc"]> | null {
-  const dir = path.join(brandDir(slug), "metrics");
-  if (!fs.existsSync(dir)) return null;
-  const files = fs.readdirSync(dir)
-    .filter((file) => /^\d{4}-\d{2}-\d{2}\.json$/.test(file))
-    .sort()
-    .slice(-60);
-  if (files.length === 0) return null;
-
-  const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-  const agg = { clicks: 0, impressions: 0, posSum: 0, posN: 0, days: 0 };
-  const prev = { clicks: 0, impressions: 0, days: 0 };
-
-  for (const file of files) {
-    const date = file.replace(".json", "");
-    const data = readJSON<DailyMetricsFile>(path.join(dir, file), {});
-    const entries = data.sources?.gsc?.metrics || [];
-    if (entries.length === 0) continue;
-    const value = (name: string) => entries.find((entry) => entry.name === name && !entry.dimensions)?.value;
-    const clicks = value("clicks") ?? 0;
-    const impressions = value("impressions") ?? 0;
-    const position = value("position");
-    const bucket = date >= cutoff ? agg : prev;
-    bucket.clicks += clicks;
-    bucket.impressions += impressions;
-    bucket.days++;
-    if (bucket === agg && typeof position === "number" && position > 0) {
-      agg.posSum += position;
-      agg.posN++;
-    }
-  }
-
-  if (agg.days === 0 && prev.days === 0) return null;
+function sumPoints(points: SeriesPoint[], from: string, to?: string): { value: number; days: number } {
+  const selected = points.filter((point) => point.date >= from && (!to || point.date < to));
   return {
-    clicks30d: agg.clicks,
-    impressions30d: agg.impressions,
-    avgPosition: agg.posN > 0 ? Math.round((agg.posSum / agg.posN) * 10) / 10 : null,
-    prevClicks30d: prev.days > 0 ? prev.clicks : null,
-    prevImpressions30d: prev.days > 0 ? prev.impressions : null,
+    value: selected.reduce((sum, point) => sum + point.value, 0),
+    days: selected.length,
+  };
+}
+
+async function gscAggregates(slug: string): Promise<NonNullable<ChannelLoopState["stages"]["metrics"]["gsc"]> | null> {
+  const today = new Date().toISOString().slice(0, 10);
+  const from = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+  const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const [clicks, impressions, position] = await Promise.all([
+    getMetricsTimeSeries(slug, { source: "gsc", metric: "clicks", from, to: today }),
+    getMetricsTimeSeries(slug, { source: "gsc", metric: "impressions", from, to: today }),
+    getMetricsTimeSeries(slug, { source: "gsc", metric: "position", from: cutoff, to: today }),
+  ]);
+  if (!clicks.configured && !impressions.configured && !position.configured) return null;
+
+  const clicks30 = sumPoints(clicks.points, cutoff);
+  const impressions30 = sumPoints(impressions.points, cutoff);
+  const prevClicks30 = sumPoints(clicks.points, from, cutoff);
+  const prevImpressions30 = sumPoints(impressions.points, from, cutoff);
+  const positions = position.points.map((point) => point.value).filter((value) => value > 0);
+
+  if (clicks30.days === 0 && impressions30.days === 0 && prevClicks30.days === 0 && prevImpressions30.days === 0) return null;
+  return {
+    clicks30d: clicks30.value,
+    impressions30d: impressions30.value,
+    avgPosition: positions.length > 0 ? Math.round((positions.reduce((sum, value) => sum + value, 0) / positions.length) * 10) / 10 : null,
+    prevClicks30d: prevClicks30.days > 0 ? prevClicks30.value : null,
+    prevImpressions30d: prevImpressions30.days > 0 ? prevImpressions30.value : null,
   };
 }
 

@@ -36,7 +36,7 @@ import {
   type IntelligenceItem,
   type ProposalEntry,
 } from "@/lib/data/meeting-intelligence-db";
-import { getMetricsTimeSeries, getNorthStar, getSurfaceSummary, getTrend } from "@/lib/data/metrics";
+import { findMetricoolPostByUrl, getMetricsTimeSeries, getNorthStar, getSurfaceSummary, getTrend } from "@/lib/data/metrics";
 import {
   addCustomMetric,
   applyDashboardTemplate,
@@ -380,7 +380,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug }) =>
       runTool(context, "sancho_get_client_context", clientSlug, async () => {
         assertClientReadScope(context, clientSlug);
-        const status = getInternalClientStatus(clientSlug);
+        const status = await getInternalClientStatus(clientSlug);
         if (!status) throw new McpAuthError(404, `Client context not found: ${clientSlug}`);
         return jsonResult(status);
       }),
@@ -2277,7 +2277,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug }) =>
       runTool(context, "content_get_channel_loops", clientSlug, async () => {
         assertClientScope(context, "content:read", clientSlug);
-        const payload = getContentChannelLoops(clientSlug);
+        const payload = await getContentChannelLoops(clientSlug);
         return jsonResult({ ...payload, clientSlug });
       }),
   );
@@ -5243,47 +5243,21 @@ function applyContentIdeaPatch(idea: ContentIdea, patch: Record<string, unknown>
 }
 
 async function getPublishingPostMetrics(clientSlug: string, externalUrl: string) {
-  const metricsRoot = path.join(brandDir(clientSlug), "metrics");
-  let files: string[];
-  try {
-    files = (await fs.readdir(metricsRoot))
-      .filter((file) => /^\d{4}-\d{2}-\d{2}\.json$/.test(file))
-      .sort()
-      .reverse();
-  } catch {
-    return { found: false };
-  }
-
-  for (const file of files) {
-    let data: unknown;
-    try {
-      data = JSON.parse(await fs.readFile(path.join(metricsRoot, file), "utf8")) as unknown;
-    } catch {
-      continue;
-    }
-    const metricool = isRecord(data)
-      && isRecord(data.sources)
-      && isRecord(data.sources.metricool)
-      && Array.isArray(data.sources.metricool.metrics)
-      ? data.sources.metricool.metrics
-      : [];
-    for (const entry of metricool) {
-      if (!isRecord(entry) || entry.name !== "postDetail" || !isRecord(entry.dimensions)) continue;
-      const dimensions = entry.dimensions;
-      if (dimensions.url !== externalUrl) continue;
-      return {
-        found: true,
-        metrics: {
-          impressions: typeof entry.value === "number" ? entry.value : 0,
-          likes: typeof dimensions.likes === "number" ? dimensions.likes : 0,
-          clicks: typeof dimensions.clicks === "number" ? dimensions.clicks : 0,
-          engagement: typeof dimensions.engagement === "number" ? dimensions.engagement : 0,
-          network: typeof dimensions.network === "string" ? dimensions.network : "",
-          url: externalUrl,
-          measured_at: typeof entry.date === "string" ? entry.date : file.replace(".json", ""),
-        },
-      };
-    }
+  const entry = await findMetricoolPostByUrl(clientSlug, externalUrl);
+  const dimensions = entry?.dimensions;
+  if (entry && dimensions?.url) {
+    return {
+      found: true,
+      metrics: {
+        impressions: entry.value,
+        likes: dimensions.likes ?? 0,
+        clicks: dimensions.clicks ?? 0,
+        engagement: dimensions.engagement ?? 0,
+        network: dimensions.network ?? "",
+        url: externalUrl,
+        measured_at: entry.date,
+      },
+    };
   }
   return { found: false };
 }

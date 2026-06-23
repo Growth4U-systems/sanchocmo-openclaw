@@ -5,10 +5,9 @@ import { ingestDailySnapshot, ingestSourceMetrics, type RawMetric } from "@/lib/
 /**
  * POST /api/metrics/ingest  (admin only)
  *
- * Mirrors a daily metrics snapshot (or a single source's metrics) into the
- * `metric_snapshots` time-series. Called best-effort by the metrics-collector,
- * trust-score and pagespeed paths. The JSON files remain the source of truth;
- * this is an additive, idempotent upsert. (SAN-263 · Métricas v2 PR-1.)
+ * Writes a daily metrics snapshot (or a single source's metrics) into the
+ * `metric_snapshots` time-series. This table is the runtime source of truth for
+ * metrics; the endpoint is idempotent for collector retries and re-pulls.
  *
  * Body (one of):
  *   { slug, date?, collectedAt?, sources: { <source>: { status, metrics:[...] } } }

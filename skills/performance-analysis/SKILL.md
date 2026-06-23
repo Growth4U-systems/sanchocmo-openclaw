@@ -2,7 +2,7 @@
 name: performance-analysis
 description: "Weekly performance analysis — reads existing metrics data, detects anomalies and trends, correlates with active projects, evaluates NSM progress, and generates actionable recommendations with optional web research for persistent underperformance."
 context_required:
-- brand/{slug}/metrics/metrics-data.json
+- metric_snapshots DB history (via /api/metrics?slug={slug} or metrics export)
 - brand/{slug}/metrics-plan.json
 - brand/{slug}/integrations.json
 - brand/{slug}/operational/metrics/*.json
@@ -30,7 +30,7 @@ Read ./brand/ per `_system/brand-memory.md`
 
 This skill does NOT collect metrics — that's already handled by `metrics-collector` and `morning-metrics`. Instead, it:
 
-1. Reads all existing metrics data (daily snapshots + rolling 90-day archive)
+1. Reads all existing metrics data from the metric_snapshots DB
 2. Calculates baselines (7-day and 30-day averages) per KPI
 3. Detects anomalies (spikes, drops, stagnation) and opportunities
 4. Correlates metric changes with active projects by timeline
@@ -45,7 +45,7 @@ This skill does NOT collect metrics — that's already handled by `metrics-colle
 | Source | Path | What it contains |
 |--------|------|-----------------|
 | Daily snapshots | `brand/{slug}/operational/metrics/YYYY-MM-DD.json` | Meta Ads 7d summary, GHL contacts/appointments, alerts |
-| Rolling archive | `brand/{slug}/metrics/metrics-data.json` | 90-day window: GA4, GSC, Meta Ads, GHL, Metricool per day |
+| Metrics history | `metric_snapshots` DB via `/api/metrics?slug={slug}` or `npm run export:metrics` | GA4, GSC, Meta Ads, GHL, Metricool, PageSpeed, Trust Score per day |
 | KPI definitions | `brand/{slug}/metrics-plan.json` | KPI names, sources, formulas, categories, funnel steps |
 | Strategic plan | `brand/{slug}/strategic-plan/strategic-plan.current.md` | Active strategy, NSM, priorities |
 | Projects | `brand/{slug}/projects/*/project.json` | Active projects with tasks and status |
@@ -57,7 +57,7 @@ This skill does NOT collect metrics — that's already handled by `metrics-colle
 
 ### Step 0: Load Data
 1. Read `metrics-plan.json` to know which KPIs to analyze and the primary KPI (NSM)
-2. Read `metrics-data.json` (rolling 90 days) for baseline calculations
+2. Read metrics history from `/api/metrics?slug={slug}` (or a DB export) for baseline calculations
 3. Read daily snapshots from `operational/metrics/` for the last 7 days
 4. Read `strategic-plan/strategic-plan.current.md` for context
 5. Read all `projects/*/project.json` for active project data
@@ -66,7 +66,7 @@ This skill does NOT collect metrics — that's already handled by `metrics-colle
 
 ### Step 1: Calculate Baselines
 For each KPI defined in `metrics-plan.json`:
-- Extract values from `metrics-data.json` for the last 7 and 30 days
+- Extract values from DB-backed metrics history for the last 7 and 30 days
 - Calculate: mean_7d, mean_30d, stdev_7d, stdev_30d
 - Determine trend: 3+ consecutive days above/below average = trending up/down
 - For formula-based KPIs (e.g., CPL = spend/contacts): compute from component metrics
@@ -154,7 +154,7 @@ Clean up previous recommendations:
 
 **If Metricool is connected:**
 
-1. **Extract post-level data** from `metrics-data.json` (metricool section):
+1. **Extract post-level data** from DB-backed Metricool `postDetail` rows:
    - For each post in the last 14 days: platform, format (reel/carousel/static/story/text), hook text (first line), publish date, and metrics
    - **Resonance metrics** (primary): replies, saves, shares, DMs attributed
    - **Reach metrics** (secondary): impressions, reach, likes
