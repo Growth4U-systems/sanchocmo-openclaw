@@ -62,11 +62,13 @@ Admin requests van a Cervantes (message a #cervantes-admin en Discord; Cervantes
 - Lanzamientos live solo tras confirmación explícita del usuario
 - Campaign status, reporting y guardado de resultados en `brand/{slug}/yalc/runs/`
 
-**Usa Alarife para web/páginas** (via `Agent(subagent_type="alarife")` desde Sancho; usa `alarife-integration`, `payload`, `site-architecture`, `frontend-design`, `page-cro`):
+**Usa Alarife para web/páginas** (via `Agent(subagent_type="alarife")` desde Sancho; usa `alarife-integration`, `payload`, `site-architecture`, `frontend-design`, `page-cro`, `lighthouse-landing-qa`):
 - Build y publish de páginas/sites en Payload CMS (draft → preview → publish-with-approval)
 - Arquitectura de la información: estructura de páginas, jerarquía, routing
 - Frontend: implementación de páginas en producción
 - CRO: optimización de conversión a nivel de página y formulario
+- Lighthouse/PageSpeed: mobile average >= 95 antes de pedir aprobación de publish; si falla, mejora draft y vuelve a medir
+- Waivers: solo para audits sin peso de score y con razón aprobada por el usuario
 - Importación/exportación de sites y migraciones de CMS
 - Alarife solicita el copy a Dulcinea y los visuales a Maese Pedro; nunca publica sin aprobación explícita
 
@@ -120,17 +122,17 @@ Cada tipo de tarea se delega a su especialista dueño vía `Agent(subagent_type=
 | Paid ads, ad copy | Mambrino | `mambrino` | direct-response-copy |
 | Partnerships | Rocinante | `rocinante` | company-finder, direct-response-copy |
 | Propuestas, battlecards | Dulcinea | `dulcinea` | positioning-messaging, pricing-strategy |
-| Landing pages, CRO | Dulcinea | `dulcinea` | direct-response-copy, lead-magnet |
+| Landing copy, lead magnets | Dulcinea | `dulcinea` | direct-response-copy, lead-magnet |
 | **Deep research, market analysis** | **Hamete** | `hamete` | deep-research, market-intelligence |
 | **Competitive intel, battle cards** | **Hamete** | `hamete` | competitor-intelligence, thief-marketers |
 | **Signals, daily pulse, patterns, meeting intel** | **Hamete** | `hamete` | signal-monitor, daily-pulse, pattern-detector, meeting-intelligence |
 | CRM, datos, integraciones de métricas | Merlín | `merlin` | metrics-setup, integrations |
 | YALC/GTM-OS execution | Rocinante | `rocinante` | yalc-operator |
-| **Web/page build & publish** | **Alarife** | `alarife` | alarife-integration, payload, site-architecture, frontend-design, page-cro |
+| **Web/page build & publish** | **Alarife** | `alarife` | alarife-integration, payload, site-architecture, frontend-design, page-cro, lighthouse-landing-qa |
 | Brand check, QA | Sansón | `sanson` | Brand verification, devil's advocate |
 | Admin, bugs, infra | Cervantes | — (message Discord) | System tasks |
 
-> El copy de las páginas que construye Alarife lo produce Dulcinea; los visuales, Maese Pedro.
+> El copy de las páginas que construye Alarife lo produce Dulcinea; los visuales, Maese Pedro. Si se va a crear o publicar una web, Sancho delega el build a Alarife y exige el loop Lighthouse mobile >= 95 antes de aprobación humana.
 
 ---
 

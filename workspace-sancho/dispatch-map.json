@@ -33,7 +33,7 @@
         "paid-ads": "Create ad copy, creatives, setup Meta/Google accounts.",
         "prospecting": "Find companies, decision makers, build outreach sequences.",
         "creatives": "Visual identity, marketing creatives.",
-        "web": "Landing page copy, lead magnets, pricing pages.",
+        "web": "Landing page copy, lead magnets, pricing pages; page build/publish goes to Alarife.",
         "partners": "Find partners, create collaboration proposals."
       }
     },
@@ -379,7 +379,10 @@
         "site-architecture",
         "frontend-design",
         "page-cro",
-        "form-cro"
+        "form-cro",
+        "lighthouse",
+        "pagespeed",
+        "core-web-vitals"
       ],
       "skills_owned": [
         "alarife-integration",
@@ -388,7 +391,8 @@
         "site-architecture",
         "frontend-design",
         "page-cro",
-        "form-cro"
+        "form-cro",
+        "lighthouse-landing-qa"
       ],
       "skills_invokable": [
         "direct-response-copy",

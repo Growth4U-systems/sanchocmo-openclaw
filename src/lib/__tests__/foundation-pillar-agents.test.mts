@@ -43,3 +43,19 @@ test("per-brand chat-config.json pillar override still wins over the bridge", ()
   assert.equal(res.skill, "custom-skill");
   assert.equal(res.agent, "merlin");
 });
+
+test("web-build defaults to Alarife with Lighthouse QA in the skill pipeline", () => {
+  const res = resolveThreadSkills({ taskType: "web-build" });
+
+  assert.equal(res.skill, "alarife-integration");
+  assert.equal(res.agent, "alarife");
+  assert.deepEqual(res.skills, [
+    "alarife-integration",
+    "payload",
+    "site-architecture",
+    "frontend-design",
+    "page-cro",
+    "form-cro",
+    "lighthouse-landing-qa",
+  ]);
+});

@@ -229,6 +229,37 @@ Mutating tools are side-effecting and require their matching write scope (`clien
 
 `sancho_update_task` only accepts a whitelist of fields (`name`, `status`, `description`, `brief`, `completion`, `owner`) and rejects updates that change nothing.
 
+### Alarife web-build delegation
+
+When an MCP consumer asks Sancho to create a landing page or web page, delegate the build to Alarife. Dulcinea may own landing copy, but Alarife owns draft creation, preview, Lighthouse/PageSpeed QA, Sanson QA handoff and publish-with-approval.
+
+```json
+{
+  "clientSlug": "client-slug",
+  "agent": "alarife",
+  "taskType": "web-build",
+  "intent": "create-landing-page",
+  "skills": [
+    "alarife-integration",
+    "payload",
+    "site-architecture",
+    "frontend-design",
+    "page-cro",
+    "form-cro",
+    "lighthouse-landing-qa"
+  ],
+  "acceptance": {
+    "lighthouse": {
+      "strategy": "mobile",
+      "averageScoreMin": 95,
+      "categoryFloor": 90,
+      "waivers": "Only user-approved non-scoring audits may be waived"
+    },
+    "publish": "Requires explicit human approval after preview, Lighthouse QA and Sanson QA"
+  }
+}
+```
+
 ### Recurring tasks flow
 
 Use `recurring_list_tasks` to inspect local recurring tasks and OpenClaw cron jobs for one client:
