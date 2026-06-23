@@ -2941,6 +2941,10 @@ function MetricsPageInner({ slug }: { slug: string }) {
                     🕓 Versiones{(dashboardRec?.versions?.length ?? 0) > 0 ? ` ${dashboardRec?.versions.length}` : ""}
                   </MetricButton>
                   <MetricButton variant="cyan" onClick={() => openMerlin("Quiero editar el dashboard de métricas (North Star, KPIs, superficies o una métrica custom). ¿Qué cambiamos?")}>✨ Merlin</MetricButton>
+                  <MetricButton variant="sage" onClick={handleCollect} disabled={collecting || !hasConnectedApis} title={hasConnectedApis ? "Recolecta ahora todas las fuentes conectadas" : "Conecta al menos una fuente para poder recolectar"}>
+                    {collecting ? "↻ Recolectando…" : "↻ Recolectar"}
+                  </MetricButton>
+                  {collectStatus && <span className="text-[11px] text-[var(--sc-fg-muted)] whitespace-nowrap">{collectStatus}</span>}
                 </>
               )}
               <a href={`/dashboard/${slug}/tasks/${METRICS_PROJECT_ID}`} className="inline-flex">

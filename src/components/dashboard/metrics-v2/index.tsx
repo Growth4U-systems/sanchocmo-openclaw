@@ -32,13 +32,14 @@ export function Button({
   variant = "paper",
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "paper" | "rust" | "navy" | "cyan" | "ghost";
+  variant?: "paper" | "rust" | "navy" | "cyan" | "sage" | "ghost";
 }) {
   const variants = {
     paper: "bg-card text-[var(--sc-ink-soft)]",
     rust: "bg-rust text-white",
     navy: "bg-navy text-white",
     cyan: "bg-[var(--cyan)] text-white",
+    sage: "bg-sage text-white",
     ghost: "bg-transparent text-[var(--sc-ink-soft)] shadow-none",
   };
   return (
