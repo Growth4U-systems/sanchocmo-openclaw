@@ -96,6 +96,14 @@ test("context_overflow: detects token limit errors", () => {
   assert.ok(out.text.startsWith("⚠️ **Contexto demasiado largo**"));
 });
 
+test("invalid_thinking_signature: detects corrupted reasoning blocks", () => {
+  const raw = "LLM request rejected: messages.25.content.58: Invalid signature in thinking block";
+  const out = classifyAndRewriteError(raw);
+  assert.equal(out.errorDetail.category, "invalid_thinking_signature");
+  assert.ok(out.text.startsWith("⚠️ **Historial interno corrupto**"));
+  assert.ok(out.text.includes("bloques internos"));
+});
+
 test("model_unavailable: detects overloaded/503 errors", () => {
   const out = classifyAndRewriteError(FIXTURE_MODEL_UNAVAILABLE);
   assert.equal(out.errorDetail.category, "model_unavailable");

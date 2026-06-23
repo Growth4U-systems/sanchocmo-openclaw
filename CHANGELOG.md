@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.11.0...v0.11.1) (2026-06-23)
+
+
+### Bug Fixes
+
+* **mc-chat:** sanitize persisted thinking blocks ([36d4a27](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/36d4a270681fdf7df1bff228fede01659c16a57a))
+
 ## [0.11.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.10.1...v0.11.0) (2026-06-23)
 
 

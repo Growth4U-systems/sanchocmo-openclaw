@@ -47,6 +47,12 @@ const CLASSIFIERS = [
     hint: "Reducí el prompt o reiniciá el thread.",
   },
   {
+    category: "invalid_thinking_signature",
+    regex: /invalid signature in thinking block|thinkingSignature|messages\.\d+\.content\.\d+/i,
+    header: "Historial interno corrupto",
+    hint: "Sancho detectó bloques internos de razonamiento persistidos. El runtime los limpia antes de reintentar para conservar la memoria visible sin romper la request.",
+  },
+  {
     category: "model_unavailable",
     regex: /model.{0,10}(not found|unavailable|overloaded)|\b503\b/i,
     header: "Modelo no disponible",
