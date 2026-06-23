@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { PILL_BASE } from "./rigor";
 
 export function Panel({
   children,
@@ -127,7 +128,7 @@ export function Chip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-sc-pill border-[1.5px] border-ink px-2 py-0.5 font-heading text-[10.5px] font-bold",
+        PILL_BASE,
         tones[tone],
         className,
       )}

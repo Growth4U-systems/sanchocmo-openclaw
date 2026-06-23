@@ -131,3 +131,22 @@ test("DataHealthBadge: dirty defaults href to the Salud de dato anchor", () => {
   const m = render(createElement(DataHealthBadge, { source: "ghl", status: "dirty" }));
   assert.match(m, /href="#salud-de-dato"/);
 });
+
+// ───────────────────────── a11y (accessible status names) ─────────────────────────
+
+test("DataHealthBadge: clean exposes an accessible status name (source + 'limpio')", () => {
+  const m = render(createElement(DataHealthBadge, { source: "posthog", status: "clean" }));
+  assert.match(m, /aria-label="[^"]*posthog[^"]*"/);
+  assert.match(m, /aria-label="[^"]*limpio[^"]*"/);
+});
+
+test("DataHealthBadge: dirty exposes an accessible status name (source + 'problema')", () => {
+  const m = render(createElement(DataHealthBadge, { source: "ghl", status: "dirty" }));
+  assert.match(m, /aria-label="[^"]*ghl[^"]*"/);
+  assert.match(m, /aria-label="[^"]*problema[^"]*"/);
+});
+
+test("ConnectionState: exposes an accessible label carrying the state", () => {
+  const m = render(createElement(ConnectionState, { state: "connected_pending" }));
+  assert.match(m, /aria-label="[^"]*Conectado · pendiente[^"]*"/);
+});

@@ -8,6 +8,10 @@
  */
 import { cn } from "@/lib/utils";
 
+/** Shared pill chrome — the base of `Chip` in `./index.tsx` and every badge here. */
+export const PILL_BASE =
+  "inline-flex items-center gap-1 rounded-sc-pill border-[1.5px] border-ink px-2 py-0.5 font-heading text-[10.5px] font-bold";
+
 /** Per-KPI provenance pill: a colour-dot by data `type` + label, tooltip = `source · confidence`. */
 export function DataChip({
   type,
@@ -28,10 +32,7 @@ export function DataChip({
   const { label, dot } = meta[type];
   const title = [source, confidence].filter(Boolean).join(" · ") || undefined;
   return (
-    <span
-      title={title}
-      className="inline-flex items-center gap-1 rounded-sc-pill border-[1.5px] border-ink bg-card px-2 py-0.5 font-heading text-[10.5px] font-bold text-[var(--sc-ink-soft)]"
-    >
+    <span title={title} className={cn(PILL_BASE, "bg-card text-[var(--sc-ink-soft)]")}>
       <span aria-hidden="true" className={cn("h-1.5 w-1.5 rounded-full border border-ink", dot)} />
       {label}
     </span>
@@ -86,12 +87,7 @@ export function ConnectionState({
   };
   const { label, glyph, cls } = meta[state];
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-sc-pill border-[1.5px] border-ink px-2 py-0.5 font-heading text-[10.5px] font-bold",
-        cls,
-      )}
-    >
+    <span aria-label={`Conexión: ${label}`} className={cn(PILL_BASE, cls)}>
       <span aria-hidden="true">{glyph}</span>
       {label}
     </span>
@@ -108,18 +104,20 @@ export function DataHealthBadge({
   status: "clean" | "dirty";
   href?: string;
 }) {
-  const base =
-    "inline-flex items-center gap-1 rounded-sc-pill border-[1.5px] border-ink px-2 py-0.5 font-heading text-[10.5px] font-bold";
   if (status === "clean") {
     return (
-      <span className={cn(base, "bg-[var(--sc-sage-100)] text-sage")}>
+      <span aria-label={`${source}: dato limpio`} className={cn(PILL_BASE, "bg-[var(--sc-sage-100)] text-sage")}>
         <span aria-hidden="true">✓</span>
         {source}
       </span>
     );
   }
   return (
-    <a href={href} className={cn(base, "bg-[var(--sc-brick-bg)] text-destructive underline")}>
+    <a
+      href={href}
+      aria-label={`${source}: problema de dato`}
+      className={cn(PILL_BASE, "bg-[var(--sc-brick-bg)] text-destructive underline")}
+    >
       <span aria-hidden="true">⚠</span>
       {source}
     </a>
