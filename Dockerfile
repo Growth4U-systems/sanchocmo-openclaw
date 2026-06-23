@@ -47,6 +47,9 @@ COPY public/ ./public/
 # "Module not found" even though GitHub CI (full checkout) passes.
 COPY config/ ./config/
 COPY scripts/apply-sql-migration.mjs ./scripts/apply-sql-migration.mjs
+# Single-day metrics ingest (SAN-318): the collector pipes a snapshot to this tsx
+# script to persist via the app's getDb(); scripts/ is copied file-by-file.
+COPY scripts/ingest-metrics.ts ./scripts/ingest-metrics.ts
 # Local-Postgres baseline migrator (bundled local-db). Applies the journal-backed
 # baseline under src/db/migrations-local (copied via `COPY src/`) at boot — see
 # docker/entrypoint.sh section 5d.
