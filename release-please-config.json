@@ -15,5 +15,5 @@
   },
   "pull-request-title-pattern": "chore: release ${component} v${version}",
   "group-pull-request-title-pattern": "chore: release ${component} v${version}",
-  "separate-pull-requests": false
+  "separate-pull-requests": true
 }
