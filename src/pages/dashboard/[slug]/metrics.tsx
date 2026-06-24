@@ -831,6 +831,55 @@ function PaidTrend({ series }: { series: { date: string; spend: number; roas: nu
   );
 }
 
+/** Creative grid (SAN-319 · 3c, slot ④b): tarjetas con thumbnail + hook rate + badges ganador/fatiga. source=meta_ads ad-level (platform-attributed → dedup). */
+function CreativeGrid({ creatives }: { creatives: Record<string, Record<string, number | string | null>> }) {
+  const heatCls = (kind: "cpa" | "roas", v: number | null) => {
+    if (v == null || !v) return "text-navy";
+    if (kind === "roas") return v >= 4 ? "text-sage" : v >= 2.5 ? "text-[var(--amber-ink)]" : "text-destructive";
+    return v <= 40 ? "text-sage" : v <= 70 ? "text-[var(--amber-ink)]" : "text-destructive";
+  };
+  const cards = Object.entries(creatives)
+    .map(([name, m]) => {
+      const spend = (m.spend as number) || 0;
+      const conv = (m.conversions as number) || (m.leads as number) || 0;
+      return { name, spend, cpa: conv > 0 ? spend / conv : null, roas: (m.roas as number) || 0, ctr: (m.ctr as number) || 0, hook: (m.hookRate as number) || 0 };
+    })
+    .sort((a, b) => b.spend - a.spend);
+  if (!cards.length) return null;
+  return (
+    <div className="mt-5">
+      <div className="mb-2 font-heading text-[13px] font-bold text-navy">🖼️ Creatividades — galería</div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {cards.map((c) => {
+          const badge = c.roas >= 4 ? "win" : c.ctr > 0 && c.ctr < 1.5 ? "fat" : null;
+          return (
+            <div key={c.name} className="overflow-hidden rounded-sc-md border-2 border-ink bg-card shadow-pop-xs">
+              <div className="relative grid h-16 place-items-center border-b-2 border-ink bg-aged text-[26px]">
+                🎬
+                {badge && <span className={cn("absolute right-1 top-1 rounded-sc-pill border border-ink px-1.5 py-0.5 text-[8.5px] font-bold", badge === "win" ? "bg-sage text-white" : "bg-[var(--sc-brick-bg)] text-destructive")}>{badge === "win" ? "★ ganador" : "fatiga"}</span>}
+              </div>
+              <div className="p-2">
+                <div className="truncate font-heading text-[12px] font-bold text-navy" title={c.name}>{c.name}</div>
+                <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">
+                  <div>Spend <b className="block font-heading text-[12px] text-navy">€{c.spend.toFixed(0)}</b></div>
+                  <div>CTR <b className="block font-heading text-[12px] text-navy">{c.ctr.toFixed(1)}%</b></div>
+                  <div>CPA <b className={cn("block font-heading text-[12px]", heatCls("cpa", c.cpa))}>{c.cpa != null ? `€${c.cpa.toFixed(0)}` : "—"}</b></div>
+                  <div>ROAS <b className={cn("block font-heading text-[12px]", heatCls("roas", c.roas))}>{c.roas ? `${c.roas.toFixed(1)}x` : "—"}</b></div>
+                  {c.hook ? <div>Hook <b className="block font-heading text-[12px] text-navy">{c.hook}%</b></div> : null}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[var(--sc-fg-muted)]">
+        <DataChip type="dedup" source="atribución de la plataforma" confidence="media" />
+        <span>CPA · ROAS = plataforma · thumbnail real cuando el colector traiga creative.thumbnail_url</span>
+      </div>
+    </div>
+  );
+}
+
 function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: string; period: string; series: { date: string; spend: number; roas: number }[] }) {
   const [tab, setTab] = useState<"campaign" | "adset" | "ad" | "placement" | "audience" | "keyword">("campaign");
   const [sortCol, setSortCol] = useState<number | null>(null);
@@ -1016,6 +1065,7 @@ function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: strin
           <span>Conv · CPA · ROAS = plataforma · CPA/ROAS pintados rojo→verde (mapa de calor)</span>
         </div>
       </div>
+      <CreativeGrid creatives={adCreatives} />
       <ProvenanceFooter source="meta_ads · google_ads" route="Meta / Google Ads API" client={slug} period={period} />
     </>
   );
