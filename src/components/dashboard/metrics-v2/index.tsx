@@ -261,3 +261,5 @@ export * from "./rigor";
 // surface wiring (PR7/PR8). Presentational only — re-exported from the barrel.
 export * from "./AttributionFunnel";
 export * from "./DataQualityInsight";
+// Pipeline/CRM surface rigor header (PR4) — GHL-only KPIs + provenance.
+export * from "./PipelineKpis";

@@ -1,0 +1,68 @@
+/**
+ * Pipeline/CRM surface — GHL-only KPI header with data provenance (SAN-319 · PR4).
+ *
+ * Pure/presentational: the parent (`CrmModule` in `metrics.tsx`) computes the GHL
+ * numbers (via `mVal`) and the known-dirty flag (via `getKnownDirty('ghl')`) and
+ * passes them in. Surfaces read ONLY their own source — GHL here — so this never
+ * references Koibox. GHL leads/pipeline are the platform's own (inflated, ±10)
+ * figures → `Dedup`; appointments/attendance are not instrumented → `Pendiente`; the
+ * real cita (Koibox) and the channel→cita→pago join live in the Atribución view (PR7).
+ */
+import { cn } from "@/lib/utils";
+import { DataChip, DataHealthBadge } from "./rigor";
+
+const fmt = (v: number) => v.toLocaleString();
+
+export function PipelineKpis({
+  contacts,
+  newContacts,
+  appointments,
+  opportunities,
+  pipelineValue,
+  ghlDirty,
+  dirtyReason,
+  attributionHref = "#conversion",
+}: {
+  contacts: number;
+  newContacts: number;
+  appointments: number;
+  opportunities: number;
+  pipelineValue: number;
+  ghlDirty: boolean;
+  dirtyReason?: string;
+  attributionHref?: string;
+}) {
+  const kpis: { label: string; value: string; color?: string }[] = [
+    { label: "Contacts", value: fmt(contacts) },
+    { label: "New", value: `+${newContacts}`, color: "text-sage" },
+    { label: "Appts", value: fmt(appointments) },
+    { label: "Opps", value: fmt(opportunities) },
+    ...(pipelineValue > 0
+      ? [{ label: "Pipeline", value: `€${fmt(pipelineValue)}`, color: "text-sage" }]
+      : []),
+  ];
+  return (
+    <>
+      <div className="flex flex-wrap gap-4">
+        {kpis.map((kpi) => (
+          <div key={kpi.label} className="min-w-[70px] text-center">
+            <div className={cn("font-heading text-[22px] font-bold", kpi.color)}>{kpi.value}</div>
+            <div className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">{kpi.label}</div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-[var(--sc-fg-muted)]">
+        <DataChip type="dedup" source="GHL" confidence="media" />
+        <span>leads · pipeline = lo que reporta GHL (±10, inflado) — dato propio de GHL, no cifra exacta</span>
+        <DataChip type="pending" source="GHL" />
+        <span>citas / asistencia no instrumentadas — la cita real vive en Atribución</span>
+        <span title={dirtyReason}>
+          <DataHealthBadge source="ghl" status={ghlDirty ? "dirty" : "clean"} />
+        </span>
+        <a href={attributionHref} className="font-heading font-bold text-rust underline">
+          → citas reales por canal en Conversión/Atribución
+        </a>
+      </div>
+    </>
+  );
+}
