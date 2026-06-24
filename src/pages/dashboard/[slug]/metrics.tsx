@@ -983,6 +983,45 @@ function PaidEmpty() {
   );
 }
 
+/** Campaign explorer (SAN-319 · 3f): buscar/ordenar TODAS las campañas con heat CPA/ROAS. Versión ligera del slot explorer. */
+function CampaignExplorer({ rows }: { rows: { name: string; spend: number; clicks: number; ctr: number; cpc: number; conversions: number; cpa: number | null; roas: number }[] }) {
+  const [q, setQ] = useState("");
+  const heatCpa = (v: number | null) => (v == null ? "" : v <= 40 ? "bg-[var(--sc-sage-100)] text-sage" : v <= 70 ? "bg-[var(--yellow)] text-ink" : "bg-[var(--sc-brick-bg)] text-destructive");
+  const heatRoas = (v: number) => (!v ? "" : v >= 4 ? "bg-[var(--sc-sage-100)] text-sage" : v >= 2.5 ? "bg-[var(--yellow)] text-ink" : "bg-[var(--sc-brick-bg)] text-destructive");
+  if (!rows.length) return null;
+  const filtered = rows.filter((r) => r.name.toLowerCase().includes(q.toLowerCase())).sort((a, b) => b.spend - a.spend);
+  return (
+    <div className="mt-5">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="font-heading text-[13px] font-bold text-navy">🔍 Explorador de campañas</span>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar campaña…" className="rounded-sc-md border-2 border-ink bg-card px-2 py-1 text-[12px] text-[var(--sc-ink-soft)] outline-none" />
+        <span className="text-[10.5px] text-[var(--sc-fg-muted)]">{filtered.length} de {rows.length} campañas</span>
+      </div>
+      <table className="w-full border-collapse text-[12px]">
+        <thead><tr>{["Campaña", "Spend", "Clics", "CTR", "CPC", "Conv", "CPA", "ROAS"].map((h, i) => <th key={h} className={cn("p-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground", i > 0 && "text-right")}>{h}</th>)}</tr></thead>
+        <tbody>
+          {filtered.map((r) => (
+            <tr key={r.name} className="border-t border-border hover:bg-[#fff7ea]">
+              <td className="max-w-[160px] truncate p-1.5" title={r.name}>{r.name}</td>
+              <td className="p-1.5 text-right font-heading font-semibold">€{r.spend.toFixed(0)}</td>
+              <td className="p-1.5 text-right">{r.clicks}</td>
+              <td className="p-1.5 text-right">{r.ctr.toFixed(1)}%</td>
+              <td className="p-1.5 text-right">€{r.cpc.toFixed(2)}</td>
+              <td className="p-1.5 text-right">{r.conversions}</td>
+              <td className="p-1.5 text-right"><span className={cn("inline-block rounded px-1.5 py-0.5 font-semibold", heatCpa(r.cpa))}>{r.cpa != null ? `€${r.cpa.toFixed(0)}` : "—"}</span></td>
+              <td className="p-1.5 text-right"><span className={cn("inline-block rounded px-1.5 py-0.5 font-semibold", heatRoas(r.roas))}>{r.roas ? `${r.roas.toFixed(1)}x` : "—"}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[var(--sc-fg-muted)]">
+        <DataChip type="dedup" source="atribución de la plataforma" confidence="media" />
+        <span>Todas las campañas · buscar/ordenar · CPA/ROAS de plataforma (heat). Filtros avanzados + export = follow-up.</span>
+      </div>
+    </div>
+  );
+}
+
 function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: string; period: string; series: { date: string; spend: number; roas: number }[] }) {
   const [tab, setTab] = useState<"campaign" | "adset" | "ad" | "placement" | "audience" | "keyword">("campaign");
   const [sortCol, setSortCol] = useState<number | null>(null);
@@ -1171,6 +1210,7 @@ function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: strin
       <CreativeGrid creatives={adCreatives} />
       <PaidHealthMovers creatives={adCreatives} series={series} />
       <PaidIntelBridge />
+      <CampaignExplorer rows={campaignRows} />
       <ProvenanceFooter source="meta_ads · google_ads" route="Meta / Google Ads API" client={slug} period={period} />
     </>
   );
