@@ -832,7 +832,7 @@ function PaidTrend({ series }: { series: { date: string; spend: number; roas: nu
 }
 
 function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: string; period: string; series: { date: string; spend: number; roas: number }[] }) {
-  const [tab, setTab] = useState<"campaign" | "adset" | "ad">("campaign");
+  const [tab, setTab] = useState<"campaign" | "adset" | "ad" | "placement" | "audience" | "keyword">("campaign");
   const [sortCol, setSortCol] = useState<number | null>(null);
   const [sortAsc, setSortAsc] = useState(false);
 
@@ -874,31 +874,59 @@ function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: strin
       adCreatives[key][x.name] = x.value;
     });
 
+  // Parse single-dimension breakdowns (placement / audience / keyword) from PR-D.
+  const byDim = (dim: string): Record<string, Record<string, number>> => {
+    const out: Record<string, Record<string, number>> = {};
+    ads.metrics
+      .filter((x) => x.dimensions && (x.dimensions as Record<string, string>)[dim])
+      .forEach((x) => {
+        const k = (x.dimensions as Record<string, string>)[dim];
+        if (!out[k]) out[k] = {};
+        out[k][x.name] = x.value;
+      });
+    return out;
+  };
+  const placements = byDim("placement");
+  const audiences = byDim("audience");
+  const keywords = byDim("keyword");
+
   // Calculate CPL
   for (const m of Object.values(campaigns)) { m.cpl = (m.leads as number) > 0 ? (m.spend as number) / (m.leads as number) : 0; }
   for (const m of Object.values(adsets)) { m.cpl = (m.leads as number) > 0 ? (m.spend as number) / (m.leads as number) : 0; }
   for (const m of Object.values(adCreatives)) { m.cpl = (m.leads as number) > 0 ? (m.spend as number) / (m.leads as number) : 0; }
 
-  type AdsRow = { name: string; spend: number; impressions: number; clicks: number; ctr: number; cpc: number; leads: number; cpl: number | null; extra?: string };
+  type AdsRow = { name: string; spend: number; clicks: number; ctr: number; cpc: number; conversions: number; cpa: number | null; roas: number; extra?: string };
 
   function buildRows(data: Record<string, Record<string, number | string | null>>, includeExtra = false): AdsRow[] {
     return Object.entries(data)
-      .map(([name, m]) => ({
-        name, spend: (m.spend as number) || 0, impressions: (m.impressions as number) || 0,
-        clicks: (m.clicks as number) || 0, ctr: (m.ctr as number) || 0, cpc: (m.cpc as number) || 0,
-        leads: (m.leads as number) || 0, cpl: (m.leads as number) > 0 ? ((m.spend as number) || 0) / ((m.leads as number) || 1) : null,
-        extra: includeExtra ? (m.adset as string) || "" : undefined,
-      }))
+      .map(([name, m]) => {
+        const spend = (m.spend as number) || 0;
+        const conversions = (m.conversions as number) || (m.leads as number) || 0;
+        return {
+          name,
+          spend,
+          clicks: (m.clicks as number) || 0,
+          ctr: (m.ctr as number) || 0,
+          cpc: (m.cpc as number) || 0,
+          conversions,
+          cpa: conversions > 0 ? spend / conversions : null,
+          roas: (m.roas as number) || 0,
+          extra: includeExtra ? (m.adset as string) || "" : undefined,
+        };
+      })
       .sort((a, b) => b.spend - a.spend);
   }
 
   const campaignRows = buildRows(campaigns as Record<string, Record<string, number | string | null>>);
   const adsetRows = buildRows(adsets);
   const adRows = buildRows(adCreatives, true);
+  const placementRows = buildRows(placements as Record<string, Record<string, number | string | null>>);
+  const audienceRows = buildRows(audiences as Record<string, Record<string, number | string | null>>);
+  const keywordRows = buildRows(keywords as Record<string, Record<string, number | string | null>>);
 
   function sortRows(rows: AdsRow[]): AdsRow[] {
     if (sortCol == null) return rows;
-    const keys: (keyof AdsRow)[] = ["name", "spend", "impressions", "clicks", "ctr", "cpc", "leads", "cpl"];
+    const keys: (keyof AdsRow)[] = ["name", "spend", "clicks", "ctr", "cpc", "conversions", "cpa", "roas"];
     const key = keys[sortCol] || "spend";
     return [...rows].sort((a, b) => {
       const va = (a[key] as number) ?? 999;
@@ -912,7 +940,11 @@ function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: strin
     else { setSortCol(col); setSortAsc(false); }
   }
 
-  const headers = ["Name", "Spend", "Imp", "Clicks", "CTR", "CPC", "Leads", "CPL"];
+  // CPA/ROAS heat-coloring (rojo→verde, idea Northbeam) — platform economics read like a heatmap.
+  const heatCpa = (v: number | null) => (v == null ? "" : v <= 40 ? "bg-[var(--sc-sage-100)] text-sage" : v <= 70 ? "bg-[var(--yellow)] text-ink" : "bg-[var(--sc-brick-bg)] text-destructive");
+  const heatRoas = (v: number) => (!v ? "" : v >= 4 ? "bg-[var(--sc-sage-100)] text-sage" : v >= 2.5 ? "bg-[var(--yellow)] text-ink" : "bg-[var(--sc-brick-bg)] text-destructive");
+
+  const headers = ["Name", "Spend", "Clicks", "CTR", "CPC", "Conv", "CPA", "ROAS"];
 
   function renderTable(rows: AdsRow[]) {
     const sorted = sortRows(rows);
@@ -930,12 +962,12 @@ function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: strin
             <tr key={r.name} className="border-t border-border">
               <td className="p-1.5 overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px]" title={r.name}>{r.name}</td>
               <td className="p-1.5 text-right font-heading font-semibold">{"\u20AC"}{r.spend.toFixed(0)}</td>
-              <td className="p-1.5 text-right">{fmt(r.impressions)}</td>
               <td className="p-1.5 text-right">{r.clicks}</td>
               <td className={cn("p-1.5 text-right", r.ctr > 3 ? "text-sage" : r.ctr < 1.5 ? "text-muted-foreground" : "")}>{r.ctr.toFixed(1)}%</td>
               <td className="p-1.5 text-right">{"\u20AC"}{r.cpc.toFixed(2)}</td>
-              <td className={cn("p-1.5 text-right", r.leads > 0 && "text-sage font-semibold")}>{r.leads}</td>
-              <td className={cn("p-1.5 text-right", r.cpl != null && r.cpl < 15 && "text-sage")}>{r.cpl != null ? `\u20AC${r.cpl.toFixed(2)}` : "\u2014"}</td>
+              <td className="p-1.5 text-right">{r.conversions}</td>
+              <td className="p-1.5 text-right"><span className={cn("inline-block rounded px-1.5 py-0.5 font-semibold", heatCpa(r.cpa))}>{r.cpa != null ? `\u20AC${r.cpa.toFixed(0)}` : "\u2014"}</span></td>
+              <td className="p-1.5 text-right"><span className={cn("inline-block rounded px-1.5 py-0.5 font-semibold", heatRoas(r.roas))}>{r.roas ? `${r.roas.toFixed(1)}x` : "\u2014"}</span></td>
             </tr>
           ))}
         </tbody>
@@ -965,14 +997,24 @@ function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: strin
       </div>
       <PaidTrend series={series} />
       <div>
-        <div className="flex gap-1.5 mb-3">
-          <TabButton label="Campaigns" active={tab === "campaign"} onClick={() => { setTab("campaign"); setSortCol(null); }} />
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          <TabButton label="Campañas" active={tab === "campaign"} onClick={() => { setTab("campaign"); setSortCol(null); }} />
           <TabButton label="Ad Sets" active={tab === "adset"} onClick={() => { setTab("adset"); setSortCol(null); }} />
-          <TabButton label="Ad Creatives" active={tab === "ad"} onClick={() => { setTab("ad"); setSortCol(null); }} />
+          <TabButton label="Creatividades" active={tab === "ad"} onClick={() => { setTab("ad"); setSortCol(null); }} />
+          {placementRows.length > 0 && <TabButton label="Placement" active={tab === "placement"} onClick={() => { setTab("placement"); setSortCol(null); }} />}
+          {audienceRows.length > 0 && <TabButton label="Audiencia" active={tab === "audience"} onClick={() => { setTab("audience"); setSortCol(null); }} />}
+          {keywordRows.length > 0 && <TabButton label="Keywords" active={tab === "keyword"} onClick={() => { setTab("keyword"); setSortCol(null); }} />}
         </div>
         {tab === "campaign" && (campaignRows.length > 0 ? renderTable(campaignRows) : <p className="text-muted-foreground">Sin datos</p>)}
         {tab === "adset" && (adsetRows.length > 0 ? renderTable(adsetRows) : <p className="text-muted-foreground">Sin datos</p>)}
         {tab === "ad" && (adRows.length > 0 ? renderTable(adRows) : <p className="text-muted-foreground">Sin datos</p>)}
+        {tab === "placement" && (placementRows.length > 0 ? renderTable(placementRows) : <p className="text-muted-foreground">Sin datos</p>)}
+        {tab === "audience" && (audienceRows.length > 0 ? renderTable(audienceRows) : <p className="text-muted-foreground">Sin datos</p>)}
+        {tab === "keyword" && (keywordRows.length > 0 ? renderTable(keywordRows) : <p className="text-muted-foreground">Sin datos</p>)}
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[var(--sc-fg-muted)]">
+          <DataChip type="dedup" source="atribución de la plataforma" confidence="media" />
+          <span>Conv · CPA · ROAS = plataforma · CPA/ROAS pintados rojo→verde (mapa de calor)</span>
+        </div>
       </div>
       <ProvenanceFooter source="meta_ads · google_ads" route="Meta / Google Ads API" client={slug} period={period} />
     </>
