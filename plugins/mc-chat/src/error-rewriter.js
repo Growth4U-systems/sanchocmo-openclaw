@@ -85,8 +85,8 @@ function extractProvider(text) {
   //   provider "openai-codex"
   //   from=codex/gpt-5.5    → openai-codex
   //   anthropic/claude-...  → anthropic
-  const explicit = text.match(/provider\s+["']?([a-zA-Z0-9_-]+)["']?/i);
-  if (explicit) return explicit[1];
+  const explicit = text.match(/provider\s+(?:["']([a-zA-Z0-9_-]+)["']|[:=]\s*["']?([a-zA-Z0-9_-]+)["']?)/i);
+  if (explicit) return explicit[1] || explicit[2];
 
   if (/\bcodex\/[a-zA-Z0-9.\-]+/i.test(text)) return "openai-codex";
   if (/\banthropic\/[a-zA-Z0-9.\-]+/i.test(text)) return "anthropic";
