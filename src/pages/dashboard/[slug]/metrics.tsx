@@ -794,7 +794,44 @@ function SearchModule({ gsc }: { gsc: SourceData }) {
 // Module: Paid Campaigns (Meta Ads) — 3-level hierarchy
 // ============================================================
 
-function AdsModule({ ads, slug, period }: { ads: SourceData; slug: string; period: string }) {
+/** Dual-axis Paid trend (SAN-319 · 3a): inversión = barras (rust), ROAS de plataforma = línea (navy). Inline SVG, sin librería. */
+function PaidTrend({ series }: { series: { date: string; spend: number; roas: number }[] }) {
+  if (series.length < 2) return null;
+  const W = 720;
+  const H = 150;
+  const pad = 14;
+  const n = series.length;
+  const innerW = W - pad * 2;
+  const innerH = H - pad * 2;
+  const bottom = H - pad;
+  const smax = Math.max(...series.map((d) => d.spend), 1) * 1.1;
+  const roases = series.map((d) => d.roas).filter((r) => r > 0);
+  const rmin = roases.length ? Math.min(...roases) * 0.9 : 0;
+  const rmax = roases.length ? Math.max(...roases) * 1.1 : 1;
+  const cx = (i: number) => pad + innerW * ((i + 0.5) / n);
+  const yRoas = (v: number) => bottom - (rmax > rmin ? (v - rmin) / (rmax - rmin) : 0.5) * innerH;
+  const bw = (innerW / n) * 0.55;
+  const pts = series.map((d, i) => ({ x: cx(i), y: yRoas(d.roas), ok: d.roas > 0 })).filter((p) => p.ok);
+  const line = pts.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  return (
+    <div className="mt-3">
+      <div className="mb-1 flex items-center gap-3 text-[10.5px] font-bold text-[var(--sc-fg-muted)]">
+        <span className="inline-flex items-center gap-1"><i className="inline-block h-2.5 w-2 rounded-sm border border-ink bg-rust" />Inversión</span>
+        <span className="inline-flex items-center gap-1"><i className="inline-block h-[3px] w-4 rounded-full bg-navy" />ROAS (plataforma)</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full">
+        {series.map((d, i) => {
+          const h = (d.spend / smax) * innerH;
+          return <rect key={i} x={cx(i) - bw / 2} y={bottom - h} width={bw} height={h} fill="var(--rust)" stroke="var(--ink)" strokeWidth={1} />;
+        })}
+        {line && <path d={line} fill="none" stroke="var(--navy)" strokeWidth={2.2} strokeLinejoin="round" />}
+        {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={2.6} fill="#FDF8EF" stroke="var(--navy)" strokeWidth={1.6} />)}
+      </svg>
+    </div>
+  );
+}
+
+function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: string; period: string; series: { date: string; spend: number; roas: number }[] }) {
   const [tab, setTab] = useState<"campaign" | "adset" | "ad">("campaign");
   const [sortCol, setSortCol] = useState<number | null>(null);
   const [sortAsc, setSortAsc] = useState(false);
@@ -804,6 +841,11 @@ function AdsModule({ ads, slug, period }: { ads: SourceData; slug: string; perio
   const ctr = mVal(ads, "ctr") || 0;
   const cpc = mVal(ads, "cpc") || 0;
   const leads = mVal(ads, "leads") || 0;
+  // Platform-reported outcomes (PR-D) — flagged `dedup`, not CRM truth.
+  const frequency = mVal(ads, "frequency") || 0;
+  const conversions = mVal(ads, "conversions") || 0;
+  const revenue = mVal(ads, "revenue") || 0;
+  const roas = mVal(ads, "roas") || 0;
 
   // Parse campaigns
   const campaigns: Record<string, Record<string, number>> = {};
@@ -908,15 +950,20 @@ function AdsModule({ ads, slug, period }: { ads: SourceData; slug: string; perio
         { label: "Clicks", value: fmt(clicks) },
         { label: "CTR", value: `${ctr.toFixed(1)}%` },
         { label: "CPC", value: `\u20AC${cpc.toFixed(2)}` },
+        ...(frequency ? [{ label: "Frecuencia", value: frequency.toFixed(1) }] : []),
+        ...(conversions ? [{ label: "Conv. (plat.)", value: fmt(conversions), color: "text-navy" }] : []),
+        ...(roas ? [{ label: "ROAS (plat.)", value: `${roas.toFixed(1)}x`, color: "text-navy" }] : []),
+        ...(revenue ? [{ label: "Revenue (plat.)", value: `€${fmt(Math.round(revenue))}`, color: "text-navy" }] : []),
         ...(leads ? [{ label: "Leads", value: fmt(leads), color: "text-sage" }] : []),
       ]} />
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-[var(--sc-fg-muted)]">
         <DataChip type="real" source="Meta/Google Ads API" confidence="alta" />
-        <span>medio: spend · impresiones · clics · CTR · CPC</span>
+        <span>medio: spend · impresiones · clics · CTR · CPC · frecuencia</span>
         <DataChip type="dedup" source="atribución de la plataforma" confidence="media" />
-        <span>Leads · CPL = reportado por la plataforma (inflable)</span>
-        <a href="#atribucion" className="text-[var(--cyan)] underline">→ CPA real por cita en Atribución</a>
+        <span>Conv. · ROAS · Revenue · Leads · CPL = reportado por la plataforma (inflable)</span>
+        <a href="#atribucion" className="text-[var(--cyan)] underline">→ CPA/ROAS real por cita en Atribución</a>
       </div>
+      <PaidTrend series={series} />
       <div>
         <div className="flex gap-1.5 mb-3">
           <TabButton label="Campaigns" active={tab === "campaign"} onClick={() => { setTab("campaign"); setSortCol(null); }} />
@@ -1661,7 +1708,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
     switch (mod.id) {
       case "traffic": return ga4 ? <TrafficModule ga4={ga4} /> : null;
       case "search": return gsc ? <SearchModule gsc={gsc} /> : null;
-      case "ads": return ads ? <AdsModule ads={ads} slug={slug} period={`${dateFrom} → ${dateTo}`} /> : null;
+      case "ads": return ads ? <AdsModule ads={ads} slug={slug} period={`${dateFrom} → ${dateTo}`} series={rangeEntries.map((e) => { const m = e.sources["meta-ads"] || e.sources.meta_ads; return { date: e.date, spend: mVal(m, "spend") || 0, roas: mVal(m, "roas") || 0 }; })} /> : null;
       case "social": return mc ? <SocialModule mc={mc} /> : null;
       case "crm": return ghl ? <CrmModule ghl={ghl} locationId={ghlLocationId} /> : null;
       default: return null;
