@@ -30,10 +30,12 @@ import {
   BackButton,
   Button as MetricButton,
   Chip as MetricChip,
+  DataChip,
   DataTable,
   MetricTile,
   Panel as MetricPanel,
   ProgressBar as MetricProgressBar,
+  ProvenanceFooter,
   Sparkline as MetricSparkline,
   TabBar as MetricTabBar,
 } from "@/components/dashboard/metrics-v2";
@@ -792,7 +794,7 @@ function SearchModule({ gsc }: { gsc: SourceData }) {
 // Module: Paid Campaigns (Meta Ads) — 3-level hierarchy
 // ============================================================
 
-function AdsModule({ ads }: { ads: SourceData }) {
+function AdsModule({ ads, slug, period }: { ads: SourceData; slug: string; period: string }) {
   const [tab, setTab] = useState<"campaign" | "adset" | "ad">("campaign");
   const [sortCol, setSortCol] = useState<number | null>(null);
   const [sortAsc, setSortAsc] = useState(false);
@@ -908,6 +910,13 @@ function AdsModule({ ads }: { ads: SourceData }) {
         { label: "CPC", value: `\u20AC${cpc.toFixed(2)}` },
         ...(leads ? [{ label: "Leads", value: fmt(leads), color: "text-sage" }] : []),
       ]} />
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-[var(--sc-fg-muted)]">
+        <DataChip type="real" source="Meta/Google Ads API" confidence="alta" />
+        <span>medio: spend · impresiones · clics · CTR · CPC</span>
+        <DataChip type="dedup" source="atribución de la plataforma" confidence="media" />
+        <span>Leads · CPL = reportado por la plataforma (inflable)</span>
+        <a href="#atribucion" className="text-[var(--cyan)] underline">→ CPA real por cita en Atribución</a>
+      </div>
       <div>
         <div className="flex gap-1.5 mb-3">
           <TabButton label="Campaigns" active={tab === "campaign"} onClick={() => { setTab("campaign"); setSortCol(null); }} />
@@ -918,6 +927,7 @@ function AdsModule({ ads }: { ads: SourceData }) {
         {tab === "adset" && (adsetRows.length > 0 ? renderTable(adsetRows) : <p className="text-muted-foreground">Sin datos</p>)}
         {tab === "ad" && (adRows.length > 0 ? renderTable(adRows) : <p className="text-muted-foreground">Sin datos</p>)}
       </div>
+      <ProvenanceFooter source="meta_ads · google_ads" route="Meta / Google Ads API" client={slug} period={period} />
     </>
   );
 }
@@ -1651,7 +1661,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
     switch (mod.id) {
       case "traffic": return ga4 ? <TrafficModule ga4={ga4} /> : null;
       case "search": return gsc ? <SearchModule gsc={gsc} /> : null;
-      case "ads": return ads ? <AdsModule ads={ads} /> : null;
+      case "ads": return ads ? <AdsModule ads={ads} slug={slug} period={`${dateFrom} → ${dateTo}`} /> : null;
       case "social": return mc ? <SocialModule mc={mc} /> : null;
       case "crm": return ghl ? <CrmModule ghl={ghl} locationId={ghlLocationId} /> : null;
       default: return null;
