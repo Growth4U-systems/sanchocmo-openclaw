@@ -42,7 +42,7 @@ export interface RuntimeProvider {
  * API Key) — because the route is a global credential choice, not a model choice.
  * `apiId` stays stable per provider (shared by its two rows) so the "Key sistema"
  * flow (`/api/env`) + `GATEWAY_ENV_SERVICES` keep working. Providers without a
- * subscription (OpenRouter, Gemini, xAI) are a single API-key row.
+ * subscription (OpenRouter, Fireworks, Gemini, xAI) are a single API-key row.
  */
 export const RUNTIME_PROVIDERS: RuntimeProvider[] = [
   // Anthropic — both routes fully functional (paste sk-ant-oat token / activate).
@@ -94,6 +94,13 @@ export const RUNTIME_PROVIDERS: RuntimeProvider[] = [
     icon: "🔀",
   },
   {
+    key: "fireworks",
+    apiId: "fireworks",
+    catalogIds: ["fireworks"],
+    name: "Fireworks",
+    icon: "🎆",
+  },
+  {
     key: "google",
     apiId: "gemini",
     catalogIds: ["google"],
@@ -115,6 +122,7 @@ function consoleFamily(providerId: string): string {
   if (id === "anthropic" || id === "claude-cli" || id.startsWith("claude")) return "anthropic";
   if (id === "openai" || id === "codex" || id === "openai-codex") return "openai";
   if (id === "openrouter") return "openrouter";
+  if (id === "fireworks") return "fireworks";
   if (id === "google" || id === "gemini") return "google";
   if (id === "xai" || id === "grok") return "xai";
   return id;
@@ -137,6 +145,8 @@ export function consoleUrlFor(providerId: string, route?: ProviderAuthRoute): st
       return isSub ? "https://chatgpt.com" : "https://platform.openai.com/settings/organization/api-keys";
     case "openrouter":
       return "https://openrouter.ai/settings/keys";
+    case "fireworks":
+      return "https://fireworks.ai/api-keys";
     case "google":
       return "https://aistudio.google.com/app/apikey";
     case "xai":
