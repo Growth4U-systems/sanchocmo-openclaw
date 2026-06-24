@@ -938,6 +938,51 @@ function PaidHealthMovers({ creatives, series }: { creatives: Record<string, Rec
   );
 }
 
+/** Intelligence bridge (SAN-319 · 3e, slot ⑧): preview de señales (locked) + CTA. Aún sin montar Intelligence. */
+function PaidIntelBridge() {
+  const signals = [
+    { ic: "🟢", t: "«Retargeting» capada por budget y on-target (CPA bajo) — subir presupuesto +30%" },
+    { ic: "🔁", t: "Mover budget de las campañas caras (CPA alto) a las baratas (brand search)" },
+    { ic: "⚠️", t: "Creatividad fatigando (CTR ↓, Freq ↑) — rotar antes de que suba el CPA" },
+  ];
+  return (
+    <div className="mt-5 rounded-sc-lg border-2 border-ink bg-[var(--sc-paper-3)] p-3 shadow-pop-xs">
+      <div className="flex flex-wrap items-center gap-2 border-b-2 border-dashed border-border pb-2">
+        <span className="grid h-9 w-9 flex-none place-items-center rounded-sc-md border-2 border-ink bg-navy text-[16px] text-white shadow-pop-xs">🔭</span>
+        <div className="min-w-0 flex-1">
+          <div className="font-heading text-[13px] font-bold text-navy">Señales de Paid vía Intelligence</div>
+          <div className="text-[10.5px] text-[var(--sc-fg-muted)]">Qué escalar, de dónde a dónde mover budget, qué creatividad jubilar. Aún sin montar.</div>
+        </div>
+        <a href="#intelligence" className="flex-none rounded-sc-md border-2 border-ink bg-navy px-3 py-1.5 text-[12px] font-bold text-white shadow-pop-xs">🔭 Abrir Intelligence →</a>
+      </div>
+      <div className="mt-1.5 text-[9px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">Vista previa</div>
+      {signals.map((s, i) => (
+        <div key={i} className="flex items-center gap-2 border-b border-dashed border-border py-1.5 opacity-60 last:border-b-0">
+          <span className="flex-none">{s.ic}</span>
+          <span className="flex-1 text-[11.5px] font-semibold text-navy">{s.t}</span>
+          <span className="flex-none" aria-label="bloqueado">🔒</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Paid empty state (SAN-319 · 3e): cuando no hay ninguna plataforma de ads conectada. */
+function PaidEmpty() {
+  return (
+    <div className="rounded-sc-lg border-2 border-navy bg-card p-6 text-center shadow-pop-sm">
+      <div className="text-[40px]" aria-hidden="true">💰</div>
+      <div className="mt-1 font-heading text-[18px] font-bold text-navy">Paid — sin conectar</div>
+      <p className="mx-auto mt-1 max-w-[460px] text-[12px] text-[var(--sc-fg-muted)]">Conecta tus plataformas de ads para encender Paid. Soporta Meta Ads, Google Ads y LinkedIn Ads (token + accountId de cada una).</p>
+      <div className="mt-3 flex flex-wrap justify-center gap-2">
+        <a href="#settings" className="rounded-sc-md border-2 border-ink bg-navy px-4 py-2 text-[13px] font-bold text-white shadow-pop-sm">🔌 Conectar Meta Ads</a>
+        <a href="#settings" className="rounded-sc-md border-2 border-ink bg-card px-4 py-2 text-[13px] font-bold text-[var(--sc-ink-soft)] shadow-pop-sm">🔌 Google / LinkedIn</a>
+      </div>
+      <p className="mx-auto mt-3 max-w-[520px] text-[10.5px] text-[var(--sc-fg-muted)]">Al conectar verás: inversión · CPA/ROAS de plataforma · el embudo de medio, las creatividades, el budget pacing y la fatiga.</p>
+    </div>
+  );
+}
+
 function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: string; period: string; series: { date: string; spend: number; roas: number }[] }) {
   const [tab, setTab] = useState<"campaign" | "adset" | "ad" | "placement" | "audience" | "keyword">("campaign");
   const [sortCol, setSortCol] = useState<number | null>(null);
@@ -1125,6 +1170,7 @@ function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: strin
       </div>
       <CreativeGrid creatives={adCreatives} />
       <PaidHealthMovers creatives={adCreatives} series={series} />
+      <PaidIntelBridge />
       <ProvenanceFooter source="meta_ads · google_ads" route="Meta / Google Ads API" client={slug} period={period} />
     </>
   );
@@ -1859,7 +1905,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
     switch (mod.id) {
       case "traffic": return ga4 ? <TrafficModule ga4={ga4} /> : null;
       case "search": return gsc ? <SearchModule gsc={gsc} /> : null;
-      case "ads": return ads ? <AdsModule ads={ads} slug={slug} period={`${dateFrom} → ${dateTo}`} series={rangeEntries.map((e) => { const m = e.sources["meta-ads"] || e.sources.meta_ads; return { date: e.date, spend: mVal(m, "spend") || 0, roas: mVal(m, "roas") || 0 }; })} /> : null;
+      case "ads": return ads ? <AdsModule ads={ads} slug={slug} period={`${dateFrom} → ${dateTo}`} series={rangeEntries.map((e) => { const m = e.sources["meta-ads"] || e.sources.meta_ads; return { date: e.date, spend: mVal(m, "spend") || 0, roas: mVal(m, "roas") || 0 }; })} /> : <PaidEmpty />;
       case "social": return mc ? <SocialModule mc={mc} /> : null;
       case "crm": return ghl ? <CrmModule ghl={ghl} locationId={ghlLocationId} /> : null;
       default: return null;
