@@ -639,6 +639,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
           onClick={() => {
             setSystemKeySlider(null);
             qc.invalidateQueries({ queryKey: ["api-health"] });
+            qc.invalidateQueries({ queryKey: ["runtime-system-env"] });
           }}
         >
           <div className="absolute inset-0 bg-black/30" />
@@ -657,6 +658,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
                 onClick={() => {
                   setSystemKeySlider(null);
                   qc.invalidateQueries({ queryKey: ["api-health"] });
+                  qc.invalidateQueries({ queryKey: ["runtime-system-env"] });
                 }}
                 className="text-muted-foreground hover:text-foreground text-lg leading-none px-1"
               >
@@ -670,6 +672,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
                 provider={systemKeySlider.provider}
                 onSaved={() => {
                   qc.invalidateQueries({ queryKey: ["api-health"] });
+                  qc.invalidateQueries({ queryKey: ["runtime-system-env"] });
                   qc.invalidateQueries({ queryKey: ["models-catalog"] });
                 }}
               />
