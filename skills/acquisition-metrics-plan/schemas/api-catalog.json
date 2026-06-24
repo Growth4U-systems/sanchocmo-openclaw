@@ -559,6 +559,18 @@
             { "key": "LOCATION_ID", "label": "Location ID (required for API v2)", "type": "string", "sensitive": false, "help": "GHL → Settings → Business Profile → scroll to Location ID, or from the URL: /location/<ID>" }
           ],
           "docs": "https://highlevel.stoplight.io/docs/integrations/"
+        },
+        "koibox": {
+          "provider": "Koibox",
+          "icon": "🗓️",
+          "desc": "Software de gestión de clínicas — citas y pacientes (fuente de verdad de citas)",
+          "ownership": "client",
+          "credentials": [
+            { "key": "API_KEY", "label": "API Key / Token", "type": "string", "sensitive": true, "help": "Clave de la API de tu cuenta Koibox (Ajustes → Integraciones / API). Si no aparece en tu plan, pídela a tu contacto o al soporte de Koibox." }
+          ],
+          "config": [
+            { "key": "ACCOUNT_ID", "label": "Cuenta / centro Koibox", "type": "string", "sensitive": false, "help": "Identificador de tu cuenta o centro en Koibox (suele verse en la URL de tu panel). Déjalo vacío si tu API key ya es de un único centro." }
+          ]
         }
       }
     },

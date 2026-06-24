@@ -210,6 +210,28 @@
       }
     ]
   },
+  "koibox": {
+    "title": "Koibox — Gestión de clínicas",
+    "difficulty": "media",
+    "time": "3 min",
+    "prereqNote": "Koibox no expone la API en todos los planes. Si no encuentras la clave en Ajustes, pídela a tu contacto o al soporte de Koibox.",
+    "steps": [
+      {
+        "title": "Consigue tu API Key",
+        "instructions": "En Koibox, entra en <strong>Ajustes → Integraciones / API</strong> y copia tu <strong>API Key / token</strong>. Si esa sección no aparece, solicítala a soporte de Koibox.",
+        "alwaysShow": true
+      },
+      {
+        "title": "(Opcional) Identifica tu cuenta / centro",
+        "instructions": "Si gestionas varios centros, anota el identificador de tu <strong>cuenta / centro</strong> en Koibox (suele verse en la URL de tu panel). Si tu API key ya es de un único centro, déjalo vacío.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Pega las credenciales",
+        "instructions": "Introduce tu <strong>API Key</strong> (y la cuenta / centro si aplica)."
+      }
+    ]
+  },
   "linkedin_ads": {
     "title": "LinkedIn Ads",
     "difficulty": "alta",
