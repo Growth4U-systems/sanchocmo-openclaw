@@ -80,6 +80,11 @@ export const CURATED_MODELS = [
   "openrouter/minimax/minimax-m3",
   "openrouter/google/gemini-3.5-flash",
   "openrouter/google/gemma-4-26b-a4b-it",
+  // Fireworks (env key) — open-weight models through the OpenAI-compatible API
+  "fireworks/accounts/fireworks/routers/kimi-k2p5-turbo",
+  "fireworks/accounts/fireworks/models/kimi-k2p6",
+  "fireworks/accounts/fireworks/models/gpt-oss-120b",
+  "fireworks/accounts/fireworks/models/qwen3p6-plus",
 ];
 
 const CURATED_MODEL_METADATA: Record<string, Pick<CatalogModel, "contextWindow" | "tags">> = {
@@ -98,6 +103,14 @@ const CURATED_MODEL_METADATA: Record<string, Pick<CatalogModel, "contextWindow" 
   "anthropic/claude-sonnet-4-6": {
     contextWindow: 1_000_000,
     tags: ["extended-context", "1m"],
+  },
+  "fireworks/accounts/fireworks/routers/kimi-k2p5-turbo": {
+    contextWindow: 256_000,
+    tags: ["open-weight", "vision", "fire-pass"],
+  },
+  "fireworks/accounts/fireworks/models/kimi-k2p6": {
+    contextWindow: 262_144,
+    tags: ["open-weight", "vision"],
   },
 };
 
@@ -285,6 +298,10 @@ function envCredentialLabel(entry: AuthProviderEntry | undefined): string | null
 function inferReasoningCapability(id: string, explicit?: boolean): boolean | undefined {
   if (typeof explicit === "boolean") return explicit;
   const key = id.toLowerCase();
+  if (/^fireworks\/accounts\/fireworks\/(models|routers)\/kimi-/i.test(id)) return false;
+  if (/^fireworks\//.test(key)) {
+    return /(^|\/)(deepseek|glm|gpt-oss|qwen)/.test(key) || /thinking/.test(key);
+  }
   if (CURATED_MODELS.includes(id)) return true;
   return (
     /^codex\/gpt-5/.test(key) ||

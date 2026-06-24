@@ -6,6 +6,29 @@ set -euo pipefail
 
 OPENCLAW_ROOT="${OPENCLAW_HOME:-/root/.openclaw}"
 OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-$OPENCLAW_ROOT/.openclaw/openclaw.json}"
+FIREWORKS_DEFAULT_MODEL="fireworks/accounts/fireworks/routers/kimi-k2p5-turbo"
+STRATEGY_MODEL="anthropic/claude-opus-4-7"
+CONTENT_MODEL="anthropic/claude-sonnet-4-6"
+CODE_MODEL="codex/gpt-5.5"
+
+if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
+  ANTHROPIC_AVAILABLE=0
+  [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}${ANTHROPIC_OAUTH_TOKEN:-}" ] && ANTHROPIC_AVAILABLE=1
+else
+  ANTHROPIC_AVAILABLE=0
+  [ -n "${ANTHROPIC_API_KEY:-}" ] && ANTHROPIC_AVAILABLE=1
+fi
+
+if [ "$ANTHROPIC_AVAILABLE" = "0" ] && [ -n "${FIREWORKS_API_KEY:-}" ]; then
+  STRATEGY_MODEL="$FIREWORKS_DEFAULT_MODEL"
+  CONTENT_MODEL="$FIREWORKS_DEFAULT_MODEL"
+fi
+
+if [ "${OPENAI_AUTH_MODE:-api_key}" != "subscription" ] && [ -z "${OPENAI_API_KEY:-}" ] && [ -n "${FIREWORKS_API_KEY:-}" ]; then
+  CODE_MODEL="$FIREWORKS_DEFAULT_MODEL"
+fi
+
+export STRATEGY_MODEL CONTENT_MODEL CODE_MODEL
 
 echo "=== Registering SanchoCMO agents ==="
 
@@ -86,15 +109,15 @@ declare -A AGENT_WORKSPACES=(
 )
 
 declare -A AGENT_MODELS=(
-  ["sancho"]="anthropic/claude-opus-4-7"
-  ["cervantes"]="codex/gpt-5.5"
-  ["hamete"]="anthropic/claude-opus-4-7"
-  ["dulcinea"]="anthropic/claude-sonnet-4-6"
-  ["rocinante"]="anthropic/claude-sonnet-4-6"
-  ["mambrino"]="anthropic/claude-sonnet-4-6"
-  ["merlin"]="anthropic/claude-opus-4-7"
-  ["sanson"]="anthropic/claude-opus-4-7"
-  ["maese-pedro"]="anthropic/claude-sonnet-4-6"
+  ["sancho"]="$STRATEGY_MODEL"
+  ["cervantes"]="$CODE_MODEL"
+  ["hamete"]="$STRATEGY_MODEL"
+  ["dulcinea"]="$CONTENT_MODEL"
+  ["rocinante"]="$CONTENT_MODEL"
+  ["mambrino"]="$CONTENT_MODEL"
+  ["merlin"]="$STRATEGY_MODEL"
+  ["sanson"]="$STRATEGY_MODEL"
+  ["maese-pedro"]="$CONTENT_MODEL"
 )
 
 for AGENT_NAME in sancho cervantes hamete dulcinea rocinante mambrino merlin sanson maese-pedro; do
@@ -144,16 +167,20 @@ config_path = Path(os.environ.get("OPENCLAW_CONFIG", ""))
 if not config_path.exists():
     raise SystemExit(0)
 
+strategy_model = os.environ.get("STRATEGY_MODEL", "anthropic/claude-opus-4-7")
+content_model = os.environ.get("CONTENT_MODEL", "anthropic/claude-sonnet-4-6")
+code_model = os.environ.get("CODE_MODEL", "codex/gpt-5.5")
+
 default_models = {
-    "sancho": "anthropic/claude-opus-4-7",
-    "cervantes": "codex/gpt-5.5",
-    "hamete": "anthropic/claude-opus-4-7",
-    "dulcinea": "anthropic/claude-sonnet-4-6",
-    "rocinante": "anthropic/claude-sonnet-4-6",
-    "mambrino": "anthropic/claude-sonnet-4-6",
-    "merlin": "anthropic/claude-opus-4-7",
-    "sanson": "anthropic/claude-opus-4-7",
-    "maese-pedro": "anthropic/claude-sonnet-4-6",
+    "sancho": strategy_model,
+    "cervantes": code_model,
+    "hamete": strategy_model,
+    "dulcinea": content_model,
+    "rocinante": content_model,
+    "mambrino": content_model,
+    "merlin": strategy_model,
+    "sanson": strategy_model,
+    "maese-pedro": content_model,
 }
 
 try:

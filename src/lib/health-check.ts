@@ -157,6 +157,15 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
         const r = await httpCheck("https://openrouter.ai/api/v1/models", { Authorization: `Bearer ${key}` });
         return r.ok ? ok({ httpCode: r.httpCode }) : error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
       }
+      case "fireworks": {
+        const key = getKey(envVars, "FIREWORKS_API_KEY");
+        if (!key) return notConfigured("FIREWORKS_API_KEY");
+        const r = await httpCheck(
+          "https://api.fireworks.ai/v1/accounts/fireworks/models?pageSize=1",
+          { Authorization: `Bearer ${key}` },
+        );
+        return r.ok ? ok({ httpCode: r.httpCode }) : error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
+      }
       case "openai": {
         const key = getKey(envVars, "OPENAI_API_KEY");
         if (!key) return notConfigured("OPENAI_API_KEY");
@@ -357,7 +366,7 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
 // ── Run checks ───────────────────────────────────────────────
 
 const ALL_SERVICES = [
-  "anthropic", "openrouter", "openai", "gemini", "xai", "minimax",
+  "anthropic", "openrouter", "fireworks", "openai", "gemini", "xai", "minimax",
   "brave", "apify", "firecrawl", "serper", "dataforseo",
   "notion", "slack", "discord",
   "fal", "wavespeed", "dumpling", "nanobanana", "remotion",

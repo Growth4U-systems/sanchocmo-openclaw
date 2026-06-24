@@ -47,6 +47,11 @@ async function main() {
   if (!config.auth) config.auth = {};
   if (!config.auth.profiles) config.auth.profiles = {};
   if (!config.auth.order) config.auth.order = {};
+  config.auth.profiles['fireworks:default'] = {
+    provider: 'fireworks',
+    mode: 'token'
+  };
+  config.auth.order.fireworks = ['fireworks:default'];
   if (anthropicAuthMode === 'subscription') {
     delete config.auth.profiles['anthropic:default'];
     config.auth.profiles['anthropic:claude-cli'] = {
@@ -67,10 +72,33 @@ async function main() {
   if (!config.agents) config.agents = {};
   if (!config.agents.defaults) config.agents.defaults = {};
   config.agents.defaults.workspace = path.join(OPENCLAW_ROOT, 'workspace-sancho');
-  config.agents.defaults.model = config.agents.defaults.model || { primary: 'anthropic/claude-opus-4-6' };
+  const hasAnthropicCredential = anthropicAuthMode === 'subscription'
+    ? Boolean(process.env.CLAUDE_CODE_OAUTH_TOKEN || process.env.ANTHROPIC_OAUTH_TOKEN)
+    : Boolean(process.env.ANTHROPIC_API_KEY);
+  const defaultPrimaryModel =
+    !hasAnthropicCredential && process.env.FIREWORKS_API_KEY
+      ? 'fireworks/accounts/fireworks/routers/kimi-k2p5-turbo'
+      : 'anthropic/claude-opus-4-6';
+  config.agents.defaults.model = config.agents.defaults.model || { primary: defaultPrimaryModel };
   config.agents.defaults.maxConcurrent = config.agents.defaults.maxConcurrent || 4;
   if (!config.agents.defaults.subagents) config.agents.defaults.subagents = {};
   config.agents.defaults.subagents.maxConcurrent = config.agents.defaults.subagents.maxConcurrent || 8;
+  if (!config.agents.defaults.models) config.agents.defaults.models = {};
+  const fireworksAgentModels = {
+    'fireworks/accounts/fireworks/routers/kimi-k2p5-turbo': 'Kimi K2.5 Turbo',
+    'fireworks/accounts/fireworks/models/kimi-k2p6': 'Kimi K2.6'
+  };
+  for (const [modelRef, alias] of Object.entries(fireworksAgentModels)) {
+    const existingModelEntry = config.agents.defaults.models[modelRef];
+    const existingModel =
+      existingModelEntry && typeof existingModelEntry === 'object' && !Array.isArray(existingModelEntry)
+        ? existingModelEntry
+        : {};
+    config.agents.defaults.models[modelRef] = {
+      ...existingModel,
+      alias: existingModel.alias || alias
+    };
+  }
 
   // Heartbeat polls (`{ every: "1h" }`) trigger one model turn per agent every
   // hour for proactive checks. In this project periodic work goes through
@@ -99,6 +127,39 @@ async function main() {
   if (!anthropicProvider.api) anthropicProvider.api = 'anthropic-messages';
   if (!anthropicProvider.models) anthropicProvider.models = [];
   anthropicProvider.timeoutSeconds = anthropicProvider.timeoutSeconds || 300;
+
+  // Fireworks is a bundled OpenClaw provider with an OpenAI-compatible API.
+  // Keep the static Kimi entries configured so Mission Control can list and
+  // select them immediately; the provider also accepts any runtime id prefixed
+  // as `fireworks/accounts/...`.
+  const fireworksDefaultModels = [
+    {
+      id: 'accounts/fireworks/models/kimi-k2p6',
+      name: 'Kimi K2.6',
+      input: ['text', 'image'],
+      contextWindow: 262144,
+      maxTokens: 262144,
+      cost: { input: 0.95, output: 4, cacheRead: 0, cacheWrite: 0 }
+    },
+    {
+      id: 'accounts/fireworks/routers/kimi-k2p5-turbo',
+      name: 'Kimi K2.5 Turbo (Fire Pass)',
+      input: ['text', 'image'],
+      contextWindow: 256000,
+      maxTokens: 256000,
+      compat: { unsupportedToolSchemaKeywords: ['not'] },
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
+    }
+  ];
+  if (!config.models.providers.fireworks) config.models.providers.fireworks = {};
+  const fireworksProvider = config.models.providers.fireworks;
+  if (!fireworksProvider.baseUrl) fireworksProvider.baseUrl = 'https://api.fireworks.ai/inference/v1';
+  if (!fireworksProvider.api) fireworksProvider.api = 'openai-completions';
+  if (!Array.isArray(fireworksProvider.models)) fireworksProvider.models = [];
+  const fireworksModelIds = new Set(fireworksProvider.models.map(m => m && m.id).filter(Boolean));
+  for (const model of fireworksDefaultModels) {
+    if (!fireworksModelIds.has(model.id)) fireworksProvider.models.push(model);
+  }
 
   // --- Session agents (rocinante, hamete, alarife) ---
   config.agents.list = [

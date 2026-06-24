@@ -25,6 +25,7 @@ const SERVICE_ENV_MAP: Record<
     },
   ],
   openrouter: [{ key: "OPENROUTER_API_KEY", label: "API Key", placeholder: "sk-or-..." }],
+  fireworks: [{ key: "FIREWORKS_API_KEY", label: "API Key", placeholder: "fw-..." }],
   openai: [{ key: "OPENAI_API_KEY", label: "API Key", placeholder: "sk-..." }],
   gemini: [{ key: "GEMINI_API_KEY", label: "API Key", placeholder: "AIza..." }],
   xai: [{ key: "XAI_API_KEY", label: "API Key", placeholder: "xai-..." }],
