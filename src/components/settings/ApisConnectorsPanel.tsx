@@ -53,7 +53,7 @@ interface SystemEnvField {
 // Saving any of these restarts the gateway to apply the credential. `anthropic-oauth`
 // is a modal-only service id (the subscription token paste) — not a catalog apiId, so
 // it never appears in the providers table; it only needs the post-save restart.
-const GATEWAY_ENV_SERVICES = new Set(["anthropic", "anthropic-oauth", "openai", "openrouter", "gemini", "xai"]);
+const GATEWAY_ENV_SERVICES = new Set(["anthropic", "anthropic-oauth", "openai", "openrouter", "fireworks", "gemini", "xai"]);
 
 function useStatusBadge() {
   const t = useTranslations("settings.apiStatus");

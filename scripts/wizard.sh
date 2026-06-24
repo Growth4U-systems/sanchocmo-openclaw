@@ -104,14 +104,18 @@ say "${DIM}Generates .env + config/*.json so you can 'docker compose up'.${RST}"
 
 # --- 1. Model provider + API key --------------------------------------------
 step "1/6  Model provider"
-PROVIDER="$(ask PROVIDER "Provider — anthropic, openai, or both" "anthropic")"
+PROVIDER="$(ask PROVIDER "Provider — anthropic, openai, fireworks, both, or all" "anthropic")"
 ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+FIREWORKS_API_KEY="${FIREWORKS_API_KEY:-}"
 case "$PROVIDER" in
-  anthropic|both) ANTHROPIC_API_KEY="$(ask ANTHROPIC_API_KEY "Anthropic API key (sk-ant-...)" "")" ;;
+  anthropic|both|all|multi) ANTHROPIC_API_KEY="$(ask ANTHROPIC_API_KEY "Anthropic API key (sk-ant-...)" "")" ;;
 esac
 case "$PROVIDER" in
-  openai|both) OPENAI_API_KEY="$(ask OPENAI_API_KEY "OpenAI API key (sk-...)" "")" ;;
+  openai|both|all|multi) OPENAI_API_KEY="$(ask OPENAI_API_KEY "OpenAI API key (sk-...)" "")" ;;
+esac
+case "$PROVIDER" in
+  fireworks|all|multi) FIREWORKS_API_KEY="$(ask FIREWORKS_API_KEY "Fireworks API key (fw-...)" "")" ;;
 esac
 ANTHROPIC_AUTH_MODE="$(ask ANTHROPIC_AUTH_MODE "Anthropic auth mode — api_key or subscription" "api_key")"
 OPENAI_AUTH_MODE="$(ask OPENAI_AUTH_MODE "OpenAI auth mode — api_key or subscription" "api_key")"
@@ -173,6 +177,7 @@ step "Writing $ENV_FILE"
 cp "$ENV_EXAMPLE" "$ENV_FILE"
 [ -n "$ANTHROPIC_API_KEY" ] && set_env ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"
 [ -n "$OPENAI_API_KEY" ]    && set_env OPENAI_API_KEY "$OPENAI_API_KEY"
+[ -n "$FIREWORKS_API_KEY" ] && set_env FIREWORKS_API_KEY "$FIREWORKS_API_KEY"
 set_env ANTHROPIC_AUTH_MODE "$ANTHROPIC_AUTH_MODE"
 set_env OPENAI_AUTH_MODE "$OPENAI_AUTH_MODE"
 set_env NEXTAUTH_SECRET "$NEXTAUTH_SECRET"

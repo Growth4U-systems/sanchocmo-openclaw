@@ -73,6 +73,7 @@ jobs:
           # ── Tier 2 — System APIs ──────────────────────────────────────
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
@@ -150,8 +151,9 @@ jobs:
               "YALC_API_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
               "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
               # Tier 2 — System APIs
-              "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY",
-              "XAI_API_KEY", "MINIMAX_API_KEY", "BRAVE_API_KEY", "APIFY_API_KEY",
+              "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "FIREWORKS_API_KEY",
+              "OPENAI_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "MINIMAX_API_KEY",
+              "BRAVE_API_KEY", "APIFY_API_KEY",
               "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
               "NOTION_API_KEY", "FAL_API_KEY",
               "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN",

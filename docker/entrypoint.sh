@@ -124,18 +124,19 @@ preflight() {
   done
 
   # At least one usable model credential for the active auth mode. Anthropic is
-  # Sancho's primary agent; OpenAI/Codex is secondary.
-  local anthropic_ok=0 openai_ok=0
+  # Sancho's primary agent; OpenAI/Codex and Fireworks are alternate routes.
+  local anthropic_ok=0 openai_ok=0 fireworks_ok=0
   if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
     if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}${ANTHROPIC_OAUTH_TOKEN:-}" ]; then anthropic_ok=1; fi
   else
     if [ -n "${ANTHROPIC_API_KEY:-}" ]; then anthropic_ok=1; fi
   fi
   if [ -n "${OPENAI_API_KEY:-}" ]; then openai_ok=1; fi
-  if [ "$anthropic_ok" = 0 ] && [ "$openai_ok" = 0 ]; then
-    errors+=("No usable model credential for the active auth mode(s) — set ANTHROPIC_API_KEY (or the subscription token), and/or OPENAI_API_KEY")
+  if [ -n "${FIREWORKS_API_KEY:-}" ]; then fireworks_ok=1; fi
+  if [ "$anthropic_ok" = 0 ] && [ "$openai_ok" = 0 ] && [ "$fireworks_ok" = 0 ]; then
+    errors+=("No usable model credential for the active auth mode(s) — set ANTHROPIC_API_KEY (or the subscription token), OPENAI_API_KEY, and/or FIREWORKS_API_KEY")
   elif [ "$anthropic_ok" = 0 ]; then
-    warnings+=("Anthropic credential absent — Sancho's primary agent needs it; only OpenAI/Codex agents will work")
+    warnings+=("Anthropic credential absent — Sancho's default primary model may need changing; alternate OpenAI/Codex or Fireworks routes are available")
   fi
 
   # DATABASE_URL is only required when tasks are DB-backed (default is json).
@@ -354,6 +355,75 @@ for k,v in (('baseUrl','https://api.anthropic.com'),('api','anthropic-messages')
 if changed:
     json.dump(c, open(f,'w'), indent=2)
     print('[entrypoint] Ensured full models.providers.anthropic entry (timeoutSeconds=%s)' % p['timeoutSeconds'])
+" 2>/dev/null || true
+
+# Fireworks ships as a bundled OpenClaw provider. Existing volumes won't pick up
+# the new generated config, so repair the provider/auth profile on every boot.
+# The key itself stays in FIREWORKS_API_KEY; openclaw resolves it from env via
+# the token profile. Static Kimi entries make the provider visible immediately,
+# while dynamic ids like fireworks/accounts/fireworks/models/gpt-oss-120b still
+# resolve at runtime through the provider plugin.
+python3 -c "
+import json
+f='$OPENCLAW_CONFIG'
+c=json.load(open(f))
+changed=False
+auth=c.setdefault('auth',{})
+profiles=auth.setdefault('profiles',{})
+if profiles.get('fireworks:default') != {'provider':'fireworks','mode':'token'}:
+    profiles['fireworks:default']={'provider':'fireworks','mode':'token'}
+    changed=True
+order=auth.setdefault('order',{})
+if order.get('fireworks') != ['fireworks:default']:
+    order['fireworks']=['fireworks:default']
+    changed=True
+p=c.setdefault('models',{}).setdefault('providers',{}).setdefault('fireworks',{})
+agent_models=c.setdefault('agents',{}).setdefault('defaults',{}).setdefault('models',{})
+defaults=[
+    {
+        'id':'accounts/fireworks/models/kimi-k2p6',
+        'name':'Kimi K2.6',
+        'input':['text','image'],
+        'contextWindow':262144,
+        'maxTokens':262144,
+        'cost':{'input':0.95,'output':4,'cacheRead':0,'cacheWrite':0},
+    },
+    {
+        'id':'accounts/fireworks/routers/kimi-k2p5-turbo',
+        'name':'Kimi K2.5 Turbo (Fire Pass)',
+        'input':['text','image'],
+        'contextWindow':256000,
+        'maxTokens':256000,
+        'compat':{'unsupportedToolSchemaKeywords':['not']},
+        'cost':{'input':0,'output':0,'cacheRead':0,'cacheWrite':0},
+    },
+]
+for k,v in (('baseUrl','https://api.fireworks.ai/inference/v1'),('api','openai-completions')):
+    if not p.get(k):
+        p[k]=v
+        changed=True
+if not isinstance(p.get('models'), list):
+    p['models']=[]
+    changed=True
+seen={m.get('id') for m in p['models'] if isinstance(m, dict)}
+for model in defaults:
+    if model['id'] not in seen:
+        p['models'].append(model)
+        changed=True
+for ref, alias in (
+    ('fireworks/accounts/fireworks/routers/kimi-k2p5-turbo', 'Kimi K2.5 Turbo'),
+    ('fireworks/accounts/fireworks/models/kimi-k2p6', 'Kimi K2.6'),
+):
+    if not isinstance(agent_models.get(ref), dict):
+        agent_models[ref]={}
+        changed=True
+    entry=agent_models[ref]
+    if not entry.get('alias'):
+        entry['alias']=alias
+        changed=True
+if changed:
+    json.dump(c, open(f,'w'), indent=2)
+    print('[entrypoint] Ensured Fireworks provider + auth profile')
 " 2>/dev/null || true
 
 # ===========================================================

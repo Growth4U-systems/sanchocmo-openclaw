@@ -42,6 +42,7 @@ export function providerDisplayName(providerId: string): string {
   if (providerId === "codex") return "Codex";
   if (providerId === "openai-codex") return "OpenAI Codex";
   if (providerId === "openrouter") return "OpenRouter";
+  if (providerId === "fireworks") return "Fireworks";
   if (providerId === "openai") return "OpenAI";
   if (providerId === "google") return "Gemini";
   if (providerId === "xai") return "xAI (Grok)";
@@ -76,5 +77,6 @@ export function maskAuthLabel(label: string): string {
     .replace(/sk-ant-api[\w-]*/gi, (value) => `${value.slice(0, 12)}...${value.slice(-4)}`)
     .replace(/sk-ant-o[\w-]*/gi, (value) => `${value.slice(0, 10)}...${value.slice(-4)}`)
     .replace(/sk-or-v1[\w-]*/gi, (value) => `${value.slice(0, 11)}...${value.slice(-4)}`)
+    .replace(/fw-[\w-]{12,}/gi, (value) => `${value.slice(0, 7)}...${value.slice(-4)}`)
     .replace(/sk-[\w-]{16,}/gi, (value) => `${value.slice(0, 7)}...${value.slice(-4)}`);
 }

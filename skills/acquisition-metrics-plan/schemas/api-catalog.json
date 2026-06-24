@@ -29,6 +29,17 @@
           "config": [],
           "docs": "https://openrouter.ai/docs"
         },
+        "fireworks": {
+          "provider": "Fireworks AI",
+          "icon": "🎆",
+          "desc": "Open-weight models via OpenAI-compatible inference",
+          "ownership": "system",
+          "credentials": [
+            { "key": "API_KEY", "label": "API Key", "type": "string", "sensitive": true, "help": "app.fireworks.ai → API Keys" }
+          ],
+          "config": [],
+          "docs": "https://docs.fireworks.ai/tools-sdks/openai-compatibility"
+        },
         "openai": {
           "provider": "OpenAI",
           "icon": "💚",

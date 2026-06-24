@@ -116,8 +116,9 @@ Required values:
 ```env
 # --- Required ---
 
-# Model provider (at least Anthropic)
+# Model provider (set at least one)
 ANTHROPIC_API_KEY=sk-ant-...
+# FIREWORKS_API_KEY=fw-...
 
 # Discord bot (OpenClaw agents)
 DISCORD_BOT_TOKEN=your_discord_bot_token
@@ -152,6 +153,7 @@ Optional but recommended:
 MINIMAX_API_KEY=...          # MiniMax M2.7 — used for task execution
 XAI_API_KEY=...              # xAI Grok models
 OPENROUTER_API_KEY=...       # OpenRouter proxy
+FIREWORKS_API_KEY=...        # Fireworks AI open-weight models
 
 # Cloudflare R2 (image uploads in Mission Control)
 CLOUDFLARE_ACCOUNT_ID=...
@@ -262,6 +264,7 @@ in the corresponding **GitHub Environment** so the workflow rewrites
 | `OD_ALLOWED_ORIGINS` (var) | Environment | Same as `OD_WEB_URL` (comma-list if more origins are embedding) |
 | `OPEN_DESIGN_IMAGE` (var) | Environment | `ghcr.io/growth4u-systems/od:sanchocmo` (branded trunk) or pin to `:vX.Y.Z` |
 | `ANTHROPIC_API_KEY` (secret) | Environment | Anthropic API key for the baked-in `claude` CLI (Settings → Local CLI). Per-tenant deploys should use a per-tenant key so billing is scoped to the client. |
+| `FIREWORKS_API_KEY` (secret) | Environment | Fireworks AI API key. The deploy workflows propagate it to `.env` so Sancho/OpenClaw can use Fireworks models. |
 
 The branded image bakes `@anthropic-ai/claude-code` into the runtime so
 the Settings → Local CLI panel surfaces a working agent in cloud mode.
