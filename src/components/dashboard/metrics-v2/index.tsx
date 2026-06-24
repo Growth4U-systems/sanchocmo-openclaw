@@ -263,3 +263,5 @@ export * from "./AttributionFunnel";
 export * from "./DataQualityInsight";
 // Pipeline/CRM surface rigor header (PR4) — GHL-only KPIs + provenance.
 export * from "./PipelineKpis";
+// Product surface (PR5) — PostHog funnel by unique users.
+export * from "./ProductFunnel";
