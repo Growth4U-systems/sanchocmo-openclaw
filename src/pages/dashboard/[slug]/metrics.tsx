@@ -880,6 +880,64 @@ function CreativeGrid({ creatives }: { creatives: Record<string, Record<string, 
   );
 }
 
+/** Movers & alertas + Salud (budget pace + fatiga/learning) — SAN-319 · 3d, slots ⑤⑥. Señales derivadas de plataforma. */
+function PaidHealthMovers({ creatives, series }: { creatives: Record<string, Record<string, number | string | null>>; series: { date: string; spend: number; roas: number }[] }) {
+  const cards = Object.entries(creatives)
+    .map(([name, m]) => ({ name, spend: (m.spend as number) || 0, roas: (m.roas as number) || 0, ctr: (m.ctr as number) || 0, freq: (m.frequency as number) || 0 }))
+    .sort((a, b) => b.spend - a.spend);
+  const isFatiga = (c: { ctr: number; freq: number }) => (c.ctr > 0 && c.ctr < 1.5) || c.freq > 3.5;
+  const top = [...cards].sort((a, b) => b.roas - a.roas)[0];
+  const fat = cards.find(isFatiga);
+  const low = [...cards].filter((c) => c.roas > 0).sort((a, b) => a.roas - b.roas)[0];
+  const movers = [
+    top && top.roas >= 4 ? { ic: "🔺", t: `«${top.name}» escala — ROAS ${top.roas.toFixed(1)}x`, s: "Capada por budget y on-target → subir presupuesto", a: "Escalar" } : null,
+    fat ? { ic: "⚠️", t: `«${fat.name}» fatigando`, s: `CTR ${fat.ctr.toFixed(1)}% · Freq ${fat.freq.toFixed(1)} → rotar creatividad`, a: "Rotar" } : null,
+    low && low.roas < 2.5 ? { ic: "🟡", t: `«${low.name}» bajo objetivo`, s: `ROAS ${low.roas.toFixed(1)}x → optimizar o pausar`, a: "Revisar" } : null,
+  ].filter(Boolean) as { ic: string; t: string; s: string; a: string }[];
+  const totalSpend = series.reduce((s, d) => s + d.spend, 0);
+  const days = series.length || 1;
+  const dailyAvg = totalSpend / days;
+  if (!cards.length && !series.length) return null;
+  return (
+    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div>
+        <div className="mb-2 font-heading text-[13px] font-bold text-navy">⚠️ Movers &amp; alertas</div>
+        {movers.length ? movers.map((m, i) => (
+          <div key={i} className="flex items-center gap-2 border-t border-border py-1.5 first:border-t-0">
+            <span className="grid h-7 w-7 flex-none place-items-center rounded-sc-md border-2 border-ink bg-aged text-[13px] shadow-pop-xs">{m.ic}</span>
+            <div className="min-w-0 flex-1"><div className="truncate font-heading text-[12px] font-bold text-navy">{m.t}</div><div className="text-[10.5px] text-[var(--sc-fg-muted)]">{m.s}</div></div>
+            <span className="flex-none rounded-sc-pill border-[1.5px] border-ink bg-card px-2 py-0.5 text-[10px] font-bold">{m.a} →</span>
+          </div>
+        )) : <p className="text-[11px] text-[var(--sc-fg-muted)]">Sin alertas.</p>}
+      </div>
+      <div>
+        <div className="mb-2 font-heading text-[13px] font-bold text-navy">🩺 Salud — pacing &amp; fatiga</div>
+        <div className="rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-2.5 shadow-pop-xs">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)]">Budget pace</div>
+          <div className="font-heading text-[15px] font-bold text-navy">€{Math.round(totalSpend)} <span className="text-[11px] font-normal text-[var(--sc-fg-muted)]">en {days}d · €{dailyAvg.toFixed(0)}/día · proy. 30d €{Math.round(dailyAvg * 30)}</span></div>
+        </div>
+        <div className="mt-2">
+          {cards.slice(0, 4).map((c) => {
+            const f = isFatiga(c);
+            return (
+              <div key={c.name} className="flex items-center gap-2 py-1 text-[11px]">
+                <span className="flex-none">{f ? "🔥" : "✅"}</span>
+                <span className="flex-1 truncate font-semibold text-navy">{c.name}</span>
+                <span className="flex-none text-[10px] text-[var(--sc-fg-muted)]">Freq {c.freq.toFixed(1)} · CTR {c.ctr.toFixed(1)}%</span>
+                <span className={cn("flex-none rounded-sc-pill border border-ink px-1.5 text-[9px] font-bold", f ? "bg-[var(--sc-brick-bg)] text-destructive" : "bg-[var(--sc-sage-100)] text-sage")}>{f ? "fatiga" : "ok"}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-[10px] text-[var(--sc-fg-muted)] sm:col-span-2">
+        <DataChip type="dedup" source="atribución de la plataforma" confidence="media" />
+        <span>Señales derivadas de ROAS/CTR/frecuencia de plataforma · budget target real pendiente de conectar</span>
+      </div>
+    </div>
+  );
+}
+
 function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: string; period: string; series: { date: string; spend: number; roas: number }[] }) {
   const [tab, setTab] = useState<"campaign" | "adset" | "ad" | "placement" | "audience" | "keyword">("campaign");
   const [sortCol, setSortCol] = useState<number | null>(null);
@@ -1066,6 +1124,7 @@ function AdsModule({ ads, slug, period, series }: { ads: SourceData; slug: strin
         </div>
       </div>
       <CreativeGrid creatives={adCreatives} />
+      <PaidHealthMovers creatives={adCreatives} series={series} />
       <ProvenanceFooter source="meta_ads · google_ads" route="Meta / Google Ads API" client={slug} period={period} />
     </>
   );
