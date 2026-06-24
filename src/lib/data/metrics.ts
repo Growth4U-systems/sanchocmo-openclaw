@@ -8,7 +8,7 @@ import { ensureMetricsStorage } from "@/lib/data/metrics-snapshots";
 import { SURFACES, surfaceForSource, type SurfaceKey } from "@/lib/metrics/surfaces";
 import { aggFor, type AggStrategy } from "@/lib/metrics/aggregation";
 import { getResolvedSchedules, getLatestSourceRuns } from "@/lib/data/metrics-schedule";
-import { isDueToday, type Cadence } from "@/lib/metrics/collection-schedule";
+import { isDueToday, getKnownDirty, type Cadence } from "@/lib/metrics/collection-schedule";
 import { loadJobsState } from "@/lib/data/openclaw-crons";
 
 /**
@@ -579,6 +579,9 @@ export interface SourceHealth {
   lastStatus: string | null;
   lastError: string | null;
   lastDeletedCount: number | null;
+  /** Known instrumentation problem for this source (e.g. GHL inflated events) — see KNOWN_DIRTY. */
+  knownDirty: boolean;
+  dirtyReason?: string;
 }
 
 export interface MetricsHealthResult {
@@ -658,6 +661,7 @@ export async function getMetricsHealth(slug: string): Promise<MetricsHealthResul
       lastStatus: run?.status ?? null,
       lastError: run?.error ?? null,
       lastDeletedCount: run?.deletedCount ?? null,
+      ...getKnownDirty(schedule.source),
     };
   });
   const overall = !anyData ? "no-data" : anyStale ? "stale" : "ok";
