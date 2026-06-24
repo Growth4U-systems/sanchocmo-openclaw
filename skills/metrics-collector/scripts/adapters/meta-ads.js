@@ -7,8 +7,57 @@
 const GRAPH_API_VERSION = 'v21.0';
 const BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
-const FIELDS = 'campaign_name,spend,impressions,clicks,ctr,cpc,actions';
-const AD_FIELDS = 'campaign_name,adset_name,ad_name,spend,impressions,clicks,ctr,cpc,actions';
+const FIELDS = 'campaign_name,spend,impressions,clicks,ctr,cpc,frequency,actions,action_values';
+const AD_FIELDS = 'campaign_name,adset_name,ad_name,spend,impressions,clicks,ctr,cpc,frequency,actions,action_values';
+
+/**
+ * Platform-reported outcomes from Meta's actions/action_values — frequency,
+ * conversions, revenue and platform ROAS. This is the AD PLATFORM's OWN pixel
+ * attribution (flagged `dedup` in the Paid surface), NOT CRM-verified: the real
+ * cita/revenue lives in Conversión/Atribución, never inside Paid.
+ * Returns bare { name, value }[]; the caller adds date + dimensions.
+ */
+function platformOutcomes(row) {
+  const actions = row.actions || [];
+  const values = row.action_values || [];
+  const CONV = ['lead', 'offsite_complete_registration_add_meta_leads', 'onsite_conversion.lead_grouped', 'purchase', 'offsite_conversion.fb_pixel_purchase'];
+  const conversions = actions.filter((a) => CONV.includes(a.action_type)).reduce((s, a) => s + (parseInt(a.value) || 0), 0);
+  const revenue = values
+    .filter((a) => a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_purchase')
+    .reduce((s, a) => s + (parseFloat(a.value) || 0), 0);
+  const spend = parseFloat(row.spend) || 0;
+  const out = [];
+  if (row.frequency != null) out.push({ name: 'frequency', value: parseFloat(row.frequency) || 0 });
+  if (conversions) out.push({ name: 'conversions', value: conversions });
+  if (revenue) {
+    out.push({ name: 'revenue', value: revenue });
+    if (spend > 0) out.push({ name: 'roas', value: Math.round((revenue / spend) * 100) / 100 });
+  }
+  return out;
+}
+
+/** Fetch one insights breakdown (placement/audience) and push rows with `dims`. */
+async function collectBreakdown(baseUrl, breakdowns, accessToken, dateRange, dimOf, into) {
+  try {
+    const url = `${baseUrl}&breakdowns=${breakdowns}&access_token=${accessToken}`;
+    const resp = await fetch(url);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    for (const row of data.data || []) {
+      const dims = dimOf(row);
+      into.push(
+        { name: 'spend', value: parseFloat(row.spend) || 0, date: dateRange.from, dimensions: dims },
+        { name: 'impressions', value: parseInt(row.impressions) || 0, date: dateRange.from, dimensions: dims },
+        { name: 'clicks', value: parseInt(row.clicks) || 0, date: dateRange.from, dimensions: dims },
+        { name: 'ctr', value: parseFloat(row.ctr) || 0, date: dateRange.from, dimensions: dims },
+        { name: 'cpc', value: parseFloat(row.cpc) || 0, date: dateRange.from, dimensions: dims },
+      );
+      for (const o of platformOutcomes(row)) into.push({ ...o, date: dateRange.from, dimensions: dims });
+    }
+  } catch (err) {
+    console.warn(`  ⚠️  Meta Ads ${breakdowns} breakdown error: ${err.message}`);
+  }
+}
 
 /**
  * @param {object} config - { accountId: "act_123456" }
@@ -66,6 +115,7 @@ export async function collect(config, env, dateRange) {
     if (leads) {
       metrics.push({ name: 'leads', value: parseInt(leads.value) || 0, date: dateRange.from });
     }
+    for (const o of platformOutcomes(row)) metrics.push({ ...o, date: dateRange.from });
   }
 
   // --- By campaign ---
@@ -96,6 +146,7 @@ export async function collect(config, env, dateRange) {
           if (leads) {
             metrics.push({ name: 'leads', value: parseInt(leads.value) || 0, date: dateRange.from, dimensions: { campaign } });
           }
+          for (const o of platformOutcomes(row)) metrics.push({ ...o, date: dateRange.from, dimensions: { campaign } });
         }
       }
     }
@@ -171,12 +222,35 @@ export async function collect(config, env, dateRange) {
           if (linkClicks) metrics.push({ name: 'linkClicks', value: parseInt(linkClicks.value) || 0, date: dateRange.from, dimensions: dims });
           if (leads) metrics.push({ name: 'leads', value: parseInt(leads.value) || 0, date: dateRange.from, dimensions: dims });
           if (engagement) metrics.push({ name: 'engagement', value: parseInt(engagement.value) || 0, date: dateRange.from, dimensions: dims });
+          for (const o of platformOutcomes(row)) metrics.push({ ...o, date: dateRange.from, dimensions: dims });
         }
       }
     }
   } catch (err) {
     console.warn(`  ⚠️  Meta Ads ad-level error: ${err.message}`);
   }
+
+  // --- Breakdowns: placement & audience (account-level) ---
+  const breakdownBase =
+    `${BASE_URL}/${accountId}/insights?fields=${FIELDS}` +
+    `&time_range={"since":"${dateRange.from}","until":"${dateRange.to}"}` +
+    `&limit=100`;
+  await collectBreakdown(
+    breakdownBase,
+    'publisher_platform,platform_position',
+    accessToken,
+    dateRange,
+    (row) => ({ placement: `${row.publisher_platform || '?'} · ${row.platform_position || '?'}` }),
+    metrics,
+  );
+  await collectBreakdown(
+    breakdownBase,
+    'age,gender',
+    accessToken,
+    dateRange,
+    (row) => ({ audience: `${row.age || '?'} · ${row.gender || '?'}` }),
+    metrics,
+  );
 
   return { source: 'meta-ads', date: dateRange.from, metrics };
 }
