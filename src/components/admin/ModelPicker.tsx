@@ -20,6 +20,7 @@ const MVP_MODELS = [
   "codex/gpt-5.4",
   "openrouter/z-ai/glm-5.2",
   "google/gemini-2.5-flash",
+  "fireworks/accounts/fireworks/models/glm-5p2",
   "fireworks/accounts/fireworks/routers/kimi-k2p5-turbo",
   "fireworks/accounts/fireworks/models/kimi-k2p6",
   "fireworks/accounts/fireworks/models/gpt-oss-120b",

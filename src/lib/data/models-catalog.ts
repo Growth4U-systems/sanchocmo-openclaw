@@ -81,6 +81,7 @@ export const CURATED_MODELS = [
   "openrouter/google/gemini-3.5-flash",
   "openrouter/google/gemma-4-26b-a4b-it",
   // Fireworks (env key) — open-weight models through the OpenAI-compatible API
+  "fireworks/accounts/fireworks/models/glm-5p2",
   "fireworks/accounts/fireworks/routers/kimi-k2p5-turbo",
   "fireworks/accounts/fireworks/models/kimi-k2p6",
   "fireworks/accounts/fireworks/models/gpt-oss-120b",
@@ -103,6 +104,10 @@ const CURATED_MODEL_METADATA: Record<string, Pick<CatalogModel, "contextWindow" 
   "anthropic/claude-sonnet-4-6": {
     contextWindow: 1_000_000,
     tags: ["extended-context", "1m"],
+  },
+  "fireworks/accounts/fireworks/models/glm-5p2": {
+    contextWindow: 1_048_576,
+    tags: ["open-weight", "reasoning", "1m"],
   },
   "fireworks/accounts/fireworks/routers/kimi-k2p5-turbo": {
     contextWindow: 256_000,
