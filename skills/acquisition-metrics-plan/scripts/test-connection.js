@@ -407,6 +407,32 @@ const TESTERS = {
     }
   },
 
+  async fireworks(config, env, slug) {
+    const apiKey = env[`${slug}_FIREWORKS_API_KEY`] || env.FIREWORKS_API_KEY;
+    if (!apiKey) return { ok: false, error: `Env var ${slug}_FIREWORKS_API_KEY not set` };
+
+    try {
+      const res = await httpRequest(
+        'https://api.fireworks.ai/v1/accounts/fireworks/models?pageSize=1',
+        { headers: { Authorization: `Bearer ${apiKey}` } }
+      );
+      if (res.status === 200) {
+        let detail = 'Fireworks API key valid';
+        try {
+          const data = JSON.parse(res.body);
+          const count = Array.isArray(data.models) ? data.models.length : null;
+          if (count !== null) detail = `Fireworks API key valid (${count} model${count === 1 ? '' : 's'} returned)`;
+        } catch {}
+        return { ok: true, detail };
+      }
+      if (res.status === 401) return { ok: false, error: 'Invalid Fireworks API key (HTTP 401)' };
+      if (res.status === 403) return { ok: false, error: 'Fireworks API key lacks access to list models (HTTP 403)' };
+      return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   async google_ai(config, env, slug) {
     const apiKey = env[`${slug}_GOOGLE_AI_API_KEY`];
     if (!apiKey) return { ok: false, error: `Env var ${slug}_GOOGLE_AI_API_KEY not set` };
