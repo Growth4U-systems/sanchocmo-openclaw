@@ -98,6 +98,47 @@ function workspaceDirForId(agentId: string): string {
   return path.join(BASE.replace(/\/workspace-sancho$/, ""), `workspace-${agentId}`);
 }
 
+function modelFromAgentEntry(entry: AgentEntry | undefined): string | null {
+  if (!entry || entry.model === undefined || entry.model === null) return null;
+  const m = entry.model;
+  if (typeof m === "string") return m;
+  if (m && typeof m === "object" && typeof (m as { primary?: unknown }).primary === "string") {
+    return (m as { primary: string }).primary;
+  }
+  return null;
+}
+
+function setEntryModel(entry: AgentEntry, modelId: string | null): AgentEntry {
+  const next = { ...entry };
+  if (modelId === null) {
+    delete next.model;
+  } else {
+    next.model = modelId;
+  }
+  return next;
+}
+
+function ensureAgentModelEntry(agentId: string, modelId: string): void {
+  const agents = listAgents();
+  const idx = agents.findIndex((a) => a.id === agentId);
+  if (idx < 0) {
+    writeAgentsList([
+      ...agents,
+      {
+        id: agentId,
+        workspace: workspaceDirForId(agentId),
+        model: modelId,
+      },
+    ]);
+    return;
+  }
+
+  if (modelFromAgentEntry(agents[idx]) === modelId) return;
+  const next = agents.slice();
+  next[idx] = setEntryModel(next[idx], modelId);
+  writeAgentsList(next);
+}
+
 export function registerAgent(agentId: string, model?: string): void {
   const workspace = workspaceDirForId(agentId);
   const args = ["agents", "add", agentId, "--workspace", workspace, "--non-interactive"];
@@ -115,6 +156,10 @@ export function registerAgent(agentId: string, model?: string): void {
 }
 
 export function setAgentModel(agentId: string, modelId: string | null): { updated: boolean } {
+  if (modelId !== null) {
+    ensureModelInAllowlist(modelId);
+  }
+
   const agents = listAgents();
   const idx = agents.findIndex((a) => a.id === agentId);
 
@@ -124,27 +169,19 @@ export function setAgentModel(agentId: string, modelId: string | null): { update
       return { updated: false };
     }
     // Use `openclaw agents add` rather than a raw patch so the CLI runs all
-    // its schema/identity validation and seeds default agent state.
+    // its schema/identity validation and seeds default agent state. If the CLI
+    // reports a duplicate without reflecting it in agents.list, still persist
+    // the model override below; otherwise the UI can show "saved" while the
+    // runtime keeps inheriting its old/default model.
     registerAgent(agentId, modelId);
-    if (modelId !== null) {
-      ensureModelInAllowlist(modelId);
-    }
+    ensureAgentModelEntry(agentId, modelId);
     return { updated: true };
   }
 
   const next = agents.slice();
-  const entry = { ...next[idx] };
-  if (modelId === null) {
-    delete entry.model;
-  } else {
-    entry.model = modelId;
-  }
-  next[idx] = entry;
+  next[idx] = setEntryModel(next[idx], modelId);
 
   writeAgentsList(next);
-  if (modelId !== null) {
-    ensureModelInAllowlist(modelId);
-  }
   return { updated: true };
 }
 
@@ -159,13 +196,7 @@ export function setCronModel(cronId: string, modelId: string): void {
 export function getAgentEffectiveModel(agentId: string): string | null {
   const agents = listAgents();
   const agent = agents.find((a) => a.id === agentId);
-  if (!agent) return null;
-  const m = agent.model;
-  if (typeof m === "string") return m;
-  if (m && typeof m === "object" && typeof (m as { primary?: unknown }).primary === "string") {
-    return (m as { primary: string }).primary;
-  }
-  return null;
+  return modelFromAgentEntry(agent);
 }
 
 export interface AgentRichEntry {
@@ -380,18 +411,7 @@ export function listAgentsRich(): AgentRichEntry[] {
 
   const out: AgentRichEntry[] = resolved.map((entry) => {
     const ovEntry = overrideById.get(entry.id);
-    let overrideModel: string | null = null;
-    if (ovEntry && ovEntry.model !== undefined) {
-      const m = ovEntry.model;
-      if (typeof m === "string") overrideModel = m;
-      else if (
-        m &&
-        typeof m === "object" &&
-        typeof (m as { primary?: unknown }).primary === "string"
-      ) {
-        overrideModel = (m as { primary: string }).primary;
-      }
-    }
+    const overrideModel = modelFromAgentEntry(ovEntry);
     const recommendation = recommendModelForAgent(entry.id, entry.workspace || null);
     return {
       id: entry.id,
@@ -407,6 +427,29 @@ export function listAgentsRich(): AgentRichEntry[] {
       registered: true,
     };
   });
+
+  const emittedIds = new Set(out.map((agent) => agent.id));
+  for (const entry of overrides) {
+    if (emittedIds.has(entry.id)) continue;
+    const workspace = entry.workspace || workspaceDirForId(entry.id);
+    const overrideModel = modelFromAgentEntry(entry);
+    const recommendation = recommendModelForAgent(entry.id, workspace);
+    out.push({
+      id: entry.id,
+      name: entry.name || entry.id,
+      emoji: null,
+      workspace,
+      resolvedModel: overrideModel,
+      overrideModel,
+      recommendedModel: recommendation.model,
+      recommendedReason: recommendation.reason,
+      recommendedSkills: recommendation.skills,
+      isDefault: !!entry.default,
+      registered: true,
+    });
+    registeredIds.add(entry.id);
+    emittedIds.add(entry.id);
+  }
 
   // Add filesystem-derived agents that aren't registered yet.
   const fsIds = listWorkspaceIds();

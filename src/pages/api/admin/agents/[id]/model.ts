@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { getModelCatalog, isModelAvailable, invalidateCatalogCache } from "@/lib/data/models-catalog";
-import { ensureModelInAllowlist, setAgentModel } from "@/lib/data/openclaw-config";
+import { getAgentEffectiveModel, setAgentModel } from "@/lib/data/openclaw-config";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "PATCH" && req.method !== "PUT" && req.method !== "POST") {
@@ -31,12 +31,31 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    if (typeof model === "string") {
-      ensureModelInAllowlist(model);
+    const result = setAgentModel(agentId, model ?? null);
+    const effectiveModel = getAgentEffectiveModel(agentId);
+    const verified = model === null ? effectiveModel === null : effectiveModel === model;
+    if (!verified) {
+      return res.status(409).json({
+        error:
+          model === null
+            ? `OpenClaw did not clear the model override for agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`
+            : `OpenClaw did not apply model "${model}" to agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`,
+        agentId,
+        model,
+        effectiveModel,
+        verified: false,
+      });
     }
-    setAgentModel(agentId, model ?? null);
     invalidateCatalogCache();
-    return res.status(200).json({ ok: true, agentId, model, warning });
+    return res.status(200).json({
+      ok: true,
+      agentId,
+      model,
+      effectiveModel,
+      updated: result.updated,
+      verified,
+      warning,
+    });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes("not in agents.list")) {

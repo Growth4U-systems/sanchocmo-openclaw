@@ -286,6 +286,8 @@ test("anthropic_billing: generic wrapper + anthropicAuthMode=subscription → ex
   assert.equal(out.errorDetail.anthropicAuthMode, "subscription");
   assert.ok(out.text.startsWith("⚠️ **Suscripción Claude sin extra-usage**"));
   assert.ok(out.text.includes("claude.ai/settings/usage"));
+  assert.equal(out.errorDetail.provider, undefined);
+  assert.ok(!out.text.includes("provider returned"));
   // Must NOT keep the misleading "switch your API key" advice.
   assert.ok(!/switch to a different api key/i.test(out.text));
   assert.ok(!out.text.includes("run out of credits"));
