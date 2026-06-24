@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.12.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.11.2...v0.12.0) (2026-06-24)
+
+
+### Features
+
+* **linkedin-comment:** playbook completo + cron proactivo (SAN-229) ([#640](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/640)) ([f707198](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f707198b45605b5b45e8dcfbef427842314459e3))
+* **metrics:** add rigor data-provenance primitives (SAN-319) ([0dad1b0](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0dad1b0ca51cb1ebcb470df3cdca68da5384be5c))
+* **metrics:** extend Meta ads collector + Paid seed (rich economics data, SAN-319) ([#842](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/842)) ([012917f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/012917f15de83d1223c9c5a205eb5986176852aa))
+* **metrics:** Paid KPIs with platform ROAS + dual-axis trend (SAN-319 · 3a) ([#843](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/843)) ([a72ae53](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a72ae531924f8160fe0d59933b513033cafd3ae2))
+* **metrics:** per-source data-health flag (knownDirty) in getMetricsHealth (SAN-319) ([80b348a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/80b348a3fea91021d99388d4378fa351af31f109))
+* **metrics:** wire provenance primitives into Paid surface (SAN-319) ([#841](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/841)) ([6507613](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/650761337ba8920a3ba1d4311a6cf417f05354ac))
+* **models:** add Fireworks provider support (SAN-307) ([095e18b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/095e18b484ce62f8676c1406394de6c78c5319f4))
+
+
+### Bug Fixes
+
+* **metrics:** collector persists to Neon in-process via ingestDailySnapshot (SAN-318) ([#837](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/837)) ([8573fcc](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8573fcc2f5b73d063e3f784c272c2cabcc16e8aa))
+
 ## [0.11.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.11.1...v0.11.2) (2026-06-23)
 
 
