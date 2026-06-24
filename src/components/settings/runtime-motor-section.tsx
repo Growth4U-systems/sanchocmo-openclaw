@@ -21,6 +21,31 @@ function findProvider(rp: RuntimeProvider, providers: CatalogProvider[]): Catalo
   return undefined;
 }
 
+interface SystemEnvField {
+  masked?: string;
+  hasValue?: boolean;
+}
+
+interface RuntimeSystemEnvStatus {
+  hasValue: boolean;
+  label: string | null;
+}
+
+function serviceHasCredential(status: string | undefined): boolean {
+  return status === "ok" || status === "error";
+}
+
+function summarizeSystemEnv(fields: Record<string, SystemEnvField>): RuntimeSystemEnvStatus {
+  const configured = Object.entries(fields).find(([, field]) => field?.hasValue);
+  if (!configured) return { hasValue: false, label: null };
+
+  const [key, field] = configured;
+  return {
+    hasValue: true,
+    label: `env: ${key}${field.masked ? ` · ${field.masked}` : ""}`,
+  };
+}
+
 /**
  * Engine auth routes (global). Each provider that supports a subscription shows
  * two rows (Suscripción / API Key); you activate one for the whole motor. The
@@ -52,34 +77,53 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   });
   const services = useMemo(() => health?.services ?? {}, [health]);
 
+  const { data: systemEnv } = useQuery<Record<string, RuntimeSystemEnvStatus>>({
+    queryKey: ["runtime-system-env"],
+    queryFn: async () => {
+      const apiIds = Array.from(new Set(RUNTIME_PROVIDERS.map((rp) => rp.apiId)));
+      const entries = await Promise.all(
+        apiIds.map(async (apiId) => {
+          const res = await fetch(`/api/env?service=${encodeURIComponent(apiId)}`);
+          if (!res.ok) return [apiId, { hasValue: false, label: null }] as const;
+          const payload = (await res.json().catch(() => ({}))) as Record<string, SystemEnvField>;
+          return [apiId, summarizeSystemEnv(payload)] as const;
+        }),
+      );
+      return Object.fromEntries(entries);
+    },
+    staleTime: 10_000,
+  });
+
   const rows = useMemo(
     () =>
       RUNTIME_PROVIDERS.map((rp) => {
         const provider = findProvider(rp, providers);
         const auth = provider?.auth;
         const effRoute = effectiveRoute(provider);
-        const routeForRow = rp.route ?? effRoute;
+        const svc = services[rp.apiId];
+        const env = systemEnv?.[rp.apiId];
+        const hasSystemCredential = !!env?.hasValue || serviceHasCredential(svc?.status);
+        const routeForRow = rp.route ?? (hasSystemCredential ? "env" : effRoute);
         const present =
           rp.route === "subscription"
             ? !!auth?.hasSubscription
             : rp.route === "api"
-              ? !!auth?.hasApiKey
-              : !!provider?.configured;
+              ? !!auth?.hasApiKey || hasSystemCredential
+              : !!provider?.configured || hasSystemCredential;
         // A split row is "active" when the gateway's effective route matches it;
         // a single-route row is active whenever it's configured.
-        const isActive = rp.route !== undefined ? rp.route === effRoute : !!provider?.configured;
+        const isActive = rp.route !== undefined ? rp.route === effRoute : !!provider?.configured || hasSystemCredential;
         const label =
           rp.route === "subscription"
             ? auth?.subscriptionLabels?.[0] || auth?.effectiveLabel
             : rp.route === "api"
-              ? auth?.apiKeyLabels?.[0] || auth?.effectiveLabel
-              : provider?.sourceLabel;
-        const svc = services[rp.apiId];
+              ? auth?.apiKeyLabels?.[0] || auth?.effectiveLabel || env?.label
+              : provider?.sourceLabel || env?.label;
         const healthError =
           isActive && svc?.status === "error" ? svc.details?.error || svc.error || "credencial rechazada" : null;
         return { rp, provider, routeForRow, present, isActive, label: label || null, healthError };
       }),
-    [providers, services],
+    [providers, services, systemEnv],
   );
 
   const activate = (rp: RuntimeProvider) => {
