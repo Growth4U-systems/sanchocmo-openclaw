@@ -70,6 +70,7 @@ const RECOMMENDATIONS = [
   {
     workload: "Open-weight vía Fireworks",
     primary: [
+      "fireworks/accounts/fireworks/models/glm-5p2",
       "fireworks/accounts/fireworks/routers/kimi-k2p5-turbo",
       "fireworks/accounts/fireworks/models/kimi-k2p6",
     ],
