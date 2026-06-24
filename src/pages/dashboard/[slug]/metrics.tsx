@@ -34,6 +34,7 @@ import {
   DataTable,
   MetricTile,
   Panel as MetricPanel,
+  PipelineKpis,
   ProgressBar as MetricProgressBar,
   ProvenanceFooter,
   Sparkline as MetricSparkline,
@@ -47,6 +48,7 @@ import { buildMetricsEditThread, buildTaskThread } from "@/lib/chat-openers";
 import { getTaskSet } from "@/lib/data/task-blueprints";
 import { SURFACES, SURFACE_MANDATORY_SOURCES, SURFACE_API_PROVIDERS, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
+import { getKnownDirty } from "@/lib/metrics/collection-schedule";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { normalizeTaskStatusQuiet, statusLabel, statusOption } from "@/lib/task-status";
 import { cn } from "@/lib/utils";
@@ -1281,7 +1283,7 @@ function SocialModule({ mc }: { mc: SourceData }) {
 // Module: Pipeline & CRM (GHL)
 // ============================================================
 
-function CrmModule({ ghl, locationId }: { ghl: SourceData; locationId: string }) {
+function CrmModule({ ghl, locationId, slug, period }: { ghl: SourceData; locationId: string; slug: string; period: string }) {
   const [tab, setTab] = useState<"leads" | "sources" | "pipeline" | "convos">("leads");
 
   const total = mVal(ghl, "totalContacts") || 0;
@@ -1289,6 +1291,7 @@ function CrmModule({ ghl, locationId }: { ghl: SourceData; locationId: string })
   const appt = mVal(ghl, "appointments") || 0;
   const opp = mVal(ghl, "opportunities") || 0;
   const pipe = mVal(ghl, "pipelineValue") || 0;
+  const ghlHealth = getKnownDirty("ghl");
 
   const leads = ghl.metrics.filter((x) => x.name === "recentLead");
   const srcBreakdown = ghl.metrics.find((x) => x.name === "sourceBreakdown");
@@ -1297,13 +1300,15 @@ function CrmModule({ ghl, locationId }: { ghl: SourceData; locationId: string })
 
   return (
     <>
-      <KpiRow items={[
-        { label: "Contacts", value: fmt(total) },
-        { label: "New", value: `+${nc}`, color: "text-sage" },
-        { label: "Appts", value: fmt(appt) },
-        { label: "Opps", value: fmt(opp) },
-        ...(pipe > 0 ? [{ label: "Pipeline", value: `\u20AC${fmt(pipe)}`, color: "text-sage" }] : []),
-      ]} />
+      <PipelineKpis
+        contacts={total}
+        newContacts={nc}
+        appointments={appt}
+        opportunities={opp}
+        pipelineValue={pipe}
+        ghlDirty={ghlHealth.knownDirty}
+        dirtyReason={ghlHealth.dirtyReason}
+      />
       <div>
         <div className="flex gap-1.5 mb-3">
           <TabButton label="Lead Feed" active={tab === "leads"} onClick={() => setTab("leads")} />
@@ -1435,6 +1440,7 @@ function CrmModule({ ghl, locationId }: { ghl: SourceData; locationId: string })
           ) : <p className="text-muted-foreground">Sin conversaciones</p>
         )}
       </div>
+      <ProvenanceFooter source="ghl" route="GoHighLevel API" client={slug} period={period} />
     </>
   );
 }
@@ -1947,7 +1953,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
       case "search": return gsc ? <SearchModule gsc={gsc} /> : null;
       case "ads": return ads ? <AdsModule ads={ads} slug={slug} period={`${dateFrom} → ${dateTo}`} series={rangeEntries.map((e) => { const m = e.sources["meta-ads"] || e.sources.meta_ads; return { date: e.date, spend: mVal(m, "spend") || 0, roas: mVal(m, "roas") || 0 }; })} /> : <PaidEmpty />;
       case "social": return mc ? <SocialModule mc={mc} /> : null;
-      case "crm": return ghl ? <CrmModule ghl={ghl} locationId={ghlLocationId} /> : null;
+      case "crm": return ghl ? <CrmModule ghl={ghl} locationId={ghlLocationId} slug={slug} period={`${dateFrom} → ${dateTo}`} /> : null;
       default: return null;
     }
   }
