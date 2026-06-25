@@ -23,6 +23,7 @@ test("buildYalcThread === frozen spec", () => {
     docPath: null,
     threadState: "continue",
     initialMessage: "hola",
+    scope: "agent",
   });
 });
 
@@ -38,6 +39,7 @@ test("buildOutreachTemplateThread === frozen spec (preserves {{vars}})", () => {
     threadState: "continue",
     initialMessage:
       'Estoy mirando la plantilla de outreach "Mi Seq" (secuencia, brand/growth4u/outreach/templates/Seq-1.md). Puedes ajustar tono, pasos, delays o variables ({{nombre}}, {{handle}}, {{plataforma}}, {{precio}}) — propón cambios como borrador, nada se pisa sin mi OK.',
+    scope: "agent",
   });
 });
 

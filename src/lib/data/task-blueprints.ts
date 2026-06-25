@@ -101,6 +101,13 @@ export interface NamespaceOwner {
   skill: string;
   skills: string[];
   agent?: string;
+  /**
+   * Thread scope (SAN-327). Absent or `"skill"` = narrow single-skill thread
+   * (current behavior). `"agent"` = broad thread: the owning agent may use ANY
+   * of its own skills here — send.ts widens skills[] to the agent's full owned
+   * set and the gateway frames the seed skill as a starting suggestion.
+   */
+  scope?: "agent" | "skill";
   /** Reopen matching. */
   nsKey: string;
   match: "exact" | "prefix";

@@ -101,6 +101,13 @@ export interface ThreadConfig {
    * this field — see send.ts where it's forwarded.
    */
   agent?: string;
+  /**
+   * Thread scope (SAN-327). `"agent"` marks a broad thread where the owning
+   * agent may use ANY of its own skills (the seed `skill` is just a starting
+   * point). Absent/`"skill"` keeps the narrow single-skill behavior. Declared
+   * in the manifest namespace entry and forwarded to the gateway via send.ts.
+   */
+  scope?: "agent" | "skill";
   inputDocuments?: unknown[];
   requiredInputs?: unknown[];
   outputDocuments?: unknown[];
@@ -167,6 +174,7 @@ export function instantiateNamespace(key: string, ctx: { slug: string; params?: 
   };
   if (entry.initialMessage) cfg.initialMessage = sub(entry.initialMessage);
   if (entry.docKind) cfg.docKind = entry.docKind;
+  if (entry.scope) cfg.scope = entry.scope;
   return cfg;
 }
 
@@ -1064,7 +1072,11 @@ export function getAutoPrompt(config: ThreadConfig): string {
   if (config.initialMessage) return config.initialMessage;
 
   if (config.threadState === "create") {
-    return `Quiero crear "${config.threadName}". Usa el skill ${config.skill} para generar el documento.`;
+    const framing =
+      config.scope === "agent"
+        ? `Para empezar, usa el skill ${config.skill} — es el punto de partida; si necesitas otra de tu dominio en este mismo hilo, úsala.`
+        : `Usa el skill ${config.skill} para generar el documento.`;
+    return `Quiero crear "${config.threadName}". ${framing}`;
   }
   if (config.threadState === "continue") {
     return `Estoy abriendo el chat sobre "${config.threadName}". Dame un resumen rápido del estado actual y qué podemos hacer. Si necesitas algo de mí, dímelo.`;
