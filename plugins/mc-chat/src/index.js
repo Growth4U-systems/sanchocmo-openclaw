@@ -192,6 +192,8 @@ export default defineChannelPluginEntry({
           userName,
           linkedTo,
           skill,
+          skills,
+          scope,
           agent,
           agentId,
           isAdmin,
@@ -229,7 +231,16 @@ export default defineChannelPluginEntry({
         ];
         if (threadName) contextLines.push(`thread_name: ${threadName}`);
         if (linkedTo) contextLines.push(`linked_to: ${linkedTo}`);
-        if (skill) contextLines.push(`skill: ${skill}`);
+        // SAN-327 — agent-scoped (broad) thread: tell the specialist its WHOLE
+        // owned skill set is usable here and that the seed skill is just a
+        // starting point. Narrow threads keep the single `skill:` line.
+        if (scope === "agent" && Array.isArray(skills) && skills.length > 0) {
+          const primary = skill || skills[0];
+          contextLines.push(`skill: ${primary}  ← punto de partida sugerido, NO un límite`);
+          contextLines.push(`Este es un hilo AMPLIO de tu dominio (${requestedAgent}). Puedes usar CUALQUIERA de tus skills en este MISMO hilo, sin abrir otro: ${skills.join(", ")}. Si el usuario pide algo que es tuyo (p.ej. una plantilla de outreach), cámbiate de skill y hazlo. NUNCA digas "no tengo esa skill" si está en tu set. Si de verdad es de otro agente (contenido, ads, datos), dilo y sugiere abrir su hilo.`);
+        } else if (skill) {
+          contextLines.push(`skill: ${skill}`);
+        }
         if (requestedAgent && requestedAgent !== "sancho") contextLines.push(`requested_agent: ${requestedAgent}`);
         contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Read files from disk (brand/${slug}/), never via HTTP/web_fetch to localhost.`);
         contextLines.push(`⚠️ EXECUTION GUARDRAIL: Aprobar un plan o crear proyectos NO es autorización para ejecutar tareas. Siempre preguntar "¿Ejecuto [tarea específica]?" y esperar confirmación explícita antes de generar deliverables. "Apruebo el plan" y "Ejecuta" son pasos DIFERENTES.`);

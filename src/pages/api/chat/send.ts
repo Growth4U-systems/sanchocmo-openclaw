@@ -10,6 +10,7 @@ import {
   type ErrorDetail,
 } from "@/lib/data/mc-chat";
 import { maybeMarkClarifyAnswered } from "@/lib/clarify-autostatus";
+import { skillsOwnedBy } from "@/lib/skill-resolver";
 
 async function readGatewayResponse(res: Response): Promise<{ chatId?: string; raw: string }> {
   const raw = await res.text();
@@ -54,6 +55,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     attachments,
     _source,
     agent,
+    scope,
   } = req.body;
 
   if (!slug || !text) {
@@ -76,6 +78,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       : resolvedSkill
         ? [resolvedSkill]
         : undefined;
+  // SAN-327 — agent-scoped (broad) threads let the owning specialist use ANY of
+  // its own skills in the same thread. Widen the skill set to the agent's full
+  // owned set (seed skill first), so the gateway can tell the agent its whole
+  // toolset instead of just the seed skill. Narrow threads stay untouched, and
+  // the default agent (sancho) is excluded — it delegates rather than widens.
+  const isAgentScope =
+    scope === "agent" && !!resolvedAgent && resolvedAgent !== "sancho";
+  const effectiveSkills = isAgentScope
+    ? Array.from(
+        new Set([
+          ...(resolvedSkill ? [resolvedSkill] : []),
+          ...skillsOwnedBy(resolvedAgent),
+          ...(resolvedSkills ?? []),
+        ]),
+      )
+    : resolvedSkills;
   const parsedAttachments: ChatAttachment[] | undefined =
     Array.isArray(attachments) && attachments.length > 0 ? attachments : undefined;
 
@@ -122,7 +140,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     userName: userName || (isAdmin ? "Admin" : slug),
     linkedTo: linkedTo || undefined,
     skill: resolvedSkill || undefined,
-    skills: resolvedSkills || undefined,
+    skills: effectiveSkills || undefined,
+    // SAN-327 — when "agent", the gateway frames the seed skill as a starting
+    // suggestion and tells the agent it can use any of `skills` in this thread.
+    scope: isAgentScope ? "agent" : undefined,
     threadState: threadState || undefined,
     docPath: docPath || undefined,
     docKind: typeof docKind === "string" ? docKind : undefined,

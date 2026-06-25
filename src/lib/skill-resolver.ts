@@ -227,6 +227,24 @@ export function resolveAgentForSkill(skill: string | undefined): string | undefi
   return SKILL_OWNER_MAP[skill];
 }
 
+/** Reverse of SKILL_OWNER_MAP (agent slug → skills it owns). Built once. */
+const SKILLS_BY_OWNER: Record<string, string[]> = (() => {
+  const out: Record<string, string[]> = {};
+  for (const [skill, owner] of Object.entries(SKILL_OWNER_MAP)) {
+    (out[owner] ??= []).push(skill);
+  }
+  return out;
+})();
+
+/** Return every skill owned by `agent` (reverse of SKILL_OWNER_MAP), or [] if
+ *  none (SAN-327). Used to widen a thread's skill set when it is agent-scoped
+ *  (`scope: "agent"`), so a specialist can use ANY of its own skills in the
+ *  same thread instead of being framed around a single seed skill. */
+export function skillsOwnedBy(agent: string | undefined): string[] {
+  if (!agent) return [];
+  return SKILLS_BY_OWNER[agent] ?? [];
+}
+
 /**
  * Resolve the skill that produces a Foundation pillar's doc (SAN-148).
  * Usa PILLAR_SKILL_ALIAS (derivado de la task cubriente, SAN-192 W2b). Used by
