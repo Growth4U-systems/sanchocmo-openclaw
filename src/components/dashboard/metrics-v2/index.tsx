@@ -284,3 +284,5 @@ export * from "./AiReadiness";
 export * from "./DiscoverabilitySurface";
 // Reputation — Trust Engine compare report (scoreboard · pillars · GEO · diagnosis).
 export * from "./ReputationSurface";
+// Conversión — the unified between-stage funnel (cross-source synthesis).
+export * from "./BetweenStageFunnel";

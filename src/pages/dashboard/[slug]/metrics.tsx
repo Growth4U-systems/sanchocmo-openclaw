@@ -36,6 +36,7 @@ import {
   DataTable,
   DiscoverabilitySurface,
   ReputationSurface,
+  BetweenStageFunnel,
   MetricTile,
   Panel as MetricPanel,
   PipelineKpis,
@@ -1460,9 +1461,10 @@ function CrmModule({ ghl, locationId, slug, period }: { ghl: SourceData; locatio
 
 /** Build the horizontal funnel steps from a plan + live sources (shared strip). */
 function buildFunnelSteps(funnel: NonNullable<MetricsData["plan"]>["funnel"], sources: Record<string, SourceData>) {
-  if (!funnel) return [] as { step: string; value: string; statusDot: string; statusLabel: string; automated: boolean }[];
+  if (!funnel) return [] as { step: string; value: string; num: number; statusDot: string; statusLabel: string; automated: boolean }[];
   return funnel.map((step) => {
     let value = "—";
+    let num = NaN;
     let automated = false;
     let hasManualData = false;
     if (step.source) {
@@ -1471,13 +1473,14 @@ function buildFunnelSteps(funnel: NonNullable<MetricsData["plan"]>["funnel"], so
         const m = src.metrics.find((x) => x.name === step.metric && (!x.dimensions || (x.dimensions as Record<string, string>).source === "manual"));
         if (m) {
           value = typeof m.value === "number" ? m.value.toLocaleString() : String(m.value);
+          num = typeof m.value === "number" ? m.value : Number(m.value);
           if (step.manual) hasManualData = true; else automated = true;
         }
       }
     }
     const statusDot = automated ? "🟢" : hasManualData ? "🟢" : step.manual ? "🟡" : "🔴";
     const statusLabel = automated ? "auto" : hasManualData ? "sheets" : "manual";
-    return { step: step.step, value, statusDot, statusLabel, automated: automated || hasManualData };
+    return { step: step.step, value, num, statusDot, statusLabel, automated: automated || hasManualData };
   });
 }
 
@@ -2814,8 +2817,12 @@ function MetricsPageInner({ slug }: { slug: string }) {
     const attrProps = realAttrRows.length
       ? { rows: realAttrRows, truthSource: "koibox" as const, total: true }
       : { ...REPRESENTATIVE_ATTRIBUTION, truthSource: "koibox" as const, representative: true, total: true };
+    const funnelStages = (displayPlan?.funnel ? buildFunnelSteps(displayPlan.funnel, sources) : []).map((s) => ({ label: s.step, value: s.num }));
+    const betweenFunnel = funnelStages.filter((s) => Number.isFinite(s.value)).length >= 2 ? <BetweenStageFunnel stages={funnelStages} /> : null;
     const attribution = (
-      <section id="atribucion" className="scroll-mt-20 space-y-2">
+      <>
+        {betweenFunnel}
+        <section id="atribucion" className="scroll-mt-20 space-y-2">
         <div className="flex flex-wrap items-end justify-between gap-2 border-b-[2.5px] border-ink pb-2">
           <h3 className="flex flex-wrap items-center gap-2 font-heading text-lg font-bold text-navy">
             {"🔗"} Atribución
@@ -2826,7 +2833,8 @@ function MetricsPageInner({ slug }: { slug: string }) {
         </div>
         <AttributionFunnel {...attrProps} />
         <ProvenanceFooter source="meta_ads · ga4 · koibox · stripe" route="join por UTM + koibox_appointment_id" client={slug} period={`${dateFrom} → ${dateTo}`} />
-      </section>
+        </section>
+      </>
     );
     const posthogConnected = connectedFromFiles.has("posthog");
     if (posthogConnected) {
