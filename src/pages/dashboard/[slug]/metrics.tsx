@@ -35,6 +35,7 @@ import {
   MetricTile,
   Panel as MetricPanel,
   PipelineKpis,
+  ProductFunnel,
   ProgressBar as MetricProgressBar,
   ProvenanceFooter,
   Sparkline as MetricSparkline,
@@ -1898,8 +1899,9 @@ function MetricsPageInner({ slug }: { slug: string }) {
     if (ads?.status === "ok") mods.push({ id: "ads", icon: "\uD83D\uDCE3", title: "Paid Campaigns", priority: 3 });
     if (mc?.status === "ok" && mc.metrics.length > 0) mods.push({ id: "social", icon: "\uD83D\uDCF1", title: "Social Media", priority: 4 });
     if (ghl?.status === "ok") mods.push({ id: "crm", icon: "\uD83D\uDCC7", title: "Pipeline & CRM", priority: 5 });
+    if (posthog?.status === "ok") mods.push({ id: "product", icon: "\uD83E\uDDEA", title: "Product (PostHog)", priority: 6 });
     return mods;
-  }, [ga4, gsc, ads, mc, ghl]);
+  }, [ga4, gsc, ads, mc, ghl, posthog]);
 
   const orderedModules = useMemo(() => {
     if (moduleOrder.length === 0) return dynamicModules;
@@ -1954,6 +1956,31 @@ function MetricsPageInner({ slug }: { slug: string }) {
       case "ads": return ads ? <AdsModule ads={ads} slug={slug} period={`${dateFrom} → ${dateTo}`} series={rangeEntries.map((e) => { const m = e.sources["meta-ads"] || e.sources.meta_ads; return { date: e.date, spend: mVal(m, "spend") || 0, roas: mVal(m, "roas") || 0 }; })} /> : <PaidEmpty />;
       case "social": return mc ? <SocialModule mc={mc} /> : null;
       case "crm": return ghl ? <CrmModule ghl={ghl} locationId={ghlLocationId} slug={slug} period={`${dateFrom} → ${dateTo}`} /> : null;
+      case "product": {
+        if (!posthog) return null;
+        const reached = (posthog.metrics || [])
+          .filter((x) => x.name === "funnel_step_reached" && x.dimensions)
+          .sort((a, b) => (Number(a.dimensions?.order) || 0) - (Number(b.dimensions?.order) || 0));
+        const steps = reached.map((s, i) => ({
+          step: String(s.dimensions?.step ?? ""),
+          reached: Number(s.value) || 0,
+          dropoff: i === 0 ? 0 : Math.max(0, (Number(reached[i - 1].value) || 0) - (Number(s.value) || 0)),
+        }));
+        const ph = getKnownDirty("posthog");
+        return (
+          <>
+            <ProductFunnel
+              steps={steps}
+              pageviews={mVal(posthog, "pageviews")}
+              activationEvents={mVal(posthog, "activation_events")}
+              recordings={mVal(posthog, "session_recordings")}
+              posthogDirty={ph.knownDirty}
+              dirtyReason={ph.dirtyReason}
+            />
+            <ProvenanceFooter source="posthog" route="PostHog API" client={slug} period={`${dateFrom} → ${dateTo}`} />
+          </>
+        );
+      }
       default: return null;
     }
   }
