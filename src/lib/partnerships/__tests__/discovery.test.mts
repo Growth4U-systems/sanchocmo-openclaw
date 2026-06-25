@@ -259,6 +259,7 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
       signals: { competitorBrands: ["N26", "Revolut"] },
       templates: ["Primer contacto creators fintech"],
     },
+    threadId: "monzo:discovery-new-1782311712194",
   });
 
   // Campaign Partnerships creada en Yalc con modo hybrid + umbral 40.
@@ -273,6 +274,9 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
   // Búsqueda persistida con runner encolado + proyecto de campaña sembrado (SAN-195).
   assert.equal(created.search.runner.status, "queued");
   assert.equal(created.search.campaignId, "camp-monzo-1");
+  // SAN-328: el hilo donde se construyó el plan queda persistido para que la
+  // tarjeta de Encuentra reabra esa misma sesión (no un hilo nuevo).
+  assert.equal(created.search.threadId, "monzo:discovery-new-1782311712194");
   const projectId = created.search.projectId;
   assert.ok(projectId, "proyecto de campaña creado");
   assert.equal(created.taskId, `${projectId}-T01`, "tarea madre = T01 (runner)");

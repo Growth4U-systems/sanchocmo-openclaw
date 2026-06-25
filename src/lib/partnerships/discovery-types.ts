@@ -130,6 +130,12 @@ export interface DiscoverySearchRecord {
   projectId?: string | null;
   /** Tarea madre de la búsqueda (T01 del proyecto de campaña: el runner). */
   taskId: string | null;
+  /**
+   * Hilo de chat (MC Chat) donde se construyó esta búsqueda con
+   * discovery-plan-builder. Persistido para que la tarjeta de Encuentra reabra
+   * la MISMA sesión (resume con su historial) en vez de un hilo nuevo (SAN-328).
+   */
+  threadId?: string | null;
   runner: DiscoveryRunnerState;
   /**
    * Plantillas INSTANCIADAS en esta búsqueda (SAN-80): copias congeladas de

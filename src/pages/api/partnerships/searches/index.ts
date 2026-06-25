@@ -43,9 +43,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
 
-  const body = (req.body || {}) as { plan?: unknown; run?: unknown };
+  const body = (req.body || {}) as { plan?: unknown; run?: unknown; threadId?: unknown };
   try {
-    const created = await createDiscoverySearch({ slug, plan: body.plan });
+    const created = await createDiscoverySearch({
+      slug,
+      plan: body.plan,
+      // SAN-328: el hilo MC Chat donde la skill construyó el plan, para que la
+      // tarjeta de Encuentra reabra esa misma sesión en vez de un hilo nuevo.
+      threadId: typeof body.threadId === "string" ? body.threadId : null,
+    });
 
     if (body.run === "fixtures" || body.run === true) {
       const run = await runDiscoverySearch({ slug, searchId: created.search.id, fixtures: true });

@@ -151,8 +151,12 @@ admin de `clients.json` — nunca pidas tokens en el chat):
 curl -s -X POST "http://localhost:3000/api/partnerships/searches" \
   -H "Content-Type: application/json" \
   -H "x-admin-token: $MC_ADMIN_TOKEN" \
-  -d '{ "slug": "{slug}", "plan": { ...el JSON del plan... } }'
+  -d '{ "slug": "{slug}", "threadId": "<thread_id>", "plan": { ...el JSON del plan... } }'
 ```
+
+`threadId` = el valor de `thread_id` de tu bloque `[MC Chat Context]` (este mismo
+hilo). Es lo que permite que, al reabrir la búsqueda desde su tarjeta en Encuentra,
+se retome ESTA sesión en vez de empezar un hilo nuevo (SAN-328).
 
 Respuesta: `{ ok, search, campaignId, taskId }`. Esto ya ha hecho TODO el
 trabajo de creación:

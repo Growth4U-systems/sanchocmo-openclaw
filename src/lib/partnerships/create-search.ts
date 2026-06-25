@@ -40,6 +40,8 @@ export interface CreateSearchResult {
 export async function createDiscoverySearch(options: {
   slug: string;
   plan: unknown;
+  /** Hilo MC Chat donde se construyó el plan (SAN-328) — para retomar la sesión desde la tarjeta. */
+  threadId?: string | null;
 }): Promise<CreateSearchResult> {
   const { slug } = options;
   // SAN-76: el modo/umbral de cualificación por defecto sale de la config
@@ -69,6 +71,7 @@ export async function createDiscoverySearch(options: {
     plan,
     campaignId,
     taskId: null,
+    threadId: options.threadId ?? null,
     runner: {
       status: "queued",
       mode: null,
