@@ -27,6 +27,7 @@ import { MetricsPartnershipsTab } from "@/components/partnerships/metrics-partne
 import { SlideOver } from "@/components/shared/slide-over";
 import { DocSlideOver, JsonViewer } from "@/components/shared/doc-slideover";
 import {
+  AttributionFunnel,
   BackButton,
   Button as MetricButton,
   Chip as MetricChip,
@@ -50,6 +51,7 @@ import { getTaskSet } from "@/lib/data/task-blueprints";
 import { SURFACES, SURFACE_MANDATORY_SOURCES, SURFACE_API_PROVIDERS, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
 import { getKnownDirty } from "@/lib/metrics/collection-schedule";
+import { buildAttributionRows } from "@/lib/metrics/attribution";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { normalizeTaskStatusQuiet, statusLabel, statusOption } from "@/lib/task-status";
 import { cn } from "@/lib/utils";
@@ -2724,6 +2726,27 @@ function MetricsPageInner({ slug }: { slug: string }) {
   }
 
   function renderConversion() {
+    // Atribución (PR7) — the one cross-source view: channel × Koibox cita (deduped by
+    // koibox_appointment_id) × pago. Honest empty-state until Koibox citas are collected.
+    const koiboxCitas = (sources.koibox?.metrics || [])
+      .filter((m) => m.dimensions && (m.dimensions as Record<string, string>).koibox_appointment_id)
+      .map((m) => {
+        const d = m.dimensions as Record<string, string>;
+        return { appointmentId: d.koibox_appointment_id, channel: d.channel || d.utmSource || "Directo" };
+      });
+    const attrRows = koiboxCitas.length
+      ? buildAttributionRows(channelRows.map((r) => ({ channel: r.channel, visits: r.sessions || 0, spend: r.spend || 0 })), koiboxCitas)
+      : [];
+    const attribution = (
+      <section id="atribucion" className="scroll-mt-20 space-y-2">
+        <div className="flex flex-wrap items-end justify-between gap-2 border-b-[2.5px] border-ink pb-2">
+          <h3 className="font-heading text-lg font-bold text-navy">{"🔗"} Atribución — canal {"->"} cita {"->"} pago</h3>
+          <p className="max-w-md text-[11.5px] text-[var(--sc-fg-muted)]">El único cruce de fuentes: Paid/Web (canal) con Koibox (cita real, dedup por id) y Stripe (pago). CPA real por cita.</p>
+        </div>
+        <AttributionFunnel rows={attrRows} truthSource="koibox" />
+        <ProvenanceFooter source="meta_ads · ga4 · koibox · stripe" route="join por UTM + koibox_appointment_id" client={slug} period={`${dateFrom} → ${dateTo}`} />
+      </section>
+    );
     const posthogConnected = connectedFromFiles.has("posthog");
     if (posthogConnected) {
       const pageviews = mVal(posthog, "pageviews");
@@ -2739,6 +2762,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
       }));
       return (
         <div className="space-y-5">
+          {attribution}
           <MetricPanel halftone className="border-[3px] border-navy">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -2782,6 +2806,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
     }
     return (
       <div className="space-y-5">
+        {attribution}
         <MetricPanel halftone className="border-[3px] border-[var(--cyan)] text-center">
           <div className="mx-auto max-w-xl">
             <div className="text-3xl">{"🎯"}</div>
