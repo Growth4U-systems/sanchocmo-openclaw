@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { getModelCatalog, isModelAvailable, invalidateCatalogCache } from "@/lib/data/models-catalog";
-import { getAgentEffectiveModel, setAgentModel } from "@/lib/data/openclaw-config";
+import { getAgentEffectiveModel, restartGateway, setAgentModel } from "@/lib/data/openclaw-config";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "PATCH" && req.method !== "PUT" && req.method !== "POST") {
@@ -46,7 +46,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         verified: false,
       });
     }
+    const restart = restartGateway();
     invalidateCatalogCache();
+    const responseWarning = [
+      warning,
+      restart.ok
+        ? null
+        : `Modelo guardado, pero no se pudo reiniciar el gateway (${restart.error || "timeout"}). Puede requerir restart/deploy para aplicarse al runtime.`,
+    ].filter(Boolean).join(" ");
     return res.status(200).json({
       ok: true,
       agentId,
@@ -54,7 +61,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       effectiveModel,
       updated: result.updated,
       verified,
-      warning,
+      restarted: restart.ok,
+      restartMethod: restart.method,
+      warning: responseWarning || undefined,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

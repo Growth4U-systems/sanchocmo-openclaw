@@ -381,6 +381,12 @@ p=c.setdefault('models',{}).setdefault('providers',{}).setdefault('fireworks',{}
 agent_models=c.setdefault('agents',{}).setdefault('defaults',{}).setdefault('models',{})
 defaults=[
     {
+        'id':'accounts/fireworks/models/glm-5p2',
+        'name':'GLM 5.2',
+        'input':['text'],
+        'contextWindow':1048576,
+    },
+    {
         'id':'accounts/fireworks/models/kimi-k2p6',
         'name':'Kimi K2.6',
         'input':['text','image'],
@@ -411,6 +417,7 @@ for model in defaults:
         p['models'].append(model)
         changed=True
 for ref, alias in (
+    ('fireworks/accounts/fireworks/models/glm-5p2', 'GLM 5.2'),
     ('fireworks/accounts/fireworks/routers/kimi-k2p5-turbo', 'Kimi K2.5 Turbo'),
     ('fireworks/accounts/fireworks/models/kimi-k2p6', 'Kimi K2.6'),
 ):
@@ -596,9 +603,38 @@ fi
 # ===========================================================
 # 6. START GATEWAY (foreground, backgrounded for MC)
 # ===========================================================
-echo "[entrypoint] Starting OpenClaw gateway..."
-openclaw gateway run &
-GATEWAY_PID=$!
+GATEWAY_PID_FILE="${OPENCLAW_GATEWAY_PID_FILE:-/tmp/openclaw-gateway.pid}"
+GATEWAY_RESTART_FLAG="${OPENCLAW_GATEWAY_RESTART_FLAG:-/tmp/openclaw-gateway-restart.request}"
+rm -f "$GATEWAY_RESTART_FLAG"
+
+gateway_supervisor() {
+  while true; do
+    echo "[entrypoint] Starting OpenClaw gateway..."
+    openclaw gateway run &
+    gateway_pid=$!
+    echo "$gateway_pid" > "$GATEWAY_PID_FILE"
+    echo "[entrypoint] Gateway process started (PID $gateway_pid)."
+
+    set +e
+    wait "$gateway_pid"
+    exit_code=$?
+    set -e
+    rm -f "$GATEWAY_PID_FILE"
+
+    if [ -f "$GATEWAY_RESTART_FLAG" ]; then
+      rm -f "$GATEWAY_RESTART_FLAG"
+      echo "[entrypoint] Gateway restart requested; restarting OpenClaw gateway..."
+      sleep 1
+      continue
+    fi
+
+    echo "[entrypoint] Gateway process exited with code $exit_code."
+    exit "$exit_code"
+  done
+}
+
+gateway_supervisor &
+GATEWAY_SUPERVISOR_PID=$!
 
 echo "[entrypoint] Waiting for gateway on :18789..."
 TRIES=0
@@ -610,7 +646,8 @@ until curl -sf http://localhost:18789/healthz > /dev/null 2>&1; do
   fi
   sleep 2
 done
-echo "[entrypoint] Gateway ready (PID $GATEWAY_PID)."
+GATEWAY_PID="$(cat "$GATEWAY_PID_FILE" 2>/dev/null || true)"
+echo "[entrypoint] Gateway ready (PID ${GATEWAY_PID:-unknown}, supervisor $GATEWAY_SUPERVISOR_PID)."
 
 # ===========================================================
 # 7. START MC SERVER (legacy, Strangler Fig fallback)
@@ -703,13 +740,16 @@ node_modules/.bin/next start -p 3000 &
 NEXTJS_PID=$!
 cd /root/.openclaw
 
-echo "[entrypoint] All services running. Gateway=$GATEWAY_PID LegacyMC=$MC_PID NextJS=$NEXTJS_PID CostTracker=$COST_TRACKER_PID"
+echo "[entrypoint] All services running. GatewaySupervisor=$GATEWAY_SUPERVISOR_PID Gateway=$(cat "$GATEWAY_PID_FILE" 2>/dev/null || echo unknown) LegacyMC=$MC_PID NextJS=$NEXTJS_PID CostTracker=$COST_TRACKER_PID"
 
 # ===========================================================
 # 8. WAIT — if any process dies, container stops
 # ===========================================================
-wait -n $GATEWAY_PID $MC_PID $NEXTJS_PID
+set +e
+wait -n $GATEWAY_SUPERVISOR_PID $MC_PID $NEXTJS_PID
 EXIT_CODE=$?
+set -e
 echo "[entrypoint] A process exited with code $EXIT_CODE. Shutting down."
-kill $GATEWAY_PID $MC_PID $NEXTJS_PID 2>/dev/null
+GATEWAY_PID="$(cat "$GATEWAY_PID_FILE" 2>/dev/null || true)"
+kill $GATEWAY_SUPERVISOR_PID ${GATEWAY_PID:-} $MC_PID $NEXTJS_PID 2>/dev/null
 exit $EXIT_CODE

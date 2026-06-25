@@ -20,6 +20,7 @@ import { looksLikeToolEcho } from "./tool-echo.js";
 import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
 import { parseDelegateMarkers, slugForThread } from "./delegate-marker.js";
 import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
+import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
 
 function normalizeOpenAiAuthMode(mode) {
   if (typeof mode !== "string") return null;
@@ -292,7 +293,15 @@ export default defineChannelPluginEntry({
         // workspace-<agentId>. Without this prefix the message lands on whatever
         // OpenClaw considers the default agent — which is no longer guaranteed
         // to be sancho once additional agents are registered.
-        const sessionKey = `agent:${requestedAgent}:${chatId}`;
+        //
+        // Include the resolved model in the non-routing part of the key. OpenClaw
+        // can keep per-session runtime state; if an admin changes Sancho from
+        // OpenRouter to Fireworks, reusing `agent:sancho:<chat>` can keep the old
+        // provider pinned for the next turn. Changing the model changes the key,
+        // forcing a fresh runtime session while preserving agent routing.
+        const resolvedModel = resolveAgentModel(cfg, requestedAgent);
+        const sessionKey = buildAgentSessionKey(requestedAgent, chatId, cfg);
+        logger.info(`[mc-chat] resolved agent=${requestedAgent} model=${resolvedModel || "default"} session=${sessionKey}`);
 
         // Build MsgContext for OpenClaw dispatch
         const msgCtx = finalizeInboundContext({
@@ -325,6 +334,7 @@ export default defineChannelPluginEntry({
         }));
 
         // Dispatch to agent asynchronously
+        let runtimeErrorPosted = false;
         try {
           try {
             const result = sanitizeAgentThinkingHistory(requestedAgent, { home: process.env.OPENCLAW_HOME });
@@ -365,7 +375,29 @@ export default defineChannelPluginEntry({
             return null;
           };
 
-          await dispatchInboundMessageWithBufferedDispatcher({
+          const postRuntimeError = async (rawError, respondingAgent = requestedAgent || "sancho") => {
+            if (runtimeErrorPosted) return;
+            runtimeErrorPosted = true;
+            const raw = typeof rawError === "string" && rawError.trim()
+              ? rawError
+              : "El runtime terminó sin devolver respuesta visible.";
+            const authInfo = {
+              ...(readCodexAuthInfo(respondingAgent) || {}),
+              anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
+            };
+            const { text: rewritten, errorDetail } = classifyAndRewriteError(raw, authInfo);
+            await postWithRetry(callbackUrl, {
+              slug,
+              threadId,
+              text: rewritten || "⚠️ El agente terminó sin devolver una respuesta visible. Reintentá en un hilo nuevo.",
+              role: "bot",
+              agent: respondingAgent,
+              ts: new Date().toISOString(),
+              ...(errorDetail ? { errorDetail } : {}),
+            }, "Bot runtime-error callback");
+          };
+
+          const dispatchResult = await dispatchInboundMessageWithBufferedDispatcher({
             ctx: msgCtx,
             cfg,
             // OpenClaw's default sourceReplyDeliveryMode for chatType="channel"
@@ -528,6 +560,9 @@ export default defineChannelPluginEntry({
                   const { errorDetail } = classifyAndRewriteError(err?.message || String(err), authInfo);
                   if (errorDetail) errorTracker.record(respondingAgent, errorDetail);
                 } catch {}
+                postRuntimeError(err?.message || String(err), requestedAgent || "sancho").catch((postErr) => {
+                  logger.error(`[mc-chat] Runtime error callback failed: ${postErr?.message || postErr}`);
+                });
               },
             },
             // Status updates: send intermediate state to MC typing indicator.
@@ -649,8 +684,44 @@ export default defineChannelPluginEntry({
               },
             },
           });
+          const deliveredFinal = dispatchResult?.queuedFinal === true || (dispatchResult?.counts?.final || 0) > 0;
+          const deliveredBlock = (dispatchResult?.counts?.block || 0) > 0;
+          if (!deliveredFinal && !deliveredBlock && !runtimeErrorPosted) {
+            logger.warn(`[mc-chat] dispatch completed without visible reply thread=${threadId} result=${JSON.stringify(dispatchResult || {})}`);
+            await postRuntimeError(
+              "El runtime terminó sin devolver respuesta visible. Esto suele pasar cuando el proveedor/modelo falla antes de generar texto o cuando la sesión quedó obsoleta tras un cambio de modelo.",
+              requestedAgent || "sancho",
+            );
+          }
         } catch (err) {
           logger.error(`[mc-chat] Dispatch error: ${err?.message}`);
+          try {
+            if (runtimeErrorPosted) return true;
+            runtimeErrorPosted = true;
+            const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
+            const callbackUrl = `${mcUrl}/api/chat/webhook`;
+            const secret = channelCfg?.sharedSecret;
+            const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+            const raw = err?.message || String(err);
+            const authInfo = {
+              ...(readCodexAuthInfo(requestedAgent || "sancho") || {}),
+              anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
+            };
+            const { text: rewritten, errorDetail } = classifyAndRewriteError(raw, authInfo);
+            await fetch(callbackUrl, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({
+                slug,
+                threadId,
+                role: "bot",
+                agent: requestedAgent || "sancho",
+                text: rewritten || "⚠️ El agente terminó sin devolver una respuesta visible. Reintentá en un hilo nuevo.",
+                ts: new Date().toISOString(),
+                ...(errorDetail ? { errorDetail } : {}),
+              }),
+            }).catch(() => {});
+          } catch {}
         }
 
         return true;
