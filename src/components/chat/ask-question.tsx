@@ -94,7 +94,7 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
           {submittedLabels.map((label, i) => (
             <span
               key={i}
-              className="inline-flex items-center gap-1 text-[12px] text-white bg-rust/80 rounded px-2 py-0.5"
+              className="inline-flex items-center gap-1 text-[12px] text-[var(--chat-text)] bg-rust/15 border border-rust/40 rounded px-2 py-0.5"
             >
               ✓ {label}
             </span>
