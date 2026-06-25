@@ -282,3 +282,5 @@ export * from "./AiBreakdown";
 export * from "./AiReadiness";
 // Discoverability — the composed surface (SEO | AI sub-tabs + empty state).
 export * from "./DiscoverabilitySurface";
+// Reputation — Trust Engine compare report (scoreboard · pillars · GEO · diagnosis).
+export * from "./ReputationSurface";
