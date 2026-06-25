@@ -280,3 +280,5 @@ export * from "./AiKpis";
 export * from "./SovTrend";
 export * from "./AiBreakdown";
 export * from "./AiReadiness";
+// Discoverability — the composed surface (SEO | AI sub-tabs + empty state).
+export * from "./DiscoverabilitySurface";
