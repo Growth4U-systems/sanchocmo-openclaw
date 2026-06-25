@@ -32,19 +32,36 @@ context_writes:
 
 ## Workflow
 
-### 1. Lee el contexto del cliente (no preguntes lo que ya sabemos)
+> **Regla de oro de latencia (SAN-323).** El PRIMER turno NO hace tool calls y NO
+> redacta un plan: es una pregunta corta. Solo lees contexto y propones DESPUÉS de
+> que el usuario elija el camino. Mantén turnos cortos y conversacionales (pregunta
+> → respuesta → respuesta corta → plan-card); nunca vuelques toda la estrategia en
+> un único turno. Un turno largo agota la ventana de "pensando" del chat y el
+> usuario se queda colgado sin respuesta.
+
+### 1. Abre con UNA pregunta (instantáneo · sin leer ficheros · sin plan)
+
+En cuanto se abre el hilo ("Crear nueva búsqueda"), responde en 2-3 líneas con la
+bifurcación, sin tocar ninguna herramienta y sin leer el contexto todavía:
+
+> Vamos a montar una búsqueda de creators para Partnerships. ¿Quieres que te
+> proponga yo el plan (sectores, redes, tiers…) a partir del contexto del cliente,
+> o ya tienes claro a quién quieres llegar?
+
+Espera su respuesta antes de hacer nada más.
+
+### 2. Según lo que conteste, dos caminos
+
+**A — "Hazlo tú / propónmelo":** ahora sí lee el contexto del cliente (no
+preguntes lo que ya sabemos) y propón frentes:
 
 - `company-brief.current.md`: qué vende la marca, mercado, presupuesto si consta.
 - `competitors.current.md`: competidores → candidatos a señal "repeat" vía ad-library.
 - `ecps.current.md`: a quién queremos llegar → sectores de creators con fit.
 
-Si falta el company brief, dilo y sugiere completar Foundation; puedes seguir
-si el usuario te da el contexto a mano.
-
-### 2. Recomienda frentes de búsqueda
-
-Abre proponiendo 2-3 frentes concretos para ESTE cliente (sector + red + por
-qué), estilo:
+Si falta el company brief, dilo y sugiere completar Foundation; puedes seguir si
+el usuario te da el contexto a mano. Luego propón 2-3 frentes concretos para ESTE
+cliente (sector + red + por qué), estilo:
 
 > Para el programa de creators de **Monzo** (audiencia España) os recomiendo:
 > - **Finanzas personales / ahorro** — el sector con mejor fit histórico
@@ -52,8 +69,27 @@ qué), estilo:
 > - **Lifestyle + dinero** (estudiantes, nóminas) — volumen barato en TikTok
 > ¿Por dónde empezamos, y en qué redes?
 
-El usuario puede elegir, ajustar o guiarte él ("Sorpréndeme tú" → decide tú con
-el contexto). Itera lo que haga falta: tiers, redes, volumen, audiencia.
+**B — "Lo tengo claro":** haz UNA pregunta de encuadre corta que le dé frame para
+responder (no un cuestionario), por ejemplo:
+
+> Perfecto. Cuéntame a quién te quieres dirigir y qué objetivo persigues — por
+> ejemplo: "creators de finanzas personales en IG/TikTok", o "perfiles de growth
+> en YouTube España para captar suscriptores".
+
+Con su respuesta construye el plan; lee el contexto del cliente solo para rellenar
+huecos (audiencia España, competidores para la señal repeat, tiers).
+
+**Alcance de discovery (hoy):** el runner solo busca creators en **Instagram,
+TikTok y YouTube** (`networks` ⊂ {instagram, tiktok, youtube}). Si el usuario pide
+un canal que aún no scrapeamos (podcasts, newsletters, blogs), NO montes un plan
+con una red inexistente: dilo en una línea y ofrece **mapearlo a esas redes** — p.
+ej. "los podcasters de growth suelen estar en YouTube/IG; busco ahí su presencia"
+— o anótalo para cuando se cubra. `networks` nunca lleva un valor que el runner no
+pueda buscar.
+
+En ambos caminos el usuario puede elegir, ajustar o guiarte él ("Sorpréndeme tú" →
+decide tú con el contexto). Itera lo que haga falta: tiers, redes, volumen,
+audiencia.
 
 ### 3. Presenta el PLAN (plan-card)
 
