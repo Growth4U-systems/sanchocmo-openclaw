@@ -982,7 +982,7 @@
       "linkedTo": "rocinante",
       "docPath": null,
       "threadState": "create",
-      "initialMessage": "Quiero crear una nueva búsqueda de creators para Partnerships. Propón un plan de discovery — sectores con mejor fit, redes, tiers y volumen — y cuando lo cerremos lánzala como campaña Partnerships en Yalc.",
+      "initialMessage": "Quiero crear una nueva búsqueda de creators para Partnerships.",
       "nsKey": "discovery",
       "match": "prefix",
       "reopenLinkedTo": "rocinante"
