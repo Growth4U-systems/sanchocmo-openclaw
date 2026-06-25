@@ -73,22 +73,23 @@ export function buildDataQualityInsights(health: HealthInput | null | undefined)
   return out;
 }
 
+/** A known audit finding, optionally gated to clients that use a given source. */
+export interface KnownAuditInsight extends DataQualityInsightData {
+  /** Only surface when this source is connected for the client (omit = always). */
+  appliesToSource?: string;
+}
+
 /**
- * Known instrumentation-audit findings NOT derivable from getMetricsHealth() (the
- * webhook/instrumentation gaps from the rigor audit). Appended to the derived insights
- * in the Salud de dato view so the audit baseline is versioned with the mapper.
+ * Known instrumentation-audit findings NOT derivable from getMetricsHealth() (webhook /
+ * instrumentation gaps). Gated by `appliesToSource` so a client only sees a finding for a
+ * source it actually uses (SAN-324) — appended to the derived insights in Salud de dato.
  */
-export const KNOWN_AUDIT_INSIGHTS: DataQualityInsightData[] = [
+export const KNOWN_AUDIT_INSIGHTS: KnownAuditInsight[] = [
   {
     severity: "high",
     title: "appointment_attended no se emite",
     body: "El webhook de check-in de Koibox no manda el evento → el funnel cita→paciente es inmedible. Fix: instrumentar el evento.",
     owner: "Koibox · instrumentación",
-  },
-  {
-    severity: "warn",
-    title: "Números sin fuente del 1er borrador",
-    body: "Cifras de Web/Social del 1er borrador no se hallaron en ficheros → marcadas pendiente·verificar, no reutilizar como real.",
-    owner: "auditoría",
+    appliesToSource: "koibox",
   },
 ];

@@ -1619,6 +1619,27 @@ function MetricsPageInner({ slug }: { slug: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
+  // Cross-tab deep-links (SAN-324): a DataHealthBadge → #salud-de-dato or a surface link →
+  // #atribucion lives in another view. Switch to the owning view, then scroll the anchor in.
+  useEffect(() => {
+    const VIEW: Record<string, () => void> = {
+      "salud-de-dato": () => { setSetupOpen(true); setSubView(null); },
+      atribucion: () => { setSetupOpen(false); setSubView(null); setTab("conversion"); },
+      conversion: () => { setSetupOpen(false); setSubView(null); setTab("conversion"); },
+    };
+    function go() {
+      const id = window.location.hash.replace(/^#/, "");
+      const open = VIEW[id];
+      if (!open) return;
+      open();
+      window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+    }
+    go();
+    window.addEventListener("hashchange", go);
+    return () => window.removeEventListener("hashchange", go);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selectTab = useCallback(
     (next: string) => {
       setTab(next);
@@ -2956,7 +2977,9 @@ function MetricsPageInner({ slug }: { slug: string }) {
     // Salud de dato (PR8) — instrumentation-quality callouts from getMetricsHealth()
     // (known-dirty / connected≠collected / cron) + a known audit baseline. Cross-cutting:
     // surfaces never render quality here, they only link in via DataHealthBadge.
-    const healthInsights = [...buildDataQualityInsights(healthData), ...KNOWN_AUDIT_INSIGHTS];
+    // Audit baseline gated per source (SAN-324): only show a finding for a source the client uses.
+    const auditInsights = KNOWN_AUDIT_INSIGHTS.filter((a) => !a.appliesToSource || connectedFromFiles.has(a.appliesToSource));
+    const healthInsights = [...buildDataQualityInsights(healthData), ...auditInsights];
     const saludSection = (
       <section id="salud-de-dato" className="scroll-mt-20 space-y-2">
         <div className="flex flex-wrap items-center gap-2 border-b-[2.5px] border-ink pb-2">
