@@ -132,6 +132,9 @@ export interface SourceHealthItem {
   lastStatus: string | null;
   lastError: string | null;
   lastDeletedCount: number | null;
+  /** Known instrumentation problem for this source (PR2 · SAN-319) — see KNOWN_DIRTY. */
+  knownDirty: boolean;
+  dirtyReason?: string;
 }
 
 export interface MetricsHealthResult {
