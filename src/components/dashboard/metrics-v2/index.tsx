@@ -265,3 +265,20 @@ export * from "./DataQualityInsight";
 export * from "./PipelineKpis";
 // Product surface (PR5) — PostHog funnel by unique users.
 export * from "./ProductFunnel";
+// Discoverability · SEO surface (PR6) — KPIs · trend · breakdowns · health · movers.
+export * from "./WebSeoKpis";
+export * from "./SeoTrend";
+export * from "./SeoBreakdown";
+export * from "./SeoHealth";
+export * from "./SeoMovers";
+// Generic surface slots (⑦ funnel-contribution · ⑧ intelligence bridge) — reused
+// across surfaces and sub-tabs.
+export * from "./FunnelContribution";
+export * from "./IntelBridge";
+// Discoverability · AI sub-tab (PR6) — GEO/AEO visibility (source=aeo, all seed).
+export * from "./AiKpis";
+export * from "./SovTrend";
+export * from "./AiBreakdown";
+export * from "./AiReadiness";
+// Discoverability — the composed surface (SEO | AI sub-tabs + empty state).
+export * from "./DiscoverabilitySurface";

@@ -33,6 +33,7 @@ import {
   Chip as MetricChip,
   DataChip,
   DataTable,
+  DiscoverabilitySurface,
   MetricTile,
   Panel as MetricPanel,
   PipelineKpis,
@@ -52,6 +53,7 @@ import { SURFACES, SURFACE_MANDATORY_SOURCES, SURFACE_API_PROVIDERS, type Surfac
 import { isSafeFormula } from "@/lib/metrics/formula";
 import { getKnownDirty } from "@/lib/metrics/collection-schedule";
 import { buildAttributionRows } from "@/lib/metrics/attribution";
+import { buildDiscoverabilityData } from "@/lib/metrics/discoverability";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { normalizeTaskStatusQuiet, statusLabel, statusOption } from "@/lib/task-status";
 import { cn } from "@/lib/utils";
@@ -2487,6 +2489,21 @@ function MetricsPageInner({ slug }: { slug: string }) {
         <div>
           <BackButton onClick={() => setSubView(null)}>Volver a Surfaces</BackButton>
           <MetricsPartnershipsTab slug={slug} />
+        </div>
+      );
+    }
+    if (key === "web") {
+      return (
+        <div>
+          <BackButton onClick={() => setSubView(null)}>Volver a Surfaces</BackButton>
+          <div className="mb-5 flex flex-wrap items-center gap-3 border-b-[2.5px] border-ink pb-4">
+            <h2 className="font-heading text-2xl font-bold text-navy">🔍 Discoverability</h2>
+            <span className="text-[13px] text-[var(--sc-fg-muted)]">Search &amp; AI · detalle de superficie</span>
+            <MetricButton variant="cyan" className="ml-auto" onClick={() => openMerlin("Quiero editar la superficie Discoverability (Web & SEO + AI). Revisa fuentes, cards y métricas.")}>
+              ✨ Editar con Merlin
+            </MetricButton>
+          </div>
+          <DiscoverabilitySurface data={buildDiscoverabilityData(rangeEntries)} />
         </div>
       );
     }
