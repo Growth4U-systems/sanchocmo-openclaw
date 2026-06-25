@@ -52,7 +52,7 @@ import { getTaskSet } from "@/lib/data/task-blueprints";
 import { SURFACES, SURFACE_MANDATORY_SOURCES, SURFACE_API_PROVIDERS, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
 import { getKnownDirty } from "@/lib/metrics/collection-schedule";
-import { buildAttributionRows } from "@/lib/metrics/attribution";
+import { buildAttributionRows, REPRESENTATIVE_ATTRIBUTION } from "@/lib/metrics/attribution";
 import { buildDiscoverabilityData } from "@/lib/metrics/discoverability";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { normalizeTaskStatusQuiet, statusLabel, statusOption } from "@/lib/task-status";
@@ -2758,23 +2758,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
     // representative example so the cross-source story reads; never presented as real.
     const attrProps = realAttrRows.length
       ? { rows: realAttrRows, truthSource: "koibox" as const, total: true }
-      : {
-          rows: [
-            { channel: "Meta Ads", visits: 2476, conversions: 3, convRate: 3 / 2476, spend: 770, cpa: 770 / 3 },
-            { channel: "Google Ads", visits: 250, conversions: 2, convRate: 2 / 250, spend: 135, cpa: 135 / 2 },
-            { channel: "Sin UTM", visits: NaN, conversions: 2, convRate: NaN, spend: NaN, cpa: NaN },
-          ],
-          truthSource: "koibox" as const,
-          representative: true,
-          total: true,
-          rawVsCorrected: { raw: '100 "bookings"', corrected: "7 citas Koibox", factor: "14× inflado" },
-          layers: [
-            { label: "Bruto", text: 'Plataforma: 100 bookings, 13 "conversions" Meta.' },
-            { label: "Corregido", text: "Koibox: 7 citas (Meta 3 · Google 2 · sin-UTM 2)." },
-            { label: "Lectura", text: "Google 6,7× más eficiente por visita; Meta gasta 85% al 0,12%." },
-            { label: "Decisión", text: "Reasignar a Google · CAC €905 insostenible (N=1)." },
-          ],
-        };
+      : { ...REPRESENTATIVE_ATTRIBUTION, truthSource: "koibox" as const, representative: true, total: true };
     const attribution = (
       <section id="atribucion" className="scroll-mt-20 space-y-2">
         <div className="flex flex-wrap items-end justify-between gap-2 border-b-[2.5px] border-ink pb-2">

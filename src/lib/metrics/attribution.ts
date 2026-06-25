@@ -59,3 +59,27 @@ export function buildAttributionRows(channels: ChannelSpend[], citas: KoiboxCita
     };
   });
 }
+
+/**
+ * Illustrative Atribución example (Hospital Capilar) — rendered flagged
+ * `representative` until live Koibox citas land, so the cross-source story is legible
+ * without ever presenting invented numbers as real.
+ */
+export const REPRESENTATIVE_ATTRIBUTION: {
+  rows: AttributionRow[];
+  rawVsCorrected: { raw: string; corrected: string; factor: string };
+  layers: { label: string; text: string }[];
+} = {
+  rows: [
+    { channel: "Meta Ads", visits: 2476, conversions: 3, convRate: 3 / 2476, spend: 770, cpa: 770 / 3 },
+    { channel: "Google Ads", visits: 250, conversions: 2, convRate: 2 / 250, spend: 135, cpa: 135 / 2 },
+    { channel: "Sin UTM", visits: NaN, conversions: 2, convRate: NaN, spend: NaN, cpa: NaN },
+  ],
+  rawVsCorrected: { raw: '100 "bookings"', corrected: "7 citas Koibox", factor: "14× inflado" },
+  layers: [
+    { label: "Bruto", text: 'Plataforma: 100 bookings, 13 "conversions" Meta.' },
+    { label: "Corregido", text: "Koibox: 7 citas (Meta 3 · Google 2 · sin-UTM 2)." },
+    { label: "Lectura", text: "Google 6,7× más eficiente por visita; Meta gasta 85% al 0,12%." },
+    { label: "Decisión", text: "Reasignar a Google · CAC €905 insostenible (N=1)." },
+  ],
+};
