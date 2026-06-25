@@ -275,3 +275,8 @@ export * from "./SeoMovers";
 // across surfaces and sub-tabs.
 export * from "./FunnelContribution";
 export * from "./IntelBridge";
+// Discoverability · AI sub-tab (PR6) — GEO/AEO visibility (source=aeo, all seed).
+export * from "./AiKpis";
+export * from "./SovTrend";
+export * from "./AiBreakdown";
+export * from "./AiReadiness";
