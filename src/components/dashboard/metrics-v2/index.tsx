@@ -271,3 +271,7 @@ export * from "./SeoTrend";
 export * from "./SeoBreakdown";
 export * from "./SeoHealth";
 export * from "./SeoMovers";
+// Generic surface slots (⑦ funnel-contribution · ⑧ intelligence bridge) — reused
+// across surfaces and sub-tabs.
+export * from "./FunnelContribution";
+export * from "./IntelBridge";
