@@ -35,6 +35,7 @@ import {
   DataQualityInsight,
   DataTable,
   DiscoverabilitySurface,
+  ReputationSurface,
   MetricTile,
   Panel as MetricPanel,
   PipelineKpis,
@@ -56,6 +57,7 @@ import { getKnownDirty } from "@/lib/metrics/collection-schedule";
 import { buildDataQualityInsights, KNOWN_AUDIT_INSIGHTS } from "@/lib/metrics/data-health";
 import { buildAttributionRows, REPRESENTATIVE_ATTRIBUTION } from "@/lib/metrics/attribution";
 import { buildDiscoverabilityData } from "@/lib/metrics/discoverability";
+import type { CompareResult } from "@/lib/trust-score/client";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { normalizeTaskStatusQuiet, statusLabel, statusOption } from "@/lib/task-status";
 import { cn } from "@/lib/utils";
@@ -1737,6 +1739,17 @@ function MetricsPageInner({ slug }: { slug: string }) {
     staleTime: 60_000,
   });
 
+  const { data: trustScore, refetch: refetchTrustScore } = useQuery<(CompareResult & { fetchedAt?: string }) | null>({
+    queryKey: ["trust-score", slug],
+    queryFn: async () => {
+      const res = await fetch(`/api/trust-score?slug=${slug}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!slug,
+    staleTime: 120_000,
+  });
+
   const { data: monitoring } = useQuery<MonitoringData>({
     queryKey: ["monitoring", slug],
     queryFn: async () => {
@@ -2507,6 +2520,21 @@ function MetricsPageInner({ slug }: { slug: string }) {
             </MetricButton>
           </div>
           <DiscoverabilitySurface data={buildDiscoverabilityData(rangeEntries)} />
+        </div>
+      );
+    }
+    if (key === "reputation") {
+      return (
+        <div>
+          <BackButton onClick={() => setSubView(null)}>Volver a Surfaces</BackButton>
+          <div className="mb-5 flex flex-wrap items-center gap-3 border-b-[2.5px] border-ink pb-4">
+            <h2 className="font-heading text-2xl font-bold text-navy">🛡️ Reputation</h2>
+            <span className="text-[13px] text-[var(--sc-fg-muted)]">Trust Engine · detalle de superficie</span>
+            <MetricButton variant="cyan" className="ml-auto" onClick={() => openMerlin("Quiero revisar la superficie Reputation (Trust Score, pilares, competidores).")}>
+              ✨ Editar con Merlin
+            </MetricButton>
+          </div>
+          <ReputationSurface data={trustScore ?? null} measuredAt={trustScore?.fetchedAt} onRerun={() => { void fetch(`/api/trust-score?slug=${slug}&refresh=1`).finally(() => { void refetchTrustScore(); }); }} />
         </div>
       );
     }
