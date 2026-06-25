@@ -1622,17 +1622,20 @@ function MetricsPageInner({ slug }: { slug: string }) {
   // Cross-tab deep-links (SAN-324): a DataHealthBadge → #salud-de-dato or a surface link →
   // #atribucion lives in another view. Switch to the owning view, then scroll the anchor in.
   useEffect(() => {
-    const VIEW: Record<string, () => void> = {
-      "salud-de-dato": () => { setSetupOpen(true); setSubView(null); },
-      atribucion: () => { setSetupOpen(false); setSubView(null); setTab("conversion"); },
-      conversion: () => { setSetupOpen(false); setSubView(null); setTab("conversion"); },
+    // Each cross-tab anchor → the view that owns its section + the element to scroll to.
+    // `#conversion` (the Pipeline/Product "→ Atribución" links) lands on the Conversión tab
+    // and scrolls to the Atribución section, whose id is `atribucion` (there is no #conversion).
+    const NAV: Record<string, { open: () => void; scroll: string }> = {
+      "salud-de-dato": { open: () => setSetupOpen(true), scroll: "salud-de-dato" },
+      atribucion: { open: () => { setSetupOpen(false); setTab("conversion"); }, scroll: "atribucion" },
+      conversion: { open: () => { setSetupOpen(false); setTab("conversion"); }, scroll: "atribucion" },
     };
     function go() {
-      const id = window.location.hash.replace(/^#/, "");
-      const open = VIEW[id];
-      if (!open) return;
-      open();
-      window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+      const nav = NAV[window.location.hash.replace(/^#/, "")];
+      if (!nav) return;
+      setSubView(null);
+      nav.open();
+      window.setTimeout(() => document.getElementById(nav.scroll)?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
     }
     go();
     window.addEventListener("hashchange", go);
