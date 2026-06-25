@@ -73,11 +73,19 @@ cliente (sector + red + por qué), estilo:
 responder (no un cuestionario), por ejemplo:
 
 > Perfecto. Cuéntame a quién te quieres dirigir y qué objetivo persigues — por
-> ejemplo: "salir en podcasts españoles de growth", o "creators de finanzas
-> personales en IG para captar suscriptores".
+> ejemplo: "creators de finanzas personales en IG/TikTok", o "perfiles de growth
+> en YouTube España para captar suscriptores".
 
 Con su respuesta construye el plan; lee el contexto del cliente solo para rellenar
 huecos (audiencia España, competidores para la señal repeat, tiers).
+
+**Alcance de discovery (hoy):** el runner solo busca creators en **Instagram,
+TikTok y YouTube** (`networks` ⊂ {instagram, tiktok, youtube}). Si el usuario pide
+un canal que aún no scrapeamos (podcasts, newsletters, blogs), NO montes un plan
+con una red inexistente: dilo en una línea y ofrece **mapearlo a esas redes** — p.
+ej. "los podcasters de growth suelen estar en YouTube/IG; busco ahí su presencia"
+— o anótalo para cuando se cubra. `networks` nunca lleva un valor que el runner no
+pueda buscar.
 
 En ambos caminos el usuario puede elegir, ajustar o guiarte él ("Sorpréndeme tú" →
 decide tú con el contexto). Itera lo que haga falta: tiers, redes, volumen,
