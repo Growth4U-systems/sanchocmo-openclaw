@@ -90,4 +90,15 @@ test("AttributionFunnel: without the rich props nothing extra renders (backward-
   const m = render(createElement(AttributionFunnel, { rows: ROWS, truthSource: "koibox" }));
   assert.doesNotMatch(m, /Decisión/);
   assert.doesNotMatch(m, /representativos/i);
+  assert.doesNotMatch(m, /TOTAL/);
+});
+
+test("AttributionFunnel: total=true appends a TOTAL row summing finite values", () => {
+  // ROWS: visits 1200+980, citas 4+7=11, spend 540+365=905; Sin-UTM-style NaN must be skipped
+  const rows = [...ROWS, { channel: "Sin UTM", visits: NaN, conversions: 2, convRate: NaN, spend: NaN, cpa: NaN }];
+  const m = render(createElement(AttributionFunnel, { rows, truthSource: "koibox", total: true }));
+  assert.match(m, /TOTAL/);
+  assert.match(m, /€905/); // total spend = finite-only sum (NaN skipped)
+  assert.match(m, /13\b/); // total citas = 4 + 7 + 2
+  assert.doesNotMatch(m, /NaN/);
 });

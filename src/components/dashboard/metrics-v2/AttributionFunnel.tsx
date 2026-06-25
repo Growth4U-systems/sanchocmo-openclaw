@@ -42,6 +42,7 @@ export function AttributionFunnel({
   rawVsCorrected,
   layers,
   representative,
+  total,
 }: {
   rows: AttributionRow[];
   truthSource: "koibox";
@@ -51,6 +52,8 @@ export function AttributionFunnel({
   layers?: AttributionLayer[];
   /** Mark the figures as illustrative (no live Koibox citas yet). */
   representative?: boolean;
+  /** Append a bold TOTAL row (finite-only sums; rate/CPA recomputed on the totals). */
+  total?: boolean;
 }) {
   if (!rows.length) {
     return (
@@ -69,6 +72,25 @@ export function AttributionFunnel({
     key: row.channel,
     cells: [row.channel, fmtInt(row.visits), fmtInt(row.conversions), pct(row.convRate), eur(row.spend), eur(row.cpa)],
   }));
+
+  // Optional TOTAL row — finite-only sums (a "Sin UTM" row with NaN visits/spend is skipped),
+  // with rate and CPA recomputed on the totals (not summed).
+  const fin = (n: number) => (Number.isFinite(n) ? n : 0);
+  const tVisits = rows.reduce((acc, r) => acc + fin(r.visits), 0);
+  const tCitas = rows.reduce((acc, r) => acc + fin(r.conversions), 0);
+  const tSpend = rows.reduce((acc, r) => acc + fin(r.spend), 0);
+  const totalRow = {
+    key: "__total__",
+    cells: [
+      <strong key="c">TOTAL</strong>,
+      <strong key="v">{fmtInt(tVisits)}</strong>,
+      <strong key="ci">{fmtInt(tCitas)}</strong>,
+      <strong key="cr">{pct(tVisits > 0 ? tCitas / tVisits : NaN)}</strong>,
+      <strong key="sp">{eur(tSpend)}</strong>,
+      <strong key="cp">{eur(tCitas > 0 ? tSpend / tCitas : NaN)}</strong>,
+    ],
+  };
+  const allRows = total ? [...tableRows, totalRow] : tableRows;
 
   return (
     <div className="space-y-2">
@@ -97,7 +119,7 @@ export function AttributionFunnel({
         </div>
       )}
 
-      <DataTable columns={columns} rows={tableRows} />
+      <DataTable columns={columns} rows={allRows} />
 
       {layers && layers.length > 0 && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">

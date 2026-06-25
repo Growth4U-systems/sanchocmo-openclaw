@@ -2740,7 +2740,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
     // No live Koibox citas yet (the collector/webhook is externo) → show a clearly-flagged
     // representative example so the cross-source story reads; never presented as real.
     const attrProps = realAttrRows.length
-      ? { rows: realAttrRows, truthSource: "koibox" as const }
+      ? { rows: realAttrRows, truthSource: "koibox" as const, total: true }
       : {
           rows: [
             { channel: "Meta Ads", visits: 2476, conversions: 3, convRate: 3 / 2476, spend: 770, cpa: 770 / 3 },
@@ -2749,6 +2749,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
           ],
           truthSource: "koibox" as const,
           representative: true,
+          total: true,
           rawVsCorrected: { raw: '100 "bookings"', corrected: "7 citas Koibox", factor: "14× inflado" },
           layers: [
             { label: "Bruto", text: 'Plataforma: 100 bookings, 13 "conversions" Meta.' },
@@ -2760,7 +2761,11 @@ function MetricsPageInner({ slug }: { slug: string }) {
     const attribution = (
       <section id="atribucion" className="scroll-mt-20 space-y-2">
         <div className="flex flex-wrap items-end justify-between gap-2 border-b-[2.5px] border-ink pb-2">
-          <h3 className="font-heading text-lg font-bold text-navy">{"🔗"} Atribución — canal {"->"} cita {"->"} pago</h3>
+          <h3 className="flex flex-wrap items-center gap-2 font-heading text-lg font-bold text-navy">
+            {"🔗"} Atribución
+            <span className="rounded-sc-pill border-[1.5px] border-ink bg-[var(--cyan)] px-2 py-0.5 text-[10px] font-bold text-white">cross-source</span>
+            <span className="text-[var(--sc-fg-muted)]">canal {"->"} cita {"->"} pago</span>
+          </h3>
           <p className="max-w-md text-[11.5px] text-[var(--sc-fg-muted)]">El único cruce de fuentes: Paid/Web (canal) con Koibox (cita real, dedup por id) y Stripe (pago). CPA real por cita.</p>
         </div>
         <AttributionFunnel {...attrProps} />
