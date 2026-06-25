@@ -138,7 +138,7 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
               className={cn(
                 "text-left text-[13px] rounded-md px-2.5 py-1.5 border transition-colors flex items-center gap-2 cursor-pointer",
                 isSelected
-                  ? "border-rust bg-rust/15 text-white"
+                  ? "border-rust bg-rust/15 text-[var(--chat-text)]"
                   : "border-[var(--chat-border)] bg-[var(--chat-surface)] text-[var(--chat-text)] hover:border-rust/40 hover:bg-[var(--chat-surface-2)]"
               )}
             >

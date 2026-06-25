@@ -94,7 +94,7 @@ export function ErrorDetailModal({ open, onClose, detail }: ErrorDetailModalProp
               </span>
             )}
             {detail.correlatedWith && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/40">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 border border-amber-500/40">
                 correlacionado con · {CATEGORY_LABEL[detail.correlatedWith] ?? detail.correlatedWith}
               </span>
             )}
