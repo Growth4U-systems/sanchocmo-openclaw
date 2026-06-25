@@ -31,6 +31,7 @@ import {
   Button as MetricButton,
   Chip as MetricChip,
   DataChip,
+  DataQualityInsight,
   DataTable,
   MetricTile,
   Panel as MetricPanel,
@@ -42,7 +43,7 @@ import {
   TabBar as MetricTabBar,
 } from "@/components/dashboard/metrics-v2";
 import { CadencePanel } from "@/components/dashboard/metrics-cadence-panel";
-import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, type SurfaceSummaryEntry, type DashboardRecord } from "@/hooks/useMetrics";
+import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, useMetricsHealth, type SurfaceSummaryEntry, type DashboardRecord } from "@/hooks/useMetrics";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildMetricsEditThread, buildTaskThread } from "@/lib/chat-openers";
@@ -50,6 +51,7 @@ import { getTaskSet } from "@/lib/data/task-blueprints";
 import { SURFACES, SURFACE_MANDATORY_SOURCES, SURFACE_API_PROVIDERS, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
 import { getKnownDirty } from "@/lib/metrics/collection-schedule";
+import { buildDataQualityInsights } from "@/lib/metrics/data-health";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { normalizeTaskStatusQuiet, statusLabel, statusOption } from "@/lib/task-status";
 import { cn } from "@/lib/utils";
@@ -1628,6 +1630,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
   const { data: plan, isLoading: planLoading } = useMetricsPlan(slug);
   const { data: dashboardRec, isLoading: dashboardLoading } = useDashboardDefinition(slug);
   const { data: surfaceSummary } = useSurfaceSummary(slug);
+  const { data: healthData } = useMetricsHealth(slug);
   const { data: projectsData } = useProjects(slug || null);
   const definition: DashboardDefinition | null = dashboardRec?.definition ?? null;
   const metricsProjectRecord = useMemo(
@@ -2899,8 +2902,35 @@ function MetricsPageInner({ slug }: { slug: string }) {
       (t) => t.type === "integration" && t.skill && OPERATIONAL_INTEGRATION_SKILLS.has(t.skill),
     );
 
+    // Salud de dato (PR8) — instrumentation-quality callouts from getMetricsHealth()
+    // (known-dirty / connected≠collected / cron) + a known audit baseline. Cross-cutting:
+    // surfaces never render quality here, they only link in via DataHealthBadge.
+    const healthInsights = [
+      ...buildDataQualityInsights(healthData),
+      { severity: "high" as const, title: "appointment_attended no se emite", body: "El webhook de check-in de Koibox no manda el evento → el funnel cita→paciente es inmedible. Fix: instrumentar el evento.", owner: "Koibox · instrumentación" },
+      { severity: "warn" as const, title: "Números sin fuente del 1er borrador", body: "Cifras de Web/Social del 1er borrador no se hallaron en ficheros → marcadas pendiente·verificar, no reutilizar como real.", owner: "auditoría" },
+    ];
+    const saludSection = (
+      <section id="salud-de-dato" className="scroll-mt-20 space-y-2">
+        <div className="flex flex-wrap items-center gap-2 border-b-[2.5px] border-ink pb-2">
+          <h3 className="flex items-center gap-2 font-heading text-lg font-bold text-navy">
+            {"🩺"} Salud de dato
+            <span className="rounded-sc-pill border-[1.5px] border-ink bg-[var(--yellow)] px-2 py-0.5 text-[10px] font-bold text-ink">instrumentación</span>
+          </h3>
+          <p className="text-[11.5px] text-[var(--sc-fg-muted)]">¿Qué fuente es fiable, cuál está rota, y qué falta para activar cada superficie?</p>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {healthInsights.map((ins, i) => (
+            <DataQualityInsight key={`${ins.title}-${i}`} {...ins} />
+          ))}
+        </div>
+        <p className="mt-1 font-mono text-[10px] text-[var(--sc-fg-muted)]">Alimenta: getMetricsHealth() (frescura/cron) + auditoría conocida. Cada surface enlaza aquí vía su DataHealthBadge.</p>
+      </section>
+    );
+
     return (
       <div className="space-y-4">
+        {saludSection}
         {/* prereq note — thin one-liner, never a card */}
         {metricsPrereqTask && (
           <MetricPanel className="flex flex-wrap items-center justify-between gap-3 py-3">
