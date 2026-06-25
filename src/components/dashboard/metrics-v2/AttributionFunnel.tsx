@@ -10,6 +10,7 @@
  */
 import { DataChip } from "./rigor";
 import { DataTable, Panel } from "./index";
+import { fmtInt, eur, pct } from "@/lib/metrics/format";
 
 export interface AttributionRow {
   /** Acquisition channel (e.g. "Meta Ads", "Google Ads", "Orgánico"). */
@@ -25,10 +26,6 @@ export interface AttributionRow {
   /** Cost per cita (€) = spend / conversions; non-finite when conversions = 0. */
   cpa: number;
 }
-
-const fmtInt = (n: number) => (Number.isFinite(n) ? Math.round(n).toLocaleString("es-ES") : "—");
-const eur = (n: number) => (Number.isFinite(n) ? `€${Math.round(n).toLocaleString("es-ES")}` : "—");
-const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : "—");
 
 /** One interpretation layer under the table (Bruto / Corregido / Lectura / Decisión). */
 export interface AttributionLayer {

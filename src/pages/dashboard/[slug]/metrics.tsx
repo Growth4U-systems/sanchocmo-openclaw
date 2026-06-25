@@ -1621,6 +1621,30 @@ function MetricsPageInner({ slug }: { slug: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
+  // Cross-tab deep-links (SAN-324): a DataHealthBadge → #salud-de-dato or a surface link →
+  // #atribucion lives in another view. Switch to the owning view, then scroll the anchor in.
+  useEffect(() => {
+    // Each cross-tab anchor → the view that owns its section + the element to scroll to.
+    // `#conversion` (the Pipeline/Product "→ Atribución" links) lands on the Conversión tab
+    // and scrolls to the Atribución section, whose id is `atribucion` (there is no #conversion).
+    const NAV: Record<string, { open: () => void; scroll: string }> = {
+      "salud-de-dato": { open: () => setSetupOpen(true), scroll: "salud-de-dato" },
+      atribucion: { open: () => { setSetupOpen(false); setTab("conversion"); }, scroll: "atribucion" },
+      conversion: { open: () => { setSetupOpen(false); setTab("conversion"); }, scroll: "atribucion" },
+    };
+    function go() {
+      const nav = NAV[window.location.hash.replace(/^#/, "")];
+      if (!nav) return;
+      setSubView(null);
+      nav.open();
+      window.setTimeout(() => document.getElementById(nav.scroll)?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+    }
+    go();
+    window.addEventListener("hashchange", go);
+    return () => window.removeEventListener("hashchange", go);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selectTab = useCallback(
     (next: string) => {
       setTab(next);
@@ -2984,7 +3008,9 @@ function MetricsPageInner({ slug }: { slug: string }) {
     // Salud de dato (PR8) — instrumentation-quality callouts from getMetricsHealth()
     // (known-dirty / connected≠collected / cron) + a known audit baseline. Cross-cutting:
     // surfaces never render quality here, they only link in via DataHealthBadge.
-    const healthInsights = [...buildDataQualityInsights(healthData), ...KNOWN_AUDIT_INSIGHTS];
+    // Audit baseline gated per source (SAN-324): only show a finding for a source the client uses.
+    const auditInsights = KNOWN_AUDIT_INSIGHTS.filter((a) => !a.appliesToSource || connectedFromFiles.has(a.appliesToSource));
+    const healthInsights = [...buildDataQualityInsights(healthData), ...auditInsights];
     const saludSection = (
       <section id="salud-de-dato" className="scroll-mt-20 space-y-2">
         <div className="flex flex-wrap items-center gap-2 border-b-[2.5px] border-ink pb-2">

@@ -9,6 +9,7 @@
  * never fabricates a "booked"/appointment step, it cross-links instead.
  */
 import { DataChip, DataHealthBadge } from "./rigor";
+import { fmt } from "@/lib/metrics/format";
 
 export function ProductFunnel({
   steps,
@@ -39,7 +40,7 @@ export function ProductFunnel({
         <div className="flex flex-wrap gap-4">
           {kpis.map((k) => (
             <div key={k.label} className="min-w-[70px] text-center">
-              <div className="font-heading text-[22px] font-bold text-navy">{(k.value as number).toLocaleString()}</div>
+              <div className="font-heading text-[22px] font-bold text-navy">{fmt(k.value as number)}</div>
               <div className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">{k.label}</div>
             </div>
           ))}
@@ -52,9 +53,9 @@ export function ProductFunnel({
             <div className="flex items-center justify-between text-[12px]">
               <span className="font-heading font-bold text-navy">{s.step}</span>
               <span className="font-heading font-bold">
-                {s.reached.toLocaleString()}
+                {fmt(s.reached)}
                 {i > 0 && s.dropoff > 0 && (
-                  <span className="ml-2 text-[11px] font-semibold text-destructive">-{s.dropoff.toLocaleString()}</span>
+                  <span className="ml-2 text-[11px] font-semibold text-destructive">-{fmt(s.dropoff)}</span>
                 )}
               </span>
             </div>

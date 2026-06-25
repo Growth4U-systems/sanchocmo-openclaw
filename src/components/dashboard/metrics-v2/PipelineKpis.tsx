@@ -10,8 +10,7 @@
  */
 import { cn } from "@/lib/utils";
 import { DataChip, DataHealthBadge } from "./rigor";
-
-const fmt = (v: number) => v.toLocaleString();
+import { fmt } from "@/lib/metrics/format";
 
 export function PipelineKpis({
   contacts,
