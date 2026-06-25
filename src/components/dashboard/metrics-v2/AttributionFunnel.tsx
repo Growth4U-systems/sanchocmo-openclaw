@@ -30,12 +30,27 @@ const fmtInt = (n: number) => (Number.isFinite(n) ? Math.round(n).toLocaleString
 const eur = (n: number) => (Number.isFinite(n) ? `€${Math.round(n).toLocaleString("es-ES")}` : "—");
 const pct = (n: number) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : "—");
 
+/** One interpretation layer under the table (Bruto / Corregido / Lectura / Decisión). */
+export interface AttributionLayer {
+  label: string;
+  text: string;
+}
+
 export function AttributionFunnel({
   rows,
   truthSource,
+  rawVsCorrected,
+  layers,
+  representative,
 }: {
   rows: AttributionRow[];
   truthSource: "koibox";
+  /** Headline raw→corrected story, e.g. `100 "bookings"` → `7 citas Koibox` · `14× inflado`. */
+  rawVsCorrected?: { raw: string; corrected: string; factor: string };
+  /** Interpretation cards under the table (Bruto/Corregido/Lectura/Decisión). */
+  layers?: AttributionLayer[];
+  /** Mark the figures as illustrative (no live Koibox citas yet). */
+  representative?: boolean;
 }) {
   if (!rows.length) {
     return (
@@ -63,8 +78,37 @@ export function AttributionFunnel({
           Citas = <b className="text-[var(--sc-ink-soft)]">{truthSource}</b> · dedup por{" "}
           <code className="font-mono">koibox_appointment_id</code>
         </span>
+        {representative && (
+          <span className="rounded-sc-pill border-[1.5px] border-ink bg-[var(--yellow)] px-2 py-0.5 font-heading text-[10px] font-bold text-ink">
+            datos representativos · ejemplo
+          </span>
+        )}
       </div>
+
+      {rawVsCorrected && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] px-3 py-2 text-[12px] shadow-pop-xs">
+          <span className="text-[var(--sc-fg-muted)]">Citas (conv. de plataforma):</span>
+          <span className="font-heading font-bold text-destructive line-through">{rawVsCorrected.raw}</span>
+          <span aria-hidden="true" className="text-[var(--sc-fg-muted)]">{"->"}</span>
+          <span className="font-heading font-bold text-sage">{rawVsCorrected.corrected}</span>
+          <span className="rounded-sc-pill border-[1.5px] border-ink bg-[var(--sc-brick-bg)] px-2 py-0.5 font-heading text-[10px] font-bold text-destructive">
+            {rawVsCorrected.factor}
+          </span>
+        </div>
+      )}
+
       <DataTable columns={columns} rows={tableRows} />
+
+      {layers && layers.length > 0 && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {layers.map((layer) => (
+            <div key={layer.label} className="rounded-sc-md border-2 border-ink bg-card p-2.5 shadow-pop-xs">
+              <div className="font-heading text-[10px] font-bold uppercase tracking-wide text-rust">{layer.label}</div>
+              <div className="mt-1 text-[11.5px] text-[var(--sc-ink-soft)]">{layer.text}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

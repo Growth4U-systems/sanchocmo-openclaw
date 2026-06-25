@@ -53,3 +53,41 @@ test("AttributionFunnel: empty rows render an explicit empty state, not a bare t
   assert.match(m, /Sin datos de atribución/i);
   assert.doesNotMatch(m, /Meta Ads/);
 });
+
+// ── Rich Atribución view (SAN-319 · PR7 completion): bruto→corregido + layers ──
+
+const RICH = {
+  rows: ROWS,
+  truthSource: "koibox" as const,
+  rawVsCorrected: { raw: '100 "bookings"', corrected: "7 citas Koibox", factor: "14× inflado" },
+  layers: [
+    { label: "Bruto", text: "Plataforma: 100 bookings, 13 conversions Meta." },
+    { label: "Corregido", text: "Koibox: 7 citas (Meta 3·Google 2·sin-UTM 2)." },
+    { label: "Lectura", text: "Google 6,7× más eficiente por visita." },
+    { label: "Decisión", text: "Reasignar a Google; CAC €905 insostenible (N=1)." },
+  ],
+  representative: true,
+};
+
+test("AttributionFunnel: rawVsCorrected shows the bruto→corregido headline (100 → 7)", () => {
+  const m = render(createElement(AttributionFunnel, RICH));
+  assert.match(m, /bookings/);
+  assert.match(m, /7 citas Koibox/);
+  assert.match(m, /14× inflado/);
+});
+
+test("AttributionFunnel: layers render Bruto/Corregido/Lectura/Decisión", () => {
+  const m = render(createElement(AttributionFunnel, RICH));
+  for (const label of ["Bruto", "Corregido", "Lectura", "Decisión"]) assert.match(m, new RegExp(label));
+  assert.match(m, /Reasignar a Google/);
+});
+
+test("AttributionFunnel: representative flag marks the numbers as illustrative", () => {
+  assert.match(render(createElement(AttributionFunnel, RICH)), /representativos/i);
+});
+
+test("AttributionFunnel: without the rich props nothing extra renders (backward-compatible)", () => {
+  const m = render(createElement(AttributionFunnel, { rows: ROWS, truthSource: "koibox" }));
+  assert.doesNotMatch(m, /Decisión/);
+  assert.doesNotMatch(m, /representativos/i);
+});

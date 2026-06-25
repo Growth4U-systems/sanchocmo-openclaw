@@ -2734,16 +2734,36 @@ function MetricsPageInner({ slug }: { slug: string }) {
         const d = m.dimensions as Record<string, string>;
         return { appointmentId: d.koibox_appointment_id, channel: d.channel || d.utmSource || "Directo" };
       });
-    const attrRows = koiboxCitas.length
+    const realAttrRows = koiboxCitas.length
       ? buildAttributionRows(channelRows.map((r) => ({ channel: r.channel, visits: r.sessions || 0, spend: r.spend || 0 })), koiboxCitas)
       : [];
+    // No live Koibox citas yet (the collector/webhook is externo) → show a clearly-flagged
+    // representative example so the cross-source story reads; never presented as real.
+    const attrProps = realAttrRows.length
+      ? { rows: realAttrRows, truthSource: "koibox" as const }
+      : {
+          rows: [
+            { channel: "Meta Ads", visits: 2476, conversions: 3, convRate: 3 / 2476, spend: 770, cpa: 770 / 3 },
+            { channel: "Google Ads", visits: 250, conversions: 2, convRate: 2 / 250, spend: 135, cpa: 135 / 2 },
+            { channel: "Sin UTM", visits: NaN, conversions: 2, convRate: NaN, spend: NaN, cpa: NaN },
+          ],
+          truthSource: "koibox" as const,
+          representative: true,
+          rawVsCorrected: { raw: '100 "bookings"', corrected: "7 citas Koibox", factor: "14× inflado" },
+          layers: [
+            { label: "Bruto", text: 'Plataforma: 100 bookings, 13 "conversions" Meta.' },
+            { label: "Corregido", text: "Koibox: 7 citas (Meta 3 · Google 2 · sin-UTM 2)." },
+            { label: "Lectura", text: "Google 6,7× más eficiente por visita; Meta gasta 85% al 0,12%." },
+            { label: "Decisión", text: "Reasignar a Google · CAC €905 insostenible (N=1)." },
+          ],
+        };
     const attribution = (
       <section id="atribucion" className="scroll-mt-20 space-y-2">
         <div className="flex flex-wrap items-end justify-between gap-2 border-b-[2.5px] border-ink pb-2">
           <h3 className="font-heading text-lg font-bold text-navy">{"🔗"} Atribución — canal {"->"} cita {"->"} pago</h3>
           <p className="max-w-md text-[11.5px] text-[var(--sc-fg-muted)]">El único cruce de fuentes: Paid/Web (canal) con Koibox (cita real, dedup por id) y Stripe (pago). CPA real por cita.</p>
         </div>
-        <AttributionFunnel rows={attrRows} truthSource="koibox" />
+        <AttributionFunnel {...attrProps} />
         <ProvenanceFooter source="meta_ads · ga4 · koibox · stripe" route="join por UTM + koibox_appointment_id" client={slug} period={`${dateFrom} → ${dateTo}`} />
       </section>
     );
