@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
 import { RuntimeMotorSection } from "@/components/settings/runtime-motor-section";
+import { AuthInstructions } from "@/components/settings/auth-instructions";
 import { useAppStore } from "@/stores/app";
 import { cn } from "@/lib/utils";
 import { isYalcProviderApiId } from "@/lib/yalc/provider-catalog";
@@ -651,7 +652,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <h3 className="font-heading text-base text-navy">
                 {systemKeySlider.route === "subscription"
-                  ? `🎫 Suscripción (OAuth): ${systemKeySlider.provider}`
+                  ? `🎫 Suscripción · ${systemKeySlider.provider}`
                   : `🔑 Key sistema: ${systemKeySlider.provider}`}
               </h3>
               <button
@@ -744,22 +745,41 @@ function SystemEnvPanel({
       const savePayload = await saveRes.json().catch(() => ({}));
       if (!saveRes.ok) throw new Error(savePayload.error || "No se pudo guardar");
 
-      let restartNote = "";
-      if (GATEWAY_ENV_SERVICES.has(apiId)) {
+      let applyNote = "";
+      if (apiId === "anthropic-oauth") {
+        // Combine save + activate: promote the subscription route in one step
+        // (setAnthropicAuthRoute + gateway restart server-side) so the user never
+        // has to hunt for the separate "Activar" in the table. The token we just
+        // saved lives in the same process's env, so the route check passes.
+        const actRes = await fetch("/api/admin/auth-route", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider: "anthropic", route: "subscription" }),
+        });
+        const actPayload = await actRes.json().catch(() => ({}));
+        if (actRes.ok) {
+          applyNote = actPayload.warning
+            ? ` ${actPayload.warning}`
+            : " Ruta de suscripción activada y gateway reiniciado.";
+        } else {
+          applyNote = ` Guardado, pero no se pudo activar la ruta: ${actPayload.error || "error desconocido"}.`;
+        }
+      } else if (GATEWAY_ENV_SERVICES.has(apiId)) {
         const restartRes = await fetch("/api/system/restart-gateway");
         const restartPayload = await restartRes.json().catch(() => ({}));
         if (restartRes.ok && restartPayload.ok) {
-          restartNote = " Gateway reiniciado para aplicar la credencial.";
+          applyNote = " Gateway reiniciado para aplicar la credencial.";
         } else {
-          restartNote = " Guardado, pero no se pudo reiniciar el gateway; puede requerir deploy o restart.";
+          applyNote = " Guardado, pero no se pudo reiniciar el gateway; puede requerir deploy o restart.";
         }
       }
 
-      await fetch(`/api/system/health-check-all?service=${encodeURIComponent(apiId)}`).catch(() => null);
+      const healthService = apiId === "anthropic-oauth" ? "anthropic" : apiId;
+      await fetch(`/api/system/health-check-all?service=${encodeURIComponent(healthService)}`).catch(() => null);
       setFormValues({});
       await refetch();
       onSaved();
-      setResult({ ok: true, message: `Key guardada sin mostrar el valor completo.${restartNote}` });
+      setResult({ ok: true, message: `Key guardada sin mostrar el valor completo.${applyNote}` });
     } catch (e) {
       setResult({ ok: false, message: e instanceof Error ? e.message : "Error guardando la key" });
     } finally {
@@ -809,6 +829,8 @@ function SystemEnvPanel({
     }
   };
 
+  const codeCls = "rounded border border-ink/30 bg-card px-1 font-mono text-[11px] text-navy";
+
   return (
     <div className="p-5 space-y-5">
       <div className="rounded-lg border-2 border-ink bg-background p-4">
@@ -824,6 +846,47 @@ function SystemEnvPanel({
           </span>
         </div>
       </div>
+
+      {apiId === "anthropic-oauth" && (
+        <AuthInstructions
+          intro={
+            <>
+              No hay ventana de login dentro de la app: el login lo hace{" "}
+              <code className={codeCls}>claude setup-token</code> y aquí solo pegas el token (
+              <code className={codeCls}>sk-ant-oat…</code>) que te da. Para cambiarlo o rotarlo, repite estos pasos.
+            </>
+          }
+          steps={[
+            {
+              text: (
+                <>
+                  En una terminal con <strong>Claude Code</strong> instalado, corre:
+                </>
+              ),
+              command: "claude setup-token",
+            },
+            {
+              text: (
+                <>
+                  Autoriza en el navegador y copia el token <code className={codeCls}>sk-ant-oat…</code> que te muestra.
+                </>
+              ),
+            },
+            {
+              text: (
+                <>
+                  Pégalo abajo y pulsa <strong>«Guardar y activar»</strong>.
+                </>
+              ),
+            },
+          ]}
+          footnote={
+            <>
+              Alternativa por SSH en el VPS del motor: <code className={codeCls}>openclaw models auth login</code>.
+            </>
+          }
+        />
+      )}
 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando key actual...</p>}
 
@@ -887,7 +950,7 @@ function SystemEnvPanel({
                 disabled={saving || removing}
                 className="px-4 py-2 bg-gradient-to-br from-rust to-[#D4734F] text-white border-2 border-ink rounded-lg text-sm font-bold shadow-comic cursor-pointer hover:opacity-90 disabled:opacity-50 transition-opacity"
               >
-                {saving ? "Guardando..." : "Guardar y aplicar"}
+                {saving ? "Guardando..." : apiId === "anthropic-oauth" ? "Guardar y activar" : "Guardar y aplicar"}
               </button>
               {anyConfigured && (
                 <button

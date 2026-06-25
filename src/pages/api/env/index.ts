@@ -21,7 +21,7 @@ const SERVICE_ENV_MAP: Record<
       key: "ANTHROPIC_OAUTH_TOKEN",
       label: "Token de suscripción (OAuth)",
       placeholder: "sk-ant-oat-...",
-      help: "Token de tu suscripción Claude (Max). Genéralo con `claude setup-token` (Claude Code) o `openclaw models auth login` y pégalo aquí — no hay login OAuth dentro de la app. Para activarlo como ruta del motor, pulsa «Activar» en la fila de suscripción.",
+      help: "Pega el token `sk-ant-oat…` de tu suscripción Claude (Max). Los pasos para generarlo están arriba.",
     },
   ],
   openrouter: [{ key: "OPENROUTER_API_KEY", label: "API Key", placeholder: "sk-or-..." }],

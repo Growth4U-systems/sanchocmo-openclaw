@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useModelCatalog, useSetAuthRoute, type CatalogProvider } from "@/hooks/useModels";
 import { RUNTIME_PROVIDERS, consoleUrlFor, consoleLabelFor, type RuntimeProvider } from "@/lib/provider-console";
 import { routeLabel, routeClass, effectiveRoute, maskAuthLabel } from "@/lib/provider-auth-display";
+import { AuthInstructions } from "@/components/settings/auth-instructions";
 import { cn } from "@/lib/utils";
 
 interface RuntimeMotorSectionProps {
@@ -56,8 +57,11 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const router = useRouter();
   const { data: catalog, isLoading } = useModelCatalog();
   const { mutate: setAuthRoute, isPending } = useSetAuthRoute();
+  const qc = useQueryClient();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
+  const [codexGuide, setCodexGuide] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
 
   const providers = useMemo(() => catalog?.providers ?? [], [catalog]);
 
@@ -147,6 +151,25 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         },
       },
     );
+  };
+
+  // Codex login happens over SSH (outside the app); after the user does it, this
+  // re-pings the provider and refreshes the row so they see it land.
+  const recheckCodex = async () => {
+    setRechecking(true);
+    setNotice(null);
+    try {
+      await fetch("/api/system/health-check-all?service=openai").catch(() => null);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["api-health"] }),
+        qc.invalidateQueries({ queryKey: ["runtime-system-env"] }),
+        qc.invalidateQueries({ queryKey: ["models-catalog"] }),
+      ]);
+      setNotice({ ok: true, message: "Estado del motor actualizado." });
+    } finally {
+      setRechecking(false);
+      setCodexGuide(false);
+    }
   };
 
   return (
@@ -276,26 +299,17 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-1.5 justify-end flex-wrap">
                         {/* Activate route (Anthropic only switches at runtime) */}
-                        {rp.route &&
-                          !isActive &&
-                          (rp.runtimeSwitchable ? (
-                            <button
-                              type="button"
-                              disabled={isPending || (subRow && !present)}
-                              title={subRow && !present ? "Pega el token de suscripción primero" : undefined}
-                              onClick={() => activate(rp)}
-                              className="rounded border border-ink px-2 py-0.5 text-[11px] font-semibold text-navy hover:bg-rust hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              {rowPending ? "activando…" : "Activar"}
-                            </button>
-                          ) : subRow ? (
-                            <span
-                              className="rounded border border-dashed border-border px-2 py-0.5 text-[11px] text-muted-foreground cursor-help"
-                              title="La suscripción de Codex se conecta por SSH (`openclaw models auth login`). El cambio de ruta en runtime llega en una iteración futura."
-                            >
-                              conectar por SSH
-                            </span>
-                          ) : null)}
+                        {rp.route && !isActive && rp.runtimeSwitchable && (
+                          <button
+                            type="button"
+                            disabled={isPending || (subRow && !present)}
+                            title={subRow && !present ? "Pega el token de suscripción primero" : undefined}
+                            onClick={() => activate(rp)}
+                            className="rounded border border-ink px-2 py-0.5 text-[11px] font-semibold text-navy hover:bg-rust hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {rowPending ? "activando…" : "Activar"}
+                          </button>
+                        )}
                         {/* Manage credential */}
                         {canPasteToken ? (
                           <button
@@ -313,7 +327,16 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                           >
                             🔑 Key sistema
                           </button>
-                        ) : null}
+                        ) : (
+                          /* Codex subscription: SSH-only login, no in-app paste — show the how-to. */
+                          <button
+                            type="button"
+                            onClick={() => setCodexGuide(true)}
+                            className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                          >
+                            📋 Instrucciones
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -327,10 +350,59 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       <p className="text-[11.5px] leading-relaxed text-muted-foreground">
         <strong>Qué ves:</strong> la <strong>ruta</strong> con la que el motor se autentica en cada proveedor y la
         cuenta/perfil enmascarado. <strong>Activar</strong> conmuta la ruta y reinicia el gateway para aplicarla. La
-        suscripción de Anthropic se carga pegando el token (<code>sk-ant-oat…</code>, generado con{" "}
-        <code>claude setup-token</code>); la de Codex se conecta por SSH. <strong>No hay cuota/uso en vivo</strong>{" "}
+        suscripción de Anthropic se carga con <strong>🎫 Pegar token → Guardar y activar</strong>; la de Codex se
+        conecta por SSH (pulsa <strong>📋 Instrucciones</strong>). <strong>No hay cuota/uso en vivo</strong>{" "}
         (OpenClaw no lo expone): la consola es para revisar límites y facturación.
       </p>
+
+      {codexGuide && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setCodexGuide(false)}
+        >
+          <div className="absolute inset-0 bg-black/30" />
+          <div
+            className="relative w-full max-w-[480px] rounded-lg border-2 border-ink bg-card shadow-comic"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-ink px-4 py-3">
+              <h3 className="font-heading text-base text-navy">⚙️ Conectar Codex (suscripción ChatGPT)</h3>
+              <button
+                type="button"
+                onClick={() => setCodexGuide(false)}
+                className="px-1 text-lg leading-none text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-3 p-4">
+              <AuthInstructions
+                intro="El login de Codex (suscripción ChatGPT) es interactivo y se hace por SSH en el VPS del motor — no se puede pegar aquí. El cambio de ruta en runtime llegará en una iteración futura (SAN-301)."
+                steps={[
+                  { text: "Conéctate por SSH al VPS del motor (o pídeselo a quien tenga acceso al VPS)." },
+                  {
+                    text: "Córrelo una vez; el store compartido lo propaga a todos los agentes Codex (automator, etc.):",
+                    command: "openclaw models auth login --agent cervantes",
+                  },
+                  { text: "Autoriza con tu cuenta ChatGPT en el navegador que abre el comando." },
+                  { text: "Vuelve aquí y pulsa Re-verificar." },
+                ]}
+                footnote="Por qué no hay botón aquí: el login OAuth vive en el CLI del motor y el sync por-agente no tiene inverso idempotente (SAN-301)."
+              />
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={recheckCodex}
+                  disabled={rechecking}
+                  className="rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+                >
+                  {rechecking ? "verificando…" : "🔄 Re-verificar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
