@@ -39,3 +39,15 @@ test("BetweenStageFunnel: < 2 resolvable stages → graceful note", () => {
   const m = render(createElement(BetweenStageFunnel, { stages: [{ label: "Leads", value: NaN }] }));
   assert.match(m, /aparece cuando las etapas/);
 });
+
+test("BetweenStageFunnel: a 100% step is NOT flagged as a leak (short healthy funnel)", () => {
+  // growth4u-shaped live data: Leads→Meetings 57%, Meetings→Proposals 100%
+  const short: FunnelStage[] = [
+    { label: "Leads", value: 7 },
+    { label: "Meetings", value: 4 },
+    { label: "Proposals", value: 4 },
+  ];
+  const m = render(createElement(BetweenStageFunnel, { stages: short }));
+  assert.equal((m.match(/mayor fuga/g) || []).length, 1); // only the 57% step, not the 100% one
+  assert.match(m, /Leads → Meetings[\s\S]*?mayor fuga/);
+});

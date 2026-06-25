@@ -28,8 +28,15 @@ export function BetweenStageFunnel({ stages, leaks = 2 }: { stages: FunnelStage[
     to: s,
     rate: usable[i].value > 0 ? s.value / usable[i].value : 0,
   }));
-  // leaks = the N lowest between-stage rates
-  const leakSet = new Set([...steps].sort((a, b) => a.rate - b.rate).slice(0, leaks).map((s) => s.to.label));
+  // leaks = the N lowest between-stage rates, but only ones that are genuinely low
+  // (a step converting ≥85% isn't a "fuga" — e.g. a short 100%-through funnel).
+  const leakSet = new Set(
+    [...steps]
+      .sort((a, b) => a.rate - b.rate)
+      .slice(0, leaks)
+      .filter((s) => s.rate < 0.85)
+      .map((s) => s.to.label),
+  );
   const overall = usable[0].value > 0 ? usable[usable.length - 1].value / usable[0].value : 0;
 
   return (
