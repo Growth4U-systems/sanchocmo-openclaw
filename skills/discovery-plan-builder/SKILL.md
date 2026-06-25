@@ -38,17 +38,31 @@ context_writes:
 > → respuesta → respuesta corta → plan-card); nunca vuelques toda la estrategia en
 > un único turno. Un turno largo agota la ventana de "pensando" del chat y el
 > usuario se queda colgado sin respuesta.
+>
+> **Preguntas interactivas (MC Chat).** Toda decisión (camino, sectores, redes,
+> tiers, volumen, confirmación de lanzamiento) se hace con bloques `:::ask` — NO en
+> prosa. El chat los pinta como botones/opciones y el usuario responde con un clic.
+> Un `:::ask` es solo texto (no una tool call), así que es compatible con la regla de
+> latencia de arriba. Reglas de formato y de comillas JSON en
+> `skills/_shared/clarify-by-type.md`. **Emite el bloque SIN envolverlo en un fence**
+> ` ``` ` (los fences de este doc son solo para mostrarte el ejemplo). En `single`/`multi` la ÚLTIMA opción debe ser `{"id":"other","label":"Otro (lo escribo)"}` (escape a texto libre); en una confirmación binaria pura (p.ej. lanzar/ajustar) puedes omitirla.
 
 ### 1. Abre con UNA pregunta (instantáneo · sin leer ficheros · sin plan)
 
-En cuanto se abre el hilo ("Crear nueva búsqueda"), responde en 2-3 líneas con la
-bifurcación, sin tocar ninguna herramienta y sin leer el contexto todavía:
+En cuanto se abre el hilo ("Crear nueva búsqueda"), responde con UNA frase de
+contexto + un `:::ask` con la bifurcación, sin tocar ninguna herramienta y sin leer
+el contexto todavía:
 
-> Vamos a montar una búsqueda de creators para Partnerships. ¿Quieres que te
-> proponga yo el plan (sectores, redes, tiers…) a partir del contexto del cliente,
-> o ya tienes claro a quién quieres llegar?
+> Vamos a montar una búsqueda de creators para Partnerships.
 
-Espera su respuesta antes de hacer nada más.
+```
+:::ask
+{"id":"q_path","prompt":"¿Cómo lo montamos?","mode":"single","options":[{"id":"propose","label":"Propónmelo tú a partir del contexto del cliente","recommended":true},{"id":"known","label":"Ya tengo claro a quién quiero llegar"},{"id":"other","label":"Otro (te lo cuento)"}]}
+:::
+```
+
+Espera su respuesta antes de hacer nada más («Propónmelo tú…» → camino A; «Ya tengo
+claro…» → camino B).
 
 ### 2. Según lo que conteste, dos caminos
 
@@ -67,14 +81,27 @@ cliente (sector + red + por qué), estilo:
 > - **Finanzas personales / ahorro** — el sector con mejor fit histórico
 > - **Inversión para principiantes** — buen ER en Micro y Mid
 > - **Lifestyle + dinero** (estudiantes, nóminas) — volumen barato en TikTok
-> ¿Por dónde empezamos, y en qué redes?
 
-**B — "Lo tengo claro":** haz UNA pregunta de encuadre corta que le dé frame para
-responder (no un cuestionario), por ejemplo:
+Y deja elegir con un `:::ask` (marca `recommended` en lo de mejor fit; usa los frentes
+que propusiste para ESTE cliente, no los del ejemplo):
 
-> Perfecto. Cuéntame a quién te quieres dirigir y qué objetivo persigues — por
-> ejemplo: "creators de finanzas personales en IG/TikTok", o "perfiles de growth
-> en YouTube España para captar suscriptores".
+```
+:::ask
+{"id":"q_frentes","prompt":"¿Por qué frentes empezamos?","mode":"multi","options":[{"id":"f1","label":"Finanzas personales / ahorro","recommended":true},{"id":"f2","label":"Inversión para principiantes","recommended":true},{"id":"f3","label":"Lifestyle + dinero"},{"id":"other","label":"Otro (lo escribo)"}]}
+:::
+:::ask
+{"id":"q_redes","prompt":"¿En qué redes? (hoy solo IG, TikTok y YouTube)","mode":"multi","options":[{"id":"instagram","label":"Instagram","recommended":true},{"id":"tiktok","label":"TikTok","recommended":true},{"id":"youtube","label":"YouTube"},{"id":"other","label":"Otro (lo escribo)"}]}
+:::
+```
+
+**B — "Lo tengo claro":** haz UNA pregunta de encuadre corta (no un cuestionario)
+con un `:::ask` de texto:
+
+```
+:::ask
+{"id":"q_target","prompt":"¿A quién te quieres dirigir y con qué objetivo?","mode":"text","placeholder":"p.ej. creators de finanzas personales en IG/TikTok para captar suscriptores","optional":false}
+:::
+```
 
 Con su respuesta construye el plan; lee el contexto del cliente solo para rellenar
 huecos (audiencia España, competidores para la señal repeat, tiers).
@@ -106,7 +133,9 @@ plan-card de Encuentra (en este orden):
 | **Señales** | repeat con competidores vía ad-library (marcas concretas) |
 | **Plantillas** | plantillas a instanciar al lanzar (se cambian aquí o luego en la búsqueda) |
 
-Y debajo el **JSON del plan** (contrato `DiscoveryPlan`, el que se envía):
+Construye el **contrato `DiscoveryPlan`** INTERNAMENTE para enviarlo en el POST
+(paso 4). **Nunca lo imprimas en el chat** — el usuario solo ve la tabla de arriba;
+el JSON es ruido para él. La forma del contrato:
 
 ```json
 {
@@ -139,8 +168,18 @@ Reglas del contrato:
   Contactar»). No trates las plantillas como requisito, no pidas crearlas ni
   renombrarlas para poder lanzar, y no las marques como "blocker".
 
-Cierra SIEMPRE preguntando si lo lanzas ("decidme si lo lanzo"). No lances sin
-confirmación explícita del usuario en este thread.
+Cierra SIEMPRE con un `:::ask` de confirmación (no en prosa). No lances sin un sí
+explícito del usuario en este thread:
+
+```
+:::ask
+{"id":"q_launch","prompt":"¿Lanzo esta búsqueda?","mode":"single","options":[{"id":"launch","label":"Lánzala","recommended":true},{"id":"edit","label":"Quiero ajustar algo antes"}]}
+:::
+```
+
+Solo crea la búsqueda (paso 4) cuando la respuesta sea «Lánzala» (llega como
+`[ask:q_launch] respuesta: Lánzala`). Si elige «Quiero ajustar algo antes», sigue
+iterando — no lances.
 
 ### 4. Al confirmar: crea la búsqueda
 
