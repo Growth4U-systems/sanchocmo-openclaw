@@ -52,7 +52,7 @@ import { getTaskSet } from "@/lib/data/task-blueprints";
 import { SURFACES, SURFACE_MANDATORY_SOURCES, SURFACE_API_PROVIDERS, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
 import { getKnownDirty } from "@/lib/metrics/collection-schedule";
-import { buildDataQualityInsights } from "@/lib/metrics/data-health";
+import { buildDataQualityInsights, KNOWN_AUDIT_INSIGHTS } from "@/lib/metrics/data-health";
 import { buildDiscoverabilityData } from "@/lib/metrics/discoverability";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { normalizeTaskStatusQuiet, statusLabel, statusOption } from "@/lib/task-status";
@@ -2922,11 +2922,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
     // Salud de dato (PR8) — instrumentation-quality callouts from getMetricsHealth()
     // (known-dirty / connected≠collected / cron) + a known audit baseline. Cross-cutting:
     // surfaces never render quality here, they only link in via DataHealthBadge.
-    const healthInsights = [
-      ...buildDataQualityInsights(healthData),
-      { severity: "high" as const, title: "appointment_attended no se emite", body: "El webhook de check-in de Koibox no manda el evento → el funnel cita→paciente es inmedible. Fix: instrumentar el evento.", owner: "Koibox · instrumentación" },
-      { severity: "warn" as const, title: "Números sin fuente del 1er borrador", body: "Cifras de Web/Social del 1er borrador no se hallaron en ficheros → marcadas pendiente·verificar, no reutilizar como real.", owner: "auditoría" },
-    ];
+    const healthInsights = [...buildDataQualityInsights(healthData), ...KNOWN_AUDIT_INSIGHTS];
     const saludSection = (
       <section id="salud-de-dato" className="scroll-mt-20 space-y-2">
         <div className="flex flex-wrap items-center gap-2 border-b-[2.5px] border-ink pb-2">

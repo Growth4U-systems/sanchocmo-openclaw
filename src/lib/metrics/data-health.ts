@@ -65,10 +65,30 @@ export function buildDataQualityInsights(health: HealthInput | null | undefined)
     out.push({
       severity: "warn",
       title: "Colector degradado",
-      body: `El cron de recolección está degradado: ${health.cron.reasons.join("; ") || "sin detalle"}.`,
+      body: `El cron de recolección está degradado: ${health.cron.reasons?.join("; ") || "sin detalle"}.`,
       owner: "colector · pipeline",
     });
   }
 
   return out;
 }
+
+/**
+ * Known instrumentation-audit findings NOT derivable from getMetricsHealth() (the
+ * webhook/instrumentation gaps from the rigor audit). Appended to the derived insights
+ * in the Salud de dato view so the audit baseline is versioned with the mapper.
+ */
+export const KNOWN_AUDIT_INSIGHTS: DataQualityInsightData[] = [
+  {
+    severity: "high",
+    title: "appointment_attended no se emite",
+    body: "El webhook de check-in de Koibox no manda el evento → el funnel cita→paciente es inmedible. Fix: instrumentar el evento.",
+    owner: "Koibox · instrumentación",
+  },
+  {
+    severity: "warn",
+    title: "Números sin fuente del 1er borrador",
+    body: "Cifras de Web/Social del 1er borrador no se hallaron en ficheros → marcadas pendiente·verificar, no reutilizar como real.",
+    owner: "auditoría",
+  },
+];
