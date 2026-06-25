@@ -77,7 +77,7 @@ async function main() {
     : Boolean(process.env.ANTHROPIC_API_KEY);
   const defaultPrimaryModel =
     !hasAnthropicCredential && process.env.FIREWORKS_API_KEY
-      ? 'fireworks/accounts/fireworks/routers/kimi-k2p5-turbo'
+      ? 'fireworks/accounts/fireworks/models/glm-5p2'
       : 'anthropic/claude-opus-4-6';
   config.agents.defaults.model = config.agents.defaults.model || { primary: defaultPrimaryModel };
   config.agents.defaults.maxConcurrent = config.agents.defaults.maxConcurrent || 4;
@@ -85,6 +85,7 @@ async function main() {
   config.agents.defaults.subagents.maxConcurrent = config.agents.defaults.subagents.maxConcurrent || 8;
   if (!config.agents.defaults.models) config.agents.defaults.models = {};
   const fireworksAgentModels = {
+    'fireworks/accounts/fireworks/models/glm-5p2': 'GLM 5.2',
     'fireworks/accounts/fireworks/routers/kimi-k2p5-turbo': 'Kimi K2.5 Turbo',
     'fireworks/accounts/fireworks/models/kimi-k2p6': 'Kimi K2.6'
   };
@@ -133,6 +134,12 @@ async function main() {
   // select them immediately; the provider also accepts any runtime id prefixed
   // as `fireworks/accounts/...`.
   const fireworksDefaultModels = [
+    {
+      id: 'accounts/fireworks/models/glm-5p2',
+      name: 'GLM 5.2',
+      input: ['text'],
+      contextWindow: 1048576
+    },
     {
       id: 'accounts/fireworks/models/kimi-k2p6',
       name: 'Kimi K2.6',

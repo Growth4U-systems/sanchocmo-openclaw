@@ -5,6 +5,7 @@ import {
   ensureModelInAllowlist,
   setDefaultPrimaryModel,
   getDefaultPrimaryModel,
+  restartGateway,
 } from "@/lib/data/openclaw-config";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -32,8 +33,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     ensureModelInAllowlist(model);
     setDefaultPrimaryModel(model);
+    const restart = restartGateway();
     invalidateCatalogCache();
-    return res.status(200).json({ ok: true, model, warning: check.warning });
+    const warning = [
+      check.warning,
+      restart.ok
+        ? null
+        : `Modelo guardado, pero no se pudo reiniciar el gateway (${restart.error || "timeout"}). Puede requerir restart/deploy para aplicarse al runtime.`,
+    ].filter(Boolean).join(" ");
+    return res.status(200).json({
+      ok: true,
+      model,
+      restarted: restart.ok,
+      restartMethod: restart.method,
+      warning: warning || undefined,
+    });
   } catch (e) {
     return res.status(500).json({
       error: e instanceof Error ? e.message : String(e),

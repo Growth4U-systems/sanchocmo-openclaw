@@ -16,6 +16,7 @@ import {
 import { loadClient, loadClients, loadClientsData, writeClientsFile } from "@/lib/data/clients";
 import {
   listAgentsRich,
+  restartGateway,
   setAgentModel,
   type AgentRichEntry,
 } from "@/lib/data/openclaw-config";
@@ -513,9 +514,24 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           });
         }
         setAgentModel(agentId, requestedModel);
+        const restart = restartGateway();
         invalidateCatalogCache();
         const updated = getMcpAgent(agentId) || { ...before, overrideModel: requestedModel };
-        return jsonResult({ ok: true, agentId, model: requestedModel, warning: modelCheck.warning, agent: updated });
+        const warning = [
+          modelCheck.warning,
+          restart.ok
+            ? null
+            : `Modelo guardado, pero no se pudo reiniciar el gateway (${restart.error || "timeout"}). Puede requerir restart/deploy para aplicarse al runtime.`,
+        ].filter(Boolean).join(" ");
+        return jsonResult({
+          ok: true,
+          agentId,
+          model: requestedModel,
+          restarted: restart.ok,
+          restartMethod: restart.method,
+          warning: warning || undefined,
+          agent: updated,
+        });
       }),
   );
 

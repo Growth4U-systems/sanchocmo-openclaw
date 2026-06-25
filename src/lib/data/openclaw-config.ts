@@ -659,12 +659,109 @@ export function setAnthropicAuthRoute(route: AnthropicAuthRoute): void {
   }
 }
 
-/** Restart the OpenClaw gateway so it re-reads the on-disk auth profiles. */
-export function restartGateway(): { ok: boolean; error?: string } {
+interface GatewayRestartResult {
+  ok: boolean;
+  method?: "supervisor" | "openclaw-cli";
+  error?: string;
+}
+
+function execErrorMessage(e: unknown): string {
+  const err = e as { message?: string; stdout?: Buffer | string; stderr?: Buffer | string };
+  const parts = [err?.stderr, err?.stdout, err?.message]
+    .map((value) => Buffer.isBuffer(value) ? value.toString("utf-8") : value)
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+  return (parts.join("\n").trim() || String(e)).slice(0, 500);
+}
+
+function restartSupervisedGateway(): GatewayRestartResult {
+  const pidFile = process.env.OPENCLAW_GATEWAY_PID_FILE || "/tmp/openclaw-gateway.pid";
+  const restartFlag = process.env.OPENCLAW_GATEWAY_RESTART_FLAG || "/tmp/openclaw-gateway-restart.request";
+  if (!fs.existsSync(pidFile)) {
+    return { ok: false, method: "supervisor", error: `Gateway PID file not found: ${pidFile}` };
+  }
+
+  const script = `
+set -e
+pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+if [ -z "$pid" ]; then
+  echo "gateway pid file is empty: $PID_FILE" >&2
+  exit 11
+fi
+if ! kill -0 "$pid" 2>/dev/null; then
+  echo "gateway pid $pid is not running" >&2
+  exit 12
+fi
+
+touch "$RESTART_FLAG"
+kill "$pid" 2>/dev/null || true
+
+for _ in $(seq 1 50); do
+  if ! kill -0 "$pid" 2>/dev/null; then
+    break
+  fi
+  sleep 0.2
+done
+
+if kill -0 "$pid" 2>/dev/null; then
+  rm -f "$RESTART_FLAG"
+  echo "gateway pid $pid did not stop" >&2
+  exit 13
+fi
+
+for _ in $(seq 1 90); do
+  new_pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+  if [ -n "$new_pid" ] && [ "$new_pid" != "$pid" ] && kill -0 "$new_pid" 2>/dev/null && curl -sf http://127.0.0.1:18789/healthz >/dev/null 2>&1; then
+    echo "gateway restarted: $pid -> $new_pid"
+    exit 0
+  fi
+  sleep 1
+done
+
+echo "gateway did not become healthy after restart" >&2
+exit 14
+`;
+
   try {
-    runOpenclaw(["gateway", "restart"], { timeoutMs: 30_000 });
-    return { ok: true };
+    execFileSync("bash", ["-lc", script], {
+      timeout: 120_000,
+      encoding: "utf-8",
+      cwd: OPENCLAW_ROOT,
+      env: {
+        ...process.env,
+        PATH: EXEC_PATH,
+        PID_FILE: pidFile,
+        RESTART_FLAG: restartFlag,
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 1024 * 1024,
+    });
+    return { ok: true, method: "supervisor" };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message.slice(0, 200) : String(e) };
+    return { ok: false, method: "supervisor", error: execErrorMessage(e) };
+  }
+}
+
+/** Restart the OpenClaw gateway so it re-reads on-disk config/auth profiles. */
+export function restartGateway(): GatewayRestartResult {
+  const supervised = restartSupervisedGateway();
+  if (supervised.ok) return supervised;
+
+  try {
+    const output = runOpenclaw(["gateway", "restart"], { timeoutMs: 30_000 });
+    if (/Gateway service disabled|systemd .* unavailable/i.test(output)) {
+      return {
+        ok: false,
+        method: "openclaw-cli",
+        error: output.trim().slice(0, 500) || supervised.error,
+      };
+    }
+    return { ok: true, method: "openclaw-cli" };
+  } catch (e) {
+    const cliError = execErrorMessage(e);
+    return {
+      ok: false,
+      method: supervised.method,
+      error: `${supervised.error || "supervisor restart unavailable"}; CLI fallback failed: ${cliError}`.slice(0, 500),
+    };
   }
 }

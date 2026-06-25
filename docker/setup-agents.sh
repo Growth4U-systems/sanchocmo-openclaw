@@ -6,7 +6,7 @@ set -euo pipefail
 
 OPENCLAW_ROOT="${OPENCLAW_HOME:-/root/.openclaw}"
 OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-$OPENCLAW_ROOT/.openclaw/openclaw.json}"
-FIREWORKS_DEFAULT_MODEL="fireworks/accounts/fireworks/routers/kimi-k2p5-turbo"
+FIREWORKS_DEFAULT_MODEL="fireworks/accounts/fireworks/models/glm-5p2"
 STRATEGY_MODEL="anthropic/claude-opus-4-7"
 CONTENT_MODEL="anthropic/claude-sonnet-4-6"
 CODE_MODEL="codex/gpt-5.5"
