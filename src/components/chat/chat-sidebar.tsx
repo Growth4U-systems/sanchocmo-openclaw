@@ -1521,10 +1521,10 @@ export function ChatSidebar() {
         )}
 
         {gatewayLikelyDown && ctIdFromLinked && (
-          <div className="border border-amber-500/40 bg-amber-500/10 text-amber-200 rounded-lg px-3 py-2 text-[13px] leading-snug">
+          <div className="border border-amber-500/40 bg-amber-500/10 text-amber-800 rounded-lg px-3 py-2 text-[13px] leading-snug">
             <div className="font-semibold mb-1">⚠ Dulcinea parece no haber respondido</div>
-            <p className="text-[12px] text-amber-100/80 mb-2">
-              Puede que el gateway de OpenClaw esté caído. Comprueba <code className="bg-black/30 px-1 rounded">openclaw gateway status</code> y pulsa Reintentar.
+            <p className="text-[12px] text-amber-700 mb-2">
+              Puede que el gateway de OpenClaw esté caído. Comprueba <code className="bg-amber-500/20 text-amber-900 px-1 rounded">openclaw gateway status</code> y pulsa Reintentar.
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -1534,17 +1534,17 @@ export function ChatSidebar() {
                   retriggerWriter.mutate({ slug, contentTaskId: ctIdFromLinked });
                 }}
                 disabled={retriggerWriter.isPending}
-                className="text-[12px] px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-50 rounded border border-amber-500/40 transition-colors"
+                className="text-[12px] px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-50 rounded border border-amber-500/40 text-amber-800 font-medium transition-colors"
               >
                 {retriggerWriter.isPending ? "Reintentando..." : "Reintentar"}
               </button>
               {retriggerWriter.isError && (
-                <span className="text-[11px] text-red-300">
+                <span className="text-[11px] text-[var(--chat-danger)]">
                   {(retriggerWriter.error as Error).message}
                 </span>
               )}
               {retriggerWriter.isSuccess && retriggerWriter.data?.writerTriggered === false && (
-                <span className="text-[11px] text-amber-300/80">
+                <span className="text-[11px] text-amber-700">
                   Sigue caído: {retriggerWriter.data.writerError || "sin respuesta"}
                 </span>
               )}
@@ -1691,7 +1691,7 @@ export function ChatSidebar() {
                   <button
                     type="button"
                     onClick={() => setOpenErrorDetail(msg.errorDetail ?? null)}
-                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 border border-amber-500/40 transition-colors"
+                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 border border-amber-500/40 transition-colors"
                     aria-label="Ver detalle técnico del error"
                   >
                     🔍 Ver detalle técnico
@@ -1736,9 +1736,9 @@ export function ChatSidebar() {
             last user message to nudge the agent. */}
         {replyStalled && (
           <div className="flex justify-start">
-            <div className="border border-amber-500/40 bg-amber-500/10 text-amber-200 rounded-[16px] rounded-bl-[6px] px-[14px] py-[10px] text-[13px] leading-snug max-w-[85%] shadow-sm">
+            <div className="border border-amber-500/40 bg-amber-500/10 text-amber-800 rounded-[16px] rounded-bl-[6px] px-[14px] py-[10px] text-[13px] leading-snug max-w-[85%] shadow-sm">
               <div className="font-semibold mb-1">⌛ La respuesta se está demorando</div>
-              <p className="text-[12px] text-amber-100/80 mb-2">
+              <p className="text-[12px] text-amber-700 mb-2">
                 El agente está tardando más de lo normal o se cortó la conexión. Sigo
                 escuchando — si quieres, reenvía tu último mensaje.
               </p>
@@ -1749,7 +1749,7 @@ export function ChatSidebar() {
                   sendMutation.mutate({ text: lastSubstantiveMsg.text, threadId: activeThreadId });
                 }}
                 disabled={sendMutation.isPending}
-                className="text-[12px] px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-50 rounded border border-amber-500/40 transition-colors"
+                className="text-[12px] px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-50 rounded border border-amber-500/40 text-amber-800 font-medium transition-colors"
               >
                 Reintentar
               </button>
@@ -1795,14 +1795,14 @@ export function ChatSidebar() {
                   <span>{pf.file.type.includes("pdf") ? "📄" : pf.file.type.includes("sheet") || pf.file.type.includes("csv") ? "📊" : "📎"}</span>
                 )}
                 <span className="max-w-[120px] truncate">{pf.file.name}</span>
-                <button onClick={() => removeFile(idx)} className="text-[var(--chat-text-faint)] hover:text-red-400 ml-0.5 bg-transparent border-none cursor-pointer text-xs">✕</button>
+                <button onClick={() => removeFile(idx)} className="text-[var(--chat-text-faint)] hover:text-[var(--chat-danger)] ml-0.5 bg-transparent border-none cursor-pointer text-xs">✕</button>
               </div>
             ))}
             {uploading && <span className="text-[10px] text-[var(--chat-text-faint)] animate-pulse self-center">Subiendo...</span>}
           </div>
         )}
         {uploadError && (
-          <div className="mb-2 text-[11px] text-red-400" role="alert">{uploadError}</div>
+          <div className="mb-2 text-[11px] text-[var(--chat-danger)]" role="alert">{uploadError}</div>
         )}
         <div className="flex items-end gap-2">
           {/* Clip button */}
