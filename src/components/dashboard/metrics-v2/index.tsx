@@ -265,7 +265,9 @@ export * from "./DataQualityInsight";
 export * from "./PipelineKpis";
 // Product surface (PR5) — PostHog funnel by unique users.
 export * from "./ProductFunnel";
-// Discoverability · SEO surface (PR6) — KPI scorecards · trend · breakdowns.
+// Discoverability · SEO surface (PR6) — KPIs · trend · breakdowns · health · movers.
 export * from "./WebSeoKpis";
 export * from "./SeoTrend";
 export * from "./SeoBreakdown";
+export * from "./SeoHealth";
+export * from "./SeoMovers";
