@@ -880,6 +880,18 @@ export function ChatSidebar() {
     !!ctIdFromLinked && lastIsTriggerMarker && triggerStale && !sendMutation.isPending;
   const retriggerWriter = useRetriggerWriter();
 
+  // Stalled-reply detection (SAN-323) — generalizes the ContentTask-only
+  // `gatewayLikelyDown` banner below to ANY thread. When the user's message is
+  // the last substantive one but the typing indicator has lapsed (no send in
+  // flight, no fresh gateway status, past REPLY_WINDOW_MS) the turn went quiet
+  // with no reply and no error: previously the input silently re-enabled and the
+  // user was stranded (the same failure mode as the discovery-search timeout in
+  // this issue). Surface an explicit "delayed / retry" affordance instead;
+  // polling keeps running underneath, so a late reply still lands and clears it.
+  // `!gatewayLikelyDown` avoids a double banner on ContentTask threads, which
+  // keep their tailored copy.
+  const replyStalled = waitingForReply && !isAwaitingReply && !gatewayLikelyDown;
+
   // Quick-actions from chat-config.json.
   //
   // Show when:
@@ -1713,6 +1725,34 @@ export function ChatSidebar() {
               {pendingProgress.length > 0 && (
                 <ProgressTimeline events={pendingProgress} mode="live" />
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Stalled-reply banner (SAN-323) — shown when the typing indicator has
+            lapsed but the user is still waiting (no reply, no error). Replaces the
+            previous silent input re-enable. Polling continues underneath, so a
+            late reply still renders and clears this; "Reintentar" re-sends the
+            last user message to nudge the agent. */}
+        {replyStalled && (
+          <div className="flex justify-start">
+            <div className="border border-amber-500/40 bg-amber-500/10 text-amber-200 rounded-[16px] rounded-bl-[6px] px-[14px] py-[10px] text-[13px] leading-snug max-w-[85%] shadow-sm">
+              <div className="font-semibold mb-1">⌛ La respuesta se está demorando</div>
+              <p className="text-[12px] text-amber-100/80 mb-2">
+                El agente está tardando más de lo normal o se cortó la conexión. Sigo
+                escuchando — si quieres, reenvía tu último mensaje.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!activeThreadId || !lastSubstantiveMsg?.text) return;
+                  sendMutation.mutate({ text: lastSubstantiveMsg.text, threadId: activeThreadId });
+                }}
+                disabled={sendMutation.isPending}
+                className="text-[12px] px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-50 rounded border border-amber-500/40 transition-colors"
+              >
+                Reintentar
+              </button>
             </div>
           </div>
         )}
