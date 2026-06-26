@@ -199,15 +199,14 @@ Exposed via reverse proxy (nginx on a server) or Tailscale Funnel (local dev).
 ## Development workflow
 
 ```
-feature/*  ──PR──▶  staging  ──PR──▶  main  ──release-please──▶  vX.Y.Z  ──▶  deploy
+<author>/san-N-*  ──squash PR──▶  staging  ──release-please PR──▶  vX.Y.Z (tag from staging)  ──ff──▶  main  ──▶  deploy (manual gate)
 ```
 
-- **`main`** = production. Every merge auto-tags + deploys via GitHub Actions.
-- **`staging`** = QA / preview. Where features accumulate between releases. Default branch.
-- **`feature/*`, `fix/*`, `chore/*`** → PR to `staging`.
-- **`hotfix/*`** → PR direct to `main` (then back-merge to staging).
-- Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) — enforced by commitlint.
-- Versioning is automatic via [release-please](https://github.com/googleapis/release-please).
+- **`staging`** = the trunk (default branch). **Every** change — feature, fix, *and* hotfix — branches off fresh `origin/staging` and squash-PRs back into `staging`. Branch name `<author>/san-<n>-<kebab-desc>`; every change needs a Linear `SAN-<n>` in the branch, title, or body.
+- **`main`** = a **fast-forward-only pointer** to the latest production release, moved *only* by automation (`promote-main.yml`). Never PR into `main`, never push or tag it by hand.
+- **Releases** are cut from `staging`: [release-please](https://github.com/googleapis/release-please) runs on `staging` and keeps one open `chore: release vX.Y.Z` PR. Merging it (squash) tags from `staging`; `main` then fast-forwards to that tag and `deploy-prod.yml` deploys **after a manual approval** on the `production` environment gate.
+- **Hotfixes** are normal `fix:` PRs to `staging` (no separate path) — `staging` is kept always-releasable. The rare true-emergency procedure lives in [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) §Hotfixes.
+- Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) — enforced by commitlint (`feat:` → minor, `fix:` → patch, `feat!:`/`BREAKING CHANGE:` → major).
 
 Full guide: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md). Deploy details: [docs/DEPLOY.md](docs/DEPLOY.md).
 
