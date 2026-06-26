@@ -60,6 +60,19 @@ The wrapper also reads `brand/{slug}/.env` if present.
 
 Run these from the agent workspace (`skills/` resolves to the central skills catalog — this skill is owned by Rocinante):
 
+**Passing payloads — never write under `brand/{slug}/yalc/payloads/`.** Your
+file-write root does not match the wrapper's resolution root, so a relative
+`brand/.../payloads/x.json` either lands where the wrapper can't read it or fails
+outright (a literal `$OPENCLAW_HOME/...` write the runtime never expands). Use one
+of these instead:
+
+- **Small, quote-free payloads (filters, ids):** pass inline with `--json '<json>'`
+  — no file at all. (This is what `campaign-sequence-approve/publish/live` already do.)
+- **Large or quote/newline-heavy payloads (email copy, full drafts):** write the
+  JSON to an **absolute** path under `/tmp` (e.g. `/tmp/yalc-campaign-draft.json`)
+  and pass `--input /tmp/yalc-campaign-draft.json`. The wrapper reads absolute
+  paths as-is, and `/tmp` always exists and is writable.
+
 ```bash
 node skills/yalc-operator/scripts/yalc-client.mjs health --slug growth4u
 node skills/yalc-operator/scripts/yalc-client.mjs skills --slug growth4u
@@ -70,12 +83,13 @@ node skills/yalc-operator/scripts/yalc-client.mjs campaigns --slug growth4u
 node skills/yalc-operator/scripts/yalc-client.mjs brain --slug growth4u
 ```
 
-Create the internal YALC campaign draft first:
+Create the internal YALC campaign draft first. The draft carries email copy, so
+write it to an absolute `/tmp` file and pass it with `--input`:
 
 ```bash
 node skills/yalc-operator/scripts/yalc-client.mjs create-campaign-draft \
   --slug growth4u \
-  --input brand/growth4u/yalc/payloads/campaign-draft.json
+  --input /tmp/yalc-campaign-draft.json
 ```
 
 If an existing draft is missing the reviewable email copy, add the email step to that draft instead of creating a duplicate campaign:
@@ -84,7 +98,7 @@ If an existing draft is missing the reviewable email copy, add the email step to
 node skills/yalc-operator/scripts/yalc-client.mjs add-campaign-step \
   --slug growth4u \
   --id <yalc-campaign-id> \
-  --input brand/growth4u/yalc/payloads/campaign-email-step.json
+  --input /tmp/yalc-campaign-email-step.json
 ```
 
 Search, enrich, review, and publish through the explicit campaign lifecycle:
@@ -93,13 +107,13 @@ Search, enrich, review, and publish through the explicit campaign lifecycle:
 node skills/yalc-operator/scripts/yalc-client.mjs campaign-leads-search \
   --slug growth4u \
   --id <yalc-campaign-id> \
-  --input brand/growth4u/yalc/payloads/lead-search.json \
+  --json '{"limit":50}' \
   --confirm-side-effect
 
 node skills/yalc-operator/scripts/yalc-client.mjs campaign-leads-enrich \
   --slug growth4u \
   --id <yalc-campaign-id> \
-  --input brand/growth4u/yalc/payloads/lead-enrich.json \
+  --json '{}' \
   --confirm-side-effect
 
 node skills/yalc-operator/scripts/yalc-client.mjs campaign-sequence-approve \
