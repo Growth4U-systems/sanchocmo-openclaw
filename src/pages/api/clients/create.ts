@@ -1,14 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 import fs from "fs";
-import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
-import { brandDir, chatConfigFile, CLIENTS_FILE } from "@/lib/data/paths";
+import { CLIENTS_FILE } from "@/lib/data/paths";
 import { writeClientsFile } from "@/lib/data/clients";
 import { provisionYalcBrain } from "@/lib/yalc/provision";
-import { FOUNDATION_TASK_SET_KEYS, instantiateFoundationProject } from "@/lib/data/task-blueprints";
-import { applyProjectAnchors, applyTaskAnchors } from "@/lib/data/task-create-helpers";
-import { seedClientConfig } from "@/lib/data/client-config-seed";
+import { provisionClient } from "@/lib/data/provision-client";
 
 type ClientsFileData = {
   clients?: Array<Record<string, unknown>>;
@@ -21,70 +18,6 @@ function normalizeSlug(value: string): string {
 
 function isValidSlug(value: string): boolean {
   return /^[a-z0-9][a-z0-9-]*$/.test(value);
-}
-
-function createClientDirs(slug: string): void {
-  const root = brandDir(slug);
-  const dirs = [
-    root,
-    path.join(root, "chat"),
-    path.join(root, "idea-generation"),
-    path.join(root, "market-and-us", "competitors"),
-    path.join(root, "metrics"),
-    path.join(root, "monitoring"),
-    path.join(root, "projects"),
-  ];
-
-  for (const dir of dirs) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  seedChatConfig(slug);
-  seedFoundationProjects(slug);
-}
-
-/**
- * Seed the 4 canonical Foundation projects (P00-Company-Brief, P00-Full-
- * Foundation, P00-Metrics, P00-Strategic-Plan) with their pillar tasks from
- * the declarative registry (SAN-183 F5: every Foundation pillar is a task
- * 1:1; task.status is becoming the single status source). Idempotent — an
- * existing project directory with tasks.json is left untouched. Best-effort:
- * never block client creation.
- */
-function seedFoundationProjects(slug: string): void {
-  for (const setKey of FOUNDATION_TASK_SET_KEYS) {
-    try {
-      const { project, tasks } = instantiateFoundationProject(setKey, { slug });
-      const projDir = path.join(brandDir(slug), "projects", project.id);
-      if (fs.existsSync(path.join(projDir, "tasks.json"))) continue;
-      fs.mkdirSync(projDir, { recursive: true });
-      applyProjectAnchors(slug, project);
-      const anchored = tasks.map((t) => applyTaskAnchors(slug, t));
-      fs.writeFileSync(path.join(projDir, "project.json"), JSON.stringify(project, null, 2));
-      fs.writeFileSync(path.join(projDir, "tasks.json"), JSON.stringify(anchored, null, 2));
-    } catch (err) {
-      console.error(`[clients/create] Foundation project seed failed (${setKey}, ${slug}):`, err);
-    }
-  }
-}
-
-/**
- * Seed brand/{slug}/chat-config.json from the repo default template so Foundation
- * pillar threads resolve to the right skill+agent (per-brand override point). The
- * hardcoded fallback in src/lib/skill-resolver.ts covers brands without this file,
- * but seeding it keeps the server-side quick-actions and per-brand overrides aligned.
- * Best-effort: never block client creation if the template is missing or unreadable.
- */
-function seedChatConfig(slug: string): void {
-  const target = chatConfigFile(slug);
-  if (fs.existsSync(target)) return;
-  const template = path.join(process.cwd(), "config", "chat-config.default.json");
-  try {
-    if (!fs.existsSync(template)) return;
-    fs.copyFileSync(template, target);
-  } catch {
-    // non-fatal: brands without chat-config.json fall back to skill-resolver defaults
-  }
 }
 
 /**
@@ -133,11 +66,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   data.clients = [...clients, client];
   writeClientsFile(data);
-  createClientDirs(slug);
 
-  // Sembrar client-config.json con los crons de auto-onboarding (default-on, p.ej.
-  // Trust Score refresh) para que el cliente quede cron-ready (SAN-309). Best-effort.
-  seedClientConfig(slug, name, language);
+  // Provision the brand's on-disk scaffolding: dir tree, chat-config, Foundation
+  // projects/tasks, and auto-onboarding crons (SAN-309/SAN-336). Shared with the
+  // boot reconciler so a wizard-created brand ends up identical to a UI one.
+  provisionClient(slug, { name, language });
 
   // Auto-provision the brand's YALC brain from its website — no CLI, no manual
   // step. Fire-and-forget so brand creation isn't blocked by YALC synthesis;

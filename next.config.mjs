@@ -11,6 +11,12 @@ const { version: appVersion } = JSON.parse(
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Enable src/instrumentation.ts (server-startup hook). Stable in Next 15; on
+  // 14.2 it's still behind this experimental flag. Used to backfill brand
+  // provisioning for wizard-created clients at boot (SAN-336).
+  experimental: {
+    instrumentationHook: true,
+  },
   env: {
     NEXT_PUBLIC_APP_VERSION: appVersion,
   },
