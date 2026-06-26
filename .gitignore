@@ -140,6 +140,9 @@ config/clients.js
 workspace-*/clients.json
 workspace-*/clients.json.bak.*
 
+# === Proxy device identity (contains a private key; runtime regenerates if absent) ===
+.mc-proxy-device.json
+
 # === Env backups (contain secrets — should never be tracked) ===
 .env.bak.*
 .env.bak-*
