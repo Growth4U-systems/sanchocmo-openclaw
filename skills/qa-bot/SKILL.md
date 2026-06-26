@@ -13,7 +13,7 @@ metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.1'
   system: SanchoCMO
-  agent: rocinante
+  agent: sanson
   updated: '2026-05-01'
   changes: 'v1.1 — Frontmatter cleanup. Previous version had a placeholder description and brand-file context_required that did not match the CoVe body. Body unchanged.'
 ---

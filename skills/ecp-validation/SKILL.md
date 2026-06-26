@@ -15,9 +15,9 @@ metadata:
 context_required:
 - brand/{slug}/company-brief/company-brief.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
-- brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/go-to-market/positioning/*/*.current.md
 context_writes:
+- brand/{slug}/go-to-market/ecp-validation/ecp-validation.current.md
 - brand/{slug}/go-to-market/ecps/ecps.current.md
 - brand/{slug}/operational/learnings.md
 ---
@@ -27,7 +27,7 @@ context_writes:
 > **OPCIONAL** — Skip si timeline corto. Valida ECPs con usuarios reales. CONFIDENCE = EVIDENCE.
 
 **Input**: ECPs de niche-discovery-100x + positioning
-**Output**: Validation Results → `brand/{slug}/ecp-validation/ecp-validation.current.md`
+**Output**: Validation Results → `brand/{slug}/go-to-market/ecp-validation/ecp-validation.current.md`
 
 ## References
 
@@ -85,7 +85,7 @@ context_writes:
 - Update brand/{slug}/operational/learnings.md
 
 ### 6. Self-QA + Guardar
-- Checklist, versionado, `brand/{slug}/ecp-validation/ecp-validation.current.md`
+- Checklist, versionado, `brand/{slug}/go-to-market/ecp-validation/ecp-validation.current.md`
 
 ---
 

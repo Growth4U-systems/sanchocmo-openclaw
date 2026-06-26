@@ -1,5 +1,5 @@
 ---
-name: "Feedback Triage"
+name: feedback-triage
 description: "Classify client feedback (comments) on a deliverable into improvement suggestions, bucketed by where the lever is: the skill, the client's preferences, or the onboarding form."
 metadata:
   agent: "sanson"
