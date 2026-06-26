@@ -97,14 +97,25 @@ installer walks you through `docker login` and retries.
 ```bash
 git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git sanchocmo && cd sanchocmo
 
-# Install (runs the wizard if .env is missing, then `docker compose up`)
-./install.sh
+# Install (runs the wizard if .env is missing, then starts the stack)
+./sancho install
 
 # Optional overlays:
-#   ./install.sh --od     # also start Open Design
-#   ./install.sh --yalc   # also start YALC (Outreach)
-#   ./install.sh --no-up   # configure only, don't start containers
+#   ./sancho install --od     # also start Open Design
+#   ./sancho install --yalc   # also start YALC (Outreach)
+#   ./sancho install --no-up  # configure only, don't start containers
 ```
+
+Then manage the whole lifecycle with the same CLI — no `docker compose -f …` to
+remember:
+
+```bash
+./sancho up | down | restart | status | logs
+./sancho update [vX.Y.Z|edge|latest]   # pull (and optionally pin) a version
+./sancho destroy                       # wipe containers + data (asks to confirm)
+```
+
+(`./install.sh` still works — it's a thin shim for `./sancho install`.)
 
 The wizard asks for the essentials (provider + auth mode, API key, admin email
 domain, first brand) and generates the secrets (`NEXTAUTH_SECRET`,

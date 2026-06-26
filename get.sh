@@ -52,8 +52,8 @@ fi
 
 # 4. Extraer.
 tar -xzf "$TARBALL" -C "$DEST"
-[ -f "$DEST/install.sh" ] || die "El tarball no contiene install.sh (asset corrupto?)."
-chmod +x "$DEST/install.sh"
+[ -f "$DEST/sancho" ] || die "El tarball no contiene el CLI 'sancho' (asset corrupto?)."
+chmod +x "$DEST/sancho" "$DEST/install.sh" "$DEST/scripts/compose-env.sh" 2>/dev/null || true
 
 # 5. Entregar a install.sh.
 [ -n "${SANCHO_SKIP_INSTALL:-}" ] && { bold "Runtime listo en $DEST (install salteado)."; exit 0; }
