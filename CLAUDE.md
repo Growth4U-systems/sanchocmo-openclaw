@@ -48,7 +48,7 @@ is never correct.
 ## Local quality checks (run before pushing)
 
 ```bash
-nvm use 24        # match the Dockerfile node version
+nvm use 26        # match the Dockerfile node version
 npm ci
 npm run typecheck # required in CI
 npm run build     # required in CI
