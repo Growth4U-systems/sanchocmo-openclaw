@@ -266,7 +266,11 @@ async function main() {
     };
   }
   config.channels['mc-chat'].enabled = true;
-  if (!config.channels['mc-chat'].mcServerUrl) {
+  // Set when absent, and migrate a stale legacy :18790 (written by pre-fix images)
+  // to Next — that port never serves /api/chat/webhook, so rewriting is safe. (SAN-333)
+  const LEGACY_MC = ['http://localhost:18790', 'http://127.0.0.1:18790'];
+  const currentMc = (config.channels['mc-chat'].mcServerUrl || '').replace(/\/+$/, '');
+  if (!currentMc || LEGACY_MC.includes(currentMc)) {
     config.channels['mc-chat'].mcServerUrl = mcServerUrl;
   }
   if (!config.channels['mc-chat'].contextPackUrl) {

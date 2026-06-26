@@ -510,11 +510,18 @@ channel=c.setdefault('channels',{}).setdefault('mc-chat',{})
 if channel.get('enabled') is not True:
     channel['enabled']=True
     changed=True
-if not channel.get('mcServerUrl'):
-    # mc-chat posts bot replies to {mcServerUrl}/api/chat/webhook, a route that only
-    # exists on Next (:3000), not legacy mc-server.js (:18790). Mirror contextPackUrl. (SAN-333)
-    channel['mcServerUrl']=(os.environ.get('MC_SERVER_URL') or 'http://localhost:3000').rstrip('/')
-    changed=True
+# mc-chat posts bot replies to {mcServerUrl}/api/chat/webhook, a route that only
+# exists on Next (:3000), not legacy mc-server.js (:18790). Mirror contextPackUrl.
+# Also MIGRATE a stale legacy :18790 (written by pre-fix images) to Next, so
+# existing installs self-heal on restart — not just fresh ones. The legacy port
+# never serves that webhook, so rewriting it is always safe. (SAN-333)
+mc_server_url=(os.environ.get('MC_SERVER_URL') or 'http://localhost:3000').rstrip('/')
+LEGACY_MC=('http://localhost:18790','http://127.0.0.1:18790')
+current_mc=(channel.get('mcServerUrl') or '').rstrip('/')
+if not current_mc or current_mc in LEGACY_MC:
+    if channel.get('mcServerUrl') != mc_server_url:
+        channel['mcServerUrl']=mc_server_url
+        changed=True
 context_pack_url=(os.environ.get('MC_CONTEXT_PACK_URL') or 'http://localhost:3000').rstrip('/')
 if not channel.get('contextPackUrl'):
     channel['contextPackUrl']=context_pack_url
