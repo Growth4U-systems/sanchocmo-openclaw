@@ -123,6 +123,12 @@ if [ "$WITH_YALC" != "1" ] && grep -qE '^YALC_API_TOKEN=.+' .env 2>/dev/null; th
   WITH_YALC=1
   echo "  ✓ Outreach (YALC) enabled in .env — starting its overlay"
 fi
+# Same logic for Open Design: a non-empty OD_API_TOKEN (written when the wizard
+# enabled OD) brings its overlay up without needing the explicit --od flag.
+if [ "$WITH_OD" != "1" ] && grep -qE '^OD_API_TOKEN=.+' .env 2>/dev/null; then
+  WITH_OD=1
+  echo "  ✓ Open Design enabled in .env — starting its overlay"
+fi
 COMPOSE_ARGS="-f docker-compose.yml"
 [ "$WITH_OD" = "1" ]   && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
 [ "$WITH_YALC" = "1" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"

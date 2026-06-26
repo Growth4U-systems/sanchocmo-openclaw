@@ -313,7 +313,13 @@ if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
   # Claude Code service); mirror it into ANTHROPIC_OAUTH_TOKEN so the OpenClaw
   # gateway agents use the subscription too. Without this the provider falls
   # through to ANTHROPIC_API_KEY — the silent API-billing footgun. Idempotent.
-  if [ -z "${ANTHROPIC_OAUTH_TOKEN:-}" ] && [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+  #
+  # CLAUDE_CODE_OAUTH_TOKEN is the single user-facing subscription variable (the
+  # one `claude setup-token` emits, and what the wizard + UI write). ANTHROPIC_-
+  # OAUTH_TOKEN is a pure internal alias derived here — never set by the user.
+  # Derive authoritatively (CLAUDE_CODE wins) so editing the canonical var always
+  # refreshes the alias; a stale ANTHROPIC_OAUTH_TOKEN can never shadow it.
+  if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
     export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
     echo "[entrypoint] ANTHROPIC_OAUTH_TOKEN derived from CLAUDE_CODE_OAUTH_TOKEN (gateway → Claude subscription)"
   fi
