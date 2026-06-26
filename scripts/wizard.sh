@@ -9,7 +9,11 @@
 #
 # Interactive by default. For non-interactive / CI use, set WIZARD_ASSUME_YES=1
 # and pass answers as environment variables (same names the wizard writes, plus
-# PROVIDER / DB_MODE / FIRST_BRAND_SLUG / FIRST_BRAND_NAME / BASE_URL).
+# PROVIDER / ANTHROPIC_AUTH_MODE / OPENAI_AUTH_MODE / DB_MODE / BASE_URL /
+# FIRST_BRAND_SLUG / FIRST_BRAND_NAME / ENABLE_GOOGLE). In non-interactive mode
+# you MUST supply the model credential for the chosen auth mode
+# (ANTHROPIC_API_KEY or, for subscription, CLAUDE_CODE_OAUTH_TOKEN) or the
+# wizard aborts — it never leaves a placeholder behind.
 #
 # It never overwrites an existing .env / config file unless you pass --force.
 # ============================================================================
@@ -45,6 +49,12 @@ step() { printf '\n%s▸ %s%s\n' "$B" "$*" "$RST"; }
 ok()   { printf '  %s✓%s %s\n' "$GRN" "$RST" "$*"; }
 warn() { printf '  %s!%s %s\n' "$YLW" "$RST" "$*"; }
 
+# mask_secret <value> : short, non-revealing preview of a credential for logs.
+mask_secret() {
+  local s="$1"
+  if [ "${#s}" -le 8 ]; then printf '••••'; else printf '%s…%s' "${s:0:4}" "${s: -2}"; fi
+}
+
 # --- Interactivity helpers ---------------------------------------------------
 # Non-interactive when there's no TTY or WIZARD_ASSUME_YES=1.
 INTERACTIVE=1
@@ -55,7 +65,20 @@ if [ "${WIZARD_ASSUME_YES:-0}" = "1" ] || [ ! -t 0 ]; then INTERACTIVE=0; fi
 ask() {
   local var="$1" prompt="$2" default="${3:-}" current
   current="$(printf '%s' "${!var:-}")"
-  if [ -n "$current" ]; then printf '%s' "$current"; return; fi
+  if [ -n "$current" ]; then
+    # Value came from the environment, so the prompt is skipped silently —
+    # surface that (to stderr, never stdout, which $(...) captures) so an
+    # exported/leaked var can't quietly decide an answer for the user. Mask
+    # anything that looks like a credential.
+    if [ "$INTERACTIVE" = "1" ]; then
+      local shown="$current"
+      case "$var" in
+        *KEY|*TOKEN|*SECRET|*PASSWORD) shown="$(mask_secret "$current")" ;;
+      esac
+      printf '  %s↳ %s: using %s from environment%s\n' "$DIM" "$prompt" "$shown" "$RST" >&2
+    fi
+    printf '%s' "$current"; return
+  fi
   if [ "$INTERACTIVE" = "1" ]; then
     local reply
     if [ -n "$default" ]; then
@@ -67,6 +90,25 @@ ask() {
   else
     printf '%s' "$default"
   fi
+}
+
+# ask_required <var-name> <prompt> : like `ask`, but the value must be non-empty.
+# Interactive: re-prompts once, then aborts. Non-interactive: aborts immediately
+# if empty (the caller must pass the value via env). This is how the wizard
+# guarantees a credential is present instead of silently shipping a placeholder.
+ask_required() {
+  local var="$1" prompt="$2" val
+  val="$(ask "$var" "$prompt" "")"
+  if [ -z "$val" ] && [ "$INTERACTIVE" = "1" ]; then
+    warn "$var is required — please enter a value."
+    val="$(ask "$var" "$prompt" "")"
+  fi
+  if [ -z "$val" ]; then
+    say "${YLW}ERROR:${RST} $var is required for the chosen mode but no value was provided."
+    say "  (Non-interactive? pass $var=… in the environment.)"
+    exit 1
+  fi
+  printf '%s' "$val"
 }
 
 # --- Secret generation -------------------------------------------------------
@@ -95,35 +137,102 @@ EXISTING=()
 [ -f "$CLIENTS_FILE" ] && EXISTING+=("$CLIENTS_FILE")
 if [ "${#EXISTING[@]}" -gt 0 ] && [ "$FORCE" != "1" ]; then
   warn "These files already exist: ${EXISTING[*]}"
-  say  "  Refusing to overwrite. Re-run with --force to regenerate, or edit them by hand."
-  exit 1
+  if [ "$INTERACTIVE" = "1" ]; then
+    # Interactive: offer to overwrite in place instead of forcing a re-run.
+    reply=""
+    read -r -p "  Overwrite them and regenerate? [y/N]: " reply </dev/tty || true
+    case "$reply" in
+      y|Y|yes|YES) FORCE=1; ok "Overwriting existing configuration." ;;
+      *) say "  Left untouched. Edit them by hand, or re-run to regenerate."; exit 0 ;;
+    esac
+  else
+    # Non-interactive (CI): never clobber without an explicit opt-in.
+    say  "  Refusing to overwrite. Re-run with --force to regenerate, or edit them by hand."
+    exit 1
+  fi
 fi
 
 say "${B}SanchoCMO — setup wizard${RST}"
 say "${DIM}Generates .env + config/*.json so you can 'docker compose up'.${RST}"
 
-# --- 1. Model provider + API key --------------------------------------------
-step "1/6  Model provider"
+# --- 1. Model provider + auth ------------------------------------------------
+# Ask the auth MODE first, then collect the credential that mode actually needs
+# (and require it). The runtime resolves Anthropic creds as ANTHROPIC_OAUTH_TOKEN
+# (subscription) → ANTHROPIC_API_KEY; leaving a stale API key around in
+# subscription mode is the documented "invalid x-api-key" fallback footgun, so we
+# blank the unused credential explicitly.
+step "1/6  Model provider & auth"
 PROVIDER="$(ask PROVIDER "Provider — anthropic, openai, fireworks, both, or all" "anthropic")"
+# Initialize empty (NOT to a default like "api_key") so `ask` actually prompts:
+# any non-empty value makes ask treat the question as already answered and skip
+# it. The real default is supplied as ask's 3rd argument below. Empty here only
+# guarantees the vars are defined under `set -u` when a provider branch is skipped.
 ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 OPENAI_API_KEY="${OPENAI_API_KEY:-}"
 FIREWORKS_API_KEY="${FIREWORKS_API_KEY:-}"
-case "$PROVIDER" in
-  anthropic|both|all|multi) ANTHROPIC_API_KEY="$(ask ANTHROPIC_API_KEY "Anthropic API key (sk-ant-...)" "")" ;;
-esac
-case "$PROVIDER" in
-  openai|both|all|multi) OPENAI_API_KEY="$(ask OPENAI_API_KEY "OpenAI API key (sk-...)" "")" ;;
-esac
-case "$PROVIDER" in
-  fireworks|all|multi) FIREWORKS_API_KEY="$(ask FIREWORKS_API_KEY "Fireworks API key (fw-...)" "")" ;;
-esac
-ANTHROPIC_AUTH_MODE="$(ask ANTHROPIC_AUTH_MODE "Anthropic auth mode — api_key or subscription" "api_key")"
-OPENAI_AUTH_MODE="$(ask OPENAI_AUTH_MODE "OpenAI auth mode — api_key or subscription" "api_key")"
+CLAUDE_CODE_OAUTH_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN:-}"
+ANTHROPIC_AUTH_MODE="${ANTHROPIC_AUTH_MODE:-}"
+OPENAI_AUTH_MODE="${OPENAI_AUTH_MODE:-}"
 
-# --- 2. Admin access ---------------------------------------------------------
-step "2/6  Admin access"
+case "$PROVIDER" in
+  anthropic|both|all|multi)
+    ANTHROPIC_AUTH_MODE="$(ask ANTHROPIC_AUTH_MODE "Anthropic auth mode — api_key or subscription" "api_key")"
+    if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
+      say "  ${DIM}Generate a subscription token on the host with: claude setup-token${RST}"
+      CLAUDE_CODE_OAUTH_TOKEN="$(ask_required CLAUDE_CODE_OAUTH_TOKEN "Claude subscription token (sk-ant-oat...)")"
+      ANTHROPIC_API_KEY=""
+    else
+      ANTHROPIC_API_KEY="$(ask_required ANTHROPIC_API_KEY "Anthropic API key (sk-ant-...)")"
+      CLAUDE_CODE_OAUTH_TOKEN=""
+    fi
+    ;;
+esac
+
+case "$PROVIDER" in
+  openai|both|all|multi)
+    OPENAI_AUTH_MODE="$(ask OPENAI_AUTH_MODE "OpenAI auth mode — api_key or subscription" "api_key")"
+    if [ "$OPENAI_AUTH_MODE" = "subscription" ]; then
+      warn "OpenAI subscription uses Codex (ChatGPT) OAuth, set up host-side with 'openclaw models auth login' — it can't be entered here. Configure it after install."
+      OPENAI_API_KEY=""
+    else
+      OPENAI_API_KEY="$(ask_required OPENAI_API_KEY "OpenAI API key (sk-...)")"
+    fi
+    ;;
+esac
+
+# Fireworks is API-key-only (no subscription/OAuth) — require the key when chosen.
+case "$PROVIDER" in
+  fireworks|all|multi)
+    FIREWORKS_API_KEY="$(ask_required FIREWORKS_API_KEY "Fireworks API key (fw-...)")"
+    ;;
+esac
+
+# --- 2. Admin & login access -------------------------------------------------
+step "2/6  Admin & login access"
 ADMIN_EMAIL_DOMAIN="$(ask ADMIN_EMAIL_DOMAIN "Admin email domain (emails @this become admins)" "example.com")"
 ADMIN_IDENTITY_EMAIL="$(ask ADMIN_IDENTITY_EMAIL "Admin contact email" "admin@${ADMIN_EMAIL_DOMAIN}")"
+# Google login is OPTIONAL. You can always log in with the admin token printed at
+# the end. NextAuth enables Google only when BOTH client id and secret are
+# non-empty — so a leftover placeholder would enable it with bad creds
+# (invalid_client). We therefore write an explicit value: real if you configure
+# it now, empty (= disabled) otherwise.
+GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
+GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
+say "  ${DIM}Google login is optional — skip it and use the admin token (printed at the end).${RST}"
+ENABLE_GOOGLE="$(ask ENABLE_GOOGLE "Configure Google login now? — yes or no" "no")"
+case "$(printf '%s' "$ENABLE_GOOGLE" | tr '[:upper:]' '[:lower:]')" in
+  y|yes|true|1)
+    GOOGLE_CLIENT_ID="$(ask GOOGLE_CLIENT_ID "Google OAuth client ID" "")"
+    GOOGLE_CLIENT_SECRET="$(ask GOOGLE_CLIENT_SECRET "Google OAuth client secret" "")"
+    if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ]; then
+      warn "Google client id/secret incomplete — leaving Google login OFF (use the admin token)."
+      GOOGLE_CLIENT_ID=""; GOOGLE_CLIENT_SECRET=""
+    fi
+    ;;
+  *)
+    GOOGLE_CLIENT_ID=""; GOOGLE_CLIENT_SECRET=""
+    ;;
+esac
 
 # --- 3. Database -------------------------------------------------------------
 step "3/6  Database"
@@ -133,7 +242,17 @@ if [ "$DB_MODE" = "external" ]; then
   DATABASE_URL="$(ask DATABASE_URL "External DATABASE_URL (postgres://...)" "")"
   COMPOSE_PROFILES_VAL=""
 else
-  POSTGRES_PASSWORD="$(gen_hex)"
+  # Preserve an existing local DB password instead of always minting a new one:
+  # Postgres only sets the password on the FIRST init of its data volume, so a
+  # re-run (--force) that regenerates it desyncs from the already-initialized
+  # postgres_data volume → "password authentication failed for user sancho".
+  # Precedence: env override > existing .env > freshly generated.
+  if [ -z "${POSTGRES_PASSWORD:-}" ] && [ -f "$ENV_FILE" ]; then
+    # `|| true`: grep exits 1 when absent, which would abort under `set -e`/pipefail.
+    POSTGRES_PASSWORD="$(grep -E '^POSTGRES_PASSWORD=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- || true)"
+    [ -n "$POSTGRES_PASSWORD" ] && say "  ${DIM}Reusing existing POSTGRES_PASSWORD (keeps the current local DB volume working).${RST}"
+  fi
+  [ -z "${POSTGRES_PASSWORD:-}" ] && POSTGRES_PASSWORD="$(gen_hex)"
   DATABASE_URL="postgres://sancho:${POSTGRES_PASSWORD}@postgres:5432/sancho"
   COMPOSE_PROFILES_VAL="local-db"
 fi
@@ -147,8 +266,8 @@ step "5/6  First brand"
 FIRST_BRAND_SLUG="$(ask FIRST_BRAND_SLUG "First brand slug (lowercase-hyphens)" "my-brand")"
 FIRST_BRAND_NAME="$(ask FIRST_BRAND_NAME "First brand display name" "My Brand")"
 
-# --- 6. Outreach (YALC) — optional ------------------------------------------
-step "6/6  Outreach (optional)"
+# --- 6. Optional services (Outreach, Open Design) ---------------------------
+step "6/6  Optional services"
 say "  ${DIM}YALC powers cold outbound (campaigns, leads, sequences). It runs as an${RST}"
 say "  ${DIM}opt-in container; you can also enable it later. Sending email needs your${RST}"
 say "  ${DIM}own provider key (e.g. Instantly), configured afterwards in the cockpit.${RST}"
@@ -158,12 +277,42 @@ case "$(printf '%s' "$ENABLE_YALC" | tr '[:upper:]' '[:lower:]')" in
   *)            ENABLE_YALC=0 ;;
 esac
 
+# Open Design — same opt-in logic as YALC: self-provisioning (we mint
+# OD_API_TOKEN, the Phase-5 bearer the daemon requires), brought up by install.sh
+# when its token is present. The one extra input OD needs that YALC doesn't is a
+# browser-reachable URL (the web app loads client-side); default to localhost.
+OD_API_TOKEN="${OD_API_TOKEN:-}"
+OD_WEB_URL="${OD_WEB_URL:-}"
+OD_ALLOWED_ORIGINS="${OD_ALLOWED_ORIGINS:-}"
+say ""
+say "  ${DIM}Open Design is an agentic visual editor for brand design systems. It runs${RST}"
+say "  ${DIM}as an opt-in container on port 7456; its token is generated for you.${RST}"
+ENABLE_OD="$(ask ENABLE_OD "Enable Open Design? — yes or no" "no")"
+case "$(printf '%s' "$ENABLE_OD" | tr '[:upper:]' '[:lower:]')" in
+  y|yes|true|1) ENABLE_OD=1 ;;
+  *)            ENABLE_OD=0 ;;
+esac
+if [ "$ENABLE_OD" = "1" ]; then
+  OD_WEB_URL="$(ask OD_WEB_URL "Open Design web URL (browser-reachable)" "http://localhost:7456")"
+  OD_ALLOWED_ORIGINS="$OD_WEB_URL"
+fi
+
 # --- Generate secrets --------------------------------------------------------
 step "Generating secrets"
 NEXTAUTH_SECRET="$(gen_b64)"
 ENCRYPTION_KEY="$(gen_hex)"
 SANCHO_INTERNAL_API_TOKEN="$(gen_hex)"
-ADMIN_TOKEN="$(gen_hex)"
+# adminToken: stateful, like POSTGRES_PASSWORD. config/clients.json (the brand
+# registry) is preserved across a --force re-run (see the write below), and this
+# token is mirrored into .env as MC_ADMIN_TOKEN and printed as the login token.
+# Minting a fresh one here would desync from the preserved file and rotate the
+# admin login out from under the user. Reuse the existing one when present.
+ADMIN_TOKEN=""
+if [ -f "$CLIENTS_FILE" ]; then
+  ADMIN_TOKEN="$(grep -oE '"adminToken"[[:space:]]*:[[:space:]]*"[^"]+"' "$CLIENTS_FILE" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"[[:space:]]*$/\1/')"
+  [ -n "$ADMIN_TOKEN" ] && say "  ${DIM}Reusing existing adminToken (keeps the preserved clients.json and login token in sync).${RST}"
+fi
+[ -z "$ADMIN_TOKEN" ] && ADMIN_TOKEN="$(gen_hex)"
 MC_TOKEN="$(gen_hex)"
 ok "NEXTAUTH_SECRET, ENCRYPTION_KEY, SANCHO_INTERNAL_API_TOKEN, adminToken, mcToken"
 # YALC shares a bearer token between Sancho and the YALC container.
@@ -171,13 +320,21 @@ if [ "$ENABLE_YALC" = "1" ]; then
   YALC_API_TOKEN="$(gen_hex)"
   ok "YALC_API_TOKEN (Outreach enabled)"
 fi
+# Open Design shares a bearer token between MC and the OD daemon (Phase-5 floor).
+if [ "$ENABLE_OD" = "1" ]; then
+  OD_API_TOKEN="$(gen_hex)"
+  ok "OD_API_TOKEN (Open Design enabled)"
+fi
 
 # --- Write .env --------------------------------------------------------------
 step "Writing $ENV_FILE"
 cp "$ENV_EXAMPLE" "$ENV_FILE"
-[ -n "$ANTHROPIC_API_KEY" ] && set_env ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"
-[ -n "$OPENAI_API_KEY" ]    && set_env OPENAI_API_KEY "$OPENAI_API_KEY"
-[ -n "$FIREWORKS_API_KEY" ] && set_env FIREWORKS_API_KEY "$FIREWORKS_API_KEY"
+# Model credentials — always written explicitly (empty when unused) so a
+# .env.example placeholder can never survive into the live .env.
+set_env ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"
+set_env CLAUDE_CODE_OAUTH_TOKEN "$CLAUDE_CODE_OAUTH_TOKEN"
+set_env OPENAI_API_KEY "$OPENAI_API_KEY"
+set_env FIREWORKS_API_KEY "$FIREWORKS_API_KEY"
 set_env ANTHROPIC_AUTH_MODE "$ANTHROPIC_AUTH_MODE"
 set_env OPENAI_AUTH_MODE "$OPENAI_AUTH_MODE"
 set_env NEXTAUTH_SECRET "$NEXTAUTH_SECRET"
@@ -185,6 +342,12 @@ set_env ENCRYPTION_KEY "$ENCRYPTION_KEY"
 set_env SANCHO_INTERNAL_API_TOKEN "$SANCHO_INTERNAL_API_TOKEN"
 set_env ADMIN_EMAIL_DOMAIN "$ADMIN_EMAIL_DOMAIN"
 set_env ADMIN_IDENTITY_EMAIL "$ADMIN_IDENTITY_EMAIL"
+# Login: write Google creds explicitly (empty = disabled, never a placeholder)
+# and mirror the admin token into .env so the token login works even if
+# config/clients.json is ever unavailable.
+set_env GOOGLE_CLIENT_ID "$GOOGLE_CLIENT_ID"
+set_env GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
+set_env MC_ADMIN_TOKEN "$ADMIN_TOKEN"
 set_env DATABASE_URL "$DATABASE_URL"
 set_env COMPOSE_PROFILES "$COMPOSE_PROFILES_VAL"
 set_env BASE_URL "$BASE_URL"
@@ -195,6 +358,13 @@ set_env NEXTAUTH_URL "$BASE_URL"
 if [ "$ENABLE_YALC" = "1" ]; then
   set_env YALC_API_TOKEN "$YALC_API_TOKEN"
   set_env YALC_BASE_URL "http://yalc:3847"
+fi
+# Open Design: install.sh reads a non-empty OD_API_TOKEN as the signal to bring
+# up the OD overlay. OD_DAEMON_URL keeps its compose-DNS default (open-design:7456).
+if [ "$ENABLE_OD" = "1" ]; then
+  set_env OD_API_TOKEN "$OD_API_TOKEN"
+  set_env OD_WEB_URL "$OD_WEB_URL"
+  set_env OD_ALLOWED_ORIGINS "$OD_ALLOWED_ORIGINS"
 fi
 ok "$ENV_FILE written"
 
@@ -213,6 +383,16 @@ ok "$INSTANCE_FILE written"
 
 # --- Write config/clients.json (first brand) ---------------------------------
 step "Writing $CLIENTS_FILE"
+if [ -f "$CLIENTS_FILE" ]; then
+  # Stateful, like the local Postgres volume: clients.json is the brand registry.
+  # Reaching here means a --force re-run (the clobber gate above already exited
+  # otherwise). Overwriting it would drop every brand but the first and rotate the
+  # tokens out from under live logins — even though the brand content in
+  # workspace-sancho / Postgres survives, MC would stop listing those brands.
+  # Preserve it; only scaffold a fresh file on a first install.
+  brand_count="$(grep -cE '"slug"[[:space:]]*:' "$CLIENTS_FILE" 2>/dev/null || true)"
+  ok "$CLIENTS_FILE preserved (${brand_count:-existing} brand(s) kept)"
+else
 cat > "$CLIENTS_FILE" <<JSON
 {
   "\$schema": "clients.schema.json",
@@ -232,7 +412,8 @@ cat > "$CLIENTS_FILE" <<JSON
   "adminEmails": []
 }
 JSON
-ok "$CLIENTS_FILE written"
+  ok "$CLIENTS_FILE written"
+fi
 
 # --- Final checklist (E5) ----------------------------------------------------
 say ""
@@ -242,15 +423,40 @@ if [ "${DB_MODE:-local}" = "local" ]; then
   say "   ${DIM}(bundled Postgres is enabled via COMPOSE_PROFILES=local-db)${RST}"
 fi
 say ""
+
+# Login + model auth summary — the two things needed to actually USE the app.
+say "${B}Log in${RST} at ${CYN}${BASE_URL}${RST}"
+if [ -n "$GOOGLE_CLIENT_ID" ]; then
+  say "   • Google login: ${GRN}ON${RST} (for the accounts you configured)."
+else
+  say "   • Google login: ${DIM}off${RST} — use the admin token below."
+fi
+say "   • Admin access token ${DIM}(paste into the 'Access Token' field on the sign-in page)${RST}:"
+say "       ${B}${ADMIN_TOKEN}${RST}"
+say "   ${DIM}(also stored in config/clients.json and .env as MC_ADMIN_TOKEN — keep it secret)${RST}"
+if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
+  say "   • Anthropic auth: subscription ${DIM}(Claude OAuth token set)${RST}"
+else
+  say "   • Anthropic auth: api_key ${DIM}(API key set)${RST}"
+fi
+say ""
 if [ "$ENABLE_YALC" = "1" ]; then
   say "${B}Outreach (YALC) is enabled.${RST}"
   say "   ${DIM}install.sh starts it automatically (or add -f docker-compose.yalc.yml).${RST}"
   say "   ${DIM}Add your email provider key (e.g. Instantly) in the Outreach cockpit to send.${RST}"
   say ""
 fi
+if [ "$ENABLE_OD" = "1" ]; then
+  say "${B}Open Design is enabled.${RST}"
+  say "   ${DIM}install.sh starts it automatically (or add -f docker-compose.od.yml).${RST}"
+  say "   ${DIM}Web app reachable at ${OD_WEB_URL}.${RST}"
+  say ""
+fi
 say "${B}Optional integrations${RST} — configure later (all off by default):"
 say "   • Slack          → Mission Control → Settings → APIs"
-say "   • Open Design     → add  -f docker-compose.od.yml  (needs OD_API_TOKEN)"
+if [ "$ENABLE_OD" != "1" ]; then
+  say "   • Open Design     → re-run with WIZARD: ENABLE_OD=yes, or add -f docker-compose.od.yml"
+fi
 if [ "$ENABLE_YALC" != "1" ]; then
   say "   • YALC / Outreach → re-run with WIZARD: ENABLE_YALC=yes, or add -f docker-compose.yalc.yml"
 fi
