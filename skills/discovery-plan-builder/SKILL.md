@@ -168,9 +168,10 @@ ejecuta el runner inline con los 9 creators fake del mockup.
 
 Resume en una línea + próximos pasos:
 
-> 🚀 Búsqueda lanzada — tarea Outreach creada (runner en cola). Cuando el
-> runner termine veréis los candidatos con su quality score en
-> **Outreach → Encuentra** (los descartados automáticos quedan consultables).
+> 🚀 Búsqueda lanzada — Rocinante está ejecutando el discovery ahora (scrapea
+> creators según el plan). Cuando termine veréis los candidatos con su quality
+> score en **Outreach → Encuentra** (los descartados automáticos quedan
+> consultables).
 
 Incluye `searchId` y `campaignId` por si el usuario opera por MCP/CLI después.
 
