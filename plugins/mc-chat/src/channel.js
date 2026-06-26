@@ -17,41 +17,12 @@ import {
   createChatChannelPlugin,
   createChannelPluginBase,
 } from "openclaw/plugin-sdk/core";
-
-const CHANNEL_KEY = "mc-chat";
-const DEFAULT_ACCOUNT_ID = "default";
-
-/**
- * Resolve account config from openclaw.json channels.mc-chat
- * Must be resilient to missing config — return safe defaults.
- */
-function resolveAccount(cfg, accountId) {
-  const section = cfg?.channels?.[CHANNEL_KEY];
-  if (!section) {
-    return {
-      accountId: accountId ?? DEFAULT_ACCOUNT_ID,
-      mcServerUrl: "http://localhost:18790",
-      sharedSecret: "",
-      allowFrom: [],
-      dmPolicy: "allowlist",
-    };
-  }
-  return {
-    accountId: accountId ?? DEFAULT_ACCOUNT_ID,
-    mcServerUrl: section.mcServerUrl || "http://localhost:18790",
-    sharedSecret: section.sharedSecret || "",
-    allowFrom: section.allowFrom || [],
-    dmPolicy: section.dmSecurity || "allowlist",
-  };
-}
-
-/**
- * Check if the channel has config present.
- */
-function isConfigured(cfg) {
-  const section = cfg?.channels?.[CHANNEL_KEY];
-  return Boolean(section?.mcServerUrl);
-}
+import {
+  CHANNEL_KEY,
+  DEFAULT_ACCOUNT_ID,
+  resolveAccount,
+  isConfigured,
+} from "./account.js";
 
 export const mcChatPlugin = createChatChannelPlugin({
   base: createChannelPluginBase({
