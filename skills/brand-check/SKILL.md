@@ -1,12 +1,12 @@
 ---
 name: brand-check
-description: "Brand coherence verification de cualquier output de marca (post, blog, ad, email, slide, página, thread) contra la Foundation. Aplica 4 dominios: voice & tone (siempre), messaging consistency (siempre que haya claims), visual identity (cuando aplique), SEO basics (cuando aplique). Devuelve veredicto PASS / NEEDS REVISION / MAJOR ISSUES con score y action list priorizada. Skill de Rocinante — invocada solo vía dispatch (`sessions_send` con `**Tipo**: brand-check`), no user-invocable. Use when: pipeline ha generado un draft y antes de publicar, cualquier sancho-manager request con tipo brand-check, o tras editar un asset existente. NOT for: fact-checking de datos numéricos (eso es qa-bot vía deep-research Phase 6), copy-editing prosaico (eso es copywriting), generación de contenido (skills de canal como social-writer/seo-content/newsletter)."
+description: "Brand coherence verification de cualquier output de marca (post, blog, ad, email, slide, página, thread) contra la Foundation. Aplica 4 dominios: voice & tone (siempre), messaging consistency (siempre que haya claims), visual identity (cuando aplique), SEO basics (cuando aplique). Devuelve veredicto PASS / NEEDS REVISION / MAJOR ISSUES con score y action list priorizada. Skill de Sansón — invocada solo vía dispatch (`sessions_send` con `**Tipo**: brand-check`), no user-invocable. Use when: pipeline ha generado un draft y antes de publicar, cualquier sancho-manager request con tipo brand-check, o tras editar un asset existente. NOT for: fact-checking de datos numéricos (eso es qa-bot vía deep-research Phase 6), copy-editing prosaico (eso es copywriting), generación de contenido (skills de canal como social-writer/seo-content/newsletter)."
 user-invocable: false
 metadata:
   author: Alfonso Sainz de Baranda (Growth4U)
   version: '1.0'
   system: SanchoCMO
-  agent: rocinante
+  agent: sanson
   phase: any
   layer: any
   depends_on: []
@@ -25,7 +25,7 @@ context_writes:
 
 # Brand Check
 
-> Verificación estructural de alineamiento marca de cualquier output, antes de publicar. Skill de Rocinante.
+> Verificación estructural de alineamiento marca de cualquier output, antes de publicar. Skill de Sansón.
 
 ## When to Use
 
