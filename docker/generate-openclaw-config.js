@@ -15,6 +15,37 @@ const path = require('path');
 const OPENCLAW_ROOT = process.env.OPENCLAW_HOME || '/root/.openclaw';
 const OPENCLAW_JSON = path.join(OPENCLAW_ROOT, '.openclaw', 'openclaw.json');
 
+// SAN-345 — Fireworks' OpenAI-compatible function-calling validator rejects or
+// silently breaks several JSON-schema keywords: `not` hard-400s (verified, see
+// OpenClaw issue #75444 on kimi-k2p5-turbo), and oneOf/pattern/length
+// constraints are unsupported (under xgrammar they mis-constrain instead of
+// erroring). When a tool schema carries one, the model gets NO usable tools and
+// narrates the steps as text instead of calling them (the GLM-5.2 "list files →
+// print text failed" symptom). OpenClaw strips these via
+// `compat.unsupportedToolSchemaKeywords`, so we set the same set on every
+// Fireworks model. This addresses the schema half of the failure; the other
+// half (Fireworks mis-parsing a model's native tool-call format) is theirs and
+// is caught content-side by the tool-echo detector (SAN-342).
+const FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS = [
+  'not', 'oneOf', 'pattern', 'minLength', 'maxLength', 'minItems', 'maxItems',
+];
+
+/**
+ * Set `compat.unsupportedToolSchemaKeywords` on every model under the Fireworks
+ * provider. UPSERTS onto already-present entries — the default-seeding merge
+ * only pushes models with a NEW id, so a model already in openclaw.json (e.g.
+ * glm-5p2 on a redeployed staging) would otherwise never get the field. Pure
+ * and idempotent; safe on missing/empty providers.
+ */
+function applyFireworksToolSchemaCompat(fireworksProvider) {
+  if (!fireworksProvider || !Array.isArray(fireworksProvider.models)) return;
+  for (const model of fireworksProvider.models) {
+    if (!model || typeof model !== 'object') continue;
+    if (!model.compat || typeof model.compat !== 'object') model.compat = {};
+    model.compat.unsupportedToolSchemaKeywords = [...FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS];
+  }
+}
+
 async function main() {
   // Ensure .openclaw directory exists
   const configDir = path.dirname(OPENCLAW_JSON);
@@ -158,7 +189,6 @@ async function main() {
       input: ['text', 'image'],
       contextWindow: 256000,
       maxTokens: 256000,
-      compat: { unsupportedToolSchemaKeywords: ['not'] },
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
     }
   ];
@@ -171,6 +201,10 @@ async function main() {
   for (const model of fireworksDefaultModels) {
     if (!fireworksModelIds.has(model.id)) fireworksProvider.models.push(model);
   }
+  // SAN-345: strip Fireworks-incompatible tool-schema keywords on ALL fireworks
+  // models — UPSERTS onto pre-existing entries too (the loop above only seeds
+  // new ids), so glm-5p2 already in a redeployed config gets the field.
+  applyFireworksToolSchemaCompat(fireworksProvider);
 
   // --- Session agents (rocinante, hamete, alarife) ---
   config.agents.list = [
@@ -356,7 +390,18 @@ function fetchGuilds(token) {
   });
 }
 
-main().catch(e => {
-  console.error('[config] Fatal error:', e.message);
-  process.exit(1);
-});
+// Run as a script (deploy path: `node generate-openclaw-config.js`). The guard
+// keeps `require()`-ing this module side-effect-free so its helpers can be unit
+// tested.
+if (require.main === module) {
+  main().catch(e => {
+    console.error('[config] Fatal error:', e.message);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  main,
+  applyFireworksToolSchemaCompat,
+  FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS,
+};
