@@ -304,24 +304,30 @@ if [ "${ANTHROPIC_AUTH_MODE:-api_key}" = "subscription" ]; then
   echo "[entrypoint] Ensuring Anthropic subscription auth profile..."
   node docker/ensure-anthropic-subscription-auth.js || \
     echo "[entrypoint] WARNING: ensure-anthropic-subscription-auth failed; Anthropic may use stale auth"
-  # The model layer (pi-ai's Anthropic provider) resolves the Anthropic
-  # credential from env in this order: ANTHROPIC_OAUTH_TOKEN, then
-  # ANTHROPIC_API_KEY. Any value containing "sk-ant-oat" is auto-detected as an
-  # OAuth (subscription) token → Bearer auth + Claude Code identity headers, so
-  # it bills the Claude Max subscription instead of API credit. We already ship
-  # a subscription token as CLAUDE_CODE_OAUTH_TOKEN (used by the Cervantes
-  # Claude Code service); mirror it into ANTHROPIC_OAUTH_TOKEN so the OpenClaw
-  # gateway agents use the subscription too. Without this the provider falls
-  # through to ANTHROPIC_API_KEY — the silent API-billing footgun. Idempotent.
+  # ANTHROPIC_OAUTH_TOKEN is the single user-facing subscription variable (what
+  # the wizard + UI write, and the spelling pi-ai's Anthropic provider reads
+  # natively). The model layer resolves the credential from env in this order:
+  # ANTHROPIC_OAUTH_TOKEN, then ANTHROPIC_API_KEY. Any value containing
+  # "sk-ant-oat" is auto-detected as an OAuth (subscription) token → Bearer auth
+  # + Claude Code identity headers, so it bills the Claude Max subscription
+  # instead of API credit. Without it the provider falls through to
+  # ANTHROPIC_API_KEY — the silent API-billing footgun (SAN-332).
   #
-  # CLAUDE_CODE_OAUTH_TOKEN is the single user-facing subscription variable (the
-  # one `claude setup-token` emits, and what the wizard + UI write). ANTHROPIC_-
-  # OAUTH_TOKEN is a pure internal alias derived here — never set by the user.
-  # Derive authoritatively (CLAUDE_CODE wins) so editing the canonical var always
-  # refreshes the alias; a stale ANTHROPIC_OAUTH_TOKEN can never shadow it.
-  if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+  # Backward-compat: an older install that only set the Claude-Code-native
+  # CLAUDE_CODE_OAUTH_TOKEN still lights up the motor — promote it to the
+  # canonical name when the canonical one is empty. Idempotent.
+  if [ -z "${ANTHROPIC_OAUTH_TOKEN:-}" ] && [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
     export ANTHROPIC_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN"
-    echo "[entrypoint] ANTHROPIC_OAUTH_TOKEN derived from CLAUDE_CODE_OAUTH_TOKEN (gateway → Claude subscription)"
+    echo "[entrypoint] ANTHROPIC_OAUTH_TOKEN promoted from legacy CLAUDE_CODE_OAUTH_TOKEN"
+  fi
+  # The reverse alias (CLAUDE_CODE_OAUTH_TOKEN) is the Claude-Code-native spelling
+  # that ONLY the opt-in Discord/Cervantes path needs — the `claude` binary and
+  # the usage-monitor probe read it. Derive it from the canonical var only when
+  # Discord/Cervantes is configured, so a vanilla install never carries the alias.
+  if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -n "${ANTHROPIC_OAUTH_TOKEN:-}" ] \
+     && [ -n "${DISCORD_BOT_TOKEN:-}${DISCORD_WEBHOOK_CERVANTES:-}${CERVANTES_GUILD_ID:-}" ]; then
+    export CLAUDE_CODE_OAUTH_TOKEN="$ANTHROPIC_OAUTH_TOKEN"
+    echo "[entrypoint] CLAUDE_CODE_OAUTH_TOKEN derived from ANTHROPIC_OAUTH_TOKEN (Discord/Cervantes path)"
   fi
   # Blank ANTHROPIC_API_KEY for Sancho's process so the provider can only resolve
   # the OAuth token — never a silent fall-through to API-key billing (the
@@ -704,14 +710,15 @@ COST_TRACKER_PID=$!
 # Watches the Claude subscription's "extra usage" headroom and alerts to
 # Discord (#cervantes-admin) BEFORE it runs out — so the subscription-backed
 # agents don't get silently rejected ("out of extra usage"). It does a 1-token
-# probe with CLAUDE_CODE_OAUTH_TOKEN and reads the anthropic-ratelimit-unified-*
-# headers (exact utilization per window). Gated: only runs when both the OAuth
-# token and the Discord webhook are present (no token = nothing to measure;
+# probe with the subscription OAuth token and reads the anthropic-ratelimit-
+# unified-* headers (exact utilization per window). Gated: only runs when both the
+# OAuth token (canonical ANTHROPIC_OAUTH_TOKEN, or the legacy CLAUDE_CODE_OAUTH_-
+# TOKEN alias) and the Discord webhook are present (no token = nothing to measure;
 # no webhook = nowhere to alert). The monitor self-dedupes, so this loop just
 # re-checks on an interval. Default 30 min; tune with USAGE_MONITOR_INTERVAL.
 USAGE_MONITOR_INTERVAL="${USAGE_MONITOR_INTERVAL:-1800}"
 USAGE_MONITOR_LOG="/root/.openclaw/workspace-sancho/_system/usage-monitor.log"
-if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ]; then
+if [ -n "${ANTHROPIC_OAUTH_TOKEN:-}${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}" ]; then
   mkdir -p "$(dirname "$USAGE_MONITOR_LOG")"
   echo "[entrypoint] Starting usage-monitor loop (every ${USAGE_MONITOR_INTERVAL}s)…"
   (
@@ -730,7 +737,7 @@ if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ -n "${DISCORD_WEBHOOK_CERVANTES:-}
   ) &
   USAGE_MONITOR_PID=$!
 else
-  echo "[entrypoint] usage-monitor skipped (need CLAUDE_CODE_OAUTH_TOKEN + DISCORD_WEBHOOK_CERVANTES)"
+  echo "[entrypoint] usage-monitor skipped (need ANTHROPIC_OAUTH_TOKEN + DISCORD_WEBHOOK_CERVANTES)"
   USAGE_MONITOR_PID=""
 fi
 
