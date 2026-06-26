@@ -196,6 +196,12 @@ async function main() {
   const fireworksProvider = config.models.providers.fireworks;
   if (!fireworksProvider.baseUrl) fireworksProvider.baseUrl = 'https://api.fireworks.ai/inference/v1';
   if (!fireworksProvider.api) fireworksProvider.api = 'openai-completions';
+  // SAN-347 — raise the per-provider idle watchdog like Anthropic (default cap:
+  // 120s between stream chunks). GLM 5.2 (1M context, reasoning, slower tier)
+  // can exceed 120s between chunks on heavy/long runs and die with "LLM request
+  // timed out". agents.defaults.timeoutSeconds (48h) is untouched — this only
+  // widens the per-provider idle window. Idempotent: preserves an existing value.
+  fireworksProvider.timeoutSeconds = fireworksProvider.timeoutSeconds || 300;
   if (!Array.isArray(fireworksProvider.models)) fireworksProvider.models = [];
   const fireworksModelIds = new Set(fireworksProvider.models.map(m => m && m.id).filter(Boolean));
   for (const model of fireworksDefaultModels) {
