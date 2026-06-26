@@ -79,14 +79,44 @@ else
   log "framework up to date (${home_ver}) — skipping refresh"
 fi
 
-# --- Data-bearing dirs: seed ONLY if absent (never overwrite user data) ------
+# --- Data-bearing dirs: seed when absent, self-heal a partial seed -----------
+# Never overwrite user data, but DO recover from an interrupted first boot. The
+# old "copy only if absent" wedged forever when a boot was killed mid-copy: the
+# half-written dir (e.g. workspace-sancho without scripts/) already existed, so
+# the re-seed was skipped, the server entrypoint stayed missing, and the
+# container crash-looped with no recovery (SAN-329).
+#
+# Per dir:
+#   - absent → copy into a temp dir, then atomically rename it into place. The
+#     rename is the commit, so a killed copy NEVER leaves a partial dir behind —
+#     on the next boot the real dir is still absent and we simply re-seed.
+#   - present but not marked complete (a pre-marker install, or a copy
+#     interrupted before this guard existed) → fill in only the missing files
+#     with a no-clobber merge (user data is never overwritten), then mark it.
+#   - present and marked complete → leave untouched.
+# Completion is tracked OUT of the data dirs, under .sancho-seed-state/, so the
+# marker never pollutes the seeded content.
+SEED_STATE="$HOME_DIR/.sancho-seed-state"
+mkdir -p "$SEED_STATE"
+# Drop temp dirs abandoned by a previously-killed copy.
+rm -rf "$HOME_DIR"/.seed-tmp.* 2>/dev/null || true
+
 for d in agents config cron \
          workspace-sancho workspace-cervantes workspace-hamete \
          workspace-dulcinea workspace-rocinante workspace-mambrino workspace-merlin \
          workspace-sanson workspace-alarife workspace-maese-pedro; do
-  if [ -d "$SEED/$d" ] && [ ! -e "$HOME_DIR/$d" ]; then
-    cp -a "$SEED/$d" "$HOME_DIR/$d"
+  [ -d "$SEED/$d" ] || continue
+  if [ ! -e "$HOME_DIR/$d" ]; then
+    tmp="$HOME_DIR/.seed-tmp.$d.$$"
+    rm -rf "$tmp"
+    cp -a "$SEED/$d" "$tmp"
+    mv "$tmp" "$HOME_DIR/$d"        # atomic publish — the dir appears only once complete
+    : > "$SEED_STATE/$d"
     log "seeded $d (first run)"
+  elif [ ! -f "$SEED_STATE/$d" ]; then
+    cp -an "$SEED/$d/." "$HOME_DIR/$d/" 2>/dev/null || true   # no-clobber merge
+    : > "$SEED_STATE/$d"
+    log "completed partial seed for $d (self-heal, SAN-329)"
   fi
 done
 
