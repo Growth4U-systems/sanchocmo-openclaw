@@ -501,12 +501,14 @@
         "brand-check",
         "qa-review",
         "devil-advocate",
-        "foundation-verification"
+        "foundation-verification",
+        "level-up"
       ],
       "skills_owned": [
         "brand-check",
         "qa-bot",
-        "ecp-validation"
+        "ecp-validation",
+        "level-up"
       ],
       "skills_invokable": [],
       "brand_context": [

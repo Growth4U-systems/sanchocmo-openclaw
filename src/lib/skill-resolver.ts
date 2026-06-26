@@ -186,6 +186,7 @@ const SKILL_OWNER_MAP: Record<string, string> = {
   "pov-bank-builder": "dulcinea",
   "programmatic-seo": "dulcinea",
   "qa-bot": "sanson",
+  "level-up": "sanson",
   "railway": "cervantes",
   "referral-program": "rocinante",
   "revops": "rocinante",
