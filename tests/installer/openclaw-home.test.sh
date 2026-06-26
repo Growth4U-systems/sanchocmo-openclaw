@@ -3,10 +3,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 
-# Sandbox: copia install.sh y un .env mínimo; el helper no debe depender de docker.
+# Sandbox: install.sh (shim) + el CLI sancho + la librería compose-env.sh.
+# El helper no debe depender de docker para fijar OPENCLAW_HOME.
 cp "$ROOT/install.sh" "$TMP/install.sh"
+cp "$ROOT/sancho" "$TMP/sancho"
 mkdir -p "$TMP/scripts" "$TMP/bin"
-# wizard stub: no-op (install.sh lo llama solo si falta .env; acá ya existe)
+cp "$ROOT/scripts/compose-env.sh" "$TMP/scripts/compose-env.sh"
+# wizard stub: no-op (se llama solo si falta .env; acá ya existe)
 printf '#!/usr/bin/env bash\n' > "$TMP/scripts/wizard.sh"
 # Shims para los prereqs de la sección 1 (no instalar nada real).
 for c in docker openssl; do printf '#!/usr/bin/env bash\nexit 0\n' > "$TMP/bin/$c"; chmod +x "$TMP/bin/$c"; done

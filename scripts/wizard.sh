@@ -153,7 +153,7 @@ if [ "${#EXISTING[@]}" -gt 0 ] && [ "$FORCE" != "1" ]; then
 fi
 
 say "${B}SanchoCMO — setup wizard${RST}"
-say "${DIM}Generates .env + config/*.json so you can 'docker compose up'.${RST}"
+say "${DIM}Generates .env + config/*.json so you can './sancho up'.${RST}"
 
 # --- 1. Model provider + auth ------------------------------------------------
 # Ask the auth MODE first, then collect the credential that mode actually needs
@@ -422,7 +422,7 @@ fi
 # --- Final checklist (E5) ----------------------------------------------------
 say ""
 say "${GRN}${B}✅ Configuration ready.${RST}"
-say "   Start it with:  ${CYN}docker compose -f docker-compose.yml up -d${RST}  →  ${BASE_URL}"
+say "   Start it with:  ${CYN}./sancho up${RST}  →  ${BASE_URL}"
 if [ "${DB_MODE:-local}" = "local" ]; then
   say "   ${DIM}(bundled Postgres is enabled via COMPOSE_PROFILES=local-db)${RST}"
 fi
@@ -446,23 +446,23 @@ fi
 say ""
 if [ "$ENABLE_YALC" = "1" ]; then
   say "${B}Outreach (YALC) is enabled.${RST}"
-  say "   ${DIM}install.sh starts it automatically (or add -f docker-compose.yalc.yml).${RST}"
+  say "   ${DIM}./sancho starts it automatically.${RST}"
   say "   ${DIM}Add your email provider key (e.g. Instantly) in the Outreach cockpit to send.${RST}"
   say ""
 fi
 if [ "$ENABLE_OD" = "1" ]; then
   say "${B}Open Design is enabled.${RST}"
-  say "   ${DIM}install.sh starts it automatically (or add -f docker-compose.od.yml).${RST}"
+  say "   ${DIM}./sancho starts it automatically.${RST}"
   say "   ${DIM}Web app reachable at ${OD_WEB_URL}.${RST}"
   say ""
 fi
 say "${B}Optional integrations${RST} — configure later (all off by default):"
 say "   • Slack          → Mission Control → Settings → APIs"
 if [ "$ENABLE_OD" != "1" ]; then
-  say "   • Open Design     → re-run with WIZARD: ENABLE_OD=yes, or add -f docker-compose.od.yml"
+  say "   • Open Design     → ${CYN}./sancho install --od${RST} (or re-run wizard with ENABLE_OD=yes)"
 fi
 if [ "$ENABLE_YALC" != "1" ]; then
-  say "   • YALC / Outreach → re-run with WIZARD: ENABLE_YALC=yes, or add -f docker-compose.yalc.yml"
+  say "   • YALC / Outreach → ${CYN}./sancho install --yalc${RST} (or re-run wizard with ENABLE_YALC=yes)"
 fi
 say "   • Discord         → set DISCORD_BOT_TOKEN in .env"
 say ""

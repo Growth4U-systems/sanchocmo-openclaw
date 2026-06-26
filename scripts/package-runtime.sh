@@ -9,7 +9,9 @@ FILES=(
   docker-compose.yml
   docker-compose.od.yml
   docker-compose.yalc.yml
+  sancho
   install.sh
+  scripts/compose-env.sh
   scripts/wizard.sh
   .env.example
 )

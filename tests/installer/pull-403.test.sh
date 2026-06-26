@@ -3,9 +3,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 
-# Extraer solo la función pull_images de install.sh para testearla aislada.
-# (install.sh debe definirla; la sourceamos con un guard que evita ejecutar main.)
-cp "$ROOT/install.sh" "$TMP/install.sh"
+# pull_images vive en la librería sourceable scripts/compose-env.sh (sin main),
+# así que la sourceamos aislada para testearla.
+mkdir -p "$TMP/scripts"
+cp "$ROOT/scripts/compose-env.sh" "$TMP/scripts/compose-env.sh"
 
 # Shim de docker que simula 403 en `compose pull`.
 mkdir -p "$TMP/bin"
@@ -20,8 +21,8 @@ SH
 chmod +x "$TMP/bin/docker"
 
 # Sin Dockerfile en el dir → install de producto → un pull 403 persistente es fatal.
-out="$( cd "$TMP" && PATH="$TMP/bin:$PATH" SANCHO_PULL_TEST=1 bash -c '
-  source ./install.sh           # debe definir funciones y NO correr main bajo SANCHO_PULL_TEST
+out="$( cd "$TMP" && PATH="$TMP/bin:$PATH" bash -c '
+  source ./scripts/compose-env.sh   # pura: define funciones, no corre nada
   COMPOSE="docker compose"; COMPOSE_ARGS="-f docker-compose.yml"; SCRIPT_DIR="'"$TMP"'"
   pull_images
 ' 2>&1 )" && rc=0 || rc=$?

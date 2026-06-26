@@ -1,0 +1,231 @@
+#!/usr/bin/env bash
+# ============================================================================
+# sancho — CLI único de ciclo de vida de SanchoCMO.
+# ----------------------------------------------------------------------------
+# Un solo comando para instalar, levantar, bajar, actualizar y operar el stack,
+# sin que el usuario tenga que recordar los `-f docker-compose.*.yml`.
+#
+#   ./sancho install [--od|--yalc|--build|--no-up|--force]
+#                           primer arranque: wizard (si falta .env) + up
+#   ./sancho up             levanta el stack (overlays habilitados en .env)
+#   ./sancho down           baja contenedores + red, CONSERVA los datos
+#   ./sancho restart        down + up
+#   ./sancho update [tag]   sin arg: última del tag actual; con arg (vX.Y.Z|
+#                           edge|latest): pinea SANCHOCMO_IMAGE y actualiza
+#   ./sancho logs [svc]     tail -f de logs (default: sanchocmo)
+#   ./sancho status         estado de los contenedores del stack
+#   ./sancho destroy        down -v — BORRA los datos (pide confirmación)
+#   ./sancho reconfigure    re-corre el wizard de configuración
+#   ./sancho help           esta ayuda
+# ============================================================================
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+# shellcheck source=scripts/compose-env.sh
+source "$SCRIPT_DIR/scripts/compose-env.sh"
+
+IMAGE_REPO="ghcr.io/growth4u-systems/sanchocmo"
+
+usage() {
+  cat <<'EOF'
+sancho — CLI único de ciclo de vida de SanchoCMO.
+
+  ./sancho install [--od|--yalc|--build|--no-up|--force]
+                          primer arranque: wizard (si falta .env) + up
+  ./sancho up             levanta el stack (overlays habilitados en .env)
+  ./sancho down           baja contenedores + red, CONSERVA los datos
+  ./sancho restart        down + up
+  ./sancho update [tag]   sin arg: última del tag actual; con arg (vX.Y.Z|
+                          edge|latest): pinea SANCHOCMO_IMAGE y actualiza
+  ./sancho logs [svc]     tail -f de logs (default: sanchocmo)
+  ./sancho status         estado de los contenedores del stack
+  ./sancho destroy        down -v — BORRA los datos (pide confirmación)
+  ./sancho reconfigure    re-corre el wizard de configuración
+  ./sancho help           esta ayuda
+EOF
+}
+
+require_env() {
+  [ -f .env ] || die "No hay .env todavía. Configurá primero con:  ./sancho install"
+}
+
+# Espera a que MC esté realmente listo (healthcheck del contenedor) y recién ahí
+# imprime la URL de acceso — en vez de anunciar apenas `up -d` retorna, cuando
+# los contenedores todavía están arrancando.
+announce_ready() {
+  local base rc=0
+  base="$(get_base_url)"
+  echo ""
+  wait_until_healthy sanchocmo 180 || rc=$?
+  case "$rc" in
+    0) bold "✅ Mission Control está arriba — entrá acá:"
+       printf '   \033[1;36m%s\033[0m\n' "$base" ;;
+    2) bold "Mission Control levantado:"
+       echo  "   $base" ;;
+    *) bold "⏳ Los contenedores siguen iniciando (puede tardar un poco la primera vez)."
+       echo  "   Seguí el progreso:           ./sancho logs"
+       echo  "   Cuando termine de levantar:  $base" ;;
+  esac
+}
+
+# ---------------------------------------------------------------------------
+# install — wizard (si falta .env) + up. Reemplaza al viejo install.sh.
+# ---------------------------------------------------------------------------
+cmd_install() {
+  WITH_OD=0; WITH_YALC=0; DO_UP=1; FORCE_ARG=""; BUILD=0
+  for arg in "$@"; do
+    case "$arg" in
+      --od) WITH_OD=1 ;;
+      --yalc) WITH_YALC=1 ;;
+      --no-up) DO_UP=0 ;;
+      --build) BUILD=1 ;;
+      --force) FORCE_ARG="--force" ;;
+      -h|--help) usage; exit 0 ;;
+      *) die "Flag desconocido para install: $arg" ;;
+    esac
+  done
+
+  bold "SanchoCMO — instalación"
+  check_prereqs
+
+  # Configurar (wizard) si falta .env o se fuerza.
+  if [ ! -f .env ] || [ -n "$FORCE_ARG" ]; then
+    echo ""
+    bash scripts/wizard.sh $FORCE_ARG
+  else
+    echo "  ✓ .env ya presente — salteo el wizard (usá --force para reconfigurar)"
+  fi
+
+  # El contenedor lee config desde OPENCLAW_HOME (default ~/.openclaw). En un
+  # install de producto/clone nadie lo setea, así que lo fijamos a este dir sin
+  # pisar un valor existente (el deploy de G4U lo define). Ver SAN-138.
+  ensure_env_default OPENCLAW_HOME "$SCRIPT_DIR"
+  ensure_env_default SNAPSHOT_DATA_DIR "$SCRIPT_DIR/snapshots"
+
+  detect_compose
+  build_compose_args
+
+  if [ "$DO_UP" != "1" ]; then
+    echo ""
+    bold "Configurado. Levantalo cuando quieras:"
+    echo "  ./sancho up"
+    return 0
+  fi
+
+  echo ""
+  if [ "$BUILD" = "1" ]; then
+    [ -f "$SCRIPT_DIR/Dockerfile" ] || die "--build necesita el source (Dockerfile) en $SCRIPT_DIR. En un install de producto (sin clonar) usá el modo normal."
+    bold "Buildeando y levantando ($COMPOSE $COMPOSE_ARGS up -d --build)"
+    # shellcheck disable=SC2086
+    $COMPOSE $COMPOSE_ARGS up -d --build
+  else
+    bold "Bajando imágenes ($COMPOSE $COMPOSE_ARGS pull)"
+    pull_images
+    bold "Levantando contenedores ($COMPOSE $COMPOSE_ARGS up -d)"
+    # shellcheck disable=SC2086
+    $COMPOSE $COMPOSE_ARGS up -d
+  fi
+  announce_ready
+  echo ""
+  echo "  Otros comandos:  ./sancho logs · status · update · down"
+}
+
+# ---------------------------------------------------------------------------
+# up — levanta el stack con los overlays habilitados.
+# ---------------------------------------------------------------------------
+cmd_up() {
+  require_env; detect_compose; build_compose_args
+  bold "Levantando ($COMPOSE $COMPOSE_ARGS up -d)"
+  # shellcheck disable=SC2086
+  $COMPOSE $COMPOSE_ARGS up -d
+  announce_ready
+}
+
+# ---------------------------------------------------------------------------
+# down — baja contenedores + red (todos los overlays). Conserva los datos.
+# ---------------------------------------------------------------------------
+cmd_down() {
+  require_env; detect_compose; build_compose_args
+  bold "Bajando ($COMPOSE $COMPOSE_ARGS down --remove-orphans)"
+  # shellcheck disable=SC2086
+  $COMPOSE $COMPOSE_ARGS down --remove-orphans
+  echo "  ✓ Stack bajado. Los datos (volúmenes) se conservan — ./sancho up para volver."
+}
+
+cmd_restart() { cmd_down; echo ""; cmd_up; }
+
+# ---------------------------------------------------------------------------
+# update [tag] — pinea la versión (opcional) y baja la última imagen.
+# ---------------------------------------------------------------------------
+cmd_update() {
+  require_env; detect_compose
+  local tag="${1:-}"
+  if [ -n "$tag" ]; then
+    [[ "$tag" =~ ^(v[0-9].*|edge|latest)$ ]] \
+      || die "Tag inválido: '$tag'. Usá vX.Y.Z, edge o latest."
+    bold "Pineando versión: $IMAGE_REPO:$tag"
+    set_env_var SANCHOCMO_IMAGE "$IMAGE_REPO:$tag"
+  fi
+  build_compose_args
+  bold "Bajando imágenes ($COMPOSE $COMPOSE_ARGS pull)"
+  pull_images
+  bold "Aplicando ($COMPOSE $COMPOSE_ARGS up -d)"
+  # shellcheck disable=SC2086
+  $COMPOSE $COMPOSE_ARGS up -d
+  announce_ready
+}
+
+# ---------------------------------------------------------------------------
+# logs / status — todos los overlays para abarcar cualquier servicio corriendo.
+# ---------------------------------------------------------------------------
+cmd_logs() {
+  require_env; detect_compose; build_compose_args
+  local svc="${1:-sanchocmo}"
+  # shellcheck disable=SC2086
+  exec $COMPOSE $COMPOSE_ARGS logs -f "$svc"
+}
+
+cmd_status() {
+  require_env; detect_compose; build_compose_args
+  # shellcheck disable=SC2086
+  $COMPOSE $COMPOSE_ARGS ps
+}
+
+# ---------------------------------------------------------------------------
+# destroy — down -v. BORRA los datos. Exige confirmación escrita.
+# ---------------------------------------------------------------------------
+cmd_destroy() {
+  require_env; detect_compose; build_compose_args
+  bold "⚠ Esto va a BORRAR los datos (volúmenes) del stack:"
+  # shellcheck disable=SC2086
+  $COMPOSE $COMPOSE_ARGS config --volumes 2>/dev/null | sed 's/^/    - /' || true
+  echo ""
+  printf '  Escribí "destroy" para confirmar (cualquier otra cosa aborta): '
+  local ans; read -r ans </dev/tty || true
+  [ "$ans" = "destroy" ] || { echo "  Abortado — no se borró nada."; exit 0; }
+  bold "Borrando ($COMPOSE $COMPOSE_ARGS down -v --remove-orphans)"
+  # shellcheck disable=SC2086
+  $COMPOSE $COMPOSE_ARGS down -v --remove-orphans
+  echo "  ✓ Stack y datos eliminados."
+}
+
+cmd_reconfigure() { cmd_install --force --no-up; }
+
+# ---------------------------------------------------------------------------
+# Dispatch.
+# ---------------------------------------------------------------------------
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  install)            cmd_install "$@" ;;
+  up|start)           cmd_up ;;
+  down|stop)          cmd_down ;;
+  restart)            cmd_restart ;;
+  update|upgrade)     cmd_update "$@" ;;
+  logs)               cmd_logs "$@" ;;
+  status|ps)          cmd_status ;;
+  destroy)            cmd_destroy ;;
+  reconfigure)        cmd_reconfigure ;;
+  help|-h|--help)     usage ;;
+  *) die "Comando desconocido: $cmd  (probá: ./sancho help)" ;;
+esac

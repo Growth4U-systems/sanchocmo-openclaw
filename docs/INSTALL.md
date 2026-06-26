@@ -66,14 +66,25 @@ WIZARD_ASSUME_YES=1 PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-... \
 
 ## Running
 
-```bash
-# Minimum (no Open Design / YALC / Discord):
-docker compose -f docker-compose.yml up -d
+After the first install, use the **`./sancho`** CLI for the whole lifecycle — it
+figures out which compose overlays (Open Design, YALC) to include for you, so you
+never type `-f docker-compose.*.yml` by hand:
 
-# With optional services:
-./install.sh --od        # adds the Open Design overlay (needs OD_API_TOKEN)
-./install.sh --yalc      # adds the YALC overlay
+```bash
+./sancho up            # start the stack (enabled overlays, from .env)
+./sancho down          # stop & remove containers + network (data is kept)
+./sancho status        # show the stack's containers
+./sancho logs          # tail logs (default: the sanchocmo service)
 ```
+
+First install (wizard + start) is `./sancho install` (the classic `./install.sh`
+is a thin shim for it). Opt into optional services at install time with
+`./sancho install --od` / `--yalc`.
+
+> Why a CLI? It always loads the right compose overlays (from your `.env`) and
+> `down` passes `--remove-orphans`, so the project network is always cleaned up
+> — a bare `docker compose down` would leave the YALC container attached and
+> fail with *"network … is still in use"*.
 
 Mission Control is then reachable at the **Base URL** you chose.
 
@@ -131,24 +142,26 @@ The core runs from a versioned public image, so an update is a **pull** — no
 rebuild, no `git pull`:
 
 ```bash
-docker compose pull     # fetch the new sanchocmo image (+ od / yalc if enabled)
-docker compose up -d    # recreate the changed containers
+./sancho update          # pull the latest of the configured tag, then up -d
 ```
 
-`./install.sh` (no flags) does the same `pull && up -d` for you. Add the overlay
-flags (`-f docker-compose.od.yml`, `-f docker-compose.yalc.yml`) to both commands
-if you run those services.
-
-Pin a specific release in `.env` for reproducible upgrades:
+To move to (and pin) a specific version, pass it — the CLI writes
+`SANCHOCMO_IMAGE` into `.env` for you and updates:
 
 ```bash
-SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z
+./sancho update v1.2.3   # pin that release in .env, then pull + up -d
+./sancho update edge     # switch to the rolling staging channel
+./sancho update latest   # back to the latest stable
 ```
 
-Omit it to track `:latest`, or use `:edge` for the rolling staging build.
+Omit the tag to track whatever is configured (`:latest` by default). The pinned
+value lives in `.env` as `SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z`.
 
 > Hacking on a clone instead of running the published image? Build from your
-> source tree with `docker compose up -d --build` (or `./install.sh --build`).
+> source tree with `./sancho install --build`.
+
+To wipe everything **including the database**, `./sancho destroy` (a
+`docker compose down -v`) — it asks you to type `destroy` to confirm.
 
 Schema migrations for the bundled Postgres are **applied automatically at boot**,
 so a new version that adds tables just works — your `postgres_data` volume (and
