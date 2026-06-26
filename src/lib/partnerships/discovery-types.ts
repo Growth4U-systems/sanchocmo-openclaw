@@ -15,6 +15,12 @@
 
 import type { CreatorSignals, QualificationMode, QualityComponent, ScoreBand, TierKey } from "@/lib/calc-creator-core";
 
+/** Tipo de campaña Yalc — una sola pipeline, dos motions: B2B y Partnerships (SAN-349). */
+export type CampaignType = "B2B" | "Partnerships";
+
+/** Fuente del lead: scraping social (`discovery`) o base de datos de empresas (`company-db`) (SAN-349). */
+export type LeadSource = "discovery" | "company-db";
+
 /** Plan estructurado de la búsqueda — espejo del plan-card de encuentra.html. */
 export interface DiscoveryPlan {
   /** Título corto de la búsqueda, p.ej. "Finanzas personales ES · IG+TikTok". */
@@ -85,7 +91,7 @@ export interface DiscoveryLeadPayload {
   email?: string;
   qualityScore: number;
   qualityComponents: LeadQualityComponents;
-  source: "discovery";
+  source: LeadSource;
   tags: string[];
 }
 

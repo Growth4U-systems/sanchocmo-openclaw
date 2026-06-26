@@ -8,7 +8,7 @@
 
 import { DEFAULT_CREATOR_MODEL_CONFIG } from "@/lib/calc-creator-core";
 import type { CreatorModelConfig, QualificationMode, TierKey } from "@/lib/calc-creator-core";
-import type { DiscoveryPlan } from "./discovery-types";
+import type { CampaignType, DiscoveryPlan } from "./discovery-types";
 
 export class DiscoveryPlanError extends Error {
   constructor(message: string) {
@@ -123,13 +123,19 @@ export function parseDiscoveryPlan(
   };
 }
 
-/** Payload del `POST /api/campaigns` de Yalc para una búsqueda Partnerships. */
-export function buildCampaignPayload(plan: DiscoveryPlan): {
+/** Payload del `POST /api/campaigns` de Yalc. `type` selecciona el motion
+ *  (Partnerships por defecto; B2B para outbound — SAN-349). El copy del
+ *  hypothesis/targetSegment es creator-shaped por ahora; el variante B2B llega
+ *  cuando el path B2B llame a esta función (P1/P2). */
+export function buildCampaignPayload(
+  plan: DiscoveryPlan,
+  type: CampaignType = "Partnerships",
+): {
   title: string;
   hypothesis: string;
   targetSegment: string;
   channels: string[];
-  type: "Partnerships";
+  type: CampaignType;
   campaignKind: "creator";
   qualificationMode: QualificationMode;
   disqualifyThreshold: number;
@@ -142,7 +148,7 @@ export function buildCampaignPayload(plan: DiscoveryPlan): {
       `producen partnerships rentables para la marca.`,
     targetSegment: `${plan.sectors.join(", ")} · ${plan.networks.join("+")} · tiers ${tierLabel}`,
     channels: plan.networks,
-    type: "Partnerships",
+    type,
     campaignKind: "creator",
     qualificationMode: plan.qualificationMode ?? "hybrid",
     disqualifyThreshold: plan.disqualifyThreshold ?? DEFAULT_CREATOR_MODEL_CONFIG.qualification.threshold,
