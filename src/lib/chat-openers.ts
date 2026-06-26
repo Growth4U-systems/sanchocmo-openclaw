@@ -211,11 +211,12 @@ export function buildNewTaskThread(slug: string): ThreadConfig {
  * SAN-116) atiende el hilo con sus skills de outreach.
  *
  * - Sin búsqueda: hilo nuevo por click (cada click = un plan nuevo).
- * - Con búsqueda draft: hilo estable por campaña (continuar el plan).
+ * - Con búsqueda: si trae `threadId` persistido (SAN-328), retoma ESE hilo
+ *   (la sesión donde se construyó el plan); si no, hilo estable por campaña.
  */
 export function buildDiscoverySearchThread(
   slug: string,
-  search?: { campaignId: string; title?: string },
+  search?: { campaignId: string; title?: string; threadId?: string | null },
 ): ThreadConfig {
   // Existing search: registry holds skill/agent/doc + opener; threadName is the
   // only field that's title-conditional, so it's overlaid here.
@@ -230,6 +231,14 @@ export function buildDiscoverySearchThread(
       },
     });
     cfg.threadName = search.title ? `Búsqueda: ${search.title}` : "Búsqueda de creators";
+    // SAN-328: si la búsqueda guardó el hilo donde se construyó el plan, reabre
+    // ESE hilo (resume con su historial) en vez del hilo derivado del campaignId
+    // — que estaría vacío y dispararía el initialMessage "Repasemos y lancemos…",
+    // haciendo al agente re-derivar el plan (el "se repite" que reportó el user).
+    if (search.threadId) {
+      cfg.threadId = search.threadId;
+      cfg.initialMessage = undefined;
+    }
     return cfg;
   }
 

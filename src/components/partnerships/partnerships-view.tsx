@@ -372,9 +372,21 @@ export function PartnershipsView() {
 
   function openDiscoveryChat(campaign?: PartnershipCampaign) {
     if (!slug) return;
+    // SAN-328: desde la tarjeta de una búsqueda existente, retoma el hilo donde
+    // se construyó el plan (threadId persistido en el registro de búsqueda), no
+    // un hilo nuevo. El botón "Crear nueva búsqueda" (sin campaign) sigue abriendo
+    // un hilo en blanco.
+    const search = campaign
+      ? (searchesQuery.data?.searches || []).find((item) => item.campaignId === campaign.id)
+      : undefined;
     openChat(
       slug,
-      buildDiscoverySearchThread(slug, campaign ? { campaignId: campaign.id, title: campaign.title } : undefined),
+      buildDiscoverySearchThread(
+        slug,
+        campaign
+          ? { campaignId: campaign.id, title: campaign.title, threadId: search?.threadId ?? undefined }
+          : undefined,
+      ),
     );
   }
 
