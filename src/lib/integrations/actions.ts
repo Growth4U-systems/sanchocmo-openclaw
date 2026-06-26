@@ -237,7 +237,7 @@ function runConnectionTest(clientSlug: string, source: string): { status: string
       // Keep previous state.
     }
     const entry = state.dataSources?.[source] || state.systemOverrides?.[source] || {};
-    return { status: entry.status || "connected" };
+    return { status: entry.status || "skipped" };
   } catch (err) {
     const realError = extractTestError(err);
     try {

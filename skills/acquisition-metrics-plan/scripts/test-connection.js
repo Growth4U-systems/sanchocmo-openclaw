@@ -344,6 +344,21 @@ const TESTERS = {
     }
   },
 
+  async koibox(config, env, slug) {
+    const apiKey = env[`${slug}_KOIBOX_API_KEY`];
+    if (!apiKey) return { ok: false, error: `Env var ${slug}_KOIBOX_API_KEY not set` };
+    const accountId = config.ACCOUNT_ID || config.accountId;
+
+    // Koibox does not expose public API documentation. Until the endpoint is
+    // confirmed with Koibox support, we validate that the API key is present
+    // (same approach as google_ads / linkedin_ads testers).
+    // When the endpoint is known, replace this with an actual HTTP request.
+    if (accountId) {
+      return { ok: true, detail: `API key present, account/centre: ${accountId} (endpoint TBD — contact Koibox support for API docs)` };
+    }
+    return { ok: true, detail: 'API key present (endpoint TBD — contact Koibox support for API docs)' };
+  },
+
   async stripe(config, env, slug) {
     const apiKey = env[`${slug}_STRIPE_API_KEY`];
     if (!apiKey) return { ok: false, error: `Env var ${slug}_STRIPE_API_KEY not set` };
