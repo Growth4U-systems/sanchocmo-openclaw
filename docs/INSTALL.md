@@ -16,52 +16,86 @@ instalador te guía el `docker login` y reintenta.
 
 ```bash
 git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git sanchocmo && cd sanchocmo
-./install.sh
+./sancho install
 ```
 
-`install.sh` checks prerequisites, runs the setup **wizard**, and brings the
-stack up with `docker compose`.
+`./sancho install` checks prerequisites, runs the setup **wizard** (when `.env`
+is missing), and brings the stack up. The whole lifecycle lives in the unified
+**`./sancho`** CLI; `./install.sh` is kept as a thin shim that just calls
+`./sancho install` (for the historical one-liner, `get.sh` and the release
+tarball).
 
 ## Prerequisites
 
 - **Docker** + **Docker Compose v2** (the `docker compose` subcommand).
 - **openssl** (used to generate secrets).
-- A model provider **API key** — Anthropic and/or OpenAI.
+- A model provider **credential** — Anthropic, OpenAI, and/or Fireworks (API key,
+  or a Claude/Codex subscription token for Anthropic/OpenAI).
 
 ## What the wizard asks
 
-`scripts/wizard.sh` (run automatically by `install.sh`, or on its own) collects
-the minimum to boot and generates the rest:
+`scripts/wizard.sh` (run automatically by `./sancho install`, or on its own)
+collects the minimum to boot and generates the rest, in six steps:
 
-| Prompt | Notes |
-|--------|-------|
-| Provider + API key | `anthropic`, `openai`, or `both` |
-| Auth mode | `api_key` (default) or `subscription` |
-| Admin email domain | emails `@domain` become admins |
-| Database | `local` (bundled Postgres, recommended) or `external` (e.g. Neon) |
-| Base URL | where you'll reach Mission Control (default `http://localhost:3000`) |
-| First brand | slug + display name |
-| Outreach (YALC) | optional — off by default. When enabled, generates `YALC_API_TOKEN`, wires `YALC_BASE_URL`, and `install.sh` brings the overlay up automatically |
+1. **Model provider & auth** — pick the provider(s): `anthropic`, `openai`,
+   `fireworks`, `both`, or `all` (default `anthropic`). The auth mode is asked
+   **per provider**:
+   - *Anthropic* — `api_key` (default; needs `ANTHROPIC_API_KEY`) or
+     `subscription` (needs a Claude OAuth token; generate it on the host with
+     `claude setup-token` and paste it).
+   - *OpenAI* — `api_key` (needs `OPENAI_API_KEY`) or `subscription` (Codex /
+     ChatGPT OAuth — set up host-side *after* install with
+     `openclaw models auth login`; it can't be entered in the wizard).
+   - *Fireworks* — API key only (`FIREWORKS_API_KEY`).
+
+   The wizard never leaves a placeholder credential behind: in non-interactive
+   mode it **aborts** if the key for the chosen mode is missing.
+2. **Admin & login access** — admin email domain (emails `@domain` become
+   admins), an admin contact email, and **optional Google login** (off by
+   default; needs a Google OAuth client id + secret). Skip Google and log in
+   with the admin token printed at the end.
+3. **Database** — `local` (bundled Postgres, recommended) or `external` (e.g.
+   Neon `DATABASE_URL`).
+4. **Access URL** — the Base URL where you'll reach Mission Control (default
+   `http://localhost:3000`).
+5. **First brand** — slug + display name.
+6. **Optional services** — both off by default, both self-provision their token
+   and are brought up automatically by `./sancho` when enabled:
+   - *Outreach (YALC)* — generates `YALC_API_TOKEN` and wires
+     `YALC_BASE_URL=http://yalc:3847`.
+   - *Open Design* (agentic visual editor, port 7456) — generates
+     `OD_API_TOKEN` and asks for a browser-reachable web URL.
 
 It then **generates** `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`,
-`SANCHO_INTERNAL_API_TOKEN`, the admin token and the brand's `mcToken`, and
+`SANCHO_INTERNAL_API_TOKEN`, the admin token (also mirrored into `.env` as
+`MC_ADMIN_TOKEN`), the brand's `mcToken`, the local Postgres password (in `local`
+mode), and `YALC_API_TOKEN` / `OD_API_TOKEN` when those services are enabled. It
 writes:
 
 - `.env`
 - `config/instance.json` (minimal — no Discord)
 - `config/clients.json` (your first brand)
 
-Existing files are never overwritten unless you pass `--force`.
+Existing files are never overwritten unless you pass `--force` (interactively, it
+offers to overwrite). On a `--force` re-run the stateful values — the admin
+token, `mcToken`/brand registry in `config/clients.json`, and the local Postgres
+password — are **reused**, not rotated, so existing logins and the DB volume keep
+working.
 
 ### Non-interactive / CI
 
-Set `WIZARD_ASSUME_YES=1` and pass answers as environment variables:
+Set `WIZARD_ASSUME_YES=1` and pass answers as environment variables (same names
+the wizard writes). You **must** supply the model credential for the chosen auth
+mode (`ANTHROPIC_API_KEY`, or `ANTHROPIC_OAUTH_TOKEN` for subscription) or the
+wizard aborts:
 
 ```bash
-WIZARD_ASSUME_YES=1 PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-... \
-  ADMIN_EMAIL_DOMAIN=acme.com DB_MODE=local FIRST_BRAND_SLUG=acme \
-  FIRST_BRAND_NAME="Acme Inc" bash scripts/wizard.sh
-# Add ENABLE_YALC=yes to provision Outreach in the same run.
+WIZARD_ASSUME_YES=1 PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key \
+  ANTHROPIC_API_KEY=sk-ant-... ADMIN_EMAIL_DOMAIN=acme.com \
+  ADMIN_IDENTITY_EMAIL=admin@acme.com DB_MODE=local BASE_URL=http://localhost:3000 \
+  FIRST_BRAND_SLUG=acme FIRST_BRAND_NAME="Acme Inc" bash scripts/wizard.sh
+# Optional: ENABLE_YALC=yes / ENABLE_OD=yes to provision those services, and
+# ENABLE_GOOGLE=yes GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=… for Google login.
 ```
 
 ## Running
@@ -73,8 +107,10 @@ never type `-f docker-compose.*.yml` by hand:
 ```bash
 ./sancho up            # start the stack (enabled overlays, from .env)
 ./sancho down          # stop & remove containers + network (data is kept)
+./sancho restart       # down + up
 ./sancho status        # show the stack's containers
 ./sancho logs          # tail logs (default: the sanchocmo service)
+./sancho reconfigure   # re-run the wizard (regenerates .env + config; keeps data)
 ```
 
 First install (wizard + start) is `./sancho install` (the classic `./install.sh`
@@ -92,7 +128,7 @@ Mission Control is then reachable at the **Base URL** you chose.
 
 All off by default. Turn them on when you need them:
 
-- **Open Design** (agentic visual editor) — `-f docker-compose.od.yml`, set `OD_API_TOKEN`.
+- **Open Design** (agentic visual editor, port 7456) — enable with `./sancho install --od` or by answering *yes* in the wizard; the `OD_API_TOKEN` is generated and the overlay started for you (no manual `-f docker-compose.od.yml`).
 - **Discord** — set `DISCORD_BOT_TOKEN` in `.env` (Discord is one comms channel; Mission Control chat is the primary interface).
 - **Slack** — configure in Mission Control → Settings → APIs.
 
@@ -102,7 +138,7 @@ YALC is the outbound engine (campaigns, leads, sequences). It runs as an opt-in
 container pulled from a public image — no source checkout needed.
 
 1. **Enable it** — answer *yes* to the Outreach step in the wizard, or run
-   `./install.sh --yalc`. Either way Sancho and YALC share a generated
+   `./sancho install --yalc`. Either way Sancho and YALC share a generated
    `YALC_API_TOKEN` and Sancho reaches it at `YALC_BASE_URL=http://yalc:3847`.
 2. **Connect an email provider** — sending outbound needs *your own* provider
    account (the install can't provide one). Open **Mission Control → Trabajo →
@@ -183,4 +219,4 @@ project is not tied to a cloned repo at any particular path.
 
 > **Tip:** if the machine already uses `~/.openclaw` for the `openclaw` CLI, point
 > SanchoCMO at a dedicated dir to avoid mixing them — set `OPENCLAW_HOME=/srv/sancho-home`
-> (or any path/volume) in `.env` before `docker compose up`.
+> (or any path/volume) in `.env` before `./sancho up`.
