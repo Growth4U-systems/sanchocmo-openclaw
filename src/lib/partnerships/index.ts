@@ -58,6 +58,9 @@ export type { CreateSearchResult } from "./create-search";
 export { runDiscoverySearch } from "./discovery-runner";
 export type { RunDiscoveryOptions, RunDiscoveryResult } from "./discovery-runner";
 
+export { triggerDiscoveryRunner } from "./trigger-runner";
+export type { TriggerDiscoveryRunnerInput, TriggerDiscoveryRunnerResult } from "./trigger-runner";
+
 // ── SAN-80 · Plantillas + Contacto + Inbox + negotiation-assist ─────────────
 
 export {

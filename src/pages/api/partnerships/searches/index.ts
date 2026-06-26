@@ -6,6 +6,7 @@ import {
   DiscoveryPlanError,
   listSearches,
   runDiscoverySearch,
+  triggerDiscoveryRunner,
 } from "@/lib/partnerships";
 
 /**
@@ -15,12 +16,13 @@ import {
  *     → { searches, count } (estado del runner incluido — lo consume la UI
  *       de Encuentra y el agente runner para encontrar trabajo encolado).
  *
- *   POST /api/partnerships/searches  { slug, plan, run? }
- *     Crea la búsqueda: campaign type=Partnerships en Yalc + tarea Outreach
- *     madre + runner encolado. `plan` = JSON de discovery-plan-builder
- *     (title/sectors/networks/tiers/audienceEsMinPct/targetVolume/signals/
- *     templates). Con `run: "fixtures"` ejecuta el runner inline con los 9
- *     creators fake del mockup (sin ScrapeCreators) — camino del verificador.
+ *   POST /api/partnerships/searches  { slug, plan, run?, threadId? }
+ *     Crea la búsqueda (campaign type=Partnerships en Yalc + tarea Outreach
+ *     madre) y, POR DEFECTO, despacha a Rocinante para ejecutar el discovery
+ *     REAL (scraping). `plan` = JSON de discovery-plan-builder. `run`:
+ *       - ausente / "agent" → despacha el runner a Rocinante (discovery real).
+ *       - "fixtures" (o true) → runner inline con los 9 creators fake (verifier).
+ *       - "none" / false      → solo crea, runner queued (sin despachar).
  *     → { ok, search, campaignId, taskId[, runner] }
  *
  * Paridad UI = chat = MCP: la skill llama a este endpoint; la tool MCP
@@ -64,11 +66,35 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
+    // run:"none"/false → solo crea, runner queued (sin despachar) — opt-out.
+    if (body.run === "none" || body.run === false) {
+      return res.status(201).json({
+        ok: true,
+        search: created.search,
+        campaignId: created.campaignId,
+        taskId: created.taskId,
+      });
+    }
+
+    // Por defecto (ausente o run:"agent"): despacha a Rocinante para el discovery
+    // REAL. Best-effort — si el gateway está caído, la búsqueda sigue queued
+    // (recuperable a mano); NO fallamos la creación.
+    const dispatch = await triggerDiscoveryRunner({
+      slug,
+      searchId: created.search.id,
+      title: created.search.title,
+    });
     return res.status(201).json({
       ok: true,
       search: created.search,
       campaignId: created.campaignId,
       taskId: created.taskId,
+      runner: {
+        mode: "agent",
+        dispatched: dispatch.forwardedToGateway,
+        threadId: dispatch.threadId,
+        error: dispatch.error,
+      },
     });
   } catch (err) {
     if (err instanceof DiscoveryPlanError) {
