@@ -511,7 +511,9 @@ if channel.get('enabled') is not True:
     channel['enabled']=True
     changed=True
 if not channel.get('mcServerUrl'):
-    channel['mcServerUrl']='http://localhost:18790'
+    # mc-chat posts bot replies to {mcServerUrl}/api/chat/webhook, a route that only
+    # exists on Next (:3000), not legacy mc-server.js (:18790). Mirror contextPackUrl. (SAN-333)
+    channel['mcServerUrl']=(os.environ.get('MC_SERVER_URL') or 'http://localhost:3000').rstrip('/')
     changed=True
 context_pack_url=(os.environ.get('MC_CONTEXT_PACK_URL') or 'http://localhost:3000').rstrip('/')
 if not channel.get('contextPackUrl'):

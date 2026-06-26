@@ -14,7 +14,7 @@
         "properties": {
           "mcServerUrl": {
             "type": "string",
-            "description": "Base URL of the MC server (e.g. http://localhost:18790)"
+            "description": "Base URL of the Next.js MC server that serves /api/chat/webhook (e.g. http://localhost:3000)"
           },
           "contextPackUrl": {
             "type": "string",
@@ -36,7 +36,7 @@
   "uiHints": {
     "mcServerUrl": {
       "label": "MC Server URL",
-      "placeholder": "http://localhost:18790"
+      "placeholder": "http://localhost:3000"
     },
     "contextPackUrl": {
       "label": "Context Pack API URL",

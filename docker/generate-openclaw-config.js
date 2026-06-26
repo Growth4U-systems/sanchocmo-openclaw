@@ -35,6 +35,10 @@ async function main() {
   const cervantesGuildId = process.env.CERVANTES_GUILD_ID || '';
   const mcChatSecret = process.env.MC_CHAT_SECRET || '';
   const contextPackUrl = (process.env.MC_CONTEXT_PACK_URL || 'http://localhost:3000').replace(/\/+$/, '');
+  // mc-chat delivers bot replies to ${mcServerUrl}/api/chat/webhook, a route that
+  // ONLY exists on the Next.js app (:3000), NOT the legacy mc-server.js (:18790).
+  // Mirror contextPackUrl: env-overridable, default to the Next server. (SAN-333)
+  const mcServerUrl = (process.env.MC_SERVER_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
   // --- Auth profiles ---
   // ANTHROPIC_AUTH_MODE selects how Anthropic inference authenticates:
@@ -257,13 +261,13 @@ async function main() {
   if (!config.channels['mc-chat']) {
     config.channels['mc-chat'] = {
       enabled: true,
-      mcServerUrl: 'http://localhost:18790',
+      mcServerUrl,
       contextPackUrl,
     };
   }
   config.channels['mc-chat'].enabled = true;
   if (!config.channels['mc-chat'].mcServerUrl) {
-    config.channels['mc-chat'].mcServerUrl = 'http://localhost:18790';
+    config.channels['mc-chat'].mcServerUrl = mcServerUrl;
   }
   if (!config.channels['mc-chat'].contextPackUrl) {
     config.channels['mc-chat'].contextPackUrl = contextPackUrl;
