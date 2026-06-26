@@ -30,7 +30,7 @@ make_sandbox() {
 
 # Common non-tested vars are passed explicitly empty so an inherited shell
 # environment can't leak a real credential into the assertions.
-BASE_ENV=(WIZARD_ASSUME_YES=1 ANTHROPIC_API_KEY= CLAUDE_CODE_OAUTH_TOKEN= OPENAI_API_KEY=
+BASE_ENV=(WIZARD_ASSUME_YES=1 ANTHROPIC_API_KEY= ANTHROPIC_OAUTH_TOKEN= OPENAI_API_KEY=
           GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET= ENABLE_GOOGLE=no)
 
 # --- 1. api_key mode: key written, subscription token blanked ---------------
@@ -38,14 +38,14 @@ sb="$(make_sandbox)"
 env "${BASE_ENV[@]}" PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-realkey123 \
   bash "$sb/scripts/wizard.sh" >/dev/null 2>&1 || fail "api_key run exited non-zero"
 grep -qE '^ANTHROPIC_API_KEY=sk-ant-realkey123$' "$sb/.env" || fail "api_key: ANTHROPIC_API_KEY not written"
-grep -qE '^CLAUDE_CODE_OAUTH_TOKEN=$'             "$sb/.env" || fail "api_key: CLAUDE_CODE_OAUTH_TOKEN not blanked"
+grep -qE '^ANTHROPIC_OAUTH_TOKEN=$'               "$sb/.env" || fail "api_key: ANTHROPIC_OAUTH_TOKEN not blanked"
 grep -qE '^ANTHROPIC_AUTH_MODE=api_key$'          "$sb/.env" || fail "api_key: auth mode wrong"
 
 # --- 2. subscription mode: token written, API key blanked -------------------
 sb="$(make_sandbox)"
-env "${BASE_ENV[@]}" PROVIDER=anthropic ANTHROPIC_AUTH_MODE=subscription CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat-tok456 \
+env "${BASE_ENV[@]}" PROVIDER=anthropic ANTHROPIC_AUTH_MODE=subscription ANTHROPIC_OAUTH_TOKEN=sk-ant-oat-tok456 \
   bash "$sb/scripts/wizard.sh" >/dev/null 2>&1 || fail "subscription run exited non-zero"
-grep -qE '^CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat-tok456$' "$sb/.env" || fail "subscription: token not written"
+grep -qE '^ANTHROPIC_OAUTH_TOKEN=sk-ant-oat-tok456$' "$sb/.env" || fail "subscription: token not written"
 grep -qE '^ANTHROPIC_API_KEY=$'                        "$sb/.env" || fail "subscription: API key not blanked"
 grep -qE '^ANTHROPIC_AUTH_MODE=subscription$'          "$sb/.env" || fail "subscription: auth mode wrong"
 
@@ -131,7 +131,7 @@ _, st = os.waitpid(pid, 0)
 sys.exit(os.waitstatus_to_exitcode(st))
 PY
   grep -qE '^ANTHROPIC_AUTH_MODE=subscription$'        "$sb/.env" || fail "interactive: subscription not selected (prompt skipped?)"
-  grep -qE '^CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat-ITEST$' "$sb/.env" || fail "interactive: token not written"
+  grep -qE '^ANTHROPIC_OAUTH_TOKEN=sk-ant-oat-ITEST$' "$sb/.env" || fail "interactive: token not written"
   grep -qE '^ANTHROPIC_API_KEY=$'                       "$sb/.env" || fail "interactive: API key not blanked"
 else
   echo "  (skipping interactive pty test — python3 not found)"

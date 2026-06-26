@@ -3,7 +3,7 @@
 Usage Monitor — alerta de "extra usage" de la suscripción Claude (Anthropic).
 
 Por qué existe: los agentes del gateway corren sobre la suscripción Claude Max
-(OAuth, vía CLAUDE_CODE_OAUTH_TOKEN). Esa suscripción tiene topes (ventana de 5h
+(OAuth, vía ANTHROPIC_OAUTH_TOKEN). Esa suscripción tiene topes (ventana de 5h
 y semanal de 7d) y, al agotarse, las requests se rechazan ("out of extra usage").
 Si no avisamos antes, el sistema se corta sin previo aviso. Este monitor hace un
 probe mínimo a la API, lee los headers `anthropic-ratelimit-unified-*` (que traen
@@ -31,7 +31,8 @@ Run:
   python3 scripts/usage-monitor.py --force          # postea ignorando el dedupe
 
 Env:
-  CLAUDE_CODE_OAUTH_TOKEN   (requerido) token OAuth de la suscripción
+  ANTHROPIC_OAUTH_TOKEN     (requerido) token OAuth de la suscripción
+                            (fallback legacy: CLAUDE_CODE_OAUTH_TOKEN)
   DISCORD_WEBHOOK_CERVANTES (requerido para postear) webhook de #cervantes-admin
   USAGE_WARN_THRESHOLD      umbral warning (default 0.80)
   USAGE_CRIT_THRESHOLD      umbral critical (default 0.92)
@@ -70,7 +71,11 @@ def probe():
     Reads rate-limit headers even on 429/4xx (urllib HTTPError carries .headers).
     Returns (None, {}) on network failure so the caller degrades gracefully.
     """
-    token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "").strip()
+    # ANTHROPIC_OAUTH_TOKEN is the canonical subscription var (SAN-332); fall back
+    # to the Claude-Code-native CLAUDE_CODE_OAUTH_TOKEN for older installs.
+    token = (os.environ.get("ANTHROPIC_OAUTH_TOKEN")
+             or os.environ.get("CLAUDE_CODE_OAUTH_TOKEN")
+             or "").strip()
     if not token:
         return ("no_token", {})
     body = json.dumps({

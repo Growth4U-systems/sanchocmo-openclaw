@@ -12,7 +12,7 @@
 # PROVIDER / ANTHROPIC_AUTH_MODE / OPENAI_AUTH_MODE / DB_MODE / BASE_URL /
 # FIRST_BRAND_SLUG / FIRST_BRAND_NAME / ENABLE_GOOGLE). In non-interactive mode
 # you MUST supply the model credential for the chosen auth mode
-# (ANTHROPIC_API_KEY or, for subscription, CLAUDE_CODE_OAUTH_TOKEN) or the
+# (ANTHROPIC_API_KEY or, for subscription, ANTHROPIC_OAUTH_TOKEN) or the
 # wizard aborts — it never leaves a placeholder behind.
 #
 # It never overwrites an existing .env / config file unless you pass --force.
@@ -170,7 +170,11 @@ PROVIDER="$(ask PROVIDER "Provider — anthropic, openai, fireworks, both, or al
 ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 OPENAI_API_KEY="${OPENAI_API_KEY:-}"
 FIREWORKS_API_KEY="${FIREWORKS_API_KEY:-}"
-CLAUDE_CODE_OAUTH_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN:-}"
+# ANTHROPIC_OAUTH_TOKEN is the single user-facing subscription variable (the one
+# the gateway motor reads natively). The token is what `claude setup-token`
+# emits; the entrypoint derives the Claude-Code-native CLAUDE_CODE_OAUTH_TOKEN
+# from it only for the opt-in Discord/Cervantes path (SAN-332).
+ANTHROPIC_OAUTH_TOKEN="${ANTHROPIC_OAUTH_TOKEN:-}"
 ANTHROPIC_AUTH_MODE="${ANTHROPIC_AUTH_MODE:-}"
 OPENAI_AUTH_MODE="${OPENAI_AUTH_MODE:-}"
 
@@ -179,11 +183,11 @@ case "$PROVIDER" in
     ANTHROPIC_AUTH_MODE="$(ask ANTHROPIC_AUTH_MODE "Anthropic auth mode — api_key or subscription" "api_key")"
     if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
       say "  ${DIM}Generate a subscription token on the host with: claude setup-token${RST}"
-      CLAUDE_CODE_OAUTH_TOKEN="$(ask_required CLAUDE_CODE_OAUTH_TOKEN "Claude subscription token (sk-ant-oat...)")"
+      ANTHROPIC_OAUTH_TOKEN="$(ask_required ANTHROPIC_OAUTH_TOKEN "Claude subscription token (sk-ant-oat...)")"
       ANTHROPIC_API_KEY=""
     else
       ANTHROPIC_API_KEY="$(ask_required ANTHROPIC_API_KEY "Anthropic API key (sk-ant-...)")"
-      CLAUDE_CODE_OAUTH_TOKEN=""
+      ANTHROPIC_OAUTH_TOKEN=""
     fi
     ;;
 esac
@@ -332,7 +336,7 @@ cp "$ENV_EXAMPLE" "$ENV_FILE"
 # Model credentials — always written explicitly (empty when unused) so a
 # .env.example placeholder can never survive into the live .env.
 set_env ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"
-set_env CLAUDE_CODE_OAUTH_TOKEN "$CLAUDE_CODE_OAUTH_TOKEN"
+set_env ANTHROPIC_OAUTH_TOKEN "$ANTHROPIC_OAUTH_TOKEN"
 set_env OPENAI_API_KEY "$OPENAI_API_KEY"
 set_env FIREWORKS_API_KEY "$FIREWORKS_API_KEY"
 set_env ANTHROPIC_AUTH_MODE "$ANTHROPIC_AUTH_MODE"
