@@ -5,6 +5,7 @@ import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-mi
 import { setTaskStatus } from "@/lib/data/task-status-store";
 import { BASE } from "@/lib/data/paths";
 import { VALID_TASK_STATUSES } from "@/types";
+import { assertDeliverableDone, DoneGateError, type GateStamp } from "@/lib/qa/done-gate";
 
 /**
  * POST /api/projects/task-status
@@ -49,14 +50,15 @@ const REJECTED_STATUSES: Record<string, string> = {
 };
 
 /**
- * Look up `deliverable_file` for a task by scanning project tasks.json files.
- * Returns string | string[] | null. Best-effort — if the task isn't found,
- * returns null and the caller should surface the error.
+ * Look up the fields the Definition-of-Done gate needs for a task, by scanning
+ * project tasks.json files: `deliverable_file` (the concrete output path(s)),
+ * plus `skill` / `agent` (so the gate can resolve the skill's declared
+ * `context_writes` and stamp traceability). Best-effort — null if not found.
  */
-function readTaskDeliverableFile(
+function readTaskMeta(
   slug: string,
   taskId: string
-): string | string[] | null {
+): { deliverable_file: string | string[] | null; skill?: string; agent?: string } | null {
   const projectsDir = path.join(BASE, "brand", slug, "projects");
   let dirs: fs.Dirent[];
   try {
@@ -76,31 +78,17 @@ function readTaskDeliverableFile(
       const tasks = Array.isArray(data) ? data : data.tasks || [];
       const task = tasks.find((t: Record<string, unknown>) => t.id === taskId);
       if (task) {
-        return (task.deliverable_file as string | string[] | undefined) ?? null;
+        return {
+          deliverable_file: (task.deliverable_file as string | string[] | undefined) ?? null,
+          skill: typeof task.skill === "string" ? task.skill : undefined,
+          agent: typeof task.agent === "string" ? task.agent : undefined,
+        };
       }
     } catch {
       continue;
     }
   }
   return null;
-}
-
-/**
- * Check that every path in `deliverable_file` exists on disk. Returns the
- * list of missing paths (empty if all exist).
- */
-function checkDeliverableFilesExist(
-  df: string | string[] | null
-): { missing: string[]; checked: string[] } {
-  const paths = Array.isArray(df) ? df : df ? [df] : [];
-  const missing: string[] = [];
-  for (const p of paths) {
-    if (!p || p.trim() === "") continue;
-    const rel = p.replace(/^\/+/, "");
-    const abs = rel.startsWith(BASE) ? rel : path.join(BASE, rel);
-    if (!fs.existsSync(abs)) missing.push(rel);
-  }
-  return { missing, checked: paths };
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -139,13 +127,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
   }
 
-  // Execution-time gate (2026-04-15): cannot transition to `completed`
-  // unless the task (a) has `deliverable_file` populated AND (b) the file(s)
-  // actually exist on disk. If the skill produced a different/additional
-  // file, use `task-update` with `fields: { status, deliverable_file }` to
-  // set both in one call. This endpoint is status-only.
+  // Execution-time gate (2026-04-15): cannot transition to `completed` unless
+  // the task has `deliverable_file` populated. SAN-344 generalizes the old
+  // existence-only check into the universal Definition-of-Done gate, which also
+  // enforces NON-EMPTY outputs + the skill's declared `context_writes`, returns
+  // structured reason codes (422), and stamps traceability on the deliverable.
+  let doneStamp: GateStamp | undefined;
   if (canonical === "completed") {
-    const df = readTaskDeliverableFile(slug, taskId);
+    const meta = readTaskMeta(slug, taskId);
+    const df = meta?.deliverable_file ?? null;
     const hasDeliverable =
       (typeof df === "string" && df.trim() !== "") ||
       (Array.isArray(df) && df.length > 0);
@@ -161,19 +151,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         missing: ["deliverable_file"],
       });
     }
-    const existCheck = checkDeliverableFilesExist(df);
-    if (existCheck.missing.length > 0) {
-      return res.status(400).json({
-        error:
-          `Cannot mark task '${taskId}' completed: 'deliverable_file' points ` +
-          `at ${existCheck.missing.length} file(s) that don't exist on disk. ` +
-          `The skill must produce the file before the task can be closed.`,
-        missing_files: existCheck.missing,
+    try {
+      const gate = assertDeliverableDone({
+        slug,
+        skill: meta?.skill ?? "",
+        agent: meta?.agent,
+        status: canonical,
+        deliverableFiles: Array.isArray(df) ? df : [df as string],
       });
+      doneStamp = gate.stamp;
+    } catch (e) {
+      if (e instanceof DoneGateError) {
+        return res.status(e.statusCode).json({
+          error: e.message,
+          reasons: e.result.reasons,
+          skipped: e.result.skippedOutputs,
+        });
+      }
+      throw e;
     }
   }
 
-  const result = setTaskStatus(slug, taskId, canonical);
+  const result = setTaskStatus(slug, taskId, canonical, doneStamp);
 
   if (!result.ok) {
     const code = result.error?.includes("not found") ? 404 : 500;

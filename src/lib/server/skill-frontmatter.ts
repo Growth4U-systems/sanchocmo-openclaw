@@ -53,9 +53,14 @@ export function parseSkillFrontmatter(content: string): ParsedSkillFrontmatter {
       } else {
         meta[currentKey] = val;
       }
-    } else if (line.startsWith("- ") && currentKey) {
+    } else if (/^\s*-\s+/.test(line) && currentKey && currentKey !== "metadata") {
+      // Sequence item — tolerate leading indentation. Many SKILL.md files indent
+      // list items two spaces under the key (`  - foo`); the original
+      // `startsWith("- ")` silently DROPPED those, leaving `context_required` /
+      // `context_writes` empty for those skills (degrading context-pack grounding
+      // and the SAN-344 done-gate). Match any indentation, both forms.
       if (!Array.isArray(meta[currentKey])) meta[currentKey] = [];
-      (meta[currentKey] as string[]).push(line.slice(2).trim());
+      (meta[currentKey] as string[]).push(line.replace(/^\s*-\s+/, "").trim());
     } else if (line.startsWith("  ") && currentKey === "metadata") {
       const subMatch = line.trim().match(/^(\w[\w_]*)\s*:\s*['"]?(.+?)['"]?\s*$/);
       if (subMatch) {

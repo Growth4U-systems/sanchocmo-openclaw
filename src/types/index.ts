@@ -94,6 +94,15 @@ export type TaskType =
   /** @deprecated ContentTask is the canonical name; kept only for legacy rows. */
   | "content_subtask";
 
+/** Definition-of-Done gate traceability stamp (SAN-344): what skill/agent/model
+ *  produced a deliverable, recorded when the gate passed it to `completed`. */
+export interface DoneStamp {
+  skill: string;
+  agent?: string;
+  model?: string;
+  at: string; // ISO8601
+}
+
 export interface Task {
   id: string;               // "P01-T01"
   name: string;
@@ -132,6 +141,9 @@ export interface Task {
   pillar?: string;          // Foundation only
   section?: string;         // Foundation only
   completed?: string;       // ISO8601
+  /** Definition-of-Done gate traceability (SAN-344): what skill/agent/model
+   *  produced this deliverable, stamped when the gate passed it to `completed`. */
+  done_stamp?: DoneStamp;
   output_files: string[];
   documents?: { path: string; name?: string; title?: string; status?: string; created_at?: string }[];
   /**

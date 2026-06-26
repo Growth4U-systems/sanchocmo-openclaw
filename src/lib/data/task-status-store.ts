@@ -20,7 +20,7 @@
 import fs from "fs";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
-import type { TaskStatus } from "@/types";
+import type { TaskStatus, DoneStamp } from "@/types";
 import { normalizeTaskStatus, normalizeTaskStatusQuiet } from "@/lib/task-status";
 import { findFoundationPillar, foundationTaskIdForPillar } from "./task-blueprints";
 
@@ -66,12 +66,21 @@ function writeTasksFile(filePath: string, raw: unknown, tasks: AnyRecord[]): voi
   fs.writeFileSync(filePath, JSON.stringify(writeData, null, 2));
 }
 
-/** Mutate a task in place to the given status. Returns true if changed. */
-function applyStatusToTask(task: AnyRecord, newStatus: TaskStatus): boolean {
+/** Mutate a task in place to the given status. Returns true if changed.
+ *  `stamp` (SAN-344) is the Definition-of-Done gate's traceability record; when
+ *  present and the task is being completed, it's recorded on `task.done_stamp`. */
+function applyStatusToTask(
+  task: AnyRecord,
+  newStatus: TaskStatus,
+  stamp?: DoneStamp,
+): boolean {
   if (task.status === newStatus) return false;
   task.status = newStatus;
   if (newStatus === "completed" && !task.completed) {
     task.completed = new Date().toISOString().slice(0, 10);
+  }
+  if (newStatus === "completed" && stamp) {
+    task.done_stamp = stamp;
   }
   return true;
 }
@@ -206,7 +215,12 @@ export interface SyncResult {
  * una sola fuente, escribir la task ES escribir el pilar. `pillarChanged`
  * se conserva en el resultado por compat de contrato (siempre false).
  */
-export function setTaskStatus(slug: string, taskId: string, status: string): SyncResult {
+export function setTaskStatus(
+  slug: string,
+  taskId: string,
+  status: string,
+  stamp?: DoneStamp,
+): SyncResult {
   const taskStatus = normalizeTaskStatus(status);
 
   // Guess del proyecto por prefijo ("P00" de "P00-FUL-T01"), fallback a scan.
@@ -223,7 +237,7 @@ export function setTaskStatus(slug: string, taskId: string, status: string): Syn
     if (!task) continue;
 
     const oldStatus = (task.status as string) || "todo";
-    const changed = applyStatusToTask(task, taskStatus);
+    const changed = applyStatusToTask(task, taskStatus, stamp);
     if (changed) {
       try {
         writeTasksFile(tasksPath, data.raw, data.tasks);
