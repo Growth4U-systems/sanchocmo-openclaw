@@ -288,7 +288,19 @@ function readPayload(args) {
   if (args.json) return JSON.parse(args.json)
   if (!args.input) return {}
   const abs = path.isAbsolute(args.input) ? args.input : path.join(workspaceRoot, args.input)
-  return JSON.parse(fs.readFileSync(abs, 'utf8'))
+  let raw
+  try {
+    raw = fs.readFileSync(abs, 'utf8')
+  } catch (err) {
+    if (err && err.code === 'ENOENT') {
+      throw new Error(
+        `Payload file not found at ${abs} (a relative --input is resolved against ${workspaceRoot}). ` +
+        `Pass the payload inline with --json '<json>', or write it to an absolute path under /tmp and pass that with --input.`,
+      )
+    }
+    throw err
+  }
+  return JSON.parse(raw)
 }
 
 function requireArg(args, name) {
