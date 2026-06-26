@@ -34,9 +34,28 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 ## Progreso (tracking)
 
-> Bitácora de avances. Última actualización: **2026-06-10**.
+> Bitácora de avances. Última actualización: **2026-06-26**.
 
 ### ✅ Hecho
+
+- **[2026-06-26 · Install local end-to-end + instalador sin-clone + CLI `./sancho`]** — la tanda 19→26-jun, toda **mergeada a `staging`**, cierra el camino de onboarding del producto:
+  - **Instalador sin clonar el repo (`SAN-242`, #677)**: `get.sh` + tarball de runtime adjunto al release (en vez de exigir `git clone`) + fix de `OPENCLAW_HOME` + spec del instalador. El usuario instala desde un one-liner contra el artefacto del release, no contra el source tree.
+  - **Onboarding local que realmente bootea** (sesión grande 25→26-jun, con mucho research/debug sin commit — boot loop, delivery 404 del chat, credencial sin cupo):
+    - **Wizard recolecta TODAS las credenciales pre-boot (`SAN-331`, #889)**: sin placeholders rotos; preserva `config/clients.json` en `--force` (no rota el `adminToken` ni borra brands), reestructura modo→credencial, suma `fireworks`.
+    - **Token de suscripción Anthropic unificado a `ANTHROPIC_OAUTH_TOKEN` (`SAN-332`, #891)**: una sola var de cara al usuario; `CLAUDE_CODE_OAUTH_TOKEN` queda como alias derivado solo para Discord/Cervantes.
+    - **`mc-chat` apunta a Next `:3000` (`SAN-333`, #893 + follow-up #900)**: leftover de la migración MC→Next que mandaba el delivery al legacy `:18790` y lo rompía en local; el follow-up **migra** instalaciones ya existentes en el restart.
+    - **`init-home` se auto-cura de un seed parcial (`SAN-329`, #894)**: copia atómica + merge no-clobber (`cp -an`) + limpieza de temps → un boot interrumpido ya no traba la install; se recupera al reiniciar.
+  - **CLI `./sancho` unificado (`SAN-334`, #898)**: un solo comando para todo el ciclo de vida (`install/up/down/restart/update/logs/status/destroy`), lib compartida `scripts/compose-env.sh`, `install.sh` como shim, readiness real + URL al levantar, fix de overlays (solo los habilitados + `--remove-orphans`).
+  - **Hardening de release/CI**: versionar el título del release PR agrupado para frenar el bloqueo recurrente de autorelease (`SAN-243`, #676); guard de `promote-main` contra tags fuera de staging + doc anti-tagueo-manual (`SAN-255`, #703); Dependabot con PRs agrupados por tipo de dependencia (`SAN-335`, #897); prune de planes aplicados/obsoletos en `docs/plans` (`SAN-253`, #700).
+  - **Nota**: la credencial que falló en la prueba local fue la cuenta de Claude de G4U **sin cupo** (`out of extra usage`), no un bug de config.
+
+- **[2026-06-18 · Branching/release cerrado + primera versión cortada + Fase 6 e2e ✅]** — varias piezas grandes:
+  - **Modelo de branching/release (`SAN-230`) CERRADO** (ya no es bloqueante): `main` es **ff-only** (ruleset read-only `deletion+non_fast_forward+update+creation`, bypass solo del rol admin → el PAT de `promote-main`), **release-please corre sobre `staging`** (anclado con `last-release-sha` para que no se pierda con los tags en historia divergente), `main := staging` convergido, `main-old` + su ruleset eliminados. Reconciliación main↔staging hecha — el único delta real era el parse SSE de Alarife (#654). Docs (`CONTRIBUTING`, skill `git-workflow` con runbook de hotfix autónomo) al día.
+  - **Primera versión del modelo nuevo cortada end-to-end: `v0.7.0`** — release-please sobre staging → `promote-main` ff de main → **`docker-image.yml` buildeó `ghcr.io/growth4u-systems/sanchocmo:v0.7.0`**. El pipeline nuevo funcionó por primera vez. (Salió 0.7.0 y no 1.0.0 por timing del merge de la release PR; el **1.0.0 se corta deliberado en Fase 0** como primer release público.)
+  - **Fase 6 — e2e del producto DESDE LA IMAGEN ✅**: booteado `sanchocmo:v0.7.0` en workspace aislado (wizard non-interactive + `compose up`, sin source tree): **MC reachable** (`/`→200, `/api/health`→200), container **healthy**, **Postgres bundled migrado (22 tablas)**, auth `api_key` OK. El KPI core de Fase 6 (install → MC desde imagen) se cumple.
+  - **Bug `api_key` (`SAN-235`, #663)** cazado por la Fase 6: el compose hardcodeaba `ANTHROPIC_API_KEY=` vacío (G4U-ism de subscription) y pisaba al `env_file` → el modo `api_key` del producto abortaba el preflight. Fix mode-aware (passthrough en compose + blanqueo en el branch subscription del entrypoint; G4U sin cambios).
+  - **Build perf (`SAN-236`/`SAN-237`, #665/#670)**: build de imagen de **~40 min → ~6 min**. Causa: el arm64 corría emulado por QEMU. Fix: **multi-arch NATIVO** (amd64 en `ubuntu-latest` + arm64 en `ubuntu-24.04-arm`, en paralelo) — la org está en **GitHub Team**, que tiene runners arm64 nativos (verificado empíricamente). + registry cache en **package aparte** (`sanchocmo-buildcache`), provenance `mode=max` + SBOM (estándar supply-chain). Firma cosign diferida a Fase 0 (`SAN-240`).
+  - **Nota gate de prod**: configurar required-reviewers en el environment `production` falló con un 422 de billing, pero la org **es Team** (que debería soportarlo) → re-chequear (anotado en `SAN-230`).
 
 - **[Fase 1 · Admin configurable — GAP B1]** — PR [#208](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/208) (`feat/configurable-admin-domain` → `staging`), `Refs SAN-20`.
   - Nuevo `src/lib/data/admin-domain.ts` → `isAdminDomainEmail()` / `getAdminDomains()` (lee `ADMIN_EMAIL_DOMAIN`, lista por comas, tolera `@`).
@@ -107,12 +126,12 @@ añadir wizard y publicar imágenes. No es una reescritura.
   - **Fuera de scope**: cutover de tasks a DB (B8) — `MC_TASKS_BACKEND` queda en `json`; B9 solo habilita MI/POV/Polar con DB local.
   - Verificación: `npm run test:lib` ✅ 192/192 (incluye 5 nuevos de `selectDbDriver`) · `npm run typecheck` ✅ · `docker compose config` base (sin postgres) y `--profile local-db` (con postgres+volumen) ✅ · **bootstrap real contra `postgres:16-alpine` efímero**: 22 tablas, idempotente, URL neon → skip ✅ · **e2e sobre la red de compose** (servicio `postgres` healthy vía profile, migrate por nombre de host → 22 tablas, persistencia del volumen al recrear) ✅.
 
-- **[Fase 4/6 · Fix wizard `.env` duplicado — B9 follow-up]** — PR [#367](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/367) (`fix/wizard-env-dup-database-url` → `staging`), `Refs SAN-110`. **Abierto, sin mergear.**
+- **[Fase 4/6 · Fix wizard `.env` duplicado — B9 follow-up]** — PR [#367](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/367) (`fix/wizard-env-dup-database-url` → `staging`), `Refs SAN-110`. **MERGED 2026-06-09.**
   - **Regresión que B9 metió en staging**: el bloque DB de `.env.example` documentaba el modo bundled con ejemplos comentados `DATABASE_URL=…`. El `set_env()` del wizard matchea `^#?\s*KEY=` y reemplazaba el **primer** match (el ejemplo comentado), dejando dos `DATABASE_URL` activos → en `env_file` de compose gana el último (`CHANGE_ME`) → la app no conecta al PG bundled.
   - Fix: reescritos los comentarios para que **no contengan la forma `KEY=`** (un solo target de `set_env`) + `NOTE` documentando el gotcha.
   - Verificado: el wizard emite **un solo** `DATABASE_URL` activo; boot real local-db OK (22 tablas).
 
-- **[Fase 6 / GAP G · Imagen self-contained — seed de OPENCLAW_HOME]** — PR [#369](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/369) (`chore/self-contained-image-seed` → `staging`), `Refs SAN-111`. **Abierto, sin mergear.** Trabajado en worktree aislado.
+- **[Fase 6 / GAP G · Imagen self-contained — seed de OPENCLAW_HOME]** — PR [#369](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/369) (`chore/self-contained-image-seed` → `staging`), `Refs SAN-111`. **MERGED 2026-06-09.** Trabajado en worktree aislado.
   - **Problema** (descubierto en el primer boot real del producto): un `OPENCLAW_HOME` vacío crasheaba (`Cannot find module '/root/.openclaw/docker/generate-openclaw-config.js'`) — el Dockerfile no bakeaba nada del "openclaw-home"; el contenido venía del repo montado. El producto no puede depender de tener el repo clonado en una ruta específica.
   - **`.dockerignore` (nuevo)**: el `COPY` del seed honra `.dockerignore` (no `.gitignore`) → excluye data/runtime/junk para que **no se baken datos de cliente** (`_backups/` con `hospital-capilar-backup`, `memory/`, `brand/`, `_system/recurring-tasks/`, logs, `.pyc`, `.backup*`, cron pre-backups).
   - **`Dockerfile`**: bakea el framework a `/opt/sancho-seed/` (path que el mount no shadowea) + `.seed-version`.
@@ -131,13 +150,14 @@ añadir wizard y publicar imágenes. No es una reescritura.
 
 - **[Fase 3 · Preflight de boot — GAP E3]** — PR #422 (`Refs SAN-138`) **MERGED**. Nueva sección `0c` en `docker/entrypoint.sh`: valida `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `config/clients.json`+`instance.json` (existen + JSON válido), ≥1 credencial de modelo según `*_AUTH_MODE`, y `DATABASE_URL` solo si `MC_TASKS_BACKEND`∈{db,db-shadow}. Lista todos los faltantes + fix y aborta; `SKIP_PREFLIGHT=1` saltea. G4U pasa sin cambios (verificado contra el env real de staging). `bash -n` + 13 escenarios en sandbox.
 
-- **[Fase 5 · Imagen pública de `sanchocmo` + workflow GHCR + compose `image:`]** — PR [#428](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/428) (`Refs SAN-140`) **ABIERTO**. Es EL mecanismo "compose pull". Decisión de arquitectura confirmada con el usuario: **`image:`+`build:` en el base** (no overlay separado) + **publish en release/edge/manual, multi-arch**.
+- **[Fase 5 · Imagen pública de `sanchocmo` + workflow GHCR + compose `image:`]** — PR [#428](https://github.com/Growth4U-systems/sanchocmo-openclaw/pull/428) (`Refs SAN-140`) **MERGED 2026-06-10**. Es EL mecanismo "compose pull". Decisión de arquitectura confirmada con el usuario: **`image:`+`build:` en el base** (no overlay separado) + **publish en release/edge/manual, multi-arch**.
   - **Nuevo `.github/workflows/docker-image.yml`** (espejo de OD/YALC): publica `ghcr.io/growth4u-systems/sanchocmo` multi-arch (`linux/amd64,arm64`) → `:vX.Y.Z`+`:latest` en `release: published` (engancha a release-please), `:edge` en push a `staging`, `workflow_dispatch` (input `tag`, default `edge`) para publicar privado on-demand. `cache-from/to: gha`, pasa `GIT_COMMIT=${github.sha}`, honra `.dockerignore` (el `context: .` no rebaka data de cliente, ver #369).
   - **`docker-compose.yml`**: `sanchocmo` gana `image: ${SANCHOCMO_IMAGE:-ghcr.io/growth4u-systems/sanchocmo:latest}` **conservando `build:`**. Compose tagea el build local con ese mismo `image:` → ambos caminos convergen. **Cero cambios a los deploy workflows de G4U**: su `build --pull` sigue construyendo local, y `pull --ignore-buildable` saltea sanchocmo (tiene `build:`) → nunca pullea imagen ajena.
   - **`install.sh`**: el path producto hace `compose pull` (best-effort) antes de `up -d` (sin `--build`); si el pull falla (package privado/offline) `up -d` cae a build desde el source tree (tiene `build:`). Nuevo flag `--build` fuerza build desde clone. Mensaje de update = `pull && up -d`.
   - **`.env.example`**: sección *Distribution / core image* documenta `SANCHOCMO_IMAGE` (pin de versión). **`docs/INSTALL.md`**: sección *Updating* reescrita a `pull && up -d` (sin `git pull`/rebuild) + pin + nota de build-desde-clone. **`docs/DEPLOY.md`**: nota en *Launch* ofreciendo el path imagen pública como alternativa al `--build`.
   - **Push público gateado por Fase 0** (la imagen self-contained bakea el framework con refs/data de cliente); hasta entonces el package se publica **privado** para probar el mecanismo. El workflow funciona igual para hosts autenticados a GHCR.
-  - Verificación: `bash -n install.sh` ✅ · YAML del workflow parsea (3 triggers, 6 steps) ✅ · `docker compose config`: base con `image:`+`build:` ambos presentes ✅, default `:latest` y `SANCHOCMO_IMAGE` override ✅, overlays od+yalc válidos ✅, `--ignore-buildable` saltea sanchocmo (buildable) ✅. **Pendiente**: primer push real del package (CI) + e2e `compose pull` en host limpio (Fase 6).
+  - Verificación: `bash -n install.sh` ✅ · YAML del workflow parsea (3 triggers, 6 steps) ✅ · `docker compose config`: base con `image:`+`build:` ambos presentes ✅, default `:latest` y `SANCHOCMO_IMAGE` override ✅, overlays od+yalc válidos ✅, `--ignore-buildable` saltea sanchocmo (buildable) ✅. **Pendiente** (post-merge): primer push real del package (queda **privado** hasta Fase 0) + e2e `compose pull` en host limpio (Fase 6).
+  - **🔗 Cruza con el track de branching/release** ([`branching-release-model-proposal.md`](./branching-release-model-proposal.md)): ese `docker-image.yml` se dispara en `release: published`, que en el modelo nuevo lo corta **release-please sobre staging** (tag `:vX.Y.Z` desde staging). El packaging plan **consume** ese artefacto; la maquinaria que lo **produce** es la propuesta de branching. Ver "Dependencia con el modelo de branching/release" abajo.
 
 - **[Fase 3/D7 · Degradación graceful Outreach (YALC) — parcial]** — PR #420 (`Refs SAN-137`) **MERGED** (commit `68fee290`, 2026-06-10). `isYalcConfigured()` en `client.ts` distingue "no activado" de "caído"; `overview.ts` devuelve `configured`; `yalc.tsx` muestra placeholder "Outreach no está activado" con CTA en vez del cockpit roto. `docs/INSTALL.md`: sección Outreach + conectar proveedor de email. **Falta el equivalente para OD** (D7-OD).
 
@@ -150,23 +170,25 @@ añadir wizard y publicar imágenes. No es una reescritura.
 - **✅ Visibilidad de imágenes GHCR — `yalc` y `od` PÚBLICOS (2026-06-11)**: verificado por pull anónimo a GHCR sin creds — ✅ **`yalc`** (`:edge` → `HTTP 200`) y ✅ **`od`** (`:edge` → `HTTP 200`), ambos pullables anónimo → **desbloquean #416** y dejan a OD ya no dependiente de la cache local del VPS. (`:latest` da `404` en ambos porque solo se publica `:edge`, sin release tagueado aún — esperado.) Contexto histórico (2026-06-10, ya resuelto): OD corría en staging solo por cache local de un pull viejo porque la credencial ghcr del VPS es un placeholder roto; ahora con la imagen pública el pull anónimo funciona.
 - ✅ **PR #416 — MERGED + VERIFICADO EN STAGING** (2026-06-11, commit `8910386`): YALC ya corre en staging desde la imagen pública (`ghcr.io/growth4u-systems/yalc:edge`, healthy, digest == registry), deploy verde.
 - ✅ **PR #420 MERGED** (D7-YALC, `68fee290`): degradación graceful de Outreach ya está en `staging`. Pendiente solo el espejo para OD (D7-OD).
-- **🔴 Fase 0 sigue bloqueante #1 para publicar** — y el seeding (#369) lo dejó **más expuesto**: el repo todavía commitea **data operacional y refs hardcodeadas de G4U** que el `.dockerignore` (safety net) no cubre del todo: `workspace-sancho/scripts/{regenerate.py,mc-server.js,auto-bind.py,create-client-crons.sh}`, `mc-data.js`/`legacy-*.js`, `_system/intelligence-log.json`, `AGENTS.md`, etc. mencionan slugs de clientes reales. **La imagen de Sancho NO es publicable hasta la purga Fase 0** (la imagen self-contained bakea el framework).
+- ✅ **Fase 5 mergeada — PR #428 MERGED** (2026-06-10, `SAN-140`): el mecanismo "compose pull" (`docker-image.yml` + base con `image:`+`build:` + `install.sh` pull-first) está en `staging`. **Toda la ingeniería de Fases 1–5 está mergeada.** Lo único que falta para publicar es destrabar **Fase 0**; luego el primer push real del package (hasta entonces, privado) + e2e en host limpio (Fase 6).
+- **🔴 Fase 0 = ÚNICO bloqueante restante para publicar** — confirmado 2026-06-16 (`git ls-files`): siguen trackeados con secretos vivos `sancho-cmo.taild48df2.ts.net.key` (clave TLS privada de Tailscale), `.env.bak-1778520082`, `.env.local.bak-1778526782`, `.mc-proxy-device.json`, `openclaw.json.last-good`, `workspace-sancho/_system/instance.json`. Además el seeding (#369) dejó **más expuesto** el repo: commitea **data operacional y refs hardcodeadas de G4U** que el `.dockerignore` (safety net) no cubre del todo: `workspace-sancho/scripts/{regenerate.py,mc-server.js,auto-bind.py,create-client-crons.sh}` (+ `.backup*`), `mc-data.js`/`legacy-*.js`, `_system/intelligence-log.json`, `AGENTS.md`, etc. mencionan slugs de clientes reales. **La imagen de Sancho NO es publicable hasta la purga Fase 0** (la imagen self-contained bakea el framework). Es **destructiva** (rewrite de historial + rotación de credenciales) → la ejecuta Nahuel.
 
 ### ⏭️ Próximo
 
-> Estado: el producto **levanta local sin G4U** (PG bundled + wizard + Discord/OD/YALC opcionales + preflight). Lo que falta de fondo para "autoinstalable" es **publicar imágenes (Fase 5)** + **verificar e2e (Fase 6)**; el resto es pulido. Todo el publish está gateado por **Fase 0**.
+> Estado (2026-06-26): el producto **levanta local sin G4U**, **bootea desde la imagen versionada** (`sanchocmo:v0.7.0`, Fase 6 ✅) y ahora **se instala sin clonar el repo** (`get.sh` + tarball de release, `SAN-242`) y se opera con el **CLI `./sancho`** (`SAN-334`). El onboarding local end-to-end quedó cerrado (wizard recolecta todas las credenciales pre-boot `SAN-331`, auth Anthropic unificada `SAN-332`, `mc-chat`→Next `SAN-333`, `init-home` self-heal `SAN-329`). El **modelo de branching/release está cerrado** (`SAN-230`) y ya cortó la primera versión end-to-end. **El único bloqueante de fondo para publicar es Fase 0** (la purga — destructiva, la ejecuta Nahuel). Después: cortar **v1.0.0** como primer release público + e2e con el package público (`compose pull` anónimo). El resto es pulido (E5, D7-OD) y deuda no bloqueante (Fase 7, GAP H, B8). Re-chequear el gate de prod (required reviewers, 422 de billing — la org es Team).
 
 **Bloqueado en el usuario:**
-- Hacer **públicos** los packages `yalc` + `od` → destraba #416. Luego verificar staging y mergear #416.
-- **Fase 0** (purga de secretos + data/refs de cliente; rewrite de historial + rotación) — bloqueante #1 para publicar el repo **y** la imagen de Sancho.
+- **Fase 0** (purga de secretos + data/refs de cliente; rewrite de historial + rotación) — **único bloqueante restante** para publicar el repo **y** la imagen de Sancho. Destructivo → lo ejecuta Nahuel. (Ya arrancó: `SAN-233` destrackeó secretos y gitignoreó backups en staging — falta el rewrite de historial + rotación.)
+- ~~**Decisión del modelo de branching/release**~~ → ✅ **HECHO (`SAN-230`, 2026-06-18)**: `main` ff-only + release-please sobre `staging` + reconciliación main↔staging, **v0.7.0 cortada end-to-end** (maquinaria que produce los `:vX.Y.Z`). El gate de prod (required reviewers) quedó pendiente por un 422 de billing a re-chequear (la org es Team).
+- ~~Hacer públicos los packages `yalc` + `od`~~ → ✅ **HECHO + verificado 2026-06-11** (pull anónimo `:edge` → 200; #416 mergeado y verificado en staging).
 - ~~**B7**: texto final de la LICENSE~~ → ✅ **HECHO** (SUL canónica, `SAN-94`).
 
 **Desbloqueado (ingeniería, se puede avanzar ya):**
-- **🟡 Fase 5 — workflow de imagen de `sanchocmo`** (IMPLEMENTADA, PR #428 abierto): `docker-image.yml` publica `ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z`+`:latest`/`:edge` multi-arch; base compose con `image:`+`build:`; `install.sh` pull-first. **Falta**: mergear + primer push real del package (queda **privado** hasta Fase 0) + e2e `compose pull` en host limpio (Fase 6).
-- **D6** — reescribir `README.md` alrededor de Mission Control (confirmado: sigue Discord-céntrico, "manages everything through Discord" / "Client Discord Guilds").
 - **E5** — Setup Checklist UI en el dashboard ("qué falta configurar").
 - **D7-OD** — placeholder graceful de Open Design sin daemon (espejo de lo hecho para YALC en #420).
-- **Fase 6** — verificación e2e en máquina limpia (KPI: install → MC <5min, sin ediciones manuales, anda sin opcionales, `compose pull` preserva data).
+- ~~**Fase 6 — verificación e2e en máquina limpia**~~ → ✅ **HECHO (2026-06-18)**: producto booteado **desde la imagen `sanchocmo:v0.7.0`** (no source) en workspace aislado — MC reachable + healthy + PG bundled 22 tablas + auth api_key. Cazó el bug `SAN-235`. Falta solo el e2e con el package **público** (`compose pull` anónimo) → gateado por Fase 0; y opcionalmente el path de update (`pull && up -d` preserva data).
+
+> ~~Fase 5 / #428~~ ✅ **MERGED** · ~~D6 README~~ ✅ HECHO (`SAN-92`).
 
 **Deuda / opcional (no bloquean lanzamiento):**
 - **Fase 7 — deploy de G4U vía imagen (pull en vez de build)**: hoy el VPS buildea desde source; migrarlo a `compose pull` de la imagen que publica el CI (Fase 5). Beneficio: deploy en segundos, menos RAM/disco en VPS, paridad byte-idéntica staging→prod, dogfooding. **No bloqueante**; ver sección dedicada abajo (3 pre-requisitos).
@@ -202,8 +224,8 @@ añadir wizard y publicar imágenes. No es una reescritura.
 | 4 | Fase 4/6 · install.sh + wizard | #331 (base #329) | ✅ abierto | un-comando install; DB local ✅ con B9 |
 | 5 | B7 · LICENSE.md (borrador) | #333 (base #331) | ✅ mergeado | placeholder SUL; **finalizado** luego a SUL canónica (`SAN-94`) |
 | 6 | B9 · Postgres bundled (driver condicional + baseline) | #366 (→ `staging`), SAN-110 | ✅ **MERGED** (2026-06-09) | resuelve decisión #5; e2e en container + persistencia de volumen ✅ |
-| 7 | Fix wizard `.env` duplicado (B9 follow-up) | #367 (→ `staging`), SAN-110 | 🟡 abierto | regresión de B9 en staging; mergear **antes** de #369 |
-| 8 | Imagen self-contained (seed OPENCLAW_HOME) — GAP G | #369 (→ `staging`), SAN-111 | 🟡 abierto | volumen vacío bootea; datos preservados; depende de #367 |
+| 7 | Fix wizard `.env` duplicado (B9 follow-up) | #367 (→ `staging`), SAN-110 | ✅ **MERGED** (2026-06-09) | regresión de B9 en staging; mergeado antes de #369 |
+| 8 | Imagen self-contained (seed OPENCLAW_HOME) — GAP G | #369 (→ `staging`), SAN-111 | ✅ **MERGED** (2026-06-09) | volumen vacío bootea; datos preservados |
 
 ### ❓ Preguntas abiertas para el usuario (responder al volver)
 
@@ -460,6 +482,36 @@ G4U usa el mismo mecanismo que un tercero (dogfooding).
 db:migrate:deploy` sigue igual); refactor del badge si se elige (b). **Riesgo:** medio
 (toca el path de deploy en vivo) — hacerlo con fallback a build y validado en staging
 varios días antes de prod.
+
+---
+
+## Dependencia con el modelo de branching/release 🔗
+
+> Track hermano: [`branching-release-model-proposal.md`](./branching-release-model-proposal.md)
+> (estado: **borrador para decisión de Nahuel**, ver memoria `project_branching_release_redesign_proposal`).
+
+El packaging plan **consume** imágenes versionadas `:vX.Y.Z`; la propuesta de branching es
+**la maquinaria que las corta**. No son independientes — sin un mecanismo de release sano,
+"sacar una versión de Sancho" (lo que pide el producto) no tiene de dónde salir:
+
+- **Quién produce el tag.** En el modelo propuesto, **release-please corre sobre `staging`**
+  y mantiene un único release PR; al mergearlo nace el tag `vX.Y.Z` y `main` se
+  **fast-forwardea** a él. Ese `release: published` es **exactamente el trigger** del
+  `docker-image.yml` que la Fase 5 (#428/SAN-140) ya implementó → publica `:vX.Y.Z`+`:latest`.
+- **Blocker compartido con la propuesta:** el `RELEASE_PLEASE_TOKEN` caído (ver
+  `reference_release_please_autorelease_pending_block` y §9 de la propuesta) y la
+  **reconciliación `main`↔`staging`** (Paso 0, divergencia actual) bloquean cortar releases
+  limpios — y por ende publicar imágenes versionadas reproducibles.
+- **Solapamiento con Fase 7.** El "deploy de prod por imagen" de la propuesta (Paso 6) y la
+  **Fase 7** de este plan son el **mismo trabajo** visto desde dos lados: migrar el VPS de
+  *build-en-server* a *pull de `:vX.Y.Z`*. Comparten los 3 pre-requisitos (login GHCR del VPS,
+  tag inmutable por SHA, `NEXT_PUBLIC_ENV_LABEL` a runtime). **No duplicar**: ejecutarlo una vez,
+  en el track de branching, y que la Fase 7 de acá quede como "ver propuesta de branching §10.6".
+
+**Orden recomendado:** decidir/aplicar la propuesta de branching (pasos 1–3+5: release-please
+sobre staging, `main` ff-only, gate de prod, convenciones) **destraba el corte de versiones**;
+con eso + Fase 0 (purga), el primer `:vX.Y.Z` **público** de Sancho sale por el camino estándar.
+La decisión del modelo de branching está **pendiente de Nahuel** (ver §10 de la propuesta).
 
 ---
 

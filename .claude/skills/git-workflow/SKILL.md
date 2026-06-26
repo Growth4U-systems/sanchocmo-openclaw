@@ -39,7 +39,7 @@ git checkout -b <branch> origin/staging   # ALWAYS branch from fresh origin/stag
 | `feat:` | minor | `feat(chat): add thread search` |
 | `fix:` | patch | `fix(auth): handle missing session token` |
 | `feat!:` / `BREAKING CHANGE:` footer | major | `feat!: drop /v1 routes` |
-| `chore: docs: refactor: perf: test: build: ci: style:` | none | `docs: update README` |
+| `chore:` `docs:` `style:` `refactor:` `perf:` `test:` `build:` `ci:` | none | `docs: update README` |
 
 Scope optional but encouraged. End the body with the Linear ref: `Refs SAN-<n>`
 (use `Fixes SAN-<n>` only if the merge should close the issue).
