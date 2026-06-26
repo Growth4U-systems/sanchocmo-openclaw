@@ -35,7 +35,8 @@ function skillDir() {
   return path.join(openclawHome, "skills", SKILL);
 }
 
-/** Seed a SKILL.md for `demo-skill` with the given `context_writes` entries. */
+/** Seed a SKILL.md for `demo-skill` with the given `context_writes` entries
+ *  (used to exercise the ADVISORY path). */
 function writeSkill(contextWrites: string[]) {
   fs.mkdirSync(skillDir(), { recursive: true });
   const fm = [
@@ -62,6 +63,7 @@ function writeRel(rel: string, content: string) {
 function reset() {
   fs.rmSync(brandDir(), { recursive: true, force: true });
   fs.rmSync(skillDir(), { recursive: true, force: true });
+  fs.rmSync(path.join(tmp, "campaigns"), { recursive: true, force: true });
 }
 
 before(async () => {
@@ -78,12 +80,16 @@ after(() => {
   }
 });
 
-// ── happy path ───────────────────────────────────────────────────────────────
+// ── HARD floor: the task's own deliverable_file ──────────────────────────────
 
-test("declared context_writes present + non-empty → ok, stamped", () => {
-  writeSkill([`brand/{slug}/out/result.md`]);
+test("deliverable present + non-empty → ok, stamped", () => {
   writeRel(`brand/${SLUG}/out/result.md`, "# real content\n");
-  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, status: "completed" });
+  const r = evaluateDeliverableDone({
+    slug: SLUG,
+    skill: SKILL,
+    status: "completed",
+    deliverableFiles: [`brand/${SLUG}/out/result.md`],
+  });
   assert.equal(r.ok, true);
   assert.deepEqual(r.reasons, []);
   assert.equal(r.checkedOutputs.length, 1);
@@ -92,85 +98,149 @@ test("declared context_writes present + non-empty → ok, stamped", () => {
   assert.equal(r.enforced, true);
 });
 
-// ── (a) missing / empty outputs ──────────────────────────────────────────────
-
-test("declared output file missing → MISSING_OUTPUT", () => {
-  writeSkill([`brand/{slug}/out/result.md`]); // file never written
-  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL });
+test("deliverable missing → MISSING_OUTPUT (hard, blocks)", () => {
+  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, deliverableFiles: [`brand/${SLUG}/out/result.md`] });
   assert.equal(r.ok, false);
   assert.equal(r.reasons.length, 1);
   assert.equal(r.reasons[0].code, "MISSING_OUTPUT");
 });
 
-test("declared output file empty (0 bytes) → EMPTY_OUTPUT", () => {
-  writeSkill([`brand/{slug}/out/result.md`]);
-  writeRel(`brand/${SLUG}/out/result.md`, ""); // 0 bytes
-  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL });
+test("deliverable empty (0 bytes) → EMPTY_OUTPUT", () => {
+  writeRel(`brand/${SLUG}/out/result.md`, "");
+  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, deliverableFiles: [`brand/${SLUG}/out/result.md`] });
   assert.equal(r.ok, false);
   assert.equal(r.reasons[0].code, "EMPTY_OUTPUT");
 });
 
-test("directory output non-empty → pass; empty → EMPTY_OUTPUT", () => {
-  writeSkill([`brand/{slug}/research-raw/`]);
-  // empty dir
-  fs.mkdirSync(path.join(brandDir(), "research-raw"), { recursive: true });
-  let r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL });
-  assert.equal(r.ok, false);
-  assert.equal(r.reasons[0].code, "EMPTY_OUTPUT");
-  // now non-empty
+test("deliverable is a non-empty DIRECTORY (no trailing slash) → pass", () => {
+  // A deliverable_file may point at a directory of outputs (old check used
+  // existsSync, which accepted dirs). The gate must accept a non-empty dir.
   writeRel(`brand/${SLUG}/research-raw/source-1.md`, "x");
-  r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL });
-  assert.equal(r.ok, true);
+  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, deliverableFiles: [`brand/${SLUG}/research-raw`] });
+  assert.equal(r.ok, true, JSON.stringify(r.reasons));
   assert.equal(r.checkedOutputs[0], `brand/${SLUG}/research-raw/`);
 });
 
-test("non-brand-root directory (campaigns/) resolves against BASE, not brand/", () => {
-  writeSkill([`campaigns/`]);
-  fs.mkdirSync(path.join(tmp, "campaigns"), { recursive: true });
-  writeRel(`campaigns/2026-06.md`, "x");
-  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL });
-  assert.equal(r.ok, true, JSON.stringify(r.reasons));
-  assert.equal(r.checkedOutputs[0], "campaigns/");
+test("deliverable resolving only to a preliminary lite.md → MISSING (not 'done')", () => {
+  // Declared canonical pillar.current.md was never written; only a kickoff
+  // lite.md stub exists. The resolver's lite fallback must NOT pass the gate.
+  writeRel(`brand/${SLUG}/pillar/lite.md`, "preliminary stub");
+  const r = evaluateDeliverableDone({
+    slug: SLUG,
+    skill: SKILL,
+    deliverableFiles: [`brand/${SLUG}/pillar/pillar.current.md`],
+  });
+  assert.equal(r.ok, false);
+  assert.equal(r.reasons[0].code, "MISSING_OUTPUT");
 });
 
-// ── false-positive guards: unresolved placeholders + globs are SKIPPED ────────
+test("canonical-alias drift (declared x.current.md, disk has bare current.md) → pass", () => {
+  // This fallback is the SAME logical doc (legacy/canonical rename) — must pass.
+  writeRel(`brand/${SLUG}/pillar/current.md`, "real content");
+  const r = evaluateDeliverableDone({
+    slug: SLUG,
+    skill: SKILL,
+    deliverableFiles: [`brand/${SLUG}/pillar/pillar.current.md`],
+  });
+  assert.equal(r.ok, true, JSON.stringify(r.reasons));
+});
+
+// ── ADVISORY: the skill's generic context_writes never blocks (the #1 fix) ───
+
+test("slug-only context_writes missing → ok (advisory, NOT blocked)", () => {
+  // Reproduces the false-positive: skill declares campaigns/ + a slug-only file,
+  // this task produced its own deliverable but not those. Must NOT block.
+  writeSkill([`campaigns/`, `brand/{slug}/operational/assets.md`]);
+  writeRel(`brand/${SLUG}/out/post.md`, "the actual deliverable");
+  const r = evaluateDeliverableDone({
+    slug: SLUG,
+    skill: SKILL,
+    status: "completed",
+    deliverableFiles: [`brand/${SLUG}/out/post.md`],
+  });
+  assert.equal(r.ok, true, "skill-generic context_writes must never block");
+  assert.deepEqual(r.reasons, []);
+  assert.equal(r.advisories.length, 2, "missing context_writes surface as advisories");
+  assert.ok(r.advisories.every((a) => a.code === "MISSING_OUTPUT"));
+});
+
+test("context_writes present → no advisory, counted in checkedOutputs", () => {
+  writeSkill([`brand/{slug}/operational/learnings.md`]);
+  writeRel(`brand/${SLUG}/operational/learnings.md`, "notes");
+  writeRel(`brand/${SLUG}/out/post.md`, "deliverable");
+  const r = evaluateDeliverableDone({
+    slug: SLUG,
+    skill: SKILL,
+    deliverableFiles: [`brand/${SLUG}/out/post.md`],
+  });
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.advisories, []);
+  assert.equal(r.checkedOutputs.length, 2);
+});
+
+// ── false-positive guards: placeholders + globs are SKIPPED ───────────────────
 
 test("unresolved placeholder ({ideaId}) → skipped, not blocking", () => {
-  writeSkill([`brand/{slug}/drafts/{ideaId}/post.md`]);
-  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL });
+  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, deliverableFiles: [`brand/${SLUG}/drafts/{ideaId}/post.md`] });
   assert.equal(r.ok, true);
   assert.equal(r.reasons.length, 0);
   assert.equal(r.skippedOutputs.length, 1);
 });
 
 test("placeholder resolves when its value is supplied via vars", () => {
-  writeSkill([`brand/{slug}/drafts/{ideaId}/post.md`]);
   writeRel(`brand/${SLUG}/drafts/idea-7/post.md`, "draft");
-  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, vars: { ideaId: "idea-7" } });
+  const r = evaluateDeliverableDone({
+    slug: SLUG,
+    skill: SKILL,
+    deliverableFiles: [`brand/${SLUG}/drafts/{ideaId}/post.md`],
+    vars: { ideaId: "idea-7" },
+  });
   assert.equal(r.ok, true, JSON.stringify(r.reasons));
   assert.equal(r.checkedOutputs.length, 1);
-  assert.equal(r.skippedOutputs.length, 0);
+});
+
+test("vars value containing '$' substitutes LITERALLY (no regex specials)", () => {
+  // A '$1'/'$&' in a value must not be interpreted as a replacement special.
+  writeRel(`brand/${SLUG}/drafts/a$1b/post.md`, "draft");
+  const r = evaluateDeliverableDone({
+    slug: SLUG,
+    skill: SKILL,
+    deliverableFiles: [`brand/${SLUG}/drafts/{ideaId}/post.md`],
+    vars: { ideaId: "a$1b" },
+  });
+  assert.equal(r.ok, true, JSON.stringify(r.reasons));
+  assert.equal(r.checkedOutputs.length, 1);
 });
 
 test("glob entry (*.json) → skipped, never blocking", () => {
-  writeSkill([`brand/{slug}/data/*.json`]);
-  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL });
+  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, deliverableFiles: [`brand/${SLUG}/data/*.json`] });
   assert.equal(r.ok, true);
   assert.equal(r.skippedOutputs.length, 1);
 });
 
+test("non-brand-root directory (campaigns/) resolves against BASE, not brand/", () => {
+  writeSkill([`campaigns/`]);
+  writeRel(`campaigns/2026-06.md`, "x");
+  writeRel(`brand/${SLUG}/out/post.md`, "deliverable");
+  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, deliverableFiles: [`brand/${SLUG}/out/post.md`] });
+  assert.equal(r.ok, true, JSON.stringify(r.reasons));
+  assert.ok(r.checkedOutputs.includes("campaigns/"));
+});
+
 test("inline annotation is stripped before resolving", () => {
-  writeSkill([`brand/{slug}/out/result.md  (frontmatter via API)`]);
   writeRel(`brand/${SLUG}/out/result.md`, "content");
-  const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL });
+  const r = evaluateDeliverableDone({
+    slug: SLUG,
+    skill: SKILL,
+    deliverableFiles: [`brand/${SLUG}/out/result.md  (frontmatter via API)`],
+  });
   assert.equal(r.ok, true, JSON.stringify(r.reasons));
   assert.equal(r.checkedOutputs.length, 1);
 });
 
-// ── status + step validation ─────────────────────────────────────────────────
+// ── status + step validation (HARD) ──────────────────────────────────────────
 
 test("invalid status → INVALID_STATUS; legacy alias + canonical pass", () => {
-  // no SKILL.md → no outputs → only the status check runs
   const bad = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, status: "shipped" });
   assert.equal(bad.ok, false);
   assert.equal(bad.reasons[0].code, "INVALID_STATUS");
@@ -186,43 +256,28 @@ test("invalid step → INVALID_STEP; concrete pipeline step passes", () => {
   assert.equal(evaluateDeliverableDone({ slug: SLUG, skill: SKILL, step: "drafting" }).ok, true);
 });
 
-// ── N/A: a skill that writes nothing ─────────────────────────────────────────
+// ── N/A: nothing declared ────────────────────────────────────────────────────
 
-test("skill with no context_writes and no deliverableFiles → pass (N/A)", () => {
-  writeSkill([]); // empty context_writes
+test("no deliverableFiles and no context_writes → pass (N/A)", () => {
+  writeSkill([]);
   const r = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, status: "completed" });
   assert.equal(r.ok, true);
   assert.deepEqual(r.checkedOutputs, []);
 });
 
-// ── deliverableFiles checked verbatim, independent of the skill ───────────────
-
-test("deliverableFiles param is checked verbatim (missing → MISSING_OUTPUT)", () => {
-  // no SKILL.md; the explicit deliverable doesn't exist
-  const r = evaluateDeliverableDone({
-    slug: SLUG,
-    skill: SKILL,
-    deliverableFiles: [`brand/${SLUG}/explicit/missing.md`],
-  });
-  assert.equal(r.ok, false);
-  assert.equal(r.reasons[0].code, "MISSING_OUTPUT");
-});
-
 // ── assert vs evaluate (contract + idempotency) ──────────────────────────────
 
-test("assertDeliverableDone throws DoneGateError(422); evaluate returns same result", () => {
-  writeSkill([`brand/{slug}/out/result.md`]); // missing
+test("assertDeliverableDone throws DoneGateError(422) on hard fail; evaluate returns same", () => {
   let caught: unknown;
   try {
-    assertDeliverableDone({ slug: SLUG, skill: SKILL, status: "completed" });
+    assertDeliverableDone({ slug: SLUG, skill: SKILL, status: "completed", deliverableFiles: [`brand/${SLUG}/missing.md`] });
   } catch (e) {
     caught = e;
   }
   assert.ok(caught instanceof DoneGateError, "expected DoneGateError");
   assert.equal((caught as InstanceType<typeof DoneGateError>).statusCode, 422);
-  // evaluate is non-throwing + idempotent
-  const a = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, status: "completed" });
-  const b = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, status: "completed" });
+  const a = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, deliverableFiles: [`brand/${SLUG}/missing.md`] });
+  const b = evaluateDeliverableDone({ slug: SLUG, skill: SKILL, deliverableFiles: [`brand/${SLUG}/missing.md`] });
   assert.equal(a.ok, false);
   assert.deepEqual(a.reasons, b.reasons);
 });
@@ -230,13 +285,11 @@ test("assertDeliverableDone throws DoneGateError(422); evaluate returns same res
 // ── DONE_GATE=off → audit-only bypass (child process; flag captured at import) ─
 
 test("DONE_GATE=off → assert does NOT throw, enforced=false", async () => {
-  writeSkill([`brand/{slug}/out/result.md`]); // missing → would 422 if enforced
-
   const script = `
     import { assertDeliverableDone } from ${JSON.stringify(DONE_GATE_TS)};
     const r = assertDeliverableDone({ slug: ${JSON.stringify(SLUG)}, skill: ${JSON.stringify(
       SKILL,
-    )}, status: "completed" });
+    )}, status: "completed", deliverableFiles: [${JSON.stringify(`brand/${SLUG}/missing.md`)}] });
     if (r.enforced) { console.error("ENFORCED-TRUE"); process.exit(1); }
     if (r.ok) { console.error("UNEXPECTED-OK"); process.exit(1); }
     console.log("BYPASS-OK");

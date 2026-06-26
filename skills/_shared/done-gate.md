@@ -21,15 +21,28 @@ En el momento "done" del entregable: la transición de una task **`→ completed
 (`POST /api/projects/task-status`). **No** corre en cada mensaje de chat — eso
 sería carísimo y ruidoso, y queda reservado para la futura capa Sansón (LLM).
 
+## HARD floor vs ADVISORY (clave)
+
+- **HARD (bloquea, 422)** = el **`deliverable_file` de la propia task** — el
+  contrato específico de ESA task. Si falta o está vacío, no hay "done".
+- **ADVISORY (no bloquea)** = el **`context_writes` de la skill**. Los outputs
+  declarados de una skill son *genéricos* a TODAS sus invocaciones, así que una
+  task concreta no tiene por qué haber producido cada uno (p.ej. una task
+  `newsletter` no debe bloquearse porque falte `campaigns/` o
+  `operational/assets.md`, que son outputs de OTRAS ejecuciones). Se reportan en
+  `result.advisories` (log + futura capa Sansón LLM); **nunca** bloquean.
+
 ## Criterios de paso (objetivos, deterministas)
 
 Un entregable **pasa** cuando:
 
-1. **Outputs presentes y no vacíos.** Cada ruta declarada en el `context_writes`
-   de la skill (∪ el `deliverable_file` de la task) que se pueda resolver existe
-   y es no-vacía:
+1. **Deliverable presente y no vacío (HARD).** Cada ruta del `deliverable_file`
+   de la task que se pueda resolver existe y es no-vacía:
    - Fichero → existe y `size > 0`.
-   - Directorio (la entrada acaba en `/`) → existe y **no está vacío**.
+   - Directorio (entrada con `/`, o una ruta que en disco ES un directorio) →
+     existe y **no está vacío**.
+   - Un fichero que solo resuelve a un `lite.md` preliminar (no al canónico
+     declarado) → **MISSING** (el output real no se escribió).
 2. **Status válido** (si se escribe uno): ∈ `VALID_TASK_STATUSES` (o un alias
    legacy reconocido). Mismo criterio que la API `pillar-status` — el gate nunca
    es *más estricto* que la validación de status de hoy.
@@ -37,14 +50,17 @@ Un entregable **pasa** cuando:
 4. **Stamp de trazabilidad** presente (skill · agent · model · `at`), escrito en
    `task.done_stamp` al completar.
 
+El `context_writes` de la skill se evalúa con los MISMOS criterios pero su
+resultado va a `advisories` (soft), no bloquea.
+
 ### Reglas que evitan falsos positivos (nunca bloquean)
 
 - Entrada con **placeholder sin resolver** tras sustituir `{slug}` + `vars`
   (`{ideaId}`, `{asset-slug}`, `{YYYY-MM-DD}`…) → **N/A (skipped)**, no MISSING.
 - Entrada **glob/wildcard** (`*.json`, `keywords/*.yml`) → **N/A (skipped)**: es
   una intención, no un entregable con nombre.
-- **Sin `context_writes` ni `deliverable_file`** → **pasa** (una skill puede
-  legítimamente no escribir ficheros).
+- **Sin `deliverable_file`** (ni `context_writes` resoluble) → **pasa** (una task
+  puede legítimamente no declarar entregable).
 - Anotaciones inline en la declaración (`ruta.md (vía API)`, `ruta # comentario`,
   `ruta — nota`) se recortan antes de resolver.
 

@@ -129,9 +129,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Execution-time gate (2026-04-15): cannot transition to `completed` unless
   // the task has `deliverable_file` populated. SAN-344 generalizes the old
-  // existence-only check into the universal Definition-of-Done gate, which also
-  // enforces NON-EMPTY outputs + the skill's declared `context_writes`, returns
-  // structured reason codes (422), and stamps traceability on the deliverable.
+  // existence-only check into the universal Definition-of-Done gate: the task's
+  // own `deliverable_file` is the HARD floor (must exist + be non-empty → 422 on
+  // failure, with structured reason codes), while the owning skill's generic
+  // `context_writes` are ADVISORY only (logged, never block — see done-gate.ts).
+  // The gate also stamps traceability on the deliverable.
   let doneStamp: GateStamp | undefined;
   if (canonical === "completed") {
     const meta = readTaskMeta(slug, taskId);
@@ -160,6 +162,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         deliverableFiles: Array.isArray(df) ? df : [df as string],
       });
       doneStamp = gate.stamp;
+      if (gate.advisories.length > 0) {
+        // Soft signal: the skill declares outputs this task didn't produce.
+        // Never blocks; surfaced for visibility / the future Sansón LLM tier.
+        console.warn(
+          `[done-gate] ${slug}/${taskId} completed with ${gate.advisories.length} ` +
+            `advisory(ies): ${gate.advisories.map((a) => `${a.code} ${a.path ?? a.value ?? ""}`).join("; ")}`,
+        );
+      }
     } catch (e) {
       if (e instanceof DoneGateError) {
         return res.status(e.statusCode).json({

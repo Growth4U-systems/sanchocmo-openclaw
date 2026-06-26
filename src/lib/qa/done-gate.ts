@@ -12,19 +12,28 @@
  * in `content-tasks.ts`: a fail-loud assert carrying a 422, behind a default-ON
  * kill-switch (`DONE_GATE=off`) for catastrophic-failure bypass.
  *
- * SCOPE (PR1): the deterministic floor ONLY. The qualitative Sansón/qa-bot LLM
- * pass (independent fresh-context verification, soft-flagged) is a LATER tier and
- * is intentionally NOT here. Contract + criteria: skills/_shared/done-gate.md.
+ * HARD vs ADVISORY (the altitude that matters):
+ *   - HARD floor = the task's OWN `deliverable_file`(s) — the task-specific
+ *     contract. Missing/empty here BLOCKS (422).
+ *   - ADVISORY = the owning skill's `context_writes` — a soft signal only. A
+ *     skill's declared outputs are GENERIC across all its invocations, so a
+ *     single task need not have produced every one; hard-blocking on them would
+ *     false-positive (e.g. a `newsletter` task blocked because `campaigns/` or
+ *     `operational/assets.md` — outputs of OTHER newsletter runs — are absent).
+ *     These surface in `result.advisories` for visibility and the future
+ *     Sansón/qa-bot LLM soft-flag tier; they never block.
+ *
+ * SCOPE (PR1): the deterministic floor ONLY. The qualitative Sansón LLM pass is
+ * a LATER tier. Contract + criteria: skills/_shared/done-gate.md.
  */
 
 import fs from "fs";
-import os from "os";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
 import { VALID_TASK_STATUSES, type DoneStamp } from "@/types";
 import { isLegacyStatusAlias } from "@/lib/task-status";
 import { normalizePipelineStep } from "@/lib/pipeline-steps";
-import { parseSkillFrontmatter } from "@/lib/server/skill-frontmatter";
+import { readSkillContextField } from "@/lib/server/skill-frontmatter";
 import { resolveWorkspaceDocPath } from "@/lib/server/doc-paths";
 
 // Kill-switch: `DONE_GATE=off` makes `assertDeliverableDone` a no-op (audit-only:
@@ -54,8 +63,10 @@ export type GateStamp = DoneStamp;
 
 export interface GateResult {
   ok: boolean;
-  /** Empty iff `ok`. */
+  /** HARD failures (deliverable_file + status + step). Empty iff `ok`. Blocks. */
   reasons: GateReason[];
+  /** SOFT failures from the skill's generic `context_writes`. Never blocks. */
+  advisories: GateReason[];
   /** Resolved paths actually verified (files + non-empty dirs). */
   checkedOutputs: string[];
   /** N/A entries: unresolved placeholder / glob — never blocking. */
@@ -68,7 +79,7 @@ export interface GateResult {
 
 export interface DoneGateInput {
   slug: string;
-  /** Owning skill — resolves its `context_writes` from SKILL.md. */
+  /** Owning skill — its `context_writes` are read as ADVISORY (soft) signals. */
   skill: string;
   agent?: string;
   model?: string;
@@ -76,8 +87,8 @@ export interface DoneGateInput {
   status?: string;
   /** Pipeline step being written at "done". Validated if set. */
   step?: string;
-  /** Concrete paths the caller already knows (e.g. `task.deliverable_file`).
-   *  Checked verbatim, in addition to the skill's declared `context_writes`. */
+  /** The task's own declared output(s) (e.g. `task.deliverable_file`). This is
+   *  the HARD floor: each must exist + be non-empty or the gate blocks. */
   deliverableFiles?: string[];
   /** Placeholder values beyond `{slug}` ({ideaId}, {channel}, {asset-slug}…). */
   vars?: Record<string, string>;
@@ -99,49 +110,17 @@ function buildMessage(result: GateResult): string {
   return (
     `Deliverable failed the Definition-of-Done gate (${n} issue${n === 1 ? "" : "s"}):\n` +
     `${lines.join("\n")}\n` +
-    `The work must exist on disk before "done": every declared output ` +
-    `(context_writes / deliverable_file) must be present and non-empty. ` +
-    `If this is a false positive, fix the skill's context_writes declaration, ` +
-    `or set DONE_GATE=off to bypass (audit-only).`
+    `The task's declared deliverable must exist on disk and be non-empty before ` +
+    `"done". If this is a false positive, fix the task's deliverable_file, or set ` +
+    `DONE_GATE=off to bypass (audit-only).`
   );
-}
-
-// ---------------------------------------------------------------------------
-// Skill context_writes (read-only — mirrors context-pack.ts's reader)
-// ---------------------------------------------------------------------------
-
-/** Runtime skills catalog root — same convention as context-pack.ts / skills.ts. */
-function skillsRoot(): string {
-  return path.join(
-    process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
-    "skills",
-  );
-}
-
-/** A skill's declared `context_writes` templates. `[]` when the skill or its
- *  SKILL.md is absent — a missing skill is N/A, not a gate failure. */
-function readSkillContextWrites(skill: string | null | undefined): string[] {
-  if (!skill) return [];
-  if (!/^[a-z0-9][a-z0-9_-]*$/i.test(skill)) return [];
-  const skillMdPath = path.join(skillsRoot(), skill, "SKILL.md");
-  let content: string;
-  try {
-    content = fs.readFileSync(skillMdPath, "utf-8");
-  } catch {
-    return [];
-  }
-  const { meta } = parseSkillFrontmatter(content);
-  const writes = Array.isArray(meta.context_writes) ? meta.context_writes : [];
-  return writes.filter((p) => typeof p === "string" && p.trim().length > 0);
 }
 
 // ---------------------------------------------------------------------------
 // Output resolution (deterministic, with the false-positive guards)
 // ---------------------------------------------------------------------------
 
-function escapeRe(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+const isNonEmptyString = (p: unknown): p is string => typeof p === "string" && p.trim().length > 0;
 
 /** Strip a trailing inline annotation — "(...)", "# ...", "— ..." — from a
  *  context_writes entry, leaving just the path template. */
@@ -154,22 +133,36 @@ function stripAnnotation(entry: string): string {
   return entry.slice(0, cut).trim();
 }
 
+/** Literal placeholder substitution via split/join — NOT regex, so a value
+ *  containing `$`, `$&`, `$1`, etc. can never be mis-interpreted as a
+ *  replacement special, and no key needs regex-escaping. */
 function substitute(tpl: string, slug: string, vars?: Record<string, string>): string {
-  let out = tpl.replace(/\{slug\}/g, slug);
+  let out = tpl.split("{slug}").join(slug);
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {
-      out = out.replace(new RegExp(`\\{${escapeRe(k)}\\}`, "g"), v);
+      out = out.split(`{${k}}`).join(v);
     }
   }
   return out;
 }
 
-/** Path.join under BASE that refuses traversal outside the workspace. */
+/** Path.join under BASE that refuses traversal outside the workspace. Returns
+ *  null on escape. A deliberate non-throwing variant of doc-paths' `safeAbs`. */
 function safeJoin(rel: string): string | null {
   const base = path.resolve(BASE);
   const abs = path.resolve(base, rel.replace(/^\/+/, ""));
   if (abs !== base && !abs.startsWith(base + path.sep)) return null;
   return abs;
+}
+
+/** True if `abs` is a directory; result of the non-empty check. */
+function dirState(abs: string | null): "absent" | "empty" | "non-empty" {
+  if (!abs || !fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) return "absent";
+  try {
+    return fs.readdirSync(abs).length > 0 ? "non-empty" : "empty";
+  } catch {
+    return "empty";
+  }
 }
 
 type OutputCheck =
@@ -178,12 +171,13 @@ type OutputCheck =
   | { kind: "reason"; reason: GateReason };
 
 /**
- * Verify ONE declared output entry. The guards (below) are what make hard-block
- * safe: anything we can't fully + safely resolve is SKIPPED, never failed.
+ * Verify ONE declared output entry. The guards are what make hard-block safe:
+ * anything we can't fully + safely resolve is SKIPPED, never failed.
  *   - unresolved placeholder ({ideaId}, {asset-slug}, {date}…) → skipped
  *   - glob / wildcard (`*.json`)                               → skipped
- *   - trailing slash                                           → directory check
+ *   - trailing slash, or a path that IS a directory            → non-empty dir
  *   - file                                                     → exists + non-empty
+ *   - resolves only to a preliminary `lite.md` (fallback)      → MISSING
  */
 function checkOutputEntry(rawEntry: string, slug: string, vars?: Record<string, string>): OutputCheck {
   const annotated = stripAnnotation(rawEntry);
@@ -199,25 +193,12 @@ function checkOutputEntry(rawEntry: string, slug: string, vars?: Record<string, 
 
   if (isDir) {
     const rel = substituted.replace(/\/+$/, "");
-    const abs = safeJoin(rel);
-    if (!abs) return { kind: "skipped", path: substituted };
-    if (!fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) {
-      return {
-        kind: "reason",
-        reason: { code: "MISSING_OUTPUT", message: `declared output directory does not exist: ${rel}/`, path: `${rel}/` },
-      };
+    const state = dirState(safeJoin(rel));
+    if (state === "absent") {
+      return { kind: "reason", reason: { code: "MISSING_OUTPUT", message: `declared output directory does not exist: ${rel}/`, path: `${rel}/` } };
     }
-    let entries: string[] = [];
-    try {
-      entries = fs.readdirSync(abs);
-    } catch {
-      /* unreadable → treat as empty below */
-    }
-    if (entries.length === 0) {
-      return {
-        kind: "reason",
-        reason: { code: "EMPTY_OUTPUT", message: `declared output directory is empty: ${rel}/`, path: `${rel}/` },
-      };
+    if (state === "empty") {
+      return { kind: "reason", reason: { code: "EMPTY_OUTPUT", message: `declared output directory is empty: ${rel}/`, path: `${rel}/` } };
     }
     return { kind: "checked", path: `${rel}/` };
   }
@@ -232,12 +213,25 @@ function checkOutputEntry(rawEntry: string, slug: string, vars?: Record<string, 
     // path traversal / unsafe — don't block on something we can't safely resolve.
     return { kind: "skipped", path: substituted };
   }
+
   if (!resolved.exists) {
-    return {
-      kind: "reason",
-      reason: { code: "MISSING_OUTPUT", message: `declared output file does not exist: ${resolved.canonicalPath}`, path: resolved.canonicalPath },
-    };
+    // The resolver checks isFile(); a deliverable may legitimately be a DIRECTORY
+    // of outputs (the old existence check accepted dirs). Accept a non-empty dir.
+    const state = dirState(safeJoin(substituted));
+    if (state === "non-empty") return { kind: "checked", path: `${substituted}/` };
+    if (state === "empty") {
+      return { kind: "reason", reason: { code: "EMPTY_OUTPUT", message: `declared output directory is empty: ${substituted}/`, path: `${substituted}/` } };
+    }
+    return { kind: "reason", reason: { code: "MISSING_OUTPUT", message: `declared output file does not exist: ${resolved.canonicalPath}`, path: resolved.canonicalPath } };
   }
+
+  // A `current.md`↔`x.current.md` canonical-alias fallback is the SAME doc — fine.
+  // But a fallback to a preliminary `lite.md` means the DECLARED canonical file
+  // was never written (only a kickoff stub exists) — that is NOT "done".
+  if (resolved.usedFallback && /(^|\/)lite\.md$/i.test(resolved.canonicalPath)) {
+    return { kind: "reason", reason: { code: "MISSING_OUTPUT", message: `declared output resolved only to a preliminary lite.md, not the canonical file: ${substituted}`, path: substituted } };
+  }
+
   let size = 0;
   try {
     size = fs.statSync(resolved.absPath).size;
@@ -245,10 +239,7 @@ function checkOutputEntry(rawEntry: string, slug: string, vars?: Record<string, 
     /* race — treat as 0 */
   }
   if (size === 0) {
-    return {
-      kind: "reason",
-      reason: { code: "EMPTY_OUTPUT", message: `declared output file is empty (0 bytes): ${resolved.canonicalPath}`, path: resolved.canonicalPath },
-    };
+    return { kind: "reason", reason: { code: "EMPTY_OUTPUT", message: `declared output file is empty (0 bytes): ${resolved.canonicalPath}`, path: resolved.canonicalPath } };
   }
   return { kind: "checked", path: resolved.canonicalPath };
 }
@@ -263,8 +254,10 @@ function checkOutputEntry(rawEntry: string, slug: string, vars?: Record<string, 
  */
 export function evaluateDeliverableDone(input: DoneGateInput): GateResult {
   const reasons: GateReason[] = [];
+  const advisories: GateReason[] = [];
   const checkedOutputs: string[] = [];
   const skippedOutputs: string[] = [];
+  const seen = new Set<string>();
 
   // 1. Status — reuse the exact predicate the pillar-status API uses, so the
   //    gate is never STRICTER than today's status validation (backwards-compat).
@@ -291,19 +284,33 @@ export function evaluateDeliverableDone(input: DoneGateInput): GateResult {
     }
   }
 
-  // 3. Outputs — union of explicit deliverableFiles + the skill's context_writes.
-  //    Empty union → N/A → pass (a skill may legitimately write nothing).
-  const declared = [
-    ...(input.deliverableFiles ?? []),
-    ...readSkillContextWrites(input.skill),
-  ].filter((p) => typeof p === "string" && p.trim().length > 0);
+  // 3. Outputs. HARD = the task's own deliverable_file(s). ADVISORY = the skill's
+  //    generic context_writes (soft signal — see header). Empty HARD set → N/A
+  //    pass (a task may legitimately declare no deliverable). Advisory entries
+  //    that duplicate a hard one are dropped so a path isn't reported twice.
+  const runChecks = (entries: string[], sink: GateReason[]) => {
+    for (const entry of entries) {
+      const result = checkOutputEntry(entry, input.slug, input.vars);
+      if (result.kind === "checked") {
+        if (!seen.has(result.path)) {
+          seen.add(result.path);
+          checkedOutputs.push(result.path);
+        }
+      } else if (result.kind === "skipped") {
+        skippedOutputs.push(result.path);
+      } else {
+        sink.push(result.reason);
+      }
+    }
+  };
 
-  for (const entry of declared) {
-    const result = checkOutputEntry(entry, input.slug, input.vars);
-    if (result.kind === "checked") checkedOutputs.push(result.path);
-    else if (result.kind === "skipped") skippedOutputs.push(result.path);
-    else reasons.push(result.reason);
-  }
+  const hardOutputs = (input.deliverableFiles ?? []).filter(isNonEmptyString);
+  const advisoryOutputs = readSkillContextField(input.skill, "context_writes")
+    .filter(isNonEmptyString)
+    .filter((e) => !hardOutputs.includes(e));
+
+  runChecks(hardOutputs, reasons);
+  runChecks(advisoryOutputs, advisories);
 
   const stamp: GateStamp = { skill: input.skill, at: new Date().toISOString() };
   if (input.agent) stamp.agent = input.agent;
@@ -312,6 +319,7 @@ export function evaluateDeliverableDone(input: DoneGateInput): GateResult {
   return {
     ok: reasons.length === 0,
     reasons,
+    advisories,
     checkedOutputs,
     skippedOutputs,
     stamp,
@@ -321,8 +329,8 @@ export function evaluateDeliverableDone(input: DoneGateInput): GateResult {
 
 /**
  * Throwing wrapper for write-path call sites. Throws `DoneGateError` (→ 422)
- * when the deliverable fails AND the gate is enforced. When `DONE_GATE=off`,
- * never throws (returns the audit-only result). No-op-pass when `ok`.
+ * when the HARD checks fail AND the gate is enforced. When `DONE_GATE=off`,
+ * never throws (returns the audit-only result). Advisories never throw.
  */
 export function assertDeliverableDone(input: DoneGateInput): GateResult {
   const result = evaluateDeliverableDone(input);

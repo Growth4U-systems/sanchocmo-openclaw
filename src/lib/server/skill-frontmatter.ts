@@ -11,6 +11,10 @@
  * frontmatter uses. NOT a general YAML parser; do not feed arbitrary YAML.
  */
 
+import fs from "fs";
+import os from "os";
+import path from "path";
+
 export interface SkillMeta {
   name: string;
   description: string;
@@ -53,12 +57,20 @@ export function parseSkillFrontmatter(content: string): ParsedSkillFrontmatter {
       } else {
         meta[currentKey] = val;
       }
-    } else if (/^\s*-\s+/.test(line) && currentKey && currentKey !== "metadata") {
+    } else if (
+      /^\s*-\s+/.test(line) &&
+      currentKey &&
+      currentKey !== "metadata" &&
+      typeof meta[currentKey] !== "string"
+    ) {
       // Sequence item — tolerate leading indentation. Many SKILL.md files indent
       // list items two spaces under the key (`  - foo`); the original
       // `startsWith("- ")` silently DROPPED those, leaving `context_required` /
       // `context_writes` empty for those skills (degrading context-pack grounding
       // and the SAN-344 done-gate). Match any indentation, both forms.
+      // The `typeof !== "string"` guard means a stray indented bullet after a
+      // scalar key (malformed frontmatter) is ignored rather than clobbering the
+      // scalar (e.g. turning `description` into an array).
       if (!Array.isArray(meta[currentKey])) meta[currentKey] = [];
       (meta[currentKey] as string[]).push(line.replace(/^\s*-\s+/, "").trim());
     } else if (line.startsWith("  ") && currentKey === "metadata") {
@@ -71,4 +83,38 @@ export function parseSkillFrontmatter(content: string): ParsedSkillFrontmatter {
   }
 
   return { meta: meta as unknown as SkillMeta, body };
+}
+
+/**
+ * Runtime skills catalog root (`OPENCLAW_HOME/skills`) — the single convention
+ * shared by context-pack, the SAN-344 done-gate and the Settings → Skills panel.
+ */
+export function skillsRoot(): string {
+  return path.join(
+    process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
+    "skills",
+  );
+}
+
+/**
+ * Read one frontmatter list field (`context_required` | `context_writes`) of a
+ * skill as a `string[]`. Returns `[]` when the skill name is invalid, the
+ * SKILL.md is absent, or the field is missing — a missing skill is never fatal.
+ * Single reader so context-pack and the done-gate don't each re-implement it.
+ */
+export function readSkillContextField(
+  skill: string | null | undefined,
+  field: "context_required" | "context_writes",
+): string[] {
+  if (!skill) return [];
+  if (!/^[a-z0-9][a-z0-9_-]*$/i.test(skill)) return [];
+  let content: string;
+  try {
+    content = fs.readFileSync(path.join(skillsRoot(), skill, "SKILL.md"), "utf-8");
+  } catch {
+    return [];
+  }
+  const { meta } = parseSkillFrontmatter(content);
+  const list = meta[field];
+  return Array.isArray(list) ? list.filter((p) => typeof p === "string" && p.trim().length > 0) : [];
 }

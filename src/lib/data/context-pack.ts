@@ -18,12 +18,9 @@
  * `src/lib/…`) reaches it over HTTP via `src/pages/api/chat/context-pack.ts`.
  */
 
-import fs from "fs";
-import os from "os";
-import path from "path";
 import { BASE } from "@/lib/data/paths";
 import { assembleBrandBrainState, brandExists } from "@/lib/data/brand-brain-assembler";
-import { parseSkillFrontmatter } from "@/lib/server/skill-frontmatter";
+import { readSkillContextField } from "@/lib/server/skill-frontmatter";
 import { resolveWorkspaceDocPath } from "@/lib/server/doc-paths";
 
 export type ContextPackVerdict = "ok" | "partial" | "missing";
@@ -45,33 +42,6 @@ export interface ContextPack {
 // ecps, positioning, strategic-plan); the rest are enrichment.
 const MAX_DOC_PATHS = 6;
 
-/** Runtime skills catalog root (same convention as src/pages/api/system/skills.ts). */
-function skillsRoot(): string {
-  return path.join(
-    process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
-    "skills",
-  );
-}
-
-/**
- * Read a skill's `context_required` entries (the path templates that contain
- * `{slug}`). Returns [] when the skill or its SKILL.md is absent — a missing
- * skill is not fatal: the summary alone still grounds the agent.
- */
-function readSkillContextRequired(skill: string | null): string[] {
-  if (!skill) return [];
-  if (!/^[a-z0-9][a-z0-9_-]*$/i.test(skill)) return [];
-  const skillMdPath = path.join(skillsRoot(), skill, "SKILL.md");
-  let content: string;
-  try {
-    content = fs.readFileSync(skillMdPath, "utf-8");
-  } catch {
-    return [];
-  }
-  const { meta } = parseSkillFrontmatter(content);
-  const required = Array.isArray(meta.context_required) ? meta.context_required : [];
-  return required.filter((p) => typeof p === "string" && p.trim().length > 0);
-}
 
 /**
  * Build the self-sufficient grounding summary from the brand-brain VIEW.
@@ -165,7 +135,7 @@ export function assembleContextPack(slug: string, skill: string | null): Context
   }
 
   const summary = buildSummary(slug);
-  const required = readSkillContextRequired(normalizedSkill);
+  const required = readSkillContextField(normalizedSkill, "context_required");
   const { abs, resolvedCount, total } = resolveRequiredDocPaths(slug, required);
 
   let verdict: ContextPackVerdict;
