@@ -1,0 +1,79 @@
+# Dependabot config — automated dependency updates.
+# PRs are GROUPED so we get one combined PR per dependency type instead of one
+# PR per package. See SAN-335.
+#
+# CI notes:
+# - `linear-issue-id` skips bot actors (dependabot[bot]), so these PRs don't need
+#   a SAN reference.
+# - `pr-title` lints every PR title with commitlint. The `commit-message.prefix`
+#   below is a Conventional Commit type so the title stays valid; grouped titles
+#   stay well under the 100-char header limit.
+version: 2
+updates:
+  # --- npm: the app + the maintained side packages ---------------------------
+  # One combined PR for production deps, one for development deps. Vendored
+  # copies, *.broken and plugins-wip manifests are intentionally not listed.
+  - package-ecosystem: npm
+    directories:
+      - "/" # main Next.js app
+      - "/npm"
+      - "/workspace-sancho"
+      - "/skills/metrics-collector/scripts"
+      - "/skills/acquisition-metrics-plan/scripts"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Argentina/Buenos_Aires
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
+    labels:
+      - dependencies
+    groups:
+      npm-production:
+        applies-to: version-updates
+        dependency-type: production
+      npm-development:
+        applies-to: version-updates
+        dependency-type: development
+
+  # --- GitHub Actions: one combined PR ---------------------------------------
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Argentina/Buenos_Aires
+    commit-message:
+      prefix: ci
+      include: scope
+    labels:
+      - dependencies
+      - ci
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # --- Docker (Dockerfile base images): one combined PR ----------------------
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Argentina/Buenos_Aires
+    commit-message:
+      prefix: chore
+      include: scope
+    labels:
+      - dependencies
+      - docker
+    groups:
+      docker:
+        patterns:
+          - "*"
