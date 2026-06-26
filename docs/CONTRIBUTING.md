@@ -252,7 +252,7 @@ be silently clobbered by an older-line tag.
 ## Local setup
 
 ```bash
-nvm use 24                    # match the Dockerfile node version
+nvm use 26                    # match the Dockerfile node version
 npm ci
 npm run dev                   # http://localhost:3000
 ```
