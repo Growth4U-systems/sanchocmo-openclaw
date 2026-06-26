@@ -106,3 +106,57 @@ build_compose_args() {
   [ "$yalc" = "1" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
   return 0
 }
+
+# get_base_url — la URL donde el usuario accede a Mission Control (login),
+# leída de .env (BASE_URL). Default localhost:3000.
+get_base_url() {
+  local url
+  url="$(grep -E '^[[:space:]]*BASE_URL=' .env 2>/dev/null | head -1 | cut -d= -f2- | tr -d "\"'")"
+  [ -n "$url" ] && printf '%s' "$url" || printf 'http://localhost:3000'
+}
+
+# _boot_phase SECONDS — texto orientativo de en qué anda el arranque, según el
+# tiempo transcurrido. Da feedback de progreso para que no parezca colgado.
+_boot_phase() {
+  local w="$1"
+  if   [ "$w" -lt 15 ];  then printf 'arrancando contenedores'
+  elif [ "$w" -lt 35 ];  then printf 'iniciando el servidor de Mission Control'
+  elif [ "$w" -lt 60 ];  then printf 'preparando la base de datos y migraciones'
+  elif [ "$w" -lt 120 ]; then printf 'primer arranque: seedeando el home y skills (tarda un poco)'
+  else                        printf 'todavía levantando — el primer boot suele tardar más'
+  fi
+}
+
+# wait_until_healthy NAME [TIMEOUT_SECS] — espera a que el contenedor reporte
+# healthy según su propio healthcheck. Va rotando texto de fase + recordando el
+# comando de logs para dar feedback. En no-TTY emite una línea por cambio de
+# fase. Códigos: 0 healthy · 1 timeout/desaparecido · 2 la imagen no define
+# healthcheck (no se puede esperar readiness; el caller decide).
+wait_until_healthy() {
+  local name="$1" timeout="${2:-180}" waited=0 health tty=0
+  [ -t 1 ] && tty=1
+  local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+  local n=${#frames[@]} i=0 phase last_phase=""
+  while :; do
+    health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$name" 2>/dev/null)" || health="missing"
+    [ -z "$health" ] && health="missing"
+    case "$health" in
+      healthy) [ "$tty" = 1 ] && printf '\r\033[K'; return 0 ;;
+      none)    [ "$tty" = 1 ] && printf '\r\033[K'; return 2 ;;
+      missing) [ "$tty" = 1 ] && printf '\r\033[K'; return 1 ;;
+    esac
+    if [ "$waited" -ge "$timeout" ]; then
+      [ "$tty" = 1 ] && printf '\r\033[K'; return 1
+    fi
+    phase="$(_boot_phase "$waited")"
+    if [ "$tty" = 1 ]; then
+      i=$(( (i + 1) % n ))
+      printf '\r\033[K  %s %s… (%ss · detalle en vivo: ./sancho logs)' \
+        "${frames[i]}" "$phase" "$waited"
+    elif [ "$phase" != "$last_phase" ]; then
+      echo "  … ${phase}… (${waited}s · detalle: ./sancho logs)"
+      last_phase="$phase"
+    fi
+    sleep 2; waited=$((waited + 2))
+  done
+}

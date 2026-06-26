@@ -50,6 +50,25 @@ require_env() {
   [ -f .env ] || die "No hay .env todavía. Configurá primero con:  ./sancho install"
 }
 
+# Espera a que MC esté realmente listo (healthcheck del contenedor) y recién ahí
+# imprime la URL de acceso — en vez de anunciar apenas `up -d` retorna, cuando
+# los contenedores todavía están arrancando.
+announce_ready() {
+  local base rc=0
+  base="$(get_base_url)"
+  echo ""
+  wait_until_healthy sanchocmo 180 || rc=$?
+  case "$rc" in
+    0) bold "✅ Mission Control está arriba — entrá acá:"
+       printf '   \033[1;36m%s\033[0m\n' "$base" ;;
+    2) bold "Mission Control levantado:"
+       echo  "   $base" ;;
+    *) bold "⏳ Los contenedores siguen iniciando (puede tardar un poco la primera vez)."
+       echo  "   Seguí el progreso:           ./sancho logs"
+       echo  "   Cuando termine de levantar:  $base" ;;
+  esac
+}
+
 # ---------------------------------------------------------------------------
 # install — wizard (si falta .env) + up. Reemplaza al viejo install.sh.
 # ---------------------------------------------------------------------------
@@ -107,12 +126,9 @@ cmd_install() {
     # shellcheck disable=SC2086
     $COMPOSE $COMPOSE_ARGS up -d
   fi
+  announce_ready
   echo ""
-  bold "Listo. Mission Control debería estar en el BASE_URL que elegiste."
-  echo "  Logs:        ./sancho logs"
-  echo "  Estado:      ./sancho status"
-  echo "  Actualizar:  ./sancho update"
-  echo "  Bajar:       ./sancho down"
+  echo "  Otros comandos:  ./sancho logs · status · update · down"
 }
 
 # ---------------------------------------------------------------------------
@@ -123,6 +139,7 @@ cmd_up() {
   bold "Levantando ($COMPOSE $COMPOSE_ARGS up -d)"
   # shellcheck disable=SC2086
   $COMPOSE $COMPOSE_ARGS up -d
+  announce_ready
 }
 
 # ---------------------------------------------------------------------------
@@ -156,7 +173,7 @@ cmd_update() {
   bold "Aplicando ($COMPOSE $COMPOSE_ARGS up -d)"
   # shellcheck disable=SC2086
   $COMPOSE $COMPOSE_ARGS up -d
-  echo "  ✓ Actualizado."
+  announce_ready
 }
 
 # ---------------------------------------------------------------------------
