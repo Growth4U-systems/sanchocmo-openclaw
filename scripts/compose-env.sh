@@ -84,24 +84,23 @@ pull_images() {
   die "No se pudo bajar la imagen y no hay source para buildear. Si es por acceso (imagen privada) logueate a GHCR (docker login ghcr.io); si es de red, verificá la conexión y reintentá."
 }
 
-# build_compose_args MODE — setea la global COMPOSE_ARGS.
-#   enabled : core + overlays HABILITADOS (token en .env, o WITH_OD/WITH_YALC=1).
-#             Para up/update/install — respeta el opt-in del usuario.
-#   all     : core + TODOS los overlays que existan en disco, para que down/etc.
-#             alcancen cualquier contenedor y la red siempre se limpie.
+# build_compose_args — setea la global COMPOSE_ARGS con el core + los overlays
+# HABILITADOS: un overlay entra si su token está en .env (OD_API_TOKEN /
+# YALC_API_TOKEN) o si el caller forzó WITH_OD/WITH_YALC=1 (flags de install).
+#
+# Importante: NO incluimos overlays "por las dudas". Un overlay sin configurar
+# (p. ej. od.yml sin OD_API_TOKEN) hace fallar a compose porque ese archivo
+# declara la variable como requerida. Para que down/destroy igual limpien
+# cualquier contenedor que haya quedado de un overlay no-incluido, esos comandos
+# pasan `--remove-orphans` (lo agrega el caller), que es lo que realmente
+# destraba el "network ... is still in use".
 build_compose_args() {
-  local mode="${1:-enabled}"
   COMPOSE_ARGS="-f docker-compose.yml"
   local od=0 yalc=0
-  if [ "$mode" = "all" ]; then
-    [ -f docker-compose.od.yml ]   && od=1
-    [ -f docker-compose.yalc.yml ] && yalc=1
-  else
-    [ "${WITH_OD:-0}" = "1" ]   && od=1
-    [ "${WITH_YALC:-0}" = "1" ] && yalc=1
-    grep -qE '^OD_API_TOKEN=.+'   .env 2>/dev/null && od=1
-    grep -qE '^YALC_API_TOKEN=.+' .env 2>/dev/null && yalc=1
-  fi
+  [ "${WITH_OD:-0}" = "1" ]   && od=1
+  [ "${WITH_YALC:-0}" = "1" ] && yalc=1
+  grep -qE '^OD_API_TOKEN=.+'   .env 2>/dev/null && od=1
+  grep -qE '^YALC_API_TOKEN=.+' .env 2>/dev/null && yalc=1
   [ "$od" = "1" ]   && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
   [ "$yalc" = "1" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
   return 0

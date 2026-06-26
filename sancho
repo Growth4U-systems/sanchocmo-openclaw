@@ -104,7 +104,7 @@ cmd_install() {
   ensure_env_default SNAPSHOT_DATA_DIR "$SCRIPT_DIR/snapshots"
 
   detect_compose
-  build_compose_args enabled
+  build_compose_args
 
   if [ "$DO_UP" != "1" ]; then
     echo ""
@@ -135,7 +135,7 @@ cmd_install() {
 # up — levanta el stack con los overlays habilitados.
 # ---------------------------------------------------------------------------
 cmd_up() {
-  require_env; detect_compose; build_compose_args enabled
+  require_env; detect_compose; build_compose_args
   bold "Levantando ($COMPOSE $COMPOSE_ARGS up -d)"
   # shellcheck disable=SC2086
   $COMPOSE $COMPOSE_ARGS up -d
@@ -146,7 +146,7 @@ cmd_up() {
 # down — baja contenedores + red (todos los overlays). Conserva los datos.
 # ---------------------------------------------------------------------------
 cmd_down() {
-  require_env; detect_compose; build_compose_args all
+  require_env; detect_compose; build_compose_args
   bold "Bajando ($COMPOSE $COMPOSE_ARGS down --remove-orphans)"
   # shellcheck disable=SC2086
   $COMPOSE $COMPOSE_ARGS down --remove-orphans
@@ -167,7 +167,7 @@ cmd_update() {
     bold "Pineando versión: $IMAGE_REPO:$tag"
     set_env_var SANCHOCMO_IMAGE "$IMAGE_REPO:$tag"
   fi
-  build_compose_args enabled
+  build_compose_args
   bold "Bajando imágenes ($COMPOSE $COMPOSE_ARGS pull)"
   pull_images
   bold "Aplicando ($COMPOSE $COMPOSE_ARGS up -d)"
@@ -180,14 +180,14 @@ cmd_update() {
 # logs / status — todos los overlays para abarcar cualquier servicio corriendo.
 # ---------------------------------------------------------------------------
 cmd_logs() {
-  require_env; detect_compose; build_compose_args all
+  require_env; detect_compose; build_compose_args
   local svc="${1:-sanchocmo}"
   # shellcheck disable=SC2086
   exec $COMPOSE $COMPOSE_ARGS logs -f "$svc"
 }
 
 cmd_status() {
-  require_env; detect_compose; build_compose_args all
+  require_env; detect_compose; build_compose_args
   # shellcheck disable=SC2086
   $COMPOSE $COMPOSE_ARGS ps
 }
@@ -196,7 +196,7 @@ cmd_status() {
 # destroy — down -v. BORRA los datos. Exige confirmación escrita.
 # ---------------------------------------------------------------------------
 cmd_destroy() {
-  require_env; detect_compose; build_compose_args all
+  require_env; detect_compose; build_compose_args
   bold "⚠ Esto va a BORRAR los datos (volúmenes) del stack:"
   # shellcheck disable=SC2086
   $COMPOSE $COMPOSE_ARGS config --volumes 2>/dev/null | sed 's/^/    - /' || true

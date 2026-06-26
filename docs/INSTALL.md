@@ -81,10 +81,10 @@ First install (wizard + start) is `./sancho install` (the classic `./install.sh`
 is a thin shim for it). Opt into optional services at install time with
 `./sancho install --od` / `--yalc`.
 
-> Why a CLI? `down`/`status`/`logs` always include **all** overlays plus
-> `--remove-orphans`, so the project network is always cleaned up — a bare
-> `docker compose down` would leave the YALC container attached and fail with
-> *"network … is still in use"*.
+> Why a CLI? It always loads the right compose overlays (from your `.env`) and
+> `down` passes `--remove-orphans`, so the project network is always cleaned up
+> — a bare `docker compose down` would leave the YALC container attached and
+> fail with *"network … is still in use"*.
 
 Mission Control is then reachable at the **Base URL** you chose.
 
