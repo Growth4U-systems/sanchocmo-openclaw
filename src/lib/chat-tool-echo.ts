@@ -20,36 +20,34 @@
 
 import type { ProgressEvent, ProgressKind } from "@/hooks/useChat";
 
-/** Leading glyphs the runtime / plugin prepend to tool lines. */
-const TOOL_EMOJIS = [
-  "✍️", "📝", "🐍", "🪄", "⚡", "🔍", "📄", "📖", "✏️", "🌐",
-  "🤖", "🔧", "📦", "🛠️", "👁️", "🔎", "📂", "💻", "🗂️", "🔨", "📊",
-];
-
 // English tool verbs emitted by the runtime (never start Spanish prose).
+// Case-insensitive (SAN-342): weak models narrate verbs lowercase ("list
+// files"); the `\b` guard still blocks Spanish words ("Listo" ≠ "List").
 const TOOL_VERB_RE =
-  /^(Write|Edit|MultiEdit|Read|Bash|Grep|Glob|Search|Fetch|WebFetch|WebSearch|Run|Show|show|run|Update|Create|Delete|Move|List|TodoWrite|Task|Agent|Notebook\w*)\b[: ]/;
+  /^(Write|Edit|MultiEdit|Read|Bash|Grep|Glob|Search|Fetch|WebFetch|WebSearch|Run|Show|Update|Create|Delete|Move|List|TodoWrite|Task|Agent|Notebook\w*)\b[: ]/i;
 
 // Spanish progress labels the plugin can emit (onToolStart) if they ever land
 // as bot messages instead of structured progress events.
 const TOOL_LABEL_ES_RE =
   /^(Leyendo|Escribiendo|Editando|Ejecutando|Buscando|Delegando|Compactando|Pensando)\b/;
 
-/** Strip a single leading emoji (+ optional VS16 / ZWJ) and surrounding space. */
+// A leading run of emoji / variation-selector (U+FE0F) / ZWJ (U+200D) / space.
+// Stripping it normalizes echoes prefixed by ANY emoji — incl. the agent's own
+// avatar (e.g. 🐎), which is not a tool emoji (SAN-342).
+const LEADING_EMOJI_RE = /^(?:[\p{Extended_Pictographic}\s]|️|‍)+/u;
+
+// Tool-step phrases a model narrates when it can't call tools natively. Used
+// only together with an arrow-chain, so a stray match in prose can't fire.
+const TOOL_PHRASE_RE =
+  /\b(list files?|print text|read file|write file|edit file|run (?:python|bash|node)|inline script|grep|glob)\b/i;
+
+/** Strip a leading run of emoji (+ VS16 / ZWJ) and surrounding space. */
 function stripLeadingEmoji(text: string): string {
-  let t = text.trimStart();
-  for (const e of TOOL_EMOJIS) {
-    if (t.startsWith(e)) {
-      t = t.slice(e.length).trimStart();
-      break;
-    }
-  }
-  return t;
+  return text.trimStart().replace(LEADING_EMOJI_RE, "");
 }
 
 function startsWithToolEmoji(text: string): boolean {
-  const t = text.trimStart();
-  return TOOL_EMOJIS.some((e) => t.startsWith(e));
+  return LEADING_EMOJI_RE.test(text.trimStart());
 }
 
 /**
@@ -60,8 +58,15 @@ function startsWithToolEmoji(text: string): boolean {
 export function isToolEcho(text: string | undefined | null): boolean {
   const t = (text || "").trim();
   if (!t) return false;
+  if ((t.match(/\n/g) || []).length > 2) return false; // a paragraph is a real reply
+
+  // Arrow-chained tool narration ("… → print text → … failed"): tool phrases
+  // joined by ≥2 arrows (Unicode → or ASCII ->). Requires an actual tool
+  // phrase, so Spanish prose with arrows never matches (SAN-342).
+  const arrowCount = (t.match(/\s(?:→|->)\s/g) || []).length;
+  if (arrowCount >= 2 && t.length <= 500 && TOOL_PHRASE_RE.test(t)) return true;
+
   if (t.length > 200) return false; // real replies are longer; echoes are terse
-  if ((t.match(/\n/g) || []).length > 2) return false; // not a paragraph
 
   const body = stripLeadingEmoji(t);
   if (TOOL_VERB_RE.test(body)) return true;
@@ -70,7 +75,7 @@ export function isToolEcho(text: string | undefined | null): boolean {
   // Emoji-led line with an unmistakable tool-log shape.
   if (
     startsWithToolEmoji(t) &&
-    /(->|\(\s*\d+\s*chars?\s*\)|inline script|\bto \/|\bin \/|\$OPENCLAW_HOME)/i.test(t)
+    /(->|→|\(\s*\d+\s*chars?\s*\)|inline script|\bto \/|\bin \/|\$OPENCLAW_HOME)/i.test(t)
   ) {
     return true;
   }
