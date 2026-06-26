@@ -374,6 +374,65 @@ const ALL_SERVICES = [
   "gog", "openclaw",
 ];
 
+// ── Credential presence (defense-in-depth for the cached health file) ───────
+//
+// api-health.json is a point-in-time cache. It goes stale when keys are rotated
+// or removed, and — worse — it can ship a snapshot from a *different* environment
+// (SAN-337: a fresh install inherited the old G4U statuses and showed ~12 green
+// services that were never configured locally). The read path uses these helpers
+// to never report a green "ok" for a system service whose credential is absent
+// from the current environment.
+//
+// Each entry is a list of AND-groups; a group is satisfied when at least one of
+// its env vars is present (file env or process.env), mirroring the presence
+// checks inside checkService(). Services that authenticate via a local CLI rather
+// than an env var (gog, openclaw, remotion) are intentionally absent here, so
+// isServiceCredentialPresent() returns null ("can't tell — leave the cache as-is").
+const SERVICE_ENV_REQUIREMENTS: Record<string, string[][]> = {
+  anthropic: [["ANTHROPIC_API_KEY", "ANTHROPIC_OAUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"]],
+  openrouter: [["OPENROUTER_API_KEY"]],
+  fireworks: [["FIREWORKS_API_KEY"]],
+  openai: [["OPENAI_API_KEY"]],
+  gemini: [["GEMINI_API_KEY"]],
+  xai: [["XAI_API_KEY"]],
+  minimax: [["MINIMAX_API_KEY"]],
+  perplexity: [["PERPLEXITY_API_KEY"]],
+  brave: [["BRAVE_API_KEY", "BRAVE_SEARCH_API_KEY"]],
+  apify: [["APIFY_TOKEN", "APIFY_API_KEY"]],
+  firecrawl: [["FIRECRAWL_API_KEY"]],
+  serper: [["SERPER_API_KEY"]],
+  dataforseo: [["DATAFORSEO_LOGIN"], ["DATAFORSEO_PASSWORD"]],
+  notion: [["NOTION_API_KEY"]],
+  slack: [["SLACK_BOT_TOKEN"]],
+  discord: [["DISCORD_BOT_TOKEN"]],
+  fal: [["FAL_API_KEY"]],
+  wavespeed: [["WAVESPEED_API_KEY"]],
+  dumpling: [["DUMPLING_API_KEY"]],
+  nanobanana: [["GEMINI_API_KEY"]],
+  instantly: [["INSTANTLY_API_KEY"]],
+  metricool: [["METRICOOL_API_KEY"]],
+};
+
+/** Parsed runtime env (the same `.env` file the live health checks read). */
+export function getServiceEnv(): Record<string, string> {
+  return parseEnv(readEnvFile());
+}
+
+/**
+ * Whether a service's credential is present in the current environment.
+ * Returns `null` when the service has no env-based credential requirement
+ * (local-CLI tools, or services not covered here) — callers should leave the
+ * cached status untouched in that case rather than assuming "missing".
+ */
+export function isServiceCredentialPresent(
+  serviceId: string,
+  envVars: Record<string, string>,
+): boolean | null {
+  const groups = SERVICE_ENV_REQUIREMENTS[serviceId];
+  if (!groups) return null;
+  return groups.every((group) => group.some((name) => getKey(envVars, name) !== ""));
+}
+
 export async function runHealthChecks(serviceFilter: string): Promise<HealthResult> {
   const health = loadApiHealth();
   const toCheck = serviceFilter === "all"

@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { readJSON } from "@/lib/data/json-io";
 import { apiHealthFile, integrationsFile } from "@/lib/data/paths";
 import { brandEnvHas } from "@/lib/brand-env";
+import { getServiceEnv, isServiceCredentialPresent } from "@/lib/health-check";
 import { getProvider, getProviderConfigStatus } from "@/lib/publishing/registry";
 
 interface ServiceHealth {
@@ -106,7 +107,29 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   const data = readJSON<ApiHealth>(apiHealthFile(), { lastCheck: null, services: {} });
-  const services: Record<string, ServiceHealth> = { ...(data.services || {}) };
+
+  // api-health.json is a point-in-time cache that goes stale when keys are
+  // rotated/removed and — worse — can ship a snapshot from another environment
+  // (SAN-337: a fresh install inherited the old G4U statuses and showed ~12
+  // green services that were never configured locally, until "Verificar Todo"
+  // reset them to 0). Never trust a cached "ok" for a system service whose
+  // credential is absent from the current environment: downgrade it to
+  // "not-configured" so the user is prompted to connect instead of seeing a
+  // phantom green light. Local-CLI services (gog, openclaw, remotion) have no
+  // env-based credential and are left untouched (presence check returns null).
+  const env = getServiceEnv();
+  const services: Record<string, ServiceHealth> = {};
+  for (const [apiId, entry] of Object.entries(data.services || {})) {
+    if (entry?.status === "ok" && isServiceCredentialPresent(apiId, env) === false) {
+      services[apiId] = {
+        status: "not-configured",
+        lastCheck: entry.lastCheck ?? null,
+        details: { note: "Credencial ausente en el entorno — verificá para confirmar" },
+      };
+    } else {
+      services[apiId] = entry;
+    }
+  }
 
   const slug = typeof req.query.slug === "string" ? req.query.slug : "";
   if (slug) {
