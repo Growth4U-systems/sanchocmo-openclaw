@@ -17,7 +17,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { brandDir, chatConfigFile, CLIENTS_FILE } from "@/lib/data/paths";
+import { brandDir, chatConfigFile, CLIENTS_FILE, integrationsFile } from "@/lib/data/paths";
 import { FOUNDATION_TASK_SET_KEYS, instantiateFoundationProject } from "@/lib/data/task-blueprints";
 import { applyProjectAnchors, applyTaskAnchors } from "@/lib/data/task-create-helpers";
 import { seedClientConfig } from "@/lib/data/client-config-seed";
@@ -65,6 +65,20 @@ export function seedFoundationProjects(slug: string): void {
   }
 }
 
+export function seedIntegrations(slug: string): void {
+  const target = integrationsFile(slug);
+  if (fs.existsSync(target)) return;
+  try {
+    fs.writeFileSync(target, JSON.stringify({
+      client: slug,
+      dataSources: {},
+      updatedAt: new Date().toISOString(),
+    }, null, 2));
+  } catch {
+    // non-fatal: readers already tolerate a missing integrations.json
+  }
+}
+
 /**
  * Create the brand/{slug}/ directory tree and seed its chat-config + Foundation
  * projects. Idempotent (mkdir recursive, skip-if-exists in the seeders).
@@ -84,6 +98,7 @@ export function createClientDirs(slug: string): void {
     fs.mkdirSync(dir, { recursive: true });
   }
   seedChatConfig(slug);
+  seedIntegrations(slug);
   seedFoundationProjects(slug);
 }
 

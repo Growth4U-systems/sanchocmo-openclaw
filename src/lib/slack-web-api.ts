@@ -1,4 +1,4 @@
-import { getSlackBotToken } from "@/lib/data/integrations";
+import { resolveSlackBotToken } from "@/lib/slack-token";
 
 // Tiny Slack Web API helper. Wraps fetch with the decrypted bot token for a
 // given client slug, so callers don't reach into integrations.json directly.
@@ -26,7 +26,7 @@ async function callSlack(
   method: string,
   body: Record<string, unknown>
 ): Promise<SlackResponse> {
-  const token = getSlackBotToken(slug);
+  const { token } = resolveSlackBotToken(slug);
   if (!token) {
     return { ok: false, error: `no_slack_integration_for_slug:${slug}` };
   }

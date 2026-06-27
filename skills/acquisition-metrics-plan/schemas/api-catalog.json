@@ -221,18 +221,14 @@
         "slack": {
           "provider": "Slack",
           "icon": "💬",
-          "desc": "Mensajería + Editorial Dispatch + futura aprobación con botones",
+          "desc": "OAuth multi-tenant para Slack del cliente: mensajería, dispatch y aprobaciones",
           "ownership": "client",
+          "authType": "oauth",
           "setupGuide": "_system/integrations/slack-setup.md",
-          "credentials": [
-            { "key": "BOT_TOKEN", "label": "Bot User OAuth Token", "type": "string", "sensitive": true, "help": "Empieza con xoxb-... | api.slack.com/apps → tu app → OAuth & Permissions → Bot User OAuth Token. Ver guía de setup completa." },
-            { "key": "SIGNING_SECRET", "label": "Signing Secret", "type": "string", "sensitive": true, "help": "Necesario para validar callbacks de botones interactivos. api.slack.com/apps → tu app → Basic Information → App Credentials → Signing Secret" }
-          ],
-          "config": [
-            { "key": "WORKSPACE", "label": "Nombre del workspace", "type": "string", "sensitive": false, "help": "El nombre de tu workspace de Slack (ej: growth4u, miempresa)" }
-          ],
-          "_note": "Channel selection lives en Content Creation → Inputs → 📬 Canal de envío (no aquí). Aquí solo se conecta la cuenta.",
-          "scopesRequired": ["chat:write", "chat:write.public", "channels:read", "groups:read", "channels:history", "groups:history", "commands"],
+          "credentials": [],
+          "config": [],
+          "_note": "Slack se conecta desde Settings → APIs con el app público SanchoCMO vía OAuth. Los tokens manuales xoxb quedan solo como fallback legacy.",
+          "scopesRequired": ["chat:write", "chat:write.public", "channels:read", "channels:history", "groups:read", "groups:history", "app_mentions:read", "files:read", "files:write", "users:read", "commands"],
           "docs": "https://api.slack.com/docs"
         },
         "discord": {

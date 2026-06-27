@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ComicCard } from "@/components/shared/comic-card";
 
@@ -17,6 +18,7 @@ interface Props {
 
 export function SlackIntegrationCard({ slug }: Props) {
   const qc = useQueryClient();
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
 
   const { data, isLoading } = useQuery<SlackStatusResponse>({
     queryKey: ["slack-status", slug],
@@ -50,6 +52,19 @@ export function SlackIntegrationCard({ slug }: Props) {
   }
 
   const connectUrl = `/api/integrations/slack/oauth/init?slug=${encodeURIComponent(slug)}`;
+  const copyInstallUrl = async () => {
+    setCopyStatus("idle");
+    try {
+      const res = await fetch(`${connectUrl}&format=json`);
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) throw new Error(data.error || "No install URL");
+      await navigator.clipboard.writeText(data.url);
+      setCopyStatus("copied");
+      window.setTimeout(() => setCopyStatus("idle"), 2500);
+    } catch {
+      setCopyStatus("error");
+    }
+  };
   const isConnected = data?.status === "connected";
   const installedDate = data?.installed_at
     ? new Date(data.installed_at).toLocaleString("es-ES", {
@@ -101,12 +116,21 @@ export function SlackIntegrationCard({ slug }: Props) {
 
         <div className="flex gap-2 flex-shrink-0">
           {!isConnected && (
-            <a
-              href={connectUrl}
-              className="px-4 py-2 bg-gradient-to-br from-rust to-[#D4734F] text-white border-2 border-ink rounded-md text-[13px] font-bold shadow-comic cursor-pointer hover:shadow-comic-hover hover:-translate-x-px hover:-translate-y-px active:shadow-[1px_1px_0_var(--ink)] active:translate-x-px active:translate-y-px transition-all no-underline"
-            >
-              Conectar con Slack
-            </a>
+            <>
+              <a
+                href={connectUrl}
+                className="px-4 py-2 bg-gradient-to-br from-rust to-[#D4734F] text-white border-2 border-ink rounded-md text-[13px] font-bold shadow-comic cursor-pointer hover:shadow-comic-hover hover:-translate-x-px hover:-translate-y-px active:shadow-[1px_1px_0_var(--ink)] active:translate-x-px active:translate-y-px transition-all no-underline"
+              >
+                Conectar con Slack
+              </a>
+              <button
+                type="button"
+                onClick={copyInstallUrl}
+                className="px-3 py-2 bg-background border-2 border-ink rounded-md text-[12px] font-bold cursor-pointer hover:bg-muted transition-colors"
+              >
+                {copyStatus === "copied" ? "Copiado" : copyStatus === "error" ? "Error" : "Copiar enlace"}
+              </button>
+            </>
           )}
           {isConnected && (
             <>
@@ -116,6 +140,13 @@ export function SlackIntegrationCard({ slug }: Props) {
               >
                 Reconectar
               </a>
+              <button
+                type="button"
+                onClick={copyInstallUrl}
+                className="px-3 py-2 bg-background border-2 border-ink rounded-md text-[12px] font-bold cursor-pointer hover:bg-muted transition-colors"
+              >
+                {copyStatus === "copied" ? "Copiado" : copyStatus === "error" ? "Error" : "Copiar enlace"}
+              </button>
               <button
                 onClick={() => {
                   if (confirm(`¿Desconectar Slack de "${slug}"? El bot dejará de recibir/postear hasta que se reconecte.`)) {

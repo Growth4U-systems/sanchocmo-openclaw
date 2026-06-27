@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
-import { loadIntegrations } from "@/lib/data/integrations";
+import { loadIntegrations, saveSlackIntegration } from "@/lib/data/integrations";
+import { authTest } from "@/lib/slack-web-api";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -10,10 +11,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const slug = req.query.slug as string;
   const data = loadIntegrations(slug);
-  const slack = data.slack;
+  let slack = data.slack;
 
   if (!slack) {
     return res.status(200).json({ status: "disconnected" });
+  }
+
+  if (req.query.refresh === "1") {
+    const result = await authTest(slug);
+    if (result.ok) {
+      slack = { ...slack, status: "connected", last_error: undefined };
+    } else {
+      slack = { ...slack, status: "error", last_error: result.error || "auth_test_failed" };
+    }
+    saveSlackIntegration(slug, slack);
   }
 
   // Never return the encrypted (or decrypted) token via this endpoint

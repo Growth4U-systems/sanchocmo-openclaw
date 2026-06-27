@@ -65,15 +65,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ds = (integ.dataSources as any) || (integ.services as any) || {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const oauthSlack = (integ as any).slack;
   const transports: TransportOption[] = [];
 
   // Slack
-  if (ds.slack?.status === "connected") {
+  if (oauthSlack?.status === "connected" || ds.slack?.status === "connected") {
     type R = { ok: boolean; channels: ChannelOption[]; error?: string };
     const r = await fetchInternal<R>(req, `/api/integrations/slack/list-channels?slug=${slug}`);
     transports.push({
       transport: "slack",
-      label: `💬 Slack (${ds.slack.config?.WORKSPACE || "workspace"})`,
+      label: `💬 Slack (${oauthSlack?.team_name || ds.slack?.config?.WORKSPACE || "workspace"})`,
       emoji: "💬",
       channels: r?.channels || [],
       error: r?.ok ? undefined : (r?.error || "Failed to fetch Slack channels"),

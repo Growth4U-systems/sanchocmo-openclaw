@@ -22,6 +22,17 @@ export function saveIntegrations(slug: string, data: Integration): void {
 export function saveSlackIntegration(slug: string, slack: SlackIntegration): void {
   const data = loadIntegrations(slug);
   data.slack = slack;
+  data.dataSources = data.dataSources || {};
+  data.dataSources.slack = {
+    provider: "slack",
+    status: slack.status,
+    config: {
+      WORKSPACE: slack.team_name,
+      TEAM_ID: slack.team_id,
+    },
+    envVars: [],
+    lastTestedAt: slack.installed_at,
+  };
   saveIntegrations(slug, data);
 }
 
@@ -35,6 +46,17 @@ export function disconnectSlack(slug: string): void {
   const data = loadIntegrations(slug);
   if (data.slack) {
     data.slack.status = "disconnected";
+    data.dataSources = data.dataSources || {};
+    data.dataSources.slack = {
+      ...(data.dataSources.slack || {
+        provider: "slack",
+        config: {},
+        envVars: [],
+        lastTestedAt: new Date().toISOString(),
+      }),
+      status: "disconnected",
+      lastTestedAt: new Date().toISOString(),
+    };
     saveIntegrations(slug, data);
   }
 }
