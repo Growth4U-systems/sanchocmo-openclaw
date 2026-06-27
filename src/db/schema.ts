@@ -739,3 +739,203 @@ export const metricSourceRuns = pgTable("metric_source_runs", {
   index("metric_source_runs_slug_date_idx").on(table.slug, table.metricDate),
   index("metric_source_runs_slug_source_idx").on(table.slug, table.source),
 ]);
+
+// ============================================================
+// Metric semantic layer (Métricas v2) — calculated KPI values, funnel rollups,
+// attribution-ready events, annotations and metric-specific Intelligence signals.
+// `metric_snapshots` remains the raw source-of-truth; these tables are derived.
+// ============================================================
+
+export const metricKpiRuns = pgTable("metric_kpi_runs", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  rangeStart: text("range_start").notNull(),
+  rangeEnd: text("range_end").notNull(),
+  status: text("status").notNull().default("running"), // running | ok | partial | error
+  trigger: text("trigger").notNull().default("manual"),
+  definitionVersion: integer("definition_version"),
+  sourceSnapshotMaxDate: text("source_snapshot_max_date"),
+  kpiCount: integer("kpi_count").notNull().default(0),
+  warnings: jsonb("warnings").$type<string[]>().notNull().default([]),
+  errors: jsonb("errors").$type<string[]>().notNull().default([]),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  finishedAt: timestamp("finished_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_kpi_runs_slug_range_idx").on(table.slug, table.rangeStart, table.rangeEnd),
+  index("metric_kpi_runs_slug_status_idx").on(table.slug, table.status),
+]);
+
+export const metricKpiValues = pgTable("metric_kpi_values", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  metricDate: text("metric_date").notNull(),
+  rangeStart: text("range_start").notNull(),
+  rangeEnd: text("range_end").notNull(),
+  grain: text("grain").notNull().default("range"),
+  definitionId: text("definition_id").notNull(),
+  family: text("family").notNull(),
+  surface: text("surface"),
+  source: text("source"),
+  value: real("value"),
+  valueText: text("value_text"),
+  format: text("format").notNull().default("number"),
+  calculationKind: text("calculation_kind").notNull().default("direct"),
+  dimensions: jsonb("dimensions").$type<Record<string, string> | null>(),
+  dimsKey: text("dims_key").notNull().default(""),
+  deltaValue: real("delta_value"),
+  deltaPct: real("delta_pct"),
+  trendPoints: jsonb("trend_points").$type<Array<{ date: string; value: number | null }> | null>(),
+  qualityStatus: text("quality_status").notNull().default("missing"),
+  confidence: real("confidence"),
+  inputRefs: jsonb("input_refs").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  warnings: jsonb("warnings").$type<string[]>().notNull().default([]),
+  runId: text("run_id").references(() => metricKpiRuns.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_kpi_values_slug_date_idx").on(table.slug, table.metricDate),
+  index("metric_kpi_values_slug_definition_date_idx").on(table.slug, table.definitionId, table.metricDate),
+  index("metric_kpi_values_slug_surface_date_idx").on(table.slug, table.surface, table.metricDate),
+  index("metric_kpi_values_run_idx").on(table.runId),
+]);
+
+export const metricFunnelStageMap = pgTable("metric_funnel_stage_map", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  archetype: text("archetype").notNull().default("lead-to-sale"),
+  stageKey: text("stage_key").notNull(),
+  stageLabel: text("stage_label").notNull(),
+  stageOrder: integer("stage_order").notNull().default(0),
+  source: text("source").notNull(),
+  metricName: text("metric_name").notNull(),
+  dimensions: jsonb("dimensions").$type<Record<string, string> | null>(),
+  dimsKey: text("dims_key").notNull().default(""),
+  entityType: text("entity_type"),
+  channel: text("channel"),
+  costSource: text("cost_source"),
+  costMetricName: text("cost_metric_name"),
+  enabled: boolean("enabled").notNull().default(true),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_funnel_stage_map_slug_idx").on(table.slug),
+  index("metric_funnel_stage_map_slug_archetype_idx").on(table.slug, table.archetype),
+  index("metric_funnel_stage_map_slug_stage_idx").on(table.slug, table.stageKey),
+]);
+
+export const metricStageRollups = pgTable("metric_stage_rollups", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  metricDate: text("metric_date").notNull(),
+  grain: text("grain").notNull().default("day"),
+  stageKey: text("stage_key").notNull(),
+  channel: text("channel").notNull().default(""),
+  count: real("count").notNull().default(0),
+  value: real("value"),
+  cost: real("cost"),
+  dimensions: jsonb("dimensions").$type<Record<string, string> | null>(),
+  dimsKey: text("dims_key").notNull().default(""),
+  qualityStatus: text("quality_status").notNull().default("missing"),
+  inputRefs: jsonb("input_refs").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  runId: text("run_id").references(() => metricKpiRuns.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_stage_rollups_slug_date_idx").on(table.slug, table.metricDate),
+  index("metric_stage_rollups_slug_stage_date_idx").on(table.slug, table.stageKey, table.metricDate),
+  index("metric_stage_rollups_slug_channel_date_idx").on(table.slug, table.channel, table.metricDate),
+  index("metric_stage_rollups_run_idx").on(table.runId),
+]);
+
+export const metricStageEvents = pgTable("metric_stage_events", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  entityId: text("entity_id").notNull(),
+  entityType: text("entity_type").notNull().default("lead"),
+  stageKey: text("stage_key").notNull(),
+  channel: text("channel"),
+  occurredAt: timestamp("occurred_at").notNull(),
+  metricDate: text("metric_date").notNull(),
+  source: text("source").notNull(),
+  sourceEventId: text("source_event_id"),
+  value: real("value"),
+  revenue: real("revenue"),
+  cost: real("cost"),
+  dimensions: jsonb("dimensions").$type<Record<string, string> | null>(),
+  inputRefs: jsonb("input_refs").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_stage_events_slug_entity_idx").on(table.slug, table.entityType, table.entityId),
+  index("metric_stage_events_slug_stage_date_idx").on(table.slug, table.stageKey, table.metricDate),
+  index("metric_stage_events_slug_channel_date_idx").on(table.slug, table.channel, table.metricDate),
+]);
+
+export const metricAttributionResults = pgTable("metric_attribution_results", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  model: text("model").notNull(),
+  rangeStart: text("range_start").notNull(),
+  rangeEnd: text("range_end").notNull(),
+  channel: text("channel").notNull(),
+  stageKey: text("stage_key"),
+  attributedCount: real("attributed_count"),
+  attributedValue: real("attributed_value"),
+  attributedRevenue: real("attributed_revenue"),
+  attributedCost: real("attributed_cost"),
+  weight: real("weight"),
+  qualityStatus: text("quality_status").notNull().default("missing"),
+  inputRefs: jsonb("input_refs").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  runId: text("run_id").references(() => metricKpiRuns.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_attribution_results_slug_range_idx").on(table.slug, table.rangeStart, table.rangeEnd),
+  index("metric_attribution_results_slug_model_idx").on(table.slug, table.model),
+  index("metric_attribution_results_slug_channel_idx").on(table.slug, table.channel),
+  index("metric_attribution_results_run_idx").on(table.runId),
+]);
+
+export const metricAnnotations = pgTable("metric_annotations", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  annotationDate: text("annotation_date").notNull(),
+  title: text("title").notNull(),
+  body: text("body"),
+  category: text("category").notNull().default("manual"),
+  source: text("source").notNull().default("manual"),
+  createdBy: text("created_by"),
+  scope: text("scope").notNull().default("dashboard"),
+  metricDefinitionId: text("metric_definition_id"),
+  metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_annotations_slug_date_idx").on(table.slug, table.annotationDate),
+  index("metric_annotations_slug_metric_idx").on(table.slug, table.metricDefinitionId),
+]);
+
+export const metricSignals = pgTable("metric_signals", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  signalDate: text("signal_date").notNull(),
+  surface: text("surface"),
+  definitionId: text("definition_id"),
+  severity: text("severity").notNull().default("info"),
+  title: text("title").notNull(),
+  body: text("body"),
+  status: text("status").notNull().default("open"),
+  source: text("source").notNull().default("system"),
+  inputRefs: jsonb("input_refs").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_signals_slug_date_idx").on(table.slug, table.signalDate),
+  index("metric_signals_slug_surface_idx").on(table.slug, table.surface),
+  index("metric_signals_slug_definition_idx").on(table.slug, table.definitionId),
+  index("metric_signals_slug_status_idx").on(table.slug, table.status),
+]);
