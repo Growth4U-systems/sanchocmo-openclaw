@@ -45,6 +45,7 @@ test("scores and web vitals take the latest snapshot", () => {
     "seo_desktop",
     "lcp_mobile",
     "cls_mobile",
+    "inp_mobile",
     "tbt_mobile",
   ]) {
     assert.equal(aggFor(undefined, m), "latest", `${m} should be latest`);

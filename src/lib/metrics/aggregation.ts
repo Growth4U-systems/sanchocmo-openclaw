@@ -39,6 +39,7 @@ const BY_METRIC: Record<string, AggStrategy> = {
   seo_desktop: "latest",
   lcp_mobile: "latest",
   cls_mobile: "latest",
+  inp_mobile: "latest",
   tbt_mobile: "latest",
   // Trust Score + its 6 pillars — latest snapshot.
   trust_score: "latest",

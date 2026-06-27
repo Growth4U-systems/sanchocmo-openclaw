@@ -739,3 +739,58 @@ export const metricSourceRuns = pgTable("metric_source_runs", {
   index("metric_source_runs_slug_date_idx").on(table.slug, table.metricDate),
   index("metric_source_runs_slug_source_idx").on(table.slug, table.source),
 ]);
+
+// ============================================================
+// Metric semantic layer (SAN-354) - dashboard-ready KPI values computed from
+// metric_snapshots with quality status and provenance. Raw snapshots remain the
+// source of truth; these tables are a read model for dashboard/API consumers.
+// ============================================================
+
+export const metricKpiRuns = pgTable("metric_kpi_runs", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  rangeFrom: text("range_from").notNull(),
+  rangeTo: text("range_to").notNull(),
+  status: text("status").notNull().default("running"), // running | ok | error
+  trigger: text("trigger").notNull().default("agent"),
+  definitionVersion: integer("definition_version"),
+  valuesCount: integer("values_count").notNull().default(0),
+  qualitySummary: jsonb("quality_summary").$type<Record<string, number>>().notNull().default({}),
+  errors: jsonb("errors").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  finishedAt: timestamp("finished_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_kpi_runs_slug_range_idx").on(table.slug, table.rangeFrom, table.rangeTo),
+  index("metric_kpi_runs_slug_status_idx").on(table.slug, table.status),
+]);
+
+export const metricKpiValues = pgTable("metric_kpi_values", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull().references(() => metricKpiRuns.id, { onDelete: "cascade" }),
+  slug: text("slug").notNull(),
+  kpiId: text("kpi_id").notNull(),
+  label: text("label").notNull(),
+  dashboardBlock: text("dashboard_block").notNull(),
+  surface: text("surface"),
+  source: text("source"),
+  metricName: text("metric_name"),
+  value: real("value"),
+  valueText: text("value_text"),
+  unit: text("unit"),
+  qualityStatus: text("quality_status").notNull(), // ok | partial | missing | dirty | stale | demo
+  provenanceLabel: text("provenance_label").notNull(),
+  inputRefs: jsonb("input_refs").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  sourceCoverage: real("source_coverage").notNull().default(0),
+  rangeFrom: text("range_from").notNull(),
+  rangeTo: text("range_to").notNull(),
+  definitionVersion: integer("definition_version"),
+  computedAt: timestamp("computed_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_kpi_values_run_idx").on(table.runId),
+  index("metric_kpi_values_slug_kpi_idx").on(table.slug, table.kpiId),
+  index("metric_kpi_values_slug_block_idx").on(table.slug, table.dashboardBlock),
+  index("metric_kpi_values_slug_surface_idx").on(table.slug, table.surface),
+]);
