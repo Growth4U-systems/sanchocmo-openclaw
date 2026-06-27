@@ -63,6 +63,34 @@ for f in clients.json clients.js dispatch-map.json; do
 done
 
 # ===========================================================
+# 0a3. ENSURE MC_ADMIN_TOKEN (agent → MC API auth, runs every startup)
+# ===========================================================
+# Operator skills (discovery-plan-builder, discovery-search-runner, …) drive the
+# work by having the agent `curl` Mission Control's OWN API with
+# `-H "x-admin-token: $MC_ADMIN_TOKEN"` — create a search, fetch queued work, POST
+# candidates. MC validates that header against clients.json's adminToken
+# (src/lib/api-middleware.ts resolveAuth: `data.adminToken || env.MC_ADMIN_TOKEN`),
+# but MC_ADMIN_TOKEN is an OPTIONAL env fallback that deploys leave unset and
+# nothing wires it to clients.json → the agent sends an EMPTY header → 403
+# Unauthorized, so the launch + runner silently fail and the chat turn returns no
+# visible reply. Same class as MC_BASE (SAN-241). Mirror MC's precedence
+# (clients.json adminToken first) so the agent's curl always sends the exact token
+# MC checks. Exported before `openclaw gateway run` so the gateway and its agents'
+# bash tool inherit it.
+if [ -f config/clients.json ]; then
+  _mc_admin_token="$(python3 -c "import json; print(json.load(open('config/clients.json')).get('adminToken') or '')" 2>/dev/null || true)"
+  if [ -n "$_mc_admin_token" ]; then
+    export MC_ADMIN_TOKEN="$_mc_admin_token"
+    echo "[entrypoint] MC_ADMIN_TOKEN derived from clients.json adminToken (agent → MC API auth)"
+  elif [ -n "${MC_ADMIN_TOKEN:-}" ]; then
+    echo "[entrypoint] MC_ADMIN_TOKEN from env (clients.json has no adminToken)"
+  else
+    echo "[entrypoint] WARNING: no adminToken in clients.json and MC_ADMIN_TOKEN unset — agent curls to MC API will 403 (discovery launch/runner)"
+  fi
+  unset _mc_admin_token
+fi
+
+# ===========================================================
 # 0b. ENSURE PER-AGENT SKILLS SYMLINK (runs every startup)
 # ===========================================================
 # Skills live centrally at ~/.openclaw/skills. Specialist agents run with
