@@ -49,6 +49,21 @@ test("maps Instantly emailsSent onto outbound.sent without faking data", () => {
   assert.equal(sent.inputRefs[0]?.metricName, "emailsSent");
 });
 
+test("maps Lemlist rollups onto outbound KPIs", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({ source: "lemlist", metricName: "sent", value: 12 }),
+      row({ source: "lemlist", metricName: "opens", value: 7 }),
+      row({ source: "lemlist", metricName: "replies", value: 3 }),
+    ],
+    oneDay,
+  );
+
+  assert.equal(byId(values, "outbound.sent").value, 12);
+  assert.equal(byId(values, "outbound.opens").value, 7);
+  assert.equal(byId(values, "outbound.replies").qualityStatus, "ok");
+});
+
 test("maps legacy PageSpeed tbt_mobile onto INP and keeps the latest snapshot", () => {
   const values = computeSemanticKpisFromSnapshots(
     [
