@@ -515,7 +515,9 @@
           "credentials": [
             { "key": "API_KEY", "label": "API Key", "type": "string", "sensitive": true, "help": "Lemlist → Settings → Integrations → API" }
           ],
-          "config": [],
+          "config": [
+            { "key": "CAMPAIGN_IDS", "label": "Campaign IDs (opcional)", "type": "string", "sensitive": false, "help": "Lista separada por comas (cam_...). Si se deja vacío, el collector de métricas lee todas las campañas no draft/no archivadas." }
+          ],
           "docs": "https://developer.lemlist.com/"
         }
       }

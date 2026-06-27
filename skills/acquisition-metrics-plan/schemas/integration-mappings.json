@@ -188,6 +188,28 @@
     }
   },
 
+  "lemlist": {
+    "label": "Lemlist",
+    "provides": {
+      "emailsSent": { "metric": "sent", "label": "Emails Sent" },
+      "emailDelivered": { "metric": "delivered", "label": "Delivered" },
+      "emailOpens": { "metric": "opens", "label": "Opens" },
+      "emailClicks": { "metric": "clicks", "label": "Clicks" },
+      "emailReplies": { "metric": "replies", "label": "Replies" },
+      "emailBounces": { "metric": "bounced", "label": "Bounced" },
+      "emailUnsubscribes": { "metric": "unsubscribed", "label": "Unsubscribed" },
+      "meetingsBooked": { "metric": "meetings", "label": "Meetings Booked" },
+      "interested": { "metric": "interested", "label": "Interested Leads" },
+      "byCampaign": { "metric": "sent", "dimension": "campaignName", "label": "By Campaign" }
+    },
+    "funnelMaps": {
+      "SDR Outbound": "sent",
+      "Cold Email": "sent",
+      "Meetings/Demos": "meetings",
+      "Meetings": "meetings"
+    }
+  },
+
   "shopify": {
     "label": "Shopify",
     "provides": {

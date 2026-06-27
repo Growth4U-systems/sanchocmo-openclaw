@@ -30,6 +30,7 @@
     "seed:paid-ads": "tsx scripts/metrics/seed-paid-ads.ts",
     "seed:product": "tsx scripts/metrics/seed-product.ts",
     "seed:web-seo": "tsx scripts/metrics/seed-web-seo.ts",
+    "collect:lemlist": "tsx scripts/metrics/collect-lemlist.ts",
     "export:metrics": "node scripts/metrics/export-metric-snapshots.mjs",
     "db:sync-tasks": "tsx scripts/migrate-projects-to-db.ts --apply",
     "db:sync-tasks:dry": "tsx scripts/migrate-projects-to-db.ts --dry-run",
