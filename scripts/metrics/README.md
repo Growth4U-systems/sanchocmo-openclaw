@@ -4,6 +4,23 @@ Tooling around the `metric_snapshots` time-series (Métricas v2 · SAN-300). The
 (Neon/Postgres) is the source of truth; these scripts seed it and let analysts
 explore it without touching production.
 
+## KPI compute runner
+
+```bash
+DATABASE_URL=... npm run compute:metric-kpis -- --slug growth4u --trigger manual
+DATABASE_URL=... npm run compute:metric-kpis -- --all --trigger cron --json
+```
+
+Flags: `--slug <slug[,slug]>` or `--all`, `--from` / `--to` (YYYY-MM-DD,
+defaults to the last 30 UTC days), `--force`, `--trigger`, `--json`,
+`--definition-version`.
+
+The runner writes `metric_kpi_runs` and `metric_kpi_values` through
+`computeMetricKpis(slug, range)`. It is safe for cron retries at the basic
+level: an existing `ok` run for the same slug/range/definition version is
+skipped, and a recent `running` run is treated as in-flight unless `--force` is
+passed.
+
 ## Demo seed safety
 
 The demo seed scripts (`seed:paid`, `seed:product`, `seed:web-seo`) write

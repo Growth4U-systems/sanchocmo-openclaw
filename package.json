@@ -31,6 +31,7 @@
     "seed:product": "tsx scripts/metrics/seed-product.ts",
     "seed:web-seo": "tsx scripts/metrics/seed-web-seo.ts",
     "export:metrics": "node scripts/metrics/export-metric-snapshots.mjs",
+    "compute:metric-kpis": "tsx scripts/metrics/compute-kpis.ts",
     "db:sync-tasks": "tsx scripts/migrate-projects-to-db.ts --apply",
     "db:sync-tasks:dry": "tsx scripts/migrate-projects-to-db.ts --dry-run",
     "collect:ingest": "tsx scripts/ingest-metrics.ts",
