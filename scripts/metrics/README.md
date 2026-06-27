@@ -21,6 +21,13 @@ level: an existing `ok` run for the same slug/range/definition version is
 skipped, and a recent `running` run is treated as in-flight unless `--force` is
 passed.
 
+## Demo seed safety
+
+The demo seed scripts (`seed:paid`, `seed:product`, `seed:web-seo`) write
+`seed`/`demo` metric rows. They abort when common environment markers or
+`DATABASE_URL` look production-like. Only bypass this with
+`ALLOW_METRIC_SEED_PRODUCTION=1` for an intentional emergency repair.
+
 ## Backfill (one-time / repair)
 
 ```bash

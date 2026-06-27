@@ -18,6 +18,8 @@ interface SnapshotPayload {
   slug: string;
   date?: string;
   collectedAt?: string | null;
+  provenance?: string | null;
+  quality?: string | null;
   sources: DailySnapshotInput["sources"];
   deleteStale?: boolean;
 }
@@ -66,7 +68,13 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   await ensureMetricsStorage();
-  const daily: DailySnapshotInput = { slug: payload.slug, collectedAt: payload.collectedAt ?? null, sources: payload.sources };
+  const daily: DailySnapshotInput = {
+    slug: payload.slug,
+    collectedAt: payload.collectedAt ?? null,
+    provenance: payload.provenance ?? null,
+    quality: payload.quality ?? null,
+    sources: payload.sources,
+  };
   const r = await ingestSnapshot({ slug: payload.slug, date, daily, deleteStale: payload.deleteStale === true });
   console.log(`🗃  Neon: ${r.rows} row(s) written, ${r.deleted} stale removed (${payload.slug} ${date})`);
 }

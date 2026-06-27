@@ -2,6 +2,12 @@ import crypto from "crypto";
 import { and, eq, inArray, notInArray, sql as drizzleSql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricSnapshots, metricSourceRuns } from "@/db/schema";
+import {
+  applyMetricQualityMetadata,
+  isDemoQualityMetadata,
+  isMetricMetadataDimensionKey,
+  type MetricQualityMetadata,
+} from "@/lib/metrics/provenance";
 
 /**
  * Time-series storage for client metrics (SAN-263 · Métricas v2 PR-1).
@@ -18,17 +24,23 @@ export interface RawMetric {
   value?: number | string | null;
   date?: string | null;
   dimensions?: Record<string, unknown> | null;
+  provenance?: string | null;
+  quality?: string | null;
 }
 
 export interface SourcePayload {
   status?: string;
   collectedAt?: string | null;
+  provenance?: string | null;
+  quality?: string | null;
   metrics?: RawMetric[];
 }
 
 export interface DailySnapshotInput {
   slug?: string;
   collectedAt?: string | null;
+  provenance?: string | null;
+  quality?: string | null;
   sources?: Record<string, SourcePayload>;
 }
 
@@ -98,7 +110,13 @@ function canonicalDimensions(dimensions?: Record<string, unknown> | null): {
   if (!entries.length) return { dimsKey: "", dims: null };
   const dims: Record<string, string> = {};
   for (const [key, value] of entries) dims[key] = value;
-  return { dimsKey: JSON.stringify(entries), dims };
+  const logicalEntries = entries.filter(
+    ([key]) => !isMetricMetadataDimensionKey(key),
+  );
+  return {
+    dimsKey: logicalEntries.length ? JSON.stringify(logicalEntries) : "",
+    dims,
+  };
 }
 
 function toNumber(value: unknown): number | null {
@@ -134,11 +152,13 @@ function rowsFromMetrics(
   dateKey: string,
   collectedAt: string | null | undefined,
   runId: string | null,
+  inheritedMetadata: MetricQualityMetadata = {},
 ): SnapshotRow[] {
   const now = new Date();
   const collected = toDate(collectedAt);
   const rows: SnapshotRow[] = [];
-  for (const metric of metrics) {
+  for (const rawMetric of metrics) {
+    const metric = applyMetricQualityMetadata(rawMetric, inheritedMetadata);
     if (!metric || typeof metric.name !== "string" || !metric.name) continue;
     const metricDate = typeof metric.date === "string" && DATE_RE.test(metric.date) ? metric.date : dateKey;
     if (!DATE_RE.test(metricDate)) continue;
@@ -169,7 +189,23 @@ async function upsertRows(rows: SnapshotRow[]): Promise<number> {
   // De-dupe within the batch (same logical key → one row) so a single
   // INSERT ... ON CONFLICT never tries to touch the same row twice.
   const byId = new Map<string, SnapshotRow>();
-  for (const row of rows) byId.set(row.id as string, row);
+  for (const row of rows) {
+    const id = row.id as string;
+    const existing = byId.get(id);
+    if (
+      existing &&
+      isDemoQualityMetadata(existing.dimensions) &&
+      !isDemoQualityMetadata(row.dimensions)
+    ) {
+      byId.set(id, {
+        ...row,
+        dimensions: existing.dimensions,
+        dimsKey: existing.dimsKey,
+      });
+      continue;
+    }
+    byId.set(id, row);
+  }
   const unique = [...byId.values()];
   const database = getDb();
   const CHUNK = 500;
@@ -276,7 +312,13 @@ export async function ingestSourceMetrics(
   source: string,
   metrics: RawMetric[],
   dateKey: string,
-  opts: { collectedAt?: string | null; runId?: string | null; deleteStale?: boolean } = {},
+  opts: {
+    collectedAt?: string | null;
+    runId?: string | null;
+    deleteStale?: boolean;
+    provenance?: string | null;
+    quality?: string | null;
+  } = {},
 ): Promise<IngestResult> {
   if (!hasDatabase) {
     return { ok: false, rows: 0, sources: [], skipped: source ? [source] : [], storage: STORAGE_NOT_CONFIGURED };
@@ -286,7 +328,7 @@ export async function ingestSourceMetrics(
   }
   await ensureMetricsStorage();
   const runId = opts.runId ?? `mri_${stableId(slug, dateKey, source, opts.collectedAt ?? "")}`;
-  const rows = rowsFromMetrics(slug, source, metrics, dateKey, opts.collectedAt, runId);
+  const rows = rowsFromMetrics(slug, source, metrics, dateKey, opts.collectedAt, runId, opts);
   const count = await upsertRows(rows);
   let deleted = 0;
   if (opts.deleteStale) {
@@ -335,7 +377,10 @@ export async function ingestDailySnapshot(
       continue;
     }
     used.push(source);
-    const srcRows = rowsFromMetrics(slug, source, metrics, dateKey, collectedAt, runId);
+    const srcRows = rowsFromMetrics(slug, source, metrics, dateKey, collectedAt, runId, {
+      provenance: payload?.provenance ?? daily.provenance,
+      quality: payload?.quality ?? daily.quality,
+    });
     allRows.push(...srcRows);
     bySource.set(source, srcRows);
     // Count distinct ids — what upsertRows actually writes — so the ledger

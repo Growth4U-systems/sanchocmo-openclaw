@@ -1,5 +1,9 @@
 import { TRUST_PILLAR_KEYS } from "@/lib/trust-score/client";
 import { aggFor, type AggStrategy } from "@/lib/metrics/aggregation";
+import {
+  isDemoProvenanceValue,
+  isDemoQualityMetadata,
+} from "@/lib/metrics/provenance";
 import type { SurfaceKey } from "@/lib/metrics/surfaces";
 
 export type MetricKpiQualityStatus =
@@ -108,9 +112,12 @@ const ROLLUP_METADATA_DIMENSION_KEYS = new Set([
   "__provenance",
   "__quality",
   "__type",
+  "__demo",
+  "__seed",
   "provenance",
   "quality",
   "seed",
+  "demo",
   "type",
 ]);
 
@@ -604,16 +611,9 @@ function isRollup(row: MetricKpiSnapshotInput): boolean {
 }
 
 function isDemoRow(row: MetricKpiSnapshotInput): boolean {
-  const dims = row.dimensions ?? {};
-  const provenance = String(
-    dims.provenance ?? dims.type ?? dims.quality ?? dims.source ?? "",
-  ).toLowerCase();
-  const flag = String(dims.demo ?? dims.seed ?? "").toLowerCase();
   return (
-    provenance === "seed" ||
-    provenance === "demo" ||
-    flag === "true" ||
-    flag === "1"
+    isDemoQualityMetadata(row.dimensions) ||
+    isDemoProvenanceValue(normalizeSourceId(row.source))
   );
 }
 

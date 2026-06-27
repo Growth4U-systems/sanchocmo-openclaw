@@ -30,7 +30,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     slug?: string;
     date?: string;
     collectedAt?: string | null;
-    sources?: Record<string, { status?: string; collectedAt?: string | null; metrics?: RawMetric[] }>;
+    provenance?: string | null;
+    quality?: string | null;
+    sources?: Record<
+      string,
+      {
+        status?: string;
+        collectedAt?: string | null;
+        provenance?: string | null;
+        quality?: string | null;
+        metrics?: RawMetric[];
+      }
+    >;
     source?: string;
     metrics?: RawMetric[];
     deleteStale?: boolean;
@@ -45,12 +56,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const date = typeof body.date === "string" && DATE_RE.test(body.date) ? body.date : new Date().toISOString().slice(0, 10);
 
   if (typeof body.source === "string" && Array.isArray(body.metrics)) {
-    const result = await ingestSourceMetrics(slug, body.source, body.metrics, date, { collectedAt: body.collectedAt, deleteStale });
+    const result = await ingestSourceMetrics(slug, body.source, body.metrics, date, {
+      collectedAt: body.collectedAt,
+      deleteStale,
+      provenance: body.provenance,
+      quality: body.quality,
+    });
     res.status(200).json(result);
     return;
   }
   if (body.sources && typeof body.sources === "object") {
-    const result = await ingestDailySnapshot(slug, date, { slug, collectedAt: body.collectedAt, sources: body.sources }, { deleteStale });
+    const result = await ingestDailySnapshot(
+      slug,
+      date,
+      {
+        slug,
+        collectedAt: body.collectedAt,
+        provenance: body.provenance,
+        quality: body.quality,
+        sources: body.sources,
+      },
+      { deleteStale },
+    );
     res.status(200).json(result);
     return;
   }
