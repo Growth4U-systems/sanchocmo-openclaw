@@ -4,6 +4,8 @@
  * files. Idempotent (upserts) — safe to re-run as a repair. (SAN-263 · PR-1.)
  *
  *   DATABASE_URL=... npm run backfill:metrics
+ *   DATABASE_URL=... npm run backfill:metrics -- --seed
+ *   DATABASE_URL=... npm run backfill:metrics -- --provenance seed --quality demo
  */
 import fs from "fs";
 import path from "path";
@@ -13,12 +15,29 @@ import { ensureMetricsStorage, ingestDailySnapshot, type DailySnapshotInput } fr
 
 const DATE_FILE_RE = /^\d{4}-\d{2}-\d{2}\.json$/;
 
+function arg(flag: string): string | undefined {
+  const index = process.argv.indexOf(flag);
+  return index >= 0 ? process.argv[index + 1] : undefined;
+}
+
+function hasFlag(flag: string): boolean {
+  return process.argv.includes(flag);
+}
+
 async function main() {
   if (!hasDatabase) {
     console.error("DATABASE_URL is not set — nothing to backfill.");
     process.exit(1);
   }
   await ensureMetricsStorage();
+  const provenanceArg =
+    arg("--provenance") ??
+    (hasFlag("--seed") ? "seed" : hasFlag("--demo") ? "demo" : undefined);
+  const qualityArg =
+    arg("--quality") ??
+    (provenanceArg === "seed" || provenanceArg === "demo"
+      ? "demo"
+      : undefined);
 
   const brandRoot = path.join(BASE, "brand");
   if (!fs.existsSync(brandRoot)) {
@@ -50,7 +69,15 @@ async function main() {
         console.warn(`  ! ${slug}/${file}: invalid JSON, skipped`);
         continue;
       }
-      const result = await ingestDailySnapshot(slug, dateKey, daily);
+      const dailyWithMetadata =
+        provenanceArg || qualityArg
+          ? {
+              ...daily,
+              provenance: provenanceArg ?? daily.provenance,
+              quality: qualityArg ?? daily.quality,
+            }
+          : daily;
+      const result = await ingestDailySnapshot(slug, dateKey, dailyWithMetadata);
       slugRows += result.rows;
       totalFiles += 1;
     }

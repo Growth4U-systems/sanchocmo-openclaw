@@ -14,9 +14,11 @@
  */
 import { hasDatabase } from "@/db/drizzle";
 import { ensureMetricsStorage, ingestDailySnapshot, type RawMetric } from "@/lib/data/metrics-snapshots";
+import { assertMetricSeedTargetSafe } from "./seed-safety";
 
 const SLUG = process.argv[2] || "hospital-capilar";
 const DAYS = Number(process.argv[3]) || 30;
+const SEED_METADATA = { provenance: "seed", quality: "demo" } as const;
 
 // Deterministic per-day wiggle so re-runs are stable (no Math.random).
 const wiggle = (dayIndex: number, phase: number) => 1 + 0.12 * Math.sin((dayIndex + phase) * 0.5);
@@ -138,6 +140,7 @@ async function main() {
     console.error("DATABASE_URL is not set — cannot seed. Run with DATABASE_URL=... (staging/dev DB).");
     process.exit(1);
   }
+  assertMetricSeedTargetSafe("seed-paid-ads");
   await ensureMetricsStorage();
 
   const today = new Date();
@@ -150,6 +153,7 @@ async function main() {
     const daily = {
       slug: SLUG,
       collectedAt: new Date().toISOString(),
+      ...SEED_METADATA,
       sources: {
         meta_ads: { status: "ok", metrics: metricsForDay("Meta", dayIndex) },
         google_ads: { status: "ok", metrics: metricsForDay("Google", dayIndex) },

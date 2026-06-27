@@ -126,6 +126,44 @@ test("metadata-only seed/demo rows remain selectable but never look live", () =>
   assert.equal(sessions.qualityStatus, "demo");
 });
 
+test("ingest-style __provenance/__quality metadata marks seed rows as demo", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({
+        source: "ga4",
+        metricName: "sessions",
+        value: 25,
+        dimensions: { __provenance: "seed", __quality: "demo" },
+        dimsKey: "",
+      }),
+    ],
+    oneDay,
+  );
+  const sessions = byId(values, "web.sessions");
+  assert.equal(sessions.value, 25);
+  assert.equal(sessions.qualityStatus, "demo");
+  assert.equal(sessions.inputRefs[0]?.dimensions?.__provenance, "seed");
+});
+
+test("mixed real and seed inputs never publish a KPI as ok", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({ source: "ga4", metricName: "sessions", value: 10 }),
+      row({
+        source: "ga4",
+        metricName: "sessions",
+        value: 5,
+        dimensions: { __provenance: "seed", __quality: "demo" },
+        dimsKey: "",
+      }),
+    ],
+    oneDay,
+  );
+  const sessions = byId(values, "web.sessions");
+  assert.equal(sessions.value, 15);
+  assert.equal(sessions.qualityStatus, "demo");
+});
+
 test("partial coverage is explicit for additive KPIs over multi-day ranges", () => {
   const values = computeSemanticKpisFromSnapshots(
     [

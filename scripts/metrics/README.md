@@ -4,6 +4,13 @@ Tooling around the `metric_snapshots` time-series (Métricas v2 · SAN-300). The
 (Neon/Postgres) is the source of truth; these scripts seed it and let analysts
 explore it without touching production.
 
+## Demo seed safety
+
+The demo seed scripts (`seed:paid`, `seed:product`, `seed:web-seo`) write
+`seed`/`demo` metric rows. They abort when common environment markers or
+`DATABASE_URL` look production-like. Only bypass this with
+`ALLOW_METRIC_SEED_PRODUCTION=1` for an intentional emergency repair.
+
 ## Backfill (one-time / repair)
 
 ```bash

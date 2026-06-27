@@ -10,9 +10,9 @@
  *
  * Two measurement modes (the surface has SEO | AI sub-tabs):
  *  - SEO  = ga4 (traffic) + gsc (rankings) + pagespeed (Core Web Vitals). These
- *    metric SHAPES match the real adapters (ga4.js/gsc.js//api/pagespeed) exactly,
- *    so the surface flags them `real` — the seed just stands in until a fresh
- *    collect lands. ADDITIVE: sessions/users/clicks/impressions/conversions.
+ *    metric SHAPES match the real adapters (ga4.js/gsc.js//api/pagespeed) exactly;
+ *    every row is still tagged seed/demo so semantic KPIs never publish it as OK.
+ *    ADDITIVE: sessions/users/clicks/impressions/conversions.
  *    AVG (aggregation.ts already avgs): ctr/position/bounceRate/engagementRate.
  *    LATEST: pagespeed.*.
  *  - AI   = `source=aeo` (GEO/AEO visibility in AI answers). NO real source yet →
@@ -24,9 +24,11 @@
  */
 import { hasDatabase } from "@/db/drizzle";
 import { ensureMetricsStorage, ingestDailySnapshot, type RawMetric } from "@/lib/data/metrics-snapshots";
+import { assertMetricSeedTargetSafe } from "./seed-safety";
 
 const SLUG = process.argv[2] || "hospital-capilar";
 const DAYS = Number(process.argv[3]) || 30;
+const SEED_METADATA = { provenance: "seed", quality: "demo" } as const;
 
 const wiggle = (i: number, phase = 0) => 1 + 0.08 * Math.sin((i + phase) * 0.6);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -220,6 +222,7 @@ async function main() {
     console.error("DATABASE_URL is not set — cannot seed. Run with DATABASE_URL=... (staging/dev DB).");
     process.exit(1);
   }
+  assertMetricSeedTargetSafe("seed-web-seo");
   await ensureMetricsStorage();
 
   const today = new Date();
@@ -232,6 +235,7 @@ async function main() {
     const daily = {
       slug: SLUG,
       collectedAt: new Date().toISOString(),
+      ...SEED_METADATA,
       sources: {
         ga4: { status: "ok", metrics: ga4ForDay(i) },
         gsc: { status: "ok", metrics: gscForDay(i) },
