@@ -1,4 +1,12 @@
-import { and, desc, eq, gte, lte, sql as drizzleSql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  inArray,
+  lte,
+  sql as drizzleSql,
+} from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricKpiRuns, metricKpiValues, metricSnapshots } from "@/db/schema";
 import { ensureMetricsStorage, stableId } from "@/lib/data/metrics-snapshots";
@@ -25,6 +33,7 @@ import type { SurfaceKey } from "@/lib/metrics/surfaces";
 
 export type MetricKpiRunRow = typeof metricKpiRuns.$inferSelect;
 export type MetricKpiValueRow = typeof metricKpiValues.$inferSelect;
+export type MetricKpiRunStatus = "running" | "ok" | "error";
 
 export interface ComputeMetricKpisOptions {
   from?: string;
@@ -44,6 +53,13 @@ export interface MetricKpiReadOptions {
   dashboardBlock?: MetricKpiDashboardBlock;
   surface?: SurfaceKey;
   runId?: string;
+}
+
+export interface MetricKpiRunLookupOptions {
+  from: string;
+  to: string;
+  statuses?: MetricKpiRunStatus[];
+  definitionVersion?: number;
 }
 
 export interface MetricKpiReadResult {
@@ -296,6 +312,40 @@ export async function getLatestMetricKpiRun(
     .select()
     .from(metricKpiRuns)
     .where(and(eq(metricKpiRuns.slug, slug), eq(metricKpiRuns.status, "ok")))
+    .orderBy(desc(metricKpiRuns.startedAt))
+    .limit(1);
+  return run ?? null;
+}
+
+export async function findMetricKpiRunForRange(
+  slug: string,
+  opts: MetricKpiRunLookupOptions,
+): Promise<MetricKpiRunRow | null> {
+  if (!hasDatabase) return null;
+  if (!slug) throw new Error("slug is required to find metric KPI runs");
+  if (!DATE_RE.test(opts.from) || !DATE_RE.test(opts.to) || opts.from > opts.to) {
+    throw new Error(`Invalid metric KPI range: ${opts.from}..${opts.to}`);
+  }
+
+  await ensureMetricKpiStorage();
+  const conditions = [
+    eq(metricKpiRuns.slug, slug),
+    eq(metricKpiRuns.rangeFrom, opts.from),
+    eq(metricKpiRuns.rangeTo, opts.to),
+  ];
+  if (typeof opts.definitionVersion === "number") {
+    conditions.push(eq(metricKpiRuns.definitionVersion, opts.definitionVersion));
+  }
+  if (opts.statuses?.length === 1) {
+    conditions.push(eq(metricKpiRuns.status, opts.statuses[0]));
+  } else if (opts.statuses && opts.statuses.length > 1) {
+    conditions.push(inArray(metricKpiRuns.status, opts.statuses));
+  }
+
+  const [run] = await getDb()
+    .select()
+    .from(metricKpiRuns)
+    .where(and(...conditions))
     .orderBy(desc(metricKpiRuns.startedAt))
     .limit(1);
   return run ?? null;
