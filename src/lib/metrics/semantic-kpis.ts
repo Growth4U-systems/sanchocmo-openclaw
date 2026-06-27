@@ -374,6 +374,7 @@ const pipelineDefinitions: MetricKpiDefinition[] = [
 const outboundDefinitions: MetricKpiDefinition[] = [
   kpi("outbound.sent", "Emails sent", "surface", "email", "instantly", "sent", {
     metricAliases: ["sent", "emailsSent"],
+    sourceAliases: ["lemlist"],
   }),
   kpi(
     "outbound.opens",
@@ -382,6 +383,7 @@ const outboundDefinitions: MetricKpiDefinition[] = [
     "email",
     "instantly",
     "opens",
+    { sourceAliases: ["lemlist"] },
   ),
   kpi(
     "outbound.replies",
@@ -390,6 +392,7 @@ const outboundDefinitions: MetricKpiDefinition[] = [
     "email",
     "instantly",
     "replies",
+    { sourceAliases: ["lemlist"] },
   ),
 ];
 

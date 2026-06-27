@@ -80,3 +80,20 @@ Flags: `--slug <slug|all>` (default `all`), `--from` / `--to` (YYYY-MM-DD),
 - Prefer `METRICS_RO_URL` (read-only); the script warns if it falls back to the
   read-write `DATABASE_URL`.
 ```
+
+## Lemlist collector
+
+```bash
+MC_WORKSPACE=workspace-sancho DATABASE_URL=... npm run collect:lemlist -- --slug growth4u
+```
+
+Reads `brand/<slug>/.env` for `<SLUG>_LEMLIST_API_KEY`, pulls all non-draft,
+non-archived campaigns from Lemlist, calls the batch campaign-stats endpoint for
+one UTC day, and writes source `lemlist` rows into `metric_snapshots`.
+
+Useful flags:
+
+```bash
+npm run collect:lemlist -- --slug growth4u --date 2026-06-27 --no-ingest --json
+npm run collect:lemlist -- --slug growth4u --campaign-ids cam_123,cam_456
+```
