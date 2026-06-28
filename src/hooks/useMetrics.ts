@@ -64,6 +64,60 @@ export interface MetricKpiValue {
   computedAt: string;
 }
 
+export interface MetricStageRollupStageValue {
+  stageId: string;
+  label: string;
+  order: number;
+  value: number | null;
+  displayValue: string;
+  qualityStatus: MetricKpiQualityStatus;
+  channels: string[];
+  sources: string[];
+  inputRefsCount: number;
+}
+
+export interface MetricStageRollupRateValue {
+  fromStageId: string;
+  fromLabel: string;
+  toStageId: string;
+  toLabel: string;
+  value: number | null;
+  displayValue: string;
+  numerator: number | null;
+  denominator: number | null;
+  qualityStatus: MetricKpiQualityStatus;
+}
+
+export interface MetricStageRollupChannelValue {
+  channel: string;
+  label: string;
+  value: number;
+  displayValue: string;
+  qualityStatus: MetricKpiQualityStatus;
+  stages: MetricStageRollupStageValue[];
+  rates: MetricStageRollupRateValue[];
+}
+
+export interface MetricStageRollupResult {
+  configured: boolean;
+  available: boolean;
+  range: { from: string; to: string } | null;
+  summary: {
+    qualityStatus: MetricKpiQualityStatus;
+    totalRows: number;
+    stageCount: number;
+    channelCount: number;
+    inputRefsCount: number;
+    lastComputedAt: string | null;
+    source: "metric_stage_rollups";
+    emptyState: "missing_stage_rollups" | "ready";
+    nextAction: string;
+  };
+  stages: MetricStageRollupStageValue[];
+  rates: MetricStageRollupRateValue[];
+  channels: MetricStageRollupChannelValue[];
+}
+
 export interface MetricKpiResult {
   configured: boolean;
   slug: string;
@@ -89,6 +143,7 @@ export interface MetricKpiResult {
   };
   values: MetricKpiValue[];
   northStar: MetricKpiValue | null;
+  stageRollups: MetricStageRollupResult;
 }
 
 export function useMetricsPlan(slug: string | null) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { GitBranch, Settings, Sparkles } from "lucide-react";
@@ -13,6 +13,9 @@ import {
   type DashboardVersionMeta,
   type MetricKpiResult,
   type MetricKpiValue,
+  type MetricStageRollupChannelValue,
+  type MetricStageRollupResult,
+  type MetricStageRollupStageValue,
   type SurfaceSummaryEntry,
 } from "@/hooks/useMetrics";
 import { buildMetricsEditThread } from "@/lib/chat-openers";
@@ -42,7 +45,6 @@ import {
   DeltaBadge,
   EmptyMetricState,
   MetricQualityBadge,
-  MiniFunnel,
   MiniSparkline,
   MoversPanel,
   SurfaceStatusCard,
@@ -71,15 +73,6 @@ const ATTRIBUTION_MODELS = [
   "Lineal",
   "Data-driven",
 ];
-const CHANNELS = [
-  "Paid",
-  "Organic / SEO",
-  "Outbound ICP",
-  "Partnerships",
-  "Social",
-  "Direct",
-];
-
 type DataLineageGate = {
   title: string;
   source: string;
@@ -308,9 +301,13 @@ function MetricsPageInner({ slug }: { slug: string }) {
                   />
                 ))}
               {activeTab === "channels" && (
-                <ChannelsView model={model} onModelChange={setModel} />
+                <ChannelsView
+                  model={model}
+                  onModelChange={setModel}
+                  kpiData={kpiData}
+                />
               )}
-              {activeTab === "conversion" && <ConversionView />}
+              {activeTab === "conversion" && <ConversionView kpiData={kpiData} />}
               {activeTab === "trends" && <TrendsView kpiData={kpiData} />}
             </>
           )}
@@ -700,6 +697,7 @@ function OverviewView({
   const overviewKpis = selectOverviewKpis(kpiData);
   const northStar = kpiData?.northStar ?? null;
   const economyKpis = selectEconomyKpis(kpiData);
+  const stageRollups = kpiData?.stageRollups;
 
   return (
     <div className="space-y-5">
@@ -806,15 +804,23 @@ function OverviewView({
       </Panel>
 
       <Panel>
-        <h2 className="font-heading text-[18px] font-bold text-navy">
-          Embudo unificado
-        </h2>
-        <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-          La estructura está lista; los porcentajes se llenan cuando exista
-          mapping etapa ← surface.metric.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-[18px] font-bold text-navy">
+              Embudo unificado
+            </h2>
+            <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
+              Counts por etapa desde stage rollups. Es pre-attribution/blended:
+              no deduplica leads entre fuentes ni calcula journeys.
+            </p>
+          </div>
+          <MetricQualityBadge
+            status={stageRollups?.available ? asQualityStatus(stageRollups.summary.qualityStatus) : "missing"}
+            source="metric_stage_rollups"
+          />
+        </div>
         <div className="mt-4">
-          <MiniFunnel stages={FUNNEL_STAGES} state="SIN DATOS" />
+          <StageRollupFunnel stageRollups={stageRollups} />
         </div>
       </Panel>
 
@@ -835,7 +841,9 @@ function OverviewView({
         href={`/dashboard/${slug}/intelligence`}
         signals={[
           "Cambios cross-surface pendientes de metric_signals.",
-          "Fugas del funnel pendientes de metric_stage_rollups.",
+          stageRollups?.available
+            ? "Fugas del funnel visibles como rollup básico; attribution avanzada pendiente."
+            : "Fugas del funnel pendientes de metric_stage_rollups.",
           "Recomendaciones bloqueadas hasta que existan datos reales.",
         ]}
       />
@@ -1025,10 +1033,18 @@ function SurfaceDetailView({
 function ChannelsView({
   model,
   onModelChange,
+  kpiData,
 }: {
   model: string;
   onModelChange: (model: string) => void;
+  kpiData?: MetricKpiResult;
 }) {
+  const stageRollups = kpiData?.stageRollups;
+  const matrixColumns = stageRollups?.available
+    ? ["Canal", ...stageRollups.stages.map((stage) => stage.label)]
+    : ["Canal", ...FUNNEL_STAGES];
+  const matrixRows = buildChannelMatrixRows(stageRollups);
+
   return (
     <div className="space-y-5">
       <Panel>
@@ -1038,9 +1054,8 @@ function ChannelsView({
               Channels
             </h2>
             <p className="mt-1 max-w-[760px] text-[13px] text-[var(--sc-fg-muted)]">
-              Vista de atribución preparada. El modelo avanzado queda bloqueado
-              hasta que existan `metric_stage_events` y resultados de
-              atribución.
+              Matriz básica por canal desde stage rollups. Es lectura blended,
+              no attribution model; W-shaped queda bloqueado hasta eventos.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1064,36 +1079,32 @@ function ChannelsView({
           </div>
         </div>
       </Panel>
-      <MiniFunnel stages={FUNNEL_STAGES} state="SIN DATOS" />
+      <StageRollupFunnel stageRollups={stageRollups} />
       <Panel>
-        <h3 className="font-heading text-[16px] font-bold text-navy">
-          Matriz canal × etapa
-        </h3>
-        <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-          Sin números hasta tener rollups por stage/channel.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="font-heading text-[16px] font-bold text-navy">
+              Matriz canal × etapa
+            </h3>
+            <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
+              Counts agregados por channel/stage. No se muestran como revenue
+              atribuido ni como dedupe final.
+            </p>
+          </div>
+          <MetricQualityBadge
+            status={stageRollups?.available ? asQualityStatus(stageRollups.summary.qualityStatus) : "missing"}
+            source="metric_stage_rollups"
+          />
+        </div>
         <div className="mt-4">
           <BreakdownTable
-            columns={["Canal", ...FUNNEL_STAGES]}
-            rows={CHANNELS.map((channel) => ({
-              key: channel,
-              cells: [
-                channel,
-                ...FUNNEL_STAGES.map(() => (
-                  <span
-                    key={`${channel}-empty`}
-                    className="text-[var(--sc-fg-muted)]"
-                  >
-                    —
-                  </span>
-                )),
-              ],
-            }))}
+            columns={matrixColumns}
+            rows={matrixRows}
             empty={
               <EmptyMetricState
                 title="Sin matriz"
                 requiredSource="metric_stage_rollups"
-                nextAction="Mapear etapa de negocio a source.metric/dimensions."
+                nextAction={stageRollups?.summary.nextAction ?? "Mapear etapa de negocio a source.metric/dimensions."}
               />
             }
           />
@@ -1137,7 +1148,10 @@ function ChannelsView({
   );
 }
 
-function ConversionView() {
+function ConversionView({ kpiData }: { kpiData?: MetricKpiResult }) {
+  const stageRollups = kpiData?.stageRollups;
+  const channelRateRows = buildChannelRateRows(stageRollups);
+
   return (
     <div className="space-y-5">
       <Panel>
@@ -1145,26 +1159,41 @@ function ConversionView() {
           Conversion
         </h2>
         <p className="mt-1 max-w-[780px] text-[13px] text-[var(--sc-fg-muted)]">
-          Embudo end-to-end, conversion matrix, velocidad y leaks preparados sin
-          calcular tasas todavía.
+          Embudo end-to-end y tasas básicas desde stage rollups. Velocity y
+          journeys siguen bloqueados hasta eventos individuales.
         </p>
       </Panel>
-      <MiniFunnel stages={FUNNEL_STAGES} state="SIN DATOS" />
+      <StageRollupFunnel stageRollups={stageRollups} />
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel>
-          <h3 className="font-heading text-[16px] font-bold text-navy">
-            Conversion by channel
-          </h3>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="font-heading text-[16px] font-bold text-navy">
+                Conversion by channel
+              </h3>
+              <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
+                Tasas calculadas sobre rollups agregados. Si falta numerador o
+                denominador, la fila queda fuera.
+              </p>
+            </div>
+            <MetricQualityBadge
+              status={stageRollups?.available ? asQualityStatus(stageRollups.summary.qualityStatus) : "missing"}
+              source="metric_stage_rollups"
+            />
+          </div>
+          <div className="mt-4">
           <BreakdownTable
             columns={["Canal", "Entrada", "Salida", "Tasa", "Estado"]}
+            rows={channelRateRows}
             empty={
               <EmptyMetricState
                 title="Sin tasas por canal"
                 requiredSource="metric_stage_rollups"
-                nextAction="PR posterior agregará stage/channel y comparativos."
+                nextAction={stageRollups?.summary.nextAction ?? "Ejecutar stage rollups por channel/stage."}
               />
             }
           />
+          </div>
         </Panel>
         <Panel>
           <h3 className="font-heading text-[16px] font-bold text-navy">
@@ -1177,8 +1206,189 @@ function ConversionView() {
           />
         </Panel>
       </div>
-      <MoversPanel title="Leak panel" state="COMING SOON" />
+      <StageLeakPanel stageRollups={stageRollups} />
     </div>
+  );
+}
+
+function StageRollupFunnel({
+  stageRollups,
+}: {
+  stageRollups?: MetricStageRollupResult;
+}) {
+  if (!stageRollups?.available) {
+    return (
+      <EmptyMetricState
+        title="Sin rollups de embudo"
+        requiredSource="metric_stage_rollups"
+        nextAction={stageRollups?.summary.nextAction ?? "Ejecutar compute:metric-kpis para generar rollups del rango."}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="grid gap-2 lg:grid-cols-[repeat(var(--stage-count),minmax(0,1fr))]"
+      style={{ "--stage-count": stageRollups.stages.length } as CSSProperties}
+    >
+      {stageRollups.stages.map((stage) => {
+        const nextRate = stageRollups.rates.find(
+          (rate) => rate.fromStageId === stage.stageId,
+        );
+        return (
+          <div
+            key={stage.stageId}
+            className="relative rounded-sc-md border-2 border-ink bg-card p-3 shadow-pop-xs"
+          >
+            <div className="font-heading text-[11px] font-bold uppercase text-[var(--sc-fg-muted)]">
+              {stage.label}
+            </div>
+            <div className="mt-2 font-heading text-[24px] font-bold text-navy">
+              {stage.displayValue}
+            </div>
+            <div className="mt-2">
+              <MetricQualityBadge
+                status={asQualityStatus(stage.qualityStatus)}
+                source={stageRollupSourceLabel(stage)}
+              />
+            </div>
+            <p className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">
+              {stage.inputRefsCount} refs · {stage.channels.length || 0} canales
+            </p>
+            {nextRate && (
+              <div className="mt-3 border-t border-border pt-2 text-[11px] font-semibold text-[var(--sc-fg-muted)]">
+                {nextRate.toLabel}:{" "}
+                <span className="text-navy">{nextRate.displayValue}</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StageValueCell({ stage }: { stage: MetricStageRollupStageValue }) {
+  return (
+    <div className="min-w-[96px] space-y-1">
+      <div className="font-heading text-[15px] font-bold text-navy">
+        {stage.displayValue}
+      </div>
+      <MetricQualityBadge
+        status={asQualityStatus(stage.qualityStatus)}
+        source="rollup"
+      />
+    </div>
+  );
+}
+
+function ChannelCell({ channel }: { channel: MetricStageRollupChannelValue }) {
+  return (
+    <div className="space-y-1">
+      <div className="font-heading text-[13px] font-bold text-navy">
+        {channel.label}
+      </div>
+      <div className="text-[11px] text-[var(--sc-fg-muted)]">
+        total rollup {channel.displayValue}
+      </div>
+    </div>
+  );
+}
+
+function buildChannelMatrixRows(stageRollups?: MetricStageRollupResult) {
+  if (!stageRollups?.available) return undefined;
+  return stageRollups.channels.map((channel) => ({
+    key: channel.channel,
+    cells: [
+      <ChannelCell key={`${channel.channel}-label`} channel={channel} />,
+      ...channel.stages.map((stage) => (
+        <StageValueCell
+          key={`${channel.channel}-${stage.stageId}`}
+          stage={stage}
+        />
+      )),
+    ],
+  }));
+}
+
+function buildChannelRateRows(stageRollups?: MetricStageRollupResult) {
+  if (!stageRollups?.available) return undefined;
+  const rows = stageRollups.channels.flatMap((channel) =>
+    channel.rates
+      .filter((rate) => rate.value != null)
+      .map((rate) => ({
+        key: `${channel.channel}-${rate.fromStageId}-${rate.toStageId}`,
+        cells: [
+          channel.label,
+          rate.fromLabel,
+          rate.toLabel,
+          <span
+            key={`${channel.channel}-${rate.fromStageId}-${rate.toStageId}-value`}
+            className="font-heading font-bold text-navy"
+          >
+            {rate.displayValue}
+          </span>,
+          <MetricQualityBadge
+            key={`${channel.channel}-${rate.fromStageId}-${rate.toStageId}-status`}
+            status={asQualityStatus(rate.qualityStatus)}
+            source="rollup/blended"
+          />,
+        ],
+      })),
+  );
+  return rows.length ? rows : undefined;
+}
+
+function StageLeakPanel({
+  stageRollups,
+}: {
+  stageRollups?: MetricStageRollupResult;
+}) {
+  const rates = (stageRollups?.rates ?? [])
+    .filter((rate) => rate.value != null)
+    .sort((a, b) => (a.value ?? 0) - (b.value ?? 0));
+  const worst = rates[0];
+
+  return (
+    <Panel>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-heading text-[16px] font-bold text-navy">
+            Leak panel
+          </h3>
+          <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
+            Fuga básica calculada por tasas entre etapas agregadas. No usa
+            targets ni benchmarks inventados.
+          </p>
+        </div>
+        <MetricQualityBadge
+          status={worst ? asQualityStatus(worst.qualityStatus) : "missing"}
+          source="metric_stage_rollups"
+        />
+      </div>
+      {worst ? (
+        <div className="mt-4 rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-4 shadow-pop-xs">
+          <div className="font-heading text-[12px] font-bold uppercase text-[var(--sc-fg-muted)]">
+            Mayor fuga observada
+          </div>
+          <div className="mt-2 font-heading text-[22px] font-bold text-navy">
+            {worst.fromLabel} → {worst.toLabel}: {worst.displayValue}
+          </div>
+          <p className="mt-2 text-[12px] text-[var(--sc-fg-muted)]">
+            Numerador {worst.numerator ?? "-"} · denominador {worst.denominator ?? "-"}.
+            Interpretar como rollup/blended hasta que exista attribution.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4">
+          <EmptyMetricState
+            title="Sin leak calculable"
+            requiredSource="metric_stage_rollups"
+            nextAction={stageRollups?.summary.nextAction ?? "Hace falta al menos dos etapas con valores en el rango."}
+          />
+        </div>
+      )}
+    </Panel>
   );
 }
 
@@ -1369,6 +1579,11 @@ function coverageLabel(kpi: MetricKpiValue): string {
   if (kpi.sourceCoverage >= 0.995) return "cobertura completa";
   if (kpi.sourceCoverage <= 0) return "sin cobertura";
   return `${Math.round(kpi.sourceCoverage * 100)}% cobertura`;
+}
+
+function stageRollupSourceLabel(stage: MetricStageRollupStageValue): string {
+  if (!stage.sources.length) return "metric_stage_rollups";
+  return stage.sources.slice(0, 2).join(", ");
 }
 
 function selectOverviewKpis(data?: MetricKpiResult): MetricKpiValue[] {

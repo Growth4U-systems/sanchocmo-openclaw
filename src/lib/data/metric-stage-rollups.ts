@@ -1,5 +1,6 @@
 import {
   and,
+  asc,
   eq,
   gte,
   lte,
@@ -38,6 +39,13 @@ export interface PersistMetricStageRollupsOptions {
   definitions?: MetricFunnelStageDefinition[];
 }
 
+export interface MetricStageRollupReadOptions {
+  from: string;
+  to: string;
+  runId?: string | null;
+  definitionVersion?: number | null;
+}
+
 const ENSURE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS "metric_funnel_stage_map" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "archetype" text DEFAULT 'lead-to-sale' NOT NULL, "stage_id" text NOT NULL, "stage_label" text NOT NULL, "stage_order" integer NOT NULL, "surface" text, "source" text NOT NULL, "metric_name" text NOT NULL, "source_aliases" jsonb DEFAULT '[]'::jsonb NOT NULL, "metric_aliases" jsonb DEFAULT '[]'::jsonb NOT NULL, "dimensions_filter" jsonb DEFAULT '{}'::jsonb NOT NULL, "channel" text, "aggregation" text DEFAULT 'sum' NOT NULL, "quality_override" text, "enabled" boolean DEFAULT true NOT NULL, "created_at" timestamp DEFAULT now() NOT NULL, "updated_at" timestamp DEFAULT now() NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS "metric_funnel_stage_map_slug_idx" ON "metric_funnel_stage_map" ("slug")`,
@@ -67,6 +75,38 @@ export async function ensureMetricStageRollupStorage(): Promise<void> {
 
 export function metricStageRollupStorageConfigured(): boolean {
   return hasDatabase;
+}
+
+export async function listMetricStageRollups(
+  slug: string,
+  opts: MetricStageRollupReadOptions,
+): Promise<MetricStageRollupRow[]> {
+  if (!hasDatabase) return [];
+  if (!slug) throw new Error("slug is required to read metric stage rollups");
+  if (!opts.from || !opts.to || opts.from > opts.to) {
+    throw new Error(`Invalid metric stage rollup range: ${opts.from}..${opts.to}`);
+  }
+  await ensureMetricStageRollupStorage();
+  const conditions = [
+    eq(metricStageRollups.slug, slug),
+    eq(metricStageRollups.rangeFrom, opts.from),
+    eq(metricStageRollups.rangeTo, opts.to),
+  ];
+  if (opts.runId) conditions.push(eq(metricStageRollups.runId, opts.runId));
+  if (typeof opts.definitionVersion === "number") {
+    conditions.push(eq(metricStageRollups.definitionVersion, opts.definitionVersion));
+  }
+
+  return getDb()
+    .select()
+    .from(metricStageRollups)
+    .where(and(...conditions))
+    .orderBy(
+      asc(metricStageRollups.stageOrder),
+      asc(metricStageRollups.stageDate),
+      asc(metricStageRollups.channel),
+      asc(metricStageRollups.source),
+    );
 }
 
 function defaultMapId(slug: string, definition: MetricFunnelStageDefinition) {
