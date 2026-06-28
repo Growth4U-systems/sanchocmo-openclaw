@@ -147,8 +147,13 @@
     "provides": {
       "socialPosts": { "metric": "posts", "dimension": "network", "label": "Posts Published" },
       "socialImpressions": { "metric": "impressions", "dimension": "network", "label": "Social Impressions" },
+      "socialReach": { "metric": "reach", "dimension": "network", "label": "Social Reach", "optional": true },
       "socialEngagement": { "metric": "avgEngagement", "dimension": "network", "label": "Avg Engagement", "format": "percent" },
       "socialLikes": { "metric": "likes", "dimension": "network", "label": "Likes" },
+      "socialShares": { "metric": "shares", "dimension": "network", "label": "Shares", "optional": true },
+      "socialSaves": { "metric": "saves", "dimension": "network", "label": "Saves", "optional": true },
+      "socialVideoViews": { "metric": "videoViews", "dimension": "network", "label": "Video Views", "optional": true },
+      "socialFollowers": { "metric": "followers", "dimension": "network", "label": "Followers", "optional": true },
       "socialClicks": { "metric": "clicks", "dimension": "network", "label": "Social Clicks" },
       "topPosts": { "metric": "postDetail", "label": "Top Posts", "type": "feed" }
     },

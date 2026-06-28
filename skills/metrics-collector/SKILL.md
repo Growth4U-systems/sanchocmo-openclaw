@@ -16,6 +16,7 @@ scripts/
 │   ├── gsc.js              # Google Search Console
 │   ├── metricool.js        # Metricool social analytics
 │   ├── meta-ads.js         # Meta Ads (Facebook/Instagram)
+│   ├── google-ads.js       # Google Ads
 │   ├── ghl.js              # GoHighLevel CRM
 │   ├── instantly.js        # Instantly.ai cold email
 │   └── sheets.js           # Manual data from Google Sheets
@@ -39,6 +40,7 @@ node collect.js --slug <client-slug> --source ga4
 node collect.js --slug <client-slug> --source gsc
 node collect.js --slug <client-slug> --source metricool
 node collect.js --slug <client-slug> --source meta-ads
+node collect.js --slug <client-slug> --source google-ads
 node collect.js --slug <client-slug> --source ghl
 node collect.js --slug <client-slug> --source instantly
 node collect.js --slug <client-slug> --source sheets
@@ -78,6 +80,7 @@ node collect.js --slug <client-slug> --all --due
 | GSC | Service account | `gsc.siteUrl` in integrations.json |
 | Metricool | X-Mc-Auth header | `METRICOOL_USER_TOKEN`, `METRICOOL_USER_ID`, `METRICOOL_BLOG_ID` in .env |
 | Meta Ads | Bearer token | `{SLUG}_META_ADS_ACCESS_TOKEN` in .env, `meta-ads.accountId` in integrations.json or `{SLUG}_META_ADS_ACCOUNT_ID` env override |
+| Google Ads | OAuth refresh token + developer token | `{SLUG}_GOOGLE_ADS_REFRESH_TOKEN`, `{SLUG}_GOOGLE_ADS_CLIENT_ID`, `{SLUG}_GOOGLE_ADS_CLIENT_SECRET`, `{SLUG}_GOOGLE_ADS_DEVELOPER_TOKEN` in .env, `google-ads.customerId` in integrations.json or `{SLUG}_GOOGLE_ADS_CUSTOMER_ID` env override |
 | GHL | Bearer token | `{SLUG}_GHL_API_KEY` in .env, `ghl.locationId` in integrations.json or `{SLUG}_GHL_LOCATION_ID` env override |
 | Instantly | API key | `{SLUG}_INSTANTLY_API_KEY` in .env |
 | Sheets | Service account | `sheets.spreadsheetId`, `sheets.range` in integrations.json |
@@ -90,6 +93,7 @@ node collect.js --slug <client-slug> --all --due
   "gsc": { "enabled": true, "siteUrl": "https://example.com" },
   "metricool": { "enabled": true },
   "meta-ads": { "enabled": true, "accountId": "act_123456" },
+  "google-ads": { "enabled": true, "customerId": "1234567890", "loginCustomerId": "9876543210" },
   "ghl": { "enabled": true, "locationId": "loc_abc123" },
   "instantly": { "enabled": true },
   "sheets": { "enabled": true, "spreadsheetId": "1ABC...", "range": "ManualData!A:Z" },

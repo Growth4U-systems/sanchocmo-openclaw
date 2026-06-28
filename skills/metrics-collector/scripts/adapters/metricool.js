@@ -14,6 +14,51 @@ const BASE_URL = 'https://app.metricool.com/api';
 // Networks to check via v2 analytics
 const V2_NETWORKS = ['linkedin', 'instagram', 'facebook', 'twitter', 'tiktok'];
 
+function numberFrom(obj, keys) {
+  for (const key of keys) {
+    const value = obj?.[key];
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+function nestedNumberFrom(obj, pathOptions) {
+  for (const path of pathOptions) {
+    const parts = path.split('.');
+    let cur = obj;
+    for (const part of parts) cur = cur?.[part];
+    const n = Number(cur);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+function metricIfObserved(metrics, name, value, date, dimensions, observed) {
+  if (observed || value > 0) {
+    metrics.push({ name, value, date, dimensions });
+  }
+}
+
+function profileFollowers(brand, network) {
+  const prefixed = [
+    `${network}Followers`,
+    `${network}FollowersCount`,
+    `${network}_followers`,
+    `${network}_followers_count`,
+  ];
+  const direct = numberFrom(brand, prefixed);
+  if (direct != null) return direct;
+  return nestedNumberFrom(brand, [
+    `${network}.followers`,
+    `${network}.followersCount`,
+    `${network}.followers_count`,
+    `${network}.fanCount`,
+    `${network}.fans`,
+    `${network}.subscribers`,
+  ]);
+}
+
 /**
  * @param {object} config - From integrations.json (e.g. { METRICOOL_URL: "..." })
  * @param {object} env - { METRICOOL_API_TOKEN, METRICOOL_USER_ID, METRICOOL_BLOG_ID }
@@ -49,6 +94,7 @@ export async function collect(config, env, dateRange) {
 
   // --- Detect connected networks ---
   let connectedNetworks = new Set();
+  const followersByNetwork = new Map();
   try {
     const profileResp = await fetch(
       `${BASE_URL}/admin/simpleProfiles?userId=${userId}&blogId=${blogId}`,
@@ -64,6 +110,10 @@ export async function collect(config, env, dateRange) {
         if (brand.linkedinCompany) connectedNetworks.add('linkedin');
         if (brand.tiktok) connectedNetworks.add('tiktok');
         if (brand.youtube) connectedNetworks.add('youtube');
+        for (const network of connectedNetworks) {
+          const followers = profileFollowers(brand, network);
+          if (followers != null) followersByNetwork.set(network, followers);
+        }
       }
     }
   } catch (err) {
@@ -104,6 +154,8 @@ export async function collect(config, env, dateRange) {
       // Aggregate metrics for the period
       let totalImpressions = 0, totalClicks = 0, totalLikes = 0, totalComments = 0;
       let totalEngagement = 0;
+      let totalReach = 0, totalShares = 0, totalSaves = 0, totalVideoViews = 0;
+      let hasReach = false, hasShares = false, hasSaves = false, hasVideoViews = false;
 
       for (const post of posts) {
         totalImpressions += post.impressions || 0;
@@ -111,18 +163,34 @@ export async function collect(config, env, dateRange) {
         totalLikes += post.likes || post.likeCount || 0;
         totalComments += post.comments || post.commentCount || 0;
         totalEngagement += post.engagement || 0;
+        const reach = numberFrom(post, ['reach', 'totalReach', 'accountsReached']);
+        const shares = numberFrom(post, ['shares', 'shareCount', 'shared']);
+        const saves = numberFrom(post, ['saves', 'saved', 'saveCount']);
+        const videoViews = numberFrom(post, ['videoViews', 'video_views', 'views', 'reproductions', 'plays']);
+        if (reach != null) { totalReach += reach; hasReach = true; }
+        if (shares != null) { totalShares += shares; hasShares = true; }
+        if (saves != null) { totalSaves += saves; hasSaves = true; }
+        if (videoViews != null) { totalVideoViews += videoViews; hasVideoViews = true; }
       }
 
       const avgEngagement = posts.length > 0 ? Math.round(totalEngagement / posts.length * 100) / 100 : 0;
+      const dims = { network };
 
       metrics.push(
-        { name: 'posts', value: posts.length, date: dateRange.from, dimensions: { network } },
-        { name: 'impressions', value: totalImpressions, date: dateRange.from, dimensions: { network } },
-        { name: 'clicks', value: totalClicks, date: dateRange.from, dimensions: { network } },
-        { name: 'likes', value: totalLikes, date: dateRange.from, dimensions: { network } },
-        { name: 'comments', value: totalComments, date: dateRange.from, dimensions: { network } },
-        { name: 'avgEngagement', value: avgEngagement, date: dateRange.from, dimensions: { network } },
+        { name: 'posts', value: posts.length, date: dateRange.from, dimensions: dims },
+        { name: 'impressions', value: totalImpressions, date: dateRange.from, dimensions: dims },
+        { name: 'clicks', value: totalClicks, date: dateRange.from, dimensions: dims },
+        { name: 'likes', value: totalLikes, date: dateRange.from, dimensions: dims },
+        { name: 'comments', value: totalComments, date: dateRange.from, dimensions: dims },
+        { name: 'avgEngagement', value: avgEngagement, date: dateRange.from, dimensions: dims },
       );
+      metricIfObserved(metrics, 'reach', totalReach, dateRange.from, dims, hasReach);
+      metricIfObserved(metrics, 'shares', totalShares, dateRange.from, dims, hasShares);
+      metricIfObserved(metrics, 'saves', totalSaves, dateRange.from, dims, hasSaves);
+      metricIfObserved(metrics, 'videoViews', totalVideoViews, dateRange.from, dims, hasVideoViews);
+      if (followersByNetwork.has(network)) {
+        metrics.push({ name: 'followers', value: followersByNetwork.get(network), date: dateRange.from, dimensions: dims });
+      }
 
       // Also add per-post detail (top 5 by impressions)
       const sortedPosts = [...posts].sort((a, b) => (b.impressions || 0) - (a.impressions || 0));
@@ -138,6 +206,10 @@ export async function collect(config, env, dateRange) {
             url: post.url || '',
             likes: post.likes || 0,
             clicks: post.clicks || 0,
+            shares: numberFrom(post, ['shares', 'shareCount', 'shared']) || 0,
+            saves: numberFrom(post, ['saves', 'saved', 'saveCount']) || 0,
+            reach: numberFrom(post, ['reach', 'totalReach', 'accountsReached']) || 0,
+            videoViews: numberFrom(post, ['videoViews', 'video_views', 'views', 'reproductions', 'plays']) || 0,
             engagement: Math.round((post.engagement || 0) * 100) / 100,
             text: text,
           },

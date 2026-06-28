@@ -135,7 +135,7 @@ for (const [key, val] of Object.entries(rawEnv)) {
 }
 
 // --- Available adapters ---
-const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'ghl', 'instantly', 'sheets', 'posthog'];
+const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'google-ads', 'ghl', 'instantly', 'sheets', 'posthog'];
 
 // --- Determine which adapters to run ---
 const ds = integrations.dataSources || integrations;
@@ -231,7 +231,7 @@ async function runCollection() {
 
   for (const adapterName of toRun) {
     const entry = dataSources[adapterName] || dataSources[adapterName.replace('-', '_')] || {};
-    const config = entry.config || entry || {};
+    const config = { ...(entry.config || entry || {}), _slug: slug };
     const status = entry.status || 'not_configured';
     console.log(`\n📊 Collecting: ${adapterName}...`);
 

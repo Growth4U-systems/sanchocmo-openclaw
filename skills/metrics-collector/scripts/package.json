@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "collect": "node collect.js",
-    "sync": "node sync-sheets.js"
+    "sync": "node sync-sheets.js",
+    "test": "node --test adapters/__tests__/*.test.mjs"
   },
   "dependencies": {
     "google-auth-library": "^9.0.0",
