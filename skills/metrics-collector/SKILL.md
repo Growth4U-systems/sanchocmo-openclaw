@@ -77,7 +77,7 @@ node collect.js --slug <client-slug> --all --due
 | GA4 | Service account | `ga4.propertyId` in integrations.json |
 | GSC | Service account | `gsc.siteUrl` in integrations.json |
 | Metricool | X-Mc-Auth header | `METRICOOL_USER_TOKEN`, `METRICOOL_USER_ID`, `METRICOOL_BLOG_ID` in .env |
-| Meta Ads | Bearer token | `{SLUG}_META_ADS_ACCESS_TOKEN` in .env, `meta-ads.accountId` in integrations.json |
+| Meta Ads | Bearer token | `{SLUG}_META_ADS_ACCESS_TOKEN` in .env, `meta-ads.accountId` in integrations.json or `{SLUG}_META_ADS_ACCOUNT_ID` env override |
 | GHL | Bearer token | `{SLUG}_GHL_API_KEY` in .env, `ghl.locationId` in integrations.json |
 | Instantly | API key | `{SLUG}_INSTANTLY_API_KEY` in .env |
 | Sheets | Service account | `sheets.spreadsheetId`, `sheets.range` in integrations.json |

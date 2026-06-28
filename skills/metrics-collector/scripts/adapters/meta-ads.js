@@ -65,15 +65,20 @@ async function collectBreakdown(baseUrl, breakdowns, accessToken, dateRange, dim
  * @param {{ from: string, to: string }} dateRange
  */
 export async function collect(config, env, dateRange) {
-  const accountId = config.accountId;
+  const slugUpper = (config._slug || '').toUpperCase().replace(/-/g, '_');
+  const accountId =
+    env[`${slugUpper}_META_ADS_ACCOUNT_ID`] ||
+    env[`${slugUpper}_META_ACCOUNT_ID`] ||
+    env.META_ADS_ACCOUNT_ID ||
+    env.META_ACCOUNT_ID ||
+    config.accountId;
   if (!accountId) {
-    throw new Error('Meta Ads: missing accountId in integrations.json');
+    throw new Error('Meta Ads: missing accountId in integrations.json or META_ADS_ACCOUNT_ID env');
   }
 
   // Find access token — try slug-prefixed first, then the canonical generic name,
   // then the legacy/deploy-secret name (the GitHub `staging`/`prod` Environments
   // ship META_ACCESS_TOKEN, not META_ADS_ACCESS_TOKEN).
-  const slugUpper = (config._slug || '').toUpperCase().replace(/-/g, '_');
   const accessToken =
     env[`${slugUpper}_META_ADS_ACCESS_TOKEN`] ||
     env[`${slugUpper}_META_ACCESS_TOKEN`] ||

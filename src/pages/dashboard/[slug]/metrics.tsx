@@ -762,11 +762,11 @@ function OverviewView({
             <EmptyMetricState
               title={
                 configured
-                  ? "Sin KPI computado todavía"
+                  ? "Sin KPI disponible todavía"
                   : "Dashboard no configurado"
               }
               requiredSource="metric_kpi_values"
-              nextAction="Ejecutar compute:metric-kpis para llenar el rango seleccionado."
+              nextAction="El dashboard intenta recomputar este rango automáticamente; si sigue vacío, falta ingesta fuente."
               state={configured ? "CONECTADO SIN SNAPSHOTS" : "SIN DATOS"}
             />
           )}
@@ -1221,7 +1221,7 @@ function StageRollupFunnel({
       <EmptyMetricState
         title="Sin rollups de embudo"
         requiredSource="metric_stage_rollups"
-        nextAction={stageRollups?.summary.nextAction ?? "Ejecutar compute:metric-kpis para generar rollups del rango."}
+        nextAction={stageRollups?.summary.nextAction ?? "El dashboard intenta generar rollups automáticamente cuando existen snapshots para el rango."}
       />
     );
   }
@@ -1541,10 +1541,23 @@ function KpiTile({
   kpi: MetricKpiValue;
   tone?: "paper" | "leading" | "lagging" | "custom";
 }) {
+  const lowCoverage =
+    kpi.qualityStatus === "partial" &&
+    kpi.sourceCoverage > 0 &&
+    kpi.sourceCoverage < 0.5;
   return (
     <MetricTile
       label={kpi.label}
-      value={<span className="break-words text-[20px]">{kpi.displayValue}</span>}
+      value={
+        <span className="break-words text-[20px]">
+          {kpi.displayValue}
+          {lowCoverage && (
+            <span className="mt-1 block font-sans text-[10px] font-bold uppercase leading-tight text-rust">
+              parcial · {coverageLabel(kpi)}
+            </span>
+          )}
+        </span>
+      }
       tone={tone}
       hint={
         <div className="space-y-1">
