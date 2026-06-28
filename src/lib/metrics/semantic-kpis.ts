@@ -82,8 +82,10 @@ export interface ComputedMetricKpiValue {
 export const METRIC_KPI_DEFINITION_VERSION = 1;
 
 const SOURCE_ALIASES: Record<string, string> = {
+  meta: "meta_ads",
   "meta-ads": "meta_ads",
   meta_ads: "meta_ads",
+  google: "google_ads",
   "google-ads": "google_ads",
   google_ads: "google_ads",
   "linkedin-ads": "linkedin_ads",
@@ -102,9 +104,20 @@ const SOURCE_ALIASES: Record<string, string> = {
 
 const METRIC_ALIASES: Record<string, string> = {
   emailsSent: "sent",
+  messagesSent: "sent",
   sent: "sent",
+  opened: "opens",
+  replied: "replies",
+  messagesBounced: "bounced",
+  unsubscribes: "unsubscribed",
+  optOuts: "unsubscribed",
+  meetingBooked: "meetings",
   inp_mobile: "inp_mobile",
   tbt_mobile: "inp_mobile",
+  video_views: "videoViews",
+  videoViews: "videoViews",
+  followerCount: "followers",
+  followersTotal: "followers",
 };
 
 const DEFAULT_STALE_AFTER_DAYS = 7;
@@ -283,6 +296,15 @@ const paidDefinitions: MetricKpiDefinition[] = [
       provenanceLabel: "Meta Ads - platform/dedup",
     },
   ),
+  kpi("paid.meta.frequency", "Meta frequency", "surface", "paid", "meta_ads", "frequency"),
+  kpi("paid.meta.leads", "Meta platform leads", "surface", "paid", "meta_ads", "leads", {
+    provenanceLabel: "Meta Ads - platform/dedup",
+  }),
+  kpi("paid.meta.hook_rate", "Meta creative hook rate", "surface", "paid", "meta_ads", "hookRate", {
+    unit: "%",
+    allowDimensionRollup: true,
+    provenanceLabel: "Meta Ads - creative seed/collector",
+  }),
   kpi(
     "paid.google.spend",
     "Google Ads spend",
@@ -291,6 +313,37 @@ const paidDefinitions: MetricKpiDefinition[] = [
     "google_ads",
     "spend",
     { unit: "currency" },
+  ),
+  kpi("paid.google.impressions", "Google Ads impressions", "surface", "paid", "google_ads", "impressions"),
+  kpi("paid.google.clicks", "Google Ads clicks", "surface", "paid", "google_ads", "clicks"),
+  kpi("paid.google.ctr", "Google Ads CTR", "surface", "paid", "google_ads", "ctr", { unit: "%" }),
+  kpi("paid.google.cpc", "Google Ads CPC", "surface", "paid", "google_ads", "cpc", { unit: "currency" }),
+  kpi("paid.google.conversions", "Google Ads platform conversions", "surface", "paid", "google_ads", "conversions", {
+    provenanceLabel: "Google Ads - platform/dedup",
+  }),
+  kpi("paid.google.revenue", "Google Ads platform revenue", "surface", "paid", "google_ads", "revenue", {
+    unit: "currency",
+    provenanceLabel: "Google Ads - platform/dedup",
+  }),
+  kpi("paid.google.roas", "Google Ads platform ROAS", "surface", "paid", "google_ads", "roas", {
+    unit: "ratio",
+    provenanceLabel: "Google Ads - platform/dedup",
+  }),
+  kpi("paid.google.impression_share", "Google impression share", "surface", "paid", "google_ads", "impressionShare", {
+    unit: "%",
+    allowDimensionRollup: true,
+  }),
+  kpi(
+    "paid.google.lost_impression_share",
+    "Google lost impression share",
+    "surface",
+    "paid",
+    "google_ads",
+    "lostImpressionShare",
+    {
+      unit: "%",
+      allowDimensionRollup: true,
+    },
   ),
 ];
 
@@ -401,6 +454,13 @@ const outboundDefinitions: MetricKpiDefinition[] = [
     "replies",
     { sourceAliases: ["lemlist"] },
   ),
+  kpi("outbound.delivered", "Emails delivered", "surface", "email", "lemlist", "delivered"),
+  kpi("outbound.bounced", "Email bounces", "surface", "email", "lemlist", "bounced", {
+    metricAliases: ["bounced", "messagesBounced"],
+  }),
+  kpi("outbound.unsubscribed", "Email unsubscribes", "surface", "email", "lemlist", "unsubscribed"),
+  kpi("outbound.positive_replies", "Positive replies", "surface", "email", "lemlist", "interested"),
+  kpi("outbound.meetings", "Outbound meetings", "surface", "email", "lemlist", "meetings"),
 ];
 
 const socialDefinitions: MetricKpiDefinition[] = [
@@ -462,6 +522,22 @@ const socialDefinitions: MetricKpiDefinition[] = [
       allowDimensionRollup: true,
     },
   ),
+  kpi("social.reach", "Social reach", "surface", "social", "metricool", "reach", {
+    allowDimensionRollup: true,
+  }),
+  kpi("social.followers", "Social followers", "surface", "social", "metricool", "followers", {
+    allowDimensionRollup: true,
+  }),
+  kpi("social.video_views", "Social video views", "surface", "social", "metricool", "videoViews", {
+    metricAliases: ["videoViews", "video_views"],
+    allowDimensionRollup: true,
+  }),
+  kpi("social.shares", "Social shares", "surface", "social", "metricool", "shares", {
+    allowDimensionRollup: true,
+  }),
+  kpi("social.saves", "Social saves", "surface", "social", "metricool", "saves", {
+    allowDimensionRollup: true,
+  }),
 ];
 
 const partnershipDefinitions: MetricKpiDefinition[] = [
@@ -623,6 +699,19 @@ function reduceRows(
 ): number {
   const strategy = def.agg ?? aggFor(def.source, def.metric);
   if (strategy === "latest") {
+    if (def.allowDimensionRollup) {
+      const byDimension = new Map<string, MetricKpiSnapshotInput>();
+      for (const row of rows) {
+        const key = row.dimsKey ?? "";
+        const existing = byDimension.get(key);
+        if (!existing || row.metricDate.localeCompare(existing.metricDate) > 0)
+          byDimension.set(key, row);
+      }
+      return [...byDimension.values()].reduce(
+        (acc, row) => acc + Number(row.value ?? 0),
+        0,
+      );
+    }
     const best = [...rows].sort((a, b) =>
       b.metricDate.localeCompare(a.metricDate),
     )[0];
