@@ -28,62 +28,47 @@ export async function collect(config, env, dateRange) {
 
   const metrics = [];
 
-  // --- Campaign analytics ---
+  // --- Daily campaign analytics (all campaigns) ---
   try {
-    const campaignsResp = await fetch(`${BASE_URL}/campaigns?limit=100`, { headers });
-    if (!campaignsResp.ok) {
-      throw new Error(`Instantly campaigns ${campaignsResp.status}`);
+    const params = new URLSearchParams({
+      start_date: dateRange.from,
+      end_date: dateRange.to,
+    });
+    const analyticsResp = await fetch(`${BASE_URL}/campaigns/analytics/daily?${params.toString()}`, { headers });
+    if (!analyticsResp.ok) {
+      throw new Error(`Instantly campaign analytics ${analyticsResp.status}`);
     }
 
-    const campaigns = await campaignsResp.json();
-    let totalSent = 0;
-    let totalOpens = 0;
-    let totalReplies = 0;
-
-    for (const campaign of campaigns || []) {
-      const campaignId = campaign.id;
-      if (!campaignId) continue;
-
-      try {
-        const params = new URLSearchParams({
-          start_date: dateRange.from,
-          end_date: dateRange.to,
-        });
-        const summaryResp = await fetch(
-          `${BASE_URL}/campaigns/${campaignId}/analytics?${params.toString()}`,
-          { headers }
-        );
-
-        if (summaryResp.ok) {
-          const summary = await summaryResp.json();
-          const sent = summary.sent || 0;
-          const opens = summary.opened || 0;
-          const replies = summary.replied || 0;
-
-          totalSent += sent;
-          totalOpens += opens;
-          totalReplies += replies;
-
-          // Per-campaign breakdown
-          metrics.push(
-            { name: 'emailsSent', value: sent, date: dateRange.from, dimensions: { campaign: campaign.name || campaignId } },
-            { name: 'opens', value: opens, date: dateRange.from, dimensions: { campaign: campaign.name || campaignId } },
-            { name: 'replies', value: replies, date: dateRange.from, dimensions: { campaign: campaign.name || campaignId } },
-          );
-        }
-      } catch (err) {
-        console.warn(`  ⚠️  Instantly campaign ${campaignId} error: ${err.message}`);
+    const rows = await analyticsResp.json();
+    const byDate = new Map();
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const date = row.date || dateRange.from;
+      if (date < dateRange.from || date > dateRange.to) continue;
+      const totals = byDate.get(date) || {};
+      for (const [key, value] of Object.entries(row)) {
+        if (key === 'date') continue;
+        totals[key] = (Number(totals[key]) || 0) + (Number(value) || 0);
       }
+      byDate.set(date, totals);
     }
 
-    // Totals
-    metrics.push(
-      { name: 'emailsSent', value: totalSent, date: dateRange.from },
-      { name: 'opens', value: totalOpens, date: dateRange.from },
-      { name: 'replies', value: totalReplies, date: dateRange.from },
-    );
+    for (const [date, row] of byDate) {
+      metrics.push(
+        { name: 'emailsSent', value: Number(row.sent) || 0, date },
+        { name: 'contacted', value: Number(row.contacted) || 0, date },
+        { name: 'newLeadsContacted', value: Number(row.new_leads_contacted) || 0, date },
+        { name: 'opens', value: Number(row.opened) || 0, date },
+        { name: 'uniqueOpens', value: Number(row.unique_opened) || 0, date },
+        { name: 'replies', value: Number(row.replies) || 0, date },
+        { name: 'uniqueReplies', value: Number(row.unique_replies) || 0, date },
+        { name: 'autoReplies', value: Number(row.replies_automatic) || 0, date },
+        { name: 'clicks', value: Number(row.clicks) || 0, date },
+        { name: 'uniqueClicks', value: Number(row.unique_clicks) || 0, date },
+        { name: 'opportunities', value: Number(row.opportunities) || 0, date },
+      );
+    }
   } catch (err) {
-    console.warn(`  ⚠️  Instantly campaigns error: ${err.message}`);
+    console.warn(`  ⚠️  Instantly campaign analytics error: ${err.message}`);
     throw err;
   }
 

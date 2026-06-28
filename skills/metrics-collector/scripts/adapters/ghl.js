@@ -18,8 +18,14 @@ const BASE_URL = 'https://services.leadconnectorhq.com';
  * @param {{ from: string, to: string }} dateRange - YYYY-MM-DD
  */
 export async function collect(config, env, dateRange) {
-  const locationId = config.locationId || config.LOCATION_ID;
-  if (!locationId) throw new Error('GHL: missing locationId in integrations.json');
+  const slugUpper = (config._slug || '').toUpperCase().replace(/-/g, '_');
+  const locationId =
+    config.locationId ||
+    config.LOCATION_ID ||
+    env.GHL_LOCATION_ID ||
+    env.GHL_G4U_LOCATION ||
+    (slugUpper ? env[`${slugUpper}_GHL_LOCATION_ID`] : undefined);
+  if (!locationId) throw new Error('GHL: missing locationId in integrations.json or GHL_LOCATION_ID env');
 
   const apiKey = env.GHL_API_KEY;
   if (!apiKey) throw new Error('GHL: missing GHL_API_KEY in .env');
@@ -58,14 +64,16 @@ export async function collect(config, env, dateRange) {
           locationId,
           page,
           pageLimit: 100,
-          sortBy: 'dateAdded',
-          direction: 'desc',
-          filters: {
-            dateAdded: {
-              startDate: dateRange.from,
-              endDate: dateRange.to,
+          filters: [
+            {
+              field: 'dateAdded',
+              operator: 'range',
+              value: {
+                gte: `${dateRange.from}T00:00:00Z`,
+                lte: `${dateRange.to}T23:59:59Z`,
+              },
             },
-          },
+          ],
         }),
       });
 
@@ -87,7 +95,6 @@ export async function collect(config, env, dateRange) {
 
       const data = await resp.json();
       const contacts = data.contacts || [];
-      totalContacts = data.total || data.meta?.total || totalContacts;
 
       for (const c of contacts) {
         newContacts++;
@@ -102,6 +109,18 @@ export async function collect(config, env, dateRange) {
       hasMore = contacts.length === 100;
       page++;
     }
+
+    try {
+      const totalResp = await fetch(`${BASE_URL}/contacts/search`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ locationId, page: 1, pageLimit: 1 }),
+      });
+      if (totalResp.ok) {
+        const totalData = await totalResp.json();
+        totalContacts = totalData.total || totalData.meta?.total || totalContacts;
+      }
+    } catch {}
 
     metrics.push(
       { name: 'newContacts', value: newContacts, date: dateRange.from },
