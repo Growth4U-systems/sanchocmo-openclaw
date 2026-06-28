@@ -4,6 +4,7 @@ import path from "path";
 import { compose, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
+import { recomputeMetricKpisAfterIngest } from "@/lib/data/metric-kpi-autorecompute";
 import { ingestSourceMetrics } from "@/lib/data/metrics-snapshots";
 
 const PSI_BASE = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
@@ -114,6 +115,13 @@ async function persistDailyMetrics(slug: string, mobile: StrategyResult, desktop
   if (!ingest.ok) {
     throw new Error("metric_snapshots storage is not configured for PageSpeed metrics");
   }
+  return recomputeMetricKpisAfterIngest({
+    slug,
+    date: today,
+    ingest,
+    metricDates: [today],
+    trigger: "pagespeed:auto",
+  });
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -154,11 +162,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       fetchedAt: new Date().toISOString(),
     };
 
-    await persistDailyMetrics(slug, mobile, desktop);
+    const metricsRecompute = await persistDailyMetrics(slug, mobile, desktop);
     if (!fs.existsSync(metricsDir)) fs.mkdirSync(metricsDir, { recursive: true });
     writeJSON(cacheFile, result);
 
-    return res.status(200).json(result);
+    return res.status(200).json({ ...result, _metricsRecompute: metricsRecompute });
   } catch (err) {
     const stale = readJSON<CachedResult | null>(cacheFile, null);
     if (stale) {

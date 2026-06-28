@@ -5,7 +5,9 @@ import type { RunMetricKpisResult } from "../metric-kpi-runner";
 
 const {
   buildMetricKpiAutoRecomputeRanges,
+  metricDatesFromSources,
   recomputeMetricKpisAfterIngest,
+  recomputeMetricKpisAfterIngests,
 } = (mod as unknown as { default: typeof mod }).default ?? mod;
 
 const ingestOk = {
@@ -134,4 +136,92 @@ test("returns recompute errors without throwing", async () => {
   assert.equal(result.ok, false);
   assert.match(result.errors.join(" "), /runner down/);
   assert.equal(result.results.length, 3);
+});
+
+test("extracts metric dates from nested daily snapshot sources", () => {
+  assert.deepEqual(
+    metricDatesFromSources(
+      {
+        ga4: { metrics: [{ name: "sessions", value: 3, date: "2026-06-27" }] },
+        gsc: { metrics: [{ name: "clicks", value: 2 }, { name: "impressions", value: 5, date: "bad" }] },
+      },
+      "2026-06-28",
+    ),
+    ["2026-06-27", "2026-06-28"],
+  );
+});
+
+test("batch recompute aggregates direct ingest results into one deduped range set", async () => {
+  const calls: Array<{ from?: string | null; to?: string | null; trigger?: string }> = [];
+  const result = await recomputeMetricKpisAfterIngests(
+    {
+      slug: "growth4u",
+      ingests: [
+        {
+          date: "2026-06-01",
+          ingest: { ...ingestOk, rows: 2, sources: ["ga4"], deleted: 1 },
+          metricDates: ["2026-06-01"],
+        },
+        {
+          date: "2026-06-28",
+          ingest: { ...ingestOk, rows: 4, sources: ["gsc"], deleted: 2 },
+          metricDates: ["2026-06-28"],
+        },
+      ],
+      now: new Date("2026-06-28T12:00:00.000Z"),
+      trigger: "backfill-metrics:script",
+    },
+    {
+      run: async (input) => {
+        calls.push({
+          from: input.range?.from,
+          to: input.range?.to,
+          trigger: input.trigger,
+        });
+        return runResult({
+          from: input.range?.from ?? "2026-06-28",
+          to: input.range?.to ?? "2026-06-28",
+        });
+      },
+    },
+  );
+
+  assert.equal(result.attempted, true);
+  assert.equal(result.ok, true);
+  assert.equal(calls.length, 5);
+  assert.ok(calls.every((call) => call.trigger === "backfill-metrics:script"));
+  assert.deepEqual(calls.map((call) => `${call.from}..${call.to}`), [
+    "2026-06-28..2026-06-28",
+    "2026-06-22..2026-06-28",
+    "2026-05-30..2026-06-28",
+    "2026-03-31..2026-06-28",
+    "2026-06-01..2026-06-28",
+  ]);
+});
+
+test("batch recompute skips when direct ingests wrote no rows", async () => {
+  let calls = 0;
+  const result = await recomputeMetricKpisAfterIngests(
+    {
+      slug: "growth4u",
+      ingests: [
+        {
+          date: "2026-06-28",
+          ingest: { ...ingestOk, rows: 0, sources: [], skipped: ["ga4"] },
+        },
+      ],
+      now: new Date("2026-06-28T12:00:00.000Z"),
+    },
+    {
+      run: async () => {
+        calls++;
+        return runResult({ from: "2026-06-28", to: "2026-06-28" });
+      },
+    },
+  );
+
+  assert.equal(calls, 0);
+  assert.equal(result.skipped, true);
+  assert.equal(result.skipReason, "no-rows");
+  assert.equal(result.ok, true);
 });

@@ -5,11 +5,16 @@
  * Usage:
  *   MC_WORKSPACE=workspace-sancho DATABASE_URL=... npm run collect:lemlist -- --slug growth4u
  *   npm run collect:lemlist -- --slug growth4u --date 2026-06-27 --no-ingest
+ *   npm run collect:lemlist -- --slug growth4u --no-recompute-kpis
  */
 import fs from "fs";
 import path from "path";
 import { hasDatabase } from "@/db/drizzle";
 import { BASE, brandDir } from "@/lib/data/paths";
+import {
+  formatMetricKpiAutoRecomputeSummary,
+  recomputeMetricKpisAfterIngest,
+} from "@/lib/data/metric-kpi-autorecompute";
 import { ensureMetricsStorage, ingestSourceMetrics } from "@/lib/data/metrics-snapshots";
 import { collectLemlistMetrics } from "@/lib/metrics/connectors/lemlist";
 
@@ -121,6 +126,15 @@ async function main(): Promise<void> {
     deleteStale: collection.errors.length === 0,
   });
   console.log(`ingested lemlist: ${result.rows} row(s), ${result.deleted ?? 0} stale removed`);
+  const recompute = await recomputeMetricKpisAfterIngest({
+    slug,
+    date: collection.date,
+    ingest: result,
+    metricDates: [collection.date],
+    enabled: !hasFlag("--no-recompute-kpis"),
+    trigger: "lemlist:auto",
+  });
+  console.log(formatMetricKpiAutoRecomputeSummary(recompute));
 }
 
 main().catch((err) => {

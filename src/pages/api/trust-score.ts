@@ -41,7 +41,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const outcome = await runTrustScore(slug, { url: queryUrl, competitors: provided, refresh });
   if (!outcome.ok) return res.status(outcome.status).json({ error: outcome.error });
-  return res.status(200).json(outcome.cache);
+  return res.status(200).json({
+    ...outcome.cache,
+    _metricsRecompute: outcome.metricsRecompute,
+  });
 }
 
 export default compose(withErrorHandler, withSlugAuth)(withMethod(["GET", "POST"], handler));

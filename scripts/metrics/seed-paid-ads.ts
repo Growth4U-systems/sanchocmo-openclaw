@@ -13,6 +13,10 @@
  * NOT seeded here — that lives in Conversión/Atribución.
  */
 import { hasDatabase } from "@/db/drizzle";
+import {
+  formatMetricKpiAutoRecomputeSummary,
+  recomputeMetricKpisAfterIngests,
+} from "@/lib/data/metric-kpi-autorecompute";
 import { ensureMetricsStorage, ingestDailySnapshot, type RawMetric } from "@/lib/data/metrics-snapshots";
 import { assertMetricSeedTargetSafe } from "./seed-safety";
 
@@ -145,6 +149,11 @@ async function main() {
 
   const today = new Date();
   let total = 0;
+  const ingests: Array<{
+    date: string;
+    ingest: Awaited<ReturnType<typeof ingestDailySnapshot>>;
+    metricDates: string[];
+  }> = [];
   for (let d = DAYS - 1; d >= 0; d--) {
     const date = new Date(today);
     date.setDate(today.getDate() - d);
@@ -161,8 +170,16 @@ async function main() {
     };
     const res = await ingestDailySnapshot(SLUG, dateKey, daily);
     total += res.rows;
+    ingests.push({ date: dateKey, ingest: res, metricDates: [dateKey] });
   }
   console.log(`✅ Seeded ${total} Paid metric rows for ${SLUG} across ${DAYS} days (meta_ads + google_ads, all type=seed).`);
+  const recompute = await recomputeMetricKpisAfterIngests({
+    slug: SLUG,
+    ingests,
+    enabled: !process.argv.includes("--no-recompute-kpis"),
+    trigger: "seed-paid-ads:script",
+  });
+  console.log(formatMetricKpiAutoRecomputeSummary(recompute));
 }
 
 main().catch((err) => {

@@ -6,13 +6,23 @@
  *
  * The collector (a separate ESM script in a different deploy dir) can't import
  * the app's TS modules, so it pipes the snapshot JSON to this script's stdin:
- *   { slug, date?, collectedAt?, sources, deleteStale? }
+ *   { slug, date?, collectedAt?, sources, deleteStale?, recomputeKpis? }
  * (same shape /api/metrics/ingest accepts). `--file <path>` reads a file instead
  * — handy for manual re-ingest. Refs SAN-318.
  */
 import fs from "fs";
 import { hasDatabase } from "@/db/drizzle";
-import { ensureMetricsStorage, ingestDailySnapshot, type DailySnapshotInput } from "@/lib/data/metrics-snapshots";
+import {
+  formatMetricKpiAutoRecomputeSummary,
+  metricDatesFromSources,
+  recomputeMetricKpisAfterIngest,
+} from "@/lib/data/metric-kpi-autorecompute";
+import {
+  ensureMetricsStorage,
+  ingestDailySnapshot,
+  type DailySnapshotInput,
+  type IngestResult,
+} from "@/lib/data/metrics-snapshots";
 
 interface SnapshotPayload {
   slug: string;
@@ -22,6 +32,14 @@ interface SnapshotPayload {
   quality?: string | null;
   sources: DailySnapshotInput["sources"];
   deleteStale?: boolean;
+  recomputeKpis?: boolean;
+}
+
+interface IngestSnapshotResult {
+  rows: number;
+  deleted: number;
+  configured: boolean;
+  ingest: IngestResult;
 }
 
 /** Core (testable): delegate an already-parsed daily snapshot to ingestDailySnapshot.
@@ -32,15 +50,24 @@ export async function ingestSnapshot(args: {
   daily: DailySnapshotInput;
   deleteStale: boolean;
   ingest?: typeof ingestDailySnapshot;
-}): Promise<{ rows: number; deleted: number; configured: boolean }> {
+}): Promise<IngestSnapshotResult> {
   const ingest = args.ingest ?? ingestDailySnapshot;
   const result = await ingest(args.slug, args.date, args.daily, { deleteStale: args.deleteStale });
-  return { rows: result.rows, deleted: result.deleted ?? 0, configured: result.storage.configured };
+  return {
+    rows: result.rows,
+    deleted: result.deleted ?? 0,
+    configured: result.storage.configured,
+    ingest: result,
+  };
 }
 
 function arg(flag: string): string | undefined {
   const i = process.argv.indexOf(flag);
   return i >= 0 ? process.argv[i + 1] : undefined;
+}
+
+function hasFlag(flag: string): boolean {
+  return process.argv.includes(flag);
 }
 
 async function readStdin(): Promise<string> {
@@ -77,6 +104,15 @@ async function main(): Promise<void> {
   };
   const r = await ingestSnapshot({ slug: payload.slug, date, daily, deleteStale: payload.deleteStale === true });
   console.log(`🗃  Neon: ${r.rows} row(s) written, ${r.deleted} stale removed (${payload.slug} ${date})`);
+  const recompute = await recomputeMetricKpisAfterIngest({
+    slug: payload.slug,
+    date,
+    ingest: r.ingest,
+    metricDates: metricDatesFromSources(payload.sources, date),
+    enabled: payload.recomputeKpis !== false && !hasFlag("--no-recompute-kpis"),
+    trigger: "ingest-metrics:script",
+  });
+  console.log(formatMetricKpiAutoRecomputeSummary(recompute));
 }
 
 if (require.main === module) {
