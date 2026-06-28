@@ -71,7 +71,8 @@ export async function collect(config, env, dateRange) {
     env[`${slugUpper}_META_ACCOUNT_ID`] ||
     env.META_ADS_ACCOUNT_ID ||
     env.META_ACCOUNT_ID ||
-    config.accountId;
+    config.accountId ||
+    config.ACCOUNT_ID;
   if (!accountId) {
     throw new Error('Meta Ads: missing accountId in integrations.json or META_ADS_ACCOUNT_ID env');
   }
