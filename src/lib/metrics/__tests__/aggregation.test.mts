@@ -27,7 +27,21 @@ test("no metric pinned → sum (legacy mixed-query behaviour)", () => {
 });
 
 test("rates and averages use avg, never sum", () => {
-  for (const m of ["ctr", "cpc", "position", "bounceRate", "engagementRate", "averageSessionDuration", "avgEngagement"]) {
+  for (const m of [
+    "ctr",
+    "cpc",
+    "position",
+    "bounceRate",
+    "engagementRate",
+    "averageSessionDuration",
+    "avgEngagement",
+    "frequency",
+    "roas",
+    "impressionShare",
+    "lostImpressionShare",
+    "hookRate",
+    "activation_rate",
+  ]) {
     assert.equal(aggFor(undefined, m), "avg", `${m} should avg`);
   }
   // collisions stay correct regardless of source
@@ -47,6 +61,9 @@ test("scores and web vitals take the latest snapshot", () => {
     "cls_mobile",
     "inp_mobile",
     "tbt_mobile",
+    "followers",
+    "followersTotal",
+    "followerCount",
   ]) {
     assert.equal(aggFor(undefined, m), "latest", `${m} should be latest`);
   }

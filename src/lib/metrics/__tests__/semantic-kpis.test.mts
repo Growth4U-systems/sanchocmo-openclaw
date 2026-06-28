@@ -64,6 +64,25 @@ test("maps Lemlist rollups onto outbound KPIs", () => {
   assert.equal(byId(values, "outbound.replies").qualityStatus, "ok");
 });
 
+test("maps Lemlist deliverability and meeting fields when present", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({ source: "lemlist", metricName: "delivered", value: 11 }),
+      row({ source: "lemlist", metricName: "messagesBounced", value: 2 }),
+      row({ source: "lemlist", metricName: "unsubscribed", value: 1 }),
+      row({ source: "lemlist", metricName: "interested", value: 3 }),
+      row({ source: "lemlist", metricName: "meetingBooked", value: 4 }),
+    ],
+    oneDay,
+  );
+
+  assert.equal(byId(values, "outbound.delivered").value, 11);
+  assert.equal(byId(values, "outbound.bounced").value, 2);
+  assert.equal(byId(values, "outbound.unsubscribed").value, 1);
+  assert.equal(byId(values, "outbound.positive_replies").value, 3);
+  assert.equal(byId(values, "outbound.meetings").qualityStatus, "ok");
+});
+
 test("maps legacy PageSpeed tbt_mobile onto INP and keeps the latest snapshot", () => {
   const values = computeSemanticKpisFromSnapshots(
     [
@@ -85,6 +104,42 @@ test("maps legacy PageSpeed tbt_mobile onto INP and keeps the latest snapshot", 
   const inp = byId(values, "web.inp_mobile");
   assert.equal(inp.value, 75);
   assert.equal(inp.qualityStatus, "ok");
+});
+
+test("maps Google Ads aliases and keeps seed platform KPIs as demo", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({
+        source: "google-ads",
+        metricName: "spend",
+        value: 20,
+        dimensions: { __provenance: "seed", __quality: "demo" },
+        dimsKey: "",
+      }),
+      row({
+        source: "google_ads",
+        metricName: "impressionShare",
+        value: 0.5,
+        dimensions: { keyword: "brand", __provenance: "seed" },
+        dimsKey: '[["keyword","brand"]]',
+      }),
+      row({
+        source: "google_ads",
+        metricName: "impressionShare",
+        value: 0.7,
+        dimensions: { keyword: "non-brand", __provenance: "seed" },
+        dimsKey: '[["keyword","non-brand"]]',
+      }),
+    ],
+    oneDay,
+  );
+
+  const spend = byId(values, "paid.google.spend");
+  assert.equal(spend.value, 20);
+  assert.equal(spend.qualityStatus, "demo");
+  const impressionShare = byId(values, "paid.google.impression_share");
+  assert.equal(impressionShare.value, 0.6);
+  assert.equal(impressionShare.qualityStatus, "demo");
 });
 
 test("rolls up Metricool social metrics when only network dimensions exist", () => {
@@ -111,6 +166,41 @@ test("rolls up Metricool social metrics when only network dimensions exist", () 
   assert.equal(impressions.value, 150);
   assert.equal(impressions.qualityStatus, "ok");
   assert.equal(impressions.inputRefs.length, 2);
+});
+
+test("rolls latest Metricool followers by network without dropping dimensions", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({
+        source: "metricool",
+        metricName: "followers",
+        value: 100,
+        metricDate: "2026-06-01",
+        dimensions: { network: "instagram" },
+        dimsKey: '[["network","instagram"]]',
+      }),
+      row({
+        source: "metricool",
+        metricName: "followers",
+        value: 120,
+        metricDate: "2026-06-02",
+        dimensions: { network: "instagram" },
+        dimsKey: '[["network","instagram"]]',
+      }),
+      row({
+        source: "metricool",
+        metricName: "followers",
+        value: 80,
+        metricDate: "2026-06-02",
+        dimensions: { network: "linkedin" },
+        dimsKey: '[["network","linkedin"]]',
+      }),
+    ],
+    { from: "2026-06-01", to: "2026-06-02" },
+  );
+  const followers = byId(values, "social.followers");
+  assert.equal(followers.value, 200);
+  assert.equal(followers.qualityStatus, "ok");
 });
 
 test("marks known-dirty GHL metrics as dirty instead of ok", () => {

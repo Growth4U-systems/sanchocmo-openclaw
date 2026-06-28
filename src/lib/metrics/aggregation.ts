@@ -32,6 +32,12 @@ const BY_METRIC: Record<string, AggStrategy> = {
   engagementRate: "avg",
   averageSessionDuration: "avg",
   avgEngagement: "avg",
+  frequency: "avg",
+  roas: "avg",
+  impressionShare: "avg",
+  lostImpressionShare: "avg",
+  hookRate: "avg",
+  activation_rate: "avg",
   // PageSpeed scores & Core Web Vitals — latest snapshot.
   performance_mobile: "latest",
   seo_mobile: "latest",
@@ -41,6 +47,9 @@ const BY_METRIC: Record<string, AggStrategy> = {
   cls_mobile: "latest",
   inp_mobile: "latest",
   tbt_mobile: "latest",
+  followers: "latest",
+  followersTotal: "latest",
+  followerCount: "latest",
   // Trust Score + its 6 pillars — latest snapshot.
   trust_score: "latest",
   ...Object.fromEntries(TRUST_PILLAR_KEYS.map((key): [string, AggStrategy] => [key, "latest"])),
