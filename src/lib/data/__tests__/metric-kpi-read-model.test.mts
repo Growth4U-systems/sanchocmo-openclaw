@@ -4,10 +4,72 @@ import * as mod from "../metric-kpi-read-model";
 
 const {
   formatMetricKpiValue,
+  getMetricKpiReadModelReadThrough,
   resolveMetricKpiReadRange,
   selectNorthStarKpi,
   toMetricKpiReadModelValue,
 } = (mod as unknown as { default: typeof mod }).default ?? mod;
+
+function readModel(overrides: Partial<mod.MetricKpiReadModel> = {}): mod.MetricKpiReadModel {
+  return {
+    configured: true,
+    slug: "growth4u",
+    requestedRange: {
+      key: "30d",
+      from: "2026-05-30",
+      to: "2026-06-28",
+    },
+    run: null,
+    summary: {
+      ok: 0,
+      partial: 0,
+      missing: 0,
+      dirty: 0,
+      stale: 0,
+      demo: 0,
+      total: 0,
+      qualityStatus: "missing",
+    },
+    values: [],
+    northStar: null,
+    stageRollups: {
+      configured: true,
+      available: false,
+      range: { from: "2026-05-30", to: "2026-06-28" },
+      rows: [],
+      stages: [],
+      channels: [],
+      summary: {
+        total: 0,
+        ok: 0,
+        partial: 0,
+        missing: 0,
+        dirty: 0,
+        stale: 0,
+        demo: 0,
+        qualityStatus: "missing",
+        nextAction: "Configure stage rollups.",
+      },
+    },
+    ...overrides,
+  };
+}
+
+function run(overrides: Partial<mod.MetricKpiReadModelRun> = {}): mod.MetricKpiReadModelRun {
+  return {
+    id: "mkpir_existing",
+    status: "ok",
+    trigger: "cron",
+    definitionVersion: 1,
+    valuesCount: 78,
+    qualitySummary: { missing: 78 },
+    rangeFrom: "2026-05-30",
+    rangeTo: "2026-06-28",
+    startedAt: "2026-06-28T08:00:00.000Z",
+    finishedAt: "2026-06-28T08:00:01.000Z",
+    ...overrides,
+  };
+}
 
 test("resolves dashboard range keys into UTC date windows", () => {
   const now = new Date("2026-06-28T12:00:00.000Z");
@@ -70,4 +132,84 @@ test("selects an overview KPI as the north star without requiring hardcoded busi
   ] as mod.MetricKpiReadModelValue[];
 
   assert.equal(selectNorthStarKpi(values)?.kpiId, "web.sessions");
+});
+
+test("read-through computes the requested range when no KPI run exists", async () => {
+  const reads: mod.MetricKpiReadModel[] = [
+    readModel(),
+    readModel({ run: run(), values: [{ kpiId: "web.sessions" }] as mod.MetricKpiReadModelValue[] }),
+  ];
+  const runCalls: Array<{ from?: string | null; to?: string | null; force?: boolean; trigger?: string }> = [];
+
+  const result = await getMetricKpiReadModelReadThrough(
+    "growth4u",
+    { range: "30d" },
+    {
+      read: async () => reads.shift() ?? readModel({ run: run() }),
+      run: async (input) => {
+        runCalls.push({
+          from: input.range?.from,
+          to: input.range?.to,
+          force: input.force,
+          trigger: input.trigger,
+        });
+        return {
+          ok: true,
+          configured: true,
+          skipped: false,
+          slug: input.slug,
+          range: { from: input.range?.from ?? "", to: input.range?.to ?? "" },
+          trigger: input.trigger ?? "dashboard:read-through",
+          force: input.force === true,
+          definitionVersion: 1,
+          run: null,
+          valuesCount: 78,
+        };
+      },
+    },
+  );
+
+  assert.equal(runCalls.length, 1);
+  assert.deepEqual(runCalls[0], {
+    from: "2026-05-30",
+    to: "2026-06-28",
+    force: false,
+    trigger: "dashboard:read-through",
+  });
+  assert.equal(result.run?.id, "mkpir_existing");
+  assert.equal(result.values.length, 1);
+});
+
+test("read-through forces refresh when snapshots changed after the KPI run", async () => {
+  const stale = readModel({ run: run({ finishedAt: "2026-06-28T08:00:00.000Z" }) });
+  const refreshed = readModel({ run: run({ id: "mkpir_refreshed" }) });
+  const runCalls: Array<{ force?: boolean }> = [];
+
+  const result = await getMetricKpiReadModelReadThrough(
+    "growth4u",
+    { range: "30d" },
+    {
+      read: async () => (runCalls.length ? refreshed : stale),
+      hasSnapshotUpdatesAfter: async () => true,
+      run: async (input) => {
+        runCalls.push({ force: input.force });
+        return {
+          ok: true,
+          configured: true,
+          skipped: false,
+          slug: input.slug,
+          range: { from: input.range?.from ?? "", to: input.range?.to ?? "" },
+          trigger: input.trigger ?? "dashboard:read-through",
+          force: input.force === true,
+          definitionVersion: 1,
+          run: null,
+          valuesCount: 78,
+        };
+      },
+    },
+  );
+
+  assert.equal(runCalls.length, 1);
+  assert.equal(runCalls[0]?.force, true);
+  assert.equal(result.run?.id, "mkpir_refreshed");
 });

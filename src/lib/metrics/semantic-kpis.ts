@@ -830,7 +830,7 @@ export function computeSemanticKpisFromSnapshots(
       source: def.source,
       metricName: def.metric,
       value,
-      valueText: value == null ? null : String(value),
+      valueText: null,
       unit: def.unit,
       qualityStatus,
       provenanceLabel: def.provenanceLabel ?? `${def.source}.${def.metric}`,

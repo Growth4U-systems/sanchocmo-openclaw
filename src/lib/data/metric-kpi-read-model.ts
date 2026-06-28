@@ -1,10 +1,24 @@
 import {
+  and,
+  eq,
+  gt,
+  gte,
+  lte,
+  sql as dsql,
+} from "drizzle-orm";
+import { getDb, hasDatabase } from "@/db/drizzle";
+import { metricSnapshots } from "@/db/schema";
+import {
   findMetricKpiRunForRange,
   getMetricKpiValues,
   metricKpiStorageConfigured,
   type MetricKpiRunRow,
   type MetricKpiValueRow,
 } from "@/lib/data/metric-kpis";
+import {
+  runMetricKpis,
+  type RunMetricKpisResult,
+} from "@/lib/data/metric-kpi-runner";
 import {
   listMetricStageRollups,
   metricStageRollupStorageConfigured,
@@ -39,6 +53,17 @@ export interface MetricKpiReadModelOptions extends MetricKpiReadRangeInput {
   runId?: string | null;
   surface?: SurfaceKey | null;
   dashboardBlock?: "overview" | "surface" | "channels" | "conversion" | "trends" | null;
+}
+
+export interface MetricKpiReadThroughOptions extends MetricKpiReadModelOptions {
+  autoCompute?: boolean;
+  trigger?: string | null;
+}
+
+export interface MetricKpiReadThroughDeps {
+  read?: typeof getMetricKpiReadModel;
+  run?: typeof runMetricKpis;
+  hasSnapshotUpdatesAfter?: typeof hasMetricKpiSnapshotUpdatesAfter;
 }
 
 export interface MetricKpiReadModelValue {
@@ -152,6 +177,12 @@ export function resolveMetricKpiReadRange(
 function dateToString(value: Date | string | null | undefined): string | null {
   if (!value) return null;
   return value instanceof Date ? value.toISOString() : value;
+}
+
+function dateValue(value: Date | string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function normalizeQuality(value: string | null | undefined): MetricKpiQualityStatus {
@@ -387,4 +418,89 @@ export async function getMetricKpiReadModel(
     northStar: selectNorthStarKpi(values),
     stageRollups,
   };
+}
+
+export async function hasMetricKpiSnapshotUpdatesAfter(
+  slug: string,
+  range: { from: string; to: string },
+  since: Date | string | null | undefined,
+): Promise<boolean> {
+  const sinceDate = dateValue(since);
+  if (!hasDatabase || !sinceDate) return false;
+
+  const database = getDb();
+  const rows = await database
+    .select({ count: dsql<number>`count(*)` })
+    .from(metricSnapshots)
+    .where(
+      and(
+        eq(metricSnapshots.slug, slug),
+        gte(metricSnapshots.metricDate, range.from),
+        lte(metricSnapshots.metricDate, range.to),
+        gt(metricSnapshots.updatedAt, sinceDate),
+      ),
+    );
+
+  return Number(rows[0]?.count ?? 0) > 0;
+}
+
+function shouldAutoComputeReadModel(args: {
+  model: MetricKpiReadModel;
+  opts: MetricKpiReadThroughOptions;
+  snapshotsChanged: boolean;
+}): boolean {
+  if (args.opts.autoCompute === false) return false;
+  if (args.opts.runId) return false;
+  if (!args.model.requestedRange) return false;
+  if (!args.model.run) return true;
+  return args.snapshotsChanged;
+}
+
+async function readAfterAutoCompute(args: {
+  read: typeof getMetricKpiReadModel;
+  slug: string;
+  opts: MetricKpiReadThroughOptions;
+  result: RunMetricKpisResult;
+}): Promise<MetricKpiReadModel> {
+  if (args.result.skipped && args.result.skipReason === "already-running") {
+    return args.read(args.slug, args.opts);
+  }
+  return args.read(args.slug, args.opts);
+}
+
+export async function getMetricKpiReadModelReadThrough(
+  slug: string,
+  opts: MetricKpiReadThroughOptions = {},
+  deps: MetricKpiReadThroughDeps = {},
+): Promise<MetricKpiReadModel> {
+  const read = deps.read ?? getMetricKpiReadModel;
+  const run = deps.run ?? runMetricKpis;
+  const hasSnapshotUpdatesAfter =
+    deps.hasSnapshotUpdatesAfter ?? hasMetricKpiSnapshotUpdatesAfter;
+
+  const model = await read(slug, opts);
+  const snapshotsChanged =
+    model.requestedRange && model.run
+      ? await hasSnapshotUpdatesAfter(
+        slug,
+        { from: model.requestedRange.from, to: model.requestedRange.to },
+        model.run.finishedAt ?? model.run.startedAt,
+      )
+      : false;
+
+  if (!shouldAutoComputeReadModel({ model, opts, snapshotsChanged })) {
+    return model;
+  }
+
+  const range = model.requestedRange;
+  if (!range) return model;
+  const result = await run({
+    slug,
+    range: { from: range.from, to: range.to },
+    trigger: opts.trigger?.trim() || "dashboard:read-through",
+    force: snapshotsChanged,
+  });
+
+  if (!result.ok) return model;
+  return readAfterAutoCompute({ read, slug, opts, result });
 }

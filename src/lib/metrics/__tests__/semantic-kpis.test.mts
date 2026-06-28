@@ -136,6 +136,7 @@ test("maps Google Ads aliases and keeps seed platform KPIs as demo", () => {
 
   const spend = byId(values, "paid.google.spend");
   assert.equal(spend.value, 20);
+  assert.equal(spend.valueText, null);
   assert.equal(spend.qualityStatus, "demo");
   const impressionShare = byId(values, "paid.google.impression_share");
   assert.equal(impressionShare.value, 0.6);

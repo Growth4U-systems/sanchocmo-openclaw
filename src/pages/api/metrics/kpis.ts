@@ -6,7 +6,7 @@ import {
   withErrorHandler,
 } from "@/lib/api-middleware";
 import {
-  getMetricKpiReadModel,
+  getMetricKpiReadModelReadThrough,
   type MetricKpiRangeKey,
 } from "@/lib/data/metric-kpi-read-model";
 import type { SurfaceKey } from "@/lib/metrics/surfaces";
@@ -59,7 +59,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: `Invalid surface: ${surface}` });
   }
 
-  return res.status(200).json(await getMetricKpiReadModel(slug, {
+  return res.status(200).json(await getMetricKpiReadModelReadThrough(slug, {
     dashboardBlock: dashboardBlock as never,
     from: firstString(req.query.from),
     range,
