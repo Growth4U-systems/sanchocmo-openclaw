@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
+import { recomputeMetricKpisAfterIngest } from "@/lib/data/metric-kpi-autorecompute";
 import { ingestDailySnapshot, ingestSourceMetrics, type RawMetric } from "@/lib/data/metrics-snapshots";
 
 /**
@@ -14,6 +15,29 @@ import { ingestDailySnapshot, ingestSourceMetrics, type RawMetric } from "@/lib/
  *   { slug, date?, source, metrics:[...] }
  */
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function metricDatesFromMetrics(metrics: RawMetric[] | undefined, fallback: string): string[] {
+  const dates = new Set<string>([fallback]);
+  for (const metric of metrics ?? []) {
+    if (typeof metric.date === "string" && DATE_RE.test(metric.date)) {
+      dates.add(metric.date);
+    }
+  }
+  return [...dates].sort();
+}
+
+function metricDatesFromSources(
+  sources: Record<string, { metrics?: RawMetric[] }> | undefined,
+  fallback: string,
+): string[] {
+  const dates = new Set<string>([fallback]);
+  for (const payload of Object.values(sources ?? {})) {
+    for (const date of metricDatesFromMetrics(payload.metrics, fallback)) {
+      dates.add(date);
+    }
+  }
+  return [...dates].sort();
+}
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -45,8 +69,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     source?: string;
     metrics?: RawMetric[];
     deleteStale?: boolean;
+    recomputeKpis?: boolean;
   };
   const deleteStale = body.deleteStale === true;
+  const recomputeEnabled = body.recomputeKpis !== false;
 
   const slug = typeof body.slug === "string" ? body.slug.trim() : "";
   if (!slug) {
@@ -62,7 +88,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       provenance: body.provenance,
       quality: body.quality,
     });
-    res.status(200).json(result);
+    const recompute = await recomputeMetricKpisAfterIngest({
+      slug,
+      date,
+      enabled: recomputeEnabled,
+      ingest: result,
+      metricDates: metricDatesFromMetrics(body.metrics, date),
+    });
+    res.status(200).json({ ...result, recompute });
     return;
   }
   if (body.sources && typeof body.sources === "object") {
@@ -78,7 +111,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       },
       { deleteStale },
     );
-    res.status(200).json(result);
+    const recompute = await recomputeMetricKpisAfterIngest({
+      slug,
+      date,
+      enabled: recomputeEnabled,
+      ingest: result,
+      metricDates: metricDatesFromSources(body.sources, date),
+    });
+    res.status(200).json({ ...result, recompute });
     return;
   }
 
