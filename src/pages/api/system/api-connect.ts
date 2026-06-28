@@ -176,6 +176,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
     }
 
     integrations.dataSources[apiId].status = "pending";
+    integrations.dataSources[apiId].provider = integrations.dataSources[apiId].provider || apiId;
     writeJSON(intPath, integrations);
 
     // Save secrets to brand/{slug}/.env
@@ -183,6 +184,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       const slugUpper = slug.replace(/-/g, "_").toUpperCase();
       const apiUpper = apiId.replace(/-/g, "_").toUpperCase();
       const envPath = path.join(brandDir(slug), ".env");
+      const envVars = new Set(integrations.dataSources[apiId].envVars || []);
 
       // Read existing .env content
       let envContent = "";
@@ -195,7 +197,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       // Update/add each secret
       for (const [key, value] of Object.entries(secrets)) {
         const envKey = `${slugUpper}_${apiUpper}_${key.toUpperCase()}`;
-        const envLine = `${envKey}=${value}`;
+        const envLine = `${envKey}=${serializeEnvValue(String(value))}`;
+        envVars.add(envKey);
 
         // Check if key already exists in .env
         const regex = new RegExp(`^${envKey}=.*$`, "m");
@@ -210,6 +213,9 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       const dir = path.dirname(envPath);
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(envPath, envContent);
+
+      integrations.dataSources[apiId].envVars = Array.from(envVars).sort();
+      writeJSON(intPath, integrations);
     }
   }
 
@@ -265,6 +271,11 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 }
 
 export default compose(withErrorHandler, withAuth)(handler);
+
+function serializeEnvValue(value: string): string {
+  if (/^[A-Za-z0-9_./:@+=,-]+$/.test(value)) return value;
+  return JSON.stringify(value);
+}
 
 async function loadYalcSetupGuide(slug: string, providerId: string): Promise<SetupGuide | null> {
   try {
