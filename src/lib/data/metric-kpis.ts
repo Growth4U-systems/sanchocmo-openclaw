@@ -9,6 +9,10 @@ import {
 } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricKpiRuns, metricKpiValues, metricSnapshots } from "@/db/schema";
+import {
+  persistMetricStageRollupsForSnapshots,
+  replaceStageRollupAvailabilityKpi,
+} from "@/lib/data/metric-stage-rollups";
 import { ensureMetricsStorage, stableId } from "@/lib/data/metrics-snapshots";
 import {
   METRIC_KPI_DEFINITIONS,
@@ -215,11 +219,18 @@ export async function computeMetricKpis(
       collectedAt: row.collectedAt,
       ingestRunId: row.ingestRunId,
     }));
-    const values = computeSemanticKpisFromSnapshots(
+    let values = computeSemanticKpisFromSnapshots(
       snapshots,
       range,
       opts.definitions ?? METRIC_KPI_DEFINITIONS,
     );
+    const stageRollups = await persistMetricStageRollupsForSnapshots(slug, {
+      runId,
+      range,
+      snapshots,
+      definitionVersion,
+    });
+    values = replaceStageRollupAvailabilityKpi(values, stageRollups, range);
     const now = new Date();
 
     if (values.length) {
