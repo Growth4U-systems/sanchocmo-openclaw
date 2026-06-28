@@ -17,6 +17,10 @@ import fs from "fs";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
+import {
+  recomputeMetricKpisAfterIngest,
+  type MetricKpiAutoRecomputeResult,
+} from "@/lib/data/metric-kpi-autorecompute";
 import { ingestSourceMetrics } from "@/lib/data/metrics-snapshots";
 import { loadClient } from "@/lib/data/clients";
 import {
@@ -51,7 +55,7 @@ export interface RunTrustScoreOptions {
 }
 
 export type RunTrustScoreOutcome =
-  | { ok: true; cache: TrustScoreCache; ran: boolean }
+  | { ok: true; cache: TrustScoreCache; ran: boolean; metricsRecompute?: MetricKpiAutoRecomputeResult }
   | { ok: false; status: number; error: string };
 
 function metricsDirFor(slug: string): string {
@@ -113,6 +117,13 @@ async function persistDailyMetric(slug: string, result: CompareResult) {
   if (!ingest.ok) {
     throw new Error("metric_snapshots storage is not configured for Trust Score metrics");
   }
+  return recomputeMetricKpisAfterIngest({
+    slug,
+    date: today,
+    ingest,
+    metricDates: [today],
+    trigger: "trust-score:auto",
+  });
 }
 
 // Best-effort: una falla escribiendo el doc no debe abortar la corrida ni
@@ -209,12 +220,12 @@ export async function runTrustScore(
       url: clientUrl,
       fetchedAt: new Date().toISOString(),
     };
-    await persistDailyMetric(slug, result);
+    const metricsRecompute = await persistDailyMetric(slug, result);
     writeJSON(cacheFile, cache);
     // Doc del pilar Foundation (lo consume el Brand Brain y el Strategic Plan).
     writeTrustScoreDoc(slug, result, cache.url, cache.fetchedAt);
 
-    return { ok: true, cache, ran: true };
+    return { ok: true, cache, ran: true, metricsRecompute };
   } catch (err) {
     const stale = readJSON<TrustScoreCache | null>(cacheFile, null);
     if (stale) return { ok: true, cache: { ...stale, _stale: true }, ran: false };

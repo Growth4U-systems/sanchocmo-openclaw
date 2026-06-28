@@ -32,7 +32,18 @@ test("delegates to ingestDailySnapshot with the daily payload + deleteStale", as
   assert.equal(calls[0].date, "2026-06-23");
   assert.deepEqual(calls[0].daily, daily);
   assert.deepEqual(calls[0].opts, { deleteStale: true });
-  assert.deepEqual(res, { rows: 3, deleted: 1, configured: true });
+  assert.deepEqual(
+    { rows: res.rows, deleted: res.deleted, configured: res.configured },
+    { rows: 3, deleted: 1, configured: true },
+  );
+  assert.deepEqual(res.ingest, {
+    ok: true,
+    rows: 3,
+    sources: ["ghl"],
+    skipped: [],
+    deleted: 1,
+    storage: { configured: true },
+  });
 });
 
 test("normalizes a missing `deleted` (not-configured result) to 0", async () => {
@@ -45,5 +56,15 @@ test("normalizes a missing `deleted` (not-configured result) to 0", async () => 
     daily: { slug: "g", collectedAt: null, sources: {} },
     deleteStale: false, ingest: fakeIngest,
   });
-  assert.deepEqual(res, { rows: 0, deleted: 0, configured: false });
+  assert.deepEqual(
+    { rows: res.rows, deleted: res.deleted, configured: res.configured },
+    { rows: 0, deleted: 0, configured: false },
+  );
+  assert.deepEqual(res.ingest, {
+    ok: false,
+    rows: 0,
+    sources: [],
+    skipped: [],
+    storage: { configured: false },
+  });
 });

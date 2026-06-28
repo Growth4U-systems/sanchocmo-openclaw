@@ -6,11 +6,17 @@
  *   DATABASE_URL=... npm run backfill:metrics
  *   DATABASE_URL=... npm run backfill:metrics -- --seed
  *   DATABASE_URL=... npm run backfill:metrics -- --provenance seed --quality demo
+ *   DATABASE_URL=... npm run backfill:metrics -- --no-recompute-kpis
  */
 import fs from "fs";
 import path from "path";
 import { hasDatabase } from "@/db/drizzle";
 import { BASE } from "@/lib/data/paths";
+import {
+  formatMetricKpiAutoRecomputeSummary,
+  metricDatesFromSources,
+  recomputeMetricKpisAfterIngests,
+} from "@/lib/data/metric-kpi-autorecompute";
 import { ensureMetricsStorage, ingestDailySnapshot, type DailySnapshotInput } from "@/lib/data/metrics-snapshots";
 
 const DATE_FILE_RE = /^\d{4}-\d{2}-\d{2}\.json$/;
@@ -60,6 +66,11 @@ async function main() {
     if (!files.length) continue;
 
     let slugRows = 0;
+    const slugIngests: Array<{
+      date: string;
+      ingest: Awaited<ReturnType<typeof ingestDailySnapshot>>;
+      metricDates: string[];
+    }> = [];
     for (const file of files) {
       const dateKey = file.replace(".json", "");
       let daily: DailySnapshotInput;
@@ -79,12 +90,24 @@ async function main() {
           : daily;
       const result = await ingestDailySnapshot(slug, dateKey, dailyWithMetadata);
       slugRows += result.rows;
+      slugIngests.push({
+        date: dateKey,
+        ingest: result,
+        metricDates: metricDatesFromSources(dailyWithMetadata.sources, dateKey),
+      });
       totalFiles += 1;
     }
 
     if (slugRows) {
       clientsWithData += 1;
       console.log(`  ${slug}: ${slugRows} metric rows from ${files.length} daily file(s)`);
+      const recompute = await recomputeMetricKpisAfterIngests({
+        slug,
+        ingests: slugIngests,
+        enabled: !hasFlag("--no-recompute-kpis"),
+        trigger: "backfill-metrics:script",
+      });
+      console.log(`  ${slug}: ${formatMetricKpiAutoRecomputeSummary(recompute)}`);
     }
     totalRows += slugRows;
   }

@@ -45,6 +45,23 @@ export interface MetricKpiAutoRecomputeDeps {
   run?: typeof runMetricKpis;
 }
 
+export interface MetricKpiAutoRecomputeIngestItem {
+  date: string;
+  ingest: IngestResult;
+  metricDates?: string[];
+}
+
+export interface MetricKpiAutoRecomputeBatchInput {
+  slug: string;
+  ingests: MetricKpiAutoRecomputeIngestItem[];
+  date?: string;
+  metricDates?: string[];
+  enabled?: boolean;
+  trigger?: string;
+  now?: Date;
+  force?: boolean;
+}
+
 const DASHBOARD_RANGE_DAYS = [
   ["1d", 1],
   ["7d", 7],
@@ -77,6 +94,33 @@ function rangeEndingAt(label: string, days: number, endDate: string): MetricKpiA
 
 function validDates(values: Array<string | null | undefined>): string[] {
   return [...new Set(values.filter((value): value is string => Boolean(value && DATE_RE.test(value))))].sort();
+}
+
+export function metricDatesFromMetrics(
+  metrics: Array<{ date?: string | null }> | undefined,
+  fallback?: string,
+): string[] {
+  const dates = new Set<string>();
+  if (fallback && DATE_RE.test(fallback)) dates.add(fallback);
+  for (const metric of metrics ?? []) {
+    if (typeof metric.date === "string" && DATE_RE.test(metric.date)) {
+      dates.add(metric.date);
+    }
+  }
+  return [...dates].sort();
+}
+
+export function metricDatesFromSources(
+  sources: Record<string, { metrics?: Array<{ date?: string | null }> }> | undefined,
+  fallback?: string,
+): string[] {
+  const dates = new Set<string>(metricDatesFromMetrics(undefined, fallback));
+  for (const payload of Object.values(sources ?? {})) {
+    for (const date of metricDatesFromMetrics(payload.metrics, fallback)) {
+      dates.add(date);
+    }
+  }
+  return [...dates].sort();
 }
 
 export function buildMetricKpiAutoRecomputeRanges(args: {
@@ -174,4 +218,67 @@ export async function recomputeMetricKpisAfterIngest(
     results,
     errors,
   };
+}
+
+export async function recomputeMetricKpisAfterIngests(
+  input: MetricKpiAutoRecomputeBatchInput,
+  deps: MetricKpiAutoRecomputeDeps = {},
+): Promise<MetricKpiAutoRecomputeResult> {
+  const metricDates = validDates([
+    input.date,
+    ...(input.metricDates ?? []),
+    ...input.ingests.flatMap((item) => [
+      item.date,
+      ...(item.metricDates ?? []),
+    ]),
+  ]);
+  const fallbackDate =
+    metricDates[0] ??
+    (input.date && DATE_RE.test(input.date)
+      ? input.date
+      : isoDay(utcDay(input.now ?? new Date())));
+
+  const deletedValues = input.ingests
+    .map((item) => item.ingest.deleted)
+    .filter((value): value is number => typeof value === "number");
+  const combined: IngestResult = {
+    ok: input.ingests.every((item) => item.ingest.ok),
+    rows: input.ingests.reduce((sum, item) => sum + item.ingest.rows, 0),
+    sources: [...new Set(input.ingests.flatMap((item) => item.ingest.sources))].sort(),
+    skipped: [...new Set(input.ingests.flatMap((item) => item.ingest.skipped))].sort(),
+    deleted: deletedValues.length
+      ? deletedValues.reduce((sum, value) => sum + value, 0)
+      : undefined,
+    storage: {
+      configured: input.ingests.length
+        ? input.ingests.every((item) => item.ingest.storage.configured)
+        : true,
+    },
+  };
+
+  return recomputeMetricKpisAfterIngest(
+    {
+      slug: input.slug,
+      ingest: combined,
+      date: fallbackDate,
+      metricDates,
+      enabled: input.enabled,
+      trigger: input.trigger,
+      now: input.now,
+      force: input.force,
+    },
+    deps,
+  );
+}
+
+export function formatMetricKpiAutoRecomputeSummary(
+  result: MetricKpiAutoRecomputeResult,
+): string {
+  const ranges = result.ranges.map((range) => `${range.label}:${range.from}..${range.to}`);
+  if (result.skipped) {
+    return `metrics KPI recompute skipped (${result.skipReason ?? "unknown"}; ranges=${ranges.length})`;
+  }
+  const status = result.ok ? "ok" : "failed";
+  const errors = result.errors.length ? `; errors=${result.errors.slice(0, 3).join(" | ")}` : "";
+  return `metrics KPI recompute ${status} (${result.results.length}/${ranges.length} ranges${errors})`;
 }
