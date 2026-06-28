@@ -7,9 +7,12 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import {
   useDashboardDefinition,
+  useMetricKpis,
   useMetricsHealth,
   useSurfaceSummary,
   type DashboardVersionMeta,
+  type MetricKpiResult,
+  type MetricKpiValue,
   type SurfaceSummaryEntry,
 } from "@/hooks/useMetrics";
 import { buildMetricsEditThread } from "@/lib/chat-openers";
@@ -89,10 +92,10 @@ const DATA_LINEAGE_GATES: DataLineageGate[] = [
   {
     title: "Capa semántica",
     source: "metric_kpi_values",
-    status: "missing",
+    status: "partial",
     detail:
-      "Los valores finales, deltas, input refs y quality_status todavía no están persistidos.",
-    nextAction: "PR 3 debe computar KPIs directos desde metric_snapshots.",
+      "Los KPIs directos ya se leen desde metric_kpi_values cuando existe un run del rango.",
+    nextAction: "Mantener formulas, stage rollups y attribution como missing hasta sus capas.",
   },
   {
     title: "Funnel y atribución",
@@ -108,7 +111,7 @@ const DATA_LINEAGE_GATES: DataLineageGate[] = [
     status: "partial",
     detail:
       "Hay drift conocido: emailsSent/sent, inp_mobile/tbt_mobile y source ids con guion/underscore.",
-    nextAction: "Normalizar aliases antes de resolver formulas de PR 3.",
+    nextAction: "Aliases directos normalizados; formulas posteriores deben reutilizar esa capa.",
   },
   {
     title: "Fuentes conocidas dirty",
@@ -154,6 +157,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
   const { data: surfacesData } = useSurfaceSummary(slug);
   const { data: dashboard } = useDashboardDefinition(slug);
   const { data: health } = useMetricsHealth(slug);
+  const { data: kpiData } = useMetricKpis(slug, range);
 
   const activeTab = normalizeTab(router.query.tab) ?? localTab;
   const activeSurface = normalizeSurface(router.query.surface);
@@ -271,6 +275,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
             <SetupView
               configured={dashboard?.configured}
               health={health?.overall}
+              kpiData={kpiData}
               surfaceCards={surfaceCards}
               openSurface={openSurface}
             />
@@ -283,6 +288,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
                   surfaceCards={surfaceCards}
                   openSurface={openSurface}
                   configured={surfacesData?.configured}
+                  kpiData={kpiData}
                 />
               )}
               {activeTab === "surfaces" &&
@@ -292,6 +298,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
                     surface={activeSurface}
                     entry={surfaceEntries[activeSurface]}
                     configured={surfacesData?.configured}
+                    kpiData={kpiData}
                     onBack={closeSurface}
                   />
                 ) : (
@@ -304,7 +311,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
                 <ChannelsView model={model} onModelChange={setModel} />
               )}
               {activeTab === "conversion" && <ConversionView />}
-              {activeTab === "trends" && <TrendsView />}
+              {activeTab === "trends" && <TrendsView kpiData={kpiData} />}
             </>
           )}
         </div>
@@ -353,8 +360,8 @@ function MetricsHeader({
           </div>
           <p className="mt-1 text-[13px] text-[var(--sc-fg-muted)]">
             {slug} · rango{" "}
-            {DATE_RANGES.find((item) => item.key === range)?.label} · PR 2 UI
-            shell, sin cómputo KPI avanzado.
+            {DATE_RANGES.find((item) => item.key === range)?.label} · KPIs
+            directos leídos, sin attribution avanzada.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -502,11 +509,13 @@ function VersionsPanel({
 function SetupView({
   configured,
   health,
+  kpiData,
   surfaceCards,
   openSurface,
 }: {
   configured?: boolean;
   health?: string;
+  kpiData?: MetricKpiResult;
   surfaceCards: SurfaceCardModel[];
   openSurface: (surface: SurfaceKey) => void;
 }) {
@@ -545,17 +554,36 @@ function SetupView({
             requiredSource="metric_dashboards"
             nextAction={
               configured
-                ? "Definición activa encontrada; PR 3/4 conectarán valores semánticos."
+                ? "Definición activa encontrada; los KPIs directos se leen desde el run más reciente del rango."
                 : "Diseñar o guardar la primera definición con Merlin."
             }
             state={configured ? "CONECTADO SIN SNAPSHOTS" : "SIN DATOS"}
           />
-          <EmptyMetricState
-            title="KPIs semánticos"
-            requiredSource="metric_kpi_values"
-            nextAction="Pendiente de PR 3: cómputo directo desde metric_snapshots."
-            state="SIN DATOS"
-          />
+          {kpiData?.run ? (
+            <div className="rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-4 shadow-pop-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatePill state={qualityToState(kpiData.summary.qualityStatus)} />
+                <h3 className="font-heading text-[13px] font-bold text-navy">
+                  KPIs semánticos
+                </h3>
+              </div>
+              <p className="mt-2 text-[12px] text-[var(--sc-fg-muted)]">
+                Run {kpiData.run.id.slice(-8)} · {kpiData.summary.total} KPIs ·{" "}
+                {kpiData.run.rangeFrom} a {kpiData.run.rangeTo}.
+              </p>
+              <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
+                OK {kpiData.summary.ok} · parcial {kpiData.summary.partial} ·
+                missing {kpiData.summary.missing} · demo {kpiData.summary.demo}.
+              </p>
+            </div>
+          ) : (
+            <EmptyMetricState
+              title="KPIs semánticos"
+              requiredSource="metric_kpi_values"
+              nextAction="Ejecutar el runner de KPIs para este cliente/rango; la UI no computa en lectura."
+              state="SIN DATOS"
+            />
+          )}
           <EmptyMetricState
             title="Funnel semántico"
             requiredSource="metric_stage_rollups"
@@ -661,12 +689,18 @@ function OverviewView({
   surfaceCards,
   openSurface,
   configured,
+  kpiData,
 }: {
   slug: string;
   surfaceCards: SurfaceCardModel[];
   openSurface: (surface: SurfaceKey) => void;
   configured?: boolean;
+  kpiData?: MetricKpiResult;
 }) {
+  const overviewKpis = selectOverviewKpis(kpiData);
+  const northStar = kpiData?.northStar ?? null;
+  const economyKpis = selectEconomyKpis(kpiData);
+
   return (
     <div className="space-y-5">
       <Panel>
@@ -674,46 +708,70 @@ function OverviewView({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <Chip tone="custom">North Star</Chip>
-              <DeltaBadge />
+              <DeltaBadge label={northStar ? "sin serie" : "sin delta"} />
             </div>
             <h2 className="mt-3 font-heading text-[24px] font-bold text-navy">
-              North Star pendiente de semantic KPI
+              {northStar?.label ?? "North Star pendiente de run KPI"}
             </h2>
             <p className="mt-2 max-w-[720px] text-[13px] text-[var(--sc-fg-muted)]">
-              El panel está preparado para mostrar el KPI principal con input
-              refs y deltas cuando PR 3/4 conecte `metric_kpi_values`.
+              {northStar
+                ? `${sourceMetricLabel(northStar)} · ${northStar.provenanceLabel} · cobertura ${coverageLabel(northStar)}.`
+                : "El panel muestra datos solo cuando existe un run persistido en metric_kpi_values para el rango seleccionado."}
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                "Sessions",
-                "Lead → Cualificado",
-                "Cualificado → Reunión",
-                "Coste / reunión",
-              ].map((label) => (
-                <MetricTile
-                  key={label}
-                  label={label}
-                  value="—"
-                  hint={
-                    <MetricQualityBadge
-                      status="missing"
-                      source="metric_kpi_values"
-                    />
-                  }
-                />
-              ))}
+              {overviewKpis.length
+                ? overviewKpis.map((kpi) => (
+                  <KpiTile key={kpi.id} kpi={kpi} />
+                ))
+                : [
+                  "Sessions",
+                  "Lead -> Cualificado",
+                  "Cualificado -> Reunion",
+                  "Coste / reunion",
+                ].map((label) => (
+                  <MetricTile
+                    key={label}
+                    label={label}
+                    value="-"
+                    hint={
+                      <MetricQualityBadge
+                        status="missing"
+                        source="metric_kpi_values"
+                      />
+                    }
+                  />
+                ))}
             </div>
           </div>
-          <EmptyMetricState
-            title={
-              configured
-                ? "Sin KPI computado todavía"
-                : "Dashboard no configurado"
-            }
-            requiredSource="metric_kpi_values"
-            nextAction="PR 3 calculará KPIs directos; PR 4 expondrá el API dashboard-data."
-            state={configured ? "CONECTADO SIN SNAPSHOTS" : "SIN DATOS"}
-          />
+          {northStar ? (
+            <div className="rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-4 shadow-pop-xs">
+              <MetricQualityBadge
+                status={asQualityStatus(northStar.qualityStatus)}
+                source={sourceMetricLabel(northStar)}
+              />
+              <div className="mt-3 font-heading text-[34px] font-bold leading-none text-navy">
+                {northStar.displayValue}
+              </div>
+              <p className="mt-3 text-[12px] text-[var(--sc-fg-muted)]">
+                {northStar.inputRefs.length} input refs · {northStar.rangeFrom} a{" "}
+                {northStar.rangeTo}.
+              </p>
+              <p className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">
+                Deltas y serie historica siguen vacios hasta la capa de trends.
+              </p>
+            </div>
+          ) : (
+            <EmptyMetricState
+              title={
+                configured
+                  ? "Sin KPI computado todavía"
+                  : "Dashboard no configurado"
+              }
+              requiredSource="metric_kpi_values"
+              nextAction="Ejecutar compute:metric-kpis para llenar el rango seleccionado."
+              state={configured ? "CONECTADO SIN SNAPSHOTS" : "SIN DATOS"}
+            />
+          )}
         </div>
       </Panel>
 
@@ -729,19 +787,21 @@ function OverviewView({
             </p>
           </div>
           <MetricQualityBadge
-            status="pending"
-            source="paid + partnerships + crm"
+            status={economyKpis.length ? asQualityStatus(kpiData?.summary.qualityStatus) : "pending"}
+            source={economyKpis.length ? "metric_kpi_values" : "paid + partnerships + crm"}
           />
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {["Inversión", "CAC", "Revenue generado", "ROAS"].map((label) => (
-            <MetricTile
-              key={label}
-              label={label}
-              value="—"
-              hint="Sin dato live todavía"
-            />
-          ))}
+          {economyKpis.length
+            ? economyKpis.map((kpi) => <KpiTile key={kpi.id} kpi={kpi} tone="lagging" />)
+            : ["Inversion", "CAC", "Revenue generado", "ROAS"].map((label) => (
+              <MetricTile
+                key={label}
+                label={label}
+                value="-"
+                hint="Sin dato live todavia"
+              />
+            ))}
         </div>
       </Panel>
 
@@ -811,17 +871,20 @@ function SurfaceDetailView({
   surface,
   entry,
   configured,
+  kpiData,
   onBack,
 }: {
   slug: string;
   surface: SurfaceKey;
   entry?: SurfaceSummaryEntry;
   configured?: boolean;
+  kpiData?: MetricKpiResult;
   onBack: () => void;
 }) {
   const config = SURFACE_DETAIL_CONFIGS[surface];
   const def = SURFACES.find((item) => item.key === surface);
   const state = def ? surfaceState(def, entry, configured) : "SIN DATOS";
+  const surfaceKpis = selectSurfaceKpis(kpiData, surface);
   return (
     <div className="space-y-5">
       <button
@@ -883,6 +946,40 @@ function SurfaceDetailView({
           />
         ))}
       </div>
+
+      <Panel>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="font-heading text-[16px] font-bold text-navy">
+              KPIs directos
+            </h3>
+            <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
+              Valores persistidos por surface. No hay formulas ni atribucion en
+              esta lectura.
+            </p>
+          </div>
+          <MetricQualityBadge
+            status={surfaceKpis.length ? asQualityStatus(kpiData?.summary.qualityStatus) : "missing"}
+            source="metric_kpi_values"
+          />
+        </div>
+        {surfaceKpis.length ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {surfaceKpis.slice(0, 8).map((kpi) => (
+              <KpiTile key={kpi.id} kpi={kpi} />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4">
+            <EmptyMetricState
+              title="Sin KPIs directos para esta surface"
+              requiredSource="metric_kpi_values"
+              nextAction="El run actual no incluye valores para esta superficie o todavía no se ejecutó para el rango."
+              state={state === "ON" ? "CONECTADO SIN SNAPSHOTS" : state}
+            />
+          </div>
+        )}
+      </Panel>
 
       <Panel>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1085,7 +1182,9 @@ function ConversionView() {
   );
 }
 
-function TrendsView() {
+function TrendsView({ kpiData }: { kpiData?: MetricKpiResult }) {
+  const northStar = kpiData?.northStar ?? null;
+  const trendKpis = selectOverviewKpis(kpiData);
   return (
     <div className="space-y-5">
       <Panel>
@@ -1100,17 +1199,57 @@ function TrendsView() {
             </p>
           </div>
           <MetricQualityBadge
-            status="pending"
+            status={kpiData?.run ? asQualityStatus(kpiData.summary.qualityStatus) : "pending"}
             source="metric_kpi_runs + metric_annotations"
           />
         </div>
+        {kpiData?.run && (
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <MetricTile
+              label="Run KPI"
+              value={kpiData.run.id.slice(-8)}
+              hint={`${kpiData.summary.ok}/${kpiData.summary.total} KPIs ok`}
+            />
+            <MetricTile
+              label="North Star"
+              value={northStar?.displayValue ?? "-"}
+              hint={northStar ? sourceMetricLabel(northStar) : "Sin KPI overview"}
+            />
+            <MetricTile
+              label="Rango computado"
+              value={`${kpiData.run.rangeFrom.slice(5)} -> ${kpiData.run.rangeTo.slice(5)}`}
+              hint="La serie historica sigue pendiente."
+            />
+          </div>
+        )}
         <div className="mt-5">
           <MiniSparkline state="SIN DATOS" label="North Star trend pendiente" />
         </div>
       </Panel>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {["North Star", "Inversión", "Revenue", "Conversion rate"].map(
-          (label) => (
+        {trendKpis.length ? (
+          trendKpis.map((kpi) => (
+            <Panel key={kpi.id}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-heading text-[14px] font-bold text-navy">
+                  {kpi.label}
+                </h3>
+                <MetricQualityBadge
+                  status={asQualityStatus(kpi.qualityStatus)}
+                  source={sourceMetricLabel(kpi)}
+                />
+              </div>
+              <div className="mt-3">
+                <MiniSparkline state="SIN DATOS" label={`${kpi.label} sin serie`} />
+              </div>
+              <p className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">
+                Valor actual: {kpi.displayValue}. Sin puntos historicos
+                derivados.
+              </p>
+            </Panel>
+          ))
+        ) : (
+          ["North Star", "Inversion", "Revenue", "Conversion rate"].map((label) => (
             <Panel key={label}>
               <h3 className="font-heading text-[14px] font-bold text-navy">
                 {label}
@@ -1122,7 +1261,7 @@ function TrendsView() {
                 Sin serie computada.
               </p>
             </Panel>
-          ),
+          ))
         )}
       </div>
       <Panel>
@@ -1183,6 +1322,90 @@ function StatePill({ state }: { state: MetricDataState }) {
           ? "custom"
           : "flat";
   return <Chip tone={tone}>{state}</Chip>;
+}
+
+function KpiTile({
+  kpi,
+  tone = "leading",
+}: {
+  kpi: MetricKpiValue;
+  tone?: "paper" | "leading" | "lagging" | "custom";
+}) {
+  return (
+    <MetricTile
+      label={kpi.label}
+      value={<span className="break-words text-[20px]">{kpi.displayValue}</span>}
+      tone={tone}
+      hint={
+        <div className="space-y-1">
+          <MetricQualityBadge
+            status={asQualityStatus(kpi.qualityStatus)}
+            source={sourceMetricLabel(kpi)}
+          />
+          <div>{coverageLabel(kpi)} · {kpi.inputRefs.length} refs</div>
+        </div>
+      }
+    />
+  );
+}
+
+function asQualityStatus(status?: MetricKpiValue["qualityStatus"] | MetricKpiResult["summary"]["qualityStatus"]): MetricQualityStatus {
+  return status ?? "missing";
+}
+
+function qualityToState(status?: MetricKpiResult["summary"]["qualityStatus"]): MetricDataState {
+  if (!status || status === "missing") return "SIN DATOS";
+  if (status === "ok") return "ON";
+  return "PARCIAL";
+}
+
+function sourceMetricLabel(kpi?: MetricKpiValue | null): string {
+  if (!kpi) return "metric_kpi_values";
+  if (kpi.source && kpi.metricName) return `${kpi.source}.${kpi.metricName}`;
+  return kpi.provenanceLabel || "metric_kpi_values";
+}
+
+function coverageLabel(kpi: MetricKpiValue): string {
+  if (kpi.sourceCoverage >= 0.995) return "cobertura completa";
+  if (kpi.sourceCoverage <= 0) return "sin cobertura";
+  return `${Math.round(kpi.sourceCoverage * 100)}% cobertura`;
+}
+
+function selectOverviewKpis(data?: MetricKpiResult): MetricKpiValue[] {
+  if (!data?.values?.length) return [];
+  const primary = data.northStar;
+  const overview = data.values.filter((kpi) => kpi.dashboardBlock === "overview");
+  const rest = data.values
+    .filter((kpi) => kpi.id !== primary?.id && kpi.dashboardBlock !== "overview")
+    .sort((a, b) => scoreKpi(b) - scoreKpi(a));
+  return [...(primary ? [primary] : []), ...overview.filter((kpi) => kpi.id !== primary?.id), ...rest].slice(0, 4);
+}
+
+function selectEconomyKpis(data?: MetricKpiResult): MetricKpiValue[] {
+  if (!data?.values?.length) return [];
+  return data.values
+    .filter((kpi) => {
+      const haystack = `${kpi.label} ${kpi.metricName ?? ""} ${kpi.unit ?? ""}`.toLowerCase();
+      return /spend|inversi|cac|cpa|cpl|revenue|roas|roi|coste|cost/.test(haystack);
+    })
+    .sort((a, b) => scoreKpi(b) - scoreKpi(a))
+    .slice(0, 4);
+}
+
+function selectSurfaceKpis(data: MetricKpiResult | undefined, surface: SurfaceKey): MetricKpiValue[] {
+  return (data?.values ?? [])
+    .filter((kpi) => kpi.dashboardBlock === "surface" && kpi.surface === surface)
+    .sort((a, b) => scoreKpi(b) - scoreKpi(a));
+}
+
+function scoreKpi(kpi: MetricKpiValue): number {
+  let score = kpi.value != null ? 10 : 0;
+  if (kpi.qualityStatus === "ok") score += 5;
+  if (kpi.qualityStatus === "partial") score += 4;
+  if (kpi.qualityStatus === "dirty" || kpi.qualityStatus === "stale") score += 3;
+  if (kpi.qualityStatus === "demo") score += 1;
+  if (kpi.dashboardBlock === "overview") score += 4;
+  return score;
 }
 
 function buildSurfaceCard(

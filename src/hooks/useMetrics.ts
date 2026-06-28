@@ -33,6 +33,64 @@ export interface SurfaceSummaryResult {
   surfaces: SurfaceSummaryEntry[];
 }
 
+export type MetricKpiQualityStatus =
+  | "ok"
+  | "partial"
+  | "missing"
+  | "dirty"
+  | "stale"
+  | "demo";
+export type MetricKpiRange = "1d" | "7d" | "30d" | "90d";
+
+export interface MetricKpiValue {
+  id: string;
+  kpiId: string;
+  label: string;
+  dashboardBlock: string;
+  surface: SurfaceKey | null;
+  source: string | null;
+  metricName: string | null;
+  value: number | null;
+  valueText: string | null;
+  displayValue: string;
+  unit: string | null;
+  qualityStatus: MetricKpiQualityStatus;
+  provenanceLabel: string;
+  inputRefs: Array<Record<string, unknown>>;
+  sourceCoverage: number;
+  rangeFrom: string;
+  rangeTo: string;
+  definitionVersion: number | null;
+  computedAt: string;
+}
+
+export interface MetricKpiResult {
+  configured: boolean;
+  slug: string;
+  requestedRange: {
+    key: MetricKpiRange | "custom";
+    from: string;
+    to: string;
+  } | null;
+  run: {
+    id: string;
+    status: string;
+    trigger: string;
+    definitionVersion: number | null;
+    valuesCount: number;
+    qualitySummary: Record<string, number>;
+    rangeFrom: string;
+    rangeTo: string;
+    startedAt: string;
+    finishedAt: string | null;
+  } | null;
+  summary: Record<MetricKpiQualityStatus | "total", number> & {
+    qualityStatus: MetricKpiQualityStatus;
+  };
+  values: MetricKpiValue[];
+  northStar: MetricKpiValue | null;
+}
+
 export function useMetricsPlan(slug: string | null) {
   return useQuery({
     queryKey: ["metrics-plan", slug],
@@ -67,6 +125,22 @@ export function useSurfaceSummary(slug: string | null) {
     queryFn: async () => {
       const res = await fetch(`/api/metrics/timeseries?view=surfaces&slug=${slug}`);
       if (!res.ok) throw new Error("Failed to fetch surface summary");
+      return res.json();
+    },
+    enabled: !!slug,
+    staleTime: 60_000,
+  });
+}
+
+/** Persisted semantic KPI read model. This endpoint is read-only; cron/manual runner computes the rows. */
+export function useMetricKpis(slug: string | null, range: MetricKpiRange) {
+  return useQuery<MetricKpiResult>({
+    queryKey: ["metrics-kpis", slug, range],
+    queryFn: async () => {
+      const params = new URLSearchParams({ range });
+      if (slug) params.set("slug", slug);
+      const res = await fetch(`/api/metrics/kpis?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch semantic KPIs");
       return res.json();
     },
     enabled: !!slug,
