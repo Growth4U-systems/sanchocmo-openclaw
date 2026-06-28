@@ -5,6 +5,7 @@
  * Examples:
  *   npm run compute:metric-kpis -- --slug growth4u --trigger manual
  *   npm run compute:metric-kpis -- --all --trigger cron --json
+ *   npm run compute:metric-kpis -- --slug growth4u --dashboard-ranges --force --trigger san-366
  */
 import { loadClients } from "@/lib/data/clients";
 import {
@@ -18,6 +19,8 @@ export interface MetricKpiCliArgs {
   all: boolean;
   from?: string;
   to?: string;
+  asOf?: string;
+  dashboardRanges: boolean;
   trigger: string;
   force: boolean;
   json: boolean;
@@ -57,6 +60,7 @@ export function parseMetricKpiCliArgs(
   const args: MetricKpiCliArgs = {
     slugs: [],
     all: false,
+    dashboardRanges: false,
     trigger: "manual",
     force: false,
     json: false,
@@ -80,6 +84,13 @@ export function parseMetricKpiCliArgs(
       case "--to":
         args.to = valueAfter(argv, i, flag);
         i++;
+        break;
+      case "--as-of":
+        args.asOf = valueAfter(argv, i, flag);
+        i++;
+        break;
+      case "--dashboard-ranges":
+        args.dashboardRanges = true;
         break;
       case "--trigger":
         args.trigger = valueAfter(argv, i, flag);
@@ -112,6 +123,12 @@ export function parseMetricKpiCliArgs(
   if (!args.all && args.slugs.length === 0) {
     throw new Error("Provide --slug <slug> or --all");
   }
+  if (args.dashboardRanges && (args.from || args.to)) {
+    throw new Error("Use either --dashboard-ranges or --from/--to, not both");
+  }
+  if (args.asOf && !/^\d{4}-\d{2}-\d{2}$/.test(args.asOf)) {
+    throw new Error("--as-of must be YYYY-MM-DD");
+  }
   return args;
 }
 
@@ -137,6 +154,37 @@ function formatResult(result: RunMetricKpisResult): string {
   ].join(" ");
 }
 
+const DAY_MS = 86_400_000;
+const DASHBOARD_RANGE_DAYS = [
+  ["1d", 1],
+  ["7d", 7],
+  ["30d", 30],
+  ["90d", 90],
+] as const;
+
+function isoDay(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function utcDay(value: string | undefined): Date {
+  if (value) return new Date(`${value}T00:00:00.000Z`);
+  const now = new Date();
+  return new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+  ));
+}
+
+export function dashboardMetricKpiRanges(asOf?: string): Array<{ from: string; to: string }> {
+  const end = utcDay(asOf);
+  const to = isoDay(end);
+  return DASHBOARD_RANGE_DAYS.map(([, days]) => ({
+    from: isoDay(new Date(end.getTime() - (days - 1) * DAY_MS)),
+    to,
+  }));
+}
+
 export async function runMetricKpiCli(
   args: MetricKpiCliArgs,
   deps: MetricKpiCliDeps = {},
@@ -149,17 +197,22 @@ export async function runMetricKpiCli(
   }
 
   const results: RunMetricKpisResult[] = [];
+  const ranges = args.dashboardRanges
+    ? dashboardMetricKpiRanges(args.asOf)
+    : [{ from: args.from, to: args.to }];
   for (const slug of slugs) {
-    const input: RunMetricKpisInput = {
-      slug,
-      range: { from: args.from, to: args.to },
-      trigger: args.trigger,
-      force: args.force,
-      definitionVersion: args.definitionVersion,
-    };
-    const result = await run(input);
-    results.push(result);
-    if (!args.json) stdout(formatResult(result));
+    for (const range of ranges) {
+      const input: RunMetricKpisInput = {
+        slug,
+        range,
+        trigger: args.trigger,
+        force: args.force,
+        definitionVersion: args.definitionVersion,
+      };
+      const result = await run(input);
+      results.push(result);
+      if (!args.json) stdout(formatResult(result));
+    }
   }
 
   if (args.json) stdout(JSON.stringify({ ok: results.every((r) => r.ok), results }, null, 2));

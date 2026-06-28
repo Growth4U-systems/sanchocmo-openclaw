@@ -9,17 +9,28 @@ explore it without touching production.
 ```bash
 DATABASE_URL=... npm run compute:metric-kpis -- --slug growth4u --trigger manual
 DATABASE_URL=... npm run compute:metric-kpis -- --all --trigger cron --json
+DATABASE_URL=... npm run compute:metric-kpis -- --slug growth4u --dashboard-ranges --force --trigger san-366
 ```
 
 Flags: `--slug <slug[,slug]>` or `--all`, `--from` / `--to` (YYYY-MM-DD,
-defaults to the last 30 UTC days), `--force`, `--trigger`, `--json`,
-`--definition-version`.
+defaults to the last 30 UTC days), `--dashboard-ranges` (runs `1d`, `7d`,
+`30d`, `90d` ending today), `--as-of YYYY-MM-DD` (pin the dashboard range end
+date), `--force`, `--trigger`, `--json`, `--definition-version`.
 
 The runner writes `metric_kpi_runs` and `metric_kpi_values` through
 `computeMetricKpis(slug, range)`. It is safe for cron retries at the basic
 level: an existing `ok` run for the same slug/range/definition version is
 skipped, and a recent `running` run is treated as in-flight unless `--force` is
 passed.
+
+For the Métricas dashboard closeout after an ingest/backfill, prefer the single
+dashboard-range command:
+
+```bash
+DATABASE_URL=... npm run compute:metric-kpis -- --slug growth4u --dashboard-ranges --force --trigger san-366
+```
+
+It writes the exact ranges consumed by `/api/metrics/kpis?range=1d|7d|30d|90d`.
 
 ## Demo seed safety
 
