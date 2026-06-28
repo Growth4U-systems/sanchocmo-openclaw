@@ -5,7 +5,17 @@ import {
   type MetricKpiRunRow,
   type MetricKpiValueRow,
 } from "@/lib/data/metric-kpis";
+import {
+  listMetricStageRollups,
+  metricStageRollupStorageConfigured,
+  type MetricStageRollupRow,
+} from "@/lib/data/metric-stage-rollups";
 import { METRIC_KPI_DEFINITION_VERSION } from "@/lib/metrics/semantic-kpis";
+import {
+  buildMetricStageRollupReadModel,
+  type MetricStageRollupReadInput,
+  type MetricStageRollupReadModel,
+} from "@/lib/metrics/stage-rollup-read-model";
 import type { SurfaceKey } from "@/lib/metrics/surfaces";
 
 const DAY_MS = 86_400_000;
@@ -82,6 +92,7 @@ export interface MetricKpiReadModel {
   summary: MetricKpiReadModelSummary;
   values: MetricKpiReadModelValue[];
   northStar: MetricKpiReadModelValue | null;
+  stageRollups: MetricStageRollupReadModel;
 }
 
 const RANGE_DAYS: Record<MetricKpiRangeKey, number> = {
@@ -220,6 +231,7 @@ function emptyReadModel(args: {
   configured: boolean;
   slug: string;
   requestedRange: MetricKpiReadModel["requestedRange"];
+  stageRollups: MetricStageRollupReadModel;
 }): MetricKpiReadModel {
   return {
     configured: args.configured,
@@ -229,6 +241,7 @@ function emptyReadModel(args: {
     summary: toSummary([]),
     values: [],
     northStar: null,
+    stageRollups: args.stageRollups,
   };
 }
 
@@ -278,6 +291,55 @@ export function selectNorthStarKpi(values: MetricKpiReadModelValue[]): MetricKpi
     ?? null;
 }
 
+function toStageRollupInput(row: MetricStageRollupRow): MetricStageRollupReadInput {
+  return {
+    id: row.id,
+    stageId: row.stageId,
+    stageLabel: row.stageLabel,
+    stageOrder: row.stageOrder,
+    stageDate: row.stageDate,
+    channel: row.channel,
+    surface: row.surface,
+    source: row.source,
+    metricName: row.metricName,
+    value: row.value == null ? null : Number(row.value),
+    qualityStatus: row.qualityStatus,
+    provenanceLabel: row.provenanceLabel,
+    inputRefs: row.inputRefs,
+    rangeFrom: row.rangeFrom,
+    rangeTo: row.rangeTo,
+    definitionVersion: row.definitionVersion,
+    computedAt: row.computedAt,
+  };
+}
+
+async function getStageRollupsForReadModel(
+  slug: string,
+  requestedRange: MetricKpiReadModel["requestedRange"],
+  runId?: string | null,
+): Promise<MetricStageRollupReadModel> {
+  if (!requestedRange) {
+    return buildMetricStageRollupReadModel({
+      configured: metricStageRollupStorageConfigured(),
+      range: null,
+      rows: [],
+    });
+  }
+
+  const rows = await listMetricStageRollups(slug, {
+    from: requestedRange.from,
+    to: requestedRange.to,
+    runId,
+    definitionVersion: METRIC_KPI_DEFINITION_VERSION,
+  });
+
+  return buildMetricStageRollupReadModel({
+    configured: metricStageRollupStorageConfigured(),
+    range: { from: requestedRange.from, to: requestedRange.to },
+    rows: rows.map(toStageRollupInput),
+  });
+}
+
 export async function getMetricKpiReadModel(
   slug: string,
   opts: MetricKpiReadModelOptions = {},
@@ -293,12 +355,18 @@ export async function getMetricKpiReadModel(
         definitionVersion: METRIC_KPI_DEFINITION_VERSION,
       })
       : null;
+  const stageRollups = await getStageRollupsForReadModel(
+    slug,
+    requestedRange,
+    opts.runId ?? run?.id ?? null,
+  );
 
   if (requestedRange && !run && !opts.runId) {
     return emptyReadModel({
       configured: metricKpiStorageConfigured(),
       requestedRange,
       slug,
+      stageRollups,
     });
   }
 
@@ -317,5 +385,6 @@ export async function getMetricKpiReadModel(
     summary: toSummary(values, result.run),
     values,
     northStar: selectNorthStarKpi(values),
+    stageRollups,
   };
 }
