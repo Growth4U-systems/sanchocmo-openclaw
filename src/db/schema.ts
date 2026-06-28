@@ -794,3 +794,64 @@ export const metricKpiValues = pgTable("metric_kpi_values", {
   index("metric_kpi_values_slug_block_idx").on(table.slug, table.dashboardBlock),
   index("metric_kpi_values_slug_surface_idx").on(table.slug, table.surface),
 ]);
+
+// ============================================================
+// Metric funnel/stage semantic layer (SAN-362) - maps raw snapshot metrics onto
+// business funnel stages and persists stage/channel rollups. This is intentionally
+// pre-attribution: rows stay keyed by source/channel so later layers can dedupe.
+// ============================================================
+
+export const metricFunnelStageMap = pgTable("metric_funnel_stage_map", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  archetype: text("archetype").notNull().default("lead-to-sale"),
+  stageId: text("stage_id").notNull(),
+  stageLabel: text("stage_label").notNull(),
+  stageOrder: integer("stage_order").notNull(),
+  surface: text("surface"),
+  source: text("source").notNull(),
+  metricName: text("metric_name").notNull(),
+  sourceAliases: jsonb("source_aliases").$type<string[]>().notNull().default([]),
+  metricAliases: jsonb("metric_aliases").$type<string[]>().notNull().default([]),
+  dimensionsFilter: jsonb("dimensions_filter").$type<Record<string, string>>().notNull().default({}),
+  channel: text("channel"),
+  aggregation: text("aggregation").notNull().default("sum"),
+  qualityOverride: text("quality_override"),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_funnel_stage_map_slug_idx").on(table.slug),
+  index("metric_funnel_stage_map_slug_stage_idx").on(table.slug, table.stageId),
+]);
+
+export const metricStageRollups = pgTable("metric_stage_rollups", {
+  id: text("id").primaryKey(),
+  runId: text("run_id"),
+  mapId: text("map_id"),
+  slug: text("slug").notNull(),
+  stageId: text("stage_id").notNull(),
+  stageLabel: text("stage_label").notNull(),
+  stageOrder: integer("stage_order").notNull(),
+  stageDate: text("stage_date").notNull(),
+  channel: text("channel").notNull(),
+  surface: text("surface"),
+  source: text("source").notNull(),
+  metricName: text("metric_name").notNull(),
+  value: real("value").notNull(),
+  qualityStatus: text("quality_status").notNull(),
+  provenanceLabel: text("provenance_label").notNull(),
+  inputRefs: jsonb("input_refs").$type<Array<Record<string, unknown>>>().notNull().default([]),
+  dimensions: jsonb("dimensions").$type<Record<string, string>>().notNull().default({}),
+  rangeFrom: text("range_from").notNull(),
+  rangeTo: text("range_to").notNull(),
+  definitionVersion: integer("definition_version"),
+  computedAt: timestamp("computed_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("metric_stage_rollups_slug_date_idx").on(table.slug, table.stageDate),
+  index("metric_stage_rollups_slug_stage_idx").on(table.slug, table.stageId),
+  index("metric_stage_rollups_slug_channel_idx").on(table.slug, table.channel),
+  index("metric_stage_rollups_slug_range_idx").on(table.slug, table.rangeFrom, table.rangeTo),
+]);
