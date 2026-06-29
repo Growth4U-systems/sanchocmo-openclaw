@@ -11,11 +11,15 @@ import { getMetricsTimeSeries, type SeriesPoint } from "@/lib/data/metrics";
 import { loadPovBankFromNeon } from "@/lib/data/pov-bank";
 import { buildPersonaLoops } from "@/lib/data/persona-loops";
 import { listAllCarouselTemplates, listCarouselTemplates } from "@/lib/carousel/templates";
+import {
+  normalizeCadenceChannels,
+  toChannelList,
+  type NormalizedCadenceChannel,
+} from "@/lib/content/channel-loop-inputs";
 import type {
   ChannelLoopAntenna,
   ChannelLoopsPayload,
   ChannelLoopState,
-  ChannelMode,
   ContentTask,
   Idea,
   PersonaProfile,
@@ -69,29 +73,6 @@ export interface DispatchChannelConfig {
   channel_name?: string;
   configured_at: string;
   configured_by?: string;
-}
-
-interface CadenceChannelYaml {
-  active?: boolean;
-  frequency?: string;
-  best_days?: string[];
-  best_times?: string[];
-  mode?: ChannelMode;
-  label?: string;
-  strategy_doc?: string;
-  metrics_provider?: string;
-  primary_kpi?: string;
-  profiles?: Array<{
-    id?: string;
-    name: string;
-    role?: string;
-    handle?: string;
-    pillars_slant?: string[];
-    voice_doc?: string;
-    owner?: string;
-    metricool_profile_id?: string;
-    primary_kpi?: string;
-  }>;
 }
 
 interface CronJob {
@@ -169,7 +150,7 @@ export function getContentCalendar(
       if (!task.id || !Array.isArray(task.content_tasks)) continue;
       for (const ct of task.content_tasks) {
         if (ct.status === "Discarded" || ct.status === "Deferred") continue;
-        for (const channel of ct.target_channels || []) {
+        for (const channel of toChannelList(ct.target_channel, ct.target_channels)) {
           const draft = loadDraft(slug, ct.idea_id, channel);
           if (!draft) continue;
 
@@ -351,16 +332,15 @@ export async function getContentChannelLoops(slug: string): Promise<ChannelLoops
   const cadenceChannels = readCadenceChannels(slug);
   const cts = loadUnifiedContentTasks(slug);
   const jobs = loadContentJobs(slug);
-  const jobsState = readJSON<JobsState>(cronJobsStateFile(), { jobs: {} }).jobs;
+  const jobsState = loadJobsState();
   const gscConnected = isGscConnected(slug);
-  const gscData = gscConnected ? await gscAggregates(slug) : null;
+  const gscData = gscConnected ? await safeGscAggregates(slug) : null;
 
   const channelKeys = Object.keys(cadenceChannels);
   if (channelKeys.length === 0) {
     const seen = new Set<string>();
     for (const ct of cts) {
-      if (ct.target_channel) seen.add(ct.target_channel);
-      for (const channel of ct.target_channels || []) seen.add(channel);
+      for (const channel of toChannelList(ct.target_channel, ct.target_channels)) seen.add(channel);
     }
     channelKeys.push(...seen);
   }
@@ -370,7 +350,7 @@ export async function getContentChannelLoops(slug: string): Promise<ChannelLoops
     .map((ct) => ({
       fromChannel: ct.derived_from!.channel,
       fromTitle: ct.derived_from!.title || ct.derived_from!.idea_id,
-      toChannel: ct.target_channel || (ct.target_channels || [])[0] || "",
+      toChannel: toChannelList(ct.target_channel, ct.target_channels)[0] || "",
       toTitle: ct.title || ct.name || ct.id,
       toStatus: ct.status,
       toId: ct.id,
@@ -380,7 +360,7 @@ export async function getContentChannelLoops(slug: string): Promise<ChannelLoops
   const channels: ChannelLoopState[] = channelKeys.map((key) => {
     const ch = cadenceChannels[key] || {};
     const mine = cts.filter((ct) => ctMatchesChannel(ct, key));
-    const personaProfiles: PersonaProfile[] = (ch.profiles || []).map((profile) => ({
+    const personaProfiles: PersonaProfile[] = ch.profiles.map((profile) => ({
       id: profile.id || "",
       name: profile.name,
       role: profile.role,
@@ -452,8 +432,8 @@ export async function getContentChannelLoops(slug: string): Promise<ChannelLoops
       mode: ch.mode === "always-on" ? "always-on" : "scheduled",
       cadence: {
         frequency: ch.frequency || "",
-        bestDays: ch.best_days || [],
-        bestTimes: ch.best_times || [],
+        bestDays: ch.best_days,
+        bestTimes: ch.best_times,
       },
       strategyDoc,
       strategyDocExists,
@@ -468,7 +448,7 @@ export async function getContentChannelLoops(slug: string): Promise<ChannelLoops
         },
         ideation: { newCount, approvedCount },
         creation: { draftingCount, clarifyCount, readyCount, pendingMediaCount },
-        published: { thisMonth: publishedThisMonth, nextSlot: nextSlotLabel(ch.best_days || [], ch.best_times || []) },
+        published: { thisMonth: publishedThisMonth, nextSlot: nextSlotLabel(ch.best_days, ch.best_times) },
         metrics: { provider: metricsProvider, ...metrics },
       },
       nextAction,
@@ -496,26 +476,37 @@ function dispatchConfigPath(slug: string): string {
   return path.join(brandDir(slug), "content", "configs", "dispatch-channel.yml");
 }
 
-function readCadenceChannels(slug: string): Record<string, CadenceChannelYaml> {
-  const filePath = path.join(brandDir(slug), "content", "configs", "cadence-config.yml");
-  if (!fs.existsSync(filePath)) return {};
+function readCadenceChannels(slug: string): Record<string, NormalizedCadenceChannel> {
+  const configDir = path.join(brandDir(slug), "content", "configs");
+  const filePath = ["cadence-config.yml", "cadence-config.yaml"]
+    .map((name) => path.join(configDir, name))
+    .find((candidate) => fs.existsSync(candidate));
+  if (!filePath) return {};
   try {
-    const data = yaml.load(fs.readFileSync(filePath, "utf-8")) as { channels?: Record<string, CadenceChannelYaml> };
-    return data?.channels || {};
+    return normalizeCadenceChannels(yaml.load(fs.readFileSync(filePath, "utf-8")));
   } catch {
     return {};
   }
 }
 
 function loadContentJobs(slug: string): CronJob[] {
-  const jobs = readJSON<{ jobs: CronJob[] }>(cronJobsFile(), { jobs: [] }).jobs || [];
+  const rawJobs = readJSON<{ jobs?: unknown }>(cronJobsFile(), { jobs: [] }).jobs;
+  const jobs = Array.isArray(rawJobs) ? rawJobs : [];
   return jobs.filter((job) => {
-    if (!job.name.startsWith("Content:")) return false;
-    const message = job.payload?.message || "";
+    if (!job || typeof job !== "object") return false;
+    const candidate = job as Partial<CronJob>;
+    if (typeof candidate.name !== "string") return false;
+    if (!candidate.name.startsWith("Content:")) return false;
+    const message = typeof candidate.payload?.message === "string" ? candidate.payload.message : "";
     return message.includes(`brand/${slug}/`)
       || message.includes(`para ${slug}`)
-      || job.name.toLowerCase().includes(slug.toLowerCase());
-  });
+      || candidate.name.toLowerCase().includes(slug.toLowerCase());
+  }) as CronJob[];
+}
+
+function loadJobsState(): JobsState["jobs"] {
+  const raw = readJSON<{ jobs?: unknown }>(cronJobsStateFile(), { jobs: {} }).jobs;
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as JobsState["jobs"] : {};
 }
 
 function antennasForChannel(channel: string): string[] {
@@ -530,7 +521,7 @@ function buildAntennas(
 ): ChannelLoopAntenna[] {
   return antennasForChannel(channel).map((baseName) => {
     const job = jobs.find((candidate) => {
-      const base = candidate.name.replace(/^Content:\s*/, "").replace(/\s*-\s*.*$/, "").trim();
+      const base = candidate.name.replace(/^Content:\s*/, "").replace(/\s*[—-]\s*.*$/, "").trim();
       return base === baseName;
     });
     const folder = ANTENA_FOLDERS[baseName];
@@ -572,7 +563,7 @@ function readLastFinding(
 }
 
 function ctMatchesChannel(ct: ContentTask, channel: string): boolean {
-  return ct.target_channel === channel || (ct.target_channels || []).includes(channel);
+  return toChannelList(ct.target_channel, ct.target_channels).includes(channel);
 }
 
 function inCurrentMonth(iso?: string): boolean {
@@ -645,6 +636,18 @@ async function gscAggregates(slug: string): Promise<NonNullable<ChannelLoopState
     prevClicks30d: prevClicks30.days > 0 ? prevClicks30.value : null,
     prevImpressions30d: prevImpressions30.days > 0 ? prevImpressions30.value : null,
   };
+}
+
+async function safeGscAggregates(slug: string): Promise<NonNullable<ChannelLoopState["stages"]["metrics"]["gsc"]> | null> {
+  try {
+    return await gscAggregates(slug);
+  } catch (err) {
+    console.warn(
+      `[content/read-model] GSC metrics unavailable for ${slug}:`,
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
 }
 
 function nextSlotLabel(bestDays: string[], bestTimes: string[]): string | null {

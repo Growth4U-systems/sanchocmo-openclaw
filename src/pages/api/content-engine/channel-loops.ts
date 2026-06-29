@@ -20,6 +20,11 @@ import { cronJobsFile, cronJobsStateFile } from "@/lib/data/openclaw-paths";
 import { loadUnifiedContentTasks } from "@/lib/data/content-tasks-flat";
 import { loadDraft } from "@/lib/data/drafts";
 import { getMetricsTimeSeries, type SeriesPoint } from "@/lib/data/metrics";
+import {
+  normalizeCadenceChannels,
+  toChannelList,
+  type NormalizedCadenceChannel,
+} from "@/lib/content/channel-loop-inputs";
 import type {
   ChannelLoopAntenna,
   ChannelLoopState,
@@ -33,32 +38,6 @@ import { buildPersonaLoops } from "@/lib/data/persona-loops";
 
 // ── cadence-config ──────────────────────────────────────────────
 
-interface CadenceChannelYaml {
-  active?: boolean;
-  frequency?: string;
-  best_days?: string[];
-  best_times?: string[];
-  // SAN-141 channel-entity keys (optional, backward compatible — the cadence
-  // PUT in configs.ts preserves unknown keys, so these survive UI edits).
-  mode?: ChannelMode;
-  label?: string;
-  strategy_doc?: string;
-  metrics_provider?: string;
-  primary_kpi?: string;
-  // SAN-163 — Founder-Led voices declared under this channel.
-  profiles?: Array<{
-    id?: string;
-    name: string;
-    role?: string;
-    handle?: string;
-    pillars_slant?: string[];
-    voice_doc?: string;
-    owner?: string;
-    metricool_profile_id?: string;
-    primary_kpi?: string;
-  }>;
-}
-
 const DEFAULT_LABELS: Record<string, string> = {
   linkedin: "Founder-Led Content",
   twitter: "X / Twitter",
@@ -70,12 +49,14 @@ const DEFAULT_LABELS: Record<string, string> = {
   youtube: "YouTube",
 };
 
-function readCadenceChannels(slug: string): Record<string, CadenceChannelYaml> {
-  const f = path.join(BASE, "brand", slug, "content", "configs", "cadence-config.yml");
-  if (!fs.existsSync(f)) return {};
+function readCadenceChannels(slug: string): Record<string, NormalizedCadenceChannel> {
+  const configDir = path.join(BASE, "brand", slug, "content", "configs");
+  const f = ["cadence-config.yml", "cadence-config.yaml"]
+    .map((name) => path.join(configDir, name))
+    .find((candidate) => fs.existsSync(candidate));
+  if (!f) return {};
   try {
-    const data = yaml.load(fs.readFileSync(f, "utf-8")) as { channels?: Record<string, CadenceChannelYaml> };
-    return data?.channels || {};
+    return normalizeCadenceChannels(yaml.load(fs.readFileSync(f, "utf-8")));
   } catch {
     return {};
   }
@@ -115,14 +96,23 @@ function readJSON<T>(p: string, fallback: T): T {
 }
 
 function loadContentJobs(slug: string): CronJob[] {
-  const jobs = readJSON<{ jobs: CronJob[] }>(cronJobsFile(), { jobs: [] }).jobs || [];
+  const rawJobs = readJSON<{ jobs?: unknown }>(cronJobsFile(), { jobs: [] }).jobs;
+  const jobs = Array.isArray(rawJobs) ? rawJobs : [];
   return jobs.filter((j) => {
-    if (!j.name.startsWith("Content:")) return false;
-    const msg = j.payload?.message || "";
+    if (!j || typeof j !== "object") return false;
+    const job = j as Partial<CronJob>;
+    if (typeof job.name !== "string") return false;
+    if (!job.name.startsWith("Content:")) return false;
+    const msg = typeof job.payload?.message === "string" ? job.payload.message : "";
     return msg.includes(`brand/${slug}/`)
       || msg.includes(`para ${slug}`)
-      || j.name.toLowerCase().includes(slug.toLowerCase());
-  });
+      || job.name.toLowerCase().includes(slug.toLowerCase());
+  }) as CronJob[];
+}
+
+function loadJobsState(): JobsState["jobs"] {
+  const raw = readJSON<{ jobs?: unknown }>(cronJobsStateFile(), { jobs: {} }).jobs;
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as JobsState["jobs"] : {};
 }
 
 interface JobsState {
@@ -152,7 +142,7 @@ function buildAntennas(slug: string, channel: string, jobs: CronJob[], jobsState
   const wanted = antennasForChannel(channel);
   return wanted.map((baseName) => {
     const job = jobs.find((j) => {
-      const b = j.name.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
+      const b = j.name.replace(/^Content:\s*/, "").replace(/\s*[—-]\s*.*$/, "").trim();
       return b === baseName;
     });
     const folder = ANTENA_FOLDERS[baseName];
@@ -174,7 +164,7 @@ function buildAntennas(slug: string, channel: string, jobs: CronJob[], jobsState
 // ── stage helpers ───────────────────────────────────────────────
 
 function ctMatchesChannel(ct: ContentTask, channel: string): boolean {
-  return ct.target_channel === channel || (ct.target_channels || []).includes(channel);
+  return toChannelList(ct.target_channel, ct.target_channels).includes(channel);
 }
 
 function inCurrentMonth(iso?: string): boolean {
@@ -256,6 +246,18 @@ async function gscAggregates(slug: string): Promise<NonNullable<ChannelLoopState
   };
 }
 
+async function safeGscAggregates(slug: string): Promise<NonNullable<ChannelLoopState["stages"]["metrics"]["gsc"]> | null> {
+  try {
+    return await gscAggregates(slug);
+  } catch (err) {
+    console.warn(
+      `[content-engine/channel-loops] GSC metrics unavailable for ${slug}:`,
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
+}
+
 const DOW_LABELS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 const DAY_ALIASES: Record<string, number> = {
   sunday: 0, domingo: 0, sun: 0, dom: 0,
@@ -317,9 +319,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
   const cadenceChannels = readCadenceChannels(slug);
   const cts = loadUnifiedContentTasks(slug);
   const jobs = loadContentJobs(slug);
-  const jobsState = readJSON<JobsState>(cronJobsStateFile(), { jobs: {} }).jobs;
+  const jobsState = loadJobsState();
   const gscConnected = isGscConnected(slug);
-  const gscData = gscConnected ? await gscAggregates(slug) : null;
+  const gscData = gscConnected ? await safeGscAggregates(slug) : null;
 
   // Channel registry = cadence-config keys; fall back to channels seen in CTs
   // so a brand without cadence still gets a usable view.
@@ -327,8 +329,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
   if (channelKeys.length === 0) {
     const seen = new Set<string>();
     for (const ct of cts) {
-      if (ct.target_channel) seen.add(ct.target_channel);
-      for (const c of ct.target_channels || []) seen.add(c);
+      for (const c of toChannelList(ct.target_channel, ct.target_channels)) seen.add(c);
     }
     channelKeys.push(...seen);
   }
@@ -340,7 +341,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
     .map((ct) => ({
       fromChannel: ct.derived_from!.channel,
       fromTitle: ct.derived_from!.title || ct.derived_from!.idea_id,
-      toChannel: ct.target_channel || (ct.target_channels || [])[0] || "",
+      toChannel: toChannelList(ct.target_channel, ct.target_channels)[0] || "",
       toTitle: ct.title || ct.name || ct.id,
       toStatus: ct.status,
       toId: ct.id,
@@ -352,7 +353,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
     const mine = cts.filter((ct) => ctMatchesChannel(ct, key));
 
     // SAN-163 — split into per-persona sub-loops when the channel declares voices.
-    const personaProfiles: PersonaProfile[] = (ch.profiles || []).map((p) => ({
+    const personaProfiles: PersonaProfile[] = ch.profiles.map((p) => ({
       id: p.id || "",
       name: p.name,
       role: p.role,
@@ -433,8 +434,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
       mode,
       cadence: {
         frequency: ch.frequency || "",
-        bestDays: ch.best_days || [],
-        bestTimes: ch.best_times || [],
+        bestDays: ch.best_days,
+        bestTimes: ch.best_times,
       },
       strategyDoc,
       strategyDocExists,
@@ -444,7 +445,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
         antennas: { enabled: antennasEnabled, total: antennas.length, hasError: antennasError, lastRunAt: antennasLastRun },
         ideation: { newCount, approvedCount },
         creation: { draftingCount, clarifyCount, readyCount, pendingMediaCount },
-        published: { thisMonth: publishedThisMonth, nextSlot: nextSlotLabel(ch.best_days || [], ch.best_times || []) },
+        published: { thisMonth: publishedThisMonth, nextSlot: nextSlotLabel(ch.best_days, ch.best_times) },
         metrics: { provider: metricsProvider, ...metrics },
       },
       nextAction,
