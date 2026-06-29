@@ -67,7 +67,7 @@ const REPURPOSE_STATUS_LABEL: Record<string, string> = {
 const FOUNDER_LED_CHANNELS = new Set(["linkedin", "twitter", "x"]);
 
 export function ChannelsTab({ slug, onGo, openChat }: Props) {
-  const { data, isLoading } = useChannelLoops(slug);
+  const { data, isLoading, isError, error, refetch } = useChannelLoops(slug);
   const [antennasFor, setAntennasFor] = useState<ChannelLoopState | null>(null);
   const [metricsFor, setMetricsFor] = useState<ChannelLoopState | null>(null);
   const [docPath, setDocPath] = useState<string | null>(null);
@@ -127,6 +127,24 @@ export function ChannelsTab({ slug, onGo, openChat }: Props) {
       "Añade una voz founder-led: dime quién es, en qué red (LinkedIn o X), su handle, la cadencia y la cuenta de publicación (Metricool). Una voz = una persona en una red.";
     openChat(slug, cfg);
   };
+
+  if (isError) {
+    return (
+      <div className="border-[3px] border-destructive rounded-lg bg-destructive/5 p-5 text-center" style={{ boxShadow: "var(--pop-sm)" }}>
+        <p className="font-bold text-sm text-destructive mb-1">No se pudieron cargar los canales.</p>
+        <p className="text-xs text-muted-foreground mb-3">
+          {error instanceof Error ? error.message : "Error inesperado al leer Content Creation."}
+        </p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="px-4 py-2 text-sm font-semibold border-2 border-ink rounded-lg bg-card hover:-translate-y-0.5 hover:shadow-comic transition-all"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return <p className="text-muted-foreground text-sm py-8 text-center">Cargando canales…</p>;

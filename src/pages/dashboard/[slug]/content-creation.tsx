@@ -31,7 +31,7 @@ const TAB_ALIASES: Record<string, TabKey> = { engine: "channels" };
 export default function ContentCreationPage() {
   const slug = useSlugSync();
   const router = useRouter();
-  const { data, isLoading } = useContentCreation(slug, null);
+  const { data, isLoading, isError } = useContentCreation(slug, null);
   const openChat = useOpenChat();
   const [activeTab, setActiveTab] = useState<TabKey>("channels");
 
@@ -66,7 +66,8 @@ export default function ContentCreationPage() {
     router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
   };
 
-  const hasProject = !isLoading && data ? data.hasProject : true;
+  const hasProject = data ? data.hasProject : true;
+  const legacyStatePending = isLoading && !data && !isError;
 
   return (
     <DashboardLayout>
@@ -120,17 +121,19 @@ export default function ContentCreationPage() {
       </div>
 
       {/* Content */}
-      {isLoading && <p className="text-muted-foreground">Cargando...</p>}
-      {!isLoading && slug && !hasProject && data && (
-        <StrategyDocsTab slug={slug} data={data} openChat={openChat} />
+      {legacyStatePending && activeTab !== "channels" && activeTab !== "setup" && (
+        <p className="text-muted-foreground">Cargando...</p>
       )}
-      {!isLoading && slug && hasProject && activeTab === "channels" && (
+      {slug && activeTab === "channels" && (
         <ChannelsTab slug={slug} openChat={openChat} onGo={(tab, channel, status, extra) => switchTab(tab, channel, status, extra)} />
       )}
-      {!isLoading && slug && hasProject && activeTab === "setup" && (
+      {slug && activeTab === "setup" && (
         <SetupTab slug={slug} openChat={openChat} focusChannel={channelParam} />
       )}
-      {!isLoading && slug && hasProject && activeTab === "ideas" && (
+      {!legacyStatePending && slug && !hasProject && data && activeTab !== "channels" && activeTab !== "setup" && (
+        <StrategyDocsTab slug={slug} data={data} openChat={openChat} />
+      )}
+      {!legacyStatePending && slug && hasProject && activeTab === "ideas" && (
         <IdeaQueueTab
           slug={slug}
           openChat={openChat}
@@ -141,7 +144,7 @@ export default function ContentCreationPage() {
           initialUnassigned={unassignedParam}
         />
       )}
-      {!isLoading && slug && hasProject && activeTab === "calendar" && (
+      {!legacyStatePending && slug && hasProject && activeTab === "calendar" && (
         <PostingCalendarTab
           slug={slug}
           focusKey={typeof router.query.focus === "string" ? router.query.focus : null}

@@ -23,6 +23,7 @@ import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE, competitorsSourcesFile } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
 import { loadPovBankFromNeon, savePovBankToNeon } from "@/lib/data/pov-bank";
+import { normalizeCadenceChannels } from "@/lib/content/channel-loop-inputs";
 
 // ── helpers ────────────────────────────────────────────────────
 function readYaml(filePath: string): unknown {
@@ -338,30 +339,41 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     // POV Bank — Neon is the source of truth. Normal config reads never
     // consult legacy JSON; explicit imports go through /api/content-engine/pov-bank?bootstrap=true.
-    const povBankResult = await loadPovBankFromNeon(slug);
-    configs.povBank = povBankResult.povBank;
-    configs.povBankStorage = {
-      provider: "neon",
-      configured: povBankResult.configured,
-      seededFromLegacyJson: povBankResult.seededFromLegacyJson,
-      error: povBankResult.error || null,
-    };
+    try {
+      const povBankResult = await loadPovBankFromNeon(slug);
+      configs.povBank = povBankResult.povBank;
+      configs.povBankStorage = {
+        provider: "neon",
+        configured: povBankResult.configured,
+        seededFromLegacyJson: povBankResult.seededFromLegacyJson,
+        error: povBankResult.error || null,
+      };
+    } catch (err) {
+      configs.povBank = null;
+      configs.povBankStorage = {
+        provider: "neon",
+        configured: true,
+        seededFromLegacyJson: false,
+        error: err instanceof Error ? err.message : "POV Bank unavailable",
+      };
+    }
 
     // Cadence
-    const cadenceFile = path.join(configDir, "cadence-config.yml");
+    const cadenceFile = ["cadence-config.yml", "cadence-config.yaml"]
+      .map((name) => path.join(configDir, name))
+      .find((candidate) => fs.existsSync(candidate)) || path.join(configDir, "cadence-config.yml");
     const cadenceData = readYaml(cadenceFile) as Record<string, unknown> | null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const channels = (cadenceData?.channels || {}) as Record<string, any>;
+    const channels = normalizeCadenceChannels(cadenceData);
     configs.cadence = {
       businessModel: cadenceData?.business_model || "B2B",
       channels: Object.entries(channels).map(([key, ch]) => ({
         key,
         active: ch.active ?? false,
         frequency: ch.frequency || "",
-        bestDays: ch.best_days || [],
-        bestTimes: ch.best_times || [],
+        bestDays: ch.best_days,
+        bestTimes: ch.best_times,
         gating: ch.gating || "ungated",
-        contentTypes: ch.content_types || [],
+        contentTypes: ch.content_types,
         // SAN-141 channel-entity keys. Optional in the YAML; the cadence PUT
         // below preserves them via the `...existingCh` spread, so they
         // survive edits made from the cadence editor UI.
@@ -370,7 +382,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         strategyDoc: ch.strategy_doc || "",
         metricsProvider: ch.metrics_provider || "",
         primaryKpi: ch.primary_kpi || "",
-        profiles: (ch.profiles || []).map((p: Record<string, unknown>) => ({
+        profiles: ch.profiles.map((p) => ({
           id: p.id,
           name: p.name,
           handle: p.handle,

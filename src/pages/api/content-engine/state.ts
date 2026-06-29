@@ -107,17 +107,26 @@ function loadPillars(slug: string): Pillar[] {
 }
 
 async function loadPovBank(slug: string): Promise<PovBank | null> {
-  const result = await loadPovBankFromNeon(slug);
-  return result.povBank as PovBank | null;
+  try {
+    const result = await loadPovBankFromNeon(slug);
+    return result.povBank as PovBank | null;
+  } catch (err) {
+    console.warn(
+      `[content-engine/state] POV Bank unavailable for ${slug}:`,
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
 }
 
 function loadJobs(): CronJob[] {
-  const data = readJSON<{ jobs: CronJob[] }>(cronJobsFile(), { jobs: [] });
-  return data.jobs || [];
+  const data = readJSON<{ jobs?: unknown }>(cronJobsFile(), { jobs: [] });
+  return Array.isArray(data.jobs) ? data.jobs as CronJob[] : [];
 }
 
 function loadJobsState(): JobsState["jobs"] {
-  return readJSON<JobsState>(cronJobsStateFile(), { jobs: {} }).jobs;
+  const raw = readJSON<{ jobs?: unknown }>(cronJobsStateFile(), { jobs: {} }).jobs;
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as JobsState["jobs"] : {};
 }
 
 function loadActivity(slug: string): ActivityEvent[] {
@@ -320,7 +329,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // ─── Last signals per antena ──────────────────────────────
   const lastSignals: Finding[] = antenaCrons.map((j) => {
-    const baseName = j.name.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
+    const baseName = j.name.replace(/^Content:\s*/, "").replace(/\s*[—-]\s*.*$/, "").trim();
     const folder = ANTENA_FOLDERS[baseName];
     const finding = folder ? readLastFinding(slug, folder) : { date: null, finding: null, count: null, status: null };
     const runtimeState = jobsState[j.id]?.state;
