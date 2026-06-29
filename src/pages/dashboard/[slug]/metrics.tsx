@@ -310,7 +310,12 @@ function MetricsPageInner({ slug }: { slug: string }) {
                 />
               )}
               {activeTab === "conversion" && <ConversionView kpiData={kpiData} />}
-              {activeTab === "trends" && <TrendsView kpiData={kpiData} />}
+              {activeTab === "trends" && (
+                <TrendsView
+                  dashboardDefinition={dashboard?.definition}
+                  kpiData={kpiData}
+                />
+              )}
             </>
           )}
         </div>
@@ -1406,9 +1411,15 @@ function StageLeakPanel({
   );
 }
 
-function TrendsView({ kpiData }: { kpiData?: MetricKpiResult }) {
-  const northStar = kpiData?.northStar ?? null;
-  const trendKpis = selectOverviewKpis(kpiData);
+function TrendsView({
+  dashboardDefinition,
+  kpiData,
+}: {
+  dashboardDefinition?: DashboardDefinition | null;
+  kpiData?: MetricKpiResult;
+}) {
+  const northStar = selectDashboardNorthStarKpi(kpiData, dashboardDefinition);
+  const trendKpis = selectOverviewKpis(kpiData, northStar);
   return (
     <div className="space-y-5">
       <Panel>
@@ -1437,7 +1448,7 @@ function TrendsView({ kpiData }: { kpiData?: MetricKpiResult }) {
             <MetricTile
               label="North Star"
               value={northStar?.displayValue ?? "-"}
-              hint={northStar ? sourceMetricLabel(northStar) : "Sin KPI overview"}
+              hint={northStar ? sourceMetricLabel(northStar) : "Sin KPI enlazado"}
             />
             <MetricTile
               label="Rango computado"

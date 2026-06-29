@@ -9,6 +9,7 @@ import {
   getMetricKpiReadModelReadThrough,
   type MetricKpiRangeKey,
 } from "@/lib/data/metric-kpi-read-model";
+import { getDashboardDefinition } from "@/lib/data/metric-dashboard";
 import type { SurfaceKey } from "@/lib/metrics/surfaces";
 
 const RANGES = new Set<MetricKpiRangeKey>(["1d", "7d", "30d", "90d"]);
@@ -59,9 +60,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: `Invalid surface: ${surface}` });
   }
 
+  const dashboard = await getDashboardDefinition(slug).catch(() => null);
+
   return res.status(200).json(await getMetricKpiReadModelReadThrough(slug, {
     dashboardBlock: dashboardBlock as never,
     from: firstString(req.query.from),
+    northStar: dashboard?.definition?.northStar ?? null,
     range,
     runId: firstString(req.query.runId),
     surface: surface as SurfaceKey | undefined,

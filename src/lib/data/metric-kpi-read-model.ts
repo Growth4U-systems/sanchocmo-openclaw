@@ -53,6 +53,7 @@ export interface MetricKpiReadModelOptions extends MetricKpiReadRangeInput {
   runId?: string | null;
   surface?: SurfaceKey | null;
   dashboardBlock?: "overview" | "surface" | "channels" | "conversion" | "trends" | null;
+  northStar?: MetricKpiNorthStarHint | null;
 }
 
 export interface MetricKpiReadThroughOptions extends MetricKpiReadModelOptions {
@@ -118,6 +119,11 @@ export interface MetricKpiReadModel {
   values: MetricKpiReadModelValue[];
   northStar: MetricKpiReadModelValue | null;
   stageRollups: MetricStageRollupReadModel;
+}
+
+export interface MetricKpiNorthStarHint {
+  kpiRef?: string | null;
+  label?: string | null;
 }
 
 const RANGE_DAYS: Record<MetricKpiRangeKey, number> = {
@@ -315,7 +321,61 @@ export function toMetricKpiReadModelValue(row: MetricKpiValueRow): MetricKpiRead
   };
 }
 
-export function selectNorthStarKpi(values: MetricKpiReadModelValue[]): MetricKpiReadModelValue | null {
+function normalizeComparable(value?: string | null): string {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[_\-.]+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function preferPopulated(values: MetricKpiReadModelValue[]): MetricKpiReadModelValue | null {
+  return values.find((value) => value.value != null) ?? values[0] ?? null;
+}
+
+function northStarMatchesKpi(label: string, kpi: MetricKpiReadModelValue): boolean {
+  const haystack = normalizeComparable(`${kpi.kpiId} ${kpi.label} ${kpi.source ?? ""} ${kpi.metricName ?? ""}`);
+  if (/meeting|reunion|cita|appointment/.test(label)) {
+    return /meeting|reunion|cita|appointment/.test(haystack);
+  }
+  if (/lead|contact/.test(label)) {
+    return /lead|contact/.test(haystack);
+  }
+  if (/deal|opportunit|oportunidad|proposal|propuesta/.test(label)) {
+    return /deal|opportunit|oportunidad|proposal|propuesta/.test(haystack);
+  }
+  if (/revenue|gmv|venta|sales|ingreso/.test(label)) {
+    return /revenue|gmv|venta|sales|ingreso|value/.test(haystack);
+  }
+  if (/activation|activacion|activated/.test(label)) {
+    return /activation|activacion|activated/.test(haystack);
+  }
+  return false;
+}
+
+export function selectNorthStarKpi(
+  values: MetricKpiReadModelValue[],
+  northStar?: MetricKpiNorthStarHint | null,
+): MetricKpiReadModelValue | null {
+  const ref = normalizeComparable(northStar?.kpiRef);
+  const label = normalizeComparable(northStar?.label);
+
+  if (ref) {
+    const explicit = values.filter((value) =>
+      [value.kpiId, value.label, value.metricName, `${value.source ?? ""}.${value.metricName ?? ""}`]
+        .some((candidate) => normalizeComparable(candidate) === ref),
+    );
+    const match = preferPopulated(explicit);
+    if (match) return match;
+  }
+
+  if (label) {
+    const exact = preferPopulated(values.filter((value) => normalizeComparable(value.label) === label));
+    if (exact) return exact;
+    return preferPopulated(values.filter((value) => northStarMatchesKpi(label, value)));
+  }
+
   return values.find((value) => value.dashboardBlock === "overview" && value.value != null)
     ?? values.find((value) => value.value != null)
     ?? values.find((value) => value.dashboardBlock === "overview")
@@ -415,7 +475,7 @@ export async function getMetricKpiReadModel(
     run: result.run ? toRun(result.run) : null,
     summary: toSummary(values, result.run),
     values,
-    northStar: selectNorthStarKpi(values),
+    northStar: selectNorthStarKpi(values, opts.northStar),
     stageRollups,
   };
 }

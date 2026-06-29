@@ -98,7 +98,7 @@ const ARCHETYPE_TEMPLATES: Record<string, { activationEvent: string; northStarLa
   "lead-to-sale": {
     activationEvent: "Primera reunión cualificada",
     northStarLabel: "Reuniones cualificadas",
-    funnel: ["Sessions", "Leads", "Cualificados", "Reuniones", "Deals"],
+    funnel: ["Visitas web", "Leads", "Cualificados", "Reuniones", "Deals"],
   },
   marketplace: {
     activationEvent: "Primera transacción completada",
