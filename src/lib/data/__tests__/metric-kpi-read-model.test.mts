@@ -125,22 +125,29 @@ test("adapts persisted KPI rows into client-safe read model values", () => {
   assert.equal(value.inputRefs.length, 1);
 });
 
-test("selects an overview KPI as the north star without requiring hardcoded business metrics", () => {
+test("selects the dashboard-defined north star over the generic overview KPI", () => {
   const values = [
-    { kpiId: "paid.meta.spend", dashboardBlock: "surface", value: 10 },
+    {
+      kpiId: "pipeline.ghl.appointments",
+      label: "Reuniones GHL",
+      dashboardBlock: "surface",
+      source: "ghl",
+      metricName: "appointments",
+      value: 10,
+    },
     { kpiId: "web.sessions", dashboardBlock: "overview", value: 25 },
   ] as mod.MetricKpiReadModelValue[];
 
-  assert.equal(selectNorthStarKpi(values)?.kpiId, "web.sessions");
+  assert.equal(selectNorthStarKpi(values, { label: "Reuniones cualificadas" })?.kpiId, "pipeline.ghl.appointments");
 });
 
-test("selects a populated KPI over an empty overview KPI", () => {
+test("returns null for an unmatched dashboard north star instead of inventing a fallback", () => {
   const values = [
-    { kpiId: "web.sessions", dashboardBlock: "overview", value: null },
-    { kpiId: "paid.meta.spend", dashboardBlock: "surface", value: 10 },
+    { kpiId: "web.sessions", label: "Visitas web", dashboardBlock: "overview", value: 25 },
+    { kpiId: "conversion.stage_rollups", label: "Embudo unificado", dashboardBlock: "conversion", value: 3 },
   ] as mod.MetricKpiReadModelValue[];
 
-  assert.equal(selectNorthStarKpi(values)?.kpiId, "paid.meta.spend");
+  assert.equal(selectNorthStarKpi(values, { label: "Retencion neta" }), null);
 });
 
 test("read-through computes the requested range when no KPI run exists", async () => {

@@ -133,3 +133,8 @@ test("template-only marketplace (no plan) keeps the archetype GMV North Star lab
   assert.equal(def.archetype, "marketplace");
   assert.match(def.northStar.label ?? "", /GMV|transacci/i);
 });
+
+test("template-only lead-to-sale uses visitas web instead of Sessions in the funnel", () => {
+  const def = buildTemplateDefinition("lead-to-sale");
+  assert.equal(def.plan.funnel[0]?.name, "Visitas web");
+});

@@ -165,13 +165,13 @@ const ROLLUP_METADATA_DIMENSION_KEYS = new Set([
 ]);
 
 const webSeoDefinitions: MetricKpiDefinition[] = [
-  kpi("web.sessions", "Sessions", "overview", "web", "ga4", "sessions"),
-  kpi("web.users", "Users", "surface", "web", "ga4", "totalUsers"),
-  kpi("web.new_users", "New users", "surface", "web", "ga4", "newUsers"),
-  kpi("web.pageviews", "Pageviews", "surface", "web", "ga4", "screenPageViews"),
+  kpi("web.sessions", "Visitas web", "overview", "web", "ga4", "sessions"),
+  kpi("web.users", "Usuarios", "surface", "web", "ga4", "totalUsers"),
+  kpi("web.new_users", "Usuarios nuevos", "surface", "web", "ga4", "newUsers"),
+  kpi("web.pageviews", "Paginas vistas", "surface", "web", "ga4", "screenPageViews"),
   kpi(
     "web.conversions",
-    "GA4 conversions",
+    "Conversiones GA4",
     "surface",
     "web",
     "ga4",
@@ -186,17 +186,17 @@ const webSeoDefinitions: MetricKpiDefinition[] = [
     "engagementRate",
     { unit: "%" },
   ),
-  kpi("web.gsc_clicks", "GSC clicks", "surface", "web", "gsc", "clicks"),
+  kpi("web.gsc_clicks", "Clicks GSC", "surface", "web", "gsc", "clicks"),
   kpi(
     "web.gsc_impressions",
-    "GSC impressions",
+    "Impresiones GSC",
     "surface",
     "web",
     "gsc",
     "impressions",
   ),
-  kpi("web.gsc_ctr", "GSC CTR", "surface", "web", "gsc", "ctr", { unit: "%" }),
-  kpi("web.gsc_position", "Avg position", "surface", "web", "gsc", "position"),
+  kpi("web.gsc_ctr", "CTR GSC", "surface", "web", "gsc", "ctr", { unit: "%" }),
+  kpi("web.gsc_position", "Posicion media", "surface", "web", "gsc", "position"),
   kpi(
     "web.pagespeed_mobile",
     "PageSpeed mobile",
@@ -458,7 +458,7 @@ const productDefinitions: MetricKpiDefinition[] = [
   ),
   kpi(
     "product.north_star_weekly",
-    "Product North Star weekly",
+    "North Star producto semanal",
     "surface",
     "product",
     "posthog",
@@ -469,7 +469,7 @@ const productDefinitions: MetricKpiDefinition[] = [
 const pipelineDefinitions: MetricKpiDefinition[] = [
   kpi(
     "pipeline.ghl.contacts",
-    "GHL total contacts",
+    "Contactos GHL",
     "surface",
     "pipeline",
     "ghl",
@@ -480,7 +480,7 @@ const pipelineDefinitions: MetricKpiDefinition[] = [
   ),
   kpi(
     "pipeline.ghl.opportunities",
-    "GHL opportunities",
+    "Oportunidades GHL",
     "surface",
     "pipeline",
     "ghl",
@@ -491,7 +491,7 @@ const pipelineDefinitions: MetricKpiDefinition[] = [
   ),
   kpi(
     "pipeline.ghl.pipeline_value",
-    "GHL pipeline value",
+    "Valor pipeline GHL",
     "surface",
     "pipeline",
     "ghl",
@@ -503,7 +503,7 @@ const pipelineDefinitions: MetricKpiDefinition[] = [
   ),
   kpi(
     "pipeline.ghl.appointments",
-    "GHL appointments",
+    "Reuniones GHL",
     "surface",
     "pipeline",
     "ghl",
@@ -686,7 +686,7 @@ const futureBlockDefinitions: MetricKpiDefinition[] = [
   ),
   kpi(
     "conversion.stage_rollups",
-    "Conversion stage rollups",
+    "Embudo unificado",
     "conversion",
     undefined,
     "semantic",
