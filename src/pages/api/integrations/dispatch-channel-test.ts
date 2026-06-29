@@ -23,11 +23,8 @@
  * test here would be misleading. UI greys the button instead.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs";
-import path from "path";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
-import { BASE } from "@/lib/data/paths";
-import { getSlackBotToken } from "@/lib/data/integrations";
+import { resolveSlackBotToken } from "@/lib/slack-token";
 
 interface TestRequest {
   slug?: string;
@@ -43,39 +40,6 @@ interface SlackPostResponse {
   provided?: string;
   ts?: string;
   channel?: string;
-}
-
-function loadBrandEnv(slug: string): Record<string, string> {
-  const envPath = path.join(BASE, "brand", slug, ".env");
-  const vars: Record<string, string> = {};
-  try {
-    const content = fs.readFileSync(envPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      vars[trimmed.slice(0, eq)] = trimmed.slice(eq + 1).replace(/^["']|["']$/g, "");
-    }
-  } catch { /* env file optional */ }
-  return vars;
-}
-
-function resolveSlackToken(slug: string): { token: string | null; source: string } {
-  // Same order as send-dispatch.ts. We track which tier wins for the
-  // diagnostics surface so the operator can tell "OAuth not done" apart
-  // from "no env var on the host" without having to grep three places.
-  const slugUpper = slug.toUpperCase();
-  try {
-    const oauth = getSlackBotToken(slug);
-    if (oauth) return { token: oauth, source: "integrations.json (OAuth)" };
-  } catch { /* keep going */ }
-  const env = loadBrandEnv(slug);
-  const brandToken = env[`${slugUpper}_SLACK_BOT_TOKEN`] || env.SLACK_BOT_TOKEN;
-  if (brandToken) return { token: brandToken, source: `brand/${slug}/.env` };
-  const procToken = process.env[`${slugUpper}_SLACK_BOT_TOKEN`] || process.env.SLACK_BOT_TOKEN;
-  if (procToken) return { token: procToken, source: "process.env (workspace-wide)" };
-  return { token: null, source: "" };
 }
 
 interface DiagnosedError {
@@ -154,12 +118,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: `Unknown transport: ${transport}` });
   }
 
-  const { token, source } = resolveSlackToken(slug);
+  const { token, source } = resolveSlackBotToken(slug);
   if (!token) {
     return res.status(400).json({
       ok: false,
       error: "no_token",
-      suggest: `No hay Slack bot token para ${slug}. Conectá Slack en Settings → APIs (OAuth), o agregá ${slug.toUpperCase()}_SLACK_BOT_TOKEN a brand/${slug}/.env, o definí SLACK_BOT_TOKEN como env var del host (workspace-wide).`,
+      suggest: `No hay Slack bot token para ${slug}. Conectá Slack en Settings → APIs (OAuth), o agregá ${slug.replace(/-/g, "_").toUpperCase()}_SLACK_BOT_TOKEN a brand/${slug}/.env, o definí SLACK_BOT_TOKEN como env var del host (workspace-wide).`,
     });
   }
 

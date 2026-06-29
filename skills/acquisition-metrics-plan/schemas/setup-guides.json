@@ -357,23 +357,23 @@
     "time": "10 min",
     "steps": [
       {
-        "title": "Crea una Slack App",
-        "instructions": "Ve a <a href='https://api.slack.com/apps' target='_blank'>api.slack.com/apps</a> → <strong>Create New App</strong> → <strong>From scratch</strong>. Nombre: <code>SanchoCMO</code>. Workspace: el de tu empresa.",
+        "title": "Usa el app público SanchoCMO",
+        "instructions": "SanchoCMO se conecta con OAuth multi-tenant. La app pública se configura una vez con <code>SLACK_CLIENT_ID</code>, <code>SLACK_CLIENT_SECRET</code>, <code>SLACK_SIGNING_SECRET</code> y el redirect de Sancho.",
         "alwaysShow": true
       },
       {
-        "title": "Añade permisos (Bot Token Scopes)",
-        "instructions": "En la app → <strong>OAuth & Permissions</strong> → sección <strong>Bot Token Scopes</strong> → añade estos scopes:<br><code>channels:history</code> — leer mensajes de canales<br><code>channels:read</code> — listar canales<br><code>users:read</code> — resolver nombres de usuarios<br><code>chat:write</code> — enviar mensajes<br><code>files:read</code> — leer archivos compartidos",
+        "title": "Genera el enlace por cliente",
+        "instructions": "Desde el cliente en Sancho, pulsa <strong>Conectar con Slack</strong>. Sancho genera el enlace OAuth con el <code>slug</code> del cliente y guarda el token cifrado cuando Slack vuelve al callback.",
         "alwaysShow": true
       },
       {
-        "title": "Instala la app en tu workspace",
-        "instructions": "En la app → <strong>Install App</strong> → <strong>Install to Workspace</strong> → Autoriza. Se generará el <strong>Bot User OAuth Token</strong> (<code>xoxb-...</code>).",
+        "title": "El cliente instala el app",
+        "instructions": "El cliente autoriza <strong>SanchoCMO</strong> en su workspace de Slack. No hace falta pedirle ni copiar ningún <code>xoxb-...</code> manual.",
         "alwaysShow": true
       },
       {
-        "title": "Copia el token",
-        "instructions": "Copia el <strong>Bot User OAuth Token</strong> que empieza por <code>xoxb-</code> y pégalo en el campo de abajo.",
+        "title": "Configura eventos de Slack",
+        "instructions": "En el app público, usa <code>/api/integrations/slack/events</code> como Event Request URL y suscribe <code>app_mention</code>, <code>message.channels</code> y <code>message.groups</code> si Sancho debe leer mensajes.",
         "alwaysShow": true
       },
       {

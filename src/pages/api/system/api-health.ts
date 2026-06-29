@@ -4,6 +4,7 @@ import { apiHealthFile, integrationsFile } from "@/lib/data/paths";
 import { brandEnvHas } from "@/lib/brand-env";
 import { getServiceEnv, isServiceCredentialPresent } from "@/lib/health-check";
 import { getProvider, getProviderConfigStatus } from "@/lib/publishing/registry";
+import { resolveSlackBotToken } from "@/lib/slack-token";
 
 interface ServiceHealth {
   status: string;
@@ -29,6 +30,38 @@ interface IntegrationEntry {
 interface IntegrationsData {
   dataSources?: Record<string, IntegrationEntry>;
   systemOverrides?: Record<string, IntegrationEntry>;
+  slack?: {
+    status?: "connected" | "disconnected" | "error";
+    team_id?: string;
+    team_name?: string;
+    bot_user_id?: string;
+    scope?: string;
+    installed_at?: string;
+    last_error?: string;
+  };
+}
+
+function deriveFromSlackOAuth(slack: NonNullable<IntegrationsData["slack"]>): ServiceHealth {
+  const lastCheck = slack.installed_at || null;
+  if (slack.status === "connected") {
+    return {
+      status: "ok",
+      lastCheck,
+      details: {
+        team: slack.team_name || slack.team_id,
+        botUserId: slack.bot_user_id,
+        source: "oauth",
+      },
+    };
+  }
+  if (slack.status === "error") {
+    return {
+      status: "error",
+      lastCheck,
+      details: { error: slack.last_error || "Slack OAuth connection error" },
+    };
+  }
+  return { status: "not-configured", lastCheck, details: {} };
 }
 
 /**
@@ -68,6 +101,17 @@ function deriveFromIntegration(
 
   switch (entry.status) {
     case "connected": {
+      if (apiId === "slack") {
+        const resolved = resolveSlackBotToken(slug);
+        if (!resolved.token) {
+          return {
+            status: "error",
+            lastCheck,
+            details: { error: "Slack token missing. Reconnect Slack with OAuth." },
+          };
+        }
+        return { status: "ok", lastCheck, details: { source: resolved.source || "legacy" } };
+      }
       const missing = (entry.envVars || []).filter((name) => !brandEnvHas(slug, name));
       if (missing.length > 0) {
         return {
@@ -139,6 +183,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     for (const [apiId, entry] of Object.entries(integrations.systemOverrides || {})) {
       services[apiId] = deriveFromIntegration(entry, slug, apiId);
+    }
+    if (integrations.slack) {
+      services.slack = deriveFromSlackOAuth(integrations.slack);
     }
   }
 

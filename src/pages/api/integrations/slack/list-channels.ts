@@ -8,11 +8,11 @@
  * Used by the Inputs tab → "📬 Canal de envío" dropdown.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs";
 import path from "path";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
+import { resolveSlackBotToken } from "@/lib/slack-token";
 
 interface SlackChannel {
   id: string;
@@ -20,28 +20,6 @@ interface SlackChannel {
   is_private: boolean;
   is_member?: boolean;
   topic?: string;
-}
-
-function loadBrandEnv(slug: string): Record<string, string> {
-  const envPath = path.join(BASE, "brand", slug, ".env");
-  const vars: Record<string, string> = {};
-  try {
-    const content = fs.readFileSync(envPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      vars[trimmed.slice(0, eq)] = trimmed.slice(eq + 1).replace(/^["']|["']$/g, "");
-    }
-  } catch { /* env file optional */ }
-  return vars;
-}
-
-function getSlackToken(slug: string): string | null {
-  const env = loadBrandEnv(slug);
-  const upper = slug.toUpperCase();
-  return env[`${upper}_SLACK_BOT_TOKEN`] || env.SLACK_BOT_TOKEN || process.env[`${upper}_SLACK_BOT_TOKEN`] || process.env.SLACK_BOT_TOKEN || null;
 }
 
 async function fetchSlack<T>(url: string, token: string): Promise<T | null> {
@@ -63,20 +41,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = req.query.slug as string;
   if (!slug) return res.status(400).json({ error: "Missing slug" });
 
-  // Verify slack is configured
   const integ = readJSON<Record<string, unknown>>(
     path.join(BASE, "brand", slug, "integrations.json"),
     {}
   );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slack = ((integ.dataSources as any)?.slack || (integ.services as any)?.slack);
-  if (!slack || slack.status !== "connected") {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const oauthSlack = (integ as any).slack;
+  if (oauthSlack?.status !== "connected" && slack?.status !== "connected") {
     return res.status(200).json({ ok: false, error: "Slack not connected for this brand", channels: [] });
   }
 
-  const token = getSlackToken(slug);
+  const { token } = resolveSlackBotToken(slug);
   if (!token) {
-    return res.status(200).json({ ok: false, error: "Slack token not found in env", channels: [] });
+    return res.status(200).json({ ok: false, error: "Slack token not found. Connect Slack with OAuth or configure a legacy bot token.", channels: [] });
   }
 
   // Fetch public + private separately so missing scopes only hide one bucket,

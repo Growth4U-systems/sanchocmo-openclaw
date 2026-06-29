@@ -7,7 +7,12 @@ const DEFAULT_SCOPES = [
   "chat:write",
   "chat:write.public",
   "channels:read",
+  "channels:history",
   "groups:read",
+  "groups:history",
+  "app_mentions:read",
+  "files:read",
+  "files:write",
   "im:write",
   "mpim:write",
   "users:read",
@@ -40,6 +45,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   authUrl.searchParams.set("scope", scopes);
   authUrl.searchParams.set("redirect_uri", redirectUri);
   authUrl.searchParams.set("state", state);
+
+  if (req.query.format === "json") {
+    return res.status(200).json({ url: authUrl.toString() });
+  }
 
   res.redirect(302, authUrl.toString());
 }

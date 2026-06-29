@@ -255,7 +255,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         error:
           `Slack bot token not configured for ${slug}. Either reconnect Slack at ` +
           `/dashboard/admin/settings?tab=apis (OAuth, writes encrypted to integrations.json), ` +
-          `add ${slug.toUpperCase()}_SLACK_BOT_TOKEN to brand/${slug}/.env, or set the ` +
+          `add ${slug.replace(/-/g, "_").toUpperCase()}_SLACK_BOT_TOKEN to brand/${slug}/.env, or set the ` +
           `workspace-wide SLACK_BOT_TOKEN env var.`,
       });
     }

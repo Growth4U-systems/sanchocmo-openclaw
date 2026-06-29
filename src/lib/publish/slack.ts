@@ -1,7 +1,4 @@
-import fs from "fs";
-import path from "path";
-import { BASE } from "@/lib/data/paths";
-import { getSlackBotToken } from "@/lib/data/integrations";
+import { resolveSlackBotToken } from "@/lib/slack-token";
 import type { Transport, PublishTarget, PublishMessage, PublishResult } from "./types";
 
 // Token lookup order (kept identical to the previous send-dispatch inline copy
@@ -9,34 +6,8 @@ import type { Transport, PublishTarget, PublishMessage, PublishResult } from "./
 //   1) integrations.json slack.bot_token_encrypted (OAuth callback)
 //   2) brand/<slug>/.env  ({SLUG_UPPER}_SLACK_BOT_TOKEN | SLACK_BOT_TOKEN)
 //   3) process.env        ({SLUG_UPPER}_SLACK_BOT_TOKEN | SLACK_BOT_TOKEN)
-function loadBrandEnv(slug: string): Record<string, string> {
-  const envPath = path.join(BASE, "brand", slug, ".env");
-  const vars: Record<string, string> = {};
-  try {
-    for (const line of fs.readFileSync(envPath, "utf-8").split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      vars[trimmed.slice(0, eq)] = trimmed.slice(eq + 1).replace(/^["']|["']$/g, "");
-    }
-  } catch { /* optional */ }
-  return vars;
-}
-
 export function resolveSlackToken(slug: string): string | null {
-  const slugUpper = slug.toUpperCase();
-  let token: string | null = null;
-  try { token = getSlackBotToken(slug); } catch { token = null; }
-  if (token) return token;
-  const env = loadBrandEnv(slug);
-  return (
-    env[`${slugUpper}_SLACK_BOT_TOKEN`] ||
-    env.SLACK_BOT_TOKEN ||
-    process.env[`${slugUpper}_SLACK_BOT_TOKEN`] ||
-    process.env.SLACK_BOT_TOKEN ||
-    null
-  );
+  return resolveSlackBotToken(slug).token;
 }
 
 export async function postToSlack(
