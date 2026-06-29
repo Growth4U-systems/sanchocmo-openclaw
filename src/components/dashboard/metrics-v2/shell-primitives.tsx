@@ -6,24 +6,18 @@ import type {
 } from "@/lib/metrics/dashboard-view-model";
 import { Chip, Panel } from ".";
 
-const STATE_TONE: Record<MetricDataState, string> = {
-  ON: "bg-sage text-white",
-  PARCIAL: "bg-[var(--sc-sun-300)] text-ink",
-  OFF: "bg-aged text-[var(--sc-fg-muted)]",
-  "SIN DATOS": "bg-[var(--sc-brick-bg)] text-destructive",
-  "CONECTADO SIN SNAPSHOTS": "bg-[var(--sc-sun-50)] text-[var(--sc-fg-soft)]",
-  "COMING SOON": "bg-navy text-white",
+const QUALITY_LABEL: Partial<Record<MetricQualityStatus, string>> = {
+  dirty: "Revisar dato",
+  stale: "Dato desactualizado",
 };
 
-const QUALITY_LABEL: Record<MetricQualityStatus, string> = {
-  ok: "Dato listo",
-  partial: "Dato parcial",
-  missing: "Sin dato",
-  pending: "Pendiente",
-  future: "Fase posterior",
-  dirty: "Revisar",
-  stale: "Desactualizado",
-  demo: "Demo",
+const EMPTY_LABEL: Record<MetricDataState, string> = {
+  ON: "Sin datos",
+  PARCIAL: "Sin datos",
+  OFF: "Sin datos",
+  "SIN DATOS": "Sin datos",
+  "CONECTADO SIN SNAPSHOTS": "Sin datos",
+  "COMING SOON": "Próximamente",
 };
 
 export function DeltaBadge({
@@ -33,6 +27,7 @@ export function DeltaBadge({
   label?: string;
   direction?: "up" | "down" | "flat";
 }) {
+  if (direction === "flat" && label === "sin delta") return null;
   const tone =
     direction === "up" ? "up" : direction === "down" ? "down" : "flat";
   return <Chip tone={tone}>{label}</Chip>;
@@ -45,28 +40,18 @@ export function MetricQualityBadge({
   status: MetricQualityStatus;
   source?: string;
 }) {
-  const tone =
-    status === "ok"
-      ? "ok"
-      : status === "partial" || status === "stale"
-        ? "warn"
-        : status === "dirty"
-          ? "must"
-          : status === "demo"
-            ? "custom"
-            : "flat";
+  if (status !== "dirty" && status !== "stale") return null;
+  const tone = status === "dirty" ? "must" : "warn";
   return (
     <Chip tone={tone}>
       {QUALITY_LABEL[status]}
-      {source ? ` · ${source}` : ""}
+      {source ? `: ${source}` : ""}
     </Chip>
   );
 }
 
 export function EmptyMetricState({
   title,
-  requiredSource,
-  nextAction,
   state = "SIN DATOS",
   compact,
 }: {
@@ -83,23 +68,14 @@ export function EmptyMetricState({
         compact && "p-3",
       )}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={cn(
-            "rounded-sc-pill border border-ink px-2 py-0.5 font-heading text-[10px] font-bold",
-            STATE_TONE[state],
-          )}
-        >
-          {state}
-        </span>
+      <div>
         <h3 className="font-heading text-[13px] font-bold text-navy">
           {title}
         </h3>
       </div>
-      <p className="mt-2 text-[12px] text-[var(--sc-fg-muted)]">
-        Dato necesario: <b>{requiredSource}</b>.
+      <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
+        {EMPTY_LABEL[state]}
       </p>
-      <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">{nextAction}</p>
     </div>
   );
 }
@@ -137,7 +113,6 @@ export function MiniSparkline({
 
 export function MiniFunnel({
   stages,
-  state = "SIN DATOS",
 }: {
   stages: string[];
   state?: MetricDataState;
@@ -158,13 +133,9 @@ export function MiniFunnel({
           <div className="mt-2 font-heading text-[24px] font-bold text-navy">
             —
           </div>
-          <MetricQualityBadge
-            status={state === "ON" ? "partial" : "missing"}
-            source="Embudo unificado"
-          />
           {index < stages.length - 1 && (
             <div className="mt-3 text-[11px] font-semibold text-[var(--sc-fg-muted)]">
-              Conversión pendiente →
+              →
             </div>
           )}
         </div>
@@ -219,46 +190,18 @@ export function BreakdownTable({
 
 export function MoversPanel({
   title = "Movimientos",
-  state = "COMING SOON",
 }: {
   title?: string;
   state?: MetricDataState;
 }) {
   return (
     <Panel>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-heading text-[15px] font-bold text-navy">
-            {title}
-          </h3>
-          <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-            Pendiente de conectar Intelligence signals a esta surface; hoy no
-            lee señales reales.
-          </p>
-        </div>
-        <span
-          className={cn(
-            "shrink-0 rounded-sc-pill border border-ink px-2 py-0.5 font-heading text-[10px] font-bold",
-            STATE_TONE[state],
-          )}
-        >
-          {state}
-        </span>
-      </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        {["Cambio relevante", "Fuga o anomalía", "Siguiente acción"].map(
-          (item) => (
-            <EmptyMetricState
-              key={item}
-              compact
-              title={item}
-              requiredSource="Intelligence signals por surface"
-              nextAction="Falta el read model que conecte señales reales con Métricas."
-              state={state}
-            />
-          ),
-        )}
-      </div>
+      <h3 className="font-heading text-[15px] font-bold text-navy">
+        {title}
+      </h3>
+      <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
+        Sin movimientos.
+      </p>
     </Panel>
   );
 }
@@ -267,14 +210,11 @@ export function SurfaceStatusCard({
   icon,
   label,
   description,
-  state,
-  sources,
   onOpen,
 }: {
   icon: string;
   label: string;
   description: string;
-  state: MetricDataState;
   sources: string[];
   onOpen: () => void;
 }) {
@@ -288,25 +228,12 @@ export function SurfaceStatusCard({
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-sc-md border-2 border-ink bg-aged text-xl">
           {icon}
         </span>
-        <span
-          className={cn(
-            "rounded-sc-pill border border-ink px-2 py-0.5 font-heading text-[10px] font-bold",
-            STATE_TONE[state],
-          )}
-        >
-          {state}
-        </span>
       </div>
       <h3 className="mt-3 font-heading text-[16px] font-bold text-navy">
         {label}
       </h3>
       <p className="mt-1 min-h-[38px] text-[12px] leading-snug text-[var(--sc-fg-muted)]">
         {description}
-      </p>
-      <p className="mt-3 text-[11px] text-[var(--sc-fg-muted)]">
-        {sources.length
-          ? `Fuentes: ${sources.join(" · ")}`
-          : "Sin fuentes conectadas"}
       </p>
       <div className="mt-3 font-heading text-[12px] font-bold text-rust">
         Abrir detalle →

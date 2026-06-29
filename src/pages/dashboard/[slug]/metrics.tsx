@@ -36,18 +36,14 @@ import {
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { cn } from "@/lib/utils";
 import {
-  Chip,
-  IntelBridge,
   MetricTile,
   Panel,
 } from "@/components/dashboard/metrics-v2";
 import {
   BreakdownTable,
-  DeltaBadge,
   EmptyMetricState,
   MetricQualityBadge,
   MiniSparkline,
-  MoversPanel,
   SurfaceStatusCard,
 } from "@/components/dashboard/metrics-v2/shell-primitives";
 
@@ -73,64 +69,6 @@ const ATTRIBUTION_MODELS = [
   "Last-touch",
   "Lineal",
   "Data-driven",
-];
-type DataLineageGate = {
-  title: string;
-  source: string;
-  status: MetricQualityStatus;
-  detail: string;
-  nextAction: string;
-};
-
-const DATA_LINEAGE_GATES: DataLineageGate[] = [
-  {
-    title: "Capa semántica",
-    source: "KPIs calculados",
-    status: "partial",
-    detail:
-      "Los KPIs directos ya se leen desde la tabla calculada cuando existe un run del rango.",
-    nextAction: "Mantener formulas, embudo y attribution como sin dato hasta que existan sus capas.",
-  },
-  {
-    title: "Funnel y atribución",
-    source: "Embudo unificado + eventos",
-    status: "missing",
-    detail:
-      "Overview funnel, Channels y Conversion dependen del mapa de etapas y eventos o conteos por etapa.",
-    nextAction: "Configurar etapa por fuente, métrica y dimensiones antes de tasas.",
-  },
-  {
-    title: "Aliases de métricas",
-    source: "Aliases de fuentes",
-    status: "partial",
-    detail:
-      "Hay drift conocido: emailsSent/sent, inp_mobile/tbt_mobile y source ids con guion/underscore.",
-    nextAction: "Aliases directos normalizados; formulas posteriores deben reutilizar esa capa.",
-  },
-  {
-    title: "Fuentes en revisión",
-    source: "GHL",
-    status: "dirty",
-    detail:
-      "GHL queda marcado para revisar; sus cifras no deben mostrarse como exactas sin etiqueta.",
-    nextAction: "Propagar el estado de revisión a la KPI final y usar fuente de verdad cuando exista.",
-  },
-  {
-    title: "Seeds y demos",
-    source: "paid/product/partnerships",
-    status: "demo",
-    detail:
-      "Seeds representativos sirven para QA visual, no para negocio real ni estado OK.",
-    nextAction: "Excluir seeds de KPIs OK o etiquetarlos como demo.",
-  },
-  {
-    title: "Revenue real",
-    source: "CRM/Stripe/Koibox",
-    status: "missing",
-    detail:
-      "CAC y ROAS reales requieren closed-won/revenue fiable; pixel ads solo da plataforma/dedup.",
-    nextAction: "Conectar fuente de revenue antes de economy band live.",
-  },
 ];
 
 function MetricsPage() {
@@ -248,7 +186,6 @@ function MetricsPageInner({ slug }: { slug: string }) {
             range={range}
             onRangeChange={setRange}
             versions={dashboard?.versions?.length ?? 0}
-            configured={dashboard?.configured}
             health={health?.overall}
             setupOpen={setupOpen}
             versionsOpen={versionsOpen}
@@ -278,7 +215,6 @@ function MetricsPageInner({ slug }: { slug: string }) {
               <TabNav active={activeTab} onSelect={selectTab} />
               {activeTab === "overview" && (
                 <OverviewView
-                  slug={slug}
                   surfaceCards={surfaceCards}
                   openSurface={openSurface}
                   configured={surfacesData?.configured}
@@ -289,7 +225,6 @@ function MetricsPageInner({ slug }: { slug: string }) {
               {activeTab === "surfaces" &&
                 (activeSurface ? (
                   <SurfaceDetailView
-                    slug={slug}
                     surface={activeSurface}
                     entry={surfaceEntries[activeSurface]}
                     configured={surfacesData?.configured}
@@ -329,7 +264,6 @@ function MetricsHeader({
   range,
   onRangeChange,
   versions,
-  configured,
   health,
   setupOpen,
   versionsOpen,
@@ -341,7 +275,6 @@ function MetricsHeader({
   range: DateRange;
   onRangeChange: (range: DateRange) => void;
   versions: number;
-  configured?: boolean;
   health?: string;
   setupOpen: boolean;
   versionsOpen: boolean;
@@ -353,19 +286,11 @@ function MetricsHeader({
     <Panel halftone className="border-[3px] border-navy">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-heading text-[28px] font-bold leading-tight text-navy sm:text-[34px]">
-              Métricas
-            </h1>
-            <MetricQualityBadge
-              status={configured ? "partial" : "missing"}
-              source={configured ? "dashboard definition" : "setup"}
-            />
-          </div>
+          <h1 className="font-heading text-[28px] font-bold leading-tight text-navy sm:text-[34px]">
+            Métricas
+          </h1>
           <p className="mt-1 text-[13px] text-[var(--sc-fg-muted)]">
-            {slug} · rango{" "}
-            {DATE_RANGES.find((item) => item.key === range)?.label} · KPIs
-            directos leídos, sin attribution avanzada.
+            {slug} · {DATE_RANGES.find((item) => item.key === range)?.label}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -404,15 +329,7 @@ function MetricsHeader({
             tone="cyan"
             onClick={onMerlinClick}
           />
-          {health && (
-            <Chip
-              tone={
-                health === "ok" ? "ok" : health === "stale" ? "warn" : "flat"
-              }
-            >
-              Health · {health}
-            </Chip>
-          )}
+          {health === "stale" && <MetricQualityBadge status="stale" source="health" />}
         </div>
       </div>
     </Panel>
@@ -466,13 +383,9 @@ function VersionsPanel({
           <h2 className="font-heading text-[18px] font-bold text-navy">
             Versiones
           </h2>
-          <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-            Historial de definiciones del dashboard. Revertir queda fuera del
-            shell de PR 2.
-          </p>
         </div>
         {currentVersion != null && (
-          <MetricQualityBadge status="partial" source={`v${currentVersion}`} />
+          <span className="text-[12px] text-[var(--sc-fg-muted)]">v{currentVersion}</span>
         )}
       </div>
       <div className="mt-4 space-y-2">
@@ -531,26 +444,8 @@ function SetupView({
             <h2 className="font-heading text-[20px] font-bold text-navy">
               Setup
             </h2>
-            <p className="mt-1 max-w-[760px] text-[13px] text-[var(--sc-fg-muted)]">
-              Preparación del dashboard: definición activa, salud de colectores
-              y conexión de surfaces.
-            </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <MetricQualityBadge
-              status={configured ? "partial" : "missing"}
-              source={configured ? "Definición activa" : "sin definición"}
-            />
-            {health && (
-              <Chip
-                tone={
-                  health === "ok" ? "ok" : health === "stale" ? "warn" : "flat"
-                }
-              >
-                Health · {health}
-              </Chip>
-            )}
-          </div>
+          {health === "stale" && <MetricQualityBadge status="stale" source="health" />}
         </div>
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
           <EmptyMetricState
@@ -565,19 +460,12 @@ function SetupView({
           />
           {kpiData?.run ? (
             <div className="rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-4 shadow-pop-xs">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatePill state={qualityToState(kpiData.summary.qualityStatus)} />
-                <h3 className="font-heading text-[13px] font-bold text-navy">
-                  KPIs semánticos
-                </h3>
-              </div>
+              <h3 className="font-heading text-[13px] font-bold text-navy">
+                KPIs semánticos
+              </h3>
               <p className="mt-2 text-[12px] text-[var(--sc-fg-muted)]">
-                Run {kpiData.run.id.slice(-8)} · {kpiData.summary.total} KPIs ·{" "}
-                {kpiData.run.rangeFrom} a {kpiData.run.rangeTo}.
-              </p>
-              <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-                OK {kpiData.summary.ok} · parcial {kpiData.summary.partial} ·
-                missing {kpiData.summary.missing} · demo {kpiData.summary.demo}.
+                {kpiData.summary.total} KPIs · {kpiData.run.rangeFrom} a{" "}
+                {kpiData.run.rangeTo}.
               </p>
             </div>
           ) : (
@@ -596,49 +484,11 @@ function SetupView({
           />
         </div>
       </Panel>
-      <Panel>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="font-heading text-[18px] font-bold text-navy">
-              Gates de datos antes de PR 3
-            </h2>
-            <p className="mt-1 max-w-[760px] text-[13px] text-[var(--sc-fg-muted)]">
-              Hallazgos del mapa de linaje: estos bloqueos explican qué debe
-              quedar sin dato, parcial, en revisión o demo antes de computar KPIs.
-            </p>
-          </div>
-          <MetricQualityBadge status="pending" source="Mapa de datos" />
-        </div>
-        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          {DATA_LINEAGE_GATES.map((gate) => (
-            <div
-              key={gate.title}
-              className="rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-3 shadow-pop-xs"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <MetricQualityBadge status={gate.status} source={gate.source} />
-                <h3 className="font-heading text-[13px] font-bold text-navy">
-                  {gate.title}
-                </h3>
-              </div>
-              <p className="mt-2 text-[12px] text-[var(--sc-fg-muted)]">
-                {gate.detail}
-              </p>
-              <p className="mt-1 text-[12px] font-semibold text-[var(--sc-fg-soft)]">
-                {gate.nextAction}
-              </p>
-            </div>
-          ))}
-        </div>
-      </Panel>
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-heading text-[18px] font-bold text-navy">
             Conexiones por surface
           </h2>
-          <span className="text-[12px] text-[var(--sc-fg-muted)]">
-            ON, PARCIAL, OFF o conectado sin snapshots.
-          </span>
         </div>
         <SurfaceGrid cards={surfaceCards} onOpen={openSurface} />
       </section>
@@ -671,16 +521,6 @@ function TabNav({
             <div className="font-heading text-[13px] font-bold">
               {tab.label}
             </div>
-            <div
-              className={cn(
-                "mt-0.5 max-w-[210px] text-[11px]",
-                active === tab.key
-                  ? "text-white/80"
-                  : "text-[var(--sc-fg-muted)]",
-              )}
-            >
-              {tab.description}
-            </div>
           </button>
         ))}
       </div>
@@ -689,14 +529,12 @@ function TabNav({
 }
 
 function OverviewView({
-  slug,
   surfaceCards,
   openSurface,
   configured,
   dashboardDefinition,
   kpiData,
 }: {
-  slug: string;
   surfaceCards: SurfaceCardModel[];
   openSurface: (surface: SurfaceKey) => void;
   configured?: boolean;
@@ -717,19 +555,15 @@ function OverviewView({
       <Panel>
         <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Chip tone="custom">North Star</Chip>
-              <DeltaBadge label={northStar ? "sin serie" : "sin delta"} />
-            </div>
-            <h2 className="mt-3 font-heading text-[24px] font-bold text-navy">
+            <h2 className="font-heading text-[24px] font-bold text-navy">
               {northStarLabel}
             </h2>
             <p className="mt-2 max-w-[720px] text-[13px] text-[var(--sc-fg-muted)]">
               {northStar
-                ? `${sourceMetricLabel(northStar)} · ${coverageLabel(northStar)}.`
+                ? sourceMetricLabel(northStar)
                 : northStarDefined
-                  ? "La North Star está definida en el dashboard, pero todavía no hay una KPI calculada enlazada para este rango."
-                  : "El panel necesita una North Star definida y un cálculo KPI persistido para el rango seleccionado."}
+                  ? "Sin KPI calculada para este rango."
+                  : "Sin North Star definida."}
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {overviewKpis.length
@@ -746,31 +580,18 @@ function OverviewView({
                     key={label}
                     label={label}
                     value="-"
-                    hint={
-                      <MetricQualityBadge
-                        status="missing"
-                        source="KPIs calculados"
-                      />
-                    }
                   />
                 ))}
             </div>
           </div>
           {northStar ? (
             <div className="rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-4 shadow-pop-xs">
-              <MetricQualityBadge
-                status={asQualityStatus(northStar.qualityStatus)}
-                source={sourceMetricLabel(northStar)}
-              />
-              <div className="mt-3 font-heading text-[34px] font-bold leading-none text-navy">
+              <div className="font-heading text-[34px] font-bold leading-none text-navy">
                 {northStar.displayValue}
               </div>
-              <p className="mt-3 text-[12px] text-[var(--sc-fg-muted)]">
-                {coverageLabel(northStar)} · {northStar.rangeFrom} a{" "}
+              <p className="mt-2 text-[12px] text-[var(--sc-fg-muted)]">
+                {northStar.rangeFrom} a{" "}
                 {northStar.rangeTo}
-              </p>
-              <p className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">
-                Deltas y serie historica siguen vacios hasta la capa de trends.
               </p>
             </div>
           ) : (
@@ -798,15 +619,7 @@ function OverviewView({
             <h2 className="font-heading text-[18px] font-bold text-navy">
               Economía
             </h2>
-            <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-              Inversión, CAC, revenue y ROAS aparecen solo cuando exista
-              CRM/spend con procedencia.
-            </p>
           </div>
-          <MetricQualityBadge
-            status={economyKpis.length ? asQualityStatus(kpiData?.summary.qualityStatus) : "pending"}
-            source={economyKpis.length ? "KPIs calculados" : "Paid + partnerships + CRM"}
-          />
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {economyKpis.length
@@ -816,7 +629,6 @@ function OverviewView({
                 key={label}
                 label={label}
                 value="-"
-                hint="Sin dato live todavia"
               />
             ))}
         </div>
@@ -828,15 +640,7 @@ function OverviewView({
             <h2 className="font-heading text-[18px] font-bold text-navy">
               Embudo unificado
             </h2>
-            <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-              Conteos por etapa desde los datos disponibles. Es una vista agregada:
-              no deduplica leads entre fuentes ni calcula journeys individuales.
-            </p>
           </div>
-          <MetricQualityBadge
-            status={stageRollups?.available ? asQualityStatus(stageRollups.summary.qualityStatus) : "missing"}
-            source="Embudo unificado"
-          />
         </div>
         <div className="mt-4">
           <StageRollupFunnel stageRollups={stageRollups} />
@@ -855,17 +659,6 @@ function OverviewView({
         <SurfaceGrid cards={surfaceCards} onOpen={openSurface} />
       </section>
 
-      <IntelBridge
-        surface={`Overview · ${slug}`}
-        href={`/dashboard/${slug}/intelligence`}
-        signals={[
-          "Cambios cross-surface pendientes de Intelligence signals.",
-          stageRollups?.available
-            ? "Fugas del funnel visibles como vista agregada; attribution avanzada pendiente."
-            : "Fugas del funnel pendientes hasta tener datos suficientes por etapa.",
-          "Recomendaciones bloqueadas hasta que existan datos reales.",
-        ]}
-      />
     </div>
   );
 }
@@ -883,10 +676,6 @@ function SurfacesView({
         <h2 className="font-heading text-[20px] font-bold text-navy">
           Surfaces
         </h2>
-        <p className="mt-1 max-w-[760px] text-[13px] text-[var(--sc-fg-muted)]">
-          Estado de cada superficie canónica. Outbound separa ICP Outreach y
-          Partnerships en sus details para evitar mezclar economics con email.
-        </p>
       </Panel>
       <SurfaceGrid cards={surfaceCards} onOpen={openSurface} />
     </div>
@@ -894,14 +683,12 @@ function SurfacesView({
 }
 
 function SurfaceDetailView({
-  slug,
   surface,
   entry,
   configured,
   kpiData,
   onBack,
 }: {
-  slug: string;
   surface: SurfaceKey;
   entry?: SurfaceSummaryEntry;
   configured?: boolean;
@@ -924,55 +711,15 @@ function SurfaceDetailView({
       <Panel className="border-[3px] border-navy">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <Chip tone="custom">{config.eyebrow}</Chip>
-            <h2 className="mt-3 font-heading text-[26px] font-bold text-navy">
+            <h2 className="font-heading text-[26px] font-bold text-navy">
               {def?.emoji} {config.label}
             </h2>
             <p className="mt-1 max-w-[780px] text-[13px] text-[var(--sc-fg-muted)]">
               {config.headline}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <StatePill state={state} />
-            <MetricQualityBadge
-              status={state === "ON" ? "partial" : "missing"}
-              source={entry?.sources?.join(" · ") || "sin fuente"}
-            />
-          </div>
         </div>
       </Panel>
-
-      {surface === "email" && (
-        <Panel>
-          <div className="flex flex-wrap gap-2">
-            <Chip tone="custom">ICP Outreach</Chip>
-            <Chip tone="flat">Partnerships vive en su propia surface</Chip>
-          </div>
-        </Panel>
-      )}
-
-      {surface === "partnerships" && (
-        <Panel>
-          <div className="flex flex-wrap gap-2">
-            <Chip tone="custom">Partnerships</Chip>
-            <Chip tone="flat">
-              Break-even y creator economics, sin mezclar con outbound email
-            </Chip>
-          </div>
-        </Panel>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        {config.sections.map((section) => (
-          <EmptyMetricState
-            key={section.title}
-            title={section.title}
-            requiredSource={section.requiredSource}
-            nextAction={section.nextAction}
-            state={state === "ON" ? "CONECTADO SIN SNAPSHOTS" : state}
-          />
-        ))}
-      </div>
 
       <Panel>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -980,10 +727,6 @@ function SurfaceDetailView({
             <h3 className="font-heading text-[16px] font-bold text-navy">
               KPIs directos
             </h3>
-            <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-              Valores persistidos por surface. No hay formulas ni atribucion en
-              esta lectura.
-            </p>
           </div>
           <MetricQualityBadge
             status={surfaceKpis.length ? asQualityStatus(kpiData?.summary.qualityStatus) : "missing"}
@@ -1007,44 +750,6 @@ function SurfaceDetailView({
           </div>
         )}
       </Panel>
-
-      <Panel>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h3 className="font-heading text-[16px] font-bold text-navy">
-              Breakdown preparado
-            </h3>
-            <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-              La tabla espera dimensiones reales; no se rellena con ejemplos.
-            </p>
-          </div>
-          <MetricQualityBadge status="pending" source="metrics/breakdown" />
-        </div>
-        <div className="mt-4">
-          <BreakdownTable
-            columns={["Dimensión", "Métrica", "Valor", "Estado"]}
-            empty={
-              <EmptyMetricState
-                title="Sin breakdown"
-                requiredSource="Snapshots con dimensiones reales"
-                nextAction="PR posterior conectará dimensiones por query, campaña, post, creator o etapa."
-                state="SIN DATOS"
-              />
-            }
-          />
-        </div>
-      </Panel>
-
-      <MoversPanel title={`Movimientos · ${config.label}`} />
-      <IntelBridge
-        surface={config.label}
-        href={`/dashboard/${slug}/intelligence`}
-        signals={[
-          "Insights bloqueados hasta que Intelligence tenga señales por surface.",
-          "No se muestran rankings ni recomendaciones simuladas.",
-          "Las acciones se enlazarán a Intelligence cuando exista el motor.",
-        ]}
-      />
     </div>
   );
 }
@@ -1072,10 +777,6 @@ function ChannelsView({
             <h2 className="font-heading text-[20px] font-bold text-navy">
               Channels
             </h2>
-            <p className="mt-1 max-w-[760px] text-[13px] text-[var(--sc-fg-muted)]">
-              Matriz por canal y etapa desde los datos disponibles. Todavía no
-              es un modelo de atribución; W-shaped queda bloqueado hasta eventos.
-            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {ATTRIBUTION_MODELS.map((item) => (
@@ -1092,7 +793,6 @@ function ChannelsView({
                 )}
               >
                 {item}
-                {item === "Data-driven" ? " · locked" : ""}
               </button>
             ))}
           </div>
@@ -1105,15 +805,7 @@ function ChannelsView({
             <h3 className="font-heading text-[16px] font-bold text-navy">
               Matriz canal × etapa
             </h3>
-            <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-              Conteos agregados por canal y etapa. No se muestran como revenue
-              atribuido ni como dedupe final.
-            </p>
           </div>
-          <MetricQualityBadge
-            status={stageRollups?.available ? asQualityStatus(stageRollups.summary.qualityStatus) : "missing"}
-            source="Embudo unificado"
-          />
         </div>
         <div className="mt-4">
           <BreakdownTable
@@ -1177,10 +869,6 @@ function ConversionView({ kpiData }: { kpiData?: MetricKpiResult }) {
         <h2 className="font-heading text-[20px] font-bold text-navy">
           Conversion
         </h2>
-        <p className="mt-1 max-w-[780px] text-[13px] text-[var(--sc-fg-muted)]">
-          Embudo end-to-end y tasas básicas desde datos agregados por etapa.
-          Velocity y journeys siguen bloqueados hasta eventos individuales.
-        </p>
       </Panel>
       <StageRollupFunnel stageRollups={stageRollups} />
       <div className="grid gap-4 xl:grid-cols-2">
@@ -1190,19 +878,11 @@ function ConversionView({ kpiData }: { kpiData?: MetricKpiResult }) {
               <h3 className="font-heading text-[16px] font-bold text-navy">
                 Conversion by channel
               </h3>
-              <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-                Tasas calculadas sobre conteos agregados. Si falta numerador o
-                denominador, la fila queda fuera.
-              </p>
             </div>
-            <MetricQualityBadge
-              status={stageRollups?.available ? asQualityStatus(stageRollups.summary.qualityStatus) : "missing"}
-              source="Embudo unificado"
-            />
           </div>
           <div className="mt-4">
           <BreakdownTable
-            columns={["Canal", "Entrada", "Salida", "Tasa", "Estado"]}
+            columns={["Canal", "Entrada", "Salida", "Tasa"]}
             rows={channelRateRows}
             empty={
               <EmptyMetricState
@@ -1265,15 +945,6 @@ function StageRollupFunnel({
             <div className="mt-2 font-heading text-[24px] font-bold text-navy">
               {stage.displayValue}
             </div>
-            <div className="mt-2">
-              <MetricQualityBadge
-                status={asQualityStatus(stage.qualityStatus)}
-                source={stageRollupSourceLabel(stage)}
-              />
-            </div>
-            <p className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">
-              {stageDataCompletenessLabel(stage)} · {stage.channels.length || 0} canales
-            </p>
             {nextRate && (
               <div className="mt-3 border-t border-border pt-2 text-[11px] font-semibold text-[var(--sc-fg-muted)]">
                 {nextRate.toLabel}:{" "}
@@ -1293,10 +964,6 @@ function StageValueCell({ stage }: { stage: MetricStageRollupStageValue }) {
       <div className="font-heading text-[15px] font-bold text-navy">
         {stage.displayValue}
       </div>
-      <MetricQualityBadge
-        status={asQualityStatus(stage.qualityStatus)}
-        source="Embudo unificado"
-      />
     </div>
   );
 }
@@ -1347,11 +1014,6 @@ function buildChannelRateRows(stageRollups?: MetricStageRollupResult) {
           >
             {rate.displayValue}
           </span>,
-          <MetricQualityBadge
-            key={`${channel.channel}-${rate.fromStageId}-${rate.toStageId}-status`}
-            status={asQualityStatus(rate.qualityStatus)}
-            source="Embudo agregado"
-          />,
         ],
       })),
   );
@@ -1375,15 +1037,7 @@ function StageLeakPanel({
           <h3 className="font-heading text-[16px] font-bold text-navy">
             Leak panel
           </h3>
-          <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-            Fuga básica calculada por tasas entre etapas agregadas. No usa
-            targets ni benchmarks inventados.
-          </p>
         </div>
-        <MetricQualityBadge
-          status={worst ? asQualityStatus(worst.qualityStatus) : "missing"}
-          source="Embudo unificado"
-        />
       </div>
       {worst ? (
         <div className="mt-4 rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-4 shadow-pop-xs">
@@ -1394,8 +1048,7 @@ function StageLeakPanel({
             {worst.fromLabel} → {worst.toLabel}: {worst.displayValue}
           </div>
           <p className="mt-2 text-[12px] text-[var(--sc-fg-muted)]">
-            Numerador {worst.numerator ?? "-"} · denominador {worst.denominator ?? "-"}.
-            Interpretar como vista agregada hasta que exista attribution.
+            {worst.numerator ?? "-"} de {worst.denominator ?? "-"}
           </p>
         </div>
       ) : (
@@ -1428,32 +1081,21 @@ function TrendsView({
             <h2 className="font-heading text-[20px] font-bold text-navy">
               Trends
             </h2>
-            <p className="mt-1 max-w-[780px] text-[13px] text-[var(--sc-fg-muted)]">
-              Tendencias e hitos quedan preparados. La serie de North Star no se
-              simula.
-            </p>
           </div>
-          <MetricQualityBadge
-            status={kpiData?.run ? asQualityStatus(kpiData.summary.qualityStatus) : "pending"}
-            source="Runs KPI + anotaciones"
-          />
         </div>
         {kpiData?.run && (
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <MetricTile
               label="Run KPI"
               value={kpiData.run.id.slice(-8)}
-              hint={`${kpiData.summary.ok}/${kpiData.summary.total} KPIs ok`}
             />
             <MetricTile
               label="North Star"
               value={northStar?.displayValue ?? "-"}
-              hint={northStar ? sourceMetricLabel(northStar) : "Sin KPI enlazado"}
             />
             <MetricTile
               label="Rango computado"
               value={`${kpiData.run.rangeFrom.slice(5)} -> ${kpiData.run.rangeTo.slice(5)}`}
-              hint="La serie historica sigue pendiente."
             />
           </div>
         )}
@@ -1469,17 +1111,12 @@ function TrendsView({
                 <h3 className="font-heading text-[14px] font-bold text-navy">
                   {kpi.label}
                 </h3>
-                <MetricQualityBadge
-                  status={asQualityStatus(kpi.qualityStatus)}
-                  source={sourceMetricLabel(kpi)}
-                />
               </div>
               <div className="mt-3">
                 <MiniSparkline state="SIN DATOS" label={`${kpi.label} sin serie`} />
               </div>
               <p className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">
-                Valor actual: {kpi.displayValue}. Sin puntos historicos
-                derivados.
+                {kpi.displayValue}
               </p>
             </Panel>
           ))
@@ -1492,9 +1129,6 @@ function TrendsView({
               <div className="mt-3">
                 <MiniSparkline />
               </div>
-              <p className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">
-                Sin serie computada.
-              </p>
             </Panel>
           ))
         )}
@@ -1509,7 +1143,6 @@ function TrendsView({
           nextAction="Las campañas, cambios y eventos se mostrarán aquí cuando existan."
         />
       </Panel>
-      <MoversPanel title="Intelligence preview" state="COMING SOON" />
     </div>
   );
 }
@@ -1538,25 +1171,12 @@ function SurfaceGrid({
           icon={card.icon}
           label={card.label}
           description={card.description}
-          state={card.state}
           sources={card.sources}
           onOpen={() => onOpen(card.key)}
         />
       ))}
     </div>
   );
-}
-
-function StatePill({ state }: { state: MetricDataState }) {
-  const tone =
-    state === "ON"
-      ? "ok"
-      : state === "PARCIAL" || state === "CONECTADO SIN SNAPSHOTS"
-        ? "warn"
-        : state === "COMING SOON"
-          ? "custom"
-          : "flat";
-  return <Chip tone={tone}>{state}</Chip>;
 }
 
 function KpiTile({
@@ -1566,33 +1186,15 @@ function KpiTile({
   kpi: MetricKpiValue;
   tone?: "paper" | "leading" | "lagging" | "custom";
 }) {
-  const lowCoverage =
-    kpi.qualityStatus === "partial" &&
-    kpi.sourceCoverage > 0 &&
-    kpi.sourceCoverage < 0.5;
   return (
     <MetricTile
       label={kpi.label}
       value={
         <span className="break-words text-[20px]">
           {kpi.displayValue}
-          {lowCoverage && (
-            <span className="mt-1 block font-sans text-[10px] font-bold uppercase leading-tight text-rust">
-              {coverageLabel(kpi)}
-            </span>
-          )}
         </span>
       }
       tone={tone}
-      hint={
-        <div className="space-y-1">
-          <MetricQualityBadge
-            status={asQualityStatus(kpi.qualityStatus)}
-            source={sourceMetricLabel(kpi)}
-          />
-          <div>{lineageLabel(kpi)}</div>
-        </div>
-      }
     />
   );
 }
@@ -1601,49 +1203,12 @@ function asQualityStatus(status?: MetricKpiValue["qualityStatus"] | MetricKpiRes
   return status ?? "missing";
 }
 
-function qualityToState(status?: MetricKpiResult["summary"]["qualityStatus"]): MetricDataState {
-  if (!status || status === "missing") return "SIN DATOS";
-  if (status === "ok") return "ON";
-  return "PARCIAL";
-}
-
 function sourceMetricLabel(kpi?: MetricKpiValue | null): string {
   if (!kpi) return "KPIs calculados";
   if (kpi.source && kpi.metricName) {
     return `${friendlySource(kpi.source)} · ${friendlyMetric(kpi.metricName)}`;
   }
   return friendlyProvenance(kpi.provenanceLabel) || "KPIs calculados";
-}
-
-function coverageLabel(kpi: MetricKpiValue): string {
-  const totalDays = daysInclusive(kpi.rangeFrom, kpi.rangeTo);
-  const coveredDays = Math.min(totalDays, Math.max(0, Math.round(kpi.sourceCoverage * totalDays)));
-  if (kpi.sourceCoverage >= 0.995) return `${totalDays} de ${totalDays} días con datos`;
-  if (kpi.sourceCoverage <= 0) return `0 de ${totalDays} días con datos`;
-  return `${coveredDays} de ${totalDays} días con datos`;
-}
-
-function lineageLabel(kpi: MetricKpiValue): string {
-  const entries = kpi.inputRefs.length;
-  const suffix = entries === 1 ? "entrada usada" : "entradas usadas";
-  return `${coverageLabel(kpi)} · ${entries} ${suffix}`;
-}
-
-function stageRollupSourceLabel(stage: MetricStageRollupStageValue): string {
-  if (!stage.sources.length) return "Embudo unificado";
-  return stage.sources.slice(0, 2).map(friendlySourceMetric).join(", ");
-}
-
-function stageDataCompletenessLabel(stage: MetricStageRollupStageValue): string {
-  if (stage.inputRefsCount === 0) return "sin entradas de origen";
-  return `${stage.inputRefsCount} ${stage.inputRefsCount === 1 ? "entrada de origen" : "entradas de origen"}`;
-}
-
-function daysInclusive(from: string, to: string): number {
-  const fromTime = new Date(`${from}T00:00:00Z`).getTime();
-  const toTime = new Date(`${to}T00:00:00Z`).getTime();
-  if (!Number.isFinite(fromTime) || !Number.isFinite(toTime) || toTime < fromTime) return 1;
-  return Math.floor((toTime - fromTime) / 86_400_000) + 1;
 }
 
 function friendlySourceMetric(value: string): string {
