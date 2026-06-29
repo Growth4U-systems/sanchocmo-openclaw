@@ -116,12 +116,12 @@ test("maps Trust Core labels and aliases onto Reputation KPIs", () => {
       }),
       row({
         source: "trust-core",
-        metricName: "Borrow Trust",
+        metricName: "Borrowed Trust",
         value: 22,
       }),
       row({
         source: "trust_score",
-        metricName: "Served Trust",
+        metricName: "SERP Trust",
         value: 38,
       }),
       row({
@@ -131,17 +131,17 @@ test("maps Trust Core labels and aliases onto Reputation KPIs", () => {
       }),
       row({
         source: "trust_score",
-        metricName: "Geo Presence",
+        metricName: "GEO Presence",
         value: 33,
       }),
       row({
         source: "trust_score",
-        metricName: "Out of Readiness",
+        metricName: "Outbound Readiness",
         value: 78,
       }),
       row({
         source: "trust_score",
-        metricName: "Demand Agents",
+        metricName: "Demand Engine",
         value: 52,
       }),
     ],
@@ -150,13 +150,40 @@ test("maps Trust Core labels and aliases onto Reputation KPIs", () => {
 
   assert.equal(byId(values, "reputation.trust_score").label, "Trust Core Global");
   assert.equal(byId(values, "reputation.trust_score").value, 41);
-  assert.equal(byId(values, "reputation.borrowed_trust").label, "Borrow Trust");
+  assert.equal(byId(values, "reputation.borrowed_trust").label, "Borrowed Trust");
   assert.equal(byId(values, "reputation.borrowed_trust").value, 22);
-  assert.equal(byId(values, "reputation.serp_trust").label, "Served Trust");
+  assert.equal(byId(values, "reputation.serp_trust").label, "SERP Trust");
   assert.equal(byId(values, "reputation.serp_trust").value, 38);
+  assert.equal(byId(values, "reputation.geo_presence").label, "GEO Presence");
+  assert.equal(byId(values, "reputation.outbound_readiness").label, "Outbound Readiness");
+  assert.equal(byId(values, "reputation.demand_engine").label, "Demand Engine");
   assert.equal(byId(values, "reputation.brand_assets").value, 31);
   assert.equal(byId(values, "reputation.geo_presence").value, 33);
   assert.equal(byId(values, "reputation.outbound_readiness").value, 78);
+  assert.equal(byId(values, "reputation.demand_engine").value, 52);
+});
+
+test("keeps legacy Trust Core aliases readable without showing legacy labels", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({ source: "trust_score", metricName: "Borrow Trust", value: 22 }),
+      row({ source: "trust_score", metricName: "Served Trust", value: 38 }),
+      row({ source: "trust_score", metricName: "Geo Presence", value: 33 }),
+      row({ source: "trust_score", metricName: "Out of Readiness", value: 78 }),
+      row({ source: "trust_score", metricName: "Demand Agents", value: 52 }),
+    ],
+    oneDay,
+  );
+
+  assert.equal(byId(values, "reputation.borrowed_trust").label, "Borrowed Trust");
+  assert.equal(byId(values, "reputation.borrowed_trust").value, 22);
+  assert.equal(byId(values, "reputation.serp_trust").label, "SERP Trust");
+  assert.equal(byId(values, "reputation.serp_trust").value, 38);
+  assert.equal(byId(values, "reputation.geo_presence").label, "GEO Presence");
+  assert.equal(byId(values, "reputation.geo_presence").value, 33);
+  assert.equal(byId(values, "reputation.outbound_readiness").label, "Outbound Readiness");
+  assert.equal(byId(values, "reputation.outbound_readiness").value, 78);
+  assert.equal(byId(values, "reputation.demand_engine").label, "Demand Engine");
   assert.equal(byId(values, "reputation.demand_engine").value, 52);
 });
 

@@ -93,7 +93,7 @@ export const SURFACE_DETAIL_CONFIGS: Record<SurfaceKey, SurfaceDetailConfig> = {
       {
         title: "KPIs de reputación",
         description:
-          "Trust Core Global y pilares: Borrow Trust, Served Trust, Brand Assets, Geo Presence, Out of Readiness y Demand Agents.",
+          "Trust Core Global y pilares: Borrowed Trust, SERP Trust, Brand Assets, GEO Presence, Outbound Readiness y Demand Engine.",
         requiredSource: "Trust Core snapshot",
         nextAction:
           "Ingerir el snapshot actual del Trust Core en metric_snapshots; el reporte ya existe en el módulo de Trust.",
