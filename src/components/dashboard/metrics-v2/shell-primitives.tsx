@@ -97,7 +97,7 @@ export function EmptyMetricState({
         </h3>
       </div>
       <p className="mt-2 text-[12px] text-[var(--sc-fg-muted)]">
-        Fuente requerida: <b>{requiredSource}</b>.
+        Dato necesario: <b>{requiredSource}</b>.
       </p>
       <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">{nextAction}</p>
     </div>
@@ -232,8 +232,8 @@ export function MoversPanel({
             {title}
           </h3>
           <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-            Las alertas se llenarán desde Intelligence cuando existan señales
-            reales.
+            Pendiente de conectar Intelligence signals a esta surface; hoy no
+            lee señales reales.
           </p>
         </div>
         <span
@@ -252,8 +252,8 @@ export function MoversPanel({
               key={item}
               compact
               title={item}
-              requiredSource="metric_signals"
-              nextAction="Pendiente de Intelligence; no se muestran señales inventadas."
+              requiredSource="Intelligence signals por surface"
+              nextAction="Falta el read model que conecte señales reales con Métricas."
               state={state}
             />
           ),

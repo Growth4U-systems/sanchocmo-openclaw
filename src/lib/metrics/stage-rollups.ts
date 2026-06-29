@@ -84,7 +84,7 @@ const ROLLUP_METADATA_DIMENSION_KEYS = new Set([
 ]);
 
 export const DEFAULT_FUNNEL_STAGE_DEFINITIONS: MetricFunnelStageDefinition[] = [
-  stage("web.sessions", "sessions", "Sessions", 0, "web", "ga4", "sessions", {
+  stage("web.sessions", "sessions", "Visitas web", 0, "web", "ga4", "sessions", {
     channel: "web",
   }),
   stage("web.leads.ga4", "leads", "Leads", 1, "web", "ga4", "conversions", {

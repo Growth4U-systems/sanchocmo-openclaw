@@ -90,7 +90,7 @@ const QUALITY_ORDER: MetricStageRollupQualityStatus[] = [
 ];
 
 const CORE_FUNNEL_STAGES = [
-  { stageId: "sessions", label: "Sessions", order: 0 },
+  { stageId: "sessions", label: "Visitas web", order: 0 },
   { stageId: "leads", label: "Leads", order: 1 },
   { stageId: "qualified", label: "Cualificados", order: 2 },
   { stageId: "meetings", label: "Reuniones", order: 3 },
@@ -187,7 +187,10 @@ function buildRate(
   const numerator = to.value;
   const denominator = from.value;
   const value =
-    numerator != null && denominator != null && denominator > 0
+    numerator != null &&
+    denominator != null &&
+    denominator > 0 &&
+    numerator <= denominator
       ? (numerator / denominator) * 100
       : null;
   const rawQuality = value == null

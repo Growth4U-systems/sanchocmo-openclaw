@@ -7,6 +7,7 @@ import { BASE } from "@/lib/data/paths";
 import { ensureMetricsStorage } from "@/lib/data/metrics-snapshots";
 import { SURFACES, surfaceForSource, type SurfaceKey } from "@/lib/metrics/surfaces";
 import { aggFor, type AggStrategy } from "@/lib/metrics/aggregation";
+import { normalizeSourceId } from "@/lib/metrics/semantic-kpis";
 import { getResolvedSchedules, getLatestSourceRuns } from "@/lib/data/metrics-schedule";
 import { isDueToday, getKnownDirty, type Cadence } from "@/lib/metrics/collection-schedule";
 import { loadJobsState } from "@/lib/data/openclaw-crons";
@@ -437,7 +438,7 @@ export async function getSourceScorecards(
 
   const sources: SourceScorecard[] = [...grouped.entries()].map(([source, metrics]) => ({
     source,
-    surface: surfaceForSource(source),
+    surface: surfaceForSource(normalizeSourceId(source)),
     metrics: [...metrics.entries()].map(([metric, series]) => {
       const agg = aggFor(source, metric);
       return { metric, value: reduceSeries(agg, series), agg };
@@ -486,7 +487,9 @@ export async function getSurfaceSummary(slug: string, query: { from?: string; to
     .selectDistinct({ source: metricSnapshots.source })
     .from(metricSnapshots)
     .where(and(...baseConds));
-  const connectedSources = new Set(sourceRows.map((row) => row.source));
+  const connectedSources = new Set(
+    sourceRows.map((row) => normalizeSourceId(row.source)),
+  );
 
   // Headline values = latest per (source, metric) among roll-up rows only.
   const rows = await database
@@ -505,7 +508,13 @@ export async function getSurfaceSummary(slug: string, query: { from?: string; to
   for (const surface of SURFACES) {
     const entry = bySurface.get(surface.key);
     if (!entry) continue;
-    entry.sources = surface.sources.filter((source) => connectedSources.has(source));
+    entry.sources = [
+      ...new Set(
+        surface.sources
+          .map((source) => normalizeSourceId(source))
+          .filter((source) => connectedSources.has(source)),
+      ),
+    ];
     entry.connected = entry.sources.length > 0;
   }
 
@@ -514,7 +523,7 @@ export async function getSurfaceSummary(slug: string, query: { from?: string; to
     const dedupeKey = `${row.source} ${row.metric}`;
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
-    const key = surfaceForSource(row.source);
+    const key = surfaceForSource(normalizeSourceId(row.source));
     if (!key) continue;
     const entry = bySurface.get(key);
     if (!entry) continue;

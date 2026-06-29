@@ -106,6 +106,60 @@ test("maps legacy PageSpeed tbt_mobile onto INP and keeps the latest snapshot", 
   assert.equal(inp.qualityStatus, "ok");
 });
 
+test("maps Trust Core labels and aliases onto Reputation KPIs", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({
+        source: "Trust Core",
+        metricName: "Trust Core Global",
+        value: 41,
+      }),
+      row({
+        source: "trust-core",
+        metricName: "Borrow Trust",
+        value: 22,
+      }),
+      row({
+        source: "trust_score",
+        metricName: "Served Trust",
+        value: 38,
+      }),
+      row({
+        source: "trust_score",
+        metricName: "Brand Assets",
+        value: 31,
+      }),
+      row({
+        source: "trust_score",
+        metricName: "Geo Presence",
+        value: 33,
+      }),
+      row({
+        source: "trust_score",
+        metricName: "Out of Readiness",
+        value: 78,
+      }),
+      row({
+        source: "trust_score",
+        metricName: "Demand Agents",
+        value: 52,
+      }),
+    ],
+    oneDay,
+  );
+
+  assert.equal(byId(values, "reputation.trust_score").label, "Trust Core Global");
+  assert.equal(byId(values, "reputation.trust_score").value, 41);
+  assert.equal(byId(values, "reputation.borrowed_trust").label, "Borrow Trust");
+  assert.equal(byId(values, "reputation.borrowed_trust").value, 22);
+  assert.equal(byId(values, "reputation.serp_trust").label, "Served Trust");
+  assert.equal(byId(values, "reputation.serp_trust").value, 38);
+  assert.equal(byId(values, "reputation.brand_assets").value, 31);
+  assert.equal(byId(values, "reputation.geo_presence").value, 33);
+  assert.equal(byId(values, "reputation.outbound_readiness").value, 78);
+  assert.equal(byId(values, "reputation.demand_engine").value, 52);
+});
+
 test("maps Google Ads aliases and keeps seed platform KPIs as demo", () => {
   const values = computeSemanticKpisFromSnapshots(
     [

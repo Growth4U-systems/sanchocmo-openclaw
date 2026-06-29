@@ -93,16 +93,16 @@ export const SURFACE_DETAIL_CONFIGS: Record<SurfaceKey, SurfaceDetailConfig> = {
       {
         title: "KPIs de reputación",
         description:
-          "Trust Score, gap vs líder, presencia en IA, reseñas y competidores.",
-        requiredSource: "trust_score",
+          "Trust Core Global y pilares: Borrow Trust, Served Trust, Brand Assets, Geo Presence, Out of Readiness y Demand Agents.",
+        requiredSource: "Trust Core snapshot",
         nextAction:
-          "Ejecutar o re-ejecutar Trust Engine para generar el primer snapshot.",
+          "Ingerir el snapshot actual del Trust Core en metric_snapshots; el reporte ya existe en el módulo de Trust.",
       },
       {
         title: "6 pilares vs competidores",
         description: "Benchmark por pilar y ficha de cada competidor.",
-        requiredSource: "trust_score.compare",
-        nextAction: "Definir competidores y guardar el compare report.",
+        requiredSource: "Trust Core compare report",
+        nextAction: "Usar el compare report guardado por Trust Engine como fuente visible de benchmark.",
       },
       {
         title: "Listening",
@@ -122,21 +122,21 @@ export const SURFACE_DETAIL_CONFIGS: Record<SurfaceKey, SurfaceDetailConfig> = {
         title: "SEO KPIs",
         description:
           "Clicks, impressions, CTR, posición, sesiones y engagement.",
-        requiredSource: "gsc + ga4",
-        nextAction: "Conectar GSC y GA4 o esperar snapshots del colector.",
+        requiredSource: "Search Console + GA4",
+        nextAction: "Resolver los runs de GSC/GA4, que hoy terminan en error y no escriben snapshots.",
       },
       {
         title: "Breakdowns",
         description:
           "Queries, páginas, canales, dispositivos, países y movers.",
-        requiredSource: "metric_snapshots dimensions",
-        nextAction: "PR posterior: API de breakdown por dimensiones.",
+        requiredSource: "Snapshots con query/página/dispositivo",
+        nextAction: "Añadir filas dimensionadas de GSC/GA4 y un endpoint de breakdown.",
       },
       {
         title: "Health",
         description: "Core Web Vitals, PageSpeed y distribución de posiciones.",
-        requiredSource: "pagespeed + gsc",
-        nextAction: "Activar PageSpeed automático con URL del cliente.",
+        requiredSource: "PageSpeed + Search Console",
+        nextAction: "Ingerir el PageSpeed actual guardado y reactivar el colector automático.",
       },
     ],
   },
@@ -181,8 +181,8 @@ export const SURFACE_DETAIL_CONFIGS: Record<SurfaceKey, SurfaceDetailConfig> = {
       {
         title: "Stage waterfall",
         description: "Entradas, salidas, aging y conversión entre etapas.",
-        requiredSource: "metric_stage_rollups",
-        nextAction: "PR posterior: rollups semánticos de funnel.",
+        requiredSource: "Embudo unificado",
+        nextAction: "Generar agregados de etapa desde snapshots; para inspección por deal hace falta evento individual.",
       },
       {
         title: "Deal inspection",
@@ -254,8 +254,8 @@ export const SURFACE_DETAIL_CONFIGS: Record<SurfaceKey, SurfaceDetailConfig> = {
       {
         title: "Creator economics",
         description: "Invested, CPA, value, ROI, clicks, signups y KYC.",
-        requiredSource: "yalc/creators",
-        nextAction: "Usar el módulo Partnerships existente como fuente.",
+        requiredSource: "Snapshots YalC/Partnerships",
+        nextAction: "Añadir collector YalC que escriba clicks, signups, KYC, invested y value en metric_snapshots.",
       },
       {
         title: "Break-even",
@@ -266,8 +266,8 @@ export const SURFACE_DETAIL_CONFIGS: Record<SurfaceKey, SurfaceDetailConfig> = {
       {
         title: "Creator table",
         description: "Rendimiento por creator y estado de campaña.",
-        requiredSource: "creator dimensions",
-        nextAction: "Exponer dimensiones desde el módulo YALC.",
+        requiredSource: "Dimensiones por creator/campaign",
+        nextAction: "Exponer dimensiones desde el módulo YalC antes de mostrar tabla en Métricas.",
       },
     ],
   },

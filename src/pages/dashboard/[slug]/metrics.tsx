@@ -33,6 +33,7 @@ import {
   type MetricDataState,
   type MetricQualityStatus,
 } from "@/lib/metrics/dashboard-view-model";
+import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { cn } from "@/lib/utils";
 import {
   Chip,
@@ -60,7 +61,7 @@ const DATE_RANGES: Array<{ key: DateRange; label: string }> = [
 ];
 
 const FUNNEL_STAGES = [
-  "Sessions",
+  "Visitas web",
   "Leads",
   "Cualificados",
   "Reuniones",
@@ -281,6 +282,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
                   surfaceCards={surfaceCards}
                   openSurface={openSurface}
                   configured={surfacesData?.configured}
+                  dashboardDefinition={dashboard?.definition}
                   kpiData={kpiData}
                 />
               )}
@@ -493,7 +495,7 @@ function VersionsPanel({
         ) : (
           <EmptyMetricState
             title="Sin versiones guardadas"
-            requiredSource="metric_dashboards"
+            requiredSource="Definición del dashboard"
             nextAction="Cuando Merlin o el editor guarden una definición, aparecerá aquí."
             state="SIN DATOS"
           />
@@ -532,7 +534,7 @@ function SetupView({
           <div className="flex flex-wrap gap-2">
             <MetricQualityBadge
               status={configured ? "partial" : "missing"}
-              source={configured ? "metric_dashboards" : "sin definición"}
+              source={configured ? "Definición activa" : "sin definición"}
             />
             {health && (
               <Chip
@@ -548,7 +550,7 @@ function SetupView({
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
           <EmptyMetricState
             title="Definición del dashboard"
-            requiredSource="metric_dashboards"
+            requiredSource="Definición del dashboard"
             nextAction={
               configured
                 ? "Definición activa encontrada; los KPIs directos se leen desde el run más reciente del rango."
@@ -686,16 +688,22 @@ function OverviewView({
   surfaceCards,
   openSurface,
   configured,
+  dashboardDefinition,
   kpiData,
 }: {
   slug: string;
   surfaceCards: SurfaceCardModel[];
   openSurface: (surface: SurfaceKey) => void;
   configured?: boolean;
+  dashboardDefinition?: DashboardDefinition | null;
   kpiData?: MetricKpiResult;
 }) {
-  const overviewKpis = selectOverviewKpis(kpiData);
-  const northStar = kpiData?.northStar ?? null;
+  const northStar = selectDashboardNorthStarKpi(kpiData, dashboardDefinition);
+  const northStarDefinition = dashboardDefinition?.northStar ?? null;
+  const northStarLabel =
+    northStarDefinition?.label || northStar?.label || "North Star pendiente";
+  const northStarDefined = Boolean(northStarDefinition?.label || northStarDefinition?.kpiRef);
+  const overviewKpis = selectOverviewKpis(kpiData, northStar);
   const economyKpis = selectEconomyKpis(kpiData);
   const stageRollups = kpiData?.stageRollups;
 
@@ -709,12 +717,14 @@ function OverviewView({
               <DeltaBadge label={northStar ? "sin serie" : "sin delta"} />
             </div>
             <h2 className="mt-3 font-heading text-[24px] font-bold text-navy">
-              {northStar?.label ?? "North Star pendiente de run KPI"}
+              {northStarLabel}
             </h2>
             <p className="mt-2 max-w-[720px] text-[13px] text-[var(--sc-fg-muted)]">
               {northStar
                 ? `${sourceMetricLabel(northStar)} · ${coverageLabel(northStar)}.`
-                : "El panel muestra datos solo cuando existe un cálculo KPI persistido para el rango seleccionado."}
+                : northStarDefined
+                  ? "La North Star está definida en el dashboard, pero todavía no hay una KPI calculada enlazada para este rango."
+                  : "El panel necesita una North Star definida y un cálculo KPI persistido para el rango seleccionado."}
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {overviewKpis.length
@@ -722,7 +732,7 @@ function OverviewView({
                   <KpiTile key={kpi.id} kpi={kpi} />
                 ))
                 : [
-                  "Sessions",
+                  "North Star",
                   "Lead -> Cualificado",
                   "Cualificado -> Reunion",
                   "Coste / reunion",
@@ -762,11 +772,15 @@ function OverviewView({
             <EmptyMetricState
               title={
                 configured
-                  ? "Sin KPI disponible todavía"
+                  ? "North Star sin dato calculado"
                   : "Dashboard no configurado"
               }
               requiredSource="KPIs calculados"
-              nextAction="El dashboard intenta recomputar este rango automáticamente; si sigue vacío, falta ingesta fuente."
+              nextAction={
+                northStarDefined
+                  ? "Mapear la North Star definida a una fuente, métrica o fórmula con datos reales."
+                  : "Definir la North Star del dashboard y ejecutar el cálculo de KPIs."
+              }
               state={configured ? "CONECTADO SIN SNAPSHOTS" : "SIN DATOS"}
             />
           )}
@@ -840,7 +854,7 @@ function OverviewView({
         surface={`Overview · ${slug}`}
         href={`/dashboard/${slug}/intelligence`}
         signals={[
-          "Cambios cross-surface pendientes de metric_signals.",
+          "Cambios cross-surface pendientes de Intelligence signals.",
           stageRollups?.available
             ? "Fugas del funnel visibles como vista agregada; attribution avanzada pendiente."
             : "Fugas del funnel pendientes hasta tener datos suficientes por etapa.",
@@ -1007,7 +1021,7 @@ function SurfaceDetailView({
             empty={
               <EmptyMetricState
                 title="Sin breakdown"
-                requiredSource="metric_snapshots dimensions"
+                requiredSource="Snapshots con dimensiones reales"
                 nextAction="PR posterior conectará dimensiones por query, campaña, post, creator o etapa."
                 state="SIN DATOS"
               />
@@ -1021,7 +1035,7 @@ function SurfaceDetailView({
         surface={config.label}
         href={`/dashboard/${slug}/intelligence`}
         signals={[
-          "Insights bloqueados hasta que metric_signals tenga señales reales.",
+          "Insights bloqueados hasta que Intelligence tenga señales por surface.",
           "No se muestran rankings ni recomendaciones simuladas.",
           "Las acciones se enlazarán a Intelligence cuando exista el motor.",
         ]}
@@ -1117,7 +1131,7 @@ function ChannelsView({
           </h3>
           <EmptyMetricState
             title="Sin contribución atribuida"
-            requiredSource="metric_attribution_results"
+            requiredSource="Resultados de atribución"
             nextAction="No se calcula W-shaped ni revenue atribuido en PR 2."
           />
         </Panel>
@@ -1127,7 +1141,7 @@ function ChannelsView({
           </h3>
           <EmptyMetricState
             title="Model comparison locked"
-            requiredSource="metric_attribution_results"
+            requiredSource="Resultados de atribución"
             nextAction="Disponible cuando existan first/last/linear/W-shaped computados."
             state="COMING SOON"
           />
@@ -1139,7 +1153,7 @@ function ChannelsView({
         </h3>
         <EmptyMetricState
           title="Customer journeys bloqueado"
-          requiredSource="metric_stage_events"
+          requiredSource="Eventos individuales por lead/deal"
           nextAction="Hace falta evento individual por lead/deal; PR 2 no implementa atribución avanzada."
           state="COMING SOON"
         />
@@ -1201,7 +1215,7 @@ function ConversionView({ kpiData }: { kpiData?: MetricKpiResult }) {
           </h3>
           <EmptyMetricState
             title="Sin velocidad"
-            requiredSource="metric_stage_events"
+            requiredSource="Eventos individuales por lead/deal"
             nextAction="Necesita timestamps de paso por etapa."
           />
         </Panel>
@@ -1410,7 +1424,7 @@ function TrendsView({ kpiData }: { kpiData?: MetricKpiResult }) {
           </div>
           <MetricQualityBadge
             status={kpiData?.run ? asQualityStatus(kpiData.summary.qualityStatus) : "pending"}
-            source="metric_kpi_runs + metric_annotations"
+            source="Runs KPI + anotaciones"
           />
         </div>
         {kpiData?.run && (
@@ -1480,7 +1494,7 @@ function TrendsView({ kpiData }: { kpiData?: MetricKpiResult }) {
         </h3>
         <EmptyMetricState
           title="Sin anotaciones"
-          requiredSource="metric_annotations"
+          requiredSource="Anotaciones de campañas"
           nextAction="Las campañas, cambios y eventos se mostrarán aquí cuando existan."
         />
       </Panel>
@@ -1666,6 +1680,8 @@ function friendlyMetric(metric: string): string {
     activation_events: "eventos de activación",
     activation_rate: "tasa de activación",
     avgEngagement: "engagement medio",
+    brand_assets: "Brand Assets",
+    borrowed_trust: "Borrow Trust",
     bounced: "rebotes",
     comments: "comentarios",
     clicks: "clicks",
@@ -1674,9 +1690,11 @@ function friendlyMetric(metric: string): string {
     ctr: "CTR",
     deals: "deals",
     delivered: "entregados",
+    demand_engine: "Demand Agents",
     engagementRate: "engagement rate",
     frequency: "frecuencia",
     followers: "seguidores",
+    geo_presence: "Geo Presence",
     hookRate: "hook rate",
     impressionShare: "cuota de impresiones",
     impressions: "impresiones",
@@ -1690,7 +1708,10 @@ function friendlyMetric(metric: string): string {
     newUsers: "usuarios nuevos",
     north_star_weekly: "North Star semanal",
     opens: "aperturas",
+    outbound_readiness: "Out of Readiness",
     pageviews: "pageviews",
+    performance_desktop: "PageSpeed desktop",
+    performance_mobile: "PageSpeed mobile",
     pipelineValue: "valor de pipeline",
     position: "posición media",
     reach: "alcance",
@@ -1702,10 +1723,12 @@ function friendlyMetric(metric: string): string {
     sent: "enviados",
     shares: "compartidos",
     sessions: "sesiones",
+    serp_trust: "Served Trust",
     spend: "inversión",
     totalContacts: "contactos totales",
     totalOpportunities: "oportunidades totales",
     totalUsers: "usuarios",
+    trust_score: "Trust Core Global",
     unsubscribed: "bajas",
     users: "usuarios",
     videoViews: "visualizaciones de video",
@@ -1717,14 +1740,81 @@ function friendlyMetric(metric: string): string {
     .toLowerCase();
 }
 
-function selectOverviewKpis(data?: MetricKpiResult): MetricKpiValue[] {
+function selectOverviewKpis(data?: MetricKpiResult, primary?: MetricKpiValue | null): MetricKpiValue[] {
   if (!data?.values?.length) return [];
-  const primary = data.northStar;
-  const overview = data.values.filter((kpi) => kpi.dashboardBlock === "overview");
+  const overview = data.values.filter(
+    (kpi) => kpi.dashboardBlock === "overview" && kpi.id !== primary?.id,
+  );
+  const populatedOverview = overview.filter((kpi) => kpi.value != null);
+  const missingOverview = overview.filter((kpi) => kpi.value == null);
   const rest = data.values
     .filter((kpi) => kpi.id !== primary?.id && kpi.dashboardBlock !== "overview")
     .sort((a, b) => scoreKpi(b) - scoreKpi(a));
-  return [...(primary ? [primary] : []), ...overview.filter((kpi) => kpi.id !== primary?.id), ...rest].slice(0, 4);
+  return [
+    ...(primary ? [primary] : []),
+    ...populatedOverview,
+    ...rest,
+    ...missingOverview,
+  ].slice(0, 4);
+}
+
+function selectDashboardNorthStarKpi(
+  data?: MetricKpiResult,
+  dashboardDefinition?: DashboardDefinition | null,
+): MetricKpiValue | null {
+  const values = data?.values ?? [];
+  if (!values.length) return null;
+  const northStar = dashboardDefinition?.northStar;
+  const ref = normalizeComparable(northStar?.kpiRef);
+  const label = normalizeComparable(northStar?.label);
+
+  if (ref) {
+    const explicit = values.find((kpi) =>
+      [kpi.kpiId, kpi.label, kpi.metricName, `${kpi.source ?? ""}.${kpi.metricName ?? ""}`]
+        .some((candidate) => normalizeComparable(candidate) === ref),
+    );
+    if (explicit) return explicit;
+  }
+
+  if (label) {
+    const labelMatch = values.find((kpi) => normalizeComparable(kpi.label) === label);
+    if (labelMatch) return labelMatch;
+    const inferred = values.find((kpi) => northStarMatchesKpi(label, kpi));
+    if (inferred) return inferred;
+    if (!northStar?.label && data?.northStar) return data.northStar;
+    return null;
+  }
+
+  return data?.northStar ?? null;
+}
+
+function northStarMatchesKpi(label: string, kpi: MetricKpiValue): boolean {
+  const haystack = normalizeComparable(`${kpi.kpiId} ${kpi.label} ${kpi.source ?? ""} ${kpi.metricName ?? ""}`);
+  if (/meeting|reunion|cita|appointment/.test(label)) {
+    return /meeting|reunion|cita|appointment/.test(haystack);
+  }
+  if (/lead|contact/.test(label)) {
+    return /lead|contact/.test(haystack);
+  }
+  if (/deal|opportunit|oportunidad|proposal|propuesta/.test(label)) {
+    return /deal|opportunit|oportunidad|proposal|propuesta/.test(haystack);
+  }
+  if (/revenue|gmv|venta|sales|ingreso/.test(label)) {
+    return /revenue|gmv|venta|sales|ingreso|value/.test(haystack);
+  }
+  if (/activation|activacion|activated/.test(label)) {
+    return /activation|activacion|activated/.test(haystack);
+  }
+  return false;
+}
+
+function normalizeComparable(value?: string | null): string {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[_\-.]+/g, " ")
+    .trim()
+    .toLowerCase();
 }
 
 function selectEconomyKpis(data?: MetricKpiResult): MetricKpiValue[] {
