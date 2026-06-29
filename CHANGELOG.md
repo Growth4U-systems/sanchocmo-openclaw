@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.4](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.3...v0.15.4) (2026-06-29)
+
+
+### Bug Fixes
+
+* **metrics:** SAN-369 declutter metrics dashboard ([4c85af3](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4c85af31f2b41fe6ce1847c8c0b3b2b776aad023))
+
 ## [0.15.3](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.2...v0.15.3) (2026-06-29)
 
 
