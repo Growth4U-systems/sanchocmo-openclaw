@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.3](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.2...v0.15.3) (2026-06-29)
+
+
+### Bug Fixes
+
+* **content:** load channel loops independently ([8579942](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/857994291fffbb46bd0cbb74c6c68ffa9a65b9c5))
+
 ## [0.15.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.1...v0.15.2) (2026-06-29)
 
 
