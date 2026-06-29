@@ -125,6 +125,35 @@ test("adapts persisted KPI rows into client-safe read model values", () => {
   assert.equal(value.inputRefs.length, 1);
 });
 
+test("canonicalizes persisted legacy Trust Core labels for the dashboard", () => {
+  const value = toMetricKpiReadModelValue({
+    id: "value_trust_demand",
+    runId: "run_1",
+    slug: "growth4u",
+    kpiId: "reputation.demand_engine",
+    label: "Demand Agents",
+    dashboardBlock: "surface",
+    surface: "reputation",
+    source: "trust_score",
+    metricName: "demand_engine",
+    value: 52,
+    valueText: null,
+    unit: null,
+    qualityStatus: "ok",
+    provenanceLabel: "trust_score.demand_engine",
+    inputRefs: [{ source: "trust_score", metricName: "Demand Agents" }],
+    sourceCoverage: 1,
+    rangeFrom: "2026-06-01",
+    rangeTo: "2026-06-30",
+    definitionVersion: 1,
+    computedAt: new Date("2026-06-30T01:00:00.000Z"),
+    createdAt: new Date("2026-06-30T01:00:00.000Z"),
+    updatedAt: new Date("2026-06-30T01:00:00.000Z"),
+  });
+
+  assert.equal(value.label, "Demand Engine");
+});
+
 test("selects the dashboard-defined north star over the generic overview KPI", () => {
   const values = [
     {
