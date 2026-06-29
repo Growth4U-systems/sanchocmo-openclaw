@@ -307,6 +307,31 @@ const TRUST_CORE_KPIS: Array<{
   },
 ];
 
+const TRUST_CORE_LABEL_BY_KPI_ID = new Map(
+  TRUST_CORE_KPIS.map((item) => [item.id, item.label]),
+);
+const TRUST_CORE_LABEL_BY_METRIC = new Map(
+  TRUST_CORE_KPIS.map((item) => [item.metric, item.label]),
+);
+
+export function canonicalMetricKpiLabel(input: {
+  kpiId?: string | null;
+  label?: string | null;
+  source?: string | null;
+  metricName?: string | null;
+}): string {
+  const currentLabel = input.label ?? "";
+  const labelById = input.kpiId ? TRUST_CORE_LABEL_BY_KPI_ID.get(input.kpiId) : null;
+  if (labelById) return labelById;
+
+  const source = input.source ? normalizeSourceId(input.source) : "";
+  const metric = normalizeMetricName(input.metricName ?? currentLabel);
+  const labelByMetric = TRUST_CORE_LABEL_BY_METRIC.get(metric);
+  if (source === "trust_score" && labelByMetric) return labelByMetric;
+
+  return currentLabel;
+}
+
 const reputationDefinitions: MetricKpiDefinition[] = TRUST_CORE_KPIS.map(
   (item) =>
     kpi(

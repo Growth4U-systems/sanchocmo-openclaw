@@ -24,7 +24,10 @@ import {
   metricStageRollupStorageConfigured,
   type MetricStageRollupRow,
 } from "@/lib/data/metric-stage-rollups";
-import { METRIC_KPI_DEFINITION_VERSION } from "@/lib/metrics/semantic-kpis";
+import {
+  canonicalMetricKpiLabel,
+  METRIC_KPI_DEFINITION_VERSION,
+} from "@/lib/metrics/semantic-kpis";
 import {
   buildMetricStageRollupReadModel,
   type MetricStageRollupReadInput,
@@ -301,7 +304,12 @@ export function toMetricKpiReadModelValue(row: MetricKpiValueRow): MetricKpiRead
   return {
     id: row.id,
     kpiId: row.kpiId,
-    label: row.label,
+    label: canonicalMetricKpiLabel({
+      kpiId: row.kpiId,
+      label: row.label,
+      source: row.source,
+      metricName: row.metricName,
+    }),
     dashboardBlock: row.dashboardBlock,
     surface: row.surface as SurfaceKey | null,
     source: row.source,
