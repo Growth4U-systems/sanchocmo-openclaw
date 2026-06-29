@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.15.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.14.1...v0.15.0) (2026-06-29)
+
+
+### Features
+
+* **metrics:** add Metrics v2 dashboard shell ([567d581](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/567d58129f725770a2180056304097349ac17d4d))
+* **metrics:** add SAN-354 semantic KPI layer ([46ee152](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/46ee152511b354f45624a256ae2f7456adcbc7ed))
+* **metrics:** add SAN-355 KPI UI wiring ([#953](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/953)) ([4df6acf](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4df6acfa80306f1433de105dd0e00e790bb98575))
+* **metrics:** add SAN-356 KPI runner ([#951](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/951)) ([2af9586](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2af95869a96fcba004e5ec6871bc22b05b71161e))
+* **metrics:** add SAN-357 seed demo hygiene ([#952](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/952)) ([6e58699](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6e586997a7c5c2234f80ce238ed0787b13468142))
+* **metrics:** add SAN-358 Lemlist collector ([#949](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/949)) ([888b458](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/888b45809335a784d99a008b29f83c05a95df6c5))
+* **metrics:** add SAN-362 stage rollups ([#958](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/958)) ([29c6e3b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/29c6e3bf2b4ea5e7b3d9aabb8bcc877086d3c592))
+* **metrics:** add SAN-364 ingest recompute ([d698b17](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d698b178ec8ee6a292e87d3f4212cc01c364a170))
+* **metrics:** add SAN-365 direct ingest recompute ([088f445](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/088f445487729a78748ad5fde4c64e92dd348646))
+* **metrics:** add SAN-366 dashboard range recompute ([1aaf865](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1aaf86552671600acbd7ea75e200b1c639276624))
+* **metrics:** add SAN-367 dashboard KPI read-through ([4387f14](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4387f14472f787c34c30a425eb2ef5e5e86cf797))
+* **metrics:** connect SAN-363 stage rollups dashboard ([#960](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/960)) ([c755a27](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c755a278b4bfd18b61c5f90b39e2b63cd83abafb))
+* **metrics:** harden SAN-361 direct KPI definitions ([#956](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/956)) ([ba2b08f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ba2b08fb2b0b753c6c90b3ffe3f6dc9b31886beb))
+* **metrics:** SAN-369 add Google Ads collector ([9f69f83](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9f69f8323bbf753096b6365552291a82718fd556))
+* **skills:** add level-up excellence gate owned by Sansón ([#922](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/922)) ([1b6d929](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1b6d9297a1676689c738701af47181d32257fd85))
+
+
+### Bug Fixes
+
+* enable Slack OAuth per client ([541a74c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/541a74c7c1d44b52ba6ea3dad71a8b16cac2ade2))
+* **metrics:** SAN-368 persist UI connector env vars ([7c1cb06](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7c1cb06e26daf74cf639455148326f9083e4d25f))
+* **metrics:** SAN-369 align north star copy ([#979](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/979)) ([ed92e1e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ed92e1ebd61685abffa112ccff9ce17d09e71d47))
+* **metrics:** SAN-369 clarify dashboard rollups ([a87c132](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a87c1326c7e65e8a405e9b1ed7a2c81d19192cf0))
+* **metrics:** SAN-369 repair GHL and Instantly collectors ([175754a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/175754a9aad0a032701e76e6c46fbd7c1c822d5f))
+* **partnerships:** discovery plan-card limpio + AskUserQuestion en el chat ([#884](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/884)) ([796ca0d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/796ca0df0d4d227c62de69765db3a88dccf3bbf7))
+* **partnerships:** lanzar ejecuta el discovery real (despacho a Rocinante) ([#919](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/919)) ([c5f9cfe](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c5f9cfeff17848a8415b251e06ea89174941528f))
+* **partnerships:** retomar el hilo del plan al reabrir una búsqueda ([#885](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/885)) ([d567ebd](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d567ebd10e60d675986a92536ec75b791169c2bb))
+* **runtime:** raise Fireworks per-provider idle timeout to 300s (SAN-347) ([#930](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/930)) ([9517796](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/95177961c56af8cb7341b876362662d2da6e820c))
+* **runtime:** strip Fireworks-incompatible tool-schema keywords (SAN-345) ([#926](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/926)) ([ff61c65](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ff61c650fb30f340ec0aec00a3a26325e767421a))
+* **skills:** correct Sansón skill ownership metadata + ecp-validation path ([#921](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/921)) ([489ec65](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/489ec65b401f53f022779aafb991501f85eac3b8))
+* **skills:** pass YALC payloads inline, fix Rocinante Write failure (SAN-348) ([d015a72](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d015a7294188b7d0efc9825968722b203b6035d4))
+
 ## [0.14.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.14.0...v0.14.1) (2026-06-26)
 
 
