@@ -84,7 +84,7 @@ const ROLLUP_METADATA_DIMENSION_KEYS = new Set([
 ]);
 
 export const DEFAULT_FUNNEL_STAGE_DEFINITIONS: MetricFunnelStageDefinition[] = [
-  stage("web.sessions", "sessions", "Sessions", 0, "web", "ga4", "sessions", {
+  stage("web.sessions", "sessions", "Visitas web", 0, "web", "ga4", "sessions", {
     channel: "web",
   }),
   stage("web.leads.ga4", "leads", "Leads", 1, "web", "ga4", "conversions", {
@@ -301,16 +301,28 @@ export function computeMetricStageRollupsFromSnapshots(
     const rollupRows = matching.filter(isRollup);
     const selected = rollupRows.length ? rollupRows : matching;
     const byBucket = new Map<string, MetricKpiSnapshotInput[]>();
+    const strategy = def.aggregation ?? aggFor(def.source, def.metric);
     for (const row of selected) {
       const channel = channelFor(def, row);
-      const key = `${row.metricDate}\u0000${channel}`;
+      // Stock metrics such as CRM total opportunities represent state at a
+      // point in time. Persist one range-level rollup per channel instead of
+      // one row per day, otherwise the read model would sum snapshots across
+      // the period and show inflated counts.
+      const key =
+        strategy === "latest"
+          ? `__latest__\u0000${channel}`
+          : `${row.metricDate}\u0000${channel}`;
       const bucket = byBucket.get(key) ?? [];
       bucket.push(row);
       byBucket.set(key, bucket);
     }
 
     for (const [key, bucket] of byBucket) {
-      const [stageDate, channel] = key.split("\u0000");
+      const [rawStageDate, channel] = key.split("\u0000");
+      const stageDate =
+        rawStageDate === "__latest__"
+          ? bucket.map((row) => row.metricDate).sort().at(-1) ?? range.to
+          : rawStageDate;
       out.push({
         mapId: def.mapId,
         stageId: def.stageId,

@@ -104,6 +104,23 @@ test("maps Lemlist meetingBooked alias into outbound meetings", () => {
   assert.equal(meetings?.qualityStatus, "partial");
 });
 
+test("latest stage metrics persist one range-level rollup instead of daily additive rows", () => {
+  const rollups = computeMetricStageRollupsFromSnapshots(
+    [
+      row({ source: "ghl", metricName: "totalOpportunities", value: 71, metricDate: "2026-06-01" }),
+      row({ source: "ghl", metricName: "totalOpportunities", value: 74, metricDate: "2026-06-02" }),
+      row({ source: "ghl", metricName: "totalOpportunities", value: 73, metricDate: "2026-06-03" }),
+    ],
+    { from: "2026-06-01", to: "2026-06-03" },
+  );
+  const deals = rollups.filter((item) => item.mapId.endsWith("crm.deals.ghl"));
+  assert.equal(deals.length, 1);
+  assert.equal(deals[0].stageId, "deals");
+  assert.equal(deals[0].stageDate, "2026-06-03");
+  assert.equal(deals[0].value, 73);
+  assert.equal(deals[0].qualityStatus, "dirty");
+});
+
 test("availability KPI reports honest partial coverage", () => {
   const rollups = computeMetricStageRollupsFromSnapshots(
     [

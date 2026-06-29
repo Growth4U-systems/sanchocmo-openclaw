@@ -90,7 +90,7 @@ const QUALITY_ORDER: MetricStageRollupQualityStatus[] = [
 ];
 
 const CORE_FUNNEL_STAGES = [
-  { stageId: "sessions", label: "Sessions", order: 0 },
+  { stageId: "sessions", label: "Visitas web", order: 0 },
   { stageId: "leads", label: "Leads", order: 1 },
   { stageId: "qualified", label: "Cualificados", order: 2 },
   { stageId: "meetings", label: "Reuniones", order: 3 },
@@ -187,7 +187,10 @@ function buildRate(
   const numerator = to.value;
   const denominator = from.value;
   const value =
-    numerator != null && denominator != null && denominator > 0
+    numerator != null &&
+    denominator != null &&
+    denominator > 0 &&
+    numerator <= denominator
       ? (numerator / denominator) * 100
       : null;
   const rawQuality = value == null
@@ -292,8 +295,8 @@ export function buildMetricStageRollupReadModel(args: {
       source: "metric_stage_rollups",
       emptyState: available ? "ready" : "missing_stage_rollups",
       nextAction: available
-        ? "Mostrar como rollup pre-attribution; attribution avanzada requiere metric_stage_events."
-        : "Ejecutar compute:metric-kpis y configurar stage map/source metrics para este rango.",
+        ? "Mostrar como vista agregada; attribution avanzada requiere eventos individuales."
+        : "Ejecutar cálculo de KPIs y configurar el mapa de etapas para este rango.",
     },
     stages,
     rates: buildRates(stages),

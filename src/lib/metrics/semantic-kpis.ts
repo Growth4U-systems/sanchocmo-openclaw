@@ -1,4 +1,3 @@
-import { TRUST_PILLAR_KEYS } from "@/lib/trust-score/client";
 import { aggFor, type AggStrategy } from "@/lib/metrics/aggregation";
 import {
   isDemoProvenanceValue,
@@ -100,6 +99,14 @@ const SOURCE_ALIASES: Record<string, string> = {
   lemlist: "lemlist",
   ghl: "ghl",
   "go-high-level": "ghl",
+  "go_high_level": "ghl",
+  "trust core": "trust_score",
+  "trust_core": "trust_score",
+  "trust-core": "trust_score",
+  "trust engine": "trust_score",
+  "trust_engine": "trust_score",
+  "trust-score": "trust_score",
+  trust_score: "trust_score",
 };
 
 const METRIC_ALIASES: Record<string, string> = {
@@ -118,6 +125,29 @@ const METRIC_ALIASES: Record<string, string> = {
   videoViews: "videoViews",
   followerCount: "followers",
   followersTotal: "followers",
+  "Borrow Trust": "borrowed_trust",
+  borrowTrust: "borrowed_trust",
+  borrow_trust: "borrowed_trust",
+  borrowedTrust: "borrowed_trust",
+  "Brand Assets": "brand_assets",
+  brandAssets: "brand_assets",
+  "Demand Agents": "demand_engine",
+  demandAgents: "demand_engine",
+  demand_agents: "demand_engine",
+  demandEngine: "demand_engine",
+  "Geo Presence": "geo_presence",
+  geoPresence: "geo_presence",
+  "Out of Readiness": "outbound_readiness",
+  outReadiness: "outbound_readiness",
+  out_of_readiness: "outbound_readiness",
+  outboundReadiness: "outbound_readiness",
+  "Served Trust": "serp_trust",
+  servedTrust: "serp_trust",
+  served_trust: "serp_trust",
+  serpTrust: "serp_trust",
+  "Trust Core Global": "trust_score",
+  trustCoreGlobal: "trust_score",
+  trust_core_global: "trust_score",
 };
 
 const DEFAULT_STALE_AFTER_DAYS = 7;
@@ -214,26 +244,79 @@ const webSeoDefinitions: MetricKpiDefinition[] = [
   ),
 ];
 
-const reputationDefinitions: MetricKpiDefinition[] = [
-  kpi(
-    "reputation.trust_score",
-    "Trust Score",
-    "surface",
-    "reputation",
-    "trust_score",
-    "trust_score",
-  ),
-  ...TRUST_PILLAR_KEYS.map((pillar) =>
+const TRUST_CORE_SOURCE_ALIASES = [
+  "trust_core",
+  "trust-core",
+  "trust-score",
+  "trust engine",
+  "Trust Core",
+];
+
+const TRUST_CORE_KPIS: Array<{
+  id: string;
+  label: string;
+  metric: string;
+  aliases: string[];
+}> = [
+  {
+    id: "reputation.trust_score",
+    label: "Trust Core Global",
+    metric: "trust_score",
+    aliases: ["trustCoreGlobal", "trust_core_global"],
+  },
+  {
+    id: "reputation.borrowed_trust",
+    label: "Borrow Trust",
+    metric: "borrowed_trust",
+    aliases: ["borrow_trust", "borrowTrust", "borrowedTrust"],
+  },
+  {
+    id: "reputation.brand_assets",
+    label: "Brand Assets",
+    metric: "brand_assets",
+    aliases: ["brandAssets"],
+  },
+  {
+    id: "reputation.demand_engine",
+    label: "Demand Agents",
+    metric: "demand_engine",
+    aliases: ["demand_agents", "demandAgents", "demandEngine"],
+  },
+  {
+    id: "reputation.geo_presence",
+    label: "Geo Presence",
+    metric: "geo_presence",
+    aliases: ["geoPresence"],
+  },
+  {
+    id: "reputation.outbound_readiness",
+    label: "Out of Readiness",
+    metric: "outbound_readiness",
+    aliases: ["out_of_readiness", "outReadiness", "outboundReadiness"],
+  },
+  {
+    id: "reputation.serp_trust",
+    label: "Served Trust",
+    metric: "serp_trust",
+    aliases: ["served_trust", "servedTrust", "serpTrust"],
+  },
+];
+
+const reputationDefinitions: MetricKpiDefinition[] = TRUST_CORE_KPIS.map(
+  (item) =>
     kpi(
-      `reputation.${pillar}`,
-      `Trust pillar - ${pillar}`,
+      item.id,
+      item.label,
       "surface",
       "reputation",
       "trust_score",
-      pillar,
+      item.metric,
+      {
+        metricAliases: item.aliases,
+        sourceAliases: TRUST_CORE_SOURCE_ALIASES,
+      },
     ),
-  ),
-];
+);
 
 const paidDefinitions: MetricKpiDefinition[] = [
   kpi("paid.meta.spend", "Meta spend", "surface", "paid", "meta_ads", "spend", {
@@ -659,11 +742,19 @@ function kpi(
 }
 
 export function normalizeSourceId(source: string): string {
-  return SOURCE_ALIASES[source] ?? source;
+  const normalized = source.trim().replace(/\s+/g, "_").toLowerCase();
+  return SOURCE_ALIASES[source] ?? SOURCE_ALIASES[normalized] ?? normalized;
 }
 
 export function normalizeMetricName(metric: string): string {
-  return METRIC_ALIASES[metric] ?? metric;
+  const normalized = metric.trim().replace(/[\s-]+/g, "_");
+  const lower = normalized.toLowerCase();
+  return (
+    METRIC_ALIASES[metric] ??
+    METRIC_ALIASES[normalized] ??
+    METRIC_ALIASES[lower] ??
+    metric
+  );
 }
 
 function metricNamesFor(def: MetricKpiDefinition): Set<string> {

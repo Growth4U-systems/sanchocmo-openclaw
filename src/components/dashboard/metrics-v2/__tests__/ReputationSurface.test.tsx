@@ -45,7 +45,7 @@ test("ReputationSurface: header + Trust Score + gap vs leader", () => {
 
 test("ReputationSurface: the 6 pillars vs the leader", () => {
   const m = render(createElement(ReputationSurface, { data }));
-  for (const l of ["Borrowed Trust", "SERP Trust", "Brand Assets", "Geo Presence", "Outbound Readiness", "Demand Engine"]) assert.match(m, new RegExp(l));
+  for (const l of ["Borrow Trust", "Served Trust", "Brand Assets", "Geo Presence", "Out of Readiness", "Demand Agents"]) assert.match(m, new RegExp(l));
 });
 
 test("ReputationSurface: GEO matrix shows the 0/2 AI-mention gap", () => {

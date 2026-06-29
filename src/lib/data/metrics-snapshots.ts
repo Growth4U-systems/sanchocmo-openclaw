@@ -33,6 +33,7 @@ export interface SourcePayload {
   collectedAt?: string | null;
   provenance?: string | null;
   quality?: string | null;
+  error?: string | null;
   metrics?: RawMetric[];
 }
 
@@ -373,7 +374,15 @@ export async function ingestDailySnapshot(
     const collectedAt = payload?.collectedAt ?? daily.collectedAt;
     if (payload?.status !== "ok" || !Array.isArray(metrics) || !metrics.length) {
       skipped.push(source);
-      ledger.push({ slug, metricDate: dateKey, source, status: payload?.status === "error" ? "error" : "skipped", rowCount: 0, collectedAt });
+      ledger.push({
+        slug,
+        metricDate: dateKey,
+        source,
+        status: payload?.status === "error" ? "error" : "skipped",
+        rowCount: 0,
+        collectedAt,
+        error: payload?.error ?? null,
+      });
       continue;
     }
     used.push(source);

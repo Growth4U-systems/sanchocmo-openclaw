@@ -87,3 +87,39 @@ test("returns an honest empty state when no stage rollups exist", () => {
   assert.equal(model.stages.length, 5);
   assert.ok(model.stages.every((stage) => stage.value === null));
 });
+
+test("does not publish impossible conversion rates over 100 percent", () => {
+  const model = buildMetricStageRollupReadModel({
+    configured: true,
+    range: { from: "2026-06-01", to: "2026-06-30" },
+    rows: [
+      row({
+        id: "rollup_meetings",
+        stageId: "meetings",
+        stageLabel: "Reuniones",
+        stageOrder: 3,
+        channel: "crm",
+        source: "ghl",
+        metricName: "appointments",
+        value: 4,
+        qualityStatus: "dirty",
+      }),
+      row({
+        id: "rollup_deals",
+        stageId: "deals",
+        stageLabel: "Deals",
+        stageOrder: 4,
+        channel: "crm",
+        source: "ghl",
+        metricName: "totalOpportunities",
+        value: 218,
+        qualityStatus: "dirty",
+      }),
+    ],
+  });
+
+  const rate = model.rates.find((item) => item.fromStageId === "meetings");
+  assert.equal(rate?.value, null);
+  assert.equal(rate?.displayValue, "-");
+  assert.equal(rate?.qualityStatus, "missing");
+});

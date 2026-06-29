@@ -317,8 +317,8 @@ export function toMetricKpiReadModelValue(row: MetricKpiValueRow): MetricKpiRead
 
 export function selectNorthStarKpi(values: MetricKpiReadModelValue[]): MetricKpiReadModelValue | null {
   return values.find((value) => value.dashboardBlock === "overview" && value.value != null)
-    ?? values.find((value) => value.dashboardBlock === "overview")
     ?? values.find((value) => value.value != null)
+    ?? values.find((value) => value.dashboardBlock === "overview")
     ?? null;
 }
 

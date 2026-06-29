@@ -13,12 +13,12 @@ import { DataChip } from "./rigor";
 import { IntelBridge } from "./IntelBridge";
 
 const PILLAR_LABEL: Record<TrustPillarKey, string> = {
-  borrowed_trust: "Borrowed Trust",
-  serp_trust: "SERP Trust",
+  borrowed_trust: "Borrow Trust",
+  serp_trust: "Served Trust",
   brand_assets: "Brand Assets",
   geo_presence: "Geo Presence",
-  outbound_readiness: "Outbound Readiness",
-  demand_engine: "Demand Engine",
+  outbound_readiness: "Out of Readiness",
+  demand_engine: "Demand Agents",
 };
 const tsColor = (s: number | null | undefined) => (s == null ? "#C9C4BA" : s >= 70 ? "#4A5D23" : s >= 40 ? "#B8860B" : "#C45D35");
 const gapColor = (g: number) => (g >= 0 ? "#4A5D23" : g >= -12 ? "#B8860B" : "#C45D35");
