@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.1...v0.15.2) (2026-06-29)
+
+
+### Bug Fixes
+
+* **metrics:** SAN-369 canonicalize trust KPI labels ([#984](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/984)) ([d994fbe](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d994fbe28b078debaea76c1a9129fa4d2ad43236))
+
 ## [0.15.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.0...v0.15.1) (2026-06-29)
 
 
