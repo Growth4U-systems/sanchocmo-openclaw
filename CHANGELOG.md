@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.0...v0.15.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* **metrics:** SAN-369 align trust core pillar labels ([#982](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/982)) ([5af151f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5af151ff03cda404439b58cfa50762fc8337b6a2))
+
 ## [0.15.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.14.1...v0.15.0) (2026-06-29)
 
 
