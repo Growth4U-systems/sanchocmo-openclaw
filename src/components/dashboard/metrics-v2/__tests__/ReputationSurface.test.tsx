@@ -20,7 +20,7 @@ const pillars = (b: number, s: number, br: number, g: number, o: number, d: numb
 });
 const brand = (name: string, dom: string, ts: number, p: TrustPillars, geo: Record<string, { mentions: boolean }>): BrandScore => ({
   url: "https://" + dom, domain: dom, brand_name: name, sector: "SaaS fiscal", region: "ES", trust_score: ts,
-  pillars: p, top_gaps: ["Geo Presence 18 — ausente en LLMs", "Reputación SERP negativa"], serp_highlight: "", geo_highlight: "", verdict: "posición intermedia",
+  pillars: p, top_gaps: ["GEO Presence 18 — ausente en LLMs", "Reputación SERP negativa"], serp_highlight: "", geo_highlight: "", verdict: "posición intermedia",
   geo_llm_results: geo, geo_llms_tested: Object.keys(geo).length,
 });
 const data: CompareResult = {
@@ -31,7 +31,7 @@ const data: CompareResult = {
   ],
   comparison: {
     pillar_winners: {}, primary_advantages: ["Outbound Readiness 78 — su pilar más sólido"],
-    primary_gaps: ["Geo Presence 18 vs 68 (−50)"], insights: ["Citabilidad ≠ autoridad"],
+    primary_gaps: ["GEO Presence 18 vs 68 (−50)"], insights: ["Citabilidad ≠ autoridad"],
     verdict: "Declarando ocupa una posición intermedia",
   },
 };
@@ -45,7 +45,8 @@ test("ReputationSurface: header + Trust Score + gap vs leader", () => {
 
 test("ReputationSurface: the 6 pillars vs the leader", () => {
   const m = render(createElement(ReputationSurface, { data }));
-  for (const l of ["Borrow Trust", "Served Trust", "Brand Assets", "Geo Presence", "Out of Readiness", "Demand Agents"]) assert.match(m, new RegExp(l));
+  for (const l of ["Borrowed Trust", "SERP Trust", "Brand Assets", "GEO Presence", "Outbound Readiness", "Demand Engine"]) assert.match(m, new RegExp(l));
+  for (const old of ["Borrow Trust", "Served Trust", "Geo Presence", "Out of Readiness", "Demand Agents"]) assert.doesNotMatch(m, new RegExp(old));
 });
 
 test("ReputationSurface: GEO matrix shows the 0/2 AI-mention gap", () => {
@@ -59,7 +60,7 @@ test("ReputationSurface: diagnosis — verdict + wins + gaps + insights", () => 
   const m = render(createElement(ReputationSurface, { data }));
   assert.match(m, /posición intermedia/);
   assert.match(m, /Outbound Readiness 78/);
-  assert.match(m, /Geo Presence 18 vs 68/);
+  assert.match(m, /GEO Presence 18 vs 68/);
   assert.match(m, /Citabilidad/);
 });
 

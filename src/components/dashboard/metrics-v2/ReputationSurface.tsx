@@ -13,12 +13,21 @@ import { DataChip } from "./rigor";
 import { IntelBridge } from "./IntelBridge";
 
 const PILLAR_LABEL: Record<TrustPillarKey, string> = {
-  borrowed_trust: "Borrow Trust",
-  serp_trust: "Served Trust",
+  borrowed_trust: "Borrowed Trust",
+  serp_trust: "SERP Trust",
   brand_assets: "Brand Assets",
-  geo_presence: "Geo Presence",
-  outbound_readiness: "Out of Readiness",
-  demand_engine: "Demand Agents",
+  geo_presence: "GEO Presence",
+  outbound_readiness: "Outbound Readiness",
+  demand_engine: "Demand Engine",
+};
+
+const PILLAR_DESCRIPTION: Record<TrustPillarKey, string> = {
+  borrowed_trust: "Mentions and references from third parties",
+  serp_trust: "Presence and ranking on Google",
+  brand_assets: "Visual and brand assets",
+  geo_presence: "Visibility in generative AI engines",
+  outbound_readiness: "Readiness to capture leads",
+  demand_engine: "Demand-generation infrastructure",
 };
 const tsColor = (s: number | null | undefined) => (s == null ? "#C9C4BA" : s >= 70 ? "#4A5D23" : s >= 40 ? "#B8860B" : "#C45D35");
 const gapColor = (g: number) => (g >= 0 ? "#4A5D23" : g >= -12 ? "#B8860B" : "#C45D35");
@@ -63,6 +72,14 @@ export function ReputationSurface({ data, onRerun, measuredAt }: { data: Compare
   const rows = [primary, ...competitors];
   // GEO matrix columns = union of tested LLMs
   const llms = [...new Set(rows.flatMap((b) => Object.keys(b.geo_llm_results || {})))];
+  const scoreboardHeaders: Array<{ label: string; title?: string }> = [
+    { label: "Marca" },
+    { label: "Trust" },
+    ...TRUST_PILLAR_KEYS.map((k) => ({
+      label: PILLAR_LABEL[k].split(" ")[0],
+      title: `${PILLAR_LABEL[k]}: ${PILLAR_DESCRIPTION[k]}`,
+    })),
+  ];
 
   const subTab = (k: "confianza" | "listening", label: string) => (
     <button
@@ -117,8 +134,16 @@ export function ReputationSurface({ data, onRerun, measuredAt }: { data: Compare
                 const open = openPillar === k;
                 return (
                   <div key={k}>
-                    <button type="button" onClick={() => setOpenPillar(open ? null : k)} className="flex w-full items-center gap-2 text-left">
-                      <span className="w-32 shrink-0 text-[11px] font-semibold">{PILLAR_LABEL[k]}</span>
+                    <button
+                      type="button"
+                      onClick={() => setOpenPillar(open ? null : k)}
+                      className="flex w-full items-center gap-2 text-left"
+                      aria-label={`${PILLAR_LABEL[k]}: ${PILLAR_DESCRIPTION[k]}`}
+                      title={PILLAR_DESCRIPTION[k]}
+                    >
+                      <span className="w-32 shrink-0 text-[11px] font-semibold" title={PILLAR_DESCRIPTION[k]}>
+                        {PILLAR_LABEL[k]}
+                      </span>
                       <span className="relative h-3 flex-1 overflow-visible rounded-sc-pill border border-ink bg-aged">
                         <i className="block h-full rounded-sc-pill" style={{ width: `${me}%`, background: gapColor(gap) }} />
                         {leader && <span className="absolute top-1/2 -translate-y-1/2 text-[10px]" style={{ left: `calc(${them}% - 4px)`, color: "var(--navy)" }} aria-hidden="true">◆</span>}
@@ -144,8 +169,14 @@ export function ReputationSurface({ data, onRerun, measuredAt }: { data: Compare
             <table className="w-full border-collapse text-[12px]">
               <thead>
                 <tr>
-                  {["Marca", "Trust", ...TRUST_PILLAR_KEYS.map((k) => PILLAR_LABEL[k].split(" ")[0])].map((h, i) => (
-                    <th key={h + i} className={"border-b-2 border-ink px-2 py-1.5 font-heading text-[9.5px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)] " + (i ? "text-center" : "text-left")}>{h}</th>
+                  {scoreboardHeaders.map((h, i) => (
+                    <th
+                      key={h.label + i}
+                      title={h.title}
+                      className={"border-b-2 border-ink px-2 py-1.5 font-heading text-[9.5px] font-bold uppercase tracking-wide text-[var(--sc-fg-muted)] " + (i ? "text-center" : "text-left")}
+                    >
+                      {h.label}
+                    </th>
                   ))}
                 </tr>
               </thead>

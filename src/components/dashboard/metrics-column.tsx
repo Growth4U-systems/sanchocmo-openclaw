@@ -207,7 +207,7 @@ const TRUST_PILLAR_LABELS: Record<TrustPillarKey, string> = {
   serp_trust: "SERP Trust",
   brand_assets: "Brand Assets",
   geo_presence: "GEO Presence",
-  outbound_readiness: "Outbound",
+  outbound_readiness: "Outbound Readiness",
   demand_engine: "Demand Engine",
 };
 
