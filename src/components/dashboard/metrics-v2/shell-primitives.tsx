@@ -17,12 +17,12 @@ const STATE_TONE: Record<MetricDataState, string> = {
 
 const QUALITY_LABEL: Record<MetricQualityStatus, string> = {
   ok: "Dato listo",
-  partial: "Parcial",
+  partial: "Dato parcial",
   missing: "Sin dato",
   pending: "Pendiente",
   future: "Fase posterior",
-  dirty: "Dirty",
-  stale: "Stale",
+  dirty: "Revisar",
+  stale: "Desactualizado",
   demo: "Demo",
 };
 
@@ -160,7 +160,7 @@ export function MiniFunnel({
           </div>
           <MetricQualityBadge
             status={state === "ON" ? "partial" : "missing"}
-            source="metric_stage_rollups"
+            source="Embudo unificado"
           />
           {index < stages.length - 1 && (
             <div className="mt-3 text-[11px] font-semibold text-[var(--sc-fg-muted)]">

@@ -134,6 +134,15 @@ test("selects an overview KPI as the north star without requiring hardcoded busi
   assert.equal(selectNorthStarKpi(values)?.kpiId, "web.sessions");
 });
 
+test("selects a populated KPI over an empty overview KPI", () => {
+  const values = [
+    { kpiId: "web.sessions", dashboardBlock: "overview", value: null },
+    { kpiId: "paid.meta.spend", dashboardBlock: "surface", value: 10 },
+  ] as mod.MetricKpiReadModelValue[];
+
+  assert.equal(selectNorthStarKpi(values)?.kpiId, "paid.meta.spend");
+});
+
 test("read-through computes the requested range when no KPI run exists", async () => {
   const reads: mod.MetricKpiReadModel[] = [
     readModel(),

@@ -84,35 +84,35 @@ type DataLineageGate = {
 const DATA_LINEAGE_GATES: DataLineageGate[] = [
   {
     title: "Capa semántica",
-    source: "metric_kpi_values",
+    source: "KPIs calculados",
     status: "partial",
     detail:
-      "Los KPIs directos ya se leen desde metric_kpi_values cuando existe un run del rango.",
-    nextAction: "Mantener formulas, stage rollups y attribution como missing hasta sus capas.",
+      "Los KPIs directos ya se leen desde la tabla calculada cuando existe un run del rango.",
+    nextAction: "Mantener formulas, embudo y attribution como sin dato hasta que existan sus capas.",
   },
   {
     title: "Funnel y atribución",
-    source: "metric_stage_rollups/events",
+    source: "Embudo unificado + eventos",
     status: "missing",
     detail:
-      "Overview funnel, Channels y Conversion dependen de stage map y eventos o rollups por etapa.",
-    nextAction: "Configurar etapa ← source.metric/dimensions antes de tasas.",
+      "Overview funnel, Channels y Conversion dependen del mapa de etapas y eventos o conteos por etapa.",
+    nextAction: "Configurar etapa por fuente, métrica y dimensiones antes de tasas.",
   },
   {
     title: "Aliases de métricas",
-    source: "source/metric aliases",
+    source: "Aliases de fuentes",
     status: "partial",
     detail:
       "Hay drift conocido: emailsSent/sent, inp_mobile/tbt_mobile y source ids con guion/underscore.",
     nextAction: "Aliases directos normalizados; formulas posteriores deben reutilizar esa capa.",
   },
   {
-    title: "Fuentes conocidas dirty",
+    title: "Fuentes en revisión",
     source: "GHL",
     status: "dirty",
     detail:
-      "GHL aparece marcado como dirty; sus cifras no deben mostrarse como exactas sin etiqueta.",
-    nextAction: "Propagar dirty a KPI final y usar fuente de verdad cuando exista.",
+      "GHL queda marcado para revisar; sus cifras no deben mostrarse como exactas sin etiqueta.",
+    nextAction: "Propagar el estado de revisión a la KPI final y usar fuente de verdad cuando exista.",
   },
   {
     title: "Seeds y demos",
@@ -576,15 +576,15 @@ function SetupView({
           ) : (
             <EmptyMetricState
               title="KPIs semánticos"
-              requiredSource="metric_kpi_values"
+              requiredSource="KPIs calculados"
               nextAction="Ejecutar el runner de KPIs para este cliente/rango; la UI no computa en lectura."
               state="SIN DATOS"
             />
           )}
           <EmptyMetricState
             title="Funnel semántico"
-            requiredSource="metric_stage_rollups"
-            nextAction="Pendiente de mapping etapa ← source.metric/dimensions."
+            requiredSource="Embudo unificado"
+            nextAction="Pendiente de mapear etapa por fuente, métrica y dimensiones."
             state="SIN DATOS"
           />
         </div>
@@ -597,10 +597,10 @@ function SetupView({
             </h2>
             <p className="mt-1 max-w-[760px] text-[13px] text-[var(--sc-fg-muted)]">
               Hallazgos del mapa de linaje: estos bloqueos explican qué debe
-              quedar missing, partial, dirty o demo antes de computar KPIs.
+              quedar sin dato, parcial, en revisión o demo antes de computar KPIs.
             </p>
           </div>
-          <MetricQualityBadge status="pending" source="data lineage map" />
+          <MetricQualityBadge status="pending" source="Mapa de datos" />
         </div>
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {DATA_LINEAGE_GATES.map((gate) => (
@@ -713,8 +713,8 @@ function OverviewView({
             </h2>
             <p className="mt-2 max-w-[720px] text-[13px] text-[var(--sc-fg-muted)]">
               {northStar
-                ? `${sourceMetricLabel(northStar)} · ${northStar.provenanceLabel} · cobertura ${coverageLabel(northStar)}.`
-                : "El panel muestra datos solo cuando existe un run persistido en metric_kpi_values para el rango seleccionado."}
+                ? `${sourceMetricLabel(northStar)} · ${coverageLabel(northStar)}.`
+                : "El panel muestra datos solo cuando existe un cálculo KPI persistido para el rango seleccionado."}
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {overviewKpis.length
@@ -734,7 +734,7 @@ function OverviewView({
                     hint={
                       <MetricQualityBadge
                         status="missing"
-                        source="metric_kpi_values"
+                        source="KPIs calculados"
                       />
                     }
                   />
@@ -751,8 +751,8 @@ function OverviewView({
                 {northStar.displayValue}
               </div>
               <p className="mt-3 text-[12px] text-[var(--sc-fg-muted)]">
-                {northStar.inputRefs.length} input refs · {northStar.rangeFrom} a{" "}
-                {northStar.rangeTo}.
+                {coverageLabel(northStar)} · {northStar.rangeFrom} a{" "}
+                {northStar.rangeTo}
               </p>
               <p className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">
                 Deltas y serie historica siguen vacios hasta la capa de trends.
@@ -765,7 +765,7 @@ function OverviewView({
                   ? "Sin KPI disponible todavía"
                   : "Dashboard no configurado"
               }
-              requiredSource="metric_kpi_values"
+              requiredSource="KPIs calculados"
               nextAction="El dashboard intenta recomputar este rango automáticamente; si sigue vacío, falta ingesta fuente."
               state={configured ? "CONECTADO SIN SNAPSHOTS" : "SIN DATOS"}
             />
@@ -786,7 +786,7 @@ function OverviewView({
           </div>
           <MetricQualityBadge
             status={economyKpis.length ? asQualityStatus(kpiData?.summary.qualityStatus) : "pending"}
-            source={economyKpis.length ? "metric_kpi_values" : "paid + partnerships + crm"}
+            source={economyKpis.length ? "KPIs calculados" : "Paid + partnerships + CRM"}
           />
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -810,13 +810,13 @@ function OverviewView({
               Embudo unificado
             </h2>
             <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-              Counts por etapa desde stage rollups. Es pre-attribution/blended:
-              no deduplica leads entre fuentes ni calcula journeys.
+              Conteos por etapa desde los datos disponibles. Es una vista agregada:
+              no deduplica leads entre fuentes ni calcula journeys individuales.
             </p>
           </div>
           <MetricQualityBadge
             status={stageRollups?.available ? asQualityStatus(stageRollups.summary.qualityStatus) : "missing"}
-            source="metric_stage_rollups"
+            source="Embudo unificado"
           />
         </div>
         <div className="mt-4">
@@ -842,8 +842,8 @@ function OverviewView({
         signals={[
           "Cambios cross-surface pendientes de metric_signals.",
           stageRollups?.available
-            ? "Fugas del funnel visibles como rollup básico; attribution avanzada pendiente."
-            : "Fugas del funnel pendientes de metric_stage_rollups.",
+            ? "Fugas del funnel visibles como vista agregada; attribution avanzada pendiente."
+            : "Fugas del funnel pendientes hasta tener datos suficientes por etapa.",
           "Recomendaciones bloqueadas hasta que existan datos reales.",
         ]}
       />
@@ -968,7 +968,7 @@ function SurfaceDetailView({
           </div>
           <MetricQualityBadge
             status={surfaceKpis.length ? asQualityStatus(kpiData?.summary.qualityStatus) : "missing"}
-            source="metric_kpi_values"
+            source="KPIs calculados"
           />
         </div>
         {surfaceKpis.length ? (
@@ -981,7 +981,7 @@ function SurfaceDetailView({
           <div className="mt-4">
             <EmptyMetricState
               title="Sin KPIs directos para esta surface"
-              requiredSource="metric_kpi_values"
+              requiredSource="KPIs calculados"
               nextAction="El run actual no incluye valores para esta superficie o todavía no se ejecutó para el rango."
               state={state === "ON" ? "CONECTADO SIN SNAPSHOTS" : state}
             />
@@ -1054,8 +1054,8 @@ function ChannelsView({
               Channels
             </h2>
             <p className="mt-1 max-w-[760px] text-[13px] text-[var(--sc-fg-muted)]">
-              Matriz básica por canal desde stage rollups. Es lectura blended,
-              no attribution model; W-shaped queda bloqueado hasta eventos.
+              Matriz por canal y etapa desde los datos disponibles. Todavía no
+              es un modelo de atribución; W-shaped queda bloqueado hasta eventos.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1087,13 +1087,13 @@ function ChannelsView({
               Matriz canal × etapa
             </h3>
             <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-              Counts agregados por channel/stage. No se muestran como revenue
+              Conteos agregados por canal y etapa. No se muestran como revenue
               atribuido ni como dedupe final.
             </p>
           </div>
           <MetricQualityBadge
             status={stageRollups?.available ? asQualityStatus(stageRollups.summary.qualityStatus) : "missing"}
-            source="metric_stage_rollups"
+            source="Embudo unificado"
           />
         </div>
         <div className="mt-4">
@@ -1103,8 +1103,8 @@ function ChannelsView({
             empty={
               <EmptyMetricState
                 title="Sin matriz"
-                requiredSource="metric_stage_rollups"
-                nextAction={stageRollups?.summary.nextAction ?? "Mapear etapa de negocio a source.metric/dimensions."}
+                requiredSource="Embudo unificado"
+                nextAction={stageRollups?.summary.nextAction ?? "Mapear etapa de negocio a fuente y metrica."}
               />
             }
           />
@@ -1159,8 +1159,8 @@ function ConversionView({ kpiData }: { kpiData?: MetricKpiResult }) {
           Conversion
         </h2>
         <p className="mt-1 max-w-[780px] text-[13px] text-[var(--sc-fg-muted)]">
-          Embudo end-to-end y tasas básicas desde stage rollups. Velocity y
-          journeys siguen bloqueados hasta eventos individuales.
+          Embudo end-to-end y tasas básicas desde datos agregados por etapa.
+          Velocity y journeys siguen bloqueados hasta eventos individuales.
         </p>
       </Panel>
       <StageRollupFunnel stageRollups={stageRollups} />
@@ -1172,13 +1172,13 @@ function ConversionView({ kpiData }: { kpiData?: MetricKpiResult }) {
                 Conversion by channel
               </h3>
               <p className="mt-1 text-[12px] text-[var(--sc-fg-muted)]">
-                Tasas calculadas sobre rollups agregados. Si falta numerador o
+                Tasas calculadas sobre conteos agregados. Si falta numerador o
                 denominador, la fila queda fuera.
               </p>
             </div>
             <MetricQualityBadge
               status={stageRollups?.available ? asQualityStatus(stageRollups.summary.qualityStatus) : "missing"}
-              source="metric_stage_rollups"
+              source="Embudo unificado"
             />
           </div>
           <div className="mt-4">
@@ -1188,8 +1188,8 @@ function ConversionView({ kpiData }: { kpiData?: MetricKpiResult }) {
             empty={
               <EmptyMetricState
                 title="Sin tasas por canal"
-                requiredSource="metric_stage_rollups"
-                nextAction={stageRollups?.summary.nextAction ?? "Ejecutar stage rollups por channel/stage."}
+                requiredSource="Embudo unificado"
+                nextAction={stageRollups?.summary.nextAction ?? "Ejecutar cálculo de embudo por canal y etapa."}
               />
             }
           />
@@ -1219,9 +1219,9 @@ function StageRollupFunnel({
   if (!stageRollups?.available) {
     return (
       <EmptyMetricState
-        title="Sin rollups de embudo"
-        requiredSource="metric_stage_rollups"
-        nextAction={stageRollups?.summary.nextAction ?? "El dashboard intenta generar rollups automáticamente cuando existen snapshots para el rango."}
+        title="Sin datos de embudo"
+        requiredSource="Embudo unificado"
+        nextAction={stageRollups?.summary.nextAction ?? "El dashboard intenta generar el embudo automáticamente cuando existen datos para el rango."}
       />
     );
   }
@@ -1253,7 +1253,7 @@ function StageRollupFunnel({
               />
             </div>
             <p className="mt-2 text-[11px] text-[var(--sc-fg-muted)]">
-              {stage.inputRefsCount} refs · {stage.channels.length || 0} canales
+              {stageDataCompletenessLabel(stage)} · {stage.channels.length || 0} canales
             </p>
             {nextRate && (
               <div className="mt-3 border-t border-border pt-2 text-[11px] font-semibold text-[var(--sc-fg-muted)]">
@@ -1276,7 +1276,7 @@ function StageValueCell({ stage }: { stage: MetricStageRollupStageValue }) {
       </div>
       <MetricQualityBadge
         status={asQualityStatus(stage.qualityStatus)}
-        source="rollup"
+        source="Embudo unificado"
       />
     </div>
   );
@@ -1289,7 +1289,7 @@ function ChannelCell({ channel }: { channel: MetricStageRollupChannelValue }) {
         {channel.label}
       </div>
       <div className="text-[11px] text-[var(--sc-fg-muted)]">
-        total rollup {channel.displayValue}
+        total canal {channel.displayValue}
       </div>
     </div>
   );
@@ -1331,7 +1331,7 @@ function buildChannelRateRows(stageRollups?: MetricStageRollupResult) {
           <MetricQualityBadge
             key={`${channel.channel}-${rate.fromStageId}-${rate.toStageId}-status`}
             status={asQualityStatus(rate.qualityStatus)}
-            source="rollup/blended"
+            source="Embudo agregado"
           />,
         ],
       })),
@@ -1363,7 +1363,7 @@ function StageLeakPanel({
         </div>
         <MetricQualityBadge
           status={worst ? asQualityStatus(worst.qualityStatus) : "missing"}
-          source="metric_stage_rollups"
+          source="Embudo unificado"
         />
       </div>
       {worst ? (
@@ -1376,14 +1376,14 @@ function StageLeakPanel({
           </div>
           <p className="mt-2 text-[12px] text-[var(--sc-fg-muted)]">
             Numerador {worst.numerator ?? "-"} · denominador {worst.denominator ?? "-"}.
-            Interpretar como rollup/blended hasta que exista attribution.
+            Interpretar como vista agregada hasta que exista attribution.
           </p>
         </div>
       ) : (
         <div className="mt-4">
           <EmptyMetricState
             title="Sin leak calculable"
-            requiredSource="metric_stage_rollups"
+            requiredSource="Embudo unificado"
             nextAction={stageRollups?.summary.nextAction ?? "Hace falta al menos dos etapas con valores en el rango."}
           />
         </div>
@@ -1553,7 +1553,7 @@ function KpiTile({
           {kpi.displayValue}
           {lowCoverage && (
             <span className="mt-1 block font-sans text-[10px] font-bold uppercase leading-tight text-rust">
-              parcial · {coverageLabel(kpi)}
+              {coverageLabel(kpi)}
             </span>
           )}
         </span>
@@ -1565,7 +1565,7 @@ function KpiTile({
             status={asQualityStatus(kpi.qualityStatus)}
             source={sourceMetricLabel(kpi)}
           />
-          <div>{coverageLabel(kpi)} · {kpi.inputRefs.length} refs</div>
+          <div>{lineageLabel(kpi)}</div>
         </div>
       }
     />
@@ -1583,20 +1583,138 @@ function qualityToState(status?: MetricKpiResult["summary"]["qualityStatus"]): M
 }
 
 function sourceMetricLabel(kpi?: MetricKpiValue | null): string {
-  if (!kpi) return "metric_kpi_values";
-  if (kpi.source && kpi.metricName) return `${kpi.source}.${kpi.metricName}`;
-  return kpi.provenanceLabel || "metric_kpi_values";
+  if (!kpi) return "KPIs calculados";
+  if (kpi.source && kpi.metricName) {
+    return `${friendlySource(kpi.source)} · ${friendlyMetric(kpi.metricName)}`;
+  }
+  return friendlyProvenance(kpi.provenanceLabel) || "KPIs calculados";
 }
 
 function coverageLabel(kpi: MetricKpiValue): string {
-  if (kpi.sourceCoverage >= 0.995) return "cobertura completa";
-  if (kpi.sourceCoverage <= 0) return "sin cobertura";
-  return `${Math.round(kpi.sourceCoverage * 100)}% cobertura`;
+  const totalDays = daysInclusive(kpi.rangeFrom, kpi.rangeTo);
+  const coveredDays = Math.min(totalDays, Math.max(0, Math.round(kpi.sourceCoverage * totalDays)));
+  if (kpi.sourceCoverage >= 0.995) return `${totalDays} de ${totalDays} días con datos`;
+  if (kpi.sourceCoverage <= 0) return `0 de ${totalDays} días con datos`;
+  return `${coveredDays} de ${totalDays} días con datos`;
+}
+
+function lineageLabel(kpi: MetricKpiValue): string {
+  const entries = kpi.inputRefs.length;
+  const suffix = entries === 1 ? "entrada usada" : "entradas usadas";
+  return `${coverageLabel(kpi)} · ${entries} ${suffix}`;
 }
 
 function stageRollupSourceLabel(stage: MetricStageRollupStageValue): string {
-  if (!stage.sources.length) return "metric_stage_rollups";
-  return stage.sources.slice(0, 2).join(", ");
+  if (!stage.sources.length) return "Embudo unificado";
+  return stage.sources.slice(0, 2).map(friendlySourceMetric).join(", ");
+}
+
+function stageDataCompletenessLabel(stage: MetricStageRollupStageValue): string {
+  if (stage.inputRefsCount === 0) return "sin entradas de origen";
+  return `${stage.inputRefsCount} ${stage.inputRefsCount === 1 ? "entrada de origen" : "entradas de origen"}`;
+}
+
+function daysInclusive(from: string, to: string): number {
+  const fromTime = new Date(`${from}T00:00:00Z`).getTime();
+  const toTime = new Date(`${to}T00:00:00Z`).getTime();
+  if (!Number.isFinite(fromTime) || !Number.isFinite(toTime) || toTime < fromTime) return 1;
+  return Math.floor((toTime - fromTime) / 86_400_000) + 1;
+}
+
+function friendlySourceMetric(value: string): string {
+  const [source, ...metricParts] = value.split(".");
+  const metric = metricParts.join(".");
+  return metric ? `${friendlySource(source)} · ${friendlyMetric(metric)}` : friendlySource(source);
+}
+
+function friendlyProvenance(value?: string | null): string {
+  if (!value) return "";
+  if (value === "metric_stage_rollups") return "Embudo unificado";
+  if (value.includes(" -> ")) {
+    const [left, stage] = value.split(" -> ");
+    return `${friendlySourceMetric(left)} a ${friendlyMetric(stage)}`;
+  }
+  return friendlySourceMetric(value);
+}
+
+function friendlySource(source: string): string {
+  const labels: Record<string, string> = {
+    ga4: "GA4",
+    gsc: "Search Console",
+    ghl: "GHL",
+    google_ads: "Google Ads",
+    "google-ads": "Google Ads",
+    instantly: "Instantly",
+    lemlist: "Lemlist",
+    meta_ads: "Meta Ads",
+    "meta-ads": "Meta Ads",
+    metric_kpi_values: "KPIs calculados",
+    metric_stage_rollups: "Embudo unificado",
+    metricool: "Metricool",
+    pagespeed: "PageSpeed",
+    posthog: "PostHog",
+    semantic: "Capa semántica",
+    trust_score: "Trust Engine",
+    yalc: "Partnerships",
+  };
+  return labels[source] ?? friendlyMetric(source);
+}
+
+function friendlyMetric(metric: string): string {
+  const labels: Record<string, string> = {
+    appointments: "reuniones",
+    activation_events: "eventos de activación",
+    activation_rate: "tasa de activación",
+    avgEngagement: "engagement medio",
+    bounced: "rebotes",
+    comments: "comentarios",
+    clicks: "clicks",
+    conversions: "conversiones",
+    cpc: "CPC",
+    ctr: "CTR",
+    deals: "deals",
+    delivered: "entregados",
+    engagementRate: "engagement rate",
+    frequency: "frecuencia",
+    followers: "seguidores",
+    hookRate: "hook rate",
+    impressionShare: "cuota de impresiones",
+    impressions: "impresiones",
+    interested: "respuestas positivas",
+    likes: "likes",
+    lostImpressionShare: "cuota perdida de impresiones",
+    leads: "leads",
+    meetings: "reuniones",
+    metric_stage_rollups: "embudo unificado",
+    newContacts: "nuevos contactos",
+    newUsers: "usuarios nuevos",
+    north_star_weekly: "North Star semanal",
+    opens: "aperturas",
+    pageviews: "pageviews",
+    pipelineValue: "valor de pipeline",
+    position: "posición media",
+    reach: "alcance",
+    replies: "respuestas",
+    revenue: "revenue",
+    roas: "ROAS",
+    saves: "guardados",
+    screenPageViews: "pageviews",
+    sent: "enviados",
+    shares: "compartidos",
+    sessions: "sesiones",
+    spend: "inversión",
+    totalContacts: "contactos totales",
+    totalOpportunities: "oportunidades totales",
+    totalUsers: "usuarios",
+    unsubscribed: "bajas",
+    users: "usuarios",
+    videoViews: "visualizaciones de video",
+  };
+  if (labels[metric]) return labels[metric];
+  return metric
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .toLowerCase();
 }
 
 function selectOverviewKpis(data?: MetricKpiResult): MetricKpiValue[] {

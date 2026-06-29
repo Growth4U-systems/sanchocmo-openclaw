@@ -292,8 +292,8 @@ export function buildMetricStageRollupReadModel(args: {
       source: "metric_stage_rollups",
       emptyState: available ? "ready" : "missing_stage_rollups",
       nextAction: available
-        ? "Mostrar como rollup pre-attribution; attribution avanzada requiere metric_stage_events."
-        : "Ejecutar compute:metric-kpis y configurar stage map/source metrics para este rango.",
+        ? "Mostrar como vista agregada; attribution avanzada requiere eventos individuales."
+        : "Ejecutar cálculo de KPIs y configurar el mapa de etapas para este rango.",
     },
     stages,
     rates: buildRates(stages),
