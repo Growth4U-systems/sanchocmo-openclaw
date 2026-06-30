@@ -1,6 +1,11 @@
 import { afterEach, test } from "node:test";
 import assert from "node:assert/strict";
-import { fetchContextPack, resolveContextPackBaseUrl } from "../context-pack.js";
+import {
+  buildClientContextBlock,
+  buildFoundationDirective,
+  fetchContextPack,
+  resolveContextPackBaseUrl,
+} from "../context-pack.js";
 
 const ENV_KEYS = ["MC_CONTEXT_PACK_URL", "MC_NEXT_URL", "BASE_URL", "NEXTAUTH_URL"];
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((key) => [key, process.env[key]]));
@@ -74,4 +79,39 @@ test("context-pack base URL can come from environment", () => {
   process.env.MC_CONTEXT_PACK_URL = "http://next-from-env:3000/";
 
   assert.equal(resolveContextPackBaseUrl(), "http://next-from-env:3000");
+});
+
+test("client context block embeds document content instead of requiring disk reads", () => {
+  const block = buildClientContextBlock({
+    slug: "growth4u",
+    skill: "discovery-plan-builder",
+    summary: "Cliente: Growth4U",
+    docPaths: ["/srv/openclaw/workspace-sancho/brand/growth4u/company-brief/company-brief.current.md"],
+    documents: [
+      {
+        path: "brand/growth4u/company-brief/company-brief.current.md",
+        kind: "file",
+        content: "# Company Brief\nICP: B2B SaaS.",
+        truncated: false,
+      },
+    ],
+    missingRequired: ["brand/growth4u/go-to-market/ecps/ecps.current.md"],
+    verdict: "partial",
+  });
+
+  assert.match(block, /\[Client Context\]/);
+  assert.match(block, /# Company Brief/);
+  assert.match(block, /Contexto incompleto/);
+  assert.match(block, /go-to-market\/ecps/);
+  assert.match(block, /No están generados estos archivos de contexto inicial/);
+  assert.match(block, /Rutas canonicas/);
+  assert.doesNotMatch(block, /LÉELOS de disco/);
+});
+
+test("foundation directive remains available for an absent brand", () => {
+  const block = buildFoundationDirective({ slug: "missingco" });
+
+  assert.match(block, /\[STOP/);
+  assert.match(block, /missingco/);
+  assert.match(block, /No están generados los archivos iniciales de contexto/);
 });

@@ -27,6 +27,11 @@ const FIXTURE_AUTH_ONLY =
 const FIXTURE_WATCHDOG_ABORT =
   "⚠️ 🛠️ print lines 1-260 from skills/fast-foundation/SKILL.md (agent) failed";
 
+const FIXTURE_MISSING_BRAND_CONTEXT =
+  '⚠️ 🛠️ list files in ~/workspace-rocinante/skills/discovery-plan-builder/ → print text → ' +
+  'list files in ~/workspace-rocinante/brand/ → print text → find files named "growth4u" in ' +
+  "~/workspace-rocinante failed";
+
 const FIXTURE_CONTEXT_OVERFLOW =
   "Error: This model's maximum context length is 200000 tokens. " +
   "However, your messages resulted in 215432 tokens. Please reduce the length of the messages.";
@@ -88,6 +93,15 @@ test("watchdog_abort: detects exact bot-side abort message", () => {
   const out = classifyAndRewriteError(FIXTURE_WATCHDOG_ABORT);
   assert.equal(out.errorDetail.category, "watchdog_abort");
   assert.ok(out.text.startsWith("⚠️ **Sesión sin progreso"));
+});
+
+test("missing_context: explains missing brand/Foundation files instead of generic runtime failure", () => {
+  const out = classifyAndRewriteError(FIXTURE_MISSING_BRAND_CONTEXT);
+  assert.equal(out.errorDetail.category, "missing_context");
+  assert.ok(out.text.startsWith("⚠️ **Falta contexto inicial del cliente**"));
+  assert.ok(out.text.includes("No están generados"));
+  assert.ok(out.text.includes("Foundation"));
+  assert.ok(!out.text.includes("Sesión sin progreso"));
 });
 
 test("context_overflow: detects token limit errors", () => {

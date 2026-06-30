@@ -34,6 +34,7 @@ export interface ProgressEvent {
 export type ErrorCategory =
   | "rate_limit"
   | "auth"
+  | "missing_context"
   | "context_overflow"
   | "watchdog_abort"
   | "model_unavailable"

@@ -242,7 +242,7 @@ export default defineChannelPluginEntry({
           contextLines.push(`skill: ${skill}`);
         }
         if (requestedAgent && requestedAgent !== "sancho") contextLines.push(`requested_agent: ${requestedAgent}`);
-        contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Read files from disk (brand/${slug}/), never via HTTP/web_fetch to localhost.`);
+        contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Use the injected [Client Context] first. Read files from disk only when they are accessible in your workspace; if a file is missing, ask a short question instead of showing tool errors. For Sancho API endpoints explicitly required by the active skill, use the local MC API with the admin token; never browse localhost with web_fetch.`);
         contextLines.push(`⚠️ EXECUTION GUARDRAIL: Aprobar un plan o crear proyectos NO es autorización para ejecutar tareas. Siempre preguntar "¿Ejecuto [tarea específica]?" y esperar confirmación explícita antes de generar deliverables. "Apruebo el plan" y "Ejecuta" son pasos DIFERENTES.`);
         contextLines.push(`💬 INTERACTIVE QUESTIONS: Cuando necesites una decisión del usuario entre opciones FINITAS y CONOCIDAS (ej. elegir un nicho de una lista, un tono, un pilar, un ICP), emite un bloque ":::ask" en vez de preguntar en texto libre. Formato:`);
         contextLines.push(`:::ask`);
@@ -276,7 +276,7 @@ export default defineChannelPluginEntry({
               logger,
             });
             if (pack) {
-              const prefix = pack.verdict === "missing"
+              const prefix = pack.verdict === "missing" && pack.brandFound !== true
                 ? buildFoundationDirective(pack)
                 : buildClientContextBlock(pack);
               if (prefix) {

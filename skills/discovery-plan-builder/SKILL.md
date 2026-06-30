@@ -46,6 +46,13 @@ context_writes:
 > latencia de arriba. Reglas de formato y de comillas JSON en
 > `skills/_shared/clarify-by-type.md`. **Emite el bloque SIN envolverlo en un fence**
 > ` ``` ` (los fences de este doc son solo para mostrarte el ejemplo). En `single`/`multi` la ÚLTIMA opción debe ser `{"id":"other","label":"Otro (lo escribo)"}` (escape a texto libre); en una confirmación binaria pura (p.ej. lanzar/ajustar) puedes omitirla.
+>
+> **Contexto inyectado.** MC Chat puede anteponer un bloque `[Client Context]`
+> con resumen, extractos de documentos y/o contexto faltante. Usa ese bloque como
+> fuente primaria. Si el bloque trae lo necesario, NO hagas `find`, `ls` ni busques
+> `brand/{slug}` en tu workspace: el workspace de Rocinante puede no montar los
+> mismos ficheros que Mission Control. Si falta contexto, no muestres errores de
+> herramientas; pide el dato mínimo con un `:::ask` corto y sigue por el camino B.
 
 ### 1. Abre con UNA pregunta (instantáneo · sin leer ficheros · sin plan)
 
@@ -74,7 +81,9 @@ preguntes lo que ya sabemos) y propón frentes:
 - `ecps.current.md`: a quién queremos llegar → sectores de creators con fit.
 
 Si falta el company brief, dilo y sugiere completar Foundation; puedes seguir si
-el usuario te da el contexto a mano. Luego propón 2-3 frentes concretos para ESTE
+el usuario te da el contexto a mano. Si `[Client Context]` indica que faltan los
+documentos requeridos, NO intentes encontrarlos en disco: pregunta el contexto
+mínimo con un `:::ask` de texto y continúa. Luego propón 2-3 frentes concretos para ESTE
 cliente (sector + red + por qué), estilo:
 
 > Para el programa de creators de **Monzo** (audiencia España) os recomiendo:
