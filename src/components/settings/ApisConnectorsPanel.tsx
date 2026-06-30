@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
 import { SlackIntegrationCard } from "@/components/admin/slack-integration-card";
@@ -121,6 +122,7 @@ interface ApisConnectorsPanelProps {
 
 export function ApisConnectorsPanel({ categories, showHeader = true, providers, filterLabel, onClearProviders }: ApisConnectorsPanelProps = {}) {
   const statusBadge = useStatusBadge();
+  const { data: session, status: sessionStatus } = useSession();
   const selectedClient = useAppStore((s) => s.selectedClient);
   const setSelectedClient = useAppStore((s) => s.setSelectedClient);
   const slug = selectedClient || "";
@@ -204,6 +206,9 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   });
 
   const services = useMemo(() => health?.services ?? {}, [health?.services]);
+  const isAdminSession = (session?.user as { role?: string } | undefined)?.role === "admin";
+  const adminResolved = sessionStatus !== "loading";
+  const canManageSystemKeys = !adminResolved || isAdminSession;
 
   // Flatten all APIs with their category for filtering. If a categories prop is
   // provided, restrict to that scope up-front so counters + table both reflect
@@ -241,6 +246,11 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
     else if (st === "error") errored++;
     else notConfigured++;
   }
+
+  const scrapeCreatorsApi = useMemo(
+    () => allApis.find((item) => item.apiId === "scrapecreators") || null,
+    [allApis]
+  );
 
   // Category options for filter — only when no fixed scope is forced
   const categoryOptions = useMemo(() => {
@@ -382,6 +392,40 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
           >
             ver todas las APIs →
           </button>
+        </div>
+      )}
+
+      {!slug && adminResolved && !isAdminSession && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[12px] leading-relaxed text-red-800">
+          <strong>Sesión sin permisos admin.</strong> Puedes ver esta pantalla, pero las claves globales
+          de sistema solo se pueden guardar con una sesión admin. Entra con una cuenta admin o con el
+          token admin para cargar ScrapeCreators.
+        </div>
+      )}
+
+      {!slug && scrapeCreatorsApi && (
+        <div className="mb-4 rounded-lg border-2 border-ink bg-card p-3 shadow-comic-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-base">{scrapeCreatorsApi.meta.icon}</span>
+                <span className="font-heading text-sm font-bold text-navy">ScrapeCreators</span>
+                <span className="rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">SISTEMA</span>
+              </div>
+              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                Discovery real de Partnerships: perfiles sociales, señales y ad-library. Acceso directo para no depender del filtro.
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={!canManageSystemKeys}
+              onClick={() => setSystemKeySlider({ apiId: "scrapecreators", provider: "ScrapeCreators" })}
+              className="text-[11px] px-3 py-1.5 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-background disabled:hover:text-foreground"
+              title={canManageSystemKeys ? "Configurar ScrapeCreators" : "Requiere sesión admin"}
+            >
+              🔑 Key sistema
+            </button>
+          </div>
         </div>
       )}
 
@@ -572,7 +616,9 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
                           ) : isSystem ? (
                             <button
                               onClick={() => setSystemKeySlider({ apiId, provider: apiMeta.provider })}
-                              className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                              disabled={!canManageSystemKeys}
+                              title={canManageSystemKeys ? "Configurar key de sistema" : "Requiere sesión admin"}
+                              className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-background disabled:hover:text-foreground"
                             >
                               🔑 Key sistema
                             </button>
