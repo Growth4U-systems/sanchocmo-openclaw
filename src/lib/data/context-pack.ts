@@ -10,9 +10,9 @@
  * route to kickoff instead of letting the agent invent context.
  *
  * Size discipline: the pack ships a compact SUMMARY (self-sufficient text from
- * the brand-brain view) + RESOLVED PATHS only — never file bodies, and only
- * the top required pillars. The agent reads the files itself from disk; the
- * pack just tells it WHERE and gives enough context to ground the first turn.
+ * the brand-brain view) + bounded excerpts of the required context. Resolved
+ * paths stay in the payload for traceability, but agents do not need shared
+ * filesystem access to start grounded.
  *
  * Boundary note: this is Next/TS land. The mc-chat plugin (ESM, cannot import
  * `src/lib/…`) reaches it over HTTP via `src/pages/api/chat/context-pack.ts`.
@@ -23,10 +23,22 @@ import os from "os";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
 import { assembleBrandBrainState, brandExists } from "@/lib/data/brand-brain-assembler";
+import { cleanDocPath, normalizeBrandDocPath } from "@/lib/doc-paths";
 import { parseSkillFrontmatter } from "@/lib/server/skill-frontmatter";
 import { resolveWorkspaceDocPath } from "@/lib/server/doc-paths";
 
 export type ContextPackVerdict = "ok" | "partial" | "missing";
+
+export interface ContextPackDocument {
+  /** Workspace-relative canonical path, e.g. brand/acme/company-brief/current.md. */
+  path: string;
+  /** Absolute server-side path, kept for traceability/backwards compatibility. */
+  absPath: string;
+  kind: "file" | "directory";
+  /** Bounded body or directory listing/excerpts. */
+  content: string;
+  truncated: boolean;
+}
 
 export interface ContextPack {
   slug: string;
@@ -35,6 +47,12 @@ export interface ContextPack {
   summary: string;
   /** RESOLVED absolute paths of the skill's `context_required` docs that exist on disk. */
   docPaths: string[];
+  /** Bounded context that can be injected into specialist prompts. */
+  documents: ContextPackDocument[];
+  /** Required context entries that could not be resolved on the MC server. */
+  missingRequired: string[];
+  /** False only when brand/{slug} itself is absent. */
+  brandFound: boolean;
   /** ok = all required docs present, partial = some, missing = no Foundation at all. */
   verdict: ContextPackVerdict;
 }
@@ -44,13 +62,28 @@ export interface ContextPack {
 // in a SKILL.md are the load-bearing pillars (company-brief, brand-voice,
 // ecps, positioning, strategic-plan); the rest are enrichment.
 const MAX_DOC_PATHS = 6;
+const MAX_DOCUMENT_CHARS = 6_000;
+const MAX_DIRECTORY_ENTRIES = 25;
+const MAX_DIRECTORY_FILE_EXCERPTS = 4;
 
 /** Runtime skills catalog root (same convention as src/pages/api/system/skills.ts). */
-function skillsRoot(): string {
-  return path.join(
-    process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
-    "skills",
-  );
+function skillsRoots(): string[] {
+  const roots = [
+    path.join(process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"), "skills"),
+    // In packaged/dev checkouts the skills catalog may live with the app even
+    // when OPENCLAW_HOME points at the runtime home.
+    path.join(process.cwd(), "skills"),
+    // In local OpenClaw homes BASE is usually ~/.openclaw/workspace-sancho.
+    path.join(BASE, "..", "skills"),
+  ];
+  const seen = new Set<string>();
+  return roots
+    .map((root) => path.resolve(root))
+    .filter((root) => {
+      if (seen.has(root)) return false;
+      seen.add(root);
+      return true;
+    });
 }
 
 /**
@@ -61,16 +94,19 @@ function skillsRoot(): string {
 function readSkillContextRequired(skill: string | null): string[] {
   if (!skill) return [];
   if (!/^[a-z0-9][a-z0-9_-]*$/i.test(skill)) return [];
-  const skillMdPath = path.join(skillsRoot(), skill, "SKILL.md");
   let content: string;
-  try {
-    content = fs.readFileSync(skillMdPath, "utf-8");
-  } catch {
-    return [];
+  for (const root of skillsRoots()) {
+    const skillMdPath = path.join(root, skill, "SKILL.md");
+    try {
+      content = fs.readFileSync(skillMdPath, "utf-8");
+      const { meta } = parseSkillFrontmatter(content);
+      const required = Array.isArray(meta.context_required) ? meta.context_required : [];
+      return required.filter((p) => typeof p === "string" && p.trim().length > 0);
+    } catch {
+      // Try the next catalog root.
+    }
   }
-  const { meta } = parseSkillFrontmatter(content);
-  const required = Array.isArray(meta.context_required) ? meta.context_required : [];
-  return required.filter((p) => typeof p === "string" && p.trim().length > 0);
+  return [];
 }
 
 /**
@@ -120,26 +156,130 @@ function buildSummary(slug: string): string {
  * (and vice versa) when that's what exists on disk. Only existing files are
  * returned. Capped at MAX_DOC_PATHS.
  */
-function resolveRequiredDocPaths(slug: string, required: string[]): { abs: string[]; resolvedCount: number; total: number } {
+function safeWorkspaceAbs(relPath: string): string {
+  const safeBase = path.resolve(BASE);
+  const absPath = path.resolve(path.join(safeBase, relPath));
+  if (absPath !== safeBase && !absPath.startsWith(`${safeBase}${path.sep}`)) {
+    throw new Error("Forbidden");
+  }
+  return absPath;
+}
+
+function truncateContent(content: string, maxChars = MAX_DOCUMENT_CHARS): { content: string; truncated: boolean } {
+  if (content.length <= maxChars) return { content, truncated: false };
+  return {
+    content: `${content.slice(0, maxChars).trimEnd()}\n\n[truncated]`,
+    truncated: true,
+  };
+}
+
+function readFileDocument(canonicalPath: string, absPath: string): ContextPackDocument {
+  const raw = fs.readFileSync(absPath, "utf-8");
+  const out = truncateContent(raw);
+  return {
+    path: canonicalPath,
+    absPath,
+    kind: "file",
+    content: out.content,
+    truncated: out.truncated,
+  };
+}
+
+function readDirectoryDocument(canonicalPath: string, absPath: string): ContextPackDocument {
+  const entries = fs
+    .readdirSync(absPath, { withFileTypes: true })
+    .filter((entry) => !entry.name.startsWith("."))
+    .map((entry) => {
+      const entryAbs = path.join(absPath, entry.name);
+      const stat = fs.statSync(entryAbs);
+      return { entry, entryAbs, mtimeMs: stat.mtimeMs };
+    })
+    .sort((a, b) => b.mtimeMs - a.mtimeMs || a.entry.name.localeCompare(b.entry.name));
+
+  const lines = [`Directorio: ${canonicalPath}`, "Entradas recientes:"];
+  for (const { entry } of entries.slice(0, MAX_DIRECTORY_ENTRIES)) {
+    lines.push(`- ${entry.name}${entry.isDirectory() ? "/" : ""}`);
+  }
+  if (entries.length > MAX_DIRECTORY_ENTRIES) {
+    lines.push(`- ... ${entries.length - MAX_DIRECTORY_ENTRIES} entradas mas`);
+  }
+
+  let remaining = MAX_DOCUMENT_CHARS - lines.join("\n").length;
+  let truncated = entries.length > MAX_DIRECTORY_ENTRIES;
+  for (const { entry, entryAbs } of entries) {
+    if (remaining <= 200) break;
+    if (!entry.isFile() || !/\.(json|md|txt)$/i.test(entry.name)) continue;
+    if (lines.filter((line) => line.startsWith("--- ")).length >= MAX_DIRECTORY_FILE_EXCERPTS) break;
+    try {
+      const raw = fs.readFileSync(entryAbs, "utf-8");
+      const budget = Math.max(200, Math.min(remaining - 80, 1_500));
+      const excerpt = truncateContent(raw, budget);
+      truncated = truncated || excerpt.truncated;
+      lines.push("");
+      lines.push(`--- ${entry.name} ---`);
+      lines.push(excerpt.content);
+      remaining = MAX_DOCUMENT_CHARS - lines.join("\n").length;
+    } catch {
+      // Ignore unreadable entries; the listing is still useful context.
+    }
+  }
+
+  const out = truncateContent(lines.join("\n"));
+  return {
+    path: canonicalPath,
+    absPath,
+    kind: "directory",
+    content: out.content,
+    truncated: truncated || out.truncated,
+  };
+}
+
+function resolveRequiredDocPaths(slug: string, required: string[]): {
+  abs: string[];
+  documents: ContextPackDocument[];
+  missingRequired: string[];
+  resolvedCount: number;
+  total: number;
+} {
   const abs: string[] = [];
+  const documents: ContextPackDocument[] = [];
+  const missingRequired: string[] = [];
   let resolvedCount = 0;
   const total = required.length;
 
   for (const template of required.slice(0, MAX_DOC_PATHS)) {
-    const docPath = template.replace(/\{slug\}/g, slug);
+    const rawPath = template.replace(/\{slug\}/g, slug);
+    const wantsDirectory = /\/\s*$/.test(rawPath);
     try {
-      const resolved = resolveWorkspaceDocPath(BASE, docPath, { slug, requireBrand: true });
-      if (resolved.exists) {
+      if (wantsDirectory) {
+        const canonicalPath = normalizeBrandDocPath(slug, cleanDocPath(rawPath));
+        const absPath = safeWorkspaceAbs(canonicalPath);
+        if (fs.existsSync(absPath) && fs.statSync(absPath).isDirectory()) {
+          resolvedCount += 1;
+          abs.push(absPath);
+          documents.push(readDirectoryDocument(canonicalPath, absPath));
+        } else {
+          missingRequired.push(canonicalPath);
+        }
+        continue;
+      }
+
+      const resolved = resolveWorkspaceDocPath(BASE, rawPath, { slug, requireBrand: true });
+      if (resolved.exists && fs.statSync(resolved.absPath).isFile()) {
         resolvedCount += 1;
         abs.push(resolved.absPath);
+        documents.push(readFileDocument(resolved.canonicalPath, resolved.absPath));
+      } else {
+        missingRequired.push(resolved.canonicalPath);
       }
     } catch {
       // unresolvable template (path traversal, different brand) — skip; the
       // summary still grounds the agent and verdict reflects the miss.
+      missingRequired.push(rawPath);
     }
   }
 
-  return { abs, resolvedCount, total };
+  return { abs, documents, missingRequired, resolvedCount, total };
 }
 
 /**
@@ -160,21 +300,26 @@ export function assembleContextPack(slug: string, skill: string | null): Context
       skill: normalizedSkill,
       summary: `Cliente: ${slug}\nFoundation: AUSENTE (no existe brand/${slug} en disco).`,
       docPaths: [],
+      documents: [],
+      missingRequired: [],
+      brandFound: false,
       verdict: "missing",
     };
   }
 
   const summary = buildSummary(slug);
   const required = readSkillContextRequired(normalizedSkill);
-  const { abs, resolvedCount, total } = resolveRequiredDocPaths(slug, required);
+  const { abs, documents, missingRequired, resolvedCount, total } = resolveRequiredDocPaths(slug, required);
 
   let verdict: ContextPackVerdict;
   if (total === 0) {
     // Skill declares no required docs: the brand exists, summary grounds it.
     verdict = "ok";
   } else if (resolvedCount === 0) {
-    // Required docs declared but NONE exist on disk → no Foundation to ground.
-    verdict = "missing";
+    // Brand exists but this skill's declared context is missing. Do not issue
+    // a hard stop: the injected summary + missing list lets the specialist ask
+    // for the missing context instead of crashing or inventing.
+    verdict = "partial";
   } else if (resolvedCount < total) {
     verdict = "partial";
   } else {
@@ -186,6 +331,9 @@ export function assembleContextPack(slug: string, skill: string | null): Context
     skill: normalizedSkill,
     summary,
     docPaths: abs,
+    documents,
+    missingRequired,
+    brandFound: true,
     verdict,
   };
 }

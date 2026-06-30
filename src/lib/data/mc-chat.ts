@@ -81,6 +81,7 @@ export type ErrorCategory =
   | "anthropic_billing"
   | "rate_limit"
   | "auth"
+  | "missing_context"
   | "context_overflow"
   | "watchdog_abort"
   | "model_unavailable"
@@ -103,6 +104,7 @@ const VALID_CATEGORIES: ReadonlySet<ErrorCategory> = new Set([
   "anthropic_billing",
   "rate_limit",
   "auth",
+  "missing_context",
   "context_overflow",
   "watchdog_abort",
   "model_unavailable",

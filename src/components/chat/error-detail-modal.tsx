@@ -12,6 +12,7 @@ const CATEGORY_LABEL: Record<ErrorCategory, string> = {
   anthropic_billing: "Saldo del proveedor agotado",
   rate_limit: "Rate limit alcanzado",
   auth: "Credenciales no configuradas",
+  missing_context: "Falta contexto inicial",
   context_overflow: "Contexto demasiado largo",
   watchdog_abort: "Sesión sin progreso (timeout)",
   model_unavailable: "Modelo no disponible",

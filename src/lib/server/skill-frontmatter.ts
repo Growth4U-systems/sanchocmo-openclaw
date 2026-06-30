@@ -53,9 +53,9 @@ export function parseSkillFrontmatter(content: string): ParsedSkillFrontmatter {
       } else {
         meta[currentKey] = val;
       }
-    } else if (line.startsWith("- ") && currentKey) {
+    } else if (/^\s*-\s+/.test(line) && currentKey) {
       if (!Array.isArray(meta[currentKey])) meta[currentKey] = [];
-      (meta[currentKey] as string[]).push(line.slice(2).trim());
+      (meta[currentKey] as string[]).push(line.replace(/^\s*-\s+/, "").trim());
     } else if (line.startsWith("  ") && currentKey === "metadata") {
       const subMatch = line.trim().match(/^(\w[\w_]*)\s*:\s*['"]?(.+?)['"]?\s*$/);
       if (subMatch) {

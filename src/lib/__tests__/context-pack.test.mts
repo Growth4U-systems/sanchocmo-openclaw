@@ -22,6 +22,7 @@ let openclawHome: string;
 let mod: typeof import("../data/context-pack");
 
 const SKILL = "content-strategy";
+const DIR_SKILL = "discovery-runner-test";
 
 // The skill's `context_required` (canonical filenames). The resolver must map
 // these to whatever the brand actually has on disk (canonical or legacy bare).
@@ -54,20 +55,25 @@ before(async () => {
   process.env.MC_WORKSPACE = workspace;
   process.env.OPENCLAW_HOME = openclawHome;
 
-  // Seed the skill catalog: a SKILL.md with the `context_required` list.
-  const skillMd = [
-    "---",
-    `name: ${SKILL}`,
-    'description: "test skill"',
-    "context_required:",
-    ...CONTEXT_REQUIRED.map((p) => `- ${p}`),
-    "---",
-    "",
-    "# Body",
-  ].join("\n");
-  const skillDir = path.join(openclawHome, "skills", SKILL);
-  mkdirSync(skillDir, { recursive: true });
-  writeFileSync(path.join(skillDir, "SKILL.md"), skillMd);
+  function writeSkill(skill: string, contextRequired: string[]) {
+    const skillMd = [
+      "---",
+      `name: ${skill}`,
+      'description: "test skill"',
+      "context_required:",
+      ...contextRequired.map((p) => `- ${p}`),
+      "---",
+      "",
+      "# Body",
+    ].join("\n");
+    const skillDir = path.join(openclawHome, "skills", skill);
+    mkdirSync(skillDir, { recursive: true });
+    writeFileSync(path.join(skillDir, "SKILL.md"), skillMd);
+  }
+
+  // Seed the skill catalog: SKILL.md files with `context_required` lists.
+  writeSkill(SKILL, CONTEXT_REQUIRED);
+  writeSkill(DIR_SKILL, ["brand/{slug}/outreach/searches/"]);
 
   mod = await import("../data/context-pack");
 });
@@ -86,12 +92,18 @@ test("(a) canonical layout → verdict=ok + resolved absolute paths", () => {
   const pack = mod.assembleContextPack(slug, SKILL);
 
   assert.equal(pack.verdict, "ok");
+  assert.equal(pack.brandFound, true);
   assert.equal(pack.docPaths.length, 3, "all 3 required docs resolved");
+  assert.equal(pack.documents.length, 3, "all 3 required docs embedded");
+  assert.deepEqual(pack.missingRequired, []);
   // Resolved paths are ABSOLUTE and point inside the seeded workspace.
   for (const p of pack.docPaths) {
     assert.ok(path.isAbsolute(p), `path is absolute: ${p}`);
     assert.ok(p.startsWith(workspace), `path under workspace: ${p}`);
   }
+  const brief = pack.documents.find((doc) => doc.path.endsWith("company-brief.current.md"));
+  assert.equal(brief?.kind, "file");
+  assert.match(brief?.content || "", /Acme Corp/);
   // Summary is self-sufficient grounding parsed from the company-brief.
   assert.match(pack.summary, /Acme Corp/);
   assert.match(pack.summary, /SaaS B2B/);
@@ -111,6 +123,7 @@ test("(b) legacy bare `current.md` layout → resolver maps the drift, verdict=o
 
   assert.equal(pack.verdict, "ok", "legacy bare layout still resolves to ok");
   assert.equal(pack.docPaths.length, 3, "resolver mapped all 3 despite drift");
+  assert.equal(pack.documents.length, 3);
   for (const p of pack.docPaths) {
     assert.ok(p.startsWith(workspace), `path under workspace: ${p}`);
     // Resolved to the bare legacy filename that actually exists on disk.
@@ -127,13 +140,51 @@ test("partial: some required docs present, some missing → verdict=partial", ()
 
   assert.equal(pack.verdict, "partial");
   assert.equal(pack.docPaths.length, 1);
+  assert.equal(pack.documents.length, 1);
+  assert.equal(pack.missingRequired.length, 2);
+  assert.match(pack.missingRequired.join("\n"), /brand-voice/);
+  assert.match(pack.missingRequired.join("\n"), /ecps/);
+});
+
+test("partial: brand exists but no required docs → no hard missing stop", () => {
+  const slug = "emptyco";
+  mkdirSync(path.join(workspace, "brand", slug), { recursive: true });
+
+  const pack = mod.assembleContextPack(slug, SKILL);
+
+  assert.equal(pack.verdict, "partial");
+  assert.equal(pack.brandFound, true);
+  assert.deepEqual(pack.docPaths, []);
+  assert.deepEqual(pack.documents, []);
+  assert.equal(pack.missingRequired.length, 3);
+});
+
+test("directory context_required resolves as directory context", () => {
+  const slug = "runnerco";
+  const dir = path.join(workspace, "brand", slug, "outreach", "searches");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(
+    path.join(dir, "ds-20260630-test.json"),
+    JSON.stringify({ id: "ds-20260630-test", title: "Creators fintech", runner: { status: "queued" } }, null, 2),
+  );
+
+  const pack = mod.assembleContextPack(slug, DIR_SKILL);
+
+  assert.equal(pack.verdict, "ok");
+  assert.equal(pack.docPaths.length, 1);
+  assert.equal(pack.documents.length, 1);
+  assert.equal(pack.documents[0].kind, "directory");
+  assert.match(pack.documents[0].content, /ds-20260630-test\.json/);
+  assert.match(pack.documents[0].content, /Creators fintech/);
 });
 
 test("(c) brand absent on disk → verdict=missing + no docPaths", () => {
   const pack = mod.assembleContextPack("does-not-exist", SKILL);
 
   assert.equal(pack.verdict, "missing");
+  assert.equal(pack.brandFound, false);
   assert.deepEqual(pack.docPaths, []);
+  assert.deepEqual(pack.documents, []);
   assert.match(pack.summary, /AUSENTE/);
 });
 
@@ -143,5 +194,24 @@ test("no skill → brand exists, summary grounds it, verdict=ok", () => {
 
   assert.equal(pack.verdict, "ok");
   assert.deepEqual(pack.docPaths, [], "no skill → no required docs to resolve");
+  assert.deepEqual(pack.documents, [], "no skill → no documents to embed");
   assert.match(pack.summary, /Acme Corp/);
+});
+
+test("falls back to the app skills catalog when OPENCLAW_HOME lacks the skill", () => {
+  const slug = "repo-skillco";
+  writeBrandFile(slug, "company-brief/company-brief.current.md", COMPANY_BRIEF);
+  writeBrandFile(slug, "market-and-us/competitors/competitors.current.md", "# Competitors\n- N26");
+  writeBrandFile(slug, "go-to-market/ecps/ecps.current.md", "# ECPs\n- Fintech buyers");
+  const previousHome = process.env.OPENCLAW_HOME;
+  process.env.OPENCLAW_HOME = path.join(openclawHome, "empty-home");
+  try {
+    const pack = mod.assembleContextPack(slug, "discovery-plan-builder");
+    assert.equal(pack.verdict, "ok");
+    assert.equal(pack.documents.length, 3);
+    assert.match(pack.documents.map((doc) => doc.path).join("\n"), /company-brief/);
+  } finally {
+    if (previousHome === undefined) delete process.env.OPENCLAW_HOME;
+    else process.env.OPENCLAW_HOME = previousHome;
+  }
 });
