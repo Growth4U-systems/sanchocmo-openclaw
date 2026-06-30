@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.6](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.5...v0.15.6) (2026-06-30)
+
+
+### Bug Fixes
+
+* **mc-chat:** SAN-347 serialize runtime turns ([07156ef](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/07156efe6bdcc3e8848ea82d125e5cdae05c84bd))
+* **metrics:** SAN-369 realign dashboard surfaces ([210eff7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/210eff79cabd4c11298211f7c1980f4bb0781961))
+
 ## [0.15.5](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.4...v0.15.5) (2026-06-30)
 
 
