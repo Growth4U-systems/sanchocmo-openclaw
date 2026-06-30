@@ -1,9 +1,10 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { Fragment, useMemo, useState, type CSSProperties } from "react";
 import { useRouter } from "next/router";
 import {
   useDashboardDefinition,
   useMetricKpis,
   useMetricsHealth,
+  usePartnershipReport,
   useSurfaceSummary,
   type DashboardVersionMeta,
   type MetricKpiResult,
@@ -11,6 +12,9 @@ import {
   type MetricStageRollupChannelValue,
   type MetricStageRollupResult,
   type MetricStageRollupStageValue,
+  type PartnershipReport,
+  type PartnershipReportCreatorRow,
+  type PartnershipReportPeriodDays,
   type SurfaceSummaryEntry,
 } from "@/hooks/useMetrics";
 import { useOpenChat } from "@/hooks/useChat";
@@ -229,6 +233,8 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
 
         {activeTab === "surfaces" && activeSurface ? (
           <SurfaceDetailView
+            slug={slug}
+            range={range}
             surface={activeSurface}
             entry={surfaceEntries[activeSurface]}
             configured={surfacesData?.configured}
@@ -558,12 +564,16 @@ function TrendsView({
 }
 
 function SurfaceDetailView({
+  slug,
+  range,
   surface,
   entry,
   configured,
   kpiData,
   onBack,
 }: {
+  slug: string;
+  range: DateRange;
   surface: SurfaceKey;
   entry?: SurfaceSummaryEntry;
   configured?: boolean;
@@ -575,6 +585,8 @@ function SurfaceDetailView({
   const copy = SURFACE_COPY[surface];
   const kpis = selectSurfaceKpis(kpiData, surface);
   const state = def ? surfaceState(def, entry, configured) : "SIN DATOS";
+  const partnershipPeriod: PartnershipReportPeriodDays = range === "90d" ? 90 : 30;
+  const partnershipReport = usePartnershipReport(surface === "partnerships" ? slug : null, partnershipPeriod);
   return (
     <div>
       <div className="m-detailbar">
@@ -585,6 +597,10 @@ function SurfaceDetailView({
         <ReputationSurface kpis={kpis} state={state} />
       ) : surface === "web" ? (
         <WebSeoSurface kpis={kpis} state={state} />
+      ) : surface === "email" ? (
+        <OutboundSurface kpis={kpis} state={state} />
+      ) : surface === "partnerships" ? (
+        <PartnershipsSurface kpis={kpis} report={partnershipReport.data} reportError={partnershipReport.error} reportLoading={partnershipReport.isLoading} state={state} />
       ) : surface === "product" ? (
         <GenericSurface title="Product" icon="🧪" kpis={kpis} state={state} groups={["Activation", "Retention", "Friction"]} />
       ) : surface === "pipeline" ? (
@@ -657,6 +673,248 @@ function WebSeoSurface({
       state={state}
       groups={["Google Analytics 4", "Search Console", "PageSpeed"]}
     />
+  );
+}
+
+function OutboundSurface({
+  kpis,
+  state,
+}: {
+  kpis: MetricKpiValue[];
+  state: MetricDataState;
+}) {
+  const sent = findKpi(kpis, ["outbound.sent", "emails sent", "sent"]);
+  const delivered = findKpi(kpis, ["outbound.delivered", "delivered"]);
+  const opens = findKpi(kpis, ["outbound.opens", "email opens", "opens"]);
+  const replies = findKpi(kpis, ["outbound.replies", "email replies", "replies"]);
+  const positive = findKpi(kpis, ["outbound.positive_replies", "positive replies", "interested"]);
+  const meetings = findKpi(kpis, ["outbound.meetings", "meetings"]);
+  const bounced = findKpi(kpis, ["outbound.bounced", "bounced", "email bounces"]);
+  const unsubscribed = findKpi(kpis, ["outbound.unsubscribed", "unsubscribed", "opt out"]);
+
+  const sentValue = numericValue(sent?.value);
+  const deliveredValue = numericValue(delivered?.value) ?? deriveDelivered(sent, bounced);
+  const opensValue = numericValue(opens?.value);
+  const repliesValue = numericValue(replies?.value);
+  const positiveValue = numericValue(positive?.value);
+  const meetingsValue = numericValue(meetings?.value);
+  const bouncedValue = numericValue(bounced?.value);
+  const unsubValue = numericValue(unsubscribed?.value);
+
+  const replyRateValue = safeRatio(repliesValue, sentValue);
+  const positiveRateValue = safeRatio(positiveValue, sentValue);
+  const openRateValue = safeRatio(opensValue, deliveredValue ?? sentValue);
+  const bounceRateValue = safeRatio(bouncedValue, sentValue);
+  const optOutRateValue = safeRatio(unsubValue, sentValue);
+  const replyRate = formatPercent(replyRateValue);
+  const positiveRate = formatPercent(positiveRateValue);
+  const openRate = formatPercent(openRateValue);
+  const bounceRate = formatPercent(bounceRateValue);
+  const optOutRate = formatPercent(optOutRateValue);
+  const health = outboundHealthScore({ sent: sentValue, bounced: bouncedValue, unsubscribed: unsubValue });
+  const hasInstantly = kpis.some((kpi) => kpi.source === "instantly");
+  const hasLemlist = kpis.some((kpi) => kpi.source === "lemlist");
+
+  return (
+    <div>
+      <SurfaceSubhead
+        icon="🎯"
+        title="ICP Outreach"
+        subtitle="cold email a ICP · Instantly / Lemlist"
+        state={state}
+        sources={[
+          { label: "Instantly", on: hasInstantly },
+          { label: "Lemlist", on: hasLemlist },
+        ]}
+        health={health != null ? `Outbound Health ${health}/100` : "Outbound Health sin dato"}
+      />
+
+      <div className="m-statebar m-statebar-tight">
+        <span className="m-label">Vista:</span>
+        <div className="m-vseg"><button type="button" className="on">Resumen</button><button type="button">Campañas</button></div>
+      </div>
+
+      <SectionTitle icon="📨" title="KPIs de outbound" subtitle="reply · positive · meetings" />
+      <div className="m-kpi-grid">
+        <SurfaceKpiTile label="Enviados" value={metricDisplay(sent)} kpi={sent} />
+        <SurfaceKpiTile label="Reply rate" value={replyRate} kpi={replies} tone="hero" detail={metricDisplay(replies)} />
+        <SurfaceKpiTile label="Positive reply" value={positiveRate} kpi={positive} tone="hero" detail={metricDisplay(positive)} />
+        <SurfaceKpiTile label="Meetings booked" value={metricDisplay(meetings)} kpi={meetings} tone="hero" detail="North Star de outbound" />
+        <SurfaceKpiTile label="Bounce rate" value={bounceRate} kpi={bounced} tone="gate" detail="<3% sano" inverse />
+        <SurfaceKpiTile label="Open rate" value={openRate} kpi={opens} muted detail="Apple MPP puede inflar opens" />
+        <SurfaceKpiTile label="Opt-out" value={optOutRate} kpi={unsubscribed} inverse />
+        <SurfaceKpiTile label="Spam complaint" value="Sin dato" tone="gate" detail="<0,1% sano" muted />
+      </div>
+
+      <SectionTitle icon="📈" title="Tendencia" subtitle="enviados, replies y meetings del rango" />
+      <MultiLinePanel
+        legends={[
+          { label: "Enviados", color: "navy" },
+          { label: "Replies", color: "rust" },
+          { label: "Meetings", color: "sage" },
+        ]}
+        lines={[
+          sparkFromKpi(sent),
+          sparkFromKpi(replies),
+          sparkFromKpi(meetings),
+        ]}
+      />
+
+      <SectionTitle icon="🪜" title="Funnel de secuencia" subtitle="enviado → entregado → abierto → reply → positivo → reunión" />
+      <SequenceFunnel
+        steps={[
+          { label: "Enviados", value: sentValue, displayValue: metricDisplay(sent), width: 100, color: "navy", note: "base" },
+          { label: "Entregados", value: deliveredValue, displayValue: numberDisplay(deliveredValue), width: ratioPercent(deliveredValue, sentValue), color: "navy-soft", note: ratioDisplay(deliveredValue, sentValue) },
+          { label: "Abiertos", value: opensValue, displayValue: numberDisplay(opensValue), width: ratioPercent(opensValue, deliveredValue ?? sentValue), color: "sage-soft", note: openRate, flag: "MPP" },
+          { label: "Reply", value: repliesValue, displayValue: numberDisplay(repliesValue), width: ratioPercent(repliesValue, sentValue), color: "rust", note: replyRate },
+          { label: "Positivo", value: positiveValue, displayValue: numberDisplay(positiveValue), width: ratioPercent(positiveValue, repliesValue), color: "rust-dark", note: ratioDisplay(positiveValue, repliesValue) },
+          { label: "Reunión", value: meetingsValue, displayValue: numberDisplay(meetingsValue), width: ratioPercent(meetingsValue, positiveValue ?? repliesValue), color: "sage", note: ratioDisplay(meetingsValue, positiveValue ?? repliesValue) },
+        ]}
+      />
+
+      <div className="m-two-col">
+        <div>
+          <SectionTitle icon="✉️" title="Reply por paso" />
+          <EmptyBreakdownPanel text="Sin datos por paso en este rango." />
+        </div>
+        <div>
+          <SectionTitle icon="🧪" title="A/B variante" />
+          <EmptyBreakdownPanel text="Sin variantes en este rango." />
+        </div>
+      </div>
+
+      <SectionTitle icon="⚡" title="Movimientos" subtitle="solo señales accionables cuando existan datos suficientes" />
+      <MoversPanel
+        items={buildOutboundMovers({ bounceRateValue, optOutRateValue, replyRateValue, meetingsValue, health })}
+        empty="Sin movimientos detectados para outbound en este rango."
+      />
+
+      <SectionTitle icon="🛡️" title="Salud · Deliverability" subtitle="si deliverability falla, engagement deja de ser interpretable" />
+      <DeliverabilityPanel
+        score={health}
+        rows={[
+          { label: "Bounce rate", value: bounceRate, marker: markerFromRate(bouncedValue, sentValue, 0.05, true) },
+          { label: "Opt-out", value: optOutRate, marker: markerFromRate(unsubValue, sentValue, 0.02, true) },
+          { label: "Open rate", value: openRate, marker: markerFromRate(opensValue, deliveredValue ?? sentValue, 0.35, false) },
+          { label: "Spam complaint", value: "Sin dato", marker: null },
+        ]}
+      />
+
+      <SectionTitle icon="🔁" title="Contribución al embudo" subtitle="outbound aporta replies positivos y reuniones" />
+      <ContributionStrip
+        steps={[
+          { label: "Enviados", value: metricDisplay(sent) },
+          { label: "Replies", value: numberDisplay(repliesValue), rate: replyRate },
+          { label: "Positivos", value: numberDisplay(positiveValue), rate: ratioDisplay(positiveValue, repliesValue) },
+          { label: "Reuniones", value: numberDisplay(meetingsValue), lead: true, rate: ratioDisplay(meetingsValue, positiveValue ?? repliesValue) },
+        ]}
+        note={`Outbound aporta ${numberDisplay(meetingsValue)} reuniones al funnel.`}
+      />
+
+      <SectionTitle icon="🔭" title="Señales de esta superficie" />
+      <IntelligenceBridge surface="Email / Outbound" />
+    </div>
+  );
+}
+
+function PartnershipsSurface({
+  kpis,
+  report,
+  reportError,
+  reportLoading,
+  state,
+}: {
+  kpis: MetricKpiValue[];
+  report?: PartnershipReport;
+  reportError?: unknown;
+  reportLoading?: boolean;
+  state: MetricDataState;
+}) {
+  const [openHandle, setOpenHandle] = useState<string | null>(null);
+  const hasYalc = !!report || kpis.some((kpi) => kpi.source === "yalc");
+  const creators = report?.creators ?? [];
+  const totals = report?.totals;
+  const valueGenerated = totals && report ? totals.conversions * report.targetCacEur : null;
+  const sortedCreators = [...creators].sort((a, b) => (b.roi ?? -1) - (a.roi ?? -1));
+
+  return (
+    <div>
+      <SurfaceSubhead
+        icon="🤝"
+        title="Partnerships"
+        subtitle="creators · CPA real vs break-even · ROI"
+        state={state}
+        sources={[
+          { label: "Yalc", on: hasYalc },
+          { label: "Creators", on: creators.length > 0 },
+        ]}
+        health={report ? `${report.periodDays} días · CAC objetivo ${formatCurrencyEur(report.targetCacEur)}` : "Reporte por creator"}
+      />
+
+      {reportLoading && <div className="m-panel m-pad m-empty">Cargando reporte de Partnerships...</div>}
+      {!!reportError && (
+        <div className="m-panel m-pad m-empty">
+          No se pudo cargar el reporte de Partnerships.
+        </div>
+      )}
+      {!reportLoading && !reportError && (!report || !totals || creators.length === 0) && (
+        <div className="m-panel m-empty-state">
+          <div>🤝</div>
+          <h3>Partnerships sin reporting de creators</h3>
+          <p>Se enciende cuando Yalc tenga creators con deal y performance en la ventana.</p>
+        </div>
+      )}
+
+      {report && totals && creators.length > 0 && (
+        <>
+          <SectionTitle icon="💶" title="Economía y funnel" subtitle="CPA real vs break-even y funnel clicks → signups → KYC → 1ª transacción" />
+          <div className="m-kpi-grid">
+            <SurfaceKpiTile label="Invertido" value={formatCurrencyEur(totals.investedEur)} tone="navy" detail="fees + variable" />
+            <SurfaceKpiTile label="CPA real · 1ª TX" value={totals.cpaRealEur == null ? "-" : formatCurrencyEur(totals.cpaRealEur)} tone={totals.belowBreakEven ? "good" : "bad"} detail={`break-even ${formatCurrencyEur(report.targetCacEur)}`} inverse />
+            <SurfaceKpiTile label="Value generado" value={formatCurrencyEur(valueGenerated)} tone="good" detail="conversiones × CAC objetivo" />
+            <SurfaceKpiTile label="ROI" value={roiDisplay(totals.roi)} tone={totals.roi != null && totals.roi >= 1 ? "good" : "bad"} detail="break-even 1,0x" />
+            <SurfaceKpiTile label="Clicks" value={formatCompact(totals.clicks)} />
+            <SurfaceKpiTile label="Signups" value={formatCompact(totals.signups)} detail={`CR ${ratioDisplay(totals.signups, totals.clicks)}`} />
+            <SurfaceKpiTile label="KYC aprobado" value={formatCompact(totals.kyc)} tone="cyan" detail={`${ratioDisplay(totals.kyc, totals.signups)} aprob.`} />
+            <SurfaceKpiTile label="1ª transacción" value={formatCompact(totals.conversions)} tone="cyan" detail={`${ratioDisplay(totals.conversions, totals.kyc)} funded`} />
+          </div>
+
+          <SectionTitle icon="📈" title="Tendencia" subtitle="clicks agregados de creators en la ventana" />
+          <MultiLinePanel legends={[{ label: "Clicks", color: "navy" }]} lines={[sumCreatorSparklines(creators)]} />
+
+          <SectionTitle icon="🏆" title="Leaderboard por creator" subtitle="ordenado por ROI y CPA contra break-even" />
+          <CreatorLeaderboard
+            creators={sortedCreators}
+            targetCac={report.targetCacEur}
+            openHandle={openHandle}
+            onToggle={setOpenHandle}
+          />
+
+          <SectionTitle icon="⚖️" title="CPA por creator vs break-even" subtitle="a la izquierda rentable, a la derecha necesita acción" />
+          <BreakEvenBars creators={sortedCreators} targetCac={report.targetCacEur} />
+
+          <SectionTitle icon="⚡" title="Movimientos" subtitle="mejoras, riesgo y actividad del programa" />
+          <MoversPanel items={buildPartnershipMovers(sortedCreators)} empty="Sin movimientos detectados para Partnerships en este rango." />
+
+          <SectionTitle icon="🧭" title="Salud · Renovar / Vigilar / Cortar" subtitle="decisión por economics reales del creator" />
+          <RenewWatchCut creators={sortedCreators} targetCac={report.targetCacEur} />
+
+          <SectionTitle icon="🔁" title="Contribución al embudo" subtitle="funnel fintech de Partnerships hacia la North Star" />
+          <ContributionStrip
+            steps={[
+              { label: "Clicks", value: formatCompact(totals.clicks) },
+              { label: "Signups", value: formatCompact(totals.signups), rate: ratioDisplay(totals.signups, totals.clicks) },
+              { label: "KYC", value: formatCompact(totals.kyc), rate: ratioDisplay(totals.kyc, totals.signups) },
+              { label: "1ª transacción", value: formatCompact(totals.conversions), lead: true, rate: ratioDisplay(totals.conversions, totals.kyc) },
+            ]}
+            note={`Partnerships aporta ${formatCompact(totals.conversions)} primeras transacciones con CPA ${totals.cpaRealEur == null ? "-" : formatCurrencyEur(totals.cpaRealEur)}.`}
+          />
+
+          <SectionTitle icon="🔭" title="Señales de esta superficie" />
+          <IntelligenceBridge surface="Partnerships" />
+        </>
+      )}
+    </div>
   );
 }
 
@@ -851,7 +1109,7 @@ function ContributionTable({ rows }: { rows: ChannelMatrixRow[] }) {
   if (!rows.length) {
     return (
       <div className="m-panel m-pad m-empty">
-        Sin contribución atribuida. Se llena cuando existan rollups por canal y etapa para el rango.
+        Sin contribución atribuida para este rango.
       </div>
     );
   }
@@ -1007,7 +1265,7 @@ function LeakPanel({
   const rates = funnel.rates.filter((rate) => rate.value != null).sort((a, b) => (a.value ?? 0) - (b.value ?? 0));
   const leaks = rates.slice(0, 3);
   if (!leaks.length) {
-    return <div className="m-panel m-pad m-empty">Sin fuga calculable. {stageRollups?.summary.nextAction ?? "Faltan rollups de etapa."}</div>;
+    return <div className="m-panel m-pad m-empty">Sin fuga calculable. {stageRollups?.summary.nextAction ?? "Aún faltan datos suficientes por etapa."}</div>;
   }
   return (
     <div className="m-panel m-pad">
@@ -1124,6 +1382,420 @@ function MetricCard({
   );
 }
 
+function SurfaceSubhead({
+  icon,
+  title,
+  subtitle,
+  state,
+  sources,
+  health,
+}: {
+  icon: string;
+  title: string;
+  subtitle: string;
+  state: MetricDataState;
+  sources: Array<{ label: string; on: boolean }>;
+  health?: string;
+}) {
+  return (
+    <div className="m-surface-subhead">
+      <h2><span>{icon}</span>{title}</h2>
+      <span className="m-subhead-sub">{subtitle}</span>
+      <div className="m-source-pills">
+        {sources.map((source) => (
+          <span key={source.label} className={cn("m-source-pill", !source.on && "off")}>
+            {source.on ? "✓" : "○"} {source.label}
+          </span>
+        ))}
+      </div>
+      <span className={cn("m-health-pill", stateClass(state))}>{health ?? stateLabel(state)}</span>
+    </div>
+  );
+}
+
+function SurfaceKpiTile({
+  label,
+  value,
+  kpi,
+  tone,
+  detail,
+  muted,
+  inverse,
+}: {
+  label: string;
+  value: string;
+  kpi?: MetricKpiValue | null;
+  tone?: "hero" | "gate" | "muted" | "good" | "bad" | "navy" | "cyan";
+  detail?: string;
+  muted?: boolean;
+  inverse?: boolean;
+}) {
+  return (
+    <div className={cn("m-skpi", tone, muted && "muted")}>
+      <div className="m-skpi-label">
+        <span>{label}</span>
+        {detail && <i>{detail}</i>}
+      </div>
+      <div className="m-skpi-value">{value}</div>
+      <div className="m-skpi-foot">
+        {kpi ? <DeltaBadge kpi={kpi} inverse={inverse} /> : <span className="m-chip flat">-</span>}
+        <MiniBars tone={tone === "cyan" ? "cyan" : tone === "good" || tone === "hero" ? "sage" : "navy"} values={sparkHeightsFromValue(numericValue(kpi?.value))} />
+      </div>
+    </div>
+  );
+}
+
+function MultiLinePanel({
+  legends,
+  lines,
+}: {
+  legends: Array<{ label: string; color: "navy" | "rust" | "sage" | "cyan" }>;
+  lines: number[][];
+}) {
+  const visible = lines.filter((line) => line.length >= 2 && line.some((value) => value > 0));
+  if (!visible.length) {
+    return <div className="m-panel m-pad m-empty">Sin serie temporal suficiente para este rango.</div>;
+  }
+  return (
+    <div className="m-panel m-line-panel">
+      <div className="m-line-legend">
+        {legends.slice(0, lines.length).map((legend) => (
+          <span key={legend.label}><i className={legend.color} />{legend.label}</span>
+        ))}
+      </div>
+      <MultiLineChart lines={visible} colors={legends.map((legend) => legend.color)} />
+    </div>
+  );
+}
+
+function MultiLineChart({
+  lines,
+  colors,
+}: {
+  lines: number[][];
+  colors: Array<"navy" | "rust" | "sage" | "cyan">;
+}) {
+  const width = 740;
+  const height = 170;
+  const x0 = 46;
+  const y0 = 14;
+  const plotW = 648;
+  const plotH = 130;
+  const x = (index: number, length: number) => x0 + (plotW * index) / Math.max(1, length - 1);
+  const palette = { navy: "#1E3A5F", rust: "#C45D35", sage: "#4A5D23", cyan: "#3B9EBF" };
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="m-multiline" aria-hidden="true">
+      {[0, 0.5, 1].map((factor) => (
+        <line key={factor} x1={x0} y1={y0 + plotH * factor} x2={x0 + plotW} y2={y0 + plotH * factor} stroke="#E0D5C2" strokeWidth="1" />
+      ))}
+      {lines.map((line, index) => {
+        const max = Math.max(...line, 1);
+        const min = Math.min(...line, 0);
+        const span = max - min || 1;
+        const y = (value: number) => y0 + plotH - ((value - min) / span) * plotH;
+        return (
+          <path
+            key={index}
+            d={line.map((value, pointIndex) => `${pointIndex ? "L" : "M"}${x(pointIndex, line.length).toFixed(1)} ${y(value).toFixed(1)}`).join(" ")}
+            fill="none"
+            stroke={palette[colors[index] ?? "navy"]}
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+interface SequenceStep {
+  label: string;
+  value: number | null;
+  displayValue: string;
+  width: number;
+  color: "navy" | "navy-soft" | "sage-soft" | "rust" | "rust-dark" | "sage";
+  note: string;
+  flag?: string;
+}
+
+function SequenceFunnel({ steps }: { steps: SequenceStep[] }) {
+  const colorMap: Record<SequenceStep["color"], string> = {
+    navy: "#1E3A5F",
+    "navy-soft": "#33506E",
+    "sage-soft": "#7A8A4A",
+    rust: "#C45D35",
+    "rust-dark": "#A34A28",
+    sage: "#4A5D23",
+  };
+  return (
+    <div className="m-panel m-pad">
+      <div className="m-seq-funnel">
+        {steps.map((step) => (
+          <div key={step.label} className="m-seq-row">
+            <span className="m-seq-name">{step.label}{step.flag && <i>{step.flag}</i>}</span>
+            <div className="m-seq-track">
+              <span
+                style={{
+                  width: `${Math.max(step.value == null ? 0 : 8, Math.min(100, step.width))}%`,
+                  background: colorMap[step.color],
+                }}
+              >
+                {step.displayValue}
+              </span>
+            </div>
+            <span className="m-seq-note">{step.note}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EmptyBreakdownPanel({ text }: { text: string }) {
+  return (
+    <div className="m-panel m-pad m-empty-breakdown">
+      <div>Sin dato dimensionado</div>
+      <p>{text}</p>
+    </div>
+  );
+}
+
+interface MoverItem {
+  tone: "up" | "warn" | "alert" | "act";
+  icon: string;
+  title: string;
+  subtitle: string;
+  action: string;
+}
+
+function MoversPanel({ items, empty }: { items: MoverItem[]; empty: string }) {
+  if (!items.length) return <div className="m-panel m-pad m-empty">{empty}</div>;
+  return (
+    <div className="m-panel m-movers-panel">
+      {items.map((item) => (
+        <div key={item.title} className="m-mover">
+          <span className={cn("m-mover-icon", item.tone)}>{item.icon}</span>
+          <div><b>{item.title}</b><small>{item.subtitle}</small></div>
+          <button type="button">{item.action}</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DeliverabilityPanel({
+  score,
+  rows,
+}: {
+  score: number | null;
+  rows: Array<{ label: string; value: string; marker: number | null }>;
+}) {
+  return (
+    <div className="m-panel m-deliv">
+      <div className="m-deliv-score">
+        <div className="m-deliv-ring" style={{ background: `conic-gradient(var(--sage) 0% ${score ?? 0}%, var(--aged) ${score ?? 0}% 100%)` }}>
+          <span>{score ?? "-"}</span><small>/100</small>
+        </div>
+        <b>{score == null ? "Sin score" : score >= 80 ? "Sano" : score >= 65 ? "Vigilar" : "Riesgo"}</b>
+      </div>
+      <div className="m-thresholds">
+        {rows.map((row) => (
+          <div key={row.label} className="m-threshold-row">
+            <span>{row.label}</span>
+            <i><b className="g" /><b className="a" /><b className="r" />{row.marker != null && <em style={{ left: `${row.marker}%` }} />}</i>
+            <strong>{row.value}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ContributionStrip({
+  steps,
+  note,
+}: {
+  steps: Array<{ label: string; value: string; rate?: string; lead?: boolean }>;
+  note: string;
+}) {
+  return (
+    <div className="m-panel m-contrib-panel">
+      <div className="m-contrib">
+        {steps.map((step, index) => (
+          <div key={step.label} className="m-contrib-frag">
+            {index > 0 && <span className="m-contrib-arrow">{step.rate && <i>{step.rate}</i>}→</span>}
+            <div className={cn("m-cstep", step.lead && "leadout")}>
+              <div className="cn">{step.label}</div>
+              <div className="cv">{step.value}</div>
+            </div>
+          </div>
+        ))}
+        <span className="m-contrib-note">{note}</span>
+      </div>
+    </div>
+  );
+}
+
+function CreatorLeaderboard({
+  creators,
+  targetCac,
+  openHandle,
+  onToggle,
+}: {
+  creators: PartnershipReportCreatorRow[];
+  targetCac: number;
+  openHandle: string | null;
+  onToggle: (handle: string | null) => void;
+}) {
+  const maxInvestment = Math.max(...creators.map((creator) => creator.totalCostEur ?? creator.feeEur ?? 0), 1);
+  return (
+    <div className="m-panel m-table-panel">
+      <table className="m-creator-table">
+        <thead>
+          <tr>
+            <th>Creator</th>
+            <th className="r">Invertido</th>
+            <th className="r">Clicks</th>
+            <th className="r">Signups</th>
+            <th className="r">1ª TX</th>
+            <th className="r">CPA</th>
+            <th className="r">ROI</th>
+            <th className="r">EPC</th>
+          </tr>
+        </thead>
+        <tbody>
+          {creators.map((creator) => {
+            const open = openHandle === creator.handle;
+            const investment = creator.totalCostEur ?? creator.feeEur ?? null;
+            return (
+              <Fragment key={creator.handle}>
+                <tr className={open ? "sel" : undefined} onClick={() => onToggle(open ? null : creator.handle)}>
+                  <td><b>{creator.handle}</b>{creator.network && <small>{creator.network}</small>}</td>
+                  <td className="r barcell"><span className="bg" style={{ width: `${Math.round(((investment ?? 0) / maxInvestment) * 100)}%` }} /><span className="v">{formatCurrencyEur(investment)}</span></td>
+                  <td className="r">{formatCompact(creator.clicks)}</td>
+                  <td className="r">{formatCompact(creator.signups)}</td>
+                  <td className="r">{formatCompact(creator.conversions)}</td>
+                  <td className="r"><span className={cn("m-heat", creator.belowBreakEven ? "good" : "bad")}>{creator.cpaRealEur == null ? "-" : formatCurrencyEur(creator.cpaRealEur)}</span></td>
+                  <td className="r"><b>{roiDisplay(creator.roi)}</b></td>
+                  <td className="r">{formatCurrencyEur(epcForCreator(creator, targetCac))}</td>
+                </tr>
+                {open && (
+                  <tr className="creator-detail">
+                    <td colSpan={8}>
+                      {creator.posts.length ? (
+                        <div className="m-post-list">
+                          {creator.posts.slice(0, 4).map((post) => (
+                            <span key={post.id}>{post.date.slice(5)} · {post.format} · {formatCompact(post.clicks)} clicks · {formatCompact(post.conversions)} tx</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="m-empty">Sin posts en la ventana.</div>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function BreakEvenBars({
+  creators,
+  targetCac,
+}: {
+  creators: PartnershipReportCreatorRow[];
+  targetCac: number;
+}) {
+  const visible = creators.filter((creator) => creator.cpaRealEur != null).slice(0, 8);
+  if (!visible.length) return <div className="m-panel m-pad m-empty">Sin CPA por creator calculable todavía.</div>;
+  const width = 700;
+  const rowH = 30;
+  const left = 120;
+  const top = 28;
+  const plotW = 540;
+  const max = Math.max(targetCac * 1.25, ...visible.map((creator) => creator.cpaRealEur ?? 0), 1);
+  const height = top + visible.length * rowH + 28;
+  const x = (value: number) => left + (value / max) * plotW;
+  return (
+    <div className="m-panel m-pad">
+      <svg viewBox={`0 0 ${width} ${height}`} className="m-break-even" aria-hidden="true">
+        {[0, 0.25, 0.5, 0.75, 1].map((factor) => {
+          const value = Math.round(max * factor);
+          return (
+            <g key={factor}>
+              <line x1={x(value)} y1={top} x2={x(value)} y2={top + visible.length * rowH} stroke="#E0D5C2" />
+              <text x={x(value)} y={top + visible.length * rowH + 16} textAnchor="middle">{formatCurrencyEur(value)}</text>
+            </g>
+          );
+        })}
+        {visible.map((creator, index) => {
+          const cpa = creator.cpaRealEur ?? 0;
+          const y = top + index * rowH + 5;
+          const good = cpa <= targetCac;
+          return (
+            <g key={creator.handle}>
+              <rect x={left} y={y} width={Math.max(4, x(cpa) - left)} height="18" fill={good ? "#EAF0DC" : "#F6D9D2"} stroke={good ? "#4A5D23" : "#C0392B"} strokeWidth="2" />
+              <text x={left - 8} y={y + 13} textAnchor="end" className="label">{creator.handle}</text>
+              <text x={x(cpa) + 6} y={y + 13} className={good ? "good" : "bad"}>{formatCurrencyEur(cpa)}</text>
+            </g>
+          );
+        })}
+        <line x1={x(targetCac)} y1={top - 4} x2={x(targetCac)} y2={top + visible.length * rowH + 2} stroke="#1A1A2E" strokeWidth="2" strokeDasharray="5 3" />
+        <rect x={x(targetCac) - 50} y={top - 18} width="100" height="15" fill="#F4C430" stroke="#1A1A2E" strokeWidth="1.5" rx="3" />
+        <text x={x(targetCac)} y={top - 7} textAnchor="middle" className="threshold">break-even {formatCurrencyEur(targetCac)}</text>
+      </svg>
+    </div>
+  );
+}
+
+function RenewWatchCut({
+  creators,
+  targetCac,
+}: {
+  creators: PartnershipReportCreatorRow[];
+  targetCac: number;
+}) {
+  const renew = creators.filter((creator) => (creator.roi ?? 0) >= 1.5 && creator.belowBreakEven).slice(0, 4);
+  const watch = creators.filter((creator) => (creator.roi ?? 0) >= 1 && !renew.includes(creator)).slice(0, 4);
+  const cut = creators.filter((creator) => (creator.roi ?? 0) < 1 || ((creator.cpaRealEur ?? 0) > targetCac * 1.25)).slice(0, 4);
+  return (
+    <div className="m-rwc">
+      <DecisionColumn title="Renovar / Escalar" tone="renew" items={renew} />
+      <DecisionColumn title="Vigilar" tone="watch" items={watch} />
+      <DecisionColumn title="Cortar / Renegociar" tone="cut" items={cut} />
+    </div>
+  );
+}
+
+function DecisionColumn({
+  title,
+  tone,
+  items,
+}: {
+  title: string;
+  tone: "renew" | "watch" | "cut";
+  items: PartnershipReportCreatorRow[];
+}) {
+  return (
+    <div className="m-rwcol">
+      <div className={cn("m-rwh", tone)}>{title}<span>{items.length}</span></div>
+      <div className="m-rwbody">
+        {items.length ? items.map((item) => (
+          <div key={item.handle} className="m-rwrow">
+            <b>{item.handle}</b>
+            <span>ROI {roiDisplay(item.roi)} · CPA {item.cpaRealEur == null ? "-" : formatCurrencyEur(item.cpaRealEur)}</span>
+          </div>
+        )) : <div className="m-empty">Sin creators.</div>}
+      </div>
+    </div>
+  );
+}
+
 function SectionTitle({
   icon,
   title,
@@ -1202,11 +1874,11 @@ function LineChart({ points, compact }: { points: number[]; compact?: boolean })
   );
 }
 
-function DeltaBadge({ kpi }: { kpi?: MetricKpiValue | null }) {
+function DeltaBadge({ kpi, inverse }: { kpi?: MetricKpiValue | null; inverse?: boolean }) {
   const delta = kpi?.comparison?.displayDelta;
   if (!delta) return <span className="m-chip flat">-</span>;
-  const positive = kpi.comparison?.sentiment === "positive";
-  const negative = kpi.comparison?.sentiment === "negative";
+  const positive = inverse ? kpi.comparison?.sentiment === "negative" : kpi.comparison?.sentiment === "positive";
+  const negative = inverse ? kpi.comparison?.sentiment === "positive" : kpi.comparison?.sentiment === "negative";
   return (
     <span className={cn("m-chip", positive ? "up" : negative ? "down" : "flat")}>
       {kpi.comparison?.direction === "down" ? "▼" : kpi.comparison?.direction === "up" ? "▲" : "•"} {delta}
@@ -1602,6 +2274,14 @@ function numericValue(value: unknown): number | null {
   return Number.isFinite(number) ? number : null;
 }
 
+function metricDisplay(kpi?: MetricKpiValue | null): string {
+  return kpi?.displayValue ?? "Sin dato";
+}
+
+function numberDisplay(value: number | null | undefined): string {
+  return value == null || !Number.isFinite(value) ? "-" : formatCompact(value);
+}
+
 function formatCompact(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "-";
   return new Intl.NumberFormat("es-ES", {
@@ -1610,9 +2290,75 @@ function formatCompact(value: number | null | undefined): string {
   }).format(value);
 }
 
+function formatCurrencyEur(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "-";
+  return `€${new Intl.NumberFormat("es-ES", {
+    maximumFractionDigits: Math.abs(value) < 100 ? 1 : 0,
+  }).format(value)}`;
+}
+
 function formatPercent(value: number | null): string {
   if (value == null || !Number.isFinite(value)) return "-";
   return new Intl.NumberFormat("es-ES", { style: "percent", maximumFractionDigits: value < 0.1 ? 1 : 0 }).format(value);
+}
+
+function safeRatio(numerator: number | null | undefined, denominator: number | null | undefined): number | null {
+  if (numerator == null || denominator == null || !Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0) return null;
+  return numerator / denominator;
+}
+
+function ratioDisplay(numerator: number | null | undefined, denominator: number | null | undefined): string {
+  return formatPercent(safeRatio(numerator, denominator));
+}
+
+function ratioPercent(numerator: number | null | undefined, denominator: number | null | undefined): number {
+  const ratio = safeRatio(numerator, denominator);
+  if (ratio == null) return 0;
+  return Math.max(0, Math.min(100, Math.round(ratio * 100)));
+}
+
+function deriveDelivered(sent?: MetricKpiValue | null, bounced?: MetricKpiValue | null): number | null {
+  const sentValue = numericValue(sent?.value);
+  const bouncedValue = numericValue(bounced?.value);
+  if (sentValue == null || bouncedValue == null) return null;
+  return Math.max(0, sentValue - bouncedValue);
+}
+
+function outboundHealthScore(input: {
+  sent: number | null;
+  bounced: number | null;
+  unsubscribed: number | null;
+}): number | null {
+  if (input.sent == null || input.sent <= 0) return null;
+  const bounceRate = safeRatio(input.bounced ?? 0, input.sent) ?? 0;
+  const optOutRate = safeRatio(input.unsubscribed ?? 0, input.sent) ?? 0;
+  const bouncePenalty = Math.min(35, bounceRate * 800);
+  const optOutPenalty = Math.min(25, optOutRate * 1000);
+  return Math.max(0, Math.min(100, Math.round(92 - bouncePenalty - optOutPenalty)));
+}
+
+function markerFromRate(
+  numerator: number | null | undefined,
+  denominator: number | null | undefined,
+  threshold: number,
+  lowerIsBetter: boolean,
+): number | null {
+  const ratio = safeRatio(numerator, denominator);
+  if (ratio == null) return null;
+  const scale = lowerIsBetter ? threshold * 2 : Math.max(threshold * 1.6, 0.01);
+  return Math.max(2, Math.min(98, Math.round((ratio / scale) * 100)));
+}
+
+function sparkFromKpi(kpi?: MetricKpiValue | null): number[] {
+  const current = numericValue(kpi?.value);
+  const previous = numericValue(kpi?.comparison?.previousValue);
+  if (current == null || previous == null) return [];
+  return [previous, current];
+}
+
+function sparkHeightsFromValue(value: number | null): number[] {
+  if (value == null) return [42, 42, 42, 42, 42, 42];
+  return [68, 76, 72, 84, 92, 100];
 }
 
 function percentOfTarget(value?: number | null, target?: number | null): number {
@@ -1676,6 +2422,72 @@ function dropoffLabel(value?: number | null): string {
   return `−${Math.round((1 - value) * 100)}%`;
 }
 
+function buildOutboundMovers(input: {
+  bounceRateValue: number | null;
+  optOutRateValue: number | null;
+  replyRateValue: number | null;
+  meetingsValue: number | null;
+  health: number | null;
+}): MoverItem[] {
+  const items: MoverItem[] = [];
+  if (input.replyRateValue != null && input.replyRateValue >= 0.05) {
+    items.push({ tone: "up", icon: "↗", title: `Reply rate ${formatPercent(input.replyRateValue)}`, subtitle: "respuesta por encima del umbral operativo", action: "Ver" });
+  }
+  if (input.meetingsValue != null && input.meetingsValue > 0) {
+    items.push({ tone: "act", icon: "✓", title: `${formatCompact(input.meetingsValue)} reuniones generadas`, subtitle: "impacto directo en el funnel comercial", action: "Abrir" });
+  }
+  if (input.bounceRateValue != null && input.bounceRateValue > 0.03) {
+    items.push({ tone: "alert", icon: "!", title: `Bounce ${formatPercent(input.bounceRateValue)}`, subtitle: "revisar calidad de listas y dominios", action: "Revisar" });
+  }
+  if (input.optOutRateValue != null && input.optOutRateValue > 0.01) {
+    items.push({ tone: "warn", icon: "•", title: `Opt-out ${formatPercent(input.optOutRateValue)}`, subtitle: "vigilar fit de ICP y copy", action: "Filtrar" });
+  }
+  if (input.health != null && input.health < 75) {
+    items.push({ tone: "alert", icon: "!", title: `Outbound Health ${input.health}/100`, subtitle: "deliverability puede invalidar engagement", action: "Actuar" });
+  }
+  return items.slice(0, 4);
+}
+
+function sumCreatorSparklines(creators: PartnershipReportCreatorRow[]): number[] {
+  const maxLength = Math.max(...creators.map((creator) => creator.sparkline.length), 0);
+  if (!maxLength) return [];
+  return Array.from({ length: maxLength }, (_, index) =>
+    creators.reduce((sum, creator) => sum + (creator.sparkline[index] ?? 0), 0),
+  );
+}
+
+function roiDisplay(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "-";
+  return `${value.toLocaleString("es-ES", { maximumFractionDigits: 1 })}x`;
+}
+
+function epcForCreator(creator: PartnershipReportCreatorRow, targetCac: number): number | null {
+  if (!creator.clicks) return null;
+  return (creator.conversions * targetCac) / creator.clicks;
+}
+
+function buildPartnershipMovers(creators: PartnershipReportCreatorRow[]): MoverItem[] {
+  const items: MoverItem[] = [];
+  const withRoi = creators.filter((creator) => creator.roi != null);
+  const best = [...withRoi].sort((a, b) => (b.roi ?? 0) - (a.roi ?? 0))[0];
+  const worst = [...withRoi].sort((a, b) => (a.roi ?? 0) - (b.roi ?? 0))[0];
+  const inactive = creators.find((creator) => creator.clicks === 0 && creator.postsLive === 0);
+  if (best) {
+    items.push({ tone: "up", icon: "↗", title: `${best.handle} lidera ROI ${roiDisplay(best.roi)}`, subtitle: `CPA ${best.cpaRealEur == null ? "-" : formatCurrencyEur(best.cpaRealEur)} contra break-even ${formatCurrencyEur(best.breakEvenCpaEur)}`, action: "Renovar" });
+  }
+  const promising = creators.find((creator) => creator.conversions > 0 && creator.cpaRealEur != null && creator.belowBreakEven);
+  if (promising && promising.handle !== best?.handle) {
+    items.push({ tone: "act", icon: "✓", title: `${promising.handle} bajo break-even`, subtitle: `${formatCompact(promising.conversions)} primeras transacciones`, action: "Escalar" });
+  }
+  if (worst && worst.roi != null && worst.roi < 1) {
+    items.push({ tone: "alert", icon: "!", title: `${worst.handle} bajo break-even`, subtitle: `ROI ${roiDisplay(worst.roi)} · renegociar fee o cortar`, action: "Renegociar" });
+  }
+  if (inactive) {
+    items.push({ tone: "warn", icon: "•", title: `${inactive.handle} sin actividad`, subtitle: "0 clicks y 0 posts live en la ventana", action: "Cerrar" });
+  }
+  return items.slice(0, 4);
+}
+
 function sourceIcon(source: string): string {
   const normalized = normalizeComparable(source);
   if (normalized.includes("ga4") || normalized.includes("gsc") || normalized.includes("web")) return "🌐";
@@ -1714,6 +2526,7 @@ function MockupStyles() {
         --rust:#C45D35; --rust-600:#A34A28; --rust-50:#FBE4D6;
         --navy:#1E3A5F; --sage:#4A5D23; --sage-tint:#EAF0DC;
         --sun:#F4C430; --cyan:#3B9EBF; --red:#C0392B; --redbg:#F6D9D2;
+        --amber:#FBF1D2; --amber-ink:#9a7d1e;
         --border:#D4C9B8; --border-strong:#C9B89C;
         --pop-xs:2px 2px 0 0 var(--ink); --pop-sm:3px 3px 0 0 var(--ink); --pop-md:5px 5px 0 0 var(--ink);
         --r-sm:6px; --r-md:10px; --r-lg:14px; --r-pill:999px;
@@ -1929,18 +2742,147 @@ function MockupStyles() {
       .m-detailbar h2{font-size:19px;}
       .m-surface-hero{padding:18px 20px;display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:18px;}
       .m-surface-hero p{font-size:12px;color:var(--muted);margin:6px 0 0;}
+      .m-surface-subhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:2px 0 6px;padding-bottom:13px;border-bottom:2.5px solid var(--ink);}
+      .m-surface-subhead h2{display:flex;align-items:center;gap:10px;margin:0;font-family:'Space Grotesk';font-size:24px;font-weight:700;color:var(--navy);letter-spacing:0;}
+      .m-surface-subhead h2 span{font-size:22px;}
+      .m-subhead-sub{font-size:11.5px;color:var(--muted);font-weight:700;}
+      .m-source-pills{display:flex;gap:6px;flex-wrap:wrap;}
+      .m-source-pill,.m-health-pill{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--ink);border-radius:var(--r-pill);padding:3px 10px;font-weight:800;font-size:11px;box-shadow:var(--pop-xs);background:var(--sage-tint);color:var(--sage);}
+      .m-source-pill.off{background:var(--paper2);color:var(--subtle);}
+      .m-health-pill{margin-left:auto;border-width:2px;background:var(--paper2);color:var(--navy);}
+      .m-health-pill.on{background:var(--sage-tint);color:var(--sage);}
+      .m-health-pill.partial{background:var(--amber);color:var(--amber-ink);}
+      .m-health-pill.off{background:var(--aged);color:var(--muted);}
+      .m-statebar-tight{margin-top:13px;margin-bottom:2px;}
+      .m-vseg{display:inline-flex;border:2px solid var(--ink);border-radius:var(--r-pill);overflow:hidden;box-shadow:var(--pop-xs);}
+      .m-vseg button{border:none;background:var(--paper);padding:5px 12px;font-weight:800;font-size:11.5px;color:var(--muted);border-right:1.5px solid var(--border);}
+      .m-vseg button:last-child{border-right:none;}
+      .m-vseg button.on{background:var(--navy);color:#fff;}
+      .m-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;}
+      .m-skpi{background:var(--paper2);border:2px solid var(--ink);border-radius:var(--r-md);padding:11px 12px;box-shadow:var(--pop-xs);min-height:116px;}
+      .m-skpi.hero,.m-skpi.good{border-left:5px solid var(--sage);}
+      .m-skpi.gate,.m-skpi.navy{border-left:5px solid var(--navy);}
+      .m-skpi.bad{border-left:5px solid var(--red);}
+      .m-skpi.cyan{border-left:5px solid var(--cyan);}
+      .m-skpi.muted{opacity:.66;}
+      .m-skpi-label{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);}
+      .m-skpi-label i{font-style:normal;font-size:8.5px;color:var(--subtle);border:1.5px solid var(--border-strong);border-radius:var(--r-pill);padding:0 5px;text-transform:none;letter-spacing:0;}
+      .m-skpi-value{font-family:'Space Grotesk';font-size:22px;font-weight:700;color:var(--navy);line-height:1;margin:5px 0 8px;letter-spacing:0;}
+      .m-skpi-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;}
+      .m-skpi-foot .m-bars{width:78px;height:24px;}
+      .m-line-panel{padding:14px 16px;}
+      .m-line-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;font-weight:700;margin-bottom:8px;color:var(--muted);}
+      .m-line-legend span{display:inline-flex;align-items:center;gap:6px;}
+      .m-line-legend i{width:16px;height:4px;border-radius:2px;border:1px solid var(--ink);}
+      .m-line-legend i.navy{background:var(--navy);}
+      .m-line-legend i.rust{background:var(--rust);}
+      .m-line-legend i.sage{background:var(--sage);}
+      .m-line-legend i.cyan{background:var(--cyan);}
+      .m-multiline,.m-break-even{width:100%;height:auto;display:block;}
+      .m-seq-funnel{display:flex;flex-direction:column;gap:6px;}
+      .m-seq-row{display:grid;grid-template-columns:120px 1fr 110px;gap:10px;align-items:center;}
+      .m-seq-name{font-weight:800;color:var(--navy);font-size:12px;display:flex;align-items:center;gap:5px;}
+      .m-seq-name i{font-style:normal;font-size:8.5px;font-weight:800;color:var(--amber-ink);background:var(--amber);border:1.5px solid var(--ink);border-radius:var(--r-pill);padding:0 5px;}
+      .m-seq-track{height:30px;}
+      .m-seq-track span{height:30px;border:2px solid var(--ink);border-radius:var(--r-sm);box-shadow:var(--pop-xs);display:flex;align-items:center;padding-left:11px;color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:13px;min-width:0;max-width:100%;}
+      .m-seq-note{font-size:11px;color:var(--muted);font-weight:700;}
+      .m-empty-breakdown{min-height:136px;display:flex;flex-direction:column;justify-content:center;}
+      .m-empty-breakdown div{font-family:'Space Grotesk';font-size:20px;font-weight:700;color:var(--navy);}
+      .m-empty-breakdown p{font-size:12px;color:var(--muted);margin:5px 0 0;}
+      .m-movers-panel{padding:6px 16px;}
+      .m-mover{display:flex;align-items:center;gap:11px;padding:10px 4px;border-bottom:1.5px dashed rgba(26,26,46,.14);flex-wrap:wrap;}
+      .m-mover:last-child{border-bottom:none;}
+      .m-mover-icon{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border:2px solid var(--ink);border-radius:var(--r-sm);font-size:14px;box-shadow:var(--pop-xs);font-weight:900;}
+      .m-mover-icon.up{background:var(--sage-tint);color:var(--sage);}
+      .m-mover-icon.warn{background:var(--amber);color:var(--amber-ink);}
+      .m-mover-icon.alert{background:var(--redbg);color:var(--red);}
+      .m-mover-icon.act{background:#E7F0F4;color:#1d6c84;}
+      .m-mover div{flex:1;min-width:230px;}
+      .m-mover b{display:block;font-weight:800;color:var(--navy);font-size:12.5px;}
+      .m-mover small{display:block;font-size:11px;color:var(--muted);}
+      .m-mover button{border:2px solid var(--ink);background:var(--paper);border-radius:var(--r-sm);padding:5px 10px;font-weight:800;font-size:11px;box-shadow:var(--pop-xs);}
+      .m-deliv{padding:16px;display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:start;}
+      .m-deliv-score{text-align:center;}
+      .m-deliv-ring{width:120px;height:120px;border-radius:50%;border:2.5px solid var(--ink);box-shadow:var(--pop-xs);display:grid;place-items:center;margin:0 auto;background:var(--aged);position:relative;}
+      .m-deliv-ring:before{content:'';position:absolute;width:84px;height:84px;border-radius:50%;background:var(--paper);}
+      .m-deliv-ring span,.m-deliv-ring small{position:relative;z-index:1;}
+      .m-deliv-ring span{font-family:'Space Grotesk';font-weight:700;font-size:26px;color:var(--navy);align-self:end;line-height:1;}
+      .m-deliv-ring small{font-size:8.5px;color:var(--muted);align-self:start;}
+      .m-deliv-score>b{display:block;font-weight:800;color:var(--sage);font-size:12.5px;margin-top:8px;}
+      .m-thresholds{display:flex;flex-direction:column;gap:9px;}
+      .m-threshold-row{display:grid;grid-template-columns:120px 1fr 70px;gap:9px;align-items:center;}
+      .m-threshold-row>span{font-weight:700;color:var(--navy);font-size:12px;}
+      .m-threshold-row>i{height:14px;border:2px solid var(--ink);border-radius:var(--r-pill);overflow:hidden;display:flex;box-shadow:var(--pop-xs);position:relative;font-style:normal;}
+      .m-threshold-row b{display:block;height:100%;}
+      .m-threshold-row b.g{background:var(--sage-tint);width:60%;}
+      .m-threshold-row b.a{background:var(--amber);width:20%;}
+      .m-threshold-row b.r{background:var(--redbg);width:20%;}
+      .m-threshold-row em{position:absolute;top:-3px;width:3px;height:20px;background:var(--ink);border-radius:2px;font-style:normal;}
+      .m-threshold-row strong{text-align:right;font-family:'Space Grotesk';font-weight:700;font-size:12px;color:var(--navy);}
+      .m-contrib-panel{padding:12px 16px;background:var(--paper2);}
+      .m-contrib{display:flex;align-items:center;gap:0;flex-wrap:wrap;}
+      .m-contrib-frag{display:flex;align-items:center;}
+      .m-contrib-arrow{color:var(--subtle);font-weight:800;font-size:13px;padding:0 4px;display:flex;flex-direction:column;align-items:center;}
+      .m-contrib-arrow i{font-style:normal;font-size:9px;font-weight:800;color:var(--muted);}
+      .m-cstep{text-align:center;padding:8px 13px;}
+      .m-cstep .cn{font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);}
+      .m-cstep .cv{font-family:'Space Grotesk';font-size:21px;font-weight:700;color:var(--navy);}
+      .m-cstep.leadout .cv{color:var(--rust-600);}
+      .m-contrib-note{margin-left:auto;font-size:11.5px;color:var(--muted);max-width:360px;}
+      .m-creator-table{width:100%;border-collapse:collapse;font-size:12px;}
+      .m-creator-table th{text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);padding:8px;border-bottom:2px solid var(--ink);}
+      .m-creator-table th.r,.m-creator-table td.r{text-align:right;}
+      .m-creator-table td{padding:8px;border-bottom:1.5px solid var(--border);}
+      .m-creator-table tbody tr:not(.creator-detail){cursor:pointer;}
+      .m-creator-table tbody tr:not(.creator-detail):hover td{background:#fff7ea;}
+      .m-creator-table tr.sel td{background:#FCEFE6;}
+      .m-creator-table td b{color:var(--navy);}
+      .m-creator-table td small{display:inline-block;margin-left:6px;font-size:10px;color:var(--subtle);font-weight:700;}
+      .barcell{position:relative;}
+      .barcell .bg{position:absolute;left:0;top:3px;bottom:3px;background:var(--rust-50);border:1px solid #E6C3AD;border-radius:3px;z-index:0;}
+      .barcell .v{position:relative;z-index:1;font-family:'Space Grotesk';font-weight:700;color:var(--navy);}
+      .m-heat{font-weight:800;border-radius:5px;padding:2px 7px;display:inline-block;}
+      .m-heat.good{background:var(--sage-tint);color:var(--sage);}
+      .m-heat.bad{background:var(--redbg);color:var(--red);}
+      .creator-detail td{background:var(--paper2);}
+      .m-post-list{display:flex;gap:8px;flex-wrap:wrap;}
+      .m-post-list span{border:1.5px solid var(--ink);border-radius:var(--r-pill);background:var(--paper);padding:3px 9px;font-size:11px;font-weight:800;color:var(--navy);}
+      .m-break-even text{font-size:8.5px;fill:var(--subtle);font-weight:700;}
+      .m-break-even text.label{font-size:11px;fill:var(--navy);}
+      .m-break-even text.good{font-size:10.5px;fill:var(--sage);font-weight:800;}
+      .m-break-even text.bad{font-size:10.5px;fill:var(--red);font-weight:800;}
+      .m-break-even text.threshold{font-size:9px;fill:var(--ink);font-weight:800;}
+      .m-rwc{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+      .m-rwcol{border:2.5px solid var(--ink);border-radius:var(--r-md);box-shadow:var(--pop-xs);overflow:hidden;background:var(--paper);}
+      .m-rwh{padding:8px 11px;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--ink);}
+      .m-rwh.renew{background:var(--sage-tint);color:var(--sage);}
+      .m-rwh.watch{background:var(--amber);color:var(--amber-ink);}
+      .m-rwh.cut{background:var(--redbg);color:var(--red);}
+      .m-rwbody{padding:7px 11px;display:flex;flex-direction:column;gap:7px;}
+      .m-rwrow b{display:block;color:var(--navy);font-family:'Space Grotesk';font-size:12px;}
+      .m-rwrow span{display:block;color:var(--muted);font-size:10.5px;}
+      .m-empty-state{padding:26px 24px;text-align:center;border-color:var(--navy);}
+      .m-empty-state>div{font-size:42px;}
+      .m-empty-state h3{font-family:'Space Grotesk';font-size:23px;color:var(--navy);margin:8px 0 4px;}
+      .m-empty-state p{max-width:600px;margin:2px auto 0;color:var(--muted);font-weight:700;}
       .m-empty{color:var(--muted);font-weight:700;}
       @media(max-width:1100px){
         .m-hero{grid-template-columns:1fr;}
         .m-hero-ns{border-right:none;border-bottom:2.5px solid var(--ink);}
         .m-surface-grid{grid-template-columns:repeat(2,1fr);}
         .m-two-col{grid-template-columns:1fr;}
+        .m-kpi-grid{grid-template-columns:repeat(2,1fr);}
+        .m-rwc{grid-template-columns:1fr;}
       }
       @media(max-width:780px){
         .metrics-mockup{padding:16px 14px 50px;}
         .m-small-grid,.m-econ-grid{grid-template-columns:1fr;}
         .m-surface-grid{grid-template-columns:1fr;}
         .m-head-actions{width:100%;}
+        .m-kpi-grid{grid-template-columns:1fr;}
+        .m-seq-row{grid-template-columns:92px 1fr;}
+        .m-seq-note{grid-column:2;}
+        .m-deliv{grid-template-columns:1fr;}
       }
     `}</style>
   );
