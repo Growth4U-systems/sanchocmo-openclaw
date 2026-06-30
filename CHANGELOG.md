@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.13](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.12...v0.15.13) (2026-06-30)
+
+
+### Bug Fixes
+
+* **SAN-376:** force admin API panel to system scope ([be2eeb0](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/be2eeb0a4bf549b9f60b948979d2660798689198))
+
 ## [0.15.12](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.11...v0.15.12) (2026-06-30)
 
 
