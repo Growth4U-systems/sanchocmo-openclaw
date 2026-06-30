@@ -360,27 +360,45 @@ export default defineChannelPluginEntry({
           message: "Message dispatched to agent",
         }));
 
-        const queuedBehindActive = hasActiveSessionDispatch(sessionKey);
+        // Serialize inbound turns by MC Chat thread. OpenClaw still receives the
+        // agent/model-specific SessionKey above, but the user-visible chat has
+        // one pending-progress/status lane, so concurrent messages in the same
+        // thread must run FIFO.
+        const dispatchQueueKey = chatId;
+        const queuedBehindActive = hasActiveSessionDispatch(dispatchQueueKey);
         if (queuedBehindActive) {
-          logger.warn(`[mc-chat] inbound queued behind active dispatch session=${sessionKey} thread=${threadId}`);
+          logger.warn(`[mc-chat] inbound queued behind active dispatch queue=${dispatchQueueKey} session=${sessionKey} thread=${threadId}`);
           const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
+          const callbackUrl = `${mcUrl}/api/chat/webhook`;
           const secret = channelCfg?.sharedSecret;
-          fetch(`${mcUrl}/api/chat/webhook`, {
+          const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+          fetch(callbackUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
+            headers,
             body: JSON.stringify({
               slug,
               threadId,
               role: "status",
-              text: "⏳ Hay un turno en curso; puse tu mensaje en cola.",
+              text: "Turno en curso; tu mensaje quedó en cola.",
+              agent: requestedAgent || "sancho",
+            }),
+          }).catch(() => {});
+          fetch(callbackUrl, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              slug,
+              threadId,
+              role: "system",
+              text: "⏳ Hay una respuesta anterior en curso. Tu mensaje quedó en cola y se ejecutará automáticamente cuando termine; no hace falta reenviarlo.",
               agent: requestedAgent || "sancho",
             }),
           }).catch(() => {});
         }
 
-        await enqueueSessionDispatch(sessionKey, async ({ queued, waitedMs }) => {
+        await enqueueSessionDispatch(dispatchQueueKey, async ({ queued, waitedMs }) => {
         if (queued) {
-          logger.warn(`[mc-chat] starting queued dispatch session=${sessionKey} thread=${threadId} waitedMs=${waitedMs}`);
+          logger.warn(`[mc-chat] starting queued dispatch queue=${dispatchQueueKey} session=${sessionKey} thread=${threadId} waitedMs=${waitedMs}`);
         }
 
         // Dispatch to agent asynchronously
@@ -426,6 +444,27 @@ export default defineChannelPluginEntry({
             logger.error(`[mc-chat] ${label} failed after ${delays.length} attempts: ${lastErr?.message || lastErr}`);
             return null;
           };
+
+          if (queued) {
+            await postWithRetry(callbackUrl, {
+              slug,
+              threadId,
+              role: "status",
+              text: "Ahora proceso tu mensaje en cola.",
+              agent: requestedAgent || "sancho",
+            }, "Queued start status");
+            await postWithRetry(callbackUrl, {
+              slug,
+              threadId,
+              role: "progress",
+              agent: requestedAgent || "sancho",
+              event: {
+                kind: "thinking",
+                label: "Procesando mensaje en cola",
+                target: waitedMs > 1000 ? `Esperó ${Math.round(waitedMs / 1000)}s` : undefined,
+              },
+            }, "Queued start progress");
+          }
 
           const postRuntimeError = async (rawError, respondingAgent = requestedAgent || "sancho") => {
             if (runtimeErrorPosted) return;
@@ -746,7 +785,7 @@ export default defineChannelPluginEntry({
           if (!deliveredFinal && !deliveredBlock && !visibleReplyPosted && !deliveredViaChannel && !runtimeErrorPosted) {
             logger.warn(`[mc-chat] dispatch completed without visible reply thread=${threadId} result=${JSON.stringify(dispatchResult || {})}`);
             await postRuntimeError(
-              "El agente terminó sin una respuesta final visible. El turno llegó al runtime, pero no devolvió texto de usuario; suele pasar cuando el modelo emitió solo llamadas a herramientas, una herramienta no entregó resultado, o la sesión quedó inconsistente tras cambiar de modelo. Reintenta en un hilo nuevo; si estabas lanzando discovery real, revisa que las herramientas de scraping estén configuradas.",
+              "No recibí una respuesta visible para este turno. El mensaje quedó guardado en el hilo; si no aparece una respuesta tardía, reinténtalo en este mismo hilo para que el agente continúe con el contexto. Si estabas lanzando discovery real, revisa que las herramientas de scraping estén configuradas.",
               requestedAgent || "sancho",
             );
           } else if (!deliveredFinal && !deliveredBlock && !runtimeErrorPosted) {
