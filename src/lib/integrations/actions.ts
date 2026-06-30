@@ -210,7 +210,12 @@ function writeIntegrationState(clientSlug: string, state: IntegrationState): voi
 }
 
 function resolveTestTargets(state: IntegrationState, input: TestConnectionInput): string[] {
-  if (input.source) return [input.source];
+  if (input.source) {
+    if (state.dataSources?.[input.source] || state.systemOverrides?.[input.source]) {
+      return [input.source];
+    }
+    return isSystemOnlyCatalogSource(input.source) ? [input.source] : [];
+  }
   if (!input.all) return [];
   const allSources = { ...(state.dataSources || {}), ...(state.systemOverrides || {}) };
   return Object.entries(allSources)
@@ -223,6 +228,8 @@ function runConnectionTest(clientSlug: string, source: string): { status: string
   const testScript = integrationTestScriptPath();
   const intPath = path.join(brandDir(clientSlug), "integrations.json");
   let state = readIntegrationState(clientSlug);
+  state = ensureSystemOnlyIntegrationEntry(state, source);
+  writeIntegrationState(clientSlug, state);
 
   try {
     execFileSync("node", [testScript, "--slug", clientSlug, "--source", source], {
@@ -255,6 +262,41 @@ function runConnectionTest(clientSlug: string, source: string): { status: string
     writeIntegrationState(clientSlug, state);
     return { status: "error", error: realError };
   }
+}
+
+function ensureSystemOnlyIntegrationEntry(state: IntegrationState, source: string): IntegrationState {
+  if (state.dataSources?.[source] || state.systemOverrides?.[source] || !isSystemOnlyCatalogSource(source)) {
+    return state;
+  }
+
+  const next: IntegrationState = {
+    ...state,
+    systemOverrides: { ...(state.systemOverrides || {}) },
+  };
+  next.systemOverrides![source] = {
+    provider: source,
+    status: "pending",
+    config: {},
+    envVars: systemOnlyEnvVars(source),
+    notes: "System-only integration tested from global Sancho env.",
+  };
+  return next;
+}
+
+function isSystemOnlyCatalogSource(source: string): boolean {
+  const catalog = loadIntegrationCatalog().catalog;
+  if (!isRecord(catalog) || !isRecord(catalog.categories)) return false;
+  for (const category of Object.values(catalog.categories)) {
+    if (!isRecord(category) || !isRecord(category.apis)) continue;
+    const meta = category.apis[source];
+    if (isRecord(meta) && meta.systemOnly === true) return true;
+  }
+  return false;
+}
+
+function systemOnlyEnvVars(source: string): string[] {
+  if (source === "scrapecreators") return ["SCRAPECREATORS_API_KEY"];
+  return [];
 }
 
 function resolveMessageTarget(input: PublishMessageInput): PublishTarget {
