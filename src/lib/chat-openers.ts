@@ -94,6 +94,8 @@ export interface ThreadConfig {
   threadState: "create" | "continue" | undefined;
   /** Optional message to send immediately when the thread opens. */
   initialMessage?: string;
+  /** Optional suggested prompts shown in an empty thread. */
+  quickActions?: Array<{ label: string; prompt: string }>;
   /**
    * When set, forces the gateway to dispatch this thread to a specific agent
    * (e.g. `"maese-pedro"` for Media Creation skills) instead of falling back
@@ -173,6 +175,12 @@ export function instantiateNamespace(key: string, ctx: { slug: string; params?: 
     threadState: entry.threadState,
   };
   if (entry.initialMessage) cfg.initialMessage = sub(entry.initialMessage);
+  if (entry.quickActions) {
+    cfg.quickActions = entry.quickActions.map((action) => ({
+      label: sub(action.label),
+      prompt: sub(action.prompt),
+    }));
+  }
   if (entry.docKind) cfg.docKind = entry.docKind;
   if (entry.scope) cfg.scope = entry.scope;
   return cfg;
@@ -210,7 +218,7 @@ export function buildNewTaskThread(slug: string): ThreadConfig {
  * construye SAN-79; mientras llega, Rocinante (agente owner de Outreach,
  * SAN-116) atiende el hilo con sus skills de outreach.
  *
- * - Sin búsqueda: hilo nuevo por click (cada click = un plan nuevo).
+ * - Sin búsqueda: hilo nuevo por click (cada click = un chat nuevo con Rocinante).
  * - Con búsqueda: si trae `threadId` persistido (SAN-328), retoma ESE hilo
  *   (la sesión donde se construyó el plan); si no, hilo estable por campaña.
  */

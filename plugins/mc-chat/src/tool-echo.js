@@ -16,10 +16,11 @@
 const TOOL_ECHO_EMOJIS = [
   "✍️", "📝", "🐍", "🪄", "⚡", "🔍", "📄", "📖", "✏️", "🌐",
   "🤖", "🔧", "📦", "🛠️", "👁️", "🔎", "📂", "💻", "🗂️", "🔨", "📊",
+  "🧮",
 ];
 
 const VERB_RE =
-  /^(Write|Edit|MultiEdit|Read|Bash|Grep|Glob|Search|Fetch|WebFetch|WebSearch|Run|Show|show|run|Update|Create|Delete|Move|List|TodoWrite|Task|Agent|Notebook\w*)\b[: ]/;
+  /^(Write|Edit|MultiEdit|Read|Bash|Grep|Glob|Search|Fetch|WebFetch|WebSearch|Run|Show|Update|Create|Delete|Move|List|TodoWrite|Task|Agent|Notebook\w*|Code Execution|fetch|print|pwd|curl|cat|ls|node|python3?)\b(?::|\s|$)/i;
 const LABEL_ES_RE =
   /^(Leyendo|Escribiendo|Editando|Ejecutando|Buscando|Delegando|Compactando|Pensando)\b/;
 
@@ -36,7 +37,7 @@ export function looksLikeToolEcho(text) {
   if (LABEL_ES_RE.test(body)) return true;
 
   const startsEmoji = TOOL_ECHO_EMOJIS.some((e) => t.startsWith(e));
-  if (startsEmoji && /(->|\(\s*\d+\s*chars?\s*\)|inline script|\bto \/|\bin \/|\$OPENCLAW_HOME)/i.test(t)) {
+  if (startsEmoji && /(->|\(\s*\d+\s*chars?\s*\)|inline script|\bto \/|\bin \/|\$OPENCLAW_HOME|https?:\/\/|localhost:\d+|Code Execution|HTTP\s+(GET|POST|PUT|PATCH|DELETE)\s+request)/i.test(t)) {
     return true;
   }
   return false;

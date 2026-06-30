@@ -24,11 +24,12 @@ import type { ProgressEvent, ProgressKind } from "@/hooks/useChat";
 const TOOL_EMOJIS = [
   "✍️", "📝", "🐍", "🪄", "⚡", "🔍", "📄", "📖", "✏️", "🌐",
   "🤖", "🔧", "📦", "🛠️", "👁️", "🔎", "📂", "💻", "🗂️", "🔨", "📊",
+  "🧮",
 ];
 
 // English tool verbs emitted by the runtime (never start Spanish prose).
 const TOOL_VERB_RE =
-  /^(Write|Edit|MultiEdit|Read|Bash|Grep|Glob|Search|Fetch|WebFetch|WebSearch|Run|Show|show|run|Update|Create|Delete|Move|List|TodoWrite|Task|Agent|Notebook\w*)\b[: ]/;
+  /^(Write|Edit|MultiEdit|Read|Bash|Grep|Glob|Search|Fetch|WebFetch|WebSearch|Run|Show|Update|Create|Delete|Move|List|TodoWrite|Task|Agent|Notebook\w*|Code Execution|fetch|print|pwd|curl|cat|ls|node|python3?)\b(?::|\s|$)/i;
 
 // Spanish progress labels the plugin can emit (onToolStart) if they ever land
 // as bot messages instead of structured progress events.
@@ -70,7 +71,7 @@ export function isToolEcho(text: string | undefined | null): boolean {
   // Emoji-led line with an unmistakable tool-log shape.
   if (
     startsWithToolEmoji(t) &&
-    /(->|\(\s*\d+\s*chars?\s*\)|inline script|\bto \/|\bin \/|\$OPENCLAW_HOME)/i.test(t)
+    /(->|\(\s*\d+\s*chars?\s*\)|inline script|\bto \/|\bin \/|\$OPENCLAW_HOME|https?:\/\/|localhost:\d+|Code Execution|HTTP\s+(GET|POST|PUT|PATCH|DELETE)\s+request)/i.test(t)
   ) {
     return true;
   }

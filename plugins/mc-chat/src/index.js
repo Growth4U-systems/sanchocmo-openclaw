@@ -746,7 +746,7 @@ export default defineChannelPluginEntry({
           if (!deliveredFinal && !deliveredBlock && !visibleReplyPosted && !deliveredViaChannel && !runtimeErrorPosted) {
             logger.warn(`[mc-chat] dispatch completed without visible reply thread=${threadId} result=${JSON.stringify(dispatchResult || {})}`);
             await postRuntimeError(
-              "El runtime terminó sin devolver respuesta visible. Esto suele pasar cuando el proveedor/modelo falla antes de generar texto o cuando la sesión quedó obsoleta tras un cambio de modelo.",
+              "El agente terminó sin una respuesta final visible. El turno llegó al runtime, pero no devolvió texto de usuario; suele pasar cuando el modelo emitió solo llamadas a herramientas, una herramienta no entregó resultado, o la sesión quedó inconsistente tras cambiar de modelo. Reintenta en un hilo nuevo; si estabas lanzando discovery real, revisa que las herramientas de scraping estén configuradas.",
               requestedAgent || "sancho",
             );
           } else if (!deliveredFinal && !deliveredBlock && !runtimeErrorPosted) {

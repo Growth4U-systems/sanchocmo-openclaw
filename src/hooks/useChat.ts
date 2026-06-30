@@ -290,6 +290,7 @@ interface ThreadMeta {
   linkedTo: string;
   docPath: string | null;
   threadState?: "create" | "continue";
+  quickActions?: QuickAction[];
   // Task-specific fields for resolving quick-actions
   taskType?: string;
   channel?: string;
@@ -323,6 +324,7 @@ export function useQuickActions(slug: string | undefined, meta?: ThreadMeta) {
   const store = useChatStore();
   const threadId = store.lockedThreadId;
   const threadType = resolveThreadType(threadId, meta);
+  const metaQuickActions = meta?.quickActions ?? [];
 
   const { data } = useQuery({
     queryKey: ["quick-actions", slug, threadType, meta?.taskType, meta?.channel, meta?.tool, meta?.pillar, meta?.linkedTo],
@@ -359,11 +361,11 @@ export function useQuickActions(slug: string | undefined, meta?: ThreadMeta) {
       if (!res.ok) return { quickActions: [] };
       return res.json();
     },
-    enabled: !!slug,
+    enabled: !!slug && metaQuickActions.length === 0,
     staleTime: 60_000,
   });
 
-  return { quickActions: data?.quickActions ?? [] };
+  return { quickActions: metaQuickActions.length > 0 ? metaQuickActions : data?.quickActions ?? [] };
 }
 
 /**

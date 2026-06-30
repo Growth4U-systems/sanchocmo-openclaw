@@ -10,6 +10,12 @@ test("flags runtime tool-call echoes", () => {
     "🪄 show $OPENCLAW_HOME/.../ds.json -> run python3 inline script",
     "Read: /tmp/foo.txt",
     "🔍 Grep: pattern",
+    "🛠️ fetch http://localhost:3000/api/partnerships/searches",
+    "🛠️ print text → fetch http://localhost:3000/api/partnerships/searches → print text",
+    "🧮 Code Execution: Make an HTTP POST request to http://localhost:3000/api/partnerships/searches with these headers:",
+    "🛠️ pwd",
+    "fetch http://localhost:3000/api/partnerships/searches",
+    "print text",
     "Escribiendo informe",
     "📦 Compactando contexto",
   ];

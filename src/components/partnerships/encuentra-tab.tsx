@@ -108,7 +108,7 @@ export function EncuentraTab({
           quote="«Quien busca creators, halla partners, mi señor.»"
           title="Sin búsquedas todavía"
           body="Crea tu primera búsqueda de creators con Sancho: te propone sectores con fit, redes y tiers, y el runner trae candidatos ya puntuados con quality score."
-          action={{ label: "✨ Crear nueva búsqueda", onClick: onCreateSearch }}
+          action={{ label: "🐴 Rocinante", onClick: onCreateSearch }}
         />
       ) : (
         <div className="space-y-4">
