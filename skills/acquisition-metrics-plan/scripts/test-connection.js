@@ -27,6 +27,9 @@ const WORKSPACE_DIR = process.env.MC_WORKSPACE ? path.resolve(process.env.MC_WOR
 const BRAND_DIR = WORKSPACE_DIR
   ? path.join(WORKSPACE_DIR, 'brand')
   : path.resolve(__dirname, '..', '..', '..', 'brand');
+const WORKSPACE_ENV_PATH = WORKSPACE_DIR
+  ? path.join(WORKSPACE_DIR, '..', '.env')
+  : path.resolve(BRAND_DIR, '..', '.env');
 const CATALOG_PATH = path.resolve(__dirname, '..', 'schemas', 'api-catalog.json');
 
 // --- Env loader ---
@@ -497,6 +500,33 @@ const TESTERS = {
     }
   },
 
+  async scrapecreators(config, env, slug) {
+    const key = env.SCRAPECREATORS_API_KEY;
+    if (!key) return { ok: false, error: 'Env var SCRAPECREATORS_API_KEY not set in global Sancho .env' };
+
+    try {
+      const res = await httpRequest(
+        'https://api.scrapecreators.com/v1/account/credit-balance',
+        { headers: { 'x-api-key': key } }
+      );
+      if (res.status === 200) {
+        let parsed = {};
+        try { parsed = JSON.parse(res.body || '{}'); } catch {}
+        const credits = parsed.balance ?? parsed.credits;
+        return {
+          ok: true,
+          detail: typeof credits === 'number' ? `ScrapeCreators OK · credits=${credits}` : 'ScrapeCreators OK',
+        };
+      }
+      if (res.status === 401 || res.status === 403) {
+        return { ok: false, error: 'Invalid ScrapeCreators API key or missing permissions' };
+      }
+      return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   // Google Ads requires complex OAuth — just check if creds exist
   async google_ads(config, env, slug) {
     const refreshToken = env[`${slug}_GOOGLE_ADS_REFRESH_TOKEN`];
@@ -597,9 +627,13 @@ Categories: analytics, seo, advertising, social, outbound, crm, payments, llm_ov
   }
 
   // Load .env
-  const env = loadEnvFile(envPath);
-  const envCount = Object.keys(env).length;
-  console.log(`\n🔑 Loaded ${envCount} env vars from ${envPath}`);
+  const brandEnv = loadEnvFile(envPath);
+  const workspaceEnv = loadEnvFile(WORKSPACE_ENV_PATH);
+  const env = { ...workspaceEnv, ...process.env, ...brandEnv };
+  console.log(
+    `\n🔑 Loaded ${Object.keys(brandEnv).length} brand env vars from ${envPath}` +
+    ` and ${Object.keys(workspaceEnv).length} global env vars from ${WORKSPACE_ENV_PATH}`
+  );
 
   // Determine which sources to test
   let sourcesToTest = [];
@@ -620,10 +654,24 @@ Categories: analytics, seo, advertising, social, outbound, crm, payments, llm_ov
     const section = (integrations.dataSources?.[args.source]) ? 'dataSources' :
                     (integrations.systemOverrides?.[args.source]) ? 'systemOverrides' : null;
     if (!section) {
-      console.log(`⚠️  Source "${args.source}" not found in integrations.json`);
-      process.exit(1);
+      const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf8'));
+      const meta = findCatalogApi(catalog, args.source);
+      if (!meta?.systemOnly) {
+        console.log(`⚠️  Source "${args.source}" not found in integrations.json`);
+        process.exit(1);
+      }
+      integrations.systemOverrides = integrations.systemOverrides || {};
+      integrations.systemOverrides[args.source] = {
+        provider: meta.provider || args.source,
+        status: 'pending',
+        config: {},
+        envVars: args.source === 'scrapecreators' ? ['SCRAPECREATORS_API_KEY'] : [],
+        notes: 'System-only integration tested from global Sancho env.',
+      };
+      sourcesToTest.push({ key: args.source, section: 'systemOverrides' });
+    } else {
+      sourcesToTest.push({ key: args.source, section });
     }
-    sourcesToTest.push({ key: args.source, section });
   } else if (args.category) {
     // Load catalog to find sources in category
     const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf8'));
@@ -696,6 +744,13 @@ Categories: analytics, seo, advertising, social, outbound, crm, payments, llm_ov
   console.log(`\n📊 Results: ${connected} ✅ connected | ${failed} ❌ failed | ${skipped} ⏭️ skipped\n`);
 
   if (failed > 0) process.exit(1);
+}
+
+function findCatalogApi(catalog, apiKey) {
+  for (const category of Object.values(catalog.categories || {})) {
+    if (category?.apis?.[apiKey]) return category.apis[apiKey];
+  }
+  return null;
 }
 
 function parseArgs(argv) {
