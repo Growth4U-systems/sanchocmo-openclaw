@@ -71,6 +71,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({ ok: true });
   }
 
+  // System messages are visible timeline notes, not bot replies. They should
+  // not clear typing/progress state or consume a cancellation marker.
+  if (role === "system") {
+    addMessage(tid, "system", typeof text === "string" ? text : "", agent);
+    return res.status(200).json({ ok: true });
+  }
+
   // Handoff messages: persisted as a formal message with both badges in the sidebar
   if (role === "handoff") {
     if (typeof from_agent !== "string" || typeof to_agent !== "string") {
