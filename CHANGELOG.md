@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.14](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.13...v0.15.14) (2026-06-30)
+
+
+### Bug Fixes
+
+* **SAN-376:** test ScrapeCreators system key ([03c0f59](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/03c0f5942638569b4557fcb854118bba85f42a21))
+
 ## [0.15.13](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.12...v0.15.13) (2026-06-30)
 
 
