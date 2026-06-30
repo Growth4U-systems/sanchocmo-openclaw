@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.8](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.7...v0.15.8) (2026-06-30)
+
+
+### Bug Fixes
+
+* **mc-chat:** SAN-377 clarify queued runtime turns ([04c2caf](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/04c2caf071acc163c5bfcea69a9730c583994621))
+* **metrics:** SAN-369 resolve Google service account from workspace ([e212d46](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e212d4622ec5b5b5c2ca40dbdf375cafc99e6d48))
+
 ## [0.15.7](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.6...v0.15.7) (2026-06-30)
 
 
