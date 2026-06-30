@@ -12,10 +12,11 @@ import { useAppStore } from "@/stores/app";
  *
  * Behaviour by route template:
  * - `/dashboard`                 → clear selectedClient (global view).
+ * - `/dashboard/admin/...`       → clear selectedClient (global admin).
  * - `/dashboard/[slug]/...`      → set selectedClient to the URL slug.
- * - everything else under        → preserve the last known client
- *   `/dashboard` (admin, guides)   (so the selector still shows the
- *                                   client you were working with).
+ * - other dashboard routes       → preserve the last known client
+ *   (guides, changelog, etc.)      so the selector still shows the client
+ *                                  you were working with.
  *
  * Call this exactly once per dashboard page — wired into DashboardLayout.
  */
@@ -27,7 +28,7 @@ export function useClientUrlSync(): void {
     if (!router.isReady) return;
     const slug = router.query.slug as string | undefined;
 
-    if (router.pathname === "/dashboard") {
+    if (router.pathname === "/dashboard" || router.pathname.startsWith("/dashboard/admin")) {
       setSelectedClient(null);
     } else if (slug) {
       setSelectedClient(slug);
