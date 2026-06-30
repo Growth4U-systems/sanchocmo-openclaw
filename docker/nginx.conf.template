@@ -13,6 +13,11 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
+    # Allow chat file/image uploads up to the app-level cap (formidable 20MB).
+    # Without this, nginx defaults to 1MB and rejects larger uploads with a 413
+    # before they reach Next.js (SAN-305 / SAN-371). Mirrors the Open Design vhost.
+    client_max_body_size 25M;
+
     # Legacy Mission Control (direct access, kept for backwards compat)
     location /mc/ {
         proxy_pass http://127.0.0.1:18790/mc/;

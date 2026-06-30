@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm, type File } from "formidable";
 import fs from "fs";
-import { uploadToR2, resolveUploadMime } from "@/lib/upload-r2";
+import { uploadToR2, resolveUploadMime, classifyUploadError } from "@/lib/upload-r2";
 
 export const config = {
   api: { bodyParser: false },
@@ -59,6 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   } catch (error) {
     console.error("[upload-file] Error:", error);
-    return res.status(500).json({ error: "Failed to upload file" });
+    const { status, error: message } = classifyUploadError(error);
+    return res.status(status).json({ error: message });
   }
 }
