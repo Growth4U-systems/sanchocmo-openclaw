@@ -429,7 +429,7 @@ export function PartnershipsView() {
                 className="ml-auto rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
                 data-testid="crear-busqueda"
               >
-                ✨ Crear nueva búsqueda
+                🐴 Rocinante
               </button>
             )}
           </div>

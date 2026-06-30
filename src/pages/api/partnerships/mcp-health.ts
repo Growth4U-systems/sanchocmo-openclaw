@@ -10,7 +10,8 @@ import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-midd
  * ScrapeCreators NO es un provider de Yalc: es el MCP del agente
  * (`mcp__scrapecreators__*`, https://api.scrapecreators.com) que usa
  * `discovery-search-runner` para perfiles + ad-library. Aquí solo se expone su
- * estado: la clave vive en `SCRAPECREATORS_API_KEY` del entorno de Sancho.
+ * estado: la clave vive en `SCRAPECREATORS_API_KEY` del entorno de Sancho y se
+ * configura desde Settings → APIs → ScrapeCreators.
  * Sin `ping=1` se comprueba solo la configuración; con `ping=1` se hace una
  * llamada real con timeout corto.
  */
@@ -74,7 +75,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       id: "scrapecreators",
       name: "ScrapeCreators (MCP de Sancho)",
       status: "gray",
-      description: "sin configurar — define SCRAPECREATORS_API_KEY en el entorno de Sancho",
+      description: "sin configurar — ve a Settings → APIs → ScrapeCreators y pega la API key",
       hasHealthProbe: false,
     };
   } else if (ping) {

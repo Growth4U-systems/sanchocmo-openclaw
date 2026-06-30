@@ -126,6 +126,18 @@
           "config": [],
           "docs": "https://docs.apify.com/api/v2"
         },
+        "scrapecreators": {
+          "provider": "ScrapeCreators",
+          "icon": "🧲",
+          "desc": "Social profile scraping + ad-library signals for Partnerships discovery",
+          "ownership": "system",
+          "systemOnly": true,
+          "credentials": [
+            { "key": "API_KEY", "label": "API Key", "type": "string", "sensitive": true, "help": "scrapecreators.com → API key. Sancho stores it as SCRAPECREATORS_API_KEY." }
+          ],
+          "config": [],
+          "docs": "https://api.scrapecreators.com"
+        },
         "firecrawl": {
           "provider": "Firecrawl",
           "icon": "🔥",

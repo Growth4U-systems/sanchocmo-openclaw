@@ -52,10 +52,25 @@ interface SystemEnvField {
   hasValue: boolean;
 }
 
-// Saving any of these restarts the gateway to apply the credential. `anthropic-oauth`
-// is a modal-only service id (the subscription token paste) — not a catalog apiId, so
-// it never appears in the providers table; it only needs the post-save restart.
-const GATEWAY_ENV_SERVICES = new Set(["anthropic", "anthropic-oauth", "openai", "openrouter", "fireworks", "gemini", "xai"]);
+// These providers are rendered in the dedicated Runtime / Motor section in
+// system scope instead of the generic API table.
+const ENGINE_ENV_SERVICES = new Set([
+  "anthropic",
+  "anthropic-oauth",
+  "openai",
+  "openrouter",
+  "fireworks",
+  "gemini",
+  "xai",
+]);
+
+// Saving any of these restarts the gateway to apply the credential.
+// `anthropic-oauth` is a modal-only service id (the subscription token paste);
+// ScrapeCreators powers MCP/tool injection for Rocinante discovery.
+const GATEWAY_RESTART_ENV_SERVICES = new Set([
+  ...ENGINE_ENV_SERVICES,
+  "scrapecreators",
+]);
 
 function useStatusBadge() {
   const t = useTranslations("settings.apiStatus");
@@ -205,7 +220,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
         // the dedicated "Runtime / Motor" category in system scope, so they don't
         // also show as plain api-key rows there — unless an explicit `?surface=`
         // providers filter asked for them, in which case that filter wins.
-        if (!slug && !categories && !activeProviders && GATEWAY_ENV_SERVICES.has(apiId)) continue;
+        if (!slug && !categories && !activeProviders && ENGINE_ENV_SERVICES.has(apiId)) continue;
         if (activeProviders && !activeProviders.includes(apiId)) continue;
         result.push({ apiId, meta: apiMeta, catKey, catLabel: catData.label });
       }
@@ -242,7 +257,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   const engineCatKey = useMemo(() => {
     if (!catalog?.categories) return null;
     for (const [key, cat] of Object.entries(catalog.categories)) {
-      if (Object.keys(cat.apis || {}).some((id) => GATEWAY_ENV_SERVICES.has(id))) return key;
+      if (Object.keys(cat.apis || {}).some((id) => ENGINE_ENV_SERVICES.has(id))) return key;
     }
     return null;
   }, [catalog]);
@@ -781,7 +796,7 @@ function SystemEnvPanel({
         } else {
           applyNote = ` Guardado, pero no se pudo activar la ruta: ${actPayload.error || "error desconocido"}.`;
         }
-      } else if (GATEWAY_ENV_SERVICES.has(apiId)) {
+      } else if (GATEWAY_RESTART_ENV_SERVICES.has(apiId)) {
         const restartRes = await fetch("/api/system/restart-gateway");
         const restartPayload = await restartRes.json().catch(() => ({}));
         if (restartRes.ok && restartPayload.ok) {
@@ -824,7 +839,7 @@ function SystemEnvPanel({
       if (!delRes.ok) throw new Error(delPayload.error || "No se pudo quitar la key");
 
       let restartNote = "";
-      if (GATEWAY_ENV_SERVICES.has(apiId)) {
+      if (GATEWAY_RESTART_ENV_SERVICES.has(apiId)) {
         const restartRes = await fetch("/api/system/restart-gateway");
         const restartPayload = await restartRes.json().catch(() => ({}));
         if (restartRes.ok && restartPayload.ok) {

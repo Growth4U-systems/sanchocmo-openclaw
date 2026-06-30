@@ -978,7 +978,7 @@
     },
     "discovery-search-new": {
       "threadId": "{slug}:discovery-new",
-      "threadName": "Nueva búsqueda de creators",
+      "threadName": "🐴 Rocinante",
       "skill": "discovery-plan-builder",
       "skills": ["discovery-plan-builder", "outreach-playbook", "niche-discovery-100x"],
       "agent": "rocinante",
@@ -986,7 +986,11 @@
       "linkedTo": "rocinante",
       "docPath": null,
       "threadState": "create",
-      "initialMessage": "Quiero crear una nueva búsqueda de creators para Partnerships.",
+      "quickActions": [
+        { "label": "Nueva campaña", "prompt": "Quiero crear una nueva campaña de outreach" },
+        { "label": "Modificar campaña", "prompt": "Quiero modificar una campaña existente" },
+        { "label": "Archivar campaña", "prompt": "Quiero archivar una campaña" }
+      ],
       "nsKey": "discovery",
       "match": "prefix",
       "reopenLinkedTo": "rocinante"

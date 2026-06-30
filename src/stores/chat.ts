@@ -14,6 +14,7 @@ export interface ThreadMeta {
   threadName: string;
   threadState: "create" | "continue" | undefined;
   initialMessage?: string;
+  quickActions?: Array<{ label: string; prompt: string }>;
   agent?: string;
   /** Shape of the associated doc — see ThreadConfig.docKind. */
   docKind?: "file" | "template";
@@ -126,6 +127,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       threadName: config.threadName,
       threadState: config.threadState,
       initialMessage: config.initialMessage,
+      quickActions: config.quickActions,
       agent: config.agent,
       docKind: config.docKind,
     });
@@ -150,6 +152,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         threadName: config.threadName,
         threadState: config.threadState,
         initialMessage: config.initialMessage,
+        quickActions: config.quickActions,
         agent: config.agent,
         docKind: config.docKind,
       });

@@ -71,3 +71,15 @@ for (const { name, cfg } of [
     );
   });
 }
+
+test("discovery new opens a blank Rocinante thread with suggested actions", () => {
+  const cfg = buildDiscoverySearchThread(SLUG);
+  assert.equal(cfg.threadName, "🐴 Rocinante");
+  assert.equal(cfg.agent, "rocinante");
+  assert.equal(cfg.initialMessage, undefined);
+  assert.deepEqual(cfg.quickActions, [
+    { label: "Nueva campaña", prompt: "Quiero crear una nueva campaña de outreach" },
+    { label: "Modificar campaña", prompt: "Quiero modificar una campaña existente" },
+    { label: "Archivar campaña", prompt: "Quiero archivar una campaña" },
+  ]);
+});

@@ -120,6 +120,7 @@ export interface NamespaceOwner {
   docPath?: string | null;
   threadState?: "create" | "continue";
   initialMessage?: string;
+  quickActions?: Array<{ label: string; prompt: string }>;
   docKind?: "file" | "template";
 }
 

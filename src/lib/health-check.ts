@@ -238,6 +238,22 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
         }
         return error(r.ok ? "Unexpected response" : `HTTP ${r.httpCode}`, { httpCode: r.httpCode });
       }
+      case "scrapecreators": {
+        const key = getKey(envVars, "SCRAPECREATORS_API_KEY");
+        if (!key) return notConfigured("SCRAPECREATORS_API_KEY");
+        const r = await httpCheckJson<{ balance?: number; credits?: number }>(
+          "https://api.scrapecreators.com/v1/account/credit-balance",
+          { "x-api-key": key },
+        );
+        if (r.ok) {
+          const credits = r.data?.balance ?? r.data?.credits;
+          return ok(typeof credits === "number" ? { httpCode: r.httpCode, credits } : { httpCode: r.httpCode });
+        }
+        if (r.httpCode === 401 || r.httpCode === 403) {
+          return error("invalid_key_or_permissions", { httpCode: r.httpCode });
+        }
+        return error(`HTTP ${r.httpCode}`, { httpCode: r.httpCode });
+      }
       case "firecrawl": {
         const key = getKey(envVars, "FIRECRAWL_API_KEY");
         if (!key) return notConfigured("FIRECRAWL_API_KEY");
@@ -367,7 +383,7 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
 
 const ALL_SERVICES = [
   "anthropic", "openrouter", "fireworks", "openai", "gemini", "xai", "minimax",
-  "brave", "apify", "firecrawl", "serper", "dataforseo",
+  "brave", "apify", "scrapecreators", "firecrawl", "serper", "dataforseo",
   "notion", "slack", "discord",
   "fal", "wavespeed", "dumpling", "nanobanana", "remotion",
   "instantly", "metricool",
@@ -399,6 +415,7 @@ const SERVICE_ENV_REQUIREMENTS: Record<string, string[][]> = {
   perplexity: [["PERPLEXITY_API_KEY"]],
   brave: [["BRAVE_API_KEY", "BRAVE_SEARCH_API_KEY"]],
   apify: [["APIFY_TOKEN", "APIFY_API_KEY"]],
+  scrapecreators: [["SCRAPECREATORS_API_KEY"]],
   firecrawl: [["FIRECRAWL_API_KEY"]],
   serper: [["SERPER_API_KEY"]],
   dataforseo: [["DATAFORSEO_LOGIN"], ["DATAFORSEO_PASSWORD"]],
