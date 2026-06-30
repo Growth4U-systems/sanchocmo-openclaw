@@ -7,12 +7,16 @@ import {
   CheckCircle2,
   CircleAlert,
   ExternalLink,
+  FileText,
+  Inbox,
   ListChecks,
+  Search,
   Pause,
   Play,
   RefreshCw,
   Send,
   Server,
+  Settings,
   ShieldCheck,
   Target,
   Users,
@@ -20,6 +24,7 @@ import {
   Plug,
   Loader2,
   Rocket,
+  type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,10 +33,11 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildYalcThread } from "@/lib/chat-openers";
 import { PartnershipsView } from "@/components/partnerships/partnerships-view";
+import { OutboundB2BView } from "@/components/outbound-b2b/outbound-b2b-view";
 import { TipoSelector, tipoFromQuery } from "@/components/partnerships/tipo-selector";
 import { cn } from "@/lib/utils";
 
-type TabKey = "overview" | "campaigns" | "leads" | "gates" | "providers";
+type TabKey = "overview" | "campaigns" | "leads" | "gates" | "templates" | "providers";
 
 interface RuntimeInfo {
   baseUrl?: string;
@@ -56,6 +62,7 @@ interface OverviewPayload {
 
 interface Campaign {
   id: string;
+  type?: string | null;
   title?: string;
   status?: string;
   hypothesis?: string | null;
@@ -245,15 +252,43 @@ interface SaveResult {
 
 type OutboundAction = "search" | "enrich" | "approve" | "dry-run" | "publish" | "live";
 
-const TABS: Array<{ key: TabKey; label: string }> = [
-  { key: "overview", label: "Overview" },
-  { key: "campaigns", label: "Campanas" },
-  { key: "leads", label: "Leads" },
-  { key: "gates", label: "Gates" },
-  { key: "providers", label: "Providers" },
+const TABS: Array<{ key: TabKey; label: string; icon: LucideIcon }> = [
+  { key: "overview", label: "Encuentra", icon: Search },
+  { key: "campaigns", label: "Campanas", icon: Target },
+  { key: "leads", label: "Leads", icon: Users },
+  { key: "gates", label: "Inbox", icon: Inbox },
+  { key: "templates", label: "Plantillas", icon: FileText },
+  { key: "providers", label: "Settings", icon: Settings },
 ];
 
 const MANUAL_STATUSES = ["Demo_Booked", "Deal_Created", "Closed_Won", "Closed_Lost"];
+
+const B2B_HEADERS: Record<TabKey, { title: string; sub: string }> = {
+  overview: {
+    title: "Encuentra cuentas",
+    sub: "Crea busquedas B2B, revisa salud del motor y abre las campanas recientes.",
+  },
+  campaigns: {
+    title: "Campanas B2B",
+    sub: "Drafts, readiness, operaciones de Apollo/Instantly y timeline de cada campana.",
+  },
+  leads: {
+    title: "Leads",
+    sub: "Contactos por campana, score, estado, variante y siguiente accion.",
+  },
+  gates: {
+    title: "Inbox",
+    sub: "Aprobaciones humanas pendientes antes de enviar, publicar o lanzar.",
+  },
+  templates: {
+    title: "Plantillas",
+    sub: "Secuencias outbound editables antes de aprobarlas y probarlas en Instantly.",
+  },
+  providers: {
+    title: "Settings",
+    sub: "Conexiones del motor B2B: Apollo, Instantly y proveedores auxiliares.",
+  },
+};
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -275,6 +310,11 @@ function asCampaigns(value: unknown): Campaign[] {
   return Array.isArray(campaigns) ? campaigns : [];
 }
 
+function isB2BCampaign(campaign: Campaign): boolean {
+  const type = (campaign.type || "").toLowerCase();
+  return !type || type === "b2b";
+}
+
 function asGates(value: unknown): GateItem[] {
   if (!value || typeof value !== "object") return [];
   const items = (value as GatesPayload).items;
@@ -285,6 +325,17 @@ function asProviders(value: unknown): Provider[] {
   if (!value || typeof value !== "object") return [];
   const providers = (value as ProvidersPayload).providers;
   return Array.isArray(providers) ? providers : [];
+}
+
+function healthCheckLabel(name: string): string {
+  const labels: Record<string, string> = {
+    skills: "Skills",
+    today: "Today",
+    campaigns: "Campanas",
+    gates: "Inbox",
+    providers: "Conexiones",
+  };
+  return labels[name] || name;
 }
 
 function formatDate(value?: string | null): string {
@@ -452,12 +503,12 @@ function outboundActionLabel(action: OutboundAction): string {
  *
  *  - tipo=partnerships (default) → Encuentra · Contactos · Inbox · Plantillas
  *    (SAN-78, mockups OUTPUTS/sanchocmo/mockups-partnerships como spec).
- *  - tipo=b2b → el cockpit YALC de siempre, flujos intactos.
+ *  - tipo=b2b → B2B con la misma lógica visual/operativa de Partnerships.
  */
 export default function OutreachPage() {
   const router = useRouter();
   const tipo = tipoFromQuery(router.query.tipo);
-  if (tipo === "b2b") return <YalcCockpitView />;
+  if (tipo === "b2b") return <OutboundB2BView />;
   return <PartnershipsView />;
 }
 
@@ -479,9 +530,8 @@ function YalcCockpitView() {
 
   const campaignsQuery = useQuery({
     queryKey: ["yalc", slug, "campaigns"],
-    queryFn: () => fetchJson<CampaignPayload>(`/api/yalc/campaigns?slug=${encodeURIComponent(slug)}`),
+    queryFn: () => fetchJson<CampaignPayload>(`/api/yalc/campaigns?slug=${encodeURIComponent(slug)}&type=B2B`),
     enabled: !!slug,
-    initialData: () => overview.data?.checks?.campaigns?.data as CampaignPayload | undefined,
   });
 
   const gatesQuery = useQuery({
@@ -499,7 +549,7 @@ function YalcCockpitView() {
   });
 
   const campaigns = useMemo(
-    () => campaignsQuery.data?.campaigns || asCampaigns(overview.data?.checks?.campaigns?.data),
+    () => (campaignsQuery.data?.campaigns || asCampaigns(overview.data?.checks?.campaigns?.data)).filter(isB2BCampaign),
     [campaignsQuery.data, overview.data],
   );
   const gates = useMemo(
@@ -744,6 +794,7 @@ function YalcCockpitView() {
   // Outreach is an opt-in service. When it isn't wired up, show a calm setup
   // placeholder instead of the cockpit's "unreachable" errors and empty tiles.
   const notConfigured = overview.data?.configured === false;
+  const header = B2B_HEADERS[activeTab];
   if (notConfigured) {
     return (
       <DashboardLayout>
@@ -798,49 +849,95 @@ function YalcCockpitView() {
   return (
     <DashboardLayout>
       <Head>
-        <title>{`YALC - ${slug || "cliente"} - Mission Control`}</title>
+        <title>{`Outbound - ${slug || "cliente"} - Mission Control`}</title>
       </Head>
 
-      <div className="min-h-[calc(100vh-48px)] space-y-5">
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+      <div className="relative min-h-[calc(100vh-48px)] space-y-4" data-testid="outbound-b2b">
+        <button
+          type="button"
+          onClick={() => setActiveTab("providers")}
+          title="Settings de Outbound B2B"
+          className={cn(
+            "absolute right-0 top-0 z-10 grid h-9 w-9 place-items-center rounded-md border border-border bg-transparent text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+            activeTab === "providers" && "bg-muted text-foreground",
+          )}
+          data-testid="outbound-settings"
+        >
+          <Settings className="h-4 w-4" />
+        </button>
+
+        <header className="pr-12">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-sage">
               <ShieldCheck className="h-4 w-4" />
-              GTM-OS conectado a Sancho
+              GTM-OS conectado
             </div>
-            <h1 className="mt-1 font-heading text-2xl text-navy">YALC Cockpit</h1>
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Operacion de campanas, leads, gates humanos y providers desde Mission Control.
-            </p>
+            <h1 className="m-0 font-heading text-2xl text-navy">Outbound B2B · {header.title}</h1>
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <span className="font-bold text-rust">{slug || "cliente"}</span>
+              <span>· Outreach</span>
+            </div>
+            {activeTab === "overview" && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("campaigns")}
+                className="ml-auto inline-flex items-center gap-2 rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
+              >
+                <Target className="h-4 w-4" />
+                Crear campana
+              </button>
+            )}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Selector Tipo (SAN-78): B2B = este cockpit · Partnerships = Encuentra/Contactos */}
+          <p className="mb-0 mt-1 max-w-3xl text-sm text-muted-foreground">{header.sub}</p>
+        </header>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <nav className="flex flex-wrap gap-2 overflow-x-auto" data-testid="outbound-tabs">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "flex items-center gap-1.5 whitespace-nowrap rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all",
+                    activeTab === tab.key ? "border-rust bg-rust text-white" : "border-border hover:border-rust",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
             <TipoSelector tipo="b2b" />
             <button
               type="button"
               onClick={() => openYalcAgent()}
-              className="inline-flex items-center gap-2 rounded-md border-2 border-ink bg-rust px-3 py-2 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 rounded-md border-2 border-ink bg-navy px-3 py-2 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5"
             >
               <Bot className="h-4 w-4" />
-              Abrir YALC / GTM-OS
+              Rocinante
             </button>
             <button
               type="button"
               onClick={refreshAll}
-              className="inline-flex items-center gap-2 rounded-md border-2 border-border bg-card px-3 py-2 text-sm font-semibold hover:border-ink"
+              title="Refrescar datos"
+              className="inline-grid h-10 w-10 place-items-center rounded-md border-2 border-border bg-card text-muted-foreground hover:border-ink hover:text-foreground"
             >
               <RefreshCw className={cn("h-4 w-4", overview.isFetching && "animate-spin")} />
-              Refrescar
             </button>
           </div>
-        </header>
+        </div>
 
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <StatusTile
             icon={<Server className="h-5 w-5" />}
-            label="Runtime"
+            label="Motor"
             value={overview.data?.ok ? "Online" : overview.isError ? "Error" : "Checking"}
-            detail={overview.data?.runtime?.baseUrl || "YALC_BASE_URL"}
+            detail="motor outbound"
             tone={overview.data?.ok ? "ok" : overview.isError ? "bad" : "warn"}
           />
           <StatusTile
@@ -854,19 +951,19 @@ function YalcCockpitView() {
             icon={<Users className="h-5 w-5" />}
             label="Leads"
             value={totals.leadCount.toLocaleString("es-ES")}
-            detail="en campanas YALC"
+            detail="en campanas B2B"
             tone={totals.leadCount ? "ok" : "neutral"}
           />
           <StatusTile
             icon={<ListChecks className="h-5 w-5" />}
-            label="Gates"
+            label="Inbox"
             value={gates.length.toLocaleString("es-ES")}
-            detail={gates.some((gate) => gate.stale) ? "hay gates vencidos" : "pendientes"}
+            detail={gates.some((gate) => gate.stale) ? "hay aprobaciones vencidas" : "aprobaciones"}
             tone={gates.length ? "warn" : "ok"}
           />
           <StatusTile
             icon={<Activity className="h-5 w-5" />}
-            label="Providers"
+            label="Conexiones"
             value={`${totals.readyProviders}/${providers.length || 0}`}
             detail={overview.data?.runtime?.auth === "bearer" ? "token activo" : "sin bearer"}
             tone={providers.length && totals.readyProviders === providers.length ? "ok" : "warn"}
@@ -880,27 +977,15 @@ function YalcCockpitView() {
           </div>
         )}
 
-        <nav className="flex flex-wrap gap-2 border-b-2 border-border pb-3">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              className={cn(
-                "rounded-md border px-3 py-1.5 text-sm font-bold transition-colors",
-                activeTab === tab.key
-                  ? "border-ink bg-navy text-white"
-                  : "border-border bg-card text-foreground hover:border-ink",
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-
         {activeTab === "overview" && (
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
-            <Panel title="Health checks" action={overview.isFetching ? "syncing" : "30s refresh"}>
+            <CreateOutboundCampaignPanel
+              busy={createCampaignAction.isPending}
+              error={createCampaignAction.error instanceof Error ? createCampaignAction.error.message : null}
+              onCreate={(body) => createCampaignAction.mutate(body)}
+            />
+
+            <Panel title="Estado del motor" action={overview.isFetching ? "syncing" : "30s refresh"}>
               <div className="space-y-2">
                 {Object.entries(overview.data?.checks || {}).map(([name, check]) => (
                   <div key={name} className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2">
@@ -911,7 +996,7 @@ function YalcCockpitView() {
                         ) : (
                           <CircleAlert className="h-4 w-4 text-destructive" />
                         )}
-                        <span className="font-semibold capitalize">{name}</span>
+                        <span className="font-semibold">{healthCheckLabel(name)}</span>
                       </div>
                       {check.error && <p className="mt-1 text-xs text-destructive">{check.error}</p>}
                     </div>
@@ -921,28 +1006,8 @@ function YalcCockpitView() {
                   </div>
                 ))}
                 {!overview.data?.checks && (
-                  <EmptyLine text={overview.isLoading ? "Conectando con YALC..." : "Sin datos de runtime."} />
+                  <EmptyLine text={overview.isLoading ? "Conectando con el motor outbound..." : "Sin datos de runtime."} />
                 )}
-              </div>
-            </Panel>
-
-            <Panel title="Siguiente accion" action="YALC / GTM-OS">
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Usa el agente para lanzar o diagnosticar workflows. El cockpit queda para ver estado, revisar leads y aprobar gates.
-                </p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    openYalcAgent(
-                      "Revisa el estado completo de YALC para este cliente: providers, campanas, gates pendientes y proximas acciones.",
-                    )
-                  }
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-md border-2 border-ink bg-sage px-3 py-2 text-sm font-bold text-white shadow-comic-sm"
-                >
-                  <Send className="h-4 w-4" />
-                  Pedir diagnostico completo
-                </button>
               </div>
             </Panel>
 
@@ -958,7 +1023,7 @@ function YalcCockpitView() {
               />
             </Panel>
 
-            <Panel title="Gates pendientes">
+            <Panel title="Inbox pendiente">
               <GateList
                 gates={gates.slice(0, 4)}
                 gateReasons={gateReasons}
@@ -979,7 +1044,7 @@ function YalcCockpitView() {
                 error={createCampaignAction.error instanceof Error ? createCampaignAction.error.message : null}
                 onCreate={(body) => createCampaignAction.mutate(body)}
               />
-              <Panel title="Campanas YALC" action={`${campaigns.length} total`}>
+              <Panel title="Campanas B2B" action={`${campaigns.length} total`}>
                 <CampaignTable
                   campaigns={campaigns}
                   onSelect={setSelectedCampaignId}
@@ -1074,7 +1139,7 @@ function YalcCockpitView() {
         )}
 
         {activeTab === "gates" && (
-          <Panel title="Aprobaciones humanas" action={`${gates.length} pendientes`}>
+          <Panel title="Inbox de aprobaciones" action={`${gates.length} pendientes`}>
             <GateList
               gates={gates}
               gateReasons={gateReasons}
@@ -1086,11 +1151,219 @@ function YalcCockpitView() {
           </Panel>
         )}
 
+        {activeTab === "templates" && (
+          <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_420px]">
+            <Panel
+              title="Secuencias outbound"
+              action={campaignDetailQuery.isFetching ? "loading" : selectedCampaignDetail?.title || "sin campana"}
+            >
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <select
+                  value={selectedCampaignId}
+                  onChange={(event) => setSelectedCampaignId(event.target.value)}
+                  className="min-w-[260px] rounded-md border-2 border-border bg-card px-3 py-2 text-sm font-semibold focus:border-rust focus:outline-none"
+                >
+                  {campaigns.map((campaign) => (
+                    <option key={campaign.id} value={campaign.id}>
+                      {campaign.title || campaign.id}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs font-semibold text-muted-foreground">
+                  Edita antes de aprobar o hacer dry-run.
+                </span>
+              </div>
+              <OutboundTemplatesPanel
+                campaign={selectedCampaignDetail}
+                busySequenceStepId={
+                  sequenceUpdateAction.isPending && sequenceUpdateAction.variables?.campaignId === selectedCampaignDetail?.id
+                    ? sequenceUpdateAction.variables?.stepId || "__default__"
+                    : undefined
+                }
+                error={sequenceUpdateAction.error instanceof Error ? sequenceUpdateAction.error.message : null}
+                onOpenAgent={(prompt) => openYalcAgent(prompt)}
+                onSaveSequence={(stepId, emails) => {
+                  if (selectedCampaignDetail?.id) {
+                    sequenceUpdateAction.mutate({ campaignId: selectedCampaignDetail.id, stepId, emails });
+                  }
+                }}
+              />
+            </Panel>
+
+            <Panel title="Operacion de plantilla" action={selectedCampaignDetail?.status || "draft"}>
+              <CampaignTemplateActions
+                campaign={selectedCampaignDetail}
+                readiness={readinessQuery.data || null}
+                busyAction={
+                  outboundAction.isPending && outboundAction.variables?.campaignId === selectedCampaignDetail?.id
+                    ? outboundAction.variables?.action
+                    : undefined
+                }
+                error={outboundAction.error instanceof Error ? outboundAction.error.message : null}
+                onOutboundAction={(action) => {
+                  if (selectedCampaignDetail?.id) outboundAction.mutate({ campaignId: selectedCampaignDetail.id, action });
+                }}
+              />
+            </Panel>
+          </div>
+        )}
+
         {activeTab === "providers" && (
           <ProviderConnectTab slug={slug} providers={providers} onRefresh={() => providersQuery.refetch()} />
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+function OutboundTemplatesPanel({
+  campaign,
+  busySequenceStepId,
+  error,
+  onOpenAgent,
+  onSaveSequence,
+}: {
+  campaign: CampaignDetail | Campaign | null;
+  busySequenceStepId?: string;
+  error: string | null;
+  onOpenAgent: (prompt: string) => void;
+  onSaveSequence: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
+}) {
+  if (!campaign) return <EmptyLine text="Selecciona una campana para editar sus plantillas." />;
+
+  const detail = campaign as CampaignDetail;
+  const emailSequences = extractEmailSequences(detail);
+
+  if (emailSequences.length === 0) {
+    return (
+      <div className="rounded-lg border border-yellow-500/50 bg-yellow-100 p-4 text-sm text-yellow-900">
+        <div className="flex items-start gap-2">
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <div className="font-bold">Esta campana no tiene secuencia editable.</div>
+            <p className="mt-1 text-xs">
+              Pide a Rocinante que genere o reconstruya la secuencia y la guarde en el draft antes de aprobar.
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                onOpenAgent(
+                  `Genera una secuencia outbound B2B para la campana YALC ${campaign.id} y guardala como paso send-email-sequence con dryRun true. No crees una campana nueva.`,
+                )
+              }
+              className="mt-3 inline-flex items-center gap-1 rounded-md border border-yellow-700 bg-white/70 px-2 py-1 text-xs font-bold text-yellow-900 hover:bg-white"
+            >
+              <Bot className="h-3.5 w-3.5" />
+              Pedir secuencia
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {emailSequences.map((block, blockIndex) => (
+        <EmailSequenceEditor
+          key={`${block.source}-${block.stepId || blockIndex}`}
+          block={block}
+          busy={busySequenceStepId === (block.stepId || "__default__")}
+          onSave={(emails) => onSaveSequence(block.stepId, emails)}
+        />
+      ))}
+      {error && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CampaignTemplateActions({
+  campaign,
+  readiness,
+  busyAction,
+  error,
+  onOutboundAction,
+}: {
+  campaign: CampaignDetail | Campaign | null;
+  readiness: CampaignReadiness | null;
+  busyAction?: OutboundAction;
+  error: string | null;
+  onOutboundAction: (action: OutboundAction) => void;
+}) {
+  if (!campaign) return <EmptyLine text="Selecciona una campana para operar la secuencia." />;
+
+  const emailSequences = extractEmailSequences(campaign as CampaignDetail);
+  const actions: OutboundAction[] = ["approve", "dry-run", "publish", "live"];
+
+  return (
+    <div className="space-y-4 text-sm">
+      <div>
+        <h3 className="font-heading text-base text-foreground">{campaign.title || campaign.id}</h3>
+        <p className="mt-1 text-muted-foreground">
+          {emailSequences.length} bloque{emailSequences.length === 1 ? "" : "s"} de email guardado
+          {emailSequences.length === 1 ? "" : "s"} en el motor outbound.
+        </p>
+      </div>
+
+      {readiness && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {[
+            ["Review", readiness.readyForReview],
+            ["Dry-run", readiness.readyForDryRun],
+            ["Publish", readiness.readyForPublish],
+            ["Live", readiness.readyForLive],
+          ].map(([label, ok]) => (
+            <div
+              key={String(label)}
+              className={cn(
+                "rounded-md border px-3 py-2 text-xs font-bold",
+                ok ? "border-sage/40 bg-sage/10 text-sage" : "border-border bg-card text-muted-foreground",
+              )}
+            >
+              {ok ? "✓" : "•"} {label}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        {actions.map((action) => {
+          const disabled =
+            !!busyAction ||
+            (action === "approve" && emailSequences.length === 0) ||
+            (action === "dry-run" && !readiness?.readyForDryRun) ||
+            (action === "publish" && (!readiness?.readyForPublish || readiness?.readyForLive)) ||
+            (action === "live" && !readiness?.readyForLive);
+          return (
+            <button
+              key={action}
+              type="button"
+              disabled={disabled}
+              onClick={() => onOutboundAction(action)}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-bold disabled:opacity-50",
+                action === "live"
+                  ? "border-rust bg-rust text-white"
+                  : "border-border bg-background hover:border-ink",
+              )}
+            >
+              {busyAction === action && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {outboundActionLabel(action)}
+            </button>
+          );
+        })}
+      </div>
+
+      {error && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+          {error}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1137,7 +1410,7 @@ function ProviderConnectTab({
 
   return (
     <>
-      <Panel title="Providers YALC" action={`${providers.length} registrados`}>
+      <Panel title="Conexiones de Outbound" action={`${providers.length} registradas`}>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {providers.map((provider) => {
             const knowledge = knowledgeMap.get(provider.id);
@@ -1204,7 +1477,7 @@ function ProviderConnectTab({
               </div>
             );
           })}
-          {providers.length === 0 && <EmptyLine text="No hay providers disponibles o YALC no responde." />}
+          {providers.length === 0 && <EmptyLine text="No hay conexiones disponibles o el motor no responde." />}
         </div>
       </Panel>
 
@@ -1375,7 +1648,7 @@ function CreateOutboundCampaignPanel({
   );
 
   return (
-    <Panel title="Crear campana outbound" action="YALC draft">
+    <Panel title="Crear campana B2B" action="draft">
       <div className="grid gap-3 md:grid-cols-2">
         <LabeledInput label="Titulo" value={title} onChange={setTitle} />
         <LabeledInput label="Busqueda Apollo" value={query} onChange={setQuery} />
@@ -1392,6 +1665,7 @@ function CreateOutboundCampaignPanel({
           disabled={busy || !title.trim() || !hypothesis.trim()}
           onClick={() =>
             onCreate({
+              type: "B2B",
               title,
               hypothesis,
               targetSegment,
@@ -1426,7 +1700,7 @@ function CreateOutboundCampaignPanel({
           className="inline-flex items-center gap-2 rounded-md border-2 border-ink bg-rust px-3 py-2 text-sm font-bold text-white shadow-comic-sm disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
-          Crear draft en YALC
+          Crear draft
         </button>
         <span className="text-xs font-semibold text-muted-foreground">Despues usa buscar, enriquecer, aprobar y lanzar.</span>
       </div>
@@ -1545,7 +1819,7 @@ function CampaignTable({
   onAction: (campaignId: string, action: "pause" | "resume") => void;
   busyId?: string;
 }) {
-  if (campaigns.length === 0) return <EmptyLine text="No hay campanas en YALC todavia." />;
+  if (campaigns.length === 0) return <EmptyLine text="No hay campanas B2B todavia." />;
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[820px] text-left text-sm">
@@ -1636,7 +1910,7 @@ function CampaignDetailPanel({
   busyAction?: OutboundAction;
   actionError: string | null;
 }) {
-  if (!campaign) return <EmptyLine text="Selecciona una campana para revisar el draft guardado en YALC." />;
+  if (!campaign) return <EmptyLine text="Selecciona una campana para revisar el draft." />;
 
   const steps = campaign.steps || [];
   const successMetrics = campaign.successMetrics || [];
@@ -1780,7 +2054,7 @@ function CampaignDetailPanel({
       <div>
         <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           <Activity className="h-3.5 w-3.5" />
-          Timeline YALC
+          Timeline
         </div>
         {events.length === 0 ? (
           <EmptyLine text="Sin eventos registrados." />
@@ -1811,7 +2085,7 @@ function CampaignDetailPanel({
               <div>
                 <div className="font-bold">No hay secuencia guardada en este draft.</div>
                 <p className="mt-1 text-xs">
-                  La campana existe en YALC, pero no tiene emails revisables. Pide a YALC que genere la secuencia y la anada a este draft antes de probar Instantly.
+                  La campana existe en el motor outbound, pero no tiene emails revisables. Pide a Rocinante que genere la secuencia y la anada a este draft antes de probar Instantly.
                 </p>
                 <button
                   type="button"
@@ -1928,7 +2202,7 @@ function LeadTable({
   onStatus: (leadId: string, status: string) => void;
   busyId?: string;
 }) {
-  if (leads.length === 0) return <EmptyLine text="Esta campana no tiene leads o YALC no devolvio registros." />;
+  if (leads.length === 0) return <EmptyLine text="Esta campana no tiene leads o el motor no devolvio registros." />;
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[980px] text-left text-sm">
