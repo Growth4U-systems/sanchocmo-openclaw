@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.7](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.6...v0.15.7) (2026-06-30)
+
+
+### Bug Fixes
+
+* **SAN-376:** expose ScrapeCreators API setup ([48eb9dc](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/48eb9dc269e38ae729529365f5220ebb02a6e238))
+
 ## [0.15.6](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.5...v0.15.6) (2026-06-30)
 
 
