@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.10](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.9...v0.15.10) (2026-06-30)
+
+
+### Bug Fixes
+
+* **outreach:** SAN-379 align partnerships UI ([2f4b5bf](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2f4b5bf81bf7b2ca1cb1fd634c64850df80eaa6c))
+
 ## [0.15.9](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.8...v0.15.9) (2026-06-30)
 
 
