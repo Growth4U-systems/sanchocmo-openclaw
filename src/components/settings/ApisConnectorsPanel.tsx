@@ -123,9 +123,14 @@ interface ApisConnectorsPanelProps {
 export function ApisConnectorsPanel({ categories, showHeader = true, providers, filterLabel, onClearProviders }: ApisConnectorsPanelProps = {}) {
   const statusBadge = useStatusBadge();
   const { data: session, status: sessionStatus } = useSession();
+  const router = useRouter();
   const selectedClient = useAppStore((s) => s.selectedClient);
   const setSelectedClient = useAppStore((s) => s.setSelectedClient);
-  const slug = selectedClient || "";
+  const isAdminRoute = router.pathname.startsWith("/dashboard/admin");
+  // Admin settings are always global/system scope. The persisted Zustand store
+  // can rehydrate a previous client after DashboardLayout clears it, so do not
+  // let that stale value gate system-key drawers.
+  const slug = isAdminRoute ? "" : selectedClient || "";
   const [checking, setChecking] = useState(false);
   const [checkStatus, setCheckStatus] = useState("");
   const [connectSlider, setConnectSlider] = useState<{ apiId: string; provider: string } | null>(null);
@@ -134,7 +139,10 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const qc = useQueryClient();
-  const router = useRouter();
+
+  useEffect(() => {
+    if (isAdminRoute && selectedClient) setSelectedClient(null);
+  }, [isAdminRoute, selectedClient, setSelectedClient]);
 
   // Deep-link support: `?cat=...` (from the chat error modal / models panel)
   // preselects a category. Only honored on the standalone panel, not embedded
@@ -711,8 +719,10 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
         </div>
       )}
 
-      {/* System Key Slider — global admin credentials */}
-      {systemKeySlider && !slug && (
+      {/* System Key Slider — global admin credentials.
+          System-only credentials can be opened from global settings or from a
+          client settings page; they always save through /api/env. */}
+      {systemKeySlider && (
         <div
           className="fixed inset-0 z-50 flex justify-end"
           onClick={() => {
