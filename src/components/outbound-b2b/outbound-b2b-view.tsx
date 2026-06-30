@@ -16,12 +16,14 @@ import {
   Inbox,
   Loader2,
   Mail,
+  Plus,
   RefreshCw,
   Search,
   Send,
   Settings,
   Target,
   Trash2,
+  X,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -445,6 +447,25 @@ function extractEmailSequences(campaign?: CampaignDetail | null): EmailSequenceB
     });
   }
   return blocks;
+}
+
+function extractSequencePlaceholders(blocks: EmailSequenceBlock[]): string[] {
+  const found = new Set<string>();
+  const pattern = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g;
+  for (const block of blocks) {
+    for (const email of block.emails) {
+      for (const text of [email.subject, email.body]) {
+        if (!text) continue;
+        pattern.lastIndex = 0;
+        let match = pattern.exec(text);
+        while (match) {
+          found.add(match[1]);
+          match = pattern.exec(text);
+        }
+      }
+    }
+  }
+  return [...found].sort();
 }
 
 function gateRunId(gate: GateItem): string {
@@ -935,6 +956,10 @@ export function OutboundB2BView() {
             onSave={(stepId, emails) =>
               sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
             }
+            onEditContext={() => {
+              const campaign = campaigns.find((item) => item.id === templateCampaignId) || campaignDetailQuery.data || undefined;
+              openB2BSearch(campaign);
+            }}
             onRunAction={(action) => outboundAction.mutate({ campaignId: templateCampaignId, action })}
           />
         )}
@@ -1953,6 +1978,7 @@ function B2BPlantillasTab({
   actionBusy,
   busyAction,
   onSave,
+  onEditContext,
   onRunAction,
 }: {
   campaigns: Campaign[];
@@ -1964,13 +1990,15 @@ function B2BPlantillasTab({
   actionBusy: boolean;
   busyAction?: OutboundAction;
   onSave: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
+  onEditContext: () => void;
   onRunAction: (action: OutboundAction) => void;
 }) {
   const sequences = extractEmailSequences(campaignDetail);
   const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) || campaignDetail;
+  const placeholders = extractSequencePlaceholders(sequences);
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]" data-testid="outbound-plantillas">
+    <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]" data-testid="outbound-plantillas">
       <section className="rounded-xl border border-border bg-card p-4">
         <h3 className="font-heading text-lg text-navy">Búsqueda</h3>
         <select
@@ -1986,11 +2014,11 @@ function B2BPlantillasTab({
           ))}
         </select>
         {selectedCampaign && (
-          <div className="mt-4 space-y-3 text-sm">
-            <DataItem label="Segmento" value={selectedCampaign.targetSegment || "-"} />
-            <DataItem label="Hipótesis" value={selectedCampaign.hypothesis || "-"} />
-            <DataItem label="Canales" value={channelText(selectedCampaign.channels)} />
-          </div>
+          <CampaignContextPanel
+            campaign={selectedCampaign}
+            placeholders={placeholders}
+            onEditContext={onEditContext}
+          />
         )}
         <div className="mt-5 grid gap-2">
           {(["approve", "dry-run", "publish", "live"] as const).map((action) => (
@@ -2012,11 +2040,18 @@ function B2BPlantillasTab({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-heading text-lg text-navy">Secuencia outbound</h3>
-            <p className="text-sm text-muted-foreground">Edita emails por paso antes de aprobar la campaña.</p>
+            <p className="text-sm text-muted-foreground">Edita 1 a 3 emails por campaña antes de aprobarla.</p>
           </div>
           {loading && <span className="text-xs text-muted-foreground">Cargando...</span>}
         </div>
         <div className="mt-4 space-y-4">
+          {selectedCampaign && (
+            <PersonalizationPanel
+              campaign={selectedCampaign}
+              placeholders={placeholders}
+              onEditContext={onEditContext}
+            />
+          )}
           {sequences.length === 0 && !loading && (
             <ZeroState
               title="Sin secuencia todavía"
@@ -2033,6 +2068,105 @@ function B2BPlantillasTab({
           ))}
         </div>
       </section>
+    </div>
+  );
+}
+
+function CampaignContextPanel({
+  campaign,
+  placeholders,
+  onEditContext,
+}: {
+  campaign: Campaign | CampaignDetail;
+  placeholders: string[];
+  onEditContext: () => void;
+}) {
+  return (
+    <div className="mt-4 space-y-3" data-testid="b2b-context-panel">
+      <div className="rounded-lg border border-border bg-background p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">1. ICP</span>
+          <Target className="h-4 w-4 text-rust" />
+        </div>
+        <p className="text-sm font-semibold text-foreground">{campaign.targetSegment || "Sin segmento definido"}</p>
+        <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">
+          {campaign.hypothesis || "Sin hipótesis de dolor/propuesta todavía."}
+        </p>
+      </div>
+      <div className="rounded-lg border border-border bg-background p-3">
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">2. Target y canales</div>
+        <DataItem label="Canales" value={channelText(campaign.channels)} />
+        <DataItem label="Estado" value={campaign.status || "-"} />
+      </div>
+      <div className="rounded-lg border border-border bg-background p-3">
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">3. Variables</div>
+        <div className="flex flex-wrap gap-1.5">
+          {(placeholders.length ? placeholders : ["first_name", "company_name"]).map((placeholder) => (
+            <span key={placeholder} className="rounded-full border border-border bg-card px-2 py-0.5 text-[11px] text-muted-foreground">
+              {`{{${placeholder}}}`}
+            </span>
+          ))}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onEditContext}
+        className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
+      >
+        Ajustar ICP y personalización
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function PersonalizationPanel({
+  campaign,
+  placeholders,
+  onEditContext,
+}: {
+  campaign: Campaign | CampaignDetail;
+  placeholders: string[];
+  onEditContext: () => void;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-background p-4" data-testid="b2b-personalization-panel">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="font-heading text-base text-navy">Contexto y personalización</h4>
+          <p className="text-sm text-muted-foreground">Lo que alimenta la copia antes de enviar.</p>
+        </div>
+        <button
+          type="button"
+          onClick={onEditContext}
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
+        >
+          Ajustar
+        </button>
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-3">
+        <ContextSummary label="ICP" value={campaign.targetSegment || "Sin ICP definido"} />
+        <ContextSummary label="Propuesta" value={campaign.hypothesis || "Sin hipótesis definida"} />
+        <div className="rounded-md border border-border bg-card p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Variables</div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {(placeholders.length ? placeholders : ["first_name", "company_name"]).map((placeholder) => (
+              <span key={placeholder} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
+                {`{{${placeholder}}}`}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContextSummary({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-card p-3">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <p className="mt-1 line-clamp-3 text-sm font-medium text-foreground" title={value}>{value}</p>
     </div>
   );
 }
@@ -2056,13 +2190,43 @@ function SequenceBlockEditor({
     setEmails((current) => current.map((email, i) => (i === index ? { ...email, ...next } : email)));
   }
 
+  function addEmail() {
+    setEmails((current) => {
+      if (current.length >= 3) return current;
+      return [
+        ...current,
+        {
+          subject: current.length === 0 ? "" : `Follow-up ${current.length}`,
+          body: "",
+          delayDays: current.length === 0 ? 0 : 3,
+        },
+      ];
+    });
+  }
+
+  function removeEmail(index: number) {
+    setEmails((current) => {
+      if (current.length <= 1) return current;
+      return current.filter((_email, i) => i !== index);
+    });
+  }
+
   return (
     <div className="rounded-lg border border-border bg-background p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="rounded border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           {block.source}
         </span>
-        <span className="text-xs text-muted-foreground">{emails.length} emails</span>
+        <span className="text-xs text-muted-foreground">{emails.length} de 3 emails</span>
+        <button
+          type="button"
+          onClick={addEmail}
+          disabled={emails.length >= 3 || saving}
+          className="ml-auto inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Añadir email
+        </button>
       </div>
       <div className="space-y-3">
         {emails.map((email, index) => (
@@ -2070,6 +2234,9 @@ function SequenceBlockEditor({
             <div className="mb-2 flex items-center gap-2">
               <span className="grid h-6 w-6 place-items-center rounded-full border border-border bg-muted/40 text-xs font-semibold text-rust">
                 {index + 1}
+              </span>
+              <span className="w-24 shrink-0 text-xs font-semibold text-muted-foreground">
+                {index === 0 ? "Email inicial" : `Follow-up ${index}`}
               </span>
               <input
                 value={email.subject || ""}
@@ -2084,6 +2251,15 @@ function SequenceBlockEditor({
                 placeholder="Días"
                 className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
               />
+              <button
+                type="button"
+                onClick={() => removeEmail(index)}
+                disabled={emails.length <= 1 || saving}
+                title="Eliminar email"
+                className="grid h-9 w-9 place-items-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
             <textarea
               value={email.body}
