@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.12](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.11...v0.15.12) (2026-06-30)
+
+
+### Bug Fixes
+
+* **SAN-376:** add ScrapeCreators global key shortcut ([bc19c17](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/bc19c1759b916980c952d8b7d49e77b6bccf0971))
+
 ## [0.15.11](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.10...v0.15.11) (2026-06-30)
 
 
