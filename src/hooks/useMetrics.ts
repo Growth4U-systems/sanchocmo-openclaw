@@ -62,6 +62,21 @@ export interface MetricKpiValue {
   rangeTo: string;
   definitionVersion: number | null;
   computedAt: string;
+  comparison: MetricKpiComparison | null;
+}
+
+export interface MetricKpiComparison {
+  previousRange: {
+    from: string;
+    to: string;
+  };
+  previousValue: number | null;
+  previousDisplayValue: string;
+  absoluteDelta: number | null;
+  relativeDelta: number | null;
+  displayDelta: string | null;
+  direction: "up" | "down" | "flat" | null;
+  sentiment: "positive" | "negative" | "neutral" | null;
 }
 
 export interface MetricStageRollupStageValue {

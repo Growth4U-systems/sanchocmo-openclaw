@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
+    if (isLocalDashboardBypass(req.nextUrl.hostname)) {
+      return NextResponse.next();
+    }
+
     const token = req.nextauth.token;
     const pathname = req.nextUrl.pathname;
     const isAdmin = token?.role === "admin";
@@ -53,6 +57,7 @@ export default withAuth(
     secret: process.env.NEXTAUTH_SECRET || "mc-dev-secret-change-me",
     callbacks: {
       authorized: ({ token, req }) => {
+        if (isLocalDashboardBypass(req.nextUrl.hostname)) return true;
         // Allow API routes without session (they use their own auth)
         if (req.nextUrl.pathname.startsWith("/api/")) return true;
         // Allow auth pages
@@ -67,6 +72,14 @@ export default withAuth(
     },
   }
 );
+
+function isLocalDashboardBypass(hostname: string): boolean {
+  return (
+    process.env.NODE_ENV !== "production" &&
+    process.env.LOCAL_DASHBOARD_BYPASS === "1" &&
+    (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1")
+  );
+}
 
 export const config = {
   matcher: ["/dashboard/:path*"],
