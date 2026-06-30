@@ -14,8 +14,10 @@ const CATEGORY_LABEL: Record<ErrorCategory, string> = {
   auth: "Credenciales no configuradas",
   missing_context: "Falta contexto inicial",
   context_overflow: "Contexto demasiado largo",
+  invalid_thinking_signature: "Historial interno corrupto",
   watchdog_abort: "Sesión sin progreso (timeout)",
   model_unavailable: "Modelo no disponible",
+  session_concurrency: "Turno concurrente en el mismo hilo",
   network: "Error de red",
 };
 

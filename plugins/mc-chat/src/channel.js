@@ -23,6 +23,8 @@ import {
   resolveAccount,
   isConfigured,
 } from "./account.js";
+import { markVisibleDelivery } from "./delivery-state.js";
+import { looksLikeToolEcho } from "./tool-echo.js";
 
 export const mcChatPlugin = createChatChannelPlugin({
   base: createChannelPluginBase({
@@ -104,6 +106,10 @@ export const mcChatPlugin = createChatChannelPlugin({
 
         const mcUrl = account?.mcServerUrl || "http://localhost:3000";
         const callbackUrl = `${mcUrl}/api/chat/webhook`;
+        if (looksLikeToolEcho(text)) {
+          console.error(`[mc-chat] dropped tool-echo sendText threadId=${threadId} textLen=${(text || "").length}`);
+          return { messageId: `mc-echo-${Date.now()}` };
+        }
         const headers = {
           "Content-Type": "application/json",
           ...(account?.sharedSecret ? { "X-MC-Secret": account.sharedSecret } : {}),
@@ -128,6 +134,7 @@ export const mcChatPlugin = createChatChannelPlugin({
             const response = await fetch(callbackUrl, { method: "POST", headers, body });
             if (response.ok) {
               const result = await response.json().catch(() => ({}));
+              markVisibleDelivery(slug, threadId);
               return { messageId: result.messageId || `mc-${Date.now()}` };
             }
             lastErr = new Error(`HTTP ${response.status}`);
@@ -151,7 +158,7 @@ export const mcChatPlugin = createChatChannelPlugin({
         const callbackUrl = `${mcUrl}/api/chat/webhook`;
 
         try {
-          await fetch(callbackUrl, {
+          const response = await fetch(callbackUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -166,6 +173,7 @@ export const mcChatPlugin = createChatChannelPlugin({
               ts: new Date().toISOString(),
             }),
           });
+          if (response.ok) markVisibleDelivery(slug, threadId);
         } catch (err) {
           console.error(`[mc-chat] Media callback error:`, err?.message);
         }

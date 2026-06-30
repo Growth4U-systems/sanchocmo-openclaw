@@ -83,8 +83,10 @@ export type ErrorCategory =
   | "auth"
   | "missing_context"
   | "context_overflow"
+  | "invalid_thinking_signature"
   | "watchdog_abort"
   | "model_unavailable"
+  | "session_concurrency"
   | "network";
 
 export interface ErrorDetail {
@@ -106,8 +108,10 @@ const VALID_CATEGORIES: ReadonlySet<ErrorCategory> = new Set([
   "auth",
   "missing_context",
   "context_overflow",
+  "invalid_thinking_signature",
   "watchdog_abort",
   "model_unavailable",
+  "session_concurrency",
   "network",
 ]);
 const MAX_RAW_LEN = 4096;
