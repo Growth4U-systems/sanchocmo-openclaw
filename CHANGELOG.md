@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.5](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.4...v0.15.5) (2026-06-30)
+
+
+### Bug Fixes
+
+* **SAN-349:** clarify missing outreach context errors ([6f2a341](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6f2a34155a13bc6d3718b17e5b89999dfbc39ab2))
+
 ## [0.15.4](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.3...v0.15.4) (2026-06-29)
 
 
