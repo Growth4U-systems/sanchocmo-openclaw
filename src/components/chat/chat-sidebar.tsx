@@ -753,6 +753,10 @@ export function ChatSidebar() {
       const res = await fetch("/api/upload-file", { method: "POST", body: form });
       if (!res.ok) {
         const detail = await res.json().catch(() => null);
+        if (res.status === 413) {
+          // nginx returns a non-JSON 413 page when the body exceeds its limit.
+          throw new Error(detail?.error || `"${pf.file.name}" supera el límite de subida.`);
+        }
         throw new Error(detail?.error || `No se pudo subir "${pf.file.name}".`);
       }
       results.push(await res.json());

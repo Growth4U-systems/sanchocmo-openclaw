@@ -8,11 +8,14 @@ const REQUIRED_R2_VARS = [
   "R2_PUBLIC_URL",
 ] as const;
 
+/** Stable prefix of the error assertR2Configured throws; matched by classifyUploadError. */
+export const R2_NOT_CONFIGURED_PREFIX = "R2 not configured";
+
 function assertR2Configured(): void {
   const missing = REQUIRED_R2_VARS.filter((k) => !process.env[k]);
   if (missing.length > 0) {
     throw new Error(
-      `R2 not configured: missing ${missing.join(", ")}. ` +
+      `${R2_NOT_CONFIGURED_PREFIX}: missing ${missing.join(", ")}. ` +
       `Set these in ~/.openclaw/.env.local and restart 'next dev'. ` +
       `Without them upload-media / generate-image cannot persist images, ` +
       `which causes agents to fall back to writing 'localPath' into ` +
@@ -53,6 +56,25 @@ export async function uploadToR2(
   );
 
   return `${process.env.R2_PUBLIC_URL}/${key}`;
+}
+
+/**
+ * Map an upload failure to an HTTP status + user-facing message so the chat UI
+ * shows a diagnosable error instead of an opaque one (SAN-305 / SAN-371):
+ *   - missing R2 env → 503 + the actionable config message
+ *   - file over cap  → 413 (formidable maxFileSize)
+ *   - anything else  → 500 (generic; preserves prior behavior/monitoring)
+ */
+export function classifyUploadError(error: unknown): { status: number; error: string } {
+  const message = error instanceof Error ? error.message : String(error);
+  const httpCode = (error as { httpCode?: number } | null | undefined)?.httpCode;
+  if (message.startsWith(R2_NOT_CONFIGURED_PREFIX)) {
+    return { status: 503, error: message };
+  }
+  if (httpCode === 413 || /maxFileSize|maxTotalFileSize/i.test(message)) {
+    return { status: 413, error: "El archivo supera el límite de 20 MB." };
+  }
+  return { status: 500, error: "Failed to upload file" };
 }
 
 /** Allowed MIME types for chat file uploads */
