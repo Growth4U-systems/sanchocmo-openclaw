@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.11](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.10...v0.15.11) (2026-06-30)
+
+
+### Bug Fixes
+
+* **SAN-376:** force global API scope on admin pages ([89423e6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/89423e6ff0e1e4fc6c56be7aeaa62ec132fe9d39))
+
 ## [0.15.10](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.9...v0.15.10) (2026-06-30)
 
 
