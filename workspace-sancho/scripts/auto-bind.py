@@ -175,8 +175,9 @@ CHANNEL_TEMPLATES = {
             "- Usa IDs con prefijo {prefix}- ({name})\n"
             "- Después ejecuta: python3 scripts/regenerate.py\n\n"
             "PARA TAREAS DE SISTEMA (infra, bugs, config):\n"
-            "- Escálalas a Cervantes via message a #cervantes-admin en Discord con formato ADMIN REQUEST\n"
-            "- NO uses sessions_send para Cervantes\n"
+            "- Escálalas a Cervantes con handoff real: en MC Chat usa :::delegate con agent=cervantes; por MCP usa sancho_delegate\n"
+            "- Solo usa Discord si tienes un message(action=send) real y un canal concreto disponible\n"
+            "- No digas que lo derivaste si no emitiste el handoff real\n"
             "- Si es una pregunta de marketing, responde tú directamente."
         ),
     },
