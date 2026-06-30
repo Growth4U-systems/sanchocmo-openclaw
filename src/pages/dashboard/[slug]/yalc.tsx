@@ -33,6 +33,7 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildYalcThread } from "@/lib/chat-openers";
 import { PartnershipsView } from "@/components/partnerships/partnerships-view";
+import { OutboundB2BView } from "@/components/outbound-b2b/outbound-b2b-view";
 import { TipoSelector, tipoFromQuery } from "@/components/partnerships/tipo-selector";
 import { cn } from "@/lib/utils";
 
@@ -502,12 +503,12 @@ function outboundActionLabel(action: OutboundAction): string {
  *
  *  - tipo=partnerships (default) → Encuentra · Contactos · Inbox · Plantillas
  *    (SAN-78, mockups OUTPUTS/sanchocmo/mockups-partnerships como spec).
- *  - tipo=b2b → el cockpit YALC de siempre, flujos intactos.
+ *  - tipo=b2b → B2B con la misma lógica visual/operativa de Partnerships.
  */
 export default function OutreachPage() {
   const router = useRouter();
   const tipo = tipoFromQuery(router.query.tipo);
-  if (tipo === "b2b") return <YalcCockpitView />;
+  if (tipo === "b2b") return <OutboundB2BView />;
   return <PartnershipsView />;
 }
 
