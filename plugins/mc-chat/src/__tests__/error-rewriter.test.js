@@ -39,6 +39,11 @@ const FIXTURE_CONTEXT_OVERFLOW =
 const FIXTURE_MODEL_UNAVAILABLE =
   "anthropic/claude-sonnet-4-6: The model is currently overloaded. (status=503)";
 
+const FIXTURE_SESSION_TAKEOVER =
+  "EmbeddedAttemptSessionTakeoverError: session file changed while embedded prompt lock was released: " +
+  "/root/.openclaw/.openclaw/agents/hamete/sessions/2a878746.jsonl " +
+  "from=fireworks/accounts/fireworks/models/glm-5p2";
+
 const FIXTURE_NETWORK =
   "FetchError: request to https://api.openai.com/v1/chat/completions failed, reason: ECONNREFUSED";
 
@@ -123,6 +128,14 @@ test("model_unavailable: detects overloaded/503 errors", () => {
   assert.equal(out.errorDetail.category, "model_unavailable");
   assert.equal(out.errorDetail.model, "anthropic/claude-sonnet-4-6");
   assert.ok(out.text.startsWith("⚠️ **Modelo no disponible**"));
+});
+
+test("session_concurrency: detects embedded session takeover and Fireworks model", () => {
+  const out = classifyAndRewriteError(FIXTURE_SESSION_TAKEOVER);
+  assert.equal(out.errorDetail.category, "session_concurrency");
+  assert.equal(out.errorDetail.provider, "fireworks");
+  assert.equal(out.errorDetail.model, "fireworks/accounts/fireworks/models/glm-5p2");
+  assert.ok(out.text.startsWith("⚠️ **Turno concurrente en el mismo hilo**"));
 });
 
 test("network: detects connection errors", () => {

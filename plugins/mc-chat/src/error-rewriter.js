@@ -65,6 +65,12 @@ const CLASSIFIERS = [
     hint: "Intentá nuevamente o cambiá de modelo.",
   },
   {
+    category: "session_concurrency",
+    regex: /EmbeddedAttemptSessionTakeoverError|session file changed while embedded prompt lock was released/i,
+    header: "Turno concurrente en el mismo hilo",
+    hint: "Llegó otro mensaje mientras el runtime seguía escribiendo la misma sesión. El gateway serializa estos turnos para evitar que se pisen; reintentá si este turno quedó incompleto.",
+  },
+  {
     category: "auth",
     regex: /no api key|invalid api key|missing api key|\b401\b|unauthor(ised|ized)/i,
     header: "Credenciales no configuradas",
@@ -97,6 +103,7 @@ function extractProvider(text) {
   if (/\bcodex\/[a-zA-Z0-9.\-]+/i.test(text)) return "openai-codex";
   if (/\banthropic\/[a-zA-Z0-9.\-]+/i.test(text)) return "anthropic";
   if (/\bopenai\/[a-zA-Z0-9.\-]+/i.test(text)) return "openai";
+  if (/\bfireworks\/[a-zA-Z0-9./\-]+/i.test(text)) return "fireworks";
   if (/\bbedrock\/[a-zA-Z0-9.\-]+/i.test(text)) return "bedrock";
   return undefined;
 }
@@ -107,7 +114,7 @@ function extractAccount(text) {
 }
 
 function extractModel(text) {
-  const m = text.match(/\b(?:codex|openai|anthropic|bedrock)\/[a-zA-Z0-9.\-]+/);
+  const m = text.match(/\b(?:codex|openai|anthropic|fireworks|bedrock)\/[a-zA-Z0-9./\-]+/);
   return m ? m[0] : undefined;
 }
 

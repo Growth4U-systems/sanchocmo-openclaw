@@ -416,7 +416,7 @@ defaults=[
         'cost':{'input':0,'output':0,'cacheRead':0,'cacheWrite':0},
     },
 ]
-for k,v in (('baseUrl','https://api.fireworks.ai/inference/v1'),('api','openai-completions')):
+for k,v in (('baseUrl','https://api.fireworks.ai/inference/v1'),('api','openai-completions'),('timeoutSeconds',300)):
     if not p.get(k):
         p[k]=v
         changed=True

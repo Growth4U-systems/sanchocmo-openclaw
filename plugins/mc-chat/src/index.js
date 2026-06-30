@@ -21,6 +21,12 @@ import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } f
 import { parseDelegateMarkers, slugForThread } from "./delegate-marker.js";
 import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
+import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
+import {
+  enqueueSessionDispatch,
+  hasActiveSessionDispatch,
+  isStopCommand,
+} from "./session-dispatch-state.js";
 
 function normalizeOpenAiAuthMode(mode) {
   if (typeof mode !== "string") return null;
@@ -216,6 +222,16 @@ export default defineChannelPluginEntry({
 
         logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId} agent=${requestedAgent}: ${text.slice(0, 80)}`);
 
+        if (isStopCommand(text)) {
+          logger.info(`[mc-chat] stop command acknowledged without dispatch thread=${threadId} agent=${requestedAgent}`);
+          res.statusCode = 200;
+          res.end(JSON.stringify({
+            ok: true,
+            message: "Stop acknowledged",
+          }));
+          return true;
+        }
+
         // threadId may already include slug prefix (e.g. "growth4u:self-intelligence")
         const chatId = threadId.startsWith(slug + ':')
           ? `channel:mc-chat:${threadId}`
@@ -344,8 +360,33 @@ export default defineChannelPluginEntry({
           message: "Message dispatched to agent",
         }));
 
+        const queuedBehindActive = hasActiveSessionDispatch(sessionKey);
+        if (queuedBehindActive) {
+          logger.warn(`[mc-chat] inbound queued behind active dispatch session=${sessionKey} thread=${threadId}`);
+          const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
+          const secret = channelCfg?.sharedSecret;
+          fetch(`${mcUrl}/api/chat/webhook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
+            body: JSON.stringify({
+              slug,
+              threadId,
+              role: "status",
+              text: "⏳ Hay un turno en curso; puse tu mensaje en cola.",
+              agent: requestedAgent || "sancho",
+            }),
+          }).catch(() => {});
+        }
+
+        await enqueueSessionDispatch(sessionKey, async ({ queued, waitedMs }) => {
+        if (queued) {
+          logger.warn(`[mc-chat] starting queued dispatch session=${sessionKey} thread=${threadId} waitedMs=${waitedMs}`);
+        }
+
         // Dispatch to agent asynchronously
         let runtimeErrorPosted = false;
+        let visibleReplyPosted = false;
+        const turnStartedAt = Date.now();
         try {
           try {
             const result = sanitizeAgentThinkingHistory(requestedAgent, { home: process.env.OPENCLAW_HOME });
@@ -506,7 +547,7 @@ export default defineChannelPluginEntry({
                     const prior = errorTracker.getRecent(respondingAgent);
                     if (prior) errorDetail = mergeWithPriorCategory(errorDetail, prior);
                   }
-                  await postWithRetry(callbackUrl, {
+                  const posted = await postWithRetry(callbackUrl, {
                     slug,
                     threadId,
                     text: rewritten,
@@ -515,6 +556,10 @@ export default defineChannelPluginEntry({
                     ts: new Date().toISOString(),
                     ...(errorDetail ? { errorDetail } : {}),
                   }, "Bot callback");
+                  if (posted) {
+                    visibleReplyPosted = true;
+                    markVisibleDelivery(slug, threadId);
+                  }
                   // Also relay to Discord if linked (skip if message came from Discord)
                   if (discordLink && _source !== "discord") {
                     try {
@@ -697,12 +742,15 @@ export default defineChannelPluginEntry({
           });
           const deliveredFinal = dispatchResult?.queuedFinal === true || (dispatchResult?.counts?.final || 0) > 0;
           const deliveredBlock = (dispatchResult?.counts?.block || 0) > 0;
-          if (!deliveredFinal && !deliveredBlock && !runtimeErrorPosted) {
+          const deliveredViaChannel = hasRecentVisibleDelivery(slug, threadId, turnStartedAt);
+          if (!deliveredFinal && !deliveredBlock && !visibleReplyPosted && !deliveredViaChannel && !runtimeErrorPosted) {
             logger.warn(`[mc-chat] dispatch completed without visible reply thread=${threadId} result=${JSON.stringify(dispatchResult || {})}`);
             await postRuntimeError(
               "El runtime terminó sin devolver respuesta visible. Esto suele pasar cuando el proveedor/modelo falla antes de generar texto o cuando la sesión quedó obsoleta tras un cambio de modelo.",
               requestedAgent || "sancho",
             );
+          } else if (!deliveredFinal && !deliveredBlock && !runtimeErrorPosted) {
+            logger.info(`[mc-chat] suppressing empty-dispatch fallback thread=${threadId} visibleReplyPosted=${visibleReplyPosted} deliveredViaChannel=${deliveredViaChannel} result=${JSON.stringify(dispatchResult || {})}`);
           }
         } catch (err) {
           logger.error(`[mc-chat] Dispatch error: ${err?.message}`);
@@ -734,6 +782,7 @@ export default defineChannelPluginEntry({
             }).catch(() => {});
           } catch {}
         }
+        }).promise;
 
         return true;
       },
