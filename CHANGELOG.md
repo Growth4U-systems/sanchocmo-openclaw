@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.9](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.8...v0.15.9) (2026-06-30)
+
+
+### Bug Fixes
+
+* **metrics:** SAN-379 pixel-perfect outbound and partnerships surfaces ([b57b16e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b57b16e8303ed1ef051c38833cee9f248fcf9786))
+
 ## [0.15.8](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.7...v0.15.8) (2026-06-30)
 
 
