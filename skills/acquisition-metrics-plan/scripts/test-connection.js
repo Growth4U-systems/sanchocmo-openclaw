@@ -241,6 +241,32 @@ const TESTERS = {
     }
   },
 
+  async firecrawl(config, env, slug) {
+    const apiKey = env[`${slug}_FIRECRAWL_API_KEY`] || env.FIRECRAWL_API_KEY;
+    if (!apiKey) return { ok: false, error: `Env var ${slug}_FIRECRAWL_API_KEY not set` };
+
+    try {
+      const res = await httpRequest(
+        'https://api.firecrawl.dev/v1/scrape',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: 'https://example.com' }),
+        }
+      );
+      if (res.status === 200) return { ok: true, detail: 'Firecrawl scrape test OK' };
+      if (res.status === 401) return { ok: false, error: 'Invalid Firecrawl API key (HTTP 401)' };
+      if (res.status === 402) return { ok: false, error: 'Firecrawl account has no credits or billing is required (HTTP 402)' };
+      if (res.status === 429) return { ok: false, error: 'Firecrawl rate limit exceeded (HTTP 429)' };
+      return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   async notion(config, env, slug) {
     const token = env[`${slug}_NOTION_API_KEY`];
     if (!token) return { ok: false, error: `Env var ${slug}_NOTION_API_KEY not set` };
