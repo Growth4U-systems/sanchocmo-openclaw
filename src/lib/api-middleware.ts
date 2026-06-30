@@ -35,6 +35,15 @@ export function canAccessSlug(ctx: RequestContext | undefined, slug: string): bo
   return false;
 }
 
+function isLocalDashboardBypass(req: NextApiRequest): boolean {
+  const host = String(req.headers.host ?? "").split(":")[0];
+  return (
+    process.env.NODE_ENV !== "production" &&
+    process.env.LOCAL_DASHBOARD_BYPASS === "1" &&
+    (host === "localhost" || host === "127.0.0.1" || host === "::1")
+  );
+}
+
 // Attach context to request
 declare module "next" {
   interface NextApiRequest {
@@ -133,6 +142,16 @@ export function withSlugAuth(handler: ApiHandler): ApiHandler {
  * - x-admin-token header
  */
 async function resolveAuth(req: NextApiRequest, res: NextApiResponse): Promise<RequestContext> {
+  if (isLocalDashboardBypass(req)) {
+    return {
+      isAdmin: true,
+      clientSlug: null,
+      allowedSlugs: null,
+      adminToken: null,
+      portalClient: null,
+    };
+  }
+
   const { loadClientsData } = await import("@/lib/data/clients");
   const data = loadClientsData();
   const adminToken = data.adminToken || process.env.MC_ADMIN_TOKEN || null;
