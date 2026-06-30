@@ -90,6 +90,21 @@ export interface MetricKpiReadModelValue {
   rangeTo: string;
   definitionVersion: number | null;
   computedAt: string;
+  comparison: MetricKpiComparison | null;
+}
+
+export interface MetricKpiComparison {
+  previousRange: {
+    from: string;
+    to: string;
+  };
+  previousValue: number | null;
+  previousDisplayValue: string;
+  absoluteDelta: number | null;
+  relativeDelta: number | null;
+  displayDelta: string | null;
+  direction: "up" | "down" | "flat" | null;
+  sentiment: "positive" | "negative" | "neutral" | null;
 }
 
 export interface MetricKpiReadModelRun {
@@ -180,6 +195,25 @@ export function resolveMetricKpiReadRange(
     key,
     from: isoDay(new Date(start)),
     to: isoDay(new Date(end)),
+  };
+}
+
+function utcDay(value: string): number {
+  const [year, month, day] = value.split("-").map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+export function resolvePreviousMetricKpiRange(
+  range: NonNullable<MetricKpiReadModel["requestedRange"]>,
+): { from: string; to: string } {
+  const from = utcDay(range.from);
+  const to = utcDay(range.to);
+  const days = Math.max(1, Math.round((to - from) / DAY_MS) + 1);
+  const previousTo = from - DAY_MS;
+  const previousFrom = previousTo - (days - 1) * DAY_MS;
+  return {
+    from: isoDay(new Date(previousFrom)),
+    to: isoDay(new Date(previousTo)),
   };
 }
 
@@ -326,7 +360,114 @@ export function toMetricKpiReadModelValue(row: MetricKpiValueRow): MetricKpiRead
     rangeTo: row.rangeTo,
     definitionVersion: row.definitionVersion,
     computedAt: dateToString(row.computedAt) ?? "",
+    comparison: null,
   };
+}
+
+function formatDeltaNumber(value: number): string {
+  const abs = Math.abs(value);
+  const formatted = new Intl.NumberFormat("es-ES", {
+    maximumFractionDigits: abs < 10 && !Number.isInteger(abs) ? 1 : 0,
+  }).format(abs);
+  return `${value > 0 ? "+" : value < 0 ? "-" : ""}${formatted}`;
+}
+
+function formatRelativeDelta(value: number): string {
+  const pct = value * 100;
+  const abs = Math.abs(pct);
+  const formatted = new Intl.NumberFormat("es-ES", {
+    maximumFractionDigits: abs < 10 ? 1 : 0,
+  }).format(abs);
+  return `${pct > 0 ? "+" : pct < 0 ? "-" : ""}${formatted}%`;
+}
+
+function lowerIsBetter(value: MetricKpiReadModelValue): boolean {
+  const haystack = normalizeComparable(
+    `${value.kpiId} ${value.label} ${value.metricName ?? ""} ${value.unit ?? ""}`,
+  );
+  return /\b(cac|cpa|cpc|cost|coste|position|posicion|lost|perdida|bounce|rebote|lcp|cls|inp|latency|latencia)\b/.test(haystack);
+}
+
+function buildComparison(
+  current: MetricKpiReadModelValue,
+  previous: MetricKpiReadModelValue | undefined,
+  previousRange: { from: string; to: string },
+): MetricKpiComparison | null {
+  if (!previous) {
+    return {
+      previousRange,
+      previousValue: null,
+      previousDisplayValue: "-",
+      absoluteDelta: null,
+      relativeDelta: null,
+      displayDelta: null,
+      direction: null,
+      sentiment: null,
+    };
+  }
+
+  const currentValue = current.value;
+  const previousValue = previous.value;
+  const hasDelta =
+    currentValue != null &&
+    previousValue != null &&
+    Number.isFinite(currentValue) &&
+    Number.isFinite(previousValue);
+  if (!hasDelta) {
+    return {
+      previousRange,
+      previousValue,
+      previousDisplayValue: previous.displayValue,
+      absoluteDelta: null,
+      relativeDelta: null,
+      displayDelta: null,
+      direction: null,
+      sentiment: null,
+    };
+  }
+
+  const absoluteDelta = currentValue - previousValue;
+  const relativeDelta = previousValue !== 0
+    ? absoluteDelta / Math.abs(previousValue)
+    : null;
+  const direction = Math.abs(absoluteDelta) < 1e-9
+    ? "flat"
+    : absoluteDelta > 0
+      ? "up"
+      : "down";
+  const sentiment = direction === "flat"
+    ? "neutral"
+    : lowerIsBetter(current)
+      ? direction === "down" ? "positive" : "negative"
+      : direction === "up" ? "positive" : "negative";
+  const displayDelta = current.unit === "%"
+    ? `${formatDeltaNumber(absoluteDelta)} pp`
+    : relativeDelta != null
+      ? formatRelativeDelta(relativeDelta)
+      : formatDeltaNumber(absoluteDelta);
+
+  return {
+    previousRange,
+    previousValue,
+    previousDisplayValue: previous.displayValue,
+    absoluteDelta,
+    relativeDelta,
+    displayDelta,
+    direction,
+    sentiment,
+  };
+}
+
+export function attachMetricKpiComparisons(
+  values: MetricKpiReadModelValue[],
+  previousValues: MetricKpiReadModelValue[],
+  previousRange: { from: string; to: string },
+): MetricKpiReadModelValue[] {
+  const previousByKpi = new Map(previousValues.map((value) => [value.kpiId, value]));
+  return values.map((value) => ({
+    ...value,
+    comparison: buildComparison(value, previousByKpi.get(value.kpiId), previousRange),
+  }));
 }
 
 function normalizeComparable(value?: string | null): string {
@@ -474,7 +615,29 @@ export async function getMetricKpiReadModel(
     runId: opts.runId ?? run?.id,
     surface: opts.surface ?? undefined,
   });
-  const values = result.values.map(toMetricKpiReadModelValue);
+  let values = result.values.map(toMetricKpiReadModelValue);
+
+  if (requestedRange && !opts.runId) {
+    const previousRange = resolvePreviousMetricKpiRange(requestedRange);
+    const previousRun = await findMetricKpiRunForRange(slug, {
+      from: previousRange.from,
+      to: previousRange.to,
+      statuses: ["ok"],
+      definitionVersion: METRIC_KPI_DEFINITION_VERSION,
+    });
+    if (previousRun) {
+      const previousResult = await getMetricKpiValues(slug, {
+        dashboardBlock: opts.dashboardBlock ?? undefined,
+        runId: previousRun.id,
+        surface: opts.surface ?? undefined,
+      });
+      values = attachMetricKpiComparisons(
+        values,
+        previousResult.values.map(toMetricKpiReadModelValue),
+        previousRange,
+      );
+    }
+  }
 
   return {
     configured: result.configured,

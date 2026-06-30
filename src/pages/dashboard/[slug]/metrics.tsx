@@ -31,7 +31,6 @@ import {
   SURFACE_DETAIL_CONFIGS,
   type MetricDashboardTab,
   type MetricDataState,
-  type MetricQualityStatus,
 } from "@/lib/metrics/dashboard-view-model";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { cn } from "@/lib/utils";
@@ -722,36 +721,389 @@ function SurfaceDetailView({
       </Panel>
 
       <Panel>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h3 className="font-heading text-[16px] font-bold text-navy">
-              KPIs directos
-            </h3>
-          </div>
-          <MetricQualityBadge
-            status={surfaceKpis.length ? asQualityStatus(kpiData?.summary.qualityStatus) : "missing"}
-            source="KPIs calculados"
-          />
-        </div>
-        {surfaceKpis.length ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {surfaceKpis.slice(0, 8).map((kpi) => (
-              <KpiTile key={kpi.id} kpi={kpi} />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4">
-            <EmptyMetricState
-              title="Sin KPIs directos para esta surface"
-              requiredSource="KPIs calculados"
-              nextAction="El run actual no incluye valores para esta superficie o todavía no se ejecutó para el rango."
-              state={state === "ON" ? "CONECTADO SIN SNAPSHOTS" : state}
-            />
-          </div>
-        )}
+        <SurfaceSpecificView
+          surface={surface}
+          kpis={surfaceKpis}
+          state={state === "ON" ? "CONECTADO SIN SNAPSHOTS" : state}
+        />
       </Panel>
     </div>
   );
+}
+
+function SurfaceSpecificView({
+  surface,
+  kpis,
+  state,
+}: {
+  surface: SurfaceKey;
+  kpis: MetricKpiValue[];
+  state: MetricDataState;
+}) {
+  if (surface === "reputation") return <ReputationKpiSurface kpis={kpis} state={state} />;
+  if (surface === "web") return <WebSeoKpiSurface kpis={kpis} state={state} />;
+  if (surface === "product") return <ProductKpiSurface kpis={kpis} state={state} />;
+  if (surface === "pipeline") return <PipelineKpiSurface kpis={kpis} state={state} />;
+  return (
+    <ProviderKpiSurface
+      title={SURFACE_DETAIL_CONFIGS[surface].label}
+      kpis={kpis}
+      state={state}
+      groups={SURFACE_SOURCE_GROUPS[surface] ?? []}
+    />
+  );
+}
+
+const TRUST_PILLAR_KPIS = [
+  "reputation.borrowed_trust",
+  "reputation.serp_trust",
+  "reputation.brand_assets",
+  "reputation.geo_presence",
+  "reputation.outbound_readiness",
+  "reputation.demand_engine",
+];
+
+function ReputationKpiSurface({
+  kpis,
+  state,
+}: {
+  kpis: MetricKpiValue[];
+  state: MetricDataState;
+}) {
+  const trustCore = findKpi(kpis, ["reputation.trust_score", "trust_score"]);
+  const pillars = TRUST_PILLAR_KPIS
+    .map((id) => findKpi(kpis, [id]))
+    .filter((kpi): kpi is MetricKpiValue => Boolean(kpi));
+
+  if (!trustCore && !pillars.length) {
+    return <SurfaceEmpty title="Trust Core sin datos" state={state} />;
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+        <div className="rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-4 shadow-pop-xs">
+          <div className="font-heading text-[11px] font-bold uppercase text-[var(--sc-fg-muted)]">
+            Trust Core Global
+          </div>
+          <div className="mt-2 font-heading text-[44px] font-bold leading-none text-navy">
+            {trustCore?.displayValue ?? "-"}
+          </div>
+          <div className="mt-2">
+            {trustCore ? <ComparisonHint kpi={trustCore} /> : null}
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {pillars.map((kpi) => (
+            <KpiTile key={kpi.id} kpi={kpi} tone="paper" />
+          ))}
+        </div>
+      </div>
+      <KpiComparisonTable kpis={[...(trustCore ? [trustCore] : []), ...pillars]} />
+    </div>
+  );
+}
+
+function WebSeoKpiSurface({
+  kpis,
+  state,
+}: {
+  kpis: MetricKpiValue[];
+  state: MetricDataState;
+}) {
+  const headline = [
+    "web.sessions",
+    "web.gsc_clicks",
+    "web.gsc_impressions",
+    "web.gsc_ctr",
+    "web.gsc_position",
+    "web.pagespeed_mobile",
+    "web.pagespeed_desktop",
+    "web.conversions",
+  ]
+    .map((id) => findKpi(kpis, [id]))
+    .filter((kpi): kpi is MetricKpiValue => Boolean(kpi));
+
+  return (
+    <div className="space-y-5">
+      {headline.length ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {headline.map((kpi) => (
+            <KpiTile key={kpi.id} kpi={kpi} />
+          ))}
+        </div>
+      ) : (
+        <SurfaceEmpty title="Web SEO sin datos" state={state} />
+      )}
+      <div className="grid gap-4 xl:grid-cols-3">
+        <SourceKpiBlock title="Google Analytics 4" kpis={kpisForSources(kpis, ["ga4"])} state={state} />
+        <SourceKpiBlock title="Search Console" kpis={kpisForSources(kpis, ["gsc"])} state={state} />
+        <SourceKpiBlock title="PageSpeed" kpis={kpisForSources(kpis, ["pagespeed"])} state={state} />
+      </div>
+      <KpiComparisonTable kpis={kpis} />
+    </div>
+  );
+}
+
+function ProductKpiSurface({
+  kpis,
+  state,
+}: {
+  kpis: MetricKpiValue[];
+  state: MetricDataState;
+}) {
+  const pageviews = findKpi(kpis, ["product.pageviews", "pageviews"]);
+  const activation = findKpi(kpis, ["product.activation_events", "activation_events"]);
+  const activationRate = findKpi(kpis, ["product.activation_rate", "activation_rate"]);
+  const northStar = findKpi(kpis, ["product.north_star_weekly", "north_star_weekly"]);
+  const main = [pageviews, activation, activationRate, northStar]
+    .filter((kpi): kpi is MetricKpiValue => Boolean(kpi));
+
+  return (
+    <div className="space-y-5">
+      {main.length ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {main.map((kpi) => <KpiTile key={kpi.id} kpi={kpi} />)}
+        </div>
+      ) : (
+        <SurfaceEmpty title="Producto sin datos de PostHog" state={state} />
+      )}
+      <SimpleStepPanel
+        title="Funnel producto"
+        steps={[
+          pageviews && { label: "Pageviews", kpi: pageviews },
+          activation && { label: "Activación", kpi: activation },
+          northStar && { label: "North Star producto", kpi: northStar },
+        ].filter((step): step is { label: string; kpi: MetricKpiValue } => Boolean(step))}
+        state={state}
+      />
+      <KpiComparisonTable kpis={kpis} />
+    </div>
+  );
+}
+
+function PipelineKpiSurface({
+  kpis,
+  state,
+}: {
+  kpis: MetricKpiValue[];
+  state: MetricDataState;
+}) {
+  const contacts = findKpi(kpis, ["pipeline.ghl.contacts", "totalContacts"]);
+  const opportunities = findKpi(kpis, ["pipeline.ghl.opportunities", "totalOpportunities"]);
+  const appointments = findKpi(kpis, ["pipeline.ghl.appointments", "appointments"]);
+  const pipelineValue = findKpi(kpis, ["pipeline.ghl.pipeline_value", "pipelineValue"]);
+  const main = [contacts, opportunities, appointments, pipelineValue]
+    .filter((kpi): kpi is MetricKpiValue => Boolean(kpi));
+
+  return (
+    <div className="space-y-5">
+      {main.length ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {main.map((kpi) => <KpiTile key={kpi.id} kpi={kpi} />)}
+        </div>
+      ) : (
+        <SurfaceEmpty title="Pipeline sin datos de GHL" state={state} />
+      )}
+      <SimpleStepPanel
+        title="Etapas CRM"
+        steps={[
+          contacts && { label: "Contactos", kpi: contacts },
+          opportunities && { label: "Oportunidades", kpi: opportunities },
+          appointments && { label: "Reuniones", kpi: appointments },
+          pipelineValue && { label: "Pipeline", kpi: pipelineValue },
+        ].filter((step): step is { label: string; kpi: MetricKpiValue } => Boolean(step))}
+        state={state}
+      />
+      <KpiComparisonTable kpis={kpis} />
+    </div>
+  );
+}
+
+const SURFACE_SOURCE_GROUPS: Partial<Record<SurfaceKey, Array<{ title: string; sources: string[] }>>> = {
+  paid: [
+    { title: "Meta Ads", sources: ["meta_ads", "meta-ads"] },
+    { title: "Google Ads", sources: ["google_ads", "google-ads"] },
+  ],
+  email: [
+    { title: "Instantly", sources: ["instantly"] },
+    { title: "Lemlist", sources: ["lemlist"] },
+  ],
+  partnerships: [
+    { title: "YALC", sources: ["yalc"] },
+    { title: "Creators", sources: ["creators"] },
+  ],
+  social: [
+    { title: "Metricool", sources: ["metricool"] },
+  ],
+};
+
+function ProviderKpiSurface({
+  title,
+  kpis,
+  state,
+  groups,
+}: {
+  title: string;
+  kpis: MetricKpiValue[];
+  state: MetricDataState;
+  groups: Array<{ title: string; sources: string[] }>;
+}) {
+  const ungrouped = groups.length
+    ? kpis.filter((kpi) => !groups.some((group) => kpisForSources([kpi], group.sources).length))
+    : kpis;
+
+  return (
+    <div className="space-y-5">
+      {kpis.length ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {kpis.slice(0, 8).map((kpi) => <KpiTile key={kpi.id} kpi={kpi} />)}
+        </div>
+      ) : (
+        <SurfaceEmpty title={`${title} sin datos`} state={state} />
+      )}
+      {groups.length > 0 && (
+        <div className="grid gap-4 xl:grid-cols-2">
+          {groups.map((group) => (
+            <SourceKpiBlock
+              key={group.title}
+              title={group.title}
+              kpis={kpisForSources(kpis, group.sources)}
+              state={state}
+            />
+          ))}
+          {ungrouped.length > 0 && (
+            <SourceKpiBlock title="Otros" kpis={ungrouped} state={state} />
+          )}
+        </div>
+      )}
+      <KpiComparisonTable kpis={kpis} />
+    </div>
+  );
+}
+
+function SourceKpiBlock({
+  title,
+  kpis,
+  state,
+}: {
+  title: string;
+  kpis: MetricKpiValue[];
+  state: MetricDataState;
+}) {
+  return (
+    <div className="rounded-sc-md border-2 border-ink bg-[var(--sc-paper-3)] p-4 shadow-pop-xs">
+      <h3 className="font-heading text-[14px] font-bold text-navy">{title}</h3>
+      {kpis.length ? (
+        <div className="mt-3 space-y-2">
+          {kpis.slice(0, 6).map((kpi) => (
+            <div key={kpi.id} className="flex items-baseline justify-between gap-3 border-b border-border pb-2 last:border-b-0 last:pb-0">
+              <span className="text-[12px] text-[var(--sc-fg-muted)]">{kpi.label}</span>
+              <span className="text-right font-heading text-[14px] font-bold text-navy">{kpi.displayValue}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-3">
+          <SurfaceEmpty title={`${title} sin datos`} state={state} compact />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SimpleStepPanel({
+  title,
+  steps,
+  state,
+}: {
+  title: string;
+  steps: Array<{ label: string; kpi: MetricKpiValue }>;
+  state: MetricDataState;
+}) {
+  if (!steps.length) return <SurfaceEmpty title={title} state={state} />;
+  const max = Math.max(...steps.map((step) => step.kpi.value ?? 0), 1);
+  return (
+    <div className="rounded-sc-md border-2 border-ink bg-card p-4 shadow-pop-xs">
+      <h3 className="font-heading text-[14px] font-bold text-navy">{title}</h3>
+      <div className="mt-3 space-y-3">
+        {steps.map((step) => {
+          const value = step.kpi.value ?? 0;
+          return (
+            <div key={step.kpi.id}>
+              <div className="flex items-baseline justify-between gap-3 text-[12px]">
+                <span className="font-heading font-bold text-navy">{step.label}</span>
+                <span className="font-heading font-bold">{step.kpi.displayValue}</span>
+              </div>
+              <div className="mt-1 h-2 overflow-hidden rounded-sc-pill border border-ink bg-aged">
+                <div
+                  className="h-full bg-navy"
+                  style={{ width: `${Math.max(4, Math.round((value / max) * 100))}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function KpiComparisonTable({ kpis }: { kpis: MetricKpiValue[] }) {
+  if (!kpis.length) return null;
+  return (
+    <div>
+      <h3 className="mb-3 font-heading text-[15px] font-bold text-navy">
+        Comparación del periodo
+      </h3>
+      <BreakdownTable
+        columns={["Métrica", "Actual", "Periodo anterior", "Δ"]}
+        rows={kpis.map((kpi) => ({
+          key: kpi.id,
+          cells: [
+            kpi.label,
+            <strong key={`${kpi.id}-current`} className="font-heading text-navy">{kpi.displayValue}</strong>,
+            kpi.comparison?.previousDisplayValue ?? "-",
+            <ComparisonHint key={`${kpi.id}-delta`} kpi={kpi} />,
+          ],
+        }))}
+        empty={null}
+      />
+    </div>
+  );
+}
+
+function SurfaceEmpty({
+  title,
+  state,
+  compact,
+}: {
+  title: string;
+  state: MetricDataState;
+  compact?: boolean;
+}) {
+  return (
+    <EmptyMetricState
+      title={title}
+      requiredSource="KPIs calculados"
+      nextAction="Ejecutar la corrida diaria controlada para esta fuente."
+      state={state}
+      compact={compact}
+    />
+  );
+}
+
+function findKpi(kpis: MetricKpiValue[], candidates: string[]): MetricKpiValue | null {
+  const normalized = new Set(candidates.map(normalizeComparable));
+  return kpis.find((kpi) =>
+    [kpi.kpiId, kpi.metricName ?? "", kpi.label]
+      .some((candidate) => normalized.has(normalizeComparable(candidate)))
+  ) ?? null;
+}
+
+function kpisForSources(kpis: MetricKpiValue[], sources: string[]): MetricKpiValue[] {
+  const normalized = new Set(sources.map(normalizeComparable));
+  return kpis.filter((kpi) => normalized.has(normalizeComparable(kpi.source)));
 }
 
 function ChannelsView({
@@ -1194,13 +1546,32 @@ function KpiTile({
           {kpi.displayValue}
         </span>
       }
+      hint={<ComparisonHint kpi={kpi} />}
       tone={tone}
     />
   );
 }
 
-function asQualityStatus(status?: MetricKpiValue["qualityStatus"] | MetricKpiResult["summary"]["qualityStatus"]): MetricQualityStatus {
-  return status ?? "missing";
+function ComparisonHint({ kpi }: { kpi: MetricKpiValue }) {
+  const comparison = kpi.comparison;
+  if (!comparison?.displayDelta) return null;
+  const tone =
+    comparison.sentiment === "positive"
+      ? "text-sage"
+      : comparison.sentiment === "negative"
+        ? "text-destructive"
+        : "text-[var(--sc-fg-muted)]";
+  const glyph =
+    comparison.direction === "up"
+      ? "▲"
+      : comparison.direction === "down"
+        ? "▼"
+        : "•";
+  return (
+    <span className={cn("font-semibold", tone)}>
+      <span aria-hidden="true">{glyph}</span> {comparison.displayDelta}
+    </span>
+  );
 }
 
 function sourceMetricLabel(kpi?: MetricKpiValue | null): string {

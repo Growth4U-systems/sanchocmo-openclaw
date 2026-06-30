@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import * as mod from "../metric-kpi-read-model";
 
 const {
+  attachMetricKpiComparisons,
   formatMetricKpiValue,
   getMetricKpiReadModelReadThrough,
+  resolvePreviousMetricKpiRange,
   resolveMetricKpiReadRange,
   selectNorthStarKpi,
   toMetricKpiReadModelValue,
@@ -85,6 +87,17 @@ test("resolves dashboard range keys into UTC date windows", () => {
   });
 });
 
+test("resolves the immediately previous equivalent KPI window", () => {
+  assert.deepEqual(resolvePreviousMetricKpiRange({
+    key: "30d",
+    from: "2026-05-30",
+    to: "2026-06-28",
+  }), {
+    from: "2026-04-30",
+    to: "2026-05-29",
+  });
+});
+
 test("formats KPI display values without inventing missing numbers", () => {
   assert.equal(formatMetricKpiValue({ value: null, valueText: null, unit: null }), "-");
   assert.equal(formatMetricKpiValue({ value: 1234, valueText: null, unit: "currency" }), "1234 €");
@@ -123,6 +136,54 @@ test("adapts persisted KPI rows into client-safe read model values", () => {
   assert.equal(value.displayValue, "42");
   assert.equal(value.qualityStatus, "ok");
   assert.equal(value.inputRefs.length, 1);
+  assert.equal(value.comparison, null);
+});
+
+test("attaches period-over-period comparison without changing persisted KPI rows", () => {
+  const currentRow = {
+    id: "value_current",
+    runId: "run_current",
+    slug: "growth4u",
+    kpiId: "web.sessions",
+    label: "Sessions",
+    dashboardBlock: "overview",
+    surface: "web",
+    source: "ga4",
+    metricName: "sessions",
+    value: 120,
+    valueText: null,
+    unit: null,
+    qualityStatus: "ok",
+    provenanceLabel: "ga4.sessions",
+    inputRefs: [],
+    sourceCoverage: 1,
+    rangeFrom: "2026-06-01",
+    rangeTo: "2026-06-30",
+    definitionVersion: 1,
+    computedAt: new Date("2026-06-30T01:00:00.000Z"),
+    createdAt: new Date("2026-06-30T01:00:00.000Z"),
+    updatedAt: new Date("2026-06-30T01:00:00.000Z"),
+  };
+  const current = toMetricKpiReadModelValue(currentRow);
+  const previous = toMetricKpiReadModelValue({
+    ...currentRow,
+    id: "value_previous",
+    runId: "run_previous",
+    value: 100,
+    rangeFrom: "2026-05-02",
+    rangeTo: "2026-05-31",
+  });
+
+  const [withComparison] = attachMetricKpiComparisons(
+    [current],
+    [previous],
+    { from: "2026-05-02", to: "2026-05-31" },
+  );
+
+  assert.equal(withComparison.comparison?.previousValue, 100);
+  assert.equal(withComparison.comparison?.absoluteDelta, 20);
+  assert.equal(withComparison.comparison?.displayDelta, "+20%");
+  assert.equal(withComparison.comparison?.sentiment, "positive");
 });
 
 test("canonicalizes persisted legacy Trust Core labels for the dashboard", () => {
