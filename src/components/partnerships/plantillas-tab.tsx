@@ -50,7 +50,14 @@ function emptyEditor(): EditorState {
     kind: "sequence",
     type: "partnerships",
     description: "",
-    steps: [{ title: "Paso 1", delayDays: 0, subject: "Asunto…", body: "Hola {{handle}}, …" }],
+    steps: [
+      {
+        title: "Paso 1",
+        delayDays: 0,
+        subject: "Asunto…",
+        body: "Hola {{handle}}, …",
+      },
+    ],
   };
 }
 
@@ -77,8 +84,14 @@ export function PlantillasTab({ slug }: { slug: string }) {
     enabled: !!slug,
   });
 
-  const templates = useMemo(() => templatesQuery.data?.templates || [], [templatesQuery.data]);
-  const searches = useMemo(() => searchesQuery.data?.searches || [], [searchesQuery.data]);
+  const templates = useMemo(
+    () => templatesQuery.data?.templates || [],
+    [templatesQuery.data],
+  );
+  const searches = useMemo(
+    () => searchesQuery.data?.searches || [],
+    [searchesQuery.data],
+  );
 
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [docPath, setDocPath] = useState<string | null>(null);
@@ -95,23 +108,35 @@ export function PlantillasTab({ slug }: { slug: string }) {
         steps: state.steps,
       });
       return state.id
-        ? fetchJson(`/api/partnerships/templates/${encodeURIComponent(state.id)}?slug=${encodeURIComponent(slug)}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body,
-          })
-        : fetchJson(`/api/partnerships/templates?slug=${encodeURIComponent(slug)}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body,
-          });
+        ? fetchJson(
+            `/api/partnerships/templates/${encodeURIComponent(state.id)}?slug=${encodeURIComponent(slug)}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body,
+            },
+          )
+        : fetchJson(
+            `/api/partnerships/templates?slug=${encodeURIComponent(slug)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body,
+            },
+          );
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: templatesKey });
       setEditor(null);
-      showToast("💾 Plantilla guardada — las búsquedas nuevas instanciarán esta versión");
+      showToast(
+        "💾 Plantilla guardada — las búsquedas nuevas usarán esta versión",
+      );
     },
-    onError: (error) => showToast(`⚠️ ${error instanceof Error ? error.message : "No se pudo guardar"}`, "warn"),
+    onError: (error) =>
+      showToast(
+        `⚠️ ${error instanceof Error ? error.message : "No se pudo guardar"}`,
+        "warn",
+      ),
   });
 
   function openEditor(template: PartnershipTemplate) {
@@ -127,16 +152,22 @@ export function PlantillasTab({ slug }: { slug: string }) {
 
   function taskIdForTemplate(template: PartnershipTemplate): string | null {
     const owner = searches.find((search) =>
-      (search.templates || []).some((instance) => instance.templateId === template.id),
+      (search.templates || []).some(
+        (instance) => instance.templateId === template.id,
+      ),
     );
     return owner?.taskId ?? null;
   }
 
-  const sections: Array<{ key: "sequence" | "brief"; title: string; sub: string }> = [
+  const sections: Array<{
+    key: "sequence" | "brief";
+    title: string;
+    sub: string;
+  }> = [
     {
       key: "sequence",
       title: "✉️ Secuencias de contacto",
-      sub: "Cadenas de emails con delays — cada búsqueda instancia su copia y el envío rellena las variables por creator.",
+      sub: "Cadenas de emails con delays; cada búsqueda usa su propia copia.",
     },
     {
       key: "brief",
@@ -149,7 +180,7 @@ export function PlantillasTab({ slug }: { slug: string }) {
     <div data-testid="plantillas-tab">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="m-0 text-sm text-muted-foreground">
-          Cada búsqueda instancia sus plantillas — aquí viven los originales.
+          Cada búsqueda usa su propia copia; aquí viven los originales.
         </p>
         <button
           type="button"
@@ -162,40 +193,64 @@ export function PlantillasTab({ slug }: { slug: string }) {
       </div>
 
       {templatesQuery.isLoading ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">Cargando biblioteca…</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          Cargando biblioteca…
+        </p>
       ) : templatesQuery.error ? (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           {String((templatesQuery.error as Error).message)}
         </div>
       ) : (
         sections.map((section) => {
-          const rows = templates.filter((template) => template.kind === section.key);
+          const rows = templates.filter(
+            (template) => template.kind === section.key,
+          );
           return (
-            <section key={section.key} className="mb-8" data-testid={`tpl-section-${section.key}`}>
-              <h2 className="text-sm font-semibold text-foreground">{section.title}</h2>
-              <p className="mb-3 mt-0.5 text-xs text-muted-foreground">{section.sub}</p>
+            <section
+              key={section.key}
+              className="mb-8"
+              data-testid={`tpl-section-${section.key}`}
+            >
+              <h2 className="text-sm font-semibold text-foreground">
+                {section.title}
+              </h2>
+              <p className="mb-3 mt-0.5 text-xs text-muted-foreground">
+                {section.sub}
+              </p>
               <div className="overflow-hidden rounded-xl border border-border bg-card">
                 {rows.length === 0 && (
                   <p className="px-5 py-6 text-center text-sm text-muted-foreground">
-                    Nada por aquí — crea la primera con «＋ Nueva plantilla» o pídesela a Sancho en el chat.
+                    Nada por aquí — crea la primera con «＋ Nueva plantilla» o
+                    pídesela a Sancho en el chat.
                   </p>
                 )}
                 {rows.map((template) => (
                   <div
                     key={template.id}
-                    onClick={() => setDocPath(`brand/${slug}/outreach/templates/${template.id}.md`)}
+                    onClick={() =>
+                      setDocPath(
+                        `brand/${slug}/outreach/templates/${template.id}.md`,
+                      )
+                    }
                     data-template-id={template.id}
                     className={cn(
                       "group flex cursor-pointer items-center gap-3 border-b border-border/60 px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/40",
                       template.type === "b2b" && "opacity-60 hover:opacity-90",
                     )}
                   >
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-muted/40 text-lg" aria-hidden>
+                    <div
+                      className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-muted/40 text-lg"
+                      aria-hidden
+                    >
                       {template.kind === "sequence" ? "✉️" : "📝"}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-bold text-foreground">{template.name}</div>
-                      <div className="truncate text-xs text-muted-foreground">{template.description}</div>
+                      <div className="truncate text-sm font-bold text-foreground">
+                        {template.name}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {template.description}
+                      </div>
                     </div>
                     <span
                       className={cn(
@@ -210,7 +265,10 @@ export function PlantillasTab({ slug }: { slug: string }) {
                     <span className="hidden w-28 shrink-0 text-right text-[11px] text-muted-foreground sm:block">
                       ✎{" "}
                       {template.updatedAt
-                        ? new Date(template.updatedAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })
+                        ? new Date(template.updatedAt).toLocaleDateString(
+                            "es-ES",
+                            { day: "2-digit", month: "short" },
+                          )
                         : "—"}
                     </span>
                     {/* Fila de acciones estilo Brand Brain (file-tree.tsx) */}
@@ -230,7 +288,12 @@ export function PlantillasTab({ slug }: { slug: string }) {
                       <button
                         type="button"
                         title="Chat con Sancho sobre esta plantilla"
-                        onClick={() => openChat(slug, buildOutreachTemplateThread(slug, template))}
+                        onClick={() =>
+                          openChat(
+                            slug,
+                            buildOutreachTemplateThread(slug, template),
+                          )
+                        }
                         className="grid h-8 w-8 place-items-center rounded-md border border-border bg-transparent text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         data-action="open-chat"
                       >
@@ -241,9 +304,15 @@ export function PlantillasTab({ slug }: { slug: string }) {
                         return (
                           <button
                             type="button"
-                            title={ownerTaskId ? "Abrir la tarea de la búsqueda que la instancia" : "Aún ninguna búsqueda usa esta plantilla — asígnala desde Encuentra"}
+                            title={
+                              ownerTaskId
+                                ? "Abrir tarea asociada"
+                                : "Sin búsqueda asociada"
+                            }
                             disabled={!ownerTaskId}
-                            onClick={() => ownerTaskId && setTaskId(ownerTaskId)}
+                            onClick={() =>
+                              ownerTaskId && setTaskId(ownerTaskId)
+                            }
                             className="grid h-8 w-8 place-items-center rounded-md border border-border bg-transparent text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
                             data-action="goto-task"
                           >
@@ -261,16 +330,20 @@ export function PlantillasTab({ slug }: { slug: string }) {
       )}
 
       <p className="text-[11px] text-muted-foreground">
-        * Las plantillas se comportan como los documentos de Brand Brain — clic en la línea abre el
-        documento renderizado (y dentro, «✏️ Editar secuencia») · ⬇️ descarga el .md · 💬 chat con
-        Sancho · 📋 abre la tarea de la búsqueda que la instancia.
+        Clic en una plantilla para verla o editarla.
       </p>
 
       {/* ── Editor slideover ── */}
       <SlideOver
         open={!!editor}
         onClose={() => setEditor(null)}
-        title={editor?.id ? (editor.kind === "brief" ? "✏️ Editar brief" : "✏️ Editar secuencia") : "✏️ Nueva plantilla"}
+        title={
+          editor?.id
+            ? editor.kind === "brief"
+              ? "✏️ Editar brief"
+              : "✏️ Editar secuencia"
+            : "✏️ Nueva plantilla"
+        }
         width="w-[560px] max-w-[94vw]"
       >
         {editor && (
@@ -284,29 +357,34 @@ export function PlantillasTab({ slug }: { slug: string }) {
       </SlideOver>
 
       {/* ── Doc renderizado (clic en la línea) + «✏️ Editar secuencia» dentro ── */}
-      {docPath && (() => {
-        const openId = docPath.split("/").pop()?.replace(/\.md$/, "") ?? "";
-        const tpl = templates.find((t) => t.id === openId) ?? null;
-        return (
-          <DocSlideOver
-            slug={slug}
-            docPath={docPath}
-            onClose={() => setDocPath(null)}
-            headerAction={
-              tpl ? (
-                <button
-                  type="button"
-                  onClick={() => { setDocPath(null); openEditor(tpl); }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  data-action="edit-structured"
-                >
-                  ✏️ {tpl.kind === "brief" ? "Editar brief" : "Editar secuencia"}
-                </button>
-              ) : null
-            }
-          />
-        );
-      })()}
+      {docPath &&
+        (() => {
+          const openId = docPath.split("/").pop()?.replace(/\.md$/, "") ?? "";
+          const tpl = templates.find((t) => t.id === openId) ?? null;
+          return (
+            <DocSlideOver
+              slug={slug}
+              docPath={docPath}
+              onClose={() => setDocPath(null)}
+              headerAction={
+                tpl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDocPath(null);
+                      openEditor(tpl);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    data-action="edit-structured"
+                  >
+                    ✏️{" "}
+                    {tpl.kind === "brief" ? "Editar brief" : "Editar secuencia"}
+                  </button>
+                ) : null
+              }
+            />
+          );
+        })()}
 
       {taskId && (
         <TaskSlideOver
@@ -314,7 +392,10 @@ export function PlantillasTab({ slug }: { slug: string }) {
           projectId={null}
           taskId={taskId}
           onClose={() => setTaskId(null)}
-          onOpenDoc={(p) => { setTaskId(null); setDocPath(p); }}
+          onOpenDoc={(p) => {
+            setTaskId(null);
+            setDocPath(p);
+          }}
         />
       )}
 

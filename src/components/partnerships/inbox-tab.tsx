@@ -31,7 +31,12 @@ import {
   insertAnalysisParagraph,
   negotiationBreakEven,
 } from "@/lib/partnerships/negotiation";
-import { formatFollowers, formatIntEs, formatTier, leadDisplayName } from "@/lib/partnerships/stage-mapping";
+import {
+  formatFollowers,
+  formatIntEs,
+  formatTier,
+  leadDisplayName,
+} from "@/lib/partnerships/stage-mapping";
 import type { PartnershipLead } from "@/lib/partnerships/types";
 import { ToastViewport, useToast } from "./ui";
 import { useModelConfig } from "./use-model-config";
@@ -128,13 +133,20 @@ export function InboxTab({ slug }: { slug: string }) {
     () => inboxConversations(leadsQuery.data?.leads || []),
     [leadsQuery.data],
   );
-  const counts = useMemo(() => inboxStateCounts(leadsQuery.data?.leads || []), [leadsQuery.data]);
+  const counts = useMemo(
+    () => inboxStateCounts(leadsQuery.data?.leads || []),
+    [leadsQuery.data],
+  );
   const visible = useMemo(
-    () => conversations.filter((convo) => !filter || convo.inboxState === filter),
+    () =>
+      conversations.filter((convo) => !filter || convo.inboxState === filter),
     [conversations, filter],
   );
   const selected = useMemo(
-    () => conversations.find((convo) => convo.id === selectedId) || visible[0] || null,
+    () =>
+      conversations.find((convo) => convo.id === selectedId) ||
+      visible[0] ||
+      null,
     [conversations, visible, selectedId],
   );
 
@@ -149,17 +161,25 @@ export function InboxTab({ slug }: { slug: string }) {
   });
 
   const messages = useMemo(
-    () => (threadQuery.data?.messages || []).filter((message) => message.status !== "draft"),
+    () =>
+      (threadQuery.data?.messages || []).filter(
+        (message) => message.status !== "draft",
+      ),
     [threadQuery.data],
   );
   const draftMessage = useMemo(
-    () => (threadQuery.data?.messages || []).find((message) => message.status === "draft") || null,
+    () =>
+      (threadQuery.data?.messages || []).find(
+        (message) => message.status === "draft",
+      ) || null,
     [threadQuery.data],
   );
 
   // ── negotiation-assist: precio en la última reply entrante ──
   const lastIncoming = useMemo(
-    () => [...messages].reverse().find((message) => message.direction === "in") || null,
+    () =>
+      [...messages].reverse().find((message) => message.direction === "in") ||
+      null,
     [messages],
   );
   const detectedPrice = useMemo(
@@ -197,16 +217,27 @@ export function InboxTab({ slug }: { slug: string }) {
 
   const saveDraft = useMutation({
     mutationFn: () =>
-      fetchJson(`/api/yalc/leads/${encodeURIComponent(selected!.id)}/messages?slug=${encodeURIComponent(slug)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ direction: "out", body: draft, status: "draft" }),
-      }),
+      fetchJson(
+        `/api/yalc/leads/${encodeURIComponent(selected!.id)}/messages?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            direction: "out",
+            body: draft,
+            status: "draft",
+          }),
+        },
+      ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: threadKey });
       showToast("✓ borrador guardado");
     },
-    onError: (error) => showToast(`⚠️ ${error instanceof Error ? error.message : "error"}`, "warn"),
+    onError: (error) =>
+      showToast(
+        `⚠️ ${error instanceof Error ? error.message : "error"}`,
+        "warn",
+      ),
   });
 
   // ── Enviar → gate (human-in-the-loop) ──
@@ -221,27 +252,41 @@ export function InboxTab({ slug }: { slug: string }) {
 
   const createGate = useMutation({
     mutationFn: () =>
-      fetchJson<{ gates: Array<{ runId: string; prompt: string; dryRun: boolean }> }>(
-        `/api/partnerships/contact?slug=${encodeURIComponent(slug)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            leads: [{ id: selected!.id, campaignId: selected!.campaignId }],
-            sequence: [{ subject: `Re: colaboración con ${leadDisplayName(selected!)}`, body: draft, delayDays: 0 }],
-            sequenceName: `Respuesta a ${leadDisplayName(selected!)}`,
-          }),
-        },
-      ),
+      fetchJson<{
+        gates: Array<{ runId: string; prompt: string; dryRun: boolean }>;
+      }>(`/api/partnerships/contact?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leads: [{ id: selected!.id, campaignId: selected!.campaignId }],
+          sequence: [
+            {
+              subject: `Re: colaboración con ${leadDisplayName(selected!)}`,
+              body: draft,
+              delayDays: 0,
+            },
+          ],
+          sequenceName: `Respuesta a ${leadDisplayName(selected!)}`,
+        }),
+      }),
     onSuccess: (data) => {
       const first = data.gates?.[0];
       if (!first) {
-        showToast("⚠️ Yalc no devolvió el gate", "warn");
+        showToast("⚠️ No se pudo preparar la aprobación", "warn");
         return;
       }
-      setGate({ runId: first.runId, prompt: first.prompt, dryRun: first.dryRun, preview: draft });
+      setGate({
+        runId: first.runId,
+        prompt: first.prompt,
+        dryRun: first.dryRun,
+        preview: draft,
+      });
     },
-    onError: (error) => showToast(`⚠️ ${error instanceof Error ? error.message : "error"}`, "warn"),
+    onError: (error) =>
+      showToast(
+        `⚠️ ${error instanceof Error ? error.message : "error"}`,
+        "warn",
+      ),
   });
 
   const approveGate = useMutation({
@@ -256,11 +301,19 @@ export function InboxTab({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey: threadKey });
       void queryClient.invalidateQueries({ queryKey: leadsKey });
     },
-    onError: (error) => showToast(`⚠️ ${error instanceof Error ? error.message : "error"}`, "warn"),
+    onError: (error) =>
+      showToast(
+        `⚠️ ${error instanceof Error ? error.message : "error"}`,
+        "warn",
+      ),
   });
 
   if (leadsQuery.isLoading) {
-    return <p className="py-12 text-center text-sm text-muted-foreground">Cargando conversaciones…</p>;
+    return (
+      <p className="py-12 text-center text-sm text-muted-foreground">
+        Cargando conversaciones…
+      </p>
+    );
   }
 
   return (
@@ -268,7 +321,10 @@ export function InboxTab({ slug }: { slug: string }) {
       <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
         {/* ── Lista + chips ── */}
         <div>
-          <div className="mb-3 flex flex-wrap gap-1.5" data-testid="inbox-chips">
+          <div
+            className="mb-3 flex flex-wrap gap-1.5"
+            data-testid="inbox-chips"
+          >
             {INBOX_STATES.map((state) => {
               const count = counts[state.key];
               const active = filter === state.key;
@@ -276,7 +332,7 @@ export function InboxTab({ slug }: { slug: string }) {
                 <button
                   key={state.key}
                   type="button"
-                  title={state.source}
+                  title={state.label}
                   onClick={() => setFilter(active ? null : state.key)}
                   data-state={state.key}
                   className={cn(
@@ -291,7 +347,11 @@ export function InboxTab({ slug }: { slug: string }) {
                   <span
                     className={cn(
                       "ml-1.5 inline-block min-w-[17px] rounded-full px-1 text-center text-[10px]",
-                      active ? "bg-white/20 text-white" : count > 0 ? "bg-border text-foreground" : "bg-muted text-muted-foreground",
+                      active
+                        ? "bg-white/20 text-white"
+                        : count > 0
+                          ? "bg-border text-foreground"
+                          : "bg-muted text-muted-foreground",
                     )}
                   >
                     {count}
@@ -301,15 +361,23 @@ export function InboxTab({ slug }: { slug: string }) {
             })}
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-border bg-card" data-testid="convo-list">
+          <div
+            className="overflow-hidden rounded-xl border border-border bg-card"
+            data-testid="convo-list"
+          >
             {visible.length === 0 && (
               <p className="px-4 py-7 text-center text-sm text-muted-foreground">
-                Ninguna conversación{filter ? ` en "${INBOX_STATES.find((s) => s.key === filter)?.label}"` : ""}.
-                Sancho está en ello…
+                Ninguna conversación
+                {filter
+                  ? ` en "${INBOX_STATES.find((s) => s.key === filter)?.label}"`
+                  : ""}
+                . Sancho está en ello…
               </p>
             )}
             {visible.map((convo) => {
-              const meta = INBOX_STATES.find((state) => state.key === convo.inboxState)!;
+              const meta = INBOX_STATES.find(
+                (state) => state.key === convo.inboxState,
+              )!;
               const snippet =
                 convo.lastMessage?.direction === "out"
                   ? `Tú: ${convo.lastMessage.body}`
@@ -322,7 +390,8 @@ export function InboxTab({ slug }: { slug: string }) {
                   data-convo-id={convo.id}
                   className={cn(
                     "block w-full border-b border-border/60 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/40",
-                    selected?.id === convo.id && "bg-muted/50 shadow-[inset_2px_0_0_theme(colors.rust)]",
+                    selected?.id === convo.id &&
+                      "bg-muted/50 shadow-[inset_2px_0_0_theme(colors.rust)]",
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -333,7 +402,9 @@ export function InboxTab({ slug }: { slug: string }) {
                       {timeAgo(convo.lastMessage?.createdAt || convo.updatedAt)}
                     </span>
                   </div>
-                  <div className="mt-0.5 truncate text-xs text-muted-foreground">{snippet}</div>
+                  <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {snippet}
+                  </div>
                   <span
                     className={cn(
                       "mt-1.5 inline-block rounded border px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide",
@@ -349,31 +420,46 @@ export function InboxTab({ slug }: { slug: string }) {
         </div>
 
         {/* ── Hilo ── */}
-        <div className="overflow-hidden rounded-xl border border-border bg-card" data-testid="thread-panel">
+        <div
+          className="overflow-hidden rounded-xl border border-border bg-card"
+          data-testid="thread-panel"
+        >
           {!selected ? (
             <div className="px-8 py-14 text-center">
-              <div className="text-base font-semibold text-foreground">Sin conversaciones</div>
+              <div className="text-base font-semibold text-foreground">
+                Sin conversaciones
+              </div>
               <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                Cuando contactes creators (Contactos → Contactar) sus hilos aparecerán aquí; cada
-                respuesta con precio dispara el break-even de Sancho.
+                Cuando contactes creators (Contactos → Contactar) sus hilos
+                aparecerán aquí; cada respuesta con precio dispara el break-even
+                de Sancho.
               </p>
             </div>
           ) : (
             <>
               <header className="flex flex-wrap items-center gap-3 border-b border-border bg-muted/30 px-5 py-3">
-                <div className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-background text-lg" aria-hidden>
+                <div
+                  className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-background text-lg"
+                  aria-hidden
+                >
                   {networkEmoji(selected.network)}
                 </div>
                 <div className="min-w-[180px] flex-1">
-                  <div className="text-[15px] font-semibold leading-tight text-foreground">{leadDisplayName(selected)}</div>
+                  <div className="text-[15px] font-semibold leading-tight text-foreground">
+                    {leadDisplayName(selected)}
+                  </div>
                   <div className="text-[11px] text-muted-foreground">
                     {[
                       selected.network,
                       formatFollowers(selected.followers),
-                      formatTier(selected.tier) && `Tier ${formatTier(selected.tier)}`,
-                      typeof selected.engagementRate === "number" && `ER ${selected.engagementRate.toFixed(1)}%`,
-                      typeof selected.qualityScore === "number" && `Quality ${Math.round(selected.qualityScore)}`,
-                      selected.campaignTitle && `campaña: ${selected.campaignTitle}`,
+                      formatTier(selected.tier) &&
+                        `Tier ${formatTier(selected.tier)}`,
+                      typeof selected.engagementRate === "number" &&
+                        `ER ${selected.engagementRate.toFixed(1)}%`,
+                      typeof selected.qualityScore === "number" &&
+                        `Quality ${Math.round(selected.qualityScore)}`,
+                      selected.campaignTitle &&
+                        `campaña: ${selected.campaignTitle}`,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
@@ -382,42 +468,58 @@ export function InboxTab({ slug }: { slug: string }) {
                 <span
                   className={cn(
                     "rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                    STATE_CHIP_TONES[INBOX_STATES.find((s) => s.key === selected.inboxState)!.tone],
+                    STATE_CHIP_TONES[
+                      INBOX_STATES.find((s) => s.key === selected.inboxState)!
+                        .tone
+                    ],
                   )}
                   data-testid="thread-state"
                 >
-                  {INBOX_STATES.find((s) => s.key === selected.inboxState)!.label}
+                  {
+                    INBOX_STATES.find((s) => s.key === selected.inboxState)!
+                      .label
+                  }
                 </span>
               </header>
 
               <div className="space-y-4 px-5 py-4">
                 {threadQuery.isLoading && (
-                  <p className="py-4 text-center text-sm text-muted-foreground">Cargando hilo…</p>
+                  <p className="py-4 text-center text-sm text-muted-foreground">
+                    Cargando hilo…
+                  </p>
                 )}
                 {!threadQuery.isLoading && messages.length === 0 && (
                   <p className="py-4 text-center text-sm text-muted-foreground">
-                    Sin mensajes todavía — el primer email saldrá al aprobar el gate de contacto.
+                    Sin mensajes todavía — el primer email saldrá al aprobar el
+                    contacto.
                   </p>
                 )}
 
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={cn("flex", message.direction === "out" && "justify-end")}
+                    className={cn(
+                      "flex",
+                      message.direction === "out" && "justify-end",
+                    )}
                     data-direction={message.direction}
                   >
                     <div
                       className={cn(
                         "max-w-[80%] rounded-xl border border-border px-4 py-2.5 text-sm leading-relaxed",
-                        message.direction === "out" ? "rounded-br-sm bg-muted/40" : "rounded-bl-sm bg-background",
+                        message.direction === "out"
+                          ? "rounded-br-sm bg-muted/40"
+                          : "rounded-bl-sm bg-background",
                       )}
                     >
                       <div className="mb-1 text-[10px] text-muted-foreground">
-                        {message.direction === "out" ? "Equipo (vía Sancho)" : leadDisplayName(selected)}
+                        {message.direction === "out"
+                          ? "Equipo (vía Sancho)"
+                          : leadDisplayName(selected)}
                         {" · "}
                         {timeAgo(message.createdAt)}
                         {message.subject ? ` · ${message.subject}` : ""}
-                        {message.status === "dry_run" && " · dry-run"}
+                        {message.status === "dry_run" && " · modo prueba"}
                       </div>
                       <div className="whitespace-pre-wrap">{message.body}</div>
                     </div>
@@ -432,7 +534,9 @@ export function InboxTab({ slug }: { slug: string }) {
                   >
                     <h3 className="flex flex-wrap items-center gap-2 text-sm font-semibold text-rust">
                       🧮 Sancho ha detectado un precio:{" "}
-                      <span data-testid="detected-price">{formatIntEs(fee ?? detectedPrice.amountEur)}€</span>
+                      <span data-testid="detected-price">
+                        {formatIntEs(fee ?? detectedPrice.amountEur)}€
+                      </span>
                     </h3>
 
                     <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-semibold text-muted-foreground">
@@ -443,7 +547,9 @@ export function InboxTab({ slug }: { slug: string }) {
                           min={0}
                           step={50}
                           value={fee ?? 0}
-                          onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
+                          onChange={(e) =>
+                            setFee(parseFloat(e.target.value) || 0)
+                          }
                           className="w-24 rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-rust focus:outline-none"
                           data-testid="panel-fee"
                         />
@@ -452,7 +558,9 @@ export function InboxTab({ slug }: { slug: string }) {
                         Incentivo 🎁
                         <select
                           value={String(multiplier)}
-                          onChange={(e) => setMultiplier(parseFloat(e.target.value) || 1)}
+                          onChange={(e) =>
+                            setMultiplier(parseFloat(e.target.value) || 1)
+                          }
                           className="rounded-md border border-border bg-background px-2 py-1 text-sm focus:border-rust focus:outline-none"
                           data-testid="panel-mult"
                         >
@@ -465,10 +573,18 @@ export function InboxTab({ slug }: { slug: string }) {
                       </label>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-3 gap-2.5" data-testid="panel-cells">
+                    <div
+                      className="mt-3 grid grid-cols-3 gap-2.5"
+                      data-testid="panel-cells"
+                    >
                       <div className="rounded-lg border border-border bg-background p-2.5 text-center">
-                        <div className="font-heading text-xl font-semibold leading-none text-navy" data-testid="panel-necesarias">
-                          {Number.isFinite(breakEven.necesarias) ? formatIntEs(breakEven.necesarias) : "∞"}
+                        <div
+                          className="font-heading text-xl font-semibold leading-none text-navy"
+                          data-testid="panel-necesarias"
+                        >
+                          {Number.isFinite(breakEven.necesarias)
+                            ? formatIntEs(breakEven.necesarias)
+                            : "∞"}
                         </div>
                         <div className="mt-1 text-[9px] text-muted-foreground">
                           conversiones necesarias
@@ -476,7 +592,10 @@ export function InboxTab({ slug }: { slug: string }) {
                         </div>
                       </div>
                       <div className="rounded-lg border border-border bg-background p-2.5 text-center">
-                        <div className="font-heading text-xl font-semibold leading-none text-navy" data-testid="panel-alcanzable">
+                        <div
+                          className="font-heading text-xl font-semibold leading-none text-navy"
+                          data-testid="panel-alcanzable"
+                        >
                           ~{formatIntEs(breakEven.alcanzable)}
                         </div>
                         <div className="mt-1 text-[9px] text-muted-foreground">
@@ -486,8 +605,13 @@ export function InboxTab({ slug }: { slug: string }) {
                         </div>
                       </div>
                       <div className="rounded-lg border border-border bg-background p-2.5 text-center">
-                        <div className="font-heading text-xl font-semibold leading-none text-navy" data-testid="panel-ratio">
-                          {breakEven.ratio === Infinity ? "∞" : `${Math.round(breakEven.ratio * 100)}%`}
+                        <div
+                          className="font-heading text-xl font-semibold leading-none text-navy"
+                          data-testid="panel-ratio"
+                        >
+                          {breakEven.ratio === Infinity
+                            ? "∞"
+                            : `${Math.round(breakEven.ratio * 100)}%`}
                         </div>
                         <div className="mt-1 text-[9px] text-muted-foreground">
                           cobertura del break-even
@@ -499,9 +623,12 @@ export function InboxTab({ slug }: { slug: string }) {
                       <span
                         className={cn(
                           "inline-flex items-center gap-1.5 rounded-md border px-3 py-1 text-sm font-semibold",
-                          breakEven.veredictoColor === "green" && "border-sage/60 bg-sage/10 text-sage",
-                          breakEven.veredictoColor === "amber" && "border-amber-400/60 bg-amber-100 text-amber-900",
-                          breakEven.veredictoColor === "red" && "border-destructive/50 bg-destructive/10 text-destructive",
+                          breakEven.veredictoColor === "green" &&
+                            "border-sage/60 bg-sage/10 text-sage",
+                          breakEven.veredictoColor === "amber" &&
+                            "border-amber-400/60 bg-amber-100 text-amber-900",
+                          breakEven.veredictoColor === "red" &&
+                            "border-destructive/50 bg-destructive/10 text-destructive",
                         )}
                         data-testid="panel-verdict"
                       >
@@ -511,23 +638,29 @@ export function InboxTab({ slug }: { slug: string }) {
                         {breakEven.veredictoLabel}
                       </span>
                     </div>
-                    <p className="mt-2 text-[11px] text-muted-foreground">{breakEven.modelo}</p>
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      {breakEven.modelo}
+                    </p>
 
-                    {breakEven.contraofertaEur !== null && breakEven.contraofertaEur > 0 && (
-                      <div
-                        className="mt-3 rounded-md border border-yellow-300/60 bg-yellow-50/60 px-3 py-2 text-[13px] text-yellow-900"
-                        data-testid="panel-contraoferta"
-                      >
-                        💡 <b>Contraoferta sugerida:</b> {formatIntEs(breakEven.contraofertaEur)}€ —{" "}
-                        {breakEven.contraofertaNota}
-                      </div>
-                    )}
+                    {breakEven.contraofertaEur !== null &&
+                      breakEven.contraofertaEur > 0 && (
+                        <div
+                          className="mt-3 rounded-md border border-yellow-300/60 bg-yellow-50/60 px-3 py-2 text-[13px] text-yellow-900"
+                          data-testid="panel-contraoferta"
+                        >
+                          💡 <b>Contraoferta sugerida:</b>{" "}
+                          {formatIntEs(breakEven.contraofertaEur)}€ —{" "}
+                          {breakEven.contraofertaNota}
+                        </div>
+                      )}
 
                     <div className="mt-3">
                       <button
                         type="button"
                         onClick={() => {
-                          setDraft((prev) => insertAnalysisParagraph(prev, breakEven));
+                          setDraft((prev) =>
+                            insertAnalysisParagraph(prev, breakEven),
+                          );
                           showToast("✓ análisis insertado en el borrador");
                         }}
                         className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-muted"
@@ -540,7 +673,10 @@ export function InboxTab({ slug }: { slug: string }) {
                 )}
 
                 {/* ── Borrador ── */}
-                <div className="rounded-xl border border-dashed border-border bg-background p-3" data-testid="draft-box">
+                <div
+                  className="rounded-xl border border-dashed border-border bg-background p-3"
+                  data-testid="draft-box"
+                >
                   <span className="text-xs font-semibold text-muted-foreground">
                     ✍️ Borrador — respuesta
                   </span>
@@ -559,7 +695,7 @@ export function InboxTab({ slug }: { slug: string }) {
                       className="rounded-lg border-2 border-rust bg-rust px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
                       data-testid="send-draft"
                     >
-                      {createGate.isPending ? "Creando gate…" : "📨 Enviar"}
+                      {createGate.isPending ? "Preparando…" : "📨 Enviar"}
                     </button>
                     <button
                       type="button"
@@ -571,7 +707,7 @@ export function InboxTab({ slug }: { slug: string }) {
                       💾 Guardar
                     </button>
                     <span className="text-[11px] text-muted-foreground">
-                      Enviar abre el gate de aprobación — nada sale sin tu OK (dry-run en dev).
+                      Enviar pasa por aprobación antes de salir.
                     </span>
                   </div>
                 </div>
@@ -584,7 +720,11 @@ export function InboxTab({ slug }: { slug: string }) {
       {/* ── GATE MODAL (GateItem · human-in-the-loop) ── */}
       {gate && (
         <div className="fixed inset-0 z-[600]">
-          <div className="fixed inset-0 bg-black/30" onClick={() => setGate(null)} aria-hidden />
+          <div
+            className="fixed inset-0 bg-black/30"
+            onClick={() => setGate(null)}
+            aria-hidden
+          />
           <div
             role="dialog"
             aria-modal="true"
@@ -593,21 +733,25 @@ export function InboxTab({ slug }: { slug: string }) {
           >
             {!gate.sent ? (
               <>
-                <h2 className="text-lg font-semibold text-foreground">🚦 Aprobar envío</h2>
+                <h2 className="text-lg font-semibold text-foreground">
+                  🚦 Aprobar envío
+                </h2>
                 <span className="mt-1 inline-block rounded border border-rust/50 bg-rust/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rust">
-                  GateItem · requiere humano
+                  Requiere aprobación
                 </span>
                 <div className="mt-3 space-y-1.5 text-sm">
                   <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
                     <b>Para:</b> {selected ? leadDisplayName(selected) : ""}
                     {selected?.email ? ` (${selected.email})` : ""}
                   </div>
+                  {gate.dryRun && (
+                    <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
+                      <b>Modo:</b> prueba
+                    </div>
+                  )}
                   <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
-                    <b>Gate:</b> {gate.runId}
-                    {gate.dryRun && " · dry-run (no saldrá ningún email real)"}
-                  </div>
-                  <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
-                    <b>Acción:</b> {gate.prompt || "Aprobar el envío de la respuesta"}
+                    <b>Acción:</b>{" "}
+                    {gate.prompt || "Aprobar el envío de la respuesta"}
                   </div>
                 </div>
                 <div className="mt-3 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs">
@@ -621,7 +765,9 @@ export function InboxTab({ slug }: { slug: string }) {
                     className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
                     data-testid="approve-gate"
                   >
-                    {approveGate.isPending ? "Aprobando…" : "✅ Aprobar y enviar"}
+                    {approveGate.isPending
+                      ? "Aprobando…"
+                      : "✅ Aprobar y enviar"}
                   </button>
                   <button
                     type="button"
@@ -632,8 +778,7 @@ export function InboxTab({ slug }: { slug: string }) {
                   </button>
                 </div>
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  El gate queda también en el Cockpit (yalc_list_gates) — puedes aprobarlo desde el
-                  chat o desde Claude Code (yalc_approve_gate). Tres superficies, una sola lógica.
+                  La respuesta queda pendiente hasta que apruebes el envío.
                 </p>
               </>
             ) : (
@@ -643,8 +788,8 @@ export function InboxTab({ slug }: { slug: string }) {
                 </span>
                 <p className="mx-auto mt-3 max-w-sm text-sm text-muted-foreground">
                   Sancho ha registrado la respuesta en el hilo
-                  {gate.dryRun ? " (dry-run: sin email real)" : ""} y el estado del creator avanza en
-                  el pipeline.
+                  {gate.dryRun ? " en modo prueba" : ""} y el estado del creator
+                  avanza en el pipeline.
                 </p>
                 <button
                   type="button"

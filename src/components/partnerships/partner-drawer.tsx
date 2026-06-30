@@ -31,12 +31,18 @@ import {
   stageForStatus,
   type StageFilterKey,
 } from "@/lib/partnerships/stage-mapping";
-import type { PartnershipLead, QualityComponentsMap } from "@/lib/partnerships/types";
+import type {
+  PartnershipLead,
+  QualityComponentsMap,
+} from "@/lib/partnerships/types";
 import { NetworkChip, ScoreBar, StageStamp, TierChip } from "./ui";
 import { useModelConfig } from "./use-model-config";
 
 /** Orden + etiquetas del desglose (paridad mockup drawer-partner.html). */
-const COMPONENT_ROWS: Array<{ key: keyof QualityComponentsMap; label: string }> = [
+const COMPONENT_ROWS: Array<{
+  key: keyof QualityComponentsMap;
+  label: string;
+}> = [
   { key: "erVsTier", label: "⚡ ER vs tier" },
   { key: "authenticity", label: "🛡️ Autenticidad" },
   { key: "sectorFit", label: "🎯 Sector fit & track record" },
@@ -48,7 +54,11 @@ interface PartnerDrawerProps {
   slug?: string;
   lead: PartnershipLead | null;
   onClose: () => void;
-  onMove: (lead: PartnershipLead, target: StageFilterKey, note?: string) => void;
+  onMove: (
+    lead: PartnershipLead,
+    target: StageFilterKey,
+    note?: string,
+  ) => void;
   busy?: boolean;
 }
 
@@ -61,7 +71,13 @@ interface DrawerMessage {
   createdAt?: string | null;
 }
 
-export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDrawerProps) {
+export function PartnerDrawer({
+  slug,
+  lead,
+  onClose,
+  onMove,
+  busy,
+}: PartnerDrawerProps) {
   const [expanded, setExpanded] = useState(false);
 
   // SAN-76: la calc del drawer usa la config EFECTIVA del modelo (la de
@@ -82,7 +98,9 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
   });
 
   if (!lead) return null;
-  const threadMessages = (thread.data?.messages || []).filter((m) => m.status !== "draft");
+  const threadMessages = (thread.data?.messages || []).filter(
+    (m) => m.status !== "draft",
+  );
 
   const stage = stageForStatus(lead.lifecycleStatus);
   const band = qualityBand(lead.qualityScore);
@@ -103,13 +121,20 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
           type="button"
           onClick={() => setExpanded((value) => !value)}
           className="rounded-md border border-border px-2.5 py-1 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          title={expanded ? "Volver al panel lateral" : "Expandir a pantalla completa"}
+          title={
+            expanded
+              ? "Volver al panel lateral"
+              : "Expandir a pantalla completa"
+          }
         >
           {expanded ? "⇥ Contraer" : "⤢ Expandir"}
         </button>
       }
     >
-      <div className={cn("space-y-6", expanded && "mx-auto max-w-5xl")} data-testid="partner-drawer">
+      <div
+        className={cn("space-y-6", expanded && "mx-auto max-w-5xl")}
+        data-testid="partner-drawer"
+      >
         {/* Meta del creator */}
         <div className="flex flex-wrap items-center gap-2">
           <NetworkChip network={lead.network} />
@@ -142,7 +167,10 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
                   type="button"
                   disabled={busy}
                   onClick={() => {
-                    const note = window.prompt("Nota del descarte (opcional):", "");
+                    const note = window.prompt(
+                      "Nota del descarte (opcional):",
+                      "",
+                    );
                     if (note === null) return;
                     onMove(lead, DISCARDED_STAGE, note.trim() || undefined);
                   }}
@@ -158,7 +186,7 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
                 disabled={busy}
                 onClick={() => onMove(lead, "Discovered")}
                 className="rounded-md border border-sage/50 bg-sage/10 px-3 py-1.5 text-sm font-semibold text-sage transition-colors hover:bg-sage/15 disabled:opacity-50"
-                title="Los descartes son reversibles: vuelve a Discovered (yalc: Sourced)"
+                title="Los descartes son reversibles"
               >
                 ↩︎ Restaurar a Discovered
               </button>
@@ -168,19 +196,25 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
 
         {/* Quality score — desglose de 5 componentes */}
         <section className="rounded-xl border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold text-foreground">🎯 Quality score — desglose</h3>
+          <h3 className="text-sm font-semibold text-foreground">
+            🎯 Quality score — desglose
+          </h3>
           <div className="mt-3 flex items-start gap-4">
             <div
               className={cn(
                 "flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border font-heading text-3xl",
                 band === "high" && "border-sage/60 bg-sage/15 text-sage",
-                band === "medium" && "border-amber-400/60 bg-yellow-100 text-yellow-800",
-                band === "low" && "border-destructive/50 bg-destructive/10 text-destructive",
+                band === "medium" &&
+                  "border-amber-400/60 bg-yellow-100 text-yellow-800",
+                band === "low" &&
+                  "border-destructive/50 bg-destructive/10 text-destructive",
                 !band && "border-border bg-muted text-muted-foreground",
               )}
               data-testid="quality-total"
             >
-              {typeof lead.qualityScore === "number" ? Math.round(lead.qualityScore) : "—"}
+              {typeof lead.qualityScore === "number"
+                ? Math.round(lead.qualityScore)
+                : "—"}
             </div>
             <div className="min-w-0 flex-1">
               {components ? (
@@ -188,8 +222,14 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
                   {COMPONENT_ROWS.map((row) => {
                     const value = components[row.key];
                     return (
-                      <div key={row.key} className="flex items-center gap-3" data-component={row.key}>
-                        <span className="w-44 shrink-0 text-xs text-muted-foreground">{row.label}</span>
+                      <div
+                        key={row.key}
+                        className="flex items-center gap-3"
+                        data-component={row.key}
+                      >
+                        <span className="w-44 shrink-0 text-xs text-muted-foreground">
+                          {row.label}
+                        </span>
                         {typeof value === "number" ? (
                           <>
                             <ScoreBar value={value} className="flex-1" />
@@ -198,7 +238,9 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
                             </span>
                           </>
                         ) : (
-                          <span className="text-xs text-muted-foreground">sin señal</span>
+                          <span className="text-xs text-muted-foreground">
+                            sin señal
+                          </span>
                         )}
                       </div>
                     );
@@ -206,31 +248,43 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Sin desglose todavía: el quality score con sus 5 componentes lo calcula el
-                  discovery (<code className="rounded bg-muted px-1">qualify-enrich</code>, SAN-79) y se puede pedir vía{" "}
-                  <code className="rounded bg-muted px-1">/api/yalc/qualify</code>.
+                  Sin desglose todavía. Cuando la búsqueda termine de cualificar
+                  al creator, aparecerán aquí las 5 señales del quality score.
                 </p>
               )}
             </div>
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
-            5 señales escaneadas de datos públicos del perfil — en discovery solo se ve calidad (sin precio).
+            5 señales escaneadas de datos públicos del perfil — en discovery
+            solo se ve calidad (sin precio).
           </p>
         </section>
 
         {/* Datos del creator */}
         <section className="rounded-xl border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold text-foreground">👤 Datos del creator</h3>
+          <h3 className="text-sm font-semibold text-foreground">
+            👤 Datos del creator
+          </h3>
           <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
             <DataItem label="Handle" value={lead.handle || "—"} />
             <DataItem label="Red" value={lead.network || "—"} />
-            <DataItem label="Seguidores" value={formatFollowers(lead.followers)} />
+            <DataItem
+              label="Seguidores"
+              value={formatFollowers(lead.followers)}
+            />
             <DataItem
               label="Engagement rate"
-              value={typeof lead.engagementRate === "number" ? `${lead.engagementRate.toFixed(1)}%` : "—"}
+              value={
+                typeof lead.engagementRate === "number"
+                  ? `${lead.engagementRate.toFixed(1)}%`
+                  : "—"
+              }
             />
             <DataItem label="Tier" value={formatTier(lead.tier) || "—"} />
-            <DataItem label="Búsqueda" value={lead.campaignTitle || lead.campaignId} />
+            <DataItem
+              label="Búsqueda"
+              value={lead.campaignTitle || lead.campaignId}
+            />
             <DataItem label="Fuente" value={lead.source || "—"} />
             <DataItem label="Email" value={lead.email || "—"} />
             <DataItem
@@ -248,19 +302,30 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
         <BreakEvenCalc lead={lead} config={modelConfig.data?.config} />
 
         {/* Contact log (placeholder hasta el Inbox de SAN-80) */}
-        <section className="rounded-xl border border-border bg-card p-4" data-testid="contact-log">
-          <h3 className="text-sm font-semibold text-foreground">📜 Contact log</h3>
+        <section
+          className="rounded-xl border border-border bg-card p-4"
+          data-testid="contact-log"
+        >
+          <h3 className="text-sm font-semibold text-foreground">
+            📜 Historial
+          </h3>
           <div className="mt-3 space-y-2">
             <LogRow
               icon="🔭"
               title={`Descubierto vía búsqueda «${lead.campaignTitle || lead.campaignId}»`}
               date={lead.createdAt}
             />
-            {lead.discardNote && <LogRow icon="🗑" title={`Descartado — ${lead.discardNote}`} date={lead.updatedAt} />}
+            {lead.discardNote && (
+              <LogRow
+                icon="🗑"
+                title={`Descartado — ${lead.discardNote}`}
+                date={lead.updatedAt}
+              />
+            )}
             {stage !== "Discovered" && stage !== DISCARDED_STAGE && (
               <LogRow
                 icon="🔁"
-                title={`Último movimiento de stage → ${stage || lead.lifecycleStatus}`}
+                title={`Último movimiento de estado → ${stage || lead.lifecycleStatus}`}
                 date={lead.updatedAt}
               />
             )}
@@ -273,15 +338,15 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
                   icon={message.direction === "out" ? "📨" : "📩"}
                   title={`${message.direction === "out" ? "Email enviado" : "Respuesta recibida"}${
                     message.subject ? ` — ${message.subject}` : ""
-                  }${message.status === "dry_run" ? " (dry-run)" : ""}`}
+                  }${message.status === "dry_run" ? " (modo prueba)" : ""}`}
                   date={message.createdAt}
                 />
               ))}
             </div>
           )}
           <p className="mt-3 rounded-md border border-dashed border-border bg-background px-3 py-2 text-[12px] text-muted-foreground">
-            El hilo completo (con detección de precios y break-even sobre cada oferta) vive en el
-            Inbox de negociación.
+            El hilo completo (con detección de precios y break-even sobre cada
+            oferta) vive en el Inbox de negociación.
           </p>
         </section>
       </div>
@@ -292,7 +357,9 @@ export function PartnerDrawer({ slug, lead, onClose, onMove, busy }: PartnerDraw
 function DataItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </dt>
       <dd className="truncate font-medium text-foreground" title={value}>
         {value}
       </dd>
@@ -300,16 +367,31 @@ function DataItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LogRow({ icon, title, date }: { icon: string; title: string; date?: string | null }) {
+function LogRow({
+  icon,
+  title,
+  date,
+}: {
+  icon: string;
+  title: string;
+  date?: string | null;
+}) {
   const formatted = date
-    ? new Date(date).toLocaleDateString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+    ? new Date(date).toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : null;
   return (
     <div className="flex items-start gap-2 rounded-md border border-border bg-background px-3 py-2">
       <span aria-hidden>{icon}</span>
       <div className="min-w-0">
         <div className="text-sm font-semibold text-foreground">{title}</div>
-        {formatted && <div className="text-[11px] text-muted-foreground">{formatted}</div>}
+        {formatted && (
+          <div className="text-[11px] text-muted-foreground">{formatted}</div>
+        )}
       </div>
     </div>
   );

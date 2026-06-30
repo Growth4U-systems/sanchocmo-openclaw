@@ -23,8 +23,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import type { CreatorModelConfig, QualificationMode, TierKey } from "@/lib/calc-creator-core";
-import { modelConfigQueryKey, useModelConfig, type ModelConfigPayload } from "./use-model-config";
+import type {
+  CreatorModelConfig,
+  QualificationMode,
+  TierKey,
+} from "@/lib/calc-creator-core";
+import {
+  modelConfigQueryKey,
+  useModelConfig,
+  type ModelConfigPayload,
+} from "./use-model-config";
 
 // ── Draft editable (solo lo que Settings edita) ─────────────────────────────
 
@@ -55,23 +63,31 @@ function sameList(a: string[], b: string[]): boolean {
 }
 
 /** PUT parcial: SOLO las secciones que cambiaron respecto al baseline. */
-function buildPartial(baseline: SettingsDraft, draft: SettingsDraft): Record<string, unknown> {
+function buildPartial(
+  baseline: SettingsDraft,
+  draft: SettingsDraft,
+): Record<string, unknown> {
   const partial: Record<string, unknown> = {};
-  const tiers = TIER_ORDER.filter((key) => draft.erBenchmarks[key] !== baseline.erBenchmarks[key]).map(
-    (key) => ({ key, erBenchmarkPct: draft.erBenchmarks[key] }),
-  );
+  const tiers = TIER_ORDER.filter(
+    (key) => draft.erBenchmarks[key] !== baseline.erBenchmarks[key],
+  ).map((key) => ({ key, erBenchmarkPct: draft.erBenchmarks[key] }));
   if (tiers.length > 0) partial.tiers = tiers;
-  if (!sameList(draft.verticals, baseline.verticals)) partial.verticals = draft.verticals;
-  if (!sameList(draft.formats, baseline.formats)) partial.formats = draft.formats;
+  if (!sameList(draft.verticals, baseline.verticals))
+    partial.verticals = draft.verticals;
+  if (!sameList(draft.formats, baseline.formats))
+    partial.formats = draft.formats;
   const qualification: Record<string, unknown> = {};
   if (draft.mode !== baseline.mode) qualification.defaultMode = draft.mode;
-  if (draft.threshold !== baseline.threshold) qualification.threshold = draft.threshold;
-  if (Object.keys(qualification).length > 0) partial.qualification = qualification;
+  if (draft.threshold !== baseline.threshold)
+    qualification.threshold = draft.threshold;
+  if (Object.keys(qualification).length > 0)
+    partial.qualification = qualification;
   return partial;
 }
 
 function fmtFollowers(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toLocaleString("es-ES")}M`;
+  if (value >= 1_000_000)
+    return `${(value / 1_000_000).toLocaleString("es-ES")}M`;
   if (value >= 1_000) return `${Math.round(value / 1_000)}K`;
   return String(value);
 }
@@ -100,7 +116,10 @@ function Panel({
   testid?: string;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card" data-testid={testid}>
+    <section
+      className="rounded-xl border border-border bg-card"
+      data-testid={testid}
+    >
       <header className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 pt-4 pb-3">
         <div>
           <h2 className="m-0 text-sm font-semibold text-foreground">
@@ -182,7 +201,10 @@ function ErCell({
       className="inline-flex min-w-[88px] items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-1 text-sm font-medium text-foreground transition-colors hover:border-rust"
       data-testid={`tier-er-${tier}`}
     >
-      {value.toFixed(1)}% <span className="text-[11px] opacity-50" aria-hidden>✏️</span>
+      {value.toFixed(1)}%{" "}
+      <span className="text-[11px] opacity-50" aria-hidden>
+        ✏️
+      </span>
     </button>
   );
 }
@@ -205,7 +227,11 @@ function ChipRow({
 
   function commit(apply: boolean) {
     const value = text.trim();
-    if (apply && value && !items.some((item) => item.toLowerCase() === value.toLowerCase())) {
+    if (
+      apply &&
+      value &&
+      !items.some((item) => item.toLowerCase() === value.toLowerCase())
+    ) {
       onChange([...items, value]);
     }
     setText("");
@@ -213,7 +239,10 @@ function ChipRow({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2" data-testid={`chips-${group}`}>
+    <div
+      className="flex flex-wrap items-center gap-2"
+      data-testid={`chips-${group}`}
+    >
       {items.map((item) => (
         <span
           key={item}
@@ -278,7 +307,7 @@ function QualificationDescription({
       className="font-medium text-rust underline underline-offset-2 hover:text-rust/80"
       data-testid="link-descartados"
     >
-      Contactos · Lista → filtro Stage &quot;Descartados&quot;
+      Contactos · Lista → filtro Estado &quot;Descartados&quot;
     </button>
   );
 
@@ -289,29 +318,31 @@ function QualificationDescription({
     >
       {mode === "auto" && (
         <>
-          <b>Auto (B2B a volumen):</b> el pipeline cualifica solo por umbral de score, como hace
-          Yalc hoy — los que pasan van directos a <code className="rounded bg-muted px-1">Qualified</code> y
-          a la cola de contacto. Sin triaje humano.
+          <b>Auto (B2B a volumen):</b> el pipeline cualifica solo por umbral de
+          score, como hace el motor de Outreach; los que pasan van directos a
+          Shortlist y a la cola de contacto. Sin triaje humano.
         </>
       )}
       {mode === "manual" && (
         <>
-          <b>Manual:</b> nada se cualifica solo. Todos los candidatos entran en <b>Discovered</b> con
-          su score y el humano decide uno a uno quién pasa a Shortlist y quién se descarta.
+          <b>Manual:</b> nada se cualifica solo. Todos los candidatos entran en{" "}
+          <b>Discovered</b> con su score y el humano decide uno a uno quién pasa
+          a Shortlist y quién se descarta.
         </>
       )}
       {mode === "hybrid" && (
         <>
-          <b>Hybrid (recomendado para Partnerships):</b> el scoring descarta automáticamente el
-          ruido obvio (score &lt; <span data-testid="umbral-echo">{threshold}</span> →{" "}
-          <code className="rounded bg-muted px-1">Disqualified</code>, con nota &quot;auto&quot;); el resto entra
-          en <b>Discovered</b> ya scoreado y <b>el humano decide</b> quién pasa a Shortlist. Los
-          descartados —automáticos y manuales— se consultan en {discardedLink} y son recuperables.
+          <b>Híbrido (recomendado para Partnerships):</b> el scoring descarta
+          automáticamente el ruido obvio (score &lt;{" "}
+          <span data-testid="umbral-echo">{threshold}</span>); el resto entra en{" "}
+          <b>Discovered</b> ya scoreado y <b>el humano decide</b> quién pasa a
+          Shortlist. Los descartados —automáticos y manuales— se consultan en{" "}
+          {discardedLink} y son recuperables.
         </>
       )}
       <p className="mt-2 text-xs text-muted-foreground">
-        El modo y el umbral aplican a las búsquedas <b>nuevas</b> (cada campaña los congela al
-        crearse — no se retro-aplican a las existentes).
+        El modo y el umbral aplican a las búsquedas <b>nuevas</b>; no cambian
+        las existentes.
       </p>
     </div>
   );
@@ -335,7 +366,11 @@ function connDot(status?: string): string {
 
 function connMeta(provider: Provider): string {
   const base =
-    provider.status === "green" ? "conectado" : provider.status === "red" ? "con errores" : "no conectado";
+    provider.status === "green"
+      ? "conectado"
+      : provider.status === "red"
+        ? "con errores"
+        : "no conectado";
   return provider.description ? `${base} · ${provider.description}` : base;
 }
 
@@ -343,9 +378,15 @@ function ConnectionsPanel({ slug }: { slug: string }) {
   const providersQuery = useQuery({
     queryKey: ["yalc", slug, "providers"],
     queryFn: async (): Promise<{ providers?: Provider[] }> => {
-      const res = await fetch(`/api/yalc/providers?slug=${encodeURIComponent(slug)}`);
-      const payload = (await res.json()) as { providers?: Provider[]; error?: string };
-      if (!res.ok) throw new Error(payload?.error || `Request failed (${res.status})`);
+      const res = await fetch(
+        `/api/yalc/providers?slug=${encodeURIComponent(slug)}`,
+      );
+      const payload = (await res.json()) as {
+        providers?: Provider[];
+        error?: string;
+      };
+      if (!res.ok)
+        throw new Error(payload?.error || `Request failed (${res.status})`);
       return payload;
     },
     enabled: !!slug,
@@ -357,9 +398,15 @@ function ConnectionsPanel({ slug }: { slug: string }) {
   const mcpQuery = useQuery({
     queryKey: ["partnerships", slug, "mcp-health"],
     queryFn: async (): Promise<{ connections?: Provider[] }> => {
-      const res = await fetch(`/api/partnerships/mcp-health?slug=${encodeURIComponent(slug)}`);
-      const payload = (await res.json()) as { connections?: Provider[]; error?: string };
-      if (!res.ok) throw new Error(payload?.error || `Request failed (${res.status})`);
+      const res = await fetch(
+        `/api/partnerships/mcp-health?slug=${encodeURIComponent(slug)}`,
+      );
+      const payload = (await res.json()) as {
+        connections?: Provider[];
+        error?: string;
+      };
+      if (!res.ok)
+        throw new Error(payload?.error || `Request failed (${res.status})`);
       return payload;
     },
     enabled: !!slug,
@@ -367,27 +414,42 @@ function ConnectionsPanel({ slug }: { slug: string }) {
   const mcpConnections = mcpQuery.data?.connections || [];
 
   const [testingId, setTestingId] = useState<string | null>(null);
-  const [results, setResults] = useState<Record<string, { ok: boolean; detail: string }>>({});
+  const [results, setResults] = useState<
+    Record<string, { ok: boolean; detail: string }>
+  >({});
 
   async function testProvider(provider: Provider) {
     setTestingId(provider.id);
     try {
-      const res = await fetch(`/api/yalc/providers/test?slug=${encodeURIComponent(slug)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: provider.id }),
-      });
-      const payload = (await res.json()) as { ok?: boolean; detail?: string; error?: string };
+      const res = await fetch(
+        `/api/yalc/providers/test?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider: provider.id }),
+        },
+      );
+      const payload = (await res.json()) as {
+        ok?: boolean;
+        detail?: string;
+        error?: string;
+      };
       setResults((prev) => ({
         ...prev,
         [provider.id]: res.ok
-          ? { ok: payload.ok !== false, detail: payload.detail || "Conexión OK" }
+          ? {
+              ok: payload.ok !== false,
+              detail: payload.detail || "Conexión OK",
+            }
           : { ok: false, detail: payload.error || `HTTP ${res.status}` },
       }));
     } catch (err) {
       setResults((prev) => ({
         ...prev,
-        [provider.id]: { ok: false, detail: err instanceof Error ? err.message : "Sin respuesta" },
+        [provider.id]: {
+          ok: false,
+          detail: err instanceof Error ? err.message : "Sin respuesta",
+        },
       }));
     } finally {
       setTestingId(null);
@@ -397,20 +459,31 @@ function ConnectionsPanel({ slug }: { slug: string }) {
   async function testMcpConnection(connection: Provider) {
     setTestingId(connection.id);
     try {
-      const res = await fetch(`/api/partnerships/mcp-health?slug=${encodeURIComponent(slug)}&ping=1`);
-      const payload = (await res.json()) as { connections?: Provider[]; error?: string };
+      const res = await fetch(
+        `/api/partnerships/mcp-health?slug=${encodeURIComponent(slug)}&ping=1`,
+      );
+      const payload = (await res.json()) as {
+        connections?: Provider[];
+        error?: string;
+      };
       const updated = payload.connections?.find((c) => c.id === connection.id);
       setResults((prev) => ({
         ...prev,
         [connection.id]:
           res.ok && updated
-            ? { ok: updated.status === "green", detail: updated.description || "Conexión OK" }
+            ? {
+                ok: updated.status === "green",
+                detail: updated.description || "Conexión OK",
+              }
             : { ok: false, detail: payload.error || `HTTP ${res.status}` },
       }));
     } catch (err) {
       setResults((prev) => ({
         ...prev,
-        [connection.id]: { ok: false, detail: err instanceof Error ? err.message : "Sin respuesta" },
+        [connection.id]: {
+          ok: false,
+          detail: err instanceof Error ? err.message : "Sin respuesta",
+        },
       }));
     } finally {
       setTestingId(null);
@@ -421,18 +494,26 @@ function ConnectionsPanel({ slug }: { slug: string }) {
     <Panel
       emoji="🔌"
       title="Conexiones"
-      subtitle="motor Yalc (Cockpit) + MCPs de Sancho · estado en vivo"
-      pill={<HeaderPill>{providersQuery.isLoading ? "…" : `${providers.length} providers`}</HeaderPill>}
+      subtitle="estado de integraciones de Outreach"
+      pill={
+        <HeaderPill>
+          {providersQuery.isLoading ? "…" : `${providers.length} conexiones`}
+        </HeaderPill>
+      }
       testid="panel-conexiones"
     >
       {providersQuery.error && (
         <p className="mb-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          No se pudieron cargar los providers: {String((providersQuery.error as Error).message)}
+          No se pudieron cargar las conexiones:{" "}
+          {String((providersQuery.error as Error).message)}
         </p>
       )}
       <div className="space-y-2.5">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground" data-testid="conn-group-yalc">
-          Motor de outreach · Yalc (Cockpit)
+        <div
+          className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+          data-testid="conn-group-yalc"
+        >
+          Motor de outreach
         </div>
         {providers.map((provider) => {
           const result = results[provider.id];
@@ -443,10 +524,20 @@ function ConnectionsPanel({ slug }: { slug: string }) {
               className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background px-3.5 py-2.5 transition-colors hover:border-rust"
               data-testid={`conn-row-${provider.id}`}
             >
-              <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", connDot(provider.status))} aria-hidden />
+              <span
+                className={cn(
+                  "h-2.5 w-2.5 shrink-0 rounded-full",
+                  connDot(provider.status),
+                )}
+                aria-hidden
+              />
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-foreground">{provider.name || provider.id}</div>
-                <div className="truncate text-xs text-muted-foreground">{connMeta(provider)}</div>
+                <div className="text-sm font-semibold text-foreground">
+                  {provider.name || provider.id}
+                </div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {connMeta(provider)}
+                </div>
                 {result && (
                   <div
                     className={cn(
@@ -484,11 +575,13 @@ function ConnectionsPanel({ slug }: { slug: string }) {
             </div>
           );
         })}
-        {!providersQuery.isLoading && providers.length === 0 && !providersQuery.error && (
-          <p className="py-2 text-sm text-muted-foreground">
-            YALC no devolvió providers — revisa el Cockpit (Outreach · tipo B2B → Providers).
-          </p>
-        )}
+        {!providersQuery.isLoading &&
+          providers.length === 0 &&
+          !providersQuery.error && (
+            <p className="py-2 text-sm text-muted-foreground">
+              No se devolvieron conexiones para este cliente.
+            </p>
+          )}
 
         {/* Conexiones MCP del lado Sancho (SAN-175) — ScrapeCreators no es un
             provider de Yalc: lo usa discovery-search-runner vía MCP. */}
@@ -496,7 +589,7 @@ function ConnectionsPanel({ slug }: { slug: string }) {
           className="pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
           data-testid="conn-group-sancho"
         >
-          Discovery · Sancho (MCP)
+          Discovery
         </div>
         {mcpConnections.map((connection) => {
           const result = results[connection.id];
@@ -507,11 +600,21 @@ function ConnectionsPanel({ slug }: { slug: string }) {
               className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background px-3.5 py-2.5 transition-colors hover:border-rust"
               data-testid={`conn-row-${connection.id}`}
             >
-              <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", connDot(connection.status))} aria-hidden />
+              <span
+                className={cn(
+                  "h-2.5 w-2.5 shrink-0 rounded-full",
+                  connDot(connection.status),
+                )}
+                aria-hidden
+              />
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-foreground">{connection.name || connection.id}</div>
+                <div className="text-sm font-semibold text-foreground">
+                  {connection.name || connection.id}
+                </div>
                 <div className="truncate text-xs text-muted-foreground">
-                  {connection.description || ""} · usado por discovery-search-runner (perfiles + ad-library)
+                  {[connection.description, "perfiles + ad-library"]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </div>
                 {result && (
                   <div
@@ -533,7 +636,7 @@ function ConnectionsPanel({ slug }: { slug: string }) {
                   onClick={() => void testMcpConnection(connection)}
                   title={
                     connection.hasHealthProbe === false
-                      ? "Configura SCRAPECREATORS_API_KEY para poder probar la conexión"
+                      ? "Configura ScrapeCreators para poder probar la conexión"
                       : "Hace una llamada real a la API de ScrapeCreators"
                   }
                   className={cn(
@@ -552,7 +655,8 @@ function ConnectionsPanel({ slug }: { slug: string }) {
         })}
         {mcpQuery.error && (
           <p className="py-1 text-xs text-destructive">
-            No se pudo consultar el estado MCP: {String((mcpQuery.error as Error).message)}
+            No se pudo consultar el estado de discovery:{" "}
+            {String((mcpQuery.error as Error).message)}
           </p>
         )}
 
@@ -561,7 +665,10 @@ function ConnectionsPanel({ slug }: { slug: string }) {
           className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/40 px-3.5 py-2.5 opacity-70"
           data-testid="conn-row-impact"
         >
-          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/40" aria-hidden />
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/40"
+            aria-hidden
+          />
           <div>
             <div className="text-sm font-semibold text-foreground">Impact</div>
             <div className="text-xs text-muted-foreground">
@@ -570,7 +677,7 @@ function ConnectionsPanel({ slug }: { slug: string }) {
           </div>
           <div className="ml-auto flex items-center gap-2.5">
             <span className="rounded-full border border-rust/50 px-2 py-0.5 text-[10px] font-semibold text-rust">
-              Fase 2
+              Próximamente
             </span>
             <button
               type="button"
@@ -608,7 +715,12 @@ export function SettingsTab({
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dirty = useMemo(
-    () => Boolean(baseline && draft && Object.keys(buildPartial(baseline, draft)).length > 0),
+    () =>
+      Boolean(
+        baseline &&
+        draft &&
+        Object.keys(buildPartial(baseline, draft)).length > 0,
+      ),
     [baseline, draft],
   );
 
@@ -620,7 +732,9 @@ export function SettingsTab({
   useEffect(() => {
     if (!serverDraft) return;
     const hadPendingEdits =
-      baseline && draft && Object.keys(buildPartial(baseline, draft)).length > 0;
+      baseline &&
+      draft &&
+      Object.keys(buildPartial(baseline, draft)).length > 0;
     setBaseline(serverDraft);
     if (!hadPendingEdits) setDraft(serverDraft);
     // baseline/draft a propósito fuera de deps: solo re-sincroniza al cambiar el server.
@@ -629,13 +743,19 @@ export function SettingsTab({
 
   const saveMutation = useMutation({
     mutationFn: async (partial: Record<string, unknown>) => {
-      const res = await fetch(`/api/yalc/model-config?slug=${encodeURIComponent(slug)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(partial),
-      });
-      const payload = (await res.json()) as ModelConfigPayload & { error?: string };
-      if (!res.ok) throw new Error(payload?.error || `Request failed (${res.status})`);
+      const res = await fetch(
+        `/api/yalc/model-config?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(partial),
+        },
+      );
+      const payload = (await res.json()) as ModelConfigPayload & {
+        error?: string;
+      };
+      if (!res.ok)
+        throw new Error(payload?.error || `Request failed (${res.status})`);
       return payload;
     },
     onSuccess: (payload) => {
@@ -655,7 +775,10 @@ export function SettingsTab({
 
   if (configQuery.isLoading || !draft || !baseline) {
     return (
-      <p className="py-12 text-center text-sm text-muted-foreground" data-testid="settings-loading">
+      <p
+        className="py-12 text-center text-sm text-muted-foreground"
+        data-testid="settings-loading"
+      >
         Cargando el modelo de creators…
       </p>
     );
@@ -668,9 +791,13 @@ export function SettingsTab({
   return (
     <div className="space-y-5 pb-24" data-testid="settings-tab">
       {yalcDown && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900" data-testid="yalc-down-banner">
-          ⚠️ YALC no responde — viendo los defaults sembrados de calc-creator-core (solo lectura
-          hasta que vuelva): {data?.yalcError}
+        <div
+          className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900"
+          data-testid="yalc-down-banner"
+        >
+          ⚠️ El motor de Outreach no responde; se muestran valores por defecto
+          hasta que vuelva la conexión:
+          {data?.yalcError}
         </div>
       )}
 
@@ -686,7 +813,10 @@ export function SettingsTab({
           <thead>
             <tr className="border-b border-border text-left">
               {["Tier", "Rango de seguidores", "ER benchmark"].map((label) => (
-                <th key={label} className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <th
+                  key={label}
+                  className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+                >
                   {label}
                 </th>
               ))}
@@ -694,7 +824,10 @@ export function SettingsTab({
           </thead>
           <tbody>
             {(data?.config.tiers || []).map((tier) => (
-              <tr key={tier.key} className="border-b border-border last:border-0">
+              <tr
+                key={tier.key}
+                className="border-b border-border last:border-0"
+              >
                 <td className="px-2.5 py-2.5 text-sm font-semibold text-navy">
                   {tier.label}
                 </td>
@@ -708,7 +841,10 @@ export function SettingsTab({
                     onCommit={(next) =>
                       update((prev) => ({
                         ...prev,
-                        erBenchmarks: { ...prev.erBenchmarks, [tier.key]: next },
+                        erBenchmarks: {
+                          ...prev.erBenchmarks,
+                          [tier.key]: next,
+                        },
                       }))
                     }
                   />
@@ -718,21 +854,27 @@ export function SettingsTab({
           </tbody>
         </table>
         <p className="mt-2.5 text-xs text-muted-foreground">
-          El ER benchmark por tier alimenta el componente &quot;ER vs tier&quot; del Quality Score (0–100).
-          Click en un valor para editarlo.
+          El ER benchmark por tier alimenta el componente &quot;ER vs tier&quot;
+          del Quality Score (0–100). Click en un valor para editarlo.
         </p>
 
-        <div className="mt-4 text-sm font-semibold text-foreground">Verticals</div>
+        <div className="mt-4 text-sm font-semibold text-foreground">
+          Verticals
+        </div>
         <div className="mt-2">
           <ChipRow
             group="vertical"
             items={draft.verticals}
-            onChange={(next) => update((prev) => ({ ...prev, verticals: next }))}
+            onChange={(next) =>
+              update((prev) => ({ ...prev, verticals: next }))
+            }
             placeholder="nueva vertical…"
           />
         </div>
 
-        <div className="mt-4 text-sm font-semibold text-foreground">Formats</div>
+        <div className="mt-4 text-sm font-semibold text-foreground">
+          Formats
+        </div>
         <div className="mt-2">
           <ChipRow
             group="format"
@@ -747,23 +889,23 @@ export function SettingsTab({
       <Panel
         emoji="🚦"
         title="Cualificación de candidatos"
-        subtitle="quién decide qué leads pasan de Sourced a Qualified (Shortlist) — por campaña"
+        subtitle="quién decide qué candidatos pasan a Shortlist"
         pill={<HeaderPill>Editable</HeaderPill>}
         testid="panel-cualificacion"
       >
         <div className="flex flex-wrap items-center gap-4">
           <div className="inline-flex gap-2" data-testid="qmode-segmented">
-            {(
-              [
-                { key: "auto" as const, label: "Auto" },
-                { key: "manual" as const, label: "Manual" },
-                { key: "hybrid" as const, label: "Hybrid" },
-              ]
-            ).map((option) => (
+            {[
+              { key: "auto" as const, label: "Auto" },
+              { key: "manual" as const, label: "Manual" },
+              { key: "hybrid" as const, label: "Híbrido" },
+            ].map((option) => (
               <button
                 key={option.key}
                 type="button"
-                onClick={() => update((prev) => ({ ...prev, mode: option.key }))}
+                onClick={() =>
+                  update((prev) => ({ ...prev, mode: option.key }))
+                }
                 className={cn(
                   "rounded-md border px-3 py-1.5 text-[12px] font-semibold transition-colors",
                   draft.mode === option.key
@@ -778,7 +920,10 @@ export function SettingsTab({
           </div>
 
           {draft.mode !== "manual" && (
-            <label className="flex items-center gap-2 text-sm font-medium text-foreground" data-testid="umbral-wrap">
+            <label
+              className="flex items-center gap-2 text-sm font-medium text-foreground"
+              data-testid="umbral-wrap"
+            >
               auto-descarte si Quality Score &lt;
               <input
                 type="number"
@@ -789,7 +934,9 @@ export function SettingsTab({
                   const value = Number(event.target.value);
                   update((prev) => ({
                     ...prev,
-                    threshold: Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : prev.threshold,
+                    threshold: Number.isFinite(value)
+                      ? Math.max(0, Math.min(100, Math.round(value)))
+                      : prev.threshold,
                   }));
                 }}
                 className="w-16 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-rust focus:outline-none"
@@ -799,7 +946,11 @@ export function SettingsTab({
           )}
         </div>
 
-        <QualificationDescription mode={draft.mode} threshold={draft.threshold} onGoDiscarded={onGoDiscarded} />
+        <QualificationDescription
+          mode={draft.mode}
+          threshold={draft.threshold}
+          onGoDiscarded={onGoDiscarded}
+        />
       </Panel>
 
       {/* ── 2 · Conversión / funnel (read-only) ── */}
@@ -811,8 +962,8 @@ export function SettingsTab({
         testid="panel-funnel"
       >
         <p className="mb-3.5 text-sm text-muted-foreground">
-          El funnel vive en <b>Metrics</b> — Outreach solo referencia estos valores para calcular
-          el break-even de cada deal.{" "}
+          El funnel vive en <b>Metrics</b> — Outreach solo referencia estos
+          valores para calcular el break-even de cada deal.{" "}
           <button
             type="button"
             onClick={onGoMetrics}
@@ -823,26 +974,55 @@ export function SettingsTab({
           </button>
         </p>
         {funnel && (
-          <div className="grid grid-cols-1 items-stretch gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]" data-testid="funnel-readonly">
+          <div
+            className="grid grid-cols-1 items-stretch gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]"
+            data-testid="funnel-readonly"
+          >
             {(
               [
-                { value: `${funnel.clickToSignupPct}%`, label: "click → signup", rust: false },
-                { value: `${funnel.signupToKycPct}%`, label: "signup → KYC", rust: false },
-                { value: `${funnel.kycToFirstTxPct}%`, label: "KYC → first_tx", rust: false },
-                { value: `${funnel.defaultTargetCacEur}€`, label: "CAC objetivo", rust: true },
+                {
+                  value: `${funnel.clickToSignupPct}%`,
+                  label: "click → signup",
+                  rust: false,
+                },
+                {
+                  value: `${funnel.signupToKycPct}%`,
+                  label: "signup → KYC",
+                  rust: false,
+                },
+                {
+                  value: `${funnel.kycToFirstTxPct}%`,
+                  label: "KYC → first_tx",
+                  rust: false,
+                },
+                {
+                  value: `${funnel.defaultTargetCacEur}€`,
+                  label: "CAC objetivo",
+                  rust: true,
+                },
               ] as const
             ).map((box, index) => (
               <div key={box.label} className="contents">
                 {index > 0 && (
-                  <span className="hidden place-items-center text-muted-foreground sm:grid" aria-hidden>
+                  <span
+                    className="hidden place-items-center text-muted-foreground sm:grid"
+                    aria-hidden
+                  >
                     →
                   </span>
                 )}
                 <div className="rounded-lg border border-border bg-background px-3 py-2.5 text-center">
-                  <div className={cn("font-heading text-2xl leading-none", box.rust ? "text-rust" : "text-navy")}>
+                  <div
+                    className={cn(
+                      "font-heading text-2xl leading-none",
+                      box.rust ? "text-rust" : "text-navy",
+                    )}
+                  >
                     {box.value}
                   </div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">{box.label}</div>
+                  <div className="mt-1 text-[11px] text-muted-foreground">
+                    {box.label}
+                  </div>
                 </div>
               </div>
             ))}
@@ -864,7 +1044,10 @@ export function SettingsTab({
         )}
         data-testid="save-bar"
       >
-        <span className="text-sm font-medium text-foreground" data-testid="save-msg">
+        <span
+          className="text-sm font-medium text-foreground"
+          data-testid="save-msg"
+        >
           {savedFlash
             ? "✓ Modelo guardado — aplica a búsquedas nuevas"
             : saveMutation.isPending
@@ -898,7 +1081,9 @@ export function SettingsTab({
               }}
               className={cn(
                 "rounded-md bg-rust px-4 py-1.5 text-sm font-semibold text-white transition-colors",
-                saveMutation.isPending || yalcDown ? "opacity-60" : "hover:bg-rust/90",
+                saveMutation.isPending || yalcDown
+                  ? "opacity-60"
+                  : "hover:bg-rust/90",
               )}
               data-testid="save-btn"
             >

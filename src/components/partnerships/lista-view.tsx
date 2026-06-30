@@ -76,10 +76,21 @@ export function ListaView({
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const filterState: ListFilterState = useMemo(
-    () => ({ ...EMPTY_LIST_FILTER, search, stage, networks, busqueda, sortKey, sortDir }),
+    () => ({
+      ...EMPTY_LIST_FILTER,
+      search,
+      stage,
+      networks,
+      busqueda,
+      sortKey,
+      sortDir,
+    }),
     [search, stage, networks, busqueda, sortKey, sortDir],
   );
-  const visible = useMemo(() => filterAndSortLeads(leads, filterState), [leads, filterState]);
+  const visible = useMemo(
+    () => filterAndSortLeads(leads, filterState),
+    [leads, filterState],
+  );
 
   const selectedLeads = useMemo(
     () => leads.filter((lead) => selected[lead.id]),
@@ -88,7 +99,9 @@ export function ListaView({
 
   function toggleNetwork(key: NetworkKey) {
     setNetworks((current) =>
-      current.includes(key) ? current.filter((n) => n !== key) : [...current, key],
+      current.includes(key)
+        ? current.filter((n) => n !== key)
+        : [...current, key],
     );
   }
 
@@ -125,7 +138,8 @@ export function ListaView({
     setSelected({});
   }
 
-  const allVisibleChecked = visible.length > 0 && visible.every((lead) => selected[lead.id]);
+  const allVisibleChecked =
+    visible.length > 0 && visible.every((lead) => selected[lead.id]);
 
   return (
     <div>
@@ -150,7 +164,12 @@ export function ListaView({
       {/* Toolbar de filtros */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <label className="relative">
-          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm" aria-hidden>🔍</span>
+          <span
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm"
+            aria-hidden
+          >
+            🔍
+          </span>
           <input
             type="text"
             value={search}
@@ -162,11 +181,13 @@ export function ListaView({
 
         <select
           value={stage}
-          onChange={(event) => setStage(event.target.value as StageFilterKey | "")}
+          onChange={(event) =>
+            setStage(event.target.value as StageFilterKey | "")
+          }
           className="rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
-          title="Los descartados están excluidos por defecto — usa el filtro 🗑 Descartados para verlos"
+          title="Los descartados están excluidos por defecto"
         >
-          <option value="">Stage: todos</option>
+          <option value="">Estado: todos</option>
           {PIPELINE_STAGES.map((s) => (
             <option key={s.key} value={s.key}>
               {s.label}
@@ -175,7 +196,9 @@ export function ListaView({
           <option value={DISCARDED_STAGE}>🗑 Descartados</option>
         </select>
 
-        <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Red</span>
+        <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Red
+        </span>
         {NETWORK_FILTERS.map((net) => (
           <button
             key={net.key}
@@ -195,7 +218,10 @@ export function ListaView({
 
       {/* Tabla */}
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[960px] text-left text-sm" data-testid="contactos-lista">
+        <table
+          className="w-full min-w-[960px] text-left text-sm"
+          data-testid="contactos-lista"
+        >
           <thead>
             <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
               <th className="w-10 px-3 py-2.5">
@@ -208,23 +234,42 @@ export function ListaView({
                 />
               </th>
               <th className="px-3 py-2.5">Creator</th>
-              <SortableTh label="Quality" active={sortKey === "quality"} dir={sortDir} onClick={() => toggleSort("quality")} />
+              <SortableTh
+                label="Quality"
+                active={sortKey === "quality"}
+                dir={sortDir}
+                onClick={() => toggleSort("quality")}
+              />
               <th className="px-3 py-2.5">Sector fit</th>
-              <SortableTh label="Precio" active={sortKey === "fee"} dir={sortDir} onClick={() => toggleSort("fee")} />
-              <th className="px-3 py-2.5" title="Calc break-even — llega en la Ola 2 (SAN-75b)">
+              <SortableTh
+                label="Precio"
+                active={sortKey === "fee"}
+                dir={sortDir}
+                onClick={() => toggleSort("fee")}
+              />
+              <th
+                className="px-3 py-2.5"
+                title="Break-even pendiente de cálculo"
+              >
                 Break-even
               </th>
-              <th className="px-3 py-2.5" title="Veredicto de la calc break-even — Ola 2">
+              <th
+                className="px-3 py-2.5"
+                title="Veredicto pendiente de cálculo"
+              >
                 Veredicto
               </th>
-              <th className="px-3 py-2.5">Stage</th>
+              <th className="px-3 py-2.5">Estado</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-3 py-10 text-center text-sm italic text-muted-foreground">
-                  Ningún creator coincide con esos filtros. Sancho sugiere aflojar un poco la criba…
+                <td
+                  colSpan={8}
+                  className="px-3 py-10 text-center text-sm italic text-muted-foreground"
+                >
+                  Ningún creator coincide con esos filtros.
                 </td>
               </tr>
             )}
@@ -244,7 +289,10 @@ export function ListaView({
                     discarded && "opacity-60",
                   )}
                 >
-                  <td className="px-3 py-2.5" onClick={(event) => event.stopPropagation()}>
+                  <td
+                    className="px-3 py-2.5"
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     <input
                       type="checkbox"
                       checked={!!selected[lead.id]}
@@ -254,16 +302,24 @@ export function ListaView({
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-base" aria-hidden>{networkMeta(lead.network).emoji}</span>
+                      <span className="text-base" aria-hidden>
+                        {networkMeta(lead.network).emoji}
+                      </span>
                       <span>
-                        <span className="font-semibold text-foreground">{leadDisplayName(lead)}</span>
+                        <span className="font-semibold text-foreground">
+                          {leadDisplayName(lead)}
+                        </span>
                         <br />
                         <span className="text-[11px] text-muted-foreground">
                           {[
                             networkMeta(lead.network).label,
                             formatFollowers(lead.followers),
-                            formatTier(lead.tier) ? `Tier ${formatTier(lead.tier)}` : null,
-                            typeof lead.engagementRate === "number" ? `ER ${lead.engagementRate.toFixed(1)}%` : null,
+                            formatTier(lead.tier)
+                              ? `Tier ${formatTier(lead.tier)}`
+                              : null,
+                            typeof lead.engagementRate === "number"
+                              ? `ER ${lead.engagementRate.toFixed(1)}%`
+                              : null,
                           ]
                             .filter(Boolean)
                             .join(" · ")}
@@ -277,7 +333,9 @@ export function ListaView({
                   <td className="px-3 py-2.5">
                     {typeof fit === "number" ? (
                       <div className="w-24">
-                        <span className="text-xs font-semibold">{Math.round(fit)}%</span>
+                        <span className="text-xs font-semibold">
+                          {Math.round(fit)}%
+                        </span>
                         <ScoreBar value={fit} className="mt-1" />
                       </div>
                     ) : (
@@ -288,15 +346,28 @@ export function ListaView({
                     {typeof lead.offeredPrice === "number" ? (
                       <span className="font-semibold text-foreground">
                         {formatEur(lead.offeredPrice)}
-                        {feeNote && <span className="ml-1 text-[11px] font-normal text-muted-foreground">{feeNote}</span>}
+                        {feeNote && (
+                          <span className="ml-1 text-[11px] font-normal text-muted-foreground">
+                            {feeNote}
+                          </span>
+                        )}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  {/* Break-even y Veredicto llegan con la calc (Ola 2 · SAN-75b/SAN-80) */}
-                  <td className="px-3 py-2.5 text-muted-foreground" title="Calc break-even — Ola 2">—</td>
-                  <td className="px-3 py-2.5 text-muted-foreground" title="Veredicto break-even — Ola 2">—</td>
+                  <td
+                    className="px-3 py-2.5 text-muted-foreground"
+                    title="Break-even pendiente"
+                  >
+                    —
+                  </td>
+                  <td
+                    className="px-3 py-2.5 text-muted-foreground"
+                    title="Veredicto pendiente"
+                  >
+                    —
+                  </td>
                   <td className="px-3 py-2.5">
                     <StageStamp lead={lead} />
                   </td>
@@ -309,10 +380,7 @@ export function ListaView({
 
       <p className="mt-2 text-xs text-muted-foreground">
         Mostrando {visible.length} de {leads.length} creators
-        {stage !== DISCARDED_STAGE && " · descartados excluidos por defecto (filtro Stage → 🗑 Descartados)"}
-      </p>
-      <p className="mt-1 text-[11px] text-muted-foreground">
-        * Break-even y Veredicto se calculan con la calc de negociación (Ola 2 · SAN-75b): fee / CAC objetivo, con multiplicador de incentivo del lado de lo alcanzable.
+        {stage !== DISCARDED_STAGE && " · descartados excluidos por defecto"}
       </p>
 
       {/* Bulk actions bar */}
@@ -322,7 +390,8 @@ export function ListaView({
           className="fixed bottom-6 left-1/2 z-[550] flex -translate-x-1/2 flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 shadow-lg"
         >
           <span className="text-sm font-semibold text-foreground">
-            {selectedLeads.length} seleccionado{selectedLeads.length === 1 ? "" : "s"}
+            {selectedLeads.length} seleccionado
+            {selectedLeads.length === 1 ? "" : "s"}
           </span>
           <select
             defaultValue=""
@@ -336,7 +405,7 @@ export function ListaView({
             }}
             className="rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
           >
-            <option value="">Mover a stage…</option>
+            <option value="">Mover a estado…</option>
             {PIPELINE_STAGES.map((s) => (
               <option key={s.key} value={s.key}>
                 {s.label}
@@ -347,7 +416,7 @@ export function ListaView({
             <button
               type="button"
               disabled={busy}
-              title="Instancia la secuencia de la búsqueda para estos creators y crea el gate de aprobación (dry-run)"
+              title="Preparar contacto para estos creators"
               onClick={() => {
                 onBulkContact(selectedLeads);
                 clearSelection();
@@ -403,7 +472,10 @@ function SortableTh({
       )}
       title={`Ordenar por ${label.toLowerCase()}`}
     >
-      {label} <span className="text-[9px]">{active ? (dir === -1 ? "▼" : "▲") : "▲▼"}</span>
+      {label}{" "}
+      <span className="text-[9px]">
+        {active ? (dir === -1 ? "▼" : "▲") : "▲▼"}
+      </span>
     </th>
   );
 }

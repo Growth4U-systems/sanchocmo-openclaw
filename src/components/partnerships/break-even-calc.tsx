@@ -49,7 +49,9 @@ export function BreakEvenCalc({
   const [posts, setPosts] = useState(3);
   const [format, setFormat] = useState<string>("reel");
   const [fee, setFee] = useState<number>(
-    typeof lead.offeredPrice === "number" && lead.offeredPrice > 0 ? lead.offeredPrice : 3500,
+    typeof lead.offeredPrice === "number" && lead.offeredPrice > 0
+      ? lead.offeredPrice
+      : 3500,
   );
   const [structure, setStructure] = useState<"fijo" | "mixto">("fijo");
   const [variableCpa, setVariableCpa] = useState(10);
@@ -67,19 +69,35 @@ export function BreakEvenCalc({
         posts: Number.isFinite(posts) ? Math.max(1, posts) : 1,
         format,
         structure,
-        variableCpaEur: structure === "mixto" ? Math.max(0, variableCpa) : undefined,
-        targetCacEur: Number.isFinite(effectiveCac) ? Math.max(1, effectiveCac) : defaultCac,
+        variableCpaEur:
+          structure === "mixto" ? Math.max(0, variableCpa) : undefined,
+        targetCacEur: Number.isFinite(effectiveCac)
+          ? Math.max(1, effectiveCac)
+          : defaultCac,
         incentiveMultiplier: multiplier,
         config,
       });
     } catch {
       return null;
     }
-  }, [lead.followers, lead.engagementRate, posts, format, fee, structure, variableCpa, effectiveCac, defaultCac, multiplier, config]);
+  }, [
+    lead.followers,
+    lead.engagementRate,
+    posts,
+    format,
+    fee,
+    structure,
+    variableCpa,
+    effectiveCac,
+    defaultCac,
+    multiplier,
+    config,
+  ]);
 
   const inputCls =
     "w-24 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-rust focus:outline-none";
-  const labelCls = "flex items-center gap-2 text-xs font-semibold text-muted-foreground";
+  const labelCls =
+    "flex items-center gap-2 text-xs font-semibold text-muted-foreground";
 
   return (
     <section
@@ -87,15 +105,18 @@ export function BreakEvenCalc({
       data-testid="breakeven-calc"
     >
       <h3 className="text-sm font-semibold text-foreground">
-        🧮 Calc break-even — negociación
+        🧮 Break-even de negociación
       </h3>
       <p className="mt-1 text-[11px] text-muted-foreground">
-        Le damos la vuelta: cuántas conversiones debe producir el deal para salir rentable a tu CAC
-        objetivo. Motor calc-creator-core (el mismo del chat y del MCP).
+        Le damos la vuelta: cuántas conversiones debe producir el deal para
+        salir rentable a tu CAC objetivo.
       </p>
 
       {/* Deal editable */}
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2" data-testid="breakeven-controls">
+      <div
+        className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2"
+        data-testid="breakeven-controls"
+      >
         <label className={labelCls}>
           Posts
           <input
@@ -138,7 +159,9 @@ export function BreakEvenCalc({
           Estructura
           <select
             value={structure}
-            onChange={(e) => setStructure(e.target.value === "mixto" ? "mixto" : "fijo")}
+            onChange={(e) =>
+              setStructure(e.target.value === "mixto" ? "mixto" : "fijo")
+            }
             className={cn(inputCls, "w-auto")}
             data-testid="be-structure"
           >
@@ -159,7 +182,10 @@ export function BreakEvenCalc({
             />
           </label>
         )}
-        <label className={labelCls} title="Default: CAC objetivo de Settings (referenciado de Metrics)">
+        <label
+          className={labelCls}
+          title="Default: CAC objetivo de Settings (referenciado de Metrics)"
+        >
           CAC obj. €
           <input
             type="number"
@@ -189,15 +215,23 @@ export function BreakEvenCalc({
 
       {!result ? (
         <p className="mt-3 text-sm text-muted-foreground">
-          Faltan followers del creator para estimar lo alcanzable (los trae el discovery).
+          Faltan seguidores del creator para estimar lo alcanzable.
         </p>
       ) : (
         <>
           {/* Métricas */}
-          <div className="mt-4 grid grid-cols-3 gap-3" data-testid="breakeven-cells">
+          <div
+            className="mt-4 grid grid-cols-3 gap-3"
+            data-testid="breakeven-cells"
+          >
             <div className="rounded-lg border border-border bg-background p-3 text-center">
-              <div className="font-heading text-2xl font-semibold leading-none text-navy" data-testid="be-necesarias">
-                {Number.isFinite(result.necesarias) ? formatIntEs(result.necesarias) : "∞"}
+              <div
+                className="font-heading text-2xl font-semibold leading-none text-navy"
+                data-testid="be-necesarias"
+              >
+                {Number.isFinite(result.necesarias)
+                  ? formatIntEs(result.necesarias)
+                  : "∞"}
               </div>
               <div className="mt-1 text-[10px] text-muted-foreground">
                 conversiones necesarias
@@ -205,7 +239,10 @@ export function BreakEvenCalc({
               </div>
             </div>
             <div className="rounded-lg border border-border bg-background p-3 text-center">
-              <div className="font-heading text-2xl font-semibold leading-none text-navy" data-testid="be-alcanzable">
+              <div
+                className="font-heading text-2xl font-semibold leading-none text-navy"
+                data-testid="be-alcanzable"
+              >
                 ~{formatIntEs(result.alcanzable)}
               </div>
               <div className="mt-1 text-[10px] text-muted-foreground">
@@ -215,8 +252,13 @@ export function BreakEvenCalc({
               </div>
             </div>
             <div className="rounded-lg border border-border bg-background p-3 text-center">
-              <div className="font-heading text-2xl font-semibold leading-none text-navy" data-testid="be-ratio">
-                {result.ratio === Infinity ? "∞" : `${Math.round(result.ratio * 100)}%`}
+              <div
+                className="font-heading text-2xl font-semibold leading-none text-navy"
+                data-testid="be-ratio"
+              >
+                {result.ratio === Infinity
+                  ? "∞"
+                  : `${Math.round(result.ratio * 100)}%`}
               </div>
               <div className="mt-1 text-[10px] text-muted-foreground">
                 cobertura del break-even
@@ -238,10 +280,15 @@ export function BreakEvenCalc({
               {result.veredictoColor === "red" && "⛔ "}
               {result.veredictoLabel}
             </span>
-            <span className="text-xs text-muted-foreground">{result.frase}</span>
+            <span className="text-xs text-muted-foreground">
+              {result.frase}
+            </span>
           </div>
 
-          <p className="mt-2 text-[11px] text-muted-foreground" data-testid="be-modelo">
+          <p
+            className="mt-2 text-[11px] text-muted-foreground"
+            data-testid="be-modelo"
+          >
             {result.modelo}
           </p>
 
@@ -251,7 +298,8 @@ export function BreakEvenCalc({
               className="mt-3 rounded-md border border-yellow-300/60 bg-yellow-50/60 px-3 py-2 text-sm text-yellow-900"
               data-testid="be-contraoferta"
             >
-              💡 Contraoferta sugerida: <b>{formatIntEs(result.contraofertaEur)}€</b>
+              💡 Contraoferta sugerida:{" "}
+              <b>{formatIntEs(result.contraofertaEur)}€</b>
               {" — "}
               {result.contraofertaNota}
             </div>
