@@ -161,6 +161,74 @@ export interface MetricKpiResult {
   stageRollups: MetricStageRollupResult;
 }
 
+export type PartnershipReportPeriodDays = 30 | 90;
+
+export interface PartnershipReportPostRow {
+  id: string;
+  date: string;
+  format: string;
+  title: string;
+  status: "live" | "scheduled";
+  clicks: number;
+  conversions: number;
+}
+
+export interface PartnershipReportCreatorRow {
+  handle: string;
+  network: string | null;
+  leadId: string;
+  lifecycleStatus: string | null;
+  feeEur: number | null;
+  variableCpaEur: number | null;
+  postsLive: number;
+  clicks: number;
+  signups: number;
+  kyc: number;
+  conversions: number;
+  totalCostEur: number | null;
+  cpaRealEur: number | null;
+  breakEvenCpaEur: number;
+  conversionsNeeded: number | null;
+  belowBreakEven: boolean | null;
+  roi: number | null;
+  qualityScore: number | null;
+  qualityDelta: number | null;
+  qualityNext: number | null;
+  posts: PartnershipReportPostRow[];
+  sparkline: number[];
+}
+
+export interface PartnershipReportTotals {
+  investedEur: number;
+  postsLive: number;
+  clicks: number;
+  signups: number;
+  kyc: number;
+  conversions: number;
+  totalCostEur: number;
+  cpaRealEur: number | null;
+  belowBreakEven: boolean | null;
+  roi: number | null;
+}
+
+export interface PartnershipReport {
+  periodDays: PartnershipReportPeriodDays;
+  from: string;
+  to: string;
+  targetCacEur: number;
+  totals: PartnershipReportTotals;
+  creators: PartnershipReportCreatorRow[];
+  feedback: {
+    note: string | null;
+    deltas: Array<{
+      handle: string;
+      current: number | null;
+      delta: number;
+      next: number | null;
+    }>;
+  };
+}
+
 export function useMetricsPlan(slug: string | null) {
   return useQuery({
     queryKey: ["metrics-plan", slug],
@@ -170,6 +238,7 @@ export function useMetricsPlan(slug: string | null) {
       return res.json();
     },
     enabled: !!slug,
+    retry: false,
     staleTime: 60_000,
   });
 }
@@ -211,6 +280,22 @@ export function useMetricKpis(slug: string | null, range: MetricKpiRange) {
       if (slug) params.set("slug", slug);
       const res = await fetch(`/api/metrics/kpis?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch semantic KPIs");
+      return res.json();
+    },
+    enabled: !!slug,
+    staleTime: 60_000,
+  });
+}
+
+/** Creator reporting for the Metrics · Partnerships surface (SAN-81). */
+export function usePartnershipReport(slug: string | null, period: PartnershipReportPeriodDays) {
+  return useQuery<PartnershipReport>({
+    queryKey: ["partnerships-report", slug, period],
+    queryFn: async () => {
+      const params = new URLSearchParams({ period: String(period) });
+      if (slug) params.set("slug", slug);
+      const res = await fetch(`/api/partnerships/report?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch partnerships report");
       return res.json();
     },
     enabled: !!slug,
