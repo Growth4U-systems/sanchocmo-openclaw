@@ -10,11 +10,9 @@
  */
 
 import { GoogleAuth } from 'google-auth-library';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { resolveGoogleServiceAccountPath } from './google-auth-path.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SA_PATH = path.resolve(__dirname, '..', '..', '..', '..', '.secrets', 'google-service-account.json');
+const SA_PATH = resolveGoogleServiceAccountPath(import.meta.url);
 
 async function runReport(token, propertyId, body) {
   const url = `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`;
