@@ -1,8 +1,6 @@
 /**
  * Partnerships (SAN-78) · piezas UI pequeñas compartidas por kanban/lista/drawer.
- * Estilo del producto real (mismos patrones que metrics/content-creation/brand-brain):
- * badges sobrios de un borde, sin estética cómic — los mockups mandan solo en
- * comportamiento.
+ * Estilo visual compartido por la pantalla Outreach · Partnerships.
  */
 
 "use client";
@@ -40,12 +38,14 @@ export function QualityBadge({
       title={
         band
           ? `Quality ${score}/100 — ER vs tier · autenticidad · sector fit · audiencia ES · consistencia`
-          : "Sin quality score todavía (lo calcula el discovery, SAN-79)"
+          : "Sin quality score todavía"
       }
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full border font-heading font-semibold",
         size === "lg" ? "h-12 w-12 text-lg" : "h-9 w-9 text-sm",
-        band ? BAND_BADGE[band] : "border-border bg-muted text-muted-foreground",
+        band
+          ? BAND_BADGE[band]
+          : "border-border bg-muted text-muted-foreground",
       )}
     >
       {typeof score === "number" ? Math.round(score) : "—"}
@@ -55,11 +55,30 @@ export function QualityBadge({
 
 // ── Chips de red / tier ──
 
-const NETWORK_META: Record<string, { label: string; emoji: string; className: string }> = {
-  instagram: { label: "Instagram", emoji: "📸", className: "border-pink-300/70 bg-pink-50 text-pink-800" },
-  youtube: { label: "YouTube", emoji: "▶️", className: "border-red-300/70 bg-red-50 text-red-800" },
-  tiktok: { label: "TikTok", emoji: "🎵", className: "border-border bg-muted text-foreground" },
-  other: { label: "Red", emoji: "🌐", className: "border-border bg-muted/50 text-muted-foreground" },
+const NETWORK_META: Record<
+  string,
+  { label: string; emoji: string; className: string }
+> = {
+  instagram: {
+    label: "Instagram",
+    emoji: "📸",
+    className: "border-pink-300/70 bg-pink-50 text-pink-800",
+  },
+  youtube: {
+    label: "YouTube",
+    emoji: "▶️",
+    className: "border-red-300/70 bg-red-50 text-red-800",
+  },
+  tiktok: {
+    label: "TikTok",
+    emoji: "🎵",
+    className: "border-border bg-muted text-foreground",
+  },
+  other: {
+    label: "Red",
+    emoji: "🌐",
+    className: "border-border bg-muted/50 text-muted-foreground",
+  },
 };
 
 export function networkMeta(network?: string | null) {
@@ -72,7 +91,12 @@ export function networkMeta(network?: string | null) {
 export function NetworkChip({ network }: { network?: string | null }) {
   const meta = networkMeta(network);
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium", meta.className)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
+        meta.className,
+      )}
+    >
       <span aria-hidden>{meta.emoji}</span>
       {meta.label}
     </span>
@@ -105,21 +129,29 @@ const STAGE_STAMP: Partial<Record<StageFilterKey, string>> = {
 
 export function StageStamp({ lead }: { lead: PartnershipLead }) {
   const stage = stageForStatus(lead.lifecycleStatus);
-  const label = stage === "Discarded" ? "Descartado" : stage || lead.lifecycleStatus || "—";
+  const label =
+    stage === "Discarded" ? "Descartado" : stage || lead.lifecycleStatus || "—";
   return (
     <span className="inline-flex flex-col items-start gap-0.5">
       <span
-        title={`yalc: ${lead.lifecycleStatus || "?"}`}
+        title={`Estado actual: ${label}`}
         className={cn(
           "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-          (stage && STAGE_STAMP[stage]) || "border-border bg-muted/50 text-muted-foreground",
+          (stage && STAGE_STAMP[stage]) ||
+            "border-border bg-muted/50 text-muted-foreground",
         )}
       >
-        {stage === "Discarded" && <span className="mr-1" aria-hidden>🗑</span>}
+        {stage === "Discarded" && (
+          <span className="mr-1" aria-hidden>
+            🗑
+          </span>
+        )}
         {label}
       </span>
       {lead.discardNote && (
-        <span className="text-[10px] text-muted-foreground">{lead.discardNote}</span>
+        <span className="text-[10px] text-muted-foreground">
+          {lead.discardNote}
+        </span>
       )}
     </span>
   );
@@ -127,14 +159,29 @@ export function StageStamp({ lead }: { lead: PartnershipLead }) {
 
 // ── Barra mini (sector fit en la lista, componentes en el drawer) ──
 
-export function ScoreBar({ value, className }: { value: number; className?: string }) {
+export function ScoreBar({
+  value,
+  className,
+}: {
+  value: number;
+  className?: string;
+}) {
   const clamped = Math.max(0, Math.min(100, value));
   return (
-    <span className={cn("block h-2 w-full overflow-hidden rounded-full bg-muted", className)}>
+    <span
+      className={cn(
+        "block h-2 w-full overflow-hidden rounded-full bg-muted",
+        className,
+      )}
+    >
       <span
         className={cn(
           "block h-full rounded-full",
-          clamped >= 80 ? "bg-sage" : clamped >= 60 ? "bg-cyan-600" : "bg-destructive",
+          clamped >= 80
+            ? "bg-sage"
+            : clamped >= 60
+              ? "bg-cyan-600"
+              : "bg-destructive",
         )}
         style={{ width: `${clamped}%` }}
       />
@@ -149,14 +196,20 @@ export interface ToastState {
   tone: "ok" | "warn";
 }
 
-export function useToast(): { toast: ToastState | null; showToast: (message: string, tone?: "ok" | "warn") => void } {
+export function useToast(): {
+  toast: ToastState | null;
+  showToast: (message: string, tone?: "ok" | "warn") => void;
+} {
   const [toast, setToast] = useState<ToastState | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showToast = useCallback((message: string, tone: "ok" | "warn" = "ok") => {
-    setToast({ message, tone });
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setToast(null), 3200);
-  }, []);
+  const showToast = useCallback(
+    (message: string, tone: "ok" | "warn" = "ok") => {
+      setToast({ message, tone });
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setToast(null), 3200);
+    },
+    [],
+  );
   return { toast, showToast };
 }
 

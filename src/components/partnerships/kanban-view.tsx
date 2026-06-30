@@ -32,18 +32,31 @@ interface KanbanViewProps {
   leads: PartnershipLead[];
   roster: boolean;
   busyLeadId?: string;
-  onMove: (lead: PartnershipLead, target: StageFilterKey, note?: string) => void;
+  onMove: (
+    lead: PartnershipLead,
+    target: StageFilterKey,
+    note?: string,
+  ) => void;
   onOpen: (lead: PartnershipLead) => void;
 }
 
-export function KanbanView({ leads, roster, busyLeadId, onMove, onOpen }: KanbanViewProps) {
+export function KanbanView({
+  leads,
+  roster,
+  busyLeadId,
+  onMove,
+  onOpen,
+}: KanbanViewProps) {
   const groups = groupLeadsByStage(leads);
   const stages = roster
     ? PIPELINE_STAGES.filter((stage) => ROSTER_STAGES.includes(stage.key))
     : PIPELINE_STAGES;
   const [dragOver, setDragOver] = useState<PipelineStageKey | null>(null);
 
-  function handleDrop(event: DragEvent<HTMLDivElement>, target: PipelineStageKey) {
+  function handleDrop(
+    event: DragEvent<HTMLDivElement>,
+    target: PipelineStageKey,
+  ) {
     event.preventDefault();
     setDragOver(null);
     const leadId = event.dataTransfer.getData("text/plain");
@@ -54,7 +67,10 @@ export function KanbanView({ leads, roster, busyLeadId, onMove, onOpen }: Kanban
   }
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-4" data-testid="partnerships-kanban">
+    <div
+      className="flex gap-3 overflow-x-auto pb-4"
+      data-testid="partnerships-kanban"
+    >
       {stages.map((stage) => {
         const items = groups[stage.key];
         return (
@@ -67,13 +83,13 @@ export function KanbanView({ leads, roster, busyLeadId, onMove, onOpen }: Kanban
             )}
           >
             <header
-              title={stage.headTooltip || stage.yalcSublabel}
+              title={stage.headTooltip || stage.label}
               className="flex items-start justify-between gap-2 border-b border-border px-3 py-2"
             >
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-muted-foreground">{stage.label}</div>
-                {/* Decisión de diseño nº 4 (2026-06-11): estado genérico del Cockpit Yalc al que mapea la columna */}
-                <div className="text-[10px] text-muted-foreground/70">{stage.yalcSublabel}</div>
+                <div className="text-xs font-semibold text-muted-foreground">
+                  {stage.label}
+                </div>
               </div>
               <span className="rounded-full bg-border px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
                 {items.length}
@@ -86,11 +102,17 @@ export function KanbanView({ leads, roster, busyLeadId, onMove, onOpen }: Kanban
                 event.dataTransfer.dropEffect = "move";
                 if (dragOver !== stage.key) setDragOver(stage.key);
               }}
-              onDragLeave={() => setDragOver((current) => (current === stage.key ? null : current))}
+              onDragLeave={() =>
+                setDragOver((current) =>
+                  current === stage.key ? null : current,
+                )
+              }
               onDrop={(event) => handleDrop(event, stage.key)}
             >
               {items.length === 0 && (
-                <p className="py-8 text-center text-[11px] text-muted-foreground">— vacío —</p>
+                <p className="py-8 text-center text-[11px] text-muted-foreground">
+                  Vacío
+                </p>
               )}
               {items.map((lead) => (
                 <KanbanCard
@@ -156,7 +178,9 @@ function KanbanCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-foreground">{leadDisplayName(lead)}</div>
+          <div className="truncate text-sm font-semibold text-foreground">
+            {leadDisplayName(lead)}
+          </div>
           <div className="mt-1 flex flex-wrap gap-1">
             <NetworkChip network={lead.network} />
             <TierChip tier={lead.tier} />
@@ -167,14 +191,18 @@ function KanbanCard({
       {typeof lead.offeredPrice === "number" && (
         <div className="mt-1.5 text-xs font-semibold text-rust">
           {formatEur(lead.offeredPrice)}
-          {feeNote && <span className="ml-1 font-normal text-muted-foreground">{feeNote}</span>}
+          {feeNote && (
+            <span className="ml-1 font-normal text-muted-foreground">
+              {feeNote}
+            </span>
+          )}
         </div>
       )}
       {stage === "Discovered" && (
         <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
           <button
             type="button"
-            title="Mover a Shortlist (yalc: Qualified)"
+            title="Mover a Shortlist"
             onClick={(event) => {
               event.stopPropagation();
               onMove(lead, "Shortlist");
@@ -185,7 +213,7 @@ function KanbanCard({
           </button>
           <button
             type="button"
-            title="Descartar (estado oculto Disqualified — recuperable desde la Lista)"
+            title="Descartar"
             onClick={(event) => {
               event.stopPropagation();
               discard();
