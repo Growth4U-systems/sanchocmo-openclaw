@@ -50,6 +50,7 @@ import {
 type B2BTab = "encuentra" | "contactos" | "inbox" | "plantillas" | "settings";
 type ContactosVista = "kanban" | "lista";
 type OutboundAction = "search" | "enrich" | "approve" | "dry-run" | "publish" | "live";
+type B2BInboxFilter = "all" | "followup" | "replied" | "meeting" | "deal";
 
 interface OverviewPayload {
   ok: boolean;
@@ -378,6 +379,24 @@ function sourceLabel(lead: Lead): string {
   return source;
 }
 
+function outboundActionLabel(action: OutboundAction): string {
+  if (action === "search") return "Buscar prospectos";
+  if (action === "enrich") return "Completar datos";
+  if (action === "approve") return "Aprobar secuencia";
+  if (action === "dry-run") return "Enviar prueba";
+  if (action === "publish") return "Crear campaña en Instantly";
+  return "Activar envíos";
+}
+
+function outboundActionDescription(action: OutboundAction): string {
+  if (action === "search") return "Trae más contactos desde la fuente conectada.";
+  if (action === "enrich") return "Completa email, cargo, cuenta y señales de fit.";
+  if (action === "approve") return "Bloquea la secuencia revisada para esta búsqueda.";
+  if (action === "dry-run") return "Valida la campaña sin enviar emails reales.";
+  if (action === "publish") return "Crea o actualiza la campaña en Instantly.";
+  return "Deja la campaña lista para enviar.";
+}
+
 function scoreBandClass(score: number | null, size: "md" | "lg" = "md"): string {
   const band = qualityBand(score);
   return cn(
@@ -658,7 +677,7 @@ export function OutboundB2BView() {
     },
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
-      showToast(`Acción completada: ${outboundActionLabel(variables.action)}`);
+      showToast(`Completado: ${outboundActionLabel(variables.action)}`);
     },
     onError: (error) => showToast(error instanceof Error ? error.message : "Acción incompleta", "warn"),
   });
@@ -690,6 +709,19 @@ export function OutboundB2BView() {
     const prompt = campaign
       ? `Continuar la búsqueda outbound B2B "${campaign.title || campaign.id}". Revisar ICP, priorización, scoring y secuencia de contacto.`
       : "Crear una búsqueda outbound B2B con ICP, criterios de scoring, canales, secuencia y límites de contacto.";
+    openChat(slug, buildYalcThread(slug, prompt));
+  }
+
+  function openB2BReply(lead: Lead, draft?: string) {
+    if (!slug) return;
+    const prompt = [
+      `Preparar respuesta outbound B2B para ${leadDisplayName(lead)}${lead.company ? ` (${lead.company})` : ""}.`,
+      lead.email ? `Email: ${lead.email}.` : null,
+      lead.campaignTitle || lead.campaignId ? `Búsqueda: ${lead.campaignTitle || lead.campaignId}.` : null,
+      draft?.trim() ? `Borrador actual:\n${draft.trim()}` : "Revisar el hilo, proponer respuesta y siguiente acción.",
+    ]
+      .filter(Boolean)
+      .join("\n");
     openChat(slug, buildYalcThread(slug, prompt));
   }
 
@@ -842,7 +874,7 @@ export function OutboundB2BView() {
               className="inline-flex items-center gap-2 rounded-md border-2 border-ink bg-navy px-3 py-2 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5"
             >
               <Bot className="h-4 w-4" />
-              Rocinante
+              Abrir chat
             </button>
             <button
               type="button"
@@ -854,6 +886,14 @@ export function OutboundB2BView() {
             </button>
           </div>
         </div>
+
+        <B2BFlowStrip
+          tab={tab}
+          campaigns={campaigns}
+          leads={activeLeads}
+          gates={gates}
+          onGo={(nextTab) => pushQuery({ tab: nextTab })}
+        />
 
         {pageError && (
           <div className="flex items-start gap-2 rounded-lg border-2 border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -940,7 +980,17 @@ export function OutboundB2BView() {
         )}
 
         {tab === "inbox" && (
-          <B2BInboxTab slug={slug} leads={activeLeads} gates={gates} gatesLoading={gatesQuery.isLoading} />
+          <B2BInboxTab
+            slug={slug}
+            leads={activeLeads}
+            gates={gates}
+            gatesLoading={gatesQuery.isLoading}
+            busy={stageMutation.isPending}
+            onMove={moveLead}
+            onOpenLead={(lead) => setSelectedLeadId(lead.id)}
+            onOpenSequence={() => pushQuery({ tab: "plantillas" })}
+            onPrepareReply={openB2BReply}
+          />
         )}
 
         {tab === "plantillas" && (
@@ -980,15 +1030,6 @@ export function OutboundB2BView() {
       </div>
     </DashboardLayout>
   );
-}
-
-function outboundActionLabel(action: OutboundAction): string {
-  if (action === "search") return "Buscar";
-  if (action === "enrich") return "Enriquecer";
-  if (action === "approve") return "Aprobar";
-  if (action === "dry-run") return "Prueba";
-  if (action === "publish") return "Instantly";
-  return "Live";
 }
 
 function B2BEncuentraTab({
@@ -1163,6 +1204,109 @@ function MiniMetric({ label, value, muted }: { label: string; value: number; mut
       <div className={cn("font-heading text-2xl leading-none", muted ? "text-muted-foreground/60" : "text-rust")}>{value}</div>
       <div className="text-[10px] text-muted-foreground">{label}</div>
     </div>
+  );
+}
+
+function B2BFlowStrip({
+  tab,
+  campaigns,
+  leads,
+  gates,
+  onGo,
+}: {
+  tab: B2BTab;
+  campaigns: Campaign[];
+  leads: Lead[];
+  gates: GateItem[];
+  onGo: (tab: B2BTab) => void;
+}) {
+  const hasIcp = campaigns.some((campaign) => Boolean(campaign.targetSegment || campaign.hypothesis));
+  const prioritized = leads.filter((lead) => {
+    const stage = stageForStatus(lead.lifecycleStatus);
+    return stage === "Shortlist" || stage === "Contacted" || stage === "Replied" || stage === "Negotiating" || stage === "Signed" || stage === "Active";
+  }).length;
+  const contacted = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Contacted").length;
+  const replies = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Replied").length;
+
+  const steps: Array<{
+    label: string;
+    detail: string;
+    value: string;
+    target: B2BTab;
+    icon: ReactNode;
+  }> = [
+    {
+      label: "ICP",
+      detail: hasIcp ? "Contexto definido" : "Falta contexto",
+      value: hasIcp ? "OK" : "Pendiente",
+      target: "plantillas",
+      icon: <Target className="h-4 w-4" />,
+    },
+    {
+      label: "Encuentra",
+      detail: "Búsquedas creadas",
+      value: String(campaigns.length),
+      target: "encuentra",
+      icon: <Search className="h-4 w-4" />,
+    },
+    {
+      label: "Prioriza",
+      detail: "Contactos trabajables",
+      value: String(prioritized),
+      target: "contactos",
+      icon: <Users className="h-4 w-4" />,
+    },
+    {
+      label: "Personaliza",
+      detail: "Secuencia y variables",
+      value: campaigns.length > 0 ? "Editar" : "Pendiente",
+      target: "plantillas",
+      icon: <Mail className="h-4 w-4" />,
+    },
+    {
+      label: "Envía",
+      detail: gates.length > 0 ? "Hay aprobaciones" : `${contacted} en seguimiento`,
+      value: gates.length > 0 ? String(gates.length) : "Prueba",
+      target: "plantillas",
+      icon: <Send className="h-4 w-4" />,
+    },
+    {
+      label: "Responde",
+      detail: "Inbox y siguientes pasos",
+      value: String(replies),
+      target: "inbox",
+      icon: <Inbox className="h-4 w-4" />,
+    },
+  ];
+
+  return (
+    <section className="grid gap-2 md:grid-cols-2 xl:grid-cols-6" data-testid="outbound-flow-strip" aria-label="Flujo Outbound B2B">
+      {steps.map((step) => {
+        const active = tab === step.target;
+        return (
+          <button
+            key={step.label}
+            type="button"
+            onClick={() => onGo(step.target)}
+            className={cn(
+              "flex min-h-[82px] items-start gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:border-rust hover:bg-rust/5",
+              active ? "border-rust bg-rust/10" : "border-border",
+            )}
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-background text-rust">
+              {step.icon}
+            </span>
+            <span className="min-w-0">
+              <span className="block font-heading text-sm font-bold text-foreground">{step.label}</span>
+              <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{step.detail}</span>
+              <span className="mt-1 inline-flex rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {step.value}
+              </span>
+            </span>
+          </button>
+        );
+      })}
+    </section>
   );
 }
 
@@ -1792,19 +1936,38 @@ function B2BInboxTab({
   leads,
   gates,
   gatesLoading,
+  busy,
+  onMove,
+  onOpenLead,
+  onOpenSequence,
+  onPrepareReply,
 }: {
   slug: string;
   leads: Lead[];
   gates: GateItem[];
   gatesLoading: boolean;
+  busy: boolean;
+  onMove: (lead: Lead, target: StageFilterKey, note?: string) => void;
+  onOpenLead: (lead: Lead) => void;
+  onOpenSequence: () => void;
+  onPrepareReply: (lead: Lead, draft?: string) => void;
 }) {
-  const [filter, setFilter] = useState<"all" | "pending" | "replied" | "meeting" | "deal">("all");
+  const queryClient = useQueryClient();
+  const [filter, setFilter] = useState<B2BInboxFilter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
 
   const conversations = useMemo(() => {
     const rows = leads.filter((lead) => {
       const stage = stageForStatus(lead.lifecycleStatus);
-      return stage === "Contacted" || stage === "Replied" || stage === "Negotiating" || stage === "Signed" || lead.lastMessage;
+      return (
+        stage === "Contacted" ||
+        stage === "Replied" ||
+        stage === "Negotiating" ||
+        stage === "Signed" ||
+        stage === "Active" ||
+        Boolean(lead.lastMessage)
+      );
     });
     return rows.length > 0 ? rows : leads.slice(0, 5);
   }, [leads]);
@@ -1814,10 +1977,10 @@ function B2BInboxTab({
       conversations.filter((lead) => {
         if (filter === "all") return true;
         const stage = stageForStatus(lead.lifecycleStatus);
-        if (filter === "pending") return stage === "Contacted";
+        if (filter === "followup") return stage === "Contacted";
         if (filter === "replied") return stage === "Replied";
         if (filter === "meeting") return lead.lifecycleStatus === "Demo_Booked" || stage === "Negotiating";
-        return lead.lifecycleStatus === "Deal_Created" || stage === "Signed";
+        return lead.lifecycleStatus === "Deal_Created" || stage === "Signed" || stage === "Active";
       }),
     [conversations, filter],
   );
@@ -1831,28 +1994,63 @@ function B2BInboxTab({
       ),
     enabled: !!slug && !!selected,
   });
-  const messages = threadQuery.data?.messages || [];
+  const rawMessages = threadQuery.data?.messages || [];
+  const messages = rawMessages.filter((message) => message.status !== "draft");
+  const draftMessage = rawMessages.find((message) => message.status === "draft") || null;
+
+  useEffect(() => {
+    setDraft(draftMessage?.body || "");
+  }, [draftMessage?.body, selected?.id]);
+
+  const threadKey = ["yalc", slug, "b2b", "lead-messages", selected?.id] as const;
+  const saveDraft = useMutation({
+    mutationFn: () =>
+      fetchJson(`/api/yalc/leads/${encodeURIComponent(selected!.id)}/messages?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          direction: "out",
+          body: draft,
+          status: "draft",
+          channel: "email",
+        }),
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: threadKey });
+    },
+  });
 
   const counts = {
     all: conversations.length,
-    pending: conversations.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Contacted").length,
+    followup: conversations.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Contacted").length,
     replied: conversations.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Replied").length,
     meeting: conversations.filter((lead) => lead.lifecycleStatus === "Demo_Booked" || stageForStatus(lead.lifecycleStatus) === "Negotiating").length,
-    deal: conversations.filter((lead) => lead.lifecycleStatus === "Deal_Created" || stageForStatus(lead.lifecycleStatus) === "Signed").length,
+    deal: conversations.filter((lead) => {
+      const stage = stageForStatus(lead.lifecycleStatus);
+      return lead.lifecycleStatus === "Deal_Created" || stage === "Signed" || stage === "Active";
+    }).length,
   };
+  const selectedStage = selected ? stageForStatus(selected.lifecycleStatus) : null;
+  const lastMessage = messages[messages.length - 1] || selected?.lastMessage || null;
+
+  const filters: Array<{ key: B2BInboxFilter; label: string }> = [
+    { key: "all", label: "Todo" },
+    { key: "followup", label: "Seguimiento" },
+    { key: "replied", label: "Respondieron" },
+    { key: "meeting", label: "Reuniones" },
+    { key: "deal", label: "Deals" },
+  ];
 
   return (
     <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]" data-testid="outbound-inbox">
       <section className="rounded-xl border border-border bg-card">
         <div className="border-b border-border p-3">
+          <div className="mb-3">
+            <h3 className="font-heading text-lg text-navy">Seguimiento</h3>
+            <p className="text-xs text-muted-foreground">Respuestas, follow-ups y oportunidades creadas desde la campaña.</p>
+          </div>
           <div className="flex flex-wrap gap-1.5">
-            {([
-              ["all", "Todos"],
-              ["pending", "Pendientes"],
-              ["replied", "Replies"],
-              ["meeting", "Reuniones"],
-              ["deal", "Deals"],
-            ] as const).map(([key, label]) => (
+            {filters.map(({ key, label }) => (
               <button
                 key={key}
                 type="button"
@@ -1885,9 +2083,14 @@ function B2BInboxTab({
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-semibold text-foreground">{leadDisplayName(lead)}</span>
                 <span className="block truncate text-xs text-muted-foreground">{lead.company || leadRole(lead)}</span>
-                <span className="mt-1 inline-flex rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span className={cn("mt-1 inline-flex rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide", stageClasses(lead))}>
                   {stageLabel(lead)}
                 </span>
+                {(lead.lastMessage || lead.emailStatus) && (
+                  <span className="mt-1 block truncate text-[11px] text-muted-foreground">
+                    {lead.lastMessage?.body || lead.emailStatus}
+                  </span>
+                )}
               </span>
             </button>
           ))}
@@ -1902,14 +2105,21 @@ function B2BInboxTab({
               {selected ? `${selected.company || "Cuenta"} · ${selected.email || selected.linkedinUrl || "sin contacto"}` : "Selecciona una conversación"}
             </p>
           </div>
-          <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-            {gatesLoading ? "Gates..." : `${gates.length} aprobaciones`}
-          </span>
+          {selected && (
+            <span className={cn("rounded-full border px-2.5 py-1 text-xs font-semibold", stageClasses(selected))}>
+              {stageLabel(selected)}
+            </span>
+          )}
         </header>
         <div className="space-y-3 p-4">
+          {gatesLoading && gates.length === 0 && (
+            <div className="rounded-lg border border-border bg-background p-3 text-sm text-muted-foreground">
+              Cargando aprobaciones de envío...
+            </div>
+          )}
           {gates.length > 0 && (
             <div className="rounded-lg border border-yellow-500/40 bg-yellow-50 p-3">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-yellow-900">Aprobaciones pendientes</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-yellow-900">Aprobaciones de envío</div>
               <div className="space-y-2">
                 {gates.slice(0, 3).map((gate) => (
                   <div key={gateRunId(gate)} className="flex items-start gap-2 rounded-md border border-yellow-200 bg-white/60 p-2 text-sm">
@@ -1925,10 +2135,92 @@ function B2BInboxTab({
           )}
           {selected ? (
             <>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]">
+                <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Target className="h-4 w-4 text-rust" />
+                    <h4 className="font-semibold text-foreground">Siguiente paso</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedStage === "Contacted" && "La secuencia ya está en seguimiento. Revisa la cadencia o prepara un follow-up si corresponde."}
+                    {selectedStage === "Replied" && "Hay respuesta. Prepara contestación, confirma fit y mueve a reunión si aplica."}
+                    {selectedStage === "Negotiating" && "La conversación ya está en oportunidad. Registra reunión o crea deal cuando esté listo."}
+                    {(selectedStage === "Signed" || selectedStage === "Active") && "La oportunidad ya está creada. Mantén el seguimiento comercial y actualiza cierre."}
+                    {!selectedStage && "Este contacto todavía no tiene un estado claro de inbox. Abre la ficha para revisar datos y moverlo al pipeline."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onPrepareReply(selected, draft)}
+                      className="inline-flex items-center gap-2 rounded-md border-2 border-rust bg-rust px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
+                    >
+                      <Send className="h-4 w-4" />
+                      Preparar respuesta
+                    </button>
+                    {selectedStage === "Contacted" && (
+                      <button
+                        type="button"
+                        onClick={onOpenSequence}
+                        className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
+                      >
+                        Ver secuencia
+                      </button>
+                    )}
+                    {selectedStage === "Replied" && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => onMove(selected, "Negotiating", "Marcado como reunión desde Inbox B2B")}
+                        className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+                      >
+                        Marcar reunión
+                      </button>
+                    )}
+                    {selectedStage === "Negotiating" && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => onMove(selected, "Signed", "Deal creado desde Inbox B2B")}
+                        className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+                      >
+                        Crear deal
+                      </button>
+                    )}
+                    {selectedStage === "Signed" && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => onMove(selected, "Active", "Marcado como ganado desde Inbox B2B")}
+                        className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+                      >
+                        Marcar ganado
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onOpenLead(selected)}
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
+                    >
+                      Ficha
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Estado de envío</div>
+                  <dl className="mt-2 space-y-2 text-sm">
+                    <DataItem label="Campaña" value={selected.campaignTitle || selected.campaignId || "-"} />
+                    <DataItem label="Instantly" value={selected.instantlyCampaignId || "Sin campaña creada"} />
+                    <DataItem label="Último evento" value={lastMessage ? formatDateTime(lastMessage.createdAt) : selected.emailStatus || "-"} />
+                  </dl>
+                </div>
+              </div>
               <div className="min-h-[260px] space-y-3 rounded-lg border border-border bg-background p-3">
                 {threadQuery.isLoading && <p className="text-sm text-muted-foreground">Cargando hilo...</p>}
                 {messages.length === 0 && !threadQuery.isLoading && (
-                  <p className="py-10 text-center text-sm text-muted-foreground">Sin mensajes todavía para este contacto.</p>
+                  <p className="py-10 text-center text-sm text-muted-foreground">
+                    Sin mensajes todavía. Cuando se envíe la secuencia o llegue una respuesta, aparecerá aquí.
+                  </p>
                 )}
                 {messages.map((message) => (
                   <div
@@ -1948,13 +2240,27 @@ function B2BInboxTab({
               </div>
               <div className="rounded-lg border border-border bg-background p-3">
                 <textarea
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
                   rows={4}
                   placeholder="Escribe una respuesta o nota de seguimiento..."
                   className="w-full resize-none rounded-md border border-border bg-card p-3 text-sm focus:border-rust focus:outline-none"
                 />
-                <div className="mt-2 flex justify-end">
-                  <button type="button" className="rounded-lg border-2 border-rust bg-rust px-3 py-1.5 text-sm font-semibold text-white">
-                    Preparar respuesta
+                <div className="mt-2 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    disabled={!draft.trim() || saveDraft.isPending}
+                    onClick={() => saveDraft.mutate()}
+                    className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+                  >
+                    {saveDraft.isPending ? "Guardando..." : "Guardar borrador"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onPrepareReply(selected, draft)}
+                    className="rounded-lg border-2 border-rust bg-rust px-3 py-1.5 text-sm font-semibold text-white"
+                  >
+                    Preparar en chat
                   </button>
                 </div>
               </div>
@@ -2027,9 +2333,14 @@ function B2BPlantillasTab({
               type="button"
               disabled={!selectedCampaignId || actionBusy}
               onClick={() => onRunAction(action)}
-              className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+              className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-left transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
             >
-              {outboundActionLabel(action)}
+              <span>
+                <span className="block text-sm font-semibold">{outboundActionLabel(action)}</span>
+                <span className="mt-0.5 block text-xs font-normal leading-snug text-muted-foreground">
+                  {outboundActionDescription(action)}
+                </span>
+              </span>
               {actionBusy && busyAction === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
             </button>
           ))}
@@ -2561,6 +2872,7 @@ function B2BOutreachStyles() {
       }
 
       .op-shell [data-testid="outbound-b2b-tabs"] button,
+      .op-shell [data-testid="outbound-flow-strip"] button,
       .op-shell [data-testid="crear-busqueda-b2b"],
       .op-shell [data-testid="b2b-bulk-bar"] button,
       .op-shell [data-testid="outbound-plantillas"] button {
@@ -2572,6 +2884,7 @@ function B2BOutreachStyles() {
       }
 
       .op-shell [data-testid="outbound-b2b-tabs"] button:hover,
+      .op-shell [data-testid="outbound-flow-strip"] button:hover,
       .op-shell [data-testid="crear-busqueda-b2b"]:hover,
       .op-shell [data-testid="b2b-bulk-bar"] button:hover,
       .op-shell [data-testid="outbound-plantillas"] button:hover {
@@ -2580,6 +2893,7 @@ function B2BOutreachStyles() {
       }
 
       .op-shell [data-testid="outbound-b2b-tabs"] button:active,
+      .op-shell [data-testid="outbound-flow-strip"] button:active,
       .op-shell [data-testid="crear-busqueda-b2b"]:active,
       .op-shell [data-testid="b2b-bulk-bar"] button:active,
       .op-shell [data-testid="outbound-plantillas"] button:active {
