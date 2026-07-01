@@ -190,7 +190,7 @@ const TABS: Array<{ key: Exclude<B2BTab, "settings">; label: string; icon: Lucid
   { key: "encuentra", label: "Encuentra", icon: Search },
   { key: "contactos", label: "Contactos", icon: Users },
   { key: "inbox", label: "Inbox", icon: Inbox },
-  { key: "plantillas", label: "Plantillas", icon: FileText },
+  { key: "plantillas", label: "Personalización", icon: FileText },
 ];
 
 const HEADERS: Record<B2BTab, { title: string; sub: string }> = {
@@ -207,8 +207,8 @@ const HEADERS: Record<B2BTab, { title: string; sub: string }> = {
     sub: "Respuestas, aprobaciones humanas y conversaciones listas para seguimiento.",
   },
   plantillas: {
-    title: "Plantillas",
-    sub: "Secuencias outbound editables por búsqueda antes de aprobar o lanzar.",
+    title: "Personalización",
+    sub: "Contexto de empresa, ICP, propuesta y variables que alimentan las secuencias outbound.",
   },
   settings: {
     title: "Settings",
@@ -2386,173 +2386,209 @@ function B2BPlantillasTab({
   const sequences = extractEmailSequences(campaignDetail);
   const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) || campaignDetail;
   const placeholders = extractSequencePlaceholders(sequences);
+  const emailCount = sequences.reduce((count, block) => count + block.emails.length, 0);
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]" data-testid="outbound-plantillas">
-      <section className="rounded-xl border border-border bg-card p-4">
-        <h3 className="font-heading text-lg text-navy">Búsqueda</h3>
-        <select
-          value={selectedCampaignId}
-          onChange={(event) => onSelectCampaign(event.target.value)}
-          className="mt-3 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none"
-        >
-          {campaigns.length === 0 && <option value="">Sin campañas</option>}
-          {campaigns.map((campaign) => (
-            <option key={campaign.id} value={campaign.id}>
-              {campaign.title || campaign.id}
-            </option>
-          ))}
-        </select>
-        {selectedCampaign && (
-          <CampaignContextPanel
-            campaign={selectedCampaign}
-            placeholders={placeholders}
-            onEditContext={onEditContext}
-          />
-        )}
-        <div className="mt-5 grid gap-2">
-          {(["approve", "dry-run", "publish", "live"] as const).map((action) => (
-            <button
-              key={action}
-              type="button"
-              disabled={!selectedCampaignId || actionBusy}
-              onClick={() => onRunAction(action)}
-              className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-left transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
-            >
-              <span>
-                <span className="block text-sm font-semibold">{outboundActionLabel(action)}</span>
-                <span className="mt-0.5 block text-xs font-normal leading-snug text-muted-foreground">
-                  {outboundActionDescription(action)}
-                </span>
-              </span>
-              {actionBusy && busyAction === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
-            </button>
-          ))}
-        </div>
-      </section>
-
+    <div className="space-y-4" data-testid="outbound-plantillas">
       <section className="rounded-xl border border-border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-heading text-lg text-navy">Secuencia outbound</h3>
-            <p className="text-sm text-muted-foreground">Edita 1 a 3 emails por campaña antes de aprobarla.</p>
+            <h3 className="font-heading text-lg text-navy">Brief de personalización</h3>
+            <p className="text-sm text-muted-foreground">La secuencia sale del ICP, la oferta y las variables de cada campaña.</p>
           </div>
-          {loading && <span className="text-xs text-muted-foreground">Cargando...</span>}
+          <select
+            value={selectedCampaignId}
+            onChange={(event) => onSelectCampaign(event.target.value)}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none sm:w-80"
+          >
+            {campaigns.length === 0 && <option value="">Sin campañas</option>}
+            {campaigns.map((campaign) => (
+              <option key={campaign.id} value={campaign.id}>
+                {campaign.title || campaign.id}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="mt-4 space-y-4">
-          {selectedCampaign && (
-            <PersonalizationPanel
-              campaign={selectedCampaign}
-              placeholders={placeholders}
-              onEditContext={onEditContext}
-            />
-          )}
-          {sequences.length === 0 && !loading && (
-            <ZeroState
-              title="Sin secuencia todavía"
-              body="Cuando la búsqueda tenga mensajes generados, aparecerán aquí para editar y aprobar."
-            />
-          )}
-          {sequences.map((block, index) => (
-            <SequenceBlockEditor
-              key={block.stepId || `${block.source}-${index}`}
-              block={block}
-              saving={saving}
-              onSave={(emails) => onSave(block.stepId, emails)}
-            />
-          ))}
-        </div>
+        {selectedCampaign ? (
+          <PersonalizationWorkspace
+            campaign={selectedCampaign}
+            placeholders={placeholders}
+            emailCount={emailCount}
+            onEditContext={onEditContext}
+          />
+        ) : (
+          <ZeroState
+            title="Sin campaña seleccionada"
+            body="Crea o selecciona una búsqueda para trabajar el contexto y generar la secuencia."
+          />
+        )}
       </section>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="rounded-xl border border-border bg-card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-heading text-lg text-navy">Secuencia generada</h3>
+              <p className="text-sm text-muted-foreground">Edita emails y follow-ups antes de aprobar el envío.</p>
+            </div>
+            {loading && <span className="text-xs text-muted-foreground">Cargando...</span>}
+          </div>
+          <div className="mt-4 space-y-4">
+            {sequences.length === 0 && !loading && (
+              <ZeroState
+                title="Sin secuencia todavía"
+                body="Cuando el contexto genere mensajes, aparecerán aquí para editar asuntos, cuerpos y tiempos."
+              />
+            )}
+            {sequences.map((block, index) => (
+              <SequenceBlockEditor
+                key={block.stepId || `${block.source}-${index}`}
+                block={block}
+                saving={saving}
+                onSave={(emails) => onSave(block.stepId, emails)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <aside className="rounded-xl border border-border bg-card p-4">
+          <h3 className="font-heading text-lg text-navy">Salida</h3>
+          <p className="text-sm text-muted-foreground">Acciones después de revisar contexto y mensajes.</p>
+          <div className="mt-4 grid gap-2">
+            {(["approve", "dry-run", "publish", "live"] as const).map((action) => (
+              <button
+                key={action}
+                type="button"
+                disabled={!selectedCampaignId || actionBusy}
+                onClick={() => onRunAction(action)}
+                className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-left transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+              >
+                <span>
+                  <span className="block text-sm font-semibold">{outboundActionLabel(action)}</span>
+                  <span className="mt-0.5 block text-xs font-normal leading-snug text-muted-foreground">
+                    {outboundActionDescription(action)}
+                  </span>
+                </span>
+                {actionBusy && busyAction === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 rounded-lg border border-border bg-background p-3">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Estado de campaña</div>
+            <div className="mt-2 grid gap-2 text-sm">
+              <DataItem label="Estado" value={selectedCampaign?.status || "-"} />
+              <DataItem label="Emails" value={emailCount ? `${emailCount} generados` : "Sin emails"} />
+              <DataItem label="Canales" value={selectedCampaign ? channelText(selectedCampaign.channels) : "-"} />
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
 
-function CampaignContextPanel({
+function PersonalizationWorkspace({
   campaign,
   placeholders,
+  emailCount,
   onEditContext,
 }: {
   campaign: Campaign | CampaignDetail;
   placeholders: string[];
+  emailCount: number;
   onEditContext: () => void;
 }) {
+  const tokens = placeholders.length ? placeholders : ["first_name", "company_name", "pain_point"];
+
   return (
-    <div className="mt-4 space-y-3" data-testid="b2b-context-panel">
-      <div className="rounded-lg border border-border bg-background p-3">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">1. ICP</span>
-          <Target className="h-4 w-4 text-rust" />
-        </div>
-        <p className="text-sm font-semibold text-foreground">{campaign.targetSegment || "Sin segmento definido"}</p>
-        <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">
-          {campaign.hypothesis || "Sin hipótesis de dolor/propuesta todavía."}
-        </p>
-      </div>
-      <div className="rounded-lg border border-border bg-background p-3">
-        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">2. Target y canales</div>
-        <DataItem label="Canales" value={channelText(campaign.channels)} />
-        <DataItem label="Estado" value={campaign.status || "-"} />
-      </div>
-      <div className="rounded-lg border border-border bg-background p-3">
-        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">3. Variables</div>
-        <div className="flex flex-wrap gap-1.5">
-          {(placeholders.length ? placeholders : ["first_name", "company_name"]).map((placeholder) => (
-            <span key={placeholder} className="rounded-full border border-border bg-card px-2 py-0.5 text-[11px] text-muted-foreground">
-              {`{{${placeholder}}}`}
+    <div className="mt-4 space-y-4" data-testid="b2b-personalization-workspace">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="rounded-lg border border-border bg-background p-4">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-card text-rust">
+              <Target className="h-5 w-5" />
             </span>
-          ))}
+            <div className="min-w-0">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Contexto base</div>
+              <h4 className="mt-1 font-heading text-base text-navy">{campaign.title || "Campaña outbound"}</h4>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {campaign.hypothesis || "Sin propuesta o hipótesis definida para esta campaña."}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <ContextSummary label="ICP" value={campaign.targetSegment || "Sin ICP definido"} />
+            <ContextSummary label="Propuesta" value={campaign.hypothesis || "Sin propuesta definida"} />
+          </div>
+          <div className="mt-4 grid gap-3 rounded-lg border border-border bg-card p-3 sm:grid-cols-3">
+            <DataItem label="Canales" value={channelText(campaign.channels)} />
+            <DataItem label="Leads" value={typeof campaign.leadCount === "number" ? `${campaign.leadCount}` : "-"} />
+            <DataItem label="Secuencia" value={emailCount ? `${emailCount} emails` : "Pendiente"} />
+          </div>
         </div>
-      </div>
-      <button
-        type="button"
-        onClick={onEditContext}
-        className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
-      >
-        Ajustar ICP y personalización
-        <ChevronRight className="h-4 w-4" />
-      </button>
-    </div>
-  );
-}
 
-function PersonalizationPanel({
-  campaign,
-  placeholders,
-  onEditContext,
-}: {
-  campaign: Campaign | CampaignDetail;
-  placeholders: string[];
-  onEditContext: () => void;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-background p-4" data-testid="b2b-personalization-panel">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h4 className="font-heading text-base text-navy">Contexto y personalización</h4>
-          <p className="text-sm text-muted-foreground">Lo que alimenta la copia antes de enviar.</p>
-        </div>
-        <button
-          type="button"
-          onClick={onEditContext}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
-        >
-          Ajustar
-        </button>
-      </div>
-      <div className="mt-3 grid gap-3 md:grid-cols-3">
-        <ContextSummary label="ICP" value={campaign.targetSegment || "Sin ICP definido"} />
-        <ContextSummary label="Propuesta" value={campaign.hypothesis || "Sin hipótesis definida"} />
-        <div className="rounded-md border border-border bg-card p-3">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Variables</div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {(placeholders.length ? placeholders : ["first_name", "company_name"]).map((placeholder) => (
-              <span key={placeholder} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
+        <div className="rounded-lg border border-border bg-background p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Personalización</div>
+              <h4 className="mt-1 font-heading text-base text-navy">Variables y ángulos</h4>
+            </div>
+            <button
+              type="button"
+              onClick={onEditContext}
+              className="shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
+            >
+              Trabajar contexto
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {tokens.map((placeholder) => (
+              <span key={placeholder} className="rounded-full border border-border bg-card px-2 py-0.5 text-[11px] text-muted-foreground">
                 {`{{${placeholder}}}`}
               </span>
             ))}
           </div>
+          <div className="mt-4 grid gap-2">
+            <PersonalizationCue label="Dolor" value={campaign.hypothesis || "Pendiente de definir"} />
+            <PersonalizationCue label="Persona" value={campaign.targetSegment || "Pendiente de definir"} />
+            <PersonalizationCue label="Canal" value={channelText(campaign.channels)} />
+          </div>
         </div>
       </div>
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <BriefStep number="1" title="ICP" body={campaign.targetSegment || "Definir segmento y rol comprador."} />
+        <BriefStep number="2" title="Oferta" body={campaign.hypothesis || "Definir dolor, promesa y prueba."} />
+        <BriefStep number="3" title="Mensajes" body={emailCount ? `${emailCount} emails listos para editar.` : "Generar email inicial y follow-ups."} />
+        <BriefStep number="4" title="Envío" body={campaign.status || "Revisar, probar y activar."} />
+      </div>
+    </div>
+  );
+}
+
+function BriefStep({ number, title, body }: { number: string; title: string; body: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-background p-3">
+      <div className="flex items-center gap-2">
+        <span className="grid h-7 w-7 place-items-center rounded-full border border-border bg-card font-heading text-sm font-bold text-rust">
+          {number}
+        </span>
+        <h4 className="font-heading text-sm text-navy">{title}</h4>
+      </div>
+      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground" title={body}>
+        {body}
+      </p>
+    </div>
+  );
+}
+
+function PersonalizationCue({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border bg-card p-2.5">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground" title={value}>
+        {value}
+      </p>
     </div>
   );
 }
