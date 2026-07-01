@@ -48,7 +48,7 @@ import { CadencePanel } from "@/components/dashboard/metrics-cadence-panel";
 import { useMetricsPlan, useDashboardDefinition, useSurfaceSummary, useMetricsHealth, type SurfaceSummaryEntry, type DashboardRecord } from "@/hooks/useMetrics";
 import { useProjects } from "@/hooks/useProjects";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildMetricsEditThread, buildTaskThread } from "@/lib/chat-openers";
+import { buildMerlinChatThread, buildMetricsEditThread, buildTaskThread } from "@/lib/chat-openers";
 import { getTaskSet } from "@/lib/data/task-blueprints";
 import { SURFACES, SURFACE_MANDATORY_SOURCES, SURFACE_API_PROVIDERS, type SurfaceKey, type SurfaceDef } from "@/lib/metrics/surfaces";
 import { isSafeFormula } from "@/lib/metrics/formula";
@@ -1735,6 +1735,13 @@ function MetricsPageInner({ slug }: { slug: string }) {
     openChat(slug, buildMetricsEditThread(slug, message));
   }
 
+  // Bare Merlín session for the top-right "✨ Merlin" button — no skill, no
+  // prefilled prompt; the user just talks to Merlín and asks for anything.
+  function openMerlinChat() {
+    if (!slug) return;
+    openChat(slug, buildMerlinChatThread(slug));
+  }
+
   function openSetupTaskChat(task: SetupTaskView) {
     if (!slug || !metricsProjectRecord || task.isBlueprint) return;
     openChat(slug, buildTaskThread(slug, task.id, task.name, METRICS_PROJECT_ID, {
@@ -3392,7 +3399,7 @@ function MetricsPageInner({ slug }: { slug: string }) {
                   <MetricButton variant="navy" onClick={() => setVersionsOpen(true)}>
                     🕓 Versiones{(dashboardRec?.versions?.length ?? 0) > 0 ? ` ${dashboardRec?.versions.length}` : ""}
                   </MetricButton>
-                  <MetricButton variant="cyan" onClick={() => openMerlin("Quiero editar el dashboard de métricas (North Star, KPIs, superficies o una métrica custom). ¿Qué cambiamos?")}>✨ Merlin</MetricButton>
+                  <MetricButton variant="cyan" onClick={() => openMerlinChat()}>✨ Merlin</MetricButton>
                   <MetricButton variant="sage" onClick={handleCollect} disabled={collecting || !hasConnectedApis} title={hasConnectedApis ? "Recolecta ahora todas las fuentes conectadas" : "Conecta al menos una fuente para poder recolectar"}>
                     {collecting ? "↻ Recolectando…" : "↻ Recolectar"}
                   </MetricButton>

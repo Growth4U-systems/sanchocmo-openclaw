@@ -959,6 +959,19 @@
       "match": "prefix",
       "reopenLinkedTo": "metrics-setup"
     },
+    "merlin-chat": {
+      "threadId": "{slug}:merlin-chat",
+      "threadName": "🔮 Merlín",
+      "skill": "",
+      "skills": [],
+      "agent": "merlin",
+      "linkedTo": "merlin-chat",
+      "docPath": null,
+      "threadState": "continue",
+      "nsKey": "merlin-chat",
+      "match": "prefix",
+      "reopenLinkedTo": "merlin-chat"
+    },
     "discovery-search": {
       "threadId": "{slug}:discovery-{campaignIdLower}",
       "threadName": "Búsqueda: {searchName}",

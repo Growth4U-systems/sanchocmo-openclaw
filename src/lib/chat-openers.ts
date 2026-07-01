@@ -934,6 +934,17 @@ export function buildMetricsEditThread(slug: string, message: string): ThreadCon
   return cfg;
 }
 
+/**
+ * Bare Merlín chat — the top-right "✨ Merlin" button in Métricas. No skill,
+ * no initialMessage: a plain session so the user can ask Merlín anything.
+ * Stable id → the conversation persists across clicks; agent "merlin" (declared
+ * in namespaceOwners.merlin-chat) is the hard binding so reopen resolves back to
+ * Merlín instead of Sancho. skill="" → send.ts forwards no skill.
+ */
+export function buildMerlinChatThread(slug: string): ThreadConfig {
+  return instantiateNamespace("merlin-chat", { slug });
+}
+
 /** Build thread config for creating a new skill via chat */
 export function buildSkillCreatorThread(slug: string): ThreadConfig {
   return instantiateNamespace("skill-creator", { slug, params: { nonce: String(Date.now()) } });

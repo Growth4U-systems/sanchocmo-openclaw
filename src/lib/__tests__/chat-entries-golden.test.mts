@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 // chat-openers + task-blueprints are client-safe (no fs) → load directly.
-const { buildYalcThread, buildOutreachTemplateThread, buildSkillEditorThread, instantiateNamespace } = await import(
+const { buildYalcThread, buildOutreachTemplateThread, buildSkillEditorThread, buildMerlinChatThread, instantiateNamespace } = await import(
   "../chat-openers"
 );
 const { ownerCheckFindings } = await import("../data/task-blueprints");
@@ -67,6 +67,19 @@ test("buildSkillEditorThread === frozen spec (+ docPath override)", () => {
     threadState: "continue",
   });
   assert.equal(buildSkillEditorThread(SLUG, "my-skill", "My Skill", "skills/my-skill/SKILL.md").docPath, "skills/my-skill/SKILL.md");
+});
+
+test("buildMerlinChatThread === bare Merlín session (no skill, no message)", () => {
+  assert.deepEqual(buildMerlinChatThread(SLUG), {
+    threadId: "growth4u:merlin-chat",
+    threadName: "🔮 Merlín",
+    skill: "",
+    skills: [],
+    agent: "merlin",
+    linkedTo: "merlin-chat",
+    docPath: null,
+    threadState: "continue",
+  });
 });
 
 test("unknown chat entry throws", () => {
