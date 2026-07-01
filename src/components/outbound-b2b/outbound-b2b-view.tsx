@@ -884,7 +884,6 @@ export function OutboundB2BView() {
           campaigns={campaigns}
           leads={activeLeads}
           gates={gates}
-          onGo={(nextTab) => pushQuery({ tab: nextTab })}
         />
 
         {pageError && (
@@ -1204,68 +1203,54 @@ function B2BFlowStrip({
   campaigns,
   leads,
   gates,
-  onGo,
 }: {
   tab: B2BTab;
   campaigns: Campaign[];
   leads: Lead[];
   gates: GateItem[];
-  onGo: (tab: B2BTab) => void;
 }) {
   const hasIcp = campaigns.some((campaign) => Boolean(campaign.targetSegment || campaign.hypothesis));
-  const prioritized = leads.filter((lead) => {
-    const stage = stageForStatus(lead.lifecycleStatus);
-    return stage === "Shortlist" || stage === "Contacted" || stage === "Replied" || stage === "Negotiating" || stage === "Signed" || stage === "Active";
-  }).length;
   const contacted = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Contacted").length;
-  const replies = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Replied").length;
 
   const steps: Array<{
     label: string;
     detail: string;
-    value: string;
     target: B2BTab;
     icon: ReactNode;
   }> = [
     {
       label: "ICP",
       detail: hasIcp ? "Contexto definido" : "Falta contexto",
-      value: hasIcp ? "OK" : "Pendiente",
       target: "plantillas",
       icon: <Target className="h-4 w-4" />,
     },
     {
       label: "Encuentra",
       detail: "Búsquedas creadas",
-      value: String(campaigns.length),
       target: "encuentra",
       icon: <Search className="h-4 w-4" />,
     },
     {
       label: "Prioriza",
       detail: "Contactos trabajables",
-      value: String(prioritized),
       target: "contactos",
       icon: <Users className="h-4 w-4" />,
     },
     {
       label: "Personaliza",
       detail: "Secuencia y variables",
-      value: campaigns.length > 0 ? "Editar" : "Pendiente",
       target: "plantillas",
       icon: <Mail className="h-4 w-4" />,
     },
     {
       label: "Envía",
       detail: gates.length > 0 ? "Hay aprobaciones" : `${contacted} en seguimiento`,
-      value: gates.length > 0 ? String(gates.length) : "Prueba",
       target: "plantillas",
       icon: <Send className="h-4 w-4" />,
     },
     {
       label: "Responde",
       detail: "Inbox y siguientes pasos",
-      value: String(replies),
       target: "inbox",
       icon: <Inbox className="h-4 w-4" />,
     },
@@ -1276,12 +1261,11 @@ function B2BFlowStrip({
       {steps.map((step) => {
         const active = tab === step.target;
         return (
-          <button
+          <article
             key={step.label}
-            type="button"
-            onClick={() => onGo(step.target)}
+            aria-current={active ? "step" : undefined}
             className={cn(
-              "flex min-h-[82px] items-start gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:border-rust hover:bg-rust/5",
+              "flex min-h-[82px] items-start gap-3 rounded-lg border-2 bg-card p-3 text-left shadow-[var(--pop-xs)]",
               active ? "border-rust bg-rust/10" : "border-border",
             )}
           >
@@ -1291,11 +1275,8 @@ function B2BFlowStrip({
             <span className="min-w-0">
               <span className="block font-heading text-sm font-bold text-foreground">{step.label}</span>
               <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{step.detail}</span>
-              <span className="mt-1 inline-flex rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                {step.value}
-              </span>
             </span>
-          </button>
+          </article>
         );
       })}
     </section>
@@ -2864,7 +2845,6 @@ function B2BOutreachStyles() {
       }
 
       .op-shell [data-testid="outbound-b2b-tabs"] button,
-      .op-shell [data-testid="outbound-flow-strip"] button,
       .op-shell [data-testid="crear-busqueda-b2b"],
       .op-shell [data-testid="b2b-bulk-bar"] button,
       .op-shell [data-testid="outbound-plantillas"] button {
@@ -2876,7 +2856,6 @@ function B2BOutreachStyles() {
       }
 
       .op-shell [data-testid="outbound-b2b-tabs"] button:hover,
-      .op-shell [data-testid="outbound-flow-strip"] button:hover,
       .op-shell [data-testid="crear-busqueda-b2b"]:hover,
       .op-shell [data-testid="b2b-bulk-bar"] button:hover,
       .op-shell [data-testid="outbound-plantillas"] button:hover {
@@ -2885,7 +2864,6 @@ function B2BOutreachStyles() {
       }
 
       .op-shell [data-testid="outbound-b2b-tabs"] button:active,
-      .op-shell [data-testid="outbound-flow-strip"] button:active,
       .op-shell [data-testid="crear-busqueda-b2b"]:active,
       .op-shell [data-testid="b2b-bulk-bar"] button:active,
       .op-shell [data-testid="outbound-plantillas"] button:active {
