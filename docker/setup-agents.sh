@@ -198,6 +198,26 @@ for agent in agents:
         agent["model"] = default_models[agent_id]
         changed.append(agent_id)
 
+# Resilience: give every anthropic-pinned session agent a cross-provider
+# fallback. Without a fallback profile, a transient LLM idle timeout (no first
+# token within OpenClaw's ~120s idle window — e.g. a large-context turn) makes
+# OpenClaw surface a hard "LLM request timed out" to the user instead of
+# recovering. With a fallback it fails over instead. codex/gpt-5.5 has generous
+# timeouts and tolerates the large-context turns that trip Anthropic's idle
+# ceiling. (Trigger: rocinante / YALC chat hard-errored on a 120s idle timeout.)
+# SAN-172's codex auto-track only rewrites string-form models, so it leaves
+# these object-form models untouched.
+CHAT_FALLBACKS = ["codex/gpt-5.5"]
+for agent in agents:
+    if not isinstance(agent, dict):
+        continue
+    model = agent.get("model")
+    primary = model.get("primary") if isinstance(model, dict) else model
+    has_fallback = isinstance(model, dict) and bool(model.get("fallbacks"))
+    if isinstance(primary, str) and primary.startswith("anthropic/") and not has_fallback:
+        agent["model"] = {"primary": primary, "fallbacks": list(CHAT_FALLBACKS)}
+        changed.append((agent.get("id") or "?") + " +fallback")
+
 if changed:
     config_path.write_text(json.dumps(config, indent=2, ensure_ascii=False) + "\n")
     print("  ✓ Filled missing default model for: " + ", ".join(changed))
