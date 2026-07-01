@@ -105,6 +105,7 @@ export type { AssignTemplateResult, SaveTemplateInput } from "./template-store";
 
 export { contactPartnerLeads, PartnerContactError } from "./contact";
 export type { ContactGateResult, ContactLeadsInput } from "./contact";
+export type { ContactDraftPreview } from "./contact-preview";
 
 export {
   INBOX_STATE_LABELS,

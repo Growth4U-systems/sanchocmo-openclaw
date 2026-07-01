@@ -16,7 +16,7 @@ import { yalcErrorResponse } from "@/lib/yalc/client";
  *       dryRun?: boolean                      // default true (NUNCA real)
  *     }
  *     → { ok, gates: [{ campaignId, runId, gateId, prompt, queuedLeads,
- *          dryRun, sequenceName, draftCount }] }
+ *          dryRun, sequenceName, draftCount, previews }] }
  *
  * Sin secuencia explícita usa la plantilla de secuencia INSTANCIADA en la
  * búsqueda de cada campaña; sin plantilla asignada → 409 con mensaje
