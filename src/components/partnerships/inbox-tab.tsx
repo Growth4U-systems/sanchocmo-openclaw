@@ -267,6 +267,7 @@ export function InboxTab({ slug }: { slug: string }) {
             },
           ],
           sequenceName: `Respuesta a ${leadDisplayName(selected!)}`,
+          dryRun: false,
         }),
       }),
     onSuccess: (data) => {
