@@ -292,9 +292,60 @@ function campaignStateMeta(state: ReturnType<typeof campaignState>) {
   };
 }
 
+const PARTNERSHIP_CAMPAIGN_MARKERS = [
+  "partnership",
+  "partnerships",
+  "creator",
+  "creators",
+  "creador",
+  "creadores",
+  "influencer",
+  "influencers",
+  "scrapecreators",
+  "co-marketing",
+  "post patrocinado",
+];
+
+function textIncludesAny(value: string, markers: readonly string[]): boolean {
+  const lower = value.toLowerCase();
+  return markers.some((marker) => lower.includes(marker));
+}
+
+function campaignSearchText(campaign: Campaign): string {
+  return [
+    campaign.type,
+    campaign.title,
+    campaign.targetSegment,
+    campaign.hypothesis,
+    channelText(campaign.channels),
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function isPartnershipCampaign(campaign: Campaign): boolean {
+  return textIncludesAny(campaignSearchText(campaign), PARTNERSHIP_CAMPAIGN_MARKERS);
+}
+
 function isB2BCampaign(campaign: Campaign): boolean {
-  const type = (campaign.type || "").toLowerCase();
+  const type = (campaign.type || "").trim().toLowerCase();
+  if (isPartnershipCampaign(campaign)) return false;
   return !type || type === "b2b";
+}
+
+function isB2BLead(lead: Lead, b2bCampaignIds: ReadonlySet<string>): boolean {
+  const text = [
+    lead.campaignTitle,
+    lead.source,
+    lead.headline,
+    lead.title,
+    ...(lead.tags || []),
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (textIncludesAny(text, PARTNERSHIP_CAMPAIGN_MARKERS)) return false;
+  if (lead.campaignId && b2bCampaignIds.size > 0 && !b2bCampaignIds.has(lead.campaignId)) return false;
+  return true;
 }
 
 function leadDisplayName(lead: Lead): string {
@@ -662,8 +713,15 @@ export function OutboundB2BView() {
     () => (campaignsQuery.data?.campaigns || []).filter(isB2BCampaign),
     [campaignsQuery.data],
   );
-  const activeLeads = useMemo(() => activeLeadsQuery.data?.leads || [], [activeLeadsQuery.data]);
-  const discardedLeads = useMemo(() => discardedLeadsQuery.data?.leads || [], [discardedLeadsQuery.data]);
+  const b2bCampaignIds = useMemo(() => new Set(campaigns.map((campaign) => campaign.id)), [campaigns]);
+  const activeLeads = useMemo(
+    () => (activeLeadsQuery.data?.leads || []).filter((lead) => isB2BLead(lead, b2bCampaignIds)),
+    [activeLeadsQuery.data, b2bCampaignIds],
+  );
+  const discardedLeads = useMemo(
+    () => (discardedLeadsQuery.data?.leads || []).filter((lead) => isB2BLead(lead, b2bCampaignIds)),
+    [discardedLeadsQuery.data, b2bCampaignIds],
+  );
   const allLeads = useMemo(() => [...activeLeads, ...discardedLeads], [activeLeads, discardedLeads]);
   const gates = useMemo(() => gatesQuery.data?.items || [], [gatesQuery.data]);
   const providers = useMemo(() => providersQuery.data?.providers || [], [providersQuery.data]);
@@ -676,10 +734,18 @@ export function OutboundB2BView() {
     () => campaigns.find((campaign) => campaign.id === busqueda) || null,
     [campaigns, busqueda],
   );
-  const templateCampaignId = selectedTemplateCampaignId || campaigns[0]?.id || "";
+  const selectedTemplateCampaign = campaigns.find((campaign) => campaign.id === selectedTemplateCampaignId) || null;
+  const templateCampaignId = selectedTemplateCampaign?.id || campaigns[0]?.id || "";
 
   useEffect(() => {
-    if (!selectedTemplateCampaignId && campaigns[0]?.id) setSelectedTemplateCampaignId(campaigns[0].id);
+    const firstCampaignId = campaigns[0]?.id || "";
+    if (!firstCampaignId) {
+      if (selectedTemplateCampaignId) setSelectedTemplateCampaignId("");
+      return;
+    }
+    if (!selectedTemplateCampaignId || !campaigns.some((campaign) => campaign.id === selectedTemplateCampaignId)) {
+      setSelectedTemplateCampaignId(firstCampaignId);
+    }
   }, [campaigns, selectedTemplateCampaignId]);
 
   const campaignDetailQuery = useQuery({
@@ -1315,8 +1381,8 @@ function B2BIcpPanel({
     return stage !== null && stage !== "Discovered" && stage !== DISCARDED_STAGE;
   }).length;
   const replies = scopedLeads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Replied").length;
-  const target = campaign?.targetSegment?.trim() || "ICP sin definir";
-  const hypothesis = campaign?.hypothesis?.trim() || "Define segmento, dolor, propuesta y criterios de exclusión antes de escalar la búsqueda.";
+  const target = campaign?.targetSegment?.trim() || "ICP de campaña sin definir";
+  const hypothesis = campaign?.hypothesis?.trim() || "Cada campaña outbound puede apuntar a un ICP distinto. Define segmento, dolor, propuesta y criterios de exclusión antes de escalar.";
 
   return (
     <section
@@ -1327,7 +1393,7 @@ function B2BIcpPanel({
       <div className="min-w-0">
         <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           <Target className="h-4 w-4 text-rust" />
-          ICP B2B
+          ICP de esta campaña B2B
         </div>
         <h2 className="m-0 font-heading text-2xl leading-tight text-navy">{target}</h2>
         <p className="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground">{hypothesis}</p>
@@ -1348,7 +1414,7 @@ function B2BIcpPanel({
           onClick={onEdit}
           className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
         >
-          {campaign ? "Ajustar ICP" : "Definir ICP"}
+          {campaign ? "Ajustar ICP de campaña" : "Definir ICP de campaña"}
           <ChevronRight className="h-4 w-4" />
         </button>
       </aside>
