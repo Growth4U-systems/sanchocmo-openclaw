@@ -36,6 +36,7 @@ import { PartnershipsView } from "@/components/partnerships/partnerships-view";
 import { OutboundB2BView } from "@/components/outbound-b2b/outbound-b2b-view";
 import { TipoSelector, tipoFromQuery } from "@/components/partnerships/tipo-selector";
 import { cn } from "@/lib/utils";
+import { isCampaignKind, type YalcCampaignKind } from "@/lib/yalc/campaign-kind";
 
 type TabKey = "overview" | "campaigns" | "leads" | "gates" | "templates" | "providers";
 
@@ -63,6 +64,8 @@ interface OverviewPayload {
 interface Campaign {
   id: string;
   type?: string | null;
+  campaignKind?: YalcCampaignKind;
+  campaignKindLabel?: string;
   title?: string;
   status?: string;
   hypothesis?: string | null;
@@ -311,8 +314,7 @@ function asCampaigns(value: unknown): Campaign[] {
 }
 
 function isB2BCampaign(campaign: Campaign): boolean {
-  const type = (campaign.type || "").toLowerCase();
-  return !type || type === "b2b";
+  return isCampaignKind(campaign, "b2b");
 }
 
 function asGates(value: unknown): GateItem[] {
@@ -1666,6 +1668,7 @@ function CreateOutboundCampaignPanel({
           onClick={() =>
             onCreate({
               type: "B2B",
+              campaignKind: "b2b",
               title,
               hypothesis,
               targetSegment,

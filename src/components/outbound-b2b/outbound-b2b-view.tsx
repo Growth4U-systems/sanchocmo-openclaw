@@ -35,6 +35,7 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildYalcThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
+import { isCampaignKind, type YalcCampaignKind } from "@/lib/yalc/campaign-kind";
 import {
   DISCARDED_STAGE,
   DISQUALIFIED_STATUS,
@@ -70,6 +71,8 @@ interface OverviewPayload {
 interface Campaign {
   id: string;
   type?: string | null;
+  campaignKind?: YalcCampaignKind;
+  campaignKindLabel?: string;
   title?: string;
   status?: string;
   hypothesis?: string | null;
@@ -103,6 +106,8 @@ interface Lead {
   id: string;
   campaignId?: string | null;
   campaignTitle?: string | null;
+  campaignKind?: YalcCampaignKind;
+  campaignKindLabel?: string;
   email?: string | null;
   emailStatus?: string | null;
   firstName?: string | null;
@@ -292,58 +297,12 @@ function campaignStateMeta(state: ReturnType<typeof campaignState>) {
   };
 }
 
-const PARTNERSHIP_CAMPAIGN_MARKERS = [
-  "partnership",
-  "partnerships",
-  "creator",
-  "creators",
-  "creador",
-  "creadores",
-  "influencer",
-  "influencers",
-  "scrapecreators",
-  "co-marketing",
-  "post patrocinado",
-];
-
-function textIncludesAny(value: string, markers: readonly string[]): boolean {
-  const lower = value.toLowerCase();
-  return markers.some((marker) => lower.includes(marker));
-}
-
-function campaignSearchText(campaign: Campaign): string {
-  return [
-    campaign.type,
-    campaign.title,
-    campaign.targetSegment,
-    campaign.hypothesis,
-    channelText(campaign.channels),
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-function isPartnershipCampaign(campaign: Campaign): boolean {
-  return textIncludesAny(campaignSearchText(campaign), PARTNERSHIP_CAMPAIGN_MARKERS);
-}
-
 function isB2BCampaign(campaign: Campaign): boolean {
-  const type = (campaign.type || "").trim().toLowerCase();
-  if (isPartnershipCampaign(campaign)) return false;
-  return !type || type === "b2b";
+  return isCampaignKind(campaign, "b2b");
 }
 
 function isB2BLead(lead: Lead, b2bCampaignIds: ReadonlySet<string>): boolean {
-  const text = [
-    lead.campaignTitle,
-    lead.source,
-    lead.headline,
-    lead.title,
-    ...(lead.tags || []),
-  ]
-    .filter(Boolean)
-    .join(" ");
-  if (textIncludesAny(text, PARTNERSHIP_CAMPAIGN_MARKERS)) return false;
+  if (!isCampaignKind(lead, "b2b")) return false;
   if (lead.campaignId && b2bCampaignIds.size > 0 && !b2bCampaignIds.has(lead.campaignId)) return false;
   return true;
 }
@@ -1397,8 +1356,9 @@ function B2BIcpPanel({
         </div>
         <h2 className="m-0 font-heading text-2xl leading-tight text-navy">{target}</h2>
         <p className="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground">{hypothesis}</p>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
           <ContextSummary label="Campaña" value={campaign?.title || "Sin búsqueda seleccionada"} />
+          <ContextSummary label="Tipo" value={campaign?.campaignKindLabel || "Campaña B2B"} />
           <ContextSummary label="Canales" value={campaign ? channelText(campaign.channels) : "-"} />
           <ContextSummary label="Estado" value={campaign?.status || "Pendiente"} />
         </div>
@@ -2586,7 +2546,8 @@ function PersonalizationWorkspace({
             <ContextSummary label="ICP" value={campaign.targetSegment || "Sin ICP definido"} />
             <ContextSummary label="Propuesta" value={campaign.hypothesis || "Sin propuesta definida"} />
           </div>
-          <div className="mt-4 grid gap-3 rounded-lg border border-border bg-card p-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 rounded-lg border border-border bg-card p-3 sm:grid-cols-4">
+            <DataItem label="Tipo" value={campaign.campaignKindLabel || "Campaña B2B"} />
             <DataItem label="Canales" value={channelText(campaign.channels)} />
             <DataItem label="Leads" value={typeof campaign.leadCount === "number" ? `${campaign.leadCount}` : "-"} />
             <DataItem label="Secuencia" value={emailCount ? `${emailCount} emails` : "Pendiente"} />

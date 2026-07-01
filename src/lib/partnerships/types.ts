@@ -1,3 +1,5 @@
+import type { YalcCampaignKind } from "@/lib/yalc/campaign-kind";
+
 /**
  * Partnerships (SAN-78) · tipos compartidos UI ↔ proxies Yalc.
  *
@@ -25,6 +27,8 @@ export interface PartnershipLead {
   campaignId: string;
   campaignTitle?: string | null;
   campaignType?: string | null;
+  campaignKind?: YalcCampaignKind;
+  campaignKindLabel?: string;
   providerId?: string | null;
   firstName?: string | null;
   lastName?: string | null;
@@ -62,6 +66,8 @@ export interface PartnershipCampaign {
   title?: string;
   status?: string;
   type?: string | null;
+  campaignKind?: YalcCampaignKind;
+  campaignKindLabel?: string;
   hypothesis?: string | null;
   targetSegment?: string | null;
   qualificationMode?: string | null;

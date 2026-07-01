@@ -30,6 +30,7 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildDiscoverySearchThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
+import { isCampaignKind } from "@/lib/yalc/campaign-kind";
 import {
   DISCARDED_STAGE,
   DISQUALIFIED_STATUS,
@@ -226,16 +227,16 @@ export function PartnershipsView() {
   const campaigns = useMemo(
     () =>
       (campaignsQuery.data?.campaigns || []).filter(
-        (c) => (c.type || "") === "Partnerships",
+        (campaign) => isCampaignKind(campaign, "creator"),
       ),
     [campaignsQuery.data],
   );
   const activeLeads = useMemo(
-    () => activeLeadsQuery.data?.leads || [],
+    () => (activeLeadsQuery.data?.leads || []).filter((lead) => isCampaignKind(lead, "creator")),
     [activeLeadsQuery.data],
   );
   const discardedLeads = useMemo(
-    () => discardedLeadsQuery.data?.leads || [],
+    () => (discardedLeadsQuery.data?.leads || []).filter((lead) => isCampaignKind(lead, "creator")),
     [discardedLeadsQuery.data],
   );
   const allLeads = useMemo(

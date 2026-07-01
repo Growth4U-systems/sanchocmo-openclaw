@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import { resolveYalcConfig, yalcErrorResponse, yalcFetch } from "@/lib/yalc/client";
+import { normalizeYalcCampaign } from "@/lib/yalc/campaign-kind";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = getSlug(req);
@@ -11,9 +12,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const config = resolveYalcConfig(slug);
   try {
     if (req.method === "GET") {
-      return res
-        .status(200)
-        .json(await yalcFetch(config, `/api/campaigns/${encodeURIComponent(campaignId)}`));
+      const campaign = await yalcFetch<Record<string, unknown>>(
+        config,
+        `/api/campaigns/${encodeURIComponent(campaignId)}`,
+      );
+      return res.status(200).json(normalizeYalcCampaign(campaign));
     }
 
     if (req.method === "POST") {

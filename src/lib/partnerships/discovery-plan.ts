@@ -130,6 +130,7 @@ export function buildCampaignPayload(plan: DiscoveryPlan): {
   targetSegment: string;
   channels: string[];
   type: "Partnerships";
+  campaignKind: "creator";
   qualificationMode: QualificationMode;
   disqualifyThreshold: number;
 } {
@@ -142,6 +143,7 @@ export function buildCampaignPayload(plan: DiscoveryPlan): {
     targetSegment: `${plan.sectors.join(", ")} · ${plan.networks.join("+")} · tiers ${tierLabel}`,
     channels: plan.networks,
     type: "Partnerships",
+    campaignKind: "creator",
     qualificationMode: plan.qualificationMode ?? "hybrid",
     disqualifyThreshold: plan.disqualifyThreshold ?? DEFAULT_CREATOR_MODEL_CONFIG.qualification.threshold,
   };
