@@ -14,6 +14,7 @@
  */
 
 import { resolveYalcConfig, yalcFetch } from "@/lib/yalc/client";
+import { contactDraftPreviewsFromResponse, type ContactDraftPreview } from "./contact-preview";
 import { findSearchByCampaign, findSearchSequence } from "./template-store";
 import { toYalcSequence } from "./templates";
 import type { PartnershipLead } from "./types";
@@ -36,6 +37,7 @@ export interface ContactGateResult {
   dryRun: boolean;
   sequenceName: string;
   draftCount: number;
+  previews: ContactDraftPreview[];
 }
 
 interface YalcPartnerContactResponse {
@@ -126,6 +128,7 @@ export async function contactPartnerLeads(input: ContactLeadsInput): Promise<Con
       dryRun: response.dryRun !== false,
       sequenceName: sequenceName || "Secuencia de partners",
       draftCount: Array.isArray(response.drafts) ? response.drafts.length : leadIds.length,
+      previews: contactDraftPreviewsFromResponse(response.drafts).slice(0, 3),
     });
   }
 

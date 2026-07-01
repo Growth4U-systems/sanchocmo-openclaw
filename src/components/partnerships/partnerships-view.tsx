@@ -425,6 +425,16 @@ export function PartnershipsView() {
     dryRun: boolean;
     queuedLeads: number;
     sequenceName: string;
+    draftCount?: number;
+    previews?: Array<{
+      leadId: string | null;
+      displayName: string;
+      handle: string | null;
+      network: string | null;
+      subject: string | null;
+      body: string;
+      stepCount: number;
+    }>;
     sent?: boolean;
   }
   const [contactGate, setContactGate] = useState<PendingContactGate | null>(
@@ -814,7 +824,7 @@ export function PartnershipsView() {
           <div
             role="dialog"
             aria-modal="true"
-            className="fixed left-1/2 top-1/2 w-[min(540px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-lg border-[3px] border-ink bg-card p-6 shadow-comic"
+            className="fixed left-1/2 top-1/2 max-h-[90vh] w-[min(760px,94vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border-[3px] border-ink bg-card p-6 shadow-comic"
             data-testid="contact-gate-modal"
           >
             {!contactGate.sent ? (
@@ -838,6 +848,62 @@ export function PartnershipsView() {
                     </div>
                   )}
                 </div>
+                {contactGate.previews?.length ? (
+                  <div
+                    className="mt-3 rounded-lg border border-border bg-background"
+                    data-testid="contact-gate-preview"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Preview del primer DM
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Renderizado por Yalc antes de aprobar.
+                        </p>
+                      </div>
+                      <span className="rounded border border-border bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">
+                        {contactGate.previews.length} de{" "}
+                        {contactGate.draftCount ?? contactGate.queuedLeads}
+                      </span>
+                    </div>
+                    <div className="max-h-72 space-y-3 overflow-y-auto p-3">
+                      {contactGate.previews.map((preview) => (
+                        <article
+                          key={preview.leadId ?? preview.displayName}
+                          className="rounded-md border border-border bg-muted/20 px-3 py-2"
+                        >
+                          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <b className="text-foreground">
+                              {preview.displayName}
+                            </b>
+                            {preview.network && <span>{preview.network}</span>}
+                            <span>
+                              {preview.stepCount} paso
+                              {preview.stepCount === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                          {preview.subject && (
+                            <div className="mb-2 rounded border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground">
+                              Asunto interno: {preview.subject}
+                            </div>
+                          )}
+                          <div
+                            className="whitespace-pre-wrap text-sm leading-relaxed text-foreground"
+                            data-testid="contact-gate-preview-body"
+                          >
+                            {preview.body}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                    Yalc no devolvió preview del mensaje. Puedes aprobar solo
+                    si ya revisaste la plantilla asignada.
+                  </div>
+                )}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     type="button"
