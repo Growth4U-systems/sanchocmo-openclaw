@@ -443,6 +443,7 @@ export function PartnershipsView() {
             id: lead.id,
             campaignId: lead.campaignId,
           })),
+          dryRun: false,
         }),
       });
       const first = payload.gates?.[0];
