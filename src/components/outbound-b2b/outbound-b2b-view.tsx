@@ -953,6 +953,16 @@ export function OutboundB2BView() {
             </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
+            {tab === "encuentra" && (
+              <button
+                type="button"
+                onClick={() => openB2BSearch()}
+                className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
+                data-testid="crear-busqueda-b2b"
+              >
+                Generar nueva campaña
+              </button>
+            )}
             <div className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground">
               <span className="font-bold text-rust">{slug || "cliente"}</span>
               <span>· Outreach</span>
@@ -960,15 +970,26 @@ export function OutboundB2BView() {
           </div>
         </header>
 
-        <div className="op-campaign-layout">
-          <B2BCampaignRail
-            campaigns={campaigns}
-            leads={allLeads}
-            selectedCampaignId={selectedCampaignId}
-            loading={campaignsQuery.isLoading}
-            onSelect={(campaign) => pushQuery({ campaign: campaign.id, busqueda: "", stage: "" })}
-            onCreate={() => openB2BSearch()}
-          />
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <B2BCampaignSelector
+              campaigns={campaigns}
+              selectedCampaignId={selectedCampaignId}
+              loading={campaignsQuery.isLoading}
+              onSelect={(campaignId) => pushQuery({ campaign: campaignId, busqueda: "", stage: "" })}
+            />
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <TipoSelector tipo="b2b" />
+              <button
+                type="button"
+                onClick={refreshAll}
+                title="Refrescar datos"
+                className="inline-grid h-10 w-10 place-items-center rounded-md border-2 border-border bg-card text-muted-foreground hover:border-ink hover:text-foreground"
+              >
+                <RefreshCw className={cn("h-4 w-4", overview.isFetching && "animate-spin")} />
+              </button>
+            </div>
+          </div>
 
           <main className="min-w-0 space-y-4">
             <div className="flex flex-wrap items-center gap-3">
@@ -991,25 +1012,7 @@ export function OutboundB2BView() {
                   );
                 })}
               </nav>
-              <div className="ml-auto flex flex-wrap items-center gap-2">
-                <TipoSelector tipo="b2b" />
-                <button
-                  type="button"
-                  onClick={refreshAll}
-                  title="Refrescar datos"
-                  className="inline-grid h-10 w-10 place-items-center rounded-md border-2 border-border bg-card text-muted-foreground hover:border-ink hover:text-foreground"
-                >
-                  <RefreshCw className={cn("h-4 w-4", overview.isFetching && "animate-spin")} />
-                </button>
-              </div>
             </div>
-
-            {tab !== "settings" && (
-              <B2BIcpPanel
-                campaign={icpCampaign}
-                leads={selectedAllLeads}
-              />
-            )}
 
             {pageError && (
               <div className="flex items-start gap-2 rounded-lg border-2 border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -1138,20 +1141,16 @@ export function OutboundB2BView() {
   );
 }
 
-function B2BCampaignRail({
+function B2BCampaignSelector({
   campaigns,
-  leads,
   selectedCampaignId,
   loading,
   onSelect,
-  onCreate,
 }: {
   campaigns: Campaign[];
-  leads: Lead[];
   selectedCampaignId: string;
   loading: boolean;
-  onSelect: (campaign: Campaign) => void;
-  onCreate: () => void;
+  onSelect: (campaignId: string) => void;
 }) {
   const ordered = campaigns
     .slice()
@@ -1159,73 +1158,28 @@ function B2BCampaignRail({
       const order = { running: 0, draft: 1, paused: 2, done: 3 } as const;
       return order[campaignState(a)] - order[campaignState(b)];
     });
+  const selectedCampaign = ordered.find((campaign) => campaign.id === selectedCampaignId) || ordered[0] || null;
 
   return (
-    <aside className="op-campaign-rail" data-testid="b2b-campaign-rail">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Campañas</div>
-          <h2 className="font-heading text-lg text-navy">B2B outbound</h2>
-        </div>
-        <span className="rounded-full border border-border bg-background px-2 py-0.5 text-xs font-semibold text-muted-foreground">
-          {campaigns.length}
-        </span>
-      </div>
-
-      <div className="mt-3 space-y-2">
-        {loading && <p className="rounded-lg border border-border bg-background p-3 text-sm text-muted-foreground">Cargando campañas...</p>}
-        {!loading && ordered.length === 0 && (
-          <p className="rounded-lg border border-dashed border-border bg-background p-3 text-sm text-muted-foreground">
-            No hay campañas B2B todavía.
-          </p>
-        )}
-        {ordered.map((campaign) => {
-          const state = campaignState(campaign);
-          const meta = campaignStateMeta(state);
-          const count = campaignLeadCount(campaign, leads);
-          const selected = campaign.id === selectedCampaignId;
-          return (
-            <button
-              key={campaign.id}
-              type="button"
-              onClick={() => onSelect(campaign)}
-              className={cn(
-                "w-full rounded-lg border p-3 text-left transition-colors",
-                selected ? "border-rust bg-rust/10" : "border-border bg-background hover:border-rust hover:bg-muted/30",
-              )}
-            >
-              <span className="flex items-start gap-2">
-                <span className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full", meta.barClass)} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-heading text-sm font-bold text-foreground">
-                    {campaign.title || campaign.id}
-                  </span>
-                  <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                    {campaign.targetSegment || campaign.hypothesis || "Target sin definir"}
-                  </span>
-                </span>
-              </span>
-              <span className="mt-2 flex items-center justify-between gap-2">
-                <span className={cn("rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide", meta.stampClass)}>
-                  {meta.label}
-                </span>
-                <span className="text-xs font-semibold text-muted-foreground">{count} leads</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <button
-        type="button"
-        onClick={onCreate}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-rust bg-rust px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
-        data-testid="crear-busqueda-b2b"
+    <label className="min-w-[280px] flex-1 sm:max-w-[560px]" data-testid="b2b-campaign-selector">
+      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Campaña
+      </span>
+      <select
+        value={selectedCampaign?.id || ""}
+        disabled={loading || ordered.length === 0}
+        onChange={(event) => onSelect(event.target.value)}
+        className="h-10 w-full rounded-md border-2 border-border bg-card px-3 text-sm font-semibold text-foreground focus:border-rust focus:outline-none"
       >
-        <Plus className="h-4 w-4" />
-        Nueva campaña
-      </button>
-    </aside>
+        {loading && <option value="">Cargando campañas...</option>}
+        {!loading && ordered.length === 0 && <option value="">Sin campañas B2B</option>}
+        {ordered.map((campaign) => (
+          <option key={campaign.id} value={campaign.id}>
+            {campaign.title || campaign.id}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -1325,54 +1279,6 @@ function MiniMetric({ label, value, muted }: { label: string; value: number; mut
       <div className={cn("font-heading text-2xl leading-none", muted ? "text-muted-foreground/60" : "text-rust")}>{value}</div>
       <div className="text-[10px] text-muted-foreground">{label}</div>
     </div>
-  );
-}
-
-function B2BIcpPanel({
-  campaign,
-  leads,
-}: {
-  campaign: Campaign | CampaignDetail | null;
-  leads: Lead[];
-}) {
-  const scopedLeads = campaign ? leads.filter((lead) => lead.campaignId === campaign.id) : leads;
-  const contacts = campaign ? campaignLeadCount(campaign, leads) : leads.length;
-  const prioritized = scopedLeads.filter((lead) => {
-    const stage = stageForStatus(lead.lifecycleStatus);
-    return stage !== null && stage !== "Discovered" && stage !== DISCARDED_STAGE;
-  }).length;
-  const replies = scopedLeads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Replied").length;
-  const target = campaign?.targetSegment?.trim() || "ICP de campaña sin definir";
-  const hypothesis = campaign?.hypothesis?.trim() || "Cada campaña outbound puede apuntar a un ICP distinto. Define segmento, dolor, propuesta y criterios de exclusión antes de escalar.";
-
-  return (
-    <section
-      className="grid gap-4 rounded-xl border border-border bg-card p-4 lg:grid-cols-[minmax(0,1fr)_320px]"
-      data-testid="b2b-icp-panel"
-      aria-label="ICP Outbound B2B"
-    >
-      <div className="min-w-0">
-        <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          <Target className="h-4 w-4 text-rust" />
-          ICP de esta campaña B2B
-        </div>
-        <h2 className="m-0 font-heading text-2xl leading-tight text-navy">{target}</h2>
-        <p className="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground">{hypothesis}</p>
-        <div className="mt-4 grid gap-3 md:grid-cols-4">
-          <ContextSummary label="Campaña" value={campaign?.title || "Sin búsqueda seleccionada"} />
-          <ContextSummary label="Tipo" value={campaign?.campaignKindLabel || "Campaña B2B"} />
-          <ContextSummary label="Canales" value={campaign ? channelText(campaign.channels) : "-"} />
-          <ContextSummary label="Estado" value={campaign?.status || "Pendiente"} />
-        </div>
-      </div>
-      <aside className="min-w-0 rounded-lg border border-border bg-background p-4">
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <MiniMetric label="contactos" value={contacts} muted={!campaign} />
-          <MiniMetric label="priorizados" value={prioritized} muted={!campaign} />
-          <MiniMetric label="replies" value={replies} muted={!campaign} />
-        </div>
-      </aside>
-    </section>
   );
 }
 
@@ -2987,30 +2893,6 @@ function B2BOutreachStyles() {
         text-transform: uppercase;
       }
 
-      .op-campaign-layout {
-        display: grid;
-        grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-        gap: clamp(14px, 1.8vw, 22px);
-        align-items: start;
-      }
-
-      .op-campaign-rail {
-        position: sticky;
-        top: 72px;
-        max-height: calc(100vh - 104px);
-        overflow: auto;
-        border: 2px solid var(--op-ink);
-        border-radius: var(--sc-r-md);
-        background: var(--op-paper-3);
-        padding: 1rem;
-        box-shadow: var(--pop-xs);
-      }
-
-      .op-campaign-rail button {
-        border: 2px solid var(--op-ink);
-        border-radius: var(--sc-r-md);
-      }
-
       .op-shell [data-testid="outbound-settings"] {
         right: clamp(16px, 2vw, 28px);
         top: clamp(16px, 2vw, 28px);
@@ -3021,9 +2903,7 @@ function B2BOutreachStyles() {
       }
 
       .op-shell [data-testid="outbound-b2b-tabs"] button,
-      .op-shell [data-testid="b2b-icp-panel"] button,
       .op-shell [data-testid="crear-busqueda-b2b"],
-      .op-shell [data-testid="b2b-campaign-rail"] button,
       .op-shell [data-testid="b2b-bulk-bar"] button,
       .op-shell [data-testid="outbound-plantillas"] button {
         border: 2px solid var(--op-ink);
@@ -3034,9 +2914,7 @@ function B2BOutreachStyles() {
       }
 
       .op-shell [data-testid="outbound-b2b-tabs"] button:hover,
-      .op-shell [data-testid="b2b-icp-panel"] button:hover,
       .op-shell [data-testid="crear-busqueda-b2b"]:hover,
-      .op-shell [data-testid="b2b-campaign-rail"] button:hover,
       .op-shell [data-testid="b2b-bulk-bar"] button:hover,
       .op-shell [data-testid="outbound-plantillas"] button:hover {
         transform: translate(-1px, -1px);
@@ -3044,9 +2922,7 @@ function B2BOutreachStyles() {
       }
 
       .op-shell [data-testid="outbound-b2b-tabs"] button:active,
-      .op-shell [data-testid="b2b-icp-panel"] button:active,
       .op-shell [data-testid="crear-busqueda-b2b"]:active,
-      .op-shell [data-testid="b2b-campaign-rail"] button:active,
       .op-shell [data-testid="b2b-bulk-bar"] button:active,
       .op-shell [data-testid="outbound-plantillas"] button:active {
         transform: translate(2px, 2px);
@@ -3059,7 +2935,6 @@ function B2BOutreachStyles() {
       .op-shell [data-testid="outbound-plantillas"] > section,
       .op-shell [data-testid="outbound-settings-tab"] > section,
       .op-shell [data-testid="outbound-settings-tab"] > aside,
-      .op-shell [data-testid="b2b-icp-panel"],
       .op-shell [data-testid="b2b-busqueda-banner"],
       .op-shell [data-testid="b2b-bulk-bar"] {
         border: 2px solid var(--op-ink);
@@ -3135,14 +3010,6 @@ function B2BOutreachStyles() {
           padding: 0.55rem;
         }
 
-        .op-campaign-layout {
-          grid-template-columns: 1fr;
-        }
-
-        .op-campaign-rail {
-          position: static;
-          max-height: none;
-        }
       }
     `}</style>
   );
