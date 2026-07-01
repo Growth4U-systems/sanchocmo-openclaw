@@ -29,7 +29,19 @@ interface McpConnection {
   hasHealthProbe: boolean;
 }
 
-async function pingScrapeCreators(apiKey: string): Promise<{ status: McpStatus; description: string }> {
+type ScrapeCreatorsCreditBody = {
+  balance?: number;
+  credits?: number;
+  creditCount?: number;
+  message?: string;
+};
+
+function creditCountFromBody(body: ScrapeCreatorsCreditBody | null): number | null {
+  const value = body?.balance ?? body?.credits ?? body?.creditCount;
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+export async function pingScrapeCreators(apiKey: string): Promise<{ status: McpStatus; description: string }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);
   try {
@@ -40,9 +52,15 @@ async function pingScrapeCreators(apiKey: string): Promise<{ status: McpStatus; 
     if (res.status === 401 || res.status === 403) {
       return { status: "red", description: "clave inválida o sin permisos" };
     }
+    if (res.status === 402) {
+      return { status: "red", description: "sin créditos — recarga ScrapeCreators antes de lanzar discovery real" };
+    }
     if (res.ok) {
-      const body = (await res.json().catch(() => null)) as { balance?: number; credits?: number } | null;
-      const credits = body?.balance ?? body?.credits;
+      const body = (await res.json().catch(() => null)) as ScrapeCreatorsCreditBody | null;
+      const credits = creditCountFromBody(body);
+      if (credits !== null && credits <= 0) {
+        return { status: "red", description: "sin créditos — recarga ScrapeCreators antes de lanzar discovery real" };
+      }
       return {
         status: "green",
         description:

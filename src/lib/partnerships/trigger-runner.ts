@@ -43,6 +43,7 @@ function buildRunnerMessage(input: TriggerDiscoveryRunnerInput): string {
     `1) GET /api/partnerships/searches?slug=${input.slug}&status=queued y localiza ${input.searchId} (trae plan + campaignId).`,
     `2) Scrapea candidatos por red con las tools mcp__scrapecreators__* según el plan (sectores/redes/tiers/volumen) y comprueba el repeat de competidores en ad-library.`,
     `3) POST /api/partnerships/searches/${input.searchId}/run con los candidatos normalizados (el endpoint hace qualify-enrich + ingesta en Yalc).`,
+    `No uses fixtures ni datos demo salvo que el plan o el humano lo pidan explícitamente. Si ScrapeCreators no tiene créditos o falla, reporta el error y deja la búsqueda sin ingesta fake.`,
     `Sigue la skill ${RUNNER_SKILL}. Publica el progreso en este hilo.`,
   ].join("\n");
 }

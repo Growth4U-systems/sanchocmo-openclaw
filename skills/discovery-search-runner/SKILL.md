@@ -34,6 +34,17 @@ candidatos JSON                          resolveEntryStatus (hybrid: <40 → Dis
 
 ## Workflow
 
+### Regla obligatoria: real no se sustituye por fixture
+
+Si la búsqueda fue lanzada en modo real/agentic, **NO uses fixtures** ni seeds
+demo para completar el runner. Fixtures solo se permiten si el humano, el plan
+o el payload lo piden explícitamente (`fixtures: true`, `run: "fixtures"` o
+nota equivalente).
+
+Si ScrapeCreators devuelve 402/sin créditos, timeout o error de proveedor,
+repórtalo al hilo y deja la búsqueda sin ingesta fake. No marques como `done`
+una búsqueda real usando datos demo.
+
 ### 1. Encuentra trabajo encolado
 
 ```bash
@@ -162,6 +173,6 @@ DISCOVERY_FIXTURES=1
   fixtures: scrapea primero o usa `fixtures: true`.
 - Búsqueda en `runner.status=error` → el detalle queda en `runner.error` del
   JSON de la búsqueda; re-lanza tras corregir (el runner es re-ejecutable).
-- ScrapeCreators sin crédito/timeout → degrada con gracia: reduce volumen,
-  reparte entre redes, y si una red falla entera repórtalo en el thread (no
-  inventes candidatos).
+- ScrapeCreators sin crédito/timeout → reporta el error en el thread y no
+  ingestes fixtures/datos demo. Si una red falla pero otras redes reales sí
+  devuelven candidatos, reduce volumen y continúa solo con candidatos reales.
