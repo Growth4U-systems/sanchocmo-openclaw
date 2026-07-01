@@ -192,28 +192,28 @@ interface EmailSequenceBlock {
 }
 
 const TABS: Array<{ key: Exclude<B2BTab, "settings">; label: string; icon: LucideIcon }> = [
-  { key: "encuentra", label: "Encuentra", icon: Search },
-  { key: "contactos", label: "Contactos", icon: Users },
+  { key: "encuentra", label: "Overview", icon: Search },
+  { key: "plantillas", label: "Oferta", icon: FileText },
+  { key: "contactos", label: "Leads", icon: Users },
   { key: "inbox", label: "Inbox", icon: Inbox },
-  { key: "plantillas", label: "Personalización", icon: FileText },
 ];
 
 const HEADERS: Record<B2BTab, { title: string; sub: string }> = {
   encuentra: {
-    title: "Encuentra prospectos",
-    sub: "Búsquedas B2B, scoring ICP y siguiente acción en el mismo flujo.",
+    title: "Campaña B2B",
+    sub: "Resultados, target, oferta y estado operativo de la campaña seleccionada.",
   },
   contactos: {
-    title: "Contactos",
-    sub: "Pipeline B2B para priorizar personas, revisar cuentas y activar contacto.",
+    title: "Leads",
+    sub: "Personas y cuentas de la campaña seleccionada, con score y estado comercial.",
   },
   inbox: {
     title: "Inbox",
-    sub: "Respuestas, aprobaciones humanas y conversaciones listas para seguimiento.",
+    sub: "Respuestas, pendientes y enviados de la campaña seleccionada.",
   },
   plantillas: {
-    title: "Personalización",
-    sub: "Contexto de empresa, ICP, propuesta y variables que alimentan las secuencias outbound.",
+    title: "Oferta y secuencia",
+    sub: "Qué ofrecemos, a quién se lo decimos y cómo se personaliza la secuencia.",
   },
   settings: {
     title: "Settings",
@@ -604,10 +604,10 @@ export function OutboundB2BView() {
   const vista: ContactosVista = queryValue(router.query.vista) === "lista" ? "lista" : "kanban";
   const busqueda = queryValue(router.query.busqueda);
   const stageParam = queryValue(router.query.stage) as StageFilterKey | "";
+  const campaignParam = queryValue(router.query.campaign);
 
   const [roster, setRoster] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [selectedTemplateCampaignId, setSelectedTemplateCampaignId] = useState("");
 
   function pushQuery(
     next: Partial<{
@@ -615,11 +615,13 @@ export function OutboundB2BView() {
       vista: ContactosVista;
       busqueda: string;
       stage: string;
+      campaign: string;
     }>,
   ) {
-    const merged = { tab, vista, busqueda, stage: stageParam, ...next };
+    const merged = { tab, vista, busqueda, stage: stageParam, campaign: campaignParam, ...next };
     const query: Record<string, string> = { slug, tipo: "b2b" };
     if (merged.tab !== "encuentra") query.tab = merged.tab;
+    if (merged.campaign) query.campaign = merged.campaign;
     if (merged.tab === "contactos" && merged.vista !== "kanban") query.vista = merged.vista;
     if (merged.tab === "contactos" && merged.busqueda) query.busqueda = merged.busqueda;
     if (merged.tab === "contactos" && merged.stage) query.stage = merged.stage;
@@ -689,23 +691,28 @@ export function OutboundB2BView() {
     () => (selectedLeadId ? allLeads.find((lead) => lead.id === selectedLeadId) || null : null),
     [selectedLeadId, allLeads],
   );
-  const busquedaCampaign = useMemo(
-    () => campaigns.find((campaign) => campaign.id === busqueda) || null,
-    [campaigns, busqueda],
+  const selectedCampaignId = useMemo(() => {
+    const preferred = campaignParam || busqueda;
+    if (preferred && campaigns.some((campaign) => campaign.id === preferred)) return preferred;
+    return campaigns[0]?.id || "";
+  }, [campaignParam, busqueda, campaigns]);
+  const selectedCampaign = useMemo(
+    () => campaigns.find((campaign) => campaign.id === selectedCampaignId) || null,
+    [campaigns, selectedCampaignId],
   );
-  const selectedTemplateCampaign = campaigns.find((campaign) => campaign.id === selectedTemplateCampaignId) || null;
-  const templateCampaignId = selectedTemplateCampaign?.id || campaigns[0]?.id || "";
-
-  useEffect(() => {
-    const firstCampaignId = campaigns[0]?.id || "";
-    if (!firstCampaignId) {
-      if (selectedTemplateCampaignId) setSelectedTemplateCampaignId("");
-      return;
-    }
-    if (!selectedTemplateCampaignId || !campaigns.some((campaign) => campaign.id === selectedTemplateCampaignId)) {
-      setSelectedTemplateCampaignId(firstCampaignId);
-    }
-  }, [campaigns, selectedTemplateCampaignId]);
+  const selectedActiveLeads = useMemo(
+    () => (selectedCampaignId ? activeLeads.filter((lead) => lead.campaignId === selectedCampaignId) : activeLeads),
+    [activeLeads, selectedCampaignId],
+  );
+  const selectedDiscardedLeads = useMemo(
+    () => (selectedCampaignId ? discardedLeads.filter((lead) => lead.campaignId === selectedCampaignId) : discardedLeads),
+    [discardedLeads, selectedCampaignId],
+  );
+  const selectedAllLeads = useMemo(
+    () => [...selectedActiveLeads, ...selectedDiscardedLeads],
+    [selectedActiveLeads, selectedDiscardedLeads],
+  );
+  const templateCampaignId = selectedCampaignId;
 
   const campaignDetailQuery = useQuery({
     queryKey: ["yalc", slug, "b2b", "campaigns", templateCampaignId],
@@ -717,12 +724,11 @@ export function OutboundB2BView() {
   });
   const icpCampaign = useMemo(
     () =>
-      busquedaCampaign ||
       (campaignDetailQuery.data?.id === templateCampaignId ? campaignDetailQuery.data : null) ||
-      campaigns.find((campaign) => Boolean(campaign.targetSegment || campaign.hypothesis)) ||
+      selectedCampaign ||
       campaigns[0] ||
       null,
-    [busquedaCampaign, campaignDetailQuery.data, campaigns, templateCampaignId],
+    [campaignDetailQuery.data, selectedCampaign, campaigns, templateCampaignId],
   );
 
   const stageMutation = useMutation({
@@ -935,7 +941,7 @@ export function OutboundB2BView() {
             <div className="op-stat-grid" aria-label="Resumen de Outbound B2B">
               <div>
                 <span>{activeCampaigns}</span>
-                <small>búsquedas</small>
+                <small>campañas</small>
               </div>
               <div>
                 <span>{activeLeads.length}</span>
@@ -955,169 +961,184 @@ export function OutboundB2BView() {
           </div>
         </header>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <nav className="flex flex-wrap gap-2 overflow-x-auto" data-testid="outbound-b2b-tabs">
-            {TABS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => pushQuery({ tab: item.key })}
-                  className={cn(
-                    "flex items-center gap-1.5 whitespace-nowrap rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all",
-                    tab === item.key ? "border-rust bg-rust text-white" : "border-border hover:border-rust",
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <TipoSelector tipo="b2b" />
-            <button
-              type="button"
-              onClick={refreshAll}
-              title="Refrescar datos"
-              className="inline-grid h-10 w-10 place-items-center rounded-md border-2 border-border bg-card text-muted-foreground hover:border-ink hover:text-foreground"
-            >
-              <RefreshCw className={cn("h-4 w-4", overview.isFetching && "animate-spin")} />
-            </button>
-          </div>
-        </div>
-
-        {tab !== "settings" && (
-          <B2BIcpPanel
-            campaign={icpCampaign}
-            leads={allLeads}
-            onEdit={() => openB2BSearch(icpCampaign || undefined)}
-          />
-        )}
-
-        {pageError && (
-          <div className="flex items-start gap-2 rounded-lg border-2 border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{String(pageError instanceof Error ? pageError.message : pageError)}</span>
-          </div>
-        )}
-
-        {tab === "encuentra" && (
-          <B2BEncuentraTab
+        <div className="op-campaign-layout">
+          <B2BCampaignRail
             campaigns={campaigns}
             leads={allLeads}
+            selectedCampaignId={selectedCampaignId}
             loading={campaignsQuery.isLoading}
-            actionBusy={outboundAction.isPending}
-            busyCampaignId={outboundAction.variables?.campaignId}
-            onCreateSearch={() => openB2BSearch()}
-            onContinueSearch={(campaign) => openB2BSearch(campaign)}
-            onOpenSearch={(campaign) =>
-              pushQuery({ tab: "contactos", vista: "lista", busqueda: campaign.id, stage: "" })
-            }
-            onRunAction={(campaignId, action) => outboundAction.mutate({ campaignId, action })}
+            onSelect={(campaign) => pushQuery({ campaign: campaign.id, busqueda: "", stage: "" })}
+            onCreate={() => openB2BSearch()}
           />
-        )}
 
-        {tab === "contactos" && (
-          <div data-testid="outbound-contactos">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => pushQuery({ tab: "contactos", vista: "kanban" })}
-                className={cn(
-                  "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors",
-                  vista === "kanban" ? "border-rust bg-rust text-white" : "border-border bg-background hover:bg-muted",
-                )}
-              >
-                Kanban
-              </button>
-              <button
-                type="button"
-                onClick={() => pushQuery({ tab: "contactos", vista: "lista" })}
-                className={cn(
-                  "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors",
-                  vista === "lista" ? "border-rust bg-rust text-white" : "border-border bg-background hover:bg-muted",
-                )}
-              >
-                Lista
-              </button>
-              <label className="ml-2 flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
-                <input
-                  type="checkbox"
-                  checked={roster}
-                  onChange={(event) => setRoster(event.target.checked)}
-                  className="h-4 w-4 accent-rust"
-                />
-                Solo ganados/activos
-              </label>
-              <span className="ml-auto text-xs text-muted-foreground">
-                {activeLeadsQuery.isFetching || discardedLeadsQuery.isFetching ? "Actualizando..." : `${allLeads.length} contactos`}
-              </span>
+          <main className="min-w-0 space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <nav className="flex flex-wrap gap-2 overflow-x-auto" data-testid="outbound-b2b-tabs">
+                {TABS.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => pushQuery({ tab: item.key, campaign: selectedCampaignId })}
+                      className={cn(
+                        "flex items-center gap-1.5 whitespace-nowrap rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all",
+                        tab === item.key ? "border-rust bg-rust text-white" : "border-border hover:border-rust",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </nav>
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                <TipoSelector tipo="b2b" />
+                <button
+                  type="button"
+                  onClick={refreshAll}
+                  title="Refrescar datos"
+                  className="inline-grid h-10 w-10 place-items-center rounded-md border-2 border-border bg-card text-muted-foreground hover:border-ink hover:text-foreground"
+                >
+                  <RefreshCw className={cn("h-4 w-4", overview.isFetching && "animate-spin")} />
+                </button>
+              </div>
             </div>
-            {vista === "kanban" ? (
-              <B2BKanbanView
-                leads={activeLeads}
-                roster={roster}
-                busyLeadId={stageMutation.variables?.lead.id}
-                onMove={moveLead}
-                onOpen={(lead) => setSelectedLeadId(lead.id)}
-              />
-            ) : (
-              <B2BListaView
-                leads={allLeads}
-                busqueda={busqueda}
-                busquedaLabel={busquedaCampaign?.title || null}
-                initialStage={stageParam}
-                busy={stageMutation.isPending}
-                onClearBusqueda={() => pushQuery({ tab: "contactos", vista: "lista", busqueda: "", stage: "" })}
-                onOpen={(lead) => setSelectedLeadId(lead.id)}
-                onBulkMove={moveMany}
-                onBulkDiscard={(leads) => void moveMany(leads, DISCARDED_STAGE)}
-                onBulkContact={(leads) => void moveMany(leads, "Contacted")}
+
+            {tab !== "settings" && (
+              <B2BIcpPanel
+                campaign={icpCampaign}
+                leads={selectedAllLeads}
+                onEdit={() => openB2BSearch(icpCampaign || undefined)}
               />
             )}
-          </div>
-        )}
 
-        {tab === "inbox" && (
-          <B2BInboxTab
-            slug={slug}
-            leads={activeLeads}
-            gates={gates}
-            gatesLoading={gatesQuery.isLoading}
-            busy={stageMutation.isPending}
-            onMove={moveLead}
-            onOpenLead={(lead) => setSelectedLeadId(lead.id)}
-            onOpenSequence={() => pushQuery({ tab: "plantillas" })}
-            onPrepareReply={openB2BReply}
-          />
-        )}
+            {pageError && (
+              <div className="flex items-start gap-2 rounded-lg border-2 border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{String(pageError instanceof Error ? pageError.message : pageError)}</span>
+              </div>
+            )}
 
-        {tab === "plantillas" && (
-          <B2BPlantillasTab
-            campaigns={campaigns}
-            selectedCampaignId={templateCampaignId}
-            onSelectCampaign={setSelectedTemplateCampaignId}
-            campaignDetail={campaignDetailQuery.data || null}
-            loading={campaignDetailQuery.isLoading}
-            saving={sequenceUpdateAction.isPending}
-            actionBusy={outboundAction.isPending}
-            busyAction={outboundAction.variables?.action}
-            onSave={(stepId, emails) =>
-              sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
-            }
-            onEditContext={() => {
-              const campaign = campaigns.find((item) => item.id === templateCampaignId) || campaignDetailQuery.data || undefined;
-              openB2BSearch(campaign);
-            }}
-            onRunAction={(action) => outboundAction.mutate({ campaignId: templateCampaignId, action })}
-          />
-        )}
+            {tab === "encuentra" && (
+              <B2BCampaignOverviewTab
+                campaign={icpCampaign}
+                leads={selectedAllLeads}
+                loading={campaignsQuery.isLoading || campaignDetailQuery.isLoading}
+                actionBusy={outboundAction.isPending}
+                busyCampaignId={outboundAction.variables?.campaignId}
+                onCreateSearch={() => openB2BSearch()}
+                onContinueSearch={(campaign) => openB2BSearch(campaign)}
+                onOpenLeads={(campaign) =>
+                  pushQuery({ tab: "contactos", vista: "lista", campaign: campaign.id, busqueda: campaign.id, stage: "" })
+                }
+                onOpenOffer={(campaign) =>
+                  pushQuery({ tab: "plantillas", campaign: campaign.id, busqueda: "", stage: "" })
+                }
+                onRunAction={(campaignId, action) => outboundAction.mutate({ campaignId, action })}
+              />
+            )}
 
-        {tab === "settings" && (
-          <B2BSettingsTab providers={providers} loading={providersQuery.isLoading} onRefresh={refreshAll} refreshing={providersQuery.isFetching} />
-        )}
+            {tab === "contactos" && (
+              <div data-testid="outbound-contactos">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => pushQuery({ tab: "contactos", vista: "kanban", campaign: selectedCampaignId })}
+                    className={cn(
+                      "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors",
+                      vista === "kanban" ? "border-rust bg-rust text-white" : "border-border bg-background hover:bg-muted",
+                    )}
+                  >
+                    Kanban
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => pushQuery({ tab: "contactos", vista: "lista", campaign: selectedCampaignId, busqueda: selectedCampaignId })}
+                    className={cn(
+                      "rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors",
+                      vista === "lista" ? "border-rust bg-rust text-white" : "border-border bg-background hover:bg-muted",
+                    )}
+                  >
+                    Lista
+                  </button>
+                  <label className="ml-2 flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={roster}
+                      onChange={(event) => setRoster(event.target.checked)}
+                      className="h-4 w-4 accent-rust"
+                    />
+                    Solo ganados/activos
+                  </label>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {activeLeadsQuery.isFetching || discardedLeadsQuery.isFetching ? "Actualizando..." : `${selectedAllLeads.length} leads`}
+                  </span>
+                </div>
+                {vista === "kanban" ? (
+                  <B2BKanbanView
+                    leads={selectedActiveLeads}
+                    roster={roster}
+                    busyLeadId={stageMutation.variables?.lead.id}
+                    onMove={moveLead}
+                    onOpen={(lead) => setSelectedLeadId(lead.id)}
+                  />
+                ) : (
+                  <B2BListaView
+                    leads={selectedAllLeads}
+                    busqueda={selectedCampaignId}
+                    busquedaLabel={selectedCampaign?.title || null}
+                    initialStage={stageParam}
+                    busy={stageMutation.isPending}
+                    onOpen={(lead) => setSelectedLeadId(lead.id)}
+                    onBulkMove={moveMany}
+                    onBulkDiscard={(leads) => void moveMany(leads, DISCARDED_STAGE)}
+                    onBulkContact={(leads) => void moveMany(leads, "Contacted")}
+                  />
+                )}
+              </div>
+            )}
+
+            {tab === "inbox" && (
+              <B2BInboxTab
+                slug={slug}
+                leads={selectedActiveLeads}
+                gates={gates}
+                gatesLoading={gatesQuery.isLoading}
+                busy={stageMutation.isPending}
+                onMove={moveLead}
+                onOpenLead={(lead) => setSelectedLeadId(lead.id)}
+                onOpenSequence={() => pushQuery({ tab: "plantillas", campaign: selectedCampaignId })}
+                onPrepareReply={openB2BReply}
+              />
+            )}
+
+            {tab === "plantillas" && (
+              <B2BPlantillasTab
+                campaigns={campaigns}
+                selectedCampaignId={templateCampaignId}
+                onSelectCampaign={(campaignId) => pushQuery({ campaign: campaignId, busqueda: "", stage: "" })}
+                campaignDetail={campaignDetailQuery.data || null}
+                loading={campaignDetailQuery.isLoading}
+                saving={sequenceUpdateAction.isPending}
+                actionBusy={outboundAction.isPending}
+                busyAction={outboundAction.variables?.action}
+                onSave={(stepId, emails) =>
+                  sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
+                }
+                onEditContext={() => {
+                  const campaign = campaigns.find((item) => item.id === templateCampaignId) || campaignDetailQuery.data || undefined;
+                  openB2BSearch(campaign);
+                }}
+                onRunAction={(action) => outboundAction.mutate({ campaignId: templateCampaignId, action })}
+              />
+            )}
+
+            {tab === "settings" && (
+              <B2BSettingsTab providers={providers} loading={providersQuery.isLoading} onRefresh={refreshAll} refreshing={providersQuery.isFetching} />
+            )}
+          </main>
+        </div>
 
         <B2BLeadDrawer
           slug={slug}
@@ -1130,6 +1151,243 @@ export function OutboundB2BView() {
         <B2BOutreachStyles />
       </div>
     </DashboardLayout>
+  );
+}
+
+function B2BCampaignRail({
+  campaigns,
+  leads,
+  selectedCampaignId,
+  loading,
+  onSelect,
+  onCreate,
+}: {
+  campaigns: Campaign[];
+  leads: Lead[];
+  selectedCampaignId: string;
+  loading: boolean;
+  onSelect: (campaign: Campaign) => void;
+  onCreate: () => void;
+}) {
+  const ordered = campaigns
+    .slice()
+    .sort((a, b) => {
+      const order = { running: 0, draft: 1, paused: 2, done: 3 } as const;
+      return order[campaignState(a)] - order[campaignState(b)];
+    });
+
+  return (
+    <aside className="op-campaign-rail" data-testid="b2b-campaign-rail">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Campañas</div>
+          <h2 className="font-heading text-lg text-navy">B2B outbound</h2>
+        </div>
+        <span className="rounded-full border border-border bg-background px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+          {campaigns.length}
+        </span>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        {loading && <p className="rounded-lg border border-border bg-background p-3 text-sm text-muted-foreground">Cargando campañas...</p>}
+        {!loading && ordered.length === 0 && (
+          <p className="rounded-lg border border-dashed border-border bg-background p-3 text-sm text-muted-foreground">
+            No hay campañas B2B todavía.
+          </p>
+        )}
+        {ordered.map((campaign) => {
+          const state = campaignState(campaign);
+          const meta = campaignStateMeta(state);
+          const count = campaignLeadCount(campaign, leads);
+          const selected = campaign.id === selectedCampaignId;
+          return (
+            <button
+              key={campaign.id}
+              type="button"
+              onClick={() => onSelect(campaign)}
+              className={cn(
+                "w-full rounded-lg border p-3 text-left transition-colors",
+                selected ? "border-rust bg-rust/10" : "border-border bg-background hover:border-rust hover:bg-muted/30",
+              )}
+            >
+              <span className="flex items-start gap-2">
+                <span className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full", meta.barClass)} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-heading text-sm font-bold text-foreground">
+                    {campaign.title || campaign.id}
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                    {campaign.targetSegment || campaign.hypothesis || "Target sin definir"}
+                  </span>
+                </span>
+              </span>
+              <span className="mt-2 flex items-center justify-between gap-2">
+                <span className={cn("rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide", meta.stampClass)}>
+                  {meta.label}
+                </span>
+                <span className="text-xs font-semibold text-muted-foreground">{count} leads</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={onCreate}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-rust bg-rust px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
+        data-testid="crear-busqueda-b2b"
+      >
+        <Plus className="h-4 w-4" />
+        Nueva campaña
+      </button>
+    </aside>
+  );
+}
+
+function B2BCampaignOverviewTab({
+  campaign,
+  leads,
+  loading,
+  actionBusy,
+  busyCampaignId,
+  onOpenLeads,
+  onOpenOffer,
+  onContinueSearch,
+  onCreateSearch,
+  onRunAction,
+}: {
+  campaign: Campaign | CampaignDetail | null;
+  leads: Lead[];
+  loading: boolean;
+  actionBusy: boolean;
+  busyCampaignId?: string;
+  onOpenLeads: (campaign: Campaign) => void;
+  onOpenOffer: (campaign: Campaign) => void;
+  onContinueSearch: (campaign: Campaign) => void;
+  onCreateSearch: () => void;
+  onRunAction: (campaignId: string, action: OutboundAction) => void;
+}) {
+  if (loading && !campaign) {
+    return <p className="py-12 text-center text-sm text-muted-foreground">Cargando campaña...</p>;
+  }
+
+  if (!campaign) {
+    return (
+      <ZeroState
+        title="Sin campaña B2B"
+        body="Crea una campaña B2B para definir target, oferta, audiencia, secuencia y conectar leads."
+        action={{ label: "Nueva campaña", onClick: onCreateSearch }}
+      />
+    );
+  }
+
+  const state = campaignState(campaign);
+  const meta = campaignStateMeta(state);
+  const contacts = campaignLeadCount(campaign, leads);
+  const discovered = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Discovered").length;
+  const shortlisted = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Shortlist").length;
+  const contacted = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Contacted").length;
+  const replies = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Replied").length;
+  const meetings = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Negotiating").length;
+  const won = leads.filter((lead) => ["Signed", "Active"].includes(stageForStatus(lead.lifecycleStatus) || "")).length;
+  const channelSummary = channelText(campaign.channels);
+  const segment = campaign.targetSegment || "Target por definir";
+  const offer = campaign.hypothesis || "Oferta, dolor y posicionamiento pendientes de definir para esta campaña.";
+
+  return (
+    <div className="space-y-4" data-testid="outbound-encuentra">
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="min-w-[240px] flex-1">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className={cn("rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", meta.stampClass)}>
+                {meta.label}
+              </span>
+              <span className="rounded border border-border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {campaign.campaignKindLabel || "Campaña B2B"}
+              </span>
+            </div>
+            <h3 className="font-heading text-2xl leading-tight text-navy">{campaign.title || campaign.id}</h3>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">{offer}</p>
+          </div>
+          <div className="grid min-w-[320px] grid-cols-3 gap-3 text-center">
+            <MiniMetric label="leads" value={contacts} />
+            <MiniMetric label="replies" value={replies} />
+            <MiniMetric label="reuniones" value={meetings} />
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          <ContextSummary label="Target" value={segment} />
+          <ContextSummary label="Oferta" value={offer} />
+          <ContextSummary label="Canales" value={channelSummary} />
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onOpenOffer(campaign)}
+            className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
+          >
+            Editar oferta y secuencia
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenLeads(campaign)}
+            className="rounded-lg border-2 border-rust bg-rust px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
+          >
+            Ver leads
+          </button>
+          <button
+            type="button"
+            onClick={() => onContinueSearch(campaign)}
+            className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
+          >
+            Trabajar con Sancho
+          </button>
+        </div>
+      </section>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <section className="rounded-xl border border-border bg-card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-heading text-lg text-navy">Embudo de campaña</h3>
+              <p className="text-sm text-muted-foreground">Estados reales de los leads de esta campaña B2B.</p>
+            </div>
+            <span className="text-xs text-muted-foreground">{contacts} leads totales</span>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-6">
+            <MiniMetric label="descubiertos" value={discovered} />
+            <MiniMetric label="shortlist" value={shortlisted} />
+            <MiniMetric label="contactados" value={contacted} />
+            <MiniMetric label="replies" value={replies} />
+            <MiniMetric label="meetings" value={meetings} />
+            <MiniMetric label="ganados" value={won} />
+          </div>
+        </section>
+
+        <aside className="rounded-xl border border-border bg-card p-4">
+          <h3 className="font-heading text-lg text-navy">Acciones</h3>
+          <p className="text-sm text-muted-foreground">La campaña viva no se edita en silencio: se ajusta contexto, se regenera secuencia o se duplica.</p>
+          <div className="mt-4 grid gap-2">
+            {(["search", "enrich", "approve", "dry-run", "publish", "live"] as const).map((action) => (
+              <button
+                key={action}
+                type="button"
+                disabled={actionBusy && busyCampaignId === campaign.id}
+                onClick={() => onRunAction(campaign.id, action)}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-left text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+              >
+                <span>{outboundActionLabel(action)}</span>
+                {actionBusy && busyCampaignId === campaign.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+            ))}
+          </div>
+        </aside>
+      </div>
+    </div>
   );
 }
 
@@ -1543,7 +1801,6 @@ function B2BListaView({
   busqueda,
   busquedaLabel,
   initialStage,
-  onClearBusqueda,
   onOpen,
   onBulkMove,
   onBulkDiscard,
@@ -1554,7 +1811,6 @@ function B2BListaView({
   busqueda: string;
   busquedaLabel?: string | null;
   initialStage?: StageFilterKey | "";
-  onClearBusqueda: () => void;
   onOpen: (lead: Lead) => void;
   onBulkMove: (leads: Lead[], target: StageFilterKey) => void;
   onBulkDiscard: (leads: Lead[]) => void;
@@ -1631,14 +1887,7 @@ function B2BListaView({
       {busqueda && (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border border-l-4 border-l-rust bg-card px-4 py-2 text-sm" data-testid="b2b-busqueda-banner">
           <Search className="h-4 w-4 text-rust" />
-          Prospectos de la búsqueda: <b>{busquedaLabel || busqueda}</b>
-          <button
-            type="button"
-            onClick={onClearBusqueda}
-            className="ml-auto rounded-md border border-border bg-background px-2 py-0.5 text-xs font-semibold transition-colors hover:bg-muted"
-          >
-            quitar filtro
-          </button>
+          Leads de la campaña: <b>{busquedaLabel || busqueda}</b>
         </div>
       )}
 
@@ -3009,6 +3258,30 @@ function B2BOutreachStyles() {
         text-transform: uppercase;
       }
 
+      .op-campaign-layout {
+        display: grid;
+        grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+        gap: clamp(14px, 1.8vw, 22px);
+        align-items: start;
+      }
+
+      .op-campaign-rail {
+        position: sticky;
+        top: 72px;
+        max-height: calc(100vh - 104px);
+        overflow: auto;
+        border: 2px solid var(--op-ink);
+        border-radius: var(--sc-r-md);
+        background: var(--op-paper-3);
+        padding: 1rem;
+        box-shadow: var(--pop-xs);
+      }
+
+      .op-campaign-rail button {
+        border: 2px solid var(--op-ink);
+        border-radius: var(--sc-r-md);
+      }
+
       .op-shell [data-testid="outbound-settings"] {
         right: clamp(16px, 2vw, 28px);
         top: clamp(16px, 2vw, 28px);
@@ -3021,6 +3294,7 @@ function B2BOutreachStyles() {
       .op-shell [data-testid="outbound-b2b-tabs"] button,
       .op-shell [data-testid="b2b-icp-panel"] button,
       .op-shell [data-testid="crear-busqueda-b2b"],
+      .op-shell [data-testid="b2b-campaign-rail"] button,
       .op-shell [data-testid="b2b-bulk-bar"] button,
       .op-shell [data-testid="outbound-plantillas"] button {
         border: 2px solid var(--op-ink);
@@ -3033,6 +3307,7 @@ function B2BOutreachStyles() {
       .op-shell [data-testid="outbound-b2b-tabs"] button:hover,
       .op-shell [data-testid="b2b-icp-panel"] button:hover,
       .op-shell [data-testid="crear-busqueda-b2b"]:hover,
+      .op-shell [data-testid="b2b-campaign-rail"] button:hover,
       .op-shell [data-testid="b2b-bulk-bar"] button:hover,
       .op-shell [data-testid="outbound-plantillas"] button:hover {
         transform: translate(-1px, -1px);
@@ -3042,6 +3317,7 @@ function B2BOutreachStyles() {
       .op-shell [data-testid="outbound-b2b-tabs"] button:active,
       .op-shell [data-testid="b2b-icp-panel"] button:active,
       .op-shell [data-testid="crear-busqueda-b2b"]:active,
+      .op-shell [data-testid="b2b-campaign-rail"] button:active,
       .op-shell [data-testid="b2b-bulk-bar"] button:active,
       .op-shell [data-testid="outbound-plantillas"] button:active {
         transform: translate(2px, 2px);
@@ -3128,6 +3404,15 @@ function B2BOutreachStyles() {
 
         .op-stat-grid > div {
           padding: 0.55rem;
+        }
+
+        .op-campaign-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .op-campaign-rail {
+          position: static;
+          max-height: none;
         }
       }
     `}</style>
