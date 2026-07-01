@@ -141,6 +141,7 @@ test("buildCampaignPayload produce una campaign Partnerships con el modo del pla
   });
   const payload = lib.buildCampaignPayload(plan);
   assert.equal(payload.type, "Partnerships");
+  assert.equal(payload.campaignKind, "creator");
   assert.equal(payload.title, "Inversión YouTube");
   assert.equal(payload.qualificationMode, "auto");
   assert.equal(payload.disqualifyThreshold, 55);
@@ -267,6 +268,7 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
   assert.ok(campaignCall, "POST /api/campaigns llamado");
   const campaignBody = campaignCall!.body as Record<string, unknown>;
   assert.equal(campaignBody.type, "Partnerships");
+  assert.equal(campaignBody.campaignKind, "creator");
   assert.equal(campaignBody.qualificationMode, "hybrid");
   assert.equal(campaignBody.disqualifyThreshold, 40);
   assert.equal(created.campaignId, "camp-monzo-1");

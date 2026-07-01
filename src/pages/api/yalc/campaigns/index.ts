@@ -1,6 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import { resolveYalcConfig, yalcErrorResponse, yalcFetch } from "@/lib/yalc/client";
+import {
+  normalizeYalcCampaign,
+  normalizeYalcCampaignPayload,
+  type YalcCampaignKind,
+} from "@/lib/yalc/campaign-kind";
+
+function kindFromQuery(type?: string): YalcCampaignKind {
+  if (type === "B2B") return "b2b";
+  if (type === "Partnerships") return "creator";
+  return "unknown";
+}
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET" && req.method !== "POST") {
@@ -13,25 +24,34 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const config = resolveYalcConfig(slug);
     if (req.method === "POST") {
+      const body = (req.body || {}) as Record<string, unknown>;
       return res.status(201).json(
         await yalcFetch(config, "/api/campaigns", {
           method: "POST",
-          body: req.body || {},
-        }),
+          body,
+        }).then((campaign) =>
+          campaign && typeof campaign === "object"
+            ? normalizeYalcCampaign({ ...body, ...(campaign as Record<string, unknown>) })
+            : campaign,
+        ),
       );
     }
     // Forward YALC list filters — `type` ('B2B'|'Partnerships', SAN-77/78)
     // and `status` keep the selector Tipo server-side instead of client-only.
     const params = new URLSearchParams();
+    let requestedType = "";
     for (const key of ["type", "status"] as const) {
       const value = req.query[key];
       const single = Array.isArray(value) ? value[0] : value;
-      if (typeof single === "string" && single.trim()) params.set(key, single.trim());
+      if (typeof single === "string" && single.trim()) {
+        const normalized = single.trim();
+        params.set(key, normalized);
+        if (key === "type") requestedType = normalized;
+      }
     }
     const query = params.toString();
-    return res.status(200).json(
-      await yalcFetch(config, `/api/campaigns${query ? `?${query}` : ""}`),
-    );
+    const payload = await yalcFetch<Record<string, unknown>>(config, `/api/campaigns${query ? `?${query}` : ""}`);
+    return res.status(200).json(normalizeYalcCampaignPayload(payload, kindFromQuery(requestedType)));
   } catch (err) {
     const out = yalcErrorResponse(err);
     return res.status(out.status).json(out.body);

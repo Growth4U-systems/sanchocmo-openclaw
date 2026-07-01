@@ -192,7 +192,7 @@ export function EncuentraTab({
                       {campaign.title || campaign.id}
                     </h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Partnerships
+                      {campaign.campaignKindLabel || "Campaña creator"}
                       {campaign.createdAt &&
                         ` · creada ${new Date(campaign.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}`}
                       {campaign.targetSegment && ` · ${campaign.targetSegment}`}
