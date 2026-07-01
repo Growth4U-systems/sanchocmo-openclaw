@@ -870,14 +870,6 @@ export function OutboundB2BView() {
             <TipoSelector tipo="b2b" />
             <button
               type="button"
-              onClick={() => openB2BSearch()}
-              className="inline-flex items-center gap-2 rounded-md border-2 border-ink bg-navy px-3 py-2 text-sm font-bold text-white shadow-comic-sm transition-transform hover:-translate-y-0.5"
-            >
-              <Bot className="h-4 w-4" />
-              Abrir chat
-            </button>
-            <button
-              type="button"
               onClick={refreshAll}
               title="Refrescar datos"
               className="inline-grid h-10 w-10 place-items-center rounded-md border-2 border-border bg-card text-muted-foreground hover:border-ink hover:text-foreground"
@@ -1105,7 +1097,7 @@ function B2BEncuentraTab({
                 data-campaign-id={campaign.id}
                 onClick={() => (isDraft ? onContinueSearch(campaign) : onOpenSearch(campaign))}
                 className="cursor-pointer overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-rust"
-                title={isDraft ? "Completar búsqueda con Rocinante" : "Abrir Contactos filtrado por esta búsqueda"}
+                title={isDraft ? "Completar búsqueda" : "Abrir Contactos filtrado por esta búsqueda"}
               >
                 <div className="flex flex-wrap items-center gap-4 px-5 py-4">
                   <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-border bg-muted/40 text-rust" aria-hidden>
