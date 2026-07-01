@@ -5,7 +5,6 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Bot,
   Briefcase,
   Building2,
   CheckCircle2,
@@ -1009,7 +1008,6 @@ export function OutboundB2BView() {
               <B2BIcpPanel
                 campaign={icpCampaign}
                 leads={selectedAllLeads}
-                onEdit={() => openB2BSearch(icpCampaign || undefined)}
               />
             )}
 
@@ -1025,17 +1023,7 @@ export function OutboundB2BView() {
                 campaign={icpCampaign}
                 leads={selectedAllLeads}
                 loading={campaignsQuery.isLoading || campaignDetailQuery.isLoading}
-                actionBusy={outboundAction.isPending}
-                busyCampaignId={outboundAction.variables?.campaignId}
                 onCreateSearch={() => openB2BSearch()}
-                onContinueSearch={(campaign) => openB2BSearch(campaign)}
-                onOpenLeads={(campaign) =>
-                  pushQuery({ tab: "contactos", vista: "lista", campaign: campaign.id, busqueda: campaign.id, stage: "" })
-                }
-                onOpenOffer={(campaign) =>
-                  pushQuery({ tab: "plantillas", campaign: campaign.id, busqueda: "", stage: "" })
-                }
-                onRunAction={(campaignId, action) => outboundAction.mutate({ campaignId, action })}
               />
             )}
 
@@ -1126,10 +1114,6 @@ export function OutboundB2BView() {
                 onSave={(stepId, emails) =>
                   sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
                 }
-                onEditContext={() => {
-                  const campaign = campaigns.find((item) => item.id === templateCampaignId) || campaignDetailQuery.data || undefined;
-                  openB2BSearch(campaign);
-                }}
                 onRunAction={(action) => outboundAction.mutate({ campaignId: templateCampaignId, action })}
               />
             )}
@@ -1249,24 +1233,12 @@ function B2BCampaignOverviewTab({
   campaign,
   leads,
   loading,
-  actionBusy,
-  busyCampaignId,
-  onOpenLeads,
-  onOpenOffer,
-  onContinueSearch,
   onCreateSearch,
-  onRunAction,
 }: {
   campaign: Campaign | CampaignDetail | null;
   leads: Lead[];
   loading: boolean;
-  actionBusy: boolean;
-  busyCampaignId?: string;
-  onOpenLeads: (campaign: Campaign) => void;
-  onOpenOffer: (campaign: Campaign) => void;
-  onContinueSearch: (campaign: Campaign) => void;
   onCreateSearch: () => void;
-  onRunAction: (campaignId: string, action: OutboundAction) => void;
 }) {
   if (loading && !campaign) {
     return <p className="py-12 text-center text-sm text-muted-foreground">Cargando campaña...</p>;
@@ -1324,251 +1296,25 @@ function B2BCampaignOverviewTab({
           <ContextSummary label="Canales" value={channelSummary} />
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => onOpenOffer(campaign)}
-            className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
-          >
-            Editar oferta y secuencia
-          </button>
-          <button
-            type="button"
-            onClick={() => onOpenLeads(campaign)}
-            className="rounded-lg border-2 border-rust bg-rust px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
-          >
-            Ver leads
-          </button>
-          <button
-            type="button"
-            onClick={() => onContinueSearch(campaign)}
-            className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
-          >
-            Trabajar con Sancho
-          </button>
-        </div>
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <section className="rounded-xl border border-border bg-card p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-heading text-lg text-navy">Embudo de campaña</h3>
-              <p className="text-sm text-muted-foreground">Estados reales de los leads de esta campaña B2B.</p>
-            </div>
-            <span className="text-xs text-muted-foreground">{contacts} leads totales</span>
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-heading text-lg text-navy">Embudo de campaña</h3>
+            <p className="text-sm text-muted-foreground">Estados reales de los leads de esta campaña B2B.</p>
           </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-6">
-            <MiniMetric label="descubiertos" value={discovered} />
-            <MiniMetric label="shortlist" value={shortlisted} />
-            <MiniMetric label="contactados" value={contacted} />
-            <MiniMetric label="replies" value={replies} />
-            <MiniMetric label="meetings" value={meetings} />
-            <MiniMetric label="ganados" value={won} />
-          </div>
-        </section>
-
-        <aside className="rounded-xl border border-border bg-card p-4">
-          <h3 className="font-heading text-lg text-navy">Acciones</h3>
-          <p className="text-sm text-muted-foreground">La campaña viva no se edita en silencio: se ajusta contexto, se regenera secuencia o se duplica.</p>
-          <div className="mt-4 grid gap-2">
-            {(["search", "enrich", "approve", "dry-run", "publish", "live"] as const).map((action) => (
-              <button
-                key={action}
-                type="button"
-                disabled={actionBusy && busyCampaignId === campaign.id}
-                onClick={() => onRunAction(campaign.id, action)}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-left text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
-              >
-                <span>{outboundActionLabel(action)}</span>
-                {actionBusy && busyCampaignId === campaign.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
-              </button>
-            ))}
-          </div>
-        </aside>
-      </div>
-    </div>
-  );
-}
-
-function B2BEncuentraTab({
-  campaigns,
-  leads,
-  loading,
-  actionBusy,
-  busyCampaignId,
-  onOpenSearch,
-  onContinueSearch,
-  onCreateSearch,
-  onRunAction,
-}: {
-  campaigns: Campaign[];
-  leads: Lead[];
-  loading: boolean;
-  actionBusy: boolean;
-  busyCampaignId?: string;
-  onOpenSearch: (campaign: Campaign) => void;
-  onContinueSearch: (campaign: Campaign) => void;
-  onCreateSearch: () => void;
-  onRunAction: (campaignId: string, action: OutboundAction) => void;
-}) {
-  const [filter, setFilter] = useState<"todas" | "archivadas">("todas");
-  const ordered = campaigns
-    .slice()
-    .sort((a, b) => {
-      const order = { running: 0, done: 1, paused: 2, draft: 3 } as const;
-      return order[campaignState(a)] - order[campaignState(b)];
-    });
-
-  if (filter === "archivadas") {
-    return (
-      <div data-testid="outbound-encuentra">
-        <B2BFilterBar filter={filter} onFilter={setFilter} />
-        <ZeroState
-          title="Sin búsquedas archivadas"
-          body="Cuando cierres una búsqueda, conservará sus contactos y la trazabilidad del score."
-          action={{ label: "Volver a todas", onClick: () => setFilter("todas") }}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div data-testid="outbound-encuentra">
-      <B2BFilterBar
-        filter={filter}
-        onFilter={setFilter}
-        action={!loading && campaigns.length > 0 ? { label: "+ Nueva búsqueda", onClick: onCreateSearch } : undefined}
-      />
-      {loading ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">Cargando búsquedas...</p>
-      ) : campaigns.length === 0 ? (
-        <ZeroState
-          title="Sin búsquedas todavía"
-          body="Crea una búsqueda B2B para traer personas al pipeline con score, compañía y datos de contacto."
-          action={{ label: "+ Nueva búsqueda", onClick: onCreateSearch }}
-        />
-      ) : (
-        <div className="space-y-4">
-          {ordered.map((campaign) => {
-            const state = campaignState(campaign);
-            const meta = campaignStateMeta(state);
-            const campaignLeads = leads.filter((lead) => lead.campaignId === campaign.id);
-            const candidateCount = campaignLeadCount(campaign, leads);
-            const prioritized = campaignLeads.filter((lead) => {
-              const stage = stageForStatus(lead.lifecycleStatus);
-              return stage !== null && stage !== "Discovered" && stage !== DISCARDED_STAGE;
-            }).length;
-            const replied = campaignLeads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Replied").length;
-            const isDraft = state === "draft";
-
-            return (
-              <section
-                key={campaign.id}
-                data-campaign-id={campaign.id}
-                onClick={() => (isDraft ? onContinueSearch(campaign) : onOpenSearch(campaign))}
-                className="cursor-pointer overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-rust"
-                title={isDraft ? "Completar búsqueda" : "Abrir Contactos filtrado por esta búsqueda"}
-              >
-                <div className="flex flex-wrap items-center gap-4 px-5 py-4">
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-border bg-muted/40 text-rust" aria-hidden>
-                    {isDraft ? <Bot className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-                  </div>
-                  <div className="min-w-[240px] flex-1">
-                    <h3 className="font-heading text-[15px] font-bold leading-tight text-foreground">
-                      {campaign.title || campaign.id}
-                    </h3>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      B2B
-                      {campaign.createdAt && ` · creada ${compactDate(campaign.createdAt)}`}
-                      {campaign.targetSegment && ` · ${campaign.targetSegment}`}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <MiniMetric label="prospectos" value={candidateCount} muted={isDraft} />
-                    <MiniMetric label="priorizados" value={prioritized} muted={isDraft} />
-                    <MiniMetric label="replies" value={replied} muted={isDraft} />
-                  </div>
-                  <span className={cn("rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", meta.stampClass)}>
-                    {meta.label}
-                  </span>
-                </div>
-
-                <div className="px-5 pb-3">
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className={cn("h-full rounded-full", meta.barClass)}
-                      style={{ width: isDraft ? "0%" : `${Math.max(12, Math.min(100, (prioritized / Math.max(candidateCount, 1)) * 100))}%` }}
-                    />
-                  </div>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {isDraft
-                      ? "Borrador pendiente de completar."
-                      : `${candidateCount} prospectos en pipeline · ${prioritized} priorizados · canales ${channelText(campaign.channels)}`}
-                  </p>
-                </div>
-
-                {!isDraft && (
-                  <div className="flex flex-wrap items-center gap-2 border-t border-border px-5 py-2.5" onClick={(event) => event.stopPropagation()}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Acciones</span>
-                    {(["search", "enrich", "approve", "dry-run"] as const).map((action) => (
-                      <button
-                        key={action}
-                        type="button"
-                        disabled={actionBusy && busyCampaignId === campaign.id}
-                        onClick={() => onRunAction(campaign.id, action)}
-                        className="rounded-full border border-border bg-background px-3 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-rust hover:text-foreground disabled:opacity-50"
-                      >
-                        {actionBusy && busyCampaignId === campaign.id ? "..." : outboundActionLabel(action)}
-                      </button>
-                    ))}
-                    <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
-                  </div>
-                )}
-              </section>
-            );
-          })}
+          <span className="text-xs text-muted-foreground">{contacts} leads totales</span>
         </div>
-      )}
-    </div>
-  );
-}
-
-function B2BFilterBar({
-  filter,
-  onFilter,
-  action,
-}: {
-  filter: "todas" | "archivadas";
-  onFilter: (filter: "todas" | "archivadas") => void;
-  action?: { label: string; onClick: () => void };
-}) {
-  return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Filtrar</span>
-      {(["todas", "archivadas"] as const).map((key) => (
-        <button
-          key={key}
-          type="button"
-          onClick={() => onFilter(key)}
-          className={cn(
-            "rounded-md border px-3 py-1.5 text-[12px] font-semibold transition-colors",
-            filter === key ? "border-rust bg-rust text-white" : "border-border bg-background hover:bg-muted",
-          )}
-        >
-          {key === "todas" ? "Todas" : "Archivadas"}
-        </button>
-      ))}
-      {action && (
-        <button
-          type="button"
-          onClick={action.onClick}
-          className="ml-auto rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
-          data-testid="crear-busqueda-b2b"
-        >
-          {action.label}
-        </button>
-      )}
+        <div className="mt-4 grid gap-3 md:grid-cols-6">
+          <MiniMetric label="descubiertos" value={discovered} />
+          <MiniMetric label="shortlist" value={shortlisted} />
+          <MiniMetric label="contactados" value={contacted} />
+          <MiniMetric label="replies" value={replies} />
+          <MiniMetric label="meetings" value={meetings} />
+          <MiniMetric label="ganados" value={won} />
+        </div>
+      </section>
     </div>
   );
 }
@@ -1585,11 +1331,9 @@ function MiniMetric({ label, value, muted }: { label: string; value: number; mut
 function B2BIcpPanel({
   campaign,
   leads,
-  onEdit,
 }: {
   campaign: Campaign | CampaignDetail | null;
   leads: Lead[];
-  onEdit: () => void;
 }) {
   const scopedLeads = campaign ? leads.filter((lead) => lead.campaignId === campaign.id) : leads;
   const contacts = campaign ? campaignLeadCount(campaign, leads) : leads.length;
@@ -1603,7 +1347,7 @@ function B2BIcpPanel({
 
   return (
     <section
-      className="grid gap-4 rounded-xl border border-border bg-card p-4 lg:grid-cols-[minmax(0,1fr)_360px]"
+      className="grid gap-4 rounded-xl border border-border bg-card p-4 lg:grid-cols-[minmax(0,1fr)_320px]"
       data-testid="b2b-icp-panel"
       aria-label="ICP Outbound B2B"
     >
@@ -1621,20 +1365,12 @@ function B2BIcpPanel({
           <ContextSummary label="Estado" value={campaign?.status || "Pendiente"} />
         </div>
       </div>
-      <aside className="flex min-w-0 flex-col justify-between gap-4 rounded-lg border border-border bg-background p-4">
+      <aside className="min-w-0 rounded-lg border border-border bg-background p-4">
         <div className="grid grid-cols-3 gap-3 text-center">
           <MiniMetric label="contactos" value={contacts} muted={!campaign} />
           <MiniMetric label="priorizados" value={prioritized} muted={!campaign} />
           <MiniMetric label="replies" value={replies} muted={!campaign} />
         </div>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
-        >
-          {campaign ? "Ajustar ICP de campaña" : "Definir ICP de campaña"}
-          <ChevronRight className="h-4 w-4" />
-        </button>
       </aside>
     </section>
   );
@@ -2643,7 +2379,6 @@ function B2BPlantillasTab({
   actionBusy,
   busyAction,
   onSave,
-  onEditContext,
   onRunAction,
 }: {
   campaigns: Campaign[];
@@ -2655,7 +2390,6 @@ function B2BPlantillasTab({
   actionBusy: boolean;
   busyAction?: OutboundAction;
   onSave: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
-  onEditContext: () => void;
   onRunAction: (action: OutboundAction) => void;
 }) {
   const sequences = extractEmailSequences(campaignDetail);
@@ -2689,7 +2423,6 @@ function B2BPlantillasTab({
             campaign={selectedCampaign}
             placeholders={placeholders}
             emailCount={emailCount}
-            onEditContext={onEditContext}
           />
         ) : (
           <ZeroState
@@ -2728,26 +2461,7 @@ function B2BPlantillasTab({
 
         <aside className="rounded-xl border border-border bg-card p-4">
           <h3 className="font-heading text-lg text-navy">Salida</h3>
-          <p className="text-sm text-muted-foreground">Acciones después de revisar contexto y mensajes.</p>
-          <div className="mt-4 grid gap-2">
-            {(["approve", "dry-run", "publish", "live"] as const).map((action) => (
-              <button
-                key={action}
-                type="button"
-                disabled={!selectedCampaignId || actionBusy}
-                onClick={() => onRunAction(action)}
-                className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-left transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
-              >
-                <span>
-                  <span className="block text-sm font-semibold">{outboundActionLabel(action)}</span>
-                  <span className="mt-0.5 block text-xs font-normal leading-snug text-muted-foreground">
-                    {outboundActionDescription(action)}
-                  </span>
-                </span>
-                {actionBusy && busyAction === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
-              </button>
-            ))}
-          </div>
+          <p className="text-sm text-muted-foreground">Estado operativo después de revisar contexto y mensajes.</p>
           <div className="mt-4 rounded-lg border border-border bg-background p-3">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Estado de campaña</div>
             <div className="mt-2 grid gap-2 text-sm">
@@ -2756,6 +2470,30 @@ function B2BPlantillasTab({
               <DataItem label="Canales" value={selectedCampaign ? channelText(selectedCampaign.channels) : "-"} />
             </div>
           </div>
+          <details className="mt-4 rounded-lg border border-border bg-background p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-foreground">
+              Opciones avanzadas de envío
+            </summary>
+            <div className="mt-3 grid gap-2">
+              {(["approve", "dry-run", "publish", "live"] as const).map((action) => (
+                <button
+                  key={action}
+                  type="button"
+                  disabled={!selectedCampaignId || actionBusy}
+                  onClick={() => onRunAction(action)}
+                  className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold">{outboundActionLabel(action)}</span>
+                    <span className="mt-0.5 block text-xs font-normal leading-snug text-muted-foreground">
+                      {outboundActionDescription(action)}
+                    </span>
+                  </span>
+                  {actionBusy && busyAction === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+              ))}
+            </div>
+          </details>
         </aside>
       </div>
     </div>
@@ -2766,12 +2504,10 @@ function PersonalizationWorkspace({
   campaign,
   placeholders,
   emailCount,
-  onEditContext,
 }: {
   campaign: Campaign | CampaignDetail;
   placeholders: string[];
   emailCount: number;
-  onEditContext: () => void;
 }) {
   const tokens = placeholders.length ? placeholders : ["first_name", "company_name", "pain_point"];
 
@@ -2809,13 +2545,6 @@ function PersonalizationWorkspace({
               <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Personalización</div>
               <h4 className="mt-1 font-heading text-base text-navy">Variables y ángulos</h4>
             </div>
-            <button
-              type="button"
-              onClick={onEditContext}
-              className="shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust"
-            >
-              Trabajar contexto
-            </button>
           </div>
           <div className="mt-4 flex flex-wrap gap-1.5">
             {tokens.map((placeholder) => (
