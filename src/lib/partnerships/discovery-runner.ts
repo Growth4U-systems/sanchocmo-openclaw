@@ -22,6 +22,7 @@ import { getSearch, updateRunnerState } from "./discovery-store";
 import { fixturesEnabledByEnv, loadFixtureCandidates } from "./fixtures";
 import { getEffectiveModelConfig } from "./model-config";
 import { qualifyCandidates } from "./qualify-enrich";
+import { scrapeLiveDiscoveryCandidates } from "./scrapecreators-live";
 import type { DiscoveryRunnerStats, DiscoverySearchRecord } from "./discovery-types";
 import type { QualifiedCandidate } from "./qualify-enrich";
 
@@ -88,7 +89,9 @@ export async function runDiscoverySearch(options: RunDiscoveryOptions): Promise<
   });
 
   try {
-    const raw = useFixtures ? loadFixtureCandidates() : options.candidates;
+    const raw = useFixtures
+      ? loadFixtureCandidates()
+      : options.candidates ?? await scrapeLiveDiscoveryCandidates(search.plan);
     const { candidates, invalid } = normalizeCandidates(raw);
     if (candidates.length === 0) {
       throw new Error(

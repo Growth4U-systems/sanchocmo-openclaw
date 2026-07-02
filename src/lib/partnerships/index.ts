@@ -57,6 +57,7 @@ export type { CreateSearchResult } from "./create-search";
 
 export { runDiscoverySearch } from "./discovery-runner";
 export type { RunDiscoveryOptions, RunDiscoveryResult } from "./discovery-runner";
+export { scrapeLiveDiscoveryCandidates } from "./scrapecreators-live";
 
 export { triggerDiscoveryRunner } from "./trigger-runner";
 export type { TriggerDiscoveryRunnerInput, TriggerDiscoveryRunnerResult } from "./trigger-runner";
