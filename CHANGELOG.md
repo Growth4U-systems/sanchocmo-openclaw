@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.16.0...v0.16.1) (2026-07-02)
+
+
+### Bug Fixes
+
+* **partnerships:** SAN-328 retry scrapecreators live search ([#1047](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1047)) ([6b6635e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6b6635e100510c9cdb058a87d2c5fad981397f69))
+* SAN-385 harden content creation client data ([f4eb71a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f4eb71a0c75b57c8a0b7feee5b7a36c21b0117a4))
+* SAN-385 keep content creation loading without config ([#1051](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1051)) ([47fec76](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/47fec76385ad3961b592e1a85c8a2c4d9f586c01))
+
 ## [0.16.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.14...v0.16.0) (2026-07-02)
 
 
