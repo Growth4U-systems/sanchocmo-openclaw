@@ -62,7 +62,7 @@ export function desyncsForContentTask(
   if (!state || "never_ran" in state || !contentTaskId) return [];
   const wanted = contentTaskId.toLowerCase();
   const desyncs = Array.isArray(state.desyncs) ? state.desyncs : [];
-  return desyncs.filter((d) => d.contentTaskId.toLowerCase() === wanted);
+  return desyncs.filter((d) => typeof d.contentTaskId === "string" && d.contentTaskId.toLowerCase() === wanted);
 }
 
 function normalizeReconcileState(raw: unknown, slug: string): ReconcileStateResponse {

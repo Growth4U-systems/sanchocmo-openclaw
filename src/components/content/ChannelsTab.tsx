@@ -157,6 +157,17 @@ export function ChannelsTab({ slug, onGo, openChat }: Props) {
   // networks fall back to standalone cards (so their "Activar" flow still works).
   const founderLed = channels.filter((c) => c.active && FOUNDER_LED_CHANNELS.has(c.channel));
   const standalone = channels.filter((c) => !(c.active && FOUNDER_LED_CHANNELS.has(c.channel)));
+  const activity = Array.isArray(activityQ.data?.activity)
+    ? activityQ.data.activity.map((event) => {
+        const e = event as Partial<ActivityEvent>;
+        return {
+          ts: typeof e.ts === "string" ? e.ts : null,
+          type: typeof e.type === "string" ? e.type : "event",
+          text: typeof e.text === "string" ? e.text : "",
+          icon: typeof e.icon === "string" ? e.icon : "",
+        };
+      })
+    : [];
 
   return (
     <div className="space-y-5">
@@ -242,14 +253,14 @@ export function ChannelsTab({ slug, onGo, openChat }: Props) {
 
           <section className="border-[3px] border-ink rounded-lg bg-card p-4" style={{ boxShadow: "var(--pop-sm)" }}>
             <h3 className="font-bold text-sm mb-2">🗞 Actividad — todos los canales</h3>
-            {(activityQ.data?.activity || []).slice(0, 7).map((e, i) => (
+            {activity.slice(0, 7).map((e, i) => (
               <p key={`${e.ts}-${i}`} className="text-[12px] py-1 border-b border-dashed border-ink/15 last:border-0 flex gap-2">
                 <span className="text-muted-foreground whitespace-nowrap min-w-[64px]">{relTime(e.ts)}</span>
                 {/* activity text can carry <b> markers from the engine state endpoint */}
                 <span className="flex-1" dangerouslySetInnerHTML={{ __html: `${e.icon || ""} ${e.text}` }} />
               </p>
             ))}
-            {(activityQ.data?.activity || []).length === 0 && (
+            {activity.length === 0 && (
               <p className="text-xs text-muted-foreground italic">Sin actividad reciente.</p>
             )}
           </section>

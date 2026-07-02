@@ -63,17 +63,22 @@ export function PublishingAccountInfo({
     return null;
   }
 
-  const info = data.info;
-  const connected = info.networks.filter((n) => n.connected);
+  const info = data.info && typeof data.info === "object" ? data.info : null;
+  if (!info) return null;
+
+  const brandId = typeof info.brand_id === "string" ? info.brand_id : "";
+  const brandName = typeof info.brand_name === "string" ? info.brand_name : null;
+  const networks = Array.isArray(info.networks) ? info.networks : [];
+  const connected = networks.filter((n) => n && typeof n === "object" && n.connected);
 
   if (variant === "compact") {
     return (
       <span
         className="inline-flex items-center gap-1.5 font-mono text-[11px] px-2 py-0.5 rounded-sc-pill border whitespace-nowrap"
         style={{ background: "var(--sc-paper-3)", borderColor: "var(--sc-ink)", color: "var(--sc-ink)" }}
-        title={`Brand: ${info.brand_name || info.brand_id}\nRedes: ${connected.map((n) => n.network).join(", ") || "ninguna"}`}
+        title={`Brand: ${brandName || brandId}\nRedes: ${connected.map((n) => n.network).join(", ") || "ninguna"}`}
       >
-        📡 {info.brand_name || `Blog ${info.brand_id}`}
+        📡 {brandName || `Blog ${brandId}`}
         {connected.length > 0 && (
           <span style={{ color: "var(--sc-fg-muted)" }}>
             · {connected.map((n) => NETWORK_VISUAL[n.network]?.emoji || "·").join("")}
@@ -97,7 +102,7 @@ export function PublishingAccountInfo({
           className="font-heading text-xl font-bold leading-tight"
           style={{ color: "var(--sc-ink)" }}
         >
-          {info.brand_name || `Blog ${info.brand_id}`}
+          {brandName || `Blog ${brandId}`}
         </span>
       </div>
       {connected.length === 0 ? (

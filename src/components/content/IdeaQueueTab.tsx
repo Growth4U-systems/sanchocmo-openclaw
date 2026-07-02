@@ -36,6 +36,92 @@ interface Idea {
   author?: string;
 }
 
+type AnyRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): AnyRecord {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as AnyRecord)
+    : {};
+}
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function normalizeIdea(raw: unknown, index: number): Idea {
+  const idea = asRecord(raw);
+  const signal = asRecord(idea.signal);
+  const id = asString(idea.id, asString(idea.content_task_id, `idea-${index}`));
+  return {
+    id,
+    ...(typeof idea.title === "string" ? { title: idea.title } : {}),
+    pillar_id: asString(idea.pillar_id),
+    content_type: asString(idea.content_type),
+    target_channel: asString(idea.target_channel, "linkedin"),
+    signal: {
+      summary: asString(signal.summary),
+      source: asString(signal.source),
+      ...(typeof signal.url === "string" ? { url: signal.url } : {}),
+      date: asString(signal.date, asString(idea.created_at)),
+    },
+    angle_draft: asString(idea.angle_draft),
+    pov_confidence: asNumber(idea.pov_confidence),
+    created_at: asString(idea.created_at, new Date(0).toISOString()),
+    status: asString(idea.status, "New"),
+    ...(typeof idea.approved_at === "string" ? { approved_at: idea.approved_at } : {}),
+    drafts: idea.drafts,
+    ...(typeof idea.project_task_id === "string" ? { project_task_id: idea.project_task_id } : {}),
+    ...(typeof idea.project_id === "string" ? { project_id: idea.project_id } : {}),
+    ...(typeof idea.content_task_id === "string" ? { content_task_id: idea.content_task_id } : {}),
+    content_task_channels: asStringArray(idea.content_task_channels),
+    ...(typeof idea.dispatch_date === "string" ? { dispatch_date: idea.dispatch_date } : {}),
+    ...(typeof idea.dispatch_slot === "string" ? { dispatch_slot: idea.dispatch_slot } : {}),
+    source_signals: asStringArray(idea.source_signals),
+    ...(typeof idea.author === "string" ? { author: idea.author } : {}),
+  };
+}
+
+function normalizeCounts(raw: unknown): IdeasCounts | null {
+  const counts = asRecord(raw);
+  if (Object.keys(counts).length === 0) return null;
+  return {
+    total: asNumber(counts.total),
+    New: asNumber(counts.New),
+    Approved: asNumber(counts.Approved),
+    Draft: asNumber(counts.Draft),
+    "Pending Media": asNumber(counts["Pending Media"]),
+    Ready: asNumber(counts.Ready),
+    Published: asNumber(counts.Published),
+    Discarded: asNumber(counts.Discarded),
+    Deferred: asNumber(counts.Deferred),
+  };
+}
+
+function normalizePersonas(raw: unknown): ChannelLoopState["personas"] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((persona) => {
+    if (!persona || typeof persona !== "object") return [];
+    const p = persona as Partial<ChannelLoopState["personas"][number]>;
+    if (typeof p.id !== "string" || typeof p.name !== "string") return [];
+    return [{
+      ...persona,
+      id: p.id,
+      name: p.name,
+      pillarsSlant: Array.isArray(p.pillarsSlant)
+        ? p.pillarsSlant.filter((item): item is string => typeof item === "string")
+        : [],
+    }];
+  });
+}
+
 // Strip "Nuestro POV:" / "POV:" / etc prefix from angle text. The UI/Slack
 // already shows a "✍️ Nuestro ángulo" header, so the prefix is redundant.
 function stripPovPrefix(text: string): string {
@@ -206,10 +292,12 @@ export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus, in
   }, [slug]);
 
   // Flat list of all declared personas across channels (for the filter dropdown).
-  const allPersonas = channelsForPersonas.flatMap((c) => (Array.isArray(c.personas) ? c.personas : []));
+  const allPersonas = channelsForPersonas.flatMap((c) => normalizePersonas(c.personas));
   // Personas available for a given idea's target channel (for assignment).
-  const personasForChannel = (channel: string): ChannelLoopState["personas"] =>
-    channelsForPersonas.find((c) => c.channel === channel)?.personas?.filter(Boolean) || [];
+  const personasForChannel = (channel: string): ChannelLoopState["personas"] => {
+    const loop = channelsForPersonas.find((c) => c.channel === channel);
+    return normalizePersonas(loop?.personas);
+  };
   const [filterPillar, setFilterPillar] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<"all" | "today" | "week" | "month">("all");
   const [filterSource, setFilterSource] = useState<"all" | "news" | "paa" | "keywords" | "competitors" | "other">("all");
@@ -229,9 +317,9 @@ export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus, in
     fetch(`/api/content-engine/content-tasks-pool?slug=${slug}${statusParam}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.ok) {
-          setIdeas(data.contentTasks || []);
-          setCounts(data.counts || null);
+        if (data?.ok) {
+          setIdeas(Array.isArray(data.contentTasks) ? data.contentTasks.map(normalizeIdea) : []);
+          setCounts(normalizeCounts(data.counts));
         }
       })
       .catch(() => {})
@@ -243,9 +331,27 @@ export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus, in
       fetch(`/api/content-engine/configs?slug=${slug}`).then(r => r.json()).catch(() => ({})),
       fetch(`/api/content-engine/crons?slug=${slug}`).then(r => r.json()).catch(() => ({ crons: [] })),
     ]);
-    const newsPrompts = (cfg.configs?.newsPrompts || []) as { pillarId: string; pillarName: string }[];
-    setPillars(newsPrompts.map((p) => ({ id: p.pillarId, name: p.pillarName })));
-    const dispatch = (cr.crons || []).find((c: CronLite) => c.baseName === "Editorial Dispatch") || null;
+    const newsPromptsRaw = asRecord(asRecord(cfg).configs).newsPrompts;
+    const newsPrompts = Array.isArray(newsPromptsRaw) ? newsPromptsRaw : [];
+    setPillars(newsPrompts.flatMap((item) => {
+      const p = asRecord(item);
+      const id = asString(p.pillarId);
+      if (!id) return [];
+      return [{ id, name: asString(p.pillarName, id) }];
+    }));
+    const cronsRaw = asRecord(cr).crons;
+    const crons: unknown[] = Array.isArray(cronsRaw) ? cronsRaw : [];
+    const dispatch = crons
+      .map((item: unknown): CronLite => {
+        const c = asRecord(item);
+        const last = asRecord(c.lastExecution);
+        return {
+          id: asString(c.id),
+          baseName: asString(c.baseName),
+          ...(typeof last.date === "string" && typeof last.status === "string" ? { lastExecution: { date: last.date, status: last.status } } : {}),
+        };
+      })
+      .find((c: CronLite) => c.id && c.baseName === "Editorial Dispatch") || null;
     setDispatchCron(dispatch);
   }, [slug]);
 

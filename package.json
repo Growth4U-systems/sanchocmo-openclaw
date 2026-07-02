@@ -14,6 +14,7 @@
     "test:calc": "tsx --test src/lib/calc-creator-core/__tests__/*.test.mts",
     "test:partnerships": "tsx --test src/lib/partnerships/__tests__/*.test.mts",
     "test:metrics": "tsx --tsconfig tsconfig.tsx-tests.json --test src/components/dashboard/metrics-v2/__tests__/*.test.tsx",
+    "test:content": "tsx --tsconfig tsconfig.tsx-tests.json --test src/components/content/__tests__/*.test.tsx",
     "migrate:media": "tsx scripts/migrate-legacy-media.mts",
     "check:drafts": "tsx scripts/check-legacy-media.mts",
     "audit:docs": "tsx scripts/audit-doc-paths.mts --check",
