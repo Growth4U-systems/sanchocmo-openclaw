@@ -330,6 +330,22 @@ jobs:
               docker compose $COMPOSE_ARGS logs --no-color --tail=200 sanchocmo || true
               exit 1
             fi
+            echo "▶ Ensuring Rocinante workspace links for agent skills…"
+            docker compose $COMPOSE_ARGS exec -T sanchocmo sh -lc '
+              set -e
+              mkdir -p /root/.openclaw/workspace-rocinante
+              if [ -e /root/workspace-rocinante ] && [ ! -L /root/workspace-rocinante ]; then
+                echo "WARNING: /root/workspace-rocinante exists and is not a symlink; leaving it untouched"
+              else
+                ln -sfn /root/.openclaw/workspace-rocinante /root/workspace-rocinante
+              fi
+              if [ -e /root/.openclaw/workspace-rocinante/skills ] && [ ! -L /root/.openclaw/workspace-rocinante/skills ]; then
+                echo "WARNING: workspace-rocinante/skills exists and is not a symlink; leaving it untouched"
+              else
+                ln -sfn ../skills /root/.openclaw/workspace-rocinante/skills
+              fi
+              test -f /root/workspace-rocinante/skills/discovery-search-runner/SKILL.md
+            '
             docker compose $COMPOSE_ARGS ps
           EOF
 

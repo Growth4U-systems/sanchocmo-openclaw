@@ -21,7 +21,8 @@ import {
  *     Crea la búsqueda (campaign type=Partnerships en Yalc + tarea Outreach
  *     madre) y, POR DEFECTO, despacha a Rocinante para ejecutar el discovery
  *     REAL (scraping). `plan` = JSON de discovery-plan-builder. `run`:
- *       - ausente / "agent" → despacha el runner a Rocinante (discovery real).
+ *       - ausente / "live"  → ejecuta server-side con ScrapeCreators.
+ *       - "agent"           → despacha el runner a Rocinante (fallback manual).
  *       - "fixtures" (o true) → runner inline con los 9 creators fake (verifier).
  *       - "none" / false      → solo crea, runner queued (sin despachar).
  *     → { ok, search, campaignId, taskId[, runner] }
@@ -77,9 +78,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    // Por defecto (ausente o run:"agent"): despacha a Rocinante para el discovery
-    // REAL. Best-effort — si el gateway está caído, la búsqueda sigue queued
-    // (recuperable a mano); NO fallamos la creación.
+    if (!body.run || body.run === "live") {
+      const run = await runDiscoverySearch({ slug, searchId: created.search.id });
+      return res.status(201).json({
+        ok: true,
+        search: run.search,
+        campaignId: created.campaignId,
+        taskId: created.taskId,
+        runner: { mode: "live", stats: run.stats },
+      });
+    }
+
+    // run:"agent": despacha a Rocinante para el discovery REAL. Best-effort —
+    // si el gateway está caído, la búsqueda queda en error recuperable desde UI.
     const dispatch = await triggerDiscoveryRunner({
       slug,
       searchId: created.search.id,
