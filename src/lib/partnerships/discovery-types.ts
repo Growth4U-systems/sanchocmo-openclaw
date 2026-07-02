@@ -91,12 +91,25 @@ export interface DiscoveryLeadPayload {
   email?: string;
   qualityScore: number;
   qualityComponents: LeadQualityComponents;
+  scoreProvenance?: Record<string, unknown>;
+  provenance?: Record<string, unknown>;
   source: LeadSource;
   tags: string[];
 }
 
 export type DiscoveryRunnerStatus = "queued" | "running" | "done" | "error";
 export type DiscoveryRunnerMode = "fixtures" | "live";
+export type DiscoveryRunnerErrorCode =
+  | "provider_timeout"
+  | "provider_no_credits"
+  | "provider_auth_failed"
+  | "provider_unavailable"
+  | "provider_missing_credentials"
+  | "unsupported_network"
+  | "no_candidates"
+  | "yalc_unavailable"
+  | "job_interrupted"
+  | "runner_failed";
 
 export interface DiscoveryRunnerStats {
   /** Candidatos crudos recibidos (tras normalizar). */
@@ -117,9 +130,13 @@ export interface DiscoveryRunnerStats {
 export interface DiscoveryRunnerState {
   status: DiscoveryRunnerStatus;
   mode: DiscoveryRunnerMode | null;
+  jobId?: string | null;
+  attempts?: number;
   queuedAt: string;
   startedAt: string | null;
   finishedAt: string | null;
+  retryable?: boolean;
+  errorCode?: DiscoveryRunnerErrorCode | null;
   error: string | null;
   stats: DiscoveryRunnerStats | null;
 }

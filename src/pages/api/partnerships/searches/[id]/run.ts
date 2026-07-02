@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import { yalcErrorResponse } from "@/lib/yalc/client";
-import { getSearch, runDiscoverySearch } from "@/lib/partnerships";
+import { enqueueDiscoverySearchRun, getSearch, runDiscoverySearch } from "@/lib/partnerships";
 
 /**
  * POST /api/partnerships/searches/{id}/run — ejecutar el runner (SAN-79).
@@ -17,7 +17,11 @@ import { getSearch, runDiscoverySearch } from "@/lib/partnerships";
  *  - Fixtures: `{ slug, fixtures: true }` usa los 9 creators fake del mockup
  *    sin llamar a ScrapeCreators (tests + verificador).
  *
- *   → { ok, search, stats, leads, dropped }
+ * Si el body trae `{ async: true }` sin `candidates`, encola el runner
+ * server-side y responde 202 inmediatamente. Con `candidates` se conserva el
+ * camino inline para el agente que ya scrapeó y solo necesita ingestar.
+ *
+ *   → { ok, search, stats, leads, dropped } | 202 { ok, search, runner }
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -33,8 +37,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(404).json({ error: `Discovery search not found: ${searchId}` });
   }
 
-  const body = (req.body || {}) as { candidates?: unknown; fixtures?: unknown };
+  const body = (req.body || {}) as { async?: unknown; candidates?: unknown; fixtures?: unknown };
   try {
+    if (body.async === true && body.candidates === undefined) {
+      const search = enqueueDiscoverySearchRun({
+        slug,
+        searchId,
+        fixtures: body.fixtures === true,
+      });
+      return res.status(202).json({
+        ok: true,
+        search,
+        runner: {
+          async: true,
+          jobId: search.runner.jobId,
+          status: search.runner.status,
+          mode: search.runner.mode,
+        },
+      });
+    }
+
     const result = await runDiscoverySearch({
       slug,
       searchId,

@@ -524,16 +524,45 @@ export function PartnershipsView() {
   }
 
   const retryDiscoveryMutation = useMutation({
-    mutationFn: (search: DiscoverySearchRecord) =>
-      fetchJson<{
+    mutationFn: (search: DiscoverySearchRecord) => {
+      const liveServerSide = search.runner.mode === "live" || !search.runner.mode;
+      if (liveServerSide) {
+        return fetchJson<{
+          ok: boolean;
+          runner?: {
+            async?: boolean;
+            dispatched?: boolean;
+            jobId?: string | null;
+            status?: string;
+            error?: string | null;
+          };
+        }>(
+          `/api/partnerships/searches/${encodeURIComponent(search.id)}/run?slug=${encodeURIComponent(slug)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ async: true }),
+          },
+        );
+      }
+      return fetchJson<{
         ok: boolean;
-        runner?: { dispatched?: boolean; error?: string | null };
+        runner?: {
+          async?: boolean;
+          dispatched?: boolean;
+          jobId?: string | null;
+          status?: string;
+          error?: string | null;
+        };
       }>(
         `/api/partnerships/searches/${encodeURIComponent(search.id)}/dispatch?slug=${encodeURIComponent(slug)}`,
         { method: "POST" },
-      ),
+      );
+    },
     onSuccess: (payload) => {
-      if (payload.runner?.dispatched) {
+      if (payload.runner?.async) {
+        showToast("✓ Discovery encolado");
+      } else if (payload.runner?.dispatched) {
         showToast("✓ Discovery reenviado a Rocinante");
       } else {
         showToast(

@@ -25,7 +25,7 @@ let lib: PartnershipsMod;
 
 // ── Fake Yalc (entrada hybrid con umbral 40, espejo de resolveEntryStatus) ──
 let yalc: http.Server;
-const yalcCalls: Array<{ method: string; url: string; body: unknown }> = [];
+const yalcCalls: Array<{ method: string; url: string; body: unknown; headers: http.IncomingHttpHeaders }> = [];
 
 function startFakeYalc(): Promise<string> {
   yalc = http.createServer((req, res) => {
@@ -34,7 +34,7 @@ function startFakeYalc(): Promise<string> {
     req.on("end", () => {
       const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString("utf-8")) : null;
       const url = req.url || "";
-      yalcCalls.push({ method: req.method || "", url, body });
+      yalcCalls.push({ method: req.method || "", url, body, headers: req.headers });
 
       res.setHeader("Content-Type", "application/json");
       if (req.method === "POST" && url.startsWith("/api/campaigns?")) {
@@ -74,6 +74,17 @@ function startFakeYalc(): Promise<string> {
       resolve(`http://127.0.0.1:${port}`);
     });
   });
+}
+
+async function waitFor<T>(read: () => T, predicate: (value: T) => boolean, ms = 3000): Promise<T> {
+  const deadline = Date.now() + ms;
+  let value = read();
+  while (Date.now() < deadline) {
+    value = read();
+    if (predicate(value)) return value;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  return value;
 }
 
 before(async () => {
@@ -340,6 +351,59 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
   const listed = lib.listSearches("monzo");
   assert.equal(listed.length, 1);
   assert.equal(listed[0].id, created.search.id);
+});
+
+test("enqueueDiscoverySearchRun devuelve rápido y completa el runner en background", async () => {
+  const created = await lib.createDiscoverySearch({
+    slug: "monzo",
+    plan: { title: "Async fixtures", sectors: ["fintech"], networks: ["instagram"], tiers: ["micro"] },
+  });
+
+  const queued = lib.enqueueDiscoverySearchRun({
+    slug: "monzo",
+    searchId: created.search.id,
+    fixtures: true,
+  });
+  assert.equal(queued.runner.jobId, `partnerships.discovery:${created.search.id}`);
+  assert.match(queued.runner.status, /queued|running/);
+
+  const done = await waitFor(
+    () => lib.getSearch("monzo", created.search.id),
+    (record) => record?.runner.status === "done",
+  );
+  assert.equal(done?.runner.status, "done");
+  assert.equal(done?.runner.mode, "fixtures");
+  assert.equal(done?.runner.attempts, 1);
+  assert.equal(done?.runner.retryable, false);
+  assert.ok(done?.runner.stats?.inserted);
+
+  const assignCall = yalcCalls
+    .filter((call) => call.url.includes("/leads/assign"))
+    .at(-1);
+  assert.ok(assignCall, "POST /leads/assign llamado desde el job async");
+  assert.equal(assignCall!.headers["idempotency-key"], `partnerships.discovery:${created.search.id}`);
+  const leads = (assignCall!.body as { leads: Array<Record<string, unknown>> }).leads;
+  assert.equal(
+    (leads[0].provenance as Record<string, unknown>).jobId,
+    `partnerships.discovery:${created.search.id}`,
+  );
+  assert.equal(
+    (leads[0].scoreProvenance as Record<string, unknown>).provider,
+    "calc-creator-core",
+  );
+});
+
+test("resumeQueuedDiscoverySearches no ejecuta búsquedas queued sin job server-side", async () => {
+  const created = await lib.createDiscoverySearch({
+    slug: "monzo",
+    plan: { title: "Solo crear", sectors: ["fintech"], networks: ["instagram"] },
+  });
+
+  const resumed = lib.resumeQueuedDiscoverySearches("monzo");
+  assert.ok(!resumed.includes(created.search.id));
+  const record = lib.getSearch("monzo", created.search.id)!;
+  assert.equal(record.runner.status, "queued");
+  assert.equal(record.runner.jobId, undefined);
 });
 
 test("runDiscoverySearch sin candidatos explica el camino agentic y marca error", async () => {

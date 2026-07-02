@@ -138,6 +138,7 @@ import {
   assignTemplateToSearch,
   createDiscoverySearch,
   creatorReportForSlug,
+  enqueueDiscoverySearchRun,
   getEffectiveModelConfig,
   ModelConfigValidationError,
   parseDiscoveryPlan,
@@ -3334,13 +3335,23 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             dropped: run.dropped,
           });
         }
+        const search = enqueueDiscoverySearchRun({
+          slug: clientSlug,
+          searchId: created.search.id,
+        });
         return jsonResult({
           ok: true,
-          search: created.search,
+          search,
           campaignId: created.campaignId,
           taskId: created.taskId,
+          runner: {
+            async: true,
+            mode: "live",
+            jobId: search.runner.jobId,
+            status: search.runner.status,
+          },
           message:
-            "Search queued. The discovery-search-runner agent picks it up (live scraping), or POST /api/partnerships/searches/{id}/run with fixtures=true.",
+            "Search queued. Sancho is running server-side discovery with ScrapeCreators in the background. Poll GET /api/partnerships/searches for status.",
         });
       }),
   );

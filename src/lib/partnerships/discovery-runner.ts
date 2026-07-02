@@ -108,10 +108,32 @@ export async function runDiscoverySearch(options: RunDiscoveryOptions): Promise<
     const qualified = qualifyCandidates(candidates, { searchId, config: effective.config });
 
     // Inserción en Yalc — resolveEntryStatus decide Sourced/Disqualified/drop.
+    const jobId = search.runner.jobId || `partnerships.discovery:${searchId}`;
     const response = await yalcFetch<YalcAssignResponse>(
       resolveYalcConfig(slug),
       `/api/campaigns/${encodeURIComponent(search.campaignId)}/leads/assign`,
-      { method: "POST", body: { leads: qualified.map((item) => item.lead) } },
+      {
+        method: "POST",
+        headers: { "Idempotency-Key": jobId },
+        body: {
+          leads: qualified.map((item) => ({
+            ...item.lead,
+            provenance: {
+              provider: "scrapecreators",
+              operation: "creator_discovery",
+              searchId,
+              jobId,
+              source: "sancho_partnerships_discovery",
+            },
+            scoreProvenance: {
+              provider: "calc-creator-core",
+              operation: "creator_quality_score",
+              searchId,
+              jobId,
+            },
+          })),
+        },
+      },
     );
 
     const stats = buildStats(qualified, invalid, response);
