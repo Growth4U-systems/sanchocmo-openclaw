@@ -67,6 +67,30 @@ const SPECIAL_DOCS: { key: string; label: string; alwaysOn?: boolean }[] = [
 
 const RAIL_STORAGE_KEY = "mc.editor.railCollapsed";
 
+type SafeContentDoc = {
+  path: string;
+  channel?: string;
+  name?: string;
+};
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function normalizeContentDocs(value: unknown): SafeContentDoc[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const doc = item as Record<string, unknown>;
+    if (typeof doc.path !== "string" || !doc.path) return [];
+    return [{
+      path: doc.path,
+      ...(typeof doc.channel === "string" ? { channel: doc.channel } : {}),
+      ...(typeof doc.name === "string" ? { name: doc.name } : {}),
+    }];
+  });
+}
+
 function ownerInitials(owner?: string | null): string | undefined {
   if (!owner) return undefined;
   const parts = owner.trim().split(/\s+/).filter(Boolean);
@@ -320,6 +344,8 @@ export default function DraftFullScreenPage() {
     updateContentTaskStatus.isPending ||
     approveDraft.isPending ||
     approveMedia.isPending;
+  const targetChannels = useMemo(() => asStringArray(ct?.target_channels), [ct?.target_channels]);
+  const contentDocs = useMemo(() => normalizeContentDocs(ct?.documents), [ct?.documents]);
 
   // ── Rail data ────────────────────────────────────────────────────────────
   // The proposal/research/clarify docs are *all* attached to the ContentTask
@@ -334,7 +360,7 @@ export default function DraftFullScreenPage() {
   //     answer them — that's what "done" means for clarify.
   const railDocs: RailDoc[] = useMemo(() => {
     const have = new Set(
-      (ct?.documents || [])
+      contentDocs
         .filter((d) => d.channel && SPECIAL_DOCS.some((s) => s.key === d.channel))
         .map((d) => d.channel as string),
     );
@@ -363,17 +389,16 @@ export default function DraftFullScreenPage() {
       label: d.label,
       done: d.alwaysOn ? false : !!doneByKey[d.key],
     }));
-  }, [ct, researchDoc, clarifyDoc, proposalDoc]);
+  }, [contentDocs, researchDoc, clarifyDoc, proposalDoc]);
 
   const railOutputs: RailOutput[] = useMemo(() => {
-    const channels = ct?.target_channels ?? [];
-    return channels.map((c) => ({
+    return targetChannels.map((c) => ({
       id: c,
       label: c,
       active: c === channel,
       live: ct?.channel_phases?.[c] === "drafting",
     }));
-  }, [ct, channel]);
+  }, [ct, targetChannels, channel]);
 
   // ── Derived ──────────────────────────────────────────────────────────────
   const isSpecialChannel = SPECIAL_DOCS.some((s) => s.key === channel);
@@ -390,14 +415,13 @@ export default function DraftFullScreenPage() {
   const placeholderBody = draft ? isPlaceholderBody(draft.body) : false;
 
   const attachments = useMemo(() => {
-    if (!ct?.documents) return [];
-    return ct.documents.filter((doc) => !doc.path.includes("content/drafts/"));
-  }, [ct]);
+    return contentDocs.filter((doc) => !doc.path.includes("content/drafts/"));
+  }, [contentDocs]);
 
   // ── Channel editor modal handlers ────────────────────────────────────────
   function openChannelEditor() {
     if (!ct) return;
-    setDraftChannels([...ct.target_channels]);
+    setDraftChannels([...targetChannels]);
     setChannelEditorOpen(true);
   }
   function toggleDraftChannel(c: string) {
@@ -598,7 +622,7 @@ export default function DraftFullScreenPage() {
                     slug={slug}
                     ideaId={ideaId}
                     contentTaskId={ct.id}
-                    targetChannels={ct.target_channels}
+                    targetChannels={targetChannels}
                     initialChannel={(router.query.from as string) || undefined}
                   />
                 ) : (

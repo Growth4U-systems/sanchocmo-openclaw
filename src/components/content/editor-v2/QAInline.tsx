@@ -47,7 +47,11 @@ export function QAInline({
   // a `research` document is NOT a signal that Sancho has actually done any
   // research. Signal now: body no longer contains the placeholder line and
   // has substantive content.
-  const hasResearchDoc = (ct.documents || []).some((d) => d.channel === "research");
+  const documents = Array.isArray(ct.documents) ? ct.documents : [];
+  const hasResearchDoc = documents.some((d) => {
+    if (!d || typeof d !== "object") return false;
+    return (d as { channel?: unknown }).channel === "research";
+  });
   const isStub =
     !researchBody ||
     typeof researchBody !== "string" ||

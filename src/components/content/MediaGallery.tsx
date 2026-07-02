@@ -67,7 +67,11 @@ export function MediaGallery({
   const remove = useRemoveMedia();
   const sendMessage = useSendMessage();
 
-  const chatThreadId = `${slug}:content:${contentTaskId.toLowerCase()}`;
+  const safeContentTaskId =
+    typeof contentTaskId === "string" && contentTaskId.trim()
+      ? contentTaskId
+      : ideaId || "unknown";
+  const chatThreadId = `${slug}:content:${safeContentTaskId.toLowerCase()}`;
 
   // Anti-double-fire (SAN-238 P4): the quick-action was firing TWICE — a rapid
   // double-click (or a re-render) could call `mutate` again before

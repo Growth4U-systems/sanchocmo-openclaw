@@ -104,6 +104,209 @@ interface DispatchChannelConfig {
   configured_by?: string;
 }
 
+type AnyRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): AnyRecord {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as AnyRecord)
+    : {};
+}
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asBoolean(value: unknown, fallback = false): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function asNumber(value: unknown, fallback = 0): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function normalizeNewsPrompt(value: unknown, index: number): NewsPromptConfig {
+  const item = asRecord(value);
+  const pillarId = asString(item.pillarId, `pillar-${index + 1}`);
+  return {
+    file: asString(item.file),
+    pillarId,
+    pillarName: asString(item.pillarName, pillarId),
+    prompt: asString(item.prompt),
+    sector: asString(item.sector),
+    language: asStringArray(item.language),
+  };
+}
+
+function normalizePaaConfig(value: unknown, index: number): PaaConfig {
+  const item = asRecord(value);
+  const pillarId = asString(item.pillarId, `pillar-${index + 1}`);
+  return {
+    file: asString(item.file),
+    pillarId,
+    pillarName: asString(item.pillarName, pillarId),
+    prompt: asString(item.prompt),
+    language: asStringArray(item.language),
+  };
+}
+
+function normalizeKeywordsConfig(value: unknown, index: number): KeywordsConfig {
+  const item = asRecord(value);
+  const pillarId = asString(item.pillarId, `pillar-${index + 1}`);
+  return {
+    file: asString(item.file),
+    pillarId,
+    pillarName: asString(item.pillarName, pillarId),
+    keywords: asStringArray(item.keywords),
+    target: asString(item.target),
+    language: asStringArray(item.language),
+  };
+}
+
+function normalizeProfile(value: unknown, index = 0): Profile {
+  const item = asRecord(value);
+  const type = item.type === "person" ? "person" : "company";
+  const name = asString(item.name);
+  return {
+    id: asString(item.id, name ? slugify(name) : `profile-${index + 1}`),
+    type,
+    name,
+    ...(typeof item.parent_company_id === "string" ? { parent_company_id: item.parent_company_id } : {}),
+    ...(typeof item.parent_company_name === "string" ? { parent_company_name: item.parent_company_name } : {}),
+    ...(typeof item.role === "string" ? { role: item.role } : {}),
+    ...(typeof item.tier === "string" ? { tier: item.tier } : {}),
+    platforms: asRecord(item.platforms) as Record<string, string>,
+    pillars_relevant: asStringArray(item.pillars_relevant),
+    ...(item.metadata && typeof item.metadata === "object" && !Array.isArray(item.metadata)
+      ? { metadata: item.metadata as Record<string, unknown> }
+      : {}),
+  };
+}
+
+function normalizeCadenceChannel(value: unknown, index = 0): CadenceChannel {
+  const item = asRecord(value);
+  const rawProfiles = Array.isArray(item.profiles) ? item.profiles : [];
+  return {
+    key: asString(item.key, `channel-${index + 1}`),
+    active: asBoolean(item.active),
+    frequency: asString(item.frequency),
+    bestDays: asStringArray(item.bestDays),
+    bestTimes: asStringArray(item.bestTimes),
+    gating: asString(item.gating, "ungated"),
+    contentTypes: asStringArray(item.contentTypes),
+    profiles: rawProfiles.map((profile, profileIndex) => {
+      const p = asRecord(profile);
+      return {
+        ...(typeof p.id === "string" ? { id: p.id } : {}),
+        name: asString(p.name, `Perfil ${profileIndex + 1}`),
+        handle: asString(p.handle),
+        role: asString(p.role),
+        postsPerWeek: asNumber(p.postsPerWeek),
+        ...(typeof p.metricool_profile_id === "string" ? { metricool_profile_id: p.metricool_profile_id } : {}),
+        ...(typeof p.voice_doc === "string" ? { voice_doc: p.voice_doc } : {}),
+        pillars_slant: asStringArray(p.pillars_slant),
+        ...(typeof p.owner === "string" ? { owner: p.owner } : {}),
+        ...(typeof p.primary_kpi === "string" ? { primary_kpi: p.primary_kpi } : {}),
+      };
+    }),
+  };
+}
+
+function normalizeCadence(value: unknown): AllConfigs["cadence"] {
+  const item = asRecord(value);
+  const channels = Array.isArray(item.channels) ? item.channels : [];
+  return {
+    businessModel: asString(item.businessModel),
+    channels: channels.map(normalizeCadenceChannel),
+  };
+}
+
+function normalizeSetupTask(value: unknown): SetupTask | null {
+  const item = asRecord(value);
+  if (!Object.keys(item).length) return null;
+  return {
+    projectId: asString(item.projectId),
+    taskId: asString(item.taskId),
+    taskName: asString(item.taskName, "Setup configs"),
+    ...(typeof item.skill === "string" ? { skill: item.skill } : {}),
+    ...(typeof item.status === "string" ? { status: item.status } : {}),
+    ...(typeof item.deliverableFile === "string" ? { deliverableFile: item.deliverableFile } : {}),
+    ...(typeof item.chatThreadId === "string" ? { chatThreadId: item.chatThreadId } : {}),
+    updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : null,
+  };
+}
+
+function normalizeAllConfigs(value: unknown): AllConfigs | null {
+  const cfg = asRecord(value);
+  if (!Object.keys(cfg).length) return null;
+  const newsPrompts = Array.isArray(cfg.newsPrompts) ? cfg.newsPrompts : [];
+  const paaQueries = Array.isArray(cfg.paaQueries) ? cfg.paaQueries : [];
+  const keywordsSeed = Array.isArray(cfg.keywordsSeed) ? cfg.keywordsSeed : [];
+  const monitoredProfiles = Array.isArray(cfg.monitoredProfiles) ? cfg.monitoredProfiles : [];
+  return {
+    newsPrompts: newsPrompts.map(normalizeNewsPrompt),
+    paaQueries: paaQueries.map(normalizePaaConfig),
+    keywordsSeed: keywordsSeed.map(normalizeKeywordsConfig),
+    monitoredProfiles: monitoredProfiles.map(normalizeProfile),
+    cadence: normalizeCadence(cfg.cadence),
+    setupTask: normalizeSetupTask(cfg.setupTask),
+    povBank: null,
+    ...(cfg.povBankStorage && typeof cfg.povBankStorage === "object" && !Array.isArray(cfg.povBankStorage)
+      ? { povBankStorage: cfg.povBankStorage as AllConfigs["povBankStorage"] }
+      : {}),
+  };
+}
+
+function normalizeCronInfo(value: unknown): CronInfo | null {
+  const item = asRecord(value);
+  const id = asString(item.id);
+  if (!id) return null;
+  const lastExecution = asRecord(item.lastExecution);
+  return {
+    id,
+    baseName: asString(item.baseName),
+    enabled: asBoolean(item.enabled),
+    scheduleHuman: asString(item.scheduleHuman),
+    ...(typeof lastExecution.date === "string" && typeof lastExecution.status === "string"
+      ? { lastExecution: { date: lastExecution.date, status: lastExecution.status } }
+      : {}),
+  };
+}
+
+function normalizeIdeaLite(value: unknown, index: number): IdeaLite {
+  const item = asRecord(value);
+  const signal = asRecord(item.signal);
+  return {
+    id: asString(item.id, `idea-${index + 1}`),
+    pillar_id: asString(item.pillar_id),
+    target_channel: asString(item.target_channel, "linkedin"),
+    status: asString(item.status, "New"),
+    created_at: asString(item.created_at, new Date(0).toISOString()),
+    ...(typeof item.pov_confidence === "number" ? { pov_confidence: item.pov_confidence } : {}),
+    ...(typeof item.angle_draft === "string" ? { angle_draft: item.angle_draft } : {}),
+    signal: {
+      ...(typeof signal.date === "string" ? { date: signal.date } : {}),
+      ...(typeof signal.summary === "string" ? { summary: signal.summary } : {}),
+    },
+  };
+}
+
+function normalizeDispatchChannelConfig(value: unknown): DispatchChannelConfig | null {
+  const item = asRecord(value);
+  const channelId = asString(item.channel_id);
+  if (!channelId) return null;
+  return {
+    transport: item.transport === "discord" ? "discord" : "slack",
+    channel_id: channelId,
+    ...(typeof item.channel_name === "string" ? { channel_name: item.channel_name } : {}),
+    ...(typeof item.configured_at === "string" ? { configured_at: item.configured_at } : {}),
+    ...(typeof item.configured_by === "string" ? { configured_by: item.configured_by } : {}),
+  };
+}
+
 function formatLastRun(iso: string | undefined | null): string | null {
   if (!iso) return null;
   // ISO date strings or YYYY-MM-DD; both parse fine with new Date.
@@ -160,10 +363,12 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
       fetch(`/api/content-engine/ideas?slug=${slug}&status=New`).then(r => r.json()).catch(() => ({ ideas: [] })),
       fetch(`/api/content-engine/dispatch-channel?slug=${slug}`).then(r => r.json()).catch(() => ({ config: null })),
     ]);
-    setConfigs(cfgRes.configs || null);
-    setCrons(cronRes.crons || []);
-    setIdeas(ideasRes.ideas || []);
-    setDispatchChannel(dispatchRes.config || null);
+    setConfigs(normalizeAllConfigs(asRecord(cfgRes).configs));
+    const rawCrons = asRecord(cronRes).crons;
+    setCrons(Array.isArray(rawCrons) ? rawCrons.flatMap((cron) => normalizeCronInfo(cron) ?? []) : []);
+    const rawIdeas = asRecord(ideasRes).ideas;
+    setIdeas(Array.isArray(rawIdeas) ? rawIdeas.map(normalizeIdeaLite) : []);
+    setDispatchChannel(normalizeDispatchChannelConfig(asRecord(dispatchRes).config));
     setLoading(false);
   }, [slug]);
 
@@ -191,7 +396,8 @@ export function InputsTab({ slug, openChat, embedded }: Props) {
 
   const fetchCronsOnly = useCallback(async () => {
     const r = await fetch(`/api/content-engine/crons?slug=${slug}`).then(r => r.json()).catch(() => ({ crons: [] }));
-    setCrons(r.crons || []);
+    const rawCrons = asRecord(r).crons;
+    setCrons(Array.isArray(rawCrons) ? rawCrons.flatMap((cron) => normalizeCronInfo(cron) ?? []) : []);
   }, [slug]);
 
   const runCron = useCallback(async (jobId: string) => {
@@ -780,8 +986,9 @@ function startOfWeek(d: Date): Date {
 function isPublishDay(channel: CadenceChannel, dayKey: string): boolean {
   if (!channel.active) return false;
   // If best_days is empty, treat as "any day"
-  if (!channel.bestDays || channel.bestDays.length === 0) return true;
-  return channel.bestDays.includes(dayKey);
+  const bestDays = asStringArray(channel.bestDays);
+  if (bestDays.length === 0) return true;
+  return bestDays.includes(dayKey);
 }
 
 function EditorialCalendar({
@@ -790,14 +997,17 @@ function EditorialCalendar({
   const today = new Date();
   const todayKey = DAY_KEYS[today.getDay()];
 
-  const channels = cadence.channels.filter((c) => c.active);
+  const channels = (Array.isArray(cadence.channels) ? cadence.channels : [])
+    .map(normalizeCadenceChannel)
+    .filter((c) => c.active);
+  const safeIdeas = Array.isArray(ideas) ? ideas : [];
 
   // Slots for today: each active channel that publishes today
   const todaySlots = channels.filter((c) => isPublishDay(c, todayKey));
 
   // Candidate count per channel (uses target_channel + adapter rule between linkedin/twitter)
   const candidatesFor = (channelKey: string): IdeaLite[] => {
-    return ideas.filter((i) => {
+    return safeIdeas.filter((i) => {
       if (i.target_channel === channelKey) return true;
       if (channelKey === "linkedin" && i.target_channel === "twitter") return true;
       if (channelKey === "twitter" && i.target_channel === "linkedin") return true;
@@ -837,7 +1047,9 @@ function EditorialCalendar({
         ) : (
           todaySlots.map((ch) => {
             const cands = candidatesFor(ch.key);
-            const times = ch.bestTimes.length ? ch.bestTimes.join(" · ") : "horario libre";
+            const bestTimes = asStringArray(ch.bestTimes);
+            const profiles = Array.isArray(ch.profiles) ? ch.profiles : [];
+            const times = bestTimes.length ? bestTimes.join(" · ") : "horario libre";
             return (
               <div key={ch.key} className="bg-white border border-amber-200 rounded-md px-3 py-2 flex items-center gap-2 flex-wrap">
                 <span className="text-base">{CHANNEL_ICONS[ch.key] || "📄"}</span>
@@ -849,9 +1061,9 @@ function EditorialCalendar({
                 )}>
                   {cands.length === 0 ? "Sin candidatas ready" : `${cands.length} candidata${cands.length === 1 ? "" : "s"} ready`}
                 </span>
-                {ch.profiles.length > 0 && (
+                {profiles.length > 0 && (
                   <span className="text-[10px] text-muted-foreground">
-                    👤 {ch.profiles.map((p) => p.name).join(", ")}
+                    👤 {profiles.map((p) => p.name).join(", ")}
                   </span>
                 )}
               </div>
@@ -901,7 +1113,7 @@ function EditorialCalendar({
 
 // ── NEWS PROMPTS FORM ─────────────────────────────────────────
 function NewsPromptsForm({ configs, slug, onSaved }: { configs: NewsPromptConfig[]; slug: string; onSaved: () => void }) {
-  const [data, setData] = useState(configs);
+  const [data, setData] = useState(() => (Array.isArray(configs) ? configs.map(normalizeNewsPrompt) : []));
   const [saving, setSaving] = useState(false);
 
   const updatePrompt = (pi: number, val: string) => {
@@ -937,7 +1149,7 @@ function NewsPromptsForm({ configs, slug, onSaved }: { configs: NewsPromptConfig
           <div className="flex items-center gap-2 mb-2">
             <h3 className="text-xs font-semibold text-[#2C3E50]">{pillar.pillarId}: {pillar.pillarName}</h3>
             {pillar.sector && <span className="text-[9px] bg-muted/40 px-1.5 py-0.5 rounded">{pillar.sector}</span>}
-            {pillar.language.map((l, i) => (
+            {asStringArray(pillar.language).map((l, i) => (
               <span key={i} className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{l}</span>
             ))}
           </div>
@@ -989,7 +1201,7 @@ function MonitoredProfilesForm({
   slug: string;
   onSaved: () => void;
 }) {
-  const [profiles, setProfiles] = useState<Profile[]>(initial);
+  const [profiles, setProfiles] = useState<Profile[]>(() => (Array.isArray(initial) ? initial.map(normalizeProfile) : []));
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<"all" | "company" | "person">("all");
   const [search, setSearch] = useState("");
@@ -1067,7 +1279,7 @@ function MonitoredProfilesForm({
   const visible = profiles
     .map((p, idx) => ({ p, idx }))
     .filter(({ p }) => filter === "all" || p.type === filter)
-    .filter(({ p }) => !search.trim() || p.name.toLowerCase().includes(search.toLowerCase()));
+    .filter(({ p }) => !search.trim() || asString(p.name).toLowerCase().includes(search.toLowerCase()));
 
   const counts = {
     all: profiles.length,
@@ -1327,7 +1539,7 @@ function ProfileCard({
 
 // ── KEYWORDS FORM ─────────────────────────────────────────────
 function KeywordsForm({ configs, slug, onSaved }: { configs: KeywordsConfig[]; slug: string; onSaved: () => void }) {
-  const [data, setData] = useState(configs);
+  const [data, setData] = useState(() => (Array.isArray(configs) ? configs.map(normalizeKeywordsConfig) : []));
   const [saving, setSaving] = useState(false);
 
   const updateKw = (pi: number, ki: number, val: string) => {
@@ -1338,12 +1550,12 @@ function KeywordsForm({ configs, slug, onSaved }: { configs: KeywordsConfig[]; s
   };
   const addKw = (pi: number) => {
     const next = [...data];
-    next[pi] = { ...next[pi], keywords: [...next[pi].keywords, ""] };
+    next[pi] = { ...next[pi], keywords: [...asStringArray(next[pi].keywords), ""] };
     setData(next);
   };
   const removeKw = (pi: number, ki: number) => {
     const next = [...data];
-    next[pi] = { ...next[pi], keywords: next[pi].keywords.filter((_, i) => i !== ki) };
+    next[pi] = { ...next[pi], keywords: asStringArray(next[pi].keywords).filter((_, i) => i !== ki) };
     setData(next);
   };
   const save = async () => {
@@ -1369,7 +1581,7 @@ function KeywordsForm({ configs, slug, onSaved }: { configs: KeywordsConfig[]; s
         <div key={pillar.pillarId} className="bg-white border border-[#E8E2D9] rounded-lg p-4" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
           <h3 className="text-xs font-semibold text-[#2C3E50] mb-2">{pillar.pillarId}: {pillar.pillarName}</h3>
           <div className="space-y-1.5">
-            {pillar.keywords.map((kw, ki) => (
+            {asStringArray(pillar.keywords).map((kw, ki) => (
               <div key={ki} className="flex items-center gap-1.5">
                 <input type="text" value={kw} onChange={(e) => updateKw(pi, ki, e.target.value)}
                   className="flex-1 text-[12px] border border-[#E8E2D9] rounded px-2 py-1.5 focus:outline-none focus:border-rust" placeholder="Keyword..." />
@@ -1386,7 +1598,7 @@ function KeywordsForm({ configs, slug, onSaved }: { configs: KeywordsConfig[]; s
 
 // ── PAA FORM ──────────────────────────────────────────────────
 function PaaForm({ configs, slug, onSaved }: { configs: PaaConfig[]; slug: string; onSaved: () => void }) {
-  const [data, setData] = useState(configs);
+  const [data, setData] = useState(() => (Array.isArray(configs) ? configs.map(normalizePaaConfig) : []));
   const [saving, setSaving] = useState(false);
 
   const updatePrompt = (pi: number, val: string) => {
@@ -1423,7 +1635,7 @@ function PaaForm({ configs, slug, onSaved }: { configs: PaaConfig[]; slug: strin
         <div key={pillar.pillarId} className="bg-white border border-[#E8E2D9] rounded-lg p-4" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
           <div className="flex items-center gap-2 mb-2">
             <h3 className="text-xs font-semibold text-[#2C3E50]">{pillar.pillarId}: {pillar.pillarName}</h3>
-            {pillar.language.map((l, i) => (
+            {asStringArray(pillar.language).map((l, i) => (
               <span key={i} className="text-[9px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">{l}</span>
             ))}
           </div>
@@ -1464,8 +1676,9 @@ function CadenceForm({
   slug: string;
   onSaved: () => void;
 }) {
-  const [businessModel, setBusinessModel] = useState(cadence.businessModel);
-  const [channels, setChannels] = useState<CadenceChannel[]>(cadence.channels);
+  const safeCadence = normalizeCadence(cadence);
+  const [businessModel, setBusinessModel] = useState(safeCadence.businessModel);
+  const [channels, setChannels] = useState<CadenceChannel[]>(safeCadence.channels);
   const [saving, setSaving] = useState(false);
 
   const updateChannel = (idx: number, patch: Partial<CadenceChannel>) => {
@@ -1478,9 +1691,10 @@ function CadenceForm({
 
   const toggleDay = (idx: number, dayKey: string) => {
     const ch = channels[idx];
-    const has = ch.bestDays.includes(dayKey);
+    const bestDays = asStringArray(ch?.bestDays);
+    const has = bestDays.includes(dayKey);
     updateChannel(idx, {
-      bestDays: has ? ch.bestDays.filter((d) => d !== dayKey) : [...ch.bestDays, dayKey],
+      bestDays: has ? bestDays.filter((d) => d !== dayKey) : [...bestDays, dayKey],
     });
   };
 
@@ -1497,7 +1711,7 @@ function CadenceForm({
   const updateProfile = (idx: number, pi: number, patch: Partial<CadenceChannel["profiles"][number]>) => {
     setChannels((prev) => {
       const next = [...prev];
-      const profiles = [...next[idx].profiles];
+      const profiles = Array.isArray(next[idx].profiles) ? [...next[idx].profiles] : [];
       profiles[pi] = { ...profiles[pi], ...patch };
       next[idx] = { ...next[idx], profiles };
       return next;
@@ -1509,7 +1723,7 @@ function CadenceForm({
       const next = [...prev];
       next[idx] = {
         ...next[idx],
-        profiles: [...next[idx].profiles, { name: "", handle: "", role: "", postsPerWeek: 0 }],
+        profiles: [...(Array.isArray(next[idx].profiles) ? next[idx].profiles : []), { name: "", handle: "", role: "", postsPerWeek: 0 }],
       };
       return next;
     });
@@ -1520,7 +1734,7 @@ function CadenceForm({
       const next = [...prev];
       next[idx] = {
         ...next[idx],
-        profiles: next[idx].profiles.filter((_, i) => i !== pi),
+        profiles: (Array.isArray(next[idx].profiles) ? next[idx].profiles : []).filter((_, i) => i !== pi),
       };
       return next;
     });
@@ -1571,7 +1785,12 @@ function CadenceForm({
       </div>
 
       <div className="space-y-3">
-        {channels.map((ch, idx) => (
+        {channels.map((ch, idx) => {
+          const bestDays = asStringArray(ch.bestDays);
+          const bestTimes = asStringArray(ch.bestTimes);
+          const contentTypes = asStringArray(ch.contentTypes);
+          const profiles = Array.isArray(ch.profiles) ? ch.profiles : [];
+          return (
           <div
             key={ch.key}
             className="bg-white border border-[#E8E2D9] rounded-lg p-3 space-y-2"
@@ -1622,7 +1841,7 @@ function CadenceForm({
               <span className="text-[10px] text-muted-foreground w-24">Mejores días:</span>
               <div className="flex gap-0.5">
                 {DAYS_OF_WEEK.map((d) => {
-                  const active = ch.bestDays.includes(d.key);
+                  const active = bestDays.includes(d.key);
                   return (
                     <button
                       key={d.key}
@@ -1648,7 +1867,7 @@ function CadenceForm({
               <span className="text-[10px] text-muted-foreground w-24">Horarios:</span>
               <input
                 type="text"
-                value={ch.bestTimes.join(", ")}
+                value={bestTimes.join(", ")}
                 onChange={(e) => updateTimesString(idx, e.target.value)}
                 placeholder="08:30, 12:00, 17:30"
                 className="flex-1 text-[11px] border border-[#E8E2D9] rounded px-2 py-1 focus:outline-none focus:border-rust"
@@ -1660,7 +1879,7 @@ function CadenceForm({
               <span className="text-[10px] text-muted-foreground w-24">Tipos:</span>
               <input
                 type="text"
-                value={ch.contentTypes.join(", ")}
+                value={contentTypes.join(", ")}
                 onChange={(e) => updateContentTypesString(idx, e.target.value)}
                 placeholder="hot-take, listicle, case-study"
                 className="flex-1 text-[11px] border border-[#E8E2D9] rounded px-2 py-1 focus:outline-none focus:border-rust"
@@ -1670,7 +1889,7 @@ function CadenceForm({
             {/* Profiles */}
             <div className="space-y-1.5 pt-1 border-t border-[#E8E2D9]">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground">Perfiles ({ch.profiles.length})</span>
+                <span className="text-[10px] text-muted-foreground">Perfiles ({profiles.length})</span>
                 <button
                   type="button"
                   onClick={() => addProfile(idx)}
@@ -1679,7 +1898,7 @@ function CadenceForm({
                   + Añadir perfil
                 </button>
               </div>
-              {ch.profiles.map((p, pi) => (
+              {profiles.map((p, pi) => (
                 <div key={pi} className="flex items-center gap-1.5">
                   <input
                     type="text"
@@ -1721,7 +1940,8 @@ function CadenceForm({
               ))}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
