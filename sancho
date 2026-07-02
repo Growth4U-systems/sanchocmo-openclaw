@@ -105,6 +105,10 @@ cmd_install() {
 
   detect_compose
   build_compose_args
+  # Reasigná puertos de host ocupados antes de levantar (nunca fallar con
+  # "port is already allocated"). Después de build_compose_args para saber si
+  # el overlay OD está activo (y chequear su 7456).
+  resolve_host_ports
 
   if [ "$DO_UP" != "1" ]; then
     echo ""
@@ -135,7 +139,7 @@ cmd_install() {
 # up — levanta el stack con los overlays habilitados.
 # ---------------------------------------------------------------------------
 cmd_up() {
-  require_env; detect_compose; build_compose_args
+  require_env; detect_compose; build_compose_args; resolve_host_ports
   bold "Levantando ($COMPOSE $COMPOSE_ARGS up -d)"
   # shellcheck disable=SC2086
   $COMPOSE $COMPOSE_ARGS up -d
