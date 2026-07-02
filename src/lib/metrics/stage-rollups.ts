@@ -110,10 +110,12 @@ export const DEFAULT_FUNNEL_STAGE_DEFINITIONS: MetricFunnelStageDefinition[] = [
   }),
   stage("partnerships.signups", "leads", "Leads", 1, "partnerships", "yalc", "signups", {
     channel: "partnerships",
+    aggregation: "latest",
     qualityOverride: "partial",
   }),
   stage("partnerships.kyc", "qualified", "Cualificados", 2, "partnerships", "yalc", "kyc", {
     channel: "partnerships",
+    aggregation: "latest",
     qualityOverride: "partial",
   }),
   stage("crm.meetings.ghl", "meetings", "Reuniones", 3, "pipeline", "ghl", "appointments", {
@@ -133,6 +135,7 @@ export const DEFAULT_FUNNEL_STAGE_DEFINITIONS: MetricFunnelStageDefinition[] = [
   stage("partnerships.first_tx", "customers", "Clientes", 5, "partnerships", "yalc", "firstTx", {
     metricAliases: ["firstTx", "first_tx", "firstTransaction"],
     channel: "partnerships",
+    aggregation: "latest",
     qualityOverride: "partial",
   }),
 ];
