@@ -62,6 +62,17 @@ const BY_SOURCE_METRIC: Record<string, AggStrategy> = {
   "ghl:totalContacts": "latest",
   "ghl:totalOpportunities": "latest",
   "ghl:pipelineValue": "latest",
+  // YALC currently emits the normalized Partnerships report as a rolling program
+  // snapshot. Use latest so repeated daily pulls do not sum overlapping windows.
+  "yalc:clicks": "latest",
+  "yalc:signups": "latest",
+  "yalc:kyc": "latest",
+  "yalc:firstTx": "latest",
+  "yalc:invested": "latest",
+  "yalc:totalCost": "latest",
+  "yalc:value": "latest",
+  "yalc:cpaReal": "latest",
+  "yalc:roi": "latest",
 };
 
 /**

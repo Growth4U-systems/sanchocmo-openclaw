@@ -107,8 +107,25 @@ export async function collect(config, env, dateRange) {
     // `posthog.activation_events` resolve — the resolvers only match no-dimension
     // metrics (a dimensioned-only metric would render "—" despite collected data).
     metrics.push({ name: 'activation_events', value: activation, date: from });
+    const pageviews = Number(metrics.find((metric) => metric.name === 'pageviews' && !metric.dimensions)?.value) || 0;
+    metrics.push({ name: 'activation_rate', value: pageviews > 0 ? (activation / pageviews) * 100 : 0, date: from });
   } catch (err) {
     console.warn(`  ⚠️  PostHog activation events error: ${err.message}`);
+  }
+
+  const northStarEvent = config.northStarEvent || config.north_star_event;
+  if (northStarEvent) {
+    try {
+      const rows = await runQuery(
+        host,
+        projectId,
+        headers,
+        `SELECT count() FROM events WHERE event = '${sqlStr(northStarEvent)}' AND ${where}`,
+      );
+      metrics.push({ name: 'north_star_weekly', value: Number(rows?.[0]?.[0]) || 0, date: from });
+    } catch (err) {
+      console.warn(`  ⚠️  PostHog north star event "${northStarEvent}" error: ${err.message}`);
+    }
   }
 
   // --- Funnel step dropoff (per-step counts, dimensioned by step) ---

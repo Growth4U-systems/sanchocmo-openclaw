@@ -77,11 +77,31 @@ if (!existsSync(integrationsPath)) {
 
 const integrations = JSON.parse(readFileSync(integrationsPath, 'utf-8'));
 
+function loadClientsData() {
+  if (!existsSync(clientsPath)) return {};
+  try {
+    return JSON.parse(readFileSync(clientsPath, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+function clientConfigForSlug(slug) {
+  const data = loadClientsData();
+  if (data && typeof data === 'object') {
+    if (data[slug] && typeof data[slug] === 'object') return data[slug];
+    const clients = Array.isArray(data.clients) ? data.clients : [];
+    const match = clients.find((client) => client?.slug === slug);
+    if (match) return match;
+  }
+  return {};
+}
+
 function getAdminToken() {
   if (process.env.MC_ADMIN_TOKEN) return process.env.MC_ADMIN_TOKEN;
   if (!existsSync(clientsPath)) return '';
   try {
-    const data = JSON.parse(readFileSync(clientsPath, 'utf-8'));
+    const data = loadClientsData();
     return typeof data.adminToken === 'string' ? data.adminToken : '';
   } catch {
     return '';
@@ -134,14 +154,48 @@ for (const [key, val] of Object.entries(rawEnv)) {
   }
 }
 
+const clientConfig = clientConfigForSlug(slug);
+
+function hasAnyEnv(...keys) {
+  return keys.some((key) => typeof env[key] === 'string' && env[key].trim() !== '');
+}
+
 // --- Available adapters ---
-const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'google-ads', 'ghl', 'instantly', 'sheets', 'posthog'];
+const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'google-ads', 'ghl', 'instantly', 'sheets', 'posthog', 'pagespeed', 'yalc'];
 
 // --- Determine which adapters to run ---
 const ds = integrations.dataSources || integrations;
+
+function sourceEntryFor(adapterName) {
+  const explicit = ds[adapterName] || ds[adapterName.replace('-', '_')];
+  if (explicit) return explicit;
+
+  if (adapterName === 'pagespeed') {
+    const url =
+      clientConfig.url ||
+      clientConfig.website ||
+      clientConfig.siteUrl ||
+      env.PAGESPEED_URL ||
+      env.CLIENT_URL ||
+      env.SITE_URL ||
+      env.WEBSITE_URL;
+    if (url || hasAnyEnv('PAGESPEED_API_KEY')) {
+      return { status: 'connected', config: { url } };
+    }
+  }
+
+  if (adapterName === 'yalc') {
+    if (hasAnyEnv('YALC_BASE_URL', 'YALC_API_TOKEN')) {
+      return { status: 'connected', config: {} };
+    }
+  }
+
+  return null;
+}
+
 let toRun = collectAll
   ? ADAPTERS.filter((a) => {
-      const entry = ds[a] || ds[a.replace('-', '_')];
+      const entry = sourceEntryFor(a);
       return entry && entry.status && entry.status !== 'not_configured';
     })
   : sourceFilter && ADAPTERS.includes(sourceFilter)
@@ -230,8 +284,14 @@ async function runCollection() {
   const dataSources = integrations.dataSources || integrations;
 
   for (const adapterName of toRun) {
-    const entry = dataSources[adapterName] || dataSources[adapterName.replace('-', '_')] || {};
-    const config = { ...(entry.config || entry || {}), _slug: slug };
+    const entry = sourceEntryFor(adapterName) || dataSources[adapterName] || dataSources[adapterName.replace('-', '_')] || {};
+    const config = {
+      ...(entry.config || entry || {}),
+      _adminToken: adminToken,
+      _client: clientConfig,
+      _mcBaseUrl: MC_BASE,
+      _slug: slug,
+    };
     const status = entry.status || 'not_configured';
     console.log(`\n📊 Collecting: ${adapterName}...`);
 

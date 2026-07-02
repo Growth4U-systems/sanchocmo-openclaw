@@ -587,6 +587,7 @@ export interface SourceHealth {
   overdue: boolean;
   lastStatus: string | null;
   lastError: string | null;
+  lastRowCount: number | null;
   lastDeletedCount: number | null;
   /** Known instrumentation problem for this source (e.g. GHL inflated events) — see KNOWN_DIRTY. */
   knownDirty: boolean;
@@ -669,6 +670,7 @@ export async function getMetricsHealth(slug: string): Promise<MetricsHealthResul
       overdue,
       lastStatus: run?.status ?? null,
       lastError: run?.error ?? null,
+      lastRowCount: run?.rowCount ?? null,
       lastDeletedCount: run?.deletedCount ?? null,
       ...getKnownDirty(schedule.source),
     };
