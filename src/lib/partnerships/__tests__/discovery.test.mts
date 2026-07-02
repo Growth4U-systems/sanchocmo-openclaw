@@ -150,6 +150,12 @@ test("buildCampaignPayload produce una campaign Partnerships con el modo del pla
   assert.match(payload.targetSegment, /mid\/macro/);
 });
 
+test("buildCampaignPayload acepta type B2B (SAN-349) y mantiene Partnerships por defecto", () => {
+  const plan = lib.parseDiscoveryPlan({ title: "Agencias SaaS", sectors: ["agencias"], networks: ["linkedin"] });
+  assert.equal(lib.buildCampaignPayload(plan).type, "Partnerships");
+  assert.equal(lib.buildCampaignPayload(plan, "B2B").type, "B2B");
+});
+
 // ── Normalizador de candidatos ───────────────────────────────────────────────
 
 test("normalizeCandidates tolera alias, añade @, deduplica y cuenta inválidos", () => {
