@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.16.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.14...v0.16.0) (2026-07-02)
+
+
+### Features
+
+* **outreach:** focus B2B personalization workspace ([db0ea03](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/db0ea03c4ae2824857723c5d50fe8ff45571fedb))
+* **outreach:** refine B2B ICP and inbox UI ([4e0b69f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4e0b69f19cfe415034b59810e8921485b4a05d85))
+* **outreach:** SAN-379 add B2B ICP and sequence controls ([3c16074](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3c160742464a3c9341547faf13db933907a01a7d))
+* **outreach:** SAN-379 align B2B dashboard with Partnerships UI ([3d3d661](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3d3d661cb289e6d29749f17f46683ba0a0d3fe75))
+* **outreach:** SAN-379 clarify B2B flow and inbox ([38a83f6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/38a83f66022f4f033b4dac166c96c5705a2495c3))
+
+
+### Bug Fixes
+
+* **agents:** codex/gpt-5.5 fallback for anthropic session agents ([6b39c63](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6b39c63a3e0d0958a2290d0b991b8dd2b6d58edc))
+* **chat:** allow file/image uploads over 1MB (nginx body limit + R2 env) ([#1016](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1016)) ([2e8adad](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2e8adad5d542d6a6da7d191919b76ff6bdbed8d0))
+* **outreach:** remove B2B flow strip buttons ([8c788b8](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8c788b8f283dfa12c6d74cdadc7b2dd72121830d))
+* **outreach:** separate B2B and Partnerships campaigns ([16a2dec](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/16a2decf6701cc1775e539460146e79dcf2b9cce))
+* **partnerships:** SAN-328 harden creator discovery runner ([#1041](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1041)) ([404ea17](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/404ea171d634da63d0428d3d0ea5fc74d8bf4bd7))
+* **partnerships:** SAN-328 persist rocinante workspace links ([#1045](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1045)) ([ab0ff88](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ab0ff8854439a8e207959df3d15710fba624bd6d))
+* **SAN-315:** route support escalations to Cervantes ([#1029](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1029)) ([6157137](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6157137b933cf1fd1353bb3b3d77890b33784780))
+* **SAN-379:** add campaign kind and B2B campaign view ([da05ae2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/da05ae27126772350cac089cc959f8b4f0f4ba33))
+* **SAN-379:** align discovery empty-candidate test ([ba49ba4](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ba49ba4d2c3916e1076843e28d76a02a09b23009))
+* **SAN-379:** B2B and Partnerships campaign flows ([cd3ed37](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/cd3ed3741b21d3859961093aba4f79deb70eedd5))
+* **SAN-379:** simplify B2B campaign actions ([57c4904](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/57c49049fbfe68da7cecb3a4c6ca6dc1208b77b4))
+* **SAN-379:** simplify B2B campaign selector ([7505642](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7505642558ae4db4bd254b59ebbecacc400d06a6))
+* **SAN-383:** test Firecrawl connections ([#1025](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1025)) ([293cde3](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/293cde322ea9496d966af139c1fdfb6c73232d0d))
+* **SAN-80:** send approved Partnerships UI gates live ([#1035](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1035)) ([8c109cf](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8c109cf024d65647b4a8c1c0fa30609fc37c033b))
+* **SAN-80:** show partner DM preview before approval ([58dd34d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/58dd34d785f00ff5c4a882b539b89918c5915f47))
+
 ## [0.15.14](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.15.13...v0.15.14) (2026-06-30)
 
 
