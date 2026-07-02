@@ -150,7 +150,17 @@ export function ChannelsTab({ slug, onGo, openChat }: Props) {
     return <p className="text-muted-foreground text-sm py-8 text-center">Cargando canales…</p>;
   }
 
-  const channels = data.channels;
+  const channels = Array.isArray(data.channels) ? data.channels : [];
+  const repurposing = Array.isArray(data.repurposing)
+    ? data.repurposing.map((entry) => ({
+        fromChannel: typeof entry?.fromChannel === "string" ? entry.fromChannel : "",
+        fromTitle: typeof entry?.fromTitle === "string" ? entry.fromTitle : "",
+        toChannel: typeof entry?.toChannel === "string" ? entry.toChannel : "",
+        toTitle: typeof entry?.toTitle === "string" ? entry.toTitle : "",
+        toStatus: typeof entry?.toStatus === "string" ? entry.toStatus : "",
+        toId: typeof entry?.toId === "string" ? entry.toId : "",
+      }))
+    : [];
   // Founder-led networks collapse into ONE unified "Founder-Led Content"
   // section — keyed by network (not by "has voices") so the section + its
   // "+ Añadir voz" CTA show even before the first voice exists. Inactive
@@ -222,14 +232,14 @@ export function ChannelsTab({ slug, onGo, openChat }: Props) {
         <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr] items-start">
           <section className="border-[3px] border-ink rounded-lg bg-muted/30 p-4" style={{ boxShadow: "var(--pop-sm)" }}>
             <h3 className="font-bold text-sm mb-2">♻️ Repurposing reciente — una pieza, varios canales</h3>
-            {data.repurposing.length === 0 ? (
+            {repurposing.length === 0 ? (
               <p className="text-xs text-muted-foreground italic">
                 Aún no hay piezas derivadas. En una pieza publicada (tab Ideas → Abrir draft) usa
                 &ldquo;♻️ Convertir a…&rdquo; para que content-atomizer la adapte a otro canal.
               </p>
             ) : (
               <ul className="space-y-1.5">
-                {data.repurposing.map((r) => (
+                {repurposing.map((r) => (
                   <li key={r.toId} className="flex items-center gap-2 flex-wrap text-[13px] border-b border-dashed border-ink/15 pb-1.5 last:border-0">
                     <span className="font-semibold border-2 border-ink rounded px-2 py-0.5 bg-card">
                       {CHANNEL_EMOJI[r.fromChannel] || "📄"} {r.fromTitle.slice(0, 42)}{r.fromTitle.length > 42 ? "…" : ""}

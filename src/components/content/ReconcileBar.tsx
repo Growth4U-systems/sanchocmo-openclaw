@@ -32,13 +32,17 @@ function hasCompletedRun(
   return Boolean(state && !("never_ran" in state));
 }
 
+function arrayCount(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0;
+}
+
 export function ReconcileBar({ slug }: { slug: string }) {
   const { data: state } = useReconcileState(slug);
   const reconcileNow = useReconcileNow();
   const [summary, setSummary] = useState<string | null>(null);
 
   const lastRun = hasCompletedRun(state) ? state : null;
-  const desyncCount = lastRun?.desyncs.length ?? 0;
+  const desyncCount = arrayCount(lastRun?.desyncs);
   const stale =
     lastRun && Date.now() - Date.parse(lastRun.ran_at) > 60 * 60_000;
 
@@ -49,7 +53,7 @@ export function ReconcileBar({ slug }: { slug: string }) {
       {
         onSuccess: (r) =>
           setSummary(
-            `✓ ${r.scanned} revisadas · ${r.promoted.length} promovidas · ${r.desyncs.length} desyncs`,
+            `✓ ${typeof r.scanned === "number" ? r.scanned : 0} revisadas · ${arrayCount(r.promoted)} promovidas · ${arrayCount(r.desyncs)} desyncs`,
           ),
         onError: (e) => setSummary(`⚠ ${(e as Error).message}`),
       },

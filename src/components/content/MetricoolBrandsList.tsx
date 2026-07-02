@@ -2,10 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+interface BrandNetwork {
+  network: string;
+  handle?: string | null;
+  connected: boolean;
+}
+
 interface Brand {
   id: string;
   name: string | null;
-  networks: Array<{ network: string; handle?: string | null; connected: boolean }>;
+  networks: BrandNetwork[];
 }
 
 const NET_EMOJI: Record<string, string> = {
@@ -16,6 +22,41 @@ const NET_EMOJI: Record<string, string> = {
   tiktok: "🎵",
   youtube: "📺",
 };
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function normalizeNetwork(value: unknown): BrandNetwork | null {
+  const network = asRecord(value);
+  if (typeof network.network !== "string") return null;
+  return {
+    network: network.network,
+    handle: typeof network.handle === "string" ? network.handle : null,
+    connected: network.connected === true,
+  };
+}
+
+function normalizeBrand(value: unknown): Brand | null {
+  const brand = asRecord(value);
+  const id =
+    typeof brand.id === "string"
+      ? brand.id
+      : typeof brand.blogId === "string" || typeof brand.blogId === "number"
+        ? String(brand.blogId)
+        : null;
+  if (!id) return null;
+
+  return {
+    id,
+    name: typeof brand.name === "string" ? brand.name : null,
+    networks: Array.isArray(brand.networks)
+      ? brand.networks.flatMap((network) => normalizeNetwork(network) ?? [])
+      : [],
+  };
+}
 
 /**
  * SAN-162 — lists the Metricool brands the user can publish from, each with its
@@ -38,7 +79,9 @@ export function MetricoolBrandsList({ slug }: { slug: string }) {
     retry: false,
   });
 
-  const brands = data && "brands" in data && Array.isArray(data.brands) ? data.brands : [];
+  const brands = data && "brands" in data && Array.isArray(data.brands)
+    ? data.brands.flatMap((brand) => normalizeBrand(brand) ?? [])
+    : [];
   if (brands.length === 0) return null;
 
   return (
@@ -49,7 +92,7 @@ export function MetricoolBrandsList({ slug }: { slug: string }) {
       </summary>
       <ul className="mt-1.5 space-y-1">
         {brands.map((b) => {
-          const nets = Array.isArray(b.networks) ? b.networks.filter((n) => n.connected) : [];
+          const nets = b.networks.filter((n) => n.connected);
           return (
             <li
               key={b.id}

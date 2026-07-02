@@ -59,10 +59,13 @@ interface Props {
 }
 
 export function FounderLedSection({ slug, channels, onGo, onAddVoice, onOpenStrategy, onOpenSetup }: Props) {
+  const safeChannels = Array.isArray(channels) ? channels : [];
   // One voice per (person, network): flatten personas across the founder-led channels.
-  const voices = channels.flatMap((ch) => ch.personas.map((persona) => ({ persona, channel: ch.channel })));
-  const networks = channels.length;
-  const pools = channels.filter((ch) => ch.unassignedPool > 0);
+  const voices = safeChannels.flatMap((ch) =>
+    (Array.isArray(ch.personas) ? ch.personas : []).map((persona) => ({ persona, channel: ch.channel })),
+  );
+  const networks = safeChannels.length;
+  const pools = safeChannels.filter((ch) => (typeof ch.unassignedPool === "number" ? ch.unassignedPool : 0) > 0);
 
   return (
     <section className="border-[3px] border-ink rounded-lg bg-card overflow-hidden" style={{ boxShadow: "var(--pop-md)" }}>
@@ -87,7 +90,7 @@ export function FounderLedSection({ slug, channels, onGo, onAddVoice, onOpenStra
       {/* Per-network strategy — collapsing the cards must not hide each network's
           strategy doc (or its missing-strategy warning). One chip per network. */}
       <div className="flex flex-wrap gap-2 px-4 pt-3">
-        {channels.map((ch) =>
+        {safeChannels.map((ch) =>
           ch.strategyDocExists && ch.strategyDoc ? (
             <button
               key={ch.channel}
@@ -136,7 +139,7 @@ export function FounderLedSection({ slug, channels, onGo, onAddVoice, onOpenStra
                 {p.handle ? ` · ${p.handle}` : ""}
               </span>
               <span className="text-[12px] text-ink ml-auto whitespace-nowrap">
-                💡 {st.ideation.newCount} · ✍️ {st.creation.draftingCount + st.creation.readyCount} · 🚀 {st.published.thisMonth}
+                💡 {st?.ideation?.newCount ?? 0} · ✍️ {(st?.creation?.draftingCount ?? 0) + (st?.creation?.readyCount ?? 0)} · 🚀 {st?.published?.thisMonth ?? 0}
               </span>
               {p.nextAction && (
                 <span className="text-[11px] font-semibold border-2 border-ink rounded px-1.5 bg-yellow-400/30 text-ink w-full sm:w-auto">
