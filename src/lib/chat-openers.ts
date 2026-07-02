@@ -202,6 +202,32 @@ export function buildYalcThread(slug: string, prompt?: string): ThreadConfig {
   return cfg;
 }
 
+export function buildB2BCampaignThread(slug: string): ThreadConfig {
+  const cfg = instantiateNamespace("yalc", { slug });
+  cfg.threadId = `${slug}:b2b-campaign-new-${Date.now()}`;
+  cfg.threadName = "Nueva campaña B2B";
+  cfg.threadState = "create";
+  cfg.initialMessage = undefined;
+  cfg.quickActions = [
+    {
+      label: "Crear campaña B2B",
+      prompt:
+        "Quiero crear una nueva campaña B2B de cold email. Ayúdame a definir ICP, oferta, audiencia, criterios positivos/negativos, secuencia y próximos pasos.",
+    },
+    {
+      label: "Definir ICP",
+      prompt:
+        "Quiero definir el ICP para una campaña B2B: roles, industrias, geografía, tamaño de empresa, señales de intención y exclusiones.",
+    },
+    {
+      label: "Generar secuencia",
+      prompt:
+        "Quiero generar la secuencia de emails de una campaña B2B con email inicial y follow-ups, usando el contexto de Growth4U.",
+    },
+  ];
+  return cfg;
+}
+
 /**
  * Build a fresh "Nueva tarea" thread — a blank chat with Sancho (manager),
  * ready for the user to describe a new task. No initialMessage → nothing is
@@ -256,6 +282,24 @@ export function buildDiscoverySearchThread(
   // useThreadList's exact-id dedup misses and paints a phantom row (SAN-193).
   const cfg = instantiateNamespace("discovery-search-new", { slug });
   cfg.threadId = `${slug}:discovery-new-${Date.now()}`;
+  cfg.threadName = "Nueva campaña Partnerships";
+  cfg.quickActions = [
+    {
+      label: "Crear campaña creator",
+      prompt:
+        "Quiero crear una nueva campaña de Partnerships/creators. Ayúdame a definir target de creators, redes, tiers, criterios positivos/negativos, brief y secuencia de contacto.",
+    },
+    {
+      label: "Definir audiencia",
+      prompt:
+        "Quiero definir la audiencia de una campaña creator: nichos, plataformas, países, tamaños de audiencia, señales de calidad y exclusiones.",
+    },
+    {
+      label: "Crear brief",
+      prompt:
+        "Quiero crear el brief y la secuencia de contacto para una campaña de Partnerships/creators.",
+    },
+  ];
   return cfg;
 }
 

@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 // chat-openers + skill-resolver are client-safe (no fs) → load directly.
 const {
   buildYalcThread,
+  buildB2BCampaignThread,
   buildDiscoverySearchThread,
   buildOutreachTemplateThread,
   buildMediaAssetThread,
@@ -26,6 +27,7 @@ test("founder-led-setup is owned by dulcinea", () => {
 // level). For each builder, assert agent === resolveAgentForSkill(skill).
 const CASES: Array<{ name: string; cfg: { skill: string; agent?: string } }> = [
   { name: "yalc", cfg: buildYalcThread(SLUG) },
+  { name: "b2b-campaign", cfg: buildB2BCampaignThread(SLUG) },
   { name: "discovery", cfg: buildDiscoverySearchThread(SLUG) },
   { name: "outreach-template", cfg: buildOutreachTemplateThread(SLUG, { id: "seq-1", name: "Seq" }) },
   { name: "media-asset", cfg: buildMediaAssetThread(SLUG, "brand-book/x/logo.png", "Logo", "logo") },
@@ -72,14 +74,52 @@ for (const { name, cfg } of [
   });
 }
 
-test("discovery new opens a blank Rocinante thread with suggested actions", () => {
+test("discovery new opens a blank Partnerships campaign thread with suggested actions", () => {
   const cfg = buildDiscoverySearchThread(SLUG);
-  assert.equal(cfg.threadName, "🐴 Rocinante");
+  assert.equal(cfg.threadName, "Nueva campaña Partnerships");
   assert.equal(cfg.agent, "rocinante");
   assert.equal(cfg.initialMessage, undefined);
   assert.deepEqual(cfg.quickActions, [
-    { label: "Nueva campaña", prompt: "Quiero crear una nueva campaña de outreach" },
-    { label: "Modificar campaña", prompt: "Quiero modificar una campaña existente" },
-    { label: "Archivar campaña", prompt: "Quiero archivar una campaña" },
+    {
+      label: "Crear campaña creator",
+      prompt:
+        "Quiero crear una nueva campaña de Partnerships/creators. Ayúdame a definir target de creators, redes, tiers, criterios positivos/negativos, brief y secuencia de contacto.",
+    },
+    {
+      label: "Definir audiencia",
+      prompt:
+        "Quiero definir la audiencia de una campaña creator: nichos, plataformas, países, tamaños de audiencia, señales de calidad y exclusiones.",
+    },
+    {
+      label: "Crear brief",
+      prompt:
+        "Quiero crear el brief y la secuencia de contacto para una campaña de Partnerships/creators.",
+    },
+  ]);
+});
+
+test("B2B campaign opens a blank B2B campaign thread with suggested actions", () => {
+  const cfg = buildB2BCampaignThread(SLUG);
+  assert.equal(cfg.threadName, "Nueva campaña B2B");
+  assert.equal(cfg.agent, "rocinante");
+  assert.equal(cfg.threadState, "create");
+  assert.equal(cfg.initialMessage, undefined);
+  assert.match(cfg.threadId, new RegExp(`^${SLUG}:b2b-campaign-new-\\d+$`));
+  assert.deepEqual(cfg.quickActions, [
+    {
+      label: "Crear campaña B2B",
+      prompt:
+        "Quiero crear una nueva campaña B2B de cold email. Ayúdame a definir ICP, oferta, audiencia, criterios positivos/negativos, secuencia y próximos pasos.",
+    },
+    {
+      label: "Definir ICP",
+      prompt:
+        "Quiero definir el ICP para una campaña B2B: roles, industrias, geografía, tamaño de empresa, señales de intención y exclusiones.",
+    },
+    {
+      label: "Generar secuencia",
+      prompt:
+        "Quiero generar la secuencia de emails de una campaña B2B con email inicial y follow-ups, usando el contexto de Growth4U.",
+    },
   ]);
 });

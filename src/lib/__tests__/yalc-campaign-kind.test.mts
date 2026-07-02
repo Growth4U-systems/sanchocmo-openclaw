@@ -54,3 +54,19 @@ test("normalizeYalcLeadPayload exposes campaign kind on leads", () => {
   assert.equal(leads[0].campaignKind, "b2b");
   assert.equal(leads[1].campaignKind, "creator");
 });
+
+test("legacy Apollo campaign names resolve as B2B", () => {
+  const payload = normalizeYalcLeadPayload(
+    {
+      leads: [
+        { id: "l1", campaignTitle: "Smoke B2B ICP Apollo" },
+        { id: "l2", campaignId: "apollo-fintech-cfos" },
+      ],
+    },
+    "unknown",
+  );
+  const leads = payload.leads as Array<{ campaignKind: string }>;
+
+  assert.equal(leads[0].campaignKind, "b2b");
+  assert.equal(leads[1].campaignKind, "b2b");
+});

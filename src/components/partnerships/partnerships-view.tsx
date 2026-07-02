@@ -109,6 +109,15 @@ function queryValue(value: string | string[] | undefined): string {
   return (Array.isArray(value) ? value[0] : value) || "";
 }
 
+function uniqueLeads(leads: PartnershipLead[]): PartnershipLead[] {
+  const seen = new Set<string>();
+  return leads.filter((lead) => {
+    if (seen.has(lead.id)) return false;
+    seen.add(lead.id);
+    return true;
+  });
+}
+
 export function PartnershipsView() {
   const slug = useSlugSync();
   const router = useRouter();
@@ -240,7 +249,7 @@ export function PartnershipsView() {
     [discardedLeadsQuery.data],
   );
   const allLeads = useMemo(
-    () => [...activeLeads, ...discardedLeads],
+    () => uniqueLeads([...activeLeads, ...discardedLeads]),
     [activeLeads, discardedLeads],
   );
 
@@ -544,6 +553,60 @@ export function PartnershipsView() {
     },
   });
 
+  const campaignUpdateAction = useMutation({
+    mutationFn: ({
+      campaignId,
+      title,
+    }: {
+      campaignId: string;
+      title: string;
+    }) =>
+      fetchJson<PartnershipCampaign>(
+        `/api/yalc/campaigns/${encodeURIComponent(campaignId)}?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, expectedKind: "creator" }),
+        },
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["yalc", slug, "partnerships", "campaigns"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["partnerships", slug, "searches"],
+      });
+      showToast("Campaña renombrada");
+    },
+    onError: (error) =>
+      showToast(
+        error instanceof Error ? error.message : "No se pudo renombrar la campaña",
+        "warn",
+      ),
+  });
+
+  const campaignDeleteAction = useMutation({
+    mutationFn: ({ campaignId }: { campaignId: string }) =>
+      fetchJson(
+        `/api/yalc/campaigns/${encodeURIComponent(campaignId)}?slug=${encodeURIComponent(slug)}&expectedKind=creator`,
+        { method: "DELETE" },
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["yalc", slug, "partnerships"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["partnerships", slug, "searches"],
+      });
+      showToast("Campaña borrada");
+    },
+    onError: (error) =>
+      showToast(
+        error instanceof Error ? error.message : "No se pudo borrar la campaña",
+        "warn",
+      ),
+  });
+
   function openDiscoveryChat(campaign?: PartnershipCampaign) {
     if (!slug) return;
     // SAN-328: desde la tarjeta de una búsqueda existente, retoma el hilo donde
@@ -635,7 +698,7 @@ export function PartnershipsView() {
                 className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
                 data-testid="crear-busqueda"
               >
-                + Nueva búsqueda
+                Generar nueva campaña
               </button>
             )}
             <div className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -717,6 +780,18 @@ export function PartnershipsView() {
                 onCreateTemplate={() => pushQuery({ tab: "plantillas" })}
                 onRetrySearch={(search) => retryDiscoveryMutation.mutate(search)}
                 retryingSearchId={retryDiscoveryMutation.variables?.id ?? null}
+                onRenameCampaign={(campaign, title) =>
+                  campaignUpdateAction.mutate({
+                    campaignId: campaign.id,
+                    title,
+                  })
+                }
+                onDeleteCampaign={(campaign) =>
+                  campaignDeleteAction.mutate({ campaignId: campaign.id })
+                }
+                campaignManagementBusy={
+                  campaignUpdateAction.isPending || campaignDeleteAction.isPending
+                }
               />
             )}
 
