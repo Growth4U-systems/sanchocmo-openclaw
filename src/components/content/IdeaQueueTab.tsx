@@ -122,6 +122,17 @@ function normalizePersonas(raw: unknown): ChannelLoopState["personas"] {
   });
 }
 
+function normalizeChannelLoop(raw: unknown): ChannelLoopState | null {
+  const loop = asRecord(raw);
+  const channel = asString(loop.channel);
+  if (!channel) return null;
+  return {
+    ...(loop as Partial<ChannelLoopState>),
+    channel,
+    personas: normalizePersonas(loop.personas),
+  } as ChannelLoopState;
+}
+
 // Strip "Nuestro POV:" / "POV:" / etc prefix from angle text. The UI/Slack
 // already shows a "✍️ Nuestro ángulo" header, so the prefix is redundant.
 function stripPovPrefix(text: string): string {
@@ -287,7 +298,14 @@ export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus, in
     if (!slug) return;
     fetch(`/api/content-engine/channel-loops?slug=${slug}`)
       .then((r) => r.json())
-      .then((d) => setChannelsForPersonas(Array.isArray(d.channels) ? d.channels : []))
+      .then((d) => {
+        const rawChannels = asRecord(d).channels;
+        setChannelsForPersonas(
+          Array.isArray(rawChannels)
+            ? rawChannels.flatMap((item) => normalizeChannelLoop(item) ?? [])
+            : [],
+        );
+      })
       .catch(() => {});
   }, [slug]);
 
