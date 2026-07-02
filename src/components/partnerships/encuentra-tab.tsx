@@ -27,7 +27,17 @@ import type { TemplateSummary } from "@/lib/partnerships/templates";
 
 type SearchState = "running" | "done" | "draft" | "paused";
 
-function searchState(campaign: PartnershipCampaign): SearchState {
+function searchState(
+  campaign: PartnershipCampaign,
+  search?: DiscoverySearchRecord,
+): SearchState {
+  const runner = search?.runner;
+  if (runner?.status === "done") return "done";
+  if (runner?.status === "running" || (runner?.status === "queued" && runner.jobId)) {
+    return "running";
+  }
+  if (runner?.status === "error") return "paused";
+
   const status = (campaign.status || "").toLowerCase();
   if (status === "draft") return "draft";
   if (status === "paused") return "paused";
@@ -173,9 +183,16 @@ export function EncuentraTab({
     null,
   );
   const [titleDraft, setTitleDraft] = useState("");
+  const searchByCampaignId = new Map(
+    searches.map((search) => [search.campaignId, search]),
+  );
   const ordered = campaigns
     .slice()
-    .sort((a, b) => STATE_ORDER[searchState(a)] - STATE_ORDER[searchState(b)]);
+    .sort(
+      (a, b) =>
+        STATE_ORDER[searchState(a, searchByCampaignId.get(a.id))] -
+        STATE_ORDER[searchState(b, searchByCampaignId.get(b.id))],
+    );
 
   function startRename(campaign: PartnershipCampaign) {
     setEditingCampaignId(campaign.id);
@@ -249,11 +266,9 @@ export function EncuentraTab({
       ) : (
         <div className="space-y-4">
           {ordered.map((campaign) => {
-            const state = searchState(campaign);
+            const search = searchByCampaignId.get(campaign.id);
+            const state = searchState(campaign, search);
             const meta = STATE_META[state];
-            const search = searches.find(
-              (item) => item.campaignId === campaign.id,
-            );
             const notice = runnerNotice(search);
             const campaignLeads = leads.filter(
               (lead) => lead.campaignId === campaign.id,
