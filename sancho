@@ -5,7 +5,10 @@
 # Un solo comando para instalar, levantar, bajar, actualizar y operar el stack,
 # sin que el usuario tenga que recordar los `-f docker-compose.*.yml`.
 #
-#   ./sancho install [--od|--yalc|--build|--no-up|--force]
+#   ./sancho run            arranque súper simple: si falta .env corre el wizard
+#                           en modo quick y levanta; si ya está, equivale a `up`.
+#                           Abre el navegador en la URL de acceso.
+#   ./sancho install [--od|--yalc|--build|--no-up|--force|--quick|--advanced]
 #                           primer arranque: wizard (si falta .env) + up
 #   ./sancho up             levanta el stack (overlays habilitados en .env)
 #   ./sancho down           baja contenedores + red, CONSERVA los datos
@@ -31,7 +34,9 @@ usage() {
   cat <<'EOF'
 sancho — CLI único de ciclo de vida de SanchoCMO.
 
-  ./sancho install [--od|--yalc|--build|--no-up|--force]
+  ./sancho run            arranque súper simple: wizard quick (si falta .env) + up
+                          + abre el navegador. Si ya está configurado, = `up`.
+  ./sancho install [--od|--yalc|--build|--no-up|--force|--quick|--advanced]
                           primer arranque: wizard (si falta .env) + up
   ./sancho up             levanta el stack (overlays habilitados en .env)
   ./sancho down           baja contenedores + red, CONSERVA los datos
@@ -69,6 +74,18 @@ announce_ready() {
   esac
 }
 
+# open_browser — best-effort: abre la URL de acceso en el navegador. Silencioso
+# en headless (sin xdg-open/open o sin entorno gráfico). Nunca bloquea ni falla.
+open_browser() {
+  local url; url="$(get_base_url)"
+  if command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$url" >/dev/null 2>&1 &
+  elif command -v open >/dev/null 2>&1; then
+    open "$url" >/dev/null 2>&1 &
+  fi
+  return 0
+}
+
 # ---------------------------------------------------------------------------
 # install — wizard (si falta .env) + up. Reemplaza al viejo install.sh.
 # ---------------------------------------------------------------------------
@@ -81,6 +98,10 @@ cmd_install() {
       --no-up) DO_UP=0 ;;
       --build) BUILD=1 ;;
       --force) FORCE_ARG="--force" ;;
+      # Elegir el modo del wizard (quick|advanced) sin invocarlo a mano. Se
+      # exporta para que el hijo `scripts/wizard.sh` lo herede.
+      --quick) export WIZARD_MODE=quick ;;
+      --advanced|--full) export WIZARD_MODE=advanced ;;
       -h|--help) usage; exit 0 ;;
       *) die "Flag desconocido para install: $arg" ;;
     esac
@@ -214,13 +235,27 @@ cmd_destroy() {
   echo "  ✓ Stack y datos eliminados."
 }
 
-cmd_reconfigure() { cmd_install --force --no-up; }
+# ---------------------------------------------------------------------------
+# run — el arranque más simple. Sin .env: wizard en modo QUICK + up. Con .env:
+# equivale a `up`. En ambos casos abre el navegador en la URL de acceso.
+# ---------------------------------------------------------------------------
+cmd_run() {
+  # Forzar quick para el wizard (si corre) sin pisar un WIZARD_MODE explícito.
+  export WIZARD_MODE="${WIZARD_MODE:-quick}"
+  cmd_install "$@"
+  open_browser
+}
+
+# reconfigure — re-corre el wizard (regenera config, conserva datos). Acepta
+# --quick / --advanced (y demás flags de install) y los reenvía.
+cmd_reconfigure() { cmd_install --force --no-up "$@"; }
 
 # ---------------------------------------------------------------------------
 # Dispatch.
 # ---------------------------------------------------------------------------
 cmd="${1:-help}"; shift || true
 case "$cmd" in
+  run)                cmd_run "$@" ;;
   install)            cmd_install "$@" ;;
   up|start)           cmd_up ;;
   down|stop)          cmd_down ;;
@@ -229,7 +264,7 @@ case "$cmd" in
   logs)               cmd_logs "$@" ;;
   status|ps)          cmd_status ;;
   destroy)            cmd_destroy ;;
-  reconfigure)        cmd_reconfigure ;;
+  reconfigure)        cmd_reconfigure "$@" ;;
   help|-h|--help)     usage ;;
   *) die "Comando desconocido: $cmd  (probá: ./sancho help)" ;;
 esac
