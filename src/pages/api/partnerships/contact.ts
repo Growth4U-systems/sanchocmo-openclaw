@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import { contactPartnerLeads, PartnerContactError } from "@/lib/partnerships";
 import { yalcErrorResponse } from "@/lib/yalc/client";
+import { yalcGuardErrorResponse } from "@/lib/yalc/campaign-guards";
 
 /**
  * Contactar creators (SAN-80) — la acción detrás del bulk "Contactar",
@@ -67,6 +68,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (err instanceof PartnerContactError) {
       return res.status(err.status).json({ error: err.message });
     }
+    const guard = yalcGuardErrorResponse(err);
+    if (guard) return res.status(guard.status).json(guard.body);
     const out = yalcErrorResponse(err);
     return res.status(out.status).json(out.body);
   }

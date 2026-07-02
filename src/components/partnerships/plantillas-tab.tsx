@@ -85,7 +85,7 @@ export function PlantillasTab({ slug }: { slug: string }) {
   });
 
   const templates = useMemo(
-    () => templatesQuery.data?.templates || [],
+    () => (templatesQuery.data?.templates || []).filter((template) => template.type === "partnerships"),
     [templatesQuery.data],
   );
   const searches = useMemo(
@@ -235,7 +235,6 @@ export function PlantillasTab({ slug }: { slug: string }) {
                     data-template-id={template.id}
                     className={cn(
                       "group flex cursor-pointer items-center gap-3 border-b border-border/60 px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/40",
-                      template.type === "b2b" && "opacity-60 hover:opacity-90",
                     )}
                   >
                     <div
@@ -252,15 +251,8 @@ export function PlantillasTab({ slug }: { slug: string }) {
                         {template.description}
                       </div>
                     </div>
-                    <span
-                      className={cn(
-                        "rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                        template.type === "b2b"
-                          ? "border-navy/40 bg-navy/10 text-navy"
-                          : "border-sage/50 bg-sage/10 text-sage",
-                      )}
-                    >
-                      {template.type === "b2b" ? "B2B" : "Partnerships"}
+                    <span className="rounded-full border border-sage/50 bg-sage/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sage">
+                      Partnerships
                     </span>
                     <span className="hidden w-28 shrink-0 text-right text-[11px] text-muted-foreground sm:block">
                       ✎{" "}
