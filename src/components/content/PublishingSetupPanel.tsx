@@ -31,8 +31,9 @@ export function PublishingSetupPanel({ slug }: { slug: string }) {
 
   // This row is the SOCIAL publishing slot — blog-only providers (WordPress,
   // SAN-161) have their own slot in Setup and must not light this one up.
-  const socialProviders = (data?.providers || []).filter((p) =>
-    p.supportedChannels.some((c) => c !== "blog" && c !== "email"),
+  const providers = Array.isArray(data?.providers) ? data.providers : [];
+  const socialProviders = providers.filter((p) =>
+    Array.isArray(p.supportedChannels) && p.supportedChannels.some((c) => c !== "blog" && c !== "email"),
   );
   const configured = socialProviders.filter((p) => p.configured);
   const isConnected = configured.length > 0;

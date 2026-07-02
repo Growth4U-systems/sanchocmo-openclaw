@@ -38,17 +38,18 @@ export function MetricoolBrandsList({ slug }: { slug: string }) {
     retry: false,
   });
 
-  if (!data || !("brands" in data) || data.brands.length === 0) return null;
+  const brands = data && "brands" in data && Array.isArray(data.brands) ? data.brands : [];
+  if (brands.length === 0) return null;
 
   return (
     <details className="mt-2 text-[12px]">
       <summary className="cursor-pointer font-semibold text-muted-foreground">
-        🔌 Cuentas Metricool disponibles ({data.brands.length}) — el <code>blogId</code> es el{" "}
+        🔌 Cuentas Metricool disponibles ({brands.length}) — el <code>blogId</code> es el{" "}
         <code>metricool_profile_id</code> de la voz
       </summary>
       <ul className="mt-1.5 space-y-1">
-        {data.brands.map((b) => {
-          const nets = b.networks.filter((n) => n.connected);
+        {brands.map((b) => {
+          const nets = Array.isArray(b.networks) ? b.networks.filter((n) => n.connected) : [];
           return (
             <li
               key={b.id}
