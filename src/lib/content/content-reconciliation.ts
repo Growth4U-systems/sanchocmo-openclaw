@@ -81,7 +81,18 @@ export function readReconcileState(slug: string): ContentReconcileResult | null 
   const file = reconcileStatePath(slug);
   if (!fs.existsSync(file)) return null;
   try {
-    return JSON.parse(fs.readFileSync(file, "utf-8")) as ContentReconcileResult;
+    const parsed = JSON.parse(fs.readFileSync(file, "utf-8")) as Partial<ContentReconcileResult>;
+    if (!parsed || typeof parsed !== "object") return null;
+    return {
+      ok: true,
+      slug: typeof parsed.slug === "string" ? parsed.slug : slug,
+      scanned: typeof parsed.scanned === "number" ? parsed.scanned : 0,
+      promoted: Array.isArray(parsed.promoted) ? parsed.promoted : [],
+      desyncs: Array.isArray(parsed.desyncs) ? parsed.desyncs : [],
+      skipped: Array.isArray(parsed.skipped) ? parsed.skipped : [],
+      ran_at: typeof parsed.ran_at === "string" ? parsed.ran_at : new Date(0).toISOString(),
+      duration_ms: typeof parsed.duration_ms === "number" ? parsed.duration_ms : 0,
+    };
   } catch {
     return null;
   }

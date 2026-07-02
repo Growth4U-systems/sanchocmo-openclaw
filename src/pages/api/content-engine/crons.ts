@@ -28,7 +28,25 @@ interface CronJob {
 }
 
 function loadJobs(): { version: number; jobs: CronJob[] } {
-  return JSON.parse(fs.readFileSync(cronJobsFile(), "utf-8"));
+  const file = cronJobsFile();
+  if (!fs.existsSync(file)) return { version: 1, jobs: [] };
+  try {
+    const parsed = JSON.parse(fs.readFileSync(file, "utf-8")) as { version?: unknown; jobs?: unknown };
+    const jobs = Array.isArray(parsed.jobs)
+      ? parsed.jobs.filter((j): j is CronJob => (
+          !!j &&
+          typeof j === "object" &&
+          typeof (j as Partial<CronJob>).id === "string" &&
+          typeof (j as Partial<CronJob>).name === "string"
+        ))
+      : [];
+    return {
+      version: typeof parsed.version === "number" ? parsed.version : 1,
+      jobs,
+    };
+  } catch {
+    return { version: 1, jobs: [] };
+  }
 }
 
 function saveJobs(data: { version: number; jobs: CronJob[] }) {
@@ -225,10 +243,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         name: j.name,
         baseName,
         description: DESCRIPTIONS[baseName] || "",
-        enabled: j.enabled,
-        schedule: j.schedule.expr,
-        scheduleHuman: humanizeCron(j.schedule.expr),
-        timezone: j.schedule.tz,
+        enabled: Boolean(j.enabled),
+        schedule: j.schedule?.expr || "",
+        scheduleHuman: humanizeCron(j.schedule?.expr || ""),
+        timezone: j.schedule?.tz || "",
         model: j.payload?.model || "unknown",
         lastExecution: getLastExecution(slug, j.name, j.id),
         running: live

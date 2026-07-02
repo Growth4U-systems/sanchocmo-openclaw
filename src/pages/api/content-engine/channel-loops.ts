@@ -38,6 +38,13 @@ import { buildPersonaLoops } from "@/lib/data/persona-loops";
 
 // ── cadence-config ──────────────────────────────────────────────
 
+const EMPTY_CADENCE_CHANNEL: NormalizedCadenceChannel = {
+  best_days: [],
+  best_times: [],
+  content_types: [],
+  profiles: [],
+};
+
 const DEFAULT_LABELS: Record<string, string> = {
   linkedin: "Founder-Led Content",
   twitter: "X / Twitter",
@@ -349,7 +356,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ChannelLoopsPay
     .slice(0, 12);
 
   const channels: ChannelLoopState[] = channelKeys.map((key) => {
-    const ch = cadenceChannels[key] || {};
+    const ch = cadenceChannels[key] || EMPTY_CADENCE_CHANNEL;
     const mine = cts.filter((ct) => ctMatchesChannel(ct, key));
 
     // SAN-163 — split into per-persona sub-loops when the channel declares voices.

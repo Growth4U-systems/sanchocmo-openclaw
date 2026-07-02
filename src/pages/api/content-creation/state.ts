@@ -119,8 +119,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (contentProject) {
     projectId = contentProject.dirName.split("-")[0];
     const tFile = path.join(projectsDir, contentProject.dirName, "tasks.json");
-    const raw = readJSON<TaskJson[] | { tasks: TaskJson[] }>(tFile, []);
-    const allTasks = Array.isArray(raw) ? raw : raw.tasks || [];
+    const raw = readJSON<TaskJson[] | { tasks?: unknown }>(tFile, []);
+    const allTasks: TaskJson[] = Array.isArray(raw)
+      ? raw
+      : Array.isArray(raw.tasks)
+        ? raw.tasks
+        : [];
 
     // Filter by niche if provided
     const tasks = selectedNiche
