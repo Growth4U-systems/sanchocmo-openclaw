@@ -108,7 +108,14 @@ export function PostMetricsBadge({
         <Stat label="Impresiones" value={view.impressions} />
         <Stat label="Likes" value={view.likes} />
         <Stat label="Clicks" value={view.clicks} />
-        <Stat label="Eng %" value={view.engagement.toFixed(1)} />
+        <Stat
+          label="Eng %"
+          value={
+            typeof view.engagement === "number" && Number.isFinite(view.engagement)
+              ? view.engagement.toFixed(1)
+              : "—"
+          }
+        />
       </div>
     </div>
   );

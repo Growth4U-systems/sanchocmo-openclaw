@@ -41,9 +41,14 @@ export function MediaGallery({
   targetChannels,
   initialChannel,
 }: MediaGalleryProps) {
-  const fallback = targetChannels[0] ?? "linkedin";
+  // `target_channels` is typed string[] but comes from useContentTask
+  // unnormalized; a ContentTask written by an agent/MCP path or one still
+  // pre-approval can have it missing/non-array on disk. Coerce before indexing
+  // so the render can't throw (SAN-385).
+  const channels = Array.isArray(targetChannels) ? targetChannels : [];
+  const fallback = channels[0] ?? "linkedin";
   const [activeChannel, setActiveChannel] = useState<string>(
-    initialChannel && targetChannels.includes(initialChannel)
+    initialChannel && channels.includes(initialChannel)
       ? initialChannel
       : fallback,
   );
@@ -52,7 +57,10 @@ export function MediaGallery({
   const fileInput = useRef<HTMLInputElement>(null);
 
   const { data: draft, isLoading } = useDraft(slug, ideaId, activeChannel);
-  const media = draft?.meta.media ?? [];
+  // Draft frontmatter is on-disk YAML (hand/legacy-editable) and useDraft
+  // returns it unnormalized; `media` can be a non-array. Coerce before we
+  // .map/.find/.length over it (SAN-385).
+  const media = Array.isArray(draft?.meta?.media) ? draft.meta.media : [];
 
   const upload = useUploadMedia();
   const setPrimary = useSetPrimaryMedia();
@@ -119,10 +127,10 @@ export function MediaGallery({
             Canal:
           </span>
           <div className="flex flex-wrap gap-1">
-            {targetChannels.length === 0 ? (
+            {channels.length === 0 ? (
               <span className="text-[11px] text-[#7F8C8D] italic">Sin canales</span>
             ) : (
-              targetChannels.map((c) => (
+              channels.map((c) => (
                 <button
                   key={c}
                   type="button"
