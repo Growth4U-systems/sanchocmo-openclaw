@@ -79,6 +79,9 @@ interface EncuentraTabProps {
   onCreateTemplate?: () => void;
   onRetrySearch?: (search: DiscoverySearchRecord) => void;
   retryingSearchId?: string | null;
+  onRenameCampaign?: (campaign: PartnershipCampaign, title: string) => void;
+  onDeleteCampaign?: (campaign: PartnershipCampaign) => void;
+  campaignManagementBusy?: boolean;
 }
 
 /** Orden de cards como el mockup: en marcha primero, drafts al final. */
@@ -160,12 +163,46 @@ export function EncuentraTab({
   onCreateTemplate,
   onRetrySearch,
   retryingSearchId = null,
+  onRenameCampaign,
+  onDeleteCampaign,
+  campaignManagementBusy,
 }: EncuentraTabProps) {
   const [filter, setFilter] = useState<"todas" | "archivadas">("todas");
   const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [editingCampaignId, setEditingCampaignId] = useState<string | null>(
+    null,
+  );
+  const [titleDraft, setTitleDraft] = useState("");
   const ordered = campaigns
     .slice()
     .sort((a, b) => STATE_ORDER[searchState(a)] - STATE_ORDER[searchState(b)]);
+
+  function startRename(campaign: PartnershipCampaign) {
+    setEditingCampaignId(campaign.id);
+    setTitleDraft(campaign.title || campaign.id);
+  }
+
+  function saveRename(campaign: PartnershipCampaign) {
+    const nextTitle = titleDraft.trim();
+    if (!nextTitle || nextTitle === (campaign.title || campaign.id)) {
+      setEditingCampaignId(null);
+      return;
+    }
+    onRenameCampaign?.(campaign, nextTitle);
+    setEditingCampaignId(null);
+  }
+
+  function deleteCampaign(campaign: PartnershipCampaign) {
+    const name = campaign.title || campaign.id;
+    if (
+      !window.confirm(
+        `Borrar la campaña de Partnerships "${name}"? Esta acción no se puede deshacer.`,
+      )
+    ) {
+      return;
+    }
+    onDeleteCampaign?.(campaign);
+  }
 
   return (
     <div data-testid="encuentra-tab">
@@ -207,7 +244,7 @@ export function EncuentraTab({
         <ZeroState
           title="Sin búsquedas todavía"
           body="Crea una búsqueda para traer partners al pipeline con quality score y datos de contacto."
-          action={{ label: "+ Nueva búsqueda", onClick: onCreateSearch }}
+          action={{ label: "Generar nueva campaña", onClick: onCreateSearch }}
         />
       ) : (
         <div className="space-y-4">
@@ -254,9 +291,44 @@ export function EncuentraTab({
                     {isDraft ? "🎙️" : state === "done" ? "📺" : "🔍"}
                   </div>
                   <div className="min-w-[240px] flex-1">
-                    <h3 className="font-heading text-[15px] font-bold leading-tight text-foreground">
-                      {campaign.title || campaign.id}
-                    </h3>
+                    {editingCampaignId === campaign.id ? (
+                      <div
+                        className="flex flex-wrap items-center gap-2"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <input
+                          value={titleDraft}
+                          onChange={(event) => setTitleDraft(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") saveRename(campaign);
+                            if (event.key === "Escape")
+                              setEditingCampaignId(null);
+                          }}
+                          className="h-9 min-w-[220px] flex-1 rounded-md border border-border bg-background px-3 text-sm focus:border-rust focus:outline-none"
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          disabled={campaignManagementBusy}
+                          onClick={() => saveRename(campaign)}
+                          className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:border-rust"
+                        >
+                          Guardar
+                        </button>
+                        <button
+                          type="button"
+                          disabled={campaignManagementBusy}
+                          onClick={() => setEditingCampaignId(null)}
+                          className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <h3 className="font-heading text-[15px] font-bold leading-tight text-foreground">
+                        {campaign.title || campaign.id}
+                      </h3>
+                    )}
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {campaign.campaignKindLabel || "Campaña creator"}
                       {campaign.createdAt &&
@@ -286,6 +358,38 @@ export function EncuentraTab({
                     >
                       {meta.stamp}
                     </span>
+                    {(onRenameCampaign || onDeleteCampaign) && (
+                      <details
+                        className="relative"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <summary className="list-none rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-rust hover:text-rust [&::-webkit-details-marker]:hidden">
+                          Gestionar
+                        </summary>
+                        <div className="absolute right-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-lg border border-border bg-card shadow-md">
+                          {onRenameCampaign && (
+                            <button
+                              type="button"
+                              disabled={campaignManagementBusy}
+                              onClick={() => startRename(campaign)}
+                              className="block w-full px-3 py-2 text-left text-xs font-semibold transition-colors hover:bg-muted"
+                            >
+                              Renombrar
+                            </button>
+                          )}
+                          {onDeleteCampaign && (
+                            <button
+                              type="button"
+                              disabled={campaignManagementBusy}
+                              onClick={() => deleteCampaign(campaign)}
+                              className="block w-full px-3 py-2 text-left text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                            >
+                              Borrar
+                            </button>
+                          )}
+                        </div>
+                      </details>
+                    )}
                   </div>
                 </div>
 

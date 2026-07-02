@@ -4,6 +4,7 @@
 
 import { type ReactNode, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useChatStore } from "@/stores/chat";
 
 interface SlideOverProps {
   open: boolean;
@@ -22,6 +23,12 @@ export function SlideOver({
   children,
   actions,
 }: SlideOverProps) {
+  const { sidebarOpen, isFullscreen } = useChatStore((state) => ({
+    sidebarOpen: state.sidebarOpen,
+    isFullscreen: state.isFullscreen,
+  }));
+  const offsetForChat = sidebarOpen && !isFullscreen;
+
   // Close on Escape key
   useEffect(() => {
     if (!open) return;
@@ -51,6 +58,14 @@ export function SlideOver({
           open ? "translate-x-0" : "translate-x-full",
           width ?? "w-[75vw] max-w-3xl",
         )}
+        style={
+          offsetForChat
+            ? {
+                right: "min(380px, 35vw)",
+                maxWidth: "calc(100vw - min(380px, 35vw) - 16px)",
+              }
+            : undefined
+        }
       >
         {/* Header */}
         {(title || actions) && (

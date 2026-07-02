@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import { resolveYalcConfig, yalcErrorResponse, yalcFetch } from "@/lib/yalc/client";
-import { normalizeYalcLeadPayload, type YalcCampaignKind } from "@/lib/yalc/campaign-kind";
+import { normalizeYalcLead, resolveCampaignKind, type YalcCampaignKind } from "@/lib/yalc/campaign-kind";
 
 // Forwarded YALC filters — see YALC GET /api/leads:
 //   campaignId, lifecycleStatus (comma-separated, incl. Disqualified), type
@@ -42,7 +42,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       resolveYalcConfig(slug),
       `/api/leads${query ? `?${query}` : ""}`,
     );
-    return res.status(200).json(normalizeYalcLeadPayload(payload, kindFromQuery(requestedType)));
+    const expectedKind = kindFromQuery(requestedType);
+    const leads = Array.isArray(payload.leads)
+      ? payload.leads
+          .filter((lead): lead is Record<string, unknown> => Boolean(lead) && typeof lead === "object")
+          .map((lead) => normalizeYalcLead(lead))
+          .filter((lead) => expectedKind === "unknown" || resolveCampaignKind(lead) === expectedKind)
+      : undefined;
+    return res.status(200).json(leads ? { ...payload, leads } : payload);
   } catch (err) {
     const out = yalcErrorResponse(err);
     return res.status(out.status).json(out.body);

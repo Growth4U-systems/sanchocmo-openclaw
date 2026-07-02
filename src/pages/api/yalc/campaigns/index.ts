@@ -3,7 +3,7 @@ import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-midd
 import { resolveYalcConfig, yalcErrorResponse, yalcFetch } from "@/lib/yalc/client";
 import {
   normalizeYalcCampaign,
-  normalizeYalcCampaignPayload,
+  resolveCampaignKind,
   type YalcCampaignKind,
 } from "@/lib/yalc/campaign-kind";
 
@@ -51,7 +51,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     const query = params.toString();
     const payload = await yalcFetch<Record<string, unknown>>(config, `/api/campaigns${query ? `?${query}` : ""}`);
-    return res.status(200).json(normalizeYalcCampaignPayload(payload, kindFromQuery(requestedType)));
+    const expectedKind = kindFromQuery(requestedType);
+    const campaigns = Array.isArray(payload.campaigns)
+      ? payload.campaigns
+          .filter((campaign): campaign is Record<string, unknown> => Boolean(campaign) && typeof campaign === "object")
+          .map((campaign) => normalizeYalcCampaign(campaign))
+          .filter((campaign) => expectedKind === "unknown" || resolveCampaignKind(campaign) === expectedKind)
+      : undefined;
+    return res.status(200).json(campaigns ? { ...payload, campaigns } : payload);
   } catch (err) {
     const out = yalcErrorResponse(err);
     return res.status(out.status).json(out.body);

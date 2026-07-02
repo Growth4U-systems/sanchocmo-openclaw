@@ -16,6 +16,18 @@ const CREATOR_MARKERS = [
   "post patrocinado",
 ] as const;
 
+const B2B_MARKERS = [
+  "b2b",
+  "cold email",
+  "cold-email",
+  "apollo",
+  "instantly",
+  "outbound b2b",
+  "b2b outbound",
+  "sales outreach",
+  "prospecting",
+] as const;
+
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -36,13 +48,21 @@ function includesCreatorMarker(value: string): boolean {
   return CREATOR_MARKERS.some((marker) => lower.includes(marker));
 }
 
+function includesB2BMarker(value: string): boolean {
+  const lower = value.toLowerCase();
+  return B2B_MARKERS.some((marker) => lower.includes(marker));
+}
+
 function campaignText(row: RecordLike): string {
   const channels = row.channels;
   return [
     row.type,
     row.campaignType,
+    row.campaignId,
+    row.name,
     row.title,
     row.campaignTitle,
+    row.description,
     row.targetSegment,
     row.hypothesis,
     Array.isArray(channels) ? channels.join(" ") : channels,
@@ -66,7 +86,9 @@ export function resolveCampaignKind(value: unknown, fallback: YalcCampaignKind =
     .map(kindFromType)
     .find((kind) => kind !== "unknown") ?? "unknown";
   if (explicit !== "unknown") return explicit;
-  if (includesCreatorMarker(campaignText(row))) return "creator";
+  const text = campaignText(row);
+  if (includesCreatorMarker(text)) return "creator";
+  if (includesB2BMarker(text)) return "b2b";
   return fallback;
 }
 
