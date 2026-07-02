@@ -14,7 +14,7 @@ export function usePublishProviders(slug: string | null, channel: string | null)
       const res = await fetch(`/api/publishing/providers?${qs}`);
       if (!res.ok) throw new Error("Failed to load providers");
       const data = (await res.json()) as ProvidersResponse;
-      return data.providers;
+      return Array.isArray(data.providers) ? data.providers : [];
     },
     enabled: !!slug && !!channel,
     staleTime: 60_000,

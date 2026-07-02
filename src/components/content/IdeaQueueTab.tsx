@@ -201,15 +201,15 @@ export function IdeaQueueTab({ slug, openChat, initialChannel, initialStatus, in
     if (!slug) return;
     fetch(`/api/content-engine/channel-loops?slug=${slug}`)
       .then((r) => r.json())
-      .then((d) => setChannelsForPersonas(d.channels || []))
+      .then((d) => setChannelsForPersonas(Array.isArray(d.channels) ? d.channels : []))
       .catch(() => {});
   }, [slug]);
 
   // Flat list of all declared personas across channels (for the filter dropdown).
-  const allPersonas = channelsForPersonas.flatMap((c) => c.personas);
+  const allPersonas = channelsForPersonas.flatMap((c) => (Array.isArray(c.personas) ? c.personas : []));
   // Personas available for a given idea's target channel (for assignment).
   const personasForChannel = (channel: string): ChannelLoopState["personas"] =>
-    channelsForPersonas.find((c) => c.channel === channel)?.personas || [];
+    channelsForPersonas.find((c) => c.channel === channel)?.personas?.filter(Boolean) || [];
   const [filterPillar, setFilterPillar] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<"all" | "today" | "week" | "month">("all");
   const [filterSource, setFilterSource] = useState<"all" | "news" | "paa" | "keywords" | "competitors" | "other">("all");
