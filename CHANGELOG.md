@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.17.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.17.0...v0.17.1) (2026-07-02)
+
+
+### Bug Fixes
+
+* **partnerships:** SAN-79 run discovery asynchronously ([#1058](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1058)) ([98ee086](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/98ee0860441263a6fd51e63b46e9b6768a2daa57))
+* **partnerships:** SAN-79 show completed runner cards ([#1060](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1060)) ([7dc43ee](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7dc43eef964d441a54217c5e1268fed454275ac4))
+
 ## [0.17.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.16.1...v0.17.0) (2026-07-02)
 
 
