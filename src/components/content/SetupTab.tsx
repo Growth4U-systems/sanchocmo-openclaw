@@ -106,13 +106,15 @@ export function SetupTab({ slug, openChat, focusChannel }: Props) {
     doc: documents.find((d) => (d.skill || "").toLowerCase() === m.skill || (d.skill || "").toLowerCase().startsWith(m.skill)),
   }));
 
-  const channels = loops?.channels || [];
+  const channels = Array.isArray(loops?.channels) ? loops.channels : [];
   const dispatchConfigured = !!dispatchQ.data?.config?.channel_name;
-  const providers = providersQ.data?.providers || [];
+  const providers = Array.isArray(providersQ.data?.providers) ? providersQ.data.providers : [];
+  const providerChannels = (provider: ProviderInfo) =>
+    Array.isArray(provider.supportedChannels) ? provider.supportedChannels : [];
   // Capability slots resolve per channel: social = any provider that speaks
   // linkedin/instagram/...; blog = any provider that speaks blog (SAN-161).
-  const socialProviders = providers.filter((p) => p.supportedChannels.some((c) => c !== "blog"));
-  const blogProviders = providers.filter((p) => p.supportedChannels.includes("blog"));
+  const socialProviders = providers.filter((p) => providerChannels(p).some((c) => c !== "blog"));
+  const blogProviders = providers.filter((p) => providerChannels(p).includes("blog"));
   const socialConnected = socialProviders.some((p) => p.configured);
   const blogPublisher = blogProviders.find((p) => p.configured) || null;
   const gscConnected = !!loops?.connections?.gsc;

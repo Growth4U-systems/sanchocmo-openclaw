@@ -70,6 +70,30 @@ const DRAFT_STATUS: Record<ChannelPhase, { bg: string; text: string; label: stri
   published: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Publicado" },
 };
 
+function normalizeDraft(raw: unknown): Draft | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const draft = raw as Partial<Draft>;
+  const meta = draft.meta && typeof draft.meta === "object" ? draft.meta as Partial<Draft["meta"]> : null;
+  if (!meta || typeof meta.channel !== "string") return null;
+  return {
+    meta: {
+      idea_id: typeof meta.idea_id === "string" ? meta.idea_id : "",
+      channel: meta.channel,
+      iteration: typeof meta.iteration === "number" && Number.isFinite(meta.iteration) ? meta.iteration : 0,
+      ...(typeof meta.content_task_id === "string" ? { content_task_id: meta.content_task_id } : {}),
+      ...(typeof meta.parent_task_id === "string" ? { parent_task_id: meta.parent_task_id } : {}),
+      ...(typeof meta.research_used === "boolean" ? { research_used: meta.research_used } : {}),
+      ...(meta.clarify_status === "pending" || meta.clarify_status === "answered" || meta.clarify_status === "skipped"
+        ? { clarify_status: meta.clarify_status }
+        : {}),
+      ...(typeof meta.updated_at === "string" ? { updated_at: meta.updated_at } : {}),
+    },
+    body: typeof draft.body === "string" ? draft.body : "",
+    relPath: typeof draft.relPath === "string" ? draft.relPath : "",
+    absPath: typeof draft.absPath === "string" ? draft.absPath : "",
+  };
+}
+
 export function DraftCards({ idea, slug, channelPhases, onApproveChannel, onRequestIteration, onOpenDoc, hideIteration }: Props) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(false);
@@ -81,18 +105,19 @@ export function DraftCards({ idea, slug, channelPhases, onApproveChannel, onRequ
     setLoading(true);
     fetch(`/api/content-engine/drafts?slug=${slug}&ideaId=${idea.id}`)
       .then((r) => r.json())
-      .then((data) => setDrafts(data?.drafts || []))
+      .then((data) => setDrafts(Array.isArray(data?.drafts) ? data.drafts.flatMap((draft: unknown) => normalizeDraft(draft) ?? []) : []))
       .catch(() => setDrafts([]))
       .finally(() => setLoading(false));
   }, [slug, idea.id]);
 
-  const channels = idea.target_channel === "linkedin"
+  const targetChannel = typeof idea.target_channel === "string" ? idea.target_channel : "linkedin";
+  const channels = targetChannel === "linkedin"
     ? ["linkedin", "twitter"]
-    : idea.target_channel === "blog"
+    : targetChannel === "blog"
     ? ["blog", "linkedin"]
-    : idea.target_channel === "newsletter"
+    : targetChannel === "newsletter"
     ? ["newsletter"]
-    : [idea.target_channel, "linkedin"];
+    : [targetChannel, "linkedin"];
 
   return (
     <div className="mt-3 pt-3 border-t border-[#E8E2D9] space-y-3">

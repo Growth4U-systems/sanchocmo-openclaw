@@ -82,7 +82,7 @@ const UNCONFIRMED_VISUAL = {
  *   - other: needs at least one media asset of any type. */
 function mediaBlockReason(draft: ReadyDraft): string | null {
   if (draft.media_policy !== "required") return null;
-  const items = draft.media || [];
+  const items = Array.isArray(draft.media) ? draft.media : [];
   if (items.length === 0) return "Necesita media — sube imágenes / PDF antes de programar";
   if (draft.channel === "linkedin") {
     const hasPdf = items.some((m) => m.type === "application/pdf");
@@ -174,7 +174,10 @@ export function PostingCalendarTab({ slug, focusKey, channelFilter }: { slug: st
   const [scheduleTarget, setScheduleTarget] = useState<{ dayIso: string; draft: ReadyDraft; rescheduleFrom?: CalendarEvent } | null>(null);
   const [previewItem, setPreviewItem] = useState<PreviewItem | null>(null);
 
-  const all = calendar.data ?? { scheduled: [] as CalendarEvent[], ready_queue: [] as ReadyDraft[] };
+  const all = {
+    scheduled: Array.isArray(calendar.data?.scheduled) ? calendar.data.scheduled : [] as CalendarEvent[],
+    ready_queue: Array.isArray(calendar.data?.ready_queue) ? calendar.data.ready_queue : [] as ReadyDraft[],
+  };
   // Channel drill-down from the Canales view (SAN-141) — data already carries
   // a channel per event/draft, so filtering stays client-side.
   const scheduled = channelFilter ? all.scheduled.filter((e) => e.channel === channelFilter) : all.scheduled;
@@ -219,21 +222,23 @@ export function PostingCalendarTab({ slug, focusKey, channelFilter }: { slug: st
    *  has to tweak the hour. Passes rescheduleFrom so the modal knows whether
    *  to call cancel before publish (only when status === "scheduled"). */
   function openRescheduleFor(event: CalendarEvent) {
+    const media = Array.isArray(event.media) ? event.media : [];
+    const scheduledAt = typeof event.scheduled_at === "string" ? event.scheduled_at : new Date().toISOString();
     const synthetic: ReadyDraft = {
       ideaId: event.ideaId,
       contentTaskId: event.contentTaskId,
       parentTaskId: event.parentTaskId,
       channel: event.channel,
       title: event.title,
-      ready_at: event.scheduled_at,
+      ready_at: scheduledAt,
       hero_media_url: event.hero_media_url,
-      has_media: !!event.hero_media_url || event.media.length > 0,
-      body: event.body,
-      media: event.media,
+      has_media: !!event.hero_media_url || media.length > 0,
+      body: typeof event.body === "string" ? event.body : "",
+      media,
     };
     setScheduleTarget({
       // Local date — same convention as the day-column keys.
-      dayIso: isoDate(new Date(event.scheduled_at)),
+      dayIso: isoDate(new Date(scheduledAt)),
       draft: synthetic,
       rescheduleFrom: event,
     });
@@ -260,6 +265,7 @@ export function PostingCalendarTab({ slug, focusKey, channelFilter }: { slug: st
       setScheduleTarget({ dayIso, draft: data.draft });
     } else if (data?.kind === "event" && data.event) {
       const ev = data.event;
+      const media = Array.isArray(ev.media) ? ev.media : [];
       setScheduleTarget({
         dayIso,
         draft: {
@@ -270,9 +276,9 @@ export function PostingCalendarTab({ slug, focusKey, channelFilter }: { slug: st
           title: ev.title,
           ready_at: ev.scheduled_at,
           hero_media_url: ev.hero_media_url,
-          has_media: !!ev.hero_media_url,
-          body: ev.body,
-          media: ev.media,
+          has_media: !!ev.hero_media_url || media.length > 0,
+          body: typeof ev.body === "string" ? ev.body : "",
+          media,
         },
         rescheduleFrom: ev,
       });
@@ -581,11 +587,14 @@ function DayColumn({
 }
 
 function EventCard({ event, onClick, dragging }: { event: CalendarEvent; onClick: () => void; dragging?: boolean }) {
+  const channel = typeof event.channel === "string" ? event.channel : "blog";
+  const title = typeof event.title === "string" ? event.title : "(sin titulo)";
+  const scheduledAt = typeof event.scheduled_at === "string" ? event.scheduled_at : new Date(0).toISOString();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `event-${event.contentTaskId}-${event.channel}`,
+    id: `event-${event.contentTaskId}-${channel}`,
     data: { kind: "event" as const, event },
   });
-  const cv = CHANNEL_VISUAL[event.channel] || CHANNEL_VISUAL.blog;
+  const cv = CHANNEL_VISUAL[channel] || CHANNEL_VISUAL.blog;
   // Drift watchdog: if the API flagged this scheduled event as past-due
   // without reconciliation, render the alarm visual instead of the regular
   // "Programado" badge. Same shape so the rest of the card doesn't change.
@@ -618,11 +627,11 @@ function EventCard({ event, onClick, dragging }: { event: CalendarEvent; onClick
           style={{ background: cv.bg, color: cv.fg, borderColor: "var(--sc-ink)" }}
         >{cv.emoji}</span>
         <span className="font-mono text-[10px] font-bold" style={{ color: "var(--sc-ink)" }}>
-          {timeOf(event.scheduled_at)}
+          {timeOf(scheduledAt)}
         </span>
       </div>
       <div className="text-[11px] leading-tight font-medium" style={{ color: "var(--sc-ink)" }}>
-        {event.title.slice(0, 64)}{event.title.length > 64 ? "…" : ""}
+        {title.slice(0, 64)}{title.length > 64 ? "…" : ""}
       </div>
       <div
         className="font-heading uppercase text-[8.5px] tracking-wider px-1 py-0.5 rounded-sc-pill border inline-flex items-center mt-1"
@@ -649,11 +658,16 @@ function ScheduleConfirmModal({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const providersQ = usePublishProviders(slug, draft.channel);
+  const draftChannel = typeof draft.channel === "string" ? draft.channel : "blog";
+  const draftTitle = typeof draft.title === "string" ? draft.title : "(sin titulo)";
+  const providersQ = usePublishProviders(slug, draftChannel);
   const publish = usePublishDraft();
   const cancel = useCancelPublishing();
 
-  const configured = useMemo<ProviderInfo[]>(() => (providersQ.data || []).filter((p) => p.configured), [providersQ.data]);
+  const configured = useMemo<ProviderInfo[]>(
+    () => (Array.isArray(providersQ.data) ? providersQ.data : []).filter((p) => p && typeof p === "object" && p.configured),
+    [providersQ.data],
+  );
   const [providerId, setProviderId] = useState<string>(rescheduleFrom?.provider || "");
   // Both day and time are editable INSIDE the modal — initial values come
   // from the prop (drag-drop target / current schedule) but the user can
@@ -699,12 +713,12 @@ function ScheduleConfirmModal({
       // publishing block. Calling cancel on a failed draft returns 400
       // "Draft is not currently scheduled".
       if (rescheduleFrom && rescheduleFrom.status === "scheduled") {
-        await cancel.mutateAsync({ slug, ideaId: draft.ideaId, channel: draft.channel });
+        await cancel.mutateAsync({ slug, ideaId: draft.ideaId, channel: draftChannel });
       }
       await publish.mutateAsync({
         slug,
         ideaId: draft.ideaId,
-        channel: draft.channel,
+        channel: draftChannel,
         providerId,
         schedule: { publishAt: isoLocal },
       });
@@ -729,7 +743,7 @@ function ScheduleConfirmModal({
           {rescheduleFrom ? "Reprogramar post" : "Programar post"}
         </h3>
         <p className="text-xs mb-3" style={{ color: "var(--sc-fg-muted)" }}>
-          {draft.channel.toUpperCase()} · {draft.title.slice(0, 80)}
+          {draftChannel.toUpperCase()} · {draftTitle.slice(0, 80)}
         </p>
 
         <div className="flex flex-col gap-3">
@@ -836,13 +850,19 @@ function PostPreviewSlideOver({
   const [error, setError] = useState<string | null>(null);
 
   // Normalize to a common shape — both kinds carry channel/title/body/media + ids
-  const channel = item.kind === "scheduled" ? item.event.channel : item.draft.channel;
-  const title = item.kind === "scheduled" ? item.event.title : item.draft.title;
-  const body = item.kind === "scheduled" ? item.event.body : item.draft.body;
-  const media = item.kind === "scheduled" ? item.event.media : item.draft.media;
+  const rawChannel = item.kind === "scheduled" ? item.event.channel : item.draft.channel;
+  const rawTitle = item.kind === "scheduled" ? item.event.title : item.draft.title;
+  const rawBody = item.kind === "scheduled" ? item.event.body : item.draft.body;
+  const rawMedia = item.kind === "scheduled" ? item.event.media : item.draft.media;
+  const channel = typeof rawChannel === "string" ? rawChannel : "blog";
+  const title = typeof rawTitle === "string" ? rawTitle : "(sin titulo)";
+  const body = typeof rawBody === "string" ? rawBody : "";
+  const media = Array.isArray(rawMedia) ? rawMedia : [];
   const ideaId = item.kind === "scheduled" ? item.event.ideaId : item.draft.ideaId;
   const contentTaskId = item.kind === "scheduled" ? item.event.contentTaskId : item.draft.contentTaskId;
   const parentTaskId = item.kind === "scheduled" ? item.event.parentTaskId : item.draft.parentTaskId;
+  const safeParentTaskId = typeof parentTaskId === "string" ? parentTaskId : "";
+  const safeContentTaskId = typeof contentTaskId === "string" ? contentTaskId : "";
 
   async function doCancel() {
     if (item.kind !== "scheduled") return;
@@ -856,8 +876,10 @@ function PostPreviewSlideOver({
   }
 
   const cv = CHANNEL_VISUAL[channel] || CHANNEL_VISUAL.blog;
-  const projectId = parentTaskId.replace(/-T\d+$/, "");
-  const editorHref = `/dashboard/${slug}/tasks/${projectId}/sub/${parentTaskId}/content/${contentTaskId}/draft/${channel}`;
+  const projectId = safeParentTaskId.replace(/-T\d+$/, "");
+  const editorHref = projectId && safeParentTaskId && safeContentTaskId
+    ? `/dashboard/${slug}/tasks/${projectId}/sub/${safeParentTaskId}/content/${safeContentTaskId}/draft/${channel}`
+    : `/dashboard/${slug}/content-creation?tab=calendar`;
 
   const sv = item.kind === "scheduled" ? STATUS_VISUAL[item.event.status] || STATUS_VISUAL.scheduled : null;
 

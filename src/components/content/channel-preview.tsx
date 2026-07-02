@@ -23,11 +23,14 @@ export function ChannelPreview({
   brandSlug: string;
   media?: MediaAsset[];
 }) {
+  const safeBody = typeof body === "string" ? body : "";
+  const safeBrandSlug = typeof brandSlug === "string" && brandSlug.trim() ? brandSlug : "brand";
+  const safeMedia = Array.isArray(media) ? media : [];
   // Skip non-image entries (e.g. the carousel PDF that lives at media[0])
   // so the preview always renders the cover slide as the visual.
-  const primaryMedia = media?.find((m) => m.type.startsWith("image/")) ?? null;
-  const ch = channel.toLowerCase();
-  const handle = `@${brandSlug}`;
+  const primaryMedia = safeMedia.find((m) => m && typeof m.type === "string" && typeof m.url === "string" && m.type.startsWith("image/")) ?? null;
+  const ch = typeof channel === "string" ? channel.toLowerCase() : "";
+  const handle = `@${safeBrandSlug}`;
 
   if (ch === "linkedin") {
     return (
@@ -35,17 +38,17 @@ export function ChannelPreview({
         <div className="bg-white border border-[#E0E0E0] rounded-lg overflow-hidden font-sans">
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#0A66C2] to-[#004182] flex items-center justify-center text-white font-bold text-lg">
-              {brandSlug.charAt(0).toUpperCase()}
+              {safeBrandSlug.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-sm text-[#000000E6] truncate">{brandSlug}</div>
+              <div className="font-bold text-sm text-[#000000E6] truncate">{safeBrandSlug}</div>
               <div className="text-xs text-[#00000099] truncate">CMO · Marketing</div>
               <div className="text-xs text-[#00000099]">12m · 🌐</div>
             </div>
             <span className="text-[#00000099] text-xl">⋯</span>
           </div>
           <div className="px-4 pb-3 text-sm text-[#000000E6] whitespace-pre-wrap leading-relaxed">
-            {stripMarkdownLight(body)}
+            {stripMarkdownLight(safeBody)}
           </div>
           {primaryMedia && (
             <div className="relative w-full aspect-[1.91/1] bg-black">
@@ -72,7 +75,7 @@ export function ChannelPreview({
   }
 
   if (ch === "twitter" || ch === "x") {
-    const tweets = splitTwitterThread(body);
+    const tweets = splitTwitterThread(safeBody);
     const isThread = tweets.length > 1;
     const headerLabel = isThread
       ? `Vista previa X / Twitter · Thread (${tweets.length} tweets)`
@@ -90,11 +93,11 @@ export function ChannelPreview({
               )}
               <div className="flex gap-3 px-4 pt-3">
                 <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white font-bold shrink-0">
-                  {brandSlug.charAt(0).toUpperCase()}
+                  {safeBrandSlug.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 text-sm">
-                    <span className="font-bold text-[#0F1419]">{brandSlug}</span>
+                    <span className="font-bold text-[#0F1419]">{safeBrandSlug}</span>
                     <span className="text-[#536471]">{handle} · 12m</span>
                     {isThread && (
                       <span className="ml-auto text-[10px] text-[#536471] bg-[#F1F2F4] px-2 py-0.5 rounded-full">
@@ -141,10 +144,10 @@ export function ChannelPreview({
           <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[#EFEFEF]">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FEDA75] via-[#D62976] to-[#4F5BD5] p-0.5">
               <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-xs font-bold">
-                {brandSlug.charAt(0).toUpperCase()}
+                {safeBrandSlug.charAt(0).toUpperCase()}
               </div>
             </div>
-            <span className="text-sm font-semibold text-[#262626] flex-1">{brandSlug}</span>
+            <span className="text-sm font-semibold text-[#262626] flex-1">{safeBrandSlug}</span>
             <span className="text-[#262626] text-lg">⋯</span>
           </div>
           <div className="relative aspect-square bg-gradient-to-br from-[#F5F5F5] to-[#E8E8E8] flex items-center justify-center">
@@ -164,7 +167,7 @@ export function ChannelPreview({
           <div className="px-3 py-2 space-y-1">
             <div className="flex gap-3 text-xl">❤️ 💬 ✈️</div>
             <div className="text-sm text-[#262626] whitespace-pre-wrap leading-snug">
-              <strong>{brandSlug}</strong> {stripMarkdownLight(body)}
+              <strong>{safeBrandSlug}</strong> {stripMarkdownLight(safeBody)}
             </div>
           </div>
         </div>
@@ -173,10 +176,10 @@ export function ChannelPreview({
   }
 
   if (ch === "blog" || ch === "seo") {
-    const title = extractTitle(body);
-    const sections = splitBlogSections(body);
+    const title = extractTitle(safeBody);
+    const sections = splitBlogSections(safeBody);
     const namedSections = sections.filter((s) => s.title);
-    const minutes = readingTimeMinutes(body);
+    const minutes = readingTimeMinutes(safeBody);
     return (
       <PreviewCard headerLabel="Vista previa Blog / SEO">
         <div className="space-y-3">
@@ -188,9 +191,9 @@ export function ChannelPreview({
             <div className="flex items-center gap-2 text-xs text-[#7A7A7A] mt-3">
               <span className="inline-flex items-center gap-1">
                 <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#2F7D3B] to-[#065F46] text-white text-[10px] font-bold flex items-center justify-center">
-                  {brandSlug.charAt(0).toUpperCase()}
+                  {safeBrandSlug.charAt(0).toUpperCase()}
                 </span>
-                <span className="font-medium text-[#2C3E50]">{brandSlug}</span>
+                <span className="font-medium text-[#2C3E50]">{safeBrandSlug}</span>
               </span>
               <span>·</span>
               <span>{minutes} min de lectura</span>
@@ -257,14 +260,14 @@ export function ChannelPreview({
       <PreviewCard headerLabel="Vista previa Email">
         <div className="bg-white border border-[#E8E2D9] rounded-lg overflow-hidden font-sans">
           <div className="px-4 py-3 border-b border-[#E8E2D9] bg-[#FAFAF8]">
-            <div className="text-xs text-[#7A7A7A]">De: {brandSlug}@brand.com</div>
+            <div className="text-xs text-[#7A7A7A]">De: {safeBrandSlug}@brand.com</div>
             <div className="text-xs text-[#7A7A7A]">Para: tu@email.com</div>
             <div className="text-sm font-bold text-[#2C3E50] mt-1">
-              {extractTitle(body) || "(sin asunto)"}
+              {extractTitle(safeBody) || "(sin asunto)"}
             </div>
           </div>
           <article className="prose prose-sm max-w-none p-6">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{safeBody}</ReactMarkdown>
           </article>
         </div>
       </PreviewCard>
@@ -273,14 +276,15 @@ export function ChannelPreview({
 
   return (
     <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-heading prose-headings:text-rust prose-a:text-rust">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{safeBody}</ReactMarkdown>
     </article>
   );
 }
 
 export function isPlaceholderBody(body: string): boolean {
-  if (!body) return true;
-  const trimmed = body.trim();
+  const text = typeof body === "string" ? body : "";
+  if (!text) return true;
+  const trimmed = text.trim();
   if (trimmed.length === 0) return true;
   return /Pendiente:\s*(?:Dulcinea|Escudero Content) ejecutará/.test(trimmed);
 }
@@ -297,7 +301,7 @@ function PreviewCard({ headerLabel, children }: { headerLabel: string; children:
 }
 
 function stripMarkdownLight(body: string): string {
-  let out = body.replace(/<!--[\s\S]*?-->/g, "");
+  let out = (typeof body === "string" ? body : "").replace(/<!--[\s\S]*?-->/g, "");
 
   // Drop a leading H1/H2 line entirely (the model sometimes prepends a draft
   // title that duplicates the task name). Only the first non-empty block —
@@ -316,12 +320,12 @@ function stripMarkdownLight(body: string): string {
 }
 
 function extractTitle(body: string): string | null {
-  const m = body.match(/^#\s+(.+)$/m);
+  const m = (typeof body === "string" ? body : "").match(/^#\s+(.+)$/m);
   return m ? m[1].trim() : null;
 }
 
 function stripInlineMarks(s: string): string {
-  return s
+  return (typeof s === "string" ? s : "")
     .replace(/<!--[\s\S]*?-->/g, "")
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
@@ -340,7 +344,8 @@ function stripInlineMarks(s: string): string {
 //      enough to plausibly be a tweet (≤320 chars) → hr-separated thread
 //   3. Otherwise → single tweet (or long-form), return [body]
 export function splitTwitterThread(body: string): string[] {
-  let cleaned = body.replace(/<!--[\s\S]*?-->/g, "");
+  const text = typeof body === "string" ? body : "";
+  let cleaned = text.replace(/<!--[\s\S]*?-->/g, "");
   cleaned = cleaned.replace(/^\s*\n*#{1,2}\s+.*\n+/, "");
 
   const numberedMatches = cleaned.match(/^\s*\d+\/\d+\b/gm) || [];
@@ -376,7 +381,7 @@ export function splitTwitterThread(body: string): string[] {
     return hrParts.map((p) => stripInlineMarks(p));
   }
 
-  return [stripMarkdownLight(body)];
+  return [stripMarkdownLight(text)];
 }
 
 export interface BlogSection {
@@ -389,7 +394,7 @@ export interface BlogSection {
 // stripped — the caller renders it in a hero card. H3+ subheaders stay inside
 // their section so ReactMarkdown can render them.
 export function splitBlogSections(body: string): BlogSection[] {
-  const cleaned = body.replace(/<!--[\s\S]*?-->/g, "").replace(/^#\s+.+$/m, "");
+  const cleaned = (typeof body === "string" ? body : "").replace(/<!--[\s\S]*?-->/g, "").replace(/^#\s+.+$/m, "");
   const parts = cleaned.split(/^##\s+/m);
 
   const sections: BlogSection[] = [];
@@ -411,6 +416,6 @@ export function splitBlogSections(body: string): BlogSection[] {
 }
 
 function readingTimeMinutes(body: string): number {
-  const words = body.split(/\s+/).filter(Boolean).length;
+  const words = (typeof body === "string" ? body : "").split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 200));
 }
