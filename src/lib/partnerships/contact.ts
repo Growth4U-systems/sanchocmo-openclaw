@@ -14,6 +14,7 @@
  */
 
 import { resolveYalcConfig, yalcFetch } from "@/lib/yalc/client";
+import { assertCampaignKind } from "@/lib/yalc/campaign-guards";
 import { contactDraftPreviewsFromResponse, type ContactDraftPreview } from "./contact-preview";
 import { findSearchByCampaign, findSearchSequence } from "./template-store";
 import { toYalcSequence } from "./templates";
@@ -85,6 +86,8 @@ export async function contactPartnerLeads(input: ContactLeadsInput): Promise<Con
   const results: ContactGateResult[] = [];
 
   for (const [campaignId, leadIds] of byCampaign) {
+    await assertCampaignKind(config, campaignId, "creator");
+
     let sequence = input.sequence;
     let sequenceName = input.sequenceName;
 

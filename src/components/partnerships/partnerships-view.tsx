@@ -773,7 +773,9 @@ export function PartnershipsView() {
                 onContinueDraft={(campaign) => openDiscoveryChat(campaign)}
                 onCreateSearch={() => openDiscoveryChat()}
                 searches={searchesQuery.data?.searches || []}
-                templateLibrary={templatesQuery.data?.summaries || []}
+                templateLibrary={(templatesQuery.data?.summaries || []).filter(
+                  (template) => template.type === "partnerships",
+                )}
                 onAssignTemplate={(campaign, templateId) =>
                   void assignTemplate(campaign, templateId)
                 }

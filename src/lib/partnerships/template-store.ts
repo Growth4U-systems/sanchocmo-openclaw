@@ -23,6 +23,7 @@ import {
   templateSummary,
   type AssignedTemplate,
   type PartnershipTemplate,
+  type TemplateCampaignType,
   type TemplateSummary,
 } from "./templates";
 import { getSearch, listSearches, saveSearch } from "./discovery-store";
@@ -184,10 +185,15 @@ function resolveSearch(slug: string, ref: { searchId?: string; campaignId?: stri
 export function assignTemplateToSearch(
   slug: string,
   templateId: string,
-  ref: { searchId?: string; campaignId?: string },
+  ref: { searchId?: string; campaignId?: string; expectedType?: TemplateCampaignType },
 ): AssignTemplateResult {
   const template = getTemplate(slug, templateId);
   if (!template) throw new TemplateValidationError(`Plantilla no encontrada: ${templateId}`);
+  if (ref.expectedType && template.type !== ref.expectedType) {
+    const expected = ref.expectedType === "b2b" ? "B2B" : "Partnerships";
+    const actual = template.type === "b2b" ? "B2B" : "Partnerships";
+    throw new TemplateValidationError(`La plantilla "${template.name}" es ${actual}; no se puede asignar a ${expected}.`);
+  }
   const search = resolveSearch(slug, ref);
 
   const assigned = searchTemplates(search);
@@ -238,7 +244,7 @@ export function assignTemplatesFromPlan(
       missing.push(name);
       continue;
     }
-    const result = assignTemplateToSearch(slug, match.id, { searchId: search.id });
+    const result = assignTemplateToSearch(slug, match.id, { searchId: search.id, expectedType: "partnerships" });
     assigned.push(result.instance);
   }
   return { assigned, missing };

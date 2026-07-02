@@ -29,6 +29,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const result = assignTemplateToSearch(slug, id, {
       searchId: typeof body.searchId === "string" && body.searchId ? body.searchId : undefined,
       campaignId: typeof body.campaignId === "string" && body.campaignId ? body.campaignId : undefined,
+      expectedType: "partnerships",
     });
     return res.status(200).json({ ok: true, instance: result.instance, search: result.search });
   } catch (err) {

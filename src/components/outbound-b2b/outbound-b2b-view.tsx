@@ -323,7 +323,7 @@ function campaignLeadCount(campaign: Campaign, leads: Lead[]): number {
   return byLead || campaign.leadCount || 0;
 }
 
-const CAMPAIGN_LAUNCHED_STATUS_RE = /(^|[\s_-])(published|live|active|running|sent|launched|completed|done|closed)([\s_-]|$)/;
+const CAMPAIGN_LAUNCHED_STATUS_RE = /(^|[\s_-])(published|live|sent|launched|completed|done|closed)([\s_-]|$)/;
 const EXTERNAL_EMAIL_STATUS_RE = /\b(sent|delivered|opened|clicked|replied|bounced|unsubscribed|failed)\b/i;
 const EXTERNAL_LIFECYCLE_STATUSES = new Set([
   "Connect_Sent",
@@ -795,6 +795,8 @@ export function OutboundB2BView() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          campaignId: lead.campaignId,
+          expectedKind: "b2b",
           lifecycleStatus: canonicalStatusForStage(target),
           note,
         }),
@@ -825,6 +827,7 @@ export function OutboundB2BView() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            expectedKind: "b2b",
             provider: "apollo",
             query: campaign?.targetSegment || campaign?.hypothesis || campaign?.title || "B2B ICP",
             titles: ["Founder", "CEO", "Head of Growth", "Marketing Director"],
@@ -836,34 +839,34 @@ export function OutboundB2BView() {
         return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/enrich?slug=${encodeURIComponent(slug)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provider: "apollo", limit: 25 }),
+          body: JSON.stringify({ expectedKind: "b2b", provider: "apollo", limit: 25 }),
         });
       }
       if (action === "approve") {
         return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/sequence/approve?slug=${encodeURIComponent(slug)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ actorLabel: "Sancho" }),
+          body: JSON.stringify({ expectedKind: "b2b", actorLabel: "Sancho" }),
         });
       }
       if (action === "dry-run") {
         return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/dry-run?slug=${encodeURIComponent(slug)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
+          body: JSON.stringify({ expectedKind: "b2b" }),
         });
       }
       if (action === "publish") {
         return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/publish?slug=${encodeURIComponent(slug)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ confirmInstantlyPublish: true, actorLabel: "Sancho" }),
+          body: JSON.stringify({ expectedKind: "b2b", confirmInstantlyPublish: true, actorLabel: "Sancho" }),
         });
       }
       return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/live?slug=${encodeURIComponent(slug)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmLiveLaunch: true, actorLabel: "Sancho" }),
+        body: JSON.stringify({ expectedKind: "b2b", confirmLiveLaunch: true, actorLabel: "Sancho" }),
       });
     },
     onSuccess: (_data, variables) => {
@@ -879,6 +882,7 @@ export function OutboundB2BView() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          expectedKind: "b2b",
           stepId,
           actorLabel: "Sancho",
           sequence: emails.map((email) => ({
@@ -972,7 +976,11 @@ export function OutboundB2BView() {
           fetchJson(`/api/yalc/leads/${encodeURIComponent(lead.id)}/stage?slug=${encodeURIComponent(slug)}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lifecycleStatus: canonicalStatusForStage(target) }),
+            body: JSON.stringify({
+              campaignId: lead.campaignId,
+              expectedKind: "b2b",
+              lifecycleStatus: canonicalStatusForStage(target),
+            }),
           }),
         ),
       );
@@ -1227,6 +1235,7 @@ export function OutboundB2BView() {
                 campaignDetail={campaignDetailQuery.data || null}
                 loading={campaignDetailQuery.isLoading}
                 saving={sequenceUpdateAction.isPending}
+                locked={selectedLeadEditsLocked}
                 actionBusy={outboundAction.isPending}
                 busyAction={outboundAction.variables?.action}
                 onSave={(stepId, emails) =>
@@ -2529,6 +2538,7 @@ function B2BPlantillasTab({
   campaignDetail,
   loading,
   saving,
+  locked,
   actionBusy,
   busyAction,
   onSave,
@@ -2540,6 +2550,7 @@ function B2BPlantillasTab({
   campaignDetail: CampaignDetail | null;
   loading: boolean;
   saving: boolean;
+  locked: boolean;
   actionBusy: boolean;
   busyAction?: OutboundAction;
   onSave: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
@@ -2589,6 +2600,11 @@ function B2BPlantillasTab({
         <aside className="rounded-xl border border-border bg-card p-4">
           <h3 className="font-heading text-lg text-navy">Salida</h3>
           <p className="text-sm text-muted-foreground">Estado operativo después de revisar contexto y mensajes.</p>
+          {locked && (
+            <div className="mt-3 rounded-md border border-yellow-500/40 bg-yellow-50 px-3 py-2 text-xs font-semibold text-yellow-800">
+              Campaña lanzada o sincronizada: la secuencia queda en solo lectura.
+            </div>
+          )}
           <div className="mt-4 rounded-lg border border-border bg-background p-3">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Estado de campaña</div>
             <div className="mt-2 grid gap-2 text-sm">
@@ -2606,7 +2622,7 @@ function B2BPlantillasTab({
                 <button
                   key={action}
                   type="button"
-                  disabled={!selectedCampaignId || actionBusy}
+                  disabled={!selectedCampaignId || actionBusy || locked}
                   onClick={() => onRunAction(action)}
                   className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
                 >
@@ -2644,6 +2660,7 @@ function B2BPlantillasTab({
                 key={block.stepId || `${block.source}-${index}`}
                 block={block}
                 saving={saving}
+                locked={locked}
                 onSave={(emails) => onSave(block.stepId, emails)}
               />
             ))}
@@ -2763,10 +2780,12 @@ function ContextSummary({ label, value }: { label: string; value: string }) {
 function SequenceBlockEditor({
   block,
   saving,
+  locked,
   onSave,
 }: {
   block: EmailSequenceBlock;
   saving: boolean;
+  locked: boolean;
   onSave: (emails: EmailSequenceEmail[]) => void;
 }) {
   const [emails, setEmails] = useState(block.emails);
@@ -2810,7 +2829,7 @@ function SequenceBlockEditor({
         <button
           type="button"
           onClick={addEmail}
-          disabled={emails.length >= 3 || saving}
+          disabled={emails.length >= 3 || saving || locked}
           className="ml-auto inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -2831,6 +2850,7 @@ function SequenceBlockEditor({
                 value={email.subject || ""}
                 onChange={(event) => updateEmail(index, { subject: event.target.value })}
                 placeholder="Asunto"
+                disabled={locked || saving}
                 className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
               />
               <input
@@ -2838,12 +2858,13 @@ function SequenceBlockEditor({
                 value={email.delayDays ?? ""}
                 onChange={(event) => updateEmail(index, { delayDays: event.target.value ? Number(event.target.value) : null })}
                 placeholder="Días"
+                disabled={locked || saving}
                 className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => removeEmail(index)}
-                disabled={emails.length <= 1 || saving}
+                disabled={emails.length <= 1 || saving || locked}
                 title="Eliminar email"
                 className="grid h-9 w-9 place-items-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
               >
@@ -2854,6 +2875,7 @@ function SequenceBlockEditor({
               value={email.body}
               onChange={(event) => updateEmail(index, { body: event.target.value })}
               rows={5}
+              disabled={locked || saving}
               className="w-full resize-y rounded-md border border-border bg-background p-3 text-sm focus:border-rust focus:outline-none"
             />
           </div>
@@ -2862,11 +2884,11 @@ function SequenceBlockEditor({
       <div className="mt-3 flex justify-end">
         <button
           type="button"
-          disabled={saving}
+          disabled={saving || locked}
           onClick={() => onSave(emails)}
           className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
         >
-          {saving ? "Guardando..." : "Guardar secuencia"}
+          {locked ? "Secuencia bloqueada" : saving ? "Guardando..." : "Guardar secuencia"}
         </button>
       </div>
     </div>
@@ -2935,14 +2957,24 @@ function B2BSettingsTab({
           </div>
         )}
       </section>
-      <aside className="rounded-xl border border-border bg-card p-4">
-        <h3 className="font-heading text-lg text-navy">Flujo B2B</h3>
-        <div className="mt-4 space-y-3 text-sm">
-          <FlowRow icon={<Search className="h-4 w-4" />} title="Buscar" body="Apollo/LinkedIn alimentan prospectos." />
-          <FlowRow icon={<Target className="h-4 w-4" />} title="Priorizar" body="Score ICP y señales de contacto." />
-          <FlowRow icon={<Mail className="h-4 w-4" />} title="Contactar" body="Secuencia editable y aprobación humana." />
-          <FlowRow icon={<Briefcase className="h-4 w-4" />} title="Cerrar" body="Reunión, deal y resultado final." />
-        </div>
+      <aside className="space-y-4">
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h3 className="font-heading text-lg text-navy">Flujo B2B</h3>
+          <div className="mt-4 space-y-3 text-sm">
+            <FlowRow icon={<Search className="h-4 w-4" />} title="Buscar" body="Apollo/LinkedIn alimentan prospectos." />
+            <FlowRow icon={<Target className="h-4 w-4" />} title="Priorizar" body="Score ICP y señales de contacto." />
+            <FlowRow icon={<Mail className="h-4 w-4" />} title="Contactar" body="Secuencia editable y aprobación humana." />
+            <FlowRow icon={<Briefcase className="h-4 w-4" />} title="Cerrar" body="Reunión, deal y resultado final." />
+          </div>
+        </section>
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h3 className="font-heading text-lg text-navy">Sync externo</h3>
+          <div className="mt-4 space-y-3 text-sm">
+            <FlowRow icon={<Send className="h-4 w-4" />} title="Webhooks" body="Instantly/Unipile empujan replies, sends, opens, bounces y mensajes nuevos en tiempo casi real." />
+            <FlowRow icon={<RefreshCw className="h-4 w-4" />} title="Reconciliación" body="Job incremental cada hora por campaña/account para recuperar eventos perdidos o reintentos." />
+            <FlowRow icon={<CheckCircle2 className="h-4 w-4" />} title="Rollup diario" body="Yalc consolida snapshots para dashboard, funnel e inbox sin hacer polling constante." />
+          </div>
+        </section>
       </aside>
     </div>
   );
