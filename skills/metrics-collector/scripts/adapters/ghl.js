@@ -14,7 +14,7 @@ const BASE_URL = 'https://services.leadconnectorhq.com';
 
 /**
  * @param {object} config - { locationId, calendarId? }
- * @param {object} env - { GHL_API_KEY }
+ * @param {object} env - { {SLUG}_GHL_API_KEY or GHL_API_KEY }
  * @param {{ from: string, to: string }} dateRange - YYYY-MM-DD
  */
 export async function collect(config, env, dateRange) {
@@ -27,7 +27,11 @@ export async function collect(config, env, dateRange) {
     (slugUpper ? env[`${slugUpper}_GHL_LOCATION_ID`] : undefined);
   if (!locationId) throw new Error('GHL: missing locationId in integrations.json or GHL_LOCATION_ID env');
 
-  const apiKey = env.GHL_API_KEY;
+  const apiKey =
+    (slugUpper ? env[`${slugUpper}_GHL_API_KEY`] : undefined) ||
+    (slugUpper ? env[`${slugUpper}_GHL_PRIVATE_INTEGRATION_TOKEN`] : undefined) ||
+    env.GHL_API_KEY ||
+    env.GHL_PRIVATE_INTEGRATION_TOKEN;
   if (!apiKey) throw new Error('GHL: missing GHL_API_KEY in .env');
 
   const headers = {

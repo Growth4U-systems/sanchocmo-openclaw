@@ -393,7 +393,7 @@ export async function getMetricsRuntimeAudit(slug: string, opts: MetricsAuditOpt
 
   const sourceByName = new Map(sources.map((source) => [source.source, source]));
   const surfaces = SURFACES.map((surface): MetricsAuditSurface => {
-    const canonicalSources = surface.sources.map((source) => normalizeSourceId(source));
+    const canonicalSources = [...new Set(surface.sources.map((source) => normalizeSourceId(source)))];
     const connectedSources = canonicalSources.filter((source) => (sourceByName.get(source)?.rowCount ?? 0) > 0);
     const values = computed.filter((value) => value.surface === surface.key);
     const counts = qualityCounts(values);
