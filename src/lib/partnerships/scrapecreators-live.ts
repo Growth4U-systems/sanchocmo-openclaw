@@ -3,6 +3,7 @@ import type { DiscoveryPlan, RawDiscoveryCandidate } from "./discovery-types";
 const SCRAPECREATORS_BASE = "https://api.scrapecreators.com";
 const DEFAULT_POST_COUNT = 12;
 const DEFAULT_MAX_CANDIDATES = 10;
+const DEFAULT_TIMEOUT_MS = 15_000;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -154,21 +155,44 @@ function computeCandidate(
 }
 
 async function scrapeCreatorsJson(path: string, apiKey: string): Promise<unknown> {
-  const res = await fetch(`${SCRAPECREATORS_BASE}${path}`, {
-    headers: { "x-api-key": apiKey },
-  });
-  const body = await res.json().catch(() => null);
-  if (res.status === 401 || res.status === 403) {
-    throw new Error("ScrapeCreators clave inválida o sin permisos");
+  const timeoutMs = Number(process.env.SCRAPECREATORS_TIMEOUT_MS || "") || DEFAULT_TIMEOUT_MS;
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(`${SCRAPECREATORS_BASE}${path}`, {
+        headers: { "x-api-key": apiKey },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      const body = await res.json().catch(() => null);
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("ScrapeCreators clave inválida o sin permisos");
+      }
+      if (res.status === 402) {
+        throw new Error("ScrapeCreators sin créditos");
+      }
+      if (!res.ok) {
+        const message = asString(asRecord(body).message) || `HTTP ${res.status}`;
+        lastError = new Error(`ScrapeCreators ${message}`);
+        if (res.status >= 500 && attempt < 2) continue;
+        throw lastError;
+      }
+      const record = asRecord(body);
+      if (record.success === false) {
+        lastError = new Error(`ScrapeCreators ${asString(record.message) || "respuesta no exitosa"}`);
+        if (attempt < 2) continue;
+        throw lastError;
+      }
+      return body;
+    } catch (err) {
+      clearTimeout(timer);
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < 2) continue;
+    }
   }
-  if (res.status === 402) {
-    throw new Error("ScrapeCreators sin créditos");
-  }
-  if (!res.ok) {
-    const message = asString(asRecord(body).message) || `HTTP ${res.status}`;
-    throw new Error(`ScrapeCreators ${message}`);
-  }
-  return body;
+  throw lastError || new Error("ScrapeCreators no respondió");
 }
 
 function maxCandidatesFromEnv(): number {
@@ -185,9 +209,26 @@ export async function scrapeLiveDiscoveryCandidates(plan: DiscoveryPlan): Promis
 
   const target = Math.max(1, Math.min(plan.targetVolume || DEFAULT_MAX_CANDIDATES, maxCandidatesFromEnv()));
   const wantedTiers = new Set<string>(plan.tiers || []);
-  const query = encodeURIComponent(plan.sectors.join(" "));
-  const searchBody = await scrapeCreatorsJson(`/v1/instagram/search/profiles?query=${query}&page=1`, apiKey);
-  const profiles = profileListFromResponse(searchBody);
+  const queries = Array.from(new Set([
+    plan.sectors.join(" "),
+    ...plan.sectors,
+    "inteligencia artificial empresas",
+    "tecnologia empresas",
+    "consultoria tecnologica",
+  ].map((query) => query.trim()).filter(Boolean)));
+  let profiles: SearchProfile[] = [];
+  let lastSearchError: Error | null = null;
+  for (const rawQuery of queries) {
+    try {
+      const query = encodeURIComponent(rawQuery);
+      const searchBody = await scrapeCreatorsJson(`/v1/instagram/search/profiles?query=${query}&page=1`, apiKey);
+      profiles = profileListFromResponse(searchBody);
+      if (profiles.length > 0) break;
+    } catch (err) {
+      lastSearchError = err instanceof Error ? err : new Error(String(err));
+    }
+  }
+  if (profiles.length === 0 && lastSearchError) throw lastSearchError;
   const selected = profiles.filter((profile) => {
     const tier = tierForFollowers(profile.follower_count);
     return !wantedTiers.size || (tier !== null && wantedTiers.has(tier));
