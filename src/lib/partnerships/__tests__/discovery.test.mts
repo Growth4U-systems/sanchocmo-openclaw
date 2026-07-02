@@ -346,7 +346,7 @@ test("runDiscoverySearch sin candidatos explica el camino agentic y marca error"
   assert.ok(created.search.projectId, "segundo proyecto creado");
   assert.notEqual(created.taskId, firstTaskId, "task id distinto por búsqueda");
   await assert.rejects(
-    () => lib.runDiscoverySearch({ slug: "monzo", searchId: created.search.id }),
+    () => lib.runDiscoverySearch({ slug: "monzo", searchId: created.search.id, candidates: [] }),
     /No candidates provided/,
   );
   const record = lib.getSearch("monzo", created.search.id)!;
