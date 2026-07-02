@@ -70,6 +70,8 @@ test("triggerDiscoveryRunner despacha al gateway con skill+agent del runner", as
   assert.equal(body.agent, "rocinante");
   assert.equal(body.isAdmin, true);
   assert.match(body.text, /discovery-search-runner/);
+  assert.match(body.text, /No uses fixtures ni datos demo/);
+  assert.match(body.text, /ScrapeCreators no tiene créditos/);
 });
 
 test("triggerDiscoveryRunner es best-effort: gateway caído → forwardedToGateway=false", async () => {

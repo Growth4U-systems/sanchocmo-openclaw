@@ -77,6 +77,8 @@ interface EncuentraTabProps {
     templateId: string,
   ) => void;
   onCreateTemplate?: () => void;
+  onRetrySearch?: (search: DiscoverySearchRecord) => void;
+  retryingSearchId?: string | null;
 }
 
 /** Orden de cards como el mockup: en marcha primero, drafts al final. */
@@ -85,6 +87,64 @@ const STATE_ORDER: Record<SearchState, number> = {
   done: 1,
   paused: 2,
   draft: 3,
+};
+
+type RunnerNotice = {
+  text: string;
+  tone: "muted" | "ok" | "warn" | "error";
+  retryable: boolean;
+};
+
+function minutesSince(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const timestamp = Date.parse(iso);
+  if (!Number.isFinite(timestamp)) return null;
+  return Math.max(0, Math.floor((Date.now() - timestamp) / 60_000));
+}
+
+function runnerNotice(search: DiscoverySearchRecord | undefined): RunnerNotice | null {
+  const runner = search?.runner;
+  if (!runner) return null;
+  if (runner.status === "done") {
+    const inserted = runner.stats?.inserted ?? 0;
+    return {
+      text: `Discovery completado · ${inserted} candidato${inserted === 1 ? "" : "s"} insertado${inserted === 1 ? "" : "s"}`,
+      tone: "ok",
+      retryable: false,
+    };
+  }
+  if (runner.status === "running") {
+    return {
+      text: "Scraping real en curso con Rocinante.",
+      tone: "warn",
+      retryable: false,
+    };
+  }
+  if (runner.status === "error") {
+    return {
+      text: runner.error
+        ? `No se pudo ejecutar discovery: ${runner.error}`
+        : "No se pudo ejecutar discovery.",
+      tone: "error",
+      retryable: true,
+    };
+  }
+  const minutes = minutesSince(runner.queuedAt);
+  return {
+    text:
+      minutes !== null && minutes >= 5
+        ? `Esperando a Rocinante hace ${minutes} min. Puedes reintentar el discovery.`
+        : "Esperando a Rocinante para scraping real.",
+    tone: minutes !== null && minutes >= 5 ? "warn" : "muted",
+    retryable: true,
+  };
+}
+
+const RUNNER_NOTICE_CLASS: Record<RunnerNotice["tone"], string> = {
+  muted: "border-border bg-muted/40 text-muted-foreground",
+  ok: "border-sage/40 bg-sage/10 text-sage",
+  warn: "border-yellow-500/40 bg-yellow-50 text-yellow-800",
+  error: "border-destructive/40 bg-destructive/10 text-destructive",
 };
 
 export function EncuentraTab({
@@ -98,6 +158,8 @@ export function EncuentraTab({
   templateLibrary = [],
   onAssignTemplate,
   onCreateTemplate,
+  onRetrySearch,
+  retryingSearchId = null,
 }: EncuentraTabProps) {
   const [filter, setFilter] = useState<"todas" | "archivadas">("todas");
   const [pickerFor, setPickerFor] = useState<string | null>(null);
@@ -152,6 +214,10 @@ export function EncuentraTab({
           {ordered.map((campaign) => {
             const state = searchState(campaign);
             const meta = STATE_META[state];
+            const search = searches.find(
+              (item) => item.campaignId === campaign.id,
+            );
+            const notice = runnerNotice(search);
             const campaignLeads = leads.filter(
               (lead) => lead.campaignId === campaign.id,
             );
@@ -237,6 +303,34 @@ export function EncuentraTab({
                   </p>
                 </div>
 
+                {notice && (
+                  <div className="px-5 pb-3">
+                    <div
+                      className={cn(
+                        "flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-[11px]",
+                        RUNNER_NOTICE_CLASS[notice.tone],
+                      )}
+                      data-testid="runner-notice"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <span className="min-w-0 flex-1">{notice.text}</span>
+                      {notice.retryable && search && onRetrySearch && (
+                        <button
+                          type="button"
+                          onClick={() => onRetrySearch(search)}
+                          disabled={retryingSearchId === search.id}
+                          className="rounded border border-current/30 bg-background/70 px-2.5 py-1 text-[10px] font-semibold transition-colors hover:bg-background disabled:cursor-wait disabled:opacity-60"
+                          data-testid="retry-discovery-runner"
+                        >
+                          {retryingSearchId === search.id
+                            ? "Reintentando…"
+                            : "Reintentar discovery"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {!isDraft && (
                   <div
                     className="relative flex flex-wrap items-center gap-2 border-t border-border px-5 py-2.5"
@@ -247,9 +341,7 @@ export function EncuentraTab({
                       Plantillas:
                     </span>
                     {(
-                      searches.find(
-                        (search) => search.campaignId === campaign.id,
-                      )?.templates || []
+                      search?.templates || []
                     ).map((instance) => (
                       <span
                         key={instance.instanceId}

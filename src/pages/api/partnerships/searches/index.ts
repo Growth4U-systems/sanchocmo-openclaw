@@ -7,6 +7,7 @@ import {
   listSearches,
   runDiscoverySearch,
   triggerDiscoveryRunner,
+  updateRunnerState,
 } from "@/lib/partnerships";
 
 /**
@@ -84,9 +85,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       searchId: created.search.id,
       title: created.search.title,
     });
+    const search = dispatch.forwardedToGateway
+      ? created.search
+      : updateRunnerState(slug, created.search.id, {
+          status: "error",
+          error:
+            dispatch.error ||
+            "No se pudo avisar a Rocinante. Reintenta el discovery desde Encuentra.",
+        });
     return res.status(201).json({
       ok: true,
-      search: created.search,
+      search,
       campaignId: created.campaignId,
       taskId: created.taskId,
       runner: {
