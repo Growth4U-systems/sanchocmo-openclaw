@@ -73,6 +73,20 @@ const DOT_CLASS: Record<DotState, string> = {
   off: "bg-border",
 };
 
+const DEFAULT_STAGES: ChannelLoopState["stages"] = {
+  antennas: { enabled: 0, total: 0, hasError: false, lastRunAt: null },
+  ideation: { newCount: 0, approvedCount: 0 },
+  creation: { draftingCount: 0, clarifyCount: 0, readyCount: 0, pendingMediaCount: 0 },
+  published: { thisMonth: 0, nextSlot: null },
+  metrics: {
+    provider: "none",
+    engagementPct: null,
+    impressions30d: null,
+    postsWithMetrics: 0,
+    gsc: null,
+  },
+};
+
 interface StageTileProps {
   def: StageDef;
   big: string;
@@ -120,7 +134,10 @@ interface Props {
 export function ChannelLoopCard({ loop, onStageClick, onNextAction, onOpenSetup, onOpenStrategy, onPersonaClick, onPoolClick }: Props) {
   const emoji = CHANNEL_EMOJI[loop.channel] || "📄";
   const defs = stageDefs(loop.channel);
-  const s = loop.stages;
+  const s = loop.stages ?? DEFAULT_STAGES;
+  const cadence = loop.cadence ?? { frequency: "", bestDays: [], bestTimes: [] };
+  const personas = Array.isArray(loop.personas) ? loop.personas : [];
+  const repurposing = loop.repurposing ?? { incoming: 0, outgoing: 0 };
 
   if (!loop.active) {
     return (
@@ -222,9 +239,9 @@ export function ChannelLoopCard({ loop, onStageClick, onNextAction, onOpenSetup,
         )}>
           {loop.mode === "always-on" ? "🔁 Always-on" : "● Activo"}
         </span>
-        {loop.cadence.frequency && (
+        {cadence.frequency && (
           <span className="text-[11px] font-semibold rounded-full border-2 border-ink px-2.5 py-0.5 bg-card">
-            {loop.cadence.frequency}
+            {cadence.frequency}
           </span>
         )}
         <button
@@ -276,12 +293,12 @@ export function ChannelLoopCard({ loop, onStageClick, onNextAction, onOpenSetup,
       </div>
 
       {/* Voces / personas (SAN-163) — Founder-Led splits into one sub-loop per voice */}
-      {loop.personas.length > 0 && (
+      {personas.length > 0 && (
         <div className="mx-4 mt-1 mb-2 border-t-2 border-dashed border-ink/20 pt-2 space-y-1.5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-1">
-            👥 {loop.personas.length} {loop.personas.length === 1 ? "voz" : "voces"}
+            👥 {personas.length} {personas.length === 1 ? "voz" : "voces"}
           </p>
-          {loop.personas.map((p) => {
+          {personas.map((p) => {
             const st = p.stages;
             return (
               <button
@@ -295,7 +312,7 @@ export function ChannelLoopCard({ loop, onStageClick, onNextAction, onOpenSetup,
                 {p.role && <span className="text-[11px] text-muted-foreground">· {p.role}</span>}
                 {p.handle && <span className="text-[11px] text-muted-foreground">· {p.handle}</span>}
                 <span className="text-[12px] text-ink ml-auto whitespace-nowrap">
-                  💡 {st.ideation.newCount} · ✍️ {st.creation.draftingCount + st.creation.readyCount} · 🚀 {st.published.thisMonth}
+                  💡 {st?.ideation?.newCount ?? 0} · ✍️ {(st?.creation?.draftingCount ?? 0) + (st?.creation?.readyCount ?? 0)} · 🚀 {st?.published?.thisMonth ?? 0}
                 </span>
                 {p.nextAction && (
                   <span className="text-[11px] font-semibold border-2 border-ink rounded px-1.5 bg-yellow-400/30 text-ink w-full sm:w-auto">
@@ -342,9 +359,9 @@ export function ChannelLoopCard({ loop, onStageClick, onNextAction, onOpenSetup,
             ✓ Sin pendientes — el motor sigue buscando señales
           </span>
         )}
-        {(loop.repurposing.incoming > 0 || loop.repurposing.outgoing > 0) && (
+        {(repurposing.incoming > 0 || repurposing.outgoing > 0) && (
           <span className="text-[12px] font-semibold border-2 border-ink rounded-full px-2.5 py-1 bg-sage/15" title="Piezas derivadas con content-atomizer">
-            ♻️ {loop.repurposing.outgoing} → · ← {loop.repurposing.incoming}
+            ♻️ {repurposing.outgoing} → · ← {repurposing.incoming}
           </span>
         )}
       </footer>

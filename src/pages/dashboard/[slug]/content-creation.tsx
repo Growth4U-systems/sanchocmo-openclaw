@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -27,6 +27,51 @@ type TabKey = (typeof TABS)[number]["key"] | "setup";
 
 // Legacy deep-links (?tab=engine) land on the closest new surface.
 const TAB_ALIASES: Record<string, TabKey> = { engine: "channels" };
+
+class ContentCreationRenderBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[content-creation] render error", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div
+          className="border-[3px] border-destructive rounded-lg bg-destructive/5 p-5"
+          style={{ boxShadow: "var(--pop-sm)" }}
+        >
+          <p className="font-bold text-sm text-destructive mb-1">
+            Content Creation no pudo renderizar este panel.
+          </p>
+          <p className="text-xs text-muted-foreground mb-3">
+            El resto de Mission Control sigue disponible. Hemos aislado el fallo para evitar el error global de la app.
+          </p>
+          <pre className="text-[11px] whitespace-pre-wrap break-words rounded border border-destructive/30 bg-card p-2 mb-3">
+            {this.state.error.message || "Error de render desconocido"}
+          </pre>
+          <button
+            type="button"
+            onClick={() => this.setState({ error: null })}
+            className="px-4 py-2 text-sm font-semibold border-2 border-ink rounded-lg bg-card hover:-translate-y-0.5 hover:shadow-comic transition-all"
+          >
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export default function ContentCreationPage() {
   const slug = useSlugSync();
@@ -121,36 +166,47 @@ export default function ContentCreationPage() {
       </div>
 
       {/* Content */}
-      {legacyStatePending && activeTab !== "channels" && activeTab !== "setup" && (
-        <p className="text-muted-foreground">Cargando...</p>
-      )}
-      {slug && activeTab === "channels" && (
-        <ChannelsTab slug={slug} openChat={openChat} onGo={(tab, channel, status, extra) => switchTab(tab, channel, status, extra)} />
-      )}
-      {slug && activeTab === "setup" && (
-        <SetupTab slug={slug} openChat={openChat} focusChannel={channelParam} />
-      )}
-      {!legacyStatePending && slug && !hasProject && data && activeTab !== "channels" && activeTab !== "setup" && (
-        <StrategyDocsTab slug={slug} data={data} openChat={openChat} />
-      )}
-      {!legacyStatePending && slug && hasProject && activeTab === "ideas" && (
-        <IdeaQueueTab
-          slug={slug}
-          openChat={openChat}
-          focusId={typeof router.query.focus === "string" ? router.query.focus : null}
-          initialChannel={channelParam}
-          initialStatus={statusParam}
-          initialAuthor={authorParam}
-          initialUnassigned={unassignedParam}
-        />
-      )}
-      {!legacyStatePending && slug && hasProject && activeTab === "calendar" && (
-        <PostingCalendarTab
-          slug={slug}
-          focusKey={typeof router.query.focus === "string" ? router.query.focus : null}
-          channelFilter={channelParam}
-        />
-      )}
+      <ContentCreationRenderBoundary
+        key={[
+          slug || "",
+          activeTab,
+          channelParam || "",
+          statusParam || "",
+          authorParam || "",
+          unassignedParam ? "unassigned" : "",
+        ].join(":")}
+      >
+        {legacyStatePending && activeTab !== "channels" && activeTab !== "setup" && (
+          <p className="text-muted-foreground">Cargando...</p>
+        )}
+        {slug && activeTab === "channels" && (
+          <ChannelsTab slug={slug} openChat={openChat} onGo={(tab, channel, status, extra) => switchTab(tab, channel, status, extra)} />
+        )}
+        {slug && activeTab === "setup" && (
+          <SetupTab slug={slug} openChat={openChat} focusChannel={channelParam} />
+        )}
+        {!legacyStatePending && slug && !hasProject && data && activeTab !== "channels" && activeTab !== "setup" && (
+          <StrategyDocsTab slug={slug} data={data} openChat={openChat} />
+        )}
+        {!legacyStatePending && slug && hasProject && activeTab === "ideas" && (
+          <IdeaQueueTab
+            slug={slug}
+            openChat={openChat}
+            focusId={typeof router.query.focus === "string" ? router.query.focus : null}
+            initialChannel={channelParam}
+            initialStatus={statusParam}
+            initialAuthor={authorParam}
+            initialUnassigned={unassignedParam}
+          />
+        )}
+        {!legacyStatePending && slug && hasProject && activeTab === "calendar" && (
+          <PostingCalendarTab
+            slug={slug}
+            focusKey={typeof router.query.focus === "string" ? router.query.focus : null}
+            channelFilter={channelParam}
+          />
+        )}
+      </ContentCreationRenderBoundary>
     </DashboardLayout>
   );
 }
