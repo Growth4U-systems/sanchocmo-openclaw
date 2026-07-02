@@ -11,6 +11,7 @@
 export type {
   DiscoveryLeadPayload,
   DiscoveryPlan,
+  DiscoveryRunnerErrorCode,
   DiscoveryRunnerMode,
   DiscoveryRunnerState,
   DiscoveryRunnerStats,
@@ -57,6 +58,12 @@ export type { CreateSearchResult } from "./create-search";
 
 export { runDiscoverySearch } from "./discovery-runner";
 export type { RunDiscoveryOptions, RunDiscoveryResult } from "./discovery-runner";
+export {
+  discoveryJobId,
+  enqueueDiscoverySearchRun,
+  resumeQueuedDiscoverySearches,
+} from "./discovery-jobs";
+export type { EnqueueDiscoverySearchRunOptions } from "./discovery-jobs";
 export { scrapeLiveDiscoveryCandidates } from "./scrapecreators-live";
 
 export { triggerDiscoveryRunner } from "./trigger-runner";

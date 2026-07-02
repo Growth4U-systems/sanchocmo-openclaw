@@ -4,7 +4,9 @@ import { yalcErrorResponse } from "@/lib/yalc/client";
 import {
   createDiscoverySearch,
   DiscoveryPlanError,
+  enqueueDiscoverySearchRun,
   listSearches,
+  resumeQueuedDiscoverySearches,
   runDiscoverySearch,
   triggerDiscoveryRunner,
   updateRunnerState,
@@ -19,9 +21,9 @@ import {
  *
  *   POST /api/partnerships/searches  { slug, plan, run?, threadId? }
  *     Crea la búsqueda (campaign type=Partnerships en Yalc + tarea Outreach
- *     madre) y, POR DEFECTO, despacha a Rocinante para ejecutar el discovery
- *     REAL (scraping). `plan` = JSON de discovery-plan-builder. `run`:
- *       - ausente / "live"  → ejecuta server-side con ScrapeCreators.
+ *     madre) y, POR DEFECTO, encola un job server-side para ejecutar discovery
+ *     REAL con ScrapeCreators sin bloquear el request. `run`:
+ *       - ausente / "live"  → job server-side con ScrapeCreators.
  *       - "agent"           → despacha el runner a Rocinante (fallback manual).
  *       - "fixtures" (o true) → runner inline con los 9 creators fake (verifier).
  *       - "none" / false      → solo crea, runner queued (sin despachar).
@@ -35,11 +37,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!slug) return res.status(400).json({ error: "Missing slug" });
 
   if (req.method === "GET") {
+    const resumed = resumeQueuedDiscoverySearches(slug);
     const statusFilter = typeof req.query.status === "string" ? req.query.status.trim() : "";
     const searches = listSearches(slug).filter(
       (search) => !statusFilter || search.runner.status === statusFilter,
     );
-    return res.status(200).json({ searches, count: searches.length });
+    return res.status(200).json({ searches, count: searches.length, resumed });
   }
 
   if (req.method !== "POST") {
@@ -79,13 +82,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     if (!body.run || body.run === "live") {
-      const run = await runDiscoverySearch({ slug, searchId: created.search.id });
+      const search = enqueueDiscoverySearchRun({ slug, searchId: created.search.id });
       return res.status(201).json({
         ok: true,
-        search: run.search,
+        search,
         campaignId: created.campaignId,
         taskId: created.taskId,
-        runner: { mode: "live", stats: run.stats },
+        runner: {
+          mode: "live",
+          async: true,
+          jobId: search.runner.jobId,
+          status: search.runner.status,
+        },
       });
     }
 
