@@ -514,6 +514,36 @@ export function PartnershipsView() {
     }
   }
 
+  const retryDiscoveryMutation = useMutation({
+    mutationFn: (search: DiscoverySearchRecord) =>
+      fetchJson<{
+        ok: boolean;
+        runner?: { dispatched?: boolean; error?: string | null };
+      }>(
+        `/api/partnerships/searches/${encodeURIComponent(search.id)}/dispatch?slug=${encodeURIComponent(slug)}`,
+        { method: "POST" },
+      ),
+    onSuccess: (payload) => {
+      if (payload.runner?.dispatched) {
+        showToast("✓ Discovery reenviado a Rocinante");
+      } else {
+        showToast(
+          `⚠️ No se pudo avisar a Rocinante${payload.runner?.error ? `: ${payload.runner.error}` : ""}`,
+          "warn",
+        );
+      }
+      void queryClient.invalidateQueries({
+        queryKey: ["partnerships", slug, "searches"],
+      });
+    },
+    onError: (error) => {
+      showToast(
+        `⚠️ ${error instanceof Error ? error.message : "No se pudo reintentar el discovery"}`,
+        "warn",
+      );
+    },
+  });
+
   function openDiscoveryChat(campaign?: PartnershipCampaign) {
     if (!slug) return;
     // SAN-328: desde la tarjeta de una búsqueda existente, retoma el hilo donde
@@ -685,6 +715,8 @@ export function PartnershipsView() {
                   void assignTemplate(campaign, templateId)
                 }
                 onCreateTemplate={() => pushQuery({ tab: "plantillas" })}
+                onRetrySearch={(search) => retryDiscoveryMutation.mutate(search)}
+                retryingSearchId={retryDiscoveryMutation.variables?.id ?? null}
               />
             )}
 
