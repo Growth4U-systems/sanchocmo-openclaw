@@ -9,8 +9,12 @@ curl -fsSL https://raw.githubusercontent.com/Growth4U-systems/sanchocmo-openclaw
 ```
 
 Baja el runtime del último release a `~/sanchocmo` (override `SANCHO_DIR`),
-corre el wizard y levanta el stack. Si la imagen de GHCR todavía es privada, el
-instalador te guía el `docker login` y reintenta.
+corre el wizard (modo **quick** por defecto) y levanta el stack. Si la imagen de
+GHCR todavía es privada, el instalador te guía el `docker login` y reintenta.
+
+**El arranque más simple, ya clonado:** `./sancho run` — corre el wizard en modo
+quick (sólo si falta `.env`), levanta, y abre el navegador. Si ya está
+configurado, equivale a `./sancho up`.
 
 **Para desarrollo (clonando):**
 
@@ -34,8 +38,20 @@ tarball).
 
 ## What the wizard asks
 
-`scripts/wizard.sh` (run automatically by `./sancho install`, or on its own)
-collects the minimum to boot and generates the rest, in six steps:
+The wizard has **two modes** (pick with `--quick` / `--advanced`, the
+`WIZARD_MODE` env var, or the interactive selector at the top):
+
+- **quick** (default) — asks only the essentials: the **model provider & auth**
+  (step 1 below) and the **first brand name** (the slug is derived from it).
+  Everything else takes a sensible default — admin login via the printed token,
+  bundled local Postgres, `http://localhost:3000`, default ports, no Google, no
+  optional services. Finish the rest later in the app or with
+  `./sancho reconfigure --advanced`.
+- **advanced** — the full flow below, plus a **Host ports** step (`MC_PORT` /
+  `GATEWAY_HOST_PORT` / `LEGACY_HOST_PORT`) for pinning the loopback ports.
+
+`scripts/wizard.sh` (run automatically by `./sancho install` / `run`, or on its
+own) collects the minimum to boot and generates the rest. The **advanced** steps:
 
 1. **Model provider & auth** — pick the provider(s): `anthropic`, `openai`,
    `fireworks`, `both`, or `all` (default `anthropic`). The auth mode is asked
@@ -56,10 +72,15 @@ collects the minimum to boot and generates the rest, in six steps:
    with the admin token printed at the end.
 3. **Database** — `local` (bundled Postgres, recommended) or `external` (e.g.
    Neon `DATABASE_URL`).
-4. **Access URL** — the Base URL where you'll reach Mission Control (default
-   `http://localhost:3000`).
-5. **First brand** — slug + display name.
-6. **Optional services** — both off by default, both self-provision their token
+4. **Host ports** — the loopback host ports for Mission Control / gateway /
+   legacy server (defaults `3000` / `18789` / `18790`). Only the **host** side of
+   each mapping — container ports are fixed. The installer auto-relocates a busy
+   port anyway, so this step is just for pinning.
+5. **Access URL** — the Base URL where you'll reach Mission Control (default
+   `http://localhost:<MC_PORT>`).
+6. **First brand** — display name (in **quick** the slug is derived from it; in
+   **advanced** you can also set the slug).
+7. **Optional services** — both off by default, both self-provision their token
    and are brought up automatically by `./sancho` when enabled:
    - *Outreach (YALC)* — generates `YALC_API_TOKEN` and wires
      `YALC_BASE_URL=http://yalc:3847`.
@@ -96,6 +117,8 @@ WIZARD_ASSUME_YES=1 PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key \
   FIRST_BRAND_SLUG=acme FIRST_BRAND_NAME="Acme Inc" bash scripts/wizard.sh
 # Optional: ENABLE_YALC=yes / ENABLE_OD=yes to provision those services, and
 # ENABLE_GOOGLE=yes GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=… for Google login.
+# Env answers are honored in both modes; set WIZARD_MODE=advanced only if you
+# want the advanced prompts when running interactively.
 ```
 
 ## Running
@@ -105,6 +128,7 @@ figures out which compose overlays (Open Design, YALC) to include for you, so yo
 never type `-f docker-compose.*.yml` by hand:
 
 ```bash
+./sancho run           # simplest start: quick wizard (if no .env) + up + open browser
 ./sancho up            # start the stack (enabled overlays, from .env)
 ./sancho down          # stop & remove containers + network (data is kept)
 ./sancho restart       # down + up
@@ -113,9 +137,13 @@ never type `-f docker-compose.*.yml` by hand:
 ./sancho reconfigure   # re-run the wizard (regenerates .env + config; keeps data)
 ```
 
-First install (wizard + start) is `./sancho install` (the classic `./install.sh`
+The fastest path is **`./sancho run`** — it runs the wizard in **quick** mode
+only if `.env` is missing, brings the stack up, and opens your browser at the
+access URL; if you're already configured it just behaves like `./sancho up`.
+First install with more control is `./sancho install` (the classic `./install.sh`
 is a thin shim for it). Opt into optional services at install time with
-`./sancho install --od` / `--yalc`.
+`./sancho install --od` / `--yalc`, or reconfigure fully with
+`./sancho reconfigure --advanced`.
 
 > Why a CLI? It always loads the right compose overlays (from your `.env`) and
 > `down` passes `--remove-orphans`, so the project network is always cleaned up

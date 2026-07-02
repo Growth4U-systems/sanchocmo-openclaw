@@ -7,12 +7,19 @@
 #   - config/instance.json  (minimal, no Discord)
 #   - config/clients.json   (your first brand + generated tokens)
 #
+# Two modes (WIZARD_MODE, or --quick / --advanced):
+#   quick (default)  asks only the essentials — provider + credential and the
+#                    first brand name; everything else takes a sensible default.
+#   advanced         the full flow: admin/login, database, access URL, custom
+#                    host ports (MC_PORT / GATEWAY_HOST_PORT / LEGACY_HOST_PORT),
+#                    and the optional YALC / Open Design overlays.
+#
 # Interactive by default. For non-interactive / CI use, set WIZARD_ASSUME_YES=1
 # and pass answers as environment variables (same names the wizard writes, plus
-# PROVIDER / ANTHROPIC_AUTH_MODE / OPENAI_AUTH_MODE / DB_MODE / BASE_URL /
-# FIRST_BRAND_SLUG / FIRST_BRAND_NAME / ENABLE_GOOGLE). In non-interactive mode
-# you MUST supply the model credential for the chosen auth mode
-# (ANTHROPIC_API_KEY or, for subscription, ANTHROPIC_OAUTH_TOKEN) or the
+# WIZARD_MODE / PROVIDER / ANTHROPIC_AUTH_MODE / OPENAI_AUTH_MODE / DB_MODE /
+# BASE_URL / FIRST_BRAND_SLUG / FIRST_BRAND_NAME / ENABLE_GOOGLE). In
+# non-interactive mode you MUST supply the model credential for the chosen auth
+# mode (ANTHROPIC_API_KEY or, for subscription, ANTHROPIC_OAUTH_TOKEN) or the
 # wizard aborts — it never leaves a placeholder behind.
 #
 # It never overwrites an existing .env / config file unless you pass --force.
@@ -30,9 +37,14 @@ INSTANCE_FILE="config/instance.json"
 CLIENTS_FILE="config/clients.json"
 
 FORCE=0
+# WIZARD_MODE: quick (default) asks the bare minimum to boot; advanced exposes
+# the full flow. Set via env, --quick/--advanced, or the interactive selector.
+WIZARD_MODE="${WIZARD_MODE:-}"
 for arg in "$@"; do
   case "$arg" in
     --force) FORCE=1 ;;
+    --quick) WIZARD_MODE=quick ;;
+    --advanced|--full) WIZARD_MODE=advanced ;;
     -h|--help)
       grep '^# ' "$0" | sed 's/^# //'; exit 0 ;;
   esac
@@ -117,6 +129,9 @@ need_cmd openssl
 gen_b64() { openssl rand -base64 32 | tr -d '\n'; }
 gen_hex() { openssl rand -hex 32; }
 
+# slugify <text> : lowercase, non-alnum runs → single hyphen, trim edge hyphens.
+slugify() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'; }
+
 # --- set_env KEY VALUE : set-or-append a key in $ENV_FILE (uncomments if needed)
 set_env() {
   local key="$1" val="$2"
@@ -155,13 +170,38 @@ fi
 say "${B}SanchoCMO — setup wizard${RST}"
 say "${DIM}Generates .env + config/*.json so you can './sancho up'.${RST}"
 
+# --- Setup mode --------------------------------------------------------------
+# quick (default): ask only what's needed to boot — provider + credential and the
+# first brand name; everything else takes a sensible default (finish the rest in
+# the app or via `./sancho reconfigure --advanced`). advanced: the full flow
+# (admin/login, database, access URL, custom host ports, optional services).
+if [ -z "$WIZARD_MODE" ]; then
+  if [ "$INTERACTIVE" = "1" ]; then
+    WIZARD_MODE="$(ask WIZARD_MODE "Setup mode — quick or advanced" "quick")"
+  else
+    WIZARD_MODE="quick"
+  fi
+fi
+case "$WIZARD_MODE" in advanced|full) WIZARD_MODE=advanced ;; *) WIZARD_MODE=quick ;; esac
+if [ "$WIZARD_MODE" = "advanced" ]; then STEP_TOTAL=7; else STEP_TOTAL=2; fi
+STEP_NO=0
+# nstep <title> : numbered step header ("N/TOTAL  title") with a mode-aware total.
+nstep() { STEP_NO=$((STEP_NO + 1)); step "$STEP_NO/$STEP_TOTAL  $*"; }
+say "${DIM}Mode: ${WIZARD_MODE} (quick asks the essentials; advanced exposes everything)${RST}"
+
+# Advanced-only vars default to empty so `set -u` is satisfied when quick skips
+# their steps; the write section only persists non-default host ports.
+MC_PORT="${MC_PORT:-}"
+GATEWAY_HOST_PORT="${GATEWAY_HOST_PORT:-}"
+LEGACY_HOST_PORT="${LEGACY_HOST_PORT:-}"
+
 # --- 1. Model provider + auth ------------------------------------------------
 # Ask the auth MODE first, then collect the credential that mode actually needs
 # (and require it). The runtime resolves Anthropic creds as ANTHROPIC_OAUTH_TOKEN
 # (subscription) → ANTHROPIC_API_KEY; leaving a stale API key around in
 # subscription mode is the documented "invalid x-api-key" fallback footgun, so we
 # blank the unused credential explicitly.
-step "1/6  Model provider & auth"
+nstep "Model provider & auth"
 PROVIDER="$(ask PROVIDER "Provider — anthropic, openai, fireworks, both, or all" "anthropic")"
 # Initialize empty (NOT to a default like "api_key") so `ask` actually prompts:
 # any non-empty value makes ask treat the question as already answered and skip
@@ -212,9 +252,6 @@ case "$PROVIDER" in
 esac
 
 # --- 2. Admin & login access -------------------------------------------------
-step "2/6  Admin & login access"
-ADMIN_EMAIL_DOMAIN="$(ask ADMIN_EMAIL_DOMAIN "Admin email domain (emails @this become admins)" "example.com")"
-ADMIN_IDENTITY_EMAIL="$(ask ADMIN_IDENTITY_EMAIL "Admin contact email" "admin@${ADMIN_EMAIL_DOMAIN}")"
 # Google login is OPTIONAL. You can always log in with the admin token printed at
 # the end. NextAuth enables Google only when BOTH client id and secret are
 # non-empty — so a leftover placeholder would enable it with bad creds
@@ -222,26 +259,40 @@ ADMIN_IDENTITY_EMAIL="$(ask ADMIN_IDENTITY_EMAIL "Admin contact email" "admin@${
 # it now, empty (= disabled) otherwise.
 GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
 GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
-say "  ${DIM}Google login is optional — skip it and use the admin token (printed at the end).${RST}"
-ENABLE_GOOGLE="$(ask ENABLE_GOOGLE "Configure Google login now? — yes or no" "no")"
-case "$(printf '%s' "$ENABLE_GOOGLE" | tr '[:upper:]' '[:lower:]')" in
-  y|yes|true|1)
-    GOOGLE_CLIENT_ID="$(ask GOOGLE_CLIENT_ID "Google OAuth client ID" "")"
-    GOOGLE_CLIENT_SECRET="$(ask GOOGLE_CLIENT_SECRET "Google OAuth client secret" "")"
-    if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ]; then
-      warn "Google client id/secret incomplete — leaving Google login OFF (use the admin token)."
+if [ "$WIZARD_MODE" = "advanced" ]; then
+  nstep "Admin & login access"
+  ADMIN_EMAIL_DOMAIN="$(ask ADMIN_EMAIL_DOMAIN "Admin email domain (emails @this become admins)" "example.com")"
+  ADMIN_IDENTITY_EMAIL="$(ask ADMIN_IDENTITY_EMAIL "Admin contact email" "admin@${ADMIN_EMAIL_DOMAIN}")"
+  say "  ${DIM}Google login is optional — skip it and use the admin token (printed at the end).${RST}"
+  ENABLE_GOOGLE="$(ask ENABLE_GOOGLE "Configure Google login now? — yes or no" "no")"
+  case "$(printf '%s' "$ENABLE_GOOGLE" | tr '[:upper:]' '[:lower:]')" in
+    y|yes|true|1)
+      GOOGLE_CLIENT_ID="$(ask GOOGLE_CLIENT_ID "Google OAuth client ID" "")"
+      GOOGLE_CLIENT_SECRET="$(ask GOOGLE_CLIENT_SECRET "Google OAuth client secret" "")"
+      if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ]; then
+        warn "Google client id/secret incomplete — leaving Google login OFF (use the admin token)."
+        GOOGLE_CLIENT_ID=""; GOOGLE_CLIENT_SECRET=""
+      fi
+      ;;
+    *)
       GOOGLE_CLIENT_ID=""; GOOGLE_CLIENT_SECRET=""
-    fi
-    ;;
-  *)
-    GOOGLE_CLIENT_ID=""; GOOGLE_CLIENT_SECRET=""
-    ;;
-esac
+      ;;
+  esac
+else
+  # Quick: admin login is the token printed at the end; Google stays off.
+  ADMIN_EMAIL_DOMAIN="${ADMIN_EMAIL_DOMAIN:-example.com}"
+  ADMIN_IDENTITY_EMAIL="${ADMIN_IDENTITY_EMAIL:-admin@${ADMIN_EMAIL_DOMAIN}}"
+  GOOGLE_CLIENT_ID=""; GOOGLE_CLIENT_SECRET=""
+fi
 
 # --- 3. Database -------------------------------------------------------------
-step "3/6  Database"
-say "  ${DIM}'local' uses the bundled Postgres (recommended). 'external' uses your own (e.g. Neon).${RST}"
-DB_MODE="$(ask DB_MODE "Database — local or external" "local")"
+if [ "$WIZARD_MODE" = "advanced" ]; then
+  nstep "Database"
+  say "  ${DIM}'local' uses the bundled Postgres (recommended). 'external' uses your own (e.g. Neon).${RST}"
+  DB_MODE="$(ask DB_MODE "Database — local or external" "local")"
+else
+  DB_MODE="${DB_MODE:-local}"
+fi
 if [ "$DB_MODE" = "external" ]; then
   DATABASE_URL="$(ask DATABASE_URL "External DATABASE_URL (postgres://...)" "")"
   COMPOSE_PROFILES_VAL=""
@@ -261,44 +312,72 @@ else
   COMPOSE_PROFILES_VAL="local-db"
 fi
 
-# --- 4. URLs -----------------------------------------------------------------
-step "4/6  Access URL"
-BASE_URL="$(ask BASE_URL "Base URL where you'll reach Mission Control" "http://localhost:3000")"
+# --- 4. Host ports (advanced) ------------------------------------------------
+# Only the HOST side of each mapping; container ports are fixed. The installer
+# auto-relocates a busy port anyway (SAN-386), so these are just for pinning.
+if [ "$WIZARD_MODE" = "advanced" ]; then
+  nstep "Host ports"
+  say "  ${DIM}Press Enter for defaults — the installer relocates a busy port automatically.${RST}"
+  MC_PORT="$(ask MC_PORT "Mission Control host port" "3000")"
+  GATEWAY_HOST_PORT="$(ask GATEWAY_HOST_PORT "Gateway host port" "18789")"
+  LEGACY_HOST_PORT="$(ask LEGACY_HOST_PORT "Legacy mc-server host port" "18790")"
+fi
 
-# --- 5. First brand ----------------------------------------------------------
-step "5/6  First brand"
-FIRST_BRAND_SLUG="$(ask FIRST_BRAND_SLUG "First brand slug (lowercase-hyphens)" "my-brand")"
+# --- 5. Access URL -----------------------------------------------------------
+# Default derives from the MC host port so a custom port and the login URL agree.
+if [ "$WIZARD_MODE" = "advanced" ]; then
+  nstep "Access URL"
+  BASE_URL="$(ask BASE_URL "Base URL where you'll reach Mission Control" "http://localhost:${MC_PORT:-3000}")"
+else
+  BASE_URL="${BASE_URL:-http://localhost:3000}"
+fi
+
+# --- 6. First brand ----------------------------------------------------------
+nstep "First brand"
 FIRST_BRAND_NAME="$(ask FIRST_BRAND_NAME "First brand display name" "My Brand")"
+if [ "$WIZARD_MODE" = "advanced" ]; then
+  FIRST_BRAND_SLUG="$(ask FIRST_BRAND_SLUG "First brand slug (lowercase-hyphens)" "$(slugify "$FIRST_BRAND_NAME")")"
+else
+  # Quick: derive the slug from the name (no extra question).
+  FIRST_BRAND_SLUG="${FIRST_BRAND_SLUG:-$(slugify "$FIRST_BRAND_NAME")}"
+fi
+# Guard against an empty slug (e.g. a name with no alphanumerics).
+[ -n "$FIRST_BRAND_SLUG" ] || FIRST_BRAND_SLUG="my-brand"
 
-# --- 6. Optional services (Outreach, Open Design) ---------------------------
-step "6/6  Optional services"
-say "  ${DIM}YALC powers cold outbound (campaigns, leads, sequences). It runs as an${RST}"
-say "  ${DIM}opt-in container; you can also enable it later. Sending email needs your${RST}"
-say "  ${DIM}own provider key (e.g. Instantly), configured afterwards in the cockpit.${RST}"
-ENABLE_YALC="$(ask ENABLE_YALC "Enable Outreach (YALC)? — yes or no" "no")"
-case "$(printf '%s' "$ENABLE_YALC" | tr '[:upper:]' '[:lower:]')" in
-  y|yes|true|1) ENABLE_YALC=1 ;;
-  *)            ENABLE_YALC=0 ;;
-esac
-
-# Open Design — same opt-in logic as YALC: self-provisioning (we mint
-# OD_API_TOKEN, the Phase-5 bearer the daemon requires), brought up by install.sh
-# when its token is present. The one extra input OD needs that YALC doesn't is a
-# browser-reachable URL (the web app loads client-side); default to localhost.
+# --- 7. Optional services (Outreach, Open Design) — advanced only ------------
+# Self-provisioning opt-in overlays (we mint their bearer tokens); install.sh
+# brings each up when its token is present. Quick leaves both off — enable later
+# with `./sancho install --yalc` / `--od` or `./sancho reconfigure --advanced`.
+ENABLE_YALC="${ENABLE_YALC:-0}"
+ENABLE_OD="${ENABLE_OD:-0}"
 OD_API_TOKEN="${OD_API_TOKEN:-}"
 OD_WEB_URL="${OD_WEB_URL:-}"
 OD_ALLOWED_ORIGINS="${OD_ALLOWED_ORIGINS:-}"
-say ""
-say "  ${DIM}Open Design is an agentic visual editor for brand design systems. It runs${RST}"
-say "  ${DIM}as an opt-in container on port 7456; its token is generated for you.${RST}"
-ENABLE_OD="$(ask ENABLE_OD "Enable Open Design? — yes or no" "no")"
-case "$(printf '%s' "$ENABLE_OD" | tr '[:upper:]' '[:lower:]')" in
-  y|yes|true|1) ENABLE_OD=1 ;;
-  *)            ENABLE_OD=0 ;;
-esac
-if [ "$ENABLE_OD" = "1" ]; then
-  OD_WEB_URL="$(ask OD_WEB_URL "Open Design web URL (browser-reachable)" "http://localhost:7456")"
-  OD_ALLOWED_ORIGINS="$OD_WEB_URL"
+if [ "$WIZARD_MODE" = "advanced" ]; then
+  nstep "Optional services"
+  say "  ${DIM}YALC powers cold outbound (campaigns, leads, sequences). It runs as an${RST}"
+  say "  ${DIM}opt-in container; you can also enable it later. Sending email needs your${RST}"
+  say "  ${DIM}own provider key (e.g. Instantly), configured afterwards in the cockpit.${RST}"
+  ENABLE_YALC="$(ask ENABLE_YALC "Enable Outreach (YALC)? — yes or no" "no")"
+  case "$(printf '%s' "$ENABLE_YALC" | tr '[:upper:]' '[:lower:]')" in
+    y|yes|true|1) ENABLE_YALC=1 ;;
+    *)            ENABLE_YALC=0 ;;
+  esac
+
+  # Open Design needs one extra input YALC doesn't: a browser-reachable URL (the
+  # web app loads client-side); default to localhost.
+  say ""
+  say "  ${DIM}Open Design is an agentic visual editor for brand design systems. It runs${RST}"
+  say "  ${DIM}as an opt-in container on port 7456; its token is generated for you.${RST}"
+  ENABLE_OD="$(ask ENABLE_OD "Enable Open Design? — yes or no" "no")"
+  case "$(printf '%s' "$ENABLE_OD" | tr '[:upper:]' '[:lower:]')" in
+    y|yes|true|1) ENABLE_OD=1 ;;
+    *)            ENABLE_OD=0 ;;
+  esac
+  if [ "$ENABLE_OD" = "1" ]; then
+    OD_WEB_URL="$(ask OD_WEB_URL "Open Design web URL (browser-reachable)" "http://localhost:7456")"
+    OD_ALLOWED_ORIGINS="$OD_WEB_URL"
+  fi
 fi
 
 # --- Generate secrets --------------------------------------------------------
@@ -356,6 +435,12 @@ set_env DATABASE_URL "$DATABASE_URL"
 set_env COMPOSE_PROFILES "$COMPOSE_PROFILES_VAL"
 set_env BASE_URL "$BASE_URL"
 set_env NEXTAUTH_URL "$BASE_URL"
+# Custom host ports (advanced) — only persist a non-default so a quick install
+# leaves compose on its ${MC_PORT:-3000} defaults and Phase-1 relocation stays
+# in charge. The container-internal ports never change.
+[ -n "${MC_PORT:-}" ]           && [ "$MC_PORT" != "3000" ]            && set_env MC_PORT "$MC_PORT"
+[ -n "${GATEWAY_HOST_PORT:-}" ] && [ "$GATEWAY_HOST_PORT" != "18789" ] && set_env GATEWAY_HOST_PORT "$GATEWAY_HOST_PORT"
+[ -n "${LEGACY_HOST_PORT:-}" ]  && [ "$LEGACY_HOST_PORT" != "18790" ]  && set_env LEGACY_HOST_PORT "$LEGACY_HOST_PORT"
 [ "${DB_MODE:-local}" = "local" ] && set_env POSTGRES_PASSWORD "${POSTGRES_PASSWORD:-}"
 # Outreach: wire Sancho ↔ YALC over the compose network. install.sh reads a
 # non-empty YALC_API_TOKEN as the signal to bring up the YALC overlay.
@@ -454,6 +539,11 @@ if [ "$ENABLE_OD" = "1" ]; then
   say "${B}Open Design is enabled.${RST}"
   say "   ${DIM}./sancho starts it automatically.${RST}"
   say "   ${DIM}Web app reachable at ${OD_WEB_URL}.${RST}"
+  say ""
+fi
+if [ "$WIZARD_MODE" != "advanced" ]; then
+  say "${DIM}Quick setup — admin domain, database, access URL, ports and optional services took defaults.${RST}"
+  say "   Want more control? Re-run:  ${CYN}./sancho reconfigure --advanced${RST}"
   say ""
 fi
 say "${B}Optional integrations${RST} — configure later (all off by default):"
