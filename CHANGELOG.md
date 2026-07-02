@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.17.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.16.1...v0.17.0) (2026-07-02)
+
+
+### Features
+
+* **outreach:** generalize campaign type for B2B + OUTREACH_B2B kill-switch ([#934](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/934)) ([6abfa9c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6abfa9c2f85418b02396d5af3da54ee6db4c0c91))
+
+
+### Bug Fixes
+
+* guard content creation client renders ([#1054](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1054)) ([833179d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/833179db85028c638738b187a2f5fb3ee594ea2d))
+* **outreach:** harden B2B and partnerships campaign guards ([#1057](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1057)) ([9d62580](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9d62580edfe56691a69b3a7604c7cefcb053a766))
+
 ## [0.16.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.16.0...v0.16.1) (2026-07-02)
 
 
