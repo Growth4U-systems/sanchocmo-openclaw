@@ -114,6 +114,103 @@ get_base_url() {
   [ -n "$url" ] && printf '%s' "$url" || printf 'http://localhost:3000'
 }
 
+# ---------------------------------------------------------------------------
+# Port-conflict handling. We only ever move the HOST side of a compose mapping
+# (127.0.0.1:HOST:CONTAINER) — the container-internal ports are fixed, so nginx,
+# config/instance.json, the gateway config and `next start -p` are untouched.
+# ---------------------------------------------------------------------------
+
+# _env_get KEY — active (uncommented) value of KEY in .env, empty if unset.
+_env_get() {
+  grep -E "^[[:space:]]*$1=" .env 2>/dev/null | head -1 | cut -d= -f2- | tr -d "\"'" || true
+}
+
+# port_in_use PORT — 0 if something is listening on 127.0.0.1:PORT, else 1.
+# Prefers bash /dev/tcp (no external deps); falls back to ss/lsof when a build
+# has /dev/tcp disabled.
+port_in_use() {
+  local port="$1"
+  if ( exec 3<>"/dev/tcp/127.0.0.1/$port" ) 2>/dev/null; then
+    return 0
+  fi
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${port}\$" && return 0
+    return 1
+  fi
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -iTCP:"$port" -sTCP:LISTEN -n -P >/dev/null 2>&1 && return 0
+  fi
+  return 1
+}
+
+# next_free_port START — first free port >= START (scans up to +50, else dies).
+next_free_port() {
+  local p="$1" tries=0
+  while port_in_use "$p"; do
+    p=$((p + 1)); tries=$((tries + 1))
+    [ "$tries" -gt 50 ] && die "No encontré un puerto libre cerca de $1 (probé 50)."
+  done
+  printf '%s' "$p"
+}
+
+# _stack_owns_port PORT — 0 if PORT is already published by THIS compose stack
+# (so it's "ours" — reuse it instead of relocating on a re-up). Needs COMPOSE +
+# COMPOSE_ARGS set (build_compose_args first).
+_stack_owns_port() {
+  local port="$1" ids
+  ids="$($COMPOSE $COMPOSE_ARGS ps -q 2>/dev/null)" || return 1
+  [ -n "$ids" ] || return 1
+  # shellcheck disable=SC2086
+  docker inspect --format \
+    '{{range $p, $c := .NetworkSettings.Ports}}{{range $c}}{{.HostPort}} {{end}}{{end}}' \
+    $ids 2>/dev/null | tr ' ' '\n' | grep -qx "$port"
+}
+
+# _point_base_url_to_port PORT — repoint BASE_URL/NEXTAUTH_URL at the new MC host
+# port, but ONLY when they're a localhost URL. Never rewrites a real domain.
+_point_base_url_to_port() {
+  local port="$1" key val
+  for key in BASE_URL NEXTAUTH_URL; do
+    val="$(_env_get "$key")"
+    case "$val" in
+      http://localhost:*|http://127.0.0.1:*)
+        set_env_var "$key" "$(printf '%s' "$val" | sed -E "s|:[0-9]+|:$port|")" >/dev/null
+        echo "  ↳ $key → :$port"
+        ;;
+    esac
+  done
+}
+
+# resolve_host_ports — relocate any busy host port to the next free one so `up`
+# never fails with "port is already allocated". OD's port is only checked when
+# its overlay is active. When MC_PORT moves, BASE_URL/NEXTAUTH_URL follow (if
+# localhost). Persists choices to .env via set_env_var. Idempotent: a port this
+# stack already owns is left alone.
+resolve_host_ports() {
+  local moved=0 od_active=0
+  case " ${COMPOSE_ARGS:-} " in *" docker-compose.od.yml "*) od_active=1 ;; esac
+  local key default active cur want free
+  while read -r key default active; do
+    [ -n "$key" ] || continue
+    [ "$active" = "1" ] || continue
+    cur="$(_env_get "$key")"; want="${cur:-$default}"
+    if port_in_use "$want" && ! _stack_owns_port "$want"; then
+      free="$(next_free_port $((want + 1)))"
+      echo "  ⚠ puerto $want en uso — reasigno $key=$free"
+      set_env_var "$key" "$free" >/dev/null
+      moved=1
+      [ "$key" = "MC_PORT" ] && _point_base_url_to_port "$free"
+    fi
+  done <<EOF
+MC_PORT 3000 1
+GATEWAY_HOST_PORT 18789 1
+LEGACY_HOST_PORT 18790 1
+OD_HOST_PORT 7456 $od_active
+EOF
+  [ "$moved" = "1" ] && echo "  ✓ puertos reasignados para evitar conflictos" \
+                     || echo "  ✓ puertos libres"
+}
+
 # _boot_phase SECONDS — texto orientativo de en qué anda el arranque, según el
 # tiempo transcurrido. Da feedback de progreso para que no parezca colgado.
 _boot_phase() {

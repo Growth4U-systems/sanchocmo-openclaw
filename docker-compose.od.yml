@@ -18,7 +18,9 @@ services:
     container_name: open-design
     restart: unless-stopped
     ports:
-      - "127.0.0.1:7456:7456"
+      # Host side parameterized for port-conflict relocation (compose-env.sh
+      # resolve_host_ports); container side stays 7456 (nginx-od upstream assumes it).
+      - "127.0.0.1:${OD_HOST_PORT:-7456}:7456"
     environment:
       NODE_ENV: production
       OD_BIND_HOST: 0.0.0.0
