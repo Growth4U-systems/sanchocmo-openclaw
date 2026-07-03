@@ -23,10 +23,8 @@ export function SlideOver({
   children,
   actions,
 }: SlideOverProps) {
-  const { sidebarOpen, isFullscreen } = useChatStore((state) => ({
-    sidebarOpen: state.sidebarOpen,
-    isFullscreen: state.isFullscreen,
-  }));
+  const sidebarOpen = useChatStore((state) => state.sidebarOpen);
+  const isFullscreen = useChatStore((state) => state.isFullscreen);
   const offsetForChat = sidebarOpen && !isFullscreen;
 
   // Close on Escape key
