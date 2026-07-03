@@ -1,7 +1,7 @@
 {
   "private": true,
   "dependencies": {
-    "@openclaw/discord": "2026.5.7"
+    "@openclaw/discord": "2026.6.11"
   },
   "overrides": {
     "@aws-sdk/client-bedrock-runtime": "3.1042.0",
