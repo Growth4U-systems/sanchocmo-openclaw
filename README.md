@@ -97,32 +97,38 @@ installer walks you through `docker login` and retries.
 ```bash
 git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git sanchocmo && cd sanchocmo
 
-# Install (runs the wizard if .env is missing, then starts the stack)
-./sancho install
+# Simplest — quick setup (asks only the essentials) + start + open the browser
+./sancho run
 
-# Optional overlays:
-#   ./sancho install --od     # also start Open Design
-#   ./sancho install --yalc   # also start YALC (Outreach)
-#   ./sancho install --no-up  # configure only, don't start containers
+# Or the full installer (same thing, with more control over the wizard):
+./sancho install               # runs the wizard if .env is missing, then starts
+#   ./sancho install --quick     # force the short wizard (2 questions)
+#   ./sancho install --advanced  # full wizard: admin/login, DB, host ports, overlays
+#   ./sancho install --od        # also start Open Design
+#   ./sancho install --yalc      # also start YALC (Outreach)
+#   ./sancho install --no-up     # configure only, don't start containers
 ```
 
 Then manage the whole lifecycle with the same CLI — no `docker compose -f …` to
 remember:
 
 ```bash
-./sancho up | down | restart | status | logs
+./sancho run | up | down | restart | status | logs
 ./sancho update [vX.Y.Z|edge|latest]   # pull (and optionally pin) a version
 ./sancho destroy                       # wipe containers + data (asks to confirm)
 ```
 
 (`./install.sh` still works — it's a thin shim for `./sancho install`.)
 
-The wizard asks for the essentials (provider + auth mode, API key, admin email
-domain, first brand) and generates the secrets (`NEXTAUTH_SECRET`,
-`ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `adminToken`, `mcToken`), writing
-`.env`, `config/instance.json`, and `config/clients.json` for you. A boot
-preflight then validates the must-have config and fails fast with a clear list
-if anything is missing.
+The wizard has **two modes**: **quick** (the default) asks only the essentials —
+provider + auth mode, the API key, and the first brand name — and defaults the
+rest; **advanced** also covers admin/login, database, custom host ports, and the
+optional overlays. Either way it generates the secrets (`NEXTAUTH_SECRET`,
+`ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `adminToken`, `mcToken`) and
+writes `.env`, `config/instance.json`, and `config/clients.json` for you. If a
+local port (e.g. `3000`) is already in use, the installer automatically picks the
+next free one and points your access URL at it. A boot preflight then validates
+the must-have config and fails fast with a clear list if anything is missing.
 
 Full guide: [docs/INSTALL.md](docs/INSTALL.md).
 

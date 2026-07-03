@@ -166,29 +166,34 @@ _stack_owns_port() {
     $ids 2>/dev/null | tr ' ' '\n' | grep -qx "$port"
 }
 
-# _point_base_url_to_port PORT — repoint BASE_URL/NEXTAUTH_URL at the new MC host
-# port, but ONLY when they're a localhost URL. Never rewrites a real domain.
-_point_base_url_to_port() {
-  local port="$1" key val
-  for key in BASE_URL NEXTAUTH_URL; do
-    val="$(_env_get "$key")"
-    case "$val" in
-      http://localhost:*|http://127.0.0.1:*)
-        set_env_var "$key" "$(printf '%s' "$val" | sed -E "s|:[0-9]+|:$port|")" >/dev/null
-        echo "  ↳ $key → :$port"
-        ;;
-    esac
-  done
+# _point_url_var_to_port KEY PORT — repoint the port in .env's KEY to PORT, but
+# ONLY when its value is a localhost URL. Never rewrites a real domain. Used to
+# keep a BROWSER-facing URL in sync with its relocated host port (MC's BASE_URL/
+# NEXTAUTH_URL, OD's OD_WEB_URL/OD_ALLOWED_ORIGINS). Inter-service URLs are NOT
+# touched — those use the compose network (DNS name + fixed container port, e.g.
+# yalc:3847, open-design:7456), so a host-port change never affects them.
+_point_url_var_to_port() {
+  local key="$1" port="$2" val
+  val="$(_env_get "$key")"
+  case "$val" in
+    http://localhost:*|http://127.0.0.1:*|https://localhost:*|https://127.0.0.1:*)
+      set_env_var "$key" "$(printf '%s' "$val" | sed -E "s|:[0-9]+|:$port|")" >/dev/null
+      echo "  ↳ $key → :$port"
+      ;;
+  esac
 }
 
 # resolve_host_ports — relocate any busy host port to the next free one so `up`
-# never fails with "port is already allocated". OD's port is only checked when
-# its overlay is active. When MC_PORT moves, BASE_URL/NEXTAUTH_URL follow (if
-# localhost). Persists choices to .env via set_env_var. Idempotent: a port this
-# stack already owns is left alone.
+# never fails with "port is already allocated". The OD and YALC ports are only
+# checked when their overlay is active. When a port that has a BROWSER-facing URL
+# moves, that URL follows (MC → BASE_URL/NEXTAUTH_URL, OD → OD_WEB_URL/
+# OD_ALLOWED_ORIGINS) — inter-service URLs (yalc:3847, open-design:7456) are DNS +
+# fixed container ports, so they're never touched. Persists choices to .env via
+# set_env_var. Idempotent: a port this stack already owns is left alone.
 resolve_host_ports() {
-  local moved=0 od_active=0
-  case " ${COMPOSE_ARGS:-} " in *" docker-compose.od.yml "*) od_active=1 ;; esac
+  local moved=0 od_active=0 yalc_active=0
+  case " ${COMPOSE_ARGS:-} " in *" docker-compose.od.yml "*)   od_active=1 ;; esac
+  case " ${COMPOSE_ARGS:-} " in *" docker-compose.yalc.yml "*) yalc_active=1 ;; esac
   local key default active cur want free
   while read -r key default active; do
     [ -n "$key" ] || continue
@@ -199,13 +204,22 @@ resolve_host_ports() {
       echo "  ⚠ puerto $want en uso — reasigno $key=$free"
       set_env_var "$key" "$free" >/dev/null
       moved=1
-      [ "$key" = "MC_PORT" ] && _point_base_url_to_port "$free"
+      # Keep the matching browser-facing URL(s) in sync with the new host port.
+      case "$key" in
+        MC_PORT)
+          _point_url_var_to_port BASE_URL "$free"
+          _point_url_var_to_port NEXTAUTH_URL "$free" ;;
+        OD_HOST_PORT)
+          _point_url_var_to_port OD_WEB_URL "$free"
+          _point_url_var_to_port OD_ALLOWED_ORIGINS "$free" ;;
+      esac
     fi
   done <<EOF
 MC_PORT 3000 1
 GATEWAY_HOST_PORT 18789 1
 LEGACY_HOST_PORT 18790 1
 OD_HOST_PORT 7456 $od_active
+YALC_PORT 3847 $yalc_active
 EOF
   [ "$moved" = "1" ] && echo "  ✓ puertos reasignados para evitar conflictos" \
                      || echo "  ✓ puertos libres"
