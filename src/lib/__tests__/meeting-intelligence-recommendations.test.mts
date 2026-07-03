@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 const { insightsNeedingRecommendation, documentsForText, recommendationEvidenceRefreshPatch, backfillMeetingRecommendations } = await import(
   "../data/meeting-intelligence-runner"
 );
+const { convertedRecommendationTaskId } = await import("../data/meeting-intelligence-db");
 
 test("insightsNeedingRecommendation keeps only insights without a recommendation", () => {
   const insights = [{ id: "i1" }, { id: "i2" }, { id: "i3" }];
@@ -59,6 +60,15 @@ test("recommendationEvidenceRefreshPatch preserves human workflow fields on upse
   assert.equal((patch as { status?: string }).status, undefined);
   assert.equal((patch as { taskStatus?: string }).taskStatus, undefined);
   assert.equal((patch as { taskId?: string }).taskId, undefined);
+});
+
+test("convertedRecommendationTaskId is P-prefixed (json projectDirs lists only P* dirs) and stable", () => {
+  const id = convertedRecommendationTaskId("mirc_22df657bcaa28a28f8d5483b");
+  assert.equal(id, "P-mirec-22df657bcaa28a28f8d5483b");
+  // The "P" prefix is the contract that broke on staging — guard it hard.
+  assert.ok(id.startsWith("P"), "must start with P or the json backend hides the task");
+  // Idempotent: same recommendation always maps to the same task id.
+  assert.equal(convertedRecommendationTaskId("mirc_22df657bcaa28a28f8d5483b"), id);
 });
 
 test("backfillMeetingRecommendations degrades cleanly without a database", async () => {
