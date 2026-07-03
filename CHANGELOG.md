@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.18.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.17.1...v0.18.0) (2026-07-03)
+
+
+### Features
+
+* **installer:** SAN-386 auto-relocate busy host ports ([#1067](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1067)) ([1ba9f96](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1ba9f96741bc75d12ac7e17e37578019ff0a140d))
+* **installer:** SAN-387 quick/advanced wizard modes + ./sancho run ([#1069](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1069)) ([3122a7b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3122a7b7d086a2b07ec83c5ed8e45eeeb0ad8a8f))
+* **intelligence:** adapter metricool→signals + refresh endpoint (SAN-271) ([#766](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/766)) ([7a0ba0a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7a0ba0a59aedefff085bf5eed5bb2f4be4af09f3))
+* **outreach:** B2B lead normalizer for the unified YALC pipeline (P1a) ([#1056](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1056)) ([5ddb475](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5ddb475078a1ac74045ef6cc60a7f3b66573fc0a))
+
+
+### Bug Fixes
+
+* **content:** SAN-385 harden content creation render guards ([#1061](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1061)) ([1fa300c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1fa300c35d3cc5c2bfcfb5455fd9c1e9302e2d63))
+* **content:** SAN-385 isolate content creation render failures ([dcf500b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/dcf500b3c76ab38926d5680d106e6a0634ae2539))
+* **content:** SAN-385 stop slideover update loop ([dc0a024](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/dc0a024a766e96a3894a6cacbcbb2ac03aaac0a4))
+* **installer:** SAN-390/391 complete port auto-relocation (YALC + OD URL sync) + README ([#1074](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1074)) ([f3ac0e2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f3ac0e258d37db703008214c15ff5df0055186f2))
+* **intelligence:** converted-task id must be P-prefixed to be visible (SAN-222) ([#683](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/683)) ([a70fae9](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a70fae9d6dc5b0a4b9505d2412d25b08ff5897e6))
+* **metrics:** SAN-369 audit runtime and collect missing surfaces ([8d87b97](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8d87b977b12eece29dd0554e19f90350285e98d1))
+* **metrics:** SAN-369 emit empty Metricool social rows ([6d33394](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6d33394c8f5f93311f758f361f9ce109d65d7694))
+* **metrics:** SAN-369 prefer client GHL token ([48a44a3](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/48a44a3c8da5c631f5328611daa5cdd0fef629d1))
+* **runtime:** export MC_ADMIN_TOKEN to the agent for discovery launch (SAN-350) ([#936](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/936)) ([b6e0943](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b6e094399f8e516f8bcde93efdcbd2b532346a4a))
+
 ## [0.17.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.17.0...v0.17.1) (2026-07-02)
 
 
