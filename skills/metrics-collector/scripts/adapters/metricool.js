@@ -40,6 +40,25 @@ function metricIfObserved(metrics, name, value, date, dimensions, observed) {
   }
 }
 
+function pushEmptyNetworkMetrics(metrics, network, date, followersByNetwork) {
+  const dims = { network };
+  metrics.push(
+    { name: 'posts', value: 0, date, dimensions: dims },
+    { name: 'impressions', value: 0, date, dimensions: dims },
+    { name: 'clicks', value: 0, date, dimensions: dims },
+    { name: 'likes', value: 0, date, dimensions: dims },
+    { name: 'comments', value: 0, date, dimensions: dims },
+    { name: 'avgEngagement', value: 0, date, dimensions: dims },
+    { name: 'reach', value: 0, date, dimensions: dims },
+    { name: 'shares', value: 0, date, dimensions: dims },
+    { name: 'saves', value: 0, date, dimensions: dims },
+    { name: 'videoViews', value: 0, date, dimensions: dims },
+  );
+  if (followersByNetwork.has(network)) {
+    metrics.push({ name: 'followers', value: followersByNetwork.get(network), date, dimensions: dims });
+  }
+}
+
 function profileFollowers(brand, network) {
   const prefixed = [
     `${network}Followers`,
@@ -148,8 +167,13 @@ export async function collect(config, env, dateRange) {
 
       const data = await resp.json();
       const posts = data.data || (Array.isArray(data) ? data : []);
+      const dims = { network };
 
-      if (posts.length === 0) continue;
+      if (posts.length === 0) {
+        pushEmptyNetworkMetrics(metrics, network, dateRange.from, followersByNetwork);
+        console.log(`  ✅ ${network}: 0 posts`);
+        continue;
+      }
 
       // Aggregate metrics for the period
       let totalImpressions = 0, totalClicks = 0, totalLikes = 0, totalComments = 0;
@@ -174,8 +198,6 @@ export async function collect(config, env, dateRange) {
       }
 
       const avgEngagement = posts.length > 0 ? Math.round(totalEngagement / posts.length * 100) / 100 : 0;
-      const dims = { network };
-
       metrics.push(
         { name: 'posts', value: posts.length, date: dateRange.from, dimensions: dims },
         { name: 'impressions', value: totalImpressions, date: dateRange.from, dimensions: dims },

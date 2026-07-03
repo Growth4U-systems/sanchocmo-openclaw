@@ -61,3 +61,47 @@ test('Metricool adapter emits extended social KPIs when API rows include them', 
     globalThis.fetch = originalFetch;
   }
 });
+
+test('Metricool adapter emits zero activity and followers for connected networks without posts', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    if (href.includes('/admin/simpleProfiles')) {
+      return Response.json([
+        {
+          id: 'blog-1',
+          linkedinCompany: true,
+          linkedinFollowers: 321,
+        },
+      ]);
+    }
+    if (href.includes('/v2/analytics/posts/linkedin')) {
+      return Response.json({ data: [] });
+    }
+    return new Response('', { status: 403 });
+  };
+
+  try {
+    const result = await collect(
+      { METRICOOL_URL: 'https://app.metricool.com/evolution/web?blogId=blog-1&userId=user-1' },
+      { METRICOOL_API_TOKEN: 'token' },
+      { from: '2026-07-02', to: '2026-07-02' },
+    );
+
+    const byName = new Map(result.metrics.map((metric) => [metric.name, metric]));
+    assert.equal(byName.get('posts')?.value, 0);
+    assert.equal(byName.get('impressions')?.value, 0);
+    assert.equal(byName.get('clicks')?.value, 0);
+    assert.equal(byName.get('likes')?.value, 0);
+    assert.equal(byName.get('comments')?.value, 0);
+    assert.equal(byName.get('avgEngagement')?.value, 0);
+    assert.equal(byName.get('reach')?.value, 0);
+    assert.equal(byName.get('shares')?.value, 0);
+    assert.equal(byName.get('saves')?.value, 0);
+    assert.equal(byName.get('videoViews')?.value, 0);
+    assert.equal(byName.get('followers')?.value, 321);
+    assert.equal(byName.get('posts')?.dimensions?.network, 'linkedin');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
