@@ -24,9 +24,17 @@ git checkout -b <branch> origin/staging   # ALWAYS branch from fresh origin/stag
 **Branch name:** `<author>/san-<n>-<kebab-description>`
 (e.g. `nahuel/san-230-branching-model`, `alfonso/san-104-retire-escudero`).
 - `<author>` = your handle (the human you act for). Use `claude/...` only if none.
-- `san-<n>` = the Linear issue id, lowercase. **Every code change needs one** —
+- `san-<n>` = a Linear issue id, lowercase. **Every code change needs one** —
   the `Require Linear issue ID` check fails without `SAN-<n>` in the branch,
-  title, or body. No issue yet? Create one in the SanchoCMO Linear team first.
+  title, or body. Which id to use:
+  - **Discrete work** (a reported bug, a planned feature — anything a human
+    should track or discuss on its own) → create/use its **own** issue in the
+    SanchoCMO Linear team.
+  - **Incremental PRs inside an ongoing epic/initiative** (e.g. an autonomous
+    agent shipping many small PRs toward one parent) → **reference the parent
+    epic** (`Refs SAN-<epic>` in the body / branch); do **not** mint a fresh
+    issue per PR. One-issue-per-PR floods the Linear→Slack channel and adds no
+    tracking value for work already scoped by the epic.
 - Prefer copying the branch name straight from the Linear issue.
 
 ## Committing

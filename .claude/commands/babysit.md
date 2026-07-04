@@ -9,7 +9,9 @@ hasta que esté verde y la review esté atendida. Disciplina de loop, una sola p
 ## Contexto del repo (NO re-derivar)
 - Remote: `Growth4U-systems/sanchocmo-openclaw`. Rama destino de PRs de feature = `staging` (squash merge).
 - Todo PR/rama DEBE llevar un Linear ID (SAN-###) en el nombre de rama, título o body
-  — el job de CI `linear-issue-id` falla si no.
+  — el job de CI `linear-issue-id` falla si no. Para PRs incrementales dentro de un
+  epic/iniciativa en curso, referencia el epic padre (`Refs SAN-<epic>`); NO acuñes un
+  issue nuevo por PR (satura Linear→Slack). Ver `git-workflow` skill.
 - Gate de CI autoritativo (`.github/workflows/ci.yml`):
   - job `verify`: `npm ci` → `npm run typecheck` (tsc --noEmit) → `npm run build` (next build)
   - job `verify-scripts`: `python3 -m unittest discover -s scripts -p 'test_*.py'`
