@@ -1507,9 +1507,18 @@ export function ChatSidebar() {
         {messages.length === 0 && (
           <div className="max-w-[85%] px-[14px] py-[10px] rounded-[16px] rounded-bl-[6px] text-base leading-relaxed bg-[var(--chat-surface)] text-[var(--chat-text)] border border-[var(--chat-border)] shadow-sm">
             <div className="flex items-center gap-1.5 mb-1">
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded bg-rust">
-                🤠 Sancho
-              </span>
+              {(() => {
+                // Attribute the greeting to the thread's OWN agent (SAN-376) —
+                // was hardcoded to Sancho, so a Rocinante discovery thread
+                // greeted as Sancho. agentBadge() falls back to Sancho when the
+                // thread has no agent, so manager threads are unchanged.
+                const greet = agentBadge(meta?.agent);
+                return (
+                  <span className={cn("inline-flex items-center gap-1 text-[10px] font-semibold text-white px-1.5 py-0.5 rounded", greet.color)}>
+                    {greet.emoji} {greet.label}
+                  </span>
+                );
+              })()}
             </div>
             {/* Distinguish real loading (initial fetch with no data yet) from
                 an empty thread. The previous "Cargando..." text was shown for
