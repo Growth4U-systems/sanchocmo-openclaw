@@ -176,7 +176,7 @@ export default function NotificationsPage() {
               </div>
               <h3 className="font-heading text-lg text-navy">Sin respuestas pendientes</h3>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Cuando un partner o lead B2B responda a un contacto, aparecerá aquí con acceso directo al Inbox.
+                Cuando haya una notificación importante, aparecerá aquí con el acceso directo para gestionarla.
               </p>
             </div>
           )}
