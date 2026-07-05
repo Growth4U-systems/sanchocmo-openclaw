@@ -14,6 +14,8 @@ test("flags runtime tool-call echoes", () => {
     "🛠️ print text → fetch http://localhost:3000/api/partnerships/searches → print text",
     "🧮 Code Execution: Make an HTTP POST request to http://localhost:3000/api/partnerships/searches with these headers:",
     "🛠️ pwd",
+    "🐎 list files in ~/workspace-rocinante/skills/discovery-plan-builder/ → print text → find files named \"growth4u\" in ~/workspace-rocinante/brand/",
+    "⚠️ 🛠️ list files in ~/workspace-rocinante/brand/ → print text",
     "fetch http://localhost:3000/api/partnerships/searches",
     "print text",
     "Escribiendo informe",
@@ -29,6 +31,7 @@ test("leaves real Spanish replies untouched", () => {
     "He creado la búsqueda. ¿Quieres que la lance ahora o revisas los filtros primero?",
     "Aquí tienes el resumen:\n\n- Sector: fintech\n- Tier: micro/mid\n\n¿Avanzo?",
     "Movería el lead a Negociando, pero confírmame el presupuesto.",
+    "🐎 Listo, ya revisé el plan y no hace falta tocarlo.",
     "",
   ];
   for (const r of replies) assert.equal(looksLikeToolEcho(r), false, `should NOT flag: ${r.slice(0, 40)}`);
