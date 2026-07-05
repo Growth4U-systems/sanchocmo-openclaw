@@ -1891,7 +1891,8 @@ function StatusDot({ state }: { state: MetricDataState }) {
 }
 
 function KpiComparisonTable({ kpis }: { kpis: MetricKpiValue[] }) {
-  if (!kpis.length) return null;
+  const uniqueKpis = dedupeKpis(kpis);
+  if (!uniqueKpis.length) return null;
   return (
     <div>
       <SectionTitle icon="↔️" title="Comparación del periodo" />
@@ -1899,7 +1900,7 @@ function KpiComparisonTable({ kpis }: { kpis: MetricKpiValue[] }) {
         <table className="m-ct">
           <thead><tr><th>Métrica</th><th>Actual</th><th>Periodo anterior</th><th>Δ</th></tr></thead>
           <tbody>
-            {kpis.map((kpi) => (
+            {uniqueKpis.map((kpi) => (
               <tr key={kpi.id}>
                 <td>{kpi.label}</td>
                 <td className="num">{kpi.displayValue}</td>
@@ -1912,6 +1913,16 @@ function KpiComparisonTable({ kpis }: { kpis: MetricKpiValue[] }) {
       </div>
     </div>
   );
+}
+
+function dedupeKpis(kpis: MetricKpiValue[]): MetricKpiValue[] {
+  const seen = new Set<string>();
+  return kpis.filter((kpi) => {
+    const key = kpi.kpiId || kpi.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function buildFunnelModel(data?: MetricKpiResult) {
@@ -2148,15 +2159,27 @@ function northStarMatchesKpi(label: string, kpi: MetricKpiValue): boolean {
 }
 
 function findKpi(kpis: MetricKpiValue[], candidates: string[]): MetricKpiValue | null {
-  const normalized = candidates.map(normalizeComparable);
-  return kpis.find((kpi) => {
-    const haystack = [
+  const normalized = candidates.map(normalizeComparable).filter(Boolean);
+  const exact = kpis.find((kpi) => {
+    const fields = [
       kpi.kpiId,
       kpi.metricName ?? "",
       `${kpi.source ?? ""}.${kpi.metricName ?? ""}`,
       kpi.label,
     ].map(normalizeComparable);
-    return normalized.some((candidate) => haystack.some((item) => item === candidate || item.includes(candidate)));
+    return normalized.some((candidate) => fields.some((field) => field === candidate));
+  });
+  if (exact) return exact;
+
+  return kpis.find((kpi) => {
+    const fields = [
+      kpi.kpiId,
+      kpi.metricName ?? "",
+      kpi.label,
+    ].map(normalizeComparable);
+    return normalized.some((candidate) =>
+      candidate.length >= 4 && fields.some((field) => field.includes(candidate) || candidate.includes(field)),
+    );
   }) ?? null;
 }
 

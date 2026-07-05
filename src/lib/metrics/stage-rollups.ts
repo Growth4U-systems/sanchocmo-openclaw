@@ -93,7 +93,6 @@ export const DEFAULT_FUNNEL_STAGE_DEFINITIONS: MetricFunnelStageDefinition[] = [
   }),
   stage("crm.leads.ghl", "leads", "Leads", 1, "pipeline", "ghl", "newContacts", {
     channel: "crm",
-    qualityOverride: "dirty",
   }),
   stage("paid.leads.meta", "leads", "Leads", 1, "paid", "meta_ads", "leads", {
     sourceAliases: ["meta-ads", "meta"],
@@ -120,7 +119,6 @@ export const DEFAULT_FUNNEL_STAGE_DEFINITIONS: MetricFunnelStageDefinition[] = [
   }),
   stage("crm.meetings.ghl", "meetings", "Reuniones", 3, "pipeline", "ghl", "appointments", {
     channel: "crm",
-    qualityOverride: "dirty",
   }),
   stage("outbound.meetings.lemlist", "meetings", "Reuniones", 3, "email", "lemlist", "meetings", {
     metricAliases: ["meetings", "meetingBooked"],
@@ -130,7 +128,6 @@ export const DEFAULT_FUNNEL_STAGE_DEFINITIONS: MetricFunnelStageDefinition[] = [
   stage("crm.deals.ghl", "deals", "Deals", 4, "pipeline", "ghl", "totalOpportunities", {
     channel: "crm",
     aggregation: "latest",
-    qualityOverride: "dirty",
   }),
   stage("partnerships.first_tx", "customers", "Clientes", 5, "partnerships", "yalc", "firstTx", {
     metricAliases: ["firstTx", "first_tx", "firstTransaction"],

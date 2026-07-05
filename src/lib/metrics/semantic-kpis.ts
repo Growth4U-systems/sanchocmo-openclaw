@@ -504,9 +504,6 @@ const pipelineDefinitions: MetricKpiDefinition[] = [
     "pipeline",
     "ghl",
     "totalContacts",
-    {
-      dirtySources: ["ghl"],
-    },
   ),
   kpi(
     "pipeline.ghl.opportunities",
@@ -515,9 +512,6 @@ const pipelineDefinitions: MetricKpiDefinition[] = [
     "pipeline",
     "ghl",
     "totalOpportunities",
-    {
-      dirtySources: ["ghl"],
-    },
   ),
   kpi(
     "pipeline.ghl.pipeline_value",
@@ -528,7 +522,6 @@ const pipelineDefinitions: MetricKpiDefinition[] = [
     "pipelineValue",
     {
       unit: "currency",
-      dirtySources: ["ghl"],
     },
   ),
   kpi(
@@ -538,9 +531,6 @@ const pipelineDefinitions: MetricKpiDefinition[] = [
     "pipeline",
     "ghl",
     "appointments",
-    {
-      dirtySources: ["ghl"],
-    },
   ),
 ];
 

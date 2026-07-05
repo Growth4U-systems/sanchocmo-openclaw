@@ -285,14 +285,14 @@ test("rolls latest Metricool followers by network without dropping dimensions", 
   assert.equal(followers.qualityStatus, "ok");
 });
 
-test("marks known-dirty GHL metrics as dirty instead of ok", () => {
+test("GHL metrics are clean when collected directly from the CRM", () => {
   const values = computeSemanticKpisFromSnapshots(
     [row({ source: "ghl", metricName: "pipelineValue", value: 25000 })],
     oneDay,
   );
   const pipelineValue = byId(values, "pipeline.ghl.pipeline_value");
   assert.equal(pipelineValue.value, 25000);
-  assert.equal(pipelineValue.qualityStatus, "dirty");
+  assert.equal(pipelineValue.qualityStatus, "ok");
 });
 
 test("metadata-only seed/demo rows remain selectable but never look live", () => {

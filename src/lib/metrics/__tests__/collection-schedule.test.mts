@@ -72,10 +72,10 @@ test("cron Sunday accepts both 0 and 7", () => {
   assert.equal(cronDueOnDate("0 9 * * 0", sunday), true);
 });
 
-test("getKnownDirty: flags ghl as known-dirty with a reason; clean sources are not", () => {
+test("getKnownDirty: GHL is clean by default; clean sources are not dirty", () => {
   const ghl = getKnownDirty("ghl");
-  assert.equal(ghl.knownDirty, true);
-  assert.ok(typeof ghl.dirtyReason === "string" && ghl.dirtyReason.length > 0);
+  assert.equal(ghl.knownDirty, false);
+  assert.equal(ghl.dirtyReason, undefined);
   const ga4 = getKnownDirty("ga4");
   assert.equal(ga4.knownDirty, false);
   assert.equal(ga4.dirtyReason, undefined);

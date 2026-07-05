@@ -589,7 +589,7 @@ export interface SourceHealth {
   lastError: string | null;
   lastRowCount: number | null;
   lastDeletedCount: number | null;
-  /** Known instrumentation problem for this source (e.g. GHL inflated events) — see KNOWN_DIRTY. */
+  /** Known instrumentation problem for this source — see KNOWN_DIRTY. */
   knownDirty: boolean;
   dirtyReason?: string;
 }
