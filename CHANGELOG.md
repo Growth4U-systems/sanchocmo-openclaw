@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.20.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.19.0...v0.20.0) (2026-07-05)
+
+
+### Features
+
+* **notifications:** SAN-395 add lead reply feed ([#1094](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1094)) ([730ae87](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/730ae87c3789d370d2f3c70609a22d461b795c17))
+
+
+### Bug Fixes
+
+* **metrics:** SAN-369 simplify dashboard data labels ([#1099](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1099)) ([713ca34](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/713ca347dc8ef599e9f47ee305adce03bc4df943))
+* **notifications:** SAN-395 generalize empty state copy ([#1097](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1097)) ([684b28b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/684b28b9c733af3b37136f37df6d3ebc82c8f4dd))
+* **partnerships:** SAN-78 allow editing contact drafts ([#1093](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1093)) ([2033c6a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2033c6a85a5884cd172c8393db1abfa97c833972))
+* **partnerships:** SAN-78 surface drawer contact actions ([#1091](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1091)) ([c641780](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c64178035cc88b980ac773bf864e597bbd5b9f6d))
+
 ## [0.19.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.18.1...v0.19.0) (2026-07-05)
 
 
