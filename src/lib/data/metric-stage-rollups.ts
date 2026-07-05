@@ -178,7 +178,26 @@ export async function seedMetricFunnelStageMap(
           updatedAt: now,
         })),
       )
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: metricFunnelStageMap.id,
+        set: {
+          archetype,
+          stageId: drizzleSql`excluded."stage_id"`,
+          stageLabel: drizzleSql`excluded."stage_label"`,
+          stageOrder: drizzleSql`excluded."stage_order"`,
+          surface: drizzleSql`excluded."surface"`,
+          source: drizzleSql`excluded."source"`,
+          metricName: drizzleSql`excluded."metric_name"`,
+          sourceAliases: drizzleSql`excluded."source_aliases"`,
+          metricAliases: drizzleSql`excluded."metric_aliases"`,
+          dimensionsFilter: drizzleSql`excluded."dimensions_filter"`,
+          channel: drizzleSql`excluded."channel"`,
+          aggregation: drizzleSql`excluded."aggregation"`,
+          qualityOverride: drizzleSql`excluded."quality_override"`,
+          enabled: drizzleSql`excluded."enabled"`,
+          updatedAt: now,
+        },
+      });
   }
 
   return database
