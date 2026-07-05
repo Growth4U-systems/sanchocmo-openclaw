@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.20.0...v0.20.1) (2026-07-05)
+
+
+### Bug Fixes
+
+* **metrics:** clarify empty connection states ([#1101](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1101)) ([6b42ff1](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6b42ff110d3de23c3d3a5567f799c11adf230868))
+
 ## [0.20.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.19.0...v0.20.0) (2026-07-05)
 
 
