@@ -108,6 +108,7 @@ function usage() {
   yalc-client campaign-dry-run --slug <slug> --id <campaign-id> --confirm-side-effect
   yalc-client campaign-publish --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-live --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client outbound-command --slug <slug> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-report --slug <slug> --id <campaign-id>
   yalc-client campaign-timeline --slug <slug> --id <campaign-id>
   yalc-client campaign-export --slug <slug> --id <campaign-id>
@@ -138,6 +139,8 @@ function usage() {
 Options:
   --base-url <url>              Override YALC base URL
   --token <token>               Override bearer token (avoid in shell history; prefer env)
+  --mc-base-url <url>           Override Mission Control base URL for outbound-command (default SANCHO_BASE_URL or localhost:3000)
+  --admin-token <token>         Override Mission Control admin token for outbound-command (default MC_ADMIN_TOKEN or clients.json)
   --json '<json>'               Inline JSON payload for run-skill
   --confirm-side-effect         Required for live sends, campaign status writes, gates, setup commits, and generic mutating API calls
                                 Not required for create-campaign-draft because it only creates an internal YALC review draft
@@ -250,6 +253,67 @@ async function request(config, method, endpoint, body) {
     }
   }
   return data
+}
+
+function readAdminToken() {
+  if (process.env.MC_ADMIN_TOKEN) return process.env.MC_ADMIN_TOKEN
+  for (const file of [
+    path.join(workspaceRoot, 'clients.json'),
+    path.join(workspaceRoot, 'workspace-sancho', 'clients.json'),
+  ]) {
+    try {
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'))
+      if (typeof data.adminToken === 'string' && data.adminToken.trim()) return data.adminToken.trim()
+    } catch {
+      // Best effort: env remains the preferred path.
+    }
+  }
+  return ''
+}
+
+function resolveMissionControlConfig(args) {
+  return {
+    slug: args.slug || 'growth4u',
+    baseUrl: (args.mcBaseUrl || process.env.SANCHO_BASE_URL || process.env.BASE_URL || 'http://localhost:3000').replace(/\/+$/, ''),
+    token: args.adminToken || readAdminToken(),
+  }
+}
+
+async function missionControlRequest(config, method, endpoint, body) {
+  const url = new URL(endpoint, config.baseUrl)
+  if (config.slug) url.searchParams.set('slug', config.slug)
+  const headers = { Accept: 'application/json' }
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  if (config.token) headers['x-admin-token'] = config.token
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify({ ...(body || {}), slug: config.slug }),
+  })
+  const text = await res.text()
+  let data
+  try {
+    data = text ? JSON.parse(text) : null
+  } catch {
+    data = { raw: text }
+  }
+  if (!res.ok) {
+    const message = data?.message || data?.error || text || `HTTP ${res.status}`
+    const err = new Error(message)
+    err.status = res.status
+    err.data = data
+    throw err
+  }
+  return data
+}
+
+async function callMissionControlAndSave(args, label, method, endpoint, body) {
+  const mc = resolveMissionControlConfig(args)
+  const data = await missionControlRequest(mc, method, endpoint, body)
+  const out = { ok: true, data, request: { method, endpoint, baseUrl: mc.baseUrl } }
+  out.savedTo = saveRun(mc.slug, label, out)
+  console.log(JSON.stringify(out, null, 2))
+  return out
 }
 
 async function callAndSave(config, label, method, endpoint, body) {
@@ -538,6 +602,16 @@ async function main() {
     out.savedTo = saveRun(config.slug, 'catalog', out)
     console.log(JSON.stringify(out, null, 2))
     return
+  }
+
+  if (command === 'outbound-command') {
+    const payload = readPayload(args)
+    const commandName = typeof payload.command === 'string' ? payload.command : ''
+    if (commandName !== 'outbound.status') {
+      requireConfirmation(args, command)
+    }
+    const label = `outbound-${commandName.replace(/[^a-zA-Z0-9_-]/g, '-') || 'command'}`
+    return callMissionControlAndSave(args, label, 'POST', '/api/outbound/command', payload)
   }
 
   if (command === 'campaigns') {

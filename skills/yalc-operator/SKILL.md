@@ -210,27 +210,46 @@ Use existing Sancho skills for:
 - QA and brand review
 - client-facing summaries
 
+## Unified Outbound Commands
+
+Prefer the Mission Control command surface for new B2B and Partnerships work:
+
+```bash
+node skills/yalc-operator/scripts/yalc-client.mjs outbound-command --slug <slug> --json '<payload>' --confirm-side-effect
+```
+
+The payload always uses one of:
+
+- `{"command":"outbound.plan","campaignType":"B2B"|"Partnerships","goal":"...","target":{...},"channels":["email"|"linkedin"]}`
+- `{"command":"outbound.source","campaignId":"...","profileKind":"b2b_contact"|"creator","provider":"apollo"|"crustdata"|"manual","criteria":{...},"limit":25}`
+- `{"command":"outbound.enrich","campaignId":"...","providers":["apollo"|"crustdata"]}`
+- `{"command":"outbound.score","campaignId":"...","scoreModel":"b2b_fit_v1"|"creator_quality_v1"}`
+- `{"command":"outbound.draft_sequence","campaignId":"...","channel":"email"|"linkedin","profileKind":"b2b_contact"|"creator","sequence":[...]}`
+- `{"command":"outbound.approve_and_publish","campaignId":"...","channel":"email"|"linkedin","profileKind":"b2b_contact"|"creator","dryRun":true}`
+- `{"command":"outbound.status","campaignId":"..."}`
+
+`outbound.status` is read-only and does not need `--confirm-side-effect`; every other command does. Old campaign-specific commands (`campaign-leads-search`, `campaign-sequence-update`, `campaign-publish`, `campaign-live`) remain compatibility fallbacks for debugging existing runs, but do not use them as the primary contract for new operator work.
+
 ## Workflow
 
 1. Clarify the user's requested outcome: qualify leads, prepare campaign, launch, track, or report.
 2. Run `health` before the first YALC operation in a thread.
 3. Run `skills` and compare the requested action against `references/yalc-capability-map.md`.
-4. Decompose multi-step requests into explicit YALC API/skill calls instead of calling generic autonomous orchestration.
-5. For any outbound campaign, create the internal YALC draft first with `create-campaign-draft`. Include title, hypothesis, target segment, channels, success metrics, and planned steps. Email drafts must include reviewable email copy before approval: add a `send-email-sequence` step where `skillInput.sequence` is a non-empty array of `{ subject?, body, delay_days? }`. The email/Instantly step must stay `dryRun: true` inside `skillInput`.
+4. Decompose multi-step requests into explicit outbound commands instead of calling generic autonomous orchestration.
+5. For any outbound campaign, create the internal YALC draft first with `outbound.plan`. Include title/goal, target, channels, success metrics, and planned steps. Email drafts must include reviewable email copy before approval: use `outbound.draft_sequence` with a non-empty `sequence` array of `{ subject?, body, delay_days? }`.
 6. Present the YALC draft campaign ID, what was saved for review, and where to inspect it in Sancho/YALC Cockpit before doing any Instantly call.
-7. If the campaign exists but has no reviewable email sequence, use `add-campaign-step` to attach the `send-email-sequence` draft step to the existing YALC campaign. Do not create a duplicate campaign for the same request.
-8. If the user requested lead sourcing, run `campaign-leads-search` with `--confirm-side-effect`. If Apollo credentials fail, report the provider error and continue only with user-provided leads or manual test leads.
-9. Run `campaign-leads-enrich` with `--confirm-side-effect` when assigned leads need email enrichment. Do not claim the campaign is ready for dry-run until readiness says so.
-10. After the user approves the email sequence, run `campaign-sequence-approve --confirm-side-effect`.
-11. Ask for explicit confirmation before the Instantly dry-run: "Confirmas que pruebe esta campana en Instantly en dry-run?"
-12. After confirmation, run `campaign-dry-run --confirm-side-effect`.
-13. Present the dry-run result, lead count, sequence count, readiness, and any warnings.
-14. Ask for explicit confirmation before creating the Instantly campaign: "Confirmas que cree la campana en Instantly sin lanzarla?"
-15. After confirmation, run `campaign-publish --confirm-side-effect`. This creates/updates the campaign in Instantly but does not launch it.
-16. Ask for explicit confirmation before live external execution: "Confirmas que lance la campana live en Instantly?"
-17. Only after confirmation, run `campaign-live --confirm-side-effect`.
-18. Save the returned JSON in `brand/{slug}/yalc/runs/YYYY-MM-DDTHH-mm-ss-*.json`.
-19. Report back with the YALC campaign ID, external Instantly ID when present, status, and next tracking command.
+7. If the campaign exists but has no reviewable email sequence, use `outbound.draft_sequence` against the existing campaign. Do not create a duplicate campaign for the same request.
+8. If the user requested lead sourcing, run `outbound.source` with `--confirm-side-effect`. If Apollo/Crustdata credentials fail, report the provider error and continue only with user-provided leads or manual test leads.
+9. Run `outbound.enrich` with `--confirm-side-effect` when assigned leads need enrichment. Do not claim the campaign is ready for dry-run until `outbound.status` says so.
+10. Ask for explicit confirmation before approving the sequence and running the Instantly dry-run: "Confirmas que apruebe esta secuencia y la pruebe en Instantly en dry-run?"
+11. After confirmation, run `outbound.approve_and_publish` with `dryRun:true --confirm-side-effect`.
+12. Present the dry-run result, lead count, sequence count, readiness, and any warnings.
+13. Ask for explicit confirmation before creating the Instantly campaign: "Confirmas que cree la campana en Instantly sin lanzarla?"
+14. After confirmation, run `outbound.approve_and_publish` with `dryRun:false --confirm-side-effect`. This creates/updates the campaign in Instantly but does not launch it.
+15. Ask for explicit confirmation before live external execution: "Confirmas que lance la campana live en Instantly?"
+16. Only after confirmation, run `campaign-live --confirm-side-effect` (compatibility fallback until live launch is folded into the command surface).
+17. Save the returned JSON in `brand/{slug}/yalc/runs/YYYY-MM-DDTHH-mm-ss-*.json`.
+18. Report back with the YALC campaign ID, external Instantly ID when present, status, and next tracking command.
 
 ## Campaign Lifecycle
 
