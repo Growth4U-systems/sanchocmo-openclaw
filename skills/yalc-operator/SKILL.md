@@ -221,7 +221,7 @@ node skills/yalc-operator/scripts/yalc-client.mjs outbound-command --slug <slug>
 The payload always uses one of:
 
 - `{"command":"outbound.plan","campaignType":"B2B"|"Partnerships","goal":"...","target":{...},"channels":["email"|"linkedin"]}`
-- `{"command":"outbound.source","campaignId":"...","profileKind":"b2b_contact"|"creator","provider":"apollo"|"crustdata"|"manual","criteria":{...},"limit":25}`
+- `{"command":"outbound.source","campaignId":"...","profileKind":"b2b_contact"|"creator","provider":"apollo"|"crustdata"|"manual"|"company-db","criteria":{...},"limit":25}`
 - `{"command":"outbound.enrich","campaignId":"...","providers":["apollo"|"crustdata"]}`
 - `{"command":"outbound.score","campaignId":"...","scoreModel":"b2b_fit_v1"|"creator_quality_v1"}`
 - `{"command":"outbound.draft_sequence","campaignId":"...","channel":"email"|"linkedin","profileKind":"b2b_contact"|"creator","sequence":[...]}`
@@ -239,7 +239,7 @@ The payload always uses one of:
 5. For any outbound campaign, create the internal YALC draft first with `outbound.plan`. Include title/goal, target, channels, success metrics, and planned steps. Email drafts must include reviewable email copy before approval: use `outbound.draft_sequence` with a non-empty `sequence` array of `{ subject?, body, delay_days? }`.
 6. Present the YALC draft campaign ID, what was saved for review, and where to inspect it in Sancho/YALC Cockpit before doing any Instantly call.
 7. If the campaign exists but has no reviewable email sequence, use `outbound.draft_sequence` against the existing campaign. Do not create a duplicate campaign for the same request.
-8. If the user requested lead sourcing, run `outbound.source` with `--confirm-side-effect`. If Apollo/Crustdata credentials fail, report the provider error and continue only with user-provided leads or manual test leads.
+8. If the user requested lead sourcing, run `outbound.source` with `--confirm-side-effect`. Use `provider:"company-db"` for B2B rows from company-finder/decision-maker-finder/contact-enrichment; those rows are normalized and assigned into the campaign's YALC Lead roster. If Apollo/Crustdata credentials fail, report the provider error and continue only with user-provided leads or manual test leads.
 9. Run `outbound.enrich` with `--confirm-side-effect` when assigned leads need enrichment. Do not claim the campaign is ready for dry-run until `outbound.status` says so.
 10. Ask for explicit confirmation before approving the sequence and running the Instantly dry-run: "Confirmas que apruebe esta secuencia y la pruebe en Instantly en dry-run?"
 11. After confirmation, run `outbound.approve_and_publish` with `dryRun:true --confirm-side-effect`.

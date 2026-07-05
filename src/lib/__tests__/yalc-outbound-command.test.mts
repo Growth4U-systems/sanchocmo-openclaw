@@ -13,6 +13,7 @@ const originalFetch = globalThis.fetch;
 const originalEnv = {
   YALC_BASE_URL: process.env.YALC_BASE_URL,
   YALC_API_TOKEN: process.env.YALC_API_TOKEN,
+  OUTREACH_B2B: process.env.OUTREACH_B2B,
 };
 
 let calls: FetchCall[] = [];
@@ -39,6 +40,7 @@ function installFetch(handler: (path: string, call: FetchCall) => unknown) {
 beforeEach(() => {
   process.env.YALC_BASE_URL = "http://yalc.test";
   process.env.YALC_API_TOKEN = "tok";
+  process.env.OUTREACH_B2B = "on";
 });
 
 afterEach(() => {
@@ -48,6 +50,8 @@ afterEach(() => {
   else process.env.YALC_BASE_URL = originalEnv.YALC_BASE_URL;
   if (originalEnv.YALC_API_TOKEN === undefined) delete process.env.YALC_API_TOKEN;
   else process.env.YALC_API_TOKEN = originalEnv.YALC_API_TOKEN;
+  if (originalEnv.OUTREACH_B2B === undefined) delete process.env.OUTREACH_B2B;
+  else process.env.OUTREACH_B2B = originalEnv.OUTREACH_B2B;
 });
 
 const config = { baseUrl: "http://yalc.test", token: "tok", slug: "growth4u" };
@@ -129,6 +133,43 @@ test("outbound.source provider B2B checks campaign lock before leads/search", as
     "/api/campaigns/camp-b2b",
     "/api/leads",
     "/api/campaigns/camp-b2b/leads/search",
+  ]);
+});
+
+test("outbound.source company-db normalizes B2B contacts into the shared YALC lead roster", async () => {
+  installFetch((path, call) => {
+    if (path === "/api/campaigns/camp-b2b") return { id: "camp-b2b", type: "B2B" };
+    if (path === "/api/leads") return { leads: [] };
+    if (path === "/api/campaigns/camp-b2b/leads/assign") {
+      assert.equal(call.method, "POST");
+      const body = call.body as { provider: string; leads: Array<Record<string, unknown>> };
+      assert.equal(body.provider, "company-db");
+      assert.equal(body.leads[0].company, "Acme");
+      assert.equal(body.leads[0].firstName, "Ana");
+      assert.equal(body.leads[0].source, "company-db");
+      return { ok: true, leads: body.leads };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.source",
+    campaignId: "camp-b2b",
+    profileKind: "b2b_contact",
+    provider: "company-db",
+    criteria: {
+      contacts: [{ company_name: "Acme", full_name: "Ana Gil", job_title: "CMO", email: "ana@acme.com" }],
+    },
+    searchId: "search-1",
+  });
+
+  assert.equal(result.httpStatus, 201);
+  assert.equal(result.provider, "company-db");
+  assert.equal(((result.result as Record<string, unknown>).stats as Record<string, unknown>).inserted, 1);
+  assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
+    "/api/campaigns/camp-b2b",
+    "/api/leads",
+    "/api/campaigns/camp-b2b/leads/assign",
   ]);
 });
 
