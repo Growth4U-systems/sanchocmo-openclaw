@@ -27,3 +27,28 @@ test('GHL adapter prefers slug-prefixed private integration token', async () => 
     globalThis.fetch = originalFetch;
   }
 });
+
+test('GHL adapter accepts UI-style token aliases before global fallback', async () => {
+  const originalFetch = globalThis.fetch;
+  const authHeaders = [];
+  globalThis.fetch = async (_url, options = {}) => {
+    authHeaders.push(options.headers?.Authorization);
+    return Response.json({ statusCode: 401, message: 'Invalid token' }, { status: 401 });
+  };
+
+  try {
+    await collect(
+      { _slug: 'growth4u', LOCATION_ID: 'loc-1' },
+      {
+        GHL_API_KEY: 'global-token',
+        GROWTH4U_GHL_APIKEY: 'ui-alias-token',
+      },
+      { from: '2026-07-01', to: '2026-07-01' },
+    );
+    assert.ok(authHeaders.length > 0);
+    assert.equal(new Set(authHeaders).size, 1);
+    assert.equal(authHeaders[0], 'Bearer ui-alias-token');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
