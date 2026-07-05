@@ -34,9 +34,10 @@ test("AttributionFunnel: renders one row per channel with its citas and spend", 
 
 test("AttributionFunnel: makes the Koibox dedup truth-source explicit", () => {
   const m = render(createElement(AttributionFunnel, { rows: ROWS, truthSource: "koibox" }));
-  // citas = Koibox, deduped by appointment id → DataChip(type=dedup) + the source name
+  // citas = Koibox, deduped by appointment id; provenance stays in tooltip/aria.
   assert.match(m, /koibox/i);
-  assert.match(m, /Dedup/);
+  assert.match(m, /Dato validado/);
+  assert.doesNotMatch(m, />Dedup</);
 });
 
 test("AttributionFunnel: guards a non-finite CPA (0 citas) — never prints Infinity/NaN", () => {

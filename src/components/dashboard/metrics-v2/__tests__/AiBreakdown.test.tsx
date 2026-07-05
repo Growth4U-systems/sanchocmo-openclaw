@@ -24,8 +24,9 @@ test("AiBreakdown: default Competidores view — brands + your row highlighted",
   assert.match(m, /\(tú\)/);
 });
 
-test("AiBreakdown: provenance is Seed (no AEO source yet)", () => {
+test("AiBreakdown: provenance is available without showing Seed as a tag", () => {
   const m = render(createElement(AiBreakdown, base));
-  assert.match(m, /Seed/);
+  assert.match(m, /Referencia temporal/);
+  assert.doesNotMatch(m, />Seed</);
   assert.match(m, /IA/);
 });

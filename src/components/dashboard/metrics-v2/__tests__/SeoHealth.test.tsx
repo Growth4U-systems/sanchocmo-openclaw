@@ -51,9 +51,10 @@ test("SeoHealth: position distribution buckets + counts", () => {
   assert.match(m, /110/);
 });
 
-test("SeoHealth: provenance is Real, own-source (PageSpeed · GSC)", () => {
+test("SeoHealth: provenance is direct-source without a visible Real tag", () => {
   const m = render(createElement(SeoHealth, base));
-  assert.match(m, /Real/);
+  assert.match(m, /Dato directo/);
+  assert.doesNotMatch(m, />Real</);
   assert.match(m, /PageSpeed/);
   assert.match(m, /GSC/);
 });

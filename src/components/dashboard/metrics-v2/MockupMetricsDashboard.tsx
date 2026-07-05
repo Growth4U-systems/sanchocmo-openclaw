@@ -1555,7 +1555,7 @@ function SequenceFunnel({ steps }: { steps: SequenceStep[] }) {
 function EmptyBreakdownPanel({ text }: { text: string }) {
   return (
     <div className="m-panel m-pad m-empty-breakdown">
-      <div>Sin dato dimensionado</div>
+      <div>Sin desglose para este rango</div>
       <p>{text}</p>
     </div>
   );
@@ -1887,7 +1887,7 @@ function DeltaBadge({ kpi, inverse }: { kpi?: MetricKpiValue | null; inverse?: b
 }
 
 function StatusDot({ state }: { state: MetricDataState }) {
-  return <span className={cn("m-dot", stateClass(state))} title={state} />;
+  return <span className={cn("m-dot", stateClass(state))} title={stateLabel(state)} />;
 }
 
 function KpiComparisonTable({ kpis }: { kpis: MetricKpiValue[] }) {
@@ -2400,16 +2400,14 @@ function rangeLabel(range: DateRange): string {
 }
 
 function stateValue(state: MetricDataState): string {
-  if (state === "ON") return "ON";
-  if (state === "PARCIAL") return "Parcial";
-  if (state === "OFF") return "OFF";
-  return "-";
+  if (state === "ON") return "Activo";
+  if (state === "PARCIAL") return "Datos parciales";
+  return "Sin datos";
 }
 
 function stateLabel(state: MetricDataState): string {
-  if (state === "ON") return "ON";
-  if (state === "PARCIAL") return "Parcial";
-  if (state === "OFF") return "OFF";
+  if (state === "ON") return "Activo";
+  if (state === "PARCIAL") return "Datos parciales";
   return "Sin datos";
 }
 

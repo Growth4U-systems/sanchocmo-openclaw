@@ -18,21 +18,24 @@ const render = (el: ReactElement) => renderToStaticMarkup(el);
 
 type ChipType = "real" | "dedup" | "seed" | "target" | "pending";
 const CHIP_LABEL: Record<ChipType, string> = {
-  real: "Real",
-  dedup: "Dedup",
-  seed: "Seed",
-  target: "Target",
-  pending: "Pendiente",
+  real: "Dato directo",
+  dedup: "Dato validado",
+  seed: "Referencia temporal",
+  target: "Objetivo",
+  pending: "Por conectar",
 };
 
-test("DataChip: renders the label for each type", () => {
+test("DataChip: keeps provenance in title/aria, not as visible tags", () => {
   for (const type of Object.keys(CHIP_LABEL) as ChipType[]) {
-    assert.match(render(createElement(DataChip, { type })), new RegExp(CHIP_LABEL[type]));
+    const markup = render(createElement(DataChip, { type, source: "meta_ads" }));
+    assert.match(markup, new RegExp(CHIP_LABEL[type]));
+    assert.match(markup, /aria-label="Meta Ads/);
+    assert.doesNotMatch(markup, new RegExp(`>${CHIP_LABEL[type]}<`));
   }
 });
 
 test("DataChip: each type renders a distinct dot colour class", () => {
-  const dotClass = (markup: string) => markup.match(/class="([^"]*\brounded-full\b[^"]*)"/)?.[1] ?? "";
+  const dotClass = (markup: string) => markup.match(/class="([^"]*\bh-1\.5\b[^"]*)"/)?.[1] ?? "";
   const classes = (Object.keys(CHIP_LABEL) as ChipType[]).map((type) =>
     dotClass(render(createElement(DataChip, { type }))),
   );
@@ -42,20 +45,19 @@ test("DataChip: each type renders a distinct dot colour class", () => {
   assert.match(render(createElement(DataChip, { type: "pending" })), /bg-destructive/);
 });
 
-test("DataChip: title is `source · confidence`, omitting absent parts", () => {
+test("DataChip: title is user-readable source + provenance + confidence", () => {
   assert.match(
     render(createElement(DataChip, { type: "real", source: "meta_ads", confidence: "alta" })),
-    /title="meta_ads · alta"/,
+    /title="Meta Ads · Dato directo · alta"/,
   );
   const onlySource = render(createElement(DataChip, { type: "real", source: "meta_ads" }));
-  assert.match(onlySource, /title="meta_ads"/);
-  assert.doesNotMatch(onlySource, /·/);
-  assert.doesNotMatch(render(createElement(DataChip, { type: "real" })), /title=/);
+  assert.match(onlySource, /title="Meta Ads · Dato directo"/);
+  assert.match(render(createElement(DataChip, { type: "real" })), /title="Dato directo"/);
 });
 
 // ───────────────────────── ProvenanceFooter ─────────────────────────
 
-test("ProvenanceFooter: shows every provided field with its label", () => {
+test("ProvenanceFooter: shows a compact user-facing line and keeps details in title", () => {
   const m = render(
     createElement(ProvenanceFooter, {
       source: "meta_ads",
@@ -65,18 +67,15 @@ test("ProvenanceFooter: shows every provided field with its label", () => {
       lastCollected: "2026-05-01",
     }),
   );
-  for (const v of ["meta_ads", "ruta/x.json", "hospital-capilar", "30d", "2026-05-01"]) {
-    assert.match(m, new RegExp(v));
-  }
-  for (const label of ["Fuente", "Ruta", "Cliente", "Periodo", "Colectado"]) {
-    assert.match(m, new RegExp(label));
-  }
+  assert.match(m, /Datos: Meta Ads · 30d · actualizado 2026-05-01/);
+  assert.match(m, /title="Fuente: Meta Ads · Ruta: ruta\/x\.json · Cliente: hospital-capilar · Periodo: 30d · Colectado: 2026-05-01"/);
+  assert.doesNotMatch(m, />Ruta:/);
+  assert.doesNotMatch(m, />Cliente:/);
 });
 
 test("ProvenanceFooter: omits absent optional fields", () => {
   const m = render(createElement(ProvenanceFooter, { source: "meta_ads" }));
-  assert.match(m, /meta_ads/);
-  assert.match(m, /Fuente/);
+  assert.match(m, /Datos: Meta Ads/);
   for (const label of ["Ruta", "Cliente", "Periodo", "Colectado"]) {
     assert.doesNotMatch(m, new RegExp(label));
   }
@@ -86,9 +85,9 @@ test("ProvenanceFooter: omits absent optional fields", () => {
 
 type ConnState = "off" | "partial" | "connected_pending" | "collecting";
 const CONN_LABEL: Record<ConnState, string> = {
-  off: "Desconectado",
-  partial: "Parcial",
-  connected_pending: "Conectado · pendiente",
+  off: "Sin datos",
+  partial: "Datos parciales",
+  connected_pending: "Listo para recolectar",
   collecting: "Recolectando",
 };
 
@@ -102,8 +101,8 @@ test("ConnectionState: connected_pending is distinct from partial", () => {
   const partial = render(createElement(ConnectionState, { state: "partial" }));
   const pending = render(createElement(ConnectionState, { state: "connected_pending" }));
   assert.notEqual(partial, pending);
-  assert.match(pending, /Conectado · pendiente/);
-  assert.doesNotMatch(partial, /Conectado/);
+  assert.match(pending, /Listo para recolectar/);
+  assert.doesNotMatch(partial, /Listo para recolectar/);
   // distinct colour token
   assert.match(partial, /var\(--yellow\)/);
   assert.match(pending, /var\(--cyan\)/);
@@ -111,20 +110,18 @@ test("ConnectionState: connected_pending is distinct from partial", () => {
 
 // ───────────────────────── DataHealthBadge ─────────────────────────
 
-test("DataHealthBadge: clean renders a non-link green badge", () => {
+test("DataHealthBadge: clean renders nothing visible", () => {
   const m = render(createElement(DataHealthBadge, { source: "posthog", status: "clean" }));
-  assert.match(m, /^<span/);
-  assert.doesNotMatch(m, /href=/);
-  assert.match(m, /text-sage/);
-  assert.match(m, /posthog/);
+  assert.equal(m, "");
 });
 
-test("DataHealthBadge: dirty renders a red link to the given href", () => {
+test("DataHealthBadge: dirty renders a red review link without exposing provider as a tag", () => {
   const m = render(createElement(DataHealthBadge, { source: "ghl", status: "dirty", href: "#salud" }));
   assert.match(m, /^<a /);
   assert.match(m, /href="#salud"/);
   assert.match(m, /text-destructive/);
-  assert.match(m, /ghl/);
+  assert.match(m, /Revisar dato/);
+  assert.doesNotMatch(m, />ghl</i);
 });
 
 test("DataHealthBadge: dirty defaults href to the Salud de dato anchor", () => {
@@ -134,10 +131,9 @@ test("DataHealthBadge: dirty defaults href to the Salud de dato anchor", () => {
 
 // ───────────────────────── a11y (accessible status names) ─────────────────────────
 
-test("DataHealthBadge: clean exposes an accessible status name (source + 'limpio')", () => {
+test("DataHealthBadge: clean does not add an accessible noise label", () => {
   const m = render(createElement(DataHealthBadge, { source: "posthog", status: "clean" }));
-  assert.match(m, /aria-label="[^"]*posthog[^"]*"/);
-  assert.match(m, /aria-label="[^"]*limpio[^"]*"/);
+  assert.equal(m, "");
 });
 
 test("DataHealthBadge: dirty exposes an accessible status name (source + 'problema')", () => {
@@ -148,5 +144,5 @@ test("DataHealthBadge: dirty exposes an accessible status name (source + 'proble
 
 test("ConnectionState: exposes an accessible label carrying the state", () => {
   const m = render(createElement(ConnectionState, { state: "connected_pending" }));
-  assert.match(m, /aria-label="[^"]*Conectado · pendiente[^"]*"/);
+  assert.match(m, /aria-label="[^"]*Listo para recolectar[^"]*"/);
 });

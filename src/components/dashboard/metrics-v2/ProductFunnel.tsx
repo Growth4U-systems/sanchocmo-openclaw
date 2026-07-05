@@ -3,10 +3,10 @@
  *
  * Pure/presentational: the parent (`renderModuleContent` in `metrics.tsx`) parses the
  * PostHog `funnel_step_reached` rows into ordered steps and passes them in. Surfaces
- * read ONLY their own source — PostHog here — so every frontend step is `Real`
- * (PostHog observes the event directly). The real cita and the pago are NOT computed
- * here (they're Koibox / Stripe, joined in the Atribución view, PR7); the surface
- * never fabricates a "booked"/appointment step, it cross-links instead.
+ * read ONLY their own source — PostHog here — so every frontend step is observed
+ * directly. The real cita and the pago are NOT computed here (they're joined in
+ * the Atribución view); the surface never fabricates a "booked"/appointment step,
+ * it cross-links instead.
  */
 import { DataChip, DataHealthBadge } from "./rigor";
 import { fmt } from "@/lib/metrics/format";

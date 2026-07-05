@@ -44,9 +44,10 @@ test("SeoBreakdown: the «Ver las N →» door carries the full count", () => {
   assert.match(m, /1\.?240/); // count present (es-ES grouping is locale-data dependent in the test runner)
 });
 
-test("SeoBreakdown: provenance is Real, own-source (GSC)", () => {
+test("SeoBreakdown: provenance is direct-source without a visible Real tag", () => {
   const m = render(createElement(SeoBreakdown, base));
-  assert.match(m, /Real/);
+  assert.match(m, /Dato directo/);
+  assert.doesNotMatch(m, />Real</);
   assert.match(m, /GSC/);
 });
 

@@ -3,11 +3,10 @@
  *
  * Pure/presentational: the parent (`metrics.tsx` wiring) reads the surface's OWN
  * sources — GA4 (traffic) · GSC (rankings) · PageSpeed (Core Web Vitals) — and
- * passes the scorecards in. Every number is `Real` (these are observed metrics, not
- * attributed). The cross-source story (web → cita → pago) is NOT here — it lives in
- * Atribución (PR7). When a credential is present but no rows have landed yet, the
- * surface shows `ConnectionState=connected_pending` (GA4/GSC for the ref client are
- * connected·pending until a fresh collect lands — SAN-228).
+ * passes the scorecards in. These are observed metrics, not attributed. The
+ * cross-source story (web → cita → pago) is NOT here — it lives in Atribución
+ * (PR7). When a credential is present but no rows have landed yet, the surface
+ * shows the "Listo para recolectar" state until a fresh collect lands.
  */
 import { ConnectionState, DataChip, ProvenanceFooter } from "./rigor";
 
