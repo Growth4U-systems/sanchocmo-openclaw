@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.19.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.18.1...v0.19.0) (2026-07-05)
+
+
+### Features
+
+* **outreach:** SAN-349 ingest B2B contacts into YALC ([#1085](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1085)) ([b5976e0](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b5976e091e213bf5cff4465942ed650699956257))
+* **yalc:** SAN-353 add outbound command facade ([#1084](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1084)) ([15462b7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/15462b74063a32ddb2e6217bc7701bd95cf742e4))
+
+
+### Bug Fixes
+
+* **chat:** SAN-342 fold emoji tool echoes ([#1083](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1083)) ([d1bacc9](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d1bacc9f66b405aedb59a36961c2ed98d3ce7c94))
+* **metrics:** SAN-369 clean GHL quality and trust comparison ([#1088](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1088)) ([d6954bf](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d6954bf51597300a71382c1f14b7affad9564f89))
+* **metrics:** SAN-369 refresh stage rollup map ([#1090](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1090)) ([9af77e8](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9af77e8992489f14c6d674f13fe05e852e191b5c))
+* **metrics:** SAN-369 resolve GHL UI credentials ([579ca42](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/579ca421e53c1c4ca960c0e97eee4566308e929d))
+* **outreach:** harden yalc job polling and partner contact UI ([#1087](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1087)) ([94d3e1e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/94d3e1e8ce49b60a8ada4675847a38904ff61f12))
+* **partnerships:** SAN-352 archive discovery searches ([#1081](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1081)) ([abd26b3](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/abd26b37560ac3116555927e79f3f7707756b619))
+
 ## [0.18.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.18.0...v0.18.1) (2026-07-04)
 
 
