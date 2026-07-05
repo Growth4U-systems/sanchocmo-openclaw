@@ -43,6 +43,45 @@ export function Sidebar() {
   // so we deliberately exclude the fallback client here.
   const chatSlug = activeSlug;
   const unreadCount = useUnreadCount(chatSlug);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    if (!activeSlug) {
+      setNotificationCount(0);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadNotificationCount() {
+      try {
+        const res = await fetch(
+          `/api/notifications/feed?slug=${encodeURIComponent(activeSlug || "")}`,
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = (await res.json()) as {
+          count?: number;
+          notifications?: unknown[];
+        };
+        const count =
+          typeof data.count === "number"
+            ? data.count
+            : Array.isArray(data.notifications)
+              ? data.notifications.length
+              : 0;
+        if (!cancelled) setNotificationCount(count);
+      } catch {
+        if (!cancelled) setNotificationCount(0);
+      }
+    }
+
+    void loadNotificationCount();
+    const interval = window.setInterval(loadNotificationCount, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [activeSlug]);
 
   function clientHref(path: string) {
     return slug ? `/dashboard/${slug}${path}` : "/dashboard";
@@ -203,6 +242,16 @@ export function Sidebar() {
           active={activeSlug ? isActive(clientHref("/activity")) : isActive("/dashboard/admin/activity")}
           collapsed={!sidebarOpen}
         />
+        {activeSlug && (
+          <NavLink
+            href={clientHref("/notifications")}
+            icon="/nav/notifications.svg"
+            label={t("nav.notifications")}
+            active={isActive(clientHref("/notifications"))}
+            collapsed={!sidebarOpen}
+            badge={notificationCount}
+          />
+        )}
         <NavLink
           href={activeSlug ? clientHref("/settings") : "/dashboard/admin/settings"}
           icon="/nav/settings.webp"
@@ -283,14 +332,18 @@ function NavLink({
   label,
   active,
   collapsed,
+  badge,
 }: {
   href: string;
   icon: string;
   label: string;
   active: boolean;
   collapsed: boolean;
+  badge?: number;
 }) {
   const router = useRouter();
+  const showBadge = typeof badge === "number" && badge > 0;
+  const badgeLabel = showBadge ? (badge > 99 ? "99+" : String(badge)) : "";
 
   return (
     <Link
@@ -342,6 +395,17 @@ function NavLink({
         <span className="text-sm">{icon}</span>
       )}
       {!collapsed && <span className="flex-1 truncate">{label}</span>}
+      {showBadge && (
+        <span
+          className={cn(
+            "grid min-w-[18px] place-items-center rounded-full border border-red-700 bg-red-500 px-1 text-[10px] font-bold leading-[16px] text-white shadow-sm",
+            collapsed && "absolute -right-1 -top-1",
+          )}
+          aria-label={`${badgeLabel} notificaciones pendientes`}
+        >
+          {badgeLabel}
+        </span>
+      )}
     </Link>
   );
 }
