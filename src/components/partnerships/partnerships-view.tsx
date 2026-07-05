@@ -220,7 +220,7 @@ export function PartnershipsView() {
     queryKey: ["partnerships", slug, "searches"],
     queryFn: () =>
       fetchJson<{ searches?: DiscoverySearchRecord[] }>(
-        `/api/partnerships/searches?slug=${encodeURIComponent(slug)}`,
+        `/api/partnerships/searches?slug=${encodeURIComponent(slug)}&includeArchived=1`,
       ),
     enabled: !!slug,
   });
@@ -636,6 +636,29 @@ export function PartnershipsView() {
       ),
   });
 
+  const searchArchiveAction = useMutation({
+    mutationFn: ({ searchId }: { searchId: string }) =>
+      fetchJson<{ ok: boolean; search: DiscoverySearchRecord }>(
+        `/api/partnerships/searches/${encodeURIComponent(searchId)}?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: "Archivada desde Encuentra" }),
+        },
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["partnerships", slug, "searches"],
+      });
+      showToast("Búsqueda archivada");
+    },
+    onError: (error) =>
+      showToast(
+        error instanceof Error ? error.message : "No se pudo archivar la búsqueda",
+        "warn",
+      ),
+  });
+
   function openDiscoveryChat(campaign?: PartnershipCampaign) {
     if (!slug) return;
     // SAN-328: desde la tarjeta de una búsqueda existente, retoma el hilo donde
@@ -817,11 +840,16 @@ export function PartnershipsView() {
                     title,
                   })
                 }
+                onArchiveSearch={(_campaign, search) =>
+                  searchArchiveAction.mutate({ searchId: search.id })
+                }
                 onDeleteCampaign={(campaign) =>
                   campaignDeleteAction.mutate({ campaignId: campaign.id })
                 }
                 campaignManagementBusy={
-                  campaignUpdateAction.isPending || campaignDeleteAction.isPending
+                  campaignUpdateAction.isPending ||
+                  searchArchiveAction.isPending ||
+                  campaignDeleteAction.isPending
                 }
               />
             )}

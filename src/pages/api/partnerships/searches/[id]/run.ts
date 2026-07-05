@@ -33,8 +33,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const searchId = typeof req.query.id === "string" ? req.query.id.trim() : "";
   if (!searchId) return res.status(400).json({ error: "Missing search id" });
-  if (!getSearch(slug, searchId)) {
+  const existing = getSearch(slug, searchId);
+  if (!existing) {
     return res.status(404).json({ error: `Discovery search not found: ${searchId}` });
+  }
+  if (existing.archivedAt) {
+    return res.status(409).json({ error: "Esta búsqueda está archivada." });
   }
 
   const body = (req.body || {}) as { async?: unknown; candidates?: unknown; fixtures?: unknown };

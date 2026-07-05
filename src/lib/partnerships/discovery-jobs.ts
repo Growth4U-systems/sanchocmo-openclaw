@@ -32,6 +32,7 @@ export function enqueueDiscoverySearchRun(
 ): DiscoverySearchRecord {
   const search = getSearch(options.slug, options.searchId);
   if (!search) throw new Error(`Discovery search not found: ${options.searchId} (${options.slug})`);
+  if (search.archivedAt) throw new Error(`Discovery search is archived: ${options.searchId}`);
   if (search.runner.status === "done") return search;
 
   const jobId = discoveryJobId(search.id);
@@ -63,6 +64,7 @@ export function enqueueDiscoverySearchRun(
 export function resumeQueuedDiscoverySearches(slug: string): string[] {
   const resumed: string[] = [];
   for (const search of listSearches(slug)) {
+    if (search.archivedAt) continue;
     const key = activeKey(slug, search.id);
     if (search.runner.status === "running" && !active.has(key) && isStaleRunning(search)) {
       updateRunnerState(slug, search.id, {

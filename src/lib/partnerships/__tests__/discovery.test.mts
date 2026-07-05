@@ -393,6 +393,32 @@ test("enqueueDiscoverySearchRun devuelve rápido y completa el runner en backgro
   );
 });
 
+test("archiveSearch conserva el registro y bloquea reintentos del runner", async () => {
+  const created = await lib.createDiscoverySearch({
+    slug: "monzo",
+    plan: { title: "Archivable search", sectors: ["fintech"], networks: ["instagram"] },
+  });
+  lib.updateRunnerState("monzo", created.search.id, {
+    status: "queued",
+    jobId: lib.discoveryJobId(created.search.id),
+  });
+
+  const archived = lib.archiveSearch("monzo", created.search.id, "test archive");
+  assert.ok(archived.archivedAt);
+  assert.equal(archived.archiveReason, "test archive");
+
+  const stored = lib.getSearch("monzo", created.search.id)!;
+  assert.equal(stored.id, created.search.id);
+  assert.ok(stored.archivedAt, "la búsqueda sigue en disco para histórico");
+
+  const resumed = lib.resumeQueuedDiscoverySearches("monzo");
+  assert.ok(!resumed.includes(created.search.id), "archivada no se re-encola");
+  assert.throws(
+    () => lib.enqueueDiscoverySearchRun({ slug: "monzo", searchId: created.search.id, fixtures: true }),
+    /archived/,
+  );
+});
+
 test("resumeQueuedDiscoverySearches no ejecuta búsquedas queued sin job server-side", async () => {
   const created = await lib.createDiscoverySearch({
     slug: "monzo",

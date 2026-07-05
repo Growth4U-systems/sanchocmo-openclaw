@@ -78,6 +78,7 @@ export async function runDiscoverySearch(options: RunDiscoveryOptions): Promise<
   const { slug, searchId } = options;
   const search = getSearch(slug, searchId);
   if (!search) throw new Error(`Discovery search not found: ${searchId} (${slug})`);
+  if (search.archivedAt) throw new Error(`Discovery search is archived: ${searchId}`);
 
   const useFixtures = options.fixtures ?? fixturesEnabledByEnv();
   const mode = useFixtures ? "fixtures" : "live";
