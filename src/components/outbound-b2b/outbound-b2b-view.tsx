@@ -50,6 +50,7 @@ import {
 type B2BTab = "encuentra" | "contactos" | "inbox" | "plantillas" | "settings";
 type ContactosVista = "kanban" | "lista";
 type OutboundAction = "search" | "enrich" | "approve" | "dry-run" | "publish" | "live";
+type YalcJobStatus = "queued" | "running" | "succeeded" | "failed" | "interrupted";
 type B2BInboxFilter = "needs_reply" | "got_reply" | "sent";
 type B2BReplyCategoryKey =
   | "hot"
@@ -60,6 +61,39 @@ type B2BReplyCategoryKey =
   | "recipient_gone"
   | "auto_ack"
   | "reply";
+
+interface YalcJobProgress {
+  percent?: number;
+  message?: string;
+  done?: number;
+  total?: number;
+}
+
+interface YalcJobRecord {
+  id: string;
+  type: string;
+  status: YalcJobStatus;
+  progress?: YalcJobProgress;
+  output?: Record<string, unknown> | null;
+  errorMessage?: string | null;
+  retryable?: boolean;
+}
+
+interface YalcQueuedJobResponse {
+  ok?: boolean;
+  jobId?: string;
+  status?: string;
+  statusUrl?: string;
+}
+
+interface ActiveYalcJob {
+  campaignId: string;
+  action: OutboundAction;
+  jobId: string;
+  status: YalcJobStatus | string;
+  progress?: YalcJobProgress;
+  errorMessage?: string | null;
+}
 
 interface OverviewPayload {
   ok: boolean;
@@ -561,6 +595,20 @@ function outboundActionDescription(action: OutboundAction): string {
   return "Deja la campaña lista para enviar.";
 }
 
+function isQueuedJobResponse(value: unknown): value is YalcQueuedJobResponse & { jobId: string } {
+  return !!value && typeof value === "object" && typeof (value as { jobId?: unknown }).jobId === "string";
+}
+
+function jobProgressText(job: Pick<ActiveYalcJob, "status" | "progress">): string {
+  const progress = job.progress;
+  if (progress?.message) return progress.message;
+  if (typeof progress?.percent === "number") return `${Math.round(progress.percent)}% completado`;
+  if (typeof progress?.done === "number" && typeof progress?.total === "number") return `${progress.done}/${progress.total}`;
+  if (job.status === "queued") return "En cola";
+  if (job.status === "running") return "Ejecutando";
+  return String(job.status);
+}
+
 function scoreBandClass(score: number | null, size: "md" | "lg" = "md"): string {
   const band = qualityBand(score);
   return cn(
@@ -669,6 +717,7 @@ export function OutboundB2BView() {
 
   const [roster, setRoster] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [activeJob, setActiveJob] = useState<ActiveYalcJob | null>(null);
 
   function pushQuery(
     next: Partial<{
@@ -815,7 +864,7 @@ export function OutboundB2BView() {
       showToast(`No se pudo mover: ${error instanceof Error ? error.message : "error"}`, "warn"),
   });
 
-  const outboundAction = useMutation({
+  const outboundAction = useMutation<unknown, Error, { campaignId: string; action: OutboundAction }>({
     mutationFn: ({ campaignId, action }: { campaignId: string; action: OutboundAction }) => {
       const campaign = campaigns.find((item) => item.id === campaignId) || campaignDetailQuery.data;
       const campaignLeads = allLeads.filter((lead) => lead.campaignId === campaignId);
@@ -869,12 +918,86 @@ export function OutboundB2BView() {
         body: JSON.stringify({ expectedKind: "b2b", confirmLiveLaunch: true, actorLabel: "Sancho" }),
       });
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      if (isQueuedJobResponse(data)) {
+        setActiveJob({
+          campaignId: variables.campaignId,
+          action: variables.action,
+          jobId: data.jobId,
+          status: data.status || "queued",
+        });
+        showToast(`En cola: ${outboundActionLabel(variables.action)}`);
+        return;
+      }
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
       showToast(`Completado: ${outboundActionLabel(variables.action)}`);
     },
     onError: (error) => showToast(error instanceof Error ? error.message : "Acción incompleta", "warn"),
   });
+
+  useEffect(() => {
+    if (!slug || !activeJob?.jobId) return;
+
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let failures = 0;
+    const { jobId, action } = activeJob;
+
+    const poll = async () => {
+      try {
+        const job = await fetchJson<YalcJobRecord>(
+          `/api/yalc/jobs/${encodeURIComponent(jobId)}?slug=${encodeURIComponent(slug)}`,
+        );
+        if (cancelled) return;
+        failures = 0;
+        setActiveJob((current) =>
+          current?.jobId === jobId
+            ? {
+                ...current,
+                status: job.status,
+                progress: job.progress,
+                errorMessage: job.errorMessage,
+              }
+            : current,
+        );
+
+        if (job.status === "succeeded") {
+          void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
+          showToast(`Completado: ${outboundActionLabel(action)}`);
+          setActiveJob(null);
+          return;
+        }
+
+        if (job.status === "failed" || job.status === "interrupted") {
+          void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
+          const message = job.errorMessage || "La integración externa no completó la acción.";
+          showToast(`${outboundActionLabel(action)} incompleto: ${message}`, "warn");
+          setActiveJob(null);
+          return;
+        }
+
+        timer = setTimeout(poll, 1500);
+      } catch (error) {
+        if (cancelled) return;
+        failures += 1;
+        if (failures >= 3) {
+          showToast(
+            `No pude leer el estado de ${outboundActionLabel(action)}: ${error instanceof Error ? error.message : "error"}`,
+            "warn",
+          );
+          setActiveJob(null);
+          return;
+        }
+        timer = setTimeout(poll, 2000);
+      }
+    };
+
+    void poll();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [activeJob?.jobId, queryClient, showToast, slug]);
 
   const sequenceUpdateAction = useMutation({
     mutationFn: ({ campaignId, stepId, emails }: { campaignId: string; stepId?: string; emails: EmailSequenceEmail[] }) =>
@@ -1002,6 +1125,8 @@ export function OutboundB2BView() {
   const activeCampaigns = campaigns.filter((campaign) => campaignState(campaign) !== "draft").length;
   const providerReadyCount = providers.filter((provider) => (provider.status || "").toLowerCase() === "green").length;
   const pageError = overview.error || campaignsQuery.error || activeLeadsQuery.error || discardedLeadsQuery.error;
+  const actionBusy = outboundAction.isPending || !!activeJob;
+  const busyAction = outboundAction.isPending ? outboundAction.variables?.action : activeJob?.action;
 
   if (notConfigured) {
     return (
@@ -1144,14 +1269,24 @@ export function OutboundB2BView() {
               </div>
             )}
 
+            {activeJob && (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground">
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-rust" />
+                <div className="min-w-0">
+                  <div className="font-semibold">{outboundActionLabel(activeJob.action)}</div>
+                  <div className="truncate text-xs text-muted-foreground">{jobProgressText(activeJob)}</div>
+                </div>
+              </div>
+            )}
+
             {tab === "encuentra" && (
               <B2BCampaignOverviewTab
                 campaign={icpCampaign}
                 leads={selectedAllLeads}
                 loading={campaignsQuery.isLoading || campaignDetailQuery.isLoading}
                 onCreateSearch={() => openB2BSearch()}
-                actionBusy={outboundAction.isPending}
-                busyAction={outboundAction.variables?.action}
+                actionBusy={actionBusy}
+                busyAction={busyAction}
                 onRunAction={(action) => outboundAction.mutate({ campaignId: selectedCampaignId, action })}
               />
             )}
@@ -1236,8 +1371,8 @@ export function OutboundB2BView() {
                 loading={campaignDetailQuery.isLoading}
                 saving={sequenceUpdateAction.isPending}
                 locked={selectedLeadEditsLocked}
-                actionBusy={outboundAction.isPending}
-                busyAction={outboundAction.variables?.action}
+                actionBusy={actionBusy}
+                busyAction={busyAction}
                 onSave={(stepId, emails) =>
                   sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
                 }

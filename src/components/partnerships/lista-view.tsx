@@ -51,6 +51,7 @@ interface ListaViewProps {
   onOpen: (lead: PartnershipLead) => void;
   onBulkMove: (leads: PartnershipLead[], target: StageFilterKey) => void;
   onBulkDiscard: (leads: PartnershipLead[]) => void;
+  onContactLead?: (lead: PartnershipLead) => void;
   /** SAN-80: instancia la secuencia de la búsqueda y crea el GateItem. */
   onBulkContact?: (leads: PartnershipLead[]) => void;
   busy?: boolean;
@@ -65,6 +66,7 @@ export function ListaView({
   onOpen,
   onBulkMove,
   onBulkDiscard,
+  onContactLead,
   onBulkContact,
   busy,
 }: ListaViewProps) {
@@ -219,7 +221,7 @@ export function ListaView({
       {/* Tabla */}
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table
-          className="w-full min-w-[960px] text-left text-sm"
+          className="w-full min-w-[1040px] text-left text-sm"
           data-testid="contactos-lista"
         >
           <thead>
@@ -260,13 +262,14 @@ export function ListaView({
                 Veredicto
               </th>
               <th className="px-3 py-2.5">Estado</th>
+              <th className="px-3 py-2.5 text-right">Acción</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 && (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="px-3 py-10 text-center text-sm italic text-muted-foreground"
                 >
                   Ningún creator coincide con esos filtros.
@@ -371,6 +374,26 @@ export function ListaView({
                   <td className="px-3 py-2.5">
                     <StageStamp lead={lead} />
                   </td>
+                  <td className="px-3 py-2.5 text-right">
+                    {contactActionForStage(leadStage) === "enabled" ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onContactLead?.(lead);
+                        }}
+                        className="rounded-md border border-rust/60 bg-rust px-2.5 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+                        data-testid="row-contactar"
+                      >
+                        Contactar
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-medium text-muted-foreground">
+                        {contactActionForStage(leadStage) === "done" ? "Contactado" : "—"}
+                      </span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -450,6 +473,12 @@ export function ListaView({
       )}
     </div>
   );
+}
+
+function contactActionForStage(stage: StageFilterKey | null): "enabled" | "done" | "hidden" {
+  if (!stage || stage === DISCARDED_STAGE) return "hidden";
+  if (["Contacted", "Replied", "Negotiating", "Signed", "Active"].includes(stage)) return "done";
+  return "enabled";
 }
 
 function SortableTh({

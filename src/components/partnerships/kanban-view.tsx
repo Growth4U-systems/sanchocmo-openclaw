@@ -198,30 +198,48 @@ function KanbanCard({
           )}
         </div>
       )}
-      {stage === "Discovered" && (
+      {(stage === "Discovered" || stage === "Shortlist") && (
         <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
-          <button
-            type="button"
-            title="Mover a Shortlist"
-            onClick={(event) => {
-              event.stopPropagation();
-              onMove(lead, "Shortlist");
-            }}
-            className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold transition-colors hover:border-rust hover:text-rust"
-          >
-            ✓ Shortlist
-          </button>
-          <button
-            type="button"
-            title="Descartar"
-            onClick={(event) => {
-              event.stopPropagation();
-              discard();
-            }}
-            className="rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
-          >
-            🗑
-          </button>
+          {stage === "Shortlist" && (
+            <button
+              type="button"
+              title="Preparar contacto"
+              onClick={(event) => {
+                event.stopPropagation();
+                onMove(lead, "Contacted");
+              }}
+              className="flex-1 rounded-md border border-rust bg-rust px-2 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-rust/90"
+              data-testid="kanban-contactar"
+            >
+              Contactar
+            </button>
+          )}
+          {stage === "Discovered" && (
+            <>
+              <button
+                type="button"
+                title="Mover a Shortlist"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onMove(lead, "Shortlist");
+                }}
+                className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold transition-colors hover:border-rust hover:text-rust"
+              >
+                ✓ Shortlist
+              </button>
+              <button
+                type="button"
+                title="Descartar"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  discard();
+                }}
+                className="rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
+              >
+                🗑
+              </button>
+            </>
+          )}
         </div>
       )}
     </article>
