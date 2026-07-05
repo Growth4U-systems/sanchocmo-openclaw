@@ -942,6 +942,7 @@ export function PartnershipsView() {
                     onBulkDiscard={(leads) =>
                       void moveMany(leads, DISCARDED_STAGE)
                     }
+                    onContactLead={(lead) => void contactLeads([lead])}
                     onBulkContact={(leads) => void contactLeads(leads)}
                     busy={stageMutation.isPending}
                   />

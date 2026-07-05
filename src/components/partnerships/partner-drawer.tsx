@@ -31,6 +31,7 @@ import {
   stageForStatus,
   type StageFilterKey,
 } from "@/lib/partnerships/stage-mapping";
+import { normalizeQualityComponents } from "@/lib/partnerships/quality-components";
 import type {
   PartnershipLead,
   QualityComponentsMap,
@@ -104,8 +105,9 @@ export function PartnerDrawer({
 
   const stage = stageForStatus(lead.lifecycleStatus);
   const band = qualityBand(lead.qualityScore);
-  const components = lead.qualityComponents || null;
+  const components = normalizeQualityComponents(lead.qualityComponents);
   const feeNote = feeStageNote(stage);
+  const canContact = stage === "Discovered" || stage === "Shortlist";
 
   return (
     <SlideOver
@@ -150,9 +152,20 @@ export function PartnerDrawer({
           <StageStamp lead={lead} />
         </div>
 
-        {/* Triaje desde el drawer (paridad kanban) */}
-        {(stage === "Discovered" || stage === DISCARDED_STAGE) && (
+        {/* Triaje y contacto desde el drawer */}
+        {(canContact || stage === DISCARDED_STAGE) && (
           <div className="flex flex-wrap gap-2">
+            {canContact && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onMove(lead, "Contacted")}
+                className="rounded-md border border-rust bg-rust px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+                data-testid="drawer-contactar"
+              >
+                Contactar
+              </button>
+            )}
             {stage === "Discovered" && (
               <>
                 <button
