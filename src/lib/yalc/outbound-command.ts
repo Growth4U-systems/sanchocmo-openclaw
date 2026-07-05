@@ -1,4 +1,5 @@
 import { assertCampaignKind, assertCampaignLeadEditsUnlocked } from "./campaign-guards";
+import { ingestB2BContacts } from "@/lib/partnerships/b2b-ingest";
 import {
   normalizeYalcCampaign,
   resolveCampaignKind,
@@ -19,7 +20,7 @@ export type OutboundCommandName =
 
 type ProfileKind = "b2b_contact" | "creator";
 type CampaignType = "B2B" | "Partnerships";
-type Provider = "apollo" | "crustdata" | "manual";
+type Provider = "apollo" | "crustdata" | "manual" | "company-db";
 type Channel = "email" | "linkedin";
 
 export class OutboundCommandError extends Error {
@@ -91,8 +92,8 @@ function profileKind(value: unknown): ProfileKind {
 
 function provider(value: unknown): Provider {
   const raw = text(value) || "manual";
-  if (raw === "apollo" || raw === "crustdata" || raw === "manual") return raw;
-  throw new OutboundCommandError("provider must be apollo, crustdata, or manual");
+  if (raw === "apollo" || raw === "crustdata" || raw === "manual" || raw === "company-db") return raw;
+  throw new OutboundCommandError("provider must be apollo, crustdata, manual, or company-db");
 }
 
 function channel(value: unknown): Channel {
@@ -259,6 +260,14 @@ async function source(config: YalcRuntimeConfig, input: RecordLike, command: Out
       `/api/campaigns/${encodeURIComponent(campaignId)}/leads/assign`,
       { method: "POST", body: { ...payload, leads } },
     );
+    return { ok: true, command, httpStatus: 201, campaignId, profileKind: pKind, provider: selectedProvider, result };
+  }
+
+  if (selectedProvider === "company-db") {
+    if (kind !== "b2b") {
+      throw new OutboundCommandError("company-db outbound.source is only valid for profileKind b2b_contact");
+    }
+    const result = await ingestB2BContacts(config, { ...input, campaignId });
     return { ok: true, command, httpStatus: 201, campaignId, profileKind: pKind, provider: selectedProvider, result };
   }
 
