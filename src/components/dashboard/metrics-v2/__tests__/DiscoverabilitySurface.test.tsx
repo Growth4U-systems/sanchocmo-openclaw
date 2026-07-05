@@ -45,5 +45,5 @@ test("DiscoverabilitySurface: SEO data → SEO tab content + both sub-tab button
 test("DiscoverabilitySurface: AI-only data defaults to the AI tab", () => {
   const m = render(createElement(DiscoverabilitySurface, { data: { ai } }));
   assert.match(m, /Share of Voice/);
-  assert.match(m, /Listo para recolectar/);
+  assert.match(m, /Conectado sin datos/);
 });

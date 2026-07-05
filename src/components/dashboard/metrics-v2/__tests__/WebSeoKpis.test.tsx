@@ -49,7 +49,7 @@ test("WebSeoKpis: shows the connection state (collecting)", () => {
 
 test("WebSeoKpis: connected_pending = credential present, no rows yet (SAN-228)", () => {
   const m = render(createElement(WebSeoKpis, { ...base, state: "connected_pending" }));
-  assert.match(m, /Listo para recolectar/);
+  assert.match(m, /Conectado sin datos/);
 });
 
 test("WebSeoKpis: the Core Web Vitals health KPI renders its secondary hint", () => {

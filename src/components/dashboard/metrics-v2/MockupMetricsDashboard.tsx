@@ -1555,7 +1555,7 @@ function SequenceFunnel({ steps }: { steps: SequenceStep[] }) {
 function EmptyBreakdownPanel({ text }: { text: string }) {
   return (
     <div className="m-panel m-pad m-empty-breakdown">
-      <div>Sin desglose para este rango</div>
+      <div>Sin datos para este rango</div>
       <p>{text}</p>
     </div>
   );
@@ -2400,15 +2400,15 @@ function rangeLabel(range: DateRange): string {
 }
 
 function stateValue(state: MetricDataState): string {
-  if (state === "ON") return "Activo";
-  if (state === "PARCIAL") return "Datos parciales";
-  return "Sin datos";
+  if (state === "ON") return "Sin KPI calculado";
+  if (state === "PARCIAL") return "Faltan fuentes";
+  if (state === "CONECTADO SIN SNAPSHOTS") return "Conectado sin datos";
+  if (state === "COMING SOON") return "Próximamente";
+  return "No conectado";
 }
 
 function stateLabel(state: MetricDataState): string {
-  if (state === "ON") return "Activo";
-  if (state === "PARCIAL") return "Datos parciales";
-  return "Sin datos";
+  return stateValue(state);
 }
 
 function stateClass(state: MetricDataState): string {

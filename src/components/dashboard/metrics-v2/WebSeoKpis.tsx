@@ -6,7 +6,7 @@
  * passes the scorecards in. These are observed metrics, not attributed. The
  * cross-source story (web → cita → pago) is NOT here — it lives in Atribución
  * (PR7). When a credential is present but no rows have landed yet, the surface
- * shows the "Listo para recolectar" state until a fresh collect lands.
+ * shows the connected-without-data state until a fresh collect lands.
  */
 import { ConnectionState, DataChip, ProvenanceFooter } from "./rigor";
 

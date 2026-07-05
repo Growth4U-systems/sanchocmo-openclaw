@@ -2,9 +2,9 @@
  * Discoverability · AI sub-tab — KPI scorecards (SAN-319 · PR6, slots ①②).
  *
  * Pure/presentational. The AI (GEO/AEO) sub-tab measures visibility in AI answers
- * (share of voice, citations, engines). There is NO real source yet → every number
- * is `seed` and the header shows `connected_pending` ("conecta Profound / Peec /
- * scraper interno"). Defines the shape a future AEO adapter will fill (source=aeo).
+ * (share of voice, citations, engines). There is no real source yet, so every
+ * number is `seed` and the header shows the connected-without-rows state until a
+ * future AEO adapter fills `source=aeo`.
  */
 import { ConnectionState, DataChip } from "./rigor";
 

@@ -85,9 +85,9 @@ export function ConnectionState({
   state: "off" | "partial" | "connected_pending" | "collecting";
 }) {
   const meta: Record<typeof state, { label: string; glyph: string; cls: string }> = {
-    off: { label: "Sin datos", glyph: "○", cls: "bg-aged text-[var(--sc-fg-muted)]" },
-    partial: { label: "Datos parciales", glyph: "◐", cls: "bg-[var(--yellow)] text-ink" },
-    connected_pending: { label: "Listo para recolectar", glyph: "◑", cls: "bg-[var(--cyan)] text-white" },
+    off: { label: "No conectado", glyph: "○", cls: "bg-aged text-[var(--sc-fg-muted)]" },
+    partial: { label: "Faltan fuentes", glyph: "◐", cls: "bg-[var(--yellow)] text-ink" },
+    connected_pending: { label: "Conectado sin datos", glyph: "◑", cls: "bg-[var(--cyan)] text-white" },
     collecting: { label: "Recolectando", glyph: "✓", cls: "bg-sage text-white" },
   };
   const { label, glyph, cls } = meta[state];

@@ -29,5 +29,5 @@ test("AiKpis: AI without a real source keeps provenance out of visible tags", ()
   const m = render(createElement(AiKpis, { kpis }));
   assert.doesNotMatch(m, />Seed</);
   assert.match(m, /IA/);
-  assert.match(m, /Listo para recolectar/);
+  assert.match(m, /Conectado sin datos/);
 });
