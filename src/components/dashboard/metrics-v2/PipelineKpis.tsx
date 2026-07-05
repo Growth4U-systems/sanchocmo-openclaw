@@ -4,9 +4,8 @@
  * Pure/presentational: the parent (`CrmModule` in `metrics.tsx`) computes the GHL
  * numbers (via `mVal`) and the known-dirty flag (via `getKnownDirty('ghl')`) and
  * passes them in. Surfaces read ONLY their own source — GHL here — so this never
- * references Koibox. GHL leads/pipeline are the platform's own (inflated, ±10)
- * figures → `Dedup`; appointments/attendance are not instrumented → `Pendiente`; the
- * real cita (Koibox) and the channel→cita→pago join live in the Atribución view (PR7).
+ * references cross-source attribution. GHL contacts, appointments and opportunities
+ * are CRM-owned figures; channel→cita→pago joins live in the Atribución view (PR7).
  */
 import { cn } from "@/lib/utils";
 import { DataChip, DataHealthBadge } from "./rigor";
@@ -51,10 +50,8 @@ export function PipelineKpis({
         ))}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-[var(--sc-fg-muted)]">
-        <DataChip type="dedup" source="GHL" confidence="media" />
-        <span>leads · pipeline = lo que reporta GHL (±10, inflado) — dato propio de GHL, no cifra exacta</span>
-        <DataChip type="pending" source="GHL" />
-        <span>citas / asistencia no instrumentadas — la cita real vive en Atribución</span>
+        <DataChip type="real" source="GHL" confidence="alta" />
+        <span>contactos · reuniones · opportunities = dato directo de GHL</span>
         <span title={dirtyReason}>
           <DataHealthBadge source="ghl" status={ghlDirty ? "dirty" : "clean"} />
         </span>

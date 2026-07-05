@@ -5,10 +5,8 @@
  * `tsconfig.tsx-tests.json`, so no explicit `import React`). Run: `npm run test:metrics`.
  *
  * Guards the surface's rigor contract: surfaces read ONLY their own source, so
- * Pipeline shows GHL flagged as its own (inflated, ±10) source — `Dedup`;
- * appointments/attendance are not instrumented — `Pendiente` (the real cita is
- * Koibox, which lives in the Atribución view, PR7); GHL is known-dirty so the health
- * badge links to *Salud de dato*; and the surface NEVER references Koibox.
+ * Pipeline shows GHL as the CRM-owned real source; cross-source attribution lives
+ * in the Atribución view (PR7); and the surface NEVER references Koibox.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -24,8 +22,7 @@ const base = {
   appointments: 33,
   opportunities: 210,
   pipelineValue: 45000,
-  ghlDirty: true,
-  dirtyReason: "Eventos inflados (1 cita → 100+ eventos) y leads redondeados ±10",
+  ghlDirty: false,
 };
 
 test("PipelineKpis: renders the GHL KPI values + labels", () => {
@@ -36,16 +33,20 @@ test("PipelineKpis: renders the GHL KPI values + labels", () => {
   }
 });
 
-test("PipelineKpis: GHL leads/pipeline carry a Dedup chip (±10, inflado)", () => {
-  assert.match(render(createElement(PipelineKpis, base)), /Dedup/);
-});
-
-test("PipelineKpis: appointments/attendance carry a Pendiente chip (no instrumentado)", () => {
-  assert.match(render(createElement(PipelineKpis, base)), /Pendiente/);
-});
-
-test("PipelineKpis: GHL known-dirty → health badge links to Salud de dato", () => {
+test("PipelineKpis: GHL carries a Real source chip", () => {
   const m = render(createElement(PipelineKpis, base));
+  assert.match(m, /Real/);
+  assert.match(m, /dato directo de GHL/);
+});
+
+test("PipelineKpis: clean GHL does not show pending instrumentation copy", () => {
+  const m = render(createElement(PipelineKpis, base));
+  assert.doesNotMatch(m, /Pendiente/);
+  assert.doesNotMatch(m, /inflado/);
+});
+
+test("PipelineKpis: dirty GHL still links to Salud de dato when passed explicitly", () => {
+  const m = render(createElement(PipelineKpis, { ...base, ghlDirty: true, dirtyReason: "API inconsistente" }));
   assert.match(m, /#salud-de-dato/);
   assert.match(m, /ghl: problema de dato/);
 });

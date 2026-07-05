@@ -2,7 +2,7 @@
  * DataQualityInsight (SAN-319 · PR8 component) — instrumentation-quality callout.
  *
  * Presentational only: the *Salud de dato* view feeds it from getMetricsHealth
- * (GHL inflation, ±10 leads, attendance not emitted, connected≠collected). Each
+ * (provider anomalies, missing instrumentation, connected≠collected). Each
  * surface only links here via DataHealthBadge. Rendered with `renderToStaticMarkup`
  * under `tsx --test`. Run: `npm run test:metrics`.
  */
@@ -17,13 +17,13 @@ const render = (el: ReactElement) => renderToStaticMarkup(el);
 test("DataQualityInsight: renders its title and body", () => {
   const m = render(
     createElement(DataQualityInsight, {
-      title: "GHL infla eventos de cita",
-      body: "1 cita real → 100+ eventos; los conteos no son cifra exacta.",
+      title: "Fuente con eventos duplicados",
+      body: "La fuente reporta eventos duplicados; los conteos no son cifra exacta.",
       severity: "high",
     }),
   );
-  assert.match(m, /GHL infla eventos de cita/);
-  assert.match(m, /100\+ eventos/);
+  assert.match(m, /Fuente con eventos duplicados/);
+  assert.match(m, /eventos duplicados/);
 });
 
 test("DataQualityInsight: high and warn render distinct severity styling and labels", () => {

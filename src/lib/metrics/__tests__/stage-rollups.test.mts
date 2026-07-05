@@ -64,14 +64,14 @@ test("maps raw snapshots into stage/channel rollups without double-counting dime
   assert.equal(paidLead?.qualityStatus, "partial");
 });
 
-test("marks GHL stage rollups dirty", () => {
+test("GHL stage rollups are clean when collected directly from the CRM", () => {
   const rollups = computeMetricStageRollupsFromSnapshots(
     [row({ source: "ghl", metricName: "appointments", value: 4 })],
     oneDay,
   );
   const meetings = rollups.find((item) => item.stageId === "meetings");
   assert.equal(meetings?.value, 4);
-  assert.equal(meetings?.qualityStatus, "dirty");
+  assert.equal(meetings?.qualityStatus, "ok");
 });
 
 test("seed/demo metadata wins over partial platform quality", () => {
@@ -118,7 +118,7 @@ test("latest stage metrics persist one range-level rollup instead of daily addit
   assert.equal(deals[0].stageId, "deals");
   assert.equal(deals[0].stageDate, "2026-06-03");
   assert.equal(deals[0].value, 73);
-  assert.equal(deals[0].qualityStatus, "dirty");
+  assert.equal(deals[0].qualityStatus, "ok");
 });
 
 test("availability KPI reports honest partial coverage", () => {

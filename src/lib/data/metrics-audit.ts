@@ -243,7 +243,7 @@ function buildNextActions(args: {
   for (const source of ["ga4", "gsc", "pagespeed", "posthog", "metricool", "yalc", "trust_score"]) {
     if (bySource.get(source)?.status === "missing") actions.push(`Collect ${source}: no rows in audit range.`);
   }
-  if (bySource.get("ghl")?.status === "dirty") actions.push("Reconcile GHL mapping before using deals/meetings as exact headline figures.");
+  if (args.kpiCounts.dirty > 0) actions.push("Review dirty KPI sources before using them as exact headline figures.");
   if (!args.persistedRun) actions.push("Run KPI recompute for this range or open the dashboard once to trigger read-through recompute.");
   if (args.kpiCounts.missing > 0) actions.push(`Map or collect missing KPI inputs (${args.kpiCounts.missing} missing definitions).`);
   return [...new Set(actions)];

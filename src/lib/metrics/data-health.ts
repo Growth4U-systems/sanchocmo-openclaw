@@ -35,7 +35,7 @@ export function buildDataQualityInsights(health: HealthInput | null | undefined)
   if (!health || !health.configured) return [];
   const out: DataQualityInsightData[] = [];
 
-  // 1. Known-dirty sources (e.g. GHL inflated events / ±10 leads) → critical.
+  // 1. Known-dirty sources (source-specific provider anomalies) → critical.
   for (const s of health.sources) {
     if (s.knownDirty) {
       out.push({

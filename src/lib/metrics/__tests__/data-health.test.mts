@@ -25,13 +25,13 @@ test("knownDirty source → a high insight carrying its reason + owner", () => {
   const ins = buildDataQualityInsights({
     configured: true,
     cron: { degraded: false, reasons: [] },
-    sources: [src({ source: "ghl", knownDirty: true, dirtyReason: "Eventos inflados (1 cita → 100+)" })],
+    sources: [src({ source: "legacy_crm", knownDirty: true, dirtyReason: "Eventos duplicados en la API" })],
   });
-  const ghl = ins.find((i: { owner?: string }) => i.owner === "ghl");
-  assert.ok(ghl, "expected a ghl insight");
-  assert.equal(ghl.severity, "high");
-  assert.match(ghl.title, /GHL/);
-  assert.match(ghl.body, /inflados/);
+  const legacyCrm = ins.find((i: { owner?: string }) => i.owner === "legacy_crm");
+  assert.ok(legacyCrm, "expected a legacy_crm insight");
+  assert.equal(legacyCrm.severity, "high");
+  assert.match(legacyCrm.title, /LEGACY_CRM/);
+  assert.match(legacyCrm.body, /duplicados/);
 });
 
 test("connected ≠ collected → a warn insight listing the stale sources", () => {

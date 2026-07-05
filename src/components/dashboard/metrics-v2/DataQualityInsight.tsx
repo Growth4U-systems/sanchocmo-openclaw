@@ -3,7 +3,7 @@
  * for the *Salud de dato* view.
  *
  * Presentational only. The view feeds these from `getMetricsHealth()` (GHL event
- * inflation, ±10 leads, attendance not emitted, connected≠collected). Surfaces never
+ * provider anomalies, missing instrumentation, connected≠collected). Surfaces never
  * render quality insights themselves — they only link here via `DataHealthBadge`.
  * Style matches `./index.tsx`.
  */
