@@ -35,22 +35,66 @@ const TOOL_VERB_RE =
 // as bot messages instead of structured progress events.
 const TOOL_LABEL_ES_RE =
   /^(Leyendo|Escribiendo|Editando|Ejecutando|Buscando|Delegando|Compactando|Pensando)\b/;
+const STRUCTURAL_TOOL_LOG_RE =
+  /(->|→|\(\s*\d+\s*chars?\s*\)|inline script|\bto \/|\bin \/|\$OPENCLAW_HOME|https?:\/\/|localhost:\d+|Code Execution|HTTP\s+(GET|POST|PUT|PATCH|DELETE)\s+request)/i;
+const TOOL_FRAGMENT_RE =
+  /\b(Write|Edit|MultiEdit|Read|Bash|Grep|Glob|Search|Fetch|WebFetch|WebSearch|Run|Show|Update|Create|Delete|Move|List|TodoWrite|Task|Agent|Notebook\w*|Code Execution|list files|find files|print text|fetch|print|pwd|curl|cat|ls|node|python3?)\b/i;
 
-/** Strip a single leading emoji (+ optional VS16 / ZWJ) and surrounding space. */
+function isEmojiCodePoint(code: number): boolean {
+  return (
+    (code >= 0x1f000 && code <= 0x1faff) ||
+    (code >= 0x2600 && code <= 0x27bf) ||
+    (code >= 0x2300 && code <= 0x23ff)
+  );
+}
+
+function emojiLengthAtStart(text: string): number {
+  const first = text.codePointAt(0);
+  if (!first || !isEmojiCodePoint(first)) return 0;
+
+  let length = first > 0xffff ? 2 : 1;
+  const readVariation = () => {
+    const code = text.charCodeAt(length);
+    if (code === 0xfe0e || code === 0xfe0f) length += 1;
+  };
+  readVariation();
+
+  while (text.charCodeAt(length) === 0x200d) {
+    const nextIndex = length + 1;
+    const next = text.codePointAt(nextIndex);
+    if (!next || !isEmojiCodePoint(next)) break;
+    length = nextIndex + (next > 0xffff ? 2 : 1);
+    readVariation();
+  }
+
+  return length;
+}
+
+/** Strip leading runtime glyphs, including emojis unknown to the static list. */
 function stripLeadingEmoji(text: string): string {
   let t = text.trimStart();
-  for (const e of TOOL_EMOJIS) {
-    if (t.startsWith(e)) {
-      t = t.slice(e.length).trimStart();
-      break;
+  for (let i = 0; i < 4; i += 1) {
+    const before = t;
+    const known = TOOL_EMOJIS.find((e) => t.startsWith(e));
+    if (known) {
+      t = t.slice(known.length).trimStart();
+    } else {
+      const length = emojiLengthAtStart(t);
+      if (length === 0) break;
+      t = t.slice(length).trimStart();
     }
+    if (t === before) break;
   }
   return t;
 }
 
-function startsWithToolEmoji(text: string): boolean {
+function startsWithKnownToolEmoji(text: string): boolean {
   const t = text.trimStart();
   return TOOL_EMOJIS.some((e) => t.startsWith(e));
+}
+
+function startsWithAnyEmoji(text: string): boolean {
+  return emojiLengthAtStart(text.trimStart()) > 0;
 }
 
 /**
@@ -69,10 +113,10 @@ export function isToolEcho(text: string | undefined | null): boolean {
   if (TOOL_LABEL_ES_RE.test(body)) return true;
 
   // Emoji-led line with an unmistakable tool-log shape.
-  if (
-    startsWithToolEmoji(t) &&
-    /(->|\(\s*\d+\s*chars?\s*\)|inline script|\bto \/|\bin \/|\$OPENCLAW_HOME|https?:\/\/|localhost:\d+|Code Execution|HTTP\s+(GET|POST|PUT|PATCH|DELETE)\s+request)/i.test(t)
-  ) {
+  if (startsWithKnownToolEmoji(t) && STRUCTURAL_TOOL_LOG_RE.test(t)) {
+    return true;
+  }
+  if (startsWithAnyEmoji(t) && body !== t && STRUCTURAL_TOOL_LOG_RE.test(t) && TOOL_FRAGMENT_RE.test(body)) {
     return true;
   }
   return false;
@@ -81,7 +125,7 @@ export function isToolEcho(text: string | undefined | null): boolean {
 /** Map a tool-echo line to the ProgressKind that picks its timeline icon. */
 function guessKind(body: string): ProgressKind {
   if (/^(Write|Edit|MultiEdit|Escribiendo|Editando|Update|Create)\b/i.test(body)) return "file_write";
-  if (/^(Read|Leyendo|Show|show)\b/i.test(body)) return "read";
+  if (/^(Read|Leyendo|Show|show|List|list)\b/i.test(body)) return "read";
   if (/^(Grep|Glob|Search|Fetch|WebFetch|WebSearch|Buscando)\b/i.test(body)) return "search";
   if (/^(Agent|Task|Delegando)\b/i.test(body)) return "agent_handoff";
   if (/^(Pensando|Compactando)\b/i.test(body)) return "thinking";
