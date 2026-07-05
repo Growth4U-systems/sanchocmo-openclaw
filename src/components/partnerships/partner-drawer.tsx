@@ -32,6 +32,7 @@ import {
   type StageFilterKey,
 } from "@/lib/partnerships/stage-mapping";
 import { normalizeQualityComponents } from "@/lib/partnerships/quality-components";
+import { buildSocialProfileUrl } from "@/lib/partnerships/social-profile";
 import type {
   PartnershipLead,
   QualityComponentsMap,
@@ -60,6 +61,7 @@ interface PartnerDrawerProps {
     target: StageFilterKey,
     note?: string,
   ) => void;
+  onContactLead?: (lead: PartnershipLead) => void;
   busy?: boolean;
 }
 
@@ -77,6 +79,7 @@ export function PartnerDrawer({
   lead,
   onClose,
   onMove,
+  onContactLead,
   busy,
 }: PartnerDrawerProps) {
   const [expanded, setExpanded] = useState(false);
@@ -108,6 +111,7 @@ export function PartnerDrawer({
   const components = normalizeQualityComponents(lead.qualityComponents);
   const feeNote = feeStageNote(stage);
   const canContact = stage === "Discovered" || stage === "Shortlist";
+  const profileUrl = buildSocialProfileUrl(lead);
 
   return (
     <SlideOver
@@ -150,6 +154,17 @@ export function PartnerDrawer({
             </span>
           )}
           <StageStamp lead={lead} />
+          {profileUrl && (
+            <a
+              href={profileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-semibold text-rust transition-colors hover:border-rust hover:bg-rust/10"
+              data-testid="drawer-profile-link"
+            >
+              Ver perfil
+            </a>
+          )}
         </div>
 
         {/* Triaje y contacto desde el drawer */}
@@ -159,7 +174,9 @@ export function PartnerDrawer({
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => onMove(lead, "Contacted")}
+                onClick={() =>
+                  onContactLead ? onContactLead(lead) : onMove(lead, "Contacted")
+                }
                 className="rounded-md border border-rust bg-rust px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
                 data-testid="drawer-contactar"
               >

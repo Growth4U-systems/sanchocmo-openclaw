@@ -43,6 +43,7 @@ export interface PartnershipLead {
   // ── Partnerships / creator fields ──
   handle?: string | null;
   network?: string | null;
+  profileUrl?: string | null;
   followers?: number | null;
   engagementRate?: number | null;
   tier?: string | null;

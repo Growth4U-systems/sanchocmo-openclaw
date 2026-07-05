@@ -978,6 +978,7 @@ export function PartnershipsView() {
         lead={selectedLead}
         onClose={() => setSelectedLeadId(null)}
         onMove={moveLead}
+        onContactLead={(lead) => void contactLeads([lead])}
         busy={stageMutation.isPending}
       />
 
