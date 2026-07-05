@@ -195,6 +195,24 @@ MC_PORT="${MC_PORT:-}"
 GATEWAY_HOST_PORT="${GATEWAY_HOST_PORT:-}"
 LEGACY_HOST_PORT="${LEGACY_HOST_PORT:-}"
 
+# Runtime bootstrap. Fresh OSS installs intentionally start on OpenClaw because
+# it is still the complete/default adapter. Advanced installs may pass
+# SANCHO_RUNTIME plus adapter env vars before running the wizard; we persist
+# those into .env so BYO runtime setups survive container restarts.
+SANCHO_RUNTIME="${SANCHO_RUNTIME:-openclaw}"
+case "$SANCHO_RUNTIME" in
+  openclaw|hermes|external-http|hermes-external) ;;
+  *)
+    say "${YLW}ERROR:${RST} Unsupported SANCHO_RUNTIME='$SANCHO_RUNTIME'. Use openclaw, hermes, or external-http."
+    exit 1
+    ;;
+esac
+if [ "$SANCHO_RUNTIME" = "openclaw" ]; then
+  say "${DIM}Runtime: OpenClaw initial adapter. Configure/switch runtimes later from Settings → Runtime.${RST}"
+else
+  warn "Advanced runtime selected: SANCHO_RUNTIME=$SANCHO_RUNTIME. Make sure the matching gateway env vars are set."
+fi
+
 # --- 1. Model provider + auth ------------------------------------------------
 # Ask the auth MODE first, then collect the credential that mode actually needs
 # (and require it). The runtime resolves Anthropic creds as ANTHROPIC_OAUTH_TOKEN
@@ -425,6 +443,31 @@ set_env ENCRYPTION_KEY "$ENCRYPTION_KEY"
 set_env SANCHO_INTERNAL_API_TOKEN "$SANCHO_INTERNAL_API_TOKEN"
 set_env ADMIN_EMAIL_DOMAIN "$ADMIN_EMAIL_DOMAIN"
 set_env ADMIN_IDENTITY_EMAIL "$ADMIN_IDENTITY_EMAIL"
+# Runtime: persist the boot default and any advanced adapter env vars passed to
+# the wizard. This keeps curl-based installs compatible with BYO runtimes without
+# asking first-time users for choices that would leave the stack misconfigured.
+set_env SANCHO_RUNTIME "$SANCHO_RUNTIME"
+for runtime_key in \
+  INSTALL_HERMES HERMES_AGENT_REF HERMES_GATEWAY_URL HERMES_BASE_URL HERMES_URL \
+  HERMES_BRIDGE_ENABLED HERMES_BRIDGE_PORT HERMES_CHAT_SECRET HERMES_CLI \
+  HERMES_CLI_PROVIDER HERMES_CLI_MODEL HERMES_WORKDIR HERMES_RUN_TIMEOUT_MS \
+  HERMES_CONTEXT_PACK_ENABLED HERMES_CONTEXT_PACK_TIMEOUT_MS \
+  SANCHO_EXTERNAL_PROTOCOL SANCHO_EXTERNAL_RUNTIME_PROTOCOL \
+  SANCHO_EXTERNAL_GATEWAY_URL SANCHO_EXTERNAL_RUNTIME_URL \
+  SANCHO_EXTERNAL_SECRET SANCHO_EXTERNAL_RUNTIME_SECRET \
+  SANCHO_EXTERNAL_INBOUND_PATH SANCHO_EXTERNAL_RUNTIME_INBOUND_PATH \
+  SANCHO_EXTERNAL_CHAT_PATH SANCHO_EXTERNAL_BRIDGE_CHAT_PATH \
+  SANCHO_EXTERNAL_HEALTH_PATH SANCHO_EXTERNAL_RUNTIME_HEALTH_PATH \
+  SANCHO_EXTERNAL_AGENT SANCHO_EXTERNAL_BRIDGE_AGENT SANCHO_EXTERNAL_FORWARD_AGENT \
+  SANCHO_EXTERNAL_SESSION_PREFIX SANCHO_EXTERNAL_RUNTIME_HOME SANCHO_EXTERNAL_HEALTH_TIMEOUT_MS \
+  HERMES_EXTERNAL_GATEWAY_URL HERMES_EXTERNAL_BASE_URL HERMES_EXTERNAL_URL \
+  HERMES_EXTERNAL_SECRET HERMES_EXTERNAL_INBOUND_PATH HERMES_EXTERNAL_HEALTH_PATH \
+  HERMES_EXTERNAL_PROTOCOL HERMES_EXTERNAL_CHAT_PATH HERMES_EXTERNAL_AGENT \
+  HERMES_EXTERNAL_FORWARD_AGENT HERMES_EXTERNAL_SESSION_PREFIX
+do
+  runtime_val="${!runtime_key:-}"
+  [ -n "$runtime_val" ] && set_env "$runtime_key" "$runtime_val"
+done
 # Login: write Google creds explicitly (empty = disabled, never a placeholder)
 # and mirror the admin token into .env so the token login works even if
 # config/clients.json is ever unavailable.
@@ -523,6 +566,7 @@ fi
 say "   • Admin access token ${DIM}(paste into the 'Access Token' field on the sign-in page)${RST}:"
 say "       ${B}${ADMIN_TOKEN}${RST}"
 say "   ${DIM}(also stored in config/clients.json and .env as MC_ADMIN_TOKEN — keep it secret)${RST}"
+say "   • Runtime: ${SANCHO_RUNTIME} ${DIM}(change/configure later in Settings → Runtime)${RST}"
 if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
   say "   • Anthropic auth: subscription ${DIM}(Claude OAuth token set)${RST}"
 else

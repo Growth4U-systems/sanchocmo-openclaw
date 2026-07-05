@@ -1,6 +1,9 @@
 # SanchoCMO
 
-**Fractional CMO AI** — A multi-agent marketing system built on [OpenClaw](https://openclaw.ai).
+**Fractional CMO AI** — A self-hosted multi-agent marketing system. OpenClaw is
+the default runtime today; Sancho's core is being split behind a runtime adapter
+contract so Hermes, Codex CLI, Claude Code, and other compatible harnesses can
+run the same Sancho product.
 
 SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients,
 builds brand foundations, plans campaigns, creates content, and tracks metrics.
@@ -33,6 +36,12 @@ Sancho                      Sansón
 The primary interface is **Mission Control chat** (`mc-chat → sancho`). Discord
 and Slack can be wired in as additional channels, but the product boots and runs
 without either.
+
+Runtime means the agent harness that executes turns and tools. It is not the
+same thing as a model provider. Anthropic, OpenAI and Fireworks provide models;
+OpenClaw, Hermes, Codex CLI and Claude Code are runtimes once they implement
+Sancho's adapter contract. Fresh installs start with OpenClaw and can configure
+or switch compatible runtimes from **Mission Control -> Settings -> Runtime**.
 
 ### Agents
 
@@ -129,6 +138,13 @@ writes `.env`, `config/instance.json`, and `config/clients.json` for you. If a
 local port (e.g. `3000`) is already in use, the installer automatically picks the
 next free one and points your access URL at it. A boot preflight then validates
 the must-have config and fails fast with a clear list if anything is missing.
+
+The wizard writes `SANCHO_RUNTIME=openclaw` as the safe default. Advanced
+self-hosted installs can preseed `SANCHO_RUNTIME=external-http` plus
+`SANCHO_EXTERNAL_*` variables before running the installer, or configure the
+external runtime later from Settings. Existing Mission Control/Hermes bridges can
+use `SANCHO_EXTERNAL_PROTOCOL=mc-bridge`; `hermes-external` remains accepted as a
+legacy alias.
 
 Full guide: [docs/INSTALL.md](docs/INSTALL.md).
 

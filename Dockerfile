@@ -29,6 +29,20 @@ ARG OPENCLAW_VERSION=2026.5.18
 ENV OPENCLAW_VERSION=${OPENCLAW_VERSION}
 RUN npm install -g openclaw@${OPENCLAW_VERSION}
 
+# Optional Hermes CLI install. Keep it opt-in so the default OpenClaw image path
+# stays small and unchanged; Hermes staging builds set INSTALL_HERMES=1.
+ARG INSTALL_HERMES=0
+ARG HERMES_AGENT_REF=main
+RUN if [ "$INSTALL_HERMES" = "1" ]; then \
+      git clone --depth 1 --branch "$HERMES_AGENT_REF" https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
+      && python3 -m venv /opt/hermes-agent/venv \
+      && /opt/hermes-agent/venv/bin/pip install --upgrade pip setuptools wheel \
+      && /opt/hermes-agent/venv/bin/pip install -e "/opt/hermes-agent[cli,cron,pty,mcp]" \
+      && ln -sf /opt/hermes-agent/venv/bin/hermes /usr/local/bin/hermes; \
+    else \
+      echo "Skipping Hermes CLI install (INSTALL_HERMES=$INSTALL_HERMES)"; \
+    fi
+
 # Official Notion CLI used by the bundled `notion` skill. Without `ntn`
 # on PATH, the skill's anyBins=["ntn","curl"] check passes via curl, but
 # its SKILL.md tells the agent to prefer `ntn` — leading to "command not
@@ -74,6 +88,7 @@ RUN npm run build
 # clients.json, etc. under /opt/sancho-seed).
 WORKDIR /opt/sancho-seed
 COPY docker/ ./docker/
+COPY src/lib/runtime/agent-contract/ ./src/lib/runtime/agent-contract/
 COPY skills/ ./skills/
 COPY plugins/ ./plugins/
 COPY agents/ ./agents/
@@ -100,7 +115,7 @@ RUN cd /opt/sancho-seed/workspace-sancho \
 # Version marker: init-home.sh refreshes the framework only when this changes
 # (avoids re-copying ~180 MB of skills on every container restart).
 RUN echo "${GIT_COMMIT:-$(date +%s)}" > /opt/sancho-seed/.seed-version \
-    && chmod +x /opt/sancho-seed/docker/*.sh
+    && find /opt/sancho-seed/docker -name '*.sh' -exec chmod +x {} +
 
 # --- OpenClaw workspace ---
 WORKDIR /root/.openclaw

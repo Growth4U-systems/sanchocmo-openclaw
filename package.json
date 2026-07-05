@@ -15,6 +15,8 @@
     "test:partnerships": "tsx --test src/lib/partnerships/__tests__/*.test.mts",
     "test:metrics": "tsx --tsconfig tsconfig.tsx-tests.json --test src/components/dashboard/metrics-v2/__tests__/*.test.tsx",
     "test:content": "tsx --tsconfig tsconfig.tsx-tests.json --test src/components/content/__tests__/*.test.tsx",
+    "smoke:runtime:external-http": "node scripts/smoke-external-http.mjs",
+    "smoke:runtime:external-http:bridge": "node scripts/smoke-external-http.mjs --protocol=mc-bridge",
     "migrate:media": "tsx scripts/migrate-legacy-media.mts",
     "check:drafts": "tsx scripts/check-legacy-media.mts",
     "audit:docs": "tsx scripts/audit-doc-paths.mts --check",

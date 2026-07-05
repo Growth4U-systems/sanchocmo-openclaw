@@ -9,9 +9,9 @@
 # the user's data.
 #
 # Layers:
-#   - Framework (skills/, docker/): overwritten from the image, gated on a version
-#     marker so we only re-copy when the image actually changed (avoids 180 MB of
-#     churn on every restart).
+#   - Framework (skills/, docker/, src/lib/runtime/agent-contract/): overwritten
+#     from the image, gated on a version marker so we only re-copy when the image
+#     actually changed (avoids 180 MB of churn on every restart).
 #   - plugins/: source refreshed the same way, but the runtime install registry
 #     (installs.json) is preserved.
 #   - Data-bearing dirs (agents/, workspace-*/, config/, cron/): copied ONLY when
@@ -54,8 +54,9 @@ home_ver="none";    [ -f "$HOME_DIR/.sancho-seed-version" ] && home_ver="$(cat "
 if [ "$seed_ver" != "$home_ver" ]; then
   log "framework version changed (${home_ver} -> ${seed_ver}) — refreshing…"
 
-  # Pure framework: overwrite-merge from the image.
-  for d in skills docker; do
+  # Pure framework: overwrite-merge from the image. The seed only contains the
+  # runtime-neutral contract under src/, not the full Next.js app source.
+  for d in skills docker src; do
     if [ -d "$SEED/$d" ]; then
       mkdir -p "$HOME_DIR/$d"
       cp -a "$SEED/$d/." "$HOME_DIR/$d/"
@@ -74,7 +75,7 @@ if [ "$seed_ver" != "$home_ver" ]; then
   fi
 
   echo "$seed_ver" > "$HOME_DIR/.sancho-seed-version"
-  log "framework refreshed (skills, docker, plugins)"
+  log "framework refreshed (skills, docker, src/agent-contract, plugins)"
 else
   log "framework up to date (${home_ver}) — skipping refresh"
 fi
