@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.18.0...v0.18.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* **chat:** SAN-376 greet empty thread with its own agent badge ([#998](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/998)) ([f59710b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f59710b23b1b84b4c780ac86cabd3a8301a61e54))
+
 ## [0.18.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.17.1...v0.18.0) (2026-07-03)
 
 
