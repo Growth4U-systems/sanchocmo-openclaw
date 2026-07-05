@@ -25,9 +25,9 @@ test("AiKpis: renders the AI KPI labels + values", () => {
   assert.match(m, /Share of Voice/);
 });
 
-test("AiKpis: AI has no real source yet → numbers are Seed, header connected_pending", () => {
+test("AiKpis: AI without a real source keeps provenance out of visible tags", () => {
   const m = render(createElement(AiKpis, { kpis }));
-  assert.match(m, /Seed/);
+  assert.doesNotMatch(m, />Seed</);
   assert.match(m, /IA/);
-  assert.match(m, /Conectado · pendiente/);
+  assert.match(m, /Listo para recolectar/);
 });

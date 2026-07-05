@@ -5,7 +5,7 @@
  * `tsconfig.tsx-tests.json`). Run: `npm run test:metrics`.
  *
  * Rigor contract: the Product surface reads ONLY PostHog (its own source) and shows
- * the frontend funnel by *unique people* — each step is `Real` (PostHog sees the
+ * the frontend funnel by *unique people* with direct-source provenance (PostHog sees the
  * event directly). The real cita and the pago are NOT computed here (they're Koibox /
  * Stripe, joined in the Atribución view, PR7) — so the surface never fabricates a
  * "booked"/appointment step; it cross-links instead.
@@ -36,13 +36,15 @@ test("ProductFunnel: renders the frontend funnel steps by uniques", () => {
   assert.match(m, /791/); // reached value rendered (locale-tolerant)
 });
 
-test("ProductFunnel: every step is Real (PostHog sees it directly)", () => {
-  assert.match(render(createElement(ProductFunnel, base)), /Real/);
+test("ProductFunnel: every step keeps direct-source provenance without a visible Real tag", () => {
+  const m = render(createElement(ProductFunnel, base));
+  assert.match(m, /Dato directo/);
+  assert.doesNotMatch(m, />Real</);
 });
 
-test("ProductFunnel: clean PostHog → health badge is clean, no Salud-de-dato link", () => {
+test("ProductFunnel: clean PostHog adds no health badge or Salud-de-dato link", () => {
   const m = render(createElement(ProductFunnel, base));
-  assert.match(m, /posthog: dato limpio/);
+  assert.doesNotMatch(m, /dato limpio/);
   assert.doesNotMatch(m, /#salud-de-dato/);
 });
 

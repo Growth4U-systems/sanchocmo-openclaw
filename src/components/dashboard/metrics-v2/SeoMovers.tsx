@@ -3,7 +3,7 @@
  *
  * Pure/presentational. Two columns of ranking movement (GSC, period-over-period):
  * queries climbing / newly appearing vs declining / dropped out of the top 100.
- * Own-source, Real. The "why" (Intelligence) is the ⑧ bridge, not here.
+ * Own-source. The "why" (Intelligence) is the bridge, not here.
  */
 import { PILL_BASE } from "./rigor";
 

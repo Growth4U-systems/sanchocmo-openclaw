@@ -6,7 +6,7 @@
  *    threshold bars with a marker at the current value + the PageSpeed score chips.
  *  - Position distribution (GSC): how many keywords rank in Top 1-3 / 4-10 / 11-50 /
  *    51-100 — the leading "am I climbing?" signal.
- * Both are Real (observed). No cross-source here.
+ * Both are observed own-source panels. No cross-source here.
  */
 import { DataChip } from "./rigor";
 

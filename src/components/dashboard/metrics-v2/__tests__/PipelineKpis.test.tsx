@@ -5,7 +5,7 @@
  * `tsconfig.tsx-tests.json`, so no explicit `import React`). Run: `npm run test:metrics`.
  *
  * Guards the surface's rigor contract: surfaces read ONLY their own source, so
- * Pipeline shows GHL as the CRM-owned real source; cross-source attribution lives
+ * Pipeline keeps GHL as the CRM-owned direct source; cross-source attribution lives
  * in the Atribución view (PR7); and the surface NEVER references Koibox.
  */
 import { test } from "node:test";
@@ -33,9 +33,10 @@ test("PipelineKpis: renders the GHL KPI values + labels", () => {
   }
 });
 
-test("PipelineKpis: GHL carries a Real source chip", () => {
+test("PipelineKpis: GHL keeps direct-source provenance without a visible Real tag", () => {
   const m = render(createElement(PipelineKpis, base));
-  assert.match(m, /Real/);
+  assert.match(m, /Dato directo/);
+  assert.doesNotMatch(m, />Real</);
   assert.match(m, /dato directo de GHL/);
 });
 

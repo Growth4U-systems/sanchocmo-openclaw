@@ -5,7 +5,7 @@
  * `tsconfig.tsx-tests.json`). Run: `npm run test:metrics`.
  *
  * Rigor contract: the SEO sub-tab reads ONLY its own sources (GA4 · GSC · PageSpeed),
- * every number is `Real` (observed, not attributed), and it never fabricates the
+ * every number keeps direct-source provenance without visible technical tags, and it never fabricates the
  * cross-source story (web → cita → pago) — that's Atribución (PR7).
  */
 import { test } from "node:test";
@@ -36,9 +36,10 @@ test("WebSeoKpis: renders all 8 SEO KPI labels + values", () => {
   }
 });
 
-test("WebSeoKpis: every KPI is Real (observed, not attributed)", () => {
+test("WebSeoKpis: every KPI keeps direct-source provenance without visible Real tags", () => {
   const m = render(createElement(WebSeoKpis, base));
-  assert.match(m, /Real/);
+  assert.match(m, /Dato directo/);
+  assert.doesNotMatch(m, />Real</);
   for (const src of ["GSC", "GA4", "PageSpeed"]) assert.match(m, new RegExp(src));
 });
 
@@ -48,7 +49,7 @@ test("WebSeoKpis: shows the connection state (collecting)", () => {
 
 test("WebSeoKpis: connected_pending = credential present, no rows yet (SAN-228)", () => {
   const m = render(createElement(WebSeoKpis, { ...base, state: "connected_pending" }));
-  assert.match(m, /Conectado · pendiente/);
+  assert.match(m, /Listo para recolectar/);
 });
 
 test("WebSeoKpis: the Core Web Vitals health KPI renders its secondary hint", () => {

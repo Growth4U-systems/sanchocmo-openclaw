@@ -5,7 +5,7 @@
  * Reuniones → Deals) with the **% conversion BETWEEN stages** — the leak is the
  * insight. Stages come from the dashboard funnel (each step resolved from its own
  * surface's metric), so this is an amalgam view, not a single source. Flags the
- * worst drops as leaks. Real data — `buildFunnelSteps` feeds it.
+ * worst drops as leaks.
  */
 import { DataChip } from "./rigor";
 
