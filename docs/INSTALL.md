@@ -103,6 +103,62 @@ token, `mcToken`/brand registry in `config/clients.json`, and the local Postgres
 password — are **reused**, not rotated, so existing logins and the DB volume keep
 working.
 
+## Runtime selection
+
+Fresh installs write `SANCHO_RUNTIME=openclaw` into `.env`. That is deliberate:
+OpenClaw is currently the complete/default adapter while Sancho's runtime
+contract is being split out. Sancho core owns brands, tasks, docs, skills, chat
+state and settings; runtimes sit behind adapters.
+
+Runtime is not model provider:
+
+- **Model providers**: Anthropic, OpenAI, Fireworks, OpenRouter, etc.
+- **Runtimes / harnesses**: OpenClaw, Hermes, Codex CLI, Claude Code, or another
+  compatible agent gateway.
+- **Sancho adapter**: the thin layer that maps Sancho's chat/context/state
+  contract onto one runtime.
+
+Implemented/usable today: `openclaw`, managed `hermes`, and `external-http`.
+`external-http` is the BYO gateway path: the gateway can be backed by Hermes,
+Codex CLI, Claude Code, or another harness once it speaks Sancho's HTTP contract.
+It can also talk to an existing Mission Control/Hermes bridge with
+`SANCHO_EXTERNAL_PROTOCOL=mc-bridge`. `hermes-external` remains accepted as a
+legacy alias.
+
+To use a BYO runtime gateway from day one, pass the runtime env vars before
+running the installer or wizard:
+
+```bash
+export SANCHO_RUNTIME=external-http
+export SANCHO_EXTERNAL_GATEWAY_URL=https://runtime.example.com
+export SANCHO_EXTERNAL_SECRET=...
+curl -fsSL https://raw.githubusercontent.com/Growth4U-systems/sanchocmo-openclaw/main/get.sh | bash
+```
+
+For an existing bridge that exposes `POST /chat` and `GET /health`:
+
+```bash
+export SANCHO_RUNTIME=external-http
+export SANCHO_EXTERNAL_PROTOCOL=mc-bridge
+export SANCHO_EXTERNAL_GATEWAY_URL=https://bridge.example.com
+export SANCHO_EXTERNAL_CHAT_PATH=/chat
+export SANCHO_EXTERNAL_HEALTH_PATH=/health
+export SANCHO_EXTERNAL_AGENT=sancho-coordinator
+```
+
+The wizard persists supplied `HERMES_*`, `SANCHO_EXTERNAL_*`, or legacy
+`HERMES_EXTERNAL_*` values into `.env`, so they survive restarts. You can also
+leave the install on OpenClaw and configure a runtime later from
+**Settings -> Runtime**.
+
+The external runtime HTTP contract is documented in
+[`docs/runtime-external-http-contract.md`](runtime-external-http-contract.md).
+After building the app, validate the contract locally with:
+
+```bash
+npm run smoke:runtime:external-http
+```
+
 ### Non-interactive / CI
 
 Set `WIZARD_ASSUME_YES=1` and pass answers as environment variables (same names

@@ -23,6 +23,9 @@ function findProvider(rp: RuntimeProvider, providers: CatalogProvider[]): Catalo
 }
 
 interface SystemEnvField {
+  label?: string;
+  placeholder?: string;
+  help?: string;
   masked?: string;
   hasValue?: boolean;
 }
@@ -30,6 +33,33 @@ interface SystemEnvField {
 interface RuntimeSystemEnvStatus {
   hasValue: boolean;
   label: string | null;
+}
+
+interface RuntimeAdapterOption {
+  id: string;
+  label: string;
+  displayName?: string;
+  description: string;
+  note: string;
+  configured: boolean;
+  requiredEnv?: string[];
+  capabilities: Record<string, boolean>;
+  health: {
+    ok: boolean;
+    details?: Record<string, unknown>;
+  };
+}
+
+interface RuntimeStatus {
+  active: string;
+  source: "ui" | "env" | "default";
+  envRuntime?: string | null;
+  selected?: {
+    updatedAt?: string | null;
+    updatedBy?: string | null;
+  };
+  options: RuntimeAdapterOption[];
+  warning?: string | null;
 }
 
 function serviceHasCredential(status: string | undefined): boolean {
@@ -47,6 +77,41 @@ function summarizeSystemEnv(fields: Record<string, SystemEnvField>): RuntimeSyst
   };
 }
 
+function runtimeSourceLabel(source: RuntimeStatus["source"] | undefined): string {
+  if (source === "ui") return "UI";
+  if (source === "env") return "SANCHO_RUNTIME";
+  return "default";
+}
+
+function runtimeHealthDetail(option: RuntimeAdapterOption): string | null {
+  const details = option.health.details;
+  if (!details) return null;
+  if (typeof details.error === "string") return details.error;
+  if (typeof details.baseUrl === "string") return details.baseUrl;
+  if (typeof details.gatewayUrl === "string") return details.gatewayUrl;
+  if (typeof details.status === "number") return `status ${details.status}`;
+  return null;
+}
+
+function runtimeCapabilitySummary(option: RuntimeAdapterOption): string {
+  const enabled = Object.entries(option.capabilities)
+    .filter(([, value]) => value)
+    .map(([key]) => key);
+  return enabled.length ? enabled.join(", ") : "sin capacidades activas";
+}
+
+function hasExternalRuntimeEnv(env: Record<string, SystemEnvField> | undefined, key: string): boolean {
+  return !!env?.[key]?.hasValue;
+}
+
+function externalRuntimeMasked(env: Record<string, SystemEnvField> | undefined, ...keys: string[]): string | null {
+  for (const key of keys) {
+    const field = env?.[key];
+    if (field?.hasValue) return field.masked || "URL guardada";
+  }
+  return null;
+}
+
 /**
  * Engine auth routes (global). Each provider that supports a subscription shows
  * two rows (Suscripción / API Key); you activate one for the whole motor. The
@@ -62,6 +127,17 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
   const [codexGuide, setCodexGuide] = useState(false);
   const [rechecking, setRechecking] = useState(false);
+  const [runtimePending, setRuntimePending] = useState<string | null>(null);
+  const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
+  const [externalSaving, setExternalSaving] = useState(false);
+  const [externalDraft, setExternalDraft] = useState({
+    protocol: "",
+    gatewayUrl: "",
+    secret: "",
+    inboundPath: "",
+    healthPath: "",
+    agent: "",
+  });
 
   const providers = useMemo(() => catalog?.providers ?? [], [catalog]);
 
@@ -81,6 +157,17 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   });
   const services = useMemo(() => health?.services ?? {}, [health]);
 
+  const { data: runtimeStatus, isLoading: runtimeLoading } = useQuery<RuntimeStatus>({
+    queryKey: ["system-runtime"],
+    queryFn: async () => {
+      const res = await fetch("/api/system/runtime");
+      const payload = (await res.json().catch(() => ({}))) as RuntimeStatus & { error?: string };
+      if (!res.ok) throw new Error(payload.error || "No se pudo leer el runtime activo");
+      return payload;
+    },
+    staleTime: 10_000,
+  });
+
   const { data: systemEnv } = useQuery<Record<string, RuntimeSystemEnvStatus>>({
     queryKey: ["runtime-system-env"],
     queryFn: async () => {
@@ -94,6 +181,16 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         }),
       );
       return Object.fromEntries(entries);
+    },
+    staleTime: 10_000,
+  });
+
+  const { data: externalRuntimeEnv } = useQuery<Record<string, SystemEnvField>>({
+    queryKey: ["runtime-external-env"],
+    queryFn: async () => {
+      const res = await fetch("/api/env?service=runtime-external");
+      if (!res.ok) return {};
+      return res.json();
     },
     staleTime: 10_000,
   });
@@ -153,6 +250,93 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     );
   };
 
+  const selectRuntime = async (option: RuntimeAdapterOption) => {
+    if (option.id === runtimeStatus?.active) return;
+    setRuntimePending(option.id);
+    setNotice(null);
+
+    try {
+      const res = await fetch("/api/system/runtime", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runtime: option.id }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as RuntimeStatus & { error?: string; warning?: string | null };
+      if (!res.ok) throw new Error(payload.error || "No se pudo cambiar el runtime");
+
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+        qc.invalidateQueries({ queryKey: ["api-health"] }),
+        qc.invalidateQueries({ queryKey: ["models-catalog"] }),
+      ]);
+      setNotice({
+        ok: true,
+        message: payload.warning || `${option.label} activado para los mensajes nuevos.`,
+      });
+    } catch (err) {
+      setNotice({
+        ok: false,
+        message: err instanceof Error ? err.message : "No se pudo cambiar el runtime",
+      });
+    } finally {
+      setRuntimePending(null);
+    }
+  };
+
+  const refreshRuntimeStatus = async () => {
+    setRuntimeRefreshing(true);
+    try {
+      await qc.invalidateQueries({ queryKey: ["system-runtime"] });
+      setNotice({ ok: true, message: "Estado del runtime actualizado." });
+    } finally {
+      setRuntimeRefreshing(false);
+    }
+  };
+
+  const saveExternalRuntime = async () => {
+    const vars: Record<string, string> = {};
+    if (externalDraft.protocol.trim()) vars.SANCHO_EXTERNAL_PROTOCOL = externalDraft.protocol.trim();
+    if (externalDraft.gatewayUrl.trim()) vars.SANCHO_EXTERNAL_GATEWAY_URL = externalDraft.gatewayUrl.trim();
+    if (externalDraft.secret.trim()) vars.SANCHO_EXTERNAL_SECRET = externalDraft.secret.trim();
+    if (externalDraft.inboundPath.trim()) {
+      if (externalDraft.protocol === "mc-bridge") vars.SANCHO_EXTERNAL_CHAT_PATH = externalDraft.inboundPath.trim();
+      else vars.SANCHO_EXTERNAL_INBOUND_PATH = externalDraft.inboundPath.trim();
+    }
+    if (externalDraft.healthPath.trim()) vars.SANCHO_EXTERNAL_HEALTH_PATH = externalDraft.healthPath.trim();
+    if (externalDraft.agent.trim()) vars.SANCHO_EXTERNAL_AGENT = externalDraft.agent.trim();
+
+    if (Object.keys(vars).length === 0) {
+      setNotice({ ok: false, message: "No hay cambios para guardar en el runtime externo." });
+      return;
+    }
+
+    setExternalSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/env", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ service: "runtime-external", vars }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(payload.error || "No se pudo guardar el runtime externo");
+
+      setExternalDraft({ protocol: "", gatewayUrl: "", secret: "", inboundPath: "", healthPath: "", agent: "" });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["runtime-external-env"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+      ]);
+      setNotice({ ok: true, message: "Runtime externo guardado. La verificación ya se actualizó." });
+    } catch (err) {
+      setNotice({
+        ok: false,
+        message: err instanceof Error ? err.message : "No se pudo guardar el runtime externo",
+      });
+    } finally {
+      setExternalSaving(false);
+    }
+  };
+
   // Codex login happens over SSH (outside the app); after the user does it, this
   // re-pings the provider and refreshes the row so they see it land.
   const recheckCodex = async () => {
@@ -188,6 +372,214 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
           Agentes
         </button>
         .
+      </div>
+
+      <div className="rounded-lg border-2 border-ink bg-background p-4 shadow-comic-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="font-heading text-sm text-navy">Runtime activo</h3>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-foreground/75">
+              Elige qué harness recibe los mensajes nuevos de Sancho. Esto no cambia las skills ni los documentos; cambia
+              el adapter que ejecuta la conversación.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={refreshRuntimeStatus}
+            disabled={runtimeRefreshing}
+            className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+          >
+            {runtimeRefreshing ? "verificando…" : "Re-verificar"}
+          </button>
+        </div>
+
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          {runtimeLoading && !runtimeStatus ? (
+            <div className="rounded-md border border-border px-3 py-3 text-sm text-muted-foreground">
+              cargando runtime…
+            </div>
+          ) : (
+            (runtimeStatus?.options ?? []).map((option) => {
+              const active = option.id === runtimeStatus?.active;
+              const available = option.configured && option.health.ok;
+              const disabled = !!runtimePending || (!active && !available);
+              const healthDetail = runtimeHealthDetail(option);
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => selectRuntime(option)}
+                  disabled={disabled || active}
+                  className={cn(
+                    "min-h-[148px] rounded-lg border p-3 text-left transition-colors",
+                    active
+                      ? "border-sage bg-sage/10 text-foreground"
+                      : disabled
+                        ? "border-border bg-muted/30 text-muted-foreground"
+                        : "border-border bg-card hover:border-rust hover:bg-rust/5",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-heading text-sm text-navy">{option.displayName || option.label}</div>
+                      <div className="mt-1 text-[11px] text-muted-foreground">{runtimeCapabilitySummary(option)}</div>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+                        active ? "bg-sage/16 text-sage" : available ? "bg-navy/10 text-navy" : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {active ? "activo" : !option.configured ? "sin config" : option.health.ok ? "seleccionar" : "offline"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[12px] leading-relaxed">{option.description}</p>
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{option.note}</p>
+                  <div className="mt-2 text-[11px]">
+                    <span className={cn("font-semibold", option.health.ok ? "text-sage" : "text-rust")}>
+                      {option.health.ok ? "health OK" : "health pendiente"}
+                    </span>
+                    {healthDetail && (
+                      <span className="ml-1 text-muted-foreground" title={healthDetail}>
+                        · {healthDetail}
+                      </span>
+                    )}
+                  </div>
+                  {!option.configured && option.requiredEnv?.length ? (
+                    <div className="mt-1 text-[10.5px] text-muted-foreground">
+                      requiere {option.requiredEnv.join(" o ")}
+                    </div>
+                  ) : null}
+                  {runtimePending === option.id && <div className="mt-2 text-[11px] font-semibold text-rust">activando…</div>}
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {runtimeStatus && (
+          <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
+            Actual: <strong>{runtimeStatus.active}</strong> · origen:{" "}
+            <strong>{runtimeSourceLabel(runtimeStatus.source)}</strong>. El cambio aplica a mensajes nuevos; si eliges
+            un runtime externo, el gateway compatible tiene que estar levantado.
+          </p>
+        )}
+
+        {runtimeStatus?.options.some((option) => option.id === "external-http") && (
+          <div className="mt-4 rounded-lg border border-border bg-card px-3 py-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h4 className="font-heading text-[13px] text-navy">Runtime externo compatible</h4>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                  Configuración global inicial para un gateway BYO compatible con Sancho. Puede ser Hermes, Codex CLI,
+                  Claude Code u otro runtime que exponga el contrato HTTP.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={saveExternalRuntime}
+                disabled={externalSaving}
+                className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+              >
+                {externalSaving ? "guardando…" : "Guardar y probar"}
+              </button>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                Protocolo
+                <select
+                  value={externalDraft.protocol}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, protocol: event.target.value }))}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                >
+                  <option value="">Default Sancho</option>
+                  <option value="sancho">Sancho HTTP async</option>
+                  <option value="mc-bridge">MC bridge / Hermes sync</option>
+                </select>
+              </label>
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                Gateway URL
+                <input
+                  value={externalDraft.gatewayUrl}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, gatewayUrl: event.target.value }))}
+                  placeholder={
+                    hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_GATEWAY_URL") ||
+                    hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_GATEWAY_URL")
+                      ? "Ya configurado"
+                      : "https://runtime.example.com"
+                  }
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                />
+              </label>
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                Secret
+                <input
+                  type="password"
+                  value={externalDraft.secret}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, secret: event.target.value }))}
+                  placeholder={
+                    hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_SECRET") ||
+                    hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_SECRET")
+                      ? "Ya configurado"
+                      : "secret compartido"
+                  }
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                />
+              </label>
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                {externalDraft.protocol === "mc-bridge" ? "Chat path" : "Inbound path"}
+                <input
+                  value={externalDraft.inboundPath}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, inboundPath: event.target.value }))}
+                  placeholder={externalDraft.protocol === "mc-bridge" ? "/chat" : "/sancho/inbound"}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                />
+              </label>
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                Health path
+                <input
+                  value={externalDraft.healthPath}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, healthPath: event.target.value }))}
+                  placeholder={externalDraft.protocol === "mc-bridge" ? "/health" : "/healthz"}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                />
+              </label>
+              {externalDraft.protocol === "mc-bridge" && (
+                <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                  Agent/profile
+                  <input
+                    value={externalDraft.agent}
+                    onChange={(event) => setExternalDraft((prev) => ({ ...prev, agent: event.target.value }))}
+                    placeholder="sancho-coordinator"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                  />
+                </label>
+              )}
+            </div>
+            {externalRuntimeMasked(
+              externalRuntimeEnv,
+              "SANCHO_EXTERNAL_GATEWAY_URL",
+              "HERMES_EXTERNAL_GATEWAY_URL",
+            ) && (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Config actual:{" "}
+                {externalRuntimeMasked(
+                  externalRuntimeEnv,
+                  "SANCHO_EXTERNAL_GATEWAY_URL",
+                  "HERMES_EXTERNAL_GATEWAY_URL",
+                )}
+                {hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_SECRET") ||
+                hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_SECRET")
+                  ? " · secret guardado"
+                  : ""}
+                {hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_PROTOCOL") ||
+                hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_PROTOCOL")
+                  ? " · protocolo guardado"
+                  : ""}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {notice && (

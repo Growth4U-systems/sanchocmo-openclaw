@@ -1,6 +1,25 @@
 #!/bin/bash
 set -e
 
+# Runtime bootstrap selection. The app defaults to OpenClaw today; keep Docker
+# aligned with that default and fail clearly if an unsupported runtime is set.
+export SANCHO_RUNTIME="${SANCHO_RUNTIME:-openclaw}"
+case "$SANCHO_RUNTIME" in
+  openclaw)
+    ;;
+  hermes)
+    exec /opt/sancho-seed/docker/runtimes/hermes/boot.sh
+    ;;
+  external-http|hermes-external)
+    exec /opt/sancho-seed/docker/runtimes/external-http/boot.sh
+    ;;
+  *)
+    echo "[entrypoint] ERROR: SANCHO_RUNTIME=$SANCHO_RUNTIME is not supported by this image bootstrap yet"
+    echo "[entrypoint] Supported runtimes: openclaw, hermes, external-http"
+    exit 1
+    ;;
+esac
+
 # Seed/refresh the OpenClaw home from the image's baked framework so a fresh/empty
 # OPENCLAW_HOME boots and `compose pull` updates apply — without clobbering user
 # data. No-op in source/bind-mount dev mode (no /opt/sancho-seed). See init-home.sh.

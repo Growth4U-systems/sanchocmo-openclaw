@@ -1,7 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
+import { getRuntime } from "@/lib/runtime";
 import {
-  getChatSecret,
+  appendAgentRunEvent,
+  getLatestActiveRun,
+  markAgentRunCompleted,
+  markAgentRunFailed,
+} from "@/lib/data/agent-runs";
+import {
   setStatusEntry,
   clearStatus,
   consumeCancelled,
@@ -45,7 +51,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   // Verify shared secret
-  const secret = getChatSecret();
+  const secret = getRuntime().messaging.getSharedSecret?.();
   if (secret && req.headers["x-mc-secret"] !== secret) {
     return res.status(403).json({ error: "Forbidden" });
   }
@@ -104,6 +110,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       ts: Date.now(),
     };
     appendProgress(tid, evt);
+    const activeRun = getLatestActiveRun(tid);
+    if (activeRun) {
+      appendAgentRunEvent({
+        runId: activeRun.id,
+        threadId: tid,
+        type: "progress",
+        data: evt,
+      });
+    }
     return res.status(200).json({ ok: true });
   }
 
@@ -133,6 +148,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // Still consume the sealed progress so the next reply starts from clean
       // state. No addMessage call.
       return res.status(200).json({ ok: true, suppressed: "stale_watchdog_after_success", progressCount: sealed.length });
+    }
+  }
+  const activeRun = getLatestActiveRun(tid);
+  if (activeRun) {
+    const output = {
+      agent,
+      text: typeof text === "string" ? text.slice(0, 4096) : "",
+      progressCount: sealed.length,
+      errorDetail,
+    };
+    if (errorDetail) {
+      markAgentRunFailed(activeRun.id, tid, errorDetail.category, "failed", output);
+    } else {
+      markAgentRunCompleted(activeRun.id, tid, output);
     }
   }
   addMessage(tid, "bot", text, agent, undefined, sealed, undefined, undefined, errorDetail);

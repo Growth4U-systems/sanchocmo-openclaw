@@ -3,25 +3,19 @@ import { withErrorHandler } from "@/lib/api-middleware";
 import {
   addMessage,
   clearStatus,
-  getGatewayUrl,
-  getChatSecret,
   setStatusEntry,
   type ChatAttachment,
   type ErrorDetail,
 } from "@/lib/data/mc-chat";
 import { maybeMarkClarifyAnswered } from "@/lib/clarify-autostatus";
 import { skillsOwnedBy } from "@/lib/skill-resolver";
-
-async function readGatewayResponse(res: Response): Promise<{ chatId?: string; raw: string }> {
-  const raw = await res.text();
-  if (!raw) return { raw };
-  try {
-    const data = JSON.parse(raw) as { chatId?: string };
-    return { chatId: data.chatId, raw };
-  } catch {
-    return { raw };
-  }
-}
+import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import {
+  createAgentRun,
+  markAgentRunCompleted,
+  markAgentRunDispatched,
+  markAgentRunFailed,
+} from "@/lib/data/agent-runs";
 
 function gatewayErrorDetail(raw: string): ErrorDetail {
   return {
@@ -129,9 +123,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const senderRole = isAdmin ? "admin" : "client";
   const resolvedUserId = userId || (isAdmin ? "mc-admin" : `mc-client-${slug}`);
 
-  // Forward to Gateway mc-chat plugin
-  const secret = getChatSecret();
-  const payload = {
+  const runtime = getRuntime();
+  const payload: InboundMessage = {
     slug,
     threadId: tid,
     threadName: threadName || tid,
@@ -162,21 +155,52 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     agentId: resolvedAgent,
     agent: resolvedAgent,
   };
+  const run = createAgentRun({
+    threadId: tid,
+    runtime: runtime.id,
+    agent: resolvedAgent || "sancho",
+    skill: resolvedSkill,
+    skills: effectiveSkills,
+    input: {
+      slug,
+      threadId: tid,
+      threadName: threadName || tid,
+      text,
+      linkedTo: linkedTo || undefined,
+      docPath: docPath || undefined,
+      docKind: typeof docKind === "string" ? docKind : undefined,
+      source: _source,
+    },
+  });
 
   try {
-    const gwRes = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(secret ? { "X-MC-Secret": secret } : {}),
-      },
-      body: JSON.stringify(payload),
-    });
-    const data = await readGatewayResponse(gwRes);
-    if (!gwRes.ok) {
-      const detail = `HTTP ${gwRes.status}${data.raw ? `: ${data.raw.slice(0, 500)}` : ""}`;
+    const result = await runtime.messaging.sendInbound(payload);
+    if (!result.ok) {
+      if (result.status === 0) {
+        const msg = result.error || result.raw || "Gateway unreachable";
+        markAgentRunFailed(run.id, tid, msg, "runtime_unreachable");
+        console.error("[mc-chat] Forward error:", msg);
+        clearStatus(tid);
+        addMessage(
+          tid,
+          "bot",
+          "No he podido conectar con el gateway de agentes. El mensaje quedó guardado, pero no se ha iniciado ninguna ejecución.",
+          "sancho",
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          gatewayErrorDetail(msg),
+        );
+        return res.status(502).json({ error: "Gateway unreachable: " + msg });
+      }
+      const detail = `HTTP ${result.status}${result.raw ? `: ${result.raw.slice(0, 500)}` : ""}`;
+      markAgentRunFailed(run.id, tid, detail, "runtime_rejected", {
+        status: result.status,
+        raw: result.raw,
+      });
       const userText =
-        gwRes.status === 403
+        result.status === 403
           ? "No he podido entregar el mensaje al gateway de agentes: la firma compartida de MC Chat no coincide o falta. Revisa MC_CHAT_SECRET y reinicia el gateway."
           : `No he podido entregar el mensaje al gateway de agentes (${detail}).`;
       addMessage(tid, "bot", userText, "sancho", undefined, undefined, undefined, undefined, gatewayErrorDetail(detail));
@@ -184,9 +208,25 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       console.error("[mc-chat] Gateway rejected message:", detail);
       return res.status(502).json({ error: "Gateway rejected message: " + detail });
     }
-    res.status(200).json({ ok: true, chatId: data.chatId || tid });
+    markAgentRunDispatched(run.id, tid, {
+      status: result.status,
+      chatId: result.chatId || tid,
+    });
+    if (typeof result.finalText === "string") {
+      const finalAgent = result.finalAgent || resolvedAgent || "sancho";
+      clearStatus(tid);
+      markAgentRunCompleted(run.id, tid, {
+        agent: finalAgent,
+        text: result.finalText.slice(0, 4096),
+        synchronous: true,
+      });
+      addMessage(tid, "bot", result.finalText, finalAgent);
+      return res.status(200).json({ ok: true, chatId: result.chatId || tid, completed: true });
+    }
+    res.status(200).json({ ok: true, chatId: result.chatId || tid });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Gateway unreachable";
+    markAgentRunFailed(run.id, tid, msg, "runtime_unreachable");
     console.error("[mc-chat] Forward error:", msg);
     clearStatus(tid);
     addMessage(
