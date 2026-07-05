@@ -55,6 +55,24 @@ export function listSearches(slug: string): DiscoverySearchRecord[] {
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 }
 
+export function isSearchArchived(search: DiscoverySearchRecord): boolean {
+  return Boolean(search.archivedAt);
+}
+
+export function archiveSearch(
+  slug: string,
+  searchId: string,
+  reason = "Archivada desde Encuentra",
+): DiscoverySearchRecord {
+  const record = getSearch(slug, searchId);
+  if (!record) throw new Error(`Discovery search not found: ${searchId} (${slug})`);
+  return saveSearch({
+    ...record,
+    archivedAt: record.archivedAt || new Date().toISOString(),
+    archiveReason: reason,
+  });
+}
+
 /** Patch parcial del estado del runner (merge superficial + updatedAt). */
 export function updateRunnerState(
   slug: string,

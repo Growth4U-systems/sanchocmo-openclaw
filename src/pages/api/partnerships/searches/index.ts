@@ -15,7 +15,7 @@ import {
 /**
  * Búsquedas de discovery (Partnerships · tab Encuentra) — SAN-79.
  *
- *   GET  /api/partnerships/searches?slug=…[&status=queued]
+ *   GET  /api/partnerships/searches?slug=…[&status=queued][&includeArchived=1]
  *     → { searches, count } (estado del runner incluido — lo consume la UI
  *       de Encuentra y el agente runner para encontrar trabajo encolado).
  *
@@ -39,8 +39,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     const resumed = resumeQueuedDiscoverySearches(slug);
     const statusFilter = typeof req.query.status === "string" ? req.query.status.trim() : "";
+    const includeArchived =
+      req.query.includeArchived === "1" || req.query.includeArchived === "true";
+    const archivedOnly = req.query.archived === "1" || req.query.archived === "true";
     const searches = listSearches(slug).filter(
-      (search) => !statusFilter || search.runner.status === statusFilter,
+      (search) => {
+        const archived = Boolean(search.archivedAt);
+        if (archivedOnly && !archived) return false;
+        if (!archivedOnly && !includeArchived && archived) return false;
+        return !statusFilter || search.runner.status === statusFilter;
+      },
     );
     return res.status(200).json({ searches, count: searches.length, resumed });
   }

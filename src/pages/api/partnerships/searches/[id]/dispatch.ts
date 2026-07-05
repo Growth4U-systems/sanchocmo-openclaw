@@ -28,6 +28,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!search) {
     return res.status(404).json({ error: `Discovery search not found: ${searchId}` });
   }
+  if (search.archivedAt) {
+    return res.status(409).json({ error: "Esta búsqueda está archivada." });
+  }
   if (search.runner.status === "done") {
     return res.status(409).json({ error: "Esta búsqueda ya terminó." });
   }

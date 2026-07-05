@@ -5,12 +5,9 @@
  * los candidatos son Leads del pipeline desde el primer momento; click en una
  * búsqueda abre Contactos · Lista filtrado por esa búsqueda (?busqueda=).
  *
- * Fuente de búsquedas: cada búsqueda = tarea Outreach (SAN-79). Su shape de
- * tarea aún no está construido/pusheado, así que tiramos de la fuente
- * equivalente ya real: campañas Yalc `type=Partnerships` (una búsqueda = una
- * campaña). TODO(SAN-79): cuando discovery-plan-builder cree tareas Outreach
- * con runner real, leer de ahí el estado/progreso del runner y las plantillas
- * instanciadas (SAN-80) en lugar de derivarlos de la campaña.
+ * Fuente de búsquedas: la card combina campañas Yalc `type=Partnerships`
+ * con registros DiscoverySearchRecord. El runner real, plantillas y archivo
+ * viven en el registro de búsqueda; campaign.status queda como fallback.
  */
 
 "use client";
@@ -25,12 +22,13 @@ import type {
 import type { DiscoverySearchRecord } from "@/lib/partnerships/discovery-types";
 import type { TemplateSummary } from "@/lib/partnerships/templates";
 
-type SearchState = "running" | "done" | "draft" | "paused";
+type SearchState = "running" | "done" | "draft" | "paused" | "archived";
 
 function searchState(
   campaign: PartnershipCampaign,
   search?: DiscoverySearchRecord,
 ): SearchState {
+  if (search?.archivedAt) return "archived";
   const runner = search?.runner;
   if (runner?.status === "done") return "done";
   if (runner?.status === "running" || (runner?.status === "queued" && runner.jobId)) {
@@ -69,6 +67,11 @@ const STATE_META: Record<
     stampClass: "border-yellow-500/50 bg-yellow-100 text-yellow-800",
     barClass: "bg-yellow-400",
   },
+  archived: {
+    stamp: "Archivada",
+    stampClass: "border-border bg-muted/60 text-muted-foreground",
+    barClass: "bg-muted-foreground/40",
+  },
 };
 
 interface EncuentraTabProps {
@@ -90,6 +93,10 @@ interface EncuentraTabProps {
   onRetrySearch?: (search: DiscoverySearchRecord) => void;
   retryingSearchId?: string | null;
   onRenameCampaign?: (campaign: PartnershipCampaign, title: string) => void;
+  onArchiveSearch?: (
+    campaign: PartnershipCampaign,
+    search: DiscoverySearchRecord,
+  ) => void;
   onDeleteCampaign?: (campaign: PartnershipCampaign) => void;
   campaignManagementBusy?: boolean;
 }
@@ -100,6 +107,7 @@ const STATE_ORDER: Record<SearchState, number> = {
   done: 1,
   paused: 2,
   draft: 3,
+  archived: 4,
 };
 
 type RunnerNotice = {
@@ -174,6 +182,7 @@ export function EncuentraTab({
   onRetrySearch,
   retryingSearchId = null,
   onRenameCampaign,
+  onArchiveSearch,
   onDeleteCampaign,
   campaignManagementBusy,
 }: EncuentraTabProps) {
@@ -193,6 +202,10 @@ export function EncuentraTab({
         STATE_ORDER[searchState(a, searchByCampaignId.get(a.id))] -
         STATE_ORDER[searchState(b, searchByCampaignId.get(b.id))],
     );
+  const visibleCampaigns = ordered.filter((campaign) => {
+    const archived = Boolean(searchByCampaignId.get(campaign.id)?.archivedAt);
+    return filter === "archivadas" ? archived : !archived;
+  });
 
   function startRename(campaign: PartnershipCampaign) {
     setEditingCampaignId(campaign.id);
@@ -221,6 +234,21 @@ export function EncuentraTab({
     onDeleteCampaign?.(campaign);
   }
 
+  function archiveCampaign(
+    campaign: PartnershipCampaign,
+    search: DiscoverySearchRecord,
+  ) {
+    const name = campaign.title || campaign.id;
+    if (
+      !window.confirm(
+        `Archivar la búsqueda "${name}"? Se ocultará de Todas, pero conservará candidatos e histórico.`,
+      )
+    ) {
+      return;
+    }
+    onArchiveSearch?.(campaign, search);
+  }
+
   return (
     <div data-testid="encuentra-tab">
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -244,7 +272,11 @@ export function EncuentraTab({
         ))}
       </div>
 
-      {filter === "archivadas" ? (
+      {loading ? (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          Cargando búsquedas…
+        </p>
+      ) : filter === "archivadas" && visibleCampaigns.length === 0 ? (
         <ZeroState
           title="Nada por aquí"
           body="No hay búsquedas archivadas. Cuando archives una búsqueda, conservará sus candidatos y su histórico."
@@ -253,23 +285,24 @@ export function EncuentraTab({
             onClick: () => setFilter("todas"),
           }}
         />
-      ) : loading ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">
-          Cargando búsquedas…
-        </p>
-      ) : campaigns.length === 0 ? (
+      ) : visibleCampaigns.length === 0 ? (
         <ZeroState
-          title="Sin búsquedas todavía"
-          body="Crea una búsqueda para traer partners al pipeline con quality score y datos de contacto."
+          title={filter === "archivadas" ? "Nada por aquí" : "Sin búsquedas activas"}
+          body={
+            filter === "archivadas"
+              ? "No hay búsquedas archivadas. Cuando archives una búsqueda, conservará sus candidatos y su histórico."
+              : "Crea una búsqueda para traer partners al pipeline con quality score y datos de contacto."
+          }
           action={{ label: "Generar nueva campaña", onClick: onCreateSearch }}
         />
       ) : (
         <div className="space-y-4">
-          {ordered.map((campaign) => {
+          {visibleCampaigns.map((campaign) => {
             const search = searchByCampaignId.get(campaign.id);
             const state = searchState(campaign, search);
             const meta = STATE_META[state];
-            const notice = runnerNotice(search);
+            const isArchived = state === "archived";
+            const notice = isArchived ? null : runnerNotice(search);
             const campaignLeads = leads.filter(
               (lead) => lead.campaignId === campaign.id,
             );
@@ -303,7 +336,13 @@ export function EncuentraTab({
                     className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-border bg-muted/40 text-xl"
                     aria-hidden
                   >
-                    {isDraft ? "🎙️" : state === "done" ? "📺" : "🔍"}
+                    {isArchived
+                      ? "📦"
+                      : isDraft
+                        ? "🎙️"
+                        : state === "done"
+                          ? "📺"
+                          : "🔍"}
                   </div>
                   <div className="min-w-[240px] flex-1">
                     {editingCampaignId === campaign.id ? (
@@ -373,7 +412,7 @@ export function EncuentraTab({
                     >
                       {meta.stamp}
                     </span>
-                    {(onRenameCampaign || onDeleteCampaign) && (
+                    {(onRenameCampaign || onArchiveSearch || onDeleteCampaign) && (
                       <details
                         className="relative"
                         onClick={(event) => event.stopPropagation()}
@@ -390,6 +429,16 @@ export function EncuentraTab({
                               className="block w-full px-3 py-2 text-left text-xs font-semibold transition-colors hover:bg-muted"
                             >
                               Renombrar
+                            </button>
+                          )}
+                          {onArchiveSearch && search && !isArchived && (
+                            <button
+                              type="button"
+                              disabled={campaignManagementBusy}
+                              onClick={() => archiveCampaign(campaign, search)}
+                              className="block w-full px-3 py-2 text-left text-xs font-semibold transition-colors hover:bg-muted"
+                            >
+                              Archivar
                             </button>
                           )}
                           {onDeleteCampaign && (
@@ -416,9 +465,11 @@ export function EncuentraTab({
                     />
                   </div>
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    {isDraft
-                      ? "Borrador pendiente de completar."
-                      : `${candidateCount} candidatos en pipeline · ${shortlisted} priorizados`}
+                    {isArchived
+                      ? `${candidateCount} candidatos conservados · histórico archivado`
+                      : isDraft
+                        ? "Borrador pendiente de completar."
+                        : `${candidateCount} candidatos en pipeline · ${shortlisted} priorizados`}
                   </p>
                 </div>
 

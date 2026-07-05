@@ -43,7 +43,9 @@ export type { QualifiedCandidate, QualifyOptions } from "./qualify-enrich";
 export { fixturesEnabledByEnv, loadFixtureCandidates } from "./fixtures";
 
 export {
+  archiveSearch,
   getSearch,
+  isSearchArchived,
   listSearches,
   newSearchId,
   saveSearch,

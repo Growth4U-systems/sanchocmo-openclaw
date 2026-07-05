@@ -166,6 +166,8 @@ export interface DiscoverySearchRecord {
    * los originales; el motor de Contacto envía la secuencia de aquí.
    */
   templates?: import("./templates").AssignedTemplate[];
+  archivedAt?: string | null;
+  archiveReason?: string | null;
   createdAt: string;
   updatedAt: string;
 }
