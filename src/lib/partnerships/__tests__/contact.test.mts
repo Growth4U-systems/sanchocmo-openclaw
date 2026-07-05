@@ -7,7 +7,8 @@ const contactPreviewLib =
   (contactPreviewModule as unknown as { default: typeof contactPreviewModule }).default ??
   contactPreviewModule;
 
-const { contactDraftPreviewsFromResponse } = contactPreviewLib;
+const { contactDraftPreviewsFromResponse, contactGateDraftsFromResponse } =
+  contactPreviewLib;
 
 test("contactDraftPreviewsFromResponse extracts first rendered partner DM", () => {
   const previews = contactDraftPreviewsFromResponse([
@@ -58,4 +59,53 @@ test("contactDraftPreviewsFromResponse falls back to stable labels", () => {
   assert.equal(previews[0]?.displayName, "creator@example.com");
   assert.equal(previews[0]?.subject, null);
   assert.equal(previews[0]?.stepCount, 1);
+});
+
+test("contactGateDraftsFromResponse keeps full editable drafts for approval", () => {
+  const drafts = contactGateDraftsFromResponse([
+    {
+      leadId: "lead-1",
+      providerId: "instagram:123",
+      displayName: "@gatorelato",
+      handle: "@gatorelato",
+      network: "instagram",
+      email: null,
+      steps: [
+        {
+          subject: "@gatorelato — Alfonso de Growth4U",
+          body: "Primer DM",
+          delayDays: 0,
+        },
+        {
+          subject: "Re: @gatorelato",
+          body: "Follow-up",
+          delayDays: 3.2,
+        },
+      ],
+    },
+    { leadId: "empty", steps: [] },
+  ]);
+
+  assert.deepEqual(drafts, [
+    {
+      leadId: "lead-1",
+      providerId: "instagram:123",
+      displayName: "@gatorelato",
+      handle: "@gatorelato",
+      network: "instagram",
+      email: null,
+      steps: [
+        {
+          subject: "@gatorelato — Alfonso de Growth4U",
+          body: "Primer DM",
+          delayDays: 0,
+        },
+        {
+          subject: "Re: @gatorelato",
+          body: "Follow-up",
+          delayDays: 3,
+        },
+      ],
+    },
+  ]);
 });
