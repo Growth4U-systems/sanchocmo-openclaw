@@ -73,6 +73,14 @@ function httpRequest(url, options = {}) {
   });
 }
 
+function firstEnv(env, keys) {
+  for (const key of keys) {
+    const value = env[key];
+    if (typeof value === 'string' && value.trim() !== '') return value.trim();
+  }
+  return '';
+}
+
 // --- System Service Account loader ---
 function loadSystemServiceAccount() {
   const saPath = path.resolve(__dirname, '..', '..', '..', '.secrets', 'google-service-account.json');
@@ -339,9 +347,21 @@ const TESTERS = {
   },
 
   async ghl(config, env, slug) {
-    const apiKey = env[`${slug}_GHL_API_KEY`];
-    if (!apiKey) return { ok: false, error: `Env var ${slug}_GHL_API_KEY not set` };
-    const locationId = config.locationId || config.LOCATION_ID;
+    const apiKey = firstEnv(env, [
+      `${slug}_GHL_API_KEY`,
+      `${slug}_GHL_PRIVATE_INTEGRATION_TOKEN`,
+      `${slug}_GHL_APIKEY`,
+      `${slug}_GOHIGHLEVEL_API_KEY`,
+      'GHL_API_KEY',
+      'GHL_PRIVATE_INTEGRATION_TOKEN',
+      'GHL_APIKEY',
+      'GOHIGHLEVEL_API_KEY',
+    ]);
+    if (!apiKey) return { ok: false, error: `GHL API Key / Private Integration Token not found. Save it from Settings → APIs so ${slug}_GHL_API_KEY is created.` };
+    const locationId =
+      config.locationId ||
+      config.LOCATION_ID ||
+      firstEnv(env, [`${slug}_GHL_LOCATION_ID`, 'GHL_LOCATION_ID', 'GHL_G4U_LOCATION', 'GOHIGHLEVEL_LOCATION_ID']);
 
     try {
       // Detect API version: pit- prefix = v2 (Private Integration Token), otherwise v1

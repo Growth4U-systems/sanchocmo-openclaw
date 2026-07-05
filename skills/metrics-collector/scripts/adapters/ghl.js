@@ -12,6 +12,14 @@
 
 const BASE_URL = 'https://services.leadconnectorhq.com';
 
+function firstEnv(env, keys) {
+  for (const key of keys) {
+    const value = env[key];
+    if (typeof value === 'string' && value.trim() !== '') return value.trim();
+  }
+  return '';
+}
+
 /**
  * @param {object} config - { locationId, calendarId? }
  * @param {object} env - { {SLUG}_GHL_API_KEY or GHL_API_KEY }
@@ -22,17 +30,29 @@ export async function collect(config, env, dateRange) {
   const locationId =
     config.locationId ||
     config.LOCATION_ID ||
-    env.GHL_LOCATION_ID ||
-    env.GHL_G4U_LOCATION ||
-    (slugUpper ? env[`${slugUpper}_GHL_LOCATION_ID`] : undefined);
+    firstEnv(env, [
+      ...(slugUpper ? [`${slugUpper}_GHL_LOCATION_ID`] : []),
+      'GHL_LOCATION_ID',
+      'GHL_G4U_LOCATION',
+      'GOHIGHLEVEL_LOCATION_ID',
+    ]);
   if (!locationId) throw new Error('GHL: missing locationId in integrations.json or GHL_LOCATION_ID env');
 
-  const apiKey =
-    (slugUpper ? env[`${slugUpper}_GHL_API_KEY`] : undefined) ||
-    (slugUpper ? env[`${slugUpper}_GHL_PRIVATE_INTEGRATION_TOKEN`] : undefined) ||
-    env.GHL_API_KEY ||
-    env.GHL_PRIVATE_INTEGRATION_TOKEN;
-  if (!apiKey) throw new Error('GHL: missing GHL_API_KEY in .env');
+  const apiKey = firstEnv(env, [
+    ...(slugUpper
+      ? [
+          `${slugUpper}_GHL_API_KEY`,
+          `${slugUpper}_GHL_PRIVATE_INTEGRATION_TOKEN`,
+          `${slugUpper}_GHL_APIKEY`,
+          `${slugUpper}_GOHIGHLEVEL_API_KEY`,
+        ]
+      : []),
+    'GHL_API_KEY',
+    'GHL_PRIVATE_INTEGRATION_TOKEN',
+    'GHL_APIKEY',
+    'GOHIGHLEVEL_API_KEY',
+  ]);
+  if (!apiKey) throw new Error('GHL: missing GHL API key/private integration token from UI or env');
 
   const headers = {
     Authorization: `Bearer ${apiKey}`,
