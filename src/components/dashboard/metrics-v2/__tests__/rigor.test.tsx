@@ -85,9 +85,9 @@ test("ProvenanceFooter: omits absent optional fields", () => {
 
 type ConnState = "off" | "partial" | "connected_pending" | "collecting";
 const CONN_LABEL: Record<ConnState, string> = {
-  off: "Sin datos",
-  partial: "Datos parciales",
-  connected_pending: "Listo para recolectar",
+  off: "No conectado",
+  partial: "Faltan fuentes",
+  connected_pending: "Conectado sin datos",
   collecting: "Recolectando",
 };
 
@@ -101,8 +101,8 @@ test("ConnectionState: connected_pending is distinct from partial", () => {
   const partial = render(createElement(ConnectionState, { state: "partial" }));
   const pending = render(createElement(ConnectionState, { state: "connected_pending" }));
   assert.notEqual(partial, pending);
-  assert.match(pending, /Listo para recolectar/);
-  assert.doesNotMatch(partial, /Listo para recolectar/);
+  assert.match(pending, /Conectado sin datos/);
+  assert.doesNotMatch(partial, /Conectado sin datos/);
   // distinct colour token
   assert.match(partial, /var\(--yellow\)/);
   assert.match(pending, /var\(--cyan\)/);
@@ -144,5 +144,5 @@ test("DataHealthBadge: dirty exposes an accessible status name (source + 'proble
 
 test("ConnectionState: exposes an accessible label carrying the state", () => {
   const m = render(createElement(ConnectionState, { state: "connected_pending" }));
-  assert.match(m, /aria-label="[^"]*Listo para recolectar[^"]*"/);
+  assert.match(m, /aria-label="[^"]*Conectado sin datos[^"]*"/);
 });
