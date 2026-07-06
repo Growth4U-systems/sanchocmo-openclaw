@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.20.1...v0.21.0) (2026-07-06)
+
+
+### Features
+
+* decouple Sancho runtime adapters (SAN-50) ([78fee03](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/78fee033a7e4ee8b59e18dfb0b145e109f5b2fd4))
+
 ## [0.20.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.20.0...v0.20.1) (2026-07-05)
 
 
