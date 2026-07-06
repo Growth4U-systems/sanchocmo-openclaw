@@ -4,9 +4,9 @@
  * Tests API connections for a client using their integrations.json + .env
  *
  * Usage:
- *   node test-connection.js --slug paymatico --source ga4
- *   node test-connection.js --slug paymatico --all
- *   node test-connection.js --slug paymatico --category analytics
+ *   node test-connection.js --slug example --source ga4
+ *   node test-connection.js --slug example --all
+ *   node test-connection.js --slug example --category analytics
  *
  * Reads:
  *   - brand/{slug}/integrations.json (config + env var names)

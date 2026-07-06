@@ -34,7 +34,7 @@ const day = (date: string, mul: number): DiscoverabilityEntry => ({
     aeo: { status: "ok", metrics: [
       { name: "ai_visibility", value: 43 }, { name: "share_of_voice", value: 28 }, { name: "mentions", value: 195 },
       { name: "citations", value: 84 }, { name: "ai_position", value: 2.4 }, { name: "sentiment", value: 72 }, { name: "engines_cited", value: 4 },
-      { name: "share_of_voice", value: 28, dimensions: { brand: "Hospital Capilar" } },
+      { name: "share_of_voice", value: 28, dimensions: { brand: "Example" } },
       { name: "share_of_voice", value: 32, dimensions: { brand: "Insparya" } },
       { name: "ai_visibility", value: 52, dimensions: { engine: "ChatGPT" } },
       { name: "ai_prompt", value: 2, dimensions: { prompt: "mejor clínica", engine: "Perplexity" } },

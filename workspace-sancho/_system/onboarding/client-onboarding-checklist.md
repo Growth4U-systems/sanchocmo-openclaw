@@ -4,7 +4,7 @@
 
 ## Paso 1: Datos básicos
 - [ ] Nombre del cliente
-- [ ] Slug (identificador: `hospital-capilar`, `acme-corp`)
+- [ ] Slug (identificador: `example`, `acme-corp`)
 - [ ] URL principal
 - [ ] Sector/industria
 - [ ] Contacto principal (nombre, email, timezone)

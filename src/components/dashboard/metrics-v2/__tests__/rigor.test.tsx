@@ -62,13 +62,13 @@ test("ProvenanceFooter: shows a compact user-facing line and keeps details in ti
     createElement(ProvenanceFooter, {
       source: "meta_ads",
       route: "ruta/x.json",
-      client: "hospital-capilar",
+      client: "example",
       period: "30d",
       lastCollected: "2026-05-01",
     }),
   );
   assert.match(m, /Datos: Meta Ads · 30d · actualizado 2026-05-01/);
-  assert.match(m, /title="Fuente: Meta Ads · Ruta: ruta\/x\.json · Cliente: hospital-capilar · Periodo: 30d · Colectado: 2026-05-01"/);
+  assert.match(m, /title="Fuente: Meta Ads · Ruta: ruta\/x\.json · Cliente: example · Periodo: 30d · Colectado: 2026-05-01"/);
   assert.doesNotMatch(m, />Ruta:/);
   assert.doesNotMatch(m, />Cliente:/);
 });

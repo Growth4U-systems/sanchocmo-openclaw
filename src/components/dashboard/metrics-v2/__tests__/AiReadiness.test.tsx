@@ -18,7 +18,7 @@ const checklist: AiCheck[] = [
 const evidence: AiEvidence = {
   prompt: "mejor agencia growth b2b para SaaS",
   engine: "Perplexity",
-  answer: "Para SaaS B2B destacan Hospital Capilar, Insparya y…",
+  answer: "Para SaaS B2B destacan Example, Insparya y…",
   cited: true,
   position: 2,
   sources: ["growth4u.io", "g2.com"],

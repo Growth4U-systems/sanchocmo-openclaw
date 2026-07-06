@@ -330,7 +330,7 @@ formulario que rellena el redactor humano).
 
 Esta es la operación principal de la skill. Cuando se invoca
 `growth4u-visual-generator regenerate-templates` (o equivalente para otra
-brand: `paymatico-visual-generator`, etc.), produce las 5 plantillas con la
+brand: `example-visual-generator`, etc.), produce las 5 plantillas con la
 DNA visual del brand: personajes, fotos integradas, multi-stop gradients
 específicos, layouts custom. Si la brand no tiene plantillas todavía, esta
 skill las crea desde cero — no hay defaults del sistema.

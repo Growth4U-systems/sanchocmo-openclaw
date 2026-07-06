@@ -276,7 +276,7 @@ Cada score es **2-99** (no 1-10). Cada score DEBE ir acompañado de una **explic
 
 Después del scoring, añadir badge por ECP:
 
-- **🏆 Founder Moat: ALTO** — Track record demostrable. Ejemplo: "Bnext 0→400K, Criptan x10". Ventaja competitiva difícil de replicar.
+- **🏆 Founder Moat: ALTO** — Track record demostrable. Ejemplo: "Bnext 0→400K, Example x10". Ventaja competitiva difícil de replicar.
 - **⭐ Founder Moat: MEDIO** — Experiencia relevante pero sin caso de éxito específico. Credibilidad pero sin prueba irrefutable.
 - **(sin badge)** — Sin track record diferencial. El ECP es válido, sin bonus de credibilidad.
 

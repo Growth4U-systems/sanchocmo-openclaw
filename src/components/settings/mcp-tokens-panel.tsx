@@ -213,7 +213,7 @@ export function McpTokensPanel() {
   const [revealing, setRevealing] = useState<string | null>(null);
 
   const [tokenId, setTokenId] = useState(defaultTokenId);
-  const [clients, setClients] = useState("growth4u,paymatico");
+  const [clients, setClients] = useState("growth4u,example");
   const [brands, setBrands] = useState("");
   const [activate, setActivate] = useState(true);
   const [selectedScopes, setSelectedScopes] = useState<string[]>([
@@ -455,7 +455,7 @@ export function McpTokensPanel() {
                     value={clients}
                     onChange={(event) => setClients(event.target.value)}
                     className="h-9 w-full rounded-md border-2 border-ink bg-background px-3 font-mono text-sm"
-                    placeholder="growth4u,paymatico o *"
+                    placeholder="growth4u,example o *"
                   />
                 </label>
                 <label className="block">

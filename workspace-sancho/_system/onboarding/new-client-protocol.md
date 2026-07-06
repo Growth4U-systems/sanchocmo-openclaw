@@ -7,8 +7,8 @@
 
 ### Paso 1: Recopilar datos mínimos
 Preguntar (si no los dan):
-- **Nombre del cliente** (ej: "Masabo")
-- **Slug** (ej: "masabo" — minúsculas, sin espacios, guiones permitidos)
+- **Nombre del cliente** (ej: "Example")
+- **Slug** (ej: "example" — minúsculas, sin espacios, guiones permitidos)
 
 ### Paso 2: Crear el cliente desde Mission Control
 Como admin, en Mission Control → **New client**, cargar slug + nombre.

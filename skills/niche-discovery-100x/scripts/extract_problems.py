@@ -5,7 +5,7 @@ Problem Extractor — Analyzes scraped documents in parallel to extract customer
 Usage:
     python3 extract_problems.py --api-key OPENROUTER_KEY --docs-dir docs/ --output problems.md \
         --industry fintech --product "payment platform" --target "freelancers" \
-        --context-type B2B --category "payments" --company "Paymatico"
+        --context-type B2B --category "payments" --company "Example"
 
 Output: Markdown file with consolidated problem tables from all documents.
 """

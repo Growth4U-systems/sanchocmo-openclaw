@@ -3,7 +3,7 @@
     "description": "Shared domain classification across all clients. Each domain is classified once and reused.",
     "version": 1,
     "updated_at": "2026-03-26T10:40:00Z",
-    "learning_ref": "Trust Engine v7, Learning #4 from Paymatico"
+    "learning_ref": "Trust Engine v7, Learning #4 from Example"
   },
   "domains": {
     "expansion.com": { "type": "editorial", "market": "ES", "language": "es", "sector": "business" },

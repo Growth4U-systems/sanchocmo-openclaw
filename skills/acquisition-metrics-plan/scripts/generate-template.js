@@ -5,7 +5,7 @@
  *
  * Usage:
  *   node generate-template.js --name "Monzo" --archetype fintech --output ./
- *   node generate-template.js --name "Hospital Capilar" --archetype lead-to-sale --sub-variant local --output ./
+ *   node generate-template.js --name "Example" --archetype lead-to-sale --sub-variant local --output ./
  */
 
 const ExcelJS = require('exceljs');
@@ -646,7 +646,7 @@ Sub-variants (for lead-to-sale): local, enterprise, b2b
 
 Examples:
   node generate-template.js --name "Monzo" --archetype fintech --output ./
-  node generate-template.js --name "Hospital Capilar" --archetype lead-to-sale --sub-variant local --output ./
+  node generate-template.js --name "Example" --archetype lead-to-sale --sub-variant local --output ./
   node generate-template.js --name "Growth4U" --archetype lead-to-sale --sub-variant b2b --output ./
     `);
     process.exit(1);

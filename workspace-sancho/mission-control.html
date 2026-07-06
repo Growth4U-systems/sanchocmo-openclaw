@@ -1007,7 +1007,7 @@
   <a href="#" class="nav-global-only" onclick="showPage('tasks',this)">📋 Tareas Cervantes</a>
   <a href="#" class="nav-global-only" onclick="openNewClientWizard();return false;" style="margin-top:8px;display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--rust,#C45D35);color:#fff;border-radius:8px;font-weight:700;font-size:12px;text-decoration:none;justify-content:center;">🆕 Nuevo Cliente</a>
 
-  <div class="ns nav-client-only" id="nav-client-section">Hospital Capilar</div>
+  <div class="ns nav-client-only" id="nav-client-section">Example</div>
   <a href="#" class="nav-client-only" onclick="showPage('foundation',this)">📂 Documents</a>
 
   <div class="ns nav-client-only">Trabajo</div>
@@ -1170,7 +1170,7 @@
     </div>
     <div class="form-row">
       <div class="form-field"><label>Propuesto por</label><input type="text" id="tf-by" value="Alfonso"></div>
-      <div class="form-field"><label>Cliente</label><select id="tf-client"><option value="global">Global</option><option value="hospital-capilar">Hospital Capilar</option></select></div>
+      <div class="form-field"><label>Cliente</label><select id="tf-client"><option value="global">Global</option><option value="example">Example</option></select></div>
     </div>
     <div class="form-row full"><div class="form-field"><label>Descripción</label><textarea id="tf-desc" placeholder="Contexto, por qué, qué impacta..."></textarea></div></div>
     <div class="form-actions">
@@ -1496,8 +1496,8 @@
       <div class="wiz-content active" id="wiz-1">
         <div class="wiz-title">Información del cliente</div>
         <div class="wiz-desc">Datos básicos para configurar todo.</div>
-        <div class="form-row"><div class="form-field"><label>Nombre del cliente</label><input type="text" id="wiz-name" placeholder="Ej: Hospital Capilar"></div><div class="form-field"><label>Emoji</label><input type="text" id="wiz-emoji" placeholder="🏥" style="width:60px;text-align:center;" maxlength="4"></div></div>
-        <div class="form-row"><div class="form-field"><label>URL de la web</label><input type="text" id="wiz-url" placeholder="https://ejemplo.com"></div><div class="form-field"><label>Slug (identificador)</label><input type="text" id="wiz-slug" placeholder="hospital-capilar" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"></div></div>
+        <div class="form-row"><div class="form-field"><label>Nombre del cliente</label><input type="text" id="wiz-name" placeholder="Ej: Example"></div><div class="form-field"><label>Emoji</label><input type="text" id="wiz-emoji" placeholder="🏥" style="width:60px;text-align:center;" maxlength="4"></div></div>
+        <div class="form-row"><div class="form-field"><label>URL de la web</label><input type="text" id="wiz-url" placeholder="https://ejemplo.com"></div><div class="form-field"><label>Slug (identificador)</label><input type="text" id="wiz-slug" placeholder="example" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"></div></div>
       </div>
 
       <!-- Step 2: Discord -->
@@ -2150,7 +2150,7 @@ async function saveIntegration(serviceId) {
   status.textContent = 'Guardando...'; status.style.color = 'var(--muted)';
   try {
     const sel = document.getElementById('clientSelector');
-    const slug = sel ? sel.value : 'hospital-capilar';
+    const slug = sel ? sel.value : 'example';
     const res = await fetch(MC_BASE + '/api/integration', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2236,7 +2236,7 @@ function intelEsc(v) {
 
 function intelSlug() {
   const sel = document.getElementById('clientSelector');
-  const slug = sel && sel.value && sel.value !== 'global' ? sel.value : 'hospital-capilar';
+  const slug = sel && sel.value && sel.value !== 'global' ? sel.value : 'example';
   return slug;
 }
 
@@ -2547,8 +2547,8 @@ function renderIntelProposalReview(slug, selected, proposals) {
 window._activityExpanded = false;
 
 function activityBadge(client) {
-  const clientColors = {'hospital-capilar':'#2563EB','growth4u':'#7C3AED','paymatico':'#059669','sanchocmo':'#C45D35','system':'#6B7280'};
-  const clientLabels = {'hospital-capilar':'HC','growth4u':'G4U','paymatico':'PAY','sanchocmo':'SANCHO','system':'SYS','unknown':'?'};
+  const clientColors = {'example':'#2563EB','growth4u':'#7C3AED','example':'#059669','sanchocmo':'#C45D35','system':'#6B7280'};
+  const clientLabels = {'example':'HC','growth4u':'G4U','example':'PAY','sanchocmo':'SANCHO','system':'SYS','unknown':'?'};
   const cl = client || 'unknown';
   const color = clientColors[cl] || '#9CA3AF';
   const label = clientLabels[cl] || cl.toUpperCase().slice(0,4);

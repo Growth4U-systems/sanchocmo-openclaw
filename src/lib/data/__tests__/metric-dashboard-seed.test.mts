@@ -47,7 +47,7 @@ before(async () => {
     ],
   });
 
-  // Lead-to-sale (Hospital-Capilar-style local variant): North Star =
+  // Lead-to-sale (Example-style local variant): North Star =
   // first consultations / appointments. Funnel-rate KPIs stay leading.
   writePlan("hc", {
     archetype: "lead-to-sale",

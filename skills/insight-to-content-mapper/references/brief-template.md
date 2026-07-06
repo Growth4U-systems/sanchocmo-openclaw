@@ -337,7 +337,7 @@
 | Target Page | Anchor Text | Where in Content |
 |------------|-------------|-----------------|
 | /blog/metricas-aarrr-fintech | metricas pirata AARRR | H2 Section 3 |
-| /caso-estudio/criptan | caso de estudio Criptan | H2 Section 4 |
+| /caso-estudio/example | caso de estudio Example | H2 Section 4 |
 | /servicios/growth-consulting | consultoria de growth | CTA section |
 
 ---

@@ -6,7 +6,7 @@
   "properties": {
     "slug": {
       "type": "string",
-      "description": "Client slug (e.g. paymatico, hospital-capilar)"
+      "description": "Client slug (e.g. example, example)"
     },
     "updatedAt": {
       "type": "string",

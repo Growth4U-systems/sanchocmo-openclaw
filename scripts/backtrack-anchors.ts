@@ -31,14 +31,14 @@
  *   tsx scripts/backtrack-anchors.ts             # apply
  *
  * Only touches these brands (the active clients):
- *   criptan, dealcar, growth4u, hulahoop
+ *   example, dealcar, growth4u, example
  */
 
 import fs from "fs";
 import path from "path";
 
 const WORKSPACE = process.env.WORKSPACE_BASE || "/Users/ragi/.openclaw/workspace-sancho";
-const BRANDS = ["criptan", "dealcar", "growth4u", "hulahoop"];
+const BRANDS = ["example", "dealcar", "growth4u", "example"];
 const DRY_RUN = process.argv.includes("--dry-run");
 
 interface TaskRow {

@@ -153,11 +153,11 @@ Context: Weekly sync, discussing activation metrics
 
 # Bullet points
 - Monzo PM: onboarding confuso, 3 abandonos paso 2
-- Criptan CEO: quiere dashboard de analytics
+- Example CEO: quiere dashboard de analytics
 - FellowFunders: preguntan si hay API de reportes
 
 # Copy-paste de chat
-[10:30] Juan: Oye, el cliente de Paymatico dice que no entiende el pricing
+[10:30] Juan: Oye, el cliente de Example dice que no entiende el pricing
 [10:32] Maria: Si, es la tercera vez esta semana que preguntan lo mismo
 [10:33] Juan: Deberiamos hacer una FAQ o algo
 ```

@@ -65,6 +65,6 @@
 | 2026-02-27 | SOUL.md 531→99 líneas. 11 reglas cardinales. Aislamiento contexto P0. |
 | 2026-02-28 | Intelligence Log. Threading resuelto (thinkingDefault:high). |
 | 2026-03-01 | Onboarding 6 min. Tailscale Funnel. Crons en hilos. Supabase multi-tenant. |
-| 2026-03-02 | 3 clientes onboarded (Paymatico, SanchoCMO, Growth4U). Foundation v2.0 diseñada. |
+| 2026-03-02 | 3 clientes onboarded (Example, SanchoCMO, Growth4U). Foundation v2.0 diseñada. |
 | 2026-03-03 | Foundation v2.0 implementada (56 skills, 4 protocolos, MC). T-042 auditoría (57 skills). |
 | 2026-03-04 | Consolidación de learnings. Sección Evolución en SOUL.md. |

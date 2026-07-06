@@ -26,7 +26,7 @@ const kpis: WebSeoKpi[] = [
   { label: "Conversiones", value: "142", delta: "+11%", dir: "up", source: "GA4" },
   { label: "Core Web Vitals", value: "Pasa", hint: "74 móvil", dir: "flat", source: "PageSpeed", health: true },
 ];
-const base = { kpis, state: "collecting" as const, client: "hospital-capilar", period: "30d" };
+const base = { kpis, state: "collecting" as const, client: "example", period: "30d" };
 
 test("WebSeoKpis: renders all 8 SEO KPI labels + values", () => {
   const m = render(createElement(WebSeoKpis, base));

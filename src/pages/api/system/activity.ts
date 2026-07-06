@@ -7,7 +7,7 @@ interface McData {
 }
 
 /**
- * GET /api/system/activity?slug=hospital-capilar
+ * GET /api/system/activity?slug=example
  * Returns activity events from mc-data.js
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {

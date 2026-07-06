@@ -154,7 +154,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<CalendarRespons
     try {
       // tasks.json comes in two shapes across the codebase: a bare array
       // (growth4u / newer create-project) and a wrapped object `{ tasks: [...] }`
-      // (older Foundation projects, criptan/masavo P00). Match the defensive
+      // (older Foundation projects, example/example P00). Match the defensive
       // pattern used in /api/projects/index.ts and /api/system/task-index.ts.
       const raw = JSON.parse(fs.readFileSync(tasksPath, "utf-8"));
       tasks = Array.isArray(raw) ? raw : Array.isArray(raw?.tasks) ? raw.tasks : [];

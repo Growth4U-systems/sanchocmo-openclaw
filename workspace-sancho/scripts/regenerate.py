@@ -60,7 +60,7 @@ def parse_tasks_from_file(tasks_file, source="sancho"):
                 cat_match = re.search(r'\[(\w+)\]', cells[2])
                 pri_match = re.search(r'P(\d)', cells[3] if len(cells) > 3 else "")
                 notes_text = cells[5] if len(cells) > 5 else ""
-                # Extract client slug from tags like [hospital-capilar] in cat or notes
+                # Extract client slug from tags like [example] in cat or notes
                 all_text = " ".join(cells)
                 client_tags = re.findall(r'\[([a-z][a-z0-9-]+)\]', all_text)
                 # Filter out known category tags
@@ -139,13 +139,13 @@ def parse_activity():
 
     # Add well-known aliases that may not be in clients.json
     alias_map = {
-        "hospital-capilar": ["hospital capilar", "hc ", "hc)", "hc.", "hc,", "philippe",
+        "example": ["example", "hc ", "hc)", "hc.", "hc,", "philippe",
                              "capilar", "trasplante", "alopecia", "tricoscopia", "hrt",
                              "crt", "prp", "mesohair", "mesoterapia", "cirugía",
                              "tratamiento", "bono", "consulta diagnóstica", "insparya",
                              "svensson", "capiclinic", "medical hair", "imd"],
         "growth4u": ["growth4u", "growth 4u", "g4u", "alfonso", "kleva", "lenny"],
-        "paymatico": ["paymático", "paymatico", "alex g", "alexg", "sepa", "tpv",
+        "example": ["paymático", "example", "alex g", "alexg", "sepa", "tpv",
                        "gasolineras", "franquicias", "bde", "entidad de pago"],
         "sanchocmo": ["sanchocmo", "sancho cmo", "sancho futurista", "martin",
                        "frontend-slides", "presentation template"],

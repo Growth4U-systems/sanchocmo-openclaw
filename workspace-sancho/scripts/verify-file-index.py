@@ -6,7 +6,7 @@ Uso:
   python3 scripts/verify-file-index.py                    # Verificar todos los clientes
   python3 scripts/verify-file-index.py --slug growth4u    # Solo un cliente
   python3 scripts/verify-file-index.py --fix              # Corregir discrepancias automáticamente
-  python3 scripts/verify-file-index.py --fix --slug criptan
+  python3 scripts/verify-file-index.py --fix --slug example
 """
 
 import json

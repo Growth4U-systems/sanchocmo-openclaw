@@ -8,9 +8,9 @@
 # Creates OpenClaw cron jobs via `openclaw cron add`.
 #
 # Examples:
-#   ./scripts/create-client-crons.sh hospital-capilar           # Create all enabled crons
-#   ./scripts/create-client-crons.sh hospital-capilar --dry-run  # Show what would be created
-#   ./scripts/create-client-crons.sh paymatico                   # Create for Paymatico
+#   ./scripts/create-client-crons.sh example           # Create all enabled crons
+#   ./scripts/create-client-crons.sh example --dry-run  # Show what would be created
+#   ./scripts/create-client-crons.sh example                   # Create for Example
 
 set -euo pipefail
 

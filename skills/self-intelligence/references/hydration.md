@@ -31,7 +31,7 @@
 
 ```
 "De tu Company Context ya tengo:
-  • Web principal: hospitalcapilar.com ✅
+  • Web principal: example.com ✅
   • Perfiles sociales declarados: Instagram, LinkedIn, YouTube ✅
   • Industria: Salud capilar ✅
   • Elevator pitch: [extracto] ✅

@@ -69,7 +69,7 @@ workspace-sancho/
 |---|---|---|
 | Client brand data | `brand/{slug}/` following Foundation structure | `brand/acme/company-brief/company-brief-current.md` |
 | Daily log | `memory/YYYY-MM-DD.md` | `memory/2026-04-06.md` |
-| Client memory | `memory/clients/{slug}.md` | `memory/clients/hospital-capilar.md` |
+| Client memory | `memory/clients/{slug}.md` | `memory/clients/example.md` |
 | Task definition | `memory/archive/prds/T-NNN.md` | `memory/archive/prds/T-060.md` |
 | Operational state | `memory/state/` | `memory/state/api-health.json` |
 | Cost data | `memory/costs/` | `memory/costs/global.json` |

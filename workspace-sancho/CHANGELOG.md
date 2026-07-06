@@ -78,7 +78,7 @@ Motor de contenido completo construido sobre el sistema de tareas recurrentes de
 - **content-engine-plan.md** — Plan de ejecución completo.
 
 #### Scripts y setup
-- **content-engine-setup.js** — Script reusable multi-tenant: `--list` (dashboard de readiness), `--slug X` (onboard un cliente), `--all` (todos), `--dry-run` (preview). Detecta Foundation completeness, crea estructura de carpetas (14 dirs + 2 JSON), añade 5 crons por cliente, skippa los que ya tienen CE o carecen de config. Tres clientes onboardados: hulahoop, hospital-capilar, paymatico. Growth4U ya tenía sus 5 crons activos. Total crons: 59 (era 39).
+- **content-engine-setup.js** — Script reusable multi-tenant: `--list` (dashboard de readiness), `--slug X` (onboard un cliente), `--all` (todos), `--dry-run` (preview). Detecta Foundation completeness, crea estructura de carpetas (14 dirs + 2 JSON), añade 5 crons por cliente, skippa los que ya tienen CE o carecen de config. Tres clientes onboardados: example, example, example. Growth4U ya tenía sus 5 crons activos. Total crons: 59 (era 39).
 
 #### UI — Mission Control
 - **Endpoints API nuevos**: GET/PUT `/api/content-engine/pillars`, GET/POST/PATCH `/api/content-engine/ideas` (CRUD con filtros por status), GET `/api/content-engine/signals` (research-signals con filtro por fecha).

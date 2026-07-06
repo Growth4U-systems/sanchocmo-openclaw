@@ -313,7 +313,7 @@ Ver `slide-templates.md` → Navigation Boilerplate para implementación complet
 
 ## Learnings
 
-### 2026-03-20 — Hospital Capilar
+### 2026-03-20 — Example
 1. **Cover: `flex:1`** en inner div para centrado vertical
 2. **Logo real obligatorio** — scraping web si necesario, nunca SVG genérico
 3. **Campaign slides pares** — cada nicho = niche detail + campaign detail (juntos)

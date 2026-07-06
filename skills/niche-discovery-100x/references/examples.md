@@ -10,7 +10,7 @@
 
 ```json
 {
-  "company": "Paymatico",
+  "company": "Example",
   "industry": "fintech",
   "country": "es",
   "context_type": "B2B",

@@ -77,5 +77,5 @@
 
 ## Extensibilidad
 - Para añadir otro cliente: agregar sección aquí + API credentials + intelligence channel ID
-- Hospital Capilar: pendiente conexión APIs
-- Paymatico: pendiente conexión APIs
+- Example: pendiente conexión APIs
+- Example: pendiente conexión APIs

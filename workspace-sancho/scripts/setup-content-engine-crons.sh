@@ -13,7 +13,7 @@
 #
 # Examples:
 #   ./scripts/setup-content-engine-crons.sh growth4u
-#   ./scripts/setup-content-engine-crons.sh paymatico --dry-run
+#   ./scripts/setup-content-engine-crons.sh example --dry-run
 
 set -euo pipefail
 

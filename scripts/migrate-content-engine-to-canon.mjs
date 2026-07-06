@@ -8,8 +8,8 @@
  *
  * Usage:
  *   node scripts/migrate-content-engine-to-canon.mjs                 # all brands, dry-run
- *   node scripts/migrate-content-engine-to-canon.mjs --slug paymatico  # one brand, dry-run
- *   node scripts/migrate-content-engine-to-canon.mjs --slug paymatico --apply  # write changes
+ *   node scripts/migrate-content-engine-to-canon.mjs --slug example  # one brand, dry-run
+ *   node scripts/migrate-content-engine-to-canon.mjs --slug example --apply  # write changes
  *
  * Defaults to dry-run (no writes). With `--apply` the script:
  *   1. Backups the existing `tasks.json` to `tasks.json.pre-canon-<timestamp>`

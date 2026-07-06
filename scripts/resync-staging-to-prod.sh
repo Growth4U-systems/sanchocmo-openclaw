@@ -34,14 +34,14 @@ set -euo pipefail
 # --- config (override via env) ---------------------------------------------
 STAGING_SSH="${STAGING_SSH:-sancho-cmo-staging}"   # ssh alias for staging VPS
 PROD_SSH="${PROD_SSH:-sancho-cmo-prod}"            # ssh alias for prod VPS
-PROD_IP="${PROD_IP:-159.69.244.59}"                # prod IP (rsync target from staging)
+PROD_IP="${PROD_IP:-}"                # prod IP (rsync target from staging)
 DRY_RUN="${DRY_RUN:-0}"
 DO_RESTART="${DO_RESTART:-1}"                       # restart prod sanchocmo after sync
 
 # Neon (only used if NEON_API_KEY is set)
-NEON_PROJECT="${NEON_PROJECT:-empty-rain-04721142}"
-NEON_STAGING_BRANCH="${NEON_STAGING_BRANCH:-br-lucky-lake-aga3ig9n}"
-NEON_PROD_BRANCH="${NEON_PROD_BRANCH:-br-restless-water-agt22gda}"
+NEON_PROJECT="${NEON_PROJECT:-}"
+NEON_STAGING_BRANCH="${NEON_STAGING_BRANCH:-}"
+NEON_PROD_BRANCH="${NEON_PROD_BRANCH:-}"
 
 RS="-aH"
 [ "$DRY_RUN" = "1" ] && RS="$RS --dry-run" && echo "### DRY RUN — no changes will be written ###"
