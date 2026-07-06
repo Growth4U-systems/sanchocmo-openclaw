@@ -72,11 +72,12 @@ function hasExternalSendSignal(lead: RecordLike): boolean {
   ) {
     return true;
   }
-  if (lead.lastMessage) return true;
+  const lastMessage = asRecord(lead.lastMessage);
+  if (Object.keys(lastMessage).length > 0 && text(lastMessage.status).toLowerCase() !== "dry_run") return true;
   const lifecycleStatus = text(lead.lifecycleStatus);
   if (lifecycleStatus && EXTERNAL_LIFECYCLE_STATUSES.has(lifecycleStatus)) return true;
   if (EXTERNAL_EMAIL_STATUS_RE.test(text(lead.emailStatus))) return true;
-  return /\b(instantly|unipile)\b/i.test(text(lead.source));
+  return false;
 }
 
 export function campaignLocksLeadEdits(campaign: unknown, leads: unknown[] = []): boolean {

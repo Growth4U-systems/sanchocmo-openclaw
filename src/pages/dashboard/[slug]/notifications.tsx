@@ -12,7 +12,7 @@ type Filter = "all" | NotificationArea;
 
 interface NotificationItem {
   id: string;
-  kind: "lead_reply";
+  kind: "lead_reply" | "lead_connection_accepted";
   area: NotificationArea;
   leadId: string;
   campaignId?: string | null;
@@ -124,7 +124,7 @@ export default function NotificationsPage() {
               <span>Notificaciones</span>
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Lo importante que necesita acción. Por ahora: respuestas de leads B2B y partners.
+              Lo importante que necesita acción: respuestas y conexiones aceptadas.
             </p>
           </div>
           <button
@@ -174,7 +174,7 @@ export default function NotificationsPage() {
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-background text-muted-foreground">
                 <Bell className="h-5 w-5" />
               </div>
-              <h3 className="font-heading text-lg text-navy">Sin respuestas pendientes</h3>
+              <h3 className="font-heading text-lg text-navy">Sin notificaciones pendientes</h3>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
                 Cuando haya una notificación importante, aparecerá aquí con el acceso directo para gestionarla.
               </p>

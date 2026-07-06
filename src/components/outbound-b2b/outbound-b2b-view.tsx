@@ -49,7 +49,15 @@ import {
 
 type B2BTab = "encuentra" | "contactos" | "inbox" | "plantillas" | "settings";
 type ContactosVista = "kanban" | "lista";
-type OutboundAction = "search" | "enrich" | "approve" | "dry-run" | "publish" | "live";
+type OutboundAction =
+  | "search"
+  | "enrich"
+  | "approve"
+  | "dry-run"
+  | "publish"
+  | "live"
+  | "linkedin-dry-run"
+  | "linkedin-send";
 type YalcJobStatus = "queued" | "running" | "succeeded" | "failed" | "interrupted";
 type B2BInboxFilter = "needs_reply" | "got_reply" | "sent";
 type B2BReplyCategoryKey =
@@ -127,8 +135,23 @@ interface CampaignStep {
   status?: string | null;
 }
 
+interface LinkedInVariant {
+  id: string;
+  name?: string | null;
+  connectNote?: string | null;
+  dm1Template?: string | null;
+  dm2Template?: string | null;
+}
+
 interface CampaignDetail extends Campaign {
   steps?: CampaignStep[];
+  variants?: LinkedInVariant[];
+  sequenceTiming?: {
+    connect_to_dm1_days?: number;
+    connectToDm1Days?: number;
+    dm1_to_dm2_days?: number;
+    dm1ToDm2Days?: number;
+  } | string | null;
 }
 
 interface CampaignPayload {
@@ -168,6 +191,8 @@ interface Lead {
   updatedAt?: string | null;
   lastMessage?: LeadMessage | null;
   fitBreakdown?: Record<string, number | null> | null;
+  customVariables?: Record<string, string> | null;
+  icebreaker?: string | null;
 }
 
 interface LeadsPayload {
@@ -212,6 +237,15 @@ interface EmailSequenceBlock {
   emails: EmailSequenceEmail[];
 }
 
+interface LinkedInSequenceState {
+  name: string;
+  connectNote: string;
+  dm1Template: string;
+  dm2Template: string;
+  connectToDm1Days: number;
+  dm1ToDm2Days: number;
+}
+
 const TABS: Array<{ key: Exclude<B2BTab, "settings">; label: string; icon: LucideIcon }> = [
   { key: "encuentra", label: "Overview", icon: Search },
   { key: "plantillas", label: "Oferta", icon: FileText },
@@ -250,8 +284,6 @@ const SCORE_ROWS: Array<{ key: string; label: string }> = [
   { key: "contactability", label: "Contactability" },
 ];
 
-const MANUAL_STATUS_OPTIONS = ["Replied", "Negotiating", "Demo_Booked", "Deal_Created", "Closed_Won", "Closed_Lost"];
-
 const REPLY_CATEGORIES: Array<{ key: B2BReplyCategoryKey; label: string; icon: string }> = [
   { key: "hot", label: "Hot", icon: "↳" },
   { key: "out_of_office", label: "OOO", icon: "☂" },
@@ -269,7 +301,9 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const payload = text ? JSON.parse(text) : {};
   if (!res.ok) {
     const message =
-      payload && typeof payload === "object" && "error" in payload
+      payload && typeof payload === "object" && "message" in payload
+        ? String((payload as { message: unknown }).message)
+        : payload && typeof payload === "object" && "error" in payload
         ? String((payload as { error: unknown }).error)
         : `Request failed (${res.status})`;
     throw new Error(message);
@@ -357,6 +391,23 @@ function campaignLeadCount(campaign: Campaign, leads: Lead[]): number {
   return byLead || campaign.leadCount || 0;
 }
 
+function leadPersonalization(lead: Lead): string | null {
+  const variables = lead.customVariables || {};
+  return variables.personalization || variables.icebreaker || lead.icebreaker || null;
+}
+
+function personalizedLeadCount(leads: readonly Lead[]): number {
+  return leads.filter((lead) => Boolean(leadPersonalization(lead))).length;
+}
+
+function emailLeadCount(leads: readonly Lead[]): number {
+  return leads.filter((lead) => Boolean(lead.email)).length;
+}
+
+function linkedinLeadCount(leads: readonly Lead[]): number {
+  return leads.filter((lead) => Boolean(lead.linkedinUrl) || /linkedin|unipile/i.test(lead.source || "")).length;
+}
+
 const CAMPAIGN_LAUNCHED_STATUS_RE = /(^|[\s_-])(published|live|sent|launched|completed|done|closed)([\s_-]|$)/;
 const EXTERNAL_EMAIL_STATUS_RE = /\b(sent|delivered|opened|clicked|replied|bounced|unsubscribed|failed)\b/i;
 const EXTERNAL_LIFECYCLE_STATUSES = new Set([
@@ -380,10 +431,10 @@ function hasExternalSendSignal(lead: Lead): boolean {
   if (lead.instantlyCampaignId || lead.connectSentAt || lead.connectedAt || lead.dm1SentAt || lead.dm2SentAt || lead.repliedAt) {
     return true;
   }
-  if (lead.lastMessage) return true;
+  if (lead.lastMessage && lead.lastMessage.status?.toLowerCase() !== "dry_run") return true;
   if (lead.lifecycleStatus && EXTERNAL_LIFECYCLE_STATUSES.has(lead.lifecycleStatus)) return true;
   if (EXTERNAL_EMAIL_STATUS_RE.test(lead.emailStatus || "")) return true;
-  return /\b(instantly|unipile)\b/i.test(lead.source || "");
+  return false;
 }
 
 function campaignLocksLeadEdits(campaign: Campaign | CampaignDetail | null, leads: Lead[]): boolean {
@@ -467,6 +518,43 @@ function channelText(channels?: string[] | string | null): string {
     return channels;
   }
   return channels;
+}
+
+function campaignHasLinkedIn(campaign?: Campaign | CampaignDetail | null): boolean {
+  return channelText(campaign?.channels).toLowerCase().includes("linkedin");
+}
+
+function linkedInTiming(campaign?: CampaignDetail | Campaign | null): { connectToDm1Days: number; dm1ToDm2Days: number } {
+  const detail = campaign as CampaignDetail | null | undefined;
+  const raw = detail?.sequenceTiming;
+  let row: Record<string, unknown> = {};
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) row = raw as Record<string, unknown>;
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) row = parsed as Record<string, unknown>;
+    } catch {
+      row = {};
+    }
+  }
+  const connect = row.connect_to_dm1_days ?? row.connectToDm1Days;
+  const dm2 = row.dm1_to_dm2_days ?? row.dm1ToDm2Days;
+  return {
+    connectToDm1Days: typeof connect === "number" && Number.isFinite(connect) ? Math.max(0, Math.trunc(connect)) : 0,
+    dm1ToDm2Days: typeof dm2 === "number" && Number.isFinite(dm2) ? Math.max(0, Math.trunc(dm2)) : 3,
+  };
+}
+
+function linkedInSequenceState(campaign?: CampaignDetail | Campaign | null): LinkedInSequenceState {
+  const variant = (campaign as CampaignDetail | null | undefined)?.variants?.[0];
+  const timing = linkedInTiming(campaign);
+  return {
+    name: variant?.name || "Default",
+    connectNote: variant?.connectNote || "{{personalization}} Me gustaría conectar contigo.",
+    dm1Template: variant?.dm1Template || "Gracias por aceptar, {{firstName}}. {{personalization}}",
+    dm2Template: variant?.dm2Template || "Te hago follow-up, {{firstName}}, por si quieres verlo esta semana.",
+    ...timing,
+  };
 }
 
 function groupLeadsByStage(leads: readonly Lead[]): Record<PipelineStageKey, Lead[]> {
@@ -571,6 +659,7 @@ function replyCategoryForLead(lead: Lead): { key: B2BReplyCategoryKey; label: st
 function inboxBucketForLead(lead: Lead): B2BInboxFilter | null {
   const category = replyCategoryForLead(lead);
   const stage = stageForStatus(lead.lifecycleStatus);
+  if (lead.lifecycleStatus === "Connected" && !lead.dm1SentAt) return "needs_reply";
   if (category?.key === "hot" || stage === "Replied" || stage === "Negotiating") return "needs_reply";
   if (category) return "got_reply";
   if (stage === "Contacted" || /sent|delivered|opened|contacted/i.test(lead.emailStatus || "")) return "sent";
@@ -583,15 +672,19 @@ function outboundActionLabel(action: OutboundAction): string {
   if (action === "approve") return "Aprobar secuencia";
   if (action === "dry-run") return "Enviar prueba";
   if (action === "publish") return "Crear campaña en Instantly";
+  if (action === "linkedin-dry-run") return "Preparar LinkedIn";
+  if (action === "linkedin-send") return "Enviar LinkedIn";
   return "Activar envíos";
 }
 
 function outboundActionDescription(action: OutboundAction): string {
   if (action === "search") return "Trae más contactos desde la fuente conectada.";
-  if (action === "enrich") return "Completa email, cargo, cuenta y señales de fit.";
+  if (action === "enrich") return "Completa email, cargo, fit y personalización de campaña.";
   if (action === "approve") return "Bloquea la secuencia revisada para esta búsqueda.";
   if (action === "dry-run") return "Valida la campaña sin enviar emails reales.";
   if (action === "publish") return "Crea o actualiza la campaña en Instantly.";
+  if (action === "linkedin-dry-run") return "Genera previews personalizados sin tocar Unipile.";
+  if (action === "linkedin-send") return "Envía la conexión personalizada por Unipile.";
   return "Deja la campaña lista para enviar.";
 }
 
@@ -888,7 +981,12 @@ export function OutboundB2BView() {
         return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/enrich?slug=${encodeURIComponent(slug)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ expectedKind: "b2b", provider: "apollo", limit: 25 }),
+          body: JSON.stringify({
+            expectedKind: "b2b",
+            provider: "apollo",
+            limit: 25,
+            autoPersonalize: true,
+          }),
         });
       }
       if (action === "approve") {
@@ -903,6 +1001,18 @@ export function OutboundB2BView() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ expectedKind: "b2b" }),
+        });
+      }
+      if (action === "linkedin-dry-run" || action === "linkedin-send") {
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/linkedin-contact?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            expectedKind: "b2b",
+            action: "connect",
+            dryRun: action === "linkedin-dry-run",
+            ...(action === "linkedin-send" ? { confirmLinkedInSend: true } : {}),
+          }),
         });
       }
       if (action === "publish") {
@@ -1020,6 +1130,41 @@ export function OutboundB2BView() {
       showToast("Secuencia guardada");
     },
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo guardar", "warn"),
+  });
+
+  const linkedinSequenceUpdateAction = useMutation({
+    mutationFn: ({
+      campaignId,
+      variantId,
+      sequence,
+    }: {
+      campaignId: string;
+      variantId?: string;
+      sequence: LinkedInSequenceState;
+    }) =>
+      fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/linkedin-sequence/update?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          expectedKind: "b2b",
+          variantId,
+          name: sequence.name,
+          connectNote: sequence.connectNote,
+          dm1Template: sequence.dm1Template,
+          dm2Template: sequence.dm2Template,
+          sequenceTiming: {
+            connect_to_dm1_days: sequence.connectToDm1Days,
+            dm1_to_dm2_days: sequence.dm1ToDm2Days,
+          },
+          actorLabel: "Sancho",
+        }),
+      }),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "campaigns"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaign", variables.campaignId] });
+      showToast("Secuencia LinkedIn guardada");
+    },
+    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo guardar LinkedIn", "warn"),
   });
 
   const campaignUpdateAction = useMutation({
@@ -1368,13 +1513,18 @@ export function OutboundB2BView() {
                 selectedCampaignId={templateCampaignId}
                 onSelectCampaign={(campaignId) => pushQuery({ campaign: campaignId, busqueda: "", stage: "" })}
                 campaignDetail={campaignDetailQuery.data || null}
+                leads={selectedAllLeads}
                 loading={campaignDetailQuery.isLoading}
                 saving={sequenceUpdateAction.isPending}
+                savingLinkedIn={linkedinSequenceUpdateAction.isPending}
                 locked={selectedLeadEditsLocked}
                 actionBusy={actionBusy}
                 busyAction={busyAction}
                 onSave={(stepId, emails) =>
                   sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
+                }
+                onSaveLinkedIn={(variantId, sequence) =>
+                  linkedinSequenceUpdateAction.mutate({ campaignId: templateCampaignId, variantId, sequence })
                 }
                 onRunAction={(action) => outboundAction.mutate({ campaignId: templateCampaignId, action })}
               />
@@ -2671,30 +2821,45 @@ function B2BPlantillasTab({
   selectedCampaignId,
   onSelectCampaign,
   campaignDetail,
+  leads,
   loading,
   saving,
+  savingLinkedIn,
   locked,
   actionBusy,
   busyAction,
   onSave,
+  onSaveLinkedIn,
   onRunAction,
 }: {
   campaigns: Campaign[];
   selectedCampaignId: string;
   onSelectCampaign: (campaignId: string) => void;
   campaignDetail: CampaignDetail | null;
+  leads: Lead[];
   loading: boolean;
   saving: boolean;
+  savingLinkedIn: boolean;
   locked: boolean;
   actionBusy: boolean;
   busyAction?: OutboundAction;
   onSave: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
+  onSaveLinkedIn: (variantId: string | undefined, sequence: LinkedInSequenceState) => void;
   onRunAction: (action: OutboundAction) => void;
 }) {
   const sequences = extractEmailSequences(campaignDetail);
   const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) || campaignDetail;
   const placeholders = extractSequencePlaceholders(sequences);
   const emailCount = sequences.reduce((count, block) => count + block.emails.length, 0);
+  const campaignLeads = selectedCampaignId ? leads.filter((lead) => lead.campaignId === selectedCampaignId) : leads;
+  const personalized = personalizedLeadCount(campaignLeads);
+  const emailLeads = emailLeadCount(campaignLeads);
+  const linkedinLeads = linkedinLeadCount(campaignLeads);
+  const contactableLeads = Math.max(emailLeads, linkedinLeads);
+  const hasLinkedInFlow = campaignHasLinkedIn(selectedCampaign) || linkedinLeads > 0;
+  const sendActions: OutboundAction[] = hasLinkedInFlow
+    ? ["approve", "linkedin-dry-run", "linkedin-send", "dry-run", "publish", "live"]
+    : ["approve", "dry-run", "publish", "live"];
 
   return (
     <div className="grid gap-4 xl:grid-cols-[420px_minmax(0,1fr)]" data-testid="outbound-plantillas">
@@ -2721,6 +2886,7 @@ function B2BPlantillasTab({
         {selectedCampaign ? (
           <PersonalizationWorkspace
             campaign={selectedCampaign}
+            leads={campaignLeads}
             placeholders={placeholders}
             emailCount={emailCount}
           />
@@ -2731,6 +2897,15 @@ function B2BPlantillasTab({
           />
         )}
       </section>
+
+      {selectedCampaign && hasLinkedInFlow && (
+        <LinkedInSequenceEditor
+          campaign={selectedCampaign}
+          saving={savingLinkedIn}
+          locked={locked}
+          onSave={onSaveLinkedIn}
+        />
+      )}
 
         <aside className="rounded-xl border border-border bg-card p-4">
           <h3 className="font-heading text-lg text-navy">Salida</h3>
@@ -2745,6 +2920,8 @@ function B2BPlantillasTab({
             <div className="mt-2 grid gap-2 text-sm">
               <DataItem label="Estado" value={selectedCampaign?.status || "-"} />
               <DataItem label="Emails" value={emailCount ? `${emailCount} generados` : "Sin emails"} />
+              <DataItem label="Personalización" value={contactableLeads ? `${personalized}/${contactableLeads} leads` : "Pendiente"} />
+              <DataItem label="LinkedIn" value={hasLinkedInFlow ? `${linkedinLeads} leads disponibles` : "Sin canal"} />
               <DataItem label="Canales" value={selectedCampaign ? channelText(selectedCampaign.channels) : "-"} />
             </div>
           </div>
@@ -2753,7 +2930,7 @@ function B2BPlantillasTab({
               Acciones de envío
             </summary>
             <div className="mt-3 grid gap-2">
-              {(["approve", "dry-run", "publish", "live"] as const).map((action) => (
+              {sendActions.map((action) => (
                 <button
                   key={action}
                   type="button"
@@ -2805,16 +2982,152 @@ function B2BPlantillasTab({
   );
 }
 
+function LinkedInSequenceEditor({
+  campaign,
+  saving,
+  locked,
+  onSave,
+}: {
+  campaign: Campaign | CampaignDetail;
+  saving: boolean;
+  locked: boolean;
+  onSave: (variantId: string | undefined, sequence: LinkedInSequenceState) => void;
+}) {
+  const variant = (campaign as CampaignDetail).variants?.[0];
+  const [sequence, setSequence] = useState<LinkedInSequenceState>(() => linkedInSequenceState(campaign));
+
+  useEffect(() => {
+    setSequence(linkedInSequenceState(campaign));
+  }, [campaign]);
+
+  function update(next: Partial<LinkedInSequenceState>) {
+    setSequence((current) => ({ ...current, ...next }));
+  }
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="font-heading text-lg text-navy">Secuencia LinkedIn</h3>
+          <p className="text-sm text-muted-foreground">Conexión, primer DM al aceptar y follow-up si no responde.</p>
+        </div>
+        <span className="rounded border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Unipile
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-3">
+        <LinkedInMessageField
+          label="Invitación"
+          value={sequence.connectNote}
+          rows={3}
+          disabled={locked || saving}
+          onChange={(value) => update({ connectNote: value })}
+        />
+        <LinkedInMessageField
+          label="DM1 al aceptar"
+          value={sequence.dm1Template}
+          rows={4}
+          disabled={locked || saving}
+          onChange={(value) => update({ dm1Template: value })}
+        />
+        <LinkedInMessageField
+          label="Follow-up sin respuesta"
+          value={sequence.dm2Template}
+          rows={4}
+          disabled={locked || saving}
+          onChange={(value) => update({ dm2Template: value })}
+        />
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <label className="block rounded-md border border-border bg-background p-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Días hasta DM1</span>
+          <input
+            type="number"
+            min={0}
+            value={sequence.connectToDm1Days}
+            disabled={locked || saving}
+            onChange={(event) => update({ connectToDm1Days: Math.max(0, Number(event.target.value) || 0) })}
+            className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
+          />
+        </label>
+        <label className="block rounded-md border border-border bg-background p-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Días hasta follow-up</span>
+          <input
+            type="number"
+            min={0}
+            value={sequence.dm1ToDm2Days}
+            disabled={locked || saving}
+            onChange={(event) => update({ dm1ToDm2Days: Math.max(0, Number(event.target.value) || 0) })}
+            className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
+          />
+        </label>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1.5">
+          {["{{firstName}}", "{{company}}", "{{personalization}}"].map((token) => (
+            <span key={token} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
+              {token}
+            </span>
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={saving || locked}
+          onClick={() => onSave(variant?.id, sequence)}
+          className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+        >
+          {locked ? "Secuencia bloqueada" : saving ? "Guardando..." : "Guardar LinkedIn"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function LinkedInMessageField({
+  label,
+  value,
+  rows,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  rows: number;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block rounded-md border border-border bg-background p-3">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+      <textarea
+        value={value}
+        rows={rows}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full resize-y rounded-md border border-border bg-card p-3 text-sm focus:border-rust focus:outline-none"
+      />
+    </label>
+  );
+}
+
 function PersonalizationWorkspace({
   campaign,
+  leads,
   placeholders,
   emailCount,
 }: {
   campaign: Campaign | CampaignDetail;
+  leads: Lead[];
   placeholders: string[];
   emailCount: number;
 }) {
   const tokens = placeholders.length ? placeholders : ["first_name", "company_name", "pain_point"];
+  const personalized = personalizedLeadCount(leads);
+  const contactableLeads = Math.max(emailLeadCount(leads), linkedinLeadCount(leads));
+  const sample = leads.find((lead) => leadPersonalization(lead));
 
   return (
     <div className="mt-4 space-y-3" data-testid="b2b-personalization-workspace">
@@ -2825,7 +3138,7 @@ function PersonalizationWorkspace({
               <Target className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Contexto base</div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Campaña</div>
               <h4 className="mt-1 font-heading text-base text-navy">{campaign.title || "Campaña outbound"}</h4>
               <p className="mt-1 text-sm text-muted-foreground">
                 {campaign.hypothesis || "Sin propuesta o hipótesis definida para esta campaña."}
@@ -2839,7 +3152,7 @@ function PersonalizationWorkspace({
           <div className="mt-4 grid gap-3 rounded-lg border border-border bg-card p-3 sm:grid-cols-2">
             <DataItem label="Tipo" value={campaign.campaignKindLabel || "Campaña B2B"} />
             <DataItem label="Canales" value={channelText(campaign.channels)} />
-            <DataItem label="Leads" value={typeof campaign.leadCount === "number" ? `${campaign.leadCount}` : "-"} />
+            <DataItem label="Leads" value={`${leads.length || campaign.leadCount || 0}`} />
             <DataItem label="Secuencia" value={emailCount ? `${emailCount} emails` : "Pendiente"} />
           </div>
         </div>
@@ -2847,8 +3160,10 @@ function PersonalizationWorkspace({
         <div className="rounded-lg border border-border bg-background p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Personalización</div>
-              <h4 className="mt-1 font-heading text-base text-navy">Variables y ángulos</h4>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Personalización de campaña</div>
+              <h4 className="mt-1 font-heading text-base text-navy">
+                {contactableLeads ? `${personalized}/${contactableLeads} leads listos` : "Se completará al tener contactos"}
+              </h4>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-1.5">
@@ -2861,7 +3176,7 @@ function PersonalizationWorkspace({
           <div className="mt-4 grid gap-2">
             <PersonalizationCue label="Dolor" value={campaign.hypothesis || "Pendiente de definir"} />
             <PersonalizationCue label="Persona" value={campaign.targetSegment || "Pendiente de definir"} />
-            <PersonalizationCue label="Canal" value={channelText(campaign.channels)} />
+            <PersonalizationCue label="Ejemplo" value={sample ? leadPersonalization(sample)! : "La campaña generará una línea personalizada por lead después del enrichment."} />
           </div>
         </div>
       </div>
