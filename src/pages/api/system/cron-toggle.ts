@@ -1,12 +1,11 @@
-import { EXEC_PATH } from "@/lib/data/paths";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
+import { getRuntime } from "@/lib/runtime";
 
 
 /**
  * POST /api/system/cron-toggle
- * Toggles an OpenClaw cron task on/off
+ * Toggles a cron task on/off through the active runtime.
  * Body: { cronId: string, enable: boolean }
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -24,13 +23,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Missing cronId or enable" });
   }
 
+  const runtime = getRuntime();
+  if (!runtime.capabilities.cron) {
+    return res.status(501).json({
+      error: `Runtime "${runtime.id}" does not support cron toggles through Sancho yet.`,
+      runtime: runtime.id,
+      capability: "cron",
+    });
+  }
+
   try {
     const cmd = enable ? "enable" : "disable";
-    execSync(`openclaw cron ${cmd} ${cronId} 2>/dev/null`, {
-      timeout: 10000,
-      encoding: "utf-8",
-      env: { ...process.env, PATH: EXEC_PATH },
-    });
+    await runtime.control.runCommand(["cron", cmd, cronId], { timeoutMs: 10000 });
     return res.status(200).json({ ok: true, cronId, enabled: enable });
   } catch (e) {
     return res.status(500).json({
