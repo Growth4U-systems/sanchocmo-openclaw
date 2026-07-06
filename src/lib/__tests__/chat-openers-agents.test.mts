@@ -109,7 +109,7 @@ test("B2B campaign opens a blank B2B campaign thread with suggested actions", ()
     {
       label: "Crear campaña B2B",
       prompt:
-        "Quiero crear una nueva campaña B2B de cold email. Ayúdame a definir ICP, oferta, audiencia, criterios positivos/negativos, secuencia y próximos pasos.",
+        "Quiero crear una nueva campaña B2B de cold email. Define ICP, oferta, audiencia, criterios positivos/negativos y una secuencia que incluya personalización por lead desde el inicio usando {{personalization}} o {{icebreaker}}. La campaña debe quedar preparada para buscar, enriquecer, personalizar automáticamente los leads y enviar.",
     },
     {
       label: "Definir ICP",
@@ -119,7 +119,7 @@ test("B2B campaign opens a blank B2B campaign thread with suggested actions", ()
     {
       label: "Generar secuencia",
       prompt:
-        "Quiero generar la secuencia de emails de una campaña B2B con email inicial y follow-ups, usando el contexto de Growth4U.",
+        "Quiero generar la secuencia de emails de una campaña B2B con email inicial y follow-ups, usando el contexto de Growth4U e incluyendo personalización por lead desde el primer email con {{personalization}} o {{icebreaker}}.",
     },
   ]);
 });
