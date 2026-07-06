@@ -937,7 +937,7 @@ function GenericSurface({
         <div>
           <div className="m-eyebrow">{icon} {title}</div>
           <div className="m-ns-big">{kpis[0]?.displayValue ?? stateLabel(state)}</div>
-          <p>{kpis[0]?.label ?? "Sin KPI calculado para este rango"}</p>
+          <p>{kpis[0]?.label ?? "Sin datos para este rango"}</p>
         </div>
         <MiniBars tone="navy" values={[32, 44, 40, 52, 64, 58, 76, 82]} />
       </div>
@@ -1387,7 +1387,6 @@ function SurfaceSubhead({
   title,
   subtitle,
   state,
-  sources,
   health,
 }: {
   icon: string;
@@ -1397,18 +1396,12 @@ function SurfaceSubhead({
   sources: Array<{ label: string; on: boolean }>;
   health?: string;
 }) {
+  const statusText = state === "ON" ? health : stateLabel(state);
   return (
     <div className="m-surface-subhead">
       <h2><span>{icon}</span>{title}</h2>
       <span className="m-subhead-sub">{subtitle}</span>
-      <div className="m-source-pills">
-        {sources.map((source) => (
-          <span key={source.label} className={cn("m-source-pill", !source.on && "off")}>
-            {source.on ? "✓" : "○"} {source.label}
-          </span>
-        ))}
-      </div>
-      <span className={cn("m-health-pill", stateClass(state))}>{health ?? stateLabel(state)}</span>
+      {statusText && <span className={cn("m-health-pill", state !== "ON" && stateClass(state))}>{statusText}</span>}
     </div>
   );
 }
@@ -2068,14 +2061,21 @@ function buildSurfaceCard(
 ): SurfaceCardModel {
   const copy = SURFACE_COPY[def.key];
   const kpis = selectSurfaceKpis(kpiData, def.key);
-  const primary = kpis[0] ?? entry?.metrics?.find((metric) => metric.value != null);
-  const value = "displayValue" in (primary ?? {}) ? (primary as MetricKpiValue).displayValue : primary?.value != null ? formatCompact(primary.value) : stateValue(surfaceState(def, entry, configured));
+  const primary =
+    kpis.find((kpi) => kpi.value != null || !!kpi.valueText) ??
+    entry?.metrics?.find((metric) => metric.value != null);
+  const rawState = surfaceState(def, entry, configured);
+  const state =
+    rawState === "CONECTADO SIN SNAPSHOTS" && kpis.some((kpi) => kpi.value != null || !!kpi.valueText)
+      ? "ON"
+      : rawState;
+  const value = "displayValue" in (primary ?? {}) ? (primary as MetricKpiValue).displayValue : primary?.value != null ? formatCompact(primary.value) : stateValue(state);
   return {
     key: def.key,
     icon: copy?.icon ?? def.emoji,
     label: copy?.label ?? SURFACE_DETAIL_CONFIGS[def.key].label,
     description: copy?.metric ?? def.what,
-    state: surfaceState(def, entry, configured),
+    state,
     sources: entry?.sources ?? [],
     value,
     delta: kpis[0]?.comparison?.displayDelta ?? null,
@@ -2400,8 +2400,8 @@ function rangeLabel(range: DateRange): string {
 }
 
 function stateValue(state: MetricDataState): string {
-  if (state === "ON") return "Sin KPI calculado";
-  if (state === "PARCIAL") return "Faltan fuentes";
+  if (state === "ON") return "Sin datos para este rango";
+  if (state === "PARCIAL") return "Falta conexión requerida";
   if (state === "CONECTADO SIN SNAPSHOTS") return "Conectado sin datos";
   if (state === "COMING SOON") return "Próximamente";
   return "No conectado";
@@ -2767,13 +2767,9 @@ function MockupStyles() {
       .m-surface-subhead h2{display:flex;align-items:center;gap:10px;margin:0;font-family:'Space Grotesk';font-size:24px;font-weight:700;color:var(--navy);letter-spacing:0;}
       .m-surface-subhead h2 span{font-size:22px;}
       .m-subhead-sub{font-size:11.5px;color:var(--muted);font-weight:700;}
-      .m-source-pills{display:flex;gap:6px;flex-wrap:wrap;}
-      .m-source-pill,.m-health-pill{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--ink);border-radius:var(--r-pill);padding:3px 10px;font-weight:800;font-size:11px;box-shadow:var(--pop-xs);background:var(--sage-tint);color:var(--sage);}
-      .m-source-pill.off{background:var(--paper2);color:var(--subtle);}
-      .m-health-pill{margin-left:auto;border-width:2px;background:var(--paper2);color:var(--navy);}
-      .m-health-pill.on{background:var(--sage-tint);color:var(--sage);}
-      .m-health-pill.partial{background:var(--amber);color:var(--amber-ink);}
-      .m-health-pill.off{background:var(--aged);color:var(--muted);}
+      .m-health-pill{display:inline-flex;align-items:center;margin-left:auto;font-weight:800;font-size:12px;color:var(--muted);}
+      .m-health-pill.partial{color:var(--amber-ink);}
+      .m-health-pill.off{color:var(--muted);}
       .m-statebar-tight{margin-top:13px;margin-bottom:2px;}
       .m-vseg{display:inline-flex;border:2px solid var(--ink);border-radius:var(--r-pill);overflow:hidden;box-shadow:var(--pop-xs);}
       .m-vseg button{border:none;background:var(--paper);padding:5px 12px;font-weight:800;font-size:11.5px;color:var(--muted);border-right:1.5px solid var(--border);}

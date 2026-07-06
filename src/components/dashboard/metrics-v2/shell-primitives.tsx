@@ -12,8 +12,8 @@ const QUALITY_LABEL: Partial<Record<MetricQualityStatus, string>> = {
 };
 
 const EMPTY_LABEL: Record<MetricDataState, string> = {
-  ON: "Sin KPI calculado",
-  PARCIAL: "Faltan fuentes",
+  ON: "Sin datos para este rango",
+  PARCIAL: "Falta conexión requerida",
   OFF: "No conectado",
   "SIN DATOS": "No conectado",
   "CONECTADO SIN SNAPSHOTS": "Conectado sin datos",

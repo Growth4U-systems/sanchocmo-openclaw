@@ -86,7 +86,7 @@ export function ConnectionState({
 }) {
   const meta: Record<typeof state, { label: string; glyph: string; cls: string }> = {
     off: { label: "No conectado", glyph: "○", cls: "bg-aged text-[var(--sc-fg-muted)]" },
-    partial: { label: "Faltan fuentes", glyph: "◐", cls: "bg-[var(--yellow)] text-ink" },
+    partial: { label: "Falta conexión requerida", glyph: "◐", cls: "bg-[var(--yellow)] text-ink" },
     connected_pending: { label: "Conectado sin datos", glyph: "◑", cls: "bg-[var(--cyan)] text-white" },
     collecting: { label: "Recolectando", glyph: "✓", cls: "bg-sage text-white" },
   };
