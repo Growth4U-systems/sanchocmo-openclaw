@@ -11,10 +11,9 @@
  */
 import fs from "fs";
 import path from "path";
-import { cronJobsFile, cronJobsStateFile } from "./openclaw-paths";
-import { getRunningCronJobs, type RunningCron } from "./openclaw-sessions";
 import { readJSON } from "./json-io";
 import { BASE } from "./paths";
+import { getRuntime, type RuntimeRunningCron as RunningCron } from "@/lib/runtime";
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -170,7 +169,7 @@ export function humanizeSchedule(schedule: RawCronJob["schedule"]): string {
 // ── Loading raw crons ─────────────────────────────────────────────
 
 export function loadAllCrons(): RawCronJob[] {
-  const file = process.env.OPENCLAW_CRON_FILE || cronJobsFile();
+  const file = process.env.OPENCLAW_CRON_FILE || getRuntime().state.cronJobsFile();
   const data = readJSON<{ jobs?: RawCronJob[] } | RawCronJob[]>(file, { jobs: [] });
   if (Array.isArray(data)) return data;
   return data.jobs || [];
@@ -191,17 +190,19 @@ interface JobState {
   };
 }
 
-let _jobsStateCache: { mtime: number; data: Record<string, JobState> } | null = null;
+let _jobsStateCache: { file: string; mtime: number; data: Record<string, JobState> } | null = null;
 
 export function loadJobsState(): Record<string, JobState> {
-  const file = cronJobsStateFile();
+  const file = getRuntime().state.cronJobsStateFile();
   if (!fs.existsSync(file)) return {};
   try {
     const stat = fs.statSync(file);
-    if (_jobsStateCache && _jobsStateCache.mtime === stat.mtimeMs) return _jobsStateCache.data;
+    if (_jobsStateCache && _jobsStateCache.file === file && _jobsStateCache.mtime === stat.mtimeMs) {
+      return _jobsStateCache.data;
+    }
     const parsed = JSON.parse(fs.readFileSync(file, "utf-8"));
     const data = (parsed.jobs || {}) as Record<string, JobState>;
-    _jobsStateCache = { mtime: stat.mtimeMs, data };
+    _jobsStateCache = { file, mtime: stat.mtimeMs, data };
     return data;
   } catch {
     return {};
@@ -283,7 +284,7 @@ export function enrichCrons(opts: EnrichOptions): EnrichedCronsResult {
       const s = jobsState[j.id]?.state;
       jobsEndedAt[j.id] = { lastRunAtMs: s?.lastRunAtMs, lastDurationMs: s?.lastDurationMs };
     }
-    runningMap = getRunningCronJobs(jobsEndedAt);
+    runningMap = getRuntime().state.getRunningCronJobs(jobsEndedAt);
   }
 
   const matched: EnrichedCron[] = [];
@@ -372,7 +373,7 @@ export function getLiveStatuses(jobIds: string[]): Record<string, LiveStatus> {
     const s = jobsState[id]?.state;
     jobsEndedAt[id] = { lastRunAtMs: s?.lastRunAtMs, lastDurationMs: s?.lastDurationMs };
   }
-  const running = getRunningCronJobs(jobsEndedAt);
+  const running = getRuntime().state.getRunningCronJobs(jobsEndedAt);
   const result: Record<string, LiveStatus> = {};
   for (const id of jobIds) {
     const live = running.get(id);
