@@ -30,7 +30,7 @@ import {
 import { ensureMetricsStorage, ingestDailySnapshot, type RawMetric } from "@/lib/data/metrics-snapshots";
 import { assertMetricSeedTargetSafe } from "./seed-safety";
 
-const SLUG = process.argv[2] || "hospital-capilar";
+const SLUG = process.argv[2] || "example";
 const DAYS = Number(process.argv[3]) || 30;
 const SEED_METADATA = { provenance: "seed", quality: "demo" } as const;
 
@@ -41,7 +41,7 @@ const dailySum = (total: number, i: number, phase = 0) => Math.max(0, Math.round
 // ─────────────────────────── GSC (rankings) ───────────────────────────
 // pos+delta → pos across the range so the UI derives the right movers (▲ improved / ▼ declined).
 const GSC_QUERIES: { q: string; clicks: number; impr: number; ctr: number; pos: number; delta: number; intent: string }[] = [
-  { q: "hospital capilar", clicks: 320, impr: 4200, ctr: 7.6, pos: 1.3, delta: 0, intent: "Marca" },
+  { q: "example", clicks: 320, impr: 4200, ctr: 7.6, pos: 1.3, delta: 0, intent: "Marca" },
   { q: "injerto capilar precio", clicks: 210, impr: 6400, ctr: 3.3, pos: 8.1, delta: 2, intent: "Comercial" },
   { q: "precio injerto capilar turquía", clicks: 120, impr: 9800, ctr: 1.2, pos: 9.4, delta: 1, intent: "Comercial" },
   { q: "clínica capilar madrid", clicks: 96, impr: 1400, ctr: 6.9, pos: 6.2, delta: 0, intent: "Comercial" },
@@ -80,7 +80,7 @@ const GA4_DEVICES: { device: string; sessions: number; bounceRate: number; engag
 
 // ─────────────────────────── AEO (AI visibility, all seed) ───────────────────────────
 const AEO_BRANDS: { brand: string; sov: number; visibility: number; mentions: number; position: number; sentiment: number }[] = [
-  { brand: "Hospital Capilar", sov: 28, visibility: 43.8, mentions: 195, position: 2.4, sentiment: 72 },
+  { brand: "Example", sov: 28, visibility: 43.8, mentions: 195, position: 2.4, sentiment: 72 },
   { brand: "Insparya", sov: 32, visibility: 50, mentions: 240, position: 1.9, sentiment: 70 },
   { brand: "Clínica X", sov: 20, visibility: 33, mentions: 130, position: 3.1, sentiment: 68 },
   { brand: "Capilar Y", sov: 12, visibility: 22, mentions: 80, position: 3.8, sentiment: 65 },

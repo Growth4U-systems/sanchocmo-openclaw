@@ -5,7 +5,7 @@ import { withAuth, withErrorHandler, compose, canAccessSlug } from "@/lib/api-mi
 import { mcDataFile, BASE } from "@/lib/data/paths";
 
 /**
- * GET /api/activity?slug=hospital-capilar&limit=15
+ * GET /api/activity?slug=example&limit=15
  * Returns recent activity events for the activity bar.
  * Combines mc-data.js (system events) + live cron runs read directly from
  * brand/<slug>/recurring-tasks/ — so cron runs reflect current state without

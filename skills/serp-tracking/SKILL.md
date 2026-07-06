@@ -77,5 +77,5 @@ Cada resultado: **URL completa** (no solo dominio), **título del artículo** (c
 - ✅ URLs completas con títulos · resumen (total, client_in_top3, client_in_top10, client_invisible) · top invisibles de alto volumen · breakdown por subnicho
 - ❌ FAIL si <15 keywords · si DataForSEO existe y no se usa · si no hay estadísticas · si algún subnicho tiene 0 keywords
 
-## Learnings heredados (Paymatico, Mar 2026)
+## Learnings heredados (Example, Mar 2026)
 - **#5 URLs > dominios** · **#11 Auto-keywords de competidor** (no excluir por bajo volumen, tienen alta intención) · **#12 Filtro mercado/idioma**.

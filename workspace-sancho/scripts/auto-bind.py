@@ -212,7 +212,7 @@ def fetch_guild_channels(token, guild_id):
 
 
 def make_task_prefix(slug):
-    """Generate task ID prefix from slug: hospital-capilar → HC, growth4u → G4U."""
+    """Generate task ID prefix from slug: example → HC, growth4u → G4U."""
     parts = slug.split("-")
     if len(parts) == 1:
         return slug[:3].upper()

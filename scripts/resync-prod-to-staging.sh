@@ -61,7 +61,7 @@ esac
 case "$MODE" in A|B|C) ;; *) echo "✗ Invalid MODE='$MODE' (expected A, B or C)" >&2; write_status failed; exit 2 ;; esac
 
 # --- config (override via env) ----------------------------------------------
-PROD_IP="${PROD_IP:-159.69.244.59}"            # prod VPS (rsync source)
+PROD_IP="${PROD_IP:-}"            # prod VPS (rsync source)
 SSH_OPTS="${SSH_OPTS:--o StrictHostKeyChecking=accept-new -o ConnectTimeout=15}"
 OPENCLAW_HOME="${OPENCLAW_HOME:-/root/.openclaw}"
 WORKSPACE="${MC_WORKSPACE:-$OPENCLAW_HOME/workspace-sancho}"
@@ -75,9 +75,9 @@ PROD_BRAND_DIR="${PROD_BRAND_DIR:-$PROD_OPENCLAW_HOME/workspace-sancho/brand}"
 PROD_STATE_DIR="${PROD_STATE_DIR:-$PROD_OPENCLAW_HOME/.openclaw}"
 
 # Neon (modes B/C). Defaults mirror scripts/resync-staging-to-prod.sh.
-NEON_PROJECT="${NEON_PROJECT:-empty-rain-04721142}"
-NEON_STAGING_BRANCH="${NEON_STAGING_BRANCH:-br-lucky-lake-aga3ig9n}"
-NEON_PROD_BRANCH="${NEON_PROD_BRANCH:-br-restless-water-agt22gda}"
+NEON_PROJECT="${NEON_PROJECT:-}"
+NEON_STAGING_BRANCH="${NEON_STAGING_BRANCH:-}"
+NEON_PROD_BRANCH="${NEON_PROD_BRANCH:-}"
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BK_DIR="$OPENCLAW_HOME/backups"

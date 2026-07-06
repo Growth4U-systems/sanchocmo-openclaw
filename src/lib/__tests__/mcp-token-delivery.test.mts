@@ -15,7 +15,7 @@ function seedClients() {
     JSON.stringify({
       clients: [
         { slug: "growth4u", name: "Growth4U", active: true, plan: "pro", status: "active" },
-        { slug: "paymatico", name: "Paymatico", active: true, plan: "pro", status: "active" },
+        { slug: "example", name: "Example", active: true, plan: "pro", status: "active" },
       ],
       adminToken: null,
     }),
@@ -30,7 +30,7 @@ let auth: AuthMod;
 before(async () => {
   seedClients();
   process.env.GROWTH4U_ALARIFE_WEB_MCP_TOKEN = "tok-growth4u-web";
-  delete process.env.PAYMATICO_ALARIFE_WEB_MCP_TOKEN;
+  delete process.env.EXAMPLE_ALARIFE_WEB_MCP_TOKEN;
   alarife = await import("../mcp/alarife");
   auth = await import("../mcp/auth");
 });
@@ -77,7 +77,7 @@ test("keeps Sancho web as a separate Alarife instance inside Growth4U", () => {
 
 test("fails closed for a client outside the token scope", () => {
   assert.throws(
-    () => alarife.deliverAlarifeMcpToken(principal({ clients: ["growth4u"] }), "paymatico", "web"),
+    () => alarife.deliverAlarifeMcpToken(principal({ clients: ["growth4u"] }), "example", "web"),
     (err: unknown) => err instanceof auth.McpAuthError && err.status === 403,
   );
 });
@@ -93,8 +93,8 @@ test("returns 424 when the secret is not configured", () => {
   assert.throws(
     () =>
       alarife.deliverAlarifeMcpToken(
-        principal({ clients: ["paymatico"], brands: ["paymatico"] }),
-        "paymatico",
+        principal({ clients: ["example"], brands: ["example"] }),
+        "example",
         "web",
       ),
     (err: unknown) => err instanceof auth.McpAuthError && err.status === 424,

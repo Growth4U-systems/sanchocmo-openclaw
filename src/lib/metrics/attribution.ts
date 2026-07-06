@@ -61,7 +61,7 @@ export function buildAttributionRows(channels: ChannelSpend[], citas: KoiboxCita
 }
 
 /**
- * Illustrative Atribución example (Hospital Capilar) — rendered flagged
+ * Illustrative Atribución example (Example) — rendered flagged
  * `representative` until live Koibox citas land, so the cross-source story is legible
  * without ever presenting invented numbers as real.
  */

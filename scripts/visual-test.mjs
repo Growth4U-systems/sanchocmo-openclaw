@@ -7,7 +7,7 @@ import { chromium } from 'playwright';
 
 const BASE = 'http://localhost:3005';
 const ADMIN_TOKEN = 'cc9b8067c18c5214358611d75f151f6d';
-const SLUG = 'hospital-capilar';
+const SLUG = 'example';
 const SCREENSHOTS_DIR = 'screenshots/test';
 
 async function run() {

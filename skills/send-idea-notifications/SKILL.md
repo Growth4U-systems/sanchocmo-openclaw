@@ -80,14 +80,14 @@ Write back to brand/{slug}/idea-generation/notifications.json with sent=true for
 ```
 💡 **Nuevas ideas de contenido**
 
-Se generaron 12 ideas de contenido para Hospital Capilar:
+Se generaron 12 ideas de contenido para Example:
 - 8 keywords para rankear (SEO)
 - 3 trending topics (redes sociales)
 - 1 gap vs competencia
 
 📊 **Stats**: 12 nuevas ideas (12 contenido, 0 contactos)
 
-🔗 **Ver en Mission Control**: <MC_BASE>/portal/{token}/docs/brand/hospital-capilar/idea-generation
+🔗 **Ver en Mission Control**: <MC_BASE>/portal/{token}/docs/brand/example/idea-generation
 ```
 
 ### Contact ideas notification
@@ -113,7 +113,7 @@ Se generaron 18 ideas para Paymático:
 
 📊 **Stats**: 18 nuevas ideas (10 contenido, 8 contactos)
 
-🔗 **Ver en Mission Control**: <MC_BASE>/portal/{token}/docs/brand/paymatico/idea-generation
+🔗 **Ver en Mission Control**: <MC_BASE>/portal/{token}/docs/brand/example/idea-generation
 ```
 
 ---

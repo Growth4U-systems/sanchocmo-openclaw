@@ -10,7 +10,7 @@ WEB_PORT="${OD_WEB_PORT:-3100}"
 
 # Origins desde los que el daemon acepta requests (cross-origin guard).
 # Incluye localhost (default) + Tailscale Funnel/Serve para acceso remoto.
-export OD_ALLOWED_ORIGINS="${OD_ALLOWED_ORIGINS:-https://sancho-cmo.taild48df2.ts.net:8444,https://sancho-cmo.taild48df2.ts.net,https://sancho-cmo.taild48df2.ts.net:8443}"
+export OD_ALLOWED_ORIGINS="${OD_ALLOWED_ORIGINS:-https://your-instance.ts.net:8444,https://your-instance.ts.net,https://your-instance.ts.net:8443}"
 
 cd "$OD_REPO"
 

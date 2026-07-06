@@ -37,7 +37,7 @@ Alarife Payload API supports:
 - Import one URL: `POST /api/clients/{clientId}/import`.
 - Crawl/discover URLs from sitemap: `POST /api/clients/{clientId}/import/crawl`.
 - Preview rendered HTML: `GET /api/clients/{clientId}/pages/{pageId}/preview`.
-- Legacy Paymatico alias: `7SRxn8rDeE3PWEi-oQjle` resolves to `paymatico`.
+- Legacy Example alias: `7SRxn8rDeE3PWEi-oQjle` resolves to `example`.
 
 Not available yet:
 
@@ -54,20 +54,20 @@ Use the bundled helper instead of hand-writing curl when possible:
 
 ```bash
 python3 skills/alarife-integration/scripts/alarife_payload_api.py clients
-python3 skills/alarife-integration/scripts/alarife_payload_api.py pages paymatico
-python3 skills/alarife-integration/scripts/alarife_payload_api.py create-page paymatico --json /tmp/page.json
-python3 skills/alarife-integration/scripts/alarife_payload_api.py update-page paymatico <pageId> --json /tmp/patch.json
-python3 skills/alarife-integration/scripts/alarife_payload_api.py preview paymatico <pageId> --out /tmp/preview.html
-python3 skills/alarife-integration/scripts/alarife_payload_api.py import-url paymatico https://example.com/page --target-path /page
-python3 skills/alarife-integration/scripts/alarife_payload_api.py import-save paymatico --json /tmp/import-save.json
-python3 skills/alarife-integration/scripts/alarife_payload_api.py delete-page paymatico <pageId>
+python3 skills/alarife-integration/scripts/alarife_payload_api.py pages example
+python3 skills/alarife-integration/scripts/alarife_payload_api.py create-page example --json /tmp/page.json
+python3 skills/alarife-integration/scripts/alarife_payload_api.py update-page example <pageId> --json /tmp/patch.json
+python3 skills/alarife-integration/scripts/alarife_payload_api.py preview example <pageId> --out /tmp/preview.html
+python3 skills/alarife-integration/scripts/alarife_payload_api.py import-url example https://example.com/page --target-path /page
+python3 skills/alarife-integration/scripts/alarife_payload_api.py import-save example --json /tmp/import-save.json
+python3 skills/alarife-integration/scripts/alarife_payload_api.py delete-page example <pageId>
 ```
 
 The script reads `.env` from the current shell and `brand/sanchocmo/.env`.
 
 ## Workflow: Export a Sancho Site to Alarife Payload
 
-1. Identify the target client/site slug. Use an existing slug when possible (`paymatico`, `growth4u`, etc.).
+1. Identify the target client/site slug. Use an existing slug when possible (`example`, `growth4u`, etc.).
 2. If the site does not exist, create it with `POST /api/clients`.
 3. Convert each page to one `raw_html` section:
    - `title`

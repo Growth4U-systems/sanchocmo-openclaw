@@ -7,6 +7,6 @@
 
 ## Context
 
-- **Empresa:** Hospital Capilar — clínica de trasplante/tratamiento capilar
-- **Servidor Discord:** Hospital Capilar (guild 1475635138108063746)
+- **Empresa:** Example — clínica de trasplante/tratamiento capilar
+- **Servidor Discord:** Example (guild 1475635138108063746)
 - **Estilo:** Directo, no le gusta perder tiempo. Prefiere acción sobre explicación.

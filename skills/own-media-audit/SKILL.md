@@ -83,5 +83,5 @@ Cada gap: domain + specific_urls + url_title + gap_type + gap_source + domain_cl
 - ✅ Cada gap con URLs específicas + clasificación + suggested_action · competidores excluidos · dominios fuera de mercado excluidos · ordenados por score
 - ❌ FAIL si devuelve 0 sin comprobar modo densidad · si los gaps solo tienen dominios sin URL · si aparecen competidores en recomendaciones de medios
 
-## Learnings heredados (Paymatico, Mar 2026)
+## Learnings heredados (Example, Mar 2026)
 - **#3 Modo densidad** · **#4 Taxonomía compartida de dominios** · **#5 URLs > dominios** · **#6 Score compuesto GEO+SERP**.

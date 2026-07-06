@@ -7,7 +7,7 @@ import { BASE } from "@/lib/data/paths";
 import { cronJobsFile } from "@/lib/data/openclaw-paths";
 
 /**
- * GET /api/cron-runs?limit=20&slug=hospital-capilar
+ * GET /api/cron-runs?limit=20&slug=example
  * Returns latest cron run outputs — ported from mc-server.js:6708
  */
 

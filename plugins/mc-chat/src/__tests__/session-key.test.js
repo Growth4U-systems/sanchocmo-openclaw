@@ -41,7 +41,7 @@ test("buildAgentSessionKey keeps the agent prefix and includes the model slug", 
   };
 
   assert.equal(
-    buildAgentSessionKey("sancho", "channel:mc-chat:hospital-capilar:new-task-1", cfg),
-    "agent:sancho:model:fireworks_accounts_fireworks_models_glm-5p2:channel:mc-chat:hospital-capilar:new-task-1",
+    buildAgentSessionKey("sancho", "channel:mc-chat:example:new-task-1", cfg),
+    "agent:sancho:model:fireworks_accounts_fireworks_models_glm-5p2:channel:mc-chat:example:new-task-1",
   );
 });

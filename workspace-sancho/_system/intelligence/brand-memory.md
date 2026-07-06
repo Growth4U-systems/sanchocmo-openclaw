@@ -399,7 +399,7 @@ Campaigns are **distinct** from brand memory.
 
 ### Campaign Naming
 
-lowercase-kebab-case: `monzo-launch-2026`, `criptan-activation-q1`, `trust-engine-monzo`
+lowercase-kebab-case: `monzo-launch-2026`, `example-activation-q1`, `trust-engine-monzo`
 
 ### Campaign Brief Format
 

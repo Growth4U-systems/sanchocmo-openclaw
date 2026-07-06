@@ -61,7 +61,7 @@ If company-context is missing, ask these questions then map to archetype:
 | Archetype | Examples | Signals |
 |-----------|----------|---------|
 | **SaaS / App** | Slack, Notion, mobile games | Self-serve signup, product-led, subscription/freemium |
-| **Fintech** | Monzo, Revolut, Criptan | KYC/regulatory onboarding, transactions, deposits |
+| **Fintech** | Monzo, Revolut, Example | KYC/regulatory onboarding, transactions, deposits |
 | **Marketplace** | Airbnb, Wallapop, FellowFunders | Two-sided, platform takes cut |
 | **E-commerce / D2C** | Shopify stores, Nike.com | Product catalog, cart, purchase, shipping |
 | **Lead-to-Sale** | Agencies, law firms, clinics, SaaS Enterprise | Leads -> qualification -> meeting/appointment -> deal |
@@ -202,7 +202,7 @@ For each metric in the hierarchy, identify WHERE the data comes from and HOW to 
 3. **Collect credentials one by one**: For each source, use the `api-catalog.json` to:
    - Tell the client exactly what to provide (key name, where to find it, what permissions)
    - Accept the credential in the thread
-   - Store secrets in `./brand/.env` with naming: `{SLUG_UPPER}_{SOURCE}_{KEY}` (e.g. `PAYMATICO_GA4_SA_KEY`)
+   - Store secrets in `./brand/.env` with naming: `{SLUG_UPPER}_{SOURCE}_{KEY}` (e.g. `EXAMPLE_GA4_SA_KEY`)
    - Store non-sensitive config in `./brand/integrations.json`
 
 4. **Test each connection**: After receiving credentials:

@@ -85,7 +85,7 @@ y **clasificación de dominio** (editorial, directorio, competidor, etc.).
 - ✅ client_visibility (%) con denominador real · comparación de ≥3 competidores · breakdown por subnicho
 - ❌ FAIL si <8 runs totales · si solo 1 provider · si algún subnicho tiene 0 prompts · si las citas solo tienen dominios sin URL
 
-## Learnings heredados (Paymatico, Mar 2026)
+## Learnings heredados (Example, Mar 2026)
 - **#1/#2/#8 Subnichos**: keywords y prompts por subnicho; prompts = objetivo × subnicho × propuesta de valor.
 - **#5 URLs > dominios**: output siempre con URLs específicas de artículo, no solo dominios.
 - **#12 Filtro mercado/idioma**: excluir dominios de otros mercados/idiomas automáticamente.

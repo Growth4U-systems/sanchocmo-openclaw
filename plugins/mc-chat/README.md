@@ -82,7 +82,7 @@ MC Server sends user messages here.
 **Body:**
 ```json
 {
-  "slug": "hospital-capilar",
+  "slug": "example",
   "threadId": "abc123",
   "threadName": "Market Analysis",
   "text": "Analiza el mercado de trasplante capilar en España",
@@ -98,7 +98,7 @@ MC Server sends user messages here.
 ```json
 {
   "ok": true,
-  "chatId": "mc-chat:hospital-capilar:abc123",
+  "chatId": "mc-chat:example:abc123",
   "message": "Message dispatched to agent"
 }
 ```
@@ -116,7 +116,7 @@ Plugin sends agent responses here.
 **Body:**
 ```json
 {
-  "slug": "hospital-capilar",
+  "slug": "example",
   "threadId": "abc123",
   "text": "## Análisis del mercado...",
   "role": "bot",

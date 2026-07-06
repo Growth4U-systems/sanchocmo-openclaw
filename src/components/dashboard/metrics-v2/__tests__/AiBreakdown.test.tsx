@@ -9,7 +9,7 @@ import { AiBreakdown, type AiCompetitor, type AiEngine, type AiPrompt } from "..
 
 const render = (el: ReactElement) => renderToStaticMarkup(el);
 const competitors: AiCompetitor[] = [
-  { brand: "Hospital Capilar", sov: 28, visibility: 43.8, mentions: 195, position: 2.4, sentiment: 72, you: true },
+  { brand: "Example", sov: 28, visibility: 43.8, mentions: 195, position: 2.4, sentiment: 72, you: true },
   { brand: "Insparya", sov: 32, visibility: 50, mentions: 240, position: 1.9, sentiment: 70 },
   { brand: "Clínica X", sov: 20, visibility: 33, mentions: 130, position: 3.1, sentiment: 68 },
 ];
@@ -19,7 +19,7 @@ const base = { competitors, engines, prompts, totalPrompts: 1000 };
 
 test("AiBreakdown: default Competidores view — brands + your row highlighted", () => {
   const m = render(createElement(AiBreakdown, base));
-  assert.match(m, /Hospital Capilar/);
+  assert.match(m, /Example/);
   assert.match(m, /Insparya/);
   assert.match(m, /\(tú\)/);
 });

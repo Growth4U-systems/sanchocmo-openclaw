@@ -28,7 +28,7 @@ test("listMcpTokenSummaries exposes metadata without plaintext tokens", () => {
     SANCHO_MCP_TOKEN: "legacy-dummy",
     SANCHO_MCP_TOKEN_ID: "legacy",
     SANCHO_MCP_SCOPES: "tasks:read,docs:read",
-    SANCHO_MCP_CLIENTS: "paymatico",
+    SANCHO_MCP_CLIENTS: "example",
   };
 
   const summaries = listMcpTokenSummaries(env);
@@ -74,7 +74,7 @@ test("appendMcpTokenConfig accepts existing object or array JSON", () => {
     id: "two",
     tokenHash: hashMcpToken("two"),
     scopes: ["docs:read"],
-    clients: ["paymatico"],
+    clients: ["example"],
   });
 
   const parsed = parseMcpTokensJson(next);

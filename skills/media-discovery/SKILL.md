@@ -77,7 +77,7 @@ Clasificación de dominio:
 - ✅ Output 3-tier (count raw + count filtrada + lista accionable)
 - ❌ FAIL si solo se listan dominios de resultados SERP (eso son gaps, no discovery) · si <5 entradas Tier 3 · si aparecen competidores
 
-## Learnings heredados (Paymatico, Mar 2026)
+## Learnings heredados (Example, Mar 2026)
 - **#4 Taxonomía de dominios**: clasificación compartida cross-client (`_system/domain-taxonomy.json`).
 - **#5 URLs > dominios**: incluir URLs de artículo, no solo el dominio.
 - **#9 Filtrado 3 pasos**: Raw → Filtrada → Accionable con tipo de colaboración.

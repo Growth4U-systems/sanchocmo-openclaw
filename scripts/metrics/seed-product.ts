@@ -30,7 +30,7 @@ import {
 import { ensureMetricsStorage, ingestDailySnapshot, type RawMetric } from "@/lib/data/metrics-snapshots";
 import { assertMetricSeedTargetSafe } from "./seed-safety";
 
-const SLUG = process.argv[2] || "hospital-capilar";
+const SLUG = process.argv[2] || "example";
 const DAYS = Number(process.argv[3]) || 30;
 const SEED_METADATA = { provenance: "seed", quality: "demo" } as const;
 

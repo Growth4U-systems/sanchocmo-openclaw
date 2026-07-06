@@ -4,7 +4,7 @@
  *
  * Usage:
  *   node scripts/content-engine-setup.js --slug growth4u
- *   node scripts/content-engine-setup.js --slug hulahoop --dry-run
+ *   node scripts/content-engine-setup.js --slug example --dry-run
  *   node scripts/content-engine-setup.js --all
  *   node scripts/content-engine-setup.js --list
  *

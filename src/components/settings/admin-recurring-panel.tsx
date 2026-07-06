@@ -240,7 +240,7 @@ function BrandSection(props: BrandSectionProps) {
   const { slug, name, icon, crons, errorCount, defaultOpen, flashByJob, pendingClicks, nowTick, onRun, onToggle, onDetails } = props;
   // System section passes its display name directly; brand sections add
   // the slug to disambiguate when name differs from the slug (e.g.
-  // "Hospital Capilar" vs "hospital-capilar").
+  // "Example" vs "example").
   const title = slug === "_system" ? name : name.toLowerCase() === slug ? name : `${name} (${slug})`;
   const headerIcon = icon ?? "🏷️";
 

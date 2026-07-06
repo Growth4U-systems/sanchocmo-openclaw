@@ -35,7 +35,7 @@
 
 ### Patterns Previos (sigue vigente)
 
-- Onboarding Mega-Sessions Work (Paymatico 9h)
+- Onboarding Mega-Sessions Work (Example 9h)
 - Methodology Iteration Cycles Shortening (Alfonso edits skills directly)
 - Deliverables Need Anchor Linking
 - Visual Identity Before Positioning?

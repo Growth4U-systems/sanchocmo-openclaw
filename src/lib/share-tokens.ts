@@ -32,7 +32,7 @@ const SECRET =
   "mc-share-dev-fallback-secret-DO-NOT-USE-IN-PROD";
 
 export interface SharePayload {
-  /** Brand slug — `growth4u`, `criptan`, etc. */
+  /** Brand slug — `growth4u`, `example`, etc. */
   slug: string;
   /** Brand-relative doc path — e.g. `brand/growth4u/projects/.../foo.md` */
   docPath: string;

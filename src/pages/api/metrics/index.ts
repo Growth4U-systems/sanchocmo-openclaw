@@ -6,7 +6,7 @@ import { BASE, integrationsFile } from "@/lib/data/paths";
 import { getDailySnapshots } from "@/lib/data/metrics";
 
 /**
- * GET /api/metrics?slug=hospital-capilar
+ * GET /api/metrics?slug=example
  * Returns metrics data — ported from mc-server.js:9888
  *
  * DB-only metrics runtime: `metric_snapshots` is the source of truth. `rolling`
