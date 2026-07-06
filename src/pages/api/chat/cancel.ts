@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { markCancelled, clearStatus, clearProgress, getGatewayUrl, getChatSecret } from "@/lib/data/mc-chat";
+import { clearStatus, clearProgress } from "@/lib/data/mc-chat";
+import { getRuntime } from "@/lib/runtime";
 
 /**
  * POST /api/chat/cancel
@@ -21,32 +22,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           ? "rocinante"
           : undefined;
 
-  markCancelled(tid);
   clearStatus(tid);
   clearProgress(tid);
   console.log(`[mc-chat] Cancelling thread: ${tid}`);
 
-  // Send /stop to gateway
+  // Ask the selected runtime to cancel the active turn.
   try {
-    const secret = getChatSecret();
-    await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(secret ? { "X-MC-Secret": secret } : {}),
-      },
-      body: JSON.stringify({
-        slug,
-        threadId,
-        text: "/stop",
-        userName: "Admin",
-        userId: "mc-admin",
-        isAdmin: true,
-        ...(requestedAgent ? { agent: requestedAgent, agentId: requestedAgent } : {}),
-      }),
+    await getRuntime().messaging.cancel(tid, {
+      slug,
+      ...(requestedAgent ? { agent: requestedAgent, agentId: requestedAgent } : {}),
     });
   } catch (err) {
-    console.error(`[mc-chat] Gateway /stop failed: ${err instanceof Error ? err.message : err}`);
+    console.error(`[mc-chat] Runtime cancel failed: ${err instanceof Error ? err.message : err}`);
   }
 
   res.status(200).json({ ok: true });

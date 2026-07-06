@@ -99,6 +99,84 @@ test("getRuntime selects the external HTTP adapter", () => {
   else process.env.SANCHO_RUNTIME = previous;
 });
 
+test("fake runtime is rejected outside test mode", () => {
+  const previousRuntime = process.env.SANCHO_RUNTIME;
+  const previousNodeEnv = process.env.NODE_ENV;
+  process.env.SANCHO_RUNTIME = "fake";
+  process.env.NODE_ENV = "production";
+  runtime.resetRuntimeForTests();
+
+  assert.throws(() => runtime.getRuntime(), /Unknown SANCHO_RUNTIME: fake/);
+
+  runtime.resetRuntimeForTests();
+  if (previousRuntime === undefined) delete process.env.SANCHO_RUNTIME;
+  else process.env.SANCHO_RUNTIME = previousRuntime;
+  if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+  else process.env.NODE_ENV = previousNodeEnv;
+});
+
+test("fake runtime can exercise Sancho without OpenClaw or an external endpoint", async () => {
+  const previousRuntime = process.env.SANCHO_RUNTIME;
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousFakeHome = process.env.SANCHO_FAKE_RUNTIME_HOME;
+  const previousFakeResponse = process.env.SANCHO_FAKE_RUNTIME_RESPONSE;
+  const previousFetch = globalThis.fetch;
+  const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-fake-runtime-"));
+
+  process.env.SANCHO_RUNTIME = "fake";
+  process.env.NODE_ENV = "test";
+  process.env.SANCHO_FAKE_RUNTIME_HOME = fakeHome;
+  process.env.SANCHO_FAKE_RUNTIME_RESPONSE = "fake-ok {{threadId}} {{text}}";
+  runtime.resetRuntimeForTests();
+
+  globalThis.fetch = (async () => {
+    throw new Error("fake runtime must not fetch");
+  }) as typeof fetch;
+
+  try {
+    const adapter = runtime.getRuntime();
+    const result = await adapter.messaging.sendInbound({
+      slug: "acme",
+      threadId: "acme:general",
+      text: "hola",
+      userId: "mc-admin",
+      userName: "Admin",
+      agent: "sancho",
+    });
+
+    assert.equal(adapter.id, "fake");
+    assert.equal(adapter.capabilities.chat, true);
+    assert.equal(adapter.capabilities.cron, false);
+    assert.equal(adapter.state.home(), fakeHome);
+    assert.equal(adapter.state.runtimeFile("x.json"), path.join(fakeHome, "x.json"));
+    assert.equal(result.ok, true);
+    assert.equal(result.status, 200);
+    assert.equal(result.chatId, "fake:acme:general");
+    assert.equal(result.finalText, "fake-ok acme:general hola");
+    assert.equal(result.finalAgent, "sancho");
+    assert.deepEqual(adapter.state.loadAgentSessions("sancho"), {});
+    assert.equal(adapter.state.getRunningCronJobs({}).size, 0);
+    assert.deepEqual(await adapter.lifecycle.healthcheck(), {
+      ok: true,
+      details: { home: fakeHome, mode: "test" },
+    });
+    await adapter.messaging.cancel("acme:general", { slug: "acme", agent: "sancho" });
+    await assert.rejects(() => adapter.control.listAgents(), /Fake runtime does not support listAgents/);
+  } finally {
+    globalThis.fetch = previousFetch;
+    fs.rmSync(fakeHome, { recursive: true, force: true });
+    runtime.resetRuntimeForTests();
+    if (previousRuntime === undefined) delete process.env.SANCHO_RUNTIME;
+    else process.env.SANCHO_RUNTIME = previousRuntime;
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+    if (previousFakeHome === undefined) delete process.env.SANCHO_FAKE_RUNTIME_HOME;
+    else process.env.SANCHO_FAKE_RUNTIME_HOME = previousFakeHome;
+    if (previousFakeResponse === undefined) delete process.env.SANCHO_FAKE_RUNTIME_RESPONSE;
+    else process.env.SANCHO_FAKE_RUNTIME_RESPONSE = previousFakeResponse;
+  }
+});
+
 test("legacy hermes-external runtime id maps to external-http", () => {
   const previous = process.env.SANCHO_RUNTIME;
   process.env.SANCHO_RUNTIME = "hermes-external";
@@ -336,6 +414,52 @@ test("external HTTP adapter can speak the mc-bridge chat protocol", async () => 
     else process.env.SANCHO_EXTERNAL_AGENT = previousExternalAgent;
     if (previousExternalPrefix === undefined) delete process.env.SANCHO_EXTERNAL_SESSION_PREFIX;
     else process.env.SANCHO_EXTERNAL_SESSION_PREFIX = previousExternalPrefix;
+  }
+});
+
+test("OpenClaw adapter sends cancellation through the runtime boundary", async () => {
+  const previousRuntime = process.env.SANCHO_RUNTIME;
+  const previousGateway = process.env.MC_CHAT_GATEWAY;
+  const previousSecret = process.env.MC_CHAT_SECRET;
+  const previousFetch = globalThis.fetch;
+  const calls: { url: string; init?: RequestInit }[] = [];
+
+  process.env.SANCHO_RUNTIME = "openclaw";
+  process.env.MC_CHAT_GATEWAY = "https://openclaw-gateway.test";
+  process.env.MC_CHAT_SECRET = "managed-secret";
+  runtime.resetRuntimeForTests();
+
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    calls.push({ url: String(input), init });
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  }) as typeof fetch;
+
+  try {
+    await runtime.getRuntime().messaging.cancel("acme:general", {
+      slug: "acme",
+      agent: "dulcinea",
+      agentId: "dulcinea",
+    });
+
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, "https://openclaw-gateway.test/mc-chat/inbound");
+    assert.equal(calls[0].init?.method, "POST");
+    assert.equal((calls[0].init?.headers as Record<string, string>)["X-MC-Secret"], "managed-secret");
+    const body = JSON.parse(String(calls[0].init?.body));
+    assert.equal(body.slug, "acme");
+    assert.equal(body.threadId, "acme:general");
+    assert.equal(body.text, "/stop");
+    assert.equal(body.agent, "dulcinea");
+    assert.equal(body.agentId, "dulcinea");
+  } finally {
+    globalThis.fetch = previousFetch;
+    runtime.resetRuntimeForTests();
+    if (previousRuntime === undefined) delete process.env.SANCHO_RUNTIME;
+    else process.env.SANCHO_RUNTIME = previousRuntime;
+    if (previousGateway === undefined) delete process.env.MC_CHAT_GATEWAY;
+    else process.env.MC_CHAT_GATEWAY = previousGateway;
+    if (previousSecret === undefined) delete process.env.MC_CHAT_SECRET;
+    else process.env.MC_CHAT_SECRET = previousSecret;
   }
 });
 

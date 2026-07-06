@@ -45,6 +45,12 @@ export interface SendInboundOptions {
   headers?: Record<string, string>;
 }
 
+export interface RuntimeCancelOptions {
+  slug?: string;
+  agent?: string;
+  agentId?: string;
+}
+
 export interface RuntimeRunningCron {
   jobId: string;
   sessionId: string | null;
@@ -59,7 +65,7 @@ export interface RuntimeJobEndedAt {
 
 export interface RuntimeMessaging {
   sendInbound(message: InboundMessage, opts?: SendInboundOptions): Promise<SendInboundResult>;
-  cancel(threadId: string): Promise<void>;
+  cancel(threadId: string, opts?: RuntimeCancelOptions): Promise<void>;
   getSharedSecret?(): string | undefined;
   createChannelThread?(input: unknown): Promise<unknown>;
   relayChannelMention?(input: unknown): Promise<unknown>;

@@ -5,6 +5,9 @@ product state: brands, tasks, docs, chat threads, context packs, and run ledger.
 The external runtime only has to accept a chat turn and return or post the final
 answer.
 
+For the higher-level adapter interface and conformance tests every runtime must
+pass, see [Runtime Adapter Contract](./runtime-adapter-contract.md).
+
 There are two supported protocols:
 
 - `SANCHO_EXTERNAL_PROTOCOL=sancho` (default): async Sancho contract. The runtime
