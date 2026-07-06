@@ -281,3 +281,6 @@ workspace-sancho/scripts/*.backup*
 *.key
 *.crt
 *.ts.net.crt
+
+# === Planning docs — keep LOCAL only, never in the public repo (SAN-340) ===
+docs/plans/
