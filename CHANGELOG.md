@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.0.0...v1.0.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* **metrics:** SAN-369 simplify empty state labels ([0f1ae88](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0f1ae887b8a5dcab296d1c26294cfe629c446ed0))
+
 ## [1.0.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.21.0...v1.0.0) (2026-07-06)
 
 
