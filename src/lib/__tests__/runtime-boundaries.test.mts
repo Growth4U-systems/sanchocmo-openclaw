@@ -5,13 +5,19 @@ import { test } from "node:test";
 
 const REPO_ROOT = process.cwd();
 
-const CHAT_RUNTIME_BOUNDARY_FILES = [
+const RUNTIME_BOUNDARY_FILES = [
   "src/pages/api/chat/send.ts",
   "src/pages/api/chat/cancel.ts",
+  "src/pages/api/admin/default-model.ts",
+  "src/pages/api/admin/agents/index.ts",
+  "src/pages/api/admin/agents/[id]/model.ts",
+  "src/pages/api/admin/auth-route.ts",
+  "src/pages/api/crons/[id]/model.ts",
+  "src/pages/api/system/restart-gateway.ts",
 ];
 
-test("runtime-routed chat APIs do not call the OpenClaw gateway directly", () => {
-  for (const relative of CHAT_RUNTIME_BOUNDARY_FILES) {
+test("runtime-routed APIs do not call OpenClaw directly", () => {
+  for (const relative of RUNTIME_BOUNDARY_FILES) {
     const source = fs.readFileSync(path.join(REPO_ROOT, relative), "utf8");
 
     assert.doesNotMatch(
