@@ -5,6 +5,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Archive,
   Briefcase,
   Building2,
   CheckCircle2,
@@ -868,7 +869,9 @@ export function OutboundB2BView() {
   });
 
   const campaigns = useMemo(
-    () => (campaignsQuery.data?.campaigns || []).filter(isB2BCampaign),
+    () => (campaignsQuery.data?.campaigns || [])
+      .filter(isB2BCampaign)
+      .filter((campaign) => String(campaign.status || "").toLowerCase() !== "archived"),
     [campaignsQuery.data],
   );
   const b2bCampaignIds = useMemo(() => new Set(campaigns.map((campaign) => campaign.id)), [campaigns]);
@@ -1182,18 +1185,20 @@ export function OutboundB2BView() {
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo renombrar la campaña", "warn"),
   });
 
-  const campaignDeleteAction = useMutation({
+  const campaignArchiveAction = useMutation({
     mutationFn: ({ campaignId }: { campaignId: string }) =>
-      fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}?slug=${encodeURIComponent(slug)}&expectedKind=b2b`, {
-        method: "DELETE",
+      fetchJson<Campaign>(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}?slug=${encodeURIComponent(slug)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "archived", expectedKind: "b2b" }),
       }),
     onSuccess: (_data, variables) => {
       const nextCampaign = campaigns.find((campaign) => campaign.id !== variables.campaignId);
       pushQuery({ campaign: nextCampaign?.id || "", busqueda: "", stage: "" });
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b"] });
-      showToast("Campaña borrada");
+      showToast("Campaña archivada");
     },
-    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo borrar la campaña", "warn"),
+    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo archivar la campaña", "warn"),
   });
 
   function openB2BSearch(campaign?: Campaign) {
@@ -1368,8 +1373,8 @@ export function OutboundB2BView() {
               loading={campaignsQuery.isLoading}
               onSelect={(campaignId) => pushQuery({ campaign: campaignId, busqueda: "", stage: "" })}
               onRename={(campaign, title) => campaignUpdateAction.mutate({ campaignId: campaign.id, title })}
-              onDelete={(campaign) => campaignDeleteAction.mutate({ campaignId: campaign.id })}
-              busy={campaignUpdateAction.isPending || campaignDeleteAction.isPending}
+              onArchive={(campaign) => campaignArchiveAction.mutate({ campaignId: campaign.id })}
+              busy={campaignUpdateAction.isPending || campaignArchiveAction.isPending}
             />
             <div className="ml-auto flex flex-wrap items-center gap-2">
               <TipoSelector tipo="b2b" />
@@ -1432,6 +1437,8 @@ export function OutboundB2BView() {
                 onCreateSearch={() => openB2BSearch()}
                 actionBusy={actionBusy}
                 busyAction={busyAction}
+                archiveBusy={campaignArchiveAction.isPending}
+                onArchive={() => selectedCampaignId && campaignArchiveAction.mutate({ campaignId: selectedCampaignId })}
                 onRunAction={(action) => outboundAction.mutate({ campaignId: selectedCampaignId, action })}
               />
             )}
@@ -1557,7 +1564,7 @@ function B2BCampaignSelector({
   loading,
   onSelect,
   onRename,
-  onDelete,
+  onArchive,
   busy,
 }: {
   campaigns: Campaign[];
@@ -1565,7 +1572,7 @@ function B2BCampaignSelector({
   loading: boolean;
   onSelect: (campaignId: string) => void;
   onRename: (campaign: Campaign, title: string) => void;
-  onDelete: (campaign: Campaign) => void;
+  onArchive: (campaign: Campaign) => void;
   busy?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -1595,11 +1602,11 @@ function B2BCampaignSelector({
     setEditing(false);
   }
 
-  function deleteCampaign() {
+  function archiveCampaign() {
     if (!selectedCampaign) return;
     const name = selectedCampaign.title || selectedCampaign.id;
-    if (!window.confirm(`Borrar la campaña B2B "${name}"? Esta acción no se puede deshacer.`)) return;
-    onDelete(selectedCampaign);
+    if (!window.confirm(`Archivar la campaña B2B "${name}"? No se borra; solo deja de aparecer en la vista principal.`)) return;
+    onArchive(selectedCampaign);
   }
 
   return (
@@ -1661,10 +1668,10 @@ function B2BCampaignSelector({
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={deleteCampaign}
-                  className="block w-full px-3 py-2 text-left text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                  onClick={archiveCampaign}
+                  className="block w-full px-3 py-2 text-left text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  Borrar
+                  Archivar
                 </button>
               </div>
             </details>
@@ -1682,6 +1689,8 @@ function B2BCampaignOverviewTab({
   onCreateSearch,
   actionBusy,
   busyAction,
+  archiveBusy,
+  onArchive,
   onRunAction,
 }: {
   campaign: Campaign | CampaignDetail | null;
@@ -1690,6 +1699,8 @@ function B2BCampaignOverviewTab({
   onCreateSearch: () => void;
   actionBusy: boolean;
   busyAction?: OutboundAction;
+  archiveBusy: boolean;
+  onArchive: () => void;
   onRunAction: (action: OutboundAction) => void;
 }) {
   if (loading && !campaign) {
@@ -1720,18 +1731,37 @@ function B2BCampaignOverviewTab({
   const offer = campaign.hypothesis || "Oferta, dolor y posicionamiento pendientes de definir para esta campaña.";
   const leadEditsLocked = campaignLocksLeadEdits(campaign, leads);
 
+  function archiveCampaign() {
+    if (!campaign) return;
+    const name = campaign.title || campaign.id;
+    if (!window.confirm(`Archivar la campaña B2B "${name}"? No se borra; solo deja de aparecer en la vista principal.`)) return;
+    onArchive();
+  }
+
   return (
     <div className="space-y-4" data-testid="outbound-encuentra">
       <section className="rounded-xl border border-border bg-card p-4">
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-[240px] flex-1">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className={cn("rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", meta.stampClass)}>
-                {meta.label}
-              </span>
-              <span className="rounded border border-border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                {campaign.campaignKindLabel || "Campaña B2B"}
-              </span>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={cn("rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", meta.stampClass)}>
+                  {meta.label}
+                </span>
+                <span className="rounded border border-border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {campaign.campaignKindLabel || "Campaña B2B"}
+                </span>
+              </div>
+              <button
+                type="button"
+                disabled={archiveBusy}
+                onClick={archiveCampaign}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+                title="Oculta esta campaña de la vista principal sin borrar sus datos."
+              >
+                {archiveBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Archive className="h-3.5 w-3.5" />}
+                Archivar
+              </button>
             </div>
             <h3 className="font-heading text-2xl leading-tight text-navy">{campaign.title || campaign.id}</h3>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">{offer}</p>
