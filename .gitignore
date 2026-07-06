@@ -263,3 +263,21 @@ workspace-sancho/cron/jobs.json.bak
 # Python bytecode (scripts/upsert-env.py and its tests)
 __pycache__/
 *.py[cod]
+
+# === Fase 0 / public-repo purge guards (SAN-340) ===
+# Keep per-instance data & data-as-code from being re-tracked after the purge.
+.archived/
+workspace-sancho/_system/recurring-tasks/
+# Dead legacy dashboard (only referenced by legacy-mc-server.js/legacy-mc-work.js,
+# neither launched at boot). NOTE: workspace-sancho/mission-control.html is KEPT
+# and tracked — it's still served by mc-server.js:18790 (Strangler-Fig fallback).
+workspace-sancho/legacy-mission-control.html
+# Legacy data-as-code (SAN-109 retirement targets)
+workspace-sancho/legacy-*.js
+workspace-sancho/mc-data.js
+# Backup copies of scripts
+workspace-sancho/scripts/*.backup*
+# Any TLS cert / private key must never be tracked
+*.key
+*.crt
+*.ts.net.crt
