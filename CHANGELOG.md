@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.21.0...v1.0.0) (2026-07-06)
+
+
+### Features
+
+* first public open-source release (v1.0.0) ([#1111](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1111)) ([519967f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/519967fec145ade9cc9b6387ad51f7bc26b38c00))
+
 ## [0.21.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v0.20.1...v0.21.0) (2026-07-06)
 
 
