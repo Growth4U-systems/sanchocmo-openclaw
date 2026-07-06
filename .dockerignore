@@ -51,6 +51,8 @@ workspace-*/campaigns/
 workspace-*/_backups/
 workspace-*/_system/recurring-tasks/
 workspace-*/_system/intelligence-log.json
+**/.archived/
+**/*.crt
 workspace-sancho/clients.json
 workspace-sancho/clients.js
 workspace-sancho/scripts/.channel-guild-cache.json

@@ -1,5 +1,0 @@
-[
-  {"version": 1, "date": "2026-02-27", "skill": "competitor-intelligence", "qa": "PASS", "score": 7},
-  {"version": 2, "date": "2026-02-27", "skill": "competitor-intelligence", "qa": "PASS", "score": 8},
-  {"version": 3, "date": "2026-02-27", "skill": "competitor-intelligence", "qa": "PASS", "score": 9, "notes": "Deep research: Apify website crawl (5 competitors), consumer sentiment (Trustpilot, Reddit, OCU, Indeed), enriched all battle cards"}
-]
