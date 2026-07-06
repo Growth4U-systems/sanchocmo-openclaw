@@ -11,6 +11,9 @@ You operate it through **Mission Control** — a web dashboard where each client
 gets a chat that talks directly to Sancho. Discord and Slack are optional
 notification/publishing channels, not requirements.
 
+SanchoCMO is open source and follows semantic versioning; **v1.0.0** is the
+first public release.
+
 ## Architecture
 
 ```
