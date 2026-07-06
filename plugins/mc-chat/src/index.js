@@ -23,6 +23,11 @@ import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
 import {
+  buildAttachmentContextBlock,
+  buildIndexedAttachmentContextBlock,
+  shouldExtractAttachmentContent,
+} from "./attachments.js";
+import {
   enqueueSessionDispatch,
   hasActiveSessionDispatch,
   isStopCommand,
@@ -135,6 +140,29 @@ function scrubAngleWrappedUrls(text) {
   return text.replace(/<(https?:\/\/[^\s<>]+)>/g, "$1");
 }
 
+function uploadedFilesIndexContextLine(slug) {
+  if (!slug || typeof slug !== "string") return "";
+  const brandPath = `brand/${slug}/attachments/index.json`;
+  const home = process.env.OPENCLAW_HOME || path.join(process.env.HOME || "", ".openclaw");
+  const candidates = [
+    path.join(home, "workspace-sancho", brandPath),
+    path.join(process.cwd(), brandPath),
+    path.join(process.cwd(), "workspace-sancho", brandPath),
+  ];
+  for (const filePath of candidates) {
+    try {
+      if (!fs.existsSync(filePath)) continue;
+      const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+      const count = Number(data?.count ?? (Array.isArray(data?.items) ? data.items.length : 0));
+      if (!Number.isFinite(count) || count <= 0) continue;
+      return `uploaded_files_index: ${brandPath} (${count} archivo(s)). Abre este indice solo si el usuario pide encontrar o trabajar con archivos/documentos subidos anteriormente; no cargues todo el indice si no hace falta.`;
+    } catch {
+      // Try the next candidate.
+    }
+  }
+  return "";
+}
+
 
 export default defineChannelPluginEntry({
   id: "mc-chat",
@@ -202,6 +230,7 @@ export default defineChannelPluginEntry({
           scope,
           agent,
           agentId,
+          attachments,
           isAdmin,
           senderRole,
           _source, // "discord" if relayed from Discord
@@ -245,6 +274,8 @@ export default defineChannelPluginEntry({
           `client_slug: ${slug}`,
           `thread_id: ${threadId}`,
         ];
+        const uploadedFilesLine = uploadedFilesIndexContextLine(slug);
+        if (uploadedFilesLine) contextLines.push(uploadedFilesLine);
         if (threadName) contextLines.push(`thread_name: ${threadName}`);
         if (linkedTo) contextLines.push(`linked_to: ${linkedTo}`);
         // SAN-327 — agent-scoped (broad) thread: tell the specialist its WHOLE
@@ -303,6 +334,25 @@ export default defineChannelPluginEntry({
           } catch (e) {
             logger.warn(`[mc-chat] context-pack injection skipped: ${e?.message || e}`);
           }
+        }
+
+        const attachmentContextBlock = await buildAttachmentContextBlock(attachments, {
+          extractContent: shouldExtractAttachmentContent(text),
+          logger,
+        });
+        if (attachmentContextBlock) {
+          groundedText = `${groundedText}\n\n${attachmentContextBlock}`;
+          logger.info(`[mc-chat] user attachments injected (agent=${requestedAgent} slug=${slug} count=${Array.isArray(attachments) ? attachments.length : 0})`);
+        }
+
+        const indexedAttachmentContextBlock = await buildIndexedAttachmentContextBlock({
+          slug,
+          text,
+          extractContent: shouldExtractAttachmentContent(text),
+          logger,
+        });
+        if (indexedAttachmentContextBlock) {
+          groundedText = `${groundedText}\n\n${indexedAttachmentContextBlock}`;
         }
 
         const bodyForAgent = contextLines.join('\n') + '\n\n' + groundedText;

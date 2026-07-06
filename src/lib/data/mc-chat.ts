@@ -3,6 +3,7 @@ import path from "path";
 import { BASE, chatReadStateFile } from "./paths";
 import { readJSON, writeJSON } from "./json-io";
 import { sanitizeShortId } from "../thread-id";
+import { syncUploadedAttachmentIndexForThread } from "./uploaded-attachments";
 
 /**
  * MC-Chat state management — ported from mc-server.js in-memory state.
@@ -247,6 +248,13 @@ export function addMessage(
   }
   thread.updatedAt = Date.now();
   saveThread(threadId, thread);
+  if (attachments?.length) {
+    try {
+      syncUploadedAttachmentIndexForThread(threadId);
+    } catch (err) {
+      console.error("[mc-chat] failed to update uploaded attachment index:", err);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

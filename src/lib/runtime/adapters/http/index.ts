@@ -131,6 +131,51 @@ function bridgeSessionKey(message: InboundMessage): string {
   return `${prefix}:${message.threadId}`;
 }
 
+function cleanAttachmentText(value: unknown, fallback = ""): string {
+  if (typeof value !== "string") return fallback;
+  return value.replace(/[\r\n]+/g, " ").trim() || fallback;
+}
+
+function bridgeAttachmentBlock(attachments: unknown[] | undefined): string | null {
+  if (!Array.isArray(attachments) || attachments.length === 0) return null;
+  const usable = attachments
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const record = item as Record<string, unknown>;
+      const url = cleanAttachmentText(record.url);
+      if (!url) return null;
+      const size = Number(record.size);
+      return {
+        url,
+        filename: cleanAttachmentText(record.filename, "archivo-adjunto"),
+        mimeType: cleanAttachmentText(record.mimeType ?? record.type, "application/octet-stream"),
+        size: Number.isFinite(size) && size >= 0 ? Math.round(size) : null,
+      };
+    })
+    .filter((item): item is { url: string; filename: string; mimeType: string; size: number | null } => Boolean(item))
+    .slice(0, 10);
+  if (usable.length === 0) return null;
+
+  const lines = [
+    "[User Attachments]",
+    `El usuario adjunto ${usable.length} archivo(s) a este mensaje. Tratalos como parte del turno actual.`,
+    "Si el usuario pide leer, revisar o analizar el archivo, descarga la URL indicada con tus herramientas disponibles antes de responder.",
+    "No digas que no hay adjuntos cuando esta seccion este presente.",
+    "",
+  ];
+  for (const [index, attachment] of usable.entries()) {
+    lines.push(`Archivo ${index + 1}: ${attachment.filename}`);
+    lines.push(`- url: ${attachment.url}`);
+    lines.push(`- mime_type: ${attachment.mimeType}`);
+    if (attachment.size !== null) lines.push(`- size_bytes: ${attachment.size}`);
+  }
+  if (attachments.length > usable.length) {
+    lines.push(`Se omitieron ${attachments.length - usable.length} adjunto(s) extra para mantener el contexto acotado.`);
+  }
+  lines.push("[/User Attachments]");
+  return lines.join("\n");
+}
+
 function bridgePrompt(message: InboundMessage): string {
   const context = [
     `Cliente: ${message.slug}`,
@@ -144,8 +189,10 @@ function bridgePrompt(message: InboundMessage): string {
     message.senderRole ? `Rol del emisor: ${message.senderRole}` : null,
   ].filter(Boolean);
 
-  if (!context.length) return message.text;
-  return `Contexto Sancho:\n${context.map((line) => `- ${line}`).join("\n")}\n\nMensaje:\n${message.text}`;
+  const attachmentBlock = bridgeAttachmentBlock(message.attachments);
+  const text = attachmentBlock ? `${message.text}\n\n${attachmentBlock}` : message.text;
+  if (!context.length) return text;
+  return `Contexto Sancho:\n${context.map((line) => `- ${line}`).join("\n")}\n\nMensaje:\n${text}`;
 }
 
 async function readBridgeResponse(

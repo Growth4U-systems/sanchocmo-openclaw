@@ -134,11 +134,12 @@ for ws in /root/.openclaw/workspace-*; do
   # container, so specialists (dulcinea, sanson, merlin, mambrino) lost brand +
   # protocol context and degraded — fabricating content with no foundation
   # (SAN-241, root of SAN-238). Repair to the relative path that resolves here.
-  # Only fix an EXISTING symlink (broken or not) — never invent a mount in a
-  # workspace that never had one, nor clobber a real directory.
+  # Create or repair symlinks when absent/broken, but never clobber a real
+  # directory. All specialists need the shared brand context so they can open
+  # brand/<slug>/... paths referenced by Mission Control prompts.
   for shared in _system brand; do
     sl="$ws/$shared"
-    if [ -L "$sl" ]; then
+    if [ -L "$sl" ] || [ ! -e "$sl" ]; then
       ln -sfn "../workspace-sancho/$shared" "$sl"
       echo "[entrypoint] Relinked $(basename "$ws")/$shared -> ../workspace-sancho/$shared"
     fi
