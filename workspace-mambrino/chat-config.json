@@ -1,0 +1,23 @@
+{
+  "agent": "mambrino",
+  "version": 1,
+  "note": "Config del chat para Mambrino. MC consulta esto cuando enruta tasks con triggers paid-ads, meta-ads, google-ads, retargeting o channel #paid-ads.",
+  "tasks": {
+    "_defaults": {
+      "skill": "paid-ads"
+    },
+    "_byType": {
+      "analysis": {
+        "skill": "paid-ads",
+        "skills": ["paid-ads", "meta-ads", "google-ads", "retargeting", "ad-creative", "ab-test-setup"]
+      }
+    },
+    "_byChannel": {
+      "paid-ads": { "skill": "paid-ads" }
+    },
+    "_byTool": {
+      "meta-ads-manager": { "skill": "meta-ads" },
+      "google-ads": { "skill": "google-ads" }
+    }
+  }
+}

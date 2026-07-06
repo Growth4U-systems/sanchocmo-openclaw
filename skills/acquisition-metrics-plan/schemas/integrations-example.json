@@ -1,0 +1,48 @@
+{
+  "slug": "example",
+  "updatedAt": "2026-03-08T19:50:00Z",
+  "dataSources": {
+    "ga4": {
+      "provider": "Google Analytics 4",
+      "status": "connected",
+      "config": {
+        "propertyId": "123456789"
+      },
+      "envVars": ["EXAMPLE_GA4_SA_KEY"],
+      "lastTestedAt": "2026-03-08T19:48:00Z"
+    },
+    "gsc": {
+      "provider": "Google Search Console",
+      "status": "connected",
+      "config": {
+        "siteUrl": "https://example.com/"
+      },
+      "envVars": ["EXAMPLE_GSC_SA_KEY"],
+      "lastTestedAt": "2026-03-08T19:48:00Z"
+    },
+    "meta_ads": {
+      "provider": "Meta Ads (Facebook/Instagram)",
+      "status": "pending",
+      "config": {
+        "accountId": "act_987654321"
+      },
+      "envVars": ["EXAMPLE_META_ADS_ACCESS_TOKEN"],
+      "notes": "Token solicitado a Alex G, pendiente de recibir"
+    },
+    "metricool": {
+      "provider": "Metricool",
+      "status": "not_configured",
+      "config": {},
+      "envVars": []
+    }
+  },
+  "systemOverrides": {
+    "anthropic": {
+      "provider": "Anthropic",
+      "status": "not_configured",
+      "config": {},
+      "envVars": [],
+      "notes": "Usa la key del sistema (Growth4U)"
+    }
+  }
+}

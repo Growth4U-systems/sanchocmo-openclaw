@@ -1,0 +1,44 @@
+services:
+  sanchocmo:
+    depends_on:
+      yalc:
+        condition: service_healthy
+    environment:
+      - YALC_BASE_URL=${YALC_BASE_URL:-http://yalc:3847}
+      - YALC_API_TOKEN=${YALC_API_TOKEN:-}
+
+  yalc:
+    # Public image on GHCR (built by Yalc-Growth4U/.github/workflows/docker-image.yml).
+    # Override the tag with YALC_IMAGE (e.g. a pinned :vX.Y.Z) in .env.
+    image: ${YALC_IMAGE:-ghcr.io/growth4u-systems/yalc:edge}
+    container_name: yalc-gtm-os
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3847
+      - DATABASE_URL=${YALC_DATABASE_URL:-file:/root/.gtm-os/gtm-os.db}
+      - GTM_OS_API_TOKEN=${YALC_API_TOKEN:-}
+    ports:
+      - "127.0.0.1:${YALC_PORT:-3847}:3847"
+    volumes:
+      - ${YALC_DATA_VOLUME:-yalc_data}:/root/.gtm-os
+      # Sancho brand workspace, read-only: lets YALC's provision endpoint read
+      # approved Foundation docs as synthesis sources (see lib/yalc/provision.ts).
+      - ${OPENCLAW_HOME:-~/.openclaw}/workspace-sancho/brand:/sancho-brands:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3847/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  yalc_data:

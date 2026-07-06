@@ -1,0 +1,16 @@
+{
+  "version": 3,
+  "dispatch_mode": "sessions",
+  "agent": "hamete",
+  "note": "Workspace de Hamete (Research & Market Intel). Agente nuevo creado en Fase 1. Las skills viven aún en workspace-sancho/skills/; migración a workspace-hamete/skills/ en Fase 3.",
+  "channel_roles": {
+    "intelligence": {
+      "description": "Gather insights, detect patterns, feed decisions.",
+      "channels": ["research", "intelligence"],
+      "rules": {
+        "research": "Deep research, competitive intelligence, market analysis. Output como documento promocionable.",
+        "intelligence": "Signals, patterns, daily pulse, meeting intelligence. Outputs cortos y accionables."
+      }
+    }
+  }
+}

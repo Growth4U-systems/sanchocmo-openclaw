@@ -1,0 +1,20 @@
+# Pre-push hook — runs checks locally to save CI Actions minutes.
+#   • typecheck (tsc --noEmit) → BLOCKS the push if it fails.
+#   • lint (next lint)         → BLOCKS the push on errors (warnings don't fail).
+#     The repo's legacy lint debt was cleared, so lint is now an enforced gate.
+#   • lint:paths --strict      → BLOCKS the push if any SKILL.md declares a
+#     canonical `*.current.md` brand-doc path not in config/pillar-manifest.json
+#     (stops the pillar-doc-path drift that was the root of dolor #1).
+# Bypass in a pinch with: git push --no-verify
+# (CI still runs typecheck + build on staging/main as the authoritative gate.)
+
+echo "🔎 pre-push: typecheck…"
+npm run typecheck
+
+echo ""
+echo "🧹 pre-push: lint…"
+npm run lint
+
+echo ""
+echo "🧭 pre-push: lint:paths…"
+npm run lint:paths -- --strict

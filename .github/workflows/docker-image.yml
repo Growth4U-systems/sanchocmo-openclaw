@@ -1,0 +1,183 @@
+name: Publish sanchocmo image
+
+# Builds and pushes the public, versioned core image so the product can
+# `docker compose pull` instead of cloning + building from source (Fase 5,
+# GAP F1/F2/F4). Mirror of the OD/YALC `docker-image.yml` workflows.
+#
+#   • release: published   → :vX.Y.Z + :latest   (hooks into release-please)
+#   • workflow_dispatch     → :<input>            (default :edge, for private tests)
+#
+# Multi-arch (amd64 + arm64) is built on NATIVE runners in parallel — amd64 on
+# ubuntu-latest, arm64 on ubuntu-24.04-arm — then merged into one manifest list.
+# No QEMU emulation (the old single-runner build emulated the arm64 leg and took
+# ~40 min). Native arm64 runners are available on this org's GitHub Team plan.
+# We don't build on every push to staging: deploy-staging builds `sanchocmo`
+# from source on the VPS, and docker-compose.yml defaults to `:latest`.
+#
+# NOTE: the GHCR package starts PRIVATE. Making it public is gated on Fase 0
+# (secret + client-data purge). See docs/plans/sanchocmo-packaging-plan.md.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to publish (manual runs)"
+        default: edge
+
+# One in-flight build per ref; a newer trigger supersedes an older one.
+concurrency:
+  group: docker-image-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/growth4u-systems/sanchocmo
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata (labels)
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+
+      - name: Build & push by digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          # .dockerignore (not .gitignore) keeps per-instance data/runtime out
+          # of the baked framework seed — see Dockerfile §"Bake the OpenClaw home".
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Push by digest only; the merge job assembles the tagged manifest list.
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          # Supply-chain attestations (the 2025 standard): full build provenance
+          # (SLSA) + an SBOM, per platform. They surface as `unknown/unknown`
+          # entries in the registry's OS/Arch list — that's the correct, expected
+          # shape, not a defect. (Not yet cryptographically signed — cosign is a
+          # follow-up, see SAN-240.)
+          provenance: mode=max
+          sbom: true
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+          # Registry buildcache in a SEPARATE package (`sanchocmo-buildcache`), not
+          # the image package: keeps the image's tag list to real, pullable images,
+          # and lets the cache stay private when the image goes public. Per-arch ref
+          # so the two parallel jobs never race. Read by every future build
+          # (cache-from) and updated by every build (cache-to).
+          cache-from: type=registry,ref=${{ env.IMAGE }}-buildcache:${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.IMAGE }}-buildcache:${{ matrix.arch }},mode=max
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Merge & push manifest
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute tags
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
+            type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.IMAGE }}@sha256:%s ' *)
+
+      - name: Inspect
+        run: |
+          TAG=$(jq -r '.tags[0]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          docker buildx imagetools inspect "$TAG"
+
+  runtime-tarball:
+    name: Attach runtime tarball to release
+    # Solo en releases reales (no en workflow_dispatch de prueba).
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # gh release upload
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Build runtime tarball
+        run: |
+          bash scripts/package-runtime.sh \
+            "sancho-runtime-${{ github.event.release.tag_name }}.tar.gz"
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "sancho-runtime-${{ github.event.release.tag_name }}.tar.gz" \
+            --clobber

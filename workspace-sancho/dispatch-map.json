@@ -1,0 +1,551 @@
+{
+  "version": 4,
+  "dispatch_mode": "sessions",
+  "note": "v4 (Fase 2 — 2026-05-11/12): Bloque `personas` reemplazado por `specialists` con los 7 agentes del nuevo equipo. Escudero archivado (retirado). Sancho dispatcha directamente a cada especialista via Agent(subagent_type=<slug>) en lugar de pasar todo por Escudero. Fase 5 (2026-05-12): dispatch end-to-end activado — el campo `agent` del payload de /api/chat/send se propaga al gateway via SessionKey prefix `agent:<slug>:` (fix en plugins/mc-chat/src/index.js). Fase 7 (2026-05-12): skills viven en ~/.openclaw/skills/ (catálogo central global, leído nativamente por OpenClaw's built-in managed-skills root). SAN-148 (2026-06-11): `review-comments` es una shared skill SIN owner fijo — la ejecuta el agente AUTOR del doc; el trigger de MC (review-comments-trigger.ts) resuelve doc→task→skill→agente y pasa `agent` explícito en el payload, que tiene precedencia sobre SKILL_OWNER_MAP.",
+  "channel_roles": {
+    "decision": {
+      "description": "No execution. Propose, discuss, redirect.",
+      "channels": [
+        "general",
+        "brand",
+        "campaigns"
+      ],
+      "rules": {
+        "general": "Only respond when @mentioned. Never execute skills.",
+        "brand": "Post-onboarding only. Consult and update existing brand, never create from scratch. Show file links.",
+        "campaigns": "Propose and plan only. Execution goes to execution channels."
+      }
+    },
+    "execution": {
+      "description": "Create and execute. Skills run here.",
+      "channels": [
+        "onboarding",
+        "content",
+        "paid-ads",
+        "prospecting",
+        "creatives",
+        "web",
+        "partners"
+      ],
+      "rules": {
+        "onboarding": "Full Foundation creation. Iterative flow. Recommend archiving when done.",
+        "content": "Create content. Ideas come from intelligence → campaigns → here.",
+        "paid-ads": "Create ad copy, creatives, setup Meta/Google accounts.",
+        "prospecting": "Find companies, decision makers, build outreach sequences.",
+        "creatives": "Visual identity, marketing creatives.",
+        "web": "Landing page copy, lead magnets, pricing pages; page build/publish goes to Alarife.",
+        "partners": "Find partners, create collaboration proposals."
+      }
+    },
+    "intelligence": {
+      "description": "Gather insights, detect patterns, feed decisions.",
+      "channels": [
+        "research",
+        "intelligence",
+        "learning"
+      ],
+      "rules": {
+        "research": "Deep research, competitive intelligence, market analysis.",
+        "intelligence": "Signals, patterns, daily pulse, meeting intelligence. Ideas go to #campaigns.",
+        "learning": "CRM analysis, last 30 days trends, self-intelligence."
+      }
+    },
+    "support": {
+      "description": "Bugs, feedback, escalation to Cervantes.",
+      "channels": [
+        "soporte"
+      ]
+    }
+  },
+  "flow": "intelligence → campaigns (propose) → user approves → execution channels → brand (if update needed)",
+  "discord_channels": {
+    "onboarding": "1476491108421730334",
+    "general": "1475635138988609678",
+    "brand": "1475638249107095866",
+    "campaigns": "1475638251485401171",
+    "content": "1475638259425087629",
+    "creatives": "1475638268015022284",
+    "prospecting": "1475638257088860244",
+    "partners": "1475638255641952386",
+    "paid-ads": "1475638261819900146",
+    "web": "1475638263720181841",
+    "research": "1475638269109862463",
+    "intelligence": "1475638253154603170",
+    "learning": "1475638272523763834",
+    "soporte": "1475638273501040681"
+  },
+  "qa_agent": {
+    "id": "sanson",
+    "method": "sessions_send",
+    "activate_for": [
+      "brand-check",
+      "qa-review",
+      "devil-advocate",
+      "foundation-verification"
+    ]
+  },
+  "ui_section_to_agent": {
+    "_comment": "Mapping section/canal lógico de Mission Control → agente. Frontend lee esto para setear `agent` al crear threads. Sancho es default cuando ninguna sección encaja.",
+    "content-creation": "dulcinea",
+    "outreach": "rocinante",
+    "research": "hamete",
+    "intelligence": "hamete",
+    "media-creation": "maese-pedro",
+    "creatives": "maese-pedro",
+    "paid-ads": "mambrino",
+    "metrics": "merlin",
+    "learning": "merlin",
+    "brand-check": "sanson",
+    "qa": "sanson",
+    "soporte": "cervantes",
+    "general": "sancho"
+  },
+  "specialists": {
+    "hamete": {
+      "name": "Hamete",
+      "emoji": "📜",
+      "workspace": "../workspace-hamete",
+      "soul_file": "../workspace-hamete/SOUL.md",
+      "domain": "Research & Market Intelligence",
+      "dispatch_for": [
+        "daily-pulse",
+        "meeting-intelligence",
+        "signal-monitor",
+        "thief-marketers",
+        "competitor-intelligence",
+        "market-intelligence",
+        "deep-research",
+        "pattern-detector"
+      ],
+      "skills_owned": [
+        "daily-pulse",
+        "meeting-intelligence",
+        "signal-monitor",
+        "thief-marketers",
+        "competitor-intelligence",
+        "market-intelligence",
+        "self-intelligence",
+        "market-synthesis",
+        "niche-discovery-100x",
+        "existing-customer-data",
+        "deep-research",
+        "apify",
+        "competitor-alternatives",
+        "competitor-profiling",
+        "customer-research",
+        "find-instagram-profiles",
+        "find-linkedin-profiles",
+        "find-twitter-profiles",
+        "last30days",
+        "news-monitor",
+        "paa-monitor",
+        "smart-scrape",
+        "social-media-extractor"
+      ],
+      "skills_invokable": [
+        "pattern-detector"
+      ],
+      "brand_context": [
+        "competitors.md",
+        "market.md",
+        "learnings.md",
+        "ecps.md"
+      ],
+      "channels": [
+        "research",
+        "intelligence"
+      ]
+    },
+    "dulcinea": {
+      "name": "Dulcinea",
+      "emoji": "✍️",
+      "workspace": "../workspace-dulcinea",
+      "soul_file": "../workspace-dulcinea/SOUL.md",
+      "domain": "Contenido escrito (SEO, atomización, newsletter, landing copy, voice)",
+      "dispatch_for": [
+        "seo-content",
+        "keyword-research",
+        "keyword-antenna",
+        "content-calendar",
+        "content-calendar-planner",
+        "content-atomizer",
+        "newsletter",
+        "social",
+        "brand-voice",
+        "lead-magnet",
+        "positioning-messaging",
+        "landing-pages",
+        "web"
+      ],
+      "skills_owned": [
+        "seo-content",
+        "keyword-research",
+        "keyword-antenna",
+        "landing-pages",
+        "content-calendar-planner",
+        "content-atomizer",
+        "newsletter",
+        "brand-voice",
+        "lead-magnet",
+        "lead-magnets",
+        "ai-seo",
+        "content-engine-setup",
+        "content-image",
+        "content-pillars",
+        "content-playbook",
+        "content-strategy",
+        "copy-editing",
+        "copywriting",
+        "direct-response-copy",
+        "doc-coauthoring",
+        "image",
+        "insight-classifier",
+        "insight-to-content-mapper",
+        "instagram-content",
+        "internal-comms",
+        "larry",
+        "metricool",
+        "onboarding-cro",
+        "paywall-upgrade-cro",
+        "popup-cro",
+        "positioning-messaging",
+        "pov-bank-builder",
+        "programmatic-seo",
+        "schema-markup",
+        "send-idea-notifications",
+        "seo-audit",
+        "signup-flow-cro",
+        "social-content",
+        "social-writer",
+        "tiktok-growth",
+        "video",
+        "youtube-transcript"
+      ],
+      "skills_invokable": [
+        "directory-submissions"
+      ],
+      "brand_context": [
+        "voice-profile.md",
+        "positioning.md",
+        "ecps.md"
+      ],
+      "channels": [
+        "content",
+        "web"
+      ]
+    },
+    "rocinante": {
+      "name": "Rocinante",
+      "emoji": "🐴",
+      "workspace": "../workspace-rocinante",
+      "soul_file": "../workspace-rocinante/SOUL.md",
+      "domain": "Outreach, Partnerships & GTM-OS execution (prospecting, sequences, YALC/Instantly operations)",
+      "dispatch_for": [
+        "company-finder",
+        "decision-maker-finder",
+        "contact-enrichment",
+        "outreach",
+        "outreach-sequence-builder",
+        "email-sequence",
+        "partnerships",
+        "affiliates",
+        "collaborations",
+        "yalc",
+        "gtm-os",
+        "outbound-execution",
+        "lead-qualification",
+        "campaign-dry-run",
+        "campaign-launch-confirmed",
+        "campaign-reporting",
+        "instantly",
+        "provider-status",
+        "mcp-provider-status"
+      ],
+      "skills_owned": [
+        "company-finder",
+        "decision-maker-finder",
+        "contact-enrichment",
+        "outreach-sequence-builder",
+        "email-sequence",
+        "cold-email",
+        "outreach-playbook",
+        "apollo",
+        "sales-call-prep",
+        "sales-enablement",
+        "referral-program",
+        "co-marketing",
+        "community-marketing",
+        "lead-intelligence-hub",
+        "revops",
+        "directory-submissions",
+        "yalc-operator"
+      ],
+      "skills_invokable": [
+        "direct-response-copy",
+        "positioning-messaging"
+      ],
+      "requires_confirmation_for": [
+        "send-email",
+        "launch-campaign",
+        "approve-gate",
+        "commit-setup",
+        "pause-campaign",
+        "resume-campaign",
+        "update-lead-status"
+      ],
+      "brand_context": [
+        "ecps.md",
+        "positioning.md",
+        "competitors.md"
+      ],
+      "channels": [
+        "prospecting",
+        "partners"
+      ]
+    },
+    "maese-pedro": {
+      "name": "Maese Pedro",
+      "emoji": "🎭",
+      "workspace": "../workspace-maese-pedro",
+      "soul_file": "../workspace-maese-pedro/SOUL.md",
+      "domain": "Visual Director — design system, assets, web visuals, ad creatives",
+      "dispatch_for": [
+        "design-system",
+        "od-generate",
+        "od-refine",
+        "od-export",
+        "od-list-skills",
+        "od-list-design-systems",
+        "visual-identity",
+        "design",
+        "nano-banana-pro",
+        "sancho-visual",
+        "visual-template",
+        "mockup",
+        "logo-refresh",
+        "html-output"
+      ],
+      "skills_owned": [
+        "design-system",
+        "od-generate",
+        "od-refine",
+        "od-export",
+        "od-list-skills",
+        "od-list-design-systems",
+        "sancho-visual",
+        "visual-identity",
+        "nano-banana-pro",
+        "algorithmic-art",
+        "canvas-design",
+        "comic-ui-system",
+        "frontend-slides",
+        "growth4u-ui-system",
+        "growth4u-visual-generator",
+        "html-output",
+        "niche-presentation",
+        "slack-gif-creator",
+        "theme-factory",
+        "web-artifacts-builder",
+        "webapp-testing"
+      ],
+      "skills_invokable": [],
+      "brand_context": [
+        "DESIGN.md",
+        "visual-identity.current.md"
+      ],
+      "channels": [
+        "creatives",
+        "design",
+        "web",
+        "brand"
+      ]
+    },
+    "alarife": {
+      "name": "Alarife",
+      "emoji": "🧱",
+      "workspace": "../workspace-alarife",
+      "soul_file": "../workspace-alarife/SOUL.md",
+      "domain": "Web/Page Builder — Payload CMS, site architecture, frontend build, CRO, controlled publishing",
+      "dispatch_for": [
+        "alarife",
+        "alarife-payload",
+        "payload",
+        "cms-migration",
+        "export-site",
+        "import-site",
+        "page-design",
+        "web-publish",
+        "site-preview",
+        "site-architecture",
+        "frontend-design",
+        "page-cro",
+        "form-cro",
+        "lighthouse",
+        "pagespeed",
+        "core-web-vitals"
+      ],
+      "skills_owned": [
+        "alarife-integration",
+        "payload",
+        "cms-migration",
+        "site-architecture",
+        "frontend-design",
+        "page-cro",
+        "form-cro",
+        "lighthouse-landing-qa"
+      ],
+      "skills_invokable": [
+        "direct-response-copy",
+        "landing-pages",
+        "sancho-visual",
+        "design-system",
+        "visual-identity"
+      ],
+      "requires_confirmation_for": [
+        "web-publish"
+      ],
+      "brand_context": [
+        "voice-profile.md",
+        "visual-identity.md",
+        "positioning.md"
+      ],
+      "channels": [
+        "web"
+      ]
+    },
+    "mambrino": {
+      "name": "Mambrino",
+      "emoji": "🪖",
+      "workspace": "../workspace-mambrino",
+      "soul_file": "../workspace-mambrino/SOUL.md",
+      "domain": "Paid Ads & Retargeting (Meta, Google, LinkedIn)",
+      "dispatch_for": [
+        "paid-ads",
+        "meta-ads",
+        "google-ads",
+        "retargeting",
+        "campaigns-paid",
+        "ad-creative",
+        "ab-test-setup",
+        "acquisition-metrics-plan"
+      ],
+      "skills_owned": [
+        "paid-ads",
+        "meta-ads",
+        "google-ads",
+        "ad-creative",
+        "ab-test-setup",
+        "acquisition-metrics-plan"
+      ],
+      "skills_invokable": [
+        "direct-response-copy",
+        "sancho-visual",
+        "popup-cro"
+      ],
+      "brand_context": [
+        "positioning.md",
+        "ecps.md",
+        "voice-profile.md"
+      ],
+      "channels": [
+        "paid-ads"
+      ]
+    },
+    "merlin": {
+      "name": "Merlín",
+      "emoji": "🔮",
+      "workspace": "../workspace-merlin",
+      "soul_file": "../workspace-merlin/SOUL.md",
+      "domain": "Data, atribución, forecasting, CRM",
+      "dispatch_for": [
+        "attribution-analysis",
+        "cohort-analysis",
+        "kpi-dashboard",
+        "forecast",
+        "retention-analysis",
+        "crm-pulse",
+        "funnel-analysis",
+        "pattern-detector"
+      ],
+      "skills_owned": [
+        "analytics-tracking",
+        "google-analytics",
+        "native-google-analytics",
+        "google-search-console",
+        "gsc",
+        "metrics-collector",
+        "metrics-setup",
+        "performance-analysis",
+        "aso-audit",
+        "pattern-detector",
+        "xlsx"
+      ],
+      "skills_invokable": [],
+      "skills_note": "Core analytics skills TBD (attribution-analysis, cohort-analysis, kpi-dashboard, forecast, retention-analysis, crm-pulse, funnel-analysis). Meanwhile Merlín operates with ad-hoc analyses directly over CRM tables.",
+      "brand_context": [
+        "positioning.md",
+        "ecps.md",
+        "learnings.md"
+      ],
+      "channels": [
+        "learning"
+      ]
+    },
+    "sanson": {
+      "name": "Sansón",
+      "emoji": "🛡️",
+      "workspace": "../workspace-sanson",
+      "soul_file": "../workspace-sanson/SOUL.md",
+      "domain": "QA, brand-check, devil's advocate, foundation-verification",
+      "dispatch_for": [
+        "brand-check",
+        "qa-review",
+        "devil-advocate",
+        "foundation-verification",
+        "level-up"
+      ],
+      "skills_owned": [
+        "brand-check",
+        "qa-bot",
+        "ecp-validation",
+        "level-up"
+      ],
+      "skills_invokable": [],
+      "brand_context": [
+        "positioning.md",
+        "voice-profile.md",
+        "ecps.md",
+        "todo el Context Lake"
+      ],
+      "channels": [
+        "invocado por Sancho via sessions_send"
+      ]
+    },
+    "cervantes": {
+      "name": "Cervantes",
+      "emoji": "✒️",
+      "workspace": "../workspace-cervantes",
+      "soul_file": "../workspace-cervantes/SOUL.md",
+      "domain": "Arquitecto del sistema — bugs, infra, skills, multi-client setup",
+      "dispatch_for": [
+        "skill-creator",
+        "mcp-builder",
+        "claude-api",
+        "connect-api",
+        "railway"
+      ],
+      "skills_owned": [
+        "skill-creator",
+        "mcp-builder",
+        "claude-api",
+        "connect-api",
+        "railway"
+      ],
+      "skills_invokable": [],
+      "brand_context": [],
+      "channels": [
+        "soporte"
+      ]
+    }
+  }
+}

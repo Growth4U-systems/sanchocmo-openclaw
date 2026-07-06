@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "last-release-sha": "7775969b59192661f45f26f29e4c0e8826dc6f78",
+  "packages": {
+    ".": {
+      "component": "mission-control",
+      "package-name": "mission-control",
+      "changelog-path": "CHANGELOG.md",
+      "include-v-in-tag": true,
+      "include-component-in-tag": false,
+      "draft": false,
+      "prerelease": false
+    }
+  },
+  "pull-request-title-pattern": "chore: release ${component} v${version}",
+  "group-pull-request-title-pattern": "chore: release ${component} v${version}",
+  "separate-pull-requests": true
+}

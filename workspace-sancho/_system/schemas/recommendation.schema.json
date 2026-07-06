@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sanchocmo.com/schemas/recommendation.schema.json",
+  "title": "Universal Recommendation",
+  "description": "Schema for recommendations from any source (Trust Engine, Performance Analysis, manual). Used across the entire SanchoCMO platform.",
+  "type": "object",
+  "required": [
+    "id",
+    "source",
+    "type",
+    "priority",
+    "title",
+    "status",
+    "created_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique ID. Pattern: rec-{source}-YYYYMMDD-NNN or idea-YYYYMMDD-NNN"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "trust-engine",
+        "performance-analysis",
+        "manual"
+      ],
+      "description": "Which module generated this recommendation"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "content_idea",
+        "contact",
+        "operational"
+      ],
+      "description": "content_idea = content to create/publish, contact = person to reach out to, operational = infrastructure/optimization task"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why this recommendation, backed by data"
+    },
+    "content": {
+      "type": "object",
+      "description": "Only for type=content_idea",
+      "properties": {
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "linkedin, twitter, blog, instagram, meta-ads, email, etc."
+        },
+        "format": {
+          "type": "string",
+          "description": "carousel, thread, article, ad, reel, email, video"
+        },
+        "list": {
+          "type": "string",
+          "description": "Category: keywords, trending, gaps, repurpose"
+        },
+        "inspiration": {
+          "type": "object",
+          "properties": {
+            "snippet": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "url": {
+              "type": "string"
+            },
+            "author": {
+              "type": "string"
+            },
+            "platform": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "description": "Only for type=contact",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "outreach",
+            "affiliate",
+            "partner",
+            "collaboration",
+            "media",
+            "influencer"
+          ]
+        },
+        "target_channel": {
+          "type": "string",
+          "description": "partners, medios, influencers, outreach"
+        },
+        "suggested_message": {
+          "type": "string"
+        }
+      }
+    },
+    "operational": {
+      "type": "object",
+      "description": "Only for type=operational",
+      "properties": {
+        "linked_project": {
+          "type": "string"
+        },
+        "linked_metric": {
+          "type": "string"
+        },
+        "suggested_action": {
+          "type": "string"
+        },
+        "estimated_impact": {
+          "type": "string"
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "dismissed",
+        "converted",
+        "auto_resolved"
+      ],
+      "default": "pending"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actioned_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "converted_to": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "What it became: idea:{id}, task:{project-task-id}, contact:{id}"
+    }
+  }
+}

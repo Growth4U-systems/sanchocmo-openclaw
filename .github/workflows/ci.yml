@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [staging, main]
+  push:
+    branches: [staging, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '26'
+
+jobs:
+  verify:
+    name: Typecheck + Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Gates the src/lib unit tests (tsx --test) so tool-registry goldens and
+      # other lib invariants can't silently rot (SAN-285). Runs before Build for
+      # fast feedback. Kept in this job (not renamed) so the required-check name
+      # "Typecheck + Build" stays valid for branch protection.
+      - name: Lib tests
+        run: npm run test:lib
+
+      - name: Build
+        env:
+          # Build-time stubs. Production values come from VPS .env at runtime.
+          DATABASE_URL: postgresql://stub:stub@localhost:5432/stub
+          NEXTAUTH_SECRET: stub-secret-for-ci-build-only
+          NEXTAUTH_URL: http://localhost:3000
+          NEXT_PUBLIC_ENV_LABEL: ci
+        run: npm run build
+
+  # NOTE: lint runs as a local pre-push hook (.husky/pre-push) to save CI
+  # Actions minutes. It was already `continue-on-error` here (non-blocking),
+  # so moving it out of CI loses no enforcement — only cost.
+
+  verify-scripts:
+    name: Scripts unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s scripts -p 'test_*.py' -v

@@ -1,0 +1,286 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# worktrees
+.worktrees/
+
+# dependencies
+/node_modules
+node_modules/
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files + ALL .env variants (backups, pre-rotation snapshots, etc.)
+# Operators create ad-hoc .env backups during key rotations with arbitrary
+# suffixes (.env.bak-*, .env.backup-*, .env.pre-*, ...). Catch them all and
+# only allow the committed templates/examples back in. See SAN-233.
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Runtime/agent files that frequently capture secrets — never track. Found on
+# prod as untracked-but-committable holding live secrets (SAN-233):
+#  - Codex shell-history snapshots (env + commands)
+#  - timestamped *.old.<date>/ backup dirs and *.bak-<ts> files
+**/shell_snapshots/
+*.old.[0-9]*/
+*.bak-*
+*.bak.[0-9]*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# === Secrets & Auth ===
+openclaw.json
+openclaw.json.bak*
+openclaw.json.pre-migration
+exec-approvals.json
+agents/*/agent/auth.json
+agents/*/agent/auth-profiles.json
+
+# === Session logs (large, contain secrets) ===
+agents/*/sessions/
+*.jsonl
+
+# === Browser data ===
+browser/
+
+# === Logs ===
+logs/
+*.log
+
+# === Backups (large, may contain secrets) ===
+backups/
+
+# === Caches & temp ===
+.cache/
+delivery-queue/
+update-check.json
+subagents/
+tmp/
+plugin-runtime-deps/
+
+# === Workspace backups ===
+skills.bak.*
+.git-backup-temp
+
+# === Generated/large data files ===
+agents/*-data.js
+gateway-data.js
+workspace-sancho/*-data.js
+workspace-sancho/mc-data/
+workspace-sancho/mc/
+workspace-sancho/clients.js
+
+# === Media (binary) ===
+/media/
+
+# === Shell completions (installed by CLI) ===
+completions/
+
+# === Canvas (installed by CLI) ===
+canvas/
+
+# === Device state ===
+devices/
+
+# === OpenClaw internal runtime state ===
+.openclaw/
+workspace-*/.openclaw/
+
+# === Instance-specific workspace files (OpenClaw auto-creates, unique per deploy) ===
+workspace-*/TOOLS.md
+workspace-*/USER.md
+workspace-*/MEMORY.md
+workspace-*/TASKS.md
+workspace-*/CHANGELOG.md
+workspace-*/VERSION.md
+
+# === Identity ===
+identity/
+
+# === Nested workspace copies ===
+workspace-sancho/workspace-*/
+workspace-sancho/workspace/
+workspace-sancho/agents/
+
+# === SQLite memory indexes ===
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# === Instance-specific config (private) ===
+config/instance.json
+config/clients.json
+config/clients.js
+workspace-*/clients.json
+workspace-*/clients.json.bak.*
+
+# === Proxy device identity (contains a private key; runtime regenerates if absent) ===
+.mc-proxy-device.json
+
+# === Env backups (contain secrets — should never be tracked) ===
+.env.bak.*
+.env.bak-*
+
+# === Client brand data (private) ===
+workspace-sancho/brand/*/
+!workspace-sancho/brand/example/
+
+# === Agent memory (instance-specific) ===
+workspace-sancho/memory/
+workspace-cervantes/memory/
+
+# === Cron state (instance-specific) ===
+cron/jobs.json.bak*
+cron/jobs.json.pre-*
+
+# === Workspace backups (large, may contain secrets) ===
+workspace-sancho/_backups/
+workspace-sancho/tmp/
+
+# === Skill repos (fetched at runtime) ===
+skill-repos/
+
+# === MC proxy device keys ===
+.mc-proxy-device.json
+
+# === Docker runtime ===
+docker/nginx.conf
+
+# === Workspace runtime state ===
+workspace-sancho/_system/api-health.json
+workspace-sancho/_system/intelligence-log.json
+workspace-sancho/_system/intelligence-tracker.json
+workspace-sancho/_system/skill-improvement-metrics.json
+workspace-sancho/_system/improvement-plans/
+workspace-sancho/_system/skill-improvement-proposals/
+
+# === Workspace PRDs & proposals (instance-specific planning artifacts) ===
+workspace-*/_system/prds/
+workspace-*/_proposals/
+
+# === Workspace scripts cache/secrets ===
+workspace-sancho/scripts/.channel-guild-cache.json
+workspace-sancho/scripts/.meta-ads-env
+
+# === Workspace campaigns (client content) ===
+workspace-sancho/campaigns/
+
+# === Workspace brand learnings ===
+workspace-sancho/brand/learnings.md
+
+# === Temp verification scripts ===
+workspace-sancho/scripts/verify-*.sh
+
+# === Workspace one-off artifacts ===
+workspace-sancho/sidebar-mockups.html
+workspace-sancho/mission-control-nextjs
+
+# === Migration markers ===
+MIGRATION-PENDING.md
+
+# === Root-level memory (pre-workspace legacy, instance-specific) ===
+memory/
+
+# === Development plans ===
+docs/superpowers
+.claude/plans
+.claude/worktrees/
+
+# === mc-inspect script output ===
+screenshots/mc-inspect/
+
+# === Main workspace (from origin/main) ===
+workspace-main/
+workspace/
+
+# === Refactor-side additions (instance-specific runtime) ===
+
+# Agent runtime state (per-deploy)
+agents/*/agent/models.json
+agents/*/agent/auth-state.json
+
+# Cron state and backups
+cron/jobs.json
+cron/jobs.json.pre-*
+cron/jobs-state.json
+
+# Discord runtime cache
+discord/command-deploy-cache.json
+
+# Plugins runtime
+plugins/installs.json
+
+# Tailscale device certs (secrets — NEVER commit)
+*.taild*.ts.net.crt
+*.taild*.ts.net.key
+
+# Refactor-side ephemeral / deploy markers
+OD_VERSION.txt
+PLAN-chat-progress-streaming.md
+openclaw.json.last-good
+
+# ACP / Codex local config (per-machine)
+acpx/codex-home/
+
+# Workspace framework runtime (instance-specific)
+workspace-sancho/.clawhub/lock.json
+workspace-sancho/costs-daily.json
+workspace-sancho/costs-global.json
+workspace-sancho/cron/jobs.json
+workspace-sancho/cron/jobs.json.pre-*
+workspace-sancho/cron/jobs.json.bak
+
+# Generated env backups (timestamped)
+.env.bak-*
+.env.local.bak-*
+
+# Python bytecode (scripts/upsert-env.py and its tests)
+__pycache__/
+*.py[cod]
+
+# === Fase 0 / public-repo purge guards (SAN-340) ===
+# Keep per-instance data & data-as-code from being re-tracked after the purge.
+.archived/
+workspace-sancho/_system/recurring-tasks/
+# Dead legacy dashboard (only referenced by legacy-mc-server.js/legacy-mc-work.js,
+# neither launched at boot). NOTE: workspace-sancho/mission-control.html is KEPT
+# and tracked — it's still served by mc-server.js:18790 (Strangler-Fig fallback).
+workspace-sancho/legacy-mission-control.html
+# Legacy data-as-code (SAN-109 retirement targets)
+workspace-sancho/legacy-*.js
+workspace-sancho/mc-data.js
+# Backup copies of scripts
+workspace-sancho/scripts/*.backup*
+# Any TLS cert / private key must never be tracked
+*.key
+*.crt
+*.ts.net.crt
+
+# === Planning docs — keep LOCAL only, never in the public repo (SAN-340) ===
+docs/plans/

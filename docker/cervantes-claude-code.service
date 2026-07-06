@@ -1,0 +1,25 @@
+[Unit]
+Description=Cervantes - Claude Code Agent with Discord Channel
+After=network-online.target docker.service
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/.openclaw/workspace-cervantes
+EnvironmentFile=/root/.openclaw/workspace-cervantes/.env
+Environment=PATH=/root/.local/bin:/root/.bun/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/root/.local/bin/claude --channels plugin:discord@claude-plugins-official
+Restart=on-failure
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+# Safety: prevent runaway resource usage
+MemoryMax=2G
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

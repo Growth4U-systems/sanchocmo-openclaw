@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "dispatch_mode": "sessions",
+  "agent": "mambrino",
+  "note": "Workspace de Mambrino (Paid Ads & Retargeting). Agente nuevo creado en Fase 1. Hereda dominio de persona Amplificador. Skills viven aún en workspace-sancho/skills/; migración en Fase 3.",
+  "channel_roles": {
+    "execution": {
+      "description": "Paid ads campaigns. Setup, copy, creative briefs, optimization.",
+      "channels": ["paid-ads"],
+      "rules": {
+        "paid-ads": "Create ad copy, brief creatives to Maese Pedro, setup Meta/Google accounts, manage budget and optimization."
+      }
+    }
+  }
+}

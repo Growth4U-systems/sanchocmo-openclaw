@@ -1,0 +1,16 @@
+{
+  "name": "workspace-sancho",
+  "version": "1.0.0",
+  "description": "",
+  "main": "memory/mc/agents-data.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ws": "^8.20.0"
+  }
+}

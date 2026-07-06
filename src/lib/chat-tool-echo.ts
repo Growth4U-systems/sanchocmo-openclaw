@@ -1,0 +1,210 @@
+/**
+ * chat-tool-echo — detect & fold runtime tool-call narration in the chat.
+ *
+ * Context: the mc-chat plugin's `deliver` hook forwards every `part` of the
+ * runtime reply as its own `role:"bot"` message. The runtime emits a terse
+ * line per tool call ("✍️ Write: to <path> (1539 chars)", "🐍 run python3
+ * inline script", "🪄 show <path> -> run python3 inline script"), so each tool
+ * call lands as a separate Sancho bubble — noise the user shouldn't see inline.
+ *
+ * The chat already has a collapsible "▸ N pasos" timeline (ProgressTimeline)
+ * for structured progress events. This module classifies those tool-echo bot
+ * messages and folds consecutive runs into the same timeline UI, so the chat
+ * shows real prose and tucks the mechanics behind one toggle.
+ *
+ * Heuristic, deliberately conservative — Sancho talks Spanish, the runtime
+ * echoes English tool verbs, so an English tool verb at the start of a terse
+ * line is a strong, low-false-positive signal. `\b` after each verb stops
+ * Spanish words ("Listo") from matching ("List").
+ */
+
+import type { ProgressEvent, ProgressKind } from "@/hooks/useChat";
+
+/** Leading glyphs the runtime / plugin prepend to tool lines. */
+const TOOL_EMOJIS = [
+  "✍️", "📝", "🐍", "🪄", "⚡", "🔍", "📄", "📖", "✏️", "🌐",
+  "🤖", "🔧", "📦", "🛠️", "👁️", "🔎", "📂", "💻", "🗂️", "🔨", "📊",
+  "🧮",
+];
+
+// English tool verbs emitted by the runtime (never start Spanish prose).
+const TOOL_VERB_RE =
+  /^(Write|Edit|MultiEdit|Read|Bash|Grep|Glob|Search|Fetch|WebFetch|WebSearch|Run|Show|Update|Create|Delete|Move|List|TodoWrite|Task|Agent|Notebook\w*|Code Execution|fetch|print|pwd|curl|cat|ls|node|python3?)\b(?::|\s|$)/i;
+
+// Spanish progress labels the plugin can emit (onToolStart) if they ever land
+// as bot messages instead of structured progress events.
+const TOOL_LABEL_ES_RE =
+  /^(Leyendo|Escribiendo|Editando|Ejecutando|Buscando|Delegando|Compactando|Pensando)\b/;
+const STRUCTURAL_TOOL_LOG_RE =
+  /(->|→|\(\s*\d+\s*chars?\s*\)|inline script|\bto \/|\bin \/|\$OPENCLAW_HOME|https?:\/\/|localhost:\d+|Code Execution|HTTP\s+(GET|POST|PUT|PATCH|DELETE)\s+request)/i;
+const TOOL_FRAGMENT_RE =
+  /\b(Write|Edit|MultiEdit|Read|Bash|Grep|Glob|Search|Fetch|WebFetch|WebSearch|Run|Show|Update|Create|Delete|Move|List|TodoWrite|Task|Agent|Notebook\w*|Code Execution|list files|find files|print text|fetch|print|pwd|curl|cat|ls|node|python3?)\b/i;
+
+function isEmojiCodePoint(code: number): boolean {
+  return (
+    (code >= 0x1f000 && code <= 0x1faff) ||
+    (code >= 0x2600 && code <= 0x27bf) ||
+    (code >= 0x2300 && code <= 0x23ff)
+  );
+}
+
+function emojiLengthAtStart(text: string): number {
+  const first = text.codePointAt(0);
+  if (!first || !isEmojiCodePoint(first)) return 0;
+
+  let length = first > 0xffff ? 2 : 1;
+  const readVariation = () => {
+    const code = text.charCodeAt(length);
+    if (code === 0xfe0e || code === 0xfe0f) length += 1;
+  };
+  readVariation();
+
+  while (text.charCodeAt(length) === 0x200d) {
+    const nextIndex = length + 1;
+    const next = text.codePointAt(nextIndex);
+    if (!next || !isEmojiCodePoint(next)) break;
+    length = nextIndex + (next > 0xffff ? 2 : 1);
+    readVariation();
+  }
+
+  return length;
+}
+
+/** Strip leading runtime glyphs, including emojis unknown to the static list. */
+function stripLeadingEmoji(text: string): string {
+  let t = text.trimStart();
+  for (let i = 0; i < 4; i += 1) {
+    const before = t;
+    const known = TOOL_EMOJIS.find((e) => t.startsWith(e));
+    if (known) {
+      t = t.slice(known.length).trimStart();
+    } else {
+      const length = emojiLengthAtStart(t);
+      if (length === 0) break;
+      t = t.slice(length).trimStart();
+    }
+    if (t === before) break;
+  }
+  return t;
+}
+
+function startsWithKnownToolEmoji(text: string): boolean {
+  const t = text.trimStart();
+  return TOOL_EMOJIS.some((e) => t.startsWith(e));
+}
+
+function startsWithAnyEmoji(text: string): boolean {
+  return emojiLengthAtStart(text.trimStart()) > 0;
+}
+
+/**
+ * True when a bot message is runtime tool-call narration rather than a real
+ * reply. Terse, single-ish line, and either led by a tool verb/label or by a
+ * tool emoji plus a structural tool-log signal ("-> ", "(123 chars)", "to ").
+ */
+export function isToolEcho(text: string | undefined | null): boolean {
+  const t = (text || "").trim();
+  if (!t) return false;
+  if (t.length > 200) return false; // real replies are longer; echoes are terse
+  if ((t.match(/\n/g) || []).length > 2) return false; // not a paragraph
+
+  const body = stripLeadingEmoji(t);
+  if (TOOL_VERB_RE.test(body)) return true;
+  if (TOOL_LABEL_ES_RE.test(body)) return true;
+
+  // Emoji-led line with an unmistakable tool-log shape.
+  if (startsWithKnownToolEmoji(t) && STRUCTURAL_TOOL_LOG_RE.test(t)) {
+    return true;
+  }
+  if (startsWithAnyEmoji(t) && body !== t && STRUCTURAL_TOOL_LOG_RE.test(t) && TOOL_FRAGMENT_RE.test(body)) {
+    return true;
+  }
+  return false;
+}
+
+/** Map a tool-echo line to the ProgressKind that picks its timeline icon. */
+function guessKind(body: string): ProgressKind {
+  if (/^(Write|Edit|MultiEdit|Escribiendo|Editando|Update|Create)\b/i.test(body)) return "file_write";
+  if (/^(Read|Leyendo|Show|show|List|list)\b/i.test(body)) return "read";
+  if (/^(Grep|Glob|Search|Fetch|WebFetch|WebSearch|Buscando)\b/i.test(body)) return "search";
+  if (/^(Agent|Task|Delegando)\b/i.test(body)) return "agent_handoff";
+  if (/^(Pensando|Compactando)\b/i.test(body)) return "thinking";
+  return "tool_call";
+}
+
+/**
+ * Convert a tool-echo bot message into a ProgressEvent so it can render inside
+ * the existing collapsible timeline. The leading emoji is stripped because
+ * ProgressTimeline supplies its own per-kind icon.
+ */
+export function toToolEvent(msg: { text?: string; ts?: number; agent?: string }): ProgressEvent {
+  const raw = (msg.text || "").trim();
+  const body = stripLeadingEmoji(raw);
+  return {
+    kind: guessKind(body),
+    label: body || raw,
+    agent: msg.agent,
+    ts: typeof msg.ts === "number" ? msg.ts : 0,
+  };
+}
+
+/**
+ * Strip the `[ask:<id>] respuesta:` protocol prefix from a user message for
+ * display. The prefix is required on the wire so the agent can correlate an
+ * inline answer to its question, but it's machine plumbing — the user should
+ * only see what they actually answered.
+ */
+export function stripAskProtocol(text: string | undefined | null): string {
+  const t = text || "";
+  if (!t.includes("[ask:")) return t;
+  return t
+    .split("\n")
+    .map((line) => line.replace(/^\s*\[ask:[^\]]+\]\s*respuesta:\s*/i, ""))
+    .join("\n")
+    .trim();
+}
+
+export interface ChatMsgLike {
+  role: string;
+  text?: string;
+  agent?: string;
+  ts?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [k: string]: any;
+}
+
+export type RenderItem =
+  | { kind: "message"; msg: ChatMsgLike; key: string }
+  | { kind: "tools"; events: ProgressEvent[]; key: string };
+
+/**
+ * Collapse runs of consecutive tool-echo bot messages into a single "tools"
+ * render item, leaving every real message untouched and in order.
+ */
+export function groupChatMessages(messages: ChatMsgLike[]): RenderItem[] {
+  const items: RenderItem[] = [];
+  let batch: ProgressEvent[] = [];
+  let batchStart = -1;
+
+  const flush = () => {
+    if (batch.length) {
+      items.push({ kind: "tools", events: batch, key: `tools-${batchStart}` });
+      batch = [];
+      batchStart = -1;
+    }
+  };
+
+  messages.forEach((msg, i) => {
+    const isEchoableBot =
+      (msg.role === "bot" || msg.role === undefined) && isToolEcho(msg.text);
+    if (isEchoableBot) {
+      if (batchStart === -1) batchStart = i;
+      batch.push(toToolEvent(msg));
+      return;
+    }
+    flush();
+    items.push({ kind: "message", msg, key: `msg-${i}` });
+  });
+  flush();
+  return items;
+}

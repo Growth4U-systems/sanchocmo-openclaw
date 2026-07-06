@@ -1,0 +1,144 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
+import { yalcErrorResponse } from "@/lib/yalc/client";
+import {
+  createDiscoverySearch,
+  DiscoveryPlanError,
+  enqueueDiscoverySearchRun,
+  listSearches,
+  resumeQueuedDiscoverySearches,
+  runDiscoverySearch,
+  triggerDiscoveryRunner,
+  updateRunnerState,
+} from "@/lib/partnerships";
+
+/**
+ * Búsquedas de discovery (Partnerships · tab Encuentra) — SAN-79.
+ *
+ *   GET  /api/partnerships/searches?slug=…[&status=queued][&includeArchived=1]
+ *     → { searches, count } (estado del runner incluido — lo consume la UI
+ *       de Encuentra y el agente runner para encontrar trabajo encolado).
+ *
+ *   POST /api/partnerships/searches  { slug, plan, run?, threadId? }
+ *     Crea la búsqueda (campaign type=Partnerships en Yalc + tarea Outreach
+ *     madre) y, POR DEFECTO, encola un job server-side para ejecutar discovery
+ *     REAL con ScrapeCreators sin bloquear el request. `run`:
+ *       - ausente / "live"  → job server-side con ScrapeCreators.
+ *       - "agent"           → despacha el runner a Rocinante (fallback manual).
+ *       - "fixtures" (o true) → runner inline con los 9 creators fake (verifier).
+ *       - "none" / false      → solo crea, runner queued (sin despachar).
+ *     → { ok, search, campaignId, taskId[, runner] }
+ *
+ * Paridad UI = chat = MCP: la skill llama a este endpoint; la tool MCP
+ * `yalc_create_search` comparte `createDiscoverySearch`/`runDiscoverySearch`.
+ */
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const slug = getSlug(req);
+  if (!slug) return res.status(400).json({ error: "Missing slug" });
+
+  if (req.method === "GET") {
+    const resumed = resumeQueuedDiscoverySearches(slug);
+    const statusFilter = typeof req.query.status === "string" ? req.query.status.trim() : "";
+    const includeArchived =
+      req.query.includeArchived === "1" || req.query.includeArchived === "true";
+    const archivedOnly = req.query.archived === "1" || req.query.archived === "true";
+    const searches = listSearches(slug).filter(
+      (search) => {
+        const archived = Boolean(search.archivedAt);
+        if (archivedOnly && !archived) return false;
+        if (!archivedOnly && !includeArchived && archived) return false;
+        return !statusFilter || search.runner.status === statusFilter;
+      },
+    );
+    return res.status(200).json({ searches, count: searches.length, resumed });
+  }
+
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "GET, POST");
+    return res.status(405).json({ error: `Method ${req.method} not allowed` });
+  }
+
+  const body = (req.body || {}) as { plan?: unknown; run?: unknown; threadId?: unknown };
+  try {
+    const created = await createDiscoverySearch({
+      slug,
+      plan: body.plan,
+      // SAN-328: el hilo MC Chat donde la skill construyó el plan, para que la
+      // tarjeta de Encuentra reabra esa misma sesión en vez de un hilo nuevo.
+      threadId: typeof body.threadId === "string" ? body.threadId : null,
+    });
+
+    if (body.run === "fixtures" || body.run === true) {
+      const run = await runDiscoverySearch({ slug, searchId: created.search.id, fixtures: true });
+      return res.status(201).json({
+        ok: true,
+        search: run.search,
+        campaignId: created.campaignId,
+        taskId: created.taskId,
+        runner: { mode: "fixtures", stats: run.stats },
+      });
+    }
+
+    // run:"none"/false → solo crea, runner queued (sin despachar) — opt-out.
+    if (body.run === "none" || body.run === false) {
+      return res.status(201).json({
+        ok: true,
+        search: created.search,
+        campaignId: created.campaignId,
+        taskId: created.taskId,
+      });
+    }
+
+    if (!body.run || body.run === "live") {
+      const search = enqueueDiscoverySearchRun({ slug, searchId: created.search.id });
+      return res.status(201).json({
+        ok: true,
+        search,
+        campaignId: created.campaignId,
+        taskId: created.taskId,
+        runner: {
+          mode: "live",
+          async: true,
+          jobId: search.runner.jobId,
+          status: search.runner.status,
+        },
+      });
+    }
+
+    // run:"agent": despacha a Rocinante para el discovery REAL. Best-effort —
+    // si el gateway está caído, la búsqueda queda en error recuperable desde UI.
+    const dispatch = await triggerDiscoveryRunner({
+      slug,
+      searchId: created.search.id,
+      title: created.search.title,
+    });
+    const search = dispatch.forwardedToGateway
+      ? created.search
+      : updateRunnerState(slug, created.search.id, {
+          status: "error",
+          error:
+            dispatch.error ||
+            "No se pudo avisar a Rocinante. Reintenta el discovery desde Encuentra.",
+        });
+    return res.status(201).json({
+      ok: true,
+      search,
+      campaignId: created.campaignId,
+      taskId: created.taskId,
+      runner: {
+        mode: "agent",
+        dispatched: dispatch.forwardedToGateway,
+        threadId: dispatch.threadId,
+        error: dispatch.error,
+      },
+    });
+  } catch (err) {
+    if (err instanceof DiscoveryPlanError) {
+      return res.status(400).json({ error: err.message });
+    }
+    const out = yalcErrorResponse(err);
+    return res.status(out.status).json(out.body);
+  }
+}
+
+export default compose(withErrorHandler, withSlugAuth)(handler);

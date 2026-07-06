@@ -1,0 +1,413 @@
+#!/usr/bin/env node
+/**
+ * generate-openclaw-config.js — Auto-generate openclaw.json from env vars
+ *
+ * Reads DISCORD_BOT_TOKEN from env.
+ * Auto-detects Discord guilds via API and creates bindings:
+ *   - All guilds → sancho agent
+ *
+ * Idempotent: merges with existing config, preserves runtime state.
+ */
+const fs = require('fs');
+const https = require('https');
+const path = require('path');
+
+const OPENCLAW_ROOT = process.env.OPENCLAW_HOME || '/root/.openclaw';
+const OPENCLAW_JSON = path.join(OPENCLAW_ROOT, '.openclaw', 'openclaw.json');
+
+// SAN-345 — Fireworks' OpenAI-compatible function-calling validator rejects or
+// silently breaks several JSON-schema keywords: `not` hard-400s (verified, see
+// OpenClaw issue #75444 on kimi-k2p5-turbo), and oneOf/pattern/length
+// constraints are unsupported (under xgrammar they mis-constrain instead of
+// erroring). When a tool schema carries one, the model gets NO usable tools and
+// narrates the steps as text instead of calling them (the GLM-5.2 "list files →
+// print text failed" symptom). OpenClaw strips these via
+// `compat.unsupportedToolSchemaKeywords`, so we set the same set on every
+// Fireworks model. This addresses the schema half of the failure; the other
+// half (Fireworks mis-parsing a model's native tool-call format) is theirs and
+// is caught content-side by the tool-echo detector (SAN-342).
+const FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS = [
+  'not', 'oneOf', 'pattern', 'minLength', 'maxLength', 'minItems', 'maxItems',
+];
+
+/**
+ * Set `compat.unsupportedToolSchemaKeywords` on every model under the Fireworks
+ * provider. UPSERTS onto already-present entries — the default-seeding merge
+ * only pushes models with a NEW id, so a model already in openclaw.json (e.g.
+ * glm-5p2 on a redeployed staging) would otherwise never get the field. Pure
+ * and idempotent; safe on missing/empty providers.
+ */
+function applyFireworksToolSchemaCompat(fireworksProvider) {
+  if (!fireworksProvider || !Array.isArray(fireworksProvider.models)) return;
+  for (const model of fireworksProvider.models) {
+    if (!model || typeof model !== 'object') continue;
+    if (!model.compat || typeof model.compat !== 'object') model.compat = {};
+    model.compat.unsupportedToolSchemaKeywords = [...FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS];
+  }
+}
+
+async function main() {
+  // Ensure .openclaw directory exists
+  const configDir = path.dirname(OPENCLAW_JSON);
+  if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
+
+  // Load existing config or start fresh
+  let config = {};
+  if (fs.existsSync(OPENCLAW_JSON)) {
+    try {
+      config = JSON.parse(fs.readFileSync(OPENCLAW_JSON, 'utf8'));
+    } catch (e) {
+      console.log('[config] WARNING: existing openclaw.json is corrupt, starting fresh');
+      config = {};
+    }
+  }
+
+  const discordToken = process.env.DISCORD_BOT_TOKEN;
+  const cervantesGuildId = process.env.CERVANTES_GUILD_ID || '';
+  const mcChatSecret = process.env.MC_CHAT_SECRET || '';
+  const contextPackUrl = (process.env.MC_CONTEXT_PACK_URL || 'http://localhost:3000').replace(/\/+$/, '');
+  // mc-chat delivers bot replies to ${mcServerUrl}/api/chat/webhook, a route that
+  // ONLY exists on the Next.js app (:3000), NOT the legacy mc-server.js (:18790).
+  // Mirror contextPackUrl: env-overridable, default to the Next server. (SAN-333)
+  const mcServerUrl = (process.env.MC_SERVER_URL || 'http://localhost:3000').replace(/\/+$/, '');
+
+  // --- Auth profiles ---
+  // ANTHROPIC_AUTH_MODE selects how Anthropic inference authenticates:
+  //   api_key (default) → profile `anthropic:default` (mode "token"); the key
+  //                       is read from ANTHROPIC_API_KEY in the env.
+  //   subscription      → profile `anthropic:claude-cli` (OAuth via Claude CLI).
+  // The subscription enforcement (docker/ensure-anthropic-subscription-auth.js)
+  // is gated on the same mode in entrypoint.sh, so the two stay consistent.
+  const anthropicAuthMode = (process.env.ANTHROPIC_AUTH_MODE || 'api_key').toLowerCase();
+  if (!config.auth) config.auth = {};
+  if (!config.auth.profiles) config.auth.profiles = {};
+  if (!config.auth.order) config.auth.order = {};
+  config.auth.profiles['fireworks:default'] = {
+    provider: 'fireworks',
+    mode: 'token'
+  };
+  config.auth.order.fireworks = ['fireworks:default'];
+  if (anthropicAuthMode === 'subscription') {
+    delete config.auth.profiles['anthropic:default'];
+    config.auth.profiles['anthropic:claude-cli'] = {
+      provider: 'claude-cli',
+      mode: 'oauth'
+    };
+    config.auth.order.anthropic = ['anthropic:claude-cli'];
+  } else {
+    delete config.auth.profiles['anthropic:claude-cli'];
+    config.auth.profiles['anthropic:default'] = {
+      provider: 'anthropic',
+      mode: 'token'
+    };
+    config.auth.order.anthropic = ['anthropic:default'];
+  }
+
+  // --- Agent defaults ---
+  if (!config.agents) config.agents = {};
+  if (!config.agents.defaults) config.agents.defaults = {};
+  config.agents.defaults.workspace = path.join(OPENCLAW_ROOT, 'workspace-sancho');
+  const hasAnthropicCredential = anthropicAuthMode === 'subscription'
+    ? Boolean(process.env.CLAUDE_CODE_OAUTH_TOKEN || process.env.ANTHROPIC_OAUTH_TOKEN)
+    : Boolean(process.env.ANTHROPIC_API_KEY);
+  const defaultPrimaryModel =
+    !hasAnthropicCredential && process.env.FIREWORKS_API_KEY
+      ? 'fireworks/accounts/fireworks/models/glm-5p2'
+      : 'anthropic/claude-opus-4-6';
+  config.agents.defaults.model = config.agents.defaults.model || { primary: defaultPrimaryModel };
+  config.agents.defaults.maxConcurrent = config.agents.defaults.maxConcurrent || 4;
+  if (!config.agents.defaults.subagents) config.agents.defaults.subagents = {};
+  config.agents.defaults.subagents.maxConcurrent = config.agents.defaults.subagents.maxConcurrent || 8;
+  if (!config.agents.defaults.models) config.agents.defaults.models = {};
+  const fireworksAgentModels = {
+    'fireworks/accounts/fireworks/models/glm-5p2': 'GLM 5.2',
+    'fireworks/accounts/fireworks/routers/kimi-k2p5-turbo': 'Kimi K2.5 Turbo',
+    'fireworks/accounts/fireworks/models/kimi-k2p6': 'Kimi K2.6'
+  };
+  for (const [modelRef, alias] of Object.entries(fireworksAgentModels)) {
+    const existingModelEntry = config.agents.defaults.models[modelRef];
+    const existingModel =
+      existingModelEntry && typeof existingModelEntry === 'object' && !Array.isArray(existingModelEntry)
+        ? existingModelEntry
+        : {};
+    config.agents.defaults.models[modelRef] = {
+      ...existingModel,
+      alias: existingModel.alias || alias
+    };
+  }
+
+  // Heartbeat polls (`{ every: "1h" }`) trigger one model turn per agent every
+  // hour for proactive checks. In this project periodic work goes through
+  // explicit cron jobs, so heartbeats just burn quota — on 2026-05-22 they
+  // saturated the Codex subscription rate-limit. Strip the block defensively
+  // in case an older config or upstream default reintroduced it.
+  if (config.agents.defaults.heartbeat) {
+    delete config.agents.defaults.heartbeat;
+    console.log('[config] Removed agents.defaults.heartbeat (deprecated in this project)');
+  }
+
+  // --- Model providers ---
+  // Raise the model idle watchdog for Anthropic (default cap: 120s without
+  // provider timeout). Sonnet/Opus runs with long thinking or heavy load can
+  // exceed 120s between stream chunks, killing the run with
+  // "LLM request timed out". agents.defaults.timeoutSeconds (48h default)
+  // stays untouched — only the per-provider idle window is extended.
+  // OpenClaw >= 2026.5.18 requires baseUrl + models on any models.providers.<id>
+  // entry (a timeout-only entry fails validation and blocks gateway startup).
+  // models:[] merges with — does not replace — the built-in Anthropic catalog.
+  if (!config.models) config.models = {};
+  if (!config.models.providers) config.models.providers = {};
+  if (!config.models.providers.anthropic) config.models.providers.anthropic = {};
+  const anthropicProvider = config.models.providers.anthropic;
+  if (!anthropicProvider.baseUrl) anthropicProvider.baseUrl = 'https://api.anthropic.com';
+  if (!anthropicProvider.api) anthropicProvider.api = 'anthropic-messages';
+  if (!anthropicProvider.models) anthropicProvider.models = [];
+  anthropicProvider.timeoutSeconds = anthropicProvider.timeoutSeconds || 300;
+
+  // Fireworks is a bundled OpenClaw provider with an OpenAI-compatible API.
+  // Keep the static Kimi entries configured so Mission Control can list and
+  // select them immediately; the provider also accepts any runtime id prefixed
+  // as `fireworks/accounts/...`.
+  const fireworksDefaultModels = [
+    {
+      id: 'accounts/fireworks/models/glm-5p2',
+      name: 'GLM 5.2',
+      input: ['text'],
+      contextWindow: 1048576
+    },
+    {
+      id: 'accounts/fireworks/models/kimi-k2p6',
+      name: 'Kimi K2.6',
+      input: ['text', 'image'],
+      contextWindow: 262144,
+      maxTokens: 262144,
+      cost: { input: 0.95, output: 4, cacheRead: 0, cacheWrite: 0 }
+    },
+    {
+      id: 'accounts/fireworks/routers/kimi-k2p5-turbo',
+      name: 'Kimi K2.5 Turbo (Fire Pass)',
+      input: ['text', 'image'],
+      contextWindow: 256000,
+      maxTokens: 256000,
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
+    }
+  ];
+  if (!config.models.providers.fireworks) config.models.providers.fireworks = {};
+  const fireworksProvider = config.models.providers.fireworks;
+  if (!fireworksProvider.baseUrl) fireworksProvider.baseUrl = 'https://api.fireworks.ai/inference/v1';
+  if (!fireworksProvider.api) fireworksProvider.api = 'openai-completions';
+  // SAN-347 — raise the per-provider idle watchdog like Anthropic (default cap:
+  // 120s between stream chunks). GLM 5.2 (1M context, reasoning, slower tier)
+  // can exceed 120s between chunks on heavy/long runs and die with "LLM request
+  // timed out". agents.defaults.timeoutSeconds (48h) is untouched — this only
+  // widens the per-provider idle window. Idempotent: preserves an existing value.
+  fireworksProvider.timeoutSeconds = fireworksProvider.timeoutSeconds || 300;
+  if (!Array.isArray(fireworksProvider.models)) fireworksProvider.models = [];
+  const fireworksModelIds = new Set(fireworksProvider.models.map(m => m && m.id).filter(Boolean));
+  for (const model of fireworksDefaultModels) {
+    if (!fireworksModelIds.has(model.id)) fireworksProvider.models.push(model);
+  }
+  // SAN-345: strip Fireworks-incompatible tool-schema keywords on ALL fireworks
+  // models — UPSERTS onto pre-existing entries too (the loop above only seeds
+  // new ids), so glm-5p2 already in a redeployed config gets the field.
+  applyFireworksToolSchemaCompat(fireworksProvider);
+
+  // --- Session agents (rocinante, hamete, alarife) ---
+  config.agents.list = [
+    { id: 'rocinante', workspace: path.join(OPENCLAW_ROOT, 'workspace-rocinante') },
+    // Hamete — Research & Market Intelligence agent (deep-research, competitor/market intel,
+    // signals). Runs the scraping-preflight + /deep-research stack. See dispatch-protocol.md.
+    { id: 'hamete', workspace: path.join(OPENCLAW_ROOT, 'workspace-hamete') },
+    // Alarife — Web/Page Builder (Payload CMS, site architecture, frontend, CRO). Promoted
+    // from alarife_operator to full specialist on 2026-06-09 (SAN-116).
+    { id: 'alarife', workspace: path.join(OPENCLAW_ROOT, 'workspace-alarife') }
+  ];
+
+  // --- Gateway ---
+  if (!config.gateway) config.gateway = {};
+  config.gateway.port = 18789;
+  config.gateway.mode = 'local';
+  config.gateway.bind = 'loopback';
+  if (!config.gateway.auth) config.gateway.auth = {};
+  if (!config.gateway.auth.token) {
+    config.gateway.auth.mode = 'token';
+    config.gateway.auth.token = require('crypto').randomBytes(24).toString('hex');
+  }
+
+  // --- Commands ---
+  if (!config.commands) config.commands = {};
+  config.commands.native = 'auto';
+  config.commands.nativeSkills = 'auto';
+  config.commands.restart = true;
+  config.commands.ownerDisplay = 'raw';
+
+  // --- Discord channel config (OPTIONAL — only when a bot token is set) ---
+  // Discord is one comms option, not a requirement. Without DISCORD_BOT_TOKEN
+  // the channel stays disabled and MC chat (below) is the primary interface.
+  if (!config.channels) config.channels = {};
+  if (discordToken) {
+    if (!config.channels.discord) config.channels.discord = {};
+    config.channels.discord.enabled = true;
+    config.channels.discord.token = discordToken;
+    config.channels.discord.groupPolicy = 'allowlist';
+    config.channels.discord.replyToMode = 'first';
+    if (!config.channels.discord.threadBindings) config.channels.discord.threadBindings = {};
+    config.channels.discord.threadBindings.enabled = true;
+    config.channels.discord.threadBindings.spawnSubagentSessions = true;
+  } else if (config.channels.discord) {
+    // No token → keep any existing block but ensure it's disabled so the
+    // gateway doesn't try to connect with a tokenless Discord channel.
+    config.channels.discord.enabled = false;
+  }
+
+  // --- Session config ---
+  if (!config.session) config.session = {};
+  if (!config.session.threadBindings) config.session.threadBindings = {};
+  config.session.threadBindings.enabled = true;
+  config.session.threadBindings.idleHours = 24;
+  config.session.threadBindings.maxAgeHours = 0;
+
+  // --- Remove tools.profile (blocks non-coding agents like Sancho) ---
+  if (config.tools && config.tools.profile) {
+    delete config.tools.profile;
+    if (Object.keys(config.tools).length === 0) delete config.tools;
+    console.log('[config] Removed tools.profile (not compatible with marketing agents)');
+  }
+
+  // --- Hooks ---
+  if (!config.hooks) config.hooks = {};
+  if (!config.hooks.internal) config.hooks.internal = {};
+  config.hooks.internal.enabled = true;
+  if (!config.hooks.internal.entries) config.hooks.internal.entries = {};
+  config.hooks.internal.entries['session-memory'] = { enabled: true };
+  config.hooks.internal.entries['boot-md'] = { enabled: true };
+
+  // --- Memory ---
+  if (!config.memory) config.memory = {};
+  config.memory.backend = 'builtin';
+
+  // --- MC Chat plugin (Mission Control webchat → Sancho) ---
+  if (!config.plugins) config.plugins = {};
+  if (!config.plugins.load) config.plugins.load = {};
+  if (!config.plugins.load.paths) config.plugins.load.paths = [];
+  const mcChatPluginPath = path.join(OPENCLAW_ROOT, 'plugins', 'mc-chat');
+  if (fs.existsSync(mcChatPluginPath) && !config.plugins.load.paths.includes(mcChatPluginPath)) {
+    config.plugins.load.paths.push(mcChatPluginPath);
+  }
+  if (!config.plugins.entries) config.plugins.entries = {};
+  if (!config.plugins.entries['mc-chat']) {
+    config.plugins.entries['mc-chat'] = { enabled: true, config: {} };
+  }
+  if (!config.channels['mc-chat']) {
+    config.channels['mc-chat'] = {
+      enabled: true,
+      mcServerUrl,
+      contextPackUrl,
+    };
+  }
+  config.channels['mc-chat'].enabled = true;
+  // Set when absent, and migrate a stale legacy :18790 (written by pre-fix images)
+  // to Next — that port never serves /api/chat/webhook, so rewriting is safe. (SAN-333)
+  const LEGACY_MC = ['http://localhost:18790', 'http://127.0.0.1:18790'];
+  const currentMc = (config.channels['mc-chat'].mcServerUrl || '').replace(/\/+$/, '');
+  if (!currentMc || LEGACY_MC.includes(currentMc)) {
+    config.channels['mc-chat'].mcServerUrl = mcServerUrl;
+  }
+  if (!config.channels['mc-chat'].contextPackUrl) {
+    config.channels['mc-chat'].contextPackUrl = contextPackUrl;
+  }
+  if (mcChatSecret) {
+    config.channels['mc-chat'].sharedSecret = mcChatSecret;
+  } else if (config.channels['mc-chat'].sharedSecret) {
+    delete config.channels['mc-chat'].sharedSecret;
+  }
+  // Binding: mc-chat → sancho (if not already present)
+  if (!config.bindings) config.bindings = [];
+  const hasMcBinding = config.bindings.some(b => b.match && b.match.channel === 'mc-chat');
+  if (!hasMcBinding) {
+    config.bindings.push({ agentId: 'sancho', match: { channel: 'mc-chat' } });
+    console.log('[config] MC Chat binding: mc-chat → sancho');
+  }
+
+  // --- Auto-detect Discord guilds and create bindings ---
+  if (discordToken) {
+    try {
+      const guilds = await fetchGuilds(discordToken);
+
+      if (Array.isArray(guilds) && guilds.length > 0) {
+        if (!config.bindings) config.bindings = [];
+        if (!config.channels.discord.guilds) config.channels.discord.guilds = {};
+
+        for (const guild of guilds) {
+          // Skip Cervantes guild — managed by Claude Code, not OpenClaw
+          if (cervantesGuildId && guild.id === cervantesGuildId) {
+            console.log(`[config] Skipping Cervantes guild: ${guild.name} (${guild.id})`);
+            continue;
+          }
+
+          // Binding: client guilds → sancho
+          const existingBinding = config.bindings.find(
+            b => b.match && b.match.guildId === guild.id
+          );
+          if (!existingBinding) {
+            config.bindings.push({
+              agentId: 'sancho',
+              match: { channel: 'discord', guildId: guild.id }
+            });
+            console.log(`[config] Guild binding: ${guild.name} → sancho`);
+          }
+
+          // requireMention: false (bot responds without @mention)
+          if (!config.channels.discord.guilds[guild.id]) {
+            config.channels.discord.guilds[guild.id] = {};
+          }
+          config.channels.discord.guilds[guild.id].requireMention = false;
+        }
+        console.log(`[config] ${guilds.length} guild(s) configured`);
+      }
+    } catch (e) {
+      console.log(`[config] WARNING: Could not auto-detect guilds: ${e.message}`);
+      console.log('[config] Bot will start but may not respond to messages.');
+    }
+  } else {
+    console.log('[config] WARNING: DISCORD_BOT_TOKEN not set. No Discord bindings created.');
+  }
+
+  // --- Write config ---
+  fs.writeFileSync(OPENCLAW_JSON, JSON.stringify(config, null, 2) + '\n');
+  console.log(`[config] Written to ${OPENCLAW_JSON}`);
+}
+
+function fetchGuilds(token) {
+  return new Promise((resolve, reject) => {
+    https.get('https://discord.com/api/v10/users/@me/guilds', {
+      headers: { Authorization: 'Bot ' + token }
+    }, res => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          resolve(JSON.parse(data));
+        } else {
+          reject(new Error(`Discord API HTTP ${res.statusCode}: ${data}`));
+        }
+      });
+    }).on('error', reject);
+  });
+}
+
+// Run as a script (deploy path: `node generate-openclaw-config.js`). The guard
+// keeps `require()`-ing this module side-effect-free so its helpers can be unit
+// tested.
+if (require.main === module) {
+  main().catch(e => {
+    console.error('[config] Fatal error:', e.message);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  main,
+  applyFireworksToolSchemaCompat,
+  FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS,
+};

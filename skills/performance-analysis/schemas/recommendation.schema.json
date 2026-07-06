@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pending Recommendations",
+  "description": "Active recommendations awaiting user action in MC. Overwritten each weekly run.",
+  "type": "object",
+  "required": ["updated_at", "recommendations"],
+  "properties": {
+    "updated_at": { "type": "string", "format": "date-time" },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "priority", "title", "rationale", "suggested_action", "status", "created_at"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^rec-\\d{8}-\\d{3}$",
+            "description": "Unique ID: rec-YYYYMMDD-NNN"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["optimize", "investigate", "launch", "pause", "escalate"],
+            "description": "optimize=improve existing, investigate=find root cause, launch=start new, pause=stop inefficient, escalate=needs human decision"
+          },
+          "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+          "title": { "type": "string", "description": "Short actionable title" },
+          "rationale": { "type": "string", "description": "Why this recommendation, backed by data" },
+          "suggested_action": { "type": "string", "description": "Specific next step" },
+          "linked_project": { "type": ["string", "null"], "description": "Project ID if applicable (e.g., P04)" },
+          "linked_metric": { "type": ["string", "null"], "description": "KPI key (e.g., meta-ads.cpc)" },
+          "estimated_impact": { "type": "string" },
+          "web_research": {
+            "type": "object",
+            "properties": {
+              "searched": { "type": "boolean" },
+              "query": { "type": "string" },
+              "findings": { "type": "string" },
+              "sources": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "dismissed", "converted", "auto_resolved"]
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "approved_at": { "type": ["string", "null"], "format": "date-time" },
+          "converted_to_task": { "type": ["string", "null"], "description": "Task ID if converted" }
+        }
+      }
+    }
+  }
+}

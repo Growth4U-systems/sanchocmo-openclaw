@@ -1,0 +1,27 @@
+name: Linear issue ID
+
+on:
+  pull_request:
+    branches: [staging, main]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+jobs:
+  require-linear-issue-id:
+    name: Require Linear issue ID
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+
+      - name: Check PR metadata
+        env:
+          LINEAR_TEAM_KEYS: SAN
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: node scripts/check-linear-issue-id.mjs

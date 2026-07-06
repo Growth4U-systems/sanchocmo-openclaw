@@ -1,0 +1,26 @@
+{
+  "skill_name": "level-up",
+  "evals": [
+    {
+      "id": 0,
+      "name": "deck-lean",
+      "prompt": "Súbele el nivel a este deck de Monzo, está bien pero quiero que mole más: OUTPUTS/monzo/2026-06-22-partner-advocacy-programme-deck.html",
+      "expected_output": "Carga rúbrica excellence/deck.md, lanza juez independiente que puntúa 0-10 por dimensión, produce versión elevada del deck (HTML, marca Monzo respetada), muestra tabla antes→después + qué cambió. Modo Lean (no se pidió panel).",
+      "files": ["OUTPUTS/monzo/2026-06-22-partner-advocacy-programme-deck.html"]
+    },
+    {
+      "id": 1,
+      "name": "copy-lean",
+      "prompt": "Este landing copy de Sancho está correcto pero no me emociona, hazlo mejor: OUTPUTS/sancho/2026-06-01-landing-copy.md",
+      "expected_output": "Clasifica como copy, carga excellence/copy.md, juez independiente puntúa gancho/claridad/no-huele-a-IA/persuasión, reescribe el copy elevado, muestra antes→después. Modo Lean.",
+      "files": ["OUTPUTS/sancho/2026-06-01-landing-copy.md"]
+    },
+    {
+      "id": 2,
+      "name": "research-panel",
+      "prompt": "Quiero llevar este análisis a otro nivel, hazlo a fondo con panel: OUTPUTS/internal/2026-06-07-medio-gestorias-analisis-completo.html",
+      "expected_output": "Clasifica como research, modo Panel: 2-3 variantes desde ángulos distintos, panel de jueces puntúa cada una, sintetiza la mejor, loop hasta ≥9 o tope 3 rondas. Reporta honesto si no llega a 9. Trae referencia externa para comparar.",
+      "files": ["OUTPUTS/internal/2026-06-07-medio-gestorias-analisis-completo.html"]
+    }
+  ]
+}

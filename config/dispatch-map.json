@@ -1,0 +1,47 @@
+{
+  "version": 3,
+  "dispatch_mode": "sessions",
+  "note": "v3: Channel roles (decision/execution/intelligence/support). Sancho respects channel context.",
+  "channel_roles": {
+    "estrategia": {
+      "description": "No execution. Propose, discuss, redirect.",
+      "channels": ["general", "onboarding", "marketing-inbox", "projects", "research"],
+      "rules": {
+        "general": "Only respond when @mentioned. Never execute skills.",
+        "onboarding": "Full Foundation creation. Iterative flow. Recommend archiving when done.",
+        "marketing-inbox": "Triage incoming requests. Route to appropriate execution channels.",
+        "projects": "Propose and plan only. Execution goes to execution channels.",
+        "research": "Deep research, competitive intelligence, market analysis."
+      }
+    },
+    "ejecucion": {
+      "description": "Create and execute. Skills run here.",
+      "channels": ["partners", "prospecting", "content", "paid-ads", "creatives", "web"],
+      "rules": {
+        "content": "Create content. Ideas come from intelligence → projects → here.",
+        "paid-ads": "Create ad copy, creatives, setup Meta/Google accounts.",
+        "prospecting": "Find companies, decision makers, build outreach sequences.",
+        "creatives": "Visual identity, marketing creatives.",
+        "web": "Landing page copy, lead magnets, pricing pages.",
+        "partners": "Find partners, create collaboration proposals."
+      }
+    },
+    "sistema": {
+      "description": "Insights, feedback, escalation.",
+      "channels": ["insights", "soporte"],
+      "rules": {
+        "insights": "Signals, patterns, daily pulse, meeting intelligence.",
+        "soporte": "Bugs, feedback, escalation to Cervantes."
+      }
+    }
+  },
+  "flow": "intelligence → campaigns (propose) → user approves → execution channels → brand (if update needed)",
+  "discord_channels_note": "Channel IDs are resolved per-client from brand/{slug}/sources.json. No hardcoded IDs here.",
+  "client_channels": ["general", "onboarding", "marketing-inbox", "projects", "research", "partners", "prospecting", "content", "paid-ads", "creatives", "web", "insights", "soporte"],
+  "cervantes_channels": ["skills", "bugs", "infra", "tasks", "ideas", "nuevo-cliente"],
+  "qa_agent": {
+    "id": "sanson",
+    "method": "sessions_send",
+    "activate_for": ["brand-check", "qa-review", "devil-advocate", "foundation-verification"]
+  }
+}

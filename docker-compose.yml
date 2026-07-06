@@ -1,0 +1,131 @@
+services:
+  sanchocmo:
+    # Product default is `docker compose pull` of a versioned public image.
+    # `build:` stays so the source-of-truth deploy (and anyone hacking on a
+    # clone) can build locally — Compose tags that local build with this same
+    # `image:` name, so the two paths converge:
+    #   • Product / update:  docker compose pull && up -d   → uses the registry image
+    #   • G4U deploy / clone: docker compose build           → tags the build as this image
+    # The deploy's `pull --ignore-buildable` skips this service (it has a
+    # `build:`), so a build host never pulls a foreign image. Pin a version
+    # with SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:vX.Y.Z.
+    image: ${SANCHOCMO_IMAGE:-ghcr.io/growth4u-systems/sanchocmo:latest}
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_ENV_LABEL: ${NEXT_PUBLIC_ENV_LABEL:-}
+        GIT_COMMIT: ${GIT_COMMIT:-}
+        INSTALL_HERMES: ${INSTALL_HERMES:-0}
+        HERMES_AGENT_REF: ${HERMES_AGENT_REF:-main}
+    container_name: sanchocmo
+    restart: unless-stopped
+    ports:
+      # Host side is parameterized so the installer can relocate a port that's
+      # already in use on the host (see scripts/compose-env.sh resolve_host_ports).
+      # The CONTAINER side stays fixed — nginx, config/instance.json, the gateway
+      # config and `next start -p` all assume 3000/18789/18790 inside the container.
+      - "127.0.0.1:${GATEWAY_HOST_PORT:-18789}:18789"
+      - "127.0.0.1:${LEGACY_HOST_PORT:-18790}:18790"
+      - "127.0.0.1:${MC_PORT:-3000}:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${OPENCLAW_HOME:-~/.openclaw}:/root/.openclaw
+      - ${SNAPSHOT_DATA_DIR:-/mnt/data/snapshots}:/mnt/data/snapshots
+    env_file:
+      - .env
+    environment:
+      - OPENCLAW_HOME=/root/.openclaw
+      - MC_BIND_ADDRESS=0.0.0.0
+      - MC_WORKSPACE=/root/.openclaw/workspace-sancho
+      - LEGACY_PORT=18790
+      # Anthropic auth: pass ANTHROPIC_API_KEY through so `api_key` mode works
+      # (the product default — without this the key never reaches Sancho and
+      # preflight aborts). The subscription-billing guard is mode-aware in the
+      # entrypoint: when ANTHROPIC_AUTH_MODE=subscription it blanks this key for
+      # Sancho's process so the provider can only resolve ANTHROPIC_OAUTH_TOKEN
+      # (never a silent API-billing fallback — the historical footgun). Scoped
+      # to sanchocmo — open-design keeps its own key from its env_file.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      # Tasks backend: "json" (default), "db-shadow" or "db".
+      # When "db" or "db-shadow", DATABASE_URL must resolve to a Postgres with
+      # the schema applied (the bundled local-db does this at boot; Neon/managed
+      # uses the manual apply flow). B9 enables MI/POV/Polar on the bundled DB;
+      # the tasks cutover to "db" is tracked separately (B8).
+      - MC_TASKS_BACKEND=${MC_TASKS_BACKEND:-json}
+      - MC_TASKS_WORKSPACE=${MC_TASKS_WORKSPACE:-workspace-sancho}
+      # DATABASE_URL: bundled local Postgres by default when COMPOSE_PROFILES
+      # includes `local-db` (postgres://sancho:...@postgres:5432/sancho), or any
+      # external/Neon URL. DATABASE_DRIVER auto-detects from the host
+      # (*.neon.tech -> neon-http, else postgres-js); override to force one.
+      - DATABASE_URL=${DATABASE_URL:-}
+      - DATABASE_DRIVER=${DATABASE_DRIVER:-}
+      # Open Design (agentic editor): daemonUrl is server-to-server via the
+      # compose network; webUrl is the public URL the browser loads in the
+      # iframe / new tab. Both end at the same `open-design` container.
+      # OD_API_TOKEN is shared with the daemon — MC injects it as Bearer +
+      # spoofs `Origin: ${OD_WEB_URL}` so writes (e.g. PUT /api/app-config)
+      # pass the fork's Phase 5 auth + same-origin guard.
+      - OD_DAEMON_URL=${OD_DAEMON_URL:-http://open-design:7456}
+      - OD_WEB_URL=${OD_WEB_URL:-}
+      - OD_API_TOKEN=${OD_API_TOKEN:-}
+      # The bundled `notion` skill reads NOTION_API_TOKEN, but `.env` ships the
+      # key as NOTION_API_KEY (the name the meeting-intelligence flow + the
+      # admin api-health check expect). Alias the two so `ntn` and the skill's
+      # curl examples both authenticate against the same Notion integration
+      # without forcing every agent to remember to re-export.
+      - NOTION_API_TOKEN=${NOTION_API_KEY:-}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "case \"$${SANCHO_RUNTIME:-openclaw}\" in openclaw) curl -sf http://localhost:18789/healthz >/dev/null ;; hermes) curl -sf \"http://localhost:$${PORT:-3000}/api/health\" >/dev/null && { [ \"$${HERMES_BRIDGE_ENABLED:-0}\" != \"1\" ] || curl -sf \"http://localhost:$${HERMES_BRIDGE_PORT:-18791}/healthz\" >/dev/null; } ;; external-http|hermes-external) curl -sf \"http://localhost:$${PORT:-3000}/api/health\" >/dev/null ;; *) exit 1 ;; esac",
+        ]
+      # Tight interval + generous start_period so `docker compose up --wait`
+      # in the deploy workflow marks the container healthy within ~10s of the
+      # app being ready (instead of waiting up to a full 60s interval),
+      # minimizing the user-visible gap between old-container stop and
+      # new-container readiness.
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Bundled Postgres for the out-of-the-box "local-db" experience: MI/POV/Polar
+  # work without a Neon account. Gated behind the `local-db` Compose profile so
+  # it only runs when the wizard sets COMPOSE_PROFILES=local-db (external/Neon
+  # users leave the profile unset and point DATABASE_URL elsewhere). No
+  # `depends_on` from sanchocmo: the profile makes that a hard error when the
+  # profile is inactive, so readiness is handled by scripts/migrate-local.mjs
+  # (retry loop) and the app's lazy DB connection instead.
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["local-db"]
+    container_name: sancho-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-sancho}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-sancho}
+      - POSTGRES_DB=${POSTGRES_DB:-sancho}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sancho} -d ${POSTGRES_DB:-sancho}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  # Persists the bundled local Postgres across container restarts/upgrades.
+  postgres_data:

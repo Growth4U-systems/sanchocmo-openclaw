@@ -1,0 +1,280 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .theme {
+    --font-heading: var(--font-sans);
+    --font-sans: var(--font-sans);
+  }
+
+  /* Comic UI — Light (parchment) */
+  :root {
+    --background: #F5F0E6;
+    --foreground: #1A1A2E;
+    --card: #FDF8EF;
+    --card-foreground: #1A1A2E;
+    --popover: #FDF8EF;
+    --popover-foreground: #1A1A2E;
+    --primary: #C45D35;
+    --primary-foreground: #ffffff;
+    --secondary: #1E3A5F;
+    --secondary-foreground: #ffffff;
+    --muted: #E8DCC8;
+    --muted-foreground: #5D5348;
+    --accent: #4A5D23;
+    --accent-foreground: #ffffff;
+    --destructive: #C0392B;
+    --border: #D4C9B8;
+    --input: #D4C9B8;
+    --ring: #C45D35;
+    --chart-1: #C45D35;
+    --chart-2: #1E3A5F;
+    --chart-3: #4A5D23;
+    --chart-4: #F2C94C;
+    --chart-5: #3B9EBF;
+    --radius: 0.5rem;
+    --sidebar: #FDF8EF;
+    --sidebar-foreground: #1A1A2E;
+    --sidebar-primary: #C45D35;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #F5F0E6;
+    --sidebar-accent-foreground: #1A1A2E;
+    --sidebar-border: #D4C9B8;
+    --sidebar-ring: #C45D35;
+
+    /* Comic UI semantic tokens */
+    --rust: #C45D35;
+    --navy: #1E3A5F;
+    --sage: #4A5D23;
+    --aged: #E8DCC8;
+    --ink: #1A1A2E;
+    --parchment: #F5F0E6;
+    --yellow: #F2C94C;
+    --cyan: #3B9EBF;
+    --green: #4A5D23;
+    --red: #C0392B;
+    --orange: #fb923c;
+    --blue: #3B82F6;
+    --purple: #C45D35;
+
+    /* ============================================================
+       Sancho Comic — full shade scale (for Content Engine UI)
+       ============================================================ */
+    --sc-ink: #1F1410;
+    --sc-ink-soft: #3B2A22;
+    --sc-paper: #FBF3E1;
+    --sc-paper-2: #F5E8C8;
+    --sc-paper-3: #FFFAEC;
+    --sc-white: #FFFFFF;
+
+    --sc-fg-soft: #3B2A22;
+    --sc-fg-muted: #6B5044;
+    --sc-fg-subtle: #9A8473;
+
+    --sc-rust-50: #FBE4D6;
+    --sc-rust-100: #F5BFA0;
+    --sc-rust-300: #E07140;
+    --sc-rust-500: #C45D35;
+    --sc-rust-600: #A34A28;
+    --sc-rust-700: #7A331A;
+
+    --sc-sun-50: #FFF6CF;
+    --sc-sun-100: #FFE57A;
+    --sc-sun-300: #F4C430;
+    --sc-sun-500: #D9A300;
+
+    --sc-navy-500: #1B2C5B;
+    --sc-navy-700: #0E1A3A;
+
+    --sc-sage-100: #C8DDB8;
+    --sc-sage-500: #4F7F4F;
+
+    --sc-brick-500: #B83A2C;
+    --sc-brick-bg: #F6D9D2;
+
+    --sc-caramel-50: #F8E6CC;
+    --sc-caramel-100: #ECC893;
+    --sc-caramel-200: #DDA961;
+
+    /* Pop shadows — hard offset, no blur (the comic sticker move) */
+    --pop-xs: 2px 2px 0 0 var(--sc-ink);
+    --pop-sm: 3px 3px 0 0 var(--sc-ink);
+    --pop-md: 5px 5px 0 0 var(--sc-ink);
+    --pop-lg: 8px 8px 0 0 var(--sc-ink);
+
+    /* Radii — chunkier than default */
+    --sc-r-sm: 4px;
+    --sc-r-md: 8px;
+    --sc-r-lg: 14px;
+    --sc-r-tile: 22px;
+    --sc-r-pill: 999px;
+
+    /* Motion */
+    --sc-dur-fast: 90ms;
+    --sc-dur-base: 160ms;
+    --sc-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Halftone texture */
+    --sc-halftone-dots: radial-gradient(rgba(31,20,16,0.12) 1.2px, transparent 1.6px);
+
+    /* ============================================================
+       Sancho Chat — warm parchment surface (light)
+       Centralizes the chat palette so the sidebar matches the brand
+       instead of the old slate/Catppuccin dark. Referenced via
+       bg-[var(--chat-*)] / text-[var(--chat-*)] utilities.
+       ============================================================ */
+    --chat-bg: #F4EEE1;          /* chat canvas — warm paper */
+    --chat-bg-deep: #EBE2D1;     /* thread-list rail */
+    --chat-surface: #FFFCF6;     /* bot bubble / cards — cream */
+    --chat-surface-2: #F0E7D6;   /* inputs, chips, secondary fills */
+    --chat-border: #E4D9C4;      /* hairline warm border */
+    --chat-border-strong: #D2C4AC;
+    --chat-text: #332E26;        /* primary ink */
+    --chat-text-muted: #6E6553;  /* secondary */
+    --chat-text-faint: #9A8E78;  /* timestamps, hints */
+    --chat-link: #A34A28;        /* rust-600 — readable on parchment */
+    --chat-danger: #B4322E;
+  }
+
+  /* Comic UI — Dark (Catppuccin-inspired) */
+  .dark {
+    --background: #1A1A2E;
+    --foreground: #FDF8EF;
+    --card: #2D2D44;
+    --card-foreground: #FDF8EF;
+    --popover: #2D2D44;
+    --popover-foreground: #FDF8EF;
+    --primary: #D4734F;
+    --primary-foreground: #ffffff;
+    --secondary: #60a5fa;
+    --secondary-foreground: #ffffff;
+    --muted: #3D3D5C;
+    --muted-foreground: #A09890;
+    --accent: #6B8E23;
+    --accent-foreground: #ffffff;
+    --destructive: #E74C3C;
+    --border: #3D3D5C;
+    --input: #3D3D5C;
+    --ring: #D4734F;
+    --chart-1: #D4734F;
+    --chart-2: #60a5fa;
+    --chart-3: #6B8E23;
+    --chart-4: #F2C94C;
+    --chart-5: #5BBAD9;
+    --sidebar: #2D2D44;
+    --sidebar-foreground: #FDF8EF;
+    --sidebar-primary: #D4734F;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #3D3D5C;
+    --sidebar-accent-foreground: #FDF8EF;
+    --sidebar-border: #3D3D5C;
+    --sidebar-ring: #D4734F;
+
+    /* Comic UI semantic tokens — dark */
+    --rust: #D4734F;
+    --navy: #60a5fa;
+    --sage: #6B8E23;
+    --aged: #3D3D5C;
+    --ink: #FDF8EF;
+    --parchment: #1A1A2E;
+    --yellow: #F2C94C;
+    --cyan: #5BBAD9;
+    --green: #6B8E23;
+    --red: #E74C3C;
+    --orange: #fb923c;
+    --blue: #60a5fa;
+    --purple: #D4734F;
+
+    /* Sancho Chat — warm dark (preserves the old slate feel for
+       dark-mode users instead of regressing them to parchment) */
+    --chat-bg: #1E1B26;
+    --chat-bg-deep: #181621;
+    --chat-surface: #2C2838;
+    --chat-surface-2: #3A3548;
+    --chat-border: #3D3A4C;
+    --chat-border-strong: #56516A;
+    --chat-text: #E8E2D6;
+    --chat-text-muted: #A8A192;
+    --chat-text-faint: #756E63;
+    --chat-link: #E0915F;
+    --chat-danger: #f38ba8;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ============================================================
+   Sancho Comic utilities — used by Content Engine screens
+   ============================================================ */
+.sc-halftone {
+  background-image: var(--sc-halftone-dots);
+  background-size: 14px 14px;
+}
+.sc-halftone-strong {
+  background-image: radial-gradient(rgba(31,20,16,0.22) 1.4px, transparent 1.8px);
+  background-size: 10px 10px;
+}
+.sc-pop-hover { transition: transform var(--sc-dur-fast) var(--sc-ease-pop), box-shadow var(--sc-dur-fast); }
+.sc-pop-hover:hover { transform: translate(-1px, -1px); box-shadow: var(--pop-sm); }
+.sc-pop-hover:active { transform: translate(2px, 2px); box-shadow: none; }
+.sc-burst {
+  display: inline-grid; place-items: center;
+  background: var(--sc-sun-300);
+  color: var(--sc-ink);
+  border: 2.5px solid var(--sc-ink);
+  font-weight: 800;
+  text-align: center;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  clip-path: polygon(
+    50% 0%, 60% 12%, 75% 5%, 75% 22%, 92% 22%, 82% 38%, 100% 50%,
+    82% 62%, 92% 78%, 75% 78%, 75% 95%, 60% 88%, 50% 100%, 40% 88%,
+    25% 95%, 25% 78%, 8% 78%, 18% 62%, 0% 50%, 18% 38%, 8% 22%,
+    25% 22%, 25% 5%, 40% 12%);
+  transform: rotate(-8deg);
+}
+
+/* Toast UI Editor — force light theme in dark mode */
+.toastui-editor-defaultUI {
+  background: #fff !important;
+  border: 1px solid #e5e2dc !important;
+  border-radius: 8px !important;
+}
+.toastui-editor-md-container,
+.toastui-editor-ww-container {
+  background: #fff !important;
+}
+.toastui-editor-md-container .CodeMirror {
+  background: #fff !important;
+  color: #1a1a1a !important;
+}
+.toastui-editor-contents,
+.toastui-editor-contents p,
+.toastui-editor-contents li,
+.toastui-editor-contents td,
+.toastui-editor-contents th,
+.toastui-editor-contents h1,
+.toastui-editor-contents h2,
+.toastui-editor-contents h3,
+.toastui-editor-contents h4,
+.ProseMirror {
+  color: #1a1a1a !important;
+}
+.cm-s-default .cm-header { color: #1e40af !important; }
+.cm-s-default .cm-link { color: #047857 !important; }
+.cm-s-default .cm-string { color: #b45309 !important; }
+.toastui-editor-mode-switch {
+  background: #fafaf8 !important;
+  border-top: 1px solid #e5e2dc !important;
+}

@@ -1,0 +1,6 @@
+services:
+  sanchocmo:
+    container_name: sanchocmo-hermes
+    volumes:
+      - ${OPENCLAW_HOME:-~/.openclaw-hermes-data}:/root/.openclaw
+      - ${SNAPSHOT_DATA_DIR:-/mnt/data/snapshots-hermes}:/mnt/data/snapshots

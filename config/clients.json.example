@@ -1,0 +1,27 @@
+{
+  "$schema": "clients.schema.json",
+  "clients": [
+    {
+      "slug": "my-client",
+      "name": "My Client",
+      "emoji": "🏢",
+      "url": "https://myclient.com",
+      "guild": "discord-guild-id",
+      "language": "es",
+      "active": true,
+      "paths": {
+        "brand": "brand/",
+        "campaigns": "campaigns/"
+      },
+      "phase": 0,
+      "mcToken": "generate-with-openssl-rand-hex-32",
+      "channels": {
+        "intelligence": "discord-channel-id"
+      }
+    }
+  ],
+  "adminToken": "generate-with-openssl-rand-hex-32",
+  "adminEmails": [
+    "external.admin@example.com"
+  ]
+}

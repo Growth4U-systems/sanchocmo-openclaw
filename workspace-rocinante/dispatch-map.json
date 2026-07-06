@@ -1,0 +1,16 @@
+{
+  "version": 3,
+  "dispatch_mode": "sessions",
+  "agent": "rocinante",
+  "note": "Workspace de Rocinante (Outreach & Partnerships). Slug reutilizado: el antiguo Rocinante=QA fue renombrado a Sansón el 2026-05-11. En Fase 1 las skills viven aún en workspace-sancho/skills/. Migración a workspace-rocinante/skills/ en Fase 3.",
+  "channel_roles": {
+    "execution": {
+      "description": "Outreach saliente, prospecting, partnerships.",
+      "channels": ["prospecting", "partners"],
+      "rules": {
+        "prospecting": "Find companies, decision makers, build outreach sequences.",
+        "partners": "Find partners, create collaboration proposals, sostener conversaciones."
+      }
+    }
+  }
+}

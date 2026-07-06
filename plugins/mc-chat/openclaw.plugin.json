@@ -1,0 +1,50 @@
+{
+  "id": "mc-chat",
+  "name": "Mission Control Chat",
+  "description": "Webchat channel plugin that connects Mission Control dashboard to OpenClaw agents",
+  "version": "0.1.0",
+  "channels": ["mc-chat"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "mc-chat": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mcServerUrl": {
+            "type": "string",
+            "description": "Base URL of the Next.js MC server that serves /api/chat/webhook (e.g. http://localhost:3000)"
+          },
+          "contextPackUrl": {
+            "type": "string",
+            "description": "Base URL of the Next.js Mission Control API used for /api/chat/context-pack (e.g. http://localhost:3000)"
+          },
+          "sharedSecret": {
+            "type": "string",
+            "description": "Shared secret for authenticating webhook callbacks between gateway and MC server"
+          },
+          "allowFrom": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Portal tokens or admin tokens allowed to send messages"
+          }
+        }
+      }
+    }
+  },
+  "uiHints": {
+    "mcServerUrl": {
+      "label": "MC Server URL",
+      "placeholder": "http://localhost:3000"
+    },
+    "contextPackUrl": {
+      "label": "Context Pack API URL",
+      "placeholder": "http://localhost:3000"
+    },
+    "sharedSecret": {
+      "label": "Shared Secret",
+      "sensitive": true
+    }
+  }
+}

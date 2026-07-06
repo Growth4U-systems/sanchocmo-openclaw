@@ -1,0 +1,383 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g. v1.2.3)'
+        required: true
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ github.event.release.tag_name || inputs.tag }} to prod VPS
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.HEALTH_URL }}
+    steps:
+      - name: Checkout (need scripts/upsert-env.py for scp)
+        uses: actions/checkout@v7
+
+      - name: Resolve target tag
+        id: tag
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Deploying tag: $TAG"
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add VPS host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        env:
+          # ── Deploy infra ──────────────────────────────────────────────
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
+          RUN_DB_MIGRATIONS: ${{ vars.RUN_DB_MIGRATIONS }}
+          # YALC ships as a public GHCR image (SAN-135). Override the tag here
+          # to pin a version; empty falls back to the compose default (:edge).
+          YALC_IMAGE: ${{ vars.YALC_IMAGE }}
+          # ── Tier 1 — Auth & infra secrets ─────────────────────────────
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          OD_API_TOKEN: ${{ secrets.OD_API_TOKEN }}
+          OPENCLAW_GATEWAY_TOKEN: ${{ secrets.OPENCLAW_GATEWAY_TOKEN }}
+          GTM_OS_API_TOKEN: ${{ secrets.GTM_OS_API_TOKEN }}
+          YALC_API_TOKEN: ${{ secrets.YALC_API_TOKEN }}
+          YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
+          GHCR_USERNAME: ${{ github.actor }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+          SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          # ── Tier 2 — System APIs ──────────────────────────────────────
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+          DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+          DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
+          WAVESPEED_API_KEY: ${{ secrets.WAVESPEED_API_KEY }}
+          DUMPLING_API_KEY: ${{ secrets.DUMPLING_API_KEY }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
+          METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
+          SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
+          SANCHO_MCP_TOKENS: ${{ secrets.SANCHO_MCP_TOKENS }}
+          # ── Tier 3 — Skill APIs ───────────────────────────────────────
+          APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+          GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
+          GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
+          # UNIPILE_API_KEY / UNIPILE_DSN are intentionally NOT injected here:
+          # they are YALC provider credentials managed from the Sancho UI, which
+          # writes them to YALC's own key store (a persistent volume). Injecting
+          # them from secrets would override the UI choice on every deploy (the
+          # container env wins over the key store at boot). Sancho has no direct
+          # consumer of these vars — only YALC reads them. (SAN-36)
+          DATAFORSEO_API_KEY: ${{ secrets.DATAFORSEO_API_KEY }}
+          # ── R2 / Supabase / Cloudflare / Apify (secrets que vivían solo en el VPS) ──
+          R2_UPLOAD_IMAGE_ACCESS_KEY_ID: ${{ secrets.R2_UPLOAD_IMAGE_ACCESS_KEY_ID }}
+          R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY: ${{ secrets.R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY }}
+          R2_UPLOAD_IMAGE_BUCKET_NAME: ${{ secrets.R2_UPLOAD_IMAGE_BUCKET_NAME }}
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          # ── Variables (non-sensitive config) ─────────────────────────
+          BASE_URL: ${{ vars.BASE_URL }}
+          NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
+          NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
+          OD_WEB_URL: ${{ vars.OD_WEB_URL }}
+          OD_ALLOWED_ORIGINS: ${{ vars.OD_ALLOWED_ORIGINS }}
+          OPEN_DESIGN_IMAGE: ${{ vars.OPEN_DESIGN_IMAGE }}
+          MC_CHAT_GATEWAY: ${{ vars.MC_CHAT_GATEWAY }}
+          SLACK_REDIRECT_URI: ${{ vars.SLACK_REDIRECT_URI }}
+          ANTHROPIC_AUTH_MODE: ${{ vars.ANTHROPIC_AUTH_MODE }}
+          OPENAI_AUTH_MODE: ${{ vars.OPENAI_AUTH_MODE }}
+          ADMIN_EMAIL_DOMAIN: ${{ vars.ADMIN_EMAIL_DOMAIN }}
+          ADMIN_IDENTITY_EMAIL: ${{ vars.ADMIN_IDENTITY_EMAIL }}
+          # Force the Neon HTTP driver in G4U deploys (belt over the runtime's
+          # *.neon.tech auto-detect) so prod can never fall back to the
+          # vanilla-Postgres driver used by the bundled local-db.
+          DATABASE_DRIVER: neon
+          SANCHO_MCP_AUDIT_BACKEND: ${{ vars.SANCHO_MCP_AUDIT_BACKEND }}
+          SANCHO_MCP_AUDIT_FAIL_CLOSED: ${{ vars.SANCHO_MCP_AUDIT_FAIL_CLOSED }}
+          SANCHO_MCP_AUDIT_FILE: ${{ vars.SANCHO_MCP_AUDIT_FILE }}
+          # Sancho->YALC runtime URL inside the compose network. Default avoids the
+          # client.ts localhost:3847 fallback that left the cockpit stuck on "Checking".
+          YALC_BASE_URL: ${{ vars.YALC_BASE_URL || 'http://yalc:3847' }}
+        run: |
+          # Build payload identically to deploy-staging.yml — same key list.
+          # Empty secrets/vars are filtered out so an under-populated
+          # `production` Environment is a safe no-op.
+          PAYLOAD_B64=$(python3 - <<'PY'
+          import os, json, base64
+          KEYS = [
+              # Tier 1 — Auth & infra
+              "NEXTAUTH_SECRET", "ENCRYPTION_KEY", "DATABASE_URL",
+              "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+              "OD_API_TOKEN", "OPENCLAW_GATEWAY_TOKEN", "GTM_OS_API_TOKEN",
+              "YALC_API_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
+              "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
+              # Tier 2 — System APIs
+              "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "FIREWORKS_API_KEY",
+              "OPENAI_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "MINIMAX_API_KEY",
+              "BRAVE_API_KEY", "APIFY_API_KEY",
+              "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
+              "NOTION_API_KEY", "FAL_API_KEY",
+              "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN",
+              "INSTANTLY_API_KEY", "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
+              "SANCHO_MCP_TOKENS",
+              # Tier 3 — Skill APIs
+              "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",
+              "META_ACCESS_TOKEN", "META_AD_ACCOUNT_ID", "PAGESPEED_API_KEY",
+              # UNIPILE_* omitted on purpose — UI-managed via YALC key store (SAN-36)
+              "DATAFORSEO_API_KEY",
+              # R2 / Supabase / Cloudflare / Apify
+              "R2_UPLOAD_IMAGE_ACCESS_KEY_ID", "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
+              "R2_UPLOAD_IMAGE_BUCKET_NAME", "R2_PUBLIC_URL",
+              "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY",
+              "CLOUDFLARE_ACCOUNT_ID", "APIFY_TOKEN",
+              # Variables (non-sensitive config)
+              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL",
+              "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE", "YALC_IMAGE",
+              "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
+              "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
+              "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
+              "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
+              "SANCHO_MCP_AUDIT_FILE",
+              "YALC_BASE_URL",
+          ]
+          out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
+          print(base64.b64encode(json.dumps(out).encode()).decode())
+          PY
+          )
+
+          scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
+
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME bash -s" <<'EOF'
+            set -euo pipefail
+            cd "$DEPLOY_PATH"
+            echo "▶ Fetching tags…"
+            git fetch --tags --prune
+
+            # See deploy-staging.yml for context: brand/<slug>/ folders are
+            # transitioning from tracked to untracked-runtime. Backup before
+            # checkout so the transition deploy doesn't wipe live client data.
+            # No-op after the transition (folders are gitignored, untouched).
+            BRAND_BACKUP_DIR="$(mktemp -d -t sancho-brand-bk-XXXXXX)"
+            if [ -d workspace-sancho/brand ]; then
+              echo "▶ Backing up workspace-sancho/brand/ runtime data to $BRAND_BACKUP_DIR…"
+              for d in workspace-sancho/brand/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                [ "$name" = "example" ] && continue
+                [ "$name" = "_archived" ] && continue
+                cp -a "$d" "$BRAND_BACKUP_DIR/"
+              done
+            fi
+
+            # Prod can accumulate tracked local edits from historical runtime
+            # generators/manual hotfixes. A tag checkout must not abort on those.
+            # Stash tracked changes only: untracked runtime data remains in place,
+            # and brand folders are backed up/restored explicitly above/below.
+            if ! git diff --quiet || ! git diff --cached --quiet; then
+              echo "▶ Stashing tracked local changes before tag checkout…"
+              git stash push -m "deploy-prod-$(date -u +%Y%m%dT%H%M%SZ)" || true
+            fi
+
+            # Apply GitHub `production` Environment to ~/.openclaw/.env.
+            # When unpopulated (current state), this is a no-op — empty
+            # secrets/vars are filtered out by the payload builder.
+            ENV_HASH_BEFORE=$(sha256sum .env 2>/dev/null | cut -d' ' -f1 || echo "missing")
+            if [ -n "${PAYLOAD_B64:-}" ]; then
+              echo "▶ Upserting envs from GitHub \`production\` Environment…"
+              echo "$PAYLOAD_B64" | python3 /tmp/upsert-env.py .env
+            fi
+            ENV_HASH_AFTER=$(sha256sum .env | cut -d' ' -f1)
+            ENV_CHANGED=0
+            if [ "$ENV_HASH_BEFORE" != "$ENV_HASH_AFTER" ]; then
+              ENV_CHANGED=1
+              echo "▶ .env content changed (will force-recreate sanchocmo)"
+            fi
+            rm -f /tmp/upsert-env.py
+
+            echo "▶ Checking out $TAG…"
+            # Self-heal: discard tracked files that are regenerated or locally
+            # edited on the VPS and would abort the tag checkout. Runtime data
+            # under workspace-sancho/brand is backed up/restored above.
+            git checkout -- \
+              src \
+              workspace-escudero/skills \
+              workspace-sancho/AGENTS.md \
+              workspace-sancho/PROTOCOLS.md \
+              workspace-sancho/TOOLS.md \
+              workspace-sancho/_system/output/presentation-summary-protocol.md \
+              workspace-sancho/mission-control.html \
+              2>/dev/null || true
+            git checkout "$TAG"
+            export GIT_COMMIT="$(git rev-parse HEAD)"
+
+            # Restore brand/<slug>/ files that the checkout removed.
+            # `cp -a -n` merges any backup file that isn't already in target,
+            # so untracked-runtime data (chat, projects) survives next to
+            # restored-tracked data (foundation-state, brand-book). Idempotent.
+            if [ -d "$BRAND_BACKUP_DIR" ]; then
+              for d in "$BRAND_BACKUP_DIR"/*/; do
+                [ -d "$d" ] || continue
+                name=$(basename "$d")
+                target="workspace-sancho/brand/$name"
+                if [ -d "$target" ] && [ -n "$(ls -A "$target" 2>/dev/null || true)" ]; then
+                  before=$(find "$target" -type f 2>/dev/null | wc -l)
+                  cp -a -n "$d." "$target/" 2>/dev/null || true
+                  after=$(find "$target" -type f 2>/dev/null | wc -l)
+                  diff=$((after - before))
+                  if [ "$diff" -gt 0 ]; then
+                    echo "▶ Merged $diff missing file(s) into workspace-sancho/brand/$name from backup"
+                  fi
+                else
+                  echo "▶ Restoring workspace-sancho/brand/$name from backup…"
+                  mkdir -p "$target"
+                  cp -a "$d." "$target/"
+                fi
+              done
+              rm -rf "$BRAND_BACKUP_DIR"
+            fi
+
+            COMPOSE_ARGS="-f docker-compose.yml"
+            # Open Design is an opt-in overlay (image is public). G4U keeps it on by default.
+            [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
+            # YALC (Outreach) is an opt-in overlay; its image is public on GHCR
+            # (pulled below via `pull --ignore-buildable`, same as Open Design).
+            [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
+            echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
+            docker compose $COMPOSE_ARGS build --pull
+            if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
+              echo "▶ Running DB migrations…"
+              # Apply only the curated additive deploy migrations via the
+              # non-destructive single-file runner — mirrors deploy-staging.yml.
+              # The repo's historical SQL migrations are not a safe input for
+              # `drizzle-kit migrate` (no journal in git; one old migration drops/recreates
+              # `tasks`). Redirect stdin so the one-off container can't eat the SSH heredoc.
+              docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:deploy" < /dev/null
+            fi
+            # `build --pull` only refreshes images for services with a
+            # `build:` directive (sanchocmo). Services that consume a
+            # pre-built image (open-design via OPEN_DESIGN_IMAGE) need an
+            # explicit pull, or Docker keeps the cached local image even
+            # when the rolling tag (`:sanchocmo`, `:edge`) points at a new
+            # digest in the registry. See deploy-staging.yml for the incident.
+            if [ -n "${YALC_REPO_TOKEN:-}" ]; then
+              echo "▶ Logging in to GHCR for private deploy images…"
+              printf '%s' "$YALC_REPO_TOKEN" | docker login ghcr.io -u "${GHCR_USERNAME:-deploy}" --password-stdin >/dev/null
+            fi
+            docker compose $COMPOSE_ARGS pull --ignore-buildable || true
+            UP_ARGS="--wait --wait-timeout 180"
+            if [ "$ENV_CHANGED" = "1" ]; then
+              UP_ARGS="$UP_ARGS --force-recreate"
+            fi
+            if ! docker compose $COMPOSE_ARGS up -d $UP_ARGS; then
+              echo "▶ docker compose up failed; current service state:"
+              docker compose $COMPOSE_ARGS ps || true
+              echo "▶ yalc logs:"
+              docker compose $COMPOSE_ARGS logs --no-color --tail=200 yalc || true
+              echo "▶ sanchocmo logs:"
+              docker compose $COMPOSE_ARGS logs --no-color --tail=200 sanchocmo || true
+              exit 1
+            fi
+            echo "▶ Ensuring Rocinante workspace links for agent skills…"
+            docker compose $COMPOSE_ARGS exec -T sanchocmo sh -lc '
+              set -e
+              mkdir -p /root/.openclaw/workspace-rocinante
+              if [ -e /root/workspace-rocinante ] && [ ! -L /root/workspace-rocinante ]; then
+                echo "WARNING: /root/workspace-rocinante exists and is not a symlink; leaving it untouched"
+              else
+                ln -sfn /root/.openclaw/workspace-rocinante /root/workspace-rocinante
+              fi
+              if [ -e /root/.openclaw/workspace-rocinante/skills ] && [ ! -L /root/.openclaw/workspace-rocinante/skills ]; then
+                echo "WARNING: workspace-rocinante/skills exists and is not a symlink; leaving it untouched"
+              else
+                ln -sfn ../skills /root/.openclaw/workspace-rocinante/skills
+              fi
+              test -f /root/workspace-rocinante/skills/discovery-search-runner/SKILL.md
+            '
+            docker compose $COMPOSE_ARGS ps
+          EOF
+
+      - name: Health check
+        env:
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "::warning::HEALTH_URL variable not set on production environment; skipping health check"
+            exit 0
+          fi
+          echo "▶ Polling $HEALTH_URL (up to 60s)…"
+          for i in {1..30}; do
+            if curl -fsS --max-time 5 "$HEALTH_URL" > /dev/null; then
+              echo "✓ Health check passed"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Health check failed after 60s"
+          exit 1
+
+      - name: Rollback on failure
+        if: failure() && steps.tag.outcome == 'success'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
+        run: |
+          echo "::warning::Deploy failed. Attempting rollback to previous tag…"
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH bash -s" <<'EOF'
+            set -euo pipefail
+            cd "$DEPLOY_PATH"
+            PREV=$(git tag --sort=-creatordate | sed -n '2p')
+            if [ -z "$PREV" ]; then
+              echo "No previous tag found; cannot rollback"
+              exit 1
+            fi
+            echo "▶ Rolling back to $PREV"
+            git checkout "$PREV"
+            export GIT_COMMIT="$(git rev-parse HEAD)"
+            COMPOSE_ARGS="-f docker-compose.yml"
+            [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
+            [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
+            docker compose $COMPOSE_ARGS pull --ignore-buildable || true
+            docker compose $COMPOSE_ARGS up -d
+          EOF

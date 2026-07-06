@@ -1,0 +1,15 @@
+{
+  "name": "metrics-collector",
+  "version": "1.0.0",
+  "description": "Unified metrics collector for SanchoCMO clients",
+  "type": "module",
+  "scripts": {
+    "collect": "node collect.js",
+    "sync": "node sync-sheets.js",
+    "test": "node --test adapters/__tests__/*.test.mjs"
+  },
+  "dependencies": {
+    "google-auth-library": "^9.0.0",
+    "googleapis": "^140.0.0"
+  }
+}

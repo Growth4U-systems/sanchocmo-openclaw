@@ -1,0 +1,73 @@
+# Build context filter. CRITICAL: the Dockerfile bakes the OpenClaw "home"
+# framework into the image (/opt/sancho-seed) with `COPY workspace-*/ skills/ …`.
+# COPY honors THIS file (not .gitignore), so anything not excluded here would be
+# baked into a public image. Keep per-instance DATA and runtime state out.
+#
+# NOTE: nested matches need the `**/` prefix (`*.log` alone only matches the
+# context root), hence the `**/` patterns below.
+
+# --- VCS / deps / build artifacts ---
+.git
+.gitignore
+**/node_modules
+.next
+**/*.log
+**/*.tmp
+
+# --- backups / dev cruft / secrets / keys / env ---
+**/*.bak
+**/*.bak-*
+**/*.bak.*
+**/*.backup
+**/*.backup-*
+**/*.backup[0-9]*
+**/_backups/
+**/__pycache__/
+**/*.pyc
+**/plugins-wip/
+**/*.broken/
+.env
+.env.*
+!.env.example
+**/*.key
+**/*.pem
+
+# --- dev tooling / docs / CI (not needed at runtime) ---
+docs/
+tests/
+infra/
+.github/
+.claude/
+.husky/
+
+# --- OpenClaw runtime state (generated; never bake) ---
+.openclaw/
+workspace-*/.openclaw/
+
+# --- per-instance DATA (must NEVER land in a public image) ---
+workspace-*/memory/
+workspace-*/brand/
+workspace-*/campaigns/
+workspace-*/_backups/
+workspace-*/_system/recurring-tasks/
+workspace-*/_system/intelligence-log.json
+**/.archived/
+**/*.crt
+workspace-sancho/clients.json
+workspace-sancho/clients.js
+workspace-sancho/scripts/.channel-guild-cache.json
+config/clients.json
+config/instance.json
+config/dispatch-map.json
+cron/jobs.json
+cron/jobs.json.pre-*
+
+# NOTE (Fase 0): the repo still commits some Growth4U-specific data and
+# hardcoded client references inside framework scripts/UI (e.g.
+# workspace-sancho/scripts/regenerate.py, mc-server.js, mc-data.js, legacy-*.js).
+# This .dockerignore is a safety net, NOT a substitute for the Fase 0 repo
+# purge/decoupling — the image is NOT safe to publish publicly until that lands.
+
+# --- data mounts / snapshots ---
+mnt/
+snapshots/

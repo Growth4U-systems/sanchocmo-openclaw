@@ -1,0 +1,1308 @@
+{
+  "version": "3.0",
+  "quadrants": [
+    {
+      "id": "1to1-organic",
+      "label": "1:1 Organic",
+      "icon": "🤝"
+    },
+    {
+      "id": "1toN-organic",
+      "label": "1:Many Organic",
+      "icon": "📢"
+    },
+    {
+      "id": "1to1-paid",
+      "label": "1:1 Paid",
+      "icon": "💰"
+    },
+    {
+      "id": "1toN-paid",
+      "label": "1:Many Paid",
+      "icon": "💳"
+    },
+    {
+      "id": "transversal",
+      "label": "Transversal",
+      "icon": "⚙️"
+    }
+  ],
+  "strategies": [
+    {
+      "id": "01",
+      "name": "ICP List B2B Outreach",
+      "quadrant": "1to1-organic",
+      "objetivo": "Generar ≥10 meetings cualificados/mes con pipeline de €50K+",
+      "prerequisitos": "ACV >€1K/deal, ICP definido con precisión, sequencer (Instantly, Lemlist)",
+      "tiempoResultado": "2-4 semanas (primeras respuestas), 4-8 semanas (primeras reuniones)",
+      "b2b": "core",
+      "b2c": "no",
+      "sectores": [
+        "SaaS",
+        "Consultoría",
+        "Servicios profesionales",
+        "Tech",
+        "Industrial"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "lead-gen",
+        "conversion"
+      ],
+      "skills": [
+        "company-finder",
+        "decision-maker-finder",
+        "contact-enrichment",
+        "outreach-sequence-builder"
+      ],
+      "workflow": {
+        "objetivo": "Lead generation + pipeline de ventas B2B. Cuando tienes ACV suficiente para justificar el esfuerzo 1:1, sabes exactamente quién es tu ICP, y necesitas resultados rápidos sin depender de inbound. Construyes una lista basada en criterios de ICP, enriqueces contactos, y lanzas secuencia de outreach. Sin magia — ejecución pura.",
+        "ideacion": "- Definir criterios de empresa objetivo: industria, tamaño (empleados/revenue), geografía, tecnología\n- Revisar `ecps.md` → extraer dolores específicos del ICP para personalización de mensajes\n- Definir segmentos dentro del ICP (si hay sub-nichos): cada segmento puede tener un ángulo distinto\n- Volumen de lista: 200-500 empresas por campaña",
+        "creacion": "- **List building**: `company-finder` → lista de 200-500 empresas\n- **Decision makers**: `decision-maker-finder` → persona correcta por empresa\n- **Enriquecimiento**: `contact-enrichment` → email verificado, LinkedIn, contexto\n- **Secuencia de outreach**: `outreach-sequence-builder` → 3-5 touchpoints:\n  - Email 1: contexto específico + dolor ICP + CTA suave\n  - LinkedIn connection + mensaje personalizado (día 2-3)\n  - Email 2: case study o dato relevante (día 5)\n  - Llamada si ACV >€10K (día 7)\n  - Email 3: breakup email con valor (día 10)",
+        "ejecucion": "- Warm-up de dominios de envío (2 semanas antes si dominio nuevo)\n- 30-50 emails/día por buzón (no más)\n- Gestionar respuestas en <4h\n- No-response → nurture list (recontactar en 90 días)",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Open rate | >50% |\n| Reply rate | >15% |\n| Positive reply rate | >5% |\n| Meeting booked rate | >3% |\n| Pipeline generado | >€50K/mes |\n| Cost per meeting | <€100 |"
+      },
+      "cuandoUsar": [
+        "B2B con ACV >€1K",
+        "ICP definido y listable",
+        "Necesitas pipeline rápido"
+      ],
+      "cuandoNoUsar": [
+        "B2C",
+        "Sin sequencer",
+        "ACV <€200"
+      ]
+    },
+    {
+      "id": "02",
+      "name": "Trust Engine Media Placements",
+      "quadrant": "1to1-organic",
+      "objetivo": "≥4 apariciones/mes en medios del nicho, >1K visitas atribuidas/mes, >10 leads/mes",
+      "prerequisitos": "Founder/experto con experiencia demostrable, 1-2 temas de expertise claros",
+      "tiempoResultado": "2-8 semanas",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera con ecosistema de medios/creadores en su vertical"
+      ],
+      "velocidad": "medio",
+      "objetivos": [
+        "awareness",
+        "autoridad"
+      ],
+      "skills": [
+        "company-finder",
+        "direct-response-copy",
+        "seo-content",
+        "outreach-sequence-builder",
+        "content-atomizer"
+      ],
+      "workflow": {
+        "objetivo": "Autoridad + awareness + lead gen accediendo a audiencias que ya confían en otro. La clave es el **trust transfer**: cuando un host de podcast te recomienda, su audiencia te recibe con confianza heredada. La diferencia entre orgánico y pagado NO es una estrategia distinta — es el outcome de la negociación.",
+        "ideacion": "- **Podcasts**: ListenNotes.com, Apple Podcasts/Spotify, \"[competidor] podcast\" en Google\n- **Blogs/Publicaciones**: \"[industria] + guest post / write for us\", backlinks de competidores\n- **Newsletters**: SparkLoop marketplace, \"[industria] newsletter\"\n- **Influencers/Creadores**: LinkedIn/Twitter/YouTube creators del nicho\n- **Criterios**: Audiencia relevante > tamaño. Engagement real. Fit temático.\n- **Output**: Lista maestra de 30-50 medios target",
+        "creacion": "- Consumir su contenido → interactuar genuinamente (2 semanas warm-up)\n- Preparar 3 talking points únicos: dato propio, experiencia contraintuitiva, framework accionable\n- Pitch universal adaptable + one-pager de speaker/empresa + materials de soporte",
+        "ejecucion": "La negociación determina si es orgánico o pagado:\n\n| Outcome | Cuándo suele pasar |\n|---------|-------------------|\n| **Orgánico** | Aportas valor único, audiencia pequeña-media |\n| **Pagado fijo** | Medio profesionalizado con media kit |\n| **Revenue share / Afiliado** | Relación a largo plazo, confianza mutua |\n| **Híbrido** | Mezcla de valor + compensación |\n\nPost-aparición: reutilizar en clips (content-atomizer), compartir en LinkedIn, añadir \"as seen in\"",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Tasa de respuesta pitches | >20% |\n| Apariciones totales/mes | ≥4 |\n| Tráfico atribuido (UTM) | >1K visitas/mes |\n| Leads desde placements | >10/mes |\n| ROI placements pagados | >3x |"
+      },
+      "cuandoUsar": [
+        "Experto con perspectiva de valor",
+        "ICP consume podcasts/blogs/newsletters"
+      ],
+      "cuandoNoUsar": [
+        "Sin expertise demostrable",
+        "Sin product-market fit"
+      ]
+    },
+    {
+      "id": "03",
+      "name": "Adjacent Ecosystem Partnerships",
+      "quadrant": "1to1-organic",
+      "objetivo": "≥3 socios activos, >50 leads/trimestre desde partnerships",
+      "prerequisitos": "Oferta complementaria, audiencias solapadas, disposición a dar antes de pedir",
+      "tiempoResultado": "6-12 semanas",
+      "b2b": "core",
+      "b2c": "adaptacion",
+      "sectores": [
+        "SaaS (integraciones)",
+        "Fintech (gestorías)",
+        "Services",
+        "E-commerce",
+        "Salud"
+      ],
+      "velocidad": "medio",
+      "objetivos": [
+        "awareness",
+        "lead-gen"
+      ],
+      "skills": [
+        "company-finder",
+        "direct-response-copy"
+      ],
+      "workflow": {
+        "objetivo": "Lead generation + awareness a través de relaciones recíprocas con el ecosistema adyacente. Los adyacentes sirven al MISMO cliente con un producto/servicio diferente. Cuando un consultor recomienda tu herramienta, la conversión es brutal porque viene con endorsement implícito.",
+        "ideacion": "Mapear TODOS los adyacentes:\n\n| Tipo de adyacente | Ejemplo (SaaS marketing) | Activación |\n|-------------------|--------------------------|------------|\n| Tools complementarias | CRM, analytics, email | Integración + co-marketing |\n| Consultores/freelancers | Growth consultants, SEO | Referral mutuo |\n| Agencias | Marketing, diseño, dev | Incluirte en su stack |\n| Asociaciones/comunidades | Cámaras de comercio | Eventos, contenido conjunto |\n| Formadores/educadores | Bootcamps, cursos | Guest teaching, bundle |",
+        "creacion": "- Relationship building primero (2-4 semanas antes de proponer nada)\n- Formatos de co-activación: referral mutuo informal, email cross-promo, webinar conjunto, guía co-creada, bundle, integración técnica",
+        "ejecucion": "- Negociar términos → pilot → si funciona, repetir mensualmente → relación permanente\n- Los mejores partners se convierten en canal permanente de referral",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Socios activos | ≥3 |\n| Leads/trimestre desde partners | >50 |\n| Conversion rate leads partnership | >10% |\n| CAC via partnerships vs. otros | <50% del CAC normal |"
+      },
+      "cuandoUsar": [
+        "Ecosistema de adyacentes existe",
+        "Producto complementario claro"
+      ],
+      "cuandoNoUsar": [
+        "No hay adyacentes claros",
+        "Quieres resultados en <30 días"
+      ]
+    },
+    {
+      "id": "04",
+      "name": "Customer Advocacy (Reviews + Referrals)",
+      "quadrant": "1to1-organic",
+      "objetivo": "≥3 reviews nuevos/mes (rating >4.5) + ≥5 referidos/mes (conversión >40%)",
+      "prerequisitos": "Base de clientes satisfechos, plataformas de review identificadas",
+      "tiempoResultado": "2-4 semanas",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "SaaS",
+        "E-commerce",
+        "Fintech",
+        "Salud",
+        "Educación",
+        "Hospitality"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "lead-gen",
+        "conversion"
+      ],
+      "skills": [
+        "direct-response-copy",
+        "email-sequences"
+      ],
+      "workflow": {
+        "objetivo": "Social proof (92% de compradores B2B leen reviews) + lead gen de alta calidad (referidos convierten 3-5x más que cold). Ambos salen del mismo lugar: un cliente satisfecho.",
+        "ideacion": "- Identificar promotores: NPS 9-10, resultados demostrables\n- Timing triggers: post-win, renovación, post-NPS alto\n- Plataformas: G2/Capterra (SaaS), Clutch (services), Trustpilot (fintech), Google Business (local)",
+        "creacion": "**Track B2B (1:1, personal):**\n- Ask combinado en la misma conversación: review + referral\n- \"Triángulo de referral\" — 3 ángulos para que piense\n- Pedir en llamada (más efectivo que email)\n\n**Track B2C (automatizado):**\n\n| Trigger | Acción | Timing |\n|---------|--------|--------|\n| Post-compra satisfactoria | Email: \"Deja un review\" | 24-48h |\n| NPS 9-10 | Redirect a plataforma review | Inmediato |\n| 3ª compra / milestone | \"Comparte con amigo → [incentivo]\" | Automatizado |\n| Review dejado | \"Gracias — código de referral: [X]\" | Post-review |",
+        "ejecucion": "- B2B: link directo al formulario, follow-up a 5 días, contactar referido en <48h\n- B2C: triggers automatizados, A/B test timing, monitorear reviews\n- Ambos: compartir reviews en LinkedIn, incorporar en decks/landing/emails",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Reviews nuevos/mes | ≥3 (B2B) / ≥20 (B2C) |\n| Rating promedio | >4.5 |\n| Referidos/mes | ≥5 |\n| Conversión referidos | >40% |\n| CAC referidos vs. otros | <25% del CAC normal |"
+      },
+      "cuandoUsar": [
+        "Clientes satisfechos",
+        "Producto con resultados demostrables"
+      ],
+      "cuandoNoUsar": [
+        "Pre-PMF",
+        "Churn alto",
+        "Sin base de clientes"
+      ]
+    },
+    {
+      "id": "05",
+      "name": "Warm Outreach",
+      "quadrant": "1to1-organic",
+      "objetivo": "Activar ≥15 contactos/semana, tasa respuesta >40%, ≥3 meetings/semana",
+      "prerequisitos": "Base de contactos existente (LinkedIn, CRM, email)",
+      "tiempoResultado": "1-2 semanas",
+      "b2b": "core",
+      "b2c": "no",
+      "sectores": [
+        "Consultoría",
+        "Services",
+        "SaaS enterprise",
+        "Formación B2B"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "lead-gen",
+        "conversion"
+      ],
+      "skills": [
+        "outreach-sequence-builder"
+      ],
+      "workflow": {
+        "objetivo": "La estrategia MÁS rápida. Ya tienes contactos que te conocen. Cada contacto warm tiene 5-10x más probabilidad de responder que cold.",
+        "ideacion": "- Exportar contactos → categorizar: ex-clientes, leads no cerrados, networking, ex-colegas, seguidores activos\n- Para cada uno, buscar \"trigger de reconexión\" reciente",
+        "creacion": "- Templates por categoría: ex-cliente, lead no cerrado, networking\n- NUNCA pitch directo en primer mensaje — CTA suave",
+        "ejecucion": "- 15-25 contactos/semana (personalizado)\n- Canal donde la relación es más fuerte (LinkedIn, email, WhatsApp)\n- Máximo 2 follow-ups",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Contactos activados/semana | 15-25 |\n| Tasa de respuesta | >40% |\n| Meetings/semana | ≥3 |\n| Conversión a cliente | >15% |"
+      },
+      "cuandoUsar": [
+        "Red de contactos existente",
+        "Ex-clientes o leads fríos"
+      ],
+      "cuandoNoUsar": [
+        "Sin red previa",
+        "Red <50 contactos relevantes"
+      ]
+    },
+    {
+      "id": "06",
+      "name": "Community & Reddit Participation",
+      "quadrant": "1to1-organic",
+      "objetivo": "Presencia activa en 3-5 comunidades, ≥15 interacciones/semana, ≥3 leads de Reddit/mes",
+      "prerequisitos": "5-8h/semana, comunidades del ICP identificadas, cuenta Reddit con historial",
+      "tiempoResultado": "4-8 semanas (reputación), 2-4 meses (leads)",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Tech",
+        "SaaS",
+        "Gaming",
+        "Crypto/Fintech",
+        "Developer tools",
+        "Fitness",
+        "Educación"
+      ],
+      "velocidad": "lento",
+      "objetivos": [
+        "awareness",
+        "autoridad",
+        "comunidad"
+      ],
+      "skills": [
+        "daily-pulse",
+        "keyword-research"
+      ],
+      "workflow": {
+        "objetivo": "Awareness + autoridad + AIO/GEO. Reddit tiene triple impacto: (1) trust directo, (2) rankea en Google, (3) LLMs citan Reddit como fuente primaria.",
+        "ideacion": "- Descubrir comunidades: slofile.com (Slack), disboard.org (Discord), Gummy Search (Reddit)\n- Seleccionar 3-5 total. Lurk 1-2 semanas → entender tono, normas\n- Cross-reference con SEO → queries donde Reddit ya rankea en Google",
+        "creacion": "**Regla 10-3-1**: 10 interacciones de valor → 3 contenido propio → 1 mención producto.\n\n| Plataforma | Tono | Mención producto |\n|-----------|------|------------------|\n| Slack/Discord | Profesional-casual | OK después de 30 días si natural |\n| Reddit | Directo, sin jerga | SOLO si preguntan + disclosure |\n| LinkedIn Groups | Profesional | Más tolerado pero sin spam |",
+        "ejecucion": "- Reddit: ≥10 contribuciones de valor/semana, 1-2 posts propios/semana, AMA cuando karma >1K\n- Slack/Discord: presentarte → regla 10-3-1 → identificar power users",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Comunidades activas | 3-5 |\n| Interacciones de valor/semana | ≥15 |\n| DMs inbound/mes | ≥5 |\n| Leads atribuidos | ≥3/mes |\n| Reddit karma/mes | ≥500 upvotes |"
+      },
+      "cuandoUsar": [
+        "ICP en comunidades online",
+        "Expertise real",
+        "Quieres AIO/GEO (Reddit)"
+      ],
+      "cuandoNoUsar": [
+        "ICP no está en comunidades",
+        "Sin 5h/semana",
+        "Sin PMF"
+      ]
+    },
+    {
+      "id": "07",
+      "name": "ABM (Account-Based Marketing)",
+      "quadrant": "1to1-paid",
+      "objetivo": "≥30% target accounts alcanzadas, ≥5 meetings/trimestre enterprise",
+      "prerequisitos": "<500 cuentas objetivo, €5K+/mes, persona dedicada, ads configurado",
+      "tiempoResultado": "6-12 semanas",
+      "b2b": "core",
+      "b2c": "no",
+      "sectores": [
+        "Enterprise SaaS",
+        "Cybersecurity",
+        "HR Tech",
+        "Fintech B2B",
+        "Industrial"
+      ],
+      "velocidad": "medio",
+      "objetivos": [
+        "lead-gen",
+        "conversion"
+      ],
+      "skills": [
+        "company-finder",
+        "decision-maker-finder",
+        "outreach-sequence-builder",
+        "paid-ads"
+      ],
+      "workflow": {
+        "objetivo": "Pipeline enterprise con deals >€10K ACV. Pescas con arpón, no con red. Cada cuenta recibe tratamiento personalizado multi-canal imposible de ignorar.",
+        "ideacion": "- Lista <500 empresas específicas + mapa decisores (2-5 personas/empresa)",
+        "creacion": "- Ads dirigidas (LinkedIn company targeting) + contenido personalizado + outreach coordinado",
+        "ejecucion": "- Multi-touch orchestration: ad → email → LinkedIn → contenido → llamada",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Cuentas alcanzadas (%) | ≥30% |\n| Meeting rate por cuenta | >10% |\n| Pipeline por cuenta | >€10K |\n| Meetings/trimestre | ≥5 |"
+      },
+      "cuandoUsar": [
+        "ACV >€10K",
+        "<500 cuentas",
+        "Enterprise con ciclo largo"
+      ],
+      "cuandoNoUsar": [
+        "ACV <€5K",
+        ">1000 cuentas",
+        "Sin budget ads €5K+/mes"
+      ]
+    },
+    {
+      "id": "08",
+      "name": "SEO Content",
+      "quadrant": "1toN-organic",
+      "objetivo": "≥5K visitas orgánicas/mes a 6 meses, ≥10 keywords en top 10",
+      "prerequisitos": "CMS + herramienta SEO, capacidad de escritura, 3-6 meses compromiso",
+      "tiempoResultado": "3-6 meses",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera con demanda de búsqueda"
+      ],
+      "velocidad": "lento",
+      "objetivos": [
+        "awareness",
+        "lead-gen",
+        "autoridad"
+      ],
+      "skills": [
+        "keyword-research",
+        "seo-content",
+        "content-atomizer"
+      ],
+      "workflow": {
+        "objetivo": "Tráfico orgánico sostenible a través de contenido optimizado para buscadores. Extensión AIO/GEO: SEO maduro → extender con estructura AIO para ChatGPT/Perplexity.",
+        "ideacion": "- Keyword research por pilares temáticos del ICP → mapear a intención (TOFU/MOFU/BOFU)",
+        "creacion": "- Artículos optimizados para ranking + lectura humana + párrafos auto-contenidos (bonus AIO)",
+        "ejecucion": "- 2-4 artículos/mes, distribución social, actualizar cada 6-12 meses",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Tráfico orgánico/mes | ≥5K |\n| Keywords top 10 | ≥10 |\n| Leads orgánicos/mes | tracking |\n| Domain Rating | crecimiento |"
+      },
+      "cuandoUsar": [
+        "ICP busca en Google",
+        "Horizonte 3-6 meses"
+      ],
+      "cuandoNoUsar": [
+        "ICP no busca en Google",
+        "Sin CMS",
+        "Necesitas resultados <3 meses"
+      ]
+    },
+    {
+      "id": "09",
+      "name": "Community Building",
+      "quadrant": "1toN-organic",
+      "objetivo": "≥100 miembros activos (>20% participación), ≥5 leads/trimestre",
+      "prerequisitos": "Community manager o founder 5h/semana, 6-12 meses horizonte",
+      "tiempoResultado": "3-6 meses",
+      "b2b": "adaptacion",
+      "b2c": "core",
+      "sectores": [
+        "SaaS",
+        "Gaming",
+        "Educación",
+        "Fitness",
+        "Crypto",
+        "Developer tools"
+      ],
+      "velocidad": "lento",
+      "objetivos": [
+        "autoridad",
+        "retencion",
+        "comunidad"
+      ],
+      "skills": [
+        "content-calendar-planner"
+      ],
+      "workflow": {
+        "objetivo": "Construir comunidad propia como canal de retención, autoridad y lead gen a largo plazo.",
+        "ideacion": "- Plataforma: Slack (B2B), Discord (tech), Circle (premium), Skool (educativa)\n- Propósito claro (no \"vender\"), rituales semanales/mensuales",
+        "creacion": "- Primeros 50 miembros curados manualmente → founder participa activamente",
+        "ejecucion": "- 80/20 contenido (80% miembros, 20% tú)\n- Rituales: weekly thread, monthly AMA, quarterly meetup",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Miembros activos | ≥100 |\n| Participación | >20% |\n| Retention 3 meses | >60% |\n| Pipeline atribuido | tracking |"
+      },
+      "cuandoUsar": [
+        "ICP con interés en comunidad",
+        "Horizonte 6-12 meses"
+      ],
+      "cuandoNoUsar": [
+        "Sin community manager",
+        "Producto sin base usuarios"
+      ]
+    },
+    {
+      "id": "10",
+      "name": "Product Hunt Launch",
+      "quadrant": "1toN-organic",
+      "objetivo": "Top 5 del día, ≥200 upvotes, ≥500 signups",
+      "prerequisitos": "Producto digital funcional, comunidad para votos día 1",
+      "tiempoResultado": "Inmediato",
+      "b2b": "core",
+      "b2c": "adaptacion",
+      "sectores": [
+        "SaaS",
+        "AI tools",
+        "Developer tools",
+        "Productivity",
+        "Design"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "awareness",
+        "lead-gen"
+      ],
+      "skills": [
+        "direct-response-copy"
+      ],
+      "workflow": {
+        "objetivo": "Lanzamiento concentrado para máxima visibilidad en 24h en la comunidad tech/early adopter.",
+        "ideacion": "- Preparación 4 semanas antes: tagline, gallery, video demo, hunter, supporters",
+        "creacion": "- Assets: screenshots, video demo 60s, maker comment preparado, descripción con social proof",
+        "ejecucion": "- Launch: martes-jueves, founder responde CADA comentario, follow-up PH-exclusive",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Posición ranking | Top 5 |\n| Upvotes | ≥200 |\n| Signups | ≥500 |\n| Conversión visitors → usuarios | tracking |"
+      },
+      "cuandoUsar": [
+        "Producto tech listo",
+        "Primera vez",
+        "Audiencia early adopter"
+      ],
+      "cuandoNoUsar": [
+        "B2B enterprise",
+        "Sin producto funcional"
+      ]
+    },
+    {
+      "id": "11",
+      "name": "Free Tool Strategy",
+      "quadrant": "1toN-organic",
+      "objetivo": "≥1K users/mes, ≥100 email captures/mes, ranking top 3 keyword",
+      "prerequisitos": "Capacidad técnica, funnel de captura",
+      "tiempoResultado": "4-8 semanas",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "SaaS",
+        "Fintech",
+        "Marketing",
+        "HR Tech",
+        "Legal",
+        "Salud"
+      ],
+      "velocidad": "medio",
+      "objetivos": [
+        "awareness",
+        "lead-gen",
+        "autoridad"
+      ],
+      "skills": [
+        "free-tool-strategy",
+        "landing-pages",
+        "email-sequences"
+      ],
+      "workflow": {
+        "objetivo": "Crear herramienta gratuita que resuelve un problema del ICP, captura emails, y genera awareness + backlinks orgánicos.",
+        "ideacion": "- Problema ICP resoluble con tool simple + keyword de alto volumen",
+        "creacion": "- Elemento viral: OG image dinámica + \"promoting the tool IS promoting themselves\"\n- Landing SEO + email capture + follow-up sequence",
+        "ejecucion": "- Lanzar → distribuir en comunidades + Product Hunt + directorios\n- Iterar basado en uso real",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Users/mes | ≥1K |\n| Email captures/mes | ≥100 |\n| Ranking keyword | Top 3 |\n| Conversión tool → pago | tracking |"
+      },
+      "cuandoUsar": [
+        "Funcionalidad freemium natural",
+        "ICP busca herramientas gratis"
+      ],
+      "cuandoNoUsar": [
+        "Sin dev",
+        "Herramienta sin relación con producto",
+        "Mercado saturado"
+      ]
+    },
+    {
+      "id": "12",
+      "name": "Webinars / Eventos Online",
+      "quadrant": "1toN-organic",
+      "objetivo": "≥100 registrados, >40% show-up, ≥15 leads cualificados",
+      "prerequisitos": "Experto, plataforma (Zoom/StreamYard), lista >500",
+      "tiempoResultado": "3-4 semanas",
+      "b2b": "core",
+      "b2c": "adaptacion",
+      "sectores": [
+        "SaaS",
+        "Consultoría",
+        "Educación",
+        "Fintech",
+        "Salud",
+        "Legal"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "lead-gen",
+        "conversion",
+        "autoridad"
+      ],
+      "skills": [
+        "content-calendar-planner",
+        "direct-response-copy",
+        "content-atomizer"
+      ],
+      "workflow": {
+        "objetivo": "Eventos online como canal de lead gen + autoridad. Tema de pattern-detector (qué pregunta el ICP).",
+        "ideacion": "- Formatos: educational, panel, workshop, AMA\n- Tema basado en dolores ICP + tendencias detectadas",
+        "creacion": "- Estructura 60 min: 80% valor, 20% pitch\n- Landing de registro (máx 4 campos)",
+        "ejecucion": "- Promoción -3 semanas, live, follow-up +1-7 días, replay como lead magnet",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Registrados | ≥100 |\n| Show-up rate | >40% |\n| Leads cualificados | ≥15 |\n| Replay views | tracking |"
+      },
+      "cuandoUsar": [
+        "ICP asiste a webinars (B2B)",
+        "Expertise para presentar"
+      ],
+      "cuandoNoUsar": [
+        "Sin audiencia",
+        "ICP no consume webinars",
+        "Sin follow-up"
+      ]
+    },
+    {
+      "id": "13",
+      "name": "Free Media & Directory Listings",
+      "quadrant": "1toN-organic",
+      "objetivo": "Presencia en ≥20 directorios, ≥2 guest posts/mes, ≥5 backlinks DR >40/trimestre",
+      "prerequisitos": "Experto disponible, producto lanzado, 3-5h/semana",
+      "tiempoResultado": "1-4 semanas",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera — universal"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "awareness",
+        "autoridad"
+      ],
+      "skills": [
+        "company-finder",
+        "direct-response-copy",
+        "seo-content"
+      ],
+      "workflow": {
+        "objetivo": "Presencia gratuita en directorios, guest posts, PR gratuita y review platforms. 4 pilares de visibilidad sin coste.",
+        "ideacion": "**A. Directorios** (submit y olvidar):\n- SaaS: G2, Capterra, GetApp, TrustRadius, Clutch, GoodFirms, SaaSHub, AlternativeTo\n- AI: There's An AI For That, Futurepedia, Toolify.ai, TopAI.tools\n- Startups: Product Hunt, Crunchbase, AngelList, BetaList, F6S, Indie Hackers\n- General: Google Business, Bing Places, Apple Maps, LinkedIn Company Page\n- Servicios de submit: ListingBott ($499), LaunchDirectories (~$249)\n\n**B. Guest posting**: \"[industria] + write for us\", backlinks competidores, DR >40, pitch con ángulo único\n\n**C. PR gratuita**: HARO, Source of Sources, Featured.com, SourceBottle, MentionMatch, Qwoted\n- Proactive pitching: lista de periodistas del sector, news hijacking con daily-pulse\n\n**D. Review platforms**: G2/Capterra (SaaS), Clutch (services), Google Business (local), Trustpilot (fintech)",
+        "creacion": "- Perfiles completos en cada directorio\n- Pitches personalizados para guest posts\n- Responses rápidas a queries HARO",
+        "ejecucion": "- Semana 1-2: blitz directorios (≥15)\n- Ongoing: 5 pitches guest post + 5 respuestas HARO/semana\n- Pitch podcasts del sector",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Directorios activos | ≥20 |\n| Guest posts/mes | ≥2 |\n| Backlinks DR >40/trimestre | ≥5 |\n| Tráfico referral | tracking |"
+      },
+      "cuandoUsar": [
+        "Producto lanzado",
+        "Quieres backlinks gratis",
+        "Expertise para compartir"
+      ],
+      "cuandoNoUsar": [
+        "Pre-lanzamiento",
+        "Sin tiempo para mantener"
+      ]
+    },
+    {
+      "id": "14",
+      "name": "Referral Program",
+      "quadrant": "1toN-organic",
+      "objetivo": "≥10% clientes en programa, ≥15 referidos/mes, CPL <€20",
+      "prerequisitos": "Tracking, incentivo definido, producto con usuarios satisfechos",
+      "tiempoResultado": "4-6 semanas",
+      "b2b": "adaptacion",
+      "b2c": "core",
+      "sectores": [
+        "Fintech",
+        "E-commerce",
+        "SaaS",
+        "Apps móviles",
+        "Suscripciones",
+        "Marketplaces"
+      ],
+      "velocidad": "lento",
+      "objetivos": [
+        "lead-gen",
+        "expansion",
+        "comunidad"
+      ],
+      "skills": [
+        "referral-program",
+        "direct-response-copy"
+      ],
+      "workflow": {
+        "objetivo": "Programa de referidos estructurado con incentivos double-sided para crecimiento viral.",
+        "ideacion": "- Incentivo double-sided (referidor + referido)\n- Gamification, plataforma (Viral Loops, Rewardful)",
+        "creacion": "- Mecánica: enlace único, tracking automático, reward delivery\n- Comunicación: email de onboarding al programa, reminders",
+        "ejecucion": "- In-app prompts en momentos de satisfacción\n- Milestone PR (\"X usuarios vía referral\")",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| % clientes en programa | ≥10% |\n| Referidos/mes | ≥15 |\n| CPL | <€20 |\n| Viral coefficient | >0.3 |"
+      },
+      "cuandoUsar": [
+        "Advocacy natural",
+        "Momento viral",
+        "Incentivo justo"
+      ],
+      "cuandoNoUsar": [
+        "Churn alto",
+        "Sin tracking"
+      ]
+    },
+    {
+      "id": "15",
+      "name": "PLG (Product-Led Growth)",
+      "quadrant": "1toN-organic",
+      "objetivo": "Activation >25%, free-to-paid >5%, viral coefficient >0.3",
+      "prerequisitos": "Producto con momento viral, freemium/trial viable",
+      "tiempoResultado": "3-6 meses",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "SaaS",
+        "Productivity",
+        "Developer tools",
+        "Design",
+        "Communication"
+      ],
+      "velocidad": "lento",
+      "objetivos": [
+        "conversion",
+        "retencion",
+        "expansion"
+      ],
+      "skills": [
+        "onboarding-cro",
+        "paywall-upgrade-cro"
+      ],
+      "workflow": {
+        "objetivo": "El producto es el canal de adquisición. Diseñar freemium con acceso real al valor, identificar 'aha moment'.",
+        "ideacion": "- Identificar \"aha moment\" del producto\n- Diseñar freemium que da valor real sin regalar todo",
+        "creacion": "- Activation onboarding hacia el aha moment\n- Upsell triggers por uso\n- PQL scoring (Product Qualified Lead)",
+        "ejecucion": "- Optimizar activation → virality (1 click invitations, resultado compartible)\n- A/B test paywall, onboarding steps",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Activation rate | >25% |\n| Free-to-paid | >5% |\n| Time to value | minimizar |\n| Viral coefficient | >0.3 |\n| NRR | >110% |"
+      },
+      "cuandoUsar": [
+        "Uso frecuente",
+        "Bajo costo onboarding",
+        "Virality natural"
+      ],
+      "cuandoNoUsar": [
+        "Producto complejo",
+        "ACV muy alto (sales-led)"
+      ]
+    },
+    {
+      "id": "16",
+      "name": "Paid Ads",
+      "quadrant": "1toN-paid",
+      "objetivo": "CPL <€50 (B2B), ROAS >3x, ≥50 leads/mes",
+      "prerequisitos": "€1K+/mes, landing page/funnel listo, pixel instalado",
+      "tiempoResultado": "2-4 semanas",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera con unit economics claros"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "lead-gen",
+        "conversion"
+      ],
+      "skills": [
+        "paid-ads",
+        "direct-response-copy",
+        "landing-pages"
+      ],
+      "workflow": {
+        "objetivo": "Ads pagados como canal de adquisición escalable. Espionaje de competidores primero.",
+        "ideacion": "1. **Spy**: Meta Ads Library, LinkedIn Ad Library, Google Transparency Center, SEMrush/SpyFu\n2. **Analizar ganadores**: ads activos >30 días = validados con dinero real. Extraer: hook, dolor, CTA, formato\n3. **Adaptar**: usar ángulo/dolor validado, crear TU versión",
+        "creacion": "- 3-5 variantes creative basadas en ángulos ganadores de competidores\n- Landing optimizada para conversión",
+        "ejecucion": "- Budget mínimo → testear → escalar ganadores → nueva creative cada 2-4 semanas\n- Re-espiar cada 2 semanas",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| CPC | mercado |\n| CTR | >2% |\n| CPL | <€50 (B2B) |\n| ROAS | >3x |\n| Conversion rate landing | >15% |"
+      },
+      "cuandoUsar": [
+        "Landing optimizada",
+        "Budget ≥€1K/mes",
+        "CAC < LTV/3"
+      ],
+      "cuandoNoUsar": [
+        "Sin landing",
+        "Budget <€500",
+        "Sin tracking"
+      ]
+    },
+    {
+      "id": "17",
+      "name": "Compra de Visibilidad + Paid PR",
+      "quadrant": "1toN-paid",
+      "objetivo": "CPL <€40, ≥1 backlink DR >40/mes, ≥1 pieza PR/mes DR >50",
+      "prerequisitos": "Budget €500-€10K/acción, medios del sector identificados",
+      "tiempoResultado": "Inmediato / 2-4 semanas (PR)",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "SaaS",
+        "Fintech",
+        "Salud",
+        "Belleza",
+        "Tech",
+        "Alimentación",
+        "Moda"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "awareness",
+        "autoridad"
+      ],
+      "skills": [
+        "direct-response-copy"
+      ],
+      "workflow": {
+        "objetivo": "Compra de posiciones y visibilidad en medios del sector. 11 tipos de compra disponibles.",
+        "ideacion": "- 11 tipos: artículo patrocinado (€1K-5K), publireportaje (€3K-15K), directory premium (€200-2K/mes), awards (€2K-10K), sponsored research (€5K-20K), conference (€2K-20K), etc.",
+        "creacion": "- **Si parece anuncio, pierde todo el valor**\n- Contenido con valor editorial real, no copy publicitario",
+        "ejecucion": "- Post-publicación: \"as seen in\" en web, compartir en redes, incluir en materiales ventas",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| CPL | <€40 |\n| Leads/placement | ≥10 |\n| Backlinks DR >40 | ≥1/mes |\n| ROI | >2x |"
+      },
+      "cuandoUsar": [
+        "Budget para posiciones",
+        "Backlinks rápidos",
+        "\"As seen in\""
+      ],
+      "cuandoNoUsar": [
+        "Budget <€500",
+        "Sin UTM tracking"
+      ]
+    },
+    {
+      "id": "18",
+      "name": "Retargeting",
+      "quadrant": "1toN-paid",
+      "objetivo": "Conversion rate >5%, CPL <50% del prospecting",
+      "prerequisitos": "Tráfico >1K visitas/mes, pixel instalado, oferta de conversión",
+      "tiempoResultado": "1-2 semanas",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera con tráfico web"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "lead-gen",
+        "conversion"
+      ],
+      "skills": [
+        "paid-ads",
+        "direct-response-copy"
+      ],
+      "workflow": {
+        "objetivo": "Re-impactar visitantes que ya mostraron interés. Conversion rate mucho mayor que prospecting porque ya te conocen.",
+        "ideacion": "- Segmentar por comportamiento (pricing, carrito, lead magnet, blog)",
+        "creacion": "- Mensaje diferente por segmento\n- Offer escalation (primero valor, luego descuento)\n- Cap frecuencia 3-5/semana",
+        "ejecucion": "- Refresh creative cada 2 semanas (fatiga de anuncios)\n- Exclusión de ya-convertidos",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Conversion rate | >5% |\n| CPL vs. prospecting | <50% |\n| ROAS | >5x |"
+      },
+      "cuandoUsar": [
+        "Tráfico >1K/mes",
+        "Pixel instalado",
+        "Oferta clara"
+      ],
+      "cuandoNoUsar": [
+        "Tráfico <500",
+        "Sin pixel",
+        "Sin oferta"
+      ]
+    },
+    {
+      "id": "19",
+      "name": "Founder-Led GTM (LinkedIn Flywheel)",
+      "quadrant": "1toN-organic",
+      "objetivo": "≥3 qualified calls/week en semana 6-8, reply rate DMs warm >30%",
+      "prerequisitos": "Founder publicando 3-5x/semana en LinkedIn, ICP en LinkedIn",
+      "tiempoResultado": "4-8 semanas",
+      "b2b": "core",
+      "b2c": "no",
+      "sectores": [
+        "SaaS",
+        "Consultoría",
+        "Services",
+        "Tech",
+        "Startups",
+        "Venture/PE"
+      ],
+      "velocidad": "medio",
+      "objetivos": [
+        "lead-gen",
+        "conversion",
+        "autoridad"
+      ],
+      "skills": [
+        "brand-voice",
+        "content-calendar-planner",
+        "content-atomizer",
+        "linkedin-comment",
+        "outreach-sequence-builder"
+      ],
+      "workflow": {
+        "objetivo": "Sistema LinkedIn-específico con output medible: contenido → warm prospects → DMs → calls. Estrategia #1 para B2B early-stage.",
+        "ideacion": "Mix de contenido:\n\n| Tipo | % | Ejemplos |\n|------|---|----------|\n| Dolores ICP | 40% | Opinión propia, objeciones resueltas |\n| Frameworks accionables | 20% | Templates, procesos, checklists |\n| Building in Public | 20% | Revenue updates, failures, decisiones |\n| Case studies mini | 20% | Antes/después con datos |",
+        "creacion": "- Cada post: 1 dolor × 1 perspectiva única. Formato nativo (sin links externos)\n- Pre-engagement: seguir y comentar prospects antes del DM. Instrumentado con la skill `linkedin-comment` (arma grupo foco, elige a quién comentar con cooldown, deja el borrador en la voz del cliente) + el cron recurrente `linkedin_engagement` que sugiere proactivamente a quién comentar",
+        "ejecucion": "- Trackear quién interactúa → DM: \"Vi que comentaste en mi post sobre [X]...\"\n- Compounding: más contenido → más warm prospects → cierre más fácil\n- 3-5 posts/semana, 15+ DMs/semana",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Qualified calls/week | ≥3 |\n| Reply rate DMs warm | >30% |\n| Connection accept rate | >40% |\n| Pipeline atribuido LinkedIn | tracking CRM |"
+      },
+      "cuandoUsar": [
+        "Founder B2B con perspectiva",
+        "ICP en LinkedIn",
+        "3-5 posts/semana"
+      ],
+      "cuandoNoUsar": [
+        "Sin tiempo para contenido",
+        "ICP no en LinkedIn",
+        "B2C puro"
+      ]
+    },
+    {
+      "id": "20",
+      "name": "AIO / GEO (AI Search Optimization)",
+      "quadrant": "1toN-organic",
+      "objetivo": "Citado en ≥20% queries target en ChatGPT/Perplexity a 6 meses",
+      "prerequisitos": "Contenido existente, dominio con autoridad",
+      "tiempoResultado": "3-6 meses",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera con contenido indexable"
+      ],
+      "velocidad": "lento",
+      "objetivos": [
+        "awareness",
+        "autoridad"
+      ],
+      "skills": [
+        "keyword-research",
+        "seo-content",
+        "schema-markup"
+      ],
+      "workflow": {
+        "objetivo": "Optimizar contenido para ser citado por LLMs (ChatGPT, Perplexity, Gemini). Extensión natural del SEO tradicional.",
+        "ideacion": "- Queries del ICP que responden ChatGPT/Perplexity (no Google clásico)\n- Identificar dónde los LLMs ya citan competidores",
+        "creacion": "- \"Self-contained paragraphs\" + E-E-A-T + schema markup\n- Menciones en fuentes que LLMs priorizan (Reddit, G2, Trustpilot, Wikipedia)",
+        "ejecucion": "- Reestructurar contenido existente con párrafos auto-contenidos\n- Publicar en fuentes que LLMs indexan\n- Monitorear con Otterly.ai",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| % queries con citación | ≥20% |\n| Brand mentions en AI | crecimiento |\n| Inbound atribuido a AI | tracking |"
+      },
+      "cuandoUsar": [
+        "ICP usa ChatGPT/Perplexity",
+        "SEO maduro",
+        "Expertise real"
+      ],
+      "cuandoNoUsar": [
+        "Sin contenido",
+        "ICP no usa AI search"
+      ]
+    },
+    {
+      "id": "21",
+      "name": "Social SEO (Search Everywhere Optimization)",
+      "quadrant": "1toN-organic",
+      "objetivo": "≥30% views from search, ranking top 5 para ≥5 keywords sociales",
+      "prerequisitos": "Capacidad de video, keywords del ICP por plataforma",
+      "tiempoResultado": "2-4 meses",
+      "b2b": "adaptacion",
+      "b2c": "core",
+      "sectores": [
+        "E-commerce",
+        "Moda",
+        "Belleza",
+        "Fitness",
+        "Gastronomía",
+        "Travel",
+        "Educación"
+      ],
+      "velocidad": "medio",
+      "objetivos": [
+        "awareness",
+        "lead-gen"
+      ],
+      "skills": [
+        "keyword-research",
+        "content-calendar-planner",
+        "content-atomizer"
+      ],
+      "workflow": {
+        "objetivo": "Optimizar contenido social para búsqueda dentro de las plataformas (TikTok, Instagram, YouTube como buscadores).",
+        "ideacion": "- Keywords son DIFERENTES por plataforma (Google formal, TikTok coloquial, YouTube comparativo)\n- Research: autocomplete de cada plataforma",
+        "creacion": "- Optimizar: títulos, captions, texto en pantalla, subtítulos, hashtags por plataforma\n- Templates adaptados a cada red",
+        "ejecucion": "- Publicar 3-5x/semana por plataforma\n- Medir views from search vs. from feed",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| % views from search | ≥30% |\n| Ranking keywords sociales | Top 5 en ≥5 |\n| Follows from search | tracking |\n| Tráfico web desde social | tracking |"
+      },
+      "cuandoUsar": [
+        "ICP busca en TikTok/YouTube/Instagram",
+        "Capacidad video"
+      ],
+      "cuandoNoUsar": [
+        "ICP no busca en social",
+        "Sin producción audiovisual",
+        "B2B enterprise puro"
+      ]
+    },
+    {
+      "id": "22",
+      "name": "GTM Engineering (AI Automation Layer)",
+      "quadrant": "transversal",
+      "objetivo": "≥3x output/hora vs. manual, CPL automatizado <50% del manual",
+      "prerequisitos": "Capacidad técnica (Claude Code CLI), herramientas de automatización",
+      "tiempoResultado": "1-2 semanas setup → inmediato",
+      "b2b": "core",
+      "b2c": "adaptacion",
+      "sectores": [
+        "SaaS",
+        "Tech",
+        "Startups técnicos",
+        "Agencias",
+        "Consultoría"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "lead-gen",
+        "conversion"
+      ],
+      "skills": [
+        "todos"
+      ],
+      "workflow": {
+        "objetivo": "Capa que POTENCIA las otras 24 estrategias. No es una estrategia standalone — es un multiplicador de las demás.",
+        "ideacion": "- Variantes: outreach automation, content automation, research automation\n- Identificar bottlenecks manuales en estrategias activas",
+        "creacion": "- Herramientas: Claude Code CLI, Firecrawl, Apollo, Clay, Instantly, Phantom Buster\n- Scripts y workflows personalizados",
+        "ejecucion": "- Automatizar lo repetitivo, mantener lo humano donde importa\n- Monitorear calidad del output automatizado",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Output/hora | ≥3x vs manual |\n| Leads/hora | >10 |\n| CPL automatizado | <50% manual |\n| Time saved | >10h/semana |"
+      },
+      "cuandoUsar": [
+        "Capacidad técnica",
+        "Alto volumen",
+        "Signal-monitor HOT"
+      ],
+      "cuandoNoUsar": [
+        "Sin ops técnicos",
+        "Ultra-high-touch"
+      ]
+    },
+    {
+      "id": "23",
+      "name": "Email List as Owned Channel",
+      "quadrant": "1toN-organic",
+      "objetivo": "≥1K suscriptores a 6 meses, open rate >40%, ≥5 leads/mes",
+      "prerequisitos": "ESP configurado (Beehiiv/ConvertKit/Substack), POV claro",
+      "tiempoResultado": "3-6 meses",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera — universal"
+      ],
+      "velocidad": "lento",
+      "objetivos": [
+        "awareness",
+        "lead-gen",
+        "autoridad",
+        "comunidad"
+      ],
+      "skills": [
+        "newsletter",
+        "lead-magnet",
+        "email-sequences",
+        "content-atomizer"
+      ],
+      "workflow": {
+        "objetivo": "Newsletter de nicho como canal de ADQUISICIÓN (no conversión). Diferente de Email Sequences (MOFU): sequences convierten a quien ya está. Esta construye la lista como canal propio.",
+        "ideacion": "- POV claro + formato (curated/deep dive/hybrid) + cadencia sostenible",
+        "creacion": "- Lead magnet para primeros 200\n- Crecimiento vía LinkedIn/cross-promo/podcast/SEO",
+        "ejecucion": "- Consistencia absoluta\n- Mes 6: evaluar monetización (sponsors, premium, product)",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Suscriptores | ≥1K a 6 meses |\n| Growth rate | >10%/mes |\n| Open rate | >40% |\n| CTR | >5% |\n| Leads atribuidos | ≥5/mes |"
+      },
+      "cuandoUsar": [
+        "Perspectiva para escribir",
+        "ICP lee emails"
+      ],
+      "cuandoNoUsar": [
+        "Sin cadencia sostenible"
+      ]
+    },
+    {
+      "id": "24",
+      "name": "Customer Expansion / Account-Led Growth",
+      "quadrant": "1to1-organic",
+      "objetivo": "NRR >110%, Expansion MRR >15% del total",
+      "prerequisitos": "Base de clientes existente, CS/AM function, producto con tiers/módulos",
+      "tiempoResultado": "2-4 semanas",
+      "b2b": "core",
+      "b2c": "adaptacion",
+      "sectores": [
+        "SaaS",
+        "Enterprise software",
+        "Consultoría",
+        "Telecom",
+        "Insurance",
+        "Banking"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "conversion",
+        "expansion",
+        "retencion"
+      ],
+      "skills": [
+        "outreach-sequence-builder",
+        "direct-response-copy"
+      ],
+      "workflow": {
+        "objetivo": "Revenue expansion sin coste de adquisición. Expandir un cliente existente cuesta 5-7x menos que adquirir nuevo. NRR >120% = empresa premium.",
+        "ideacion": "- Mapear clientes por ACV actual vs. potencial\n- QBR template: resultados → ROI demostrado → \"next level\"",
+        "creacion": "- Upsell framing: \"genera más\" (no \"cuesta más\")\n- CS/AM inicia conversación estratégica (NO pitch directo)",
+        "ejecucion": "- QBRs como pipeline de expansión continua\n- Identificar señales de expansión: uso creciente, requests de features, equipo creciendo",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| NRR | >110% |\n| Expansion MRR / Total | >15% |\n| Upsell conversion rate | >30% |\n| ACV growth/año | >20% |"
+      },
+      "cuandoUsar": [
+        "Base >6 meses",
+        "Producto con módulos/tiers"
+      ],
+      "cuandoNoUsar": [
+        "Sin CS/AM",
+        "Producto de uso único"
+      ]
+    },
+    {
+      "id": "25",
+      "name": "Content Ideation Engine (Question Mining + Competitor Gap + Trends)",
+      "quadrant": "transversal",
+      "objetivo": "≥50 ideas validadas/mes, ≥80% contenido basado en datos",
+      "prerequisitos": "Herramientas SEO (Ahrefs/SEMrush), AlsoAsked, seed keywords",
+      "tiempoResultado": "1-2 semanas",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera con estrategia de contenido — universal"
+      ],
+      "velocidad": "rapido",
+      "objetivos": [
+        "awareness",
+        "lead-gen",
+        "autoridad"
+      ],
+      "skills": [
+        "keyword-research",
+        "content-calendar-planner",
+        "seo-content",
+        "content-atomizer"
+      ],
+      "workflow": {
+        "objetivo": "Motor de ideación que alimenta TODAS las estrategias de contenido. 3 fuentes combinadas para generar ideas validadas con datos.",
+        "ideacion": "**Fuente A: Question Mining (PAA / Autocomplete)**\n- Seed keywords de `ecps.md` → AlsoAsked (profundidad PAA) → AnswerThePublic (amplitud)\n- YouTube/TikTok autocomplete para ideas video/Social SEO\n- Herramientas: AlsoAsked, AnswerThePublic, Answer Socrates, Keywords Everywhere, Google Trends\n\n**Fuente B: Competitor SEO Gap Analysis**\n- Content gap: keywords donde rankean competidores pero TÚ no\n- Debilidad: posiciones 5-20 de competidores = contenido mediocre superable\n- Backlink gap: ¿qué contenido atrae backlinks? → Skyscraper technique\n- Herramientas: Ahrefs Content Gap, SEMrush Keyword Gap, SpyFu\n\n**Fuente C: Trending Topics + Internal Signals**\n- pattern-detector → temas recurrentes en conversaciones con clientes\n- daily-pulse → tendencias del mercado\n- Reddit/X/LinkedIn → qué preguntan AHORA",
+        "creacion": "- Clustering por intent → priorización por score → formato sugerido por idea\n- Feed directo a `content-calendar-planner`",
+        "ejecucion": "- Ejecutar mensualmente el pipeline completo\n- Comparar ideas generadas vs. ejecutadas vs. performance",
+        "medicion": "| Métrica | Target |\n|---------|--------|\n| Preguntas extraídas/mes | ≥50 |\n| Contenido desde PAA/mes | ≥5 |\n| Rankings PAA boxes | ≥3 |\n| % contenido data-driven | ≥80% |"
+      },
+      "cuandoUsar": [
+        "ICP busca en Google",
+        "Blog sin dirección",
+        "AIO activa"
+      ],
+      "cuandoNoUsar": [
+        "ICP no busca en Google",
+        "Sin capacidad de contenido"
+      ]
+    },
+    {
+      "id": "26",
+      "name": "Content Engine (Estrategia + Playbook + Calendario + Crons)",
+      "quadrant": "1toN-organic",
+      "objetivo": "Sistema completo de contenido: estrategia definida, playbook operativo, calendario BOFU-first, generacion recurrente de ideas",
+      "prerequisitos": "Foundation completa (ECPs, positioning, brand-voice). Metricool para metricas sociales.",
+      "tiempoResultado": "1-2 semanas setup completo → ejecucion continua",
+      "b2b": "core",
+      "b2c": "core",
+      "sectores": [
+        "Cualquiera con estrategia de contenido — universal"
+      ],
+      "velocidad": "medio",
+      "objetivos": [
+        "awareness",
+        "lead-gen",
+        "autoridad"
+      ],
+      "skills": [
+        "content-strategy",
+        "content-playbook",
+        "channel-setup",
+        "keyword-research",
+        "content-calendar",
+        "idea-generation",
+        "seo-content",
+        "content-atomizer"
+      ],
+      "workflow": {
+        "objetivo": "Construir la maquina de contenido completa para un nicho: desde las 14 decisiones estrategicas hasta el calendario editorial con crons automaticos de ideas.",
+        "ideacion": "**Paso 1: Content Strategy (14 decisiones)**\nAnaliza Foundation (ECPs, positioning, competencia) y toma 14 decisiones: Content Tilt (donde eres la unica voz creible), Villano (enemigo comun de la audiencia), Trigger Events (que activa la compra), Beachhead, Playground Model (conceptual/estrategico/tactico vs TOFU/MOFU/BOFU), BOFU-first (que contenido bottom-funnel crear primero), Growth Loops, Growth Matrix 2x2, Zero-Click strategy, Canal Primario, Founder-Led decision, tangencialidad a otros nichos.\nBasado en: Pulizzi (Content Tilt), Verna (Loops + Villain), Bourgoin (Triggers), Voje (Beachhead), Faus (Playground), Walling (BOFU-first), Rachitsky (Growth Matrix), Natividad (Zero-Click).",
+        "creacion": "**Paso 2: Content Playbook (8-15 archivos)**\nGenera el cerebro operativo: pillars.md (3-5 pilares), writing-guide.md, hooks.md (28+ formulas en 8 categorias), repurpose-chain.md (orden de produccion por plataforma), platform-tone.md, audience-segments.md, y playbooks por plataforma (linkedin.md con Phase A/B, carousel specs, lead magnet formats; instagram.md, etc.).\n\n**Paso 3: Channel Setup**\nProfile CRO por plataforma: LinkedIn (headline formula, About section, Featured, Banner, Newsletter), Instagram (bio, highlights, link in bio), etc.\n\n**Paso 4: Keyword Research**\nKeywords guiados por pilares de contenido, BOFU-first ordering.\n\n**Paso 5: Content Calendar**\nCalendario editorial 4 semanas con BOFU-first, repurpose chain integrada, ideas aprobadas incorporadas.",
+        "ejecucion": "**Paso 6: Activar Crons**\n- Idea Generation (2x/semana): noticias sector, SERP gaps, PAA, trending\n- Atalaya (semanal): influencers + competencia via Apify\n- Performance Analysis (semanal): Metricool + actualizacion hooks.md\n- Calendar Refresh (semanal): regenera calendario con ideas + learnings",
+        "medicion": "| Metrica | Target |\n|---------|--------|\n| Documentos estrategicos | 8-15 archivos aprobados |\n| Pilares definidos | 3-5 |\n| Hook formulas | 28+ |\n| Ideas generadas/semana | 5-10 |\n| Calendario planificado | 4 semanas |\n| Canales configurados | 2-3 |\n| Crons activos | 4 |"
+      },
+      "cuandoUsar": [
+        "No hay estrategia de contenido definida",
+        "Publicando contenido sin sistema",
+        "Foundation completa pero sin content engine",
+        "Multiples canales sin playbook",
+        "Quiero automatizar la generacion de ideas"
+      ],
+      "cuandoNoUsar": [
+        "Foundation incompleta (falta ECPs o positioning)",
+        "Solo un canal sin ambicion de escalar",
+        "Ya tiene content engine operativo"
+      ]
+    }
+  ],
+  "byObjective": {
+    "awareness": [
+      "02",
+      "03",
+      "06",
+      "08",
+      "10",
+      "13",
+      "16",
+      "17",
+      "20",
+      "21",
+      "23",
+      "26"
+    ],
+    "lead-gen": [
+      "01",
+      "03",
+      "04",
+      "05",
+      "07",
+      "08",
+      "10",
+      "11",
+      "12",
+      "14",
+      "16",
+      "18",
+      "19",
+      "21",
+      "23",
+      "26"
+    ],
+    "conversion": [
+      "01",
+      "04",
+      "05",
+      "07",
+      "12",
+      "15",
+      "16",
+      "18",
+      "19",
+      "24"
+    ],
+    "autoridad": [
+      "02",
+      "06",
+      "08",
+      "09",
+      "11",
+      "12",
+      "13",
+      "17",
+      "19",
+      "20",
+      "23",
+      "26"
+    ],
+    "retencion": [
+      "09",
+      "15",
+      "24"
+    ],
+    "expansion": [
+      "14",
+      "15",
+      "24"
+    ],
+    "comunidad": [
+      "06",
+      "09",
+      "14",
+      "23"
+    ]
+  },
+  "bySpeed": {
+    "rapido": [
+      "01",
+      "04",
+      "05",
+      "10",
+      "12",
+      "13",
+      "16",
+      "17",
+      "18",
+      "22",
+      "24",
+      "25"
+    ],
+    "medio": [
+      "02",
+      "03",
+      "07",
+      "11",
+      "19",
+      "21",
+      "26"
+    ],
+    "lento": [
+      "06",
+      "08",
+      "09",
+      "14",
+      "15",
+      "20",
+      "23"
+    ]
+  },
+  "clientStrategies": {
+    "growth4u": [
+      {
+        "id": "19",
+        "score": 8.25,
+        "justification": "Alfonso, Martín y Philippe ya en LinkedIn. Falta funnel post-engagement. LinkedIn → DM warm → Call = canal más rápido para B2B 7K€"
+      },
+      {
+        "id": "01",
+        "score": 8.25,
+        "justification": "ACV 7K€ justifica 1:1. Instantly listo. ECP 1: ~2.500 startups. ECP 2: ~427 fintechs BdE"
+      },
+      {
+        "id": "16",
+        "score": 8,
+        "justification": "Meta stack existe, CPL 20€ demostrado. Bloqueado hasta pixel instalado"
+      },
+      {
+        "id": "04",
+        "score": 8,
+        "justification": "Desbloquea todo: resolver W1 SWOT (0 social proof)"
+      },
+      {
+        "id": "13",
+        "score": 7.75,
+        "justification": "Aparecer en todos los sitios gratuitos: directorios, guest posts, HARO, podcasts"
+      },
+      {
+        "id": "21",
+        "score": 6.5,
+        "justification": "Contenido educativo respondiendo preguntas de growth. IG estáticos + TikTok vídeos"
+      }
+    ],
+    "dealcar": [
+      {
+        "id": "08",
+        "score": 7.25,
+        "justification": "ICP busca activamente soluciones de software. Keywords BOFU con intención de compra alta. Blog ya tiene formato comparadores — hay que escalar"
+      },
+      {
+        "id": "19",
+        "score": 7.5,
+        "justification": "9K seguidores, perfil de founder credible. Con cadencia más estructurada + sistema DM warm → pipeline directo"
+      },
+      {
+        "id": "20",
+        "score": 5.75,
+        "justification": "Extensión natural del SEO — estructurar contenido para ser citado por ChatGPT/Perplexity"
+      },
+      {
+        "id": "25",
+        "score": 7,
+        "justification": "Keyword research ya hecho con 3 clusters priorizados (BOFU/MOFU/TOFU)"
+      },
+      {
+        "id": "04",
+        "score": 7.5,
+        "justification": "Social proof desde clientes existentes satisfechos"
+      }
+    ]
+  }
+}

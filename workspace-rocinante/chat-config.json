@@ -1,0 +1,24 @@
+{
+  "agent": "rocinante",
+  "version": 1,
+  "note": "Config del chat para Rocinante. MC consulta esto cuando enruta tasks type=outreach o tareas con triggers de prospecting/partnerships.",
+  "tasks": {
+    "_defaults": {
+      "skill": "outreach-sequence-builder"
+    },
+    "_byType": {
+      "outreach": {
+        "skill": "outreach-sequence-builder",
+        "skills": ["company-finder", "decision-maker-finder", "contact-enrichment", "outreach-sequence-builder", "email-sequences"]
+      }
+    },
+    "_byChannel": {
+      "prospecting": { "skill": "company-finder" },
+      "partners": { "skill": "outreach-sequence-builder" }
+    },
+    "_byTool": {
+      "apollo": { "skill": "company-finder" },
+      "apify": { "skill": "contact-enrichment" }
+    }
+  }
+}
