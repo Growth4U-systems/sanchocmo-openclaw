@@ -86,7 +86,7 @@ test("ProvenanceFooter: omits absent optional fields", () => {
 type ConnState = "off" | "partial" | "connected_pending" | "collecting";
 const CONN_LABEL: Record<ConnState, string> = {
   off: "No conectado",
-  partial: "Faltan fuentes",
+  partial: "Falta conexión requerida",
   connected_pending: "Conectado sin datos",
   collecting: "Recolectando",
 };
