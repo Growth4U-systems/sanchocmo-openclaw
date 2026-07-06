@@ -15,8 +15,11 @@ Workflow guide for sanchocmo-openclaw.
                    merge release PR (squash) ──▶ tag vX.Y.Z + GitHub Release
                               │
                               ├──▶ promote-main.yml: main FAST-FORWARDS to the tag
+                              ├──▶ docker-image.yml: builds & pushes the image
                               │
-                              └──▶ deploy-prod.yml ──(manual approval: `production` gate)──▶ prod VPS
+                              ┊  (publishing a release does NOT deploy prod)
+                              ┊
+   Actions ▶ "Deploy to Production" ▶ Run workflow ▶ tag=vX.Y.Z (manual) ──▶ prod VPS
 ```
 
 `main` **never receives work** — not a PR, not a push, not a merge. It is a
@@ -27,9 +30,11 @@ Because it can only advance to commits that already live on `staging`, it can
 - **`staging`** auto-deploys on every merge (no gate). It is the trunk; keep it
   always releasable — small PRs, feature-flag incomplete work.
 - **`main`** is automation-only. A published release fast-forwards it to the tag.
-- **Prod deploy is gated.** `deploy-prod.yml` runs on a published release but
-  **pauses for manual approval** on the `production` GitHub Environment. That
-  approval is the go/no-go for *when* a release reaches prod.
+- **Prod deploy is manual.** `deploy-prod.yml` is **`workflow_dispatch` only** — it
+  does **not** trigger on a published release. To ship, run it from the Actions tab
+  and enter the tag (it's rejected if the tag doesn't exist). Deciding to run it is
+  the go/no-go for *when* a release reaches prod. Publishing a release only builds
+  the image and fast-forwards `main`; prod never auto-deploys.
 
 | Branch | Purpose | Protection |
 |---|---|---|
@@ -98,7 +103,7 @@ Merging to `staging` automatically triggers `deploy-staging.yml`, which SSHes in
 
 Releases are cut **from `staging`** — there is no `staging → main` promotion. The
 go-live is **two human decisions**: *merge the release PR* (cut the version) and
-*approve the prod gate* (let it deploy). Everything else is automated.
+*dispatch `deploy-prod.yml`* with the tag (ship it). Everything else is automated.
 
 1. **`release-please.yml` runs on `staging`** and keeps **one** open "release PR"
    (`chore: release vX.Y.Z`, base `staging`) with the version bump + CHANGELOG. It
@@ -118,14 +123,22 @@ go-live is **two human decisions**: *merge the release PR* (cut the version) and
 3. **Publishing the Release fires two jobs in parallel:**
    - **`promote-main.yml`** fast-forwards `main` to the tag — `main` becomes the
      immutable pointer to what's released. (No PR, no merge; pure ff.)
-   - **`deploy-prod.yml`** targets the `production` Environment and **pauses for
-     manual approval**. Approve it ("Approve and deploy") to roll the tag to the
-     prod VPS (checkout tag → build → `docker compose up -d` with the YALC overlay,
-     health check, auto-rollback on failure). Until you approve, prod is untouched.
+   - **`docker-image.yml`** builds & pushes the versioned image (`:vX.Y.Z` +
+     `:latest`) to GHCR.
+
+   **Publishing a Release does NOT deploy prod.** Prod is a separate, deliberate
+   step.
+
+4. **Deploy to prod — manual, `workflow_dispatch` only.** When you want the tag
+   live, go to **Actions → "Deploy to Production" → Run workflow** and enter the
+   tag (e.g. `vX.Y.Z`). The workflow validates the tag exists (typos / missing
+   tags abort before anything touches prod), then rolls it to the prod VPS
+   (checkout tag → build → `docker compose up -d` with the YALC overlay, health
+   check, auto-rollback on failure). Until you run it, prod is untouched.
 
 You don't manually create tags or touch `main` — automation owns both. You also
-don't have to deploy every tag: approve the gate when you want it live, or use
-`deploy-prod.yml`'s `workflow_dispatch(tag)` to (re)deploy or roll back any tag.
+don't have to deploy every tag: dispatch `deploy-prod.yml` with the tag when you
+want it live, or with any older tag to roll back.
 
 > **Never create a tag or GitHub Release by hand for a normal release** (CLI or
 > web UI). Releases come *only* from release-please merging its `chore: release`
@@ -178,8 +191,8 @@ git push --force origin "${TAG_SHA}:refs/heads/main"
 **There is no separate hotfix procedure.** A hotfix is just a `fix:` change:
 branch from `staging` → commit `fix: ...` → squash PR to `staging` (deploys to
 staging, verify) → merge the release PR release-please cuts (a patch bump) →
-approve the `production` gate. Identical to any other change. This works because
-`staging` is kept always-releasable (small PRs + feature flags).
+dispatch `deploy-prod.yml` with the new tag. Identical to any other change. This
+works because `staging` is kept always-releasable (small PRs + feature flags).
 
 ```bash
 git checkout staging && git pull
@@ -204,16 +217,16 @@ git commit -am "fix: <summary> (SAN-<n>)"
 git push -u origin hotfix/san-<n>-<desc>
 
 # 3. Patch-bump the prod tag and publish a Release on it. The published release
-#    fires promote-main (ff main → tag), docker-image (build) and deploy-prod.
+#    fires promote-main (ff main → tag) and docker-image (build). It does NOT
+#    deploy — prod is a separate manual dispatch (step 4).
 NEW="v0.6.1"   # patch bump of $PROD_TAG
 git tag -a "$NEW" -m "hotfix: <summary> (SAN-<n>)"
 git push origin "$NEW"
 # [hotfix-off-staging] opts this tag past promote-main's "tag must be on staging"
 # guard — the only sanctioned off-staging promote. Forward-merge to staging (below).
 gh release create "$NEW" --title "$NEW" --notes "Hotfix: <summary> (SAN-<n>) [hotfix-off-staging]"
-#    (or run deploy-prod.yml via workflow_dispatch with that tag)
 
-# 4. A human approves the `production` gate → prod deploys.
+# 4. Ship it: Actions → "Deploy to Production" → Run workflow → tag=$NEW.
 ```
 
 Because the hotfix tag is built **on top of** `$PROD_TAG` (where `main` points), it
@@ -239,9 +252,9 @@ release PR before the bump lands is the one thing that collides.
 Two edge cases fall back to **`deploy-prod.yml` `workflow_dispatch`** (deploys any
 tag without moving `main`) plus the usual forward-port:
 
-- `main` is already past prod — a newer release was published but is stuck at the
-  gate, so the hotfix tag won't fast-forward `main`. Deploy via `workflow_dispatch`;
-  don't move `main`. (Root cause to avoid: `main` getting ahead of prod.)
+- `main` is already past prod — a newer release was published (so `main` ff'd) but
+  never dispatched to prod, so the hotfix tag won't fast-forward `main`. Deploy via
+  `workflow_dispatch`; don't move `main`. (Root cause to avoid: `main` ahead of prod.)
 - the would-be hotfix version is already a published tag — you can't reuse it.
 
 `main` only ever fast-forwards and refuses any non-descendant move, so it can never
@@ -288,7 +301,7 @@ The deploy workflows resolve VPS credentials from two **GitHub Environments** (S
 | Environment | Triggered by | Required reviewers | Used by |
 |---|---|---|---|
 | `staging` | merge / push to `staging` | none (auto) | `deploy-staging.yml` |
-| `production` | release published | **required (manual approval gate)** | `deploy-prod.yml` |
+| `production` | **manual `workflow_dispatch` only** (enter the tag) | none — running it *is* the deliberate go-live | `deploy-prod.yml` |
 
 Each environment exposes the same secret/variable names with different values:
 

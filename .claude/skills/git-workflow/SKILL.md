@@ -60,9 +60,10 @@ the last release.
 
 1. **Merge that release PR (squash)** when told to cut the version → creates the
    tag + GitHub Release on the staging commit.
-2. Automation then fast-forwards `main` to the tag (`promote-main.yml`) and
-   `deploy-prod.yml` **waits at the `production` approval gate**. A human approves
-   to deploy. You do not approve prod deploys.
+2. Automation then fast-forwards `main` to the tag (`promote-main.yml`) and builds
+   the image (`docker-image.yml`). **Prod does NOT auto-deploy.** `deploy-prod.yml`
+   is **`workflow_dispatch` only**: a human runs it from the Actions tab and enters
+   the tag to ship (rejected if the tag doesn't exist). You do not deploy prod.
 
 Merging the release PR does **not** freeze staging — keep working immediately.
 
@@ -96,14 +97,16 @@ git commit -am "fix: <summary> (SAN-<n>)"
 git push -u origin hotfix/san-<n>-<desc>
 
 # 3. Patch-bump the prod tag, push it, publish a Release on it. Publishing the
-#    release fires promote-main (ff main → tag), docker-image (build), and
-#    deploy-prod (waits at the production gate).
+#    release fires promote-main (ff main → tag) and docker-image (build). It does
+#    NOT deploy — after the image is built, run deploy-prod.yml via
+#    workflow_dispatch with $NEW to ship it (step 4).
 NEW="v0.6.1"   # patch bump of $PROD_TAG
 git tag -a "$NEW" -m "hotfix: <summary> (SAN-<n>)"
 git push origin "$NEW"
 gh release create "$NEW" --title "$NEW" --notes "Hotfix: <summary> (SAN-<n>)"
 
-# 4. A human approves the `production` gate → prod deploys the hotfix.
+# 4. Ship it: Actions → "Deploy to Production" → Run workflow → tag=$NEW.
+#    (Prod is workflow_dispatch only; publishing the release never auto-deploys.)
 ```
 
 Then **restore the invariant** so the next normal release stays a fast-forward —
@@ -133,11 +136,11 @@ bump lands, *that* collides.
 
 Two edge cases:
 
-- **`main` is already past prod** (a newer release was published but is stuck at the
-  prod gate, so prod still runs the old tag): the hotfix tag won't descend from
-  `main`, so you can't ff it. Don't try — deploy the patch with `deploy-prod.yml`
-  **`workflow_dispatch`** (any tag, doesn't touch `main`) and just forward-port. The
-  real fix is to not let `main` get ahead of prod.
+- **`main` is already past prod** (a newer release was published so `main` ff'd, but
+  it was never dispatched to prod, so prod still runs the old tag): the hotfix tag
+  won't descend from `main`, so you can't ff it. Don't try — deploy the patch with
+  `deploy-prod.yml` **`workflow_dispatch`** (any tag, doesn't touch `main`) and just
+  forward-port. The real fix is to not let `main` get ahead of prod.
 - **The would-be hotfix version is already a published tag**: you can't reuse it —
   fall back to `workflow_dispatch` deploy + forward-port, as above.
 

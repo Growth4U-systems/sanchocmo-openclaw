@@ -521,7 +521,7 @@ docker compose restart
 
 ## Connect this VPS to the CI/CD pipeline (GitHub Actions)
 
-Once the VPS is running manually (steps 1–10 above), the next step is to plug it into the pipeline so a push to `staging` (or a release to `main`) deploys to it automatically. The workflows (`.github/workflows/deploy-staging.yml`, `deploy-prod.yml`) read everything from a GitHub **Environment** — one per VPS.
+Once the VPS is running manually (steps 1–10 above), the next step is to plug it into the pipeline. A push to `staging` auto-deploys to the staging VPS; prod is shipped **manually** by dispatching `deploy-prod.yml` with a tag (publishing a release does not auto-deploy prod). The workflows (`.github/workflows/deploy-staging.yml`, `deploy-prod.yml`) read everything from a GitHub **Environment** — one per VPS.
 
 ### The two SSH keys you need
 
@@ -598,7 +598,7 @@ In the repo: **Settings → Environments**. Two environments exist, one per VPS:
 | Environment | Triggered by | Required reviewers | Used by |
 |---|---|---|---|
 | `staging` | merge / push to `staging` | none (auto-deploy) | `deploy-staging.yml` |
-| `production` | release published | maintainers (manual approval) | `deploy-prod.yml` |
+| `production` | **manual `workflow_dispatch` only** (enter the tag) | none — running it is the deliberate go-live | `deploy-prod.yml` |
 
 Both environments use the **same secret and variable names** — only the values differ. Add for the environment matching this VPS:
 
@@ -628,10 +628,12 @@ git commit --allow-empty -m "chore: trigger first staging deploy"
 git push origin staging
 ```
 
-**For `production`:** the deploy is triggered automatically when release-please publishes a new GitHub Release. To dispatch manually (useful for the first deploy or for redeploying a known tag), use the Actions UI:
+**For `production`:** the deploy is **manual only** — publishing a GitHub Release does *not* deploy prod (it only builds the image and fast-forwards `main`). Ship a tag via the Actions UI:
 
 1. Actions → "Deploy to Production"
 2. "Run workflow" → enter the tag (e.g. `v0.2.0`) → Run
+
+The workflow validates the tag exists before touching prod, so a typo or a tag that was never published fails fast instead of deploying nothing.
 
 Watch the run at `https://github.com/<org>/<repo>/actions`. Expected step order and what each failure means:
 
