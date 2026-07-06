@@ -2,12 +2,14 @@ import fs from "fs";
 import path from "path";
 import { BASE } from "@/lib/data/paths";
 
-export const RUNTIME_IDS = ["openclaw", "hermes", "external-http"] as const;
+export const PUBLIC_RUNTIME_IDS = ["openclaw", "hermes", "external-http"] as const;
+export const RUNTIME_IDS = [...PUBLIC_RUNTIME_IDS, "fake"] as const;
 export type RuntimeId = (typeof RUNTIME_IDS)[number];
+export type PublicRuntimeId = (typeof PUBLIC_RUNTIME_IDS)[number];
 export type RuntimeSelectionSource = "ui" | "env" | "default";
 
 export interface RuntimeOptionMeta {
-  id: RuntimeId;
+  id: PublicRuntimeId;
   label: string;
   description: string;
   note: string;
@@ -55,15 +57,20 @@ const RUNTIME_ALIASES: Record<string, RuntimeId> = {
   "hermes-external": "external-http",
 };
 
+function isFakeRuntimeAllowed(): boolean {
+  return process.env.NODE_ENV === "test";
+}
+
 export function resolveRuntimeId(value: unknown): RuntimeId | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
-  if (RUNTIME_IDS.includes(trimmed as RuntimeId)) return trimmed as RuntimeId;
+  if (PUBLIC_RUNTIME_IDS.includes(trimmed as PublicRuntimeId)) return trimmed as PublicRuntimeId;
+  if (trimmed === "fake" && isFakeRuntimeAllowed()) return "fake";
   return RUNTIME_ALIASES[trimmed] ?? null;
 }
 
 export function isRuntimeId(value: unknown): value is RuntimeId {
-  return typeof value === "string" && RUNTIME_IDS.includes(value.trim() as RuntimeId);
+  return resolveRuntimeId(value) !== null;
 }
 
 export function runtimeConfigFile(): string {
@@ -126,6 +133,7 @@ export function writeRuntimeSelection(runtime: RuntimeId, updatedBy?: string): R
 
 export function isRuntimeConfigured(runtime: RuntimeId): boolean {
   if (runtime === "openclaw") return true;
+  if (runtime === "fake") return isFakeRuntimeAllowed();
   if (runtime === "hermes") {
     return Boolean(process.env.HERMES_GATEWAY_URL || process.env.HERMES_BASE_URL || process.env.HERMES_URL);
   }

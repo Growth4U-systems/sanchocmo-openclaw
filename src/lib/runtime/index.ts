@@ -1,6 +1,7 @@
 import { OpenclawAdapter } from "./adapters/openclaw";
 import { HermesAdapter } from "./adapters/hermes";
 import { ExternalHttpAdapter } from "./adapters/http";
+import { FakeRuntimeAdapter } from "./adapters/fake";
 import { readRuntimeSelection, type RuntimeId } from "./config";
 import type { RuntimeAdapter } from "./types";
 
@@ -14,6 +15,8 @@ export function createRuntimeAdapter(runtime: RuntimeId): RuntimeAdapter {
       return new HermesAdapter();
     case "external-http":
       return new ExternalHttpAdapter();
+    case "fake":
+      return new FakeRuntimeAdapter();
   }
 }
 
@@ -36,6 +39,7 @@ export function resetRuntimeForTests(): void {
 export {
   RUNTIME_IDS,
   RUNTIME_OPTIONS,
+  PUBLIC_RUNTIME_IDS,
   isRuntimeConfigured,
   isRuntimeId,
   readRuntimeSelection,
@@ -53,6 +57,7 @@ export type {
   RuntimeAdapter,
   RuntimeCapabilities,
   RuntimeCapability,
+  RuntimeCancelOptions,
   RuntimeControl,
   RuntimeLifecycle,
   RuntimeMessaging,
