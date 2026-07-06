@@ -1,23 +1,35 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { getModelCatalog, isModelAvailable, invalidateCatalogCache } from "@/lib/data/models-catalog";
-import {
-  ensureModelInAllowlist,
-  setDefaultPrimaryModel,
-  getDefaultPrimaryModel,
-  restartGateway,
-} from "@/lib/data/openclaw-config";
+import { getRuntime } from "@/lib/runtime";
+
+interface RestartResult {
+  ok?: boolean;
+  method?: string;
+  error?: string;
+}
+
+function unsupportedRuntime(res: NextApiResponse, runtimeId: string) {
+  return res.status(501).json({
+    error: `Runtime "${runtimeId}" does not support model selection through Sancho yet.`,
+    runtime: runtimeId,
+    capability: "modelPicker",
+  });
+}
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const runtime = getRuntime();
   if (req.method === "GET") {
     if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
-    return res.status(200).json({ ok: true, model: getDefaultPrimaryModel() });
+    if (!runtime.capabilities.modelPicker) return unsupportedRuntime(res, runtime.id);
+    return res.status(200).json({ ok: true, model: await runtime.control.getDefaultModel() });
   }
   if (req.method !== "PATCH" && req.method !== "PUT" && req.method !== "POST") {
     res.setHeader("Allow", "GET, PATCH, PUT, POST");
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
   if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
+  if (!runtime.capabilities.modelPicker) return unsupportedRuntime(res, runtime.id);
 
   const { model } = (req.body || {}) as { model?: string };
   if (!model || typeof model !== "string") {
@@ -31,9 +43,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    ensureModelInAllowlist(model);
-    setDefaultPrimaryModel(model);
-    const restart = restartGateway();
+    await runtime.control.ensureModelInAllowlist(model);
+    await runtime.control.setDefaultModel(model);
+    const restart = (await runtime.lifecycle.restart()) as RestartResult;
     invalidateCatalogCache();
     const warning = [
       check.warning,

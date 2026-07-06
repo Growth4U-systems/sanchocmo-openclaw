@@ -1,7 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { getModelCatalog, isModelAvailable, invalidateCatalogCache } from "@/lib/data/models-catalog";
-import { getAgentEffectiveModel, restartGateway, setAgentModel } from "@/lib/data/openclaw-config";
+import { getRuntime } from "@/lib/runtime";
+
+interface RestartResult {
+  ok?: boolean;
+  method?: string;
+  error?: string;
+}
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "PATCH" && req.method !== "PUT" && req.method !== "POST") {
@@ -9,6 +15,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
   if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
+
+  const runtime = getRuntime();
+  if (!runtime.capabilities.modelPicker || !runtime.capabilities.agentRegistry) {
+    return res.status(501).json({
+      error: `Runtime "${runtime.id}" does not support per-agent model selection through Sancho yet.`,
+      runtime: runtime.id,
+      capability: "modelPicker",
+    });
+  }
 
   const agentId = req.query.id as string;
   if (!agentId) return res.status(400).json({ error: "Missing agent id" });
@@ -31,22 +46,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const result = setAgentModel(agentId, model ?? null);
-    const effectiveModel = getAgentEffectiveModel(agentId);
+    const result = await runtime.control.setAgentModel(agentId, model ?? null);
+    const effectiveModel = await runtime.control.getAgentEffectiveModel(agentId);
     const verified = model === null ? effectiveModel === null : effectiveModel === model;
     if (!verified) {
       return res.status(409).json({
         error:
           model === null
-            ? `OpenClaw did not clear the model override for agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`
-            : `OpenClaw did not apply model "${model}" to agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`,
+            ? `Runtime "${runtime.id}" did not clear the model override for agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`
+            : `Runtime "${runtime.id}" did not apply model "${model}" to agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`,
         agentId,
         model,
         effectiveModel,
         verified: false,
       });
     }
-    const restart = restartGateway();
+    const restart = (await runtime.lifecycle.restart()) as RestartResult;
     invalidateCatalogCache();
     const responseWarning = [
       warning,
