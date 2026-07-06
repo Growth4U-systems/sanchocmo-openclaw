@@ -1,8 +1,7 @@
-import { EXEC_PATH } from "@/lib/data/paths";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { execSync } from "child_process";
 import { compose, withErrorHandler, withAuth, canAccessSlug } from "@/lib/api-middleware";
 import { loadClients } from "@/lib/data/clients";
+import { getRuntime, type RuntimeAdapter } from "@/lib/runtime";
 
 
 function enrichCronJob(job: Record<string, unknown>, clients: { slug: string; name: string }[]) {
@@ -38,13 +37,9 @@ function enrichCronJob(job: Record<string, unknown>, clients: { slug: string; na
   };
 }
 
-function loadCronJobs(): Record<string, unknown>[] {
+async function loadCronJobs(runtime: RuntimeAdapter): Promise<Record<string, unknown>[]> {
   try {
-    const output = execSync("openclaw cron list --json", {
-      timeout: 15000,
-      encoding: "utf-8",
-      env: { ...process.env, PATH: EXEC_PATH },
-    });
+    const output = await runtime.control.runCommand(["cron", "list", "--json"], { timeoutMs: 15000 });
     return (JSON.parse(output).jobs || []) as Record<string, unknown>[];
   } catch {
     return [];
@@ -67,7 +62,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).json({ error: "Forbidden" });
   }
   const clients = loadClients() as { slug: string; name: string }[];
-  const enriched = loadCronJobs().map((j) => enrichCronJob(j, clients));
+  const runtime = getRuntime();
+  if (!runtime.capabilities.cron) {
+    return res.status(501).json({
+      error: `Runtime "${runtime.id}" does not support cron listing through Sancho yet.`,
+      runtime: runtime.id,
+      capability: "cron",
+    });
+  }
+  const enriched = (await loadCronJobs(runtime)).map((j) => enrichCronJob(j, clients));
 
   let filtered = enriched;
   if (req.ctx?.clientSlug) {
