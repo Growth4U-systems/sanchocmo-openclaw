@@ -1,8 +1,12 @@
 name: Deploy to Production
 
+# Prod deploys are MANUAL ONLY: run this workflow via `workflow_dispatch`
+# (Actions tab → "Deploy to Production" → Run workflow) and enter the tag to
+# ship. It intentionally does NOT trigger on `release: published` — publishing
+# a release builds the image (docker-image.yml) and fast-forwards `main`
+# (promote-main.yml), but shipping to prod is a deliberate human action so a
+# release never auto-deploys.
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -15,7 +19,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ${{ github.event.release.tag_name || inputs.tag }} to prod VPS
+    name: Deploy ${{ inputs.tag }} to prod VPS
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -23,13 +27,25 @@ jobs:
     steps:
       - name: Checkout (need scripts/upsert-env.py for scp)
         uses: actions/checkout@v7
+        with:
+          fetch-tags: true
 
-      - name: Resolve target tag
+      - name: Resolve and validate target tag
         id: tag
         run: |
-          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          set -euo pipefail
+          TAG="${{ inputs.tag }}"
+          # Fail fast BEFORE touching prod if the tag doesn't exist. The input
+          # is free text (GitHub can't populate a dropdown from real tags), so
+          # this guards against typos / non-existent versions.
+          git fetch --tags --force --quiet
+          if ! git rev-parse -q --verify "refs/tags/${TAG}^{commit}" >/dev/null; then
+            echo "::error::Tag '${TAG}' does not exist — aborting before any prod change."
+            echo "Recent tags:"; git tag --sort=-creatordate | head -10
+            exit 1
+          fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "Deploying tag: $TAG"
+          echo "✓ Deploying existing tag: $TAG"
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.10.0

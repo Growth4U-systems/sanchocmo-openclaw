@@ -23,9 +23,10 @@ essentials:
   Never open a PR into `main`, never push to it, never merge into it.
 - **Releases are cut from `staging`.** release-please runs on `staging` and keeps
   one open `chore: release vX.Y.Z` PR (base `staging`, **squash** like any other).
-  Merging it creates the tag from staging; `main` then fast-forwards to that tag,
-  and `deploy-prod.yml` deploys **after a manual approval** on the `production`
-  environment gate.
+  Merging it creates the tag from staging; `main` then fast-forwards to that tag.
+  Publishing a release does **not** deploy prod — `deploy-prod.yml` is
+  **`workflow_dispatch` only**: a human runs it from the Actions tab and enters
+  the tag to ship (validated against real tags). Prod never auto-deploys.
 - **Commits use Conventional Commits** (enforced by commitlint): `feat:` → minor,
   `fix:` → patch, `feat!:`/`BREAKING CHANGE:` → major. release-please reads these.
 - **Never push directly to `main` or `staging`**, never force-push protected

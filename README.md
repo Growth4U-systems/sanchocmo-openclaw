@@ -229,7 +229,7 @@ Exposed via reverse proxy (nginx on a server) or Tailscale Funnel (local dev).
 
 - **`staging`** = the trunk (default branch). **Every** change — feature, fix, *and* hotfix — branches off fresh `origin/staging` and squash-PRs back into `staging`. Branch name `<author>/san-<n>-<kebab-desc>`; every change needs a Linear `SAN-<n>` in the branch, title, or body.
 - **`main`** = a **fast-forward-only pointer** to the latest production release, moved *only* by automation (`promote-main.yml`). Never PR into `main`, never push or tag it by hand.
-- **Releases** are cut from `staging`: [release-please](https://github.com/googleapis/release-please) runs on `staging` and keeps one open `chore: release vX.Y.Z` PR. Merging it (squash) tags from `staging`; `main` then fast-forwards to that tag and `deploy-prod.yml` deploys **after a manual approval** on the `production` environment gate.
+- **Releases** are cut from `staging`: [release-please](https://github.com/googleapis/release-please) runs on `staging` and keeps one open `chore: release vX.Y.Z` PR. Merging it (squash) tags from `staging`; `main` then fast-forwards to that tag and the image is built. **Prod does not auto-deploy** — `deploy-prod.yml` is **`workflow_dispatch` only**: ship a tag manually from **Actions → "Deploy to Production"** (the tag is validated before anything touches prod).
 - **Hotfixes** are normal `fix:` PRs to `staging` (no separate path) — `staging` is kept always-releasable. The rare true-emergency procedure lives in [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) §Hotfixes.
 - Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) — enforced by commitlint (`feat:` → minor, `fix:` → patch, `feat!:`/`BREAKING CHANGE:` → major).
 
