@@ -59,18 +59,26 @@ require_env() {
 # imprime la URL de acceso — en vez de anunciar apenas `up -d` retorna, cuando
 # los contenedores todavía están arrancando.
 announce_ready() {
-  local base rc=0
+  # First boot (image seed + plugins + DB migrate + gateway) can take several
+  # minutes, so wait generously (SANCHO_READY_TIMEOUT, default 600s) with live
+  # progress rather than declaring "still starting" prematurely. (SAN-408)
+  local base rc=0 timeout="${SANCHO_READY_TIMEOUT:-600}"
   base="$(get_base_url)"
   echo ""
-  wait_until_healthy sanchocmo 180 || rc=$?
+  wait_until_healthy sanchocmo "$timeout" || rc=$?
   case "$rc" in
     0) bold "✅ Mission Control está arriba — entrá acá:"
        printf '   \033[1;36m%s\033[0m\n' "$base" ;;
     2) bold "Mission Control levantado:"
        echo  "   $base" ;;
-    *) bold "⏳ Los contenedores siguen iniciando (puede tardar un poco la primera vez)."
-       echo  "   Seguí el progreso:           ./sancho logs"
-       echo  "   Cuando termine de levantar:  $base" ;;
+    3) # Still booting past the timeout — not an error; first boot is slow.
+       bold "⏳ Mission Control sigue arrancando — el primer arranque puede tardar varios minutos."
+       echo  "   Esto NO es un error. Seguí el progreso:  ./sancho logs"
+       echo  "   Cuando esté listo, entrá acá:            $base" ;;
+    *) # Container missing/crashed — this one IS worth looking at.
+       bold "⚠ El contenedor no está corriendo o no respondió."
+       echo  "   Revisá qué pasó:  ./sancho logs"
+       echo  "   URL prevista:     $base" ;;
   esac
 }
 
