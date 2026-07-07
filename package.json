@@ -12,6 +12,7 @@
     "test:plugins": "node --test plugins/mc-chat/src/__tests__/*.test.js",
     "test:lib": "tsx --test src/lib/__tests__/*.test.mts src/lib/data/__tests__/*.test.mts src/lib/metrics/__tests__/*.test.mts src/lib/calc-creator-core/__tests__/*.test.mts src/lib/partnerships/__tests__/*.test.mts",
     "test:runtime": "tsx --test src/lib/__tests__/runtime-*.test.mts",
+    "test:runtime:bridges": "node --test docker/runtimes/hermes/bridge.test.mjs docker/runtimes/claude-code/bridge.test.mjs docker/runtimes/codex/bridge.test.mjs",
     "test:calc": "tsx --test src/lib/calc-creator-core/__tests__/*.test.mts",
     "test:partnerships": "tsx --test src/lib/partnerships/__tests__/*.test.mts",
     "test:metrics": "tsx --tsconfig tsconfig.tsx-tests.json --test src/components/dashboard/metrics-v2/__tests__/*.test.tsx",
