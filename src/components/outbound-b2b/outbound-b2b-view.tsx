@@ -247,6 +247,16 @@ interface LinkedInSequenceState {
   dm1ToDm2Days: number;
 }
 
+interface SequencePreviewItem {
+  key: string;
+  channel: "LinkedIn" | "Email";
+  title: string;
+  timing: string;
+  subject?: string | null;
+  body: string;
+  status?: string;
+}
+
 const TABS: Array<{ key: Exclude<B2BTab, "settings">; label: string; icon: LucideIcon }> = [
   { key: "encuentra", label: "Overview", icon: Search },
   { key: "plantillas", label: "Oferta", icon: FileText },
@@ -277,12 +287,12 @@ const HEADERS: Record<B2BTab, { title: string; sub: string }> = {
   },
 };
 
-const SCORE_ROWS: Array<{ key: string; label: string }> = [
-  { key: "icpFit", label: "ICP fit" },
-  { key: "seniority", label: "Seniority" },
-  { key: "companyFit", label: "Company fit" },
-  { key: "intent", label: "Intent" },
-  { key: "contactability", label: "Contactability" },
+const SCORE_ROWS: Array<{ key: string; aliases?: string[]; label: string }> = [
+  { key: "roleFit", aliases: ["icpFit"], label: "Rol" },
+  { key: "seniorityFit", aliases: ["seniority"], label: "Seniority" },
+  { key: "companyFit", label: "Empresa" },
+  { key: "contactability", label: "Canal" },
+  { key: "sourceConfidence", aliases: ["intent"], label: "Fuente" },
 ];
 
 const REPLY_CATEGORIES: Array<{ key: B2BReplyCategoryKey; label: string; icon: string }> = [
@@ -418,15 +428,13 @@ function leadOriginSummary(lead: Lead): string {
   return campaign ? `${source} · ${campaign}` : source;
 }
 
-function leadContactReason(lead: Lead, preparedMessage?: LeadMessage | null): string {
-  const personalization = preparedMessage?.body || leadPersonalization(lead);
-  if (personalization) return personalization;
+function leadContactReason(lead: Lead): string {
   const role = leadRole(lead);
   const company = lead.company ? ` en ${lead.company}` : "";
   if (leadScore(lead) !== null) {
     return `Tiene score B2B ${Math.round(leadScore(lead)!)} y encaja como ${role}${company}.`;
   }
-  return `Aparece en esta búsqueda por su rol de ${role}${company}; falta score automático para explicar el fit con más precisión.`;
+  return `Aparece en esta campaña por su rol de ${role}${company}.`;
 }
 
 function personalizedLeadCount(leads: readonly Lead[]): number {
@@ -845,6 +853,113 @@ function extractSequencePlaceholders(blocks: EmailSequenceBlock[]): string[] {
     }
   }
   return [...found].sort();
+}
+
+function leadTemplateVariables(lead: Lead): Record<string, string> {
+  const custom = lead.customVariables || {};
+  const fullName = leadDisplayName(lead);
+  const role = leadRole(lead);
+  const personalization = leadPersonalization(lead) || "";
+  return {
+    ...custom,
+    yalc_lead_id: lead.id,
+    leadId: lead.id,
+    firstName: lead.firstName || fullName.split(/\s+/)[0] || "",
+    first_name: lead.firstName || fullName.split(/\s+/)[0] || "",
+    lastName: lead.lastName || "",
+    last_name: lead.lastName || "",
+    name: fullName,
+    fullName,
+    full_name: fullName,
+    company: lead.company || "",
+    companyName: lead.company || "",
+    company_name: lead.company || "",
+    title: role,
+    headline: lead.headline || role,
+    role,
+    email: lead.email || "",
+    linkedinUrl: lead.linkedinUrl || "",
+    linkedin_url: lead.linkedinUrl || "",
+    source: lead.source || "",
+    personalization,
+    icebreaker: custom.icebreaker || personalization,
+  };
+}
+
+function renderLeadTemplate(template: string | null | undefined, lead: Lead): string {
+  if (!template) return "";
+  const variables = leadTemplateVariables(lead);
+  return template.replace(/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g, (match, key: string) => {
+    const value = variables[key];
+    return typeof value === "string" && value.trim() ? value : match;
+  });
+}
+
+function scoreComponentValue(
+  components: Record<string, number | null>,
+  row: { key: string; aliases?: string[] },
+): number | null {
+  for (const key of [row.key, ...(row.aliases || [])]) {
+    const value = components[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
+function contactStepStatus(lead: Lead, key: SequencePreviewItem["key"]): string {
+  if (key === "linkedin-connect") return lead.connectSentAt ? "Enviado" : "Pendiente";
+  if (key === "linkedin-dm1") return lead.dm1SentAt ? "Enviado" : lead.connectedAt ? "Listo cuando toque" : "Espera aceptación";
+  if (key === "linkedin-dm2") return lead.dm2SentAt ? "Enviado" : lead.repliedAt ? "Cancelado por respuesta" : "Pendiente";
+  return lead.emailStatus && /sent|delivered|opened|replied/i.test(lead.emailStatus) ? "Enviado" : "Pendiente";
+}
+
+function sequencePreviewForLead(lead: Lead, campaign?: CampaignDetail | null): SequencePreviewItem[] {
+  if (!campaign) return [];
+  const items: SequencePreviewItem[] = [];
+  if (campaignHasLinkedIn(campaign) || Boolean(campaign.variants?.length)) {
+    const linkedIn = linkedInSequenceState(campaign);
+    items.push(
+      {
+        key: "linkedin-connect",
+        channel: "LinkedIn",
+        title: "Invitación de conexión",
+        timing: "Día 0",
+        body: renderLeadTemplate(linkedIn.connectNote, lead),
+      },
+      {
+        key: "linkedin-dm1",
+        channel: "LinkedIn",
+        title: "DM1 al aceptar",
+        timing: linkedIn.connectToDm1Days
+          ? `Al aceptar + ${linkedIn.connectToDm1Days} día${linkedIn.connectToDm1Days === 1 ? "" : "s"}`
+          : "Al aceptar",
+        body: renderLeadTemplate(linkedIn.dm1Template, lead),
+      },
+      {
+        key: "linkedin-dm2",
+        channel: "LinkedIn",
+        title: "Follow-up sin respuesta",
+        timing: `DM1 + ${linkedIn.dm1ToDm2Days} día${linkedIn.dm1ToDm2Days === 1 ? "" : "s"}`,
+        body: renderLeadTemplate(linkedIn.dm2Template, lead),
+      },
+    );
+  }
+
+  for (const block of extractEmailSequences(campaign)) {
+    block.emails.forEach((email, index) => {
+      const delayDays = email.delayDays ?? 0;
+      items.push({
+        key: `email-${block.stepId || block.source}-${index}`,
+        channel: "Email",
+        title: index === 0 ? "Email inicial" : `Follow-up ${index}`,
+        timing: index === 0 ? "Día 0" : `+${delayDays} día${delayDays === 1 ? "" : "s"}`,
+        subject: renderLeadTemplate(email.subject, lead),
+        body: renderLeadTemplate(email.body, lead),
+      });
+    });
+  }
+
+  return items.map((item) => ({ ...item, status: contactStepStatus(lead, item.key) }));
 }
 
 export function OutboundB2BView() {
@@ -2415,6 +2530,14 @@ function B2BLeadDrawer({
       ),
     enabled: !!slug && !!lead,
   });
+  const campaignDetail = useQuery({
+    queryKey: ["yalc", slug, "b2b", "lead-campaign", lead?.campaignId],
+    queryFn: () =>
+      fetchJson<CampaignDetail>(
+        `/api/yalc/campaigns/${encodeURIComponent(lead!.campaignId!)}?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug && !!lead?.campaignId,
+  });
 
   if (!lead) return null;
 
@@ -2424,7 +2547,8 @@ function B2BLeadDrawer({
   const preparedMessages = messages.filter((message) =>
     message.direction === "out" && (message.status === "dry_run" || message.status === "draft"),
   );
-  const latestPreparedMessage = preparedMessages[0] || null;
+  const campaignForLead = campaignDetail.data || null;
+  const sequencePreview = sequencePreviewForLead(lead, campaignForLead);
   const linkedinHref = externalHref(lead.linkedinUrl);
   const stage = stageForStatus(lead.lifecycleStatus);
 
@@ -2512,12 +2636,13 @@ function B2BLeadDrawer({
         )}
 
         <section className="rounded-xl border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold text-foreground">Contexto</h3>
+          <h3 className="text-sm font-semibold text-foreground">Lead en esta campaña</h3>
           <div className="mt-3 grid gap-3 text-sm">
-            <ContextLine label="Qué es" value={`${leadRole(lead)}${lead.company ? ` · ${lead.company}` : ""}`} />
-            <ContextLine label="De dónde sale" value={leadOriginSummary(lead)} />
-            <ContextLine label="Por qué contactar" value={leadContactReason(lead, latestPreparedMessage)} />
-            <ContextLine label="Canal disponible" value={leadContactChannels(lead)} />
+            <ContextLine label="Rol" value={leadRole(lead)} />
+            <ContextLine label="Empresa" value={lead.company || "-"} />
+            <ContextLine label="Origen" value={leadOriginSummary(lead)} />
+            <ContextLine label="Canal" value={leadContactChannels(lead)} />
+            <ContextLine label="Motivo" value={leadContactReason(lead)} />
           </div>
         </section>
 
@@ -2529,7 +2654,7 @@ function B2BLeadDrawer({
             </div>
             <div className="min-w-0 flex-1 space-y-2.5">
               {SCORE_ROWS.map((row) => {
-                const value = typeof components[row.key] === "number" ? components[row.key] : null;
+                const value = scoreComponentValue(components, row);
                 return (
                   <div key={row.key} className="flex items-center gap-3">
                     <span className="w-32 shrink-0 text-xs text-muted-foreground">{row.label}</span>
@@ -2564,8 +2689,26 @@ function B2BLeadDrawer({
         </section>
 
         <section className="rounded-xl border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold text-foreground">Mensaje preparado</h3>
-          {preparedMessages.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold text-foreground">Secuencia de esta campaña</h3>
+            {campaignForLead?.title && <span className="text-xs text-muted-foreground">{campaignForLead.title}</span>}
+          </div>
+          {sequencePreview.length > 0 ? (
+            <div className="mt-3 space-y-3">
+              {sequencePreview.map((item, index) => (
+                <SequencePreviewCard key={item.key} item={item} index={index} />
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Esta campaña todavía no tiene secuencia configurada.
+            </p>
+          )}
+        </section>
+
+        {preparedMessages.length > 0 && (
+          <section className="rounded-xl border border-border bg-card p-4">
+            <h3 className="text-sm font-semibold text-foreground">Previews registrados</h3>
             <div className="mt-3 space-y-3">
               {preparedMessages.map((message) => (
                 <div key={message.id} className="rounded-lg border border-border bg-background p-3">
@@ -2578,12 +2721,8 @@ function B2BLeadDrawer({
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="mt-2 text-sm text-muted-foreground">
-              Todavía no hay mensaje personalizado preparado para este lead.
-            </p>
-          )}
-        </section>
+          </section>
+        )}
 
         <section className="rounded-xl border border-border bg-card p-4">
           <h3 className="text-sm font-semibold text-foreground">Historial</h3>
@@ -3642,6 +3781,21 @@ function DataItem({ label, value, href }: { label: string; value: string; href?:
           value
         )}
       </dd>
+    </div>
+  );
+}
+
+function SequencePreviewCard({ item, index }: { item: SequencePreviewItem; index: number }) {
+  return (
+    <div className="rounded-lg border border-border bg-background p-3">
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <span>{index + 1}. {item.channel}</span>
+        <span>{item.title}</span>
+        <span>{item.timing}</span>
+        {item.status && <span>{item.status}</span>}
+      </div>
+      {item.subject && <div className="mb-2 text-sm font-semibold text-foreground">{item.subject}</div>}
+      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{item.body || "-"}</p>
     </div>
   );
 }
