@@ -397,6 +397,38 @@ function leadPersonalization(lead: Lead): string | null {
   return variables.personalization || variables.icebreaker || lead.icebreaker || null;
 }
 
+function externalHref(value?: string | null): string | null {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^(www\.|linkedin\.com\/)/i.test(trimmed)) return `https://${trimmed}`;
+  return null;
+}
+
+function leadContactChannels(lead: Lead): string {
+  const channels: string[] = [];
+  if (lead.linkedinUrl || /linkedin|unipile/i.test(lead.source || "")) channels.push("LinkedIn");
+  if (lead.email) channels.push("Email");
+  return channels.length ? channels.join(" + ") : "Sin canal confirmado";
+}
+
+function leadOriginSummary(lead: Lead): string {
+  const source = sourceLabel(lead);
+  const campaign = lead.campaignTitle || lead.campaignId;
+  return campaign ? `${source} · ${campaign}` : source;
+}
+
+function leadContactReason(lead: Lead, preparedMessage?: LeadMessage | null): string {
+  const personalization = preparedMessage?.body || leadPersonalization(lead);
+  if (personalization) return personalization;
+  const role = leadRole(lead);
+  const company = lead.company ? ` en ${lead.company}` : "";
+  if (leadScore(lead) !== null) {
+    return `Tiene score B2B ${Math.round(leadScore(lead)!)} y encaja como ${role}${company}.`;
+  }
+  return `Aparece en esta búsqueda por su rol de ${role}${company}; falta score automático para explicar el fit con más precisión.`;
+}
+
 function personalizedLeadCount(leads: readonly Lead[]): number {
   return leads.filter((lead) => Boolean(leadPersonalization(lead))).length;
 }
@@ -449,8 +481,21 @@ function campaignLocksLeadEdits(campaign: Campaign | CampaignDetail | null, lead
 
 function stageLabel(lead: Lead): string {
   const stage = stageForStatus(lead.lifecycleStatus);
+  return stageDisplayLabel(stage || lead.lifecycleStatus);
+}
+
+function stageDisplayLabel(stage?: string | null): string {
+  if (!stage) return "-";
   if (stage === DISCARDED_STAGE) return "Descartado";
-  return stage || lead.lifecycleStatus || "-";
+  if (stage === "Discovered") return "Descubiertos";
+  if (stage === "Shortlist") return "A contactar";
+  if (stage === "Contacted") return "Contactados";
+  if (stage === "Replied") return "Respondieron";
+  if (stage === "Negotiating") return "En negociación";
+  if (stage === "Signed") return "Firmados";
+  if (stage === "Active") return "Activos";
+  if (stage === "Closed") return "Cerrados";
+  return stage;
 }
 
 function stageClasses(lead: Lead): string {
@@ -600,6 +645,15 @@ function messageChannelLabel(message: LeadMessage, lead?: Lead | null): string {
   if (lead?.instantlyCampaignId) return "Email · Instantly";
   if (lead?.linkedinUrl) return "LinkedIn · Unipile";
   return "Canal";
+}
+
+function messageEventLabel(message: LeadMessage): string {
+  const status = (message.status || "").toLowerCase();
+  if (message.direction === "in") return "Respuesta recibida";
+  if (status === "dry_run") return "Mensaje preparado";
+  if (status === "draft") return "Borrador guardado";
+  if (status === "sent") return "Mensaje enviado";
+  return "Mensaje saliente";
 }
 
 function leadChannelSummary(lead: Lead): string {
@@ -952,8 +1006,8 @@ export function OutboundB2BView() {
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "campaigns"] });
       showToast(
         variables.target === "Contacted"
-          ? `${leadDisplayName(variables.lead)} marcado como Contacted. Esto no crea ni envía la campaña.`
-          : `${leadDisplayName(variables.lead)} -> ${variables.target === DISCARDED_STAGE ? "Descartado" : variables.target}`,
+          ? `${leadDisplayName(variables.lead)} marcado como contactado. Esto no crea ni envía la campaña.`
+          : `${leadDisplayName(variables.lead)} -> ${stageDisplayLabel(variables.target)}`,
       );
     },
     onError: (error) =>
@@ -1259,8 +1313,8 @@ export function OutboundB2BView() {
       );
       showToast(
         target === "Contacted"
-          ? `${leads.length} contacto${leads.length === 1 ? "" : "s"} marcado${leads.length === 1 ? "" : "s"} como Contacted. Esto no crea ni envía la campaña.`
-          : `${leads.length} contacto${leads.length === 1 ? "" : "s"} movido${leads.length === 1 ? "" : "s"} a ${target}`,
+          ? `${leads.length} contacto${leads.length === 1 ? "" : "s"} marcado${leads.length === 1 ? "" : "s"} como contactado${leads.length === 1 ? "" : "s"}. Esto no crea ni envía la campaña.`
+          : `${leads.length} contacto${leads.length === 1 ? "" : "s"} movido${leads.length === 1 ? "" : "s"} a ${stageDisplayLabel(target)}`,
       );
     } catch (error) {
       showToast(`Bulk incompleto: ${error instanceof Error ? error.message : "error"}`, "warn");
@@ -1820,16 +1874,16 @@ function B2BCampaignOverviewTab({
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-6">
           <MiniMetric label="descubiertos" value={discovered} />
-          <MiniMetric label="shortlist" value={shortlisted} />
+          <MiniMetric label="a contactar" value={shortlisted} />
           <MiniMetric label="contactados" value={contacted} />
           <MiniMetric label="replies" value={replies} />
           <MiniMetric label="meetings" value={meetings} />
           <MiniMetric label="ganados" value={won} />
         </div>
         <div className="mt-4 grid gap-2 text-xs text-muted-foreground md:grid-cols-3">
-          <p><b className="text-foreground">Discovered</b>: lead encontrado, aún puede faltarle enrichment/score.</p>
-          <p><b className="text-foreground">Shortlist</b>: lead priorizado para entrar en secuencia.</p>
-          <p><b className="text-foreground">Contacted</b>: listo para contacto o en cola; se bloquea cuando se lanza/sincroniza fuera de Sancho.</p>
+          <p><b className="text-foreground">Descubiertos</b>: lead encontrado, aún puede faltarle enrichment/score.</p>
+          <p><b className="text-foreground">A contactar</b>: lead aprobado para entrar en secuencia.</p>
+          <p><b className="text-foreground">Contactados</b>: listo para contacto o en cola; se bloquea cuando se lanza/sincroniza fuera de Sancho.</p>
         </div>
       </section>
     </div>
@@ -1896,7 +1950,9 @@ function B2BKanbanView({
             >
               <header className="flex items-start justify-between gap-2 border-b border-border px-3 py-2" title={stage.headTooltip || stage.label}>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-muted-foreground">{stage.label}</div>
+                  <div className="text-xs font-semibold text-muted-foreground">
+                    {stageDisplayLabel(stage.key)}
+                  </div>
                 </div>
                 <span className="rounded-full bg-border px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">{items.length}</span>
               </header>
@@ -1949,6 +2005,7 @@ function B2BKanbanCard({
 }) {
   const [dragging, setDragging] = useState(false);
   const score = leadScore(lead);
+  const linkedinHref = externalHref(lead.linkedinUrl);
 
   function discard() {
     const note = window.prompt(`Descartar ${leadDisplayName(lead)} - nota opcional:`, "");
@@ -1984,6 +2041,7 @@ function B2BKanbanCard({
           <div className="mt-1 flex flex-wrap gap-1">
             <SourceChip lead={lead} />
             {lead.email && <InfoChip icon={<Mail className="h-3 w-3" />} label="Email" />}
+            {linkedinHref && <InfoChip icon={<ExternalLink className="h-3 w-3" />} label="LinkedIn" href={linkedinHref} />}
           </div>
         </div>
         <span className={scoreBandClass(score)}>{score == null ? "-" : Math.round(score)}</span>
@@ -1993,14 +2051,14 @@ function B2BKanbanCard({
         <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
           <button
             type="button"
-            title="Mover a Shortlist"
+            title="Aprobar para contactar"
             onClick={(event) => {
               event.stopPropagation();
               onMove(lead, "Shortlist");
             }}
             className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold transition-colors hover:border-rust hover:text-rust"
           >
-            Shortlist
+            Aprobar para contactar
           </button>
           <button
             type="button"
@@ -2134,7 +2192,7 @@ function B2BListaView({
             type="text"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar contacto o cuenta..."
+            placeholder="Buscar contacto o empresa..."
             className="w-64 rounded-md border border-border bg-background py-1.5 pl-8 pr-3 text-sm focus:border-rust focus:outline-none"
           />
         </label>
@@ -2146,7 +2204,7 @@ function B2BListaView({
           <option value="">Estado: todos</option>
           {PIPELINE_STAGES.map((item) => (
             <option key={item.key} value={item.key}>
-              {item.label}
+              {stageDisplayLabel(item.key)}
             </option>
           ))}
           <option value={DISCARDED_STAGE}>Descartados</option>
@@ -2168,7 +2226,7 @@ function B2BListaView({
               </th>
               <th className="px-3 py-2.5">Contacto</th>
               <SortableTh label="Score" active={sortKey === "score"} dir={sortDir} onClick={() => toggleSort("score")} />
-              <SortableTh label="Cuenta" active={sortKey === "company"} dir={sortDir} onClick={() => toggleSort("company")} />
+              <SortableTh label="Empresa" active={sortKey === "company"} dir={sortDir} onClick={() => toggleSort("company")} />
               <th className="px-3 py-2.5">Rol</th>
               <th className="px-3 py-2.5">Fuente</th>
               <th className="px-3 py-2.5">Contacto</th>
@@ -2230,7 +2288,13 @@ function B2BListaView({
                   <td className="px-3 py-2.5">
                     <div className="flex flex-wrap gap-1">
                       {lead.email && <InfoChip icon={<Mail className="h-3 w-3" />} label="Email" />}
-            {lead.linkedinUrl && <InfoChip icon={<ExternalLink className="h-3 w-3" />} label="LinkedIn" />}
+                      {externalHref(lead.linkedinUrl) && (
+                        <InfoChip
+                          icon={<ExternalLink className="h-3 w-3" />}
+                          label="LinkedIn"
+                          href={externalHref(lead.linkedinUrl) || undefined}
+                        />
+                      )}
                     </div>
                   </td>
                   <td className="px-3 py-2.5">
@@ -2269,7 +2333,7 @@ function B2BListaView({
             <option value="">Mover a estado...</option>
             {PIPELINE_STAGES.map((item) => (
               <option key={item.key} value={item.key}>
-                {item.label}
+                {stageDisplayLabel(item.key)}
               </option>
             ))}
           </select>
@@ -2283,7 +2347,7 @@ function B2BListaView({
             }}
             className="rounded-lg border-2 border-rust bg-rust px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
           >
-            Marcar Contacted
+            Marcar contactados
           </button>
           <button
             type="button"
@@ -2357,6 +2421,11 @@ function B2BLeadDrawer({
   const score = leadScore(lead);
   const components = lead.fitBreakdown || {};
   const messages = thread.data?.messages || [];
+  const preparedMessages = messages.filter((message) =>
+    message.direction === "out" && (message.status === "dry_run" || message.status === "draft"),
+  );
+  const latestPreparedMessage = preparedMessages[0] || null;
+  const linkedinHref = externalHref(lead.linkedinUrl);
   const stage = stageForStatus(lead.lifecycleStatus);
 
   return (
@@ -2383,7 +2452,15 @@ function B2BLeadDrawer({
           <SourceChip lead={lead} />
           {lead.company && <InfoChip icon={<Building2 className="h-3 w-3" />} label={lead.company} />}
           {lead.email && <InfoChip icon={<Mail className="h-3 w-3" />} label="Email" />}
-                      {lead.linkedinUrl && <InfoChip icon={<ExternalLink className="h-3 w-3" />} label="LinkedIn" />}
+          {linkedinHref ? (
+            <InfoChip
+              icon={<ExternalLink className="h-3 w-3" />}
+              label="Abrir LinkedIn"
+              href={linkedinHref}
+            />
+          ) : lead.linkedinUrl ? (
+            <InfoChip icon={<ExternalLink className="h-3 w-3" />} label="LinkedIn no válido" />
+          ) : null}
           <span className={cn("inline-flex rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide", stageClasses(lead))}>
             {stageLabel(lead)}
           </span>
@@ -2405,7 +2482,7 @@ function B2BLeadDrawer({
                   onClick={() => onMove(lead, "Shortlist")}
                   className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
                 >
-                  Mover a Shortlist
+                  Aprobar para contactar
                 </button>
                 <button
                   type="button"
@@ -2428,11 +2505,21 @@ function B2BLeadDrawer({
                 onClick={() => onMove(lead, "Discovered")}
                 className="rounded-md border border-sage/50 bg-sage/10 px-3 py-1.5 text-sm font-semibold text-sage transition-colors hover:bg-sage/15 disabled:opacity-50"
               >
-                Restaurar a Discovered
+                Restaurar a descubiertos
               </button>
             )}
           </div>
         )}
+
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h3 className="text-sm font-semibold text-foreground">Contexto</h3>
+          <div className="mt-3 grid gap-3 text-sm">
+            <ContextLine label="Qué es" value={`${leadRole(lead)}${lead.company ? ` · ${lead.company}` : ""}`} />
+            <ContextLine label="De dónde sale" value={leadOriginSummary(lead)} />
+            <ContextLine label="Por qué contactar" value={leadContactReason(lead, latestPreparedMessage)} />
+            <ContextLine label="Canal disponible" value={leadContactChannels(lead)} />
+          </div>
+        </section>
 
         <section className="rounded-xl border border-border bg-card p-4">
           <h3 className="text-sm font-semibold text-foreground">Score B2B</h3>
@@ -2466,14 +2553,36 @@ function B2BLeadDrawer({
           <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
             <DataItem label="Nombre" value={leadDisplayName(lead)} />
             <DataItem label="Rol" value={leadRole(lead)} />
-            <DataItem label="Cuenta" value={lead.company || "-"} />
+            <DataItem label="Empresa" value={lead.company || "-"} />
             <DataItem label="Email" value={lead.email || "-"} />
-            <DataItem label="LinkedIn" value={lead.linkedinUrl || "-"} />
+            <DataItem label="LinkedIn" value={linkedinHref ? "Abrir perfil" : lead.linkedinUrl || "-"} href={linkedinHref || undefined} />
             <DataItem label="Búsqueda" value={lead.campaignTitle || lead.campaignId || "-"} />
             <DataItem label="Fuente" value={sourceLabel(lead)} />
             <DataItem label="Ubicación" value={lead.location || "-"} />
             <DataItem label="Creado" value={compactDate(lead.createdAt)} />
           </dl>
+        </section>
+
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h3 className="text-sm font-semibold text-foreground">Mensaje preparado</h3>
+          {preparedMessages.length > 0 ? (
+            <div className="mt-3 space-y-3">
+              {preparedMessages.map((message) => (
+                <div key={message.id} className="rounded-lg border border-border bg-background p-3">
+                  <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span>{messageChannelLabel(message, lead)}</span>
+                    <span>{message.status === "dry_run" ? "Preview" : "Draft"}</span>
+                    {message.createdAt && <span>{formatDateTime(message.createdAt)}</span>}
+                  </div>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{message.body}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Todavía no hay mensaje personalizado preparado para este lead.
+            </p>
+          )}
         </section>
 
         <section className="rounded-xl border border-border bg-card p-4">
@@ -2487,7 +2596,7 @@ function B2BLeadDrawer({
               <LogRow
                 key={message.id}
                 icon={message.direction === "out" ? <Send className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
-                title={`${message.direction === "out" ? "Mensaje enviado" : "Respuesta recibida"}${message.subject ? ` - ${message.subject}` : ""}`}
+                title={`${messageEventLabel(message)}${message.subject ? ` - ${message.subject}` : ""}`}
                 date={message.createdAt}
               />
             ))}
@@ -2752,7 +2861,11 @@ function B2BInboxTab({
                     <DataItem label="Canal" value={leadChannelSummary(selected)} />
                     <DataItem label="Estado" value={stageLabel(selected)} />
                     <DataItem label="Email" value={selected.email || "-"} />
-                    <DataItem label="LinkedIn" value={selected.linkedinUrl || "-"} />
+                    <DataItem
+                      label="LinkedIn"
+                      value={externalHref(selected.linkedinUrl) ? "Abrir perfil" : selected.linkedinUrl || "-"}
+                      href={externalHref(selected.linkedinUrl) || undefined}
+                    />
                   </dl>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
@@ -3469,11 +3582,30 @@ function SourceChip({ lead }: { lead: Lead }) {
   );
 }
 
-function InfoChip({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <span className="inline-flex max-w-[180px] items-center gap-1 truncate rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+function InfoChip({ icon, label, href }: { icon: ReactNode; label: string; href?: string }) {
+  const className = "inline-flex max-w-[180px] items-center gap-1 truncate rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground";
+  const content = (
+    <>
       {icon}
       <span className="truncate">{label}</span>
+    </>
+  );
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className={cn(className, "transition-colors hover:border-rust hover:text-rust")}
+        onClick={(event) => event.stopPropagation()}
+      >
+        {content}
+      </a>
+    );
+  }
+  return (
+    <span className={className}>
+      {content}
     </span>
   );
 }
@@ -3490,13 +3622,35 @@ function FlowRow({ icon, title, body }: { icon: ReactNode; title: string; body: 
   );
 }
 
-function DataItem({ label, value }: { label: string; value: string }) {
+function DataItem({ label, value, href }: { label: string; value: string; href?: string }) {
   return (
     <div className="min-w-0">
       <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="truncate font-medium text-foreground" title={value}>
-        {value}
+      <dd className="truncate font-medium text-foreground" title={href || value}>
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex max-w-full items-center gap-1 truncate text-rust underline-offset-2 hover:underline"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="truncate">{value}</span>
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+          </a>
+        ) : (
+          value
+        )}
       </dd>
+    </div>
+  );
+}
+
+function ContextLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid gap-1 rounded-md border border-border bg-background px-3 py-2 sm:grid-cols-[130px_minmax(0,1fr)]">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="min-w-0 text-sm leading-relaxed text-foreground">{value}</div>
     </div>
   );
 }
