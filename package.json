@@ -19,6 +19,8 @@
     "test:content": "tsx --tsconfig tsconfig.tsx-tests.json --test src/components/content/__tests__/*.test.tsx",
     "smoke:runtime:external-http": "node scripts/smoke-external-http.mjs",
     "smoke:runtime:external-http:bridge": "node scripts/smoke-external-http.mjs --protocol=mc-bridge",
+    "smoke:runtime:claude-code": "node scripts/smoke-cli-runtime.mjs --runtime=claude-code",
+    "smoke:runtime:codex": "node scripts/smoke-cli-runtime.mjs --runtime=codex",
     "migrate:media": "tsx scripts/migrate-legacy-media.mts",
     "check:drafts": "tsx scripts/check-legacy-media.mts",
     "audit:docs": "tsx scripts/audit-doc-paths.mts --check",

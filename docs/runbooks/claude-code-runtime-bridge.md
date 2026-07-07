@@ -64,16 +64,27 @@ runtime must use Claude Code built-ins.
 The bridge invokes:
 
 ```bash
-claude -p "<prompt>" --output-format json --no-session-persistence
+claude -p "<prompt>" --output-format json --setting-sources local --disable-slash-commands --no-session-persistence
 ```
 
 Use the normal Claude Code host authentication for the first spike, such as
 `claude setup-token`, `CLAUDE_CODE_OAUTH_TOKEN`, or `ANTHROPIC_API_KEY`.
 
-The bridge intentionally sticks to CLI flags supported by the local Claude Code
-2.1.3 install used for this spike. Newer flags such as `--bare` or
-`--max-turns` can be evaluated later after pinning the Claude Code version used
-by the runtime host.
+The bridge intentionally isolates runtime calls from user/project Claude Code
+settings by default. Override `CLAUDE_CODE_RUNTIME_SETTING_SOURCES` only when the
+runtime host deliberately needs user or project settings.
+
+## Smoke test
+
+After `npm run build`, validate the full Sancho -> external-http -> Claude Code
+bridge -> Sancho webhook path with:
+
+```bash
+npm run smoke:runtime:claude-code
+```
+
+The smoke writes only under `.context/cli-runtime-smoke/claude-code/` and checks
+that Sancho stores a bot reply plus an `external-http` completed run.
 
 ## Native context
 

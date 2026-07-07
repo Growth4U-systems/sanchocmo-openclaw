@@ -187,6 +187,8 @@ test("buildClaudeArgs wires print mode, Sancho MCP, and safe tool defaults", () 
     assert.ok(args.includes("sonnet"));
     assert.ok(args.includes("--tools"));
     assert.equal(args[args.indexOf("--tools") + 1], "");
+    assert.equal(args[args.indexOf("--setting-sources") + 1], "local");
+    assert.ok(args.includes("--disable-slash-commands"));
     assert.ok(args.includes("--no-session-persistence"));
     assert.ok(args.includes("--strict-mcp-config"));
     assert.equal(args[args.indexOf("--allowedTools") + 1], "mcp__sancho__*");

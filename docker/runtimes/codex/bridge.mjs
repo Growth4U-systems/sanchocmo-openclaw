@@ -240,11 +240,10 @@ export function buildCodexArgs(message, prompt, outputFile = "") {
 
   if (process.env.CODEX_RUNTIME_OSS === "1") args.push("--oss");
   args.push("-s", firstEnv(["CODEX_RUNTIME_SANDBOX"]) || "read-only");
-  args.push("-a", firstEnv(["CODEX_RUNTIME_APPROVAL_POLICY"]) || "never");
   args.push("-C", bridgeWorkdir());
   args.push("--skip-git-repo-check", "--ephemeral", "--color", "never");
 
-  if (process.env.CODEX_RUNTIME_IGNORE_USER_CONFIG === "1") args.push("--ignore-user-config");
+  if (!flagDisabled(["CODEX_RUNTIME_IGNORE_USER_CONFIG"])) args.push("--ignore-user-config");
   if (process.env.CODEX_RUNTIME_JSON_EVENTS === "1") args.push("--json");
   if (outputFile) args.push("-o", outputFile);
 
