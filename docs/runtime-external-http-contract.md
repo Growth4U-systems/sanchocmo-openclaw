@@ -198,3 +198,8 @@ the synchronous reply path. They write their latest artifacts to:
 Runtime engines such as Hermes, Codex CLI, Claude Code, or another harness should
 be exposed to Sancho through this same HTTP shape. Sancho should not need a
 separate product build per runtime.
+
+For native bridge spikes that implement this contract with CLI runtimes, see:
+
+- [Claude Code Runtime Bridge](./runbooks/claude-code-runtime-bridge.md)
+- [Codex Runtime Bridge](./runbooks/codex-runtime-bridge.md)
