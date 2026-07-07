@@ -15,6 +15,8 @@ import {
   Inbox,
   Loader2,
   Mail,
+  MessageSquare,
+  Network,
   Plus,
   RefreshCw,
   Search,
@@ -212,6 +214,49 @@ interface EmailSequenceBlock {
   emails: EmailSequenceEmail[];
 }
 
+interface LinkedInAutopilotAccountInput {
+  accountId: string;
+  label?: string;
+}
+
+interface LinkedInAutopilotPlanItem {
+  leadId: string;
+  name: string;
+  company?: string | null;
+  providerId?: string | null;
+  linkedinUrl?: string | null;
+  action: "connect" | "dm";
+  accountId?: string | null;
+  accountLabel?: string | null;
+  message: string;
+  blocked?: boolean;
+  blockedReason?: string | null;
+}
+
+interface LinkedInAutopilotPlan {
+  summary: {
+    total: number;
+    sendable: number;
+    connect: number;
+    dm: number;
+    blocked: number;
+  };
+  items: LinkedInAutopilotPlanItem[];
+}
+
+interface LinkedInAutopilotCommandResponse {
+  ok: boolean;
+  command: string;
+  campaignId: string;
+  mode?: "proposal" | "dry_run" | "live";
+  plan?: LinkedInAutopilotPlan;
+  summary?: LinkedInAutopilotPlan["summary"] & {
+    sent?: number;
+    skipped?: number;
+    failed?: number;
+  };
+}
+
 const TABS: Array<{ key: Exclude<B2BTab, "settings">; label: string; icon: LucideIcon }> = [
   { key: "encuentra", label: "Overview", icon: Search },
   { key: "plantillas", label: "Oferta", icon: FileText },
@@ -249,8 +294,6 @@ const SCORE_ROWS: Array<{ key: string; label: string }> = [
   { key: "intent", label: "Intent" },
   { key: "contactability", label: "Contactability" },
 ];
-
-const MANUAL_STATUS_OPTIONS = ["Replied", "Negotiating", "Demo_Booked", "Deal_Created", "Closed_Won", "Closed_Lost"];
 
 const REPLY_CATEGORIES: Array<{ key: B2BReplyCategoryKey; label: string; icon: string }> = [
   { key: "hot", label: "Hot", icon: "↳" },
@@ -699,6 +742,25 @@ function extractSequencePlaceholders(blocks: EmailSequenceBlock[]): string[] {
   return [...found].sort();
 }
 
+function linkedInReadyLeads(leads: Lead[]): Lead[] {
+  return leads.filter((lead) => !!lead.linkedinUrl);
+}
+
+function parseLinkedInAccounts(value: string): LinkedInAutopilotAccountInput[] {
+  return value
+    .split(/[\n,;]+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const [accountId, label] = item.split("|").map((part) => part.trim());
+      return {
+        accountId,
+        ...(label ? { label } : {}),
+      };
+    })
+    .filter((item) => !!item.accountId);
+}
+
 export function OutboundB2BView() {
   const slug = useSlugSync();
   const router = useRouter();
@@ -718,6 +780,8 @@ export function OutboundB2BView() {
   const [roster, setRoster] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [activeJob, setActiveJob] = useState<ActiveYalcJob | null>(null);
+  const [linkedinAccountInput, setLinkedinAccountInput] = useState("");
+  const [linkedinAutopilotPlan, setLinkedinAutopilotPlan] = useState<LinkedInAutopilotPlan | null>(null);
 
   function pushQuery(
     next: Partial<{
@@ -814,6 +878,10 @@ export function OutboundB2BView() {
   const selectedAllLeads = useMemo(
     () => uniqueLeads([...selectedActiveLeads, ...selectedDiscardedLeads]),
     [selectedActiveLeads, selectedDiscardedLeads],
+  );
+  const selectedLinkedInLeads = useMemo(
+    () => linkedInReadyLeads(selectedActiveLeads),
+    [selectedActiveLeads],
   );
   const templateCampaignId = selectedCampaignId;
 
@@ -934,6 +1002,76 @@ export function OutboundB2BView() {
     },
     onError: (error) => showToast(error instanceof Error ? error.message : "Acción incompleta", "warn"),
   });
+
+  const linkedinAutopilotPlanAction = useMutation<
+    LinkedInAutopilotCommandResponse,
+    Error,
+    { campaignId: string }
+  >({
+    mutationFn: ({ campaignId }) => {
+      const leadIds = selectedLinkedInLeads.map((lead) => lead.id);
+      if (leadIds.length === 0) throw new Error("No hay leads con LinkedIn en esta campaña.");
+      const accounts = parseLinkedInAccounts(linkedinAccountInput);
+      return fetchJson<LinkedInAutopilotCommandResponse>(
+        `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            command: "outbound.linkedin_autopilot.plan",
+            campaignId,
+            leadIds,
+            ...(accounts.length > 0 ? { accounts } : {}),
+          }),
+        },
+      );
+    },
+    onSuccess: (data) => {
+      setLinkedinAutopilotPlan(data.plan || null);
+      showToast("Plan LinkedIn generado");
+    },
+    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo generar el plan LinkedIn", "warn"),
+  });
+
+  const linkedinAutopilotExecuteAction = useMutation<
+    LinkedInAutopilotCommandResponse,
+    Error,
+    { campaignId: string }
+  >({
+    mutationFn: ({ campaignId }) => {
+      const sendableLeadIds = (linkedinAutopilotPlan?.items || [])
+        .filter((item) => !item.blocked)
+        .map((item) => item.leadId);
+      if (sendableLeadIds.length === 0) throw new Error("No hay mensajes LinkedIn aprobables en el plan.");
+      const accounts = parseLinkedInAccounts(linkedinAccountInput);
+      return fetchJson<LinkedInAutopilotCommandResponse>(
+        `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            command: "outbound.linkedin_autopilot.execute",
+            campaignId,
+            leadIds: sendableLeadIds,
+            ...(accounts.length > 0 ? { accounts } : {}),
+            dryRun: false,
+            confirmLinkedInSend: true,
+          }),
+        },
+      );
+    },
+    onSuccess: (data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
+      setLinkedinAutopilotPlan(data.plan || null);
+      showToast(`LinkedIn enviado: ${data.summary?.sent ?? 0} lead${data.summary?.sent === 1 ? "" : "s"}`);
+      void linkedinAutopilotPlanAction.mutateAsync({ campaignId: variables.campaignId }).catch(() => undefined);
+    },
+    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo ejecutar LinkedIn", "warn"),
+  });
+
+  useEffect(() => {
+    setLinkedinAutopilotPlan(null);
+  }, [selectedCampaignId]);
 
   useEffect(() => {
     if (!slug || !activeJob?.jobId) return;
@@ -1120,6 +1258,15 @@ export function OutboundB2BView() {
     }
   }
 
+  function executeLinkedInAutopilot() {
+    const count = linkedinAutopilotPlan?.items.filter((item) => !item.blocked).length || 0;
+    if (!selectedCampaignId || count === 0) return;
+    if (!window.confirm(`Esto enviará ${count} mensaje${count === 1 ? "" : "s"} reales por LinkedIn desde Unipile. ¿Continuar?`)) {
+      return;
+    }
+    linkedinAutopilotExecuteAction.mutate({ campaignId: selectedCampaignId });
+  }
+
   const notConfigured = overview.data?.configured === false;
   const header = HEADERS[tab];
   const activeCampaigns = campaigns.filter((campaign) => campaignState(campaign) !== "draft").length;
@@ -1127,6 +1274,7 @@ export function OutboundB2BView() {
   const pageError = overview.error || campaignsQuery.error || activeLeadsQuery.error || discardedLeadsQuery.error;
   const actionBusy = outboundAction.isPending || !!activeJob;
   const busyAction = outboundAction.isPending ? outboundAction.variables?.action : activeJob?.action;
+  const linkedinBusy = linkedinAutopilotPlanAction.isPending || linkedinAutopilotExecuteAction.isPending;
 
   if (notConfigured) {
     return (
@@ -1280,15 +1428,29 @@ export function OutboundB2BView() {
             )}
 
             {tab === "encuentra" && (
-              <B2BCampaignOverviewTab
-                campaign={icpCampaign}
-                leads={selectedAllLeads}
-                loading={campaignsQuery.isLoading || campaignDetailQuery.isLoading}
-                onCreateSearch={() => openB2BSearch()}
-                actionBusy={actionBusy}
-                busyAction={busyAction}
-                onRunAction={(action) => outboundAction.mutate({ campaignId: selectedCampaignId, action })}
-              />
+              <>
+                <B2BCampaignOverviewTab
+                  campaign={icpCampaign}
+                  leads={selectedAllLeads}
+                  loading={campaignsQuery.isLoading || campaignDetailQuery.isLoading}
+                  onCreateSearch={() => openB2BSearch()}
+                  actionBusy={actionBusy}
+                  busyAction={busyAction}
+                  onRunAction={(action) => outboundAction.mutate({ campaignId: selectedCampaignId, action })}
+                />
+                <LinkedInAutopilotPanel
+                  campaign={icpCampaign}
+                  leads={selectedLinkedInLeads}
+                  plan={linkedinAutopilotPlan}
+                  accountInput={linkedinAccountInput}
+                  onAccountInputChange={setLinkedinAccountInput}
+                  planning={linkedinAutopilotPlanAction.isPending}
+                  executing={linkedinAutopilotExecuteAction.isPending}
+                  disabled={!selectedCampaignId || linkedinBusy}
+                  onPlan={() => linkedinAutopilotPlanAction.mutate({ campaignId: selectedCampaignId })}
+                  onExecute={executeLinkedInAutopilot}
+                />
+              </>
             )}
 
             {tab === "contactos" && (
@@ -1653,6 +1815,158 @@ function B2BCampaignOverviewTab({
         </div>
       </section>
     </div>
+  );
+}
+
+function LinkedInAutopilotPanel({
+  campaign,
+  leads,
+  plan,
+  accountInput,
+  onAccountInputChange,
+  planning,
+  executing,
+  disabled,
+  onPlan,
+  onExecute,
+}: {
+  campaign: Campaign | CampaignDetail | null;
+  leads: Lead[];
+  plan: LinkedInAutopilotPlan | null;
+  accountInput: string;
+  onAccountInputChange: (value: string) => void;
+  planning: boolean;
+  executing: boolean;
+  disabled: boolean;
+  onPlan: () => void;
+  onExecute: () => void;
+}) {
+  const leadById = useMemo(() => new Map(leads.map((lead) => [lead.id, lead])), [leads]);
+  const sendable = plan?.items.filter((item) => !item.blocked) || [];
+  const blocked = plan?.items.filter((item) => item.blocked) || [];
+  const hasCampaign = !!campaign;
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-4" data-testid="linkedin-autopilot-panel">
+      <div className="flex flex-wrap items-start gap-4">
+        <div className="min-w-[260px] flex-1">
+          <div className="mb-2 inline-flex items-center gap-2 rounded border border-cyan-600/30 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-800">
+            <Network className="h-3 w-3" />
+            LinkedIn autopilot
+          </div>
+          <h3 className="font-heading text-lg text-navy">Planificar conexión y DMs</h3>
+          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            Sancho genera la propuesta por lead, muestra el mensaje final y solo envía por Unipile cuando apruebas explícitamente.
+          </p>
+        </div>
+        <div className="grid min-w-[300px] grid-cols-3 gap-2 text-center">
+          <MiniMetric label="LinkedIn" value={leads.length} muted={leads.length === 0} />
+          <MiniMetric label="enviar" value={sendable.length} muted={!plan} />
+          <MiniMetric label="bloqueos" value={blocked.length} muted={!plan || blocked.length === 0} />
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <label className="block">
+          <span className="text-xs font-semibold text-foreground">Cuentas LinkedIn Unipile</span>
+          <input
+            value={accountInput}
+            onChange={(event) => onAccountInputChange(event.target.value)}
+            placeholder="Opcional: acct-martin | Martin, acct-alfonso | Alfonso"
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none"
+          />
+          <span className="mt-1 block text-[11px] text-muted-foreground">
+            Si queda vacío, YALC usa la cuenta LinkedIn guardada en la campaña.
+          </span>
+        </label>
+        <div className="flex items-end gap-2">
+          <button
+            type="button"
+            disabled={disabled || !hasCampaign || leads.length === 0}
+            onClick={onPlan}
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+          >
+            {planning ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+            Generar plan
+          </button>
+          <button
+            type="button"
+            disabled={disabled || executing || sendable.length === 0}
+            onClick={onExecute}
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-3 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+          >
+            {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Enviar aprobados
+          </button>
+        </div>
+      </div>
+
+      {leads.length === 0 && (
+        <div className="mt-4 rounded-lg border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
+          Esta campaña todavía no tiene leads con LinkedIn. Busca o enriquece leads antes de planificar el autopilot.
+        </div>
+      )}
+
+      {plan && (
+        <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background">
+          <div className="grid grid-cols-[110px_minmax(170px,1fr)_minmax(240px,2fr)_160px] gap-3 border-b border-border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground max-lg:hidden">
+            <span>Acción</span>
+            <span>Lead</span>
+            <span>Mensaje</span>
+            <span>Cuenta</span>
+          </div>
+          <div className="max-h-[420px] divide-y divide-border overflow-auto">
+            {plan.items.map((item) => {
+              const lead = leadById.get(item.leadId);
+              return (
+                <div
+                  key={item.leadId}
+                  className={cn(
+                    "grid gap-3 px-3 py-3 text-sm lg:grid-cols-[110px_minmax(170px,1fr)_minmax(240px,2fr)_160px]",
+                    item.blocked && "bg-yellow-50/70",
+                  )}
+                >
+                  <div>
+                    <span className={cn(
+                      "inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold",
+                      item.action === "dm"
+                        ? "border-cyan-600/40 bg-cyan-50 text-cyan-800"
+                        : "border-sage/40 bg-sage/10 text-sage",
+                    )}>
+                      {item.action === "dm" ? "DM" : "Conexión"}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-foreground">{item.name || leadDisplayName(lead || { id: item.leadId })}</div>
+                    <div className="truncate text-xs text-muted-foreground">{item.company || lead?.company || lead?.headline || item.leadId}</div>
+                  </div>
+                  <div className="min-w-0">
+                    {item.blocked ? (
+                      <span className="text-xs font-semibold text-yellow-800">{item.blockedReason || "Bloqueado"}</span>
+                    ) : (
+                      <p className="line-clamp-3 text-sm leading-relaxed text-foreground/85">{item.message}</p>
+                    )}
+                  </div>
+                  <div className="min-w-0 text-xs text-muted-foreground">
+                    <div className="truncate font-semibold text-foreground">{item.accountLabel || item.accountId || "Sin cuenta"}</div>
+                    {item.linkedinUrl && (
+                      <a
+                        href={item.linkedinUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 inline-flex items-center gap-1 text-rust hover:underline"
+                      >
+                        Perfil <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
