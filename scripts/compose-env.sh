@@ -233,7 +233,8 @@ _boot_phase() {
   elif [ "$w" -lt 35 ];  then printf 'iniciando el servidor de Mission Control'
   elif [ "$w" -lt 60 ];  then printf 'preparando la base de datos y migraciones'
   elif [ "$w" -lt 120 ]; then printf 'primer arranque: seedeando el home y skills (tarda un poco)'
-  else                        printf 'todavía levantando — el primer boot suele tardar más'
+  elif [ "$w" -lt 240 ]; then printf 'instalando plugins y preparando el runtime'
+  else                        printf 'casi listo — el primer arranque puede tardar varios minutos, es normal'
   fi
 }
 
@@ -256,7 +257,10 @@ wait_until_healthy() {
       missing) [ "$tty" = 1 ] && printf '\r\033[K'; return 1 ;;
     esac
     if [ "$waited" -ge "$timeout" ]; then
-      [ "$tty" = 1 ] && printf '\r\033[K'; return 1
+      # Timed out while the container is still booting (health=starting) — this
+      # is NOT a failure (return 3), distinct from a missing/crashed container
+      # (return 1). First boot can legitimately exceed the ceiling. (SAN-408)
+      [ "$tty" = 1 ] && printf '\r\033[K'; return 3
     fi
     phase="$(_boot_phase "$waited")"
     if [ "$tty" = 1 ]; then

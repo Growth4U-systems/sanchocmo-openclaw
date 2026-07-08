@@ -643,14 +643,25 @@ fi
 # pluginApi contract is always met. Use `openclaw plugins install` (not raw
 # npm) so the CLI also wires the peer-dep loader hook that resolves
 # `import "openclaw"` to the global install.
-if [ -n "$OPENCLAW_VERSION" ]; then
+# SAN-407: the pin only matters when OpenAI/Codex is actually in use — codex is
+# the OpenAI runtime plugin. On an Anthropic- or Fireworks-only install there's
+# nothing to pin, and the network-gated `openclaw plugins install` just adds
+# first-boot latency (and, on an offline / registry-blocked host, hangs the boot
+# with no timeout). So (a) gate on an OpenAI credential, and (b) hard-cap the
+# install with `timeout` so it can never block the gateway from starting.
+codex_in_use=0
+[ -n "${OPENAI_API_KEY:-}" ] && codex_in_use=1
+[ "${OPENAI_AUTH_MODE:-api_key}" = "subscription" ] && codex_in_use=1
+if [ -n "$OPENCLAW_VERSION" ] && [ "$codex_in_use" = 1 ]; then
   CURRENT_CODEX=$(node -p "try{require('/root/.openclaw/.openclaw/npm/node_modules/@openclaw/codex/package.json').version}catch(_){''}" 2>/dev/null)
   if [ "$CURRENT_CODEX" != "$OPENCLAW_VERSION" ]; then
     echo "[entrypoint] Pinning @openclaw/codex@${OPENCLAW_VERSION} (was: ${CURRENT_CODEX:-none}) to match host..."
-    openclaw plugins install "@openclaw/codex@${OPENCLAW_VERSION}" --force >/tmp/codex-pin.log 2>&1 \
+    timeout "${CODEX_PIN_TIMEOUT:-180}" openclaw plugins install "@openclaw/codex@${OPENCLAW_VERSION}" --force >/tmp/codex-pin.log 2>&1 \
       && echo "[entrypoint] codex pinned to ${OPENCLAW_VERSION}" \
-      || echo "[entrypoint] WARNING: codex pin failed (see /tmp/codex-pin.log); MC chat may hang if installed codex requires a newer pluginApi"
+      || echo "[entrypoint] WARNING: codex pin failed or timed out after ${CODEX_PIN_TIMEOUT:-180}s (see /tmp/codex-pin.log); continuing boot. MC chat via Codex may hang if the installed codex needs a newer pluginApi."
   fi
+elif [ -n "$OPENCLAW_VERSION" ]; then
+  echo "[entrypoint] Skipping @openclaw/codex pin — no OpenAI/Codex credential in use (set OPENAI_API_KEY or OPENAI_AUTH_MODE=subscription to enable)."
 fi
 
 # ===========================================================

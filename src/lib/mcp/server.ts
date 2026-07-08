@@ -107,6 +107,7 @@ import {
   testIntegrationConnection,
 } from "@/lib/integrations/actions";
 import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
+import { dispatchOutboundCommand } from "@/lib/yalc/outbound-command";
 import { getAvailableProviders } from "@/lib/publishing/registry";
 import { fetchAccountInfo } from "@/lib/publishing/providers/metricool";
 import { getCronPublishConfig, setCronPublishConfig } from "@/lib/publish/cron-publish-config";
@@ -3191,6 +3192,128 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           { headers: traceHeaders(context) },
         );
         return jsonResult(data);
+      }),
+  );
+
+  const linkedinAutopilotAccountSchema = z.object({
+    accountId: z.string().min(1).optional(),
+    account_id: z.string().min(1).optional(),
+    id: z.string().min(1).optional(),
+    label: z.string().min(1).optional(),
+    name: z.string().min(1).optional(),
+    dailyLimit: z.number().int().min(1).optional(),
+    daily_limit: z.number().int().min(1).optional(),
+  });
+
+  const linkedinAutopilotSharedSchema = {
+    clientSlug: z.string().min(1).describe("Sancho client slug."),
+    campaignId: z.string().min(1).describe("YALC B2B campaign id."),
+    leadIds: z.array(z.string().min(1)).optional().describe("Optional explicit lead ids to include in this autopilot batch."),
+    limit: z.number().int().min(1).optional().describe("Optional max number of leads to include when leadIds is omitted."),
+    accounts: z
+      .array(linkedinAutopilotAccountSchema)
+      .optional()
+      .describe("Optional Unipile LinkedIn accounts with accountId/id and dailyLimit."),
+    directMessageLeadIds: z
+      .array(z.string().min(1))
+      .optional()
+      .describe("Lead ids that should receive a direct DM because they are already connected."),
+    connectionLeadIds: z
+      .array(z.string().min(1))
+      .optional()
+      .describe("Lead ids that should receive a LinkedIn connection request."),
+    connectMessage: z.string().min(1).optional().describe("Optional override for connection request copy."),
+    dmMessage: z.string().min(1).optional().describe("Optional override for direct DM copy."),
+  };
+
+  server.registerTool(
+    "yalc_linkedin_autopilot_plan",
+    {
+      title: "Plan YALC LinkedIn autopilot",
+      description:
+        "Builds the same B2B LinkedIn autopilot plan used by the Sancho UI before sending. It does not contact leads. Requires yalc:read.",
+      inputSchema: linkedinAutopilotSharedSchema,
+    },
+    async ({
+      clientSlug,
+      campaignId,
+      leadIds,
+      limit,
+      accounts,
+      directMessageLeadIds,
+      connectionLeadIds,
+      connectMessage,
+      dmMessage,
+    }) =>
+      runTool(context, "yalc_linkedin_autopilot_plan", clientSlug, async () => {
+        assertClientScope(context, "yalc:read", clientSlug);
+        const result = await dispatchOutboundCommand(resolveYalcConfig(clientSlug), {
+          command: "outbound.linkedin_autopilot.plan",
+          campaignId,
+          leadIds,
+          limit,
+          accounts,
+          directMessageLeadIds,
+          connectionLeadIds,
+          connectMessage,
+          dmMessage,
+          source: "sancho.mcp",
+        });
+        return jsonResult(result);
+      }),
+  );
+
+  server.registerTool(
+    "yalc_linkedin_autopilot_execute",
+    {
+      title: "Execute YALC LinkedIn autopilot",
+      description:
+        "Executes the same B2B LinkedIn autopilot send path used by the Sancho UI. Defaults to dry-run. Live execution requires dryRun=false and confirm=true. Requires yalc:write.",
+      inputSchema: {
+        ...linkedinAutopilotSharedSchema,
+        dryRun: z.boolean().default(true).describe("When true, returns the execution plan without contacting leads."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to send via Unipile."),
+      },
+    },
+    async ({
+      clientSlug,
+      campaignId,
+      leadIds,
+      limit,
+      accounts,
+      directMessageLeadIds,
+      connectionLeadIds,
+      connectMessage,
+      dmMessage,
+      dryRun = true,
+      confirm = false,
+    }) =>
+      runTool(context, "yalc_linkedin_autopilot_execute", clientSlug, async () => {
+        assertClientScope(context, "yalc:write", clientSlug);
+        const liveConfirmed = dryRun === false && confirm === true;
+        const result = await dispatchOutboundCommand(resolveYalcConfig(clientSlug), {
+          command: "outbound.linkedin_autopilot.execute",
+          campaignId,
+          leadIds,
+          limit,
+          accounts,
+          directMessageLeadIds,
+          connectionLeadIds,
+          connectMessage,
+          dmMessage,
+          dryRun: liveConfirmed ? false : true,
+          confirm: liveConfirmed,
+          confirmLinkedInSend: liveConfirmed,
+          source: "sancho.mcp",
+        });
+        return jsonResult({
+          ...result,
+          dryRun: !liveConfirmed,
+          requiresConfirmation: !liveConfirmed,
+          message: liveConfirmed
+            ? result.message
+            : "Set dryRun=false and confirm=true to execute LinkedIn autopilot via Unipile.",
+        });
       }),
   );
 

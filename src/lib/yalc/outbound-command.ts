@@ -15,6 +15,8 @@ export type OutboundCommandName =
   | "outbound.enrich"
   | "outbound.score"
   | "outbound.draft_sequence"
+  | "outbound.linkedin_autopilot.plan"
+  | "outbound.linkedin_autopilot.execute"
   | "outbound.approve_and_publish"
   | "outbound.status";
 
@@ -68,6 +70,8 @@ function commandName(value: unknown): OutboundCommandName {
     "outbound.enrich",
     "outbound.score",
     "outbound.draft_sequence",
+    "outbound.linkedin_autopilot.plan",
+    "outbound.linkedin_autopilot.execute",
     "outbound.approve_and_publish",
     "outbound.status",
   ];
@@ -345,6 +349,28 @@ async function draftSequence(config: YalcRuntimeConfig, input: RecordLike, comma
   return { ok: true, command, campaignId, channel: ch, profileKind: pKind, result };
 }
 
+async function linkedinAutopilot(
+  config: YalcRuntimeConfig,
+  input: RecordLike,
+  command: Extract<OutboundCommandName, "outbound.linkedin_autopilot.plan" | "outbound.linkedin_autopilot.execute">,
+): Promise<OutboundCommandResult> {
+  const campaignId = requiredText(input, "campaignId");
+  await assertCampaignKind(config, campaignId, "b2b");
+  const result = await yalcFetch<RecordLike>(config, "/api/outbound/command", {
+    method: "POST",
+    body: {
+      ...input,
+      command,
+      campaignId,
+      expectedKind: "b2b",
+      profileKind: "b2b_contact",
+      type: "B2B",
+      source: "outbound.command",
+    },
+  });
+  return { ok: true, command, campaignId, ...result };
+}
+
 async function approveAndPublish(
   config: YalcRuntimeConfig,
   input: RecordLike,
@@ -426,6 +452,9 @@ export async function dispatchOutboundCommand(
       return score(config, input, command);
     case "outbound.draft_sequence":
       return draftSequence(config, input, command);
+    case "outbound.linkedin_autopilot.plan":
+    case "outbound.linkedin_autopilot.execute":
+      return linkedinAutopilot(config, input, command);
     case "outbound.approve_and_publish":
       return approveAndPublish(config, input, command);
     case "outbound.status":
