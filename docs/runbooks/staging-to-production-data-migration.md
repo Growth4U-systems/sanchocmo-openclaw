@@ -95,8 +95,8 @@ Before copying files:
 - Verify both environments are healthy:
 
 ```bash
-curl -fsS https://staging.sanchocmo.ai/api/health
-curl -fsS https://app.sanchocmo.ai/api/health
+curl -fsS https://staging.example.com/api/health
+curl -fsS https://app.example.com/api/health
 ```
 
 ## Inventory
@@ -166,8 +166,8 @@ Run `rsync` in dry-run mode first and save the output in the manifest folder.
 ```bash
 SYNC_ID="staging-to-prod-$(date -u +%Y-%m-%dT%H-%M-%SZ)"
 CLIENT="growth4u"
-SRC="root@staging.sanchocmo.ai:/root/.openclaw/workspace-sancho/brand/$CLIENT/"
-DST="root@app.sanchocmo.ai:/root/.openclaw/workspace-sancho/brand/$CLIENT/"
+SRC="root@staging.example.com:/root/.openclaw/workspace-sancho/brand/$CLIENT/"
+DST="root@app.example.com:/root/.openclaw/workspace-sancho/brand/$CLIENT/"
 
 mkdir -p ".context/migrations/$SYNC_ID"
 
@@ -210,7 +210,7 @@ For file migrations:
 ```bash
 CLIENT="growth4u"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-ssh root@app.sanchocmo.ai \
+ssh root@app.example.com \
   "cd /root/.openclaw/workspace-sancho && tar -czf /root/.openclaw/backups/${CLIENT}-pre-doc-sync-${STAMP}.tgz brand/${CLIENT}"
 ```
 
@@ -249,11 +249,11 @@ rsync -aH --delete --itemize-changes \
 After copying, write the final manifest to production:
 
 ```bash
-ssh root@app.sanchocmo.ai \
+ssh root@app.example.com \
   "mkdir -p /root/.openclaw/workspace-sancho/_system/migrations/staging-to-prod"
 
 scp ".context/migrations/$SYNC_ID/manifest.json" \
-  "root@app.sanchocmo.ai:/root/.openclaw/workspace-sancho/_system/migrations/staging-to-prod/$SYNC_ID.json"
+  "root@app.example.com:/root/.openclaw/workspace-sancho/_system/migrations/staging-to-prod/$SYNC_ID.json"
 ```
 
 ## Verification
@@ -270,7 +270,7 @@ File verification:
 Application verification:
 
 ```bash
-curl -fsS https://app.sanchocmo.ai/api/health
+curl -fsS https://app.example.com/api/health
 ```
 
 For each migrated client:
