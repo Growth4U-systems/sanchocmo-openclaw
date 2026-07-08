@@ -26,15 +26,6 @@ const RANGE_DAYS: Record<AuditRangeKey, number> = {
   "30d": 30,
   "90d": 90,
 };
-const QUALITY_STATUSES: MetricKpiQualityStatus[] = [
-  "ok",
-  "partial",
-  "missing",
-  "dirty",
-  "stale",
-  "demo",
-];
-
 export interface MetricsAuditOptions {
   range?: string | null;
   from?: string | null;
