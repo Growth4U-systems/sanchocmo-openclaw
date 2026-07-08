@@ -14,6 +14,7 @@ import {
   useSetAgentModel,
   useSetCronModel,
   type CatalogProvider,
+  type ModelAssignment,
   type ModelCatalogResponse,
   type ProviderAuthRoute,
   type RichAgent,
@@ -127,6 +128,40 @@ function providerForModel(data: ModelCatalogResponse | undefined, modelId: strin
   return data.providers.find((p) => p.id === providerId);
 }
 
+function fallbackValue(fallbacks: string[] | null | undefined): string | null {
+  return Array.isArray(fallbacks) && fallbacks.length > 0 ? fallbacks[0] : null;
+}
+
+function assignment(primary: string, fallback: string | null): ModelAssignment {
+  return { primary, fallbacks: fallback ? [fallback] : [] };
+}
+
+function subscriptionStatusLabel(provider: CatalogProvider | undefined): string | null {
+  if (!provider?.auth?.subscriptionStatus) return null;
+  if (provider.auth.subscriptionStatus === "expired") return "token caducado";
+  if (provider.auth.subscriptionStatus === "missing") return "token ausente";
+  if (provider.auth.subscriptionStatus === "usable") return null;
+  return "token sin verificar";
+}
+
+function AuthHealthNote({ provider }: { provider: CatalogProvider | undefined }) {
+  const label = subscriptionStatusLabel(provider);
+  if (!label) return null;
+  return (
+    <span
+      title={provider?.auth?.subscriptionExpiresAt ? `Expira/caducó: ${new Date(provider.auth.subscriptionExpiresAt).toLocaleString()}` : undefined}
+      className={cn(
+        "rounded px-2 py-0.5 text-[10px] font-bold uppercase",
+        provider?.auth?.subscriptionStatus === "expired"
+          ? "bg-red-100 text-red-700"
+          : "bg-amber-100 text-amber-800"
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
 interface CronAssignment extends CronApi {
   groupSlug: string;
 }
@@ -204,13 +239,21 @@ function useCronAssignments() {
 }
 
 export function DefaultModelSection() {
+  const { data: catalog } = useModelCatalog();
   const { data: defaultModel, isLoading } = useDefaultModel();
   const { mutate, isPending, error } = useSetDefaultModel();
-  const [draft, setDraft] = useState<string | null>(null);
+  const [primaryDraft, setPrimaryDraft] = useState<string | null>(null);
+  const [fallbackDraft, setFallbackDraft] = useState<string | null | undefined>(undefined);
 
   const current = defaultModel?.model ?? null;
-  const value = draft !== null ? draft : current;
-  const dirty = draft !== null && draft !== current;
+  const currentFallback = fallbackValue(defaultModel?.fallbacks);
+  const primaryValue = primaryDraft !== null ? primaryDraft : current;
+  const fallbackValueDraft = fallbackDraft !== undefined ? fallbackDraft : currentFallback;
+  const dirty =
+    (primaryDraft !== null && primaryDraft !== current) ||
+    (fallbackDraft !== undefined && fallbackDraft !== currentFallback);
+  const primaryProvider = providerForModel(catalog, primaryValue);
+  const fallbackProvider = providerForModel(catalog, fallbackValueDraft);
 
   return (
     <CollapsibleModelSection
@@ -225,12 +268,37 @@ export function DefaultModelSection() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">cargando…</p>
       ) : (
-        <div className="flex items-center gap-3 flex-wrap">
-          <ModelPicker value={value} onChange={setDraft} />
+        <div className="space-y-3">
+          <div className="grid gap-3 xl:grid-cols-[minmax(260px,1fr)_minmax(260px,1fr)_auto]">
+            <label className="min-w-0 space-y-1">
+              <span className="text-[11px] font-bold uppercase text-muted-foreground">Principal</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <ModelPicker value={primaryValue} onChange={setPrimaryDraft} />
+                <AuthHealthNote provider={primaryProvider} />
+              </div>
+            </label>
+            <label className="min-w-0 space-y-1">
+              <span className="text-[11px] font-bold uppercase text-muted-foreground">Fallback</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <ModelPicker
+                  value={fallbackValueDraft}
+                  onChange={setFallbackDraft}
+                  allowInherit
+                  inheritLabel="Sin fallback"
+                />
+                <AuthHealthNote provider={fallbackProvider} />
+              </div>
+            </label>
+            <div className="flex items-end gap-2">
           <button
             type="button"
-            disabled={!dirty || isPending || !draft}
-            onClick={() => draft && mutate(draft, { onSuccess: () => setDraft(null) })}
+            disabled={!dirty || isPending || !primaryValue}
+            onClick={() => primaryValue && mutate(assignment(primaryValue, fallbackValueDraft), {
+              onSuccess: () => {
+                setPrimaryDraft(null);
+                setFallbackDraft(undefined);
+              },
+            })}
             className={cn(
               "px-3 py-1.5 rounded-md text-sm font-semibold border-2 border-ink",
               dirty && !isPending
@@ -243,12 +311,21 @@ export function DefaultModelSection() {
           {dirty && (
             <button
               type="button"
-              onClick={() => setDraft(null)}
+              onClick={() => {
+                setPrimaryDraft(null);
+                setFallbackDraft(undefined);
+              }}
               className="text-xs text-muted-foreground hover:text-foreground underline"
             >
               cancelar
             </button>
           )}
+            </div>
+          </div>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            Si el principal falla por cuota, timeout o auth, OpenClaw prueba el fallback. Evitá usar Codex como fallback
+            si su token aparece caducado.
+          </p>
         </div>
       )}
       {error && (
@@ -270,33 +347,50 @@ export function AgentModelControl({
   globalDefault,
 }: {
   agent: RichAgent;
-  globalDefault: string | null;
+  globalDefault: ModelAssignment | null;
 }) {
   const { data: catalog } = useModelCatalog();
   const { mutate, isPending } = useSetAgentModel();
   const [ownModeDraft, setOwnModeDraft] = useState<boolean | undefined>(undefined);
   const [modelDraft, setModelDraft] = useState<string | null>(null);
+  const [fallbackDraft, setFallbackDraft] = useState<string | null | undefined>(undefined);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
   const busy = isPending;
   const inheriting = a.overrideModel === null;
+  const globalPrimary = globalDefault?.primary ?? null;
+  const globalFallback = fallbackValue(globalDefault?.fallbacks);
+  const overrideFallback = fallbackValue(a.overrideFallbacks);
+  const resolvedFallback = fallbackValue(a.resolvedFallbacks);
   const backendModel =
-    ownModeDraft === false ? globalDefault : a.resolvedModel || (inheriting ? globalDefault : a.overrideModel);
+    ownModeDraft === false ? globalPrimary : a.resolvedModel || (inheriting ? globalPrimary : a.overrideModel);
+  const backendFallback =
+    ownModeDraft === false
+      ? globalFallback
+      : resolvedFallback ?? (inheriting ? globalFallback : overrideFallback);
   const recommendedModel = a.recommendedModel || null;
   const ownMode = ownModeDraft ?? (!inheriting || !a.registered);
   const pickerValue =
-    modelDraft || a.overrideModel || (ownMode ? recommendedModel : null) || backendModel || globalDefault;
+    modelDraft || a.overrideModel || (ownMode ? recommendedModel : null) || backendModel || globalPrimary;
+  const fallbackPickerValue = fallbackDraft !== undefined
+    ? fallbackDraft
+    : ownMode
+      ? overrideFallback
+      : backendFallback;
   const displayModel = modelDraft || (ownMode ? pickerValue : backendModel) || null;
+  const displayFallback = fallbackPickerValue;
   const currentOwnModel = a.overrideModel || (ownMode ? pickerValue : null);
   const recommendedApplied = Boolean(
     recommendedModel && a.registered && !modelDraft && currentOwnModel === recommendedModel
   );
   const displayProvider = providerForModel(catalog, displayModel);
+  const fallbackProvider = providerForModel(catalog, displayFallback);
   const route = effectiveRoute(displayProvider);
 
   const clearModelDraft = () => setModelDraft(null);
-  const handleSave = (next: string | null) => {
+  const clearFallbackDraft = () => setFallbackDraft(undefined);
+  const handleSave = (next: ModelAssignment | null) => {
     setSaveError(null);
     setSaved(false);
     mutate(
@@ -304,6 +398,7 @@ export function AgentModelControl({
       {
         onSuccess: () => {
           clearModelDraft();
+          clearFallbackDraft();
           setOwnModeDraft(next !== null);
           setSaved(true);
           window.setTimeout(() => setSaved(false), 2200);
@@ -328,12 +423,13 @@ export function AgentModelControl({
             onChange={() => {
               setOwnModeDraft(false);
               clearModelDraft();
+              clearFallbackDraft();
               handleSave(null);
             }}
           />
           <span>
             Heredar default
-            {globalDefault && <span className="text-muted-foreground font-mono"> ({globalDefault})</span>}
+            {globalPrimary && <span className="text-muted-foreground font-mono"> ({globalPrimary})</span>}
           </span>
         </label>
         <label className="flex items-center gap-1 text-xs cursor-pointer">
@@ -346,25 +442,48 @@ export function AgentModelControl({
               setOwnModeDraft(true);
               const nextModel = modelDraft || recommendedModel || pickerValue;
               if (nextModel) setModelDraft(nextModel);
-              if ((inheriting || !a.registered) && nextModel) handleSave(nextModel);
+              if ((inheriting || !a.registered) && nextModel) {
+                handleSave(assignment(nextModel, fallbackPickerValue));
+              }
             }}
           />
           <span>Modelo propio</span>
         </label>
       </div>
 
-      <ModelPicker
-        value={pickerValue}
-        allowInherit={false}
-        disabled={busy || (!ownMode && a.registered)}
-        size="sm"
-        onChange={(next) => {
-          if (!next) return;
-          setOwnModeDraft(true);
-          setModelDraft(next);
-          handleSave(next);
-        }}
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-bold uppercase text-muted-foreground">Principal</span>
+        <ModelPicker
+          value={pickerValue}
+          allowInherit={false}
+          disabled={busy || (!ownMode && a.registered)}
+          size="sm"
+          onChange={(next) => {
+            if (!next) return;
+            setOwnModeDraft(true);
+            setModelDraft(next);
+            handleSave(assignment(next, fallbackPickerValue));
+          }}
+        />
+        <AuthHealthNote provider={displayProvider} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-bold uppercase text-muted-foreground">Fallback</span>
+        <ModelPicker
+          value={fallbackPickerValue}
+          allowInherit
+          inheritLabel="Sin fallback"
+          disabled={busy || (!ownMode && a.registered)}
+          size="sm"
+          onChange={(next) => {
+            setOwnModeDraft(true);
+            setFallbackDraft(next);
+            if (pickerValue) handleSave(assignment(pickerValue, next));
+          }}
+        />
+        <AuthHealthNote provider={fallbackProvider} />
+      </div>
 
       {!inheriting && a.registered && (
         <span className="text-[10px] uppercase font-bold text-rust">override</span>
@@ -377,7 +496,7 @@ export function AgentModelControl({
           onClick={() => {
             setOwnModeDraft(true);
             setModelDraft(recommendedModel);
-            handleSave(recommendedModel);
+            handleSave(assignment(recommendedModel, fallbackPickerValue));
           }}
           className={cn(
             "max-w-[220px] truncate rounded px-2 py-1 text-left text-[10px] font-bold uppercase",
@@ -397,8 +516,12 @@ export function AgentModelControl({
         </span>
       )}
       <span className="ml-auto flex items-center gap-2 text-xs">
-        <span className="max-w-[190px] truncate font-mono text-muted-foreground" title={displayModel || undefined}>
+        <span
+          className="max-w-[260px] truncate font-mono text-muted-foreground"
+          title={[displayModel, displayFallback ? `fallback ${displayFallback}` : null].filter(Boolean).join("\n") || undefined}
+        >
           {displayModel || "sin modelo"}
+          {displayFallback ? <span className="text-muted-foreground/80"> → {displayFallback}</span> : null}
         </span>
         <AuthRouteBadge route={route} configured={displayProvider?.configured} title={displayProvider?.sourceLabel} />
       </span>
@@ -584,8 +707,13 @@ function ProvidersSection() {
                     <div className="text-[11px] text-muted-foreground">{p.id}</div>
                   </td>
                   <td className="px-3 py-2">
-                    <span className={cn("rounded px-2 py-0.5 text-[10px] font-bold uppercase", connectionClass(route, p.configured))}>
-                      {connectionLabel(route, p.configured)}
+                    <span className={cn(
+                      "rounded px-2 py-0.5 text-[10px] font-bold uppercase",
+                      p.auth.subscriptionStatus === "expired"
+                        ? "bg-red-100 text-red-700"
+                        : connectionClass(route, p.configured)
+                    )}>
+                      {p.auth.subscriptionStatus === "expired" ? "token caducado" : connectionLabel(route, p.configured)}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">
@@ -599,7 +727,14 @@ function ProvidersSection() {
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    {p.auth.subscriptionSupported ? (
+                    {p.auth.subscriptionStatus === "expired" ? (
+                      <span
+                        title={p.auth.subscriptionExpiresAt ? `Caducó: ${new Date(p.auth.subscriptionExpiresAt).toLocaleString()}` : undefined}
+                        className="rounded bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase text-red-700"
+                      >
+                        caducada
+                      </span>
+                    ) : p.auth.subscriptionSupported ? (
                       <AuthRouteBadge
                         route="subscription"
                         configured={p.auth.hasSubscription}

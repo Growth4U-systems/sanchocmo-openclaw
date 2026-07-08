@@ -16,6 +16,9 @@ export interface ProviderAuthState {
   preferred: ProviderAuthRoute;
   effectiveLabel: string | null;
   preferredLabel: string | null;
+  subscriptionStatus?: "usable" | "expired" | "missing" | "unknown";
+  subscriptionExpiresAt?: number | null;
+  subscriptionRemainingMs?: number | null;
   subscriptionSupported: boolean;
   hasSubscription: boolean;
   hasApiKey: boolean;
@@ -49,6 +52,11 @@ export interface ModelCatalogResponse {
   complete: boolean;
 }
 
+export interface ModelAssignment {
+  primary: string;
+  fallbacks: string[];
+}
+
 export function useModelCatalog(opts: { all?: boolean } = {}) {
   const all = opts.all === true;
   return useQuery<ModelCatalogResponse>({
@@ -67,7 +75,7 @@ export function useModelCatalog(opts: { all?: boolean } = {}) {
 }
 
 export function useDefaultModel() {
-  return useQuery<{ ok: true; model: string | null }>({
+  return useQuery<{ ok: true; model: string | null; fallbacks: string[]; assignment: ModelAssignment | null }>({
     queryKey: ["models-default"],
     queryFn: async () => {
       const res = await fetch("/api/admin/default-model");
@@ -81,11 +89,11 @@ export function useDefaultModel() {
 export function useSetDefaultModel() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (model: string) => {
+    mutationFn: async (model: string | ModelAssignment) => {
       const res = await fetch("/api/admin/default-model", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model }),
+        body: JSON.stringify(typeof model === "string" ? { model } : { model }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || "Failed to set default model");
@@ -121,7 +129,7 @@ export function useSetAuthRoute() {
 export function useSetAgentModel() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { agentId: string; model: string | null }) => {
+    mutationFn: async (input: { agentId: string; model: string | ModelAssignment | null }) => {
       const res = await fetch(`/api/admin/agents/${encodeURIComponent(input.agentId)}/model`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -166,7 +174,9 @@ export interface RichAgent {
   emoji: string | null;
   workspace: string | null;
   resolvedModel: string | null;
+  resolvedFallbacks: string[];
   overrideModel: string | null;
+  overrideFallbacks: string[];
   recommendedModel: string | null;
   recommendedReason: string | null;
   recommendedSkills: string[];

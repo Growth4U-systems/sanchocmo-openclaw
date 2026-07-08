@@ -84,6 +84,21 @@ export function setDefaultPrimaryModel(modelId: string): void {
   });
 }
 
+export function setDefaultModelAssignment(model: ModelAssignmentInput): void {
+  ensureModelsInAllowlist(model);
+  const normalized = normalizeModelInput(model);
+  patchOpenclawConfigReplacePath("agents.defaults.model", {
+    agents: {
+      defaults: {
+        model: {
+          primary: normalized.primary,
+          fallbacks: normalized.fallbacks,
+        },
+      },
+    },
+  });
+}
+
 interface AgentEntry {
   id: string;
   name?: string;
@@ -92,6 +107,13 @@ interface AgentEntry {
   model?: string | { primary?: string; fallbacks?: string[] } | null;
   [key: string]: unknown;
 }
+
+export interface ModelAssignment {
+  primary: string;
+  fallbacks: string[];
+}
+
+export type ModelAssignmentInput = string | ModelAssignment;
 
 export function listAgents(): AgentEntry[] {
   const raw = getOpenclawConfig("agents.list");
@@ -108,25 +130,61 @@ function writeAgentsList(newList: AgentEntry[]): void {
 
 function modelFromAgentEntry(entry: AgentEntry | undefined): string | null {
   if (!entry || entry.model === undefined || entry.model === null) return null;
-  const m = entry.model;
-  if (typeof m === "string") return m;
+  return modelAssignmentFromValue(entry.model)?.primary ?? null;
+}
+
+function modelAssignmentFromValue(value: AgentEntry["model"] | unknown): ModelAssignment | null {
+  if (value === undefined || value === null) return null;
+  const m = value;
+  if (typeof m === "string") return { primary: m, fallbacks: [] };
   if (m && typeof m === "object" && typeof (m as { primary?: unknown }).primary === "string") {
-    return (m as { primary: string }).primary;
+    const fallbacks = Array.isArray((m as { fallbacks?: unknown }).fallbacks)
+      ? ((m as { fallbacks: unknown[] }).fallbacks).filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+      : [];
+    return {
+      primary: (m as { primary: string }).primary,
+      fallbacks,
+    };
   }
   return null;
 }
 
-function setEntryModel(entry: AgentEntry, modelId: string | null): AgentEntry {
+function normalizeModelInput(model: ModelAssignmentInput): ModelAssignment {
+  if (typeof model === "string") return { primary: model, fallbacks: [] };
+  return {
+    primary: model.primary,
+    fallbacks: Array.isArray(model.fallbacks)
+      ? model.fallbacks.filter((v) => typeof v === "string" && v.trim().length > 0)
+      : [],
+  };
+}
+
+function modelConfigValue(model: ModelAssignmentInput): { primary: string; fallbacks: string[] } {
+  const normalized = normalizeModelInput(model);
+  return {
+    primary: normalized.primary,
+    fallbacks: normalized.fallbacks,
+  };
+}
+
+function ensureModelsInAllowlist(model: ModelAssignmentInput): void {
+  const normalized = normalizeModelInput(model);
+  for (const modelId of [normalized.primary, ...normalized.fallbacks]) {
+    ensureModelInAllowlist(modelId);
+  }
+}
+
+function setEntryModel(entry: AgentEntry, model: ModelAssignmentInput | null): AgentEntry {
   const next = { ...entry };
-  if (modelId === null) {
+  if (model === null) {
     delete next.model;
   } else {
-    next.model = modelId;
+    next.model = modelConfigValue(model);
   }
   return next;
 }
 
-function ensureAgentModelEntry(agentId: string, modelId: string): void {
+function ensureAgentModelEntry(agentId: string, model: ModelAssignmentInput): void {
   const agents = listAgents();
   const idx = agents.findIndex((a) => a.id === agentId);
   if (idx < 0) {
@@ -135,15 +193,22 @@ function ensureAgentModelEntry(agentId: string, modelId: string): void {
       {
         id: agentId,
         workspace: workspaceDirForId(agentId),
-        model: modelId,
+        model: modelConfigValue(model),
       },
     ]);
     return;
   }
 
-  if (modelFromAgentEntry(agents[idx]) === modelId) return;
+  const current = modelAssignmentFromValue(agents[idx].model);
+  const nextModel = normalizeModelInput(model);
+  if (
+    current?.primary === nextModel.primary &&
+    JSON.stringify(current.fallbacks) === JSON.stringify(nextModel.fallbacks)
+  ) {
+    return;
+  }
   const next = agents.slice();
-  next[idx] = setEntryModel(next[idx], modelId);
+  next[idx] = setEntryModel(next[idx], model);
   writeAgentsList(next);
 }
 
@@ -163,16 +228,16 @@ export function registerAgent(agentId: string, model?: string): void {
   }
 }
 
-export function setAgentModel(agentId: string, modelId: string | null): { updated: boolean } {
-  if (modelId !== null) {
-    ensureModelInAllowlist(modelId);
+export function setAgentModel(agentId: string, model: ModelAssignmentInput | null): { updated: boolean } {
+  if (model !== null) {
+    ensureModelsInAllowlist(model);
   }
 
   const agents = listAgents();
   const idx = agents.findIndex((a) => a.id === agentId);
 
   if (idx < 0) {
-    if (modelId === null) {
+    if (model === null) {
       // Nothing to clear if the agent isn't registered.
       return { updated: false };
     }
@@ -181,13 +246,13 @@ export function setAgentModel(agentId: string, modelId: string | null): { update
     // reports a duplicate without reflecting it in agents.list, still persist
     // the model override below; otherwise the UI can show "saved" while the
     // runtime keeps inheriting its old/default model.
-    registerAgent(agentId, modelId);
-    ensureAgentModelEntry(agentId, modelId);
+    registerAgent(agentId, normalizeModelInput(model).primary);
+    ensureAgentModelEntry(agentId, model);
     return { updated: true };
   }
 
   const next = agents.slice();
-  next[idx] = setEntryModel(next[idx], modelId);
+  next[idx] = setEntryModel(next[idx], model);
 
   writeAgentsList(next);
   return { updated: true };
@@ -207,13 +272,21 @@ export function getAgentEffectiveModel(agentId: string): string | null {
   return modelFromAgentEntry(agent);
 }
 
+export function getAgentModelAssignment(agentId: string): ModelAssignment | null {
+  const agents = listAgents();
+  const agent = agents.find((a) => a.id === agentId);
+  return modelAssignmentFromValue(agent?.model);
+}
+
 export interface AgentRichEntry {
   id: string;
   name: string;
   emoji: string | null;
   workspace: string | null;
   resolvedModel: string | null;
+  resolvedFallbacks: string[];
   overrideModel: string | null;
+  overrideFallbacks: string[];
   recommendedModel: string | null;
   recommendedReason: string | null;
   recommendedSkills: string[];
@@ -226,7 +299,7 @@ interface AgentsListJsonEntry {
   identityName?: string;
   identityEmoji?: string;
   workspace?: string;
-  model?: string;
+  model?: string | { primary?: string; fallbacks?: string[] };
   isDefault?: boolean;
 }
 
@@ -272,15 +345,18 @@ export function listAgentsRich(): AgentRichEntry[] {
 
   const out: AgentRichEntry[] = resolved.map((entry) => {
     const ovEntry = overrideById.get(entry.id);
-    const overrideModel = modelFromAgentEntry(ovEntry);
+    const overrideAssignment = modelAssignmentFromValue(ovEntry?.model);
+    const resolvedAssignment = modelAssignmentFromValue(entry.model) || overrideAssignment;
     const recommendation = recommendModelForAgent(entry.id, entry.workspace || null);
     return {
       id: entry.id,
       name: entry.identityName || entry.id,
       emoji: entry.identityEmoji || null,
       workspace: entry.workspace || null,
-      resolvedModel: entry.model || null,
-      overrideModel,
+      resolvedModel: resolvedAssignment?.primary || null,
+      resolvedFallbacks: resolvedAssignment?.fallbacks || [],
+      overrideModel: overrideAssignment?.primary || null,
+      overrideFallbacks: overrideAssignment?.fallbacks || [],
       recommendedModel: recommendation.model,
       recommendedReason: recommendation.reason,
       recommendedSkills: recommendation.skills,
@@ -293,15 +369,17 @@ export function listAgentsRich(): AgentRichEntry[] {
   for (const entry of overrides) {
     if (emittedIds.has(entry.id)) continue;
     const workspace = entry.workspace || workspaceDirForId(entry.id);
-    const overrideModel = modelFromAgentEntry(entry);
+    const overrideAssignment = modelAssignmentFromValue(entry.model);
     const recommendation = recommendModelForAgent(entry.id, workspace);
     out.push({
       id: entry.id,
       name: entry.name || entry.id,
       emoji: null,
       workspace,
-      resolvedModel: overrideModel,
-      overrideModel,
+      resolvedModel: overrideAssignment?.primary || null,
+      resolvedFallbacks: overrideAssignment?.fallbacks || [],
+      overrideModel: overrideAssignment?.primary || null,
+      overrideFallbacks: overrideAssignment?.fallbacks || [],
       recommendedModel: recommendation.model,
       recommendedReason: recommendation.reason,
       recommendedSkills: recommendation.skills,
@@ -324,7 +402,9 @@ export function listAgentsRich(): AgentRichEntry[] {
       emoji: null,
       workspace,
       resolvedModel: null,
+      resolvedFallbacks: [],
       overrideModel: null,
+      overrideFallbacks: [],
       recommendedModel: recommendation.model,
       recommendedReason: recommendation.reason,
       recommendedSkills: recommendation.skills,
@@ -346,6 +426,11 @@ export function getDefaultPrimaryModel(): string | null {
   const raw = getOpenclawConfig("agents.defaults.model.primary");
   if (typeof raw === "string") return raw;
   return null;
+}
+
+export function getDefaultModelAssignment(): ModelAssignment | null {
+  const raw = getOpenclawConfig("agents.defaults.model");
+  return modelAssignmentFromValue(raw);
 }
 
 // ──────────────────────────────────────────────────────────────────────────

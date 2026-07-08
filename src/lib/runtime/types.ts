@@ -71,6 +71,13 @@ export interface RuntimeMessaging {
   relayChannelMention?(input: unknown): Promise<unknown>;
 }
 
+export interface RuntimeModelAssignment {
+  primary: string;
+  fallbacks: string[];
+}
+
+export type RuntimeModelInput = string | RuntimeModelAssignment;
+
 export interface RuntimeControl {
   runCommand(
     args: string[],
@@ -80,12 +87,15 @@ export interface RuntimeControl {
   patchConfig(patch: unknown): Promise<void>;
   ensureModelInAllowlist(modelId: string): Promise<void>;
   getDefaultModel(): Promise<string | null>;
+  getDefaultModelAssignment(): Promise<RuntimeModelAssignment | null>;
   setDefaultModel(modelId: string): Promise<void>;
+  setDefaultModelAssignment(model: RuntimeModelInput): Promise<void>;
   setCronModel(cronId: string, modelId: string): Promise<void>;
   listAgents(): Promise<unknown[]>;
   listAgentsRich(): Promise<unknown[]>;
   getAgentEffectiveModel(agentId: string): Promise<string | null>;
-  setAgentModel(agentId: string, modelId: string | null): Promise<{ updated: boolean }>;
+  getAgentModelAssignment(agentId: string): Promise<RuntimeModelAssignment | null>;
+  setAgentModel(agentId: string, model: RuntimeModelInput | null): Promise<{ updated: boolean }>;
   hasAnthropicSubscriptionToken(): Promise<boolean>;
   hasAnthropicApiKey(): Promise<boolean>;
   setAnthropicAuthRoute(route: "subscription" | "api"): Promise<void>;

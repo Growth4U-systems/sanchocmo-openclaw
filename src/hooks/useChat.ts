@@ -38,6 +38,7 @@ export type ErrorCategory =
   | "context_overflow"
   | "watchdog_abort"
   | "model_unavailable"
+  | "cost_guard"
   | "network";
 
 export interface ErrorDetail {

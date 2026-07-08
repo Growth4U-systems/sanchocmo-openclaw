@@ -2,6 +2,8 @@ import {
   getOpenclawConfig,
   ensureModelInAllowlist,
   getAgentEffectiveModel,
+  getAgentModelAssignment,
+  getDefaultModelAssignment,
   getDefaultPrimaryModel,
   hasAnthropicApiKey,
   hasAnthropicSubscriptionToken,
@@ -13,6 +15,7 @@ import {
   setAgentModel,
   setAnthropicAuthRoute,
   setCronModel,
+  setDefaultModelAssignment,
   setDefaultPrimaryModel,
 } from "./control";
 import {
@@ -34,6 +37,7 @@ import {
 import type {
   RuntimeAdapter,
   RuntimeCapabilities,
+  RuntimeModelInput,
 } from "../../types";
 
 const OPENCLAW_CAPABILITIES: RuntimeCapabilities = {
@@ -70,8 +74,12 @@ export class OpenclawAdapter implements RuntimeAdapter {
       ensureModelInAllowlist(modelId);
     },
     getDefaultModel: async (): Promise<string | null> => getDefaultPrimaryModel(),
+    getDefaultModelAssignment: async () => getDefaultModelAssignment(),
     setDefaultModel: async (modelId: string): Promise<void> => {
       setDefaultPrimaryModel(modelId);
+    },
+    setDefaultModelAssignment: async (model: RuntimeModelInput): Promise<void> => {
+      setDefaultModelAssignment(model);
     },
     setCronModel: async (cronId: string, modelId: string): Promise<void> => {
       setCronModel(cronId, modelId);
@@ -80,8 +88,9 @@ export class OpenclawAdapter implements RuntimeAdapter {
     listAgentsRich: async (): Promise<unknown[]> => listAgentsRich(),
     getAgentEffectiveModel: async (agentId: string): Promise<string | null> =>
       getAgentEffectiveModel(agentId),
-    setAgentModel: async (agentId: string, modelId: string | null): Promise<{ updated: boolean }> =>
-      setAgentModel(agentId, modelId),
+    getAgentModelAssignment: async (agentId: string) => getAgentModelAssignment(agentId),
+    setAgentModel: async (agentId: string, model: RuntimeModelInput | null): Promise<{ updated: boolean }> =>
+      setAgentModel(agentId, model),
     hasAnthropicSubscriptionToken: async (): Promise<boolean> => hasAnthropicSubscriptionToken(),
     hasAnthropicApiKey: async (): Promise<boolean> => hasAnthropicApiKey(),
     setAnthropicAuthRoute: async (route: "subscription" | "api"): Promise<void> => {

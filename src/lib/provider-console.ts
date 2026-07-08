@@ -28,8 +28,8 @@ export interface RuntimeProvider {
    * (API key only — no subscription exists), rendered as one row. */
   route?: "subscription" | "api";
   /** Whether this route can be activated from the UI at runtime. Anthropic: yes.
-   * Codex subscription: no (its token is minted interactively over SSH and the
-   * per-agent symlink-sync has no idempotent inverse) — shown read-only. */
+   * Codex subscription is paired through its own OAuth/device-code flow, not a
+   * route flip, so it is shown as a separate connect action. */
   runtimeSwitchable?: boolean;
   /** For a subscription row whose token can be pasted: the env var it writes
    * (e.g. `ANTHROPIC_OAUTH_TOKEN`). Absent when the token isn't pasteable (Codex). */
@@ -65,9 +65,8 @@ export const RUNTIME_PROVIDERS: RuntimeProvider[] = [
     route: "api",
     runtimeSwitchable: true,
   },
-  // Codex (ChatGPT subscription) — informative only this iteration: its token is
-  // minted interactively (`openclaw models auth login`) over SSH, not pasteable,
-  // and the per-agent symlink-sync has no idempotent inverse, so no runtime flip.
+  // Codex (ChatGPT subscription) — paired through OpenClaw's device-code/OAuth
+  // flow. It is not a pasteable token and not a runtime route flip.
   {
     key: "codex",
     apiId: "openai",

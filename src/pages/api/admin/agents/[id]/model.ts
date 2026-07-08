@@ -9,6 +9,45 @@ interface RestartResult {
   error?: string;
 }
 
+interface ModelAssignment {
+  primary: string;
+  fallbacks: string[];
+}
+
+function normalizeFallbacks(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === "string" && v.trim().length > 0);
+}
+
+function parseModelAssignment(body: unknown): ModelAssignment | null | "inherit" {
+  if (!body || typeof body !== "object") return null;
+  const v = body as Record<string, unknown>;
+  if (v.model === null) return "inherit";
+  const raw = v.model && typeof v.model === "object" ? (v.model as Record<string, unknown>) : v;
+  const primary =
+    typeof raw.primary === "string"
+      ? raw.primary
+      : typeof v.model === "string"
+        ? v.model
+        : null;
+  if (!primary) return null;
+  return {
+    primary,
+    fallbacks: normalizeFallbacks(raw.fallbacks ?? v.fallbacks),
+  };
+}
+
+async function validateModels(assignment: ModelAssignment): Promise<string | undefined> {
+  const catalog = await getModelCatalog();
+  const warnings: string[] = [];
+  for (const model of [assignment.primary, ...assignment.fallbacks]) {
+    const check = isModelAvailable(catalog, model);
+    if (!check.ok) throw new Error(check.reason);
+    if (check.warning) warnings.push(check.warning);
+  }
+  return Array.from(new Set(warnings)).join(" ") || undefined;
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "PATCH" && req.method !== "PUT" && req.method !== "POST") {
     res.setHeader("Allow", "PATCH, PUT, POST");
@@ -28,36 +67,43 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const agentId = req.query.id as string;
   if (!agentId) return res.status(400).json({ error: "Missing agent id" });
 
-  const body = (req.body || {}) as { model?: string | null };
-  const model = body.model;
-
-  if (model !== null && typeof model !== "string") {
+  const parsed = parseModelAssignment(req.body);
+  if (!parsed) {
     return res.status(400).json({
-      error: "'model' must be a string or null (null = inherit default)",
+      error: "'model' must be a string, { primary, fallbacks }, or null (null = inherit default)",
     });
   }
 
   let warning: string | undefined;
-  if (typeof model === "string") {
-    const catalog = await getModelCatalog();
-    const check = isModelAvailable(catalog, model);
-    if (!check.ok) return res.status(400).json({ error: check.reason });
-    warning = check.warning;
+  if (parsed !== "inherit") {
+    try {
+      warning = await validateModels(parsed);
+    } catch (e) {
+      return res.status(400).json({ error: e instanceof Error ? e.message : String(e) });
+    }
   }
 
   try {
-    const result = await runtime.control.setAgentModel(agentId, model ?? null);
+    const model = parsed === "inherit" ? null : parsed;
+    const result = await runtime.control.setAgentModel(agentId, model);
     const effectiveModel = await runtime.control.getAgentEffectiveModel(agentId);
-    const verified = model === null ? effectiveModel === null : effectiveModel === model;
+    const effectiveAssignment = await runtime.control.getAgentModelAssignment(agentId);
+    const verified =
+      model === null
+        ? effectiveAssignment === null
+        : effectiveAssignment?.primary === model.primary &&
+          JSON.stringify(effectiveAssignment.fallbacks) === JSON.stringify(model.fallbacks);
     if (!verified) {
       return res.status(409).json({
         error:
           model === null
             ? `Runtime "${runtime.id}" did not clear the model override for agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`
-            : `Runtime "${runtime.id}" did not apply model "${model}" to agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`,
+            : `Runtime "${runtime.id}" did not apply model "${model.primary}" to agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`,
         agentId,
-        model,
+        model: model?.primary ?? null,
+        fallbacks: model?.fallbacks ?? [],
         effectiveModel,
+        effectiveFallbacks: effectiveAssignment?.fallbacks ?? [],
         verified: false,
       });
     }
@@ -72,8 +118,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({
       ok: true,
       agentId,
-      model,
+      model: model?.primary ?? null,
+      fallbacks: model?.fallbacks ?? [],
       effectiveModel,
+      effectiveFallbacks: effectiveAssignment?.fallbacks ?? [],
       updated: result.updated,
       verified,
       restarted: restart.ok,

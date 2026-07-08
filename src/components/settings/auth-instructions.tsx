@@ -20,10 +20,9 @@ interface AuthInstructionsProps {
 }
 
 /**
- * Guided, numbered instructions with copyable commands. Used by the engine auth
- * flows (Anthropic subscription token paste, Codex SSH login) where the login
- * itself runs in an external CLI — not in the app — so the screen's job is to
- * tell the user *exactly* what to run. Presentational only.
+ * Guided, numbered instructions with copyable commands. Used by engine auth
+ * flows where the credential is generated outside the basic key form.
+ * Presentational only.
  */
 export function AuthInstructions({ intro, steps, footnote, className }: AuthInstructionsProps) {
   const [copied, setCopied] = useState<number | null>(null);

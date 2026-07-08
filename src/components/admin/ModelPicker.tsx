@@ -34,6 +34,7 @@ function authRouteLabel(route: string | undefined): string {
 }
 
 function authBadge(p: CatalogProvider): string {
+  if (p.auth?.subscriptionStatus === "expired") return "token caducado";
   if (!p.configured) return "missing";
   if (p.auth) {
     const effective = p.auth.effective !== "missing" ? p.auth.effective : p.auth.preferred;

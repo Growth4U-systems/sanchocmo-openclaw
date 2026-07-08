@@ -87,6 +87,7 @@ export type ErrorCategory =
   | "watchdog_abort"
   | "model_unavailable"
   | "session_concurrency"
+  | "cost_guard"
   | "network";
 
 export interface ErrorDetail {
@@ -112,6 +113,7 @@ const VALID_CATEGORIES: ReadonlySet<ErrorCategory> = new Set([
   "watchdog_abort",
   "model_unavailable",
   "session_concurrency",
+  "cost_guard",
   "network",
 ]);
 const MAX_RAW_LEN = 4096;
