@@ -25,8 +25,8 @@ function seedConfig(config: unknown) {
 function readConfig() {
   return JSON.parse(fs.readFileSync(configFile, "utf8")) as {
     agents?: {
-      defaults?: { models?: Record<string, unknown> };
-      list?: Array<{ id: string; workspace?: string; model?: string }>;
+      defaults?: { model?: { primary?: string; fallbacks?: string[] }; models?: Record<string, unknown> };
+      list?: Array<{ id: string; workspace?: string; model?: string | { primary?: string; fallbacks?: string[] } }>;
     };
   };
 }
@@ -65,6 +65,10 @@ if (args[0] === "config" && args[1] === "get" && args[2] === "agents.defaults.mo
   out(JSON.stringify(readConfig().agents?.defaults?.model?.primary || null));
   process.exit(0);
 }
+if (args[0] === "config" && args[1] === "get" && args[2] === "agents.defaults.model") {
+  out(readConfig().agents?.defaults?.model || null);
+  process.exit(0);
+}
 if (args[0] === "config" && args[1] === "get") {
   out("");
   process.exit(0);
@@ -76,6 +80,10 @@ if (args[0] === "config" && args[1] === "patch") {
   if (replaceIdx >= 0 && args[replaceIdx + 1] === "agents.list") {
     cfg.agents = cfg.agents || {};
     cfg.agents.list = patch.agents?.list || [];
+  } else if (replaceIdx >= 0 && args[replaceIdx + 1] === "agents.defaults.model") {
+    cfg.agents = cfg.agents || {};
+    cfg.agents.defaults = cfg.agents.defaults || {};
+    cfg.agents.defaults.model = patch.agents?.defaults?.model || null;
   } else {
     merge(cfg, patch);
   }
@@ -132,9 +140,60 @@ test("setAgentModel persists an override when agents add reports duplicate", () 
   const entry = config.agents?.list?.find((agent) => agent.id === "rocinante");
   assert.ok(entry);
   assert.equal(entry.workspace, workspaceRocinante);
-  assert.equal(entry.model, model);
+  assert.deepEqual(entry.model, { primary: model, fallbacks: [] });
   assert.equal(mod.getAgentEffectiveModel("rocinante"), model);
   assert.deepEqual(config.agents?.defaults?.models?.[model], {});
+});
+
+test("setAgentModel persists primary plus fallback", () => {
+  seedConfig({ agents: { defaults: { models: {} }, list: [] } });
+
+  const primary = "anthropic/claude-opus-4-7";
+  const fallback = "fireworks/accounts/fireworks/models/glm-5p2";
+  const result = mod.setAgentModel("sancho", { primary, fallbacks: [fallback] });
+
+  assert.equal(result.updated, true);
+  const entry = readConfig().agents?.list?.find((agent) => agent.id === "sancho");
+  assert.deepEqual(entry?.model, { primary, fallbacks: [fallback] });
+  assert.deepEqual(mod.getAgentModelAssignment("sancho"), { primary, fallbacks: [fallback] });
+  assert.deepEqual(readConfig().agents?.defaults?.models?.[primary], {});
+  assert.deepEqual(readConfig().agents?.defaults?.models?.[fallback], {});
+});
+
+test("setDefaultModelAssignment persists default primary plus fallback", () => {
+  const primary = "anthropic/claude-opus-4-7";
+  const fallback = "fireworks/accounts/fireworks/models/glm-5p2";
+  seedConfig({ agents: { defaults: { models: {} }, list: [] } });
+
+  mod.setDefaultModelAssignment({ primary, fallbacks: [fallback] });
+
+  assert.deepEqual(readConfig().agents?.defaults?.model, { primary, fallbacks: [fallback] });
+  assert.deepEqual(mod.getDefaultModelAssignment(), { primary, fallbacks: [fallback] });
+  assert.deepEqual(readConfig().agents?.defaults?.models?.[primary], {});
+  assert.deepEqual(readConfig().agents?.defaults?.models?.[fallback], {});
+});
+
+test("setDefaultPrimaryModel clears stale default fallbacks", () => {
+  const model = "fireworks/accounts/fireworks/models/glm-5p2";
+  seedConfig({
+    agents: {
+      defaults: {
+        model: {
+          primary: "anthropic/claude-opus-4-7",
+          fallbacks: ["anthropic/claude-sonnet-4-6"],
+        },
+        models: {},
+      },
+      list: [],
+    },
+  });
+
+  mod.setDefaultPrimaryModel(model);
+
+  const config = readConfig();
+  assert.deepEqual(config.agents?.defaults?.model, { primary: model });
+  assert.deepEqual(config.agents?.defaults?.models?.[model], {});
+  assert.equal(mod.getDefaultPrimaryModel(), model);
 });
 
 test("setAgentModel round-trips all curated selector model ids and full-catalog examples", () => {
@@ -173,5 +232,7 @@ test("listAgentsRich treats config-only agents as registered", () => {
   assert.equal(rocinante.registered, true);
   assert.equal(rocinante.workspace, workspaceRocinante);
   assert.equal(rocinante.overrideModel, model);
+  assert.deepEqual(rocinante.overrideFallbacks, []);
   assert.equal(rocinante.resolvedModel, model);
+  assert.deepEqual(rocinante.resolvedFallbacks, []);
 });

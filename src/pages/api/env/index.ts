@@ -14,8 +14,8 @@ const SERVICE_ENV_MAP: Record<
   anthropic: [{ key: "ANTHROPIC_API_KEY", label: "API Key", placeholder: "sk-ant-..." }],
   // Subscription/OAuth route for the motor. Modal-only service id (the runtime
   // table opens it for the "Anthropic · Suscripción" row); shares the `anthropic`
-  // provider for health/console. The token is pasted, not logged in via OAuth in
-  // the app — generate it with `claude setup-token` / `openclaw models auth login`.
+  // provider for health/console. Anthropic's token is pasted; Codex uses the
+  // dedicated pairing flow in /api/admin/codex-auth.
   "anthropic-oauth": [
     {
       key: "ANTHROPIC_OAUTH_TOKEN",

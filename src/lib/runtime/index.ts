@@ -61,6 +61,8 @@ export type {
   RuntimeControl,
   RuntimeLifecycle,
   RuntimeMessaging,
+  RuntimeModelAssignment,
+  RuntimeModelInput,
   RuntimeJobEndedAt,
   RuntimeRunningCron,
   RuntimeState,

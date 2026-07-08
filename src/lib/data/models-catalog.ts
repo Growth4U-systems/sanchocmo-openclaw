@@ -1,9 +1,4 @@
-import { execFile } from "child_process";
-import { promisify } from "util";
-import { EXEC_PATH } from "@/lib/data/paths";
-import { listAgents } from "@/lib/data/openclaw-config";
-
-const execFileAsync = promisify(execFile);
+import { getRuntime } from "@/lib/runtime";
 
 export interface CatalogProvider {
   id: string;
@@ -21,6 +16,9 @@ export interface ProviderAuthState {
   preferred: ProviderAuthRoute;
   effectiveLabel: string | null;
   preferredLabel: string | null;
+  subscriptionStatus?: "usable" | "expired" | "missing" | "unknown";
+  subscriptionExpiresAt?: number | null;
+  subscriptionRemainingMs?: number | null;
   subscriptionSupported: boolean;
   hasSubscription: boolean;
   hasApiKey: boolean;
@@ -129,13 +127,10 @@ const cache: {
 } = {};
 
 async function runOpenclaw(args: string[], extraEnv?: Record<string, string>): Promise<string> {
-  const { stdout } = await execFileAsync("openclaw", args, {
-    timeout: SHELL_TIMEOUT_MS,
-    encoding: "utf-8",
-    env: { ...process.env, ...extraEnv, PATH: EXEC_PATH },
-    maxBuffer: 64 * 1024 * 1024,
+  return getRuntime().control.runCommand(args, {
+    timeoutMs: SHELL_TIMEOUT_MS,
+    env: extraEnv,
   });
-  return stdout;
 }
 
 function extractJson<T = unknown>(raw: string): T | null {
@@ -150,9 +145,12 @@ function extractJson<T = unknown>(raw: string): T | null {
   }
 }
 
-function pickPrimaryAgentDir(): string | null {
+async function pickPrimaryAgentDir(): Promise<string | null> {
   try {
-    const agents = listAgents();
+    const agents = await getRuntime().control.listAgents() as Array<{
+      id?: string;
+      agentDir?: string;
+    }>;
     const preferred = agents.find((a) => a.id === "sancho" && typeof a.agentDir === "string");
     if (preferred && typeof preferred.agentDir === "string") return preferred.agentDir;
     const anyWithDir = agents.find((a) => typeof a.agentDir === "string");
@@ -212,6 +210,8 @@ interface AuthProfile {
   provider?: string;
   type?: string;
   status?: string;
+  expiresAt?: number;
+  remainingMs?: number;
   source?: string;
   label?: string;
 }
@@ -219,6 +219,8 @@ interface AuthProfile {
 interface AuthProviderProfiles {
   provider?: string;
   status?: string;
+  expiresAt?: number;
+  remainingMs?: number;
   profiles?: AuthProfile[];
   effectiveProfiles?: AuthProfile[];
 }
@@ -290,6 +292,35 @@ function authKindForRoute(route: ProviderAuthRoute): string {
   if (route === "api") return "apiKey";
   if (route === "env") return "env";
   return "missing";
+}
+
+function subscriptionStatusForProfiles(
+  providers: AuthProviderProfiles[],
+  authProviders: string[],
+): Pick<ProviderAuthState, "subscriptionStatus" | "subscriptionExpiresAt" | "subscriptionRemainingMs"> {
+  const matching = providers.filter((p) => authProviders.includes(p.provider || ""));
+  const profiles = matching.flatMap((p) => p.effectiveProfiles?.length ? p.effectiveProfiles : p.profiles || []);
+  const statuses = uniqueStrings([
+    ...matching.map((p) => p.status),
+    ...profiles.map((p) => p.status),
+  ]).map((s) => s.toLowerCase());
+  const expiresAt = matching.find((p) => typeof p.expiresAt === "number")?.expiresAt ??
+    profiles.find((p) => typeof p.expiresAt === "number")?.expiresAt ??
+    null;
+  const remainingMs = matching.find((p) => typeof p.remainingMs === "number")?.remainingMs ??
+    profiles.find((p) => typeof p.remainingMs === "number")?.remainingMs ??
+    null;
+
+  if (statuses.includes("expired") || (typeof remainingMs === "number" && remainingMs <= 0)) {
+    return { subscriptionStatus: "expired", subscriptionExpiresAt: expiresAt, subscriptionRemainingMs: remainingMs };
+  }
+  if (statuses.includes("usable") || statuses.includes("ok") || (typeof remainingMs === "number" && remainingMs > 0)) {
+    return { subscriptionStatus: "usable", subscriptionExpiresAt: expiresAt, subscriptionRemainingMs: remainingMs };
+  }
+  if (statuses.includes("missing")) {
+    return { subscriptionStatus: "missing", subscriptionExpiresAt: expiresAt, subscriptionRemainingMs: remainingMs };
+  }
+  return { subscriptionStatus: matching.length > 0 ? "unknown" : undefined, subscriptionExpiresAt: expiresAt, subscriptionRemainingMs: remainingMs };
 }
 
 function envCredentialLabel(entry: AuthProviderEntry | undefined): string | null {
@@ -367,6 +398,7 @@ export function summarizeProviderAuth(
   const effectiveEntry = direct || providerEntries[0] || null;
   const oauthProviders = auth.auth.oauth?.providers || [];
   const oauthProfiles = auth.auth.oauth?.profiles || [];
+  const subscriptionStatus = subscriptionStatusForProfiles(oauthProviders, authProviders);
   const directEffectiveProfiles =
     oauthProviders.find((p) => p.provider === effectiveEntry?.provider)?.effectiveProfiles || [];
   const directEffectiveProfile = directEffectiveProfiles[0];
@@ -501,6 +533,7 @@ export function summarizeProviderAuth(
     preferred,
     effectiveLabel,
     preferredLabel,
+    ...subscriptionStatus,
     subscriptionSupported,
     hasSubscription,
     hasApiKey,
@@ -534,7 +567,7 @@ function synthesizeCuratedEntries(existing: CatalogModel[]): CatalogModel[] {
 }
 
 async function buildCatalog(opts: { all: boolean }): Promise<ModelCatalog> {
-  const agentDir = pickPrimaryAgentDir();
+  const agentDir = await pickPrimaryAgentDir();
   const env = agentDir ? { OPENCLAW_AGENT_DIR: agentDir } : undefined;
 
   const modelsArgs = opts.all
@@ -622,6 +655,15 @@ export function isModelAvailable(
   }
   const provider = catalog.providers.find((p) => p.id === model.provider);
   if (!provider) return { ok: false, reason: `Provider "${model.provider}" not in catalog` };
+  if (
+    provider.auth.subscriptionStatus === "expired" &&
+    (provider.auth.effective === "subscription" || provider.auth.preferred === "subscription")
+  ) {
+    return {
+      ok: true,
+      warning: `Token OAuth de "${model.provider}" caducado — reautentica el provider antes de usar este modelo.`,
+    };
+  }
   // A configured-but-unauthed provider is the silent-failure case the picker
   // is most prone to: the id is valid, the save succeeds, but the model never
   // responds at runtime. Allow the write (auth can be added afterwards) but

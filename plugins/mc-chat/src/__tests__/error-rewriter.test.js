@@ -24,6 +24,10 @@ const FIXTURE_AUTH_ONLY =
   "(agentDir: /root/.openclaw/.openclaw/agents/cervantes/agent). Configure auth for this agent " +
   "(openclaw agents add <id>) or copy only portable static auth profiles from the main agentDir.";
 
+const FIXTURE_MODEL_LOGIN_EXPIRED =
+  "Model login expired on the gateway for openai-codex. Re-auth with " +
+  "openclaw models auth login --provider openai-codex, then try again.";
+
 const FIXTURE_WATCHDOG_ABORT =
   "⚠️ 🛠️ print lines 1-260 from skills/fast-foundation/SKILL.md (agent) failed";
 
@@ -94,6 +98,16 @@ test("auth: detects missing API key and extracts provider", () => {
   assert.ok(out.text.startsWith("⚠️ **Credenciales no configuradas**"));
 });
 
+test("auth: detects expired OpenAI Codex gateway login without leaking re-auth command", () => {
+  const out = classifyAndRewriteError(FIXTURE_MODEL_LOGIN_EXPIRED);
+  assert.equal(out.errorDetail.category, "auth");
+  assert.equal(out.errorDetail.provider, "openai-codex");
+  assert.ok(out.text.startsWith("⚠️ **Sesión Codex caducada**"));
+  assert.ok(!out.text.includes("openclaw models auth login"));
+  assert.ok(!out.text.includes("--provider"));
+  assert.equal(out.errorDetail.raw, FIXTURE_MODEL_LOGIN_EXPIRED);
+});
+
 test("watchdog_abort: detects exact bot-side abort message", () => {
   const out = classifyAndRewriteError(FIXTURE_WATCHDOG_ABORT);
   assert.equal(out.errorDetail.category, "watchdog_abort");
@@ -136,6 +150,15 @@ test("session_concurrency: detects embedded session takeover and Fireworks model
   assert.equal(out.errorDetail.provider, "fireworks");
   assert.equal(out.errorDetail.model, "fireworks/accounts/fireworks/models/glm-5p2");
   assert.ok(out.text.startsWith("⚠️ **Turno concurrente en el mismo hilo**"));
+});
+
+test("cost_guard: detects budget stop messages", () => {
+  const raw =
+    "⚠️ **Ejecución detenida por presupuesto de seguridad**\n" +
+    "El modelo devolvió 3 respuestas casi vacías seguidas con prompts grandes.";
+  const out = classifyAndRewriteError(raw);
+  assert.equal(out.errorDetail.category, "cost_guard");
+  assert.ok(out.text.startsWith("⚠️ **Ejecución detenida por presupuesto**"));
 });
 
 test("network: detects connection errors", () => {

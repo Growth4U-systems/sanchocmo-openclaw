@@ -131,6 +131,44 @@ function bridgeSessionKey(message: InboundMessage): string {
   return `${prefix}:${message.threadId}`;
 }
 
+function cleanAttachmentText(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value.replace(/[\r\n]+/g, " ").trim() || fallback : fallback;
+}
+
+function bridgeAttachmentBlock(attachments: unknown[] | undefined): string | null {
+  if (!Array.isArray(attachments) || attachments.length === 0) return null;
+  const rows = attachments
+    .map((attachment) => {
+      if (!attachment || typeof attachment !== "object") return null;
+      const item = attachment as Record<string, unknown>;
+      const url = cleanAttachmentText(item.url);
+      if (!url) return null;
+      const filename = cleanAttachmentText(item.filename, "archivo-adjunto");
+      const mimeType = cleanAttachmentText(item.mimeType || item.type, "application/octet-stream");
+      const size = Number(item.size);
+      return {
+        url,
+        filename,
+        mimeType,
+        size: Number.isFinite(size) && size >= 0 ? Math.round(size) : null,
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 10) as Array<{ url: string; filename: string; mimeType: string; size: number | null }>;
+  if (rows.length === 0) return null;
+
+  return [
+    "Adjuntos del usuario:",
+    ...rows.flatMap((attachment, index) => [
+      `${index + 1}. ${attachment.filename}`,
+      `   url: ${attachment.url}`,
+      `   mime_type: ${attachment.mimeType}`,
+      ...(attachment.size !== null ? [`   size_bytes: ${attachment.size}`] : []),
+    ]),
+    "Instrucción: si el usuario pide leer/revisar/analizar un archivo, descarga la URL antes de responder. No digas que no hay adjuntos.",
+  ].join("\n");
+}
+
 function bridgePrompt(message: InboundMessage): string {
   const context = [
     `Cliente: ${message.slug}`,
@@ -144,8 +182,14 @@ function bridgePrompt(message: InboundMessage): string {
     message.senderRole ? `Rol del emisor: ${message.senderRole}` : null,
   ].filter(Boolean);
 
-  if (!context.length) return message.text;
-  return `Contexto Sancho:\n${context.map((line) => `- ${line}`).join("\n")}\n\nMensaje:\n${message.text}`;
+  const attachmentBlock = bridgeAttachmentBlock(message.attachments);
+  const sections = [
+    context.length ? `Contexto Sancho:\n${context.map((line) => `- ${line}`).join("\n")}` : null,
+    `Mensaje:\n${message.text}`,
+    attachmentBlock,
+  ].filter(Boolean);
+
+  return sections.join("\n\n");
 }
 
 async function readBridgeResponse(
@@ -237,11 +281,14 @@ const control: RuntimeControl = {
   patchConfig: async () => unsupported("patchConfig"),
   ensureModelInAllowlist: async () => unsupported("ensureModelInAllowlist"),
   getDefaultModel: async () => unsupported("getDefaultModel"),
+  getDefaultModelAssignment: async () => unsupported("getDefaultModelAssignment"),
   setDefaultModel: async () => unsupported("setDefaultModel"),
+  setDefaultModelAssignment: async () => unsupported("setDefaultModelAssignment"),
   setCronModel: async () => unsupported("setCronModel"),
   listAgents: async () => unsupported("listAgents"),
   listAgentsRich: async () => unsupported("listAgentsRich"),
   getAgentEffectiveModel: async () => unsupported("getAgentEffectiveModel"),
+  getAgentModelAssignment: async () => unsupported("getAgentModelAssignment"),
   setAgentModel: async () => unsupported("setAgentModel"),
   hasAnthropicSubscriptionToken: async () => unsupported("hasAnthropicSubscriptionToken"),
   hasAnthropicApiKey: async () => unsupported("hasAnthropicApiKey"),

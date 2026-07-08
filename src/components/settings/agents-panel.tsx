@@ -47,7 +47,9 @@ export function AgentsPanel() {
   // identity list by id === slug.
   const { data: richData, isLoading: richLoading, error: richError } = useAgentsList();
   const { data: defaultModel } = useDefaultModel();
-  const globalDefault = defaultModel?.model ?? null;
+  const globalDefault = defaultModel?.assignment ?? (
+    defaultModel?.model ? { primary: defaultModel.model, fallbacks: defaultModel.fallbacks || [] } : null
+  );
   const richById = useMemo(() => {
     const m = new Map<string, RichAgent>();
     for (const a of richData?.agents || []) m.set(a.id, a);

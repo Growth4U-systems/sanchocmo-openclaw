@@ -7,7 +7,6 @@ import { CheckCircle2, Clipboard, PlugZap, RefreshCcw, Terminal } from "lucide-r
 import { useModelCatalog, useSetAuthRoute, type CatalogProvider } from "@/hooks/useModels";
 import { RUNTIME_PROVIDERS, consoleUrlFor, consoleLabelFor, type RuntimeProvider } from "@/lib/provider-console";
 import { routeLabel, routeClass, effectiveRoute, maskAuthLabel } from "@/lib/provider-auth-display";
-import { AuthInstructions } from "@/components/settings/auth-instructions";
 import { cn } from "@/lib/utils";
 
 interface RuntimeMotorSectionProps {
@@ -99,6 +98,22 @@ interface StartedRuntimeBridge {
   error?: string;
 }
 
+interface CodexAuthJob {
+  id: string;
+  status: "running" | "succeeded" | "failed" | "cancelled";
+  provider: string;
+  url?: string;
+  code?: string;
+  expiresText?: string;
+  output: string;
+  error?: string;
+  restart?: {
+    ok: boolean;
+    method?: string;
+    error?: string;
+  };
+}
+
 const CLI_RUNTIME_META: Record<CliRuntimeId, { title: string; subtitle: string; account: string }> = {
   hermes: {
     title: "Hermes CLI",
@@ -167,6 +182,20 @@ function externalRuntimeMasked(env: Record<string, SystemEnvField> | undefined, 
   return null;
 }
 
+function codexAuthStatusLabel(status: CodexAuthJob["status"] | undefined): string {
+  if (status === "succeeded") return "conectado";
+  if (status === "failed") return "falló";
+  if (status === "cancelled") return "cancelado";
+  return "esperando autorización";
+}
+
+function codexAuthStatusClass(status: CodexAuthJob["status"] | undefined): string {
+  if (status === "succeeded") return "border-green-200 bg-green-50 text-green-700";
+  if (status === "failed") return "border-red-200 bg-red-50 text-red-700";
+  if (status === "cancelled") return "border-muted bg-muted text-muted-foreground";
+  return "border-amber-200 bg-amber-50 text-amber-800";
+}
+
 /**
  * Engine auth routes (global). Each provider that supports a subscription shows
  * two rows (Suscripción / API Key); you activate one for the whole motor. The
@@ -182,6 +211,11 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
   const [codexGuide, setCodexGuide] = useState(false);
   const [rechecking, setRechecking] = useState(false);
+  const [codexAuthJobId, setCodexAuthJobId] = useState<string | null>(null);
+  const [codexAuthStarting, setCodexAuthStarting] = useState(false);
+  const [codexAuthSubmitting, setCodexAuthSubmitting] = useState(false);
+  const [codexAuthCancelling, setCodexAuthCancelling] = useState(false);
+  const [codexAuthInput, setCodexAuthInput] = useState("");
   const [runtimePending, setRuntimePending] = useState<string | null>(null);
   const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
   const [externalSaving, setExternalSaving] = useState(false);
@@ -267,6 +301,19 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       return res.json();
     },
     staleTime: 10_000,
+  });
+
+  const { data: codexAuthJob } = useQuery<CodexAuthJob | null>({
+    queryKey: ["codex-auth", codexAuthJobId],
+    enabled: codexGuide && !!codexAuthJobId,
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/codex-auth?id=${encodeURIComponent(codexAuthJobId || "")}`);
+      const payload = (await res.json().catch(() => ({}))) as { job?: CodexAuthJob | null; error?: string };
+      if (!res.ok) throw new Error(payload.error || "No se pudo leer el login de Codex");
+      return payload.job ?? null;
+    },
+    refetchInterval: (query) => (query.state.data?.status === "running" ? 1500 : false),
+    staleTime: 0,
   });
 
   const rows = useMemo(
@@ -567,8 +614,64 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     }
   };
 
-  // Codex login happens over SSH (outside the app); after the user does it, this
-  // re-pings the provider and refreshes the row so they see it land.
+  const startCodexAuth = async () => {
+    setCodexAuthStarting(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/codex-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start" }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as { job?: CodexAuthJob; error?: string };
+      if (!res.ok || !payload.job) throw new Error(payload.error || "No se pudo iniciar el login de Codex");
+      setCodexAuthJobId(payload.job.id);
+      setCodexAuthInput("");
+    } catch (err) {
+      setNotice({ ok: false, message: err instanceof Error ? err.message : "No se pudo iniciar Codex" });
+    } finally {
+      setCodexAuthStarting(false);
+    }
+  };
+
+  const submitCodexAuthInput = async () => {
+    if (!codexAuthJob?.id || !codexAuthInput.trim()) return;
+    setCodexAuthSubmitting(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/codex-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "submit", id: codexAuthJob.id, input: codexAuthInput }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as { job?: CodexAuthJob; error?: string };
+      if (!res.ok || !payload.job) throw new Error(payload.error || "No se pudo enviar el redirect");
+      setCodexAuthJobId(payload.job.id);
+      setCodexAuthInput("");
+      await qc.invalidateQueries({ queryKey: ["codex-auth", payload.job.id] });
+    } catch (err) {
+      setNotice({ ok: false, message: err instanceof Error ? err.message : "No se pudo enviar el redirect" });
+    } finally {
+      setCodexAuthSubmitting(false);
+    }
+  };
+
+  const cancelCodexAuth = async () => {
+    if (!codexAuthJob?.id) return;
+    setCodexAuthCancelling(true);
+    try {
+      await fetch("/api/admin/codex-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel", id: codexAuthJob.id }),
+      });
+      await qc.invalidateQueries({ queryKey: ["codex-auth", codexAuthJob.id] });
+    } finally {
+      setCodexAuthCancelling(false);
+    }
+  };
+
+  // Re-ping the provider and refresh the row so the renewed token is visible.
   const recheckCodex = async () => {
     setRechecking(true);
     setNotice(null);
@@ -1009,9 +1112,9 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                             🔑 Key sistema
                           </button>
                         ) : (
-                          /* Codex subscription: SSH-only login, no in-app paste — show the how-to. */
+                          /* Codex subscription: start the OpenClaw pairing flow from the UI. */
                           <button type="button" onClick={() => setCodexGuide(true)} className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap">
-                            📋 Instrucciones
+                            Conectar
                           </button>
                         )}
                       </div>
@@ -1025,40 +1128,124 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       </div>
 
       <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-        <strong>Qué ves:</strong> la <strong>ruta</strong> con la que el motor se autentica en cada proveedor y la cuenta/perfil enmascarado. <strong>Activar</strong> conmuta la ruta y reinicia el gateway para aplicarla. La suscripción de Anthropic se carga con <strong>🎫 Pegar token → Guardar y activar</strong>; la de Codex se conecta por SSH (pulsa <strong>📋 Instrucciones</strong>). <strong>No hay cuota/uso en vivo</strong> (OpenClaw no lo expone): la consola es para revisar límites y facturación.
+        <strong>Qué ves:</strong> la <strong>ruta</strong> con la que el motor se autentica en cada proveedor y la cuenta/perfil enmascarado. <strong>Activar</strong> conmuta la ruta y reinicia el gateway para aplicarla. La suscripción de Anthropic se carga con <strong>🎫 Pegar token → Guardar y activar</strong>; la de Codex se renueva desde <strong>Conectar</strong> y muestra el código de autorización en pantalla. <strong>No hay cuota/uso en vivo</strong> (OpenClaw no lo expone): la consola es para revisar límites y facturación.
       </p>
 
       {codexGuide && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setCodexGuide(false)}>
           <div className="absolute inset-0 bg-black/30" />
-          <div className="relative w-full max-w-[480px] rounded-lg border-2 border-ink bg-card shadow-comic" onClick={(e) => e.stopPropagation()}>
+          <div className="relative w-full max-w-[560px] rounded-lg border-2 border-ink bg-card shadow-comic" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-ink px-4 py-3">
-              <h3 className="font-heading text-base text-navy">⚙️ Conectar Codex (suscripción ChatGPT)</h3>
+              <h3 className="font-heading text-base text-navy">Conectar Codex (suscripción ChatGPT)</h3>
               <button type="button" onClick={() => setCodexGuide(false)} className="px-1 text-lg leading-none text-muted-foreground hover:text-foreground">
                 ✕
               </button>
             </div>
             <div className="space-y-3 p-4">
-              <AuthInstructions
-                intro="El login de Codex (suscripción ChatGPT) es interactivo y se hace por SSH en el VPS del motor — no se puede pegar aquí. El cambio de ruta en runtime llegará en una iteración futura (SAN-301)."
-                steps={[
-                  {
-                    text: "Conéctate por SSH al VPS del motor (o pídeselo a quien tenga acceso al VPS).",
-                  },
-                  {
-                    text: "Córrelo una vez; el store compartido lo propaga a todos los agentes Codex (automator, etc.):",
-                    command: "openclaw models auth login --agent cervantes",
-                  },
-                  {
-                    text: "Autoriza con tu cuenta ChatGPT en el navegador que abre el comando.",
-                  },
-                  { text: "Vuelve aquí y pulsa Re-verificar." },
-                ]}
-                footnote="Por qué no hay botón aquí: el login OAuth vive en el CLI del motor y el sync por-agente no tiene inverso idempotente (SAN-301)."
-              />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-[12.5px] leading-relaxed text-foreground/80">
+                    Pulsa iniciar. Sancho pedirá a OpenClaw un código de emparejamiento; abre la URL, escribe el
+                    código y autoriza con la cuenta ChatGPT que debe pagar Codex.
+                  </p>
+                  <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                    El token queda guardado en el motor y se comparte con los agentes Codex. No hace falta terminal.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={startCodexAuth}
+                  disabled={codexAuthStarting || codexAuthJob?.status === "running"}
+                  className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+                >
+                  {codexAuthStarting ? "iniciando…" : codexAuthJob ? "Reiniciar conexión" : "Iniciar conexión"}
+                </button>
+              </div>
+
+              {codexAuthJob && (
+                <div className="space-y-3 rounded-md border border-border bg-background p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className={cn("rounded-full border px-2 py-0.5 text-[10.5px] font-bold uppercase", codexAuthStatusClass(codexAuthJob.status))}>
+                      {codexAuthStatusLabel(codexAuthJob.status)}
+                    </span>
+                    <span className="font-mono text-[10.5px] text-muted-foreground">{codexAuthJob.provider}</span>
+                  </div>
+
+                  {codexAuthJob.url && (
+                    <div>
+                      <div className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">URL</div>
+                      <a href={codexAuthJob.url} target="_blank" rel="noopener noreferrer" className="break-all text-[12px] font-semibold text-rust underline-offset-2 hover:underline">
+                        {codexAuthJob.url}
+                      </a>
+                    </div>
+                  )}
+
+                  {codexAuthJob.code && (
+                    <div>
+                      <div className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">Código</div>
+                      <div className="mt-1 inline-flex items-center rounded-md border border-ink bg-card px-3 py-1 font-mono text-lg font-bold tracking-[0.12em] text-navy">
+                        {codexAuthJob.code}
+                      </div>
+                      {codexAuthJob.expiresText && (
+                        <div className="mt-1 text-[11px] text-muted-foreground">caduca en {codexAuthJob.expiresText}</div>
+                      )}
+                    </div>
+                  )}
+
+                  {codexAuthJob.error && (
+                    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-700">
+                      {codexAuthJob.error}
+                    </div>
+                  )}
+
+                  {codexAuthJob.restart && !codexAuthJob.restart.ok && (
+                    <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
+                      Codex quedó autenticado, pero el gateway no se pudo reiniciar automáticamente:{" "}
+                      {codexAuthJob.restart.error || "timeout"}. Pulsa Re-verificar tras reiniciar el runtime.
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
+                      Redirect manual
+                      <textarea
+                        value={codexAuthInput}
+                        onChange={(event) => setCodexAuthInput(event.target.value)}
+                        placeholder="Solo si OpenClaw lo pide: pega aquí la URL de redirección completa."
+                        className="mt-1 h-16 w-full resize-none rounded-md border border-border bg-card px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                      />
+                    </label>
+                    <div className="mt-2 flex flex-wrap justify-end gap-2">
+                      {codexAuthJob.status === "running" && (
+                        <button
+                          type="button"
+                          onClick={cancelCodexAuth}
+                          disabled={codexAuthCancelling}
+                          className="rounded border border-border px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:border-ink hover:text-navy disabled:opacity-50"
+                        >
+                          {codexAuthCancelling ? "cancelando…" : "Cancelar"}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={submitCodexAuthInput}
+                        disabled={!codexAuthInput.trim() || codexAuthSubmitting || codexAuthJob.status !== "running"}
+                        className="rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+                      >
+                        {codexAuthSubmitting ? "enviando…" : "Enviar redirect"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <pre className="max-h-44 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-2 text-[11px] leading-relaxed text-muted-foreground">
+                    {codexAuthJob.output || "Esperando salida de OpenClaw..."}
+                  </pre>
+                </div>
+              )}
+
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={recheckCodex} disabled={rechecking} className="rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50">
-                  {rechecking ? "verificando…" : "🔄 Re-verificar"}
+                  {rechecking ? "verificando…" : "Re-verificar"}
                 </button>
               </div>
             </div>

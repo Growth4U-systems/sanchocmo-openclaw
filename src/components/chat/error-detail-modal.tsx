@@ -18,6 +18,7 @@ const CATEGORY_LABEL: Record<ErrorCategory, string> = {
   watchdog_abort: "Sesión sin progreso (timeout)",
   model_unavailable: "Modelo no disponible",
   session_concurrency: "Turno concurrente en el mismo hilo",
+  cost_guard: "Ejecución detenida por presupuesto",
   network: "Error de red",
 };
 
@@ -128,7 +129,7 @@ export function ErrorDetailModal({ open, onClose, detail }: ErrorDetailModalProp
                 </a>
               )}
               <Link
-                href="/dashboard/admin/settings?tab=apis&cat=runtime"
+                href="/dashboard/admin/settings?tab=runtime"
                 onClick={onClose}
                 className="inline-flex items-center gap-1 rounded-md border border-[var(--chat-border)] px-2.5 py-1 text-[11px] font-semibold text-[var(--chat-text)] hover:bg-[var(--chat-surface)] transition-colors"
               >

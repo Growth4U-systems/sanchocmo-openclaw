@@ -9,6 +9,12 @@
 // Order matters: first match wins.
 const CLASSIFIERS = [
   {
+    category: "missing_context",
+    regex: /(?:workspace-[a-z0-9_-]+\/brand\/?|brand\/[a-z0-9_-]+\/|find files named .{0,80} in .{0,120}brand|list files in .{0,120}brand).{0,160}(?:failed|not found|no such file|ENOENT)|(?:No such file|ENOENT).{0,160}brand\/[a-z0-9_-]+/i,
+    header: "Falta contexto inicial del cliente",
+    hint: "No están generados o montados los archivos base de contexto para esta marca. Hay que completar/generar Foundation antes de pedirle al agente que proponga estrategia, búsqueda o mensajes basados en el cliente.",
+  },
+  {
     category: "insufficient_quota",
     regex: /\binsufficient_quota\b|you (?:have )?exceeded your current quota|you have run out of credits/i,
     header: "API key OpenAI sin cuota",
@@ -58,6 +64,12 @@ const CLASSIFIERS = [
   },
   {
     category: "auth",
+    regex: /model login expired|re-auth with .*models auth login|auth login expired/i,
+    header: "Sesión Codex caducada",
+    hint: "El motor necesita reconectar la cuenta Codex. Reautenticá el provider desde Runtime/Motor y reintentá.",
+  },
+  {
+    category: "auth",
     regex: /no api key|invalid api key|missing api key|\b401\b|unauthor(ised|ized)/i,
     header: "Credenciales no configuradas",
     hint: "Revisá el auth-profile del agente.",
@@ -77,9 +89,13 @@ const CLASSIFIERS = [
 ];
 
 function extractProvider(text) {
+  const cliFlag = text.match(/--provider\s+([a-zA-Z0-9_-]+)/i);
+  if (cliFlag) return cliFlag[1];
+
   const explicit = text.match(/provider\s+(?:["']([a-zA-Z0-9_-]+)["']|[:=]\s*["']?([a-zA-Z0-9_-]+)["']?)/i);
   if (explicit) return explicit[1] || explicit[2];
 
+  if (/\bopenai-codex\b/i.test(text)) return "openai-codex";
   if (/\bcodex\/[a-zA-Z0-9.\-]+/i.test(text)) return "openai-codex";
   if (/\banthropic\/[a-zA-Z0-9.\-]+/i.test(text)) return "anthropic";
   if (/\bopenai\/[a-zA-Z0-9.\-]+/i.test(text)) return "openai";

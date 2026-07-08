@@ -46,15 +46,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Invalid or missing 'route' (subscription | api)" });
   }
 
-  // Codex/OpenAI runtime route-switch is not supported yet: the subscription
-  // token is minted interactively (`openclaw models auth login`) over SSH and the
-  // per-agent symlink-sync has no idempotent inverse. OpenAI's only resolvable
-  // route here is its API key (no flip needed — manage it via "Key sistema").
+  // Codex/OpenAI runtime route-switch is not supported here: the subscription
+  // session is paired through /api/admin/codex-auth, not flipped as a route.
+  // OpenAI's only resolvable row here is its API key.
   if (provider === "openai") {
     return res.status(400).json({
       error:
         route === "subscription"
-          ? "La suscripción de Codex se conecta por SSH (`openclaw models auth login`); el cambio de ruta en runtime no está disponible todavía."
+          ? "La suscripción de Codex se conecta desde «Conectar Codex» en Runtime/Motor; no es un cambio de ruta."
           : "OpenAI no cambia de ruta en runtime; gestiona su API key con «Key sistema».",
     });
   }
