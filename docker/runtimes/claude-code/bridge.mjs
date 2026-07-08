@@ -287,6 +287,15 @@ export function buildClaudeArgs(message, prompt, mcpConfig = buildMcpConfig()) {
     "CLAUDE_RUNTIME_SYSTEM_PROMPT",
   ]);
 
+  args.push("--setting-sources", firstEnv([
+    "CLAUDE_CODE_RUNTIME_SETTING_SOURCES",
+    "CLAUDE_RUNTIME_SETTING_SOURCES",
+  ]) || "local");
+
+  if (!flagDisabled(["CLAUDE_CODE_RUNTIME_DISABLE_SLASH_COMMANDS", "CLAUDE_RUNTIME_DISABLE_SLASH_COMMANDS"])) {
+    args.push("--disable-slash-commands");
+  }
+
   if (!flagDisabled(["CLAUDE_CODE_RUNTIME_NO_SESSION_PERSISTENCE", "CLAUDE_RUNTIME_NO_SESSION_PERSISTENCE"])) {
     args.push("--no-session-persistence");
   }

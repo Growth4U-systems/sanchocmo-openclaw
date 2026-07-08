@@ -74,12 +74,10 @@ test("buildCodexArgs wires non-interactive exec defaults", () => {
   const previous = {
     CODEX_RUNTIME_MODEL: process.env.CODEX_RUNTIME_MODEL,
     CODEX_RUNTIME_SANDBOX: process.env.CODEX_RUNTIME_SANDBOX,
-    CODEX_RUNTIME_APPROVAL_POLICY: process.env.CODEX_RUNTIME_APPROVAL_POLICY,
     CODEX_RUNTIME_WORKDIR: process.env.CODEX_RUNTIME_WORKDIR,
   };
   process.env.CODEX_RUNTIME_MODEL = "gpt-5.1-codex";
   process.env.CODEX_RUNTIME_SANDBOX = "read-only";
-  process.env.CODEX_RUNTIME_APPROVAL_POLICY = "never";
   process.env.CODEX_RUNTIME_WORKDIR = "/tmp/sancho-codex";
 
   try {
@@ -88,10 +86,11 @@ test("buildCodexArgs wires non-interactive exec defaults", () => {
     assert.equal(args[0], "exec");
     assert.equal(args[args.indexOf("-m") + 1], "gpt-5.1-codex");
     assert.equal(args[args.indexOf("-s") + 1], "read-only");
-    assert.equal(args[args.indexOf("-a") + 1], "never");
+    assert.equal(args.includes("-a"), false);
     assert.equal(args[args.indexOf("-C") + 1], "/tmp/sancho-codex");
     assert.ok(args.includes("--skip-git-repo-check"));
     assert.ok(args.includes("--ephemeral"));
+    assert.ok(args.includes("--ignore-user-config"));
     assert.equal(args[args.indexOf("-o") + 1], "/tmp/out.txt");
     assert.equal(args.at(-1), "hello");
   } finally {

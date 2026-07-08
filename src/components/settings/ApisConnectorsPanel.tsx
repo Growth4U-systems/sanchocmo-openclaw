@@ -124,6 +124,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   const statusBadge = useStatusBadge();
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
+  const runtimeOnly = categories?.length === 1 && categories[0] === "runtime";
   const selectedClient = useAppStore((s) => s.selectedClient);
   const setSelectedClient = useAppStore((s) => s.setSelectedClient);
   const isAdminRoute = router.pathname.startsWith("/dashboard/admin");
@@ -136,7 +137,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   const [connectSlider, setConnectSlider] = useState<{ apiId: string; provider: string } | null>(null);
   const [systemKeySlider, setSystemKeySlider] = useState<{ apiId: string; provider: string; route?: "subscription" | "api" } | null>(null);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>(runtimeOnly ? "runtime" : "all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const qc = useQueryClient();
 
@@ -150,12 +151,16 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   // forces "all clients" scope — its links target the admin global settings page,
   // and without this the section is gated off (`!slug`) and the panel renders blank.
   useEffect(() => {
+    if (runtimeOnly) {
+      setCategoryFilter("runtime");
+      return;
+    }
     if (categories) return;
     const cat = router.query.cat;
     if (typeof cat !== "string" || !cat) return;
     if (cat === "runtime") setSelectedClient(null);
     setCategoryFilter(cat);
-  }, [router.query.cat, categories, setSelectedClient]);
+  }, [router.query.cat, categories, runtimeOnly, setSelectedClient]);
 
   // Safety net: "runtime" is only valid in system scope. If a client gets selected
   // while it's active, fall back to "all" so the category <select> never holds a
@@ -368,7 +373,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       )}
 
       {/* Summary counters */}
-      <div className="grid grid-cols-4 gap-3 mb-5">
+      {!runtimeOnly && <div className="grid grid-cols-4 gap-3 mb-5">
         <ComicCard className="text-center py-3">
           <div className="text-2xl font-extrabold text-green-600">{connected}</div>
           <div className="text-[11px] text-muted-foreground uppercase tracking-wider">🟢 Conectados</div>
@@ -385,11 +390,11 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
           <div className="text-2xl font-extrabold text-muted-foreground">{notConfigured}</div>
           <div className="text-[11px] text-muted-foreground uppercase tracking-wider">⚫ Sin configurar</div>
         </ComicCard>
-      </div>
+      </div>}
 
       {/* Surface providers banner — shown when ?surface= scopes the panel; rendered
           above the controls so the user sees the active filter context first. */}
-      {activeProviders && (
+      {!runtimeOnly && activeProviders && (
         <div className="mb-4 flex items-center gap-2 rounded-sc-md border border-dashed border-ink bg-aged/40 px-3 py-2 text-[12px]">
           <span className="font-heading font-bold text-navy">🔌 Filtrado por la superficie «{filterLabel ?? "superficie"}»</span>
           <span className="text-ink/50">—</span>
@@ -411,7 +416,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
         </div>
       )}
 
-      {!slug && scrapeCreatorsApi && (
+      {!runtimeOnly && !slug && scrapeCreatorsApi && (
         <div className="mb-4 rounded-lg border-2 border-ink bg-card p-3 shadow-comic-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
@@ -438,7 +443,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       )}
 
       {/* Search + Category Filter */}
-      <div className="flex items-center gap-3 mb-4 flex-wrap">
+      {!runtimeOnly && <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[220px] max-w-md">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">🔍</span>
           <input
@@ -486,12 +491,12 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
             {filteredApis.length} de {allApis.length} integraciones
           </span>
         )}
-      </div>
+      </div>}
 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando...</p>}
 
       {/* Runtime / Motor — engine accounts + primary-model selector (admin/system only) */}
-      {categoryFilter === "runtime" && !slug && (
+      {(runtimeOnly || categoryFilter === "runtime") && !slug && (
         <RuntimeMotorSection
           onOpenSystemKey={(apiId, provider, route) =>
             setSystemKeySlider({
@@ -506,7 +511,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       )}
 
       {/* The engine providers moved to Runtime/Motor — point admins there from their old category. */}
-      {!slug && !activeProviders && categoryFilter !== "runtime" && (categoryFilter === "all" || categoryFilter === engineCatKey) && (
+      {!runtimeOnly && !slug && !activeProviders && categoryFilter !== "runtime" && (categoryFilter === "all" || categoryFilter === engineCatKey) && (
         <div className="mb-4 px-3 py-2 rounded-md border border-sage/40 bg-sage/5 text-[12px] text-foreground/80 flex items-center gap-2">
           <span>🚂</span>
           <span>
@@ -524,7 +529,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       )}
 
       {/* API Table */}
-      {!isLoading && filteredApis.length > 0 && (
+      {!runtimeOnly && !isLoading && filteredApis.length > 0 && (
         <div className="border-2 border-ink rounded-lg overflow-hidden shadow-comic">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -659,7 +664,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
         </div>
       )}
 
-      {!isLoading && filteredApis.length === 0 && search && categoryFilter !== "runtime" && (
+      {!runtimeOnly && !isLoading && filteredApis.length === 0 && search && categoryFilter !== "runtime" && (
         <div className="text-center py-8 text-muted-foreground">
           <p className="text-sm">No se encontraron integraciones para &quot;{search}&quot;</p>
           <button

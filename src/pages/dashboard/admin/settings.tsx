@@ -32,10 +32,11 @@ import { McpTokensPanel } from "@/components/settings/mcp-tokens-panel";
  *   - /dashboard/admin/users
  */
 
-const TAB_KEYS = ["apis", "mcp", "agents", "skills", "recurring", "datasync", "preferences"] as const;
+const TAB_KEYS = ["runtime", "apis", "mcp", "agents", "skills", "recurring", "datasync", "preferences"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
 const TAB_ICONS: Record<TabKey, string> = {
+  runtime: "🚂",
   apis: "🔌",
   mcp: "🔐",
   agents: "🤖",
@@ -44,7 +45,7 @@ const TAB_ICONS: Record<TabKey, string> = {
   datasync: "⬇️",
   preferences: "⚙️",
 };
-const DEFAULT_TAB: TabKey = "apis";
+const DEFAULT_TAB: TabKey = "runtime";
 
 // The "Sync with Prod" tab only exists on staging. Prod ships
 // NEXT_PUBLIC_ENV_LABEL empty; staging sets it (e.g. "STAGING").
@@ -96,6 +97,7 @@ export default function SettingsPage() {
         }}
       />
 
+      {activeTab === "runtime" && <ApisConnectorsPanel categories={["runtime"]} showHeader={false} />}
       {activeTab === "apis" && <ApisConnectorsPanel />}
       {activeTab === "mcp" && <McpTokensPanel />}
       {activeTab === "agents" && <AgentsPanel />}

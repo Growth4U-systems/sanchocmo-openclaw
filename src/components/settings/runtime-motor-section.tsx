@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Clipboard, PlugZap, RefreshCcw, Terminal } from "lucide-react";
 import { useModelCatalog, useSetAuthRoute, type CatalogProvider } from "@/hooks/useModels";
 import { RUNTIME_PROVIDERS, consoleUrlFor, consoleLabelFor, type RuntimeProvider } from "@/lib/provider-console";
 import { routeLabel, routeClass, effectiveRoute, maskAuthLabel } from "@/lib/provider-auth-display";
@@ -61,6 +62,44 @@ interface RuntimeStatus {
   options: RuntimeAdapterOption[];
   warning?: string | null;
 }
+
+type CliRuntimeId = "hermes" | "claude-code" | "codex";
+
+interface RuntimeBridgeProvider {
+  id: CliRuntimeId;
+  label: string;
+  defaultPort: number;
+  defaultGatewayUrl: string;
+}
+
+interface RuntimeBridgeStatus {
+  ok: boolean;
+  active: string;
+  configuredKind: CliRuntimeId | null;
+  providers: RuntimeBridgeProvider[];
+}
+
+interface PreparedRuntimeBridge {
+  provider: CliRuntimeId;
+  label: string;
+  gatewayUrl: string;
+  command: string;
+}
+
+const CLI_RUNTIME_META: Record<CliRuntimeId, { subtitle: string; account: string }> = {
+  hermes: {
+    subtitle: "Usa Hermes CLI como bridge externo compatible con Sancho.",
+    account: "Proveedor/modelo según la auth y config del Hermes CLI.",
+  },
+  "claude-code": {
+    subtitle: "Usa la sesión Claude Code del host donde corre el bridge.",
+    account: "Suscripción Claude o API según la auth del CLI.",
+  },
+  codex: {
+    subtitle: "Usa Codex CLI como ejecutor externo de los turnos.",
+    account: "Cuenta Codex/ChatGPT o API según la auth del CLI.",
+  },
+};
 
 function serviceHasCredential(status: string | undefined): boolean {
   return status === "ok" || status === "error";
@@ -130,6 +169,14 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const [runtimePending, setRuntimePending] = useState<string | null>(null);
   const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
   const [externalSaving, setExternalSaving] = useState(false);
+  const [bridgeDrafts, setBridgeDrafts] = useState<Record<CliRuntimeId, string>>({
+    hermes: "",
+    "claude-code": "",
+    codex: "",
+  });
+  const [preparedBridge, setPreparedBridge] = useState<PreparedRuntimeBridge | null>(null);
+  const [bridgePending, setBridgePending] = useState<string | null>(null);
+  const [copiedBridge, setCopiedBridge] = useState<CliRuntimeId | null>(null);
   const [externalDraft, setExternalDraft] = useState({
     protocol: "",
     gatewayUrl: "",
@@ -163,6 +210,17 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       const res = await fetch("/api/system/runtime");
       const payload = (await res.json().catch(() => ({}))) as RuntimeStatus & { error?: string };
       if (!res.ok) throw new Error(payload.error || "No se pudo leer el runtime activo");
+      return payload;
+    },
+    staleTime: 10_000,
+  });
+
+  const { data: runtimeBridgeStatus } = useQuery<RuntimeBridgeStatus>({
+    queryKey: ["runtime-bridge"],
+    queryFn: async () => {
+      const res = await fetch("/api/system/runtime-bridge");
+      const payload = (await res.json().catch(() => ({}))) as RuntimeBridgeStatus & { error?: string };
+      if (!res.ok) throw new Error(payload.error || "No se pudo leer el bridge de runtime");
       return payload;
     },
     staleTime: 10_000,
@@ -226,6 +284,21 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       }),
     [providers, services, systemEnv],
   );
+
+  const cliRuntimeCards = useMemo(() => {
+    const providersById = new Map((runtimeBridgeStatus?.providers ?? []).map((provider) => [provider.id, provider]));
+    return (["hermes", "claude-code", "codex"] as CliRuntimeId[]).map((id) => {
+      const provider = providersById.get(id);
+      return {
+        id,
+        label: provider?.label || (id === "hermes" ? "Hermes" : id === "claude-code" ? "Claude Code" : "Codex"),
+        defaultGatewayUrl:
+          provider?.defaultGatewayUrl ||
+          (id === "hermes" ? "http://127.0.0.1:18791" : id === "claude-code" ? "http://127.0.0.1:18792" : "http://127.0.0.1:18793"),
+        ...CLI_RUNTIME_META[id],
+      };
+    });
+  }, [runtimeBridgeStatus?.providers]);
 
   const activate = (rp: RuntimeProvider) => {
     if (rp.route !== "subscription" && rp.route !== "api") return;
@@ -334,6 +407,75 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       });
     } finally {
       setExternalSaving(false);
+    }
+  };
+
+  const prepareCliBridge = async (provider: CliRuntimeId) => {
+    setBridgePending(`${provider}:prepare`);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/system/runtime-bridge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "prepare",
+          provider,
+          gatewayUrl: bridgeDrafts[provider].trim() || undefined,
+        }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as PreparedRuntimeBridge & { error?: string };
+      if (!res.ok) throw new Error(payload.error || "No se pudo preparar el bridge");
+
+      setPreparedBridge(payload);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["runtime-bridge"] }),
+        qc.invalidateQueries({ queryKey: ["runtime-external-env"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+      ]);
+      setNotice({ ok: true, message: `${payload.label} preparado. Ejecuta el comando y verifica la conexión.` });
+    } catch (err) {
+      setNotice({ ok: false, message: err instanceof Error ? err.message : "No se pudo preparar el bridge" });
+    } finally {
+      setBridgePending(null);
+    }
+  };
+
+  const copyBridgeCommand = async (provider: CliRuntimeId, command: string) => {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopiedBridge(provider);
+      window.setTimeout(() => setCopiedBridge(null), 1800);
+    } catch {
+      setNotice({ ok: false, message: "No se pudo copiar. Selecciona el comando manualmente." });
+    }
+  };
+
+  const verifyAndActivateCliBridge = async (provider: CliRuntimeId) => {
+    setBridgePending(`${provider}:verify`);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/system/runtime-bridge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify", provider, activate: true }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        active?: string;
+      };
+      if (!res.ok || !payload.ok) throw new Error(payload.error || "El bridge todavía no responde");
+
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["runtime-bridge"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+        qc.invalidateQueries({ queryKey: ["api-health"] }),
+      ]);
+      setNotice({ ok: true, message: "Runtime externo activado para los mensajes nuevos." });
+    } catch (err) {
+      setNotice({ ok: false, message: err instanceof Error ? err.message : "No se pudo activar el runtime" });
+    } finally {
+      setBridgePending(null);
     }
   };
 
@@ -466,13 +608,124 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         )}
 
         {runtimeStatus?.options.some((option) => option.id === "external-http") && (
-          <div className="mt-4 rounded-lg border border-border bg-card px-3 py-3">
+          <div className="mt-4 rounded-lg border border-ink bg-card px-3 py-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h4 className="font-heading text-[13px] text-navy">Runtime externo compatible</h4>
+                <h4 className="font-heading text-[13px] text-navy">Conectar runtime CLI</h4>
                 <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-                  Configuración global inicial para un gateway BYO compatible con Sancho. Puede ser Hermes, Codex CLI,
-                  Claude Code u otro runtime que exponga el contrato HTTP.
+                  El bridge debe correr en una máquina alcanzable por Sancho. En el mismo host no cambies la URL.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-semibold uppercase text-muted-foreground">
+                <PlugZap className="h-3.5 w-3.5" />
+                {runtimeBridgeStatus?.configuredKind ? runtimeBridgeStatus.configuredKind : "sin bridge"}
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-3 xl:grid-cols-3">
+              {cliRuntimeCards.map((card) => {
+                const prepared = preparedBridge?.provider === card.id ? preparedBridge : null;
+                const isConfigured = runtimeBridgeStatus?.configuredKind === card.id;
+                const isActive = runtimeStatus?.active === "external-http" && isConfigured;
+                const preparing = bridgePending === `${card.id}:prepare`;
+                const verifying = bridgePending === `${card.id}:verify`;
+
+                return (
+                  <div
+                    key={card.id}
+                    className={cn(
+                      "rounded-lg border p-3",
+                      isActive ? "border-sage bg-sage/10" : isConfigured ? "border-navy/30 bg-navy/[0.03]" : "border-border bg-background",
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-heading text-sm text-navy">{card.label}</div>
+                        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">{card.subtitle}</p>
+                      </div>
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+                          isActive ? "bg-sage/16 text-sage" : isConfigured ? "bg-navy/10 text-navy" : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {isActive && <CheckCircle2 className="h-3 w-3" />}
+                        {isActive ? "activo" : isConfigured ? "preparado" : "nuevo"}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-[11px] text-muted-foreground">{card.account}</p>
+
+                    <label className="mt-3 block text-[10.5px] font-semibold uppercase text-muted-foreground">
+                      Bridge URL
+                      <input
+                        value={bridgeDrafts[card.id]}
+                        onChange={(event) =>
+                          setBridgeDrafts((prev) => ({ ...prev, [card.id]: event.target.value }))
+                        }
+                        placeholder={card.defaultGatewayUrl}
+                        className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                      />
+                    </label>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => prepareCliBridge(card.id)}
+                        disabled={!!bridgePending}
+                        className="inline-flex items-center gap-1.5 rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+                      >
+                        <Terminal className="h-3.5 w-3.5" />
+                        {preparing ? "preparando..." : "Preparar"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => verifyAndActivateCliBridge(card.id)}
+                        disabled={!!bridgePending || (!prepared && !isConfigured)}
+                        className="inline-flex items-center gap-1.5 rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-sage hover:text-white disabled:opacity-50"
+                      >
+                        <RefreshCcw className="h-3.5 w-3.5" />
+                        {verifying ? "verificando..." : "Verificar y activar"}
+                      </button>
+                    </div>
+
+                    {prepared && (
+                      <div className="mt-3 rounded-md border border-border bg-muted/30 p-2">
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <span className="text-[10.5px] font-semibold uppercase text-muted-foreground">
+                            Comando del bridge
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => copyBridgeCommand(card.id, prepared.command)}
+                            className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[11px] font-semibold text-navy hover:border-rust hover:text-rust"
+                          >
+                            <Clipboard className="h-3.5 w-3.5" />
+                            {copiedBridge === card.id ? "Copiado" : "Copiar"}
+                          </button>
+                        </div>
+                        <pre className="max-h-[120px] overflow-auto whitespace-pre-wrap break-all rounded bg-background p-2 text-[11px] leading-relaxed text-foreground">
+                          {prepared.command}
+                        </pre>
+                        <p className="mt-2 text-[10.5px] text-muted-foreground">
+                          URL guardada: <span className="font-mono">{prepared.gatewayUrl}</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {runtimeStatus?.options.some((option) => option.id === "external-http") && (
+          <div className="mt-3 rounded-lg border border-border bg-card px-3 py-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h4 className="font-heading text-[13px] text-navy">Configuración avanzada HTTP</h4>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                  Para otro gateway custom. Hermes, Claude Code y Codex quedan cubiertos por las tarjetas anteriores.
                 </p>
               </div>
               <button

@@ -176,6 +176,7 @@
     "title": "Settings",
     "subtitle": "System configuration",
     "tabs": {
+      "runtime": "Runtime",
       "apis": "APIs",
       "mcp": "MCP",
       "agents": "Agents",

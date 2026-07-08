@@ -43,7 +43,6 @@ CODEX_CONTEXT_PACK_URL=http://127.0.0.1:3000/api/chat/context-pack
 CODEX_RUNTIME_MODEL=gpt-5.1-codex
 CODEX_RUNTIME_TIMEOUT_MS=900000
 CODEX_RUNTIME_SANDBOX=read-only
-CODEX_RUNTIME_APPROVAL_POLICY=never
 ```
 
 Start it:
@@ -55,10 +54,25 @@ node docker/runtimes/codex/bridge.mjs
 The bridge invokes:
 
 ```bash
-codex exec -s read-only -a never --ephemeral --skip-git-repo-check
+codex exec -s read-only --ephemeral --skip-git-repo-check --ignore-user-config
 ```
 
 The local CLI version used for this spike is `codex-cli 0.142.5`.
+The bridge ignores user config by default so runtime calls do not inherit local
+MCP servers or project settings. Set `CODEX_RUNTIME_IGNORE_USER_CONFIG=0` only
+when the runtime host intentionally needs its Codex user config.
+
+## Smoke test
+
+After `npm run build`, validate the full Sancho -> external-http -> Codex bridge
+-> Sancho webhook path with:
+
+```bash
+npm run smoke:runtime:codex
+```
+
+The smoke writes only under `.context/cli-runtime-smoke/codex/` and checks that
+Sancho stores a bot reply plus an `external-http` completed run.
 
 ## Native context
 

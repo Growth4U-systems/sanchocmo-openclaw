@@ -151,6 +151,19 @@ The wizard persists supplied `HERMES_*`, `SANCHO_EXTERNAL_*`, or legacy
 leave the install on OpenClaw and configure a runtime later from
 **Settings -> Runtime**.
 
+For Hermes, Claude Code, or Codex, use the guided setup in
+**Settings -> Runtime**:
+
+1. Choose **Hermes**, **Claude Code**, or **Codex** under
+   **Conectar runtime CLI**.
+2. Leave the default bridge URL when the bridge runs on the same host as Sancho,
+   or set the URL Sancho can reach.
+3. Click **Preparar**. Sancho writes the `external-http` env vars, generates a
+   shared secret, and shows one bridge command.
+4. Run that command on the host with the authenticated Claude Code/Codex CLI.
+5. Click **Verificar y activar**. If the bridge healthcheck passes, Sancho
+   switches new chat turns to `external-http`.
+
 The external runtime HTTP contract is documented in
 [`docs/runtime-external-http-contract.md`](runtime-external-http-contract.md).
 After building the app, validate the contract locally with:
