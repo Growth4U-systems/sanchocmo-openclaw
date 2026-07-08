@@ -156,6 +156,9 @@ function startManagedBridge(
   }
 
   const provider = cliBridgeProvider(providerId);
+  if (!provider.serverStartSupported) {
+    throw new Error(`${provider.label} no se puede arrancar desde el host de Sancho.`);
+  }
   const host = gatewayListenHost(options.gatewayUrl);
   const port = gatewayPortOrDefault(providerId, options.gatewayUrl);
   const scriptPath = path.join(process.cwd(), provider.scriptPath);
@@ -238,6 +241,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       providers: CLI_BRIDGE_PROVIDERS.map((provider) => ({
         id: provider.id,
         label: provider.label,
+        runtimeLocation: provider.runtimeLocation,
+        serverStartSupported: provider.serverStartSupported,
         defaultPort: provider.defaultPort,
         defaultGatewayUrl: defaultGatewayUrl(provider.id),
       })),
@@ -251,6 +256,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!providerId) return res.status(400).json({ error: "Unknown CLI runtime" });
 
     const provider = cliBridgeProvider(providerId);
+    if (!provider.serverStartSupported) {
+      return res.status(400).json({
+        ok: false,
+        error: `${provider.label} corre en el ordenador del usuario. Sancho necesita un conector local; no puede prepararlo como bridge gestionado en el VPS.`,
+        provider: providerId,
+        label: provider.label,
+        runtimeLocation: provider.runtimeLocation,
+        active: readRuntimeSelection().runtime,
+      });
+    }
+
     const parsedEnv = parseEnvContent(readEnvFile());
     const gatewayUrl =
       typeof req.body.gatewayUrl === "string" && req.body.gatewayUrl.trim()
@@ -282,6 +298,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!providerId) return res.status(400).json({ error: "Unknown CLI runtime" });
 
     const provider = cliBridgeProvider(providerId);
+    if (!provider.serverStartSupported) {
+      return res.status(400).json({
+        ok: false,
+        error: `${provider.label} corre en el ordenador del usuario. Sancho necesita un conector local; no puede arrancarlo dentro del VPS.`,
+        provider: providerId,
+        label: provider.label,
+        runtimeLocation: provider.runtimeLocation,
+        active: readRuntimeSelection().runtime,
+      });
+    }
+
     const parsedEnv = parseEnvContent(readEnvFile());
     const gatewayUrl =
       typeof req.body.gatewayUrl === "string" && req.body.gatewayUrl.trim()

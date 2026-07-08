@@ -67,6 +67,8 @@ type CliRuntimeId = "hermes" | "claude-code" | "codex";
 interface RuntimeBridgeProvider {
   id: CliRuntimeId;
   label: string;
+  runtimeLocation: "server" | "user-device";
+  serverStartSupported: boolean;
   defaultPort: number;
   defaultGatewayUrl: string;
 }
@@ -117,18 +119,18 @@ interface CodexAuthJob {
 const CLI_RUNTIME_META: Record<CliRuntimeId, { title: string; subtitle: string; account: string }> = {
   hermes: {
     title: "Hermes CLI",
-    subtitle: "Para correr Sancho con Hermes desde un bridge externo.",
-    account: "Usa la auth y el modelo configurados en Hermes.",
+    subtitle: "Para correr Sancho con Hermes desde un bridge gestionado.",
+    account: "Puede arrancar junto a Sancho si Hermes está disponible en el servidor.",
   },
   "claude-code": {
     title: "Claude Code",
-    subtitle: "Para correr Sancho con la sesión Claude Code del host.",
-    account: "Usa la suscripción o API configurada en Claude Code.",
+    subtitle: "Usa Claude Code donde está instalado: normalmente tu ordenador.",
+    account: "Sancho no lo arranca en el VPS. Necesita un conector local en tu máquina.",
   },
   codex: {
     title: "Codex",
-    subtitle: "Para correr Sancho con Codex CLI.",
-    account: "Usa la cuenta ChatGPT/Codex o API configurada en el CLI.",
+    subtitle: "Usa Codex CLI donde está autenticado: normalmente tu ordenador.",
+    account: "Sancho no lo arranca en el VPS. Necesita un conector local en tu máquina.",
   },
 };
 
@@ -227,6 +229,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const [preparedBridge, setPreparedBridge] = useState<PreparedRuntimeBridge | null>(null);
   const [bridgePending, setBridgePending] = useState<string | null>(null);
   const [copiedBridge, setCopiedBridge] = useState<CliRuntimeId | null>(null);
+  const [advancedBridgeOpen, setAdvancedBridgeOpen] = useState(false);
   const [externalDraft, setExternalDraft] = useState({
     protocol: "",
     gatewayUrl: "",
@@ -352,6 +355,8 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       return {
         id,
         label: provider?.label || (id === "hermes" ? "Hermes" : id === "claude-code" ? "Claude Code" : "Codex"),
+        runtimeLocation: provider?.runtimeLocation || (id === "hermes" ? "server" : "user-device"),
+        serverStartSupported: provider?.serverStartSupported ?? id === "hermes",
         defaultGatewayUrl: provider?.defaultGatewayUrl || (id === "hermes" ? "http://127.0.0.1:18791" : id === "claude-code" ? "http://127.0.0.1:18792" : "http://127.0.0.1:18793"),
         ...CLI_RUNTIME_META[id],
       };
@@ -720,7 +725,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h4 className="font-heading text-[13px] text-navy">Elige un motor</h4>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Para la mayoría de casos, solo elige el motor y pulsa el botón. No necesitas tocar URLs.</p>
+              <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">OpenClaw corre integrado. Hermes puede correr junto a Sancho. Claude Code y Codex corren en el ordenador del usuario y necesitan conector local.</p>
             </div>
             {externalRuntimeAvailable && (
               <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[10px] font-semibold uppercase text-muted-foreground">
@@ -760,8 +765,9 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                   const connecting = bridgePending === `${card.id}:start`;
                   const preparing = bridgePending === `${card.id}:prepare`;
                   const verifying = bridgePending === `${card.id}:verify`;
+                  const needsLocalConnector = !card.serverStartSupported && !readyToActivate;
                   const disabled = isActive || !!bridgePending;
-                  const actionLabel = isActive ? "Activo" : verifying ? "activando..." : connecting ? "conectando..." : preparing ? "preparando..." : readyToActivate ? "Activar" : "Conectar";
+                  const actionLabel = isActive ? "Activo" : verifying ? "activando..." : connecting ? "conectando..." : preparing ? "preparando..." : readyToActivate ? "Activar" : needsLocalConnector ? "Conector local" : "Conectar";
 
                   return (
                     <div key={card.id} className={cn("flex min-h-[170px] flex-col rounded-lg border p-3", isActive ? "border-sage bg-sage/10" : isConfigured ? "border-navy/30 bg-navy/[0.03]" : "border-border bg-card")}>
@@ -772,7 +778,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                         </div>
                         <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase", isActive ? "bg-sage/16 text-sage" : isConfigured ? "bg-navy/10 text-navy" : "bg-muted text-muted-foreground")}>
                           {isActive && <CheckCircle2 className="h-3 w-3" />}
-                          {isActive ? "activo" : isConfigured ? "listo" : "nuevo"}
+                          {isActive ? "activo" : isConfigured ? "listo" : card.runtimeLocation === "user-device" ? "local" : "nuevo"}
                         </span>
                       </div>
 
@@ -782,7 +788,14 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                         type="button"
                         onClick={() => {
                           if (readyToActivate) verifyAndActivateCliBridge(card.id);
-                          else startCliBridge(card.id);
+                          else if (card.serverStartSupported) startCliBridge(card.id);
+                          else {
+                            setAdvancedBridgeOpen(true);
+                            setNotice({
+                              ok: false,
+                              message: `${card.title} corre en el ordenador del usuario. Falta el conector local de Sancho para vincularlo sin terminal ni túneles.`,
+                            });
+                          }
                         }}
                         disabled={disabled}
                         className="mt-auto inline-flex w-fit items-center gap-1.5 rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
@@ -798,12 +811,12 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         </div>
 
         {externalRuntimeAvailable && (
-          <details className="mt-4 rounded-lg border border-border bg-card">
+          <details className="mt-4 rounded-lg border border-border bg-card" open={advancedBridgeOpen} onToggle={(event) => setAdvancedBridgeOpen(event.currentTarget.open)}>
             <summary className="cursor-pointer list-none px-3 py-2 text-[12px] font-semibold text-navy">Avanzado: bridge manual y gateway custom</summary>
             <div className="space-y-4 border-t border-border px-3 py-3">
               <div>
                 <h4 className="font-heading text-[13px] text-navy">Conexión local del bridge</h4>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Solo cambia esto si el bridge corre en otra máquina. Si corre junto a Sancho, déjalo vacío.</p>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Solo cambia esto para bridges server-side o gateways ya publicados. Claude Code y Codex locales necesitan el conector local.</p>
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                   {cliRuntimeCards.map((card) => (
                     <label key={card.id} className="block text-[10.5px] font-semibold uppercase text-muted-foreground">
@@ -816,7 +829,8 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                             [card.id]: event.target.value,
                           }))
                         }
-                        placeholder={card.defaultGatewayUrl}
+                        placeholder={card.serverStartSupported ? card.defaultGatewayUrl : "conector local pendiente"}
+                        disabled={!card.serverStartSupported}
                         className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
                       />
                     </label>
@@ -828,10 +842,10 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h4 className="font-heading text-[13px] text-navy">Modo manual</h4>
-                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Solo para arrancar el bridge fuera de Sancho o en otro host.</p>
+                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Solo para bridges que Sancho puede gestionar en el servidor. Claude Code y Codex locales van por conector local.</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {cliRuntimeCards.map((card) => (
+                    {cliRuntimeCards.filter((card) => card.serverStartSupported).map((card) => (
                       <button key={card.id} type="button" onClick={() => prepareCliBridge(card.id)} disabled={!!bridgePending} className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-2.5 py-1 text-[11px] font-semibold text-navy hover:border-rust hover:text-rust disabled:opacity-50">
                         <Terminal className="h-3.5 w-3.5" />
                         {bridgePending === `${card.id}:prepare` ? "generando..." : card.title}
@@ -905,7 +919,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h4 className="font-heading text-[13px] text-navy">Gateway HTTP custom</h4>
-                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Para un runtime propio. Hermes CLI, Claude Code y Codex usan las opciones de arriba.</p>
+                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Para un runtime propio o un conector local ya publicado con una URL alcanzable desde Sancho.</p>
                   </div>
                   <button type="button" onClick={saveExternalRuntime} disabled={externalSaving} className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50">
                     {externalSaving ? "guardando…" : "Guardar y probar"}
