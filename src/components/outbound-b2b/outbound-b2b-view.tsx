@@ -791,8 +791,8 @@ function outboundActionDescription(action: OutboundAction): string {
   if (action === "approve") return "Bloquea la secuencia revisada para esta búsqueda.";
   if (action === "dry-run") return "Valida la campaña sin enviar emails reales.";
   if (action === "publish") return "Crea o actualiza la campaña en Instantly.";
-  if (action === "linkedin-dry-run") return "Genera previews personalizados sin tocar Unipile.";
-  if (action === "linkedin-send") return "Envía la conexión personalizada por Unipile.";
+  if (action === "linkedin-dry-run") return "Genera previews personalizados sin enviar nada real.";
+  if (action === "linkedin-send") return "Envía conexión o DM por LinkedIn según el estado del lead.";
   return "Deja la campaña lista para enviar.";
 }
 
@@ -3455,127 +3455,156 @@ function B2BPlantillasTab({
   const linkedinLeads = linkedinLeadCount(campaignLeads);
   const contactableLeads = Math.max(emailLeads, linkedinLeads);
   const hasLinkedInFlow = campaignHasLinkedIn(selectedCampaign) || linkedinLeads > 0;
-  const sendActions: OutboundAction[] = hasLinkedInFlow
-    ? ["approve", "linkedin-dry-run", "linkedin-send", "dry-run", "publish", "live"]
-    : ["approve", "dry-run", "publish", "live"];
+  const hasEmailFlow = !hasLinkedInFlow || emailCount > 0 || emailLeads > 0;
+  const sequenceStatus = hasLinkedInFlow
+    ? "Conexión + DM + follow-up"
+    : emailCount
+      ? `${emailCount} emails`
+      : "Pendiente";
+  const sendActions: OutboundAction[] =
+    hasLinkedInFlow && !hasEmailFlow
+      ? ["approve", "linkedin-dry-run", "linkedin-send"]
+      : hasLinkedInFlow
+        ? ["approve", "linkedin-dry-run", "linkedin-send", "dry-run", "publish", "live"]
+        : ["approve", "dry-run", "publish", "live"];
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[420px_minmax(0,1fr)]" data-testid="outbound-plantillas">
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]" data-testid="outbound-plantillas">
       <div className="space-y-4">
-      <section className="rounded-xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="font-heading text-lg text-navy">Brief de personalización</h3>
-            <p className="text-sm text-muted-foreground">La secuencia sale del ICP, la oferta y las variables de cada campaña.</p>
-          </div>
-          <select
-            value={selectedCampaignId}
-            onChange={(event) => onSelectCampaign(event.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none sm:w-80"
-          >
-            {campaigns.length === 0 && <option value="">Sin campañas</option>}
-            {campaigns.map((campaign) => (
-              <option key={campaign.id} value={campaign.id}>
-                {campaign.title || campaign.id}
-              </option>
-            ))}
-          </select>
-        </div>
-        {selectedCampaign ? (
-          <PersonalizationWorkspace
+        {!selectedCampaign ? (
+          <section className="rounded-xl border border-border bg-card p-4">
+            <ZeroState
+              title="Sin campaña seleccionada"
+              body="Crea o selecciona una campaña para revisar la secuencia."
+            />
+          </section>
+        ) : hasLinkedInFlow ? (
+          <LinkedInSequenceEditor
             campaign={selectedCampaign}
-            leads={campaignLeads}
-            placeholders={placeholders}
-            emailCount={emailCount}
+            saving={savingLinkedIn}
+            locked={locked}
+            onSave={onSaveLinkedIn}
           />
         ) : (
-          <ZeroState
-            title="Sin campaña seleccionada"
-            body="Crea o selecciona una búsqueda para trabajar el contexto y generar la secuencia."
-          />
+          <section className="rounded-xl border border-border bg-card p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-heading text-lg text-navy">Secuencia de email</h3>
+                <p className="text-sm text-muted-foreground">Edita el email inicial y los follow-ups antes de aprobar el envío.</p>
+              </div>
+              {loading && <span className="text-xs text-muted-foreground">Cargando...</span>}
+            </div>
+            <div className="mt-4 space-y-4">
+              {sequences.length === 0 && !loading && (
+                <ZeroState
+                  title="Secuencia pendiente"
+                  body="Cuando Sancho genere los mensajes de esta campaña, aparecerán aquí para revisarlos y editarlos."
+                />
+              )}
+              {sequences.map((block, index) => (
+                <SequenceBlockEditor
+                  key={block.stepId || `${block.source}-${index}`}
+                  block={block}
+                  saving={saving}
+                  locked={locked}
+                  onSave={(emails) => onSave(block.stepId, emails)}
+                />
+              ))}
+            </div>
+          </section>
         )}
-      </section>
 
-      {selectedCampaign && hasLinkedInFlow && (
-        <LinkedInSequenceEditor
-          campaign={selectedCampaign}
-          saving={savingLinkedIn}
-          locked={locked}
-          onSave={onSaveLinkedIn}
-        />
-      )}
-
-        <aside className="rounded-xl border border-border bg-card p-4">
-          <h3 className="font-heading text-lg text-navy">Salida</h3>
-          <p className="text-sm text-muted-foreground">Estado operativo después de revisar contexto y mensajes.</p>
-          {locked && (
-            <div className="mt-3 rounded-md border border-yellow-500/40 bg-yellow-50 px-3 py-2 text-xs font-semibold text-yellow-800">
-              Campaña lanzada o sincronizada: la secuencia queda en solo lectura.
-            </div>
-          )}
-          <div className="mt-4 rounded-lg border border-border bg-background p-3">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Estado de campaña</div>
-            <div className="mt-2 grid gap-2 text-sm">
-              <DataItem label="Estado" value={selectedCampaign?.status || "-"} />
-              <DataItem label="Emails" value={emailCount ? `${emailCount} generados` : "Sin emails"} />
-              <DataItem label="Personalización" value={contactableLeads ? `${personalized}/${contactableLeads} leads` : "Pendiente"} />
-              <DataItem label="LinkedIn" value={hasLinkedInFlow ? `${linkedinLeads} leads disponibles` : "Sin canal"} />
-              <DataItem label="Canales" value={selectedCampaign ? channelText(selectedCampaign.channels) : "-"} />
-            </div>
-          </div>
-          <details className="mt-4 rounded-lg border border-border bg-background p-3">
-            <summary className="cursor-pointer text-sm font-semibold text-foreground">
-              Acciones de envío
-            </summary>
-            <div className="mt-3 grid gap-2">
-              {sendActions.map((action) => (
-                <button
-                  key={action}
-                  type="button"
-                  disabled={!selectedCampaignId || actionBusy || locked}
-                  onClick={() => onRunAction(action)}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
-                >
-                  <span>
-                    <span className="block text-sm font-semibold">{outboundActionLabel(action)}</span>
-                    <span className="mt-0.5 block text-xs font-normal leading-snug text-muted-foreground">
-                      {outboundActionDescription(action)}
-                    </span>
-                  </span>
-                  {actionBusy && busyAction === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
-                </button>
+        {selectedCampaign && hasLinkedInFlow && hasEmailFlow && sequences.length > 0 && (
+          <details className="rounded-xl border border-border bg-card p-4">
+            <summary className="cursor-pointer font-heading text-base text-navy">Emails asociados</summary>
+            <div className="mt-4 space-y-4">
+              {sequences.map((block, index) => (
+                <SequenceBlockEditor
+                  key={block.stepId || `${block.source}-${index}`}
+                  block={block}
+                  saving={saving}
+                  locked={locked}
+                  onSave={(emails) => onSave(block.stepId, emails)}
+                />
               ))}
             </div>
           </details>
-        </aside>
+        )}
       </div>
 
+      <aside className="space-y-4">
         <section className="rounded-xl border border-border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-heading text-lg text-navy">Secuencia generada</h3>
-              <p className="text-sm text-muted-foreground">Edita emails y follow-ups antes de aprobar el envío.</p>
+              <h3 className="font-heading text-lg text-navy">Resumen</h3>
+              <p className="text-sm text-muted-foreground">Contexto que usa Sancho para personalizar esta campaña.</p>
             </div>
-            {loading && <span className="text-xs text-muted-foreground">Cargando...</span>}
+            <select
+              value={selectedCampaignId}
+              onChange={(event) => onSelectCampaign(event.target.value)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none"
+            >
+              {campaigns.length === 0 && <option value="">Sin campañas</option>}
+              {campaigns.map((campaign) => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.title || campaign.id}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="mt-4 space-y-4">
-            {sequences.length === 0 && !loading && (
-              <ZeroState
-                title="Sin secuencia todavía"
-                body="Cuando el contexto genere mensajes, aparecerán aquí para editar asuntos, cuerpos y tiempos."
-              />
-            )}
-            {sequences.map((block, index) => (
-              <SequenceBlockEditor
-                key={block.stepId || `${block.source}-${index}`}
-                block={block}
-                saving={saving}
-                locked={locked}
-                onSave={(emails) => onSave(block.stepId, emails)}
-              />
+          {selectedCampaign ? (
+            <PersonalizationWorkspace
+              campaign={selectedCampaign}
+              leads={campaignLeads}
+              placeholders={placeholders}
+              emailCount={emailCount}
+              sequenceLabel={sequenceStatus}
+            />
+          ) : (
+            <ZeroState
+              title="Sin campaña seleccionada"
+              body="Crea o selecciona una búsqueda para trabajar el contexto y generar la secuencia."
+            />
+          )}
+        </section>
+
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h3 className="font-heading text-lg text-navy">Enviar</h3>
+          <p className="text-sm text-muted-foreground">Prueba, aprueba y activa la campaña cuando los mensajes estén listos.</p>
+          {locked && (
+            <div className="mt-3 rounded-md border border-yellow-500/40 bg-yellow-50 px-3 py-2 text-xs font-semibold text-yellow-800">
+              Esta campaña ya tuvo envíos externos. La edición queda bloqueada para no romper el historial.
+            </div>
+          )}
+          <div className="mt-4 rounded-lg border border-border bg-background p-3">
+            <div className="grid gap-2 text-sm">
+              <DataItem label="Canal" value={selectedCampaign ? channelText(selectedCampaign.channels) : "-"} />
+              <DataItem label="Leads" value={`${contactableLeads || campaignLeads.length || 0}`} />
+              <DataItem label="Mensajes" value={sequenceStatus} />
+              <DataItem label="Personalización" value={contactableLeads ? `${personalized}/${contactableLeads}` : "Pendiente"} />
+            </div>
+          </div>
+          <div className="mt-3 grid gap-2">
+            {sendActions.map((action) => (
+              <button
+                key={action}
+                type="button"
+                disabled={!selectedCampaignId || actionBusy || locked}
+                onClick={() => onRunAction(action)}
+                className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-left transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+              >
+                <span>
+                  <span className="block text-sm font-semibold">{outboundActionLabel(action)}</span>
+                  <span className="mt-0.5 block text-xs font-normal leading-snug text-muted-foreground">
+                    {outboundActionDescription(action)}
+                  </span>
+                </span>
+                {actionBusy && busyAction === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
             ))}
           </div>
         </section>
+      </aside>
     </div>
   );
 }
@@ -3716,91 +3745,56 @@ function PersonalizationWorkspace({
   leads,
   placeholders,
   emailCount,
+  sequenceLabel,
 }: {
   campaign: Campaign | CampaignDetail;
   leads: Lead[];
   placeholders: string[];
   emailCount: number;
+  sequenceLabel: string;
 }) {
   const tokens = placeholders.length ? placeholders : ["first_name", "company_name", "pain_point"];
   const personalized = personalizedLeadCount(leads);
   const contactableLeads = Math.max(emailLeadCount(leads), linkedinLeadCount(leads));
   const sample = leads.find((lead) => leadPersonalization(lead));
+  const targetSegment = campaign.targetSegment || "Sin ICP definido";
+  const offer = campaign.hypothesis || "Sin oferta definida";
+  const showOffer = offer !== targetSegment;
 
   return (
-    <div className="mt-4 space-y-3" data-testid="b2b-personalization-workspace">
-      <div className="grid gap-3">
-        <div className="rounded-lg border border-border bg-background p-4">
-          <div className="flex items-start gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-card text-rust">
-              <Target className="h-5 w-5" />
+    <div className="mt-4 space-y-3 text-sm" data-testid="b2b-personalization-workspace">
+      <div className="rounded-lg border border-border bg-background p-3">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Campaña</div>
+        <h4 className="mt-1 font-heading text-base text-navy">{campaign.title || "Campaña outbound"}</h4>
+      </div>
+
+      <div className="grid gap-2">
+        <ContextSummary label="ICP" value={targetSegment} />
+        {showOffer && <ContextSummary label="Oferta" value={offer} />}
+      </div>
+
+      <div className="grid gap-2 rounded-lg border border-border bg-background p-3">
+        <DataItem label="Tipo" value={campaign.campaignKindLabel || "Campaña B2B"} />
+        <DataItem label="Leads" value={`${leads.length || campaign.leadCount || 0}`} />
+        <DataItem label="Mensajes" value={sequenceLabel || (emailCount ? `${emailCount} emails` : "Pendiente")} />
+        <DataItem label="Personalizados" value={contactableLeads ? `${personalized}/${contactableLeads}` : "Pendiente"} />
+      </div>
+
+      <div className="rounded-lg border border-border bg-background p-3">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Variables</div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {tokens.slice(0, 6).map((placeholder) => (
+            <span key={placeholder} className="rounded-full border border-border bg-card px-2 py-0.5 text-[11px] text-muted-foreground">
+              {`{{${placeholder}}}`}
             </span>
-            <div className="min-w-0">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Campaña</div>
-              <h4 className="mt-1 font-heading text-base text-navy">{campaign.title || "Campaña outbound"}</h4>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {campaign.hypothesis || "Sin propuesta o hipótesis definida para esta campaña."}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-3">
-            <ContextSummary label="ICP" value={campaign.targetSegment || "Sin ICP definido"} />
-            <ContextSummary label="Propuesta" value={campaign.hypothesis || "Sin propuesta definida"} />
-          </div>
-          <div className="mt-4 grid gap-3 rounded-lg border border-border bg-card p-3 sm:grid-cols-2">
-            <DataItem label="Tipo" value={campaign.campaignKindLabel || "Campaña B2B"} />
-            <DataItem label="Canales" value={channelText(campaign.channels)} />
-            <DataItem label="Leads" value={`${leads.length || campaign.leadCount || 0}`} />
-            <DataItem label="Secuencia" value={emailCount ? `${emailCount} emails` : "Pendiente"} />
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-border bg-background p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Personalización de campaña</div>
-              <h4 className="mt-1 font-heading text-base text-navy">
-                {contactableLeads ? `${personalized}/${contactableLeads} leads listos` : "Se completará al tener contactos"}
-              </h4>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {tokens.map((placeholder) => (
-              <span key={placeholder} className="rounded-full border border-border bg-card px-2 py-0.5 text-[11px] text-muted-foreground">
-                {`{{${placeholder}}}`}
-              </span>
-            ))}
-          </div>
-          <div className="mt-4 grid gap-2">
-            <PersonalizationCue label="Dolor" value={campaign.hypothesis || "Pendiente de definir"} />
-            <PersonalizationCue label="Persona" value={campaign.targetSegment || "Pendiente de definir"} />
-            <PersonalizationCue label="Ejemplo" value={sample ? leadPersonalization(sample)! : "La campaña generará una línea personalizada por lead después del enrichment."} />
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className="grid gap-3">
-        <BriefStep number="1" title="ICP" body={campaign.targetSegment || "Definir segmento y rol comprador."} />
-        <BriefStep number="2" title="Oferta" body={campaign.hypothesis || "Definir dolor, promesa y prueba."} />
-        <BriefStep number="3" title="Mensajes" body={emailCount ? `${emailCount} emails listos para editar.` : "Generar email inicial y follow-ups."} />
-        <BriefStep number="4" title="Envío" body={campaign.status || "Revisar, probar y activar."} />
-      </div>
-    </div>
-  );
-}
-
-function BriefStep({ number, title, body }: { number: string; title: string; body: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-background p-3">
-      <div className="flex items-center gap-2">
-        <span className="grid h-7 w-7 place-items-center rounded-full border border-border bg-card font-heading text-sm font-bold text-rust">
-          {number}
-        </span>
-        <h4 className="font-heading text-sm text-navy">{title}</h4>
-      </div>
-      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground" title={body}>
-        {body}
-      </p>
+      <PersonalizationCue
+        label="Ejemplo de personalización"
+        value={sample ? leadPersonalization(sample)! : "Aparecerá cuando los leads tengan enrichment y mensaje generado."}
+      />
     </div>
   );
 }
