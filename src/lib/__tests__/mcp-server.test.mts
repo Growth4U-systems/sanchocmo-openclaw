@@ -231,6 +231,8 @@ test("tools/list exposes expected MCP schemas", async () => {
       // SAN-76: model settings (lectura efectiva + PUT parcial espejo de la UI)
       "yalc_get_model_config",
       "yalc_get_overview",
+      "yalc_linkedin_autopilot_execute",
+      "yalc_linkedin_autopilot_plan",
       "yalc_list_campaigns",
       "yalc_list_gates",
       "yalc_list_lead_messages",
@@ -378,6 +380,114 @@ test("yalc lead read tools proxy detail and messages with trace headers", async 
     const firstHeaders = calls[0].init?.headers as Record<string, string>;
     assert.equal(firstHeaders["X-Request-Id"], "trace-test-1");
     assert.equal(firstHeaders["X-Sancho-MCP-Trace-Id"], "trace-test-1");
+  } finally {
+    await close();
+    globalThis.fetch = originalFetch;
+    if (originalBaseUrl === undefined) {
+      delete process.env.YALC_BASE_URL;
+    } else {
+      process.env.YALC_BASE_URL = originalBaseUrl;
+    }
+  }
+});
+
+test("yalc_linkedin_autopilot_plan requires yalc:read scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["sancho:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_linkedin_autopilot_plan",
+      arguments: { clientSlug: "alpha", campaignId: "campaign-1", leadIds: ["lead-1"] },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:read/);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_linkedin_autopilot_execute requires yalc:write scope", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_linkedin_autopilot_execute",
+      arguments: { clientSlug: "alpha", campaignId: "campaign-1", leadIds: ["lead-1"] },
+    });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].type === "text" ? result.content[0].text : "", /yalc:write/);
+  } finally {
+    await close();
+  }
+});
+
+test("yalc_linkedin_autopilot_execute defaults to dry-run and forwards the autopilot command", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalBaseUrl = process.env.YALC_BASE_URL;
+  const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
+  process.env.YALC_BASE_URL = "http://yalc.test";
+  globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
+    const url = String(input);
+    const parsed = new URL(url);
+    const headers = { "content-type": "application/json" };
+    if (parsed.pathname === "/api/campaigns/campaign-1") {
+      return new Response(JSON.stringify({ id: "campaign-1", type: "B2B" }), { status: 200, headers });
+    }
+    if (parsed.pathname === "/api/outbound/command") {
+      const body = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+      calls.push({ url, body });
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          command: body.command,
+          campaignId: body.campaignId,
+          mode: "dry_run",
+          plan: { summary: { sendable: 1 }, items: [{ leadId: "lead-1", blocked: false }] },
+        }),
+        { status: 200, headers },
+      );
+    }
+    return new Response(JSON.stringify({ error: `unexpected path ${parsed.pathname}` }), {
+      status: 404,
+      headers,
+    });
+  }) as typeof fetch;
+
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:write"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_linkedin_autopilot_execute",
+      arguments: {
+        clientSlug: "alpha",
+        campaignId: "campaign-1",
+        leadIds: ["lead-1"],
+        dryRun: false,
+      },
+    });
+    assert.equal(result.isError, undefined);
+    const payload = payloadOf(result);
+    assert.equal(payload.dryRun, true);
+    assert.equal(payload.requiresConfirmation, true);
+    assert.match(String(payload.message), /confirm=true/);
+    assert.equal(calls.length, 1);
+    assert.equal(new URL(calls[0].url).searchParams.get("tenant"), "alpha");
+    assert.equal(calls[0].body.command, "outbound.linkedin_autopilot.execute");
+    assert.equal(calls[0].body.dryRun, true);
+    assert.equal(calls[0].body.confirmLinkedInSend, false);
+    assert.deepEqual(calls[0].body.leadIds, ["lead-1"]);
   } finally {
     await close();
     globalThis.fetch = originalFetch;
