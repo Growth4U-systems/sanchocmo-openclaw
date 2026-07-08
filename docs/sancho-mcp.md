@@ -665,7 +665,7 @@ Install the single staging MCP in Claude Code with:
 ```bash
 SANCHO_MCP_TOKEN="$(cat .context/sancho-mcp-staging-operator-token.txt)"
 
-claude mcp add --transport http sancho-staging https://staging.sanchocmo.ai/api/mcp/sancho \
+claude mcp add --transport http sancho-staging https://staging.example.com/api/mcp/sancho \
   --header "Authorization: Bearer $SANCHO_MCP_TOKEN"
 ```
 

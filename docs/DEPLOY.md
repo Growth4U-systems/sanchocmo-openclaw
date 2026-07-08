@@ -62,7 +62,7 @@ Add an **A record** for your domain pointing to the VPS IP:
 
 ```
 Type: A
-Name: staging.sanchocmo.ai   (or your chosen subdomain)
+Name: staging.example.com   (or your chosen subdomain)
 Value: <VPS IP>
 TTL:  300
 ```
@@ -70,7 +70,7 @@ TTL:  300
 **Verify DNS propagation before proceeding** (certbot will fail otherwise):
 
 ```bash
-dig staging.sanchocmo.ai +short
+dig staging.example.com +short
 # Should return your VPS IP
 ```
 
@@ -95,10 +95,10 @@ cd ~/.openclaw
 Installs Docker, nginx, certbot, configures SSL, and sets up UFW firewall.
 
 ```bash
-bash docker/setup-vps.sh staging.sanchocmo.ai
+bash docker/setup-vps.sh staging.example.com
 ```
 
-Replace `staging.sanchocmo.ai` with your actual domain.
+Replace `staging.example.com` with your actual domain.
 
 ### 5. Configure
 
@@ -225,7 +225,7 @@ with placeholders for the FQDN and API token. Apply it like this:
 
 ```bash
 # Choose the OD subdomain (must have an A record pointing at the VPS IP)
-OD_DOMAIN=od.staging.sanchocmo.ai
+OD_DOMAIN=od.staging.example.com
 
 # 1) Add OD env vars to .env (token must match what nginx will inject below)
 cat >> /root/.openclaw/.env <<EOF
@@ -243,7 +243,7 @@ sudo ln -sf /etc/nginx/sites-available/sancho-od /etc/nginx/sites-enabled/sancho
 sudo nginx -t && sudo systemctl reload nginx
 
 # 3) Cert
-sudo certbot --nginx -d ${OD_DOMAIN} --non-interactive --agree-tos --email ops@sanchocmo.ai
+sudo certbot --nginx -d ${OD_DOMAIN} --non-interactive --agree-tos --email ops@example.com
 
 # 4) Replace the certbot stub with the versioned config from this repo
 TOKEN=$(grep '^OD_API_TOKEN=' /root/.openclaw/.env | cut -d= -f2-)
@@ -260,7 +260,7 @@ in the corresponding **GitHub Environment** so the workflow rewrites
 | Variable / Secret | Where it lives | Value |
 |------|------|------|
 | `OD_API_TOKEN` (secret) | Environment | Same hex string injected by nginx |
-| `OD_WEB_URL` (var) | Environment | `https://od.<env>.sanchocmo.ai` |
+| `OD_WEB_URL` (var) | Environment | `https://od.<env>.example.com` |
 | `OD_ALLOWED_ORIGINS` (var) | Environment | Same as `OD_WEB_URL` (comma-list if more origins are embedding) |
 | `OPEN_DESIGN_IMAGE` (var) | Environment | `ghcr.io/growth4u-systems/od:sanchocmo` (branded trunk) or pin to `:vX.Y.Z` |
 | `ANTHROPIC_API_KEY` (secret) | Environment | Anthropic API key for the baked-in `claude` CLI (Settings → Local CLI). Per-tenant deploys should use a per-tenant key so billing is scoped to the client. |
@@ -312,7 +312,7 @@ The YALC container exposes its API inside Docker as `http://yalc:3847`, persists
 docker ps
 
 # Hit the health endpoint
-curl https://staging.sanchocmo.ai/mc/api/health-check
+curl https://staging.example.com/mc/api/health-check
 
 # Stream logs
 docker logs sanchocmo --tail 50 -f
@@ -328,7 +328,7 @@ curl http://127.0.0.1:3847/healthz
 Mission Control exposes the YALC cockpit at:
 
 ```text
-https://staging.sanchocmo.ai/dashboard/<client-slug>/yalc
+https://staging.example.com/dashboard/<client-slug>/yalc
 ```
 
 ### 8. Approve your Discord user (OpenClaw bot)
@@ -606,7 +606,7 @@ Both environments use the **same secret and variable names** — only the values
 
 | Name | Value | Where to get it |
 |---|---|---|
-| `VPS_HOST` | Bare hostname or IP — **no protocol, no slash, no spaces** | The IP or domain you set up DNS for in step 2. Examples that work: `staging.sanchocmo.ai`, `app.sanchocmo.ai`, `203.0.113.42`. Examples that break: `https://staging.sanchocmo.ai` (has protocol), `staging.sanchocmo.ai/` (has slash), `staging.sanchocmo.ai ` (trailing space). |
+| `VPS_HOST` | Bare hostname or IP — **no protocol, no slash, no spaces** | The IP or domain you set up DNS for in step 2. Examples that work: `staging.example.com`, `app.example.com`, `203.0.113.42`. Examples that break: `https://staging.example.com` (has protocol), `staging.example.com/` (has slash), `staging.example.com ` (trailing space). |
 | `VPS_USER` | SSH user that owns `authorized_keys` | The user you ran `ssh-keygen` as in Step 1 (e.g. `deploy`, `root`). Bare username, no `@host` suffix. |
 | `VPS_SSH_KEY` | Full private key contents from Step 1 | The output of `cat ~/.ssh/github-actions-deploy` — entire block including the `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----` lines. |
 
@@ -615,7 +615,7 @@ Both environments use the **same secret and variable names** — only the values
 | Name | Value | Where to get it |
 |---|---|---|
 | `DEPLOY_PATH` | Absolute path of the repo clone on the VPS | Output of `echo $HOME/.openclaw` on the VPS as the SSH user (e.g. `/home/deploy/.openclaw`, `/root/.openclaw`). Can be left unset to default to `~/.openclaw`. |
-| `HEALTH_URL` | Public URL the workflow polls after deploy | `https://<env-domain>/api/health` — e.g. `https://staging.sanchocmo.ai/api/health`, `https://app.sanchocmo.ai/api/health` |
+| `HEALTH_URL` | Public URL the workflow polls after deploy | `https://<env-domain>/api/health` — e.g. `https://staging.example.com/api/health`, `https://app.example.com/api/health` |
 
 > **Secrets vs variables, why two?** Secrets are encrypted at rest and masked as `***` in workflow logs — use them for anything sensitive (private keys, tokens). Variables are stored in plain text and shown in logs — use them for non-sensitive config (paths, public URLs). GitHub does not let you put a secret in a `vars.` context or vice versa, so the names above are not interchangeable.
 

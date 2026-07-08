@@ -2,7 +2,7 @@
 
 Operational guide for issuing access, troubleshooting, and safely disabling the Sancho MCP. For the architecture/contract and the tool reference, see [`sancho-mcp.md`](./sancho-mcp.md).
 
-- **Staging endpoint:** `https://staging.sanchocmo.ai/api/mcp/sancho`
+- **Staging endpoint:** `https://staging.example.com/api/mcp/sancho`
 - **One MCP server, one endpoint.** What a caller can do is decided entirely by the **token** (its scopes + allowed clients).
 - **Traceability:** every tool response includes `traceId`; audit events store the same value in metadata.
 - **Repo:** `Growth4U-systems/sanchocmo-openclaw`. Token config lives in the GitHub **Environment** secret `SANCHO_MCP_TOKENS` (per environment: `staging`, `production`).
@@ -139,7 +139,7 @@ The MCP server stays up even when a backend is down; affected tools return struc
 | **DB (tasks/audit)** | task reads/writes error; if `SANCHO_MCP_AUDIT_BACKEND=db` + `FAIL_CLOSED=true`, tool calls fail closed | status, clients, chat reads | Check DB connectivity; audit can fall back to JSONL if not fail-closed. |
 | **DB (Meeting Intelligence)** | `sancho_list_meetings`, `sancho_get_meeting` and `sancho_list_intelligence` return `storage.configured:false` with empty read payloads | everything non-DB-backed | Check `DATABASE_URL`; these tools intentionally do not read JSON fallback data as processed intelligence. |
 
-Health probe: `curl -s https://staging.sanchocmo.ai/api/health` returns `{ok, commit, env}` — confirm `commit` matches the SHA you expect after a deploy.
+Health probe: `curl -s https://staging.example.com/api/health` returns `{ok, commit, env}` — confirm `commit` matches the SHA you expect after a deploy.
 
 ---
 
@@ -148,7 +148,7 @@ Health probe: `curl -s https://staging.sanchocmo.ai/api/health` returns `{ok, co
 ```bash
 SANCHO_MCP_TOKEN="<token from 1Password>"
 claude mcp add --scope local --transport http sancho-staging \
-  https://staging.sanchocmo.ai/api/mcp/sancho \
+  https://staging.example.com/api/mcp/sancho \
   --header "Authorization: Bearer $SANCHO_MCP_TOKEN"
 ```
 
