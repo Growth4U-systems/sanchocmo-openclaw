@@ -229,6 +229,25 @@ All off by default. Turn them on when you need them:
 - **Discord** — set `DISCORD_BOT_TOKEN` in `.env` (Discord is one comms channel; Mission Control chat is the primary interface).
 - **Slack** — configure in Mission Control → Settings → APIs.
 
+### Open Design (visual editor)
+
+Open Design is the agentic design daemon (skills, design systems, prompt
+templates, and the "Abrir editor agentic" flow). It runs as an opt-in container
+pulled from a public image — enable it with `./sancho install --od` or by
+answering *yes* in the wizard (the `OD_API_TOKEN` is generated and the overlay
+started for you).
+
+The **Open Design Library** tab in Media Creation degrades gracefully — it tells
+the three states apart instead of showing broken/empty grids:
+
+- **Not enabled** (no `OD_DAEMON_URL` / `OD_WEB_URL` / `OD_API_TOKEN`) → a calm
+  "Open Design no está activado" placeholder with a one-command enable CTA.
+- **Enabled but daemon down** → a distinct "daemon caído" state naming the
+  unreachable `daemonUrl` plus a restart hint and a "re-check" button.
+- **Enabled and healthy** → the real Library UI.
+
+Nothing else in Mission Control depends on Open Design being on.
+
 ### Outreach (YALC)
 
 YALC is the outbound engine (campaigns, leads, sequences). It runs as an opt-in

@@ -46,6 +46,27 @@ export function resolveOdConfig(): OdClientConfig {
 }
 
 /**
+ * Whether Open Design is intentionally wired up for this install.
+ *
+ * OD is an opt-in overlay (`docker-compose.od.yml`). `resolveOdConfig` always
+ * returns a localhost fallback daemonUrl, so a bare default can't be told apart
+ * from a real config by URL alone — same problem `isYalcConfigured` solves for
+ * Outreach. We treat an explicitly-set `OD_DAEMON_URL` / `OD_WEB_URL` /
+ * `OD_API_TOKEN` (or the public-mode `OD_PUBLIC_*` variants) as the signal that
+ * the operator enabled OD. When false, the Open Design Library shows a calm
+ * "not activated" placeholder instead of empty grids / unreachable errors.
+ */
+export function isOdConfigured(): boolean {
+  const usePublic = process.env.OD_USE_PUBLIC === "true";
+  const candidates = [
+    usePublic ? process.env.OD_PUBLIC_DAEMON_URL : process.env.OD_DAEMON_URL,
+    usePublic ? process.env.OD_PUBLIC_WEB_URL : process.env.OD_WEB_URL,
+    process.env.OD_API_TOKEN,
+  ];
+  return candidates.some((v) => typeof v === "string" && v.trim() !== "");
+}
+
+/**
  * Build the request init OD endpoints expect when the daemon enforces
  * Phase 5 hosted-mode auth:
  *
