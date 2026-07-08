@@ -5,6 +5,7 @@ import cliRuntimeBridge from "@/lib/cli-runtime-bridge";
 const {
   buildCliBridgeCommand,
   buildCliBridgeEnv,
+  cliBridgeProvider,
   defaultGatewayUrl,
   externalRuntimeVarsForCliBridge,
   gatewayListenHost,
@@ -23,6 +24,15 @@ test("externalRuntimeVarsForCliBridge stores Sancho HTTP defaults for Hermes", (
       SANCHO_EXTERNAL_HEALTH_PATH: "/healthz",
     },
   );
+});
+
+test("CLI bridge metadata separates server runtimes from user-device runtimes", () => {
+  assert.equal(cliBridgeProvider("hermes").runtimeLocation, "server");
+  assert.equal(cliBridgeProvider("hermes").serverStartSupported, true);
+  assert.equal(cliBridgeProvider("claude-code").runtimeLocation, "user-device");
+  assert.equal(cliBridgeProvider("claude-code").serverStartSupported, false);
+  assert.equal(cliBridgeProvider("codex").runtimeLocation, "user-device");
+  assert.equal(cliBridgeProvider("codex").serverStartSupported, false);
 });
 
 test("buildCliBridgeCommand emits a single runnable Hermes command", () => {

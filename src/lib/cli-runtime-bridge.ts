@@ -3,6 +3,8 @@ export type CliBridgeProviderId = "hermes" | "claude-code" | "codex";
 export interface CliBridgeProviderMeta {
   id: CliBridgeProviderId;
   label: string;
+  runtimeLocation: "server" | "user-device";
+  serverStartSupported: boolean;
   defaultPort: number;
   scriptPath: string;
   bridgeSecretEnv: string;
@@ -25,6 +27,8 @@ export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
   {
     id: "hermes",
     label: "Hermes",
+    runtimeLocation: "server",
+    serverStartSupported: true,
     defaultPort: 18791,
     scriptPath: "docker/runtimes/hermes/bridge.mjs",
     bridgeSecretEnv: "HERMES_BRIDGE_SECRET",
@@ -35,6 +39,8 @@ export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
   {
     id: "claude-code",
     label: "Claude Code",
+    runtimeLocation: "user-device",
+    serverStartSupported: false,
     defaultPort: 18792,
     scriptPath: "docker/runtimes/claude-code/bridge.mjs",
     bridgeSecretEnv: "CLAUDE_CODE_BRIDGE_SECRET",
@@ -47,6 +53,8 @@ export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
   {
     id: "codex",
     label: "Codex",
+    runtimeLocation: "user-device",
+    serverStartSupported: false,
     defaultPort: 18793,
     scriptPath: "docker/runtimes/codex/bridge.mjs",
     bridgeSecretEnv: "CODEX_BRIDGE_SECRET",
