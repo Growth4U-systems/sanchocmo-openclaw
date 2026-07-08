@@ -1,4 +1,4 @@
-export type CliBridgeProviderId = "claude-code" | "codex";
+export type CliBridgeProviderId = "hermes" | "claude-code" | "codex";
 
 export interface CliBridgeProviderMeta {
   id: CliBridgeProviderId;
@@ -22,6 +22,16 @@ export interface CliBridgeCommandOptions {
 }
 
 export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
+  {
+    id: "hermes",
+    label: "Hermes",
+    defaultPort: 18791,
+    scriptPath: "docker/runtimes/hermes/bridge.mjs",
+    bridgeSecretEnv: "HERMES_BRIDGE_SECRET",
+    bridgePortEnv: "HERMES_BRIDGE_PORT",
+    bridgeHostEnv: "HERMES_BRIDGE_HOST",
+    runtimeTimeoutEnv: "HERMES_RUN_TIMEOUT_MS",
+  },
   {
     id: "claude-code",
     label: "Claude Code",
@@ -47,7 +57,7 @@ export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
 ];
 
 export function isCliBridgeProviderId(value: unknown): value is CliBridgeProviderId {
-  return value === "claude-code" || value === "codex";
+  return value === "hermes" || value === "claude-code" || value === "codex";
 }
 
 export function cliBridgeProvider(id: CliBridgeProviderId): CliBridgeProviderMeta {
@@ -136,6 +146,9 @@ export function buildCliBridgeCommand(
 
   if (providerId === "claude-code") {
     env.CLAUDE_CODE_SANCHO_MCP_ENABLED = "0";
+  }
+  if (providerId === "hermes") {
+    env.HERMES_SANCHO_SECRET = options.secret;
   }
   if (provider.runtimeModelEnv && (options.model || provider.defaultModel)) {
     env[provider.runtimeModelEnv] = options.model || provider.defaultModel || "";

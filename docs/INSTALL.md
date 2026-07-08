@@ -151,9 +151,11 @@ The wizard persists supplied `HERMES_*`, `SANCHO_EXTERNAL_*`, or legacy
 leave the install on OpenClaw and configure a runtime later from
 **Settings -> Runtime**.
 
-For Claude Code or Codex, use the guided setup in **Settings -> Runtime**:
+For Hermes, Claude Code, or Codex, use the guided setup in
+**Settings -> Runtime**:
 
-1. Choose **Claude Code** or **Codex** under **Conectar runtime CLI**.
+1. Choose **Hermes**, **Claude Code**, or **Codex** under
+   **Conectar runtime CLI**.
 2. Leave the default bridge URL when the bridge runs on the same host as Sancho,
    or set the URL Sancho can reach.
 3. Click **Preparar**. Sancho writes the `external-http` env vars, generates a

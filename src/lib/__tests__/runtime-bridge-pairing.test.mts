@@ -10,18 +10,33 @@ const {
   gatewayPortOrDefault,
 } = cliRuntimeBridge;
 
-test("externalRuntimeVarsForCliBridge stores Sancho HTTP defaults for Claude Code", () => {
+test("externalRuntimeVarsForCliBridge stores Sancho HTTP defaults for Hermes", () => {
   assert.deepEqual(
-    externalRuntimeVarsForCliBridge("claude-code", "http://127.0.0.1:18792/", "secret"),
+    externalRuntimeVarsForCliBridge("hermes", "http://127.0.0.1:18791/", "secret"),
     {
-      SANCHO_EXTERNAL_RUNTIME_KIND: "claude-code",
+      SANCHO_EXTERNAL_RUNTIME_KIND: "hermes",
       SANCHO_EXTERNAL_PROTOCOL: "sancho",
-      SANCHO_EXTERNAL_GATEWAY_URL: "http://127.0.0.1:18792",
+      SANCHO_EXTERNAL_GATEWAY_URL: "http://127.0.0.1:18791",
       SANCHO_EXTERNAL_SECRET: "secret",
       SANCHO_EXTERNAL_INBOUND_PATH: "/sancho/inbound",
       SANCHO_EXTERNAL_HEALTH_PATH: "/healthz",
     },
   );
+});
+
+test("buildCliBridgeCommand emits a single runnable Hermes command", () => {
+  const command = buildCliBridgeCommand("hermes", {
+    sanchoBaseUrl: "https://sancho.example.com/",
+    secret: "shared secret",
+  });
+
+  assert.match(command, /SANCHO_BASE_URL=https:\/\/sancho\.example\.com/);
+  assert.match(command, /SANCHO_WEBHOOK_URL=https:\/\/sancho\.example\.com\/api\/chat\/webhook/);
+  assert.match(command, /HERMES_BRIDGE_PORT=18791/);
+  assert.match(command, /HERMES_BRIDGE_SECRET='shared secret'/);
+  assert.match(command, /HERMES_SANCHO_SECRET='shared secret'/);
+  assert.match(command, /HERMES_RUN_TIMEOUT_MS=900000/);
+  assert.match(command, /node docker\/runtimes\/hermes\/bridge\.mjs$/);
 });
 
 test("buildCliBridgeCommand emits a single runnable Claude Code command", () => {
@@ -54,6 +69,7 @@ test("buildCliBridgeCommand emits Codex bridge command without MCP flags", () =>
 
 test("gateway helpers derive listen settings from the saved bridge URL", () => {
   assert.equal(gatewayPortOrDefault("claude-code", "http://127.0.0.1:19999"), 19999);
+  assert.equal(gatewayPortOrDefault("hermes", "http://127.0.0.1:19998"), 19998);
   assert.equal(gatewayPortOrDefault("codex", "https://codex-bridge.example.com"), 18793);
   assert.equal(gatewayListenHost("http://127.0.0.1:18792"), "127.0.0.1");
   assert.equal(gatewayListenHost("http://10.0.0.5:18792"), "0.0.0.0");

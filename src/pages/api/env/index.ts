@@ -55,8 +55,8 @@ const SERVICE_ENV_MAP: Record<
     {
       key: "SANCHO_EXTERNAL_RUNTIME_KIND",
       label: "Runtime kind",
-      placeholder: "claude-code",
-      help: "Identificador informativo del bridge preparado por la UI: claude-code, codex o custom.",
+      placeholder: "hermes",
+      help: "Identificador informativo del bridge preparado por la UI: hermes, claude-code, codex o custom.",
     },
     {
       key: "SANCHO_EXTERNAL_PROTOCOL",

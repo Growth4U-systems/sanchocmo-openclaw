@@ -63,7 +63,7 @@ interface RuntimeStatus {
   warning?: string | null;
 }
 
-type CliRuntimeId = "claude-code" | "codex";
+type CliRuntimeId = "hermes" | "claude-code" | "codex";
 
 interface RuntimeBridgeProvider {
   id: CliRuntimeId;
@@ -87,6 +87,10 @@ interface PreparedRuntimeBridge {
 }
 
 const CLI_RUNTIME_META: Record<CliRuntimeId, { subtitle: string; account: string }> = {
+  hermes: {
+    subtitle: "Usa Hermes CLI como bridge externo compatible con Sancho.",
+    account: "Proveedor/modelo según la auth y config del Hermes CLI.",
+  },
   "claude-code": {
     subtitle: "Usa la sesión Claude Code del host donde corre el bridge.",
     account: "Suscripción Claude o API según la auth del CLI.",
@@ -166,6 +170,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
   const [externalSaving, setExternalSaving] = useState(false);
   const [bridgeDrafts, setBridgeDrafts] = useState<Record<CliRuntimeId, string>>({
+    hermes: "",
     "claude-code": "",
     codex: "",
   });
@@ -282,13 +287,14 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
 
   const cliRuntimeCards = useMemo(() => {
     const providersById = new Map((runtimeBridgeStatus?.providers ?? []).map((provider) => [provider.id, provider]));
-    return (["claude-code", "codex"] as CliRuntimeId[]).map((id) => {
+    return (["hermes", "claude-code", "codex"] as CliRuntimeId[]).map((id) => {
       const provider = providersById.get(id);
       return {
         id,
-        label: provider?.label || (id === "claude-code" ? "Claude Code" : "Codex"),
+        label: provider?.label || (id === "hermes" ? "Hermes" : id === "claude-code" ? "Claude Code" : "Codex"),
         defaultGatewayUrl:
-          provider?.defaultGatewayUrl || (id === "claude-code" ? "http://127.0.0.1:18792" : "http://127.0.0.1:18793"),
+          provider?.defaultGatewayUrl ||
+          (id === "hermes" ? "http://127.0.0.1:18791" : id === "claude-code" ? "http://127.0.0.1:18792" : "http://127.0.0.1:18793"),
         ...CLI_RUNTIME_META[id],
       };
     });
@@ -616,7 +622,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
               </div>
             </div>
 
-            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+            <div className="mt-3 grid gap-3 xl:grid-cols-3">
               {cliRuntimeCards.map((card) => {
                 const prepared = preparedBridge?.provider === card.id ? preparedBridge : null;
                 const isConfigured = runtimeBridgeStatus?.configuredKind === card.id;
@@ -719,7 +725,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
               <div>
                 <h4 className="font-heading text-[13px] text-navy">Configuración avanzada HTTP</h4>
                 <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-                  Para Hermes u otro gateway custom. Claude Code y Codex quedan cubiertos por las tarjetas anteriores.
+                  Para otro gateway custom. Hermes, Claude Code y Codex quedan cubiertos por las tarjetas anteriores.
                 </p>
               </div>
               <button
