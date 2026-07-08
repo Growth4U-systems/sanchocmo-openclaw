@@ -86,6 +86,19 @@ interface PreparedRuntimeBridge {
   command: string;
 }
 
+interface StartedRuntimeBridge {
+  ok?: boolean;
+  provider: CliRuntimeId;
+  label: string;
+  gatewayUrl: string;
+  activated?: boolean;
+  started?: boolean;
+  reused?: boolean;
+  pid?: number;
+  command?: string;
+  error?: string;
+}
+
 const CLI_RUNTIME_META: Record<CliRuntimeId, { title: string; subtitle: string; account: string }> = {
   hermes: {
     title: "Hermes CLI",
@@ -467,6 +480,49 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     }
   };
 
+  const startCliBridge = async (provider: CliRuntimeId) => {
+    setBridgePending(`${provider}:start`);
+    setNotice(null);
+    setPreparedBridge(null);
+    try {
+      const res = await fetch("/api/system/runtime-bridge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "start",
+          provider,
+          gatewayUrl: bridgeDrafts[provider].trim() || undefined,
+          activate: true,
+        }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as StartedRuntimeBridge;
+      if (!res.ok || !payload.ok) {
+        if (payload.command) {
+          setPreparedBridge({
+            provider,
+            label: payload.label || CLI_RUNTIME_META[provider].title,
+            gatewayUrl: payload.gatewayUrl || bridgeDrafts[provider] || "",
+            command: payload.command,
+          });
+        }
+        throw new Error(payload.error || "No se pudo conectar el runtime desde Sancho");
+      }
+
+      await Promise.all([qc.invalidateQueries({ queryKey: ["runtime-bridge"] }), qc.invalidateQueries({ queryKey: ["runtime-external-env"] }), qc.invalidateQueries({ queryKey: ["system-runtime"] }), qc.invalidateQueries({ queryKey: ["api-health"] })]);
+      setNotice({
+        ok: true,
+        message: `${payload.label} conectado y activado para los mensajes nuevos.`,
+      });
+    } catch (err) {
+      setNotice({
+        ok: false,
+        message: err instanceof Error ? err.message : "No se pudo conectar el runtime desde Sancho",
+      });
+    } finally {
+      setBridgePending(null);
+    }
+  };
+
   const copyBridgeCommand = async (provider: CliRuntimeId, command: string) => {
     try {
       await navigator.clipboard.writeText(command);
@@ -595,14 +651,14 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
 
               {externalRuntimeAvailable &&
                 cliRuntimeCards.map((card) => {
-                  const prepared = preparedBridge?.provider === card.id ? preparedBridge : null;
                   const isConfigured = runtimeBridgeStatus?.configuredKind === card.id;
                   const isActive = runtimeStatus?.active === "external-http" && isConfigured;
-                  const readyToActivate = !!prepared || isConfigured;
+                  const readyToActivate = isConfigured;
+                  const connecting = bridgePending === `${card.id}:start`;
                   const preparing = bridgePending === `${card.id}:prepare`;
                   const verifying = bridgePending === `${card.id}:verify`;
                   const disabled = isActive || !!bridgePending;
-                  const actionLabel = isActive ? "Activo" : verifying ? "activando..." : preparing ? "preparando..." : readyToActivate ? "Activar" : "Conectar";
+                  const actionLabel = isActive ? "Activo" : verifying ? "activando..." : connecting ? "conectando..." : preparing ? "preparando..." : readyToActivate ? "Activar" : "Conectar";
 
                   return (
                     <div key={card.id} className={cn("flex min-h-[170px] flex-col rounded-lg border p-3", isActive ? "border-sage bg-sage/10" : isConfigured ? "border-navy/30 bg-navy/[0.03]" : "border-border bg-card")}>
@@ -623,12 +679,12 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                         type="button"
                         onClick={() => {
                           if (readyToActivate) verifyAndActivateCliBridge(card.id);
-                          else prepareCliBridge(card.id);
+                          else startCliBridge(card.id);
                         }}
                         disabled={disabled}
                         className="mt-auto inline-flex w-fit items-center gap-1.5 rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
                       >
-                        {readyToActivate ? <RefreshCcw className="h-3.5 w-3.5" /> : <Terminal className="h-3.5 w-3.5" />}
+                        {readyToActivate ? <RefreshCcw className="h-3.5 w-3.5" /> : <PlugZap className="h-3.5 w-3.5" />}
                         {actionLabel}
                       </button>
                     </div>
@@ -638,36 +694,9 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
           )}
         </div>
 
-        {preparedBridge && (
-          <div className="mt-4 rounded-lg border border-sage/50 bg-sage/10 p-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h4 className="font-heading text-[13px] text-navy">{preparedBridge.label} preparado</h4>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Ejecuta este comando en el host donde corre Sancho. Después vuelve y activa el motor.</p>
-              </div>
-              <button type="button" onClick={() => verifyAndActivateCliBridge(preparedBridge.provider)} disabled={!!bridgePending} className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-sage hover:text-white disabled:opacity-50">
-                {bridgePending === `${preparedBridge.provider}:verify` ? "activando..." : "Ya lo ejecuté, activar"}
-              </button>
-            </div>
-            <div className="mt-3 rounded-md border border-border bg-background p-2">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="text-[10.5px] font-semibold uppercase text-muted-foreground">Comando para iniciar el bridge</span>
-                <button type="button" onClick={() => copyBridgeCommand(preparedBridge.provider, preparedBridge.command)} className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[11px] font-semibold text-navy hover:border-rust hover:text-rust">
-                  <Clipboard className="h-3.5 w-3.5" />
-                  {copiedBridge === preparedBridge.provider ? "Copiado" : "Copiar"}
-                </button>
-              </div>
-              <pre className="max-h-[120px] overflow-auto whitespace-pre-wrap break-all rounded bg-muted/30 p-2 text-[11px] leading-relaxed text-foreground">{preparedBridge.command}</pre>
-              <p className="mt-2 text-[10.5px] text-muted-foreground">
-                URL interna usada por Sancho: <span className="font-mono">{preparedBridge.gatewayUrl}</span>
-              </p>
-            </div>
-          </div>
-        )}
-
         {externalRuntimeAvailable && (
           <details className="mt-4 rounded-lg border border-border bg-card">
-            <summary className="cursor-pointer list-none px-3 py-2 text-[12px] font-semibold text-navy">Avanzado: conexión local y gateway custom</summary>
+            <summary className="cursor-pointer list-none px-3 py-2 text-[12px] font-semibold text-navy">Avanzado: bridge manual y gateway custom</summary>
             <div className="space-y-4 border-t border-border px-3 py-3">
               <div>
                 <h4 className="font-heading text-[13px] text-navy">Conexión local del bridge</h4>
@@ -690,6 +719,50 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div className="rounded-md border border-border bg-background p-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h4 className="font-heading text-[13px] text-navy">Modo manual</h4>
+                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Solo para arrancar el bridge fuera de Sancho o en otro host.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {cliRuntimeCards.map((card) => (
+                      <button key={card.id} type="button" onClick={() => prepareCliBridge(card.id)} disabled={!!bridgePending} className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-2.5 py-1 text-[11px] font-semibold text-navy hover:border-rust hover:text-rust disabled:opacity-50">
+                        <Terminal className="h-3.5 w-3.5" />
+                        {bridgePending === `${card.id}:prepare` ? "generando..." : card.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {preparedBridge && (
+                  <div className="mt-3 rounded-md border border-sage/40 bg-sage/10 p-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <h5 className="font-heading text-[12px] text-navy">{preparedBridge.label}: comando manual</h5>
+                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">Ejecútalo solo si Sancho no puede arrancar el bridge automáticamente.</p>
+                      </div>
+                      <button type="button" onClick={() => verifyAndActivateCliBridge(preparedBridge.provider)} disabled={!!bridgePending} className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-sage hover:text-white disabled:opacity-50">
+                        {bridgePending === `${preparedBridge.provider}:verify` ? "activando..." : "Ya está corriendo"}
+                      </button>
+                    </div>
+                    <div className="mt-3 rounded-md border border-border bg-background p-2">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="text-[10.5px] font-semibold uppercase text-muted-foreground">Comando manual</span>
+                        <button type="button" onClick={() => copyBridgeCommand(preparedBridge.provider, preparedBridge.command)} className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[11px] font-semibold text-navy hover:border-rust hover:text-rust">
+                          <Clipboard className="h-3.5 w-3.5" />
+                          {copiedBridge === preparedBridge.provider ? "Copiado" : "Copiar"}
+                        </button>
+                      </div>
+                      <pre className="max-h-[120px] overflow-auto whitespace-pre-wrap break-all rounded bg-muted/30 p-2 text-[11px] leading-relaxed text-foreground">{preparedBridge.command}</pre>
+                      <p className="mt-2 text-[10.5px] text-muted-foreground">
+                        URL interna usada por Sancho: <span className="font-mono">{preparedBridge.gatewayUrl}</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
