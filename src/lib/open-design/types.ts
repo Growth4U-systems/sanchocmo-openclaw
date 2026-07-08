@@ -174,3 +174,13 @@ export interface OdClientConfig {
   /** Optional server-to-server metadata headers, e.g. request tracing. */
   extraHeaders?: Record<string, string>;
 }
+
+/** Response of GET /api/open-design/status — backs the Library's three-state UI. */
+export interface OdStatus {
+  /** Operator explicitly enabled the OD overlay (OD_DAEMON_URL / OD_WEB_URL / OD_API_TOKEN). */
+  configured: boolean;
+  /** Daemon reachable (only meaningful when configured). */
+  healthy: boolean;
+  /** Resolved daemon URL, surfaced in the "daemon down" state. */
+  daemonUrl: string;
+}
