@@ -567,11 +567,33 @@ say "   • Admin access token ${DIM}(paste into the 'Access Token' field on the
 say "       ${B}${ADMIN_TOKEN}${RST}"
 say "   ${DIM}(also stored in config/clients.json and .env as MC_ADMIN_TOKEN — keep it secret)${RST}"
 say "   • Runtime: ${SANCHO_RUNTIME} ${DIM}(change/configure later in Settings → Runtime)${RST}"
-if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
-  say "   • Anthropic auth: subscription ${DIM}(Claude OAuth token set)${RST}"
-else
-  say "   • Anthropic auth: api_key ${DIM}(API key set)${RST}"
-fi
+# Model provider(s) — reflect exactly what was configured. Mirror the same
+# per-provider case selection used to collect the credentials above, so a
+# Fireworks-only (or openai/both/all) install never shows a stale Anthropic line.
+say "   • Model provider(s):"
+case "$PROVIDER" in
+  anthropic|both|all|multi)
+    if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
+      say "       – Anthropic: subscription ${DIM}(Claude OAuth token set)${RST}"
+    else
+      say "       – Anthropic: api_key ${DIM}(API key set)${RST}"
+    fi
+    ;;
+esac
+case "$PROVIDER" in
+  openai|both|all|multi)
+    if [ "$OPENAI_AUTH_MODE" = "subscription" ]; then
+      say "       – OpenAI: subscription ${DIM}(Codex/ChatGPT OAuth — set up host-side after install)${RST}"
+    else
+      say "       – OpenAI: api_key ${DIM}(API key set)${RST}"
+    fi
+    ;;
+esac
+case "$PROVIDER" in
+  fireworks|all|multi)
+    say "       – Fireworks: api_key ${DIM}(API key set)${RST}"
+    ;;
+esac
 say ""
 if [ "$ENABLE_YALC" = "1" ]; then
   say "${B}Outreach (YALC) is enabled.${RST}"
