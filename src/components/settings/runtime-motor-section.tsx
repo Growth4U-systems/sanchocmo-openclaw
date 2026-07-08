@@ -305,8 +305,8 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const openClawRuntime = runtimeOptionsById.get("openclaw");
   const activeRuntimeOption = runtimeOptionsById.get(runtimeStatus?.active ?? "");
   const activeCliRuntime = runtimeStatus?.active === "external-http" && runtimeBridgeStatus?.configuredKind ? cliRuntimeCards.find((card) => card.id === runtimeBridgeStatus.configuredKind) : null;
-  const activeRuntimeLabel = activeCliRuntime?.title || (runtimeStatus?.active === "openclaw" ? "Sancho integrado" : runtimeStatus?.active === "hermes" ? "Hermes gestionado" : activeRuntimeOption?.displayName || activeRuntimeOption?.label || "Sin verificar");
-  const activeRuntimeCopy = runtimeStatus?.active === "external-http" ? (activeCliRuntime ? `Sancho delega los mensajes nuevos en ${activeCliRuntime.title}.` : "Sancho delega los mensajes nuevos en un gateway HTTP externo.") : runtimeStatus?.active === "openclaw" ? "Sancho ejecuta los mensajes con su runtime integrado." : activeRuntimeOption?.description || "Verifica el estado para confirmar el runtime activo.";
+  const activeRuntimeLabel = activeCliRuntime?.title || (runtimeStatus?.active === "openclaw" ? "OpenClaw integrado" : runtimeStatus?.active === "hermes" ? "Hermes gestionado" : activeRuntimeOption?.displayName || activeRuntimeOption?.label || "Sin verificar");
+  const activeRuntimeCopy = runtimeStatus?.active === "external-http" ? (activeCliRuntime ? `Sancho delega los mensajes nuevos en ${activeCliRuntime.title}.` : "Sancho delega los mensajes nuevos en un gateway HTTP externo.") : runtimeStatus?.active === "openclaw" ? "Sancho ejecuta los mensajes con OpenClaw integrado." : activeRuntimeOption?.description || "Verifica el estado para confirmar el runtime activo.";
   const externalRuntimeAvailable = runtimeStatus?.options.some((option) => option.id === "external-http") ?? false;
   const openClawActive = runtimeStatus?.active === "openclaw";
   const openClawReady = !!openClawRuntime?.configured && !!openClawRuntime?.health.ok;
@@ -578,8 +578,8 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
               <div className={cn("flex min-h-[170px] flex-col rounded-lg border p-3", openClawActive ? "border-sage bg-sage/10" : openClawReady ? "border-border bg-card" : "border-border bg-muted/30 text-muted-foreground")}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="font-heading text-sm text-navy">Sancho integrado</div>
-                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Usa el runtime completo que ya viene con Sancho.</p>
+                    <div className="font-heading text-sm text-navy">OpenClaw integrado</div>
+                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Usa OpenClaw como runtime completo incluido en Sancho.</p>
                   </div>
                   <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase", openClawActive ? "bg-sage/16 text-sage" : openClawReady ? "bg-navy/10 text-navy" : "bg-muted text-muted-foreground")}>
                     {openClawActive && <CheckCircle2 className="h-3 w-3" />}
@@ -589,7 +589,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 <p className="mt-2 text-[11px] text-muted-foreground">Opción simple y estable. También sirve como fallback si un bridge externo no responde.</p>
                 <button type="button" onClick={() => openClawRuntime && selectRuntime(openClawRuntime)} disabled={!openClawRuntime || openClawActive || !openClawReady || !!runtimePending} className="mt-auto inline-flex w-fit items-center gap-1.5 rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  {runtimePending === "openclaw" ? "activando..." : openClawActive ? "Activo" : "Usar Sancho"}
+                  {runtimePending === "openclaw" ? "activando..." : openClawActive ? "Activo" : "Usar OpenClaw"}
                 </button>
               </div>
 
