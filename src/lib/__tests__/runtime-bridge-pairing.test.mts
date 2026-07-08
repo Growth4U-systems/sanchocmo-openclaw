@@ -4,6 +4,7 @@ import cliRuntimeBridge from "@/lib/cli-runtime-bridge";
 
 const {
   buildCliBridgeCommand,
+  buildCliBridgeEnv,
   defaultGatewayUrl,
   externalRuntimeVarsForCliBridge,
   gatewayListenHost,
@@ -37,6 +38,30 @@ test("buildCliBridgeCommand emits a single runnable Hermes command", () => {
   assert.match(command, /HERMES_SANCHO_SECRET='shared secret'/);
   assert.match(command, /HERMES_RUN_TIMEOUT_MS=900000/);
   assert.match(command, /node docker\/runtimes\/hermes\/bridge\.mjs$/);
+});
+
+test("buildCliBridgeEnv exposes the env needed to start a bridge from Sancho", () => {
+  assert.deepEqual(
+    buildCliBridgeEnv("claude-code", {
+      sanchoBaseUrl: "https://sancho.example.com/",
+      secret: "secret",
+      host: "127.0.0.1",
+      port: 19999,
+    }),
+    {
+      SANCHO_BASE_URL: "https://sancho.example.com",
+      SANCHO_WEBHOOK_URL: "https://sancho.example.com/api/chat/webhook",
+      SANCHO_CONTEXT_PACK_URL: "https://sancho.example.com/api/chat/context-pack",
+      SANCHO_EXTERNAL_SECRET: "secret",
+      MC_CHAT_SECRET: "secret",
+      CLAUDE_CODE_BRIDGE_HOST: "127.0.0.1",
+      CLAUDE_CODE_BRIDGE_PORT: "19999",
+      CLAUDE_CODE_BRIDGE_SECRET: "secret",
+      CLAUDE_CODE_RUNTIME_TIMEOUT_MS: "900000",
+      CLAUDE_CODE_SANCHO_MCP_ENABLED: "0",
+      CLAUDE_CODE_RUNTIME_MODEL: "haiku",
+    },
+  );
 });
 
 test("buildCliBridgeCommand emits a single runnable Claude Code command", () => {

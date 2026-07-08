@@ -129,6 +129,15 @@ export function buildCliBridgeCommand(
   options: CliBridgeCommandOptions,
 ): string {
   const provider = cliBridgeProvider(providerId);
+  const env = buildCliBridgeEnv(providerId, options);
+  return `${Object.entries(env).map(([key, value]) => shellAssignment(key, value)).join(" ")} node ${provider.scriptPath}`;
+}
+
+export function buildCliBridgeEnv(
+  providerId: CliBridgeProviderId,
+  options: CliBridgeCommandOptions,
+): Record<string, string> {
+  const provider = cliBridgeProvider(providerId);
   const sanchoBaseUrl = normalizeBaseUrl(options.sanchoBaseUrl);
   const host = options.host || "127.0.0.1";
   const port = options.port ?? provider.defaultPort;
@@ -154,12 +163,13 @@ export function buildCliBridgeCommand(
     env[provider.runtimeModelEnv] = options.model || provider.defaultModel || "";
   }
 
-  return `${Object.entries(env).map(([key, value]) => shellAssignment(key, value)).join(" ")} node ${provider.scriptPath}`;
+  return env;
 }
 
 const cliRuntimeBridge = {
   CLI_BRIDGE_PROVIDERS,
   buildCliBridgeCommand,
+  buildCliBridgeEnv,
   cliBridgeProvider,
   defaultGatewayUrl,
   externalRuntimeVarsForCliBridge,
