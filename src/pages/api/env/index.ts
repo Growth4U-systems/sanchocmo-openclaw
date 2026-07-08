@@ -53,6 +53,12 @@ const SERVICE_ENV_MAP: Record<
   slack: [{ key: "SLACK_BOT_TOKEN", label: "Bot Token", placeholder: "xoxb-..." }],
   "runtime-external": [
     {
+      key: "SANCHO_EXTERNAL_RUNTIME_KIND",
+      label: "Runtime kind",
+      placeholder: "claude-code",
+      help: "Identificador informativo del bridge preparado por la UI: claude-code, codex o custom.",
+    },
+    {
       key: "SANCHO_EXTERNAL_PROTOCOL",
       label: "Protocol",
       placeholder: "sancho",

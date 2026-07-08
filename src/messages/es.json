@@ -176,6 +176,7 @@
     "title": "Ajustes",
     "subtitle": "Configuración del sistema",
     "tabs": {
+      "runtime": "Runtime",
       "apis": "APIs",
       "mcp": "MCP",
       "agents": "Agentes",
