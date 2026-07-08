@@ -224,6 +224,76 @@ test("outbound.approve_and_publish approves then runs a dry-run by default", asy
   ]);
 });
 
+test("outbound.linkedin_autopilot.plan delegates through the YALC command contract", async () => {
+  installFetch((path, call) => {
+    if (path === "/api/campaigns/camp-b2b") return { id: "camp-b2b", type: "B2B" };
+    if (path === "/api/outbound/command") {
+      assert.equal(call.method, "POST");
+      const body = call.body as Record<string, unknown>;
+      assert.equal(body.command, "outbound.linkedin_autopilot.plan");
+      assert.equal(body.campaignId, "camp-b2b");
+      assert.equal(body.expectedKind, "b2b");
+      assert.deepEqual(body.leadIds, ["lead-1", "lead-2"]);
+      return {
+        ok: true,
+        command: "outbound.linkedin_autopilot.plan",
+        campaignId: "camp-b2b",
+        plan: { summary: { total: 2, sendable: 2, connect: 1, dm: 1, blocked: 0 }, items: [] },
+      };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.linkedin_autopilot.plan",
+    campaignId: "camp-b2b",
+    leadIds: ["lead-1", "lead-2"],
+  });
+
+  assert.equal(result.campaignId, "camp-b2b");
+  assert.equal((result.plan as Record<string, unknown> | undefined)?.summary !== undefined, true);
+  assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
+    "/api/campaigns/camp-b2b",
+    "/api/outbound/command",
+  ]);
+});
+
+test("outbound.linkedin_autopilot.execute forwards explicit live confirmation", async () => {
+  installFetch((path, call) => {
+    if (path === "/api/campaigns/camp-b2b") return { id: "camp-b2b", type: "B2B" };
+    if (path === "/api/outbound/command") {
+      assert.equal(call.method, "POST");
+      const body = call.body as Record<string, unknown>;
+      assert.equal(body.command, "outbound.linkedin_autopilot.execute");
+      assert.equal(body.dryRun, false);
+      assert.equal(body.confirmLinkedInSend, true);
+      assert.deepEqual(body.accounts, [{ accountId: "acct-martin", label: "Martin" }]);
+      return {
+        ok: true,
+        command: "outbound.linkedin_autopilot.execute",
+        campaignId: "camp-b2b",
+        mode: "live",
+        summary: { sent: 1, failed: 0 },
+      };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.linkedin_autopilot.execute",
+    campaignId: "camp-b2b",
+    dryRun: false,
+    confirmLinkedInSend: true,
+    accounts: [{ accountId: "acct-martin", label: "Martin" }],
+  });
+
+  assert.equal(result.mode, "live");
+  assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
+    "/api/campaigns/camp-b2b",
+    "/api/outbound/command",
+  ]);
+});
+
 test("outbound.enrich fails loud for entity-only mode until entity store lands in this repo", async () => {
   await assert.rejects(
     dispatchOutboundCommand(config, {
