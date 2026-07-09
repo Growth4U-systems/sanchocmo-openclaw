@@ -402,6 +402,36 @@ export function InboxTab({ slug }: { slug: string }) {
       ),
   });
 
+  const createFirstContactGate = useMutation({
+    mutationFn: () =>
+      fetchJson<{
+        gates: Array<{ runId: string; prompt: string; dryRun: boolean }>;
+      }>(`/api/partnerships/contact?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leads: [{ id: selected!.id, campaignId: selected!.campaignId }],
+          dryRun: false,
+        }),
+      }),
+    onSuccess: (data) => {
+      const first = data.gates?.[0];
+      if (!first) {
+        showToast("⚠️ No se pudo preparar la aprobación", "warn");
+        return;
+      }
+      showToast("✓ aprobación preparada");
+      void queryClient.invalidateQueries({ queryKey: gatesKey });
+      void queryClient.invalidateQueries({ queryKey: leadsKey });
+      void queryClient.invalidateQueries({ queryKey: threadKey });
+    },
+    onError: (error) =>
+      showToast(
+        `⚠️ ${error instanceof Error ? error.message : "error"}`,
+        "warn",
+      ),
+  });
+
   const approveGate = useMutation({
     mutationFn: (runId: string) =>
       fetchJson(`/api/yalc/gates?slug=${encodeURIComponent(slug)}`, {
@@ -605,7 +635,7 @@ export function InboxTab({ slug }: { slug: string }) {
                 )}
                 {!threadQuery.isLoading && messages.length === 0 && !pendingContactGate && (
                   <p className="py-4 text-center text-sm text-muted-foreground">
-                    Sin mensajes todavía — el primer email saldrá al aprobar el
+                    Sin mensajes todavía — el primer mensaje saldrá al aprobar el
                     contacto.
                   </p>
                 )}
@@ -649,6 +679,36 @@ export function InboxTab({ slug }: { slug: string }) {
                         {pendingContactPreview}
                       </div>
                     )}
+                  </section>
+                )}
+                {waitingForFirstTouch && !pendingContactGate && !gatesQuery.isLoading && (
+                  <section
+                    className="rounded-xl border border-yellow-500/40 bg-yellow-50/70 p-4"
+                    data-testid="missing-contact-gate"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-yellow-900">
+                          Contacto en cola sin aprobación abierta
+                        </h3>
+                        <p className="mt-1 max-w-2xl text-xs leading-relaxed text-yellow-900/80">
+                          Sancho no encuentra un gate pendiente para este lead.
+                          Si el envío anterior se cerró o falló antes de salir,
+                          prepara una nueva aprobación desde acá.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={createFirstContactGate.isPending}
+                        onClick={() => createFirstContactGate.mutate()}
+                        className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+                        data-testid="retry-first-contact"
+                      >
+                        {createFirstContactGate.isPending
+                          ? "Preparando…"
+                          : "Preparar contacto de nuevo"}
+                      </button>
+                    </div>
                   </section>
                 )}
 
