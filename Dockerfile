@@ -77,6 +77,11 @@ COPY scripts/migrate-local.mjs ./scripts/migrate-local.mjs
 # prod→staging data sync (staging-only "Sync with Prod" admin button). Invoked
 # via `bash` by /api/system/sync-prod-to-staging; needs rsync (installed above).
 COPY scripts/resync-prod-to-staging.sh ./scripts/resync-prod-to-staging.sh
+# Runtime connector assets served by /api/runtime/local-connector/*.
+COPY scripts/sancho-local-connector.mjs ./scripts/sancho-local-connector.mjs
+COPY docker/runtimes/hermes/bridge.mjs ./docker/runtimes/hermes/bridge.mjs
+COPY docker/runtimes/claude-code/bridge.mjs ./docker/runtimes/claude-code/bridge.mjs
+COPY docker/runtimes/codex/bridge.mjs ./docker/runtimes/codex/bridge.mjs
 # NEXT_PUBLIC_* vars must be present at build time — they are inlined into the client bundle.
 ARG NEXT_PUBLIC_ENV_LABEL=""
 ENV NEXT_PUBLIC_ENV_LABEL=${NEXT_PUBLIC_ENV_LABEL}
