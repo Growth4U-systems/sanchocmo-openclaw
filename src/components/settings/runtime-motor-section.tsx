@@ -61,6 +61,23 @@ interface RuntimeStatus {
   warning?: string | null;
 }
 
+type CliRuntimeProviderId = "hermes" | "claude-code" | "codex";
+
+interface RuntimeBridgeProvider {
+  id: CliRuntimeProviderId;
+  label: string;
+  runtimeLocation: "server" | "user-device";
+  serverStartSupported: boolean;
+  defaultPort: number;
+  defaultGatewayUrl: string;
+}
+
+interface RuntimeBridgeStatus {
+  active: string;
+  configuredKind?: CliRuntimeProviderId | null;
+  providers: RuntimeBridgeProvider[];
+}
+
 interface CodexAuthJob {
   id: string;
   status: "running" | "succeeded" | "failed" | "cancelled";
@@ -100,6 +117,22 @@ function runtimeSourceLabel(source: RuntimeStatus["source"] | undefined): string
   return "default";
 }
 
+function runtimeFriendlyLabel(
+  runtime: string | undefined,
+  bridgeKind: CliRuntimeProviderId | null | undefined,
+  fallback?: RuntimeAdapterOption,
+): string {
+  if (runtime === "openclaw") return "OpenClaw";
+  if (runtime === "hermes") return "Hermes";
+  if (runtime === "external-http") {
+    if (bridgeKind === "hermes") return "Hermes";
+    if (bridgeKind === "claude-code") return "Claude Code";
+    if (bridgeKind === "codex") return "Codex";
+    return "Runtime propio / API";
+  }
+  return fallback?.displayName || fallback?.label || "Sin verificar";
+}
+
 function runtimeHealthDetail(option: RuntimeAdapterOption): string | null {
   const details = option.health.details;
   if (!details) return null;
@@ -115,6 +148,87 @@ function runtimeCapabilitySummary(option: RuntimeAdapterOption): string {
     .filter(([, value]) => value)
     .map(([key]) => key);
   return enabled.length ? enabled.join(", ") : "sin capacidades activas";
+}
+
+function runtimeReady(option: RuntimeAdapterOption | undefined): boolean {
+  return !!option?.configured && !!option.health.ok;
+}
+
+type RuntimeChoiceTone = "active" | "ready" | "blocked" | "pending";
+
+interface RuntimeChoiceCardProps {
+  title: string;
+  subtitle: string;
+  description: string;
+  status: string;
+  tone: RuntimeChoiceTone;
+  detail?: string;
+  actionLabel: string;
+  actionDisabled?: boolean;
+  actionBusy?: boolean;
+  onAction: () => void;
+}
+
+function RuntimeChoiceCard({
+  title,
+  subtitle,
+  description,
+  status,
+  tone,
+  detail,
+  actionLabel,
+  actionDisabled,
+  actionBusy,
+  onAction,
+}: RuntimeChoiceCardProps) {
+  return (
+    <div
+      className={cn(
+        "flex min-h-[188px] flex-col rounded-lg border px-3 py-3",
+        tone === "active"
+          ? "border-sage bg-sage/10"
+          : tone === "ready"
+            ? "border-border bg-card"
+            : "border-border bg-muted/25",
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h4 className="font-heading text-sm text-navy">{title}</h4>
+          <p className="mt-0.5 text-[11.5px] font-semibold text-muted-foreground">{subtitle}</p>
+        </div>
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+            tone === "active"
+              ? "bg-sage/16 text-sage"
+              : tone === "ready"
+                ? "bg-navy/10 text-navy"
+                : tone === "pending"
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-muted text-muted-foreground",
+          )}
+        >
+          {status}
+        </span>
+      </div>
+      <p className="mt-3 flex-1 text-[12.5px] leading-relaxed text-foreground/80">{description}</p>
+      {detail && <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">{detail}</p>}
+      <button
+        type="button"
+        onClick={onAction}
+        disabled={actionDisabled || actionBusy}
+        className={cn(
+          "mt-3 w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+          tone === "active"
+            ? "bg-sage/10 text-sage"
+            : "text-navy hover:bg-rust hover:text-white",
+        )}
+      >
+        {actionBusy ? "conectando..." : actionLabel}
+      </button>
+    </div>
+  );
 }
 
 function codexAuthStatusLabel(status: CodexAuthJob["status"] | undefined): string {
@@ -165,6 +279,9 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const [codexAuthInput, setCodexAuthInput] = useState("");
   const [runtimePending, setRuntimePending] = useState<string | null>(null);
   const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
+  const [bridgePending, setBridgePending] = useState<CliRuntimeProviderId | null>(null);
+  const [localRuntimeGuide, setLocalRuntimeGuide] = useState<CliRuntimeProviderId | null>(null);
+  const [runtimeAdvancedOpen, setRuntimeAdvancedOpen] = useState(false);
   const [externalSaving, setExternalSaving] = useState(false);
   const [externalDraft, setExternalDraft] = useState({
     protocol: "",
@@ -199,6 +316,17 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       const res = await fetch("/api/system/runtime");
       const payload = (await res.json().catch(() => ({}))) as RuntimeStatus & { error?: string };
       if (!res.ok) throw new Error(payload.error || "No se pudo leer el runtime activo");
+      return payload;
+    },
+    staleTime: 10_000,
+  });
+
+  const { data: runtimeBridgeStatus } = useQuery<RuntimeBridgeStatus>({
+    queryKey: ["system-runtime-bridge"],
+    queryFn: async () => {
+      const res = await fetch("/api/system/runtime-bridge");
+      const payload = (await res.json().catch(() => ({}))) as RuntimeBridgeStatus & { error?: string };
+      if (!res.ok) throw new Error(payload.error || "No se pudo leer el conector de runtime");
       return payload;
     },
     staleTime: 10_000,
@@ -284,6 +412,29 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     [providers, services, systemEnv],
   );
 
+  const runtimeOptionsById = useMemo(() => {
+    return new Map((runtimeStatus?.options ?? []).map((option) => [option.id, option] as const));
+  }, [runtimeStatus]);
+  const openClawRuntime = runtimeOptionsById.get("openclaw");
+  const hermesRuntime = runtimeOptionsById.get("hermes");
+  const externalHttpRuntime = runtimeOptionsById.get("external-http");
+  const activeRuntimeOption = runtimeOptionsById.get(runtimeStatus?.active || "");
+  const configuredBridgeKind = runtimeBridgeStatus?.configuredKind ?? null;
+  const activeRuntimeLabel = runtimeFriendlyLabel(runtimeStatus?.active, configuredBridgeKind, activeRuntimeOption);
+  const externalSavedUrl = externalRuntimeMasked(
+    externalRuntimeEnv,
+    "SANCHO_EXTERNAL_GATEWAY_URL",
+    "HERMES_EXTERNAL_GATEWAY_URL",
+  );
+  const externalReady = runtimeReady(externalHttpRuntime);
+  const openClawActive = runtimeStatus?.active === "openclaw";
+  const hermesActive =
+    runtimeStatus?.active === "hermes" || (runtimeStatus?.active === "external-http" && configuredBridgeKind === "hermes");
+  const claudeCodeActive = runtimeStatus?.active === "external-http" && configuredBridgeKind === "claude-code";
+  const codexRuntimeActive = runtimeStatus?.active === "external-http" && configuredBridgeKind === "codex";
+  const customRuntimeActive =
+    runtimeStatus?.active === "external-http" && configuredBridgeKind !== "hermes" && configuredBridgeKind !== "claude-code" && configuredBridgeKind !== "codex";
+
   const activate = (rp: RuntimeProvider) => {
     if (rp.route !== "subscription" && rp.route !== "api") return;
     const route = rp.route;
@@ -323,6 +474,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
 
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime-bridge"] }),
         qc.invalidateQueries({ queryKey: ["api-health"] }),
         qc.invalidateQueries({ queryKey: ["models-catalog"] }),
       ]);
@@ -340,10 +492,51 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     }
   };
 
+  const connectManagedBridge = async (provider: CliRuntimeProviderId) => {
+    setBridgePending(provider);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/system/runtime-bridge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start", provider, activate: true }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        label?: string;
+        gatewayUrl?: string;
+      };
+      if (!res.ok || payload.ok === false) throw new Error(payload.error || "No se pudo conectar el runtime");
+
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime-bridge"] }),
+        qc.invalidateQueries({ queryKey: ["runtime-external-env"] }),
+        qc.invalidateQueries({ queryKey: ["api-health"] }),
+        qc.invalidateQueries({ queryKey: ["models-catalog"] }),
+      ]);
+      setNotice({
+        ok: true,
+        message: `${payload.label || "Runtime"} conectado y activado para mensajes nuevos.`,
+      });
+    } catch (err) {
+      setNotice({
+        ok: false,
+        message: err instanceof Error ? err.message : "No se pudo conectar el runtime",
+      });
+    } finally {
+      setBridgePending(null);
+    }
+  };
+
   const refreshRuntimeStatus = async () => {
     setRuntimeRefreshing(true);
     try {
-      await qc.invalidateQueries({ queryKey: ["system-runtime"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime-bridge"] }),
+      ]);
       setNotice({ ok: true, message: "Estado del runtime actualizado." });
     } finally {
       setRuntimeRefreshing(false);
@@ -382,6 +575,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["runtime-external-env"] }),
         qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime-bridge"] }),
       ]);
       setNotice({ ok: true, message: "Runtime externo guardado. La verificación ya se actualizó." });
     } catch (err) {
@@ -469,122 +663,195 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
 
   return (
     <div className="space-y-4">
-      {/* The engine's auth route is global; the per-agent model lives in Models. */}
-      <div className="rounded-lg border-2 border-ink bg-sage/5 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/80">
-        <strong className="font-heading text-navy">🔐 Autenticación del motor.</strong>{" "}
-        Elige la <strong>ruta</strong> (suscripción/OAuth o API key) con la que el motor se autentica ante cada
-        proveedor — es <strong>global</strong>, compartida por todos los agentes. El <strong>modelo de cada agente</strong>{" "}
-        (su «motor concreto») se elige en{" "}
-        <button
-          type="button"
-          onClick={() => router.replace({ query: { ...router.query, tab: "agents" } }, undefined, { shallow: true })}
-          className="font-semibold text-rust hover:underline"
-        >
-          Agentes
-        </button>
-        .
-      </div>
-
       <div className="rounded-lg border-2 border-ink bg-background p-4 shadow-comic-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h3 className="font-heading text-sm text-navy">Runtime activo</h3>
+          <div className="max-w-2xl">
+            <h3 className="font-heading text-sm text-navy">Runtime</h3>
             <p className="mt-1 text-[12.5px] leading-relaxed text-foreground/75">
-              Elige qué harness recibe los mensajes nuevos de Sancho. Esto no cambia las skills ni los documentos; cambia
-              el adapter que ejecuta la conversación.
+              Elige quién ejecuta los mensajes nuevos de Sancho. Las skills, documentos y contexto siguen viviendo en Sancho.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={refreshRuntimeStatus}
-            disabled={runtimeRefreshing}
-            className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
-          >
-            {runtimeRefreshing ? "verificando…" : "Re-verificar"}
-          </button>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <div className="rounded-md border border-border bg-card px-3 py-2 text-[12px] text-muted-foreground">
+              Activo ahora: <strong className="font-heading text-navy">{activeRuntimeLabel}</strong>
+              {runtimeStatus && (
+                <span className="block text-[10.5px]">
+                  origen: {runtimeSourceLabel(runtimeStatus.source)}
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={refreshRuntimeStatus}
+              disabled={runtimeRefreshing}
+              className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+            >
+              {runtimeRefreshing ? "revisando..." : "Revisar estado"}
+            </button>
+          </div>
         </div>
 
-        <div className="mt-3 grid gap-2 md:grid-cols-2">
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {runtimeLoading && !runtimeStatus ? (
-            <div className="rounded-md border border-border px-3 py-3 text-sm text-muted-foreground">
-              cargando runtime…
-            </div>
+            <div className="rounded-md border border-border px-3 py-3 text-sm text-muted-foreground">cargando runtime...</div>
           ) : (
-            (runtimeStatus?.options ?? []).map((option) => {
-              const active = option.id === runtimeStatus?.active;
-              const available = option.configured && option.health.ok;
-              const disabled = !!runtimePending || (!active && !available);
-              const healthDetail = runtimeHealthDetail(option);
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => selectRuntime(option)}
-                  disabled={disabled || active}
-                  className={cn(
-                    "min-h-[148px] rounded-lg border p-3 text-left transition-colors",
-                    active
-                      ? "border-sage bg-sage/10 text-foreground"
-                      : disabled
-                        ? "border-border bg-muted/30 text-muted-foreground"
-                        : "border-border bg-card hover:border-rust hover:bg-rust/5",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="font-heading text-sm text-navy">{option.displayName || option.label}</div>
-                      <div className="mt-1 text-[11px] text-muted-foreground">{runtimeCapabilitySummary(option)}</div>
-                    </div>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
-                        active ? "bg-sage/16 text-sage" : available ? "bg-navy/10 text-navy" : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {active ? "activo" : !option.configured ? "sin config" : option.health.ok ? "seleccionar" : "offline"}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-[12px] leading-relaxed">{option.description}</p>
-                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{option.note}</p>
-                  <div className="mt-2 text-[11px]">
-                    <span className={cn("font-semibold", option.health.ok ? "text-sage" : "text-rust")}>
-                      {option.health.ok ? "health OK" : "health pendiente"}
-                    </span>
-                    {healthDetail && (
-                      <span className="ml-1 text-muted-foreground" title={healthDetail}>
-                        · {healthDetail}
-                      </span>
-                    )}
-                  </div>
-                  {!option.configured && option.requiredEnv?.length ? (
-                    <div className="mt-1 text-[10.5px] text-muted-foreground">
-                      requiere {option.requiredEnv.join(" o ")}
-                    </div>
-                  ) : null}
-                  {runtimePending === option.id && <div className="mt-2 text-[11px] font-semibold text-rust">activando…</div>}
-                </button>
-              );
-            })
+            <>
+              <RuntimeChoiceCard
+                title="OpenClaw"
+                subtitle="Incluido en Sancho"
+                description="La opción estable. Usa el runtime que ya viene con Sancho y no requiere configuración extra."
+                status={openClawActive ? "activo" : "listo"}
+                tone={openClawActive ? "active" : "ready"}
+                detail="Recomendado como fallback cuando estás probando otros runtimes."
+                actionLabel={openClawActive ? "Activo" : "Usar OpenClaw"}
+                actionDisabled={openClawActive || !openClawRuntime || !!runtimePending}
+                actionBusy={runtimePending === "openclaw"}
+                onAction={() => openClawRuntime && selectRuntime(openClawRuntime)}
+              />
+
+              <RuntimeChoiceCard
+                title="Hermes"
+                subtitle="Runtime gestionado"
+                description="Sancho intenta conectarlo desde el servidor. Es el camino más simple cuando Hermes está disponible en el despliegue."
+                status={hermesActive ? "activo" : runtimeReady(hermesRuntime) ? "listo" : "conectar"}
+                tone={hermesActive ? "active" : "ready"}
+                detail={
+                  runtimeReady(hermesRuntime)
+                    ? "Ya responde health OK."
+                    : "Si el bridge de Hermes está instalado en el servidor, Sancho lo prepara y lo activa."
+                }
+                actionLabel={hermesActive ? "Activo" : runtimeReady(hermesRuntime) ? "Usar Hermes" : "Conectar Hermes"}
+                actionDisabled={hermesActive || !!runtimePending || !!bridgePending}
+                actionBusy={bridgePending === "hermes" || runtimePending === "hermes"}
+                onAction={() => {
+                  if (runtimeReady(hermesRuntime) && hermesRuntime) {
+                    void selectRuntime(hermesRuntime);
+                    return;
+                  }
+                  void connectManagedBridge("hermes");
+                }}
+              />
+
+              <RuntimeChoiceCard
+                title="Claude Code"
+                subtitle="Corre en el ordenador del usuario"
+                description="Para usarlo como runtime, Sancho necesita un conector local que empareje este navegador con Claude Code."
+                status={claudeCodeActive ? "activo" : configuredBridgeKind === "claude-code" && externalReady ? "listo" : "conector local"}
+                tone={claudeCodeActive ? "active" : configuredBridgeKind === "claude-code" && externalReady ? "ready" : "pending"}
+                detail="No se instala en el VPS. Cuando el conector local esté listo, se empareja desde aquí."
+                actionLabel={
+                  claudeCodeActive
+                    ? "Activo"
+                    : configuredBridgeKind === "claude-code" && externalReady
+                      ? "Usar Claude Code"
+                      : "Ver conexión"
+                }
+                actionDisabled={claudeCodeActive || !!runtimePending}
+                actionBusy={runtimePending === "external-http" && configuredBridgeKind === "claude-code"}
+                onAction={() => {
+                  if (configuredBridgeKind === "claude-code" && externalReady && externalHttpRuntime) {
+                    void selectRuntime(externalHttpRuntime);
+                    return;
+                  }
+                  setLocalRuntimeGuide("claude-code");
+                }}
+              />
+
+              <RuntimeChoiceCard
+                title="Codex"
+                subtitle="Corre en el ordenador del usuario"
+                description="La integración de runtime usa el bridge de Codex. Las credenciales de Codex se gestionan aparte, debajo."
+                status={codexRuntimeActive ? "activo" : configuredBridgeKind === "codex" && externalReady ? "listo" : "conector local"}
+                tone={codexRuntimeActive ? "active" : configuredBridgeKind === "codex" && externalReady ? "ready" : "pending"}
+                detail="No es lo mismo que conectar la suscripción Codex; esto cambia quién ejecuta los mensajes."
+                actionLabel={
+                  codexRuntimeActive ? "Activo" : configuredBridgeKind === "codex" && externalReady ? "Usar Codex" : "Ver conexión"
+                }
+                actionDisabled={codexRuntimeActive || !!runtimePending}
+                actionBusy={runtimePending === "external-http" && configuredBridgeKind === "codex"}
+                onAction={() => {
+                  if (configuredBridgeKind === "codex" && externalReady && externalHttpRuntime) {
+                    void selectRuntime(externalHttpRuntime);
+                    return;
+                  }
+                  setLocalRuntimeGuide("codex");
+                }}
+              />
+
+              <RuntimeChoiceCard
+                title="Runtime propio / API"
+                subtitle="Endpoint compatible"
+                description="Para equipos que ya tienen un runtime expuesto por HTTP. La URL la da ese runtime o su conector."
+                status={customRuntimeActive ? "activo" : externalReady && !configuredBridgeKind ? "listo" : "manual"}
+                tone={customRuntimeActive ? "active" : externalReady && !configuredBridgeKind ? "ready" : "blocked"}
+                detail={
+                  externalSavedUrl
+                    ? `Guardado: ${externalSavedUrl}`
+                    : "No hace falta para OpenClaw ni para Hermes gestionado."
+                }
+                actionLabel={customRuntimeActive ? "Activo" : externalReady && !configuredBridgeKind ? "Usar API" : "Configurar API"}
+                actionDisabled={customRuntimeActive || !!runtimePending}
+                actionBusy={runtimePending === "external-http" && !configuredBridgeKind}
+                onAction={() => {
+                  if (externalReady && !configuredBridgeKind && externalHttpRuntime) {
+                    void selectRuntime(externalHttpRuntime);
+                    return;
+                  }
+                  setRuntimeAdvancedOpen(true);
+                }}
+              />
+            </>
           )}
         </div>
 
-        {runtimeStatus && (
-          <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
-            Actual: <strong>{runtimeStatus.active}</strong> · origen:{" "}
-            <strong>{runtimeSourceLabel(runtimeStatus.source)}</strong>. El cambio aplica a mensajes nuevos; si eliges
-            un runtime externo, el gateway compatible tiene que estar levantado.
-          </p>
+        {localRuntimeGuide && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-[12.5px] leading-relaxed text-amber-900">
+            <div className="font-heading text-sm text-amber-950">
+              {localRuntimeGuide === "claude-code" ? "Claude Code necesita conector local" : "Codex necesita conector local"}
+            </div>
+            <p className="mt-1">
+              Este runtime vive en el ordenador de la persona que lo usa, no en el VPS de Sancho. Para hacerlo fácil desde
+              la UI falta el emparejador local: Sancho genera el vínculo, el usuario autoriza en su ordenador y la pantalla
+              queda activa sin tocar URLs.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRuntimeAdvancedOpen(true);
+                  setLocalRuntimeGuide(null);
+                }}
+                className="rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white"
+              >
+                Tengo un endpoint manual
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocalRuntimeGuide(null)}
+                className="rounded border border-amber-300 px-3 py-1.5 text-[12px] font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
         )}
 
         {runtimeStatus?.options.some((option) => option.id === "external-http") && (
-          <div className="mt-4 rounded-lg border border-border bg-card px-3 py-3">
+          <details
+            open={runtimeAdvancedOpen}
+            onToggle={(event) => setRuntimeAdvancedOpen(event.currentTarget.open)}
+            className="mt-4 rounded-lg border border-border bg-card px-3 py-3"
+          >
+            <summary className="cursor-pointer font-heading text-[13px] text-navy">
+              Avanzado: conectar una API propia
+            </summary>
+            <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+              Úsalo sólo si ya tienes un endpoint compatible con Sancho. La URL sale del runtime o del conector que
+              quieras conectar; Sancho sólo la guarda y prueba que responda.
+            </p>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h4 className="font-heading text-[13px] text-navy">Runtime externo compatible</h4>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-                  Configuración global inicial para un gateway BYO compatible con Sancho. Puede ser Hermes, Codex CLI,
-                  Claude Code u otro runtime que exponga el contrato HTTP.
-                </p>
+                <h4 className="sr-only">Configuración de API propia</h4>
               </div>
               <button
                 type="button"
@@ -597,7 +864,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                Protocolo
+                Tipo
                 <select
                   value={externalDraft.protocol}
                   onChange={(event) => setExternalDraft((prev) => ({ ...prev, protocol: event.target.value }))}
@@ -609,7 +876,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 </select>
               </label>
               <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                Gateway URL
+                URL del runtime
                 <input
                   value={externalDraft.gatewayUrl}
                   onChange={(event) => setExternalDraft((prev) => ({ ...prev, gatewayUrl: event.target.value }))}
@@ -623,7 +890,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 />
               </label>
               <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                Secret
+                Clave compartida
                 <input
                   type="password"
                   value={externalDraft.secret}
@@ -638,7 +905,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 />
               </label>
               <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                {externalDraft.protocol === "mc-bridge" ? "Chat path" : "Inbound path"}
+                {externalDraft.protocol === "mc-bridge" ? "Ruta de chat" : "Ruta para recibir mensajes"}
                 <input
                   value={externalDraft.inboundPath}
                   onChange={(event) => setExternalDraft((prev) => ({ ...prev, inboundPath: event.target.value }))}
@@ -647,7 +914,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 />
               </label>
               <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                Health path
+                Ruta de verificación
                 <input
                   value={externalDraft.healthPath}
                   onChange={(event) => setExternalDraft((prev) => ({ ...prev, healthPath: event.target.value }))}
@@ -657,7 +924,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
               </label>
               {externalDraft.protocol === "mc-bridge" && (
                 <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                  Agent/profile
+                  Perfil o agente
                   <input
                     value={externalDraft.agent}
                     onChange={(event) => setExternalDraft((prev) => ({ ...prev, agent: event.target.value }))}
@@ -667,18 +934,9 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 </label>
               )}
             </div>
-            {externalRuntimeMasked(
-              externalRuntimeEnv,
-              "SANCHO_EXTERNAL_GATEWAY_URL",
-              "HERMES_EXTERNAL_GATEWAY_URL",
-            ) && (
+            {externalSavedUrl && (
               <p className="mt-2 text-[11px] text-muted-foreground">
-                Config actual:{" "}
-                {externalRuntimeMasked(
-                  externalRuntimeEnv,
-                  "SANCHO_EXTERNAL_GATEWAY_URL",
-                  "HERMES_EXTERNAL_GATEWAY_URL",
-                )}
+                Guardado: {externalSavedUrl}
                 {hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_SECRET") ||
                 hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_SECRET")
                   ? " · secret guardado"
@@ -689,7 +947,30 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                   : ""}
               </p>
             )}
-          </div>
+            <div className="mt-4 border-t border-border pt-3">
+              <div className="font-heading text-[12px] text-navy">Adapters técnicos</div>
+              <div className="mt-2 grid gap-2 md:grid-cols-3">
+                {(runtimeStatus?.options ?? []).map((option) => {
+                  const active = option.id === runtimeStatus?.active;
+                  const healthDetail = runtimeHealthDetail(option);
+                  return (
+                    <div key={option.id} className="rounded-md border border-border bg-background px-2.5 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-heading text-[12px] text-navy">{option.label}</span>
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                          {active ? "activo" : option.configured && option.health.ok ? "ok" : "pendiente"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[10.5px] leading-relaxed text-muted-foreground">
+                        {runtimeCapabilitySummary(option)}
+                        {healthDetail ? ` · ${healthDetail}` : ""}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </details>
         )}
       </div>
 
@@ -704,159 +985,183 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         </div>
       )}
 
-      {/* Auth routes table */}
-      <div className="overflow-x-auto rounded-lg border-2 border-ink shadow-comic-sm">
-        <table className="w-full min-w-[860px] text-sm">
-          <thead>
-            <tr className="border-b-2 border-ink bg-navy/5">
-              <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Proveedor</th>
-              <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Ruta</th>
-              <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Cuenta / perfil</th>
-              <th className="px-3 py-2 text-center font-heading text-xs uppercase text-navy">Estado</th>
-              <th className="px-3 py-2 text-right font-heading text-xs uppercase text-navy">Consola</th>
-              <th className="px-3 py-2 text-right font-heading text-xs uppercase text-navy">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && rows.every((r) => !r.provider) ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-4 text-sm text-muted-foreground">
-                  cargando estado del motor…
-                </td>
-              </tr>
-            ) : (
-              rows.map(({ rp, routeForRow, present, isActive, label, healthError }) => {
-                const consoleUrl = consoleUrlFor(rp.apiId, routeForRow);
-                const consoleHost = consoleLabelFor(rp.apiId, routeForRow);
-                const subRow = rp.route === "subscription";
-                const canPasteToken = subRow && !!rp.subscriptionTokenEnv; // Anthropic subscription
-                const rowPending = pendingKey === rp.key;
-                return (
-                  <tr
-                    key={rp.key}
-                    className={cn("border-b border-border align-middle last:border-b-0", isActive && "bg-sage/[0.06]")}
-                  >
-                    {/* Provider + route */}
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{rp.icon}</span>
-                        <div>
-                          <div className="font-mono font-semibold">{rp.name}</div>
-                          <div className="text-[11px] text-muted-foreground">
-                            {rp.route ? (rp.route === "subscription" ? "suscripción" : "API key") : rp.key}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    {/* Route badge */}
-                    <td className="px-3 py-2.5">
-                      <span
-                        className={cn("rounded px-2 py-0.5 text-[10px] font-bold uppercase", routeClass(routeForRow, present))}
-                      >
-                        {present ? routeLabel(routeForRow) : "sin auth"}
-                      </span>
-                      {healthError && (
-                        <div className="mt-1 max-w-[200px] truncate text-[10px] font-bold text-red-600" title={healthError}>
-                          ⚠ credencial rechazada
-                        </div>
-                      )}
-                    </td>
-                    {/* Account / profile */}
-                    <td className="px-3 py-2.5">
-                      <span
-                        className="block max-w-[230px] truncate font-mono text-[12px] text-muted-foreground"
-                        title={label || undefined}
-                      >
-                        {label ? maskAuthLabel(label) : "—"}
-                      </span>
-                    </td>
-                    {/* Status */}
-                    <td className="px-3 py-2.5 text-center">
-                      {isActive ? (
-                        <span className="rounded-full bg-sage/16 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-sage">
-                          activa
-                        </span>
-                      ) : present ? (
-                        <span className="text-[10px] font-semibold text-muted-foreground">disponible</span>
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">sin auth</span>
-                      )}
-                    </td>
-                    {/* Console */}
-                    <td className="px-3 py-2.5 text-right">
-                      {consoleUrl ? (
-                        <a
-                          href={consoleUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={consoleHost || undefined}
-                          className="text-[11px] font-semibold text-rust underline-offset-2 hover:underline whitespace-nowrap"
-                        >
-                          🔗 {consoleHost || "consola"}
-                        </a>
-                      ) : (
-                        <span className="text-[11px] text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    {/* Action */}
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-1.5 justify-end flex-wrap">
-                        {/* Activate route (Anthropic only switches at runtime) */}
-                        {rp.route && !isActive && rp.runtimeSwitchable && (
-                          <button
-                            type="button"
-                            disabled={isPending || (subRow && !present)}
-                            title={subRow && !present ? "Pega el token de suscripción primero" : undefined}
-                            onClick={() => activate(rp)}
-                            className="rounded border border-ink px-2 py-0.5 text-[11px] font-semibold text-navy hover:bg-rust hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            {rowPending ? "activando…" : "Activar"}
-                          </button>
-                        )}
-                        {/* Manage credential */}
-                        {canPasteToken ? (
-                          <button
-                            type="button"
-                            onClick={() => onOpenSystemKey(rp.apiId, rp.name, "subscription")}
-                            className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
-                          >
-                            🎫 Pegar token
-                          </button>
-                        ) : !subRow ? (
-                          <button
-                            type="button"
-                            onClick={() => onOpenSystemKey(rp.apiId, rp.name, rp.route)}
-                            className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
-                          >
-                            🔑 Key sistema
-                          </button>
-                        ) : (
-                          /* Codex subscription: start the OpenClaw pairing flow from the UI. */
-                          <button
-                            type="button"
-                            onClick={() => setCodexGuide(true)}
-                            className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
-                          >
-                            Conectar
-                          </button>
-                        )}
-                      </div>
+      <details className="rounded-lg border-2 border-ink bg-background shadow-comic-sm">
+        <summary className="cursor-pointer px-4 py-3 font-heading text-sm text-navy">
+          Credenciales del motor
+          <span className="ml-2 font-sans text-[11.5px] font-normal text-muted-foreground">
+            API keys, suscripciones y cuentas de proveedores
+          </span>
+        </summary>
+        <div className="space-y-3 border-t border-border px-4 py-3">
+          {/* The engine's auth route is global; the per-agent model lives in Models. */}
+          <p className="text-[12.5px] leading-relaxed text-foreground/80">
+            Esto es distinto del runtime: aquí eliges si cada proveedor usa suscripción/OAuth o API key. Es global para
+            todos los agentes. El modelo concreto de cada agente se elige en{" "}
+            <button
+              type="button"
+              onClick={() => router.replace({ query: { ...router.query, tab: "agents" } }, undefined, { shallow: true })}
+              className="font-semibold text-rust hover:underline"
+            >
+              Agentes
+            </button>
+            .
+          </p>
+
+          {/* Auth routes table */}
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="w-full min-w-[860px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-navy/5">
+                  <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Proveedor</th>
+                  <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Ruta</th>
+                  <th className="px-3 py-2 text-left font-heading text-xs uppercase text-navy">Cuenta / perfil</th>
+                  <th className="px-3 py-2 text-center font-heading text-xs uppercase text-navy">Estado</th>
+                  <th className="px-3 py-2 text-right font-heading text-xs uppercase text-navy">Consola</th>
+                  <th className="px-3 py-2 text-right font-heading text-xs uppercase text-navy">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading && rows.every((r) => !r.provider) ? (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-4 text-sm text-muted-foreground">
+                      cargando estado del motor…
                     </td>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                ) : (
+                  rows.map(({ rp, routeForRow, present, isActive, label, healthError }) => {
+                    const consoleUrl = consoleUrlFor(rp.apiId, routeForRow);
+                    const consoleHost = consoleLabelFor(rp.apiId, routeForRow);
+                    const subRow = rp.route === "subscription";
+                    const canPasteToken = subRow && !!rp.subscriptionTokenEnv; // Anthropic subscription
+                    const rowPending = pendingKey === rp.key;
+                    return (
+                      <tr
+                        key={rp.key}
+                        className={cn("border-b border-border align-middle last:border-b-0", isActive && "bg-sage/[0.06]")}
+                      >
+                        {/* Provider + route */}
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">{rp.icon}</span>
+                            <div>
+                              <div className="font-mono font-semibold">{rp.name}</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                {rp.route ? (rp.route === "subscription" ? "suscripción" : "API key") : rp.key}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        {/* Route badge */}
+                        <td className="px-3 py-2.5">
+                          <span
+                            className={cn("rounded px-2 py-0.5 text-[10px] font-bold uppercase", routeClass(routeForRow, present))}
+                          >
+                            {present ? routeLabel(routeForRow) : "sin auth"}
+                          </span>
+                          {healthError && (
+                            <div className="mt-1 max-w-[200px] truncate text-[10px] font-bold text-red-600" title={healthError}>
+                              ⚠ credencial rechazada
+                            </div>
+                          )}
+                        </td>
+                        {/* Account / profile */}
+                        <td className="px-3 py-2.5">
+                          <span
+                            className="block max-w-[230px] truncate font-mono text-[12px] text-muted-foreground"
+                            title={label || undefined}
+                          >
+                            {label ? maskAuthLabel(label) : "—"}
+                          </span>
+                        </td>
+                        {/* Status */}
+                        <td className="px-3 py-2.5 text-center">
+                          {isActive ? (
+                            <span className="rounded-full bg-sage/16 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-sage">
+                              activa
+                            </span>
+                          ) : present ? (
+                            <span className="text-[10px] font-semibold text-muted-foreground">disponible</span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">sin auth</span>
+                          )}
+                        </td>
+                        {/* Console */}
+                        <td className="px-3 py-2.5 text-right">
+                          {consoleUrl ? (
+                            <a
+                              href={consoleUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={consoleHost || undefined}
+                              className="text-[11px] font-semibold text-rust underline-offset-2 hover:underline whitespace-nowrap"
+                            >
+                              🔗 {consoleHost || "consola"}
+                            </a>
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        {/* Action */}
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center gap-1.5 justify-end flex-wrap">
+                            {/* Activate route (Anthropic only switches at runtime) */}
+                            {rp.route && !isActive && rp.runtimeSwitchable && (
+                              <button
+                                type="button"
+                                disabled={isPending || (subRow && !present)}
+                                title={subRow && !present ? "Pega el token de suscripción primero" : undefined}
+                                onClick={() => activate(rp)}
+                                className="rounded border border-ink px-2 py-0.5 text-[11px] font-semibold text-navy hover:bg-rust hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                {rowPending ? "activando…" : "Activar"}
+                              </button>
+                            )}
+                            {/* Manage credential */}
+                            {canPasteToken ? (
+                              <button
+                                type="button"
+                                onClick={() => onOpenSystemKey(rp.apiId, rp.name, "subscription")}
+                                className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                              >
+                                🎫 Pegar token
+                              </button>
+                            ) : !subRow ? (
+                              <button
+                                type="button"
+                                onClick={() => onOpenSystemKey(rp.apiId, rp.name, rp.route)}
+                                className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                              >
+                                🔑 Key sistema
+                              </button>
+                            ) : (
+                              /* Codex subscription: start the OpenClaw pairing flow from the UI. */
+                              <button
+                                type="button"
+                                onClick={() => setCodexGuide(true)}
+                                className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                              >
+                                Conectar
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
-      <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-        <strong>Qué ves:</strong> la <strong>ruta</strong> con la que el motor se autentica en cada proveedor y la
-        cuenta/perfil enmascarado. <strong>Activar</strong> conmuta la ruta y reinicia el gateway para aplicarla. La
-        suscripción de Anthropic se carga con <strong>🎫 Pegar token → Guardar y activar</strong>; la de Codex se
-        renueva desde <strong>Conectar</strong> y muestra el código de autorización en pantalla. <strong>No hay cuota/uso en vivo</strong>{" "}
-        (OpenClaw no lo expone): la consola es para revisar límites y facturación.
-      </p>
+          <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+            <strong>Qué ves:</strong> la <strong>ruta</strong> con la que el motor se autentica en cada proveedor y la
+            cuenta/perfil enmascarado. <strong>Activar</strong> conmuta la ruta y reinicia el gateway para aplicarla. La
+            suscripción de Anthropic se carga con <strong>🎫 Pegar token → Guardar y activar</strong>; la de Codex se
+            renueva desde <strong>Conectar</strong> y muestra el código de autorización en pantalla. <strong>No hay cuota/uso en vivo</strong>{" "}
+            (OpenClaw no lo expone): la consola es para revisar límites y facturación.
+          </p>
+        </div>
+      </details>
 
       {codexGuide && (
         <div
