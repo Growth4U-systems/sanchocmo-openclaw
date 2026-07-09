@@ -289,6 +289,11 @@ interface LinkedInAutopilotPlan {
   items: LinkedInAutopilotPlanItem[];
 }
 
+interface LinkedInAutopilotApproval {
+  approved: boolean;
+  message: string;
+}
+
 interface LinkedInAutopilotCommandResponse {
   ok: boolean;
   command: string;
@@ -1047,6 +1052,7 @@ export function OutboundB2BView() {
   const [activeJob, setActiveJob] = useState<ActiveYalcJob | null>(null);
   const [linkedinAccountInput, setLinkedinAccountInput] = useState("");
   const [linkedinAutopilotPlan, setLinkedinAutopilotPlan] = useState<LinkedInAutopilotPlan | null>(null);
+  const [linkedinAutopilotApprovals, setLinkedinAutopilotApprovals] = useState<Record<string, LinkedInAutopilotApproval>>({});
 
   function pushQuery(
     next: Partial<{
@@ -1311,7 +1317,19 @@ export function OutboundB2BView() {
       );
     },
     onSuccess: (data) => {
-      setLinkedinAutopilotPlan(data.plan || null);
+      const nextPlan = data.plan || null;
+      setLinkedinAutopilotPlan(nextPlan);
+      setLinkedinAutopilotApprovals(
+        Object.fromEntries(
+          (nextPlan?.items || []).map((item) => [
+            item.leadId,
+            {
+              approved: !item.blocked,
+              message: item.message || "",
+            },
+          ]),
+        ),
+      );
       showToast("Plan LinkedIn generado");
     },
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo generar el plan LinkedIn", "warn"),
@@ -1320,13 +1338,24 @@ export function OutboundB2BView() {
   const linkedinAutopilotExecuteAction = useMutation<
     LinkedInAutopilotCommandResponse,
     Error,
-    { campaignId: string }
+    { campaignId: string; dryRun: boolean; approvedCount: number }
   >({
-    mutationFn: ({ campaignId }) => {
-      const sendableLeadIds = (linkedinAutopilotPlan?.items || [])
+    mutationFn: ({ campaignId, dryRun }) => {
+      const approvedItems = (linkedinAutopilotPlan?.items || [])
         .filter((item) => !item.blocked)
-        .map((item) => item.leadId);
-      if (sendableLeadIds.length === 0) throw new Error("No hay mensajes LinkedIn aprobables en el plan.");
+        .map((item) => {
+          const approval = linkedinAutopilotApprovals[item.leadId];
+          const message = (approval?.message ?? item.message ?? "").trim();
+          if (approval?.approved === false || !message) return null;
+          return {
+            leadId: item.leadId,
+            action: item.action,
+            message,
+            ...(item.accountId ? { accountId: item.accountId } : {}),
+          };
+        })
+        .filter((item): item is { leadId: string; action: "connect" | "dm"; message: string; accountId?: string } => item !== null);
+      if (approvedItems.length === 0) throw new Error("No hay mensajes LinkedIn aprobados para enviar.");
       const accounts = parseLinkedInAccounts(linkedinAccountInput);
       return fetchJson<LinkedInAutopilotCommandResponse>(
         `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
@@ -1336,17 +1365,25 @@ export function OutboundB2BView() {
           body: JSON.stringify({
             command: "outbound.linkedin_autopilot.execute",
             campaignId,
-            leadIds: sendableLeadIds,
+            leadIds: approvedItems.map((item) => item.leadId),
+            items: approvedItems,
             ...(accounts.length > 0 ? { accounts } : {}),
-            dryRun: false,
-            confirmLinkedInSend: true,
+            dryRun,
+            confirmLinkedInSend: !dryRun,
           }),
         },
       );
     },
     onSuccess: (data, variables) => {
+      if (variables.dryRun) {
+        const count = data.plan?.summary?.sendable ?? variables.approvedCount;
+        showToast(`Simulación LinkedIn OK: ${count} mensaje${count === 1 ? "" : "s"}. No se envió nada.`);
+        if (data.plan) setLinkedinAutopilotPlan(data.plan);
+        return;
+      }
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
       setLinkedinAutopilotPlan(data.plan || null);
+      setLinkedinAutopilotApprovals({});
       showToast(`LinkedIn enviado: ${data.summary?.sent ?? 0} lead${data.summary?.sent === 1 ? "" : "s"}`);
       void linkedinAutopilotPlanAction.mutateAsync({ campaignId: variables.campaignId }).catch(() => undefined);
     },
@@ -1355,6 +1392,7 @@ export function OutboundB2BView() {
 
   useEffect(() => {
     setLinkedinAutopilotPlan(null);
+    setLinkedinAutopilotApprovals({});
   }, [selectedCampaignId]);
 
   useEffect(() => {
@@ -1579,13 +1617,35 @@ export function OutboundB2BView() {
     }
   }
 
-  function executeLinkedInAutopilot() {
-    const count = linkedinAutopilotPlan?.items.filter((item) => !item.blocked).length || 0;
+  function updateLinkedInAutopilotApproval(leadId: string, next: Partial<LinkedInAutopilotApproval>) {
+    setLinkedinAutopilotApprovals((current) => ({
+      ...current,
+      [leadId]: {
+        approved: current[leadId]?.approved ?? true,
+        message: current[leadId]?.message ?? "",
+        ...next,
+      },
+    }));
+  }
+
+  function approvedLinkedInAutopilotCount() {
+    return (linkedinAutopilotPlan?.items || []).filter((item) => {
+      if (item.blocked) return false;
+      const approval = linkedinAutopilotApprovals[item.leadId];
+      return approval?.approved !== false && Boolean((approval?.message ?? item.message ?? "").trim());
+    }).length;
+  }
+
+  function executeLinkedInAutopilot(dryRun: boolean) {
+    const count = approvedLinkedInAutopilotCount();
     if (!selectedCampaignId || count === 0) return;
-    if (!window.confirm(`Esto enviará ${count} mensaje${count === 1 ? "" : "s"} reales por LinkedIn desde Unipile. ¿Continuar?`)) {
-      return;
+    if (!dryRun) {
+      const confirmation = window.prompt(
+        `Esto enviará ${count} mensaje${count === 1 ? "" : "s"} reales por LinkedIn desde Unipile. Escribe ENVIAR para continuar.`,
+      );
+      if (confirmation !== "ENVIAR") return;
     }
-    linkedinAutopilotExecuteAction.mutate({ campaignId: selectedCampaignId });
+    linkedinAutopilotExecuteAction.mutate({ campaignId: selectedCampaignId, dryRun, approvedCount: count });
   }
 
   const notConfigured = overview.data?.configured === false;
@@ -1765,13 +1825,16 @@ export function OutboundB2BView() {
                   campaign={icpCampaign}
                   leads={selectedLinkedInLeads}
                   plan={linkedinAutopilotPlan}
+                  approvals={linkedinAutopilotApprovals}
                   accountInput={linkedinAccountInput}
                   onAccountInputChange={setLinkedinAccountInput}
                   planning={linkedinAutopilotPlanAction.isPending}
                   executing={linkedinAutopilotExecuteAction.isPending}
                   disabled={!selectedCampaignId || linkedinBusy}
                   onPlan={() => linkedinAutopilotPlanAction.mutate({ campaignId: selectedCampaignId })}
-                  onExecute={executeLinkedInAutopilot}
+                  onApprovalChange={updateLinkedInAutopilotApproval}
+                  onSimulate={() => executeLinkedInAutopilot(true)}
+                  onExecute={() => executeLinkedInAutopilot(false)}
                 />
               </>
             )}
@@ -2173,29 +2236,45 @@ function LinkedInAutopilotPanel({
   campaign,
   leads,
   plan,
+  approvals,
   accountInput,
   onAccountInputChange,
   planning,
   executing,
   disabled,
   onPlan,
+  onApprovalChange,
+  onSimulate,
   onExecute,
 }: {
   campaign: Campaign | CampaignDetail | null;
   leads: Lead[];
   plan: LinkedInAutopilotPlan | null;
+  approvals: Record<string, LinkedInAutopilotApproval>;
   accountInput: string;
   onAccountInputChange: (value: string) => void;
   planning: boolean;
   executing: boolean;
   disabled: boolean;
   onPlan: () => void;
+  onApprovalChange: (leadId: string, next: Partial<LinkedInAutopilotApproval>) => void;
+  onSimulate: () => void;
   onExecute: () => void;
 }) {
   const leadById = useMemo(() => new Map(leads.map((lead) => [lead.id, lead])), [leads]);
   const sendable = plan?.items.filter((item) => !item.blocked) || [];
   const blocked = plan?.items.filter((item) => item.blocked) || [];
+  const approved = sendable.filter((item) => {
+    const approval = approvals[item.leadId];
+    return approval?.approved !== false && Boolean((approval?.message ?? item.message ?? "").trim());
+  });
+  const blankApproved = sendable.filter((item) => {
+    const approval = approvals[item.leadId];
+    return approval?.approved !== false && !(approval?.message ?? item.message ?? "").trim();
+  }).length;
   const hasCampaign = !!campaign;
+  const canReview = !!plan && sendable.length > 0;
+  const canExecute = canReview && approved.length > 0 && blankApproved === 0;
 
   return (
     <section className="rounded-xl border border-border bg-card p-4" data-testid="linkedin-autopilot-panel">
@@ -2205,16 +2284,23 @@ function LinkedInAutopilotPanel({
             <Network className="h-3 w-3" />
             LinkedIn autopilot
           </div>
-          <h3 className="font-heading text-lg text-navy">Planificar conexión y DMs</h3>
+          <h3 className="font-heading text-lg text-navy">Revisar y enviar LinkedIn</h3>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Sancho genera la propuesta por lead, muestra el mensaje final y solo envía por Unipile cuando apruebas explícitamente.
+            Primero genera el plan. Después revisa cada mensaje, simula sin enviar y solo entonces envía real.
           </p>
         </div>
-        <div className="grid min-w-[300px] grid-cols-3 gap-2 text-center">
+        <div className="grid min-w-[320px] grid-cols-4 gap-2 text-center">
           <MiniMetric label="LinkedIn" value={leads.length} muted={leads.length === 0} />
-          <MiniMetric label="enviar" value={sendable.length} muted={!plan} />
+          <MiniMetric label="plan" value={sendable.length} muted={!plan} />
+          <MiniMetric label="aprobados" value={approved.length} muted={!plan || approved.length === 0} />
           <MiniMetric label="bloqueos" value={blocked.length} muted={!plan || blocked.length === 0} />
         </div>
+      </div>
+
+      <div className="mt-4 grid gap-2 md:grid-cols-3">
+        <StepBadge index={1} label="Plan" active={!plan} done={!!plan} />
+        <StepBadge index={2} label="Revisar mensajes" active={!!plan && !canExecute} done={canExecute} />
+        <StepBadge index={3} label="Simular y enviar" active={canExecute} done={false} />
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
@@ -2230,7 +2316,7 @@ function LinkedInAutopilotPanel({
             Si queda vacío, YALC usa la cuenta LinkedIn guardada en la campaña.
           </span>
         </label>
-        <div className="flex items-end gap-2">
+        <div className="flex flex-wrap items-end gap-2">
           <button
             type="button"
             disabled={disabled || !hasCampaign || leads.length === 0}
@@ -2242,12 +2328,21 @@ function LinkedInAutopilotPanel({
           </button>
           <button
             type="button"
-            disabled={disabled || executing || sendable.length === 0}
+            disabled={disabled || executing || !canExecute}
+            onClick={onSimulate}
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-sage bg-sage/10 px-3 text-sm font-semibold text-sage transition-colors hover:bg-sage/15 disabled:opacity-50"
+          >
+            {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            Simular sin enviar
+          </button>
+          <button
+            type="button"
+            disabled={disabled || executing || !canExecute}
             onClick={onExecute}
             className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-3 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
           >
             {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Enviar aprobados
+            Enviar real
           </button>
         </div>
       </div>
@@ -2258,10 +2353,22 @@ function LinkedInAutopilotPanel({
         </div>
       )}
 
+      {plan && sendable.length === 0 && blocked.length > 0 && (
+        <div className="mt-4 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
+          Todos los leads están bloqueados. Revisa la columna de bloqueos antes de intentar enviar.
+        </div>
+      )}
+
+      {plan && sendable.length > 0 && !canExecute && (
+        <div className="mt-4 rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
+          Selecciona al menos un lead y deja su mensaje con texto para poder simular o enviar.
+        </div>
+      )}
+
       {plan && (
         <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background">
-          <div className="grid grid-cols-[110px_minmax(170px,1fr)_minmax(240px,2fr)_160px] gap-3 border-b border-border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground max-lg:hidden">
-            <span>Acción</span>
+          <div className="grid grid-cols-[130px_minmax(170px,1fr)_minmax(280px,2fr)_160px] gap-3 border-b border-border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground max-lg:hidden">
+            <span>Aprobar</span>
             <span>Lead</span>
             <span>Mensaje</span>
             <span>Cuenta</span>
@@ -2269,15 +2376,28 @@ function LinkedInAutopilotPanel({
           <div className="max-h-[420px] divide-y divide-border overflow-auto">
             {plan.items.map((item) => {
               const lead = leadById.get(item.leadId);
+              const approval = approvals[item.leadId];
+              const approvedForSend = approval?.approved !== false && !item.blocked;
+              const message = approval?.message ?? item.message ?? "";
               return (
                 <div
                   key={item.leadId}
                   className={cn(
-                    "grid gap-3 px-3 py-3 text-sm lg:grid-cols-[110px_minmax(170px,1fr)_minmax(240px,2fr)_160px]",
+                    "grid gap-3 px-3 py-3 text-sm lg:grid-cols-[130px_minmax(170px,1fr)_minmax(280px,2fr)_160px]",
                     item.blocked && "bg-yellow-50/70",
                   )}
                 >
-                  <div>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={approvedForSend}
+                        disabled={item.blocked}
+                        onChange={(event) => onApprovalChange(item.leadId, { approved: event.target.checked })}
+                        className="h-4 w-4 rounded border-border text-rust focus:ring-rust"
+                      />
+                      {approvedForSend ? "Aprobado" : "No enviar"}
+                    </label>
                     <span className={cn(
                       "inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold",
                       item.action === "dm"
@@ -2295,7 +2415,13 @@ function LinkedInAutopilotPanel({
                     {item.blocked ? (
                       <span className="text-xs font-semibold text-yellow-800">{item.blockedReason || "Bloqueado"}</span>
                     ) : (
-                      <p className="line-clamp-3 text-sm leading-relaxed text-foreground/85">{item.message}</p>
+                      <textarea
+                        value={message}
+                        disabled={!approvedForSend}
+                        rows={4}
+                        onChange={(event) => onApprovalChange(item.leadId, { message: event.target.value })}
+                        className="w-full resize-y rounded-md border border-border bg-card p-2 text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none disabled:bg-muted/30 disabled:text-muted-foreground"
+                      />
                     )}
                   </div>
                   <div className="min-w-0 text-xs text-muted-foreground">
@@ -2318,6 +2444,29 @@ function LinkedInAutopilotPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function StepBadge({ index, label, active, done }: { index: number; label: string; active: boolean; done: boolean }) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm",
+        done && "border-sage/40 bg-sage/10 text-sage",
+        active && !done && "border-rust/40 bg-rust/10 text-rust",
+        !active && !done && "border-border bg-background text-muted-foreground",
+      )}
+    >
+      <span
+        className={cn(
+          "grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-bold",
+          done ? "border-sage bg-sage text-white" : active ? "border-rust bg-rust text-white" : "border-border bg-card",
+        )}
+      >
+        {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : index}
+      </span>
+      <span className="font-semibold">{label}</span>
+    </div>
   );
 }
 
