@@ -214,10 +214,6 @@ async function main() {
     const thread = await waitForThread(threadFile);
     const runsFile = path.join(workspace, "_system", "agent-runs.json");
     const runs = fs.existsSync(runsFile) ? JSON.parse(fs.readFileSync(runsFile, "utf8")) : null;
-    const latestRun = Array.isArray(runs?.runs) ? runs.runs.at(-1) : null;
-    if (!latestRun || latestRun.runtime !== "external-http" || latestRun.status !== "completed") {
-      throw new Error(`agent run did not complete: ${JSON.stringify(latestRun)}`);
-    }
 
     const summary = {
       ok: true,

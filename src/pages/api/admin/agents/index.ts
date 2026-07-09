@@ -9,17 +9,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
   if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
 
-  const runtime = getRuntime();
-  if (!runtime.capabilities.agentRegistry) {
-    return res.status(501).json({
-      error: `Runtime "${runtime.id}" does not support agent registry reads through Sancho yet.`,
-      runtime: runtime.id,
-      capability: "agentRegistry",
-    });
-  }
-
   try {
-    const agents = await runtime.control.listAgentsRich();
+    const agents = await getRuntime().control.listAgentsRich();
     return res.status(200).json({ ok: true, agents });
   } catch (e) {
     return res.status(500).json({

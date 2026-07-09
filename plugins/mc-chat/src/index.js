@@ -19,13 +19,18 @@ import { errorTracker } from "./error-tracker.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
 import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
 import { parseDelegateMarkers, slugForThread } from "./delegate-marker.js";
+import { buildMcChatContextBlock } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
+import { applyBrandEnvToProcess } from "./brand-env.js";
+import { mcChatCostGuard } from "./cost-guard.js";
+import { buildAttachmentContextBlock } from "./attachments.js";
 import {
   enqueueSessionDispatch,
   hasActiveSessionDispatch,
   isStopCommand,
+  semanticSessionFamilyKey,
 } from "./session-dispatch-state.js";
 
 function normalizeOpenAiAuthMode(mode) {
@@ -144,6 +149,43 @@ export default defineChannelPluginEntry({
 
   registerFull(api) {
     const logger = api.logger;
+    const registerCostHook = (name, handler, opts = {}) => {
+      if (typeof api.on === "function") {
+        api.on(name, handler, opts);
+      } else if (typeof api.registerHook === "function") {
+        api.registerHook(name, handler, opts);
+      } else {
+        logger.warn(`[mc-chat] cost guard hook API unavailable; ${name} not registered`);
+        return false;
+      }
+      return true;
+    };
+
+    registerCostHook(
+      "before_agent_run",
+      (event, ctx) => mcChatCostGuard.beforeAgentRun(event, ctx),
+      { priority: 100, timeoutMs: 1000 },
+    );
+    registerCostHook(
+      "model_call_started",
+      (event, ctx) => mcChatCostGuard.modelCallStarted(event, ctx),
+      { priority: 100, timeoutMs: 1000 },
+    );
+    registerCostHook(
+      "llm_output",
+      (event, ctx) => mcChatCostGuard.llmOutput(event, ctx),
+      { priority: 100, timeoutMs: 1000 },
+    );
+    const beforeToolCallHookRegistered = registerCostHook(
+      "before_tool_call",
+      (event, ctx) => mcChatCostGuard.beforeToolCall(event, ctx),
+      { priority: 100, timeoutMs: 1000 },
+    );
+    registerCostHook(
+      "agent_end",
+      (event, ctx) => mcChatCostGuard.agentEnd(event, ctx),
+      { priority: 100, timeoutMs: 1000 },
+    );
 
     // ─── HTTP Route: Inbound webhook from MC Server ───
     api.registerHttpRoute({
@@ -202,6 +244,7 @@ export default defineChannelPluginEntry({
           scope,
           agent,
           agentId,
+          attachments,
           isAdmin,
           senderRole,
           _source, // "discord" if relayed from Discord
@@ -237,53 +280,25 @@ export default defineChannelPluginEntry({
           ? `channel:mc-chat:${threadId}`
           : `channel:mc-chat:${slug}:${threadId}`;
 
-        // Build structured context for the agent
-        // This mimics how Discord provides guild context via inbound metadata
-        const contextLines = [
-          `[MC Chat Context]`,
-          `channel: mc-chat (Mission Control webchat — NOT Discord)`,
-          `client_slug: ${slug}`,
-          `thread_id: ${threadId}`,
-        ];
-        if (threadName) contextLines.push(`thread_name: ${threadName}`);
-        if (linkedTo) contextLines.push(`linked_to: ${linkedTo}`);
-        // SAN-327 — agent-scoped (broad) thread: tell the specialist its WHOLE
-        // owned skill set is usable here and that the seed skill is just a
-        // starting point. Narrow threads keep the single `skill:` line.
-        if (scope === "agent" && Array.isArray(skills) && skills.length > 0) {
-          const primary = skill || skills[0];
-          contextLines.push(`skill: ${primary}  ← punto de partida sugerido, NO un límite`);
-          contextLines.push(`Este es un hilo AMPLIO de tu dominio (${requestedAgent}). Puedes usar CUALQUIERA de tus skills en este MISMO hilo, sin abrir otro: ${skills.join(", ")}. Si el usuario pide algo que es tuyo (p.ej. una plantilla de outreach), cámbiate de skill y hazlo. NUNCA digas "no tengo esa skill" si está en tu set. Si de verdad es de otro agente (contenido, ads, datos), dilo y sugiere abrir su hilo.`);
-        } else if (skill) {
-          contextLines.push(`skill: ${skill}`);
-        }
-        if (requestedAgent && requestedAgent !== "sancho") contextLines.push(`requested_agent: ${requestedAgent}`);
-        contextLines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Use the injected [Client Context] first. Read files from disk only when they are accessible in your workspace; if a file is missing, ask a short question instead of showing tool errors. For Sancho API endpoints explicitly required by the active skill, use the local MC API with the admin token; never browse localhost with web_fetch.`);
-        contextLines.push(`⚠️ EXECUTION GUARDRAIL: Aprobar un plan o crear proyectos NO es autorización para ejecutar tareas. Siempre preguntar "¿Ejecuto [tarea específica]?" y esperar confirmación explícita antes de generar deliverables. "Apruebo el plan" y "Ejecuta" son pasos DIFERENTES.`);
-        contextLines.push(`💬 INTERACTIVE QUESTIONS: Cuando necesites una decisión del usuario entre opciones FINITAS y CONOCIDAS (ej. elegir un nicho de una lista, un tono, un pilar, un ICP), emite un bloque ":::ask" en vez de preguntar en texto libre. Formato:`);
-        contextLines.push(`:::ask`);
-        contextLines.push(`{"id":"q_<short>","prompt":"<pregunta>","mode":"single"|"multi","options":[{"id":"<key>","label":"<texto>"}]}`);
-        contextLines.push(`:::`);
-        contextLines.push(`Modos: "single" para radios (1 opción), "multi" para checkboxes, "text" para CAMPOS ABIERTOS (nombre, handle, una URL…). Un bloque de texto se escribe SIN "options": {"id":"q_<short>","prompt":"<etiqueta>","mode":"text","placeholder":"<pista>","optional":true|false} → renderiza un input real, sin opciones ni "Otro" ("optional":true permite dejarlo vacío). SOLO para single/multi es OBLIGATORIO que la ÚLTIMA opción sea {"id":"other","label":"Otro (lo escribo)"} — es un requisito del componente para dar respuesta libre; en "text" NO va "Otro". En cualquier opción de single/multi puedes marcar "recommended":true: esa opción sale PRE-SELECCIONADA con un badge "recomendado" y el usuario puede cambiarla (útil para sugerir un valor por defecto, p.ej. una cadencia). NO uses ":::ask" para invitaciones a un monólogo largo ("cuéntame todo sobre tu negocio"); para datos concretos sí, aunque sean abiertos, usa "text". Puedes MEZCLAR bloques de choice y de text en un MISMO mensaje para construir UN solo formulario (p.ej. nombre[text] + red[single] + cadencia[single recommended] + handle[text]); el componente los pinta juntos con un único botón "Enviar" y espera a que el usuario responda TODOS antes de devolverte un único mensaje con las respuestas en líneas separadas: "[ask:q1] respuesta: …\\n[ask:q2] respuesta: …". NO ejecutes nada hasta recibir ese mensaje completo. En "text" verás el texto que escribió; si en single/multi eligió "Otro" verás su texto literal en lugar de la etiqueta.`);
-        if (requestedAgent === "sancho") {
-          contextLines.push(`🤝 DELEGAR (cesión real de turno): cuando la petición es el ENTREGABLE de un especialista (research, contenido, outreach, ads, datos, visual, QA, skills/docs), NO la ejecutes inline ni con Agent(subagent_type=…) — eso corre dentro de TU turno y vuelve a ti (narras en vez de ceder). Emite un bloque ":::delegate": el especialista arranca en SU PROPIO hilo, opera su sistema y habla en su voz. Formato:`);
-          contextLines.push(`:::delegate`);
-          contextLines.push(`{"agent":"hamete","name":"<título corto>","brief":"<briefing completo y autónomo: objetivo, contexto, qué entregable y dónde>"}`);
-          contextLines.push(`:::`);
-          contextLines.push(`Agentes válidos: cervantes (skills/docs), hamete (research/market intel), dulcinea (contenido), rocinante (outreach/prospecting), mambrino (ads), merlin (datos), sanson (QA/feedback), maese-pedro (visual). Puedes emitir VARIOS bloques. Acompaña el/los bloque(s) con UNA línea para el usuario ("Lo paso a Hamete; te aviso cuando vuelva."). Reserva Agent(subagent_type=…) SOLO para sub-consultas rápidas que vuelven a ti, nunca para un entregable.`);
-        }
-        contextLines.push(`[/MC Chat Context]`);
+        const mcChatContextBlock = buildMcChatContextBlock({
+          slug,
+          threadId,
+          threadName,
+          linkedTo,
+          scope,
+          skills,
+          skill,
+          requestedAgent,
+        });
 
-        // ─── Specialist grounding (SAN-246) ───
-        // A thread dispatched DIRECTLY to a specialist (agent:dulcinea) gets no
-        // client context — the agent starts blind (instance of SAN-218). Fetch
-        // a bounded context pack from Next and prepend it to the user text, OR a
-        // STOP directive when the client has no Foundation. Skip for sancho (the
-        // orchestrator carries its own grounding). FAIL-SOFT: any failure logs a
-        // warning and continues WITHOUT blocking the dispatch — never crash the
-        // gateway over grounding.
+        // ─── Bounded grounding (SAN-246/SAN-382 follow-up) ───
+        // Fetch a compact context manifest from Next and prepend it to the user
+        // text. The manifest is summary + file paths only; it tells agents to
+        // read selectively instead of shoving full Foundation docs into the
+        // prompt. FAIL-SOFT: any failure logs a warning and continues WITHOUT
+        // blocking the dispatch — never crash the gateway over grounding.
         let groundedText = text;
-        if (requestedAgent && requestedAgent !== "sancho") {
+        if (requestedAgent) {
           try {
             const pack = await fetchContextPack(slug, skill || null, {
               contextPackUrl: channelCfg?.contextPackUrl,
@@ -292,7 +307,7 @@ export default defineChannelPluginEntry({
               logger,
             });
             if (pack) {
-              const prefix = pack.verdict === "missing" && pack.brandFound !== true
+              const prefix = pack.verdict === "missing"
                 ? buildFoundationDirective(pack)
                 : buildClientContextBlock(pack);
               if (prefix) {
@@ -305,7 +320,13 @@ export default defineChannelPluginEntry({
           }
         }
 
-        const bodyForAgent = contextLines.join('\n') + '\n\n' + groundedText;
+        const attachmentContextBlock = buildAttachmentContextBlock(attachments);
+        if (attachmentContextBlock) {
+          groundedText = `${groundedText}\n\n${attachmentContextBlock}`;
+          logger.info(`[mc-chat] user attachments injected (agent=${requestedAgent} slug=${slug} count=${Array.isArray(attachments) ? attachments.length : 0})`);
+        }
+
+        const bodyForAgent = mcChatContextBlock + '\n\n' + groundedText;
 
         // Resolve sender identity based on admin/client role
         // This maps to toolsBySender keys in openclaw.json:
@@ -328,7 +349,17 @@ export default defineChannelPluginEntry({
         // forcing a fresh runtime session while preserving agent routing.
         const resolvedModel = resolveAgentModel(cfg, requestedAgent);
         const sessionKey = buildAgentSessionKey(requestedAgent, chatId, cfg);
-        logger.info(`[mc-chat] resolved agent=${requestedAgent} model=${resolvedModel || "default"} session=${sessionKey}`);
+        const dispatchFamilyKey = semanticSessionFamilyKey(sessionKey);
+        logger.info(`[mc-chat] resolved agent=${requestedAgent} model=${resolvedModel || "default"} session=${sessionKey} dispatchFamily=${dispatchFamilyKey}`);
+        const guardRunId = `mc-chat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        const abortController = new AbortController();
+        const guardLimits = mcChatCostGuard.limits();
+        mcChatCostGuard.registerActiveTurn({
+          runId: guardRunId,
+          sessionKey,
+          abortController,
+          startedAt: Date.now(),
+        });
 
         // Build MsgContext for OpenClaw dispatch
         const msgCtx = finalizeInboundContext({
@@ -360,51 +391,42 @@ export default defineChannelPluginEntry({
           message: "Message dispatched to agent",
         }));
 
-        // Serialize inbound turns by MC Chat thread. OpenClaw still receives the
-        // agent/model-specific SessionKey above, but the user-visible chat has
-        // one pending-progress/status lane, so concurrent messages in the same
-        // thread must run FIFO.
-        const dispatchQueueKey = chatId;
-        const queuedBehindActive = hasActiveSessionDispatch(dispatchQueueKey);
+        const queuedBehindActive = hasActiveSessionDispatch(sessionKey, { familyKey: dispatchFamilyKey });
         if (queuedBehindActive) {
-          logger.warn(`[mc-chat] inbound queued behind active dispatch queue=${dispatchQueueKey} session=${sessionKey} thread=${threadId}`);
+          logger.warn(`[mc-chat] inbound queued behind active dispatch session=${sessionKey} family=${dispatchFamilyKey} thread=${threadId}`);
           const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
-          const callbackUrl = `${mcUrl}/api/chat/webhook`;
           const secret = channelCfg?.sharedSecret;
-          const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
-          fetch(callbackUrl, {
+          fetch(`${mcUrl}/api/chat/webhook`, {
             method: "POST",
-            headers,
+            headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
             body: JSON.stringify({
               slug,
               threadId,
               role: "status",
-              text: "Turno en curso; tu mensaje quedó en cola.",
-              agent: requestedAgent || "sancho",
-            }),
-          }).catch(() => {});
-          fetch(callbackUrl, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              slug,
-              threadId,
-              role: "system",
-              text: "⏳ Hay una respuesta anterior en curso. Tu mensaje quedó en cola y se ejecutará automáticamente cuando termine; no hace falta reenviarlo.",
+              text: "⏳ Hay un turno en curso; puse tu mensaje en cola.",
               agent: requestedAgent || "sancho",
             }),
           }).catch(() => {});
         }
 
-        await enqueueSessionDispatch(dispatchQueueKey, async ({ queued, waitedMs }) => {
+        await enqueueSessionDispatch(sessionKey, async ({ queued, waitedMs, dispatchKey }) => {
         if (queued) {
-          logger.warn(`[mc-chat] starting queued dispatch queue=${dispatchQueueKey} session=${sessionKey} thread=${threadId} waitedMs=${waitedMs}`);
+          logger.warn(`[mc-chat] starting queued dispatch session=${sessionKey} family=${dispatchKey} thread=${threadId} waitedMs=${waitedMs}`);
         }
 
         // Dispatch to agent asynchronously
         let runtimeErrorPosted = false;
         let visibleReplyPosted = false;
         const turnStartedAt = Date.now();
+        const turnTimer = guardLimits.enabled
+          ? setTimeout(() => {
+              mcChatCostGuard.abortRun(
+                guardRunId,
+                sessionKey,
+                "La ejecución superó el tiempo máximo permitido.",
+              );
+            }, guardLimits.maxWallClockMs)
+          : null;
         try {
           try {
             const result = sanitizeAgentThinkingHistory(requestedAgent, { home: process.env.OPENCLAW_HOME });
@@ -445,27 +467,6 @@ export default defineChannelPluginEntry({
             return null;
           };
 
-          if (queued) {
-            await postWithRetry(callbackUrl, {
-              slug,
-              threadId,
-              role: "status",
-              text: "Ahora proceso tu mensaje en cola.",
-              agent: requestedAgent || "sancho",
-            }, "Queued start status");
-            await postWithRetry(callbackUrl, {
-              slug,
-              threadId,
-              role: "progress",
-              agent: requestedAgent || "sancho",
-              event: {
-                kind: "thinking",
-                label: "Procesando mensaje en cola",
-                target: waitedMs > 1000 ? `Esperó ${Math.round(waitedMs / 1000)}s` : undefined,
-              },
-            }, "Queued start progress");
-          }
-
           const postRuntimeError = async (rawError, respondingAgent = requestedAgent || "sancho") => {
             if (runtimeErrorPosted) return;
             runtimeErrorPosted = true;
@@ -488,16 +489,26 @@ export default defineChannelPluginEntry({
             }, "Bot runtime-error callback");
           };
 
-          const dispatchResult = await dispatchInboundMessageWithBufferedDispatcher({
-            ctx: msgCtx,
-            cfg,
+          const restoreBrandEnv = applyBrandEnvToProcess(slug);
+          let dispatchResult;
+          try {
+            dispatchResult = await dispatchInboundMessageWithBufferedDispatcher({
+              ctx: msgCtx,
+              cfg,
             // OpenClaw's default sourceReplyDeliveryMode for chatType="channel"
             // is "message_tool_only", which suppresses auto-delivery and expects
             // the agent to call the message tool. The mc-chat system prompt
             // explicitly instructs the agent NOT to use that tool — its reply
             // is delivered via the `deliver` callback below. Force "automatic"
             // so deliver actually fires.
-            replyOptions: { sourceReplyDeliveryMode: "automatic" },
+            replyOptions: {
+              sourceReplyDeliveryMode: "automatic",
+              runId: guardRunId,
+              abortSignal: abortController.signal,
+              timeoutOverrideSeconds: guardLimits.enabled
+                ? Math.ceil(guardLimits.maxWallClockMs / 1000)
+                : undefined,
+            },
             dispatcherOptions: {
               deliver: async (replyPayload, _info) => {
                 // Diagnostic: log every deliver invocation so we can tell
@@ -725,6 +736,16 @@ export default defineChannelPluginEntry({
                   || (typeof input.command === "string" ? input.command.slice(0, 80) : undefined)
                   || undefined;
 
+                if (!beforeToolCallHookRegistered) {
+                  const blocked = mcChatCostGuard.beforeToolCall(
+                    { name: toolName, input },
+                    { runId: guardRunId, sessionKey },
+                  );
+                  if (blocked?.block) {
+                    logger.warn(`[mc-chat] cost guard requested abort on tool start: ${blocked.blockReason}`);
+                  }
+                }
+
                 // Legacy status (ephemeral)
                 fetch(callbackUrl, {
                   method: "POST",
@@ -778,14 +799,17 @@ export default defineChannelPluginEntry({
                 }).catch(() => {});
               },
             },
-          });
+            });
+          } finally {
+            restoreBrandEnv();
+          }
           const deliveredFinal = dispatchResult?.queuedFinal === true || (dispatchResult?.counts?.final || 0) > 0;
           const deliveredBlock = (dispatchResult?.counts?.block || 0) > 0;
           const deliveredViaChannel = hasRecentVisibleDelivery(slug, threadId, turnStartedAt);
           if (!deliveredFinal && !deliveredBlock && !visibleReplyPosted && !deliveredViaChannel && !runtimeErrorPosted) {
             logger.warn(`[mc-chat] dispatch completed without visible reply thread=${threadId} result=${JSON.stringify(dispatchResult || {})}`);
             await postRuntimeError(
-              "No recibí una respuesta visible para este turno. El mensaje quedó guardado en el hilo; si no aparece una respuesta tardía, reinténtalo en este mismo hilo para que el agente continúe con el contexto. Si estabas lanzando discovery real, revisa que las herramientas de scraping estén configuradas.",
+              "El runtime terminó sin devolver respuesta visible. Esto suele pasar cuando el proveedor/modelo falla antes de generar texto o cuando la sesión quedó obsoleta tras un cambio de modelo.",
               requestedAgent || "sancho",
             );
           } else if (!deliveredFinal && !deliveredBlock && !runtimeErrorPosted) {
@@ -800,7 +824,10 @@ export default defineChannelPluginEntry({
             const callbackUrl = `${mcUrl}/api/chat/webhook`;
             const secret = channelCfg?.sharedSecret;
             const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
-            const raw = err?.message || String(err);
+            const raw =
+              mcChatCostGuard.abortMessageFor(guardRunId, sessionKey) ||
+              err?.message ||
+              String(err);
             const authInfo = {
               ...(readCodexAuthInfo(requestedAgent || "sancho") || {}),
               anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
@@ -820,8 +847,11 @@ export default defineChannelPluginEntry({
               }),
             }).catch(() => {});
           } catch {}
+        } finally {
+          if (turnTimer) clearTimeout(turnTimer);
+          mcChatCostGuard.clearActiveTurn(guardRunId, sessionKey);
         }
-        }).promise;
+        }, { familyKey: dispatchFamilyKey }).promise;
 
         return true;
       },

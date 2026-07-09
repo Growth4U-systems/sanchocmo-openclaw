@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm, type File } from "formidable";
 import fs from "fs";
-import { uploadToR2, resolveUploadMime, classifyUploadError } from "@/lib/upload-r2";
+import { R2ConfigError, uploadToR2, resolveUploadMime } from "@/lib/upload-r2";
 
 export const config = {
   api: { bodyParser: false },
@@ -28,6 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const file = files.file?.[0];
     if (!file) {
+      cleanupFiles(files);
       return res.status(400).json({ error: "No file provided" });
     }
 
@@ -36,6 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // extension and normalize to a canonical MIME type (SAN-117).
     const mimeType = resolveUploadMime(file.mimetype, file.originalFilename);
     if (!mimeType) {
+      cleanupTempFile(file);
       return res.status(400).json({
         error: `File type not allowed: ${file.originalFilename || file.mimetype || "unknown"}. Allowed: images, PDF, XLSX, DOCX, CSV, TXT, MD`,
       });
@@ -46,10 +48,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ext = originalName.split(".").pop() || "bin";
     const key = `chat/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-    const url = await uploadToR2(buffer, key, mimeType);
-
-    // Clean up temp file
-    fs.unlinkSync(file.filepath);
+    let url: string;
+    try {
+      url = await uploadToR2(buffer, key, mimeType);
+    } finally {
+      cleanupTempFile(file);
+    }
 
     return res.json({
       url,
@@ -58,8 +62,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       size: file.size || buffer.length,
     });
   } catch (error) {
+    if (error instanceof R2ConfigError) {
+      return res.status(503).json({
+        error: error.message,
+        storage: { ok: false, missing: error.missing },
+      });
+    }
     console.error("[upload-file] Error:", error);
-    const { status, error: message } = classifyUploadError(error);
-    return res.status(status).json({ error: message });
+    return res.status(500).json({ error: "Failed to upload file" });
   }
+}
+
+function cleanupTempFile(file: File): void {
+  try {
+    fs.unlinkSync(file.filepath);
+  } catch {
+    // best-effort cleanup
+  }
+}
+
+function cleanupFiles(files: Record<string, File[]>): void {
+  for (const file of Object.values(files).flat()) cleanupTempFile(file);
 }

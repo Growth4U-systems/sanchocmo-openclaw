@@ -5,6 +5,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl jq openssh-client rsync sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
+# Fireworks CLI. The public billingUsage HTTP endpoint exposes usage/tokens, but
+# account-level real/rated cost currently comes from firectl account costs.
+RUN curl -fsSL https://storage.googleapis.com/fireworks-public/firectl/stable/linux-amd64.gz \
+      | gunzip > /usr/local/bin/firectl \
+    && chmod 0755 /usr/local/bin/firectl
+
 # PDF extraction libs. Debian Bookworm marks the system Python as
 # externally-managed (PEP 668), so `pip install pypdf` from an agent's
 # bash tool fails with "externally-managed-environment". Sancho recovered

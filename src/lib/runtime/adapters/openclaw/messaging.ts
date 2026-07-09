@@ -1,7 +1,5 @@
-import { markCancelled } from "@/lib/data/mc-chat";
 import type {
   InboundMessage,
-  RuntimeCancelOptions,
   SendInboundOptions,
   SendInboundResult,
 } from "../../types";
@@ -57,36 +55,6 @@ export async function sendOpenclawInbound(
       raw: message,
       error: message,
     };
-  }
-}
-
-export async function cancelOpenclawThread(
-  threadId: string,
-  opts: RuntimeCancelOptions = {},
-): Promise<void> {
-  markCancelled(threadId);
-  const secret = getChatSecret();
-  const slug = opts.slug || threadId.split(":")[0] || threadId;
-  const requestedAgent = opts.agentId || opts.agent;
-  try {
-    await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(secret ? { "X-MC-Secret": secret } : {}),
-      },
-      body: JSON.stringify({
-        slug,
-        threadId,
-        text: "/stop",
-        userName: "Admin",
-        userId: "mc-admin",
-        isAdmin: true,
-        ...(requestedAgent ? { agent: requestedAgent, agentId: requestedAgent } : {}),
-      }),
-    });
-  } catch (err) {
-    console.error(`[mc-chat] Gateway /stop failed: ${err instanceof Error ? err.message : err}`);
   }
 }
 

@@ -3,6 +3,7 @@ import path from "path";
 import { execSync } from "child_process";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
 import { apiHealthFile, BASE } from "@/lib/data/paths";
+import { buildBrandRuntimeEnv } from "@/lib/brand-env";
 
 // ── Env helpers ──────────────────────────────────────────────
 
@@ -431,8 +432,8 @@ const SERVICE_ENV_REQUIREMENTS: Record<string, string[][]> = {
 };
 
 /** Parsed runtime env (the same `.env` file the live health checks read). */
-export function getServiceEnv(): Record<string, string> {
-  return parseEnv(readEnvFile());
+export function getServiceEnv(slug?: string): Record<string, string> {
+  return slug ? buildBrandRuntimeEnv(slug) : parseEnv(readEnvFile());
 }
 
 /**
@@ -450,7 +451,7 @@ export function isServiceCredentialPresent(
   return groups.every((group) => group.some((name) => getKey(envVars, name) !== ""));
 }
 
-export async function runHealthChecks(serviceFilter: string): Promise<HealthResult> {
+export async function runHealthChecks(serviceFilter: string, slug?: string): Promise<HealthResult> {
   const health = loadApiHealth();
   const toCheck = serviceFilter === "all"
     ? ALL_SERVICES
@@ -460,14 +461,14 @@ export async function runHealthChecks(serviceFilter: string): Promise<HealthResu
     return { checked: [], results: {}, lastCheck: health.lastCheck || "", error: `Unknown service: ${serviceFilter}` };
   }
 
-  const envVars = parseEnv(readEnvFile());
+  const envVars = getServiceEnv(slug);
   const results: Record<string, ServiceHealth> = {};
 
   for (const svc of toCheck) {
     results[svc] = await checkService(svc, envVars);
-    health.services[svc] = results[svc];
+    if (!slug) health.services[svc] = results[svc];
   }
 
-  saveApiHealth(health);
-  return { checked: toCheck, results, lastCheck: health.lastCheck || "" };
+  if (!slug) saveApiHealth(health);
+  return { checked: toCheck, results, lastCheck: slug ? new Date().toISOString() : health.lastCheck || "" };
 }

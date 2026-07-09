@@ -1,15 +1,16 @@
 /**
  * Feedback-triage trigger.
  *
- * Asks Sansón (via the OpenClaw gateway, same pattern as writer-trigger.ts) to
+ * Asks Sansón (via the active runtime, same pattern as writer-trigger.ts) to
  * run skills/_shared/feedback-triage.md over the client comments on a doc and
  * POST categorized insights back to /api/clients/{slug}/feedback-insights/ingest.
  *
- * Fire-and-forget. No-op (no gateway call) when the doc has no comments.
+ * Fire-and-forget. No-op when the doc has no comments.
  */
 
 import crypto from "crypto";
-import { addMessage, getChatSecret, getGatewayUrl } from "./mc-chat";
+import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import { addMessage } from "./mc-chat";
 import { type CommentRow, loadDocComments, loadDocCommentsFamily } from "@/lib/comments";
 import { getOriginalDocPath } from "@/lib/comments-file";
 
@@ -106,8 +107,7 @@ export async function triggerFeedbackTriage(
   );
   addMessage(threadId, "user", message);
 
-  const secret = getChatSecret();
-  const payload = {
+  const payload: InboundMessage = {
     slug: input.slug,
     threadId,
     threadName: `Feedback triage ${input.docPath}`,
@@ -124,26 +124,17 @@ export async function triggerFeedbackTriage(
   };
 
   try {
-    const res = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(secret ? { "X-MC-Secret": secret } : {}),
-      },
-      body: JSON.stringify(payload),
-      // Never hang the caller on a slow/down gateway: the manual buttons
-      // in the dashboard await this request, and without a timeout the UI
-      // sits in "Despachando..." forever (SAN-148 staging finding).
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
+    // Never hang the caller on a slow/down runtime: the manual buttons
+    // in the dashboard await this request, and without a timeout the UI
+    // sits in "Despachando..." forever (SAN-148 staging finding).
+    const result = await getRuntime().messaging.sendInbound(payload, { timeoutMs: 15_000 });
+    if (!result.ok) {
       return {
         forwardedToGateway: false,
         threadId,
         runId,
         commentCount: comments.length,
-        error: `gateway ${res.status}: ${text}`,
+        error: `gateway ${result.status}: ${result.raw}`,
       };
     }
     return { forwardedToGateway: true, threadId, runId, commentCount: comments.length };

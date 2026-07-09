@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
-import os from "os";
 import path from "path";
 import { brandDir } from "@/lib/data/paths";
+import { getRuntime } from "@/lib/runtime";
 import {
   odFindProjectByBaseDir,
   odImportFolder,
@@ -12,7 +12,7 @@ import {
 import type { OdClientConfig, OdProject } from "@/lib/open-design/types";
 
 const MAPPING_FILE = path.join(
-  process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
+  getRuntime().state.home(),
   "workspace-maese-pedro",
   "od-projects.json",
 );

@@ -5,12 +5,6 @@ import { getRuntime } from "@/lib/runtime";
 
 type AnthropicAuthRoute = "subscription" | "api";
 
-interface RestartResult {
-  ok?: boolean;
-  method?: string;
-  error?: string;
-}
-
 /**
  * POST /api/admin/auth-route — activate a global engine auth route.
  *
@@ -28,15 +22,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
   if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
-
-  const runtime = getRuntime();
-  if (!runtime.capabilities.modelPicker) {
-    return res.status(501).json({
-      error: `Runtime "${runtime.id}" does not support auth route switching through Sancho yet.`,
-      runtime: runtime.id,
-      capability: "modelPicker",
-    });
-  }
 
   const { provider, route } = (req.body || {}) as { provider?: string; route?: string };
   if (provider !== "anthropic" && provider !== "openai") {
@@ -59,7 +44,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // provider === "anthropic"
-  if (route === "subscription" && !(await runtime.control.hasAnthropicSubscriptionToken())) {
+  if (route === "subscription" && !(await getRuntime().control.hasAnthropicSubscriptionToken())) {
     return res.status(409).json({
       error:
         "No hay token de suscripción. Pega el token OAuth (sk-ant-oat…) en «Key sistema» antes de activar la suscripción.",
@@ -67,12 +52,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    await runtime.control.setAnthropicAuthRoute(route as AnthropicAuthRoute);
-    const restart = (await runtime.lifecycle.restart()) as RestartResult;
+    await getRuntime().control.setAnthropicAuthRoute(route as AnthropicAuthRoute);
+    const restart = await getRuntime().lifecycle.restart() as {
+      ok: boolean;
+      error?: string;
+    };
     invalidateCatalogCache();
 
     let warning: string | undefined;
-    if (route === "api" && !(await runtime.control.hasAnthropicApiKey())) {
+    if (route === "api" && !(await getRuntime().control.hasAnthropicApiKey())) {
       warning =
         "Ruta API key activada, pero no hay ANTHROPIC_API_KEY cargada: el motor no responderá hasta cargarla.";
     }

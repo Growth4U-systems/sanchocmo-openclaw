@@ -13,7 +13,7 @@ import fs from "fs";
 import path from "path";
 import { readJSON } from "./json-io";
 import { BASE } from "./paths";
-import { getRuntime, type RuntimeRunningCron as RunningCron } from "@/lib/runtime";
+import { getRuntime, type RuntimeRunningCron } from "@/lib/runtime";
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -190,19 +190,17 @@ interface JobState {
   };
 }
 
-let _jobsStateCache: { file: string; mtime: number; data: Record<string, JobState> } | null = null;
+let _jobsStateCache: { mtime: number; data: Record<string, JobState> } | null = null;
 
 export function loadJobsState(): Record<string, JobState> {
   const file = getRuntime().state.cronJobsStateFile();
   if (!fs.existsSync(file)) return {};
   try {
     const stat = fs.statSync(file);
-    if (_jobsStateCache && _jobsStateCache.file === file && _jobsStateCache.mtime === stat.mtimeMs) {
-      return _jobsStateCache.data;
-    }
+    if (_jobsStateCache && _jobsStateCache.mtime === stat.mtimeMs) return _jobsStateCache.data;
     const parsed = JSON.parse(fs.readFileSync(file, "utf-8"));
     const data = (parsed.jobs || {}) as Record<string, JobState>;
-    _jobsStateCache = { file, mtime: stat.mtimeMs, data };
+    _jobsStateCache = { mtime: stat.mtimeMs, data };
     return data;
   } catch {
     return {};
@@ -260,7 +258,7 @@ interface EnrichOptions {
   includeSystem?: boolean;
   clients: { slug: string; name: string }[];
   /** Pre-loaded running map (lets callers reuse one read across many crons). */
-  runningMap?: Map<string, RunningCron>;
+  runningMap?: Map<string, RuntimeRunningCron>;
 }
 
 export interface EnrichedCronsResult {
@@ -311,7 +309,7 @@ export function enrichCrons(opts: EnrichOptions): EnrichedCronsResult {
 function enrichSingleCron(
   cron: RawCronJob,
   jobState: JobState | undefined,
-  running: RunningCron | undefined,
+  running: RuntimeRunningCron | undefined,
   cronSlug: string | null,
 ): EnrichedCron {
   const payload = cron.payload || {};

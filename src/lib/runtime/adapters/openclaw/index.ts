@@ -1,3 +1,4 @@
+import { markCancelled } from "@/lib/data/mc-chat";
 import {
   getOpenclawConfig,
   ensureModelInAllowlist,
@@ -28,7 +29,6 @@ import {
   openclawRuntimeFile,
 } from "./state";
 import {
-  cancelOpenclawThread,
   createOpenclawChannelThread,
   getChatSecret,
   getGatewayUrl,
@@ -56,7 +56,9 @@ export class OpenclawAdapter implements RuntimeAdapter {
 
   readonly messaging = {
     sendInbound: sendOpenclawInbound,
-    cancel: cancelOpenclawThread,
+    cancel: async (threadId: string): Promise<void> => {
+      markCancelled(threadId);
+    },
     getSharedSecret: (): string | undefined => getChatSecret(),
     createChannelThread: createOpenclawChannelThread,
   };

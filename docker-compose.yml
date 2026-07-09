@@ -20,13 +20,9 @@ services:
     container_name: sanchocmo
     restart: unless-stopped
     ports:
-      # Host side is parameterized so the installer can relocate a port that's
-      # already in use on the host (see scripts/compose-env.sh resolve_host_ports).
-      # The CONTAINER side stays fixed — nginx, config/instance.json, the gateway
-      # config and `next start -p` all assume 3000/18789/18790 inside the container.
-      - "127.0.0.1:${GATEWAY_HOST_PORT:-18789}:18789"
-      - "127.0.0.1:${LEGACY_HOST_PORT:-18790}:18790"
-      - "127.0.0.1:${MC_PORT:-3000}:3000"
+      - "${SANCHOCMO_BIND_ADDRESS:-127.0.0.1}:${SANCHOCMO_GATEWAY_PORT:-18789}:18789"
+      - "${SANCHOCMO_BIND_ADDRESS:-127.0.0.1}:${SANCHOCMO_LEGACY_PORT:-18790}:18790"
+      - "${SANCHOCMO_BIND_ADDRESS:-127.0.0.1}:${SANCHOCMO_MC_PORT:-3000}:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

@@ -3,20 +3,6 @@ import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { getModelCatalog, isModelAvailable, invalidateCatalogCache } from "@/lib/data/models-catalog";
 import { getRuntime } from "@/lib/runtime";
 
-interface RestartResult {
-  ok?: boolean;
-  method?: string;
-  error?: string;
-}
-
-function unsupportedRuntime(res: NextApiResponse, runtimeId: string) {
-  return res.status(501).json({
-    error: `Runtime "${runtimeId}" does not support model selection through Sancho yet.`,
-    runtime: runtimeId,
-    capability: "modelPicker",
-  });
-}
-
 interface ModelAssignment {
   primary: string;
   fallbacks: string[];
@@ -30,13 +16,12 @@ function normalizeFallbacks(value: unknown): string[] {
 function parseModelAssignment(body: unknown): ModelAssignment | null {
   if (!body || typeof body !== "object") return null;
   const v = body as Record<string, unknown>;
-  const raw = v.model && typeof v.model === "object" ? (v.model as Record<string, unknown>) : v;
-  const primary =
-    typeof raw.primary === "string"
-      ? raw.primary
-      : typeof v.model === "string"
-        ? v.model
-        : null;
+  const raw = v.model && typeof v.model === "object" ? v.model as Record<string, unknown> : v;
+  const primary = typeof raw.primary === "string"
+    ? raw.primary
+    : typeof v.model === "string"
+      ? v.model
+      : null;
   if (!primary) return null;
   return {
     primary,
@@ -56,11 +41,9 @@ async function validateModels(assignment: ModelAssignment): Promise<string | und
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const runtime = getRuntime();
   if (req.method === "GET") {
     if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
-    if (!runtime.capabilities.modelPicker) return unsupportedRuntime(res, runtime.id);
-    const assignment = await runtime.control.getDefaultModelAssignment();
+    const assignment = await getRuntime().control.getDefaultModelAssignment();
     return res.status(200).json({
       ok: true,
       model: assignment?.primary ?? null,
@@ -73,7 +56,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
   if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
-  if (!runtime.capabilities.modelPicker) return unsupportedRuntime(res, runtime.id);
 
   const assignment = parseModelAssignment(req.body);
   if (!assignment) {
@@ -88,10 +70,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    await runtime.control.setDefaultModelAssignment(assignment);
-    const restart = (await runtime.lifecycle.restart()) as RestartResult;
+    await getRuntime().control.setDefaultModelAssignment(assignment);
+    const restart = await getRuntime().lifecycle.restart() as {
+      ok: boolean;
+      method?: string;
+      error?: string;
+    };
     invalidateCatalogCache();
-    const warning = [
+    const responseWarning = [
       validationWarning,
       restart.ok
         ? null
@@ -104,7 +90,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       assignment,
       restarted: restart.ok,
       restartMethod: restart.method,
-      warning: warning || undefined,
+      warning: responseWarning || undefined,
     });
   } catch (e) {
     return res.status(500).json({

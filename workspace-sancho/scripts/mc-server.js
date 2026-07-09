@@ -567,6 +567,41 @@ function parseEnv(content) {
   return vars;
 }
 
+function normalizeEnvPart(value) {
+  return String(value || '').replace(/-/g, '_').toUpperCase();
+}
+
+function readBrandEnv(slug) {
+  try {
+    return parseEnv(fs.readFileSync(path.join(BASE, 'brand', slug, '.env'), 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+function applyScopedAliases(target, source, slug) {
+  const prefix = `${normalizeEnvPart(slug)}_`;
+  for (const [key, value] of Object.entries(source || {})) {
+    if (!value || !key.startsWith(prefix)) continue;
+    const flat = key.slice(prefix.length);
+    if (flat) target[flat] = value;
+  }
+}
+
+function buildBrandRuntimeEnv(slug, baseEnv = process.env) {
+  const workspaceEnv = parseEnv(readEnvFile());
+  const brandEnv = readBrandEnv(slug);
+  const env = { ...baseEnv, ...workspaceEnv };
+
+  applyScopedAliases(env, baseEnv, slug);
+  applyScopedAliases(env, workspaceEnv, slug);
+
+  Object.assign(env, brandEnv);
+  applyScopedAliases(env, brandEnv, slug);
+
+  return env;
+}
+
 function setEnvVars(updates) {
   // updates = { KEY: value, ... }
   let content = readEnvFile();
@@ -7662,7 +7697,12 @@ async function doTest() {
         const testScript = path.join(BASE, 'skills', 'acquisition-metrics-plan', 'scripts', 'test-connection.js');
         let testResult = { status: 'pending' };
         try {
-          const testOutput = execSync(`/opt/homebrew/bin/node "${testScript}" --slug ${slug} --source ${source}`, { cwd: BASE, timeout: 30000, encoding: 'utf-8' });
+          const testOutput = execSync(`/opt/homebrew/bin/node "${testScript}" --slug ${slug} --source ${source}`, {
+            cwd: BASE,
+            timeout: 30000,
+            encoding: 'utf-8',
+            env: buildBrandRuntimeEnv(slug, { ...process.env, MC_WORKSPACE: BASE, PATH: process.env.PATH }),
+          });
           // Script succeeded (exit 0) — re-read integrations.json (script updates it)
           try { intData = JSON.parse(fs.readFileSync(intPath, 'utf-8')); } catch {}
           const updatedEntry = (intData.dataSources || {})[source] || (intData.systemOverrides || {})[source] || {};
@@ -7725,7 +7765,12 @@ async function doTest() {
 
         function runTest(srcId) {
           try {
-            execSync(`/opt/homebrew/bin/node "${testScript}" --slug ${slug} --source ${srcId}`, { cwd: BASE, timeout: 30000, encoding: 'utf-8' });
+            execSync(`/opt/homebrew/bin/node "${testScript}" --slug ${slug} --source ${srcId}`, {
+              cwd: BASE,
+              timeout: 30000,
+              encoding: 'utf-8',
+              env: buildBrandRuntimeEnv(slug, { ...process.env, MC_WORKSPACE: BASE, PATH: process.env.PATH }),
+            });
             // Re-read integrations.json (script updates it)
             try { intData = JSON.parse(fs.readFileSync(intPath, 'utf-8')); } catch {}
             const entry = (intData.dataSources || {})[srcId] || (intData.systemOverrides || {})[srcId] || {};
@@ -7966,7 +8011,10 @@ async function doTest() {
           
           // Run openclaw agent async — use spawn with args to avoid shell escaping issues
           const { spawn } = require('child_process');
-          const agentEnv = { ...process.env, PATH: '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:' + (process.env.PATH || '') };
+          const agentEnv = buildBrandRuntimeEnv(slug, {
+            ...process.env,
+            PATH: '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:' + (process.env.PATH || ''),
+          });
           const agentProc = spawn('/opt/homebrew/bin/openclaw', ['agent', '--agent', 'sancho', '-m', fullMessage], { timeout: 120000, env: agentEnv });
           let agentStdout = '';
           let agentStderr = '';

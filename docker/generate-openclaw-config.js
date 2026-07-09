@@ -136,15 +136,22 @@ async function main() {
     };
   }
 
-  // Heartbeat polls (`{ every: "1h" }`) trigger one model turn per agent every
-  // hour for proactive checks. In this project periodic work goes through
-  // explicit cron jobs, so heartbeats just burn quota — on 2026-05-22 they
-  // saturated the Codex subscription rate-limit. Strip the block defensively
-  // in case an older config or upstream default reintroduced it.
-  if (config.agents.defaults.heartbeat) {
-    delete config.agents.defaults.heartbeat;
-    console.log('[config] Removed agents.defaults.heartbeat (deprecated in this project)');
-  }
+  // Heartbeat polls trigger one model turn per agent on a timer. Keep the
+  // global heartbeat disabled and opt in only the agents whose HEARTBEAT.md has
+  // real lightweight checks. Empty/comment-only agents must not wake.
+  config.agents.defaults.heartbeat = {
+    every: '0m',
+    model: 'anthropic/claude-sonnet-4-5',
+    target: 'none',
+    lightContext: true,
+    isolatedSession: true,
+    skipWhenBusy: true,
+    includeReasoning: false,
+    suppressToolErrorWarnings: true,
+    timeoutSeconds: 45,
+    ackMaxChars: 300
+  };
+  console.log('[config] Disabled global heartbeat; selective per-agent heartbeats may opt in');
 
   // --- Model providers ---
   // Raise the model idle watchdog for Anthropic (default cap: 120s without
@@ -222,6 +229,23 @@ async function main() {
     // from alarife_operator to full specialist on 2026-06-09 (SAN-116).
     { id: 'alarife', workspace: path.join(OPENCLAW_ROOT, 'workspace-alarife') }
   ];
+  for (const agent of config.agents.list) {
+    if (agent.id === 'sancho') {
+      agent.heartbeat = {
+        every: '6h',
+        activeHours: { start: '08:00', end: '22:30' },
+        prompt: 'Read HEARTBEAT.md in the workspace. Run only lightweight checks. Do not execute long-running skills, cron jobs, Foundation, Content Engine, Lead Sync, or Sales Call Prep. If nothing needs attention, use heartbeat_respond with notify=false. If something requires attention, keep it brief and actionable.'
+      };
+    } else if (agent.id === 'cervantes') {
+      agent.heartbeat = {
+        every: '12h',
+        activeHours: { start: '09:00', end: '19:00' },
+        prompt: 'Read HEARTBEAT.md in the workspace. Run only lightweight ops checks and memory maintenance. Do not execute development tasks automatically. If nothing needs attention, use heartbeat_respond with notify=false. If something requires attention, keep it brief and actionable.'
+      };
+    } else {
+      delete agent.heartbeat;
+    }
+  }
 
   // --- Gateway ---
   if (!config.gateway) config.gateway = {};
@@ -298,6 +322,18 @@ async function main() {
   if (!config.plugins.entries['mc-chat']) {
     config.plugins.entries['mc-chat'] = { enabled: true, config: {} };
   }
+  config.plugins.entries['mc-chat'].enabled = true;
+  if (!config.plugins.entries['mc-chat'].config) config.plugins.entries['mc-chat'].config = {};
+  if (!config.plugins.entries['mc-chat'].hooks) config.plugins.entries['mc-chat'].hooks = {};
+  config.plugins.entries['mc-chat'].hooks.allowConversationAccess = true;
+  config.plugins.entries['mc-chat'].hooks.timeouts = {
+    ...(config.plugins.entries['mc-chat'].hooks.timeouts || {}),
+    before_agent_run: 1000,
+    before_tool_call: 1000,
+    model_call_started: 1000,
+    llm_output: 1000,
+    agent_end: 1000,
+  };
   if (!config.channels['mc-chat']) {
     config.channels['mc-chat'] = {
       enabled: true,

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useSession } from "next-auth/react";
 import { ComicCard } from "@/components/shared/comic-card";
 import { ApiConnectPanel } from "@/components/settings/api-connect-panel";
 import { SlackIntegrationCard } from "@/components/admin/slack-integration-card";
@@ -12,7 +11,6 @@ import { RuntimeMotorSection } from "@/components/settings/runtime-motor-section
 import { AuthInstructions } from "@/components/settings/auth-instructions";
 import { useAppStore } from "@/stores/app";
 import { cn } from "@/lib/utils";
-import { isYalcProviderApiId } from "@/lib/yalc/provider-catalog";
 
 interface ApiHealth {
   lastCheck: string | null;
@@ -53,25 +51,10 @@ interface SystemEnvField {
   hasValue: boolean;
 }
 
-// These providers are rendered in the dedicated Runtime / Motor section in
-// system scope instead of the generic API table.
-const ENGINE_ENV_SERVICES = new Set([
-  "anthropic",
-  "anthropic-oauth",
-  "openai",
-  "openrouter",
-  "fireworks",
-  "gemini",
-  "xai",
-]);
-
-// Saving any of these restarts the gateway to apply the credential.
-// `anthropic-oauth` is a modal-only service id (the subscription token paste);
-// ScrapeCreators powers MCP/tool injection for Rocinante discovery.
-const GATEWAY_RESTART_ENV_SERVICES = new Set([
-  ...ENGINE_ENV_SERVICES,
-  "scrapecreators",
-]);
+// Saving any of these restarts the gateway to apply the credential. `anthropic-oauth`
+// is a modal-only service id (the subscription token paste) — not a catalog apiId, so
+// it never appears in the providers table; it only needs the post-save restart.
+const GATEWAY_ENV_SERVICES = new Set(["anthropic", "anthropic-oauth", "openai", "openrouter", "fireworks", "gemini", "xai"]);
 
 function useStatusBadge() {
   const t = useTranslations("settings.apiStatus");
@@ -121,29 +104,27 @@ interface ApisConnectorsPanelProps {
 }
 
 export function ApisConnectorsPanel({ categories, showHeader = true, providers, filterLabel, onClearProviders }: ApisConnectorsPanelProps = {}) {
-  const statusBadge = useStatusBadge();
-  const { data: session, status: sessionStatus } = useSession();
-  const router = useRouter();
   const runtimeOnly = categories?.length === 1 && categories[0] === "runtime";
+  const statusBadge = useStatusBadge();
   const selectedClient = useAppStore((s) => s.selectedClient);
   const setSelectedClient = useAppStore((s) => s.setSelectedClient);
-  const isAdminRoute = router.pathname.startsWith("/dashboard/admin");
-  // Admin settings are always global/system scope. The persisted Zustand store
-  // can rehydrate a previous client after DashboardLayout clears it, so do not
-  // let that stale value gate system-key drawers.
-  const slug = isAdminRoute ? "" : selectedClient || "";
+  const slug = selectedClient || "";
   const [checking, setChecking] = useState(false);
   const [checkStatus, setCheckStatus] = useState("");
   const [connectSlider, setConnectSlider] = useState<{ apiId: string; provider: string } | null>(null);
   const [systemKeySlider, setSystemKeySlider] = useState<{ apiId: string; provider: string; route?: "subscription" | "api" } | null>(null);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>(runtimeOnly ? "runtime" : "all");
+  const [categoryFilter, setCategoryFilter] = useState<string>(() => (runtimeOnly ? "runtime" : "all"));
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const qc = useQueryClient();
+  const router = useRouter();
 
   useEffect(() => {
-    if (isAdminRoute && selectedClient) setSelectedClient(null);
-  }, [isAdminRoute, selectedClient, setSelectedClient]);
+    if (runtimeOnly) {
+      setSelectedClient(null);
+      setCategoryFilter("runtime");
+    }
+  }, [runtimeOnly, setSelectedClient]);
 
   // Deep-link support: `?cat=...` (from the chat error modal / models panel)
   // preselects a category. Only honored on the standalone panel, not embedded
@@ -151,16 +132,12 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   // forces "all clients" scope — its links target the admin global settings page,
   // and without this the section is gated off (`!slug`) and the panel renders blank.
   useEffect(() => {
-    if (runtimeOnly) {
-      setCategoryFilter("runtime");
-      return;
-    }
     if (categories) return;
     const cat = router.query.cat;
     if (typeof cat !== "string" || !cat) return;
     if (cat === "runtime") setSelectedClient(null);
     setCategoryFilter(cat);
-  }, [router.query.cat, categories, runtimeOnly, setSelectedClient]);
+  }, [router.query.cat, categories, setSelectedClient]);
 
   // Safety net: "runtime" is only valid in system scope. If a client gets selected
   // while it's active, fall back to "all" so the category <select> never holds a
@@ -176,13 +153,13 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
     try {
       const res = serviceId === "slack" && slug
         ? await fetch(`/api/integrations/slack/status?slug=${encodeURIComponent(slug)}&refresh=1`)
-        : isYalcProviderApiId(serviceId) && slug
+        : slug
         ? await fetch("/api/system/api-connect", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ slug, apiId: serviceId, testOnly: true }),
           })
-        : await fetch(`/api/system/health-check-all?service=${serviceId}`);
+        : await fetch(`/api/system/health-check-all?service=${encodeURIComponent(serviceId)}`);
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         console.error(`Health check failed for ${serviceId}:`, data?.error || res.statusText);
@@ -204,6 +181,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       if (!res.ok) return { lastCheck: null, services: {} };
       return res.json();
     },
+    enabled: !runtimeOnly,
     staleTime: 30_000,
   });
 
@@ -215,13 +193,11 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       if (!res.ok) return { categories: {} };
       return res.json();
     },
+    enabled: !runtimeOnly,
     staleTime: 120_000,
   });
 
   const services = useMemo(() => health?.services ?? {}, [health?.services]);
-  const isAdminSession = (session?.user as { role?: string } | undefined)?.role === "admin";
-  const adminResolved = sessionStatus !== "loading";
-  const canManageSystemKeys = !adminResolved || isAdminSession;
 
   // Flatten all APIs with their category for filtering. If a categories prop is
   // provided, restrict to that scope up-front so counters + table both reflect
@@ -229,6 +205,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   // restrict to only those apiIds — counters and table both scope to it.
   const activeProviders = providers && providers.length > 0 ? providers : null;
   const allApis = useMemo(() => {
+    if (runtimeOnly) return [];
     if (!catalog?.categories) return [];
     const result: Array<{ apiId: string; meta: ApiMeta; catKey: string; catLabel: string }> = [];
     for (const [catKey, catData] of Object.entries(catalog.categories)) {
@@ -238,7 +215,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
         // the dedicated "Runtime / Motor" category in system scope, so they don't
         // also show as plain api-key rows there — unless an explicit `?surface=`
         // providers filter asked for them, in which case that filter wins.
-        if (!slug && !categories && !activeProviders && ENGINE_ENV_SERVICES.has(apiId)) continue;
+        if (!slug && !categories && !activeProviders && GATEWAY_ENV_SERVICES.has(apiId)) continue;
         if (activeProviders && !activeProviders.includes(apiId)) continue;
         result.push({ apiId, meta: apiMeta, catKey, catLabel: catData.label });
       }
@@ -247,7 +224,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   // activeProviders is derived from the `providers` prop; joining to a string stabilises
   // the dep across array-identity changes so the memo re-runs only when the set differs.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catalog, categories, slug, activeProviders?.join(",")]);
+  }, [catalog, categories, runtimeOnly, slug, activeProviders?.join(",")]);
 
   // Counters scoped to the (potentially filtered) set
   let connected = 0, pending = 0, errored = 0, notConfigured = 0;
@@ -259,11 +236,6 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
     else if (st === "error") errored++;
     else notConfigured++;
   }
-
-  const scrapeCreatorsApi = useMemo(
-    () => allApis.find((item) => item.apiId === "scrapecreators") || null,
-    [allApis]
-  );
 
   // Category options for filter — only when no fixed scope is forced
   const categoryOptions = useMemo(() => {
@@ -280,7 +252,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
   const engineCatKey = useMemo(() => {
     if (!catalog?.categories) return null;
     for (const [key, cat] of Object.entries(catalog.categories)) {
-      if (Object.keys(cat.apis || {}).some((id) => ENGINE_ENV_SERVICES.has(id))) return key;
+      if (Object.keys(cat.apis || {}).some((id) => GATEWAY_ENV_SERVICES.has(id))) return key;
     }
     return null;
   }, [catalog]);
@@ -339,11 +311,11 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
     setChecking(false);
   };
 
-  const isLoading = healthLoading || catalogLoading;
+  const isLoading = !runtimeOnly && (healthLoading || catalogLoading);
 
   return (
     <div>
-      {showHeader && (
+      {showHeader && !runtimeOnly && (
         <>
           <h2 className="font-heading text-lg text-navy mb-3">🔌 APIs & Servicios</h2>
 
@@ -394,7 +366,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
 
       {/* Surface providers banner — shown when ?surface= scopes the panel; rendered
           above the controls so the user sees the active filter context first. */}
-      {!runtimeOnly && activeProviders && (
+      {activeProviders && (
         <div className="mb-4 flex items-center gap-2 rounded-sc-md border border-dashed border-ink bg-aged/40 px-3 py-2 text-[12px]">
           <span className="font-heading font-bold text-navy">🔌 Filtrado por la superficie «{filterLabel ?? "superficie"}»</span>
           <span className="text-ink/50">—</span>
@@ -405,40 +377,6 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
           >
             ver todas las APIs →
           </button>
-        </div>
-      )}
-
-      {!slug && adminResolved && !isAdminSession && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[12px] leading-relaxed text-red-800">
-          <strong>Sesión sin permisos admin.</strong> Puedes ver esta pantalla, pero las claves globales
-          de sistema solo se pueden guardar con una sesión admin. Entra con una cuenta admin o con el
-          token admin para cargar ScrapeCreators.
-        </div>
-      )}
-
-      {!runtimeOnly && !slug && scrapeCreatorsApi && (
-        <div className="mb-4 rounded-lg border-2 border-ink bg-card p-3 shadow-comic-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-base">{scrapeCreatorsApi.meta.icon}</span>
-                <span className="font-heading text-sm font-bold text-navy">ScrapeCreators</span>
-                <span className="rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">SISTEMA</span>
-              </div>
-              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-                Discovery real de Partnerships: perfiles sociales, señales y ad-library. Acceso directo para no depender del filtro.
-              </p>
-            </div>
-            <button
-              type="button"
-              disabled={!canManageSystemKeys}
-              onClick={() => setSystemKeySlider({ apiId: "scrapecreators", provider: "ScrapeCreators" })}
-              className="text-[11px] px-3 py-1.5 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-background disabled:hover:text-foreground"
-              title={canManageSystemKeys ? "Configurar ScrapeCreators" : "Requiere sesión admin"}
-            >
-              🔑 Key sistema
-            </button>
-          </div>
         </div>
       )}
 
@@ -496,7 +434,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando...</p>}
 
       {/* Runtime / Motor — engine accounts + primary-model selector (admin/system only) */}
-      {(runtimeOnly || categoryFilter === "runtime") && !slug && (
+      {categoryFilter === "runtime" && !slug && (
         <RuntimeMotorSection
           onOpenSystemKey={(apiId, provider, route) =>
             setSystemKeySlider({
@@ -511,7 +449,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       )}
 
       {/* The engine providers moved to Runtime/Motor — point admins there from their old category. */}
-      {!runtimeOnly && !slug && !activeProviders && categoryFilter !== "runtime" && (categoryFilter === "all" || categoryFilter === engineCatKey) && (
+      {!slug && !activeProviders && categoryFilter !== "runtime" && (categoryFilter === "all" || categoryFilter === engineCatKey) && (
         <div className="mb-4 px-3 py-2 rounded-md border border-sage/40 bg-sage/5 text-[12px] text-foreground/80 flex items-center gap-2">
           <span>🚂</span>
           <span>
@@ -529,7 +467,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
       )}
 
       {/* API Table */}
-      {!runtimeOnly && !isLoading && filteredApis.length > 0 && (
+      {!isLoading && filteredApis.length > 0 && (
         <div className="border-2 border-ink rounded-lg overflow-hidden shadow-comic">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -629,9 +567,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
                           ) : isSystem ? (
                             <button
                               onClick={() => setSystemKeySlider({ apiId, provider: apiMeta.provider })}
-                              disabled={!canManageSystemKeys}
-                              title={canManageSystemKeys ? "Configurar key de sistema" : "Requiere sesión admin"}
-                              className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-background disabled:hover:text-foreground"
+                              className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
                             >
                               🔑 Key sistema
                             </button>
@@ -664,7 +600,7 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
         </div>
       )}
 
-      {!runtimeOnly && !isLoading && filteredApis.length === 0 && search && categoryFilter !== "runtime" && (
+      {!isLoading && filteredApis.length === 0 && search && categoryFilter !== "runtime" && (
         <div className="text-center py-8 text-muted-foreground">
           <p className="text-sm">No se encontraron integraciones para &quot;{search}&quot;</p>
           <button
@@ -724,10 +660,8 @@ export function ApisConnectorsPanel({ categories, showHeader = true, providers, 
         </div>
       )}
 
-      {/* System Key Slider — global admin credentials.
-          System-only credentials can be opened from global settings or from a
-          client settings page; they always save through /api/env. */}
-      {systemKeySlider && (
+      {/* System Key Slider — global admin credentials */}
+      {systemKeySlider && !slug && (
         <div
           className="fixed inset-0 z-50 flex justify-end"
           onClick={() => {
@@ -857,7 +791,7 @@ function SystemEnvPanel({
         } else {
           applyNote = ` Guardado, pero no se pudo activar la ruta: ${actPayload.error || "error desconocido"}.`;
         }
-      } else if (GATEWAY_RESTART_ENV_SERVICES.has(apiId)) {
+      } else if (GATEWAY_ENV_SERVICES.has(apiId)) {
         const restartRes = await fetch("/api/system/restart-gateway");
         const restartPayload = await restartRes.json().catch(() => ({}));
         if (restartRes.ok && restartPayload.ok) {
@@ -900,7 +834,7 @@ function SystemEnvPanel({
       if (!delRes.ok) throw new Error(delPayload.error || "No se pudo quitar la key");
 
       let restartNote = "";
-      if (GATEWAY_RESTART_ENV_SERVICES.has(apiId)) {
+      if (GATEWAY_ENV_SERVICES.has(apiId)) {
         const restartRes = await fetch("/api/system/restart-gateway");
         const restartPayload = await restartRes.json().catch(() => ({}));
         if (restartRes.ok && restartPayload.ok) {

@@ -1,31 +1,33 @@
 # HEARTBEAT.md — Checks periódicos de Sancho (CMO)
 
-## Rotación (hacer 2-3 por heartbeat, rotar)
+## Reglas
+
+- Hacer solo checks ligeros. No ejecutar skills largos, Foundation, Content Engine, Lead Sync ni Sales Call Prep desde heartbeat.
+- Si no hay nada accionable: responder con `heartbeat_respond` y `notify=false`.
+- Si hay una alerta real: registrar el detalle en `memory/heartbeat-state.json` y devolver una notificación breve.
+- Rotar como máximo 2 checks por heartbeat.
 
 ### 📧 Email
 - Revisar inbox de alfonso@growth4u.io (gog gmail inbox, últimas 5)
-- Si hay algo urgente → notificar
+- Si hay algo urgente → registrar alerta
 
 ### 📅 Calendario
 - Revisar próximas 48h (gog calendar upcoming)
-- Si hay evento en <2h → notificar
+- Si hay evento en <2h → registrar alerta
 
 ### 📝 Memory Maintenance
 - Si es el primer heartbeat del día: crear memory/YYYY-MM-DD.md
 - Cada 3 días: revisar daily files recientes → actualizar MEMORY.md
 
-### 📊 Lead Sync (primer heartbeat después de 22:00)
-- Ejecutar lead-intelligence-hub para cada cliente con lead_sync_enabled
-- Sync completo: detectar nuevos leads + actualizar existentes
-- NO ejecutar en otros heartbeats del día
-- Trackear en memory/heartbeat-state.json → lead_sync.last_run
+### 📊 Lead Sync
+- Verificar que el cron `Lead Intelligence Hub — Nightly` corrió cuando correspondía.
+- Si no corrió o falló → registrar alerta.
+- NO ejecutar el skill desde heartbeat.
 
-### 📞 Sales Call Prep (primer heartbeat después de 22:30, DESPUÉS del lead sync)
-- Si hay llamadas en Calendar para mañana
-- Ejecutar sales-call-prep para generar briefing con script personalizado
-- Enviar briefing a Discord #intelligence
-- NO ejecutar en otros heartbeats del día
-- Trackear en memory/heartbeat-state.json → sales_call_prep.last_run
+### 📞 Sales Call Prep
+- Verificar que el cron `Sales Call Prep — Nightly` corrió cuando correspondía.
+- Si hay llamadas mañana y no hay briefing generado → registrar alerta.
+- NO ejecutar el skill desde heartbeat.
 
 ## Estado de checks
 Trackear en memory/heartbeat-state.json

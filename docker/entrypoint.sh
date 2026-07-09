@@ -237,6 +237,74 @@ else
   echo "[entrypoint] Config exists, skipping first-run setup."
 fi
 
+# Existing installs may already have an older openclaw.json with global
+# agents.defaults.heartbeat. Those polls wake every agent on a timer and spend a
+# model turn even when HEARTBEAT.md is empty/comment-only. Keep the global
+# heartbeat disabled, and opt in only agents whose HEARTBEAT.md contains real
+# lightweight checks.
+if [ -f "$OPENCLAW_CONFIG" ]; then
+  OPENCLAW_CONFIG="$OPENCLAW_CONFIG" python3 - <<'PY'
+import json
+import os
+
+path = os.environ["OPENCLAW_CONFIG"]
+with open(path, "r", encoding="utf-8") as fh:
+    config = json.load(fh)
+
+defaults = config.setdefault("agents", {}).setdefault("defaults", {})
+heartbeat = defaults.get("heartbeat")
+desired_defaults = {
+    "every": "0m",
+    "model": "anthropic/claude-sonnet-4-5",
+    "target": "none",
+    "lightContext": True,
+    "isolatedSession": True,
+    "skipWhenBusy": True,
+    "includeReasoning": False,
+    "suppressToolErrorWarnings": True,
+    "timeoutSeconds": 45,
+    "ackMaxChars": 300,
+}
+
+desired_agents = {
+    "sancho": {
+        "every": "6h",
+        "activeHours": {"start": "08:00", "end": "22:30"},
+        "prompt": "Read HEARTBEAT.md in the workspace. Run only lightweight checks. Do not execute long-running skills, cron jobs, Foundation, Content Engine, Lead Sync, or Sales Call Prep. If nothing needs attention, use heartbeat_respond with notify=false. If something requires attention, keep it brief and actionable.",
+    },
+    "cervantes": {
+        "every": "12h",
+        "activeHours": {"start": "09:00", "end": "19:00"},
+        "prompt": "Read HEARTBEAT.md in the workspace. Run only lightweight ops checks and memory maintenance. Do not execute development tasks automatically. If nothing needs attention, use heartbeat_respond with notify=false. If something requires attention, keep it brief and actionable.",
+    },
+}
+
+changed = False
+if heartbeat != desired_defaults:
+    defaults["heartbeat"] = desired_defaults
+    changed = True
+
+for agent in config.setdefault("agents", {}).setdefault("list", []):
+    agent_id = agent.get("id")
+    desired = desired_agents.get(agent_id)
+    if desired:
+        if agent.get("heartbeat") != desired:
+            agent["heartbeat"] = desired
+            changed = True
+    elif "heartbeat" in agent:
+        agent.pop("heartbeat", None)
+        changed = True
+
+if changed:
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(config, fh, indent=2)
+        fh.write("\n")
+    print("[entrypoint] Reconciled selective heartbeats: sancho=6h, cervantes=12h, global=0m")
+else:
+    print("[entrypoint] Selective heartbeats already reconciled")
+PY
+fi
+
 # MC Chat often asks Sancho to produce large markdown deliverables in one
 # model turn. Keep the app-server and diagnostic recovery watchdogs aligned so
 # long Opus generations are not aborted just before the final write arrives.
@@ -553,6 +621,22 @@ import json, os, sys
 f='$OPENCLAW_CONFIG'
 c=json.load(open(f))
 changed=False
+entry=c.setdefault('plugins',{}).setdefault('entries',{}).setdefault('mc-chat',{})
+if entry.get('enabled') is not True:
+    entry['enabled']=True
+    changed=True
+if not isinstance(entry.get('config'), dict):
+    entry['config']={}
+    changed=True
+hooks=entry.setdefault('hooks',{})
+if hooks.get('allowConversationAccess') is not True:
+    hooks['allowConversationAccess']=True
+    changed=True
+timeouts=hooks.setdefault('timeouts',{})
+for name in ('before_agent_run','before_tool_call','model_call_started','llm_output','agent_end'):
+    if timeouts.get(name) != 1000:
+        timeouts[name]=1000
+        changed=True
 channel=c.setdefault('channels',{}).setdefault('mc-chat',{})
 if channel.get('enabled') is not True:
     channel['enabled']=True
@@ -738,10 +822,11 @@ MC_PID=$!
 # ===========================================================
 # 7a. COST TRACKER LOOP (background)
 # ===========================================================
-# Runs cost-tracker.py every COST_TRACKER_INTERVAL seconds (default 600 = 10
-# min). The tracker scans OpenClaw session transcripts and aggregates token
-# costs into workspace-sancho/memory/costs/global.json + brand/<slug>/costs.json.
-# Used by /api/system/costs â†’ dashboard CostsCard.
+# Runs cost-tracker.py and llm-usage-tracker.py every COST_TRACKER_INTERVAL
+# seconds (default 600 = 10 min). cost-tracker.py aggregates token costs
+# reported by OpenClaw transcripts; llm-usage-tracker.py separately counts model
+# calls/tool calls per day and optionally pulls Fireworks billingUsage tokens.
+# Used by /api/system/costs and by ops diagnostics under memory/costs/.
 #
 # Previously this ran outside the container via an external cron that wasn't
 # transferable. Embedding the loop here makes the cost dashboard work on any
@@ -760,6 +845,12 @@ echo "[entrypoint] Starting cost-tracker loop (every ${COST_TRACKER_INTERVAL}s)â
       echo "[$(date -u +%FT%TZ)] cost-tracker run start"
       python3 /root/.openclaw/workspace-sancho/scripts/cost-tracker.py 2>&1
       echo "[$(date -u +%FT%TZ)] cost-tracker run done"
+      echo "[$(date -u +%FT%TZ)] llm-usage-tracker run start"
+      python3 /root/.openclaw/workspace-sancho/scripts/llm-usage-tracker.py 2>&1
+      echo "[$(date -u +%FT%TZ)] llm-usage-tracker run done"
+      echo "[$(date -u +%FT%TZ)] llm-usage-slack-report run start"
+      python3 /root/.openclaw/workspace-sancho/scripts/llm-usage-slack-report.py 2>&1
+      echo "[$(date -u +%FT%TZ)] llm-usage-slack-report run done"
     } >> "$COST_TRACKER_LOG" 2>&1 || true
     # Cap log file to last ~5MB to avoid unbounded growth in long-running
     # containers without external logrotate. Keeps the tail readable on SSH.

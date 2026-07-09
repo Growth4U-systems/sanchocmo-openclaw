@@ -10,6 +10,7 @@ import type {
   GatewayInboundPayload,
   JobCallbackPayload,
 } from "../yalc/job-callback";
+import type { SendInboundOptions } from "../runtime";
 
 const { parseCallback, buildReEngagePayload, dispatchJobResult, summarizeOutput } = (
   mod as unknown as { default: typeof mod }
@@ -146,30 +147,29 @@ interface AddMessageCall {
 
 function makeStubDeps(fetchResult: { ok: boolean; status?: number; body?: string } = { ok: true }) {
   const addMessageCalls: AddMessageCall[] = [];
-  const fetchCalls: { url: string; init: RequestInit | undefined }[] = [];
+  const sendInboundCalls: { message: GatewayInboundPayload; opts: SendInboundOptions | undefined }[] = [];
 
   const deps: DispatchDeps = {
-    getGatewayUrl: () => "http://gw.test:18789",
-    getChatSecret: () => "s3cr3t",
     addMessage: ((threadId: string, role: string, text: string, agent?: string) => {
       addMessageCalls.push({ threadId, role, text, agent });
     }) as DispatchDeps["addMessage"],
-    fetch: (async (url: string | URL, init?: RequestInit) => {
-      fetchCalls.push({ url: String(url), init });
+    sendInbound: async (message: GatewayInboundPayload, opts?: SendInboundOptions) => {
+      sendInboundCalls.push({ message, opts });
       return {
         ok: fetchResult.ok,
         status: fetchResult.status ?? (fetchResult.ok ? 200 : 500),
-        text: async () => fetchResult.body ?? "",
-      } as Response;
-    }) as DispatchDeps["fetch"],
+        raw: fetchResult.body ?? "",
+        error: fetchResult.ok ? undefined : fetchResult.body ?? "",
+      };
+    },
   };
 
-  return { deps, addMessageCalls, fetchCalls };
+  return { deps, addMessageCalls, sendInboundCalls };
 }
 
-test("dispatchJobResult posts to the gateway inbound URL with the secret header", async () => {
+test("dispatchJobResult sends an inbound runtime message with timeout", async () => {
   const payload: JobCallbackPayload = parseCallback(validBody());
-  const { deps, addMessageCalls, fetchCalls } = makeStubDeps();
+  const { deps, addMessageCalls, sendInboundCalls } = makeStubDeps();
 
   const result = await dispatchJobResult(payload, deps);
 
@@ -186,16 +186,10 @@ test("dispatchJobResult posts to the gateway inbound URL with the secret header"
   assert.ok(userMsg, "expected a user message");
   assert.equal(userMsg!.threadId, "growth4u:abc");
 
-  // One fetch to the gateway inbound endpoint.
-  assert.equal(fetchCalls.length, 1);
-  assert.equal(fetchCalls[0].url, "http://gw.test:18789/mc-chat/inbound");
-  const init = fetchCalls[0].init!;
-  assert.equal(init.method, "POST");
-  const headers = init.headers as Record<string, string>;
-  assert.equal(headers["X-MC-Secret"], "s3cr3t");
-  assert.equal(headers["Content-Type"], "application/json");
-
-  const sent = JSON.parse(String(init.body));
+  // One runtime dispatch with the same inbound payload shape.
+  assert.equal(sendInboundCalls.length, 1);
+  assert.equal(sendInboundCalls[0].opts?.timeoutMs, 15_000);
+  const sent = sendInboundCalls[0].message;
   assert.equal(sent.slug, "growth4u");
   assert.equal(sent.threadId, "growth4u:abc");
   assert.equal(sent.agent, "rocinante");
@@ -203,15 +197,15 @@ test("dispatchJobResult posts to the gateway inbound URL with the secret header"
   assert.equal(sent.isAdmin, true);
 });
 
-test("dispatchJobResult omits the secret header when no secret is configured", async () => {
+test("dispatchJobResult keeps runtime transport details out of the callback", async () => {
   const payload = parseCallback(validBody());
-  const { deps, fetchCalls } = makeStubDeps();
-  deps.getChatSecret = () => undefined;
+  const { deps, sendInboundCalls } = makeStubDeps();
 
   await dispatchJobResult(payload, deps);
 
-  const headers = (fetchCalls[0].init!.headers as Record<string, string>);
-  assert.equal(headers["X-MC-Secret"], undefined);
+  assert.equal(sendInboundCalls.length, 1);
+  assert.equal(sendInboundCalls[0].message.userId, "yalc-job-callback");
+  assert.equal(sendInboundCalls[0].message.userName, "YALC");
 });
 
 test("dispatchJobResult reports a gateway error without throwing", async () => {
@@ -224,12 +218,12 @@ test("dispatchJobResult reports a gateway error without throwing", async () => {
   assert.match(result.error ?? "", /gateway 502/);
 });
 
-test("dispatchJobResult catches a thrown fetch error", async () => {
+test("dispatchJobResult catches a thrown runtime dispatch error", async () => {
   const payload = parseCallback(validBody());
   const { deps } = makeStubDeps();
-  deps.fetch = (async () => {
+  deps.sendInbound = async () => {
     throw new Error("ECONNREFUSED");
-  }) as DispatchDeps["fetch"];
+  };
 
   const result = await dispatchJobResult(payload, deps);
   assert.equal(result.forwardedToGateway, false);

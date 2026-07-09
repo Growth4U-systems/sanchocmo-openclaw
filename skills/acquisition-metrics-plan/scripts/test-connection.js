@@ -4,9 +4,9 @@
  * Tests API connections for a client using their integrations.json + .env
  *
  * Usage:
- *   node test-connection.js --slug example --source ga4
- *   node test-connection.js --slug example --all
- *   node test-connection.js --slug example --category analytics
+ *   node test-connection.js --slug paymatico --source ga4
+ *   node test-connection.js --slug paymatico --all
+ *   node test-connection.js --slug paymatico --category analytics
  *
  * Reads:
  *   - brand/{slug}/integrations.json (config + env var names)
@@ -27,9 +27,9 @@ const WORKSPACE_DIR = process.env.MC_WORKSPACE ? path.resolve(process.env.MC_WOR
 const BRAND_DIR = WORKSPACE_DIR
   ? path.join(WORKSPACE_DIR, 'brand')
   : path.resolve(__dirname, '..', '..', '..', 'brand');
-const WORKSPACE_ENV_PATH = WORKSPACE_DIR
+const GLOBAL_ENV_PATH = WORKSPACE_DIR
   ? path.join(WORKSPACE_DIR, '..', '.env')
-  : path.resolve(BRAND_DIR, '..', '.env');
+  : path.resolve(__dirname, '..', '..', '..', '.env');
 const CATALOG_PATH = path.resolve(__dirname, '..', 'schemas', 'api-catalog.json');
 
 // --- Env loader ---
@@ -53,6 +53,50 @@ function loadEnvFile(envPath) {
   return vars;
 }
 
+function normalizeEnvPart(value) {
+  return String(value || '').replace(/-/g, '_').toUpperCase();
+}
+
+function scopedEnvName(slugUpper, apiId, fieldKey) {
+  return `${slugUpper}_${normalizeEnvPart(apiId)}_${normalizeEnvPart(fieldKey)}`;
+}
+
+function flatEnvName(apiId, fieldKey) {
+  return `${normalizeEnvPart(apiId)}_${normalizeEnvPart(fieldKey)}`;
+}
+
+function applyScopedAliases(env, slugUpper, source) {
+  const prefix = `${slugUpper}_`;
+  for (const [key, value] of Object.entries(source || {})) {
+    if (!value || !key.startsWith(prefix)) continue;
+    const flat = key.slice(prefix.length);
+    if (flat) env[flat] = value;
+  }
+}
+
+function applyCatalogFallbacks(env, slugUpper, catalog) {
+  for (const cat of Object.values(catalog.categories || {})) {
+    for (const [apiId, apiMeta] of Object.entries(cat.apis || {})) {
+      const fields = [...(apiMeta.credentials || []), ...(apiMeta.config || [])];
+      for (const field of fields) {
+        if (!field || !field.key) continue;
+        const scoped = scopedEnvName(slugUpper, apiId, field.key);
+        const flat = flatEnvName(apiId, field.key);
+        if (!env[scoped] && env[flat]) env[scoped] = env[flat];
+      }
+    }
+  }
+}
+
+function buildRuntimeEnv(slugUpper, globalEnv, brandEnv, catalog) {
+  const env = { ...process.env, ...globalEnv, ...brandEnv };
+  applyCatalogFallbacks(env, slugUpper, catalog);
+  applyScopedAliases(env, slugUpper, process.env);
+  applyScopedAliases(env, slugUpper, globalEnv);
+  applyScopedAliases(env, slugUpper, brandEnv);
+  return env;
+}
+
 // --- HTTP request helper ---
 function httpRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
@@ -71,14 +115,6 @@ function httpRequest(url, options = {}) {
     if (options.body) req.write(options.body);
     req.end();
   });
-}
-
-function firstEnv(env, keys) {
-  for (const key of keys) {
-    const value = env[key];
-    if (typeof value === 'string' && value.trim() !== '') return value.trim();
-  }
-  return '';
 }
 
 // --- System Service Account loader ---
@@ -249,32 +285,6 @@ const TESTERS = {
     }
   },
 
-  async firecrawl(config, env, slug) {
-    const apiKey = env[`${slug}_FIRECRAWL_API_KEY`] || env.FIRECRAWL_API_KEY;
-    if (!apiKey) return { ok: false, error: `Env var ${slug}_FIRECRAWL_API_KEY not set` };
-
-    try {
-      const res = await httpRequest(
-        'https://api.firecrawl.dev/v1/scrape',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url: 'https://example.com' }),
-        }
-      );
-      if (res.status === 200) return { ok: true, detail: 'Firecrawl scrape test OK' };
-      if (res.status === 401) return { ok: false, error: 'Invalid Firecrawl API key (HTTP 401)' };
-      if (res.status === 402) return { ok: false, error: 'Firecrawl account has no credits or billing is required (HTTP 402)' };
-      if (res.status === 429) return { ok: false, error: 'Firecrawl rate limit exceeded (HTTP 429)' };
-      return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
-    } catch (e) {
-      return { ok: false, error: e.message };
-    }
-  },
-
   async notion(config, env, slug) {
     const token = env[`${slug}_NOTION_API_KEY`];
     if (!token) return { ok: false, error: `Env var ${slug}_NOTION_API_KEY not set` };
@@ -347,21 +357,9 @@ const TESTERS = {
   },
 
   async ghl(config, env, slug) {
-    const apiKey = firstEnv(env, [
-      `${slug}_GHL_API_KEY`,
-      `${slug}_GHL_PRIVATE_INTEGRATION_TOKEN`,
-      `${slug}_GHL_APIKEY`,
-      `${slug}_GOHIGHLEVEL_API_KEY`,
-      'GHL_API_KEY',
-      'GHL_PRIVATE_INTEGRATION_TOKEN',
-      'GHL_APIKEY',
-      'GOHIGHLEVEL_API_KEY',
-    ]);
-    if (!apiKey) return { ok: false, error: `GHL API Key / Private Integration Token not found. Save it from Settings → APIs so ${slug}_GHL_API_KEY is created.` };
-    const locationId =
-      config.locationId ||
-      config.LOCATION_ID ||
-      firstEnv(env, [`${slug}_GHL_LOCATION_ID`, 'GHL_LOCATION_ID', 'GHL_G4U_LOCATION', 'GOHIGHLEVEL_LOCATION_ID']);
+    const apiKey = env[`${slug}_GHL_API_KEY`];
+    if (!apiKey) return { ok: false, error: `Env var ${slug}_GHL_API_KEY not set` };
+    const locationId = config.locationId || config.LOCATION_ID;
 
     try {
       // Detect API version: pit- prefix = v2 (Private Integration Token), otherwise v1
@@ -546,33 +544,6 @@ const TESTERS = {
     }
   },
 
-  async scrapecreators(config, env, slug) {
-    const key = env.SCRAPECREATORS_API_KEY;
-    if (!key) return { ok: false, error: 'Env var SCRAPECREATORS_API_KEY not set in global Sancho .env' };
-
-    try {
-      const res = await httpRequest(
-        'https://api.scrapecreators.com/v1/account/credit-balance',
-        { headers: { 'x-api-key': key } }
-      );
-      if (res.status === 200) {
-        let parsed = {};
-        try { parsed = JSON.parse(res.body || '{}'); } catch {}
-        const credits = parsed.balance ?? parsed.credits;
-        return {
-          ok: true,
-          detail: typeof credits === 'number' ? `ScrapeCreators OK · credits=${credits}` : 'ScrapeCreators OK',
-        };
-      }
-      if (res.status === 401 || res.status === 403) {
-        return { ok: false, error: 'Invalid ScrapeCreators API key or missing permissions' };
-      }
-      return { ok: false, error: `HTTP ${res.status}: ${res.body.slice(0, 200)}` };
-    } catch (e) {
-      return { ok: false, error: e.message };
-    }
-  },
-
   // Google Ads requires complex OAuth — just check if creds exist
   async google_ads(config, env, slug) {
     const refreshToken = env[`${slug}_GOOGLE_ADS_REFRESH_TOKEN`];
@@ -672,14 +643,15 @@ Categories: analytics, seo, advertising, social, outbound, crm, payments, llm_ov
     process.exit(1);
   }
 
-  // Load .env
+  const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf8'));
+
+  // Load env with Local → Global fallback. Testers may read either
+  // `SLUG_API_KEY` or flat `API_KEY`; expose both without leaking values.
+  const globalEnv = loadEnvFile(GLOBAL_ENV_PATH);
   const brandEnv = loadEnvFile(envPath);
-  const workspaceEnv = loadEnvFile(WORKSPACE_ENV_PATH);
-  const env = { ...workspaceEnv, ...process.env, ...brandEnv };
-  console.log(
-    `\n🔑 Loaded ${Object.keys(brandEnv).length} brand env vars from ${envPath}` +
-    ` and ${Object.keys(workspaceEnv).length} global env vars from ${WORKSPACE_ENV_PATH}`
-  );
+  const env = buildRuntimeEnv(slugUpper, globalEnv, brandEnv, catalog);
+  console.log(`\n🔑 Loaded ${Object.keys(brandEnv).length} local env vars from ${envPath}`);
+  console.log(`🔑 Loaded ${Object.keys(globalEnv).length} global env vars from ${GLOBAL_ENV_PATH}`);
 
   // Determine which sources to test
   let sourcesToTest = [];
@@ -700,27 +672,12 @@ Categories: analytics, seo, advertising, social, outbound, crm, payments, llm_ov
     const section = (integrations.dataSources?.[args.source]) ? 'dataSources' :
                     (integrations.systemOverrides?.[args.source]) ? 'systemOverrides' : null;
     if (!section) {
-      const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf8'));
-      const meta = findCatalogApi(catalog, args.source);
-      if (!meta?.systemOnly) {
-        console.log(`⚠️  Source "${args.source}" not found in integrations.json`);
-        process.exit(1);
-      }
-      integrations.systemOverrides = integrations.systemOverrides || {};
-      integrations.systemOverrides[args.source] = {
-        provider: meta.provider || args.source,
-        status: 'pending',
-        config: {},
-        envVars: args.source === 'scrapecreators' ? ['SCRAPECREATORS_API_KEY'] : [],
-        notes: 'System-only integration tested from global Sancho env.',
-      };
-      sourcesToTest.push({ key: args.source, section: 'systemOverrides' });
-    } else {
-      sourcesToTest.push({ key: args.source, section });
+      console.log(`⚠️  Source "${args.source}" not found in integrations.json`);
+      process.exit(1);
     }
+    sourcesToTest.push({ key: args.source, section });
   } else if (args.category) {
     // Load catalog to find sources in category
-    const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf8'));
     const cat = catalog.categories[args.category];
     if (!cat) {
       console.log(`⚠️  Unknown category: ${args.category}`);
@@ -790,13 +747,6 @@ Categories: analytics, seo, advertising, social, outbound, crm, payments, llm_ov
   console.log(`\n📊 Results: ${connected} ✅ connected | ${failed} ❌ failed | ${skipped} ⏭️ skipped\n`);
 
   if (failed > 0) process.exit(1);
-}
-
-function findCatalogApi(catalog, apiKey) {
-  for (const category of Object.values(catalog.categories || {})) {
-    if (category?.apis?.[apiKey]) return category.apis[apiKey];
-  }
-  return null;
 }
 
 function parseArgs(argv) {

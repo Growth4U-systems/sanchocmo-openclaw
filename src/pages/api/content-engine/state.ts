@@ -14,8 +14,8 @@ import fs from "fs";
 import path from "path";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
-import { cronJobsFile, cronJobsStateFile } from "@/lib/data/openclaw-paths";
 import { loadPovBankFromNeon } from "@/lib/data/pov-bank";
+import { getRuntime } from "@/lib/runtime";
 
 interface Idea {
   id: string;
@@ -120,12 +120,12 @@ async function loadPovBank(slug: string): Promise<PovBank | null> {
 }
 
 function loadJobs(): CronJob[] {
-  const data = readJSON<{ jobs?: unknown }>(cronJobsFile(), { jobs: [] });
+  const data = readJSON<{ jobs?: unknown }>(getRuntime().state.cronJobsFile(), { jobs: [] });
   return Array.isArray(data.jobs) ? data.jobs as CronJob[] : [];
 }
 
 function loadJobsState(): JobsState["jobs"] {
-  const raw = readJSON<{ jobs?: unknown }>(cronJobsStateFile(), { jobs: {} }).jobs;
+  const raw = readJSON<{ jobs?: unknown }>(getRuntime().state.cronJobsStateFile(), { jobs: {} }).jobs;
   return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as JobsState["jobs"] : {};
 }
 

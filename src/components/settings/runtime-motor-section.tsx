@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clipboard, PlugZap, RefreshCcw, Terminal } from "lucide-react";
 import { useModelCatalog, useSetAuthRoute, type CatalogProvider } from "@/hooks/useModels";
 import { RUNTIME_PROVIDERS, consoleUrlFor, consoleLabelFor, type RuntimeProvider } from "@/lib/provider-console";
 import { routeLabel, routeClass, effectiveRoute, maskAuthLabel } from "@/lib/provider-auth-display";
@@ -62,77 +61,23 @@ interface RuntimeStatus {
   warning?: string | null;
 }
 
-type CliRuntimeId = "hermes" | "claude-code" | "codex";
-
-interface RuntimeBridgeProvider {
-  id: CliRuntimeId;
-  label: string;
-  runtimeLocation: "server" | "user-device";
-  serverStartSupported: boolean;
-  defaultPort: number;
-  defaultGatewayUrl: string;
-}
-
-interface RuntimeBridgeStatus {
-  ok: boolean;
-  active: string;
-  configuredKind: CliRuntimeId | null;
-  providers: RuntimeBridgeProvider[];
-}
-
-interface PreparedRuntimeBridge {
-  provider: CliRuntimeId;
-  label: string;
-  gatewayUrl: string;
-  command: string;
-}
-
-interface StartedRuntimeBridge {
-  ok?: boolean;
-  provider: CliRuntimeId;
-  label: string;
-  gatewayUrl: string;
-  activated?: boolean;
-  started?: boolean;
-  reused?: boolean;
-  pid?: number;
-  command?: string;
-  error?: string;
-}
-
 interface CodexAuthJob {
   id: string;
   status: "running" | "succeeded" | "failed" | "cancelled";
-  provider: string;
-  url?: string;
-  code?: string;
-  expiresText?: string;
+  startedAt: string;
+  updatedAt: string;
   output: string;
-  error?: string;
+  exitCode: number | null;
+  error: string | null;
+  url: string | null;
+  code: string | null;
+  expiresText: string | null;
   restart?: {
     ok: boolean;
     method?: string;
     error?: string;
   };
 }
-
-const CLI_RUNTIME_META: Record<CliRuntimeId, { title: string; subtitle: string; account: string }> = {
-  hermes: {
-    title: "Hermes CLI",
-    subtitle: "Para correr Sancho con Hermes desde un bridge gestionado.",
-    account: "Puede arrancar junto a Sancho si Hermes está disponible en el servidor.",
-  },
-  "claude-code": {
-    title: "Claude Code",
-    subtitle: "Usa Claude Code donde está instalado: normalmente tu ordenador.",
-    account: "Sancho no lo arranca en el VPS. Necesita un conector local en tu máquina.",
-  },
-  codex: {
-    title: "Codex",
-    subtitle: "Usa Codex CLI donde está autenticado: normalmente tu ordenador.",
-    account: "Sancho no lo arranca en el VPS. Necesita un conector local en tu máquina.",
-  },
-};
 
 function serviceHasCredential(status: string | undefined): boolean {
   return status === "ok" || status === "error";
@@ -172,18 +117,6 @@ function runtimeCapabilitySummary(option: RuntimeAdapterOption): string {
   return enabled.length ? enabled.join(", ") : "sin capacidades activas";
 }
 
-function hasExternalRuntimeEnv(env: Record<string, SystemEnvField> | undefined, key: string): boolean {
-  return !!env?.[key]?.hasValue;
-}
-
-function externalRuntimeMasked(env: Record<string, SystemEnvField> | undefined, ...keys: string[]): string | null {
-  for (const key of keys) {
-    const field = env?.[key];
-    if (field?.hasValue) return field.masked || "URL guardada";
-  }
-  return null;
-}
-
 function codexAuthStatusLabel(status: CodexAuthJob["status"] | undefined): string {
   if (status === "succeeded") return "conectado";
   if (status === "failed") return "falló";
@@ -194,8 +127,20 @@ function codexAuthStatusLabel(status: CodexAuthJob["status"] | undefined): strin
 function codexAuthStatusClass(status: CodexAuthJob["status"] | undefined): string {
   if (status === "succeeded") return "border-green-200 bg-green-50 text-green-700";
   if (status === "failed") return "border-red-200 bg-red-50 text-red-700";
-  if (status === "cancelled") return "border-muted bg-muted text-muted-foreground";
-  return "border-amber-200 bg-amber-50 text-amber-800";
+  if (status === "cancelled") return "border-border bg-muted text-muted-foreground";
+  return "border-amber-200 bg-amber-50 text-amber-700";
+}
+
+function hasExternalRuntimeEnv(env: Record<string, SystemEnvField> | undefined, key: string): boolean {
+  return !!env?.[key]?.hasValue;
+}
+
+function externalRuntimeMasked(env: Record<string, SystemEnvField> | undefined, ...keys: string[]): string | null {
+  for (const key of keys) {
+    const field = env?.[key];
+    if (field?.hasValue) return field.masked || "URL guardada";
+  }
+  return null;
 }
 
 /**
@@ -221,15 +166,6 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const [runtimePending, setRuntimePending] = useState<string | null>(null);
   const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
   const [externalSaving, setExternalSaving] = useState(false);
-  const [bridgeDrafts, setBridgeDrafts] = useState<Record<CliRuntimeId, string>>({
-    hermes: "",
-    "claude-code": "",
-    codex: "",
-  });
-  const [preparedBridge, setPreparedBridge] = useState<PreparedRuntimeBridge | null>(null);
-  const [bridgePending, setBridgePending] = useState<string | null>(null);
-  const [copiedBridge, setCopiedBridge] = useState<CliRuntimeId | null>(null);
-  const [advancedBridgeOpen, setAdvancedBridgeOpen] = useState(false);
   const [externalDraft, setExternalDraft] = useState({
     protocol: "",
     gatewayUrl: "",
@@ -268,17 +204,6 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     staleTime: 10_000,
   });
 
-  const { data: runtimeBridgeStatus } = useQuery<RuntimeBridgeStatus>({
-    queryKey: ["runtime-bridge"],
-    queryFn: async () => {
-      const res = await fetch("/api/system/runtime-bridge");
-      const payload = (await res.json().catch(() => ({}))) as RuntimeBridgeStatus & { error?: string };
-      if (!res.ok) throw new Error(payload.error || "No se pudo leer el bridge de runtime");
-      return payload;
-    },
-    staleTime: 10_000,
-  });
-
   const { data: systemEnv } = useQuery<Record<string, RuntimeSystemEnvStatus>>({
     queryKey: ["runtime-system-env"],
     queryFn: async () => {
@@ -306,7 +231,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     staleTime: 10_000,
   });
 
-  const { data: codexAuthJob } = useQuery<CodexAuthJob | null>({
+  const { data: codexAuthJob, isFetching: codexAuthPolling } = useQuery<CodexAuthJob | null>({
     queryKey: ["codex-auth", codexAuthJobId],
     enabled: codexGuide && !!codexAuthJobId,
     queryFn: async () => {
@@ -315,9 +240,17 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       if (!res.ok) throw new Error(payload.error || "No se pudo leer el login de Codex");
       return payload.job ?? null;
     },
-    refetchInterval: (query) => (query.state.data?.status === "running" ? 1500 : false),
-    staleTime: 0,
+    refetchInterval: codexGuide ? 2_000 : false,
   });
+
+  useEffect(() => {
+    if (codexAuthJob?.status !== "succeeded") return;
+    void Promise.all([
+      qc.invalidateQueries({ queryKey: ["api-health"] }),
+      qc.invalidateQueries({ queryKey: ["runtime-system-env"] }),
+      qc.invalidateQueries({ queryKey: ["models-catalog"] }),
+    ]);
+  }, [codexAuthJob?.status, qc]);
 
   const rows = useMemo(
     () =>
@@ -329,52 +262,27 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         const env = systemEnv?.[rp.apiId];
         const hasSystemCredential = !!env?.hasValue || serviceHasCredential(svc?.status);
         const routeForRow = rp.route ?? (hasSystemCredential ? "env" : effRoute);
-        const present = rp.route === "subscription" ? !!auth?.hasSubscription : rp.route === "api" ? !!auth?.hasApiKey || hasSystemCredential : !!provider?.configured || hasSystemCredential;
+        const present =
+          rp.route === "subscription"
+            ? !!auth?.hasSubscription
+            : rp.route === "api"
+              ? !!auth?.hasApiKey || hasSystemCredential
+              : !!provider?.configured || hasSystemCredential;
         // A split row is "active" when the gateway's effective route matches it;
         // a single-route row is active whenever it's configured.
         const isActive = rp.route !== undefined ? rp.route === effRoute : !!provider?.configured || hasSystemCredential;
-        const label = rp.route === "subscription" ? auth?.subscriptionLabels?.[0] || auth?.effectiveLabel : rp.route === "api" ? auth?.apiKeyLabels?.[0] || auth?.effectiveLabel || env?.label : provider?.sourceLabel || env?.label;
-        const healthError = isActive && svc?.status === "error" ? svc.details?.error || svc.error || "credencial rechazada" : null;
-        return {
-          rp,
-          provider,
-          routeForRow,
-          present,
-          isActive,
-          label: label || null,
-          healthError,
-        };
+        const label =
+          rp.route === "subscription"
+            ? auth?.subscriptionLabels?.[0] || auth?.effectiveLabel
+            : rp.route === "api"
+              ? auth?.apiKeyLabels?.[0] || auth?.effectiveLabel || env?.label
+              : provider?.sourceLabel || env?.label;
+        const healthError =
+          isActive && svc?.status === "error" ? svc.details?.error || svc.error || "credencial rechazada" : null;
+        return { rp, provider, routeForRow, present, isActive, label: label || null, healthError };
       }),
     [providers, services, systemEnv],
   );
-
-  const cliRuntimeCards = useMemo(() => {
-    const providersById = new Map((runtimeBridgeStatus?.providers ?? []).map((provider) => [provider.id, provider]));
-    return (["hermes", "claude-code", "codex"] as CliRuntimeId[]).map((id) => {
-      const provider = providersById.get(id);
-      return {
-        id,
-        label: provider?.label || (id === "hermes" ? "Hermes" : id === "claude-code" ? "Claude Code" : "Codex"),
-        runtimeLocation: provider?.runtimeLocation || (id === "hermes" ? "server" : "user-device"),
-        serverStartSupported: provider?.serverStartSupported ?? id === "hermes",
-        defaultGatewayUrl: provider?.defaultGatewayUrl || (id === "hermes" ? "http://127.0.0.1:18791" : id === "claude-code" ? "http://127.0.0.1:18792" : "http://127.0.0.1:18793"),
-        ...CLI_RUNTIME_META[id],
-      };
-    });
-  }, [runtimeBridgeStatus?.providers]);
-
-  const runtimeOptionsById = useMemo(() => {
-    return new Map((runtimeStatus?.options ?? []).map((option) => [option.id, option]));
-  }, [runtimeStatus?.options]);
-
-  const openClawRuntime = runtimeOptionsById.get("openclaw");
-  const activeRuntimeOption = runtimeOptionsById.get(runtimeStatus?.active ?? "");
-  const activeCliRuntime = runtimeStatus?.active === "external-http" && runtimeBridgeStatus?.configuredKind ? cliRuntimeCards.find((card) => card.id === runtimeBridgeStatus.configuredKind) : null;
-  const activeRuntimeLabel = activeCliRuntime?.title || (runtimeStatus?.active === "openclaw" ? "OpenClaw integrado" : runtimeStatus?.active === "hermes" ? "Hermes gestionado" : activeRuntimeOption?.displayName || activeRuntimeOption?.label || "Sin verificar");
-  const activeRuntimeCopy = runtimeStatus?.active === "external-http" ? (activeCliRuntime ? `Sancho delega los mensajes nuevos en ${activeCliRuntime.title}.` : "Sancho delega los mensajes nuevos en un gateway HTTP externo.") : runtimeStatus?.active === "openclaw" ? "Sancho ejecuta los mensajes con OpenClaw integrado." : activeRuntimeOption?.description || "Verifica el estado para confirmar el runtime activo.";
-  const externalRuntimeAvailable = runtimeStatus?.options.some((option) => option.id === "external-http") ?? false;
-  const openClawActive = runtimeStatus?.active === "openclaw";
-  const openClawReady = !!openClawRuntime?.configured && !!openClawRuntime?.health.ok;
 
   const activate = (rp: RuntimeProvider) => {
     if (rp.route !== "subscription" && rp.route !== "api") return;
@@ -392,10 +300,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
           setPendingKey(null);
         },
         onError: (err: unknown) => {
-          setNotice({
-            ok: false,
-            message: err instanceof Error ? err.message : "No se pudo activar la ruta",
-          });
+          setNotice({ ok: false, message: err instanceof Error ? err.message : "No se pudo activar la ruta" });
           setPendingKey(null);
         },
       },
@@ -413,13 +318,14 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ runtime: option.id }),
       });
-      const payload = (await res.json().catch(() => ({}))) as RuntimeStatus & {
-        error?: string;
-        warning?: string | null;
-      };
+      const payload = (await res.json().catch(() => ({}))) as RuntimeStatus & { error?: string; warning?: string | null };
       if (!res.ok) throw new Error(payload.error || "No se pudo cambiar el runtime");
 
-      await Promise.all([qc.invalidateQueries({ queryKey: ["system-runtime"] }), qc.invalidateQueries({ queryKey: ["api-health"] }), qc.invalidateQueries({ queryKey: ["models-catalog"] })]);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+        qc.invalidateQueries({ queryKey: ["api-health"] }),
+        qc.invalidateQueries({ queryKey: ["models-catalog"] }),
+      ]);
       setNotice({
         ok: true,
         message: payload.warning || `${option.label} activado para los mensajes nuevos.`,
@@ -457,10 +363,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     if (externalDraft.agent.trim()) vars.SANCHO_EXTERNAL_AGENT = externalDraft.agent.trim();
 
     if (Object.keys(vars).length === 0) {
-      setNotice({
-        ok: false,
-        message: "No hay cambios para guardar en el runtime externo.",
-      });
+      setNotice({ ok: false, message: "No hay cambios para guardar en el runtime externo." });
       return;
     }
 
@@ -472,24 +375,15 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ service: "runtime-external", vars }),
       });
-      const payload = (await res.json().catch(() => ({}))) as {
-        error?: string;
-      };
+      const payload = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(payload.error || "No se pudo guardar el runtime externo");
 
-      setExternalDraft({
-        protocol: "",
-        gatewayUrl: "",
-        secret: "",
-        inboundPath: "",
-        healthPath: "",
-        agent: "",
-      });
-      await Promise.all([qc.invalidateQueries({ queryKey: ["runtime-external-env"] }), qc.invalidateQueries({ queryKey: ["system-runtime"] })]);
-      setNotice({
-        ok: true,
-        message: "Runtime externo guardado. La verificación ya se actualizó.",
-      });
+      setExternalDraft({ protocol: "", gatewayUrl: "", secret: "", inboundPath: "", healthPath: "", agent: "" });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["runtime-external-env"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+      ]);
+      setNotice({ ok: true, message: "Runtime externo guardado. La verificación ya se actualizó." });
     } catch (err) {
       setNotice({
         ok: false,
@@ -497,125 +391,6 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       });
     } finally {
       setExternalSaving(false);
-    }
-  };
-
-  const prepareCliBridge = async (provider: CliRuntimeId) => {
-    setBridgePending(`${provider}:prepare`);
-    setNotice(null);
-    try {
-      const res = await fetch("/api/system/runtime-bridge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "prepare",
-          provider,
-          gatewayUrl: bridgeDrafts[provider].trim() || undefined,
-        }),
-      });
-      const payload = (await res.json().catch(() => ({}))) as PreparedRuntimeBridge & { error?: string };
-      if (!res.ok) throw new Error(payload.error || "No se pudo preparar el bridge");
-
-      setPreparedBridge(payload);
-      await Promise.all([qc.invalidateQueries({ queryKey: ["runtime-bridge"] }), qc.invalidateQueries({ queryKey: ["runtime-external-env"] }), qc.invalidateQueries({ queryKey: ["system-runtime"] })]);
-      setNotice({
-        ok: true,
-        message: `${payload.label} preparado. Ejecuta el comando y verifica la conexión.`,
-      });
-    } catch (err) {
-      setNotice({
-        ok: false,
-        message: err instanceof Error ? err.message : "No se pudo preparar el bridge",
-      });
-    } finally {
-      setBridgePending(null);
-    }
-  };
-
-  const startCliBridge = async (provider: CliRuntimeId) => {
-    setBridgePending(`${provider}:start`);
-    setNotice(null);
-    setPreparedBridge(null);
-    try {
-      const res = await fetch("/api/system/runtime-bridge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "start",
-          provider,
-          gatewayUrl: bridgeDrafts[provider].trim() || undefined,
-          activate: true,
-        }),
-      });
-      const payload = (await res.json().catch(() => ({}))) as StartedRuntimeBridge;
-      if (!res.ok || !payload.ok) {
-        if (payload.command) {
-          setPreparedBridge({
-            provider,
-            label: payload.label || CLI_RUNTIME_META[provider].title,
-            gatewayUrl: payload.gatewayUrl || bridgeDrafts[provider] || "",
-            command: payload.command,
-          });
-        }
-        throw new Error(payload.error || "No se pudo conectar el runtime desde Sancho");
-      }
-
-      await Promise.all([qc.invalidateQueries({ queryKey: ["runtime-bridge"] }), qc.invalidateQueries({ queryKey: ["runtime-external-env"] }), qc.invalidateQueries({ queryKey: ["system-runtime"] }), qc.invalidateQueries({ queryKey: ["api-health"] })]);
-      setNotice({
-        ok: true,
-        message: `${payload.label} conectado y activado para los mensajes nuevos.`,
-      });
-    } catch (err) {
-      setNotice({
-        ok: false,
-        message: err instanceof Error ? err.message : "No se pudo conectar el runtime desde Sancho",
-      });
-    } finally {
-      setBridgePending(null);
-    }
-  };
-
-  const copyBridgeCommand = async (provider: CliRuntimeId, command: string) => {
-    try {
-      await navigator.clipboard.writeText(command);
-      setCopiedBridge(provider);
-      window.setTimeout(() => setCopiedBridge(null), 1800);
-    } catch {
-      setNotice({
-        ok: false,
-        message: "No se pudo copiar. Selecciona el comando manualmente.",
-      });
-    }
-  };
-
-  const verifyAndActivateCliBridge = async (provider: CliRuntimeId) => {
-    setBridgePending(`${provider}:verify`);
-    setNotice(null);
-    try {
-      const res = await fetch("/api/system/runtime-bridge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "verify", provider, activate: true }),
-      });
-      const payload = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        error?: string;
-        active?: string;
-      };
-      if (!res.ok || !payload.ok) throw new Error(payload.error || "El bridge todavía no responde");
-
-      await Promise.all([qc.invalidateQueries({ queryKey: ["runtime-bridge"] }), qc.invalidateQueries({ queryKey: ["system-runtime"] }), qc.invalidateQueries({ queryKey: ["api-health"] })]);
-      setNotice({
-        ok: true,
-        message: "Runtime externo activado para los mensajes nuevos.",
-      });
-    } catch (err) {
-      setNotice({
-        ok: false,
-        message: err instanceof Error ? err.message : "No se pudo activar el runtime",
-      });
-    } finally {
-      setBridgePending(null);
     }
   };
 
@@ -676,370 +451,258 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     }
   };
 
-  // Re-ping the provider and refresh the row so the renewed token is visible.
   const recheckCodex = async () => {
     setRechecking(true);
     setNotice(null);
     try {
       await fetch("/api/system/health-check-all?service=openai").catch(() => null);
-      await Promise.all([qc.invalidateQueries({ queryKey: ["api-health"] }), qc.invalidateQueries({ queryKey: ["runtime-system-env"] }), qc.invalidateQueries({ queryKey: ["models-catalog"] })]);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["api-health"] }),
+        qc.invalidateQueries({ queryKey: ["runtime-system-env"] }),
+        qc.invalidateQueries({ queryKey: ["models-catalog"] }),
+      ]);
       setNotice({ ok: true, message: "Estado del motor actualizado." });
     } finally {
       setRechecking(false);
-      setCodexGuide(false);
     }
   };
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border-2 border-ink bg-background p-4 shadow-comic-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h3 className="font-heading text-sm text-navy">Motor de Sancho</h3>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-foreground/75">Elige quién ejecuta los mensajes nuevos. Sancho conserva el contexto, las skills, los documentos y las integraciones.</p>
-          </div>
-          <button type="button" onClick={refreshRuntimeStatus} disabled={runtimeRefreshing} className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50">
-            {runtimeRefreshing ? "verificando…" : "Re-verificar"}
-          </button>
-        </div>
-
-        <div className="mt-4 rounded-lg border border-sage/50 bg-sage/10 px-3 py-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="text-[10.5px] font-bold uppercase tracking-wide text-sage">Activo ahora</div>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="font-heading text-base text-navy">{runtimeLoading && !runtimeStatus ? "Verificando..." : activeRuntimeLabel}</span>
-                {runtimeStatus && <span className="rounded-full bg-background px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{runtimeSourceLabel(runtimeStatus.source)}</span>}
-              </div>
-              <p className="mt-1 text-[12px] leading-relaxed text-foreground/75">{activeRuntimeCopy}</p>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-full border border-sage/40 bg-background px-2.5 py-1 text-[10px] font-semibold uppercase text-sage">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              mensajes nuevos
-            </div>
-          </div>
-          {runtimeStatus?.warning && <p className="mt-2 text-[11px] font-semibold text-rust">{runtimeStatus.warning}</p>}
-        </div>
-
-        <div className="mt-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h4 className="font-heading text-[13px] text-navy">Elige un motor</h4>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">OpenClaw corre integrado. Hermes puede correr junto a Sancho. Claude Code y Codex corren en el ordenador del usuario y necesitan conector local.</p>
-            </div>
-            {externalRuntimeAvailable && (
-              <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[10px] font-semibold uppercase text-muted-foreground">
-                <PlugZap className="h-3.5 w-3.5" />
-                {runtimeBridgeStatus?.configuredKind ? `${CLI_RUNTIME_META[runtimeBridgeStatus.configuredKind].title} preparado` : "sin motor externo"}
-              </div>
-            )}
-          </div>
-
-          {runtimeLoading && !runtimeStatus ? (
-            <div className="mt-3 rounded-md border border-border px-3 py-3 text-sm text-muted-foreground">Cargando motores...</div>
-          ) : (
-            <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <div className={cn("flex min-h-[170px] flex-col rounded-lg border p-3", openClawActive ? "border-sage bg-sage/10" : openClawReady ? "border-border bg-card" : "border-border bg-muted/30 text-muted-foreground")}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="font-heading text-sm text-navy">OpenClaw integrado</div>
-                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Usa OpenClaw como runtime completo incluido en Sancho.</p>
-                  </div>
-                  <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase", openClawActive ? "bg-sage/16 text-sage" : openClawReady ? "bg-navy/10 text-navy" : "bg-muted text-muted-foreground")}>
-                    {openClawActive && <CheckCircle2 className="h-3 w-3" />}
-                    {openClawActive ? "activo" : openClawReady ? "listo" : "offline"}
-                  </span>
-                </div>
-                <p className="mt-2 text-[11px] text-muted-foreground">Opción simple y estable. También sirve como fallback si un bridge externo no responde.</p>
-                <button type="button" onClick={() => openClawRuntime && selectRuntime(openClawRuntime)} disabled={!openClawRuntime || openClawActive || !openClawReady || !!runtimePending} className="mt-auto inline-flex w-fit items-center gap-1.5 rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {runtimePending === "openclaw" ? "activando..." : openClawActive ? "Activo" : "Usar OpenClaw"}
-                </button>
-              </div>
-
-              {externalRuntimeAvailable &&
-                cliRuntimeCards.map((card) => {
-                  const isConfigured = runtimeBridgeStatus?.configuredKind === card.id;
-                  const isActive = runtimeStatus?.active === "external-http" && isConfigured;
-                  const readyToActivate = isConfigured;
-                  const connecting = bridgePending === `${card.id}:start`;
-                  const preparing = bridgePending === `${card.id}:prepare`;
-                  const verifying = bridgePending === `${card.id}:verify`;
-                  const needsLocalConnector = !card.serverStartSupported && !readyToActivate;
-                  const disabled = isActive || !!bridgePending;
-                  const actionLabel = isActive ? "Activo" : verifying ? "activando..." : connecting ? "conectando..." : preparing ? "preparando..." : readyToActivate ? "Activar" : needsLocalConnector ? "Conector local" : "Conectar";
-
-                  return (
-                    <div key={card.id} className={cn("flex min-h-[170px] flex-col rounded-lg border p-3", isActive ? "border-sage bg-sage/10" : isConfigured ? "border-navy/30 bg-navy/[0.03]" : "border-border bg-card")}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="font-heading text-sm text-navy">{card.title}</div>
-                          <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">{card.subtitle}</p>
-                        </div>
-                        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase", isActive ? "bg-sage/16 text-sage" : isConfigured ? "bg-navy/10 text-navy" : "bg-muted text-muted-foreground")}>
-                          {isActive && <CheckCircle2 className="h-3 w-3" />}
-                          {isActive ? "activo" : isConfigured ? "listo" : card.runtimeLocation === "user-device" ? "local" : "nuevo"}
-                        </span>
-                      </div>
-
-                      <p className="mt-2 text-[11px] text-muted-foreground">{card.account}</p>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (readyToActivate) verifyAndActivateCliBridge(card.id);
-                          else if (card.serverStartSupported) startCliBridge(card.id);
-                          else {
-                            setAdvancedBridgeOpen(true);
-                            setNotice({
-                              ok: false,
-                              message: `${card.title} corre en el ordenador del usuario. Falta el conector local de Sancho para vincularlo sin terminal ni túneles.`,
-                            });
-                          }
-                        }}
-                        disabled={disabled}
-                        className="mt-auto inline-flex w-fit items-center gap-1.5 rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
-                      >
-                        {readyToActivate ? <RefreshCcw className="h-3.5 w-3.5" /> : <PlugZap className="h-3.5 w-3.5" />}
-                        {actionLabel}
-                      </button>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-        </div>
-
-        {externalRuntimeAvailable && (
-          <details className="mt-4 rounded-lg border border-border bg-card" open={advancedBridgeOpen} onToggle={(event) => setAdvancedBridgeOpen(event.currentTarget.open)}>
-            <summary className="cursor-pointer list-none px-3 py-2 text-[12px] font-semibold text-navy">Avanzado: bridge manual y gateway custom</summary>
-            <div className="space-y-4 border-t border-border px-3 py-3">
-              <div>
-                <h4 className="font-heading text-[13px] text-navy">Conexión local del bridge</h4>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Solo cambia esto para bridges server-side o gateways ya publicados. Claude Code y Codex locales necesitan el conector local.</p>
-                <div className="mt-3 grid gap-3 md:grid-cols-3">
-                  {cliRuntimeCards.map((card) => (
-                    <label key={card.id} className="block text-[10.5px] font-semibold uppercase text-muted-foreground">
-                      {card.title}
-                      <input
-                        value={bridgeDrafts[card.id]}
-                        onChange={(event) =>
-                          setBridgeDrafts((prev) => ({
-                            ...prev,
-                            [card.id]: event.target.value,
-                          }))
-                        }
-                        placeholder={card.serverStartSupported ? card.defaultGatewayUrl : "conector local pendiente"}
-                        disabled={!card.serverStartSupported}
-                        className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
-                      />
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-md border border-border bg-background p-3">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h4 className="font-heading text-[13px] text-navy">Modo manual</h4>
-                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Solo para bridges que Sancho puede gestionar en el servidor. Claude Code y Codex locales van por conector local.</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {cliRuntimeCards.filter((card) => card.serverStartSupported).map((card) => (
-                      <button key={card.id} type="button" onClick={() => prepareCliBridge(card.id)} disabled={!!bridgePending} className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-2.5 py-1 text-[11px] font-semibold text-navy hover:border-rust hover:text-rust disabled:opacity-50">
-                        <Terminal className="h-3.5 w-3.5" />
-                        {bridgePending === `${card.id}:prepare` ? "generando..." : card.title}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {preparedBridge && (
-                  <div className="mt-3 rounded-md border border-sage/40 bg-sage/10 p-3">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h5 className="font-heading text-[12px] text-navy">{preparedBridge.label}: comando manual</h5>
-                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">Ejecútalo solo si Sancho no puede arrancar el bridge automáticamente.</p>
-                      </div>
-                      <button type="button" onClick={() => verifyAndActivateCliBridge(preparedBridge.provider)} disabled={!!bridgePending} className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-sage hover:text-white disabled:opacity-50">
-                        {bridgePending === `${preparedBridge.provider}:verify` ? "activando..." : "Ya está corriendo"}
-                      </button>
-                    </div>
-                    <div className="mt-3 rounded-md border border-border bg-background p-2">
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <span className="text-[10.5px] font-semibold uppercase text-muted-foreground">Comando manual</span>
-                        <button type="button" onClick={() => copyBridgeCommand(preparedBridge.provider, preparedBridge.command)} className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[11px] font-semibold text-navy hover:border-rust hover:text-rust">
-                          <Clipboard className="h-3.5 w-3.5" />
-                          {copiedBridge === preparedBridge.provider ? "Copiado" : "Copiar"}
-                        </button>
-                      </div>
-                      <pre className="max-h-[120px] overflow-auto whitespace-pre-wrap break-all rounded bg-muted/30 p-2 text-[11px] leading-relaxed text-foreground">{preparedBridge.command}</pre>
-                      <p className="mt-2 text-[10.5px] text-muted-foreground">
-                        URL interna usada por Sancho: <span className="font-mono">{preparedBridge.gatewayUrl}</span>
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h4 className="font-heading text-[13px] text-navy">Adapter técnico</h4>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Solo para mantenimiento o gateways legacy. No hace falta tocarlo para Hermes CLI, Claude Code o Codex.</p>
-                <div className="mt-2 overflow-hidden rounded-md border border-border">
-                  {runtimeLoading && !runtimeStatus ? (
-                    <div className="px-3 py-3 text-sm text-muted-foreground">Cargando adapters...</div>
-                  ) : (
-                    (runtimeStatus?.options ?? []).map((option) => {
-                      const active = option.id === runtimeStatus?.active;
-                      const available = option.configured && option.health.ok;
-                      const disabled = !!runtimePending || (!active && !available);
-                      const healthDetail = runtimeHealthDetail(option);
-                      const displayName = option.id === "hermes" ? "Hermes gestionado (legacy)" : option.displayName || option.label;
-
-                      return (
-                        <button key={option.id} type="button" onClick={() => selectRuntime(option)} disabled={disabled || active} className={cn("flex w-full items-center justify-between gap-3 border-b border-border px-3 py-2 text-left text-[12px] last:border-b-0", active ? "bg-sage/10 text-foreground" : disabled ? "bg-muted/30 text-muted-foreground" : "bg-background hover:bg-rust/5")}>
-                          <span>
-                            <span className="font-semibold text-navy">{displayName}</span>
-                            <span className="ml-2 text-muted-foreground">{runtimeCapabilitySummary(option)}</span>
-                            {healthDetail && (
-                              <span className="ml-2 text-muted-foreground" title={healthDetail}>
-                                {healthDetail}
-                              </span>
-                            )}
-                          </span>
-                          <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase", active ? "bg-sage/16 text-sage" : available ? "bg-navy/10 text-navy" : "bg-muted text-muted-foreground")}>{active ? "activo" : !option.configured ? "sin config" : option.health.ok ? "usar" : "offline"}</span>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h4 className="font-heading text-[13px] text-navy">Gateway HTTP custom</h4>
-                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">Para un runtime propio o un conector local ya publicado con una URL alcanzable desde Sancho.</p>
-                  </div>
-                  <button type="button" onClick={saveExternalRuntime} disabled={externalSaving} className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50">
-                    {externalSaving ? "guardando…" : "Guardar y probar"}
-                  </button>
-                </div>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                    Protocolo
-                    <select
-                      value={externalDraft.protocol}
-                      onChange={(event) =>
-                        setExternalDraft((prev) => ({
-                          ...prev,
-                          protocol: event.target.value,
-                        }))
-                      }
-                      className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
-                    >
-                      <option value="">Default Sancho</option>
-                      <option value="sancho">Sancho HTTP async</option>
-                      <option value="mc-bridge">MC bridge / Hermes sync</option>
-                    </select>
-                  </label>
-                  <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                    Gateway URL
-                    <input
-                      value={externalDraft.gatewayUrl}
-                      onChange={(event) =>
-                        setExternalDraft((prev) => ({
-                          ...prev,
-                          gatewayUrl: event.target.value,
-                        }))
-                      }
-                      placeholder={hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_GATEWAY_URL") || hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_GATEWAY_URL") ? "Ya configurado" : "https://runtime.example.com"}
-                      className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
-                    />
-                  </label>
-                  <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                    Secret
-                    <input
-                      type="password"
-                      value={externalDraft.secret}
-                      onChange={(event) =>
-                        setExternalDraft((prev) => ({
-                          ...prev,
-                          secret: event.target.value,
-                        }))
-                      }
-                      placeholder={hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_SECRET") || hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_SECRET") ? "Ya configurado" : "secret compartido"}
-                      className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
-                    />
-                  </label>
-                  <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                    {externalDraft.protocol === "mc-bridge" ? "Chat path" : "Inbound path"}
-                    <input
-                      value={externalDraft.inboundPath}
-                      onChange={(event) =>
-                        setExternalDraft((prev) => ({
-                          ...prev,
-                          inboundPath: event.target.value,
-                        }))
-                      }
-                      placeholder={externalDraft.protocol === "mc-bridge" ? "/chat" : "/sancho/inbound"}
-                      className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
-                    />
-                  </label>
-                  <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                    Health path
-                    <input
-                      value={externalDraft.healthPath}
-                      onChange={(event) =>
-                        setExternalDraft((prev) => ({
-                          ...prev,
-                          healthPath: event.target.value,
-                        }))
-                      }
-                      placeholder={externalDraft.protocol === "mc-bridge" ? "/health" : "/healthz"}
-                      className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
-                    />
-                  </label>
-                  {externalDraft.protocol === "mc-bridge" && (
-                    <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
-                      Agent/profile
-                      <input
-                        value={externalDraft.agent}
-                        onChange={(event) =>
-                          setExternalDraft((prev) => ({
-                            ...prev,
-                            agent: event.target.value,
-                          }))
-                        }
-                        placeholder="sancho-coordinator"
-                        className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
-                      />
-                    </label>
-                  )}
-                </div>
-                {externalRuntimeMasked(externalRuntimeEnv, "SANCHO_EXTERNAL_GATEWAY_URL", "HERMES_EXTERNAL_GATEWAY_URL") && (
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    Config actual: {externalRuntimeMasked(externalRuntimeEnv, "SANCHO_EXTERNAL_GATEWAY_URL", "HERMES_EXTERNAL_GATEWAY_URL")}
-                    {hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_SECRET") || hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_SECRET") ? " · secret guardado" : ""}
-                    {hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_PROTOCOL") || hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_PROTOCOL") ? " · protocolo guardado" : ""}
-                  </p>
-                )}
-              </div>
-            </div>
-          </details>
-        )}
-      </div>
-
-      {notice && <div className={cn("rounded-lg border px-3 py-2 text-xs", notice.ok ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700")}>{notice.message}</div>}
-
       {/* The engine's auth route is global; the per-agent model lives in Models. */}
       <div className="rounded-lg border-2 border-ink bg-sage/5 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/80">
-        <strong className="font-heading text-navy">Credenciales de proveedores.</strong> Después de elegir motor, usa la tabla de abajo para decidir si cada proveedor se conecta con suscripción o API key. El modelo concreto de cada agente se elige en{" "}
-        <button type="button" onClick={() => router.replace({ query: { ...router.query, tab: "agents" } }, undefined, { shallow: true })} className="font-semibold text-rust hover:underline">
+        <strong className="font-heading text-navy">🔐 Autenticación del motor.</strong>{" "}
+        Elige la <strong>ruta</strong> (suscripción/OAuth o API key) con la que el motor se autentica ante cada
+        proveedor — es <strong>global</strong>, compartida por todos los agentes. El <strong>modelo de cada agente</strong>{" "}
+        (su «motor concreto») se elige en{" "}
+        <button
+          type="button"
+          onClick={() => router.replace({ query: { ...router.query, tab: "agents" } }, undefined, { shallow: true })}
+          className="font-semibold text-rust hover:underline"
+        >
           Agentes
         </button>
         .
       </div>
+
+      <div className="rounded-lg border-2 border-ink bg-background p-4 shadow-comic-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="font-heading text-sm text-navy">Runtime activo</h3>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-foreground/75">
+              Elige qué harness recibe los mensajes nuevos de Sancho. Esto no cambia las skills ni los documentos; cambia
+              el adapter que ejecuta la conversación.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={refreshRuntimeStatus}
+            disabled={runtimeRefreshing}
+            className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+          >
+            {runtimeRefreshing ? "verificando…" : "Re-verificar"}
+          </button>
+        </div>
+
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          {runtimeLoading && !runtimeStatus ? (
+            <div className="rounded-md border border-border px-3 py-3 text-sm text-muted-foreground">
+              cargando runtime…
+            </div>
+          ) : (
+            (runtimeStatus?.options ?? []).map((option) => {
+              const active = option.id === runtimeStatus?.active;
+              const available = option.configured && option.health.ok;
+              const disabled = !!runtimePending || (!active && !available);
+              const healthDetail = runtimeHealthDetail(option);
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => selectRuntime(option)}
+                  disabled={disabled || active}
+                  className={cn(
+                    "min-h-[148px] rounded-lg border p-3 text-left transition-colors",
+                    active
+                      ? "border-sage bg-sage/10 text-foreground"
+                      : disabled
+                        ? "border-border bg-muted/30 text-muted-foreground"
+                        : "border-border bg-card hover:border-rust hover:bg-rust/5",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-heading text-sm text-navy">{option.displayName || option.label}</div>
+                      <div className="mt-1 text-[11px] text-muted-foreground">{runtimeCapabilitySummary(option)}</div>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+                        active ? "bg-sage/16 text-sage" : available ? "bg-navy/10 text-navy" : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {active ? "activo" : !option.configured ? "sin config" : option.health.ok ? "seleccionar" : "offline"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[12px] leading-relaxed">{option.description}</p>
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{option.note}</p>
+                  <div className="mt-2 text-[11px]">
+                    <span className={cn("font-semibold", option.health.ok ? "text-sage" : "text-rust")}>
+                      {option.health.ok ? "health OK" : "health pendiente"}
+                    </span>
+                    {healthDetail && (
+                      <span className="ml-1 text-muted-foreground" title={healthDetail}>
+                        · {healthDetail}
+                      </span>
+                    )}
+                  </div>
+                  {!option.configured && option.requiredEnv?.length ? (
+                    <div className="mt-1 text-[10.5px] text-muted-foreground">
+                      requiere {option.requiredEnv.join(" o ")}
+                    </div>
+                  ) : null}
+                  {runtimePending === option.id && <div className="mt-2 text-[11px] font-semibold text-rust">activando…</div>}
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {runtimeStatus && (
+          <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
+            Actual: <strong>{runtimeStatus.active}</strong> · origen:{" "}
+            <strong>{runtimeSourceLabel(runtimeStatus.source)}</strong>. El cambio aplica a mensajes nuevos; si eliges
+            un runtime externo, el gateway compatible tiene que estar levantado.
+          </p>
+        )}
+
+        {runtimeStatus?.options.some((option) => option.id === "external-http") && (
+          <div className="mt-4 rounded-lg border border-border bg-card px-3 py-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h4 className="font-heading text-[13px] text-navy">Runtime externo compatible</h4>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                  Configuración global inicial para un gateway BYO compatible con Sancho. Puede ser Hermes, Codex CLI,
+                  Claude Code u otro runtime que exponga el contrato HTTP.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={saveExternalRuntime}
+                disabled={externalSaving}
+                className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+              >
+                {externalSaving ? "guardando…" : "Guardar y probar"}
+              </button>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                Protocolo
+                <select
+                  value={externalDraft.protocol}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, protocol: event.target.value }))}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                >
+                  <option value="">Default Sancho</option>
+                  <option value="sancho">Sancho HTTP async</option>
+                  <option value="mc-bridge">MC bridge / Hermes sync</option>
+                </select>
+              </label>
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                Gateway URL
+                <input
+                  value={externalDraft.gatewayUrl}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, gatewayUrl: event.target.value }))}
+                  placeholder={
+                    hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_GATEWAY_URL") ||
+                    hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_GATEWAY_URL")
+                      ? "Ya configurado"
+                      : "https://runtime.example.com"
+                  }
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                />
+              </label>
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                Secret
+                <input
+                  type="password"
+                  value={externalDraft.secret}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, secret: event.target.value }))}
+                  placeholder={
+                    hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_SECRET") ||
+                    hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_SECRET")
+                      ? "Ya configurado"
+                      : "secret compartido"
+                  }
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                />
+              </label>
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                {externalDraft.protocol === "mc-bridge" ? "Chat path" : "Inbound path"}
+                <input
+                  value={externalDraft.inboundPath}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, inboundPath: event.target.value }))}
+                  placeholder={externalDraft.protocol === "mc-bridge" ? "/chat" : "/sancho/inbound"}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                />
+              </label>
+              <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                Health path
+                <input
+                  value={externalDraft.healthPath}
+                  onChange={(event) => setExternalDraft((prev) => ({ ...prev, healthPath: event.target.value }))}
+                  placeholder={externalDraft.protocol === "mc-bridge" ? "/health" : "/healthz"}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                />
+              </label>
+              {externalDraft.protocol === "mc-bridge" && (
+                <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
+                  Agent/profile
+                  <input
+                    value={externalDraft.agent}
+                    onChange={(event) => setExternalDraft((prev) => ({ ...prev, agent: event.target.value }))}
+                    placeholder="sancho-coordinator"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12px] font-normal normal-case text-foreground outline-none focus:border-rust"
+                  />
+                </label>
+              )}
+            </div>
+            {externalRuntimeMasked(
+              externalRuntimeEnv,
+              "SANCHO_EXTERNAL_GATEWAY_URL",
+              "HERMES_EXTERNAL_GATEWAY_URL",
+            ) && (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Config actual:{" "}
+                {externalRuntimeMasked(
+                  externalRuntimeEnv,
+                  "SANCHO_EXTERNAL_GATEWAY_URL",
+                  "HERMES_EXTERNAL_GATEWAY_URL",
+                )}
+                {hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_SECRET") ||
+                hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_SECRET")
+                  ? " · secret guardado"
+                  : ""}
+                {hasExternalRuntimeEnv(externalRuntimeEnv, "SANCHO_EXTERNAL_PROTOCOL") ||
+                hasExternalRuntimeEnv(externalRuntimeEnv, "HERMES_EXTERNAL_PROTOCOL")
+                  ? " · protocolo guardado"
+                  : ""}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {notice && (
+        <div
+          className={cn(
+            "rounded-lg border px-3 py-2 text-xs",
+            notice.ok ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700",
+          )}
+        >
+          {notice.message}
+        </div>
+      )}
 
       {/* Auth routes table */}
       <div className="overflow-x-auto rounded-lg border-2 border-ink shadow-comic-sm">
@@ -1069,20 +732,29 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 const canPasteToken = subRow && !!rp.subscriptionTokenEnv; // Anthropic subscription
                 const rowPending = pendingKey === rp.key;
                 return (
-                  <tr key={rp.key} className={cn("border-b border-border align-middle last:border-b-0", isActive && "bg-sage/[0.06]")}>
+                  <tr
+                    key={rp.key}
+                    className={cn("border-b border-border align-middle last:border-b-0", isActive && "bg-sage/[0.06]")}
+                  >
                     {/* Provider + route */}
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2">
                         <span className="text-base">{rp.icon}</span>
                         <div>
                           <div className="font-mono font-semibold">{rp.name}</div>
-                          <div className="text-[11px] text-muted-foreground">{rp.route ? (rp.route === "subscription" ? "suscripción" : "API key") : rp.key}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {rp.route ? (rp.route === "subscription" ? "suscripción" : "API key") : rp.key}
+                          </div>
                         </div>
                       </div>
                     </td>
                     {/* Route badge */}
                     <td className="px-3 py-2.5">
-                      <span className={cn("rounded px-2 py-0.5 text-[10px] font-bold uppercase", routeClass(routeForRow, present))}>{present ? routeLabel(routeForRow) : "sin auth"}</span>
+                      <span
+                        className={cn("rounded px-2 py-0.5 text-[10px] font-bold uppercase", routeClass(routeForRow, present))}
+                      >
+                        {present ? routeLabel(routeForRow) : "sin auth"}
+                      </span>
                       {healthError && (
                         <div className="mt-1 max-w-[200px] truncate text-[10px] font-bold text-red-600" title={healthError}>
                           ⚠ credencial rechazada
@@ -1091,16 +763,35 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                     </td>
                     {/* Account / profile */}
                     <td className="px-3 py-2.5">
-                      <span className="block max-w-[230px] truncate font-mono text-[12px] text-muted-foreground" title={label || undefined}>
+                      <span
+                        className="block max-w-[230px] truncate font-mono text-[12px] text-muted-foreground"
+                        title={label || undefined}
+                      >
                         {label ? maskAuthLabel(label) : "—"}
                       </span>
                     </td>
                     {/* Status */}
-                    <td className="px-3 py-2.5 text-center">{isActive ? <span className="rounded-full bg-sage/16 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-sage">activa</span> : present ? <span className="text-[10px] font-semibold text-muted-foreground">disponible</span> : <span className="text-[10px] text-muted-foreground">sin auth</span>}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      {isActive ? (
+                        <span className="rounded-full bg-sage/16 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-sage">
+                          activa
+                        </span>
+                      ) : present ? (
+                        <span className="text-[10px] font-semibold text-muted-foreground">disponible</span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">sin auth</span>
+                      )}
+                    </td>
                     {/* Console */}
                     <td className="px-3 py-2.5 text-right">
                       {consoleUrl ? (
-                        <a href={consoleUrl} target="_blank" rel="noopener noreferrer" title={consoleHost || undefined} className="text-[11px] font-semibold text-rust underline-offset-2 hover:underline whitespace-nowrap">
+                        <a
+                          href={consoleUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={consoleHost || undefined}
+                          className="text-[11px] font-semibold text-rust underline-offset-2 hover:underline whitespace-nowrap"
+                        >
                           🔗 {consoleHost || "consola"}
                         </a>
                       ) : (
@@ -1112,22 +803,40 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                       <div className="flex items-center gap-1.5 justify-end flex-wrap">
                         {/* Activate route (Anthropic only switches at runtime) */}
                         {rp.route && !isActive && rp.runtimeSwitchable && (
-                          <button type="button" disabled={isPending || (subRow && !present)} title={subRow && !present ? "Pega el token de suscripción primero" : undefined} onClick={() => activate(rp)} className="rounded border border-ink px-2 py-0.5 text-[11px] font-semibold text-navy hover:bg-rust hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                          <button
+                            type="button"
+                            disabled={isPending || (subRow && !present)}
+                            title={subRow && !present ? "Pega el token de suscripción primero" : undefined}
+                            onClick={() => activate(rp)}
+                            className="rounded border border-ink px-2 py-0.5 text-[11px] font-semibold text-navy hover:bg-rust hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
                             {rowPending ? "activando…" : "Activar"}
                           </button>
                         )}
                         {/* Manage credential */}
                         {canPasteToken ? (
-                          <button type="button" onClick={() => onOpenSystemKey(rp.apiId, rp.name, "subscription")} className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => onOpenSystemKey(rp.apiId, rp.name, "subscription")}
+                            className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                          >
                             🎫 Pegar token
                           </button>
                         ) : !subRow ? (
-                          <button type="button" onClick={() => onOpenSystemKey(rp.apiId, rp.name, rp.route)} className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => onOpenSystemKey(rp.apiId, rp.name, rp.route)}
+                            className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                          >
                             🔑 Key sistema
                           </button>
                         ) : (
                           /* Codex subscription: start the OpenClaw pairing flow from the UI. */
-                          <button type="button" onClick={() => setCodexGuide(true)} className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => setCodexGuide(true)}
+                            className="text-[11px] px-2.5 py-1 bg-background border border-border rounded-md cursor-pointer hover:border-rust hover:bg-rust hover:text-white transition-all whitespace-nowrap"
+                          >
                             Conectar
                           </button>
                         )}
@@ -1142,73 +851,109 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       </div>
 
       <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-        <strong>Qué ves:</strong> la <strong>ruta</strong> con la que el motor se autentica en cada proveedor y la cuenta/perfil enmascarado. <strong>Activar</strong> conmuta la ruta y reinicia el gateway para aplicarla. La suscripción de Anthropic se carga con <strong>🎫 Pegar token → Guardar y activar</strong>; la de Codex se renueva desde <strong>Conectar</strong> y muestra el código de autorización en pantalla. <strong>No hay cuota/uso en vivo</strong> (OpenClaw no lo expone): la consola es para revisar límites y facturación.
+        <strong>Qué ves:</strong> la <strong>ruta</strong> con la que el motor se autentica en cada proveedor y la
+        cuenta/perfil enmascarado. <strong>Activar</strong> conmuta la ruta y reinicia el gateway para aplicarla. La
+        suscripción de Anthropic se carga con <strong>🎫 Pegar token → Guardar y activar</strong>; la de Codex se
+        renueva desde <strong>Conectar</strong> y muestra el código de autorización en pantalla. <strong>No hay cuota/uso en vivo</strong>{" "}
+        (OpenClaw no lo expone): la consola es para revisar límites y facturación.
       </p>
 
       {codexGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setCodexGuide(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setCodexGuide(false)}
+        >
           <div className="absolute inset-0 bg-black/30" />
-          <div className="relative w-full max-w-[560px] rounded-lg border-2 border-ink bg-card shadow-comic" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="relative w-full max-w-[620px] rounded-lg border-2 border-ink bg-card shadow-comic"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-ink px-4 py-3">
               <h3 className="font-heading text-base text-navy">Conectar Codex (suscripción ChatGPT)</h3>
-              <button type="button" onClick={() => setCodexGuide(false)} className="px-1 text-lg leading-none text-muted-foreground hover:text-foreground">
+              <button
+                type="button"
+                onClick={() => setCodexGuide(false)}
+                className="px-1 text-lg leading-none text-muted-foreground hover:text-foreground"
+              >
                 ✕
               </button>
             </div>
             <div className="space-y-3 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-[12.5px] leading-relaxed text-foreground/80">
-                    Pulsa iniciar. Sancho pedirá a OpenClaw un código de emparejamiento; abre la URL, escribe el
-                    código y autoriza con la cuenta ChatGPT que debe pagar Codex.
-                  </p>
-                  <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-                    El token queda guardado en el motor y se comparte con los agentes Codex. No hace falta terminal.
-                  </p>
+              <div className="rounded-lg border border-border bg-background px-3 py-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-[12.5px] leading-relaxed text-foreground/80">
+                      Pulsa iniciar. Sancho pedirá a OpenClaw un código de emparejamiento; abre la URL, escribe el
+                      código y autoriza con la cuenta ChatGPT que debe pagar Codex.
+                    </p>
+                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                      El token queda guardado en el motor y se comparte con los agentes Codex. No hace falta terminal.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={startCodexAuth}
+                    disabled={codexAuthStarting || codexAuthJob?.status === "running"}
+                    className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+                  >
+                    {codexAuthStarting || codexAuthJob?.status === "running" ? "conectando..." : "Iniciar conexión"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={startCodexAuth}
-                  disabled={codexAuthStarting || codexAuthJob?.status === "running"}
-                  className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
-                >
-                  {codexAuthStarting ? "iniciando…" : codexAuthJob ? "Reiniciar conexión" : "Iniciar conexión"}
-                </button>
               </div>
 
               {codexAuthJob && (
-                <div className="space-y-3 rounded-md border border-border bg-background p-3">
+                <div className="space-y-3 rounded-lg border border-border bg-background px-3 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className={cn("rounded-full border px-2 py-0.5 text-[10.5px] font-bold uppercase", codexAuthStatusClass(codexAuthJob.status))}>
+                    <span
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide",
+                        codexAuthStatusClass(codexAuthJob.status),
+                      )}
+                    >
                       {codexAuthStatusLabel(codexAuthJob.status)}
                     </span>
-                    <span className="font-mono text-[10.5px] text-muted-foreground">{codexAuthJob.provider}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {codexAuthPolling ? "actualizando..." : `última señal ${new Date(codexAuthJob.updatedAt).toLocaleTimeString()}`}
+                    </span>
                   </div>
 
-                  {codexAuthJob.url && (
-                    <div>
-                      <div className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">URL</div>
-                      <a href={codexAuthJob.url} target="_blank" rel="noopener noreferrer" className="break-all text-[12px] font-semibold text-rust underline-offset-2 hover:underline">
-                        {codexAuthJob.url}
-                      </a>
-                    </div>
-                  )}
-
-                  {codexAuthJob.code && (
-                    <div>
-                      <div className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">Código</div>
-                      <div className="mt-1 inline-flex items-center rounded-md border border-ink bg-card px-3 py-1 font-mono text-lg font-bold tracking-[0.12em] text-navy">
-                        {codexAuthJob.code}
+                  {(codexAuthJob.url || codexAuthJob.code) && (
+                    <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-semibold uppercase text-muted-foreground">URL</div>
+                        {codexAuthJob.url ? (
+                          <a
+                            href={codexAuthJob.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block truncate text-[12px] font-semibold text-rust underline-offset-2 hover:underline"
+                            title={codexAuthJob.url}
+                          >
+                            {codexAuthJob.url}
+                          </a>
+                        ) : (
+                          <span className="text-[12px] text-muted-foreground">esperando URL...</span>
+                        )}
                       </div>
-                      {codexAuthJob.expiresText && (
-                        <div className="mt-1 text-[11px] text-muted-foreground">caduca en {codexAuthJob.expiresText}</div>
+                      {codexAuthJob.url && (
+                        <a
+                          href={codexAuthJob.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-fit rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white"
+                        >
+                          Abrir autorización
+                        </a>
                       )}
-                    </div>
-                  )}
-
-                  {codexAuthJob.error && (
-                    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-700">
-                      {codexAuthJob.error}
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase text-muted-foreground">Código</div>
+                        <div className="mt-1 rounded-md border border-border bg-muted/35 px-3 py-2 font-mono text-lg font-bold tracking-wide text-navy">
+                          {codexAuthJob.code || "esperando..."}
+                        </div>
+                        {codexAuthJob.expiresText && (
+                          <div className="mt-1 text-[11px] text-muted-foreground">caduca en {codexAuthJob.expiresText}</div>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -1220,7 +965,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                   )}
 
                   <div>
-                    <label className="text-[10.5px] font-bold uppercase tracking-wide text-muted-foreground">
+                    <label className="block text-[11px] font-semibold uppercase text-muted-foreground">
                       Redirect manual
                       <textarea
                         value={codexAuthInput}
@@ -1237,7 +982,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                           disabled={codexAuthCancelling}
                           className="rounded border border-border px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:border-ink hover:text-navy disabled:opacity-50"
                         >
-                          {codexAuthCancelling ? "cancelando…" : "Cancelar"}
+                          {codexAuthCancelling ? "cancelando..." : "Cancelar"}
                         </button>
                       )}
                       <button
@@ -1246,7 +991,7 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                         disabled={!codexAuthInput.trim() || codexAuthSubmitting || codexAuthJob.status !== "running"}
                         className="rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
                       >
-                        {codexAuthSubmitting ? "enviando…" : "Enviar redirect"}
+                        {codexAuthSubmitting ? "enviando..." : "Enviar redirect"}
                       </button>
                     </div>
                   </div>
@@ -1258,8 +1003,13 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
               )}
 
               <div className="flex items-center justify-end gap-2">
-                <button type="button" onClick={recheckCodex} disabled={rechecking} className="rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50">
-                  {rechecking ? "verificando…" : "Re-verificar"}
+                <button
+                  type="button"
+                  onClick={recheckCodex}
+                  disabled={rechecking}
+                  className="rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+                >
+                  {rechecking ? "verificando..." : "Re-verificar estado"}
                 </button>
               </div>
             </div>
