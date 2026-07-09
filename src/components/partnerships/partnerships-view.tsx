@@ -97,7 +97,9 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const payload = text ? JSON.parse(text) : {};
   if (!res.ok) {
     const message =
-      payload && typeof payload === "object" && "error" in payload
+      payload && typeof payload === "object" && "message" in payload
+        ? String((payload as { message: unknown }).message)
+        : payload && typeof payload === "object" && "error" in payload
         ? String((payload as { error: unknown }).error)
         : `Request failed (${res.status})`;
     throw new Error(message);
