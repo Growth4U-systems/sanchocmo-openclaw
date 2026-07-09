@@ -62,6 +62,7 @@ interface RuntimeStatus {
 }
 
 type CliRuntimeProviderId = "hermes" | "claude-code" | "codex";
+type LocalRuntimeProviderId = Extract<CliRuntimeProviderId, "claude-code" | "codex">;
 
 interface RuntimeBridgeProvider {
   id: CliRuntimeProviderId;
@@ -76,6 +77,43 @@ interface RuntimeBridgeStatus {
   active: string;
   configuredKind?: CliRuntimeProviderId | null;
   providers: RuntimeBridgeProvider[];
+}
+
+interface LocalConnectorRuntimeStatus {
+  ok: boolean;
+  command?: string;
+  version?: string;
+  path?: string;
+  error?: string;
+}
+
+interface LocalConnectorSession {
+  id: string;
+  provider: LocalRuntimeProviderId;
+  pairingCode: string;
+  status: "pending" | "connected" | "expired" | "revoked";
+  createdAt: string;
+  expiresAt: string;
+  connectedAt?: string;
+  lastSeenAt?: string;
+  activatedAt?: string;
+  deviceName?: string;
+  runtime?: LocalConnectorRuntimeStatus;
+  online: boolean;
+}
+
+interface LocalConnectorStatus {
+  ok: boolean;
+  session?: LocalConnectorSession | null;
+  sessions: LocalConnectorSession[];
+}
+
+interface LocalPairingStart {
+  ok?: boolean;
+  error?: string;
+  command?: string;
+  session?: LocalConnectorSession;
+  label?: string;
 }
 
 interface CodexAuthJob {
@@ -257,6 +295,32 @@ function externalRuntimeMasked(env: Record<string, SystemEnvField> | undefined, 
   return null;
 }
 
+function localRuntimeLabel(provider: LocalRuntimeProviderId): string {
+  return provider === "claude-code" ? "Claude Code" : "Codex";
+}
+
+function latestLocalConnectorSession(
+  status: LocalConnectorStatus | undefined,
+  provider: LocalRuntimeProviderId,
+): LocalConnectorSession | null {
+  const sessions = status?.sessions?.filter((session) => session.provider === provider) ?? [];
+  return sessions.find((session) => session.online) || sessions.find((session) => session.status === "connected") || sessions[0] || null;
+}
+
+function localConnectorDetail(session: LocalConnectorSession | null, fallback: string): string {
+  if (!session) return fallback;
+  if (session.runtime?.ok === false) {
+    return `${session.runtime.command || "El CLI local"} no está disponible${session.runtime.error ? `: ${session.runtime.error}` : ""}.`;
+  }
+  if (session.online) {
+    return `Conectado en ${session.deviceName || "este ordenador"}${session.runtime?.version ? ` · ${session.runtime.version}` : ""}.`;
+  }
+  if (session.status === "connected") return "El conector estuvo conectado, pero ahora no está respondiendo.";
+  if (session.status === "pending") return `Esperando conexión local · código ${session.pairingCode}.`;
+  if (session.status === "expired") return "La conexión caducó. Crea una nueva para este ordenador.";
+  return fallback;
+}
+
 /**
  * Engine auth routes (global). Each provider that supports a subscription shows
  * two rows (Suscripción / API Key); you activate one for the whole motor. The
@@ -280,7 +344,12 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const [runtimePending, setRuntimePending] = useState<string | null>(null);
   const [runtimeRefreshing, setRuntimeRefreshing] = useState(false);
   const [bridgePending, setBridgePending] = useState<CliRuntimeProviderId | null>(null);
-  const [localRuntimeGuide, setLocalRuntimeGuide] = useState<CliRuntimeProviderId | null>(null);
+  const [localRuntimeGuide, setLocalRuntimeGuide] = useState<LocalRuntimeProviderId | null>(null);
+  const [localPairingSessionId, setLocalPairingSessionId] = useState<string | null>(null);
+  const [localPairingCommand, setLocalPairingCommand] = useState<string | null>(null);
+  const [localPairingStarting, setLocalPairingStarting] = useState<LocalRuntimeProviderId | null>(null);
+  const [localRuntimeActivating, setLocalRuntimeActivating] = useState<LocalRuntimeProviderId | null>(null);
+  const [localCommandCopied, setLocalCommandCopied] = useState(false);
   const [runtimeAdvancedOpen, setRuntimeAdvancedOpen] = useState(false);
   const [externalSaving, setExternalSaving] = useState(false);
   const [externalDraft, setExternalDraft] = useState({
@@ -332,6 +401,22 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     staleTime: 10_000,
   });
 
+  const { data: localConnectorStatus } = useQuery<LocalConnectorStatus>({
+    queryKey: ["system-runtime-local-connector", localRuntimeGuide, localPairingSessionId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (localRuntimeGuide) params.set("provider", localRuntimeGuide);
+      if (localPairingSessionId) params.set("session", localPairingSessionId);
+      const qs = params.toString();
+      const res = await fetch(`/api/system/runtime-local-connector${qs ? `?${qs}` : ""}`);
+      const payload = (await res.json().catch(() => ({}))) as LocalConnectorStatus & { error?: string };
+      if (!res.ok) throw new Error(payload.error || "No se pudo leer el conector local");
+      return payload;
+    },
+    refetchInterval: localRuntimeGuide ? 2_000 : 8_000,
+    staleTime: 2_000,
+  });
+
   const { data: systemEnv } = useQuery<Record<string, RuntimeSystemEnvStatus>>({
     queryKey: ["runtime-system-env"],
     queryFn: async () => {
@@ -379,6 +464,20 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
       qc.invalidateQueries({ queryKey: ["models-catalog"] }),
     ]);
   }, [codexAuthJob?.status, qc]);
+
+  useEffect(() => {
+    if (!localCommandCopied) return;
+    const timer = window.setTimeout(() => setLocalCommandCopied(false), 1800);
+    return () => window.clearTimeout(timer);
+  }, [localCommandCopied]);
+
+  useEffect(() => {
+    if (!localConnectorStatus?.sessions.some((session) => session.online)) return;
+    void Promise.all([
+      qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+      qc.invalidateQueries({ queryKey: ["system-runtime-bridge"] }),
+    ]);
+  }, [localConnectorStatus?.sessions, qc]);
 
   const rows = useMemo(
     () =>
@@ -434,6 +533,12 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const codexRuntimeActive = runtimeStatus?.active === "external-http" && configuredBridgeKind === "codex";
   const customRuntimeActive =
     runtimeStatus?.active === "external-http" && configuredBridgeKind !== "hermes" && configuredBridgeKind !== "claude-code" && configuredBridgeKind !== "codex";
+  const claudeCodeLocalSession = latestLocalConnectorSession(localConnectorStatus, "claude-code");
+  const codexLocalSession = latestLocalConnectorSession(localConnectorStatus, "codex");
+  const selectedLocalSession =
+    localConnectorStatus?.session ||
+    (localRuntimeGuide ? latestLocalConnectorSession(localConnectorStatus, localRuntimeGuide) : null);
+  const selectedLocalRuntimeLabel = localRuntimeGuide ? localRuntimeLabel(localRuntimeGuide) : "";
 
   const activate = (rp: RuntimeProvider) => {
     if (rp.route !== "subscription" && rp.route !== "api") return;
@@ -530,12 +635,88 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
     }
   };
 
+  const startLocalRuntimePairing = async (provider: LocalRuntimeProviderId) => {
+    setLocalRuntimeGuide(provider);
+    setLocalPairingStarting(provider);
+    setLocalPairingCommand(null);
+    setLocalPairingSessionId(null);
+    setLocalCommandCopied(false);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/system/runtime-local-connector", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", provider }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as LocalPairingStart;
+      if (!res.ok || !payload.session || !payload.command) {
+        throw new Error(payload.error || "No se pudo crear la conexión local");
+      }
+      setLocalPairingSessionId(payload.session.id);
+      setLocalPairingCommand(payload.command);
+      await qc.invalidateQueries({ queryKey: ["system-runtime-local-connector"] });
+    } catch (err) {
+      setNotice({
+        ok: false,
+        message: err instanceof Error ? err.message : "No se pudo crear la conexión local",
+      });
+    } finally {
+      setLocalPairingStarting(null);
+    }
+  };
+
+  const activateLocalRuntime = async (session: LocalConnectorSession) => {
+    setLocalRuntimeActivating(session.provider);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/system/runtime-local-connector", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "activate", sessionId: session.id }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || payload.ok === false) throw new Error(payload.error || "No se pudo activar el runtime local");
+
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["system-runtime"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime-bridge"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime-local-connector"] }),
+        qc.invalidateQueries({ queryKey: ["runtime-external-env"] }),
+        qc.invalidateQueries({ queryKey: ["api-health"] }),
+        qc.invalidateQueries({ queryKey: ["models-catalog"] }),
+      ]);
+      setNotice({
+        ok: true,
+        message: `${localRuntimeLabel(session.provider)} activado para los mensajes nuevos.`,
+      });
+      setLocalRuntimeGuide(null);
+    } catch (err) {
+      setNotice({
+        ok: false,
+        message: err instanceof Error ? err.message : "No se pudo activar el runtime local",
+      });
+    } finally {
+      setLocalRuntimeActivating(null);
+    }
+  };
+
+  const copyLocalPairingCommand = async () => {
+    if (!localPairingCommand) return;
+    try {
+      await navigator.clipboard.writeText(localPairingCommand);
+      setLocalCommandCopied(true);
+    } catch {
+      setNotice({ ok: false, message: "No se pudo copiar el comando automáticamente." });
+    }
+  };
+
   const refreshRuntimeStatus = async () => {
     setRuntimeRefreshing(true);
     try {
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["system-runtime"] }),
         qc.invalidateQueries({ queryKey: ["system-runtime-bridge"] }),
+        qc.invalidateQueries({ queryKey: ["system-runtime-local-connector"] }),
       ]);
       setNotice({ ok: true, message: "Estado del runtime actualizado." });
     } finally {
@@ -734,47 +915,53 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
 
               <RuntimeChoiceCard
                 title="Claude Code"
-                subtitle="Corre en el ordenador del usuario"
-                description="Para usarlo como runtime, Sancho necesita un conector local que empareje este navegador con Claude Code."
-                status={claudeCodeActive ? "activo" : configuredBridgeKind === "claude-code" && externalReady ? "listo" : "conector local"}
-                tone={claudeCodeActive ? "active" : configuredBridgeKind === "claude-code" && externalReady ? "ready" : "pending"}
-                detail="No se instala en el VPS. Cuando el conector local esté listo, se empareja desde aquí."
+                subtitle="En tu ordenador"
+                description="Usa la instalación de Claude Code de la persona que conecta este runtime."
+                status={claudeCodeActive ? "activo" : claudeCodeLocalSession?.online ? "conectado" : "conectar"}
+                tone={claudeCodeActive ? "active" : claudeCodeLocalSession?.online ? "ready" : "pending"}
+                detail={localConnectorDetail(claudeCodeLocalSession, "Sancho genera un comando seguro y espera a este ordenador.")}
                 actionLabel={
                   claudeCodeActive
                     ? "Activo"
-                    : configuredBridgeKind === "claude-code" && externalReady
+                    : claudeCodeLocalSession?.online
                       ? "Usar Claude Code"
-                      : "Ver conexión"
+                      : "Conectar"
                 }
-                actionDisabled={claudeCodeActive || !!runtimePending}
-                actionBusy={runtimePending === "external-http" && configuredBridgeKind === "claude-code"}
+                actionDisabled={claudeCodeActive || !!runtimePending || !!localRuntimeActivating}
+                actionBusy={localPairingStarting === "claude-code" || localRuntimeActivating === "claude-code"}
                 onAction={() => {
+                  if (claudeCodeLocalSession?.online) {
+                    void activateLocalRuntime(claudeCodeLocalSession);
+                    return;
+                  }
                   if (configuredBridgeKind === "claude-code" && externalReady && externalHttpRuntime) {
                     void selectRuntime(externalHttpRuntime);
                     return;
                   }
-                  setLocalRuntimeGuide("claude-code");
+                  void startLocalRuntimePairing("claude-code");
                 }}
               />
 
               <RuntimeChoiceCard
                 title="Codex"
-                subtitle="Corre en el ordenador del usuario"
-                description="La integración de runtime usa el bridge de Codex. Las credenciales de Codex se gestionan aparte, debajo."
-                status={codexRuntimeActive ? "activo" : configuredBridgeKind === "codex" && externalReady ? "listo" : "conector local"}
-                tone={codexRuntimeActive ? "active" : configuredBridgeKind === "codex" && externalReady ? "ready" : "pending"}
-                detail="No es lo mismo que conectar la suscripción Codex; esto cambia quién ejecuta los mensajes."
-                actionLabel={
-                  codexRuntimeActive ? "Activo" : configuredBridgeKind === "codex" && externalReady ? "Usar Codex" : "Ver conexión"
-                }
-                actionDisabled={codexRuntimeActive || !!runtimePending}
-                actionBusy={runtimePending === "external-http" && configuredBridgeKind === "codex"}
+                subtitle="En tu ordenador"
+                description="Usa el CLI de Codex local como runtime de Sancho para los mensajes nuevos."
+                status={codexRuntimeActive ? "activo" : codexLocalSession?.online ? "conectado" : "conectar"}
+                tone={codexRuntimeActive ? "active" : codexLocalSession?.online ? "ready" : "pending"}
+                detail={localConnectorDetail(codexLocalSession, "La autenticación de Codex se gestiona aparte; esto conecta el runtime local.")}
+                actionLabel={codexRuntimeActive ? "Activo" : codexLocalSession?.online ? "Usar Codex" : "Conectar"}
+                actionDisabled={codexRuntimeActive || !!runtimePending || !!localRuntimeActivating}
+                actionBusy={localPairingStarting === "codex" || localRuntimeActivating === "codex"}
                 onAction={() => {
+                  if (codexLocalSession?.online) {
+                    void activateLocalRuntime(codexLocalSession);
+                    return;
+                  }
                   if (configuredBridgeKind === "codex" && externalReady && externalHttpRuntime) {
                     void selectRuntime(externalHttpRuntime);
                     return;
                   }
-                  setLocalRuntimeGuide("codex");
+                  void startLocalRuntimePairing("codex");
                 }}
               />
 
@@ -805,32 +992,115 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
         </div>
 
         {localRuntimeGuide && (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-[12.5px] leading-relaxed text-amber-900">
-            <div className="font-heading text-sm text-amber-950">
-              {localRuntimeGuide === "claude-code" ? "Claude Code necesita conector local" : "Codex necesita conector local"}
+          <div className="mt-4 rounded-lg border border-navy/20 bg-navy/[0.03] px-3 py-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="font-heading text-sm text-navy">Conectar {selectedLocalRuntimeLabel}</div>
+                <p className="mt-1 max-w-2xl text-[12.5px] leading-relaxed text-foreground/75">
+                  Este runtime corre en el ordenador de la persona que lo conecta. Sancho queda esperando una conexión
+                  saliente, sin bridge URL ni túnel.
+                </p>
+              </div>
+              <span
+                className={cn(
+                  "w-fit rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+                  selectedLocalSession?.online
+                    ? "bg-sage/16 text-sage"
+                    : selectedLocalSession?.status === "expired"
+                      ? "bg-red-50 text-red-700"
+                      : "bg-amber-50 text-amber-700",
+                )}
+              >
+                {selectedLocalSession?.online
+                  ? "conectado"
+                  : selectedLocalSession?.status === "expired"
+                    ? "caducado"
+                    : "esperando"}
+              </span>
             </div>
-            <p className="mt-1">
-              Este runtime vive en el ordenador de la persona que lo usa, no en el VPS de Sancho. Para hacerlo fácil desde
-              la UI falta el emparejador local: Sancho genera el vínculo, el usuario autoriza en su ordenador y la pantalla
-              queda activa sin tocar URLs.
-            </p>
+
+            <div className="mt-3 grid gap-2 md:grid-cols-3">
+              {["Abrir Terminal", "Pegar comando", "Volver a Sancho"].map((label, index) => (
+                <div key={label} className="rounded-md border border-border bg-background px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy text-[10px] font-bold text-white">
+                      {index + 1}
+                    </span>
+                    <span className="font-heading text-[12px] text-navy">{label}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {selectedLocalSession && (
+              <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
+                {localConnectorDetail(selectedLocalSession, `Esperando ${selectedLocalRuntimeLabel}.`)}
+              </p>
+            )}
+
+            {localPairingCommand ? (
+              <div className="mt-3 rounded-md border border-border bg-foreground/[0.04] p-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <code className="max-h-24 flex-1 overflow-auto break-all text-[11.5px] leading-relaxed text-foreground">
+                    {localPairingCommand}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={copyLocalPairingCommand}
+                    className="w-fit shrink-0 rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white"
+                  >
+                    {localCommandCopied ? "Copiado" : "Copiar"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void startLocalRuntimePairing(localRuntimeGuide)}
+                disabled={localPairingStarting === localRuntimeGuide}
+                className="mt-3 rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+              >
+                {localPairingStarting === localRuntimeGuide ? "creando..." : "Crear conexión"}
+              </button>
+            )}
+
             <div className="mt-3 flex flex-wrap gap-2">
+              {selectedLocalSession?.online && (
+                <button
+                  type="button"
+                  onClick={() => void activateLocalRuntime(selectedLocalSession)}
+                  disabled={localRuntimeActivating === selectedLocalSession.provider}
+                  className="rounded border border-ink bg-sage/10 px-3 py-1.5 text-[12px] font-semibold text-sage transition-colors hover:bg-sage hover:text-white disabled:opacity-50"
+                >
+                  {localRuntimeActivating === selectedLocalSession.provider ? "activando..." : `Usar ${selectedLocalRuntimeLabel}`}
+                </button>
+              )}
+              {selectedLocalSession?.status === "expired" && (
+                <button
+                  type="button"
+                  onClick={() => void startLocalRuntimePairing(localRuntimeGuide)}
+                  disabled={localPairingStarting === localRuntimeGuide}
+                  className="rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white disabled:opacity-50"
+                >
+                  Nueva conexión
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
                   setRuntimeAdvancedOpen(true);
                   setLocalRuntimeGuide(null);
                 }}
-                className="rounded border border-ink px-3 py-1.5 text-[12px] font-semibold text-navy transition-colors hover:bg-rust hover:text-white"
+                className="rounded border border-border px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:border-ink hover:text-navy"
               >
-                Tengo un endpoint manual
+                Endpoint manual
               </button>
               <button
                 type="button"
                 onClick={() => setLocalRuntimeGuide(null)}
-                className="rounded border border-amber-300 px-3 py-1.5 text-[12px] font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+                className="rounded border border-border px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:border-ink hover:text-navy"
               >
-                Entendido
+                Cerrar
               </button>
             </div>
           </div>
