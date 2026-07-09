@@ -5,7 +5,7 @@ import { getRuntime } from "@/lib/runtime";
 /**
  * GET /api/system/restart-gateway
  * Ported from mc-server.js:8678
- * Restarts the active runtime gateway when the selected runtime supports it.
+ * Restarts the OpenClaw gateway
  */
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -18,17 +18,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   res.setHeader("Access-Control-Allow-Origin", "*");
-  const runtime = getRuntime();
-  try {
-    const result = await runtime.lifecycle.restart();
-    res.status(200).json({ runtime: runtime.id, ...((result as Record<string, unknown>) || {}) });
-  } catch (e) {
-    return res.status(501).json({
-      ok: false,
-      runtime: runtime.id,
-      error: e instanceof Error ? e.message : String(e),
-    });
-  }
+  const result = await getRuntime().lifecycle.restart();
+  res.status(200).json(result);
 }
 
 export default compose(withErrorHandler, withAuth)(handler);

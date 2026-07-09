@@ -9,19 +9,16 @@
  * so the agent can tell the user the result ("✅ YALC terminó: 132 leads…").
  *
  * Modeled on src/lib/data/feedback-triage-trigger.ts: addMessage a short system
- * note, then POST to `${getGatewayUrl()}/mc-chat/inbound` with `X-MC-Secret`,
- * `threadState:"continue"`, `isAdmin:true`, and the agent/slug/threadId taken
- * from the callbackContext (NOT hardcoded — the agent owns the thread).
+ * note, then send an inbound runtime message with `threadState:"continue"`,
+ * `isAdmin:true`, and the agent/slug/threadId taken from the callbackContext
+ * (NOT hardcoded — the agent owns the thread).
  *
  * `dispatchJobResult` keeps its side-effecting deps injectable so the unit test
- * can stub fetch / gateway URL / chat secret / addMessage.
+ * can stub runtime dispatch / addMessage.
  */
 
-import {
-  addMessage as defaultAddMessage,
-  getChatSecret as defaultGetChatSecret,
-  getGatewayUrl as defaultGetGatewayUrl,
-} from "@/lib/data/mc-chat";
+import { addMessage as defaultAddMessage } from "@/lib/data/mc-chat";
+import { getRuntime, type InboundMessage, type SendInboundOptions, type SendInboundResult } from "@/lib/runtime";
 
 /** Shape of the opaque context the YALC-calling skill set when starting the job. */
 export interface JobCallbackContext {
@@ -123,14 +120,9 @@ export function summarizeOutput(output: unknown): string {
   return String(output);
 }
 
-/** The gateway inbound payload shape we POST to re-engage the agent. */
-export interface GatewayInboundPayload {
-  slug: string;
-  threadId: string;
+/** The runtime inbound payload shape we send to re-engage the agent. */
+export interface GatewayInboundPayload extends InboundMessage {
   threadName: string;
-  text: string;
-  userId: string;
-  userName: string;
   agent: string;
   threadState: "continue";
   isAdmin: true;
@@ -184,16 +176,15 @@ export function buildReEngagePayload(payload: JobCallbackPayload): GatewayInboun
 
 /** Injectable dependencies so the orchestration is unit-testable. */
 export interface DispatchDeps {
-  fetch: typeof fetch;
-  getGatewayUrl: () => string;
-  getChatSecret: () => string | undefined;
+  sendInbound: (
+    message: GatewayInboundPayload,
+    opts?: SendInboundOptions,
+  ) => Promise<SendInboundResult>;
   addMessage: typeof defaultAddMessage;
 }
 
 const defaultDeps: DispatchDeps = {
-  fetch: (...args: Parameters<typeof fetch>) => fetch(...args),
-  getGatewayUrl: defaultGetGatewayUrl,
-  getChatSecret: defaultGetChatSecret,
+  sendInbound: (message, opts) => getRuntime().messaging.sendInbound(message, opts),
   addMessage: defaultAddMessage,
 };
 
@@ -214,7 +205,7 @@ export async function dispatchJobResult(
   payload: JobCallbackPayload,
   deps: Partial<DispatchDeps> = {},
 ): Promise<DispatchResult> {
-  const { fetch: fetchImpl, getGatewayUrl, getChatSecret, addMessage } = { ...defaultDeps, ...deps };
+  const { sendInbound, addMessage } = { ...defaultDeps, ...deps };
   const { threadId, agent } = payload.callbackContext;
   const succeeded = payload.event === "job.completed";
 
@@ -228,27 +219,17 @@ export async function dispatchJobResult(
   // self-contained, exactly like the triage trigger does.
   addMessage(threadId, "user", inbound.text, agent);
 
-  const secret = getChatSecret();
   try {
-    const res = await fetchImpl(`${getGatewayUrl()}/mc-chat/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(secret ? { "X-MC-Secret": secret } : {}),
-      },
-      body: JSON.stringify(inbound),
-      // Never hang the callback HTTP handler on a slow/down gateway (mirrors
-      // the 15s timeout used by triggerFeedbackTriage).
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
+    // Never hang the callback HTTP handler on a slow/down runtime (mirrors
+    // the 15s timeout used by triggerFeedbackTriage).
+    const result = await sendInbound(inbound, { timeoutMs: 15_000 });
+    if (!result.ok) {
       return {
         forwardedToGateway: false,
         threadId,
         agent,
         jobId: payload.jobId,
-        error: `gateway ${res.status}: ${text}`,
+        error: `gateway ${result.status}: ${result.raw}`,
       };
     }
     return { forwardedToGateway: true, threadId, agent, jobId: payload.jobId };

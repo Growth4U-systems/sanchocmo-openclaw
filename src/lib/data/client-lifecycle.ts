@@ -20,7 +20,7 @@ import {
   povUpdateProposals,
 } from "@/db/schema";
 import { BASE, brandDir, EXEC_PATH, mcDataFile } from "@/lib/data/paths";
-import { cronJobsFile } from "@/lib/data/openclaw-paths";
+import { getRuntime } from "@/lib/runtime";
 
 const ARCHIVE_ROOT = path.join(BASE, "brand", "_archived");
 const COSTS_DAILY_PATH = path.join(BASE, "costs-daily.json");
@@ -377,7 +377,7 @@ function cronReferencesSlug(job: CronJobLike, slug: string, name?: string): bool
  * downstream cleanup steps run.
  */
 export function disableClientCrons(slug: string, name?: string): DisableClientCronsResult {
-  const jobsPath = cronJobsFile();
+  const jobsPath = getRuntime().state.cronJobsFile();
   const result: DisableClientCronsResult = { disabled: [], errors: [] };
 
   if (!fs.existsSync(jobsPath)) return result;

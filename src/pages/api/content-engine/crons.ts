@@ -11,8 +11,8 @@ import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { cronJobsFile, cronJobsStateFile } from "@/lib/data/openclaw-paths";
-import { getRunningCronJobs } from "@/lib/data/openclaw-sessions";
+import { getRuntime } from "@/lib/runtime";
+import { getLiveStatuses } from "@/lib/data/openclaw-crons";
 
 const EXEC_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin";
 
@@ -28,7 +28,7 @@ interface CronJob {
 }
 
 function loadJobs(): { version: number; jobs: CronJob[] } {
-  const file = cronJobsFile();
+  const file = getRuntime().state.cronJobsFile();
   if (!fs.existsSync(file)) return { version: 1, jobs: [] };
   try {
     const parsed = JSON.parse(fs.readFileSync(file, "utf-8")) as { version?: unknown; jobs?: unknown };
@@ -50,7 +50,7 @@ function loadJobs(): { version: number; jobs: CronJob[] } {
 }
 
 function saveJobs(data: { version: number; jobs: CronJob[] }) {
-  fs.writeFileSync(cronJobsFile(), JSON.stringify(data, null, 2));
+  fs.writeFileSync(getRuntime().state.cronJobsFile(), JSON.stringify(data, null, 2));
 }
 
 /** Convert cron expression to human-readable Spanish */
@@ -70,7 +70,7 @@ function humanizeCron(expr: string): string {
 /** Read raw jobs-state.json once per request */
 let _jobsStateCache: { mtime: number; data: Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string } }> } | null = null;
 function loadJobsState(): Record<string, { state?: { lastRunAtMs?: number; lastRunStatus?: string } }> {
-  const f = cronJobsStateFile();
+  const f = getRuntime().state.cronJobsStateFile();
   if (!fs.existsSync(f)) return {};
   try {
     const stat = fs.statSync(f);
@@ -233,7 +233,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const s = jobsState[j.id]?.state as { lastRunAtMs?: number; lastDurationMs?: number } | undefined;
       jobsEndedAt[j.id] = { lastRunAtMs: s?.lastRunAtMs, lastDurationMs: s?.lastDurationMs };
     }
-    const runningMap = getRunningCronJobs(jobsEndedAt);
+    const runningMap = getRuntime().state.getRunningCronJobs(jobsEndedAt);
 
     const contentJobs = matchedJobs.map((j) => {
       const baseName = j.name.replace(/^Content:\s*/, "").replace(/\s*—\s*.*$/, "").trim();
@@ -301,6 +301,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const data = loadJobs();
     const job = data.jobs.find((j) => j.id === jobId);
     if (!job) return res.status(404).json({ error: "Job not found" });
+
+    const live = getLiveStatuses([jobId])[jobId];
+    if (live?.running) {
+      return res.status(409).json({
+        error: "Cron is already running",
+        startedAtMs: live.startedAtMs,
+      });
+    }
 
     // Fire-and-forget: spawn `openclaw cron run <id>` detached.
     // The job runs via the Gateway and writes results to cron/runs/<id>.jsonl.

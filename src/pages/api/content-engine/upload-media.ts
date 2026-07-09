@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm, type File } from "formidable";
 import fs from "fs";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { uploadToR2 } from "@/lib/upload-r2";
+import { getMissingR2Env, uploadToR2 } from "@/lib/upload-r2";
 import { attachMediaToDraft, buildMediaKey } from "@/lib/publishing/media-helpers";
 import { loadDraft } from "@/lib/data/drafts";
 
@@ -43,40 +43,45 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const ideaId = pickField(parsed.fields.ideaId);
   const channel = pickField(parsed.fields.channel);
   if (!slug || !ideaId || !channel) {
+    cleanupFiles(parsed.files);
     return res.status(400).json({ error: "Missing slug, ideaId or channel" });
   }
   if (!loadDraft(slug, ideaId, channel)) {
+    cleanupFiles(parsed.files);
     return res.status(404).json({ error: "Draft not found" });
   }
 
+  const file = parsed.files.file?.[0];
+  if (!file) {
+    cleanupFiles(parsed.files);
+    return res.status(400).json({ error: "No file provided" });
+  }
+  if (!file.mimetype || !ALLOWED_MIME.has(file.mimetype)) {
+    cleanupFiles(parsed.files);
+    return res.status(400).json({ error: "Invalid file type. Only images allowed." });
+  }
+
   // Same hard pre-flight as generate-image: refuse early when R2 is missing.
-  const missingR2 = [
-    "CLOUDFLARE_ACCOUNT_ID",
-    "R2_UPLOAD_IMAGE_ACCESS_KEY_ID",
-    "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
-    "R2_UPLOAD_IMAGE_BUCKET_NAME",
-    "R2_PUBLIC_URL",
-  ].filter((k) => !process.env[k]);
+  const missingR2 = getMissingR2Env();
   if (missingR2.length > 0) {
+    cleanupFiles(parsed.files);
     return res.status(503).json({
       error:
         `Storage unavailable: missing ${missingR2.join(", ")}. ` +
-        `Set them in ~/.openclaw/.env.local and restart 'next dev'.`,
+        `Set them in ~/.openclaw/.env.local (next dev) or the active Sancho .env and restart the server.`,
       storage: { ok: false, missing: missingR2 },
     });
-  }
-
-  const file = parsed.files.file?.[0];
-  if (!file) return res.status(400).json({ error: "No file provided" });
-  if (!file.mimetype || !ALLOWED_MIME.has(file.mimetype)) {
-    return res.status(400).json({ error: "Invalid file type. Only images allowed." });
   }
 
   const buffer = fs.readFileSync(file.filepath);
   const ext = file.originalFilename?.split(".").pop() || "png";
   const key = buildMediaKey(slug, ideaId, channel, ext);
-  const publicUrl = await uploadToR2(buffer, key, file.mimetype);
-  fs.unlinkSync(file.filepath);
+  let publicUrl: string;
+  try {
+    publicUrl = await uploadToR2(buffer, key, file.mimetype);
+  } finally {
+    cleanupFiles(parsed.files);
+  }
 
   const draft = attachMediaToDraft(slug, ideaId, channel, {
     url: publicUrl,
@@ -90,6 +95,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 function pickField(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
+}
+
+function cleanupFiles(files: Record<string, File[]>): void {
+  for (const file of Object.values(files).flat()) {
+    try {
+      fs.unlinkSync(file.filepath);
+    } catch {
+      // best-effort cleanup
+    }
+  }
 }
 
 export default withErrorHandler(handler);

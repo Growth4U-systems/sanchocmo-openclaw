@@ -3,7 +3,6 @@ import path from "path";
 import yaml from "js-yaml";
 import { BASE, brandDir } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
-import { cronJobsFile, cronJobsStateFile } from "@/lib/data/openclaw-paths";
 import { loadIdeas } from "@/lib/data/ideas";
 import { loadUnifiedContentTasks } from "@/lib/data/content-tasks-flat";
 import { loadDraft, type MediaAsset, type PostMetricsSnapshot } from "@/lib/data/drafts";
@@ -11,6 +10,7 @@ import { getMetricsTimeSeries, type SeriesPoint } from "@/lib/data/metrics";
 import { loadPovBankFromNeon } from "@/lib/data/pov-bank";
 import { buildPersonaLoops } from "@/lib/data/persona-loops";
 import { listAllCarouselTemplates, listCarouselTemplates } from "@/lib/carousel/templates";
+import { getRuntime } from "@/lib/runtime";
 import {
   normalizeCadenceChannels,
   toChannelList,
@@ -490,7 +490,7 @@ function readCadenceChannels(slug: string): Record<string, NormalizedCadenceChan
 }
 
 function loadContentJobs(slug: string): CronJob[] {
-  const rawJobs = readJSON<{ jobs?: unknown }>(cronJobsFile(), { jobs: [] }).jobs;
+  const rawJobs = readJSON<{ jobs?: unknown }>(getRuntime().state.cronJobsFile(), { jobs: [] }).jobs;
   const jobs = Array.isArray(rawJobs) ? rawJobs : [];
   return jobs.filter((job) => {
     if (!job || typeof job !== "object") return false;
@@ -505,7 +505,7 @@ function loadContentJobs(slug: string): CronJob[] {
 }
 
 function loadJobsState(): JobsState["jobs"] {
-  const raw = readJSON<{ jobs?: unknown }>(cronJobsStateFile(), { jobs: {} }).jobs;
+  const raw = readJSON<{ jobs?: unknown }>(getRuntime().state.cronJobsStateFile(), { jobs: {} }).jobs;
   return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as JobsState["jobs"] : {};
 }
 

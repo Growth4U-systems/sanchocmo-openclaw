@@ -1,9 +1,10 @@
-import { addMessage, getChatSecret, getGatewayUrl } from "./mc-chat";
+import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import { addMessage } from "./mc-chat";
 
 /**
  * Writer-skill trigger.
  *
- * Calls the OpenClaw gateway (`/mc-chat/inbound`) on the ContentTask's chat
+ * Sends an inbound chat message through the active runtime on the ContentTask's
  * thread so Dulcinea (or whichever writer skill the ContentTask is mapped
  * to) actually runs deep-research → Clarify → writer and overwrites the
  * draft `.md` files. Best-effort: if the gateway is down, we still record
@@ -283,7 +284,7 @@ function buildMessage(input: TriggerWriterInput): string {
 }
 
 /**
- * Fire-and-forget: returns immediately while the gateway runs the agent.
+ * Fire-and-forget: returns immediately while the runtime runs the agent.
  * Records a system message in the thread before forwarding so the user sees
  * what was requested even if the gateway is down.
  */
@@ -304,8 +305,7 @@ export async function triggerWriter(
   );
   addMessage(threadId, "user", message);
 
-  const secret = getChatSecret();
-  const payload = {
+  const payload: InboundMessage = {
     slug: input.slug,
     threadId,
     threadName: `Content ${input.contentTaskId}`,
@@ -322,17 +322,9 @@ export async function triggerWriter(
   };
 
   try {
-    const res = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(secret ? { "X-MC-Secret": secret } : {}),
-      },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      return { forwardedToGateway: false, threadId, error: `gateway ${res.status}: ${text}` };
+    const result = await getRuntime().messaging.sendInbound(payload);
+    if (!result.ok) {
+      return { forwardedToGateway: false, threadId, error: `gateway ${result.status}: ${result.raw}` };
     }
     return { forwardedToGateway: true, threadId };
   } catch (e) {

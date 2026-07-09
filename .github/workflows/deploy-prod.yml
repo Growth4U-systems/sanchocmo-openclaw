@@ -1,12 +1,8 @@
 name: Deploy to Production
 
-# Prod deploys are MANUAL ONLY: run this workflow via `workflow_dispatch`
-# (Actions tab → "Deploy to Production" → Run workflow) and enter the tag to
-# ship. It intentionally does NOT trigger on `release: published` — publishing
-# a release builds the image (docker-image.yml) and fast-forwards `main`
-# (promote-main.yml), but shipping to prod is a deliberate human action so a
-# release never auto-deploys.
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -19,7 +15,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ${{ inputs.tag }} to prod VPS
+    name: Deploy ${{ github.event.release.tag_name || inputs.tag }} to prod VPS
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -27,25 +23,13 @@ jobs:
     steps:
       - name: Checkout (need scripts/upsert-env.py for scp)
         uses: actions/checkout@v7
-        with:
-          fetch-tags: true
 
-      - name: Resolve and validate target tag
+      - name: Resolve target tag
         id: tag
         run: |
-          set -euo pipefail
-          TAG="${{ inputs.tag }}"
-          # Fail fast BEFORE touching prod if the tag doesn't exist. The input
-          # is free text (GitHub can't populate a dropdown from real tags), so
-          # this guards against typos / non-existent versions.
-          git fetch --tags --force --quiet
-          if ! git rev-parse -q --verify "refs/tags/${TAG}^{commit}" >/dev/null; then
-            echo "::error::Tag '${TAG}' does not exist — aborting before any prod change."
-            echo "Recent tags:"; git tag --sort=-creatordate | head -10
-            exit 1
-          fi
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "✓ Deploying existing tag: $TAG"
+          echo "Deploying tag: $TAG"
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.10.0
@@ -90,6 +74,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
+          FIREWORKS_ACCOUNT_ID: ${{ secrets.FIREWORKS_ACCOUNT_ID || vars.FIREWORKS_ACCOUNT_ID }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
@@ -105,6 +90,16 @@ jobs:
           WAVESPEED_API_KEY: ${{ secrets.WAVESPEED_API_KEY }}
           DUMPLING_API_KEY: ${{ secrets.DUMPLING_API_KEY }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          LLM_USAGE_SLACK_BOT_TOKEN: ${{ secrets.LLM_USAGE_SLACK_BOT_TOKEN || vars.LLM_USAGE_SLACK_BOT_TOKEN }}
+          LLM_USAGE_SLACK_CHANNEL: ${{ vars.LLM_USAGE_SLACK_CHANNEL || 'C0AHWST8Y5C' }}
+          LLM_USAGE_SLACK_REPORT_HOUR: ${{ vars.LLM_USAGE_SLACK_REPORT_HOUR || '9' }}
+          LLM_USAGE_SLACK_REPORT_MINUTE: ${{ vars.LLM_USAGE_SLACK_REPORT_MINUTE || '0' }}
+          LLM_USAGE_SLACK_REPORT_TIMEZONE: ${{ vars.LLM_USAGE_SLACK_REPORT_TIMEZONE || 'Europe/Madrid' }}
+          LLM_USAGE_SLACK_REPORT_ENABLED: ${{ vars.LLM_USAGE_SLACK_REPORT_ENABLED || '1' }}
+          LLM_USAGE_SLACK_REQUIRE_BILLING: ${{ vars.LLM_USAGE_SLACK_REQUIRE_BILLING || '0' }}
+          LLM_USAGE_SLACK_EXPECTED_BOT: ${{ vars.LLM_USAGE_SLACK_EXPECTED_BOT || 'SanchoCMO' }}
+          LLM_USAGE_SLACK_ALLOW_DEFAULT_TOKEN: ${{ vars.LLM_USAGE_SLACK_ALLOW_DEFAULT_TOKEN || '1' }}
+          LLM_USAGE_USD_TO_EUR: ${{ vars.LLM_USAGE_USD_TO_EUR || '0.92' }}
           INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
           METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
           SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
@@ -126,8 +121,8 @@ jobs:
           # ── R2 / Supabase / Cloudflare / Apify (secrets que vivían solo en el VPS) ──
           R2_UPLOAD_IMAGE_ACCESS_KEY_ID: ${{ secrets.R2_UPLOAD_IMAGE_ACCESS_KEY_ID }}
           R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY: ${{ secrets.R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY }}
-          R2_UPLOAD_IMAGE_BUCKET_NAME: ${{ secrets.R2_UPLOAD_IMAGE_BUCKET_NAME }}
-          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+          R2_UPLOAD_IMAGE_BUCKET_NAME: ${{ secrets.R2_UPLOAD_IMAGE_BUCKET_NAME || vars.R2_UPLOAD_IMAGE_BUCKET_NAME }}
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL || vars.R2_PUBLIC_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -169,12 +164,15 @@ jobs:
               "YALC_API_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
               "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
               # Tier 2 — System APIs
-              "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "FIREWORKS_API_KEY",
+              "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "FIREWORKS_API_KEY", "FIREWORKS_ACCOUNT_ID",
               "OPENAI_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "MINIMAX_API_KEY",
               "BRAVE_API_KEY", "APIFY_API_KEY",
               "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
               "NOTION_API_KEY", "FAL_API_KEY",
-              "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN",
+              "WAVESPEED_API_KEY", "DUMPLING_API_KEY", "SLACK_BOT_TOKEN", "LLM_USAGE_SLACK_BOT_TOKEN",
+              "LLM_USAGE_SLACK_CHANNEL", "LLM_USAGE_SLACK_REPORT_HOUR", "LLM_USAGE_SLACK_REPORT_MINUTE",
+              "LLM_USAGE_SLACK_REPORT_TIMEZONE", "LLM_USAGE_SLACK_REPORT_ENABLED", "LLM_USAGE_SLACK_REQUIRE_BILLING",
+              "LLM_USAGE_SLACK_EXPECTED_BOT", "LLM_USAGE_SLACK_ALLOW_DEFAULT_TOKEN", "LLM_USAGE_USD_TO_EUR",
               "INSTANTLY_API_KEY", "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
               "SANCHO_MCP_TOKENS",
               # Tier 3 — Skill APIs
@@ -334,22 +332,6 @@ jobs:
               docker compose $COMPOSE_ARGS logs --no-color --tail=200 sanchocmo || true
               exit 1
             fi
-            echo "▶ Ensuring Rocinante workspace links for agent skills…"
-            docker compose $COMPOSE_ARGS exec -T sanchocmo sh -lc '
-              set -e
-              mkdir -p /root/.openclaw/workspace-rocinante
-              if [ -e /root/workspace-rocinante ] && [ ! -L /root/workspace-rocinante ]; then
-                echo "WARNING: /root/workspace-rocinante exists and is not a symlink; leaving it untouched"
-              else
-                ln -sfn /root/.openclaw/workspace-rocinante /root/workspace-rocinante
-              fi
-              if [ -e /root/.openclaw/workspace-rocinante/skills ] && [ ! -L /root/.openclaw/workspace-rocinante/skills ]; then
-                echo "WARNING: workspace-rocinante/skills exists and is not a symlink; leaving it untouched"
-              else
-                ln -sfn ../skills /root/.openclaw/workspace-rocinante/skills
-              fi
-              test -f /root/workspace-rocinante/skills/discovery-search-runner/SKILL.md
-            '
             docker compose $COMPOSE_ARGS ps
           EOF
 

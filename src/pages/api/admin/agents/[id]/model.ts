@@ -3,12 +3,6 @@ import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { getModelCatalog, isModelAvailable, invalidateCatalogCache } from "@/lib/data/models-catalog";
 import { getRuntime } from "@/lib/runtime";
 
-interface RestartResult {
-  ok?: boolean;
-  method?: string;
-  error?: string;
-}
-
 interface ModelAssignment {
   primary: string;
   fallbacks: string[];
@@ -23,13 +17,12 @@ function parseModelAssignment(body: unknown): ModelAssignment | null | "inherit"
   if (!body || typeof body !== "object") return null;
   const v = body as Record<string, unknown>;
   if (v.model === null) return "inherit";
-  const raw = v.model && typeof v.model === "object" ? (v.model as Record<string, unknown>) : v;
-  const primary =
-    typeof raw.primary === "string"
-      ? raw.primary
-      : typeof v.model === "string"
-        ? v.model
-        : null;
+  const raw = v.model && typeof v.model === "object" ? v.model as Record<string, unknown> : v;
+  const primary = typeof raw.primary === "string"
+    ? raw.primary
+    : typeof v.model === "string"
+      ? v.model
+      : null;
   if (!primary) return null;
   return {
     primary,
@@ -55,15 +48,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
   if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
 
-  const runtime = getRuntime();
-  if (!runtime.capabilities.modelPicker || !runtime.capabilities.agentRegistry) {
-    return res.status(501).json({
-      error: `Runtime "${runtime.id}" does not support per-agent model selection through Sancho yet.`,
-      runtime: runtime.id,
-      capability: "modelPicker",
-    });
-  }
-
   const agentId = req.query.id as string;
   if (!agentId) return res.status(400).json({ error: "Missing agent id" });
 
@@ -85,29 +69,32 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     const model = parsed === "inherit" ? null : parsed;
-    const result = await runtime.control.setAgentModel(agentId, model);
-    const effectiveModel = await runtime.control.getAgentEffectiveModel(agentId);
-    const effectiveAssignment = await runtime.control.getAgentModelAssignment(agentId);
-    const verified =
-      model === null
-        ? effectiveAssignment === null
-        : effectiveAssignment?.primary === model.primary &&
-          JSON.stringify(effectiveAssignment.fallbacks) === JSON.stringify(model.fallbacks);
+    const result = await getRuntime().control.setAgentModel(agentId, model);
+    const effectiveModel = await getRuntime().control.getAgentEffectiveModel(agentId);
+    const effectiveAssignment = await getRuntime().control.getAgentModelAssignment(agentId);
+    const verified = model === null
+      ? effectiveAssignment === null
+      : effectiveAssignment?.primary === model.primary &&
+        JSON.stringify(effectiveAssignment.fallbacks) === JSON.stringify(model.fallbacks);
     if (!verified) {
       return res.status(409).json({
         error:
           model === null
-            ? `Runtime "${runtime.id}" did not clear the model override for agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`
-            : `Runtime "${runtime.id}" did not apply model "${model.primary}" to agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`,
+            ? `OpenClaw did not clear the model override for agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`
+            : `OpenClaw did not apply model "${model.primary}" to agent "${agentId}". Effective model is "${effectiveModel ?? "inherit"}".`,
         agentId,
-        model: model?.primary ?? null,
+        model,
         fallbacks: model?.fallbacks ?? [],
         effectiveModel,
         effectiveFallbacks: effectiveAssignment?.fallbacks ?? [],
         verified: false,
       });
     }
-    const restart = (await runtime.lifecycle.restart()) as RestartResult;
+    const restart = await getRuntime().lifecycle.restart() as {
+      ok: boolean;
+      method?: string;
+      error?: string;
+    };
     invalidateCatalogCache();
     const responseWarning = [
       warning,

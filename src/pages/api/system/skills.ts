@@ -1,17 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import os from "os";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { resolveAgentForSkill } from "@/lib/skill-resolver";
 import { parseSkillFrontmatter } from "@/lib/server/skill-frontmatter";
+import { getRuntime } from "@/lib/runtime";
 
 // Fase 7 (2026-05-11/12): skills live in `~/.openclaw/skills/` (OpenClaw's
 // built-in managed-skills root, read natively by all agents). The Settings →
 // Skills panel reads from this single central catalog and enriches each entry
 // with its owner agent via SKILL_OWNER_MAP in skill-resolver.ts.
 const SKILLS_ROOT = path.join(
-  process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
+  getRuntime().state.home(),
   "skills",
 );
 

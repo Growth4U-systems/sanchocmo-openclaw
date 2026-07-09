@@ -172,6 +172,7 @@ function GlobalDashboard({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Costs card */}
       <CostsCard />
+      {isAdmin && <LlmUsageCard />}
 
       {/* Integrations card */}
       <IntegrationsCard />
@@ -430,6 +431,115 @@ interface CostsData {
   clients?: Record<string, { cost_usd: number; turns: number; sessions: number }>;
 }
 
+interface LlmUsageCounter {
+  name?: string;
+  client?: string;
+  agent?: string;
+  thread?: string | null;
+  model_calls?: number;
+  fireworks_calls?: number;
+  zero_prompt_fireworks_calls?: number;
+  tool_calls?: number;
+  reported_cost_usd?: number;
+  reported_cost_eur?: number;
+  fireworks_actual_cost_usd?: number;
+  fireworks_actual_cost_eur?: number;
+  total_cost_usd?: number;
+  total_cost_eur?: number;
+  reported_usage?: {
+    input?: number;
+    output?: number;
+    cache_read?: number;
+    cache_write?: number;
+    total?: number;
+  };
+}
+
+interface LlmUsageDay {
+  model_calls?: number;
+  fireworks_calls?: number;
+  zero_prompt_fireworks_calls?: number;
+  tool_calls?: number;
+  sessions?: number;
+  reported_cost_usd?: number;
+  reported_cost_eur?: number;
+  fireworks_reported_cost_usd?: number;
+  fireworks_reported_cost_eur?: number;
+  fireworks_billing_cost_usd?: number;
+  fireworks_billing_cost_eur?: number;
+  fireworks_actual_cost_usd?: number;
+  fireworks_actual_cost_eur?: number;
+  fireworks_estimated_cost_usd?: number;
+  fireworks_estimated_cost_eur?: number;
+  fireworks_cost_status?: string;
+  sancho_total_cost_usd?: number;
+  sancho_total_cost_eur?: number;
+  sancho_cost_basis?: string;
+  sancho_cost_complete?: boolean;
+  by_agent?: LlmUsageCounter[];
+  by_client?: LlmUsageCounter[];
+  by_model?: LlmUsageCounter[];
+  top_threads?: LlmUsageCounter[];
+}
+
+interface LlmUsageData {
+  available?: boolean;
+  updated_at?: string;
+  latest_day?: string | null;
+  currency?: { billing?: string; display?: string; usd_to_eur_rate?: number; source?: string };
+  window?: { timezone?: string; days?: number; start?: string; end?: string };
+  sources?: {
+    fireworks_billing_usage?: {
+      status?: string;
+      totals?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        cost_usd?: number;
+        cost_eur?: number;
+        estimated_cost_usd?: number;
+        estimated_cost_eur?: number;
+      };
+      days?: Record<string, {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        cost_usd?: number;
+        cost_eur?: number;
+        estimated_cost_usd?: number;
+        estimated_cost_eur?: number;
+        cost_sources?: Record<string, number>;
+        by_model?: Array<{
+          name?: string;
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          cost_usd?: number;
+          cost_eur?: number;
+          estimated_cost_usd?: number;
+          estimated_cost_eur?: number;
+        }>;
+      }>;
+    };
+  };
+  totals?: {
+    model_calls?: number;
+    fireworks_calls?: number;
+    zero_prompt_fireworks_calls?: number;
+    tool_calls?: number;
+    reported_cost_usd?: number;
+    reported_cost_eur?: number;
+    fireworks_reported_cost_usd?: number;
+    fireworks_reported_cost_eur?: number;
+    fireworks_billing_cost_usd?: number;
+    fireworks_billing_cost_eur?: number;
+    fireworks_actual_cost_usd?: number;
+    fireworks_actual_cost_eur?: number;
+    fireworks_estimated_cost_usd?: number;
+    fireworks_estimated_cost_eur?: number;
+    sancho_total_cost_usd?: number;
+    sancho_total_cost_eur?: number;
+  };
+  days?: Record<string, LlmUsageDay>;
+}
+
 interface IntegrationsSummary {
   connected: number;
   disconnected: number;
@@ -449,6 +559,18 @@ function useCosts() {
   });
 }
 
+function useLlmUsage() {
+  return useQuery<LlmUsageData | null>({
+    queryKey: ["llm-usage"],
+    queryFn: async () => {
+      const res = await fetch("/api/system/llm-usage");
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+}
+
 function useIntegrationsSummary() {
   return useQuery<IntegrationsSummary | null>({
     queryKey: ["integrations-summary"],
@@ -459,6 +581,20 @@ function useIntegrationsSummary() {
     },
     staleTime: 60_000,
   });
+}
+
+const DEFAULT_USD_TO_EUR = 0.92;
+
+function numeric(value?: number) {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function eurFromUsd(value?: number, rate = DEFAULT_USD_TO_EUR) {
+  return numeric(value) * rate;
+}
+
+function formatEur(value?: number) {
+  return Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(numeric(value));
 }
 
 // ============================================================
@@ -478,12 +614,8 @@ function CostsCard() {
         <>
           <div className="flex gap-6 mb-3">
             <div>
-              <div className="font-heading text-2xl text-rust">${data.total_cost_usd?.toFixed(2)}</div>
-              <div className="text-[10px] text-muted-foreground uppercase">USD · {data.period}</div>
-            </div>
-            <div>
-              <div className="font-heading text-2xl text-navy">€{data.total_cost_eur?.toFixed(2)}</div>
-              <div className="text-[10px] text-muted-foreground uppercase">EUR</div>
+              <div className="font-heading text-2xl text-rust">{formatEur(data.total_cost_eur ?? eurFromUsd(data.total_cost_usd))}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">EUR · {data.period}</div>
             </div>
             <div>
               <div className="font-heading text-xl">{data.total_sessions}</div>
@@ -502,7 +634,7 @@ function CostsCard() {
                 {Object.entries(data.system.agents).map(([agent, info]) => (
                   <div key={agent} className="text-xs">
                     <span className="font-semibold capitalize">{agent}</span>
-                    <span className="text-muted-foreground"> ${info.cost_usd?.toFixed(2)} · {info.turns}t</span>
+                    <span className="text-muted-foreground"> {formatEur(eurFromUsd(info.cost_usd))} · {info.turns}t</span>
                   </div>
                 ))}
               </div>
@@ -516,7 +648,177 @@ function CostsCard() {
                 {Object.entries(data.clients).map(([slug, info]) => (
                   <div key={slug} className="text-xs">
                     <span className="font-semibold">{slug}</span>
-                    <span className="text-muted-foreground"> ${info.cost_usd?.toFixed(2)} · {info.sessions}s</span>
+                    <span className="text-muted-foreground"> {formatEur(eurFromUsd(info.cost_usd))} · {info.sessions}s</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </ComicCard>
+  );
+}
+
+// ============================================================
+// LLM Usage Card — real data from llm-usage-daily.json
+// ============================================================
+
+function compactNumber(value?: number) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "0";
+  return Intl.NumberFormat("es", { notation: value >= 100_000 ? "compact" : "standard" }).format(value);
+}
+
+function formatCostSources(sources?: Record<string, number>) {
+  if (!sources || Object.keys(sources).length === 0) return null;
+  return Object.entries(sources)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, count]) => `${name}:${count}`)
+    .join(", ");
+}
+
+function LlmUsageCard() {
+  const { data } = useLlmUsage();
+  const latestDay = data?.latest_day || null;
+  const latest = latestDay && data?.days ? data.days[latestDay] : null;
+  const billing = data?.sources?.fireworks_billing_usage;
+  const billingStatus = billing?.status || "not_configured";
+  const billingDay = latestDay && billing?.days ? billing.days[latestDay] : null;
+  const usdToEur = numeric(data?.currency?.usd_to_eur_rate) || DEFAULT_USD_TO_EUR;
+  const money = (eur?: number, usd?: number) => (typeof eur === "number" && Number.isFinite(eur) ? eur : eurFromUsd(usd, usdToEur));
+  const sanchoCost = money(latest?.sancho_total_cost_eur, latest?.sancho_total_cost_usd ?? latest?.reported_cost_usd);
+  const reportedCost = money(latest?.reported_cost_eur, latest?.reported_cost_usd);
+  const localFireworksCost = money(latest?.fireworks_reported_cost_eur, latest?.fireworks_reported_cost_usd);
+  const fireworksActualCost = money(
+    latest?.fireworks_actual_cost_eur ?? latest?.fireworks_billing_cost_eur ?? billingDay?.cost_eur,
+    latest?.fireworks_actual_cost_usd ?? latest?.fireworks_billing_cost_usd ?? billingDay?.cost_usd,
+  );
+  const topAgents = (latest?.by_agent || []).slice(0, 5);
+  const topThreads = (latest?.top_threads || []).slice(0, 5);
+  const topLocalModels = (latest?.by_model || []).slice(0, 6);
+  const topBillingModels = (billingDay?.by_model || []).slice(0, 5);
+  const costSources = formatCostSources(billingDay?.cost_sources);
+
+  return (
+    <ComicCard className="mb-5">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+        <div>
+          <h2 className="font-heading text-base text-navy">🔥 Uso LLM / Costes</h2>
+          <p className="text-[11px] text-muted-foreground">
+            {latestDay ? `${latestDay} · actualizado ${data?.updated_at ? new Date(data.updated_at).toLocaleString("es") : "pendiente"}` : "Monitor pendiente de primera ejecución"}
+          </p>
+        </div>
+        <div className="text-[10px] uppercase text-muted-foreground">
+          Fireworks billing: <span className="font-semibold text-navy">{billingStatus}</span> · EUR FX:{" "}
+          <span className="font-semibold text-navy">{usdToEur}</span>
+        </div>
+      </div>
+
+      {!data?.available || !latest ? (
+        <p className="text-xs text-muted-foreground">
+          Todavía no hay datos. El cron escribirá `memory/costs/llm-usage-daily.json` en la próxima ejecución.
+        </p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <div>
+              <div className="font-heading text-2xl text-rust">{formatEur(sanchoCost)}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">Coste confirmado</div>
+            </div>
+            <div>
+              <div className="font-heading text-2xl text-navy">{formatEur(fireworksActualCost)}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">Fireworks real</div>
+            </div>
+            <div>
+              <div className="font-heading text-2xl text-sage">{compactNumber(latest.model_calls)}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">Model calls</div>
+            </div>
+            <div>
+              <div className="font-heading text-2xl text-orange-700">{compactNumber(latest.tool_calls)}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">Tool calls</div>
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-2 mt-2 text-xs text-muted-foreground">
+            Local Sancho:{" "}
+            <span className="font-semibold text-navy">{formatEur(reportedCost)}</span> ·{" "}
+            Fireworks local sustituido:{" "}
+            <span className="font-semibold text-navy">{formatEur(localFireworksCost)}</span> ·{" "}
+            Fireworks calls:{" "}
+            <span className="font-semibold text-navy">{compactNumber(latest.fireworks_calls)}</span> ·{" "}
+            Prompt local cero:{" "}
+            <span className="font-semibold text-navy">{compactNumber(latest.zero_prompt_fireworks_calls)}</span>
+          </div>
+
+          {billing?.totals && (
+            <div className="border-t border-border pt-2 mt-2 text-xs text-muted-foreground">
+              Fireworks en ventana:{" "}
+              <span className="font-semibold text-navy">{formatEur(money(billing.totals.cost_eur, billing.totals.cost_usd))}</span> real ·{" "}
+              <span className="font-semibold text-navy">{compactNumber(billing.totals.prompt_tokens)}</span> prompt ·{" "}
+              <span className="font-semibold text-navy">{compactNumber(billing.totals.completion_tokens)}</span> completion
+              {costSources ? <span> · fuente: <span className="font-mono">{costSources}</span></span> : null}
+            </div>
+          )}
+
+          {topLocalModels.length > 0 && (
+            <div className="border-t border-border pt-2 mt-2">
+              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">Coste Sancho por modelo</div>
+              <div className="space-y-1">
+                {topLocalModels.map((model) => (
+                  <div key={model.name} className="flex items-center justify-between gap-3 text-xs">
+                    <span className="min-w-0 truncate font-mono">{model.name || "unknown"}</span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {formatEur(money(model.total_cost_eur ?? model.reported_cost_eur, model.total_cost_usd ?? model.reported_cost_usd))} · {compactNumber(model.model_calls)}m · {compactNumber(model.fireworks_calls)}fw
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {topBillingModels.length > 0 && (
+            <div className="border-t border-border pt-2 mt-2">
+              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">Fireworks billing por modelo</div>
+              <div className="space-y-1">
+                {topBillingModels.map((model) => (
+                  <div key={model.name} className="flex items-center justify-between gap-3 text-xs">
+                    <span className="min-w-0 truncate font-mono">{model.name || "unknown"}</span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {(model.cost_eur || model.cost_usd) ? `${formatEur(money(model.cost_eur, model.cost_usd))} real` : "sin coste por fila"} · {compactNumber(model.prompt_tokens)}p · {compactNumber(model.completion_tokens)}c
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {topAgents.length > 0 && (
+            <div className="border-t border-border pt-2 mt-2">
+              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">Top agentes</div>
+              <div className="flex gap-4 flex-wrap">
+                {topAgents.map((agent) => (
+                  <div key={agent.name} className="text-xs">
+                    <span className="font-semibold capitalize">{agent.name}</span>
+                    <span className="text-muted-foreground"> {formatEur(money(agent.total_cost_eur ?? agent.reported_cost_eur, agent.total_cost_usd ?? agent.reported_cost_usd))} · {compactNumber(agent.fireworks_calls)}fw · {compactNumber(agent.model_calls)}m</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {topThreads.length > 0 && (
+            <div className="border-t border-border pt-2 mt-2">
+              <div className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">Top threads</div>
+              <div className="space-y-1">
+                {topThreads.map((thread) => (
+                  <div key={thread.name} className="flex items-center justify-between gap-3 text-xs">
+                    <span className="min-w-0 truncate">
+                      <span className="font-semibold">{thread.client || "_unclassified"}</span>
+                      <span className="text-muted-foreground"> · {thread.agent || "unknown"} · {thread.thread || thread.name}</span>
+                    </span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {formatEur(money(thread.total_cost_eur ?? thread.reported_cost_eur, thread.total_cost_usd ?? thread.reported_cost_usd))} · {compactNumber(thread.fireworks_calls)}fw · {compactNumber(thread.model_calls)}m
+                    </span>
                   </div>
                 ))}
               </div>

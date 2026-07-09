@@ -1,6 +1,10 @@
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { parseEnvContent } from "@/lib/env-file";
 
-const REQUIRED_R2_VARS = [
+export const REQUIRED_R2_VARS = [
   "CLOUDFLARE_ACCOUNT_ID",
   "R2_UPLOAD_IMAGE_ACCESS_KEY_ID",
   "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
@@ -8,20 +12,81 @@ const REQUIRED_R2_VARS = [
   "R2_PUBLIC_URL",
 ] as const;
 
-/** Stable prefix of the error assertR2Configured throws; matched by classifyUploadError. */
-export const R2_NOT_CONFIGURED_PREFIX = "R2 not configured";
+export type RequiredR2Var = (typeof REQUIRED_R2_VARS)[number];
 
-function assertR2Configured(): void {
-  const missing = REQUIRED_R2_VARS.filter((k) => !process.env[k]);
-  if (missing.length > 0) {
-    throw new Error(
-      `${R2_NOT_CONFIGURED_PREFIX}: missing ${missing.join(", ")}. ` +
-      `Set these in ~/.openclaw/.env.local and restart 'next dev'. ` +
+const R2_CONFIG_INSTRUCTIONS =
+  "Set these in ~/.openclaw/.env.local (next dev) or the active Sancho .env and restart the server.";
+
+export class R2ConfigError extends Error {
+  missing: RequiredR2Var[];
+
+  constructor(missing: RequiredR2Var[]) {
+    super(
+      `Storage unavailable: missing ${missing.join(", ")}. ` +
+      `${R2_CONFIG_INSTRUCTIONS} ` +
       `Without them upload-media / generate-image cannot persist images, ` +
       `which causes agents to fall back to writing 'localPath' into ` +
       `frontmatter.media — see _system/media-persistence-protocol.md.`,
     );
+    this.name = "R2ConfigError";
+    this.missing = missing;
   }
+}
+
+export function getMissingR2Env(options: { hydrate?: boolean } = {}): RequiredR2Var[] {
+  if (options.hydrate !== false) hydrateR2EnvFromLocalFiles();
+  return REQUIRED_R2_VARS.filter((k) => !process.env[k]);
+}
+
+export function assertR2Configured(options: { hydrate?: boolean } = {}): void {
+  const missing = getMissingR2Env(options);
+  if (missing.length > 0) {
+    throw new R2ConfigError(missing);
+  }
+}
+
+let hydratedR2Env = false;
+
+function hydrateR2EnvFromLocalFiles(): void {
+  if (hydratedR2Env) return;
+  hydratedR2Env = true;
+
+  for (const envFile of getCandidateEnvFiles()) {
+    let vars: Record<string, string>;
+    try {
+      vars = parseEnvContent(fs.readFileSync(envFile, "utf-8"));
+    } catch {
+      continue;
+    }
+
+    for (const key of REQUIRED_R2_VARS) {
+      if (process.env[key] || !vars[key]) continue;
+      process.env[key] = normalizeEnvValue(vars[key]);
+    }
+  }
+}
+
+function getCandidateEnvFiles(): string[] {
+  const candidates = [
+    path.join(process.env.OPENCLAW_HOME || path.join(os.homedir(), ".openclaw"), ".env.local"),
+    path.join(process.env.OPENCLAW_HOME || path.join(os.homedir(), ".openclaw"), ".env"),
+    path.join(os.homedir(), ".openclaw", ".env.local"),
+    path.join(os.homedir(), ".openclaw", ".env"),
+    path.join(process.cwd(), ".env.local"),
+    path.join(process.cwd(), ".env"),
+  ];
+  return Array.from(new Set(candidates));
+}
+
+function normalizeEnvValue(value: string): string {
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
 }
 
 let _client: S3Client | null = null;
@@ -56,25 +121,6 @@ export async function uploadToR2(
   );
 
   return `${process.env.R2_PUBLIC_URL}/${key}`;
-}
-
-/**
- * Map an upload failure to an HTTP status + user-facing message so the chat UI
- * shows a diagnosable error instead of an opaque one (SAN-305 / SAN-371):
- *   - missing R2 env → 503 + the actionable config message
- *   - file over cap  → 413 (formidable maxFileSize)
- *   - anything else  → 500 (generic; preserves prior behavior/monitoring)
- */
-export function classifyUploadError(error: unknown): { status: number; error: string } {
-  const message = error instanceof Error ? error.message : String(error);
-  const httpCode = (error as { httpCode?: number } | null | undefined)?.httpCode;
-  if (message.startsWith(R2_NOT_CONFIGURED_PREFIX)) {
-    return { status: 503, error: message };
-  }
-  if (httpCode === 413 || /maxFileSize|maxTotalFileSize/i.test(message)) {
-    return { status: 413, error: "El archivo supera el límite de 20 MB." };
-  }
-  return { status: 500, error: "Failed to upload file" };
 }
 
 /** Allowed MIME types for chat file uploads */

@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import type { MeetingIntelligenceConfig } from "@/lib/data/meeting-intelligence-db";
-import { cronJobsFile, cronJobsStateFile } from "@/lib/data/openclaw-paths";
+import { getRuntime } from "@/lib/runtime";
 
 interface CronJob {
   id: string;
@@ -26,19 +26,19 @@ interface CronData {
 
 function loadJobs(): CronData | null {
   try {
-    return JSON.parse(fs.readFileSync(cronJobsFile(), "utf-8")) as CronData;
+    return JSON.parse(fs.readFileSync(getRuntime().state.cronJobsFile(), "utf-8")) as CronData;
   } catch {
     return null;
   }
 }
 
 function saveJobs(data: CronData) {
-  fs.writeFileSync(cronJobsFile(), JSON.stringify(data, null, 2));
+  fs.writeFileSync(getRuntime().state.cronJobsFile(), JSON.stringify(data, null, 2));
 }
 
 function loadJobState(jobId: string) {
   try {
-    const parsed = JSON.parse(fs.readFileSync(cronJobsStateFile(), "utf-8")) as {
+    const parsed = JSON.parse(fs.readFileSync(getRuntime().state.cronJobsStateFile(), "utf-8")) as {
       jobs?: Record<string, { state?: Record<string, unknown> }>;
     };
     return parsed.jobs?.[jobId]?.state || null;

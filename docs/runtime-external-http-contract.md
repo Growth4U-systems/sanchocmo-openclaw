@@ -5,9 +5,6 @@ product state: brands, tasks, docs, chat threads, context packs, and run ledger.
 The external runtime only has to accept a chat turn and return or post the final
 answer.
 
-For the higher-level adapter interface and conformance tests every runtime must
-pass, see [Runtime Adapter Contract](./runtime-adapter-contract.md).
-
 There are two supported protocols:
 
 - `SANCHO_EXTERNAL_PROTOCOL=sancho` (default): async Sancho contract. The runtime
@@ -198,8 +195,3 @@ the synchronous reply path. They write their latest artifacts to:
 Runtime engines such as Hermes, Codex CLI, Claude Code, or another harness should
 be exposed to Sancho through this same HTTP shape. Sancho should not need a
 separate product build per runtime.
-
-For native bridge spikes that implement this contract with CLI runtimes, see:
-
-- [Claude Code Runtime Bridge](./runbooks/claude-code-runtime-bridge.md)
-- [Codex Runtime Bridge](./runbooks/codex-runtime-bridge.md)

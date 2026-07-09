@@ -77,6 +77,19 @@ def agent_sessions_dirs():
         _AGENT_DIRS_CACHE = get_agent_sessions_dirs()
     return _AGENT_DIRS_CACHE
 
+
+def transcript_files(sessions_dir):
+    """Yield canonical session transcripts, excluding diagnostic trajectories.
+
+    OpenClaw writes `*.trajectory.jsonl` sidecars with runtime snapshots. Those
+    snapshots can embed previous assistant messages including `usage.cost`, so
+    counting them as transcripts duplicates (and sometimes multiplies) spend.
+    """
+    for jsonl_file in sessions_dir.glob("*.jsonl"):
+        if jsonl_file.name.endswith(".trajectory.jsonl"):
+            continue
+        yield jsonl_file
+
 # ──────────────────── Channel → Guild → Client mapping ────────────────────
 
 def load_guild_to_client():
@@ -154,7 +167,7 @@ def build_channel_guild_map(session_map):
         for agent_id, sessions_dir in agent_sessions_dirs().items():
             if not sessions_dir.exists():
                 continue
-            for jsonl_file in sessions_dir.glob("*.jsonl"):
+            for jsonl_file in transcript_files(sessions_dir):
                 fname = jsonl_file.stem
                 if "_" in fname:
                     sid = fname.split("_", 1)[1]
@@ -880,7 +893,7 @@ def main():
         if not sessions_dir.exists():
             continue
         count = 0
-        for jsonl_file in sessions_dir.glob("*.jsonl"):
+        for jsonl_file in transcript_files(sessions_dir):
             result = scan_transcript(jsonl_file, agent_id, period)
             if result:
                 all_results.append(result)

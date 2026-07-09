@@ -1,16 +1,17 @@
-import { addMessage, getChatSecret, getGatewayUrl } from "@/lib/data/mc-chat";
+import { addMessage } from "@/lib/data/mc-chat";
+import { getRuntime, type InboundMessage } from "@/lib/runtime";
 
 /**
  * Discovery-runner trigger (SAN-328).
  *
  * Al lanzar una búsqueda, despacha a Rocinante (skill `discovery-search-runner`)
- * en SU PROPIO hilo vía el gateway (`/mc-chat/inbound`) para que ejecute el
+ * en SU PROPIO hilo vía el runtime activo para que ejecute el
  * discovery REAL: scrapea creators con las tools ScrapeCreators según el plan e
  * ingesta candidatos vía `/run`. Sin esto, la búsqueda quedaba `queued` para
  * siempre porque NADIE la recogía (no hay cron; el runner es manual).
  *
  * Best-effort, calcado de `triggerWriter` (src/lib/data/writer-trigger.ts): si
- * el gateway está caído, la búsqueda sigue `queued` (recuperable a mano) y se
+ * el runtime está caído, la búsqueda sigue `queued` (recuperable a mano) y se
  * deja un marcador local con lo que se pidió.
  */
 
@@ -49,7 +50,7 @@ function buildRunnerMessage(input: TriggerDiscoveryRunnerInput): string {
 }
 
 /**
- * Despacha el runner de discovery a Rocinante. Devuelve si el gateway aceptó el
+ * Despacha el runner de discovery a Rocinante. Devuelve si el runtime aceptó el
  * inbound (fire-and-forget) y el hilo donde corre.
  */
 export async function triggerDiscoveryRunner(
@@ -62,8 +63,7 @@ export async function triggerDiscoveryRunner(
   addMessage(threadId, "system", "🐴 Pidiendo a Rocinante que ejecute el discovery (scraping real)…");
   addMessage(threadId, "user", message);
 
-  const secret = getChatSecret();
-  const payload = {
+  const payload: InboundMessage = {
     slug: input.slug,
     threadId,
     threadName: input.title ? `Discovery: ${input.title}` : `Discovery ${input.searchId}`,
@@ -80,17 +80,9 @@ export async function triggerDiscoveryRunner(
   };
 
   try {
-    const res = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(secret ? { "X-MC-Secret": secret } : {}),
-      },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      return { forwardedToGateway: false, threadId, error: `gateway ${res.status}: ${text}` };
+    const result = await getRuntime().messaging.sendInbound(payload);
+    if (!result.ok) {
+      return { forwardedToGateway: false, threadId, error: `gateway ${result.status}: ${result.raw}` };
     }
     return { forwardedToGateway: true, threadId };
   } catch (e) {

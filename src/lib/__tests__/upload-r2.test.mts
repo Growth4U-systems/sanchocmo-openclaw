@@ -1,7 +1,6 @@
 /**
  * resolveUploadMime — MIME/extension resolution for chat uploads (SAN-117).
- * classifyUploadError — maps an upload failure to an HTTP status (SAN-305/371).
- * Pure functions: no network, no env, no R2 client construction on import.
+ * Pure function: no network, no env, no R2 client construction on import.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -10,8 +9,12 @@ import * as mod from "../upload-r2";
 // upload-r2 is a .ts (CJS) module imported from a .mts (ESM) test; named
 // bindings come through the interop `default` wrapper — match the convention
 // used by the other tests in this folder (e.g. anchoring.test.mts).
-const { resolveUploadMime, classifyUploadError } =
-  (mod as unknown as { default: typeof mod }).default ?? mod;
+const {
+  R2ConfigError,
+  assertR2Configured,
+  getMissingR2Env,
+  resolveUploadMime,
+} = (mod as unknown as { default: typeof mod }).default ?? mod;
 
 test("keeps a specific, allowed declared MIME type", () => {
   assert.equal(resolveUploadMime("application/pdf", "doc.pdf"), "application/pdf");
@@ -45,24 +48,31 @@ test("rejects disallowed types (returns null)", () => {
   assert.equal(resolveUploadMime(null, "noextension"), null);
 });
 
-test("classifyUploadError: missing R2 config surfaces as 503 with the actionable message", () => {
-  const err = new Error("R2 not configured: missing R2_PUBLIC_URL. Set these in ~/.openclaw/.env.local");
-  const res = classifyUploadError(err);
-  assert.equal(res.status, 503);
-  assert.match(res.error, /R2 not configured: missing R2_PUBLIC_URL/);
-});
+test("R2 configuration checks report missing env vars without constructing a client", () => {
+  const keys = [
+    "CLOUDFLARE_ACCOUNT_ID",
+    "R2_UPLOAD_IMAGE_ACCESS_KEY_ID",
+    "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
+    "R2_UPLOAD_IMAGE_BUCKET_NAME",
+    "R2_PUBLIC_URL",
+  ] as const;
+  const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 
-test("classifyUploadError: oversized file (formidable) surfaces as 413", () => {
-  const byMessage = classifyUploadError(new Error("options.maxFileSize (20971520 bytes) exceeded"));
-  assert.equal(byMessage.status, 413);
-  assert.match(byMessage.error, /límite de 20 MB/);
-
-  const byHttpCode = classifyUploadError(Object.assign(new Error("Request Entity Too Large"), { httpCode: 413 }));
-  assert.equal(byHttpCode.status, 413);
-});
-
-test("classifyUploadError: unknown failure stays a generic 500 (preserves existing behavior)", () => {
-  const res = classifyUploadError(new Error("connection reset by peer"));
-  assert.equal(res.status, 500);
-  assert.equal(res.error, "Failed to upload file");
+  try {
+    for (const key of keys) delete process.env[key];
+    assert.deepEqual(getMissingR2Env({ hydrate: false }), [...keys]);
+    assert.throws(
+      () => assertR2Configured({ hydrate: false }),
+      (err) =>
+        err instanceof R2ConfigError &&
+        err.missing.join(",") === keys.join(",") &&
+        err.message.startsWith("Storage unavailable: missing "),
+    );
+  } finally {
+    for (const key of keys) {
+      const value = previous[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });

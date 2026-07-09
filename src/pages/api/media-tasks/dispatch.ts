@@ -13,8 +13,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { promises as fs } from "fs";
 import path from "path";
-import os from "os";
 import crypto from "crypto";
+import { getRuntime } from "@/lib/runtime";
 
 interface DispatchRequest {
   slug: string;
@@ -29,7 +29,7 @@ interface DispatchRequest {
 }
 
 const INBOX_DIR = path.join(
-  process.env.OPENCLAW_HOME ?? path.join(os.homedir(), ".openclaw"),
+  getRuntime().state.home(),
   "workspace-maese-pedro",
   "inbox",
 );

@@ -9,12 +9,6 @@
 // Order matters: first match wins.
 const CLASSIFIERS = [
   {
-    category: "missing_context",
-    regex: /(?:workspace-[a-z0-9_-]+\/brand\/?|brand\/[a-z0-9_-]+\/|find files named .{0,80} in .{0,120}brand|list files in .{0,120}brand).{0,160}(?:failed|not found|no such file|ENOENT)|(?:No such file|ENOENT).{0,160}brand\/[a-z0-9_-]+/i,
-    header: "Falta contexto inicial del cliente",
-    hint: "No están generados o montados los archivos base de contexto para esta marca. Hay que completar/generar Foundation antes de pedirle al agente que proponga estrategia, búsqueda o mensajes basados en el cliente.",
-  },
-  {
     category: "insufficient_quota",
     regex: /\binsufficient_quota\b|you (?:have )?exceeded your current quota|you have run out of credits/i,
     header: "API key OpenAI sin cuota",

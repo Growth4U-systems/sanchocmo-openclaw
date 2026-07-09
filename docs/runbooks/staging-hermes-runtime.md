@@ -14,8 +14,8 @@ This runbook brings up a parallel `staging-hermes` Sancho environment without re
 Start from `.env.example` and set the normal Mission Control values for the new hostname:
 
 ```env
-BASE_URL=https://staging-hermes.example.com
-NEXTAUTH_URL=https://staging-hermes.example.com
+BASE_URL=https://staging-hermes.sanchocmo.ai
+NEXTAUTH_URL=https://staging-hermes.sanchocmo.ai
 NEXT_PUBLIC_ENV_LABEL=STAGING-HERMES
 SANCHO_RUNTIME=hermes
 INSTALL_HERMES=1
@@ -94,7 +94,7 @@ Verify:
 
 ```bash
 docker inspect --format='{{.State.Health.Status}}' sanchocmo-hermes
-curl -sf https://staging-hermes.example.com/api/health
+curl -sf https://staging-hermes.sanchocmo.ai/api/health
 docker compose -f docker-compose.yml -f docker-compose.hermes.yml exec sanchocmo curl -sf http://127.0.0.1:18791/healthz
 ```
 
@@ -111,7 +111,7 @@ npm run smoke:runtime:external-http
 That smoke uses a fake runtime and writes the latest result to
 `.context/external-http-smoke/latest.json`.
 
-1. Log in to Mission Control on `https://staging-hermes.example.com`.
+1. Log in to Mission Control on `https://staging-hermes.sanchocmo.ai`.
 2. Go to `Ajustes -> Runtime`.
 3. Confirm Hermes appears configured and active. If it is configured but inactive, select Hermes.
 4. Open a test client chat and send:

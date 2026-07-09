@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { uploadImageAssets } from "@/lib/upload-image";
+import { R2ConfigError } from "@/lib/upload-r2";
 import { IncomingForm, type File } from "formidable";
 import fs from "fs";
 
@@ -31,6 +32,7 @@ export default async function handler(
 
     const file = files.file?.[0];
     if (!file) {
+      cleanupFiles(files);
       return res.status(400).json({ error: "No file provided" });
     }
 
@@ -44,6 +46,7 @@ export default async function handler(
     ];
 
     if (!file.mimetype || !allowedMimeTypes.includes(file.mimetype)) {
+      cleanupTempFile(file);
       return res
         .status(400)
         .json({ error: "Invalid file type. Only images allowed." });
@@ -53,14 +56,34 @@ export default async function handler(
     const ext = file.originalFilename?.split(".").pop() || "png";
     const filename = `upload-${Date.now()}.${ext}`;
 
-    const url = await uploadImageAssets(buffer, filename, file.mimetype);
-
-    // Clean up temp file
-    fs.unlinkSync(file.filepath);
+    let url: string;
+    try {
+      url = await uploadImageAssets(buffer, filename, file.mimetype);
+    } finally {
+      cleanupTempFile(file);
+    }
 
     return res.json({ url });
   } catch (error) {
+    if (error instanceof R2ConfigError) {
+      return res.status(503).json({
+        error: error.message,
+        storage: { ok: false, missing: error.missing },
+      });
+    }
     console.error("Upload error:", error);
     return res.status(500).json({ error: "Failed to process upload" });
   }
+}
+
+function cleanupTempFile(file: File): void {
+  try {
+    fs.unlinkSync(file.filepath);
+  } catch {
+    // best-effort cleanup
+  }
+}
+
+function cleanupFiles(files: Record<string, File[]>): void {
+  for (const file of Object.values(files).flat()) cleanupTempFile(file);
 }

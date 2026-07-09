@@ -10,15 +10,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
   if (!req.ctx?.isAdmin) return res.status(403).json({ error: "Admin only" });
 
-  const runtime = getRuntime();
-  if (!runtime.capabilities.cron || !runtime.capabilities.modelPicker) {
-    return res.status(501).json({
-      error: `Runtime "${runtime.id}" does not support cron model selection through Sancho yet.`,
-      runtime: runtime.id,
-      capability: "cron",
-    });
-  }
-
   const cronId = req.query.id as string;
   if (!cronId) return res.status(400).json({ error: "Missing cron id" });
 
@@ -32,8 +23,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!check.ok) return res.status(400).json({ error: check.reason });
 
   try {
-    await runtime.control.ensureModelInAllowlist(model);
-    await runtime.control.setCronModel(cronId, model);
+    await getRuntime().control.ensureModelInAllowlist(model);
+    await getRuntime().control.setCronModel(cronId, model);
     invalidateCatalogCache();
     return res.status(200).json({ ok: true, cronId, model, warning: check.warning });
   } catch (e) {

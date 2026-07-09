@@ -17,10 +17,11 @@
  *     endpoint POST /api/clients/[slug]/review-comments and by the
  *     debounce timer.
  *
- * Same fire-and-forget gateway pattern as feedback-triage-trigger.ts.
+ * Same fire-and-forget runtime dispatch pattern as feedback-triage-trigger.ts.
  */
 
-import { addMessage, getChatSecret, getGatewayUrl } from "./mc-chat";
+import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import { addMessage } from "./mc-chat";
 import { type CommentRow, loadDocCommentsFamily } from "@/lib/comments";
 import { getOriginalDocPath } from "@/lib/comments-file";
 import { resolveDocAuthor } from "@/lib/doc-owner";
@@ -142,7 +143,7 @@ export async function triggerReviewComments(
 
   const message = buildReviewMessage({ ...input, docPath: originalDocPath }, author, comments);
   // The thread shows a readable card; the technical dispatch travels only
-  // through the gateway payload below.
+  // through the runtime payload below.
   addMessage(
     author.threadId,
     "system",
@@ -150,8 +151,7 @@ export async function triggerReviewComments(
   );
   addMessage(author.threadId, "user", buildThreadCard(originalDocPath, author.agent, comments));
 
-  const secret = getChatSecret();
-  const payload = {
+  const payload: InboundMessage = {
     slug: input.slug,
     threadId: author.threadId,
     threadName: author.threadName,
@@ -170,26 +170,17 @@ export async function triggerReviewComments(
   };
 
   try {
-    const res = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(secret ? { "X-MC-Secret": secret } : {}),
-      },
-      body: JSON.stringify(payload),
-      // Never hang the caller on a slow/down gateway: the manual buttons
-      // in the dashboard await this request, and without a timeout the UI
-      // sits in "Despachando..." forever (SAN-148 staging finding).
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
+    // Never hang the caller on a slow/down runtime: the manual buttons
+    // in the dashboard await this request, and without a timeout the UI
+    // sits in "Despachando..." forever (SAN-148 staging finding).
+    const result = await getRuntime().messaging.sendInbound(payload, { timeoutMs: 15_000 });
+    if (!result.ok) {
       return {
         forwardedToGateway: false,
         threadId: author.threadId,
         agent: author.agent,
         commentCount: comments.length,
-        error: `gateway ${res.status}: ${text}`,
+        error: `gateway ${result.status}: ${result.raw}`,
       };
     }
     return {

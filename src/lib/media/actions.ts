@@ -10,15 +10,7 @@ import {
   readVisualIdentityPrefix,
 } from "@/lib/publishing/media-helpers";
 import { getAvailableImageProviders, getImageProvider } from "@/lib/image-gen/registry";
-import { uploadToR2 } from "@/lib/upload-r2";
-
-const REQUIRED_R2_VARS = [
-  "CLOUDFLARE_ACCOUNT_ID",
-  "R2_UPLOAD_IMAGE_ACCESS_KEY_ID",
-  "R2_UPLOAD_IMAGE_SECRET_ACCESS_KEY",
-  "R2_UPLOAD_IMAGE_BUCKET_NAME",
-  "R2_PUBLIC_URL",
-] as const;
+import { getMissingR2Env, uploadToR2 } from "@/lib/upload-r2";
 
 export interface DraftMediaSummary {
   ideaId: string;
@@ -55,7 +47,7 @@ export interface ImageGenerationInput {
 }
 
 export function checkMediaStorage(): { ok: boolean; missing: string[] } {
-  const missing = REQUIRED_R2_VARS.filter((key) => !process.env[key]);
+  const missing = getMissingR2Env();
   return { ok: missing.length === 0, missing };
 }
 

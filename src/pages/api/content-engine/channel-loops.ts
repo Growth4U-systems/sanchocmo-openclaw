@@ -16,10 +16,10 @@ import path from "path";
 import yaml from "js-yaml";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
-import { cronJobsFile, cronJobsStateFile } from "@/lib/data/openclaw-paths";
 import { loadUnifiedContentTasks } from "@/lib/data/content-tasks-flat";
 import { loadDraft } from "@/lib/data/drafts";
 import { getMetricsTimeSeries, type SeriesPoint } from "@/lib/data/metrics";
+import { getRuntime } from "@/lib/runtime";
 import {
   normalizeCadenceChannels,
   toChannelList,
@@ -103,7 +103,7 @@ function readJSON<T>(p: string, fallback: T): T {
 }
 
 function loadContentJobs(slug: string): CronJob[] {
-  const rawJobs = readJSON<{ jobs?: unknown }>(cronJobsFile(), { jobs: [] }).jobs;
+  const rawJobs = readJSON<{ jobs?: unknown }>(getRuntime().state.cronJobsFile(), { jobs: [] }).jobs;
   const jobs = Array.isArray(rawJobs) ? rawJobs : [];
   return jobs.filter((j) => {
     if (!j || typeof j !== "object") return false;
@@ -118,7 +118,7 @@ function loadContentJobs(slug: string): CronJob[] {
 }
 
 function loadJobsState(): JobsState["jobs"] {
-  const raw = readJSON<{ jobs?: unknown }>(cronJobsStateFile(), { jobs: {} }).jobs;
+  const raw = readJSON<{ jobs?: unknown }>(getRuntime().state.cronJobsStateFile(), { jobs: {} }).jobs;
   return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as JobsState["jobs"] : {};
 }
 

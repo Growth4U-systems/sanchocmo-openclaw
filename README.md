@@ -1,18 +1,15 @@
 # SanchoCMO
 
-**Fractional CMO AI** — A self-hosted multi-agent marketing system. OpenClaw is
-the default runtime today; Sancho's core is being split behind a runtime adapter
-contract so Hermes, Codex CLI, Claude Code, and other compatible harnesses can
-run the same Sancho product.
+**Fractional CMO AI** — A self-hosted, runtime-agnostic multi-agent marketing
+system. OpenClaw is the initial/default runtime adapter while Sancho's core is
+being decoupled to support Hermes, Codex, Claude Code, and other compatible
+runtimes behind the same contract.
 
 SanchoCMO operates as an AI-powered Chief Marketing Officer: it onboards clients,
 builds brand foundations, plans campaigns, creates content, and tracks metrics.
 You operate it through **Mission Control** — a web dashboard where each client
 gets a chat that talks directly to Sancho. Discord and Slack are optional
 notification/publishing channels, not requirements.
-
-SanchoCMO is open source and follows semantic versioning; **v1.0.0** is the
-first public release.
 
 ## Architecture
 
@@ -22,8 +19,16 @@ first public release.
                             │                     │
               ┌─────────────┴─────────────────────┘
               │
-      OpenClaw Gateway (:18789)
+        Sancho core
+        brands · tasks · docs · skills · chat state
               │
+        Runtime adapter contract
+              │
+      ┌───────┼──────────────────────────────────────┐
+      │       │                                      │
+  OpenClaw   Hermes / BYO Hermes                 Future adapters
+  default    external gateway                    Codex / Claude Code
+      │
   ┌───────────────────────────┐
   │                           │
 Sancho                      Sansón
@@ -40,11 +45,14 @@ The primary interface is **Mission Control chat** (`mc-chat → sancho`). Discor
 and Slack can be wired in as additional channels, but the product boots and runs
 without either.
 
-Runtime means the agent harness that executes turns and tools. It is not the
-same thing as a model provider. Anthropic, OpenAI and Fireworks provide models;
-OpenClaw, Hermes, Codex CLI and Claude Code are runtimes once they implement
-Sancho's adapter contract. Fresh installs start with OpenClaw and can configure
-or switch compatible runtimes from **Mission Control -> Settings -> Runtime**.
+Fresh installs use OpenClaw as the initial runtime because it is still the most
+complete adapter. Admins can configure and switch runtimes from **Mission Control
+→ Settings → Runtime** as the decoupled adapters become available.
+
+Runtime means the agent harness that actually executes turns and tools. It is
+not the same thing as a model provider. OpenAI, Anthropic and Fireworks provide
+models; OpenClaw, Hermes, Codex CLI and Claude Code are possible runtimes once
+they implement Sancho's adapter contract.
 
 ### Agents
 
@@ -109,45 +117,39 @@ installer walks you through `docker login` and retries.
 ```bash
 git clone https://github.com/Growth4U-systems/sanchocmo-openclaw.git sanchocmo && cd sanchocmo
 
-# Simplest — quick setup (asks only the essentials) + start + open the browser
-./sancho run
+# Install (runs the wizard if .env is missing, then starts the stack)
+./sancho install
 
-# Or the full installer (same thing, with more control over the wizard):
-./sancho install               # runs the wizard if .env is missing, then starts
-#   ./sancho install --quick     # force the short wizard (2 questions)
-#   ./sancho install --advanced  # full wizard: admin/login, DB, host ports, overlays
-#   ./sancho install --od        # also start Open Design
-#   ./sancho install --yalc      # also start YALC (Outreach)
-#   ./sancho install --no-up     # configure only, don't start containers
+# Optional overlays:
+#   ./sancho install --od     # also start Open Design
+#   ./sancho install --yalc   # also start YALC (Outreach)
+#   ./sancho install --no-up  # configure only, don't start containers
 ```
 
 Then manage the whole lifecycle with the same CLI — no `docker compose -f …` to
 remember:
 
 ```bash
-./sancho run | up | down | restart | status | logs
+./sancho up | down | restart | status | logs
 ./sancho update [vX.Y.Z|edge|latest]   # pull (and optionally pin) a version
 ./sancho destroy                       # wipe containers + data (asks to confirm)
 ```
 
 (`./install.sh` still works — it's a thin shim for `./sancho install`.)
 
-The wizard has **two modes**: **quick** (the default) asks only the essentials —
-provider + auth mode, the API key, and the first brand name — and defaults the
-rest; **advanced** also covers admin/login, database, custom host ports, and the
-optional overlays. Either way it generates the secrets (`NEXTAUTH_SECRET`,
-`ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `adminToken`, `mcToken`) and
-writes `.env`, `config/instance.json`, and `config/clients.json` for you. If a
-local port (e.g. `3000`) is already in use, the installer automatically picks the
-next free one and points your access URL at it. A boot preflight then validates
-the must-have config and fails fast with a clear list if anything is missing.
+The wizard asks for the essentials (provider + auth mode, API key, admin email
+domain, first brand) and generates the secrets (`NEXTAUTH_SECRET`,
+`ENCRYPTION_KEY`, `SANCHO_INTERNAL_API_TOKEN`, `adminToken`, `mcToken`), writing
+`.env`, `config/instance.json`, and `config/clients.json` for you. A boot
+preflight then validates the must-have config and fails fast with a clear list
+if anything is missing.
 
-The wizard writes `SANCHO_RUNTIME=openclaw` as the safe default. Advanced
-self-hosted installs can preseed `SANCHO_RUNTIME=external-http` plus
-`SANCHO_EXTERNAL_*` variables before running the installer, or configure the
-external runtime later from Settings. Existing Mission Control/Hermes bridges can
-use `SANCHO_EXTERNAL_PROTOCOL=mc-bridge`; `hermes-external` remains accepted as a
-legacy alias.
+The installer writes `SANCHO_RUNTIME=openclaw` as the safe initial adapter.
+Advanced self-hosted setups can pass `SANCHO_RUNTIME=external-http` plus the
+matching `SANCHO_EXTERNAL_*` variables before running the wizard, or configure
+the external runtime later from Settings. Existing Mission Control/Hermes bridges
+can use `SANCHO_EXTERNAL_PROTOCOL=mc-bridge`; `hermes-external` remains accepted
+as a legacy alias.
 
 Full guide: [docs/INSTALL.md](docs/INSTALL.md).
 
@@ -229,7 +231,7 @@ Exposed via reverse proxy (nginx on a server) or Tailscale Funnel (local dev).
 
 - **`staging`** = the trunk (default branch). **Every** change — feature, fix, *and* hotfix — branches off fresh `origin/staging` and squash-PRs back into `staging`. Branch name `<author>/san-<n>-<kebab-desc>`; every change needs a Linear `SAN-<n>` in the branch, title, or body.
 - **`main`** = a **fast-forward-only pointer** to the latest production release, moved *only* by automation (`promote-main.yml`). Never PR into `main`, never push or tag it by hand.
-- **Releases** are cut from `staging`: [release-please](https://github.com/googleapis/release-please) runs on `staging` and keeps one open `chore: release vX.Y.Z` PR. Merging it (squash) tags from `staging`; `main` then fast-forwards to that tag and the image is built. **Prod does not auto-deploy** — `deploy-prod.yml` is **`workflow_dispatch` only**: ship a tag manually from **Actions → "Deploy to Production"** (the tag is validated before anything touches prod).
+- **Releases** are cut from `staging`: [release-please](https://github.com/googleapis/release-please) runs on `staging` and keeps one open `chore: release vX.Y.Z` PR. Merging it (squash) tags from `staging`; `main` then fast-forwards to that tag and `deploy-prod.yml` deploys **after a manual approval** on the `production` environment gate.
 - **Hotfixes** are normal `fix:` PRs to `staging` (no separate path) — `staging` is kept always-releasable. The rare true-emergency procedure lives in [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) §Hotfixes.
 - Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) — enforced by commitlint (`feat:` → minor, `fix:` → patch, `feat!:`/`BREAKING CHANGE:` → major).
 

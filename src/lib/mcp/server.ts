@@ -6,20 +6,14 @@ import path from "path";
 import * as z from "zod/v4";
 import {
   addMessage,
-  getChatSecret,
-  getGatewayUrl,
   getPendingProgress,
   getStatusEntry,
   getThread,
   listThreadsForSlug,
 } from "@/lib/data/mc-chat";
 import { loadClient, loadClients, loadClientsData, writeClientsFile } from "@/lib/data/clients";
-import {
-  listAgentsRich,
-  restartGateway,
-  setAgentModel,
-  type AgentRichEntry,
-} from "@/lib/data/openclaw-config";
+import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import type { AgentRichEntry } from "@/lib/runtime/adapters/openclaw/control";
 import { getModelCatalog, invalidateCatalogCache, isModelAvailable } from "@/lib/data/models-catalog";
 import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
 import { enrichCrons, humanizeSchedule, type EnrichedCron } from "@/lib/data/openclaw-crons";
@@ -457,7 +451,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async () =>
       runTool(context, "sancho_list_agents", undefined, async () => {
         assertMcpScope(context.principal, "agents:read");
-        const agents = listAgentsRich();
+        const agents = await getRuntime().control.listAgentsRich();
         return jsonResult({ ok: true, agents, count: agents.length });
       }),
   );
@@ -474,7 +468,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ agentId }) =>
       runTool(context, "sancho_get_agent", undefined, async () => {
         assertMcpScope(context.principal, "agents:read");
-        const agent = getMcpAgent(agentId);
+        const agent = await getMcpAgent(agentId);
         if (!agent) throw new McpAuthError(404, `Agent not found: ${agentId}`);
         return jsonResult({ ok: true, agent });
       }),
@@ -496,7 +490,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ agentId, model, dryRun = true, confirm = false }) =>
       runTool(context, "sancho_set_agent_model", undefined, async () => {
         assertMcpScope(context.principal, "agents:write");
-        const before = getMcpAgent(agentId);
+        const before = await getMcpAgent(agentId);
         if (!before) throw new McpAuthError(404, `Agent not found: ${agentId}`);
         const requestedModel = model ?? null;
         const modelCheck = await validateAgentModel(requestedModel);
@@ -515,10 +509,14 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             message: "Set dryRun=false and confirm=true to update this agent model override.",
           });
         }
-        setAgentModel(agentId, requestedModel);
-        const restart = restartGateway();
+        await getRuntime().control.setAgentModel(agentId, requestedModel);
+        const restart = await getRuntime().lifecycle.restart() as {
+          ok: boolean;
+          method?: string;
+          error?: string;
+        };
         invalidateCatalogCache();
-        const updated = getMcpAgent(agentId) || { ...before, overrideModel: requestedModel };
+        const updated = (await getMcpAgent(agentId)) || { ...before, overrideModel: requestedModel };
         const warning = [
           modelCheck.warning,
           restart.ok
@@ -1121,7 +1119,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           skills,
           mc_chat_thread_id: tid,
         });
-        const payload = {
+        const payload: InboundMessage = {
           slug: clientSlug,
           threadId: tid,
           threadName: threadName || name,
@@ -1281,7 +1279,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       runTool(context, "sancho_send_message", clientSlug, async () => {
         assertClientScope(context, "chat:write", clientSlug);
         const tid = threadId || `${clientSlug}:mcp`;
-        const payload = {
+        const payload: InboundMessage = {
           slug: clientSlug,
           threadId: tid,
           threadName: threadName || tid,
@@ -1306,21 +1304,15 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         }
 
         addMessage(tid, "user", text);
-        const secret = getChatSecret();
-        const response = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...traceHeaders(context),
-            ...(secret ? { "X-MC-Secret": secret } : {}),
-          },
-          body: JSON.stringify(payload),
+        const result = await getRuntime().messaging.sendInbound(payload, {
+          headers: traceHeaders(context),
         });
-        const data = (await response.json()) as unknown;
-        if (!response.ok) {
-          throw new Error(`Mission Control gateway rejected message: ${response.status}`);
+        const data = parseGatewayBody(result.raw);
+        if (!result.ok) {
+          const detail = result.raw ? `: ${result.raw.slice(0, 500)}` : "";
+          throw new Error(`Mission Control runtime rejected message: HTTP ${result.status}${detail}`);
         }
-        return jsonResult({ ok: true, chatId: extractChatId(data) || tid, gateway: data });
+        return jsonResult({ ok: true, chatId: result.chatId || extractChatId(data) || tid, gateway: data });
       }),
   );
 
@@ -4321,10 +4313,11 @@ function updateClientMetadata(
   };
 }
 
-function getMcpAgent(agentId: string): AgentRichEntry | null {
+async function getMcpAgent(agentId: string): Promise<AgentRichEntry | null> {
   const normalized = agentId.trim();
   if (!normalized) throw new McpAuthError(400, "agentId is required");
-  return listAgentsRich().find((agent) => agent.id === normalized) || null;
+  const agents = await getRuntime().control.listAgentsRich() as AgentRichEntry[];
+  return agents.find((agent) => agent.id === normalized) || null;
 }
 
 async function validateAgentModel(model: string | null): Promise<{ warning?: string }> {
@@ -4726,25 +4719,17 @@ function extractChatId(value: unknown): string | null {
 
 async function dispatchMcChatMessage(
   context: SanchoMcpContext,
-  payload: { threadId: string } & Record<string, unknown>,
+  payload: InboundMessage,
 ): Promise<{ chatId: string; gateway: unknown }> {
-  const secret = getChatSecret();
-  const response = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...traceHeaders(context),
-      ...(secret ? { "X-MC-Secret": secret } : {}),
-    },
-    body: JSON.stringify(payload),
+  const result = await getRuntime().messaging.sendInbound(payload, {
+    headers: traceHeaders(context),
   });
-  const raw = await response.text();
-  const data = parseGatewayBody(raw);
-  if (!response.ok) {
-    const detail = raw ? `: ${raw.slice(0, 500)}` : "";
-    throw new Error(`Mission Control gateway rejected message: HTTP ${response.status}${detail}`);
+  const data = parseGatewayBody(result.raw);
+  if (!result.ok) {
+    const detail = result.raw ? `: ${result.raw.slice(0, 500)}` : "";
+    throw new Error(`Mission Control runtime rejected message: HTTP ${result.status}${detail}`);
   }
-  return { chatId: extractChatId(data) || payload.threadId, gateway: data };
+  return { chatId: result.chatId || extractChatId(data) || payload.threadId, gateway: data };
 }
 
 function parseGatewayBody(raw: string): unknown {

@@ -13,7 +13,7 @@ import fs from "fs";
 import crypto from "crypto";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { verifyIntakeToken } from "@/lib/intake-tokens";
-import { uploadToR2, ALLOWED_MIME_TYPES } from "@/lib/upload-r2";
+import { R2ConfigError, uploadToR2, resolveUploadMime } from "@/lib/upload-r2";
 import { loadClient } from "@/lib/data/clients";
 
 export const config = {
@@ -66,14 +66,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const file = files.file?.[0];
   if (!file) {
+    cleanupFiles(files);
     return res.status(400).json({ error: "No file provided (field name: file)" });
   }
 
-  // Validate mime type
-  const mimeType = file.mimetype || "";
-  if (!mimeType || !ALLOWED_MIME_TYPES.has(mimeType)) {
+  // Validate mime type. Browsers can send PDFs/documents as
+  // application/octet-stream, so normalize via the shared resolver.
+  const mimeType = resolveUploadMime(file.mimetype, file.originalFilename);
+  if (!mimeType) {
+    cleanupTempFile(file);
     return res.status(400).json({
-      error: `File type not allowed: ${mimeType}. Allowed: images, PDF, XLSX, DOCX, CSV, TXT, MD`,
+      error: `File type not allowed: ${file.originalFilename || file.mimetype || "unknown"}. Allowed: images, PDF, XLSX, DOCX, CSV, TXT, MD`,
     });
   }
 
@@ -86,11 +89,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Read, upload, clean up
   const buffer = fs.readFileSync(file.filepath);
   const size = file.size || buffer.length;
-  const url = await uploadToR2(buffer, key, mimeType);
+  let url: string;
   try {
-    fs.unlinkSync(file.filepath);
-  } catch {
-    // best-effort cleanup
+    try {
+      url = await uploadToR2(buffer, key, mimeType);
+    } finally {
+      cleanupTempFile(file);
+    }
+  } catch (err) {
+    if (err instanceof R2ConfigError) {
+      return res.status(503).json({
+        error: err.message,
+        storage: { ok: false, missing: err.missing },
+      });
+    }
+    throw err;
   }
 
   return res.status(200).json({
@@ -99,6 +112,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     mimeType,
     size,
   });
+}
+
+function cleanupTempFile(file: File): void {
+  try {
+    fs.unlinkSync(file.filepath);
+  } catch {
+    // best-effort cleanup
+  }
+}
+
+function cleanupFiles(files: Record<string, File[]>): void {
+  for (const file of Object.values(files).flat()) cleanupTempFile(file);
 }
 
 export default withErrorHandler(handler);

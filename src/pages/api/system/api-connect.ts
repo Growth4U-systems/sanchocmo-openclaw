@@ -5,6 +5,7 @@ import fs from "fs";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE, integrationsFile, brandDir } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
+import { runHealthChecks, type ServiceHealth } from "@/lib/health-check";
 import { resolveYalcConfig, yalcErrorResponse, yalcFetch } from "@/lib/yalc/client";
 import {
   buildYalcSetupGuide,
@@ -43,6 +44,15 @@ interface SetupGuide {
   time: string;
   warning?: string;
   steps: GuideStep[];
+}
+
+interface CatalogApiEntry {
+  ownership?: "system" | "client";
+  provider?: string;
+}
+
+interface ApiCatalog {
+  categories?: Record<string, { apis?: Record<string, CatalogApiEntry> }>;
 }
 
 interface YalcSaveResponse {
@@ -219,6 +229,23 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
+  const catalogApi = loadCatalogApi(apiId);
+  if (catalogApi?.ownership === "system") {
+    const healthResult = await runHealthChecks(apiId, slug);
+    const serviceHealth = healthResult.results[apiId];
+    if (!healthResult.error && serviceHealth) {
+      writeHealthCheckIntegrationState(slug, apiId, serviceHealth);
+      return res.status(200).json({
+        ok: serviceHealth.status === "ok",
+        testResult: {
+          status: serviceHealth.status === "ok" ? "connected" : "error",
+          output: serviceHealth.status === "ok" ? "Health check OK" : undefined,
+          error: serviceHealth.status === "ok" ? undefined : healthErrorMessage(serviceHealth),
+        },
+      });
+    }
+  }
+
   // Run test script. Same shared-skills tree as setup-guides above.
   const scriptDir = path.join(BASE, "..", "skills", "acquisition-metrics-plan", "scripts");
   const testScript = path.join(scriptDir, "test-connection.js");
@@ -271,6 +298,44 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 }
 
 export default compose(withErrorHandler, withAuth)(handler);
+
+function loadCatalogApi(apiId: string): CatalogApiEntry | null {
+  const catalogPath = path.join(
+    BASE,
+    "..",
+    "skills",
+    "acquisition-metrics-plan",
+    "schemas",
+    "api-catalog.json",
+  );
+  const catalog = readJSON<ApiCatalog>(catalogPath, { categories: {} });
+  for (const cat of Object.values(catalog.categories || {})) {
+    const api = cat.apis?.[apiId];
+    if (api) return api;
+  }
+  return null;
+}
+
+function writeHealthCheckIntegrationState(slug: string, apiId: string, health: ServiceHealth) {
+  const intPath = integrationsFile(slug);
+  const integrations = readJSON<IntegrationsData>(intPath, { dataSources: {} });
+  if (!integrations.dataSources) integrations.dataSources = {};
+  const prev = integrations.dataSources[apiId] || {};
+  integrations.dataSources[apiId] = {
+    ...prev,
+    provider: prev.provider || apiId,
+    status: health.status === "ok" ? "connected" : "error",
+    lastTestedAt: health.lastCheck,
+    lastError: health.status === "ok" ? null : healthErrorMessage(health),
+  };
+  integrations.updatedAt = new Date().toISOString();
+  writeJSON(intPath, integrations);
+}
+
+function healthErrorMessage(health: ServiceHealth): string {
+  const raw = health.details?.error;
+  return typeof raw === "string" && raw ? raw : health.status;
+}
 
 function serializeEnvValue(value: string): string {
   if (/^[A-Za-z0-9_./:@+=,-]+$/.test(value)) return value;

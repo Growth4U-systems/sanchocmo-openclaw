@@ -4,7 +4,7 @@ import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { loadClients } from "@/lib/data/clients";
 import { BASE } from "@/lib/data/paths";
-import { cronJobsFile } from "@/lib/data/openclaw-paths";
+import { getRuntime } from "@/lib/runtime";
 
 /**
  * GET /api/cron-runs?limit=20&slug=example
@@ -42,7 +42,7 @@ function loadCronsFromOpenClaw(): CronJob[] {
   const now = Date.now();
   if (_cronCache && (now - _cronCacheTs) < CRON_CACHE_TTL) return _cronCache;
   try {
-    const data = JSON.parse(fs.readFileSync(cronJobsFile(), "utf-8"));
+    const data = JSON.parse(fs.readFileSync(getRuntime().state.cronJobsFile(), "utf-8"));
     _cronCache = data.jobs || [];
     _cronCacheTs = now;
     return _cronCache!;
@@ -102,7 +102,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const clients = loadClients();
   const crons = loadCronsFromOpenClaw();
-  const runsDir = path.join(process.env.HOME || "/tmp", ".openclaw", "cron", "runs");
+  const runsDir = getRuntime().state.runtimeFile("cron", "runs");
   const runs: CronRun[] = [];
 
   for (const cron of crons) {

@@ -52,14 +52,12 @@ export function consumeCancelled(
   return true;
 }
 
-// Gateway URL and secret
-export function getGatewayUrl(): string {
-  return process.env.MC_CHAT_GATEWAY || "http://localhost:18789";
-}
-
-export function getChatSecret(): string | undefined {
-  return process.env.MC_CHAT_SECRET;
-}
+// Backward-compatible shims for older code paths. New outbound/runtime code
+// should use `getRuntime().messaging` instead.
+export {
+  getChatSecret,
+  getGatewayUrl,
+} from "@/lib/runtime/adapters/openclaw/messaging";
 
 // Attachment type for chat messages
 export interface ChatAttachment {

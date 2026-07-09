@@ -2,6 +2,10 @@
 
 SanchoCMO ships as Docker images plus a thin installer.
 
+The installer is the entrypoint for the new self-hosted product: it boots Sancho
+with OpenClaw as the safe initial runtime adapter, then lets admins configure or
+switch compatible runtimes from **Mission Control → Settings → Runtime**.
+
 **Un comando (recomendado, sin clonar):**
 
 ```bash
@@ -9,12 +13,8 @@ curl -fsSL https://raw.githubusercontent.com/Growth4U-systems/sanchocmo-openclaw
 ```
 
 Baja el runtime del último release a `~/sanchocmo` (override `SANCHO_DIR`),
-corre el wizard (modo **quick** por defecto) y levanta el stack. Si la imagen de
-GHCR todavía es privada, el instalador te guía el `docker login` y reintenta.
-
-**El arranque más simple, ya clonado:** `./sancho run` — corre el wizard en modo
-quick (sólo si falta `.env`), levanta, y abre el navegador. Si ya está
-configurado, equivale a `./sancho up`.
+corre el wizard y levanta el stack. Si la imagen de GHCR todavía es privada, el
+instalador te guía el `docker login` y reintenta.
 
 **Para desarrollo (clonando):**
 
@@ -38,20 +38,8 @@ tarball).
 
 ## What the wizard asks
 
-The wizard has **two modes** (pick with `--quick` / `--advanced`, the
-`WIZARD_MODE` env var, or the interactive selector at the top):
-
-- **quick** (default) — asks only the essentials: the **model provider & auth**
-  (step 1 below) and the **first brand name** (the slug is derived from it).
-  Everything else takes a sensible default — admin login via the printed token,
-  bundled local Postgres, `http://localhost:3000`, default ports, no Google, no
-  optional services. Finish the rest later in the app or with
-  `./sancho reconfigure --advanced`.
-- **advanced** — the full flow below, plus a **Host ports** step (`MC_PORT` /
-  `GATEWAY_HOST_PORT` / `LEGACY_HOST_PORT`) for pinning the loopback ports.
-
-`scripts/wizard.sh` (run automatically by `./sancho install` / `run`, or on its
-own) collects the minimum to boot and generates the rest. The **advanced** steps:
+`scripts/wizard.sh` (run automatically by `./sancho install`, or on its own)
+collects the minimum to boot and generates the rest, in six steps:
 
 1. **Model provider & auth** — pick the provider(s): `anthropic`, `openai`,
    `fireworks`, `both`, or `all` (default `anthropic`). The auth mode is asked
@@ -72,15 +60,10 @@ own) collects the minimum to boot and generates the rest. The **advanced** steps
    with the admin token printed at the end.
 3. **Database** — `local` (bundled Postgres, recommended) or `external` (e.g.
    Neon `DATABASE_URL`).
-4. **Host ports** — the loopback host ports for Mission Control / gateway /
-   legacy server (defaults `3000` / `18789` / `18790`). Only the **host** side of
-   each mapping — container ports are fixed. The installer auto-relocates a busy
-   port anyway, so this step is just for pinning.
-5. **Access URL** — the Base URL where you'll reach Mission Control (default
-   `http://localhost:<MC_PORT>`).
-6. **First brand** — display name (in **quick** the slug is derived from it; in
-   **advanced** you can also set the slug).
-7. **Optional services** — both off by default, both self-provision their token
+4. **Access URL** — the Base URL where you'll reach Mission Control (default
+   `http://localhost:3000`).
+5. **First brand** — slug + display name.
+6. **Optional services** — both off by default, both self-provision their token
    and are brought up automatically by `./sancho` when enabled:
    - *Outreach (YALC)* — generates `YALC_API_TOKEN` and wires
      `YALC_BASE_URL=http://yalc:3847`.
@@ -107,10 +90,11 @@ working.
 
 Fresh installs write `SANCHO_RUNTIME=openclaw` into `.env`. That is deliberate:
 OpenClaw is currently the complete/default adapter while Sancho's runtime
-contract is being split out. Sancho core owns brands, tasks, docs, skills, chat
-state and settings; runtimes sit behind adapters.
+contract is being split out. The product itself is not meant to stay coupled to
+OpenClaw; Sancho core owns brands, tasks, docs, skills, chat state and settings,
+while runtimes sit behind adapters.
 
-Runtime is not model provider:
+Do not confuse runtime with model provider:
 
 - **Model providers**: Anthropic, OpenAI, Fireworks, OpenRouter, etc.
 - **Runtimes / harnesses**: OpenClaw, Hermes, Codex CLI, Claude Code, or another
@@ -119,11 +103,11 @@ Runtime is not model provider:
   contract onto one runtime.
 
 Implemented/usable today: `openclaw`, managed `hermes`, and `external-http`.
-`external-http` is the BYO gateway path: the gateway can be backed by Hermes,
+`external-http` is the BYO gateway path: that gateway can be backed by Hermes,
 Codex CLI, Claude Code, or another harness once it speaks Sancho's HTTP contract.
 It can also talk to an existing Mission Control/Hermes bridge with
-`SANCHO_EXTERNAL_PROTOCOL=mc-bridge`. `hermes-external` remains accepted as a
-legacy alias.
+`SANCHO_EXTERNAL_PROTOCOL=mc-bridge`.
+`hermes-external` remains accepted as a legacy alias.
 
 To use a BYO runtime gateway from day one, pass the runtime env vars before
 running the installer or wizard:
@@ -146,23 +130,10 @@ export SANCHO_EXTERNAL_HEALTH_PATH=/health
 export SANCHO_EXTERNAL_AGENT=sancho-coordinator
 ```
 
-The wizard persists supplied `HERMES_*`, `SANCHO_EXTERNAL_*`, or legacy
-`HERMES_EXTERNAL_*` values into `.env`, so they survive restarts. You can also
-leave the install on OpenClaw and configure a runtime later from
-**Settings -> Runtime**.
-
-For Hermes, Claude Code, or Codex, use the guided setup in
-**Settings -> Runtime**:
-
-1. Choose **Hermes**, **Claude Code**, or **Codex** under
-   **Conectar runtime CLI**.
-2. Leave the default bridge URL when the bridge runs on the same host as Sancho,
-   or set the URL Sancho can reach.
-3. Click **Preparar**. Sancho writes the `external-http` env vars, generates a
-   shared secret, and shows one bridge command.
-4. Run that command on the host with the authenticated Claude Code/Codex CLI.
-5. Click **Verificar y activar**. If the bridge healthcheck passes, Sancho
-   switches new chat turns to `external-http`.
+The wizard persists any supplied `HERMES_*`, `SANCHO_EXTERNAL_*`, or legacy
+`HERMES_EXTERNAL_*` values into
+`.env`, so they survive restarts. You can also leave the install on OpenClaw and
+configure a runtime later from **Settings → Runtime**.
 
 The external runtime HTTP contract is documented in
 [`docs/runtime-external-http-contract.md`](runtime-external-http-contract.md).
@@ -186,8 +157,6 @@ WIZARD_ASSUME_YES=1 PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key \
   FIRST_BRAND_SLUG=acme FIRST_BRAND_NAME="Acme Inc" bash scripts/wizard.sh
 # Optional: ENABLE_YALC=yes / ENABLE_OD=yes to provision those services, and
 # ENABLE_GOOGLE=yes GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=… for Google login.
-# Env answers are honored in both modes; set WIZARD_MODE=advanced only if you
-# want the advanced prompts when running interactively.
 ```
 
 ## Running
@@ -197,7 +166,6 @@ figures out which compose overlays (Open Design, YALC) to include for you, so yo
 never type `-f docker-compose.*.yml` by hand:
 
 ```bash
-./sancho run           # simplest start: quick wizard (if no .env) + up + open browser
 ./sancho up            # start the stack (enabled overlays, from .env)
 ./sancho down          # stop & remove containers + network (data is kept)
 ./sancho restart       # down + up
@@ -206,13 +174,9 @@ never type `-f docker-compose.*.yml` by hand:
 ./sancho reconfigure   # re-run the wizard (regenerates .env + config; keeps data)
 ```
 
-The fastest path is **`./sancho run`** — it runs the wizard in **quick** mode
-only if `.env` is missing, brings the stack up, and opens your browser at the
-access URL; if you're already configured it just behaves like `./sancho up`.
-First install with more control is `./sancho install` (the classic `./install.sh`
+First install (wizard + start) is `./sancho install` (the classic `./install.sh`
 is a thin shim for it). Opt into optional services at install time with
-`./sancho install --od` / `--yalc`, or reconfigure fully with
-`./sancho reconfigure --advanced`.
+`./sancho install --od` / `--yalc`.
 
 > Why a CLI? It always loads the right compose overlays (from your `.env`) and
 > `down` passes `--remove-orphans`, so the project network is always cleaned up
@@ -228,25 +192,6 @@ All off by default. Turn them on when you need them:
 - **Open Design** (agentic visual editor, port 7456) — enable with `./sancho install --od` or by answering *yes* in the wizard; the `OD_API_TOKEN` is generated and the overlay started for you (no manual `-f docker-compose.od.yml`).
 - **Discord** — set `DISCORD_BOT_TOKEN` in `.env` (Discord is one comms channel; Mission Control chat is the primary interface).
 - **Slack** — configure in Mission Control → Settings → APIs.
-
-### Open Design (visual editor)
-
-Open Design is the agentic design daemon (skills, design systems, prompt
-templates, and the "Abrir editor agentic" flow). It runs as an opt-in container
-pulled from a public image — enable it with `./sancho install --od` or by
-answering *yes* in the wizard (the `OD_API_TOKEN` is generated and the overlay
-started for you).
-
-The **Open Design Library** tab in Media Creation degrades gracefully — it tells
-the three states apart instead of showing broken/empty grids:
-
-- **Not enabled** (no `OD_DAEMON_URL` / `OD_WEB_URL` / `OD_API_TOKEN`) → a calm
-  "Open Design no está activado" placeholder with a one-command enable CTA.
-- **Enabled but daemon down** → a distinct "daemon caído" state naming the
-  unreachable `daemonUrl` plus a restart hint and a "re-check" button.
-- **Enabled and healthy** → the real Library UI.
-
-Nothing else in Mission Control depends on Open Design being on.
 
 ### Outreach (YALC)
 

@@ -1,7 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { clearStatus, clearProgress } from "@/lib/data/mc-chat";
-import { getRuntime } from "@/lib/runtime";
+import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import {
+  appendAgentRunEvent,
+  getLatestActiveRun,
+  markAgentRunCancelled,
+} from "@/lib/data/agent-runs";
 
 /**
  * POST /api/chat/cancel
@@ -22,18 +27,49 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           ? "rocinante"
           : undefined;
 
+  const runtime = getRuntime();
+  await runtime.messaging.cancel(tid);
+  const activeRun = getLatestActiveRun(tid);
+  if (activeRun) {
+    markAgentRunCancelled(activeRun.id, tid, { requestedAgent });
+  }
   clearStatus(tid);
   clearProgress(tid);
   console.log(`[mc-chat] Cancelling thread: ${tid}`);
 
-  // Ask the selected runtime to cancel the active turn.
+  // Send /stop through the active runtime.
   try {
-    await getRuntime().messaging.cancel(tid, {
+    const payload: InboundMessage = {
       slug,
+      threadId: tid,
+      text: "/stop",
+      userName: "Admin",
+      userId: "mc-admin",
+      isAdmin: true,
       ...(requestedAgent ? { agent: requestedAgent, agentId: requestedAgent } : {}),
-    });
+    };
+    const result = await runtime.messaging.sendInbound(payload);
+    if (activeRun) {
+      appendAgentRunEvent({
+        runId: activeRun.id,
+        threadId: tid,
+        type: result.ok ? "cancel_dispatched" : "cancel_failed",
+        data: {
+          status: result.status,
+          raw: result.raw,
+        },
+      });
+    }
   } catch (err) {
-    console.error(`[mc-chat] Runtime cancel failed: ${err instanceof Error ? err.message : err}`);
+    if (activeRun) {
+      appendAgentRunEvent({
+        runId: activeRun.id,
+        threadId: tid,
+        type: "cancel_failed",
+        data: { error: err instanceof Error ? err.message : String(err) },
+      });
+    }
+    console.error(`[mc-chat] Runtime /stop failed: ${err instanceof Error ? err.message : err}`);
   }
 
   res.status(200).json({ ok: true });
