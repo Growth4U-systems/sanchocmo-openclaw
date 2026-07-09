@@ -236,6 +236,12 @@ jobs:
               git stash push -m "deploy-prod-$(date -u +%Y%m%dT%H%M%SZ)" || true
             fi
 
+            CHECKOUT_BLOCKER="plugins/mc-chat/src/attachments.js"
+            if [ -e "$CHECKOUT_BLOCKER" ] && ! git ls-files --error-unmatch "$CHECKOUT_BLOCKER" >/dev/null 2>&1; then
+              echo "▶ Stashing untracked $CHECKOUT_BLOCKER before tag checkout..."
+              git stash push --include-untracked -m "deploy-prod-untracked-$(date -u +%Y%m%dT%H%M%SZ)" -- "$CHECKOUT_BLOCKER" || true
+            fi
+
             # Apply GitHub `production` Environment to ~/.openclaw/.env.
             # When unpopulated (current state), this is a no-op — empty
             # secrets/vars are filtered out by the payload builder.
@@ -363,17 +369,23 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
+          FAILED_TAG: ${{ steps.tag.outputs.tag }}
         run: |
           echo "::warning::Deploy failed. Attempting rollback to previous tag…"
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH bash -s" <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH FAILED_TAG=$FAILED_TAG bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
-            PREV=$(git tag --sort=-creatordate | sed -n '2p')
+            PREV=$(git tag --sort=-creatordate --list 'v*.*.*' | awk -v failed="${FAILED_TAG:-}" '$0 != failed { print; exit }')
             if [ -z "$PREV" ]; then
               echo "No previous tag found; cannot rollback"
               exit 1
             fi
             echo "▶ Rolling back to $PREV"
+            CHECKOUT_BLOCKER="plugins/mc-chat/src/attachments.js"
+            if [ -e "$CHECKOUT_BLOCKER" ] && ! git ls-files --error-unmatch "$CHECKOUT_BLOCKER" >/dev/null 2>&1; then
+              echo "▶ Stashing untracked $CHECKOUT_BLOCKER before rollback checkout..."
+              git stash push --include-untracked -m "deploy-prod-rollback-untracked-$(date -u +%Y%m%dT%H%M%SZ)" -- "$CHECKOUT_BLOCKER" || true
+            fi
             git checkout "$PREV"
             export GIT_COMMIT="$(git rev-parse HEAD)"
             COMPOSE_ARGS="-f docker-compose.yml"
