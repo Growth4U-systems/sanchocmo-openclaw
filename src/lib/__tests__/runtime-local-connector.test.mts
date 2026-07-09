@@ -121,8 +121,12 @@ test("activation and install helpers use the Sancho self-queue contract", () => 
     SANCHO_EXTERNAL_INBOUND_PATH: "/api/runtime/local-connector/inbound",
     SANCHO_EXTERNAL_HEALTH_PATH: "/api/runtime/local-connector/health",
   });
+  const installCommand = localConnectorInstallCommand("https://sancho.example.com/", "pairing-token");
+  assert.match(installCommand, /^SANCHO_CONNECTOR_INSTALLER="\$\(mktemp "\$\{TMPDIR:-\/tmp\}\/sancho-connector\.XXXXXX\.sh"\)"/);
   assert.match(
-    localConnectorInstallCommand("https://sancho.example.com/", "pairing-token"),
-    /^curl -fsSL 'https:\/\/sancho\.example\.com\/api\/runtime\/local-connector\/install\?token=pairing-token' \| bash$/,
+    installCommand,
+    /curl -fsSL 'https:\/\/sancho\.example\.com\/api\/runtime\/local-connector\/install\?token=pairing-token' -o "\$SANCHO_CONNECTOR_INSTALLER"/,
   );
+  assert.match(installCommand, /bash "\$SANCHO_CONNECTOR_INSTALLER"$/);
+  assert.doesNotMatch(installCommand, /\|\s*bash/);
 });
