@@ -18,6 +18,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
@@ -110,6 +111,7 @@ function timeAgo(date?: string | null): string {
 }
 
 export function InboxTab({ slug }: { slug: string }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { toast, showToast } = useToast();
 
@@ -127,6 +129,8 @@ export function InboxTab({ slug }: { slug: string }) {
         `/api/yalc/leads?slug=${encodeURIComponent(slug)}&type=Partnerships&include=lastMessage`,
       ),
     enabled: !!slug,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const conversations = useMemo(
@@ -150,6 +154,15 @@ export function InboxTab({ slug }: { slug: string }) {
     [conversations, visible, selectedId],
   );
 
+  useEffect(() => {
+    const requestedLeadId =
+      typeof router.query.leadId === "string" ? router.query.leadId : "";
+    if (!requestedLeadId) return;
+    if (conversations.some((convo) => convo.id === requestedLeadId)) {
+      setSelectedId(requestedLeadId);
+    }
+  }, [router.query.leadId, conversations]);
+
   const threadKey = ["yalc", slug, "lead-messages", selected?.id] as const;
   const threadQuery = useQuery({
     queryKey: threadKey,
@@ -158,6 +171,8 @@ export function InboxTab({ slug }: { slug: string }) {
         `/api/yalc/leads/${encodeURIComponent(selected!.id)}/messages?slug=${encodeURIComponent(slug)}`,
       ),
     enabled: !!slug && !!selected,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const messages = useMemo(

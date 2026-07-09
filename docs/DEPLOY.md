@@ -169,6 +169,8 @@ FIRECRAWL_API_KEY=...        # Web scraping
 # YALC / GTM-OS (used by Yalc Agent + Mission Control cockpit)
 YALC_BASE_URL=http://yalc:3847
 YALC_API_TOKEN=...           # Same value exposed to YALC as GTM_OS_API_TOKEN
+SANCHO_REPLY_WEBHOOK_URL=http://sanchocmo:3000/api/yalc/replies
+SANCHO_REPLY_WEBHOOK_TOKEN=... # Shared secret for YALC inbound replies -> Sancho notifications
 YALC_BUILD_CONTEXT=../Yalc-Growth4U
 YALC_DATA_VOLUME=yalc_data   # Or /mnt/data/yalc-gtm-os for a host-mounted SQLite directory
 YALC_PORT=3847

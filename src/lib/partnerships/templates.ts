@@ -80,14 +80,65 @@ export interface AssignedTemplate extends PartnershipTemplate {
   assignedAt: string;
 }
 
-export const TEMPLATE_VARIABLES = [
-  "{{nombre}}",
-  "{{handle}}",
-  "{{plataforma}}",
-  "{{seguidores}}",
-  "{{sector}}",
-  "{{precio}}",
-] as const;
+export interface TemplateVariableOption {
+  key: string;
+  token: string;
+  label: string;
+  description: string;
+  source: "system" | "custom";
+  aliases?: string[];
+}
+
+export const TEMPLATE_VARIABLE_OPTIONS: TemplateVariableOption[] = [
+  {
+    key: "nombre",
+    token: "{{nombre}}",
+    label: "Nombre visible",
+    description: "Nombre, handle o identificador visible del creator.",
+    source: "system",
+    aliases: ["name"],
+  },
+  {
+    key: "handle",
+    token: "{{handle}}",
+    label: "Handle",
+    description: "Usuario social del creator.",
+    source: "system",
+  },
+  {
+    key: "plataforma",
+    token: "{{plataforma}}",
+    label: "Plataforma",
+    description: "Red social del creator.",
+    source: "system",
+    aliases: ["network"],
+  },
+  {
+    key: "seguidores",
+    token: "{{seguidores}}",
+    label: "Seguidores",
+    description: "Número de seguidores formateado.",
+    source: "system",
+    aliases: ["followers"],
+  },
+  {
+    key: "sector",
+    token: "{{sector}}",
+    label: "Sector",
+    description: "Temática o vertical del contenido del creator.",
+    source: "system",
+    aliases: ["vertical", "category", "niche", "topic"],
+  },
+  {
+    key: "precio",
+    token: "{{precio}}",
+    label: "Precio",
+    description: "Precio ofertado/negociado en EUR si existe.",
+    source: "system",
+  },
+];
+
+export const TEMPLATE_VARIABLES = TEMPLATE_VARIABLE_OPTIONS.map((item) => item.token);
 
 export function templateRelativePath(id: string): string {
   return `outreach/templates/${id}.md`;
@@ -267,9 +318,15 @@ function fmtFollowers(value: number): string {
 
 export function renderTemplateText(text: string, context: TemplateRenderContext): string {
   const values: Record<string, string | null> = {
+    name: context.name?.trim() || null,
     nombre: context.name?.trim() || null,
     handle: context.handle?.trim() || null,
+    network: context.network?.trim() || null,
     plataforma: context.network?.trim() || null,
+    followers:
+      typeof context.followers === "number" && Number.isFinite(context.followers)
+        ? fmtFollowers(context.followers)
+        : null,
     seguidores:
       typeof context.followers === "number" && Number.isFinite(context.followers)
         ? fmtFollowers(context.followers)

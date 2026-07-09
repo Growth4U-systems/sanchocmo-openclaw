@@ -53,6 +53,7 @@ jobs:
           OPENCLAW_GATEWAY_TOKEN: ${{ secrets.OPENCLAW_GATEWAY_TOKEN }}
           GTM_OS_API_TOKEN: ${{ secrets.GTM_OS_API_TOKEN }}
           YALC_API_TOKEN: ${{ secrets.YALC_API_TOKEN }}
+          SANCHO_REPLY_WEBHOOK_TOKEN: ${{ secrets.SANCHO_REPLY_WEBHOOK_TOKEN }}
           YALC_REPO_TOKEN: ${{ secrets.YALC_REPO_TOKEN }}
           GHCR_USERNAME: ${{ github.actor }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -140,6 +141,8 @@ jobs:
           # Sancho->YALC runtime URL inside the compose network. Default avoids the
           # client.ts localhost:3847 fallback that left the cockpit stuck on "Checking".
           YALC_BASE_URL: ${{ vars.YALC_BASE_URL || 'http://yalc:3847' }}
+          # YALC->Sancho reply callback URL inside the compose network.
+          SANCHO_REPLY_WEBHOOK_URL: ${{ vars.SANCHO_REPLY_WEBHOOK_URL || 'http://sanchocmo:3000/api/yalc/replies' }}
         run: |
           # Build a base64-encoded JSON dict of every non-empty key (skip empty
           # values so unset GitHub secrets/variables are safe no-ops on the VPS).
@@ -150,7 +153,7 @@ jobs:
               "NEXTAUTH_SECRET", "ENCRYPTION_KEY", "DATABASE_URL",
               "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
               "OD_API_TOKEN", "OPENCLAW_GATEWAY_TOKEN", "GTM_OS_API_TOKEN",
-              "YALC_API_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
+              "YALC_API_TOKEN", "SANCHO_REPLY_WEBHOOK_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
               "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
               # Tier 2 — System APIs
               "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "FIREWORKS_API_KEY", "FIREWORKS_ACCOUNT_ID",
@@ -182,7 +185,7 @@ jobs:
               "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
               "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
               "SANCHO_MCP_AUDIT_FILE",
-              "YALC_BASE_URL",
+              "YALC_BASE_URL", "SANCHO_REPLY_WEBHOOK_URL",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())
