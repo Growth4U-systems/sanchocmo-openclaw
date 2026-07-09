@@ -429,7 +429,11 @@ export function localConnectorRuntimeVars(
 export function localConnectorInstallCommand(sanchoBaseUrl: string, pairingToken: string): string {
   const url = new URL(`${normalizeBaseUrl(sanchoBaseUrl)}/api/runtime/local-connector/install`);
   url.searchParams.set("token", pairingToken);
-  return `curl -fsSL '${url.toString()}' | bash`;
+  return [
+    'SANCHO_CONNECTOR_INSTALLER="$(mktemp "${TMPDIR:-/tmp}/sancho-connector.XXXXXX.sh")"',
+    `curl -fsSL '${url.toString()}' -o "$SANCHO_CONNECTOR_INSTALLER"`,
+    'bash "$SANCHO_CONNECTOR_INSTALLER"',
+  ].join(" && ");
 }
 
 export function localConnectorHealth(provider?: LocalConnectorProviderId): {
