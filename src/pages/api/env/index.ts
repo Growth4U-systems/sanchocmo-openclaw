@@ -46,6 +46,14 @@ const SERVICE_ENV_MAP: Record<
   minimax: [{ key: "MINIMAX_API_KEY", label: "API Key", placeholder: "eyJ..." }],
   brave: [{ key: "BRAVE_API_KEY", label: "API Key", placeholder: "BSA..." }],
   apify: [{ key: "APIFY_API_KEY", label: "API Key", placeholder: "apify_api_..." }],
+  scrapecreators: [
+    {
+      key: "SCRAPECREATORS_API_KEY",
+      label: "API Key",
+      placeholder: "scrapecreators...",
+      help: "Necesaria para discovery real de creators. Sancho la usa contra https://api.scrapecreators.com.",
+    },
+  ],
   firecrawl: [{ key: "FIRECRAWL_API_KEY", label: "API Key", placeholder: "fc-..." }],
   serper: [{ key: "SERPER_API_KEY", label: "API Key", placeholder: "" }],
   dataforseo: [
