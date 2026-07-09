@@ -18,7 +18,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (!runId) return res.status(400).json({ error: "runId required" });
       if (action === "approve") {
         return res.status(200).json(
-          await yalcFetch(config, `/api/gates/${encodeURIComponent(runId)}/approve`, {
+          await yalcFetch(config, `/api/gates/${encodeURIComponent(runId)}/approve?sync=1`, {
             method: "POST",
             body: { edits: req.body?.edits },
           }),

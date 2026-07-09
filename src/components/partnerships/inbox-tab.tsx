@@ -60,6 +60,41 @@ interface InboxLead extends PartnershipLead {
   lastMessage?: LeadMessage | null;
 }
 
+interface AwaitingGateDraftStep {
+  subject?: string | null;
+  body?: string | null;
+  delayDays?: number | null;
+}
+
+interface AwaitingGateDraft {
+  leadId?: string | null;
+  providerId?: string | null;
+  handle?: string | null;
+  network?: string | null;
+  email?: string | null;
+  displayName?: string | null;
+  steps?: AwaitingGateDraftStep[];
+}
+
+interface AwaitingGateItem {
+  run_id: string;
+  framework?: string | null;
+  gate_id?: string | null;
+  prompt?: string | null;
+  created_at?: string | null;
+  stale?: boolean;
+  payload?: {
+    kind?: string | null;
+    sequenceName?: string | null;
+    dryRun?: boolean;
+    drafts?: AwaitingGateDraft[];
+  } | null;
+  inputs?: {
+    campaignId?: string | null;
+    leadIds?: string[];
+  } | null;
+}
+
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   const text = await res.text();
@@ -110,6 +145,40 @@ function timeAgo(date?: string | null): string {
   return `hace ${days} d`;
 }
 
+function normalizeHandle(value?: string | null): string {
+  return (value || "").trim().replace(/^@+/, "").toLowerCase();
+}
+
+function gateDraftMatchesLead(draft: AwaitingGateDraft, lead: InboxLead): boolean {
+  if (draft.leadId && draft.leadId === lead.id) return true;
+  if (draft.providerId && lead.providerId && draft.providerId === lead.providerId) return true;
+  if (draft.email && lead.email && draft.email.toLowerCase() === lead.email.toLowerCase()) return true;
+  const draftHandle = normalizeHandle(draft.handle);
+  const leadHandle = normalizeHandle(lead.handle);
+  return Boolean(draftHandle && leadHandle && draftHandle === leadHandle);
+}
+
+function gateMatchesLead(gate: AwaitingGateItem, lead: InboxLead): boolean {
+  if (
+    gate.framework !== "partner-outreach" ||
+    gate.gate_id !== "approve-send" ||
+    gate.payload?.kind !== "partner-contact"
+  ) {
+    return false;
+  }
+  if (Array.isArray(gate.inputs?.leadIds) && gate.inputs.leadIds.includes(lead.id)) return true;
+  return (gate.payload?.drafts || []).some((draft) => gateDraftMatchesLead(draft, lead));
+}
+
+function gateDraftForLead(gate: AwaitingGateItem | null, lead: InboxLead | null): AwaitingGateDraft | null {
+  if (!gate || !lead) return null;
+  return (gate.payload?.drafts || []).find((draft) => gateDraftMatchesLead(draft, lead)) || null;
+}
+
+function firstDraftBody(draft: AwaitingGateDraft | null): string {
+  return (draft?.steps || []).find((step) => typeof step.body === "string" && step.body.trim())?.body || "";
+}
+
 export function InboxTab({ slug }: { slug: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -127,6 +196,18 @@ export function InboxTab({ slug }: { slug: string }) {
     queryFn: () =>
       fetchJson<{ leads?: InboxLead[] }>(
         `/api/yalc/leads?slug=${encodeURIComponent(slug)}&type=Partnerships&include=lastMessage`,
+      ),
+    enabled: !!slug,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+  });
+
+  const gatesKey = ["yalc", slug, "gates", "awaiting"] as const;
+  const gatesQuery = useQuery({
+    queryKey: gatesKey,
+    queryFn: () =>
+      fetchJson<{ items?: AwaitingGateItem[] }>(
+        `/api/yalc/gates?slug=${encodeURIComponent(slug)}`,
       ),
     enabled: !!slug,
     refetchInterval: 5000,
@@ -152,6 +233,21 @@ export function InboxTab({ slug }: { slug: string }) {
       visible[0] ||
       null,
     [conversations, visible, selectedId],
+  );
+  const pendingContactGate = useMemo(
+    () =>
+      selected
+        ? (gatesQuery.data?.items || []).find((gate) => gateMatchesLead(gate, selected)) || null
+        : null,
+    [gatesQuery.data, selected],
+  );
+  const pendingContactDraft = useMemo(
+    () => gateDraftForLead(pendingContactGate, selected),
+    [pendingContactGate, selected],
+  );
+  const pendingContactPreview = useMemo(
+    () => firstDraftBody(pendingContactDraft),
+    [pendingContactDraft],
   );
 
   useEffect(() => {
@@ -189,6 +285,7 @@ export function InboxTab({ slug }: { slug: string }) {
       ) || null,
     [threadQuery.data],
   );
+  const waitingForFirstTouch = selected?.inboxState === "en-cola" && messages.length === 0;
 
   // ── negotiation-assist: precio en la última reply entrante ──
   const lastIncoming = useMemo(
@@ -314,8 +411,10 @@ export function InboxTab({ slug }: { slug: string }) {
       }),
     onSuccess: () => {
       setGate((prev) => (prev ? { ...prev, sent: true } : prev));
+      showToast("✓ envío aprobado");
       void queryClient.invalidateQueries({ queryKey: threadKey });
       void queryClient.invalidateQueries({ queryKey: leadsKey });
+      void queryClient.invalidateQueries({ queryKey: gatesKey });
     },
     onError: (error) =>
       showToast(
@@ -504,11 +603,53 @@ export function InboxTab({ slug }: { slug: string }) {
                     Cargando hilo…
                   </p>
                 )}
-                {!threadQuery.isLoading && messages.length === 0 && (
+                {!threadQuery.isLoading && messages.length === 0 && !pendingContactGate && (
                   <p className="py-4 text-center text-sm text-muted-foreground">
                     Sin mensajes todavía — el primer email saldrá al aprobar el
                     contacto.
                   </p>
+                )}
+                {pendingContactGate && (
+                  <section
+                    className="rounded-xl border border-yellow-500/40 bg-yellow-50/70 p-4"
+                    data-testid="pending-contact-gate"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-yellow-900">
+                          Primer contacto pendiente de aprobación
+                        </h3>
+                        <p className="mt-1 max-w-2xl text-xs leading-relaxed text-yellow-900/80">
+                          El lead está en cola. Todavía no salió por Instagram ni
+                          aparece como enviado hasta que apruebes este gate.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={approveGate.isPending}
+                        onClick={() => approveGate.mutate(pendingContactGate.run_id)}
+                        className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+                        data-testid="approve-pending-contact"
+                      >
+                        {approveGate.isPending ? "Aprobando…" : "Aprobar y enviar"}
+                      </button>
+                    </div>
+                    <div className="mt-3 space-y-1.5 text-xs text-yellow-950">
+                      <div className="rounded-md border border-yellow-500/30 bg-background/70 px-3 py-1.5">
+                        <b>Secuencia:</b>{" "}
+                        {pendingContactGate.payload?.sequenceName || "Primer contacto"}
+                      </div>
+                      <div className="rounded-md border border-yellow-500/30 bg-background/70 px-3 py-1.5">
+                        <b>Acción:</b>{" "}
+                        {pendingContactGate.prompt || "Aprobar envío al creator"}
+                      </div>
+                    </div>
+                    {pendingContactPreview && (
+                      <div className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-md border border-dashed border-yellow-500/40 bg-background px-3 py-2 text-xs leading-relaxed text-foreground">
+                        {pendingContactPreview}
+                      </div>
+                    )}
+                  </section>
                 )}
 
                 {messages.map((message) => (
@@ -689,44 +830,46 @@ export function InboxTab({ slug }: { slug: string }) {
                 )}
 
                 {/* ── Borrador ── */}
-                <div
-                  className="rounded-xl border border-dashed border-border bg-background p-3"
-                  data-testid="draft-box"
-                >
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    ✍️ Borrador — respuesta
-                  </span>
-                  <textarea
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    placeholder={`Escribe la respuesta a ${leadDisplayName(selected)}…`}
-                    className="mt-2 min-h-[150px] w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed focus:border-rust focus:outline-none"
-                    data-testid="draft-textarea"
-                  />
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      disabled={!draft.trim() || createGate.isPending}
-                      onClick={() => createGate.mutate()}
-                      className="rounded-lg border-2 border-rust bg-rust px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
-                      data-testid="send-draft"
-                    >
-                      {createGate.isPending ? "Preparando…" : "📨 Enviar"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!draft.trim() || saveDraft.isPending}
-                      onClick={() => saveDraft.mutate()}
-                      className="rounded-lg border-2 border-border bg-background px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-muted disabled:opacity-50"
-                      data-testid="save-draft"
-                    >
-                      💾 Guardar
-                    </button>
-                    <span className="text-[11px] text-muted-foreground">
-                      Enviar pasa por aprobación antes de salir.
+                {!waitingForFirstTouch && (
+                  <div
+                    className="rounded-xl border border-dashed border-border bg-background p-3"
+                    data-testid="draft-box"
+                  >
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      ✍️ Borrador — respuesta
                     </span>
+                    <textarea
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      placeholder={`Escribe la respuesta a ${leadDisplayName(selected)}…`}
+                      className="mt-2 min-h-[150px] w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed focus:border-rust focus:outline-none"
+                      data-testid="draft-textarea"
+                    />
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={!draft.trim() || createGate.isPending}
+                        onClick={() => createGate.mutate()}
+                        className="rounded-lg border-2 border-rust bg-rust px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+                        data-testid="send-draft"
+                      >
+                        {createGate.isPending ? "Preparando…" : "📨 Enviar"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!draft.trim() || saveDraft.isPending}
+                        onClick={() => saveDraft.mutate()}
+                        className="rounded-lg border-2 border-border bg-background px-4 py-1.5 text-sm font-semibold transition-colors hover:bg-muted disabled:opacity-50"
+                        data-testid="save-draft"
+                      >
+                        💾 Guardar
+                      </button>
+                      <span className="text-[11px] text-muted-foreground">
+                        Enviar pasa por aprobación antes de salir.
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </>
           )}

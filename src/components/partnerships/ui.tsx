@@ -130,11 +130,19 @@ const STAGE_STAMP: Partial<Record<StageFilterKey, string>> = {
 export function StageStamp({ lead }: { lead: PartnershipLead }) {
   const stage = stageForStatus(lead.lifecycleStatus);
   const label =
-    stage === "Discarded" ? "Descartado" : stage || lead.lifecycleStatus || "—";
+    lead.lifecycleStatus === "Queued"
+      ? "En cola"
+      : stage === "Discarded"
+        ? "Descartado"
+        : stage || lead.lifecycleStatus || "—";
+  const title =
+    lead.lifecycleStatus === "Queued"
+      ? "Estado actual: En cola — pendiente de aprobar el envío"
+      : `Estado actual: ${label}`;
   return (
     <span className="inline-flex flex-col items-start gap-0.5">
       <span
-        title={`Estado actual: ${label}`}
+        title={title}
         className={cn(
           "inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
           (stage && STAGE_STAMP[stage]) ||

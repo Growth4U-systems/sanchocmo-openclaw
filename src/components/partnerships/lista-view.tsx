@@ -390,7 +390,11 @@ export function ListaView({
                       </button>
                     ) : (
                       <span className="text-[11px] font-medium text-muted-foreground">
-                        {contactActionForStage(leadStage) === "done" ? "Contactado" : "—"}
+                        {lead.lifecycleStatus === "Queued"
+                          ? "En cola"
+                          : contactActionForStage(leadStage) === "done"
+                            ? "Contactado"
+                            : "—"}
                       </span>
                     )}
                   </td>
