@@ -430,7 +430,7 @@ export function localConnectorInstallCommand(sanchoBaseUrl: string, pairingToken
   const url = new URL(`${normalizeBaseUrl(sanchoBaseUrl)}/api/runtime/local-connector/install`);
   url.searchParams.set("token", pairingToken);
   return [
-    'SANCHO_CONNECTOR_INSTALLER="$(mktemp "${TMPDIR:-/tmp}/sancho-connector.XXXXXX.sh")"',
+    'SANCHO_CONNECTOR_INSTALLER="$(mktemp "${TMPDIR:-/tmp}/sancho-connector.XXXXXX")"',
     `curl -fsSL '${url.toString()}' -o "$SANCHO_CONNECTOR_INSTALLER"`,
     'bash "$SANCHO_CONNECTOR_INSTALLER"',
   ].join(" && ");
