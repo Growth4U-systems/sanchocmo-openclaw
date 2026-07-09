@@ -1,0 +1,29 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
+import { resolveYalcConfig, yalcErrorResponse, yalcFetch } from "@/lib/yalc/client";
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "GET") {
+    res.setHeader("Allow", "GET");
+    return res.status(405).json({ error: `Method ${req.method} not allowed` });
+  }
+
+  const slug = getSlug(req);
+  if (!slug) return res.status(400).json({ error: "Missing slug" });
+  const campaignId = String(req.query.campaignId || "").trim();
+  if (!campaignId) return res.status(400).json({ error: "Missing campaignId" });
+
+  try {
+    return res.status(200).json(
+      await yalcFetch(
+        resolveYalcConfig(slug),
+        `/api/campaigns/${encodeURIComponent(campaignId)}/template-variables`,
+      ),
+    );
+  } catch (err) {
+    const out = yalcErrorResponse(err);
+    return res.status(out.status).json(out.body);
+  }
+}
+
+export default compose(withErrorHandler, withSlugAuth)(handler);

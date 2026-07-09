@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { readJSON, writeJSON } from "./json-io";
 import { notificationsFile } from "./paths";
 
-interface Notification {
+export interface Notification {
   id: string;
   type: string;
   title: string;
@@ -10,23 +10,55 @@ interface Notification {
   slug: string;
   created_at: string;
   sent_at: string | null;
+  sent: boolean;
   metadata?: Record<string, unknown>;
 }
 
 export function loadNotifications(slug: string): Notification[] {
-  const data = readJSON<{ notifications: Notification[] }>(
-    notificationsFile(slug),
-    { notifications: [] }
-  );
-  return data.notifications || [];
+  const data = readJSON<unknown>(notificationsFile(slug), []);
+  const rows = Array.isArray(data)
+    ? data
+    : data && typeof data === "object" && Array.isArray((data as { notifications?: unknown }).notifications)
+      ? (data as { notifications: unknown[] }).notifications
+      : [];
+
+  return rows
+    .filter((row): row is Record<string, unknown> => !!row && typeof row === "object" && !Array.isArray(row))
+    .map((row) => {
+      const createdAt =
+        typeof row.created_at === "string"
+          ? row.created_at
+          : typeof row.timestamp === "string"
+            ? row.timestamp
+            : new Date().toISOString();
+      const sentAt =
+        typeof row.sent_at === "string"
+          ? row.sent_at
+          : row.sent === true
+            ? createdAt
+            : null;
+      return {
+        id: typeof row.id === "string" ? row.id : `ntf_${crypto.randomUUID()}`,
+        type: typeof row.type === "string" ? row.type : "notification",
+        title: typeof row.title === "string" ? row.title : typeof row.ideaTitle === "string" ? row.ideaTitle : "Notificación",
+        body: typeof row.body === "string" ? row.body : "",
+        slug,
+        created_at: createdAt,
+        sent_at: sentAt,
+        sent: row.sent === true || Boolean(sentAt),
+        metadata: row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+          ? row.metadata as Record<string, unknown>
+          : undefined,
+      };
+    });
 }
 
 export function saveNotifications(slug: string, notifications: Notification[]): void {
-  writeJSON(notificationsFile(slug), { notifications });
+  writeJSON(notificationsFile(slug), notifications);
 }
 
 export function getUnsentNotifications(slug: string): Notification[] {
-  return loadNotifications(slug).filter((n) => !n.sent_at);
+  return loadNotifications(slug).filter((n) => !n.sent && !n.sent_at);
 }
 
 export function markNotificationsSent(slug: string, ids: string[]): void {
@@ -35,6 +67,7 @@ export function markNotificationsSent(slug: string, ids: string[]): void {
   for (const n of all) {
     if (ids.includes(n.id)) {
       n.sent_at = now;
+      n.sent = true;
     }
   }
   saveNotifications(slug, all);
@@ -56,6 +89,7 @@ export function addNotification(
     slug,
     created_at: new Date().toISOString(),
     sent_at: null,
+    sent: false,
     ...(n.metadata ? { metadata: n.metadata } : {}),
   };
   const all = loadNotifications(slug);

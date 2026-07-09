@@ -1,8 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs";
-import path from "path";
 import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
-import { BASE } from "@/lib/data/paths";
+import { getUnsentNotifications, markNotificationsSent } from "@/lib/data/notifications";
 
 /**
  * POST /api/notifications/sent
@@ -20,24 +18,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Missing slug or ids array" });
   }
 
-  const notifsFile = path.join(BASE, "brand", slug, "idea-generation", "notifications.json");
-  let notifs: { id: string; sent?: boolean }[] = [];
-  try {
-    notifs = JSON.parse(fs.readFileSync(notifsFile, "utf-8"));
-  } catch {
-    // empty
-  }
-
-  let marked = 0;
-  notifs.forEach((n) => {
-    if (ids.includes(n.id)) {
-      n.sent = true;
-      marked++;
-    }
-  });
-
-  fs.mkdirSync(path.dirname(notifsFile), { recursive: true });
-  fs.writeFileSync(notifsFile, JSON.stringify(notifs, null, 2));
+  const before = getUnsentNotifications(slug);
+  markNotificationsSent(slug, ids);
+  const marked = before.filter((n) => ids.includes(n.id)).length;
 
   res.status(200).json({ ok: true, marked });
 }

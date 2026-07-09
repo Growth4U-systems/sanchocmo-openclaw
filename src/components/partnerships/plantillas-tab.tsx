@@ -24,7 +24,7 @@ import { SlideOver } from "@/components/shared/slide-over";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { TaskSlideOver } from "@/components/shared/task-slideover";
 // Imports de LEAF modules client-safe (el index del paquete arrastra fs).
-import type { PartnershipTemplate } from "@/lib/partnerships/templates";
+import type { PartnershipTemplate, TemplateVariableOption } from "@/lib/partnerships/templates";
 import type { DiscoverySearchRecord } from "@/lib/partnerships/discovery-types";
 import { SequenceEditor, type EditorState } from "./sequence-editor";
 import { ToastViewport, useToast } from "./ui";
@@ -59,6 +59,10 @@ function emptyEditor(): EditorState {
       },
     ],
   };
+}
+
+interface TemplateVariablesPayload {
+  variables: TemplateVariableOption[];
 }
 
 export function PlantillasTab({ slug }: { slug: string }) {
@@ -96,6 +100,15 @@ export function PlantillasTab({ slug }: { slug: string }) {
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [docPath, setDocPath] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
+  const editorVariableType = editor?.type === "b2b" ? "B2B" : "Partnerships";
+  const variablesQuery = useQuery({
+    queryKey: ["yalc", slug, "template-variables", editorVariableType],
+    queryFn: () =>
+      fetchJson<TemplateVariablesPayload>(
+        `/api/yalc/template-variables?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(editorVariableType)}`,
+      ),
+    enabled: !!slug && !!editor,
+  });
 
   const saveMutation = useMutation({
     mutationFn: (state: EditorState) => {
@@ -344,6 +357,9 @@ export function PlantillasTab({ slug }: { slug: string }) {
             onChange={setEditor}
             onSave={() => saveMutation.mutate(editor)}
             saving={saveMutation.isPending}
+            variables={variablesQuery.data?.variables}
+            variablesLoading={variablesQuery.isLoading}
+            variablesError={variablesQuery.error instanceof Error ? variablesQuery.error.message : null}
           />
         )}
       </SlideOver>

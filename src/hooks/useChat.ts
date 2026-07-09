@@ -153,6 +153,8 @@ export function useThreadList(slug: string | null) {
       return threads;
     },
     enabled: !!slug,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
     staleTime: 5000,
   });
 }
