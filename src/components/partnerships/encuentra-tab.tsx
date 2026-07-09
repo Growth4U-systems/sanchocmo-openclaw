@@ -324,7 +324,10 @@ export function EncuentraTab({
                 onClick={() =>
                   isDraft ? onContinueDraft(campaign) : onOpenSearch(campaign)
                 }
-                className="cursor-pointer overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-rust"
+                className={cn(
+                  "relative cursor-pointer overflow-visible rounded-xl border border-border bg-card transition-colors hover:border-rust",
+                  pickerFor === campaign.id && "z-30",
+                )}
                 title={
                   isDraft
                     ? "Borrador — completa el plan con Sancho para lanzar"
