@@ -123,6 +123,29 @@ ask_required() {
   printf '%s' "$val"
 }
 
+# check_runtime_gateway <base-url> <health-path> <secret> : best-effort reachability
+# probe for a BYO runtime gateway. Warns (never aborts) so a scripted install whose
+# gateway is not up yet still completes — the gateway only has to be reachable when
+# Sancho actually boots. Sends the shared secret as X-MC-Secret when provided.
+check_runtime_gateway() {
+  local base="${1%/}" path="${2:-/healthz}" secret="$3" url code
+  case "$path" in /*) ;; *) path="/$path" ;; esac
+  url="${base}${path}"
+  if ! command -v curl >/dev/null 2>&1; then
+    warn "curl not found — skipping the runtime gateway healthcheck ($url)."
+    return 0
+  fi
+  say "  ${DIM}Checking runtime gateway at ${url} …${RST}"
+  code="$(curl -sS -o /dev/null -w '%{http_code}' -m 5 ${secret:+-H "X-MC-Secret: $secret"} "$url" 2>/dev/null || true)"
+  code="${code:-000}"
+  case "$code" in
+    2*|3*) ok "Runtime gateway reachable: ${url} (HTTP ${code})." ;;
+    000)   warn "Could not reach the runtime gateway at ${url}. It must be running and reachable when Sancho boots (check URL/host/firewall)." ;;
+    401|403) warn "Runtime gateway at ${url} answered HTTP ${code} — reachable, but the shared secret looks wrong. Re-check SANCHO_EXTERNAL_SECRET." ;;
+    *)     warn "Runtime gateway at ${url} returned HTTP ${code} (expected 2xx/3xx). Re-check the URL and health path." ;;
+  esac
+}
+
 # --- Secret generation -------------------------------------------------------
 need_cmd() { command -v "$1" >/dev/null 2>&1 || { say "ERROR: '$1' is required but not installed."; exit 1; }; }
 need_cmd openssl
@@ -183,7 +206,7 @@ if [ -z "$WIZARD_MODE" ]; then
   fi
 fi
 case "$WIZARD_MODE" in advanced|full) WIZARD_MODE=advanced ;; *) WIZARD_MODE=quick ;; esac
-if [ "$WIZARD_MODE" = "advanced" ]; then STEP_TOTAL=7; else STEP_TOTAL=2; fi
+if [ "$WIZARD_MODE" = "advanced" ]; then STEP_TOTAL=8; else STEP_TOTAL=2; fi
 STEP_NO=0
 # nstep <title> : numbered step header ("N/TOTAL  title") with a mode-aware total.
 nstep() { STEP_NO=$((STEP_NO + 1)); step "$STEP_NO/$STEP_TOTAL  $*"; }
@@ -207,11 +230,9 @@ case "$SANCHO_RUNTIME" in
     exit 1
     ;;
 esac
-if [ "$SANCHO_RUNTIME" = "openclaw" ]; then
-  say "${DIM}Runtime: OpenClaw initial adapter. Configure/switch runtimes later from Settings → Runtime.${RST}"
-else
-  warn "Advanced runtime selected: SANCHO_RUNTIME=$SANCHO_RUNTIME. Make sure the matching gateway env vars are set."
-fi
+# Advanced installs pick/confirm the runtime interactively in the "Runtime engine"
+# step below; quick installs keep whatever resolved here (openclaw, or a pre-set
+# SANCHO_RUNTIME for scripted BYO). The final choice is echoed in the summary.
 
 # --- 1. Model provider + auth ------------------------------------------------
 # Ask the auth MODE first, then collect the credential that mode actually needs
@@ -277,6 +298,51 @@ esac
 # it now, empty (= disabled) otherwise.
 GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
 GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
+# --- Runtime engine (advanced only) -----------------------------------------
+# Which engine executes Sancho turns. OpenClaw is the complete default; hermes and
+# external-http (BYO gateway — Claude Code, Codex, a Hermes gateway, or any HTTP
+# runtime speaking the Sancho contract) are selectable here for self-hosted
+# installs. Quick installs stay on OpenClaw and can switch later in Settings →
+# Runtime. `ask` would skip the prompt because SANCHO_RUNTIME already resolved
+# above, so we blank it first and pass that value as the default.
+SANCHO_EXTERNAL_GATEWAY_URL="${SANCHO_EXTERNAL_GATEWAY_URL:-}"
+SANCHO_EXTERNAL_SECRET="${SANCHO_EXTERNAL_SECRET:-}"
+SANCHO_EXTERNAL_PROTOCOL="${SANCHO_EXTERNAL_PROTOCOL:-}"
+SANCHO_EXTERNAL_HEALTH_PATH="${SANCHO_EXTERNAL_HEALTH_PATH:-}"
+HERMES_GATEWAY_URL="${HERMES_GATEWAY_URL:-}"
+HERMES_CHAT_SECRET="${HERMES_CHAT_SECRET:-}"
+if [ "$WIZARD_MODE" = "advanced" ]; then
+  nstep "Runtime engine"
+  say "  ${DIM}OpenClaw is the complete default. 'external-http' points Sancho at your own${RST}"
+  say "  ${DIM}gateway (Claude Code / Codex / Hermes / custom); 'hermes' uses a managed Hermes.${RST}"
+  say "  ${DIM}You can also switch or reconfigure this later in Settings → Runtime.${RST}"
+  _rt_default="$SANCHO_RUNTIME"
+  SANCHO_RUNTIME=""   # blank so `ask` prompts (interactive) / takes the default (non-interactive)
+  SANCHO_RUNTIME="$(ask SANCHO_RUNTIME "Runtime — openclaw, hermes, or external-http" "$_rt_default")"
+  case "$SANCHO_RUNTIME" in
+    hermes-external) SANCHO_RUNTIME=external-http ;;
+    openclaw|hermes|external-http) ;;
+    *) warn "Unknown runtime '$SANCHO_RUNTIME' — falling back to openclaw."; SANCHO_RUNTIME=openclaw ;;
+  esac
+  case "$SANCHO_RUNTIME" in
+    external-http)
+      SANCHO_EXTERNAL_GATEWAY_URL="$(ask_required SANCHO_EXTERNAL_GATEWAY_URL "External runtime gateway URL (e.g. http://127.0.0.1:18792)")"
+      SANCHO_EXTERNAL_SECRET="$(ask SANCHO_EXTERNAL_SECRET "Shared runtime secret (sent as X-MC-Secret; blank if none)" "")"
+      SANCHO_EXTERNAL_PROTOCOL="$(ask SANCHO_EXTERNAL_PROTOCOL "Protocol — sancho (async, default) or mc-bridge (sync)" "sancho")"
+      SANCHO_EXTERNAL_HEALTH_PATH="$(ask SANCHO_EXTERNAL_HEALTH_PATH "Health check path" "/healthz")"
+      check_runtime_gateway "$SANCHO_EXTERNAL_GATEWAY_URL" "$SANCHO_EXTERNAL_HEALTH_PATH" "$SANCHO_EXTERNAL_SECRET"
+      ;;
+    hermes)
+      HERMES_GATEWAY_URL="$(ask_required HERMES_GATEWAY_URL "Hermes gateway URL (e.g. https://hermes.example.com)")"
+      HERMES_CHAT_SECRET="$(ask HERMES_CHAT_SECRET "Hermes chat secret (blank if none)" "")"
+      check_runtime_gateway "$HERMES_GATEWAY_URL" "/health" "$HERMES_CHAT_SECRET"
+      ;;
+    openclaw)
+      say "  ${DIM}OpenClaw selected — no gateway configuration needed.${RST}"
+      ;;
+  esac
+fi
+
 if [ "$WIZARD_MODE" = "advanced" ]; then
   nstep "Admin & login access"
   ADMIN_EMAIL_DOMAIN="$(ask ADMIN_EMAIL_DOMAIN "Admin email domain (emails @this become admins)" "example.com")"
@@ -567,6 +633,11 @@ say "   • Admin access token ${DIM}(paste into the 'Access Token' field on the
 say "       ${B}${ADMIN_TOKEN}${RST}"
 say "   ${DIM}(also stored in config/clients.json and .env as MC_ADMIN_TOKEN — keep it secret)${RST}"
 say "   • Runtime: ${SANCHO_RUNTIME} ${DIM}(change/configure later in Settings → Runtime)${RST}"
+if [ "$SANCHO_RUNTIME" = "external-http" ] && [ -n "${SANCHO_EXTERNAL_GATEWAY_URL:-}" ]; then
+  say "       ${DIM}→ gateway ${SANCHO_EXTERNAL_GATEWAY_URL} (protocol ${SANCHO_EXTERNAL_PROTOCOL:-sancho})${RST}"
+elif [ "$SANCHO_RUNTIME" = "hermes" ] && [ -n "${HERMES_GATEWAY_URL:-}" ]; then
+  say "       ${DIM}→ gateway ${HERMES_GATEWAY_URL}${RST}"
+fi
 # Model provider(s) — reflect exactly what was configured. Mirror the same
 # per-provider case selection used to collect the credentials above, so a
 # Fireworks-only (or openai/both/all) install never shows a stale Anthropic line.
