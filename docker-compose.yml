@@ -20,9 +20,9 @@ services:
     container_name: sanchocmo
     restart: unless-stopped
     ports:
-      - "${SANCHOCMO_BIND_ADDRESS:-127.0.0.1}:${SANCHOCMO_GATEWAY_PORT:-18789}:18789"
-      - "${SANCHOCMO_BIND_ADDRESS:-127.0.0.1}:${SANCHOCMO_LEGACY_PORT:-18790}:18790"
-      - "${SANCHOCMO_BIND_ADDRESS:-127.0.0.1}:${SANCHOCMO_MC_PORT:-3000}:3000"
+      - "${SANCHOCMO_BIND_ADDRESS:-127.0.0.1}:${GATEWAY_HOST_PORT:-18789}:18789"
+      - "${SANCHOCMO_BIND_ADDRESS:-127.0.0.1}:${LEGACY_HOST_PORT:-18790}:18790"
+      - "${SANCHOCMO_BIND_ADDRESS:-127.0.0.1}:${MC_PORT:-3000}:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
