@@ -69,6 +69,15 @@ selector:
 
 **Advanced only** (quick applies defaults instead of asking):
 
+- **Runtime engine** — which engine executes Sancho turns: `openclaw` (default),
+  `hermes`, or `external-http` (BYO gateway — Claude Code, Codex, a Hermes
+  gateway, or any HTTP runtime speaking the Sancho contract). Picking `hermes` or
+  `external-http` prompts for the gateway URL, shared secret, protocol
+  (`sancho`/`mc-bridge`) and health path, then **runs a reachability healthcheck**
+  and warns clearly if the gateway can't be reached (it never blocks the install —
+  the gateway only has to be up when Sancho boots). Quick installs stay on
+  `openclaw`; you can switch later from **Settings → Runtime**. See
+  [Runtime selection](#runtime-selection) below.
 - **Admin & login access** — admin email domain (emails `@domain` become
   admins), an admin contact email, and **optional Google login** (off by
   default; needs a Google OAuth client id + secret). Skip Google and log in
@@ -126,8 +135,11 @@ It can also talk to an existing Mission Control/Hermes bridge with
 `SANCHO_EXTERNAL_PROTOCOL=mc-bridge`.
 `hermes-external` remains accepted as a legacy alias.
 
-To use a BYO runtime gateway from day one, pass the runtime env vars before
-running the installer or wizard:
+The **advanced** wizard (`./sancho install --advanced`) offers this interactively
+in its **Runtime engine** step: pick `hermes`/`external-http`, enter the gateway
+URL + secret + protocol + health path, and the wizard runs a reachability
+healthcheck before finishing. Alternatively — or for scripted/quick installs —
+pass the runtime env vars before running the installer or wizard:
 
 ```bash
 export SANCHO_RUNTIME=external-http
