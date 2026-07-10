@@ -33,12 +33,22 @@ updates:
     labels:
       - dependencies
     groups:
+      # Only minor/patch updates are grouped. MAJOR bumps are excluded so they
+      # land as dedicated per-package PRs — majors (e.g. next, react, tailwindcss,
+      # typescript) routinely need framework migration + runtime verification and
+      # must not ride in a combined PR that only passes typecheck/build. See SAN-428.
       npm-production:
         applies-to: version-updates
         dependency-type: production
+        update-types:
+          - minor
+          - patch
       npm-development:
         applies-to: version-updates
         dependency-type: development
+        update-types:
+          - minor
+          - patch
 
   # --- GitHub Actions: one combined PR ---------------------------------------
   - package-ecosystem: github-actions
