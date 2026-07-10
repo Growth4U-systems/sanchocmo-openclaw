@@ -42,6 +42,7 @@ La unidad de trabajo visible es la campaña. Cada campaña muestra una sola sigu
 - Bandeja de acción, no espejo completo de LinkedIn o Instantly.
 - Solo muestra respuestas nuevas, positivas, excepciones y conversaciones pendientes.
 - Una respuesta detiene las secuencias activas de esa persona en todos los canales.
+- La primera respuesta real crea o actualiza de forma idempotente el Contacto canónico en Sancho, vinculado a la persona, campaña y conversación de origen.
 - En v1, la acción principal puede abrir la conversación en la herramienta de origen. Responder desde Sancho requiere soporte fiable para enviar dentro del `chat_id` existente.
 
 ## Contrato de ejecución
@@ -54,7 +55,7 @@ La unidad de trabajo visible es la campaña. Cada campaña muestra una sola sigu
 | Personalizar | Solicita generación y permite revisión | Persiste variables y mensajes por lead | Modelo configurado |
 | LinkedIn | Envía items aprobados por lead | Aplica bloqueos, límites e idempotencia | Unipile |
 | Email | Aprueba y publica una secuencia | Crea campaña, variables y leads | Instantly |
-| Respuestas | Consulta bandeja y notifica | Normaliza webhook, guarda mensaje y detiene secuencia | Unipile/Instantly |
+| Respuestas | Consulta bandeja, promueve a Contacto y notifica | Normaliza webhook, guarda mensaje y detiene secuencia | Unipile/Instantly |
 
 Los comandos que ya existen y deben ser el contrato estable son:
 
@@ -97,6 +98,7 @@ Incluye:
 - Simulación sin escrituras externas.
 - Activación en Unipile e Instantly.
 - Stop-on-reply global por persona y protección contra doble envío.
+- Promoción idempotente a Contacto canónico de Sancho al recibir la primera respuesta real.
 - Bandeja de respuestas con enlace al origen.
 - Estado de sincronización y errores recuperables.
 
@@ -115,8 +117,9 @@ No incluye:
 1. Programar `campaign:track` como proceso periódico y observable. Hoy existe como comando, no como loop instalado por defecto.
 2. Registrar automáticamente los webhooks de Unipile e Instantly y verificar firma, tenant e idempotencia.
 3. Consolidar una respuesta en un stop global por persona para LinkedIn y email, incluso si aparece en otra campaña.
-4. Exponer un estado canónico de campaña con `nextAction` y `lastSyncedAt`; la UI todavía lo infiere de leads y timestamps.
-5. Probar live en staging con cuentas de test: crear campaña, enviar a un contacto controlado, recibir respuesta y detener follow-ups.
+4. Crear o actualizar el Contacto canónico de Sancho cuando llega la primera respuesta, con una clave idempotente por persona/provider.
+5. Exponer un estado canónico de campaña con `nextAction` y `lastSyncedAt`; la UI todavía lo infiere de leads y timestamps.
+6. Probar live en staging con cuentas de test: crear campaña, enviar a un contacto controlado, recibir respuesta, crear el Contacto y detener follow-ups.
 
 ### P1: operación humana
 
@@ -150,4 +153,3 @@ Outreach B2B está cerrado cuando un usuario puede, sin conocer los proveedores:
 5. Ver el estado real de cada envío.
 6. Recibir una respuesta en Sancho y comprobar que se detuvieron los follow-ups.
 7. Recuperarse de un fallo del proveedor sin duplicar mensajes.
-
