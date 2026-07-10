@@ -2273,7 +2273,6 @@ function LinkedInAutopilotPanel({
     return approval?.approved !== false && !(approval?.message ?? item.message ?? "").trim();
   }).length;
   const hasCampaign = !!campaign;
-  const hasPeople = leads.length > 0;
   const canReview = !!plan && sendable.length > 0;
   const canExecute = canReview && approved.length > 0 && blankApproved === 0;
 
@@ -2296,13 +2295,6 @@ function LinkedInAutopilotPanel({
           <MiniMetric label="aprobados" value={approved.length} muted={!plan || approved.length === 0} />
           <MiniMetric label="bloqueos" value={blocked.length} muted={!plan || blocked.length === 0} />
         </div>
-      </div>
-
-      <div className="mt-4 grid gap-2 md:grid-cols-4">
-        <StepBadge index={1} label="Buscar personas" active={!hasPeople} done={hasPeople} />
-        <StepBadge index={2} label="Enriquecer datos" active={hasPeople && !plan} done={!!plan} />
-        <StepBadge index={3} label="Personalizar" active={!!plan && !canExecute} done={canExecute} />
-        <StepBadge index={4} label="Contactar" active={canExecute} done={false} />
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
@@ -2446,29 +2438,6 @@ function LinkedInAutopilotPanel({
         </div>
       )}
     </section>
-  );
-}
-
-function StepBadge({ index, label, active, done }: { index: number; label: string; active: boolean; done: boolean }) {
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm",
-        done && "border-sage/40 bg-sage/10 text-sage",
-        active && !done && "border-rust/40 bg-rust/10 text-rust",
-        !active && !done && "border-border bg-background text-muted-foreground",
-      )}
-    >
-      <span
-        className={cn(
-          "grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-bold",
-          done ? "border-sage bg-sage text-white" : active ? "border-rust bg-rust text-white" : "border-border bg-card",
-        )}
-      >
-        {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : index}
-      </span>
-      <span className="font-semibold">{label}</span>
-    </div>
   );
 }
 
