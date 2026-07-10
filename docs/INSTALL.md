@@ -164,13 +164,25 @@ The wizard persists any supplied `HERMES_*`, `SANCHO_EXTERNAL_*`, or legacy
 `.env`, so they survive restarts. You can also leave the install on OpenClaw and
 configure a runtime later from **Settings → Runtime**.
 
+Running Sancho **on** Hermes as the engine needs no special compose file — pick
+`hermes` / `external-http` in the advanced wizard (or set the env vars above).
+`docker-compose.hermes.yml` is a different concern: it runs a *separate, parallel*
+Hermes environment alongside an OpenClaw stack (see
+[`docs/runbooks/staging-hermes-runtime.md`](runbooks/staging-hermes-runtime.md)),
+which is why it isn't shipped in the product tarball.
+
 The external runtime HTTP contract is documented in
 [`docs/runtime-external-http-contract.md`](runtime-external-http-contract.md).
-After building the app, validate the contract locally with:
+After `npm run build`, validate a runtime end to end with:
 
 ```bash
-npm run smoke:runtime:external-http
+npm run smoke:runtime:external-http    # generic BYO gateway (fake runtime)
+npm run smoke:runtime:codex            # Codex CLI bridge (needs `codex` on PATH)
+npm run smoke:runtime:claude-code      # Claude Code bridge (needs `claude` on PATH)
 ```
+
+The runtime adapter/bridge unit suite runs without a build via
+`npm run test:runtime`.
 
 ### Non-interactive / CI
 
