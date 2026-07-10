@@ -90,7 +90,7 @@
     "@types/react-dom": "^18",
     "drizzle-kit": "^0.31.10",
     "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "eslint-config-next": "15.5.20",
     "husky": "^9.1.7",
     "playwright": "^1.59.1",
     "postcss": "^8",
