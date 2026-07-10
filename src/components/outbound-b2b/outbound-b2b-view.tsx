@@ -5,7 +5,6 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Archive,
   Briefcase,
   Building2,
   CheckCircle2,
@@ -55,10 +54,13 @@ type ContactosVista = "kanban" | "lista";
 type OutboundAction =
   | "search"
   | "enrich"
+  | "personalize"
   | "approve"
   | "dry-run"
   | "publish"
   | "live"
+  | "email-dry-run"
+  | "email-send"
   | "linkedin-dry-run"
   | "linkedin-send";
 type YalcJobStatus = "queued" | "running" | "succeeded" | "failed" | "interrupted";
@@ -259,11 +261,6 @@ interface SequencePreviewItem {
   status?: string;
 }
 
-interface LinkedInAutopilotAccountInput {
-  accountId: string;
-  label?: string;
-}
-
 interface LinkedInAutopilotPlanItem {
   leadId: string;
   name: string;
@@ -308,28 +305,28 @@ interface LinkedInAutopilotCommandResponse {
 }
 
 const TABS: Array<{ key: Exclude<B2BTab, "settings">; label: string; icon: LucideIcon }> = [
-  { key: "encuentra", label: "Overview", icon: Search },
-  { key: "plantillas", label: "Oferta", icon: FileText },
+  { key: "encuentra", label: "Campañas", icon: Briefcase },
   { key: "contactos", label: "Personas", icon: Users },
-  { key: "inbox", label: "Inbox", icon: Inbox },
+  { key: "plantillas", label: "Mensajes", icon: FileText },
+  { key: "inbox", label: "Respuestas", icon: Inbox },
 ];
 
 const HEADERS: Record<B2BTab, { title: string; sub: string }> = {
   encuentra: {
-    title: "Campaña B2B",
-    sub: "Resultados, target, oferta y estado operativo de la campaña seleccionada.",
+    title: "Campañas B2B",
+    sub: "Crea una campaña y continúa siempre desde su siguiente acción.",
   },
   contactos: {
     title: "Personas",
-    sub: "Personas y cuentas de la campaña seleccionada, con score y estado comercial.",
+    sub: "Revisa a quién encontró Sancho, sus datos y su estado de contacto.",
   },
   inbox: {
-    title: "Inbox",
-    sub: "Respuestas, pendientes y enviados de la campaña seleccionada.",
+    title: "Respuestas",
+    sub: "Atiende solo las conversaciones que necesitan una decisión humana.",
   },
   plantillas: {
-    title: "Oferta y secuencia",
-    sub: "Qué ofrecemos, a quién se lo decimos y cómo se personaliza la secuencia.",
+    title: "Mensajes",
+    sub: "Genera, revisa y activa la secuencia de LinkedIn o email.",
   },
   settings: {
     title: "Settings",
@@ -497,6 +494,76 @@ function emailLeadCount(leads: readonly Lead[]): number {
 
 function linkedinLeadCount(leads: readonly Lead[]): number {
   return leads.filter((lead) => Boolean(lead.linkedinUrl) || /linkedin|unipile/i.test(lead.source || "")).length;
+}
+
+type CampaignNextAction =
+  | { kind: "action"; action: "search" | "enrich" | "personalize"; label: string; description: string }
+  | { kind: "tab"; tab: "contactos" | "plantillas" | "inbox"; label: string; description: string };
+
+function campaignContactableLeadCount(campaign: Campaign | CampaignDetail, leads: readonly Lead[]): number {
+  const channels = channelText(campaign.channels).toLowerCase();
+  const wantsLinkedIn = channels.includes("linkedin");
+  const wantsEmail = channels.includes("email") || !wantsLinkedIn;
+  return leads.filter((lead) =>
+    (wantsLinkedIn && Boolean(lead.linkedinUrl)) || (wantsEmail && Boolean(lead.email)),
+  ).length;
+}
+
+function campaignNextAction(campaign: Campaign | CampaignDetail, leads: readonly Lead[]): CampaignNextAction {
+  const replies = leads.filter((lead) => replyCategoryForLead(lead)).length;
+  if (replies > 0) {
+    return {
+      kind: "tab",
+      tab: "inbox",
+      label: `Ver ${replies} respuesta${replies === 1 ? "" : "s"}`,
+      description: "Hay conversaciones que necesitan revisión.",
+    };
+  }
+
+  if (leads.some(hasExternalSendSignal)) {
+    return {
+      kind: "tab",
+      tab: "contactos",
+      label: "Ver campaña en marcha",
+      description: "Los envíos ya comenzaron. Revisa el avance por persona.",
+    };
+  }
+
+  if (leads.length === 0) {
+    return {
+      kind: "action",
+      action: "search",
+      label: "Buscar personas",
+      description: "Encuentra personas que encajan con el target de la campaña.",
+    };
+  }
+
+  const contactable = campaignContactableLeadCount(campaign, leads);
+  if (contactable < leads.length) {
+    return {
+      kind: "action",
+      action: "enrich",
+      label: "Completar datos",
+      description: `${leads.length - contactable} persona${leads.length - contactable === 1 ? "" : "s"} todavía no tiene un canal utilizable.`,
+    };
+  }
+
+  const personalized = personalizedLeadCount(leads);
+  if (personalized < contactable) {
+    return {
+      kind: "action",
+      action: "personalize",
+      label: "Generar personalización",
+      description: `Faltan mensajes personalizados para ${contactable - personalized} persona${contactable - personalized === 1 ? "" : "s"}.`,
+    };
+  }
+
+  return {
+    kind: "tab",
+    tab: "plantillas",
+    label: "Revisar y contactar",
+    description: "Los datos están listos. Revisa los mensajes antes de activar la campaña.",
+  };
 }
 
 const CAMPAIGN_LAUNCHED_STATUS_RE = /(^|[\s_-])(published|live|sent|launched|completed|done|closed)([\s_-]|$)/;
@@ -782,23 +849,15 @@ function inboxBucketForLead(lead: Lead): B2BInboxFilter | null {
 function outboundActionLabel(action: OutboundAction): string {
   if (action === "search") return "Buscar personas";
   if (action === "enrich") return "Enriquecer datos";
+  if (action === "personalize") return "Generar personalización";
   if (action === "approve") return "Personalizar mensajes";
   if (action === "dry-run") return "Simular envíos";
   if (action === "publish") return "Contactar por email";
+  if (action === "email-dry-run") return "Simular email";
+  if (action === "email-send") return "Activar email";
   if (action === "linkedin-dry-run") return "Personalizar LinkedIn";
   if (action === "linkedin-send") return "Contactar por LinkedIn";
   return "Contactar";
-}
-
-function outboundActionDescription(action: OutboundAction): string {
-  if (action === "search") return "Encuentra personas que encajan con el target.";
-  if (action === "enrich") return "Completa email, LinkedIn, cargo, empresa y señales de fit.";
-  if (action === "approve") return "Prepara mensajes revisables por persona.";
-  if (action === "dry-run") return "Valida el envío sin contactar a nadie.";
-  if (action === "publish") return "Lanza la secuencia de email.";
-  if (action === "linkedin-dry-run") return "Prepara mensajes de LinkedIn sin enviarlos.";
-  if (action === "linkedin-send") return "Envía conexión o DM por LinkedIn.";
-  return "Deja la campaña lista para contactar.";
 }
 
 function isQueuedJobResponse(value: unknown): value is YalcQueuedJobResponse & { jobId: string } {
@@ -1016,21 +1075,6 @@ function linkedInReadyLeads(leads: Lead[]): Lead[] {
   return leads.filter((lead) => !!lead.linkedinUrl);
 }
 
-function parseLinkedInAccounts(value: string): LinkedInAutopilotAccountInput[] {
-  return value
-    .split(/[\n,;]+/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .map((item) => {
-      const [accountId, label] = item.split("|").map((part) => part.trim());
-      return {
-        accountId,
-        ...(label ? { label } : {}),
-      };
-    })
-    .filter((item) => !!item.accountId);
-}
-
 export function OutboundB2BView() {
   const slug = useSlugSync();
   const router = useRouter();
@@ -1050,7 +1094,6 @@ export function OutboundB2BView() {
   const [roster, setRoster] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [activeJob, setActiveJob] = useState<ActiveYalcJob | null>(null);
-  const [linkedinAccountInput, setLinkedinAccountInput] = useState("");
   const [linkedinAutopilotPlan, setLinkedinAutopilotPlan] = useState<LinkedInAutopilotPlan | null>(null);
   const [linkedinAutopilotApprovals, setLinkedinAutopilotApprovals] = useState<Record<string, LinkedInAutopilotApproval>>({});
 
@@ -1209,7 +1252,7 @@ export function OutboundB2BView() {
     mutationFn: ({ campaignId, action }: { campaignId: string; action: OutboundAction }) => {
       const campaign = campaigns.find((item) => item.id === campaignId) || campaignDetailQuery.data;
       const campaignLeads = allLeads.filter((lead) => lead.campaignId === campaignId);
-      if ((action === "search" || action === "enrich") && campaignLocksLeadEdits(campaign || null, campaignLeads)) {
+      if ((action === "search" || action === "enrich" || action === "personalize") && campaignLocksLeadEdits(campaign || null, campaignLeads)) {
         throw new Error(LEAD_LOCKED_MESSAGE);
       }
       if (action === "search") {
@@ -1234,6 +1277,30 @@ export function OutboundB2BView() {
             provider: "apollo",
             limit: 25,
             autoPersonalize: true,
+          }),
+        });
+      }
+      if (action === "personalize") {
+        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/personalize?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            expectedKind: "b2b",
+            limit: 25,
+            overwrite: false,
+          }),
+        });
+      }
+      if (action === "email-dry-run" || action === "email-send") {
+        return fetchJson(`/api/outbound/command?slug=${encodeURIComponent(slug)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            command: "outbound.approve_and_publish",
+            campaignId,
+            channel: "email",
+            profileKind: "b2b_contact",
+            dryRun: action === "email-dry-run",
           }),
         });
       }
@@ -1301,7 +1368,6 @@ export function OutboundB2BView() {
     mutationFn: ({ campaignId }) => {
       const leadIds = selectedLinkedInLeads.map((lead) => lead.id);
       if (leadIds.length === 0) throw new Error("No hay personas con LinkedIn en esta campaña.");
-      const accounts = parseLinkedInAccounts(linkedinAccountInput);
       return fetchJson<LinkedInAutopilotCommandResponse>(
         `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
         {
@@ -1311,7 +1377,6 @@ export function OutboundB2BView() {
             command: "outbound.linkedin_autopilot.plan",
             campaignId,
             leadIds,
-            ...(accounts.length > 0 ? { accounts } : {}),
           }),
         },
       );
@@ -1356,7 +1421,6 @@ export function OutboundB2BView() {
         })
         .filter((item): item is { leadId: string; action: "connect" | "dm"; message: string; accountId?: string } => item !== null);
       if (approvedItems.length === 0) throw new Error("No hay mensajes LinkedIn aprobados para enviar.");
-      const accounts = parseLinkedInAccounts(linkedinAccountInput);
       return fetchJson<LinkedInAutopilotCommandResponse>(
         `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
         {
@@ -1367,7 +1431,6 @@ export function OutboundB2BView() {
             campaignId,
             leadIds: approvedItems.map((item) => item.leadId),
             items: approvedItems,
-            ...(accounts.length > 0 ? { accounts } : {}),
             dryRun,
             confirmLinkedInSend: !dryRun,
           }),
@@ -1648,10 +1711,23 @@ export function OutboundB2BView() {
     linkedinAutopilotExecuteAction.mutate({ campaignId: selectedCampaignId, dryRun, approvedCount: count });
   }
 
+  function executeEmailCampaign(dryRun: boolean) {
+    if (!selectedCampaignId) return;
+    if (!dryRun) {
+      const count = emailLeadCount(selectedActiveLeads);
+      const confirmation = window.prompt(
+        `Esto activará la secuencia de email para ${count} persona${count === 1 ? "" : "s"}. Escribe ENVIAR para continuar.`,
+      );
+      if (confirmation !== "ENVIAR") return;
+    }
+    outboundAction.mutate({
+      campaignId: selectedCampaignId,
+      action: dryRun ? "email-dry-run" : "email-send",
+    });
+  }
+
   const notConfigured = overview.data?.configured === false;
   const header = HEADERS[tab];
-  const activeCampaigns = campaigns.filter((campaign) => campaignState(campaign) !== "draft").length;
-  const providerReadyCount = providers.filter((provider) => (provider.status || "").toLowerCase() === "green").length;
   const pageError = overview.error || campaignsQuery.error || activeLeadsQuery.error || discardedLeadsQuery.error;
   const actionBusy = outboundAction.isPending || !!activeJob;
   const busyAction = outboundAction.isPending ? outboundAction.variables?.action : activeJob?.action;
@@ -1705,26 +1781,10 @@ export function OutboundB2BView() {
         </button>
 
         <header className="op-hero pr-12">
-          <div className="flex flex-wrap items-start gap-4">
-            <div className="min-w-[240px] flex-1">
-              <div className="op-kicker">Outreach · B2B</div>
-              <h1 className="m-0 font-heading text-3xl leading-tight text-navy">{header.title}</h1>
-              <p className="mb-0 mt-1 max-w-2xl text-sm text-muted-foreground">{header.sub}</p>
-            </div>
-            <div className="op-stat-grid" aria-label="Resumen de Outbound B2B">
-              <div>
-                <span>{activeCampaigns}</span>
-                <small>campañas</small>
-              </div>
-              <div>
-                <span>{activeLeads.length}</span>
-                <small>personas</small>
-              </div>
-              <div>
-                <span>{providerReadyCount}/{providers.length || 0}</span>
-                <small>conexiones</small>
-              </div>
-            </div>
+          <div className="min-w-[240px]">
+            <div className="op-kicker">Outreach · B2B</div>
+            <h1 className="m-0 font-heading text-3xl leading-tight text-navy">{header.title}</h1>
+            <p className="mb-0 mt-1 max-w-2xl text-sm text-muted-foreground">{header.sub}</p>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             {tab === "encuentra" && (
@@ -1734,7 +1794,7 @@ export function OutboundB2BView() {
                 className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
                 data-testid="crear-busqueda-b2b"
               >
-                Nueva búsqueda
+                Nueva campaña
               </button>
             )}
             <div className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -1746,15 +1806,17 @@ export function OutboundB2BView() {
 
         <div className="space-y-4">
           <div className="flex flex-wrap items-end gap-3">
-            <B2BCampaignSelector
-              campaigns={campaigns}
-              selectedCampaignId={selectedCampaignId}
-              loading={campaignsQuery.isLoading}
-              onSelect={(campaignId) => pushQuery({ campaign: campaignId, busqueda: "", stage: "" })}
-              onRename={(campaign, title) => campaignUpdateAction.mutate({ campaignId: campaign.id, title })}
-              onArchive={(campaign) => campaignArchiveAction.mutate({ campaignId: campaign.id })}
-              busy={campaignUpdateAction.isPending || campaignArchiveAction.isPending}
-            />
+            {tab !== "encuentra" && (
+              <B2BCampaignSelector
+                campaigns={campaigns}
+                selectedCampaignId={selectedCampaignId}
+                loading={campaignsQuery.isLoading}
+                onSelect={(campaignId) => pushQuery({ campaign: campaignId, busqueda: "", stage: "" })}
+                onRename={(campaign, title) => campaignUpdateAction.mutate({ campaignId: campaign.id, title })}
+                onArchive={(campaign) => campaignArchiveAction.mutate({ campaignId: campaign.id })}
+                busy={campaignUpdateAction.isPending || campaignArchiveAction.isPending}
+              />
+            )}
             <div className="ml-auto flex flex-wrap items-center gap-2">
               <TipoSelector tipo="b2b" />
               <button
@@ -1809,34 +1871,21 @@ export function OutboundB2BView() {
             )}
 
             {tab === "encuentra" && (
-              <>
-                <B2BCampaignOverviewTab
-                  campaign={icpCampaign}
-                  leads={selectedAllLeads}
-                  loading={campaignsQuery.isLoading || campaignDetailQuery.isLoading}
-                  onCreateSearch={() => openB2BSearch()}
-                  actionBusy={actionBusy}
-                  busyAction={busyAction}
-                  archiveBusy={campaignArchiveAction.isPending}
-                  onArchive={() => selectedCampaignId && campaignArchiveAction.mutate({ campaignId: selectedCampaignId })}
-                  onRunAction={(action) => outboundAction.mutate({ campaignId: selectedCampaignId, action })}
-                />
-                <LinkedInAutopilotPanel
-                  campaign={icpCampaign}
-                  leads={selectedLinkedInLeads}
-                  plan={linkedinAutopilotPlan}
-                  approvals={linkedinAutopilotApprovals}
-                  accountInput={linkedinAccountInput}
-                  onAccountInputChange={setLinkedinAccountInput}
-                  planning={linkedinAutopilotPlanAction.isPending}
-                  executing={linkedinAutopilotExecuteAction.isPending}
-                  disabled={!selectedCampaignId || linkedinBusy}
-                  onPlan={() => linkedinAutopilotPlanAction.mutate({ campaignId: selectedCampaignId })}
-                  onApprovalChange={updateLinkedInAutopilotApproval}
-                  onSimulate={() => executeLinkedInAutopilot(true)}
-                  onExecute={() => executeLinkedInAutopilot(false)}
-                />
-              </>
+              <B2BCampaignsTab
+                campaigns={campaigns}
+                leads={allLeads}
+                loading={campaignsQuery.isLoading}
+                actionBusy={actionBusy}
+                busyCampaignId={outboundAction.variables?.campaignId || activeJob?.campaignId}
+                onCreate={() => openB2BSearch()}
+                onOpen={(campaign, next) => {
+                  pushQuery({ campaign: campaign.id, tab: next.tab, busqueda: "", stage: "" });
+                }}
+                onRunAction={(campaign, action) => {
+                  pushQuery({ campaign: campaign.id, busqueda: "", stage: "" });
+                  outboundAction.mutate({ campaignId: campaign.id, action });
+                }}
+              />
             )}
 
             {tab === "contactos" && (
@@ -1911,26 +1960,50 @@ export function OutboundB2BView() {
             )}
 
             {tab === "plantillas" && (
-              <B2BPlantillasTab
-                campaigns={campaigns}
-                selectedCampaignId={templateCampaignId}
-                onSelectCampaign={(campaignId) => pushQuery({ campaign: campaignId, busqueda: "", stage: "" })}
-                campaignDetail={campaignDetailQuery.data || null}
-                leads={selectedAllLeads}
-                loading={campaignDetailQuery.isLoading}
-                saving={sequenceUpdateAction.isPending}
-                savingLinkedIn={linkedinSequenceUpdateAction.isPending}
-                locked={selectedLeadEditsLocked}
-                actionBusy={actionBusy}
-                busyAction={busyAction}
-                onSave={(stepId, emails) =>
-                  sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
-                }
-                onSaveLinkedIn={(variantId, sequence) =>
-                  linkedinSequenceUpdateAction.mutate({ campaignId: templateCampaignId, variantId, sequence })
-                }
-                onRunAction={(action) => outboundAction.mutate({ campaignId: templateCampaignId, action })}
-              />
+              <div className="space-y-4">
+                <B2BPlantillasTab
+                  campaign={icpCampaign}
+                  campaignDetail={campaignDetailQuery.data || null}
+                  leads={selectedAllLeads}
+                  loading={campaignDetailQuery.isLoading}
+                  saving={sequenceUpdateAction.isPending}
+                  savingLinkedIn={linkedinSequenceUpdateAction.isPending}
+                  locked={selectedLeadEditsLocked}
+                  onSave={(stepId, emails) =>
+                    sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
+                  }
+                  onSaveLinkedIn={(variantId, sequence) =>
+                    linkedinSequenceUpdateAction.mutate({ campaignId: templateCampaignId, variantId, sequence })
+                  }
+                />
+                {campaignHasLinkedIn(icpCampaign) && (
+                  <LinkedInAutopilotPanel
+                    campaign={icpCampaign}
+                    leads={selectedLinkedInLeads}
+                    plan={linkedinAutopilotPlan}
+                    approvals={linkedinAutopilotApprovals}
+                    planning={linkedinAutopilotPlanAction.isPending}
+                    executing={linkedinAutopilotExecuteAction.isPending}
+                    disabled={!selectedCampaignId || linkedinBusy}
+                    onPlan={() => linkedinAutopilotPlanAction.mutate({ campaignId: selectedCampaignId })}
+                    onApprovalChange={updateLinkedInAutopilotApproval}
+                    onSimulate={() => executeLinkedInAutopilot(true)}
+                    onExecute={() => executeLinkedInAutopilot(false)}
+                  />
+                )}
+                {channelText(icpCampaign?.channels).toLowerCase().includes("email") && (
+                  <EmailCampaignPanel
+                    leads={selectedActiveLeads}
+                    personalized={personalizedLeadCount(selectedActiveLeads)}
+                    busy={actionBusy}
+                    busyAction={busyAction}
+                    disabled={!selectedCampaignId || selectedLeadEditsLocked}
+                    onPersonalize={() => outboundAction.mutate({ campaignId: selectedCampaignId, action: "personalize" })}
+                    onSimulate={() => executeEmailCampaign(true)}
+                    onExecute={() => executeEmailCampaign(false)}
+                  />
+                )}
+              </div>
             )}
 
             {tab === "settings" && (
@@ -2078,156 +2151,92 @@ function B2BCampaignSelector({
   );
 }
 
-function B2BCampaignOverviewTab({
-  campaign,
+function B2BCampaignsTab({
+  campaigns,
   leads,
   loading,
-  onCreateSearch,
   actionBusy,
-  busyAction,
-  archiveBusy,
-  onArchive,
+  busyCampaignId,
+  onCreate,
+  onOpen,
   onRunAction,
 }: {
-  campaign: Campaign | CampaignDetail | null;
+  campaigns: Campaign[];
   leads: Lead[];
   loading: boolean;
-  onCreateSearch: () => void;
   actionBusy: boolean;
-  busyAction?: OutboundAction;
-  archiveBusy: boolean;
-  onArchive: () => void;
-  onRunAction: (action: OutboundAction) => void;
+  busyCampaignId?: string;
+  onCreate: () => void;
+  onOpen: (campaign: Campaign, next: Extract<CampaignNextAction, { kind: "tab" }>) => void;
+  onRunAction: (campaign: Campaign, action: Extract<CampaignNextAction, { kind: "action" }>["action"]) => void;
 }) {
-  if (loading && !campaign) {
-    return <p className="py-12 text-center text-sm text-muted-foreground">Cargando campaña...</p>;
+  if (loading && campaigns.length === 0) {
+    return <p className="py-12 text-center text-sm text-muted-foreground">Cargando campañas...</p>;
   }
 
-  if (!campaign) {
+  if (campaigns.length === 0) {
     return (
       <ZeroState
         title="Sin campaña B2B"
-        body="Crea una campaña B2B para definir target, oferta, audiencia, mensajes y contactar personas."
-        action={{ label: "Nueva campaña", onClick: onCreateSearch }}
+        body="Crea una campaña para definir el target y deja que Sancho te lleve por búsqueda, personalización y contacto."
+        action={{ label: "Nueva campaña", onClick: onCreate }}
       />
     );
   }
 
-  const state = campaignState(campaign);
-  const meta = campaignStateMeta(state);
-  const contacts = campaignLeadCount(campaign, leads);
-  const discovered = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Discovered").length;
-  const shortlisted = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Shortlist").length;
-  const contacted = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Contacted").length;
-  const replies = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Replied").length;
-  const meetings = leads.filter((lead) => stageForStatus(lead.lifecycleStatus) === "Negotiating").length;
-  const won = leads.filter((lead) => ["Signed", "Active"].includes(stageForStatus(lead.lifecycleStatus) || "")).length;
-  const channelSummary = channelText(campaign.channels);
-  const segment = campaign.targetSegment || "Target por definir";
-  const offer = campaign.hypothesis || "Oferta, dolor y posicionamiento pendientes de definir para esta campaña.";
-  const leadEditsLocked = campaignLocksLeadEdits(campaign, leads);
-
-  function archiveCampaign() {
-    if (!campaign) return;
-    const name = campaign.title || campaign.id;
-    if (!window.confirm(`Archivar la campaña B2B "${name}"? No se borra; solo deja de aparecer en la vista principal.`)) return;
-    onArchive();
-  }
+  const ordered = campaigns.slice().sort((a, b) =>
+    String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")),
+  );
 
   return (
-    <div className="space-y-4" data-testid="outbound-encuentra">
-      <section className="rounded-xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-start gap-4">
-          <div className="min-w-[240px] flex-1">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={cn("rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", meta.stampClass)}>
-                  {meta.label}
-                </span>
-                <span className="rounded border border-border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {campaign.campaignKindLabel || "Campaña B2B"}
-                </span>
+    <div className="space-y-3" data-testid="outbound-campaigns">
+      {ordered.map((campaign) => {
+        const campaignLeads = leads.filter((lead) => lead.campaignId === campaign.id);
+        const next = campaignNextAction(campaign, campaignLeads);
+        const state = campaignStateMeta(campaignState(campaign));
+        const replies = campaignLeads.filter((lead) => replyCategoryForLead(lead)).length;
+        const isBusy = actionBusy && busyCampaignId === campaign.id;
+        return (
+          <article key={campaign.id} className="rounded-lg border border-border bg-card px-5 py-4">
+            <div className="flex flex-wrap items-start gap-4">
+              <div className="min-w-[260px] flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={cn("rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", state.stampClass)}>
+                    {state.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{channelText(campaign.channels)}</span>
+                </div>
+                <h2 className="mt-2 font-heading text-xl text-navy">{campaign.title || campaign.id}</h2>
+                <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+                  {campaign.targetSegment || "Target pendiente de definir"}
+                </p>
+              </div>
+              <div className="flex shrink-0 gap-6 text-center">
+                <MiniMetric label="personas" value={campaignLeadCount(campaign, campaignLeads)} />
+                <MiniMetric label="personalizadas" value={personalizedLeadCount(campaignLeads)} muted={campaignLeads.length === 0} />
+                <MiniMetric label="respuestas" value={replies} muted={replies === 0} />
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+              <div className="min-w-[260px] flex-1">
+                <div className="text-sm font-semibold text-foreground">{next.label}</div>
+                <p className="mt-0.5 text-xs text-muted-foreground">{next.description}</p>
               </div>
               <button
                 type="button"
-                disabled={archiveBusy}
-                onClick={archiveCampaign}
-                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
-                title="Oculta esta campaña de la vista principal sin borrar sus datos."
+                disabled={isBusy}
+                onClick={() => next.kind === "action" ? onRunAction(campaign, next.action) : onOpen(campaign, next)}
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-4 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
               >
-                {archiveBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Archive className="h-3.5 w-3.5" />}
-                Archivar
+                {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {isBusy ? "Procesando..." : next.label}
+                {!isBusy && <ChevronRight className="h-4 w-4" />}
               </button>
             </div>
-            <h3 className="font-heading text-2xl leading-tight text-navy">{campaign.title || campaign.id}</h3>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">{offer}</p>
-          </div>
-          <div className="grid min-w-[320px] grid-cols-3 gap-3 text-center">
-            <MiniMetric label="personas" value={contacts} />
-            <MiniMetric label="replies" value={replies} />
-            <MiniMetric label="reuniones" value={meetings} />
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 lg:grid-cols-3">
-          <ContextSummary label="Target" value={segment} />
-          <ContextSummary label="Oferta" value={offer} />
-          <ContextSummary label="Canales" value={channelSummary} />
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background p-3">
-          <div className="min-w-[260px] flex-1">
-            <div className="text-xs font-semibold text-foreground">Buscar y enriquecer personas</div>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {leadEditsLocked
-                ? "Esta campaña ya fue lanzada o sincronizada. La lista queda bloqueada para no desalinear lo enviado."
-                : "Primero encuentra personas. Después completa sus datos antes de personalizar mensajes."}
-            </p>
-          </div>
-          <button
-            type="button"
-            disabled={actionBusy || leadEditsLocked}
-            onClick={() => onRunAction("search")}
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
-            title={leadEditsLocked ? "Duplica la campaña para cambiar personas." : "Busca personas para esta campaña antes de contactarlas."}
-          >
-            {actionBusy && busyAction === "search" ? "Buscando..." : "Buscar personas"}
-          </button>
-          <button
-            type="button"
-            disabled={actionBusy || leadEditsLocked || leads.length === 0}
-            onClick={() => onRunAction("enrich")}
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
-            title={leadEditsLocked ? "Las personas ya contactadas no se modifican." : "Completa email, LinkedIn, cargo, empresa y señales de fit."}
-          >
-            {actionBusy && busyAction === "enrich" ? "Enriqueciendo..." : "Enriquecer datos"}
-          </button>
-        </div>
-
-      </section>
-
-      <section className="rounded-xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="font-heading text-lg text-navy">Embudo de campaña</h3>
-            <p className="text-sm text-muted-foreground">Estados reales de las personas de esta campaña B2B.</p>
-          </div>
-          <span className="text-xs text-muted-foreground">{contacts} persona{contacts === 1 ? "" : "s"} totales</span>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-6">
-          <MiniMetric label="descubiertos" value={discovered} />
-          <MiniMetric label="a contactar" value={shortlisted} />
-          <MiniMetric label="contactados" value={contacted} />
-          <MiniMetric label="replies" value={replies} />
-          <MiniMetric label="meetings" value={meetings} />
-          <MiniMetric label="ganados" value={won} />
-        </div>
-        <div className="mt-4 grid gap-2 text-xs text-muted-foreground md:grid-cols-3">
-          <p><b className="text-foreground">Descubiertos</b>: persona encontrada, aún puede faltarle datos o score.</p>
-          <p><b className="text-foreground">A contactar</b>: persona aprobada para entrar en secuencia.</p>
-          <p><b className="text-foreground">Contactados</b>: listo para contacto o en cola; se bloquea cuando se lanza/sincroniza fuera de Sancho.</p>
-        </div>
-      </section>
+          </article>
+        );
+      })}
     </div>
   );
 }
@@ -2237,8 +2246,6 @@ function LinkedInAutopilotPanel({
   leads,
   plan,
   approvals,
-  accountInput,
-  onAccountInputChange,
   planning,
   executing,
   disabled,
@@ -2251,8 +2258,6 @@ function LinkedInAutopilotPanel({
   leads: Lead[];
   plan: LinkedInAutopilotPlan | null;
   approvals: Record<string, LinkedInAutopilotApproval>;
-  accountInput: string;
-  onAccountInputChange: (value: string) => void;
   planning: boolean;
   executing: boolean;
   disabled: boolean;
@@ -2286,31 +2291,15 @@ function LinkedInAutopilotPanel({
           </div>
           <h3 className="font-heading text-lg text-navy">Personalizar y contactar</h3>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Revisa el mensaje de cada persona. Simular no envía nada; enviar real contacta por LinkedIn.
+            Sancho usa la cuenta LinkedIn conectada a la campaña. Revisa cada mensaje antes de activar el envío.
           </p>
         </div>
-        <div className="grid min-w-[320px] grid-cols-4 gap-2 text-center">
-          <MiniMetric label="personas" value={leads.length} muted={leads.length === 0} />
-          <MiniMetric label="mensajes" value={sendable.length} muted={!plan} />
-          <MiniMetric label="aprobados" value={approved.length} muted={!plan || approved.length === 0} />
-          <MiniMetric label="bloqueos" value={blocked.length} muted={!plan || blocked.length === 0} />
-        </div>
+        <p className="text-sm font-semibold text-foreground">
+          {plan ? `${approved.length} de ${sendable.length} aprobados` : `${leads.length} persona${leads.length === 1 ? "" : "s"} con LinkedIn`}
+        </p>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <label className="block">
-          <span className="text-xs font-semibold text-foreground">Cuenta LinkedIn</span>
-          <input
-            value={accountInput}
-            onChange={(event) => onAccountInputChange(event.target.value)}
-            placeholder="Opcional: acct-martin | Martin, acct-alfonso | Alfonso"
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none"
-          />
-          <span className="mt-1 block text-[11px] text-muted-foreground">
-            Si queda vacío, Sancho usa la cuenta LinkedIn guardada en la campaña.
-          </span>
-        </label>
-        <div className="flex flex-wrap items-end gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
             type="button"
             disabled={disabled || !hasCampaign || leads.length === 0}
@@ -2318,7 +2307,7 @@ function LinkedInAutopilotPanel({
             className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
           >
             {planning ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
-            {planning ? "Personalizando..." : "Personalizar mensajes"}
+            {planning ? "Generando..." : plan ? "Volver a generar" : "Generar mensajes"}
           </button>
           <button
             type="button"
@@ -2327,7 +2316,7 @@ function LinkedInAutopilotPanel({
             className="inline-flex h-10 items-center gap-2 rounded-md border border-sage bg-sage/10 px-3 text-sm font-semibold text-sage transition-colors hover:bg-sage/15 disabled:opacity-50"
           >
             {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            Simular sin enviar
+            Simular
           </button>
           <button
             type="button"
@@ -2336,9 +2325,8 @@ function LinkedInAutopilotPanel({
             className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-3 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
           >
             {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Enviar real
+            Aprobar y enviar
           </button>
-        </div>
       </div>
 
       {leads.length === 0 && (
@@ -2436,6 +2424,80 @@ function LinkedInAutopilotPanel({
             })}
           </div>
         </div>
+      )}
+    </section>
+  );
+}
+
+function EmailCampaignPanel({
+  leads,
+  personalized,
+  busy,
+  busyAction,
+  disabled,
+  onPersonalize,
+  onSimulate,
+  onExecute,
+}: {
+  leads: Lead[];
+  personalized: number;
+  busy: boolean;
+  busyAction?: OutboundAction;
+  disabled: boolean;
+  onPersonalize: () => void;
+  onSimulate: () => void;
+  onExecute: () => void;
+}) {
+  const emailLeads = emailLeadCount(leads);
+  const ready = emailLeads > 0 && personalized >= emailLeads;
+  return (
+    <section className="rounded-lg border border-border bg-card p-4" data-testid="email-campaign-panel">
+      <div className="flex flex-wrap items-start gap-4">
+        <div className="min-w-[260px] flex-1">
+          <div className="mb-2 inline-flex items-center gap-2 rounded border border-border bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Mail className="h-3 w-3" />
+            Contactar por email
+          </div>
+          <h3 className="font-heading text-lg text-navy">Personalizar y activar</h3>
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+            Revisa la secuencia de arriba. Sancho publicará la campaña en la herramienta de email conectada.
+          </p>
+        </div>
+        <p className="text-sm font-semibold text-foreground">
+          {personalized} de {emailLeads} personalizados
+        </p>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={disabled || busy || emailLeads === 0}
+          onClick={onPersonalize}
+          className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+        >
+          {busy && busyAction === "personalize" ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+          {personalized > 0 ? "Volver a generar" : "Generar personalización"}
+        </button>
+        <button
+          type="button"
+          disabled={disabled || busy || !ready}
+          onClick={onSimulate}
+          className="inline-flex h-10 items-center gap-2 rounded-md border border-sage bg-sage/10 px-3 text-sm font-semibold text-sage transition-colors hover:bg-sage/15 disabled:opacity-50"
+        >
+          {busy && busyAction === "email-dry-run" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+          Simular
+        </button>
+        <button
+          type="button"
+          disabled={disabled || busy || !ready}
+          onClick={onExecute}
+          className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-3 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+        >
+          {busy && busyAction === "email-send" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          Aprobar y activar
+        </button>
+      </div>
+      {emailLeads === 0 && (
+        <p className="mt-3 text-sm text-muted-foreground">No hay personas con email utilizable. Completa sus datos antes de activar la campaña.</p>
       )}
     </section>
   );
@@ -3535,45 +3597,33 @@ function B2BInboxTab({
 }
 
 function B2BPlantillasTab({
-  campaigns,
-  selectedCampaignId,
-  onSelectCampaign,
+  campaign,
   campaignDetail,
   leads,
   loading,
   saving,
   savingLinkedIn,
   locked,
-  actionBusy,
-  busyAction,
   onSave,
   onSaveLinkedIn,
-  onRunAction,
 }: {
-  campaigns: Campaign[];
-  selectedCampaignId: string;
-  onSelectCampaign: (campaignId: string) => void;
+  campaign: Campaign | CampaignDetail | null;
   campaignDetail: CampaignDetail | null;
   leads: Lead[];
   loading: boolean;
   saving: boolean;
   savingLinkedIn: boolean;
   locked: boolean;
-  actionBusy: boolean;
-  busyAction?: OutboundAction;
   onSave: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
   onSaveLinkedIn: (variantId: string | undefined, sequence: LinkedInSequenceState) => void;
-  onRunAction: (action: OutboundAction) => void;
 }) {
   const sequences = extractEmailSequences(campaignDetail);
-  const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) || campaignDetail;
+  const selectedCampaign = campaignDetail || campaign;
   const placeholders = extractSequencePlaceholders(sequences);
   const emailCount = sequences.reduce((count, block) => count + block.emails.length, 0);
-  const campaignLeads = selectedCampaignId ? leads.filter((lead) => lead.campaignId === selectedCampaignId) : leads;
-  const personalized = personalizedLeadCount(campaignLeads);
-  const emailLeads = emailLeadCount(campaignLeads);
+  const campaignLeads = leads;
+  const emailLeads = emailLeadCount(leads);
   const linkedinLeads = linkedinLeadCount(campaignLeads);
-  const contactableLeads = Math.max(emailLeads, linkedinLeads);
   const hasLinkedInFlow = campaignHasLinkedIn(selectedCampaign) || linkedinLeads > 0;
   const hasEmailFlow = !hasLinkedInFlow || emailCount > 0 || emailLeads > 0;
   const sequenceStatus = hasLinkedInFlow
@@ -3581,13 +3631,6 @@ function B2BPlantillasTab({
     : emailCount
       ? `${emailCount} emails`
       : "Pendiente";
-  const sendActions: OutboundAction[] =
-    hasLinkedInFlow && !hasEmailFlow
-      ? ["approve", "linkedin-dry-run", "linkedin-send"]
-      : hasLinkedInFlow
-        ? ["approve", "linkedin-dry-run", "linkedin-send", "dry-run", "publish", "live"]
-        : ["approve", "dry-run", "publish", "live"];
-
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]" data-testid="outbound-plantillas">
       <div className="space-y-4">
@@ -3653,24 +3696,10 @@ function B2BPlantillasTab({
       </div>
 
       <aside className="space-y-4">
-        <section className="rounded-xl border border-border bg-card p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-heading text-lg text-navy">Resumen</h3>
-              <p className="text-sm text-muted-foreground">Contexto que usa Sancho para personalizar esta campaña.</p>
-            </div>
-            <select
-              value={selectedCampaignId}
-              onChange={(event) => onSelectCampaign(event.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-rust focus:outline-none"
-            >
-              {campaigns.length === 0 && <option value="">Sin campañas</option>}
-              {campaigns.map((campaign) => (
-                <option key={campaign.id} value={campaign.id}>
-                  {campaign.title || campaign.id}
-                </option>
-              ))}
-            </select>
+        <section className="rounded-lg border border-border bg-card p-4">
+          <div>
+            <h3 className="font-heading text-lg text-navy">Contexto</h3>
+            <p className="text-sm text-muted-foreground">Lo que Sancho usa para personalizar esta campaña.</p>
           </div>
           {selectedCampaign ? (
             <PersonalizationWorkspace
@@ -3686,43 +3715,6 @@ function B2BPlantillasTab({
               body="Crea o selecciona una búsqueda para trabajar el contexto y generar la secuencia."
             />
           )}
-        </section>
-
-        <section className="rounded-xl border border-border bg-card p-4">
-          <h3 className="font-heading text-lg text-navy">Enviar</h3>
-          <p className="text-sm text-muted-foreground">Prueba, aprueba y activa la campaña cuando los mensajes estén listos.</p>
-          {locked && (
-            <div className="mt-3 rounded-md border border-yellow-500/40 bg-yellow-50 px-3 py-2 text-xs font-semibold text-yellow-800">
-              Esta campaña ya tuvo envíos externos. La edición queda bloqueada para no romper el historial.
-            </div>
-          )}
-          <div className="mt-4 rounded-lg border border-border bg-background p-3">
-            <div className="grid gap-2 text-sm">
-              <DataItem label="Canal" value={selectedCampaign ? channelText(selectedCampaign.channels) : "-"} />
-              <DataItem label="Personas" value={`${contactableLeads || campaignLeads.length || 0}`} />
-              <DataItem label="Mensajes" value={sequenceStatus} />
-              <DataItem label="Personalización" value={contactableLeads ? `${personalized}/${contactableLeads}` : "Pendiente"} />
-            </div>
-          </div>
-          <div className="mt-3 grid gap-2">
-            {sendActions.map((action) => (
-              <button
-                key={action}
-                type="button"
-                disabled={!selectedCampaignId || actionBusy || locked}
-                onClick={() => onRunAction(action)}
-                className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-left transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
-              >
-                <span>
-                  <span className="block text-sm font-semibold">{outboundActionLabel(action)}</span>
-                  <span className="mt-0.5 block text-xs font-normal leading-snug text-muted-foreground">
-                    {outboundActionDescription(action)}
-                  </span>
-                </span>
-                {actionBusy && busyAction === action ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
-              </button>
-            ))}
-          </div>
         </section>
       </aside>
     </div>
