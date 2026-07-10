@@ -1,3 +1,16 @@
+# Parallel-environment override — NOT a product runtime overlay.
+#
+# This file exists only to run a SECOND, isolated Hermes environment alongside an
+# existing OpenClaw stack (separate container name + data volume so they don't
+# collide). See docs/runbooks/staging-hermes-runtime.md.
+#
+# You do NOT need this file to run Sancho ON Hermes. To use Hermes (or any other
+# runtime) as the engine, pick `hermes` / `external-http` in the advanced wizard
+# (./sancho install --advanced) or set SANCHO_RUNTIME + the gateway vars — that
+# path needs no compose overlay. This override is intentionally left out of the
+# product tarball (scripts/package-runtime.sh) and unwired from scripts/compose-env.sh;
+# it's a repo-clone / ops artifact, used as:
+#   docker compose -f docker-compose.yml -f docker-compose.hermes.yml up -d sanchocmo
 services:
   sanchocmo:
     container_name: sanchocmo-hermes
