@@ -28,7 +28,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import { BASE } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
 import { logActivity } from "@/lib/data/activity-log";
