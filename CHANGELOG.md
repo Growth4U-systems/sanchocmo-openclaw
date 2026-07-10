@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.1.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.0.1...v1.1.0) (2026-07-10)
+
+
+### Features
+
+* add B2B LinkedIn autopilot controls ([#1146](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1146)) ([#1151](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1151)) ([b3d8ae2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b3d8ae2bb2640bce5b6428045f77c529a43843a1))
+* add CLI runtime bridge spikes ([#1139](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1139)) ([cee2c5e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/cee2c5e020442bf6aeebebb347ce8ee2f36c3269))
+* expose LinkedIn autopilot over MCP ([6321d02](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6321d02436351454a6a9587816ad137bcca941a3))
+* **open-design:** graceful degradation for the OD library ([#1163](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1163)) ([74e8356](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/74e8356701ffe0e2e7b4df7d7d4f1eec75ffd552))
+* **outreach:** add campaign archive action (SAN-400) ([8ded374](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8ded3742dc53c58710edbef0160f646d3db55c10))
+* **outreach:** add LinkedIn sequence UI ([#1118](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1118)) ([2ad19c4](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2ad19c4263c1e93ab9ec030805e98bc98d04aa6e))
+* **outreach:** clarify B2B lead context ([#1132](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1132)) ([64fb555](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/64fb555995187962d991a0ffbba2a1418c511f03))
+* **outreach:** show B2B campaign sequence per lead ([#1134](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1134)) ([6551023](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6551023d91083a1c79fd439138b31a5d8c7ab658))
+* **runtime:** add CLI runtime setup wizard (SAN-50) ([b409cbb](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b409cbb67d018827096f1d285f6e14fbbf279a39))
+* **runtime:** add codex auth ui and fallback model picker (SAN-417, SAN-418) ([2da781b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2da781bb6ae2c9f0e1a1db12d6cedf3e2ed2ef15))
+* **runtime:** add local connector pairing ([#1180](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1180)) ([6252dbf](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6252dbf0fdf678927eba04941f9bb5764d4af132))
+* **runtime:** SAN-369 deploy full workspace update ([c9b3601](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c9b3601fec0317d9dcd30975c7c26241fd6db652))
+* **wizard:** offer and validate runtime selection in advanced install ([#1199](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1199)) ([5ee979c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5ee979c5ec6866bd01b072c5377a409ba4d42fe8))
+* **yalc:** surface inbound replies in Sancho SAN-234 ([a4418ab](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a4418ab530df99a17dd32642b8c40c6b6722571c))
+
+
+### Bug Fixes
+
+* **deploy:** handle prod checkout blocker SAN-234 ([abd37dc](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/abd37dc1286a4330e3e8cc0f27813e986e0f55f9))
+* **install:** align compose host-port vars with the CLI (SAN-386 relocation) ([#1213](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1213)) ([2521d30](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2521d30f1a2606b7a8cdb88994c371375e3b9de5))
+* **install:** gate codex pin to OpenAI + timeout, and don't false-alarm on slow first boot ([#1144](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1144)) ([811477c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/811477c66c144aff2c081310b9e07c620ee8149c))
+* **lint:** remove dead code blocking the lint gate ([#1159](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1159)) ([1a23e0b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1a23e0b1c9d7a3a5d7d5c2e6223ced134ddacc64))
+* **partnerships:** approve queued contacts from inbox SAN-234 ([4fef079](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4fef079b11326e096a130ff0e0e6f022888d62fc))
+* **partnerships:** retry queued contact approval SAN-234 ([ef55965](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ef559654840f2bef02fdc9bceccbb52caa6aab6c))
+* **partnerships:** show assign template picker SAN-234 ([a3a8bfd](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a3a8bfd115eb0f0295a9fdc7cd9c43a03e4007aa))
+* **partnerships:** show yalc gate failure messages SAN-234 ([35c3895](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/35c3895466f923ffa2e84d8fb25a407f7eb91d55))
+* **release:** enforce single tagging path for prod deploys ([#1215](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1215)) ([fa7bbf5](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/fa7bbf502dd5a4c79c1ea9f0109147ab5f8ece3a))
+* **runtime:** avoid pipe bash connector command SAN-50 ([#1182](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1182)) ([cdc376a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/cdc376af4712fe9890cf1b90d449fb96eaca2397))
+* **runtime:** clarify OpenClaw integrated label (SAN-50) ([e17a469](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e17a46938c6a1ce2d84747b0ef0369de78000173))
+* **runtime:** connect CLI bridges from UI (SAN-50) ([a5cac45](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a5cac4535c3a17e69a51c92c5981c4baf571dd8f))
+* **runtime:** include local connector assets SAN-50 ([#1183](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1183)) ([2b76a0a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2b76a0af6a391dd20a7af4b742df88fe41fba1ec))
+* **runtime:** make connector mktemp portable SAN-50 ([#1184](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1184)) ([4a685f9](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4a685f97ab972a1e4fadccf6206169e99f853db5))
+* **runtime:** mark local CLI runtimes correctly (SAN-50) ([6fc8d63](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6fc8d635d51fcd88e9d91de120af6107a9bfb48e))
+* **runtime:** simplify runtime selector UI (SAN-50) ([179923d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/179923d7f6f1ad448bb4cd1ba4dbb2fbb987c928))
+* **runtime:** simplify runtime selector UI SAN-50 ([67a7521](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/67a75218693acc1b69beb57ba93032d6eb27cc72))
+* **settings:** map ScrapeCreators system key SAN-234 ([3a54668](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3a5466813c7945ead8b52c19214c2fd49029c0b6))
+* surface linkedin offer sequence ([#1170](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1170)) ([9f19074](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9f190748d9680582a8c7b6ef5cfee935faa182d5))
+* **wizard:** restore quick/advanced modes clobbered by SAN-369 ([#1196](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1196)) ([c1fb6f0](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c1fb6f0fc37baeb8a29e9c3afbf3d9ae9004bfc9))
+* **wizard:** summary reflects the actual provider(s) chosen ([#1148](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1148)) ([49e13cd](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/49e13cdfe33409e851798f7350f984c91e8da637))
+
 ## [1.0.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.0.0...v1.0.1) (2026-07-06)
 
 
