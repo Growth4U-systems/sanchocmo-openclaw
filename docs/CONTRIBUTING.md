@@ -32,9 +32,11 @@ Because it can only advance to commits that already live on `staging`, it can
 - **`main`** is automation-only. A published release fast-forwards it to the tag.
 - **Prod deploy is manual.** `deploy-prod.yml` is **`workflow_dispatch` only** — it
   does **not** trigger on a published release. To ship, run it from the Actions tab
-  and enter the tag (it's rejected if the tag doesn't exist). Deciding to run it is
-  the go/no-go for *when* a release reaches prod. Publishing a release only builds
-  the image and fast-forwards `main`; prod never auto-deploys.
+  and enter the tag. The tag is **rejected unless it is a published GitHub Release
+  cut by release-please** — a hand-created tag is not deployable (see "Single
+  tagging path" below). Deciding to run it is the go/no-go for *when* a release
+  reaches prod. Publishing a release only builds the image and fast-forwards `main`;
+  prod never auto-deploys.
 
 | Branch | Purpose | Protection |
 |---|---|---|
@@ -131,14 +133,34 @@ go-live is **two human decisions**: *merge the release PR* (cut the version) and
 
 4. **Deploy to prod — manual, `workflow_dispatch` only.** When you want the tag
    live, go to **Actions → "Deploy to Production" → Run workflow** and enter the
-   tag (e.g. `vX.Y.Z`). The workflow validates the tag exists (typos / missing
-   tags abort before anything touches prod), then rolls it to the prod VPS
-   (checkout tag → build → `docker compose up -d` with the YALC overlay, health
-   check, auto-rollback on failure). Until you run it, prod is untouched.
+   tag (e.g. `vX.Y.Z`). The workflow's **guard requires the tag to be a published
+   GitHub Release** (i.e. cut by release-please); a typo, a missing tag, or a
+   hand-created tag with no Release aborts before anything touches prod. It then
+   rolls the tag to the prod VPS (checkout tag → build → `docker compose up -d`
+   with the YALC overlay, health check, auto-rollback on failure). Until you run
+   it, prod is untouched.
 
 You don't manually create tags or touch `main` — automation owns both. You also
 don't have to deploy every tag: dispatch `deploy-prod.yml` with the tag when you
-want it live, or with any older tag to roll back.
+want it live, or with any older *release* tag to roll back.
+
+### Single tagging path — never tag by hand
+
+**release-please is the only thing that creates version tags.** It cuts `vX.Y.Z`
++ a GitHub Release from `staging` when you merge the release PR. That is the *only*
+sanctioned way a `vX.Y.Z` tag comes into existence. Two guardrails enforce it:
+
+- **Deploy guard:** `deploy-prod.yml` refuses any tag that isn't a *published
+  Release*, so a hand-cut tag can never reach prod (it has no image, no runtime
+  tarball, and never promoted `main` — the installer would still serve the last
+  real release, not your tag).
+- **Tag ruleset:** a repo ruleset blocks creating/updating/deleting `refs/tags/v*`
+  for everyone except the release-please automation.
+
+If you need to ship a fix to prod, **merge the release PR to cut a real release**,
+then dispatch `deploy-prod.yml` with that tag. Do **not** `git tag vX.Y.Z` locally
+and push, and do **not** create a Release by hand. For a true emergency that must
+skip staging, follow the `[hotfix-off-staging]` runbook (see `promote-main.yml`).
 
 > **Never create a tag or GitHub Release by hand for a normal release** (CLI or
 > web UI). Releases come *only* from release-please merging its `chore: release`

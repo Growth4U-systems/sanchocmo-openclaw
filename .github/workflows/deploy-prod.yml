@@ -1,12 +1,15 @@
 name: Deploy to Production
 
+# Prod deploy is a deliberate MANUAL step — `workflow_dispatch` only. Publishing a
+# release does NOT deploy prod (that only cuts the tag/Release, builds the image and
+# fast-forwards `main`). Shipping to prod is the human go/no-go: dispatch this with the
+# tag. The tag MUST be a release-please Release (enforced by the guard job below) — a
+# hand-created tag is not deployable. This keeps a single tagging path (SAN-430).
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to deploy (e.g. v1.2.3)'
+        description: 'Release tag to deploy (must be a published GitHub Release, e.g. v1.2.3)'
         required: true
 
 concurrency:
@@ -15,7 +18,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ${{ github.event.release.tag_name || inputs.tag }} to prod VPS
+    name: Deploy ${{ inputs.tag }} to prod VPS
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -27,9 +30,25 @@ jobs:
       - name: Resolve target tag
         id: tag
         run: |
-          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          TAG="${{ inputs.tag }}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Deploying tag: $TAG"
+
+      # Single tagging path (SAN-430): only tags cut by release-please — i.e. tags
+      # that have a *published GitHub Release* — are deployable. A hand-created tag
+      # "exists" (so `git checkout` would succeed on the VPS) but has no Release; it
+      # would ship prod off a version that has no image/tarball and never promoted
+      # `main`. Refuse it here, before we touch the VPS.
+      - name: Guard — tag must be a published Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::'$TAG' is not a published GitHub Release. Prod only deploys release-please tags. Do NOT create tags by hand — merge the release PR on staging to cut a real release, then dispatch this workflow with that tag."
+            exit 1
+          fi
+          echo "✓ '$TAG' is a published Release — cleared to deploy."
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.10.0
