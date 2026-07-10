@@ -1,4 +1,4 @@
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 /**
  * Tiny frontmatter helper. We don't pull `gray-matter` since `js-yaml` is
