@@ -39,7 +39,17 @@ tarball).
 ## What the wizard asks
 
 `scripts/wizard.sh` (run automatically by `./sancho install`, or on its own)
-collects the minimum to boot and generates the rest, in six steps:
+collects the minimum to boot and generates the rest. It has **two modes** — pick
+one with `--quick` / `--advanced`, the `WIZARD_MODE` env var, or the interactive
+selector:
+
+- **quick** (the default, and what `./sancho run` uses) asks only the essentials
+  — the model provider + credential and the first brand — and applies sensible
+  defaults for everything else.
+- **advanced** (`--advanced`) exposes the full flow: admin/login, database, host
+  ports, access URL and optional services.
+
+**Always asked (both modes):**
 
 1. **Model provider & auth** — pick the provider(s): `anthropic`, `openai`,
    `fireworks`, `both`, or `all` (default `anthropic`). The auth mode is asked
@@ -54,21 +64,28 @@ collects the minimum to boot and generates the rest, in six steps:
 
    The wizard never leaves a placeholder credential behind: in non-interactive
    mode it **aborts** if the key for the chosen mode is missing.
-2. **Admin & login access** — admin email domain (emails `@domain` become
-   admins), an admin contact email, and **optional Google login** (off by
-   default; needs a Google OAuth client id + secret). Skip Google and log in
-   with the admin token printed at the end.
-3. **Database** — `local` (bundled Postgres, recommended) or `external` (e.g.
-   Neon `DATABASE_URL`).
-4. **Access URL** — the Base URL where you'll reach Mission Control (default
-   `http://localhost:3000`).
-5. **First brand** — slug + display name.
-6. **Optional services** — both off by default, both self-provision their token
-   and are brought up automatically by `./sancho` when enabled:
-   - *Outreach (YALC)* — generates `YALC_API_TOKEN` and wires
-     `YALC_BASE_URL=http://yalc:3847`.
-   - *Open Design* (agentic visual editor, port 7456) — generates
-     `OD_API_TOKEN` and asks for a browser-reachable web URL.
+2. **First brand** — display name; in quick mode the slug is auto-derived from
+   the name, in advanced mode you can override it.
+
+**Advanced only** (quick applies defaults instead of asking):
+
+- **Admin & login access** — admin email domain (emails `@domain` become
+  admins), an admin contact email, and **optional Google login** (off by
+  default; needs a Google OAuth client id + secret). Skip Google and log in
+  with the admin token printed at the end.
+- **Database** — `local` (bundled Postgres, recommended) or `external` (e.g.
+  Neon `DATABASE_URL`).
+- **Host ports** — relocate any host port already in use (Mission Control,
+  gateway, legacy, Open Design); container-internal ports stay fixed.
+- **Access URL** — the Base URL where you'll reach Mission Control (default
+  `http://localhost:3000`).
+- **Optional services** — both off by default (quick leaves them off), both
+  self-provision their token and are brought up automatically by `./sancho`
+  when enabled:
+  - *Outreach (YALC)* — generates `YALC_API_TOKEN` and wires
+    `YALC_BASE_URL=http://yalc:3847`.
+  - *Open Design* (agentic visual editor, port 7456) — generates
+    `OD_API_TOKEN` and asks for a browser-reachable web URL.
 
 It then **generates** `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`,
 `SANCHO_INTERNAL_API_TOKEN`, the admin token (also mirrored into `.env` as
