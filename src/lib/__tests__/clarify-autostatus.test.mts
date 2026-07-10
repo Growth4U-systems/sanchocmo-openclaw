@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 // MC_WORKSPACE must be set before the data modules are imported (lib/data/paths
 // computes BASE at module load), so everything below uses dynamic import.

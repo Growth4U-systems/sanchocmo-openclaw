@@ -13,7 +13,7 @@
  */
 import fs from "fs";
 import path from "path";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import { BASE } from "@/lib/data/paths";
 import { personaId } from "@/lib/data/persona-loops";
 
