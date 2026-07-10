@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import { BASE, brandDir } from "@/lib/data/paths";
 import { readJSON } from "@/lib/data/json-io";
 import { loadIdeas } from "@/lib/data/ideas";
