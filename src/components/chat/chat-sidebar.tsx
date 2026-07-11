@@ -275,7 +275,8 @@ export function ChatSidebar() {
       const persistedRouting = threads.find((thread) => thread.id === threadId)?.routing;
       if (persistedRouting) {
         config.agent = persistedRouting.agent ?? config.agent;
-        config.scope = persistedRouting.skillMode === "auto" ? "agent" : "skill";
+        config.scope = persistedRouting.scope
+          ?? (persistedRouting.skillMode === "auto" ? "agent" : "skill");
         config.skill = persistedRouting.skillHint ?? config.skill;
         if (persistedRouting.availableSkills?.length) {
           config.skills = persistedRouting.availableSkills;
@@ -336,6 +337,8 @@ export function ChatSidebar() {
               taskStatus: foundTask.status,
               taskType: foundTask.type,
               pillar: foundTask.pillar,
+              agent: foundTask.agent,
+              skills: foundTask.skills,
               deliverableFile: typeof foundTask.deliverable_file === "string" ? foundTask.deliverable_file : undefined,
             }
           );
@@ -513,6 +516,8 @@ export function ChatSidebar() {
               taskStatus: bestMatch.task.status,
               taskType: bestMatch.task.type,
               pillar: bestMatch.task.pillar,
+              agent: bestMatch.task.agent,
+              skills: bestMatch.task.skills,
               deliverableFile: typeof bestMatch.task.deliverable_file === "string" ? bestMatch.task.deliverable_file : undefined,
             }
           );
@@ -598,6 +603,8 @@ export function ChatSidebar() {
                 taskStatus: matchingTask.status,
                 taskType: matchingTask.type,
                 pillar: matchingTask.pillar,
+                agent: matchingTask.agent,
+                skills: matchingTask.skills,
               deliverableFile: typeof matchingTask.deliverable_file === "string" ? matchingTask.deliverable_file : undefined,
               }
             );

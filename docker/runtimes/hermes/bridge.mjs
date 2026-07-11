@@ -130,6 +130,22 @@ async function postWebhook(payload) {
   }
 }
 
+function callbackIdentity(message) {
+  return typeof message?.missionControlRunId === "string" && message.missionControlRunId
+    ? { missionControlRunId: message.missionControlRunId }
+    : {};
+}
+
+function postTerminalOnce(message, payload, label) {
+  const entry = activeRuns.get(message.threadId);
+  if (!entry || entry.terminalPosted) return false;
+  entry.terminalPosted = true;
+  if (activeRuns.get(message.threadId) === entry) activeRuns.delete(message.threadId);
+  postWebhook({ ...payload, ...callbackIdentity(message) })
+    .catch((e) => console.error(`[hermes bridge] ${label} webhook failed:`, e.message));
+  return true;
+}
+
 function contextPackUrl() {
   if (process.env.SANCHO_CONTEXT_PACK_URL) return process.env.SANCHO_CONTEXT_PACK_URL;
   const base =
@@ -180,7 +196,11 @@ export function buildHermesPrompt(message, contextPack = null) {
     ...message,
     requestedAgent,
     skillMode,
-    canDelegate: false,
+    // Final replies are posted back to Next, whose runtime-neutral control
+    // plane consumes task/intervention markers.
+    canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1,
+    temporaryAgent: message.temporaryAgent,
+    taskRouteProposal: message.taskRouteProposal,
   });
   const runtimeContext = {
     slug: message.slug,
@@ -261,6 +281,7 @@ async function postProgress(message, runId, label, detail) {
   await postWebhook({
     slug: message.slug,
     threadId: message.threadId,
+    ...callbackIdentity(message),
     role: "progress",
     agent: message.agent || message.agentId || "hermes",
     event: {
@@ -296,7 +317,7 @@ async function startHermesRun(message, runId) {
     env: { ...process.env, HERMES_SANCHO_RUN_ID: runId },
     stdio: ["ignore", "pipe", "pipe"],
   });
-  const entry = existing || { runId, child: null, killed: false };
+  const entry = existing || { runId, child: null, killed: false, terminalPosted: false };
   entry.child = child;
   entry.pending = false;
   activeRuns.set(message.threadId, entry);
@@ -314,7 +335,7 @@ async function startHermesRun(message, runId) {
     entry.killed = true;
     child.kill("SIGTERM");
     setTimeout(() => child.kill("SIGKILL"), 1000).unref();
-    postWebhook({
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: "Hermes no terminó la ejecución dentro del tiempo esperado.",
@@ -325,7 +346,7 @@ async function startHermesRun(message, runId) {
         provider: "hermes",
         classifiedAt: Date.now(),
       },
-    }).catch((e) => console.error("[hermes bridge] timeout webhook failed:", e.message));
+    }, "timeout");
   }, runTimeoutMs());
 
   const contextDetail =
@@ -344,8 +365,8 @@ async function startHermesRun(message, runId) {
 
   child.on("error", (e) => {
     clearTimeout(timeout);
-    activeRuns.delete(message.threadId);
-    postWebhook({
+    entry.killed = true;
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: `No he podido arrancar Hermes: ${e.message}`,
@@ -356,28 +377,27 @@ async function startHermesRun(message, runId) {
         provider: "hermes",
         classifiedAt: Date.now(),
       },
-    }).catch((err) => console.error("[hermes bridge] error webhook failed:", err.message));
+    }, "error");
   });
 
   child.on("close", (code, signal) => {
     clearTimeout(timeout);
-    activeRuns.delete(message.threadId);
-    if (entry.killed) return;
+    if (entry.killed || entry.terminalPosted) return;
 
     const cleanStdout = cleanHermesStdout(stdout);
     const cleanStderr = stripAnsi(stderr).trim();
     if (code === 0) {
-      postWebhook({
+      postTerminalOnce(message, {
         slug: message.slug,
         threadId: message.threadId,
         text: cleanStdout || "(Hermes terminó sin texto de salida.)",
         agent: message.agent || message.agentId || "hermes",
-      }).catch((e) => console.error("[hermes bridge] final webhook failed:", e.message));
+      }, "final");
       return;
     }
 
     const raw = [cleanStderr, cleanStdout].filter(Boolean).join("\n\n").slice(0, 4096);
-    postWebhook({
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: `Hermes falló ejecutando este turno${signal ? ` (${signal})` : ""}.`,
@@ -388,7 +408,7 @@ async function startHermesRun(message, runId) {
         provider: "hermes",
         classifiedAt: Date.now(),
       },
-    }).catch((e) => console.error("[hermes bridge] failure webhook failed:", e.message));
+    }, "failure");
   });
 }
 
@@ -432,10 +452,9 @@ async function handleInbound(req, res) {
   }
 
   const runId = `hermes_${randomUUID()}`;
-  activeRuns.set(message.threadId, { runId, child: null, killed: false, pending: true });
+  activeRuns.set(message.threadId, { runId, child: null, killed: false, pending: true, terminalPosted: false });
   startHermesRun(message, runId).catch((e) => {
-    activeRuns.delete(message.threadId);
-    postWebhook({
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: `No he podido arrancar Hermes: ${e.message}`,
@@ -446,7 +465,7 @@ async function handleInbound(req, res) {
         provider: "hermes",
         classifiedAt: Date.now(),
       },
-    }).catch((err) => console.error("[hermes bridge] start webhook failed:", err.message));
+    }, "start");
   });
   return json(res, 202, { ok: true, runId, chatId: runId, threadId: message.threadId });
 }

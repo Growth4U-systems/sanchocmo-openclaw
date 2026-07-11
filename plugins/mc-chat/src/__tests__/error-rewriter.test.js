@@ -114,13 +114,10 @@ test("watchdog_abort: detects exact bot-side abort message", () => {
   assert.ok(out.text.startsWith("⚠️ **Sesión sin progreso"));
 });
 
-test("missing_context: explains missing brand/Foundation files instead of generic runtime failure", () => {
+test("missing Foundation tool output is not misclassified as a runtime failure", () => {
   const out = classifyAndRewriteError(FIXTURE_MISSING_BRAND_CONTEXT);
-  assert.equal(out.errorDetail.category, "missing_context");
-  assert.ok(out.text.startsWith("⚠️ **Falta contexto inicial del cliente**"));
-  assert.ok(out.text.includes("No están generados"));
-  assert.ok(out.text.includes("Foundation"));
-  assert.ok(!out.text.includes("Sesión sin progreso"));
+  assert.equal(out.errorDetail, null);
+  assert.equal(out.text, FIXTURE_MISSING_BRAND_CONTEXT);
 });
 
 test("context_overflow: detects token limit errors", () => {

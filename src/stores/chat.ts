@@ -16,8 +16,8 @@ export interface ThreadMeta {
   initialMessage?: string;
   quickActions?: Array<{ label: string; prompt: string }>;
   agent?: string;
-  /** `agent` = the owner stays fixed while skills are selected per turn. */
-  scope?: "agent" | "skill";
+  /** agent=all owned skills; task=task allowlist; skill=guided primary. */
+  scope?: "agent" | "skill" | "task";
   /** Shape of the associated doc — see ThreadConfig.docKind. */
   docKind?: "file" | "template";
 }

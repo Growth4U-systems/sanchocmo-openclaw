@@ -25,9 +25,17 @@ const DELEGATE_PROTOCOL_LINES = [
 const TASK_ROUTE_PROTOCOL_LINES = [
   `🧭 CAMBIO DE TAREA: una skill distinta NO implica por sí sola otra tarea. Si el pedido sigue perteneciendo al objetivo/entregable de la tarea actual, continúa aquí y elige la skill adecuada automáticamente. Solo cuando el pedido pertenece claramente a OTRO objetivo/entregable emite ":::task-route"; no sigas ejecutándolo en el hilo actual.`,
   `:::task-route`,
-  `{"name":"<título corto de la tarea destino>","brief":"<pedido completo y autónomo>","agent":"<agente propietario opcional>","skill":"<skill sugerida opcional>","taskId":"<ID solo si el usuario eligió una existente>"}`,
+  `{"name":"<título corto de la tarea destino>","brief":"<pedido completo y autónomo>","agent":"<agente propietario opcional>","skill":"<skill sugerida opcional>","taskId":"<ID solo si el usuario eligió una existente>","proposalId":"<ID solo al confirmar una propuesta pendiente>"}`,
   `:::`,
-  `El runtime buscará una tarea activa compatible exclusivamente dentro del mismo grupo/proyecto. Si hay una sola, cambia al hilo canónico y continúa allí. Si hay varias, le pedirá al usuario elegir. Si no hay ninguna, sugerirá crearla dentro del mismo grupo; NUNCA la crea silenciosamente. Tras confirmación explícita del usuario, repite el bloque con "confirmCreate":true. Si el hilo no pertenece a un grupo, el sistema pedirá cuál usar. No inventes IDs ni pongas confirmCreate:true antes de esa confirmación.`,
+  `El runtime buscará una tarea activa compatible exclusivamente dentro del mismo grupo/proyecto. Si hay una sola, cambia al hilo canónico y continúa allí. Si hay varias, le pedirá al usuario elegir. Si no hay ninguna, sugerirá crearla dentro del mismo grupo; NUNCA la crea silenciosamente. Tras confirmación explícita del usuario, usa los datos EXACTOS de pending_task_creation_proposal y repite el bloque con "confirmCreate":true y su "proposalId". El servidor verifica también el mensaje humano actual. Si el hilo no pertenece a un grupo, el sistema pedirá cuál usar. No inventes IDs ni pongas confirmCreate:true antes de esa confirmación.`,
+];
+
+const SANCHO_INTERVENTION_PROTOCOL_LINES = [
+  `🛡️ INTERVENCIÓN TEMPORAL DE SANCHO: si la petición sigue perteneciendo a ESTA tarea pero exige diagnóstico, reparación, configuración o comandos que ninguna skill permitida de tu agente cubre, no inventes una skill y no propongas otra tarea. Emite:`,
+  `:::sancho-intervene`,
+  `{"brief":"<qué debe diagnosticar/reparar/configurar/operar Sancho dentro de la tarea actual>","reason":"<por qué ninguna skill permitida lo cubre>"}`,
+  `:::`,
+  `Sancho tomará únicamente ese turno en este mismo hilo. No cambia el propietario, el agente persistido, la tarea ni su harness; al turno siguiente vuelves tú automáticamente. No uses esta intervención para un entregable que ya salió de tu dominio: en ese caso corresponde cambio de agente/tarea.`,
 ];
 
 /**
@@ -41,6 +49,7 @@ export function resolveTurnSkillPolicy(input = {}) {
   if (input.skillMode === "auto") return "auto";
   if (input.skillMode === "pinned") return hasSkill ? "pinned" : "auto";
   if (input.scope === "agent") return "auto";
+  if (input.scope === "task") return "auto";
   if (input.scope === "skill") return hasSkill ? "pinned" : "auto";
   return hasSkill ? "pinned" : "auto";
 }
@@ -66,8 +75,12 @@ export function groundingSkillForTurn(input = {}) {
  *   skillMode?: string,
  *   skills?: string[],
  *   skill?: string,
+ *   primarySkill?: string,
  *   requestedAgent?: string,
  *   canDelegate?: boolean,
+ *   temporaryAgent?: boolean,
+ *   controlDepth?: number,
+ *   taskRouteProposal?: { id?: string, groupId?: string, agent?: string, skill?: string, skills?: string[], name?: string, brief?: string },
  * }} input
  * @returns {string}
  */
@@ -83,8 +96,12 @@ export function buildMcChatContextBlock(input) {
     skillMode,
     skills,
     skill,
+    primarySkill,
     requestedAgent = "sancho",
     canDelegate = true,
+    temporaryAgent = false,
+    controlDepth = 0,
+    taskRouteProposal,
   } = input || {};
 
   const lines = [
@@ -93,6 +110,11 @@ export function buildMcChatContextBlock(input) {
     `client_slug: ${slug}`,
     `thread_id: ${threadId}`,
   ];
+  const boundedControlDepth = controlDepth === 1 ? 1 : 0;
+  if (boundedControlDepth === 1) {
+    lines.push(`control_depth: 1`);
+    lines.push(`Este turno ya fue originado por una acción de control. Resuelve el brief aquí, pero no delegues, no cambies de tarea/agente, no solicites otra intervención y no emitas markers de control.`);
+  }
   if (threadName) lines.push(`thread_name: ${threadName}`);
   if (linkedTo) lines.push(`linked_to: ${linkedTo}`);
   if (docPath) lines.push(`thread_document: ${docPath}${docKind ? ` (${docKind})` : ""}`);
@@ -101,33 +123,77 @@ export function buildMcChatContextBlock(input) {
     ? skills.filter((item) => typeof item === "string" && item.trim())
     : [];
   if (resolvedSkillMode === "auto") {
-    const primary = skill || availableSkills[0];
     const isSancho = !requestedAgent || requestedAgent === "sancho";
-    lines.push(`execution_mode: ${isSancho ? "generalist" : "agent-led"}`);
-    lines.push(`skill_policy: auto`);
-    if (primary) lines.push(`skill_hint: ${primary}  ← sugerencia para ESTE turno, nunca una restricción`);
-    if (availableSkills.length > 0) lines.push(`available_skills: ${availableSkills.join(", ")}`);
+    const isTaskScope = scope === "task";
+    const primary = isTaskScope
+      ? (typeof primarySkill === "string" && primarySkill.trim() ? primarySkill.trim() : undefined)
+      : skill || availableSkills[0];
+    lines.push(`execution_mode: ${isSancho ? "generalist" : isTaskScope ? "task-led" : "agent-led"}`);
+    lines.push(`skill_policy: ${isTaskScope ? "task-flexible" : "auto"}`);
+    if (isTaskScope && primary) lines.push(`primary_skill: ${primary}`);
+    if (isTaskScope && skill && skill !== primary) {
+      lines.push(`skill_hint: ${skill}  ← sugerencia para ESTE turno, nunca una restricción`);
+    } else if (!isTaskScope && primary) {
+      lines.push(`skill_hint: ${primary}  ← sugerencia para ESTE turno, nunca una restricción`);
+    }
+    if (availableSkills.length > 0) {
+      lines.push(`${isTaskScope ? "permitted_agent_skills" : "available_skills"}: ${availableSkills.join(", ")}`);
+    }
     if (isSancho) {
       lines.push(canDelegate
         ? `Eres Sancho, el agente generalista y orquestador. Resuelve directamente cuando puedas y delega cuando el entregable pertenezca claramente a un especialista.`
         : `Eres Sancho, el agente generalista. Resuelve directamente con tus capacidades y herramientas disponibles; este adapter no ejecuta cesiones automáticas de turno.`);
+    } else if (isTaskScope) {
+      lines.push(`Eres ${requestedAgent}, propietario de esta tarea. La TAREA —su objetivo y entregable— es el límite estable; no una allowlist cerrada de skills.`);
+      lines.push(primary
+        ? `La skill primaria es el camino normal. Puedes cambiar a cualquier skill de permitted_agent_skills si la petición sigue perteneciendo a esta misma tarea.`
+        : `Esta tarea no fija una skill primaria. Elige libremente dentro de permitted_agent_skills según el mensaje actual, sin salir del objetivo/entregable de la tarea.`);
     } else {
       lines.push(`Eres ${requestedAgent}, especialista propietario de este dominio con skills automáticas. No eres Sancho ni un generalista global: conserva tu dominio, pero no quedes encerrado en la skill anterior.`);
     }
     lines.push(`Reevalúa la intención del mensaje actual: usa una skill solo si encaja; si la conversación salió del workflow anterior, abandona esa skill.`);
-    lines.push(`Si ninguna skill encaja pero la petición sigue dentro de tu dominio, resuelve igualmente con tu razonamiento base y tus herramientas/APIs disponibles. La ausencia de una skill NUNCA es motivo para fallar ni para negarte.`);
+    lines.push(isTaskScope
+      ? `Si ninguna skill permitida cubre diagnóstico, reparación, configuración o comandos necesarios para ESTA tarea, solicita una intervención temporal de Sancho; no crees otra tarea por ese motivo.`
+      : `Si ninguna skill encaja pero la petición sigue dentro de tu dominio, resuelve igualmente con tu razonamiento base y tus herramientas/APIs disponibles. La ausencia de una skill NUNCA es motivo para fallar ni para negarte.`);
     lines.push(`No recorras el filesystem para descubrir skills o estado interno. Usa el catálogo conocido, las rutas canónicas incluidas en el contexto y las APIs/MCP del dominio.`);
   } else if (skill) {
     lines.push(`execution_mode: guided`);
-    lines.push(`skill_policy: pinned`);
-    lines.push(`skill: ${skill}`);
-    lines.push(`Esta skill guía el workflow actual. Si el usuario cambia de intención y la petición queda fuera de su contrato, responde con tus capacidades base o deriva al agente adecuado; no fuerces la petición dentro de la skill ni falles solo por salir de ella.`);
+    lines.push(`skill_policy: guided`);
+    lines.push(`primary_skill: ${skill}`);
+    lines.push(`allowed_skills: ${(availableSkills.length ? availableSkills : [skill]).join(", ")}`);
+    lines.push(`La skill primaria es el camino normal. Puedes cambiar a otra skill SOLO si sigue siendo la misma tarea/entregable y esa skill aparece en allowed_skills. No uses ninguna skill fuera de esa allowlist.`);
   } else {
     lines.push(`execution_mode: generalist`);
     lines.push(`skill_policy: auto`);
     lines.push(`No hay una skill sugerida. Resuelve con tu razonamiento base y tus herramientas/APIs disponibles.`);
   }
   if (requestedAgent && requestedAgent !== "sancho") lines.push(`requested_agent: ${requestedAgent}`);
+  if (temporaryAgent && requestedAgent === "sancho") {
+    lines.push(`temporary_intervention: true`);
+    lines.push(`Intervienes durante UN solo turno dentro de la tarea y el hilo actuales. Diagnostica, repara, configura o ejecuta el comando puntual solicitado. No delegues, no cambies de agente/tarea, no crees tareas y no emitas markers :::delegate, :::task-route ni :::sancho-intervene.`);
+  }
+  if (taskRouteProposal?.id) {
+    lines.push(`pending_task_creation_proposal: ${JSON.stringify({
+      proposalId: taskRouteProposal.id,
+      groupId: taskRouteProposal.groupId,
+      agent: taskRouteProposal.agent,
+      ...(taskRouteProposal.skill ? { skill: taskRouteProposal.skill } : {}),
+      ...(Array.isArray(taskRouteProposal.skills) && taskRouteProposal.skills.length
+        ? { skills: taskRouteProposal.skills }
+        : {}),
+      name: taskRouteProposal.name,
+      brief: taskRouteProposal.brief,
+    })}`);
+    lines.push(`Esta propuesta no es autorización. Solo si el mensaje HUMANO actual confirma explícitamente crearla, emite el marker con estos datos exactos, confirmCreate:true y proposalId. Si cambia cualquier dato, solicita una propuesta nueva.`);
+  }
+  if (requestedAgent && requestedAgent !== "sancho" && boundedControlDepth === 0) {
+    lines.push(`ORDEN DE DECISIÓN OBLIGATORIO:`);
+    lines.push(`1. Continuar con la skill primaria. Es el camino normal.`);
+    lines.push(`2. Cambiar de skill dentro del mismo agente. Solo si la petición sigue perteneciendo a la tarea y la nueva skill está permitida.`);
+    lines.push(`3. Intervención temporal de Sancho. Para diagnóstico, reparación, configuración o comandos que ninguna skill de ese agente cubre.`);
+    lines.push(`4. Proponer cambio de agente o nueva tarea. Cuando la intención realmente salió del dominio o cambia el entregable.`);
+    lines.push(`Las opciones 1–3 conservan esta tarea. Solo la opción 4 activa resolución/cambio/creación de tarea.`);
+  }
   lines.push(`IMPORTANT: You are responding via MC Chat, NOT Discord. Do NOT use the message tool to reply. Just respond with text directly — your reply will be delivered to the user automatically via the MC Chat callback. Do NOT create Discord threads or send Discord messages for this conversation. Read files from disk (brand/${slug}/), never via HTTP/web_fetch to localhost.`);
   lines.push(`⚠️ EXECUTION GUARDRAIL: Aprobar un plan o crear proyectos NO es autorización para ejecutar tareas. Siempre preguntar "¿Ejecuto [tarea específica]?" y esperar confirmación explícita antes de generar deliverables. "Apruebo el plan" y "Ejecuta" son pasos DIFERENTES.`);
   lines.push(...ASK_PROTOCOL_LINES);
@@ -135,6 +201,9 @@ export function buildMcChatContextBlock(input) {
   // dispatching the destination thread. Adapters without that rail keep the
   // generalist/skill escape behavior but must not emit a visible raw marker.
   if (canDelegate) lines.push(...TASK_ROUTE_PROTOCOL_LINES);
+  if (canDelegate && requestedAgent && requestedAgent !== "sancho") {
+    lines.push(...SANCHO_INTERVENTION_PROTOCOL_LINES);
+  }
   if (requestedAgent === "sancho" && canDelegate) {
     lines.push(...DELEGATE_PROTOCOL_LINES);
   }

@@ -279,6 +279,45 @@ export function inferTaskExecutionContract(
   };
 }
 
+/**
+ * Select the skill fields that are safe to persist on a task.
+ *
+ * `inferTaskExecutionContract` intentionally keeps the historical
+ * `sancho-manager` fallback for legacy non-task callers. Persisting that
+ * fallback, however, silently turns a genuinely skill-less task back into a
+ * guided workflow. This boundary preserves explicit/supporting skills and
+ * meaningful structured inference (pillar, strategy, web-build, content), but
+ * drops the generic manager fallback.
+ */
+export function persistedTaskSkillFields(
+  task: TaskContractInput,
+  contract: { skill?: string; skills?: string[] },
+): { skill: string | null; skills: string[] } {
+  const type = task.type === "content_subtask"
+    ? "content_task"
+    : String(task.type || "execution");
+  const explicitPrimary = normalizeSkillId(task.skill);
+  const declaredSkills = skillListFromUnknown(task.skills);
+  const inferredPrimary = normalizeSkillId(contract.skill);
+  const structuredInference = type === "project"
+    || type === "content_task"
+    || Boolean(task.pillar)
+    || Boolean(task.strategy)
+    || Boolean(inferredPrimary && inferredPrimary !== "sancho-manager");
+  const primary = explicitPrimary || (structuredInference ? inferredPrimary : undefined);
+  const includeInferredPipeline = Boolean(explicitPrimary || structuredInference);
+  const skills = Array.from(new Set([
+    ...(primary ? [primary] : []),
+    ...declaredSkills,
+    ...(includeInferredPipeline ? skillListFromUnknown(contract.skills) : []),
+  ]));
+
+  return {
+    skill: primary || null,
+    skills,
+  };
+}
+
 function writerSkillFor(channel: string): string {
   const c = channel.toLowerCase().trim();
   if (c === "linkedin" || c === "x" || c === "twitter") return "social-writer";

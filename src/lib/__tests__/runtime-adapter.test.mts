@@ -320,7 +320,8 @@ test("external HTTP bridge shares Sancho generalist and pinned skill semantics",
     assert.match(body.message, /execution_mode: generalist/);
     assert.match(body.message, /skill_policy: auto/);
     assert.match(body.message, /Eres Sancho, el agente generalista/);
-    assert.doesNotMatch(body.message, /:::delegate/);
+    assert.match(body.message, /:::delegate/);
+    assert.match(body.message, /:::task-route/);
     assert.doesNotMatch(body.message, /skill_hint:/);
     assert.match(body.message, /Mensaje:\nhola/);
 
@@ -338,9 +339,12 @@ test("external HTTP bridge shares Sancho generalist and pinned skill semantics",
     assert.equal(calls.length, 2);
     const pinnedBody = JSON.parse(String(calls[1].init?.body));
     assert.match(pinnedBody.message, /execution_mode: guided/);
-    assert.match(pinnedBody.message, /skill_policy: pinned/);
-    assert.match(pinnedBody.message, /skill: content-writer/);
-    assert.match(pinnedBody.message, /no fuerces la petición dentro de la skill/i);
+    assert.match(pinnedBody.message, /skill_policy: guided/);
+    assert.match(pinnedBody.message, /primary_skill: content-writer/);
+    assert.match(pinnedBody.message, /allowed_skills: content-writer/);
+    assert.match(pinnedBody.message, /:::sancho-intervene/);
+    assert.match(pinnedBody.message, /La skill primaria es el camino normal/i);
+    assert.match(pinnedBody.message, /Solo la opción 4 activa resolución\/cambio\/creación de tarea/i);
   } finally {
     globalThis.fetch = previousFetch;
     runtime.resetRuntimeForTests();

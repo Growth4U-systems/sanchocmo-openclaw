@@ -17,12 +17,18 @@ export function parseTaskRouteMarkers(text) {
 
   const routes = [];
   const malformed = [];
-  const cleaned = text.replace(TASK_ROUTE_BLOCK_RE, (block, json) => {
+  let cleaned = text.replace(TASK_ROUTE_BLOCK_RE, (block, json) => {
     const parsed = parseOne(json);
     if (parsed) routes.push(parsed);
     else malformed.push(block);
     return "";
   });
+
+  const danglingAt = cleaned.indexOf(":::task-route");
+  if (danglingAt >= 0) {
+    malformed.push(cleaned.slice(danglingAt));
+    cleaned = cleaned.slice(0, danglingAt);
+  }
 
   return { text: collapseGaps(cleaned), routes, malformed };
 }
@@ -44,6 +50,7 @@ function parseOne(json) {
   const skill = cleanToken(obj.skill);
   const taskId = cleanIdentifier(obj.taskId);
   const groupId = cleanIdentifier(obj.groupId);
+  const proposalId = cleanIdentifier(obj.proposalId);
 
   return {
     name,
@@ -52,6 +59,7 @@ function parseOne(json) {
     ...(skill ? { skill } : {}),
     ...(taskId ? { taskId } : {}),
     ...(groupId ? { groupId } : {}),
+    ...(proposalId ? { proposalId } : {}),
     ...(obj.confirmCreate === true ? { confirmCreate: true } : {}),
   };
 }

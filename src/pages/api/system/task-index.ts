@@ -20,6 +20,8 @@ interface TaskIndexEntry {
   taskName: string;
   status: string;
   skill: string;
+  skills?: string[];
+  agent?: string;
   skillOk: boolean;
   executionMode?: "guided" | "agent";
   deliverableFile: string;
@@ -128,6 +130,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         taskName: (task.name || "") as string,
         status: (task.status || "todo") as string,
         skill,
+        skills: Array.isArray(task.skills)
+          ? task.skills.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+          : skill ? [skill] : [],
+        agent: typeof task.agent === "string" ? task.agent : undefined,
         // No skill is a valid agent-led task. Only the explicit legacy sentinel
         // remains invalid.
         skillOk: skill !== "MISSING",

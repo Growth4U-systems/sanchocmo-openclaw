@@ -187,8 +187,14 @@ function bridgePrompt(message: InboundMessage): string {
     skillMode,
     skills: message.skills,
     skill: message.skill,
+    primarySkill: message.primarySkill,
     requestedAgent,
-    canDelegate: false,
+    // `mc-bridge` returns final text synchronously; Next consumes control
+    // markers through the runtime-neutral control plane in `/api/chat/send`.
+    canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1,
+    temporaryAgent: message.temporaryAgent,
+    controlDepth: message.controlDepth,
+    taskRouteProposal: message.taskRouteProposal,
   });
 
   const attachmentBlock = bridgeAttachmentBlock(message.attachments);

@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-const { buildTaskIndex, buildTaskThread, resolveFullThreadConfig } = await import("../chat-openers");
+const {
+  buildContentTaskThread,
+  buildTaskIndex,
+  buildTaskThread,
+  resolveFullThreadConfig,
+} = await import("../chat-openers");
 
 // Reopening a content-flavored thread whose task is NOT in the loaded index
 // must still route to Dulcinea (content owner), not fall back to Sancho.
@@ -68,20 +73,42 @@ test("reopen a routed task by its persisted chat anchor restores the task harnes
   assert.deepEqual(cfg.skills, ["outreach-sequence-builder", "yalc-operator"]);
 });
 
-test("task harness is pinned only when the task explicitly declares a skill", () => {
+test("task harness keeps the task boundary with or without a primary skill", () => {
   const guided = buildTaskThread("growth4u", "P01-T01", "Guided", "P01", {
     taskSkill: "market-research",
     agent: "hamete",
   });
-  assert.equal(guided.scope, "skill");
+  assert.equal(guided.scope, "task");
   assert.equal(guided.skill, "market-research");
 
   const agentLed = buildTaskThread("growth4u", "P01-T02", "General", "P01", {
     taskType: "research",
     agent: "hamete",
   });
-  assert.equal(agentLed.scope, "agent");
-  assert.ok(agentLed.skill, "an inferred skill may remain as a non-binding hint");
+  assert.equal(agentLed.scope, "task");
+  assert.equal(agentLed.skill, "", "a skill-less task must not invent a primary skill");
+  assert.deepEqual(agentLed.skills, []);
+
+  const pillarTask = buildTaskThread("growth4u", "P00-T01", "Market", "P00", {
+    taskSkill: "market-intelligence",
+    pillar: "market-analysis",
+    agent: "hamete",
+  });
+  assert.equal(pillarTask.threadId, "growth4u:market-analysis");
+  assert.equal(pillarTask.scope, "task");
+  assert.equal(pillarTask.skill, "market-intelligence");
+
+  const contentTask = buildContentTaskThread(
+    "growth4u",
+    "P14-T01",
+    "P14-T01-C01",
+    "Post",
+    "P14",
+    {},
+  );
+  assert.equal(contentTask.scope, "task");
+  assert.equal(contentTask.skill, "");
+  assert.deepEqual(contentTask.skills, []);
 });
 
 test("generic recurring/strategy threads still → Sancho default (no agent)", () => {

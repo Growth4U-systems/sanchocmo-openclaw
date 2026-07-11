@@ -80,6 +80,61 @@ function seedDocument(relPath: string, content: string) {
   fs.writeFileSync(absPath, content, "utf8");
 }
 
+function seedDelegateRoutingFixture() {
+  const writeProject = (projectId: string, tasks: Array<Record<string, unknown>>) => {
+    const dir = path.join(tmp, "brand", "alpha", "projects", `${projectId}-delegate-routing`);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "project.json"), JSON.stringify({
+      id: projectId,
+      slug: `${projectId.toLowerCase()}-delegate-routing`,
+      name: `${projectId} delegate routing`,
+      strategy: "growth",
+      status: "active",
+      phase: 1,
+      category: "growth",
+      created_at: new Date(0).toISOString(),
+      review_date: null,
+    }));
+    fs.writeFileSync(path.join(dir, "tasks.json"), JSON.stringify(tasks));
+    return dir;
+  };
+  const task = (
+    id: string,
+    name: string,
+    agent: string,
+    skill: string,
+    threadId: string,
+    status = "todo",
+  ) => ({
+    id,
+    name,
+    description: "",
+    deliverable: "",
+    done_criteria: "",
+    depends_on: null,
+    owner: agent,
+    agent,
+    status,
+    channel: "execution",
+    type: "execution",
+    skill,
+    skills: [skill],
+    output_files: [],
+    mc_chat_thread_id: threadId,
+  });
+
+  const sourceGroupDir = writeProject("P90", [
+    task("P90-T01", "Source task", "rocinante", "outreach-playbook", "alpha:task-p90-source"),
+    task("P90-T02", "Market research", "hamete", "deep-research", "alpha:task-p90-research"),
+    task("P90-T03", "Content task", "dulcinea", "social-writer", "alpha:task-p90-content"),
+    task("P90-T04", "Archived research", "hamete", "deep-research", "alpha:task-p90-archived", "archived"),
+  ]);
+  const outsideGroupDir = writeProject("P91", [
+    task("P91-T01", "Outside research", "hamete", "deep-research", "alpha:task-p91-research"),
+  ]);
+  return { sourceGroupDir, outsideGroupDir };
+}
+
 type McpServerMod = typeof import("../mcp/server");
 let mcpServerMod: McpServerMod;
 
@@ -3287,6 +3342,212 @@ test("sancho_update_task requires at least one field to change", async () => {
     assert.match(result.content[0].type === "text" ? result.content[0].text : "", /no fields/i);
   } finally {
     await close();
+  }
+});
+
+test("sancho_delegate reuses only a same-group owned task through the central harness and keeps creation human-gated", async () => {
+  const { sourceGroupDir, outsideGroupDir } = seedDelegateRoutingFixture();
+  const originalFetch = globalThis.fetch;
+  const originalNextUrl = process.env.MC_NEXT_URL;
+  const originalSecret = process.env.MC_CHAT_SECRET;
+  process.env.MC_NEXT_URL = "http://mission-control.test";
+  process.env.MC_CHAT_SECRET = "mcp-delegate-secret";
+  const calls: Array<{ url: string; headers: Record<string, string>; body: Record<string, unknown> }> = [];
+  globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
+    const url = String(input);
+    const body = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+    calls.push({
+      url,
+      headers: (init?.headers || {}) as Record<string, string>,
+      body,
+    });
+    if (url === "http://mission-control.test/api/chat/send") {
+      return new Response(JSON.stringify({ ok: true, chatId: body.threadId }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ error: `unexpected URL ${url}` }), {
+      status: 404,
+      headers: { "content-type": "application/json" },
+    });
+  }) as typeof fetch;
+
+  const { resetTaskRouteProposalsForTests } = await import("../data/task-route-proposals");
+  resetTaskRouteProposalsForTests();
+  const { client, close } = await createConnectedClient({
+    id: "delegate-operator",
+    scopes: ["tasks:write", "chat:write"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  const base = {
+    clientSlug: "alpha",
+    sourceThreadId: "alpha:task-p90-source",
+    sourceTaskId: "P90-T01",
+    agent: "hamete",
+    skill: "deep-research",
+    name: "Market research",
+    brief: "Research the market and return the evidence.",
+  };
+
+  try {
+    const noContext = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        clientSlug: "alpha",
+        targetTaskId: "P90-T02",
+        agent: "hamete",
+        name: "Market research",
+        brief: "Research the market.",
+      },
+    });
+    assert.equal(noContext.isError, undefined);
+    assert.equal(payloadOf(noContext).action, "group_required");
+    assert.equal(calls.length, 0);
+
+    const preview = await client.callTool({
+      name: "sancho_delegate",
+      arguments: { ...base, targetTaskId: "P90-T02" },
+    });
+    assert.equal(preview.isError, undefined);
+    assert.equal(payloadOf(preview).action, "reuse");
+    assert.equal(payloadOf(preview).dryRun, true);
+    assert.equal(calls.length, 0);
+
+    const dispatched = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        ...base,
+        targetTaskId: "P90-T02",
+        dryRun: false,
+        confirm: true,
+      },
+    });
+    assert.equal(dispatched.isError, undefined);
+    assert.equal(payloadOf(dispatched).action, "reuse");
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, "http://mission-control.test/api/chat/send");
+    assert.equal(calls[0].headers["X-MC-Secret"], "mcp-delegate-secret");
+    assert.equal(calls[0].headers["X-Request-Id"], "trace-test-1");
+    assert.equal(calls[0].body.threadId, "alpha:task-p90-research");
+    assert.equal(calls[0].body.agent, "hamete");
+
+    const selfRoute = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        ...base,
+        targetTaskId: "P90-T01",
+        dryRun: false,
+        confirm: true,
+      },
+    });
+    assert.equal(selfRoute.isError, undefined);
+    assert.equal(payloadOf(selfRoute).action, "noop");
+    assert.equal(payloadOf(selfRoute).dispatched, false);
+    assert.equal(calls.length, 1);
+
+    const wrongOwner = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        ...base,
+        targetTaskId: "P90-T03",
+        dryRun: false,
+        confirm: true,
+      },
+    });
+    assert.equal(wrongOwner.isError, undefined);
+    assert.equal(payloadOf(wrongOwner).action, "owner_mismatch");
+    assert.equal(payloadOf(wrongOwner).dispatched, false);
+    assert.equal(calls.length, 1);
+
+    const inactive = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        ...base,
+        targetTaskId: "P90-T04",
+        name: "Archived research replacement",
+        dryRun: false,
+        confirm: true,
+      },
+    });
+    assert.equal(inactive.isError, undefined);
+    assert.equal(payloadOf(inactive).action, "suggest_create");
+    assert.equal((payloadOf(inactive).resolution as { reason: string }).reason, "explicit_target_inactive");
+    assert.equal(payloadOf(inactive).requiresHumanConfirmation, true);
+    assert.equal(typeof payloadOf(inactive).proposalId, "string");
+    assert.equal(calls.length, 1);
+
+    const outside = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        ...base,
+        threadId: "alpha:task-p91-research",
+        name: "Outside research replacement",
+        dryRun: false,
+        confirm: true,
+      },
+    });
+    assert.equal(outside.isError, undefined);
+    const outsidePayload = payloadOf(outside);
+    assert.equal(outsidePayload.action, "suggest_create");
+    assert.equal((outsidePayload.resolution as { reason: string }).reason, "explicit_target_outside_group");
+    assert.equal(outsidePayload.requiresHumanConfirmation, true);
+    assert.equal(typeof outsidePayload.proposalId, "string");
+    assert.equal(calls.length, 1);
+
+    const changedProposal = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        ...base,
+        threadId: "alpha:task-p91-research",
+        name: "Outside research replacement",
+        brief: "A changed brief must require a new proposal.",
+        proposalId: outsidePayload.proposalId,
+        dryRun: false,
+        confirm: true,
+      },
+    });
+    assert.equal(changedProposal.isError, undefined);
+    assert.equal(payloadOf(changedProposal).action, "confirmation_required");
+    assert.equal(payloadOf(changedProposal).requiresHumanConfirmation, true);
+    assert.equal(calls.length, 1);
+
+    const confirmedOnlyByModel = await client.callTool({
+      name: "sancho_delegate",
+      arguments: {
+        ...base,
+        threadId: "alpha:task-p91-research",
+        name: "Outside research replacement",
+        proposalId: outsidePayload.proposalId,
+        dryRun: false,
+        confirm: true,
+      },
+    });
+    assert.equal(confirmedOnlyByModel.isError, undefined);
+    assert.equal(payloadOf(confirmedOnlyByModel).action, "suggest_create");
+    assert.equal(payloadOf(confirmedOnlyByModel).requiresHumanConfirmation, true);
+    assert.match(String(payloadOf(confirmedOnlyByModel).message), /cannot authenticate human consent/i);
+    assert.equal(calls.length, 1);
+
+    const sourceTasks = JSON.parse(
+      fs.readFileSync(path.join(sourceGroupDir, "tasks.json"), "utf8"),
+    ) as Array<{ id: string }>;
+    const outsideTasks = JSON.parse(
+      fs.readFileSync(path.join(outsideGroupDir, "tasks.json"), "utf8"),
+    ) as Array<{ id: string }>;
+    assert.deepEqual(sourceTasks.map((task) => task.id), ["P90-T01", "P90-T02", "P90-T03", "P90-T04"]);
+    assert.deepEqual(outsideTasks.map((task) => task.id), ["P91-T01"]);
+  } finally {
+    await close();
+    globalThis.fetch = originalFetch;
+    if (originalNextUrl === undefined) delete process.env.MC_NEXT_URL;
+    else process.env.MC_NEXT_URL = originalNextUrl;
+    if (originalSecret === undefined) delete process.env.MC_CHAT_SECRET;
+    else process.env.MC_CHAT_SECRET = originalSecret;
+    fs.rmSync(sourceGroupDir, { recursive: true, force: true });
+    fs.rmSync(outsideGroupDir, { recursive: true, force: true });
+    resetTaskRouteProposalsForTests();
   }
 });
 

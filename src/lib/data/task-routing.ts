@@ -1,10 +1,25 @@
 import { canonicalThreadId } from "@/lib/thread-id";
 import { listUnifiedTaskRowsAsync, type UnifiedTaskRow } from "@/lib/data/tasks";
+import {
+  normalizeAgentSlug,
+  normalizeSkillId,
+} from "@/lib/data/task-execution-contract";
+import { resolveAgentForSkill } from "@/lib/skill-resolver";
 
-const TERMINAL_TASK_STATUSES = new Set([
+const TERMINAL_STANDARD_TASK_STATUSES = new Set([
   "archived",
+  "approved",
+  "canceled",
   "cancelled",
+  "complete",
   "completed",
+  "discarded",
+  "done",
+  "finished",
+  "rejected",
+]);
+
+const TERMINAL_CONTENT_TASK_STATUSES = new Set([
   // ContentTask terminal states use a different vocabulary.
   "discarded",
   "published",
@@ -29,6 +44,19 @@ export interface ResolveSameGroupTaskRouteInput extends TaskRouteRequestSelector
   /** Explicit destination. When present, no heuristic fallback is allowed. */
   targetThreadId?: string;
 }
+
+export interface TaskThreadExecutionRoute {
+  agent?: string;
+  scope: "task";
+  skill?: string;
+  skills?: string[];
+}
+
+export type TaskThreadExecutionResolution =
+  | { kind: "task"; taskId: string; route: TaskThreadExecutionRoute }
+  | { kind: "none" }
+  | { kind: "inactive"; taskId: string }
+  | { kind: "ambiguous"; taskIds: string[] };
 
 export type TaskRouteMatchSignal =
   | "agent_exact"
@@ -64,6 +92,12 @@ export interface TaskRouteCandidate {
 
 export type SameGroupTaskRouteResolution =
   | {
+      kind: "no_change";
+      reason: "source_task";
+      groupId: string;
+      source: TaskRouteCandidate;
+    }
+  | {
       kind: "reuse";
       reason: "explicit_target" | "unique_compatible";
       groupId: string | null;
@@ -93,7 +127,8 @@ export type SameGroupTaskRouteResolution =
         | "no_group_context"
         | "group_not_found"
         | "source_not_found"
-        | "source_ambiguous";
+        | "source_ambiguous"
+        | "source_group_mismatch";
     };
 
 function normalized(value: unknown): string {
@@ -134,8 +169,28 @@ function nameSimilarity(requestedName: string, candidateName: string): "exact" |
   return "weak";
 }
 
-export function isActiveTaskRouteCandidate(candidate: Pick<UnifiedTaskRow, "status">): boolean {
-  return !TERMINAL_TASK_STATUSES.has(normalized(candidate.status));
+export function isActiveTaskRouteCandidate(candidate: Pick<UnifiedTaskRow, "status" | "type">): boolean {
+  const status = normalized(candidate.status);
+  return normalized(candidate.type) === "content task"
+    ? !TERMINAL_CONTENT_TASK_STATUSES.has(status)
+    : !TERMINAL_STANDARD_TASK_STATUSES.has(status);
+}
+
+/** Resolve legacy task ownership without turning a human owner into a peer signal. */
+function taskAgent(row: UnifiedTaskRow): string | undefined {
+  const explicit = normalizeAgentSlug(row.agent);
+  if (explicit) return explicit;
+
+  const skillCandidates = [
+    row.skill,
+    ...(Array.isArray(row.skills) ? row.skills : []),
+  ];
+  for (const candidate of skillCandidates) {
+    const owner = resolveAgentForSkill(normalizeSkillId(candidate));
+    if (owner) return owner;
+  }
+
+  return normalizeAgentSlug(row.owner);
 }
 
 /**
@@ -155,23 +210,21 @@ export function scoreTaskRouteCandidate(
   }
 
   const requestedAgent = normalized(request.requestedAgent);
-  const candidateAgents = new Set(
-    [candidate.agent, candidate.owner].map(normalized).filter(Boolean),
-  );
+  const candidateAgents = new Set([taskAgent(candidate)].map(normalized).filter(Boolean));
   const agentExact = Boolean(requestedAgent && candidateAgents.has(requestedAgent));
-  let structuredMismatch = false;
-  let structuredMissing = false;
+  let agentMismatch = false;
+  let agentMissing = false;
   if (requestedAgent) {
     if (agentExact) {
       signals.push("agent_exact");
       score += 30;
     } else if (candidateAgents.size === 0) {
       signals.push("agent_missing");
-      structuredMissing = true;
+      agentMissing = true;
       score -= 5;
     } else {
       signals.push("agent_mismatch");
-      structuredMismatch = true;
+      agentMismatch = true;
       score -= 60;
     }
   }
@@ -189,12 +242,13 @@ export function scoreTaskRouteCandidate(
       score += 45;
     } else if (candidateSkills.size === 0) {
       signals.push("skill_missing");
-      structuredMissing = true;
       score -= 10;
     } else {
       signals.push("skill_mismatch");
-      structuredMismatch = true;
-      score -= 80;
+      // A task's declared skills are priorities, not an identity boundary. A
+      // different requested skill may still be valid inside the same task and
+      // owning agent, so this is a ranking penalty rather than a veto.
+      score -= 15;
     }
   }
 
@@ -225,8 +279,8 @@ export function scoreTaskRouteCandidate(
     || (nameMatch === "strong" && structuredAnchor);
   const identityAnchor = nameMatch === "exact" || structuredAnchor;
   const eligibleForReuse = hasSelector
-    && !structuredMismatch
-    && !structuredMissing
+    && !agentMismatch
+    && !agentMissing
     && nameSatisfied
     && identityAnchor;
 
@@ -246,8 +300,15 @@ function isRoutableTask(row: UnifiedTaskRow): boolean {
   return normalized(row.type) !== "project";
 }
 
-/** Return the canonical full chat id, preferring the task's persisted anchor. */
+/** Return the canonical full chat id; pillar tasks converge on the pillar chat. */
 export function canonicalTaskRouteThreadId(row: UnifiedTaskRow, clientSlug: string): string {
+  const pillar = typeof row.pillar === "string" ? row.pillar.trim() : "";
+  if (pillar) {
+    // Foundation tasks intentionally converge on their canonical pillar chat.
+    // Their persisted task-* anchor remains a read alias for compatibility.
+    return canonicalThreadId(`${clientSlug}:${pillar.toLocaleLowerCase("en-US")}`);
+  }
+
   const persisted = typeof row.mc_chat_thread_id === "string"
     ? row.mc_chat_thread_id.trim()
     : "";
@@ -255,8 +316,24 @@ export function canonicalTaskRouteThreadId(row: UnifiedTaskRow, clientSlug: stri
     return canonicalThreadId(persisted.includes(":") ? persisted : `${clientSlug}:${persisted}`);
   }
 
-  const namespace = normalized(row.type) === "content task" ? "content" : "task";
+  const namespace = normalized(row.type) === "project"
+    ? "project"
+    : normalized(row.type) === "content task"
+      ? "content"
+      : "task";
   return canonicalThreadId(`${clientSlug}:${namespace}:${row.id.toLocaleLowerCase("en-US")}`);
+}
+
+/** All accepted thread identities for a row, with the canonical target first. */
+function taskRouteThreadIds(row: UnifiedTaskRow, clientSlug: string): string[] {
+  const ids = [canonicalTaskRouteThreadId(row, clientSlug)];
+  const persisted = typeof row.mc_chat_thread_id === "string"
+    ? row.mc_chat_thread_id.trim()
+    : "";
+  if (persisted) {
+    ids.push(canonicalThreadId(persisted.includes(":") ? persisted : `${clientSlug}:${persisted}`));
+  }
+  return Array.from(new Set(ids.map((id) => key(id)).filter(Boolean)));
 }
 
 function canonicalInputThreadId(clientSlug: string, threadId: string): string {
@@ -289,7 +366,7 @@ function groupIdForRow(row: UnifiedTaskRow, byId: Map<string, UnifiedTaskRow>): 
 
 function rowsByThread(rows: UnifiedTaskRow[], input: ResolveSameGroupTaskRouteInput, threadId: string): UnifiedTaskRow[] {
   const wanted = key(canonicalInputThreadId(input.clientSlug, threadId));
-  return rows.filter((row) => key(canonicalTaskRouteThreadId(row, input.clientSlug)) === wanted);
+  return rows.filter((row) => taskRouteThreadIds(row, input.clientSlug).includes(wanted));
 }
 
 function toCandidate(
@@ -303,7 +380,7 @@ function toCandidate(
     taskType: String(row.type),
     status: row.status,
     groupId,
-    agent: row.agent || row.owner || undefined,
+    agent: taskAgent(row),
     skill: row.skill || (Array.isArray(row.skills) ? row.skills[0] : undefined),
     targetThreadId: canonicalTaskRouteThreadId(row, input.clientSlug),
     match: scoreTaskRouteCandidate(row, input),
@@ -330,8 +407,8 @@ function resolveExplicitTarget(
     if (!isRoutableTask(row)) return false;
     const taskMatches = !hasTask || key(row.id) === key(input.targetTaskId);
     const threadMatches = !hasThread
-      || key(canonicalTaskRouteThreadId(row, input.clientSlug))
-        === key(canonicalInputThreadId(input.clientSlug, input.targetThreadId!));
+      || taskRouteThreadIds(row, input.clientSlug)
+        .includes(key(canonicalInputThreadId(input.clientSlug, input.targetThreadId!)));
     return taskMatches && threadMatches;
   });
 }
@@ -341,14 +418,18 @@ function resolveGroupId(
   byId: Map<string, UnifiedTaskRow>,
   input: ResolveSameGroupTaskRouteInput,
 ): { groupId?: string; error?: Extract<SameGroupTaskRouteResolution, { kind: "group_required" }>["reason"] } {
+  let explicitGroupId: string | undefined;
   if (input.groupId?.trim()) {
     const wanted = key(input.groupId);
     const group = rows.find((row) => normalized(row.type) === "project" && key(row.id) === wanted);
-    return group ? { groupId: group.id } : { error: "group_not_found" };
+    if (!group) return { error: "group_not_found" };
+    explicitGroupId = group.id;
   }
 
   const hasSource = Boolean(input.sourceTaskId?.trim() || input.sourceThreadId?.trim());
-  if (!hasSource) return { error: "no_group_context" };
+  if (!hasSource) return explicitGroupId
+    ? { groupId: explicitGroupId }
+    : { error: "no_group_context" };
 
   const sourceRows = new Map<string, UnifiedTaskRow>();
   if (input.sourceTaskId?.trim()) {
@@ -370,7 +451,11 @@ function resolveGroupId(
   }
   if (groups.size === 0) return { error: "source_not_found" };
   if (groups.size > 1) return { error: "source_ambiguous" };
-  return { groupId: [...groups.values()][0] };
+  const sourceGroupId = [...groups.values()][0];
+  if (explicitGroupId && key(explicitGroupId) !== key(sourceGroupId)) {
+    return { error: "source_group_mismatch" };
+  }
+  return { groupId: sourceGroupId };
 }
 
 function sourceTaskKeys(
@@ -409,6 +494,7 @@ export function resolveSameGroupTaskRouteFromRows(
   if (contextGroup && !contextGroup.groupId) {
     return { kind: "group_required", reason: contextGroup.error || "no_group_context" };
   }
+  const sourceKeys = sourceTaskKeys(rows, input);
 
   if (explicitTargetRows) {
     const targetsInGroup = contextGroup?.groupId
@@ -422,6 +508,14 @@ export function resolveSameGroupTaskRouteFromRows(
         toCandidate(row, groupIdForRow(row, byId), input),
       ));
       if (candidates.length === 1) {
+        if (sourceKeys.has(key(candidates[0].taskId))) {
+          return {
+            kind: "no_change",
+            reason: "source_task",
+            groupId: contextGroup?.groupId || candidates[0].groupId!,
+            source: candidates[0],
+          };
+        }
         return {
           kind: "reuse",
           reason: "explicit_target",
@@ -497,7 +591,22 @@ export function resolveSameGroupTaskRouteFromRows(
     };
   }
 
-  const sourceKeys = sourceTaskKeys(rows, input);
+  const matchingSource = sortCandidates(rows
+    .filter(isRoutableTask)
+    .filter(isActiveTaskRouteCandidate)
+    .filter((row) => sourceKeys.has(key(row.id)))
+    .filter((row) => key(groupIdForRow(row, byId)) === key(group.groupId))
+    .map((row) => toCandidate(row, group.groupId!, input))
+    .filter((candidate) => candidate.match.eligibleForReuse));
+  if (matchingSource.length > 0) {
+    return {
+      kind: "no_change",
+      reason: "source_task",
+      groupId: group.groupId,
+      source: matchingSource[0],
+    };
+  }
+
   const groupCandidates = rows
     .filter(isRoutableTask)
     .filter(isActiveTaskRouteCandidate)
@@ -551,4 +660,65 @@ export async function resolveSameGroupTaskRoute(
 ): Promise<SameGroupTaskRouteResolution> {
   const rows = await listUnifiedTaskRowsAsync(input.clientSlug);
   return resolveSameGroupTaskRouteFromRows(rows, input);
+}
+
+/**
+ * Resolve the authoritative task harness for chat ingress. Unlike browser
+ * metadata or persisted chat routing, this reads the current task record, so
+ * edits to its primary skill/allowlist take effect on the next turn.
+ * Ambiguous duplicate thread anchors fail closed and return undefined.
+ */
+export async function resolveTaskThreadExecutionRoute(
+  clientSlug: string,
+  threadId: string,
+): Promise<TaskThreadExecutionResolution> {
+  if (!clientSlug || !threadId) return { kind: "none" };
+  const rows = await listUnifiedTaskRowsAsync(clientSlug);
+  return resolveTaskThreadExecutionRouteFromRows(rows, clientSlug, threadId);
+}
+
+export function resolveTaskThreadExecutionRouteFromRows(
+  rows: UnifiedTaskRow[],
+  clientSlug: string,
+  threadId: string,
+): TaskThreadExecutionResolution {
+  if (!clientSlug || !threadId) return { kind: "none" };
+  const wanted = key(canonicalInputThreadId(clientSlug, threadId));
+  const matches = rows
+    .filter(isRoutableTask)
+    .filter((row) => taskRouteThreadIds(row, clientSlug).includes(wanted));
+  if (matches.length === 0) return { kind: "none" };
+  if (matches.length > 1) {
+    return {
+      kind: "ambiguous",
+      taskIds: matches.map((row) => row.id).sort(),
+    };
+  }
+
+  const row = matches[0];
+  if (!isActiveTaskRouteCandidate(row)) {
+    return { kind: "inactive", taskId: row.id };
+  }
+  const primary = typeof row.skill === "string" && row.skill.trim()
+    ? row.skill.trim()
+    : undefined;
+  const allowed = Array.from(new Set([
+    ...(primary ? [primary] : []),
+    ...(Array.isArray(row.skills)
+      ? row.skills.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+      : []),
+  ]));
+  return {
+    kind: "task",
+    taskId: row.id,
+    route: {
+      agent: taskAgent(row),
+      // A task remains the boundary even when it declares a primary skill. The
+      // primary guides the normal path; it does not turn the whole thread into a
+      // permanently pinned skill execution.
+      scope: "task",
+      skill: primary,
+      skills: allowed.length ? allowed : undefined,
+    },
+  };
 }

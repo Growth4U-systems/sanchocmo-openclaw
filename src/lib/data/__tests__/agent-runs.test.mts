@@ -70,3 +70,46 @@ test("agent run ledger marks failures and cancellations terminal", () => {
   assert.equal(agentRuns.listAgentRunsForThread(cancelled.threadId)[0].status, "cancelled");
   assert.equal(agentRuns.getLatestActiveRun(cancelled.threadId), null);
 });
+
+test("agent runs support exact callback lookup and retry idempotency keys", () => {
+  const first = agentRuns.createAgentRun({
+    threadId: "acme:shared",
+    runtime: "external-http",
+    agent: "rocinante",
+    idempotencyKey: "mc-control:owner:temporary",
+  });
+  const second = agentRuns.createAgentRun({
+    threadId: "acme:shared",
+    runtime: "external-http",
+    agent: "sancho",
+  });
+
+  assert.equal(agentRuns.getAgentRunById(first.id)?.agent, "rocinante");
+  assert.equal(agentRuns.getAgentRunById(second.id)?.agent, "sancho");
+  assert.equal(
+    agentRuns.getAgentRunByIdempotencyKey("acme:shared", "mc-control:owner:temporary")?.id,
+    first.id,
+  );
+  assert.equal(
+    agentRuns.getAgentRunByIdempotencyKey("acme:other", "mc-control:owner:temporary"),
+    null,
+  );
+});
+
+test("terminal agent-run state is monotonic under late callbacks", () => {
+  const run = agentRuns.createAgentRun({
+    threadId: "acme:monotonic",
+    runtime: "external-http",
+  });
+  agentRuns.markAgentRunCompleted(run.id, run.threadId, { text: "winner" });
+  agentRuns.markAgentRunDispatched(run.id, run.threadId, { late: true });
+  agentRuns.markAgentRunFailed(run.id, run.threadId, "late failure");
+
+  const stored = agentRuns.getAgentRunById(run.id);
+  assert.equal(stored?.status, "completed");
+  assert.deepEqual(stored?.output, { text: "winner" });
+  assert.deepEqual(
+    agentRuns.listAgentRunEvents(run.id).map((event) => event.type),
+    ["run_created", "bot_reply"],
+  );
+});

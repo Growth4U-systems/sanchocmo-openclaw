@@ -81,6 +81,7 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           OD_API_TOKEN: ${{ secrets.OD_API_TOKEN }}
           OPENCLAW_GATEWAY_TOKEN: ${{ secrets.OPENCLAW_GATEWAY_TOKEN }}
+          MC_CHAT_SECRET: ${{ secrets.MC_CHAT_SECRET }}
           GTM_OS_API_TOKEN: ${{ secrets.GTM_OS_API_TOKEN }}
           YALC_API_TOKEN: ${{ secrets.YALC_API_TOKEN }}
           SANCHO_REPLY_WEBHOOK_TOKEN: ${{ secrets.SANCHO_REPLY_WEBHOOK_TOKEN }}
@@ -182,7 +183,7 @@ jobs:
               # Tier 1 — Auth & infra
               "NEXTAUTH_SECRET", "ENCRYPTION_KEY", "DATABASE_URL",
               "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
-              "OD_API_TOKEN", "OPENCLAW_GATEWAY_TOKEN", "GTM_OS_API_TOKEN",
+              "OD_API_TOKEN", "OPENCLAW_GATEWAY_TOKEN", "MC_CHAT_SECRET", "GTM_OS_API_TOKEN",
               "YALC_API_TOKEN", "SANCHO_REPLY_WEBHOOK_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
               "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
               # Tier 2 — System APIs

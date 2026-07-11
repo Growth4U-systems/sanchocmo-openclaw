@@ -2,6 +2,10 @@
 import http from "node:http";
 import { spawn } from "node:child_process";
 import { randomUUID, timingSafeEqual } from "node:crypto";
+import {
+  buildMcChatContextBlock,
+  resolveTurnSkillPolicy,
+} from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 18792;
@@ -124,6 +128,22 @@ async function postWebhook(payload) {
   }
 }
 
+function callbackIdentity(message) {
+  return typeof message?.missionControlRunId === "string" && message.missionControlRunId
+    ? { missionControlRunId: message.missionControlRunId }
+    : {};
+}
+
+function postTerminalOnce(message, payload, label) {
+  const entry = activeRuns.get(message.threadId);
+  if (!entry || entry.terminalPosted) return false;
+  entry.terminalPosted = true;
+  if (activeRuns.get(message.threadId) === entry) activeRuns.delete(message.threadId);
+  postWebhook({ ...payload, ...callbackIdentity(message) })
+    .catch((e) => console.error(`[claude-code bridge] ${label} webhook failed:`, e.message));
+  return true;
+}
+
 function sanchoMcpServerName() {
   return firstEnv(["CLAUDE_CODE_SANCHO_MCP_SERVER", "SANCHO_MCP_SERVER_NAME"]) || "sancho";
 }
@@ -219,6 +239,16 @@ export async function fetchContextPack(message) {
 }
 
 export function buildClaudePrompt(message, contextPack = null) {
+  const requestedAgent = message.agent || message.agentId || "sancho";
+  const skillMode = resolveTurnSkillPolicy(message);
+  const mcChatContext = buildMcChatContextBlock({
+    ...message,
+    requestedAgent,
+    skillMode,
+    canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1,
+    temporaryAgent: message.temporaryAgent,
+    taskRouteProposal: message.taskRouteProposal,
+  });
   const runtimeContext = {
     slug: message.slug,
     threadId: message.threadId,
@@ -227,6 +257,8 @@ export function buildClaudePrompt(message, contextPack = null) {
     skill: message.skill,
     skills: normalizeArray(message.skills),
     scope: message.scope,
+    skillMode,
+    temporaryAgent: message.temporaryAgent === true,
     linkedTo: message.linkedTo,
     docPath: message.docPath,
     docKind: message.docKind,
@@ -242,6 +274,8 @@ export function buildClaudePrompt(message, contextPack = null) {
     "If Sancho MCP tools are configured, use them only when the turn requires live Sancho operations beyond the provided context.",
     "Return only the final answer that should appear in the Sancho chat.",
     "Do not mention the external-http transport, MCP setup, or bridge internals unless the user asks.",
+    "",
+    mcChatContext,
     "",
     "Runtime context:",
     JSON.stringify(runtimeContext, null, 2),
@@ -320,6 +354,18 @@ export function buildClaudeArgs(message, prompt, mcpConfig = buildMcpConfig()) {
     (mcpConfig ? `mcp__${sanchoMcpServerName()}__*` : undefined);
   if (allowedTools) args.push("--allowedTools", allowedTools);
 
+  if (message?.temporaryAgent === true || message?.controlDepth === 1) {
+    const server = sanchoMcpServerName();
+    const forbiddenTaskMutations = [
+      "sancho_create_task",
+      "sancho_update_task",
+      "sancho_delegate",
+      "content_transition_task",
+      "content_update_task",
+    ].map((tool) => `mcp__${server}__${tool}`);
+    args.push("--disallowedTools", forbiddenTaskMutations.join(","));
+  }
+
   return args;
 }
 
@@ -356,6 +402,7 @@ async function postProgress(message, runId, label, detail) {
   await postWebhook({
     slug: message.slug,
     threadId: message.threadId,
+    ...callbackIdentity(message),
     role: "progress",
     agent: message.agent || message.agentId || "claude-code",
     event: {
@@ -401,7 +448,7 @@ async function startClaudeRun(message, runId) {
     env: buildClaudeEnv(runId),
     stdio: ["ignore", "pipe", "pipe"],
   });
-  const entry = existing || { runId, child: null, killed: false, pending: false };
+  const entry = existing || { runId, child: null, killed: false, pending: false, terminalPosted: false };
   entry.child = child;
   entry.pending = false;
   activeRuns.set(message.threadId, entry);
@@ -419,7 +466,7 @@ async function startClaudeRun(message, runId) {
     entry.killed = true;
     child.kill("SIGTERM");
     setTimeout(() => child.kill("SIGKILL"), 1000).unref();
-    postWebhook({
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: "Claude Code did not finish the runtime turn before the timeout.",
@@ -430,7 +477,7 @@ async function startClaudeRun(message, runId) {
         provider: "claude-code",
         classifiedAt: Date.now(),
       },
-    }).catch((e) => console.error("[claude-code bridge] timeout webhook failed:", e.message));
+    }, "timeout");
   }, runTimeoutMs());
 
   postProgress(
@@ -442,8 +489,8 @@ async function startClaudeRun(message, runId) {
 
   child.on("error", (e) => {
     clearTimeout(timeout);
-    activeRuns.delete(message.threadId);
-    postWebhook({
+    entry.killed = true;
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: `Could not start Claude Code: ${e.message}`,
@@ -454,28 +501,27 @@ async function startClaudeRun(message, runId) {
         provider: "claude-code",
         classifiedAt: Date.now(),
       },
-    }).catch((err) => console.error("[claude-code bridge] error webhook failed:", err.message));
+    }, "error");
   });
 
   child.on("close", (code, signal) => {
     clearTimeout(timeout);
-    activeRuns.delete(message.threadId);
-    if (entry.killed) return;
+    if (entry.killed || entry.terminalPosted) return;
 
     const cleanStdout = cleanClaudeStdout(stdout);
     const cleanStderr = stripAnsi(stderr).trim();
     if (code === 0) {
-      postWebhook({
+      postTerminalOnce(message, {
         slug: message.slug,
         threadId: message.threadId,
         text: cleanStdout || "(Claude Code finished without text output.)",
         agent: message.agent || message.agentId || "claude-code",
-      }).catch((e) => console.error("[claude-code bridge] final webhook failed:", e.message));
+      }, "final");
       return;
     }
 
     const raw = [cleanStderr, cleanStdout].filter(Boolean).join("\n\n").slice(0, 4096);
-    postWebhook({
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: `Claude Code failed while executing this runtime turn${signal ? ` (${signal})` : ""}.`,
@@ -486,7 +532,7 @@ async function startClaudeRun(message, runId) {
         provider: "claude-code",
         classifiedAt: Date.now(),
       },
-    }).catch((e) => console.error("[claude-code bridge] failure webhook failed:", e.message));
+    }, "failure");
   });
 }
 
@@ -528,10 +574,9 @@ async function handleInbound(req, res) {
   }
 
   const runId = `claude_code_${randomUUID()}`;
-  activeRuns.set(message.threadId, { runId, child: null, killed: false, pending: true });
+  activeRuns.set(message.threadId, { runId, child: null, killed: false, pending: true, terminalPosted: false });
   startClaudeRun(message, runId).catch((e) => {
-    activeRuns.delete(message.threadId);
-    postWebhook({
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: `Could not start Claude Code: ${e.message}`,
@@ -542,7 +587,7 @@ async function handleInbound(req, res) {
         provider: "claude-code",
         classifiedAt: Date.now(),
       },
-    }).catch((err) => console.error("[claude-code bridge] start webhook failed:", err.message));
+    }, "start");
   });
   return json(res, 202, { ok: true, runId, chatId: runId, threadId: message.threadId });
 }

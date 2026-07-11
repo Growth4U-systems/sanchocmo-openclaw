@@ -110,7 +110,7 @@ export interface ThreadConfig {
    * point). Absent/`"skill"` keeps the narrow single-skill behavior. Declared
    * in the manifest namespace entry and forwarded to the gateway via send.ts.
    */
-  scope?: "agent" | "skill";
+  scope?: "agent" | "skill" | "task";
   inputDocuments?: unknown[];
   requiredInputs?: unknown[];
   outputDocuments?: unknown[];
@@ -713,13 +713,17 @@ export function buildTaskThread(
   // converge to the same thread.
   if (opts.pillar) {
     const config = buildPillarThread(slug, opts.pillar, opts.deliverableFile);
-    // Override skill if the task has an explicit one and the pillar
-    // resolution fell back to sancho-manager.
-    if (opts.taskSkill && config.skill === "sancho-manager") {
-      config.skill = opts.taskSkill;
-      config.skills = opts.skills?.length ? opts.skills : [opts.taskSkill];
-    }
+    // The task record, not pillar inference, owns the primary/supporting skill
+    // hints. A skill-less task must stay skill-less even though the pillar has a
+    // natural workflow, otherwise reopening silently recreates a pinned rail.
+    config.skill = opts.taskSkill || "";
+    config.skills = opts.skills?.length
+      ? opts.skills
+      : opts.taskSkill
+        ? [opts.taskSkill]
+        : [];
     if (opts.agent) config.agent = opts.agent;
+    config.scope = "task";
     config.inputDocuments = opts.inputDocuments;
     config.requiredInputs = opts.requiredInputs;
     config.outputDocuments = opts.outputDocuments;
@@ -742,15 +746,19 @@ export function buildTaskThread(
   return {
     threadId,
     threadName: taskName,
-    skill: opts.taskSkill || resolved.skill,
-    skills: opts.skills?.length ? opts.skills : resolved.skills,
+    skill: opts.taskSkill || "",
+    skills: opts.skills?.length
+      ? opts.skills
+      : opts.taskSkill
+        ? [opts.taskSkill]
+        : [],
     linkedTo: `projects/${projectId}/tasks/${taskId}`,
     docPath: opts.deliverableFile || `projects/${projectId}/tasks.json`,
     threadState: opts.taskStatus === "ready" || opts.taskStatus === "pending" ? "create" : "continue",
     agent: opts.agent || resolved.agent,
-    // An explicit task skill is the product harness. An inferred fallback is
-    // merely a grounding hint and must stay agent-led/auto.
-    scope: opts.taskSkill ? "skill" : "agent",
+    // The task is always the durable boundary. A declared primary skill guides
+    // the normal path, but does not pin the entire thread to that one workflow.
+    scope: "task",
     initialMessage: opts.taskSkill === "meeting-intelligence" && taskName.toLowerCase().includes("configurar")
       ? resolveOpener("meeting-intelligence-setup", { slug })
       : undefined,
@@ -782,17 +790,18 @@ export function buildContentTaskThread(
   }
 ): ThreadConfig {
   const threadId = `${slug}:content:${contentTaskId.toLowerCase()}`;
-  const skill = opts.skill || "social-writer";
+  const skill = opts.skill || "";
 
   return {
     threadId,
     threadName: contentTaskName,
     skill,
-    skills: opts.skills?.length ? opts.skills : [skill],
+    skills: opts.skills?.length ? opts.skills : skill ? [skill] : [],
     linkedTo: `projects/${projectId}/tasks/${parentTaskId}/content/${contentTaskId}`,
     docPath: opts.docPath || `projects/${projectId}/tasks.json`,
     threadState: opts.status === "Approved" || opts.status === "New" ? "create" : "continue",
     agent: opts.agent || "dulcinea",
+    scope: "task",
     inputDocuments: opts.inputDocuments,
     requiredInputs: opts.requiredInputs,
     outputDocuments: opts.outputDocuments,

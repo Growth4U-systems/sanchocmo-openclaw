@@ -25,6 +25,7 @@ import {
 } from "./account.js";
 import { markVisibleDelivery } from "./delivery-state.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
+import { missionControlRunIdFor } from "./runtime-run-state.js";
 
 export const mcChatPlugin = createChatChannelPlugin({
   base: createChannelPluginBase({
@@ -106,6 +107,8 @@ export const mcChatPlugin = createChatChannelPlugin({
 
         const mcUrl = account?.mcServerUrl || "http://localhost:3000";
         const callbackUrl = `${mcUrl}/api/chat/webhook`;
+        const respondingAgent = params.agentId || "sancho";
+        const missionControlRunId = missionControlRunIdFor(slug, threadId, params.agentId);
         if (looksLikeToolEcho(text)) {
           console.error(`[mc-chat] dropped tool-echo sendText threadId=${threadId} textLen=${(text || "").length}`);
           return { messageId: `mc-echo-${Date.now()}` };
@@ -117,9 +120,10 @@ export const mcChatPlugin = createChatChannelPlugin({
         const body = JSON.stringify({
           slug,
           threadId,
+          ...(missionControlRunId ? { missionControlRunId } : {}),
           text,
           role: "bot",
-          agent: params.agentId || "sancho",
+          agent: respondingAgent,
           ts: new Date().toISOString(),
         });
 
@@ -156,6 +160,7 @@ export const mcChatPlugin = createChatChannelPlugin({
 
         const mcUrl = account?.mcServerUrl || "http://localhost:3000";
         const callbackUrl = `${mcUrl}/api/chat/webhook`;
+        const missionControlRunId = missionControlRunIdFor(slug, threadId, "sancho");
 
         try {
           const response = await fetch(callbackUrl, {
@@ -167,6 +172,7 @@ export const mcChatPlugin = createChatChannelPlugin({
             body: JSON.stringify({
               slug,
               threadId,
+              ...(missionControlRunId ? { missionControlRunId } : {}),
               text: `📎 [Archivo adjunto](${filePath})`,
               role: "bot",
               agent: "sancho",

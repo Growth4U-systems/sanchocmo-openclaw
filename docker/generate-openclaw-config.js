@@ -64,7 +64,7 @@ async function main() {
 
   const discordToken = process.env.DISCORD_BOT_TOKEN;
   const cervantesGuildId = process.env.CERVANTES_GUILD_ID || '';
-  const mcChatSecret = process.env.MC_CHAT_SECRET || '';
+  const mcChatSecret = process.env.MC_CHAT_SECRET || process.env.OPENCLAW_GATEWAY_TOKEN || '';
   const contextPackUrl = (process.env.MC_CONTEXT_PACK_URL || 'http://localhost:3000').replace(/\/+$/, '');
   // mc-chat delivers bot replies to ${mcServerUrl}/api/chat/webhook, a route that
   // ONLY exists on the Next.js app (:3000), NOT the legacy mc-server.js (:18790).

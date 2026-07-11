@@ -5,6 +5,7 @@ import {
   dependencyIds,
   inferTaskExecutionContract,
   normalizeAgentSlug,
+  persistedTaskSkillFields,
   type TaskDocumentRef,
 } from "../src/lib/data/task-execution-contract";
 
@@ -81,7 +82,7 @@ async function main() {
   const updates: Array<{
     row: DbTaskRow;
     agent: string;
-    skill: string;
+    skill: string | null;
     skills: string[];
     inputDocuments: TaskDocumentRef[];
     requiredInputs: unknown[];
@@ -97,15 +98,17 @@ async function main() {
       }
       return [];
     });
-    const contract = inferTaskExecutionContract(toTaskInput(row), {
+    const taskInput = toTaskInput(row);
+    const contract = inferTaskExecutionContract(taskInput, {
       brandSlug: row.brandSlug,
       dependencyOutputs,
     });
+    const persistedSkills = persistedTaskSkillFields(taskInput, contract);
     updates.push({
       row,
       agent: contract.agent,
-      skill: contract.skill,
-      skills: contract.skills,
+      skill: persistedSkills.skill,
+      skills: persistedSkills.skills,
       inputDocuments: contract.inputDocuments,
       requiredInputs: contract.requiredInputs,
       outputDocuments: contract.outputDocuments,

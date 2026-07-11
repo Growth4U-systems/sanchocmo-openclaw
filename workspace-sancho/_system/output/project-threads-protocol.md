@@ -181,11 +181,17 @@ Cada cambio de estado actualiza SIEMPRE:
 
 ## Protocolo de nuevas tareas
 
+Antes de entrar aquí, agotar en este orden: (1) continuar con la skill primaria,
+(2) cambiar a otra skill perteneciente al mismo agente si sigue siendo la misma
+tarea —la tarea es el límite y `skills[]` solo prioriza—, (3) intervención temporal de Sancho para diagnóstico/reparación/config o
+comandos no cubiertos. Ninguna de esas tres opciones crea tarea. Solo continuar
+con este protocolo cuando cambió realmente el dominio o el entregable.
+
 Si surge necesidad de nueva tarea:
 1. Validar vs strategic plan (alineado / parcial / no)
 2. Buscar primero una tarea activa compatible dentro del mismo proyecto/grupo
 3. Si hay una coincidencia inequívoca: reutilizar su hilo canónico; si hay varias, pedir elección
-4. Si no existe: sugerir crearla dentro del mismo grupo y esperar confirmación explícita
+4. Si no existe: sugerir crearla dentro del mismo grupo y esperar confirmación explícita; la creación exige la propuesta pendiente emitida por servidor y el mensaje humano afirmativo actual
 5. Si aprobada: crear en tasks.json + crear hilo en canal correspondiente
 6. Actualizar hilo del proyecto con la nueva tarea
 7. "¿La ejecuto?"

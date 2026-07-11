@@ -65,10 +65,26 @@ test("buildClaudePrompt preserves Sancho routing metadata", () => {
   assert.match(prompt, /Claude Code runtime for Sancho/);
   assert.match(prompt, /"threadId": "acme:content:123"/);
   assert.match(prompt, /"agent": "dulcinea"/);
+  assert.match(prompt, /ORDEN DE DECISIÓN OBLIGATORIO/);
+  assert.match(prompt, /:::sancho-intervene/);
+  assert.match(prompt, /:::task-route/);
   assert.match(prompt, /"docPath": "brand\/acme\/content\/draft.md"/);
   assert.match(prompt, /Sancho context pack/);
   assert.match(prompt, /Brand context summary/);
   assert.match(prompt, /Revisa este draft/);
+});
+
+test("temporary Sancho in Claude Code cannot receive cession markers", () => {
+  const prompt = buildClaudePrompt({
+    slug: "acme",
+    threadId: "acme:task:1",
+    text: "Diagnostica",
+    agent: "sancho",
+    temporaryAgent: true,
+  });
+  assert.match(prompt, /temporary_intervention: true/);
+  assert.doesNotMatch(prompt, /:::delegate\n/);
+  assert.doesNotMatch(prompt, /:::task-route\n/);
 });
 
 test("buildMcpConfig is opt-in when only Sancho base URL exists", () => {
@@ -197,6 +213,31 @@ test("buildClaudeArgs wires print mode, Sancho MCP, and safe tool defaults", () 
   }
 });
 
+test("temporary Sancho denies task mutation and delegation MCP tools at the Claude CLI boundary", () => {
+  const previous = {
+    CLAUDE_CODE_SANCHO_MCP_SERVER: process.env.CLAUDE_CODE_SANCHO_MCP_SERVER,
+  };
+  process.env.CLAUDE_CODE_SANCHO_MCP_SERVER = "sancho";
+
+  try {
+    const args = buildClaudeArgs(
+      { threadId: "acme:task", temporaryAgent: true },
+      "diagnose",
+      { mcpServers: { sancho: { type: "http", url: "http://localhost/mcp" } } },
+    );
+    const denied = args[args.indexOf("--disallowedTools") + 1].split(",");
+    assert.deepEqual(denied, [
+      "mcp__sancho__sancho_create_task",
+      "mcp__sancho__sancho_update_task",
+      "mcp__sancho__sancho_delegate",
+      "mcp__sancho__content_transition_task",
+      "mcp__sancho__content_update_task",
+    ]);
+  } finally {
+    restoreEnv(previous);
+  }
+});
+
 test("cleanClaudeStdout extracts Claude Code JSON result", () => {
   const output = cleanClaudeStdout(
     JSON.stringify({
@@ -257,6 +298,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
       body: JSON.stringify({
         slug: "acme",
         threadId: "acme:general",
+        missionControlRunId: "run_mc_claude",
         text: "hola",
         agent: "sancho",
       }),
@@ -270,11 +312,62 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     const progress = received.find((item) => item.role === "progress");
     const final = received.find((item) => !item.role);
     assert.equal(progress.agent, "sancho");
+    assert.equal(progress.missionControlRunId, "run_mc_claude");
     assert.equal(progress.event.kind, "thinking");
     assert.equal(final.slug, "acme");
     assert.equal(final.threadId, "acme:general");
     assert.equal(final.agent, "sancho");
+    assert.equal(final.missionControlRunId, "run_mc_claude");
     assert.match(final.text, /--output-format json/);
+  } finally {
+    await close(bridge);
+    await close(webhook);
+    restoreEnv(previous);
+  }
+});
+
+test("Claude Code spawn error emits exactly one terminal callback", async () => {
+  const previous = {
+    CLAUDE_CODE_BRIDGE_SECRET: process.env.CLAUDE_CODE_BRIDGE_SECRET,
+    CLAUDE_CODE_CLI: process.env.CLAUDE_CODE_CLI,
+    CLAUDE_CODE_CONTEXT_PACK_ENABLED: process.env.CLAUDE_CODE_CONTEXT_PACK_ENABLED,
+    SANCHO_WEBHOOK_URL: process.env.SANCHO_WEBHOOK_URL,
+  };
+  const received = [];
+  const webhook = http.createServer((req, res) => {
+    let raw = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => { raw += chunk; });
+    req.on("end", () => {
+      received.push(JSON.parse(raw));
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    });
+  });
+  const webhookAddr = await listen(webhook);
+  process.env.CLAUDE_CODE_BRIDGE_SECRET = "terminal-secret";
+  process.env.CLAUDE_CODE_CLI = "/definitely/missing/claude";
+  process.env.CLAUDE_CODE_CONTEXT_PACK_ENABLED = "0";
+  process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
+  const bridge = createServer();
+  const bridgeAddr = await listen(bridge);
+
+  try {
+    await fetch(`http://127.0.0.1:${bridgeAddr.port}/sancho/inbound`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-MC-Secret": "terminal-secret" },
+      body: JSON.stringify({
+        slug: "acme",
+        threadId: "acme:claude-error",
+        missionControlRunId: "run_mc_claude_error",
+        text: "hola",
+      }),
+    });
+    await waitFor(() => received.some((payload) => payload.text), 3000);
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    const terminal = received.filter((payload) => payload.text);
+    assert.equal(terminal.length, 1);
+    assert.equal(terminal[0].missionControlRunId, "run_mc_claude_error");
   } finally {
     await close(bridge);
     await close(webhook);

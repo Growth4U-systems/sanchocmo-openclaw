@@ -116,6 +116,18 @@ A chat that opens from a button (new skill, new search, outreach template, asset
 - A different skill does **not** automatically mean a different task. Keep the task when the objective/deliverable is unchanged; route tasks only when the work itself has changed.
 - Don't force it: if the chat goes nowhere, create nothing. The task is born on confirmation, never on the button click.
 
+#### Decision order inside a task
+
+Apply these four possibilities in order; do not jump directly to task creation:
+
+1. **Continue with the primary skill.** This is the normal path.
+2. **Change skill within the same agent.** Only when the request still belongs to the current task and the new skill belongs to that agent. The task is the boundary; its `skills[]` list prioritizes useful skills but is not a second cage.
+3. **Temporary Sancho intervention.** For diagnosis, repair, configuration, or commands that none of that agent's skills covers. It lasts one turn in the same thread and never changes the task, owner, durable agent route, principal, or harness.
+4. **Propose an agent change or another/new task.** Only when the intent truly left the agent's domain or changes the deliverable. First reuse a compatible active task inside the same group; suggest creation only when no compatible task exists.
+
+Options 1–3 do not create a task and do not propose an agent/task change. Only option 4 enters the task-resolution flow.
+Task creation additionally requires a live server-issued proposal and an affirmative current human message; a model-generated `confirmCreate:true` by itself is never authorization.
+
 ### 20. ⚙️ Operate the system, don't narrate (SAN-218)
 
 A specialist's deliverable is a **record/asset in its system of record** — never a chat artifact (a `.md`, a table, a "top 5"). The global chat only **triggers** the work and **reports state** (IDs, links, counts). If the outcome is not a real record in the system, the work is NOT done.

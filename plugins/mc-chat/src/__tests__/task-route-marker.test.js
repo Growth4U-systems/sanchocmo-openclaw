@@ -18,13 +18,14 @@ test("parses and strips a task route", () => {
 
 test("accepts an explicit task or a confirmed same-group creation", () => {
   const out = parseTaskRouteMarkers(
-    ':::task-route\n{"name":"Research","brief":"Investiga","taskId":"P01-T03","groupId":"P01","confirmCreate":true}\n:::',
+    ':::task-route\n{"name":"Research","brief":"Investiga","taskId":"P01-T03","groupId":"P01","proposalId":"proposal-123","confirmCreate":true}\n:::',
   );
   assert.deepEqual(out.routes[0], {
     name: "Research",
     brief: "Investiga",
     taskId: "P01-T03",
     groupId: "P01",
+    proposalId: "proposal-123",
     confirmCreate: true,
   });
 });
@@ -50,4 +51,13 @@ test("leaves delegate and ask markers alone", () => {
   const out = parseTaskRouteMarkers(text);
   assert.equal(out.text, text);
   assert.deepEqual(out.routes, []);
+});
+
+test("strips an unterminated task-route tail and records it as malformed", () => {
+  const out = parseTaskRouteMarkers(
+    'Respuesta visible.\n\n:::task-route\n{"name":"Research","brief":"Investiga"}',
+  );
+  assert.equal(out.text, "Respuesta visible.");
+  assert.deepEqual(out.routes, []);
+  assert.equal(out.malformed.length, 1);
 });

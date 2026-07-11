@@ -7,6 +7,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { defineChannelPluginEntry } from "openclaw/plugin-sdk/core";
 import {
   finalizeInboundContext,
@@ -20,6 +21,8 @@ import { looksLikeToolEcho } from "./tool-echo.js";
 import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
 import { parseDelegateMarkers } from "./delegate-marker.js";
 import { parseTaskRouteMarkers } from "./task-route-marker.js";
+import { parseSanchoInterventionMarkers } from "./sancho-intervention-marker.js";
+import { resolveChatUserId } from "./sender-identity.js";
 import {
   buildMcChatContextBlock,
   groundingSkillForTurn,
@@ -36,6 +39,7 @@ import {
   isStopCommand,
   semanticSessionFamilyKey,
 } from "./session-dispatch-state.js";
+import { registerRuntimeRun } from "./runtime-run-state.js";
 
 function normalizeOpenAiAuthMode(mode) {
   if (typeof mode !== "string") return null;
@@ -225,19 +229,24 @@ export default defineChannelPluginEntry({
         const cfg = loadConfig();
         const channelCfg = cfg?.channels?.[CHANNEL_KEY];
         const expectedSecret = channelCfg?.sharedSecret;
-        if (expectedSecret) {
-          const providedSecret = req.headers["x-mc-secret"];
-          if (providedSecret !== expectedSecret) {
-            logger.warn("[mc-chat] Invalid shared secret from MC server");
-            res.statusCode = 403;
-            res.end(JSON.stringify({ error: "Forbidden" }));
-            return true;
-          }
+        if (!expectedSecret) {
+          logger.error("[mc-chat] Refusing inbound traffic: sharedSecret is not configured");
+          res.statusCode = 503;
+          res.end(JSON.stringify({ error: "MC_CHAT_SECRET not configured" }));
+          return true;
+        }
+        const providedSecret = req.headers["x-mc-secret"];
+        if (providedSecret !== expectedSecret) {
+          logger.warn("[mc-chat] Invalid shared secret from MC server");
+          res.statusCode = 403;
+          res.end(JSON.stringify({ error: "Forbidden" }));
+          return true;
         }
 
         const {
           slug,
           threadId,
+          missionControlRunId,
           threadName,
           text,
           userId,
@@ -246,6 +255,7 @@ export default defineChannelPluginEntry({
           docPath,
           docKind,
           skill,
+          primarySkill,
           skills,
           scope,
           skillMode,
@@ -254,6 +264,9 @@ export default defineChannelPluginEntry({
           attachments,
           isAdmin,
           senderRole,
+          temporaryAgent,
+          controlDepth,
+          taskRouteProposal,
           _source, // "discord" if relayed from Discord
         } = payload;
 
@@ -269,6 +282,8 @@ export default defineChannelPluginEntry({
         const requestedAgent = /^[a-z0-9][a-z0-9_-]{0,63}$/i.test(rawRequestedAgent)
           ? rawRequestedAgent.toLowerCase()
           : "sancho";
+        const isTemporarySancho = temporaryAgent === true && requestedAgent === "sancho";
+        const isControlFollowup = controlDepth === 1;
 
         logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId} agent=${requestedAgent}: ${text.slice(0, 80)}`);
 
@@ -298,8 +313,12 @@ export default defineChannelPluginEntry({
           skillMode,
           skills,
           skill,
+          primarySkill,
           requestedAgent,
-          canDelegate: true,
+          canDelegate: !isTemporarySancho && !isControlFollowup,
+          temporaryAgent: isTemporarySancho,
+          controlDepth: isControlFollowup ? 1 : 0,
+          taskRouteProposal,
         });
 
         // ─── Bounded grounding (SAN-246/SAN-382 follow-up) ───
@@ -344,7 +363,12 @@ export default defineChannelPluginEntry({
         // This maps to toolsBySender keys in openclaw.json:
         //   "id:mc-admin" → alsoAllow: [gateway, exec, cron]
         //   clients get default deny
-        const resolvedSenderId = isAdmin ? "mc-admin" : (userId || `mc-client-${slug}`);
+        const resolvedSenderId = resolveChatUserId({
+          trustedRuntimeRequest: true,
+          isAdmin: isAdmin === true,
+          slug,
+          claimedUserId: userId,
+        });
         const resolvedSenderName = userName || (isAdmin ? "Admin" : `${slug} (client)`);
 
         // Always embed the agentId in the SessionKey using OpenClaw's canonical
@@ -414,6 +438,7 @@ export default defineChannelPluginEntry({
             body: JSON.stringify({
               slug,
               threadId,
+              ...(missionControlRunId ? { missionControlRunId } : {}),
               role: "status",
               text: "⏳ Hay un turno en curso; puse tu mensaje en cola.",
               agent: requestedAgent || "sancho",
@@ -422,6 +447,12 @@ export default defineChannelPluginEntry({
         }
 
         await enqueueSessionDispatch(sessionKey, async ({ queued, waitedMs, dispatchKey }) => {
+        const releaseRuntimeRun = registerRuntimeRun({
+          slug,
+          threadId,
+          agent: requestedAgent,
+          missionControlRunId,
+        });
         if (queued) {
           logger.warn(`[mc-chat] starting queued dispatch session=${sessionKey} family=${dispatchKey} thread=${threadId} waitedMs=${waitedMs}`);
         }
@@ -429,6 +460,9 @@ export default defineChannelPluginEntry({
         // Dispatch to agent asynchronously
         let runtimeErrorPosted = false;
         let visibleReplyPosted = false;
+        let turnControlAction = null;
+        let temporaryInterventionDispatched = false;
+        const turnSeenRouteRequests = new Set();
         const turnStartedAt = Date.now();
         const turnTimer = guardLimits.enabled
           ? setTimeout(() => {
@@ -458,6 +492,15 @@ export default defineChannelPluginEntry({
           const sendUrl = `${mcUrl}/api/chat/send`;
           const taskRouteUrl = `${mcUrl}/api/tasks/resolve-route`;
           const secret = channelCfg?.sharedSecret;
+          const callbackIdentity = missionControlRunId ? { missionControlRunId } : {};
+          const controlRunId = missionControlRunId || guardRunId;
+          const controlIdempotencyKey = (kind, value) => {
+            const digest = createHash("sha256")
+              .update(JSON.stringify(value))
+              .digest("hex")
+              .slice(0, 24);
+            return `mc-control:${controlRunId}:${kind}:${digest}`;
+          };
           // Retry with exponential backoff for transient Next.js outages
           // (dev server reloads, restarts). On permanent failure the message
           // is logged loudly — Sancho's trajectory still has it for recovery.
@@ -494,6 +537,7 @@ export default defineChannelPluginEntry({
             await postWithRetry(callbackUrl, {
               slug,
               threadId,
+              ...callbackIdentity,
               text: rewritten || "⚠️ El agente terminó sin devolver una respuesta visible. Reintentá en un hilo nuevo.",
               role: "bot",
               agent: respondingAgent,
@@ -560,35 +604,117 @@ export default defineChannelPluginEntry({
                 // FAIL-SOFT: a parse bug must never break the normal reply.
                 let delegations = [];
                 let taskRoutes = [];
+                let sanchoInterventions = [];
+                let malformedControlBlocks = 0;
+                let blockedControlBlocks = 0;
                 try {
                   const cleaned = [];
                   for (const rawText of texts) {
                     let visibleText = rawText;
-                    if (respondingAgent === "sancho") {
-                      const parsedDelegate = parseDelegateMarkers(visibleText);
-                      if (parsedDelegate.delegations.length) delegations.push(...parsedDelegate.delegations);
-                      if (parsedDelegate.malformed.length) {
-                        logger.warn(`[mc-chat] ${parsedDelegate.malformed.length} malformed :::delegate block(s) thread=${threadId}`);
+                    const parsedDelegate = parseDelegateMarkers(visibleText);
+                    if (parsedDelegate.delegations.length) {
+                      if (respondingAgent !== "sancho" || isTemporarySancho || isControlFollowup) {
+                        blockedControlBlocks += parsedDelegate.delegations.length;
+                        logger.warn(`[mc-chat] ignored unauthorized delegation agent=${respondingAgent} temporary=${isTemporarySancho} thread=${threadId}`);
+                      } else {
+                        delegations.push(...parsedDelegate.delegations);
                       }
-                      visibleText = parsedDelegate.text;
                     }
+                    if (parsedDelegate.malformed.length) {
+                      malformedControlBlocks += parsedDelegate.malformed.length;
+                      logger.warn(`[mc-chat] ${parsedDelegate.malformed.length} malformed :::delegate block(s) thread=${threadId}`);
+                    }
+                    visibleText = parsedDelegate.text;
 
                     const parsedRoute = parseTaskRouteMarkers(visibleText);
-                    if (parsedRoute.routes.length) taskRoutes.push(...parsedRoute.routes);
+                    if (parsedRoute.routes.length) {
+                      if (isTemporarySancho || isControlFollowup) {
+                        blockedControlBlocks += parsedRoute.routes.length;
+                        logger.warn(`[mc-chat] ignored task route from temporary Sancho thread=${threadId}`);
+                      } else {
+                        taskRoutes.push(...parsedRoute.routes);
+                      }
+                    }
                     if (parsedRoute.malformed.length) {
+                      malformedControlBlocks += parsedRoute.malformed.length;
                       logger.warn(`[mc-chat] ${parsedRoute.malformed.length} malformed :::task-route block(s) thread=${threadId}`);
                     }
-                    if (parsedRoute.text) cleaned.push(parsedRoute.text);
+                    visibleText = parsedRoute.text;
+
+                    const parsedIntervention = parseSanchoInterventionMarkers(visibleText);
+                    if (parsedIntervention.interventions.length) {
+                      if (respondingAgent === "sancho" || isTemporarySancho || isControlFollowup) {
+                        blockedControlBlocks += parsedIntervention.interventions.length;
+                        logger.warn(`[mc-chat] ignored self-requested Sancho intervention thread=${threadId}`);
+                      } else {
+                        sanchoInterventions.push(...parsedIntervention.interventions);
+                      }
+                    }
+                    if (parsedIntervention.malformed.length) {
+                      malformedControlBlocks += parsedIntervention.malformed.length;
+                      logger.warn(`[mc-chat] ${parsedIntervention.malformed.length} malformed :::sancho-intervene block(s) thread=${threadId}`);
+                    }
+                    if (parsedIntervention.text) cleaned.push(parsedIntervention.text);
+                  }
+                  // The four-way policy is exclusive. When a model emits both
+                  // a temporary intervention and a task/agent change, choose
+                  // the reversible same-task intervention and refuse the more
+                  // expansive route for this turn.
+                  if (sanchoInterventions.length && (delegations.length || taskRoutes.length)) {
+                    logger.warn(`[mc-chat] conflicting intervention + task route; keeping temporary Sancho only thread=${threadId}`);
+                    blockedControlBlocks += delegations.length + taskRoutes.length;
+                    delegations = [];
+                    taskRoutes = [];
+                  }
+                  if (sanchoInterventions.length > 1) {
+                    logger.warn(`[mc-chat] multiple Sancho interventions requested; keeping the first only thread=${threadId}`);
+                    blockedControlBlocks += sanchoInterventions.length - 1;
+                    sanchoInterventions = sanchoInterventions.slice(0, 1);
+                  }
+                  if (temporaryInterventionDispatched && sanchoInterventions.length) {
+                    logger.warn(`[mc-chat] ignored repeated Sancho intervention in later delivery thread=${threadId}`);
+                    blockedControlBlocks += sanchoInterventions.length;
+                    sanchoInterventions = [];
+                  }
+                  const hasRouteAction = delegations.length > 0 || taskRoutes.length > 0;
+                  if (sanchoInterventions.length) {
+                    if (turnControlAction === "route") {
+                      logger.warn(`[mc-chat] ignored late Sancho intervention after route action thread=${threadId}`);
+                      blockedControlBlocks += sanchoInterventions.length;
+                      sanchoInterventions = [];
+                    } else {
+                      turnControlAction = "intervention";
+                      delegations = [];
+                      taskRoutes = [];
+                    }
+                  } else if (hasRouteAction) {
+                    if (turnControlAction === "intervention") {
+                      logger.warn(`[mc-chat] ignored late route after Sancho intervention thread=${threadId}`);
+                      blockedControlBlocks += delegations.length + taskRoutes.length;
+                      delegations = [];
+                      taskRoutes = [];
+                    } else {
+                      turnControlAction = "route";
+                    }
                   }
                   texts.length = 0;
                   texts.push(...cleaned);
-                  if ((delegations.length || taskRoutes.length) && texts.length === 0) {
+                  if (sanchoInterventions.length && texts.length === 0) {
+                    texts.push("🛡️ Pido una intervención puntual de Sancho en esta misma tarea.");
+                  } else if ((delegations.length || taskRoutes.length) && texts.length === 0) {
                     texts.push("🧭 Voy a ubicar la tarea correcta dentro de este grupo.");
+                  }
+                  if (blockedControlBlocks > 0) {
+                    texts.push("⚠️ Bloqueé una instrucción de control no autorizada o incompatible. El harness original sigue intacto.");
+                  }
+                  if (malformedControlBlocks > 0) {
+                    texts.push("⚠️ El agente devolvió una instrucción de routing inválida. No cambié la tarea ni el agente por esa instrucción.");
                   }
                 } catch (e) {
                   logger.warn(`[mc-chat] task route marker parse skipped: ${e?.message || e}`);
                   delegations = [];
                   taskRoutes = [];
+                  sanchoInterventions = [];
                 }
 
                 // Check if thread is linked to Discord
@@ -623,6 +749,7 @@ export default defineChannelPluginEntry({
                   const posted = await postWithRetry(callbackUrl, {
                     slug,
                     threadId,
+                    ...callbackIdentity,
                     text: rewritten,
                     role: "bot",
                     agent: respondingAgent,
@@ -648,6 +775,50 @@ export default defineChannelPluginEntry({
                   }
                 }
 
+                // Same task, same thread, one-turn Sancho override. send.ts
+                // deliberately does not persist this route, so the next user
+                // turn returns to the original owning agent and skill harness.
+                for (const intervention of sanchoInterventions) {
+                  // Exactly one intervention may be launched by an owning turn,
+                  // including when the runtime delivers multiple response parts.
+                  if (temporaryInterventionDispatched) break;
+                  temporaryInterventionDispatched = true;
+                  const dispatched = await postWithRetry(sendUrl, {
+                    slug,
+                    threadId,
+                    threadName,
+                    text: intervention.brief,
+                    agent: "sancho",
+                    scope: "agent",
+                    skillMode: "auto",
+                    temporaryAgent: true,
+                    controlDepth: 1,
+                    idempotencyKey: controlIdempotencyKey("temporary-sancho", intervention),
+                    userId,
+                    userName,
+                    isAdmin: isAdmin === true,
+                    senderRole: senderRole === "admin" ? "admin" : "client",
+                    linkedTo,
+                    docPath,
+                    docKind,
+                    attachments,
+                    _source,
+                  }, "Temporary Sancho intervention");
+                  if (dispatched) {
+                    logger.info(`[mc-chat] temporary Sancho intervention dispatched in-place owner=${respondingAgent} thread=${threadId}`);
+                  } else {
+                    await postWithRetry(callbackUrl, {
+                      slug,
+                      threadId,
+                      ...callbackIdentity,
+                      role: "bot",
+                      agent: respondingAgent,
+                      text: "⚠️ No pude iniciar la intervención temporal de Sancho. La tarea y su agente original no cambiaron.",
+                      ts: new Date().toISOString(),
+                    }, "Temporary Sancho intervention fail-loud");
+                  }
+                }
+
                 // Every cession/task switch resolves through the same-group task
                 // router first. It may reuse one canonical task, ask the user to
                 // choose, or suggest a confirmed creation. It never fabricates a
@@ -660,7 +831,6 @@ export default defineChannelPluginEntry({
                     routeSource: "task-route",
                   })),
                 ];
-                const seenRouteRequests = new Set();
                 for (const routeRequest of routeRequests) {
                   const routeAgent = routeRequest.agent || respondingAgent || "sancho";
                   const routeName = routeRequest.name || `${routeAgent}: ${routeRequest.brief.slice(0, 64)}`;
@@ -669,20 +839,23 @@ export default defineChannelPluginEntry({
                     routeName,
                     routeRequest.brief,
                     routeRequest.taskId || "",
+                    routeRequest.proposalId || "",
                   ]);
-                  if (seenRouteRequests.has(dedupeKey)) continue;
-                  seenRouteRequests.add(dedupeKey);
+                  if (turnSeenRouteRequests.has(dedupeKey)) continue;
+                  turnSeenRouteRequests.add(dedupeKey);
 
                   const routeResponse = await postWithRetry(taskRouteUrl, {
                     slug,
                     sourceThreadId: threadId,
                     groupId: routeRequest.groupId,
                     targetTaskId: routeRequest.taskId,
+                    proposalId: routeRequest.proposalId,
                     agent: routeAgent,
                     skill: routeRequest.skill,
                     name: routeName,
                     brief: routeRequest.brief,
                     confirmCreate: routeRequest.confirmCreate === true,
+                    confirmationText: routeRequest.confirmCreate === true ? text : undefined,
                   }, `Task route→${routeAgent}`);
                   let routeData = null;
                   if (routeResponse) {
@@ -704,8 +877,19 @@ export default defineChannelPluginEntry({
                       text: routeRequest.brief,
                       agent: routeAgent,
                       skill: routeRequest.skill,
-                      userName: respondingAgent === "sancho" ? "Sancho" : respondingAgent,
-                      _source: routeRequest.routeSource === "delegate" ? "agent_delegate" : "task_route",
+                      controlDepth: 1,
+                      idempotencyKey: controlIdempotencyKey("task-dispatch", {
+                        routeAgent,
+                        targetThreadId,
+                        brief: routeRequest.brief,
+                        proposalId: routeRequest.proposalId,
+                      }),
+                      userId,
+                      userName,
+                      isAdmin: isAdmin === true,
+                      senderRole: senderRole === "admin" ? "admin" : "client",
+                      attachments,
+                      _source,
                     }, `Task dispatch→${routeAgent}`);
                     if (dispatched) {
                       logger.info(`[mc-chat] task routed → ${routeAgent} task=${routeData.taskId || "unknown"} thread=${targetThreadId} action=${routeData.action}`);
@@ -719,6 +903,7 @@ export default defineChannelPluginEntry({
                   await postWithRetry(callbackUrl, {
                     slug,
                     threadId,
+                    ...callbackIdentity,
                     role: "bot",
                     agent: respondingAgent,
                     text: routeMessage,
@@ -757,13 +942,13 @@ export default defineChannelPluginEntry({
                 fetch(callbackUrl, {
                   method: "POST",
                   headers,
-                  body: JSON.stringify({ slug, threadId, role: "status", text: "🔄 Sancho está pensando...", agent: baseAgent }),
+                  body: JSON.stringify({ slug, threadId, ...callbackIdentity, role: "status", text: "🔄 Sancho está pensando...", agent: baseAgent }),
                 }).catch(() => {});
                 fetch(callbackUrl, {
                   method: "POST",
                   headers,
                   body: JSON.stringify({
-                    slug, threadId, role: "progress", agent: baseAgent,
+                    slug, threadId, ...callbackIdentity, role: "progress", agent: baseAgent,
                     event: { kind: "thinking", label: "Pensando…" },
                   }),
                 }).catch(() => {});
@@ -824,7 +1009,7 @@ export default defineChannelPluginEntry({
                 fetch(callbackUrl, {
                   method: "POST",
                   headers,
-                  body: JSON.stringify({ slug, threadId, role: "status", text: label + "...", agent: baseAgent }),
+                  body: JSON.stringify({ slug, threadId, ...callbackIdentity, role: "status", text: label + "...", agent: baseAgent }),
                 }).catch(() => {});
 
                 // Structured progress event (accumulated + sealed)
@@ -832,7 +1017,7 @@ export default defineChannelPluginEntry({
                   method: "POST",
                   headers,
                   body: JSON.stringify({
-                    slug, threadId, role: "progress", agent: baseAgent,
+                    slug, threadId, ...callbackIdentity, role: "progress", agent: baseAgent,
                     event: { kind, label, target },
                   }),
                 }).catch(() => {});
@@ -847,7 +1032,7 @@ export default defineChannelPluginEntry({
                     method: "POST",
                     headers,
                     body: JSON.stringify({
-                      slug, threadId, role: "handoff", agent: baseAgent,
+                      slug, threadId, ...callbackIdentity, role: "handoff", agent: baseAgent,
                       text: reason,
                       from_agent: baseAgent,
                       to_agent: input.subagent_type,
@@ -861,13 +1046,13 @@ export default defineChannelPluginEntry({
                 fetch(callbackUrl, {
                   method: "POST",
                   headers,
-                  body: JSON.stringify({ slug, threadId, role: "status", text: "📦 Compactando contexto...", agent: baseAgent }),
+                  body: JSON.stringify({ slug, threadId, ...callbackIdentity, role: "status", text: "📦 Compactando contexto...", agent: baseAgent }),
                 }).catch(() => {});
                 fetch(callbackUrl, {
                   method: "POST",
                   headers,
                   body: JSON.stringify({
-                    slug, threadId, role: "progress", agent: baseAgent,
+                    slug, threadId, ...callbackIdentity, role: "progress", agent: baseAgent,
                     event: { kind: "tool_call", label: "📦 Compactando contexto" },
                   }),
                 }).catch(() => {});
@@ -914,6 +1099,7 @@ export default defineChannelPluginEntry({
               body: JSON.stringify({
                 slug,
                 threadId,
+                ...(missionControlRunId ? { missionControlRunId } : {}),
                 role: "bot",
                 agent: requestedAgent || "sancho",
                 text: rewritten || "⚠️ El agente terminó sin devolver una respuesta visible. Reintentá en un hilo nuevo.",
@@ -925,6 +1111,7 @@ export default defineChannelPluginEntry({
         } finally {
           if (turnTimer) clearTimeout(turnTimer);
           mcChatCostGuard.clearActiveTurn(guardRunId, sessionKey);
+          releaseRuntimeRun();
         }
         }, { familyKey: dispatchFamilyKey }).promise;
 

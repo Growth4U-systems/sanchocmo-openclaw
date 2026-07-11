@@ -21,12 +21,59 @@ test("buildMcChatContextBlock includes common MC chat contract and ask protocol"
   assert.ok(block.includes("thread_id: strategy"));
   assert.ok(block.includes("thread_name: Strategy"));
   assert.ok(block.includes("execution_mode: guided"));
-  assert.ok(block.includes("skill_policy: pinned"));
-  assert.ok(block.includes("skill: fast-foundation"));
+  assert.ok(block.includes("skill_policy: guided"));
+  assert.ok(block.includes("primary_skill: fast-foundation"));
   assert.ok(block.includes(":::ask"));
   assert.ok(block.includes(":::delegate"));
   assert.ok(block.includes(":::task-route"));
+  assert.equal(block.includes(":::sancho-intervene"), false);
   assert.ok(block.endsWith("[/MC Chat Context]"));
+});
+
+test("strictly guided workflows expose their declared skill allowlist", () => {
+  const block = buildMcChatContextBlock({
+    slug: "growth4u",
+    threadId: "task-p01-t01",
+    skill: "outreach-playbook",
+    skills: ["outreach-playbook", "outreach-sequence-builder"],
+    requestedAgent: "rocinante",
+  });
+  assert.ok(block.includes("primary_skill: outreach-playbook"));
+  assert.ok(block.includes("allowed_skills: outreach-playbook, outreach-sequence-builder"));
+  assert.ok(block.includes("No uses ninguna skill fuera de esa allowlist"));
+  assert.ok(block.includes(":::sancho-intervene"));
+});
+
+test("task scope keeps the task boundary while exposing the owning agent catalogue", () => {
+  const block = buildMcChatContextBlock({
+    slug: "growth4u",
+    threadId: "task-p01-t01",
+    scope: "task",
+    skill: "outreach-playbook",
+    primarySkill: "outreach-playbook",
+    skills: ["outreach-playbook", "outreach-sequence-builder", "yalc-operator"],
+    requestedAgent: "rocinante",
+  });
+  assert.ok(block.includes("execution_mode: task-led"));
+  assert.ok(block.includes("skill_policy: task-flexible"));
+  assert.ok(block.includes("primary_skill: outreach-playbook"));
+  assert.ok(block.includes("permitted_agent_skills: outreach-playbook, outreach-sequence-builder, yalc-operator"));
+  assert.ok(block.includes("La TAREA —su objetivo y entregable— es el límite estable"));
+  assert.ok(block.includes("Puedes cambiar a cualquier skill de permitted_agent_skills"));
+});
+
+test("a skillless task may carry an advisory hint without inventing a primary skill", () => {
+  const block = buildMcChatContextBlock({
+    slug: "growth4u",
+    threadId: "task-p01-t02",
+    scope: "task",
+    skill: "outreach-playbook",
+    skills: ["outreach-playbook", "yalc-operator"],
+    requestedAgent: "rocinante",
+  });
+  assert.ok(block.includes("skill_hint: outreach-playbook"));
+  assert.equal(block.includes("primary_skill:"), false);
+  assert.ok(block.includes("Esta tarea no fija una skill primaria"));
 });
 
 test("buildMcChatContextBlock includes specialist broad-scope skills without delegate protocol", () => {
@@ -52,6 +99,11 @@ test("buildMcChatContextBlock includes specialist broad-scope skills without del
   assert.ok(block.includes(":::ask"));
   assert.equal(block.includes(":::delegate"), false);
   assert.ok(block.includes(":::task-route"));
+  assert.ok(block.includes(":::sancho-intervene"));
+  assert.ok(block.includes("1. Continuar con la skill primaria"));
+  assert.ok(block.includes("2. Cambiar de skill dentro del mismo agente"));
+  assert.ok(block.includes("3. Intervención temporal de Sancho"));
+  assert.ok(block.includes("4. Proponer cambio de agente o nueva tarea"));
 });
 
 test("adapters without a task cession rail never receive route markers", () => {
@@ -63,7 +115,42 @@ test("adapters without a task cession rail never receive route markers", () => {
   });
   assert.equal(block.includes(":::delegate"), false);
   assert.equal(block.includes(":::task-route"), false);
+  assert.equal(block.includes(":::sancho-intervene"), false);
   assert.ok(block.includes("generalist"));
+});
+
+test("temporary Sancho is bounded to one in-place turn without cession protocols", () => {
+  const block = buildMcChatContextBlock({
+    slug: "growth4u",
+    threadId: "task-p01-t01",
+    requestedAgent: "sancho",
+    scope: "agent",
+    temporaryAgent: true,
+    canDelegate: false,
+  });
+  assert.ok(block.includes("temporary_intervention: true"));
+  assert.ok(block.includes("Intervienes durante UN solo turno"));
+  assert.ok(block.includes("No delegues, no cambies de agente/tarea"));
+  assert.equal(block.includes(":::delegate\n"), false);
+  assert.equal(block.includes(":::task-route\n"), false);
+  assert.equal(block.includes(":::sancho-intervene\n"), false);
+});
+
+test("a control follow-up cannot receive another control protocol", () => {
+  const block = buildMcChatContextBlock({
+    slug: "growth4u",
+    threadId: "task-p01-t02",
+    requestedAgent: "hamete",
+    scope: "task",
+    controlDepth: 1,
+    canDelegate: false,
+  });
+  assert.ok(block.includes("control_depth: 1"));
+  assert.ok(block.includes("no emitas markers de control"));
+  assert.equal(block.includes(":::delegate\n"), false);
+  assert.equal(block.includes(":::task-route\n"), false);
+  assert.equal(block.includes(":::sancho-intervene\n"), false);
+  assert.equal(block.includes("ORDEN DE DECISIÓN OBLIGATORIO"), false);
 });
 
 test("execution policy and bounded grounding are independent", () => {

@@ -12,6 +12,8 @@ const {
   canonicalTaskRouteThreadId,
   resolveSameGroupTaskRoute,
   resolveSameGroupTaskRouteFromRows,
+  resolveTaskThreadExecutionRoute,
+  resolveTaskThreadExecutionRouteFromRows,
   scoreTaskRouteCandidate,
 } = await import("../task-routing");
 
@@ -70,6 +72,37 @@ test("pure scorer requires exact anchors and never reuses a fuzzy name alone", (
   });
   assert.equal(wrongAgent.eligibleForReuse, false);
   assert.ok(wrongAgent.signals.includes("agent_mismatch"));
+
+  const advisorySkillMismatch = scoreTaskRouteCandidate(candidate, {
+    requestedName: "Estrategia contenido trimestral",
+    requestedAgent: "dulcinea",
+    requestedSkill: "social-writer",
+  });
+  assert.equal(advisorySkillMismatch.eligibleForReuse, true);
+  assert.equal(advisorySkillMismatch.strength, "exact");
+  assert.ok(advisorySkillMismatch.signals.includes("skill_mismatch"));
+});
+
+test("a different owned skill remains advisory when task identity and agent match", () => {
+  const rows = [
+    project("P1"),
+    task("P1-T1", "P1", {
+      name: "Estrategia de contenido",
+      agent: "dulcinea",
+      skill: "content-strategy",
+    }),
+  ];
+  const resolution = resolveSameGroupTaskRouteFromRows(rows, {
+    clientSlug: "demo",
+    groupId: "P1",
+    requestedName: "Estrategia de contenido",
+    requestedAgent: "dulcinea",
+    requestedSkill: "social-writer",
+  });
+  assert.equal(resolution.kind, "reuse");
+  if (resolution.kind !== "reuse") return;
+  assert.equal(resolution.target.taskId, "P1-T1");
+  assert.ok(resolution.target.match.signals.includes("skill_mismatch"));
 });
 
 test("a unique compatible active task is reused only inside the source group", () => {
@@ -174,6 +207,42 @@ test("terminal tasks are excluded and creation is suggested in the same group", 
   assert.deepEqual(resolution.nearbyCandidates, []);
 });
 
+test("legacy completion aliases are terminal, while ContentTask Approved remains active", () => {
+  for (const status of ["done", "approved", "complete", "finished", "canceled", "discarded", "rejected"]) {
+    const resolution = resolveSameGroupTaskRouteFromRows([
+      project("P1"),
+      task("P1-T1", "P1", {
+        name: "Auditar mercado",
+        status,
+        agent: "rocinante",
+      }),
+    ], {
+      clientSlug: "demo",
+      groupId: "P1",
+      requestedName: "Auditar mercado",
+      requestedAgent: "rocinante",
+    });
+    assert.equal(resolution.kind, "suggest_create", `${status} must be terminal`);
+  }
+
+  const contentResolution = resolveSameGroupTaskRouteFromRows([
+    project("P1"),
+    task("P1-C1", "P1", {
+      name: "Redactar post",
+      type: "content_task",
+      status: "Approved",
+      agent: "dulcinea",
+      skill: "social-writer",
+    }),
+  ], {
+    clientSlug: "demo",
+    groupId: "P1",
+    requestedName: "Redactar post",
+    requestedAgent: "dulcinea",
+  });
+  assert.equal(contentResolution.kind, "reuse");
+});
+
 test("an explicit active target wins without heuristic compatibility checks", () => {
   const rows = [
     project("P1"),
@@ -241,7 +310,28 @@ test("an explicit target cannot cross the supplied source/group boundary", () =>
   assert.equal(inactiveOutside.reason, "explicit_target_outside_group");
 });
 
-test("heuristic routing excludes the source task but explicit targeting may reuse it", () => {
+test("an explicit group cannot override the source task group", () => {
+  const rows = [
+    project("P1"),
+    project("P2"),
+    task("P1-T0", "P1", { mc_chat_thread_id: "task-p1-t0" }),
+    task("P2-T1", "P2", { mc_chat_thread_id: "task-p2-t1" }),
+  ];
+
+  const resolution = resolveSameGroupTaskRouteFromRows(rows, {
+    clientSlug: "demo",
+    sourceThreadId: "demo:task-p1-t0",
+    groupId: "P2",
+    targetTaskId: "P2-T1",
+  });
+
+  assert.deepEqual(resolution, {
+    kind: "group_required",
+    reason: "source_group_mismatch",
+  });
+});
+
+test("routing back to the source task is a safe no-op", () => {
   const rows = [
     project("P1"),
     task("P1-T0", "P1", {
@@ -259,20 +349,21 @@ test("heuristic routing excludes the source task but explicit targeting may reus
     requestedAgent: "rocinante",
     requestedSkill: "market-research",
   });
-  assert.equal(heuristic.kind, "suggest_create");
-  if (heuristic.kind !== "suggest_create") return;
-  assert.equal(heuristic.reason, "no_compatible_task");
+  assert.equal(heuristic.kind, "no_change");
+  if (heuristic.kind !== "no_change") return;
+  assert.equal(heuristic.reason, "source_task");
   assert.equal(heuristic.groupId, "P1");
+  assert.equal(heuristic.source.taskId, "P1-T0");
 
   const explicit = resolveSameGroupTaskRouteFromRows(rows, {
     clientSlug: "demo",
     sourceThreadId: "demo:task-p1-t0",
     targetTaskId: "P1-T0",
   });
-  assert.equal(explicit.kind, "reuse");
-  if (explicit.kind !== "reuse") return;
-  assert.equal(explicit.reason, "explicit_target");
-  assert.equal(explicit.target.taskId, "P1-T0");
+  assert.equal(explicit.kind, "no_change");
+  if (explicit.kind !== "no_change") return;
+  assert.equal(explicit.reason, "source_task");
+  assert.equal(explicit.source.taskId, "P1-T0");
 });
 
 test("an explicit inactive target is never reused", () => {
@@ -320,6 +411,72 @@ test("canonical target threads use persisted anchors and safe task fallbacks", (
     canonicalTaskRouteThreadId(task("P1-T2", "P1"), "demo"),
     "demo:task-p1-t2",
   );
+  assert.equal(
+    canonicalTaskRouteThreadId(task("P1-T3", "P1", {
+      pillar: "market-analysis",
+      mc_chat_thread_id: "task-p1-t3",
+    }), "demo"),
+    "demo:market-analysis",
+  );
+  assert.equal(
+    canonicalTaskRouteThreadId(project("P1"), "demo"),
+    "demo:project-p1",
+  );
+});
+
+test("task ingress fails closed for duplicate anchors and inactive tasks", () => {
+  const duplicate = resolveTaskThreadExecutionRouteFromRows([
+    task("P1-T1", "P1", { mc_chat_thread_id: "task-shared" }),
+    task("P1-T2", "P1", { mc_chat_thread_id: "task-shared" }),
+  ], "demo", "demo:task-shared");
+  assert.deepEqual(duplicate, {
+    kind: "ambiguous",
+    taskIds: ["P1-T1", "P1-T2"],
+  });
+
+  const inactive = resolveTaskThreadExecutionRouteFromRows([
+    task("P1-T3", "P1", { status: "archived", mc_chat_thread_id: "task-archived" }),
+  ], "demo", "task-archived");
+  assert.deepEqual(inactive, { kind: "inactive", taskId: "P1-T3" });
+});
+
+test("task ingress accepts canonical pillar and historical task anchors", () => {
+  const row = task("P1-T1", "P1", {
+    pillar: "market-analysis",
+    agent: "hamete",
+    skill: "market-intelligence",
+    mc_chat_thread_id: "task-p1-t1",
+  });
+  const pillar = resolveTaskThreadExecutionRouteFromRows([row], "demo", "demo:market-analysis");
+  const historical = resolveTaskThreadExecutionRouteFromRows([row], "demo", "demo:task-p1-t1");
+  assert.equal(pillar.kind, "task");
+  assert.equal(historical.kind, "task");
+  if (pillar.kind !== "task") return;
+  assert.equal(pillar.taskId, "P1-T1");
+  assert.equal(pillar.route.scope, "task");
+});
+
+test("task ingress infers legacy ownership from skill before human owner", () => {
+  const fromSkill = resolveTaskThreadExecutionRouteFromRows([
+    task("P1-T1", "P1", {
+      owner: "Sancho",
+      skill: "market-intelligence",
+      mc_chat_thread_id: "task-p1-t1",
+    }),
+  ], "demo", "task-p1-t1");
+  assert.equal(fromSkill.kind, "task");
+  if (fromSkill.kind !== "task") return;
+  assert.equal(fromSkill.route.agent, "hamete");
+
+  const fromOwner = resolveTaskThreadExecutionRouteFromRows([
+    task("P1-T2", "P1", {
+      owner: "Rocinante",
+      mc_chat_thread_id: "task-p1-t2",
+    }),
+  ], "demo", "task-p1-t2");
+  assert.equal(fromOwner.kind, "task");
+  if (fromOwner.kind !== "task") return;
+  assert.equal(fromOwner.route.agent, "rocinante");
 });
 
 test("async resolver reads the existing JSON unified task backend", async () => {
@@ -336,22 +493,42 @@ test("async resolver reads the existing JSON unified task backend", async () => 
     created_at: new Date(0).toISOString(),
     review_date: null,
   }));
-  fs.writeFileSync(path.join(projectDir, "tasks.json"), JSON.stringify([{
-    id: "P9-T1",
-    name: "Research market",
-    description: "",
-    deliverable: "",
-    done_criteria: "",
-    depends_on: null,
-    owner: "Rocinante",
-    agent: "rocinante",
-    status: "todo",
-    channel: "intelligence",
-    type: "research",
-    skill: "market-research",
-    output_files: [],
-    mc_chat_thread_id: "task-p9-t1",
-  }]));
+  fs.writeFileSync(path.join(projectDir, "tasks.json"), JSON.stringify([
+    {
+      id: "P9-T1",
+      name: "Research market",
+      description: "",
+      deliverable: "",
+      done_criteria: "",
+      depends_on: null,
+      owner: "Rocinante",
+      agent: "rocinante",
+      status: "todo",
+      channel: "intelligence",
+      type: "research",
+      skill: "market-research",
+      skills: ["market-research", "competitor-research"],
+      output_files: [],
+      mc_chat_thread_id: "task-p9-t1",
+    },
+    {
+      id: "P9-T2",
+      name: "Flexible task",
+      description: "",
+      deliverable: "",
+      done_criteria: "",
+      depends_on: null,
+      owner: "Rocinante",
+      agent: "rocinante",
+      status: "todo",
+      channel: "execution",
+      type: "execution",
+      skill: "",
+      skills: ["outreach-playbook", "outreach-sequence-builder"],
+      output_files: [],
+      mc_chat_thread_id: "task-p9-t2",
+    },
+  ]));
 
   const resolution = await resolveSameGroupTaskRoute({
     clientSlug: "json-demo",
@@ -364,4 +541,30 @@ test("async resolver reads the existing JSON unified task backend", async () => 
   if (resolution.kind !== "reuse") return;
   assert.equal(resolution.target.taskId, "P9-T1");
   assert.equal(resolution.target.targetThreadId, "json-demo:task-p9-t1");
+});
+
+test("task ingress reloads the authoritative primary skill and allowlist", async () => {
+  const guided = await resolveTaskThreadExecutionRoute("json-demo", "json-demo:task-p9-t1");
+  assert.deepEqual(guided, {
+    kind: "task",
+    taskId: "P9-T1",
+    route: {
+      agent: "rocinante",
+      scope: "task",
+      skill: "market-research",
+      skills: ["market-research", "competitor-research"],
+    },
+  });
+
+  const flexible = await resolveTaskThreadExecutionRoute("json-demo", "task-p9-t2");
+  assert.deepEqual(flexible, {
+    kind: "task",
+    taskId: "P9-T2",
+    route: {
+      agent: "rocinante",
+      scope: "task",
+      skill: undefined,
+      skills: ["outreach-playbook", "outreach-sequence-builder"],
+    },
+  });
 });

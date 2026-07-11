@@ -27,7 +27,9 @@ test("buildHermesPrompt preserves Sancho routing metadata", () => {
   assert.match(prompt, /"threadId": "acme:content:123"/);
   assert.match(prompt, /"agent": "dulcinea"/);
   assert.match(prompt, /execution_mode: guided/);
-  assert.match(prompt, /skill_policy: pinned/);
+  assert.match(prompt, /skill_policy: guided/);
+  assert.match(prompt, /primary_skill: seo-content/);
+  assert.match(prompt, /allowed_skills: seo-content, content-review/);
   assert.match(prompt, /"docPath": "brand\/acme\/content\/draft.md"/);
   assert.match(prompt, /Revisa este draft/);
 });
@@ -40,7 +42,8 @@ test("Hermes keeps Sancho generalist and specialist skill-auto roles distinct", 
   });
   assert.match(sanchoPrompt, /execution_mode: generalist/);
   assert.match(sanchoPrompt, /Eres Sancho, el agente generalista/);
-  assert.doesNotMatch(sanchoPrompt, /:::delegate/);
+  assert.match(sanchoPrompt, /:::delegate/);
+  assert.match(sanchoPrompt, /:::task-route/);
 
   const specialistPrompt = buildHermesPrompt({
     slug: "acme",
@@ -55,6 +58,7 @@ test("Hermes keeps Sancho generalist and specialist skill-auto roles distinct", 
   assert.match(specialistPrompt, /execution_mode: agent-led/);
   assert.match(specialistPrompt, /skill_policy: auto/);
   assert.match(specialistPrompt, /No eres Sancho ni un generalista global/);
+  assert.match(specialistPrompt, /:::sancho-intervene/);
 });
 
 test("buildHermesPrompt includes Sancho context pack when available", () => {
@@ -269,6 +273,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
       body: JSON.stringify({
         slug: "acme",
         threadId: "acme:general",
+        missionControlRunId: "run_mc_hermes",
         text: "Hola Hermes",
         userId: "mc-admin",
         userName: "Admin",
@@ -283,10 +288,12 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
 
     await waitFor(() => received.some((payload) => payload.text), 3000);
     assert.equal(received[0].role, "progress");
+    assert.equal(received[0].missionControlRunId, "run_mc_hermes");
     const final = received.find((payload) => payload.text);
     assert.equal(final.slug, "acme");
     assert.equal(final.threadId, "acme:general");
     assert.equal(final.agent, "hermes");
+    assert.equal(final.missionControlRunId, "run_mc_hermes");
     assert.match(final.text, /Hola Hermes/);
   } finally {
     await close(bridge);
@@ -301,5 +308,57 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     else process.env.HERMES_RUN_TIMEOUT_MS = previousTimeout;
     if (previousContextEnabled === undefined) delete process.env.HERMES_CONTEXT_PACK_ENABLED;
     else process.env.HERMES_CONTEXT_PACK_ENABLED = previousContextEnabled;
+  }
+});
+
+test("Hermes spawn error emits exactly one terminal callback", async () => {
+  const previous = {
+    HERMES_BRIDGE_SECRET: process.env.HERMES_BRIDGE_SECRET,
+    HERMES_CLI: process.env.HERMES_CLI,
+    HERMES_CONTEXT_PACK_ENABLED: process.env.HERMES_CONTEXT_PACK_ENABLED,
+    SANCHO_WEBHOOK_URL: process.env.SANCHO_WEBHOOK_URL,
+  };
+  const received = [];
+  const webhook = http.createServer((req, res) => {
+    let raw = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => { raw += chunk; });
+    req.on("end", () => {
+      received.push(JSON.parse(raw));
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    });
+  });
+  const webhookAddr = await listen(webhook);
+  process.env.HERMES_BRIDGE_SECRET = "terminal-secret";
+  process.env.HERMES_CLI = "/definitely/missing/hermes";
+  process.env.HERMES_CONTEXT_PACK_ENABLED = "0";
+  process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
+  const bridge = createServer();
+  const bridgeAddr = await listen(bridge);
+
+  try {
+    await fetch(`http://127.0.0.1:${bridgeAddr.port}/sancho/inbound`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-MC-Secret": "terminal-secret" },
+      body: JSON.stringify({
+        slug: "acme",
+        threadId: "acme:hermes-error",
+        missionControlRunId: "run_mc_hermes_error",
+        text: "hola",
+      }),
+    });
+    await waitFor(() => received.some((payload) => payload.text), 3000);
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    const terminal = received.filter((payload) => payload.text);
+    assert.equal(terminal.length, 1);
+    assert.equal(terminal[0].missionControlRunId, "run_mc_hermes_error");
+  } finally {
+    await close(bridge);
+    await close(webhook);
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 });

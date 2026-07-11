@@ -19,6 +19,8 @@ export type AgentRunEventType =
 
 export interface AgentRun {
   id: string;
+  /** Stable key for an externally retried mutation that must create one run. */
+  idempotencyKey?: string;
   threadId: string;
   runtime: string;
   agent?: string;
@@ -30,6 +32,8 @@ export interface AgentRun {
   input?: unknown;
   output?: unknown;
   error?: string;
+  /** Bounded transport fingerprints used to make terminal callbacks idempotent. */
+  callbackFingerprints?: string[];
   createdAt: string;
   startedAt?: string;
   finishedAt?: string;
@@ -51,6 +55,7 @@ interface AgentRunsStore {
 }
 
 export interface CreateAgentRunInput {
+  idempotencyKey?: string;
   threadId: string;
   runtime: string;
   agent?: string;
@@ -81,6 +86,7 @@ export interface UpdateAgentRunInput {
 const MAX_RUNS = 2000;
 const MAX_EVENTS = 10000;
 const ACTIVE_STATUSES = new Set<AgentRunStatus>(["queued", "running"]);
+const TERMINAL_STATUSES = new Set<AgentRunStatus>(["completed", "failed", "cancelled"]);
 
 export function agentRunsFile(): string {
   return path.join(BASE, "_system", "agent-runs.json");
@@ -113,6 +119,7 @@ export function createAgentRun(input: CreateAgentRunInput): AgentRun {
   const now = iso(input.now);
   const run: AgentRun = {
     id: id("run"),
+    idempotencyKey: input.idempotencyKey,
     threadId: input.threadId,
     runtime: input.runtime,
     agent: input.agent,
@@ -134,6 +141,7 @@ export function createAgentRun(input: CreateAgentRunInput): AgentRun {
     ts: now,
     data: {
       runtime: run.runtime,
+      idempotencyKey: run.idempotencyKey,
       agent: run.agent,
       skill: run.skill,
       skills: run.skills,
@@ -164,6 +172,10 @@ export function updateAgentRun(runId: string, input: UpdateAgentRunInput): Agent
   const idx = store.runs.findIndex((run) => run.id === runId);
   if (idx < 0) return null;
   const previous = store.runs[idx];
+  // Runtime callbacks may arrive late or be retried. Once a run reaches a
+  // terminal state, never let a delayed dispatch/final callback reopen it or
+  // replace the terminal output that won the race.
+  if (TERMINAL_STATUSES.has(previous.status)) return previous;
   const now = iso(input.now);
   const updated: AgentRun = {
     ...previous,
@@ -177,6 +189,43 @@ export function updateAgentRun(runId: string, input: UpdateAgentRunInput): Agent
   store.runs[idx] = updated;
   writeStore(store);
   return updated;
+}
+
+export function getAgentRunById(runId: string): AgentRun | null {
+  if (!runId) return null;
+  return readStore().runs.find((run) => run.id === runId) ?? null;
+}
+
+export function getAgentRunByIdempotencyKey(
+  threadId: string,
+  idempotencyKey: string,
+): AgentRun | null {
+  if (!threadId || !idempotencyKey) return null;
+  const runs = readStore().runs;
+  for (let i = runs.length - 1; i >= 0; i -= 1) {
+    const run = runs[i];
+    if (run.threadId === threadId && run.idempotencyKey === idempotencyKey) return run;
+  }
+  return null;
+}
+
+/**
+ * Atomically claims a runtime callback fingerprint in the JSON ledger.
+ * Returns false when a transport retry already delivered the same callback.
+ */
+export function claimAgentRunCallbackFingerprint(runId: string, fingerprint: string): boolean {
+  if (!runId || !fingerprint) return false;
+  const store = readStore();
+  const index = store.runs.findIndex((run) => run.id === runId);
+  if (index < 0) return false;
+  const existing = store.runs[index].callbackFingerprints ?? [];
+  if (existing.includes(fingerprint)) return false;
+  store.runs[index] = {
+    ...store.runs[index],
+    callbackFingerprints: [...existing, fingerprint].slice(-100),
+  };
+  writeStore(store);
+  return true;
 }
 
 export function getLatestActiveRun(threadId: string): AgentRun | null {
@@ -193,6 +242,8 @@ export function markAgentRunDispatched(
   threadId: string,
   data?: unknown,
 ): AgentRun | null {
+  const current = getAgentRunById(runId);
+  if (!current || TERMINAL_STATUSES.has(current.status)) return current;
   const now = new Date();
   appendAgentRunEvent({ runId, threadId, type: "runtime_dispatched", data, now });
   return updateAgentRun(runId, {
@@ -209,6 +260,8 @@ export function markAgentRunFailed(
   type: "runtime_rejected" | "runtime_unreachable" | "failed" = "failed",
   data?: unknown,
 ): AgentRun | null {
+  const current = getAgentRunById(runId);
+  if (!current || TERMINAL_STATUSES.has(current.status)) return current;
   const now = new Date();
   appendAgentRunEvent({ runId, threadId, type, data: data ?? { error }, now });
   return updateAgentRun(runId, {
@@ -224,6 +277,8 @@ export function markAgentRunCompleted(
   threadId: string,
   output?: unknown,
 ): AgentRun | null {
+  const current = getAgentRunById(runId);
+  if (!current || TERMINAL_STATUSES.has(current.status)) return current;
   const now = new Date();
   appendAgentRunEvent({ runId, threadId, type: "bot_reply", data: output, now });
   return updateAgentRun(runId, {
@@ -239,6 +294,8 @@ export function markAgentRunCancelled(
   threadId: string,
   data?: unknown,
 ): AgentRun | null {
+  const current = getAgentRunById(runId);
+  if (!current || TERMINAL_STATUSES.has(current.status)) return current;
   const now = new Date();
   appendAgentRunEvent({ runId, threadId, type: "cancel_requested", data, now });
   return updateAgentRun(runId, {

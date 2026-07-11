@@ -28,12 +28,17 @@ export function parseDelegateMarkers(text, allowedAgents = DELEGATE_AGENTS) {
   }
   const delegations = [];
   const malformed = [];
-  const cleaned = text.replace(DELEGATE_BLOCK_RE, (block, json) => {
+  let cleaned = text.replace(DELEGATE_BLOCK_RE, (block, json) => {
     const parsed = parseOne(json, allowedAgents);
     if (parsed) delegations.push(parsed);
     else malformed.push(block);
     return "";
   });
+  const danglingAt = cleaned.indexOf(":::delegate");
+  if (danglingAt >= 0) {
+    malformed.push(cleaned.slice(danglingAt));
+    cleaned = cleaned.slice(0, danglingAt);
+  }
   return { text: collapseGaps(cleaned), delegations, malformed };
 }
 
@@ -53,6 +58,7 @@ function parseOne(json, allowedAgents) {
   const skill = cleanToken(obj.skill);
   const taskId = cleanIdentifier(obj.taskId);
   const groupId = cleanIdentifier(obj.groupId);
+  const proposalId = cleanIdentifier(obj.proposalId);
   return {
     agent,
     brief,
@@ -60,6 +66,7 @@ function parseOne(json, allowedAgents) {
     ...(skill ? { skill } : {}),
     ...(taskId ? { taskId } : {}),
     ...(groupId ? { groupId } : {}),
+    ...(proposalId ? { proposalId } : {}),
     ...(obj.confirmCreate === true ? { confirmCreate: true } : {}),
   };
 }

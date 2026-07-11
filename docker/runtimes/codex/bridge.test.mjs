@@ -65,10 +65,26 @@ test("buildCodexPrompt preserves Sancho routing metadata and context pack", () =
   assert.match(prompt, /read and follow skills\/<skill>\/SKILL\.md/);
   assert.match(prompt, /"threadId": "acme:content:123"/);
   assert.match(prompt, /"agent": "dulcinea"/);
+  assert.match(prompt, /ORDEN DE DECISIÓN OBLIGATORIO/);
+  assert.match(prompt, /:::sancho-intervene/);
+  assert.match(prompt, /:::task-route/);
   assert.match(prompt, /"docPath": "brand\/acme\/content\/draft.md"/);
   assert.match(prompt, /Sancho context pack/);
   assert.match(prompt, /Brand context summary/);
   assert.match(prompt, /Revisa este draft/);
+});
+
+test("temporary Sancho in Codex cannot receive cession markers", () => {
+  const prompt = buildCodexPrompt({
+    slug: "acme",
+    threadId: "acme:task:1",
+    text: "Diagnostica",
+    agent: "sancho",
+    temporaryAgent: true,
+  });
+  assert.match(prompt, /temporary_intervention: true/);
+  assert.doesNotMatch(prompt, /:::delegate\n/);
+  assert.doesNotMatch(prompt, /:::task-route\n/);
 });
 
 test("buildCodexArgs wires non-interactive exec defaults", () => {
@@ -185,6 +201,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
       body: JSON.stringify({
         slug: "acme",
         threadId: "acme:general",
+        missionControlRunId: "run_mc_codex",
         text: "hola",
         agent: "sancho",
       }),
@@ -198,11 +215,62 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     const progress = received.find((item) => item.role === "progress");
     const final = received.find((item) => !item.role);
     assert.equal(progress.agent, "sancho");
+    assert.equal(progress.missionControlRunId, "run_mc_codex");
     assert.equal(progress.event.kind, "thinking");
     assert.equal(final.slug, "acme");
     assert.equal(final.threadId, "acme:general");
     assert.equal(final.agent, "sancho");
+    assert.equal(final.missionControlRunId, "run_mc_codex");
     assert.match(final.text, /exec/);
+  } finally {
+    await close(bridge);
+    await close(webhook);
+    restoreEnv(previous);
+  }
+});
+
+test("Codex spawn error emits exactly one terminal callback", async () => {
+  const previous = {
+    CODEX_BRIDGE_SECRET: process.env.CODEX_BRIDGE_SECRET,
+    CODEX_CLI: process.env.CODEX_CLI,
+    CODEX_CONTEXT_PACK_ENABLED: process.env.CODEX_CONTEXT_PACK_ENABLED,
+    SANCHO_WEBHOOK_URL: process.env.SANCHO_WEBHOOK_URL,
+  };
+  const received = [];
+  const webhook = http.createServer((req, res) => {
+    let raw = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => { raw += chunk; });
+    req.on("end", () => {
+      received.push(JSON.parse(raw));
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    });
+  });
+  const webhookAddr = await listen(webhook);
+  process.env.CODEX_BRIDGE_SECRET = "terminal-secret";
+  process.env.CODEX_CLI = "/definitely/missing/codex";
+  process.env.CODEX_CONTEXT_PACK_ENABLED = "0";
+  process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
+  const bridge = createServer();
+  const bridgeAddr = await listen(bridge);
+
+  try {
+    await fetch(`http://127.0.0.1:${bridgeAddr.port}/sancho/inbound`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-MC-Secret": "terminal-secret" },
+      body: JSON.stringify({
+        slug: "acme",
+        threadId: "acme:codex-error",
+        missionControlRunId: "run_mc_codex_error",
+        text: "hola",
+      }),
+    });
+    await waitFor(() => received.some((payload) => payload.text), 3000);
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    const terminal = received.filter((payload) => payload.text);
+    assert.equal(terminal.length, 1);
+    assert.equal(terminal[0].missionControlRunId, "run_mc_codex_error");
   } finally {
     await close(bridge);
     await close(webhook);
