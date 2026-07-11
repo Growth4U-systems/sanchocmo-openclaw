@@ -68,9 +68,20 @@ mask_secret() {
 }
 
 # --- Interactivity helpers ---------------------------------------------------
-# Non-interactive when there's no TTY or WIZARD_ASSUME_YES=1.
+# Interactive whenever we can reach the controlling terminal. We deliberately
+# probe /dev/tty (the same fd every prompt reads from, `read … </dev/tty`)
+# instead of stdin: under the documented one-liner `curl … | bash`, bash's
+# stdin is the pipe (not a TTY), yet /dev/tty still points at the user's
+# terminal — so testing `-t 0` alone would wrongly go non-interactive and abort
+# on the first required credential. Only force non-interactive when explicitly
+# asked (WIZARD_ASSUME_YES=1) or when there is genuinely no terminal at all
+# (real CI / `docker build` / cron: stdin not a TTY AND /dev/tty unopenable).
 INTERACTIVE=1
-if [ "${WIZARD_ASSUME_YES:-0}" = "1" ] || [ ! -t 0 ]; then INTERACTIVE=0; fi
+if [ "${WIZARD_ASSUME_YES:-0}" = "1" ]; then
+  INTERACTIVE=0
+elif [ ! -t 0 ] && ! { true 0</dev/tty; } 2>/dev/null; then
+  INTERACTIVE=0
+fi
 
 # ask <var-name> <prompt> <default>
 # Resolution order: existing env value > interactive prompt > default.
