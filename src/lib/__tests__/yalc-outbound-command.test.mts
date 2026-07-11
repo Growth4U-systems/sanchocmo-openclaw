@@ -136,6 +136,128 @@ test("outbound.source provider B2B checks campaign lock before leads/search", as
   ]);
 });
 
+test("outbound.source normalizes Apollo-style criteria emitted by the agent", async () => {
+  installFetch((path, call) => {
+    if (path === "/api/campaigns/camp-b2b") return { id: "camp-b2b", type: "B2B" };
+    if (path === "/api/leads") return { leads: [] };
+    if (path === "/api/campaigns/camp-b2b/leads/search") {
+      const body = call.body as Record<string, unknown>;
+      assert.deepEqual(body.titles, ["Founder", "Co-Founder", "CEO"]);
+      assert.deepEqual(body.seniorities, ["owner", "c_suite"]);
+      assert.deepEqual(body.personLocations, ["Spain"]);
+      assert.deepEqual(body.organizationDomains, ["welov.io", "hirint.io"]);
+      assert.deepEqual(body.employeeRanges, ["1,10", "11,50"]);
+      assert.deepEqual(body.emailStatuses, ["verified"]);
+      assert.deepEqual((body.criteria as Record<string, unknown>).titles, ["Founder", "Co-Founder", "CEO"]);
+      return { ok: true, providerRunId: "run-criteria" };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  await dispatchOutboundCommand(config, {
+    command: "outbound.source",
+    campaignId: "camp-b2b",
+    profileKind: "b2b_contact",
+    provider: "apollo",
+    criteria: {
+      person_titles: ["Founder", "Co-Founder", "CEO"],
+      person_seniorities: ["owner", "c_suite"],
+      person_locations: ["Spain"],
+      company_domains: ["welov.io", "hirint.io"],
+      company_num_employees_ranges: ["1,10", "11,50"],
+      contact_email_status: "verified",
+    },
+    limit: 3,
+  });
+});
+
+test("outbound.source rejects simulated provider results", async () => {
+  installFetch((path) => {
+    if (path === "/api/campaigns/camp-b2b") return { id: "camp-b2b", type: "B2B" };
+    if (path === "/api/leads") return { leads: [] };
+    if (path === "/api/campaigns/camp-b2b/leads/search") {
+      return { ok: true, mock: true, leads: [{ id: "fake-lead" }] };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  await assert.rejects(
+    dispatchOutboundCommand(config, {
+      command: "outbound.source",
+      campaignId: "camp-b2b",
+      profileKind: "b2b_contact",
+      provider: "apollo",
+      criteria: { titles: ["CMO"] },
+      limit: 25,
+    }),
+    (err) =>
+      err instanceof OutboundCommandError &&
+      err.status === 502 &&
+      /no continuar\u00e1 con mocks, fixtures ni demos/i.test(err.message),
+  );
+});
+
+test("outbound.source forwards callback context and hoists queued jobs", async () => {
+  installFetch((path, call) => {
+    if (path === "/api/campaigns/camp-b2b") return { id: "camp-b2b", type: "B2B" };
+    if (path === "/api/leads") return { leads: [] };
+    if (path === "/api/campaigns/camp-b2b/leads/search") {
+      const body = call.body as Record<string, unknown>;
+      assert.equal(body.callbackUrl, "http://sancho.test/api/yalc/job-callback");
+      assert.deepEqual(body.callbackContext, {
+        slug: "growth4u",
+        threadId: "growth4u:outbound",
+        agent: "rocinante",
+      });
+      return { ok: true, jobId: "job-1", status: "queued", statusUrl: "/api/jobs/job-1" };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.source",
+    campaignId: "camp-b2b",
+    profileKind: "b2b_contact",
+    provider: "apollo",
+    criteria: { titles: ["CMO"] },
+    callbackUrl: "http://sancho.test/api/yalc/job-callback",
+    callbackContext: {
+      slug: "growth4u",
+      threadId: "growth4u:outbound",
+      agent: "rocinante",
+    },
+  });
+
+  assert.equal(result.httpStatus, 202);
+  assert.equal(result.async, true);
+  assert.equal(result.jobId, "job-1");
+});
+
+test("outbound.personalize returns an async job without building a premature preview", async () => {
+  installFetch((path) => {
+    if (path === "/api/campaigns/camp-b2b") {
+      return { id: "camp-b2b", type: "B2B", hypothesis: "podemos simplificar el outbound" };
+    }
+    if (path === "/api/leads") return { leads: [] };
+    if (path === "/api/campaigns/camp-b2b/leads/personalize") {
+      return { ok: true, jobId: "job-personalize", status: "queued", statusUrl: "/api/jobs/job-personalize" };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.personalize",
+    campaignId: "camp-b2b",
+    profileKind: "b2b_contact",
+    channel: "linkedin",
+  });
+
+  assert.equal(result.httpStatus, 202);
+  assert.equal(result.async, true);
+  assert.equal(result.jobId, "job-personalize");
+  assert.equal(calls.some((call) => new URL(call.url).pathname === "/api/outbound/command"), false);
+});
+
 test("outbound.source company-db normalizes B2B contacts into the shared YALC lead roster", async () => {
   installFetch((path, call) => {
     if (path === "/api/campaigns/camp-b2b") return { id: "camp-b2b", type: "B2B" };
@@ -220,6 +342,30 @@ test("outbound.personalize persists campaign lead personalization through YALC",
     "/api/campaigns/camp-b2b/leads/personalize",
     "/api/outbound/command",
   ]);
+});
+
+test("outbound.personalize rejects a simulated preview", async () => {
+  installFetch((path) => {
+    if (path === "/api/campaigns/camp-b2b") {
+      return { id: "camp-b2b", type: "B2B", hypothesis: "podemos simplificar el outbound" };
+    }
+    if (path === "/api/leads") return { leads: [] };
+    if (path === "/api/campaigns/camp-b2b/leads/personalize") return { ok: true, updated: 1 };
+    if (path === "/api/outbound/command") {
+      return { mode: "fixture", plan: { items: [{ leadId: "fake-lead", message: "Hola Ana" }] } };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  await assert.rejects(
+    dispatchOutboundCommand(config, {
+      command: "outbound.personalize",
+      campaignId: "camp-b2b",
+      profileKind: "b2b_contact",
+      channel: "linkedin",
+    }),
+    (err) => err instanceof OutboundCommandError && err.status === 502,
+  );
 });
 
 test("outbound.status aggregates campaign, readiness, events, leads and provider runs", async () => {

@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import {
   applyBrandEnvToProcess,
+  applyRuntimeEnvToProcess,
   buildBrandRuntimeEnv,
   resolveWorkspaceDir,
 } from "../brand-env.js";
@@ -62,4 +63,20 @@ test("applyBrandEnvToProcess restores the previous process env", () => {
   assert.equal(targetEnv.FIRECRAWL_API_KEY, "process-firecrawl");
   assert.equal(targetEnv.XHYP_FIRECRAWL_API_KEY, undefined);
   assert.equal(targetEnv.KEEP, "1");
+});
+
+test("applyRuntimeEnvToProcess exposes and restores per-turn chat context", () => {
+  const targetEnv = { SANCHO_CHAT_SLUG: "previous" };
+  const restore = applyRuntimeEnvToProcess({
+    SANCHO_CHAT_SLUG: "growth4u",
+    SANCHO_CHAT_THREAD_ID: "growth4u:outbound",
+    SANCHO_CHAT_AGENT: "rocinante",
+  }, { targetEnv });
+
+  assert.equal(targetEnv.SANCHO_CHAT_SLUG, "growth4u");
+  assert.equal(targetEnv.SANCHO_CHAT_THREAD_ID, "growth4u:outbound");
+  assert.equal(targetEnv.SANCHO_CHAT_AGENT, "rocinante");
+
+  restore();
+  assert.deepEqual(targetEnv, { SANCHO_CHAT_SLUG: "previous" });
 });

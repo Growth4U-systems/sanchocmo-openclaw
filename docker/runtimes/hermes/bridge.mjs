@@ -240,6 +240,17 @@ export function cleanHermesStdout(value) {
     .trim();
 }
 
+export function buildHermesChildEnv(message, runId) {
+  return {
+    ...process.env,
+    HERMES_SANCHO_RUN_ID: runId,
+    SANCHO_CHAT_SLUG: message.slug || "",
+    SANCHO_CHAT_THREAD_ID: message.threadId || "",
+    SANCHO_CHAT_AGENT: message.agent || message.agentId || "hermes",
+    SANCHO_CHAT_REQUEST: message.text || "",
+  };
+}
+
 async function postProgress(message, runId, label, detail) {
   await postWebhook({
     slug: message.slug,
@@ -276,7 +287,7 @@ async function startHermesRun(message, runId) {
   }
   const child = spawn(command, args, {
     cwd: bridgeWorkdir(),
-    env: { ...process.env, HERMES_SANCHO_RUN_ID: runId },
+    env: buildHermesChildEnv(message, runId),
     stdio: ["ignore", "pipe", "pipe"],
   });
   const entry = existing || { runId, child: null, killed: false };

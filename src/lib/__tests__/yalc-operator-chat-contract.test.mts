@@ -25,6 +25,9 @@ test("yalc operator selects signal personalization with a truthful fallback", ()
   assert.match(skill, /verified recent person\/company signal/);
   assert.match(skill, /Never invent a signal/);
   assert.match(skill, /company \+ campaign contact reason/);
+  assert.match(skill, /Never use fixtures, demo candidates, generated people/);
+  assert.match(skill, /Before creating a campaign, run `providers`/);
+  assert.match(skill, /`manual` is valid only when the user supplied real records/);
 });
 
 test("yalc operator must show actual LinkedIn preview messages before asking to send", () => {
@@ -37,4 +40,7 @@ test("yalc client exposes campaign personalization as an orchestratable step", (
   assert.match(client, /campaign-leads-personalize/);
   assert.match(client, /\/leads\/personalize/);
   assert.match(client, /withAsyncCallback\(readPayload\(args\), args\)/);
+  assert.match(client, /SANCHO_CHAT_THREAD_ID/);
+  assert.match(client, /callbackContext: \{ \.\.\.ctx, command, campaignId, profileKind, channel \}/);
+  assert.match(client, /async === true[\s\S]*out\.async = true/);
 });

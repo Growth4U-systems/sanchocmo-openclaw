@@ -48,6 +48,58 @@ function asRecord(value: unknown): RecordLike {
   return value && typeof value === "object" && !Array.isArray(value) ? value as RecordLike : {};
 }
 
+const SIMULATED_MARKER_KEYS = new Set(["mock", "simulated", "fixture", "fixtures", "demo"]);
+const SIMULATED_MARKER_VALUES = new Set(["mock", "simulated", "simulation", "fixture", "fixtures", "demo"]);
+
+function containsSimulatedOutboundData(value: unknown, depth = 0, seen = new Set<object>()): boolean {
+  if (depth > 5 || value === null || typeof value !== "object") return false;
+  if (seen.has(value)) return false;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value.some((item) => containsSimulatedOutboundData(item, depth + 1, seen));
+  }
+
+  for (const [rawKey, item] of Object.entries(value as RecordLike)) {
+    const key = rawKey.toLowerCase().replace(/[_-]/g, "");
+    if (SIMULATED_MARKER_KEYS.has(key) && item === true) return true;
+    if (
+      (key === "mode" || key === "source" || key === "provenance" || key === "datamode") &&
+      typeof item === "string" &&
+      SIMULATED_MARKER_VALUES.has(item.trim().toLowerCase())
+    ) {
+      return true;
+    }
+    if (containsSimulatedOutboundData(item, depth + 1, seen)) return true;
+  }
+  return false;
+}
+
+function assertRealOutboundData(value: unknown, operation: string): void {
+  if (!containsSimulatedOutboundData(value)) return;
+  throw new OutboundCommandError(
+    `YALC devolvi\u00f3 datos simulados para ${operation}. Configura un proveedor real o aporta registros reales; Sancho no continuar\u00e1 con mocks, fixtures ni demos.`,
+    502,
+  );
+}
+
+function callbackFields(input: RecordLike): RecordLike {
+  const callbackUrl = text(input.callbackUrl);
+  const callbackContext = asRecord(input.callbackContext);
+  return {
+    ...(callbackUrl ? { callbackUrl } : {}),
+    ...(Object.keys(callbackContext).length > 0 ? { callbackContext } : {}),
+  };
+}
+
+function queuedJob(value: unknown): { jobId: string; statusUrl: string | null } | null {
+  const row = asRecord(value);
+  const jobId = text(row.jobId);
+  const status = text(row.status).toLowerCase();
+  if (!jobId || (status !== "queued" && status !== "running")) return null;
+  return { jobId, statusUrl: text(row.statusUrl) || null };
+}
+
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -62,6 +114,58 @@ function stringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.map(text).filter(Boolean)
     : [];
+}
+
+const SOURCE_CRITERIA_ALIASES: ReadonlyArray<readonly [string, readonly string[]]> = [
+  ["titles", ["titles", "person_titles", "roles", "title_keywords", "job_titles"]],
+  ["seniorities", ["seniorities", "person_seniorities"]],
+  ["personLocations", ["personLocations", "person_locations", "person_geo", "person_country"]],
+  ["organizationLocations", [
+    "organizationLocations",
+    "organization_locations",
+    "companyLocations",
+    "company_locations",
+  ]],
+  ["organizationDomains", [
+    "organizationDomains",
+    "organization_domains",
+    "companyDomains",
+    "company_domains",
+    "q_organization_domains_list",
+  ]],
+  ["employeeRanges", [
+    "employeeRanges",
+    "employee_ranges",
+    "company_num_employees_ranges",
+    "organization_num_employees_ranges",
+    "company_employee_ranges",
+  ]],
+  ["emailStatuses", [
+    "emailStatuses",
+    "email_statuses",
+    "contact_email_status",
+    "contact_email_statuses",
+  ]],
+];
+
+function sourceCriteriaValues(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(text).filter(Boolean);
+  const single = text(value);
+  return single ? [single] : [];
+}
+
+function normalizeSourceCriteria(value: unknown): RecordLike {
+  const raw = asRecord(value);
+  const normalized: RecordLike = { ...raw };
+  for (const [canonical, aliases] of SOURCE_CRITERIA_ALIASES) {
+    for (const alias of aliases) {
+      const values = sourceCriteriaValues(raw[alias]);
+      if (values.length === 0) continue;
+      normalized[canonical] = values;
+      break;
+    }
+  }
+  return normalized;
 }
 
 function commandName(value: unknown): OutboundCommandName {
@@ -242,7 +346,7 @@ async function source(config: YalcRuntimeConfig, input: RecordLike, command: Out
   const pKind = profileKind(input.profileKind);
   const kind = kindFromProfileKind(pKind);
   const selectedProvider = provider(input.provider);
-  const criteria = asRecord(input.criteria);
+  const criteria = normalizeSourceCriteria(input.criteria);
   const limit = finiteLimit(input.limit);
   const payload = {
     ...criteria,
@@ -252,6 +356,7 @@ async function source(config: YalcRuntimeConfig, input: RecordLike, command: Out
     ...(limit ? { limit } : {}),
     ...kindPayload(kind),
     source: "outbound.command",
+    ...callbackFields(input),
   };
 
   if (selectedProvider === "manual") {
@@ -267,6 +372,7 @@ async function source(config: YalcRuntimeConfig, input: RecordLike, command: Out
       `/api/campaigns/${encodeURIComponent(campaignId)}/leads/assign`,
       { method: "POST", body: { ...payload, leads } },
     );
+    assertRealOutboundData(result, "la carga de personas");
     return { ok: true, command, httpStatus: 201, campaignId, profileKind: pKind, provider: selectedProvider, result };
   }
 
@@ -275,6 +381,7 @@ async function source(config: YalcRuntimeConfig, input: RecordLike, command: Out
       throw new OutboundCommandError("company-db outbound.source is only valid for profileKind b2b_contact");
     }
     const result = await ingestB2BContacts(config, { ...input, campaignId });
+    assertRealOutboundData(result, "la carga de personas");
     return { ok: true, command, httpStatus: 201, campaignId, profileKind: pKind, provider: selectedProvider, result };
   }
 
@@ -284,6 +391,22 @@ async function source(config: YalcRuntimeConfig, input: RecordLike, command: Out
     `/api/campaigns/${encodeURIComponent(campaignId)}/leads/search`,
     { method: "POST", body: payload },
   );
+  assertRealOutboundData(result, "la b\u00fasqueda de personas");
+  const queued = queuedJob(result);
+  if (queued) {
+    return {
+      ok: true,
+      command,
+      httpStatus: 202,
+      async: true,
+      campaignId,
+      profileKind: pKind,
+      provider: selectedProvider,
+      jobId: queued.jobId,
+      statusUrl: queued.statusUrl,
+      result,
+    };
+  }
   return { ok: true, command, campaignId, profileKind: pKind, provider: selectedProvider, result };
 }
 
@@ -306,6 +429,22 @@ async function enrich(config: YalcRuntimeConfig, input: RecordLike, command: Out
     `/api/campaigns/${encodeURIComponent(campaignId)}/leads/enrich`,
     { method: "POST", body: { ...input, providers, entityIds, source: "outbound.command" } },
   );
+  assertRealOutboundData(result, "el enriquecimiento");
+  const queued = queuedJob(result);
+  if (queued) {
+    return {
+      ok: true,
+      command,
+      httpStatus: 202,
+      async: true,
+      campaignId,
+      providers,
+      entityIds,
+      jobId: queued.jobId,
+      statusUrl: queued.statusUrl,
+      result,
+    };
+  }
   return { ok: true, command, campaignId, providers, entityIds, result };
 }
 
@@ -347,6 +486,22 @@ async function personalize(config: YalcRuntimeConfig, input: RecordLike, command
       },
     },
   );
+  assertRealOutboundData(result, "la personalizaci\u00f3n");
+  const queued = queuedJob(result);
+  if (queued) {
+    return {
+      ok: true,
+      command,
+      httpStatus: 202,
+      async: true,
+      campaignId,
+      profileKind: pKind,
+      channel: requestedChannel || null,
+      jobId: queued.jobId,
+      statusUrl: queued.statusUrl,
+      result,
+    };
+  }
   let preview: unknown = null;
   if (kind === "b2b" && requestedChannel === "linkedin") {
     const suppliedConnectMessage = text(input.connectMessage ?? input.connect_message);
@@ -365,6 +520,7 @@ async function personalize(config: YalcRuntimeConfig, input: RecordLike, command
         ...(defaultConnectMessage ? { connectMessage: defaultConnectMessage } : {}),
       },
     });
+    assertRealOutboundData(previewResult, "la vista previa de LinkedIn");
     preview = previewResult.plan ?? previewResult;
   }
   return {
@@ -433,6 +589,10 @@ async function linkedinAutopilot(
       ...(defaultConnectMessage ? { connectMessage: defaultConnectMessage } : {}),
     },
   });
+  assertRealOutboundData(
+    result,
+    command === "outbound.linkedin_autopilot.execute" ? "el contacto por LinkedIn" : "el plan de LinkedIn",
+  );
   return { ok: true, command, campaignId, ...result };
 }
 

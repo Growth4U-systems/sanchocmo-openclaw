@@ -87,3 +87,21 @@ export function applyBrandEnvToProcess(slug, opts = {}) {
     }
   };
 }
+
+export function applyRuntimeEnvToProcess(values, opts = {}) {
+  const target = opts.targetEnv || process.env;
+  const previous = new Map();
+
+  for (const [key, value] of Object.entries(values || {})) {
+    if (typeof value !== "string") continue;
+    previous.set(key, Object.prototype.hasOwnProperty.call(target, key) ? target[key] : undefined);
+    target[key] = value;
+  }
+
+  return () => {
+    for (const [key, value] of previous.entries()) {
+      if (value === undefined) delete target[key];
+      else target[key] = value;
+    }
+  };
+}

@@ -38,9 +38,10 @@ YALC is the source of truth for the GTM operating workflow: lead import, qualifi
 5. Use the wrapper script instead of direct `curl` so auth, live catalog verification and dry-run behavior stay consistent.
 6. Do not ask users for YALC tokens in chat. If YALC is not configured, send them to Mission Control API setup.
 7. Keep client isolation: pass `--slug {slug}` and only write outputs under `brand/{slug}/yalc/`.
-8. Read `references/yalc-capability-map.md` before deciding which YALC skill to invoke.
+8. For the standard unified outbound flow, use the fast path below and do not read the capability map, list the skill catalog, inspect standalone provider scripts or call provider APIs directly. Read `references/yalc-capability-map.md` only for a legacy command or an unsupported capability.
 9. Missing brand documents or a `partial` context pack are not blockers when the request already specifies a usable audience, channel and objective. State the fallback briefly in the completed result, use only facts from the request, and proceed. Never stop at a proposal or ask permission to create the draft in this case.
 10. In chat, never call `clarify`, `ask_user` or another interactive tool for approval. Return the three message samples and the live-send question together as the plain final answer, then end the turn.
+11. Never use fixtures, demo candidates, generated people, or provider payloads marked as mock/simulated. `manual` is valid only when the user supplied real records. Before creating a campaign, run `providers` and verify a green real source for the requested audience. If none is available, do not create a placeholder campaign: report the exact missing connector and stop before persistence.
 
 ## Interaction Model
 
@@ -49,7 +50,7 @@ Chat is the primary control surface. The Outreach UI is the persistent view of t
 When the user describes an outcome:
 
 1. Infer the ICP, offer and channel from the current request plus brand context. If the user did not provide an ICP, recommend one and proceed with it without asking the user to approve the recommendation. Ask at most one question, and only when a missing business fact makes execution unsafe or meaningless.
-2. Create or reuse one YALC campaign, then source, enrich, score and prepare messages through that campaign. Do not narrate a menu of tools or ask which skill to run.
+2. Check provider readiness first. Create or reuse one YALC campaign only after a real source is green (or the user supplied real records), then source, enrich, score and prepare messages through that campaign. Do not narrate a menu of tools or ask which skill to run.
 3. Choose personalization per lead in this order: verified recent person/company signal; verified company context; role + company relevance; company + campaign contact reason. Never invent a signal. If signal tools are unavailable or return nothing, use the fallback automatically.
 4. Fetch the actual channel preview and present the resulting audience size, selected strategy, three representative messages, exceptions and the next safe batch. `outbound.personalize` with `channel: "linkedin"` returns this automatically in `preview.items`; quote three returned `preview.items[].message` values. Only call `outbound.linkedin_autopilot.plan` separately as a compatibility fallback when `preview` is absent. `outbound.status` alone is not a message preview. Do not require review of every lead.
 5. Ask for one explicit confirmation before live external contact. The user may confirm in chat or in the UI; both must call the same YALC execution contract.
@@ -184,7 +185,7 @@ YALC converts long-running ops to background jobs. The long ops are: lead enrich
 
 When you call any of these long ops you MUST:
 
-1. **Pass `--callback-context`** so YALC can deliver the result back to this exact chat thread. This applies to search, enrichment, personalization, publish and other calls that return an async job. Build it from the `[MC Chat Context]` block at the top of the turn:
+1. The wrapper automatically reads the current chat callback context from the runtime and attaches it so YALC can deliver the result back to this exact thread. This applies to search, enrichment, personalization, publish and other calls that return an async job. Use explicit `--callback-context` only as a CLI/debug fallback:
 
    ```bash
    node skills/yalc-operator/scripts/yalc-client.mjs campaign-leads-enrich \
@@ -200,7 +201,7 @@ When you call any of these long ops you MUST:
 
 3. **Do NOT poll `/api/jobs/:id` or `statusUrl` in a loop.** The result arrives as a brand-new message in this same thread when the job completes — YALC POSTs to `/api/yalc/job-callback`, which re-engages you with a synthetic prompt summarizing the job (status, type, output, jobId). At that point you report the result to the user (e.g. "✅ YALC terminó: 132 leads. ¿Enriquezco?") and suggest the next step.
 
-If the op returns a normal sync result (no `async` flag), handle it as before. Always pass `--callback-context` on the long ops regardless, so the async path works whenever YALC decides to background the work.
+If the op returns a normal sync result (no `async` flag), handle it as before. Do not spend tool calls reconstructing callback metadata during normal chat operation; the runtime already supplies it.
 
 ## Routing
 
@@ -243,7 +244,7 @@ node skills/yalc-operator/scripts/yalc-client.mjs outbound-command --slug <slug>
 The payload always uses one of:
 
 - `{"command":"outbound.plan","campaignType":"B2B"|"Partnerships","goal":"...","hypothesis":"recipient-facing reason for contact","target":{...},"channels":["email"|"linkedin"]}`
-- `{"command":"outbound.source","campaignId":"...","profileKind":"b2b_contact"|"creator","provider":"apollo"|"crustdata"|"manual"|"company-db","criteria":{...},"limit":25}`
+- `{"command":"outbound.source","campaignId":"...","profileKind":"b2b_contact"|"creator","provider":"apollo"|"crustdata"|"manual"|"company-db","criteria":{"query":"software","titles":["Founder","Co-Founder","CEO"],"organizationLocations":["Spain"],"employeeRanges":["1,10","11,50"]},"limit":25}`
 - `{"command":"outbound.enrich","campaignId":"...","providers":["apollo"|"crustdata"]}`
 - `{"command":"outbound.score","campaignId":"...","scoreModel":"b2b_fit_v1"|"creator_quality_v1"}`
 - `{"command":"outbound.personalize","campaignId":"...","profileKind":"b2b_contact"|"creator","channel":"email"|"linkedin","enrichWithCrustdata":true}`
@@ -258,8 +259,8 @@ The payload always uses one of:
 ## Workflow
 
 1. Read the user's outcome and available brand context. Infer a concrete recommended ICP and a recipient-facing contact reason. Save that reason as `hypothesis`; it must be a natural standalone sentence (for example, "Creemos que podemos ayudar a simplificar vuestro outbound"), and must never be a copy of the search goal such as "encontrar founders". Partial or missing optional brand documents require a truthful fallback, not a question. Ask only for a critical missing business fact.
-2. Run `health`, then verify the required runtime capabilities with `skills` and `references/yalc-capability-map.md`.
-3. Create or reuse the internal campaign with `outbound.plan`. Never create a duplicate for the same request.
+2. For a new B2B or Partnerships campaign, run only `health` and `providers` as preflight. Do not run `skills`, `catalog`, standalone Apollo scripts, direct `curl`, web research or the capability map on this known path. For a B2B database, require a green real source such as Apollo or user-supplied real records; for signal enrichment use only green providers; for delivery require Instantly (email) or Unipile (LinkedIn). A gray/missing provider is a blocker for that capability, never a reason to synthesize data.
+3. Create or reuse the internal campaign with `outbound.plan` only after the source preflight passes. Never create a duplicate for the same request.
 4. If the user asked for a database or campaign, continue in the same turn with `outbound.source`, enrichment when needed, and `outbound.score`. The original request is sufficient authorization for these non-contact steps.
 5. If the user asks for signals, or signal tools are available and relevant, run the appropriate research/detection skills and then `campaign-leads-personalize`. Select the strongest verified strategy per lead automatically. Fall back to role/company or company/contact-reason copy without asking the user to choose a technique.
 6. Prepare the channel sequence. Email uses `outbound.draft_sequence`; LinkedIn uses the saved campaign reason and `outbound.personalize`, whose response includes a three-message `preview`. Persist every artifact on the campaign.
@@ -267,6 +268,8 @@ The payload always uses one of:
 8. Ask once: "Tengo listo el lote de N contactos. ¿Confirmas el envío real por LinkedIn/email?" This question must refer to the real external send, never to a test or dry-run. Do not add intermediate confirmation gates for approving copy, creating the provider draft or launching unless those actions have materially different external consequences.
 9. After explicit confirmation, execute the approved batch with the live command and save the returned JSON in `brand/{slug}/yalc/runs/YYYY-MM-DDTHH-mm-ss-*.json`.
 10. Report the YALC campaign ID, external provider ID when present, sent/skipped/failed counts, remaining audience and next scheduled or available batch.
+
+When any unified command returns top-level `async: true`, stop issuing tools immediately and end the turn after saying that YALC is processing it. The callback will reopen this same thread. On that callback, continue the remaining authorized internal workflow automatically. After a personalization job completes, fetch the LinkedIn preview with `outbound.linkedin_autopilot.plan`; do not call personalization a second time and do not ask the user for another internal approval.
 
 ## Campaign Lifecycle
 
