@@ -33,6 +33,7 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildB2BCampaignThread, buildYalcThread } from "@/lib/chat-openers";
 import { buildPhaseOneLinkedInMessage } from "@/lib/outreach/phase-one-message";
+import { linkedInFirstContactCandidates } from "@/lib/outreach/linkedin-first-contact";
 import { cn } from "@/lib/utils";
 import { isCampaignKind, type YalcCampaignKind } from "@/lib/yalc/campaign-kind";
 import {
@@ -603,7 +604,7 @@ function stageDisplayLabel(stage?: string | null): string {
   if (!stage) return "-";
   if (stage === DISCARDED_STAGE) return "Descartado";
   if (stage === "Discovered") return "Descubiertos";
-  if (stage === "Shortlist") return "A contactar";
+  if (stage === "Shortlist") return "Aprobados · sin enviar";
   if (stage === "Contacted") return "Contactados";
   if (stage === "Replied") return "Respondieron";
   if (stage === "Negotiating") return "En negociación";
@@ -1043,10 +1044,6 @@ function sequencePreviewForLead(lead: Lead, campaign?: CampaignDetail | null): S
   return items.map((item) => ({ ...item, status: contactStepStatus(lead, item.key) }));
 }
 
-function linkedInReadyLeads(leads: Lead[]): Lead[] {
-  return leads.filter((lead) => !!lead.linkedinUrl);
-}
-
 export function OutboundB2BView() {
   const slug = useSlugSync();
   const router = useRouter();
@@ -1169,9 +1166,10 @@ export function OutboundB2BView() {
     [selectedActiveLeads, selectedDiscardedLeads],
   );
   const selectedLinkedInLeads = useMemo(
-    () => linkedInReadyLeads(selectedActiveLeads),
+    () => linkedInFirstContactCandidates(selectedActiveLeads),
     [selectedActiveLeads],
   );
+  const selectedLinkedInLeadIds = selectedLinkedInLeads.map((lead) => lead.id).sort().join(",");
   const templateCampaignId = selectedCampaignId;
 
   const campaignDetailQuery = useQuery({
@@ -1209,14 +1207,16 @@ export function OutboundB2BView() {
         }),
       }),
     onSuccess: (_data, variables) => {
+      setLinkedinAutopilotPlan(null);
+      setLinkedinAutopilotApprovals({});
       void queryClient.invalidateQueries({ queryKey: activeLeadsKey });
       void queryClient.invalidateQueries({ queryKey: discardedLeadsKey });
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "campaigns"] });
-      showToast(
-        variables.target === "Contacted"
+      showToast(variables.target === "Shortlist"
+        ? `${leadDisplayName(variables.lead)}: aprobado. No se envió nada.`
+        : variables.target === "Contacted"
           ? `${leadDisplayName(variables.lead)} marcado como contactado. Esto no crea ni envía la campaña.`
-          : `${leadDisplayName(variables.lead)} -> ${stageDisplayLabel(variables.target)}`,
-      );
+          : `${leadDisplayName(variables.lead)} -> ${stageDisplayLabel(variables.target)}`);
     },
     onError: (error) =>
       showToast(`No se pudo mover: ${error instanceof Error ? error.message : "error"}`, "warn"),
@@ -1426,7 +1426,14 @@ export function OutboundB2BView() {
   useEffect(() => {
     setLinkedinAutopilotPlan(null);
     setLinkedinAutopilotApprovals({});
-  }, [selectedCampaignId]);
+  }, [selectedCampaignId, selectedLinkedInLeadIds]);
+
+  function prepareLinkedInContact() {
+    setSelectedLeadId(null);
+    window.requestAnimationFrame(() => {
+      document.getElementById("linkedin-contact-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   useEffect(() => {
     if (!slug || !activeJob?.jobId) return;
@@ -1860,25 +1867,27 @@ export function OutboundB2BView() {
             {tab === "contactos" && (
               <div className="space-y-4" data-testid="outbound-contactos">
                 {campaignHasLinkedIn(icpCampaign) && (
-                  <LinkedInAutopilotPanel
-                    campaign={icpCampaign}
-                    leads={selectedLinkedInLeads}
-                    contactReason={contactReason}
-                    plan={linkedinAutopilotPlan}
-                    approvals={linkedinAutopilotApprovals}
-                    planning={linkedinAutopilotPlanAction.isPending}
-                    executing={linkedinAutopilotExecuteAction.isPending}
-                    disabled={!selectedCampaignId || linkedinBusy}
-                    onContactReasonChange={(reason) => {
-                      setContactReasons((current) => ({ ...current, [selectedCampaignId]: reason }));
-                      setLinkedinAutopilotPlan(null);
-                      setLinkedinAutopilotApprovals({});
-                    }}
-                    onPlan={() => linkedinAutopilotPlanAction.mutate({ campaignId: selectedCampaignId, contactReason })}
-                    onApprovalChange={updateLinkedInAutopilotApproval}
-                    onSimulate={() => executeLinkedInAutopilot(true)}
-                    onExecute={() => executeLinkedInAutopilot(false)}
-                  />
+                  <div id="linkedin-contact-panel" className="scroll-mt-4">
+                    <LinkedInAutopilotPanel
+                      campaign={icpCampaign}
+                      leads={selectedLinkedInLeads}
+                      contactReason={contactReason}
+                      plan={linkedinAutopilotPlan}
+                      approvals={linkedinAutopilotApprovals}
+                      planning={linkedinAutopilotPlanAction.isPending}
+                      executing={linkedinAutopilotExecuteAction.isPending}
+                      disabled={!selectedCampaignId || linkedinBusy}
+                      onContactReasonChange={(reason) => {
+                        setContactReasons((current) => ({ ...current, [selectedCampaignId]: reason }));
+                        setLinkedinAutopilotPlan(null);
+                        setLinkedinAutopilotApprovals({});
+                      }}
+                      onPlan={() => linkedinAutopilotPlanAction.mutate({ campaignId: selectedCampaignId, contactReason })}
+                      onApprovalChange={updateLinkedInAutopilotApproval}
+                      onSimulate={() => executeLinkedInAutopilot(true)}
+                      onExecute={() => executeLinkedInAutopilot(false)}
+                    />
+                  </div>
                 )}
                 {channelText(icpCampaign?.channels).toLowerCase().includes("email") && (
                   <EmailCampaignPanel
@@ -1992,6 +2001,7 @@ export function OutboundB2BView() {
           lead={selectedLead}
           onClose={() => setSelectedLeadId(null)}
           onMove={moveLead}
+          onPrepareContact={prepareLinkedInContact}
           busy={stageMutation.isPending}
           locked={selectedLeadEditsLocked}
         />
@@ -2291,7 +2301,7 @@ function LinkedInAutopilotPanel({
           <h3 className="font-heading text-lg text-navy">Mensaje de apertura</h3>
         </div>
         <p className="text-sm font-semibold text-foreground">
-          {plan ? `${approved.length} de ${sendable.length} aprobados` : `${leads.length} persona${leads.length === 1 ? "" : "s"} con LinkedIn`}
+          {plan ? `${approved.length} de ${sendable.length} listos` : `${leads.length} aprobado${leads.length === 1 ? "" : "s"} · sin enviar`}
         </p>
       </div>
 
@@ -2323,7 +2333,7 @@ function LinkedInAutopilotPanel({
 
       {leads.length === 0 && (
         <div className="mt-4 rounded-lg border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
-          Esta campaña todavía no tiene personas con LinkedIn. Busca o enriquece datos antes de contactar.
+          No hay personas aprobadas con LinkedIn. Aprueba primero a quienes quieras incluir en el próximo envío.
         </div>
       )}
 
@@ -2724,14 +2734,14 @@ function B2BKanbanCard({
         <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
           <button
             type="button"
-            title="Aprobar para contactar"
+            title="Aprobar sin enviar"
             onClick={(event) => {
               event.stopPropagation();
               onMove(lead, "Shortlist");
             }}
             className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold transition-colors hover:border-rust hover:text-rust"
           >
-            Aprobar para contactar
+            Aprobar sin enviar
           </button>
           <button
             type="button"
@@ -3069,6 +3079,7 @@ function B2BLeadDrawer({
   lead,
   onClose,
   onMove,
+  onPrepareContact,
   busy,
   locked,
 }: {
@@ -3076,6 +3087,7 @@ function B2BLeadDrawer({
   lead: Lead | null;
   onClose: () => void;
   onMove: (lead: Lead, target: StageFilterKey, note?: string) => void;
+  onPrepareContact: () => void;
   busy?: boolean;
   locked?: boolean;
 }) {
@@ -3154,6 +3166,26 @@ function B2BLeadDrawer({
           </div>
         )}
 
+        {!locked && stage === "Shortlist" && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border py-3">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <CheckCircle2 className="h-4 w-4 text-sage" />
+                Aprobado · sin enviar
+              </div>
+              <div className="mt-0.5 text-xs text-muted-foreground">Se incluirá en el próximo lote de LinkedIn.</div>
+            </div>
+            <button
+              type="button"
+              onClick={onPrepareContact}
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-rust bg-rust px-3 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Preparar contacto
+            </button>
+          </div>
+        )}
+
         {!locked && (stage === "Discovered" || stage === DISCARDED_STAGE) && (
           <div className="flex flex-wrap gap-2">
             {stage === "Discovered" && (
@@ -3164,7 +3196,7 @@ function B2BLeadDrawer({
                   onClick={() => onMove(lead, "Shortlist")}
                   className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
                 >
-                  Aprobar para contactar
+                  Aprobar sin enviar
                 </button>
                 <button
                   type="button"
