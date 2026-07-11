@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import archiver from "archiver";
+import { ZipArchive } from "archiver";
 import { withErrorHandler, withAuth, compose } from "@/lib/api-middleware";
 import { BASE, brandDir } from "@/lib/data/paths";
 import { assembleBrandBrainState, brandExists } from "@/lib/data/brand-brain-assembler";
@@ -54,7 +54,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader("Content-Type", "application/zip");
   res.setHeader("Content-Disposition", `attachment; filename="${slug}-brand-brain.zip"`);
 
-  const archive = archiver("zip", { zlib: { level: 6 } });
+  const archive = new ZipArchive({ zlib: { level: 6 } });
   archive.on("error", (err) => { res.status(500).end(); throw err; });
   archive.pipe(res);
 

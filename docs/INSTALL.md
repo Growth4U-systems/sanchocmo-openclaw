@@ -39,7 +39,17 @@ tarball).
 ## What the wizard asks
 
 `scripts/wizard.sh` (run automatically by `./sancho install`, or on its own)
-collects the minimum to boot and generates the rest, in six steps:
+collects the minimum to boot and generates the rest. It has **two modes** — pick
+one with `--quick` / `--advanced`, the `WIZARD_MODE` env var, or the interactive
+selector:
+
+- **quick** (the default, and what `./sancho run` uses) asks only the essentials
+  — the model provider + credential and the first brand — and applies sensible
+  defaults for everything else.
+- **advanced** (`--advanced`) exposes the full flow: admin/login, database, host
+  ports, access URL and optional services.
+
+**Always asked (both modes):**
 
 1. **Model provider & auth** — pick the provider(s): `anthropic`, `openai`,
    `fireworks`, `both`, or `all` (default `anthropic`). The auth mode is asked
@@ -54,21 +64,37 @@ collects the minimum to boot and generates the rest, in six steps:
 
    The wizard never leaves a placeholder credential behind: in non-interactive
    mode it **aborts** if the key for the chosen mode is missing.
-2. **Admin & login access** — admin email domain (emails `@domain` become
-   admins), an admin contact email, and **optional Google login** (off by
-   default; needs a Google OAuth client id + secret). Skip Google and log in
-   with the admin token printed at the end.
-3. **Database** — `local` (bundled Postgres, recommended) or `external` (e.g.
-   Neon `DATABASE_URL`).
-4. **Access URL** — the Base URL where you'll reach Mission Control (default
-   `http://localhost:3000`).
-5. **First brand** — slug + display name.
-6. **Optional services** — both off by default, both self-provision their token
-   and are brought up automatically by `./sancho` when enabled:
-   - *Outreach (YALC)* — generates `YALC_API_TOKEN` and wires
-     `YALC_BASE_URL=http://yalc:3847`.
-   - *Open Design* (agentic visual editor, port 7456) — generates
-     `OD_API_TOKEN` and asks for a browser-reachable web URL.
+2. **First brand** — display name; in quick mode the slug is auto-derived from
+   the name, in advanced mode you can override it.
+
+**Advanced only** (quick applies defaults instead of asking):
+
+- **Runtime engine** — which engine executes Sancho turns: `openclaw` (default),
+  `hermes`, or `external-http` (BYO gateway — Claude Code, Codex, a Hermes
+  gateway, or any HTTP runtime speaking the Sancho contract). Picking `hermes` or
+  `external-http` prompts for the gateway URL, shared secret, protocol
+  (`sancho`/`mc-bridge`) and health path, then **runs a reachability healthcheck**
+  and warns clearly if the gateway can't be reached (it never blocks the install —
+  the gateway only has to be up when Sancho boots). Quick installs stay on
+  `openclaw`; you can switch later from **Settings → Runtime**. See
+  [Runtime selection](#runtime-selection) below.
+- **Admin & login access** — admin email domain (emails `@domain` become
+  admins), an admin contact email, and **optional Google login** (off by
+  default; needs a Google OAuth client id + secret). Skip Google and log in
+  with the admin token printed at the end.
+- **Database** — `local` (bundled Postgres, recommended) or `external` (e.g.
+  Neon `DATABASE_URL`).
+- **Host ports** — relocate any host port already in use (Mission Control,
+  gateway, legacy, Open Design); container-internal ports stay fixed.
+- **Access URL** — the Base URL where you'll reach Mission Control (default
+  `http://localhost:3000`).
+- **Optional services** — both off by default (quick leaves them off), both
+  self-provision their token and are brought up automatically by `./sancho`
+  when enabled:
+  - *Outreach (YALC)* — generates `YALC_API_TOKEN` and wires
+    `YALC_BASE_URL=http://yalc:3847`.
+  - *Open Design* (agentic visual editor, port 7456) — generates
+    `OD_API_TOKEN` and asks for a browser-reachable web URL.
 
 It then **generates** `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`,
 `SANCHO_INTERNAL_API_TOKEN`, the admin token (also mirrored into `.env` as
@@ -109,8 +135,11 @@ It can also talk to an existing Mission Control/Hermes bridge with
 `SANCHO_EXTERNAL_PROTOCOL=mc-bridge`.
 `hermes-external` remains accepted as a legacy alias.
 
-To use a BYO runtime gateway from day one, pass the runtime env vars before
-running the installer or wizard:
+The **advanced** wizard (`./sancho install --advanced`) offers this interactively
+in its **Runtime engine** step: pick `hermes`/`external-http`, enter the gateway
+URL + secret + protocol + health path, and the wizard runs a reachability
+healthcheck before finishing. Alternatively — or for scripted/quick installs —
+pass the runtime env vars before running the installer or wizard:
 
 ```bash
 export SANCHO_RUNTIME=external-http
@@ -135,13 +164,25 @@ The wizard persists any supplied `HERMES_*`, `SANCHO_EXTERNAL_*`, or legacy
 `.env`, so they survive restarts. You can also leave the install on OpenClaw and
 configure a runtime later from **Settings → Runtime**.
 
+Running Sancho **on** Hermes as the engine needs no special compose file — pick
+`hermes` / `external-http` in the advanced wizard (or set the env vars above).
+`docker-compose.hermes.yml` is a different concern: it runs a *separate, parallel*
+Hermes environment alongside an OpenClaw stack (see
+[`docs/runbooks/staging-hermes-runtime.md`](runbooks/staging-hermes-runtime.md)),
+which is why it isn't shipped in the product tarball.
+
 The external runtime HTTP contract is documented in
 [`docs/runtime-external-http-contract.md`](runtime-external-http-contract.md).
-After building the app, validate the contract locally with:
+After `npm run build`, validate a runtime end to end with:
 
 ```bash
-npm run smoke:runtime:external-http
+npm run smoke:runtime:external-http    # generic BYO gateway (fake runtime)
+npm run smoke:runtime:codex            # Codex CLI bridge (needs `codex` on PATH)
+npm run smoke:runtime:claude-code      # Claude Code bridge (needs `claude` on PATH)
 ```
+
+The runtime adapter/bridge unit suite runs without a build via
+`npm run test:runtime`.
 
 ### Non-interactive / CI
 
