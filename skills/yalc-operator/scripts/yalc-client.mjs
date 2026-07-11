@@ -312,6 +312,11 @@ async function callMissionControlAndSave(args, label, method, endpoint, body) {
   const mc = resolveMissionControlConfig(args)
   const data = await missionControlRequest(mc, method, endpoint, body)
   const out = { ok: true, data, request: { method, endpoint, baseUrl: mc.baseUrl } }
+  if (data && data.async === true) {
+    out.async = true
+    out.jobId = data.jobId
+    out.statusUrl = data.statusUrl
+  }
   out.savedTo = saveRun(mc.slug, label, out)
   console.log(JSON.stringify(out, null, 2))
   return out
@@ -397,13 +402,22 @@ function callbackUrl() {
 
 // Long-op commands hit YALC endpoints that may return 202 + run async. For
 // those we attach callbackUrl + callbackContext so YALC can re-engage the
-// originating chat thread when the job finishes. callbackContext is passed in
-// by the agent as `--callback-context '{"slug":..,"threadId":..,"agent":..}'`
-// captured from the [MC Chat Context] block. When absent (e.g. a manual CLI
-// run with no chat thread), we omit the fields and the op stays fire-and-poll
-// only if the user asks — but normal agent use always supplies it.
+// originating chat thread when the job finishes. The chat runtime exposes this
+// context through SANCHO_CHAT_*; --callback-context remains an explicit CLI
+// fallback. A manual CLI run without either source remains fire-and-poll.
 function parseCallbackContext(args) {
-  if (!args.callbackContext) return null
+  if (!args.callbackContext) {
+    const slug = process.env.SANCHO_CHAT_SLUG
+    const threadId = process.env.SANCHO_CHAT_THREAD_ID
+    const agent = process.env.SANCHO_CHAT_AGENT
+    if (!slug || !threadId || !agent) return null
+    return {
+      slug,
+      threadId,
+      agent,
+      originalRequest: process.env.SANCHO_CHAT_REQUEST || undefined,
+    }
+  }
   let ctx
   try {
     ctx = JSON.parse(args.callbackContext)
@@ -413,7 +427,14 @@ function parseCallbackContext(args) {
   if (!ctx || typeof ctx !== 'object' || !ctx.slug || !ctx.threadId || !ctx.agent) {
     throw new Error('--callback-context requires { slug, threadId, agent }')
   }
-  return { slug: ctx.slug, threadId: ctx.threadId, agent: ctx.agent }
+  return {
+    slug: ctx.slug,
+    threadId: ctx.threadId,
+    agent: ctx.agent,
+    originalRequest: typeof ctx.originalRequest === 'string'
+      ? ctx.originalRequest
+      : process.env.SANCHO_CHAT_REQUEST || undefined,
+  }
 }
 
 // Merge callbackUrl + callbackContext into a long-op POST body when the agent
@@ -421,7 +442,15 @@ function parseCallbackContext(args) {
 function withAsyncCallback(body, args) {
   const ctx = parseCallbackContext(args)
   if (!ctx) return body
-  return { ...(body || {}), callbackUrl: callbackUrl(), callbackContext: ctx }
+  const command = typeof body?.command === 'string' ? body.command : undefined
+  const campaignId = typeof body?.campaignId === 'string' ? body.campaignId : undefined
+  const profileKind = typeof body?.profileKind === 'string' ? body.profileKind : undefined
+  const channel = typeof body?.channel === 'string' ? body.channel : undefined
+  return {
+    ...(body || {}),
+    callbackUrl: callbackUrl(),
+    callbackContext: { ...ctx, command, campaignId, profileKind, channel },
+  }
 }
 
 function normalizeLiveSkillIds(skillsData) {

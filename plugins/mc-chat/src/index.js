@@ -23,7 +23,7 @@ import { buildMcChatContextBlock } from "../../../src/lib/runtime/agent-contract
 import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
-import { applyBrandEnvToProcess } from "./brand-env.js";
+import { applyBrandEnvToProcess, applyRuntimeEnvToProcess } from "./brand-env.js";
 import { mcChatCostGuard } from "./cost-guard.js";
 import { buildAttachmentContextBlock } from "./attachments.js";
 import {
@@ -490,6 +490,12 @@ export default defineChannelPluginEntry({
           };
 
           const restoreBrandEnv = applyBrandEnvToProcess(slug);
+          const restoreChatEnv = applyRuntimeEnvToProcess({
+            SANCHO_CHAT_SLUG: slug,
+            SANCHO_CHAT_THREAD_ID: threadId,
+            SANCHO_CHAT_AGENT: requestedAgent || "sancho",
+            SANCHO_CHAT_REQUEST: text,
+          });
           let dispatchResult;
           try {
             dispatchResult = await dispatchInboundMessageWithBufferedDispatcher({
@@ -801,6 +807,7 @@ export default defineChannelPluginEntry({
             },
             });
           } finally {
+            restoreChatEnv();
             restoreBrandEnv();
           }
           const deliveredFinal = dispatchResult?.queuedFinal === true || (dispatchResult?.counts?.final || 0) > 0;

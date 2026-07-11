@@ -52,6 +52,26 @@ test("parseCallback accepts a failed payload with errorMessage", () => {
   assert.equal(p.errorMessage, "Apollo 429");
 });
 
+test("parseCallback preserves outbound workflow context", () => {
+  const p = parseCallback(validBody({
+    callbackContext: {
+      slug: "growth4u",
+      threadId: "growth4u:abc",
+      agent: "rocinante",
+      originalRequest: "Busca tres founders y prepara los mensajes",
+      command: "outbound.source",
+      campaignId: "camp-123",
+      profileKind: "b2b_contact",
+      channel: "linkedin",
+    },
+  }));
+
+  assert.equal(p.callbackContext.originalRequest, "Busca tres founders y prepara los mensajes");
+  assert.equal(p.callbackContext.command, "outbound.source");
+  assert.equal(p.callbackContext.campaignId, "camp-123");
+  assert.equal(p.callbackContext.channel, "linkedin");
+});
+
 test("parseCallback rejects a non-object body", () => {
   assert.throws(() => parseCallback("nope"), /body must be a JSON object/);
 });
@@ -115,6 +135,27 @@ test("buildReEngagePayload text includes job summary for a completed job", () =>
   assert.match(out.text, /job_123/);
   assert.match(out.text, /leads=132/);
   assert.match(out.text, /completado/);
+});
+
+test("buildReEngagePayload tells the agent to continue the authorized workflow", () => {
+  const payload = parseCallback(validBody({
+    callbackContext: {
+      slug: "growth4u",
+      threadId: "growth4u:abc",
+      agent: "rocinante",
+      originalRequest: "Busca tres founders y prepara una vista previa",
+      command: "outbound.source",
+      campaignId: "camp-123",
+      channel: "linkedin",
+    },
+  }));
+  const out = buildReEngagePayload(payload);
+
+  assert.match(out.text, /ejecutá ahora el siguiente paso interno/i);
+  assert.match(out.text, /Nunca ejecutes un envío real/i);
+  assert.match(out.text, /outbound\.source/);
+  assert.match(out.text, /camp-123/);
+  assert.match(out.text, /Busca tres founders/);
 });
 
 test("buildReEngagePayload text includes the error for a failed job", () => {
