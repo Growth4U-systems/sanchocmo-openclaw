@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.2.0...v1.2.1) (2026-07-11)
+
+
+### Bug Fixes
+
+* **installer:** make a fresh quick install work end-to-end ([#1226](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1226)) ([7b95311](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7b95311be81dfd21e580c6742fee04e4da39316f))
+* **installer:** make wizard interactive under the curl | bash one-liner ([#1224](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1224)) ([c940c7e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c940c7ef7e76b8dc3d7f4248fcc60539a9d7a8f4))
+* **open-design:** only surface the agentic editor when OD is enabled ([#1229](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1229)) ([eb3b4cc](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/eb3b4cc4b3e16a29bf7b17414c6f20ecd4229899))
+
 ## [1.2.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.1.0...v1.2.0) (2026-07-11)
 
 
