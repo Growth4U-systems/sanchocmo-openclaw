@@ -428,7 +428,10 @@ if [ "$WIZARD_MODE" = "advanced" ]; then
   say "  ${DIM}Press Enter for defaults — the installer relocates a busy port automatically.${RST}"
   MC_PORT="$(ask MC_PORT "Mission Control host port" "3000")"
   GATEWAY_HOST_PORT="$(ask GATEWAY_HOST_PORT "Gateway host port" "18789")"
-  LEGACY_HOST_PORT="$(ask LEGACY_HOST_PORT "Legacy mc-server host port" "18790")"
+  # The legacy mc-server (:18790) is a Strangler-Fig fallback the product no
+  # longer depends on (Next :3000 is canonical; full retirement is SAN-109), so
+  # we don't prompt for its host port. It keeps its 18790 default and still
+  # auto-relocates if busy; pin it by setting LEGACY_HOST_PORT in .env if needed.
 fi
 
 # --- 5. Access URL -----------------------------------------------------------
