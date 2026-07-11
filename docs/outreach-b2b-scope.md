@@ -16,28 +16,28 @@ La unidad de trabajo visible es la campaña. Cada campaña muestra una sola sigu
 
 ## Superficie de Sancho
 
-### Campañas
+### Encuentra
 
 - Lista de campañas B2B, como en Partnerships.
 - Cada campaña muestra target, canales, personas, personalizaciones y respuestas.
 - Una sola CTA calculada desde el estado real: `Buscar personas`, `Completar datos`, `Generar personalización`, `Revisar y contactar`, `Ver campaña en marcha` o `Ver respuestas`.
 - Crear campaña abre el flujo asistido de Sancho. No se pide al usuario que conozca YALC, Apollo, Unipile o Instantly.
 
-### Personas
+### Contactos
 
 - Lista y pipeline de personas de la campaña seleccionada.
 - Score, empresa, rol, canales utilizables y estado de contacto.
 - Acciones excepcionales: descartar, pausar, reactivar y abrir el perfil.
 - No contiene botones que simulen un envío cambiando solo el estado local.
 
-### Mensajes
+### Plantillas
 
 - Editor de la secuencia por canal.
 - Vista de la personalización por persona.
 - Para cada canal hay solo tres decisiones: generar/revisar, simular y aprobar/activar.
 - La cuenta de envío se resuelve desde la configuración de la campaña. Los IDs técnicos no se escriben en esta pantalla.
 
-### Respuestas
+### Inbox
 
 - Bandeja de acción, no espejo completo de LinkedIn o Instantly.
 - Solo muestra respuestas nuevas, positivas, excepciones y conversaciones pendientes.

@@ -11,7 +11,6 @@ import {
   ChevronRight,
   CircleAlert,
   ExternalLink,
-  FileText,
   Inbox,
   Loader2,
   Mail,
@@ -25,12 +24,10 @@ import {
   Target,
   Trash2,
   X,
-  Users,
-  type LucideIcon,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { OutreachTabs, type OutreachTabKey } from "@/components/outreach/outreach-tabs";
 import { SlideOver } from "@/components/shared/slide-over";
-import { TipoSelector } from "@/components/partnerships/tipo-selector";
 import { ScoreBar, ToastViewport, useToast } from "@/components/partnerships/ui";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
@@ -49,7 +46,7 @@ import {
   type StageFilterKey,
 } from "@/lib/partnerships/stage-mapping";
 
-type B2BTab = "encuentra" | "contactos" | "inbox" | "plantillas" | "settings";
+type B2BTab = OutreachTabKey | "settings";
 type ContactosVista = "kanban" | "lista";
 type OutboundAction =
   | "search"
@@ -304,28 +301,21 @@ interface LinkedInAutopilotCommandResponse {
   };
 }
 
-const TABS: Array<{ key: Exclude<B2BTab, "settings">; label: string; icon: LucideIcon }> = [
-  { key: "encuentra", label: "Campañas", icon: Briefcase },
-  { key: "contactos", label: "Personas", icon: Users },
-  { key: "plantillas", label: "Mensajes", icon: FileText },
-  { key: "inbox", label: "Respuestas", icon: Inbox },
-];
-
 const HEADERS: Record<B2BTab, { title: string; sub: string }> = {
   encuentra: {
-    title: "Campañas B2B",
+    title: "Encuentra personas",
     sub: "Crea una campaña y continúa siempre desde su siguiente acción.",
   },
   contactos: {
-    title: "Personas",
+    title: "Contactos",
     sub: "Revisa a quién encontró Sancho, sus datos y su estado de contacto.",
   },
   inbox: {
-    title: "Respuestas",
+    title: "Inbox",
     sub: "Atiende solo las conversaciones que necesitan una decisión humana.",
   },
   plantillas: {
-    title: "Mensajes",
+    title: "Plantillas",
     sub: "Genera, revisa y activa la secuencia de LinkedIn o email.",
   },
   settings: {
@@ -1805,6 +1795,13 @@ export function OutboundB2BView() {
         </header>
 
         <div className="space-y-4">
+          <OutreachTabs
+            active={tab === "settings" ? null : tab}
+            tipo="b2b"
+            testId="outbound-b2b-tabs"
+            onChange={(nextTab) => pushQuery({ tab: nextTab, campaign: selectedCampaignId })}
+          />
+
           <div className="flex flex-wrap items-end gap-3">
             {tab !== "encuentra" && (
               <B2BCampaignSelector
@@ -1818,7 +1815,6 @@ export function OutboundB2BView() {
               />
             )}
             <div className="ml-auto flex flex-wrap items-center gap-2">
-              <TipoSelector tipo="b2b" />
               <button
                 type="button"
                 onClick={refreshAll}
@@ -1831,28 +1827,6 @@ export function OutboundB2BView() {
           </div>
 
           <main className="min-w-0 space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <nav className="flex flex-wrap gap-2 overflow-x-auto" data-testid="outbound-b2b-tabs">
-                {TABS.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => pushQuery({ tab: item.key, campaign: selectedCampaignId })}
-                      className={cn(
-                        "flex items-center gap-1.5 whitespace-nowrap rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all",
-                        tab === item.key ? "border-rust bg-rust text-white" : "border-border hover:border-rust",
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-
             {pageError && (
               <div className="flex items-start gap-2 rounded-lg border-2 border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
                 <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />

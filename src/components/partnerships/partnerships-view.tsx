@@ -46,7 +46,7 @@ import type {
 } from "@/lib/partnerships/types";
 import type { DiscoverySearchRecord } from "@/lib/partnerships/discovery-types";
 import type { TemplateSummary } from "@/lib/partnerships/templates";
-import { TipoSelector } from "./tipo-selector";
+import { OutreachTabs, type OutreachTabKey } from "@/components/outreach/outreach-tabs";
 import { EncuentraTab } from "./encuentra-tab";
 import { KanbanView } from "./kanban-view";
 import { ListaView } from "./lista-view";
@@ -56,20 +56,8 @@ import { PlantillasTab } from "./plantillas-tab";
 import { SettingsTab } from "./settings-tab";
 import { ToastViewport, useToast } from "./ui";
 
-type PartnershipsTab =
-  | "encuentra"
-  | "contactos"
-  | "inbox"
-  | "plantillas"
-  | "settings";
+type PartnershipsTab = OutreachTabKey | "settings";
 type ContactosVista = "kanban" | "lista";
-
-const TABS: Array<{ key: PartnershipsTab; label: string; icon: string }> = [
-  { key: "encuentra", label: "Encuentra", icon: "🔎" },
-  { key: "contactos", label: "Contactos", icon: "▦" },
-  { key: "inbox", label: "Inbox", icon: "✉" },
-  { key: "plantillas", label: "Plantillas", icon: "✎" },
-];
 
 const HEADERS: Record<PartnershipsTab, { title: string; sub: string }> = {
   encuentra: {
@@ -826,32 +814,12 @@ export function PartnershipsView() {
           </div>
         </header>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <nav
-            className="flex flex-wrap gap-2 overflow-x-auto"
-            data-testid="partnerships-tabs"
-          >
-            {TABS.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => pushQuery({ tab: item.key })}
-                className={cn(
-                  "flex items-center gap-1.5 whitespace-nowrap rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-all",
-                  tab === item.key
-                    ? "border-rust bg-rust text-white"
-                    : "border-border hover:border-rust",
-                )}
-              >
-                <span aria-hidden>{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
-          </nav>
-          <div className="ml-auto">
-            <TipoSelector tipo="partnerships" />
-          </div>
-        </div>
+        <OutreachTabs
+          active={tab === "settings" ? null : tab}
+          tipo="partnerships"
+          testId="partnerships-tabs"
+          onChange={(nextTab) => pushQuery({ tab: nextTab })}
+        />
 
         {notConfigured ? (
           <div className="mx-auto max-w-2xl rounded-xl border border-border bg-card p-8 text-center">
