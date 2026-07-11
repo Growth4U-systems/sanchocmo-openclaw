@@ -14,7 +14,7 @@ context_required:
   - brand/{slug}/company-brief/company-brief.current.md
   - brand/{slug}/go-to-market/ecps/ecps.current.md
   - brand/{slug}/go-to-market/positioning/*/*.current.md
-  - brand/{slug}/brand-voice/brand-voice.current.md
+  - brand/{slug}/brand-book/brand-voice/brand-voice.current.md
   - brand/{slug}/integrations.json
 context_writes:
   - brand/{slug}/yalc/runs/

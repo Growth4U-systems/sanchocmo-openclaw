@@ -23,6 +23,7 @@ let mod: typeof import("../data/context-pack");
 
 const SKILL = "content-strategy";
 const DIR_SKILL = "discovery-runner-test";
+const GLOB_SKILL = "glob-context-test";
 
 // The skill's `context_required` (canonical filenames). The resolver must map
 // these to whatever the brand actually has on disk (canonical or legacy bare).
@@ -74,6 +75,12 @@ before(async () => {
   // Seed the skill catalog: SKILL.md files with `context_required` lists.
   writeSkill(SKILL, CONTEXT_REQUIRED);
   writeSkill(DIR_SKILL, ["brand/{slug}/outreach/searches/"]);
+  writeSkill(GLOB_SKILL, [
+    "brand/{slug}/company-brief/company-brief.current.md",
+    "brand/{slug}/go-to-market/positioning/*/*.current.md",
+    "brand/{slug}/brand-book/brand-voice/brand-voice.current.md",
+    "brand/{slug}/integrations.json",
+  ]);
 
   mod = await import("../data/context-pack");
 });
@@ -108,6 +115,8 @@ test("(a) canonical layout → verdict=ok + resolved absolute paths", () => {
   assert.match(pack.summary, /Acme Corp/);
   assert.match(pack.summary, /SaaS B2B/);
   assert.match(pack.summary, /Pymes industriales/);
+  assert.match(pack.summary, /Contexto Foundation: disponible/);
+  assert.match(pack.summary, /no interpretes este contador como ausencia de contexto/);
 });
 
 test("(b) legacy bare `current.md` layout → resolver maps the drift, verdict=ok", () => {
@@ -176,6 +185,30 @@ test("directory context_required resolves as directory context", () => {
   assert.equal(pack.documents[0].kind, "directory");
   assert.match(pack.documents[0].content, /ds-20260630-test\.json/);
   assert.match(pack.documents[0].content, /Creators fintech/);
+});
+
+test("glob context_required resolves matches without starving later documents", () => {
+  const slug = "globco";
+  writeBrandFile(slug, "company-brief/company-brief.current.md", COMPANY_BRIEF);
+  for (const id of ["ecp1", "ecp2", "ecp3", "ecp4"]) {
+    writeBrandFile(
+      slug,
+      `go-to-market/positioning/${id}/${id}.current.md`,
+      `# Positioning ${id}`,
+    );
+  }
+  writeBrandFile(slug, "brand-book/brand-voice/brand-voice.current.md", "# Voice");
+  writeBrandFile(slug, "integrations.json", "{}");
+
+  const pack = mod.assembleContextPack(slug, GLOB_SKILL);
+  const paths = pack.documents.map((doc) => doc.path);
+
+  assert.equal(pack.verdict, "ok");
+  assert.equal(pack.documents.length, 6, "context remains bounded");
+  assert.equal(paths.filter((docPath) => docPath.includes("/positioning/")).length, 3);
+  assert.ok(paths.some((docPath) => docPath.endsWith("brand-voice.current.md")));
+  assert.ok(paths.some((docPath) => docPath.endsWith("integrations.json")));
+  assert.deepEqual(pack.missingRequired, []);
 });
 
 test("(c) brand absent on disk → verdict=missing + no docPaths", () => {
