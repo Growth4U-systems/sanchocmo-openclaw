@@ -11,14 +11,36 @@ export type RuntimeCapabilities = Record<RuntimeCapability, boolean>;
 export interface InboundMessage {
   slug: string;
   threadId: string;
+  /** Mission Control ledger id echoed by every async runtime callback. */
+  missionControlRunId?: string;
+  /** Authenticated control-plane hop count. Control actions stop at depth 1. */
+  controlDepth?: 0 | 1;
   threadName?: string;
   text: string;
   userId: string;
   userName: string;
   linkedTo?: string;
+  /** Seed playbook for this turn. Advisory when `skillMode` is `auto`. */
   skill?: string;
+  /** Primary task workflow, distinct from an advisory per-turn skill hint. */
+  primarySkill?: string;
   skills?: string[];
-  scope?: "agent";
+  /** agent=all owned skills; task=task allowlist only; skill=guided primary. */
+  scope?: "agent" | "skill" | "task";
+  /** `auto` selects within scope; `pinned` starts from the primary guided skill and its allowlist. */
+  skillMode?: "auto" | "pinned";
+  /** Trusted one-turn Sancho override. Never changes durable thread ownership. */
+  temporaryAgent?: boolean;
+  /** Server-issued, expiring proposal required before a task may be created. */
+  taskRouteProposal?: {
+    id: string;
+    groupId: string;
+    agent: string;
+    skill?: string;
+    skills?: string[];
+    name: string;
+    brief: string;
+  };
   threadState?: unknown;
   docPath?: string;
   docKind?: string;

@@ -77,6 +77,7 @@
 // ============================================================
 
 import { resolveThreadSkills, type SkillContext } from "./skill-resolver";
+import { sanitizeShortId } from "./thread-id";
 import {
   getNamespaceOwner,
   getThreadOpener,
@@ -109,7 +110,7 @@ export interface ThreadConfig {
    * point). Absent/`"skill"` keeps the narrow single-skill behavior. Declared
    * in the manifest namespace entry and forwarded to the gateway via send.ts.
    */
-  scope?: "agent" | "skill";
+  scope?: "agent" | "skill" | "task";
   inputDocuments?: unknown[];
   requiredInputs?: unknown[];
   outputDocuments?: unknown[];
@@ -454,6 +455,17 @@ export function buildTaskIndex(
       const id = (task.id || "").toLowerCase();
       index.set(`task:${id}`, entry);
       index.set(`task-${id}`, entry);
+      // Tasks materialized from a routed chat may own a deterministic thread
+      // that is not derived from their task id. Index the persisted anchor too
+      // so reopening that thread restores the task harness instead of falling
+      // through to a generic namespace.
+      if (typeof task.mc_chat_thread_id === "string" && task.mc_chat_thread_id.trim()) {
+        const anchored = task.mc_chat_thread_id.trim();
+        const shortAnchor = anchored.includes(":")
+          ? anchored.slice(anchored.indexOf(":") + 1)
+          : anchored;
+        index.set(sanitizeShortId(shortAnchor), entry);
+      }
       // Index by pillar (if present)
       if (task.pillar) {
         const pl = task.pillar.toLowerCase();
@@ -526,10 +538,32 @@ function reopenFromNamespace(
     skill: owner.skill,
     skills: owner.skills,
     agent: owner.agent,
+    scope: owner.scope,
     linkedTo: subRest(owner.reopenLinkedTo),
     docPath: null,
     threadState: "continue",
   };
+}
+
+/**
+ * Resolve only the declared namespace route for a thread.
+ *
+ * Server ingress uses this as a durable fallback when a non-browser source
+ * (Discord, delegation, callback) sends only a thread id. Task resolution
+ * remains in `resolveFullThreadConfig`; this helper intentionally performs no
+ * filesystem or task-index lookup.
+ */
+export function resolveNamespaceThreadConfig(
+  slug: string,
+  threadId: string,
+): ThreadConfig | undefined {
+  const shortId = threadId.startsWith(`${slug}:`)
+    ? threadId.slice(slug.length + 1)
+    : threadId;
+  const match = matchNamespaceOwner(shortId);
+  return match
+    ? reopenFromNamespace(threadId, shortId, match.owner, match.rest)
+    : undefined;
 }
 
 /**
@@ -597,6 +631,16 @@ export function resolveFullThreadConfig(
         taskStatus: task.status as string | undefined,
         taskType: task.type as string | undefined,
         pillar: task.pillar as string | undefined,
+        agent: task.agent as string | undefined,
+        skills: task.skills as string[] | undefined,
+        inputDocuments: task.input_documents as unknown[] | undefined,
+        requiredInputs: task.required_inputs as unknown[] | undefined,
+        outputDocuments: task.output_documents as unknown[] | undefined,
+        dependsOn: task.depends_on
+          ? Array.isArray(task.depends_on)
+            ? task.depends_on as string[]
+            : [task.depends_on as string]
+          : undefined,
         deliverableFile,
       }
     );
@@ -669,13 +713,17 @@ export function buildTaskThread(
   // converge to the same thread.
   if (opts.pillar) {
     const config = buildPillarThread(slug, opts.pillar, opts.deliverableFile);
-    // Override skill if the task has an explicit one and the pillar
-    // resolution fell back to sancho-manager.
-    if (opts.taskSkill && config.skill === "sancho-manager") {
-      config.skill = opts.taskSkill;
-      config.skills = opts.skills?.length ? opts.skills : [opts.taskSkill];
-    }
+    // The task record, not pillar inference, owns the primary/supporting skill
+    // hints. A skill-less task must stay skill-less even though the pillar has a
+    // natural workflow, otherwise reopening silently recreates a pinned rail.
+    config.skill = opts.taskSkill || "";
+    config.skills = opts.skills?.length
+      ? opts.skills
+      : opts.taskSkill
+        ? [opts.taskSkill]
+        : [];
     if (opts.agent) config.agent = opts.agent;
+    config.scope = "task";
     config.inputDocuments = opts.inputDocuments;
     config.requiredInputs = opts.requiredInputs;
     config.outputDocuments = opts.outputDocuments;
@@ -698,12 +746,19 @@ export function buildTaskThread(
   return {
     threadId,
     threadName: taskName,
-    skill: opts.taskSkill || resolved.skill,
-    skills: opts.skills?.length ? opts.skills : resolved.skills,
+    skill: opts.taskSkill || "",
+    skills: opts.skills?.length
+      ? opts.skills
+      : opts.taskSkill
+        ? [opts.taskSkill]
+        : [],
     linkedTo: `projects/${projectId}/tasks/${taskId}`,
     docPath: opts.deliverableFile || `projects/${projectId}/tasks.json`,
     threadState: opts.taskStatus === "ready" || opts.taskStatus === "pending" ? "create" : "continue",
     agent: opts.agent || resolved.agent,
+    // The task is always the durable boundary. A declared primary skill guides
+    // the normal path, but does not pin the entire thread to that one workflow.
+    scope: "task",
     initialMessage: opts.taskSkill === "meeting-intelligence" && taskName.toLowerCase().includes("configurar")
       ? resolveOpener("meeting-intelligence-setup", { slug })
       : undefined,
@@ -735,17 +790,18 @@ export function buildContentTaskThread(
   }
 ): ThreadConfig {
   const threadId = `${slug}:content:${contentTaskId.toLowerCase()}`;
-  const skill = opts.skill || "social-writer";
+  const skill = opts.skill || "";
 
   return {
     threadId,
     threadName: contentTaskName,
     skill,
-    skills: opts.skills?.length ? opts.skills : [skill],
+    skills: opts.skills?.length ? opts.skills : skill ? [skill] : [],
     linkedTo: `projects/${projectId}/tasks/${parentTaskId}/content/${contentTaskId}`,
     docPath: opts.docPath || `projects/${projectId}/tasks.json`,
     threadState: opts.status === "Approved" || opts.status === "New" ? "create" : "continue",
     agent: opts.agent || "dulcinea",
+    scope: "task",
     inputDocuments: opts.inputDocuments,
     requiredInputs: opts.requiredInputs,
     outputDocuments: opts.outputDocuments,

@@ -143,6 +143,7 @@ function newState(key, ctx, startedAt = nowMs()) {
     blocked: false,
     blockReason: null,
     abortController: null,
+    managedActiveTurn: false,
   };
 }
 
@@ -276,6 +277,7 @@ export function createCostGuard({ env = process.env, clock = nowMs } = {}) {
     state.sessionKey = activeSessionKey || state.sessionKey;
     state.startedAt = startedAt ?? state.startedAt;
     state.abortController = abortController || null;
+    state.managedActiveTurn = true;
     return state;
   }
 
@@ -461,7 +463,13 @@ export function createCostGuard({ env = process.env, clock = nowMs } = {}) {
   }
 
   function agentEnd(_event, ctx = {}) {
-    if (ctx?.runId) runs.delete(ctx.runId);
+    if (!ctx?.runId) return;
+    const state = runs.get(ctx.runId);
+    // A blocked turn still needs its reason after the runtime's agent_end hook:
+    // the channel checks it once dispatch resolves so it can show the real
+    // budget failure instead of a generic provider/session error. The channel
+    // finally calls clearActiveTurn(), which is the authoritative cleanup.
+    if (!state?.blocked || !state.managedActiveTurn) runs.delete(ctx.runId);
   }
 
   function abortMessageFor(runId, activeSessionKey) {

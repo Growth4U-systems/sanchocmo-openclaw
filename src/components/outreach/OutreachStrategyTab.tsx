@@ -95,6 +95,7 @@ export function OutreachStrategyTab({ slug }: Props) {
           taskStatus: task.status,
           taskType: task.type,
           agent: task.agent,
+          skills: task.skills,
           deliverableFile: Array.isArray(task.deliverable_file)
             ? task.deliverable_file[0]
             : task.deliverable_file,
@@ -154,7 +155,9 @@ export function OutreachStrategyTab({ slug }: Props) {
               </div>
               <div className="text-sm font-medium text-foreground truncate">{task.name}</div>
               <div className="text-xs text-muted-foreground truncate">
-                {task.skill} · {task.agent}
+                {task.skill
+                  ? `${task.skill} · ${task.agent || "agente"}`
+                  : `${task.agent || "Agente"} · auto`}
               </div>
             </div>
             <button

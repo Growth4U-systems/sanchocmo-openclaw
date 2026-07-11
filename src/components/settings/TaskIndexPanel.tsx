@@ -13,7 +13,10 @@ interface TaskIndexEntry {
   taskName: string;
   status: string;
   skill: string;
+  skills?: string[];
+  agent?: string;
   skillOk: boolean;
+  executionMode?: "guided" | "agent";
   deliverableFile: string;
   docExists: boolean;
   mcChatThreadId: string;
@@ -212,11 +215,15 @@ export function TaskIndexPanel({ slug }: Props) {
                             </Link>
                           ))}
                         </div>
-                      ) : task.skillOk ? (
+                      ) : task.skill ? (
                         <Link href={`/dashboard/${slug}/skills/${task.skill}`}
                           className="text-[9px] bg-rust/10 text-rust px-1.5 py-0.5 rounded-full hover:bg-rust/20 no-underline transition-colors">
                           {task.skill}
                         </Link>
+                      ) : task.executionMode === "agent" ? (
+                        <span className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full">
+                          {task.agent ? `${task.agent} · auto` : "Agente · auto"}
+                        </span>
                       ) : "❌"}
                     </td>
                     <td className="text-center px-2 py-2">
@@ -242,7 +249,13 @@ export function TaskIndexPanel({ slug }: Props) {
                             }
                             const config = buildTaskThread(
                               slug, task.taskId, task.taskName, task.projectId,
-                              { taskSkill: task.skill, pillar: task.pillar || undefined, deliverableFile: task.deliverableFile || undefined }
+                              {
+                                taskSkill: task.skill || undefined,
+                                skills: task.skills,
+                                agent: task.agent,
+                                pillar: task.pillar || undefined,
+                                deliverableFile: task.deliverableFile || undefined,
+                              }
                             );
                             openChat(slug, config);
                           }}

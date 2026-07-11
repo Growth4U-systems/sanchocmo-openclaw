@@ -36,6 +36,27 @@ test("name is optional → omitted when absent", () => {
   assert.equal(out.delegations[0].name, undefined);
 });
 
+test("parses task routing hints without granting implicit creation", () => {
+  const text = ':::delegate\n{"agent":"hamete","name":"Mercado","brief":"Investiga","skill":"market-research","taskId":"P01-T03","groupId":"P01","proposalId":"proposal-123","confirmCreate":true}\n:::';
+  const out = parseDelegateMarkers(text, ALLOWED);
+  assert.deepEqual(out.delegations[0], {
+    agent: "hamete",
+    name: "Mercado",
+    brief: "Investiga",
+    skill: "market-research",
+    taskId: "P01-T03",
+    groupId: "P01",
+    proposalId: "proposal-123",
+    confirmCreate: true,
+  });
+
+  const unconfirmed = parseDelegateMarkers(
+    ':::delegate\n{"agent":"hamete","brief":"Investiga","confirmCreate":"true"}\n:::',
+    ALLOWED,
+  );
+  assert.equal(unconfirmed.delegations[0].confirmCreate, undefined);
+});
+
 test("collects multiple delegate blocks in order", () => {
   const text =
     ':::delegate\n{"agent":"hamete","brief":"research"}\n:::\nluego\n:::delegate\n{"agent":"rocinante","brief":"outreach"}\n:::';
@@ -97,4 +118,14 @@ test("slugForThread kebab-cases, strips accents, and bounds length", () => {
   assert.equal(slugForThread(""), "task");
   assert.equal(slugForThread(null), "task");
   assert.ok(slugForThread("x".repeat(100)).length <= 48);
+});
+
+test("strips an unterminated delegate tail and records it as malformed", () => {
+  const out = parseDelegateMarkers(
+    'Respuesta visible.\n\n:::delegate\n{"agent":"hamete","brief":"research"}',
+    ALLOWED,
+  );
+  assert.equal(out.text, "Respuesta visible.");
+  assert.deepEqual(out.delegations, []);
+  assert.equal(out.malformed.length, 1);
 });

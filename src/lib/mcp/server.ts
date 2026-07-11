@@ -43,6 +43,17 @@ import { getMeetingIntelligenceCronStatus, syncMeetingIntelligenceCron } from "@
 import { runMeetingIntelligenceSync } from "@/lib/data/meeting-intelligence-runner";
 import { getInternalClientStatus } from "@/lib/sancho-internal-api";
 import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
+import {
+  canonicalTaskRouteThreadId,
+  resolveSameGroupTaskRoute,
+} from "@/lib/data/task-routing";
+import {
+  getPendingTaskRouteProposal,
+  issueTaskRouteProposal,
+  proposalMatches,
+} from "@/lib/data/task-route-proposals";
+import { normalizeAgentSlug } from "@/lib/data/task-execution-contract";
+import { canonicalThreadId } from "@/lib/thread-id";
 import { brandDir, EXEC_PATH } from "@/lib/data/paths";
 import { isSafeFormula } from "@/lib/metrics/dashboard-schema";
 import { getContentConfig, updateContentConfig, type ContentConfig } from "@/lib/data/content-config";
@@ -1079,46 +1090,223 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Delegate Sancho work to a specialist",
       description:
-        "Creates or reuses an idempotent specialist-owned task thread, then dispatches the brief to that specialist via " +
-        "Mission Control chat. Requires tasks:write and chat:write. Defaults to dry-run and requires confirm=true. " +
+        "Resolves a compatible active task inside the current project/group, reuses its canonical thread, or suggests " +
+        "creating a task in that same group before dispatching the specialist via Mission Control chat. Creation is " +
+        "always fail-closed in MCP: the tool stores a proposal bound to the source thread, but only an explicit human " +
+        "confirmation received through MC Chat may create it. Never creates a standalone task. Requires tasks:write " +
+        "and chat:write. Existing-task dispatch defaults to dry-run and requires confirm=true. " +
         "Use this for real work owned by a specialist instead of asking Sancho to answer inline.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         agent: z.string().min(1).describe(`Active delegate agent id. Allowed: ${DELEGATE_AGENT_LIST}.`),
         name: z.string().min(1).describe("Task name shown in Mission Control."),
         brief: z.string().min(1).describe("Brief to dispatch to the specialist thread."),
-        threadId: z.string().optional().describe("Optional MC chat thread id. Defaults to an idempotent delegate-<agent>-<name> thread."),
+        sourceThreadId: z.string().optional().describe("Current MC chat thread. Used to derive the same project/group safely."),
+        sourceTaskId: z.string().optional().describe("Current task id. Used to derive the same project/group safely."),
+        targetTaskId: z.string().optional().describe("Existing destination task selected by the user."),
+        threadId: z.string().optional().describe("Existing destination MC chat thread selected by the user (legacy explicit target)."),
         threadName: z.string().optional().describe("Optional thread display name. Defaults to the task name."),
-        parentId: z.string().optional().describe("Optional parent task id."),
-        owner: z.string().optional().describe("Task owner label. Defaults to the specialist agent."),
+        parentId: z.string().optional().describe("Project/group id. New tasks are only suggested/created inside this group."),
+        owner: z.string().optional().describe("Legacy compatibility field. It cannot override an existing task owner and MCP does not create the proposed task."),
         skill: z.string().optional().describe("Skill that should run the task, when known."),
         skills: z.array(z.string()).optional().describe("Skill pipeline for the task, when known."),
-        status: z.string().optional().describe("Initial task status (default todo)."),
+        status: z.string().optional().describe("Legacy compatibility field. Existing task status is authoritative and MCP does not create the proposed task."),
+        proposalId: z.string().optional().describe("Pending same-thread creation proposal id. MCP still cannot complete creation without a human MC Chat confirmation."),
         dryRun: z.boolean().default(true).describe("When true, only previews the create+dispatch operation."),
-        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create/reuse and dispatch."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to dispatch an existing task. It never proves human consent for task creation."),
       },
     },
-    async ({ clientSlug, agent, name, brief, threadId, threadName, parentId, owner, skill, skills, status, dryRun, confirm }) =>
+    async ({ clientSlug, agent, name, brief, sourceThreadId, sourceTaskId, targetTaskId, threadId, threadName, parentId, skill, skills, proposalId, dryRun, confirm }) =>
       runTool(context, "sancho_delegate", clientSlug, async () => {
         assertClientScope(context, "tasks:write", clientSlug);
         assertClientScope(context, "chat:write", clientSlug);
         const agentSlug = normalizeDelegateAgent(agent);
-        const tid = threadId
-          ? normalizeChatThreadId(clientSlug, threadId)
-          : defaultDelegateThreadId(clientSlug, agentSlug, name);
-        const taskInput = pickDefined({
-          name,
-          description: brief,
-          brief,
-          status,
-          type: "execution",
-          parent_id: parentId,
-          owner: owner || agentSlug,
-          skill,
-          agent: agentSlug,
-          skills,
-          mc_chat_thread_id: tid,
+        if (![sourceThreadId, sourceTaskId, parentId].some((value) => typeof value === "string" && value.trim())) {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            action: "group_required",
+            requiresGroupSelection: true,
+            message: "sancho_delegate requires sourceThreadId, sourceTaskId or parentId so it can enforce the current project/group boundary.",
+          });
+        }
+        const resolution = await resolveSameGroupTaskRoute({
+          clientSlug,
+          sourceThreadId,
+          sourceTaskId,
+          groupId: parentId,
+          targetTaskId,
+          targetThreadId: threadId,
+          requestedAgent: agentSlug,
+          requestedSkill: skill,
+          requestedName: name,
         });
+
+        if (resolution.kind === "group_required") {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            requiresGroupSelection: true,
+            resolution,
+            message: "Choose the current project/group before delegating; no standalone task or thread was created.",
+          });
+        }
+        if (resolution.kind === "ambiguous") {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            requiresTaskSelection: true,
+            resolution,
+            message: "Select targetTaskId from the compatible tasks, or explicitly confirm creation after choosing a new task.",
+          });
+        }
+        if (resolution.kind === "no_change") {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            action: "noop",
+            resolution,
+            taskId: resolution.source.taskId,
+            threadId: resolution.source.targetThreadId,
+            message: "The resolver selected the current source task. No new turn was dispatched.",
+          });
+        }
+
+        if (resolution.kind === "suggest_create") {
+          const proposalSourceThreadId = await resolveMcpDelegateSourceThread(
+            clientSlug,
+            sourceThreadId,
+            sourceTaskId,
+          );
+          if (!proposalSourceThreadId) {
+            return jsonResult({
+              ok: true,
+              dispatched: false,
+              action: "source_thread_required",
+              requiresSourceThread: true,
+              resolution,
+              message: "No task was created. MCP creation proposals must be bound to a real source chat thread so a later human MC Chat message can confirm them.",
+            });
+          }
+
+          const proposalInput = {
+            clientSlug,
+            sourceThreadId: proposalSourceThreadId,
+            groupId: resolution.groupId,
+            agent: agentSlug,
+            skill: normalizeMcpDelegateSkill(skill),
+            skills: normalizeMcpDelegateSkills(skills),
+            name: name.trim(),
+            brief: brief.trim(),
+          };
+          const suppliedProposalId = typeof proposalId === "string" && proposalId.trim()
+            ? proposalId.trim()
+            : undefined;
+          let proposal = suppliedProposalId
+            ? await getPendingTaskRouteProposal(clientSlug, proposalSourceThreadId)
+            : undefined;
+          if (suppliedProposalId && (
+            !proposal
+            || proposal.id !== suppliedProposalId
+            || !proposalMatches(proposal, proposalInput)
+          )) {
+            return jsonResult({
+              ok: true,
+              dispatched: false,
+              action: "confirmation_required",
+              requiresHumanConfirmation: true,
+              resolution,
+              message: "No task was created. proposalId is missing, stale or does not match the exact source, group, agent, skills, name and brief.",
+            });
+          }
+          proposal ??= await issueTaskRouteProposal(proposalInput);
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            dryRun: true,
+            action: "suggest_create",
+            requiresConfirmation: true,
+            requiresHumanConfirmation: true,
+            resolution,
+            proposalId: proposal.id,
+            proposal: {
+              sourceThreadId: proposal.sourceThreadId,
+              groupId: proposal.groupId,
+              agent: proposal.agent,
+              skill: proposal.skill,
+              skills: proposal.skills,
+              name: proposal.name,
+              brief: proposal.brief,
+            },
+            message:
+              "No task was created or dispatched. MCP cannot authenticate human consent: show this exact proposal in the source MC Chat thread and wait for the user's explicit confirmation there. The MC Chat routing rail—not confirm=true in MCP—must perform creation.",
+          });
+        }
+
+        const tid = resolution.target.targetThreadId;
+        if (isMcpDelegateSelfRoute({
+          clientSlug,
+          sourceThreadId,
+          sourceTaskId,
+          targetTaskId: resolution.target.taskId,
+          targetThreadId: tid,
+        })) {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            action: "noop",
+            resolution,
+            taskId: resolution.target.taskId,
+            threadId: tid,
+            message: "The resolved destination is the current source task/thread. No new turn was dispatched.",
+          });
+        }
+
+        const task = await getTask(clientSlug, resolution.target.taskId);
+        if (!task || !isMcpDelegateTaskActive(task)) {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            action: "target_inactive",
+            resolution,
+            taskId: resolution.target.taskId,
+            message: "The resolved target disappeared or became inactive before dispatch. Nothing was sent.",
+          });
+        }
+        const targetAgent = normalizeAgentSlug(
+          isRecord(task) && typeof task.agent === "string" && task.agent.trim()
+            ? task.agent
+            : isRecord(task) && typeof task.owner === "string" && task.owner.trim()
+              ? task.owner
+              : resolution.target.agent,
+        );
+        if (!targetAgent || targetAgent !== agentSlug) {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            action: "owner_mismatch",
+            resolution,
+            taskId: resolution.target.taskId,
+            expectedAgent: targetAgent,
+            requestedAgent: agentSlug,
+            message: "The selected task belongs to another agent (or has no authoritative owner). Nothing was dispatched.",
+          });
+        }
+        if (
+          !resolution.groupId
+          || !resolution.target.groupId
+          || normalizedMcpRouteKey(resolution.groupId) !== normalizedMcpRouteKey(resolution.target.groupId)
+        ) {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            action: "group_mismatch",
+            resolution,
+            taskId: resolution.target.taskId,
+            message: "The selected task is not verifiably inside the resolved source group. Nothing was dispatched.",
+          });
+        }
+
         const payload: InboundMessage = {
           slug: clientSlug,
           threadId: tid,
@@ -1138,23 +1326,30 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message: "Set dryRun=false and confirm=true to create/reuse this task thread and dispatch the brief.",
+            action: "reuse",
+            resolution,
+            message: "Set dryRun=false and confirm=true to dispatch through the authoritative /api/chat/send task harness.",
             threadId: tid,
-            taskInput: { clientSlug, ...taskInput },
+            task,
             payload,
           });
         }
 
-        const task = await createTask(clientSlug, taskInput as Parameters<typeof createTask>[1]);
-        addMessage(tid, "user", brief);
         try {
-          const dispatch = await dispatchMcChatMessage(context, payload);
-          return jsonResult({ ok: true, task, threadId: tid, agent: agentSlug, dispatch });
+          const dispatch = await dispatchMcChatThroughControlPlane(context, payload);
+          return jsonResult({
+            ok: true,
+            action: "reuse",
+            resolution,
+            task,
+            threadId: tid,
+            agent: agentSlug,
+            dispatch,
+          });
         } catch (err) {
-          const taskId = isRecord(task) && typeof task.id === "string" ? task.id : "unknown";
           const message = err instanceof Error ? err.message : "Unknown gateway dispatch error";
           throw new Error(
-            `Created/reused task ${taskId} for ${agentSlug} at thread ${tid}, but the specialist was NOT dispatched: ${message}`,
+            `Resolved task ${resolution.target.taskId} for ${agentSlug} at thread ${tid}, but the specialist was NOT dispatched through the task harness: ${message}`,
           );
         }
       }),
@@ -4717,19 +4912,119 @@ function extractChatId(value: unknown): string | null {
   return typeof value.chatId === "string" ? value.chatId : null;
 }
 
-async function dispatchMcChatMessage(
+async function resolveMcpDelegateSourceThread(
+  clientSlug: string,
+  sourceThreadId?: string,
+  sourceTaskId?: string,
+): Promise<string | undefined> {
+  if (typeof sourceThreadId === "string" && sourceThreadId.trim()) {
+    return canonicalThreadId(normalizeChatThreadId(clientSlug, sourceThreadId));
+  }
+  if (typeof sourceTaskId !== "string" || !sourceTaskId.trim()) return undefined;
+  const wanted = normalizedMcpRouteKey(sourceTaskId);
+  const rows = await listUnifiedTaskRowsAsync(clientSlug);
+  const matches = rows.filter((row) => normalizedMcpRouteKey(row.id) === wanted);
+  if (matches.length !== 1 || String(matches[0].type).toLowerCase() === "project") return undefined;
+  return canonicalTaskRouteThreadId(matches[0], clientSlug);
+}
+
+function normalizeMcpDelegateSkill(value: string | undefined): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const token = value.trim().toLowerCase();
+  return /^[a-z0-9][a-z0-9_-]{0,127}$/.test(token) ? token : undefined;
+}
+
+function normalizeMcpDelegateSkills(value: string[] | undefined): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = Array.from(new Set(
+    value.map((item) => normalizeMcpDelegateSkill(item)).filter((item): item is string => Boolean(item)),
+  ));
+  return normalized.length ? normalized : undefined;
+}
+
+function normalizedMcpRouteKey(value: unknown): string {
+  return typeof value === "string" ? value.trim().toLocaleLowerCase("en-US") : "";
+}
+
+function isMcpDelegateSelfRoute(input: {
+  clientSlug: string;
+  sourceThreadId?: string;
+  sourceTaskId?: string;
+  targetTaskId: string;
+  targetThreadId: string;
+}): boolean {
+  if (
+    input.sourceTaskId
+    && normalizedMcpRouteKey(input.sourceTaskId) === normalizedMcpRouteKey(input.targetTaskId)
+  ) {
+    return true;
+  }
+  if (!input.sourceThreadId?.trim()) return false;
+  const source = canonicalThreadId(normalizeChatThreadId(input.clientSlug, input.sourceThreadId));
+  const target = canonicalThreadId(normalizeChatThreadId(input.clientSlug, input.targetThreadId));
+  return normalizedMcpRouteKey(source) === normalizedMcpRouteKey(target);
+}
+
+function isMcpDelegateTaskActive(task: unknown): boolean {
+  if (!isRecord(task) || typeof task.status !== "string" || !task.status.trim()) return false;
+  const status = task.status.trim().toLocaleLowerCase("en-US").replace(/_/g, "-");
+  return !new Set([
+    "archived",
+    "cancelled",
+    "canceled",
+    "completed",
+    "complete",
+    "done",
+    "finished",
+    "approved",
+    "discarded",
+    "published",
+    "rejected",
+  ]).has(status);
+}
+
+function mcNextBaseUrl(): string {
+  return (
+    process.env.MC_NEXT_URL
+    || process.env.BASE_URL
+    || process.env.NEXTAUTH_URL
+    || "http://localhost:3000"
+  ).replace(/\/+$/, "");
+}
+
+/**
+ * MCP delegation must enter through the same authenticated ingress as browser
+ * and runtime-controlled task turns. Calling the runtime adapter directly would
+ * bypass authoritative task/agent/skill resolution in `/api/chat/send`.
+ */
+async function dispatchMcChatThroughControlPlane(
   context: SanchoMcpContext,
   payload: InboundMessage,
-): Promise<{ chatId: string; gateway: unknown }> {
-  const result = await getRuntime().messaging.sendInbound(payload, {
-    headers: traceHeaders(context),
-  });
-  const data = parseGatewayBody(result.raw);
-  if (!result.ok) {
-    const detail = result.raw ? `: ${result.raw.slice(0, 500)}` : "";
-    throw new Error(`Mission Control runtime rejected message: HTTP ${result.status}${detail}`);
+): Promise<{ chatId: string; controlPlane: unknown }> {
+  const secret = getRuntime().messaging.getSharedSecret?.();
+  if (!secret) {
+    throw new McpAuthError(503, "MCP delegation requires the runtime MC chat shared secret");
   }
-  return { chatId: result.chatId || extractChatId(data) || payload.threadId, gateway: data };
+  const response = await fetch(`${mcNextBaseUrl()}/api/chat/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-MC-Secret": secret,
+      ...traceHeaders(context),
+    },
+    body: JSON.stringify(payload),
+  });
+  const raw = await response.text();
+  const data = parseGatewayBody(raw);
+  if (!response.ok) {
+    throw new Error(
+      `Mission Control task harness rejected message: HTTP ${response.status}${raw ? `: ${raw.slice(0, 500)}` : ""}`,
+    );
+  }
+  return {
+    chatId: extractChatId(data) || payload.threadId,
+    controlPlane: data,
+  };
 }
 
 function parseGatewayBody(raw: string): unknown {
@@ -4753,22 +5048,6 @@ function normalizeDelegateAgent(agent: string): string {
     );
   }
   return slug;
-}
-
-function defaultDelegateThreadId(clientSlug: string, agent: string, name: string): string {
-  return `${clientSlug}:delegate-${agent}-${slugForThread(name)}`;
-}
-
-function slugForThread(value: string): string {
-  const slug = value
-    .trim()
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 64);
-  return slug || "task";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

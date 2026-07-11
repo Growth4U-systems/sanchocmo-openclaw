@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useChatStore } from "@/stores/chat";
 import type { ThreadConfig } from "@/lib/chat-openers";
+import type { ThreadRouting } from "@/lib/runtime/agent-execution-policy";
 
 // ============================================================
 // Chat Hooks — TanStack Query integration for MC Chat system
@@ -76,6 +77,7 @@ interface ThreadListItem {
   lastMessage: { role: string; text: string; ts: number } | null;
   hasUnread: boolean;
   lastBotTs: number | null;
+  routing?: ThreadRouting;
 }
 
 /**

@@ -657,7 +657,7 @@ context_pack_url=(os.environ.get('MC_CONTEXT_PACK_URL') or 'http://localhost:300
 if not channel.get('contextPackUrl'):
     channel['contextPackUrl']=context_pack_url
     changed=True
-secret=os.environ.get('MC_CHAT_SECRET') or ''
+secret=os.environ.get('MC_CHAT_SECRET') or os.environ.get('OPENCLAW_GATEWAY_TOKEN') or ''
 if secret and channel.get('sharedSecret') != secret:
     channel['sharedSecret']=secret
     changed=True

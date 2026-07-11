@@ -240,3 +240,47 @@ test("beforeToolCall blocks exact repeated tool calls", () => {
   assert.equal(blocked.block, true);
   assert.match(blocked.blockReason, /misma llamada de herramienta/);
 });
+
+test("blocked reason survives agent_end until the channel fallback consumes it", () => {
+  const guard = createCostGuard({
+    env: { MC_CHAT_MAX_RISKY_TOOL_CALLS_PER_RUN: "1" },
+    clock: () => 1_000,
+  });
+  guard.registerActiveTurn({
+    runId: "run-lifecycle",
+    sessionKey: "session-lifecycle",
+    abortController: { abort: () => {} },
+  });
+
+  guard.beforeToolCall(
+    { name: "exec", input: { command: "find /root/.openclaw -type f" } },
+    { runId: "run-lifecycle", sessionKey: "session-lifecycle" },
+  );
+  guard.beforeToolCall(
+    { name: "exec", input: { command: "grep -rn partnerships /app" } },
+    { runId: "run-lifecycle", sessionKey: "session-lifecycle" },
+  );
+
+  guard.agentEnd({}, { runId: "run-lifecycle", sessionKey: "session-lifecycle" });
+  assert.match(
+    guard.abortMessageFor("run-lifecycle", "session-lifecycle"),
+    /herramientas de riesgo/,
+  );
+
+  guard.clearActiveTurn("run-lifecycle", "session-lifecycle");
+  assert.equal(guard.abortMessageFor("run-lifecycle", "session-lifecycle"), null);
+});
+
+test("agent_end still cleans blocked runs that are not managed MC turns", () => {
+  const guard = createCostGuard({
+    env: { MC_CHAT_MAX_MODEL_CALLS_PER_RUN: "1" },
+    clock: () => 1_000,
+  });
+
+  guard.modelCallStarted({ runId: "other-run" }, { runId: "other-run" });
+  guard.modelCallStarted({ runId: "other-run" }, { runId: "other-run" });
+  assert.match(guard.abortMessageFor("other-run"), /llamadas al modelo/);
+
+  guard.agentEnd({}, { runId: "other-run" });
+  assert.equal(guard.abortMessageFor("other-run"), null);
+});

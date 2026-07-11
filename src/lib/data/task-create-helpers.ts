@@ -2,22 +2,27 @@
  * task-create-helpers.ts — Shared helpers for task/project creation.
  *
  * Architectural principle (2026-04-15): every task and project in MC is
- * born with its 3 anchors atomically set, so the chat sidebar (and any
- * other surface) can resolve the thread's associated doc + skill + chat
+ * born with its durable document/chat anchors atomically set, so the chat
+ * sidebar (and any other surface) can resolve the thread's associated doc
+ * and chat
  * by direct lookup — NOT by retro-active heuristics.
  *
- * The 3 anchors:
+ * The durable anchors:
  *   1. `deliverable_file` — the concrete file path the skill writes
- *   2. `skill` — the slug of the skill that executes the task
- *   3. `mc_chat_thread_id` — canonical name of the MC chat JSON file
+ *   2. `mc_chat_thread_id` — canonical name of the MC chat JSON file
  *      (`brand/{slug}/chat/{mc_chat_thread_id}.json`)
+ *
+ * `skill` is an optional execution harness, not an identity anchor. When it
+ * is present the task starts guided/pinned; when absent the owning agent
+ * selects a skill (or none) per turn. Blueprints may still require a skill as
+ * a product contract, but generic task creation must not fail without one.
  *
  * (`discord_thread_id` was the 4th anchor — Discord retired, SAN-183 F5.)
  *
  * This module is the enforcement layer for API endpoints that create
  * tasks / projects. Every create endpoint MUST:
  *
- *   1. Accept `skill` and `deliverable_file` in the request body and
+ *   1. Accept `deliverable_file` (and optional `skill`) in the request body and
  *      validate them via `requireTaskAnchors()` BEFORE writing.
  *   2. Generate `mc_chat_thread_id` via `canonicalChatThreadId(taskId)`.
  *   3. Create the empty chat thread JSON file via `ensureEmptyChatThread()`.
@@ -55,21 +60,20 @@ export class TaskAnchorError extends Error {
 }
 
 /**
- * Enforce that a task has the 2 required anchors (`skill` + `deliverable_file`).
+ * Enforce the required document anchor (`deliverable_file`) when the task
+ * produces a document.
  * Throws a `TaskAnchorError` with the list of missing fields if not.
  *
  * Exemption (SAN-183 F5): tasks of type `integration` (connect Meeting
  * Intelligence / Call Prep / Daily Pulse) and `execution` (orchestration, e.g.
  * "Ejecutar Strategic Plan") produce configuration or projects, not documents
- * — `deliverable_file` is not required for them (skill + chat thread still are).
+ * — `deliverable_file` is not required for them. The chat anchor is generated
+ * by `applyTaskAnchors`; skill remains optional in every case.
  *
  * Callers should catch and return 400 to the API consumer.
  */
 export function requireTaskAnchors(task: TaskCreateInput): void {
   const missing: string[] = [];
-  if (!task.skill || (typeof task.skill === "string" && task.skill.trim() === "")) {
-    missing.push("skill");
-  }
   const deliverableExempt = task.type === "integration" || task.type === "execution";
   if (
     !deliverableExempt &&
@@ -82,9 +86,10 @@ export function requireTaskAnchors(task: TaskCreateInput): void {
   if (missing.length > 0) {
     throw new TaskAnchorError(
       `Task '${task.id}' missing required anchors: ${missing.join(", ")}. ` +
-        `Every task must be created with \`skill\` and \`deliverable_file\` ` +
-        `so the chat sidebar and other surfaces can resolve the thread ` +
-        `context without retro-active heuristics. See ` +
+        `Document-producing tasks must be created with \`deliverable_file\` ` +
+        `so the chat sidebar and other surfaces can resolve their output. ` +
+        `The \`skill\` field is optional: its presence selects a guided harness; ` +
+        `its absence selects agent-led execution. See ` +
         `src/lib/data/task-create-helpers.ts and the execution-gate protocol.`,
       missing
     );
@@ -128,7 +133,7 @@ export function ensureEmptyChatThread(slug: string, chatThreadId: string): void 
 
 /**
  * Populate the anchors on a task-input before writing to tasks.json.
- * Mutates `task` in place. Validates `skill` + `deliverable_file` first;
+ * Mutates `task` in place. Validates `deliverable_file` when required;
  * auto-computes `mc_chat_thread_id` if missing.
  *
  * Also creates the empty chat thread JSON file.

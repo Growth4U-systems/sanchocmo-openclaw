@@ -19,6 +19,10 @@ import type {
   SendInboundOptions,
   SendInboundResult,
 } from "../../types";
+import {
+  buildMcChatContextBlock,
+  resolveTurnSkillPolicy,
+} from "../../agent-contract/mc-chat-context.mjs";
 
 const EXTERNAL_HTTP_CAPABILITIES: RuntimeCapabilities = {
   chat: true,
@@ -170,21 +174,33 @@ function bridgeAttachmentBlock(attachments: unknown[] | undefined): string | nul
 }
 
 function bridgePrompt(message: InboundMessage): string {
-  const context = [
-    `Cliente: ${message.slug}`,
-    `Hilo: ${message.threadName || message.threadId}`,
-    message.agent || message.agentId ? `Agente solicitado por Sancho: ${message.agent || message.agentId}` : null,
-    message.skill ? `Skill seed: ${message.skill}` : null,
-    message.skills?.length ? `Skills disponibles: ${message.skills.join(", ")}` : null,
-    message.scope ? `Scope: ${message.scope}` : null,
-    message.linkedTo ? `Linked to: ${message.linkedTo}` : null,
-    message.docPath ? `Documento: ${message.docPath}${message.docKind ? ` (${message.docKind})` : ""}` : null,
-    message.senderRole ? `Rol del emisor: ${message.senderRole}` : null,
-  ].filter(Boolean);
+  const skillMode = resolveTurnSkillPolicy(message);
+  const requestedAgent = message.agent || message.agentId || "sancho";
+  const contract = buildMcChatContextBlock({
+    slug: message.slug,
+    threadId: message.threadId,
+    threadName: message.threadName,
+    linkedTo: message.linkedTo,
+    docPath: message.docPath,
+    docKind: message.docKind,
+    scope: message.scope,
+    skillMode,
+    skills: message.skills,
+    skill: message.skill,
+    primarySkill: message.primarySkill,
+    requestedAgent,
+    // `mc-bridge` returns final text synchronously; Next consumes control
+    // markers through the runtime-neutral control plane in `/api/chat/send`.
+    canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1,
+    temporaryAgent: message.temporaryAgent,
+    controlDepth: message.controlDepth,
+    taskRouteProposal: message.taskRouteProposal,
+  });
 
   const attachmentBlock = bridgeAttachmentBlock(message.attachments);
   const sections = [
-    context.length ? `Contexto Sancho:\n${context.map((line) => `- ${line}`).join("\n")}` : null,
+    contract,
+    message.senderRole ? `Rol del emisor: ${message.senderRole}` : null,
     `Mensaje:\n${message.text}`,
     attachmentBlock,
   ].filter(Boolean);

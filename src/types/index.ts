@@ -124,7 +124,8 @@ export interface Task {
   channel: string;          // "web", "content", "intelligence"...
   type: TaskType;
   batch_type?: string;      // Legacy fallback for type
-  skill: string;
+  /** Primary workflow harness. Optional tasks run agent-led with auto skill selection. */
+  skill?: string;
   skills?: string[];        // Canonical skill contract. `skill` remains primary.
   input_documents?: { path: string; name?: string; title?: string; source?: string }[];
   required_inputs?: { id: string; label: string; kind?: string; optional?: boolean; source?: string }[];

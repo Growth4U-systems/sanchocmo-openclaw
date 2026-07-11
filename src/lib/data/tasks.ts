@@ -21,7 +21,10 @@ import {
 } from "@/lib/data/content-tasks";
 import { findContentTaskById as findFlatContentTaskById, loadUnifiedContentTasks, upsertContentTask } from "@/lib/data/content-tasks-flat";
 import { expandBriefPatch } from "@/lib/data/task-brief";
-import { inferTaskExecutionContract } from "@/lib/data/task-execution-contract";
+import {
+  inferTaskExecutionContract,
+  persistedTaskSkillFields,
+} from "@/lib/data/task-execution-contract";
 import { instantiateTaskSet, getTaskSet } from "@/lib/data/task-blueprints";
 import { applyTaskAnchors, TaskAnchorError, type TaskCreateInput } from "@/lib/data/task-create-helpers";
 import { VALID_CONTENT_TASK_STATUSES } from "@/types";
@@ -210,6 +213,71 @@ function dbPatch(fields: Record<string, unknown>) {
 
 function dbSourceKey(...parts: string[]) {
   return parts.map((part) => encodeURIComponent(part)).join("/");
+}
+
+export function nextDbProjectIdFromIds(ids: readonly string[]): string {
+  const max = ids.reduce((current, id) => {
+    const match = id.match(/^P(\d+)$/i);
+    return match ? Math.max(current, Number(match[1])) : current;
+  }, -1);
+  return `P${String(max + 1).padStart(2, "0")}`;
+}
+
+export function nextChildTaskIdFromIds(parentId: string, ids: readonly string[]): string {
+  const escaped = parentId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^${escaped}-T(\\d+)$`, "i");
+  const max = ids.reduce((current, id) => {
+    const match = id.match(pattern);
+    return match ? Math.max(current, Number(match[1])) : current;
+  }, 0);
+  return `${parentId}-T${String(max + 1).padStart(2, "0")}`;
+}
+
+export function nextStandaloneTaskIdFromIds(ids: readonly string[]): string {
+  const max = ids.reduce((current, id) => {
+    const match = id.match(/^-?T(\d+)$/i);
+    return match ? Math.max(current, Number(match[1])) : current;
+  }, 0);
+  return `T${String(max + 1).padStart(2, "0")}`;
+}
+
+async function getNextDbProjectId(slug: string): Promise<string> {
+  const rows = await db
+    .select({ id: tasksTable.id })
+    .from(tasksTable)
+    .where(and(
+      eq(tasksTable.workspaceSlug, MC_TASKS_WORKSPACE),
+      eq(tasksTable.brandSlug, slug),
+      eq(tasksTable.type, "project"),
+    ));
+  return nextDbProjectIdFromIds(rows.map((row) => row.id));
+}
+
+async function getNextDbChildTaskId(slug: string, parentId: string): Promise<string> {
+  const rows = await db
+    .select({ id: tasksTable.id })
+    .from(tasksTable)
+    .where(and(
+      eq(tasksTable.workspaceSlug, MC_TASKS_WORKSPACE),
+      eq(tasksTable.brandSlug, slug),
+      eq(tasksTable.parentId, parentId),
+    ));
+  return nextChildTaskIdFromIds(parentId, rows.map((row) => row.id));
+}
+
+async function getNextDbStandaloneTaskId(slug: string): Promise<string> {
+  const rows = await db
+    .select({ id: tasksTable.id, parentId: tasksTable.parentId, type: tasksTable.type })
+    .from(tasksTable)
+    .where(and(
+      eq(tasksTable.workspaceSlug, MC_TASKS_WORKSPACE),
+      eq(tasksTable.brandSlug, slug),
+    ));
+  return nextStandaloneTaskIdFromIds(
+    rows
+      .filter((row) => !row.parentId && row.type !== "project")
+      .map((row) => row.id),
+  );
 }
 
 function projectDirs(slug: string): string[] {
@@ -542,9 +610,12 @@ export async function createTask(
     const type =
       input.type ||
       (input.parent_id ? "execution" : input.mc_chat_thread_id ? "execution" : "project");
-    const id = input.id || (type === "project"
-      ? await getNextProjectId(slug)
-      : await getNextChildTaskId(slug, input.parent_id || ""));
+    const generatedId = !input.id;
+    let id = input.id || (type === "project"
+      ? await getNextDbProjectId(slug)
+      : input.parent_id
+        ? await getNextDbChildTaskId(slug, input.parent_id)
+        : await getNextDbStandaloneTaskId(slug));
     const parentRows = input.parent_id
       ? await db.select().from(tasksTable).where(and(
           eq(tasksTable.workspaceSlug, MC_TASKS_WORKSPACE),
@@ -553,10 +624,10 @@ export async function createTask(
         )).limit(1)
       : [];
     const parent = parentRows[0];
-    const contract = inferTaskExecutionContract(
-      {
+    const buildRow = (rowId: string): typeof tasksTable.$inferInsert => {
+      const contractInput = {
         ...input,
-        id,
+        id: rowId,
         type,
         brand_slug: slug,
         owner: input.owner,
@@ -565,45 +636,76 @@ export async function createTask(
         input_documents: (input as { input_documents?: unknown }).input_documents,
         required_inputs: (input as { required_inputs?: unknown }).required_inputs,
         output_documents: (input as { output_documents?: unknown }).output_documents,
-      },
-      { brandSlug: slug },
-    );
-    const row = {
-      sourceKey: dbSourceKey(MC_TASKS_WORKSPACE, slug, type === "project" ? "project" : type === "content_task" ? "content_task" : "task", id),
-      id,
-      workspaceSlug: MC_TASKS_WORKSPACE,
-      brandSlug: slug,
-      parentId: input.parent_id || null,
-      parentKey: parent?.sourceKey || null,
-      type,
-      status: input.status || "todo",
-      name: input.name || id,
-      brief: input.brief || input.description || "",
-      completion: input.completion || input.done_criteria || input.deliverable || "",
-      executionNotes: input.execution_notes || input.approach || "",
-      description: input.description || null,
-      owner: input.owner || "Sancho",
-      agent: contract.agent,
-      skill: contract.skill || null,
-      skills: contract.skills,
-      channel: input.channel || null,
-      deliverable: input.deliverable || null,
-      doneCriteria: input.done_criteria || null,
-      dependsOn: input.depends_on || null,
-      inputDocuments: contract.inputDocuments,
-      requiredInputs: contract.requiredInputs,
-      outputDocuments: contract.outputDocuments,
-      createdAt: now,
-      updatedAt: now,
-      mcChatThreadId: input.mc_chat_thread_id || null,
-      outputFiles: input.output_files || [],
-      documents: input.documents || [],
-      attachments: input.attachments || [],
-    } satisfies typeof tasksTable.$inferInsert;
-    await db.insert(tasksTable).values(row).onConflictDoUpdate({
-      target: tasksTable.sourceKey,
-      set: { ...row, updatedAt: now },
-    });
+      };
+      const contract = inferTaskExecutionContract(contractInput, { brandSlug: slug });
+      const persistedSkills = persistedTaskSkillFields(contractInput, contract);
+      return {
+        sourceKey: dbSourceKey(MC_TASKS_WORKSPACE, slug, type === "project" ? "project" : type === "content_task" ? "content_task" : "task", rowId),
+        id: rowId,
+        workspaceSlug: MC_TASKS_WORKSPACE,
+        brandSlug: slug,
+        parentId: input.parent_id || null,
+        parentKey: parent?.sourceKey || null,
+        type,
+        status: input.status || "todo",
+        name: input.name || rowId,
+        brief: input.brief || input.description || "",
+        completion: input.completion || input.done_criteria || input.deliverable || "",
+        executionNotes: input.execution_notes || input.approach || "",
+        description: input.description || null,
+        owner: input.owner || "Sancho",
+        agent: contract.agent,
+        skill: persistedSkills.skill,
+        skills: persistedSkills.skills,
+        channel: input.channel || null,
+        deliverable: input.deliverable || null,
+        doneCriteria: input.done_criteria || null,
+        dependsOn: input.depends_on || null,
+        inputDocuments: contract.inputDocuments,
+        requiredInputs: contract.requiredInputs,
+        outputDocuments: contract.outputDocuments,
+        createdAt: now,
+        updatedAt: now,
+        mcChatThreadId: input.mc_chat_thread_id || null,
+        outputFiles: input.output_files || [],
+        documents: input.documents || [],
+        attachments: input.attachments || [],
+      };
+    };
+
+    // Generated IDs must never use upsert semantics: a stale/colliding `T01`
+    // would overwrite an unrelated task. Retry against the DB snapshot and fail
+    // loudly if contention does not settle. Explicit IDs retain the historical
+    // idempotent upsert behavior used by manifests/backfills.
+    let inserted = false;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      if (attempt > 0) {
+        id = type === "project"
+          ? await getNextDbProjectId(slug)
+          : input.parent_id
+            ? await getNextDbChildTaskId(slug, input.parent_id)
+            : await getNextDbStandaloneTaskId(slug);
+      }
+      const row = buildRow(id);
+      if (!generatedId) {
+        await db.insert(tasksTable).values(row).onConflictDoUpdate({
+          target: tasksTable.sourceKey,
+          set: { ...row, updatedAt: now },
+        });
+        inserted = true;
+        break;
+      }
+      const created = await db.insert(tasksTable).values(row).onConflictDoNothing({
+        target: tasksTable.sourceKey,
+      }).returning({ sourceKey: tasksTable.sourceKey });
+      if (created.length > 0) {
+        inserted = true;
+        break;
+      }
+    }
+    if (!inserted) {
+      throw new Error(`createTask: could not allocate a unique DB id under ${input.parent_id || slug}`);
+    }
     if (seedSection && type === "project") {
       for (const t of instantiateTaskSet(seedSection, { slug, projectId: id })) {
         const { id: childId, ...rest } = t as { id: string } & Record<string, unknown>;
@@ -664,11 +766,14 @@ export async function createTask(
     deliverable: input.deliverable || "",
     done_criteria: input.done_criteria || "",
     depends_on: input.depends_on || null,
+    parent_id: input.parent_id,
+    ...(found.projectId ? { project_id: found.projectId } : {}),
     owner: input.owner || "Sancho",
     status: input.status || "todo",
     channel: input.channel || "execution",
     type: input.type || "execution",
     skill: input.skill || "",
+    ...(Array.isArray(input.skills) && input.skills.length ? { skills: input.skills } : {}),
     ...(input.agent ? { agent: input.agent } : {}),
     ...(input.mc_chat_thread_id ? { mc_chat_thread_id: input.mc_chat_thread_id } : {}),
     output_files: input.output_files || [],

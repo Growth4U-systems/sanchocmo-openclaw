@@ -1,6 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { withErrorHandler } from "@/lib/api-middleware";
-import { addMessage, clearStatus, clearProgress } from "@/lib/data/mc-chat";
+import {
+  canAccessSlug,
+  compose,
+  withAuth,
+  withErrorHandler,
+} from "@/lib/api-middleware";
+import { addMessage, clearStatus, clearProgress, markCancelled } from "@/lib/data/mc-chat";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
 import {
   appendAgentRunEvent,
@@ -13,11 +18,20 @@ import {
  * Ported from mc-server.js:5046-5076
  * Cancels a running agent and discards its response
  */
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const { slug, threadId, agent, agentId } = req.body;
-  const tid = threadId || slug;
+  if (typeof slug !== "string" || !slug.trim()) {
+    return res.status(400).json({ error: "Missing slug" });
+  }
+  if (!canAccessSlug(req.ctx, slug)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  const tid = threadId || `${slug}:general`;
+  if (typeof tid !== "string" || !tid.startsWith(`${slug}:`)) {
+    return res.status(400).json({ error: "Thread does not belong to slug" });
+  }
   const requestedAgent =
     typeof agentId === "string" && agentId.trim()
       ? agentId.trim()
@@ -33,6 +47,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (activeRun) {
     markAgentRunCancelled(activeRun.id, tid, { requestedAgent });
   }
+  // Keep the legacy no-run-id callback path fail-closed during rolling deploys.
+  markCancelled(tid);
   clearStatus(tid);
   clearProgress(tid);
   addMessage(tid, "bot", "Ejecución detenida.", requestedAgent || "sancho");
@@ -84,4 +100,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.status(200).json({ ok: true, runtimeCancelled });
 }
 
-export default withErrorHandler(handler);
+export default compose(withErrorHandler, withAuth)(cancelHandler);

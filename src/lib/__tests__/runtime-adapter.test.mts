@@ -269,7 +269,7 @@ test("external HTTP adapter uses only external endpoint and secret", async () =>
   }
 });
 
-test("external HTTP adapter can speak the mc-bridge chat protocol", async () => {
+test("external HTTP bridge shares Sancho generalist and pinned skill semantics", async () => {
   const previousRuntime = process.env.SANCHO_RUNTIME;
   const previousExternalGateway = process.env.SANCHO_EXTERNAL_GATEWAY_URL;
   const previousExternalProtocol = process.env.SANCHO_EXTERNAL_PROTOCOL;
@@ -302,14 +302,12 @@ test("external HTTP adapter can speak the mc-bridge chat protocol", async () => 
       text: "hola",
       userId: "mc-admin",
       userName: "Admin",
-      agent: "dulcinea",
-      skill: "content-writer",
     });
 
     assert.equal(result.ok, true);
     assert.equal(result.chatId, "bridge-session-1");
     assert.equal(result.finalText, "respuesta desde Hermes");
-    assert.equal(result.finalAgent, "dulcinea");
+    assert.equal(result.finalAgent, "sancho");
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, "https://mc-bridge.test/chat");
     assert.equal(calls[0].init?.method, "POST");
@@ -318,9 +316,35 @@ test("external HTTP adapter can speak the mc-bridge chat protocol", async () => 
     const body = JSON.parse(String(calls[0].init?.body));
     assert.equal(body.agent, "sancho-coordinator");
     assert.equal(body.sessionKey, "test-sancho:acme:general");
-    assert.match(body.message, /Contexto Sancho:/);
-    assert.match(body.message, /Skill seed: content-writer/);
+    assert.match(body.message, /\[MC Chat Context\]/);
+    assert.match(body.message, /execution_mode: generalist/);
+    assert.match(body.message, /skill_policy: auto/);
+    assert.match(body.message, /Eres Sancho, el agente generalista/);
+    assert.match(body.message, /:::delegate/);
+    assert.match(body.message, /:::task-route/);
+    assert.doesNotMatch(body.message, /skill_hint:/);
     assert.match(body.message, /Mensaje:\nhola/);
+
+    const pinnedResult = await runtime.getRuntime().messaging.sendInbound({
+      slug: "acme",
+      threadId: "acme:general",
+      threadName: "General",
+      text: "escribe el borrador",
+      userId: "mc-admin",
+      userName: "Admin",
+      agent: "dulcinea",
+      skill: "content-writer",
+    });
+    assert.equal(pinnedResult.ok, true);
+    assert.equal(calls.length, 2);
+    const pinnedBody = JSON.parse(String(calls[1].init?.body));
+    assert.match(pinnedBody.message, /execution_mode: guided/);
+    assert.match(pinnedBody.message, /skill_policy: guided/);
+    assert.match(pinnedBody.message, /primary_skill: content-writer/);
+    assert.match(pinnedBody.message, /allowed_skills: content-writer/);
+    assert.match(pinnedBody.message, /:::sancho-intervene/);
+    assert.match(pinnedBody.message, /La skill primaria es el camino normal/i);
+    assert.match(pinnedBody.message, /Solo la opción 4 activa resolución\/cambio\/creación de tarea/i);
   } finally {
     globalThis.fetch = previousFetch;
     runtime.resetRuntimeForTests();

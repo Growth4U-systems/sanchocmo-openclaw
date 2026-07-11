@@ -9,7 +9,10 @@ export function getGatewayUrl(): string {
 }
 
 export function getChatSecret(): string | undefined {
-  return process.env.MC_CHAT_SECRET;
+  // Dedicated secret is preferred. Existing deployments always have the
+  // gateway token, so it is a safe fail-closed migration fallback rather than
+  // silently leaving the chat control plane unauthenticated.
+  return process.env.MC_CHAT_SECRET || process.env.OPENCLAW_GATEWAY_TOKEN;
 }
 
 async function readGatewayResponse(res: Response): Promise<{ chatId?: string; raw: string }> {

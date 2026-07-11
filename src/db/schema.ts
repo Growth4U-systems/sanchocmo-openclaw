@@ -8,6 +8,7 @@ import {
   real,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // ============================================================
@@ -506,6 +507,28 @@ export const mcpAuditEvents = pgTable("mcp_audit_events", {
   index("mcp_audit_events_tool_idx").on(table.toolName),
   index("mcp_audit_events_client_idx").on(table.clientSlug),
   index("mcp_audit_events_ok_idx").on(table.ok),
+]);
+
+// ============================================================
+// One-shot task routing proposals
+// ============================================================
+
+export const taskRouteProposals = pgTable("task_route_proposals", {
+  id: text("id").primaryKey(),
+  clientSlug: text("client_slug").notNull(),
+  sourceThreadId: text("source_thread_id").notNull(),
+  groupId: text("group_id").notNull(),
+  agent: text("agent").notNull(),
+  skill: text("skill"),
+  skills: jsonb("skills").$type<string[]>(),
+  name: text("name").notNull(),
+  brief: text("brief").notNull(),
+  candidateTaskIds: jsonb("candidate_task_ids").$type<string[]>(),
+  createdAt: timestamp("created_at").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+}, (table) => [
+  uniqueIndex("task_route_proposals_source_idx").on(table.clientSlug, table.sourceThreadId),
+  index("task_route_proposals_expires_idx").on(table.expiresAt),
 ]);
 
 export const feedbackInsights = pgTable("feedback_insights", {

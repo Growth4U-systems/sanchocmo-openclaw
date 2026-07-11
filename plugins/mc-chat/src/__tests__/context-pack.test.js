@@ -81,7 +81,7 @@ test("context-pack base URL can come from environment", () => {
   assert.equal(resolveContextPackBaseUrl(), "http://next-from-env:3000");
 });
 
-test("client context block embeds document content instead of requiring disk reads", () => {
+test("client context block exposes a selective manifest instead of embedding documents", () => {
   const block = buildClientContextBlock({
     slug: "growth4u",
     skill: "discovery-plan-builder",
@@ -99,13 +99,14 @@ test("client context block embeds document content instead of requiring disk rea
     verdict: "partial",
   });
 
-  assert.match(block, /\[Client Context\]/);
-  assert.match(block, /# Company Brief/);
-  assert.match(block, /Contexto incompleto/);
-  assert.match(block, /go-to-market\/ecps/);
-  assert.match(block, /No están generados estos archivos de contexto inicial/);
-  assert.match(block, /Rutas canonicas/);
-  assert.doesNotMatch(block, /LÉELOS de disco/);
+  assert.match(block, /\[Client Context Manifest\]/);
+  assert.match(block, /Cliente: Growth4U/);
+  assert.match(block, /company-brief\/company-brief\.current\.md/);
+  assert.match(block, /lee de forma selectiva/i);
+  assert.match(block, /lee solo fragmentos relevantes/i);
+  assert.doesNotMatch(block, /# Company Brief/);
+  assert.doesNotMatch(block, /ICP: B2B SaaS/);
+  assert.doesNotMatch(block, /go-to-market\/ecps/);
 });
 
 test("foundation directive remains available for an absent brand", () => {
@@ -113,5 +114,5 @@ test("foundation directive remains available for an absent brand", () => {
 
   assert.match(block, /\[STOP/);
   assert.match(block, /missingco/);
-  assert.match(block, /No están generados los archivos iniciales de contexto/);
+  assert.match(block, /No hay Foundation en disco/);
 });

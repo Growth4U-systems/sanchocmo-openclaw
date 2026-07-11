@@ -28,12 +28,17 @@ export function parseDelegateMarkers(text, allowedAgents = DELEGATE_AGENTS) {
   }
   const delegations = [];
   const malformed = [];
-  const cleaned = text.replace(DELEGATE_BLOCK_RE, (block, json) => {
+  let cleaned = text.replace(DELEGATE_BLOCK_RE, (block, json) => {
     const parsed = parseOne(json, allowedAgents);
     if (parsed) delegations.push(parsed);
     else malformed.push(block);
     return "";
   });
+  const danglingAt = cleaned.indexOf(":::delegate");
+  if (danglingAt >= 0) {
+    malformed.push(cleaned.slice(danglingAt));
+    cleaned = cleaned.slice(0, danglingAt);
+  }
   return { text: collapseGaps(cleaned), delegations, malformed };
 }
 
@@ -50,7 +55,34 @@ function parseOne(json, allowedAgents) {
   if (!agent || !allowedAgents.has(agent)) return null;
   if (!brief) return null;
   const name = typeof obj.name === "string" ? obj.name.trim() : "";
-  return { agent, brief, name: name || undefined };
+  const skill = cleanToken(obj.skill);
+  const taskId = cleanIdentifier(obj.taskId);
+  const groupId = cleanIdentifier(obj.groupId);
+  const proposalId = cleanIdentifier(obj.proposalId);
+  return {
+    agent,
+    brief,
+    name: name || undefined,
+    ...(skill ? { skill } : {}),
+    ...(taskId ? { taskId } : {}),
+    ...(groupId ? { groupId } : {}),
+    ...(proposalId ? { proposalId } : {}),
+    ...(obj.confirmCreate === true ? { confirmCreate: true } : {}),
+  };
+}
+
+function cleanToken(value) {
+  if (typeof value !== "string") return "";
+  const token = value.trim().toLowerCase();
+  return /^[a-z0-9][a-z0-9_-]{0,127}$/i.test(token) ? token : "";
+}
+
+function cleanIdentifier(value) {
+  if (typeof value !== "string") return "";
+  const identifier = value.trim();
+  return identifier && identifier.length <= 160 && !/[\r\n]/.test(identifier)
+    ? identifier
+    : "";
 }
 
 function collapseGaps(text) {

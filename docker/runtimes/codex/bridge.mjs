@@ -5,6 +5,10 @@ import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { randomUUID, timingSafeEqual } from "node:crypto";
+import {
+  buildMcChatContextBlock,
+  resolveTurnSkillPolicy,
+} from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 18793;
@@ -124,6 +128,22 @@ async function postWebhook(payload) {
   }
 }
 
+function callbackIdentity(message) {
+  return typeof message?.missionControlRunId === "string" && message.missionControlRunId
+    ? { missionControlRunId: message.missionControlRunId }
+    : {};
+}
+
+function postTerminalOnce(message, payload, label) {
+  const entry = activeRuns.get(message.threadId);
+  if (!entry || entry.terminalPosted) return false;
+  entry.terminalPosted = true;
+  if (activeRuns.get(message.threadId) === entry) activeRuns.delete(message.threadId);
+  postWebhook({ ...payload, ...callbackIdentity(message) })
+    .catch((e) => console.error(`[codex bridge] ${label} webhook failed:`, e.message));
+  return true;
+}
+
 function normalizeArray(value) {
   if (!Array.isArray(value)) return [];
   return value.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim());
@@ -171,6 +191,16 @@ export async function fetchContextPack(message) {
 }
 
 export function buildCodexPrompt(message, contextPack = null) {
+  const requestedAgent = message.agent || message.agentId || "sancho";
+  const skillMode = resolveTurnSkillPolicy(message);
+  const mcChatContext = buildMcChatContextBlock({
+    ...message,
+    requestedAgent,
+    skillMode,
+    canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1,
+    temporaryAgent: message.temporaryAgent,
+    taskRouteProposal: message.taskRouteProposal,
+  });
   const runtimeContext = {
     slug: message.slug,
     threadId: message.threadId,
@@ -179,6 +209,8 @@ export function buildCodexPrompt(message, contextPack = null) {
     skill: message.skill,
     skills: normalizeArray(message.skills),
     scope: message.scope,
+    skillMode,
+    temporaryAgent: message.temporaryAgent === true,
     linkedTo: message.linkedTo,
     docPath: message.docPath,
     docKind: message.docKind,
@@ -195,6 +227,8 @@ export function buildCodexPrompt(message, contextPack = null) {
     "Return only the final answer that should appear in the Sancho chat.",
     "Do not modify files unless the user explicitly asks for file changes.",
     "Do not mention the external-http transport or bridge internals unless the user asks.",
+    "",
+    mcChatContext,
     "",
     "Runtime context:",
     JSON.stringify(runtimeContext, null, 2),
@@ -274,6 +308,7 @@ async function postProgress(message, runId, label, detail) {
   await postWebhook({
     slug: message.slug,
     threadId: message.threadId,
+    ...callbackIdentity(message),
     role: "progress",
     agent: message.agent || message.agentId || "codex",
     event: {
@@ -311,7 +346,7 @@ async function startCodexRun(message, runId) {
     env: { ...process.env, SANCHO_RUNTIME_RUN_ID: runId },
     stdio: ["ignore", "pipe", "pipe"],
   });
-  const entry = existing || { runId, child: null, killed: false, pending: false };
+  const entry = existing || { runId, child: null, killed: false, pending: false, terminalPosted: false };
   entry.child = child;
   entry.pending = false;
   activeRuns.set(message.threadId, entry);
@@ -329,7 +364,7 @@ async function startCodexRun(message, runId) {
     entry.killed = true;
     child.kill("SIGTERM");
     setTimeout(() => child.kill("SIGKILL"), 1000).unref();
-    postWebhook({
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: "Codex did not finish the runtime turn before the timeout.",
@@ -340,7 +375,7 @@ async function startCodexRun(message, runId) {
         provider: "codex",
         classifiedAt: Date.now(),
       },
-    }).catch((e) => console.error("[codex bridge] timeout webhook failed:", e.message));
+    }, "timeout");
   }, runTimeoutMs());
 
   postProgress(
@@ -352,8 +387,8 @@ async function startCodexRun(message, runId) {
 
   child.on("error", (e) => {
     clearTimeout(timeout);
-    activeRuns.delete(message.threadId);
-    postWebhook({
+    entry.killed = true;
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: `Could not start Codex: ${e.message}`,
@@ -364,29 +399,28 @@ async function startCodexRun(message, runId) {
         provider: "codex",
         classifiedAt: Date.now(),
       },
-    }).catch((err) => console.error("[codex bridge] error webhook failed:", err.message));
+    }, "error");
   });
 
   child.on("close", (code, signal) => {
     clearTimeout(timeout);
-    activeRuns.delete(message.threadId);
-    if (entry.killed) return;
+    if (entry.killed || entry.terminalPosted) return;
 
     const fileOutput = fs.existsSync(outputFile) ? fs.readFileSync(outputFile, "utf8") : "";
     const cleanOutput = cleanCodexOutput(fileOutput || stdout);
     const cleanStderr = stripAnsi(stderr).trim();
     if (code === 0) {
-      postWebhook({
+      postTerminalOnce(message, {
         slug: message.slug,
         threadId: message.threadId,
         text: cleanOutput || "(Codex finished without text output.)",
         agent: message.agent || message.agentId || "codex",
-      }).catch((e) => console.error("[codex bridge] final webhook failed:", e.message));
+      }, "final");
       return;
     }
 
     const raw = [cleanStderr, cleanOutput].filter(Boolean).join("\n\n").slice(0, 4096);
-    postWebhook({
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: `Codex failed while executing this runtime turn${signal ? ` (${signal})` : ""}.`,
@@ -397,7 +431,7 @@ async function startCodexRun(message, runId) {
         provider: "codex",
         classifiedAt: Date.now(),
       },
-    }).catch((e) => console.error("[codex bridge] failure webhook failed:", e.message));
+    }, "failure");
   });
 }
 
@@ -439,10 +473,9 @@ async function handleInbound(req, res) {
   }
 
   const runId = `codex_${randomUUID()}`;
-  activeRuns.set(message.threadId, { runId, child: null, killed: false, pending: true });
+  activeRuns.set(message.threadId, { runId, child: null, killed: false, pending: true, terminalPosted: false });
   startCodexRun(message, runId).catch((e) => {
-    activeRuns.delete(message.threadId);
-    postWebhook({
+    postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
       text: `Could not start Codex: ${e.message}`,
@@ -453,7 +486,7 @@ async function handleInbound(req, res) {
         provider: "codex",
         classifiedAt: Date.now(),
       },
-    }).catch((err) => console.error("[codex bridge] start webhook failed:", err.message));
+    }, "start");
   });
   return json(res, 202, { ok: true, runId, chatId: runId, threadId: message.threadId });
 }

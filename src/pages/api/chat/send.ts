@@ -1,21 +1,48 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { withErrorHandler } from "@/lib/api-middleware";
+import {
+  canAccessSlug,
+  compose,
+  withAuth,
+  withErrorHandler,
+} from "@/lib/api-middleware";
 import {
   addMessage,
   clearStatus,
+  getThreadRouting,
+  setThreadRouting,
   setStatusEntry,
   type ChatAttachment,
   type ErrorDetail,
 } from "@/lib/data/mc-chat";
 import { maybeMarkClarifyAnswered } from "@/lib/clarify-autostatus";
-import { skillsOwnedBy } from "@/lib/skill-resolver";
+import { resolveNamespaceThreadConfig } from "@/lib/chat-openers";
+import { resolveTaskThreadExecutionRoute } from "@/lib/data/task-routing";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
 import {
+  resolveAgentTurnPolicy,
+  toThreadRouting,
+} from "@/lib/runtime/agent-execution-policy";
+import {
   createAgentRun,
+  getAgentRunByIdempotencyKey,
   markAgentRunCompleted,
   markAgentRunDispatched,
   markAgentRunFailed,
 } from "@/lib/data/agent-runs";
+import {
+  discardPendingTaskRouteProposal,
+  getPendingTaskRouteProposal,
+  isExplicitTaskCreationRejection,
+} from "@/lib/data/task-route-proposals";
+import { dispatchRuntimeControlActions } from "@/lib/runtime/control-actions";
+import { parseRuntimeControlReply } from "@/lib/runtime/agent-contract/control-reply.mjs";
+import { resolveChatUserId } from "@/lib/runtime/agent-contract/chat-principal.mjs";
+
+function normalizedIdempotencyKey(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const key = value.trim();
+  return key && key.length <= 240 && !/[\r\n\0]/.test(key) ? key : undefined;
+}
 
 function gatewayErrorDetail(raw: string): ErrorDetail {
   return {
@@ -30,7 +57,7 @@ function gatewayErrorDetail(raw: string): ErrorDetail {
  * Ported from mc-server.js:5079-5132
  * Sends a message from the frontend, stores locally, forwards to gateway
  */
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const {
@@ -50,46 +77,177 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     _source,
     agent,
     scope,
+    skillMode,
+    temporaryAgent,
+    controlDepth: claimedControlDepth,
+    idempotencyKey: claimedIdempotencyKey,
+    isAdmin: claimedIsAdmin,
+    senderRole: claimedSenderRole,
   } = req.body;
 
   if (!slug || !text) {
     return res.status(400).json({ error: "Missing slug or text" });
   }
 
+  const runtime = getRuntime();
+  const sharedSecret = runtime.messaging.getSharedSecret?.();
+  const suppliedSecret = Array.isArray(req.headers["x-mc-secret"])
+    ? req.headers["x-mc-secret"][0]
+    : req.headers["x-mc-secret"];
+  const trustedRuntimeRequest = Boolean(
+    sharedSecret && suppliedSecret && suppliedSecret === sharedSecret,
+  );
+  if (!trustedRuntimeRequest && !canAccessSlug(req.ctx, String(slug))) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  if (temporaryAgent === true) {
+    if (typeof agent !== "string" || agent.trim().toLowerCase() !== "sancho") {
+      return res.status(400).json({ error: "temporaryAgent is only valid for Sancho" });
+    }
+    if (!sharedSecret) {
+      return res.status(503).json({ error: "Temporary intervention requires MC_CHAT_SECRET" });
+    }
+    if (!trustedRuntimeRequest) {
+      return res.status(403).json({ error: "Temporary intervention requires a trusted runtime request" });
+    }
+  }
+  if (trustedRuntimeRequest && claimedControlDepth !== undefined && claimedControlDepth !== 0 && claimedControlDepth !== 1) {
+    return res.status(400).json({ error: "controlDepth must be 0 or 1" });
+  }
+  const controlDepth: 0 | 1 = trustedRuntimeRequest && claimedControlDepth === 1 ? 1 : 0;
+
   const tid = threadId || `${slug}:general`;
-  const rawAgent = typeof agent === "string" && agent.trim() ? agent.trim() : undefined;
   const shortThreadId =
     typeof tid === "string" && tid.startsWith(`${slug}:`)
       ? tid.slice(String(slug).length + 1)
       : typeof tid === "string"
         ? tid
         : "";
-  const resolvedAgent = rawAgent || (shortThreadId === "yalc" ? "rocinante" : undefined);
-  const resolvedSkill = skill || (shortThreadId === "yalc" ? "yalc-operator" : undefined);
-  const resolvedSkills =
-    Array.isArray(skills) && skills.length > 0
-      ? skills
-      : resolvedSkill
-        ? [resolvedSkill]
-        : undefined;
-  // SAN-327 — agent-scoped (broad) threads let the owning specialist use ANY of
-  // its own skills in the same thread. Widen the skill set to the agent's full
-  // owned set (seed skill first), so the gateway can tell the agent its whole
-  // toolset instead of just the seed skill. Narrow threads stay untouched, and
-  // the default agent (sancho) is excluded — it delegates rather than widens.
-  const isAgentScope =
-    scope === "agent" && !!resolvedAgent && resolvedAgent !== "sancho";
-  const effectiveSkills = isAgentScope
-    ? Array.from(
-        new Set([
-          ...(resolvedSkill ? [resolvedSkill] : []),
-          ...skillsOwnedBy(resolvedAgent),
-          ...(resolvedSkills ?? []),
-        ]),
-      )
-    : resolvedSkills;
+  const persistedRoute = getThreadRouting(tid);
+  const namespaceRoute = resolveNamespaceThreadConfig(slug, tid);
+  const requestRoute = { agent, scope, skillMode, skill, skills };
+  const taskExecution = await resolveTaskThreadExecutionRoute(slug, tid);
+  if (taskExecution.kind === "ambiguous") {
+    return res.status(409).json({
+      error: "Ambiguous task thread anchor",
+      taskIds: taskExecution.taskIds,
+    });
+  }
+  if (taskExecution.kind === "inactive") {
+    return res.status(409).json({
+      error: "Task is not active",
+      taskId: taskExecution.taskId,
+    });
+  }
+  const taskExecutionRoute = taskExecution.kind === "task"
+    ? taskExecution.route
+    : undefined;
+  const persistedExecutionRoute = !taskExecutionRoute && persistedRoute?.scope === "task"
+    ? { ...persistedRoute, scope: "agent" as const, skillMode: "auto" as const }
+    : persistedRoute;
+  const requestedExecutionRoute = !taskExecutionRoute && requestRoute.scope === "task"
+    ? { ...requestRoute, scope: "agent" as const, skillMode: "auto" as const }
+    : requestRoute;
+  const turnPolicy = resolveAgentTurnPolicy([
+    // The current task record is authoritative for its primary skill and
+    // allowlist. Persisted ownership then wins over browser metadata.
+    taskExecutionRoute ?? {},
+    persistedExecutionRoute ?? requestedExecutionRoute,
+    requestedExecutionRoute,
+    namespaceRoute ?? {},
+    shortThreadId === "yalc"
+      ? { agent: "rocinante", scope: "agent", skill: "yalc-operator" }
+      : {},
+  ], { temporaryAgent, agent });
+  const policy = turnPolicy.policy;
+  const isTemporarySancho = turnPolicy.temporarySancho;
+  const resolvedAgent = policy.agent;
+  const resolvedSkill = policy.skillHint;
+  const resolvedPrimarySkill = policy.scope === "task"
+    ? taskExecutionRoute?.skill
+    : policy.scope === "skill"
+      ? policy.skillHint
+      : undefined;
+  const effectiveSkills = policy.availableSkills;
   const parsedAttachments: ChatAttachment[] | undefined =
     Array.isArray(attachments) && attachments.length > 0 ? attachments : undefined;
+
+  // Runtime follow-ups preserve the original principal, but browser JSON never
+  // chooses a sender id and a trusted client can never claim the reserved admin
+  // sender. OpenClaw applies the same rule again at its tool boundary.
+  const isAdmin = trustedRuntimeRequest
+    ? claimedIsAdmin === true && claimedSenderRole === "admin"
+    : req.ctx?.isAdmin === true;
+  const senderRole: "admin" | "client" = isAdmin ? "admin" : "client";
+  const resolvedUserId = resolveChatUserId({
+    trustedRuntimeRequest,
+    isAdmin,
+    slug: String(slug),
+    claimedUserId: userId,
+  });
+  const resolvedUserName = userName || (isAdmin ? "Admin" : slug);
+  const acceptedIdempotencyKey = trustedRuntimeRequest
+    ? normalizedIdempotencyKey(claimedIdempotencyKey)
+    : undefined;
+  if (trustedRuntimeRequest && claimedIdempotencyKey !== undefined && !acceptedIdempotencyKey) {
+    return res.status(400).json({ error: "Invalid idempotencyKey" });
+  }
+
+  // Claim the retry key synchronously before any message/thread side effect.
+  // Node handles the lookup + create without an await between them, so two
+  // concurrent retries in this process cannot both create a run.
+  if (acceptedIdempotencyKey) {
+    const existingRun = getAgentRunByIdempotencyKey(tid, acceptedIdempotencyKey);
+    if (existingRun) {
+      const accepted = existingRun.status === "queued"
+        || existingRun.status === "running"
+        || existingRun.status === "completed";
+      return res.status(accepted ? 200 : 409).json({
+        ok: accepted,
+        duplicate: true,
+        runId: existingRun.id,
+        status: existingRun.status,
+        chatId: tid,
+      });
+    }
+  }
+
+  const run = createAgentRun({
+    idempotencyKey: acceptedIdempotencyKey,
+    threadId: tid,
+    runtime: runtime.id,
+    agent: resolvedAgent || "sancho",
+    skill: resolvedSkill,
+    skills: effectiveSkills,
+    skillMode: policy.skillMode,
+    input: {
+      slug,
+      threadId: tid,
+      threadName: threadName || tid,
+      text,
+      linkedTo: linkedTo || undefined,
+      docPath: docPath || undefined,
+      docKind: typeof docKind === "string" ? docKind : undefined,
+      source: _source,
+      temporaryAgent: isTemporarySancho,
+      controlDepth,
+      trigger: isTemporarySancho ? "temporary_sancho" : undefined,
+      userText: text,
+      userId: resolvedUserId,
+      userName: resolvedUserName,
+      isAdmin,
+      senderRole,
+      attachments: parsedAttachments,
+      scope: policy.scope,
+      skillMode: policy.skillMode,
+      primarySkill: resolvedPrimarySkill,
+    },
+  });
+
+  // Agent ownership and auto/pinned policy are server state, not browser
+  // state. Persist the route before the message so Discord, callbacks and a
+  // reopened tab continue with the same agent while re-evaluating skills.
+  if (turnPolicy.persistRoute) setThreadRouting(tid, toThreadRouting(policy));
 
   // Store user message locally
   addMessage(tid, "user", text, undefined, parsedAttachments);
@@ -109,34 +267,49 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
   if (resolvedAgent) {
     setStatusEntry(tid, {
-      text: shortThreadId === "yalc" ? "YALC está preparando la respuesta..." : "El agente está pensando...",
+      text: isTemporarySancho
+        ? "Sancho está interviniendo temporalmente..."
+        : shortThreadId === "yalc"
+          ? "YALC está preparando la respuesta..."
+          : "El agente está pensando...",
       agent: resolvedAgent,
       ts: Date.now(),
     });
   }
 
-  // Dashboard UI doesn't send _source → treated as admin (unchanged behavior).
-  // mc-chat plugin relays Discord messages with _source: "discord" → client role
-  // so the gateway doesn't re-relay the reply back to Discord (see plugin
-  // index.js outbound callback, which skips relay when _source === "discord").
-  const isAdmin = _source !== "discord";
-  const senderRole = isAdmin ? "admin" : "client";
-  const resolvedUserId = userId || (isAdmin ? "mc-admin" : `mc-client-${slug}`);
+  let pendingTaskRouteProposal = await getPendingTaskRouteProposal(slug, tid);
+  if (pendingTaskRouteProposal && isExplicitTaskCreationRejection(text)) {
+    await discardPendingTaskRouteProposal(slug, tid);
+    pendingTaskRouteProposal = undefined;
+  }
 
-  const runtime = getRuntime();
   const payload: InboundMessage = {
     slug,
     threadId: tid,
+    missionControlRunId: run.id,
+    controlDepth,
     threadName: threadName || tid,
     text,
     userId: resolvedUserId,
-    userName: userName || (isAdmin ? "Admin" : slug),
+    userName: resolvedUserName,
     linkedTo: linkedTo || undefined,
     skill: resolvedSkill || undefined,
+    primarySkill: resolvedPrimarySkill,
     skills: effectiveSkills || undefined,
-    // SAN-327 — when "agent", the gateway frames the seed skill as a starting
-    // suggestion and tells the agent it can use any of `skills` in this thread.
-    scope: isAgentScope ? "agent" : undefined,
+    scope: policy.scope,
+    skillMode: policy.skillMode,
+    temporaryAgent: isTemporarySancho || undefined,
+    taskRouteProposal: pendingTaskRouteProposal
+      ? {
+          id: pendingTaskRouteProposal.id,
+          groupId: pendingTaskRouteProposal.groupId,
+          agent: pendingTaskRouteProposal.agent,
+          skill: pendingTaskRouteProposal.skill,
+          skills: pendingTaskRouteProposal.skills,
+          name: pendingTaskRouteProposal.name,
+          brief: pendingTaskRouteProposal.brief,
+        }
+      : undefined,
     threadState: threadState || undefined,
     docPath: docPath || undefined,
     docKind: typeof docKind === "string" ? docKind : undefined,
@@ -155,24 +328,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     agentId: resolvedAgent,
     agent: resolvedAgent,
   };
-  const run = createAgentRun({
-    threadId: tid,
-    runtime: runtime.id,
-    agent: resolvedAgent || "sancho",
-    skill: resolvedSkill,
-    skills: effectiveSkills,
-    input: {
-      slug,
-      threadId: tid,
-      threadName: threadName || tid,
-      text,
-      linkedTo: linkedTo || undefined,
-      docPath: docPath || undefined,
-      docKind: typeof docKind === "string" ? docKind : undefined,
-      source: _source,
-    },
-  });
-
   try {
     const result = await runtime.messaging.sendInbound(payload);
     if (!result.ok) {
@@ -214,16 +369,52 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
     if (typeof result.finalText === "string") {
       const finalAgent = result.finalAgent || resolvedAgent || "sancho";
+      const controlContext = {
+        slug,
+        threadId: tid,
+        missionControlRunId: run.id,
+        controlDepth,
+        threadName: threadName || tid,
+        respondingAgent: finalAgent,
+        temporaryAgent: isTemporarySancho,
+        userText: text,
+        userId: resolvedUserId,
+        userName: resolvedUserName,
+        isAdmin,
+        senderRole,
+        source: _source,
+        linkedTo: linkedTo || undefined,
+        docPath: docPath || undefined,
+        docKind: typeof docKind === "string" ? docKind : undefined,
+        attachments: parsedAttachments,
+      };
+      const parsedControl = runtime.id === "openclaw"
+        ? null
+        : parseRuntimeControlReply(result.finalText, {
+            respondingAgent: finalAgent,
+            temporaryAgent: isTemporarySancho,
+          });
+      const visibleText = parsedControl?.text ?? result.finalText;
       clearStatus(tid);
       markAgentRunCompleted(run.id, tid, {
         agent: finalAgent,
-        text: result.finalText.slice(0, 4096),
+        text: visibleText.slice(0, 4096),
         synchronous: true,
       });
-      addMessage(tid, "bot", result.finalText, finalAgent);
-      return res.status(200).json({ ok: true, chatId: result.chatId || tid, completed: true });
+      addMessage(tid, "bot", visibleText, finalAgent);
+      if (parsedControl) {
+        const controlled = await dispatchRuntimeControlActions(
+          parsedControl,
+          controlContext,
+          { secret: sharedSecret },
+        );
+        for (const followup of controlled.followupMessages) {
+          addMessage(tid, "bot", followup, "sancho");
+        }
+      }
+      return res.status(200).json({ ok: true, runId: run.id, chatId: result.chatId || tid, completed: true });
     }
-    res.status(200).json({ ok: true, chatId: result.chatId || tid });
+    res.status(200).json({ ok: true, runId: run.id, chatId: result.chatId || tid });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Gateway unreachable";
     markAgentRunFailed(run.id, tid, msg, "runtime_unreachable");
@@ -244,4 +435,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default withErrorHandler(handler);
+const sessionAuthed = compose(withErrorHandler, withAuth)(sendHandler);
+const runtimeAuthed = withErrorHandler(async (req: NextApiRequest, res: NextApiResponse) => {
+  const expected = getRuntime().messaging.getSharedSecret?.();
+  const supplied = Array.isArray(req.headers["x-mc-secret"])
+    ? req.headers["x-mc-secret"][0]
+    : req.headers["x-mc-secret"];
+  if (!expected) return res.status(503).json({ error: "MC_CHAT_SECRET not configured" });
+  if (!supplied || supplied !== expected) return res.status(403).json({ error: "Forbidden" });
+  return sendHandler(req, res);
+});
+
+export default function entry(req: NextApiRequest, res: NextApiResponse) {
+  // Runtime/plugin calls always carry X-MC-Secret. Browser calls use the
+  // authenticated session and are scoped to their permitted client slug.
+  if (req.headers["x-mc-secret"] !== undefined) return runtimeAuthed(req, res);
+  return sessionAuthed(req, res);
+}
