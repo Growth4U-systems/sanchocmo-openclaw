@@ -1,5 +1,6 @@
 import { assertCampaignKind, assertCampaignLeadEditsUnlocked } from "./campaign-guards";
 import { ingestB2BContacts } from "@/lib/partnerships/b2b-ingest";
+import { buildPhaseOneLinkedInTemplate } from "@/lib/outreach/phase-one-message";
 import {
   normalizeYalcCampaign,
   resolveCampaignKind,
@@ -329,7 +330,9 @@ async function personalize(config: YalcRuntimeConfig, input: RecordLike, command
   if (requestedChannel && requestedChannel !== "email" && requestedChannel !== "linkedin") {
     throw new OutboundCommandError("channel must be email or linkedin");
   }
-  if (kind === "b2b") await assertCampaignLeadEditsUnlocked(config, campaignId, kind);
+  const campaign = kind === "b2b"
+    ? await assertCampaignLeadEditsUnlocked(config, campaignId, kind)
+    : null;
   const result = await yalcFetch<RecordLike>(
     config,
     `/api/campaigns/${encodeURIComponent(campaignId)}/leads/personalize`,
@@ -344,7 +347,35 @@ async function personalize(config: YalcRuntimeConfig, input: RecordLike, command
       },
     },
   );
-  return { ok: true, command, campaignId, profileKind: pKind, channel: requestedChannel || null, result };
+  let preview: unknown = null;
+  if (kind === "b2b" && requestedChannel === "linkedin") {
+    const suppliedConnectMessage = text(input.connectMessage ?? input.connect_message);
+    const contactReason = text(input.contactReason) || text(campaign?.hypothesis);
+    const defaultConnectMessage = suppliedConnectMessage || buildPhaseOneLinkedInTemplate(contactReason);
+    const previewResult = await yalcFetch<RecordLike>(config, "/api/outbound/command", {
+      method: "POST",
+      body: {
+        command: "outbound.linkedin_autopilot.plan",
+        campaignId,
+        expectedKind: "b2b",
+        profileKind: "b2b_contact",
+        type: "B2B",
+        source: "outbound.command",
+        limit: finiteLimit(input.previewLimit) ?? 3,
+        ...(defaultConnectMessage ? { connectMessage: defaultConnectMessage } : {}),
+      },
+    });
+    preview = previewResult.plan ?? previewResult;
+  }
+  return {
+    ok: true,
+    command,
+    campaignId,
+    profileKind: pKind,
+    channel: requestedChannel || null,
+    result,
+    ...(preview ? { preview } : {}),
+  };
 }
 
 async function draftSequence(config: YalcRuntimeConfig, input: RecordLike, command: OutboundCommandName): Promise<OutboundCommandResult> {
@@ -383,7 +414,12 @@ async function linkedinAutopilot(
   command: Extract<OutboundCommandName, "outbound.linkedin_autopilot.plan" | "outbound.linkedin_autopilot.execute">,
 ): Promise<OutboundCommandResult> {
   const campaignId = requiredText(input, "campaignId");
-  await assertCampaignKind(config, campaignId, "b2b");
+  const campaign = await assertCampaignKind(config, campaignId, "b2b");
+  const suppliedConnectMessage = text(input.connectMessage ?? input.connect_message);
+  const contactReason = text(input.contactReason) || text(campaign.hypothesis);
+  const defaultConnectMessage = command === "outbound.linkedin_autopilot.plan" && !suppliedConnectMessage
+    ? buildPhaseOneLinkedInTemplate(contactReason)
+    : "";
   const result = await yalcFetch<RecordLike>(config, "/api/outbound/command", {
     method: "POST",
     body: {
@@ -394,6 +430,7 @@ async function linkedinAutopilot(
       profileKind: "b2b_contact",
       type: "B2B",
       source: "outbound.command",
+      ...(defaultConnectMessage ? { connectMessage: defaultConnectMessage } : {}),
     },
   });
   return { ok: true, command, campaignId, ...result };

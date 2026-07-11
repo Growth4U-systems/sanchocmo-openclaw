@@ -3,7 +3,7 @@ import test from "node:test";
 import * as phaseOneModule from "../outreach/phase-one-message";
 
 const phaseOne = (phaseOneModule as unknown as { default?: typeof phaseOneModule }).default ?? phaseOneModule;
-const { buildPhaseOneLinkedInMessage } = phaseOne;
+const { buildPhaseOneLinkedInMessage, buildPhaseOneLinkedInTemplate } = phaseOne;
 
 test("builds the phase-one message only from name, company, and contact reason", () => {
   assert.equal(
@@ -11,7 +11,7 @@ test("builds the phase-one message only from name, company, and contact reason",
       { firstName: "Ana", company: "Nébula CRM" },
       "ayudamos a equipos comerciales pequeños a ordenar su outbound",
     ),
-    "Hola Ana, te contacto porque ayudamos a equipos comerciales pequeños a ordenar su outbound. Creo que puede ser relevante para Nébula CRM. ¿Te parece si conectamos?",
+    "Hola Ana, quería contactarte por una idea para Nébula CRM. Ayudamos a equipos comerciales pequeños a ordenar su outbound. ¿Te parece si conectamos?",
   );
 });
 
@@ -23,9 +23,16 @@ test("normalizes the reason without adding inferred claims", () => {
 
   assert.equal(
     message,
-    "Hola Diego, te contacto porque quiero compartir una forma simple de abrir nuevas conversaciones. Creo que puede ser relevante para AtlasOps. ¿Te parece si conectamos?",
+    "Hola Diego, quería contactarte por una idea para AtlasOps. Quiero compartir una forma simple de abrir nuevas conversaciones. ¿Te parece si conectamos?",
   );
   assert.doesNotMatch(message, /contratando|PLG|funding|creciendo/i);
+});
+
+test("builds the shared YALC template with merge variables and sentence casing", () => {
+  assert.equal(
+    buildPhaseOneLinkedInTemplate("creemos que podemos ayudar a ordenar el outbound."),
+    "Hola {{firstName}}, quería contactarte por una idea para {{company}}. Creemos que podemos ayudar a ordenar el outbound. ¿Te parece si conectamos?",
+  );
 });
 
 test("does not generate a message without a contact reason", () => {
