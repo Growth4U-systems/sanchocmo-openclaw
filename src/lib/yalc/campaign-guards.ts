@@ -123,12 +123,13 @@ export async function assertCampaignLeadEditsUnlocked(
   config: YalcRuntimeConfig,
   campaignId: string,
   expectedKind: YalcCampaignKind,
-): Promise<void> {
+): Promise<RecordLike> {
   const campaign = await assertCampaignKind(config, campaignId, expectedKind);
   const leads = await fetchCampaignLeads(config, campaignId);
   if (campaignLocksLeadEdits(campaign, leads)) {
     throw new YalcGuardError(LEAD_LOCKED_MESSAGE);
   }
+  return campaign;
 }
 
 export function yalcGuardErrorResponse(err: unknown) {

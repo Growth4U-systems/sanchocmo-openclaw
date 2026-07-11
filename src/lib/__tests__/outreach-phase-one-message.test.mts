@@ -1,0 +1,54 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import * as phaseOneModule from "../outreach/phase-one-message";
+
+const phaseOne = (phaseOneModule as unknown as { default?: typeof phaseOneModule }).default ?? phaseOneModule;
+const { buildPhaseOneLinkedInMessage, buildPhaseOneLinkedInTemplate } = phaseOne;
+
+test("builds the phase-one message only from name, company, and contact reason", () => {
+  assert.equal(
+    buildPhaseOneLinkedInMessage(
+      { firstName: "Ana", company: "Nébula CRM" },
+      "ayudamos a equipos comerciales pequeños a ordenar su outbound",
+    ),
+    "Hola Ana, quería contactarte por una idea para Nébula CRM. Ayudamos a equipos comerciales pequeños a ordenar su outbound. ¿Te parece si conectamos?",
+  );
+});
+
+test("normalizes the reason without adding inferred claims", () => {
+  const message = buildPhaseOneLinkedInMessage(
+    { firstName: "Diego", company: "AtlasOps" },
+    "  quiero compartir una forma simple de abrir nuevas conversaciones.  ",
+  );
+
+  assert.equal(
+    message,
+    "Hola Diego, quería contactarte por una idea para AtlasOps. Quiero compartir una forma simple de abrir nuevas conversaciones. ¿Te parece si conectamos?",
+  );
+  assert.doesNotMatch(message, /contratando|PLG|funding|creciendo/i);
+});
+
+test("builds the shared YALC template with merge variables and sentence casing", () => {
+  assert.equal(
+    buildPhaseOneLinkedInTemplate("creemos que podemos ayudar a ordenar el outbound."),
+    "Hola {{firstName}}, quería contactarte por una idea para {{company}}. Creemos que podemos ayudar a ordenar el outbound. ¿Te parece si conectamos?",
+  );
+});
+
+test("does not generate a message without a contact reason", () => {
+  assert.equal(buildPhaseOneLinkedInMessage({ firstName: "Ana", company: "Nébula CRM" }, "  "), "");
+});
+
+test("generates a thousand distinct lead messages from one campaign reason", () => {
+  const messages = Array.from({ length: 1_000 }, (_, index) =>
+    buildPhaseOneLinkedInMessage(
+      { firstName: `Lead ${index + 1}`, company: `Company ${index + 1}` },
+      "ayudamos a ordenar el proceso comercial",
+    ),
+  );
+
+  assert.equal(messages.length, 1_000);
+  assert.equal(new Set(messages).size, 1_000);
+  assert.match(messages[999], /Lead 1000/);
+  assert.match(messages[999], /Company 1000/);
+});

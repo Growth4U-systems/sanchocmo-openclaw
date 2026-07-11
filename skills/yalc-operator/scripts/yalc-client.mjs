@@ -100,6 +100,7 @@ function usage() {
   yalc-client add-campaign-step --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>']
   yalc-client campaign-leads-search --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-leads-enrich --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client campaign-leads-personalize --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-leads --slug <slug> --id <campaign-id>
   yalc-client campaign-lead --slug <slug> --id <campaign-id> --lead-id <lead-id>
   yalc-client campaign-sequence-update --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
@@ -144,7 +145,7 @@ Options:
   --json '<json>'               Inline JSON payload for run-skill
   --confirm-side-effect         Required for live sends, campaign status writes, gates, setup commits, and generic mutating API calls
                                 Not required for create-campaign-draft because it only creates an internal YALC review draft
-  --callback-context '<json>'   For long ops (campaign-leads-enrich, campaign-publish, run-skill, approve-gate, reject-gate):
+  --callback-context '<json>'   For long ops (campaign-leads-search, campaign-leads-enrich, campaign-leads-personalize, campaign-publish, run-skill, approve-gate, reject-gate):
                                 {"slug","threadId","agent"} captured from the [MC Chat Context]. When YALC runs the op as a
                                 background job (202), it POSTs the result to SANCHO_BASE_URL/api/yalc/job-callback, which
                                 re-engages this chat thread. The agent must say "te aviso cuando termine" and END the turn.
@@ -605,7 +606,7 @@ async function main() {
   }
 
   if (command === 'outbound-command') {
-    const payload = readPayload(args)
+    const payload = withAsyncCallback(readPayload(args), args)
     const commandName = typeof payload.command === 'string' ? payload.command : ''
     if (commandName !== 'outbound.status') {
       requireConfirmation(args, command)
@@ -634,7 +635,7 @@ async function main() {
   if (command === 'campaign-leads-search') {
     requireConfirmation(args, command)
     const id = requireArg(args, 'id')
-    const payload = readPayload(args)
+    const payload = withAsyncCallback(readPayload(args), args)
     return callAndSave(config, `campaign-${id}-leads-search`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/leads/search`, payload)
   }
 
@@ -643,6 +644,13 @@ async function main() {
     const id = requireArg(args, 'id')
     const payload = withAsyncCallback(readPayload(args), args)
     return callAndSave(config, `campaign-${id}-leads-enrich`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/leads/enrich`, payload)
+  }
+
+  if (command === 'campaign-leads-personalize') {
+    requireConfirmation(args, command)
+    const id = requireArg(args, 'id')
+    const payload = withAsyncCallback(readPayload(args), args)
+    return callAndSave(config, `campaign-${id}-leads-personalize`, 'POST', `/api/campaigns/${encodeURIComponent(id)}/leads/personalize`, payload)
   }
 
   if (command === 'today') {

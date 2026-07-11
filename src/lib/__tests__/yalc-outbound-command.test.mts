@@ -173,6 +173,55 @@ test("outbound.source company-db normalizes B2B contacts into the shared YALC le
   ]);
 });
 
+test("outbound.personalize persists campaign lead personalization through YALC", async () => {
+  installFetch((path, call) => {
+    if (path === "/api/campaigns/camp-b2b") {
+      return { id: "camp-b2b", type: "B2B", hypothesis: "creemos que podemos simplificar el outbound" };
+    }
+    if (path === "/api/leads") return { leads: [] };
+    if (path === "/api/campaigns/camp-b2b/leads/personalize") {
+      assert.equal(call.method, "POST");
+      const body = call.body as Record<string, unknown>;
+      assert.equal(body.channel, "linkedin");
+      assert.equal(body.profileKind, "b2b_contact");
+      assert.equal(body.enrichWithCrustdata, true);
+      assert.equal(body.source, "outbound.command");
+      return { ok: true, updated: 25 };
+    }
+    if (path === "/api/outbound/command") {
+      const body = call.body as Record<string, unknown>;
+      assert.equal(body.command, "outbound.linkedin_autopilot.plan");
+      assert.equal(body.limit, 3);
+      assert.equal(
+        body.connectMessage,
+        "Hola {{firstName}}, quería contactarte por una idea para {{company}}. Creemos que podemos simplificar el outbound. ¿Te parece si conectamos?",
+      );
+      return { plan: { summary: { total: 3 }, items: [{ leadId: "lead-1", message: "Hola Ana" }] } };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.personalize",
+    campaignId: "camp-b2b",
+    profileKind: "b2b_contact",
+    channel: "linkedin",
+    enrichWithCrustdata: true,
+    limit: 25,
+  });
+
+  assert.equal(result.campaignId, "camp-b2b");
+  assert.deepEqual((result.preview as Record<string, unknown>).items, [
+    { leadId: "lead-1", message: "Hola Ana" },
+  ]);
+  assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
+    "/api/campaigns/camp-b2b",
+    "/api/leads",
+    "/api/campaigns/camp-b2b/leads/personalize",
+    "/api/outbound/command",
+  ]);
+});
+
 test("outbound.status aggregates campaign, readiness, events, leads and provider runs", async () => {
   installFetch((path) => {
     if (path === "/api/campaigns/camp-1") return { id: "camp-1", type: "B2B" };
@@ -226,7 +275,9 @@ test("outbound.approve_and_publish approves then runs a dry-run by default", asy
 
 test("outbound.linkedin_autopilot.plan delegates through the YALC command contract", async () => {
   installFetch((path, call) => {
-    if (path === "/api/campaigns/camp-b2b") return { id: "camp-b2b", type: "B2B" };
+    if (path === "/api/campaigns/camp-b2b") {
+      return { id: "camp-b2b", type: "B2B", hypothesis: "creemos que podemos simplificar el outbound" };
+    }
     if (path === "/api/outbound/command") {
       assert.equal(call.method, "POST");
       const body = call.body as Record<string, unknown>;
@@ -234,6 +285,10 @@ test("outbound.linkedin_autopilot.plan delegates through the YALC command contra
       assert.equal(body.campaignId, "camp-b2b");
       assert.equal(body.expectedKind, "b2b");
       assert.deepEqual(body.leadIds, ["lead-1", "lead-2"]);
+      assert.equal(
+        body.connectMessage,
+        "Hola {{firstName}}, quería contactarte por una idea para {{company}}. Creemos que podemos simplificar el outbound. ¿Te parece si conectamos?",
+      );
       return {
         ok: true,
         command: "outbound.linkedin_autopilot.plan",

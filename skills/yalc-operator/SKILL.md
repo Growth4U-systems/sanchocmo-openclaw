@@ -32,11 +32,27 @@ YALC is the source of truth for the GTM operating workflow: lead import, qualifi
 ## Hard Rules
 
 1. Never send email, add leads to a live campaign, or launch a campaign without explicit user confirmation in the current thread.
-2. Default every potentially side-effecting YALC call to `dryRun: true`.
-3. Use the wrapper script instead of direct `curl` so auth, live catalog verification, and dry-run behavior stay consistent.
-4. Do not ask users for YALC tokens in chat. If YALC is not configured, send them to Mission Control API setup.
-5. Keep client isolation: pass `--slug {slug}` and only write outputs under `brand/{slug}/yalc/`.
-6. Read `references/yalc-capability-map.md` before deciding which YALC skill to invoke.
+2. An explicit request such as "crea una base", "busca personas", "enriquece" or "prepara la campaña" authorizes the corresponding draft, provider-read and internal persistence steps in that turn. Pass the wrapper confirmation flag, but do not ask the user to confirm the inferred ICP, campaign draft or any internal step again.
+3. Never ask the user to approve a preview, proposal, internal draft or `dryRun`. Execute or skip those under the original request. Ask once immediately before the first real contact send or a material provider cost that was not implied by the request.
+4. Do not ask the user to choose implementation techniques such as signal-based vs role-based personalization, provider, skill, scoring model or merge variables. Select the best available path and report the choice in the result.
+5. Use the wrapper script instead of direct `curl` so auth, live catalog verification and dry-run behavior stay consistent.
+6. Do not ask users for YALC tokens in chat. If YALC is not configured, send them to Mission Control API setup.
+7. Keep client isolation: pass `--slug {slug}` and only write outputs under `brand/{slug}/yalc/`.
+8. Read `references/yalc-capability-map.md` before deciding which YALC skill to invoke.
+9. Missing brand documents or a `partial` context pack are not blockers when the request already specifies a usable audience, channel and objective. State the fallback briefly in the completed result, use only facts from the request, and proceed. Never stop at a proposal or ask permission to create the draft in this case.
+10. In chat, never call `clarify`, `ask_user` or another interactive tool for approval. Return the three message samples and the live-send question together as the plain final answer, then end the turn.
+
+## Interaction Model
+
+Chat is the primary control surface. The Outreach UI is the persistent view of the same YALC campaigns: status, sample messages, exceptions, approval and results. Never create a parallel chat-only campaign or leave generated copy only in the conversation.
+
+When the user describes an outcome:
+
+1. Infer the ICP, offer and channel from the current request plus brand context. If the user did not provide an ICP, recommend one and proceed with it without asking the user to approve the recommendation. Ask at most one question, and only when a missing business fact makes execution unsafe or meaningless.
+2. Create or reuse one YALC campaign, then source, enrich, score and prepare messages through that campaign. Do not narrate a menu of tools or ask which skill to run.
+3. Choose personalization per lead in this order: verified recent person/company signal; verified company context; role + company relevance; company + campaign contact reason. Never invent a signal. If signal tools are unavailable or return nothing, use the fallback automatically.
+4. Fetch the actual channel preview and present the resulting audience size, selected strategy, three representative messages, exceptions and the next safe batch. `outbound.personalize` with `channel: "linkedin"` returns this automatically in `preview.items`; quote three returned `preview.items[].message` values. Only call `outbound.linkedin_autopilot.plan` separately as a compatibility fallback when `preview` is absent. `outbound.status` alone is not a message preview. Do not require review of every lead.
+5. Ask for one explicit confirmation before live external contact. The user may confirm in chat or in the UI; both must call the same YALC execution contract.
 
 ## Configuration
 
@@ -116,6 +132,12 @@ node skills/yalc-operator/scripts/yalc-client.mjs campaign-leads-enrich \
   --json '{}' \
   --confirm-side-effect
 
+node skills/yalc-operator/scripts/yalc-client.mjs campaign-leads-personalize \
+  --slug growth4u \
+  --id <yalc-campaign-id> \
+  --json '{"channel":"linkedin","overwrite":false}' \
+  --confirm-side-effect
+
 node skills/yalc-operator/scripts/yalc-client.mjs campaign-sequence-approve \
   --slug growth4u \
   --id <yalc-campaign-id> \
@@ -128,7 +150,7 @@ node skills/yalc-operator/scripts/yalc-client.mjs campaign-dry-run \
   --confirm-side-effect
 ```
 
-Creating the Instantly campaign and launching it require separate explicit confirmations:
+Creating an Instantly draft is allowed when the user asked to prepare or create the campaign and it does not contact anyone. Launching it requires explicit confirmation:
 
 ```bash
 node skills/yalc-operator/scripts/yalc-client.mjs campaign-publish \
@@ -146,7 +168,7 @@ node skills/yalc-operator/scripts/yalc-client.mjs campaign-live \
 
 Other YALC API surfaces covered by the wrapper:
 
-- `skill-info`, `today`, `create-campaign-draft`, `add-campaign-step`, `campaign`, `campaign-leads-search`, `campaign-leads-enrich`, `campaign-leads`, `campaign-lead`, `campaign-sequence-update`, `campaign-sequence-approve`, `campaign-sequence-request-changes`, `campaign-dry-run`, `campaign-publish`, `campaign-live`, `campaign-report`, `campaign-timeline`, `campaign-export`, `campaign-chat`
+- `skill-info`, `today`, `create-campaign-draft`, `add-campaign-step`, `campaign`, `campaign-leads-search`, `campaign-leads-enrich`, `campaign-leads-personalize`, `campaign-leads`, `campaign-lead`, `campaign-sequence-update`, `campaign-sequence-approve`, `campaign-sequence-request-changes`, `campaign-dry-run`, `campaign-publish`, `campaign-live`, `campaign-report`, `campaign-timeline`, `campaign-export`, `campaign-chat`
 - `pause-campaign`, `resume-campaign`, `update-lead-status` with confirmation
 - `brain-update` with confirmation
 - `gates`, `approve-gate`, `reject-gate` with confirmation
@@ -162,7 +184,7 @@ YALC converts long-running ops to background jobs. The long ops are: lead enrich
 
 When you call any of these long ops you MUST:
 
-1. **Pass `--callback-context`** so YALC can deliver the result back to this exact chat thread. Build it from the `[MC Chat Context]` block at the top of the turn:
+1. **Pass `--callback-context`** so YALC can deliver the result back to this exact chat thread. This applies to search, enrichment, personalization, publish and other calls that return an async job. Build it from the `[MC Chat Context]` block at the top of the turn:
 
    ```bash
    node skills/yalc-operator/scripts/yalc-client.mjs campaign-leads-enrich \
@@ -220,36 +242,31 @@ node skills/yalc-operator/scripts/yalc-client.mjs outbound-command --slug <slug>
 
 The payload always uses one of:
 
-- `{"command":"outbound.plan","campaignType":"B2B"|"Partnerships","goal":"...","target":{...},"channels":["email"|"linkedin"]}`
+- `{"command":"outbound.plan","campaignType":"B2B"|"Partnerships","goal":"...","hypothesis":"recipient-facing reason for contact","target":{...},"channels":["email"|"linkedin"]}`
 - `{"command":"outbound.source","campaignId":"...","profileKind":"b2b_contact"|"creator","provider":"apollo"|"crustdata"|"manual"|"company-db","criteria":{...},"limit":25}`
 - `{"command":"outbound.enrich","campaignId":"...","providers":["apollo"|"crustdata"]}`
 - `{"command":"outbound.score","campaignId":"...","scoreModel":"b2b_fit_v1"|"creator_quality_v1"}`
+- `{"command":"outbound.personalize","campaignId":"...","profileKind":"b2b_contact"|"creator","channel":"email"|"linkedin","enrichWithCrustdata":true}`
 - `{"command":"outbound.draft_sequence","campaignId":"...","channel":"email"|"linkedin","profileKind":"b2b_contact"|"creator","sequence":[...]}`
+- `{"command":"outbound.linkedin_autopilot.plan","campaignId":"...","leadIds":["..."]}`
+- `{"command":"outbound.linkedin_autopilot.execute","campaignId":"...","leadIds":["..."],"dryRun":true}`
 - `{"command":"outbound.approve_and_publish","campaignId":"...","channel":"email"|"linkedin","profileKind":"b2b_contact"|"creator","dryRun":true}`
 - `{"command":"outbound.status","campaignId":"..."}`
 
-`outbound.status` is read-only and does not need `--confirm-side-effect`; every other command does. Old campaign-specific commands (`campaign-leads-search`, `campaign-sequence-update`, `campaign-publish`, `campaign-live`) remain compatibility fallbacks for debugging existing runs, but do not use them as the primary contract for new operator work.
+`outbound.status` is read-only and does not need `--confirm-side-effect`; every other command does. The wrapper flag is a technical guard, not a reason to ask the user again: the original request authorizes plan, source, enrich, score, personalize, preview and dry-run operations. Old campaign-specific commands (`campaign-leads-search`, `campaign-sequence-update`, `campaign-publish`, `campaign-live`) remain compatibility fallbacks for debugging existing runs, but do not use them as the primary contract for new operator work.
 
 ## Workflow
 
-1. Clarify the user's requested outcome: qualify leads, prepare campaign, launch, track, or report.
-2. Run `health` before the first YALC operation in a thread.
-3. Run `skills` and compare the requested action against `references/yalc-capability-map.md`.
-4. Decompose multi-step requests into explicit outbound commands instead of calling generic autonomous orchestration.
-5. For any outbound campaign, create the internal YALC draft first with `outbound.plan`. Include title/goal, target, channels, success metrics, and planned steps. Email drafts must include reviewable email copy before approval: use `outbound.draft_sequence` with a non-empty `sequence` array of `{ subject?, body, delay_days? }`.
-6. Present the YALC draft campaign ID, what was saved for review, and where to inspect it in Sancho/YALC Cockpit before doing any Instantly call.
-7. If the campaign exists but has no reviewable email sequence, use `outbound.draft_sequence` against the existing campaign. Do not create a duplicate campaign for the same request.
-8. If the user requested lead sourcing, run `outbound.source` with `--confirm-side-effect`. Use `provider:"company-db"` for B2B rows from company-finder/decision-maker-finder/contact-enrichment; those rows are normalized and assigned into the campaign's YALC Lead roster. If Apollo/Crustdata credentials fail, report the provider error and continue only with user-provided leads or manual test leads.
-9. Run `outbound.enrich` with `--confirm-side-effect` when assigned leads need enrichment. Do not claim the campaign is ready for dry-run until `outbound.status` says so.
-10. Ask for explicit confirmation before approving the sequence and running the Instantly dry-run: "Confirmas que apruebe esta secuencia y la pruebe en Instantly en dry-run?"
-11. After confirmation, run `outbound.approve_and_publish` with `dryRun:true --confirm-side-effect`.
-12. Present the dry-run result, lead count, sequence count, readiness, and any warnings.
-13. Ask for explicit confirmation before creating the Instantly campaign: "Confirmas que cree la campana en Instantly sin lanzarla?"
-14. After confirmation, run `outbound.approve_and_publish` with `dryRun:false --confirm-side-effect`. This creates/updates the campaign in Instantly but does not launch it.
-15. Ask for explicit confirmation before live external execution: "Confirmas que lance la campana live en Instantly?"
-16. Only after confirmation, run `campaign-live --confirm-side-effect` (compatibility fallback until live launch is folded into the command surface).
-17. Save the returned JSON in `brand/{slug}/yalc/runs/YYYY-MM-DDTHH-mm-ss-*.json`.
-18. Report back with the YALC campaign ID, external Instantly ID when present, status, and next tracking command.
+1. Read the user's outcome and available brand context. Infer a concrete recommended ICP and a recipient-facing contact reason. Save that reason as `hypothesis`; it must be a natural standalone sentence (for example, "Creemos que podemos ayudar a simplificar vuestro outbound"), and must never be a copy of the search goal such as "encontrar founders". Partial or missing optional brand documents require a truthful fallback, not a question. Ask only for a critical missing business fact.
+2. Run `health`, then verify the required runtime capabilities with `skills` and `references/yalc-capability-map.md`.
+3. Create or reuse the internal campaign with `outbound.plan`. Never create a duplicate for the same request.
+4. If the user asked for a database or campaign, continue in the same turn with `outbound.source`, enrichment when needed, and `outbound.score`. The original request is sufficient authorization for these non-contact steps.
+5. If the user asks for signals, or signal tools are available and relevant, run the appropriate research/detection skills and then `campaign-leads-personalize`. Select the strongest verified strategy per lead automatically. Fall back to role/company or company/contact-reason copy without asking the user to choose a technique.
+6. Prepare the channel sequence. Email uses `outbound.draft_sequence`; LinkedIn uses the saved campaign reason and `outbound.personalize`, whose response includes a three-message `preview`. Persist every artifact on the campaign.
+7. If a dry-run adds useful validation, run it automatically; otherwise stop at the channel preview. Never ask whether to run a dry-run. Present audience count, three actual returned messages, exceptions, daily capacity and the exact live action awaiting approval.
+8. Ask once: "Tengo listo el lote de N contactos. ¿Confirmas el envío real por LinkedIn/email?" This question must refer to the real external send, never to a test or dry-run. Do not add intermediate confirmation gates for approving copy, creating the provider draft or launching unless those actions have materially different external consequences.
+9. After explicit confirmation, execute the approved batch with the live command and save the returned JSON in `brand/{slug}/yalc/runs/YYYY-MM-DDTHH-mm-ss-*.json`.
+10. Report the YALC campaign ID, external provider ID when present, sent/skipped/failed counts, remaining audience and next scheduled or available batch.
 
 ## Campaign Lifecycle
 
@@ -259,10 +276,10 @@ Chat copy is not enough. Yalc Agent must persist a YALC campaign draft before In
 2. Yalc Agent creates a YALC `draft` campaign with `create-campaign-draft`.
 3. The user reviews the draft in Sancho/YALC Cockpit or by asking chat to inspect the campaign ID.
 4. Yalc Agent searches/enriches/assigns leads only through the campaign endpoints or provided leads.
-5. Yalc Agent approves the reviewable email sequence only after user approval.
-6. Yalc Agent runs Instantly dry-run only after explicit approval.
-7. Yalc Agent publishes to Instantly without launching only after explicit approval.
-8. Yalc Agent launches the published Instantly campaign only after explicit approval.
+5. Yalc Agent approves the reviewable email sequence under the user's request to prepare the campaign; this is internal state and does not contact anyone.
+6. Yalc Agent may run an Instantly dry-run under that same request without another question.
+7. Yalc Agent may publish an unlaunched Instantly draft when the user asked to create or prepare the provider campaign and no contact is sent.
+8. Yalc Agent launches the published Instantly campaign only after explicit live-send approval.
 
 Never jump from chat copy directly to an Instantly placeholder campaign when no YALC campaign ID exists. If the user says "crea la campana para revisar", that means create the YALC draft, not a live external campaign.
 

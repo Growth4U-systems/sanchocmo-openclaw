@@ -23,6 +23,7 @@ test("buildHermesPrompt preserves Sancho routing metadata", () => {
   });
 
   assert.match(prompt, /Sancho Mission Control/);
+  assert.match(prompt, /never call clarify or any interactive question tool/);
   assert.match(prompt, /"threadId": "acme:content:123"/);
   assert.match(prompt, /"agent": "dulcinea"/);
   assert.match(prompt, /"docPath": "brand\/acme\/content\/draft.md"/);

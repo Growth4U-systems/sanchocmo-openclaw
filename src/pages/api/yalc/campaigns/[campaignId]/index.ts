@@ -19,6 +19,7 @@ function mutableCampaignBody(body: Record<string, unknown>): Record<string, unkn
   const out: Record<string, unknown> = {};
   if (typeof body.title === "string") out.title = body.title.trim();
   if (typeof body.name === "string" && !out.title) out.title = body.name.trim();
+  if (typeof body.hypothesis === "string") out.hypothesis = body.hypothesis.trim();
   if (typeof body.status === "string") out.status = body.status.trim();
   return out;
 }

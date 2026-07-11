@@ -52,6 +52,8 @@ These are built-in or markdown skills registered by the current YALC runtime and
 | `research` | Open research with citations | Research/provider usage |
 | `md:*` skills listed by `/api/skills/list` | Declarative YALC skills such as `icp-company-search`, `people-enrich`, `email-campaign-create`, `score-lead`, `verify-campaign-launch` | Depends on capability; sending/launching skills require dry-run first |
 
+For chat-led B2B campaigns, use the unified `outbound.personalize` command after sourcing/enrichment. Signal skills provide verified context when available; `outbound.personalize` persists the resulting per-lead copy on the same campaign. Missing signal capabilities are a fallback condition, not a reason to ask the user to choose another personalization mode.
+
 ## Known YALC Skills Not Guaranteed Through `/api/skills/run`
 
 These exist in the YALC source tree, docs, or Claude Code skill layer, but are not guaranteed as registered HTTP skills in the current Growth4U fork. Use them only after `skills --slug` confirms they are registered, via another explicit API endpoint, or via the wrapper's allowlisted CLI fallback.

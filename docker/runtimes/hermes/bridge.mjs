@@ -187,6 +187,7 @@ export function buildHermesPrompt(message, contextPack = null) {
   const base = [
     "You are replying inside Sancho Mission Control.",
     "Return only the final answer that should appear in the Sancho chat.",
+    "This is a headless turn: never call clarify or any interactive question tool. Put every user question directly in the final answer and end the turn.",
     "Use the runtime context as routing and grounding metadata. Do not mention transport details unless the user asks.",
     "",
     "Runtime context:",
