@@ -50,9 +50,6 @@ import {
 type B2BTab = OutreachTabKey | "settings";
 type ContactosVista = "kanban" | "lista";
 type OutboundAction =
-  | "search"
-  | "enrich"
-  | "personalize"
   | "approve"
   | "dry-run"
   | "publish"
@@ -302,6 +299,18 @@ interface LinkedInAutopilotCommandResponse {
   };
 }
 
+function linkedinBlockReasonLabel(reason?: string | null): string {
+  if (!reason) return "No disponible";
+  if (reason.includes("daily_capacity_exhausted")) return "Fuera del cupo de este lote";
+  if (reason.includes("connection_already_sent")) return "Conexión ya enviada";
+  if (reason.includes("dm1_already_sent")) return "Mensaje ya enviado";
+  if (reason.includes("missing_linkedin_account")) return "Falta una cuenta de LinkedIn";
+  if (reason.includes("missing_linkedin_identity")) return "Falta identificar el perfil de LinkedIn";
+  if (reason.includes("missing_connect_template") || reason.includes("missing_dm_template")) return "Falta el mensaje base";
+  if (reason.includes("rendered_message_empty")) return "El mensaje quedó vacío";
+  return reason;
+}
+
 const HEADERS: Record<B2BTab, { title: string; sub: string }> = {
   encuentra: {
     title: "Encuentra personas",
@@ -488,7 +497,7 @@ function linkedinLeadCount(leads: readonly Lead[]): number {
 }
 
 type CampaignNextAction =
-  | { kind: "action"; action: "search" | "enrich" | "personalize"; label: string; description: string }
+  | { kind: "action"; action: "search" | "enrich"; label: string; description: string }
   | { kind: "tab"; tab: "contactos" | "plantillas" | "inbox"; label: string; description: string };
 
 function campaignContactableLeadCount(campaign: Campaign | CampaignDetail, leads: readonly Lead[]): number {
@@ -832,9 +841,6 @@ function inboxBucketForLead(lead: Lead): B2BInboxFilter | null {
 }
 
 function outboundActionLabel(action: OutboundAction): string {
-  if (action === "search") return "Buscar personas";
-  if (action === "enrich") return "Enriquecer datos";
-  if (action === "personalize") return "Generar personalización";
   if (action === "approve") return "Personalizar mensajes";
   if (action === "dry-run") return "Simular envíos";
   if (action === "publish") return "Contactar por email";
@@ -1218,47 +1224,6 @@ export function OutboundB2BView() {
 
   const outboundAction = useMutation<unknown, Error, { campaignId: string; action: OutboundAction }>({
     mutationFn: ({ campaignId, action }: { campaignId: string; action: OutboundAction }) => {
-      const campaign = campaigns.find((item) => item.id === campaignId) || campaignDetailQuery.data;
-      const campaignLeads = allLeads.filter((lead) => lead.campaignId === campaignId);
-      if ((action === "search" || action === "enrich" || action === "personalize") && campaignLocksLeadEdits(campaign || null, campaignLeads)) {
-        throw new Error(LEAD_LOCKED_MESSAGE);
-      }
-      if (action === "search") {
-        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/search?slug=${encodeURIComponent(slug)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            expectedKind: "b2b",
-            provider: "apollo",
-            query: campaign?.targetSegment || campaign?.hypothesis || campaign?.title || "B2B ICP",
-            titles: ["Founder", "CEO", "Head of Growth", "Marketing Director"],
-            limit: 25,
-          }),
-        });
-      }
-      if (action === "enrich") {
-        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/enrich?slug=${encodeURIComponent(slug)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            expectedKind: "b2b",
-            provider: "apollo",
-            limit: 25,
-            autoPersonalize: false,
-          }),
-        });
-      }
-      if (action === "personalize") {
-        return fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/leads/personalize?slug=${encodeURIComponent(slug)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            expectedKind: "b2b",
-            limit: 25,
-            overwrite: false,
-          }),
-        });
-      }
       if (action === "email-dry-run" || action === "email-send") {
         return fetchJson(`/api/outbound/command?slug=${encodeURIComponent(slug)}`, {
           method: "POST",
@@ -1333,10 +1298,15 @@ export function OutboundB2BView() {
     Error,
     { campaignId: string; contactReason: string }
   >({
-    mutationFn: ({ campaignId, contactReason: reason }) => {
+    mutationFn: async ({ campaignId, contactReason: reason }) => {
       if (!reason.trim()) throw new Error("Escribe por qué quieres contactar a estas personas.");
       const leadIds = selectedLinkedInLeads.map((lead) => lead.id);
       if (leadIds.length === 0) throw new Error("No hay personas con LinkedIn en esta campaña.");
+      await fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}?slug=${encodeURIComponent(slug)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expectedKind: "b2b", hypothesis: reason.trim() }),
+      });
       return fetchJson<LinkedInAutopilotCommandResponse>(
         `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
         {
@@ -1396,6 +1366,7 @@ export function OutboundB2BView() {
           ]),
         ),
       );
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "campaigns"] });
       showToast("Mensajes preparados con nombre, empresa y motivo de contacto");
     },
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo generar el plan LinkedIn", "warn"),
@@ -1610,15 +1581,20 @@ export function OutboundB2BView() {
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo archivar la campaña", "warn"),
   });
 
-  function openB2BSearch(campaign?: Campaign) {
+  function openB2BSearch(campaign?: Campaign, action?: "search" | "enrich" | "personalize") {
     if (!slug) return;
     if (!campaign) {
       openChat(slug, buildB2BCampaignThread(slug));
       return;
     }
-    const prompt = campaign
-      ? `Continuar la búsqueda outbound B2B "${campaign.title || campaign.id}". Revisar ICP, priorización, scoring y secuencia de contacto.`
-      : "Crear una búsqueda outbound B2B con ICP, criterios de scoring, canales, secuencia y límites de contacto.";
+    const campaignRef = `"${campaign.title || campaign.id}" (${campaign.id})`;
+    const prompt = action === "search"
+      ? `Continúa la campaña B2B ${campaignRef}. Usa su ICP para recomendar y buscar las personas con mejor encaje, enriquécelas si hace falta y deja una muestra de mensajes preparada. Ejecuta los pasos internos sin preguntarme qué técnica o proveedor usar. No envíes contactos reales.`
+      : action === "enrich"
+        ? `Continúa la campaña B2B ${campaignRef}. Completa los datos necesarios de las personas encontradas, prioriza las contactables y prepara el siguiente lote de mensajes. Ejecuta los pasos internos sin preguntarme qué técnica usar. No envíes contactos reales.`
+        : action === "personalize"
+          ? `Continúa la campaña B2B ${campaignRef}. Elige automáticamente la mejor personalización verificable para cada persona, prepara los mensajes a escala y enséñame tres ejemplos y las excepciones. Si no hay señales fiables, usa empresa, rol y motivo de contacto sin inventar hechos. No envíes contactos reales.`
+        : `Lee el estado de la campaña B2B ${campaignRef} y continúa con el siguiente paso lógico: audiencia, enriquecimiento, personalización o muestra. Recomienda una única estrategia y ejecútala; no me presentes un menú técnico. No envíes contactos reales sin mi confirmación explícita.`;
     openChat(slug, buildYalcThread(slug, prompt));
   }
 
@@ -1824,6 +1800,16 @@ export function OutboundB2BView() {
               />
             )}
             <div className="ml-auto flex flex-wrap items-center gap-2">
+              {tab !== "encuentra" && icpCampaign && (
+                <button
+                  type="button"
+                  onClick={() => openB2BSearch(icpCampaign)}
+                  className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold text-foreground transition-colors hover:border-rust hover:text-rust"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Abrir en chat
+                </button>
+              )}
               <button
                 type="button"
                 onClick={refreshAll}
@@ -1866,7 +1852,7 @@ export function OutboundB2BView() {
                 }}
                 onRunAction={(campaign, action) => {
                   pushQuery({ campaign: campaign.id, busqueda: "", stage: "" });
-                  outboundAction.mutate({ campaignId: campaign.id, action });
+                  openB2BSearch(campaign, action);
                 }}
               />
             )}
@@ -1901,7 +1887,7 @@ export function OutboundB2BView() {
                     busy={actionBusy}
                     busyAction={busyAction}
                     disabled={!selectedCampaignId || selectedLeadEditsLocked}
-                    onPersonalize={() => outboundAction.mutate({ campaignId: selectedCampaignId, action: "personalize" })}
+                    onPersonalize={() => icpCampaign && openB2BSearch(icpCampaign, "personalize")}
                     onSimulate={() => executeEmailCampaign(true)}
                     onExecute={() => executeEmailCampaign(false)}
                   />
@@ -2264,9 +2250,19 @@ function LinkedInAutopilotPanel({
   onSimulate: () => void;
   onExecute: () => void;
 }) {
+  const reviewPageSize = 25;
+  const [reviewPage, setReviewPage] = useState(0);
   const leadById = useMemo(() => new Map(leads.map((lead) => [lead.id, lead])), [leads]);
   const sendable = plan?.items.filter((item) => !item.blocked) || [];
   const blocked = plan?.items.filter((item) => item.blocked) || [];
+  const deferred = blocked.filter((item) => item.blockedReason?.includes("daily_capacity_exhausted"));
+  const alreadyContacted = blocked.filter((item) => /connection_already_sent|dm1_already_sent/.test(item.blockedReason || ""));
+  const needsAttention = blocked.filter((item) =>
+    !/daily_capacity_exhausted|connection_already_sent|dm1_already_sent/.test(item.blockedReason || ""),
+  );
+  const sampleItems = sendable.slice(0, 3);
+  const reviewPageCount = Math.max(1, Math.ceil(sendable.length / reviewPageSize));
+  const reviewItems = sendable.slice(reviewPage * reviewPageSize, (reviewPage + 1) * reviewPageSize);
   const approved = sendable.filter((item) => {
     const approval = approvals[item.leadId];
     return approval?.approved !== false && Boolean((approval?.message ?? item.message ?? "").trim());
@@ -2279,6 +2275,10 @@ function LinkedInAutopilotPanel({
   const hasReason = Boolean(contactReason.trim());
   const canReview = !!plan && sendable.length > 0;
   const canExecute = canReview && approved.length > 0 && blankApproved === 0;
+
+  useEffect(() => {
+    setReviewPage(0);
+  }, [plan]);
 
   return (
     <section className="rounded-lg border border-border bg-card p-4" data-testid="linkedin-autopilot-panel">
@@ -2327,9 +2327,9 @@ function LinkedInAutopilotPanel({
         </div>
       )}
 
-      {plan && sendable.length === 0 && blocked.length > 0 && (
+      {plan && sendable.length === 0 && needsAttention.length > 0 && (
         <div className="mt-4 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
-          Todas las personas están bloqueadas. Revisa la columna de bloqueos antes de intentar enviar.
+          No hay personas listas para este lote. Revisa los contactos que necesitan atención.
         </div>
       )}
 
@@ -2340,78 +2340,126 @@ function LinkedInAutopilotPanel({
       )}
 
       {plan && (
-        <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background">
-          <div className="grid grid-cols-[110px_minmax(190px,1fr)_minmax(300px,2fr)] gap-3 border-b border-border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground max-lg:hidden">
-            <span>Enviar</span>
-            <span>Persona</span>
-            <span>Mensaje</span>
+        <div className="mt-4 border-y border-border py-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <span><strong className="text-foreground">{approved.length}</strong> listos en este lote</span>
+            {deferred.length > 0 && <span><strong className="text-foreground">{deferred.length}</strong> pendientes por capacidad</span>}
+            {alreadyContacted.length > 0 && <span><strong className="text-foreground">{alreadyContacted.length}</strong> ya contactados</span>}
+            {needsAttention.length > 0 && <span className="text-yellow-800"><strong>{needsAttention.length}</strong> requieren atención</span>}
           </div>
-          <div className="max-h-[420px] divide-y divide-border overflow-auto">
-            {plan.items.map((item) => {
+        </div>
+      )}
+
+      {plan && sampleItems.length > 0 && (
+        <div className="mt-4" data-testid="outbound-message-sample">
+          <div className="flex items-center justify-between gap-3">
+            <h4 className="text-sm font-semibold text-foreground">Muestra de mensajes</h4>
+            <span className="text-xs text-muted-foreground">3 como máximo</span>
+          </div>
+          <div className="mt-2 divide-y divide-border border-y border-border">
+            {sampleItems.map((item) => {
               const lead = leadById.get(item.leadId);
               const approval = approvals[item.leadId];
-              const approvedForSend = approval?.approved !== false && !item.blocked;
               const message = approval?.message ?? item.message ?? "";
               return (
-                <div
-                  key={item.leadId}
-                  className={cn(
-                    "grid gap-3 px-3 py-3 text-sm lg:grid-cols-[110px_minmax(190px,1fr)_minmax(300px,2fr)]",
-                    item.blocked && "bg-yellow-50/70",
-                  )}
-                >
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={approvedForSend}
-                        disabled={item.blocked}
-                        onChange={(event) => onApprovalChange(item.leadId, { approved: event.target.checked })}
-                        className="h-4 w-4 rounded border-border text-rust focus:ring-rust"
-                      />
-                      {approvedForSend ? "Sí" : "No"}
-                    </label>
-                    <span className={cn(
-                      "inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold",
-                      item.action === "dm"
-                        ? "border-cyan-600/40 bg-cyan-50 text-cyan-800"
-                        : "border-sage/40 bg-sage/10 text-sage",
-                    )}>
-                      {item.action === "dm" ? "DM" : "Conexión"}
-                    </span>
-                  </div>
+                <div key={item.leadId} className="grid gap-1 py-3 text-sm md:grid-cols-[minmax(160px,0.55fr)_minmax(0,1.45fr)] md:gap-4">
                   <div className="min-w-0">
                     <div className="truncate font-semibold text-foreground">{item.name || leadDisplayName(lead || { id: item.leadId })}</div>
                     <div className="truncate text-xs text-muted-foreground">{item.company || lead?.company || lead?.headline || item.leadId}</div>
-                    {(item.linkedinUrl || lead?.linkedinUrl) && (
-                      <a
-                        href={item.linkedinUrl || lead?.linkedinUrl || undefined}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 inline-flex items-center gap-1 text-xs text-rust hover:underline"
-                      >
-                        Ver perfil <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
                   </div>
-                  <div className="min-w-0">
-                    {item.blocked ? (
-                      <span className="text-xs font-semibold text-yellow-800">{item.blockedReason || "Bloqueado"}</span>
-                    ) : (
-                      <textarea
-                        value={message}
-                        disabled={!approvedForSend}
-                        rows={3}
-                        onChange={(event) => onApprovalChange(item.leadId, { message: event.target.value })}
-                        className="w-full resize-y rounded-md border border-border bg-card p-2 text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none disabled:bg-muted/30 disabled:text-muted-foreground"
-                      />
-                    )}
-                  </div>
+                  <p className="m-0 whitespace-pre-wrap leading-relaxed text-foreground">{message}</p>
                 </div>
               );
             })}
           </div>
         </div>
+      )}
+
+      {plan && sendable.length > 0 && (
+        <details className="mt-4 border-t border-border pt-3">
+          <summary className="cursor-pointer text-sm font-semibold text-foreground">
+            Editar o excluir personas <span className="font-normal text-muted-foreground">(opcional)</span>
+          </summary>
+          <div className="mt-3 overflow-hidden rounded-lg border border-border bg-background">
+            <div className="divide-y divide-border">
+              {reviewItems.map((item) => {
+                const lead = leadById.get(item.leadId);
+                const approval = approvals[item.leadId];
+                const approvedForSend = approval?.approved !== false;
+                const message = approval?.message ?? item.message ?? "";
+                return (
+                  <div key={item.leadId} className="grid gap-3 px-3 py-3 text-sm lg:grid-cols-[110px_minmax(190px,1fr)_minmax(300px,2fr)]">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={approvedForSend}
+                        onChange={(event) => onApprovalChange(item.leadId, { approved: event.target.checked })}
+                        className="h-4 w-4 rounded border-border text-rust focus:ring-rust"
+                      />
+                      {approvedForSend ? "Incluir" : "Excluir"}
+                    </label>
+                    <div className="min-w-0">
+                      <div className="truncate font-semibold text-foreground">{item.name || leadDisplayName(lead || { id: item.leadId })}</div>
+                      <div className="truncate text-xs text-muted-foreground">{item.company || lead?.company || lead?.headline || item.leadId}</div>
+                      {(item.linkedinUrl || lead?.linkedinUrl) && (
+                        <a
+                          href={item.linkedinUrl || lead?.linkedinUrl || undefined}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 inline-flex items-center gap-1 text-xs text-rust hover:underline"
+                        >
+                          Ver perfil <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                    <textarea
+                      value={message}
+                      disabled={!approvedForSend}
+                      rows={3}
+                      onChange={(event) => onApprovalChange(item.leadId, { message: event.target.value })}
+                      className="w-full resize-y rounded-md border border-border bg-card p-2 text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none disabled:bg-muted/30 disabled:text-muted-foreground"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            {reviewPageCount > 1 && (
+              <div className="flex items-center justify-between gap-3 border-t border-border px-3 py-2 text-xs text-muted-foreground">
+                <button
+                  type="button"
+                  disabled={reviewPage === 0}
+                  onClick={() => setReviewPage((current) => Math.max(0, current - 1))}
+                  className="rounded-md border border-border bg-card px-2.5 py-1 font-semibold text-foreground disabled:opacity-40"
+                >
+                  Anterior
+                </button>
+                <span>{reviewPage + 1} de {reviewPageCount}</span>
+                <button
+                  type="button"
+                  disabled={reviewPage >= reviewPageCount - 1}
+                  onClick={() => setReviewPage((current) => Math.min(reviewPageCount - 1, current + 1))}
+                  className="rounded-md border border-border bg-card px-2.5 py-1 font-semibold text-foreground disabled:opacity-40"
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </div>
+        </details>
+      )}
+
+      {plan && needsAttention.length > 0 && (
+        <details className="mt-3 text-sm">
+          <summary className="cursor-pointer font-semibold text-yellow-800">Revisar {needsAttention.length} no disponibles</summary>
+          <div className="mt-2 divide-y divide-border border-y border-border">
+            {needsAttention.slice(0, 25).map((item) => (
+              <div key={item.leadId} className="flex flex-wrap justify-between gap-2 py-2">
+                <span>{item.name || item.leadId}</span>
+                <span className="text-xs text-yellow-800">{linkedinBlockReasonLabel(item.blockedReason)}</span>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
 
       {plan && (
@@ -2433,7 +2481,7 @@ function LinkedInAutopilotPanel({
             data-testid="outbound-send-messages"
           >
             {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Enviar {approved.length}
+            {deferred.length > 0 ? `Enviar lote de ${approved.length}` : `Enviar ${approved.length}`}
           </button>
         </div>
       )}
@@ -2486,8 +2534,8 @@ function EmailCampaignPanel({
           onClick={onPersonalize}
           className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
         >
-          {busy && busyAction === "personalize" ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
-          {personalized > 0 ? "Volver a generar" : "Generar personalización"}
+          <MessageSquare className="h-4 w-4" />
+          {personalized > 0 ? "Actualizar en chat" : "Preparar en chat"}
         </button>
         <button
           type="button"

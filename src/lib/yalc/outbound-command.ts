@@ -14,6 +14,7 @@ export type OutboundCommandName =
   | "outbound.source"
   | "outbound.enrich"
   | "outbound.score"
+  | "outbound.personalize"
   | "outbound.draft_sequence"
   | "outbound.linkedin_autopilot.plan"
   | "outbound.linkedin_autopilot.execute"
@@ -69,6 +70,7 @@ function commandName(value: unknown): OutboundCommandName {
     "outbound.source",
     "outbound.enrich",
     "outbound.score",
+    "outbound.personalize",
     "outbound.draft_sequence",
     "outbound.linkedin_autopilot.plan",
     "outbound.linkedin_autopilot.execute",
@@ -319,6 +321,32 @@ async function score(config: YalcRuntimeConfig, input: RecordLike, command: Outb
   return { ok: true, command, campaignId, scoreModel: model, result };
 }
 
+async function personalize(config: YalcRuntimeConfig, input: RecordLike, command: OutboundCommandName): Promise<OutboundCommandResult> {
+  const campaignId = requiredText(input, "campaignId");
+  const pKind = profileKind(input.profileKind);
+  const kind = kindFromProfileKind(pKind);
+  const requestedChannel = text(input.channel);
+  if (requestedChannel && requestedChannel !== "email" && requestedChannel !== "linkedin") {
+    throw new OutboundCommandError("channel must be email or linkedin");
+  }
+  if (kind === "b2b") await assertCampaignLeadEditsUnlocked(config, campaignId, kind);
+  const result = await yalcFetch<RecordLike>(
+    config,
+    `/api/campaigns/${encodeURIComponent(campaignId)}/leads/personalize`,
+    {
+      method: "POST",
+      body: {
+        ...input,
+        channel: requestedChannel || undefined,
+        profileKind: pKind,
+        ...kindPayload(kind),
+        source: "outbound.command",
+      },
+    },
+  );
+  return { ok: true, command, campaignId, profileKind: pKind, channel: requestedChannel || null, result };
+}
+
 async function draftSequence(config: YalcRuntimeConfig, input: RecordLike, command: OutboundCommandName): Promise<OutboundCommandResult> {
   const campaignId = requiredText(input, "campaignId");
   const ch = channel(input.channel);
@@ -450,6 +478,8 @@ export async function dispatchOutboundCommand(
       return enrich(config, input, command);
     case "outbound.score":
       return score(config, input, command);
+    case "outbound.personalize":
+      return personalize(config, input, command);
     case "outbound.draft_sequence":
       return draftSequence(config, input, command);
     case "outbound.linkedin_autopilot.plan":

@@ -107,19 +107,14 @@ test("B2B campaign opens a blank B2B campaign thread with suggested actions", ()
   assert.match(cfg.threadId, new RegExp(`^${SLUG}:b2b-campaign-new-\\d+$`));
   assert.deepEqual(cfg.quickActions, [
     {
-      label: "Crear campaña B2B",
+      label: "Crear campaña",
       prompt:
-        "Quiero crear una nueva campaña B2B de cold email. Define ICP, oferta, audiencia, criterios positivos/negativos y una secuencia que incluya personalización por lead desde el inicio usando {{personalization}} o {{icebreaker}}. La campaña debe quedar preparada para buscar, enriquecer, personalizar automáticamente los leads y enviar.",
+        "Quiero crear una campaña outbound B2B. Usa el contexto de mi empresa para recomendar el mejor ICP, crear la campaña, buscar y enriquecer personas, y preparar mensajes con la mejor personalización verificable disponible. No envíes nada real hasta que yo apruebe el lote.",
     },
     {
-      label: "Definir ICP",
+      label: "Encontrar personas",
       prompt:
-        "Quiero definir el ICP para una campaña B2B: roles, industrias, geografía, tamaño de empresa, señales de intención y exclusiones.",
-    },
-    {
-      label: "Generar secuencia",
-      prompt:
-        "Quiero generar la secuencia de emails de una campaña B2B con email inicial y follow-ups, usando el contexto de Growth4U e incluyendo personalización por lead desde el primer email con {{personalization}} o {{icebreaker}}.",
+        "Recomiéndame a quién contactar según mi ICP y crea una base de personas. Busca y enriquece los contactos, prioriza los que tengan mejor encaje y deja una muestra de mensajes preparada para revisar.",
     },
   ]);
 });

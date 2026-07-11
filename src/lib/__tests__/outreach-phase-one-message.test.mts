@@ -31,3 +31,17 @@ test("normalizes the reason without adding inferred claims", () => {
 test("does not generate a message without a contact reason", () => {
   assert.equal(buildPhaseOneLinkedInMessage({ firstName: "Ana", company: "Nébula CRM" }, "  "), "");
 });
+
+test("generates a thousand distinct lead messages from one campaign reason", () => {
+  const messages = Array.from({ length: 1_000 }, (_, index) =>
+    buildPhaseOneLinkedInMessage(
+      { firstName: `Lead ${index + 1}`, company: `Company ${index + 1}` },
+      "ayudamos a ordenar el proceso comercial",
+    ),
+  );
+
+  assert.equal(messages.length, 1_000);
+  assert.equal(new Set(messages).size, 1_000);
+  assert.match(messages[999], /Lead 1000/);
+  assert.match(messages[999], /Company 1000/);
+});
