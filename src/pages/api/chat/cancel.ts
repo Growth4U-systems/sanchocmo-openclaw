@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { clearStatus, clearProgress } from "@/lib/data/mc-chat";
+import { addMessage, clearStatus, clearProgress } from "@/lib/data/mc-chat";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
 import {
   appendAgentRunEvent,
@@ -35,9 +35,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
   clearStatus(tid);
   clearProgress(tid);
+  addMessage(tid, "bot", "Ejecución detenida.", requestedAgent || "sancho");
   console.log(`[mc-chat] Cancelling thread: ${tid}`);
 
   // Send /stop through the active runtime.
+  let runtimeCancelled = false;
   try {
     const payload: InboundMessage = {
       slug,
@@ -49,6 +51,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       ...(requestedAgent ? { agent: requestedAgent, agentId: requestedAgent } : {}),
     };
     const result = await runtime.messaging.sendInbound(payload);
+    try {
+      const ack = result.raw ? JSON.parse(result.raw) as { cancelled?: unknown } : null;
+      runtimeCancelled = ack?.cancelled === true;
+    } catch {
+      runtimeCancelled = false;
+    }
     if (activeRun) {
       appendAgentRunEvent({
         runId: activeRun.id,
@@ -57,6 +65,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         data: {
           status: result.status,
           raw: result.raw,
+          runtimeCancelled,
         },
       });
     }
@@ -72,7 +81,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     console.error(`[mc-chat] Runtime /stop failed: ${err instanceof Error ? err.message : err}`);
   }
 
-  res.status(200).json({ ok: true });
+  res.status(200).json({ ok: true, runtimeCancelled });
 }
 
 export default withErrorHandler(handler);

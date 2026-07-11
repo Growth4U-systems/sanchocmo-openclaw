@@ -265,20 +265,26 @@ export default defineChannelPluginEntry({
 
         logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId} agent=${requestedAgent}: ${text.slice(0, 80)}`);
 
-        if (isStopCommand(text)) {
-          logger.info(`[mc-chat] stop command acknowledged without dispatch thread=${threadId} agent=${requestedAgent}`);
-          res.statusCode = 200;
-          res.end(JSON.stringify({
-            ok: true,
-            message: "Stop acknowledged",
-          }));
-          return true;
-        }
-
         // threadId may already include slug prefix (e.g. "growth4u:self-intelligence")
         const chatId = threadId.startsWith(slug + ':')
           ? `channel:mc-chat:${threadId}`
           : `channel:mc-chat:${slug}:${threadId}`;
+
+        if (isStopCommand(text)) {
+          const stopSessionKey = buildAgentSessionKey(requestedAgent, chatId, cfg);
+          const cancelled = mcChatCostGuard.cancelRun(
+            stopSessionKey,
+            "La ejecución fue detenida por el usuario.",
+          );
+          logger.info(`[mc-chat] stop command processed thread=${threadId} agent=${requestedAgent} cancelled=${cancelled}`);
+          res.statusCode = 200;
+          res.end(JSON.stringify({
+            ok: true,
+            cancelled,
+            message: cancelled ? "Active turn cancelled" : "No active turn found",
+          }));
+          return true;
+        }
 
         const mcChatContextBlock = buildMcChatContextBlock({
           slug,

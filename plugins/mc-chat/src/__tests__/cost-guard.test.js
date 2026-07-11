@@ -111,6 +111,25 @@ test("abortRun records wall-clock timeouts as cost-guard stops", () => {
   assert.match(guard.abortMessageFor("run-timeout", "session-timeout"), /tiempo máximo/);
 });
 
+test("cancelRun aborts the active session without adding a cooldown", () => {
+  let abortedWith = null;
+  const guard = createCostGuard({ clock: () => 1_000 });
+  guard.registerActiveTurn({
+    runId: "run-cancel",
+    sessionKey: "session-cancel",
+    abortController: { abort: (reason) => { abortedWith = reason; } },
+  });
+
+  assert.equal(guard.cancelRun("session-cancel"), true);
+  assert.match(abortedWith?.message || "", /detenida por el usuario/);
+  assert.equal(guard.abortMessageFor("run-cancel", "session-cancel"), null);
+  assert.equal(
+    guard.beforeAgentRun({ prompt: "nuevo turno", messages: [] }, { sessionKey: "session-cancel" }).outcome,
+    "pass",
+  );
+  assert.equal(guard.cancelRun("missing-session"), false);
+});
+
 test("llmOutput aborts on repeated tiny outputs with large prompts", () => {
   let aborted = false;
   const guard = createCostGuard({

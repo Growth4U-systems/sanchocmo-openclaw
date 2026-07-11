@@ -297,6 +297,25 @@ export function createCostGuard({ env = process.env, clock = nowMs } = {}) {
     return userMessage(reason);
   }
 
+  function cancelRun(activeSessionKey, reason = "La ejecución fue detenida por el usuario.") {
+    if (!activeSessionKey) return false;
+    const state = [...runs.values()].find((candidate) => candidate.sessionKey === activeSessionKey);
+    if (!state?.abortController?.abort) return false;
+
+    // User cancellation is not a safety violation: abort the active provider
+    // call without blocking the next turn or adding a cooldown for the session.
+    try {
+      state.abortController.abort(new Error(reason));
+    } catch {
+      try {
+        state.abortController.abort();
+      } catch {
+        return false;
+      }
+    }
+    return true;
+  }
+
   function beforeAgentRun(event, ctx = {}) {
     const currentLimits = limits();
     if (!currentLimits.enabled) return { outcome: "pass" };
@@ -458,6 +477,7 @@ export function createCostGuard({ env = process.env, clock = nowMs } = {}) {
     registerActiveTurn,
     clearActiveTurn,
     abortRun,
+    cancelRun,
     beforeAgentRun,
     beforeToolCall,
     modelCallStarted,
