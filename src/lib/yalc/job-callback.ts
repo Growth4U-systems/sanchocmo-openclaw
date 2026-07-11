@@ -25,6 +25,11 @@ export interface JobCallbackContext {
   slug: string;
   threadId: string;
   agent: string;
+  originalRequest?: string;
+  command?: string;
+  campaignId?: string;
+  profileKind?: string;
+  channel?: string;
 }
 
 export type JobCallbackEvent = "job.completed" | "job.failed";
@@ -84,6 +89,16 @@ export function parseCallback(body: unknown): JobCallbackPayload {
     throw new Error("Invalid job callback: callbackContext.agent is required");
   }
 
+  const optionalContext = (key: keyof JobCallbackContext): string | undefined => {
+    const value = ctx[key];
+    return typeof value === "string" && value.trim() ? value.trim() : undefined;
+  };
+  const originalRequest = optionalContext("originalRequest");
+  const command = optionalContext("command");
+  const campaignId = optionalContext("campaignId");
+  const profileKind = optionalContext("profileKind");
+  const channel = optionalContext("channel");
+
   return {
     event,
     jobId,
@@ -92,7 +107,16 @@ export function parseCallback(body: unknown): JobCallbackPayload {
     status,
     output: body.output,
     errorMessage: typeof body.errorMessage === "string" ? body.errorMessage : undefined,
-    callbackContext: { slug, threadId, agent },
+    callbackContext: {
+      slug,
+      threadId,
+      agent,
+      ...(originalRequest ? { originalRequest } : {}),
+      ...(command ? { command } : {}),
+      ...(campaignId ? { campaignId } : {}),
+      ...(profileKind ? { profileKind } : {}),
+      ...(channel ? { channel } : {}),
+    },
     timestamp: typeof body.timestamp === "string" ? body.timestamp : undefined,
   };
 }
@@ -135,18 +159,37 @@ export interface GatewayInboundPayload extends InboundMessage {
  * Pure function — no side effects, fully testable.
  */
 export function buildReEngagePayload(payload: JobCallbackPayload): GatewayInboundPayload {
-  const { slug, threadId, agent } = payload.callbackContext;
+  const {
+    slug,
+    threadId,
+    agent,
+    originalRequest,
+    command,
+    campaignId,
+    profileKind,
+    channel,
+  } = payload.callbackContext;
   const succeeded = payload.event === "job.completed";
+
+  const workflowContext = [
+    command ? `- comando completado: ${command}` : null,
+    campaignId ? `- campaignId: ${campaignId}` : null,
+    profileKind ? `- profileKind: ${profileKind}` : null,
+    channel ? `- canal: ${channel}` : null,
+    originalRequest ? `- solicitud original: ${originalRequest.slice(0, 4_000)}` : null,
+  ].filter((line): line is string => Boolean(line));
 
   const lines = succeeded
     ? [
-        `El trabajo asíncrono de YALC que lanzaste terminó. Informá al usuario del resultado en este hilo (en su idioma) y sugerí el siguiente paso si aplica.`,
+        `El trabajo asíncrono de YALC que lanzaste terminó. Retomá el flujo en este mismo hilo y en el idioma del usuario.`,
+        `Si la solicitud original ya autorizaba buscar, enriquecer, puntuar, personalizar o preparar una vista previa, ejecutá ahora el siguiente paso interno sin pedir otra confirmación. Nunca ejecutes un envío real sin una confirmación explícita separada.`,
         ``,
         `Resultado:`,
         `- estado: ${payload.status} (completado)`,
         `- tipo: ${payload.type || "(desconocido)"}`,
         `- jobId: ${payload.jobId}`,
         `- output: ${summarizeOutput(payload.output)}`,
+        ...(workflowContext.length > 0 ? [``, `Contexto del flujo:`, ...workflowContext] : []),
       ]
     : [
         `El trabajo asíncrono de YALC que lanzaste FALLÓ. Informá al usuario en este hilo (en su idioma), explicá el error de forma clara y ofrecé reintentar o un siguiente paso.`,
@@ -156,6 +199,7 @@ export function buildReEngagePayload(payload: JobCallbackPayload): GatewayInboun
         `- tipo: ${payload.type || "(desconocido)"}`,
         `- jobId: ${payload.jobId}`,
         `- error: ${payload.errorMessage || "(sin mensaje de error)"}`,
+        ...(workflowContext.length > 0 ? [``, `Contexto del flujo:`, ...workflowContext] : []),
       ];
 
   const text = lines.join("\n");

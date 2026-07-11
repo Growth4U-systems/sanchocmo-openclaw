@@ -5,7 +5,7 @@ import {
   withAuth,
   withErrorHandler,
 } from "@/lib/api-middleware";
-import { clearStatus, clearProgress, markCancelled } from "@/lib/data/mc-chat";
+import { addMessage, clearStatus, clearProgress, markCancelled } from "@/lib/data/mc-chat";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
 import {
   appendAgentRunEvent,
@@ -51,9 +51,11 @@ export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
   markCancelled(tid);
   clearStatus(tid);
   clearProgress(tid);
+  addMessage(tid, "bot", "Ejecución detenida.", requestedAgent || "sancho");
   console.log(`[mc-chat] Cancelling thread: ${tid}`);
 
   // Send /stop through the active runtime.
+  let runtimeCancelled = false;
   try {
     const payload: InboundMessage = {
       slug,
@@ -65,6 +67,12 @@ export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
       ...(requestedAgent ? { agent: requestedAgent, agentId: requestedAgent } : {}),
     };
     const result = await runtime.messaging.sendInbound(payload);
+    try {
+      const ack = result.raw ? JSON.parse(result.raw) as { cancelled?: unknown } : null;
+      runtimeCancelled = ack?.cancelled === true;
+    } catch {
+      runtimeCancelled = false;
+    }
     if (activeRun) {
       appendAgentRunEvent({
         runId: activeRun.id,
@@ -73,6 +81,7 @@ export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
         data: {
           status: result.status,
           raw: result.raw,
+          runtimeCancelled,
         },
       });
     }
@@ -88,7 +97,7 @@ export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
     console.error(`[mc-chat] Runtime /stop failed: ${err instanceof Error ? err.message : err}`);
   }
 
-  res.status(200).json({ ok: true });
+  res.status(200).json({ ok: true, runtimeCancelled });
 }
 
 export default compose(withErrorHandler, withAuth)(cancelHandler);

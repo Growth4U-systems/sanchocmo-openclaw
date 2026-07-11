@@ -3,11 +3,30 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import {
   buildHermesArgs,
+  buildHermesChildEnv,
   buildHermesPrompt,
   cleanHermesStdout,
   createServer,
   fetchContextPack,
 } from "./bridge.mjs";
+
+test("buildHermesChildEnv exposes chat context to deterministic CLI wrappers", () => {
+  const env = buildHermesChildEnv(
+    {
+      slug: "growth4u",
+      threadId: "growth4u:outbound",
+      agent: "rocinante",
+      text: "Crea una base real",
+    },
+    "run-1",
+  );
+
+  assert.equal(env.HERMES_SANCHO_RUN_ID, "run-1");
+  assert.equal(env.SANCHO_CHAT_SLUG, "growth4u");
+  assert.equal(env.SANCHO_CHAT_THREAD_ID, "growth4u:outbound");
+  assert.equal(env.SANCHO_CHAT_AGENT, "rocinante");
+  assert.equal(env.SANCHO_CHAT_REQUEST, "Crea una base real");
+});
 
 test("buildHermesPrompt preserves Sancho routing metadata", () => {
   const prompt = buildHermesPrompt({

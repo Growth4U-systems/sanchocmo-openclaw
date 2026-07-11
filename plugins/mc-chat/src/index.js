@@ -30,7 +30,7 @@ import {
 import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
-import { applyBrandEnvToProcess } from "./brand-env.js";
+import { applyBrandEnvToProcess, applyRuntimeEnvToProcess } from "./brand-env.js";
 import { mcChatCostGuard } from "./cost-guard.js";
 import { buildAttachmentContextBlock } from "./attachments.js";
 import {
@@ -287,20 +287,26 @@ export default defineChannelPluginEntry({
 
         logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId} agent=${requestedAgent}: ${text.slice(0, 80)}`);
 
-        if (isStopCommand(text)) {
-          logger.info(`[mc-chat] stop command acknowledged without dispatch thread=${threadId} agent=${requestedAgent}`);
-          res.statusCode = 200;
-          res.end(JSON.stringify({
-            ok: true,
-            message: "Stop acknowledged",
-          }));
-          return true;
-        }
-
         // threadId may already include slug prefix (e.g. "growth4u:self-intelligence")
         const chatId = threadId.startsWith(slug + ':')
           ? `channel:mc-chat:${threadId}`
           : `channel:mc-chat:${slug}:${threadId}`;
+
+        if (isStopCommand(text)) {
+          const stopSessionKey = buildAgentSessionKey(requestedAgent, chatId, cfg);
+          const cancelled = mcChatCostGuard.cancelRun(
+            stopSessionKey,
+            "La ejecución fue detenida por el usuario.",
+          );
+          logger.info(`[mc-chat] stop command processed thread=${threadId} agent=${requestedAgent} cancelled=${cancelled}`);
+          res.statusCode = 200;
+          res.end(JSON.stringify({
+            ok: true,
+            cancelled,
+            message: cancelled ? "Active turn cancelled" : "No active turn found",
+          }));
+          return true;
+        }
 
         const mcChatContextBlock = buildMcChatContextBlock({
           slug,
@@ -547,6 +553,12 @@ export default defineChannelPluginEntry({
           };
 
           const restoreBrandEnv = applyBrandEnvToProcess(slug);
+          const restoreChatEnv = applyRuntimeEnvToProcess({
+            SANCHO_CHAT_SLUG: slug,
+            SANCHO_CHAT_THREAD_ID: threadId,
+            SANCHO_CHAT_AGENT: requestedAgent || "sancho",
+            SANCHO_CHAT_REQUEST: text,
+          });
           let dispatchResult;
           try {
             dispatchResult = await dispatchInboundMessageWithBufferedDispatcher({
@@ -1060,6 +1072,7 @@ export default defineChannelPluginEntry({
             },
             });
           } finally {
+            restoreChatEnv();
             restoreBrandEnv();
           }
           const deliveredFinal = dispatchResult?.queuedFinal === true || (dispatchResult?.counts?.final || 0) > 0;
