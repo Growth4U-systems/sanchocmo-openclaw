@@ -51,9 +51,10 @@ selector:
 
 **Always asked (both modes):**
 
-1. **Model provider & auth** — pick the provider(s): `anthropic`, `openai`,
-   `fireworks`, `both`, or `all` (default `anthropic`). The auth mode is asked
-   **per provider**:
+1. **Model provider & auth** — pick the provider: `anthropic`, `openai`,
+   `fireworks`, or `all` (default `anthropic`). Invalid entries are rejected and
+   re-prompted (non-interactive installs abort with a clear message). The auth
+   mode is asked **per provider**:
    - *Anthropic* — `api_key` (default; needs `ANTHROPIC_API_KEY`) or
      `subscription` (needs a Claude OAuth token; generate it on the host with
      `claude setup-token` and paste it).
@@ -88,13 +89,17 @@ selector:
   gateway, legacy, Open Design); container-internal ports stay fixed.
 - **Access URL** — the Base URL where you'll reach Mission Control (default
   `http://localhost:3000`).
-- **Optional services** — both off by default (quick leaves them off), both
-  self-provision their token and are brought up automatically by `./sancho`
-  when enabled:
+- **Optional services** — **quick enables both by default** (so a fresh install
+  is feature-complete out of the box); advanced asks per-service. Override in
+  quick with `ENABLE_YALC=no` / `ENABLE_OD=no`. Both self-provision their token
+  and are brought up automatically by `./sancho`; their host ports auto-relocate
+  if busy (`OD_HOST_PORT` 7456, `YALC_PORT` 3847), and Open Design's browser URL
+  follows the relocated port:
   - *Outreach (YALC)* — generates `YALC_API_TOKEN` and wires
     `YALC_BASE_URL=http://yalc:3847`.
-  - *Open Design* (agentic visual editor, port 7456) — generates
-    `OD_API_TOKEN` and asks for a browser-reachable web URL.
+  - *Open Design* (agentic visual editor, port 7456) — generates `OD_API_TOKEN`;
+    advanced asks for a browser-reachable web URL, quick defaults it to
+    `http://localhost:7456`.
 
 It then **generates** `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`,
 `SANCHO_INTERNAL_API_TOKEN`, the admin token (also mirrored into `.env` as
