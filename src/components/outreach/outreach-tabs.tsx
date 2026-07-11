@@ -14,17 +14,19 @@ export function OutreachTabs({
   active,
   tipo,
   testId,
+  hidden = [],
   onChange,
 }: {
   active: OutreachTabKey | null;
   tipo: "partnerships" | "b2b";
   testId: string;
+  hidden?: OutreachTabKey[];
   onChange: (tab: OutreachTabKey) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <nav className="flex flex-wrap gap-2 overflow-x-auto" data-testid={testId}>
-        {OUTREACH_TABS.map((item) => (
+        {OUTREACH_TABS.filter((item) => !hidden.includes(item.key)).map((item) => (
           <button
             key={item.key}
             type="button"

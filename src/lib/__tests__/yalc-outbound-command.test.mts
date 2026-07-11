@@ -495,6 +495,77 @@ test("outbound.linkedin_autopilot.execute forwards explicit live confirmation", 
   ]);
 });
 
+test("outbound.workflow.prepare delegates the deterministic spec without rebuilding messages", async () => {
+  const spec = {
+    channels: ["linkedin"],
+    contactReason: "Quiero compartir una forma más simple de operar outbound B2B",
+    leadIds: ["lead-ruth"],
+    source: { enabled: false, provider: "apollo", limit: 25, criteria: {} },
+    enrichment: { enabled: false },
+    strategyPack: {
+      strategies: [{ id: "company_reason_v1", version: 1, priority: 100, enabled: true, parameters: {} }],
+      minimumScore: 0.65,
+      allowFallback: true,
+    },
+    approval: { required: true, sampleSize: 3 },
+    sender: {},
+  };
+  installFetch((path, call) => {
+    if (path === "/api/campaigns/camp-workflow") return { id: "camp-workflow", type: "B2B" };
+    if (path === "/api/outbound/command") {
+      const body = call.body as Record<string, unknown>;
+      assert.equal(body.command, "outbound.workflow.prepare");
+      assert.equal(body.source, "outbound.workflow");
+      assert.deepEqual(body.spec, spec);
+      return {
+        ok: true,
+        command: "outbound.workflow.prepare",
+        campaignId: "camp-workflow",
+        runId: "run-1",
+        status: "awaiting_approval",
+        batch: { id: "batch-1", itemCount: 1, sample: [] },
+      };
+    }
+    throw new Error(`Unexpected path ${path}`);
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.workflow.prepare",
+    campaignId: "camp-workflow",
+    sync: true,
+    spec,
+  });
+
+  assert.equal(result.runId, "run-1");
+  assert.equal((result.batch as { itemCount: number }).itemCount, 1);
+  assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
+    "/api/campaigns/camp-workflow",
+    "/api/outbound/command",
+  ]);
+});
+
+test("outbound.workflow.status can restore a persisted run by run id", async () => {
+  installFetch((path, call) => {
+    assert.equal(path, "/api/outbound/command");
+    assert.equal((call.body as Record<string, unknown>).command, "outbound.workflow.status");
+    assert.equal((call.body as Record<string, unknown>).runId, "run-1");
+    return {
+      ok: true,
+      command: "outbound.workflow.status",
+      campaignId: "camp-workflow",
+      run: { id: "run-1", status: "approved" },
+      batch: { id: "batch-1", status: "approved", itemCount: 1, items: [] },
+    };
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.workflow.status",
+    runId: "run-1",
+  });
+  assert.equal((result.run as { status: string }).status, "approved");
+  assert.equal(calls.length, 1);
+});
+
 test("outbound.enrich fails loud for entity-only mode until entity store lands in this repo", async () => {
   await assert.rejects(
     dispatchOutboundCommand(config, {

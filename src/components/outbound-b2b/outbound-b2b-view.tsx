@@ -32,7 +32,6 @@ import { ScoreBar, ToastViewport, useToast } from "@/components/partnerships/ui"
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildB2BCampaignThread, buildYalcThread } from "@/lib/chat-openers";
-import { buildPhaseOneLinkedInMessage } from "@/lib/outreach/phase-one-message";
 import { linkedInFirstContactCandidates } from "@/lib/outreach/linkedin-first-contact";
 import { cn } from "@/lib/utils";
 import { isCampaignKind, type YalcCampaignKind } from "@/lib/yalc/campaign-kind";
@@ -136,23 +135,8 @@ interface CampaignStep {
   status?: string | null;
 }
 
-interface LinkedInVariant {
-  id: string;
-  name?: string | null;
-  connectNote?: string | null;
-  dm1Template?: string | null;
-  dm2Template?: string | null;
-}
-
 interface CampaignDetail extends Campaign {
   steps?: CampaignStep[];
-  variants?: LinkedInVariant[];
-  sequenceTiming?: {
-    connect_to_dm1_days?: number;
-    connectToDm1Days?: number;
-    dm1_to_dm2_days?: number;
-    dm1ToDm2Days?: number;
-  } | string | null;
 }
 
 interface CampaignPayload {
@@ -238,15 +222,6 @@ interface EmailSequenceBlock {
   emails: EmailSequenceEmail[];
 }
 
-interface LinkedInSequenceState {
-  name: string;
-  connectNote: string;
-  dm1Template: string;
-  dm2Template: string;
-  connectToDm1Days: number;
-  dm1ToDm2Days: number;
-}
-
 interface SequencePreviewItem {
   key: string;
   channel: "LinkedIn" | "Email";
@@ -257,58 +232,100 @@ interface SequencePreviewItem {
   status?: string;
 }
 
-interface LinkedInAutopilotPlanItem {
+interface OutboundWorkflowBatchItem {
   leadId: string;
-  name: string;
-  company?: string | null;
-  providerId?: string | null;
-  linkedinUrl?: string | null;
-  action: "connect" | "dm";
-  accountId?: string | null;
-  accountLabel?: string | null;
-  message: string;
-  blocked?: boolean;
-  blockedReason?: string | null;
+  included: boolean;
+  status: string;
+  strategyId: string;
+  hook: string;
+  hookStatus: "verified" | "fallback" | string;
+  messageBody: string;
+  contentHash: string;
+  errorCode?: string | null;
+  errorMessage?: string | null;
 }
 
-interface LinkedInAutopilotPlan {
-  summary: {
-    total: number;
-    sendable: number;
-    connect: number;
-    dm: number;
-    blocked: number;
-  };
-  items: LinkedInAutopilotPlanItem[];
-}
-
-interface LinkedInAutopilotApproval {
-  approved: boolean;
-  message: string;
-}
-
-interface LinkedInAutopilotCommandResponse {
+interface OutboundWorkflowStatusResponse {
   ok: boolean;
   command: string;
   campaignId: string;
-  mode?: "proposal" | "dry_run" | "live";
-  plan?: LinkedInAutopilotPlan;
-  summary?: LinkedInAutopilotPlan["summary"] & {
-    sent?: number;
-    skipped?: number;
-    failed?: number;
+  run: {
+    id: string;
+    status: string;
+    currentStep?: string | null;
+    errorCode?: string | null;
+    errorMessage?: string | null;
+    updatedAt?: string | null;
+  };
+  blocked?: Array<{ leadId: string; reason: string }>;
+  batch?: {
+    id: string;
+    status: string;
+    channel: string;
+    itemCount: number;
+    contentHash: string;
+    approvedAt?: string | null;
+    approvedBy?: string | null;
+    summary?: {
+      included: number;
+      approved: number;
+      sending: number;
+      sent: number;
+      failed: number;
+      uncertain: number;
+      pending: number;
+    };
+    items: OutboundWorkflowBatchItem[];
+    returnedItems: number;
+    totalItems: number;
+  } | null;
+}
+
+interface OutboundWorkflowPrepareResponse {
+  ok: boolean;
+  command: string;
+  campaignId: string;
+  runId: string;
+  status: string;
+  batch?: {
+    id: string;
+    itemCount: number;
+    contentHash: string;
+    sample: Array<{
+      leadId: string;
+      strategyId: string;
+      hook: string;
+      hookStatus: string;
+      messageBody: string;
+    }>;
+  };
+  blocked?: Array<{ leadId: string; reason: string }>;
+  signalFailures?: Array<{ entityId: string; capability: string; message: string }>;
+}
+
+interface OutboundWorkflowExecuteResponse extends YalcQueuedJobResponse {
+  ok?: boolean;
+  command?: string;
+  runId?: string;
+  mode?: "dry_run" | "live";
+  noExternalWrite?: boolean;
+  summary?: {
+    total: number;
+    sent: number;
+    failed: number;
+    uncertain: number;
+    pending: number;
   };
 }
 
-function linkedinBlockReasonLabel(reason?: string | null): string {
+function workflowBlockReasonLabel(reason?: string | null): string {
   if (!reason) return "No disponible";
-  if (reason.includes("daily_capacity_exhausted")) return "Fuera del cupo de este lote";
   if (reason.includes("connection_already_sent")) return "Conexión ya enviada";
-  if (reason.includes("dm1_already_sent")) return "Mensaje ya enviado";
-  if (reason.includes("missing_linkedin_account")) return "Falta una cuenta de LinkedIn";
+  if (reason.includes("daily_capacity_exhausted")) return "Diferido por el cupo diario de LinkedIn";
   if (reason.includes("missing_linkedin_identity")) return "Falta identificar el perfil de LinkedIn";
-  if (reason.includes("missing_connect_template") || reason.includes("missing_dm_template")) return "Falta el mensaje base";
-  if (reason.includes("rendered_message_empty")) return "El mensaje quedó vacío";
+  if (reason.includes("lifecycle_sourced")) return "Pendiente de aprobación";
+  if (reason.includes("lifecycle_disqualified")) return "Descartado";
+  if (reason.includes("No eligible evidence")) return "Faltan empresa o motivo de contacto";
   return reason;
 }
 
@@ -491,10 +508,6 @@ function personalizedLeadCount(leads: readonly Lead[]): number {
 
 function emailLeadCount(leads: readonly Lead[]): number {
   return leads.filter((lead) => Boolean(lead.email)).length;
-}
-
-function linkedinLeadCount(leads: readonly Lead[]): number {
-  return leads.filter((lead) => Boolean(lead.linkedinUrl) || /linkedin|unipile/i.test(lead.source || "")).length;
 }
 
 type CampaignNextAction =
@@ -684,43 +697,6 @@ function channelText(channels?: string[] | string | null): string {
 
 function campaignHasLinkedIn(campaign?: Campaign | CampaignDetail | null): boolean {
   return channelText(campaign?.channels).toLowerCase().includes("linkedin");
-}
-
-function linkedInTiming(campaign?: CampaignDetail | Campaign | null): { connectToDm1Days: number; dm1ToDm2Days: number } {
-  const detail = campaign as CampaignDetail | null | undefined;
-  const raw = detail?.sequenceTiming;
-  let row: Record<string, unknown> = {};
-  if (raw && typeof raw === "object" && !Array.isArray(raw)) row = raw as Record<string, unknown>;
-  if (typeof raw === "string") {
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) row = parsed as Record<string, unknown>;
-    } catch {
-      row = {};
-    }
-  }
-  const connect = row.connect_to_dm1_days ?? row.connectToDm1Days;
-  const dm2 = row.dm1_to_dm2_days ?? row.dm1ToDm2Days;
-  return {
-    connectToDm1Days: typeof connect === "number" && Number.isFinite(connect) ? Math.max(0, Math.trunc(connect)) : 0,
-    dm1ToDm2Days: typeof dm2 === "number" && Number.isFinite(dm2) ? Math.max(0, Math.trunc(dm2)) : 3,
-  };
-}
-
-function linkedInSequenceState(campaign?: CampaignDetail | Campaign | null): LinkedInSequenceState {
-  const variant = (campaign as CampaignDetail | null | undefined)?.variants?.[0];
-  const timing = linkedInTiming(campaign);
-  return {
-    name: variant?.name || "Default",
-    connectNote:
-      variant?.connectNote ||
-      "Hola {{firstName}}, me gustaría conectar y compartir una idea que puede ser relevante para {{company}}.",
-    dm1Template:
-      variant?.dm1Template ||
-      "Hola {{firstName}}, ¿te parece si hablamos de cómo simplificar outbound en {{company}}?",
-    dm2Template: variant?.dm2Template || "Te hago follow-up, {{firstName}}, por si quieres verlo esta semana.",
-    ...timing,
-  };
 }
 
 function groupLeadsByStage(leads: readonly Lead[]): Record<PipelineStageKey, Lead[]> {
@@ -998,35 +974,6 @@ function contactStepStatus(lead: Lead, key: SequencePreviewItem["key"]): string 
 function sequencePreviewForLead(lead: Lead, campaign?: CampaignDetail | null): SequencePreviewItem[] {
   if (!campaign) return [];
   const items: SequencePreviewItem[] = [];
-  if (campaignHasLinkedIn(campaign) || Boolean(campaign.variants?.length)) {
-    const linkedIn = linkedInSequenceState(campaign);
-    items.push(
-      {
-        key: "linkedin-connect",
-        channel: "LinkedIn",
-        title: "Invitación de conexión",
-        timing: "Día 0",
-        body: renderLeadTemplate(linkedIn.connectNote, lead),
-      },
-      {
-        key: "linkedin-dm1",
-        channel: "LinkedIn",
-        title: "DM1 al aceptar",
-        timing: linkedIn.connectToDm1Days
-          ? `Al aceptar + ${linkedIn.connectToDm1Days} día${linkedIn.connectToDm1Days === 1 ? "" : "s"}`
-          : "Al aceptar",
-        body: renderLeadTemplate(linkedIn.dm1Template, lead),
-      },
-      {
-        key: "linkedin-dm2",
-        channel: "LinkedIn",
-        title: "Follow-up sin respuesta",
-        timing: `DM1 + ${linkedIn.dm1ToDm2Days} día${linkedIn.dm1ToDm2Days === 1 ? "" : "s"}`,
-        body: renderLeadTemplate(linkedIn.dm2Template, lead),
-      },
-    );
-  }
-
   for (const block of extractEmailSequences(campaign)) {
     block.emails.forEach((email, index) => {
       const delayDays = email.delayDays ?? 0;
@@ -1063,8 +1010,7 @@ export function OutboundB2BView() {
   const [roster, setRoster] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [activeJob, setActiveJob] = useState<ActiveYalcJob | null>(null);
-  const [linkedinAutopilotPlan, setLinkedinAutopilotPlan] = useState<LinkedInAutopilotPlan | null>(null);
-  const [linkedinAutopilotApprovals, setLinkedinAutopilotApprovals] = useState<Record<string, LinkedInAutopilotApproval>>({});
+  const [workflowBlocked, setWorkflowBlocked] = useState<Array<{ leadId: string; reason: string }>>([]);
   const [contactReasons, setContactReasons] = useState<Record<string, string>>({});
 
   function pushQuery(
@@ -1189,6 +1135,21 @@ export function OutboundB2BView() {
     [campaignDetailQuery.data, selectedCampaign, campaigns, templateCampaignId],
   );
   const contactReason = contactReasons[selectedCampaignId] ?? icpCampaign?.hypothesis ?? "";
+  const workflowStatusQuery = useQuery({
+    queryKey: ["yalc", slug, "b2b", "workflow", selectedCampaignId],
+    queryFn: () =>
+      fetchJson<OutboundWorkflowStatusResponse>(`/api/outbound/command?slug=${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          command: "outbound.workflow.status",
+          campaignId: selectedCampaignId,
+          limit: 100,
+        }),
+      }),
+    enabled: !!slug && !!selectedCampaignId && campaignHasLinkedIn(icpCampaign),
+    retry: false,
+  });
   const selectedLeadEditsLocked = useMemo(
     () => campaignLocksLeadEdits(icpCampaign, selectedAllLeads),
     [icpCampaign, selectedAllLeads],
@@ -1207,8 +1168,7 @@ export function OutboundB2BView() {
         }),
       }),
     onSuccess: (_data, variables) => {
-      setLinkedinAutopilotPlan(null);
-      setLinkedinAutopilotApprovals({});
+      setWorkflowBlocked([]);
       void queryClient.invalidateQueries({ queryKey: activeLeadsKey });
       void queryClient.invalidateQueries({ queryKey: discardedLeadsKey });
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "campaigns"] });
@@ -1293,8 +1253,8 @@ export function OutboundB2BView() {
     onError: (error) => showToast(error instanceof Error ? error.message : "Acción incompleta", "warn"),
   });
 
-  const linkedinAutopilotPlanAction = useMutation<
-    LinkedInAutopilotCommandResponse,
+  const linkedinWorkflowPrepareAction = useMutation<
+    OutboundWorkflowPrepareResponse,
     Error,
     { campaignId: string; contactReason: string }
   >({
@@ -1307,125 +1267,114 @@ export function OutboundB2BView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ expectedKind: "b2b", hypothesis: reason.trim() }),
       });
-      return fetchJson<LinkedInAutopilotCommandResponse>(
+      return fetchJson<OutboundWorkflowPrepareResponse>(
         `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            command: "outbound.linkedin_autopilot.plan",
+            command: "outbound.workflow.prepare",
             campaignId,
-            leadIds,
+            sync: true,
+            spec: {
+              channels: ["linkedin"],
+              contactReason: reason.trim(),
+              leadIds,
+              source: { enabled: false, provider: "apollo", limit: 25, criteria: {} },
+              enrichment: { enabled: false },
+              strategyPack: {
+                strategies: [
+                  { id: "company_reason_v1", version: 1, priority: 100, enabled: true, parameters: {} },
+                ],
+                minimumScore: 0.65,
+                allowFallback: true,
+              },
+              approval: { required: true, sampleSize: 3 },
+              sender: {},
+            },
           }),
         },
       );
     },
-    onSuccess: (data, variables) => {
-      const leadsById = new Map(selectedLinkedInLeads.map((lead) => [lead.id, lead]));
-      const items = (data.plan?.items || []).map((item) => {
-        const lead = leadsById.get(item.leadId);
-        const company = lead?.company?.trim() || item.company?.trim() || "";
-        const missingCompany = !company;
-        return {
-          ...item,
-          name: lead ? leadDisplayName(lead) : item.name,
-          company: company || null,
-          message: missingCompany
-            ? ""
-            : buildPhaseOneLinkedInMessage(
-                { firstName: lead?.firstName || item.name?.split(/\s+/)[0], company },
-                variables.contactReason,
-              ),
-          blocked: Boolean(item.blocked || missingCompany),
-          blockedReason: item.blockedReason || (missingCompany ? "Falta el nombre de la empresa." : null),
-        };
-      });
-      const sendable = items.filter((item) => !item.blocked);
-      const nextPlan = data.plan
-        ? {
-            ...data.plan,
-            summary: {
-              total: items.length,
-              sendable: sendable.length,
-              connect: sendable.filter((item) => item.action === "connect").length,
-              dm: sendable.filter((item) => item.action === "dm").length,
-              blocked: items.length - sendable.length,
-            },
-            items,
-          }
-        : null;
-      setLinkedinAutopilotPlan(nextPlan);
-      setLinkedinAutopilotApprovals(
-        Object.fromEntries(
-          (nextPlan?.items || []).map((item) => [
-            item.leadId,
-            {
-              approved: !item.blocked,
-              message: item.message || "",
-            },
-          ]),
-        ),
-      );
+    onSuccess: (data) => {
+      setWorkflowBlocked(data.blocked || []);
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "campaigns"] });
-      showToast("Mensajes preparados con nombre, empresa y motivo de contacto");
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "workflow", selectedCampaignId] });
+      showToast(`${data.batch?.itemCount ?? 0} mensajes preparados. No se envió nada.`);
     },
-    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo generar el plan LinkedIn", "warn"),
+    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo preparar el lote LinkedIn", "warn"),
   });
 
-  const linkedinAutopilotExecuteAction = useMutation<
-    LinkedInAutopilotCommandResponse,
+  const linkedinWorkflowApproveAction = useMutation<
+    Record<string, unknown>,
     Error,
-    { campaignId: string; dryRun: boolean; approvedCount: number }
+    { campaignId: string; runId: string; silent?: boolean }
   >({
-    mutationFn: ({ campaignId, dryRun }) => {
-      const approvedItems = (linkedinAutopilotPlan?.items || [])
-        .filter((item) => !item.blocked)
-        .map((item) => {
-          const approval = linkedinAutopilotApprovals[item.leadId];
-          const message = (approval?.message ?? item.message ?? "").trim();
-          if (approval?.approved === false || !message) return null;
-          return {
-            leadId: item.leadId,
-            action: item.action,
-            message,
-            ...(item.accountId ? { accountId: item.accountId } : {}),
-          };
-        })
-        .filter((item): item is { leadId: string; action: "connect" | "dm"; message: string; accountId?: string } => item !== null);
-      if (approvedItems.length === 0) throw new Error("No hay mensajes LinkedIn aprobados para enviar.");
-      return fetchJson<LinkedInAutopilotCommandResponse>(
+    mutationFn: ({ campaignId, runId }) =>
+      fetchJson<Record<string, unknown>>(
         `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            command: "outbound.linkedin_autopilot.execute",
+            command: "outbound.workflow.approve",
             campaignId,
-            leadIds: approvedItems.map((item) => item.leadId),
-            items: approvedItems,
+            runId,
+            actor: "Sancho",
+          }),
+        },
+      ),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "workflow", selectedCampaignId] });
+      if (!variables.silent) showToast("Lote aprobado. Todavía no se envió nada.");
+    },
+    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo aprobar el lote", "warn"),
+  });
+
+  const linkedinWorkflowExecuteAction = useMutation<
+    OutboundWorkflowExecuteResponse,
+    Error,
+    { campaignId: string; runId: string; dryRun: boolean; itemCount: number }
+  >({
+    mutationFn: ({ campaignId, runId, dryRun }) =>
+      fetchJson<OutboundWorkflowExecuteResponse>(
+        `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            command: "outbound.workflow.execute",
+            campaignId,
+            runId,
             dryRun,
             confirmLinkedInSend: !dryRun,
           }),
         },
-      );
-    },
+      ),
     onSuccess: (data, variables) => {
-      if (variables.dryRun) {
-        const count = data.plan?.summary?.sendable ?? variables.approvedCount;
-        showToast(`Simulación LinkedIn OK: ${count} mensaje${count === 1 ? "" : "s"}. No se envió nada.`);
+      if (isQueuedJobResponse(data)) {
+        setActiveJob({
+          campaignId: variables.campaignId,
+          action: "linkedin-send",
+          jobId: data.jobId,
+          status: data.status || "queued",
+        });
+        showToast(`En cola: ${variables.itemCount} contactos por LinkedIn`);
         return;
       }
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
-      setLinkedinAutopilotPlan(null);
-      setLinkedinAutopilotApprovals({});
-      showToast(`LinkedIn enviado: ${data.summary?.sent ?? 0} persona${data.summary?.sent === 1 ? "" : "s"}`);
+      if (variables.dryRun) {
+        showToast(`Simulación OK: ${variables.itemCount} mensajes. No se envió nada.`);
+      } else {
+        const sent = data.summary?.sent ?? 0;
+        showToast(`LinkedIn enviado: ${sent} persona${sent === 1 ? "" : "s"}`);
+      }
     },
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo ejecutar LinkedIn", "warn"),
   });
 
   useEffect(() => {
-    setLinkedinAutopilotPlan(null);
-    setLinkedinAutopilotApprovals({});
+    setWorkflowBlocked([]);
   }, [selectedCampaignId, selectedLinkedInLeadIds]);
 
   function prepareLinkedInContact() {
@@ -1435,13 +1384,17 @@ export function OutboundB2BView() {
     });
   }
 
+  const activeJobId = activeJob?.jobId;
+  const activeJobAction = activeJob?.action;
+
   useEffect(() => {
-    if (!slug || !activeJob?.jobId) return;
+    if (!slug || !activeJobId || !activeJobAction) return;
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let failures = 0;
-    const { jobId, action } = activeJob;
+    const jobId = activeJobId;
+    const action = activeJobAction;
 
     const poll = async () => {
       try {
@@ -1497,7 +1450,7 @@ export function OutboundB2BView() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [activeJob?.jobId, queryClient, showToast, slug]);
+  }, [activeJobAction, activeJobId, queryClient, showToast, slug]);
 
   const sequenceUpdateAction = useMutation({
     mutationFn: ({ campaignId, stepId, emails }: { campaignId: string; stepId?: string; emails: EmailSequenceEmail[] }) =>
@@ -1520,41 +1473,6 @@ export function OutboundB2BView() {
       showToast("Secuencia guardada");
     },
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo guardar", "warn"),
-  });
-
-  const linkedinSequenceUpdateAction = useMutation({
-    mutationFn: ({
-      campaignId,
-      variantId,
-      sequence,
-    }: {
-      campaignId: string;
-      variantId?: string;
-      sequence: LinkedInSequenceState;
-    }) =>
-      fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}/linkedin-sequence/update?slug=${encodeURIComponent(slug)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          expectedKind: "b2b",
-          variantId,
-          name: sequence.name,
-          connectNote: sequence.connectNote,
-          dm1Template: sequence.dm1Template,
-          dm2Template: sequence.dm2Template,
-          sequenceTiming: {
-            connect_to_dm1_days: sequence.connectToDm1Days,
-            dm1_to_dm2_days: sequence.dm1ToDm2Days,
-          },
-          actorLabel: "Sancho",
-        }),
-      }),
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "campaigns"] });
-      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "campaign", variables.campaignId] });
-      showToast("Secuencia LinkedIn guardada");
-    },
-    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo guardar LinkedIn", "warn"),
   });
 
   const campaignUpdateAction = useMutation({
@@ -1662,35 +1580,33 @@ export function OutboundB2BView() {
     }
   }
 
-  function updateLinkedInAutopilotApproval(leadId: string, next: Partial<LinkedInAutopilotApproval>) {
-    setLinkedinAutopilotApprovals((current) => ({
-      ...current,
-      [leadId]: {
-        approved: current[leadId]?.approved ?? true,
-        message: current[leadId]?.message ?? "",
-        ...next,
-      },
-    }));
-  }
-
-  function approvedLinkedInAutopilotCount() {
-    return (linkedinAutopilotPlan?.items || []).filter((item) => {
-      if (item.blocked) return false;
-      const approval = linkedinAutopilotApprovals[item.leadId];
-      return approval?.approved !== false && Boolean((approval?.message ?? item.message ?? "").trim());
-    }).length;
-  }
-
-  function executeLinkedInAutopilot(dryRun: boolean) {
-    const count = approvedLinkedInAutopilotCount();
-    if (!selectedCampaignId || count === 0) return;
+  async function executeLinkedInWorkflow(dryRun: boolean) {
+    const workflow = workflowStatusQuery.data;
+    const count = workflow?.batch?.itemCount ?? 0;
+    if (!selectedCampaignId || !workflow?.run.id || count === 0) return;
     if (!dryRun) {
       const confirmation = window.prompt(
         `Esto enviará ${count} mensaje${count === 1 ? "" : "s"} reales por LinkedIn. Escribe ENVIAR para continuar.`,
       );
       if (confirmation !== "ENVIAR") return;
     }
-    linkedinAutopilotExecuteAction.mutate({ campaignId: selectedCampaignId, dryRun, approvedCount: count });
+    if (workflow.batch?.status === "draft" || workflow.run.status === "awaiting_approval") {
+      try {
+        await linkedinWorkflowApproveAction.mutateAsync({
+          campaignId: selectedCampaignId,
+          runId: workflow.run.id,
+          silent: true,
+        });
+      } catch {
+        return;
+      }
+    }
+    linkedinWorkflowExecuteAction.mutate({
+      campaignId: selectedCampaignId,
+      runId: workflow.run.id,
+      dryRun,
+      itemCount: count,
+    });
   }
 
   function executeEmailCampaign(dryRun: boolean) {
@@ -1713,7 +1629,10 @@ export function OutboundB2BView() {
   const pageError = overview.error || campaignsQuery.error || activeLeadsQuery.error || discardedLeadsQuery.error;
   const actionBusy = outboundAction.isPending || !!activeJob;
   const busyAction = outboundAction.isPending ? outboundAction.variables?.action : activeJob?.action;
-  const linkedinBusy = linkedinAutopilotPlanAction.isPending || linkedinAutopilotExecuteAction.isPending;
+  const linkedinBusy =
+    linkedinWorkflowPrepareAction.isPending ||
+    linkedinWorkflowApproveAction.isPending ||
+    linkedinWorkflowExecuteAction.isPending;
 
   if (notConfigured) {
     return (
@@ -1791,6 +1710,7 @@ export function OutboundB2BView() {
             active={tab === "settings" ? null : tab}
             tipo="b2b"
             testId="outbound-b2b-tabs"
+            hidden={channelText(icpCampaign?.channels).toLowerCase().includes("email") ? [] : ["plantillas"]}
             onChange={(nextTab) => pushQuery({ tab: nextTab, campaign: selectedCampaignId })}
           />
 
@@ -1868,24 +1788,26 @@ export function OutboundB2BView() {
               <div className="space-y-4" data-testid="outbound-contactos">
                 {campaignHasLinkedIn(icpCampaign) && (
                   <div id="linkedin-contact-panel" className="scroll-mt-4">
-                    <LinkedInAutopilotPanel
+                    <LinkedInWorkflowPanel
                       campaign={icpCampaign}
                       leads={selectedLinkedInLeads}
                       contactReason={contactReason}
-                      plan={linkedinAutopilotPlan}
-                      approvals={linkedinAutopilotApprovals}
-                      planning={linkedinAutopilotPlanAction.isPending}
-                      executing={linkedinAutopilotExecuteAction.isPending}
+                      workflow={workflowStatusQuery.data || null}
+                      blocked={workflowStatusQuery.data?.blocked || workflowBlocked}
+                      loadingStatus={workflowStatusQuery.isLoading}
+                      planning={linkedinWorkflowPrepareAction.isPending}
+                      executing={
+                        linkedinWorkflowApproveAction.isPending ||
+                        linkedinWorkflowExecuteAction.isPending ||
+                        activeJob?.action === "linkedin-send"
+                      }
                       disabled={!selectedCampaignId || linkedinBusy}
                       onContactReasonChange={(reason) => {
                         setContactReasons((current) => ({ ...current, [selectedCampaignId]: reason }));
-                        setLinkedinAutopilotPlan(null);
-                        setLinkedinAutopilotApprovals({});
                       }}
-                      onPlan={() => linkedinAutopilotPlanAction.mutate({ campaignId: selectedCampaignId, contactReason })}
-                      onApprovalChange={updateLinkedInAutopilotApproval}
-                      onSimulate={() => executeLinkedInAutopilot(true)}
-                      onExecute={() => executeLinkedInAutopilot(false)}
+                      onPrepare={() => linkedinWorkflowPrepareAction.mutate({ campaignId: selectedCampaignId, contactReason })}
+                      onSimulate={() => void executeLinkedInWorkflow(true)}
+                      onExecute={() => void executeLinkedInWorkflow(false)}
                     />
                   </div>
                 )}
@@ -1978,13 +1900,9 @@ export function OutboundB2BView() {
                   leads={selectedAllLeads}
                   loading={campaignDetailQuery.isLoading}
                   saving={sequenceUpdateAction.isPending}
-                  savingLinkedIn={linkedinSequenceUpdateAction.isPending}
                   locked={selectedLeadEditsLocked}
                   onSave={(stepId, emails) =>
                     sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
-                  }
-                  onSaveLinkedIn={(variantId, sequence) =>
-                    linkedinSequenceUpdateAction.mutate({ campaignId: templateCampaignId, variantId, sequence })
                   }
                 />
               </div>
@@ -2231,77 +2149,68 @@ function B2BCampaignsTab({
   );
 }
 
-function LinkedInAutopilotPanel({
+function LinkedInWorkflowPanel({
   campaign,
   leads,
   contactReason,
-  plan,
-  approvals,
+  workflow,
+  blocked,
+  loadingStatus,
   planning,
   executing,
   disabled,
   onContactReasonChange,
-  onPlan,
-  onApprovalChange,
+  onPrepare,
   onSimulate,
   onExecute,
 }: {
   campaign: Campaign | CampaignDetail | null;
   leads: Lead[];
   contactReason: string;
-  plan: LinkedInAutopilotPlan | null;
-  approvals: Record<string, LinkedInAutopilotApproval>;
+  workflow: OutboundWorkflowStatusResponse | null;
+  blocked: Array<{ leadId: string; reason: string }>;
+  loadingStatus: boolean;
   planning: boolean;
   executing: boolean;
   disabled: boolean;
   onContactReasonChange: (reason: string) => void;
-  onPlan: () => void;
-  onApprovalChange: (leadId: string, next: Partial<LinkedInAutopilotApproval>) => void;
+  onPrepare: () => void;
   onSimulate: () => void;
   onExecute: () => void;
 }) {
-  const reviewPageSize = 25;
-  const [reviewPage, setReviewPage] = useState(0);
   const leadById = useMemo(() => new Map(leads.map((lead) => [lead.id, lead])), [leads]);
-  const sendable = plan?.items.filter((item) => !item.blocked) || [];
-  const blocked = plan?.items.filter((item) => item.blocked) || [];
-  const deferred = blocked.filter((item) => item.blockedReason?.includes("daily_capacity_exhausted"));
-  const alreadyContacted = blocked.filter((item) => /connection_already_sent|dm1_already_sent/.test(item.blockedReason || ""));
-  const needsAttention = blocked.filter((item) =>
-    !/daily_capacity_exhausted|connection_already_sent|dm1_already_sent/.test(item.blockedReason || ""),
-  );
-  const sampleItems = sendable.slice(0, 3);
-  const reviewPageCount = Math.max(1, Math.ceil(sendable.length / reviewPageSize));
-  const reviewItems = sendable.slice(reviewPage * reviewPageSize, (reviewPage + 1) * reviewPageSize);
-  const approved = sendable.filter((item) => {
-    const approval = approvals[item.leadId];
-    return approval?.approved !== false && Boolean((approval?.message ?? item.message ?? "").trim());
-  });
-  const blankApproved = sendable.filter((item) => {
-    const approval = approvals[item.leadId];
-    return approval?.approved !== false && !(approval?.message ?? item.message ?? "").trim();
-  }).length;
+  const batch = workflow?.batch || null;
+  const items = batch?.items || [];
+  const sampleItems = items.filter((item) => item.included).slice(0, 3);
+  const failedCount = (batch?.summary?.failed ?? 0) + (batch?.summary?.uncertain ?? 0);
+  const sentCount = batch?.summary?.sent ?? items.filter((item) => item.status === "sent").length;
   const hasCampaign = !!campaign;
   const hasReason = Boolean(contactReason.trim());
-  const canReview = !!plan && sendable.length > 0;
-  const canExecute = canReview && approved.length > 0 && blankApproved === 0;
-
-  useEffect(() => {
-    setReviewPage(0);
-  }, [plan]);
+  const awaitingApproval = batch?.status === "draft" || workflow?.run.status === "awaiting_approval";
+  const approved = batch?.status === "approved" || workflow?.run.status === "approved";
+  const finished = batch?.status === "completed" || batch?.status === "completed_with_errors";
+  const itemCount = batch?.itemCount ?? 0;
 
   return (
-    <section className="rounded-lg border border-border bg-card p-4" data-testid="linkedin-autopilot-panel">
+    <section className="rounded-lg border border-border bg-card p-4" data-testid="linkedin-workflow-panel">
       <div className="flex flex-wrap items-start gap-4">
         <div className="min-w-[260px] flex-1">
           <div className="mb-2 inline-flex items-center gap-2 rounded border border-cyan-600/30 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-800">
             <Network className="h-3 w-3" />
             LinkedIn
           </div>
-          <h3 className="font-heading text-lg text-navy">Mensaje de apertura</h3>
+          <h3 className="font-heading text-lg text-navy">Lote de apertura</h3>
         </div>
         <p className="text-sm font-semibold text-foreground">
-          {plan ? `${approved.length} de ${sendable.length} listos` : `${leads.length} aprobado${leads.length === 1 ? "" : "s"} · sin enviar`}
+          {loadingStatus
+            ? "Leyendo estado..."
+            : finished
+              ? `${sentCount} enviados · ${failedCount} con incidencia`
+              : approved
+                ? `${itemCount} aprobados · sin enviar`
+                : batch
+                  ? `${itemCount} preparados · sin enviar`
+                  : `${leads.length} aprobado${leads.length === 1 ? "" : "s"} · sin enviar`}
         </p>
       </div>
 
@@ -2322,12 +2231,12 @@ function LinkedInAutopilotPanel({
         <button
           type="button"
           disabled={disabled || planning || !hasCampaign || leads.length === 0 || !hasReason}
-          onClick={onPlan}
+          onClick={onPrepare}
           className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-rust bg-rust px-4 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
           data-testid="outbound-prepare-messages"
         >
           {planning ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
-          {planning ? "Preparando..." : `Preparar ${leads.length} mensaje${leads.length === 1 ? "" : "s"}`}
+          {planning ? "Preparando..." : batch ? "Volver a preparar" : `Preparar ${leads.length} mensaje${leads.length === 1 ? "" : "s"}`}
         </button>
       </div>
 
@@ -2337,30 +2246,25 @@ function LinkedInAutopilotPanel({
         </div>
       )}
 
-      {plan && sendable.length === 0 && needsAttention.length > 0 && (
-        <div className="mt-4 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
-          No hay personas listas para este lote. Revisa los contactos que necesitan atención.
+      {workflow?.run.status === "failed" && (
+        <div className="mt-4 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{workflow.run.errorMessage || "No se pudo preparar el lote."}</span>
         </div>
       )}
 
-      {plan && sendable.length > 0 && !canExecute && (
-        <div className="mt-4 rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
-          Selecciona al menos una persona y deja su mensaje con texto para poder simular o enviar.
-        </div>
-      )}
-
-      {plan && (
+      {batch && (
         <div className="mt-4 border-y border-border py-3">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-            <span><strong className="text-foreground">{approved.length}</strong> listos en este lote</span>
-            {deferred.length > 0 && <span><strong className="text-foreground">{deferred.length}</strong> pendientes por capacidad</span>}
-            {alreadyContacted.length > 0 && <span><strong className="text-foreground">{alreadyContacted.length}</strong> ya contactados</span>}
-            {needsAttention.length > 0 && <span className="text-yellow-800"><strong>{needsAttention.length}</strong> requieren atención</span>}
+            <span><strong className="text-foreground">{itemCount}</strong> incluidos</span>
+            <span><strong className="text-foreground">{sampleItems.length}</strong> en la muestra</span>
+            {blocked.length > 0 && <span className="text-yellow-800"><strong>{blocked.length}</strong> fuera del lote</span>}
+            {failedCount > 0 && <span className="text-destructive"><strong>{failedCount}</strong> con incidencia</span>}
           </div>
         </div>
       )}
 
-      {plan && sampleItems.length > 0 && (
+      {batch && sampleItems.length > 0 && (
         <div className="mt-4" data-testid="outbound-message-sample">
           <div className="flex items-center justify-between gap-3">
             <h4 className="text-sm font-semibold text-foreground">Muestra de mensajes</h4>
@@ -2369,15 +2273,16 @@ function LinkedInAutopilotPanel({
           <div className="mt-2 divide-y divide-border border-y border-border">
             {sampleItems.map((item) => {
               const lead = leadById.get(item.leadId);
-              const approval = approvals[item.leadId];
-              const message = approval?.message ?? item.message ?? "";
               return (
                 <div key={item.leadId} className="grid gap-1 py-3 text-sm md:grid-cols-[minmax(160px,0.55fr)_minmax(0,1.45fr)] md:gap-4">
                   <div className="min-w-0">
-                    <div className="truncate font-semibold text-foreground">{item.name || leadDisplayName(lead || { id: item.leadId })}</div>
-                    <div className="truncate text-xs text-muted-foreground">{item.company || lead?.company || lead?.headline || item.leadId}</div>
+                    <div className="truncate font-semibold text-foreground">{leadDisplayName(lead || { id: item.leadId })}</div>
+                    <div className="truncate text-xs text-muted-foreground">{lead?.company || lead?.headline || item.leadId}</div>
+                    <div className="mt-1 text-[11px] font-semibold text-muted-foreground">
+                      {item.hookStatus === "verified" ? "Señal verificada" : "Empresa + motivo"}
+                    </div>
                   </div>
-                  <p className="m-0 whitespace-pre-wrap leading-relaxed text-foreground">{message}</p>
+                  <p className="m-0 whitespace-pre-wrap leading-relaxed text-foreground">{item.messageBody}</p>
                 </div>
               );
             })}
@@ -2385,113 +2290,41 @@ function LinkedInAutopilotPanel({
         </div>
       )}
 
-      {plan && sendable.length > 0 && (
-        <details className="mt-4 border-t border-border pt-3">
-          <summary className="cursor-pointer text-sm font-semibold text-foreground">
-            Editar o excluir personas <span className="font-normal text-muted-foreground">(opcional)</span>
-          </summary>
-          <div className="mt-3 overflow-hidden rounded-lg border border-border bg-background">
-            <div className="divide-y divide-border">
-              {reviewItems.map((item) => {
-                const lead = leadById.get(item.leadId);
-                const approval = approvals[item.leadId];
-                const approvedForSend = approval?.approved !== false;
-                const message = approval?.message ?? item.message ?? "";
-                return (
-                  <div key={item.leadId} className="grid gap-3 px-3 py-3 text-sm lg:grid-cols-[110px_minmax(190px,1fr)_minmax(300px,2fr)]">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={approvedForSend}
-                        onChange={(event) => onApprovalChange(item.leadId, { approved: event.target.checked })}
-                        className="h-4 w-4 rounded border-border text-rust focus:ring-rust"
-                      />
-                      {approvedForSend ? "Incluir" : "Excluir"}
-                    </label>
-                    <div className="min-w-0">
-                      <div className="truncate font-semibold text-foreground">{item.name || leadDisplayName(lead || { id: item.leadId })}</div>
-                      <div className="truncate text-xs text-muted-foreground">{item.company || lead?.company || lead?.headline || item.leadId}</div>
-                      {(item.linkedinUrl || lead?.linkedinUrl) && (
-                        <a
-                          href={item.linkedinUrl || lead?.linkedinUrl || undefined}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-1 inline-flex items-center gap-1 text-xs text-rust hover:underline"
-                        >
-                          Ver perfil <ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
-                    </div>
-                    <textarea
-                      value={message}
-                      disabled={!approvedForSend}
-                      rows={3}
-                      onChange={(event) => onApprovalChange(item.leadId, { message: event.target.value })}
-                      className="w-full resize-y rounded-md border border-border bg-card p-2 text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none disabled:bg-muted/30 disabled:text-muted-foreground"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            {reviewPageCount > 1 && (
-              <div className="flex items-center justify-between gap-3 border-t border-border px-3 py-2 text-xs text-muted-foreground">
-                <button
-                  type="button"
-                  disabled={reviewPage === 0}
-                  onClick={() => setReviewPage((current) => Math.max(0, current - 1))}
-                  className="rounded-md border border-border bg-card px-2.5 py-1 font-semibold text-foreground disabled:opacity-40"
-                >
-                  Anterior
-                </button>
-                <span>{reviewPage + 1} de {reviewPageCount}</span>
-                <button
-                  type="button"
-                  disabled={reviewPage >= reviewPageCount - 1}
-                  onClick={() => setReviewPage((current) => Math.min(reviewPageCount - 1, current + 1))}
-                  className="rounded-md border border-border bg-card px-2.5 py-1 font-semibold text-foreground disabled:opacity-40"
-                >
-                  Siguiente
-                </button>
-              </div>
-            )}
-          </div>
-        </details>
-      )}
-
-      {plan && needsAttention.length > 0 && (
+      {blocked.length > 0 && (
         <details className="mt-3 text-sm">
-          <summary className="cursor-pointer font-semibold text-yellow-800">Revisar {needsAttention.length} no disponibles</summary>
+          <summary className="cursor-pointer font-semibold text-yellow-800">Ver {blocked.length} fuera del lote</summary>
           <div className="mt-2 divide-y divide-border border-y border-border">
-            {needsAttention.slice(0, 25).map((item) => (
+            {blocked.slice(0, 25).map((item) => (
               <div key={item.leadId} className="flex flex-wrap justify-between gap-2 py-2">
-                <span>{item.name || item.leadId}</span>
-                <span className="text-xs text-yellow-800">{linkedinBlockReasonLabel(item.blockedReason)}</span>
+                <span>{leadDisplayName(leadById.get(item.leadId) || { id: item.leadId })}</span>
+                <span className="text-xs text-yellow-800">{workflowBlockReasonLabel(item.reason)}</span>
               </div>
             ))}
           </div>
         </details>
       )}
 
-      {plan && (
+      {batch && (awaitingApproval || approved) && (
         <div className="mt-4 flex flex-wrap justify-end gap-2">
           <button
             type="button"
-            disabled={disabled || executing || !canExecute}
+            disabled={disabled || executing || itemCount === 0}
             onClick={onSimulate}
             className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-semibold transition-colors hover:border-sage hover:text-sage disabled:opacity-50"
+            data-testid="outbound-test-messages"
           >
             {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             Probar sin enviar
           </button>
           <button
             type="button"
-            disabled={disabled || executing || !canExecute}
+            disabled={disabled || executing || itemCount === 0}
             onClick={onExecute}
             className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-4 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
             data-testid="outbound-send-messages"
           >
             {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {deferred.length > 0 ? `Enviar lote de ${approved.length}` : `Enviar ${approved.length}`}
+            Enviar {itemCount}
           </button>
         </div>
       )}
@@ -3691,224 +3524,46 @@ function B2BInboxTab({
 function B2BPlantillasTab({
   campaign,
   campaignDetail,
-  leads,
   loading,
   saving,
-  savingLinkedIn,
   locked,
   onSave,
-  onSaveLinkedIn,
 }: {
   campaign: Campaign | CampaignDetail | null;
   campaignDetail: CampaignDetail | null;
   leads: Lead[];
   loading: boolean;
   saving: boolean;
-  savingLinkedIn: boolean;
   locked: boolean;
   onSave: (stepId: string | undefined, emails: EmailSequenceEmail[]) => void;
-  onSaveLinkedIn: (variantId: string | undefined, sequence: LinkedInSequenceState) => void;
 }) {
   const sequences = extractEmailSequences(campaignDetail);
   const selectedCampaign = campaignDetail || campaign;
-  const emailCount = sequences.reduce((count, block) => count + block.emails.length, 0);
-  const emailLeads = emailLeadCount(leads);
-  const linkedinLeads = linkedinLeadCount(leads);
-  const hasLinkedInFlow = campaignHasLinkedIn(selectedCampaign) || linkedinLeads > 0;
-  const hasEmailFlow = !hasLinkedInFlow || emailCount > 0 || emailLeads > 0;
   return (
-    <div className="space-y-4" data-testid="outbound-plantillas">
-        {!selectedCampaign ? (
-          <section className="rounded-xl border border-border bg-card p-4">
-            <ZeroState
-              title="Sin campaña seleccionada"
-              body="Crea o selecciona una campaña para revisar la secuencia."
-            />
-          </section>
-        ) : hasLinkedInFlow ? (
-          <LinkedInSequenceEditor
-            campaign={selectedCampaign}
-            saving={savingLinkedIn}
-            locked={locked}
-            onSave={onSaveLinkedIn}
-          />
-        ) : (
-          <section className="rounded-xl border border-border bg-card p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="font-heading text-lg text-navy">Secuencia de email</h3>
-                <p className="text-sm text-muted-foreground">Edita el email inicial y los follow-ups antes de aprobar el envío.</p>
-              </div>
-              {loading && <span className="text-xs text-muted-foreground">Cargando...</span>}
-            </div>
-            <div className="mt-4 space-y-4">
-              {sequences.length === 0 && !loading && (
-                <ZeroState
-                  title="Secuencia pendiente"
-                  body="Cuando Sancho genere los mensajes de esta campaña, aparecerán aquí para revisarlos y editarlos."
-                />
-              )}
-              {sequences.map((block, index) => (
-                <SequenceBlockEditor
-                  key={block.stepId || `${block.source}-${index}`}
-                  block={block}
-                  saving={saving}
-                  locked={locked}
-                  onSave={(emails) => onSave(block.stepId, emails)}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {selectedCampaign && hasLinkedInFlow && hasEmailFlow && sequences.length > 0 && (
-          <details className="rounded-xl border border-border bg-card p-4">
-            <summary className="cursor-pointer font-heading text-base text-navy">Emails asociados</summary>
-            <div className="mt-4 space-y-4">
-              {sequences.map((block, index) => (
-                <SequenceBlockEditor
-                  key={block.stepId || `${block.source}-${index}`}
-                  block={block}
-                  saving={saving}
-                  locked={locked}
-                  onSave={(emails) => onSave(block.stepId, emails)}
-                />
-              ))}
-            </div>
-          </details>
-        )}
-    </div>
-  );
-}
-
-function LinkedInSequenceEditor({
-  campaign,
-  saving,
-  locked,
-  onSave,
-}: {
-  campaign: Campaign | CampaignDetail;
-  saving: boolean;
-  locked: boolean;
-  onSave: (variantId: string | undefined, sequence: LinkedInSequenceState) => void;
-}) {
-  const variant = (campaign as CampaignDetail).variants?.[0];
-  const [sequence, setSequence] = useState<LinkedInSequenceState>(() => linkedInSequenceState(campaign));
-
-  useEffect(() => {
-    setSequence(linkedInSequenceState(campaign));
-  }, [campaign]);
-
-  function update(next: Partial<LinkedInSequenceState>) {
-    setSequence((current) => ({ ...current, ...next }));
-  }
-
-  return (
-    <section className="rounded-xl border border-border bg-card p-4">
+    <section className="rounded-xl border border-border bg-card p-4" data-testid="outbound-plantillas">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="font-heading text-lg text-navy">Secuencia LinkedIn</h3>
-          <p className="text-sm text-muted-foreground">Conexión, primer DM al aceptar y follow-up si no responde.</p>
+          <h3 className="font-heading text-lg text-navy">Secuencia de email</h3>
+          <p className="text-sm text-muted-foreground">Email inicial y follow-ups de la campaña seleccionada.</p>
         </div>
-        <span className="rounded border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          LinkedIn
-        </span>
+        {loading && <span className="text-xs text-muted-foreground">Cargando...</span>}
       </div>
-
-      <div className="mt-4 grid gap-3">
-        <LinkedInMessageField
-          label="Invitación"
-          value={sequence.connectNote}
-          rows={3}
-          disabled={locked || saving}
-          onChange={(value) => update({ connectNote: value })}
-        />
-        <LinkedInMessageField
-          label="DM1 al aceptar"
-          value={sequence.dm1Template}
-          rows={4}
-          disabled={locked || saving}
-          onChange={(value) => update({ dm1Template: value })}
-        />
-        <LinkedInMessageField
-          label="Follow-up sin respuesta"
-          value={sequence.dm2Template}
-          rows={4}
-          disabled={locked || saving}
-          onChange={(value) => update({ dm2Template: value })}
-        />
-      </div>
-
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <label className="block rounded-md border border-border bg-background p-3">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Días hasta DM1</span>
-          <input
-            type="number"
-            min={0}
-            value={sequence.connectToDm1Days}
-            disabled={locked || saving}
-            onChange={(event) => update({ connectToDm1Days: Math.max(0, Number(event.target.value) || 0) })}
-            className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
+      <div className="mt-4 space-y-4">
+        {!selectedCampaign && !loading && <ZeroState title="Sin campaña seleccionada" body="Selecciona una campaña de email." />}
+        {selectedCampaign && sequences.length === 0 && !loading && (
+          <ZeroState title="Secuencia pendiente" body="Todavía no hay mensajes de email guardados." />
+        )}
+        {sequences.map((block, index) => (
+          <SequenceBlockEditor
+            key={block.stepId || `${block.source}-${index}`}
+            block={block}
+            saving={saving}
+            locked={locked}
+            onSave={(emails) => onSave(block.stepId, emails)}
           />
-        </label>
-        <label className="block rounded-md border border-border bg-background p-3">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Días hasta follow-up</span>
-          <input
-            type="number"
-            min={0}
-            value={sequence.dm1ToDm2Days}
-            disabled={locked || saving}
-            onChange={(event) => update({ dm1ToDm2Days: Math.max(0, Number(event.target.value) || 0) })}
-            className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-sm focus:border-rust focus:outline-none"
-          />
-        </label>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5">
-          {["{{firstName}}", "{{company}}"].map((token) => (
-            <span key={token} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
-              {token}
-            </span>
-          ))}
-        </div>
-        <button
-          type="button"
-          disabled={saving || locked}
-          onClick={() => onSave(variant?.id, sequence)}
-          className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
-        >
-          {locked ? "Secuencia bloqueada" : saving ? "Guardando..." : "Guardar LinkedIn"}
-        </button>
+        ))}
       </div>
     </section>
-  );
-}
-
-function LinkedInMessageField({
-  label,
-  value,
-  rows,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  rows: number;
-  disabled: boolean;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="block rounded-md border border-border bg-background p-3">
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
-      <textarea
-        value={value}
-        rows={rows}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full resize-y rounded-md border border-border bg-card p-3 text-sm focus:border-rust focus:outline-none"
-      />
-    </label>
   );
 }
 

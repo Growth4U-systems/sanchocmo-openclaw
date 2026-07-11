@@ -637,7 +637,7 @@ async function main() {
   if (command === 'outbound-command') {
     const payload = withAsyncCallback(readPayload(args), args)
     const commandName = typeof payload.command === 'string' ? payload.command : ''
-    if (commandName !== 'outbound.status') {
+    if (commandName !== 'outbound.status' && commandName !== 'outbound.workflow.status') {
       requireConfirmation(args, command)
     }
     const label = `outbound-${commandName.replace(/[^a-zA-Z0-9_-]/g, '-') || 'command'}`
