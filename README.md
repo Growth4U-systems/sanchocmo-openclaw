@@ -144,6 +144,22 @@ domain, first brand) and generates the secrets (`NEXTAUTH_SECRET`,
 preflight then validates the must-have config and fails fast with a clear list
 if anything is missing.
 
+**Wizard modes — `quick` (default) vs `advanced`.** *Quick* asks only what's
+needed to boot (provider + credential) and generates sensible defaults for the
+rest; *advanced* exposes the full flow (admin/login, database, access URL, custom
+brand, runtime, optional services). Pick one:
+
+```bash
+./sancho install --advanced       # clone path (default is --quick)
+./sancho reconfigure --advanced   # re-run later (regenerates config, keeps data)
+
+# One-liner path — select the mode with WIZARD_MODE:
+curl -fsSL https://raw.githubusercontent.com/Growth4U-systems/sanchocmo-openclaw/main/get.sh | WIZARD_MODE=advanced bash
+```
+
+Prefer to skip prompts entirely (CI/scripted)? Set `WIZARD_ASSUME_YES=1` and pass
+the answers as environment variables — see [docs/INSTALL.md](docs/INSTALL.md).
+
 The installer writes `SANCHO_RUNTIME=openclaw` as the safe initial adapter.
 Advanced self-hosted setups can pass `SANCHO_RUNTIME=external-http` plus the
 matching `SANCHO_EXTERNAL_*` variables before running the wizard, or configure
