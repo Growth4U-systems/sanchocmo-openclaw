@@ -62,7 +62,11 @@ services:
       # OD_API_TOKEN is shared with the daemon — MC injects it as Bearer +
       # spoofs `Origin: ${OD_WEB_URL}` so writes (e.g. PUT /api/app-config)
       # pass the fork's Phase 5 auth + same-origin guard.
-      - OD_DAEMON_URL=${OD_DAEMON_URL:-http://open-design:7456}
+      # OD_DAEMON_URL is set ONLY by the OD overlay (docker-compose.od.yml) so
+      # isOdConfigured() can tell OD-off from OD-on — a baked default here made
+      # MC always think OD was enabled and show a dead "Abrir editor agentic".
+      # A BYO daemon URL set in .env still passes through.
+      - OD_DAEMON_URL=${OD_DAEMON_URL:-}
       - OD_WEB_URL=${OD_WEB_URL:-}
       - OD_API_TOKEN=${OD_API_TOKEN:-}
       # The bundled `notion` skill reads NOTION_API_TOKEN, but `.env` ships the

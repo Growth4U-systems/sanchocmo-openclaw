@@ -131,8 +131,8 @@ export default function MediaCreationEditorPage() {
             <p className="font-semibold">No se puede conectar al daemon de Open Design.</p>
             <p>{String(error instanceof Error ? error.message : error)}</p>
             <p className="text-xs">
-              Verifica que está corriendo:{" "}
-              <code className="bg-red-100 px-1.5 py-0.5 rounded">~/.openclaw/scripts/od-daemon.sh status</code>
+              Verificá que el contenedor de Open Design esté sano:{" "}
+              <code className="bg-red-100 px-1.5 py-0.5 rounded">./sancho status</code>
             </p>
           </div>
         )}

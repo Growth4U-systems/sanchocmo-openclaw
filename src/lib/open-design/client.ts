@@ -104,7 +104,7 @@ function withOdAuth(init: RequestInit | undefined, config: OdClientConfig): Requ
 export class OdDaemonOfflineError extends Error {
   constructor(daemonUrl: string, cause?: unknown) {
     super(
-      `OD daemon offline at ${daemonUrl}. Arranca con: ~/.openclaw/scripts/od-daemon.sh start`,
+      `OD daemon offline at ${daemonUrl}. Verificá que Open Design esté habilitado y su contenedor sano: ./sancho status · ./sancho logs (habilitalo con ./sancho install --od).`,
     );
     this.name = "OdDaemonOfflineError";
     if (cause) (this as { cause?: unknown }).cause = cause;

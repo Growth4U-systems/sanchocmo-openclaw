@@ -42,6 +42,10 @@ export default function MediaCreationPage() {
   const openChat = useOpenChat();
   const [activeTab, setActiveTab] = useState<TabKey>("design-system");
   const [launching, setLaunching] = useState(false);
+  // Only offer the agentic editor when the Open Design overlay is actually wired
+  // up (OD_DAEMON_URL/OD_WEB_URL/OD_API_TOKEN set → docker-compose.od.yml active).
+  // Otherwise the button would 503 on click ("OD daemon offline").
+  const [odConfigured, setOdConfigured] = useState(false);
 
   const handleLaunchEditor = async () => {
     if (!slug || launching) return;
@@ -64,6 +68,18 @@ export default function MediaCreationPage() {
       setLaunching(false);
     }
   };
+
+  // Resolve whether Open Design is wired up so we only show its launch button.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/open-design/status")
+      .then((r) => (r.ok ? r.json() : { configured: false }))
+      .then((d) => { if (!cancelled) setOdConfigured(Boolean(d?.configured)); })
+      .catch(() => { if (!cancelled) setOdConfigured(false); });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Sync tab with URL query (?tab=...) so deep links + cross-tab nav work
   useEffect(() => {
@@ -105,7 +121,7 @@ export default function MediaCreationPage() {
             {tab.label}
           </button>
         ))}
-        {slug && (
+        {slug && odConfigured && (
           <button
             type="button"
             onClick={handleLaunchEditor}
