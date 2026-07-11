@@ -104,6 +104,30 @@ export interface ErrorDetail {
   correlatedWith?: ErrorCategory;
 }
 
+export interface WorkflowJobEvent {
+  jobId: string;
+  type: string;
+  status: "completed" | "failed";
+  command?: string;
+  campaignId?: string;
+  runId?: string;
+  summary?: string;
+  errorMessage?: string;
+  batch?: {
+    itemCount: number;
+    sample: Array<{ leadId?: string; messageBody: string }>;
+  };
+  stats?: {
+    found: number;
+    enriched: number;
+    usable: number;
+    totalAvailable: number | null;
+    truncated: boolean;
+    hasMore?: boolean;
+    nextPage?: number | null;
+  };
+}
+
 const VALID_CATEGORIES: ReadonlySet<ErrorCategory> = new Set([
   "insufficient_quota",
   "anthropic_billing",
@@ -178,7 +202,7 @@ const MAX_PENDING_PROGRESS = 200;
 const MAX_SEALED_PROGRESS = 50;
 
 // Thread persistence (disk-based, same as legacy)
-// role can be "user" | "bot" | "status" | "system" | "handoff". When role === "handoff",
+// role can be "user" | "bot" | "status" | "system" | "workflow" | "handoff". When role === "handoff",
 // `from_agent` and `to_agent` carry the source/target agent slugs and `text` is the reason.
 export interface ThreadData {
   messages: {
@@ -191,6 +215,7 @@ export interface ThreadData {
     from_agent?: string;
     to_agent?: string;
     errorDetail?: ErrorDetail;
+    workflowJob?: WorkflowJobEvent;
   }[];
   discordThreadId?: string;
   discordChannelId?: string;
@@ -262,6 +287,41 @@ export function addMessage(
     thread.messages = thread.messages.slice(-200);
   }
   thread.updatedAt = Date.now();
+  saveThread(threadId, thread);
+}
+
+/**
+ * Persist one visible result per asynchronous workflow job. Callback retries
+ * update the same entry instead of adding chat turns, and no model is involved.
+ */
+export function upsertWorkflowJobMessage(
+  threadId: string,
+  text: string,
+  workflowJob: WorkflowJobEvent,
+  agent?: string,
+) {
+  const thread = getThread(threadId);
+  const existingIndex = thread.messages.findIndex(
+    (message) => message.workflowJob?.jobId === workflowJob.jobId,
+  );
+  const now = Date.now();
+  const message = {
+    role: "workflow",
+    text,
+    ts: existingIndex >= 0 ? thread.messages[existingIndex].ts : now,
+    agent,
+    workflowJob,
+  };
+
+  if (existingIndex >= 0) {
+    thread.messages[existingIndex] = message;
+  } else {
+    thread.messages.push(message);
+  }
+  if (thread.messages.length > 200) {
+    thread.messages = thread.messages.slice(-200);
+  }
+  thread.updatedAt = now;
   saveThread(threadId, thread);
 }
 

@@ -116,9 +116,19 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
     && role !== "progress"
     && role !== "system"
     && role !== "handoff";
+  // One run has one terminal result. Multipart replies are joined by the
+  // runtime adapter before they reach this endpoint; any later terminal event
+  // is stale noise and must not become another chat card.
+  if (
+    claimedRunId
+    && exactRun
+    && isTerminalDelivery
+    && (exactRun.status === "completed" || exactRun.status === "failed")
+  ) {
+    return res.status(200).json({ ok: true, stale: true, runId: exactRun.id });
+  }
   // A run may legitimately produce multiple visible parts, but an HTTP retry
-  // repeats the same payload. Claim a content fingerprint before persistence:
-  // identical retries become no-ops while distinct multipart text remains.
+  // repeats the same payload. Claim a content fingerprint before persistence.
   if (claimedRunId && exactRun && isTerminalDelivery) {
     const callbackFingerprint = createHash("sha256")
       .update(JSON.stringify({ role: role || "bot", text, agent, errorDetail: rawErrorDetail }))

@@ -42,16 +42,18 @@ export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
           : undefined;
 
   const runtime = getRuntime();
-  await runtime.messaging.cancel(tid);
   const activeRun = getLatestActiveRun(tid);
+  await runtime.messaging.cancel(tid);
   if (activeRun) {
     markAgentRunCancelled(activeRun.id, tid, { requestedAgent });
+    // Keep the legacy no-run-id callback path fail-closed during rolling deploys.
+    markCancelled(tid);
   }
-  // Keep the legacy no-run-id callback path fail-closed during rolling deploys.
-  markCancelled(tid);
   clearStatus(tid);
   clearProgress(tid);
-  addMessage(tid, "bot", "Ejecución detenida.", requestedAgent || "sancho");
+  if (activeRun) {
+    addMessage(tid, "system", "Ejecución detenida.", requestedAgent || "sancho");
+  }
   console.log(`[mc-chat] Cancelling thread: ${tid}`);
 
   // Send /stop through the active runtime.
@@ -97,7 +99,12 @@ export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
     console.error(`[mc-chat] Runtime /stop failed: ${err instanceof Error ? err.message : err}`);
   }
 
-  res.status(200).json({ ok: true, runtimeCancelled });
+  res.status(200).json({
+    ok: true,
+    cancelled: Boolean(activeRun),
+    alreadyStopped: !activeRun,
+    runtimeCancelled,
+  });
 }
 
 export default compose(withErrorHandler, withAuth)(cancelHandler);

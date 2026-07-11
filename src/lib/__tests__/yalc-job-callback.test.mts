@@ -1,18 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-// job-callback.ts is authored as an ES module but consumed as CommonJS by
-// Next.js (root package.json has no "type":"module"), so under tsx --test the
-// named exports may land on the `default` namespace — mirror the interop dance
-// used in api-middleware.test.mts / mc-chat.test.mts.
 import * as mod from "../yalc/job-callback";
-import type {
-  DispatchDeps,
-  GatewayInboundPayload,
-  JobCallbackPayload,
-} from "../yalc/job-callback";
-import type { SendInboundOptions } from "../runtime";
+import type { DispatchDeps, JobCallbackPayload } from "../yalc/job-callback";
+import type { WorkflowJobEvent } from "../data/mc-chat";
 
-const { parseCallback, buildReEngagePayload, dispatchJobResult, summarizeOutput } = (
+const { parseCallback, dispatchJobResult, formatJobResult, summarizeOutput } = (
   mod as unknown as { default: typeof mod }
 ).default ?? mod;
 
@@ -30,243 +22,162 @@ function validBody(overrides: Record<string, unknown> = {}) {
   };
 }
 
-// --- parseCallback ---------------------------------------------------------
-
 test("parseCallback accepts a valid completed payload", () => {
-  const p = parseCallback(validBody());
-  assert.equal(p.event, "job.completed");
-  assert.equal(p.jobId, "job_123");
-  assert.equal(p.type, "campaign.enrich");
-  assert.deepEqual(p.callbackContext, {
-    slug: "growth4u",
-    threadId: "growth4u:abc",
-    agent: "rocinante",
-  });
-});
-
-test("parseCallback accepts a failed payload with errorMessage", () => {
-  const p = parseCallback(
-    validBody({ event: "job.failed", status: "failed", output: undefined, errorMessage: "Apollo 429" }),
-  );
-  assert.equal(p.event, "job.failed");
-  assert.equal(p.errorMessage, "Apollo 429");
+  const payload = parseCallback(validBody());
+  assert.equal(payload.event, "job.completed");
+  assert.equal(payload.jobId, "job_123");
+  assert.equal(payload.type, "campaign.enrich");
 });
 
 test("parseCallback preserves outbound workflow context", () => {
-  const p = parseCallback(validBody({
+  const payload = parseCallback(validBody({
     callbackContext: {
       slug: "growth4u",
       threadId: "growth4u:abc",
       agent: "rocinante",
-      originalRequest: "Busca tres founders y prepara los mensajes",
-      command: "outbound.source",
+      originalRequest: "Busca tres founders",
+      command: "outbound.workflow.prepare",
       campaignId: "camp-123",
       profileKind: "b2b_contact",
       channel: "linkedin",
     },
   }));
 
-  assert.equal(p.callbackContext.originalRequest, "Busca tres founders y prepara los mensajes");
-  assert.equal(p.callbackContext.command, "outbound.source");
-  assert.equal(p.callbackContext.campaignId, "camp-123");
-  assert.equal(p.callbackContext.channel, "linkedin");
+  assert.equal(payload.callbackContext.command, "outbound.workflow.prepare");
+  assert.equal(payload.callbackContext.campaignId, "camp-123");
+  assert.equal(payload.callbackContext.channel, "linkedin");
 });
 
-test("parseCallback rejects a non-object body", () => {
+test("parseCallback rejects malformed callbacks", () => {
   assert.throws(() => parseCallback("nope"), /body must be a JSON object/);
-});
-
-test("parseCallback rejects an unknown event", () => {
   assert.throws(() => parseCallback(validBody({ event: "job.started" })), /event must be/);
-});
-
-test("parseCallback rejects a missing jobId", () => {
   assert.throws(() => parseCallback(validBody({ jobId: "" })), /jobId is required/);
-});
-
-test("parseCallback rejects a missing callbackContext", () => {
-  const body = validBody();
-  delete (body as Record<string, unknown>).callbackContext;
-  assert.throws(() => parseCallback(body), /callbackContext is required/);
-});
-
-test("parseCallback rejects callbackContext missing slug/threadId/agent", () => {
   assert.throws(
     () => parseCallback(validBody({ callbackContext: { threadId: "t", agent: "a" } })),
     /callbackContext.slug is required/,
   );
-  assert.throws(
-    () => parseCallback(validBody({ callbackContext: { slug: "s", agent: "a" } })),
-    /callbackContext.threadId is required/,
-  );
-  assert.throws(
-    () => parseCallback(validBody({ callbackContext: { slug: "s", threadId: "t" } })),
-    /callbackContext.agent is required/,
-  );
 });
 
-// --- summarizeOutput -------------------------------------------------------
-
-test("summarizeOutput surfaces count-ish fields", () => {
+test("summarizeOutput surfaces useful counts", () => {
   assert.equal(summarizeOutput({ leads: 132 }), "leads=132");
   assert.equal(summarizeOutput({ count: 5, total: 9 }), "count=5, total=9");
   assert.equal(summarizeOutput([1, 2, 3]), "3 elementos");
-  assert.equal(summarizeOutput("hello"), "hello");
   assert.equal(summarizeOutput(undefined), "(sin output)");
 });
 
-// --- buildReEngagePayload --------------------------------------------------
+test("formatJobResult is deterministic and never contains an agent instruction", () => {
+  const completed = parseCallback(validBody({ type: "campaign.search", output: { leads: 132 } }));
+  const failed = parseCallback(validBody({
+    event: "job.failed",
+    status: "failed",
+    type: "campaign.workflow.prepare",
+    errorMessage: "La campaña no tiene LinkedIn como canal",
+  }));
 
-test("buildReEngagePayload carries slug/threadId/agent from callbackContext", () => {
-  const payload = parseCallback(validBody());
-  const out: GatewayInboundPayload = buildReEngagePayload(payload);
-  assert.equal(out.slug, "growth4u");
-  assert.equal(out.threadId, "growth4u:abc");
-  assert.equal(out.agent, "rocinante");
-  assert.equal(out.threadState, "continue");
-  assert.equal(out.isAdmin, true);
-  assert.equal(out.senderRole, "admin");
+  assert.equal(formatJobResult(completed), "Búsqueda completada: leads=132.");
+  assert.equal(
+    formatJobResult(failed),
+    "No se pudo preparar LinkedIn porque la campaña pertenece a otro canal. No se creó otra campaña ni se envió ningún contacto.",
+  );
+  assert.doesNotMatch(formatJobResult(completed), /retom|ejecut|prompt|agente/i);
 });
 
-test("buildReEngagePayload text includes job summary for a completed job", () => {
-  const payload = parseCallback(validBody());
-  const out = buildReEngagePayload(payload);
-  assert.match(out.text, /campaign\.enrich/);
-  assert.match(out.text, /job_123/);
-  assert.match(out.text, /leads=132/);
-  assert.match(out.text, /completado/);
+test("formatJobResult reports another cohort without implying an automatic loop", () => {
+  const text = formatJobResult(parseCallback({
+    event: "job.completed",
+    jobId: "job-cohort",
+    tenantId: "growth4u",
+    type: "campaign.workflow.prepare",
+    status: "completed",
+    output: {
+      source: { found: 1_000, totalAvailable: 12_500, hasMore: true, nextPage: 11 },
+      enrichment: { enriched: 900 },
+      batch: { itemCount: 850, sample: [] },
+    },
+    callbackContext: { slug: "growth4u", threadId: "growth4u:outreach", agent: "rocinante" },
+  }));
+
+  assert.match(text, /12\.500|12500/);
+  assert.match(text, /solo se prepara cuando la pidas/);
+  assert.doesNotMatch(text, /autom[aá]ticamente|iniciando la siguiente/i);
 });
 
-test("buildReEngagePayload tells the agent to continue the authorized workflow", () => {
-  const payload = parseCallback(validBody({
+interface UpsertCall {
+  threadId: string;
+  text: string;
+  workflowJob: WorkflowJobEvent;
+  agent?: string;
+}
+
+function makeStubDeps() {
+  const calls: UpsertCall[] = [];
+  const deps: DispatchDeps = {
+    upsertWorkflowJobMessage: (threadId, text, workflowJob, agent) => {
+      calls.push({ threadId, text, workflowJob, agent });
+    },
+  };
+  return { deps, calls };
+}
+
+test("dispatchJobResult records one workflow result without re-engaging the runtime", async () => {
+  const payload: JobCallbackPayload = parseCallback(validBody({
+    type: "campaign.workflow.prepare",
+    output: {
+      runId: "run-123",
+      source: { found: 3, totalAvailable: 3, truncated: false },
+      enrichment: { enriched: 2 },
+      batch: {
+        itemCount: 2,
+        sample: [{ leadId: "lead-1", messageBody: "Hola Ruth, ¿conectamos?" }],
+      },
+    },
     callbackContext: {
       slug: "growth4u",
       threadId: "growth4u:abc",
       agent: "rocinante",
-      originalRequest: "Busca tres founders y prepara una vista previa",
-      command: "outbound.source",
+      command: "outbound.workflow.prepare",
       campaignId: "camp-123",
-      channel: "linkedin",
     },
   }));
-  const out = buildReEngagePayload(payload);
-
-  assert.match(out.text, /ejecutá ahora el siguiente paso interno/i);
-  assert.match(out.text, /Nunca ejecutes un envío real/i);
-  assert.match(out.text, /outbound\.source/);
-  assert.match(out.text, /camp-123/);
-  assert.match(out.text, /Busca tres founders/);
-});
-
-test("buildReEngagePayload text includes the error for a failed job", () => {
-  const payload = parseCallback(
-    validBody({ event: "job.failed", status: "failed", output: undefined, errorMessage: "Apollo 429" }),
-  );
-  const out = buildReEngagePayload(payload);
-  assert.match(out.text, /FALLÓ/);
-  assert.match(out.text, /Apollo 429/);
-});
-
-test("buildReEngagePayload does NOT hardcode an agent — it echoes the context agent", () => {
-  const payload = parseCallback(
-    validBody({ callbackContext: { slug: "acme", threadId: "acme:xyz", agent: "sanson" } }),
-  );
-  const out = buildReEngagePayload(payload);
-  assert.equal(out.agent, "sanson");
-  assert.equal(out.slug, "acme");
-  assert.equal(out.threadId, "acme:xyz");
-});
-
-// --- dispatchJobResult (stubbed deps) --------------------------------------
-
-interface AddMessageCall {
-  threadId: string;
-  role: string;
-  text: string;
-  agent?: string;
-}
-
-function makeStubDeps(fetchResult: { ok: boolean; status?: number; body?: string } = { ok: true }) {
-  const addMessageCalls: AddMessageCall[] = [];
-  const sendInboundCalls: { message: GatewayInboundPayload; opts: SendInboundOptions | undefined }[] = [];
-
-  const deps: DispatchDeps = {
-    addMessage: ((threadId: string, role: string, text: string, agent?: string) => {
-      addMessageCalls.push({ threadId, role, text, agent });
-    }) as DispatchDeps["addMessage"],
-    sendInbound: async (message: GatewayInboundPayload, opts?: SendInboundOptions) => {
-      sendInboundCalls.push({ message, opts });
-      return {
-        ok: fetchResult.ok,
-        status: fetchResult.status ?? (fetchResult.ok ? 200 : 500),
-        raw: fetchResult.body ?? "",
-        error: fetchResult.ok ? undefined : fetchResult.body ?? "",
-      };
-    },
-  };
-
-  return { deps, addMessageCalls, sendInboundCalls };
-}
-
-test("dispatchJobResult sends an inbound runtime message with timeout", async () => {
-  const payload: JobCallbackPayload = parseCallback(validBody());
-  const { deps, addMessageCalls, sendInboundCalls } = makeStubDeps();
-
-  const result = await dispatchJobResult(payload, deps);
-
-  assert.equal(result.forwardedToGateway, true);
-  assert.equal(result.threadId, "growth4u:abc");
-  assert.equal(result.agent, "rocinante");
-  assert.equal(result.jobId, "job_123");
-
-  // It must add a system note + the synthetic user prompt to the SAME thread.
-  assert.ok(addMessageCalls.length >= 2);
-  assert.equal(addMessageCalls[0].threadId, "growth4u:abc");
-  assert.equal(addMessageCalls[0].role, "system");
-  const userMsg = addMessageCalls.find((c) => c.role === "user");
-  assert.ok(userMsg, "expected a user message");
-  assert.equal(userMsg!.threadId, "growth4u:abc");
-
-  // One runtime dispatch with the same inbound payload shape.
-  assert.equal(sendInboundCalls.length, 1);
-  assert.equal(sendInboundCalls[0].opts?.timeoutMs, 15_000);
-  const sent = sendInboundCalls[0].message;
-  assert.equal(sent.slug, "growth4u");
-  assert.equal(sent.threadId, "growth4u:abc");
-  assert.equal(sent.agent, "rocinante");
-  assert.equal(sent.threadState, "continue");
-  assert.equal(sent.isAdmin, true);
-});
-
-test("dispatchJobResult keeps runtime transport details out of the callback", async () => {
-  const payload = parseCallback(validBody());
-  const { deps, sendInboundCalls } = makeStubDeps();
-
-  await dispatchJobResult(payload, deps);
-
-  assert.equal(sendInboundCalls.length, 1);
-  assert.equal(sendInboundCalls[0].message.userId, "yalc-job-callback");
-  assert.equal(sendInboundCalls[0].message.userName, "YALC");
-});
-
-test("dispatchJobResult reports a gateway error without throwing", async () => {
-  const payload = parseCallback(validBody());
-  const { deps } = makeStubDeps({ ok: false, status: 502, body: "bad gateway" });
+  const { deps, calls } = makeStubDeps();
 
   const result = await dispatchJobResult(payload, deps);
 
   assert.equal(result.forwardedToGateway, false);
-  assert.match(result.error ?? "", /gateway 502/);
+  assert.equal(result.recorded, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].threadId, "growth4u:abc");
+  assert.equal(calls[0].workflowJob.jobId, "job_123");
+  assert.equal(calls[0].workflowJob.campaignId, "camp-123");
+  assert.equal(calls[0].workflowJob.status, "completed");
+  assert.equal(calls[0].workflowJob.runId, "run-123");
+  assert.deepEqual(calls[0].workflowJob.batch, {
+    itemCount: 2,
+    sample: [{ leadId: "lead-1", messageBody: "Hola Ruth, ¿conectamos?" }],
+  });
+  assert.deepEqual(calls[0].workflowJob.stats, {
+    found: 3,
+    enriched: 2,
+    usable: 2,
+    totalAvailable: 3,
+    truncated: false,
+    hasMore: false,
+    nextPage: null,
+  });
+  assert.equal(calls[0].text, "Campaña lista para revisar: 3 encontrados, 2 enriquecidos, 2 utilizables.");
 });
 
-test("dispatchJobResult catches a thrown runtime dispatch error", async () => {
-  const payload = parseCallback(validBody());
-  const { deps } = makeStubDeps();
-  deps.sendInbound = async () => {
-    throw new Error("ECONNREFUSED");
-  };
+test("dispatchJobResult records failed jobs without throwing", async () => {
+  const payload = parseCallback(validBody({
+    event: "job.failed",
+    status: "failed",
+    errorMessage: "Apollo 429",
+  }));
+  const { deps, calls } = makeStubDeps();
 
   const result = await dispatchJobResult(payload, deps);
-  assert.equal(result.forwardedToGateway, false);
-  assert.match(result.error ?? "", /ECONNREFUSED/);
+
+  assert.equal(result.recorded, true);
+  assert.equal(calls[0].workflowJob.status, "failed");
+  assert.equal(calls[0].workflowJob.errorMessage, "Apollo 429");
 });

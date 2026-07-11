@@ -544,6 +544,88 @@ test("outbound.workflow.prepare delegates the deterministic spec without rebuild
   ]);
 });
 
+test("outbound.workflow.start delegates one bounded intent without a pre-existing campaign", async () => {
+  const intent = {
+    schemaVersion: 1,
+    channel: "linkedin",
+    targetSegment: "Founders de SaaS B2B en España",
+    contactReason: "Quiero compartir una forma más simple de operar outbound B2B",
+    batchSize: 1_000,
+    criteria: { titles: ["Founder", "CEO"], organizationLocations: ["Spain"] },
+  };
+  installFetch((path, call) => {
+    assert.equal(path, "/api/outbound/command");
+    const body = call.body as Record<string, unknown>;
+    assert.equal(body.command, "outbound.workflow.start");
+    assert.equal(body.idempotencyKey, "growth4u:thread-1:linkedin-outbound-v1");
+    assert.equal(body.source, "outbound.workflow");
+    assert.deepEqual(body.intent, intent);
+    return {
+      ok: true,
+      command: "outbound.workflow.start",
+      campaignId: "campaign-1",
+      runId: "run-1",
+      jobId: "job-1",
+      status: "queued",
+      statusUrl: "/api/jobs/job-1",
+    };
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.workflow.start",
+    idempotencyKey: "growth4u:thread-1:linkedin-outbound-v1",
+    intent,
+  });
+
+  assert.equal(result.httpStatus, 202);
+  assert.equal(result.async, true);
+  assert.equal(result.campaignId, "campaign-1");
+  assert.equal(result.runId, "run-1");
+  assert.equal(calls.length, 1);
+});
+
+test("outbound.workflow.start refuses to create a campaign without an idempotency key", async () => {
+  await assert.rejects(
+    dispatchOutboundCommand(config, {
+      command: "outbound.workflow.start",
+      intent: {
+        targetSegment: "SaaS founders",
+        contactReason: "Quiero conversar sobre su proceso comercial",
+      },
+    }),
+    (error) => error instanceof OutboundCommandError && /idempotencyKey is required/.test(error.message),
+  );
+  assert.equal(calls.length, 0);
+});
+
+test("outbound.workflow.continue advances one persisted run without creating a campaign", async () => {
+  installFetch((path, call) => {
+    assert.equal(path, "/api/outbound/command");
+    const body = call.body as Record<string, unknown>;
+    assert.equal(body.command, "outbound.workflow.continue");
+    assert.equal(body.runId, "run-1");
+    return {
+      ok: true,
+      command: "outbound.workflow.continue",
+      campaignId: "campaign-1",
+      runId: "run-2",
+      jobId: "job-2",
+      status: "queued",
+      statusUrl: "/api/jobs/job-2",
+    };
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.workflow.continue",
+    runId: "run-1",
+  });
+
+  assert.equal(result.httpStatus, 202);
+  assert.equal(result.campaignId, "campaign-1");
+  assert.equal(result.runId, "run-2");
+  assert.equal(calls.length, 1);
+});
+
 test("outbound.workflow.status can restore a persisted run by run id", async () => {
   installFetch((path, call) => {
     assert.equal(path, "/api/outbound/command");

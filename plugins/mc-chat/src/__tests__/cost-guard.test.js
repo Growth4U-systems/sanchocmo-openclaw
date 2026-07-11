@@ -45,7 +45,7 @@ test("beforeAgentRun blocks an oversized prepared prompt before provider call", 
   );
 
   assert.equal(result.outcome, "block");
-  assert.match(result.message, /presupuesto de seguridad/);
+  assert.match(result.message, /No se completó la ejecución/);
 
   const cooled = guard.beforeAgentRun(
     { prompt: "ok", messages: [] },
@@ -107,7 +107,7 @@ test("abortRun records wall-clock timeouts as cost-guard stops", () => {
   const message = guard.abortRun("run-timeout", "session-timeout", "La ejecución superó el tiempo máximo permitido.");
 
   assert.equal(aborted, true);
-  assert.match(message, /presupuesto de seguridad/);
+  assert.match(message, /No se completó la ejecución/);
   assert.match(guard.abortMessageFor("run-timeout", "session-timeout"), /tiempo máximo/);
 });
 

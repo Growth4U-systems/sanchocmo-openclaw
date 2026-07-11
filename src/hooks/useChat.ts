@@ -33,12 +33,16 @@ export interface ProgressEvent {
 }
 
 export type ErrorCategory =
+  | "insufficient_quota"
+  | "anthropic_billing"
   | "rate_limit"
   | "auth"
   | "missing_context"
   | "context_overflow"
+  | "invalid_thinking_signature"
   | "watchdog_abort"
   | "model_unavailable"
+  | "session_concurrency"
   | "cost_guard"
   | "network";
 
@@ -53,7 +57,7 @@ export interface ErrorDetail {
 }
 
 export interface ChatMessage {
-  role: "user" | "bot" | "status" | "system" | "handoff";
+  role: "user" | "bot" | "status" | "system" | "workflow" | "handoff";
   text: string;
   agent?: string;
   ts?: number;
@@ -66,6 +70,29 @@ export interface ChatMessage {
   // (rate limit, watchdog abort, auth failure, etc.). Drives the "Ver detalle
   // técnico" chip + modal.
   errorDetail?: ErrorDetail;
+  workflowJob?: {
+    jobId: string;
+    type: string;
+    status: "completed" | "failed";
+    command?: string;
+    campaignId?: string;
+    runId?: string;
+    summary?: string;
+    errorMessage?: string;
+    batch?: {
+      itemCount: number;
+      sample: Array<{ leadId?: string; messageBody: string }>;
+    };
+    stats?: {
+      found: number;
+      enriched: number;
+      usable: number;
+      totalAvailable: number | null;
+      truncated: boolean;
+      hasMore?: boolean;
+      nextPage?: number | null;
+    };
+  };
 }
 
 interface ThreadListItem {
@@ -86,7 +113,12 @@ interface ThreadListItem {
 export function useThreadMessages(threadId: string | null) {
   const { isPolling, lastMsgCount, setLastMsgCount } = useChatStore();
 
-  return useQuery<{ messages: ChatMessage[]; status: { text: string; agent?: string; ts: number } | null; pendingProgress?: ProgressEvent[] }>({
+  return useQuery<{
+    messages: ChatMessage[];
+    status: { text: string; agent?: string; ts: number } | null;
+    pendingProgress?: ProgressEvent[];
+    activeRun?: { id: string; status: "queued" | "running"; createdAt: string } | null;
+  }>({
     queryKey: ["chat", "thread", threadId],
     queryFn: async () => {
       if (!threadId) return { messages: [], status: null };

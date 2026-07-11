@@ -109,12 +109,12 @@ test("B2B campaign opens a blank B2B campaign thread with suggested actions", ()
     {
       label: "Crear campaña",
       prompt:
-        "Quiero crear una campaña outbound B2B. Usa el contexto de mi empresa para recomendar el mejor ICP, crear la campaña, buscar y enriquecer personas, y preparar mensajes con la mejor personalización verificable disponible. No envíes nada real hasta que yo apruebe el lote.",
+        "Quiero crear una campaña B2B por LinkedIn. Revisa los ECP de mi Foundation, recomiéndame como máximo tres opciones concretas y pídeme elegir una. Todavía no crees la campaña. Después de mi elección, inicia una sola vez el workflow completo para buscar, enriquecer y preparar los mensajes. No envíes nada real hasta mi aprobación final.",
     },
     {
       label: "Encontrar personas",
       prompt:
-        "Recomiéndame a quién contactar según mi ICP y crea una base de personas. Busca y enriquece los contactos, prioriza los que tengan mejor encaje y deja una muestra de mensajes preparada para revisar.",
+        "Quiero crear una base para outbound B2B por LinkedIn. Revisa los ECP de mi Foundation, recomiéndame como máximo tres opciones y pídeme elegir una. Después de mi elección, ejecuta un único workflow para buscar y enriquecer contactos reales y preparar los mensajes para revisión.",
     },
   ]);
 });

@@ -53,8 +53,8 @@ const CLASSIFIERS = [
   {
     category: "cost_guard",
     regex: /presupuesto de seguridad|cost guard|demasiadas llamadas al modelo|demasiadas llamadas a herramientas|superó el tiempo máximo|respuestas casi vacías|tokens de entrada en un solo run/i,
-    header: "Ejecución detenida por presupuesto",
-    hint: "Sancho cortó el run antes de seguir reenviando contexto al modelo. Reduce el alcance o abre un hilo nuevo si necesitas continuar.",
+    header: "No se completó la ejecución",
+    hint: "El runtime detuvo este turno. Puedes continuar desde este mismo chat.",
   },
   {
     category: "auth",

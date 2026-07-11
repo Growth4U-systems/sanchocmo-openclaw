@@ -155,7 +155,7 @@ test("cost_guard: detects budget stop messages", () => {
     "El modelo devolvió 3 respuestas casi vacías seguidas con prompts grandes.";
   const out = classifyAndRewriteError(raw);
   assert.equal(out.errorDetail.category, "cost_guard");
-  assert.ok(out.text.startsWith("⚠️ **Ejecución detenida por presupuesto**"));
+  assert.ok(out.text.startsWith("⚠️ **No se completó la ejecución**"));
 });
 
 test("network: detects connection errors", () => {

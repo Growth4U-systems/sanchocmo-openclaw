@@ -121,11 +121,11 @@ test("a retried terminal callback is acknowledged without duplicating the visibl
   await webhookHandler(request, first.res);
   await webhookHandler(request, retry.res);
   assert.equal(first.read().payload.duplicate, undefined);
-  assert.equal(retry.read().payload.duplicate, true);
+  assert.equal(retry.read().payload.stale, true);
   assert.equal(chat.getThread(threadId).messages.filter((message) => message.text === "Resultado único").length, 1);
 });
 
-test("distinct multipart callbacks remain visible while each part stays idempotent", async () => {
+test("a run accepts only one terminal callback", async () => {
   const threadId = "demo:multipart";
   const run = agentRuns.createAgentRun({
     threadId,
@@ -145,11 +145,11 @@ test("distinct multipart callbacks remain visible while each part stays idempote
     return mocked.read().payload;
   };
   assert.equal((await sendPart("Parte uno")).duplicate, undefined);
-  assert.equal((await sendPart("Parte dos")).duplicate, undefined);
-  assert.equal((await sendPart("Parte dos")).duplicate, true);
+  assert.equal((await sendPart("Parte dos")).stale, true);
+  assert.equal((await sendPart("Parte dos")).stale, true);
   assert.deepEqual(
     chat.getThread(threadId).messages.map((message) => message.text),
-    ["Parte uno", "Parte dos"],
+    ["Parte uno"],
   );
 });
 

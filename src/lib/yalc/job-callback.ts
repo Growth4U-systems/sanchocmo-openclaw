@@ -4,21 +4,19 @@
  * YALC returns `202 {jobId, statusUrl}` for long-running operations and, when
  * the job finishes, POSTs to a `callbackUrl` Sancho provided. The calling skill
  * stashes `{ slug, threadId, agent }` (the current Sancho chat thread) in the
- * job's opaque `callbackContext`. When the callback arrives we re-engage that
- * same agent on that same thread with a synthetic prompt summarizing the job,
- * so the agent can tell the user the result ("✅ YALC terminó: 132 leads…").
+ * job's opaque `callbackContext`. When the callback arrives we persist one
+ * deterministic workflow update in that same thread. A callback never becomes
+ * a user message and never starts another model turn.
  *
- * Modeled on src/lib/data/feedback-triage-trigger.ts: addMessage a short system
- * note, then send an inbound runtime message with `threadState:"continue"`,
- * `isAdmin:true`, and the agent/slug/threadId taken from the callbackContext
- * (NOT hardcoded — the agent owns the thread).
- *
- * `dispatchJobResult` keeps its side-effecting deps injectable so the unit test
- * can stub runtime dispatch / addMessage.
+ * YALC owns workflow continuation and persists its state. Sancho only renders
+ * the result, so provider callbacks cannot recurse, duplicate campaigns or
+ * consume the chat model budget.
  */
 
-import { addMessage as defaultAddMessage } from "@/lib/data/mc-chat";
-import { getRuntime, type InboundMessage, type SendInboundOptions, type SendInboundResult } from "@/lib/runtime";
+import {
+  upsertWorkflowJobMessage as defaultUpsertWorkflowJobMessage,
+  type WorkflowJobEvent,
+} from "@/lib/data/mc-chat";
 
 /** Shape of the opaque context the YALC-calling skill set when starting the job. */
 export interface JobCallbackContext {
@@ -144,96 +142,56 @@ export function summarizeOutput(output: unknown): string {
   return String(output);
 }
 
-/** The runtime inbound payload shape we send to re-engage the agent. */
-export interface GatewayInboundPayload extends InboundMessage {
-  threadName: string;
-  agent: string;
-  threadState: "continue";
-  isAdmin: true;
-  senderRole: "admin";
-}
-
-/**
- * From the callbackContext + job result, build the synthetic `user` prompt and
- * the gateway inbound payload that re-engages the SAME agent on the SAME thread.
- * Pure function — no side effects, fully testable.
- */
-export function buildReEngagePayload(payload: JobCallbackPayload): GatewayInboundPayload {
-  const {
-    slug,
-    threadId,
-    agent,
-    originalRequest,
-    command,
-    campaignId,
-    profileKind,
-    channel,
-  } = payload.callbackContext;
+export function formatJobResult(payload: JobCallbackPayload): string {
   const succeeded = payload.event === "job.completed";
+  const type = payload.type || "trabajo de Outreach";
+  const summary = summarizeOutput(payload.output);
 
-  const workflowContext = [
-    command ? `- comando completado: ${command}` : null,
-    campaignId ? `- campaignId: ${campaignId}` : null,
-    profileKind ? `- profileKind: ${profileKind}` : null,
-    channel ? `- canal: ${channel}` : null,
-    originalRequest ? `- solicitud original: ${originalRequest.slice(0, 4_000)}` : null,
-  ].filter((line): line is string => Boolean(line));
+  if (succeeded) {
+    if (payload.type === "campaign.search") {
+      return `Búsqueda completada: ${summary === "(sin output)" ? "resultado guardado" : summary}.`;
+    }
+    if (payload.type === "campaign.workflow.prepare") {
+      const output = isRecord(payload.output) ? payload.output : {};
+      const batch = isRecord(output.batch) ? output.batch : {};
+      const source = isRecord(output.source) ? output.source : {};
+      const enrichment = isRecord(output.enrichment) ? output.enrichment : {};
+      const itemCount = typeof batch.itemCount === "number" ? batch.itemCount : null;
+      if (itemCount === null) return "Campaña preparada y lista para revisar.";
+      const counts = [
+        typeof source.found === "number" ? `${source.found} encontrados` : null,
+        typeof enrichment.enriched === "number" ? `${enrichment.enriched} enriquecidos` : null,
+        `${itemCount} utilizables`,
+      ].filter((value): value is string => Boolean(value));
+      const truncated = source.hasMore === true
+        ? typeof source.totalAvailable === "number"
+          ? ` Apollo informó ${source.totalAvailable} disponibles; la siguiente tanda solo se prepara cuando la pidas.`
+          : " Apollo informó más resultados; la siguiente tanda solo se prepara cuando la pidas."
+        : "";
+      return `Campaña lista para revisar: ${counts.join(", ")}.${truncated}`;
+    }
+    return `${type} completado: ${summary}.`;
+  }
 
-  const lines = succeeded
-    ? [
-        `El trabajo asíncrono de YALC que lanzaste terminó. Retomá el flujo en este mismo hilo y en el idioma del usuario.`,
-        `Si la solicitud original ya autorizaba buscar, enriquecer, puntuar, personalizar o preparar una vista previa, ejecutá ahora el siguiente paso interno sin pedir otra confirmación. Nunca ejecutes un envío real sin una confirmación explícita separada.`,
-        ``,
-        `Resultado:`,
-        `- estado: ${payload.status} (completado)`,
-        `- tipo: ${payload.type || "(desconocido)"}`,
-        `- jobId: ${payload.jobId}`,
-        `- output: ${summarizeOutput(payload.output)}`,
-        ...(workflowContext.length > 0 ? [``, `Contexto del flujo:`, ...workflowContext] : []),
-      ]
-    : [
-        `El trabajo asíncrono de YALC que lanzaste FALLÓ. Informá al usuario en este hilo (en su idioma), explicá el error de forma clara y ofrecé reintentar o un siguiente paso.`,
-        ``,
-        `Resultado:`,
-        `- estado: ${payload.status} (fallido)`,
-        `- tipo: ${payload.type || "(desconocido)"}`,
-        `- jobId: ${payload.jobId}`,
-        `- error: ${payload.errorMessage || "(sin mensaje de error)"}`,
-        ...(workflowContext.length > 0 ? [``, `Contexto del flujo:`, ...workflowContext] : []),
-      ];
-
-  const text = lines.join("\n");
-
-  return {
-    slug,
-    threadId,
-    threadName: `YALC job ${payload.type || payload.jobId}`,
-    text,
-    userId: "yalc-job-callback",
-    userName: "YALC",
-    agent,
-    threadState: "continue",
-    isAdmin: true,
-    senderRole: "admin",
-  };
+  const reason = payload.errorMessage?.trim() || "No se pudo completar este paso.";
+  if (/no tiene linkedin como canal/i.test(reason)) {
+    return "No se pudo preparar LinkedIn porque la campaña pertenece a otro canal. No se creó otra campaña ni se envió ningún contacto.";
+  }
+  return `No se pudo completar ${type}: ${reason}`;
 }
 
 /** Injectable dependencies so the orchestration is unit-testable. */
 export interface DispatchDeps {
-  sendInbound: (
-    message: GatewayInboundPayload,
-    opts?: SendInboundOptions,
-  ) => Promise<SendInboundResult>;
-  addMessage: typeof defaultAddMessage;
+  upsertWorkflowJobMessage: typeof defaultUpsertWorkflowJobMessage;
 }
 
 const defaultDeps: DispatchDeps = {
-  sendInbound: (message, opts) => getRuntime().messaging.sendInbound(message, opts),
-  addMessage: defaultAddMessage,
+  upsertWorkflowJobMessage: defaultUpsertWorkflowJobMessage,
 };
 
 export interface DispatchResult {
   forwardedToGateway: boolean;
+  recorded: boolean;
   threadId: string;
   agent: string;
   jobId: string;
@@ -241,49 +199,66 @@ export interface DispatchResult {
 }
 
 /**
- * Orchestrate the re-engagement: add a short system note to the thread, then
- * POST the synthetic prompt to the gateway inbound so the agent replies in the
- * same thread. Mirrors triggerFeedbackTriage's addMessage + fetch flow.
+ * Record a deterministic workflow update. Workflow progression happens in
+ * YALC, not through a chain of model turns.
  */
 export async function dispatchJobResult(
   payload: JobCallbackPayload,
   deps: Partial<DispatchDeps> = {},
 ): Promise<DispatchResult> {
-  const { sendInbound, addMessage } = { ...defaultDeps, ...deps };
-  const { threadId, agent } = payload.callbackContext;
+  const { upsertWorkflowJobMessage } = { ...defaultDeps, ...deps };
+  const { threadId, agent, command, campaignId } = payload.callbackContext;
   const succeeded = payload.event === "job.completed";
-
-  const note = succeeded
-    ? `✅ YALC terminó el trabajo ${payload.type || payload.jobId}. Preparando el resumen...`
-    : `⚠️ El trabajo de YALC ${payload.type || payload.jobId} falló. Informando...`;
-  addMessage(threadId, "system", note);
-
-  const inbound = buildReEngagePayload(payload);
-  // Also record the synthetic user prompt on the thread so the conversation is
-  // self-contained, exactly like the triage trigger does.
-  addMessage(threadId, "user", inbound.text, agent);
-
-  try {
-    // Never hang the callback HTTP handler on a slow/down runtime (mirrors
-    // the 15s timeout used by triggerFeedbackTriage).
-    const result = await sendInbound(inbound, { timeoutMs: 15_000 });
-    if (!result.ok) {
-      return {
-        forwardedToGateway: false,
-        threadId,
-        agent,
-        jobId: payload.jobId,
-        error: `gateway ${result.status}: ${result.raw}`,
+  const workflowJob: WorkflowJobEvent = {
+    jobId: payload.jobId,
+    type: payload.type,
+    status: succeeded ? "completed" : "failed",
+    ...(command ? { command } : {}),
+    ...(campaignId ? { campaignId } : {}),
+    ...(succeeded ? { summary: summarizeOutput(payload.output) } : {}),
+    ...(!succeeded && payload.errorMessage ? { errorMessage: payload.errorMessage } : {}),
+  };
+  if (isRecord(payload.output)) {
+    const runId = typeof payload.output.runId === "string" ? payload.output.runId : undefined;
+    const batch = isRecord(payload.output.batch) ? payload.output.batch : null;
+    const sample = Array.isArray(batch?.sample)
+      ? batch.sample.flatMap((value) => {
+          if (!isRecord(value) || typeof value.messageBody !== "string") return [];
+          return [{
+            ...(typeof value.leadId === "string" ? { leadId: value.leadId } : {}),
+            messageBody: value.messageBody,
+          }];
+        }).slice(0, 3)
+      : [];
+    if (runId) workflowJob.runId = runId;
+    if (batch && typeof batch.itemCount === "number") {
+      workflowJob.batch = { itemCount: batch.itemCount, sample };
+    }
+    const source = isRecord(payload.output.source) ? payload.output.source : {};
+    const enrichment = isRecord(payload.output.enrichment) ? payload.output.enrichment : {};
+    if (
+      typeof source.found === "number"
+      && typeof enrichment.enriched === "number"
+      && batch
+      && typeof batch.itemCount === "number"
+    ) {
+      workflowJob.stats = {
+        found: source.found,
+        enriched: enrichment.enriched,
+        usable: batch.itemCount,
+        totalAvailable: typeof source.totalAvailable === "number" ? source.totalAvailable : null,
+        truncated: source.hasMore === true || source.truncated === true,
+        hasMore: source.hasMore === true,
+        nextPage: typeof source.nextPage === "number" ? source.nextPage : null,
       };
     }
-    return { forwardedToGateway: true, threadId, agent, jobId: payload.jobId };
-  } catch (e) {
-    return {
-      forwardedToGateway: false,
-      threadId,
-      agent,
-      jobId: payload.jobId,
-      error: e instanceof Error ? e.message : "Gateway unreachable",
-    };
   }
+  upsertWorkflowJobMessage(threadId, formatJobResult(payload), workflowJob, agent);
+  return {
+    forwardedToGateway: false,
+    recorded: true,
+    threadId,
+    agent,
+    jobId: payload.jobId,
+  };
 }
