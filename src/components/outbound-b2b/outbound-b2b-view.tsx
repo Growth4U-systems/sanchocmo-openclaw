@@ -1961,21 +1961,6 @@ export function OutboundB2BView() {
 
             {tab === "plantillas" && (
               <div className="space-y-4">
-                <B2BPlantillasTab
-                  campaign={icpCampaign}
-                  campaignDetail={campaignDetailQuery.data || null}
-                  leads={selectedAllLeads}
-                  loading={campaignDetailQuery.isLoading}
-                  saving={sequenceUpdateAction.isPending}
-                  savingLinkedIn={linkedinSequenceUpdateAction.isPending}
-                  locked={selectedLeadEditsLocked}
-                  onSave={(stepId, emails) =>
-                    sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
-                  }
-                  onSaveLinkedIn={(variantId, sequence) =>
-                    linkedinSequenceUpdateAction.mutate({ campaignId: templateCampaignId, variantId, sequence })
-                  }
-                />
                 {campaignHasLinkedIn(icpCampaign) && (
                   <LinkedInAutopilotPanel
                     campaign={icpCampaign}
@@ -2003,6 +1988,21 @@ export function OutboundB2BView() {
                     onExecute={() => executeEmailCampaign(false)}
                   />
                 )}
+                <B2BPlantillasTab
+                  campaign={icpCampaign}
+                  campaignDetail={campaignDetailQuery.data || null}
+                  leads={selectedAllLeads}
+                  loading={campaignDetailQuery.isLoading}
+                  saving={sequenceUpdateAction.isPending}
+                  savingLinkedIn={linkedinSequenceUpdateAction.isPending}
+                  locked={selectedLeadEditsLocked}
+                  onSave={(stepId, emails) =>
+                    sequenceUpdateAction.mutate({ campaignId: templateCampaignId, stepId, emails })
+                  }
+                  onSaveLinkedIn={(variantId, sequence) =>
+                    linkedinSequenceUpdateAction.mutate({ campaignId: templateCampaignId, variantId, sequence })
+                  }
+                />
               </div>
             )}
 
