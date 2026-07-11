@@ -12,6 +12,11 @@ services:
     depends_on:
       open-design:
         condition: service_healthy
+    # Point MC at the daemon only when this overlay is active. The base compose
+    # leaves OD_DAEMON_URL empty so isOdConfigured() reports OD off when the
+    # overlay isn't layered (no dead "Abrir editor agentic" button).
+    environment:
+      - OD_DAEMON_URL=${OD_DAEMON_URL:-http://open-design:7456}
 
   open-design:
     image: ${OPEN_DESIGN_IMAGE:-ghcr.io/growth4u-systems/od:edge}
