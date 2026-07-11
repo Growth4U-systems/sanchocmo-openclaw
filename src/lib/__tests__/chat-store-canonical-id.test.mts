@@ -56,4 +56,16 @@ test("selectThread + getThreadMeta round-trip on the canonical id (colon lookup 
   assert.ok(useChatStore.getState().getThreadMeta(canon));
 });
 
+test("agent scope survives both store entry paths", () => {
+  reset();
+  const scoped = { ...cfg("acme:discovery-new-1", "Discovery"), scope: "agent" as const };
+
+  useChatStore.getState().openSidebar(scoped);
+  assert.equal(useChatStore.getState().getThreadMeta(scoped.threadId)?.scope, "agent");
+
+  reset();
+  useChatStore.getState().selectThread(scoped);
+  assert.equal(useChatStore.getState().getThreadMeta(scoped.threadId)?.scope, "agent");
+});
+
 reset();

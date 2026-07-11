@@ -21,6 +21,7 @@ interface TaskIndexEntry {
   status: string;
   skill: string;
   skillOk: boolean;
+  executionMode?: "guided" | "agent";
   deliverableFile: string;
   docExists: boolean;
   mcChatThreadId: string;
@@ -127,7 +128,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         taskName: (task.name || "") as string,
         status: (task.status || "todo") as string,
         skill,
-        skillOk: !!skill && skill !== "MISSING",
+        // No skill is a valid agent-led task. Only the explicit legacy sentinel
+        // remains invalid.
+        skillOk: skill !== "MISSING",
+        executionMode: skill ? "guided" : "agent",
         deliverableFile: df,
         docExists,
         mcChatThreadId: thread,

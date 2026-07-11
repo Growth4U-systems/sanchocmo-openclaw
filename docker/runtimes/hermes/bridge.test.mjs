@@ -26,8 +26,35 @@ test("buildHermesPrompt preserves Sancho routing metadata", () => {
   assert.match(prompt, /never call clarify or any interactive question tool/);
   assert.match(prompt, /"threadId": "acme:content:123"/);
   assert.match(prompt, /"agent": "dulcinea"/);
+  assert.match(prompt, /execution_mode: guided/);
+  assert.match(prompt, /skill_policy: pinned/);
   assert.match(prompt, /"docPath": "brand\/acme\/content\/draft.md"/);
   assert.match(prompt, /Revisa este draft/);
+});
+
+test("Hermes keeps Sancho generalist and specialist skill-auto roles distinct", () => {
+  const sanchoPrompt = buildHermesPrompt({
+    slug: "acme",
+    threadId: "acme:general",
+    text: "Resuelve esto",
+  });
+  assert.match(sanchoPrompt, /execution_mode: generalist/);
+  assert.match(sanchoPrompt, /Eres Sancho, el agente generalista/);
+  assert.doesNotMatch(sanchoPrompt, /:::delegate/);
+
+  const specialistPrompt = buildHermesPrompt({
+    slug: "acme",
+    threadId: "acme:discovery-new",
+    text: "Corrige la audiencia",
+    agent: "rocinante",
+    skill: "discovery-plan-builder",
+    skills: ["discovery-plan-builder", "outreach-sequence-builder"],
+    scope: "agent",
+    skillMode: "auto",
+  });
+  assert.match(specialistPrompt, /execution_mode: agent-led/);
+  assert.match(specialistPrompt, /skill_policy: auto/);
+  assert.match(specialistPrompt, /No eres Sancho ni un generalista global/);
 });
 
 test("buildHermesPrompt includes Sancho context pack when available", () => {
@@ -105,6 +132,20 @@ test("buildHermesArgs skips generic Sancho chat skill aliases", () => {
   assert.deepEqual(args, ["chat", "-Q", "-s", "seo-content", "-q", "hello"]);
 });
 
+test("buildHermesArgs never preloads a hinted skill in auto mode", () => {
+  const args = buildHermesArgs(
+    {
+      skill: "discovery-plan-builder",
+      skills: ["discovery-plan-builder", "outreach-sequence-builder"],
+      scope: "agent",
+      skillMode: "auto",
+    },
+    "hello",
+  );
+
+  assert.deepEqual(args, ["chat", "-Q", "-q", "hello"]);
+});
+
 test("cleanHermesStdout removes transport metadata and runtime warnings", () => {
   const output = cleanHermesStdout(
     [
@@ -164,7 +205,12 @@ test("fetchContextPack calls Sancho context-pack endpoint with shared secret", a
   delete process.env.HERMES_CONTEXT_PACK_ENABLED;
 
   try {
-    const pack = await fetchContextPack({ slug: "acme", skill: "seo-content" });
+    const pack = await fetchContextPack({
+      slug: "acme",
+      skill: "seo-content",
+      scope: "agent",
+      skillMode: "auto",
+    });
 
     assert.deepEqual(pack, { slug: "acme", skill: "seo-content", verdict: "ok" });
     assert.equal(calls.length, 1);

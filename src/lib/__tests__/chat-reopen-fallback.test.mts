@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-const { buildTaskIndex, resolveFullThreadConfig } = await import("../chat-openers");
+const { buildTaskIndex, buildTaskThread, resolveFullThreadConfig } = await import("../chat-openers");
 
 // Reopening a content-flavored thread whose task is NOT in the loaded index
 // must still route to Dulcinea (content owner), not fall back to Sancho.
@@ -31,6 +31,7 @@ for (const [ns, threadId] of [
   test(`reopen ${ns}: discovery thread (sin tarea) → rocinante`, () => {
     const cfg = resolveFullThreadConfig("growth4u", threadId, emptyIdx);
     assert.equal(cfg.agent, "rocinante", `${ns} → ${cfg.agent}`);
+    assert.equal(cfg.scope, "agent", `${ns} must remain agent-first after reopen`);
   });
 }
 
@@ -40,6 +41,47 @@ test("reopen indexed content task → dulcinea (sin regresión)", () => {
   ]);
   const cfg = resolveFullThreadConfig("growth4u", "growth4u:content:p-content-semana-24-t05-c02", idx);
   assert.equal(cfg.agent, "dulcinea");
+});
+
+test("reopen a routed task by its persisted chat anchor restores the task harness", () => {
+  const idx = buildTaskIndex([
+    {
+      project: { id: "P01" },
+      tasks: [{
+        id: "P01-T09",
+        name: "Plantillas de contacto",
+        type: "execution",
+        status: "todo",
+        agent: "rocinante",
+        skill: "outreach-sequence-builder",
+        skills: ["outreach-sequence-builder", "yalc-operator"],
+        mc_chat_thread_id: "growth4u:delegate-p01-rocinante-plantillas-de-contacto",
+      }],
+    },
+  ]);
+  const threadId = "growth4u:delegate-p01-rocinante-plantillas-de-contacto";
+  const cfg = resolveFullThreadConfig("growth4u", threadId, idx);
+  assert.equal(cfg.threadId, threadId);
+  assert.equal(cfg.linkedTo, "projects/P01/tasks/P01-T09");
+  assert.equal(cfg.agent, "rocinante");
+  assert.equal(cfg.skill, "outreach-sequence-builder");
+  assert.deepEqual(cfg.skills, ["outreach-sequence-builder", "yalc-operator"]);
+});
+
+test("task harness is pinned only when the task explicitly declares a skill", () => {
+  const guided = buildTaskThread("growth4u", "P01-T01", "Guided", "P01", {
+    taskSkill: "market-research",
+    agent: "hamete",
+  });
+  assert.equal(guided.scope, "skill");
+  assert.equal(guided.skill, "market-research");
+
+  const agentLed = buildTaskThread("growth4u", "P01-T02", "General", "P01", {
+    taskType: "research",
+    agent: "hamete",
+  });
+  assert.equal(agentLed.scope, "agent");
+  assert.ok(agentLed.skill, "an inferred skill may remain as a non-binding hint");
 });
 
 test("generic recurring/strategy threads still → Sancho default (no agent)", () => {
@@ -70,6 +112,17 @@ test("reopen yalc keeps its static name; threadState forced to continue", () => 
   const cfg = resolveFullThreadConfig("growth4u", "growth4u:yalc", buildTaskIndex([]));
   assert.equal(cfg.threadName, "YALC / GTM-OS");
   assert.equal(cfg.threadState, "continue");
+  assert.equal(cfg.scope, "agent");
+});
+
+test("reopen outreach template remains an agent-first Rocinante thread", () => {
+  const cfg = resolveFullThreadConfig(
+    "growth4u",
+    "growth4u:outreach-template:seq-1",
+    buildTaskIndex([]),
+  );
+  assert.equal(cfg.agent, "rocinante");
+  assert.equal(cfg.scope, "agent");
 });
 
 test("longest-prefix wins: skill-creator vs skill", () => {

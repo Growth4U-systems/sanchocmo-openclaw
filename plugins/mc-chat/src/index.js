@@ -18,8 +18,12 @@ import { classifyAndRewriteError, mergeWithPriorCategory } from "./error-rewrite
 import { errorTracker } from "./error-tracker.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
 import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
-import { parseDelegateMarkers, slugForThread } from "./delegate-marker.js";
-import { buildMcChatContextBlock } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
+import { parseDelegateMarkers } from "./delegate-marker.js";
+import { parseTaskRouteMarkers } from "./task-route-marker.js";
+import {
+  buildMcChatContextBlock,
+  groundingSkillForTurn,
+} from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
@@ -239,9 +243,12 @@ export default defineChannelPluginEntry({
           userId,
           userName,
           linkedTo,
+          docPath,
+          docKind,
           skill,
           skills,
           scope,
+          skillMode,
           agent,
           agentId,
           attachments,
@@ -285,10 +292,14 @@ export default defineChannelPluginEntry({
           threadId,
           threadName,
           linkedTo,
+          docPath,
+          docKind,
           scope,
+          skillMode,
           skills,
           skill,
           requestedAgent,
+          canDelegate: true,
         });
 
         // ─── Bounded grounding (SAN-246/SAN-382 follow-up) ───
@@ -300,7 +311,8 @@ export default defineChannelPluginEntry({
         let groundedText = text;
         if (requestedAgent) {
           try {
-            const pack = await fetchContextPack(slug, skill || null, {
+            const groundingSkill = groundingSkillForTurn({ scope, skillMode, skill });
+            const pack = await fetchContextPack(slug, groundingSkill, {
               contextPackUrl: channelCfg?.contextPackUrl,
               nextServerUrl: channelCfg?.nextServerUrl,
               secret: channelCfg?.sharedSecret,
@@ -312,7 +324,7 @@ export default defineChannelPluginEntry({
                 : buildClientContextBlock(pack);
               if (prefix) {
                 groundedText = `${prefix}\n\n${text}`;
-                logger.info(`[mc-chat] context-pack injected (agent=${requestedAgent} slug=${slug} verdict=${pack.verdict} docs=${Array.isArray(pack.docPaths) ? pack.docPaths.length : 0})`);
+                logger.info(`[mc-chat] context-pack injected (agent=${requestedAgent} slug=${slug} skillMode=${skillMode || scope || "legacy"} verdict=${pack.verdict} docs=${Array.isArray(pack.docPaths) ? pack.docPaths.length : 0})`);
               }
             }
           } catch (e) {
@@ -444,6 +456,7 @@ export default defineChannelPluginEntry({
           const callbackUrl = `${mcUrl}/api/chat/webhook`;
           const threadLinkUrlBase = `${mcUrl}/api/chat/thread`;
           const sendUrl = `${mcUrl}/api/chat/send`;
+          const taskRouteUrl = `${mcUrl}/api/tasks/resolve-route`;
           const secret = channelCfg?.sharedSecret;
           // Retry with exponential backoff for transient Next.js outages
           // (dev server reloads, restarts). On permanent failure the message
@@ -546,26 +559,36 @@ export default defineChannelPluginEntry({
                 // AFTER this reply posts. Only the orchestrator (sancho) may cede.
                 // FAIL-SOFT: a parse bug must never break the normal reply.
                 let delegations = [];
-                if (respondingAgent === "sancho") {
-                  try {
-                    const cleaned = [];
-                    for (const t of texts) {
-                      const parsed = parseDelegateMarkers(t);
-                      if (parsed.delegations.length) delegations.push(...parsed.delegations);
-                      if (parsed.malformed.length) {
-                        logger.warn(`[mc-chat] ${parsed.malformed.length} malformed :::delegate block(s) thread=${threadId}`);
+                let taskRoutes = [];
+                try {
+                  const cleaned = [];
+                  for (const rawText of texts) {
+                    let visibleText = rawText;
+                    if (respondingAgent === "sancho") {
+                      const parsedDelegate = parseDelegateMarkers(visibleText);
+                      if (parsedDelegate.delegations.length) delegations.push(...parsedDelegate.delegations);
+                      if (parsedDelegate.malformed.length) {
+                        logger.warn(`[mc-chat] ${parsedDelegate.malformed.length} malformed :::delegate block(s) thread=${threadId}`);
                       }
-                      if (parsed.text) cleaned.push(parsed.text);
+                      visibleText = parsedDelegate.text;
                     }
-                    texts.length = 0;
-                    texts.push(...cleaned);
-                    if (delegations.length && texts.length === 0) {
-                      texts.push(`🤝 Paso el trabajo a ${[...new Set(delegations.map((d) => d.agent))].join(", ")}.`);
+
+                    const parsedRoute = parseTaskRouteMarkers(visibleText);
+                    if (parsedRoute.routes.length) taskRoutes.push(...parsedRoute.routes);
+                    if (parsedRoute.malformed.length) {
+                      logger.warn(`[mc-chat] ${parsedRoute.malformed.length} malformed :::task-route block(s) thread=${threadId}`);
                     }
-                  } catch (e) {
-                    logger.warn(`[mc-chat] :::delegate parse skipped: ${e?.message || e}`);
-                    delegations = [];
+                    if (parsedRoute.text) cleaned.push(parsedRoute.text);
                   }
+                  texts.length = 0;
+                  texts.push(...cleaned);
+                  if ((delegations.length || taskRoutes.length) && texts.length === 0) {
+                    texts.push("🧭 Voy a ubicar la tarea correcta dentro de este grupo.");
+                  }
+                } catch (e) {
+                  logger.warn(`[mc-chat] task route marker parse skipped: ${e?.message || e}`);
+                  delegations = [];
+                  taskRoutes = [];
                 }
 
                 // Check if thread is linked to Discord
@@ -625,31 +648,82 @@ export default defineChannelPluginEntry({
                   }
                 }
 
-                // Dispatch the collected delegations AFTER the reply is posted:
-                // POST each brief to the specialist's own task thread →
-                // /api/chat/send sets agentId → gateway routes to
-                // workspace-<agent> (the by-thread cession rail). FAIL-LOUD if a
-                // dispatch fails; never throw out of deliver.
-                for (const d of delegations) {
-                  const delegateThreadId = `${slug}:delegate-${d.agent}-${slugForThread(d.name || d.brief)}`;
-                  const dispatched = await postWithRetry(sendUrl, {
+                // Every cession/task switch resolves through the same-group task
+                // router first. It may reuse one canonical task, ask the user to
+                // choose, or suggest a confirmed creation. It never fabricates a
+                // free-floating specialist thread.
+                const routeRequests = [
+                  ...delegations.map((item) => ({ ...item, routeSource: "delegate" })),
+                  ...taskRoutes.map((item) => ({
+                    ...item,
+                    agent: item.agent || respondingAgent || "sancho",
+                    routeSource: "task-route",
+                  })),
+                ];
+                const seenRouteRequests = new Set();
+                for (const routeRequest of routeRequests) {
+                  const routeAgent = routeRequest.agent || respondingAgent || "sancho";
+                  const routeName = routeRequest.name || `${routeAgent}: ${routeRequest.brief.slice(0, 64)}`;
+                  const dedupeKey = JSON.stringify([
+                    routeAgent,
+                    routeName,
+                    routeRequest.brief,
+                    routeRequest.taskId || "",
+                  ]);
+                  if (seenRouteRequests.has(dedupeKey)) continue;
+                  seenRouteRequests.add(dedupeKey);
+
+                  const routeResponse = await postWithRetry(taskRouteUrl, {
                     slug,
-                    threadId: delegateThreadId,
-                    threadName: d.name || `${d.agent}: ${d.brief.slice(0, 48)}`,
-                    text: d.brief,
-                    agent: d.agent,
-                    userName: "Sancho",
-                    _source: "agent_delegate",
-                  }, `Delegate→${d.agent}`);
-                  if (dispatched) {
-                    logger.info(`[mc-chat] delegated → ${d.agent} thread=${delegateThreadId}`);
-                  } else {
-                    await postWithRetry(callbackUrl, {
-                      slug, threadId, role: "bot", agent: respondingAgent,
-                      text: `⚠️ No pude arrancar a **${d.agent}** (fallo al despachar a su hilo). No se despachó nada — reinténtalo.`,
-                      ts: new Date().toISOString(),
-                    }, "Delegate fail-loud");
+                    sourceThreadId: threadId,
+                    groupId: routeRequest.groupId,
+                    targetTaskId: routeRequest.taskId,
+                    agent: routeAgent,
+                    skill: routeRequest.skill,
+                    name: routeName,
+                    brief: routeRequest.brief,
+                    confirmCreate: routeRequest.confirmCreate === true,
+                  }, `Task route→${routeAgent}`);
+                  let routeData = null;
+                  if (routeResponse) {
+                    try {
+                      routeData = await routeResponse.json();
+                    } catch (e) {
+                      logger.error(`[mc-chat] invalid task route response for ${routeAgent}: ${e?.message || e}`);
+                    }
                   }
+
+                  const targetThreadId = typeof routeData?.threadId === "string"
+                    ? routeData.threadId
+                    : null;
+                  if ((routeData?.action === "reuse" || routeData?.action === "created") && targetThreadId) {
+                    const dispatched = await postWithRetry(sendUrl, {
+                      slug,
+                      threadId: targetThreadId,
+                      threadName: routeData.threadName || routeName,
+                      text: routeRequest.brief,
+                      agent: routeAgent,
+                      skill: routeRequest.skill,
+                      userName: respondingAgent === "sancho" ? "Sancho" : respondingAgent,
+                      _source: routeRequest.routeSource === "delegate" ? "agent_delegate" : "task_route",
+                    }, `Task dispatch→${routeAgent}`);
+                    if (dispatched) {
+                      logger.info(`[mc-chat] task routed → ${routeAgent} task=${routeData.taskId || "unknown"} thread=${targetThreadId} action=${routeData.action}`);
+                      continue;
+                    }
+                  }
+
+                  const routeMessage = typeof routeData?.message === "string" && routeData.message.trim()
+                    ? routeData.message
+                    : `⚠️ No pude resolver una tarea segura para **${routeAgent}** dentro de este grupo. No se despachó nada.`;
+                  await postWithRetry(callbackUrl, {
+                    slug,
+                    threadId,
+                    role: "bot",
+                    agent: respondingAgent,
+                    text: routeMessage,
+                    ts: new Date().toISOString(),
+                  }, "Task route feedback");
                 }
               },
               onError: (err, info) => {
@@ -808,8 +882,9 @@ export default defineChannelPluginEntry({
           const deliveredViaChannel = hasRecentVisibleDelivery(slug, threadId, turnStartedAt);
           if (!deliveredFinal && !deliveredBlock && !visibleReplyPosted && !deliveredViaChannel && !runtimeErrorPosted) {
             logger.warn(`[mc-chat] dispatch completed without visible reply thread=${threadId} result=${JSON.stringify(dispatchResult || {})}`);
+            const guardMessage = mcChatCostGuard.abortMessageFor(guardRunId, sessionKey);
             await postRuntimeError(
-              "El runtime terminó sin devolver respuesta visible. Esto suele pasar cuando el proveedor/modelo falla antes de generar texto o cuando la sesión quedó obsoleta tras un cambio de modelo.",
+              guardMessage || "El runtime terminó sin devolver respuesta visible. Esto suele pasar cuando el proveedor/modelo falla antes de generar texto o cuando la sesión quedó obsoleta tras un cambio de modelo.",
               requestedAgent || "sancho",
             );
           } else if (!deliveredFinal && !deliveredBlock && !runtimeErrorPosted) {

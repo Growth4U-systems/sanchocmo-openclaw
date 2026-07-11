@@ -22,8 +22,10 @@ export interface AgentRun {
   threadId: string;
   runtime: string;
   agent?: string;
+  /** Legacy-compatible seed; advisory when skillMode is auto. */
   skill?: string;
   skills?: string[];
+  skillMode?: "auto" | "pinned";
   status: AgentRunStatus;
   input?: unknown;
   output?: unknown;
@@ -54,6 +56,7 @@ export interface CreateAgentRunInput {
   agent?: string;
   skill?: string;
   skills?: string[];
+  skillMode?: "auto" | "pinned";
   input?: unknown;
   now?: Date;
 }
@@ -115,6 +118,7 @@ export function createAgentRun(input: CreateAgentRunInput): AgentRun {
     agent: input.agent,
     skill: input.skill,
     skills: input.skills,
+    skillMode: input.skillMode,
     status: "queued",
     input: input.input,
     createdAt: now,
@@ -133,6 +137,7 @@ export function createAgentRun(input: CreateAgentRunInput): AgentRun {
       agent: run.agent,
       skill: run.skill,
       skills: run.skills,
+      skillMode: run.skillMode,
     },
   });
   writeStore(store);

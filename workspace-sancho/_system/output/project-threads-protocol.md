@@ -183,9 +183,12 @@ Cada cambio de estado actualiza SIEMPRE:
 
 Si surge necesidad de nueva tarea:
 1. Validar vs strategic plan (alineado / parcial / no)
-2. Si aprobada: crear en tasks.json + crear hilo en canal correspondiente
-3. Actualizar hilo del proyecto con la nueva tarea
-4. "¿La ejecuto?"
+2. Buscar primero una tarea activa compatible dentro del mismo proyecto/grupo
+3. Si hay una coincidencia inequívoca: reutilizar su hilo canónico; si hay varias, pedir elección
+4. Si no existe: sugerir crearla dentro del mismo grupo y esperar confirmación explícita
+5. Si aprobada: crear en tasks.json + crear hilo en canal correspondiente
+6. Actualizar hilo del proyecto con la nueva tarea
+7. "¿La ejecuto?"
 
 ## Regla cardinal
 

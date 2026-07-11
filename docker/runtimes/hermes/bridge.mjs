@@ -2,6 +2,11 @@
 import http from "node:http";
 import { spawn } from "node:child_process";
 import { randomUUID, timingSafeEqual } from "node:crypto";
+import {
+  buildMcChatContextBlock,
+  groundingSkillForTurn,
+  resolveTurnSkillPolicy,
+} from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 18791;
@@ -91,6 +96,7 @@ function runtimeSkill(value) {
 }
 
 function hermesSkills(message) {
+  if (resolveTurnSkillPolicy(message) !== "pinned") return [];
   return uniqueStrings([runtimeSkill(message.skill), ...normalizeArray(message.skills).map(runtimeSkill)]);
 }
 
@@ -143,7 +149,7 @@ function contextPackTimeoutMs() {
 export async function fetchContextPack(message) {
   if (process.env.HERMES_CONTEXT_PACK_ENABLED === "0") return null;
   if (!message?.slug) return null;
-  const skills = hermesSkills(message);
+  const groundingSkill = groundingSkillForTurn(message);
 
   const headers = { "Content-Type": "application/json" };
   const shared = sanchoSharedSecret();
@@ -154,7 +160,7 @@ export async function fetchContextPack(message) {
     headers,
     body: JSON.stringify({
       slug: message.slug,
-      skill: skills[0] || null,
+      skill: groundingSkill,
     }),
     signal: AbortSignal.timeout(contextPackTimeoutMs()),
   });
@@ -168,14 +174,23 @@ export async function fetchContextPack(message) {
 
 export function buildHermesPrompt(message, contextPack = null) {
   const skills = uniqueStrings([message.skill, ...normalizeArray(message.skills)]);
+  const requestedAgent = message.agent || message.agentId || "sancho";
+  const skillMode = resolveTurnSkillPolicy(message);
+  const mcChatContext = buildMcChatContextBlock({
+    ...message,
+    requestedAgent,
+    skillMode,
+    canDelegate: false,
+  });
   const runtimeContext = {
     slug: message.slug,
     threadId: message.threadId,
     threadName: message.threadName,
-    agent: message.agent || message.agentId || "sancho",
+    agent: requestedAgent,
     skill: message.skill,
     skills,
     scope: message.scope,
+    skillMode,
     linkedTo: message.linkedTo,
     docPath: message.docPath,
     docKind: message.docKind,
@@ -189,6 +204,8 @@ export function buildHermesPrompt(message, contextPack = null) {
     "Return only the final answer that should appear in the Sancho chat.",
     "This is a headless turn: never call clarify or any interactive question tool. Put every user question directly in the final answer and end the turn.",
     "Use the runtime context as routing and grounding metadata. Do not mention transport details unless the user asks.",
+    "",
+    mcChatContext,
     "",
     "Runtime context:",
     JSON.stringify(runtimeContext, null, 2),

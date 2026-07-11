@@ -50,7 +50,32 @@ function parseOne(json, allowedAgents) {
   if (!agent || !allowedAgents.has(agent)) return null;
   if (!brief) return null;
   const name = typeof obj.name === "string" ? obj.name.trim() : "";
-  return { agent, brief, name: name || undefined };
+  const skill = cleanToken(obj.skill);
+  const taskId = cleanIdentifier(obj.taskId);
+  const groupId = cleanIdentifier(obj.groupId);
+  return {
+    agent,
+    brief,
+    name: name || undefined,
+    ...(skill ? { skill } : {}),
+    ...(taskId ? { taskId } : {}),
+    ...(groupId ? { groupId } : {}),
+    ...(obj.confirmCreate === true ? { confirmCreate: true } : {}),
+  };
+}
+
+function cleanToken(value) {
+  if (typeof value !== "string") return "";
+  const token = value.trim().toLowerCase();
+  return /^[a-z0-9][a-z0-9_-]{0,127}$/i.test(token) ? token : "";
+}
+
+function cleanIdentifier(value) {
+  if (typeof value !== "string") return "";
+  const identifier = value.trim();
+  return identifier && identifier.length <= 160 && !/[\r\n]/.test(identifier)
+    ? identifier
+    : "";
 }
 
 function collapseGaps(text) {

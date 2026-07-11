@@ -16,12 +16,14 @@ test("agent run ledger records lifecycle events for a thread", () => {
     runtime: "openclaw",
     agent: "sancho",
     skill: "sancho-manager",
+    skillMode: "pinned",
     input: { text: "hola" },
     now: new Date("2026-06-30T10:00:00.000Z"),
   });
 
   assert.equal(run.status, "queued");
   assert.equal(run.threadId, "acme:general");
+  assert.equal(run.skillMode, "pinned");
 
   agentRuns.markAgentRunDispatched(run.id, run.threadId, { chatId: "acme:general" });
   assert.equal(agentRuns.getLatestActiveRun(run.threadId)?.id, run.id);
@@ -48,6 +50,7 @@ test("agent run ledger records lifecycle events for a thread", () => {
     "progress",
     "bot_reply",
   ]);
+  assert.equal((events[0].data as { skillMode?: string }).skillMode, "pinned");
 });
 
 test("agent run ledger marks failures and cancellations terminal", () => {

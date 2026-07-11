@@ -42,6 +42,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     ok: true,
     threadId,
     messages: thread?.messages || [],
+    routing: thread?.routing || null,
     status: liveStatus,
     pendingProgress,
   });

@@ -584,7 +584,12 @@ export async function createTask(
       description: input.description || null,
       owner: input.owner || "Sancho",
       agent: contract.agent,
-      skill: contract.skill || null,
+      // Persist only a skill the caller explicitly chose. Contract inference
+      // still supplies agent/available skills, but must not silently turn a
+      // skill-less task into a pinned `sancho-manager` workflow.
+      skill: typeof input.skill === "string" && input.skill.trim()
+        ? input.skill.trim()
+        : null,
       skills: contract.skills,
       channel: input.channel || null,
       deliverable: input.deliverable || null,

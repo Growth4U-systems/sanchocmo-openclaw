@@ -3,13 +3,19 @@ import { withErrorHandler } from "@/lib/api-middleware";
 import {
   addMessage,
   clearStatus,
+  getThreadRouting,
+  setThreadRouting,
   setStatusEntry,
   type ChatAttachment,
   type ErrorDetail,
 } from "@/lib/data/mc-chat";
 import { maybeMarkClarifyAnswered } from "@/lib/clarify-autostatus";
-import { skillsOwnedBy } from "@/lib/skill-resolver";
+import { resolveNamespaceThreadConfig } from "@/lib/chat-openers";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import {
+  resolveAgentExecutionPolicy,
+  toThreadRouting,
+} from "@/lib/runtime/agent-execution-policy";
 import {
   createAgentRun,
   markAgentRunCompleted,
@@ -50,6 +56,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     _source,
     agent,
     scope,
+    skillMode,
   } = req.body;
 
   if (!slug || !text) {
@@ -57,39 +64,35 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const tid = threadId || `${slug}:general`;
-  const rawAgent = typeof agent === "string" && agent.trim() ? agent.trim() : undefined;
   const shortThreadId =
     typeof tid === "string" && tid.startsWith(`${slug}:`)
       ? tid.slice(String(slug).length + 1)
       : typeof tid === "string"
         ? tid
         : "";
-  const resolvedAgent = rawAgent || (shortThreadId === "yalc" ? "rocinante" : undefined);
-  const resolvedSkill = skill || (shortThreadId === "yalc" ? "yalc-operator" : undefined);
-  const resolvedSkills =
-    Array.isArray(skills) && skills.length > 0
-      ? skills
-      : resolvedSkill
-        ? [resolvedSkill]
-        : undefined;
-  // SAN-327 — agent-scoped (broad) threads let the owning specialist use ANY of
-  // its own skills in the same thread. Widen the skill set to the agent's full
-  // owned set (seed skill first), so the gateway can tell the agent its whole
-  // toolset instead of just the seed skill. Narrow threads stay untouched, and
-  // the default agent (sancho) is excluded — it delegates rather than widens.
-  const isAgentScope =
-    scope === "agent" && !!resolvedAgent && resolvedAgent !== "sancho";
-  const effectiveSkills = isAgentScope
-    ? Array.from(
-        new Set([
-          ...(resolvedSkill ? [resolvedSkill] : []),
-          ...skillsOwnedBy(resolvedAgent),
-          ...(resolvedSkills ?? []),
-        ]),
-      )
-    : resolvedSkills;
+  const persistedRoute = getThreadRouting(tid);
+  const namespaceRoute = resolveNamespaceThreadConfig(slug, tid);
+  const requestRoute = { agent, scope, skillMode, skill, skills };
+  const policy = resolveAgentExecutionPolicy([
+    // Once established, server-side ownership wins over stale browser
+    // metadata from another entry surface. A future intentional reroute should
+    // be an explicit server operation, never an accidental message side effect.
+    persistedRoute ?? requestRoute,
+    namespaceRoute ?? {},
+    shortThreadId === "yalc"
+      ? { agent: "rocinante", scope: "agent", skill: "yalc-operator" }
+      : {},
+  ]);
+  const resolvedAgent = policy.agent;
+  const resolvedSkill = policy.skillHint;
+  const effectiveSkills = policy.availableSkills;
   const parsedAttachments: ChatAttachment[] | undefined =
     Array.isArray(attachments) && attachments.length > 0 ? attachments : undefined;
+
+  // Agent ownership and auto/pinned policy are server state, not browser
+  // state. Persist the route before the message so Discord, callbacks and a
+  // reopened tab continue with the same agent while re-evaluating skills.
+  setThreadRouting(tid, toThreadRouting(policy));
 
   // Store user message locally
   addMessage(tid, "user", text, undefined, parsedAttachments);
@@ -134,9 +137,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     linkedTo: linkedTo || undefined,
     skill: resolvedSkill || undefined,
     skills: effectiveSkills || undefined,
-    // SAN-327 — when "agent", the gateway frames the seed skill as a starting
-    // suggestion and tells the agent it can use any of `skills` in this thread.
-    scope: isAgentScope ? "agent" : undefined,
+    scope: policy.scope,
+    skillMode: policy.skillMode,
     threadState: threadState || undefined,
     docPath: docPath || undefined,
     docKind: typeof docKind === "string" ? docKind : undefined,
@@ -161,6 +163,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     agent: resolvedAgent || "sancho",
     skill: resolvedSkill,
     skills: effectiveSkills,
+    skillMode: policy.skillMode,
     input: {
       slug,
       threadId: tid,
@@ -170,6 +173,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       docPath: docPath || undefined,
       docKind: typeof docKind === "string" ? docKind : undefined,
       source: _source,
+      scope: policy.scope,
+      skillMode: policy.skillMode,
     },
   });
 

@@ -77,6 +77,7 @@
 // ============================================================
 
 import { resolveThreadSkills, type SkillContext } from "./skill-resolver";
+import { sanitizeShortId } from "./thread-id";
 import {
   getNamespaceOwner,
   getThreadOpener,
@@ -454,6 +455,17 @@ export function buildTaskIndex(
       const id = (task.id || "").toLowerCase();
       index.set(`task:${id}`, entry);
       index.set(`task-${id}`, entry);
+      // Tasks materialized from a routed chat may own a deterministic thread
+      // that is not derived from their task id. Index the persisted anchor too
+      // so reopening that thread restores the task harness instead of falling
+      // through to a generic namespace.
+      if (typeof task.mc_chat_thread_id === "string" && task.mc_chat_thread_id.trim()) {
+        const anchored = task.mc_chat_thread_id.trim();
+        const shortAnchor = anchored.includes(":")
+          ? anchored.slice(anchored.indexOf(":") + 1)
+          : anchored;
+        index.set(sanitizeShortId(shortAnchor), entry);
+      }
       // Index by pillar (if present)
       if (task.pillar) {
         const pl = task.pillar.toLowerCase();
@@ -526,10 +538,32 @@ function reopenFromNamespace(
     skill: owner.skill,
     skills: owner.skills,
     agent: owner.agent,
+    scope: owner.scope,
     linkedTo: subRest(owner.reopenLinkedTo),
     docPath: null,
     threadState: "continue",
   };
+}
+
+/**
+ * Resolve only the declared namespace route for a thread.
+ *
+ * Server ingress uses this as a durable fallback when a non-browser source
+ * (Discord, delegation, callback) sends only a thread id. Task resolution
+ * remains in `resolveFullThreadConfig`; this helper intentionally performs no
+ * filesystem or task-index lookup.
+ */
+export function resolveNamespaceThreadConfig(
+  slug: string,
+  threadId: string,
+): ThreadConfig | undefined {
+  const shortId = threadId.startsWith(`${slug}:`)
+    ? threadId.slice(slug.length + 1)
+    : threadId;
+  const match = matchNamespaceOwner(shortId);
+  return match
+    ? reopenFromNamespace(threadId, shortId, match.owner, match.rest)
+    : undefined;
 }
 
 /**
@@ -597,6 +631,16 @@ export function resolveFullThreadConfig(
         taskStatus: task.status as string | undefined,
         taskType: task.type as string | undefined,
         pillar: task.pillar as string | undefined,
+        agent: task.agent as string | undefined,
+        skills: task.skills as string[] | undefined,
+        inputDocuments: task.input_documents as unknown[] | undefined,
+        requiredInputs: task.required_inputs as unknown[] | undefined,
+        outputDocuments: task.output_documents as unknown[] | undefined,
+        dependsOn: task.depends_on
+          ? Array.isArray(task.depends_on)
+            ? task.depends_on as string[]
+            : [task.depends_on as string]
+          : undefined,
         deliverableFile,
       }
     );
@@ -704,6 +748,9 @@ export function buildTaskThread(
     docPath: opts.deliverableFile || `projects/${projectId}/tasks.json`,
     threadState: opts.taskStatus === "ready" || opts.taskStatus === "pending" ? "create" : "continue",
     agent: opts.agent || resolved.agent,
+    // An explicit task skill is the product harness. An inferred fallback is
+    // merely a grounding hint and must stay agent-led/auto.
+    scope: opts.taskSkill ? "skill" : "agent",
     initialMessage: opts.taskSkill === "meeting-intelligence" && taskName.toLowerCase().includes("configurar")
       ? resolveOpener("meeting-intelligence-setup", { slug })
       : undefined,

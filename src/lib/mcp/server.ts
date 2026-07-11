@@ -42,7 +42,8 @@ import {
 import { getMeetingIntelligenceCronStatus, syncMeetingIntelligenceCron } from "@/lib/data/meeting-intelligence-cron";
 import { runMeetingIntelligenceSync } from "@/lib/data/meeting-intelligence-runner";
 import { getInternalClientStatus } from "@/lib/sancho-internal-api";
-import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
+import { createTask, findTaskByThreadId, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
+import { resolveSameGroupTaskRoute } from "@/lib/data/task-routing";
 import { brandDir, EXEC_PATH } from "@/lib/data/paths";
 import { isSafeFormula } from "@/lib/metrics/dashboard-schema";
 import { getContentConfig, updateContentConfig, type ContentConfig } from "@/lib/data/content-config";
@@ -1079,17 +1080,21 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Delegate Sancho work to a specialist",
       description:
-        "Creates or reuses an idempotent specialist-owned task thread, then dispatches the brief to that specialist via " +
-        "Mission Control chat. Requires tasks:write and chat:write. Defaults to dry-run and requires confirm=true. " +
+        "Resolves a compatible active task inside the current project/group, reuses its canonical thread, or suggests " +
+        "creating a task in that same group before dispatching the specialist via Mission Control chat. Never creates " +
+        "a standalone task. Requires tasks:write and chat:write. Defaults to dry-run and requires confirm=true. " +
         "Use this for real work owned by a specialist instead of asking Sancho to answer inline.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         agent: z.string().min(1).describe(`Active delegate agent id. Allowed: ${DELEGATE_AGENT_LIST}.`),
         name: z.string().min(1).describe("Task name shown in Mission Control."),
         brief: z.string().min(1).describe("Brief to dispatch to the specialist thread."),
-        threadId: z.string().optional().describe("Optional MC chat thread id. Defaults to an idempotent delegate-<agent>-<name> thread."),
+        sourceThreadId: z.string().optional().describe("Current MC chat thread. Used to derive the same project/group safely."),
+        sourceTaskId: z.string().optional().describe("Current task id. Used to derive the same project/group safely."),
+        targetTaskId: z.string().optional().describe("Existing destination task selected by the user."),
+        threadId: z.string().optional().describe("Existing destination MC chat thread selected by the user (legacy explicit target)."),
         threadName: z.string().optional().describe("Optional thread display name. Defaults to the task name."),
-        parentId: z.string().optional().describe("Optional parent task id."),
+        parentId: z.string().optional().describe("Project/group id. New tasks are only suggested/created inside this group."),
         owner: z.string().optional().describe("Task owner label. Defaults to the specialist agent."),
         skill: z.string().optional().describe("Skill that should run the task, when known."),
         skills: z.array(z.string()).optional().describe("Skill pipeline for the task, when known."),
@@ -1098,21 +1103,56 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create/reuse and dispatch."),
       },
     },
-    async ({ clientSlug, agent, name, brief, threadId, threadName, parentId, owner, skill, skills, status, dryRun, confirm }) =>
+    async ({ clientSlug, agent, name, brief, sourceThreadId, sourceTaskId, targetTaskId, threadId, threadName, parentId, owner, skill, skills, status, dryRun, confirm }) =>
       runTool(context, "sancho_delegate", clientSlug, async () => {
         assertClientScope(context, "tasks:write", clientSlug);
         assertClientScope(context, "chat:write", clientSlug);
         const agentSlug = normalizeDelegateAgent(agent);
-        const tid = threadId
-          ? normalizeChatThreadId(clientSlug, threadId)
-          : defaultDelegateThreadId(clientSlug, agentSlug, name);
+        const resolution = await resolveSameGroupTaskRoute({
+          clientSlug,
+          sourceThreadId,
+          sourceTaskId,
+          groupId: parentId,
+          targetTaskId,
+          targetThreadId: threadId,
+          requestedAgent: agentSlug,
+          requestedSkill: skill,
+          requestedName: name,
+        });
+
+        if (resolution.kind === "group_required") {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            requiresGroupSelection: true,
+            resolution,
+            message: "Choose the current project/group before delegating; no standalone task or thread was created.",
+          });
+        }
+        if (resolution.kind === "ambiguous") {
+          return jsonResult({
+            ok: true,
+            dispatched: false,
+            requiresTaskSelection: true,
+            resolution,
+            message: "Select targetTaskId from the compatible tasks, or explicitly confirm creation after choosing a new task.",
+          });
+        }
+
+        const reusing = resolution.kind === "reuse";
+        const creationGroup = resolution.kind === "suggest_create" ? resolution.groupId : undefined;
+        const tid = reusing
+          ? resolution.target.targetThreadId
+          : threadId
+            ? normalizeChatThreadId(clientSlug, threadId)
+            : defaultDelegateThreadId(clientSlug, agentSlug, name, creationGroup);
         const taskInput = pickDefined({
           name,
           description: brief,
           brief,
           status,
           type: "execution",
-          parent_id: parentId,
+          parent_id: creationGroup,
           owner: owner || agentSlug,
           skill,
           agent: agentSlug,
@@ -1138,18 +1178,37 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message: "Set dryRun=false and confirm=true to create/reuse this task thread and dispatch the brief.",
+            action: reusing ? "reuse" : "suggest_create",
+            resolution,
+            message: reusing
+              ? "Set dryRun=false and confirm=true to dispatch to this existing same-group task."
+              : `No compatible task exists in ${creationGroup}. Confirm to create it in that group and dispatch.`,
             threadId: tid,
             taskInput: { clientSlug, ...taskInput },
             payload,
           });
         }
 
-        const task = await createTask(clientSlug, taskInput as Parameters<typeof createTask>[1]);
+        const resolvedTaskId = resolution.kind === "reuse" ? resolution.target.taskId : undefined;
+        const existingByThread = reusing ? null : await findTaskByThreadId(clientSlug, tid);
+        const task = reusing
+          ? await getTask(clientSlug, resolvedTaskId!)
+          : existingByThread || await createTask(clientSlug, taskInput as Parameters<typeof createTask>[1]);
+        if (!task) {
+          throw new Error(`Resolved task ${resolvedTaskId || tid} disappeared before dispatch`);
+        }
         addMessage(tid, "user", brief);
         try {
           const dispatch = await dispatchMcChatMessage(context, payload);
-          return jsonResult({ ok: true, task, threadId: tid, agent: agentSlug, dispatch });
+          return jsonResult({
+            ok: true,
+            action: reusing || existingByThread ? "reuse" : "created",
+            resolution,
+            task,
+            threadId: tid,
+            agent: agentSlug,
+            dispatch,
+          });
         } catch (err) {
           const taskId = isRecord(task) && typeof task.id === "string" ? task.id : "unknown";
           const message = err instanceof Error ? err.message : "Unknown gateway dispatch error";
@@ -4755,8 +4814,9 @@ function normalizeDelegateAgent(agent: string): string {
   return slug;
 }
 
-function defaultDelegateThreadId(clientSlug: string, agent: string, name: string): string {
-  return `${clientSlug}:delegate-${agent}-${slugForThread(name)}`;
+function defaultDelegateThreadId(clientSlug: string, agent: string, name: string, groupId?: string): string {
+  const group = groupId ? `${slugForThread(groupId)}-` : "";
+  return `${clientSlug}:delegate-${group}${agent}-${slugForThread(name)}`;
 }
 
 function slugForThread(value: string): string {

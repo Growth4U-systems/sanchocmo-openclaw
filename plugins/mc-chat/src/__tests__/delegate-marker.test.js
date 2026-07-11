@@ -36,6 +36,26 @@ test("name is optional → omitted when absent", () => {
   assert.equal(out.delegations[0].name, undefined);
 });
 
+test("parses task routing hints without granting implicit creation", () => {
+  const text = ':::delegate\n{"agent":"hamete","name":"Mercado","brief":"Investiga","skill":"market-research","taskId":"P01-T03","groupId":"P01","confirmCreate":true}\n:::';
+  const out = parseDelegateMarkers(text, ALLOWED);
+  assert.deepEqual(out.delegations[0], {
+    agent: "hamete",
+    name: "Mercado",
+    brief: "Investiga",
+    skill: "market-research",
+    taskId: "P01-T03",
+    groupId: "P01",
+    confirmCreate: true,
+  });
+
+  const unconfirmed = parseDelegateMarkers(
+    ':::delegate\n{"agent":"hamete","brief":"Investiga","confirmCreate":"true"}\n:::',
+    ALLOWED,
+  );
+  assert.equal(unconfirmed.delegations[0].confirmCreate, undefined);
+});
+
 test("collects multiple delegate blocks in order", () => {
   const text =
     ':::delegate\n{"agent":"hamete","brief":"research"}\n:::\nluego\n:::delegate\n{"agent":"rocinante","brief":"outreach"}\n:::';

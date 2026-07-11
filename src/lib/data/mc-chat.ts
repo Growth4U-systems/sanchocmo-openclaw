@@ -3,6 +3,10 @@ import path from "path";
 import { BASE, chatReadStateFile } from "./paths";
 import { readJSON, writeJSON } from "./json-io";
 import { sanitizeShortId } from "../thread-id";
+import {
+  normalizeThreadRouting,
+  type ThreadRouting,
+} from "../runtime/agent-execution-policy";
 
 /**
  * MC-Chat state management — ported from mc-server.js in-memory state.
@@ -176,7 +180,7 @@ const MAX_SEALED_PROGRESS = 50;
 // Thread persistence (disk-based, same as legacy)
 // role can be "user" | "bot" | "status" | "system" | "handoff". When role === "handoff",
 // `from_agent` and `to_agent` carry the source/target agent slugs and `text` is the reason.
-interface ThreadData {
+export interface ThreadData {
   messages: {
     role: string;
     text: string;
@@ -192,6 +196,8 @@ interface ThreadData {
   discordChannelId?: string;
   updatedAt?: number;
   pendingProgress?: ProgressEvent[];
+  /** Durable agent route. Skills remain hints; no active skill is persisted. */
+  routing?: ThreadRouting;
 }
 
 function threadFile(threadId: string): string {
@@ -212,6 +218,16 @@ export function getThread(threadId: string): ThreadData {
 
 export function saveThread(threadId: string, data: ThreadData) {
   writeJSON(threadFile(threadId), data);
+}
+
+export function getThreadRouting(threadId: string): ThreadRouting | undefined {
+  return normalizeThreadRouting(getThread(threadId).routing);
+}
+
+export function setThreadRouting(threadId: string, routing: ThreadRouting) {
+  const thread = getThread(threadId);
+  thread.routing = normalizeThreadRouting(routing);
+  saveThread(threadId, thread);
 }
 
 export function addMessage(
@@ -375,6 +391,7 @@ export function listThreadsForSlug(slug: string) {
             : null,
           hasUnread,
           lastBotTs,
+          routing: normalizeThreadRouting(data.routing),
         });
       } catch {
         // skip invalid files

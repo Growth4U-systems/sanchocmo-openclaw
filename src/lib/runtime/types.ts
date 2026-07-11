@@ -16,9 +16,12 @@ export interface InboundMessage {
   userId: string;
   userName: string;
   linkedTo?: string;
+  /** Seed playbook for this turn. Advisory when `skillMode` is `auto`. */
   skill?: string;
   skills?: string[];
-  scope?: "agent";
+  scope?: "agent" | "skill";
+  /** `auto` lets the owning agent choose per turn; `pinned` keeps a deterministic workflow. */
+  skillMode?: "auto" | "pinned";
   threadState?: unknown;
   docPath?: string;
   docKind?: string;

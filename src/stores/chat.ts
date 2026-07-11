@@ -16,6 +16,8 @@ export interface ThreadMeta {
   initialMessage?: string;
   quickActions?: Array<{ label: string; prompt: string }>;
   agent?: string;
+  /** `agent` = the owner stays fixed while skills are selected per turn. */
+  scope?: "agent" | "skill";
   /** Shape of the associated doc — see ThreadConfig.docKind. */
   docKind?: "file" | "template";
 }
@@ -129,6 +131,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       initialMessage: config.initialMessage,
       quickActions: config.quickActions,
       agent: config.agent,
+      scope: config.scope,
       docKind: config.docKind,
     });
     get().registerThread(config.threadId, config.threadName);
@@ -154,6 +157,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         initialMessage: config.initialMessage,
         quickActions: config.quickActions,
         agent: config.agent,
+        scope: config.scope,
         docKind: config.docKind,
       });
       // Register thread locally

@@ -272,9 +272,18 @@ export function ChatSidebar() {
         slug, threadId, taskIndex,
         (pk) => resolvePillarDocPath(pk, foundationState as Parameters<typeof resolvePillarDocPath>[1]),
       );
+      const persistedRouting = threads.find((thread) => thread.id === threadId)?.routing;
+      if (persistedRouting) {
+        config.agent = persistedRouting.agent ?? config.agent;
+        config.scope = persistedRouting.skillMode === "auto" ? "agent" : "skill";
+        config.skill = persistedRouting.skillHint ?? config.skill;
+        if (persistedRouting.availableSkills?.length) {
+          config.skills = persistedRouting.availableSkills;
+        }
+      }
       selectThread(config);
     },
-    [slug, foundationState, taskIndex, selectThread]
+    [slug, foundationState, taskIndex, selectThread, threads]
   );
 
   // ── DEPRECATED: old handleSelectFromPanel body ──────────────
@@ -643,6 +652,9 @@ export function ChatSidebar() {
   const skills = meta?.skills ?? [];
   const primarySkill = meta?.skill || skills[0];
   const extraSkillCount = skills.length > 1 ? skills.length - 1 : 0;
+  const isAutoSkillMode = meta?.scope === "agent";
+  const isSanchoGeneralist = isAutoSkillMode && meta?.agent === "sancho";
+  const hasExecutionBadge = isAutoSkillMode || Boolean(primarySkill);
 
   // Estado de la tarea ligada al thread ABIERTO → la cabecera muestra el
   // StatusPill y ofrece "cambiar estado / archivar" inline. Se resuelve por
@@ -1117,7 +1129,7 @@ export function ChatSidebar() {
 
       {/* THREAD BAR — solo chips de meta (doc · estado · tarea · adjuntos ·
           skill). El título del hilo vive ahora en la HEADER BAR. */}
-      {activeThreadId && (meta?.docPath || meta?.linkedTo || primarySkill || activeTaskStatus || contentTaskStatus) && (
+      {activeThreadId && (meta?.docPath || meta?.linkedTo || hasExecutionBadge || activeTaskStatus || contentTaskStatus) && (
       <div className="px-3 py-1.5 border-b border-[var(--chat-border)] shrink-0">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
 
@@ -1130,7 +1142,7 @@ export function ChatSidebar() {
               Plus the skill badge, always.
               Applies to BOTH locked and free mode so the user never loses
               the associated-link context as they navigate threads. */}
-          {activeThreadId && (meta?.docPath || meta?.linkedTo || primarySkill) && (() => {
+          {activeThreadId && (meta?.docPath || meta?.linkedTo || hasExecutionBadge) && (() => {
             // Priority order for what to show in the pill:
             //   1. Real doc (.md / .html / etc) → doc viewer
             //   2. Task page (linkedTo has `projects/.../tasks/...`)
@@ -1478,16 +1490,28 @@ export function ChatSidebar() {
             );
           })()}
 
-          {/* Skill chip — siempre que el hilo tenga skill asociada */}
-          {primarySkill && (
+          {/* Execution chip — broad threads keep their owner and select skills per turn. */}
+          {isAutoSkillMode ? (
+            <span
+              className="inline-flex items-center gap-1 bg-cyan-500/15 text-[10px] text-cyan-700 dark:text-cyan-300 px-2 py-1 rounded-md shrink-0 font-semibold"
+              title={isSanchoGeneralist
+                ? "Sancho resuelve de forma general y delega cuando corresponde."
+                : primarySkill
+                  ? `Skill inicial: ${primarySkill}. El agente elige la adecuada en cada turno.`
+                  : "El agente elige skills por turno"}
+            >
+              {isSanchoGeneralist ? "🧭 Sancho generalista" : "🧭 Skills automáticas"}
+              {!isSanchoGeneralist && primarySkill ? <span className="opacity-70">· {primarySkill}</span> : null}
+            </span>
+          ) : primarySkill ? (
             <span
               className="inline-flex items-center gap-0.5 bg-rust/15 text-[10px] text-rust px-2 py-1 rounded-md shrink-0 font-semibold"
               title={(meta?.skills && meta.skills.length ? meta.skills : [primarySkill]).join(", ")}
             >
               🛠️ {primarySkill}
-              {extraSkillCount > 0 && <span className="opacity-70"> +{extraSkillCount}</span>}
+              {extraSkillCount > 0 ? <span className="opacity-70"> +{extraSkillCount}</span> : null}
             </span>
-          )}
+          ) : null}
           </div>
       </div>
       )}
