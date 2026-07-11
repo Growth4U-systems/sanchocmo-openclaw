@@ -58,6 +58,24 @@ require_env() {
 # Espera a que MC esté realmente listo (healthcheck del contenedor) y recién ahí
 # imprime la URL de acceso — en vez de anunciar apenas `up -d` retorna, cuando
 # los contenedores todavía están arrancando.
+# Reprint the admin access token as the LAST thing on screen. The wizard prints
+# it once, but the (often multi-minute) pull + boot output that follows buries it
+# in the scrollback — so a quick install appears to finish without handing you a
+# way in. Reads MC_ADMIN_TOKEN from .env; no-op if unset. (SAN-434)
+print_login_hint() {
+  local tok google
+  tok="$(_env_get MC_ADMIN_TOKEN)"
+  [ -n "$tok" ] || return 0
+  google="$(_env_get GOOGLE_CLIENT_ID)"
+  echo ""
+  if [ -n "$google" ]; then
+    echo  "   Log in with Google, or paste this admin access token on the sign-in page:"
+  else
+    printf '   \033[2mPaste this in the "Access Token" field on the sign-in page:\033[0m\n'
+  fi
+  printf '   \033[1m%s\033[0m\n' "$tok"
+}
+
 announce_ready() {
   # First boot (image seed + plugins + DB migrate + gateway) can take several
   # minutes, so wait generously (SANCHO_READY_TIMEOUT, default 600s) with live
@@ -80,6 +98,8 @@ announce_ready() {
        echo  "   Revisá qué pasó:  ./sancho logs"
        echo  "   URL prevista:     $base" ;;
   esac
+  # Surface the login token last, whenever MC is up or still coming up.
+  case "$rc" in 0|2|3) print_login_hint ;; esac
 }
 
 # open_browser — best-effort: abre la URL de acceso en el navegador. Silencioso
