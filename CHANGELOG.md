@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.1.0...v1.2.0) (2026-07-11)
+
+
+### Features
+
+* **chat:** task-led flexible routing (SAN-432) ([b24b812](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b24b812d41d86fed29656f9cddd77108788d9ebc))
+
+
+### Bug Fixes
+
+* **chat:** abort active runs on stop ([#1220](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1220)) ([656520e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/656520ecd2f3972978ebff4683d12c9be82e7436))
+* **outreach:** resume agent campaign jobs ([#1218](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1218)) ([5482752](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5482752fef8e4bf9bec2b8c85a6e8db75893fac7))
+* **outreach:** simplify the B2B campaign flow ([#1194](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1194)) ([10cadef](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/10cadef74ede7937b68a5a97ed3a5021a34d630d))
+
 ## [1.1.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.0.1...v1.1.0) (2026-07-10)
 
 
