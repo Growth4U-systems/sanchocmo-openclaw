@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback, useMemo, type KeyboardEvent, type DragEvent, type ClipboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/stores/chat";
@@ -19,6 +20,7 @@ import {
   buildPillarThread,
   buildTaskThread,
   buildProjectThread,
+  buildNewTaskThread,
   resolveFullThreadConfig,
   buildTaskIndex,
 } from "@/lib/chat-openers";
@@ -985,6 +987,11 @@ export function ChatSidebar() {
     [handleSend]
   );
 
+  const handleNewTask = useCallback(() => {
+    if (!slug) return;
+    selectThread(buildNewTaskThread(slug));
+  }, [selectThread, slug]);
+
   // Focus the textarea once the thread has loaded and is empty, so users see
   // the cursor blink in the input instead of staring at the "empty thread"
   // bubble wondering what to do.
@@ -1111,11 +1118,13 @@ export function ChatSidebar() {
             </button>
           )}
           <button
-            onClick={() => handleSelectFromPanel(`${slug}:general`)}
-            title={t("newThread")}
-            className="text-green-500 hover:opacity-80 text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
+            type="button"
+            onClick={handleNewTask}
+            title={t("newTask")}
+            className="inline-flex h-7 items-center gap-1 rounded-md bg-rust px-2 text-[11px] font-semibold text-white hover:opacity-90"
           >
-            +
+            <Plus size={13} aria-hidden="true" />
+            <span>{t("newTask")}</span>
           </button>
           <button
             onClick={toggleFullscreen}

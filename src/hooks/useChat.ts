@@ -139,7 +139,7 @@ export function useThreadList(slug: string | null) {
         }
       }
 
-      // Sort: general PINNED at top (day-to-day chat + new task creation),
+      // Sort: general PINNED at top (stable day-to-day chat),
       // everything else strictly by `updatedAt` desc (most recent first).
       //
       // NOTE: 2026-04-15 — removed the unread-first tier because it made the

@@ -234,6 +234,15 @@ export function buildNewTaskThread(slug: string): ThreadConfig {
   return instantiateNamespace("new-task", { slug, params: { nonce: String(Date.now()) } });
 }
 
+/** Open the stable day-to-day chat without creating a task or a new thread. */
+export function buildGeneralThread(slug: string): ThreadConfig {
+  const cfg = buildPillarThread(slug, "general");
+  cfg.threadName = "General";
+  cfg.linkedTo = "general";
+  cfg.docPath = null;
+  return cfg;
+}
+
 /**
  * Partnerships (SAN-78) — "Crear nueva búsqueda" de creators abre el chat
  * global con el plan de discovery. La skill `discovery-plan-builder` la

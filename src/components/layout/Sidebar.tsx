@@ -3,9 +3,10 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useSession, signOut } from "next-auth/react";
+import { MessageCircle } from "lucide-react";
 import { useAppStore } from "@/stores/app";
 import { useChatStore } from "@/stores/chat";
-import { buildNewTaskThread } from "@/lib/chat-openers";
+import { buildGeneralThread } from "@/lib/chat-openers";
 import { cn } from "@/lib/utils";
 import { navigateToClient } from "@/lib/navigation";
 import { useClients } from "@/hooks/useClients";
@@ -92,16 +93,15 @@ export function Sidebar() {
     return currentPath === href || currentPath.startsWith(href + "/");
   }
 
-  function openNewTask() {
+  function openChat() {
     if (!chatSlug) return;
-    // "Nueva tarea": abre el chat a pantalla completa pero en modo LIBRE (no
-    // bloqueado), con el hilo de nueva tarea seleccionado — así el usuario
-    // puede cambiar de hilo desde el panel. See namespaceOwners.new-task.
-    const cfg = buildNewTaskThread(chatSlug);
     const chat = useChatStore.getState();
+    const hasCurrentClientThread = chat.currentThread?.startsWith(`${chatSlug}:`);
     chat.setCurrentSlug(chatSlug);
-    chat.openSidebar();        // modo libre (sidebarOpen, sin bloquear)
-    chat.selectThread(cfg);    // selecciona el hilo de nueva tarea sin bloquear
+    chat.openSidebar();
+    if (!hasCurrentClientThread) {
+      chat.selectThread(buildGeneralThread(chatSlug));
+    }
     useChatStore.setState({ isFullscreen: true });
   }
 
@@ -163,10 +163,11 @@ export function Sidebar() {
         {/* Chat button (concrete client only — hidden in the global view) */}
         {chatSlug && sidebarOpen && (
           <button
-            onClick={openNewTask}
+            onClick={openChat}
             className="w-full flex items-center gap-2 px-3.5 py-2.5 mt-2 bg-rust text-white rounded-lg font-bold text-[13px] hover:opacity-90 justify-center relative"
           >
-            ➕ {t("chat.newTask")}
+            <MessageCircle size={16} aria-hidden="true" />
+            {t("chat.openChat")}
             {unreadCount > 0 && (
               <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                 {unreadCount}
@@ -178,12 +179,12 @@ export function Sidebar() {
         {/* Chat button — collapsed: icon-only, keeps the unread badge visible */}
         {chatSlug && !sidebarOpen && (
           <button
-            onClick={openNewTask}
-            title={t("chat.newTask")}
-            aria-label={t("chat.newTask")}
+            onClick={openChat}
+            title={t("chat.openChat")}
+            aria-label={t("chat.openChat")}
             className="relative mt-2 mx-auto w-9 h-9 flex items-center justify-center bg-rust text-white rounded-lg font-bold text-base hover:opacity-90"
           >
-            ➕
+            <MessageCircle size={17} aria-hidden="true" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">
                 {unreadCount}
