@@ -121,6 +121,18 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     assert.equal(received.length, 2);
     assert.equal(received[1].userId, "mc-client-demo");
     assert.equal(received[1].controlDepth, 0);
+
+    const crossTenant = mockResponse();
+    await sendHandler(runtimeRequest({
+      ...body,
+      slug: "demo",
+      threadId: "other:general",
+      text: "Do not cross tenants",
+      idempotencyKey: "mc-control:cross-tenant",
+    }), crossTenant.res);
+    assert.equal(crossTenant.read().statusCode, 400);
+    assert.equal(crossTenant.read().payload.error, "Thread does not belong to slug");
+    assert.equal(received.length, 2);
   } finally {
     await close(runtime);
   }
