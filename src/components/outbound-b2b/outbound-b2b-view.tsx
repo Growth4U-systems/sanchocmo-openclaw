@@ -324,6 +324,11 @@ interface OutboundWorkflowStatusResponse {
       approach: LinkedInMessageApproach;
       campaignReason: string;
       framework?: "observation_relevance_value_cta_v1";
+      playbook?: {
+        id: string;
+        version: string;
+        owner?: "dulcinea";
+      };
       ecp?: {
         id: string;
         name: string;
@@ -2499,6 +2504,15 @@ function providerDisplayName(provider?: string | null): string {
   return provider || "Sin confirmar";
 }
 
+function selectionReasonDisplay(reason?: string | null, variantLabel?: string | null): string {
+  const clean = String(reason || "").trim();
+  if (!clean) return "Se usó el ángulo base porque no hay una señal específica.";
+  if (!/selectionRule|\bv[1-3]\b/i.test(clean)) return clean;
+  const profileContext = clean.split(",")[0]?.trim().replace(/[.;:]+$/, "");
+  const angle = variantLabel ? `«${variantLabel}»` : "este ángulo";
+  return `${profileContext || "El perfil"}. Se eligió ${angle} como hipótesis para este perfil.`;
+}
+
 function OutboundTargetingAuditPanel({ audit }: { audit: OutboundTargetingAudit | null }) {
   if (!audit) return null;
   const accountFilters = [
@@ -2625,7 +2639,10 @@ function LinkedInWorkflowPanel({
   const batch = workflow?.batch || null;
   const items = batch?.items || [];
   const includedItems = items.filter((item) => item.included);
-  const sampleItems = includedItems.slice(0, 3);
+  const variantExamples = (batch?.personalization?.variants || [])
+    .map((variant) => includedItems.find((item) => item.variantId === variant.id))
+    .filter((item): item is OutboundWorkflowBatchItem => Boolean(item));
+  const sampleItems = variantExamples.length > 0 ? variantExamples : includedItems.slice(0, 3);
   const [approach, setApproach] = useState<LinkedInMessageApproach>("conversational");
   const [variantRules, setVariantRules] = useState<Record<string, string>>({});
   const failedCount = (batch?.summary?.failed ?? 0) + (batch?.summary?.uncertain ?? 0);
@@ -2760,9 +2777,17 @@ function LinkedInWorkflowPanel({
             <div className="mt-3 border-y border-border py-3">
               <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold uppercase text-muted-foreground">
                 <span>Estrategia de campaña</span>
-                {batch.personalization.ecp && (
-                  <span title={batch.personalization.ecp.source}>Foundation · {batch.personalization.ecp.name}</span>
-                )}
+                <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+                  {batch.personalization.ecp && (
+                    <span title={batch.personalization.ecp.source}>Foundation · {batch.personalization.ecp.name}</span>
+                  )}
+                  {batch.personalization.playbook && (
+                    <span title={batch.personalization.playbook.id}>
+                      {batch.personalization.playbook.owner === "dulcinea" ? "Playbook de Dulcinea" : "Playbook de copy"}
+                      {" · "}v{batch.personalization.playbook.version}
+                    </span>
+                  )}
+                </div>
               </div>
               <p className="mb-0 mt-1 text-sm leading-relaxed text-foreground">{batch.personalization.campaignReason}</p>
               {batch.personalization.framework === "observation_relevance_value_cta_v1" && (
@@ -2775,7 +2800,10 @@ function LinkedInWorkflowPanel({
 
           {batch.personalization?.variants && batch.personalization.variants.length > 0 && (
             <div className="mt-3">
-              <div className="text-[11px] font-semibold uppercase text-muted-foreground">Variantes del lote</div>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold uppercase text-muted-foreground">
+                <span>Ángulos y criterios</span>
+                <span>Foundation + workflow</span>
+              </div>
               <div className="mt-1 divide-y divide-border border-y border-border">
                 {batch.personalization.variants.map((variant, index) => (
                   <div key={variant.id} className="grid gap-1 py-2.5 text-sm sm:grid-cols-[160px_minmax(0,1fr)_80px] sm:gap-4">
@@ -2783,7 +2811,7 @@ function LinkedInWorkflowPanel({
                     <div className="min-w-0">
                       <div className="break-words text-xs text-muted-foreground">{variant.angle}</div>
                       <label className="mt-2 block text-[10px] font-semibold uppercase text-muted-foreground" htmlFor={`variant-rule-${variant.id}`}>
-                        Aplicar cuando
+                        {index === 0 ? "Usar como ángulo base" : "Activar solo cuando"}
                       </label>
                       <textarea
                         id={`variant-rule-${variant.id}`}
@@ -2869,7 +2897,7 @@ function LinkedInWorkflowPanel({
         <div className="mt-4" data-testid="outbound-message-sample">
           <div className="flex items-center justify-between gap-3">
             <h4 className="text-sm font-semibold text-foreground">Previsualización</h4>
-            <span className="text-xs text-muted-foreground">La tabla superior contiene todo el lote</span>
+            <span className="text-xs text-muted-foreground">1 ejemplo real por ángulo aplicado</span>
           </div>
           <div className="mt-2 divide-y divide-border border-y border-border">
             {sampleItems.map((item) => {
@@ -2900,7 +2928,8 @@ function LinkedInWorkflowPanel({
                     )}
                     {item.selectionReason && (
                       <p className="mb-2 mt-0 text-xs leading-relaxed text-muted-foreground">
-                        <span className="font-semibold text-foreground">Por qué este ángulo:</span> {item.selectionReason}
+                        <span className="font-semibold text-foreground">Por qué este ángulo:</span>{" "}
+                        {selectionReasonDisplay(item.selectionReason, item.variantLabel)}
                       </p>
                     )}
                     <div className="text-[11px] font-semibold uppercase text-muted-foreground">Apertura personalizada</div>
@@ -3504,11 +3533,11 @@ function B2BListaView({
                       </span>
                     )}
                     {batchItem?.selectionReason && (
-                      <p className="mb-1 mt-0 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
-                        {batchItem.selectionReason}
+                      <p className="mb-1 mt-0 text-[11px] leading-relaxed text-muted-foreground">
+                        {selectionReasonDisplay(batchItem.selectionReason, batchItem.variantLabel)}
                       </p>
                     )}
-                    <p className="m-0 line-clamp-3 text-xs leading-relaxed text-foreground">{batchItem?.hook || "-"}</p>
+                    <p className="m-0 whitespace-normal break-words text-xs leading-relaxed text-foreground">{batchItem?.hook || "-"}</p>
                     {batchItem && (
                       <span className="mt-1 block text-[10px] font-semibold uppercase text-muted-foreground">
                         {batchItem.hookStatus === "verified" ? "Evidencia validada" : "Rol + empresa"}
@@ -3516,7 +3545,7 @@ function B2BListaView({
                     )}
                   </td>
                   <td className="px-3 py-2.5 align-top">
-                    <p className="m-0 line-clamp-3 text-xs leading-relaxed text-foreground">{batchItem?.messageBody || "-"}</p>
+                    <p className="m-0 whitespace-pre-wrap break-words text-xs leading-relaxed text-foreground">{batchItem?.messageBody || "-"}</p>
                   </td>
                   <td className="px-3 py-2.5">
                     <SourceChip lead={lead} />

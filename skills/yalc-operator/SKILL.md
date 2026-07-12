@@ -3,13 +3,16 @@ name: yalc-operator
 description: "Operate YALC/GTM-OS from Sancho through deterministic outbound workflows: provider checks, campaign preparation, verified personalization, immutable batch approval, LinkedIn/Unipile execution, email/Instantly handoff, status, and reporting. Use when the user asks Sancho to prepare, review, send, inspect, or troubleshoot outbound."
 metadata:
   author: Growth4U
-  version: '0.1'
+  version: '0.2'
   system: SanchoCMO
   phase: Execute (one-to-one)
   pillar: yalc-operator
   layer: Execute
   depends_on: outreach-sequence-builder, contact-enrichment
   chains_to: campaign-tracking, performance-analysis
+  yalc_copy_skill: linkedin-connection-copy@1.0.0
+  copy_playbook_owner: dulcinea
+  copy_qa_owner: sanson
 context_required:
   - brand/{slug}/company-brief/company-brief.current.md
   - brand/{slug}/go-to-market/ecps/ecps.current.md
@@ -46,6 +49,7 @@ YALC is the source of truth for the GTM operating workflow: lead import, qualifi
 13. `manual` is valid only when the user supplied real records. Never synthesize manual leads as a fallback for a provider failure.
 14. Never treat a role, seniority or personal location as the company ICP. A normal campaign uses `account_first_v1`: find matching companies first, keep only usable domains, then search the target roles inside those domains. A signal-first recipe is a separate versioned workflow and must not be improvised from chat.
 15. Language stays open; workflow actions stay typed. Never classify user requests with a finite phrase list. When `[MC Chat Context]` contains `active_outbound_workflow`, treat its `campaignId`, `runId`, status and samples as the trusted current object. Interpret the user's request, then call exactly one compatible `outbound.workflow.*` command. Never search templates or claim the prior messages are unavailable when this context exists.
+16. LinkedIn copy is generated inside YALC by the versioned `linkedin-connection-copy` batch skill. Dulcinea owns the playbook and examples; Sansón reviews new playbook versions. Neither is invoked per lead at runtime. Never invoke that skill directly, loop over leads, or reproduce its prompt in chat. Call one workflow transition and use only the persisted result.
 
 ## Interaction Model
 
@@ -53,7 +57,7 @@ The Outreach UI is the primary control surface for the standard path: choose an 
 
 After a campaign exists, free-form chat is an intent layer over the persisted state machine. The user may ask naturally to change tone, improve an opening, change the rule for assigning angles, continue sourcing, inspect status, approve or send. Read `active_outbound_workflow`, choose the matching typed command and let YALC validate the transition. Do not force the user through a keyword grammar or reconstruct campaign state from prose.
 
-For a request to improve or change all current LinkedIn drafts before approval, call `outbound.workflow.personalize` with the active `runId`. Pass `approach` for tone changes and `variantRules` keyed by `v1`, `v2`, `v3` when the user changes how angles should be assigned. YALC regenerates the complete batch with the fixed framework `observation → relevance bridge → shared value → CTA`; it chooses only among approved angles, cites evidence and persists the reason for each assignment. Report the exact returned samples. Do not edit contacts one by one, write copy only in chat, distribute variants evenly, or invent a signal.
+For a request to improve or change all current LinkedIn drafts before approval, call `outbound.workflow.personalize` once with the active `runId`. Pass `approach` for tone changes and `variantRules` keyed by `v1`, `v2`, `v3` when the user changes how angles should be assigned. YALC runs `linkedin-connection-copy@1.0.0` internally over the complete batch with the fixed framework `observation → relevance bridge → shared value → CTA`; it chooses only among Foundation-approved angles, requires explicit evidence for specialized variants, cites that evidence and persists the reason for each assignment. Report the exact persisted samples. Do not edit contacts one by one, write copy only in chat, distribute variants evenly, invoke the copy skill directly, or invent a signal.
 
 When the user asks for a new B2B outbound campaign:
 
@@ -258,7 +262,7 @@ The payload always uses one of:
 - `{"command":"outbound.score","campaignId":"...","scoreModel":"b2b_fit_v1"|"creator_quality_v1"}`
 - `{"command":"outbound.workflow.prepare","campaignId":"...","spec":{"channels":["linkedin"],"contactReason":"...","leadIds":["..."],"source":{"enabled":false,"provider":"apollo","limit":25,"criteria":{}},"enrichment":{"enabled":false},"strategyPack":{"strategies":[{"id":"company_reason_v1","version":1,"priority":100,"enabled":true,"parameters":{}}],"minimumScore":0.65,"allowFallback":true},"approval":{"required":true,"sampleSize":3},"sender":{}}}`
 - `{"command":"outbound.workflow.status","runId":"..."}`
-- `{"command":"outbound.workflow.rewrite","runId":"...","style":"conversation_question_v1"}` — atomically rewrites every unapproved artifact in the active batch and returns new persisted samples.
+- `{"command":"outbound.workflow.personalize","runId":"...","approach":"conversational","variantRules":{"v1":"...","v2":"..."}}` — runs the versioned YALC copy skill once for the full unapproved batch and returns persisted samples.
 - `{"command":"outbound.workflow.approve","runId":"...","actor":"Sancho"}`
 - `{"command":"outbound.workflow.execute","runId":"...","dryRun":true}`
 - `{"command":"outbound.workflow.execute","runId":"...","dryRun":false,"confirmLinkedInSend":true}`
@@ -276,7 +280,7 @@ The payload always uses one of:
 4. Never call `outbound.plan`, `outbound.source`, `outbound.enrich` or `outbound.workflow.prepare` for that new campaign. Those commands are compatibility surfaces for pre-existing campaigns and email/Partnerships flows.
 5. If `outbound.workflow.start` completes synchronously, show `batch.itemCount`, three exact `batch.sample[].messageBody` values, blocked contacts and signal failures. If asynchronous, stop after reporting its returned IDs; the persisted workflow event will announce completion.
    Preparation is not capped by today's LinkedIn sending capacity. The full valid base is prepared; execution sends only the available daily amount and leaves the remainder pending for deterministic resume.
-6. On later turns, use `active_outbound_workflow.runId`. For copy changes before approval, call `outbound.workflow.rewrite` once and show its persisted samples. Do not search Foundation templates for workflow artifacts.
+6. On later turns, use `active_outbound_workflow.runId`. For copy changes before approval, call `outbound.workflow.personalize` once and show its persisted samples. Do not search Foundation templates for workflow artifacts or invoke a skill per contact.
 7. For a dry-run, call `outbound.workflow.approve` and then `outbound.workflow.execute` with `dryRun:true`. Never ask permission for a dry-run.
 8. For a live send, ask once: "Tengo listo el lote de N contactos. ¿Confirmas el envío real por LinkedIn?" This question must refer to the real external send, never to approval, a test or a dry-run.
 9. After confirmation, call `outbound.workflow.approve` and then `outbound.workflow.execute` with the same `runId`, `dryRun:false` and `confirmLinkedInSend:true`. Never substitute messages or lead IDs at execution time.
