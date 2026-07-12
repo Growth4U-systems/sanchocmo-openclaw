@@ -8,7 +8,6 @@ import { resolveYalcConfig, yalcErrorResponse } from "@/lib/yalc/client";
 import { yalcGuardErrorResponse } from "@/lib/yalc/campaign-guards";
 import { upsertWorkflowJobMessage } from "@/lib/data/mc-chat";
 import { buildSynchronousOutboundWorkflowMessage } from "@/lib/outreach/sync-workflow-result";
-import { getOutboundOfferContext } from "@/lib/outreach/campaign-options";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -20,9 +19,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     const body = req.body && typeof req.body === "object" ? { ...req.body } : {};
-    if (body.command === "outbound.workflow.personalize" && !body.offerContext) {
-      body.offerContext = getOutboundOfferContext(slug);
-    }
     const { httpStatus, ...payload } = await dispatchOutboundCommand(
       resolveYalcConfig(slug),
       body,

@@ -1,7 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { brandDir } from "@/lib/data/paths";
-import { loadBrandSummary } from "@/lib/data/brand-brain-assembler";
+import {
+  foundationOfferContext,
+  loadFoundationOutboundCatalog,
+  recommendedFoundationOutboundEcps,
+  type FoundationOutboundBrief,
+} from "@/lib/outreach/foundation-outbound-context";
 
 export const OUTBOUND_CAMPAIGN_START_PROMPT = "Quiero crear una campaña B2B por LinkedIn.";
 
@@ -13,17 +18,17 @@ interface FoundationOutboundConfig {
   };
 }
 
-interface RoleGroup {
-  id: string;
-  name: string;
-  titles: string[];
-}
-
 export interface OutboundCampaignAudienceOption {
   id: string;
   title: string;
   label: string;
   description: string;
+  ecpStatus: string;
+  ecpScore?: number;
+  foundationSource: string;
+  targetNeed: string;
+  targetOutcome: string;
+  anglePreviews: string[];
   accountDescription: string;
   declaredAccountDescription: string;
   roles: string[];
@@ -100,28 +105,6 @@ function canonicalRole(value: string): string | null {
   return null;
 }
 
-function roleGroups(roleKeywords: string[]): RoleGroup[] {
-  const roles = [...new Set(roleKeywords.map(canonicalRole).filter((role): role is string => !!role))];
-  const candidates: RoleGroup[] = [
-    {
-      id: "founders-ceos",
-      name: "Founders y CEOs",
-      titles: roles.filter((role) => role === "Founder" || role === "CEO"),
-    },
-    {
-      id: "growth-leaders",
-      name: "Responsables de Growth",
-      titles: roles.filter((role) => role.includes("Growth")),
-    },
-    {
-      id: "marketing-leaders",
-      name: "Responsables de Marketing",
-      titles: roles.filter((role) => role === "CMO" || role.includes("Marketing")),
-    },
-  ];
-  return candidates.filter((candidate) => candidate.titles.length > 0).slice(0, 3);
-}
-
 function industryFor(companyContext: string): string | null {
   const value = companyContext.toLowerCase();
   if (/fintech|financial|finance|banca|crypto/.test(value)) return "Financial Services";
@@ -155,27 +138,24 @@ function unappliedCompanyCriteria(companyContext: string): string[] {
   return [...new Set(criteria)];
 }
 
-function readPositioningContext(slug: string, value: string): string {
-  if (!value || !/\.(?:md|txt)$/i.test(value)) return value;
-  const root = path.resolve(brandDir(slug));
-  const file = path.resolve(root, value.replace(/^brand\/[^/]+\//, ""));
-  if (file !== root && !file.startsWith(`${root}${path.sep}`)) return "";
-  try {
-    return fs.readFileSync(file, "utf8").slice(0, 6_000);
-  } catch {
-    return "";
-  }
+function rolesForCampaign(roleKeywords: string[]): string[] {
+  return [...new Set(roleKeywords.map(canonicalRole).filter((role): role is string => !!role))];
 }
 
-export function getOutboundOfferContext(slug: string): string {
-  const summary = loadBrandSummary(slug);
-  const positioning = readPositioningContext(slug, text(summary.positioning));
-  return [
-    summary.company_name ? `Empresa oferente: ${summary.company_name}` : null,
-    summary.sector ? `Categoría: ${summary.sector}` : null,
-    summary.description ? `Servicio: ${summary.description}` : null,
-    positioning ? `Posicionamiento y mensajes:\n${positioning}` : null,
-  ].filter(Boolean).join("\n\n").slice(0, 8_000);
+function campaignReason(brief: FoundationOutboundBrief): string {
+  const outcome = brief.target.outcome.replace(/[.!?]+$/, "");
+  return `Trabajamos con ${brief.target.audience} para ${outcome.charAt(0).toLocaleLowerCase("es-ES")}${outcome.slice(1)}`
+    .replace(/\s+/g, " ")
+    .slice(0, 480);
+}
+
+function ecpAccountIndustry(brief: FoundationOutboundBrief, companyContext: string): string | null {
+  return industryFor([
+    brief.target.audience,
+    brief.target.need,
+    brief.positioning.uvp,
+    companyContext,
+  ].join(" "));
 }
 
 export function isOutboundCampaignStartPrompt(value: unknown): boolean {
@@ -188,65 +168,81 @@ export function isOutboundCampaignStartPrompt(value: unknown): boolean {
 export function getOutboundCampaignChoices(slug: string): OutboundCampaignChoiceResult {
   const config = readFoundationConfig(slug);
   const companyContext = text(config?.icp?.company_context);
-  const groups = roleGroups(strings(config?.icp?.role_keywords));
-  if (!config || !companyContext || groups.length === 0) {
+  const roles = rolesForCampaign(strings(config?.icp?.role_keywords));
+  const catalog = loadFoundationOutboundCatalog(slug);
+  const ecps = recommendedFoundationOutboundEcps(catalog);
+  if (!config || !companyContext || roles.length === 0 || ecps.length === 0) {
     return {
       ok: false,
-      message: "No pude construir audiencias operables desde Foundation. Falta `go-to-market/ecps/config.json` con `icp.company_context` y `icp.role_keywords`. No inicié ninguna campaña.",
+      message: "No pude construir targets operables desde Foundation. Se necesita el ICP de `go-to-market/ecps/config.json` y al menos un playbook ECP sin restricciones de activación en `go-to-market/positioning/`. No inicié ninguna campaña.",
     };
   }
 
-  const industry = industryFor(companyContext);
   const range = employeeRange(companyContext);
   const countryCode = text(config.country).toUpperCase();
   const country = COUNTRY_NAMES[countryCode] || text(config.country) || null;
-  const accountLabel = compactAccountLabel(industry, range, country);
-  const unappliedCriteria = unappliedCompanyCriteria(companyContext);
-  const operationalAccountDescription = accountLabel
-    ? `Empresas de ${accountLabel.replace(/ · /g, ", ")}`
-    : companyContext;
-  const offerContext = getOutboundOfferContext(slug);
-  const companyUniverseKey = slugify(JSON.stringify({ industry, range, country, companyContext }));
   const defaultBatchSize = process.env.NODE_ENV === "development" ? 3 : 1_000;
   const batchSize = Math.max(
     1,
     Math.min(2_000, Number(process.env.OUTBOUND_PREPARATION_BATCH_SIZE) || defaultBatchSize),
   );
-  const options = groups.map((group, index) => ({
-    id: group.id,
-    title: group.name,
-    label: `${group.name} · ${accountLabel || companyContext} · ${group.titles.join("/")}`,
-    description: `${operationalAccountDescription}. Roles: ${group.titles.join(", ")}.`,
-    accountDescription: operationalAccountDescription,
-    declaredAccountDescription: companyContext,
-    roles: group.titles,
-    unappliedCriteria,
-    companyUniverseKey,
-    ...(index === 0 ? { recommended: true } : {}),
-    workflowIntent: {
-      schemaVersion: 1,
-      channel: "linkedin",
-      title: `${group.name} - LinkedIn`,
-      ecpId: slugify(group.name),
-      targetSegment: `${group.name} en ${operationalAccountDescription}`,
-      contactReason: "Quiero compartir una idea concreta para simplificar su sistema de growth",
-      ...(offerContext ? { offerContext, approach: "conversational" } : {}),
-      batchSize,
-      discoveryStrategy: "account_first_v1",
-      accountTarget: {
-        description: operationalAccountDescription,
-        declaredDescription: companyContext,
-        ...(unappliedCriteria.length > 0 ? { unappliedCriteria } : {}),
-        ...(industry ? { industries: [industry] } : { keywords: companyContext }),
-        ...(country ? { locations: [country] } : {}),
-        ...(range ? { employeeRanges: [range] } : {}),
+  const options = ecps.map(({ brief }, index) => {
+    const industry = ecpAccountIndustry(brief, companyContext);
+    const accountLabel = compactAccountLabel(industry, range, country);
+    const operationalAccountDescription = accountLabel
+      ? `Empresas de ${accountLabel.replace(/ · /g, ", ")}`
+      : companyContext;
+    const unappliedCriteria = [
+      ...unappliedCompanyCriteria(companyContext),
+      `Señal del ECP: ${brief.ecp.name}`,
+    ];
+    const offerContext = foundationOfferContext(brief);
+    const companyUniverseKey = slugify(JSON.stringify({ industry, range, country, companyContext }));
+    return {
+      id: brief.ecp.id,
+      title: brief.ecp.name,
+      label: `${brief.ecp.name} · ${accountLabel || companyContext}`,
+      description: `Hipótesis: ${brief.target.need} Resultado: ${brief.target.outcome}`,
+      ecpStatus: brief.ecp.status,
+      ...(brief.ecp.score !== undefined ? { ecpScore: brief.ecp.score } : {}),
+      foundationSource: brief.ecp.source,
+      targetNeed: brief.target.need,
+      targetOutcome: brief.target.outcome,
+      anglePreviews: brief.positioning.angles.slice(0, 3).map((angle) => angle.label),
+      accountDescription: operationalAccountDescription,
+      declaredAccountDescription: `${companyContext}. ECP: ${brief.ecp.name}.`,
+      roles,
+      unappliedCriteria,
+      companyUniverseKey,
+      ...(index === 0 ? { recommended: true } : {}),
+      workflowIntent: {
+        schemaVersion: 1,
+        channel: "linkedin",
+        title: `${brief.ecp.name} - LinkedIn`,
+        ecpId: brief.ecp.id,
+        targetSegment: `${brief.ecp.name} · ${operationalAccountDescription}`,
+        contactReason: campaignReason(brief),
+        offerContext,
+        foundationBrief: brief,
+        messageVariantCount: 3,
+        approach: "conversational",
+        batchSize,
+        discoveryStrategy: "account_first_v1",
+        accountTarget: {
+          description: operationalAccountDescription,
+          declaredDescription: `${companyContext}. ECP: ${brief.ecp.name}.`,
+          ...(unappliedCriteria.length > 0 ? { unappliedCriteria } : {}),
+          ...(industry ? { industries: [industry] } : { keywords: companyContext }),
+          ...(country ? { locations: [country] } : {}),
+          ...(range ? { employeeRanges: [range] } : {}),
+        },
+        personTarget: {
+          description: `Buyers declarados en Foundation para ${brief.ecp.name}`,
+          titles: roles,
+        },
       },
-      personTarget: {
-        description: group.name,
-        titles: group.titles,
-      },
-    },
-  }));
+    };
+  });
 
   return {
     ok: true,
@@ -254,7 +250,7 @@ export function getOutboundCampaignChoices(slug: string): OutboundCampaignChoice
       id: "outbound_ecp_v1",
       channel: "linkedin",
       objective: "start_conversations",
-      prompt: `¿Con qué audiencia empezamos? Prepararé un primer lote de hasta ${batchSize.toLocaleString("es-ES")} contactos para revisión.`,
+      prompt: `¿Qué problema del target queremos abordar? Prepararé hasta ${batchSize.toLocaleString("es-ES")} contactos con variantes de mensaje para revisión.`,
       batchSize,
       options,
     },
@@ -271,6 +267,7 @@ export function buildOutboundCampaignOptions(slug: string): { ok: true; message:
     options: result.choices.options.map((option) => ({
       id: option.id,
       label: option.label,
+      description: option.description,
       ...(option.recommended ? { recommended: true } : {}),
       workflowIntent: option.workflowIntent,
     })),

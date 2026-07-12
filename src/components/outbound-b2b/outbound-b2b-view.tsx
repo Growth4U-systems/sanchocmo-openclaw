@@ -242,6 +242,8 @@ interface SequencePreviewItem {
 
 interface OutboundWorkflowBatchItem {
   leadId: string;
+  variantId?: string | null;
+  variantLabel?: string | null;
   included: boolean;
   status: string;
   strategyId: string;
@@ -320,6 +322,20 @@ interface OutboundWorkflowStatusResponse {
     personalization?: {
       approach: LinkedInMessageApproach;
       campaignReason: string;
+      ecp?: {
+        id: string;
+        name: string;
+        source: string;
+      };
+      variants?: Array<{
+        id: string;
+        label: string;
+        angle: string;
+        messageCore: string;
+        cta: string;
+        sourceAngleId?: string | null;
+        assigned: number;
+      }>;
       source: "ai_grounded" | "deterministic_fallback";
       provider?: string | null;
       generatedAt: string;
@@ -2626,14 +2642,14 @@ function LinkedInWorkflowPanel({
             <Network className="h-3 w-3" />
             LinkedIn
           </div>
-          <h3 className="font-heading text-lg text-navy">Mensaje de conexión</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Sancho propone el mensaje completo para todo el lote.</p>
+          <h3 className="font-heading text-lg text-navy">Mensajes de conexión</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Una estrategia común, variantes controladas y un hook factual por persona.</p>
         </div>
         <p className="text-sm font-semibold text-foreground">
           {loadingStatus
             ? "Leyendo estado..."
             : personalizing
-              ? "Generando mensajes..."
+              ? "Generando mensajes…"
               : finished
                 ? `${sentCount} enviados · ${failedCount} con incidencia`
                 : approved
@@ -2669,7 +2685,7 @@ function LinkedInWorkflowPanel({
         <div className="mt-4 border-t border-border pt-4" data-testid="outbound-personalization-controls">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h4 className="text-sm font-semibold text-foreground">Personalización propuesta</h4>
+              <h4 className="text-sm font-semibold text-foreground">Tono de comunicación</h4>
               <p className="mb-0 mt-1 text-xs text-muted-foreground">
                 {batch.personalization
                   ? `${verifiedCount} con evidencia guardada${roleOnlyCount ? ` · ${roleOnlyCount} basados solo en rol y empresa` : ""}`
@@ -2712,8 +2728,31 @@ function LinkedInWorkflowPanel({
 
           {batch.personalization?.campaignReason && (
             <div className="mt-3 border-y border-border py-3">
-              <div className="text-[11px] font-semibold uppercase text-muted-foreground">Ángulo común sugerido</div>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold uppercase text-muted-foreground">
+                <span>Estrategia de campaña</span>
+                {batch.personalization.ecp && (
+                  <span title={batch.personalization.ecp.source}>Foundation · {batch.personalization.ecp.name}</span>
+                )}
+              </div>
               <p className="mb-0 mt-1 text-sm leading-relaxed text-foreground">{batch.personalization.campaignReason}</p>
+            </div>
+          )}
+
+          {batch.personalization?.variants && batch.personalization.variants.length > 0 && (
+            <div className="mt-3">
+              <div className="text-[11px] font-semibold uppercase text-muted-foreground">Variantes del lote</div>
+              <div className="mt-1 divide-y divide-border border-y border-border">
+                {batch.personalization.variants.map((variant, index) => (
+                  <div key={variant.id} className="grid gap-1 py-2.5 text-sm sm:grid-cols-[160px_minmax(0,1fr)_80px] sm:gap-4">
+                    <div className="font-semibold text-foreground">{String.fromCharCode(65 + index)} · {variant.label}</div>
+                    <div className="min-w-0">
+                      <div className="break-words text-xs text-muted-foreground">{variant.angle}</div>
+                      <div className="mt-0.5 break-words text-xs text-foreground">{variant.messageCore}</div>
+                    </div>
+                    <div className="text-xs font-semibold text-muted-foreground sm:text-right">{variant.assigned} contactos</div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -2731,7 +2770,7 @@ function LinkedInWorkflowPanel({
               data-testid="outbound-generate-messages"
             >
               {personalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {personalizing ? "Generando..." : batch.personalization ? `Regenerar ${itemCount}` : `Generar ${itemCount}`}
+              {personalizing ? "Generando…" : batch.personalization ? `Regenerar ${itemCount}` : `Generar ${itemCount}`}
             </button>
           </div>
         </div>
@@ -2791,6 +2830,9 @@ function LinkedInWorkflowPanel({
                     </div>
                   </div>
                   <div className="min-w-0">
+                    {item.variantLabel && (
+                      <div className="mb-2 text-[11px] font-semibold uppercase text-rust">Variante · {item.variantLabel}</div>
+                    )}
                     <div className="text-[11px] font-semibold uppercase text-muted-foreground">Hook personalizado</div>
                     <p className="mb-0 mt-1 leading-relaxed text-foreground">{item.hook}</p>
                     <div className="mt-3 text-[11px] font-semibold uppercase text-muted-foreground">Mensaje final</div>
@@ -3176,6 +3218,7 @@ function B2BListaView({
           lead.email,
           leadRole(lead),
           lead.source,
+          batchItem?.variantLabel,
           batchItem?.hook,
           batchItem?.messageBody,
         ]
@@ -3321,7 +3364,7 @@ function B2BListaView({
               <SortableTh className="w-24" label="Fit estimado" active={sortKey === "score"} dir={sortDir} onClick={() => toggleSort("score")} />
               <SortableTh className="w-48" label="Empresa" active={sortKey === "company"} dir={sortDir} onClick={() => toggleSort("company")} />
               <th className="w-44 px-3 py-2.5">Rol</th>
-              <th className="w-64 px-3 py-2.5">Ángulo</th>
+              <th className="w-64 px-3 py-2.5">Variante + hook</th>
               <th className="w-[420px] px-3 py-2.5">Mensaje</th>
               <th className="w-28 px-3 py-2.5">Fuente</th>
               <th className="w-28 px-3 py-2.5">Estado</th>
@@ -3384,6 +3427,11 @@ function B2BListaView({
                   </td>
                   <td className="px-3 py-2.5 text-muted-foreground">{leadRole(lead)}</td>
                   <td className="px-3 py-2.5 align-top">
+                    {batchItem?.variantLabel && (
+                      <span className="mb-1 block text-[10px] font-semibold uppercase text-rust">
+                        {batchItem.variantLabel}
+                      </span>
+                    )}
                     <p className="m-0 line-clamp-3 text-xs leading-relaxed text-foreground">{batchItem?.hook || "-"}</p>
                     {batchItem && (
                       <span className="mt-1 block text-[10px] font-semibold uppercase text-muted-foreground">

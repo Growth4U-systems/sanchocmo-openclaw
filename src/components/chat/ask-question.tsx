@@ -10,6 +10,7 @@ export interface AskQuestionData {
   options?: {
     id: string;
     label: string;
+    description?: string;
     recommended?: boolean;
     /** Hidden deterministic action resolved by the server after selection. */
     workflowIntent?: Record<string, unknown>;
@@ -142,7 +143,7 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
               type="button"
               onClick={() => toggle(opt.id)}
               className={cn(
-                "text-left text-[13px] rounded-md px-2.5 py-1.5 border transition-colors flex items-center gap-2 cursor-pointer",
+                "text-left text-[13px] rounded-md px-2.5 py-1.5 border transition-colors flex items-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust",
                 isSelected
                   ? "border-rust bg-rust/15 text-[var(--chat-text)]"
                   : "border-[var(--chat-border)] bg-[var(--chat-surface)] text-[var(--chat-text)] hover:border-rust/40 hover:bg-[var(--chat-surface-2)]"
@@ -157,9 +158,16 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
               >
                 {isSelected ? "✓" : ""}
               </span>
-              <span>{opt.label}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium">{opt.label}</span>
+                {opt.description && (
+                  <span className="mt-0.5 block text-[11px] leading-snug text-[var(--chat-text-muted)]">
+                    {opt.description}
+                  </span>
+                )}
+              </span>
               {opt.recommended && (
-                <span className="ml-auto shrink-0 inline-flex items-center text-[10px] font-semibold uppercase tracking-wide text-rust border border-rust/45 bg-rust/10 rounded-full px-1.5 py-px">
+                <span className="shrink-0 inline-flex items-center text-[10px] font-semibold uppercase tracking-wide text-rust border border-rust/45 bg-rust/10 rounded-full px-1.5 py-px">
                   recomendado
                 </span>
               )}

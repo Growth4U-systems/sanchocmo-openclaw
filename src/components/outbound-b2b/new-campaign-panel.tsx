@@ -8,6 +8,12 @@ export interface OutboundCampaignSetupOption {
   title: string;
   label: string;
   description: string;
+  ecpStatus: string;
+  ecpScore?: number;
+  foundationSource: string;
+  targetNeed: string;
+  targetOutcome: string;
+  anglePreviews: string[];
   accountDescription: string;
   declaredAccountDescription: string;
   roles: string[];
@@ -53,14 +59,15 @@ export function NewCampaignPanel({
         <div className="min-w-0 flex-1">
           <h2 className="font-heading text-lg text-navy">Nueva campaña por LinkedIn</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Elige una audiencia de Foundation para preparar el primer lote.
+            Elige el problema del target. Foundation definirá los ángulos y Sancho buscará las personas.
           </p>
         </div>
         <button
           type="button"
           onClick={onClose}
+          aria-label="Cerrar nueva campaña"
           title="Cerrar"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -70,7 +77,7 @@ export function NewCampaignPanel({
         {loading && (
           <div className="flex min-h-28 items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            Leyendo audiencias de Foundation...
+            Leyendo targets y posicionamiento de Foundation…
           </div>
         )}
 
@@ -81,7 +88,7 @@ export function NewCampaignPanel({
         )}
 
         {!loading && choices && (
-          <div className="divide-y divide-border border-y border-border" role="radiogroup" aria-label="Audiencia de la campaña">
+          <div className="divide-y divide-border border-y border-border" role="radiogroup" aria-label="Target de la campaña">
             {choices.options.map((option) => {
               const selected = selectedId === option.id;
               return (
@@ -108,9 +115,23 @@ export function NewCampaignPanel({
                           Recomendada
                         </span>
                       )}
+                      {typeof option.ecpScore === "number" && (
+                        <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+                          Foundation {option.ecpScore.toFixed(1)}
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-1 block break-words text-xs leading-relaxed text-foreground">
+                      {option.targetNeed}
+                    </span>
+                    <span className="mt-1 block break-words text-xs leading-relaxed text-muted-foreground">
+                      <strong className="font-semibold text-foreground">Resultado:</strong> {option.targetOutcome}
                     </span>
                     <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
                       {option.accountDescription} · {option.roles.join(", ")}
+                    </span>
+                    <span className="mt-1 block text-[11px] text-muted-foreground">
+                      Ángulos disponibles: {option.anglePreviews.join(" · ")}
                     </span>
                     {option.unappliedCriteria && option.unappliedCriteria.length > 0 && (
                       <span className="mt-1 block text-xs text-yellow-900">
@@ -127,7 +148,7 @@ export function NewCampaignPanel({
         {!loading && choices && (
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <p className="min-w-[220px] flex-1 text-xs text-muted-foreground">
-              Hasta {choices.batchSize.toLocaleString("es-ES")} contactos · los mensajes quedan pendientes de aprobación.
+              Hasta {choices.batchSize.toLocaleString("es-ES")} contactos · 3 variantes compartidas · nada se envía sin aprobación.
             </p>
             <button
               type="button"
@@ -145,7 +166,7 @@ export function NewCampaignPanel({
               data-testid="outbound-campaign-start"
             >
               {starting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Search className="h-4 w-4" aria-hidden="true" />}
-              {starting ? "Preparando..." : "Buscar y preparar"}
+              {starting ? "Preparando…" : "Buscar y preparar"}
             </button>
           </div>
         )}

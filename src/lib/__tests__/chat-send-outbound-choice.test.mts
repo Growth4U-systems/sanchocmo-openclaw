@@ -31,6 +31,47 @@ function writeFoundationConfig() {
       ],
     },
   }));
+  const positioning = path.join(tmp, "brand", "growth4u", "go-to-market", "positioning");
+  const ecps = [
+    { id: 1, slug: "sistema", name: "Sistema repetible", score: 79, audience: "startups tech", need: "Quiero un sistema de growth repetible.", outcome: "Instalar un sistema que el equipo pueda operar.", angle: "Sistema transferible" },
+    { id: 2, slug: "regulacion", name: "Growth regulado", score: 74, audience: "fintechs reguladas", need: "Quiero crecer dentro del marco regulatorio.", outcome: "Competir sin arriesgar la licencia.", angle: "Growth compliance-friendly" },
+    { id: 3, slug: "canales", name: "Diversificar canales", score: 73, audience: "startups tech", need: "Quiero dejar de depender de un solo canal.", outcome: "Construir adquisición multicanal.", angle: "Sistema multicanal" },
+  ];
+  for (const ecp of ecps) {
+    const ecpDir = path.join(positioning, `ecp${ecp.id}-${ecp.slug}`);
+    fs.mkdirSync(ecpDir, { recursive: true });
+    fs.writeFileSync(path.join(ecpDir, `ecp${ecp.id}-${ecp.slug}.current.md`), [
+      `# Positioning — ECP ${ecp.id}: "${ecp.name}"`,
+      `> Generado: 2026-03-06 | Score: ${ecp.score} | Wave 1`,
+      "> Status: approved | v1",
+      "",
+      "## JTBD Synthesis",
+      "| Campo | Contenido |",
+      "|---|---|",
+      `| **Need** | "${ecp.need}" |`,
+      "| **Situation** | Situación investigada. |",
+      `| **Motivation** | ${ecp.outcome} |`,
+      `| **Outcome** | ${ecp.outcome} |`,
+      `| **JTBD** | ${ecp.need} |`,
+      "| **Alternatives** | Agencia · In-house |",
+      "",
+      "## Top Value Criteria para messaging",
+      "| # | Criteria | Imp. | G4U | Avg comp. | Zone | Asset clave |",
+      "|---|---|---|---|---|---|---|",
+      `| 1 | **${ecp.angle}** | 10 | 5 | 2 | Opp | A1 |`,
+      "",
+      "## Assets relevantes",
+      "| # | Asset | Criteria | Por qué importa en este ECP |",
+      "|---|---|---|---|",
+      `| A1 | **${ecp.angle}** | 1 | Prueba relevante. |`,
+      "",
+      "## Messaging Playbook",
+      `**UVP:** *"Para ${ecp.audience}, Growth4U ayuda a ${ecp.outcome.toLowerCase()}"*`,
+      "| Cat. | Criteria | Asset | Versión Corta | Versión Landing |",
+      "|---|---|---|---|---|",
+      `| **UVP Core** | 1 | A1 | ${ecp.angle}. | Mensaje largo. |`,
+    ].join("\n"));
+  }
 }
 
 function listen(server: http.Server): Promise<{ port: number }> {
@@ -137,8 +178,10 @@ test("an outbound ECP click starts YALC directly without invoking the agent gate
   assert.doesNotMatch(String(selected.workflowIntent.targetSegment), /MRR|post-PMF/i);
   assert.deepEqual(
     (selected.workflowIntent.accountTarget as Record<string, unknown>).unappliedCriteria,
-    ["Post-PMF"],
+    ["Post-PMF", "Señal del ECP: Sistema repetible"],
   );
+  assert.equal((selected.workflowIntent.foundationBrief as Record<string, unknown>).schemaVersion, 1);
+  assert.equal(selected.workflowIntent.messageVariantCount, 3);
 
   const response = mockResponse();
   try {
