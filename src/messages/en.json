@@ -153,6 +153,7 @@
   },
   "chat": {
     "title": "Chat with Sancho",
+    "openChat": "Open chat",
     "newTask": "New task",
     "connected": "Connected",
     "waiting": "Waiting",

@@ -83,10 +83,23 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
       runId: exactRun.id,
     });
   }
-  const isTerminalDelivery = role !== "status" && role !== "progress" && role !== "system" && role !== "handoff";
-  // A run may legitimately produce multiple visible parts, but an HTTP retry
-  // repeats the same payload. Claim a content fingerprint before persistence:
-  // identical retries become no-ops while distinct multipart text remains.
+  const isTerminalDelivery = role !== "status"
+    && role !== "progress"
+    && role !== "system"
+    && role !== "handoff";
+  // One run has one terminal result. Multipart replies are joined by the
+  // runtime adapter before they reach this endpoint; any later terminal event
+  // is stale noise and must not become another chat card.
+  if (
+    claimedRunId
+    && exactRun
+    && isTerminalDelivery
+    && (exactRun.status === "completed" || exactRun.status === "failed")
+  ) {
+    return res.status(200).json({ ok: true, stale: true, runId: exactRun.id });
+  }
+  // Claim before persistence so concurrent retries are no-ops, while a retry
+  // after a crash can finish an active run without duplicating its chat card.
   let terminalCallbackClaim: string | undefined;
   if (claimedRunId && exactRun && isTerminalDelivery) {
     const callbackFingerprint = createHash("sha256")

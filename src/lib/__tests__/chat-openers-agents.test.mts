@@ -108,13 +108,7 @@ test("B2B campaign opens a blank B2B campaign thread with suggested actions", ()
   assert.deepEqual(cfg.quickActions, [
     {
       label: "Crear campaña",
-      prompt:
-        "Quiero crear una campaña outbound B2B. Usa el contexto de mi empresa para recomendar el mejor ICP, crear la campaña, buscar y enriquecer personas, y preparar mensajes con la mejor personalización verificable disponible. No envíes nada real hasta que yo apruebe el lote.",
-    },
-    {
-      label: "Encontrar personas",
-      prompt:
-        "Recomiéndame a quién contactar según mi ICP y crea una base de personas. Busca y enriquece los contactos, prioriza los que tengan mejor encaje y deja una muestra de mensajes preparada para revisar.",
+      prompt: "Quiero crear una campaña B2B por LinkedIn.",
     },
   ]);
 });

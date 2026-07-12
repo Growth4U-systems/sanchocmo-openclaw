@@ -2,6 +2,7 @@
 import fs from 'fs'
 import path from 'path'
 import { spawnSync } from 'child_process'
+import { createHash } from 'crypto'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -109,6 +110,8 @@ function usage() {
   yalc-client campaign-dry-run --slug <slug> --id <campaign-id> --confirm-side-effect
   yalc-client campaign-publish --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-live --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client outbound-campaign-options --slug <slug> [--mc-base-url <url>]
+  yalc-client outbound-campaign-start --slug <slug> [--input <json-file>|--json '<json>'] [--mc-base-url <url>] --confirm-side-effect
   yalc-client outbound-command --slug <slug> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-report --slug <slug> --id <campaign-id>
   yalc-client campaign-timeline --slug <slug> --id <campaign-id>
@@ -148,7 +151,7 @@ Options:
   --callback-context '<json>'   For long ops (campaign-leads-search, campaign-leads-enrich, campaign-leads-personalize, campaign-publish, run-skill, approve-gate, reject-gate):
                                 {"slug","threadId","agent"} captured from the [MC Chat Context]. When YALC runs the op as a
                                 background job (202), it POSTs the result to SANCHO_BASE_URL/api/yalc/job-callback, which
-                                re-engages this chat thread. The agent must say "te aviso cuando termine" and END the turn.
+                                updates this chat thread without starting another agent turn. End the current turn after a 202.
 `)
 }
 
@@ -247,6 +250,7 @@ async function request(config, method, endpoint, body) {
   // callAndSave/commands can report "te aviso cuando termine" and end the turn.
   if (res.status === 202) {
     return {
+      ...(data && typeof data === 'object' ? data : {}),
       ok: true,
       async: true,
       jobId: data?.jobId ?? null,
@@ -401,7 +405,7 @@ function callbackUrl() {
 }
 
 // Long-op commands hit YALC endpoints that may return 202 + run async. For
-// those we attach callbackUrl + callbackContext so YALC can re-engage the
+// those we attach callbackUrl + callbackContext so YALC can update the
 // originating chat thread when the job finishes. The chat runtime exposes this
 // context through SANCHO_CHAT_*; --callback-context remains an explicit CLI
 // fallback. A manual CLI run without either source remains fire-and-poll.
@@ -446,10 +450,24 @@ function withAsyncCallback(body, args) {
   const campaignId = typeof body?.campaignId === 'string' ? body.campaignId : undefined
   const profileKind = typeof body?.profileKind === 'string' ? body.profileKind : undefined
   const channel = typeof body?.channel === 'string' ? body.channel : undefined
+  const idempotencyKey = command === 'outbound.workflow.start'
+    && typeof body?.idempotencyKey !== 'string'
+    && typeof body?.idempotency_key !== 'string'
+      ? `linkedin-outbound-v1:${createHash('sha256').update(`${ctx.slug}:${ctx.threadId}`).digest('hex').slice(0, 32)}`
+      : undefined
   return {
     ...(body || {}),
+    ...(idempotencyKey ? { idempotencyKey } : {}),
     callbackUrl: callbackUrl(),
-    callbackContext: { ...ctx, command, campaignId, profileKind, channel },
+    callbackContext: {
+      slug: ctx.slug,
+      threadId: ctx.threadId,
+      agent: ctx.agent,
+      command,
+      campaignId,
+      profileKind,
+      channel,
+    },
   }
 }
 
@@ -637,11 +655,21 @@ async function main() {
   if (command === 'outbound-command') {
     const payload = withAsyncCallback(readPayload(args), args)
     const commandName = typeof payload.command === 'string' ? payload.command : ''
-    if (commandName !== 'outbound.status') {
+    if (commandName !== 'outbound.status' && commandName !== 'outbound.workflow.status') {
       requireConfirmation(args, command)
     }
     const label = `outbound-${commandName.replace(/[^a-zA-Z0-9_-]/g, '-') || 'command'}`
     return callMissionControlAndSave(args, label, 'POST', '/api/outbound/command', payload)
+  }
+
+  if (command === 'outbound-campaign-options') {
+    return callMissionControlAndSave(args, 'outbound-campaign-options', 'GET', '/api/outbound/campaign-setup')
+  }
+
+  if (command === 'outbound-campaign-start') {
+    requireConfirmation(args, command)
+    const payload = readPayload(args)
+    return callMissionControlAndSave(args, 'outbound-campaign-start', 'POST', '/api/outbound/campaign-setup', payload)
   }
 
   if (command === 'campaigns') {
@@ -895,7 +923,7 @@ async function main() {
       throw new Error(`Skill "${skill}" can modify external systems. Re-run with --confirm-side-effect after user approval.`)
     }
     // Skill runs are long ops on the YALC side — attach the callback so a 202
-    // job can re-engage the originating chat thread when it finishes.
+    // job can update the originating chat thread when it finishes.
     const body = withAsyncCallback(payload, args)
     const data = await request(config, 'POST', `/api/skills/run/${encodeURIComponent(skill)}`, body)
     const out = {

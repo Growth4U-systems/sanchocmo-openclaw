@@ -155,13 +155,29 @@ export function toToolEvent(msg: { text?: string; ts?: number; agent?: string })
  * only see what they actually answered.
  */
 export function stripAskProtocol(text: string | undefined | null): string {
-  const t = text || "";
-  if (!t.includes("[ask:")) return t;
-  return t
+  const raw = text || "";
+  const withoutInternalMarkers = raw.replace(
+    /\s*<!--workflow-option:[A-Za-z0-9._:-]+-->\s*/g,
+    " ",
+  );
+  if (!withoutInternalMarkers.includes("[ask:")) {
+    return withoutInternalMarkers === raw ? raw : withoutInternalMarkers.trim();
+  }
+  return withoutInternalMarkers
     .split("\n")
     .map((line) => line.replace(/^\s*\[ask:[^\]]+\]\s*respuesta:\s*/i, ""))
     .join("\n")
     .trim();
+}
+
+/** Hide legacy workflow ids that were previously appended to chat replies. */
+export function stripOutboundWorkflowDebugDetails(text: string | undefined | null): string {
+  const raw = text || "";
+  const withoutDebugDetails = raw.replace(
+    /\n+Campaña:\s*`[^`]+`\s*\nRun:\s*`[^`]+`\s*$/i,
+    "",
+  );
+  return withoutDebugDetails === raw ? raw : withoutDebugDetails.trim();
 }
 
 export interface ChatMsgLike {

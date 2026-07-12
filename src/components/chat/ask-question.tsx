@@ -7,7 +7,14 @@ export interface AskQuestionData {
   id: string;
   prompt: string;
   mode: "single" | "multi" | "text";
-  options?: { id: string; label: string; recommended?: boolean }[];
+  options?: {
+    id: string;
+    label: string;
+    description?: string;
+    recommended?: boolean;
+    /** Hidden deterministic action resolved by the server after selection. */
+    workflowIntent?: Record<string, unknown>;
+  }[];
   /** text mode: placeholder for the input/textarea. */
   placeholder?: string;
   /** text mode: when true the field can be left empty. */
@@ -136,7 +143,7 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
               type="button"
               onClick={() => toggle(opt.id)}
               className={cn(
-                "text-left text-[13px] rounded-md px-2.5 py-1.5 border transition-colors flex items-center gap-2 cursor-pointer",
+                "text-left text-[13px] rounded-md px-2.5 py-1.5 border transition-colors flex items-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust",
                 isSelected
                   ? "border-rust bg-rust/15 text-[var(--chat-text)]"
                   : "border-[var(--chat-border)] bg-[var(--chat-surface)] text-[var(--chat-text)] hover:border-rust/40 hover:bg-[var(--chat-surface-2)]"
@@ -151,9 +158,16 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
               >
                 {isSelected ? "✓" : ""}
               </span>
-              <span>{opt.label}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium">{opt.label}</span>
+                {opt.description && (
+                  <span className="mt-0.5 block text-[11px] leading-snug text-[var(--chat-text-muted)]">
+                    {opt.description}
+                  </span>
+                )}
+              </span>
               {opt.recommended && (
-                <span className="ml-auto shrink-0 inline-flex items-center text-[10px] font-semibold uppercase tracking-wide text-rust border border-rust/45 bg-rust/10 rounded-full px-1.5 py-px">
+                <span className="shrink-0 inline-flex items-center text-[10px] font-semibold uppercase tracking-wide text-rust border border-rust/45 bg-rust/10 rounded-full px-1.5 py-px">
                   recomendado
                 </span>
               )}
@@ -265,7 +279,13 @@ export function AskQuestionGroup({
     for (const q of questions) {
       const labels = buildAnswerLabels(q, states[q.id]);
       labelsByQ[q.id] = labels;
-      lines.push(`[ask:${q.id}] respuesta: ${labels.join(", ")}`);
+      const selectedWorkflowOptions = (q.options ?? [])
+        .filter((option) => states[q.id].selected.has(option.id) && option.workflowIntent)
+        .map((option) => option.id);
+      const workflowMarker = selectedWorkflowOptions.length === 1
+        ? ` <!--workflow-option:${selectedWorkflowOptions[0]}-->`
+        : "";
+      lines.push(`[ask:${q.id}] respuesta: ${labels.join(", ")}${workflowMarker}`);
     }
     try {
       for (const q of questions) {

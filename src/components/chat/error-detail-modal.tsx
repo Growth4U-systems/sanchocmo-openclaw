@@ -18,7 +18,7 @@ const CATEGORY_LABEL: Record<ErrorCategory, string> = {
   watchdog_abort: "Sesión sin progreso (timeout)",
   model_unavailable: "Modelo no disponible",
   session_concurrency: "Turno concurrente en el mismo hilo",
-  cost_guard: "Ejecución detenida por presupuesto",
+  cost_guard: "Ejecución detenida",
   network: "Error de red",
 };
 

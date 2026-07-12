@@ -1,7 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-const { groupChatMessages, isToolEcho, toToolEvent } = await import("../chat-tool-echo");
+const {
+  groupChatMessages,
+  isToolEcho,
+  stripAskProtocol,
+  stripOutboundWorkflowDebugDetails,
+  toToolEvent,
+} = await import("../chat-tool-echo");
 
 test("isToolEcho flags runtime echoes with unknown leading emoji", () => {
   const echoes = [
@@ -44,4 +50,29 @@ test("toToolEvent strips multiple leading runtime glyphs", () => {
 
   assert.equal(event.kind, "read");
   assert.equal(event.label, "list files in ~/workspace-rocinante/brand/ → print text");
+});
+
+test("stripAskProtocol hides outbound workflow metadata", () => {
+  assert.equal(
+    stripAskProtocol("[ask:outbound_ecp_v1] respuesta: Responsables de Growth <!--workflow-option:growth-leaders-->"),
+    "Responsables de Growth",
+  );
+  assert.equal(
+    stripAskProtocol("Responsables de Growth <!--workflow-option:growth-leaders-->"),
+    "Responsables de Growth",
+  );
+  assert.equal(stripAskProtocol("  texto normal  "), "  texto normal  ");
+});
+
+test("stripOutboundWorkflowDebugDetails hides legacy campaign and run ids", () => {
+  assert.equal(
+    stripOutboundWorkflowDebugDetails([
+      "Inicié la campaña para Founders y CEOs.",
+      "El workflow no enviará nada sin aprobación.",
+      "Campaña: `d21fde5e-a4bd-5f01-a4e4-e992fc3b126e`",
+      "Run: `fe760456-294f-410e-b1d9-1cc6b0c25b4c`",
+    ].join("\n")),
+    "Inicié la campaña para Founders y CEOs.\nEl workflow no enviará nada sin aprobación.",
+  );
+  assert.equal(stripOutboundWorkflowDebugDetails("  respuesta normal  "), "  respuesta normal  ");
 });

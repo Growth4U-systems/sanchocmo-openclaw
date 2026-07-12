@@ -212,13 +212,7 @@ export function buildB2BCampaignThread(slug: string): ThreadConfig {
   cfg.quickActions = [
     {
       label: "Crear campaña",
-      prompt:
-        "Quiero crear una campaña outbound B2B. Usa el contexto de mi empresa para recomendar el mejor ICP, crear la campaña, buscar y enriquecer personas, y preparar mensajes con la mejor personalización verificable disponible. No envíes nada real hasta que yo apruebe el lote.",
-    },
-    {
-      label: "Encontrar personas",
-      prompt:
-        "Recomiéndame a quién contactar según mi ICP y crea una base de personas. Busca y enriquece los contactos, prioriza los que tengan mejor encaje y deja una muestra de mensajes preparada para revisar.",
+      prompt: "Quiero crear una campaña B2B por LinkedIn.",
     },
   ];
   return cfg;
@@ -232,6 +226,15 @@ export function buildB2BCampaignThread(slug: string): ThreadConfig {
  */
 export function buildNewTaskThread(slug: string): ThreadConfig {
   return instantiateNamespace("new-task", { slug, params: { nonce: String(Date.now()) } });
+}
+
+/** Open the stable day-to-day chat without creating a task or a new thread. */
+export function buildGeneralThread(slug: string): ThreadConfig {
+  const cfg = buildPillarThread(slug, "general");
+  cfg.threadName = "General";
+  cfg.linkedTo = "general";
+  cfg.docPath = null;
+  return cfg;
 }
 
 /**

@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { createHash } from "node:crypto";
 import {
   canAccessSlug,
   compose,
@@ -8,14 +9,17 @@ import {
 import {
   addMessage,
   clearStatus,
+  getThread,
   getThreadRouting,
   setThreadRouting,
   setStatusEntry,
+  upsertWorkflowJobMessage,
   type ChatAttachment,
   type ErrorDetail,
 } from "@/lib/data/mc-chat";
 import { maybeMarkClarifyAnswered } from "@/lib/clarify-autostatus";
 import { resolveNamespaceThreadConfig } from "@/lib/chat-openers";
+import { stripAskProtocol } from "@/lib/chat-tool-echo";
 import { resolveTaskThreadExecutionRoute } from "@/lib/data/task-routing";
 import { getTask } from "@/lib/data/tasks";
 import { buildTaskContractSnapshot } from "@/lib/quality/task-contract-snapshot";
@@ -39,6 +43,14 @@ import {
 import { dispatchRuntimeControlActions } from "@/lib/runtime/control-actions";
 import { parseRuntimeControlReply } from "@/lib/runtime/agent-contract/control-reply.mjs";
 import { resolveChatUserId } from "@/lib/runtime/agent-contract/chat-principal.mjs";
+import { resolveOutboundWorkflowChoice } from "@/lib/outreach/structured-choice";
+import {
+  buildOutboundCampaignOptions,
+  isOutboundCampaignStartPrompt,
+} from "@/lib/outreach/campaign-options";
+import { resolveActiveOutboundWorkflow } from "@/lib/outreach/active-workflow";
+import { dispatchOutboundCommand } from "@/lib/yalc/outbound-command";
+import { resolveYalcConfig } from "@/lib/yalc/client";
 
 function normalizedIdempotencyKey(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -56,6 +68,24 @@ function gatewayErrorDetail(raw: string, status?: number): ErrorDetail {
     raw: raw.slice(0, 4096),
     classifiedAt: Date.now(),
   };
+}
+
+function requestBaseUrl(req: NextApiRequest): string {
+  const configured = process.env.SANCHO_BASE_URL || process.env.BASE_URL;
+  if (configured) return configured.replace(/\/+$/, "");
+  const forwardedProto = Array.isArray(req.headers["x-forwarded-proto"])
+    ? req.headers["x-forwarded-proto"][0]
+    : req.headers["x-forwarded-proto"];
+  const host = Array.isArray(req.headers.host) ? req.headers.host[0] : req.headers.host;
+  return `${forwardedProto || "http"}://${host || "localhost:3000"}`;
+}
+
+function resultText(value: unknown): string {
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+function resultNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 /**
@@ -215,6 +245,132 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Invalid idempotencyKey" });
   }
 
+  // Persist ownership before any deterministic early return so a reload
+  // between opening the chooser and selecting an option keeps the same route.
+  if (turnPolicy.persistRoute) setThreadRouting(tid, toThreadRouting(policy));
+
+  if (isOutboundCampaignStartPrompt(text)) {
+    addMessage(tid, "user", String(text), undefined, parsedAttachments);
+    const prepared = buildOutboundCampaignOptions(String(slug));
+    addMessage(tid, "bot", prepared.message, resolvedAgent || "rocinante");
+    return res.status(200).json({
+      ok: prepared.ok,
+      deterministic: true,
+      chatId: tid,
+      ...(!prepared.ok ? { error: "Foundation outbound configuration unavailable" } : {}),
+    });
+  }
+
+  const outboundSelectionAttempt = /^\[ask:outbound_ecp_v1\]\s*respuesta:/m.test(String(text));
+  const outboundChoice = resolveOutboundWorkflowChoice(getThread(tid), String(text));
+  if (outboundSelectionAttempt && !outboundChoice) {
+    addMessage(tid, "user", stripAskProtocol(String(text)), undefined, parsedAttachments);
+    addMessage(
+      tid,
+      "bot",
+      "No pude validar esta opción de campaña. No inicié ninguna búsqueda ni envié datos al agente. Vuelve a abrir «Crear campaña» para generar opciones ejecutables.",
+      resolvedAgent || "rocinante",
+    );
+    return res.status(200).json({
+      ok: false,
+      error: "Invalid outbound workflow option",
+      deterministic: true,
+      chatId: tid,
+    });
+  }
+  if (outboundChoice) {
+    addMessage(tid, "user", stripAskProtocol(String(text)), undefined, parsedAttachments);
+    setStatusEntry(tid, {
+      text: "Buscando empresas del ICP...",
+      agent: resolvedAgent || "rocinante",
+      ts: Date.now(),
+    });
+    try {
+      const result = await dispatchOutboundCommand(resolveYalcConfig(String(slug)), {
+        command: "outbound.workflow.start",
+        idempotencyKey: `linkedin-outbound-v1:${createHash("sha256")
+          .update(`${slug}:${tid}`)
+          .digest("hex")
+          .slice(0, 32)}`,
+        intent: outboundChoice.intent,
+        callbackUrl: `${requestBaseUrl(req)}/api/yalc/job-callback`,
+        callbackContext: {
+          slug: String(slug),
+          threadId: tid,
+          agent: resolvedAgent || "rocinante",
+          command: "outbound.workflow.start",
+        },
+      });
+      clearStatus(tid);
+      const accounts = result.accounts && typeof result.accounts === "object"
+        ? result.accounts as Record<string, unknown>
+        : {};
+      const batch = result.batch && typeof result.batch === "object"
+        ? result.batch as Record<string, unknown>
+        : {};
+      const campaignId = resultText(result.campaignId);
+      const runId = resultText(result.runId);
+      const itemCount = resultNumber(batch.itemCount);
+      if (result.reused === true && campaignId && runId && itemCount !== null) {
+        const sample = Array.isArray(batch.sample)
+          ? batch.sample.flatMap((item) => {
+              if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+              const value = item as Record<string, unknown>;
+              const messageBody = resultText(value.messageBody);
+              if (!messageBody) return [];
+              const leadId = resultText(value.leadId);
+              return [{ ...(leadId ? { leadId } : {}), messageBody }];
+            }).slice(0, 3)
+          : [];
+        upsertWorkflowJobMessage(
+          tid,
+          `Ya existe una campaña activa equivalente con ${itemCount} contacto${itemCount === 1 ? "" : "s"}. No creé otra ni repetí la búsqueda.`,
+          {
+            jobId: `reused:${runId}`,
+            type: "campaign.workflow.prepare",
+            status: "completed",
+            command: "outbound.workflow.start",
+            campaignId,
+            runId,
+            summary: "active equivalent workflow reused",
+            batch: { itemCount, sample },
+          },
+          resolvedAgent || "rocinante",
+        );
+        const { httpStatus: _httpStatus, ...payload } = result;
+        return res.status(200).json({ ...payload, deterministic: true, chatId: tid });
+      }
+      const startedText = result.async === true
+        ? [
+            `Inicié la campaña para **${outboundChoice.label}**.`,
+            "",
+            "El workflow buscará primero las empresas del ICP y después los roles objetivo dentro de esas empresas. No enviará ningún mensaje sin tu aprobación final.",
+          ].filter(Boolean).join("\n")
+        : [
+            `Preparé la campaña para **${outboundChoice.label}**.`,
+            `Empresas válidas: ${resultNumber(accounts.usableDomains) ?? 0}.`,
+            `Contactos preparados: ${resultNumber(batch.itemCount) ?? 0}.`,
+            "No se envió ningún mensaje.",
+          ].join("\n");
+      addMessage(tid, "bot", startedText, resolvedAgent || "rocinante");
+      const { httpStatus: _httpStatus, ...payload } = result;
+      return res.status(200).json({ ...payload, deterministic: true, chatId: tid });
+    } catch (error) {
+      clearStatus(tid);
+      const message = error instanceof Error ? error.message : "No se pudo iniciar el workflow";
+      addMessage(
+        tid,
+        "bot",
+        `No pude iniciar la campaña: ${message}. No se envió ningún mensaje.`,
+        resolvedAgent || "rocinante",
+      );
+      const status = typeof (error as { status?: unknown })?.status === "number"
+        ? (error as { status: number }).status
+        : 502;
+      return res.status(status >= 400 && status <= 599 ? status : 502).json({ error: message });
+    }
+  }
+
   // Claim the retry key synchronously before any message/thread side effect.
   // Node handles the lookup + create without an await between them, so two
   // concurrent retries in this process cannot both create a run.
@@ -234,6 +390,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
+  const activeOutboundWorkflow = resolveActiveOutboundWorkflow(getThread(tid));
   const run = createAgentRun({
     idempotencyKey: acceptedIdempotencyKey,
     threadId: tid,
@@ -265,14 +422,13 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       scope: policy.scope,
       skillMode: policy.skillMode,
       primarySkill: resolvedPrimarySkill,
+      activeOutboundWorkflow,
     },
   });
 
   // Agent ownership and auto/pinned policy are server state, not browser
   // state. Persist the route before the message so Discord, callbacks and a
   // reopened tab continue with the same agent while re-evaluating skills.
-  if (turnPolicy.persistRoute) setThreadRouting(tid, toThreadRouting(policy));
-
   // Store user message locally
   addMessage(tid, "user", text, undefined, parsedAttachments);
 
@@ -334,6 +490,8 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
           brief: pendingTaskRouteProposal.brief,
         }
       : undefined,
+    activeOutboundWorkflow,
+    controlBaseUrl: requestBaseUrl(req),
     threadState: threadState || undefined,
     docPath: docPath || undefined,
     docKind: typeof docKind === "string" ? docKind : undefined,

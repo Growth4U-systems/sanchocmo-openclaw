@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { getThread, getStatusEntry, getPendingProgress } from "@/lib/data/mc-chat";
+import { getLatestActiveRun } from "@/lib/data/agent-runs";
 
 /**
  * GET /api/chat/thread/:threadId
@@ -37,6 +38,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const pendingProgress = getPendingProgress(decodeURIComponent(threadId));
+  const activeRun = getLatestActiveRun(decodeURIComponent(threadId));
 
   res.status(200).json({
     ok: true,
@@ -45,6 +47,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     routing: thread?.routing || null,
     status: liveStatus,
     pendingProgress,
+    activeRun: activeRun
+      ? { id: activeRun.id, status: activeRun.status, createdAt: activeRun.createdAt }
+      : null,
   });
 }
 

@@ -12,7 +12,8 @@ test("chat cancel aborts the active OpenClaw turn", () => {
   assert.match(plugin, /cancelled,\s*message: cancelled/);
 });
 
-test("chat cancel persists an immediate terminal message for the UI", () => {
-  assert.match(cancelApi, /addMessage\(tid, "bot", "Ejecución detenida\."/);
+test("chat cancel records one terminal note only for an active run", () => {
+  assert.match(cancelApi, /if \(activeRun\) \{[\s\S]*addMessage\(tid, "system", "Ejecución detenida\."/);
+  assert.match(cancelApi, /alreadyStopped: !activeRun/);
   assert.match(cancelApi, /runtimeCancelled/);
 });

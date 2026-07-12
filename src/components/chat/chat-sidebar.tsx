@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback, useMemo, type KeyboardEvent, type DragEvent, type ClipboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, CheckCircle2, CircleEllipsis, ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/stores/chat";
@@ -19,6 +20,7 @@ import {
   buildPillarThread,
   buildTaskThread,
   buildProjectThread,
+  buildNewTaskThread,
   resolveFullThreadConfig,
   buildTaskIndex,
 } from "@/lib/chat-openers";
@@ -28,7 +30,12 @@ import { ThreadListPanel } from "./thread-list-panel";
 import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
 import { ProgressTimeline } from "./progress-timeline";
 import { ChatMarkdown } from "./chat-markdown";
-import { groupChatMessages, stripAskProtocol } from "@/lib/chat-tool-echo";
+import {
+  groupChatMessages,
+  stripAskProtocol,
+  stripOutboundWorkflowDebugDetails,
+} from "@/lib/chat-tool-echo";
+import { collapseExecutionOutcomes } from "@/lib/chat-execution-outcomes";
 import { formatElapsed } from "@/lib/format-elapsed";
 import type { ProgressEvent } from "@/hooks/useChat";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
@@ -65,6 +72,25 @@ const AGENT_BADGES: Record<string, { emoji: string; label: string; color: string
 
 function agentBadge(agent?: string) {
   return AGENT_BADGES[agent ?? "sancho"] ?? AGENT_BADGES.sancho;
+}
+
+function executionErrorCopy(category: ErrorDetail["category"]): { title: string; body: string } {
+  if (category === "cost_guard" || category === "context_overflow") {
+    return {
+      title: "La ejecución se detuvo antes de terminar",
+      body: "Puedes continuar desde aquí. No hace falta abrir otro chat ni reducir tu petición.",
+    };
+  }
+  if (category === "network" || category === "model_unavailable" || category === "rate_limit") {
+    return {
+      title: "No pudimos completar esta ejecución",
+      body: "El servicio tuvo un problema temporal. Puedes continuar desde este mismo chat.",
+    };
+  }
+  return {
+    title: "No pudimos completar esta ejecución",
+    body: "Puedes continuar desde este mismo chat.",
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -642,11 +668,31 @@ export function ChatSidebar() {
     () => messagesQuery.data?.messages ?? [],
     [messagesQuery.data?.messages]
   );
+  const refreshedWorkflowJobs = useRef(new Set<string>());
+  useEffect(() => {
+    if (!slug) return;
+    const unseenCompletedJobs = messages.filter((message) => {
+      const job = message.workflowJob;
+      return message.role === "workflow"
+        && job?.status === "completed"
+        && job.type.startsWith("campaign.workflow.")
+        && !refreshedWorkflowJobs.current.has(job.jobId);
+    });
+    if (unseenCompletedJobs.length === 0) return;
+    unseenCompletedJobs.forEach((message) => {
+      if (message.workflowJob) refreshedWorkflowJobs.current.add(message.workflowJob.jobId);
+    });
+    void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
+  }, [messages, queryClient, slug]);
   const statusData = messagesQuery.data?.status;
+  const activeRun = messagesQuery.data?.activeRun ?? null;
   // Fold runtime tool-call narration ("Write: to…", "run python3 inline
   // script") into the collapsible "N pasos" timeline instead of letting each
   // land as its own Sancho bubble. Real replies pass through untouched.
-  const renderItems = useMemo(() => groupChatMessages(messages), [messages]);
+  const renderItems = useMemo(
+    () => groupChatMessages(collapseExecutionOutcomes(messages)),
+    [messages],
+  );
   const pendingProgress: ProgressEvent[] = messagesQuery.data?.pendingProgress ?? [];
 
   // Send / cancel / mark-read
@@ -855,8 +901,8 @@ export function ChatSidebar() {
   const REPLY_WINDOW_MS = 5 * 60_000;
   const now = Date.now();
   const hasFreshStatus = !!statusData?.text && now - (statusData?.ts ?? 0) < STATUS_FRESH_MS;
-  const recentUserMsg = waitingForReply && lastUserMsgTs > 0 && now - lastUserMsgTs < REPLY_WINDOW_MS;
-  const isAwaitingReply = sendMutation.isPending || hasFreshStatus || recentUserMsg;
+  const hasActiveRun = activeRun?.status === "queued" || activeRun?.status === "running";
+  const isAwaitingReply = sendMutation.isPending || hasFreshStatus || hasActiveRun;
   const showTyping = isAwaitingReply;
 
   // Live "thinking for Ns" counter on the typing indicator. Anchored to the
@@ -913,7 +959,11 @@ export function ChatSidebar() {
   // polling keeps running underneath, so a late reply still lands and clears it.
   // `!gatewayLikelyDown` avoids a double banner on ContentTask threads, which
   // keep their tailored copy.
-  const replyStalled = waitingForReply && !isAwaitingReply && !gatewayLikelyDown;
+  const replyStalled = waitingForReply
+    && !isAwaitingReply
+    && lastUserMsgTs > 0
+    && now - lastUserMsgTs >= REPLY_WINDOW_MS
+    && !gatewayLikelyDown;
 
   // Quick-actions from chat-config.json.
   //
@@ -984,6 +1034,11 @@ export function ChatSidebar() {
     },
     [handleSend]
   );
+
+  const handleNewTask = useCallback(() => {
+    if (!slug) return;
+    selectThread(buildNewTaskThread(slug));
+  }, [selectThread, slug]);
 
   // Focus the textarea once the thread has loaded and is empty, so users see
   // the cursor blink in the input instead of staring at the "empty thread"
@@ -1111,11 +1166,13 @@ export function ChatSidebar() {
             </button>
           )}
           <button
-            onClick={() => handleSelectFromPanel(`${slug}:general`)}
-            title={t("newThread")}
-            className="text-green-500 hover:opacity-80 text-sm leading-none border border-[var(--chat-border)] rounded-md px-1.5 py-0.5"
+            type="button"
+            onClick={handleNewTask}
+            title={t("newTask")}
+            className="inline-flex h-7 items-center gap-1 rounded-md bg-rust px-2 text-[11px] font-semibold text-white hover:opacity-90"
           >
-            +
+            <Plus size={13} aria-hidden="true" />
+            <span>{t("newTask")}</span>
           </button>
           <button
             onClick={toggleFullscreen}
@@ -1609,6 +1666,48 @@ export function ChatSidebar() {
           }
           const msg = item.msg;
           const i = item.key;
+          if (msg.role === "workflow" && msg.workflowJob) {
+            const failed = msg.workflowJob.status === "failed";
+            const samples: Array<{ leadId?: string; messageBody: string }> = msg.workflowJob.batch?.sample ?? [];
+            const campaignHref = msg.workflowJob.campaignId
+              ? `/dashboard/${encodeURIComponent(slug)}/yalc?tipo=b2b&campaign=${encodeURIComponent(msg.workflowJob.campaignId)}`
+              : null;
+            return (
+              <div key={i} className="flex items-start gap-2 px-1 py-2 text-[13px] leading-snug text-[var(--chat-text)]">
+                {failed ? (
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden="true" />
+                ) : (
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p>{msg.text}</p>
+                  {!failed && samples.length > 0 && (
+                    <details className="mt-2 text-[12px] text-[var(--chat-text-muted)]">
+                      <summary className="cursor-pointer select-none font-medium text-[var(--chat-text)]">
+                        Ver {samples.length} {samples.length === 1 ? "mensaje" : "mensajes"} de muestra
+                      </summary>
+                      <div className="mt-2 space-y-2 border-l-2 border-[var(--chat-border)] pl-3">
+                        {samples.map((sample, sampleIndex) => (
+                          <p key={sample.leadId ?? `${msg.workflowJob?.jobId}-${sampleIndex}`}>
+                            {sample.messageBody}
+                          </p>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                  {campaignHref && (
+                    <Link
+                      href={campaignHref}
+                      className="mt-1.5 inline-flex items-center gap-1 text-[12px] font-medium text-[var(--chat-link)] hover:underline"
+                    >
+                      Abrir campaña
+                      <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            );
+          }
           if (msg.role === "system") {
             return (
               <div key={i} className="flex justify-center">
@@ -1653,6 +1752,28 @@ export function ChatSidebar() {
           const isUser = msg.role === "user";
           const badge = !isUser ? agentBadge(msg.agent) : null;
 
+          if (!isUser && msg.errorDetail) {
+            const copy = executionErrorCopy(msg.errorDetail.category);
+            return (
+              <div key={i} className="flex items-start gap-2 px-1 py-2 text-[13px] leading-snug" role="alert">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[var(--chat-text)]">{copy.title}</p>
+                  <p className="mt-0.5 text-[12px] text-[var(--chat-text-muted)]">{copy.body}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpenErrorDetail(msg.errorDetail ?? null)}
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[var(--chat-text-faint)] hover:bg-[var(--chat-surface-2)] hover:text-[var(--chat-text)]"
+                  aria-label="Ver diagnóstico técnico"
+                  title="Ver diagnóstico técnico"
+                >
+                  <CircleEllipsis className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            );
+          }
+
           // The auto-sent kickoff prompt: render as a discreet, foldable note
           // instead of a giant orange bubble the user never actually typed.
           if (
@@ -1685,7 +1806,9 @@ export function ChatSidebar() {
                 )}
                 <AskQuestionGroup
                   segments={parseMessageSegments(
-                    isUser ? stripAskProtocol(msg.text) : (msg.text || "")
+                    isUser
+                      ? stripAskProtocol(msg.text)
+                      : stripOutboundWorkflowDebugDetails(msg.text)
                   )}
                   threadId={activeThreadId ?? ""}
                   renderText={(text, key) => (
@@ -1730,16 +1853,6 @@ export function ChatSidebar() {
                 )}
                 {!isUser && msg.progress && msg.progress.length > 0 && (
                   <ProgressTimeline events={msg.progress} mode="sealed" />
-                )}
-                {!isUser && msg.errorDetail && (
-                  <button
-                    type="button"
-                    onClick={() => setOpenErrorDetail(msg.errorDetail ?? null)}
-                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 border border-amber-500/40 transition-colors"
-                    aria-label="Ver detalle técnico del error"
-                  >
-                    🔍 Ver detalle técnico
-                  </button>
                 )}
               </div>
             </div>
@@ -1819,7 +1932,7 @@ export function ChatSidebar() {
                 onClick={() => sendMutation.mutate({ text: promptText, threadId: activeThreadId! })}
                 className="w-full text-left px-3 py-2 text-[15px] leading-snug rounded-lg border border-[var(--chat-border)] text-[var(--chat-text)] bg-[var(--chat-surface-2)] hover:bg-[var(--chat-surface-2)] hover:border-rust/40 transition-colors cursor-pointer"
               >
-                {promptText}
+                {qa.label}
               </button>
             );
           })}
@@ -1883,7 +1996,7 @@ export function ChatSidebar() {
             className="chat-textarea flex-1 bg-[var(--chat-surface)] text-[var(--chat-text)] placeholder-[var(--chat-text-faint)] text-base px-3 py-2 rounded-lg border border-[var(--chat-border)] focus:outline-none focus:border-rust disabled:opacity-50 resize-none overflow-y-auto leading-snug"
             style={{ maxHeight: 120 }}
           />
-          {isAwaitingReply || cancelMutation.isPending || uploading ? (
+          {isAwaitingReply || cancelMutation.isPending ? (
             <button
               onClick={() => cancelMutation.mutate({ threadId: activeThreadId ?? undefined })}
               className="bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
@@ -1894,7 +2007,7 @@ export function ChatSidebar() {
           ) : (
             <button
               onClick={handleSend}
-              disabled={!activeThreadId || (!input.trim() && pendingFiles.length === 0)}
+              disabled={!activeThreadId || uploading || (!input.trim() && pendingFiles.length === 0)}
               className="bg-rust hover:opacity-90 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               title={t("send")}
             >

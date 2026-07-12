@@ -741,8 +741,10 @@ export default defineChannelPluginEntry({
                   }
                 } catch {}
 
-                // Send each text as a separate message (MC + Discord if linked).
-                // Each text is run through the error rewriter: if it matches a
+                // A runtime run has one terminal result. Join multipart output
+                // before persistence so later parts cannot look like separate
+                // assistant turns. The result is run through the error rewriter:
+                // if it matches a
                 // known error pattern (rate_limit / auth / watchdog_abort / …)
                 // the user-facing text is replaced with a clear Spanish summary
                 // and the raw payload is surfaced as `errorDetail` for the UI
@@ -751,7 +753,8 @@ export default defineChannelPluginEntry({
                   ...(readCodexAuthInfo(respondingAgent) || {}),
                   anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
                 };
-                for (const msgText of texts) {
+                const msgText = texts.map((part) => String(part || "").trim()).filter(Boolean).join("\n\n");
+                if (msgText) {
                   const { text: rewritten, errorDetail: classified } = classifyAndRewriteError(msgText, authInfo);
                   let errorDetail = classified;
                   if (errorDetail?.category === "watchdog_abort") {

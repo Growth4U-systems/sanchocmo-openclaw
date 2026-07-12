@@ -212,9 +212,9 @@ function riskyToolReason(event) {
 
 function userMessage(reason) {
   return [
-    "⚠️ **Ejecución detenida por presupuesto de seguridad**",
+    "⚠️ **No se completó la ejecución**",
     reason,
-    "He parado esta ejecución antes de que siguiera enviando contexto al modelo. Abre un hilo nuevo o reduce el alcance si necesitas continuar.",
+    "El runtime detuvo este turno. Puedes continuar desde este mismo chat.",
   ].join("\n");
 }
 

@@ -6,8 +6,8 @@ import { dispatchJobResult, parseCallback } from "@/lib/yalc/job-callback";
  * POST /api/yalc/job-callback
  *
  * YALC POSTs here when an async job (enrich/publish/skill run/gate resume)
- * completes or fails. We re-engage the agent that owns the originating chat
- * thread (carried in callbackContext) so it reports the result to the user.
+ * completes or fails. We persist one deterministic result in the originating
+ * chat thread. A callback never starts another model turn.
  *
  * No withAuth: YALC authenticates with a dedicated shared secret, not a Sancho
  * session/token. Mirrors the x-mc-secret check in src/pages/api/chat/webhook.ts

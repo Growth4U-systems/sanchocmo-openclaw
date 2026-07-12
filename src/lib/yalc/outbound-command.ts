@@ -19,6 +19,15 @@ export type OutboundCommandName =
   | "outbound.draft_sequence"
   | "outbound.linkedin_autopilot.plan"
   | "outbound.linkedin_autopilot.execute"
+  | "outbound.workflow.start"
+  | "outbound.workflow.continue"
+  | "outbound.workflow.prepare"
+  | "outbound.workflow.personalize"
+  | "outbound.workflow.rewrite"
+  | "outbound.workflow.select"
+  | "outbound.workflow.approve"
+  | "outbound.workflow.execute"
+  | "outbound.workflow.status"
   | "outbound.approve_and_publish"
   | "outbound.status";
 
@@ -179,6 +188,15 @@ function commandName(value: unknown): OutboundCommandName {
     "outbound.draft_sequence",
     "outbound.linkedin_autopilot.plan",
     "outbound.linkedin_autopilot.execute",
+    "outbound.workflow.start",
+    "outbound.workflow.continue",
+    "outbound.workflow.prepare",
+    "outbound.workflow.personalize",
+    "outbound.workflow.rewrite",
+    "outbound.workflow.select",
+    "outbound.workflow.approve",
+    "outbound.workflow.execute",
+    "outbound.workflow.status",
     "outbound.approve_and_publish",
     "outbound.status",
   ];
@@ -596,6 +614,61 @@ async function linkedinAutopilot(
   return { ok: true, command, campaignId, ...result };
 }
 
+async function outboundWorkflow(
+  config: YalcRuntimeConfig,
+  input: RecordLike,
+  command: Extract<
+    OutboundCommandName,
+    | "outbound.workflow.start"
+    | "outbound.workflow.continue"
+    | "outbound.workflow.prepare"
+    | "outbound.workflow.personalize"
+    | "outbound.workflow.rewrite"
+    | "outbound.workflow.select"
+    | "outbound.workflow.approve"
+    | "outbound.workflow.execute"
+    | "outbound.workflow.status"
+  >,
+): Promise<OutboundCommandResult> {
+  const campaignId = text(input.campaignId ?? input.campaign_id);
+  const runId = text(input.runId ?? input.run_id);
+  if (command !== "outbound.workflow.start" && !campaignId && !runId) {
+    throw new OutboundCommandError("campaignId or runId is required");
+  }
+  if (command === "outbound.workflow.start") {
+    const intent = asRecord(input.intent);
+    if (Object.keys(intent).length === 0) throw new OutboundCommandError("intent is required");
+    if (!text(input.idempotencyKey ?? input.idempotency_key)) {
+      throw new OutboundCommandError("idempotencyKey is required for outbound.workflow.start");
+    }
+  }
+  if (campaignId) await assertCampaignKind(config, campaignId, "b2b");
+
+  const result = await yalcFetch<RecordLike>(config, "/api/outbound/command", {
+    method: "POST",
+    body: {
+      ...input,
+      command,
+      ...(campaignId ? { campaignId } : {}),
+      ...(runId ? { runId } : {}),
+      expectedKind: "b2b",
+      profileKind: "b2b_contact",
+      type: "B2B",
+      source: "outbound.workflow",
+    },
+  });
+  assertRealOutboundData(result, "el workflow de outbound");
+  const queued = queuedJob(result);
+  return {
+    ok: true,
+    command,
+    ...(queued ? { httpStatus: 202, async: true } : {}),
+    ...(campaignId ? { campaignId } : {}),
+    ...(runId ? { runId } : {}),
+    ...result,
+  };
+}
+
 async function approveAndPublish(
   config: YalcRuntimeConfig,
   input: RecordLike,
@@ -682,6 +755,16 @@ export async function dispatchOutboundCommand(
     case "outbound.linkedin_autopilot.plan":
     case "outbound.linkedin_autopilot.execute":
       return linkedinAutopilot(config, input, command);
+    case "outbound.workflow.start":
+    case "outbound.workflow.continue":
+    case "outbound.workflow.prepare":
+    case "outbound.workflow.personalize":
+    case "outbound.workflow.rewrite":
+    case "outbound.workflow.select":
+    case "outbound.workflow.approve":
+    case "outbound.workflow.execute":
+    case "outbound.workflow.status":
+      return outboundWorkflow(config, input, command);
     case "outbound.approve_and_publish":
       return approveAndPublish(config, input, command);
     case "outbound.status":

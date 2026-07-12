@@ -134,7 +134,18 @@ function buildSummary(slug: string): string {
   const competitorNames = (s.competitors ?? []).map(nameOf).filter(Boolean);
   if (competitorNames.length) lines.push(`Competidores: ${competitorNames.join(", ")}`);
 
-  // One-line Foundation rollup: how many pillars are completed vs total.
+  const hasUsableFoundationContext = Boolean(
+    s.sector?.trim()
+      || s.description?.trim()
+      || s.north_star?.trim()
+      || s.positioning?.trim()
+      || icpNames.length
+      || competitorNames.length,
+  );
+
+  // Task status is an execution tracker, not proof that Foundation documents
+  // are absent. Legacy workspaces can contain complete context without the P00
+  // tasks introduced by the current tracker.
   let total = 0;
   let completed = 0;
   for (const section of Object.values(state.sections)) {
@@ -143,7 +154,13 @@ function buildSummary(slug: string): string {
       if (pillar.status === "completed") completed += 1;
     }
   }
-  if (total > 0) lines.push(`Foundation: ${completed}/${total} pilares completados.`);
+  if (total > 0) {
+    lines.push(
+      hasUsableFoundationContext
+        ? `Contexto Foundation: disponible. Tracker de ejecución: ${completed}/${total} tareas marcadas como completadas; no interpretes este contador como ausencia de contexto.`
+        : `Contexto Foundation: no verificado. Tracker de ejecución: ${completed}/${total} tareas marcadas como completadas.`,
+    );
+  }
 
   return lines.join("\n");
 }
@@ -163,6 +180,41 @@ function safeWorkspaceAbs(relPath: string): string {
     throw new Error("Forbidden");
   }
   return absPath;
+}
+
+function wildcardSegmentMatcher(segment: string): RegExp {
+  let source = "";
+  for (const char of segment) {
+    if (char === "*") source += "[^/]*";
+    else if (char === "?") source += "[^/]";
+    else source += char.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
+  }
+  return new RegExp(`^${source}$`);
+}
+
+function expandWorkspaceFilePattern(rawPattern: string): string[] {
+  const safeBase = path.resolve(BASE);
+  const absPattern = safeWorkspaceAbs(rawPattern);
+  const segments = path.relative(safeBase, absPattern).split(path.sep).filter(Boolean);
+  let candidates = [safeBase];
+
+  for (const [index, segment] of segments.entries()) {
+    const matcher = wildcardSegmentMatcher(segment);
+    const isLast = index === segments.length - 1;
+    const next: string[] = [];
+    for (const candidate of candidates) {
+      if (!fs.existsSync(candidate) || !fs.statSync(candidate).isDirectory()) continue;
+      for (const entry of fs.readdirSync(candidate, { withFileTypes: true })) {
+        if (!matcher.test(entry.name)) continue;
+        if (isLast ? !entry.isFile() : !entry.isDirectory()) continue;
+        next.push(path.join(candidate, entry.name));
+      }
+    }
+    candidates = next.sort((a, b) => a.localeCompare(b));
+    if (candidates.length === 0) break;
+  }
+
+  return candidates;
 }
 
 function truncateContent(content: string, maxChars = MAX_DOCUMENT_CHARS): { content: string; truncated: boolean } {
@@ -245,12 +297,31 @@ function resolveRequiredDocPaths(slug: string, required: string[]): {
   const documents: ContextPackDocument[] = [];
   const missingRequired: string[] = [];
   let resolvedCount = 0;
-  const total = required.length;
+  const boundedRequired = required.slice(0, MAX_DOC_PATHS);
+  const total = boundedRequired.length;
 
-  for (const template of required.slice(0, MAX_DOC_PATHS)) {
+  for (const [index, template] of boundedRequired.entries()) {
     const rawPath = template.replace(/\{slug\}/g, slug);
     const wantsDirectory = /\/\s*$/.test(rawPath);
     try {
+      if (/[*?]/.test(rawPath)) {
+        const matches = expandWorkspaceFilePattern(rawPath);
+        if (matches.length === 0) {
+          missingRequired.push(rawPath);
+          continue;
+        }
+
+        resolvedCount += 1;
+        const requiredAfterThis = boundedRequired.length - index - 1;
+        const matchBudget = Math.max(1, MAX_DOC_PATHS - documents.length - requiredAfterThis);
+        for (const absPath of matches.slice(0, matchBudget)) {
+          const canonicalPath = path.relative(BASE, absPath).split(path.sep).join("/");
+          abs.push(absPath);
+          documents.push(readFileDocument(canonicalPath, absPath));
+        }
+        continue;
+      }
+
       if (wantsDirectory) {
         const canonicalPath = normalizeBrandDocPath(slug, cleanDocPath(rawPath));
         const absPath = safeWorkspaceAbs(canonicalPath);
