@@ -32,7 +32,7 @@ YALC is the source of truth for the GTM operating workflow: lead import, qualifi
 ## Hard Rules
 
 1. Never send email, add leads to a live campaign, or launch a campaign without explicit user confirmation in the current thread.
-2. For a new B2B campaign, the only human choice before preparation is the ECP/ICP. Before presenting it, compile each option into two separate profiles: `accountTarget` (which companies fit) and `personTarget` (which roles inside them fit). Present at most three Foundation-backed options and wait for that choice. Once selected, the request authorizes campaign creation, sourcing, enrichment, deterministic qualification and message preparation as one workflow; never ask for separate sourcing or enrichment confirmation.
+2. For a new B2B campaign, the only human choice before preparation is the ECP/ICP. Use Mission Control's server-generated options; each already contains `accountTarget` (which companies fit) and `personTarget` (which roles inside them fit). Present at most three and wait for that choice. Once selected, the request authorizes campaign creation, sourcing, enrichment, deterministic qualification and message preparation as one workflow; never ask for separate sourcing or enrichment confirmation.
 3. Never ask the user to approve a preview, proposal, internal draft or `dryRun`. Execute or skip those under the original request. Ask once immediately before the first real contact send or a material provider cost that was not implied by the request.
 4. Do not ask the user to choose implementation techniques such as signal-based vs role-based personalization, provider, skill, scoring model or merge variables. Select the best available path and report the choice in the result.
 5. Use the wrapper script instead of direct `curl` so auth, live catalog verification and dry-run behavior stay consistent.
@@ -45,17 +45,22 @@ YALC is the source of truth for the GTM operating workflow: lead import, qualifi
 12. A preparation cohort is 1,000 contacts by default and at most 2,000 when the user explicitly requests it. Apollo's total is informational; never turn it into one giant run and never continue to the next cohort automatically.
 13. `manual` is valid only when the user supplied real records. Never synthesize manual leads as a fallback for a provider failure.
 14. Never treat a role, seniority or personal location as the company ICP. A normal campaign uses `account_first_v1`: find matching companies first, keep only usable domains, then search the target roles inside those domains. A signal-first recipe is a separate versioned workflow and must not be improvised from chat.
+15. Language stays open; workflow actions stay typed. Never classify user requests with a finite phrase list. When `[MC Chat Context]` contains `active_outbound_workflow`, treat its `campaignId`, `runId`, status and samples as the trusted current object. Interpret the user's request, then call exactly one compatible `outbound.workflow.*` command. Never search templates or claim the prior messages are unavailable when this context exists.
 
 ## Interaction Model
 
-Chat is the primary control surface. The Outreach UI is the persistent view of the same YALC campaigns: status, sample messages, exceptions, approval and results. Never create a parallel chat-only campaign or leave generated copy only in the conversation.
+The Outreach UI is the primary control surface for the standard path: choose an audience, create the campaign, inspect the batch, test and send. Chat is an optional free-language control layer over the same persisted workflow. Both surfaces must call the same typed commands; never create a parallel chat-only campaign or leave generated copy only in the conversation.
+
+After a campaign exists, free-form chat is an intent layer over the persisted state machine. The user may ask naturally to change tone, improve a hook, continue sourcing, inspect status, approve or send. Read `active_outbound_workflow`, choose the matching typed command and let YALC validate the transition. Do not force the user through a keyword grammar or reconstruct campaign state from prose.
+
+For a request to improve or change all current LinkedIn drafts before approval, call `outbound.workflow.rewrite` with the active `runId`. Phase 1 supports `style:"conversation_question_v1"`: a truthful question hook based only on known name and company data. Report the exact returned samples. Do not edit contacts one by one, write copy only in chat, or invent a signal.
 
 When the user asks for a new B2B outbound campaign:
 
-1. Read `go-to-market/ecps/config.json` and the Foundation ECPs once. Compile at most three proposals. Every proposal must contain a concrete company profile and a concrete role profile that can be executed with the installed providers. Do not offer an ECP whose defining signal cannot be sourced by an operational recipe.
-2. Present the proposals in one `:::ask` block with `id:"outbound_ecp_v1"` and `mode:"single"`. Keep each label concise but explicit: `<persona> · <tipo/tamaño/país de empresa> · <roles>`. Recommend one, wait for the user's selection and do not create a campaign yet.
-3. Every option must include a hidden `workflowIntent` object with the complete canonical payload: `schemaVersion`, `channel:"linkedin"`, `title`, `ecpId`, `targetSegment`, `contactReason`, `batchSize`, `discoveryStrategy:"account_first_v1"`, `accountTarget`, and `personTarget`. The UI displays only `label`; Mission Control resolves the selected option from the persisted bot message and does not trust a browser-supplied payload.
-4. After the click, Mission Control calls `outbound.workflow.start` directly and exactly once. The answer must not return to the model, read Foundation files again or reinterpret the selection. The stable thread id derives the idempotency key, so retries reuse the same campaign and run.
+1. Use the trusted command bus operation `outbound-campaign-options`. Mission Control reads Foundation and returns at most three executable options with separate company and role profiles. Do not read Foundation files or construct a second option list in the model.
+2. Present those exact options concisely, recommend the server-marked option and wait for the user's selection. Do not create a campaign yet.
+3. Call `outbound-campaign-start` once with the selected server `optionId` and the supplied request id. Mission Control resolves the canonical workflow intent server-side; never accept or recreate a browser/model-supplied targeting payload.
+4. Mission Control calls `outbound.workflow.start` directly and exactly once. The result must not return to the model for another planning pass. Idempotency and the active-equivalent guard reuse the same campaign and run on retries.
 5. If the command is asynchronous, report that the workflow is processing and end the turn. The callback updates persisted workflow status directly; it never becomes a user prompt and never invokes the model.
 6. When the persisted run reaches `awaiting_approval`, show the company count, contact count and up to three exact persisted samples. Never regenerate messages in chat and never require one-by-one review.
 7. For a live send, ask once. After explicit confirmation call `outbound.workflow.approve` and `outbound.workflow.execute` using the same `runId`. Internal approval is not a separate user decision.
@@ -253,6 +258,7 @@ The payload always uses one of:
 - `{"command":"outbound.score","campaignId":"...","scoreModel":"b2b_fit_v1"|"creator_quality_v1"}`
 - `{"command":"outbound.workflow.prepare","campaignId":"...","spec":{"channels":["linkedin"],"contactReason":"...","leadIds":["..."],"source":{"enabled":false,"provider":"apollo","limit":25,"criteria":{}},"enrichment":{"enabled":false},"strategyPack":{"strategies":[{"id":"company_reason_v1","version":1,"priority":100,"enabled":true,"parameters":{}}],"minimumScore":0.65,"allowFallback":true},"approval":{"required":true,"sampleSize":3},"sender":{}}}`
 - `{"command":"outbound.workflow.status","runId":"..."}`
+- `{"command":"outbound.workflow.rewrite","runId":"...","style":"conversation_question_v1"}` — atomically rewrites every unapproved artifact in the active batch and returns new persisted samples.
 - `{"command":"outbound.workflow.approve","runId":"...","actor":"Sancho"}`
 - `{"command":"outbound.workflow.execute","runId":"...","dryRun":true}`
 - `{"command":"outbound.workflow.execute","runId":"...","dryRun":false,"confirmLinkedInSend":true}`
@@ -270,11 +276,12 @@ The payload always uses one of:
 4. Never call `outbound.plan`, `outbound.source`, `outbound.enrich` or `outbound.workflow.prepare` for that new campaign. Those commands are compatibility surfaces for pre-existing campaigns and email/Partnerships flows.
 5. If `outbound.workflow.start` completes synchronously, show `batch.itemCount`, three exact `batch.sample[].messageBody` values, blocked contacts and signal failures. If asynchronous, stop after reporting its returned IDs; the persisted workflow event will announce completion.
    Preparation is not capped by today's LinkedIn sending capacity. The full valid base is prepared; execution sends only the available daily amount and leaves the remainder pending for deterministic resume.
-6. For a dry-run, call `outbound.workflow.approve` and then `outbound.workflow.execute` with `dryRun:true`. Never ask permission for a dry-run.
-7. For a live send, ask once: "Tengo listo el lote de N contactos. ¿Confirmas el envío real por LinkedIn?" This question must refer to the real external send, never to approval, a test or a dry-run.
-8. After confirmation, call `outbound.workflow.approve` and then `outbound.workflow.execute` with the same `runId`, `dryRun:false` and `confirmLinkedInSend:true`. Never substitute messages or lead IDs at execution time.
-9. Approval is an internal integrity gate over the immutable content hash. Do not present it as a separate user step or decision.
-10. Report campaign/run IDs and sent, failed, uncertain and pending counts. An `uncertain` result requires reconciliation; never retry it automatically.
+6. On later turns, use `active_outbound_workflow.runId`. For copy changes before approval, call `outbound.workflow.rewrite` once and show its persisted samples. Do not search Foundation templates for workflow artifacts.
+7. For a dry-run, call `outbound.workflow.approve` and then `outbound.workflow.execute` with `dryRun:true`. Never ask permission for a dry-run.
+8. For a live send, ask once: "Tengo listo el lote de N contactos. ¿Confirmas el envío real por LinkedIn?" This question must refer to the real external send, never to approval, a test or a dry-run.
+9. After confirmation, call `outbound.workflow.approve` and then `outbound.workflow.execute` with the same `runId`, `dryRun:false` and `confirmLinkedInSend:true`. Never substitute messages or lead IDs at execution time.
+10. Approval is an internal integrity gate over the immutable content hash. Do not present it as a separate user step or decision.
+11. Report campaign/run IDs and sent, failed, uncertain and pending counts. An `uncertain` result requires reconciliation; never retry it automatically.
 
 When any unified command returns top-level `async: true`, stop issuing tools immediately and end the turn after saying that YALC is processing it. The callback updates the same thread without invoking an agent. On a later user request, fetch `outbound.workflow.status` with its `runId`; never start or prepare again. After live execution completes, report its persisted item states and do not retry failed or uncertain contacts automatically.
 

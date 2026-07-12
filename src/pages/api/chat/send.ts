@@ -13,6 +13,7 @@ import {
   getThreadRouting,
   setThreadRouting,
   setStatusEntry,
+  upsertWorkflowJobMessage,
   type ChatAttachment,
   type ErrorDetail,
 } from "@/lib/data/mc-chat";
@@ -45,6 +46,7 @@ import {
   buildOutboundCampaignOptions,
   isOutboundCampaignStartPrompt,
 } from "@/lib/outreach/campaign-options";
+import { resolveActiveOutboundWorkflow } from "@/lib/outreach/active-workflow";
 import { dispatchOutboundCommand } from "@/lib/yalc/outbound-command";
 import { resolveYalcConfig } from "@/lib/yalc/client";
 
@@ -70,6 +72,10 @@ function requestBaseUrl(req: NextApiRequest): string {
     : req.headers["x-forwarded-proto"];
   const host = Array.isArray(req.headers.host) ? req.headers.host[0] : req.headers.host;
   return `${forwardedProto || "http"}://${host || "localhost:3000"}`;
+}
+
+function resultText(value: unknown): string {
+  return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
 function resultNumber(value: unknown): number | null {
@@ -280,6 +286,38 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       const batch = result.batch && typeof result.batch === "object"
         ? result.batch as Record<string, unknown>
         : {};
+      const campaignId = resultText(result.campaignId);
+      const runId = resultText(result.runId);
+      const itemCount = resultNumber(batch.itemCount);
+      if (result.reused === true && campaignId && runId && itemCount !== null) {
+        const sample = Array.isArray(batch.sample)
+          ? batch.sample.flatMap((item) => {
+              if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+              const value = item as Record<string, unknown>;
+              const messageBody = resultText(value.messageBody);
+              if (!messageBody) return [];
+              const leadId = resultText(value.leadId);
+              return [{ ...(leadId ? { leadId } : {}), messageBody }];
+            }).slice(0, 3)
+          : [];
+        upsertWorkflowJobMessage(
+          tid,
+          `Ya existe una campaña activa equivalente con ${itemCount} contacto${itemCount === 1 ? "" : "s"}. No creé otra ni repetí la búsqueda.`,
+          {
+            jobId: `reused:${runId}`,
+            type: "campaign.workflow.prepare",
+            status: "completed",
+            command: "outbound.workflow.start",
+            campaignId,
+            runId,
+            summary: "active equivalent workflow reused",
+            batch: { itemCount, sample },
+          },
+          resolvedAgent || "rocinante",
+        );
+        const { httpStatus: _httpStatus, ...payload } = result;
+        return res.status(200).json({ ...payload, deterministic: true, chatId: tid });
+      }
       const startedText = result.async === true
         ? [
             `Inicié la campaña para **${outboundChoice.label}**.`,
@@ -330,6 +368,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
+  const activeOutboundWorkflow = resolveActiveOutboundWorkflow(getThread(tid));
   const run = createAgentRun({
     idempotencyKey: acceptedIdempotencyKey,
     threadId: tid,
@@ -359,6 +398,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       scope: policy.scope,
       skillMode: policy.skillMode,
       primarySkill: resolvedPrimarySkill,
+      activeOutboundWorkflow,
     },
   });
 
@@ -426,6 +466,8 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
           brief: pendingTaskRouteProposal.brief,
         }
       : undefined,
+    activeOutboundWorkflow,
+    controlBaseUrl: requestBaseUrl(req),
     threadState: threadState || undefined,
     docPath: docPath || undefined,
     docKind: typeof docKind === "string" ? docKind : undefined,

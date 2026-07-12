@@ -31,8 +31,12 @@ import { SlideOver } from "@/components/shared/slide-over";
 import { ScoreBar, ToastViewport, useToast } from "@/components/partnerships/ui";
 import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
-import { buildB2BCampaignThread, buildYalcThread } from "@/lib/chat-openers";
+import { buildYalcThread } from "@/lib/chat-openers";
 import { linkedInFirstContactCandidates } from "@/lib/outreach/linkedin-first-contact";
+import {
+  NewCampaignPanel,
+  type OutboundCampaignSetupChoices,
+} from "@/components/outbound-b2b/new-campaign-panel";
 import { cn } from "@/lib/utils";
 import { isCampaignKind, type YalcCampaignKind } from "@/lib/yalc/campaign-kind";
 import {
@@ -50,6 +54,7 @@ import {
 type B2BTab = OutreachTabKey | "settings";
 type ContactosVista = "kanban" | "lista";
 type OutboundAction =
+  | "workflow-start"
   | "approve"
   | "dry-run"
   | "publish"
@@ -316,6 +321,13 @@ interface OutboundWorkflowExecuteResponse extends YalcQueuedJobResponse {
     uncertain: number;
     pending: number;
   };
+}
+
+interface OutboundCampaignStartResponse extends YalcQueuedJobResponse {
+  campaignId: string;
+  runId: string;
+  reused?: boolean;
+  batch?: { itemCount?: number };
 }
 
 function workflowBlockReasonLabel(reason?: string | null): string {
@@ -818,6 +830,7 @@ function inboxBucketForLead(lead: Lead): B2BInboxFilter | null {
 }
 
 function outboundActionLabel(action: OutboundAction): string {
+  if (action === "workflow-start") return "Buscar y preparar campaña";
   if (action === "approve") return "Personalizar mensajes";
   if (action === "dry-run") return "Simular envíos";
   if (action === "publish") return "Contactar por email";
@@ -1012,6 +1025,8 @@ export function OutboundB2BView() {
   const [activeJob, setActiveJob] = useState<ActiveYalcJob | null>(null);
   const [workflowBlocked, setWorkflowBlocked] = useState<Array<{ leadId: string; reason: string }>>([]);
   const [contactReasons, setContactReasons] = useState<Record<string, string>>({});
+  const [campaignSetupOpen, setCampaignSetupOpen] = useState(false);
+  const [campaignSetupOptionId, setCampaignSetupOptionId] = useState("");
 
   function pushQuery(
     next: Partial<{
@@ -1067,6 +1082,22 @@ export function OutboundB2BView() {
     queryFn: () => fetchJson<ProvidersPayload>(`/api/yalc/providers?slug=${encodeURIComponent(slug)}`),
     enabled: !!slug,
   });
+
+  const campaignSetupQuery = useQuery({
+    queryKey: ["yalc", slug, "b2b", "campaign-setup"],
+    queryFn: () =>
+      fetchJson<OutboundCampaignSetupChoices>(
+        `/api/outbound/campaign-setup?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug && campaignSetupOpen,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (!campaignSetupOpen || campaignSetupOptionId || !campaignSetupQuery.data) return;
+    const recommended = campaignSetupQuery.data.options.find((option) => option.recommended);
+    setCampaignSetupOptionId(recommended?.id || campaignSetupQuery.data.options[0]?.id || "");
+  }, [campaignSetupOpen, campaignSetupOptionId, campaignSetupQuery.data]);
 
   const campaigns = useMemo(
     () => (campaignsQuery.data?.campaigns || [])
@@ -1506,10 +1537,52 @@ export function OutboundB2BView() {
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo archivar la campaña", "warn"),
   });
 
-  function openB2BSearch(campaign?: Campaign, action?: "search" | "enrich" | "personalize") {
+  const campaignStartAction = useMutation<OutboundCampaignStartResponse, Error, { optionId: string }>({
+    mutationFn: ({ optionId }) =>
+      fetchJson<OutboundCampaignStartResponse>(
+        `/api/outbound/campaign-setup?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            optionId,
+            requestId: globalThis.crypto.randomUUID(),
+          }),
+        },
+      ),
+    onSuccess: (data) => {
+      setCampaignSetupOpen(false);
+      setCampaignSetupOptionId("");
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
+      if (isQueuedJobResponse(data)) {
+        setActiveJob({
+          campaignId: data.campaignId,
+          action: "workflow-start",
+          jobId: data.jobId,
+          status: data.status || "queued",
+        });
+        showToast("Buscando empresas, contactos y preparando mensajes.");
+        return;
+      }
+      if (data.campaignId) {
+        pushQuery({
+          campaign: data.campaignId,
+          tab: data.batch?.itemCount ? "contactos" : "encuentra",
+          busqueda: "",
+          stage: "",
+        });
+      }
+      showToast(data.reused
+        ? "Abrí la campaña equivalente que ya estaba preparada."
+        : `${data.batch?.itemCount ?? 0} contactos preparados. No se envió nada.`);
+    },
+    onError: (error) => showToast(error.message || "No se pudo preparar la campaña", "warn"),
+  });
+
+  async function openB2BSearch(campaign?: Campaign, action?: "search" | "enrich" | "personalize") {
     if (!slug) return;
     if (!campaign) {
-      openChat(slug, buildB2BCampaignThread(slug));
+      setCampaignSetupOpen(true);
       return;
     }
     const campaignRef = `"${campaign.title || campaign.id}" (${campaign.id})`;
@@ -1520,7 +1593,26 @@ export function OutboundB2BView() {
         : action === "personalize"
           ? `Continúa la campaña B2B ${campaignRef}. Elige automáticamente la mejor personalización verificable para cada persona, prepara los mensajes a escala y enséñame tres ejemplos y las excepciones. Si no hay señales fiables, usa empresa, rol y motivo de contacto sin inventar hechos. No envíes contactos reales.`
         : `Lee el estado de la campaña B2B ${campaignRef} y continúa con el siguiente paso lógico: audiencia, enriquecimiento, personalización o muestra. Recomienda una única estrategia y ejecútala; no me presentes un menú técnico. No envíes contactos reales sin mi confirmación explícita.`;
-    openChat(slug, buildYalcThread(slug, prompt));
+    try {
+      const context = await fetchJson<{ threadId: string }>(
+        `/api/outbound/chat-context?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ campaignId: campaign.id }),
+        },
+      );
+      const thread = buildYalcThread(slug, action ? prompt : undefined);
+      thread.threadId = context.threadId;
+      thread.threadName = campaign.title || "Campaña B2B";
+      thread.threadState = "continue";
+      openChat(slug, thread);
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "No se pudo abrir el workflow en chat",
+        "warn",
+      );
+    }
   }
 
   function openB2BReply(lead: Lead, draft?: string) {
@@ -1691,7 +1783,7 @@ export function OutboundB2BView() {
             {tab === "encuentra" && (
               <button
                 type="button"
-                onClick={() => openB2BSearch()}
+                onClick={() => void openB2BSearch()}
                 className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
                 data-testid="crear-busqueda-b2b"
               >
@@ -1730,7 +1822,7 @@ export function OutboundB2BView() {
               {tab !== "encuentra" && icpCampaign && (
                 <button
                   type="button"
-                  onClick={() => openB2BSearch(icpCampaign)}
+                  onClick={() => void openB2BSearch(icpCampaign)}
                   className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold text-foreground transition-colors hover:border-rust hover:text-rust"
                 >
                   <MessageSquare className="h-4 w-4" />
@@ -1766,6 +1858,25 @@ export function OutboundB2BView() {
               </div>
             )}
 
+            {tab === "encuentra" && campaignSetupOpen && (
+              <NewCampaignPanel
+                choices={campaignSetupQuery.data}
+                selectedId={campaignSetupOptionId}
+                loading={campaignSetupQuery.isLoading}
+                starting={campaignStartAction.isPending}
+                error={campaignSetupQuery.error instanceof Error ? campaignSetupQuery.error.message : null}
+                onSelect={setCampaignSetupOptionId}
+                onStart={() => {
+                  if (campaignSetupOptionId) campaignStartAction.mutate({ optionId: campaignSetupOptionId });
+                }}
+                onClose={() => {
+                  if (campaignStartAction.isPending) return;
+                  setCampaignSetupOpen(false);
+                  setCampaignSetupOptionId("");
+                }}
+              />
+            )}
+
             {tab === "encuentra" && (
               <B2BCampaignsTab
                 campaigns={campaigns}
@@ -1773,13 +1884,13 @@ export function OutboundB2BView() {
                 loading={campaignsQuery.isLoading}
                 actionBusy={actionBusy}
                 busyCampaignId={outboundAction.variables?.campaignId || activeJob?.campaignId}
-                onCreate={() => openB2BSearch()}
+                onCreate={() => void openB2BSearch()}
                 onOpen={(campaign, next) => {
                   pushQuery({ campaign: campaign.id, tab: next.tab, busqueda: "", stage: "" });
                 }}
                 onRunAction={(campaign, action) => {
                   pushQuery({ campaign: campaign.id, busqueda: "", stage: "" });
-                  openB2BSearch(campaign, action);
+                  void openB2BSearch(campaign, action);
                 }}
               />
             )}
@@ -1818,7 +1929,9 @@ export function OutboundB2BView() {
                     busy={actionBusy}
                     busyAction={busyAction}
                     disabled={!selectedCampaignId || selectedLeadEditsLocked}
-                    onPersonalize={() => icpCampaign && openB2BSearch(icpCampaign, "personalize")}
+                    onPersonalize={() => {
+                      if (icpCampaign) void openB2BSearch(icpCampaign, "personalize");
+                    }}
                     onSimulate={() => executeEmailCampaign(true)}
                     onExecute={() => executeEmailCampaign(false)}
                   />

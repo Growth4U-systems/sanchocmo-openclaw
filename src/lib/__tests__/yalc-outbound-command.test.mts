@@ -636,6 +636,33 @@ test("outbound.workflow.continue advances one persisted run without creating a c
   assert.equal(calls.length, 1);
 });
 
+test("outbound.workflow.rewrite forwards one typed batch transition", async () => {
+  installFetch((path, call) => {
+    assert.equal(path, "/api/outbound/command");
+    const body = call.body as Record<string, unknown>;
+    assert.equal(body.command, "outbound.workflow.rewrite");
+    assert.equal(body.runId, "run-1");
+    assert.equal(body.style, "conversation_question_v1");
+    return {
+      ok: true,
+      command: "outbound.workflow.rewrite",
+      campaignId: "campaign-1",
+      runId: "run-1",
+      batch: { itemCount: 3, contentHash: "hash-1", sample: [] },
+    };
+  });
+
+  const result = await dispatchOutboundCommand(config, {
+    command: "outbound.workflow.rewrite",
+    runId: "run-1",
+    style: "conversation_question_v1",
+  });
+
+  assert.equal(result.campaignId, "campaign-1");
+  assert.equal((result.batch as { itemCount: number }).itemCount, 3);
+  assert.equal(calls.length, 1);
+});
+
 test("outbound.workflow.status can restore a persisted run by run id", async () => {
   installFetch((path, call) => {
     assert.equal(path, "/api/outbound/command");

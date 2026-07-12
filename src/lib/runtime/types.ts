@@ -41,6 +41,27 @@ export interface InboundMessage {
     name: string;
     brief: string;
   };
+  /** Server-derived state for conversational control of a persisted YALC workflow. */
+  activeOutboundWorkflow?: {
+    campaignId: string;
+    runId: string;
+    status:
+      | "queued"
+      | "running"
+      | "awaiting_approval"
+      | "approved"
+      | "executing"
+      | "completed"
+      | "completed_with_errors"
+      | "failed";
+    lastOperation: string;
+    batch?: {
+      itemCount: number;
+      sample: Array<{ leadId?: string; messageBody: string }>;
+    };
+  };
+  /** Trusted Mission Control origin used by runtime-side command adapters. */
+  controlBaseUrl?: string;
   threadState?: unknown;
   docPath?: string;
   docKind?: string;

@@ -18,6 +18,30 @@ interface RoleGroup {
   titles: string[];
 }
 
+export interface OutboundCampaignAudienceOption {
+  id: string;
+  title: string;
+  label: string;
+  description: string;
+  accountDescription: string;
+  roles: string[];
+  recommended?: boolean;
+  workflowIntent: Record<string, unknown>;
+}
+
+export interface OutboundCampaignChoiceSet {
+  id: "outbound_ecp_v1";
+  channel: "linkedin";
+  objective: "start_conversations";
+  prompt: string;
+  batchSize: number;
+  options: OutboundCampaignAudienceOption[];
+}
+
+export type OutboundCampaignChoiceResult =
+  | { ok: true; choices: OutboundCampaignChoiceSet }
+  | { ok: false; message: string };
+
 const COUNTRY_NAMES: Record<string, string> = {
   AR: "Argentina",
   CL: "Chile",
@@ -125,7 +149,7 @@ export function isOutboundCampaignStartPrompt(value: unknown): boolean {
     || normalized.startsWith("quiero crear una campaña b2b por linkedin ");
 }
 
-export function buildOutboundCampaignOptions(slug: string): { ok: true; message: string } | { ok: false; message: string } {
+export function getOutboundCampaignChoices(slug: string): OutboundCampaignChoiceResult {
   const config = readFoundationConfig(slug);
   const companyContext = text(config?.icp?.company_context);
   const groups = roleGroups(strings(config?.icp?.role_keywords));
@@ -151,7 +175,11 @@ export function buildOutboundCampaignOptions(slug: string): { ok: true; message:
   );
   const options = groups.map((group, index) => ({
     id: group.id,
+    title: group.name,
     label: `${group.name} · ${accountLabel || companyContext} · ${group.titles.join("/")}`,
+    description: `${operationalAccountDescription}. Roles: ${group.titles.join(", ")}.`,
+    accountDescription: operationalAccountDescription,
+    roles: group.titles,
     ...(index === 0 ? { recommended: true } : {}),
     workflowIntent: {
       schemaVersion: 1,
@@ -175,11 +203,32 @@ export function buildOutboundCampaignOptions(slug: string): { ok: true; message:
     },
   }));
 
+  return {
+    ok: true,
+    choices: {
+      id: "outbound_ecp_v1",
+      channel: "linkedin",
+      objective: "start_conversations",
+      prompt: `¿Con qué audiencia empezamos? Prepararé un primer lote de hasta ${batchSize.toLocaleString("es-ES")} contactos para revisión.`,
+      batchSize,
+      options,
+    },
+  };
+}
+
+export function buildOutboundCampaignOptions(slug: string): { ok: true; message: string } | { ok: false; message: string } {
+  const result = getOutboundCampaignChoices(slug);
+  if (!result.ok) return result;
   const question = {
-    id: "outbound_ecp_v1",
-    prompt: `¿Con qué audiencia empezamos? Prepararé un primer lote de hasta ${batchSize.toLocaleString("es-ES")} contactos para revisión.`,
+    id: result.choices.id,
+    prompt: result.choices.prompt,
     mode: "single",
-    options,
+    options: result.choices.options.map((option) => ({
+      id: option.id,
+      label: option.label,
+      ...(option.recommended ? { recommended: true } : {}),
+      workflowIntent: option.workflowIntent,
+    })),
   };
   return {
     ok: true,

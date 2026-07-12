@@ -6,6 +6,8 @@ import {
 } from "@/lib/yalc/outbound-command";
 import { resolveYalcConfig, yalcErrorResponse } from "@/lib/yalc/client";
 import { yalcGuardErrorResponse } from "@/lib/yalc/campaign-guards";
+import { upsertWorkflowJobMessage } from "@/lib/data/mc-chat";
+import { buildSynchronousOutboundWorkflowMessage } from "@/lib/outreach/sync-workflow-result";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -20,6 +22,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       resolveYalcConfig(slug),
       req.body || {},
     );
+    if (!httpStatus || httpStatus < 202) {
+      const workflowMessage = buildSynchronousOutboundWorkflowMessage(slug, req.body, payload);
+      if (workflowMessage) {
+        upsertWorkflowJobMessage(
+          workflowMessage.threadId,
+          workflowMessage.text,
+          workflowMessage.event,
+          workflowMessage.agent,
+        );
+      }
+    }
     return res.status(httpStatus || 200).json(payload);
   } catch (err) {
     const command = outboundCommandErrorResponse(err);

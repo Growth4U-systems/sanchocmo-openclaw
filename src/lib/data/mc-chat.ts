@@ -108,6 +108,7 @@ export interface WorkflowJobEvent {
   jobId: string;
   type: string;
   status: "completed" | "failed";
+  workflowStatus?: string;
   command?: string;
   campaignId?: string;
   runId?: string;
@@ -301,6 +302,36 @@ export function upsertWorkflowJobMessage(
   agent?: string,
 ) {
   const thread = getThread(threadId);
+  const isCampaignWorkflow = workflowJob.type.startsWith("campaign.workflow.") && Boolean(workflowJob.runId);
+  if (isCampaignWorkflow) {
+    const existing = thread.messages.find(
+      (message) => message.role === "workflow" && (
+        message.workflowJob?.jobId === workflowJob.jobId
+        || (
+          message.workflowJob?.type.startsWith("campaign.workflow.")
+          && message.workflowJob.runId === workflowJob.runId
+        )
+      ),
+    );
+    thread.messages = thread.messages.filter(
+      (message) => !(
+        message.role === "workflow"
+        && (
+          message.workflowJob?.jobId === workflowJob.jobId
+          || (
+            message.workflowJob?.type.startsWith("campaign.workflow.")
+            && message.workflowJob.runId === workflowJob.runId
+          )
+        )
+      ),
+    );
+    const now = Date.now();
+    thread.messages.push({ role: "workflow", text, ts: existing?.ts ?? now, agent, workflowJob });
+    if (thread.messages.length > 200) thread.messages = thread.messages.slice(-200);
+    thread.updatedAt = now;
+    saveThread(threadId, thread);
+    return;
+  }
   const existingIndex = thread.messages.findIndex(
     (message) => message.workflowJob?.jobId === workflowJob.jobId,
   );

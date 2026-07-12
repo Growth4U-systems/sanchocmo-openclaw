@@ -675,7 +675,7 @@ export function ChatSidebar() {
       const job = message.workflowJob;
       return message.role === "workflow"
         && job?.status === "completed"
-        && job.type === "campaign.workflow.prepare"
+        && job.type.startsWith("campaign.workflow.")
         && !refreshedWorkflowJobs.current.has(job.jobId);
     });
     if (unseenCompletedJobs.length === 0) return;

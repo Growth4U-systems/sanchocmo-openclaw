@@ -10,18 +10,19 @@ const client = fs.readFileSync(
   "utf8",
 );
 
-test("yalc operator treats chat as the primary outbound control surface", () => {
-  assert.match(skill, /Chat is the primary control surface/);
+test("yalc operator keeps UI and chat on one typed outbound workflow", () => {
+  assert.match(skill, /Outreach UI is the primary control surface/);
+  assert.match(skill, /Chat is an optional free-language control layer/);
   assert.match(skill, /do not ask the user to choose implementation techniques/i);
   assert.match(skill, /For a live send, ask once/i);
   assert.match(skill, /Never ask the user to approve a preview, proposal, internal draft or `dryRun`/);
   assert.match(skill, /This question must refer to the real external send, never to approval, a test or a dry-run/);
   assert.match(skill, /Missing brand documents or a `partial` context pack are not blockers/);
-  assert.match(skill, /present at most three Foundation-backed options and wait for that choice/i);
+  assert.match(skill, /Present at most three and wait for that choice/i);
   assert.match(skill, /only allowed pre-workflow question/i);
-  assert.match(skill, /one `:::ask` block with `id:"outbound_ecp_v1"` and `mode:"single"`/i);
-  assert.match(skill, /`id:"outbound_ecp_v1"`/);
-  assert.match(skill, /hidden `workflowIntent` object/);
+  assert.match(skill, /`outbound-campaign-options`/);
+  assert.match(skill, /`outbound-campaign-start`/);
+  assert.match(skill, /server `optionId`/);
 });
 
 test("yalc operator keeps signal recipes modular and evidence-backed", () => {
@@ -48,6 +49,10 @@ test("yalc operator must use one persisted deterministic workflow before asking 
   assert.match(skill, /never continue to the next cohort automatically/i);
   assert.match(skill, /`outbound\.workflow\.continue` only after an explicit request/i);
   assert.match(skill, /Mission Control calls `outbound\.workflow\.start` directly and exactly once/i);
+  assert.match(skill, /Never classify user requests with a finite phrase list/i);
+  assert.match(skill, /`active_outbound_workflow`/);
+  assert.match(skill, /`outbound\.workflow\.rewrite`/);
+  assert.match(skill, /Do not edit contacts one by one/i);
 });
 
 test("yalc client exposes campaign personalization as an orchestratable step", () => {
@@ -59,4 +64,6 @@ test("yalc client exposes campaign personalization as an orchestratable step", (
   assert.match(client, /linkedin-outbound-v1:[\s\S]*createHash/);
   assert.match(client, /async === true[\s\S]*out\.async = true/);
   assert.match(client, /commandName !== 'outbound\.status' && commandName !== 'outbound\.workflow\.status'/);
+  assert.match(client, /command === 'outbound-campaign-options'/);
+  assert.match(client, /command === 'outbound-campaign-start'/);
 });

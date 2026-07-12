@@ -110,6 +110,8 @@ function usage() {
   yalc-client campaign-dry-run --slug <slug> --id <campaign-id> --confirm-side-effect
   yalc-client campaign-publish --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-live --slug <slug> --id <campaign-id> [--input <json-file>|--json '<json>'] --confirm-side-effect
+  yalc-client outbound-campaign-options --slug <slug> [--mc-base-url <url>]
+  yalc-client outbound-campaign-start --slug <slug> [--input <json-file>|--json '<json>'] [--mc-base-url <url>] --confirm-side-effect
   yalc-client outbound-command --slug <slug> [--input <json-file>|--json '<json>'] --confirm-side-effect
   yalc-client campaign-report --slug <slug> --id <campaign-id>
   yalc-client campaign-timeline --slug <slug> --id <campaign-id>
@@ -658,6 +660,16 @@ async function main() {
     }
     const label = `outbound-${commandName.replace(/[^a-zA-Z0-9_-]/g, '-') || 'command'}`
     return callMissionControlAndSave(args, label, 'POST', '/api/outbound/command', payload)
+  }
+
+  if (command === 'outbound-campaign-options') {
+    return callMissionControlAndSave(args, 'outbound-campaign-options', 'GET', '/api/outbound/campaign-setup')
+  }
+
+  if (command === 'outbound-campaign-start') {
+    requireConfirmation(args, command)
+    const payload = readPayload(args)
+    return callMissionControlAndSave(args, 'outbound-campaign-start', 'POST', '/api/outbound/campaign-setup', payload)
   }
 
   if (command === 'campaigns') {

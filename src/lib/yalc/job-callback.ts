@@ -223,6 +223,7 @@ export async function dispatchJobResult(
   };
   if (isRecord(payload.output)) {
     const runId = typeof payload.output.runId === "string" ? payload.output.runId : undefined;
+    const workflowStatus = typeof payload.output.status === "string" ? payload.output.status : undefined;
     const batch = isRecord(payload.output.batch) ? payload.output.batch : null;
     const sample = Array.isArray(batch?.sample)
       ? batch.sample.flatMap((value) => {
@@ -234,6 +235,7 @@ export async function dispatchJobResult(
         }).slice(0, 3)
       : [];
     if (runId) workflowJob.runId = runId;
+    if (workflowStatus) workflowJob.workflowStatus = workflowStatus;
     if (batch && typeof batch.itemCount === "number") {
       workflowJob.batch = { itemCount: batch.itemCount, sample };
     }

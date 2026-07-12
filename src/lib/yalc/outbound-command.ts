@@ -22,6 +22,7 @@ export type OutboundCommandName =
   | "outbound.workflow.start"
   | "outbound.workflow.continue"
   | "outbound.workflow.prepare"
+  | "outbound.workflow.rewrite"
   | "outbound.workflow.approve"
   | "outbound.workflow.execute"
   | "outbound.workflow.status"
@@ -188,6 +189,7 @@ function commandName(value: unknown): OutboundCommandName {
     "outbound.workflow.start",
     "outbound.workflow.continue",
     "outbound.workflow.prepare",
+    "outbound.workflow.rewrite",
     "outbound.workflow.approve",
     "outbound.workflow.execute",
     "outbound.workflow.status",
@@ -616,6 +618,7 @@ async function outboundWorkflow(
     | "outbound.workflow.start"
     | "outbound.workflow.continue"
     | "outbound.workflow.prepare"
+    | "outbound.workflow.rewrite"
     | "outbound.workflow.approve"
     | "outbound.workflow.execute"
     | "outbound.workflow.status"
@@ -749,6 +752,7 @@ export async function dispatchOutboundCommand(
     case "outbound.workflow.start":
     case "outbound.workflow.continue":
     case "outbound.workflow.prepare":
+    case "outbound.workflow.rewrite":
     case "outbound.workflow.approve":
     case "outbound.workflow.execute":
     case "outbound.workflow.status":
