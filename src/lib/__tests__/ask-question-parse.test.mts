@@ -36,6 +36,25 @@ test("parseMessageSegments: tolerates recommended on a single option", () => {
   assert.equal(ask.question.options?.[0]?.recommended, true);
 });
 
+test("parseMessageSegments: retains hidden deterministic workflow intents", () => {
+  const workflowIntent = {
+    channel: "linkedin",
+    discoveryStrategy: "account_first_v1",
+    targetSegment: "Founders SaaS",
+    contactReason: "Quiero conversar sobre vuestro sistema de growth",
+    accountTarget: { description: "SaaS España", keywords: "SaaS" },
+    personTarget: { description: "Founders", titles: ["Founder"] },
+  };
+  const text = `:::ask\n${JSON.stringify({
+    id: "outbound_ecp_v1",
+    prompt: "Elige",
+    mode: "single",
+    options: [{ id: "founders", label: "Founders SaaS", workflowIntent }],
+  })}\n:::`;
+  const ask = parseMessageSegments(text).find((segment) => segment.type === "ask");
+  assert.deepEqual(ask?.type === "ask" ? ask.question.options?.[0].workflowIntent : null, workflowIntent);
+});
+
 test("parseMessageSegments: can MIX text + single blocks in one message", () => {
   const text =
     ':::ask\n{"id":"q_name","prompt":"Nombre","mode":"text"}\n:::\n:::ask\n{"id":"q_net","prompt":"Red","mode":"single","options":[{"id":"li","label":"LinkedIn"},{"id":"other","label":"Otro"}]}\n:::';

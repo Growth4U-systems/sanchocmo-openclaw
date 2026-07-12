@@ -551,7 +551,17 @@ test("outbound.workflow.start delegates one bounded intent without a pre-existin
     targetSegment: "Founders de SaaS B2B en España",
     contactReason: "Quiero compartir una forma más simple de operar outbound B2B",
     batchSize: 1_000,
-    criteria: { titles: ["Founder", "CEO"], organizationLocations: ["Spain"] },
+    discoveryStrategy: "account_first_v1",
+    accountTarget: {
+      description: "Empresas SaaS B2B en España",
+      keywords: "B2B SaaS",
+      locations: ["Spain"],
+      employeeRanges: ["5,200"],
+    },
+    personTarget: {
+      description: "Founders y CEOs",
+      titles: ["Founder", "CEO"],
+    },
   };
   installFetch((path, call) => {
     assert.equal(path, "/api/outbound/command");

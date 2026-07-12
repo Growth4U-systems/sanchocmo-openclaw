@@ -212,13 +212,7 @@ export function buildB2BCampaignThread(slug: string): ThreadConfig {
   cfg.quickActions = [
     {
       label: "Crear campaña",
-      prompt:
-        "Quiero crear una campaña B2B por LinkedIn. Revisa los ECP de mi Foundation, recomiéndame como máximo tres opciones concretas y pídeme elegir una. Todavía no crees la campaña. Después de mi elección, inicia una sola vez el workflow completo para buscar, enriquecer y preparar los mensajes. No envíes nada real hasta mi aprobación final.",
-    },
-    {
-      label: "Encontrar personas",
-      prompt:
-        "Quiero crear una base para outbound B2B por LinkedIn. Revisa los ECP de mi Foundation, recomiéndame como máximo tres opciones y pídeme elegir una. Después de mi elección, ejecuta un único workflow para buscar y enriquecer contactos reales y preparar los mensajes para revisión.",
+      prompt: "Quiero crear una campaña B2B por LinkedIn.",
     },
   ];
   return cfg;

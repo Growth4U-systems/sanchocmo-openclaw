@@ -7,7 +7,13 @@ export interface AskQuestionData {
   id: string;
   prompt: string;
   mode: "single" | "multi" | "text";
-  options?: { id: string; label: string; recommended?: boolean }[];
+  options?: {
+    id: string;
+    label: string;
+    recommended?: boolean;
+    /** Hidden deterministic action resolved by the server after selection. */
+    workflowIntent?: Record<string, unknown>;
+  }[];
   /** text mode: placeholder for the input/textarea. */
   placeholder?: string;
   /** text mode: when true the field can be left empty. */
@@ -265,7 +271,13 @@ export function AskQuestionGroup({
     for (const q of questions) {
       const labels = buildAnswerLabels(q, states[q.id]);
       labelsByQ[q.id] = labels;
-      lines.push(`[ask:${q.id}] respuesta: ${labels.join(", ")}`);
+      const selectedWorkflowOptions = (q.options ?? [])
+        .filter((option) => states[q.id].selected.has(option.id) && option.workflowIntent)
+        .map((option) => option.id);
+      const workflowMarker = selectedWorkflowOptions.length === 1
+        ? ` <!--workflow-option:${selectedWorkflowOptions[0]}-->`
+        : "";
+      lines.push(`[ask:${q.id}] respuesta: ${labels.join(", ")}${workflowMarker}`);
     }
     try {
       for (const q of questions) {

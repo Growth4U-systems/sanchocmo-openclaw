@@ -32,7 +32,7 @@ YALC is the source of truth for the GTM operating workflow: lead import, qualifi
 ## Hard Rules
 
 1. Never send email, add leads to a live campaign, or launch a campaign without explicit user confirmation in the current thread.
-2. For a new B2B campaign, the only human choice before preparation is the ECP/ICP. Present at most three Foundation-backed options and wait for that choice. Once selected, the request authorizes campaign creation, sourcing, enrichment, deterministic qualification and message preparation as one workflow; never ask for separate sourcing or enrichment confirmation.
+2. For a new B2B campaign, the only human choice before preparation is the ECP/ICP. Before presenting it, compile each option into two separate profiles: `accountTarget` (which companies fit) and `personTarget` (which roles inside them fit). Present at most three Foundation-backed options and wait for that choice. Once selected, the request authorizes campaign creation, sourcing, enrichment, deterministic qualification and message preparation as one workflow; never ask for separate sourcing or enrichment confirmation.
 3. Never ask the user to approve a preview, proposal, internal draft or `dryRun`. Execute or skip those under the original request. Ask once immediately before the first real contact send or a material provider cost that was not implied by the request.
 4. Do not ask the user to choose implementation techniques such as signal-based vs role-based personalization, provider, skill, scoring model or merge variables. Select the best available path and report the choice in the result.
 5. Use the wrapper script instead of direct `curl` so auth, live catalog verification and dry-run behavior stay consistent.
@@ -44,6 +44,7 @@ YALC is the source of truth for the GTM operating workflow: lead import, qualifi
 11. Never use fixtures, demo candidates, generated people, or provider payloads marked as mock/simulated. `outbound.workflow.start` performs the provider preflight before persistence and fails without creating a campaign when Apollo is unavailable.
 12. A preparation cohort is 1,000 contacts by default and at most 2,000 when the user explicitly requests it. Apollo's total is informational; never turn it into one giant run and never continue to the next cohort automatically.
 13. `manual` is valid only when the user supplied real records. Never synthesize manual leads as a fallback for a provider failure.
+14. Never treat a role, seniority or personal location as the company ICP. A normal campaign uses `account_first_v1`: find matching companies first, keep only usable domains, then search the target roles inside those domains. A signal-first recipe is a separate versioned workflow and must not be improvised from chat.
 
 ## Interaction Model
 
@@ -51,15 +52,16 @@ Chat is the primary control surface. The Outreach UI is the persistent view of t
 
 When the user asks for a new B2B outbound campaign:
 
-1. Read the Foundation ECPs and present at most three concise options in one `:::ask` block with `mode:"single"`. Recommend one, but wait for the user's selection. Do not create a campaign yet.
-2. After selection, derive a recipient-facing `contactReason`, a target segment and Apollo criteria. Use LinkedIn as the fixed Phase-1 channel. Set `batchSize:1000` by default; use `2000` only when the user explicitly asks for that larger cohort.
-3. When the ECP answer arrives, call `outbound.workflow.start` exactly once with `LinkedInOutboundV1` in that same turn. Do not ask another question. The wrapper derives a stable idempotency key from the chat thread, so retries reuse the same campaign and run.
-4. If the command is asynchronous, report that the workflow is processing and end the turn. The callback updates persisted workflow status directly; it never becomes a user prompt and never invokes the model.
-5. When the persisted run reaches `awaiting_approval`, show the batch count and up to three exact persisted samples. Never regenerate messages in chat and never require one-by-one review.
-6. For a live send, ask once. After explicit confirmation call `outbound.workflow.approve` and `outbound.workflow.execute` using the same `runId`. Internal approval is not a separate user decision.
-7. If Apollo reports more results, show `prepared of total` and offer the next cohort as a normal follow-up. Call `outbound.workflow.continue` only after an explicit request, passing the exact previous `runId`; it reuses the campaign and advances the stored cursor without reusing prior leads.
+1. Read `go-to-market/ecps/config.json` and the Foundation ECPs once. Compile at most three proposals. Every proposal must contain a concrete company profile and a concrete role profile that can be executed with the installed providers. Do not offer an ECP whose defining signal cannot be sourced by an operational recipe.
+2. Present the proposals in one `:::ask` block with `id:"outbound_ecp_v1"` and `mode:"single"`. Keep each label concise but explicit: `<persona> · <tipo/tamaño/país de empresa> · <roles>`. Recommend one, wait for the user's selection and do not create a campaign yet.
+3. Every option must include a hidden `workflowIntent` object with the complete canonical payload: `schemaVersion`, `channel:"linkedin"`, `title`, `ecpId`, `targetSegment`, `contactReason`, `batchSize`, `discoveryStrategy:"account_first_v1"`, `accountTarget`, and `personTarget`. The UI displays only `label`; Mission Control resolves the selected option from the persisted bot message and does not trust a browser-supplied payload.
+4. After the click, Mission Control calls `outbound.workflow.start` directly and exactly once. The answer must not return to the model, read Foundation files again or reinterpret the selection. The stable thread id derives the idempotency key, so retries reuse the same campaign and run.
+5. If the command is asynchronous, report that the workflow is processing and end the turn. The callback updates persisted workflow status directly; it never becomes a user prompt and never invokes the model.
+6. When the persisted run reaches `awaiting_approval`, show the company count, contact count and up to three exact persisted samples. Never regenerate messages in chat and never require one-by-one review.
+7. For a live send, ask once. After explicit confirmation call `outbound.workflow.approve` and `outbound.workflow.execute` using the same `runId`. Internal approval is not a separate user decision.
+8. If Apollo reports more results, show `prepared of total` and offer the next cohort as a normal follow-up. Call `outbound.workflow.continue` only after an explicit request, passing the exact previous `runId`; it reuses the campaign, the selected account set and the stored people cursor without reusing prior leads.
 
-Phase 1 always uses `company_reason_v1`: known first name, company and the campaign's contact reason. `hiring_signal_v1`, `recent_news_v1` remain modular strategies for later activation when their real providers are available; every strategy falls back without inventing a signal.
+Phase 1 discovery always uses `account_first_v1`: source companies from the account ICP, then source people only inside the returned domains. Phase 1 copy uses `company_reason_v1`: known first name, company and the campaign's contact reason. `linkedin_post_authors_v1`, `hiring_signal_v1`, and `recent_news_v1` remain separate modular recipes for later activation only after their real provider path passes an end-to-end test; never invent or silently fall back from a promised signal.
 
 ## Configuration
 
@@ -243,7 +245,7 @@ node skills/yalc-operator/scripts/yalc-client.mjs outbound-command --slug <slug>
 
 The payload always uses one of:
 
-- `{"command":"outbound.workflow.start","intent":{"schemaVersion":1,"channel":"linkedin","title":"...","ecpId":"...","targetSegment":"...","contactReason":"...","batchSize":1000,"criteria":{"query":"software","titles":["Founder","CEO"],"organizationLocations":["Spain"],"employeeRanges":["1,10","11,50"]}}}` — the only entrypoint for a new B2B LinkedIn campaign. Do not provide `idempotencyKey`; the wrapper derives it from the chat thread.
+- `{"command":"outbound.workflow.start","intent":{"schemaVersion":1,"channel":"linkedin","title":"...","ecpId":"...","targetSegment":"...","contactReason":"...","batchSize":1000,"discoveryStrategy":"account_first_v1","accountTarget":{"description":"Empresas SaaS B2B post-PMF en España, 5-200 empleados","keywords":"B2B SaaS post-PMF","industries":["Software"],"locations":["Spain"],"employeeRanges":["5,200"]},"personTarget":{"description":"Founders y CEOs","titles":["Founder","Co-Founder","CEO"],"seniorities":["founder","c_suite"]}}}` — the only entrypoint for a new B2B LinkedIn campaign. Do not provide `idempotencyKey`; the wrapper derives it from the chat thread.
 - `{"command":"outbound.workflow.continue","runId":"..."}` — prepares exactly one next cohort in the same campaign. Use only after the user explicitly asks to continue.
 - `{"command":"outbound.plan","campaignType":"B2B"|"Partnerships","goal":"...","hypothesis":"recipient-facing reason for contact","target":{...},"channels":["email"|"linkedin"]}`
 - `{"command":"outbound.source","campaignId":"...","profileKind":"b2b_contact"|"creator","provider":"apollo"|"crustdata"|"manual"|"company-db","criteria":{"query":"software","titles":["Founder","Co-Founder","CEO"],"organizationLocations":["Spain"],"employeeRanges":["1,10","11,50"]},"limit":25}`
@@ -262,7 +264,7 @@ The payload always uses one of:
 
 ## Workflow
 
-1. Read the user's outcome and available brand context. Infer a concrete recommended ICP and a recipient-facing contact reason. Save that reason as `hypothesis`; it must be a natural standalone sentence (for example, "Creemos que podemos ayudar a simplificar vuestro outbound"), and must never be a copy of the search goal such as "encontrar founders". Partial or missing optional brand documents require a truthful fallback, not a question. Ask only for a critical missing business fact.
+1. Read the user's outcome and available brand context once. Compile the ICP into `accountTarget` and `personTarget`, then infer a recipient-facing contact reason. Save that reason as `hypothesis`; it must be a natural standalone sentence (for example, "Creemos que podemos ayudar a simplificar vuestro outbound"), and must never be a copy of the search goal such as "encontrar founders". Partial or missing optional brand documents require a truthful fallback, not a question. Ask only for a critical missing business fact.
 2. Do not run a separate provider preflight for a new LinkedIn campaign. `outbound.workflow.start` owns that check and fails before persistence when Apollo is unavailable. Do not run `health`, `providers`, `skills`, standalone Apollo scripts, direct `curl`, web research or the capability map on this known path.
 3. For a new LinkedIn campaign, call `outbound.workflow.start` once. It performs provider preflight before persistence, creates or reuses one deterministic campaign, paginates sourcing to the requested target, enriches, qualifies usable contacts and prepares the message batch.
 4. Never call `outbound.plan`, `outbound.source`, `outbound.enrich` or `outbound.workflow.prepare` for that new campaign. Those commands are compatibility surfaces for pre-existing campaigns and email/Partnerships flows.

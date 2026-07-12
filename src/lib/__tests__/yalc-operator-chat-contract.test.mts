@@ -19,13 +19,15 @@ test("yalc operator treats chat as the primary outbound control surface", () => 
   assert.match(skill, /Missing brand documents or a `partial` context pack are not blockers/);
   assert.match(skill, /present at most three Foundation-backed options and wait for that choice/i);
   assert.match(skill, /only allowed pre-workflow question/i);
-  assert.match(skill, /one `:::ask` block with `mode:"single"`/i);
+  assert.match(skill, /one `:::ask` block with `id:"outbound_ecp_v1"` and `mode:"single"`/i);
+  assert.match(skill, /`id:"outbound_ecp_v1"`/);
+  assert.match(skill, /hidden `workflowIntent` object/);
 });
 
-test("yalc operator selects signal personalization with a truthful fallback", () => {
+test("yalc operator keeps signal recipes modular and evidence-backed", () => {
   assert.match(skill, /`company_reason_v1`/);
-  assert.match(skill, /`hiring_signal_v1`, `recent_news_v1`/);
-  assert.match(skill, /falls back without inventing a signal/i);
+  assert.match(skill, /`linkedin_post_authors_v1`, `hiring_signal_v1`, and `recent_news_v1`/);
+  assert.match(skill, /never invent or silently fall back from a promised signal/i);
   assert.match(skill, /Never use fixtures, demo candidates, generated people/);
   assert.match(skill, /performs the provider preflight before persistence/i);
   assert.match(skill, /`manual` is valid only when the user supplied real records/);
@@ -33,7 +35,7 @@ test("yalc operator selects signal personalization with a truthful fallback", ()
 
 test("yalc operator must use one persisted deterministic workflow before asking to send", () => {
   assert.match(skill, /`outbound\.workflow\.start` is the only permitted entrypoint/);
-  assert.match(skill, /show the batch count and up to three exact persisted samples/i);
+  assert.match(skill, /show the company count, contact count and up to three exact persisted samples/i);
   assert.match(skill, /Approval is an internal integrity gate over the immutable content hash/);
   assert.match(skill, /using the same `runId`/);
   assert.match(skill, /Do not present it as a separate user step or decision/);
@@ -45,6 +47,7 @@ test("yalc operator must use one persisted deterministic workflow before asking 
   assert.match(skill, /1,000 contacts by default and at most 2,000/i);
   assert.match(skill, /never continue to the next cohort automatically/i);
   assert.match(skill, /`outbound\.workflow\.continue` only after an explicit request/i);
+  assert.match(skill, /Mission Control calls `outbound\.workflow\.start` directly and exactly once/i);
 });
 
 test("yalc client exposes campaign personalization as an orchestratable step", () => {
