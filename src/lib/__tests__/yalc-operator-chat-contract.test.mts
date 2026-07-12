@@ -51,7 +51,8 @@ test("yalc operator must use one persisted deterministic workflow before asking 
   assert.match(skill, /Mission Control calls `outbound\.workflow\.start` directly and exactly once/i);
   assert.match(skill, /Never classify user requests with a finite phrase list/i);
   assert.match(skill, /`active_outbound_workflow`/);
-  assert.match(skill, /`outbound\.workflow\.rewrite`/);
+  assert.match(skill, /`outbound\.workflow\.personalize`/);
+  assert.match(skill, /`linkedin-connection-copy@1\.0\.0`/);
   assert.match(skill, /Do not edit contacts one by one/i);
 });
 
