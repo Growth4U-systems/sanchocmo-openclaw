@@ -33,6 +33,7 @@ export const MCP_SCOPES = [
   "seo:write",
   "metrics:read",
   "metrics:write",
+  "quality:read",
 ] as const;
 
 export type McpScope = (typeof MCP_SCOPES)[number];

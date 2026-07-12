@@ -68,9 +68,20 @@ mask_secret() {
 }
 
 # --- Interactivity helpers ---------------------------------------------------
-# Non-interactive when there's no TTY or WIZARD_ASSUME_YES=1.
+# Interactive whenever we can reach the controlling terminal. We deliberately
+# probe /dev/tty (the same fd every prompt reads from, `read … </dev/tty`)
+# instead of stdin: under the documented one-liner `curl … | bash`, bash's
+# stdin is the pipe (not a TTY), yet /dev/tty still points at the user's
+# terminal — so testing `-t 0` alone would wrongly go non-interactive and abort
+# on the first required credential. Only force non-interactive when explicitly
+# asked (WIZARD_ASSUME_YES=1) or when there is genuinely no terminal at all
+# (real CI / `docker build` / cron: stdin not a TTY AND /dev/tty unopenable).
 INTERACTIVE=1
-if [ "${WIZARD_ASSUME_YES:-0}" = "1" ] || [ ! -t 0 ]; then INTERACTIVE=0; fi
+if [ "${WIZARD_ASSUME_YES:-0}" = "1" ]; then
+  INTERACTIVE=0
+elif [ ! -t 0 ] && ! { true 0</dev/tty; } 2>/dev/null; then
+  INTERACTIVE=0
+fi
 
 # ask <var-name> <prompt> <default>
 # Resolution order: existing env value > interactive prompt > default.
@@ -121,6 +132,30 @@ ask_required() {
     exit 1
   fi
   printf '%s' "$val"
+}
+
+# ask_choice <var-name> <prompt> <default> <valid…> : like `ask`, but only accepts
+# one of the listed choices (case-insensitive, normalized to lowercase). Interactive:
+# re-prompts until the value is valid. Non-interactive: validates the env/default
+# value and aborts with a clear message — so a typo can never silently fall through
+# to a mis-configured install (e.g. a bad provider that collects no credential).
+ask_choice() {
+  local var="$1" prompt="$2" default="$3"; shift 3
+  local valid="$*" val low choice
+  while :; do
+    val="$(ask "$var" "$prompt" "$default")"
+    low="$(printf '%s' "$val" | tr '[:upper:]' '[:lower:]')"
+    for choice in $valid; do
+      [ "$low" = "$choice" ] && { printf '%s' "$low"; return; }
+    done
+    if [ "$INTERACTIVE" = "1" ]; then
+      warn "Invalid value '$val' — choose one of: $valid"
+      unset "$var"   # drop a bad env-provided value so `ask` re-prompts
+      continue
+    fi
+    say "${YLW}ERROR:${RST} $var must be one of: $valid (got '$val')."
+    exit 1
+  done
 }
 
 # check_runtime_gateway <base-url> <health-path> <secret> : best-effort reachability
@@ -241,7 +276,7 @@ esac
 # subscription mode is the documented "invalid x-api-key" fallback footgun, so we
 # blank the unused credential explicitly.
 nstep "Model provider & auth"
-PROVIDER="$(ask PROVIDER "Provider — anthropic, openai, fireworks, both, or all" "anthropic")"
+PROVIDER="$(ask_choice PROVIDER "Provider — anthropic, openai, fireworks, or all" "anthropic" anthropic openai fireworks all)"
 # Initialize empty (NOT to a default like "api_key") so `ask` actually prompts:
 # any non-empty value makes ask treat the question as already answered and skip
 # it. The real default is supplied as ask's 3rd argument below. Empty here only
@@ -258,8 +293,8 @@ ANTHROPIC_AUTH_MODE="${ANTHROPIC_AUTH_MODE:-}"
 OPENAI_AUTH_MODE="${OPENAI_AUTH_MODE:-}"
 
 case "$PROVIDER" in
-  anthropic|both|all|multi)
-    ANTHROPIC_AUTH_MODE="$(ask ANTHROPIC_AUTH_MODE "Anthropic auth mode — api_key or subscription" "api_key")"
+  anthropic|all)
+    ANTHROPIC_AUTH_MODE="$(ask_choice ANTHROPIC_AUTH_MODE "Anthropic auth mode — api_key or subscription" "api_key" api_key subscription)"
     if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
       say "  ${DIM}Generate a subscription token on the host with: claude setup-token${RST}"
       ANTHROPIC_OAUTH_TOKEN="$(ask_required ANTHROPIC_OAUTH_TOKEN "Claude subscription token (sk-ant-oat...)")"
@@ -272,8 +307,8 @@ case "$PROVIDER" in
 esac
 
 case "$PROVIDER" in
-  openai|both|all|multi)
-    OPENAI_AUTH_MODE="$(ask OPENAI_AUTH_MODE "OpenAI auth mode — api_key or subscription" "api_key")"
+  openai|all)
+    OPENAI_AUTH_MODE="$(ask_choice OPENAI_AUTH_MODE "OpenAI auth mode — api_key or subscription" "api_key" api_key subscription)"
     if [ "$OPENAI_AUTH_MODE" = "subscription" ]; then
       warn "OpenAI subscription uses Codex (ChatGPT) OAuth, set up host-side with 'openclaw models auth login' — it can't be entered here. Configure it after install."
       OPENAI_API_KEY=""
@@ -285,7 +320,7 @@ esac
 
 # Fireworks is API-key-only (no subscription/OAuth) — require the key when chosen.
 case "$PROVIDER" in
-  fireworks|all|multi)
+  fireworks|all)
     FIREWORKS_API_KEY="$(ask_required FIREWORKS_API_KEY "Fireworks API key (fw-...)")"
     ;;
 esac
@@ -428,12 +463,15 @@ fi
 # Guard against an empty slug (e.g. a name with no alphanumerics).
 [ -n "$FIRST_BRAND_SLUG" ] || FIRST_BRAND_SLUG="my-brand"
 
-# --- 7. Optional services (Outreach, Open Design) — advanced only ------------
+# --- 7. Optional services (Outreach, Open Design) ----------------------------
 # Self-provisioning opt-in overlays (we mint their bearer tokens); install.sh
-# brings each up when its token is present. Quick leaves both off — enable later
-# with `./sancho install --yalc` / `--od` or `./sancho reconfigure --advanced`.
-ENABLE_YALC="${ENABLE_YALC:-0}"
-ENABLE_OD="${ENABLE_OD:-0}"
+# brings each up when its token is present. Quick enables BOTH by default so a
+# fresh install is feature-complete out of the box; advanced asks per-service.
+# Override in quick with ENABLE_YALC=no / ENABLE_OD=no. Their host ports
+# auto-relocate if busy (resolve_host_ports: OD_HOST_PORT 7456, YALC_PORT 3847)
+# and OD_WEB_URL follows the relocated port, so no port question is needed here.
+ENABLE_YALC="${ENABLE_YALC:-}"
+ENABLE_OD="${ENABLE_OD:-}"
 OD_API_TOKEN="${OD_API_TOKEN:-}"
 OD_WEB_URL="${OD_WEB_URL:-}"
 OD_ALLOWED_ORIGINS="${OD_ALLOWED_ORIGINS:-}"
@@ -462,6 +500,32 @@ if [ "$WIZARD_MODE" = "advanced" ]; then
     OD_WEB_URL="$(ask OD_WEB_URL "Open Design web URL (browser-reachable)" "http://localhost:7456")"
     OD_ALLOWED_ORIGINS="$OD_WEB_URL"
   fi
+else
+  # Quick: enable both opt-in services by default for a hands-on (interactive)
+  # install, so a fresh install is feature-complete without a per-service prompt.
+  # Headless/CI (WIZARD_ASSUME_YES / no TTY) stays off-by-default so scripted
+  # installs stay minimal and don't fail pulling extra images — opt in there with
+  # ENABLE_YALC=yes / ENABLE_OD=yes. Either way an explicit env value always wins.
+  _svc_default=no
+  [ "$INTERACTIVE" = "1" ] && _svc_default=yes
+  ENABLE_YALC="${ENABLE_YALC:-$_svc_default}"
+  ENABLE_OD="${ENABLE_OD:-$_svc_default}"
+fi
+
+# Normalize yes/no/1/0 → 1/0 for BOTH modes (advanced already produced 1/0; this
+# is idempotent for it and resolves the quick defaults / any env override).
+case "$(printf '%s' "$ENABLE_YALC" | tr '[:upper:]' '[:lower:]')" in
+  y|yes|true|1) ENABLE_YALC=1 ;; *) ENABLE_YALC=0 ;;
+esac
+case "$(printf '%s' "$ENABLE_OD" | tr '[:upper:]' '[:lower:]')" in
+  y|yes|true|1) ENABLE_OD=1 ;; *) ENABLE_OD=0 ;;
+esac
+# Open Design needs a browser-reachable URL. When enabled without one (quick, or
+# a scripted install that set ENABLE_OD but not OD_WEB_URL) default to localhost;
+# resolve_host_ports repoints it if host port 7456 gets relocated.
+if [ "$ENABLE_OD" = "1" ] && [ -z "$OD_WEB_URL" ]; then
+  OD_WEB_URL="http://localhost:7456"
+  OD_ALLOWED_ORIGINS="${OD_ALLOWED_ORIGINS:-$OD_WEB_URL}"
 fi
 
 # --- Generate secrets --------------------------------------------------------
@@ -469,6 +533,18 @@ step "Generating secrets"
 NEXTAUTH_SECRET="$(gen_b64)"
 ENCRYPTION_KEY="$(gen_hex)"
 SANCHO_INTERNAL_API_TOKEN="$(gen_hex)"
+# MC_CHAT_SECRET: the shared secret the control plane (MC's chat send/webhook
+# endpoints) and the runtime gateway sign with (X-MC-Secret). The openclaw
+# adapter, entrypoint.sh and generate-openclaw-config.js all read
+# MC_CHAT_SECRET (falling back to OPENCLAW_GATEWAY_TOKEN), so a fresh install
+# that never sets it 503s on the first chat ("MC_CHAT_SECRET not configured").
+# Generate it here so chat works out of the box. Reused on --force (stateful,
+# like adminToken) so an existing gateway pairing isn't rotated out.
+MC_CHAT_SECRET="${MC_CHAT_SECRET:-}"
+if [ -z "$MC_CHAT_SECRET" ] && [ -f "$ENV_FILE" ]; then
+  MC_CHAT_SECRET="$(grep -E '^[[:space:]]*MC_CHAT_SECRET=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d "\"'")"
+fi
+[ -n "$MC_CHAT_SECRET" ] || MC_CHAT_SECRET="$(gen_hex)"
 # adminToken: stateful, like POSTGRES_PASSWORD. config/clients.json (the brand
 # registry) is preserved across a --force re-run (see the write below), and this
 # token is mirrored into .env as MC_ADMIN_TOKEN and printed as the login token.
@@ -481,7 +557,7 @@ if [ -f "$CLIENTS_FILE" ]; then
 fi
 [ -z "$ADMIN_TOKEN" ] && ADMIN_TOKEN="$(gen_hex)"
 MC_TOKEN="$(gen_hex)"
-ok "NEXTAUTH_SECRET, ENCRYPTION_KEY, SANCHO_INTERNAL_API_TOKEN, adminToken, mcToken"
+ok "NEXTAUTH_SECRET, ENCRYPTION_KEY, SANCHO_INTERNAL_API_TOKEN, MC_CHAT_SECRET, adminToken, mcToken"
 # YALC shares a bearer token between Sancho and the YALC container.
 if [ "$ENABLE_YALC" = "1" ]; then
   YALC_API_TOKEN="$(gen_hex)"
@@ -507,6 +583,7 @@ set_env OPENAI_AUTH_MODE "$OPENAI_AUTH_MODE"
 set_env NEXTAUTH_SECRET "$NEXTAUTH_SECRET"
 set_env ENCRYPTION_KEY "$ENCRYPTION_KEY"
 set_env SANCHO_INTERNAL_API_TOKEN "$SANCHO_INTERNAL_API_TOKEN"
+set_env MC_CHAT_SECRET "$MC_CHAT_SECRET"
 set_env ADMIN_EMAIL_DOMAIN "$ADMIN_EMAIL_DOMAIN"
 set_env ADMIN_IDENTITY_EMAIL "$ADMIN_IDENTITY_EMAIL"
 # Runtime: persist the boot default and any advanced adapter env vars passed to
@@ -640,10 +717,10 @@ elif [ "$SANCHO_RUNTIME" = "hermes" ] && [ -n "${HERMES_GATEWAY_URL:-}" ]; then
 fi
 # Model provider(s) — reflect exactly what was configured. Mirror the same
 # per-provider case selection used to collect the credentials above, so a
-# Fireworks-only (or openai/both/all) install never shows a stale Anthropic line.
+# Fireworks-only (or openai/all) install never shows a stale Anthropic line.
 say "   • Model provider(s):"
 case "$PROVIDER" in
-  anthropic|both|all|multi)
+  anthropic|all)
     if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
       say "       – Anthropic: subscription ${DIM}(Claude OAuth token set)${RST}"
     else
@@ -652,7 +729,7 @@ case "$PROVIDER" in
     ;;
 esac
 case "$PROVIDER" in
-  openai|both|all|multi)
+  openai|all)
     if [ "$OPENAI_AUTH_MODE" = "subscription" ]; then
       say "       – OpenAI: subscription ${DIM}(Codex/ChatGPT OAuth — set up host-side after install)${RST}"
     else
@@ -661,7 +738,7 @@ case "$PROVIDER" in
     ;;
 esac
 case "$PROVIDER" in
-  fireworks|all|multi)
+  fireworks|all)
     say "       – Fireworks: api_key ${DIM}(API key set)${RST}"
     ;;
 esac

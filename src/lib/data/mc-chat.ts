@@ -217,6 +217,8 @@ export interface ThreadData {
     to_agent?: string;
     errorDetail?: ErrorDetail;
     workflowJob?: WorkflowJobEvent;
+    /** Stable transport key used to make runtime callback persistence idempotent. */
+    deliveryKey?: string;
   }[];
   discordThreadId?: string;
   discordChannelId?: string;
@@ -266,11 +268,18 @@ export function addMessage(
   fromAgent?: string,
   toAgent?: string,
   errorDetail?: ErrorDetail,
+  deliveryKey?: string,
 ) {
   if (role === "handoff" && (!fromAgent || !toAgent)) {
     throw new Error("addMessage: role 'handoff' requires both fromAgent and toAgent");
   }
   const thread = getThread(threadId);
+  if (
+    deliveryKey &&
+    thread.messages.some((message) => message.deliveryKey === deliveryKey)
+  ) {
+    return;
+  }
   const sealed = progress?.length ? progress.slice(-MAX_SEALED_PROGRESS) : undefined;
   thread.messages.push({
     role,
@@ -282,6 +291,7 @@ export function addMessage(
     from_agent: fromAgent,
     to_agent: toAgent,
     errorDetail,
+    deliveryKey,
   });
   // Cap messages at 200
   if (thread.messages.length > 200) {

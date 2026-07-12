@@ -21,6 +21,8 @@ import { maybeMarkClarifyAnswered } from "@/lib/clarify-autostatus";
 import { resolveNamespaceThreadConfig } from "@/lib/chat-openers";
 import { stripAskProtocol } from "@/lib/chat-tool-echo";
 import { resolveTaskThreadExecutionRoute } from "@/lib/data/task-routing";
+import { getTask } from "@/lib/data/tasks";
+import { buildTaskContractSnapshot } from "@/lib/quality/task-contract-snapshot";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
 import {
   resolveAgentTurnPolicy,
@@ -56,9 +58,13 @@ function normalizedIdempotencyKey(value: unknown): string | undefined {
   return key && key.length <= 240 && !/[\r\n\0]/.test(key) ? key : undefined;
 }
 
-function gatewayErrorDetail(raw: string): ErrorDetail {
+function gatewayErrorDetail(raw: string, status?: number): ErrorDetail {
   return {
-    category: "network",
+    category: status === 401 || status === 403
+      ? "auth"
+      : status === 429
+        ? "rate_limit"
+        : "network",
     raw: raw.slice(0, 4096),
     classifiedAt: Date.now(),
   };
@@ -147,12 +153,11 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   const controlDepth: 0 | 1 = trustedRuntimeRequest && claimedControlDepth === 1 ? 1 : 0;
 
   const tid = threadId || `${slug}:general`;
+  if (typeof tid !== "string" || !tid.startsWith(`${slug}:`)) {
+    return res.status(400).json({ error: "Thread does not belong to slug" });
+  }
   const shortThreadId =
-    typeof tid === "string" && tid.startsWith(`${slug}:`)
-      ? tid.slice(String(slug).length + 1)
-      : typeof tid === "string"
-        ? tid
-        : "";
+    tid.slice(String(slug).length + 1);
   const persistedRoute = getThreadRouting(tid);
   const namespaceRoute = resolveNamespaceThreadConfig(slug, tid);
   const requestRoute = { agent, scope, skillMode, skill, skills };
@@ -172,6 +177,23 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   const taskExecutionRoute = taskExecution.kind === "task"
     ? taskExecution.route
     : undefined;
+  const resolvedTaskId = taskExecution.kind === "task" ? taskExecution.taskId : undefined;
+  let taskContractSnapshot: ReturnType<typeof buildTaskContractSnapshot>;
+  if (resolvedTaskId) {
+    try {
+      taskContractSnapshot = buildTaskContractSnapshot(
+        await getTask(String(slug), resolvedTaskId),
+        String(slug),
+      );
+    } catch (error) {
+      // Quality capture is best-effort during the shadow phase and must never
+      // turn an otherwise valid user message into a failed dispatch.
+      console.warn(
+        `[quality-evidence] could not snapshot task ${resolvedTaskId}:`,
+        error instanceof Error ? error.message : error,
+      );
+    }
+  }
   const persistedExecutionRoute = !taskExecutionRoute && persistedRoute?.scope === "task"
     ? { ...persistedRoute, scope: "agent" as const, skillMode: "auto" as const }
     : persistedRoute;
@@ -377,6 +399,8 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     skill: resolvedSkill,
     skills: effectiveSkills,
     skillMode: policy.skillMode,
+    taskId: resolvedTaskId,
+    taskContract: taskContractSnapshot,
     input: {
       slug,
       threadId: tid,
@@ -491,7 +515,9 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     if (!result.ok) {
       if (result.status === 0) {
         const msg = result.error || result.raw || "Gateway unreachable";
-        markAgentRunFailed(run.id, tid, msg, "runtime_unreachable");
+        markAgentRunFailed(run.id, tid, msg, "runtime_unreachable", {
+          errorDetail: gatewayErrorDetail(msg),
+        });
         console.error("[mc-chat] Forward error:", msg);
         clearStatus(tid);
         addMessage(
@@ -511,12 +537,13 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       markAgentRunFailed(run.id, tid, detail, "runtime_rejected", {
         status: result.status,
         raw: result.raw,
+        errorDetail: gatewayErrorDetail(detail, result.status),
       });
       const userText =
         result.status === 403
           ? "No he podido entregar el mensaje al gateway de agentes: la firma compartida de MC Chat no coincide o falta. Revisa MC_CHAT_SECRET y reinicia el gateway."
           : `No he podido entregar el mensaje al gateway de agentes (${detail}).`;
-      addMessage(tid, "bot", userText, "sancho", undefined, undefined, undefined, undefined, gatewayErrorDetail(detail));
+      addMessage(tid, "bot", userText, "sancho", undefined, undefined, undefined, undefined, gatewayErrorDetail(detail, result.status));
       clearStatus(tid);
       console.error("[mc-chat] Gateway rejected message:", detail);
       return res.status(502).json({ error: "Gateway rejected message: " + detail });
@@ -575,7 +602,9 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     res.status(200).json({ ok: true, runId: run.id, chatId: result.chatId || tid });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Gateway unreachable";
-    markAgentRunFailed(run.id, tid, msg, "runtime_unreachable");
+    markAgentRunFailed(run.id, tid, msg, "runtime_unreachable", {
+      errorDetail: gatewayErrorDetail(msg),
+    });
     console.error("[mc-chat] Forward error:", msg);
     clearStatus(tid);
     addMessage(

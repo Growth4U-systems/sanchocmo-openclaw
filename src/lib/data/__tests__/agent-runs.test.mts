@@ -17,6 +17,11 @@ test("agent run ledger records lifecycle events for a thread", () => {
     agent: "sancho",
     skill: "sancho-manager",
     skillMode: "pinned",
+    taskId: "P01-T01",
+    taskContract: {
+      completion: "Report exists",
+      expectedOutputs: [{ path: "brand/acme/report.md", source: "deliverable_file" }],
+    },
     input: { text: "hola" },
     now: new Date("2026-06-30T10:00:00.000Z"),
   });
@@ -24,6 +29,8 @@ test("agent run ledger records lifecycle events for a thread", () => {
   assert.equal(run.status, "queued");
   assert.equal(run.threadId, "acme:general");
   assert.equal(run.skillMode, "pinned");
+  assert.equal(run.taskId, "P01-T01");
+  assert.equal(run.taskContract?.expectedOutputs[0].path, "brand/acme/report.md");
 
   agentRuns.markAgentRunDispatched(run.id, run.threadId, { chatId: "acme:general" });
   assert.equal(agentRuns.getLatestActiveRun(run.threadId)?.id, run.id);
@@ -51,6 +58,10 @@ test("agent run ledger records lifecycle events for a thread", () => {
     "bot_reply",
   ]);
   assert.equal((events[0].data as { skillMode?: string }).skillMode, "pinned");
+  assert.equal((events[0].data as { taskId?: string }).taskId, "P01-T01");
+  const snapshot = agentRuns.readAgentRunsSnapshot();
+  assert.equal(snapshot.runs.some((entry) => entry.id === run.id), true);
+  assert.equal(agentRuns.AGENT_RUN_RETENTION.maxRuns, 2000);
 });
 
 test("agent run ledger marks failures and cancellations terminal", () => {

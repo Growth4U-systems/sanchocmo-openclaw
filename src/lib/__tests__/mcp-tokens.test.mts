@@ -94,3 +94,14 @@ test("generateMcpToken rejects unknown scopes", () => {
     /Unknown MCP scopes/,
   );
 });
+
+test("generateMcpToken accepts the dedicated quality read scope", () => {
+  const generated = generateMcpToken({
+    id: "quality-lab",
+    scopes: ["quality:read"],
+    clients: ["growth4u"],
+  });
+
+  assert.deepEqual(generated.config.scopes, ["quality:read"]);
+  assert.deepEqual(generated.config.clients, ["growth4u"]);
+});

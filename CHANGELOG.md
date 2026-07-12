@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.2.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.2.0...v1.2.1) (2026-07-11)
+
+
+### Bug Fixes
+
+* **installer:** make a fresh quick install work end-to-end ([#1226](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1226)) ([7b95311](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7b95311be81dfd21e580c6742fee04e4da39316f))
+* **installer:** make wizard interactive under the curl | bash one-liner ([#1224](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1224)) ([c940c7e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c940c7ef7e76b8dc3d7f4248fcc60539a9d7a8f4))
+* **open-design:** only surface the agentic editor when OD is enabled ([#1229](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1229)) ([eb3b4cc](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/eb3b4cc4b3e16a29bf7b17414c6f20ecd4229899))
+
+## [1.2.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.1.0...v1.2.0) (2026-07-11)
+
+
+### Features
+
+* **chat:** task-led flexible routing (SAN-432) ([b24b812](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b24b812d41d86fed29656f9cddd77108788d9ebc))
+
+
+### Bug Fixes
+
+* **chat:** abort active runs on stop ([#1220](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1220)) ([656520e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/656520ecd2f3972978ebff4683d12c9be82e7436))
+* **outreach:** resume agent campaign jobs ([#1218](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1218)) ([5482752](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5482752fef8e4bf9bec2b8c85a6e8db75893fac7))
+* **outreach:** simplify the B2B campaign flow ([#1194](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1194)) ([10cadef](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/10cadef74ede7937b68a5a97ed3a5021a34d630d))
+
 ## [1.1.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.0.1...v1.1.0) (2026-07-10)
 
 

@@ -89,6 +89,27 @@ test("assertMcpScope supports exact and namespace wildcard scopes", () => {
   );
 });
 
+test("quality evidence requires its dedicated read-only scope", () => {
+  const qualityReader = {
+    id: "quality-lab",
+    scopes: ["quality:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  };
+  const genericReader = {
+    id: "generic-reader",
+    scopes: ["sancho:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  };
+
+  assert.doesNotThrow(() => auth.assertMcpScope(qualityReader, "quality:read"));
+  assert.throws(
+    () => auth.assertMcpScope(genericReader, "quality:read"),
+    (err) => err instanceof auth.McpAuthError && err.status === 403,
+  );
+});
+
 test("assertMcpScope treats legacy sancho:chat as chat read/write", () => {
   const legacy = {
     id: "legacy",

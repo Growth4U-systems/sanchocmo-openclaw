@@ -54,6 +54,52 @@ export function normalizeBrandDocPath(slug: string, input: string): string {
   return `${prefix}${cleaned}`;
 }
 
+function normalizeAllowingTraversal(input: string): string {
+  const parts = String(input || "")
+    .trim()
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "")
+    .split("/");
+  const stack: string[] = [];
+  for (const part of parts) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      if (stack.length > 0 && stack[stack.length - 1] !== "..") stack.pop();
+      else stack.push(part);
+    } else {
+      stack.push(part);
+    }
+  }
+  return stack.join("/");
+}
+
+/**
+ * Resolve a task output path against the directory anchored by its primary
+ * deliverable. Traversal is allowed during resolution but must remain inside
+ * the same brand root. Already-based paths are kept as-is.
+ */
+export function normalizeBrandDocPathFromBase(
+  slug: string,
+  input: string,
+  baseDirectory: string,
+): string {
+  const tenantRoot = `brand/${slug}`;
+  const base = normalizeBrandDocPath(slug, baseDirectory);
+  const raw = String(input || "").trim().replace(/^\/+/, "");
+  if (!raw) throw new DocPathError("Missing path");
+  const workspaceQualified = raw.replace(/\\/g, "/").startsWith("brand/");
+  const direct = normalizeAllowingTraversal(
+    workspaceQualified ? raw : `${tenantRoot}/${raw}`,
+  );
+  const candidate = workspaceQualified || direct === base || direct.startsWith(`${base}/`)
+    ? direct
+    : normalizeAllowingTraversal(`${base}/${raw}`);
+  if (candidate === tenantRoot || !candidate.startsWith(`${tenantRoot}/`)) {
+    throw new DocPathError("docPath escapes brand root");
+  }
+  return normalizeBrandDocPath(slug, candidate);
+}
+
 export function normalizeWorkspaceDocPath(input: string, slug?: string): string {
   if (slug) return normalizeBrandDocPath(slug, input);
   return collapseDuplicateBrandPrefix(input);
