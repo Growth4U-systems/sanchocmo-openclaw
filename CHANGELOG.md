@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.2.1...v1.3.0) (2026-07-12)
+
+
+### Features
+
+* **quality:** expose causal evidence feed (SAN-436) ([#1232](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1232)) ([0a9ad68](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0a9ad68f8fc7d2cd7be869d86dda3ce6e1e3f4aa))
+
 ## [1.2.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.2.0...v1.2.1) (2026-07-11)
 
 
