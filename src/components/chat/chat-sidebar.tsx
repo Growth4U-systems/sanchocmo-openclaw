@@ -1910,7 +1910,7 @@ export function ChatSidebar() {
                 onClick={() => sendMutation.mutate({ text: promptText, threadId: activeThreadId! })}
                 className="w-full text-left px-3 py-2 text-[15px] leading-snug rounded-lg border border-[var(--chat-border)] text-[var(--chat-text)] bg-[var(--chat-surface-2)] hover:bg-[var(--chat-surface-2)] hover:border-rust/40 transition-colors cursor-pointer"
               >
-                {promptText}
+                {qa.label}
               </button>
             );
           })}
