@@ -244,6 +244,7 @@ interface OutboundWorkflowBatchItem {
   leadId: string;
   variantId?: string | null;
   variantLabel?: string | null;
+  selectionReason?: string | null;
   included: boolean;
   status: string;
   strategyId: string;
@@ -322,6 +323,7 @@ interface OutboundWorkflowStatusResponse {
     personalization?: {
       approach: LinkedInMessageApproach;
       campaignReason: string;
+      framework?: "observation_relevance_value_cta_v1";
       ecp?: {
         id: string;
         name: string;
@@ -331,6 +333,7 @@ interface OutboundWorkflowStatusResponse {
         id: string;
         label: string;
         angle: string;
+        selectionRule?: string;
         messageCore: string;
         cta: string;
         sourceAngleId?: string | null;
@@ -1455,9 +1458,14 @@ export function OutboundB2BView() {
   const linkedinWorkflowPersonalizeAction = useMutation<
     OutboundWorkflowPersonalizeResponse,
     Error,
-    { campaignId: string; runId: string; approach: LinkedInMessageApproach }
+    {
+      campaignId: string;
+      runId: string;
+      approach: LinkedInMessageApproach;
+      variantRules?: Record<string, string>;
+    }
   >({
-    mutationFn: ({ campaignId, runId, approach }) =>
+    mutationFn: ({ campaignId, runId, approach, variantRules }) =>
       fetchJson<OutboundWorkflowPersonalizeResponse>(
         `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
         {
@@ -1468,6 +1476,7 @@ export function OutboundB2BView() {
             campaignId,
             runId,
             approach,
+            ...(variantRules && Object.keys(variantRules).length > 0 ? { variantRules } : {}),
             requestId: crypto.randomUUID(),
           }),
         },
@@ -2195,13 +2204,14 @@ export function OutboundB2BView() {
                       }
                       disabled={!selectedCampaignId || linkedinBusy}
                       onPrepare={() => linkedinWorkflowPrepareAction.mutate({ campaignId: selectedCampaignId, contactReason })}
-                      onPersonalize={(approach) => {
+                      onPersonalize={(approach, variantRules) => {
                         const runId = workflowStatusQuery.data?.run.id;
                         if (!runId) return;
                         linkedinWorkflowPersonalizeAction.mutate({
                           campaignId: selectedCampaignId,
                           runId,
                           approach,
+                          variantRules,
                         });
                       }}
                       onSimulate={() => void executeLinkedInWorkflow(true)}
@@ -2607,7 +2617,7 @@ function LinkedInWorkflowPanel({
   executing: boolean;
   disabled: boolean;
   onPrepare: () => void;
-  onPersonalize: (approach: LinkedInMessageApproach) => void;
+  onPersonalize: (approach: LinkedInMessageApproach, variantRules?: Record<string, string>) => void;
   onSimulate: () => void;
   onExecute: () => void;
 }) {
@@ -2617,6 +2627,7 @@ function LinkedInWorkflowPanel({
   const includedItems = items.filter((item) => item.included);
   const sampleItems = includedItems.slice(0, 3);
   const [approach, setApproach] = useState<LinkedInMessageApproach>("conversational");
+  const [variantRules, setVariantRules] = useState<Record<string, string>>({});
   const failedCount = (batch?.summary?.failed ?? 0) + (batch?.summary?.uncertain ?? 0);
   const sentCount = batch?.summary?.sent ?? items.filter((item) => item.status === "sent").length;
   const itemCount = batch?.itemCount ?? 0;
@@ -2629,10 +2640,29 @@ function LinkedInWorkflowPanel({
   const finished = batch?.status === "completed" || batch?.status === "completed_with_errors";
   const reviewReady = Boolean(batch?.personalization) && itemCount > 0;
   const appliedApproach = batch?.personalization?.approach;
+  const appliedVariantRules = useMemo(
+    () => Object.fromEntries(
+      (batch?.personalization?.variants || []).map((variant) => [variant.id, variant.selectionRule || ""]),
+    ),
+    [batch?.personalization?.variants],
+  );
+  const variantRulesDirty = JSON.stringify(variantRules) !== JSON.stringify(appliedVariantRules);
+  const validVariantRules = useMemo(
+    () => Object.fromEntries(
+      Object.entries(variantRules).filter(([, rule]) => rule.trim().length >= 20),
+    ),
+    [variantRules],
+  );
+  const hasInvalidVariantRule = Object.values(variantRules)
+    .some((rule) => rule.trim().length < 20);
 
   useEffect(() => {
     setApproach(batch?.personalization?.approach ?? "conversational");
   }, [campaign?.id, batch?.personalization?.approach]);
+
+  useEffect(() => {
+    setVariantRules(appliedVariantRules);
+  }, [campaign?.id, batch?.personalization?.generatedAt, appliedVariantRules]);
 
   return (
     <section className="rounded-lg border border-border bg-card p-4" data-testid="linkedin-workflow-panel">
@@ -2735,6 +2765,11 @@ function LinkedInWorkflowPanel({
                 )}
               </div>
               <p className="mb-0 mt-1 text-sm leading-relaxed text-foreground">{batch.personalization.campaignReason}</p>
+              {batch.personalization.framework === "observation_relevance_value_cta_v1" && (
+                <p className="mb-0 mt-1 text-[11px] font-semibold text-muted-foreground">
+                  Observación → relevancia → valor → CTA
+                </p>
+              )}
             </div>
           )}
 
@@ -2747,7 +2782,27 @@ function LinkedInWorkflowPanel({
                     <div className="font-semibold text-foreground">{String.fromCharCode(65 + index)} · {variant.label}</div>
                     <div className="min-w-0">
                       <div className="break-words text-xs text-muted-foreground">{variant.angle}</div>
-                      <div className="mt-0.5 break-words text-xs text-foreground">{variant.messageCore}</div>
+                      <label className="mt-2 block text-[10px] font-semibold uppercase text-muted-foreground" htmlFor={`variant-rule-${variant.id}`}>
+                        Aplicar cuando
+                      </label>
+                      <textarea
+                        id={`variant-rule-${variant.id}`}
+                        value={variantRules[variant.id] ?? variant.selectionRule ?? ""}
+                        disabled={personalizing || executing}
+                        rows={2}
+                        maxLength={220}
+                        aria-invalid={Boolean(
+                          (variantRules[variant.id] ?? variant.selectionRule ?? "").trim().length < 20
+                        )}
+                        onChange={(event) => setVariantRules((current) => ({
+                          ...current,
+                          [variant.id]: event.target.value,
+                        }))}
+                        className="mt-1 w-full resize-y rounded-md border border-border bg-background px-2.5 py-2 text-xs leading-relaxed text-foreground focus:border-rust focus:outline-none focus-visible:ring-2 focus-visible:ring-rust/30 disabled:opacity-60"
+                      />
+                      <div className="mt-2 break-words text-xs text-foreground">
+                        <span className="font-semibold">Mensaje común:</span> {variant.messageCore}
+                      </div>
                     </div>
                     <div className="text-xs font-semibold text-muted-foreground sm:text-right">{variant.assigned} contactos</div>
                   </div>
@@ -2758,19 +2813,29 @@ function LinkedInWorkflowPanel({
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">
-              {appliedApproach && appliedApproach !== approach
+              {hasInvalidVariantRule
+                ? "Cada regla necesita al menos 20 caracteres."
+                : appliedApproach && appliedApproach !== approach
                 ? "El enfoque elegido se aplicará al regenerar."
-                : "Se actualizarán todos los mensajes incluidos; no se enviará nada."}
+                : variantRulesDirty
+                  ? "Las reglas nuevas se aplicarán a todo el lote."
+                  : "Se actualizarán todos los mensajes incluidos; no se enviará nada."}
             </span>
             <button
               type="button"
-              disabled={disabled || personalizing || executing || itemCount === 0}
-              onClick={() => onPersonalize(approach)}
+              disabled={disabled || personalizing || executing || itemCount === 0 || hasInvalidVariantRule}
+              onClick={() => onPersonalize(approach, validVariantRules)}
               className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-4 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
               data-testid="outbound-generate-messages"
             >
               {personalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {personalizing ? "Generando…" : batch.personalization ? `Regenerar ${itemCount}` : `Generar ${itemCount}`}
+              {personalizing
+                ? "Generando…"
+                : variantRulesDirty
+                  ? `Aplicar y regenerar ${itemCount}`
+                  : batch.personalization
+                    ? `Regenerar ${itemCount}`
+                    : `Generar ${itemCount}`}
             </button>
           </div>
         </div>
@@ -2833,7 +2898,12 @@ function LinkedInWorkflowPanel({
                     {item.variantLabel && (
                       <div className="mb-2 text-[11px] font-semibold uppercase text-rust">Variante · {item.variantLabel}</div>
                     )}
-                    <div className="text-[11px] font-semibold uppercase text-muted-foreground">Hook personalizado</div>
+                    {item.selectionReason && (
+                      <p className="mb-2 mt-0 text-xs leading-relaxed text-muted-foreground">
+                        <span className="font-semibold text-foreground">Por qué este ángulo:</span> {item.selectionReason}
+                      </p>
+                    )}
+                    <div className="text-[11px] font-semibold uppercase text-muted-foreground">Apertura personalizada</div>
                     <p className="mb-0 mt-1 leading-relaxed text-foreground">{item.hook}</p>
                     <div className="mt-3 text-[11px] font-semibold uppercase text-muted-foreground">Mensaje final</div>
                     <p className="mb-0 mt-1 whitespace-pre-wrap leading-relaxed text-foreground">{item.messageBody}</p>
@@ -3219,6 +3289,7 @@ function B2BListaView({
           leadRole(lead),
           lead.source,
           batchItem?.variantLabel,
+          batchItem?.selectionReason,
           batchItem?.hook,
           batchItem?.messageBody,
         ]
@@ -3364,7 +3435,7 @@ function B2BListaView({
               <SortableTh className="w-24" label="Fit estimado" active={sortKey === "score"} dir={sortDir} onClick={() => toggleSort("score")} />
               <SortableTh className="w-48" label="Empresa" active={sortKey === "company"} dir={sortDir} onClick={() => toggleSort("company")} />
               <th className="w-44 px-3 py-2.5">Rol</th>
-              <th className="w-64 px-3 py-2.5">Variante + hook</th>
+              <th className="w-64 px-3 py-2.5">Ángulo + apertura</th>
               <th className="w-[420px] px-3 py-2.5">Mensaje</th>
               <th className="w-28 px-3 py-2.5">Fuente</th>
               <th className="w-28 px-3 py-2.5">Estado</th>
@@ -3432,10 +3503,15 @@ function B2BListaView({
                         {batchItem.variantLabel}
                       </span>
                     )}
+                    {batchItem?.selectionReason && (
+                      <p className="mb-1 mt-0 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+                        {batchItem.selectionReason}
+                      </p>
+                    )}
                     <p className="m-0 line-clamp-3 text-xs leading-relaxed text-foreground">{batchItem?.hook || "-"}</p>
                     {batchItem && (
                       <span className="mt-1 block text-[10px] font-semibold uppercase text-muted-foreground">
-                        {batchItem.hookStatus === "verified" ? "Señal verificada" : "Empresa + motivo"}
+                        {batchItem.hookStatus === "verified" ? "Evidencia validada" : "Rol + empresa"}
                       </span>
                     )}
                   </td>
