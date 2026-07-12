@@ -18,6 +18,7 @@ import {
 } from "@/lib/data/mc-chat";
 import { maybeMarkClarifyAnswered } from "@/lib/clarify-autostatus";
 import { resolveNamespaceThreadConfig } from "@/lib/chat-openers";
+import { stripAskProtocol } from "@/lib/chat-tool-echo";
 import { resolveTaskThreadExecutionRoute } from "@/lib/data/task-routing";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
 import {
@@ -69,10 +70,6 @@ function requestBaseUrl(req: NextApiRequest): string {
     : req.headers["x-forwarded-proto"];
   const host = Array.isArray(req.headers.host) ? req.headers.host[0] : req.headers.host;
   return `${forwardedProto || "http"}://${host || "localhost:3000"}`;
-}
-
-function resultText(value: unknown): string {
-  return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
 function resultNumber(value: unknown): number | null {
@@ -239,7 +236,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   const outboundSelectionAttempt = /^\[ask:outbound_ecp_v1\]\s*respuesta:/m.test(String(text));
   const outboundChoice = resolveOutboundWorkflowChoice(getThread(tid), String(text));
   if (outboundSelectionAttempt && !outboundChoice) {
-    addMessage(tid, "user", String(text), undefined, parsedAttachments);
+    addMessage(tid, "user", stripAskProtocol(String(text)), undefined, parsedAttachments);
     addMessage(
       tid,
       "bot",
@@ -254,7 +251,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     });
   }
   if (outboundChoice) {
-    addMessage(tid, "user", String(text), undefined, parsedAttachments);
+    addMessage(tid, "user", stripAskProtocol(String(text)), undefined, parsedAttachments);
     setStatusEntry(tid, {
       text: "Buscando empresas del ICP...",
       agent: resolvedAgent || "rocinante",
@@ -277,8 +274,6 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         },
       });
       clearStatus(tid);
-      const campaignId = resultText(result.campaignId);
-      const runId = resultText(result.runId);
       const accounts = result.accounts && typeof result.accounts === "object"
         ? result.accounts as Record<string, unknown>
         : {};
@@ -290,8 +285,6 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
             `Inicié la campaña para **${outboundChoice.label}**.`,
             "",
             "El workflow buscará primero las empresas del ICP y después los roles objetivo dentro de esas empresas. No enviará ningún mensaje sin tu aprobación final.",
-            campaignId ? `Campaña: \`${campaignId}\`` : "",
-            runId ? `Run: \`${runId}\`` : "",
           ].filter(Boolean).join("\n")
         : [
             `Preparé la campaña para **${outboundChoice.label}**.`,

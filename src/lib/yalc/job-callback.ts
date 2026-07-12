@@ -177,6 +177,9 @@ export function formatJobResult(payload: JobCallbackPayload): string {
   if (/no tiene linkedin como canal/i.test(reason)) {
     return "No se pudo preparar LinkedIn porque la campaña pertenece a otro canal. No se creó otra campaña ni se envió ningún contacto.";
   }
+  if (/no_new_source_leads|apollo no devolvi[oó] contactos nuevos/i.test(reason)) {
+    return "No encontramos personas con esos cargos dentro de las empresas seleccionadas. No se preparó ningún contacto ni se envió ningún mensaje.";
+  }
   return `No se pudo completar ${type}: ${reason}`;
 }
 

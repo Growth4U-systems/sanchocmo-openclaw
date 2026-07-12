@@ -152,6 +152,10 @@ test("an outbound ECP click starts YALC directly without invoking the agent gate
     );
     const messages = getThread(threadId).messages;
     assert.match(messages.at(-1)?.text || "", /workflow buscará primero las empresas/i);
+    assert.doesNotMatch(messages.at(-1)?.text || "", /Campaña:|Run:|campaign-1|run-1/);
+    const selectedUserMessage = [...messages].reverse().find((message) => message.role === "user");
+    assert.equal(selectedUserMessage?.text, selected.label);
+    assert.doesNotMatch(selectedUserMessage?.text || "", /workflow-option|\[ask:/);
 
     const invalid = mockResponse();
     await sendHandler({
@@ -169,6 +173,8 @@ test("an outbound ECP click starts YALC directly without invoking the agent gate
     assert.equal(invalid.read().statusCode, 200);
     assert.equal(invalid.read().payload.ok, false);
     assert.equal(calls.length, 1, "invalid structured choices must not reach YALC or the agent gateway");
+    const invalidUserMessage = [...getThread(threadId).messages].reverse().find((message) => message.role === "user");
+    assert.equal(invalidUserMessage?.text, "Inventado");
 
     const missingFoundation = mockResponse();
     await sendHandler({

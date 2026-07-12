@@ -82,6 +82,20 @@ test("formatJobResult is deterministic and never contains an agent instruction",
   assert.doesNotMatch(formatJobResult(completed), /retom|ejecut|prompt|agente/i);
 });
 
+test("formatJobResult translates an empty Apollo cohort into user-facing copy", () => {
+  const failed = parseCallback(validBody({
+    event: "job.failed",
+    status: "failed",
+    type: "campaign.workflow.prepare",
+    errorMessage: "Apollo no devolvió contactos nuevos para esta tanda; no se reutilizaron contactos anteriores",
+  }));
+
+  assert.equal(
+    formatJobResult(failed),
+    "No encontramos personas con esos cargos dentro de las empresas seleccionadas. No se preparó ningún contacto ni se envió ningún mensaje.",
+  );
+});
+
 test("formatJobResult reports another cohort without implying an automatic loop", () => {
   const text = formatJobResult(parseCallback({
     event: "job.completed",

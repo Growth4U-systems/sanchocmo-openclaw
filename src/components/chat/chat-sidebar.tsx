@@ -30,7 +30,11 @@ import { ThreadListPanel } from "./thread-list-panel";
 import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
 import { ProgressTimeline } from "./progress-timeline";
 import { ChatMarkdown } from "./chat-markdown";
-import { groupChatMessages, stripAskProtocol } from "@/lib/chat-tool-echo";
+import {
+  groupChatMessages,
+  stripAskProtocol,
+  stripOutboundWorkflowDebugDetails,
+} from "@/lib/chat-tool-echo";
 import { collapseExecutionOutcomes } from "@/lib/chat-execution-outcomes";
 import { formatElapsed } from "@/lib/format-elapsed";
 import type { ProgressEvent } from "@/hooks/useChat";
@@ -664,6 +668,22 @@ export function ChatSidebar() {
     () => messagesQuery.data?.messages ?? [],
     [messagesQuery.data?.messages]
   );
+  const refreshedWorkflowJobs = useRef(new Set<string>());
+  useEffect(() => {
+    if (!slug) return;
+    const unseenCompletedJobs = messages.filter((message) => {
+      const job = message.workflowJob;
+      return message.role === "workflow"
+        && job?.status === "completed"
+        && job.type === "campaign.workflow.prepare"
+        && !refreshedWorkflowJobs.current.has(job.jobId);
+    });
+    if (unseenCompletedJobs.length === 0) return;
+    unseenCompletedJobs.forEach((message) => {
+      if (message.workflowJob) refreshedWorkflowJobs.current.add(message.workflowJob.jobId);
+    });
+    void queryClient.invalidateQueries({ queryKey: ["yalc", slug] });
+  }, [messages, queryClient, slug]);
   const statusData = messagesQuery.data?.status;
   const activeRun = messagesQuery.data?.activeRun ?? null;
   // Fold runtime tool-call narration ("Write: to…", "run python3 inline
@@ -1786,7 +1806,9 @@ export function ChatSidebar() {
                 )}
                 <AskQuestionGroup
                   segments={parseMessageSegments(
-                    isUser ? stripAskProtocol(msg.text) : (msg.text || "")
+                    isUser
+                      ? stripAskProtocol(msg.text)
+                      : stripOutboundWorkflowDebugDetails(msg.text)
                   )}
                   threadId={activeThreadId ?? ""}
                   renderText={(text, key) => (
