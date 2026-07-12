@@ -9,7 +9,9 @@ export interface OutboundCampaignSetupOption {
   label: string;
   description: string;
   accountDescription: string;
+  declaredAccountDescription: string;
   roles: string[];
+  unappliedCriteria?: string[];
   recommended?: boolean;
 }
 
@@ -109,6 +111,11 @@ export function NewCampaignPanel({
                     <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
                       {option.accountDescription} · {option.roles.join(", ")}
                     </span>
+                    {option.unappliedCriteria && option.unappliedCriteria.length > 0 && (
+                      <span className="mt-1 block text-xs text-yellow-900">
+                        No verificable en esta fase: {option.unappliedCriteria.join(" · ")}
+                      </span>
+                    )}
                   </span>
                 </label>
               );

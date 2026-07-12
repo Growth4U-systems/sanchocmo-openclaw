@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Briefcase,
+  Braces,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -21,6 +22,7 @@ import {
   Search,
   Send,
   Settings,
+  Sparkles,
   Target,
   Trash2,
   X,
@@ -33,6 +35,10 @@ import { useSlugSync } from "@/hooks/useSlugSync";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildYalcThread } from "@/lib/chat-openers";
 import { linkedInFirstContactCandidates } from "@/lib/outreach/linkedin-first-contact";
+import {
+  LINKEDIN_MESSAGE_SUGGESTIONS,
+  LINKEDIN_MESSAGE_VARIABLES,
+} from "@/lib/outreach/linkedin-message-templates";
 import {
   NewCampaignPanel,
   type OutboundCampaignSetupChoices,
@@ -263,6 +269,42 @@ interface OutboundWorkflowStatusResponse {
     updatedAt?: string | null;
   };
   blocked?: Array<{ leadId: string; reason: string }>;
+  targetingAudit?: {
+    sourceRunId: string;
+    discoveryStrategy: string;
+    declaredAccountDescription?: string | null;
+    operationalAccountDescription?: string | null;
+    accountFilters: {
+      keywords?: string | null;
+      industries: string[];
+      locations: string[];
+      employeeRanges: string[];
+      providedDomainCount: number;
+    };
+    personFilters: {
+      titles: string[];
+      seniorities: string[];
+      locations: string[];
+      emailStatuses: string[];
+    };
+    unappliedCriteria: string[];
+    coverage: { applied: number; declared: number; percent: number };
+    providers: { accounts: string; people: string; enrichment: string };
+    results: {
+      accountsRequested?: number | null;
+      accountsFound?: number | null;
+      usableDomains?: number | null;
+      accountsDropped?: number | null;
+      peopleFound?: number | null;
+      peopleRequested?: number | null;
+      peopleDropped?: number | null;
+      qualified?: number | null;
+      blocked?: number | null;
+      targetVerified?: number | null;
+      targetMismatches?: number | null;
+    };
+    validation: { accounts: string; people: string };
+  } | null;
   batch?: {
     id: string;
     status: string;
@@ -285,6 +327,8 @@ interface OutboundWorkflowStatusResponse {
     totalItems: number;
   } | null;
 }
+
+type OutboundTargetingAudit = NonNullable<OutboundWorkflowStatusResponse["targetingAudit"]>;
 
 interface OutboundWorkflowPrepareResponse {
   ok: boolean;
@@ -335,6 +379,9 @@ function workflowBlockReasonLabel(reason?: string | null): string {
   if (reason.includes("connection_already_sent")) return "Conexión ya enviada";
   if (reason.includes("daily_capacity_exhausted")) return "Diferido por el cupo diario de LinkedIn";
   if (reason.includes("missing_linkedin_identity")) return "Falta identificar el perfil de LinkedIn";
+  if (reason.includes("title_outside_target_roles")) return "El cargo no coincide con el target";
+  if (reason.includes("company_outside_target_accounts")) return "La empresa no pertenece al target";
+  if (reason.includes("missing_company_domain")) return "No se pudo verificar la empresa";
   if (reason.includes("lifecycle_sourced")) return "Pendiente de aprobación";
   if (reason.includes("lifecycle_disqualified")) return "Descartado";
   if (reason.includes("No eligible evidence")) return "Faltan empresa o motivo de contacto";
@@ -368,8 +415,8 @@ const SCORE_ROWS: Array<{ key: string; aliases?: string[]; label: string }> = [
   { key: "roleFit", aliases: ["icpFit"], label: "Rol" },
   { key: "seniorityFit", aliases: ["seniority"], label: "Seniority" },
   { key: "companyFit", label: "Empresa" },
-  { key: "contactability", label: "Canal" },
-  { key: "sourceConfidence", aliases: ["intent"], label: "Fuente" },
+  { key: "contactability", label: "Datos de contacto" },
+  { key: "sourceConfidence", aliases: ["intent"], label: "Calidad de fuente" },
 ];
 
 const REPLY_CATEGORIES: Array<{ key: B2BReplyCategoryKey; label: string; icon: string }> = [
@@ -509,7 +556,7 @@ function leadContactReason(lead: Lead): string {
   const role = leadRole(lead);
   const company = lead.company ? ` en ${lead.company}` : "";
   if (leadScore(lead) !== null) {
-    return `Tiene score B2B ${Math.round(leadScore(lead)!)} y encaja como ${role}${company}.`;
+    return `Tiene fit estimado ${Math.round(leadScore(lead)!)} y encaja como ${role}${company}.`;
   }
   return `Aparece en esta campaña por su rol de ${role}${company}.`;
 }
@@ -1015,7 +1062,7 @@ export function OutboundB2BView() {
   const tab: B2BTab = (["encuentra", "contactos", "inbox", "plantillas", "settings"] as const).includes(tabParam)
     ? tabParam
     : "encuentra";
-  const vista: ContactosVista = queryValue(router.query.vista) === "lista" ? "lista" : "kanban";
+  const vista: ContactosVista = queryValue(router.query.vista) === "kanban" ? "kanban" : "lista";
   const busqueda = queryValue(router.query.busqueda);
   const stageParam = queryValue(router.query.stage) as StageFilterKey | "";
   const campaignParam = queryValue(router.query.campaign);
@@ -1041,7 +1088,7 @@ export function OutboundB2BView() {
     const query: Record<string, string> = { slug, tipo: "b2b" };
     if (merged.tab !== "encuentra") query.tab = merged.tab;
     if (merged.campaign) query.campaign = merged.campaign;
-    if (merged.tab === "contactos" && merged.vista !== "kanban") query.vista = merged.vista;
+    if (merged.tab === "contactos" && merged.vista === "kanban") query.vista = merged.vista;
     if (merged.tab === "contactos" && merged.busqueda) query.busqueda = merged.busqueda;
     if (merged.tab === "contactos" && merged.stage) query.stage = merged.stage;
     void router.push({ pathname: router.pathname, query }, undefined, { shallow: true });
@@ -1089,7 +1136,7 @@ export function OutboundB2BView() {
       fetchJson<OutboundCampaignSetupChoices>(
         `/api/outbound/campaign-setup?slug=${encodeURIComponent(slug)}`,
       ),
-    enabled: !!slug && campaignSetupOpen,
+    enabled: !!slug && (campaignSetupOpen || tab === "contactos"),
     staleTime: 60_000,
   });
 
@@ -1130,6 +1177,10 @@ export function OutboundB2BView() {
     () => campaigns.find((campaign) => campaign.id === selectedCampaignId) || null,
     [campaigns, selectedCampaignId],
   );
+  const selectedCampaignSetupOption = useMemo(() => {
+    const title = String(selectedCampaign?.title || "").toLowerCase();
+    return campaignSetupQuery.data?.options.find((option) => title.startsWith(option.title.toLowerCase())) || null;
+  }, [campaignSetupQuery.data?.options, selectedCampaign?.title]);
   const selectedActiveLeads = useMemo(
     () => (selectedCampaignId ? activeLeads.filter((lead) => lead.campaignId === selectedCampaignId) : activeLeads),
     [activeLeads, selectedCampaignId],
@@ -1175,12 +1226,35 @@ export function OutboundB2BView() {
         body: JSON.stringify({
           command: "outbound.workflow.status",
           campaignId: selectedCampaignId,
-          limit: 100,
+          limit: 2_000,
         }),
       }),
     enabled: !!slug && !!selectedCampaignId && campaignHasLinkedIn(icpCampaign),
     retry: false,
   });
+  const workflowBatchItemsByLead = useMemo(
+    () => new Map((workflowStatusQuery.data?.batch?.items || []).map((item) => [item.leadId, item])),
+    [workflowStatusQuery.data?.batch?.items],
+  );
+  const targetingAuditForDisplay = useMemo(() => {
+    const audit = workflowStatusQuery.data?.targetingAudit;
+    if (!audit) return null;
+    const unappliedCriteria = [...new Set([
+      ...audit.unappliedCriteria,
+      ...(selectedCampaignSetupOption?.unappliedCriteria || []),
+    ])];
+    return {
+      ...audit,
+      declaredAccountDescription: selectedCampaignSetupOption?.declaredAccountDescription
+        || audit.declaredAccountDescription,
+      unappliedCriteria,
+      coverage: {
+        applied: audit.coverage.applied,
+        declared: audit.coverage.applied + unappliedCriteria.length,
+        percent: Math.round((audit.coverage.applied / Math.max(1, audit.coverage.applied + unappliedCriteria.length)) * 100),
+      },
+    } satisfies OutboundTargetingAudit;
+  }, [selectedCampaignSetupOption, workflowStatusQuery.data?.targetingAudit]);
   const selectedLeadEditsLocked = useMemo(
     () => campaignLocksLeadEdits(icpCampaign, selectedAllLeads),
     [icpCampaign, selectedAllLeads],
@@ -1334,6 +1408,68 @@ export function OutboundB2BView() {
       showToast(`${data.batch?.itemCount ?? 0} mensajes preparados. No se envió nada.`);
     },
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo preparar el lote LinkedIn", "warn"),
+  });
+
+  const linkedinWorkflowRewriteAction = useMutation<
+    OutboundWorkflowPrepareResponse,
+    Error,
+    { campaignId: string; runId: string; contactReason: string; templateName: string; template: string }
+  >({
+    mutationFn: async ({ campaignId, runId, contactReason: reason, templateName, template }) => {
+      if (!reason.trim()) throw new Error("Escribe por qué quieres contactar a estas personas.");
+      await fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}?slug=${encodeURIComponent(slug)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expectedKind: "b2b", hypothesis: reason.trim() }),
+      });
+      return fetchJson<OutboundWorkflowPrepareResponse>(
+        `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            command: "outbound.workflow.rewrite",
+            campaignId,
+            runId,
+            contactReason: reason.trim(),
+            templateName,
+            template,
+          }),
+        },
+      );
+    },
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "campaigns"] });
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "workflow", selectedCampaignId] });
+      showToast(`${data.batch?.itemCount ?? 0} mensajes actualizados. No se envió nada.`);
+    },
+    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudieron actualizar los mensajes", "warn"),
+  });
+
+  const linkedinWorkflowSelectionAction = useMutation<
+    { batch?: { itemCount?: number } },
+    Error,
+    { campaignId: string; runId: string; leadIds: string[] }
+  >({
+    mutationFn: ({ campaignId, runId, leadIds }) =>
+      fetchJson<{ batch?: { itemCount?: number } }>(
+        `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            command: "outbound.workflow.select",
+            campaignId,
+            runId,
+            leadIds,
+          }),
+        },
+      ),
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "workflow", selectedCampaignId] });
+      showToast(`${data.batch?.itemCount ?? 0} contactos guardados para revisión. No se envió nada.`);
+    },
+    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo guardar la selección", "warn"),
   });
 
   const linkedinWorkflowApproveAction = useMutation<
@@ -1682,7 +1818,7 @@ export function OutboundB2BView() {
       );
       if (confirmation !== "ENVIAR") return;
     }
-    if (workflow.batch?.status === "draft" || workflow.run.status === "awaiting_approval") {
+    if (!dryRun && (workflow.batch?.status === "draft" || workflow.run.status === "awaiting_approval")) {
       try {
         await linkedinWorkflowApproveAction.mutateAsync({
           campaignId: selectedCampaignId,
@@ -1723,6 +1859,8 @@ export function OutboundB2BView() {
   const busyAction = outboundAction.isPending ? outboundAction.variables?.action : activeJob?.action;
   const linkedinBusy =
     linkedinWorkflowPrepareAction.isPending ||
+    linkedinWorkflowRewriteAction.isPending ||
+    linkedinWorkflowSelectionAction.isPending ||
     linkedinWorkflowApproveAction.isPending ||
     linkedinWorkflowExecuteAction.isPending;
 
@@ -1898,29 +2036,7 @@ export function OutboundB2BView() {
             {tab === "contactos" && (
               <div className="space-y-4" data-testid="outbound-contactos">
                 {campaignHasLinkedIn(icpCampaign) && (
-                  <div id="linkedin-contact-panel" className="scroll-mt-4">
-                    <LinkedInWorkflowPanel
-                      campaign={icpCampaign}
-                      leads={selectedLinkedInLeads}
-                      contactReason={contactReason}
-                      workflow={workflowStatusQuery.data || null}
-                      blocked={workflowStatusQuery.data?.blocked || workflowBlocked}
-                      loadingStatus={workflowStatusQuery.isLoading}
-                      planning={linkedinWorkflowPrepareAction.isPending}
-                      executing={
-                        linkedinWorkflowApproveAction.isPending ||
-                        linkedinWorkflowExecuteAction.isPending ||
-                        activeJob?.action === "linkedin-send"
-                      }
-                      disabled={!selectedCampaignId || linkedinBusy}
-                      onContactReasonChange={(reason) => {
-                        setContactReasons((current) => ({ ...current, [selectedCampaignId]: reason }));
-                      }}
-                      onPrepare={() => linkedinWorkflowPrepareAction.mutate({ campaignId: selectedCampaignId, contactReason })}
-                      onSimulate={() => void executeLinkedInWorkflow(true)}
-                      onExecute={() => void executeLinkedInWorkflow(false)}
-                    />
-                  </div>
+                  <OutboundTargetingAuditPanel audit={targetingAuditForDisplay} />
                 )}
                 {channelText(icpCampaign?.channels).toLowerCase().includes("email") && (
                   <EmailCampaignPanel
@@ -1982,16 +2098,70 @@ export function OutboundB2BView() {
                 ) : (
                   <B2BListaView
                     leads={selectedAllLeads}
+                    workflowReviewMode={campaignHasLinkedIn(icpCampaign)}
+                    batchItems={workflowBatchItemsByLead}
+                    selectionVersion={workflowStatusQuery.data?.batch?.contentHash}
+                    selectionEditable={
+                      workflowStatusQuery.data?.batch?.status === "draft"
+                      && workflowStatusQuery.data?.run.status === "awaiting_approval"
+                    }
+                    selectionSaving={linkedinWorkflowSelectionAction.isPending}
                     busqueda={selectedCampaignId}
                     busquedaLabel={selectedCampaign?.title || null}
                     initialStage={stageParam}
-                    busy={stageMutation.isPending}
+                    busy={stageMutation.isPending || linkedinWorkflowSelectionAction.isPending}
                     locked={selectedLeadEditsLocked}
                     onOpen={(lead) => setSelectedLeadId(lead.id)}
                     onBulkMove={moveMany}
                     onBulkDiscard={(leads) => void moveMany(leads, DISCARDED_STAGE)}
                     onBulkContact={(leads) => void moveMany(leads, "Contacted")}
+                    onSaveSelection={(leadIds) => {
+                      const runId = workflowStatusQuery.data?.run.id;
+                      if (!runId) return;
+                      linkedinWorkflowSelectionAction.mutate({
+                        campaignId: selectedCampaignId,
+                        runId,
+                        leadIds,
+                      });
+                    }}
                   />
+                )}
+                {campaignHasLinkedIn(icpCampaign) && (
+                  <div id="linkedin-contact-panel" className="scroll-mt-4">
+                    <LinkedInWorkflowPanel
+                      campaign={icpCampaign}
+                      leads={selectedLinkedInLeads}
+                      contactReason={contactReason}
+                      workflow={workflowStatusQuery.data || null}
+                      blocked={workflowStatusQuery.data?.blocked || workflowBlocked}
+                      loadingStatus={workflowStatusQuery.isLoading}
+                      planning={linkedinWorkflowPrepareAction.isPending}
+                      rewriting={linkedinWorkflowRewriteAction.isPending}
+                      executing={
+                        linkedinWorkflowApproveAction.isPending ||
+                        linkedinWorkflowExecuteAction.isPending ||
+                        activeJob?.action === "linkedin-send"
+                      }
+                      disabled={!selectedCampaignId || linkedinBusy}
+                      onContactReasonChange={(reason) => {
+                        setContactReasons((current) => ({ ...current, [selectedCampaignId]: reason }));
+                      }}
+                      onPrepare={() => linkedinWorkflowPrepareAction.mutate({ campaignId: selectedCampaignId, contactReason })}
+                      onApplyTemplate={(templateName, template) => {
+                        const runId = workflowStatusQuery.data?.run.id;
+                        if (!runId) return;
+                        linkedinWorkflowRewriteAction.mutate({
+                          campaignId: selectedCampaignId,
+                          runId,
+                          contactReason,
+                          templateName,
+                          template,
+                        });
+                      }}
+                      onSimulate={() => void executeLinkedInWorkflow(true)}
+                      onExecute={() => void executeLinkedInWorkflow(false)}
+                    />
+                  </div>
                 )}
               </div>
             )}
@@ -2262,6 +2432,93 @@ function B2BCampaignsTab({
   );
 }
 
+function providerDisplayName(provider?: string | null): string {
+  const value = String(provider || "").toLowerCase();
+  if (value === "crustdata") return "Crustdata";
+  if (value === "apollo") return "Apollo";
+  if (value === "provided") return "Dominios definidos";
+  return provider || "Sin confirmar";
+}
+
+function OutboundTargetingAuditPanel({ audit }: { audit: OutboundTargetingAudit | null }) {
+  if (!audit) return null;
+  const accountFilters = [
+    ...audit.accountFilters.industries,
+    ...audit.accountFilters.locations,
+    ...audit.accountFilters.employeeRanges.map((range) => `${range.replace(",", "-")} empleados`),
+    ...(audit.accountFilters.keywords ? [audit.accountFilters.keywords] : []),
+  ];
+  const personFilters = [
+    ...audit.personFilters.titles,
+    ...audit.personFilters.seniorities,
+    ...audit.personFilters.locations,
+  ];
+  const verified = audit.validation.people === "provider_and_server";
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4" data-testid="outbound-targeting-audit">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-rust" />
+            <h3 className="text-sm font-semibold text-foreground">Búsqueda aplicada</h3>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">{audit.declaredAccountDescription}</p>
+        </div>
+        <span className={cn(
+          "inline-flex items-center gap-1.5 rounded border px-2 py-1 text-xs font-semibold",
+          audit.unappliedCriteria.length === 0
+            ? "border-sage/40 bg-sage/10 text-sage"
+            : "border-yellow-500/40 bg-yellow-50 text-yellow-900",
+        )}>
+          {audit.unappliedCriteria.length === 0 ? <CheckCircle2 className="h-3.5 w-3.5" /> : <CircleAlert className="h-3.5 w-3.5" />}
+          {audit.coverage.applied}/{audit.coverage.declared} criterios operativos
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-4 border-y border-border py-3 md:grid-cols-2 md:divide-x md:divide-border">
+        <div className="md:pr-4">
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <span className="font-semibold text-foreground">Empresas</span>
+            <span className="font-semibold text-muted-foreground">{providerDisplayName(audit.providers.accounts)}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {accountFilters.map((filter) => (
+              <span key={filter} className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground">{filter}</span>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {audit.results.accountsFound ?? "-"} cumplen de hasta {audit.results.accountsRequested ?? "-"} evaluadas · {audit.results.accountsDropped ?? "-"} descartadas · {audit.results.usableDomains ?? "-"} con dominio
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">Es el límite de esta búsqueda, no el total del mercado.</p>
+        </div>
+        <div className="md:pl-4">
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <span className="font-semibold text-foreground">Personas</span>
+            <span className="font-semibold text-muted-foreground">{providerDisplayName(audit.providers.people)}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {personFilters.map((filter) => (
+              <span key={filter} className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground">{filter}</span>
+            ))}
+          </div>
+          <p className={cn("mt-2 flex items-center gap-1.5 text-xs", verified ? "text-sage" : "text-yellow-900")}>
+            {verified ? <CheckCircle2 className="h-3.5 w-3.5" /> : <CircleAlert className="h-3.5 w-3.5" />}
+            Lote solicitado: {audit.results.peopleRequested ?? "-"} · {audit.results.targetVerified ?? audit.results.qualified ?? "-"} verificadas por cargo y empresa
+          </p>
+        </div>
+      </div>
+
+      {audit.unappliedCriteria.length > 0 && (
+        <div className="mt-3 flex items-start gap-2 text-xs text-yellow-900">
+          <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>No verificado todavía: {audit.unappliedCriteria.join(" · ")}</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function LinkedInWorkflowPanel({
   campaign,
   leads,
@@ -2270,10 +2527,12 @@ function LinkedInWorkflowPanel({
   blocked,
   loadingStatus,
   planning,
+  rewriting,
   executing,
   disabled,
   onContactReasonChange,
   onPrepare,
+  onApplyTemplate,
   onSimulate,
   onExecute,
 }: {
@@ -2284,13 +2543,20 @@ function LinkedInWorkflowPanel({
   blocked: Array<{ leadId: string; reason: string }>;
   loadingStatus: boolean;
   planning: boolean;
+  rewriting: boolean;
   executing: boolean;
   disabled: boolean;
   onContactReasonChange: (reason: string) => void;
   onPrepare: () => void;
+  onApplyTemplate: (templateName: string, template: string) => void;
   onSimulate: () => void;
   onExecute: () => void;
 }) {
+  const recommendedTemplate = LINKEDIN_MESSAGE_SUGGESTIONS.find((suggestion) => suggestion.recommended)
+    || LINKEDIN_MESSAGE_SUGGESTIONS[0]!;
+  const [templateId, setTemplateId] = useState(recommendedTemplate.id);
+  const [messageTemplate, setMessageTemplate] = useState(recommendedTemplate.template);
+  const templateRef = useRef<HTMLTextAreaElement | null>(null);
   const leadById = useMemo(() => new Map(leads.map((lead) => [lead.id, lead])), [leads]);
   const batch = workflow?.batch || null;
   const items = batch?.items || [];
@@ -2304,6 +2570,29 @@ function LinkedInWorkflowPanel({
   const finished = batch?.status === "completed" || batch?.status === "completed_with_errors";
   const itemCount = batch?.itemCount ?? 0;
 
+  useEffect(() => {
+    setTemplateId(recommendedTemplate.id);
+    setMessageTemplate(recommendedTemplate.template);
+  }, [campaign?.id, recommendedTemplate.id, recommendedTemplate.template]);
+
+  function chooseTemplate(suggestion: (typeof LINKEDIN_MESSAGE_SUGGESTIONS)[number]) {
+    setTemplateId(suggestion.id);
+    setMessageTemplate(suggestion.template);
+  }
+
+  function insertVariable(token: string) {
+    const field = templateRef.current;
+    const start = field?.selectionStart ?? messageTemplate.length;
+    const end = field?.selectionEnd ?? start;
+    const next = `${messageTemplate.slice(0, start)}${token}${messageTemplate.slice(end)}`;
+    setMessageTemplate(next);
+    setTemplateId("");
+    window.requestAnimationFrame(() => {
+      field?.focus();
+      field?.setSelectionRange(start + token.length, start + token.length);
+    });
+  }
+
   return (
     <section className="rounded-lg border border-border bg-card p-4" data-testid="linkedin-workflow-panel">
       <div className="flex flex-wrap items-start gap-4">
@@ -2312,7 +2601,8 @@ function LinkedInWorkflowPanel({
             <Network className="h-3 w-3" />
             LinkedIn
           </div>
-          <h3 className="font-heading text-lg text-navy">Lote de apertura</h3>
+          <h3 className="font-heading text-lg text-navy">Secuencia LinkedIn · Apertura</h3>
+          <p className="mt-1 text-xs text-muted-foreground">1 paso · solicitud de conexión</p>
         </div>
         <p className="text-sm font-semibold text-foreground">
           {loadingStatus
@@ -2329,29 +2619,111 @@ function LinkedInWorkflowPanel({
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
         <label className="min-w-0 flex-1">
-          <span className="text-xs font-semibold text-foreground">Por qué los contactas</span>
+          <span className="text-xs font-semibold text-foreground">Argumento común</span>
+          <span className="mt-0.5 block text-[11px] text-muted-foreground">Completa la idea: “Te contacto porque…”</span>
           <textarea
             value={contactReason}
             maxLength={140}
             rows={2}
-            disabled={!hasCampaign || planning || executing}
+            disabled={!hasCampaign || planning || rewriting || executing}
             onChange={(event) => onContactReasonChange(event.target.value)}
             placeholder="Ej. ayudamos a equipos comerciales pequeños a ordenar su outbound"
             className="mt-1 w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none disabled:bg-muted/30"
             data-testid="outbound-contact-reason"
           />
         </label>
-        <button
-          type="button"
-          disabled={disabled || planning || !hasCampaign || leads.length === 0 || !hasReason}
-          onClick={onPrepare}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-rust bg-rust px-4 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
-          data-testid="outbound-prepare-messages"
-        >
-          {planning ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
-          {planning ? "Preparando..." : batch ? "Volver a preparar" : `Preparar ${leads.length} mensaje${leads.length === 1 ? "" : "s"}`}
-        </button>
+        {!batch && (
+          <button
+            type="button"
+            disabled={disabled || planning || !hasCampaign || leads.length === 0 || !hasReason}
+            onClick={onPrepare}
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-rust bg-rust px-4 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+            data-testid="outbound-prepare-messages"
+          >
+            {planning ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+            {planning ? "Preparando..." : `Preparar ${leads.length} mensaje${leads.length === 1 ? "" : "s"}`}
+          </button>
+        )}
       </div>
+
+      {batch && awaitingApproval && (
+        <div className="mt-4 border-t border-border pt-4" data-testid="outbound-template-editor">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold text-foreground">Propuestas de apertura</h4>
+            <span className="text-xs text-muted-foreground">Se aplica a todo el lote</span>
+          </div>
+          <div className="mt-2 divide-y divide-border border-y border-border">
+            {LINKEDIN_MESSAGE_SUGGESTIONS.map((suggestion) => (
+              <label key={suggestion.id} className="flex cursor-pointer items-start gap-3 py-2.5">
+                <input
+                  type="radio"
+                  name="linkedin-message-template"
+                  checked={templateId === suggestion.id}
+                  disabled={rewriting || executing}
+                  onChange={() => chooseTemplate(suggestion)}
+                  className="mt-0.5 h-4 w-4 accent-rust"
+                />
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
+                    {suggestion.name}
+                    {suggestion.recommended && (
+                      <span className="rounded border border-sage/40 bg-sage/10 px-1.5 py-0.5 text-[10px] uppercase text-sage">
+                        Recomendada
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{suggestion.description}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {LINKEDIN_MESSAGE_VARIABLES.map((variable) => (
+              <button
+                key={variable.token}
+                type="button"
+                title={`Insertar ${variable.label.toLowerCase()}`}
+                disabled={rewriting || executing}
+                onClick={() => insertVariable(variable.token)}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
+              >
+                <Braces className="h-3 w-3" />
+                {variable.label}
+              </button>
+            ))}
+          </div>
+          <textarea
+            ref={templateRef}
+            value={messageTemplate}
+            maxLength={600}
+            rows={3}
+            disabled={rewriting || executing}
+            onChange={(event) => {
+              setMessageTemplate(event.target.value);
+              setTemplateId("");
+            }}
+            className="mt-2 w-full resize-y rounded-md border border-border bg-background px-3 py-2 font-mono text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none disabled:bg-muted/30"
+            data-testid="outbound-message-template"
+          />
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">{messageTemplate.length}/600</span>
+            <button
+              type="button"
+              disabled={disabled || rewriting || executing || !hasReason || !messageTemplate.trim()}
+              onClick={() => onApplyTemplate(
+                LINKEDIN_MESSAGE_SUGGESTIONS.find((suggestion) => suggestion.id === templateId)?.name || "Personalizada",
+                messageTemplate,
+              )}
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-4 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+              data-testid="outbound-apply-template"
+            >
+              {rewriting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {rewriting ? "Aplicando..." : `Aplicar a ${itemCount}`}
+            </button>
+          </div>
+        </div>
+      )}
 
       {leads.length === 0 && (
         <div className="mt-4 rounded-lg border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
@@ -2708,6 +3080,11 @@ function B2BKanbanCard({
 
 function B2BListaView({
   leads,
+  workflowReviewMode,
+  batchItems,
+  selectionVersion,
+  selectionEditable,
+  selectionSaving,
   busqueda,
   busquedaLabel,
   initialStage,
@@ -2715,10 +3092,16 @@ function B2BListaView({
   onBulkMove,
   onBulkDiscard,
   onBulkContact,
+  onSaveSelection,
   busy,
   locked,
 }: {
   leads: Lead[];
+  workflowReviewMode?: boolean;
+  batchItems?: Map<string, OutboundWorkflowBatchItem>;
+  selectionVersion?: string;
+  selectionEditable?: boolean;
+  selectionSaving?: boolean;
   busqueda: string;
   busquedaLabel?: string | null;
   initialStage?: StageFilterKey | "";
@@ -2726,6 +3109,7 @@ function B2BListaView({
   onBulkMove: (leads: Lead[], target: StageFilterKey) => void;
   onBulkDiscard: (leads: Lead[]) => void;
   onBulkContact: (leads: Lead[]) => void;
+  onSaveSelection?: (leadIds: string[]) => void;
   busy?: boolean;
   locked?: boolean;
 }) {
@@ -2733,7 +3117,17 @@ function B2BListaView({
   const [stage, setStage] = useState<StageFilterKey | "">(initialStage ?? "");
   const [sortKey, setSortKey] = useState<"score" | "company" | null>("score");
   const [sortDir, setSortDir] = useState<1 | -1>(-1);
+  const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const workflowReview = Boolean(workflowReviewMode || (batchItems && batchItems.size > 0));
+  const selectionLocked = Boolean(locked || (workflowReview && !selectionEditable));
+  const persistedSelection = useMemo(() => {
+    const next: Record<string, boolean> = {};
+    for (const [leadId, item] of batchItems || []) {
+      if (item.included) next[leadId] = true;
+    }
+    return next;
+  }, [batchItems, selectionVersion]);
 
   const visible = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
@@ -2743,7 +3137,16 @@ function B2BListaView({
       if (!stage && leadStage === DISCARDED_STAGE) return false;
       if (stage && leadStage !== stage) return false;
       if (searchValue) {
-        const haystack = [leadDisplayName(lead), lead.company, lead.email, leadRole(lead), lead.source]
+        const batchItem = batchItems?.get(lead.id);
+        const haystack = [
+          leadDisplayName(lead),
+          lead.company,
+          lead.email,
+          leadRole(lead),
+          lead.source,
+          batchItem?.hook,
+          batchItem?.messageBody,
+        ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
@@ -2756,14 +3159,34 @@ function B2BListaView({
       if (sortKey === "score") return (((leadScore(a) ?? -1) - (leadScore(b) ?? -1)) * sortDir);
       return (a.company || "").localeCompare(b.company || "") * sortDir;
     });
-  }, [leads, busqueda, search, sortKey, sortDir, stage]);
+  }, [leads, batchItems, busqueda, search, sortKey, sortDir, stage]);
+
+  const pageSize = 100;
+  const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageStart = safePage * pageSize;
+  const pageRows = visible.slice(pageStart, pageStart + pageSize);
 
   const selectedLeads = useMemo(() => leads.filter((lead) => selected[lead.id]), [leads, selected]);
-  const allVisibleChecked = !locked && visible.length > 0 && visible.every((lead) => selected[lead.id]);
+  const selectableVisible = useMemo(
+    () => workflowReview ? pageRows.filter((lead) => batchItems?.has(lead.id)) : pageRows,
+    [batchItems, pageRows, workflowReview],
+  );
+  const allVisibleChecked = !selectionLocked
+    && selectableVisible.length > 0
+    && selectableVisible.every((lead) => selected[lead.id]);
+  const persistedIds = Object.keys(persistedSelection).sort();
+  const selectedIds = Object.keys(selected).filter((leadId) => selected[leadId]).sort();
+  const selectionDirty = workflowReview && persistedIds.join(",") !== selectedIds.join(",");
 
   useEffect(() => {
-    if (locked) setSelected({});
-  }, [locked]);
+    if (workflowReview) setSelected(persistedSelection);
+    else if (locked) setSelected({});
+  }, [locked, persistedSelection, selectionVersion, workflowReview]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [busqueda, search, sortDir, sortKey, stage]);
 
   function toggleSort(key: "score" | "company") {
     if (sortKey === key) {
@@ -2775,7 +3198,7 @@ function B2BListaView({
   }
 
   function toggleSelected(leadId: string) {
-    if (locked) return;
+    if (selectionLocked || (workflowReview && !batchItems?.has(leadId))) return;
     setSelected((current) => {
       const next = { ...current };
       if (next[leadId]) delete next[leadId];
@@ -2785,10 +3208,10 @@ function B2BListaView({
   }
 
   function toggleAllVisible(checked: boolean) {
-    if (locked) return;
+    if (selectionLocked) return;
     setSelected((current) => {
       const next = { ...current };
-      for (const lead of visible) {
+      for (const lead of selectableVisible) {
         if (checked) next[lead.id] = true;
         else delete next[lead.id];
       }
@@ -2797,7 +3220,7 @@ function B2BListaView({
   }
 
   function clearSelection() {
-    setSelected({});
+    setSelected(workflowReview ? persistedSelection : {});
   }
 
   return (
@@ -2821,7 +3244,7 @@ function B2BListaView({
             type="text"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar contacto o empresa..."
+            placeholder="Buscar persona, empresa, ángulo o mensaje..."
             className="w-64 rounded-md border border-border bg-background py-1.5 pl-8 pr-3 text-sm focus:border-rust focus:outline-none"
           />
         </label>
@@ -2838,40 +3261,51 @@ function B2BListaView({
           ))}
           <option value={DISCARDED_STAGE}>Descartados</option>
         </select>
+        {workflowReview && (
+          <span className="ml-auto text-xs font-semibold text-foreground">
+            {selectedIds.length} de {batchItems?.size ?? 0} para contactar
+            {selectionDirty && <span className="ml-2 text-rust">· sin guardar</span>}
+          </span>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[960px] text-left text-sm" data-testid="outbound-lista">
+        <table className="w-full min-w-[1480px] table-fixed text-left text-sm" data-testid="outbound-lista">
           <thead>
             <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-              <th className="w-10 px-3 py-2.5">
+              <th className="w-24 px-3 py-2.5">
+                <span className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={allVisibleChecked}
-                  disabled={locked}
+                  disabled={selectionLocked || selectableVisible.length === 0}
                   onChange={(event) => toggleAllVisible(event.target.checked)}
                   className="h-4 w-4 accent-rust"
                 />
+                  Contactar
+                </span>
               </th>
-              <th className="px-3 py-2.5">Contacto</th>
-              <SortableTh label="Score" active={sortKey === "score"} dir={sortDir} onClick={() => toggleSort("score")} />
-              <SortableTh label="Empresa" active={sortKey === "company"} dir={sortDir} onClick={() => toggleSort("company")} />
-              <th className="px-3 py-2.5">Rol</th>
-              <th className="px-3 py-2.5">Fuente</th>
-              <th className="px-3 py-2.5">Contacto</th>
-              <th className="px-3 py-2.5">Estado</th>
+              <th className="w-56 px-3 py-2.5">Persona</th>
+              <SortableTh className="w-24" label="Fit estimado" active={sortKey === "score"} dir={sortDir} onClick={() => toggleSort("score")} />
+              <SortableTh className="w-48" label="Empresa" active={sortKey === "company"} dir={sortDir} onClick={() => toggleSort("company")} />
+              <th className="w-44 px-3 py-2.5">Rol</th>
+              <th className="w-64 px-3 py-2.5">Ángulo</th>
+              <th className="w-[420px] px-3 py-2.5">Mensaje</th>
+              <th className="w-28 px-3 py-2.5">Fuente</th>
+              <th className="w-28 px-3 py-2.5">Estado</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-3 py-10 text-center text-sm italic text-muted-foreground">
+                <td colSpan={9} className="px-3 py-10 text-center text-sm italic text-muted-foreground">
                   Ningún prospecto coincide con esos filtros.
                 </td>
               </tr>
             )}
-            {visible.map((lead) => {
+            {pageRows.map((lead) => {
               const discarded = stageForStatus(lead.lifecycleStatus) === DISCARDED_STAGE;
+              const batchItem = batchItems?.get(lead.id);
               return (
                 <tr
                   key={lead.id}
@@ -2887,9 +3321,10 @@ function B2BListaView({
                     <input
                       type="checkbox"
                       checked={!!selected[lead.id]}
-                      disabled={locked}
+                      disabled={selectionLocked || (workflowReview && !batchItem)}
                       onChange={() => toggleSelected(lead.id)}
                       className="h-4 w-4 accent-rust"
+                      aria-label={`Contactar a ${leadDisplayName(lead)}`}
                     />
                   </td>
                   <td className="px-3 py-2.5">
@@ -2904,27 +3339,31 @@ function B2BListaView({
                     </div>
                   </td>
                   <td className="px-3 py-2.5">
-                    <span className={scoreBandClass(leadScore(lead))}>{leadScore(lead) == null ? "-" : Math.round(leadScore(lead)!)}</span>
+                    <span
+                      className={scoreBandClass(leadScore(lead))}
+                      title="Estimación heurística. La validación de filtros está en el resumen de búsqueda."
+                    >
+                      {leadScore(lead) == null ? "-" : Math.round(leadScore(lead)!)}
+                    </span>
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="font-semibold text-foreground">{lead.company || "-"}</div>
                     <div className="text-[11px] text-muted-foreground">{lead.companySize || lead.location || lead.companyDomain || ""}</div>
                   </td>
                   <td className="px-3 py-2.5 text-muted-foreground">{leadRole(lead)}</td>
-                  <td className="px-3 py-2.5">
-                    <SourceChip lead={lead} />
+                  <td className="px-3 py-2.5 align-top">
+                    <p className="m-0 line-clamp-3 text-xs leading-relaxed text-foreground">{batchItem?.hook || "-"}</p>
+                    {batchItem && (
+                      <span className="mt-1 block text-[10px] font-semibold uppercase text-muted-foreground">
+                        {batchItem.hookStatus === "verified" ? "Señal verificada" : "Empresa + motivo"}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 align-top">
+                    <p className="m-0 line-clamp-3 text-xs leading-relaxed text-foreground">{batchItem?.messageBody || "-"}</p>
                   </td>
                   <td className="px-3 py-2.5">
-                    <div className="flex flex-wrap gap-1">
-                      {lead.email && <InfoChip icon={<Mail className="h-3 w-3" />} label="Email" />}
-                      {externalHref(lead.linkedinUrl) && (
-                        <InfoChip
-                          icon={<ExternalLink className="h-3 w-3" />}
-                          label="LinkedIn"
-                          href={externalHref(lead.linkedinUrl) || undefined}
-                        />
-                      )}
-                    </div>
+                    <SourceChip lead={lead} />
                   </td>
                   <td className="px-3 py-2.5">
                     <span className={cn("inline-flex rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide", stageClasses(lead))}>
@@ -2939,10 +3378,64 @@ function B2BListaView({
       </div>
 
       <p className="mt-2 text-xs text-muted-foreground">
-        Mostrando {visible.length} de {leads.length} persona{leads.length === 1 ? "" : "s"}{stage !== DISCARDED_STAGE && " · descartadas excluidas por defecto"}
+        Mostrando {visible.length === 0 ? 0 : pageStart + 1}-{Math.min(pageStart + pageSize, visible.length)} de {visible.length}
+        {visible.length !== leads.length && ` · ${leads.length} totales`}
+        {stage !== DISCARDED_STAGE && " · descartadas excluidas por defecto"}
       </p>
 
-      {selectedLeads.length > 0 && !locked && (
+      {pageCount > 1 && (
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            title="Página anterior"
+            disabled={safePage === 0}
+            onClick={() => setPage((current) => Math.max(0, current - 1))}
+            className="grid h-9 w-9 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+          >
+            <ChevronRight className="h-4 w-4 rotate-180" />
+          </button>
+          <span className="min-w-24 text-center text-xs font-semibold text-foreground">
+            {safePage + 1} de {pageCount}
+          </span>
+          <button
+            type="button"
+            title="Página siguiente"
+            disabled={safePage >= pageCount - 1}
+            onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}
+            className="grid h-9 w-9 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {workflowReview && selectionDirty && !locked && (
+        <div className="fixed bottom-6 left-1/2 z-[550] flex -translate-x-1/2 flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-5 py-3 shadow-lg" data-testid="b2b-workflow-selection-bar">
+          <span className="text-sm font-semibold text-foreground">
+            {selectedIds.length} para contactar
+          </span>
+          <button
+            type="button"
+            disabled={selectionSaving || selectedIds.length === 0}
+            onClick={() => onSaveSelection?.(selectedIds)}
+            className="inline-flex h-9 items-center gap-2 rounded-md border border-rust bg-rust px-3 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+          >
+            {selectionSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            {selectionSaving ? "Guardando..." : "Guardar lote"}
+          </button>
+          <button
+            type="button"
+            title="Deshacer cambios"
+            disabled={selectionSaving}
+            onClick={clearSelection}
+            className="grid h-9 w-9 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {!workflowReview && selectedLeads.length > 0 && !locked && (
         <div className="fixed bottom-6 left-1/2 z-[550] flex -translate-x-1/2 flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 shadow-lg" data-testid="b2b-bulk-bar">
           <span className="text-sm font-semibold text-foreground">
             {selectedLeads.length} seleccionado{selectedLeads.length === 1 ? "" : "s"}
@@ -3000,11 +3493,13 @@ function B2BListaView({
 
 function SortableTh({
   label,
+  className,
   active,
   dir,
   onClick,
 }: {
   label: string;
+  className?: string;
   active: boolean;
   dir: 1 | -1;
   onClick: () => void;
@@ -3012,7 +3507,7 @@ function SortableTh({
   return (
     <th
       onClick={onClick}
-      className={cn("cursor-pointer select-none px-3 py-2.5 transition-colors hover:text-foreground", active && "text-rust")}
+      className={cn("cursor-pointer select-none px-3 py-2.5 transition-colors hover:text-foreground", active && "text-rust", className)}
       title={`Ordenar por ${label.toLowerCase()}`}
     >
       {label} <span className="text-[9px]">{active ? (dir === -1 ? "▼" : "▲") : "▲▼"}</span>
@@ -3183,7 +3678,7 @@ function B2BLeadDrawer({
         </section>
 
         <section className="rounded-xl border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold text-foreground">Score B2B</h3>
+          <h3 className="text-sm font-semibold text-foreground">Fit estimado</h3>
           <div className="mt-3 flex items-start gap-4">
             <div className={scoreBandClass(score, "lg")} data-testid="b2b-score-total">
               {score == null ? "-" : Math.round(score)}

@@ -24,7 +24,9 @@ export interface OutboundCampaignAudienceOption {
   label: string;
   description: string;
   accountDescription: string;
+  declaredAccountDescription: string;
   roles: string[];
+  unappliedCriteria: string[];
   recommended?: boolean;
   workflowIntent: Record<string, unknown>;
 }
@@ -142,6 +144,15 @@ function compactAccountLabel(industry: string | null, range: string | null, coun
   ].filter(Boolean).join(" · ");
 }
 
+function unappliedCompanyCriteria(companyContext: string): string[] {
+  const criteria: string[] = [];
+  if (/\bpost[-\s]?pmf\b/i.test(companyContext)) criteria.push("Post-PMF");
+  const recurringRevenue = companyContext.match(/[<>≥≤]\s*[\d.,]+\s*[km]?\s*€?\s*(?:mrr|arr)\b/i);
+  if (recurringRevenue) criteria.push(recurringRevenue[0].replace(/\s+/g, " ").trim());
+  if (/\bjourney\s+digital\b/i.test(companyContext)) criteria.push("Journey digital");
+  return [...new Set(criteria)];
+}
+
 export function isOutboundCampaignStartPrompt(value: unknown): boolean {
   const normalized = text(value).toLowerCase();
   return normalized === OUTBOUND_CAMPAIGN_START_PROMPT.toLowerCase()
@@ -165,6 +176,7 @@ export function getOutboundCampaignChoices(slug: string): OutboundCampaignChoice
   const countryCode = text(config.country).toUpperCase();
   const country = COUNTRY_NAMES[countryCode] || text(config.country) || null;
   const accountLabel = compactAccountLabel(industry, range, country);
+  const unappliedCriteria = unappliedCompanyCriteria(companyContext);
   const operationalAccountDescription = accountLabel
     ? `Empresas de ${accountLabel.replace(/ · /g, ", ")}`
     : companyContext;
@@ -179,7 +191,9 @@ export function getOutboundCampaignChoices(slug: string): OutboundCampaignChoice
     label: `${group.name} · ${accountLabel || companyContext} · ${group.titles.join("/")}`,
     description: `${operationalAccountDescription}. Roles: ${group.titles.join(", ")}.`,
     accountDescription: operationalAccountDescription,
+    declaredAccountDescription: companyContext,
     roles: group.titles,
+    unappliedCriteria,
     ...(index === 0 ? { recommended: true } : {}),
     workflowIntent: {
       schemaVersion: 1,
@@ -192,6 +206,8 @@ export function getOutboundCampaignChoices(slug: string): OutboundCampaignChoice
       discoveryStrategy: "account_first_v1",
       accountTarget: {
         description: operationalAccountDescription,
+        declaredDescription: companyContext,
+        ...(unappliedCriteria.length > 0 ? { unappliedCriteria } : {}),
         ...(industry ? { industries: [industry] } : { keywords: companyContext }),
         ...(country ? { locations: [country] } : {}),
         ...(range ? { employeeRanges: [range] } : {}),

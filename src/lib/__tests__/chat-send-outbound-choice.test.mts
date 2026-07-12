@@ -135,6 +135,10 @@ test("an outbound ECP click starts YALC directly without invoking the agent gate
   assert.equal(question.options.length, 3);
   const selected = question.options[0];
   assert.doesNotMatch(String(selected.workflowIntent.targetSegment), /MRR|post-PMF/i);
+  assert.deepEqual(
+    (selected.workflowIntent.accountTarget as Record<string, unknown>).unappliedCriteria,
+    ["Post-PMF"],
+  );
 
   const response = mockResponse();
   try {
