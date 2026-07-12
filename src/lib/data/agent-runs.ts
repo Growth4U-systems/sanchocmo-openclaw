@@ -1,9 +1,36 @@
 import crypto from "crypto";
+import fs from "fs";
 import path from "path";
 import { BASE } from "./paths";
 import { readJSON, writeJSON } from "./json-io";
 
 export type AgentRunStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
+
+export interface AgentRunExpectedOutput {
+  path: string;
+  source:
+    | "deliverable_file"
+    | "output_documents"
+    | "output_files"
+    | "documents"
+    | "fallback";
+}
+
+/**
+ * Minimal immutable description of the task harness at dispatch time.
+ *
+ * Quality consumers must not reconstruct this from the current task record:
+ * task configuration can change after a run and would rewrite history.
+ */
+export interface AgentRunTaskContractSnapshot {
+  name?: string;
+  type?: string;
+  status?: string;
+  completion?: string;
+  doneCriteria?: string;
+  deliverable?: string;
+  expectedOutputs: AgentRunExpectedOutput[];
+}
 
 export type AgentRunEventType =
   | "run_created"
@@ -11,6 +38,7 @@ export type AgentRunEventType =
   | "runtime_rejected"
   | "runtime_unreachable"
   | "progress"
+  | "artifact_readback"
   | "bot_reply"
   | "cancel_requested"
   | "cancel_dispatched"
@@ -28,6 +56,10 @@ export interface AgentRun {
   skill?: string;
   skills?: string[];
   skillMode?: "auto" | "pinned";
+  /** Task harness resolved by Mission Control for this turn, when any. */
+  taskId?: string;
+  /** Task contract captured when the run was accepted. */
+  taskContract?: AgentRunTaskContractSnapshot;
   status: AgentRunStatus;
   input?: unknown;
   output?: unknown;
@@ -49,7 +81,7 @@ export interface AgentRunEvent {
   data?: unknown;
 }
 
-interface AgentRunsStore {
+export interface AgentRunsSnapshot {
   runs: AgentRun[];
   events: AgentRunEvent[];
 }
@@ -62,6 +94,8 @@ export interface CreateAgentRunInput {
   skill?: string;
   skills?: string[];
   skillMode?: "auto" | "pinned";
+  taskId?: string;
+  taskContract?: AgentRunTaskContractSnapshot;
   input?: unknown;
   now?: Date;
 }
@@ -83,8 +117,19 @@ export interface UpdateAgentRunInput {
   now?: Date;
 }
 
-const MAX_RUNS = 2000;
-const MAX_EVENTS = 10000;
+/**
+ * Current shadow-ledger coverage. This JSON ledger is bounded and is not an
+ * append-only audit log; callers must surface these limits with every export.
+ */
+export const AGENT_RUN_RETENTION = Object.freeze({
+  storage: "bounded-json" as const,
+  maxRuns: 2000,
+  maxEvents: 10000,
+  durable: false,
+});
+
+const MAX_RUNS = AGENT_RUN_RETENTION.maxRuns;
+const MAX_EVENTS = AGENT_RUN_RETENTION.maxEvents;
 const ACTIVE_STATUSES = new Set<AgentRunStatus>(["queued", "running"]);
 const TERMINAL_STATUSES = new Set<AgentRunStatus>(["completed", "failed", "cancelled"]);
 
@@ -92,15 +137,15 @@ export function agentRunsFile(): string {
   return path.join(BASE, "_system", "agent-runs.json");
 }
 
-function readStore(): AgentRunsStore {
-  const store = readJSON<AgentRunsStore>(agentRunsFile(), { runs: [], events: [] });
+function readStore(): AgentRunsSnapshot {
+  const store = readJSON<AgentRunsSnapshot>(agentRunsFile(), { runs: [], events: [] });
   return {
     runs: Array.isArray(store.runs) ? store.runs : [],
     events: Array.isArray(store.events) ? store.events : [],
   };
 }
 
-function writeStore(store: AgentRunsStore): void {
+function writeStore(store: AgentRunsSnapshot): void {
   writeJSON(agentRunsFile(), {
     runs: store.runs.slice(-MAX_RUNS),
     events: store.events.slice(-MAX_EVENTS),
@@ -126,6 +171,8 @@ export function createAgentRun(input: CreateAgentRunInput): AgentRun {
     skill: input.skill,
     skills: input.skills,
     skillMode: input.skillMode,
+    taskId: input.taskId,
+    taskContract: input.taskContract,
     status: "queued",
     input: input.input,
     createdAt: now,
@@ -146,10 +193,29 @@ export function createAgentRun(input: CreateAgentRunInput): AgentRun {
       skill: run.skill,
       skills: run.skills,
       skillMode: run.skillMode,
+      taskId: run.taskId,
     },
   });
   writeStore(store);
   return run;
+}
+
+/**
+ * Read-only point-in-time view used by the shadow quality evidence endpoint.
+ * The returned objects come from a fresh JSON parse; mutating them cannot write
+ * back to the ledger.
+ */
+export function readAgentRunsSnapshot(): AgentRunsSnapshot {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(agentRunsFile(), "utf8")) as Partial<AgentRunsSnapshot>;
+    if (!Array.isArray(parsed.runs) || !Array.isArray(parsed.events)) {
+      throw new Error("agent-runs ledger has an invalid shape");
+    }
+    return { runs: parsed.runs, events: parsed.events };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { runs: [], events: [] };
+    throw new Error(`agent-runs ledger is unreadable: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 export function appendAgentRunEvent(input: AppendAgentRunEventInput): AgentRunEvent {
@@ -276,10 +342,11 @@ export function markAgentRunCompleted(
   runId: string,
   threadId: string,
   output?: unknown,
+  completedAt?: Date,
 ): AgentRun | null {
   const current = getAgentRunById(runId);
   if (!current || TERMINAL_STATUSES.has(current.status)) return current;
-  const now = new Date();
+  const now = completedAt ?? new Date();
   appendAgentRunEvent({ runId, threadId, type: "bot_reply", data: output, now });
   return updateAgentRun(runId, {
     status: "completed",

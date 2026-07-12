@@ -1,4 +1,8 @@
 import { resolveAgentForSkill, resolveThreadSkills } from "@/lib/skill-resolver";
+import {
+  normalizeBrandDocPath,
+  normalizeBrandDocPathFromBase,
+} from "@/lib/doc-paths";
 
 export type TaskDocumentRef = {
   path: string;
@@ -137,7 +141,7 @@ export function documentRefsFromUnknown(value: unknown, source = "document"): Ta
             title: typeof record.title === "string" ? record.title : undefined,
             status: typeof record.status === "string" ? record.status : undefined,
             kind: typeof record.kind === "string" ? record.kind as TaskDocumentRef["kind"] : undefined,
-            source,
+            source: typeof record.source === "string" ? record.source : source,
           });
         }
       }
@@ -152,7 +156,7 @@ export function documentRefsFromUnknown(value: unknown, source = "document"): Ta
         title: typeof record.title === "string" ? record.title : undefined,
         status: typeof record.status === "string" ? record.status : undefined,
         kind: typeof record.kind === "string" ? record.kind as TaskDocumentRef["kind"] : undefined,
-        source,
+        source: typeof record.source === "string" ? record.source : source,
       });
     }
   }
@@ -191,6 +195,50 @@ export function uniqueDocs(docs: TaskDocumentRef[]): TaskDocumentRef[] {
     seen.add(key);
     doc.path = key;
     return true;
+  });
+}
+
+function firstDocumentPath(value: unknown): string | undefined {
+  const docs = documentRefsFromUnknown(value);
+  if (docs[0]?.path) return docs[0].path;
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (Array.isArray(value)) {
+    const raw = value.find((item) => typeof item === "string" && item.trim());
+    if (typeof raw === "string") return raw.trim();
+  }
+  return undefined;
+}
+
+function dirname(pathValue: string): string {
+  const cleaned = pathValue.replace(/\\/g, "/").replace(/\/+$/, "");
+  const index = cleaned.lastIndexOf("/");
+  return index > 0 ? cleaned.slice(0, index) : cleaned;
+}
+
+function normalizedOutputFileRefs(
+  value: unknown,
+  brandSlug: string | undefined,
+  deliverableAnchor: string | undefined,
+): TaskDocumentRef[] {
+  const refs = documentRefsFromUnknown(value, "output_files");
+  if (!brandSlug) return refs;
+  let baseDirectory: string | undefined;
+  if (deliverableAnchor) {
+    try {
+      baseDirectory = dirname(normalizeBrandDocPath(brandSlug, deliverableAnchor));
+    } catch {
+      baseDirectory = undefined;
+    }
+  }
+  return refs.flatMap((ref) => {
+    try {
+      const resolved = baseDirectory
+        ? normalizeBrandDocPathFromBase(brandSlug, ref.path, baseDirectory)
+        : normalizeBrandDocPath(brandSlug, ref.path);
+      return [{ ...ref, path: resolved }];
+    } catch {
+      return [];
+    }
   });
 }
 
@@ -234,7 +282,14 @@ export function inferTaskExecutionContract(
     normalizeAgentSlug(task.owner) ||
     "sancho";
 
-  const outputDocs = documentRefsFromUnknown(task.output_documents, "output_documents");
+  let outputDocs = documentRefsFromUnknown(task.output_documents, "output_documents");
+  const declaredOutputFiles = documentRefsFromUnknown(task.output_files, "output_files");
+  if (declaredOutputFiles.length > 0) {
+    // DB rows persist the previously inferred output_documents as well as the
+    // raw output_files. Drop those derived copies and rebuild them below so
+    // legacy root-relative mistakes do not become additional expectations.
+    outputDocs = outputDocs.filter((doc) => doc.source !== "output_files");
+  }
   if (type === "project") {
     const projectSlug = task.slug || task.id;
     if (opts.brandSlug && projectSlug) {
@@ -247,8 +302,11 @@ export function inferTaskExecutionContract(
       });
     }
   }
-  outputDocs.push(...documentRefsFromUnknown(task.deliverable_file, "deliverable_file"));
-  outputDocs.push(...documentRefsFromUnknown(task.output_files, "output_files"));
+  const deliverableDocs = documentRefsFromUnknown(task.deliverable_file, "deliverable_file");
+  const deliverableAnchor = firstDocumentPath(task.deliverable_file)
+    || outputDocs.find((doc) => doc.source === "deliverable_file")?.path;
+  outputDocs.push(...deliverableDocs);
+  outputDocs.push(...normalizedOutputFileRefs(task.output_files, opts.brandSlug, deliverableAnchor));
   outputDocs.push(...documentRefsFromUnknown(task.documents, "documents"));
   outputDocs.push(...documentRefsFromUnknown(task.attachments, "attachments"));
   if (opts.brandSlug && task.id && outputDocs.length === 0) {
