@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { brandDir } from "@/lib/data/paths";
+import { loadBrandSummary } from "@/lib/data/brand-brain-assembler";
 
 export const OUTBOUND_CAMPAIGN_START_PROMPT = "Quiero crear una campaña B2B por LinkedIn.";
 
@@ -27,6 +28,7 @@ export interface OutboundCampaignAudienceOption {
   declaredAccountDescription: string;
   roles: string[];
   unappliedCriteria: string[];
+  companyUniverseKey: string;
   recommended?: boolean;
   workflowIntent: Record<string, unknown>;
 }
@@ -153,6 +155,29 @@ function unappliedCompanyCriteria(companyContext: string): string[] {
   return [...new Set(criteria)];
 }
 
+function readPositioningContext(slug: string, value: string): string {
+  if (!value || !/\.(?:md|txt)$/i.test(value)) return value;
+  const root = path.resolve(brandDir(slug));
+  const file = path.resolve(root, value.replace(/^brand\/[^/]+\//, ""));
+  if (file !== root && !file.startsWith(`${root}${path.sep}`)) return "";
+  try {
+    return fs.readFileSync(file, "utf8").slice(0, 6_000);
+  } catch {
+    return "";
+  }
+}
+
+export function getOutboundOfferContext(slug: string): string {
+  const summary = loadBrandSummary(slug);
+  const positioning = readPositioningContext(slug, text(summary.positioning));
+  return [
+    summary.company_name ? `Empresa oferente: ${summary.company_name}` : null,
+    summary.sector ? `Categoría: ${summary.sector}` : null,
+    summary.description ? `Servicio: ${summary.description}` : null,
+    positioning ? `Posicionamiento y mensajes:\n${positioning}` : null,
+  ].filter(Boolean).join("\n\n").slice(0, 8_000);
+}
+
 export function isOutboundCampaignStartPrompt(value: unknown): boolean {
   const normalized = text(value).toLowerCase();
   return normalized === OUTBOUND_CAMPAIGN_START_PROMPT.toLowerCase()
@@ -180,6 +205,8 @@ export function getOutboundCampaignChoices(slug: string): OutboundCampaignChoice
   const operationalAccountDescription = accountLabel
     ? `Empresas de ${accountLabel.replace(/ · /g, ", ")}`
     : companyContext;
+  const offerContext = getOutboundOfferContext(slug);
+  const companyUniverseKey = slugify(JSON.stringify({ industry, range, country, companyContext }));
   const defaultBatchSize = process.env.NODE_ENV === "development" ? 3 : 1_000;
   const batchSize = Math.max(
     1,
@@ -194,6 +221,7 @@ export function getOutboundCampaignChoices(slug: string): OutboundCampaignChoice
     declaredAccountDescription: companyContext,
     roles: group.titles,
     unappliedCriteria,
+    companyUniverseKey,
     ...(index === 0 ? { recommended: true } : {}),
     workflowIntent: {
       schemaVersion: 1,
@@ -202,6 +230,7 @@ export function getOutboundCampaignChoices(slug: string): OutboundCampaignChoice
       ecpId: slugify(group.name),
       targetSegment: `${group.name} en ${operationalAccountDescription}`,
       contactReason: "Quiero compartir una idea concreta para simplificar su sistema de growth",
+      ...(offerContext ? { offerContext, approach: "conversational" } : {}),
       batchSize,
       discoveryStrategy: "account_first_v1",
       accountTarget: {

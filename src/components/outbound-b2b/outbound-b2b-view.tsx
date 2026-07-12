@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Briefcase,
-  Braces,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -36,10 +35,6 @@ import { useOpenChat } from "@/hooks/useChat";
 import { buildYalcThread } from "@/lib/chat-openers";
 import { linkedInFirstContactCandidates } from "@/lib/outreach/linkedin-first-contact";
 import {
-  LINKEDIN_MESSAGE_SUGGESTIONS,
-  LINKEDIN_MESSAGE_VARIABLES,
-} from "@/lib/outreach/linkedin-message-templates";
-import {
   NewCampaignPanel,
   type OutboundCampaignSetupChoices,
 } from "@/components/outbound-b2b/new-campaign-panel";
@@ -59,6 +54,7 @@ import {
 
 type B2BTab = OutreachTabKey | "settings";
 type ContactosVista = "kanban" | "lista";
+type LinkedInMessageApproach = "conversational" | "direct" | "commercial" | "organic";
 type OutboundAction =
   | "workflow-start"
   | "approve"
@@ -67,6 +63,7 @@ type OutboundAction =
   | "live"
   | "email-dry-run"
   | "email-send"
+  | "linkedin-personalize"
   | "linkedin-dry-run"
   | "linkedin-send";
 type YalcJobStatus = "queued" | "running" | "succeeded" | "failed" | "interrupted";
@@ -251,6 +248,11 @@ interface OutboundWorkflowBatchItem {
   hook: string;
   hookStatus: "verified" | "fallback" | string;
   messageBody: string;
+  evidence?: Array<{
+    provider: string;
+    label: string;
+    sourceUrl?: string | null;
+  }>;
   contentHash: string;
   errorCode?: string | null;
   errorMessage?: string | null;
@@ -302,6 +304,10 @@ interface OutboundWorkflowStatusResponse {
       blocked?: number | null;
       targetVerified?: number | null;
       targetMismatches?: number | null;
+      accountsInMemory?: number | null;
+      accountsFromProvider?: number | null;
+      accountsReused?: number | null;
+      accountsNew?: number | null;
     };
     validation: { accounts: string; people: string };
   } | null;
@@ -311,6 +317,15 @@ interface OutboundWorkflowStatusResponse {
     channel: string;
     itemCount: number;
     contentHash: string;
+    personalization?: {
+      approach: LinkedInMessageApproach;
+      campaignReason: string;
+      source: "ai_grounded" | "deterministic_fallback";
+      provider?: string | null;
+      generatedAt: string;
+      generated: number;
+      fallback: number;
+    } | null;
     approvedAt?: string | null;
     approvedBy?: string | null;
     summary?: {
@@ -350,6 +365,17 @@ interface OutboundWorkflowPrepareResponse {
   };
   blocked?: Array<{ leadId: string; reason: string }>;
   signalFailures?: Array<{ entityId: string; capability: string; message: string }>;
+}
+
+interface OutboundWorkflowPersonalizeResponse extends YalcQueuedJobResponse {
+  ok?: boolean;
+  campaignId?: string;
+  runId?: string;
+  personalization?: {
+    generated?: number;
+    fallback?: number;
+  } | null;
+  batch?: { itemCount?: number };
 }
 
 interface OutboundWorkflowExecuteResponse extends YalcQueuedJobResponse {
@@ -883,6 +909,7 @@ function outboundActionLabel(action: OutboundAction): string {
   if (action === "publish") return "Contactar por email";
   if (action === "email-dry-run") return "Simular email";
   if (action === "email-send") return "Activar email";
+  if (action === "linkedin-personalize") return "Generar mensajes de LinkedIn";
   if (action === "linkedin-dry-run") return "Personalizar LinkedIn";
   if (action === "linkedin-send") return "Contactar por LinkedIn";
   return "Contactar";
@@ -1071,7 +1098,6 @@ export function OutboundB2BView() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [activeJob, setActiveJob] = useState<ActiveYalcJob | null>(null);
   const [workflowBlocked, setWorkflowBlocked] = useState<Array<{ leadId: string; reason: string }>>([]);
-  const [contactReasons, setContactReasons] = useState<Record<string, string>>({});
   const [campaignSetupOpen, setCampaignSetupOpen] = useState(false);
   const [campaignSetupOptionId, setCampaignSetupOptionId] = useState("");
 
@@ -1216,7 +1242,7 @@ export function OutboundB2BView() {
       null,
     [campaignDetailQuery.data, selectedCampaign, campaigns, templateCampaignId],
   );
-  const contactReason = contactReasons[selectedCampaignId] ?? icpCampaign?.hypothesis ?? "";
+  const contactReason = icpCampaign?.hypothesis ?? "";
   const workflowStatusQuery = useQuery({
     queryKey: ["yalc", slug, "b2b", "workflow", selectedCampaignId],
     queryFn: () =>
@@ -1410,40 +1436,43 @@ export function OutboundB2BView() {
     onError: (error) => showToast(error instanceof Error ? error.message : "No se pudo preparar el lote LinkedIn", "warn"),
   });
 
-  const linkedinWorkflowRewriteAction = useMutation<
-    OutboundWorkflowPrepareResponse,
+  const linkedinWorkflowPersonalizeAction = useMutation<
+    OutboundWorkflowPersonalizeResponse,
     Error,
-    { campaignId: string; runId: string; contactReason: string; templateName: string; template: string }
+    { campaignId: string; runId: string; approach: LinkedInMessageApproach }
   >({
-    mutationFn: async ({ campaignId, runId, contactReason: reason, templateName, template }) => {
-      if (!reason.trim()) throw new Error("Escribe por qué quieres contactar a estas personas.");
-      await fetchJson(`/api/yalc/campaigns/${encodeURIComponent(campaignId)}?slug=${encodeURIComponent(slug)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expectedKind: "b2b", hypothesis: reason.trim() }),
-      });
-      return fetchJson<OutboundWorkflowPrepareResponse>(
+    mutationFn: ({ campaignId, runId, approach }) =>
+      fetchJson<OutboundWorkflowPersonalizeResponse>(
         `/api/outbound/command?slug=${encodeURIComponent(slug)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            command: "outbound.workflow.rewrite",
+            command: "outbound.workflow.personalize",
             campaignId,
             runId,
-            contactReason: reason.trim(),
-            templateName,
-            template,
+            approach,
+            requestId: crypto.randomUUID(),
           }),
         },
-      );
-    },
-    onSuccess: (data) => {
-      void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "campaigns"] });
+      ),
+    onSuccess: (data, variables) => {
+      if (isQueuedJobResponse(data)) {
+        setActiveJob({
+          campaignId: variables.campaignId,
+          action: "linkedin-personalize",
+          jobId: data.jobId,
+          status: data.status || "queued",
+        });
+        showToast("Generando mensajes personalizados. No se enviará nada.");
+        return;
+      }
       void queryClient.invalidateQueries({ queryKey: ["yalc", slug, "b2b", "workflow", selectedCampaignId] });
-      showToast(`${data.batch?.itemCount ?? 0} mensajes actualizados. No se envió nada.`);
+      const generated = data.personalization?.generated ?? data.batch?.itemCount ?? 0;
+      const fallback = data.personalization?.fallback ?? 0;
+      showToast(`${generated} mensajes generados${fallback ? ` · ${fallback} requieren revisión` : ""}. No se envió nada.`);
     },
-    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudieron actualizar los mensajes", "warn"),
+    onError: (error) => showToast(error instanceof Error ? error.message : "No se pudieron generar los mensajes", "warn"),
   });
 
   const linkedinWorkflowSelectionAction = useMutation<
@@ -1859,10 +1888,12 @@ export function OutboundB2BView() {
   const busyAction = outboundAction.isPending ? outboundAction.variables?.action : activeJob?.action;
   const linkedinBusy =
     linkedinWorkflowPrepareAction.isPending ||
-    linkedinWorkflowRewriteAction.isPending ||
+    linkedinWorkflowPersonalizeAction.isPending ||
     linkedinWorkflowSelectionAction.isPending ||
     linkedinWorkflowApproveAction.isPending ||
-    linkedinWorkflowExecuteAction.isPending;
+    linkedinWorkflowExecuteAction.isPending ||
+    activeJob?.action === "linkedin-personalize" ||
+    activeJob?.action === "linkedin-send";
 
   if (notConfigured) {
     return (
@@ -2104,12 +2135,13 @@ export function OutboundB2BView() {
                     selectionEditable={
                       workflowStatusQuery.data?.batch?.status === "draft"
                       && workflowStatusQuery.data?.run.status === "awaiting_approval"
+                      && !linkedinBusy
                     }
                     selectionSaving={linkedinWorkflowSelectionAction.isPending}
                     busqueda={selectedCampaignId}
                     busquedaLabel={selectedCampaign?.title || null}
                     initialStage={stageParam}
-                    busy={stageMutation.isPending || linkedinWorkflowSelectionAction.isPending}
+                    busy={stageMutation.isPending || linkedinBusy}
                     locked={selectedLeadEditsLocked}
                     onOpen={(lead) => setSelectedLeadId(lead.id)}
                     onBulkMove={moveMany}
@@ -2136,26 +2168,24 @@ export function OutboundB2BView() {
                       blocked={workflowStatusQuery.data?.blocked || workflowBlocked}
                       loadingStatus={workflowStatusQuery.isLoading}
                       planning={linkedinWorkflowPrepareAction.isPending}
-                      rewriting={linkedinWorkflowRewriteAction.isPending}
+                      personalizing={
+                        linkedinWorkflowPersonalizeAction.isPending ||
+                        activeJob?.action === "linkedin-personalize"
+                      }
                       executing={
                         linkedinWorkflowApproveAction.isPending ||
                         linkedinWorkflowExecuteAction.isPending ||
                         activeJob?.action === "linkedin-send"
                       }
                       disabled={!selectedCampaignId || linkedinBusy}
-                      onContactReasonChange={(reason) => {
-                        setContactReasons((current) => ({ ...current, [selectedCampaignId]: reason }));
-                      }}
                       onPrepare={() => linkedinWorkflowPrepareAction.mutate({ campaignId: selectedCampaignId, contactReason })}
-                      onApplyTemplate={(templateName, template) => {
+                      onPersonalize={(approach) => {
                         const runId = workflowStatusQuery.data?.run.id;
                         if (!runId) return;
-                        linkedinWorkflowRewriteAction.mutate({
+                        linkedinWorkflowPersonalizeAction.mutate({
                           campaignId: selectedCampaignId,
                           runId,
-                          contactReason,
-                          templateName,
-                          template,
+                          approach,
                         });
                       }}
                       onSimulate={() => void executeLinkedInWorkflow(true)}
@@ -2434,6 +2464,9 @@ function B2BCampaignsTab({
 
 function providerDisplayName(provider?: string | null): string {
   const value = String(provider || "").toLowerCase();
+  if (value === "database") return "Base propia";
+  if (value === "database+crustdata") return "Base propia + Crustdata";
+  if (value === "database+apollo") return "Base propia + Apollo";
   if (value === "crustdata") return "Crustdata";
   if (value === "apollo") return "Apollo";
   if (value === "provided") return "Dominios definidos";
@@ -2519,6 +2552,18 @@ function OutboundTargetingAuditPanel({ audit }: { audit: OutboundTargetingAudit 
   );
 }
 
+const LINKEDIN_MESSAGE_APPROACH_OPTIONS: Array<{
+  id: LinkedInMessageApproach;
+  name: string;
+  description: string;
+  recommended?: boolean;
+}> = [
+  { id: "conversational", name: "Conversacional", description: "Observación concreta y apertura ligera.", recommended: true },
+  { id: "direct", name: "Directo", description: "Relevancia y motivo sin rodeos." },
+  { id: "commercial", name: "Más comercial", description: "Problema y valor potencial más explícitos." },
+  { id: "organic", name: "Orgánico", description: "Networking entre pares, con mínima presión." },
+];
+
 function LinkedInWorkflowPanel({
   campaign,
   leads,
@@ -2527,12 +2572,11 @@ function LinkedInWorkflowPanel({
   blocked,
   loadingStatus,
   planning,
-  rewriting,
+  personalizing,
   executing,
   disabled,
-  onContactReasonChange,
   onPrepare,
-  onApplyTemplate,
+  onPersonalize,
   onSimulate,
   onExecute,
 }: {
@@ -2543,96 +2587,71 @@ function LinkedInWorkflowPanel({
   blocked: Array<{ leadId: string; reason: string }>;
   loadingStatus: boolean;
   planning: boolean;
-  rewriting: boolean;
+  personalizing: boolean;
   executing: boolean;
   disabled: boolean;
-  onContactReasonChange: (reason: string) => void;
   onPrepare: () => void;
-  onApplyTemplate: (templateName: string, template: string) => void;
+  onPersonalize: (approach: LinkedInMessageApproach) => void;
   onSimulate: () => void;
   onExecute: () => void;
 }) {
-  const recommendedTemplate = LINKEDIN_MESSAGE_SUGGESTIONS.find((suggestion) => suggestion.recommended)
-    || LINKEDIN_MESSAGE_SUGGESTIONS[0]!;
-  const [templateId, setTemplateId] = useState(recommendedTemplate.id);
-  const [messageTemplate, setMessageTemplate] = useState(recommendedTemplate.template);
-  const templateRef = useRef<HTMLTextAreaElement | null>(null);
   const leadById = useMemo(() => new Map(leads.map((lead) => [lead.id, lead])), [leads]);
   const batch = workflow?.batch || null;
   const items = batch?.items || [];
-  const sampleItems = items.filter((item) => item.included).slice(0, 3);
+  const includedItems = items.filter((item) => item.included);
+  const sampleItems = includedItems.slice(0, 3);
+  const [approach, setApproach] = useState<LinkedInMessageApproach>("conversational");
   const failedCount = (batch?.summary?.failed ?? 0) + (batch?.summary?.uncertain ?? 0);
   const sentCount = batch?.summary?.sent ?? items.filter((item) => item.status === "sent").length;
+  const itemCount = batch?.itemCount ?? 0;
+  const verifiedCount = includedItems.filter((item) => item.hookStatus === "verified").length;
+  const roleOnlyCount = Math.max(0, itemCount - verifiedCount);
   const hasCampaign = !!campaign;
   const hasReason = Boolean(contactReason.trim());
   const awaitingApproval = batch?.status === "draft" || workflow?.run.status === "awaiting_approval";
   const approved = batch?.status === "approved" || workflow?.run.status === "approved";
   const finished = batch?.status === "completed" || batch?.status === "completed_with_errors";
-  const itemCount = batch?.itemCount ?? 0;
+  const reviewReady = Boolean(batch?.personalization) && itemCount > 0;
+  const appliedApproach = batch?.personalization?.approach;
 
   useEffect(() => {
-    setTemplateId(recommendedTemplate.id);
-    setMessageTemplate(recommendedTemplate.template);
-  }, [campaign?.id, recommendedTemplate.id, recommendedTemplate.template]);
-
-  function chooseTemplate(suggestion: (typeof LINKEDIN_MESSAGE_SUGGESTIONS)[number]) {
-    setTemplateId(suggestion.id);
-    setMessageTemplate(suggestion.template);
-  }
-
-  function insertVariable(token: string) {
-    const field = templateRef.current;
-    const start = field?.selectionStart ?? messageTemplate.length;
-    const end = field?.selectionEnd ?? start;
-    const next = `${messageTemplate.slice(0, start)}${token}${messageTemplate.slice(end)}`;
-    setMessageTemplate(next);
-    setTemplateId("");
-    window.requestAnimationFrame(() => {
-      field?.focus();
-      field?.setSelectionRange(start + token.length, start + token.length);
-    });
-  }
+    setApproach(batch?.personalization?.approach ?? "conversational");
+  }, [campaign?.id, batch?.personalization?.approach]);
 
   return (
     <section className="rounded-lg border border-border bg-card p-4" data-testid="linkedin-workflow-panel">
       <div className="flex flex-wrap items-start gap-4">
         <div className="min-w-[260px] flex-1">
-          <div className="mb-2 inline-flex items-center gap-2 rounded border border-cyan-600/30 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-800">
+          <div className="mb-2 inline-flex items-center gap-2 rounded border border-cyan-600/30 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-cyan-800">
             <Network className="h-3 w-3" />
             LinkedIn
           </div>
-          <h3 className="font-heading text-lg text-navy">Secuencia LinkedIn · Apertura</h3>
-          <p className="mt-1 text-xs text-muted-foreground">1 paso · solicitud de conexión</p>
+          <h3 className="font-heading text-lg text-navy">Mensaje de conexión</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Sancho propone el mensaje completo para todo el lote.</p>
         </div>
         <p className="text-sm font-semibold text-foreground">
           {loadingStatus
             ? "Leyendo estado..."
-            : finished
-              ? `${sentCount} enviados · ${failedCount} con incidencia`
-              : approved
-                ? `${itemCount} aprobados · sin enviar`
-                : batch
-                  ? `${itemCount} preparados · sin enviar`
-                  : `${leads.length} aprobado${leads.length === 1 ? "" : "s"} · sin enviar`}
+            : personalizing
+              ? "Generando mensajes..."
+              : finished
+                ? `${sentCount} enviados · ${failedCount} con incidencia`
+                : approved
+                  ? `${itemCount} aprobados · sin enviar`
+                  : batch
+                    ? `${itemCount} preparados · sin enviar`
+                    : `${leads.length} contacto${leads.length === 1 ? "" : "s"} · sin enviar`}
         </p>
       </div>
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
-        <label className="min-w-0 flex-1">
-          <span className="text-xs font-semibold text-foreground">Argumento común</span>
-          <span className="mt-0.5 block text-[11px] text-muted-foreground">Completa la idea: “Te contacto porque…”</span>
-          <textarea
-            value={contactReason}
-            maxLength={140}
-            rows={2}
-            disabled={!hasCampaign || planning || rewriting || executing}
-            onChange={(event) => onContactReasonChange(event.target.value)}
-            placeholder="Ej. ayudamos a equipos comerciales pequeños a ordenar su outbound"
-            className="mt-1 w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none disabled:bg-muted/30"
-            data-testid="outbound-contact-reason"
-          />
-        </label>
-        {!batch && (
+      {!batch && (
+        <div className="mt-4 flex flex-col gap-3 border-y border-border py-3 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-semibold text-foreground">Motivo de la campaña</div>
+            <p className="mb-0 mt-1 text-sm leading-relaxed text-muted-foreground">
+              {contactReason || "La campaña no tiene todavía un motivo definido."}
+            </p>
+          </div>
           <button
             type="button"
             disabled={disabled || planning || !hasCampaign || leads.length === 0 || !hasReason}
@@ -2641,93 +2660,86 @@ function LinkedInWorkflowPanel({
             data-testid="outbound-prepare-messages"
           >
             {planning ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
-            {planning ? "Preparando..." : `Preparar ${leads.length} mensaje${leads.length === 1 ? "" : "s"}`}
+            {planning ? "Preparando..." : `Preparar ${leads.length}`}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {batch && awaitingApproval && (
-        <div className="mt-4 border-t border-border pt-4" data-testid="outbound-template-editor">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="text-sm font-semibold text-foreground">Propuestas de apertura</h4>
-            <span className="text-xs text-muted-foreground">Se aplica a todo el lote</span>
-          </div>
-          <div className="mt-2 divide-y divide-border border-y border-border">
-            {LINKEDIN_MESSAGE_SUGGESTIONS.map((suggestion) => (
-              <label key={suggestion.id} className="flex cursor-pointer items-start gap-3 py-2.5">
-                <input
-                  type="radio"
-                  name="linkedin-message-template"
-                  checked={templateId === suggestion.id}
-                  disabled={rewriting || executing}
-                  onChange={() => chooseTemplate(suggestion)}
-                  className="mt-0.5 h-4 w-4 accent-rust"
-                />
-                <span className="min-w-0">
-                  <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-foreground">
-                    {suggestion.name}
-                    {suggestion.recommended && (
-                      <span className="rounded border border-sage/40 bg-sage/10 px-1.5 py-0.5 text-[10px] uppercase text-sage">
-                        Recomendada
-                      </span>
-                    )}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">{suggestion.description}</span>
-                </span>
-              </label>
-            ))}
+        <div className="mt-4 border-t border-border pt-4" data-testid="outbound-personalization-controls">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">Personalización propuesta</h4>
+              <p className="mb-0 mt-1 text-xs text-muted-foreground">
+                {batch.personalization
+                  ? `${verifiedCount} con evidencia guardada${roleOnlyCount ? ` · ${roleOnlyCount} basados solo en rol y empresa` : ""}`
+                  : "Genera la versión personalizada antes de aprobar o enviar."}
+              </p>
+            </div>
+            {batch.personalization?.source === "ai_grounded" && roleOnlyCount === 0 && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sage">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Datos reales
+              </span>
+            )}
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {LINKEDIN_MESSAGE_VARIABLES.map((variable) => (
-              <button
-                key={variable.token}
-                type="button"
-                title={`Insertar ${variable.label.toLowerCase()}`}
-                disabled={rewriting || executing}
-                onClick={() => insertVariable(variable.token)}
-                className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-rust hover:text-rust disabled:opacity-50"
-              >
-                <Braces className="h-3 w-3" />
-                {variable.label}
-              </button>
-            ))}
+          <div className="mt-3 grid overflow-hidden rounded-md border border-border sm:grid-cols-2 lg:grid-cols-4" role="radiogroup" aria-label="Enfoque del mensaje">
+            {LINKEDIN_MESSAGE_APPROACH_OPTIONS.map((option) => {
+              const selected = approach === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  disabled={personalizing || executing}
+                  onClick={() => setApproach(option.id)}
+                  className={cn(
+                    "min-h-[72px] border-b border-border px-3 py-2 text-left transition-colors last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0",
+                    selected ? "bg-rust/10 text-foreground" : "bg-background text-muted-foreground hover:bg-muted/40",
+                  )}
+                >
+                  <span className="flex items-center gap-1.5 text-sm font-semibold">
+                    {option.name}
+                    {option.recommended && <span className="text-[10px] uppercase text-rust">Recomendado</span>}
+                  </span>
+                  <span className="mt-1 block text-xs leading-snug">{option.description}</span>
+                </button>
+              );
+            })}
           </div>
-          <textarea
-            ref={templateRef}
-            value={messageTemplate}
-            maxLength={600}
-            rows={3}
-            disabled={rewriting || executing}
-            onChange={(event) => {
-              setMessageTemplate(event.target.value);
-              setTemplateId("");
-            }}
-            className="mt-2 w-full resize-y rounded-md border border-border bg-background px-3 py-2 font-mono text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none disabled:bg-muted/30"
-            data-testid="outbound-message-template"
-          />
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-muted-foreground">{messageTemplate.length}/600</span>
+
+          {batch.personalization?.campaignReason && (
+            <div className="mt-3 border-y border-border py-3">
+              <div className="text-[11px] font-semibold uppercase text-muted-foreground">Ángulo común sugerido</div>
+              <p className="mb-0 mt-1 text-sm leading-relaxed text-foreground">{batch.personalization.campaignReason}</p>
+            </div>
+          )}
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">
+              {appliedApproach && appliedApproach !== approach
+                ? "El enfoque elegido se aplicará al regenerar."
+                : "Se actualizarán todos los mensajes incluidos; no se enviará nada."}
+            </span>
             <button
               type="button"
-              disabled={disabled || rewriting || executing || !hasReason || !messageTemplate.trim()}
-              onClick={() => onApplyTemplate(
-                LINKEDIN_MESSAGE_SUGGESTIONS.find((suggestion) => suggestion.id === templateId)?.name || "Personalizada",
-                messageTemplate,
-              )}
+              disabled={disabled || personalizing || executing || itemCount === 0}
+              onClick={() => onPersonalize(approach)}
               className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-4 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
-              data-testid="outbound-apply-template"
+              data-testid="outbound-generate-messages"
             >
-              {rewriting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {rewriting ? "Aplicando..." : `Aplicar a ${itemCount}`}
+              {personalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {personalizing ? "Generando..." : batch.personalization ? `Regenerar ${itemCount}` : `Generar ${itemCount}`}
             </button>
           </div>
         </div>
       )}
 
       {leads.length === 0 && (
-        <div className="mt-4 rounded-lg border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
-          No hay personas aprobadas con LinkedIn. Aprueba primero a quienes quieras incluir en el próximo envío.
+        <div className="mt-4 border-y border-dashed border-border py-4 text-sm text-muted-foreground">
+          No hay personas aprobadas con LinkedIn. Selecciona primero los contactos del lote.
         </div>
       )}
 
@@ -2742,7 +2754,7 @@ function LinkedInWorkflowPanel({
         <div className="mt-4 border-y border-border py-3">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
             <span><strong className="text-foreground">{itemCount}</strong> incluidos</span>
-            <span><strong className="text-foreground">{sampleItems.length}</strong> en la muestra</span>
+            <span><strong className="text-foreground">{verifiedCount}</strong> con evidencia</span>
             {blocked.length > 0 && <span className="text-yellow-800"><strong>{blocked.length}</strong> fuera del lote</span>}
             {failedCount > 0 && <span className="text-destructive"><strong>{failedCount}</strong> con incidencia</span>}
           </div>
@@ -2752,22 +2764,39 @@ function LinkedInWorkflowPanel({
       {batch && sampleItems.length > 0 && (
         <div className="mt-4" data-testid="outbound-message-sample">
           <div className="flex items-center justify-between gap-3">
-            <h4 className="text-sm font-semibold text-foreground">Muestra de mensajes</h4>
-            <span className="text-xs text-muted-foreground">3 como máximo</span>
+            <h4 className="text-sm font-semibold text-foreground">Previsualización</h4>
+            <span className="text-xs text-muted-foreground">La tabla superior contiene todo el lote</span>
           </div>
           <div className="mt-2 divide-y divide-border border-y border-border">
             {sampleItems.map((item) => {
               const lead = leadById.get(item.leadId);
+              const evidence = item.evidence?.[0];
               return (
-                <div key={item.leadId} className="grid gap-1 py-3 text-sm md:grid-cols-[minmax(160px,0.55fr)_minmax(0,1.45fr)] md:gap-4">
+                <div key={item.leadId} className="grid gap-3 py-4 text-sm md:grid-cols-[minmax(180px,0.55fr)_minmax(0,1.45fr)] md:gap-5">
                   <div className="min-w-0">
                     <div className="truncate font-semibold text-foreground">{leadDisplayName(lead || { id: item.leadId })}</div>
                     <div className="truncate text-xs text-muted-foreground">{lead?.company || lead?.headline || item.leadId}</div>
-                    <div className="mt-1 text-[11px] font-semibold text-muted-foreground">
-                      {item.hookStatus === "verified" ? "Señal verificada" : "Empresa + motivo"}
+                    <div className={cn(
+                      "mt-2 flex items-start gap-1.5 text-[11px] font-semibold",
+                      item.hookStatus === "verified" ? "text-sage" : "text-yellow-900",
+                    )}>
+                      {item.hookStatus === "verified"
+                        ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        : <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
+                      <span>
+                        {evidence
+                          ? `${evidence.label} · ${providerDisplayName(evidence.provider)}`
+                          : "Solo rol y empresa confirmados"}
+                      </span>
                     </div>
                   </div>
-                  <p className="m-0 whitespace-pre-wrap leading-relaxed text-foreground">{item.messageBody}</p>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-semibold uppercase text-muted-foreground">Hook personalizado</div>
+                    <p className="mb-0 mt-1 leading-relaxed text-foreground">{item.hook}</p>
+                    <div className="mt-3 text-[11px] font-semibold uppercase text-muted-foreground">Mensaje final</div>
+                    <p className="mb-0 mt-1 whitespace-pre-wrap leading-relaxed text-foreground">{item.messageBody}</p>
+                    <div className="mt-1 text-right text-[11px] text-muted-foreground">{item.messageBody.length}/280</div>
+                  </div>
                 </div>
               );
             })}
@@ -2790,10 +2819,13 @@ function LinkedInWorkflowPanel({
       )}
 
       {batch && (awaitingApproval || approved) && (
-        <div className="mt-4 flex flex-wrap justify-end gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+          {!reviewReady && (
+            <span className="mr-auto text-xs font-semibold text-yellow-900">Genera los mensajes antes de probar o enviar.</span>
+          )}
           <button
             type="button"
-            disabled={disabled || executing || itemCount === 0}
+            disabled={disabled || personalizing || executing || !reviewReady}
             onClick={onSimulate}
             className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-semibold transition-colors hover:border-sage hover:text-sage disabled:opacity-50"
             data-testid="outbound-test-messages"
@@ -2803,7 +2835,7 @@ function LinkedInWorkflowPanel({
           </button>
           <button
             type="button"
-            disabled={disabled || executing || itemCount === 0}
+            disabled={disabled || personalizing || executing || !reviewReady}
             onClick={onExecute}
             className="inline-flex h-10 items-center gap-2 rounded-md border border-rust bg-rust px-4 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
             data-testid="outbound-send-messages"

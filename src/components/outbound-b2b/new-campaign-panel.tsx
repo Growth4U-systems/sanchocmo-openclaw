@@ -12,6 +12,7 @@ export interface OutboundCampaignSetupOption {
   declaredAccountDescription: string;
   roles: string[];
   unappliedCriteria?: string[];
+  companyUniverseKey: string;
   recommended?: boolean;
 }
 
