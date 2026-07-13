@@ -226,8 +226,11 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
     let botText = typeof text === "string" ? text : "";
     let parsedControl: ReturnType<typeof parseRuntimeControlReply> | null = null;
     let controlContext: RuntimeControlTurnContext | null = null;
-    if (callbackRunWasActive && callbackRun && callbackRun.runtime !== "openclaw" && !errorDetail) {
-      const input = callbackRun.input && typeof callbackRun.input === "object" ? (callbackRun.input as Record<string, unknown>) : {};
+    const callbackInput = callbackRun?.input && typeof callbackRun.input === "object"
+      ? callbackRun.input as Record<string, unknown>
+      : {};
+    if (callbackRunWasActive && callbackRun && callbackRun.runtime !== "openclaw" && !errorDetail && callbackInput.readOnly !== true) {
+      const input = callbackInput;
       controlContext = {
         slug: typeof input.slug === "string" ? input.slug : String(slug || "default"),
         threadId: tid,

@@ -181,3 +181,19 @@ test("turns without a skill remain executable generalist turns", () => {
   assert.ok(block.includes("Eres Sancho, el agente generalista y orquestador"));
   assert.ok(block.includes("Si ninguna skill encaja pero la petición sigue dentro de tu dominio"));
 });
+
+test("docs review turns are read-only and receive no action protocols", () => {
+  const block = buildMcChatContextBlock({
+    slug: "growth4u",
+    threadId: "docs-test",
+    requestedAgent: "sancho",
+    readOnly: true,
+  });
+
+  assert.ok(block.includes("channel_mode: docs-review"));
+  assert.ok(block.includes("read_only: true"));
+  assert.ok(block.includes("no escribas, edites, borres"));
+  assert.equal(block.includes(":::ask\n"), false);
+  assert.equal(block.includes(":::delegate\n"), false);
+  assert.equal(block.includes(":::task-route\n"), false);
+});

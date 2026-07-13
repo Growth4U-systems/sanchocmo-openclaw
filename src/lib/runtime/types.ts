@@ -68,6 +68,8 @@ export interface InboundMessage {
   attachments?: unknown[];
   isAdmin?: boolean;
   senderRole?: "admin" | "client";
+  /** A trusted channel may force a turn to analysis-only behavior. */
+  readOnly?: boolean;
   _source?: string;
   agentId?: string;
   agent?: string;
