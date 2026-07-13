@@ -1,0 +1,31 @@
+# gitleaks config (SAN-239) — secret-scanning guardrail.
+# Enforces engineering non-negotiable #2: never commit a secret.
+# Runs on pre-push (local) and CI (.github/workflows/ci.yml, job `secret-scan`).
+# We scan the working tree (--no-git) so we catch secrets present in tracked files
+# *now*, without re-flagging already-purged history (see SAN-233).
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Paths and placeholders that are intentionally not secrets"
+# Path regexes (matched against file paths) we never scan.
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.next/''',
+  '''(^|/)\.git/''',
+  '''(^|/)dist/''',
+  '''(^|/)build/''',
+  # Example/template env files contain placeholders by design.
+  '''\.example$''',
+  '''(^|/)\.env\.example$''',
+  # Lockfiles: hashes, not secrets.
+  '''(^|/)package-lock\.json$''',
+]
+# Known non-secret placeholder values used in CI/build stubs and docs.
+regexes = [
+  '''stub-secret-for-ci-build-only''',
+  '''stub:stub@''',
+  '''sk-ant-test''',
+  '''__TRACKED_VAR__''',
+]
