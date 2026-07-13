@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.3.0...v1.4.0) (2026-07-13)
+
+
+### Features
+
+* **docs:** add read-only Sancho assistant (SAN-442) ([#1250](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1250)) ([066f151](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/066f1513d7912cce39d4b5f1825131703a8978cd))
+* **outreach:** use deterministic LinkedIn workflow ([#1222](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1222)) ([13dd293](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/13dd2935bf72901bd7232218e8a696f435026f49))
+
+
+### Bug Fixes
+
+* **brand:** give specialist agents write-through to the shared brand (SAN-438) ([919d62b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/919d62bad94b79f2280e14cbca5c416867ba93bc))
+* **chat:** stop a transient gateway outage from wedging agent delegations ([#1246](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1246)) ([3c1de39](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3c1de398fc1ce4cd122eba320d594d57bb7da7fe))
+* **docs:** route Growie through fast model (SAN-442) ([#1254](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1254)) ([03704be](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/03704beeef0f969767952a640fd8cd4bead5cd10))
+* **docs:** wait for answer after model fallback (SAN-442) ([#1252](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1252)) ([69f47c4](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/69f47c42f0e6f9c23e22f01e6c0bddd6436017a2))
+* **open-design:** let the daemon reach any brand's folder, not a hardcoded one (SAN-439) ([441c347](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/441c3479bf6a2c2a6962fd1cb050cc8f760768ff))
+* **wizard:** harden all install paths — escaping, reconfigure, DB & runtime guards (SAN-443) ([8dfa66d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8dfa66d7824fd0b21af77a72511551f319dbc187))
+* **wizard:** stop provider typo from silently skipping the API-key prompt (SAN-437) ([9dba9cb](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9dba9cbe2825ec735a13f8fd66a7f327fbdace33))
+
 ## [1.3.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.2.1...v1.3.0) (2026-07-12)
 
 
