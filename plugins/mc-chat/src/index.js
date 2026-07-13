@@ -30,7 +30,7 @@ import {
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
-import { resolveTurnModelOverride } from "./model-routing.js";
+import { buildDocsReviewReplyOptions, resolveTurnModelOverride } from "./model-routing.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
 import { applyBrandEnvToProcess, applyRuntimeEnvToProcess } from "./brand-env.js";
 import { mcChatCostGuard } from "./cost-guard.js";
@@ -357,7 +357,10 @@ export default defineChannelPluginEntry({
             if (pack) {
               const prefix = pack.verdict === "missing"
                 ? buildFoundationDirective(pack)
-                : buildClientContextBlock(pack);
+                : buildClientContextBlock(pack, {
+                    includeDocuments: Boolean(turnModelOverride),
+                    maxInlineDocumentChars: 10_000,
+                  });
               if (prefix) {
                 groundedText = `${prefix}\n\n${text}`;
                 logger.info(`[mc-chat] context-pack injected (agent=${requestedAgent} slug=${slug} skillMode=${skillMode || scope || "legacy"} verdict=${pack.verdict} docs=${Array.isArray(pack.docPaths) ? pack.docPaths.length : 0})`);
@@ -589,7 +592,7 @@ export default defineChannelPluginEntry({
               sourceReplyDeliveryMode: "automatic",
               runId: guardRunId,
               abortSignal: abortController.signal,
-              ...(turnModelOverride ? { modelOverride: turnModelOverride } : {}),
+              ...buildDocsReviewReplyOptions(turnModelOverride),
               timeoutOverrideSeconds: guardLimits.enabled
                 ? Math.ceil(guardLimits.maxWallClockMs / 1000)
                 : undefined,

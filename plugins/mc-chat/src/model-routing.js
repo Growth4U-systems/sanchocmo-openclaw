@@ -17,3 +17,17 @@ export function resolveTurnModelOverride({ readOnly, source, slug, userId }, env
     && userId === "docs-assistant";
   return isTrustedDocsReview ? configuredDocsAssistantModel(env) : null;
 }
+
+export function buildDocsReviewReplyOptions(modelOverride) {
+  if (!modelOverride) return {};
+  return {
+    modelOverride,
+    thinkingLevelOverride: "off",
+    fastModeOverride: true,
+    bootstrapContextMode: "lightweight",
+    disableTools: true,
+    skillFilter: [],
+    suppressToolErrorWarnings: true,
+    suppressDefaultToolProgressMessages: true,
+  };
+}

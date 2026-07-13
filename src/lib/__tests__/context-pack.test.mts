@@ -248,3 +248,24 @@ test("falls back to the app skills catalog when OPENCLAW_HOME lacks the skill", 
     else process.env.OPENCLAW_HOME = previousHome;
   }
 });
+
+test("docs-review resolves the six core Brain sources from the app catalog", () => {
+  const slug = "docs-reviewco";
+  writeBrandFile(slug, "company-brief/company-brief.current.md", COMPANY_BRIEF);
+  writeBrandFile(slug, "brand-book/brand-voice/brand-voice.current.md", "# Voice\nDirecta.");
+  writeBrandFile(slug, "go-to-market/ecps/ecps.current.md", "# ECPs\n- Founder B2B");
+  writeBrandFile(slug, "go-to-market/positioning/shared/messaging-summary.md", "# Messaging\nSistema repetible.");
+  writeBrandFile(slug, "strategic-plan/strategic-plan.current.md", "# Plan\nPrioridad: crecimiento.");
+  writeBrandFile(slug, "operational/learnings.md", "# Learnings\nValidar antes de escalar.");
+  const previousHome = process.env.OPENCLAW_HOME;
+  process.env.OPENCLAW_HOME = path.join(openclawHome, "empty-home");
+  try {
+    const pack = mod.assembleContextPack(slug, "docs-review");
+    assert.equal(pack.verdict, "ok");
+    assert.equal(pack.documents.length, 6);
+    assert.match(pack.documents.map((doc) => doc.path).join("\n"), /operational\/learnings\.md/);
+  } finally {
+    if (previousHome === undefined) delete process.env.OPENCLAW_HOME;
+    else process.env.OPENCLAW_HOME = previousHome;
+  }
+});

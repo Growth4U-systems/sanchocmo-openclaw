@@ -109,6 +109,34 @@ test("client context block exposes a selective manifest instead of embedding doc
   assert.doesNotMatch(block, /go-to-market\/ecps/);
 });
 
+test("docs review context can inline bounded Brain excerpts with source paths", () => {
+  const block = buildClientContextBlock({
+    summary: "Cliente: Growth4U",
+    docPaths: ["/srv/absolute/company-brief.current.md", "/srv/absolute/messaging-summary.md"],
+    documents: [
+      {
+        path: "brand/growth4u/company-brief/company-brief.current.md",
+        content: `# Company Brief\n${"A".repeat(2_000)}`,
+        truncated: false,
+      },
+      {
+        path: "brand/growth4u/go-to-market/positioning/shared/messaging-summary.md",
+        content: `# Messaging\n${"B".repeat(2_000)}`,
+        truncated: false,
+      },
+    ],
+  }, { includeDocuments: true, maxInlineDocumentChars: 1_000 });
+
+  assert.match(block, /Extractos del Brain/);
+  assert.match(block, /Fuente Brain: brand\/growth4u\/company-brief/);
+  assert.match(block, /Fuente Brain: brand\/growth4u\/go-to-market\/positioning/);
+  assert.match(block, /# Company Brief/);
+  assert.match(block, /# Messaging/);
+  assert.match(block, /extracto truncado/);
+  assert.ok(block.length < 2_500);
+  assert.doesNotMatch(block, /\/srv\/absolute/);
+});
+
 test("foundation directive remains available for an absent brand", () => {
   const block = buildFoundationDirective({ slug: "missingco" });
 
