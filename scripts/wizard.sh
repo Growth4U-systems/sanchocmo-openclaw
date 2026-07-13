@@ -199,6 +199,21 @@ gen_hex() { openssl rand -hex 32; }
 # slugify <text> : lowercase, non-alnum runs → single hyphen, trim edge hyphens.
 slugify() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'; }
 
+# json_escape <text> : escape a string for safe interpolation inside a JSON string
+# literal (backslash, double-quote, control chars). Brand name and access URL are
+# free text; without this a name like `Acme "Rockets" Inc` produces an invalid
+# config/clients.json while the wizard still exits 0 → the container fails to parse
+# it at boot (SAN-443).
+json_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"   # backslash first, so it doesn't double-escape the ones below
+  s="${s//\"/\\\"}"   # double-quote
+  s="${s//$'\n'/\\n}" # newline
+  s="${s//$'\r'/\\r}" # carriage return
+  s="${s//$'\t'/\\t}" # tab
+  printf '%s' "$s"
+}
+
 # --- set_env KEY VALUE : set-or-append a key in $ENV_FILE (uncomments if needed)
 set_env() {
   local key="$1" val="$2"
@@ -278,6 +293,63 @@ esac
 # step below; quick installs keep whatever resolved here (openclaw, or a pre-set
 # SANCHO_RUNTIME for scripted BYO). The final choice is echoed in the summary.
 
+# --- Runtime engine (chosen BEFORE the model-provider step) ------------------
+# Which engine executes Sancho turns. OpenClaw is the complete default; hermes and
+# external-http (BYO gateway — Claude Code, Codex, a Hermes gateway, or any HTTP
+# runtime speaking the Sancho contract) are selectable here for self-hosted
+# installs. Resolved BEFORE the provider step so a runtime that doesn't call the
+# model locally (external-http — a pure forward to an external gateway) can skip
+# the model-credential requirement. hermes still runs an agent locally (its
+# bridge/CLI), so it needs a credential like openclaw (SAN-443). `ask` would skip
+# the prompt because SANCHO_RUNTIME already resolved above, so we blank it first
+# and pass that value as the default.
+SANCHO_EXTERNAL_GATEWAY_URL="${SANCHO_EXTERNAL_GATEWAY_URL:-}"
+SANCHO_EXTERNAL_SECRET="${SANCHO_EXTERNAL_SECRET:-}"
+SANCHO_EXTERNAL_PROTOCOL="${SANCHO_EXTERNAL_PROTOCOL:-}"
+SANCHO_EXTERNAL_HEALTH_PATH="${SANCHO_EXTERNAL_HEALTH_PATH:-}"
+HERMES_GATEWAY_URL="${HERMES_GATEWAY_URL:-}"
+HERMES_CHAT_SECRET="${HERMES_CHAT_SECRET:-}"
+if [ "$WIZARD_MODE" = "advanced" ]; then
+  nstep "Runtime engine"
+  say "  ${DIM}OpenClaw is the complete default. 'external-http' points Sancho at your own${RST}"
+  say "  ${DIM}gateway (Claude Code / Codex / Hermes / custom); 'hermes' uses a managed Hermes.${RST}"
+  say "  ${DIM}You can also switch or reconfigure this later in Settings → Runtime.${RST}"
+  _rt_default="$SANCHO_RUNTIME"
+  SANCHO_RUNTIME=""   # blank so `ask` prompts (interactive) / takes the default (non-interactive)
+  SANCHO_RUNTIME="$(ask SANCHO_RUNTIME "Runtime — openclaw, hermes, or external-http" "$_rt_default")"
+  case "$SANCHO_RUNTIME" in
+    hermes-external) SANCHO_RUNTIME=external-http ;;
+    openclaw|hermes|external-http) ;;
+    *) warn "Unknown runtime '$SANCHO_RUNTIME' — falling back to openclaw."; SANCHO_RUNTIME=openclaw ;;
+  esac
+  case "$SANCHO_RUNTIME" in
+    external-http)
+      SANCHO_EXTERNAL_GATEWAY_URL="$(ask_required SANCHO_EXTERNAL_GATEWAY_URL "External runtime gateway URL (e.g. http://127.0.0.1:18792)")"
+      SANCHO_EXTERNAL_SECRET="$(ask SANCHO_EXTERNAL_SECRET "Shared runtime secret (sent as X-MC-Secret; blank if none)" "")"
+      SANCHO_EXTERNAL_PROTOCOL="$(ask SANCHO_EXTERNAL_PROTOCOL "Protocol — sancho (async, default) or mc-bridge (sync)" "sancho")"
+      SANCHO_EXTERNAL_HEALTH_PATH="$(ask SANCHO_EXTERNAL_HEALTH_PATH "Health check path" "/healthz")"
+      check_runtime_gateway "$SANCHO_EXTERNAL_GATEWAY_URL" "$SANCHO_EXTERNAL_HEALTH_PATH" "$SANCHO_EXTERNAL_SECRET"
+      ;;
+    hermes)
+      HERMES_GATEWAY_URL="$(ask_required HERMES_GATEWAY_URL "Hermes gateway URL (e.g. https://hermes.example.com)")"
+      HERMES_CHAT_SECRET="$(ask HERMES_CHAT_SECRET "Hermes chat secret (blank if none)" "")"
+      check_runtime_gateway "$HERMES_GATEWAY_URL" "/health" "$HERMES_CHAT_SECRET"
+      ;;
+    openclaw)
+      say "  ${DIM}OpenClaw selected — no gateway configuration needed.${RST}"
+      ;;
+  esac
+fi
+# Does this runtime need a local model credential?
+#   openclaw — runs the agent in-process → YES.
+#   hermes   — also runs an agent locally (the Hermes bridge/CLI or a gateway
+#              command executes turns via HERMES_CLI --provider/--model), so it
+#              still needs the model auth in env → YES (same as openclaw).
+#   external-http — Sancho only forwards to a FULLY external gateway (just a URL)
+#              that owns the model auth, and its boot requires no credential → NO.
+# So only external-http skips the requirement.
+if [ "$SANCHO_RUNTIME" = "external-http" ]; then RUNTIME_NEEDS_MODEL_CRED=0; else RUNTIME_NEEDS_MODEL_CRED=1; fi
+
 # --- 1. Model provider + auth ------------------------------------------------
 # Ask the auth MODE first, then collect the credential that mode actually needs
 # (and require it). The runtime resolves Anthropic creds as ANTHROPIC_OAUTH_TOKEN
@@ -317,6 +389,11 @@ has_model_credential() {
   return 1
 }
 
+# Runtimes that call the model locally (openclaw, hermes) collect and REQUIRE a
+# credential. external-http only forwards to an external gateway that owns the
+# model auth, so it skips the whole loop (any provider key passed via env is still
+# persisted by the write section).
+if [ "$RUNTIME_NEEDS_MODEL_CRED" = "1" ]; then
 # Collect provider + credential, then re-loop until at least one usable
 # credential exists. A keyless selection (e.g. openai 'subscription' alone) sends
 # an interactive install back to re-choose and aborts a non-interactive one — the
@@ -377,6 +454,12 @@ while :; do
   say "  ANTHROPIC_OAUTH_TOKEN (Anthropic subscription), OPENAI_API_KEY, or FIREWORKS_API_KEY."
   exit 1
 done
+else
+  # external-http: Sancho forwards to an external gateway that owns the model auth.
+  say "  ${DIM}Runtime '${SANCHO_RUNTIME}' forwards to your external gateway for model calls — no local${RST}"
+  say "  ${DIM}model credential needed here (any provider key passed via env is still kept).${RST}"
+  PROVIDER="${PROVIDER:-}"   # keep for the summary; may be empty for BYO
+fi
 
 # --- 2. Admin & login access -------------------------------------------------
 # Google login is OPTIONAL. You can always log in with the admin token printed at
@@ -386,50 +469,10 @@ done
 # it now, empty (= disabled) otherwise.
 GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
 GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
-# --- Runtime engine (advanced only) -----------------------------------------
-# Which engine executes Sancho turns. OpenClaw is the complete default; hermes and
-# external-http (BYO gateway — Claude Code, Codex, a Hermes gateway, or any HTTP
-# runtime speaking the Sancho contract) are selectable here for self-hosted
-# installs. Quick installs stay on OpenClaw and can switch later in Settings →
-# Runtime. `ask` would skip the prompt because SANCHO_RUNTIME already resolved
-# above, so we blank it first and pass that value as the default.
-SANCHO_EXTERNAL_GATEWAY_URL="${SANCHO_EXTERNAL_GATEWAY_URL:-}"
-SANCHO_EXTERNAL_SECRET="${SANCHO_EXTERNAL_SECRET:-}"
-SANCHO_EXTERNAL_PROTOCOL="${SANCHO_EXTERNAL_PROTOCOL:-}"
-SANCHO_EXTERNAL_HEALTH_PATH="${SANCHO_EXTERNAL_HEALTH_PATH:-}"
-HERMES_GATEWAY_URL="${HERMES_GATEWAY_URL:-}"
-HERMES_CHAT_SECRET="${HERMES_CHAT_SECRET:-}"
-if [ "$WIZARD_MODE" = "advanced" ]; then
-  nstep "Runtime engine"
-  say "  ${DIM}OpenClaw is the complete default. 'external-http' points Sancho at your own${RST}"
-  say "  ${DIM}gateway (Claude Code / Codex / Hermes / custom); 'hermes' uses a managed Hermes.${RST}"
-  say "  ${DIM}You can also switch or reconfigure this later in Settings → Runtime.${RST}"
-  _rt_default="$SANCHO_RUNTIME"
-  SANCHO_RUNTIME=""   # blank so `ask` prompts (interactive) / takes the default (non-interactive)
-  SANCHO_RUNTIME="$(ask SANCHO_RUNTIME "Runtime — openclaw, hermes, or external-http" "$_rt_default")"
-  case "$SANCHO_RUNTIME" in
-    hermes-external) SANCHO_RUNTIME=external-http ;;
-    openclaw|hermes|external-http) ;;
-    *) warn "Unknown runtime '$SANCHO_RUNTIME' — falling back to openclaw."; SANCHO_RUNTIME=openclaw ;;
-  esac
-  case "$SANCHO_RUNTIME" in
-    external-http)
-      SANCHO_EXTERNAL_GATEWAY_URL="$(ask_required SANCHO_EXTERNAL_GATEWAY_URL "External runtime gateway URL (e.g. http://127.0.0.1:18792)")"
-      SANCHO_EXTERNAL_SECRET="$(ask SANCHO_EXTERNAL_SECRET "Shared runtime secret (sent as X-MC-Secret; blank if none)" "")"
-      SANCHO_EXTERNAL_PROTOCOL="$(ask SANCHO_EXTERNAL_PROTOCOL "Protocol — sancho (async, default) or mc-bridge (sync)" "sancho")"
-      SANCHO_EXTERNAL_HEALTH_PATH="$(ask SANCHO_EXTERNAL_HEALTH_PATH "Health check path" "/healthz")"
-      check_runtime_gateway "$SANCHO_EXTERNAL_GATEWAY_URL" "$SANCHO_EXTERNAL_HEALTH_PATH" "$SANCHO_EXTERNAL_SECRET"
-      ;;
-    hermes)
-      HERMES_GATEWAY_URL="$(ask_required HERMES_GATEWAY_URL "Hermes gateway URL (e.g. https://hermes.example.com)")"
-      HERMES_CHAT_SECRET="$(ask HERMES_CHAT_SECRET "Hermes chat secret (blank if none)" "")"
-      check_runtime_gateway "$HERMES_GATEWAY_URL" "/health" "$HERMES_CHAT_SECRET"
-      ;;
-    openclaw)
-      say "  ${DIM}OpenClaw selected — no gateway configuration needed.${RST}"
-      ;;
-  esac
-fi
+# (The runtime engine is chosen BEFORE the model-provider step above — see the
+# "Runtime engine" block there — so external-http (a pure forward to an external
+# gateway) can skip the model-credential requirement. openclaw and hermes both run
+# an agent locally, so they still require one, SAN-443.)
 
 if [ "$WIZARD_MODE" = "advanced" ]; then
   nstep "Admin & login access"
@@ -466,7 +509,11 @@ else
   DB_MODE="${DB_MODE:-local}"
 fi
 if [ "$DB_MODE" = "external" ]; then
-  DATABASE_URL="$(ask DATABASE_URL "External DATABASE_URL (postgres://...)" "")"
+  # Required: 'external' means BYO database, so an empty URL leaves the install
+  # with NO database at all (no local-db profile either) — a silent misconfig
+  # the container only surfaces later (SAN-443). Interactive re-prompts; scripted
+  # must pass DATABASE_URL.
+  DATABASE_URL="$(ask_required DATABASE_URL "External DATABASE_URL (postgres://...)")"
   COMPOSE_PROFILES_VAL=""
 else
   # Preserve an existing local DB password instead of always minting a new one:
@@ -513,6 +560,11 @@ else
   # Quick: derive the slug from the name (no extra question).
   FIRST_BRAND_SLUG="${FIRST_BRAND_SLUG:-$(slugify "$FIRST_BRAND_NAME")}"
 fi
+# Always slugify the final value — a slug typed in advanced or supplied via env
+# (FIRST_BRAND_SLUG) would otherwise reach clients.json unsanitized (uppercase,
+# spaces, symbols) and break brand routing (SAN-443). slugify is idempotent, so a
+# already-valid slug passes through unchanged.
+FIRST_BRAND_SLUG="$(slugify "$FIRST_BRAND_SLUG")"
 # Guard against an empty slug (e.g. a name with no alphanumerics).
 [ -n "$FIRST_BRAND_SLUG" ] || FIRST_BRAND_SLUG="my-brand"
 
@@ -624,7 +676,17 @@ fi
 
 # --- Write .env --------------------------------------------------------------
 step "Writing $ENV_FILE"
-cp "$ENV_EXAMPLE" "$ENV_FILE"
+# Scaffold from .env.example ONLY on a first install. On a --force re-run
+# (./sancho reconfigure) the .env already exists and may hold keys the user added
+# by hand after install (DISCORD_BOT_TOKEN, NOTION_API_KEY, FIREWORKS_ACCOUNT_ID,
+# GA4/GSC creds…). `cp`-ing the example over it would wipe those (SAN-443); instead
+# we edit the existing file in place — set_env below updates the wizard-managed
+# keys (and blanks the ones it must) while leaving every other line untouched.
+if [ ! -f "$ENV_FILE" ]; then
+  cp "$ENV_EXAMPLE" "$ENV_FILE"
+else
+  say "  ${DIM}Existing .env kept — updating managed keys in place (custom keys preserved).${RST}"
+fi
 # Model credentials — always written explicitly (empty when unused) so a
 # .env.example placeholder can never survive into the live .env.
 set_env ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"
@@ -696,18 +758,32 @@ if [ "$ENABLE_OD" = "1" ]; then
 fi
 ok "$ENV_FILE written"
 
+# Free-text values interpolated into the JSON files below (brand name, access URL)
+# must be JSON-escaped so a quote/backslash can't produce invalid config the app
+# fails to parse (SAN-443). The slug is already slug-safe but escaped for defense.
+_BASE_URL_JSON="$(json_escape "$BASE_URL")"
+_BRAND_NAME_JSON="$(json_escape "$FIRST_BRAND_NAME")"
+_BRAND_SLUG_JSON="$(json_escape "$FIRST_BRAND_SLUG")"
+
 # --- Write config/instance.json (minimal, no Discord) ------------------------
 step "Writing $INSTANCE_FILE"
 mkdir -p config
-cat > "$INSTANCE_FILE" <<JSON
+if [ -f "$INSTANCE_FILE" ]; then
+  # Stateful like clients.json: instance.json can hold agent/Discord `accounts`
+  # populated after install. A --force re-run (./sancho reconfigure) must not wipe
+  # them (SAN-443). Preserve it; a changed access URL needs a manual mc_base_url edit.
+  ok "$INSTANCE_FILE preserved (accounts kept — edit mc_base_url by hand if the access URL changed)"
+else
+  cat > "$INSTANCE_FILE" <<JSON
 {
-  "mc_base_url": "${BASE_URL}/mc",
+  "mc_base_url": "${_BASE_URL_JSON}/mc",
   "mc_server_port": 3000,
   "gateway_port": 18789,
   "accounts": {}
 }
 JSON
-ok "$INSTANCE_FILE written"
+  ok "$INSTANCE_FILE written"
+fi
 
 # --- Write config/clients.json (first brand) ---------------------------------
 step "Writing $CLIENTS_FILE"
@@ -726,8 +802,8 @@ cat > "$CLIENTS_FILE" <<JSON
   "\$schema": "clients.schema.json",
   "clients": [
     {
-      "slug": "${FIRST_BRAND_SLUG}",
-      "name": "${FIRST_BRAND_NAME}",
+      "slug": "${_BRAND_SLUG_JSON}",
+      "name": "${_BRAND_NAME_JSON}",
       "emoji": "🏢",
       "language": "es",
       "active": true,
@@ -771,6 +847,10 @@ fi
 # Model provider(s) — reflect exactly what was configured. Mirror the same
 # per-provider case selection used to collect the credentials above, so a
 # Fireworks-only (or openai/all) install never shows a stale Anthropic line.
+# A BYO runtime with no provider key configured shows the gateway instead.
+if [ "$RUNTIME_NEEDS_MODEL_CRED" != "1" ] && [ -z "$PROVIDER" ]; then
+  say "   • Model: served by the ${SANCHO_RUNTIME} gateway ${DIM}(no local model credential)${RST}"
+else
 say "   • Model provider(s):"
 case "$PROVIDER" in
   anthropic|all)
@@ -795,6 +875,7 @@ case "$PROVIDER" in
     say "       – Fireworks: api_key ${DIM}(API key set)${RST}"
     ;;
 esac
+fi
 say ""
 if [ "$ENABLE_YALC" = "1" ]; then
   say "${B}Outreach (YALC) is enabled.${RST}"
