@@ -18,6 +18,7 @@ import { mcChatPlugin } from "./channel.js";
 import { classifyAndRewriteError, mergeWithPriorCategory } from "./error-rewriter.js";
 import { errorTracker } from "./error-tracker.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
+import { isModelFallbackNotice } from "./delivery-filter.js";
 import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } from "./context-pack.js";
 import { parseDelegateMarkers } from "./delegate-marker.js";
 import { parseTaskRouteMarkers } from "./task-route-marker.js";
@@ -606,7 +607,13 @@ export default defineChannelPluginEntry({
                   logger.info(`[mc-chat] dropped ${beforeFilter - delivered.length} tool-echo part(s) thread=${threadId}`);
                 }
                 texts.length = 0;
-                texts.push(...delivered);
+                const visibleDeliveries = isReadOnly
+                  ? delivered.filter((item) => !isModelFallbackNotice(item))
+                  : delivered;
+                if (visibleDeliveries.length < delivered.length) {
+                  logger.info(`[mc-chat] suppressed ${delivered.length - visibleDeliveries.length} model fallback notice(s) for read-only thread=${threadId}`);
+                }
+                texts.push(...visibleDeliveries);
                 if (texts.length === 0) return;
 
                 // Detect which agent is responding
