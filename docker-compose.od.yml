@@ -15,8 +15,20 @@ services:
     # Point MC at the daemon only when this overlay is active. The base compose
     # leaves OD_DAEMON_URL empty so isOdConfigured() reports OD off when the
     # overlay isn't layered (no dead "Abrir editor agentic" button).
+    #
+    # OD_BRAND_ROOT tells MC where the OD daemon SEES the shared brand tree in
+    # its own container (the `open-design` service mounts it at /brands below).
+    # MC translates the absolute brand path it sends to the daemon
+    # (POST /api/import/folder) from its own `/root/.openclaw/...` brandDir into
+    # this daemon-visible root — see toDaemonBrandPath in src/lib/open-design.
+    # This is an internal container path, NOT a user setting — it is hardcoded to
+    # match the /brands mount target below and MUST stay in lockstep with it
+    # (overriding one without the other sends the daemon a path it hasn't mounted).
+    # Set only here (the overlay); the base compose leaves it unset, so in
+    # same-filesystem dev the path passes through unchanged.
     environment:
       - OD_DAEMON_URL=${OD_DAEMON_URL:-http://open-design:7456}
+      - OD_BRAND_ROOT=/brands
 
   open-design:
     image: ${OPEN_DESIGN_IMAGE:-ghcr.io/growth4u-systems/od:edge}
@@ -56,14 +68,27 @@ services:
       OD_CLAUDE_PRESERVE_API_KEY: "1"
     volumes:
       - open_design_data:/app/.od
-      # Brand design systems live in MC's workspace as the output of Sancho's
-      # visual-identity skill. We expose each brand's `brand-book/visual-identity`
-      # directory as a "user" design system to OD by bind-mounting it into
-      # `/app/.od/design-systems/<slug>` (the dir the daemon scans). Read-only
-      # because the daemon must never write to brand-book artifacts — the
-      # skill owns authoring. Add one mount per brand that has authored
-      # DESIGN.md. Brands without one stay invisible to OD.
-      - ${OPENCLAW_HOME:-~/.openclaw}/workspace-sancho/brand/growth4u/brand-book/visual-identity:/app/.od/design-systems/growth4u:ro
+      # Brand files live in MC's workspace. When a user opens the agentic editor,
+      # MC calls the daemon's POST /api/import/folder with an absolute `baseDir`
+      # (brand-book/visual-identity of the brand). The daemon reads that path from
+      # ITS OWN filesystem, so the shared brand tree must be mounted here. Mount
+      # the whole brand root once, read-only (the daemon imports a COPY into its
+      # data store and must never write brand-book artifacts — the skill owns
+      # authoring), so import works for ANY brand slug created at runtime without
+      # a per-brand mount.
+      #
+      # Mounted at /brands (NOT MC's own /root/.openclaw/... path): the daemon
+      # runs as a non-root user and cannot traverse the image's /root (mode 700),
+      # so the target must be world-traversable. MC rewrites the path it sends to
+      # the daemon into this root via OD_BRAND_ROOT (see the sanchocmo env above).
+      #
+      # This replaces an earlier mount that bind-mounted a single hardcoded
+      # `growth4u` brand into `/app/.od/design-systems/growth4u`. That never
+      # enabled editing (the daemon refuses to import a folder inside its own data
+      # dir: "cannot import the data directory") and only ever covered one
+      # G4U-internal brand, so any other slug (product installs) 400'd with
+      # "folder not found".
+      - ${OPENCLAW_HOME:-~/.openclaw}/workspace-sancho/brand:/brands:ro
     read_only: true
     tmpfs:
       - /tmp
