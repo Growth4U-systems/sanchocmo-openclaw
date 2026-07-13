@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { brandDir } from "@/lib/data/paths";
+import { brandDir, BASE } from "@/lib/data/paths";
 import { getRuntime } from "@/lib/runtime";
 import {
   odFindProjectByBaseDir,
@@ -51,6 +51,27 @@ export function normalizeOpenDesignScope(scope: string | undefined): string {
   return normalized;
 }
 
+/**
+ * Map an MC-local absolute brand path to the path the Open Design daemon sees it
+ * at. The daemon runs in a separate container (docker-compose.od.yml) as a
+ * non-root user and mounts the shared brand tree at OD_BRAND_ROOT (e.g. /brands);
+ * it cannot read MC's own brandDir root (`/root/.openclaw/...` — the image's
+ * `/root` is mode 700, untraversable by the daemon's uid). So every absolute path
+ * MC hands the daemon — import/folder `baseDir`, project-by-baseDir lookup — must
+ * be rewritten from MC's brand root into OD_BRAND_ROOT, or the daemon 400s with
+ * "folder not found". When OD_BRAND_ROOT is unset (same-filesystem dev, or the OD
+ * overlay is off) the path is returned unchanged.
+ */
+export function toDaemonBrandPath(localBrandPath: string): string {
+  const daemonRoot = process.env.OD_BRAND_ROOT?.trim();
+  if (!daemonRoot) return localBrandPath;
+  const localRoot = path.resolve(BASE, "brand");
+  const rel = path.relative(localRoot, path.resolve(localBrandPath));
+  // Defensive: a path outside the brand root is left untouched.
+  if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) return localBrandPath;
+  return path.posix.join(daemonRoot, ...rel.split(path.sep));
+}
+
 export async function resolveOpenDesignBrandDir(clientSlug: string, scope?: string) {
   const root = path.resolve(brandDir(clientSlug));
   const normalizedScope = normalizeOpenDesignScope(scope);
@@ -78,10 +99,11 @@ export async function resolveExistingOpenDesignProject(
   config: OdClientConfig = resolveOdConfig(),
 ): Promise<OpenDesignProjectResolution> {
   const target = await resolveOpenDesignBrandDir(clientSlug, scope);
+  const daemonBaseDir = toDaemonBrandPath(target.baseDir);
   const mapping = await readMapping();
   const mappedProjectId = mapping[clientSlug]?.[target.scope];
   let project = mappedProjectId ? await findProjectById(mappedProjectId, config) : null;
-  if (!project) project = await odFindProjectByBaseDir(target.baseDir, config);
+  if (!project) project = await odFindProjectByBaseDir(daemonBaseDir, config);
 
   return {
     ok: true,
@@ -120,18 +142,19 @@ export async function ensureOpenDesignProject(
 ): Promise<OpenDesignProjectResolution> {
   const config = options.config ?? resolveOdConfig();
   const target = await resolveOpenDesignBrandDir(clientSlug, scope);
+  const daemonBaseDir = toDaemonBrandPath(target.baseDir);
   const mapping = await readMapping();
   let projectId: string | undefined = mapping[clientSlug]?.[target.scope];
   let project: OdProject | null = projectId ? await findProjectById(projectId, config) : null;
   let imported = false;
 
   if (!project) {
-    project = await odFindProjectByBaseDir(target.baseDir, config);
+    project = await odFindProjectByBaseDir(daemonBaseDir, config);
     projectId = project?.id;
   }
 
   if (!project) {
-    const result = await odImportFolder({ baseDir: target.baseDir }, config);
+    const result = await odImportFolder({ baseDir: daemonBaseDir }, config);
     project = result.project;
     projectId = result.project.id;
     imported = true;
