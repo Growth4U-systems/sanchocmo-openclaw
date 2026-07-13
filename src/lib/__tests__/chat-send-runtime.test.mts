@@ -137,3 +137,65 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     await close(runtime);
   }
 });
+
+test("a run that failed to reach the runtime does not wedge the idempotency key", async () => {
+  // A transient gateway outage marks the delegation's run `failed`. Because the
+  // task-dispatch idempotency key is deterministic, the retry must NOT 409
+  // forever — it must supersede the failed run with a fresh dispatch.
+  let calls = 0;
+  const runtime = http.createServer((req, res) => {
+    req.resume();
+    req.on("end", () => {
+      calls += 1;
+      if (calls === 1) {
+        // First attempt: gateway is momentarily unhealthy.
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "gateway boom" }));
+      } else {
+        res.writeHead(202, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, runId: "external-retry" }));
+      }
+    });
+  });
+  const address = await listen(runtime);
+  process.env.SANCHO_EXTERNAL_GATEWAY_URL = `http://127.0.0.1:${address.port}`;
+
+  const { resetRuntimeForTests } = await import("../runtime");
+  resetRuntimeForTests();
+  const { sendHandler } = await import("@/pages/api/chat/send");
+  const runsModule = await import("../data/agent-runs");
+  const agentRuns = (runsModule as unknown as { default: typeof runsModule }).default ?? runsModule;
+
+  const body = {
+    slug: "demo",
+    threadId: "demo:wedge",
+    text: "Delega a Hamete",
+    agent: "sancho",
+    scope: "agent",
+    userId: "mc-admin",
+    isAdmin: false,
+    senderRole: "client",
+    controlDepth: 1,
+    idempotencyKey: "mc-control:owner:task-dispatch:wedge",
+  };
+
+  try {
+    const first = mockResponse();
+    await sendHandler(runtimeRequest(body), first.res);
+    assert.equal(first.read().statusCode, 502);
+    const afterFirst = agentRuns.listAgentRunsForThread("demo:wedge");
+    assert.equal(afterFirst.length, 1);
+    assert.equal(afterFirst[0].status, "failed");
+
+    const retry = mockResponse();
+    await sendHandler(runtimeRequest(body), retry.res);
+    // Was 409 before the fix — now the failed run is superseded by a fresh one.
+    assert.equal(retry.read().statusCode, 200);
+    assert.notEqual(retry.read().payload.duplicate, true);
+    const afterRetry = agentRuns.listAgentRunsForThread("demo:wedge");
+    assert.equal(afterRetry.length, 2);
+    assert.equal(calls, 2);
+  } finally {
+    await close(runtime);
+  }
+});

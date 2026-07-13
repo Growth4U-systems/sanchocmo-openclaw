@@ -376,12 +376,21 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   // concurrent retries in this process cannot both create a run.
   if (acceptedIdempotencyKey) {
     const existingRun = getAgentRunByIdempotencyKey(tid, acceptedIdempotencyKey);
-    if (existingRun) {
-      const accepted = existingRun.status === "queued"
+    // Only a run that is still in flight or already succeeded is a genuine
+    // duplicate. A prior run that failed to reach the runtime (or was
+    // cancelled) must NOT wedge the key: a transient gateway outage would
+    // otherwise brick the delegation forever — every retry with the same
+    // deterministic key would 409, even after the gateway recovered. Fall
+    // through so a fresh run is created below; because
+    // getAgentRunByIdempotencyKey scans newest-first, the new run supersedes
+    // the failed one for all future lookups. No await runs between here and
+    // createAgentRun, so the single-writer atomicity above is preserved.
+    if (existingRun
+      && (existingRun.status === "queued"
         || existingRun.status === "running"
-        || existingRun.status === "completed";
-      return res.status(accepted ? 200 : 409).json({
-        ok: accepted,
+        || existingRun.status === "completed")) {
+      return res.status(200).json({
+        ok: true,
         duplicate: true,
         runId: existingRun.id,
         status: existingRun.status,
