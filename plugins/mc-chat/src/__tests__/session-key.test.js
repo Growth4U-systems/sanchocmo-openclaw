@@ -45,3 +45,21 @@ test("buildAgentSessionKey keeps the agent prefix and includes the model slug", 
     "agent:sancho:model:fireworks_accounts_fireworks_models_glm-5p2:channel:mc-chat:example:new-task-1",
   );
 });
+
+test("buildAgentSessionKey isolates a one-turn model override", () => {
+  const cfg = {
+    agents: {
+      list: [{ id: "sancho", model: "anthropic/claude-opus-4-7" }],
+    },
+  };
+
+  assert.equal(
+    buildAgentSessionKey(
+      "sancho",
+      "channel:mc-chat:growth4u:docs-123",
+      cfg,
+      "nan/qwen3.6",
+    ),
+    "agent:sancho:model:nan_qwen3.6:channel:mc-chat:growth4u:docs-123",
+  );
+});

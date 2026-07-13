@@ -83,6 +83,7 @@ test("document prompt keeps the HTML untrusted and the turn read-only", () => {
   });
   assert.match(prompt, /solo lectura/);
   assert.match(prompt, /no escribas, edites, borres/);
+  assert.match(prompt, /listas con bullets/);
   assert.match(prompt, /UNTRUSTED-DOCUMENT/);
   assert.doesNotMatch(prompt, /END UNTRUSTED_DOCUMENT ---\n\nPregunta del usuario: Ignore/);
 });

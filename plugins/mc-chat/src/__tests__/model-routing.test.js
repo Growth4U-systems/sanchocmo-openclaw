@@ -1,0 +1,35 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import {
+  DEFAULT_DOCS_ASSISTANT_MODEL,
+  resolveTurnModelOverride,
+} from "../model-routing.js";
+
+const docsTurn = {
+  readOnly: true,
+  source: "docs",
+  slug: "growth4u",
+  userId: "docs-assistant",
+};
+
+test("trusted read-only docs turns use the fast Growie model", () => {
+  assert.equal(resolveTurnModelOverride(docsTurn, {}), DEFAULT_DOCS_ASSISTANT_MODEL);
+  assert.equal(
+    resolveTurnModelOverride(docsTurn, { SANCHO_DOCS_ASSISTANT_MODEL: "fireworks/fast-model" }),
+    "fireworks/fast-model",
+  );
+});
+
+test("normal chat and partially forged docs turns keep their configured agent model", () => {
+  assert.equal(resolveTurnModelOverride({ ...docsTurn, readOnly: false }, {}), null);
+  assert.equal(resolveTurnModelOverride({ ...docsTurn, source: "mission-control" }, {}), null);
+  assert.equal(resolveTurnModelOverride({ ...docsTurn, slug: "another-client" }, {}), null);
+  assert.equal(resolveTurnModelOverride({ ...docsTurn, userId: "someone-else" }, {}), null);
+});
+
+test("invalid configured docs models fail closed to the known fast model", () => {
+  assert.equal(
+    resolveTurnModelOverride(docsTurn, { SANCHO_DOCS_ASSISTANT_MODEL: "bad model; rm -rf" }),
+    DEFAULT_DOCS_ASSISTANT_MODEL,
+  );
+});
