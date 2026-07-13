@@ -119,16 +119,20 @@ ask() {
 # Interactive: re-prompts once, then aborts. Non-interactive: aborts immediately
 # if empty (the caller must pass the value via env). This is how the wizard
 # guarantees a credential is present instead of silently shipping a placeholder.
+# The return value travels on STDOUT (captured by `$(ask_required …)`), so every
+# human-facing line here MUST go to stderr (>&2) — otherwise the warning text is
+# concatenated onto the captured value and corrupts the credential (e.g. leaving
+# a key empty then retyping it would return "…is required…<the key>").
 ask_required() {
   local var="$1" prompt="$2" val
   val="$(ask "$var" "$prompt" "")"
   if [ -z "$val" ] && [ "$INTERACTIVE" = "1" ]; then
-    warn "$var is required — please enter a value."
+    warn "$var is required — please enter a value." >&2
     val="$(ask "$var" "$prompt" "")"
   fi
   if [ -z "$val" ]; then
-    say "${YLW}ERROR:${RST} $var is required for the chosen mode but no value was provided."
-    say "  (Non-interactive? pass $var=… in the environment.)"
+    say "${YLW}ERROR:${RST} $var is required for the chosen mode but no value was provided." >&2
+    say "  (Non-interactive? pass $var=… in the environment.)" >&2
     exit 1
   fi
   printf '%s' "$val"
@@ -139,6 +143,11 @@ ask_required() {
 # re-prompts until the value is valid. Non-interactive: validates the env/default
 # value and aborts with a clear message — so a typo can never silently fall through
 # to a mis-configured install (e.g. a bad provider that collects no credential).
+# The chosen value is returned on STDOUT (captured by `$(ask_choice …)`), so the
+# invalid-value warning MUST go to stderr (>&2). Otherwise a typo-then-correction
+# (e.g. "firewokrs" then "fireworks") concatenates the warning text onto the
+# captured value — PROVIDER becomes "…Invalid value…fireworks", matches no case
+# branch, no credential is collected, and the install boots credential-less.
 ask_choice() {
   local var="$1" prompt="$2" default="$3"; shift 3
   local valid="$*" val low choice
@@ -149,11 +158,11 @@ ask_choice() {
       [ "$low" = "$choice" ] && { printf '%s' "$low"; return; }
     done
     if [ "$INTERACTIVE" = "1" ]; then
-      warn "Invalid value '$val' — choose one of: $valid"
+      warn "Invalid value '$val' — choose one of: $valid" >&2
       unset "$var"   # drop a bad env-provided value so `ask` re-prompts
       continue
     fi
-    say "${YLW}ERROR:${RST} $var must be one of: $valid (got '$val')."
+    say "${YLW}ERROR:${RST} $var must be one of: $valid (got '$val')." >&2
     exit 1
   done
 }
@@ -276,7 +285,6 @@ esac
 # subscription mode is the documented "invalid x-api-key" fallback footgun, so we
 # blank the unused credential explicitly.
 nstep "Model provider & auth"
-PROVIDER="$(ask_choice PROVIDER "Provider — anthropic, openai, fireworks, or all" "anthropic" anthropic openai fireworks all)"
 # Initialize empty (NOT to a default like "api_key") so `ask` actually prompts:
 # any non-empty value makes ask treat the question as already answered and skip
 # it. The real default is supplied as ask's 3rd argument below. Empty here only
@@ -291,39 +299,84 @@ FIREWORKS_API_KEY="${FIREWORKS_API_KEY:-}"
 ANTHROPIC_OAUTH_TOKEN="${ANTHROPIC_OAUTH_TOKEN:-}"
 ANTHROPIC_AUTH_MODE="${ANTHROPIC_AUTH_MODE:-}"
 OPENAI_AUTH_MODE="${OPENAI_AUTH_MODE:-}"
+PROVIDER="${PROVIDER:-}"
 
-case "$PROVIDER" in
-  anthropic|all)
-    ANTHROPIC_AUTH_MODE="$(ask_choice ANTHROPIC_AUTH_MODE "Anthropic auth mode — api_key or subscription" "api_key" api_key subscription)"
-    if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
-      say "  ${DIM}Generate a subscription token on the host with: claude setup-token${RST}"
-      ANTHROPIC_OAUTH_TOKEN="$(ask_required ANTHROPIC_OAUTH_TOKEN "Claude subscription token (sk-ant-oat...)")"
-      ANTHROPIC_API_KEY=""
-    else
-      ANTHROPIC_API_KEY="$(ask_required ANTHROPIC_API_KEY "Anthropic API key (sk-ant-...)")"
-      ANTHROPIC_OAUTH_TOKEN=""
-    fi
-    ;;
-esac
+# has_model_credential : true when at least one directly-usable model credential
+# is present, mirroring the entrypoint preflight (docker/entrypoint.sh). The
+# wizard must never hand off a .env without one — that boots straight into a
+# crash-loop ("No usable model credential"). openai 'subscription' (Codex OAuth,
+# set up host-side) leaves no key here, so it can't satisfy boot on its own.
+has_model_credential() {
+  if [ "${ANTHROPIC_AUTH_MODE:-}" = "subscription" ]; then
+    [ -n "$ANTHROPIC_OAUTH_TOKEN" ] && return 0
+  else
+    [ -n "$ANTHROPIC_API_KEY" ] && return 0
+  fi
+  [ -n "$OPENAI_API_KEY" ] && return 0
+  [ -n "$FIREWORKS_API_KEY" ] && return 0
+  return 1
+}
 
-case "$PROVIDER" in
-  openai|all)
-    OPENAI_AUTH_MODE="$(ask_choice OPENAI_AUTH_MODE "OpenAI auth mode — api_key or subscription" "api_key" api_key subscription)"
-    if [ "$OPENAI_AUTH_MODE" = "subscription" ]; then
-      warn "OpenAI subscription uses Codex (ChatGPT) OAuth, set up host-side with 'openclaw models auth login' — it can't be entered here. Configure it after install."
-      OPENAI_API_KEY=""
-    else
-      OPENAI_API_KEY="$(ask_required OPENAI_API_KEY "OpenAI API key (sk-...)")"
-    fi
-    ;;
-esac
+# Collect provider + credential, then re-loop until at least one usable
+# credential exists. A keyless selection (e.g. openai 'subscription' alone) sends
+# an interactive install back to re-choose and aborts a non-interactive one — the
+# wizard can never emit a .env that fails the container preflight. This is the
+# backstop; the primary guarantee is that ask_choice/ask_required return cleanly
+# on stdout (prompts/warnings go to stderr), so a typo-then-correction on the
+# provider can't corrupt $PROVIDER and silently skip the credential prompt.
+while :; do
+  PROVIDER="$(ask_choice PROVIDER "Provider — anthropic, openai, fireworks, or all" "anthropic" anthropic openai fireworks all)"
 
-# Fireworks is API-key-only (no subscription/OAuth) — require the key when chosen.
-case "$PROVIDER" in
-  fireworks|all)
-    FIREWORKS_API_KEY="$(ask_required FIREWORKS_API_KEY "Fireworks API key (fw-...)")"
-    ;;
-esac
+  case "$PROVIDER" in
+    anthropic|all)
+      ANTHROPIC_AUTH_MODE="$(ask_choice ANTHROPIC_AUTH_MODE "Anthropic auth mode — api_key or subscription" "api_key" api_key subscription)"
+      if [ "$ANTHROPIC_AUTH_MODE" = "subscription" ]; then
+        say "  ${DIM}Generate a subscription token on the host with: claude setup-token${RST}"
+        ANTHROPIC_OAUTH_TOKEN="$(ask_required ANTHROPIC_OAUTH_TOKEN "Claude subscription token (sk-ant-oat...)")"
+        ANTHROPIC_API_KEY=""
+      else
+        ANTHROPIC_API_KEY="$(ask_required ANTHROPIC_API_KEY "Anthropic API key (sk-ant-...)")"
+        ANTHROPIC_OAUTH_TOKEN=""
+      fi
+      ;;
+  esac
+
+  case "$PROVIDER" in
+    openai|all)
+      OPENAI_AUTH_MODE="$(ask_choice OPENAI_AUTH_MODE "OpenAI auth mode — api_key or subscription" "api_key" api_key subscription)"
+      if [ "$OPENAI_AUTH_MODE" = "subscription" ]; then
+        warn "OpenAI subscription uses Codex (ChatGPT) OAuth, set up host-side with 'openclaw models auth login' — it can't be entered here. Configure it after install."
+        OPENAI_API_KEY=""
+      else
+        OPENAI_API_KEY="$(ask_required OPENAI_API_KEY "OpenAI API key (sk-...)")"
+      fi
+      ;;
+  esac
+
+  # Fireworks is API-key-only (no subscription/OAuth) — require the key when chosen.
+  case "$PROVIDER" in
+    fireworks|all)
+      FIREWORKS_API_KEY="$(ask_required FIREWORKS_API_KEY "Fireworks API key (fw-...)")"
+      ;;
+  esac
+
+  has_model_credential && break
+
+  # No usable credential for the active auth mode(s). Reachable when the only
+  # provider is openai 'subscription' (keyless at wizard time), or a scripted env
+  # combination. Interactive: explain and re-pick. Non-interactive: abort.
+  if [ "$INTERACTIVE" = "1" ]; then
+    warn "That selection left no usable model credential — the container would fail preflight."
+    say  "  ${DIM}OpenAI 'subscription' (Codex OAuth) is configured host-side, so it can't${RST}"
+    say  "  ${DIM}satisfy boot on its own. Pick a provider with a directly-usable key${RST}"
+    say  "  ${DIM}(Anthropic api_key/subscription, OpenAI api_key, or Fireworks).${RST}"
+    PROVIDER=""; OPENAI_AUTH_MODE=""; ANTHROPIC_AUTH_MODE=""
+    continue
+  fi
+  say "${YLW}ERROR:${RST} No usable model credential for provider '$PROVIDER' — set ANTHROPIC_API_KEY,"
+  say "  ANTHROPIC_OAUTH_TOKEN (Anthropic subscription), OPENAI_API_KEY, or FIREWORKS_API_KEY."
+  exit 1
+done
 
 # --- 2. Admin & login access -------------------------------------------------
 # Google login is OPTIONAL. You can always log in with the admin token printed at
