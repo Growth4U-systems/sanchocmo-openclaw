@@ -46,7 +46,14 @@ workspace-*/.openclaw/
 
 # --- per-instance DATA (must NEVER land in a public image) ---
 workspace-*/memory/
-workspace-*/brand/
+# Only exclude the SHARED brand DATA dir (workspace-sancho/brand/*), NOT the
+# per-agent `brand` SYMLINKS (workspace-<specialist>/brand -> ../workspace-sancho/
+# brand). The old `workspace-*/brand/` glob stripped those symlinks from the build
+# context, so no specialist workspace shipped with brand write-through and every
+# agent-authored deliverable (DESIGN.md, company-brief, …) landed in the agent's
+# isolated home instead of the shared brand the UI reads (SAN-438). The symlinks
+# carry no data; the real brand content still never lands in the image.
+workspace-sancho/brand/
 workspace-*/campaigns/
 workspace-*/_backups/
 workspace-*/_system/recurring-tasks/

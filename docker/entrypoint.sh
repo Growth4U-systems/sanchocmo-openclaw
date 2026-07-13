@@ -120,6 +120,25 @@ fi
 # Sancho keeps its own real skills/ dir (first-party operator skills not in the
 # central catalog). `git checkout` wipes symlinks on deploy → recreate every
 # boot. Idempotent: only manage an absent or already-symlinked path.
+
+# Specialists that AUTHOR brand deliverables (DESIGN.md, company-brief, keyword
+# plans, …). Their workspace `brand`/`_system` must resolve to the shared
+# workspace-sancho/{brand,_system} so those writes land where the UI reads them.
+BRAND_SHARING_AGENTS="hamete dulcinea mambrino merlin sanson maese-pedro"
+
+# ensure_shared_link <workspace-dir> <name> <relative-target>: make <dir>/<name>
+# a symlink to <target>. Repairs a stale/wrong symlink, creates a missing one,
+# and refuses to clobber a real directory — warning instead so the isolated-data
+# case (SAN-438) is visible rather than silently swallowed (or silently wiped).
+ensure_shared_link() {
+  local dir="$1" name="$2" target="$3" sl="$1/$2"
+  if [ -L "$sl" ] || [ ! -e "$sl" ]; then
+    ln -sfn "$target" "$sl"
+  else
+    echo "[entrypoint] WARN: $(basename "$dir")/$name is a real path, not a symlink to $target — brand write-through is NOT active for it (SAN-438; migrate its contents into workspace-sancho/$name and remove it)."
+  fi
+}
+
 for ws in /root/.openclaw/workspace-*; do
   [ -d "$ws" ] || continue
   [ "$(basename "$ws")" = "workspace-sancho" ] && continue
@@ -129,20 +148,43 @@ for ws in /root/.openclaw/workspace-*; do
     echo "[entrypoint] Linked $(basename "$ws")/skills -> ../skills"
   fi
   # `_system` (protocols, instance.json) and `brand` (brand context) are owned by
-  # Sancho and shared into each specialist workspace by symlink. The seed shipped
-  # these as macOS-absolute links (`/Users/ragi/.openclaw/...`) that dangle in the
-  # container, so specialists (dulcinea, sanson, merlin, mambrino) lost brand +
-  # protocol context and degraded — fabricating content with no foundation
-  # (SAN-241, root of SAN-238). Repair to the relative path that resolves here.
-  # Only fix an EXISTING symlink (broken or not) — never invent a mount in a
-  # workspace that never had one, nor clobber a real directory.
-  for shared in _system brand; do
-    sl="$ws/$shared"
-    if [ -L "$sl" ]; then
-      ln -sfn "../workspace-sancho/$shared" "$sl"
-      echo "[entrypoint] Relinked $(basename "$ws")/$shared -> ../workspace-sancho/$shared"
-    fi
-  done
+  # Sancho and shared into each specialist workspace as a relative symlink so the
+  # agent's `brand/{slug}/…` writes land in the shared brand the UI reads. The
+  # seed historically shipped these as macOS-absolute links (`/Users/ragi/…`,
+  # SAN-241) and the `.dockerignore` `workspace-*/brand/` glob then stripped every
+  # `brand` symlink from the image, so NO specialist shipped with brand
+  # write-through (SAN-438). Now they ship relative and unstripped; this repairs
+  # older seeds and, for the brand-authoring specialists, CREATES a missing link.
+  ws_name="$(basename "$ws")"
+  agent_name="${ws_name#workspace-}"
+  case " $BRAND_SHARING_AGENTS " in
+    *" $agent_name "*)
+      ensure_shared_link "$ws" "_system" "../workspace-sancho/_system"
+      ensure_shared_link "$ws" "brand" "../workspace-sancho/brand"
+      ;;
+    *)
+      # Non-authoring workspace: only repair an already-present symlink; never
+      # invent a mount in a workspace that never had one.
+      for shared in _system brand; do
+        [ -L "$ws/$shared" ] && ln -sfn "../workspace-sancho/$shared" "$ws/$shared"
+      done
+      ;;
+  esac
+done
+
+# Nested subagent homes: openclaw materializes an `Agent(subagent_type=…)` home
+# at workspace-sancho/<agent>/ (cwd inherited from the parent, workspace-sancho),
+# which the workspace-* loop above does NOT match. A specialist spawned that way
+# wrote brand/{slug}/… into an isolated real dir the UI never reads (SAN-438).
+# Repair any such nested home that already exists — from one level deeper the
+# shared dirs are ../brand and ../_system. (A first-ever spawn that races ahead
+# of this boot-time pass still needs the openclaw-side home wiring; tracked as a
+# follow-up.)
+for agent in $BRAND_SHARING_AGENTS; do
+  nested="/root/.openclaw/workspace-sancho/$agent"
+  [ -d "$nested" ] || continue
+  ensure_shared_link "$nested" "_system" "../_system"
+  ensure_shared_link "$nested" "brand" "../brand"
 done
 
 # ===========================================================
