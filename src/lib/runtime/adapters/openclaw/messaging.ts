@@ -82,42 +82,60 @@ async function readGatewayResponse(res: Response): Promise<{ chatId?: string; ra
   }
 }
 
+// Backoff between forward attempts when the gateway is momentarily unreachable.
+// The embedded OpenClaw runtime shares one event loop with this HTTP endpoint,
+// so a burst of concurrent agent runs (e.g. a Full Foundation fan-out) can stall
+// it for a few seconds and make the connection fail outright. A small bounded
+// retry absorbs that blip instead of surfacing "gateway unreachable" and marking
+// the delegation's run failed. We deliberately retry ONLY on a thrown
+// connection-level error: a gateway that answered (any HTTP status) has received
+// the message, so retrying it could double-dispatch. We add no default timeout —
+// the gateway may hold the connection open to return a synchronous run reply.
+const GATEWAY_FORWARD_RETRY_DELAYS_MS = [0, 500, 1500];
+
 export async function sendOpenclawInbound(
   message: InboundMessage,
   opts?: SendInboundOptions,
 ): Promise<SendInboundResult> {
   const secret = getChatSecret();
-  try {
-    const res = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(opts?.headers ?? {}),
-        ...(secret ? { "X-MC-Secret": secret } : {}),
-      },
-      body: JSON.stringify({
-        ...message,
-        text: textWithActiveOutboundWorkflow(message),
-      }),
-      ...(opts?.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
-    });
-    const data = await readGatewayResponse(res);
-    return {
-      ok: res.ok,
-      status: res.status,
-      chatId: data.chatId,
-      raw: data.raw,
-      error: res.ok ? undefined : data.raw,
-    };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    return {
-      ok: false,
-      status: 0,
-      raw: message,
-      error: message,
-    };
+  const body = JSON.stringify({
+    ...message,
+    text: textWithActiveOutboundWorkflow(message),
+  });
+  const headers = {
+    "Content-Type": "application/json",
+    ...(opts?.headers ?? {}),
+    ...(secret ? { "X-MC-Secret": secret } : {}),
+  };
+  let lastError = "Gateway unreachable";
+  for (let attempt = 0; attempt < GATEWAY_FORWARD_RETRY_DELAYS_MS.length; attempt += 1) {
+    const backoff = GATEWAY_FORWARD_RETRY_DELAYS_MS[attempt];
+    if (backoff) await new Promise((resolve) => setTimeout(resolve, backoff));
+    try {
+      const res = await fetch(`${getGatewayUrl()}/mc-chat/inbound`, {
+        method: "POST",
+        headers,
+        body,
+        ...(opts?.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
+      });
+      const data = await readGatewayResponse(res);
+      return {
+        ok: res.ok,
+        status: res.status,
+        chatId: data.chatId,
+        raw: data.raw,
+        error: res.ok ? undefined : data.raw,
+      };
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+    }
   }
+  return {
+    ok: false,
+    status: 0,
+    raw: lastError,
+    error: lastError,
+  };
 }
 
 export async function createOpenclawChannelThread(input: unknown): Promise<unknown> {
