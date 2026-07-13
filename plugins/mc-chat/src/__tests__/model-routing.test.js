@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildDocsReviewReplyOptions,
   DEFAULT_DOCS_ASSISTANT_MODEL,
   resolveTurnModelOverride,
 } from "../model-routing.js";
@@ -32,4 +33,18 @@ test("invalid configured docs models fail closed to the known fast model", () =>
     resolveTurnModelOverride(docsTurn, { SANCHO_DOCS_ASSISTANT_MODEL: "bad model; rm -rf" }),
     DEFAULT_DOCS_ASSISTANT_MODEL,
   );
+});
+
+test("docs reviews disable runtime overhead and tools for a single fast turn", () => {
+  assert.deepEqual(buildDocsReviewReplyOptions("nan/qwen3.6"), {
+    modelOverride: "nan/qwen3.6",
+    thinkingLevelOverride: "off",
+    fastModeOverride: true,
+    bootstrapContextMode: "lightweight",
+    disableTools: true,
+    skillFilter: [],
+    suppressToolErrorWarnings: true,
+    suppressDefaultToolProgressMessages: true,
+  });
+  assert.deepEqual(buildDocsReviewReplyOptions(null), {});
 });
