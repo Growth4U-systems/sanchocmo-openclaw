@@ -433,6 +433,7 @@ test("successful webhook persists causal artifact readback only for a matching f
   );
   assert.equal(progress.read().statusCode, 200);
   // The write must happen at or after the causally bound progress receipt.
+  await new Promise((resolve) => setTimeout(resolve, 5));
   fs.writeFileSync(output, "causal bytes after progress");
 
   const final = mockResponse();

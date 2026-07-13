@@ -264,6 +264,7 @@ export default defineChannelPluginEntry({
           attachments,
           isAdmin,
           senderRole,
+          readOnly,
           temporaryAgent,
           controlDepth,
           taskRouteProposal,
@@ -283,7 +284,8 @@ export default defineChannelPluginEntry({
           ? rawRequestedAgent.toLowerCase()
           : "sancho";
         const isTemporarySancho = temporaryAgent === true && requestedAgent === "sancho";
-        const isControlFollowup = controlDepth === 1;
+        const isReadOnly = readOnly === true;
+        const isControlFollowup = controlDepth === 1 || isReadOnly;
 
         logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId} agent=${requestedAgent}: ${text.slice(0, 80)}`);
 
@@ -325,6 +327,7 @@ export default defineChannelPluginEntry({
           temporaryAgent: isTemporarySancho,
           controlDepth: isControlFollowup ? 1 : 0,
           taskRouteProposal,
+          readOnly: isReadOnly,
         });
 
         // ─── Bounded grounding (SAN-246/SAN-382 follow-up) ───

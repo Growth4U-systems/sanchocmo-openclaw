@@ -119,6 +119,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     idempotencyKey: claimedIdempotencyKey,
     isAdmin: claimedIsAdmin,
     senderRole: claimedSenderRole,
+    readOnly: claimedReadOnly,
   } = req.body;
 
   if (!slug || !text) {
@@ -231,6 +232,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     ? claimedIsAdmin === true && claimedSenderRole === "admin"
     : req.ctx?.isAdmin === true;
   const senderRole: "admin" | "client" = isAdmin ? "admin" : "client";
+  const readOnly = trustedRuntimeRequest && claimedReadOnly === true;
   const resolvedUserId = resolveChatUserId({
     trustedRuntimeRequest,
     isAdmin,
@@ -427,6 +429,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       userName: resolvedUserName,
       isAdmin,
       senderRole,
+      readOnly,
       attachments: parsedAttachments,
       scope: policy.scope,
       skillMode: policy.skillMode,
@@ -507,6 +510,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     attachments: parsedAttachments,
     isAdmin,
     senderRole,
+    readOnly,
     _source,
     // Force routing: when the thread carries an `agent` field, the gateway
     // dispatches to that agent (e.g. dulcinea for content tasks, maese-pedro
@@ -582,7 +586,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         docKind: typeof docKind === "string" ? docKind : undefined,
         attachments: parsedAttachments,
       };
-      const parsedControl = runtime.id === "openclaw"
+      const parsedControl = runtime.id === "openclaw" || readOnly
         ? null
         : parseRuntimeControlReply(result.finalText, {
             respondingAgent: finalAgent,

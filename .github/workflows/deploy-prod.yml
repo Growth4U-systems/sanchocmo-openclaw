@@ -124,6 +124,7 @@ jobs:
           INSTANTLY_API_KEY: ${{ secrets.INSTANTLY_API_KEY }}
           METRICOOL_API_KEY: ${{ secrets.METRICOOL_API_KEY }}
           SANCHO_INTERNAL_API_TOKEN: ${{ secrets.SANCHO_INTERNAL_API_TOKEN }}
+          SANCHO_DOCS_ASSISTANT_TOKEN: ${{ secrets.SANCHO_DOCS_ASSISTANT_TOKEN }}
           SANCHO_MCP_TOKENS: ${{ secrets.SANCHO_MCP_TOKENS }}
           # ── Tier 3 — Skill APIs ───────────────────────────────────────
           APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
@@ -197,6 +198,7 @@ jobs:
               "LLM_USAGE_SLACK_REPORT_TIMEZONE", "LLM_USAGE_SLACK_REPORT_ENABLED", "LLM_USAGE_SLACK_REQUIRE_BILLING",
               "LLM_USAGE_SLACK_EXPECTED_BOT", "LLM_USAGE_SLACK_ALLOW_DEFAULT_TOKEN", "LLM_USAGE_USD_TO_EUR",
               "INSTANTLY_API_KEY", "METRICOOL_API_KEY", "SANCHO_INTERNAL_API_TOKEN",
+              "SANCHO_DOCS_ASSISTANT_TOKEN",
               "SANCHO_MCP_TOKENS",
               # Tier 3 — Skill APIs
               "APOLLO_API_KEY", "GHL_API_KEY", "GHL_LOCATION_ID",

@@ -191,9 +191,10 @@ function bridgePrompt(message: InboundMessage): string {
     requestedAgent,
     // `mc-bridge` returns final text synchronously; Next consumes control
     // markers through the runtime-neutral control plane in `/api/chat/send`.
-    canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1,
+    canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1 && message.readOnly !== true,
     temporaryAgent: message.temporaryAgent,
     controlDepth: message.controlDepth,
+    readOnly: message.readOnly,
     taskRouteProposal: message.taskRouteProposal,
   });
 
