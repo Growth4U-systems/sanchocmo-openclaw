@@ -84,7 +84,7 @@ export async function docsAssistantHandler(
       ok: true,
       status: "completed",
       answer: state.answer,
-      agent: state.agent || "sancho",
+      agent: "growie",
       readOnly: true,
       generatedAt: new Date().toISOString(),
     });
